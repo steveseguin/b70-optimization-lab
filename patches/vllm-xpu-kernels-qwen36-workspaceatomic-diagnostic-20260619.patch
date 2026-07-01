@@ -1,0 +1,1646 @@
+diff --git a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+index b9c0d1a..6389f32 100644
+--- a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
++++ b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+@@ -140,6 +140,47 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_offsets_interface(
+   }
+ }
+ 
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_offsets_atomic_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts,
++    int* atomic_buffer) {
++  if (vllm::xpu::force_xe_default_kernel()) {
++    TORCH_CHECK(
++        false,
++        "W8A8 INT8 grouped GEMM offsets requires the XE2 cutlass kernel; XE "
++        "default does not implement this path.");
++  } else if (vllm::xpu::is_xe2_arch()) {
++#ifdef VLLM_XPU_ENABLE_XE2
++    return cutlass_grouped_gemm_w8a8_int8_xe2_offsets_atomic(
++        ptr_A,
++        ptr_A_scales,
++        ptr_B,
++        ptr_B_scales,
++        ptr_bias,
++        ptr_D,
++        expert_first_token_offset,
++        N,
++        K,
++        num_experts,
++        atomic_buffer);
++#else
++    TORCH_CHECK(false, "XE2 cutlass kernel is not enabled in this build.");
++#endif
++  } else {
++    TORCH_CHECK(
++        false,
++        "W8A8 INT8 grouped GEMM offsets requires an XE2 XPU architecture.");
++  }
++}
++
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(
+     torch::Tensor ptr_A,
+     torch::Tensor ptr_A_scales,
+@@ -183,3 +224,46 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(
+         "architecture.");
+   }
+ }
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_topk8_gather_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor topk_ids,
++    torch::Tensor topk_weights,
++    torch::Tensor unpermuted_row_to_permuted_row,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts) {
++  if (vllm::xpu::force_xe_default_kernel()) {
++    TORCH_CHECK(
++        false,
++        "W8A8 INT8 topk8 gather GEMM requires the XE2 cutlass kernel; XE "
++        "default does not implement this path.");
++  } else if (vllm::xpu::is_xe2_arch()) {
++#ifdef VLLM_XPU_ENABLE_XE2
++    return cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather(
++        ptr_A,
++        ptr_A_scales,
++        ptr_B,
++        ptr_B_scales,
++        ptr_bias,
++        ptr_D,
++        topk_ids,
++        topk_weights,
++        unpermuted_row_to_permuted_row,
++        N,
++        K,
++        num_experts);
++#else
++    TORCH_CHECK(false, "XE2 cutlass kernel is not enabled in this build.");
++#endif
++  } else {
++    TORCH_CHECK(
++        false,
++        "W8A8 INT8 topk8 gather GEMM requires an XE2 XPU architecture.");
++  }
++}
+diff --git a/csrc/xpu/grouped_gemm/grouped_gemm_interface.h b/csrc/xpu/grouped_gemm/grouped_gemm_interface.h
+index 2a45e65..a191da0 100644
+--- a/csrc/xpu/grouped_gemm/grouped_gemm_interface.h
++++ b/csrc/xpu/grouped_gemm/grouped_gemm_interface.h
+@@ -37,6 +37,19 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_offsets_interface(
+     int64_t K,
+     int64_t num_experts);
+ 
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_offsets_atomic_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts,
++    int* atomic_buffer);
++
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(
+     torch::Tensor ptr_A,
+     torch::Tensor ptr_A_scales,
+@@ -50,3 +63,17 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_active_offsets_interface(
+     int64_t K,
+     int64_t num_experts,
+     int64_t num_active_experts);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_topk8_gather_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor topk_ids,
++    torch::Tensor topk_weights,
++    torch::Tensor unpermuted_row_to_permuted_row,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts);
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+index 208477d..df1aeed 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+@@ -74,6 +74,18 @@ class w8a16_policy_m_8 : public xe_gemm_policy_base {
+   using SGLayout = Layout<Shape<_1, _4, _1>, Stride<_4, _1, _0>>;
+ };
+ 
++class w8a8_topk8_policy_n_32 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_8, _32, _32>;
++  using SGLayout = Layout<Shape<_1, _2, _1>, Stride<_2, _1, _0>>;
++};
++
++class w8a8_topk8_policy_n_16 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_8, _16, _32>;
++  using SGLayout = Layout<Shape<_1, _1, _1>, Stride<_1, _1, _0>>;
++};
++
+ class w8a16_policy_m_16 : public xe_gemm_policy_base {
+  public:
+   using WGTile = Shape<_16, _64, _32>;
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp
+index 1cad1a3..a79947a 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp
+@@ -76,6 +76,32 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets(
+       num_experts);
+ }
+ 
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_atomic(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts,
++    int* atomic_buffer) {
++  return MoE::cutlass_grouped_gemm_w8a8_int8_xe2_offsets_impl(
++      ptr_A,
++      ptr_A_scales,
++      ptr_B,
++      ptr_B_scales,
++      ptr_bias,
++      ptr_D,
++      expert_first_token_offset,
++      N,
++      K,
++      num_experts,
++      atomic_buffer);
++}
++
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets(
+     torch::Tensor ptr_A,
+     torch::Tensor ptr_A_scales,
+@@ -103,3 +129,31 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets(
+       num_experts,
+       num_active_experts);
+ }
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor topk_ids,
++    torch::Tensor topk_weights,
++    torch::Tensor unpermuted_row_to_permuted_row,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts) {
++  return MoE::cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather_impl(
++      ptr_A,
++      ptr_A_scales,
++      ptr_B,
++      ptr_B_scales,
++      ptr_bias,
++      ptr_D,
++      topk_ids,
++      topk_weights,
++      unpermuted_row_to_permuted_row,
++      N,
++      K,
++      num_experts);
++}
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
+index cc4574b..bf1d4ea 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
+@@ -37,6 +37,19 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets(
+     int64_t K,
+     int64_t num_experts);
+ 
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_atomic(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts,
++    int* atomic_buffer);
++
+ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets(
+     torch::Tensor ptr_A,
+     torch::Tensor ptr_A_scales,
+@@ -50,3 +63,17 @@ torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets(
+     int64_t K,
+     int64_t num_experts,
+     int64_t num_active_experts);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor topk_ids,
++    torch::Tensor topk_weights,
++    torch::Tensor unpermuted_row_to_permuted_row,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts);
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index dbeb772..4cd3dfa 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -58,6 +58,175 @@ CUTE_DEVICE auto make_moe_tensor(T* ptr, int r, int c) {
+         make_gmem_ptr(ptr), make_layout(shape, make_stride(c, _1{})));
+ }
+ 
++template <
++    class GmemTiledCopyA,
++    class GmemTiledCopyB,
++    class GmemTiledCopyD,
++    class TiledMMA,
++    typename ElementD>
++CUTE_DEVICE void xe_gemm_w8a8_topk8_gather(
++    const int8_t* Activations,
++    const int8_t* Weights,
++    const float* Scales,
++    const float* ActivationScales,
++    const float* Bias,
++    ElementD* Outputs,
++    const int64_t* TopkIds,
++    const float* TopkWeights,
++    const int* UnpermutedRowToPermutedRow,
++    const int32_t gemm_n,
++    const int32_t gemm_k,
++    TiledMMA const& mma) {
++  auto item = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
++  const int wg_n = item.get_group(1);
++  const int local_id = item.get_local_linear_id();
++
++  auto C_tensor = make_moe_tensor<ElementD, 'R'>(Outputs, 1, gemm_n);
++  Tensor cC = make_identity_tensor(C_tensor.shape());
++  auto wg_tile = mma.tile_mnk();
++  auto wg_coord = make_coord(0, wg_n, 0);
++  Tensor gC =
++      local_tile(cC, wg_tile, wg_coord, Step<_1, _1, X>{});  // (1,BLK_N)
++
++  auto copy_c = get_block_2d_copy_D<GmemTiledCopyD>(mma, C_tensor);
++  auto thr_mma = mma.get_slice(local_id);
++  auto thr_copy_c = copy_c.get_slice(local_id);
++  auto tCrC_template = thr_mma.partition_sg_fragment_C(gC);
++  auto tCrAccum = make_subgroup_tensor(
++      make_tensor_like<float>(tCrC_template.tensor()),
++      tCrC_template.tv_layout());
++  auto tCrC_out = thr_copy_c.partition_sg_fragment_S(gC);
++  auto tCgC = thr_copy_c.partition_D(gC);
++  clear(tCrAccum);
++
++  static constexpr auto ATOM_M =
++      get<1>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++  static constexpr auto ATOM_N =
++      get<2>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++
++  auto sg_local_m_coord = cutlass::get_sub_group_id() / ATOM_N;
++  auto sg_local_n_coord = cutlass::get_sub_group_id() % ATOM_N;
++
++  static constexpr auto tile_m = get<0>(wg_tile);
++  static constexpr auto tile_n = get<1>(wg_tile);
++  static constexpr auto SG_M = tile_m / ATOM_M;
++  static constexpr auto SG_N = tile_n / ATOM_N;
++  const int sg_local_id = cutlass::get_sub_group_local_id();
++  static constexpr int sg_local_range = 16;
++
++  const int m_sg_start = sg_local_m_coord * SG_M;
++  const int n_tile_start = wg_n * tile_n;
++  const int n_sg_start = sg_local_n_coord * SG_N;
++
++  CUTE_UNROLL
++  for (int topk_idx = 0; topk_idx < 8; ++topk_idx) {
++    const int permuted_row = UnpermutedRowToPermutedRow[topk_idx];
++    const int64_t expert = TopkIds[topk_idx];
++    const float route_weight = TopkWeights[topk_idx];
++
++    auto A_tensor = make_moe_tensor<int8_t, 'R'>(
++        const_cast<int8_t*>(Activations) + permuted_row * gemm_k,
++        1,
++        gemm_k);
++    auto B_tensor = make_moe_tensor<int8_t, 'R'>(
++        const_cast<int8_t*>(Weights) +
++            expert * static_cast<int64_t>(gemm_n) *
++                static_cast<int64_t>(gemm_k),
++        gemm_n,
++        gemm_k);
++
++    Tensor cA = make_identity_tensor(A_tensor.shape());
++    Tensor cB = make_identity_tensor(B_tensor.shape());
++    Tensor gA = local_tile(
++        cA, select<0, 2>(wg_tile), make_coord(0, _));  // (BLK_M,BLK_K,k)
++    Tensor gB = local_tile(
++        cB, select<1, 2>(wg_tile), make_coord(wg_n, _));  // (BLK_N,BLK_K,k)
++
++    auto copy_a = get_block_2d_copy_A<GmemTiledCopyA>(mma, A_tensor);
++    auto copy_b = get_block_2d_copy_B<GmemTiledCopyB>(mma, B_tensor);
++    auto thr_copy_a = copy_a.get_slice(local_id);
++    auto thr_copy_b = copy_b.get_slice(local_id);
++
++    auto tCrA = thr_mma.partition_sg_fragment_A(gA(_, _, 0));
++    auto tCrB = thr_mma.partition_sg_fragment_B(gB(_, _, 0));
++    auto tArA = thr_copy_a.partition_sg_fragment_D(gA(_, _, 0));
++    auto tBrB = thr_copy_b.partition_sg_fragment_D(gB(_, _, 0));
++    Tensor tAgA = thr_copy_a.partition_S(gA);
++    Tensor tBgB = thr_copy_b.partition_S(gB);
++    auto tCrC = thr_mma.partition_sg_fragment_C(gC);
++
++    auto prefetch_a = make_block_2d_prefetch(copy_a);
++    auto prefetch_b = make_block_2d_prefetch(copy_b);
++    auto thr_prefetch_A = prefetch_a.get_slice(local_id);
++    auto thr_prefetch_B = prefetch_b.get_slice(local_id);
++    auto pAgA = thr_prefetch_A.partition_S(gA);
++    auto pBgB = thr_prefetch_B.partition_S(gB);
++
++    constexpr int prefetch_dist = 3;
++    constexpr int barrier_scope = 2;
++    const int k_tile_count = ceil_div(shape<1>(A_tensor), get<2>(wg_tile));
++    int k_tile_prefetch = 0;
++    clear(tCrC);
++
++    CUTE_UNROLL
++    for (; k_tile_prefetch < prefetch_dist; k_tile_prefetch++) {
++      prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++      prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++    }
++
++    for (int k_tile = 0; k_tile < k_tile_count;
++         k_tile++, k_tile_prefetch++) {
++      barrier_arrive(barrier_scope);
++
++      copy(copy_a, tAgA(_, _, _, k_tile), tArA);
++      copy(copy_b, tBgB(_, _, _, k_tile), tBrB);
++
++      if (k_tile_prefetch < k_tile_count) {
++        prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++        prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++      }
++
++      reorder(tArA, tCrA);
++      reorder(tBrB, tCrB);
++
++      cute::gemm(mma, tCrA, tCrB, tCrC);
++
++      barrier_wait(barrier_scope);
++    }
++
++    CUTLASS_PRAGMA_UNROLL
++    for (int sn = 0; sn < SG_N / sg_local_range; ++sn) {
++      const int sg_local_n = sn * sg_local_range + sg_local_id;
++      const int col = n_tile_start + n_sg_start + sg_local_n;
++      const float b_scale =
++          (Scales != nullptr && col < gemm_n)
++              ? Scales[expert * static_cast<int64_t>(gemm_n) + col]
++              : 1.0f;
++      const float b_float =
++          (Bias != nullptr && col < gemm_n)
++              ? Bias[expert * static_cast<int64_t>(gemm_n) + col]
++              : 0.0f;
++      CUTLASS_PRAGMA_UNROLL
++      for (int sm = 0; sm < SG_M; ++sm) {
++        const int idx = sn * SG_M + sm;
++        const int row = m_sg_start + sm;
++        if (row == 0 && col < gemm_n) {
++          const float a_scale =
++              ActivationScales != nullptr ? ActivationScales[permuted_row]
++                                          : 1.0f;
++          const float value =
++              static_cast<float>(tCrC(idx)) * a_scale * b_scale + b_float;
++          const ElementD rounded = static_cast<ElementD>(value);
++          tCrAccum(idx) += static_cast<float>(rounded) * route_weight;
++        }
++      }
++    }
++  }
++
++  reorder(tCrAccum, tCrC_out);
++  copy(copy_c, tCrC_out, tCgC);
++}
++
+ template <
+     bool UseOffsets,
+     bool UseActiveExpertList,
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index b38a34f..54e3867 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -63,12 +63,15 @@
+ namespace MoE {
+ using namespace cute;
+ 
+-static inline int get_w8a8_grouped_gemm_policy_override() {
+-  const char* env_val = std::getenv("VLLM_XPU_W8A8_GROUPED_GEMM_POLICY");
++static inline int parse_w8a8_grouped_gemm_policy_override(
++    const char* env_val) {
+   if (env_val == nullptr) {
+     return 0;
+   }
+   const std::string value(env_val);
++  if (value == "m8" || value == "M8" || value == "8") {
++    return 8;
++  }
+   if (value == "m16" || value == "M16" || value == "16") {
+     return 16;
+   }
+@@ -82,6 +85,30 @@ static inline int get_w8a8_grouped_gemm_policy_override() {
+   return 0;
+ }
+ 
++static inline int get_w8a8_grouped_gemm_policy_override(
++    const int gemm_n,
++    const int gemm_k) {
++  const char* shape_env = nullptr;
++  if (gemm_n < gemm_k) {
++    shape_env = std::getenv("VLLM_XPU_W8A8_GROUPED_GEMM_N_LT_K_POLICY");
++  } else if (gemm_n > gemm_k) {
++    shape_env = std::getenv("VLLM_XPU_W8A8_GROUPED_GEMM_N_GT_K_POLICY");
++  }
++  int shape_override = parse_w8a8_grouped_gemm_policy_override(shape_env);
++  if (gemm_n > gemm_k && shape_override == 8) {
++    return 0;
++  }
++  if (shape_override != 0) {
++    return shape_override;
++  }
++  int override = parse_w8a8_grouped_gemm_policy_override(
++      std::getenv("VLLM_XPU_W8A8_GROUPED_GEMM_POLICY"));
++  if (gemm_n > gemm_k && override == 8) {
++    return 0;
++  }
++  return override;
++}
++
+ // type tag to define a unique sycl kernel name
+ template <typename, typename, typename, typename, char, char, class>
+ class GemmCuteName;
+@@ -92,6 +119,9 @@ class GemmCuteNameOffsets;
+ template <typename, typename, typename, typename, char, char, class>
+ class GemmCuteNameActiveOffsets;
+ 
++template <typename, class>
++class GemmCuteNameTopK8Gather;
++
+ template <
+     char layoutA,
+     char layoutB,
+@@ -753,8 +783,12 @@ at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_impl(
+     W8A8MoEGEMMLauncherCallER(policy, out_t);  \
+   }
+ 
+-  const int policy_override = get_w8a8_grouped_gemm_policy_override();
+-  if (policy_override == 16) {
++  const int policy_override =
++      get_w8a8_grouped_gemm_policy_override(N, K);
++  if (policy_override == 8) {
++    using policy = w8a16_policy_m_8;
++    W8A8LauncherCallER(policy);
++  } else if (policy_override == 16) {
+     using policy = w8a16_policy_m_16;
+     W8A8LauncherCallER(policy);
+   } else if (policy_override == 32) {
+@@ -791,7 +825,8 @@ at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_impl(
+     at::Tensor& expert_first_token_offset,
+     int64_t N,
+     int64_t K,
+-    int64_t num_experts) {
++    int64_t num_experts,
++    int* external_atomic_buffer = nullptr) {
+   auto& dpcpp_queue =
+       at::xpu::getCurrentXPUStream(ptr_A.device().index()).queue();
+   auto A_dtype = ptr_A.dtype();
+@@ -874,8 +909,13 @@ at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_impl(
+     TORCH_CHECK(ptr_bias->size(1) == N, "ptr_bias.size(1) must match N");
+   }
+ 
+-  at::Tensor atomic_buffer =
+-      at::empty({static_cast<long>(1)}, ptr_A.options().dtype(at::kInt));
++  at::Tensor owned_atomic_buffer;
++  int* atomic_buffer_ptr = external_atomic_buffer;
++  if (atomic_buffer_ptr == nullptr) {
++    owned_atomic_buffer =
++        at::empty({static_cast<long>(1)}, ptr_A.options().dtype(at::kInt));
++    atomic_buffer_ptr = static_cast<int*>(owned_atomic_buffer.data_ptr());
++  }
+ 
+ #define W8A8MoEGEMMLauncherOffsetsCallER(Policy, ElementD)                  \
+   MoEGEMMLauncherOffsets<'R', 'R', Policy>(                                  \
+@@ -892,7 +932,7 @@ at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_impl(
+       reinterpret_cast<int64_t*>(expert_first_token_offset.data_ptr()),      \
+       num_experts,                                                           \
+       group_size,                                                            \
+-      static_cast<int*>(atomic_buffer.data_ptr()));
++      atomic_buffer_ptr);
+ 
+ #define W8A8OffsetsLauncherCallER(policy)       \
+   if (D_dtype == at::kBFloat16) {               \
+@@ -903,8 +943,12 @@ at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_offsets_impl(
+     W8A8MoEGEMMLauncherOffsetsCallER(policy, out_t); \
+   }
+ 
+-  const int policy_override = get_w8a8_grouped_gemm_policy_override();
+-  if (policy_override == 16) {
++  const int policy_override =
++      get_w8a8_grouped_gemm_policy_override(N, K);
++  if (policy_override == 8) {
++    using policy = w8a16_policy_m_8;
++    W8A8OffsetsLauncherCallER(policy);
++  } else if (policy_override == 16) {
+     using policy = w8a16_policy_m_16;
+     W8A8OffsetsLauncherCallER(policy);
+   } else if (policy_override == 32) {
+@@ -1066,8 +1110,12 @@ at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets_impl(
+     W8A8MoEGEMMLauncherActiveOffsetsCallER(policy, out_t); \
+   }
+ 
+-  const int policy_override = get_w8a8_grouped_gemm_policy_override();
+-  if (policy_override == 16) {
++  const int policy_override =
++      get_w8a8_grouped_gemm_policy_override(N, K);
++  if (policy_override == 8) {
++    using policy = w8a16_policy_m_8;
++    W8A8ActiveOffsetsLauncherCallER(policy);
++  } else if (policy_override == 16) {
+     using policy = w8a16_policy_m_16;
+     W8A8ActiveOffsetsLauncherCallER(policy);
+   } else if (policy_override == 32) {
+@@ -1093,4 +1141,212 @@ at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_active_offsets_impl(
+ 
+   return ptr_D;
+ }
++
++template <class policy, typename ElementD>
++void MoEGEMMTopK8GatherLauncher(
++    sycl::queue& stream,
++    const int8_t* activations,
++    const int8_t* weights,
++    const float* scales,
++    const float* activation_scales,
++    const float* bias,
++    ElementD* outputs,
++    const int64_t* topk_ids,
++    const float* topk_weights,
++    const int* unpermuted_row_to_permuted_row,
++    const int gemm_n,
++    const int gemm_k) {
++  auto op = XE_DPAS_TT<8, int32_t, int8_t>{};
++
++  using WGTile = typename policy::WGTile;
++  using SGLayout = typename policy::SGLayout;
++  using MMA = typename TiledMMAHelper<
++      MMA_Atom<decltype(op)>,
++      Layout<WGTile>,
++      SGLayout>::TiledMMA;
++  auto mma = MMA{};
++
++  auto MaxThreadsPerWorkgroup = size(mma);
++
++  static constexpr int MaxThreadsPerSM = 512;
++
++  TORCH_CHECK(
++      MaxThreadsPerSM % MaxThreadsPerWorkgroup == 0,
++      "MaxThreadsPerSM must be divisible by MaxThreadsPerWorkgroup")
++
++  const int wg_tile_n = get<1>(mma.tile_mnk());
++  const int n_tiles = (gemm_n + wg_tile_n - 1) / wg_tile_n;
++  sycl::range<3> local(1, 1, MaxThreadsPerWorkgroup);
++  sycl::range<3> global(1, n_tiles, 1);
++
++  namespace syclex = sycl::ext::oneapi::experimental;
++  namespace intelex = sycl::ext::intel::experimental;
++
++  syclex::properties kernel_props{
++      syclex::sub_group_size<16>, intelex::grf_size<256>};
++
++  using GmemTiledCopyA = typename policy::GmemTiledCopyA;
++  using GmemTiledCopyB = typename policy::GmemTiledCopyB;
++  using GmemTiledCopyD = typename policy::GmemTiledCopyD;
++
++  stream.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for<GemmCuteNameTopK8Gather<ElementD, policy>>(
++        sycl::nd_range<3>{global * local, local}, kernel_props, [=](auto) {
++          xe_gemm_w8a8_topk8_gather<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD>(
++              activations,
++              weights,
++              scales,
++              activation_scales,
++              bias,
++              outputs,
++              topk_ids,
++              topk_weights,
++              unpermuted_row_to_permuted_row,
++              gemm_n,
++              gemm_k,
++              mma);
++        });
++  });
++}
++
++at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_topk8_gather_impl(
++    at::Tensor& ptr_A,
++    at::Tensor& ptr_A_scales,
++    at::Tensor& ptr_B,
++    at::Tensor& ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    at::Tensor& ptr_D,
++    at::Tensor& topk_ids,
++    at::Tensor& topk_weights,
++    at::Tensor& unpermuted_row_to_permuted_row,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts) {
++  auto& dpcpp_queue =
++      at::xpu::getCurrentXPUStream(ptr_A.device().index()).queue();
++  auto A_dtype = ptr_A.dtype();
++  auto B_dtype = ptr_B.dtype();
++  auto D_dtype = ptr_D.dtype();
++
++  TORCH_CHECK(N % 32 == 0, "N must be divisible by 32");
++  TORCH_CHECK(A_dtype == at::kChar, "ptr_A must be int8");
++  TORCH_CHECK(B_dtype == at::kChar, "ptr_B must be int8");
++  TORCH_CHECK(
++      D_dtype == at::kBFloat16 || D_dtype == at::kHalf,
++      "ptr_D must be bfloat16 or float16");
++  TORCH_CHECK(ptr_A_scales.dtype() == at::kFloat, "ptr_A_scales must be float");
++  TORCH_CHECK(ptr_B_scales.dtype() == at::kFloat, "ptr_B_scales must be float");
++  TORCH_CHECK(topk_ids.dtype() == at::kLong, "topk_ids must be int64");
++  TORCH_CHECK(topk_weights.dtype() == at::kFloat, "topk_weights must be float");
++  TORCH_CHECK(
++      unpermuted_row_to_permuted_row.dtype() == at::kInt,
++      "unpermuted_row_to_permuted_row must be int32");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(ptr_bias->dtype() == at::kFloat, "ptr_bias must be float");
++  }
++
++  TORCH_CHECK(ptr_A.dim() == 2, "ptr_A must be 2D [Total_M, K]");
++  TORCH_CHECK(ptr_A.size(0) >= 8, "ptr_A must contain at least topk rows");
++  TORCH_CHECK(ptr_A.size(1) == K, "ptr_A.size(1) must match K");
++  TORCH_CHECK(ptr_B.dim() == 3, "ptr_B must be 3D [num_experts, K, N]");
++  TORCH_CHECK(ptr_D.dim() == 2, "ptr_D must be 2D [1, N]");
++  TORCH_CHECK(ptr_D.size(0) == 1, "ptr_D first dim must be one token");
++  TORCH_CHECK(ptr_D.size(1) == N, "ptr_D.size(1) must match N");
++  TORCH_CHECK(
++      ptr_A_scales.dim() == 1 ||
++          (ptr_A_scales.dim() == 2 && ptr_A_scales.size(1) == 1),
++      "ptr_A_scales must be 1D [Total_M] or 2D [Total_M, 1]");
++  TORCH_CHECK(
++      ptr_A_scales.size(0) >= 8,
++      "ptr_A_scales must contain at least topk rows");
++  TORCH_CHECK(
++      ptr_B_scales.dim() == 2,
++      "ptr_B_scales must be 2D [num_experts, N]");
++  TORCH_CHECK(topk_ids.dim() == 2, "topk_ids must be 2D [1, 8]");
++  TORCH_CHECK(topk_ids.size(0) == 1, "topk_ids first dim must be one token");
++  TORCH_CHECK(topk_ids.size(1) == 8, "topk_ids second dim must be topk=8");
++  TORCH_CHECK(
++      topk_weights.sizes() == topk_ids.sizes(),
++      "topk_weights shape must match topk_ids");
++  TORCH_CHECK(
++      unpermuted_row_to_permuted_row.numel() >= 8,
++      "unpermuted_row_to_permuted_row must cover topk=8");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(ptr_bias->dim() == 2, "ptr_bias must be 2D [num_experts, N]");
++  }
++
++  TORCH_CHECK(ptr_A.is_contiguous(), "ptr_A must be contiguous");
++  TORCH_CHECK(ptr_A_scales.is_contiguous(), "ptr_A_scales must be contiguous");
++  TORCH_CHECK(ptr_B.is_contiguous(), "ptr_B must be contiguous");
++  TORCH_CHECK(ptr_B_scales.is_contiguous(), "ptr_B_scales must be contiguous");
++  TORCH_CHECK(ptr_D.is_contiguous(), "ptr_D must be contiguous");
++  TORCH_CHECK(topk_ids.is_contiguous(), "topk_ids must be contiguous");
++  TORCH_CHECK(topk_weights.is_contiguous(), "topk_weights must be contiguous");
++  TORCH_CHECK(
++      unpermuted_row_to_permuted_row.is_contiguous(),
++      "unpermuted_row_to_permuted_row must be contiguous");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(ptr_bias->is_contiguous(), "ptr_bias must be contiguous");
++  }
++
++  TORCH_CHECK(ptr_B.size(0) == num_experts, "ptr_B.size(0) mismatch");
++  TORCH_CHECK(ptr_B.size(1) == K, "ptr_B.size(1) mismatch");
++  TORCH_CHECK(ptr_B.size(2) == N, "ptr_B.size(2) mismatch");
++  TORCH_CHECK(
++      ptr_B_scales.size(0) == num_experts,
++      "ptr_B_scales.size(0) must match num_experts");
++  TORCH_CHECK(ptr_B_scales.size(1) == N, "ptr_B_scales.size(1) mismatch");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(
++        ptr_bias->size(0) == num_experts,
++        "ptr_bias.size(0) must match num_experts");
++    TORCH_CHECK(ptr_bias->size(1) == N, "ptr_bias.size(1) mismatch");
++  }
++
++#define W8A8TopK8GatherLauncherCallER(Policy, ElementDType)                 \
++  MoEGEMMTopK8GatherLauncher<Policy, ElementDType>(                         \
++      dpcpp_queue,                                                          \
++      reinterpret_cast<int8_t*>(ptr_A.data_ptr()),                          \
++      reinterpret_cast<int8_t*>(ptr_B.data_ptr()),                          \
++      reinterpret_cast<float*>(ptr_B_scales.data_ptr()),                    \
++      reinterpret_cast<float*>(ptr_A_scales.data_ptr()),                    \
++      ptr_bias.has_value() ? reinterpret_cast<float*>(ptr_bias->data_ptr()) \
++                           : static_cast<float*>(nullptr),                  \
++      reinterpret_cast<ElementDType*>(ptr_D.data_ptr()),                    \
++      reinterpret_cast<int64_t*>(topk_ids.data_ptr()),                      \
++      reinterpret_cast<float*>(topk_weights.data_ptr()),                    \
++      reinterpret_cast<int*>(unpermuted_row_to_permuted_row.data_ptr()),    \
++      N,                                                                    \
++      K);
++
++#define W8A8TopK8GatherDispatch(policy)            \
++  if (D_dtype == at::kBFloat16) {                  \
++    using out_t = bfloat16_t;                      \
++    W8A8TopK8GatherLauncherCallER(policy, out_t);  \
++  } else if (D_dtype == at::kHalf) {               \
++    using out_t = half_t;                          \
++    W8A8TopK8GatherLauncherCallER(policy, out_t);  \
++  }
++
++  const char* ntile_env =
++      std::getenv("VLLM_XPU_MOE_W8A8_DPAS_GEMM2_GATHER_NTILE");
++  if (ntile_env != nullptr && std::string(ntile_env) == "16") {
++    using policy = w8a8_topk8_policy_n_16;
++    W8A8TopK8GatherDispatch(policy);
++  } else if (ntile_env != nullptr && std::string(ntile_env) == "32") {
++    using policy = w8a8_topk8_policy_n_32;
++    W8A8TopK8GatherDispatch(policy);
++  } else {
++    using policy = w8a16_policy_m_8;
++    W8A8TopK8GatherDispatch(policy);
++  }
++
++#undef W8A8TopK8GatherDispatch
++#undef W8A8TopK8GatherLauncherCallER
++
++  return ptr_D;
++}
+ }  // namespace MoE
+diff --git a/csrc/xpu/moe_layerlet.cpp b/csrc/xpu/moe_layerlet.cpp
+index 40289f7..3f43fbc 100644
+--- a/csrc/xpu/moe_layerlet.cpp
++++ b/csrc/xpu/moe_layerlet.cpp
+@@ -1,6 +1,10 @@
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+ 
++#include <cstdlib>
++#include <cstdint>
++
++#include "csrc/moe/moe_ops.h"
+ #include "grouped_gemm/grouped_gemm_interface.h"
+ #include "ops.h"
+ #include "utils.h"
+@@ -9,6 +13,20 @@ namespace {
+ 
+ class Qwen36RowsPerExpertOffsetsInt64Kernel;
+ 
++template <typename scalar_t>
++class Qwen36SingleTokenPrologueQuant1Kernel;
++
++template <typename scalar_t>
++class Qwen36SingleTokenGatherTopK8Kernel;
++
++template <typename scalar_t>
++class Qwen36SingleTokenGemm2GatherTopK8Kernel;
++
++template <typename scalar_t>
++float qwen36_to_float(scalar_t value) {
++  return static_cast<float>(value);
++}
++
+ void require_xpu_contiguous(const torch::Tensor& tensor, const char* name) {
+   TORCH_CHECK(tensor.defined(), name, " must be defined");
+   TORCH_CHECK(tensor.is_xpu(), name, " must be an XPU tensor");
+@@ -49,6 +67,538 @@ void require_optional_same_device(
+   require_same_device(reference, tensor.value(), name);
+ }
+ 
++template <typename scalar_t>
++void qwen36_single_token_prologue_quant1_out_impl(
++    const scalar_t* hidden_states,
++    const int64_t* topk_ids,
++    int64_t* expert_first_token_offset,
++    int* unpermuted_row_to_permuted_row,
++    int8_t* gemm1_a,
++    float* gemm1_a_scales,
++    int64_t hidden_size,
++    int64_t topk,
++    int64_t num_experts) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_max(local, cgh);
++    sycl::local_accessor<int, 1> local_permuted(sycl::range<1>(topk), cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int local_id = item.get_local_id(0);
++              const int local_range = item.get_local_range(0);
++
++              for (int64_t expert = local_id; expert <= num_experts;
++                   expert += local_range) {
++                int count = 0;
++                for (int k = 0; k < topk; ++k) {
++                  if (topk_ids[k] < expert) {
++                    count += 1;
++                  }
++                }
++                expert_first_token_offset[expert] = count;
++              }
++
++              for (int row_id = local_id; row_id < topk;
++                   row_id += local_range) {
++                const int64_t selected_expert = topk_ids[row_id];
++                int less = 0;
++                int prior_equal = 0;
++                for (int k = 0; k < topk; ++k) {
++                  const int64_t other = topk_ids[k];
++                  if (other < selected_expert) {
++                    less += 1;
++                  }
++                  if (k < row_id && other == selected_expert) {
++                    prior_equal += 1;
++                  }
++                }
++                const int permuted_row = less + prior_equal;
++                local_permuted[row_id] = permuted_row;
++                unpermuted_row_to_permuted_row[row_id] = permuted_row;
++              }
++
++              float thread_max = 0.0f;
++              for (int64_t col = local_id; col < hidden_size;
++                   col += local_range) {
++                const float value = qwen36_to_float(hidden_states[col]);
++                thread_max = sycl::fmax(thread_max, sycl::fabs(value));
++              }
++
++              local_max[local_id] = thread_max;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++                if (local_id < stride) {
++                  local_max[local_id] =
++                      sycl::fmax(local_max[local_id],
++                                 local_max[local_id + stride]);
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              const float absmax = sycl::fmax(local_max[0], 1.0e-10f);
++              const float scale = absmax / 127.0f;
++              const float inv_scale = 127.0f / absmax;
++
++              for (int row_id = local_id; row_id < topk;
++                   row_id += local_range) {
++                gemm1_a_scales[local_permuted[row_id]] = scale;
++              }
++
++              for (int64_t col = local_id; col < hidden_size;
++                   col += local_range) {
++                float value = qwen36_to_float(hidden_states[col]) * inv_scale;
++                value = sycl::round(value);
++                value = sycl::fmin(127.0f, sycl::fmax(-127.0f, value));
++                const int8_t qvalue = static_cast<int8_t>(value);
++                for (int row_id = 0; row_id < topk; ++row_id) {
++                  gemm1_a[local_permuted[row_id] * hidden_size + col] =
++                      qvalue;
++                }
++              }
++            });
++  });
++}
++
++bool qwen36_can_use_single_token_prologue_quant1(
++    const torch::Tensor& hidden_states,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& expert_first_token_offset,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    const torch::Tensor& gemm1_a,
++    const torch::Tensor& gemm1_a_scales,
++    int64_t hidden_size,
++    int64_t num_experts) {
++  return hidden_states.size(0) == 1 && hidden_states.size(1) == hidden_size &&
++         topk_ids.size(0) == 1 && topk_ids.size(1) == 8 &&
++         topk_weights.size(0) == 1 && topk_weights.size(1) == 8 &&
++         expert_first_token_offset.dim() == 1 &&
++         expert_first_token_offset.numel() >= num_experts + 1 &&
++         unpermuted_row_to_permuted_row.dim() == 1 &&
++         unpermuted_row_to_permuted_row.numel() >= 8 &&
++         gemm1_a.dim() == 2 && gemm1_a.size(0) >= 8 &&
++         gemm1_a.size(1) == hidden_size &&
++         gemm1_a_scales.numel() >= 8;
++}
++
++bool qwen36_fused_q1_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_FUSED_Q1");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_fast_gather_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_FAST_GATHER");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_direct_gemm2_gather_enabled() {
++  const char* value =
++      std::getenv("VLLM_XPU_MOE_W8A8_DIRECT_GEMM2_GATHER");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_dpas_gemm2_gather_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_DPAS_GEMM2_GATHER");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++bool qwen36_workspace_atomic_enabled() {
++  const char* value = std::getenv("VLLM_XPU_MOE_W8A8_WORKSPACE_ATOMIC");
++  return value && value[0] != '\0' && value[0] != '0' && value[0] != 'f' &&
++         value[0] != 'F';
++}
++
++int* qwen36_workspace_atomic_ptr(torch::Tensor& workspace) {
++  TORCH_CHECK(
++      workspace.scalar_type() == torch::kUInt8,
++      "qwen36 workspace atomic reuse expects a uint8 workspace");
++  TORCH_CHECK(
++      workspace.numel() >= static_cast<int64_t>(sizeof(int)),
++      "qwen36 workspace is too small for atomic reuse");
++  auto* ptr = workspace.data_ptr<uint8_t>();
++  TORCH_CHECK(
++      reinterpret_cast<std::uintptr_t>(ptr) % alignof(int) == 0,
++      "qwen36 workspace pointer is not int aligned");
++  return reinterpret_cast<int*>(ptr);
++}
++
++torch::Tensor qwen36_grouped_gemm_offsets_maybe_atomic(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor expert_first_token_offset,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts,
++    int* atomic_buffer) {
++  if (atomic_buffer != nullptr) {
++    return cutlass_grouped_gemm_w8a8_int8_offsets_atomic_interface(
++        ptr_A,
++        ptr_A_scales,
++        ptr_B,
++        ptr_B_scales,
++        ptr_bias,
++        ptr_D,
++        expert_first_token_offset,
++        N,
++        K,
++        num_experts,
++        atomic_buffer);
++  }
++  return cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++      ptr_A,
++      ptr_A_scales,
++      ptr_B,
++      ptr_B_scales,
++      ptr_bias,
++      ptr_D,
++      expert_first_token_offset,
++      N,
++      K,
++      num_experts);
++}
++
++void qwen36_single_token_prologue_quant1_out(
++    const torch::Tensor& hidden_states,
++    const torch::Tensor& topk_ids,
++    torch::Tensor& expert_first_token_offset,
++    torch::Tensor& unpermuted_row_to_permuted_row,
++    torch::Tensor& gemm1_a,
++    torch::Tensor& gemm1_a_scales,
++    int64_t hidden_size,
++    int64_t num_experts) {
++  TORCH_CHECK(
++      hidden_states.scalar_type() == torch::kBFloat16 ||
++          hidden_states.scalar_type() == torch::kFloat16 ||
++          hidden_states.scalar_type() == torch::kFloat32,
++      "qwen36 fused prologue+quant1 only supports bf16, fp16, and fp32 hidden_states");
++  require_dtype(gemm1_a, "gemm1_a", torch::kInt8);
++  require_dtype(gemm1_a_scales, "gemm1_a_scales", torch::kFloat32);
++
++  if (hidden_states.scalar_type() == torch::kBFloat16) {
++    qwen36_single_token_prologue_quant1_out_impl(
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            hidden_states.data_ptr()),
++        topk_ids.data_ptr<int64_t>(),
++        expert_first_token_offset.data_ptr<int64_t>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        gemm1_a.data_ptr<int8_t>(),
++        gemm1_a_scales.data_ptr<float>(),
++        hidden_size,
++        8,
++        num_experts);
++  } else if (hidden_states.scalar_type() == torch::kFloat16) {
++    qwen36_single_token_prologue_quant1_out_impl(
++        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()),
++        topk_ids.data_ptr<int64_t>(),
++        expert_first_token_offset.data_ptr<int64_t>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        gemm1_a.data_ptr<int8_t>(),
++        gemm1_a_scales.data_ptr<float>(),
++        hidden_size,
++        8,
++        num_experts);
++  } else {
++    qwen36_single_token_prologue_quant1_out_impl(
++        hidden_states.data_ptr<float>(),
++        topk_ids.data_ptr<int64_t>(),
++        expert_first_token_offset.data_ptr<int64_t>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        gemm1_a.data_ptr<int8_t>(),
++        gemm1_a_scales.data_ptr<float>(),
++        hidden_size,
++        8,
++        num_experts);
++  }
++}
++
++template <typename scalar_t>
++void qwen36_single_token_gather_topk8_out_impl(
++    scalar_t* output,
++    const scalar_t* moe_output,
++    const float* topk_weights,
++    const int* unpermuted_row_to_permuted_row,
++    int64_t hidden_size) {
++  constexpr int kBlockSize = 256;
++  constexpr int kElemsPerItem = 8;
++  constexpr int kTopK = 8;
++  constexpr int kStride = kBlockSize * kElemsPerItem;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int local_id = item.get_local_id(0);
++              int moe_ids[kTopK];
++              float scores[kTopK];
++#pragma unroll
++              for (int k = 0; k < kTopK; ++k) {
++                moe_ids[k] = unpermuted_row_to_permuted_row[k];
++                scores[k] = topk_weights[k];
++              }
++
++              for (int64_t hidden_idx = local_id * kElemsPerItem;
++                   hidden_idx < hidden_size;
++                   hidden_idx += kStride) {
++                float accum[kElemsPerItem];
++#pragma unroll
++                for (int e = 0; e < kElemsPerItem; ++e) {
++                  accum[e] = 0.0f;
++                }
++#pragma unroll
++                for (int k = 0; k < kTopK; ++k) {
++                  const int row = moe_ids[k];
++#pragma unroll
++                  for (int e = 0; e < kElemsPerItem; ++e) {
++                    accum[e] += qwen36_to_float(
++                                    moe_output[row * hidden_size + hidden_idx +
++                                               e]) *
++                                scores[k];
++                  }
++                }
++#pragma unroll
++                for (int e = 0; e < kElemsPerItem; ++e) {
++                  output[hidden_idx + e] = accum[e];
++                }
++              }
++            });
++  });
++}
++
++bool qwen36_can_use_single_token_fast_gather(
++    const torch::Tensor& output,
++    const torch::Tensor& gemm2_output,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size) {
++  return output.dim() == 2 && output.size(0) == 1 &&
++         output.size(1) == hidden_size && hidden_size % 8 == 0 &&
++         gemm2_output.dim() == 2 && gemm2_output.size(0) >= 8 &&
++         gemm2_output.size(1) == hidden_size && topk_weights.dim() == 2 &&
++         topk_weights.size(0) == 1 && topk_weights.size(1) == 8 &&
++         unpermuted_row_to_permuted_row.dim() == 1 &&
++         unpermuted_row_to_permuted_row.numel() >= 8;
++}
++
++void qwen36_single_token_gather_topk8_out(
++    torch::Tensor& output,
++    const torch::Tensor& gemm2_output,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size) {
++  if (output.scalar_type() == torch::kBFloat16) {
++    qwen36_single_token_gather_topk8_out_impl(
++        reinterpret_cast<sycl::ext::oneapi::bfloat16*>(output.data_ptr()),
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            gemm2_output.data_ptr()),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size);
++  } else if (output.scalar_type() == torch::kFloat16) {
++    qwen36_single_token_gather_topk8_out_impl(
++        reinterpret_cast<sycl::half*>(output.data_ptr()),
++        reinterpret_cast<const sycl::half*>(gemm2_output.data_ptr()),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size);
++  } else {
++    qwen36_single_token_gather_topk8_out_impl(
++        output.data_ptr<float>(),
++        gemm2_output.data_ptr<float>(),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size);
++  }
++}
++
++template <typename scalar_t>
++void qwen36_single_token_gemm2_gather_topk8_out_impl(
++    scalar_t* output,
++    const int8_t* gemm2_a,
++    const float* gemm2_a_scales,
++    const int8_t* w2,
++    const float* w2_scales,
++    const float* w2_bias,
++    const int64_t* topk_ids,
++    const float* topk_weights,
++    const int* unpermuted_row_to_permuted_row,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t topk) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(hidden_size * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<int32_t, 1> partial(local, cgh);
++    cgh.parallel_for<
++        Qwen36SingleTokenGemm2GatherTopK8Kernel<scalar_t>>(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int64_t col = item.get_group(0);
++              const int local_id = item.get_local_id(0);
++              const int local_range = item.get_local_range(0);
++              float accum = 0.0f;
++
++              for (int k = 0; k < topk; ++k) {
++                const int row = unpermuted_row_to_permuted_row[k];
++                const int64_t expert = topk_ids[k];
++                int32_t thread_sum = 0;
++                for (int64_t kk = local_id; kk < inter_size;
++                     kk += local_range) {
++                  const int32_t a =
++                      static_cast<int32_t>(gemm2_a[row * inter_size + kk]);
++                  const int32_t b = static_cast<int32_t>(
++                      w2[(expert * inter_size + kk) * hidden_size + col]);
++                  thread_sum += a * b;
++                }
++
++                partial[local_id] = thread_sum;
++                item.barrier(sycl::access::fence_space::local_space);
++
++                for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++                  if (local_id < stride) {
++                    partial[local_id] += partial[local_id + stride];
++                  }
++                  item.barrier(sycl::access::fence_space::local_space);
++                }
++
++                if (local_id == 0) {
++                  float value = static_cast<float>(partial[0]) *
++                      gemm2_a_scales[row] *
++                      w2_scales[expert * hidden_size + col];
++                  if (w2_bias != nullptr) {
++                    value += w2_bias[expert * hidden_size + col];
++                  }
++
++                  // Match the accepted exact path: GEMM2 first materializes a
++                  // BF16/FP16 row; gather then converts that row back to float.
++                  const scalar_t intermediate = static_cast<scalar_t>(value);
++                  accum += qwen36_to_float(intermediate) * topk_weights[k];
++                }
++
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              if (local_id == 0) {
++                output[col] = static_cast<scalar_t>(accum);
++              }
++            });
++  });
++}
++
++bool qwen36_can_use_single_token_direct_gemm2_gather(
++    const torch::Tensor& output,
++    const torch::Tensor& gemm2_a,
++    const torch::Tensor& gemm2_a_scales,
++    const torch::Tensor& w2,
++    const torch::Tensor& w2_scales,
++    const c10::optional<at::Tensor>& w2_bias,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t num_experts) {
++  const bool bias_ok = !w2_bias.has_value() ||
++      (w2_bias.value().defined() && w2_bias.value().dim() == 2 &&
++       w2_bias.value().size(0) == num_experts &&
++       w2_bias.value().size(1) == hidden_size &&
++       w2_bias.value().scalar_type() == torch::kFloat32);
++  return output.dim() == 2 && output.size(0) == 1 &&
++         output.size(1) == hidden_size &&
++         (output.scalar_type() == torch::kBFloat16 ||
++          output.scalar_type() == torch::kFloat16) &&
++         gemm2_a.dim() == 2 && gemm2_a.size(0) >= 8 &&
++         gemm2_a.size(1) == inter_size &&
++         gemm2_a.scalar_type() == torch::kInt8 &&
++         gemm2_a_scales.numel() >= 8 &&
++         gemm2_a_scales.scalar_type() == torch::kFloat32 &&
++         w2.dim() == 3 && w2.size(0) == num_experts &&
++         w2.size(1) == inter_size && w2.size(2) == hidden_size &&
++         w2.scalar_type() == torch::kInt8 &&
++         w2_scales.dim() == 2 && w2_scales.size(0) == num_experts &&
++         w2_scales.size(1) == hidden_size &&
++         w2_scales.scalar_type() == torch::kFloat32 && bias_ok &&
++         topk_ids.dim() == 2 && topk_ids.size(0) == 1 &&
++         topk_ids.size(1) == 8 &&
++         topk_ids.scalar_type() == torch::kInt64 &&
++         topk_weights.dim() == 2 && topk_weights.size(0) == 1 &&
++         topk_weights.size(1) == 8 &&
++         topk_weights.scalar_type() == torch::kFloat32 &&
++         unpermuted_row_to_permuted_row.dim() == 1 &&
++         unpermuted_row_to_permuted_row.numel() >= 8 &&
++         unpermuted_row_to_permuted_row.scalar_type() == torch::kInt32;
++}
++
++void qwen36_single_token_gemm2_gather_topk8_out(
++    torch::Tensor& output,
++    const torch::Tensor& gemm2_a,
++    const torch::Tensor& gemm2_a_scales,
++    const torch::Tensor& w2,
++    const torch::Tensor& w2_scales,
++    const c10::optional<at::Tensor>& w2_bias,
++    const torch::Tensor& topk_ids,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t topk) {
++  const float* bias_ptr = w2_bias.has_value()
++      ? w2_bias.value().data_ptr<float>()
++      : static_cast<float*>(nullptr);
++
++  if (output.scalar_type() == torch::kBFloat16) {
++    qwen36_single_token_gemm2_gather_topk8_out_impl(
++        reinterpret_cast<sycl::ext::oneapi::bfloat16*>(output.data_ptr()),
++        gemm2_a.data_ptr<int8_t>(),
++        gemm2_a_scales.data_ptr<float>(),
++        w2.data_ptr<int8_t>(),
++        w2_scales.data_ptr<float>(),
++        bias_ptr,
++        topk_ids.data_ptr<int64_t>(),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size,
++        inter_size,
++        topk);
++  } else {
++    qwen36_single_token_gemm2_gather_topk8_out_impl(
++        reinterpret_cast<sycl::half*>(output.data_ptr()),
++        gemm2_a.data_ptr<int8_t>(),
++        gemm2_a_scales.data_ptr<float>(),
++        w2.data_ptr<int8_t>(),
++        w2_scales.data_ptr<float>(),
++        bias_ptr,
++        topk_ids.data_ptr<int64_t>(),
++        topk_weights.data_ptr<float>(),
++        unpermuted_row_to_permuted_row.data_ptr<int>(),
++        hidden_size,
++        inter_size,
++        topk);
++  }
++}
++
+ }  // namespace
+ 
+ torch::Tensor qwen36_rows_per_expert_offsets_int64_out(
+@@ -194,3 +744,259 @@ torch::Tensor qwen36_moe_w8a8_middle_layerlet(
+ 
+   return gemm2_output;
+ }
++
++torch::Tensor qwen36_moe_w8a8_full_layerlet(
++    torch::Tensor hidden_states,
++    torch::Tensor topk_ids,
++    torch::Tensor topk_weights,
++    torch::Tensor workspace,
++    torch::Tensor remapped_hidden_states,
++    torch::Tensor unpermuted_row_to_permuted_row,
++    torch::Tensor expert_first_token_offset,
++    torch::Tensor gemm1_a,
++    torch::Tensor gemm1_a_scales,
++    torch::Tensor w13,
++    torch::Tensor w13_scales,
++    const c10::optional<at::Tensor>& w13_bias,
++    torch::Tensor gemm1_output,
++    torch::Tensor gemm2_a,
++    torch::Tensor gemm2_a_scales,
++    torch::Tensor w2,
++    torch::Tensor w2_scales,
++    const c10::optional<at::Tensor>& w2_bias,
++    torch::Tensor gemm2_output,
++    torch::Tensor output,
++    int64_t hidden_size,
++    int64_t inter_size,
++    int64_t num_experts) {
++  require_xpu_contiguous(hidden_states, "hidden_states");
++  require_xpu_contiguous(topk_ids, "topk_ids");
++  require_xpu_contiguous(topk_weights, "topk_weights");
++  require_xpu_contiguous(workspace, "workspace");
++  require_xpu_contiguous(remapped_hidden_states, "remapped_hidden_states");
++  require_xpu_contiguous(
++      unpermuted_row_to_permuted_row, "unpermuted_row_to_permuted_row");
++  require_xpu_contiguous(expert_first_token_offset,
++                         "expert_first_token_offset");
++  require_xpu_contiguous(output, "output");
++
++  require_same_device(hidden_states, topk_ids, "topk_ids");
++  require_same_device(hidden_states, topk_weights, "topk_weights");
++  require_same_device(hidden_states, workspace, "workspace");
++  require_same_device(hidden_states, remapped_hidden_states,
++                      "remapped_hidden_states");
++  require_same_device(hidden_states, unpermuted_row_to_permuted_row,
++                      "unpermuted_row_to_permuted_row");
++  require_same_device(hidden_states, expert_first_token_offset,
++                      "expert_first_token_offset");
++  require_same_device(hidden_states, output, "output");
++
++  require_dtype(topk_ids, "topk_ids", torch::kInt64);
++  require_dtype(topk_weights, "topk_weights", torch::kFloat32);
++  require_dtype(workspace, "workspace", torch::kUInt8);
++  require_dtype(
++      unpermuted_row_to_permuted_row,
++      "unpermuted_row_to_permuted_row",
++      torch::kInt32);
++  require_dtype(expert_first_token_offset,
++                "expert_first_token_offset",
++                torch::kInt64);
++
++  TORCH_CHECK(hidden_states.dim() == 2, "hidden_states must be 2D");
++  TORCH_CHECK(topk_ids.dim() == 2, "topk_ids must be 2D");
++  TORCH_CHECK(topk_weights.dim() == 2, "topk_weights must be 2D");
++  TORCH_CHECK(output.dim() == 2, "output must be 2D");
++  TORCH_CHECK(
++      hidden_states.size(0) == topk_ids.size(0),
++      "topk_ids row count must match hidden_states");
++  TORCH_CHECK(
++      topk_weights.sizes() == topk_ids.sizes(),
++      "topk_weights shape must match topk_ids");
++  TORCH_CHECK(
++      hidden_states.size(1) == hidden_size,
++      "hidden_states last dim must match hidden_size");
++  TORCH_CHECK(
++      output.size(0) == hidden_states.size(0),
++      "output row count must match hidden_states");
++  TORCH_CHECK(
++      output.size(1) == hidden_size,
++      "output last dim must match hidden_size");
++
++  if (qwen36_fused_q1_enabled() &&
++      qwen36_can_use_single_token_prologue_quant1(
++          hidden_states,
++          topk_ids,
++          topk_weights,
++          expert_first_token_offset,
++          unpermuted_row_to_permuted_row,
++          gemm1_a,
++          gemm1_a_scales,
++          hidden_size,
++          num_experts)) {
++    qwen36_single_token_prologue_quant1_out(
++        hidden_states,
++        topk_ids,
++        expert_first_token_offset,
++        unpermuted_row_to_permuted_row,
++        gemm1_a,
++        gemm1_a_scales,
++        hidden_size,
++        num_experts);
++  } else {
++    c10::optional<torch::Tensor> input_scales = c10::nullopt;
++    fused_moe_prologue(
++        hidden_states,
++        input_scales,
++        topk_ids,
++        topk_weights,
++        workspace,
++        hidden_size,
++        inter_size,
++        1,
++        0,
++        1,
++        num_experts);
++
++    per_token_quant_int8_xpu_out(
++        remapped_hidden_states, gemm1_a, gemm1_a_scales);
++  }
++
++  const bool can_use_gemm2_gather =
++      qwen36_can_use_single_token_direct_gemm2_gather(
++          output,
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          topk_ids,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size,
++          inter_size,
++          num_experts);
++  const bool use_dpas_gemm2_gather =
++      qwen36_dpas_gemm2_gather_enabled() && can_use_gemm2_gather;
++  const bool use_direct_gemm2_gather =
++      qwen36_direct_gemm2_gather_enabled() && can_use_gemm2_gather;
++  int* workspace_atomic_buffer =
++      qwen36_workspace_atomic_enabled() ? qwen36_workspace_atomic_ptr(workspace)
++                                        : nullptr;
++
++  if (use_dpas_gemm2_gather || use_direct_gemm2_gather) {
++    qwen36_grouped_gemm_offsets_maybe_atomic(
++        gemm1_a,
++        gemm1_a_scales,
++        w13,
++        w13_scales,
++        w13_bias,
++        gemm1_output,
++        expert_first_token_offset,
++        2 * inter_size,
++        hidden_size,
++        num_experts,
++        workspace_atomic_buffer);
++
++    silu_and_mul_quant_int8_xpu_out(gemm1_output, gemm2_a, gemm2_a_scales);
++
++    if (use_dpas_gemm2_gather) {
++      cutlass_grouped_gemm_w8a8_int8_topk8_gather_interface(
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          output,
++          topk_ids,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size,
++          inter_size,
++          num_experts);
++    } else {
++      qwen36_single_token_gemm2_gather_topk8_out(
++          output,
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          topk_ids,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size,
++          inter_size,
++          8);
++    }
++  } else {
++    if (workspace_atomic_buffer != nullptr) {
++      qwen36_grouped_gemm_offsets_maybe_atomic(
++          gemm1_a,
++          gemm1_a_scales,
++          w13,
++          w13_scales,
++          w13_bias,
++          gemm1_output,
++          expert_first_token_offset,
++          2 * inter_size,
++          hidden_size,
++          num_experts,
++          workspace_atomic_buffer);
++
++      silu_and_mul_quant_int8_xpu_out(gemm1_output, gemm2_a, gemm2_a_scales);
++
++      qwen36_grouped_gemm_offsets_maybe_atomic(
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          gemm2_output,
++          expert_first_token_offset,
++          hidden_size,
++          inter_size,
++          num_experts,
++          workspace_atomic_buffer);
++    } else {
++      qwen36_moe_w8a8_middle_layerlet(
++          gemm1_a,
++          gemm1_a_scales,
++          w13,
++          w13_scales,
++          w13_bias,
++          gemm1_output,
++          gemm2_a,
++          gemm2_a_scales,
++          w2,
++          w2_scales,
++          w2_bias,
++          gemm2_output,
++          expert_first_token_offset,
++          2 * inter_size,
++          hidden_size,
++          hidden_size,
++          inter_size,
++          num_experts);
++    }
++
++    if (qwen36_fast_gather_enabled() &&
++        qwen36_can_use_single_token_fast_gather(
++            output,
++            gemm2_output,
++            topk_weights,
++            unpermuted_row_to_permuted_row,
++            hidden_size)) {
++      qwen36_single_token_gather_topk8_out(
++          output,
++          gemm2_output,
++          topk_weights,
++          unpermuted_row_to_permuted_row,
++          hidden_size);
++    } else {
++      moe_gather(
++          output, gemm2_output, topk_weights, unpermuted_row_to_permuted_row,
++          num_experts);
++    }
++  }
++  return output;
++}

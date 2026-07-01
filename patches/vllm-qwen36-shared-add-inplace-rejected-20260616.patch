@@ -1,0 +1,378 @@
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index 2eee8acf6..919f8ac34 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
+ from collections.abc import Callable
+ from contextlib import nullcontext
+ from typing import TYPE_CHECKING
+@@ -10,6 +11,7 @@ import torch.nn.functional as F
+ from vllm.distributed import (
+     get_ep_group,
+     get_pcp_group,
++    get_tp_group,
+     tensor_model_parallel_all_reduce,
+ )
+ from vllm.forward_context import (
+@@ -42,6 +44,35 @@ from vllm.utils.torch_utils import (
+     LayerName,
+     direct_register_custom_op,
+ )
++from vllm.utils.xpu_decode_timing import allreduce_label, timed_region
++
++
++def _minimax_moe_delay_allreduce_enabled() -> bool:
++    return os.environ.get("VLLM_MINIMAX_MOE_DELAY_ALLREDUCE", "0") == "1"
++
++
++def _minimax_moe_final_inplace_allreduce_enabled() -> bool:
++    return os.environ.get("VLLM_MINIMAX_MOE_FINAL_INPLACE_ALLREDUCE", "0") == "1"
++
++
++def _minimax_moe_output_allreduce_inside_custom_op_enabled() -> bool:
++    return (
++        os.environ.get(
++            "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP", "0"
++        )
++        == "1"
++    )
++
++
++def _xpu_moe_shared_add_allreduce_custom_op_enabled() -> bool:
++    return (
++        os.environ.get("VLLM_XPU_MOE_SHARED_ADD_ALLREDUCE_CUSTOM_OP", "0")
++        == "1"
++    )
++
++
++def _xpu_moe_shared_add_inplace_enabled() -> bool:
++    return os.environ.get("VLLM_XPU_MOE_SHARED_ADD_INPLACE", "0") == "1"
+ 
+ 
+ def get_layer_from_name(layer_name: str) -> torch.nn.Module:
+@@ -95,13 +126,14 @@ def _moe_forward(
+     layer_name: _layer_name_type,
+ ) -> torch.Tensor:
+     layer = get_layer_from_name(_resolve_layer_name(layer_name))
+-    return layer.runner._forward_impl(
+-        layer,
+-        hidden_states,
+-        router_logits,
+-        shared_experts_input,
+-        input_ids,
+-    )
++    with timed_region("moe_forward.custom_op"):
++        return layer.runner._forward_impl(
++            layer,
++            hidden_states,
++            router_logits,
++            shared_experts_input,
++            input_ids,
++        )
+ 
+ 
+ def _moe_forward_fake(
+@@ -122,13 +154,14 @@ def _moe_forward_shared(
+     layer_name: _layer_name_type,
+ ) -> tuple[torch.Tensor, torch.Tensor]:
+     layer = get_layer_from_name(_resolve_layer_name(layer_name))
+-    return layer.runner._forward_impl(
+-        layer,
+-        hidden_states,
+-        router_logits,
+-        shared_experts_input,
+-        input_ids,
+-    )
++    with timed_region("moe_forward_shared.custom_op"):
++        return layer.runner._forward_impl(
++            layer,
++            hidden_states,
++            router_logits,
++            shared_experts_input,
++            input_ids,
++        )
+ 
+ 
+ def _moe_forward_shared_fake(
+@@ -151,6 +184,21 @@ def _moe_forward_shared_fake(
+     return shared_out, fused_out
+ 
+ 
++def _moe_shared_add_allreduce(
++    shared_output: torch.Tensor,
++    fused_output: torch.Tensor,
++) -> torch.Tensor:
++    with timed_region("moe_shared_add_allreduce.custom_op"):
++        return tensor_model_parallel_all_reduce(shared_output + fused_output)
++
++
++def _moe_shared_add_allreduce_fake(
++    shared_output: torch.Tensor,
++    fused_output: torch.Tensor,
++) -> torch.Tensor:
++    return torch.empty_like(fused_output)
++
++
+ direct_register_custom_op(
+     op_name="moe_forward",
+     op_func=_moe_forward,
+@@ -168,6 +216,14 @@ direct_register_custom_op(
+ )
+ 
+ 
++direct_register_custom_op(
++    op_name="moe_shared_add_allreduce",
++    op_func=_moe_shared_add_allreduce,
++    fake_impl=_moe_shared_add_allreduce_fake,
++    tags=(torch.Tag.needs_fixed_stride_order,),
++)
++
++
+ def _unpack(
+     result: torch.Tensor | tuple[torch.Tensor, torch.Tensor],
+ ) -> tuple[torch.Tensor | None, torch.Tensor]:
+@@ -351,9 +407,38 @@ class MoERunner(MoERunnerInterface):
+             and not self.moe_config.is_sequence_parallel
+             and self._fused_output_is_reduced
+         ):
+-            shared_output = tensor_model_parallel_all_reduce(shared_output)
++            with allreduce_label("moe.reduce_shared_output"):
++                shared_output = tensor_model_parallel_all_reduce(shared_output)
+         return shared_output
+ 
++    def _allreduce_output_inside_custom_op_active(self) -> bool:
++        return (
++            _minimax_moe_output_allreduce_inside_custom_op_enabled()
++            and self._shared_experts is None
++            and self.routed_output_transform is None
++            and not self.moe_config.is_sequence_parallel
++            and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
++            and not self._fused_output_is_reduced
++            and not _minimax_moe_delay_allreduce_enabled()
++        )
++
++    def _shared_add_allreduce_inside_custom_op_active(
++        self,
++        shared_output: torch.Tensor | None,
++        *,
++        hidden_dim_was_padded: bool,
++    ) -> bool:
++        return (
++            _xpu_moe_shared_add_allreduce_custom_op_enabled()
++            and shared_output is not None
++            and not hidden_dim_was_padded
++            and self.routed_output_transform is None
++            and not self.moe_config.is_sequence_parallel
++            and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
++            and not self._fused_output_is_reduced
++            and not _minimax_moe_delay_allreduce_enabled()
++        )
++
+     def _maybe_reduce_final_output(
+         self,
+         states: torch.Tensor,
+@@ -373,8 +458,22 @@ class MoERunner(MoERunnerInterface):
+             not self.moe_config.is_sequence_parallel
+             and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
+             and not self._fused_output_is_reduced
++            and not self._allreduce_output_inside_custom_op_active()
++            and not getattr(self, "_last_quant_output_reduced", False)
++            and not _minimax_moe_delay_allreduce_enabled()
+         ):
+-            states = tensor_model_parallel_all_reduce(states)
++            if (
++                _minimax_moe_final_inplace_allreduce_enabled()
++                and self.moe_config.tp_size > 1
++                and hasattr(torch.ops, "vllm")
++                and hasattr(torch.ops.vllm, "all_reduce_inplace")
++            ):
++                torch.ops.vllm.all_reduce_inplace(
++                    states, group_name=get_tp_group().unique_name
++                )
++            else:
++                with allreduce_label("moe.final_output"):
++                    states = tensor_model_parallel_all_reduce(states)
+ 
+         return states[..., :trunc_size]
+ 
+@@ -447,33 +546,77 @@ class MoERunner(MoERunnerInterface):
+         via the router, and the actual fused MoE computation. Returns
+         (shared_expert_output, fused_expert_output).
+         """
++        self._last_quant_output_reduced = False
+         self._maybe_apply_shared_experts(
+             shared_experts_input, SharedExpertsOrder.NO_OVERLAP
+         )
+ 
+-        if self._quant_method.is_monolithic:
+-            fused_out = self._quant_method.apply_monolithic(
+-                layer=layer,
+-                x=hidden_states,
+-                router_logits=router_logits,
+-                input_ids=input_ids,
+-            )
++        should_apply_decode_monolithic = getattr(
++            self._quant_method, "should_apply_decode_monolithic", None
++        )
++        if (
++            should_apply_decode_monolithic is not None
++            and should_apply_decode_monolithic(layer, hidden_states)
++        ):
++            route_capture = getattr(layer, "route_capture", None)
++            if route_capture is not None:
++                with timed_region("moe.router_select_for_capture"):
++                    _, topk_ids = self.router.select_experts(
++                        hidden_states=hidden_states,
++                        router_logits=router_logits,
++                        input_ids=input_ids,
++                    )
++                route_capture.capture(topk_ids, stage="runner_pre_monolithic")
++            with timed_region("moe.apply_monolithic"):
++                fused_out = self._quant_method.apply_monolithic(
++                    layer=layer,
++                    x=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
++        elif self._quant_method.is_monolithic:
++            route_capture = getattr(layer, "route_capture", None)
++            if route_capture is not None:
++                with timed_region("moe.router_select_for_capture"):
++                    _, topk_ids = self.router.select_experts(
++                        hidden_states=hidden_states,
++                        router_logits=router_logits,
++                        input_ids=input_ids,
++                    )
++                route_capture.capture(topk_ids, stage="runner_pre_monolithic")
++            with timed_region("moe.apply_monolithic"):
++                fused_out = self._quant_method.apply_monolithic(
++                    layer=layer,
++                    x=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
+         else:
+-            topk_weights, topk_ids = self.router.select_experts(
+-                hidden_states=hidden_states,
+-                router_logits=router_logits,
+-                input_ids=input_ids,
+-            )
++            with timed_region("moe.router_select"):
++                topk_weights, topk_ids = self.router.select_experts(
++                    hidden_states=hidden_states,
++                    router_logits=router_logits,
++                    input_ids=input_ids,
++                )
+ 
+             # Passing shared_experts_input in case SharedExpertsOrder is
+             # MK_INTERNAL_OVERLAPPED.
+-            fused_out = self._quant_method.apply(
+-                layer=layer,
+-                x=hidden_states,
+-                topk_weights=topk_weights,
+-                topk_ids=topk_ids,
+-                shared_experts_input=shared_experts_input,
+-            )
++            with timed_region("moe.apply"):
++                fused_out = self._quant_method.apply(
++                    layer=layer,
++                    x=hidden_states,
++                    topk_weights=topk_weights,
++                    topk_ids=topk_ids,
++                    shared_experts_input=shared_experts_input,
++                )
++
++        if (
++            self._allreduce_output_inside_custom_op_active()
++            and shared_experts_input is None
++        ):
++            with allreduce_label("moe.quant_output_inside_custom_op"):
++                fused_out = tensor_model_parallel_all_reduce(fused_out)
++            self._last_quant_output_reduced = True
+ 
+         self._maybe_apply_shared_experts(
+             shared_experts_input,
+@@ -606,8 +749,27 @@ class MoERunner(MoERunnerInterface):
+         # Apply output transform (e.g. latent -> full dim)
+         fused_output = self.apply_routed_output_transform(fused_output)
+ 
+-        if shared_output is not None:
+-            result = shared_output + fused_output
++        if self._shared_add_allreduce_inside_custom_op_active(
++            shared_output,
++            hidden_dim_was_padded=hidden_dim_was_padded,
++        ):
++            result = torch.ops.vllm.moe_shared_add_allreduce(
++                shared_output,
++                fused_output,
++            )
++            self._last_quant_output_reduced = True
++        elif shared_output is not None:
++            if (
++                _xpu_moe_shared_add_inplace_enabled()
++                and current_platform.is_xpu()
++                and shared_output.shape == fused_output.shape
++                and shared_output.dtype == fused_output.dtype
++                and shared_output.device == fused_output.device
++            ):
++                fused_output.add_(shared_output)
++                result = fused_output
++            else:
++                result = shared_output + fused_output
+         else:
+             result = fused_output
+ 
+@@ -707,27 +869,31 @@ class MoERunner(MoERunnerInterface):
+         # so it can run overlapped with the
+         # NOTE: in future PR, MoE runner will always hold the gate.
+         if self.gate is not None:
+-            router_logits, _ = self.gate(hidden_states)
++            with timed_region("moe.internal_gate"):
++                router_logits, _ = self.gate(hidden_states)
+ 
+         with self._sequence_parallel_context():
+             # TODO(bnell): parts of the dispatch/combine steps will go away once
+             # #32567 lands and the remaining kernels are made MKs.  The PCP
+             # code will probably remain
+-            hidden_states, router_logits = self._maybe_dispatch(
+-                layer,
+-                hidden_states,
+-                router_logits,
+-            )
+-
+-            shared_output, hidden_states = self._apply_quant_method(
+-                layer=layer,
+-                hidden_states=hidden_states,
+-                router_logits=router_logits,
+-                shared_experts_input=shared_experts_input,
+-                input_ids=input_ids,
+-            )
+-
+-            return self._maybe_combine(
+-                shared_output,
+-                hidden_states,
+-            )
++            with timed_region("moe.dispatch"):
++                hidden_states, router_logits = self._maybe_dispatch(
++                    layer,
++                    hidden_states,
++                    router_logits,
++                )
++
++            with timed_region("moe.quant_method_total"):
++                shared_output, hidden_states = self._apply_quant_method(
++                    layer=layer,
++                    hidden_states=hidden_states,
++                    router_logits=router_logits,
++                    shared_experts_input=shared_experts_input,
++                    input_ids=input_ids,
++                )
++
++            with timed_region("moe.combine"):
++                return self._maybe_combine(
++                    shared_output,
++                    hidden_states,
++                )

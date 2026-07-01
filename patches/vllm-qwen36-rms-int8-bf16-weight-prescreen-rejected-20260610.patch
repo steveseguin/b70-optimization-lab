@@ -1,0 +1,60 @@
+diff --git a/vllm/compilation/passes/fusion/rms_quant_fusion.py b/vllm/compilation/passes/fusion/rms_quant_fusion.py
+index 000000000..000000000 100644
+--- a/vllm/compilation/passes/fusion/rms_quant_fusion.py
++++ b/vllm/compilation/passes/fusion/rms_quant_fusion.py
+@@ -725,6 +725,16 @@ class XPUInt8RMSNormDynamicQuantPattern:
+
+         pm.register_replacement(
+             pattern,
+             replacement,
++            [
++                empty_xpu_bf16(5, 16),  # input
++                empty_xpu_bf16(16),  # Qwen-style RMSNorm weight
++            ],
++            pm.fwd_only,
++            pm_pass,
++        )
++        pm.register_replacement(
++            pattern,
++            replacement,
+             [
+                 empty_xpu_bf16(5, 16),  # input
+                 empty_xpu_fp32(16),  # Gemma-style RMSNorm weight
+diff --git a/csrc/layernorm_quant.cpp b/csrc/layernorm_quant.cpp
+index 0000000..0000000 100644
+--- a/csrc/layernorm_quant.cpp
++++ b/csrc/layernorm_quant.cpp
+@@ -725,8 +725,13 @@ void rms_norm_dynamic_per_token_quant(
+   const bool qwen_gemma_int8_norm =
+       out.dtype() == torch::kInt8 && input.dtype() == torch::kBFloat16 &&
+       weight.dtype() == torch::kFloat32 && !scale_ub.has_value() &&
+       !residual.has_value();
+-  if (!qwen_gemma_int8_norm) {
++  const bool bf16_int8_norm =
++      out.dtype() == torch::kInt8 && input.dtype() == torch::kBFloat16 &&
++      weight.dtype() == torch::kBFloat16 && !scale_ub.has_value() &&
++      !residual.has_value();
++  if (!qwen_gemma_int8_norm && !bf16_int8_norm) {
+     TORCH_CHECK(
+         weight.dtype() == input.dtype(),
+         "weight and input must have the same dtype");
+@@ -775,6 +780,21 @@ void rms_norm_dynamic_per_token_quant(
+           scale_ub,
+           scales,
+           static_cast<float>(epsilon));
++    } else if (bf16_int8_norm) {
++      vllm::call_rms_norm_dynamic_per_token_quant_kernel<
++          at::BFloat16,
++          at::BFloat16,
++          int8_t,
++          true>(
++          out,
++          residual,
++          input,
++          weight,
++          scale_ub,
++          scales,
++          static_cast<float>(epsilon));
+     } else {
+       VLLM_DISPATCH_FLOATING_TYPES(
+           input.scalar_type(), "rms_norm_dynamic_per_token_quant_int8", [&] {

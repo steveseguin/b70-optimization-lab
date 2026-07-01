@@ -1,0 +1,102 @@
+diff --git a/vllm/compilation/passes/utility/xpu_dedup_int8_quant.py b/vllm/compilation/passes/utility/xpu_dedup_int8_quant.py
+new file mode 100644
+index 000000000..b3df26b64
+--- /dev/null
++++ b/vllm/compilation/passes/utility/xpu_dedup_int8_quant.py
+@@ -0,0 +1,96 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++from __future__ import annotations
++
++import torch
++from torch import fx
++
++from vllm.logger import init_logger
++
++from ..fx_utils import is_func
++from ..vllm_inductor_pass import VllmInductorPass
++
++logger = init_logger(__name__)
++
++
++class XpuDedupInt8QuantPass(VllmInductorPass):
++    """Reuse duplicate dynamic INT8 activation quantization on XPU.
++
++    Qwen3.6 A3B has several adjacent INT8 GEMMs fed by the same normalized
++    activation. The default graph quantizes that same activation separately for
++    each GEMM. Since _xpu_C.per_token_quant_int8_xpu is pure and its output
++    depends only on the activation tensor, later identical quant calls can reuse
++    the first tuple exactly.
++    """
++
++    def _strip_view_ops(self, node: fx.Node) -> fx.Node:
++        while isinstance(node, fx.Node):
++            if node.op == "call_method" and node.target == "contiguous":
++                node = node.args[0]
++                continue
++            if node.op == "call_method" and node.target in ("view", "reshape"):
++                node = node.args[0]
++                continue
++            if is_func(node, torch.ops.aten.contiguous.default):
++                node = node.args[0]
++                continue
++            if is_func(node, torch.ops.aten.view.default) or is_func(
++                node, torch.ops.aten.reshape.default
++            ):
++                node = node.args[0]
++                continue
++            break
++        return node
++
++    def _quant_input_key(self, node: fx.Node) -> tuple[fx.Node, str, str] | None:
++        if not node.args or not isinstance(node.args[0], fx.Node):
++            return None
++        input_node = node.args[0]
++        meta_val = input_node.meta.get("val")
++        if meta_val is None or not hasattr(meta_val, "shape"):
++            return None
++        base = self._strip_view_ops(input_node)
++        shape = ",".join(str(dim) for dim in meta_val.shape)
++        dtype = str(getattr(meta_val, "dtype", ""))
++        return base, shape, dtype
++
++    def _is_xpu_int8_quant(self, node: fx.Node) -> bool:
++        if node.op != "call_function":
++            return False
++        try:
++            packet = torch.ops._xpu_C.per_token_quant_int8_xpu
++            default = packet.default
++        except AttributeError:
++            return False
++        if node.target == packet or node.target == default:
++            return True
++        return "per_token_quant_int8_xpu" in str(node.target)
++
++    @VllmInductorPass.time_and_log
++    def __call__(self, graph: fx.Graph) -> None:
++        seen: dict[tuple[fx.Node, str, str], fx.Node] = {}
++        count = 0
++        candidates = 0
++        for node in list(graph.nodes):
++            if not self._is_xpu_int8_quant(node):
++                continue
++            candidates += 1
++            key = self._quant_input_key(node)
++            if key is None:
++                continue
++            prev = seen.get(key)
++            if prev is None:
++                seen[key] = node
++                continue
++            node.replace_all_uses_with(prev)
++            count += 1
++
++        if count:
++            graph.eliminate_dead_code()
++            graph.lint()
++        logger.info(
++            "XPU INT8 quant dedup saw %s quant nodes and removed %s duplicates",
++            candidates,
++            count,
++        )

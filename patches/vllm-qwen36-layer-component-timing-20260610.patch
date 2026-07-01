@@ -1,0 +1,73 @@
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+index 96d7e9c71..3fcf8c42b 100644
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -57,6 +57,7 @@ from vllm.model_executor.models.qwen2_moe import Qwen2MoeMLP as Qwen3NextMLP
+ from vllm.model_executor.models.utils import sequence_parallel_chunk
+ from vllm.sequence import IntermediateTensors
+ from vllm.transformers_utils.configs.qwen3_next import Qwen3NextConfig
++from vllm.utils.xpu_decode_timing import timed_region
+ 
+ from .interfaces import (
+     EagleModelMixin,
+@@ -399,22 +400,32 @@ class Qwen3NextDecoderLayer(nn.Module):
+     ):
+         if residual is None:
+             residual = hidden_states
+-            hidden_states = self.input_layernorm(hidden_states)
++            with timed_region(
++                f"qwen3_next.layer.{self.layer_type}.input_norm"
++            ):
++                hidden_states = self.input_layernorm(hidden_states)
+         else:
+-            hidden_states, residual = self.input_layernorm(hidden_states, residual)
++            with timed_region(
++                f"qwen3_next.layer.{self.layer_type}.input_norm"
++            ):
++                hidden_states, residual = self.input_layernorm(
++                    hidden_states, residual
++                )
+ 
+         self_attention_output = torch.empty_like(hidden_states)
+         if self.layer_type == "linear_attention":
+-            self.linear_attn(
+-                hidden_states=hidden_states,
+-                output=self_attention_output,
+-            )
++            with timed_region("qwen3_next.layer.linear_attention.attn"):
++                self.linear_attn(
++                    hidden_states=hidden_states,
++                    output=self_attention_output,
++                )
+         elif self.layer_type == "full_attention":
+-            self.self_attn(
+-                hidden_states=hidden_states,
+-                output=self_attention_output,
+-                positions=positions,
+-            )
++            with timed_region("qwen3_next.layer.full_attention.attn"):
++                self.self_attn(
++                    hidden_states=hidden_states,
++                    output=self_attention_output,
++                    positions=positions,
++                )
+         else:
+             raise ValueError("Invalid layer_type")
+         hidden_states = self_attention_output
+@@ -430,8 +441,14 @@ class Qwen3NextDecoderLayer(nn.Module):
+                 )
+ 
+         # Fully Connected
+-        hidden_states, residual = self.post_attention_layernorm(hidden_states, residual)
+-        hidden_states = self.mlp(hidden_states)
++        with timed_region(
++            f"qwen3_next.layer.{self.layer_type}.post_attention_norm"
++        ):
++            hidden_states, residual = self.post_attention_layernorm(
++                hidden_states, residual
++            )
++        with timed_region(f"qwen3_next.layer.{self.layer_type}.mlp"):
++            hidden_states = self.mlp(hidden_states)
+ 
+         if self.layer_scale:
+             if len(hidden_states.shape) == 2:

@@ -1,0 +1,71 @@
+diff --git a/vllm/envs.py b/vllm/envs.py
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@
+     VLLM_XPU_ENABLE_XPU_GRAPH: bool = False
+     VLLM_XPU_BLOCK_FP8_REQUANT: bool = False
+     VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT: str = "0"
++    VLLM_XPU_SHARED_EXPERTS_STREAM: bool = False
+     VLLM_QWEN35_MTP_FORCE_FP8_BLOCK: bool = False
+@@
+     "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT": lambda: os.getenv(
+         "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT", "0"
+     ).strip().lower(),
++    "VLLM_XPU_SHARED_EXPERTS_STREAM": lambda: bool(
++        int(os.getenv("VLLM_XPU_SHARED_EXPERTS_STREAM", "0"))
++    ),
+     "VLLM_QWEN35_MTP_FORCE_FP8_BLOCK": lambda: bool(
+diff --git a/vllm/utils/torch_utils.py b/vllm/utils/torch_utils.py
+--- a/vllm/utils/torch_utils.py
++++ b/vllm/utils/torch_utils.py
+@@
+ def aux_stream() -> torch.cuda.Stream | None:
+@@
+     global _aux_stream
+ 
++    import vllm.envs as envs
+     from vllm.platforms import current_platform
+ 
+-    if _aux_stream is None and current_platform.is_cuda_alike():
+-        _aux_stream = torch.cuda.Stream()
++    if _aux_stream is None:
++        if current_platform.is_cuda_alike():
++            _aux_stream = torch.cuda.Stream()
++        elif current_platform.is_xpu() and envs.VLLM_XPU_SHARED_EXPERTS_STREAM:
++            _aux_stream = torch.xpu.Stream()
+ 
+     return _aux_stream
+diff --git a/vllm/model_executor/layers/fused_moe/runner/shared_experts.py b/vllm/model_executor/layers/fused_moe/runner/shared_experts.py
+--- a/vllm/model_executor/layers/fused_moe/runner/shared_experts.py
++++ b/vllm/model_executor/layers/fused_moe/runner/shared_experts.py
+@@
+-            # TODO(rob): enable shared expert overlap with non-cuda-alike.
+-            # aux_stream() returns None on non-cuda-alike platforms.
+             self._stream = aux_stream()
+             if self._stream is not None:
+-                logger.debug_once("Enabled separate cuda stream for MoE shared_experts")
++                logger.debug_once("Enabled separate stream for MoE shared_experts")
+@@
+-        should_run_shared_in_aux_stream = (
+-            current_platform.is_cuda()
++        supports_shared_aux_stream = current_platform.is_cuda() or (
++            current_platform.is_xpu() and envs.VLLM_XPU_SHARED_EXPERTS_STREAM
++        )
++        should_run_shared_in_aux_stream = (
++            supports_shared_aux_stream
+             and self._stream is not None
+             and hidden_states.shape[0]
+             <= envs.VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD
+         )
+@@
++    def _stream_context(self):
++        assert self._stream is not None
++        if current_platform.is_xpu():
++            return torch.xpu.stream(self._stream)
++        return torch.cuda.stream(self._stream)
++
+     def _run_in_aux_stream(
+@@
+-        with torch.cuda.stream(self._stream):
++        with self._stream_context():
+             output = self._layer(shared_experts_input)

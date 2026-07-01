@@ -1,0 +1,40 @@
+Focused patch excerpt against the cached two-GEMM sidecar diagnostic. This adds
+final gathered-output parity for execute_mode=both without mutating the accepted
+model output.
+
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@
+                 for target_name, target_tensor, before, before_checksum in (
+                         parity_before):
+                     parity_record.append({
+                         "target": target_name,
+                         "before_checksum_f32": before_checksum,
+                         "after_checksum_f32":
+                         _tensor_checksum_f32(target_tensor),
+                         "max_abs_diff_f32":
+                         _tensor_max_abs_diff_f32(target_tensor, before),
+                     })
++                if execute_mode == 3:
++                    gathered_output = torch.empty_like(output)
++                    torch.ops._moe_C.moe_gather(
++                        gathered_output,
++                        gemm2_output,
++                        topk_weights,
++                        unpermuted_row_to_permuted_row,
++                        int(rows_per_expert.numel()),
++                    )
++                    if getattr(getattr(output, "device", None), "type",
++                               None) == "xpu":
++                        torch.xpu.synchronize()
++                    parity_record.append({
++                        "target": "gathered_output",
++                        "before_checksum_f32": _tensor_checksum_f32(output),
++                        "after_checksum_f32":
++                        _tensor_checksum_f32(gathered_output),
++                        "max_abs_diff_f32":
++                        _tensor_max_abs_diff_f32(gathered_output, output),
++                    })
+                 if len(parity_record) == 1:
+                     parity_record = parity_record[0]

@@ -1,0 +1,91 @@
+diff --git a/vllm/envs.py b/vllm/envs.py
+index b2db5a811..b1e87cf11 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -265,4 +265,5 @@ if TYPE_CHECKING:
+     VLLM_NIXL_EP_MAX_NUM_RANKS: int = 32
+     VLLM_XPU_ENABLE_XPU_GRAPH: bool = False
++    VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT: str = "0"
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+ 
+@@ -1774,6 +1775,11 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_ENABLE_XPU_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_ENABLE_XPU_GRAPH", "0"))
+     ),
++    # Experimental Qwen3.6 GDN path that reuses the qkvz/ba input activation
++    # quantization. Valid values: "0", "1", "true", or "clone".
++    "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT": lambda: os.getenv(
++        "VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT", "0"
++    ).strip().lower(),
+     # Enable simple KV offload.
+     "VLLM_USE_SIMPLE_KV_OFFLOAD": lambda: bool(
+         int(os.getenv("VLLM_USE_SIMPLE_KV_OFFLOAD", "0"))
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..5589538c1 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -383,6 +383,15 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         self.enable_packed_recurrent_decode = (
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
++        xpu_gdn_reuse_qkvz_ba_quant_mode = (
++            envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT
++        )
++        self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
++            xpu_gdn_reuse_qkvz_ba_quant_mode in ("1", "true", "clone")
++        )
++        self.xpu_reuse_qkvz_ba_quant_clone = (
++            xpu_gdn_reuse_qkvz_ba_quant_mode == "clone"
++        )
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+@@ -612,8 +621,46 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if self.xpu_reuse_qkvz_ba_quant and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            if self.xpu_reuse_qkvz_ba_quant_clone:
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            else:
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q
++                x_s_ba = x_s
++
++            projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q_qkvz,
++                x_s_qkvz,
++                self.in_proj_qkvz.weight,
++                self.in_proj_qkvz.weight_scale,
++                hidden_states.dtype,
++                None,
++            ).view(*hidden_states.shape[:-1], self.in_proj_qkvz.weight.shape[1])
++            projected_states_ba = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q_ba,
++                x_s_ba,
++                self.in_proj_ba.weight,
++                self.in_proj_ba.weight_scale,
++                hidden_states.dtype,
++                None,
++            ).view(*hidden_states.shape[:-1], self.in_proj_ba.weight.shape[1])
++        else:
++            projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++            projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention

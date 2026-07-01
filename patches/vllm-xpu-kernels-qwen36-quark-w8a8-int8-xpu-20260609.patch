@@ -1,0 +1,1414 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 492aec7..e7bad7e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -535,6 +535,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/torch_bindings.cpp"
+       "csrc/xpu/lora/lora_shrink.cpp"
+       "csrc/xpu/lora/lora_expand.cpp"
++      "csrc/xpu/quantization/int8_quant.cpp"
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+       "csrc/xpu/sycl/multimodal_rope.cpp"
+diff --git a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+index 1649412..85be870 100644
+--- a/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
++++ b/csrc/xpu/grouped_gemm/grouped_gemm_interface.cpp
+@@ -61,3 +61,42 @@ torch::Tensor cutlass_grouped_gemm_interface(
+ #endif
+   }
+ }
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor rows_per_expert,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts) {
++  if (vllm::xpu::force_xe_default_kernel()) {
++    TORCH_CHECK(
++        false,
++        "W8A8 INT8 grouped GEMM requires the XE2 cutlass kernel; XE default "
++        "does not implement this path.");
++  } else if (vllm::xpu::is_xe2_arch()) {
++#ifdef VLLM_XPU_ENABLE_XE2
++    return cutlass_grouped_gemm_w8a8_int8_xe2(
++        ptr_A,
++        ptr_A_scales,
++        ptr_B,
++        ptr_B_scales,
++        ptr_bias,
++        ptr_D,
++        rows_per_expert,
++        N,
++        K,
++        num_experts);
++#else
++    TORCH_CHECK(false, "XE2 cutlass kernel is not enabled in this build.");
++#endif
++  } else {
++    TORCH_CHECK(
++        false,
++        "W8A8 INT8 grouped GEMM requires an XE2 XPU architecture.");
++  }
++}
+diff --git a/csrc/xpu/grouped_gemm/grouped_gemm_interface.h b/csrc/xpu/grouped_gemm/grouped_gemm_interface.h
+index 8e7c298..188607b 100644
+--- a/csrc/xpu/grouped_gemm/grouped_gemm_interface.h
++++ b/csrc/xpu/grouped_gemm/grouped_gemm_interface.h
+@@ -11,4 +11,16 @@ torch::Tensor cutlass_grouped_gemm_interface(
+     int64_t K,
+     int64_t num_experts,
+     bool is_B_int4,
+-    bool is_B_mxfp4);
+\ No newline at end of file
++    bool is_B_mxfp4);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor rows_per_expert,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts);
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index ac2d7d6..95b8f72 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -93,6 +93,7 @@ CUTE_DEVICE void xe_gemm(
+     ATensor const& A,  // (M,K)
+     BTensor const& B,  // (N,K)
+     const ElementS* Scales,
++    const float* ActivationScales,
+     const ElementBI* Bias,
+     DTensor& C,  // (M,N)
+     Coord<int, int, cute::Underscore, int> blk_coord,
+@@ -163,6 +164,8 @@ CUTE_DEVICE void xe_gemm(
+   static constexpr bool is_B_fp8_type =
+       std::is_same_v<ElementB, cutlass::float_e5m2_t> ||
+       std::is_same_v<ElementB, cutlass::float_e4m3_t>;
++  static constexpr bool is_w8a8_int8 =
++      std::is_same_v<TA, int8_t> && std::is_same_v<TB, int8_t>;
+ 
+   CUTE_UNROLL
+   for (; k_tile_prefetch < prefetch_dist; k_tile_prefetch++) {
+@@ -197,31 +200,63 @@ CUTE_DEVICE void xe_gemm(
+     }
+   }
+ 
+-  if (Bias != nullptr) {
+-    static constexpr auto ATOM_M =
+-        get<1>(typename TiledMMA::ThrLayoutVMNK{}.shape());
+-    static constexpr auto ATOM_N =
+-        get<2>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++  static constexpr auto ATOM_M =
++      get<1>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++  static constexpr auto ATOM_N =
++      get<2>(typename TiledMMA::ThrLayoutVMNK{}.shape());
++
++  auto sg_local_m_coord = cutlass::get_sub_group_id() / ATOM_N;
++  auto sg_local_n_coord = cutlass::get_sub_group_id() % ATOM_N;
+ 
+-    auto sg_local_n_coord = cutlass::get_sub_group_id() % ATOM_N;
++  static constexpr auto tile_m = get<0>(wg_tile);
++  static constexpr auto tile_n = get<1>(wg_tile);
+ 
+-    static constexpr auto tile_m = get<0>(wg_tile);
+-    static constexpr auto tile_n = get<1>(wg_tile);
++  // 32 * 64
++  static constexpr auto SG_M = tile_m / ATOM_M;  // BLK_M / ATOM_M;
++  static constexpr auto SG_N = tile_n / ATOM_N;  // BLK_N / ATOM_N;
+ 
+-    // 32 * 64
+-    static constexpr auto SG_M = tile_m / ATOM_M;  // BLK_M / ATOM_M;
+-    static constexpr auto SG_N = tile_n / ATOM_N;  // BLK_N / ATOM_N;
++  int sg_local_id = cutlass::get_sub_group_local_id();
++  static constexpr int sg_local_range = 16;
+ 
+-    int sg_local_id = cutlass::get_sub_group_local_id();
+-    static constexpr int sg_local_range = 16;
++  int m_tile_start = wg_m * tile_m;
++  int m_sg_start = sg_local_m_coord * SG_M;
++  int n_tile_start = wg_n * tile_n;
++  int n_sg_start = sg_local_n_coord * SG_N;
+ 
+-    int n_tile_start = wg_n * tile_n;
+-    int n_sg_start = sg_local_n_coord * SG_N;
++  if constexpr (is_w8a8_int8) {
++    auto tCrC_scaled =
++        make_subgroup_tensor(
++            make_tensor_like<float>(tCrC.tensor()), tCrC.tv_layout());
++    CUTLASS_PRAGMA_UNROLL
++    for (int sn = 0; sn < SG_N / sg_local_range; ++sn) {
++      int sg_local_n = sn * sg_local_range + sg_local_id;
++      int col = n_tile_start + n_sg_start + sg_local_n;
++      float b_scale =
++          (Scales != nullptr && col < shape<1>(C)) ? Scales[col] : 1.0f;
++      float b_float =
++          (Bias != nullptr && col < shape<1>(C)) ? Bias[col] : 0.0f;
++      CUTLASS_PRAGMA_UNROLL
++      for (int sm = 0; sm < SG_M; ++sm) {
++        int idx = sn * SG_M + sm;
++        int row = m_tile_start + m_sg_start + sm;
++        float a_scale = (ActivationScales != nullptr && row < shape<0>(C))
++            ? ActivationScales[row]
++            : 1.0f;
++        tCrC_scaled(idx) =
++            static_cast<float>(tCrC(idx)) * a_scale * b_scale + b_float;
++      }
++    }
++    reorder(tCrC_scaled, tCrC_out);
++    copy(copy_c, tCrC_out, tCgC);
++    return;
++  }
+ 
++  if (Bias != nullptr) {
+     CUTLASS_PRAGMA_UNROLL
+     for (int sn = 0; sn < SG_N / sg_local_range; ++sn) {
+       int sg_local_n = sn * sg_local_range + sg_local_id;
+-      float b_float = Bias[n_tile_start + n_sg_start + sg_local_n];
++      int col = n_tile_start + n_sg_start + sg_local_n;
++      float b_float = col < shape<1>(C) ? Bias[col] : 0.0f;
+       CUTLASS_PRAGMA_UNROLL
+       for (int sm = 0; sm < SG_M; ++sm) {
+         tCrC(sn * SG_M + sm) += b_float;
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+index f613d78..208477d 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+@@ -60,6 +60,14 @@ class w8a16_policy : public xe_gemm_policy_base {
+   using GmemTiledCopyD = XE_STORE_2D<16, 8, 32>;
+ };
+ 
++class w8a8_policy : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_128, _128, _32>;
++  using SGLayout = Layout<Shape<_4, _2, _1>, Stride<_2, _1, _0>>;
++
++  using GmemTiledCopyD = XE_STORE_2D<16, 8, 32>;
++};
++
+ class w8a16_policy_m_8 : public xe_gemm_policy_base {
+  public:
+   using WGTile = Shape<_8, _64, _32>;
+@@ -104,4 +112,4 @@ class w4a16_policy_m_32 : public xe_gemm_policy_base {
+   using SGLayout = Layout<Shape<_1, _4, _1>, Stride<_4, _1, _0>>;
+ };
+ 
+-}  // namespace MoE
+\ No newline at end of file
++}  // namespace MoE
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp
+index 78f1650..fefab48 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.cpp
+@@ -26,4 +26,28 @@ torch::Tensor cutlass_grouped_gemm_xe2(
+       num_experts,
+       is_B_int4,
+       is_B_mxfp4);
+-}
+\ No newline at end of file
++}
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor rows_per_expert,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts) {
++  return MoE::cutlass_grouped_gemm_w8a8_int8_xe2_impl(
++      ptr_A,
++      ptr_A_scales,
++      ptr_B,
++      ptr_B_scales,
++      ptr_bias,
++      ptr_D,
++      rows_per_expert,
++      N,
++      K,
++      num_experts);
++}
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
+index a8b943c..1759c6f 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.h
+@@ -11,4 +11,16 @@ torch::Tensor cutlass_grouped_gemm_xe2(
+     int64_t K,
+     int64_t num_experts,
+     bool is_B_int4,
+-    bool is_B_mxfp4);
+\ No newline at end of file
++    bool is_B_mxfp4);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_xe2(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor rows_per_expert,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts);
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index 2cf77c6..999e007 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -75,6 +75,7 @@ CUTE_DEVICE void MoEGEMM(
+     const ElementA* Activations,
+     const ElementB* Weights,
+     const ElementS* Scales,
++    const float* ActivationScales,
+     const ElementBI* Bias,
+     ElementD* Outputs,
+     TiledMMA const& mma,
+@@ -91,6 +92,8 @@ CUTE_DEVICE void MoEGEMM(
+   static constexpr bool is_B_mxfp4 = (std::is_same_v<ElementB, uint8_t>) &&
+                                      (std::is_same_v<ElementS, uint8_t>);
+   static constexpr bool is_B_4bits = std::is_same_v<ElementB, uint8_t>;
++  static constexpr bool is_w8a8_int8 =
++      std::is_same_v<ElementA, int8_t> && std::is_same_v<ElementB, int8_t>;
+ 
+   auto item = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+   auto wg_tile = mma.tile_mnk();
+@@ -140,12 +143,20 @@ CUTE_DEVICE void MoEGEMM(
+     }
+     ElementA* ptr_A_curr_batch =
+         const_cast<ElementA*>(Activations) + pre_rows * gemm_k;
++    const float* ptr_ActivationScales_curr_batch =
++        ActivationScales == nullptr ? nullptr : ActivationScales + pre_rows;
+     ElementB* ptr_B_curr_batch = const_cast<ElementB*>(Weights) + B_offset;
+     ElementD* ptr_D_curr_batch = Outputs + pre_rows * gemm_n;
+-    ElementS* ptr_Scales_curr_batch = const_cast<ElementS*>(Scales) + expert_id;
+-    if constexpr (is_B_4bits) {
+-      ptr_Scales_curr_batch =
+-          const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
++    ElementS* ptr_Scales_curr_batch = nullptr;
++    if (Scales != nullptr) {
++      ptr_Scales_curr_batch = const_cast<ElementS*>(Scales) + expert_id;
++      if constexpr (is_B_4bits) {
++        ptr_Scales_curr_batch =
++            const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
++      } else if constexpr (is_w8a8_int8) {
++        ptr_Scales_curr_batch =
++            const_cast<ElementS*>(Scales) + expert_id * gemm_n;
++      }
+     }
+     ElementBI* ptr_Bias_curr_batch = nullptr;
+     if (Bias != static_cast<ElementBI*>(nullptr)) {
+@@ -199,6 +210,7 @@ CUTE_DEVICE void MoEGEMM(
+             A_tensor,
+             B_tensor,
+             ptr_Scales_curr_batch,
++            ptr_ActivationScales_curr_batch,
+             ptr_Bias_curr_batch,
+             D_tensor,
+             tile_coord,
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index b47b627..650884e 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -81,6 +81,7 @@ void MoEGEMMLauncher(
+     const ElementA* activations,
+     const ElementB* weights,
+     const ElementS* scales,
++    const float* activation_scales,
+     const ElementBI* bias,
+     ElementD* outputs,
+     const int gemm_n,
+@@ -88,9 +89,15 @@ void MoEGEMMLauncher(
+     const int* rows_per_expert,
+     const int num_experts,
+     const int group_size,
+-    int32_t* atomic_buffer) {
++  int32_t* atomic_buffer) {
+   using ElementA_non_CV = cutlass::platform::remove_cv_t<ElementA>;
+-  auto op = XE_DPAS_TT<8, float, ElementA_non_CV>{};
++  using ElementB_non_CV = cutlass::platform::remove_cv_t<ElementB>;
++  static constexpr bool is_w8a8_int8 =
++      std::is_same_v<ElementA_non_CV, int8_t> &&
++      std::is_same_v<ElementB_non_CV, int8_t>;
++  using MmaInput = std::conditional_t<is_w8a8_int8, int8_t, ElementA_non_CV>;
++  using MmaAccum = std::conditional_t<is_w8a8_int8, int32_t, float>;
++  auto op = XE_DPAS_TT<8, MmaAccum, MmaInput>{};
+ 
+   using WGTile = typename policy::WGTile;
+   using SGLayout = typename policy::SGLayout;
+@@ -145,6 +152,7 @@ void MoEGEMMLauncher(
+               activations,
+               weights,
+               scales,
++              activation_scales,
+               bias,
+               outputs,
+               mma,
+@@ -223,24 +231,27 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+ 
+   at::Tensor atomic_buffer =
+       at::empty({static_cast<long>(1)}, ptr_A.options().dtype(at::kInt));
+-
+-#define MoEGEMMLauncherCallER(                                                 \
+-    LayoutA, LayoutB, Policy, ElementA, ElementB, ElementS)                    \
+-  MoEGEMMLauncher<LayoutA, LayoutB, Policy>(                                   \
+-      dpcpp_queue,                                                             \
+-      reinterpret_cast<ElementA*>(ptr_A.data_ptr()),                           \
+-      reinterpret_cast<ElementB*>(ptr_B.data_ptr()),                           \
+-      ptr_scales.has_value()                                                   \
+-          ? reinterpret_cast<ElementS*>(ptr_scales->data_ptr())                \
+-          : static_cast<ElementS*>(nullptr),                                   \
+-      ptr_bias.has_value() ? reinterpret_cast<ElementA*>(ptr_bias->data_ptr()) \
+-                           : static_cast<ElementA*>(nullptr),                  \
+-      reinterpret_cast<ElementA*>(ptr_D.data_ptr()),                           \
+-      N,                                                                       \
+-      K,                                                                       \
+-      reinterpret_cast<int*>(rows_per_expert.data_ptr()),                      \
+-      num_experts,                                                             \
+-      group_size,                                                              \
++  const float* activation_scales = nullptr;
++
++#define MoEGEMMLauncherCallER(                                                \
++    LayoutA, LayoutB, Policy, ElementA, ElementB, ElementS, ElementBI,         \
++    ElementD)                                                                 \
++  MoEGEMMLauncher<LayoutA, LayoutB, Policy>(                                  \
++      dpcpp_queue,                                                            \
++      reinterpret_cast<ElementA*>(ptr_A.data_ptr()),                          \
++      reinterpret_cast<ElementB*>(ptr_B.data_ptr()),                          \
++      ptr_scales.has_value()                                                  \
++          ? reinterpret_cast<ElementS*>(ptr_scales->data_ptr())               \
++          : static_cast<ElementS*>(nullptr),                                  \
++      activation_scales,                                                      \
++      ptr_bias.has_value() ? reinterpret_cast<ElementBI*>(ptr_bias->data_ptr())\
++                           : static_cast<ElementBI*>(nullptr),                \
++      reinterpret_cast<ElementD*>(ptr_D.data_ptr()),                          \
++      N,                                                                      \
++      K,                                                                      \
++      reinterpret_cast<int*>(rows_per_expert.data_ptr()),                     \
++      num_experts,                                                            \
++      group_size,                                                             \
+       static_cast<int*>(atomic_buffer.data_ptr()));
+ 
+   if (is_B_int4 || is_B_mxfp4) {
+@@ -269,18 +280,24 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+   if (is_B_int4) {                                                          \
+     if (A_dtype == at::kBFloat16) {                                         \
+       using scalar_t = bfloat16_t;                                          \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, scalar_t); \
++      MoEGEMMLauncherCallER(                                                \
++          'R', 'C', policy, scalar_t, uint8_t, scalar_t, scalar_t,          \
++          scalar_t);                                                        \
+     } else if (A_dtype == at::kHalf) {                                      \
+       using scalar_t = half_t;                                              \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, scalar_t); \
++      MoEGEMMLauncherCallER(                                                \
++          'R', 'C', policy, scalar_t, uint8_t, scalar_t, scalar_t,          \
++          scalar_t);                                                        \
+     }                                                                       \
+   } else if (is_B_mxfp4) {                                                  \
+     if (A_dtype == at::kBFloat16) {                                         \
+       using scalar_t = bfloat16_t;                                          \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, uint8_t);  \
++      MoEGEMMLauncherCallER(                                                \
++          'R', 'C', policy, scalar_t, uint8_t, uint8_t, scalar_t, scalar_t);\
+     } else if (A_dtype == at::kHalf) {                                      \
+       using scalar_t = half_t;                                              \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, uint8_t);  \
++      MoEGEMMLauncherCallER(                                                \
++          'R', 'C', policy, scalar_t, uint8_t, uint8_t, scalar_t, scalar_t);\
+     }                                                                       \
+   }
+ 
+@@ -311,16 +328,24 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+ #define W8A16LauncherCallER(policy)                                         \
+   if (B_dtype == at::kFloat8_e4m3fn && A_dtype == at::kHalf) {              \
+     using scalar_t = half_t;                                                \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e4m3_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, scalar_t, float_e4m3_t, float, scalar_t,          \
++        scalar_t);                                                          \
+   } else if (B_dtype == at::kFloat8_e5m2 && A_dtype == at::kHalf) {         \
+     using scalar_t = half_t;                                                \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e5m2_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, scalar_t, float_e5m2_t, float, scalar_t,          \
++        scalar_t);                                                          \
+   } else if (B_dtype == at::kFloat8_e4m3fn && A_dtype == at::kBFloat16) {   \
+     using scalar_t = bfloat16_t;                                            \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e4m3_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, scalar_t, float_e4m3_t, float, scalar_t,          \
++        scalar_t);                                                          \
+   } else if (B_dtype == at::kFloat8_e5m2 && A_dtype == at::kBFloat16) {     \
+     using scalar_t = bfloat16_t;                                            \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e5m2_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, scalar_t, float_e5m2_t, float, scalar_t,          \
++        scalar_t);                                                          \
+   }
+ 
+     if (A_avg_M <= 8) {
+@@ -341,10 +366,14 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+ #define W16A16LauncherCallER(policy)                                       \
+   if (A_dtype == at::kBFloat16) {                                          \
+     using scalar_t = bfloat16_t;                                           \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, scalar_t, scalar_t); \
++    MoEGEMMLauncherCallER(                                                 \
++        'R', 'R', policy, scalar_t, scalar_t, scalar_t, scalar_t,          \
++        scalar_t);                                                         \
+   } else if (A_dtype == at::kHalf) {                                       \
+     using scalar_t = half_t;                                               \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, scalar_t, scalar_t); \
++    MoEGEMMLauncherCallER(                                                 \
++        'R', 'R', policy, scalar_t, scalar_t, scalar_t, scalar_t,          \
++        scalar_t);                                                         \
+   }
+ 
+     if (A_avg_M <= 8) {
+@@ -370,4 +399,131 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+ #undef MoEGEMMLauncherCallER
+   return ptr_D;
+ }
+-}  // namespace MoE
+\ No newline at end of file
++
++at::Tensor cutlass_grouped_gemm_w8a8_int8_xe2_impl(
++    at::Tensor& ptr_A,
++    at::Tensor& ptr_A_scales,
++    at::Tensor& ptr_B,
++    at::Tensor& ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    at::Tensor& ptr_D,
++    at::Tensor& rows_per_expert,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts) {
++  auto& dpcpp_queue =
++      at::xpu::getCurrentXPUStream(ptr_A.device().index()).queue();
++  auto A_dtype = ptr_A.dtype();
++  auto B_dtype = ptr_B.dtype();
++  auto D_dtype = ptr_D.dtype();
++
++  TORCH_CHECK(N % 32 == 0, "N must be divisible by 32");
++  TORCH_CHECK(A_dtype == at::kChar, "ptr_A must be int8");
++  TORCH_CHECK(B_dtype == at::kChar, "ptr_B must be int8");
++  TORCH_CHECK(
++      D_dtype == at::kBFloat16 || D_dtype == at::kHalf,
++      "ptr_D must be bfloat16 or float16");
++  TORCH_CHECK(ptr_A_scales.dtype() == at::kFloat, "ptr_A_scales must be float");
++  TORCH_CHECK(ptr_B_scales.dtype() == at::kFloat, "ptr_B_scales must be float");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(ptr_bias->dtype() == at::kFloat, "ptr_bias must be float");
++  }
++
++  TORCH_CHECK(ptr_A.dim() == 2, "ptr_A must be 2D [Total_M, K]");
++  TORCH_CHECK(ptr_B.dim() == 3, "ptr_B must be 3D [num_experts, K, N]");
++  TORCH_CHECK(ptr_D.dim() == 2, "ptr_D must be 2D [Total_M, N]");
++  TORCH_CHECK(
++      ptr_A_scales.dim() == 1 ||
++          (ptr_A_scales.dim() == 2 && ptr_A_scales.size(1) == 1),
++      "ptr_A_scales must be 1D [Total_M] or 2D [Total_M, 1]");
++  TORCH_CHECK(
++      ptr_B_scales.dim() == 2,
++      "ptr_B_scales must be 2D [num_experts, N]");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(ptr_bias->dim() == 2, "ptr_bias must be 2D [num_experts, N]");
++  }
++
++  TORCH_CHECK(ptr_A.is_contiguous(), "ptr_A must be contiguous");
++  TORCH_CHECK(ptr_A_scales.is_contiguous(), "ptr_A_scales must be contiguous");
++  TORCH_CHECK(ptr_B.is_contiguous(), "ptr_B must be contiguous");
++  TORCH_CHECK(ptr_B_scales.is_contiguous(), "ptr_B_scales must be contiguous");
++  TORCH_CHECK(ptr_D.is_contiguous(), "ptr_D must be contiguous");
++  TORCH_CHECK(rows_per_expert.is_contiguous(), "rows_per_expert must be contiguous");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(ptr_bias->is_contiguous(), "ptr_bias must be contiguous");
++  }
++
++  int A_total_M = ptr_A.size(0);
++  int A_K = ptr_A.size(1);
++  int B_E = ptr_B.size(0);
++  int B_K = ptr_B.size(1);
++  int B_N = ptr_B.size(2);
++  int D_total_M = ptr_D.size(0);
++  int D_N = ptr_D.size(1);
++  int A_avg_M = A_total_M / num_experts;
++  int group_size = -1;
++
++  TORCH_CHECK(B_E == num_experts, "ptr_B.size(0) must match num_experts");
++  TORCH_CHECK(A_total_M == D_total_M, "ptr_A.size(0) must match ptr_D.size(0)");
++  TORCH_CHECK(A_K == B_K && B_K == K, "ptr_A.size(1) must match ptr_B.size(1)");
++  TORCH_CHECK(B_N == D_N && D_N == N, "ptr_B.size(2) must match ptr_D.size(1)");
++  TORCH_CHECK(
++      ptr_A_scales.size(0) == A_total_M,
++      "ptr_A_scales.size(0) must match ptr_A.size(0)");
++  TORCH_CHECK(
++      ptr_B_scales.size(0) == num_experts,
++      "ptr_B_scales.size(0) must match num_experts");
++  TORCH_CHECK(
++      ptr_B_scales.size(1) == N, "ptr_B_scales.size(1) must match N");
++  if (ptr_bias.has_value()) {
++    TORCH_CHECK(
++        ptr_bias->size(0) == num_experts,
++        "ptr_bias.size(0) must match num_experts");
++    TORCH_CHECK(ptr_bias->size(1) == N, "ptr_bias.size(1) must match N");
++  }
++
++  at::Tensor atomic_buffer =
++      at::empty({static_cast<long>(1)}, ptr_A.options().dtype(at::kInt));
++
++#define W8A8MoEGEMMLauncherCallER(Policy, ElementD)                         \
++  MoEGEMMLauncher<'R', 'R', Policy>(                                         \
++      dpcpp_queue,                                                           \
++      reinterpret_cast<int8_t*>(ptr_A.data_ptr()),                           \
++      reinterpret_cast<int8_t*>(ptr_B.data_ptr()),                           \
++      reinterpret_cast<float*>(ptr_B_scales.data_ptr()),                     \
++      reinterpret_cast<float*>(ptr_A_scales.data_ptr()),                     \
++      ptr_bias.has_value() ? reinterpret_cast<float*>(ptr_bias->data_ptr())  \
++                           : static_cast<float*>(nullptr),                  \
++      reinterpret_cast<ElementD*>(ptr_D.data_ptr()),                         \
++      N,                                                                     \
++      K,                                                                     \
++      reinterpret_cast<int*>(rows_per_expert.data_ptr()),                    \
++      num_experts,                                                           \
++      group_size,                                                            \
++      static_cast<int*>(atomic_buffer.data_ptr()));
++
++#define W8A8LauncherCallER(policy)             \
++  if (D_dtype == at::kBFloat16) {              \
++    using out_t = bfloat16_t;                  \
++    W8A8MoEGEMMLauncherCallER(policy, out_t);  \
++  } else if (D_dtype == at::kHalf) {           \
++    using out_t = half_t;                      \
++    W8A8MoEGEMMLauncherCallER(policy, out_t);  \
++  }
++
++  if (A_avg_M <= 8) {
++    using policy = w8a16_policy_m_16;
++    W8A8LauncherCallER(policy);
++  } else if (A_avg_M <= 32) {
++    using policy = w8a16_policy_m_32;
++    W8A8LauncherCallER(policy);
++  } else {
++    using policy = w8a8_policy;
++    W8A8LauncherCallER(policy);
++  }
++#undef W8A8LauncherCallER
++#undef W8A8MoEGEMMLauncherCallER
++
++  return ptr_D;
++}
++}  // namespace MoE
+diff --git a/csrc/xpu/onednn/onednn_ext.h b/csrc/xpu/onednn/onednn_ext.h
+index 4135617..bd93054 100644
+--- a/csrc/xpu/onednn/onednn_ext.h
++++ b/csrc/xpu/onednn/onednn_ext.h
+@@ -43,6 +43,8 @@ enum class joint_dtypes_t {
+   bf16_int4,
+   s8_int4,
+   u8_int4,
++  s8_s8_f16,
++  s8_s8_bf16,
+   f16_f8_e5m2,
+   bf16_f8_e5m2,
+   f16_f8_e4m3,
+@@ -100,6 +102,26 @@ struct onednn_types_mapper<joint_dtypes_t::u8_int4> {
+   }
+ };
+ 
++template <>
++struct onednn_types_mapper<joint_dtypes_t::s8_s8_f16> {
++  static inline std::
++      tuple<memory::data_type, memory::data_type, memory::data_type>
++      get() {
++    return std::make_tuple(
++        memory::data_type::s8, memory::data_type::s8, memory::data_type::f16);
++  }
++};
++
++template <>
++struct onednn_types_mapper<joint_dtypes_t::s8_s8_bf16> {
++  static inline std::
++      tuple<memory::data_type, memory::data_type, memory::data_type>
++      get() {
++    return std::make_tuple(
++        memory::data_type::s8, memory::data_type::s8, memory::data_type::bf16);
++  }
++};
++
+ template <>
+ struct onednn_types_mapper<joint_dtypes_t::f16_f8_e5m2> {
+   static inline std::
+@@ -932,6 +954,34 @@ static inline primitive_ext& matmul_primitive_create_and_cache(
+           attr,
+           scale_group_size,
+           zp_group_size);
++    case joint_dtypes_t::s8_s8_f16:
++      return matmul_primitive_create_and_cache<joint_dtypes_t::s8_s8_f16, F>(
++          Tt,
++          b_type,
++          m,
++          n,
++          k,
++          lda,
++          ldb,
++          ldc,
++          device_id,
++          attr,
++          scale_group_size,
++          zp_group_size);
++    case joint_dtypes_t::s8_s8_bf16:
++      return matmul_primitive_create_and_cache<joint_dtypes_t::s8_s8_bf16, F>(
++          Tt,
++          b_type,
++          m,
++          n,
++          k,
++          lda,
++          ldb,
++          ldc,
++          device_id,
++          attr,
++          scale_group_size,
++          zp_group_size);
+     case joint_dtypes_t::f16_f8_e5m2:
+       return matmul_primitive_create_and_cache<joint_dtypes_t::f16_f8_e5m2, F>(
+           Tt,
+diff --git a/csrc/xpu/onednn/onednn_matmul.cpp b/csrc/xpu/onednn/onednn_matmul.cpp
+index 2a3dace..cfb3f9a 100644
+--- a/csrc/xpu/onednn/onednn_matmul.cpp
++++ b/csrc/xpu/onednn/onednn_matmul.cpp
+@@ -2,6 +2,7 @@
+ #include "fp4_gemm_w4a4.h"
+ #include "fp8_gemm_w8a8.h"
+ #include "fp8_gemm_w8a16.h"
++#include "int8_gemm_w8a8.h"
+ #include "int4_gemm_w4a16.h"
+ #include "int4_gemm_w4a8.h"
+ 
+@@ -173,3 +174,17 @@ torch::Tensor int4_gemm_w4a8(
+ 
+   return result;
+ }
++
++torch::Tensor int8_gemm_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    std::optional<c10::ScalarType> out_dtype,
++    const std::optional<torch::Tensor>& bias_) {
++  const at::DeviceGuard device_guard(A.device());
++  torch::Tensor result = check_and_create_output_tensor(A, B, out_dtype);
++  bool is_nt = B.strides()[B.dim() - 2] == 1;
++  oneDNN::dnnl_matmul_w8a8_int8(result, A, A_scale, B, B_scale, is_nt, bias_);
++  return result;
++}
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 0200386..7905bcc 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -52,6 +52,17 @@ torch::Tensor int4_gemm_w4a8(
+     const std::optional<torch::Tensor>& g_idx,
+     const std::optional<torch::Tensor>& bias);
+ 
++torch::Tensor int8_gemm_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    std::optional<c10::ScalarType> out_dtype,
++    const std::optional<torch::Tensor>& bias);
++
++std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu(
++    const torch::Tensor& x);
++
+ #ifdef VLLM_MOE_ENABLED
+ torch::Tensor cutlass_grouped_gemm_interface(
+     torch::Tensor ptr_A,
+@@ -65,6 +76,18 @@ torch::Tensor cutlass_grouped_gemm_interface(
+     int64_t num_experts,
+     bool is_B_int4,
+     bool is_B_mxfp4);
++
++torch::Tensor cutlass_grouped_gemm_w8a8_int8_interface(
++    torch::Tensor ptr_A,
++    torch::Tensor ptr_A_scales,
++    torch::Tensor ptr_B,
++    torch::Tensor ptr_B_scales,
++    const c10::optional<at::Tensor>& ptr_bias,
++    torch::Tensor ptr_D,
++    torch::Tensor rows_per_expert,
++    int64_t N,
++    int64_t K,
++    int64_t num_experts);
+ #endif
+ 
+ std::tuple<at::Tensor, at::Tensor> deepseek_scaling_rope(
+@@ -148,4 +171,4 @@ torch::Tensor fp8_paged_mqa_logits(
+     const torch::Tensor& block_tables,
+     const c10::optional<at::Tensor>& schedule_metadata,
+     int64_t max_model_len);
+-#endif
+\ No newline at end of file
++#endif
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index 2c73d16..4c0ac40 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -37,6 +37,14 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "bias) -> Tensor");
+   xpu_ops.impl("int4_gemm_w4a8", torch::kXPU, &int4_gemm_w4a8);
+ 
++  xpu_ops.def(
++      "int8_gemm_w8a8(Tensor A, Tensor A_scale, Tensor B, Tensor B_scale, "
++      "ScalarType? out_dtype, Tensor? bias) -> Tensor");
++  xpu_ops.impl("int8_gemm_w8a8", torch::kXPU, &int8_gemm_w8a8);
++
++  xpu_ops.def("per_token_quant_int8_xpu(Tensor x) -> (Tensor, Tensor)");
++  xpu_ops.impl("per_token_quant_int8_xpu", torch::kXPU, &per_token_quant_int8_xpu);
++
+ #ifdef VLLM_MOE_ENABLED
+   xpu_ops.def(
+       "cutlass_grouped_gemm_interface(Tensor ptr_A, Tensor ptr_B, Tensor? "
+@@ -51,6 +59,16 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "cutlass_grouped_gemm_interface",
+       torch::kXPU,
+       &cutlass_grouped_gemm_interface);
++
++  xpu_ops.def(
++      "cutlass_grouped_gemm_w8a8_int8_interface(Tensor ptr_A, Tensor "
++      "ptr_A_scales, Tensor ptr_B, Tensor ptr_B_scales, Tensor? ptr_bias, "
++      "Tensor ptr_D, Tensor rows_per_expert, int N, int K, int num_experts) "
++      "-> Tensor");
++  xpu_ops.impl(
++      "cutlass_grouped_gemm_w8a8_int8_interface",
++      torch::kXPU,
++      &cutlass_grouped_gemm_w8a8_int8_interface);
+ #endif
+ 
+   xpu_ops.def(
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 93735cb..ed18a8e 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -29,11 +29,71 @@ def _should_use_ref_fused_moe(is_mxfp8: bool) -> bool:
+     return _is_env_enabled(REF_FUSED_MOE_ENV)
+ 
+ 
+-def _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4, is_block_fp8):
++if FUSEDMOE_AVAILABLE:
++    try:
++
++        @torch.library.register_fake(
++            "_xpu_C::cutlass_grouped_gemm_w8a8_int8_interface")
++        def _fake_cutlass_grouped_gemm_w8a8_int8_interface(
++                ptr_A, ptr_A_scales, ptr_B, ptr_B_scales, ptr_bias, ptr_D,
++                rows_per_expert, N, K, num_experts):
++            return ptr_D
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::per_token_quant_int8_xpu")
++        def _fake_per_token_quant_int8_xpu(x):
++            q = torch.empty_like(x, dtype=torch.int8)
++            scales = torch.empty((*x.shape[:-1], 1),
++                                 device=x.device,
++                                 dtype=torch.float32)
++            return q, scales
++
++    except RuntimeError:
++        pass
++
++
++def _per_token_quant_int8(x):
++    if FUSEDMOE_AVAILABLE and hasattr(torch.ops._xpu_C,
++                                      "per_token_quant_int8_xpu"):
++        return torch.ops._xpu_C.per_token_quant_int8_xpu(x)
++
++    x_2d = x.reshape(-1, x.shape[-1]).contiguous()
++    scales = x_2d.float().abs().amax(dim=-1, keepdim=True)
++    scales = scales.clamp(min=1e-10) / 127.0
++    q = (x_2d.float() / scales).round().clamp(-127, 127).to(torch.int8)
++    return q.reshape_as(x), scales.reshape(*x.shape[:-1], 1)
++
++
++def _normalize_int8_weight_scales(scales, out_features):
++    scales = scales.squeeze(-1) if scales is not None and scales.dim() == 3 else scales
++    if scales is None:
++        raise ValueError("W8A8 INT8 grouped GEMM requires weight scales.")
++    if scales.dim() == 1:
++        scales = scales.view(-1, 1).expand(-1, out_features)
++    elif scales.dim() == 2 and scales.shape[-1] != out_features:
++        raise ValueError(
++            "W8A8 INT8 weight scales must be [num_experts], "
++            f"[num_experts, {out_features}], or [num_experts, {out_features}, 1]. "
++            f"Got {tuple(scales.shape)}.")
++    return scales.contiguous()
++
++
++def _get_recipe(is_fp8,
++                is_mxfp8,
++                is_mxfp4,
++                is_int4,
++                is_block_fp8,
++                is_int8=False):
+     if is_mxfp8:
+         return "mxfp8"
+     elif is_block_fp8:
+         return "fp8block"
++    elif is_int8:
++        return "int8"
+     elif is_mxfp4:
+         return "mxfp4"
+     elif is_int4:
+@@ -227,7 +287,13 @@ def ref_fused_moe(recipe,
+         if recipe == "fp8block":
+             expert_w13 = hp_from_128x128(w13[expert_id, :, :],
+                                         w13_scales[expert_id, :, :])
+-        if recipe in ("fp8block", "mxfp8"):
++        elif recipe == "int8":
++            expert_w13 = (
++                expert_w13.to(compute_dtype) *
++                _normalize_int8_weight_scales(
++                    w13_scales, expert_w13.shape[-1])[expert_id].view(
++                        1, -1).to(compute_dtype))
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             inter = expert_w13.shape[-1] // 2
+             w1, w3 = torch.split(expert_w13, inter, dim=-1)
+         else:
+@@ -238,7 +304,7 @@ def ref_fused_moe(recipe,
+         if w13_bias is not None:
+             w1_bias, w3_bias = w13_bias[expert_id, :].chunk(2)
+ 
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             gemm1 = expert_tokens.to(compute_dtype) @ w1.to(compute_dtype)
+         else:
+             gemm1 = expert_tokens.to(compute_dtype) @ w1.T.to(compute_dtype)
+@@ -247,7 +313,7 @@ def ref_fused_moe(recipe,
+ 
+         gate = _naive_fused_moe_activation(gemm1, activation)
+ 
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             up = expert_tokens.to(compute_dtype) @ w3.to(compute_dtype)
+         else:
+             up = expert_tokens.to(compute_dtype) @ w3.T.to(compute_dtype)
+@@ -262,6 +328,12 @@ def ref_fused_moe(recipe,
+                                         w2_scales[expert_id, :, :])
+             _q, _scale = quant_fp8_act(gemm2_input)
+             gemm2_input = hp_from_1x128(_q, _scale)
++        elif recipe == "int8":
++            expert_w2 = (
++                expert_w2.to(compute_dtype) *
++                _normalize_int8_weight_scales(
++                    w2_scales, expert_w2.shape[-1])[expert_id].view(
++                        1, -1).to(compute_dtype))
+         elif recipe == "mxfp8":
+             _q, _scale = quant_mxfp_act(gemm2_input, "mxfp8")
+             gemm2_input = (_q.to(compute_dtype).reshape(-1, 32)
+@@ -275,7 +347,7 @@ def ref_fused_moe(recipe,
+                                               (_q.shape[-1] * 2, ))
+         ###
+ 
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             expert_out = gemm2_input @ expert_w2.to(compute_dtype)
+         else:
+             expert_out = gemm2_input @ expert_w2.T.to(compute_dtype)
+@@ -312,7 +384,8 @@ class XpuFusedMoe:
+         is_int4=False,
+         is_mxfp4=False,
+         is_mxfp8=False,
+-        is_block_fp8=False
++        is_block_fp8=False,
++        is_int8=False,
+     ):
+         # 4bits support [E, N, K]
+         # other types [E, K, N]
+@@ -339,7 +412,7 @@ class XpuFusedMoe:
+         self.w13 = w13
+         self.w2 = w2
+ 
+-        if not is_fp8 and not is_int4 and not is_mxfp4 and not is_block_fp8:
++        if not is_fp8 and not is_int4 and not is_mxfp4 and not is_block_fp8 and not is_int8:
+             self.gemm1_scales = None
+             self.gemm2_scales = None
+         else:
+@@ -360,8 +433,9 @@ class XpuFusedMoe:
+         self.is_mxfp4 = is_mxfp4
+         self.is_mxfp8 = is_mxfp8
+         self.is_block_fp8 = is_block_fp8
++        self.is_int8 = is_int8
+         self.recipe = _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4,
+-                                   is_block_fp8)
++                                   is_block_fp8, is_int8)
+         self._use_ref = _should_use_ref_fused_moe(is_mxfp8)
+ 
+         if self.activation == "silu":
+@@ -411,9 +485,28 @@ class XpuFusedMoe:
+                             topk_weights, topk_ids,
+                             expert_map)
+         else:
+-            self._apply_kernel(output, hidden_states,
+-                               topk_weights, topk_ids,
+-                               expert_map)
++            xpu_fused_moe(hidden_states=hidden_states,
++                          w13=self.w13,
++                          w13_scales=self.gemm1_scales,
++                          w13_bias=self.w13_bias,
++                          w2=self.w2,
++                          w2_scales=self.gemm2_scales,
++                          w2_bias=self.w2_bias,
++                          topk_weights=topk_weights,
++                          topk_ids=topk_ids,
++                          n_experts_per_token=self.n_experts_per_token,
++                          activation=self.activation,
++                          num_experts=self.num_experts,
++                          ep_rank=self.ep_rank,
++                          ep_size=self.ep_size,
++                          expert_map=expert_map,
++                          output=output,
++                          is_fp8=self.is_fp8,
++                          is_int4=self.is_int4,
++                          is_mxfp4=self.is_mxfp4,
++                          is_mxfp8=self.is_mxfp8,
++                          is_block_fp8=self.is_block_fp8,
++                          is_int8=self.is_int8)
+ 
+     def _apply_ref(
+         self,
+@@ -544,7 +637,8 @@ def xpu_fused_moe(hidden_states,
+                   is_int4=False,
+                   is_mxfp4=False,
+                   is_mxfp8=False,
+-                  is_block_fp8=False):
++                  is_block_fp8=False,
++                  is_int8=False):
+     '''
+     hidden_states: [num_rows, hidden_size]
+     w13: [num_experts, 2*inter_size, hidden_size]
+@@ -568,6 +662,7 @@ def xpu_fused_moe(hidden_states,
+     is_mxfp4: bool
+     is_mxfp8: bool
+     is_block_fp8: bool
++    is_int8: bool
+     '''
+     if output is None:
+         output = torch.empty_like(hidden_states)
+@@ -576,7 +671,7 @@ def xpu_fused_moe(hidden_states,
+             "output shape must be the same as hidden_states shape"
+     if _should_use_ref_fused_moe(is_mxfp8):
+         recipe = _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4,
+-                             is_block_fp8)
++                             is_block_fp8, is_int8)
+         out = ref_fused_moe(recipe=recipe,
+                             x=hidden_states,
+                             w13=w13,
+@@ -623,7 +718,7 @@ def xpu_fused_moe(hidden_states,
+                                dtype=hidden_states.dtype,
+                                device=hidden_states.device)
+ 
+-    if not is_fp8 and not is_int4 and not is_mxfp4:
++    if not is_fp8 and not is_int4 and not is_mxfp4 and not is_int8:
+         gemm1_scales = None
+         gemm2_scales = None
+     else:
+@@ -670,18 +765,35 @@ def xpu_fused_moe(hidden_states,
+     ########### gemm1 ##################
+     input_B = w13
+ 
+-    torch.ops._xpu_C.cutlass_grouped_gemm_interface(
+-        ptr_A=remapped_hidden_states,
+-        ptr_B=input_B,
+-        ptr_scales=gemm1_scales,
+-        ptr_bias=w13_bias,
+-        ptr_D=gemm1_output,
+-        rows_per_expert=rows_per_expert,
+-        N=2 * inter_size,
+-        K=hidden_size,
+-        num_experts=num_experts,
+-        is_B_int4=is_int4,
+-        is_B_mxfp4=is_mxfp4)
++    if is_int8:
++        remapped_hidden_states, gemm1_a_scales = _per_token_quant_int8(
++            remapped_hidden_states)
++        gemm1_scales = _normalize_int8_weight_scales(gemm1_scales,
++                                                     2 * inter_size)
++        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++            ptr_A=remapped_hidden_states,
++            ptr_A_scales=gemm1_a_scales,
++            ptr_B=input_B,
++            ptr_B_scales=gemm1_scales,
++            ptr_bias=w13_bias,
++            ptr_D=gemm1_output,
++            rows_per_expert=rows_per_expert,
++            N=2 * inter_size,
++            K=hidden_size,
++            num_experts=num_experts)
++    else:
++        torch.ops._xpu_C.cutlass_grouped_gemm_interface(
++            ptr_A=remapped_hidden_states,
++            ptr_B=input_B,
++            ptr_scales=gemm1_scales,
++            ptr_bias=w13_bias,
++            ptr_D=gemm1_output,
++            rows_per_expert=rows_per_expert,
++            N=2 * inter_size,
++            K=hidden_size,
++            num_experts=num_experts,
++            is_B_int4=is_int4,
++            is_B_mxfp4=is_mxfp4)
+ 
+     inter_size_scale = 2 if activation == "relu2_no_mul" else 1
+     # act
+@@ -697,18 +809,34 @@ def xpu_fused_moe(hidden_states,
+                                dtype=hidden_states.dtype,
+                                device=hidden_states.device)
+ 
+-    torch.ops._xpu_C.cutlass_grouped_gemm_interface(
+-        ptr_A=input_A,
+-        ptr_B=input_B,
+-        ptr_scales=gemm2_scales,
+-        ptr_bias=w2_bias,
+-        ptr_D=gemm2_output,
+-        rows_per_expert=rows_per_expert,
+-        N=hidden_size,
+-        K=inter_size * inter_size_scale,
+-        num_experts=num_experts,
+-        is_B_int4=is_int4,
+-        is_B_mxfp4=is_mxfp4)
++    if is_int8:
++        input_A, gemm2_a_scales = _per_token_quant_int8(input_A)
++        gemm2_scales = _normalize_int8_weight_scales(gemm2_scales,
++                                                     hidden_size)
++        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++            ptr_A=input_A,
++            ptr_A_scales=gemm2_a_scales,
++            ptr_B=input_B,
++            ptr_B_scales=gemm2_scales,
++            ptr_bias=w2_bias,
++            ptr_D=gemm2_output,
++            rows_per_expert=rows_per_expert,
++            N=hidden_size,
++            K=inter_size * inter_size_scale,
++            num_experts=num_experts)
++    else:
++        torch.ops._xpu_C.cutlass_grouped_gemm_interface(
++            ptr_A=input_A,
++            ptr_B=input_B,
++            ptr_scales=gemm2_scales,
++            ptr_bias=w2_bias,
++            ptr_D=gemm2_output,
++            rows_per_expert=rows_per_expert,
++            N=hidden_size,
++            K=inter_size * inter_size_scale,
++            num_experts=num_experts,
++            is_B_int4=is_int4,
++            is_B_mxfp4=is_mxfp4)
+ 
+     torch.ops._moe_C.moe_gather(output, gemm2_output, topk_weights,
+                                 unpermuted_row_to_permuted_row,
+diff --git a/csrc/xpu/onednn/int8_gemm_w8a8.h b/csrc/xpu/onednn/int8_gemm_w8a8.h
+new file mode 100644
+index 0000000..88f3d97
+--- /dev/null
++++ b/csrc/xpu/onednn/int8_gemm_w8a8.h
+@@ -0,0 +1,152 @@
++#pragma once
++
++#include <c10/xpu/XPUStream.h>
++#include <dnnl.hpp>
++#include <torch/torch.h>
++
++#include "onednn_ext.h"
++#include "onednn_runtime.h"
++
++namespace oneDNN {
++
++static inline torch::Tensor& get_int8_gemm_scratchpad_cache(
++    const int device_id,
++    const int scratchpad_size,
++    const torch::TensorOptions& options) {
++  static thread_local std::array<ska::flat_hash_map<int, torch::Tensor>, 16>
++      scratchpads;
++
++  auto& device_scratchpads = scratchpads[device_id];
++  auto iter = device_scratchpads.find(scratchpad_size);
++  if (iter == device_scratchpads.end() || !iter->second.defined()) {
++    iter = device_scratchpads
++               .insert({scratchpad_size,
++                        at::empty(
++                            {scratchpad_size},
++                            options.dtype(at::kByte),
++                            c10::nullopt)})
++               .first;
++  }
++  return iter->second;
++}
++
++static inline void dnnl_matmul_w8a8_int8(
++    torch::Tensor& result,       // dst, [m, n] or [b, m, n]
++    const torch::Tensor& mat1,   // quantized src, [m, k] or [b, m, k]
++    const torch::Tensor& m1_sc,  // src scales, [m, 1] or [1]
++    const torch::Tensor& mat2,   // quantized weight, [k, n] or [n, k]
++    const torch::Tensor& m2_sc,  // weight scales, [n] / [n, 1] or [1]
++    bool is_nt,
++    const std::optional<torch::Tensor>& bias) {
++  auto src_sz = mat1.sizes();
++  auto o_sz = result.sizes();
++
++  const int m = std::reduce(
++      src_sz.begin(), src_sz.end() - 1, 1, std::multiplies<int64_t>());
++  const int n = o_sz.back();
++  const int k = *(src_sz.end() - 1);
++
++  TORCH_CHECK(mat1.scalar_type() == at::ScalarType::Char,
++              "input must be int8 for int8 matmul");
++  TORCH_CHECK(mat2.scalar_type() == at::ScalarType::Char,
++              "weight must be int8 for int8 matmul");
++
++  joint_dtypes_t jd;
++  if (result.scalar_type() == torch::kBFloat16) {
++    jd = joint_dtypes_t::s8_s8_bf16;
++  } else if (result.scalar_type() == torch::kFloat16) {
++    jd = joint_dtypes_t::s8_s8_f16;
++  } else {
++    TORCH_CHECK(false, "output must be float16 or bfloat16 for int8 matmul");
++  }
++
++  bias_type_t b_type = get_bias_type(bias, m, n);
++  trans_type_t tt = is_nt ? trans_type_t::nt : trans_type_t::nn;
++
++  auto mat1_strides = mat1.strides();
++  int64_t leading_dim = -1;
++  if (mat1.dim() == 2) {
++    leading_dim = 0;
++  } else if (mat1.dim() == 3) {
++    leading_dim = mat1_strides[0] < mat1_strides[1] ? 0 : 1;
++  } else {
++    TORCH_CHECK(false, "Unsupported input dimension for int8 matmul: ", mat1.dim());
++  }
++
++  int64_t lda = mat1_strides[leading_dim];
++  int64_t ldb = mat2.strides()[mat2.dim() - 1] == 1
++                    ? mat2.strides()[mat2.dim() - 2]
++                    : mat2.strides()[mat2.dim() - 1];
++  int64_t ldc = result.strides()[leading_dim];
++
++  auto f_attr = [&](dnnl::primitive_attr& pattr) {
++    pattr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
++
++    if (m1_sc.numel() == 1) {
++      pattr.set_scales(
++          DNNL_ARG_SRC, /* mask */ 0, {}, get_onednn_dtype(m1_sc));
++    } else {
++      TORCH_CHECK(
++          m1_sc.numel() == m,
++          "input scales must be per-tensor or per-token for int8 matmul");
++      pattr.set_scales(
++          DNNL_ARG_SRC,
++          /* mask */ (1 << 0) + (1 << 1),
++          {1, k},
++          get_onednn_dtype(m1_sc));
++    }
++
++    if (m2_sc.numel() == 1) {
++      pattr.set_scales(
++          DNNL_ARG_WEIGHTS, /* mask */ 0, {}, get_onednn_dtype(m2_sc));
++    } else {
++      TORCH_CHECK(
++          m2_sc.numel() == n,
++          "weight scales must be per-tensor or per-output-channel for int8 matmul");
++      pattr.set_scales(
++          DNNL_ARG_WEIGHTS,
++          /* mask */ (1 << 1),
++          {},
++          get_onednn_dtype(m2_sc));
++    }
++  };
++
++  const int dev_id = c10::xpu::getCurrentXPUStream().device_index();
++  at::Device curDevice = at::Device(at::kXPU, dev_id);
++  auto engine = GpuEngineManager::Instance().get_engine(curDevice);
++
++  int sc_group_size = ((m1_sc.numel() == 1 ? 1 : 2) << 8) |
++                      (m2_sc.numel() == 1 ? 1 : 2);
++  auto& matmul_ext = matmul_primitive_create_and_cache(
++      jd, tt, b_type, m, n, k, lda, ldb, ldc, dev_id, f_attr, sc_group_size);
++
++  int arg_off = 0;
++  matmul_ext.set_attribute(
++      arg_off++, DNNL_ARG_ATTR_SCALES | DNNL_ARG_WEIGHTS, m2_sc.data_ptr(), [&]() {
++        return make_onednn_memory(
++            get_onednn_md(m2_sc), engine, m2_sc.data_ptr());
++      });
++  matmul_ext.set_attribute(
++      arg_off++, DNNL_ARG_ATTR_SCALES | DNNL_ARG_SRC, m1_sc.data_ptr(), [&]() {
++        return make_onednn_memory(
++            get_onednn_md(m1_sc), engine, m1_sc.data_ptr());
++      });
++
++  std::vector<std::pair<int, void*>> arg_handles;
++  arg_handles.reserve(8);
++  arg_handles.emplace_back(DNNL_ARG_SRC, mat1.data_ptr());
++  arg_handles.emplace_back(DNNL_ARG_WEIGHTS, mat2.data_ptr());
++  arg_handles.emplace_back(DNNL_ARG_DST, result.data_ptr());
++  if (get_shape(b_type) != bias_shape_t::none) {
++    arg_handles.emplace_back(DNNL_ARG_BIAS, bias.value().data_ptr());
++  }
++
++  int scratchpad_size = matmul_ext.get_scratchpad_size();
++  torch::Tensor& scratchpad_tensor =
++      get_int8_gemm_scratchpad_cache(dev_id, scratchpad_size, mat1.options());
++  arg_handles.emplace_back(DNNL_ARG_SCRATCHPAD, scratchpad_tensor.data_ptr());
++
++  auto& strm = GpuStreamManager::Instance().get_stream();
++  matmul_ext.execute(strm, engine, std::move(arg_handles), arg_off);
++}
++}  // namespace oneDNN
+diff --git a/csrc/xpu/quantization/int8_quant.cpp b/csrc/xpu/quantization/int8_quant.cpp
+new file mode 100644
+index 0000000..9fe657c
+--- /dev/null
++++ b/csrc/xpu/quantization/int8_quant.cpp
+@@ -0,0 +1,122 @@
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include "utils.h"
++
++namespace {
++
++template <typename scalar_t>
++float to_float(scalar_t value) {
++  return static_cast<float>(value);
++}
++
++template <typename scalar_t>
++void launch_per_token_quant_int8(
++    const scalar_t* x,
++    int8_t* q,
++    float* scales,
++    int64_t rows,
++    int64_t cols) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(rows * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_max(local, cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int64_t row = item.get_group(0);
++              const int local_id = item.get_local_id(0);
++              const int local_range = item.get_local_range(0);
++
++              float thread_max = 0.0f;
++              const int64_t row_offset = row * cols;
++              for (int64_t col = local_id; col < cols; col += local_range) {
++                const float value = to_float(x[row_offset + col]);
++                thread_max = sycl::fmax(thread_max, sycl::fabs(value));
++              }
++
++              local_max[local_id] = thread_max;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++                if (local_id < stride) {
++                  local_max[local_id] =
++                      sycl::fmax(local_max[local_id],
++                                 local_max[local_id + stride]);
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              const float absmax = sycl::fmax(local_max[0], 1.0e-10f);
++              const float scale = absmax / 127.0f;
++              if (local_id == 0) {
++                scales[row] = scale;
++              }
++
++              const float inv_scale = 127.0f / absmax;
++              for (int64_t col = local_id; col < cols; col += local_range) {
++                float value = to_float(x[row_offset + col]) * inv_scale;
++                value = sycl::round(value);
++                value = sycl::fmin(127.0f, sycl::fmax(-127.0f, value));
++                q[row_offset + col] = static_cast<int8_t>(value);
++              }
++            });
++  });
++}
++
++}  // namespace
++
++std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu(
++    const torch::Tensor& x) {
++  TORCH_CHECK(x.is_xpu(), "x must be an XPU tensor");
++  TORCH_CHECK(x.dim() >= 2, "x must have at least 2 dimensions");
++  TORCH_CHECK(
++      x.scalar_type() == torch::kFloat32 || x.scalar_type() == torch::kFloat16 ||
++          x.scalar_type() == torch::kBFloat16,
++      "per_token_quant_int8_xpu only supports fp32, fp16, and bf16 inputs, got ",
++      x.scalar_type());
++
++  auto x_contig = x.contiguous();
++  const int64_t cols = x_contig.size(-1);
++  const int64_t rows = x_contig.numel() / cols;
++
++  auto q = torch::empty_like(x_contig, x_contig.options().dtype(torch::kInt8));
++
++  std::vector<int64_t> scale_shape;
++  scale_shape.reserve(x_contig.dim());
++  for (int64_t i = 0; i < x_contig.dim() - 1; ++i) {
++    scale_shape.push_back(x_contig.size(i));
++  }
++  scale_shape.push_back(1);
++  auto scales = torch::empty(scale_shape, x_contig.options().dtype(torch::kFloat32));
++
++  if (rows == 0 || cols == 0) {
++    return {q, scales};
++  }
++
++  if (x_contig.scalar_type() == torch::kFloat32) {
++    launch_per_token_quant_int8(
++        x_contig.data_ptr<float>(), q.data_ptr<int8_t>(), scales.data_ptr<float>(),
++        rows, cols);
++  } else if (x_contig.scalar_type() == torch::kFloat16) {
++    launch_per_token_quant_int8(
++        reinterpret_cast<const sycl::half*>(x_contig.data_ptr()),
++        q.data_ptr<int8_t>(),
++        scales.data_ptr<float>(),
++        rows,
++        cols);
++  } else {
++    launch_per_token_quant_int8(
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(x_contig.data_ptr()),
++        q.data_ptr<int8_t>(),
++        scales.data_ptr<float>(),
++        rows,
++        cols);
++  }
++
++  return {q, scales};
++}

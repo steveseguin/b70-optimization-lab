@@ -1,0 +1,31 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -388,12 +388,15 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT
+         )
+         self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
+-            xpu_gdn_reuse_qkvz_ba_quant_mode in ("1", "true", "clone")
++            xpu_gdn_reuse_qkvz_ba_quant_mode in ("1", "true", "clone", "view")
+         )
+         self.xpu_reuse_qkvz_ba_quant_clone = (
+             xpu_gdn_reuse_qkvz_ba_quant_mode == "clone"
+         )
++        self.xpu_reuse_qkvz_ba_quant_view = (
++            xpu_gdn_reuse_qkvz_ba_quant_mode == "view"
++        )
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+@@ -634,6 +637,12 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                 x_s_qkvz = x_s.clone()
+                 x_q_ba = x_q.clone()
+                 x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_view:
++                x_q_qkvz = x_q.view_as(x_q)
++                x_s_qkvz = x_s.view_as(x_s)
++                x_q_ba = x_q.view_as(x_q)
++                x_s_ba = x_s.view_as(x_s)
+             else:
+                 x_q_qkvz = x_q
+                 x_s_qkvz = x_s

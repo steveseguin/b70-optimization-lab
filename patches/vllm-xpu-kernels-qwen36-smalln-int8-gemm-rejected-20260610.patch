@@ -1,0 +1,147 @@
+diff --git a/csrc/xpu/onednn/int8_gemm_w8a8_small_n.h b/csrc/xpu/onednn/int8_gemm_w8a8_small_n.h
+new file mode 100644
+index 0000000..0000000
+--- /dev/null
++++ b/csrc/xpu/onednn/int8_gemm_w8a8_small_n.h
+@@ -0,0 +1,120 @@
++#pragma once
++
++#include <cstdlib>
++#include <sycl/sycl.hpp>
++#include <torch/torch.h>
++
++#include "utils.h"
++
++namespace oneDNN {
++
++static inline bool env_enabled(const char* name) {
++  const char* value = std::getenv(name);
++  if (value == nullptr) {
++    return false;
++  }
++  return value[0] == '1' || value[0] == 't' || value[0] == 'T' ||
++         value[0] == 'y' || value[0] == 'Y';
++}
++
++static inline bool dnnl_matmul_w8a8_int8_small_n_bf16(
++    torch::Tensor& result,
++    const torch::Tensor& mat1,
++    const torch::Tensor& m1_sc,
++    const torch::Tensor& mat2,
++    const torch::Tensor& m2_sc,
++    bool is_nt,
++    const std::optional<torch::Tensor>& bias) {
++  if (!env_enabled("VLLM_XPU_INT8_GEMM_SMALL_N")) {
++    return false;
++  }
++  if (bias.has_value() || is_nt) {
++    return false;
++  }
++  if (mat1.dim() != 2 || mat2.dim() != 2 || result.dim() != 2) {
++    return false;
++  }
++  if (result.scalar_type() != torch::kBFloat16) {
++    return false;
++  }
++  if (mat1.scalar_type() != at::ScalarType::Char ||
++      mat2.scalar_type() != at::ScalarType::Char ||
++      m1_sc.scalar_type() != torch::kFloat32 ||
++      m2_sc.scalar_type() != torch::kFloat32) {
++    return false;
++  }
++
++  const int64_t m = mat1.size(0);
++  const int64_t k = mat1.size(1);
++  const int64_t n = mat2.size(1);
++  if (m <= 0 || k <= 0 || n <= 0 || n > 16) {
++    return false;
++  }
++  if (result.size(0) != m || result.size(1) != n || mat2.size(0) != k) {
++    return false;
++  }
++  if (m1_sc.numel() != m || m2_sc.numel() != n) {
++    return false;
++  }
++  if (mat1.stride(1) != 1 || mat2.stride(1) != 1 || result.stride(1) != 1) {
++    return false;
++  }
++
++  const int64_t lda = mat1.stride(0);
++  const int64_t ldb = mat2.stride(0);
++  const int64_t ldc = result.stride(0);
++  const int64_t scale_stride = m1_sc.stride(0);
++
++  const int8_t* a = mat1.data_ptr<int8_t>();
++  const int8_t* b = mat2.data_ptr<int8_t>();
++  const float* a_scales = m1_sc.data_ptr<float>();
++  const float* b_scales = m2_sc.data_ptr<float>();
++  auto* dst =
++      reinterpret_cast<sycl::ext::oneapi::bfloat16*>(result.data_ptr());
++
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(m * n * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<int32_t, 1> partial(local, cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(16)]] {
++          const int64_t group = item.get_group(0);
++          const int64_t row = group / n;
++          const int64_t col = group - row * n;
++          const int local_id = item.get_local_id(0);
++          const int local_range = item.get_local_range(0);
++
++          int32_t acc = 0;
++          const int64_t a_row = row * lda;
++          for (int64_t kk = local_id; kk < k; kk += local_range) {
++            acc += static_cast<int32_t>(a[a_row + kk]) *
++                   static_cast<int32_t>(b[kk * ldb + col]);
++          }
++
++          partial[local_id] = acc;
++          item.barrier(sycl::access::fence_space::local_space);
++
++          for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++            if (local_id < stride) {
++              partial[local_id] += partial[local_id + stride];
++            }
++            item.barrier(sycl::access::fence_space::local_space);
++          }
++
++          if (local_id == 0) {
++            const float value = static_cast<float>(partial[0]) *
++                                a_scales[row * scale_stride] *
++                                b_scales[col];
++            dst[row * ldc + col] = sycl::ext::oneapi::bfloat16(value);
++          }
++        });
++  });
++  return true;
++}
++
++}  // namespace oneDNN
+diff --git a/csrc/xpu/onednn/onednn_matmul.cpp b/csrc/xpu/onednn/onednn_matmul.cpp
+index 0000000..0000000 100644
+--- a/csrc/xpu/onednn/onednn_matmul.cpp
++++ b/csrc/xpu/onednn/onednn_matmul.cpp
+@@ -3,5 +3,6 @@
+ #include "fp8_gemm_w8a8.h"
+ #include "fp8_gemm_w8a16.h"
+ #include "int8_gemm_w8a8.h"
++#include "int8_gemm_w8a8_small_n.h"
+ #include "int4_gemm_w4a16.h"
+ #include "int4_gemm_w4a8.h"
+@@ -187,6 +188,10 @@ torch::Tensor int8_gemm_w8a8(
+   const at::DeviceGuard device_guard(A.device());
+   torch::Tensor result = check_and_create_output_tensor(A, B, out_dtype);
+   bool is_nt = B.strides()[B.dim() - 2] == 1;
++  if (oneDNN::dnnl_matmul_w8a8_int8_small_n_bf16(
++          result, A, A_scale, B, B_scale, is_nt, bias_)) {
++    return result;
++  }
+  oneDNN::dnnl_matmul_w8a8_int8(result, A, A_scale, B, B_scale, is_nt, bias_);
+  return result;
+ }

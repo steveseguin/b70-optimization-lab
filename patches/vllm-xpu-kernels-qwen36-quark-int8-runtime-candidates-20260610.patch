@@ -1,0 +1,441 @@
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 93735cb..8fbc7b4 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -16,6 +16,7 @@ from ._mx_utils import (fp4_e2m1fn_x2_to_float, hp_from_1x128, hp_from_128x128,
+                         quant_fp8_act, quant_mxfp_act)
+
+ REF_FUSED_MOE_ENV = "VLLM_XPU_FUSED_MOE_USE_REF"
++FUSE_SILU_QUANT_ENV = "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT"
+
+
+ def _is_env_enabled(env_name: str, default: str = "0") -> bool:
+@@ -29,11 +30,97 @@ def _should_use_ref_fused_moe(is_mxfp8: bool) -> bool:
+     return _is_env_enabled(REF_FUSED_MOE_ENV)
+
+
+-def _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4, is_block_fp8):
++if FUSEDMOE_AVAILABLE:
++    try:
++
++        @torch.library.register_fake(
++            "_xpu_C::cutlass_grouped_gemm_w8a8_int8_interface")
++        def _fake_cutlass_grouped_gemm_w8a8_int8_interface(
++                ptr_A, ptr_A_scales, ptr_B, ptr_B_scales, ptr_bias, ptr_D,
++                rows_per_expert, N, K, num_experts):
++            return ptr_D
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::per_token_quant_int8_xpu")
++        def _fake_per_token_quant_int8_xpu(x):
++            q = torch.empty_like(x, dtype=torch.int8)
++            scales = torch.empty((*x.shape[:-1], 1),
++                                 device=x.device,
++                                 dtype=torch.float32)
++            return q, scales
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::silu_and_mul_quant_int8_xpu")
++        def _fake_silu_and_mul_quant_int8_xpu(x):
++            q_shape = (*x.shape[:-1], x.shape[-1] // 2)
++            q = torch.empty(q_shape, device=x.device, dtype=torch.int8)
++            scales = torch.empty((*x.shape[:-1], 1),
++                                 device=x.device,
++                                 dtype=torch.float32)
++            return q, scales
++
++    except RuntimeError:
++        pass
++
++
++def _per_token_quant_int8(x):
++    if FUSEDMOE_AVAILABLE and hasattr(torch.ops._xpu_C,
++                                      "per_token_quant_int8_xpu"):
++        return torch.ops._xpu_C.per_token_quant_int8_xpu(x)
++
++    x_2d = x.reshape(-1, x.shape[-1]).contiguous()
++    scales = x_2d.float().abs().amax(dim=-1, keepdim=True)
++    scales = scales.clamp(min=1e-10) / 127.0
++    q = (x_2d.float() / scales).round().clamp(-127, 127).to(torch.int8)
++    return q.reshape_as(x), scales.reshape(*x.shape[:-1], 1)
++
++
++def _silu_and_mul_quant_int8(x):
++    if FUSEDMOE_AVAILABLE and hasattr(torch.ops._xpu_C,
++                                      "silu_and_mul_quant_int8_xpu"):
++        return torch.ops._xpu_C.silu_and_mul_quant_int8_xpu(x)
++
++    act_output = torch.empty((*x.shape[:-1], x.shape[-1] // 2),
++                             dtype=x.dtype,
++                             device=x.device)
++    torch.ops._C.silu_and_mul(act_output, x)
++    return _per_token_quant_int8(act_output)
++
++
++def _normalize_int8_weight_scales(scales, out_features):
++    scales = scales.squeeze(-1) if scales is not None and scales.dim() == 3 else scales
++    if scales is None:
++        raise ValueError("W8A8 INT8 grouped GEMM requires weight scales.")
++    if scales.dim() == 1:
++        scales = scales.view(-1, 1).expand(-1, out_features)
++    elif scales.dim() == 2 and scales.shape[-1] != out_features:
++        raise ValueError(
++            "W8A8 INT8 weight scales must be [num_experts], "
++            f"[num_experts, {out_features}], or [num_experts, {out_features}, 1]. "
++            f"Got {tuple(scales.shape)}.")
++    return scales.contiguous()
++
++
++def _get_recipe(is_fp8,
++                is_mxfp8,
++                is_mxfp4,
++                is_int4,
++                is_block_fp8,
++                is_int8=False):
+     if is_mxfp8:
+         return "mxfp8"
+     elif is_block_fp8:
+         return "fp8block"
++    elif is_int8:
++        return "int8"
+     elif is_mxfp4:
+         return "mxfp4"
+     elif is_int4:
+@@ -227,7 +314,13 @@ def ref_fused_moe(recipe,
+         if recipe == "fp8block":
+             expert_w13 = hp_from_128x128(w13[expert_id, :, :],
+                                         w13_scales[expert_id, :, :])
+-        if recipe in ("fp8block", "mxfp8"):
++        elif recipe == "int8":
++            expert_w13 = (
++                expert_w13.to(compute_dtype) *
++                _normalize_int8_weight_scales(
++                    w13_scales, expert_w13.shape[-1])[expert_id].view(
++                        1, -1).to(compute_dtype))
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             inter = expert_w13.shape[-1] // 2
+             w1, w3 = torch.split(expert_w13, inter, dim=-1)
+         else:
+@@ -238,7 +331,7 @@ def ref_fused_moe(recipe,
+         if w13_bias is not None:
+             w1_bias, w3_bias = w13_bias[expert_id, :].chunk(2)
+
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             gemm1 = expert_tokens.to(compute_dtype) @ w1.to(compute_dtype)
+         else:
+             gemm1 = expert_tokens.to(compute_dtype) @ w1.T.to(compute_dtype)
+@@ -247,7 +340,7 @@ def ref_fused_moe(recipe,
+
+         gate = _naive_fused_moe_activation(gemm1, activation)
+
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             up = expert_tokens.to(compute_dtype) @ w3.to(compute_dtype)
+         else:
+             up = expert_tokens.to(compute_dtype) @ w3.T.to(compute_dtype)
+@@ -262,6 +355,12 @@ def ref_fused_moe(recipe,
+                                         w2_scales[expert_id, :, :])
+             _q, _scale = quant_fp8_act(gemm2_input)
+             gemm2_input = hp_from_1x128(_q, _scale)
++        elif recipe == "int8":
++            expert_w2 = (
++                expert_w2.to(compute_dtype) *
++                _normalize_int8_weight_scales(
++                    w2_scales, expert_w2.shape[-1])[expert_id].view(
++                        1, -1).to(compute_dtype))
+         elif recipe == "mxfp8":
+             _q, _scale = quant_mxfp_act(gemm2_input, "mxfp8")
+             gemm2_input = (_q.to(compute_dtype).reshape(-1, 32)
+@@ -275,7 +374,7 @@ def ref_fused_moe(recipe,
+                                               (_q.shape[-1] * 2, ))
+         ###
+
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             expert_out = gemm2_input @ expert_w2.to(compute_dtype)
+         else:
+             expert_out = gemm2_input @ expert_w2.T.to(compute_dtype)
+@@ -312,7 +411,8 @@ class XpuFusedMoe:
+         is_int4=False,
+         is_mxfp4=False,
+         is_mxfp8=False,
+-        is_block_fp8=False
++        is_block_fp8=False,
++        is_int8=False,
+     ):
+         # 4bits support [E, N, K]
+         # other types [E, K, N]
+@@ -339,7 +439,7 @@ class XpuFusedMoe:
+         self.w13 = w13
+         self.w2 = w2
+
+-        if not is_fp8 and not is_int4 and not is_mxfp4 and not is_block_fp8:
++        if not is_fp8 and not is_int4 and not is_mxfp4 and not is_block_fp8 and not is_int8:
+             self.gemm1_scales = None
+             self.gemm2_scales = None
+         else:
+@@ -360,8 +460,9 @@ class XpuFusedMoe:
+         self.is_mxfp4 = is_mxfp4
+         self.is_mxfp8 = is_mxfp8
+         self.is_block_fp8 = is_block_fp8
++        self.is_int8 = is_int8
+         self.recipe = _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4,
+-                                   is_block_fp8)
++                                   is_block_fp8, is_int8)
+         self._use_ref = _should_use_ref_fused_moe(is_mxfp8)
+
+         if self.activation == "silu":
+@@ -411,9 +512,28 @@ class XpuFusedMoe:
+                             topk_weights, topk_ids,
+                             expert_map)
+         else:
+-            self._apply_kernel(output, hidden_states,
+-                               topk_weights, topk_ids,
+-                               expert_map)
++            xpu_fused_moe(hidden_states=hidden_states,
++                          w13=self.w13,
++                          w13_scales=self.gemm1_scales,
++                          w13_bias=self.w13_bias,
++                          w2=self.w2,
++                          w2_scales=self.gemm2_scales,
++                          w2_bias=self.w2_bias,
++                          topk_weights=topk_weights,
++                          topk_ids=topk_ids,
++                          n_experts_per_token=self.n_experts_per_token,
++                          activation=self.activation,
++                          num_experts=self.num_experts,
++                          ep_rank=self.ep_rank,
++                          ep_size=self.ep_size,
++                          expert_map=expert_map,
++                          output=output,
++                          is_fp8=self.is_fp8,
++                          is_int4=self.is_int4,
++                          is_mxfp4=self.is_mxfp4,
++                          is_mxfp8=self.is_mxfp8,
++                          is_block_fp8=self.is_block_fp8,
++                          is_int8=self.is_int8)
+
+     def _apply_ref(
+         self,
+@@ -544,7 +664,9 @@ def xpu_fused_moe(hidden_states,
+                   is_int4=False,
+                   is_mxfp4=False,
+                   is_mxfp8=False,
+-                  is_block_fp8=False):
++                  is_block_fp8=False,
++                  is_int8=False,
++                  scratch=None):
+     '''
+     hidden_states: [num_rows, hidden_size]
+     w13: [num_experts, 2*inter_size, hidden_size]
+@@ -568,6 +690,7 @@ def xpu_fused_moe(hidden_states,
+     is_mxfp4: bool
+     is_mxfp8: bool
+     is_block_fp8: bool
++    is_int8: bool
+     '''
+     if output is None:
+         output = torch.empty_like(hidden_states)
+@@ -576,7 +699,7 @@ def xpu_fused_moe(hidden_states,
+             "output shape must be the same as hidden_states shape"
+     if _should_use_ref_fused_moe(is_mxfp8):
+         recipe = _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4,
+-                             is_block_fp8)
++                             is_block_fp8, is_int8)
+         out = ref_fused_moe(recipe=recipe,
+                             x=hidden_states,
+                             w13=w13,
+@@ -619,11 +742,15 @@ def xpu_fused_moe(hidden_states,
+
+     num_rows, hidden_size = list(hidden_states.shape)
+     num_moe_inputs = n_experts_per_token * num_rows
+-    gemm1_output = torch.empty((num_moe_inputs, 2 * inter_size),
+-                               dtype=hidden_states.dtype,
+-                               device=hidden_states.device)
++    int8_scratch = scratch if is_int8 and scratch is not None else None
++    if int8_scratch is None:
++        gemm1_output = torch.empty((num_moe_inputs, 2 * inter_size),
++                                   dtype=hidden_states.dtype,
++                                   device=hidden_states.device)
++    else:
++        gemm1_output = int8_scratch["gemm1_output"]
+
+-    if not is_fp8 and not is_int4 and not is_mxfp4:
++    if not is_fp8 and not is_int4 and not is_mxfp4 and not is_int8:
+         gemm1_scales = None
+         gemm2_scales = None
+     else:
+@@ -643,17 +770,24 @@ def xpu_fused_moe(hidden_states,
+         total_experts_num = num_experts * ep_size
+     local_experts_num = num_experts
+
+-    remapped_hidden_states = torch.empty(
+-        (num_rows * n_experts_per_token, hidden_size),
+-        dtype=hidden_states.dtype,
+-        device=hidden_states.device)
+-    rows_per_expert = torch.zeros((num_experts),
+-                                            dtype=torch.int32,
+-                                            device=hidden_states.device)
+-    unpermuted_row_to_permuted_row = torch.empty(
+-        (num_rows, n_experts_per_token),
+-        dtype=torch.int32,
+-        device=hidden_states.device)
++    if int8_scratch is None:
++        remapped_hidden_states = torch.empty(
++            (num_rows * n_experts_per_token, hidden_size),
++            dtype=hidden_states.dtype,
++            device=hidden_states.device)
++        rows_per_expert = torch.zeros((num_experts),
++                                      dtype=torch.int32,
++                                      device=hidden_states.device)
++        unpermuted_row_to_permuted_row = torch.empty(
++            (num_rows, n_experts_per_token),
++            dtype=torch.int32,
++            device=hidden_states.device)
++    else:
++        remapped_hidden_states = int8_scratch["remapped_hidden_states"]
++        rows_per_expert = int8_scratch["rows_per_expert"]
++        rows_per_expert.zero_()
++        unpermuted_row_to_permuted_row = int8_scratch[
++            "unpermuted_row_to_permuted_row"]
+
+     torch.ops._moe_C.remap_hidden_states(
+         hidden_states=hidden_states,
+@@ -670,45 +804,94 @@ def xpu_fused_moe(hidden_states,
+     ########### gemm1 ##################
+     input_B = w13
+
+-    torch.ops._xpu_C.cutlass_grouped_gemm_interface(
+-        ptr_A=remapped_hidden_states,
+-        ptr_B=input_B,
+-        ptr_scales=gemm1_scales,
+-        ptr_bias=w13_bias,
+-        ptr_D=gemm1_output,
+-        rows_per_expert=rows_per_expert,
+-        N=2 * inter_size,
+-        K=hidden_size,
+-        num_experts=num_experts,
+-        is_B_int4=is_int4,
+-        is_B_mxfp4=is_mxfp4)
++    if is_int8:
++        remapped_hidden_states, gemm1_a_scales = _per_token_quant_int8(
++            remapped_hidden_states)
++        gemm1_scales = _normalize_int8_weight_scales(gemm1_scales,
++                                                     2 * inter_size)
++        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++            ptr_A=remapped_hidden_states,
++            ptr_A_scales=gemm1_a_scales,
++            ptr_B=input_B,
++            ptr_B_scales=gemm1_scales,
++            ptr_bias=w13_bias,
++            ptr_D=gemm1_output,
++            rows_per_expert=rows_per_expert,
++            N=2 * inter_size,
++            K=hidden_size,
++            num_experts=num_experts)
++    else:
++        torch.ops._xpu_C.cutlass_grouped_gemm_interface(
++            ptr_A=remapped_hidden_states,
++            ptr_B=input_B,
++            ptr_scales=gemm1_scales,
++            ptr_bias=w13_bias,
++            ptr_D=gemm1_output,
++            rows_per_expert=rows_per_expert,
++            N=2 * inter_size,
++            K=hidden_size,
++            num_experts=num_experts,
++            is_B_int4=is_int4,
++            is_B_mxfp4=is_mxfp4)
+
+     inter_size_scale = 2 if activation == "relu2_no_mul" else 1
+-    # act
+-    act_output = torch.empty((num_moe_inputs, inter_size * inter_size_scale),
+-                             dtype=gemm1_output.dtype,
+-                             device=gemm1_output.device)
+-    fused_moe_activation(act_output, gemm1_output, activation)
++    fuse_silu_quant = (
++        is_int8 and activation == "silu" and
++        _is_env_enabled(FUSE_SILU_QUANT_ENV))
++    gemm2_a_scales = None
++
++    if fuse_silu_quant:
++        input_A, gemm2_a_scales = _silu_and_mul_quant_int8(gemm1_output)
++    else:
++        # act
++        if int8_scratch is None:
++            act_output = torch.empty((num_moe_inputs,
++                                      inter_size * inter_size_scale),
++                                     dtype=gemm1_output.dtype,
++                                     device=gemm1_output.device)
++        else:
++            act_output = int8_scratch["act_output"]
++        fused_moe_activation(act_output, gemm1_output, activation)
++        input_A = act_output.contiguous()
+
+     ########### gemm2 ##################
+-    input_A = act_output.contiguous()
+     input_B = w2
+-    gemm2_output = torch.empty((num_moe_inputs, hidden_size),
+-                               dtype=hidden_states.dtype,
+-                               device=hidden_states.device)
+-
+-    torch.ops._xpu_C.cutlass_grouped_gemm_interface(
+-        ptr_A=input_A,
+-        ptr_B=input_B,
+-        ptr_scales=gemm2_scales,
+-        ptr_bias=w2_bias,
+-        ptr_D=gemm2_output,
+-        rows_per_expert=rows_per_expert,
+-        N=hidden_size,
+-        K=inter_size * inter_size_scale,
+-        num_experts=num_experts,
+-        is_B_int4=is_int4,
+-        is_B_mxfp4=is_mxfp4)
++    if int8_scratch is None:
++        gemm2_output = torch.empty((num_moe_inputs, hidden_size),
++                                   dtype=hidden_states.dtype,
++                                   device=hidden_states.device)
++    else:
++        gemm2_output = int8_scratch["gemm2_output"]
++
++    if is_int8:
++        if gemm2_a_scales is None:
++            input_A, gemm2_a_scales = _per_token_quant_int8(input_A)
++        gemm2_scales = _normalize_int8_weight_scales(gemm2_scales,
++                                                     hidden_size)
++        torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++            ptr_A=input_A,
++            ptr_A_scales=gemm2_a_scales,
++            ptr_B=input_B,
++            ptr_B_scales=gemm2_scales,
++            ptr_bias=w2_bias,
++            ptr_D=gemm2_output,
++            rows_per_expert=rows_per_expert,
++            N=hidden_size,
++            K=inter_size * inter_size_scale,
++            num_experts=num_experts)
++    else:
++        torch.ops._xpu_C.cutlass_grouped_gemm_interface(
++            ptr_A=input_A,
++            ptr_B=input_B,
++            ptr_scales=gemm2_scales,
++            ptr_bias=w2_bias,
++            ptr_D=gemm2_output,
++            rows_per_expert=rows_per_expert,
++            N=hidden_size,
++            K=inter_size * inter_size_scale,
++            num_experts=num_experts,
++            is_B_int4=is_int4,
++            is_B_mxfp4=is_mxfp4)
+
+     torch.ops._moe_C.moe_gather(output, gemm2_output, topk_weights,
+                                 unpermuted_row_to_permuted_row,

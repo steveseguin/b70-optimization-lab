@@ -1,0 +1,322 @@
+diff --git a/csrc/xpu/gdn_attn/causal_conv1d.hpp b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+index f61a125..a0356ae 100755
+--- a/csrc/xpu/gdn_attn/causal_conv1d.hpp
++++ b/csrc/xpu/gdn_attn/causal_conv1d.hpp
+@@ -41,6 +41,8 @@ struct causal_conv1d_kernel {
+       const int& num_v_heads,
+       const int& head_v_dim,
+       const int& qkvz_elems,
++      const int& qkvz_stride_0,
++      const int& ba_stride_0,
+       const int& conv_elems)
+       : q_out(q_out),
+         k_out(k_out),
+@@ -67,6 +69,8 @@ struct causal_conv1d_kernel {
+         num_v_heads(num_v_heads),
+         head_v_dim(head_v_dim),
+         qkvz_elems(qkvz_elems),
++        qkvz_stride_0(qkvz_stride_0),
++        ba_stride_0(ba_stride_0),
+         conv_elems(conv_elems) {}
+ 
+   static inline sycl::nd_range<2>
+@@ -108,25 +112,29 @@ struct causal_conv1d_kernel {
+     if constexpr (ReorderInput) {
+       if (qkvz_elems_id < num_v_heads) {
+         int step = token_id * num_v_heads;
++        int ba_base = token_id * ba_stride_0;
+ #pragma unroll
+         for (int e = 0; e < elems_per_item; ++e) {
+           b_out[step + qkvz_elems_id + e] =
+-              mixed_ba[step * 2 + qkvz_elems_id + e];
++              mixed_ba[ba_base + qkvz_elems_id + e];
+           a_out[step + qkvz_elems_id + e] =
+-              mixed_ba[step * 2 + num_v_heads + qkvz_dim_id + e];
++              mixed_ba[ba_base + num_v_heads + qkvz_dim_id + e];
+         }
+       }
+     } else {
+       if (qkvz_dim_id < (num_v_heads / num_k_heads)) {
+         int step =
+             token_id * num_v_heads + k_heads_id * num_v_heads / num_k_heads;
++        int ba_base = token_id * ba_stride_0 +
++                      k_heads_id * 2 * num_v_heads / num_k_heads;
+         const int ba_elems_per_item =
+             sycl::min(elems_per_item, num_v_heads / num_k_heads);
+ #pragma unroll
+         for (int e = 0; e < ba_elems_per_item; ++e) {
+-          b_out[step + qkvz_dim_id + e] = mixed_ba[step * 2 + qkvz_dim_id + e];
++          b_out[step + qkvz_dim_id + e] =
++              mixed_ba[ba_base + qkvz_dim_id + e];
+           a_out[step + qkvz_dim_id + e] =
+-              mixed_ba[step * 2 + num_v_heads / num_k_heads + qkvz_dim_id + e];
++              mixed_ba[ba_base + num_v_heads / num_k_heads + qkvz_dim_id + e];
+         }
+       }
+     }
+@@ -191,7 +199,7 @@ struct causal_conv1d_kernel {
+ #pragma unroll
+       for (int e = 0; e < elems_per_item; ++e) {
+         z_out[token_id * num_k_heads * z_dim + z_elems_id + e] =
+-            mixed_qkvz[token_id * qkvz_elems + mixed_qkvz_id + e];
++            mixed_qkvz[token_id * qkvz_stride_0 + mixed_qkvz_id + e];
+       }
+       return;
+     }
+@@ -255,8 +263,8 @@ struct causal_conv1d_kernel {
+ #pragma unroll
+       for (int e = 0; e < elems_per_item; ++e) {
+         local_input[Width * e + states_load_len + i] = mixed_qkvz
+-            [(token_id - input_load_len + 1 + i) * qkvz_elems + mixed_qkvz_id +
+-             e];
++            [(token_id - input_load_len + 1 + i) * qkvz_stride_0 +
++             mixed_qkvz_id + e];
+       }
+     }
+ 
+@@ -371,6 +379,8 @@ struct causal_conv1d_kernel {
+   const int num_v_heads;
+   const int head_v_dim;
+   const int qkvz_elems;
++  const int qkvz_stride_0;
++  const int ba_stride_0;
+   const int conv_elems;
+ };
+ 
+@@ -475,6 +485,8 @@ void kernel_launcher(
+     const int& num_v_heads,
+     const int& head_v_dim,
+     const int& qkvz_elems,
++    const int& qkvz_stride_0,
++    const int& ba_stride_0,
+     const int& conv_elems,
+     const int& num_prefills,
+     const int& num_decodes) {
+@@ -509,6 +521,8 @@ void kernel_launcher(
+         num_v_heads,
+         head_v_dim,
+         qkvz_elems,
++        qkvz_stride_0,
++        ba_stride_0,
+         conv_elems);
+     cgh.parallel_for(range_main, task);
+   });
+@@ -573,6 +587,8 @@ void causal_conv1d(
+   const int num_v_heads = v_out.size(1);
+   const int head_v_dim = v_out.size(2);
+   const int qkvz_elems = mixed_qkvz.size(1);
++  const int qkvz_stride_0 = mixed_qkvz.stride(0);
++  const int ba_stride_0 = mixed_ba.stride(0);
+   const int conv_elems = conv_weights.size(0);
+   const int width = conv_weights.size(1);
+   const int conv_states_stride_0 = conv_states.stride(0);
+@@ -615,6 +631,8 @@ void causal_conv1d(
+       num_v_heads,                                                 \
+       head_v_dim,                                                  \
+       qkvz_elems,                                                  \
++      qkvz_stride_0,                                               \
++      ba_stride_0,                                                 \
+       conv_elems,                                                  \
+       num_prefills,                                                \
+       num_decodes);
+@@ -662,4 +680,4 @@ void causal_conv1d(
+ #undef KERNEL_LAUNCHER
+ }
+ 
+-}  // namespace gdn
+\ No newline at end of file
++}  // namespace gdn
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index 21b3ec0..bb340ab 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -53,11 +53,11 @@ void gdn_attention(
+       core_attn_out.is_contiguous(), "core_attn_out must be contiguous");
+   TORCH_CHECK(z.is_contiguous(), "z must be contiguous");
+   TORCH_CHECK(
+-      projected_states_qkvz.is_contiguous(),
+-      "projected_states_qkvz must be contiguous");
++      projected_states_qkvz.stride(1) == 1,
++      "projected_states_qkvz last dimension must be contiguous");
+   TORCH_CHECK(
+-      projected_states_ba.is_contiguous(),
+-      "projected_states_ba must be contiguous");
++      projected_states_ba.stride(1) == 1,
++      "projected_states_ba last dimension must be contiguous");
+   TORCH_CHECK(
+       conv_state[0].is_contiguous(),
+       "conv_state of each batch must be contiguous");
+@@ -262,4 +262,4 @@ void gdn_attention(
+   NATIVE_LAUNCHER;
+ #endif
+ #undef NATIVE_LAUNCHER
+-}
+\ No newline at end of file
++}
+diff --git a/csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_xe2.hpp b/csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_xe2.hpp
+index b9729cd..c169aa7 100644
+--- a/csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_xe2.hpp
++++ b/csrc/xpu/gdn_attn/xe_2/chunk_causal_conv1d_xe2.hpp
+@@ -45,6 +45,8 @@ struct chunk_causal_conv1d_kernel {
+       const int& num_v_heads,
+       const int& head_v_dim,
+       const int& qkvz_elems,
++      const int& qkvz_stride_0,
++      const int& ba_stride_0,
+       const int& conv_elems)
+       : q_out(q_out),
+         k_out(k_out),
+@@ -72,6 +74,8 @@ struct chunk_causal_conv1d_kernel {
+         num_v_heads(num_v_heads),
+         head_v_dim(head_v_dim),
+         qkvz_elems(qkvz_elems),
++        qkvz_stride_0(qkvz_stride_0),
++        ba_stride_0(ba_stride_0),
+         conv_elems(conv_elems) {}
+ 
+   static inline sycl::nd_range<2> get_nd_range(
+@@ -222,7 +226,7 @@ struct chunk_causal_conv1d_kernel {
+ #pragma unroll
+       for (int e = 0; e < elems_per_item; ++e) {
+         local_input[Width * e + states_load_len + i] = mixed_qkvz
+-            [(token_id - input_load_len + 1 + i) * qkvz_elems +
++            [(token_id - input_load_len + 1 + i) * qkvz_stride_0 +
+              qkvz_elems_offset + e];
+       }
+     }
+@@ -339,6 +343,8 @@ struct chunk_causal_conv1d_kernel {
+   const int num_v_heads;
+   const int head_v_dim;
+   const int qkvz_elems;
++  const int qkvz_stride_0;
++  const int ba_stride_0;
+   const int conv_elems;
+ };
+ 
+@@ -365,7 +371,9 @@ struct chunk_reorder_zba_kernel {
+       const int& num_k_heads,
+       const int& head_k_dim,
+       const int& num_v_heads,
+-      const int& head_v_dim)
++      const int& head_v_dim,
++      const int& qkvz_stride_0,
++      const int& ba_stride_0)
+       : z_out(z_out),
+         b_out(b_out),
+         a_out(a_out),
+@@ -377,7 +385,9 @@ struct chunk_reorder_zba_kernel {
+         num_k_heads(num_k_heads),
+         head_k_dim(head_k_dim),
+         num_v_heads(num_v_heads),
+-        head_v_dim(head_v_dim) {}
++        head_v_dim(head_v_dim),
++        qkvz_stride_0(qkvz_stride_0),
++        ba_stride_0(ba_stride_0) {}
+ 
+   static inline sycl::nd_range<2>
+   get_nd_range(const int total_seqlen, const int num_k_heads, const int z_dim) {
+@@ -418,12 +428,12 @@ struct chunk_reorder_zba_kernel {
+       }
+ 
+       if constexpr (ReorderInput) {
+-        int step = token_id * num_v_heads * 2;
++        int ba_base = token_id * ba_stride_0;
+ #pragma unroll
+         for (int e = 0; e < kv_ratio; ++e) {
+-          float b_value = mixed_ba[step + k_head_id * kv_ratio + e];
++          float b_value = mixed_ba[ba_base + k_head_id * kv_ratio + e];
+           float a_value =
+-              mixed_ba[step + num_v_heads + k_head_id * kv_ratio + e];
++              mixed_ba[ba_base + num_v_heads + k_head_id * kv_ratio + e];
+           b_value = act_sigmoid(b_value);
+           b_out
+               [(k_head_id * kv_ratio + e) * num_virtual_tokens + out_token_id] =
+@@ -433,9 +443,8 @@ struct chunk_reorder_zba_kernel {
+                   a_value;
+         }
+       } else {
+-        int step =
+-            (token_id * num_v_heads + k_head_id * num_v_heads / num_k_heads) *
+-            2;
++        int step = token_id * ba_stride_0 +
++                   k_head_id * 2 * num_v_heads / num_k_heads;
+ #pragma unroll
+         for (int e = 0; e < kv_ratio; ++e) {
+           float b_value = mixed_ba[step + e];
+@@ -455,10 +464,10 @@ struct chunk_reorder_zba_kernel {
+ #pragma unroll
+     for (int e = 0; e < load_size; ++e) {
+       int z_dim_id = dim_offset * load_size + e;
+-      int mixed_z_id = token_id * num_k_heads * qkvz_dim +
+-                       k_head_id * qkvz_dim + qkv_dim + z_dim_id;
++      int mixed_z_id =
++          token_id * qkvz_stride_0 + k_head_id * qkvz_dim + qkv_dim + z_dim_id;
+       if constexpr (ReorderInput) {
+-        mixed_z_id = token_id * num_k_heads * qkvz_dim +
++        mixed_z_id = token_id * qkvz_stride_0 +
+                      2 * num_k_heads * head_k_dim + num_v_heads * head_v_dim +
+                      k_head_id * z_dim + z_dim_id;
+       }
+@@ -480,6 +489,8 @@ struct chunk_reorder_zba_kernel {
+   const int head_k_dim;
+   const int num_v_heads;
+   const int head_v_dim;
++  const int qkvz_stride_0;
++  const int ba_stride_0;
+ };
+ 
+ template <typename T>
+@@ -584,6 +595,8 @@ void kernel_launcher(
+     const int& num_v_heads,
+     const int& head_v_dim,
+     const int& qkvz_elems,
++    const int& qkvz_stride_0,
++    const int& ba_stride_0,
+     const int& conv_elems,
+     const int& num_prefills,
+     const int& num_decodes) {
+@@ -618,6 +631,8 @@ void kernel_launcher(
+         num_v_heads,
+         head_v_dim,
+         qkvz_elems,
++        qkvz_stride_0,
++        ba_stride_0,
+         conv_elems);
+     cgh.parallel_for(range_main, task);
+   });
+@@ -643,7 +658,9 @@ void kernel_launcher(
+         num_k_heads,
+         head_k_dim,
+         num_v_heads,
+-        head_v_dim);
++        head_v_dim,
++        qkvz_stride_0,
++        ba_stride_0);
+     cgh.parallel_for(range_zba, task);
+   });
+ 
+@@ -709,6 +726,8 @@ void chunk_causal_conv1d_xe2(
+   const int num_v_heads = v_out.size(1);
+   const int head_v_dim = v_out.size(2);
+   const int qkvz_elems = mixed_qkvz.size(1);
++  const int qkvz_stride_0 = mixed_qkvz.stride(0);
++  const int ba_stride_0 = mixed_ba.stride(0);
+   const int conv_elems = conv_weights.size(0);
+   const int width = conv_weights.size(1);
+   const int conv_states_stride_0 = conv_states.stride(0);
+@@ -752,6 +771,8 @@ void chunk_causal_conv1d_xe2(
+       num_v_heads,                                                 \
+       head_v_dim,                                                  \
+       qkvz_elems,                                                  \
++      qkvz_stride_0,                                               \
++      ba_stride_0,                                                 \
+       conv_elems,                                                  \
+       num_prefills,                                                \
+       num_decodes);
+@@ -799,4 +820,4 @@ void chunk_causal_conv1d_xe2(
+ #undef KERNEL_LAUNCHER
+ }
+ 
+-}  // namespace gdn
+\ No newline at end of file
++}  // namespace gdn

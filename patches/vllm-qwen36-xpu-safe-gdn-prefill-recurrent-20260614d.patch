@@ -1,0 +1,973 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 0b39a4000..270a06cac 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -1,16 +1,22 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+-from typing import TYPE_CHECKING
++import json
++import os
++import re
++import time
++from typing import TYPE_CHECKING, Any
+ 
+ import torch
+ from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+ 
+ from vllm.logger import init_logger
+ from vllm.platforms import current_platform
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ logger = init_logger(__name__)
++_XPU_GDN_TRACE_LINES = 0
+ 
+ if TYPE_CHECKING:
+ 
+@@ -92,6 +98,347 @@ if hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
+         return torch.empty((M, N), dtype=input.dtype, device=input.device)
+ 
+ 
++def _xpu_gdn_trace_int_env(name: str, default: int) -> int:
++    try:
++        return int(os.environ.get(name, str(default)) or default)
++    except ValueError:
++        return default
++
++
++def _xpu_gdn_truthy_env(name: str) -> bool:
++    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
++
++
++def _xpu_gdn_fallback_modes(value: str) -> set[str]:
++    return {
++        part
++        for part in re.split(r"[\s,;]+", value.strip().lower())
++        if part
++    }
++
++
++def _xpu_gdn_layer_index(layer_name: str) -> int | None:
++    match = re.search(r"(?:^|\.)layers\.(\d+)(?:\.|$)", layer_name)
++    if not match:
++        return None
++    try:
++        return int(match.group(1))
++    except ValueError:
++        return None
++
++
++def _xpu_gdn_layer_list_match(layer_name: str, env_name: str) -> bool:
++    raw_value = os.environ.get(env_name, "").strip()
++    if not raw_value:
++        return False
++
++    layer_idx = _xpu_gdn_layer_index(layer_name)
++    layer_tail = layer_name.rsplit(".", 1)[-1]
++    for raw_part in raw_value.split(","):
++        part = raw_part.strip()
++        if not part:
++            continue
++        if part == layer_name or part == layer_tail:
++            return True
++        if layer_idx is None:
++            continue
++        try:
++            if "-" in part:
++                start_s, end_s = part.split("-", 1)
++                start = int(start_s.strip())
++                end = int(end_s.strip())
++                if start <= layer_idx <= end:
++                    return True
++            elif int(part) == layer_idx:
++                return True
++        except ValueError:
++            continue
++    return False
++
++
++def _xpu_gdn_decode_layer_fallback_enabled(layer_name: str) -> bool:
++    if _xpu_gdn_layer_list_match(
++        layer_name, "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYERS"
++    ):
++        return True
++
++    max_layer = _xpu_gdn_trace_int_env(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_MAX_LAYER", -1
++    )
++    layer_idx = _xpu_gdn_layer_index(layer_name)
++    if max_layer >= 0 and layer_idx is not None and layer_idx <= max_layer:
++        return True
++
++    layer_regex = os.environ.get(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_DECODE_LAYER_REGEX", ""
++    )
++    if layer_regex:
++        try:
++            return re.search(layer_regex, layer_name) is not None
++        except re.error:
++            return False
++    return False
++
++
++def _xpu_gdn_trace_rank() -> int:
++    try:
++        from vllm.distributed import get_tensor_model_parallel_rank
++
++        return int(get_tensor_model_parallel_rank())
++    except Exception:
++        try:
++            return int(os.environ.get("LOCAL_RANK", "0") or "0")
++        except ValueError:
++            return 0
++
++
++def _xpu_gdn_json_number(value: Any) -> int | float | str | None:
++    try:
++        if value is None:
++            return None
++        if isinstance(value, bool):
++            return bool(value)
++        if isinstance(value, int):
++            return int(value)
++        if isinstance(value, float):
++            if value == float("inf"):
++                return "inf"
++            if value == float("-inf"):
++                return "-inf"
++            if value != value:
++                return "nan"
++            return value
++    except Exception:
++        return repr(value)
++    return value
++
++
++def _xpu_gdn_tensor_digest(
++    tensor: torch.Tensor | None,
++    *,
++    head_limit: int,
++    include_head: bool = False,
++) -> dict[str, Any] | None:
++    if tensor is None:
++        return None
++    try:
++        with torch.no_grad():
++            t = tensor.detach()
++            record: dict[str, Any] = {
++                "shape": list(t.shape),
++                "dtype": str(t.dtype),
++                "device": str(t.device),
++                "numel": int(t.numel()),
++            }
++            if t.numel() == 0:
++                record.update({"finite": 0, "nan": 0, "posinf": 0, "neginf": 0})
++                return record
++            stats_t = t.float() if not t.is_floating_point() else t
++            finite_mask = torch.isfinite(stats_t)
++            nan_mask = torch.isnan(stats_t)
++            posinf_mask = stats_t == float("inf")
++            neginf_mask = stats_t == float("-inf")
++            finite_count = int(finite_mask.sum().item())
++            record.update(
++                {
++                    "finite": finite_count,
++                    "nan": int(nan_mask.sum().item()),
++                    "posinf": int(posinf_mask.sum().item()),
++                    "neginf": int(neginf_mask.sum().item()),
++                }
++            )
++            if finite_count:
++                finite_vals = stats_t[finite_mask].float()
++                record.update(
++                    {
++                        "min": _xpu_gdn_json_number(finite_vals.min().item()),
++                        "max": _xpu_gdn_json_number(finite_vals.max().item()),
++                        "mean": _xpu_gdn_json_number(finite_vals.mean().item()),
++                        "sum": _xpu_gdn_json_number(finite_vals.sum().item()),
++                        "l2": _xpu_gdn_json_number(
++                            torch.linalg.vector_norm(finite_vals).item()
++                        ),
++                    }
++                )
++            if include_head and head_limit > 0:
++                head = t.reshape(-1)[:head_limit].to("cpu").tolist()
++                record["head"] = [_xpu_gdn_json_number(v) for v in head]
++            return record
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _xpu_gdn_selected_state_digest(
++    state: torch.Tensor | None,
++    indices: torch.Tensor | None,
++    *,
++    head_limit: int,
++    state_limit: int,
++) -> dict[str, Any] | None:
++    if state is None or indices is None:
++        return None
++    try:
++        flat_indices = indices.detach().reshape(-1)
++        valid = flat_indices[(flat_indices >= 0) & (flat_indices < state.shape[0])]
++        if state_limit > 0:
++            valid = valid[:state_limit]
++        record: dict[str, Any] = {
++            "indices_shape": list(indices.shape),
++            "indices_head": [
++                int(v) for v in flat_indices[: max(0, head_limit)].to("cpu").tolist()
++            ],
++            "selected_count": int(valid.numel()),
++        }
++        if valid.numel() > 0:
++            selected = state.index_select(0, valid.to(device=state.device).long())
++            record["selected"] = _xpu_gdn_tensor_digest(
++                selected, head_limit=head_limit, include_head=True
++            )
++        return record
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _xpu_gdn_trace_enabled(
++    forward_context: Any,
++    layer_name: str,
++    attn_metadata: Any,
++) -> tuple[bool, dict[str, Any]]:
++    trace_file = os.environ.get("VLLM_XPU_GDN_TRACE_FILE", "")
++    if not trace_file:
++        return False, {}
++
++    global _XPU_GDN_TRACE_LINES
++    max_lines = _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_MAX_LINES", 0)
++    if max_lines > 0 and _XPU_GDN_TRACE_LINES >= max_lines:
++        return False, {}
++
++    tp_rank = _xpu_gdn_trace_rank()
++    rank_filter = os.environ.get("VLLM_XPU_GDN_TRACE_RANK", "")
++    if rank_filter and rank_filter not in ("*", "all") and str(tp_rank) != rank_filter:
++        return False, {}
++
++    layer_regex = os.environ.get("VLLM_XPU_GDN_TRACE_LAYER_REGEX", "")
++    if layer_regex:
++        try:
++            if not re.search(layer_regex, layer_name):
++                return False, {}
++        except re.error:
++            return False, {}
++
++    if (
++        os.environ.get("VLLM_XPU_GDN_TRACE_PREFILL_ONLY", "0") == "1"
++        and getattr(attn_metadata, "num_prefills", 0) <= 0
++    ):
++        return False, {}
++    if (
++        os.environ.get("VLLM_XPU_GDN_TRACE_DECODE_ONLY", "0") == "1"
++        and getattr(attn_metadata, "num_decodes", 0) <= 0
++    ):
++        return False, {}
++
++    extra = getattr(forward_context, "additional_kwargs", {}) or {}
++    req_ids = [str(req_id) for req_id in extra.get("xpu_req_ids", [])]
++    req_regex = os.environ.get("VLLM_XPU_GDN_TRACE_REQ_REGEX", "")
++    matched_req_ids = req_ids
++    if req_regex:
++        try:
++            matched_req_ids = [req_id for req_id in req_ids if re.search(req_regex, req_id)]
++        except re.error:
++            matched_req_ids = []
++        if not matched_req_ids:
++            return False, {}
++
++    return True, {
++        "trace_file": trace_file,
++        "tp_rank": tp_rank,
++        "req_ids": req_ids,
++        "matched_req_ids": matched_req_ids,
++        "forward_context_extra": extra,
++    }
++
++
++def _xpu_gdn_trace_write(
++    *,
++    stage: str,
++    trace_context: dict[str, Any],
++    layer_name: str,
++    attn_metadata: Any,
++    core_attn_out: torch.Tensor | None,
++    z: torch.Tensor | None,
++    projected_states_qkvz: torch.Tensor | None,
++    projected_states_ba: torch.Tensor | None,
++    conv_state: torch.Tensor | None,
++    ssm_state: torch.Tensor | None,
++    non_spec_state_indices_tensor: torch.Tensor | None,
++) -> None:
++    global _XPU_GDN_TRACE_LINES
++    max_lines = _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_MAX_LINES", 0)
++    if max_lines > 0 and _XPU_GDN_TRACE_LINES >= max_lines:
++        return
++    head_limit = max(0, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_TENSOR_LIMIT", 8))
++    state_limit = max(1, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_STATE_LIMIT", 2))
++    try:
++        has_initial_state = getattr(attn_metadata, "has_initial_state", None)
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "stage": stage,
++            "tp_rank": trace_context.get("tp_rank"),
++            "layer": layer_name,
++            "req_ids": trace_context.get("req_ids", []),
++            "matched_req_ids": trace_context.get("matched_req_ids", []),
++            "forward_context_extra": trace_context.get("forward_context_extra", {}),
++            "metadata": {
++                "num_prefills": int(getattr(attn_metadata, "num_prefills", 0)),
++                "num_decodes": int(getattr(attn_metadata, "num_decodes", 0)),
++                "num_actual_tokens": int(
++                    getattr(attn_metadata, "num_actual_tokens", 0)
++                ),
++                "has_initial_state": None
++                if has_initial_state is None
++                else [
++                    bool(v)
++                    for v in has_initial_state.detach()
++                    .reshape(-1)[:head_limit]
++                    .to("cpu")
++                    .tolist()
++                ],
++            },
++            "projected_states_qkvz": _xpu_gdn_tensor_digest(
++                projected_states_qkvz, head_limit=head_limit, include_head=True
++            ),
++            "projected_states_ba": _xpu_gdn_tensor_digest(
++                projected_states_ba, head_limit=head_limit, include_head=True
++            ),
++            "core_attn_out": _xpu_gdn_tensor_digest(
++                core_attn_out, head_limit=head_limit, include_head=True
++            ),
++            "z": _xpu_gdn_tensor_digest(z, head_limit=head_limit, include_head=True),
++            "conv_state": _xpu_gdn_selected_state_digest(
++                conv_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++            "ssm_state": _xpu_gdn_selected_state_digest(
++                ssm_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++        }
++        trace_file = str(trace_context["trace_file"])
++        trace_dir = os.path.dirname(trace_file)
++        if trace_dir:
++            os.makedirs(trace_dir, exist_ok=True)
++        with open(trace_file, "a", encoding="utf-8") as f:
++            f.write(json.dumps(record, separators=(",", ":")) + "\n")
++        _XPU_GDN_TRACE_LINES += 1
++    except Exception:
++        logger.exception("Failed to write XPU GDN trace")
++
++
+ def _gdn_attention_core_xpu_impl(
+     core_attn_out: torch.Tensor,
+     z: torch.Tensor,
+@@ -107,45 +454,270 @@ def _gdn_attention_core_xpu_impl(
+     self = forward_context.no_compile_layers[layer_name]
+     attn_metadata_raw = forward_context.attn_metadata
+ 
++    def unpack_projected_states() -> tuple[
++        torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
++    ]:
++        if self.gqa_interleaved_layout:
++            from einops import rearrange
++
++            query, key, value, z_generic, b, a = self.fix_query_key_value_ordering(
++                projected_states_qkvz, projected_states_ba
++            )
++            query, key, value = map(
++                lambda x: rearrange(x, "l p d -> l (p d)"), (query, key, value)
++            )
++            mixed_qkv = torch.cat((query, key, value), dim=-1)
++        else:
++            qkv_size = (self.key_dim * 2 + self.value_dim) // self.tp_size
++            z_size = self.value_dim // self.tp_size
++            mixed_qkv, z_generic = projected_states_qkvz.split(
++                [qkv_size, z_size], dim=-1
++            )
++            z_generic = z_generic.reshape(z_generic.size(0), -1, self.head_v_dim)
++            b, a = projected_states_ba.chunk(2, dim=-1)
++            b = b.contiguous()
++            a = a.contiguous()
++        return mixed_qkv, z_generic, b, a
++
++    gdn_native_fallback = os.environ.get(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK", "decode,prefill"
++    )
++    gdn_native_fallback_modes = _xpu_gdn_fallback_modes(gdn_native_fallback)
++    gdn_fallback_all = bool(
++        gdn_native_fallback_modes & {"1", "true", "yes", "on", "all"}
++    )
++    gdn_fallback_safe = "safe" in gdn_native_fallback_modes
++    gdn_prefill_fallback_requested = (
++        gdn_fallback_all
++        or gdn_fallback_safe
++        or bool(gdn_native_fallback_modes & {"prefill", "prefill_only"})
++        or _xpu_gdn_truthy_env("VLLM_XPU_GDN_NATIVE_PREFILL_FALLBACK")
++    )
++    gdn_prefill_recurrent_fallback = (
++        current_platform.is_xpu()
++        and os.environ.get(
++            "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK", "1"
++        ).strip().lower()
++        not in ("0", "false", "no", "off")
++    )
++
+     if attn_metadata_raw is None:
++        if gdn_prefill_fallback_requested and not gdn_prefill_recurrent_fallback:
++            mixed_qkv, z_generic, b, a = unpack_projected_states()
++            z.copy_(z_generic)
++            self._forward_core(
++                mixed_qkv=mixed_qkv,
++                b=b,
++                a=a,
++                core_attn_out=core_attn_out,
++            )
+         return
+ 
+     assert isinstance(attn_metadata_raw, dict)
+     attn_metadata = attn_metadata_raw[self.prefix]
+     assert isinstance(attn_metadata, GDNAttentionMetadata)
++    initial_decode_fallback_steps = _xpu_gdn_trace_int_env(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS", 0
++    )
++    decode_without_spec = (
++        attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++        and attn_metadata.num_prefills == 0  # type: ignore[attr-defined]
++        and attn_metadata.num_decodes > 0  # type: ignore[attr-defined]
++    )
++    prefill_without_spec = (
++        attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++        and attn_metadata.num_prefills > 0  # type: ignore[attr-defined]
++    )
++    initial_decode_fallback = False
++    if (
++        initial_decode_fallback_steps > 0
++        and decode_without_spec
++    ):
++        try:
++            extra = getattr(forward_context, "additional_kwargs", {}) or {}
++            prompt_tokens = extra.get("xpu_num_prompt_tokens") or []
++            computed_tokens = extra.get("xpu_num_computed_tokens") or []
++            for prompt_count, computed_count in zip(prompt_tokens, computed_tokens):
++                decode_index = int(computed_count) - int(prompt_count)
++                if 0 <= decode_index < initial_decode_fallback_steps:
++                    initial_decode_fallback = True
++                    break
++        except Exception:
++            logger.exception("Failed to inspect initial GDN decode fallback state")
++    decode_only_fallback = (
++        (
++            gdn_fallback_all
++            or gdn_fallback_safe
++            or bool(gdn_native_fallback_modes & {"decode", "decode_only"})
++        )
++        and decode_without_spec
++    )
++    prefill_fallback = (
++        gdn_prefill_fallback_requested
++        and prefill_without_spec
++    )
++    decode_layer_fallback = (
++        decode_without_spec and _xpu_gdn_decode_layer_fallback_enabled(self.prefix)
++    )
++    if (
++        gdn_fallback_all
++        or decode_only_fallback
++        or prefill_fallback
++        or initial_decode_fallback
++        or decode_layer_fallback
++    ):
++        mixed_qkv, z_generic, b, a = unpack_projected_states()
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
+ 
+-    # TODO: xpu does not support speculative decoding yet
+-    assert attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++    if attn_metadata.spec_sequence_masks is not None:  # type: ignore[attr-defined]
++        mixed_qkv, z_generic, b, a = unpack_projected_states()
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
+ 
+     conv_weights = self.conv1d.weight.view(
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
+-    torch.ops._xpu_C.gdn_attention(
+-        core_attn_out,
+-        z,
+-        projected_states_qkvz,
+-        projected_states_ba,
+-        self.num_k_heads,
+-        self.num_v_heads,
+-        self.head_k_dim,
+-        self.head_v_dim,
+-        conv_state=self.kv_cache[0],
+-        ssm_state=self.kv_cache[1],
+-        conv_weights=conv_weights,
+-        conv_bias=self.conv1d.bias,
+-        activation=self.activation,
+-        A_log=self.A_log,
+-        dt_bias=self.dt_bias,
+-        num_prefills=attn_metadata.num_prefills,  # type: ignore[attr-defined]
+-        num_decodes=attn_metadata.num_decodes,  # type: ignore[attr-defined]
+-        has_initial_state=attn_metadata.has_initial_state,  # type: ignore[attr-defined]
+-        non_spec_query_start_loc=attn_metadata.non_spec_query_start_loc,  # type: ignore[attr-defined]
+-        non_spec_state_indices_tensor=attn_metadata.non_spec_state_indices_tensor,  # type: ignore[attr-defined]
+-        num_actual_tokens=attn_metadata.num_actual_tokens,  # type: ignore[attr-defined]
+-        tp_size=self.tp_size,
+-        reorder_input=not self.gqa_interleaved_layout,
++    non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # type: ignore[attr-defined]
++    if non_spec_state_indices_tensor is not None:
++        non_spec_state_indices_tensor = non_spec_state_indices_tensor.contiguous()
++
++    non_spec_query_start_loc = attn_metadata.non_spec_query_start_loc  # type: ignore[attr-defined]
++    if non_spec_query_start_loc is not None:
++        non_spec_query_start_loc = non_spec_query_start_loc.contiguous()
++
++    conv_state = self.kv_cache[0]
++    ssm_state = self.kv_cache[1]
++    trace_enabled, trace_context = _xpu_gdn_trace_enabled(
++        forward_context, self.prefix, attn_metadata
++    )
++    if trace_enabled:
++        _xpu_gdn_trace_write(
++            stage="pre_native",
++            trace_context=trace_context,
++            layer_name=self.prefix,
++            attn_metadata=attn_metadata,
++            core_attn_out=core_attn_out,
++            z=z,
++            projected_states_qkvz=projected_states_qkvz,
++            projected_states_ba=projected_states_ba,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++        )
++
++    if (
++        decode_without_spec
++        and (
++            _xpu_gdn_truthy_env("VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE")
++            or _xpu_gdn_layer_list_match(
++                self.prefix, "VLLM_XPU_GDN_SYNC_BEFORE_NATIVE_DECODE_LAYERS"
++            )
++        )
++    ):
++        try:
++            torch.xpu.synchronize()
++        except Exception:
++            logger.exception("Failed to synchronize before native XPU GDN decode")
++
++    zero_all_prefill_gdn_state = (
++        os.environ.get("VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE", "0") == "1"
+     )
++    if (
++        (
++            os.environ.get("VLLM_XPU_ZERO_FRESH_GDN_STATE", "0") == "1"
++            or zero_all_prefill_gdn_state
++        )
++        and getattr(attn_metadata, "num_prefills", 0) > 0
++        and non_spec_state_indices_tensor is not None
++        and (
++            zero_all_prefill_gdn_state
++            or getattr(attn_metadata, "has_initial_state", None) is not None
++        )
++    ):
++        try:
++            if zero_all_prefill_gdn_state:
++                fresh_state_indices = non_spec_state_indices_tensor.reshape(-1)
++            else:
++                has_initial_state = attn_metadata.has_initial_state  # type: ignore[attr-defined]
++                fresh_state_mask = ~has_initial_state
++                fresh_state_indices = non_spec_state_indices_tensor[fresh_state_mask]
++            conv_state[fresh_state_indices] = 0
++            ssm_state[fresh_state_indices] = 0
++            if trace_enabled:
++                _xpu_gdn_trace_write(
++                    stage=(
++                        "post_prefill_state_zero"
++                        if zero_all_prefill_gdn_state
++                        else "post_fresh_state_zero"
++                    ),
++                    trace_context=trace_context,
++                    layer_name=self.prefix,
++                    attn_metadata=attn_metadata,
++                    core_attn_out=core_attn_out,
++                    z=z,
++                    projected_states_qkvz=projected_states_qkvz,
++                    projected_states_ba=projected_states_ba,
++                    conv_state=conv_state,
++                    ssm_state=ssm_state,
++                    non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++                )
++        except Exception:
++            logger.exception("Failed to zero fresh XPU GDN state")
++
++    with timed_region("gdn_attention_core_xpu.native"):
++        torch.ops._xpu_C.gdn_attention(
++            core_attn_out,
++            z,
++            projected_states_qkvz,
++            projected_states_ba,
++            self.num_k_heads,
++            self.num_v_heads,
++            self.head_k_dim,
++            self.head_v_dim,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            conv_weights=conv_weights,
++            conv_bias=self.conv1d.bias,
++            activation=self.activation,
++            A_log=self.A_log,
++            dt_bias=self.dt_bias,
++            num_prefills=attn_metadata.num_prefills,  # type: ignore[attr-defined]
++            num_decodes=attn_metadata.num_decodes,  # type: ignore[attr-defined]
++            has_initial_state=attn_metadata.has_initial_state,  # type: ignore[attr-defined]
++            non_spec_query_start_loc=non_spec_query_start_loc,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++            num_actual_tokens=attn_metadata.num_actual_tokens,  # type: ignore[attr-defined]
++            tp_size=self.tp_size,
++            reorder_input=not self.gqa_interleaved_layout,
++        )
++    if trace_enabled:
++        _xpu_gdn_trace_write(
++            stage="post_native",
++            trace_context=trace_context,
++            layer_name=self.prefix,
++            attn_metadata=attn_metadata,
++            core_attn_out=core_attn_out,
++            z=z,
++            projected_states_qkvz=projected_states_qkvz,
++            projected_states_ba=projected_states_ba,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++        )
+ 
+ 
+ def _gdn_attention_core_xpu_fake(
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index a621ab962..6cc30e12f 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Inference-only Qwen3-Next/Qwen3.5 model."""
+ 
++import os
+ import torch
+ from einops import rearrange
+ from torch import nn
+@@ -62,6 +63,7 @@ from vllm.utils.torch_utils import (
+     _resolve_layer_name,
+     direct_register_custom_op,
+ )
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.v1.attention.backends.gdn_attn import GDNAttentionMetadata
+ 
+ logger = init_logger(__name__)
+@@ -384,6 +386,14 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         self.enable_packed_recurrent_decode = (
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+         )
++        xpu_gdn_reuse_qkvz_ba_quant_mode = (
++            envs.VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT
++        )
++        self.xpu_reuse_qkvz_ba_quant_mode = xpu_gdn_reuse_qkvz_ba_quant_mode
++        self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
++            xpu_gdn_reuse_qkvz_ba_quant_mode
++            in ("1", "true", "clone", "clone-ba", "clone-qkvz")
++        )
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+         if prefix in compilation_config.static_forward_context:
+@@ -612,8 +622,61 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # ============================================================
+         # Part 1: Input Projection
+         # ============================================================
+-        projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
+-        projected_states_ba, _ = self.in_proj_ba(hidden_states)
++        if self.xpu_reuse_qkvz_ba_quant and (
++            getattr(self.in_proj_qkvz, "xpu_native_int8_activation_quant", False)
++            and getattr(self.in_proj_ba, "xpu_native_int8_activation_quant", False)
++            and self.in_proj_qkvz.bias is None
++            and self.in_proj_ba.bias is None
++            and not self.in_proj_qkvz.gather_output
++            and not self.in_proj_ba.gather_output
++        ):
++            x_2d = hidden_states.view(-1, hidden_states.shape[-1]).contiguous()
++            with timed_region("qwen3_next.gdn.input_quant"):
++                x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++            if self.xpu_reuse_qkvz_ba_quant_mode == "clone":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-ba":
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q.clone()
++                x_s_ba = x_s.clone()
++            elif self.xpu_reuse_qkvz_ba_quant_mode == "clone-qkvz":
++                x_q_qkvz = x_q.clone()
++                x_s_qkvz = x_s.clone()
++                x_q_ba = x_q
++                x_s_ba = x_s
++            else:
++                x_q_qkvz = x_q
++                x_s_qkvz = x_s
++                x_q_ba = x_q
++                x_s_ba = x_s
++
++            with timed_region("qwen3_next.gdn.qkvz_gemm_w8a8"):
++                projected_states_qkvz = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_qkvz,
++                    x_s_qkvz,
++                    self.in_proj_qkvz.weight,
++                    self.in_proj_qkvz.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_qkvz.weight.shape[1])
++            with timed_region("qwen3_next.gdn.ba_gemm_w8a8"):
++                projected_states_ba = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q_ba,
++                    x_s_ba,
++                    self.in_proj_ba.weight,
++                    self.in_proj_ba.weight_scale,
++                    hidden_states.dtype,
++                    None,
++                ).view(*hidden_states.shape[:-1], self.in_proj_ba.weight.shape[1])
++        else:
++            with timed_region("qwen3_next.gdn.qkvz_proj"):
++                projected_states_qkvz, _ = self.in_proj_qkvz(hidden_states)
++            with timed_region("qwen3_next.gdn.ba_proj"):
++                projected_states_ba, _ = self.in_proj_ba(hidden_states)
+ 
+         # ============================================================
+         # Part 2: Core Attention
+@@ -625,13 +688,14 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         )
+         z = torch.empty_like(core_attn_out)
+ 
+-        torch.ops.vllm.gdn_attention_core_xpu(
+-            core_attn_out,
+-            z,
+-            projected_states_qkvz,
+-            projected_states_ba,
+-            self.prefix,
+-        )
++        with timed_region("qwen3_next.gdn.core_op"):
++            torch.ops.vllm.gdn_attention_core_xpu(
++                core_attn_out,
++                z,
++                projected_states_qkvz,
++                projected_states_ba,
++                self.prefix,
++            )
+ 
+         # ============================================================
+         # Part 3: Output Projection
+@@ -640,10 +704,12 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # Reshape input data into 2D tensor
+         core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+         z = z.reshape(-1, z.shape[-1])
+-        core_attn_out = self.norm(core_attn_out, z)
++        with timed_region("qwen3_next.gdn.output_norm"):
++            core_attn_out = self.norm(core_attn_out, z)
+         core_attn_out = core_attn_out.reshape(z_shape_og)
+         core_attn_out = rearrange(core_attn_out, "... h d -> ... (h d)")
+-        output[:num_tokens], _ = self.out_proj(core_attn_out)
++        with timed_region("qwen3_next.gdn.out_proj"):
++            output[:num_tokens], _ = self.out_proj(core_attn_out)
+ 
+     def _warmup_prefill_kernels(self, mixed_qkv: torch.Tensor) -> None:
+         """Warm up GDN prefill kernels during V1 profiling.
+@@ -791,6 +857,13 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         non_spec_token_indx = attn_metadata.non_spec_token_indx
+         spec_state_indices_tensor = attn_metadata.spec_state_indices_tensor  # noqa: E501
+         non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # noqa: E501
++        prefill_recurrent_fallback = (
++            current_platform.is_xpu()
++            and os.environ.get(
++                "VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK", "1"
++            ).strip().lower()
++            not in ("0", "false", "no", "off")
++        )
+         self_kv_cache = self.kv_cache
+         # conv_state must be (..., dim, width-1) for the conv kernels.
+         # DS layout stores it that way directly; SD layout needs a transpose.
+@@ -845,6 +918,15 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         # 1.2: Process the remaining part
+         if attn_metadata.num_prefills > 0:
+             assert mixed_qkv_non_spec is not None
++            if (
++                os.environ.get("VLLM_XPU_ZERO_FRESH_GDN_STATE", "0") == "1"
++                and has_initial_state is not None
++                and non_spec_state_indices_tensor is not None
++            ):
++                fresh_state_mask = ~has_initial_state
++                fresh_state_indices = non_spec_state_indices_tensor[fresh_state_mask]
++                conv_state[fresh_state_indices] = 0
++                ssm_state[fresh_state_indices] = 0
+             mixed_qkv_non_spec_T = mixed_qkv_non_spec.transpose(0, 1)
+             # - "cache_indices" updates the conv_state cache in positions
+             #   pointed to by "state_indices_tensor"
+@@ -887,29 +969,36 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                 a_non_spec = a
+                 b_non_spec = b
+ 
+-            (
+-                query_non_spec,
+-                key_non_spec,
+-                value_non_spec,
+-                g_non_spec,
+-                beta_non_spec,
+-            ) = fused_post_conv_prep(
+-                conv_output=mixed_qkv_non_spec,
+-                a=a_non_spec,
+-                b=b_non_spec,
+-                A_log=self.A_log,
+-                dt_bias=self.dt_bias,
+-                num_k_heads=self.num_k_heads // self.tp_size,
+-                head_k_dim=self.head_k_dim,
+-                head_v_dim=self.head_v_dim,
+-                apply_l2norm=True,
+-                output_g_exp=False,
+-            )
+-            query_non_spec = query_non_spec.unsqueeze(0)
+-            key_non_spec = key_non_spec.unsqueeze(0)
+-            value_non_spec = value_non_spec.unsqueeze(0)
+-            g_non_spec = g_non_spec.unsqueeze(0)
+-            beta_non_spec = beta_non_spec.unsqueeze(0)
++            if prefill_recurrent_fallback:
++                query_non_spec, key_non_spec, value_non_spec = (
++                    self.rearrange_mixed_qkv(mixed_qkv_non_spec)
++                )
++                g_non_spec = None
++                beta_non_spec = None
++            else:
++                (
++                    query_non_spec,
++                    key_non_spec,
++                    value_non_spec,
++                    g_non_spec,
++                    beta_non_spec,
++                ) = fused_post_conv_prep(
++                    conv_output=mixed_qkv_non_spec,
++                    a=a_non_spec,
++                    b=b_non_spec,
++                    A_log=self.A_log,
++                    dt_bias=self.dt_bias,
++                    num_k_heads=self.num_k_heads // self.tp_size,
++                    head_k_dim=self.head_k_dim,
++                    head_v_dim=self.head_v_dim,
++                    apply_l2norm=True,
++                    output_g_exp=False,
++                )
++                query_non_spec = query_non_spec.unsqueeze(0)
++                key_non_spec = key_non_spec.unsqueeze(0)
++                value_non_spec = value_non_spec.unsqueeze(0)
++                g_non_spec = g_non_spec.unsqueeze(0)
++                beta_non_spec = beta_non_spec.unsqueeze(0)
+         else:
+             query_non_spec, key_non_spec, value_non_spec = self.rearrange_mixed_qkv(
+                 mixed_qkv_non_spec
+@@ -950,22 +1039,57 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             initial_state = ssm_state[non_spec_state_indices_tensor].contiguous()  # type: ignore[index]
+             assert has_initial_state is not None
+             initial_state[~has_initial_state, ...] = 0  # type: ignore[operator]
+-            (
+-                core_attn_out_non_spec,
+-                last_recurrent_state,
+-            ) = self.chunk_gated_delta_rule(
+-                q=query_non_spec,
+-                k=key_non_spec,
+-                v=value_non_spec,
+-                g=g_non_spec,
+-                beta=beta_non_spec,
+-                initial_state=initial_state,
+-                output_final_state=True,
+-                cu_seqlens=non_spec_query_start_loc,
+-                chunk_indices=attn_metadata.chunk_indices,
+-                chunk_offsets=attn_metadata.chunk_offsets,
+-                use_qk_l2norm_in_kernel=False,
+-            )
++            if prefill_recurrent_fallback:
++                (
++                    core_attn_out_non_spec,
++                    last_recurrent_state,
++                ) = fused_sigmoid_gating_delta_rule_update(
++                    A_log=self.A_log,
++                    a=a_non_spec,
++                    b=b_non_spec,
++                    dt_bias=self.dt_bias,
++                    q=query_non_spec,
++                    k=key_non_spec,
++                    v=value_non_spec,
++                    initial_state=initial_state,
++                    inplace_final_state=False,
++                    cu_seqlens=non_spec_query_start_loc,
++                    use_qk_l2norm_in_kernel=True,
++                )
++                seq_lens = (
++                    non_spec_query_start_loc[1:] - non_spec_query_start_loc[:-1]
++                )
++                non_empty_seq_mask = seq_lens > 0
++                if non_empty_seq_mask.all():
++                    last_recurrent_state = last_recurrent_state.index_select(
++                        0, non_spec_query_start_loc[1:] - 1
++                    )
++                else:
++                    final_state_by_token = last_recurrent_state
++                    last_recurrent_state = initial_state.clone()
++                    last_recurrent_state[non_empty_seq_mask] = (
++                        final_state_by_token.index_select(
++                            0,
++                            non_spec_query_start_loc[1:][non_empty_seq_mask] - 1,
++                        )
++                    )
++            else:
++                (
++                    core_attn_out_non_spec,
++                    last_recurrent_state,
++                ) = self.chunk_gated_delta_rule(
++                    q=query_non_spec,
++                    k=key_non_spec,
++                    v=value_non_spec,
++                    g=g_non_spec,
++                    beta=beta_non_spec,
++                    initial_state=initial_state,
++                    output_final_state=True,
++                    cu_seqlens=non_spec_query_start_loc,
++                    chunk_indices=attn_metadata.chunk_indices,
++                    chunk_offsets=attn_metadata.chunk_offsets,
++                    use_qk_l2norm_in_kernel=False,
++                )
+             # Init cache
+             ssm_state[non_spec_state_indices_tensor] = last_recurrent_state.to(
+                 ssm_state.dtype

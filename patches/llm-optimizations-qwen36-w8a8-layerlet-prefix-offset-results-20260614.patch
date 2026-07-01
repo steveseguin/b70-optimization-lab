@@ -1,0 +1,1237 @@
+diff --git a/scripts/launch-qwen36-quark-int8-accepted.sh b/scripts/launch-qwen36-quark-int8-accepted.sh
+index 2669a43..91580db 100755
+--- a/scripts/launch-qwen36-quark-int8-accepted.sh
++++ b/scripts/launch-qwen36-quark-int8-accepted.sh
+@@ -5,13 +5,13 @@ MODEL_PATH="${MODEL_PATH:-/mnt/fast-ai/llm-cache/hf/models--nameistoken--Qwen3.6
+ SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-35b-a3b-fp8}"
+ HOST="${HOST:-127.0.0.1}"
+ PORT="${PORT:-18080}"
+-LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix.log}"
++LOG_PATH="${LOG_PATH:-/tmp/qwen36-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k.log}"
+ MAX_MODEL_LEN="${MAX_MODEL_LEN:-32768}"
+ MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-8192}"
+ MAX_NUM_SEQS="${MAX_NUM_SEQS:-48}"
+-GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
++GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.90}"
+ if [[ -z "${COMPILATION_CONFIG:-}" ]]; then
+-  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'
++  COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'
+ fi
+ MODEL_INPUT_TRACE_FILE="${MODEL_INPUT_TRACE_FILE:-}"
+ MODEL_INPUT_TRACE_MAX_LINES="${MODEL_INPUT_TRACE_MAX_LINES:-400}"
+@@ -24,25 +24,30 @@ COW_WORKER_TRACE_RANK="${COW_WORKER_TRACE_RANK:-}"
+ 
+ export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
+ export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-/mnt/fast-ai/llm-cache/hf}"
+-export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/torchinductor}"
+-export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-piecewise-graph-gdn-reuseqkvzbaquant-clone-envclean-32k-noprefix/vllm}"
++export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/torchinductor}"
++export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/qwen36-35b-a3b-quark-int8-tp4-safe-gdn-recurrent-graphnone-32k/vllm}"
+ export PYTHONPATH="/home/steve/src/vllm:/home/steve/src/vllm-xpu-kernels${PYTHONPATH:+:$PYTHONPATH}"
+ export LD_LIBRARY_PATH="/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+ 
+ export VLLM_USE_V1=1
+ export VLLM_TARGET_DEVICE=xpu
+ export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+-export XPU_GRAPH="${XPU_GRAPH:-1}"
+-export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
+-export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-1}"
+-export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-1}"
+-export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1
+-export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1
+-export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1
+-export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1
++export XPU_GRAPH="${XPU_GRAPH:-0}"
++export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-0}"
++export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-0}"
++export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-0}"
++export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES="${VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES:-1}"
++export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP="${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-1}"
++export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-1}"
++export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT:-1}"
+ export VLLM_XPU_QUARK_W8A8_MOE=1
+ export VLLM_XPU_FORCE_QUARK_REPACK=0
+-export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone
++export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT="${VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT:-clone}"
++export VLLM_XPU_GDN_NATIVE_FALLBACK="${VLLM_XPU_GDN_NATIVE_FALLBACK:-decode,prefill}"
++export VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK="${VLLM_XPU_GDN_PREFILL_RECURRENT_FALLBACK:-1}"
++export VLLM_XPU_ZERO_FRESH_GDN_STATE="${VLLM_XPU_ZERO_FRESH_GDN_STATE:-1}"
++export VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK="${VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK:-1}"
++export VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY="${VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY:-1}"
+ export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0,1,2,3}"
+ export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1,2,3}"
+ export CCL_ATL_TRANSPORT=ofi
+@@ -55,7 +60,11 @@ unset CCL_WORKER_COUNT
+ 
+ # Accepted production/provenance lane: keep rejected diagnostic MoE paths out
+ # unless a new launcher explicitly opts into them.
+-unset VLLM_XPU_W8A8_USE_OFFSETS
++if [[ "${VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW:-0}" != "1" ]]; then
++  unset VLLM_XPU_W8A8_USE_OFFSETS
++  unset VLLM_XPU_W8A8_OFFSETS_PREFIX_OP
++  unset VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET
++fi
+ unset VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE
+ unset VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS
+ unset VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS
+@@ -134,6 +143,10 @@ fi
+ 
+ source /home/steve/.venvs/vllm-xpu/bin/activate
+ 
++if [[ -z "${VLLM_EXTRA_ARGS:-}" ]]; then
++  VLLM_EXTRA_ARGS="--no-async-scheduling"
++fi
++
+ EXTRA_ARGS=()
+ if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+   # shellcheck disable=SC2206
+diff --git a/scripts/check-qwen36-w8a8-middle-layerlet.py b/scripts/check-qwen36-w8a8-middle-layerlet.py
+new file mode 100755
+index 0000000..89b3e97
+--- /dev/null
++++ b/scripts/check-qwen36-w8a8-middle-layerlet.py
+@@ -0,0 +1,497 @@
++#!/usr/bin/env python3
++"""Check Qwen3.6 W8A8 MoE middle-layerlet correctness.
++
++This compares the new graph-native layerlet against the existing exact
++three-step path:
++
++  offsets W8A8 GEMM1 -> SiLU+INT8 quant -> offsets W8A8 GEMM2
++
++It is intentionally synthetic. The purpose is to validate the operator and
++graph-capture behavior before using it inside the full vLLM endpoint.
++"""
++
++from __future__ import annotations
++
++import argparse
++import json
++import sys
++from dataclasses import asdict, dataclass
++from datetime import datetime, timezone
++from pathlib import Path
++from typing import Any
++
++
++DEFAULT_KERNEL_REPO = Path("/home/steve/src/vllm-xpu-kernels")
++DEFAULT_DATA_DIR = Path("/home/steve/llm-optimizations/data")
++
++
++@dataclass(frozen=True)
++class Case:
++    name: str
++    experts: int
++    rows: tuple[int, ...]
++    hidden: int
++    inter: int
++
++
++DEFAULT_CASES = (
++    Case("tiny_sparse", 4, (1, 2, 0, 3), 64, 64),
++    Case("single_hot_expert", 4, (0, 0, 8, 0), 64, 64),
++    Case("decode_like_sparse", 8, (1, 0, 2, 0, 1, 0, 3, 1), 128, 128),
++    Case("dense_small", 8, (1, 1, 1, 1, 1, 1, 1, 1), 128, 64),
++)
++
++
++def parse_args() -> argparse.Namespace:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--device", default="xpu:0")
++    parser.add_argument("--seed", type=int, default=1234)
++    parser.add_argument("--kernel-repo", type=Path, default=DEFAULT_KERNEL_REPO)
++    parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
++    parser.add_argument("--json-out", type=Path)
++    parser.add_argument("--md-out", type=Path)
++    parser.add_argument("--graph-replay", action="store_true")
++    parser.add_argument("--require-graph", action="store_true")
++    parser.add_argument("--rtol", type=float, default=0.0)
++    parser.add_argument("--atol", type=float, default=0.0)
++    return parser.parse_args()
++
++
++def add_kernel_repo_to_path(kernel_repo: Path) -> None:
++    repo = str(kernel_repo)
++    if repo not in sys.path:
++        sys.path.insert(0, repo)
++
++
++def make_offsets(torch: Any, rows: tuple[int, ...], device: str) -> Any:
++    rows_cpu = torch.tensor(rows, dtype=torch.int64)
++    offsets_cpu = torch.empty((len(rows) + 1,), dtype=torch.int64)
++    offsets_cpu[0] = 0
++    offsets_cpu[1:] = torch.cumsum(rows_cpu, dim=0)
++    return offsets_cpu.to(device)
++
++
++def fill_random_(torch: Any, tensors: dict[str, Any], case: Case) -> None:
++    device = tensors["gemm1_a"].device
++    total = int(sum(case.rows))
++    tensors["gemm1_a"].copy_(
++        torch.randint(-16, 16, (total, case.hidden), dtype=torch.int8,
++                      device=device))
++    tensors["gemm1_a_scales"].copy_(
++        torch.rand((total, 1), dtype=torch.float32, device=device) * 0.03 +
++        0.01)
++    tensors["w13"].copy_(
++        torch.randint(-16,
++                      16,
++                      (case.experts, case.hidden, 2 * case.inter),
++                      dtype=torch.int8,
++                      device=device))
++    tensors["w13_scales"].copy_(
++        torch.rand((case.experts, 2 * case.inter),
++                   dtype=torch.float32,
++                   device=device) * 0.03 + 0.01)
++    tensors["w2"].copy_(
++        torch.randint(-16,
++                      16,
++                      (case.experts, case.inter, case.hidden),
++                      dtype=torch.int8,
++                      device=device))
++    tensors["w2_scales"].copy_(
++        torch.rand((case.experts, case.hidden),
++                   dtype=torch.float32,
++                   device=device) * 0.03 + 0.01)
++
++
++def allocate_case_tensors(torch: Any, case: Case, device: str) -> dict[str, Any]:
++    total = int(sum(case.rows))
++    return {
++        "rows_per_expert":
++        torch.tensor(case.rows, dtype=torch.int32, device=device),
++        "offsets":
++        make_offsets(torch, case.rows, device),
++        "prefix_offsets":
++        torch.empty((case.experts + 1,), dtype=torch.int64, device=device),
++        "gemm1_a":
++        torch.empty((total, case.hidden), dtype=torch.int8, device=device),
++        "gemm1_a_scales":
++        torch.empty((total, 1), dtype=torch.float32, device=device),
++        "w13":
++        torch.empty((case.experts, case.hidden, 2 * case.inter),
++                    dtype=torch.int8,
++                    device=device),
++        "w13_scales":
++        torch.empty((case.experts, 2 * case.inter),
++                    dtype=torch.float32,
++                    device=device),
++        "w2":
++        torch.empty((case.experts, case.inter, case.hidden),
++                    dtype=torch.int8,
++                    device=device),
++        "w2_scales":
++        torch.empty((case.experts, case.hidden),
++                    dtype=torch.float32,
++                    device=device),
++        "ref_gemm1":
++        torch.empty((total, 2 * case.inter),
++                    dtype=torch.bfloat16,
++                    device=device),
++        "ref_gemm2_a":
++        torch.empty((total, case.inter), dtype=torch.int8, device=device),
++        "ref_gemm2_a_scales":
++        torch.empty((total, 1), dtype=torch.float32, device=device),
++        "ref_out":
++        torch.empty((total, case.hidden), dtype=torch.bfloat16, device=device),
++        "cand_gemm1":
++        torch.empty((total, 2 * case.inter),
++                    dtype=torch.bfloat16,
++                    device=device),
++        "cand_gemm2_a":
++        torch.empty((total, case.inter), dtype=torch.int8, device=device),
++        "cand_gemm2_a_scales":
++        torch.empty((total, 1), dtype=torch.float32, device=device),
++        "cand_out":
++        torch.empty((total, case.hidden), dtype=torch.bfloat16, device=device),
++    }
++
++
++def compare_prefix_offsets(torch: Any,
++                           tensors: dict[str, Any],
++                           run_op: bool = True) -> dict[str, Any]:
++    rows = tensors["rows_per_expert"]
++    offsets = tensors["prefix_offsets"]
++    ret_is_offsets = None
++    if run_op:
++        ret = torch.ops._xpu_C.qwen36_rows_per_expert_offsets_int64_out(
++            rows, offsets)
++        ret_is_offsets = bool(ret.data_ptr() == offsets.data_ptr())
++    ref = torch.empty_like(offsets)
++    ref[0].zero_()
++    torch.cumsum(rows, dim=0, dtype=torch.int64, out=ref[1:])
++    torch.xpu.synchronize()
++    return {
++        "offsets_equal": bool(torch.equal(offsets, ref)),
++        "offsets_mismatch_count": int((offsets.cpu() != ref.cpu()).sum().item()),
++        "offsets": [int(v) for v in offsets.cpu().tolist()],
++        "ref_offsets": [int(v) for v in ref.cpu().tolist()],
++        "ret_is_offsets": ret_is_offsets,
++    }
++
++
++def prefix_passed(result: dict[str, Any]) -> bool:
++    return bool(result.get("offsets_equal")) and int(
++        result.get("offsets_mismatch_count", 1)) == 0
++
++
++def run_reference(torch: Any, tensors: dict[str, Any], case: Case) -> None:
++    ops = torch.ops._xpu_C
++    ops.cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++        tensors["gemm1_a"],
++        tensors["gemm1_a_scales"],
++        tensors["w13"],
++        tensors["w13_scales"],
++        None,
++        tensors["ref_gemm1"],
++        tensors["offsets"],
++        2 * case.inter,
++        case.hidden,
++        case.experts,
++    )
++    ops.silu_and_mul_quant_int8_xpu_out(tensors["ref_gemm1"],
++                                        tensors["ref_gemm2_a"],
++                                        tensors["ref_gemm2_a_scales"])
++    ops.cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++        tensors["ref_gemm2_a"],
++        tensors["ref_gemm2_a_scales"],
++        tensors["w2"],
++        tensors["w2_scales"],
++        None,
++        tensors["ref_out"],
++        tensors["offsets"],
++        case.hidden,
++        case.inter,
++        case.experts,
++    )
++
++
++def run_candidate(torch: Any, tensors: dict[str, Any], case: Case) -> Any:
++    return torch.ops._xpu_C.qwen36_moe_w8a8_middle_layerlet(
++        tensors["gemm1_a"],
++        tensors["gemm1_a_scales"],
++        tensors["w13"],
++        tensors["w13_scales"],
++        None,
++        tensors["cand_gemm1"],
++        tensors["cand_gemm2_a"],
++        tensors["cand_gemm2_a_scales"],
++        tensors["w2"],
++        tensors["w2_scales"],
++        None,
++        tensors["cand_out"],
++        tensors["offsets"],
++        2 * case.inter,
++        case.hidden,
++        case.hidden,
++        case.inter,
++        case.experts,
++    )
++
++
++def max_abs(torch: Any, left: Any, right: Any) -> float:
++    if left.numel() == 0:
++        return 0.0
++    return float((left.float() - right.float()).abs().max().cpu().item())
++
++
++def compare_outputs(torch: Any, tensors: dict[str, Any],
++                    case: Case) -> dict[str, Any]:
++    ref_gemm2_a = tensors["ref_gemm2_a"].cpu()
++    cand_gemm2_a = tensors["cand_gemm2_a"].cpu()
++    mismatch_count = int((ref_gemm2_a != cand_gemm2_a).sum().item())
++    return {
++        "gemm1_max_abs_diff":
++        max_abs(torch, tensors["ref_gemm1"], tensors["cand_gemm1"]),
++        "gemm2_a_equal":
++        bool(torch.equal(ref_gemm2_a, cand_gemm2_a)),
++        "gemm2_a_mismatch_count":
++        mismatch_count,
++        "gemm2_a_scales_max_abs_diff":
++        max_abs(torch, tensors["ref_gemm2_a_scales"],
++                tensors["cand_gemm2_a_scales"]),
++        "gemm2_output_max_abs_diff":
++        max_abs(torch, tensors["ref_out"], tensors["cand_out"]),
++        "ref_checksum":
++        float(tensors["ref_out"].float().sum().cpu().item()),
++        "cand_checksum":
++        float(tensors["cand_out"].float().sum().cpu().item()),
++        "retains_rows":
++        int(sum(case.rows)),
++    }
++
++
++def case_passed(result: dict[str, Any], rtol: float, atol: float) -> bool:
++    del rtol
++    allowed = atol
++    return (result["gemm1_max_abs_diff"] <= allowed
++            and result["gemm2_a_equal"]
++            and result["gemm2_a_scales_max_abs_diff"] <= allowed
++            and result["gemm2_output_max_abs_diff"] <= allowed)
++
++
++def run_graph_replay_case(torch: Any, tensors: dict[str, Any], case: Case,
++                          args: argparse.Namespace) -> dict[str, Any]:
++    if not hasattr(torch.xpu, "XPUGraph") or not hasattr(torch.xpu, "graph"):
++        return {"status": "unsupported", "passed": not args.require_graph}
++
++    graph = torch.xpu.XPUGraph()
++    try:
++        for _ in range(3):
++            run_candidate(torch, tensors, case)
++        torch.xpu.synchronize()
++
++        with torch.xpu.graph(graph):
++            run_candidate(torch, tensors, case)
++        torch.xpu.synchronize()
++
++        fill_random_(torch, tensors, case)
++        run_reference(torch, tensors, case)
++        tensors["cand_gemm1"].zero_()
++        tensors["cand_gemm2_a"].zero_()
++        tensors["cand_gemm2_a_scales"].zero_()
++        tensors["cand_out"].zero_()
++        torch.xpu.synchronize()
++        graph.replay()
++        torch.xpu.synchronize()
++        comparison = compare_outputs(torch, tensors, case)
++        comparison["status"] = "executed"
++        comparison["passed"] = case_passed(comparison, args.rtol, args.atol)
++        return comparison
++    except Exception as exc:  # noqa: BLE001 - report graph failures as data.
++        return {
++            "status": "error",
++            "passed": False if args.require_graph else True,
++            "error_type": type(exc).__name__,
++            "error": str(exc),
++        }
++
++
++def run_prefix_graph_replay_case(torch: Any, tensors: dict[str, Any],
++                                 case: Case,
++                                 args: argparse.Namespace) -> dict[str, Any]:
++    if not hasattr(torch.xpu, "XPUGraph") or not hasattr(torch.xpu, "graph"):
++        return {"status": "unsupported", "passed": not args.require_graph}
++
++    graph = torch.xpu.XPUGraph()
++    try:
++        for _ in range(3):
++            torch.ops._xpu_C.qwen36_rows_per_expert_offsets_int64_out(
++                tensors["rows_per_expert"], tensors["prefix_offsets"])
++        torch.xpu.synchronize()
++
++        with torch.xpu.graph(graph):
++            torch.ops._xpu_C.qwen36_rows_per_expert_offsets_int64_out(
++                tensors["rows_per_expert"], tensors["prefix_offsets"])
++        torch.xpu.synchronize()
++
++        replacement = tuple((value + index + 1) % 5
++                            for index, value in enumerate(case.rows))
++        tensors["rows_per_expert"].copy_(
++            torch.tensor(replacement,
++                         dtype=torch.int32,
++                         device=tensors["rows_per_expert"].device))
++        tensors["prefix_offsets"].zero_()
++        torch.xpu.synchronize()
++        graph.replay()
++        torch.xpu.synchronize()
++        comparison = compare_prefix_offsets(torch, tensors, run_op=False)
++        comparison["status"] = "executed"
++        comparison["mutated_rows"] = [int(v) for v in replacement]
++        comparison["passed"] = prefix_passed(comparison)
++        tensors["rows_per_expert"].copy_(
++            torch.tensor(case.rows,
++                         dtype=torch.int32,
++                         device=tensors["rows_per_expert"].device))
++        return comparison
++    except Exception as exc:  # noqa: BLE001 - report graph failures as data.
++        return {
++            "status": "error",
++            "passed": False if args.require_graph else True,
++            "error_type": type(exc).__name__,
++            "error": str(exc),
++        }
++
++
++def write_artifacts(args: argparse.Namespace, report: dict[str, Any]) -> None:
++    args.data_dir.mkdir(parents=True, exist_ok=True)
++    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
++    json_out = args.json_out or (
++        args.data_dir / f"qwen36-w8a8-middle-layerlet-check-{stamp}.json")
++    md_out = args.md_out or (
++        args.data_dir / f"qwen36-w8a8-middle-layerlet-check-{stamp}.md")
++
++    json_out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
++
++    lines = [
++        "# Qwen3.6 W8A8 Middle Layerlet Check",
++        "",
++        f"- timestamp_utc: `{report['timestamp_utc']}`",
++        f"- device: `{report['device']}`",
++        f"- overall_passed: `{report['overall_passed']}`",
++        f"- graph_replay_requested: `{report['graph_replay_requested']}`",
++        f"- require_graph: `{report['require_graph']}`",
++        "",
++        "| case | prefix | prefix graph | layerlet | layerlet graph | gemm1 diff | q equal | scale diff | out diff |",
++        "| --- | --- | --- | --- | --- | ---: | --- | ---: | ---: |",
++    ]
++    for item in report["cases"]:
++        prefix = item["prefix_eager"]
++        prefix_graph = item.get("prefix_graph")
++        eager = item["eager"]
++        graph = item.get("graph")
++        prefix_graph_text = "n/a"
++        if prefix_graph is not None:
++            prefix_graph_text = (
++                f"{prefix_graph.get('passed')} ({prefix_graph.get('status')})")
++        graph_text = "n/a"
++        if graph is not None:
++            graph_text = f"{graph.get('passed')} ({graph.get('status')})"
++        lines.append(
++            "| {name} | {prefix_pass} | {prefix_graph_text} | "
++            "{eager_pass} | {graph_text} | {g1:.6g} | {qeq} | "
++            "{sd:.6g} | {od:.6g} |".format(
++                name=item["case"]["name"],
++                prefix_pass=prefix["passed"],
++                prefix_graph_text=prefix_graph_text,
++                eager_pass=eager["passed"],
++                graph_text=graph_text,
++                g1=eager["gemm1_max_abs_diff"],
++                qeq=eager["gemm2_a_equal"],
++                sd=eager["gemm2_a_scales_max_abs_diff"],
++                od=eager["gemm2_output_max_abs_diff"],
++            ))
++    md_out.write_text("\n".join(lines) + "\n")
++    report["json_out"] = str(json_out)
++    report["md_out"] = str(md_out)
++
++
++def main() -> int:
++    args = parse_args()
++    add_kernel_repo_to_path(args.kernel_repo)
++
++    import torch
++    import vllm_xpu_kernels._xpu_C  # noqa: F401
++
++    required = [
++        "cutlass_grouped_gemm_w8a8_int8_offsets_interface",
++        "silu_and_mul_quant_int8_xpu_out",
++        "qwen36_moe_w8a8_middle_layerlet",
++        "qwen36_rows_per_expert_offsets_int64_out",
++    ]
++    missing = []
++    for name in required:
++        try:
++            getattr(torch.ops._xpu_C, name)
++        except AttributeError:
++            missing.append(name)
++    if missing:
++        raise RuntimeError(f"missing required XPU ops: {missing}")
++    if not torch.xpu.is_available():
++        raise RuntimeError("torch.xpu is not available")
++
++    torch.manual_seed(args.seed)
++    report: dict[str, Any] = {
++        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
++        "device": str(torch.xpu.get_device_name(int(args.device.split(":")[-1]))),
++        "seed": args.seed,
++        "kernel_repo": str(args.kernel_repo),
++        "graph_replay_requested": bool(args.graph_replay),
++        "require_graph": bool(args.require_graph),
++        "cases": [],
++    }
++
++    all_passed = True
++    for case_index, case in enumerate(DEFAULT_CASES):
++        torch.manual_seed(args.seed + case_index)
++        tensors = allocate_case_tensors(torch, case, args.device)
++        prefix_eager = compare_prefix_offsets(torch, tensors)
++        prefix_eager["passed"] = prefix_passed(prefix_eager)
++        tensors["offsets"] = tensors["prefix_offsets"]
++        fill_random_(torch, tensors, case)
++        run_reference(torch, tensors, case)
++        ret = run_candidate(torch, tensors, case)
++        torch.xpu.synchronize()
++        eager = compare_outputs(torch, tensors, case)
++        eager["passed"] = case_passed(eager, args.rtol, args.atol)
++        eager["ret_is_out"] = bool(ret.data_ptr() == tensors["cand_out"].data_ptr())
++        graph_result = None
++        prefix_graph_result = None
++        if args.graph_replay:
++            prefix_graph_result = run_prefix_graph_replay_case(
++                torch, tensors, case, args)
++            prefix_eager = compare_prefix_offsets(torch, tensors)
++            prefix_eager["passed"] = prefix_passed(prefix_eager)
++            graph_result = run_graph_replay_case(torch, tensors, case, args)
++        item = {
++            "case": asdict(case),
++            "prefix_eager": prefix_eager,
++            "eager": eager,
++        }
++        if prefix_graph_result is not None:
++            item["prefix_graph"] = prefix_graph_result
++        if graph_result is not None:
++            item["graph"] = graph_result
++        report["cases"].append(item)
++        all_passed = all_passed and prefix_eager["passed"]
++        if prefix_graph_result is not None:
++            all_passed = all_passed and bool(prefix_graph_result.get("passed"))
++        all_passed = all_passed and eager["passed"]
++        if graph_result is not None:
++            all_passed = all_passed and bool(graph_result.get("passed"))
++
++    report["overall_passed"] = bool(all_passed)
++    write_artifacts(args, report)
++    print(json.dumps(report, indent=2, sort_keys=True))
++    return 0 if report["overall_passed"] else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/notes/2026-06-14-qwen36-recovery-implementation.md b/notes/2026-06-14-qwen36-recovery-implementation.md
+new file mode 100644
+index 0000000..1b6fa90
+--- /dev/null
++++ b/notes/2026-06-14-qwen36-recovery-implementation.md
+@@ -0,0 +1,641 @@
++# Qwen3.6 Recovery Implementation
++
++Date: 2026-06-14
++
++## Implemented
++
++- Added `scripts/run-qwen36-decisive-timing.sh`.
++  - Launches the accepted graph-disabled W8A8 lane.
++  - Enables opt-in XPU decode timing without changing accepted defaults.
++  - Runs a c1 endpoint metric pass.
++  - Summarizes the timing log.
++  - Emits a fresh bottleneck-family decision JSON and Markdown.
++- Added `scripts/qwen36-timing-family-decision.py`.
++  - Classifies timing labels into MoE, GDN, full attention, collectives,
++    logits/sampler, runtime, and other.
++  - Uses top visible family labels and rank skew as routing evidence.
++  - Explicitly warns that timing labels are nested and non-exclusive.
++- Added `scripts/run-qwen36-graph-replay-matrix.sh`.
++  - Reuses the current `cuda_graph.py` compare/trace hooks.
++  - Runs a reproducible PIECEWISE prefix-0 matrix:
++    control, sync replay, compare-direct, and return-direct.
++  - Keeps graph candidates rejected unless canaries pass.
++
++## Operational Defaults
++
++- The accepted launcher remains graph-disabled and production-safe.
++- Timing stays opt-in through `VLLM_XPU_DECODE_TIMING_ALLOW=1`.
++- The decisive timing runner defaults to `p512/o256`, one measured repeat, and
++  no canaries. Set `RUN_CANARIES=1` for a heavier timing-plus-correctness pass.
++- The replay matrix defaults to 64 JSON and color repeats per variant.
++
++## Next Execution
++
++1. Run one fresh accepted-lane timing pass:
++
++```bash
++cd /home/steve/llm-optimizations
++bash scripts/run-qwen36-decisive-timing.sh accepted-c1-decisive-20260614
++```
++
++2. Use the generated timing decision to choose the next engineering branch:
++   persistent W8A8 MoE layerlet, GDN/dense fusion, collectives/topology, or
++   runtime/static c1 work.
++
++3. If graph replay remains under investigation, run:
++
++```bash
++cd /home/steve/llm-optimizations
++bash scripts/run-qwen36-graph-replay-matrix.sh
++```
++
++4. Promote no candidate until JSON/color canaries, quality suite, token checks,
++   and repeated p512/o512 metrics all pass.
++
++## Fresh Accepted-Lane Timing Run
++
++Command:
++
++```bash
++cd /home/steve/llm-optimizations
++PROMPT_TOKENS=512 OUTPUT_TOKENS=128 METRICS_REPEATS=1 \
++  VLLM_XPU_DECODE_TIMING_SKIP_FIRST=16 \
++  VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST=16 \
++  VLLM_XPU_DECODE_TIMING_STEP_EVERY=16 \
++  RUN_CANARIES=0 \
++  bash scripts/run-qwen36-decisive-timing.sh accepted-c1-decisive-20260614-impl
++```
++
++Artifacts:
++
++- Metrics:
++  `data/qwen36-accepted-c1-decisive-20260614-impl-p512o128-20260614162746.json`
++- Timing summary:
++  `data/qwen36-accepted-c1-decisive-20260614-impl-timing-summary-20260614162746.json`
++- Timing decision:
++  `data/qwen36-accepted-c1-decisive-20260614-impl-timing-decision-20260614162746.json`
++- Run summary:
++  `data/qwen36-accepted-c1-decisive-20260614-impl-run-summary-20260614162746.json`
++
++Result:
++
++- Diagnostic timing-on corrected output rate: `13.38 tok/s`.
++- vLLM decode histogram: `74.73 ms/generated token`.
++- Client TTFT: `284.98 ms`; vLLM TTFT: `209.78 ms`.
++- Available KV cache memory after profiling: `19.07 GiB`.
++- vLLM maximum 32K concurrency estimate: `57.80x`.
++
++Decision:
++
++- Leading family: MoE.
++- Top visible label after per-step normalization:
++  `moe.quant_method_total` at `38.34 ms/step`.
++- Runner-up: collectives,
++  `all_reduce:(1, 2048):torch.bfloat16:bytes=4096` at `6.51 ms/step`.
++- Next target remains the persistent/resident W8A8 MoE layerlet path.
++
++Note: this is a diagnostic timing run, not a promoted speed row. Canaries were
++not requested for this pass.
++
++## Implementation Checkpoint: Guardrails And Gates
++
++Added a fail-closed guard in
++`/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`
++for the rejected oneDNN sidecar-inside-XPU-graph path.
++
++- Default behavior now skips oneDNN sidecar execution when the current XPU
++  stream is being captured.
++- The only way to re-enter this path is to explicitly set
++  `VLLM_XPU_MOE_ONEDNN_SIDECAR_ALLOW_GRAPH_CAPTURE=1` for an isolated
++  diagnostic run.
++- Rationale: mode 123 with wait-in-capture fell back because waits cannot be
++  issued while recording a command graph; mode 133/no-wait captured but the
++  first real vLLM request hit `UR_RESULT_ERROR_DEVICE_LOST`. This path is not a
++  candidate for production or unattended benchmarking.
++
++Added `scripts/qwen36-ablation-report.py`.
++
++- Normalizes ablation summaries and decisive timing run summaries.
++- Reports corrected output tok/s, decode ms/token, JSON canary status, color
++  canary status, quality-suite status, and first failure.
++- Treats missing quality validation as missing, not as passed.
++- Separates `quality_validated` from `promotion_ready`.
++- Supports `--min-tok-s`; `promotion_ready=true` requires quality validation
++  plus the requested speed floor.
++
++Generated current min-98 report:
++
++- JSON: `data/qwen36-ablation-report-min98-20260614164151.json`
++- Markdown: `data/qwen36-ablation-report-min98-20260614164151.md`
++- Rows summarized: 29.
++- `promotion_ready`: 0.
++- `quality_validated`: 1.
++- The only quality-validated row in this set is the graph-disabled packed gate
++  at about `13.98 tok/s`, so it is not useful for the speed goal.
++
++Added `scripts/run-qwen36-oracle-parity-gate.sh`.
++
++- Consumes accepted and candidate token-trace artifacts.
++- Optionally replays speculative scheduler JSONL traces.
++- Reduces accepted-vs-candidate drift into a compact fixture.
++- Runs `check-qwen36-oracle-fixture.py` in exact or known-drift mode.
++- Default exact mode requires speculative activity and request-id joinability,
++  so a future oracle/spec patch must prove both "spec ran" and "tokens match".
++
++Known-drift smoke:
++
++```bash
++cd /home/steve/llm-optimizations
++MODE=known-drift \
++EXPECTED_MISMATCHES=2 \
++EXPECTED_ROLES=verifier_bonus_after_full_accept,replacement_after_reject \
++ACCEPTED_TRACE_JSON=data/qwen36-quark-int8-tp4-oracle-k1-short-accepted-graph-20260611.json \
++CANDIDATE_TRACE_JSON=data/qwen36-quark-int8-tp4-oracle1-workertrace-completions-20260611a.json \
++SPEC_SUMMARY_JSON=data/qwen36-quark-int8-tp4-oracle1-workertrace-spec-summary-20260611a.json \
++REPLAY_JSON=data/qwen36-quark-int8-tp4-oracle1-workertrace-replay-20260611a.json \
++./scripts/run-qwen36-oracle-parity-gate.sh workertrace-known-drift-smoke-v2
++```
++
++Result:
++
++- Summary:
++  `data/qwen36-oracle-workertrace-known-drift-smoke-v2-gate-summary-20260614164300.json`
++- Check result: pass in `known-drift` mode.
++- Mismatch roles: `verifier_bonus_after_full_accept`,
++  `replacement_after_reject`.
++- Spec activity: 15 draft tokens, 14 accepted, 1 rejected,
++  93.33% accept rate.
++- The reducer returned rc=2 because this fixture intentionally drifts; the gate
++  pass is based on the checker rc=0 in known-drift mode.
++
++Current rejected paths to avoid re-testing without new evidence:
++
++- `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1`: slightly slower than accepted and
++  costs KV headroom.
++- Direct oneDNN sidecar capture inside vLLM XPU graphs: falls back or device
++  loss.
++- PIECEWISE prefix-0 decode graph replay variants tested on 2026-06-14:
++  compare-direct short passed, but deeper return-direct/sync/zero-empty and
++  standard prefix-0 canaries still failed.
++
++Current primary engineering branches:
++
++1. Graph-native or persistent SYCL W8A8 MoE layerlet.
++   Use the oneDNN sidecar as the exact oracle, but do not capture oneDNN engine
++   stream work inside vLLM graphs.
++2. Oracle k=1 speculative parity repair.
++   Use the new oracle parity gate before any speed claim. The first required
++   milestone is token-identical output with speculative verifier activity
++   proven active.
++3. Selective graph replay bypass only if a fresh trace proves a narrow replay
++   family can be disabled while preserving enough speed. Current broad prefix-0
++   replay is not clean.
++
++## Implementation Checkpoint: Graph-Native W8A8 MoE Middle Layerlet
++
++Implemented an opt-in graph-native W8A8 MoE middle layerlet in
++`/home/steve/src/vllm-xpu-kernels`.
++
++Files changed:
++
++- `csrc/xpu/moe_layerlet.cpp`
++- `csrc/xpu/ops.h`
++- `csrc/xpu/torch_bindings.cpp`
++- `CMakeLists.txt`
++- `vllm_xpu_kernels/fused_moe_interface.py`
++- `/home/steve/src/vllm/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py`
++- `scripts/check-qwen36-w8a8-middle-layerlet.py`
++- `scripts/launch-qwen36-quark-int8-accepted.sh`
++- `scripts/run-qwen36-ablation-candidate.sh`
++- `scripts/run-qwen36-decisive-timing.sh`
++
++Behavior:
++
++- New XPU op:
++  `_xpu_C::qwen36_moe_w8a8_middle_layerlet`.
++- It runs the middle MoE sequence as one native extension boundary:
++  offsets W8A8 GEMM1 -> exact SiLU/mul INT8 quant -> offsets W8A8 GEMM2.
++- It remains fail-closed by default.
++- The accepted launcher now strips the experimental flags unless
++  `VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1` is set.
++- The vLLM path only uses it when:
++  `VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET=1`,
++  `VLLM_XPU_W8A8_USE_OFFSETS=1`,
++  activation is SiLU, INT8 scratch is available, and the oneDNN sidecar is not
++  selected.
++
++Build/deploy status:
++
++- `python3 -m py_compile vllm_xpu_kernels/fused_moe_interface.py`: pass.
++- `_xpu_C` rebuild: pass.
++- Live binary backup:
++  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so.backup-before-w8a8-middle-layerlet-20260614-170538`
++- Live op registration check: pass.
++
++Synthetic parity harness:
++
++```bash
++cd /home/steve/llm-optimizations
++python3 scripts/check-qwen36-w8a8-middle-layerlet.py --graph-replay --require-graph
++```
++
++Latest artifact:
++
++- JSON: `data/qwen36-w8a8-middle-layerlet-check-20260614T171738Z.json`
++- Markdown: `data/qwen36-w8a8-middle-layerlet-check-20260614T171738Z.md`
++
++Result:
++
++- Overall: pass.
++- XPU graph replay requested and required: pass.
++- Cases: `tiny_sparse`, `single_hot_expert`, `decode_like_sparse`,
++  `dense_small`.
++- Eager max diff: `0.0`.
++- Graph replay max diff: `0.0`.
++- Graph replay mutates inputs after capture, so this proves the op replays with
++  live buffers instead of stale captured values.
++
++Endpoint smoke, layerlet with graph disabled:
++
++```bash
++VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1 \
++VLLM_XPU_W8A8_USE_OFFSETS=1 \
++VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET=1 \
++PROMPT_TOKENS=64 OUTPUT_TOKENS=64 WARMUP_OUTPUT_TOKENS=16 \
++METRICS_REPEATS=1 RUN_CANARIES=0 \
++bash scripts/run-qwen36-decisive-timing.sh middle-layerlet-eager-smoke
++```
++
++Artifacts:
++
++- Log: `data/qwen36-middle-layerlet-eager-smoke-20260614171249.log`
++- Metrics:
++  `data/qwen36-middle-layerlet-eager-smoke-p64o64-20260614171249.json`
++- Timing decision:
++  `data/qwen36-middle-layerlet-eager-smoke-timing-decision-20260614171249.json`
++
++Result:
++
++- Corrected output rate: `13.2529 tok/s`.
++- vLLM decode time: `75.4752 ms/token`.
++- Client TTFT: `192.48 ms`.
++- vLLM TTFT: `114.45 ms`.
++- Top visible MoE label: `xpu_moe.w8a8_offsets`.
++- `xpu_moe.w8a8_offsets`: max `0.099079 ms`, mean `0.095973 ms`.
++- `xpu_moe.w8a8_middle_layerlet`: max `0.060602 ms`, mean
++  `0.059367 ms`.
++- `xpu_moe.gemm1_quant`: max `0.027884 ms`, mean `0.027227 ms`.
++
++Interpretation:
++
++- The layerlet is active and endpoint-safe in graph-disabled smoke.
++- The fixed per-token offsets construction became the top visible MoE cost.
++
++## Implementation Checkpoint: Resident Offsets Scratch
++
++Added resident offsets scratch on the mixed INT8 workspace path.
++
++Behavior:
++
++- When `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1`, the XPU MoE workspace manager
++  also allocates `w8a8_offsets` as an `int64` tensor of shape
++  `num_local_experts + 1`.
++- `_make_w8a8_grouped_gemm_offsets` now reuses this buffer when available and
++  performs `torch.cumsum(..., dtype=torch.int64, out=offsets[1:])`.
++- This avoids a per-layer offsets allocation and the extra int64 intermediate.
++
++Validation:
++
++- The synthetic layerlet harness still passed with graph replay required after
++  this change:
++  `data/qwen36-w8a8-middle-layerlet-check-20260614T171738Z.json`.
++
++Endpoint smoke, layerlet plus resident offsets:
++
++```bash
++VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1 \
++VLLM_XPU_W8A8_USE_OFFSETS=1 \
++VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET=1 \
++VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1 \
++PROMPT_TOKENS=64 OUTPUT_TOKENS=64 WARMUP_OUTPUT_TOKENS=16 \
++METRICS_REPEATS=1 RUN_CANARIES=0 \
++bash scripts/run-qwen36-decisive-timing.sh middle-layerlet-resident-offset-smoke
++```
++
++Artifacts:
++
++- Log:
++  `data/qwen36-middle-layerlet-resident-offset-smoke-20260614171754.log`
++- Metrics:
++  `data/qwen36-middle-layerlet-resident-offset-smoke-p64o64-20260614171754.json`
++- Timing decision:
++  `data/qwen36-middle-layerlet-resident-offset-smoke-timing-decision-20260614171754.json`
++
++Result:
++
++- Corrected output rate: `13.7112 tok/s`.
++- vLLM decode time: `73.0055 ms/token`.
++- Client TTFT: `190.69 ms`.
++- vLLM TTFT: `111.75 ms`.
++- Top visible MoE label remains `xpu_moe.w8a8_offsets`.
++- `xpu_moe.w8a8_offsets`: max `0.073370 ms`, mean `0.0723868 ms`.
++- `xpu_moe.w8a8_middle_layerlet`: max `0.059415 ms`, mean
++  `0.0576678 ms`.
++- `xpu_moe.gemm1_quant`: max `0.019098 ms`, mean `0.0188165 ms`.
++
++Delta versus layerlet without resident offsets:
++
++- Corrected output rate: `+0.4583 tok/s`, about `+3.46%`.
++- vLLM decode time: `75.4752 -> 73.0055 ms/token`.
++- Offsets max cost: `0.099079 -> 0.073370 ms`.
++- Graph-native layerlet cost stayed roughly flat, so the improvement is from
++  resident offsets and workspace reuse rather than a changed math path.
++
++Status:
++
++- Promising but not promoted.
++- This is one short p64/o64 smoke with canaries disabled.
++- Before adoption, run JSON/color canaries, quality suite, at least four
++  measured repeats, and an adjacent accepted-control A/B.
++
++Canary-only quality smoke:
++
++```bash
++PORT=18083 BASE_URL=http://127.0.0.1:18083 \
++VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1 \
++VLLM_XPU_W8A8_USE_OFFSETS=1 \
++VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET=1 \
++VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1 \
++ABLATION_SKIP_METRICS=1 JSON_REPEATS=8 COLOR_REPEATS=8 \
++bash scripts/run-qwen36-ablation-candidate.sh middle-layerlet-resident-offset-canary8
++```
++
++Artifacts:
++
++- Summary:
++  `data/qwen36-ablation-middle-layerlet-resident-offset-canary8-summary-20260614172409.json`
++- JSON canary:
++  `data/qwen36-ablation-middle-layerlet-resident-offset-canary8-json-repeat8-20260614172409.json`
++- Color canary:
++  `data/qwen36-ablation-middle-layerlet-resident-offset-canary8-color-repeat8-20260614172409.json`
++- Log:
++  `data/qwen36-ablation-middle-layerlet-resident-offset-canary8-20260614172409.log`
++
++Result:
++
++- JSON canary: pass, `8/8`, `0` mismatches.
++- Color canary: pass, `8/8`, `0` mismatches.
++- Metrics: skipped.
++- Quality suite: skipped.
++- This upgrades the candidate from "endpoint smoke only" to "endpoint smoke
++  plus short deterministic canary pass", but it is still not promotion-ready.
++
++Harness fix:
++
++- Patched `scripts/run-qwen36-ablation-candidate.sh` so future summaries record
++  per-step status as `passed`, `failed`, `skipped`, or `missing_artifact`.
++- Added `artifact_exists` to the summary JSON.
++- Added `VLLM_XPU_INT8_MOE_MIXED_WORKSPACE` to the recorded environment.
++- Corrected the current canary summary to mark metrics and quality as skipped
++  because those artifacts were intentionally not generated.
++
++## Implementation Checkpoint: Prefix Offset XPU Op
++
++Implemented the next target from the resident-offset checkpoint: a tiny
++graph-native prefix-offset XPU op.
++
++Files changed:
++
++- `/home/steve/src/vllm-xpu-kernels/csrc/xpu/moe_layerlet.cpp`
++- `/home/steve/src/vllm-xpu-kernels/csrc/xpu/ops.h`
++- `/home/steve/src/vllm-xpu-kernels/csrc/xpu/torch_bindings.cpp`
++- `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`
++- `scripts/check-qwen36-w8a8-middle-layerlet.py`
++- `scripts/launch-qwen36-quark-int8-accepted.sh`
++- `scripts/run-qwen36-ablation-candidate.sh`
++- `scripts/run-qwen36-decisive-timing.sh`
++
++Behavior:
++
++- New op:
++  `_xpu_C::qwen36_rows_per_expert_offsets_int64_out`.
++- It writes `offsets[0] = 0` and the inclusive prefix of int32
++  `rows_per_expert` into the resident int64 offsets buffer.
++- It is opt-in via `VLLM_XPU_W8A8_OFFSETS_PREFIX_OP=1`.
++- It is also stripped by the accepted launcher unless
++  `VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1`.
++- Added nested timing labels:
++  `xpu_moe.w8a8_offsets_prefix_op` and
++  `xpu_moe.w8a8_offsets_torch_cumsum`.
++
++Build/deploy status:
++
++- `_xpu_C` rebuild: pass.
++- Live binary backup:
++  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so.backup-before-prefix-offset-20260614-173259`
++- Direct XPU parity check against `torch.cumsum`: pass.
++
++Updated synthetic harness:
++
++```bash
++cd /home/steve/llm-optimizations
++ONEAPI_DEVICE_SELECTOR=level_zero:0 \
++  /home/steve/.venvs/vllm-xpu/bin/python \
++  scripts/check-qwen36-w8a8-middle-layerlet.py --graph-replay --require-graph
++```
++
++Artifacts:
++
++- JSON: `data/qwen36-w8a8-middle-layerlet-check-20260614T173603Z.json`
++- Markdown: `data/qwen36-w8a8-middle-layerlet-check-20260614T173603Z.md`
++
++Result:
++
++- Overall: pass.
++- Prefix eager: pass for all four cases.
++- Prefix graph replay: pass for all four cases, including mutated
++  `rows_per_expert` after capture.
++- Layerlet eager: pass for all four cases.
++- Layerlet graph replay: pass for all four cases.
++
++Endpoint smoke, layerlet plus resident prefix offsets:
++
++```bash
++PORT=18084 BASE_URL=http://127.0.0.1:18084 \
++VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1 \
++VLLM_XPU_W8A8_USE_OFFSETS=1 \
++VLLM_XPU_W8A8_OFFSETS_PREFIX_OP=1 \
++VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET=1 \
++VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1 \
++VLLM_XPU_DECODE_TIMING_LABEL_REGEX='xpu_moe\.w8a8_offsets|xpu_moe\.w8a8_offsets_prefix_op|xpu_moe\.w8a8_offsets_torch_cumsum|xpu_moe\.w8a8_middle_layerlet|xpu_moe\.gemm1_quant' \
++PROMPT_TOKENS=64 OUTPUT_TOKENS=64 WARMUP_OUTPUT_TOKENS=16 \
++METRICS_REPEATS=1 RUN_CANARIES=0 \
++bash scripts/run-qwen36-decisive-timing.sh middle-layerlet-prefix-offset-smoke
++```
++
++Artifacts:
++
++- Log: `data/qwen36-middle-layerlet-prefix-offset-smoke-20260614173632.log`
++- Metrics:
++  `data/qwen36-middle-layerlet-prefix-offset-smoke-p64o64-20260614173632.json`
++- Timing decision:
++  `data/qwen36-middle-layerlet-prefix-offset-smoke-timing-decision-20260614173632.json`
++- Run summary:
++  `data/qwen36-middle-layerlet-prefix-offset-smoke-run-summary-20260614173632.json`
++
++Result:
++
++- Corrected output rate: `14.2056 tok/s`.
++- vLLM decode time: `70.4096 ms/token`.
++- Client TTFT: `184.92 ms`.
++- vLLM TTFT: `112.45 ms`.
++- Top visible MoE label is now `xpu_moe.w8a8_middle_layerlet`, not offsets.
++- `xpu_moe.w8a8_middle_layerlet`: max `0.049362 ms`, mean
++  `0.0485178 ms`.
++- `xpu_moe.w8a8_offsets`: max `0.022380 ms`, mean `0.0221915 ms`.
++- `xpu_moe.w8a8_offsets_prefix_op`: max `0.013010 ms`, mean
++  `0.0128663 ms`.
++- `xpu_moe.gemm1_quant`: max `0.014299 ms`, mean `0.0141435 ms`.
++
++Delta versus resident-offset cumsum candidate:
++
++- Corrected output rate: `13.7112 -> 14.2056 tok/s`, about `+3.61%`.
++- vLLM decode time: `73.0055 -> 70.4096 ms/token`.
++- Offsets max cost: `0.073370 -> 0.022380 ms`.
++
++Delta versus first layerlet smoke without resident offsets:
++
++- Corrected output rate: `13.2529 -> 14.2056 tok/s`, about `+7.19%`.
++- vLLM decode time: `75.4752 -> 70.4096 ms/token`.
++- Offsets max cost: `0.099079 -> 0.022380 ms`.
++
++Canary-only quality smoke:
++
++```bash
++PORT=18085 BASE_URL=http://127.0.0.1:18085 \
++VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1 \
++VLLM_XPU_W8A8_USE_OFFSETS=1 \
++VLLM_XPU_W8A8_OFFSETS_PREFIX_OP=1 \
++VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET=1 \
++VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1 \
++ABLATION_SKIP_METRICS=1 JSON_REPEATS=8 COLOR_REPEATS=8 \
++bash scripts/run-qwen36-ablation-candidate.sh middle-layerlet-prefix-offset-canary8
++```
++
++Artifacts:
++
++- Summary:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-canary8-summary-20260614173934.json`
++- JSON canary:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-canary8-json-repeat8-20260614173934.json`
++- Color canary:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-canary8-color-repeat8-20260614173934.json`
++- Log:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-canary8-20260614173934.log`
++
++Result:
++
++- JSON canary: pass, `8/8`, `0` mismatches.
++- Color canary: pass, `8/8`, `0` mismatches.
++- Metrics: skipped.
++- Quality suite: skipped.
++- Status: promising short candidate, not promoted.
++
++Longer candidate gate:
++
++```bash
++PORT=18086 BASE_URL=http://127.0.0.1:18086 \
++VLLM_XPU_W8A8_EXPERIMENTAL_ALLOW=1 \
++VLLM_XPU_W8A8_USE_OFFSETS=1 \
++VLLM_XPU_W8A8_OFFSETS_PREFIX_OP=1 \
++VLLM_XPU_MOE_W8A8_MIDDLE_LAYERLET=1 \
++VLLM_XPU_INT8_MOE_MIXED_WORKSPACE=1 \
++METRICS_REPEATS=2 JSON_REPEATS=32 COLOR_REPEATS=32 \
++ABLATION_RUN_QUALITY=1 QUALITY_REPEAT_RUNS=4 QUALITY_LONG_CONTEXT_TOKENS=2048 \
++bash scripts/run-qwen36-ablation-candidate.sh middle-layerlet-prefix-offset-gate32-quality
++```
++
++Artifacts:
++
++- Summary:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-summary-20260614174351.json`
++- Metrics:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-p512o512-20260614174351.json`
++- JSON canary:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-json-repeat32-20260614174351.json`
++- Color canary:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-color-repeat32-20260614174351.json`
++- Quality suite:
++  `data/qwen36-ablation-middle-layerlet-prefix-offset-gate32-quality-quality-suite-20260614174351.json`
++
++Result:
++
++- Metrics: pass.
++- p512/o512 corrected output rate: `14.1911 tok/s` mean over two repeats.
++- p512/o512 vLLM decode time: `70.4677 ms/token` mean over two repeats.
++- JSON canary: pass, `32/32`, `0` mismatches.
++- Color canary: pass, `32/32`, `0` mismatches.
++- Text quality suite: pass.
++- Quality suite details:
++  baseline match all: pass;
++  exact cases `exact_ok`, `copy_phrase`, `arithmetic`, `json_schema`: pass;
++  repeat case: pass;
++  long-context case at `2048` tokens: pass.
++
++Adjacent accepted-control A/B:
++
++```bash
++PORT=18087 BASE_URL=http://127.0.0.1:18087 \
++METRICS_REPEATS=2 ABLATION_SKIP_CANARIES=1 \
++bash scripts/run-qwen36-ablation-candidate.sh accepted-control-adjacent-p512o512
++```
++
++Artifacts:
++
++- Summary:
++  `data/qwen36-ablation-accepted-control-adjacent-p512o512-summary-20260614174908.json`
++- Metrics:
++  `data/qwen36-ablation-accepted-control-adjacent-p512o512-p512o512-20260614174908.json`
++
++Result:
++
++- Accepted-control p512/o512 corrected output rate:
++  `13.9929 tok/s` mean over two repeats.
++- Accepted-control p512/o512 vLLM decode time:
++  `71.4661 ms/token` mean over two repeats.
++- Candidate versus adjacent accepted-control:
++  `14.1911 / 13.9929 = 1.0142`, about `+1.42%`.
++- Decode time improvement:
++  `71.4661 -> 70.4677 ms/token`, about `+1.40%`.
++
++Interpretation:
++
++- The short timing smoke showed a larger local MoE/offset improvement; the
++  longer p512/o512 A/B shows a real but smaller end-to-end decode improvement.
++- This candidate has now passed synthetic parity, XPU graph replay parity, a
++  short canary smoke, a longer 32-repeat canary gate, and a reduced text
++  quality suite.
++- It is still not a production default until full 96/128+ canaries, 4+ metric
++  repeats, a full-length quality suite, and stability soak are done.
++
++Saved patch snapshots:
++
++- Kernel extension:
++  `patches/vllm-xpu-kernels-qwen36-w8a8-layerlet-prefix-offset-20260614.patch`
++- vLLM resident scratch wiring:
++  `patches/vllm-qwen36-w8a8-resident-offset-scratch-20260614.patch`
++- Scripts, notes, and harness:
++  `patches/llm-optimizations-qwen36-w8a8-layerlet-prefix-offset-results-20260614.patch`
++
++Next best implementation target:
++
++1. Run full-strength validation for the prefix-offset candidate:
++   4+ p512/o512 metric repeats, 96/128+ JSON/color canaries, full quality
++   settings, and a short stability soak.
++2. If the speed signal survives full validation, look inside
++   `xpu_moe.w8a8_middle_layerlet`; it is now the top visible MoE label.
++3. Candidate layerlet follow-ups:
++   fuse prefix-offset generation into the middle layerlet call boundary,
++   reduce Python/custom-op boundary count around `gemm1_quant`, or move toward
++   a persistent per-layer descriptor/scratch object so each decode token submits
++   fewer independent commands.

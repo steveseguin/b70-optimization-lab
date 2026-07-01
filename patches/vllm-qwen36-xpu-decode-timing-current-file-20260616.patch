@@ -1,0 +1,323 @@
+--- /dev/null	2026-05-30 22:26:27.724582138 -0400
++++ /home/steve/src/vllm/vllm/utils/xpu_decode_timing.py	2026-06-15 23:51:51.747188520 -0400
+@@ -0,0 +1,320 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++
++"""Small opt-in timing helper for local XPU decode diagnostics."""
++
++import os
++import re
++import time
++import atexit
++import json
++from collections import defaultdict
++from contextlib import contextmanager
++from contextvars import ContextVar
++
++_ENABLED = os.environ.get("VLLM_XPU_DECODE_TIMING", "0") == "1"
++_SYNC = os.environ.get("VLLM_XPU_DECODE_TIMING_SYNC", "0") == "1"
++_RANK_FILTER = os.environ.get("VLLM_XPU_DECODE_TIMING_RANK")
++_SUMMARY = os.environ.get("VLLM_XPU_DECODE_TIMING_SUMMARY", "1") != "0"
++_PRINT_EVERY = max(
++    0, int(os.environ.get("VLLM_XPU_DECODE_TIMING_PRINT_EVERY", "0") or "0")
++)
++_SKIP_FIRST = max(
++    0, int(os.environ.get("VLLM_XPU_DECODE_TIMING_SKIP_FIRST", "0") or "0")
++)
++_STEP_SUMMARY = os.environ.get("VLLM_XPU_DECODE_TIMING_STEP_SUMMARY", "0") == "1"
++_FAST_DISABLED_CONTEXT = (
++    os.environ.get("VLLM_XPU_FAST_DISABLED_TIMING_CONTEXT", "0") == "1"
++)
++_STEP_EVERY = max(
++    1, int(os.environ.get("VLLM_XPU_DECODE_TIMING_STEP_EVERY", "1") or "1")
++)
++_STEP_SKIP_FIRST = max(
++    0,
++    int(
++        os.environ.get(
++            "VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST",
++            os.environ.get("VLLM_XPU_DECODE_TIMING_SKIP_FIRST", "0"),
++        )
++        or "0"
++    ),
++)
++_STATS: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0, 0, 0])
++_SUMMARY_PRINTED = False
++_ALLREDUCE_LABEL: ContextVar[str | None] = ContextVar(
++    "vllm_xpu_allreduce_label", default=None
++)
++_STEP_SEEN = 0
++_STEP_ACTIVE = False
++_STEP_RANK = ""
++_STEP_METADATA: dict[str, object] = {}
++_STEP_STATS: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0, 0])
++
++
++class _NoopContext:
++    __slots__ = ()
++
++    def __enter__(self) -> None:
++        return None
++
++    def __exit__(self, exc_type, exc, tb) -> bool:
++        return False
++
++
++_NOOP_CONTEXT = _NoopContext()
++
++
++def _compile_regex_env(name: str) -> re.Pattern[str] | None:
++    value = os.environ.get(name)
++    if not value:
++        return None
++    try:
++        return re.compile(value)
++    except re.error as exc:
++        print(
++            "[vllm-xpu-timing-config] "
++            f"ignoring invalid {name}={value!r}: {exc}",
++            flush=True,
++        )
++        return None
++
++
++_LABEL_INCLUDE_RE = _compile_regex_env("VLLM_XPU_DECODE_TIMING_LABEL_REGEX")
++_LABEL_EXCLUDE_RE = _compile_regex_env("VLLM_XPU_DECODE_TIMING_EXCLUDE_LABEL_REGEX")
++_SYNC_LABEL_INCLUDE_RE = _compile_regex_env(
++    "VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX"
++)
++_SYNC_LABEL_EXCLUDE_RE = _compile_regex_env(
++    "VLLM_XPU_DECODE_TIMING_SYNC_EXCLUDE_LABEL_REGEX"
++)
++
++
++def _rank_label() -> str:
++    for name in ("LOCAL_RANK", "RANK", "VLLM_LOCAL_RANK", "VLLM_RANK"):
++        value = os.environ.get(name)
++        if value is not None:
++            return value
++    try:
++        import torch.distributed as dist
++
++        if dist.is_available() and dist.is_initialized():
++            return str(dist.get_rank())
++    except Exception:
++        pass
++    return f"pid{os.getpid()}"
++
++
++def _rank_enabled(rank: str) -> bool:
++    return _RANK_FILTER is None or _RANK_FILTER == rank
++
++
++def _label_enabled(label: str) -> bool:
++    if _LABEL_INCLUDE_RE is not None and _LABEL_INCLUDE_RE.search(label) is None:
++        return False
++    if _LABEL_EXCLUDE_RE is not None and _LABEL_EXCLUDE_RE.search(label) is not None:
++        return False
++    return True
++
++
++def _sync_enabled_for_label(label: str) -> bool:
++    if not _SYNC:
++        return False
++    if (
++        _SYNC_LABEL_INCLUDE_RE is not None
++        and _SYNC_LABEL_INCLUDE_RE.search(label) is None
++    ):
++        return False
++    if (
++        _SYNC_LABEL_EXCLUDE_RE is not None
++        and _SYNC_LABEL_EXCLUDE_RE.search(label) is not None
++    ):
++        return False
++    return True
++
++
++def _sync_xpu(label: str) -> None:
++    if not _sync_enabled_for_label(label):
++        return
++    try:
++        import torch
++
++        if hasattr(torch, "xpu") and torch.xpu.is_available():
++            torch.xpu.synchronize()
++    except Exception:
++        pass
++
++
++def _is_compiling() -> bool:
++    try:
++        import torch
++
++        compiler = getattr(torch, "compiler", None)
++        if compiler is not None and compiler.is_compiling():
++            return True
++        dynamo = getattr(torch, "_dynamo", None)
++        return bool(dynamo is not None and dynamo.is_compiling())
++    except Exception:
++        return False
++
++
++def _print_summary() -> None:
++    global _SUMMARY_PRINTED
++    if not _ENABLED or not _SUMMARY or _SUMMARY_PRINTED or not _STATS:
++        return
++    _SUMMARY_PRINTED = True
++    rows = []
++    for (rank, label), (_seen, count, total_ns, max_ns) in _STATS.items():
++        if count == 0:
++            continue
++        rows.append((total_ns, rank, label, count, max_ns))
++    rows.sort(reverse=True)
++    print("[vllm-xpu-timing-summary] begin", flush=True)
++    for total_ns, rank, label, count, max_ns in rows:
++        avg_ns = total_ns / max(count, 1)
++        print(
++            "[vllm-xpu-timing-summary] "
++            f"rank={rank} label={label} count={count} "
++            f"total_ms={total_ns / 1e6:.6f} "
++            f"avg_ms={avg_ns / 1e6:.6f} "
++            f"max_ms={max_ns / 1e6:.6f}",
++            flush=True,
++        )
++    print("[vllm-xpu-timing-summary] end", flush=True)
++
++
++atexit.register(_print_summary)
++
++
++def begin_timing_step(metadata: dict[str, object] | None = None) -> bool:
++    global _STEP_ACTIVE, _STEP_METADATA, _STEP_RANK, _STEP_SEEN, _STEP_STATS
++    if not _ENABLED or not _STEP_SUMMARY or _is_compiling():
++        return False
++    rank = _rank_label()
++    if not _rank_enabled(rank):
++        return False
++    if _STEP_ACTIVE:
++        end_timing_step("abandoned")
++    _STEP_SEEN += 1
++    _STEP_RANK = rank
++    _STEP_METADATA = metadata or {}
++    _STEP_STATS = defaultdict(lambda: [0, 0, 0])
++    should_capture = (
++        _STEP_SEEN > _STEP_SKIP_FIRST
++        and (_STEP_SEEN - _STEP_SKIP_FIRST) % _STEP_EVERY == 0
++    )
++    _STEP_ACTIVE = should_capture
++    return should_capture
++
++
++def end_timing_step(status: str = "ok") -> None:
++    global _STEP_ACTIVE, _STEP_METADATA, _STEP_RANK, _STEP_STATS
++    if not _ENABLED or not _STEP_SUMMARY or not _STEP_ACTIVE:
++        return
++    rows = []
++    for (rank, label), (count, total_ns, max_ns) in _STEP_STATS.items():
++        if count == 0:
++            continue
++        avg_ns = total_ns / max(count, 1)
++        rows.append(
++            {
++                "rank": rank,
++                "label": label,
++                "count": count,
++                "total_ms": total_ns / 1e6,
++                "avg_ms": avg_ns / 1e6,
++                "max_ms": max_ns / 1e6,
++            }
++        )
++    rows.sort(key=lambda row: row["total_ms"], reverse=True)
++    payload = {
++        "rank": _STEP_RANK,
++        "step": _STEP_SEEN,
++        "status": status,
++        "metadata": _STEP_METADATA,
++        "summary_by_total_ms": rows,
++    }
++    print(
++        "[vllm-xpu-timing-step] "
++        + json.dumps(payload, sort_keys=True, separators=(",", ":")),
++        flush=True,
++    )
++    _STEP_ACTIVE = False
++    _STEP_METADATA = {}
++    _STEP_STATS = defaultdict(lambda: [0, 0, 0])
++
++
++def allreduce_label(label: str | None):
++    if not _ENABLED or not label:
++        if _FAST_DISABLED_CONTEXT and not _is_compiling():
++            return _NOOP_CONTEXT
++        return _disabled_region()
++    return _allreduce_label_enabled(label)
++
++
++@contextmanager
++def _disabled_region():
++    yield
++
++
++@contextmanager
++def _allreduce_label_enabled(label: str):
++    if _is_compiling():
++        yield
++        return
++    token = _ALLREDUCE_LABEL.set(label)
++    try:
++        yield
++    finally:
++        _ALLREDUCE_LABEL.reset(token)
++
++
++def current_allreduce_label() -> str | None:
++    return _ALLREDUCE_LABEL.get()
++
++
++def timed_region(label: str):
++    if not _ENABLED:
++        if _FAST_DISABLED_CONTEXT and not _is_compiling():
++            return _NOOP_CONTEXT
++        return _disabled_region()
++    return _timed_region_enabled(label)
++
++
++@contextmanager
++def _timed_region_enabled(label: str):
++    if _is_compiling():
++        yield
++        return
++    if not _label_enabled(label):
++        yield
++        return
++    rank = _rank_label()
++    if not _rank_enabled(rank):
++        yield
++        return
++    _sync_xpu(label)
++    start_ns = time.perf_counter_ns()
++    try:
++        yield
++    finally:
++        _sync_xpu(label)
++        elapsed_ns = time.perf_counter_ns() - start_ns
++        stat = _STATS[(rank, label)]
++        stat[0] += 1
++        if stat[0] <= _SKIP_FIRST:
++            return
++        stat[1] += 1
++        stat[2] += elapsed_ns
++        stat[3] = max(stat[3], elapsed_ns)
++        if _STEP_ACTIVE:
++            step_stat = _STEP_STATS[(rank, label)]
++            step_stat[0] += 1
++            step_stat[1] += elapsed_ns
++            step_stat[2] = max(step_stat[2], elapsed_ns)
++        if _PRINT_EVERY and stat[1] % _PRINT_EVERY == 0:
++            print(
++                "[vllm-xpu-timing] "
++                f"rank={rank} label={label} count={stat[1]} "
++                f"last_ms={elapsed_ns / 1e6:.6f}",
++                flush=True,
++            )

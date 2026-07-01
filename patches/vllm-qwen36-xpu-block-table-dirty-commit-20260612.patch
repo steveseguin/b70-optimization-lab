@@ -1,0 +1,146 @@
+diff --git a/vllm/v1/worker/block_table.py b/vllm/v1/worker/block_table.py
+index f46e8a8ed..ac3708d06 100644
+--- a/vllm/v1/worker/block_table.py
++++ b/vllm/v1/worker/block_table.py
+@@ -1,6 +1,8 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
++
+ import numpy as np
+ import torch
+ 
+@@ -71,6 +73,19 @@ class BlockTable:
+             self.max_num_reqs, self.max_num_blocks_per_req, dtype=torch.int32
+         )
+         self.num_blocks_per_row = np.zeros(max_num_reqs, dtype=np.int32)
++        self._xpu_dirty_commit_enabled = (
++            os.environ.get("VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT", "0") == "1"
++        )
++        self._dirty_rows = np.zeros(max_num_reqs, dtype=np.bool_)
++        self._dirty_commit_total = 0
++        self._dirty_commit_skipped = 0
++        self._dirty_commit_full = 0
++        self._dirty_commit_partial = 0
++        self._dirty_commit_rows = 0
++        self._dirty_commit_log_every = int(
++            os.environ.get("VLLM_XPU_BLOCK_TABLE_DIRTY_COMMIT_LOG_EVERY", "0")
++            or "0"
++        )
+ 
+         self.slot_mapping = self._make_buffer(
+             self.max_num_batched_tokens, dtype=torch.int64
+@@ -116,27 +131,34 @@ class BlockTable:
+         start = self.num_blocks_per_row[row_idx]
+         self.num_blocks_per_row[row_idx] += num_blocks
+         self.block_table.np[row_idx, start : start + num_blocks] = block_ids
++        self._mark_dirty(row_idx)
+ 
+     def add_row(self, block_ids: list[int], row_idx: int) -> None:
+         self.num_blocks_per_row[row_idx] = 0
+         self.append_row(block_ids, row_idx)
++        if not block_ids:
++            self._mark_dirty(row_idx)
+ 
+     def clear_row(self, row_idx: int) -> None:
+         num_blocks = self.num_blocks_per_row[row_idx]
+         if num_blocks > 0:
+             self.block_table.np[row_idx, :num_blocks] = 0
+         self.num_blocks_per_row[row_idx] = 0
++        self._mark_dirty(row_idx)
+ 
+     def move_row(self, src: int, tgt: int) -> None:
+         num_blocks = self.num_blocks_per_row[src]
+         block_table_np = self.block_table.np
+         block_table_np[tgt, :num_blocks] = block_table_np[src, :num_blocks]
+         self.num_blocks_per_row[tgt] = num_blocks
++        self._mark_dirty(tgt)
+ 
+     def swap_row(self, src: int, tgt: int) -> None:
+         src_tgt, tgt_src = [src, tgt], [tgt, src]
+         self.num_blocks_per_row[src_tgt] = self.num_blocks_per_row[tgt_src]
+         self.block_table.np[src_tgt] = self.block_table.np[tgt_src]
++        self._mark_dirty(src)
++        self._mark_dirty(tgt)
+ 
+     def compute_slot_mapping(
+         self,
+@@ -164,6 +186,9 @@ class BlockTable:
+         )
+ 
+     def commit_block_table(self, num_reqs: int) -> None:
++        if self._xpu_dirty_commit_enabled:
++            self._commit_dirty_block_table(num_reqs)
++            return
+         self.block_table.copy_to_gpu(num_reqs)
+ 
+     def clear(self) -> None:
+@@ -219,6 +244,67 @@ class BlockTable:
+             *size, dtype=dtype, device=self.device, pin_memory=self.pin_memory
+         )
+ 
++    def _mark_dirty(self, row_idx: int) -> None:
++        if self._xpu_dirty_commit_enabled:
++            self._dirty_rows[row_idx] = True
++
++    def _commit_dirty_block_table(self, num_reqs: int) -> None:
++        if num_reqs <= 0:
++            return
++
++        self._dirty_commit_total += 1
++        dirty = self._dirty_rows[:num_reqs]
++        dirty_count = int(dirty.sum())
++        if dirty_count == 0:
++            self._dirty_commit_skipped += 1
++            self._maybe_log_dirty_commit_stats()
++            return
++
++        if dirty_count == num_reqs:
++            self.block_table.copy_to_gpu(num_reqs)
++            dirty[:] = False
++            self._dirty_commit_full += 1
++            self._dirty_commit_rows += dirty_count
++            self._maybe_log_dirty_commit_stats()
++            return
++
++        dirty_indices = np.flatnonzero(dirty)
++        start = int(dirty_indices[0])
++        prev = start
++        for raw_idx in dirty_indices[1:]:
++            idx = int(raw_idx)
++            if idx != prev + 1:
++                self.block_table.gpu[start : prev + 1].copy_(
++                    self.block_table.cpu[start : prev + 1],
++                    non_blocking=True,
++                )
++                start = idx
++            prev = idx
++        self.block_table.gpu[start : prev + 1].copy_(
++            self.block_table.cpu[start : prev + 1],
++            non_blocking=True,
++        )
++        dirty[dirty_indices] = False
++        self._dirty_commit_partial += 1
++        self._dirty_commit_rows += dirty_count
++        self._maybe_log_dirty_commit_stats()
++
++    def _maybe_log_dirty_commit_stats(self) -> None:
++        if (
++            self._dirty_commit_log_every <= 0
++            or self._dirty_commit_total % self._dirty_commit_log_every != 0
++        ):
++            return
++        logger.info(
++            "XPU block-table dirty commits: total=%d skipped=%d full=%d "
++            "partial=%d copied_rows=%d",
++            self._dirty_commit_total,
++            self._dirty_commit_skipped,
++            self._dirty_commit_full,
++            self._dirty_commit_partial,
++            self._dirty_commit_rows,
++        )
++
+ 
+ class MultiGroupBlockTable:
+     """The BlockTables for each KV cache group."""

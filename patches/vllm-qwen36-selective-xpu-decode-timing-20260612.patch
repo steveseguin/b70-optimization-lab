@@ -1,0 +1,110 @@
+diff --git a/vllm/utils/xpu_decode_timing.py b/vllm/utils/xpu_decode_timing.py
+--- a/vllm/utils/xpu_decode_timing.py
++++ b/vllm/utils/xpu_decode_timing.py
+@@
+ import os
++import re
+ import time
+ import atexit
+ import json
+@@
+ _STEP_STATS: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0, 0])
+
+
++def _compile_regex_env(name: str) -> re.Pattern[str] | None:
++    value = os.environ.get(name)
++    if not value:
++        return None
++    try:
++        return re.compile(value)
++    except re.error as exc:
++        print(
++            "[vllm-xpu-timing-config] "
++            f"ignoring invalid {name}={value!r}: {exc}",
++            flush=True,
++        )
++        return None
++
++
++_LABEL_INCLUDE_RE = _compile_regex_env("VLLM_XPU_DECODE_TIMING_LABEL_REGEX")
++_LABEL_EXCLUDE_RE = _compile_regex_env("VLLM_XPU_DECODE_TIMING_EXCLUDE_LABEL_REGEX")
++_SYNC_LABEL_INCLUDE_RE = _compile_regex_env(
++    "VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX"
++)
++_SYNC_LABEL_EXCLUDE_RE = _compile_regex_env(
++    "VLLM_XPU_DECODE_TIMING_SYNC_EXCLUDE_LABEL_REGEX"
++)
++
++
+ def _rank_label() -> str:
+@@
+ def _rank_enabled(rank: str) -> bool:
+     return _RANK_FILTER is None or _RANK_FILTER == rank
+
+
+-def _sync_xpu() -> None:
+-    if not _SYNC:
++def _label_enabled(label: str) -> bool:
++    if _LABEL_INCLUDE_RE is not None and _LABEL_INCLUDE_RE.search(label) is None:
++        return False
++    if _LABEL_EXCLUDE_RE is not None and _LABEL_EXCLUDE_RE.search(label) is not None:
++        return False
++    return True
++
++
++def _sync_enabled_for_label(label: str) -> bool:
++    if not _SYNC:
++        return False
++    if (
++        _SYNC_LABEL_INCLUDE_RE is not None
++        and _SYNC_LABEL_INCLUDE_RE.search(label) is None
++    ):
++        return False
++    if (
++        _SYNC_LABEL_EXCLUDE_RE is not None
++        and _SYNC_LABEL_EXCLUDE_RE.search(label) is not None
++    ):
++        return False
++    return True
++
++
++def _sync_xpu(label: str) -> None:
++    if not _sync_enabled_for_label(label):
+         return
+     try:
+         import torch
+@@
+ def timed_region(label: str):
+     if not _ENABLED or _is_compiling():
+         yield
+         return
++    if not _label_enabled(label):
++        yield
++        return
+     rank = _rank_label()
+     if not _rank_enabled(rank):
+         yield
+         return
+-    _sync_xpu()
++    _sync_xpu(label)
+     start_ns = time.perf_counter_ns()
+     try:
+         yield
+     finally:
+-        _sync_xpu()
++        _sync_xpu(label)
+         elapsed_ns = time.perf_counter_ns() - start_ns
+diff --git a/scripts/launch-qwen36-quark-int8-accepted.sh b/scripts/launch-qwen36-quark-int8-accepted.sh
+--- a/scripts/launch-qwen36-quark-int8-accepted.sh
++++ b/scripts/launch-qwen36-quark-int8-accepted.sh
+@@
+   unset VLLM_XPU_DECODE_TIMING_SUMMARY
+   unset VLLM_XPU_DECODE_TIMING_PRINT_EVERY
+   unset VLLM_XPU_DECODE_TIMING_SKIP_FIRST
++  unset VLLM_XPU_DECODE_TIMING_LABEL_REGEX
++  unset VLLM_XPU_DECODE_TIMING_EXCLUDE_LABEL_REGEX
++  unset VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX
++  unset VLLM_XPU_DECODE_TIMING_SYNC_EXCLUDE_LABEL_REGEX
+   unset VLLM_XPU_DECODE_TIMING_STEP_SUMMARY
+   unset VLLM_XPU_DECODE_TIMING_STEP_EVERY
+   unset VLLM_XPU_DECODE_TIMING_STEP_SKIP_FIRST

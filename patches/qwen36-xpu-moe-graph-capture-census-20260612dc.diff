@@ -1,0 +1,284 @@
+--- /tmp/qwen36-graph-capture-census-pre.py	2026-06-12 18:09:34.712896951 -0400
++++ /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py	2026-06-12 18:11:04.981117957 -0400
+@@ -28,6 +28,13 @@
+ LIVE_ABI_LAYER_REGEX_ENV = "VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX"
+ LIVE_ABI_RANK_ENV = "VLLM_XPU_MOE_LIVE_ABI_RANK"
+ LIVE_ABI_INCLUDE_SAMPLES_ENV = "VLLM_XPU_MOE_LIVE_ABI_INCLUDE_SAMPLES"
++LIVE_ABI_CAPTURE_SKIPS_ENV = "VLLM_XPU_MOE_LIVE_ABI_CAPTURE_SKIPS"
++LIVE_ABI_DEFER_CAPTURE_SAMPLES_ENV = (
++    "VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_SAMPLES")
++LIVE_ABI_DEFER_CAPTURE_DELAY_MS_ENV = (
++    "VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_DELAY_MS")
++LIVE_ABI_DEFER_CAPTURE_MAX_PENDING_ENV = (
++    "VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_MAX_PENDING")
+ ONEDNN_SIDECAR_PROBE_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE"
+ ONEDNN_SIDECAR_DRY_DESCRIPTORS_ENV = (
+     "VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS")
+@@ -41,6 +48,7 @@
+ _live_abi_writes = 0
+ _live_abi_calls = 0
+ _live_abi_warned = False
++_live_abi_deferred_pending = 0
+ _sidecar_probe_lock = threading.Lock()
+ _sidecar_probe_calls = 0
+ _sidecar_probe_writes = 0
+@@ -189,6 +197,179 @@
+         return None
+
+
++def _write_live_abi_record(path: str, record: dict, max_lines: int) -> bool:
++    global _live_abi_writes
++
++    try:
++        line = json.dumps(record, sort_keys=True)
++        with _live_abi_lock:
++            if _live_abi_writes >= max_lines:
++                return False
++            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
++            with open(path, "a", encoding="utf-8") as handle:
++                handle.write(line + "\n")
++            _live_abi_writes += 1
++        return True
++    except Exception:
++        return False
++
++
++def _capture_safe_live_abi_record(*,
++                                  call_id,
++                                  diagnostic_context,
++                                  hidden_states,
++                                  w13,
++                                  w13_scales,
++                                  w2,
++                                  w2_scales,
++                                  topk_weights,
++                                  topk_ids,
++                                  output,
++                                  remapped_hidden_states,
++                                  rows_per_expert,
++                                  unpermuted_row_to_permuted_row,
++                                  gemm1_output,
++                                  gemm2_output,
++                                  int8_scratch,
++                                  num_rows,
++                                  hidden_size,
++                                  num_moe_inputs,
++                                  inter_size,
++                                  n_experts_per_token,
++                                  activation,
++                                  num_experts,
++                                  ep_rank,
++                                  ep_size,
++                                  is_int8,
++                                  capture_observation):
++    context = diagnostic_context or {}
++    tensor_map = {
++        "hidden_states": hidden_states,
++        "w13": w13,
++        "w13_scales": w13_scales,
++        "w2": w2,
++        "w2_scales": w2_scales,
++        "topk_weights": topk_weights,
++        "topk_ids": topk_ids,
++        "output": output,
++        "remapped_hidden_states": remapped_hidden_states,
++        "rows_per_expert": rows_per_expert,
++        "unpermuted_row_to_permuted_row": unpermuted_row_to_permuted_row,
++        "gemm1_output": gemm1_output,
++        "gemm2_output": gemm2_output,
++    }
++    if int8_scratch:
++        for name in ("gemm1_a", "gemm1_a_scales", "act_output",
++                     "gemm2_a", "gemm2_a_scales"):
++            tensor_map[name] = int8_scratch.get(name)
++
++    return {
++        "ts": time.time(),
++        "pid": os.getpid(),
++        "rank": os.environ.get("RANK", ""),
++        "local_rank": os.environ.get("LOCAL_RANK", ""),
++        "call": call_id,
++        "layer": str(context.get("layer", "")),
++        "context": context,
++        "stream_capture_active": True,
++        "capture_observation": capture_observation,
++        "shape": {
++            "num_rows": int(num_rows),
++            "hidden_size": int(hidden_size),
++            "topk": int(n_experts_per_token),
++            "num_moe_inputs": int(num_moe_inputs),
++            "inter_size": int(inter_size),
++            "num_experts": int(num_experts),
++            "ep_rank": int(ep_rank),
++            "ep_size": int(ep_size),
++            "activation": str(activation),
++            "is_int8": bool(is_int8),
++        },
++        "tensors": {
++            name: _tensor_meta(tensor)
++            for name, tensor in tensor_map.items()
++        },
++        "reason": (
++            "Stream capture is active; synchronous tensor copies/checksums are "
++            "not safe inside this call. Enable deferred capture samples for a "
++            "post-capture checksum probe."
++        ),
++    }
++
++
++def _schedule_deferred_live_abi_sample(*,
++                                       path,
++                                       max_lines,
++                                       call_id,
++                                       diagnostic_context,
++                                       topk_ids,
++                                       topk_weights,
++                                       output,
++                                       rows_per_expert,
++                                       gemm1_output,
++                                       gemm2_output):
++    global _live_abi_deferred_pending
++
++    max_pending = max(1, _int_env(LIVE_ABI_DEFER_CAPTURE_MAX_PENDING_ENV, 1))
++    with _live_abi_lock:
++        if _live_abi_writes >= max_lines:
++            return
++        if _live_abi_deferred_pending >= max_pending:
++            return
++        _live_abi_deferred_pending += 1
++
++    delay_ms = max(0, _int_env(LIVE_ABI_DEFER_CAPTURE_DELAY_MS_ENV, 50))
++    context = diagnostic_context or {}
++
++    def _worker():
++        global _live_abi_deferred_pending
++        try:
++            if delay_ms:
++                time.sleep(delay_ms / 1000.0)
++            if getattr(getattr(output, "device", None), "type", None) == "xpu":
++                try:
++                    torch.xpu.synchronize()
++                except Exception:
++                    pass
++            record = {
++                "ts": time.time(),
++                "pid": os.getpid(),
++                "rank": os.environ.get("RANK", ""),
++                "local_rank": os.environ.get("LOCAL_RANK", ""),
++                "call": call_id,
++                "layer": str(context.get("layer", "")),
++                "context": context,
++                "stream_capture_active": False,
++                "capture_observation": "deferred_post_capture_sample",
++                "delay_ms": delay_ms,
++                "samples": {
++                    "topk_ids": _tensor_sample(topk_ids, 32),
++                    "topk_weights": _tensor_sample(topk_weights, 32),
++                    "output": _tensor_sample(output, 32),
++                    "rows_per_expert": _tensor_sample(rows_per_expert, 64),
++                },
++                "checksums": {
++                    "output_sample_sum": _tensor_sample_sum(output, 64),
++                    "gemm1_output_sample_sum":
++                    _tensor_sample_sum(gemm1_output, 64),
++                    "gemm2_output_sample_sum":
++                    _tensor_sample_sum(gemm2_output, 64),
++                },
++            }
++            _write_live_abi_record(path, record, max_lines)
++        finally:
++            with _live_abi_lock:
++                _live_abi_deferred_pending = max(
++                    0, _live_abi_deferred_pending - 1)
++
++    thread = threading.Thread(
++        target=_worker,
++        name="xpu-moe-live-abi-deferred-sample",
++        daemon=True,
++    )
++    thread.start()
++
++
+ def _maybe_record_live_abi(*,
+                            hidden_states,
+                            w13,
+@@ -220,7 +401,7 @@
+     path = _live_abi_path()
+     if path is None:
+         return
+-    if _stream_capture_active() or not _live_abi_rank_allowed():
++    if not _live_abi_rank_allowed():
+         return
+
+     context = diagnostic_context or {}
+@@ -242,6 +423,54 @@
+         _live_abi_calls += 1
+         call_id = _live_abi_calls
+
++    if _stream_capture_active():
++        if _is_env_enabled(LIVE_ABI_CAPTURE_SKIPS_ENV):
++            record = _capture_safe_live_abi_record(
++                call_id=call_id,
++                diagnostic_context=diagnostic_context,
++                hidden_states=hidden_states,
++                w13=w13,
++                w13_scales=w13_scales,
++                w2=w2,
++                w2_scales=w2_scales,
++                topk_weights=topk_weights,
++                topk_ids=topk_ids,
++                output=output,
++                remapped_hidden_states=remapped_hidden_states,
++                rows_per_expert=rows_per_expert,
++                unpermuted_row_to_permuted_row=
++                unpermuted_row_to_permuted_row,
++                gemm1_output=gemm1_output,
++                gemm2_output=gemm2_output,
++                int8_scratch=int8_scratch,
++                num_rows=num_rows,
++                hidden_size=hidden_size,
++                num_moe_inputs=num_moe_inputs,
++                inter_size=inter_size,
++                n_experts_per_token=n_experts_per_token,
++                activation=activation,
++                num_experts=num_experts,
++                ep_rank=ep_rank,
++                ep_size=ep_size,
++                is_int8=is_int8,
++                capture_observation="stream_capture_skip_no_tensor_copy",
++            )
++            _write_live_abi_record(path, record, max_lines)
++        if _is_env_enabled(LIVE_ABI_DEFER_CAPTURE_SAMPLES_ENV):
++            _schedule_deferred_live_abi_sample(
++                path=path,
++                max_lines=max_lines,
++                call_id=call_id,
++                diagnostic_context=diagnostic_context,
++                topk_ids=topk_ids,
++                topk_weights=topk_weights,
++                output=output,
++                rows_per_expert=rows_per_expert,
++                gemm1_output=gemm1_output,
++                gemm2_output=gemm2_output,
++            )
++        return
++
+     try:
+         tensor_map = {
+             "hidden_states": hidden_states,
+@@ -315,14 +544,7 @@
+                 _tensor_sample(unpermuted_row_to_permuted_row, 32),
+             }
+
+-        line = json.dumps(record, sort_keys=True)
+-        with _live_abi_lock:
+-            if _live_abi_writes >= max_lines:
+-                return
+-            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+-            with open(path, "a", encoding="utf-8") as handle:
+-                handle.write(line + "\n")
+-            _live_abi_writes += 1
++        _write_live_abi_record(path, record, max_lines)
+     except Exception as exc:
+         if not _live_abi_warned:
+             _live_abi_warned = True

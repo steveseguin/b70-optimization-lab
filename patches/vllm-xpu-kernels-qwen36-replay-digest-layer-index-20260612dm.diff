@@ -1,0 +1,1376 @@
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 93735cb..da072f5 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -1,5 +1,10 @@
+ # SPDX-License-Identifier: Apache-2.0
++from contextlib import contextmanager
++import json
+ import os
++import re
++import threading
++import time
+ 
+ import torch
+ 
+@@ -16,6 +21,48 @@ from ._mx_utils import (fp4_e2m1fn_x2_to_float, hp_from_1x128, hp_from_128x128,
+                         quant_fp8_act, quant_mxfp_act)
+ 
+ REF_FUSED_MOE_ENV = "VLLM_XPU_FUSED_MOE_USE_REF"
++FUSE_SILU_QUANT_ENV = "VLLM_XPU_FUSED_MOE_FUSE_SILU_QUANT"
++W8A8_USE_OFFSETS_ENV = "VLLM_XPU_W8A8_USE_OFFSETS"
++LIVE_ABI_FILE_ENV = "VLLM_XPU_MOE_LIVE_ABI_FILE"
++LIVE_ABI_MAX_LINES_ENV = "VLLM_XPU_MOE_LIVE_ABI_MAX_LINES"
++LIVE_ABI_LAYER_REGEX_ENV = "VLLM_XPU_MOE_LIVE_ABI_LAYER_REGEX"
++LIVE_ABI_RANK_ENV = "VLLM_XPU_MOE_LIVE_ABI_RANK"
++LIVE_ABI_INCLUDE_SAMPLES_ENV = "VLLM_XPU_MOE_LIVE_ABI_INCLUDE_SAMPLES"
++LIVE_ABI_CAPTURE_SKIPS_ENV = "VLLM_XPU_MOE_LIVE_ABI_CAPTURE_SKIPS"
++LIVE_ABI_DEFER_CAPTURE_SAMPLES_ENV = (
++    "VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_SAMPLES")
++LIVE_ABI_DEFER_CAPTURE_DELAY_MS_ENV = (
++    "VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_DELAY_MS")
++LIVE_ABI_DEFER_CAPTURE_MAX_PENDING_ENV = (
++    "VLLM_XPU_MOE_LIVE_ABI_DEFER_CAPTURE_MAX_PENDING")
++ONEDNN_SIDECAR_PROBE_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE"
++ONEDNN_SIDECAR_DRY_DESCRIPTORS_ENV = (
++    "VLLM_XPU_MOE_ONEDNN_SIDECAR_DRY_DESCRIPTORS")
++ONEDNN_SIDECAR_OFFSETS_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_OFFSETS"
++ONEDNN_SIDECAR_MAX_CALLS_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS"
++ONEDNN_SIDECAR_LAYER_REGEX_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_LAYER_REGEX"
++ONEDNN_SIDECAR_RANK_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_RANK"
++ONEDNN_SIDECAR_LOG_ENV = "VLLM_XPU_MOE_ONEDNN_SIDECAR_LOG"
++
++_live_abi_lock = threading.Lock()
++_live_abi_writes = 0
++_live_abi_calls = 0
++_live_abi_warned = False
++_live_abi_deferred_pending = 0
++_sidecar_probe_lock = threading.Lock()
++_sidecar_probe_calls = 0
++_sidecar_probe_writes = 0
++_sidecar_probe_disabled = False
++_sidecar_probe_warned = False
++
++
++try:
++    from vllm.utils.xpu_decode_timing import timed_region
++except Exception:
++
++    @contextmanager
++    def timed_region(label: str):
++        yield
+ 
+ 
+ def _is_env_enabled(env_name: str, default: str = "0") -> bool:
+@@ -23,17 +70,844 @@ def _is_env_enabled(env_name: str, default: str = "0") -> bool:
+     return value in ("1", "ON", "TRUE", "YES", "Y")
+ 
+ 
++def _int_env(env_name: str, default: int) -> int:
++    try:
++        return int(os.environ.get(env_name, str(default)))
++    except Exception:
++        return default
++
++
+ def _should_use_ref_fused_moe(is_mxfp8: bool) -> bool:
+     if is_mxfp8:
+         return True
+     return _is_env_enabled(REF_FUSED_MOE_ENV)
+ 
+ 
+-def _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4, is_block_fp8):
++def _stream_capture_active() -> bool:
++    try:
++        return bool(torch.xpu.is_current_stream_capturing())
++    except Exception:
++        return False
++
++
++def _live_abi_path() -> str | None:
++    raw = os.environ.get(LIVE_ABI_FILE_ENV, "").strip()
++    if not raw:
++        return None
++    return (raw.replace("{pid}", str(os.getpid())).replace(
++        "{rank}", os.environ.get("RANK", "")).replace(
++            "{local_rank}", os.environ.get("LOCAL_RANK", "")))
++
++
++def _live_abi_rank_allowed() -> bool:
++    wanted = os.environ.get(LIVE_ABI_RANK_ENV, "").strip()
++    if not wanted:
++        return True
++    return wanted in {
++        os.environ.get("RANK", ""),
++        os.environ.get("LOCAL_RANK", ""),
++    }
++
++
++def _rank_allowed(env_name: str) -> bool:
++    wanted = os.environ.get(env_name, "").strip()
++    if not wanted:
++        return True
++    return wanted in {
++        os.environ.get("RANK", ""),
++        os.environ.get("LOCAL_RANK", ""),
++    }
++
++
++def _context_layer(diagnostic_context) -> str:
++    context = diagnostic_context or {}
++    return str(context.get("layer", ""))
++
++
++def _layer_matches(env_name: str, diagnostic_context) -> bool:
++    pattern = os.environ.get(env_name, "").strip()
++    if not pattern:
++        return True
++    try:
++        return bool(re.search(pattern, _context_layer(diagnostic_context)))
++    except Exception:
++        return False
++
++
++def _layer_index_from_context(diagnostic_context) -> int:
++    context = diagnostic_context or {}
++    if "layer_index" in context:
++        try:
++            return int(context.get("layer_index"))
++        except Exception:
++            pass
++    layer = _context_layer(diagnostic_context)
++    match = re.search(r"layers\.(\d+)\.", layer)
++    if not match:
++        return -1
++    try:
++        return int(match.group(1))
++    except Exception:
++        return -1
++
++
++def _sidecar_log_path() -> str | None:
++    raw = os.environ.get(ONEDNN_SIDECAR_LOG_ENV, "").strip()
++    if not raw:
++        return None
++    return (raw.replace("{pid}", str(os.getpid())).replace(
++        "{rank}", os.environ.get("RANK", "")).replace(
++            "{local_rank}", os.environ.get("LOCAL_RANK", "")))
++
++
++def _tensor_meta(tensor):
++    if tensor is None:
++        return None
++    try:
++        return {
++            "shape": list(tensor.shape),
++            "dtype": str(tensor.dtype).replace("torch.", ""),
++            "device": str(tensor.device),
++            "data_ptr": int(tensor.data_ptr()),
++            "stride": list(tensor.stride()),
++            "is_contiguous": bool(tensor.is_contiguous()),
++            "numel": int(tensor.numel()),
++        }
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _tensor_sample(tensor, limit: int = 16):
++    if tensor is None:
++        return None
++    try:
++        if tensor.numel() == 0:
++            return []
++        values = tensor.detach().reshape(-1)[:limit].to("cpu",
++                                                        non_blocking=False)
++        if tensor.dtype in (torch.int8, torch.uint8, torch.int16, torch.int32,
++                            torch.int64):
++            return [int(v) for v in values.tolist()]
++        return [float(v) for v in values.float().tolist()]
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _tensor_sample_sum(tensor, limit: int = 64):
++    sample = _tensor_sample(tensor, limit)
++    if not isinstance(sample, list):
++        return None
++    try:
++        return float(sum(sample))
++    except Exception:
++        return None
++
++
++def _write_live_abi_record(path: str, record: dict, max_lines: int) -> bool:
++    global _live_abi_writes
++
++    try:
++        line = json.dumps(record, sort_keys=True)
++        with _live_abi_lock:
++            if _live_abi_writes >= max_lines:
++                return False
++            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
++            with open(path, "a", encoding="utf-8") as handle:
++                handle.write(line + "\n")
++            _live_abi_writes += 1
++        return True
++    except Exception:
++        return False
++
++
++def _capture_safe_live_abi_record(*,
++                                  call_id,
++                                  diagnostic_context,
++                                  hidden_states,
++                                  w13,
++                                  w13_scales,
++                                  w2,
++                                  w2_scales,
++                                  topk_weights,
++                                  topk_ids,
++                                  output,
++                                  remapped_hidden_states,
++                                  rows_per_expert,
++                                  unpermuted_row_to_permuted_row,
++                                  gemm1_output,
++                                  gemm2_output,
++                                  int8_scratch,
++                                  num_rows,
++                                  hidden_size,
++                                  num_moe_inputs,
++                                  inter_size,
++                                  n_experts_per_token,
++                                  activation,
++                                  num_experts,
++                                  ep_rank,
++                                  ep_size,
++                                  is_int8,
++                                  capture_observation):
++    context = diagnostic_context or {}
++    tensor_map = {
++        "hidden_states": hidden_states,
++        "w13": w13,
++        "w13_scales": w13_scales,
++        "w2": w2,
++        "w2_scales": w2_scales,
++        "topk_weights": topk_weights,
++        "topk_ids": topk_ids,
++        "output": output,
++        "remapped_hidden_states": remapped_hidden_states,
++        "rows_per_expert": rows_per_expert,
++        "unpermuted_row_to_permuted_row": unpermuted_row_to_permuted_row,
++        "gemm1_output": gemm1_output,
++        "gemm2_output": gemm2_output,
++    }
++    if int8_scratch:
++        for name in ("gemm1_a", "gemm1_a_scales", "act_output",
++                     "gemm2_a", "gemm2_a_scales"):
++            tensor_map[name] = int8_scratch.get(name)
++
++    return {
++        "ts": time.time(),
++        "pid": os.getpid(),
++        "rank": os.environ.get("RANK", ""),
++        "local_rank": os.environ.get("LOCAL_RANK", ""),
++        "call": call_id,
++        "layer": str(context.get("layer", "")),
++        "context": context,
++        "stream_capture_active": True,
++        "capture_observation": capture_observation,
++        "shape": {
++            "num_rows": int(num_rows),
++            "hidden_size": int(hidden_size),
++            "topk": int(n_experts_per_token),
++            "num_moe_inputs": int(num_moe_inputs),
++            "inter_size": int(inter_size),
++            "num_experts": int(num_experts),
++            "ep_rank": int(ep_rank),
++            "ep_size": int(ep_size),
++            "activation": str(activation),
++            "is_int8": bool(is_int8),
++        },
++        "tensors": {
++            name: _tensor_meta(tensor)
++            for name, tensor in tensor_map.items()
++        },
++        "reason": (
++            "Stream capture is active; synchronous tensor copies/checksums are "
++            "not safe inside this call. Enable deferred capture samples for a "
++            "post-capture checksum probe."
++        ),
++    }
++
++
++def _schedule_deferred_live_abi_sample(*,
++                                       path,
++                                       max_lines,
++                                       call_id,
++                                       diagnostic_context,
++                                       topk_ids,
++                                       topk_weights,
++                                       output,
++                                       rows_per_expert,
++                                       gemm1_output,
++                                       gemm2_output):
++    global _live_abi_deferred_pending
++
++    max_pending = max(1, _int_env(LIVE_ABI_DEFER_CAPTURE_MAX_PENDING_ENV, 1))
++    with _live_abi_lock:
++        if _live_abi_writes >= max_lines:
++            return
++        if _live_abi_deferred_pending >= max_pending:
++            return
++        _live_abi_deferred_pending += 1
++
++    delay_ms = max(0, _int_env(LIVE_ABI_DEFER_CAPTURE_DELAY_MS_ENV, 50))
++    context = diagnostic_context or {}
++
++    def _worker():
++        global _live_abi_deferred_pending
++        try:
++            if delay_ms:
++                time.sleep(delay_ms / 1000.0)
++            if getattr(getattr(output, "device", None), "type", None) == "xpu":
++                try:
++                    torch.xpu.synchronize()
++                except Exception:
++                    pass
++            record = {
++                "ts": time.time(),
++                "pid": os.getpid(),
++                "rank": os.environ.get("RANK", ""),
++                "local_rank": os.environ.get("LOCAL_RANK", ""),
++                "call": call_id,
++                "layer": str(context.get("layer", "")),
++                "context": context,
++                "stream_capture_active": False,
++                "capture_observation": "deferred_post_capture_sample",
++                "delay_ms": delay_ms,
++                "samples": {
++                    "topk_ids": _tensor_sample(topk_ids, 32),
++                    "topk_weights": _tensor_sample(topk_weights, 32),
++                    "output": _tensor_sample(output, 32),
++                    "rows_per_expert": _tensor_sample(rows_per_expert, 64),
++                },
++                "checksums": {
++                    "output_sample_sum": _tensor_sample_sum(output, 64),
++                    "gemm1_output_sample_sum":
++                    _tensor_sample_sum(gemm1_output, 64),
++                    "gemm2_output_sample_sum":
++                    _tensor_sample_sum(gemm2_output, 64),
++                },
++            }
++            _write_live_abi_record(path, record, max_lines)
++        finally:
++            with _live_abi_lock:
++                _live_abi_deferred_pending = max(
++                    0, _live_abi_deferred_pending - 1)
++
++    thread = threading.Thread(
++        target=_worker,
++        name="xpu-moe-live-abi-deferred-sample",
++        daemon=True,
++    )
++    thread.start()
++
++
++def _maybe_record_live_abi(*,
++                           hidden_states,
++                           w13,
++                           w13_scales,
++                           w2,
++                           w2_scales,
++                           topk_weights,
++                           topk_ids,
++                           output,
++                           remapped_hidden_states,
++                           rows_per_expert,
++                           unpermuted_row_to_permuted_row,
++                           gemm1_output,
++                           gemm2_output,
++                           int8_scratch,
++                           num_rows,
++                           hidden_size,
++                           num_moe_inputs,
++                           inter_size,
++                           n_experts_per_token,
++                           activation,
++                           num_experts,
++                           ep_rank,
++                           ep_size,
++                           is_int8,
++                           diagnostic_context=None):
++    global _live_abi_calls, _live_abi_warned, _live_abi_writes
++
++    path = _live_abi_path()
++    if path is None:
++        return
++    if not _live_abi_rank_allowed():
++        return
++
++    context = diagnostic_context or {}
++    layer = str(context.get("layer", ""))
++    pattern = os.environ.get(LIVE_ABI_LAYER_REGEX_ENV, "").strip()
++    if pattern:
++        try:
++            if not re.search(pattern, layer):
++                return
++        except Exception:
++            return
++
++    max_lines = max(1, _int_env(LIVE_ABI_MAX_LINES_ENV, 100))
++    include_samples = _is_env_enabled(LIVE_ABI_INCLUDE_SAMPLES_ENV)
++
++    with _live_abi_lock:
++        if _live_abi_writes >= max_lines:
++            return
++        _live_abi_calls += 1
++        call_id = _live_abi_calls
++
++    if _stream_capture_active():
++        if _is_env_enabled(LIVE_ABI_CAPTURE_SKIPS_ENV):
++            record = _capture_safe_live_abi_record(
++                call_id=call_id,
++                diagnostic_context=diagnostic_context,
++                hidden_states=hidden_states,
++                w13=w13,
++                w13_scales=w13_scales,
++                w2=w2,
++                w2_scales=w2_scales,
++                topk_weights=topk_weights,
++                topk_ids=topk_ids,
++                output=output,
++                remapped_hidden_states=remapped_hidden_states,
++                rows_per_expert=rows_per_expert,
++                unpermuted_row_to_permuted_row=
++                unpermuted_row_to_permuted_row,
++                gemm1_output=gemm1_output,
++                gemm2_output=gemm2_output,
++                int8_scratch=int8_scratch,
++                num_rows=num_rows,
++                hidden_size=hidden_size,
++                num_moe_inputs=num_moe_inputs,
++                inter_size=inter_size,
++                n_experts_per_token=n_experts_per_token,
++                activation=activation,
++                num_experts=num_experts,
++                ep_rank=ep_rank,
++                ep_size=ep_size,
++                is_int8=is_int8,
++                capture_observation="stream_capture_skip_no_tensor_copy",
++            )
++            _write_live_abi_record(path, record, max_lines)
++        if _is_env_enabled(LIVE_ABI_DEFER_CAPTURE_SAMPLES_ENV):
++            _schedule_deferred_live_abi_sample(
++                path=path,
++                max_lines=max_lines,
++                call_id=call_id,
++                diagnostic_context=diagnostic_context,
++                topk_ids=topk_ids,
++                topk_weights=topk_weights,
++                output=output,
++                rows_per_expert=rows_per_expert,
++                gemm1_output=gemm1_output,
++                gemm2_output=gemm2_output,
++            )
++        return
++
++    try:
++        tensor_map = {
++            "hidden_states": hidden_states,
++            "w13": w13,
++            "w13_scales": w13_scales,
++            "w2": w2,
++            "w2_scales": w2_scales,
++            "topk_weights": topk_weights,
++            "topk_ids": topk_ids,
++            "output": output,
++            "remapped_hidden_states": remapped_hidden_states,
++            "rows_per_expert": rows_per_expert,
++            "unpermuted_row_to_permuted_row": unpermuted_row_to_permuted_row,
++            "gemm1_output": gemm1_output,
++            "gemm2_output": gemm2_output,
++        }
++        if int8_scratch:
++            for name in ("gemm1_a", "gemm1_a_scales", "act_output",
++                         "gemm2_a", "gemm2_a_scales"):
++                tensor_map[name] = int8_scratch.get(name)
++
++        route_sample_limit = min(int(num_experts), 256)
++        rows_sample = _tensor_sample(rows_per_expert, route_sample_limit)
++        if isinstance(rows_sample, list):
++            route = {
++                "rows_sample": rows_sample,
++                "rows_sum": int(sum(rows_sample)),
++                "nonzero_experts": int(sum(1 for v in rows_sample if v)),
++                "max_rows_per_expert": int(max(rows_sample) if rows_sample else 0),
++            }
++        else:
++            route = {"rows_sample": rows_sample}
++
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "rank": os.environ.get("RANK", ""),
++            "local_rank": os.environ.get("LOCAL_RANK", ""),
++            "call": call_id,
++            "layer": layer,
++            "context": context,
++            "shape": {
++                "num_rows": int(num_rows),
++                "hidden_size": int(hidden_size),
++                "topk": int(n_experts_per_token),
++                "num_moe_inputs": int(num_moe_inputs),
++                "inter_size": int(inter_size),
++                "num_experts": int(num_experts),
++                "ep_rank": int(ep_rank),
++                "ep_size": int(ep_size),
++                "activation": str(activation),
++                "is_int8": bool(is_int8),
++            },
++            "tensors": {
++                name: _tensor_meta(tensor)
++                for name, tensor in tensor_map.items()
++            },
++            "route": route,
++            "checksums": {
++                "output_sample_sum": _tensor_sample_sum(output, 64),
++                "gemm1_output_sample_sum": _tensor_sample_sum(gemm1_output, 64),
++                "gemm2_output_sample_sum": _tensor_sample_sum(gemm2_output, 64),
++            },
++        }
++        if include_samples:
++            record["samples"] = {
++                "topk_ids": _tensor_sample(topk_ids, 32),
++                "topk_weights": _tensor_sample(topk_weights, 32),
++                "output": _tensor_sample(output, 32),
++                "unpermuted_row_to_permuted_row":
++                _tensor_sample(unpermuted_row_to_permuted_row, 32),
++            }
++
++        _write_live_abi_record(path, record, max_lines)
++    except Exception as exc:
++        if not _live_abi_warned:
++            _live_abi_warned = True
++            try:
++                print(f"[xpu_moe_live_abi] disabled after error: {exc!r}")
++            except Exception:
++                pass
++
++
++def _make_onednn_grouped_offsets(rows_per_expert):
++    offsets = torch.empty_like(rows_per_expert)
++    if offsets.numel() == 0:
++        return offsets
++    cumsum = torch.cumsum(rows_per_expert,
++                          dim=0,
++                          dtype=rows_per_expert.dtype)
++    offsets[0].zero_()
++    if offsets.numel() > 1:
++        offsets[1:].copy_(cumsum[:-1])
++    return offsets
++
++
++def _make_w8a8_grouped_gemm_offsets(rows_per_expert):
++    offsets = torch.empty((rows_per_expert.numel() + 1, ),
++                          dtype=torch.int64,
++                          device=rows_per_expert.device)
++    if offsets.numel() == 0:
++        return offsets
++    offsets[0].zero_()
++    if rows_per_expert.numel() > 0:
++        offsets[1:].copy_(torch.cumsum(rows_per_expert.to(torch.int64),
++                                       dim=0))
++    return offsets
++
++
++def _should_use_w8a8_offsets():
++    return (FUSEDMOE_AVAILABLE and _is_env_enabled(W8A8_USE_OFFSETS_ENV)
++            and hasattr(torch.ops._xpu_C,
++                        "cutlass_grouped_gemm_w8a8_int8_offsets_interface"))
++
++
++def _maybe_log_sidecar_probe(record):
++    global _sidecar_probe_writes
++
++    path = _sidecar_log_path()
++    if path is None:
++        return
++    try:
++        line = json.dumps(record, sort_keys=True)
++        with _sidecar_probe_lock:
++            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
++            with open(path, "a", encoding="utf-8") as handle:
++                handle.write(line + "\n")
++            _sidecar_probe_writes += 1
++    except Exception:
++        return
++
++
++def _maybe_probe_onednn_sidecar(*,
++                                hidden_states,
++                                w13,
++                                w13_scales,
++                                w2,
++                                w2_scales,
++                                topk_weights,
++                                topk_ids,
++                                output,
++                                remapped_hidden_states,
++                                rows_per_expert,
++                                unpermuted_row_to_permuted_row,
++                                gemm1_a,
++                                gemm1_a_scales,
++                                gemm1_output,
++                                act_output,
++                                gemm2_a,
++                                gemm2_a_scales,
++                                gemm2_output,
++                                is_int8,
++                                diagnostic_context=None):
++    global _sidecar_probe_calls, _sidecar_probe_disabled
++    global _sidecar_probe_warned
++
++    if not _is_env_enabled(ONEDNN_SIDECAR_PROBE_ENV):
++        return None
++    if _sidecar_probe_disabled or _stream_capture_active():
++        return None
++    if not is_int8 or not FUSEDMOE_AVAILABLE:
++        return None
++    if not hasattr(torch.ops._xpu_C, "qwen36_moe_onednn_sidecar_probe"):
++        return None
++    if not _rank_allowed(ONEDNN_SIDECAR_RANK_ENV):
++        return None
++    if not _layer_matches(ONEDNN_SIDECAR_LAYER_REGEX_ENV, diagnostic_context):
++        return None
++    required_tensors = (
++        hidden_states,
++        w13,
++        w13_scales,
++        w2,
++        w2_scales,
++        topk_weights,
++        topk_ids,
++        output,
++        remapped_hidden_states,
++        rows_per_expert,
++        unpermuted_row_to_permuted_row,
++        gemm1_a,
++        gemm1_a_scales,
++        gemm1_output,
++        act_output,
++        gemm2_a,
++        gemm2_a_scales,
++        gemm2_output,
++    )
++    if any(tensor is None for tensor in required_tensors):
++        return None
++
++    max_calls = max(1, _int_env(ONEDNN_SIDECAR_MAX_CALLS_ENV, 1))
++    with _sidecar_probe_lock:
++        if _sidecar_probe_calls >= max_calls:
++            return None
++        _sidecar_probe_calls += 1
++        call_id = _sidecar_probe_calls
++
++    try:
++        offsets = None
++        if _is_env_enabled(ONEDNN_SIDECAR_OFFSETS_ENV, "1"):
++            offsets = _make_onednn_grouped_offsets(rows_per_expert)
++
++        layer_index = _layer_index_from_context(diagnostic_context)
++        dry_create_descriptors = _is_env_enabled(
++            ONEDNN_SIDECAR_DRY_DESCRIPTORS_ENV, "1")
++        started = time.perf_counter()
++        stats = torch.ops._xpu_C.qwen36_moe_onednn_sidecar_probe(
++            hidden_states,
++            topk_weights,
++            topk_ids,
++            w13,
++            w13_scales,
++            w2,
++            w2_scales,
++            output,
++            remapped_hidden_states,
++            rows_per_expert,
++            unpermuted_row_to_permuted_row,
++            gemm1_a,
++            gemm1_a_scales,
++            gemm1_output,
++            act_output,
++            gemm2_a,
++            gemm2_a_scales,
++            gemm2_output,
++            offsets,
++            layer_index,
++            dry_create_descriptors,
++        )
++        elapsed_ms = (time.perf_counter() - started) * 1000.0
++        stats_list = [int(v) for v in stats.tolist()]
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "rank": os.environ.get("RANK", ""),
++            "local_rank": os.environ.get("LOCAL_RANK", ""),
++            "call": call_id,
++            "layer": _context_layer(diagnostic_context),
++            "layer_index": layer_index,
++            "dry_create_descriptors": bool(dry_create_descriptors),
++            "offsets_supplied": offsets is not None,
++            "elapsed_ms": elapsed_ms,
++            "stats": stats_list,
++        }
++        _maybe_log_sidecar_probe(record)
++        return stats
++    except Exception as exc:
++        _sidecar_probe_disabled = True
++        if not _sidecar_probe_warned:
++            _sidecar_probe_warned = True
++            try:
++                print(f"[xpu_moe_onednn_sidecar_probe] disabled after "
++                      f"error: {exc!r}")
++            except Exception:
++                pass
++        _maybe_log_sidecar_probe({
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "rank": os.environ.get("RANK", ""),
++            "local_rank": os.environ.get("LOCAL_RANK", ""),
++            "call": call_id,
++            "layer": _context_layer(diagnostic_context),
++            "error": repr(exc),
++        })
++        return None
++
++
++if FUSEDMOE_AVAILABLE:
++    try:
++
++        @torch.library.register_fake(
++            "_xpu_C::cutlass_grouped_gemm_w8a8_int8_interface")
++        def _fake_cutlass_grouped_gemm_w8a8_int8_interface(
++                ptr_A, ptr_A_scales, ptr_B, ptr_B_scales, ptr_bias, ptr_D,
++                rows_per_expert, N, K, num_experts):
++            return ptr_D
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake(
++            "_xpu_C::cutlass_grouped_gemm_w8a8_int8_offsets_interface")
++        def _fake_cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++                ptr_A, ptr_A_scales, ptr_B, ptr_B_scales, ptr_bias, ptr_D,
++                expert_first_token_offset, N, K, num_experts):
++            return ptr_D
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::per_token_quant_int8_xpu")
++        def _fake_per_token_quant_int8_xpu(x):
++            q = torch.empty_like(x, dtype=torch.int8)
++            scales = torch.empty((*x.shape[:-1], 1),
++                                 device=x.device,
++                                 dtype=torch.float32)
++            return q, scales
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::per_token_quant_int8_xpu_out")
++        def _fake_per_token_quant_int8_xpu_out(x, q, scales):
++            return q, scales
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::qwen36_moe_onednn_sidecar_probe")
++        def _fake_qwen36_moe_onednn_sidecar_probe(
++                hidden_states, topk_weights, topk_ids, w13, w13_scales, w2,
++                w2_scales, output, remapped_hidden_states, rows_per_expert,
++                unpermuted_row_to_permuted_row, gemm1_a, gemm1_a_scales,
++                gemm1_output, act_output, gemm2_a, gemm2_a_scales,
++                gemm2_output, onednn_grouped_offsets, layer_index,
++                dry_create_descriptors):
++            return torch.empty((20,), dtype=torch.int64)
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake("_xpu_C::silu_and_mul_quant_int8_xpu")
++        def _fake_silu_and_mul_quant_int8_xpu(x):
++            q_shape = (*x.shape[:-1], x.shape[-1] // 2)
++            q = torch.empty(q_shape, device=x.device, dtype=torch.int8)
++            scales = torch.empty((*x.shape[:-1], 1),
++                                 device=x.device,
++                                 dtype=torch.float32)
++            return q, scales
++
++    except RuntimeError:
++        pass
++
++    try:
++
++        @torch.library.register_fake(
++            "_xpu_C::silu_and_mul_quant_int8_xpu_out")
++        def _fake_silu_and_mul_quant_int8_xpu_out(x, q, scales):
++            return q, scales
++
++    except RuntimeError:
++        pass
++
++
++def _per_token_quant_int8(x):
++    if FUSEDMOE_AVAILABLE and hasattr(torch.ops._xpu_C,
++                                      "per_token_quant_int8_xpu"):
++        return torch.ops._xpu_C.per_token_quant_int8_xpu(x)
++
++    x_2d = x.reshape(-1, x.shape[-1]).contiguous()
++    scales = x_2d.float().abs().amax(dim=-1, keepdim=True)
++    scales = scales.clamp(min=1e-10) / 127.0
++    q = (x_2d.float() / scales).round().clamp(-127, 127).to(torch.int8)
++    return q.reshape_as(x), scales.reshape(*x.shape[:-1], 1)
++
++
++def _per_token_quant_int8_out(x, q=None, scales=None):
++    if q is None or scales is None:
++        return _per_token_quant_int8(x)
++    if FUSEDMOE_AVAILABLE and hasattr(torch.ops._xpu_C,
++                                      "per_token_quant_int8_xpu_out"):
++        return torch.ops._xpu_C.per_token_quant_int8_xpu_out(x, q, scales)
++
++    q_tmp, scales_tmp = _per_token_quant_int8(x)
++    q.copy_(q_tmp)
++    scales.copy_(scales_tmp)
++    return q, scales
++
++
++def _silu_and_mul_quant_int8(x):
++    if FUSEDMOE_AVAILABLE and hasattr(torch.ops._xpu_C,
++                                      "silu_and_mul_quant_int8_xpu"):
++        return torch.ops._xpu_C.silu_and_mul_quant_int8_xpu(x)
++
++    act_output = torch.empty((*x.shape[:-1], x.shape[-1] // 2),
++                             dtype=x.dtype,
++                             device=x.device)
++    torch.ops._C.silu_and_mul(act_output, x)
++    return _per_token_quant_int8(act_output)
++
++
++def _silu_and_mul_quant_int8_out(x, q=None, scales=None):
++    if q is None or scales is None:
++        return _silu_and_mul_quant_int8(x)
++    if FUSEDMOE_AVAILABLE and hasattr(torch.ops._xpu_C,
++                                      "silu_and_mul_quant_int8_xpu_out"):
++        return torch.ops._xpu_C.silu_and_mul_quant_int8_xpu_out(x, q, scales)
++
++    q_tmp, scales_tmp = _silu_and_mul_quant_int8(x)
++    q.copy_(q_tmp)
++    scales.copy_(scales_tmp)
++    return q, scales
++
++
++def _normalize_int8_weight_scales(scales, out_features):
++    scales = scales.squeeze(-1) if scales is not None and scales.dim() == 3 else scales
++    if scales is None:
++        raise ValueError("W8A8 INT8 grouped GEMM requires weight scales.")
++    if scales.dim() == 1:
++        scales = scales.view(-1, 1).expand(-1, out_features)
++    elif scales.dim() == 2 and scales.shape[-1] != out_features:
++        raise ValueError(
++            "W8A8 INT8 weight scales must be [num_experts], "
++            f"[num_experts, {out_features}], or [num_experts, {out_features}, 1]. "
++            f"Got {tuple(scales.shape)}.")
++    return scales.contiguous()
++
++
++def _get_recipe(is_fp8,
++                is_mxfp8,
++                is_mxfp4,
++                is_int4,
++                is_block_fp8,
++                is_int8=False):
+     if is_mxfp8:
+         return "mxfp8"
+     elif is_block_fp8:
+         return "fp8block"
++    elif is_int8:
++        return "int8"
+     elif is_mxfp4:
+         return "mxfp4"
+     elif is_int4:
+@@ -227,7 +1101,13 @@ def ref_fused_moe(recipe,
+         if recipe == "fp8block":
+             expert_w13 = hp_from_128x128(w13[expert_id, :, :],
+                                         w13_scales[expert_id, :, :])
+-        if recipe in ("fp8block", "mxfp8"):
++        elif recipe == "int8":
++            expert_w13 = (
++                expert_w13.to(compute_dtype) *
++                _normalize_int8_weight_scales(
++                    w13_scales, expert_w13.shape[-1])[expert_id].view(
++                        1, -1).to(compute_dtype))
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             inter = expert_w13.shape[-1] // 2
+             w1, w3 = torch.split(expert_w13, inter, dim=-1)
+         else:
+@@ -238,7 +1118,7 @@ def ref_fused_moe(recipe,
+         if w13_bias is not None:
+             w1_bias, w3_bias = w13_bias[expert_id, :].chunk(2)
+ 
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             gemm1 = expert_tokens.to(compute_dtype) @ w1.to(compute_dtype)
+         else:
+             gemm1 = expert_tokens.to(compute_dtype) @ w1.T.to(compute_dtype)
+@@ -247,7 +1127,7 @@ def ref_fused_moe(recipe,
+ 
+         gate = _naive_fused_moe_activation(gemm1, activation)
+ 
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             up = expert_tokens.to(compute_dtype) @ w3.to(compute_dtype)
+         else:
+             up = expert_tokens.to(compute_dtype) @ w3.T.to(compute_dtype)
+@@ -262,6 +1142,12 @@ def ref_fused_moe(recipe,
+                                         w2_scales[expert_id, :, :])
+             _q, _scale = quant_fp8_act(gemm2_input)
+             gemm2_input = hp_from_1x128(_q, _scale)
++        elif recipe == "int8":
++            expert_w2 = (
++                expert_w2.to(compute_dtype) *
++                _normalize_int8_weight_scales(
++                    w2_scales, expert_w2.shape[-1])[expert_id].view(
++                        1, -1).to(compute_dtype))
+         elif recipe == "mxfp8":
+             _q, _scale = quant_mxfp_act(gemm2_input, "mxfp8")
+             gemm2_input = (_q.to(compute_dtype).reshape(-1, 32)
+@@ -275,7 +1161,7 @@ def ref_fused_moe(recipe,
+                                               (_q.shape[-1] * 2, ))
+         ###
+ 
+-        if recipe in ("fp8block", "mxfp8"):
++        if recipe in ("fp8block", "mxfp8", "int8"):
+             expert_out = gemm2_input @ expert_w2.to(compute_dtype)
+         else:
+             expert_out = gemm2_input @ expert_w2.T.to(compute_dtype)
+@@ -312,7 +1198,8 @@ class XpuFusedMoe:
+         is_int4=False,
+         is_mxfp4=False,
+         is_mxfp8=False,
+-        is_block_fp8=False
++        is_block_fp8=False,
++        is_int8=False,
+     ):
+         # 4bits support [E, N, K]
+         # other types [E, K, N]
+@@ -339,7 +1226,7 @@ class XpuFusedMoe:
+         self.w13 = w13
+         self.w2 = w2
+ 
+-        if not is_fp8 and not is_int4 and not is_mxfp4 and not is_block_fp8:
++        if not is_fp8 and not is_int4 and not is_mxfp4 and not is_block_fp8 and not is_int8:
+             self.gemm1_scales = None
+             self.gemm2_scales = None
+         else:
+@@ -360,8 +1247,9 @@ class XpuFusedMoe:
+         self.is_mxfp4 = is_mxfp4
+         self.is_mxfp8 = is_mxfp8
+         self.is_block_fp8 = is_block_fp8
++        self.is_int8 = is_int8
+         self.recipe = _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4,
+-                                   is_block_fp8)
++                                   is_block_fp8, is_int8)
+         self._use_ref = _should_use_ref_fused_moe(is_mxfp8)
+ 
+         if self.activation == "silu":
+@@ -411,9 +1299,28 @@ class XpuFusedMoe:
+                             topk_weights, topk_ids,
+                             expert_map)
+         else:
+-            self._apply_kernel(output, hidden_states,
+-                               topk_weights, topk_ids,
+-                               expert_map)
++            xpu_fused_moe(hidden_states=hidden_states,
++                          w13=self.w13,
++                          w13_scales=self.gemm1_scales,
++                          w13_bias=self.w13_bias,
++                          w2=self.w2,
++                          w2_scales=self.gemm2_scales,
++                          w2_bias=self.w2_bias,
++                          topk_weights=topk_weights,
++                          topk_ids=topk_ids,
++                          n_experts_per_token=self.n_experts_per_token,
++                          activation=self.activation,
++                          num_experts=self.num_experts,
++                          ep_rank=self.ep_rank,
++                          ep_size=self.ep_size,
++                          expert_map=expert_map,
++                          output=output,
++                          is_fp8=self.is_fp8,
++                          is_int4=self.is_int4,
++                          is_mxfp4=self.is_mxfp4,
++                          is_mxfp8=self.is_mxfp8,
++                          is_block_fp8=self.is_block_fp8,
++                          is_int8=self.is_int8)
+ 
+     def _apply_ref(
+         self,
+@@ -544,7 +1451,10 @@ def xpu_fused_moe(hidden_states,
+                   is_int4=False,
+                   is_mxfp4=False,
+                   is_mxfp8=False,
+-                  is_block_fp8=False):
++                  is_block_fp8=False,
++                  is_int8=False,
++                  scratch=None,
++                  diagnostic_context=None):
+     '''
+     hidden_states: [num_rows, hidden_size]
+     w13: [num_experts, 2*inter_size, hidden_size]
+@@ -568,6 +1478,7 @@ def xpu_fused_moe(hidden_states,
+     is_mxfp4: bool
+     is_mxfp8: bool
+     is_block_fp8: bool
++    is_int8: bool
+     '''
+     if output is None:
+         output = torch.empty_like(hidden_states)
+@@ -576,7 +1487,7 @@ def xpu_fused_moe(hidden_states,
+             "output shape must be the same as hidden_states shape"
+     if _should_use_ref_fused_moe(is_mxfp8):
+         recipe = _get_recipe(is_fp8, is_mxfp8, is_mxfp4, is_int4,
+-                             is_block_fp8)
++                             is_block_fp8, is_int8)
+         out = ref_fused_moe(recipe=recipe,
+                             x=hidden_states,
+                             w13=w13,
+@@ -619,11 +1530,15 @@ def xpu_fused_moe(hidden_states,
+ 
+     num_rows, hidden_size = list(hidden_states.shape)
+     num_moe_inputs = n_experts_per_token * num_rows
+-    gemm1_output = torch.empty((num_moe_inputs, 2 * inter_size),
+-                               dtype=hidden_states.dtype,
+-                               device=hidden_states.device)
++    int8_scratch = scratch if is_int8 and scratch is not None else None
++    if int8_scratch is None:
++        gemm1_output = torch.empty((num_moe_inputs, 2 * inter_size),
++                                   dtype=hidden_states.dtype,
++                                   device=hidden_states.device)
++    else:
++        gemm1_output = int8_scratch["gemm1_output"]
+ 
+-    if not is_fp8 and not is_int4 and not is_mxfp4:
++    if not is_fp8 and not is_int4 and not is_mxfp4 and not is_int8:
+         gemm1_scales = None
+         gemm2_scales = None
+     else:
+@@ -643,75 +1558,241 @@ def xpu_fused_moe(hidden_states,
+         total_experts_num = num_experts * ep_size
+     local_experts_num = num_experts
+ 
+-    remapped_hidden_states = torch.empty(
+-        (num_rows * n_experts_per_token, hidden_size),
+-        dtype=hidden_states.dtype,
+-        device=hidden_states.device)
+-    rows_per_expert = torch.zeros((num_experts),
+-                                            dtype=torch.int32,
+-                                            device=hidden_states.device)
+-    unpermuted_row_to_permuted_row = torch.empty(
+-        (num_rows, n_experts_per_token),
+-        dtype=torch.int32,
+-        device=hidden_states.device)
+-
+-    torch.ops._moe_C.remap_hidden_states(
+-        hidden_states=hidden_states,
+-        hidden_states_scales=None,
+-        remapped_hidden_states=remapped_hidden_states,
+-        remapped_hidden_states_scales=None,
+-        expert_map=expert_map,
+-        rows_per_expert=rows_per_expert,
+-        unpermuted_row_to_permuted_row=unpermuted_row_to_permuted_row,
+-        topk_ids=topk_ids,
+-        total_experts_num=total_experts_num,
+-        local_experts_num=local_experts_num)
++    if int8_scratch is None:
++        remapped_hidden_states = torch.empty(
++            (num_rows * n_experts_per_token, hidden_size),
++            dtype=hidden_states.dtype,
++            device=hidden_states.device)
++        rows_per_expert = torch.zeros((num_experts),
++                                      dtype=torch.int32,
++                                      device=hidden_states.device)
++        unpermuted_row_to_permuted_row = torch.empty(
++            (num_rows, n_experts_per_token),
++            dtype=torch.int32,
++            device=hidden_states.device)
++    else:
++        remapped_hidden_states = int8_scratch["remapped_hidden_states"]
++        rows_per_expert = int8_scratch["rows_per_expert"]
++        rows_per_expert.zero_()
++        unpermuted_row_to_permuted_row = int8_scratch[
++            "unpermuted_row_to_permuted_row"]
++
++    with timed_region("xpu_moe.remap_hidden_states"):
++        torch.ops._moe_C.remap_hidden_states(
++            hidden_states=hidden_states,
++            hidden_states_scales=None,
++            remapped_hidden_states=remapped_hidden_states,
++            remapped_hidden_states_scales=None,
++            expert_map=expert_map,
++            rows_per_expert=rows_per_expert,
++            unpermuted_row_to_permuted_row=unpermuted_row_to_permuted_row,
++            topk_ids=topk_ids,
++            total_experts_num=total_experts_num,
++            local_experts_num=local_experts_num)
++
++    w8a8_grouped_gemm_offsets = None
++    if is_int8 and _should_use_w8a8_offsets():
++        with timed_region("xpu_moe.w8a8_offsets"):
++            w8a8_grouped_gemm_offsets = _make_w8a8_grouped_gemm_offsets(
++                rows_per_expert)
+ 
+     ########### gemm1 ##################
+     input_B = w13
+ 
+-    torch.ops._xpu_C.cutlass_grouped_gemm_interface(
+-        ptr_A=remapped_hidden_states,
+-        ptr_B=input_B,
+-        ptr_scales=gemm1_scales,
+-        ptr_bias=w13_bias,
+-        ptr_D=gemm1_output,
+-        rows_per_expert=rows_per_expert,
+-        N=2 * inter_size,
+-        K=hidden_size,
+-        num_experts=num_experts,
+-        is_B_int4=is_int4,
+-        is_B_mxfp4=is_mxfp4)
++    if is_int8:
++        with timed_region("xpu_moe.gemm1_quant"):
++            gemm1_a = None if int8_scratch is None else int8_scratch.get(
++                "gemm1_a")
++            gemm1_a_scale_out = (
++                None if int8_scratch is None else
++                int8_scratch.get("gemm1_a_scales"))
++            remapped_hidden_states, gemm1_a_scales = _per_token_quant_int8_out(
++                remapped_hidden_states, gemm1_a, gemm1_a_scale_out)
++        gemm1_scales = _normalize_int8_weight_scales(gemm1_scales,
++                                                     2 * inter_size)
++        with timed_region("xpu_moe.gemm1_w8a8"):
++            if w8a8_grouped_gemm_offsets is not None:
++                torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++                    ptr_A=remapped_hidden_states,
++                    ptr_A_scales=gemm1_a_scales,
++                    ptr_B=input_B,
++                    ptr_B_scales=gemm1_scales,
++                    ptr_bias=w13_bias,
++                    ptr_D=gemm1_output,
++                    expert_first_token_offset=w8a8_grouped_gemm_offsets,
++                    N=2 * inter_size,
++                    K=hidden_size,
++                    num_experts=num_experts)
++            else:
++                torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++                    ptr_A=remapped_hidden_states,
++                    ptr_A_scales=gemm1_a_scales,
++                    ptr_B=input_B,
++                    ptr_B_scales=gemm1_scales,
++                    ptr_bias=w13_bias,
++                    ptr_D=gemm1_output,
++                    rows_per_expert=rows_per_expert,
++                    N=2 * inter_size,
++                    K=hidden_size,
++                    num_experts=num_experts)
++    else:
++        torch.ops._xpu_C.cutlass_grouped_gemm_interface(
++            ptr_A=remapped_hidden_states,
++            ptr_B=input_B,
++            ptr_scales=gemm1_scales,
++            ptr_bias=w13_bias,
++            ptr_D=gemm1_output,
++            rows_per_expert=rows_per_expert,
++            N=2 * inter_size,
++            K=hidden_size,
++            num_experts=num_experts,
++            is_B_int4=is_int4,
++            is_B_mxfp4=is_mxfp4)
+ 
+     inter_size_scale = 2 if activation == "relu2_no_mul" else 1
+-    # act
+-    act_output = torch.empty((num_moe_inputs, inter_size * inter_size_scale),
+-                             dtype=gemm1_output.dtype,
+-                             device=gemm1_output.device)
+-    fused_moe_activation(act_output, gemm1_output, activation)
++    fuse_silu_quant = (
++        is_int8 and activation == "silu" and
++        _is_env_enabled(FUSE_SILU_QUANT_ENV))
++    gemm2_a_scales = None
++    act_output_for_probe = None
++
++    if fuse_silu_quant:
++        with timed_region("xpu_moe.activation_quant"):
++            gemm2_a = None if int8_scratch is None else int8_scratch.get(
++                "gemm2_a")
++            gemm2_a_scale_out = (
++                None if int8_scratch is None else
++                int8_scratch.get("gemm2_a_scales"))
++            input_A, gemm2_a_scales = _silu_and_mul_quant_int8_out(
++                gemm1_output, gemm2_a, gemm2_a_scale_out)
++            if int8_scratch is not None:
++                act_output_for_probe = int8_scratch.get("act_output")
++    else:
++        # act
++        if int8_scratch is None:
++            act_output = torch.empty((num_moe_inputs,
++                                      inter_size * inter_size_scale),
++                                     dtype=gemm1_output.dtype,
++                                     device=gemm1_output.device)
++        else:
++            act_output = int8_scratch["act_output"]
++        act_output_for_probe = act_output
++        with timed_region("xpu_moe.activation"):
++            fused_moe_activation(act_output, gemm1_output, activation)
++        input_A = act_output.contiguous()
+ 
+     ########### gemm2 ##################
+-    input_A = act_output.contiguous()
+     input_B = w2
+-    gemm2_output = torch.empty((num_moe_inputs, hidden_size),
+-                               dtype=hidden_states.dtype,
+-                               device=hidden_states.device)
++    if int8_scratch is None:
++        gemm2_output = torch.empty((num_moe_inputs, hidden_size),
++                                   dtype=hidden_states.dtype,
++                                   device=hidden_states.device)
++    else:
++        gemm2_output = int8_scratch["gemm2_output"]
++
++    if is_int8:
++        if gemm2_a_scales is None:
++            with timed_region("xpu_moe.gemm2_quant"):
++                gemm2_a = None if int8_scratch is None else int8_scratch.get(
++                    "gemm2_a")
++                gemm2_a_scale_out = (
++                    None if int8_scratch is None else
++                    int8_scratch.get("gemm2_a_scales"))
++                input_A, gemm2_a_scales = _per_token_quant_int8_out(
++                    input_A, gemm2_a, gemm2_a_scale_out)
++        gemm2_scales = _normalize_int8_weight_scales(gemm2_scales,
++                                                     hidden_size)
++        with timed_region("xpu_moe.gemm2_w8a8"):
++            if w8a8_grouped_gemm_offsets is not None:
++                torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_offsets_interface(
++                    ptr_A=input_A,
++                    ptr_A_scales=gemm2_a_scales,
++                    ptr_B=input_B,
++                    ptr_B_scales=gemm2_scales,
++                    ptr_bias=w2_bias,
++                    ptr_D=gemm2_output,
++                    expert_first_token_offset=w8a8_grouped_gemm_offsets,
++                    N=hidden_size,
++                    K=inter_size * inter_size_scale,
++                    num_experts=num_experts)
++            else:
++                torch.ops._xpu_C.cutlass_grouped_gemm_w8a8_int8_interface(
++                    ptr_A=input_A,
++                    ptr_A_scales=gemm2_a_scales,
++                    ptr_B=input_B,
++                    ptr_B_scales=gemm2_scales,
++                    ptr_bias=w2_bias,
++                    ptr_D=gemm2_output,
++                    rows_per_expert=rows_per_expert,
++                    N=hidden_size,
++                    K=inter_size * inter_size_scale,
++                    num_experts=num_experts)
++    else:
++        torch.ops._xpu_C.cutlass_grouped_gemm_interface(
++            ptr_A=input_A,
++            ptr_B=input_B,
++            ptr_scales=gemm2_scales,
++            ptr_bias=w2_bias,
++            ptr_D=gemm2_output,
++            rows_per_expert=rows_per_expert,
++            N=hidden_size,
++            K=inter_size * inter_size_scale,
++            num_experts=num_experts,
++            is_B_int4=is_int4,
++            is_B_mxfp4=is_mxfp4)
+ 
+-    torch.ops._xpu_C.cutlass_grouped_gemm_interface(
+-        ptr_A=input_A,
+-        ptr_B=input_B,
+-        ptr_scales=gemm2_scales,
+-        ptr_bias=w2_bias,
+-        ptr_D=gemm2_output,
++    with timed_region("xpu_moe.gather"):
++        torch.ops._moe_C.moe_gather(output, gemm2_output, topk_weights,
++                                    unpermuted_row_to_permuted_row,
++                                    num_experts)
++    _maybe_record_live_abi(
++        hidden_states=hidden_states,
++        w13=w13,
++        w13_scales=w13_scales,
++        w2=w2,
++        w2_scales=w2_scales,
++        topk_weights=topk_weights,
++        topk_ids=topk_ids,
++        output=output,
++        remapped_hidden_states=remapped_hidden_states,
+         rows_per_expert=rows_per_expert,
+-        N=hidden_size,
+-        K=inter_size * inter_size_scale,
++        unpermuted_row_to_permuted_row=unpermuted_row_to_permuted_row,
++        gemm1_output=gemm1_output,
++        gemm2_output=gemm2_output,
++        int8_scratch=int8_scratch,
++        num_rows=num_rows,
++        hidden_size=hidden_size,
++        num_moe_inputs=num_moe_inputs,
++        inter_size=inter_size,
++        n_experts_per_token=n_experts_per_token,
++        activation=activation,
+         num_experts=num_experts,
+-        is_B_int4=is_int4,
+-        is_B_mxfp4=is_mxfp4)
+-
+-    torch.ops._moe_C.moe_gather(output, gemm2_output, topk_weights,
+-                                unpermuted_row_to_permuted_row,
+-                                num_experts)
++        ep_rank=ep_rank,
++        ep_size=ep_size,
++        is_int8=is_int8,
++        diagnostic_context=diagnostic_context,
++    )
++    _maybe_probe_onednn_sidecar(
++        hidden_states=hidden_states,
++        w13=w13,
++        w13_scales=gemm1_scales,
++        w2=w2,
++        w2_scales=gemm2_scales,
++        topk_weights=topk_weights,
++        topk_ids=topk_ids,
++        output=output,
++        remapped_hidden_states=remapped_hidden_states,
++        rows_per_expert=rows_per_expert,
++        unpermuted_row_to_permuted_row=unpermuted_row_to_permuted_row,
++        gemm1_a=remapped_hidden_states,
++        gemm1_a_scales=gemm1_a_scales if is_int8 else None,
++        gemm1_output=gemm1_output,
++        act_output=act_output_for_probe,
++        gemm2_a=input_A if is_int8 else None,
++        gemm2_a_scales=gemm2_a_scales if is_int8 else None,
++        gemm2_output=gemm2_output,
++        is_int8=is_int8,
++        diagnostic_context=diagnostic_context,
++    )
+ 
+     return output

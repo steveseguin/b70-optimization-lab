@@ -1,0 +1,146 @@
+diff --git a/vllm/model_executor/layers/fla/ops/fused_recurrent.py b/vllm/model_executor/layers/fla/ops/fused_recurrent.py
+index 920efa444..973e3b153 100644
+--- a/vllm/model_executor/layers/fla/ops/fused_recurrent.py
++++ b/vllm/model_executor/layers/fla/ops/fused_recurrent.py
+@@ -8,6 +8,8 @@
+ # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
+ # ruff: noqa: E501
+ 
++import os
++
+ import torch
+ 
+ from vllm.triton_utils import tl, triton
+@@ -57,6 +59,7 @@ def fused_recurrent_gated_delta_rule_fwd_kernel(
+     IS_VARLEN: tl.constexpr,
+     IS_CONTINUOUS_BATCHING: tl.constexpr,
+     IS_SPEC_DECODING: tl.constexpr,
++    STORE_ACCEPTED_ONLY: tl.constexpr,
+     IS_KDA: tl.constexpr,
+ ):
+     i_k, i_v, i_nh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
+@@ -150,15 +153,21 @@ def fused_recurrent_gated_delta_rule_fwd_kernel(
+ 
+         # keep the states for multi-query tokens
+         if INPLACE_FINAL_STATE:
+-            # Load state index and check for invalid entries
+-            final_state_idx = tl.load(
+-                ssm_state_indices + i_n * stride_indices_seq + i_t
+-            ).to(tl.int64)
+-            # Only store if state index is valid (not NULL_BLOCK_ID=0)
+-            if final_state_idx > 0:
+-                p_ht = ht + final_state_idx * stride_final_state_token
+-                p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+-                tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
++            store_final_state = True
++            if IS_SPEC_DECODING and STORE_ACCEPTED_ONLY:
++                store_final_state = (
++                    i_t < tl.load(num_accepted_tokens + i_n).to(tl.int64)
++                )
++            if store_final_state:
++                # Load state index and check for invalid entries
++                final_state_idx = tl.load(
++                    ssm_state_indices + i_n * stride_indices_seq + i_t
++                ).to(tl.int64)
++                # Only store if state index is valid (not NULL_BLOCK_ID=0)
++                if final_state_idx > 0:
++                    p_ht = ht + final_state_idx * stride_final_state_token
++                    p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
++                    tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
+         else:
+             p_ht = ht + (bos + i_t) * stride_final_state_token
+             p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+@@ -215,6 +224,12 @@ def fused_recurrent_gated_delta_rule_fwd(
+         stride_indices_seq, stride_indices_tok = ssm_state_indices.stride()
+ 
+     grid = (NK, NV, N * HV)
++    store_accepted_only = (
++        os.environ.get("VLLM_XPU_GDN_SPEC_STORE_ACCEPTED_ONLY", "1")
++        .strip()
++        .lower()
++        in ("1", "true", "yes", "on")
++    )
+     fused_recurrent_gated_delta_rule_fwd_kernel[grid](
+         q=q,
+         k=k,
+@@ -244,6 +259,7 @@ def fused_recurrent_gated_delta_rule_fwd(
+         IS_BETA_HEADWISE=beta.ndim == v.ndim,
+         USE_QK_L2NORM_IN_KERNEL=use_qk_l2norm_in_kernel,
+         INPLACE_FINAL_STATE=inplace_final_state,
++        STORE_ACCEPTED_ONLY=store_accepted_only,
+         IS_KDA=False,
+         num_warps=num_warps,
+         num_stages=num_stages,
+diff --git a/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py b/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py
+index 7e0c7e05c..29c83c763 100644
+--- a/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py
++++ b/vllm/model_executor/layers/fla/ops/fused_sigmoid_gating.py
+@@ -7,6 +7,8 @@
+ # the following copyright notice:
+ # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
+ 
++import os
++
+ import torch
+ 
+ from vllm.triton_utils import tl, triton
+@@ -57,6 +59,7 @@ def fused_sigmoid_gating_delta_rule_update_kernel(
+     IS_VARLEN: tl.constexpr,
+     IS_CONTINUOUS_BATCHING: tl.constexpr,
+     IS_SPEC_DECODING: tl.constexpr,
++    STORE_ACCEPTED_ONLY: tl.constexpr,
+     IS_KDA: tl.constexpr,
+ ):
+     i_k, i_v, i_nh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
+@@ -155,15 +158,21 @@ def fused_sigmoid_gating_delta_rule_update_kernel(
+ 
+         # keep the states for multi-query tokens
+         if INPLACE_FINAL_STATE:
+-            # Load state index and check for invalid entries
+-            final_state_idx = tl.load(
+-                ssm_state_indices + i_n * stride_indices_seq + i_t
+-            ).to(tl.int64)
+-            # Only store if state index is valid (not NULL_BLOCK_ID=0)
+-            if final_state_idx > 0:
+-                p_ht = ht + final_state_idx * stride_final_state_token
+-                p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+-                tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
++            store_final_state = True
++            if IS_SPEC_DECODING and STORE_ACCEPTED_ONLY:
++                store_final_state = (
++                    i_t < tl.load(num_accepted_tokens + i_n).to(tl.int64)
++                )
++            if store_final_state:
++                # Load state index and check for invalid entries
++                final_state_idx = tl.load(
++                    ssm_state_indices + i_n * stride_indices_seq + i_t
++                ).to(tl.int64)
++                # Only store if state index is valid (not NULL_BLOCK_ID=0)
++                if final_state_idx > 0:
++                    p_ht = ht + final_state_idx * stride_final_state_token
++                    p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
++                    tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
+         else:
+             p_ht = ht + (bos + i_t) * stride_final_state_token
+             p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+@@ -239,6 +248,12 @@ def fused_sigmoid_gating_delta_rule_update(
+         stride_indices_seq, stride_indices_tok = ssm_state_indices.stride()
+ 
+     grid = (NK, NV, N * HV)
++    store_accepted_only = (
++        os.environ.get("VLLM_XPU_GDN_SPEC_STORE_ACCEPTED_ONLY", "1")
++        .strip()
++        .lower()
++        in ("1", "true", "yes", "on")
++    )
+     fused_sigmoid_gating_delta_rule_update_kernel[grid](
+         A_log=A_log,
+         a=a.contiguous(),
+@@ -271,6 +286,7 @@ def fused_sigmoid_gating_delta_rule_update(
+         stride_indices_tok=stride_indices_tok,
+         INPLACE_FINAL_STATE=inplace_final_state,
+         USE_QK_L2NORM_IN_KERNEL=use_qk_l2norm_in_kernel,
++        STORE_ACCEPTED_ONLY=store_accepted_only,
+         IS_KDA=is_kda,
+         num_warps=num_warps,
+         num_stages=num_stages,

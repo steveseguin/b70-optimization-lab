@@ -1,0 +1,1451 @@
+diff --git a/vllm/_custom_ops.py b/vllm/_custom_ops.py
+index ffea35de8..19bb4b7b5 100644
+--- a/vllm/_custom_ops.py
++++ b/vllm/_custom_ops.py
+@@ -3703,3 +3703,32 @@ if hasattr(torch.ops._C, "minimax_allreduce_rms_qk"):
+             torch.empty([token_num, q_size], dtype=qkv.dtype, device=qkv.device),
+             torch.empty([token_num, kv_size], dtype=qkv.dtype, device=qkv.device),
+         )
++
++
++if hasattr(torch.ops._C, "minimax_qk_rms_var"):
++
++    @register_fake("_C::minimax_qk_rms_var")
++    def _minimax_qk_rms_var_fake(
++        qkv: torch.Tensor,
++        qk_var: torch.Tensor,
++        q_size: int,
++        kv_size: int,
++    ) -> None:
++        return None
++
++
++if hasattr(torch.ops._C, "minimax_qk_rms_apply"):
++
++    @register_fake("_C::minimax_qk_rms_apply")
++    def _minimax_qk_rms_apply_fake(
++        qkv: torch.Tensor,
++        qk_var: torch.Tensor,
++        q_weight: torch.Tensor,
++        k_weight: torch.Tensor,
++        q_out: torch.Tensor,
++        k_out: torch.Tensor,
++        q_size: int,
++        kv_size: int,
++        eps: float,
++    ) -> None:
++        return None
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 0b39a4000..039d12c58 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -114,13 +114,49 @@ def _gdn_attention_core_xpu_impl(
+     attn_metadata = attn_metadata_raw[self.prefix]
+     assert isinstance(attn_metadata, GDNAttentionMetadata)
+ 
+-    # TODO: xpu does not support speculative decoding yet
+-    assert attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++    if attn_metadata.spec_sequence_masks is not None:  # type: ignore[attr-defined]
++        if self.gqa_interleaved_layout:
++            from einops import rearrange
++
++            query, key, value, z_generic, b, a = self.fix_query_key_value_ordering(
++                projected_states_qkvz, projected_states_ba
++            )
++            query, key, value = map(
++                lambda x: rearrange(x, "l p d -> l (p d)"), (query, key, value)
++            )
++            mixed_qkv = torch.cat((query, key, value), dim=-1)
++        else:
++            qkv_size = (self.key_dim * 2 + self.value_dim) // self.tp_size
++            z_size = self.value_dim // self.tp_size
++            mixed_qkv, z_generic = projected_states_qkvz.split(
++                [qkv_size, z_size], dim=-1
++            )
++            z_generic = z_generic.reshape(z_generic.size(0), -1, self.head_v_dim)
++            b, a = projected_states_ba.chunk(2, dim=-1)
++            b = b.contiguous()
++            a = a.contiguous()
++
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
+ 
+     conv_weights = self.conv1d.weight.view(
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
++    non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # type: ignore[attr-defined]
++    if non_spec_state_indices_tensor is not None:
++        non_spec_state_indices_tensor = non_spec_state_indices_tensor.contiguous()
++
++    non_spec_query_start_loc = attn_metadata.non_spec_query_start_loc  # type: ignore[attr-defined]
++    if non_spec_query_start_loc is not None:
++        non_spec_query_start_loc = non_spec_query_start_loc.contiguous()
++
+     torch.ops._xpu_C.gdn_attention(
+         core_attn_out,
+         z,
+@@ -140,8 +176,8 @@ def _gdn_attention_core_xpu_impl(
+         num_prefills=attn_metadata.num_prefills,  # type: ignore[attr-defined]
+         num_decodes=attn_metadata.num_decodes,  # type: ignore[attr-defined]
+         has_initial_state=attn_metadata.has_initial_state,  # type: ignore[attr-defined]
+-        non_spec_query_start_loc=attn_metadata.non_spec_query_start_loc,  # type: ignore[attr-defined]
+-        non_spec_state_indices_tensor=attn_metadata.non_spec_state_indices_tensor,  # type: ignore[attr-defined]
++        non_spec_query_start_loc=non_spec_query_start_loc,
++        non_spec_state_indices_tensor=non_spec_state_indices_tensor,
+         num_actual_tokens=attn_metadata.num_actual_tokens,  # type: ignore[attr-defined]
+         tp_size=self.tp_size,
+         reorder_input=not self.gqa_interleaved_layout,
+diff --git a/vllm/distributed/device_communicators/base_device_communicator.py b/vllm/distributed/device_communicators/base_device_communicator.py
+index 0b4b81f93..29c5a3084 100644
+--- a/vllm/distributed/device_communicators/base_device_communicator.py
++++ b/vllm/distributed/device_communicators/base_device_communicator.py
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
+ import threading
+ from weakref import WeakValueDictionary
+ 
+@@ -186,18 +187,42 @@ class DeviceCommunicatorBase:
+             # Convert negative dim to positive.
+             dim += input_.dim()
+         input_size = input_.size()
+-        # NOTE: we have to use concat-style all-gather here,
+-        # stack-style all-gather has compatibility issues with
+-        # torch.compile . see https://github.com/pytorch/pytorch/issues/138795
+-        output_size = (input_size[0] * self.world_size,) + input_size[1:]
+-        # Allocate output tensor.
+-        output_tensor = torch.empty(
+-            output_size, dtype=input_.dtype, device=input_.device
++        input_for_gather = (
++            input_.contiguous()
++            if os.environ.get("VLLM_XPU_CONTIGUOUS_ALL_GATHER", "0") == "1"
++            else input_
+         )
+-        # All-gather.
+-        dist.all_gather_into_tensor(output_tensor, input_, group=self.device_group)
++        if (
++            os.environ.get("VLLM_XPU_SYNC_ALL_GATHER", "0") == "1"
++            and input_.device.type == "xpu"
++        ):
++            torch.xpu.synchronize()
++        if os.environ.get("VLLM_XPU_LIST_ALL_GATHER", "0") == "1":
++            gather_list = [
++                torch.empty_like(input_for_gather) for _ in range(self.world_size)
++            ]
++            dist.all_gather(gather_list, input_for_gather, group=self.device_group)
++            output_tensor = torch.stack(gather_list, dim=0)
++        else:
++            # NOTE: we have to use concat-style all-gather here,
++            # stack-style all-gather has compatibility issues with
++            # torch.compile . see https://github.com/pytorch/pytorch/issues/138795
++            output_size = (input_size[0] * self.world_size,) + input_size[1:]
++            # Allocate output tensor.
++            output_tensor = torch.empty(
++                output_size, dtype=input_.dtype, device=input_.device
++            )
++            # All-gather.
++            dist.all_gather_into_tensor(
++                output_tensor, input_for_gather, group=self.device_group
++            )
++            output_tensor = output_tensor.reshape((self.world_size,) + input_size)
++        if (
++            os.environ.get("VLLM_XPU_SYNC_ALL_GATHER", "0") == "1"
++            and input_.device.type == "xpu"
++        ):
++            torch.xpu.synchronize()
+         # Reshape
+-        output_tensor = output_tensor.reshape((self.world_size,) + input_size)
+         output_tensor = output_tensor.movedim(0, dim)
+         output_tensor = output_tensor.reshape(
+             input_size[:dim]
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+index 29c731fbc..91e3564aa 100644
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ 
+ import torch
+ import torch.distributed as dist
+@@ -42,8 +43,45 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 logger.info("Using AgRs manager on XPU device.")
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
+-        output = input_.clone() if torch.compiler.is_compiling() else input_
+-        dist.all_reduce(output, group=self.device_group)
++        if (
++            torch.compiler.is_compiling()
++            and os.environ.get("VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP", "0") == "1"
++        ):
++            if (
++                os.environ.get(
++                    "VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT", "0"
++                )
++                == "1"
++            ):
++                input_ = input_.clone()
++            return torch.ops.vllm.all_reduce(input_, group_name=self.unique_name)
++
++        if torch.compiler.is_compiling():
++            if os.environ.get("VLLM_XPU_COMPILE_ALLREDUCE_NO_CLONE", "0") == "1":
++                output = input_
++            else:
++                output = input_.clone()
++        else:
++            output = input_
++        if torch.compiler.is_compiling():
++            dist.all_reduce(output, group=self.device_group)
++            return output
++
++        from vllm.utils.xpu_decode_timing import (
++            current_allreduce_label,
++            timed_region,
++        )
++
++        site = current_allreduce_label()
++        label = f"all_reduce:{tuple(input_.shape)}:{input_.dtype}"
++        if site:
++            label = f"all_reduce:{site}:{tuple(input_.shape)}:{input_.dtype}"
++        with timed_region(label):
++            if os.environ.get("VLLM_XPU_ALLREDUCE_ASYNC_WAIT", "0") == "1":
++                work = dist.all_reduce(output, group=self.device_group, async_op=True)
++                work.wait()
++            else:
++                dist.all_reduce(output, group=self.device_group)
+         return output
+ 
+     def reduce_scatter(self, input_: torch.Tensor, dim: int = -1):
+@@ -126,6 +164,37 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 assert input_.shape[dim] == sizes[self.rank_in_group], (
+                     f"{input_.shape[dim]} != {sizes[self.rank_in_group]}"
+                 )
++                if os.environ.get("VLLM_XPU_PAD_UNEVEN_ALLGATHERV", "1") != "0":
++                    # XCCL can hang on variable-size all_gather(list, input)
++                    # for XPU. Pad to an equal first dimension, gather with
++                    # all_gather_into_tensor, then slice back to the requested
++                    # per-rank chunk sizes.
++                    max_size = max(sizes)
++                    if input_.shape[dim] == max_size:
++                        padded = input_.contiguous()
++                    else:
++                        padded = torch.empty(
++                            (max_size,) + input_size[1:],
++                            dtype=input_.dtype,
++                            device=input_.device,
++                        )
++                        padded[: input_.shape[dim]].copy_(input_)
++                        padded[input_.shape[dim] :].zero_()
++
++                    gathered = torch.empty(
++                        (max_size * world_size,) + input_size[1:],
++                        dtype=input_.dtype,
++                        device=input_.device,
++                    )
++                    dist.all_gather_into_tensor(
++                        gathered, padded, group=self.device_group
++                    )
++                    chunks = []
++                    for rank, size in enumerate(sizes):
++                        start = rank * max_size
++                        chunks.append(gathered[start : start + size])
++                    return torch.cat(chunks, dim=0)
++
+                 output_size = (sum(sizes),) + input_size[1:]
+             else:
+                 output_size = (input_size[0] * world_size,) + input_size[1:]
+@@ -147,7 +216,9 @@ class XpuCommunicator(DeviceCommunicatorBase):
+                 dist.all_gather(all_gather_list, input_, group=self.device_group)
+                 output_tensor = torch.cat(all_gather_list, dim=0)
+             else:
+-                dist.all_gather([output_tensor], input_, group=self.device_group)
++                dist.all_gather_into_tensor(
++                    output_tensor, input_.contiguous(), group=self.device_group
++                )
+             return output_tensor
+ 
+         if isinstance(input_, torch.Tensor):
+diff --git a/vllm/distributed/parallel_state.py b/vllm/distributed/parallel_state.py
+index 58c49c09d..6fa75f75f 100644
+--- a/vllm/distributed/parallel_state.py
++++ b/vllm/distributed/parallel_state.py
+@@ -25,6 +25,7 @@ If you only need to use the distributed environment without model/pipeline
+ 
+ import contextlib
+ import gc
++import os
+ import pickle
+ import weakref
+ from collections import namedtuple
+@@ -121,17 +122,61 @@ def _get_unique_name(name: str) -> str:
+ 
+ 
+ _groups: dict[str, Callable[[], "GroupCoordinator | None"]] = {}
++_all_reduce_shape_log_counts: dict[tuple[str, str, int, tuple[int, ...], str], int] = {}
+ 
+ 
+ def _register_group(group: "GroupCoordinator") -> None:
+     _groups[group.unique_name] = weakref.ref(group)
+ 
+ 
++def _maybe_log_all_reduce_shape(
++    tensor: torch.Tensor, group_name: str, route: str
++) -> None:
++    if os.environ.get("VLLM_XPU_CUSTOM_ALLREDUCE_LOG_SHAPES", "0") != "1":
++        return
++    if torch.compiler.is_compiling() or torch._dynamo.is_compiling():
++        return
++    log_limit = int(
++        os.environ.get("VLLM_XPU_CUSTOM_ALLREDUCE_LOG_SHAPES_LIMIT", "8") or "8"
++    )
++    key = (group_name, str(tensor.dtype), tensor.numel(), tuple(tensor.shape), route)
++    count = _all_reduce_shape_log_counts.get(key, 0)
++    if count >= log_limit:
++        return
++    _all_reduce_shape_log_counts[key] = count + 1
++    logger.info(
++        "[VLLM_XPU_ALLREDUCE_SHAPE] route=%s group=%s dtype=%s numel=%s "
++        "shape=%s device=%s count=%s",
++        route,
++        group_name,
++        tensor.dtype,
++        tensor.numel(),
++        tuple(tensor.shape),
++        tensor.device,
++        count + 1,
++    )
++
++
+ def all_reduce(tensor: torch.Tensor, group_name: str) -> torch.Tensor:
+     assert group_name in _groups, f"Group {group_name} is not found."
+     group = _groups[group_name]()
+     if group is None:
+         raise ValueError(f"Group {group_name} is destroyed.")
++    if os.environ.get("VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT", "0") == "1":
++        skip_fp32_max_numel = int(
++            os.environ.get(
++                "VLLM_XPU_CUSTOM_ALLREDUCE_SKIP_CLONE_FP32_MAX_NUMEL",
++                "0",
++            )
++            or "0"
++        )
++        skip_clone = (
++            skip_fp32_max_numel > 0
++            and tensor.dtype == torch.float32
++            and tensor.numel() <= skip_fp32_max_numel
++        )
++        if not skip_clone:
++            tensor = tensor.clone()
+     return group._all_reduce_out_place(tensor)
+ 
+ 
+@@ -139,6 +184,18 @@ def all_reduce_fake(tensor: torch.Tensor, group_name: str) -> torch.Tensor:
+     return torch.empty_like(tensor)
+ 
+ 
++def all_reduce_inplace(tensor: torch.Tensor, group_name: str) -> None:
++    assert group_name in _groups, f"Group {group_name} is not found."
++    group = _groups[group_name]()
++    if group is None:
++        raise ValueError(f"Group {group_name} is destroyed.")
++    group._all_reduce_out_place(tensor)
++
++
++def all_reduce_inplace_fake(tensor: torch.Tensor, group_name: str) -> None:
++    return None
++
++
+ def reduce_scatter(
+     tensor: torch.Tensor, dim: int, world_size: int, group_name: str
+ ) -> torch.Tensor:
+@@ -265,6 +322,13 @@ direct_register_custom_op(
+     fake_impl=all_reduce_fake,
+ )
+ 
++direct_register_custom_op(
++    op_name="all_reduce_inplace",
++    op_func=all_reduce_inplace,
++    fake_impl=all_reduce_inplace_fake,
++    mutates_args=["tensor"],
++)
++
+ direct_register_custom_op(
+     op_name="reduce_scatter",
+     op_func=reduce_scatter,
+@@ -478,14 +542,26 @@ class GroupCoordinator:
+         )
+ 
+         if self.device_communicator is not None:
+-            assert isinstance(self.device_communicator, CudaCommunicator)
+-            ca_comm = self.device_communicator.ca_comm
++            if not isinstance(self.device_communicator, CudaCommunicator):
++                if os.environ.get("VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE", "0") != "1":
++                    assert isinstance(self.device_communicator, CudaCommunicator)
++                logger.warning_once(
++                    "Skipping communicator graph-capture context for %s under "
++                    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=1.",
++                    type(self.device_communicator).__name__,
++                )
++                ca_comm = None
++            else:
++                ca_comm = self.device_communicator.ca_comm
+             if ca_comm is not None:
+                 maybe_ca_context = ca_comm.capture()  # type: ignore
+ 
+             from vllm._aiter_ops import rocm_aiter_ops
+ 
+-            if rocm_aiter_ops.is_enabled():
++            if (
++                isinstance(self.device_communicator, CudaCommunicator)
++                and rocm_aiter_ops.is_enabled()
++            ):
+                 aiter_ar = rocm_aiter_ops.get_aiter_allreduce()
+                 if aiter_ar is not None:
+                     maybe_aiter_context = aiter_ar.capture()  # type: ignore
+@@ -519,8 +595,46 @@ class GroupCoordinator:
+             return input_
+ 
+         if self.use_custom_op_call:
++            inplace_max_numel = int(
++                os.environ.get(
++                    "VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL",
++                    "0",
++                )
++                or "0"
++            )
++            if inplace_max_numel > 0 and input_.numel() <= inplace_max_numel:
++                _maybe_log_all_reduce_shape(
++                    input_, self.unique_name, "custom_inplace_threshold"
++                )
++                torch.ops.vllm.all_reduce_inplace(
++                    input_, group_name=self.unique_name
++                )
++                return input_
++            tiny_fp32_inplace_max_numel = int(
++                os.environ.get(
++                    "VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL",
++                    "0",
++                )
++                or "0"
++            )
++            if (
++                tiny_fp32_inplace_max_numel > 0
++                and input_.dtype == torch.float32
++                and input_.numel() <= tiny_fp32_inplace_max_numel
++            ):
++                _maybe_log_all_reduce_shape(
++                    input_, self.unique_name, "custom_inplace_tiny_fp32"
++                )
++                torch.ops.vllm.all_reduce_inplace(
++                    input_, group_name=self.unique_name
++                )
++                return input_
++            _maybe_log_all_reduce_shape(
++                input_, self.unique_name, "custom_outplace_op"
++            )
+             return torch.ops.vllm.all_reduce(input_, group_name=self.unique_name)
+         else:
++            _maybe_log_all_reduce_shape(input_, self.unique_name, "direct_outplace")
+             return self._all_reduce_out_place(input_)
+ 
+     def _all_reduce_out_place(self, input_: torch.Tensor) -> torch.Tensor:
+diff --git a/vllm/model_executor/kernels/linear/__init__.py b/vllm/model_executor/kernels/linear/__init__.py
+index 5d513f767..4d82d028e 100644
+--- a/vllm/model_executor/kernels/linear/__init__.py
++++ b/vllm/model_executor/kernels/linear/__init__.py
+@@ -140,7 +140,10 @@ from vllm.model_executor.kernels.linear.scaled_mm.triton import (
+     TritonInt8ScaledMMLinearKernel,
+ )
+ from vllm.model_executor.kernels.linear.scaled_mm.xpu import (
++    XPUBF16Fp8BlockScaledMMLinearKernel,
+     XPUFP8ScaledMMLinearKernel,
++    XPUInt8ScaledMMLinearKernel,
++    XPURequantFp8BlockScaledMMLinearKernel,
+ )
+ from vllm.model_executor.layers.quantization.utils.quant_utils import QuantKey
+ from vllm.platforms import PlatformEnum, current_platform
+@@ -155,6 +158,7 @@ _POSSIBLE_INT8_KERNELS: dict[PlatformEnum, list[type[Int8ScaledMMLinearKernel]]]
+         TritonInt8ScaledMMLinearKernel,
+     ],
+     PlatformEnum.ROCM: [AiterInt8ScaledMMLinearKernel, TritonInt8ScaledMMLinearKernel],
++    PlatformEnum.XPU: [XPUInt8ScaledMMLinearKernel],
+ }
+ 
+ # in priority/performance order (when available)
+@@ -199,6 +203,10 @@ _POSSIBLE_FP8_BLOCK_KERNELS: dict[
+         AiterFp8BlockScaledMMKernel,
+         TritonFp8BlockScaledMMKernel,
+     ],
++    PlatformEnum.XPU: [
++        XPURequantFp8BlockScaledMMLinearKernel,
++        XPUBF16Fp8BlockScaledMMLinearKernel,
++    ],
+ }
+ 
+ _POSSIBLE_WFP8A16_KERNELS: dict[PlatformEnum, list[type[FP8ScaledMMLinearKernel]]] = {
+diff --git a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+index 6d75a420e..b2e9495ce 100644
+--- a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+@@ -2,14 +2,29 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ from collections.abc import Sequence
++import os
+ 
+ import torch
++import torch.nn.functional as F
+ 
++from vllm import _custom_ops as ops
+ from vllm.model_executor.kernels.linear import (  # noqa: E501
+     FP8ScaledMMLinearKernel,
+     FP8ScaledMMLinearLayerConfig,
++    Int8ScaledMMLinearKernel,
++    Int8ScaledMMLinearLayerConfig,
++)
++from vllm.model_executor.kernels.linear.scaled_mm.BlockScaledMMLinearKernel import (
++    Fp8BlockScaledMMLinearKernel,
++)
++from vllm.model_executor.layers.quantization.utils.fp8_utils import (
++    process_fp8_weight_block_strategy,
++)
++from vllm.model_executor.layers.quantization.utils.int8_utils import (
++    per_token_quant_int8,
+ )
+ from vllm.model_executor.layers.quantization.utils.quant_utils import (
++    kFp8Static128BlockSym,
+     kFp8StaticChannelSym,
+     kFp8StaticTensorSym,
+ )
+@@ -17,6 +32,162 @@ from vllm.model_executor.utils import replace_parameter
+ from vllm.platforms import current_platform
+ 
+ 
++_INT8_GEMM_W8A8_FAKE_REGISTERED = False
++_INT8_PER_TOKEN_QUANT_FAKE_REGISTERED = False
++
++
++def _register_int8_gemm_w8a8_fake() -> None:
++    global _INT8_GEMM_W8A8_FAKE_REGISTERED
++    if _INT8_GEMM_W8A8_FAKE_REGISTERED:
++        return
++
++    def _fake_int8_gemm_w8a8(
++        A: torch.Tensor,
++        A_scale: torch.Tensor,
++        B: torch.Tensor,
++        B_scale: torch.Tensor,
++        out_dtype: torch.dtype | None,
++        bias: torch.Tensor | None,
++    ) -> torch.Tensor:
++        del A_scale, B_scale, bias
++        return torch.empty(
++            (A.shape[0], B.shape[1]),
++            device=A.device,
++            dtype=out_dtype or torch.bfloat16,
++        )
++
++    try:
++        torch.library.register_fake("_xpu_C::int8_gemm_w8a8")(
++            _fake_int8_gemm_w8a8
++        )
++    except RuntimeError as e:
++        if "already has" not in str(e) and "already registered" not in str(e):
++            raise
++    _INT8_GEMM_W8A8_FAKE_REGISTERED = True
++
++
++def _register_int8_per_token_quant_fake() -> None:
++    global _INT8_PER_TOKEN_QUANT_FAKE_REGISTERED
++    if _INT8_PER_TOKEN_QUANT_FAKE_REGISTERED:
++        return
++
++    def _fake_per_token_quant_int8_xpu(
++        x: torch.Tensor,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        q = torch.empty_like(x, dtype=torch.int8)
++        scales = torch.empty(
++            (*x.shape[:-1], 1),
++            device=x.device,
++            dtype=torch.float32,
++        )
++        return q, scales
++
++    try:
++        torch.library.register_fake("_xpu_C::per_token_quant_int8_xpu")(
++            _fake_per_token_quant_int8_xpu
++        )
++    except RuntimeError as e:
++        if "already has" not in str(e) and "already registered" not in str(e):
++            raise
++    _INT8_PER_TOKEN_QUANT_FAKE_REGISTERED = True
++
++
++class XPUInt8ScaledMMLinearKernel(Int8ScaledMMLinearKernel):
++    """XPU W8A8 INT8 dense GEMM for dynamic symmetric per-token activations."""
++
++    @staticmethod
++    def _has_int8_gemm_w8a8() -> bool:
++        try:
++            import vllm_xpu_kernels._xpu_C  # noqa: F401
++        except Exception:
++            return False
++        try:
++            torch._C._dispatch_find_schema_or_throw(
++                "_xpu_C::int8_gemm_w8a8",
++                "",
++            )
++            _register_int8_gemm_w8a8_fake()
++            return True
++        except RuntimeError:
++            return False
++
++    @staticmethod
++    def _has_per_token_quant_int8_xpu() -> bool:
++        try:
++            import vllm_xpu_kernels._xpu_C  # noqa: F401
++        except Exception:
++            return False
++        try:
++            torch._C._dispatch_find_schema_or_throw(
++                "_xpu_C::per_token_quant_int8_xpu",
++                "",
++            )
++            _register_int8_per_token_quant_fake()
++            return True
++        except RuntimeError:
++            return False
++
++    @classmethod
++    def is_supported(
++        cls, compute_capability: int | None = None
++    ) -> tuple[bool, str | None]:
++        if not current_platform.is_xpu():
++            return False, "XPUInt8ScaledMM only supports XPU"
++        if not cls._has_int8_gemm_w8a8():
++            return False, "vllm-xpu-kernels does not expose int8_gemm_w8a8"
++        return True, None
++
++    @classmethod
++    def can_implement(
++        cls, c: Int8ScaledMMLinearLayerConfig
++    ) -> tuple[bool, str | None]:
++        if c.is_static_input_scheme:
++            return False, "only dynamic activation scales are supported"
++        if not c.input_symmetric:
++            return False, "only symmetric activation quantization is supported"
++        if not c.is_channelwise:
++            return False, "only per-channel weight scales are supported"
++        return True, None
++
++    def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
++        w_q_name, w_s_name, i_s_name, i_zp_name, azp_adj_name = self.layer_param_names
++
++        weight = getattr(layer, w_q_name)
++        replace_parameter(layer, w_q_name, weight.t().contiguous())
++
++        weight_scale = getattr(layer, w_s_name)
++        replace_parameter(layer, w_s_name, weight_scale.flatten().contiguous())
++
++        setattr(layer, i_s_name, None)
++        setattr(layer, i_zp_name, None)
++        setattr(layer, azp_adj_name, None)
++        layer.xpu_native_int8_activation_quant = (
++            self._has_per_token_quant_int8_xpu()
++        )
++
++    def apply_weights(
++        self,
++        layer: torch.nn.Module,
++        x: torch.Tensor,
++        bias: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        w_q, w_s, _, _, _ = self._get_layer_params(layer)
++        x_2d = x.view(-1, x.shape[-1]).contiguous()
++        if getattr(layer, "xpu_native_int8_activation_quant", False):
++            x_q, x_s = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++        else:
++            x_q, x_s = per_token_quant_int8(x_2d)
++        out = torch.ops._xpu_C.int8_gemm_w8a8(
++            x_q,
++            x_s,
++            w_q,
++            w_s,
++            x.dtype,
++            bias,
++        )
++        return out.view(*x.shape[:-1], w_q.shape[1])
++
++
+ class XPUFP8ScaledMMLinearKernel(FP8ScaledMMLinearKernel):
+     @classmethod
+     def is_supported(
+@@ -46,6 +217,15 @@ class XPUFP8ScaledMMLinearKernel(FP8ScaledMMLinearKernel):
+         self.layer_param_names = layer_param_names
+ 
+     def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
++        if os.getenv("VLLM_XPU_FP8_LINEAR_BF16_FALLBACK", "0") == "1":
++            weight = layer.weight.data
++            weight_scale = layer.weight_scale.data.to(torch.bfloat16)
++            while weight_scale.ndim < weight.ndim:
++                weight_scale = weight_scale.unsqueeze(-1)
++            weight_bf16 = weight.to(torch.bfloat16) * weight_scale
++            replace_parameter(layer, "weight", weight_bf16.contiguous())
++            layer.input_scale = None
++            return
+         replace_parameter(layer, "weight", layer.weight.data.t())
+ 
+     def apply_weights(
+@@ -54,6 +234,8 @@ class XPUFP8ScaledMMLinearKernel(FP8ScaledMMLinearKernel):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if os.getenv("VLLM_XPU_FP8_LINEAR_BF16_FALLBACK", "0") == "1":
++            return F.linear(x, layer.weight, bias)
+         weight = layer.weight
+         weight_scale = layer.weight_scale
+         return torch.ops._xpu_C.fp8_gemm_w8a16(x, weight, weight_scale, bias)
+@@ -70,3 +252,174 @@ class XPUFP8ScaledMMLinearKernel(FP8ScaledMMLinearKernel):
+         output_shape: list,
+     ) -> torch.Tensor:
+         pass
++
++
++class XPUBF16Fp8BlockScaledMMLinearKernel(Fp8BlockScaledMMLinearKernel):
++    """BF16 fallback for block-FP8 checkpoints on XPU.
++
++    Intel's current XPU kernel set exposes FP8 weight-only GEMM, but not the
++    128x128 block-scaled W8A8 GEMM used by Qwen3.6 FP8 checkpoints. This path
++    keeps the checkpoint's FP8 values and scales exact by dequantizing weights
++    once after load, then using the regular BF16 matmul path.
++    """
++
++    @classmethod
++    def is_supported(
++        cls, compute_capability: int | None = None
++    ) -> tuple[bool, str | None]:
++        if not current_platform.is_xpu():
++            return False, "XPUBF16Fp8BlockScaledMM only supports XPU"
++        return True, None
++
++    @classmethod
++    def can_implement(
++        cls, config: FP8ScaledMMLinearLayerConfig
++    ) -> tuple[bool, str | None]:
++        can_implement, failure_reason = super().can_implement(config)
++        if not can_implement:
++            return can_implement, failure_reason
++
++        if config.weight_quant_key != kFp8Static128BlockSym:
++            return (
++                False,
++                "XPUBF16Fp8BlockScaledMM only supports static 128x128 FP8 blocks",
++            )
++        if config.weight_quant_key.dtype not in {
++            torch.float8_e5m2,
++            torch.float8_e4m3fn,
++        }:
++            return False, "XPUBF16Fp8BlockScaledMM only supports FP8 weight dtype"
++        return True, None
++
++    def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
++        params = self._get_layer_params(layer)
++        weight_scale = (
++            params.weight_scale
++            if params.weight_scale_inv is None
++            else params.weight_scale_inv
++        )
++        assert weight_scale is not None
++
++        weight, weight_scale = process_fp8_weight_block_strategy(
++            params.weight,
++            weight_scale,
++        )
++        block_n, block_k = self.weight_group_shape
++        scale = weight_scale.to(torch.bfloat16)
++        expanded_scale = scale.repeat_interleave(block_n, dim=0).repeat_interleave(
++            block_k, dim=1
++        )
++        expanded_scale = expanded_scale[: weight.shape[0], : weight.shape[1]]
++        weight_bf16 = weight.to(torch.bfloat16) * expanded_scale
++
++        replace_parameter(layer, params.WEIGHT, weight_bf16.contiguous())
++        layer.input_scale = None
++
++    def apply_weights(
++        self,
++        layer: torch.nn.Module,
++        x: torch.Tensor,
++        bias: torch.Tensor | None = None,
++        **kwargs,
++    ) -> torch.Tensor:
++        return F.linear(x, layer.weight, bias)
++
++    def apply_block_scaled_mm(
++        self,
++        A: torch.Tensor,
++        B: torch.Tensor,
++        As: torch.Tensor,
++        Bs: torch.Tensor,
++    ) -> torch.Tensor:
++        raise NotImplementedError("XPUBF16Fp8BlockScaledMM uses apply_weights")
++
++
++class XPURequantFp8BlockScaledMMLinearKernel(Fp8BlockScaledMMLinearKernel):
++    """Experimental XPU path that maps block-FP8 checkpoints to W8A16 FP8 GEMM.
++
++    This is faster and more memory efficient than the BF16 fallback, but it
++    requantizes the checkpoint from 128x128 block-scaled FP8 into per-channel
++    FP8 weights. Keep it opt-in until quality impact is measured.
++    """
++
++    @classmethod
++    def is_supported(
++        cls, compute_capability: int | None = None
++    ) -> tuple[bool, str | None]:
++        if not current_platform.is_xpu():
++            return False, "XPURequantFp8BlockScaledMM only supports XPU"
++        if os.getenv("VLLM_XPU_BLOCK_FP8_REQUANT", "0") != "1":
++            return False, "set VLLM_XPU_BLOCK_FP8_REQUANT=1 to enable"
++        return True, None
++
++    @classmethod
++    def can_implement(
++        cls, config: FP8ScaledMMLinearLayerConfig
++    ) -> tuple[bool, str | None]:
++        can_implement, failure_reason = super().can_implement(config)
++        if not can_implement:
++            return can_implement, failure_reason
++
++        if config.weight_quant_key != kFp8Static128BlockSym:
++            return (
++                False,
++                "XPURequantFp8BlockScaledMM only supports static 128x128 FP8 blocks",
++            )
++        if config.weight_quant_key.dtype not in {
++            torch.float8_e5m2,
++            torch.float8_e4m3fn,
++        }:
++            return False, "XPURequantFp8BlockScaledMM only supports FP8 weight dtype"
++        return True, None
++
++    def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
++        params = self._get_layer_params(layer)
++        weight_scale = (
++            params.weight_scale
++            if params.weight_scale_inv is None
++            else params.weight_scale_inv
++        )
++        assert weight_scale is not None
++
++        weight, weight_scale = process_fp8_weight_block_strategy(
++            params.weight,
++            weight_scale,
++        )
++        block_n, block_k = self.weight_group_shape
++        scale = weight_scale.to(torch.bfloat16)
++        expanded_scale = scale.repeat_interleave(block_n, dim=0).repeat_interleave(
++            block_k, dim=1
++        )
++        expanded_scale = expanded_scale[: weight.shape[0], : weight.shape[1]]
++        weight_bf16 = weight.to(torch.bfloat16) * expanded_scale
++
++        qweight, qscale = ops.scaled_fp8_quant(
++            weight_bf16.contiguous(),
++            use_per_token_if_dynamic=True,
++        )
++        replace_parameter(layer, params.WEIGHT, qweight.t().contiguous())
++        replace_parameter(layer, params.WEIGHT_SCALE_INV, qscale.flatten().contiguous())
++        layer.input_scale = None
++
++    def apply_weights(
++        self,
++        layer: torch.nn.Module,
++        x: torch.Tensor,
++        bias: torch.Tensor | None = None,
++        **kwargs,
++    ) -> torch.Tensor:
++        return torch.ops._xpu_C.fp8_gemm_w8a16(
++            x,
++            layer.weight,
++            layer.weight_scale_inv,
++            bias,
++        )
++
++    def apply_block_scaled_mm(
++        self,
++        A: torch.Tensor,
++        B: torch.Tensor,
++        As: torch.Tensor,
++        Bs: torch.Tensor,
++    ) -> torch.Tensor:
++        raise NotImplementedError("XPURequantFp8BlockScaledMM uses apply_weights")
+diff --git a/vllm/model_executor/layers/fused_moe/__init__.py b/vllm/model_executor/layers/fused_moe/__init__.py
+index 75a9faddc..b19d13342 100644
+--- a/vllm/model_executor/layers/fused_moe/__init__.py
++++ b/vllm/model_executor/layers/fused_moe/__init__.py
+@@ -88,6 +88,7 @@ if HAS_TRITON:
+     from vllm.model_executor.layers.fused_moe.experts.xpu_moe import (
+         XPUExperts,
+         XPUExpertsFp8,
++        XPUExpertsInt8,
+         XPUExpertsMXFp4,
+     )
+     from vllm.model_executor.layers.fused_moe.fused_batched_moe import (
+@@ -130,6 +131,7 @@ if HAS_TRITON:
+         "TritonOrDeepGemmExperts",
+         "XPUExperts",
+         "XPUExpertsFp8",
++        "XPUExpertsInt8",
+         "XPUExpertsMXFp4",
+     ]
+ else:
+diff --git a/vllm/model_executor/layers/fused_moe/config.py b/vllm/model_executor/layers/fused_moe/config.py
+index 8ffa5cffb..e04ec3e14 100644
+--- a/vllm/model_executor/layers/fused_moe/config.py
++++ b/vllm/model_executor/layers/fused_moe/config.py
+@@ -36,6 +36,7 @@ if has_triton_kernels():
+ def _get_config_dtype_str(
+     dtype: torch.dtype,
+     use_fp8_w8a8: bool = False,
++    use_int8_w8a8: bool = False,
+     use_fp8_w8a16: bool = False,
+     use_int8_w8a16: bool = False,
+     use_int4_w4a16: bool = False,
+@@ -48,6 +49,8 @@ def _get_config_dtype_str(
+     """
+     if use_fp8_w8a8:
+         return "fp8_w8a8"
++    elif use_int8_w8a8:
++        return "int8_w8a8"
+     elif use_fp8_w8a16:
+         return "fp8_w8a16"
+     elif use_int8_w8a16:
+@@ -437,6 +440,7 @@ class FusedMoEQuantConfig:
+         """
+         return _get_config_dtype_str(
+             use_fp8_w8a8=self.use_fp8_w8a8,
++            use_int8_w8a8=self.use_int8_w8a8,
+             use_fp8_w8a16=self.use_fp8_w8a16,
+             use_int8_w8a16=self.use_int8_w8a16,
+             use_int4_w4a16=self.use_int4_w4a16,
+diff --git a/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py b/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
+index e10be4af8..790b6021f 100644
+--- a/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
++++ b/vllm/model_executor/layers/fused_moe/experts/xpu_moe.py
+@@ -16,6 +16,8 @@ from vllm.model_executor.layers.quantization.utils.quant_utils import (
+     QuantKey,
+     kFp8DynamicTensorSym,
+     kFp8StaticTensorSym,
++    kInt8DynamicTokenSym,
++    kInt8StaticChannelSym,
+     kMxfp4Static,
+ )
+ from vllm.platforms import current_platform
+@@ -31,6 +33,38 @@ def prepare_fp8_moe_layer_for_xpu(
+     return w13.transpose(-1, -2).contiguous(), w2.transpose(-1, -2).contiguous()
+ 
+ 
++def _prepare_int8_scale_for_xpu(
++    scale: torch.Tensor,
++    out_features: int,
++) -> torch.Tensor:
++    if scale.dim() == 3 and scale.shape[-1] == 1:
++        scale = scale.squeeze(-1)
++    if scale.dim() == 1:
++        scale = scale.view(-1, 1).expand(-1, out_features)
++    elif scale.dim() != 2 or scale.shape[-1] != out_features:
++        raise ValueError(
++            "XPU W8A8 INT8 MoE expects weight scales shaped [E], "
++            f"[E, {out_features}], or [E, {out_features}, 1]. "
++            f"Got {tuple(scale.shape)}.")
++    return scale.contiguous()
++
++
++def prepare_int8_moe_layer_for_xpu(
++    w13: torch.Tensor,
++    w2: torch.Tensor,
++    w13_scale: torch.Tensor,
++    w2_scale: torch.Tensor,
++) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
++    w13_out_features = w13.shape[-2]
++    w2_out_features = w2.shape[-2]
++    return (
++        w13.transpose(-1, -2).contiguous(),
++        w2.transpose(-1, -2).contiguous(),
++        _prepare_int8_scale_for_xpu(w13_scale, w13_out_features),
++        _prepare_int8_scale_for_xpu(w2_scale, w2_out_features),
++    )
++
++
+ class XPUExperts(mk.FusedMoEExpertsModular):
+     def __init__(
+         self,
+@@ -47,6 +81,7 @@ class XPUExperts(mk.FusedMoEExpertsModular):
+         )
+         self.is_fp8 = False
+         self.is_mxfp4 = False
++        self.is_int8 = False
+ 
+     @property
+     def expects_unquantized_inputs(self) -> bool:
+@@ -85,6 +120,7 @@ class XPUExperts(mk.FusedMoEExpertsModular):
+             (None, None),
+             (kFp8StaticTensorSym, None),
+             (kFp8StaticTensorSym, kFp8DynamicTensorSym),
++            (kInt8StaticChannelSym, kInt8DynamicTokenSym),
+         ]
+         return (weight_key, activation_key) in SUPPORTED_W_A
+ 
+@@ -147,6 +183,7 @@ class XPUExperts(mk.FusedMoEExpertsModular):
+             output=output,
+             is_fp8=self.is_fp8,
+             is_mxfp4=self.is_mxfp4,
++            is_int8=self.is_int8,
+         )
+ 
+ 
+@@ -192,3 +229,30 @@ class XPUExpertsMXFp4(XPUExperts):
+             (kMxfp4Static, None),
+         ]
+         return (weight_key, activation_key) in SUPPORTED_W_A
++
++
++class XPUExpertsInt8(XPUExperts):
++    def __init__(
++        self,
++        moe_config: FusedMoEConfig,
++        quant_config: FusedMoEQuantConfig,
++        max_num_tokens: int | None = None,
++        num_dispatchers: int | None = None,
++    ):
++        super().__init__(
++            moe_config,
++            quant_config,
++            max_num_tokens,
++            num_dispatchers,
++        )
++        self.is_int8 = True
++
++    @staticmethod
++    def _supports_quant_scheme(
++        weight_key: QuantKey | None,
++        activation_key: QuantKey | None,
++    ) -> bool:
++        return (weight_key, activation_key) == (
++            kInt8StaticChannelSym,
++            kInt8DynamicTokenSym,
++        )
+diff --git a/vllm/model_executor/layers/fused_moe/fused_moe.py b/vllm/model_executor/layers/fused_moe/fused_moe.py
+index 7e7bcc709..68b422914 100644
+--- a/vllm/model_executor/layers/fused_moe/fused_moe.py
++++ b/vllm/model_executor/layers/fused_moe/fused_moe.py
+@@ -1740,6 +1740,7 @@ def fused_experts_impl(
+ 
+     config_dtype = _get_config_dtype_str(
+         use_fp8_w8a8=use_fp8_w8a8,
++        use_int8_w8a8=use_int8_w8a8,
+         use_int8_w8a16=use_int8_w8a16,
+         use_int4_w4a16=use_int4_w4a16,
+         dtype=hidden_states.dtype,
+diff --git a/vllm/model_executor/layers/fused_moe/oracle/int8.py b/vllm/model_executor/layers/fused_moe/oracle/int8.py
+index cdb1be108..f6be3eb6b 100644
+--- a/vllm/model_executor/layers/fused_moe/oracle/int8.py
++++ b/vllm/model_executor/layers/fused_moe/oracle/int8.py
+@@ -25,12 +25,14 @@ from vllm.model_executor.layers.quantization.utils.quant_utils import (
+     kInt8DynamicTokenSym,
+     kInt8StaticChannelSym,
+ )
++from vllm.platforms import current_platform
+ 
+ logger = init_logger(__name__)
+ 
+ 
+ class Int8MoeBackend(Enum):
+     TRITON = "TRITON"
++    XPU = "XPU"
+ 
+ 
+ def _get_priority_backends(
+@@ -39,6 +41,8 @@ def _get_priority_backends(
+     """
+     Get available backends in priority order based on platform and config.
+     """
++    if current_platform.is_xpu():
++        return [Int8MoeBackend.XPU, Int8MoeBackend.TRITON]
+     return [Int8MoeBackend.TRITON]
+ 
+ 
+@@ -51,6 +55,12 @@ def backend_to_kernel_cls(
+         )
+ 
+         return [TritonExperts]
++    elif backend == Int8MoeBackend.XPU:
++        from vllm.model_executor.layers.fused_moe.experts.xpu_moe import (
++            XPUExpertsInt8,
++        )
++
++        return [XPUExpertsInt8]
+ 
+     else:
+         raise ValueError(f"Unknown Int8 MoE backend: {backend.value}")
+@@ -60,6 +70,7 @@ def map_int8_backend(runner_backend: MoEBackend) -> Int8MoeBackend:
+     """Map user's MoEBackend to Int8MoeBackend."""
+     mapping = {
+         "triton": Int8MoeBackend.TRITON,
++        "xpu": Int8MoeBackend.XPU,
+     }
+     if backend := mapping.get(runner_backend):
+         return backend
+@@ -159,6 +170,15 @@ def make_int8_moe_quant_config(
+         a1_scale is not None and a2_scale is not None
+     ), "a1_scale and a2_scale must both be provided or both be None"
+ 
++    if per_act_token_quant:
++        return int8_w8a8_moe_quant_config(
++            w1_scale=w1_scale,
++            w2_scale=w2_scale,
++            a1_scale=a1_scale,
++            a2_scale=a2_scale,
++            per_act_token_quant=True,
++        )
++
+     if a1_scale is None or a2_scale is None:
+         return int8_w8a16_moe_quant_config(
+             w1_scale=w1_scale,
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index 2eee8acf6..b2d119a93 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
+ from collections.abc import Callable
+ from contextlib import nullcontext
+ from typing import TYPE_CHECKING
+@@ -10,6 +11,7 @@ import torch.nn.functional as F
+ from vllm.distributed import (
+     get_ep_group,
+     get_pcp_group,
++    get_tp_group,
+     tensor_model_parallel_all_reduce,
+ )
+ from vllm.forward_context import (
+@@ -44,6 +46,23 @@ from vllm.utils.torch_utils import (
+ )
+ 
+ 
++def _minimax_moe_delay_allreduce_enabled() -> bool:
++    return os.environ.get("VLLM_MINIMAX_MOE_DELAY_ALLREDUCE", "0") == "1"
++
++
++def _minimax_moe_final_inplace_allreduce_enabled() -> bool:
++    return os.environ.get("VLLM_MINIMAX_MOE_FINAL_INPLACE_ALLREDUCE", "0") == "1"
++
++
++def _minimax_moe_output_allreduce_inside_custom_op_enabled() -> bool:
++    return (
++        os.environ.get(
++            "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP", "0"
++        )
++        == "1"
++    )
++
++
+ def get_layer_from_name(layer_name: str) -> torch.nn.Module:
+     forward_context: ForwardContext = get_forward_context()
+     if not _USE_LAYERNAME and layer_name == "from_forward_context":
+@@ -354,6 +373,17 @@ class MoERunner(MoERunnerInterface):
+             shared_output = tensor_model_parallel_all_reduce(shared_output)
+         return shared_output
+ 
++    def _allreduce_output_inside_custom_op_active(self) -> bool:
++        return (
++            _minimax_moe_output_allreduce_inside_custom_op_enabled()
++            and self._shared_experts is None
++            and self.routed_output_transform is None
++            and not self.moe_config.is_sequence_parallel
++            and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
++            and not self._fused_output_is_reduced
++            and not _minimax_moe_delay_allreduce_enabled()
++        )
++
+     def _maybe_reduce_final_output(
+         self,
+         states: torch.Tensor,
+@@ -373,8 +403,21 @@ class MoERunner(MoERunnerInterface):
+             not self.moe_config.is_sequence_parallel
+             and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
+             and not self._fused_output_is_reduced
++            and not self._allreduce_output_inside_custom_op_active()
++            and not getattr(self, "_last_quant_output_reduced", False)
++            and not _minimax_moe_delay_allreduce_enabled()
+         ):
+-            states = tensor_model_parallel_all_reduce(states)
++            if (
++                _minimax_moe_final_inplace_allreduce_enabled()
++                and self.moe_config.tp_size > 1
++                and hasattr(torch.ops, "vllm")
++                and hasattr(torch.ops.vllm, "all_reduce_inplace")
++            ):
++                torch.ops.vllm.all_reduce_inplace(
++                    states, group_name=get_tp_group().unique_name
++                )
++            else:
++                states = tensor_model_parallel_all_reduce(states)
+ 
+         return states[..., :trunc_size]
+ 
+@@ -447,11 +490,25 @@ class MoERunner(MoERunnerInterface):
+         via the router, and the actual fused MoE computation. Returns
+         (shared_expert_output, fused_expert_output).
+         """
++        self._last_quant_output_reduced = False
+         self._maybe_apply_shared_experts(
+             shared_experts_input, SharedExpertsOrder.NO_OVERLAP
+         )
+ 
+-        if self._quant_method.is_monolithic:
++        should_apply_decode_monolithic = getattr(
++            self._quant_method, "should_apply_decode_monolithic", None
++        )
++        if (
++            should_apply_decode_monolithic is not None
++            and should_apply_decode_monolithic(layer, hidden_states)
++        ):
++            fused_out = self._quant_method.apply_monolithic(
++                layer=layer,
++                x=hidden_states,
++                router_logits=router_logits,
++                input_ids=input_ids,
++            )
++        elif self._quant_method.is_monolithic:
+             fused_out = self._quant_method.apply_monolithic(
+                 layer=layer,
+                 x=hidden_states,
+@@ -475,6 +532,13 @@ class MoERunner(MoERunnerInterface):
+                 shared_experts_input=shared_experts_input,
+             )
+ 
++        if (
++            self._allreduce_output_inside_custom_op_active()
++            and shared_experts_input is None
++        ):
++            fused_out = tensor_model_parallel_all_reduce(fused_out)
++            self._last_quant_output_reduced = True
++
+         self._maybe_apply_shared_experts(
+             shared_experts_input,
+             SharedExpertsOrder.MULTI_STREAM_OVERLAPPED,
+diff --git a/vllm/model_executor/layers/quantization/online/int8.py b/vllm/model_executor/layers/quantization/online/int8.py
+index 4b4c87fbc..797c7b079 100644
+--- a/vllm/model_executor/layers/quantization/online/int8.py
++++ b/vllm/model_executor/layers/quantization/online/int8.py
+@@ -13,6 +13,7 @@ if TYPE_CHECKING:
+     )
+ 
+ from vllm.model_executor.layers.fused_moe.oracle.int8 import (
++    Int8MoeBackend,
+     make_int8_moe_kernel,
+     make_int8_moe_quant_config,
+     select_int8_moe_backend,
+@@ -49,6 +50,8 @@ class Int8OnlineMoEMethod(OnlineMoEMethodBase):
+             return
+ 
+         self._quantize_weights(layer)
++        if self.int8_backend == Int8MoeBackend.XPU:
++            self._prepare_xpu_weights(layer)
+         self._setup_kernel(layer)
+ 
+         layer._already_called_process_weights_after_loading = True
+@@ -91,6 +94,22 @@ class Int8OnlineMoEMethod(OnlineMoEMethodBase):
+         replace_parameter(layer, "w13_scale", w13_scale)
+         replace_parameter(layer, "w2_scale", w2_scale)
+ 
++    def _prepare_xpu_weights(self, layer: Module) -> None:
++        from vllm.model_executor.layers.fused_moe.experts.xpu_moe import (
++            prepare_int8_moe_layer_for_xpu,
++        )
++
++        w13, w2, w13_scale, w2_scale = prepare_int8_moe_layer_for_xpu(
++            layer.w13_weight,
++            layer.w2_weight,
++            layer.w13_scale,
++            layer.w2_scale,
++        )
++        replace_parameter(layer, "w13_weight", w13)
++        replace_parameter(layer, "w2_weight", w2)
++        replace_parameter(layer, "w13_scale", w13_scale)
++        replace_parameter(layer, "w2_scale", w2_scale)
++
+     def _setup_kernel(self, layer: "FusedMoE") -> None:
+         self.moe_quant_config = self.get_fused_moe_quant_config(layer)
+         assert self.moe_quant_config is not None
+@@ -109,6 +128,7 @@ class Int8OnlineMoEMethod(OnlineMoEMethodBase):
+         quant_config = make_int8_moe_quant_config(
+             w1_scale=layer.w13_scale,
+             w2_scale=layer.w2_scale,
++            per_act_token_quant=self.int8_backend == Int8MoeBackend.XPU,
+         )
+         self._maybe_inject_biases(quant_config, layer)
+         return quant_config
+diff --git a/vllm/model_executor/layers/quantization/quark/quark_moe.py b/vllm/model_executor/layers/quantization/quark/quark_moe.py
+index 1eeca1423..11a019754 100644
+--- a/vllm/model_executor/layers/quantization/quark/quark_moe.py
++++ b/vllm/model_executor/layers/quantization/quark/quark_moe.py
+@@ -37,6 +37,11 @@ from vllm.model_executor.layers.fused_moe.oracle.mxfp4 import (
+     mxfp4_round_up_hidden_size_and_intermediate_size,
+     select_gpt_oss_mxfp4_moe_backend,
+ )
++from vllm.model_executor.layers.fused_moe.oracle.int8 import (
++    Int8MoeBackend,
++    make_int8_moe_kernel,
++    select_int8_moe_backend,
++)
+ from vllm.model_executor.layers.quantization.utils.marlin_utils_fp8 import (
+     prepare_fp8_moe_layer_for_marlin,
+ )
+@@ -47,7 +52,11 @@ from vllm.model_executor.layers.quantization.utils.ocp_mx_utils import (
+     OCP_MX_BLOCK_SIZE,
+     OCP_MX_Scheme,
+ )
+-from vllm.model_executor.layers.quantization.utils.quant_utils import GroupShape
++from vllm.model_executor.layers.quantization.utils.quant_utils import (
++    GroupShape,
++    kInt8DynamicTokenSym,
++    kInt8StaticChannelSym,
++)
+ from vllm.model_executor.layers.quantization.utils.w8a8_utils import (
+     all_close_1d,
+     normalize_e4m3fn_to_e4m3fnuz,
+@@ -526,6 +535,13 @@ class QuarkW8A8Int8MoEMethod(QuarkMoEMethod):
+         self.input_quant = input_config
+         self.weight_qscheme = self.weight_quant.get("qscheme", "per_tensor")
+         self.static_input_scales = not self.input_quant.get("is_dynamic", False)
++        activation_key = None if self.static_input_scales else kInt8DynamicTokenSym
++        self.int8_backend, self.experts_cls = select_int8_moe_backend(
++            config=self.moe,
++            weight_key=kInt8StaticChannelSym,
++            activation_key=activation_key,
++        )
++        self.moe_kernel: mk.FusedMoEKernel | None = None
+ 
+     def create_weights(
+         self,
+@@ -745,6 +761,32 @@ class QuarkW8A8Int8MoEMethod(QuarkMoEMethod):
+                 max_w13_scales, requires_grad=False
+             )
+ 
++        if self.int8_backend == Int8MoeBackend.XPU:
++            from vllm.model_executor.layers.fused_moe.experts.xpu_moe import (
++                prepare_int8_moe_layer_for_xpu,
++            )
++
++            w13, w2, w13_scale, w2_scale = prepare_int8_moe_layer_for_xpu(
++                layer.w13_weight,
++                layer.w2_weight,
++                layer.w13_weight_scale,
++                layer.w2_weight_scale,
++            )
++            replace_parameter(layer, "w13_weight", w13)
++            replace_parameter(layer, "w2_weight", w2)
++            replace_parameter(layer, "w13_weight_scale", w13_scale)
++            replace_parameter(layer, "w2_weight_scale", w2_scale)
++
++        self.moe_quant_config = self.get_fused_moe_quant_config(layer)
++        if self.int8_backend == Int8MoeBackend.XPU:
++            self.moe_kernel = make_int8_moe_kernel(
++                moe_quant_config=self.moe_quant_config,
++                moe_config=self.moe,
++                experts_cls=self.experts_cls,
++                routing_tables=layer._maybe_init_expert_routing_tables(),
++                shared_experts=layer.shared_experts,
++            )
++
+     def get_fused_moe_quant_config(
+         self, layer: torch.nn.Module
+     ) -> FusedMoEQuantConfig | None:
+@@ -771,6 +813,21 @@ class QuarkW8A8Int8MoEMethod(QuarkMoEMethod):
+         topk_ids: torch.Tensor,
+         shared_experts_input: torch.Tensor | None,
+     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
++        if self.int8_backend == Int8MoeBackend.XPU:
++            assert self.moe_kernel is not None
++            return self.moe_kernel.apply(
++                x,
++                layer.w13_weight,
++                layer.w2_weight,
++                topk_weights=topk_weights,
++                topk_ids=topk_ids,
++                activation=layer.activation,
++                global_num_experts=layer.global_num_experts,
++                expert_map=layer.expert_map,
++                apply_router_weight_on_input=layer.apply_router_weight_on_input,
++                shared_experts_input=shared_experts_input,
++            )
++
+         from vllm.model_executor.layers.fused_moe import fused_experts
+ 
+         return fused_experts(
+diff --git a/vllm/platforms/xpu.py b/vllm/platforms/xpu.py
+index bd9006f3f..4f47b8e0b 100644
+--- a/vllm/platforms/xpu.py
++++ b/vllm/platforms/xpu.py
+@@ -195,12 +195,20 @@ class XPUPlatform(Platform):
+                 "XPU Graph is disabled by environment variable, "
+                 "please set VLLM_XPU_ENABLE_XPU_GRAPH=1 to enable it."
+             )
+-        elif parallel_config.world_size_across_dp > 1:
++        elif (
++            parallel_config.world_size_across_dp > 1
++            and os.getenv("VLLM_XPU_FORCE_GRAPH_WITH_COMM", "0") != "1"
++        ):
+             compilation_config.cudagraph_mode = CUDAGraphMode.NONE
+             logger.warning(
+                 "XPU Graph doesn't support capture communication ops, "
+                 "disabling cudagraph_mode."
+             )
++        elif parallel_config.world_size_across_dp > 1:
++            logger.warning(
++                "Forcing XPU Graph with communication ops because "
++                "VLLM_XPU_FORCE_GRAPH_WITH_COMM=1."
++            )
+         else:
+             if (
+                 attention_config.backend == AttentionBackendEnum.FLASH_ATTN
+@@ -225,6 +233,13 @@ class XPUPlatform(Platform):
+             "fuse_act_padding": "Activation + padding fusion",
+             "fuse_rope_kvcache": "RoPE + KV cache fusion",
+         }
++        if os.getenv("VLLM_XPU_EXPERIMENTAL_ENABLE_SP", "0") == "1":
++            fusion_passes_to_disable.pop("enable_sp", None)
++        if os.getenv("VLLM_XPU_EXPERIMENTAL_FUSE_GEMM_COMMS", "0") == "1":
++            fusion_passes_to_disable.pop("enable_sp", None)
++            fusion_passes_to_disable.pop("fuse_gemm_comms", None)
++        if os.getenv("VLLM_XPU_EXPERIMENTAL_FUSE_ALLREDUCE_RMS", "0") == "1":
++            fusion_passes_to_disable.pop("fuse_allreduce_rms", None)
+         for flag, feature_name in fusion_passes_to_disable.items():
+             if getattr(pass_config, flag):
+                 logger.warning(
+@@ -343,6 +358,10 @@ class XPUPlatform(Platform):
+             )
+         return "vllm.distributed.device_communicators.xpu_communicator.XpuCommunicator"  # noqa
+ 
++    @classmethod
++    def use_custom_op_collectives(cls) -> bool:
++        return os.environ.get("VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES", "0") == "1"
++
+     @classmethod
+     def supports_fp8(cls) -> bool:
+         return True

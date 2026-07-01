@@ -1,0 +1,141 @@
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -2422,6 +2422,97 @@
+                     record[f"{label}_error"] = repr(exc)
+             return record
+ 
++        def call_bool(obj: Any, name: str) -> bool | str | None:
++            method = getattr(obj, name, None)
++            if method is None:
++                return None
++            try:
++                return bool(method())
++            except Exception as exc:
++                return f"error:{exc!r}"
++
++        def spec_config_record() -> dict[str, Any] | None:
++            spec_config = self.speculative_config
++            if spec_config is None:
++                return None
++            return {
++                "method": getattr(spec_config, "method", None),
++                "num_speculative_tokens": getattr(
++                    spec_config, "num_speculative_tokens", None
++                ),
++                "draft_model_config_present": getattr(
++                    spec_config, "draft_model_config", None
++                )
++                is not None,
++                "uses_draft_model": call_bool(spec_config, "uses_draft_model"),
++                "use_ngram_gpu": call_bool(spec_config, "use_ngram_gpu"),
++                "use_eagle": call_bool(spec_config, "use_eagle"),
++                "use_dflash": call_bool(spec_config, "use_dflash"),
++                "uses_extract_hidden_states": call_bool(
++                    spec_config, "uses_extract_hidden_states"
++                ),
++                "enforce_eager": getattr(spec_config, "enforce_eager", None),
++            }
++
++        def cache_config_record() -> dict[str, Any]:
++            record: dict[str, Any] = {
++                "cache_dtype": getattr(self.cache_config, "cache_dtype", None),
++                "kv_cache_dtype": str(self.kv_cache_dtype),
++                "configured_block_size": getattr(
++                    self.cache_config, "block_size", None
++                ),
++            }
++            kv_cache_config = getattr(self, "kv_cache_config", None)
++            if kv_cache_config is None:
++                return record
++            groups = getattr(kv_cache_config, "kv_cache_groups", []) or []
++            record["num_kv_cache_groups"] = len(groups)
++            group_records: list[dict[str, Any]] = []
++            for group_index, group in enumerate(groups):
++                group_record: dict[str, Any] = {"group": group_index}
++                spec = getattr(group, "kv_cache_spec", None)
++                if spec is not None:
++                    group_record["spec_type"] = type(spec).__name__
++                    for attr in (
++                        "block_size",
++                        "num_speculative_blocks",
++                        "sliding_window",
++                    ):
++                        if hasattr(spec, attr):
++                            try:
++                                group_record[attr] = getattr(spec, attr)
++                            except Exception as exc:
++                                group_record[f"{attr}_error"] = repr(exc)
++                group_records.append(group_record)
++            record["groups"] = group_records
++            return record
++
++        def request_state_records(req_ids: list[str]) -> list[dict[str, Any]]:
++            records: list[dict[str, Any]] = []
++            for req_id in req_ids:
++                state = self.requests.get(req_id)
++                if state is None:
++                    records.append({"req_id": req_id, "missing": True})
++                    continue
++                records.append(
++                    {
++                        "req_id": req_id,
++                        "num_prompt_tokens": int(state.num_prompt_tokens),
++                        "num_output_tokens": len(state.output_token_ids),
++                        "num_tokens": int(state.num_tokens),
++                        "num_computed_tokens": int(state.num_computed_tokens),
++                        "prev_num_draft_len": int(state.prev_num_draft_len),
++                        "block_ids_lens": [
++                            len(block_ids) for block_ids in state.block_ids
++                        ],
++                        "block_ids_head": [
++                            list(block_ids[:8]) for block_ids in state.block_ids
++                        ],
++                        "output_token_ids_head": state.output_token_ids[-16:],
++                    }
++                )
++            return records
++
+         block_table_records: list[dict[str, Any]] = []
+         try:
+             for group_index in range(len(self.kv_cache_config.kv_cache_groups)):
+@@ -2449,6 +2540,16 @@
+             "dcp_rank": self.dcp_rank,
+             "device": str(self.device),
+             "cudagraph_mode": str(cudagraph_mode),
++            "config": {
++                "max_model_len": int(self.max_model_len),
++                "max_num_tokens": int(self.max_num_tokens),
++                "max_num_reqs": int(self.max_num_reqs),
++                "num_spec_tokens": int(self.num_spec_tokens),
++                "use_async_scheduling": bool(self.use_async_scheduling),
++                "use_async_spec_decode": bool(self.use_async_spec_decode),
++                "speculative": spec_config_record(),
++                "cache": cache_config_record(),
++            },
+             "batch_desc": {
+                 "num_tokens": int(batch_desc.num_tokens),
+                 "num_reqs": None
+@@ -2481,13 +2582,23 @@
+                 "num_scheduled_tokens_np": array_head(
+                     num_scheduled_tokens_np[:num_reqs]
+                 ),
++                "num_tokens_no_spec": array_head(
++                    self.input_batch.num_tokens_no_spec[:num_reqs]
++                ),
++                "num_prompt_tokens_cpu": array_head(
++                    self.input_batch.num_prompt_tokens[:num_reqs]
++                ),
+                 "num_computed_tokens_cpu": array_head(
+                     self.input_batch.num_computed_tokens_cpu[:num_reqs]
+                 ),
++                "num_accepted_tokens_cpu": array_head(
++                    self.input_batch.num_accepted_tokens_cpu[:num_reqs]
++                ),
+                 "spec_token_ids": [
+                     list(tokens[:16])
+                     for tokens in self.input_batch.spec_token_ids[:num_reqs]
+                 ],
++                "request_states": request_state_records(req_ids),
+                 "input_ids": tensor_head(input_ids),
+                 "positions": tensor_head(positions),
+                 "logits_indices": tensor_head(logits_indices),

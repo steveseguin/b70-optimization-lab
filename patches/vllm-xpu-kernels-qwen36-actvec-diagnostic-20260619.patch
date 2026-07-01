@@ -1,0 +1,105 @@
+diff --git a/csrc/activation.cpp b/csrc/activation.cpp
+index f957136..309b6fd 100644
+--- a/csrc/activation.cpp
++++ b/csrc/activation.cpp
+@@ -1,6 +1,7 @@
+ #include <sycl/sycl.hpp>
+ #include <cmath>
+ #include <algorithm>
++#include <cstdlib>
+ #include <numeric>
+ #include "utils.h"
+ #include "dispatch_utils.h"
+@@ -376,6 +377,40 @@ class swiglustep_and_mul_kernel {
+   const float limit;
+ };
+ 
++inline int forced_act_and_mul_vec_size() {
++  static const int forced = []() {
++    const char* value = std::getenv("VLLM_XPU_ACT_AND_MUL_VEC_SIZE");
++    if (value == nullptr || value[0] == '\0') {
++      return 0;
++    }
++    const int parsed = std::atoi(value);
++    if (parsed == 1 || parsed == 2 || parsed == 4 || parsed == 8 ||
++        parsed == 16) {
++      return parsed;
++    }
++    return 0;
++  }();
++  return forced;
++}
++
++inline int select_act_and_mul_vec_size(const int d, const int scalar_size) {
++  const int forced = forced_act_and_mul_vec_size();
++  if (forced > 0 && d % forced == 0) {
++    return forced;
++  }
++
++  int vec_size = static_cast<int>(sizeof(float) * 4 / scalar_size);
++  int64_t tmp_wg =
++      std::min(static_cast<int64_t>(d), static_cast<int64_t>(1024));
++  while (vec_size > 1 && (vec_size >> 1) * tmp_wg >= d) {
++    vec_size = vec_size >> 1;
++  }
++  if (d % vec_size != 0) {
++    vec_size = 1;
++  }
++  return vec_size;
++}
++
+ }  // namespace vllm
+ 
+ // Launch activation and gating kernel.
+@@ -435,15 +470,7 @@ class swiglustep_and_mul_kernel {
+   auto input_ptr = input.data_ptr<scalar_t>();                           \
+   at::DeviceGuard device_guard(input.device());                          \
+   auto& queue = vllm::xpu::vllmGetQueue();                               \
+-  int vec_size = static_cast<int>(sizeof(float) * 4 / sizeof(scalar_t)); \
+-  {                                                                      \
+-    int64_t tmp_wg =                                                     \
+-        std::min(static_cast<int64_t>(d), static_cast<int64_t>(1024));   \
+-    while (vec_size > 1 && (vec_size >> 1) * tmp_wg >= d) {              \
+-      vec_size = vec_size >> 1;                                          \
+-    }                                                                    \
+-  }                                                                      \
+-  if (d % vec_size != 0) vec_size = 1;                                   \
++  int vec_size = vllm::select_act_and_mul_vec_size(d, sizeof(scalar_t)); \
+   int64_t wg_size = std::min(                                            \
+       static_cast<int64_t>(d / vec_size), static_cast<int64_t>(1024));   \
+   switch (vec_size) {                                                    \
+@@ -468,15 +495,7 @@ class swiglustep_and_mul_kernel {
+   const float param = static_cast<float>(PARAM);                         \
+   at::DeviceGuard device_guard(input.device());                          \
+   auto& queue = vllm::xpu::vllmGetQueue();                               \
+-  int vec_size = static_cast<int>(sizeof(float) * 4 / sizeof(scalar_t)); \
+-  {                                                                      \
+-    int64_t tmp_wg =                                                     \
+-        std::min(static_cast<int64_t>(d), static_cast<int64_t>(1024));   \
+-    while (vec_size > 1 && (vec_size >> 1) * tmp_wg >= d) {              \
+-      vec_size = vec_size >> 1;                                          \
+-    }                                                                    \
+-  }                                                                      \
+-  if (d % vec_size != 0) vec_size = 1;                                   \
++  int vec_size = vllm::select_act_and_mul_vec_size(d, sizeof(scalar_t)); \
+   int64_t wg_size = std::min(                                            \
+       static_cast<int64_t>(d / vec_size), static_cast<int64_t>(1024));   \
+   switch (vec_size) {                                                    \
+@@ -529,16 +548,7 @@ void silu_and_mul(
+   auto scale_ptr = scale.data_ptr<float>();                                  \
+   at::DeviceGuard device_guard(input.device());                              \
+   auto& queue = vllm::xpu::vllmGetQueue();                                   \
+-  /* Compute vec_size like non-quant path: gcd(4*sizeof(float)/sizeof, d) */ \
+-  int vec_size = static_cast<int>(sizeof(float) * 4 / sizeof(sycl_t));       \
+-  {                                                                          \
+-    int64_t tmp_wg =                                                         \
+-        std::min(static_cast<int64_t>(d), static_cast<int64_t>(1024));       \
+-    while (vec_size > 1 && (vec_size >> 1) * tmp_wg >= d) {                  \
+-      vec_size = vec_size >> 1;                                              \
+-    }                                                                        \
+-  }                                                                          \
+-  if (d % vec_size != 0) vec_size = 1;                                       \
++  int vec_size = vllm::select_act_and_mul_vec_size(d, sizeof(sycl_t));       \
+   switch (vec_size) {                                                        \
+     LAUNCH_ACT_AND_MUL_QUANT_VEC(KERNEL, 1);                                 \
+     LAUNCH_ACT_AND_MUL_QUANT_VEC(KERNEL, 2);                                 \

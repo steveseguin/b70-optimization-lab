@@ -1,0 +1,715 @@
+diff --git a/notes/2026-06-13-qwen36-decode-graph-replay-corruption.md b/notes/2026-06-13-qwen36-decode-graph-replay-corruption.md
+index 81ee4b5..c7f6d34 100644
+--- a/notes/2026-06-13-qwen36-decode-graph-replay-corruption.md
++++ b/notes/2026-06-13-qwen36-decode-graph-replay-corruption.md
+@@ -222,3 +222,672 @@ promote.
+ 6. Keep persistent W8A8 MoE layerlet work alive, but do not stack more MoE
+    speed claims on top of a corrupt graph replay base.
+ 
++## 2026-06-13q Follow-Up: Replay Boundary Repairs Tried
++
++New probe support:
++
++- Added `--request-id-prefix` to
++  `scripts/probe-fixed-chatml-completion-repeat.py` so server-side microscope
++  traces can be aligned with deterministic canary repeats.
++- Added an XPU replay microscope to `vllm/v1/worker/gpu_model_runner.py`.
++  It can trace selected request IDs with input IDs, positions, slot mappings,
++  hidden/sample-hidden/logit summaries, local-argmax sampled IDs, and request
++  counters.
++
++Key trace finding:
++
++- Under local argmax + direct gather + logit NaN sanitizer, the JSON canary can
++  diverge before any replayed decode in that request.
++- For the bad JSON repeat, eager prefill (`cudagraph_mode=NONE`) already had a
++  different sample-hidden digest from the adjacent good repeat:
++  - good: sampled `{`, prefill sample-hidden sum `-72.3495`
++  - bad: sampled `{`, prefill sample-hidden sum `-64.6469`
++- The next decode sampled `answer` in the good request and `question` in the
++  bad request.
++- Interpretation: a prior replayed decode can poison later request state or
++  graph/static buffers; this is not only a first post-prefill decode-boundary
++  issue and not only LM-head/logit gather.
++
++Fast-but-not-clean candidate:
++
++- `VLLM_XPU_LOCAL_ARGMAX_DECODE=1`
++- `VLLM_XPU_LOCAL_ARGMAX_DIRECT_GATHER=1`
++- `VLLM_XPU_SANITIZE_LOGITS_NAN=1`
++- JSON/color short gates can pass and `p512/o512` c1 decode is about
++  `91.4 tok/s`, but long deterministic gates fail, so this is not promotable.
++
++Repairs tested and rejected:
++
++- `VLLM_XPU_DISABLE_FIRST_DECODE_CUDAGRAPH_REPLAY=1`
++  - First implementation missed the active request count; patched to use
++    `input_batch.req_ids`.
++  - Trace confirmed the first post-prefill decode ran eager (`NONE`).
++  - JSON still failed at repeat `70`.
++  - Artifact:
++    `data/qwen36-quark-int8-tp4-seq1-localargmax-directsanitize-firstdecodeeager2-fixed-json-repeat512-20260613q.json`
++  - Trace:
++    `data/qwen36-replay-microscope-firstdecodeeager2-json-068-070-20260613q.jsonl`
++
++- `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=0`
++  - Launcher default is now overrideable.
++  - JSON still failed at repeat `139`, same `answer` -> `question` branch flip.
++  - Artifact:
++    `data/qwen36-quark-int8-tp4-seq1-localargmax-directsanitize-gdnreuse0-fixed-json-repeat512-20260613q.json`
++
++- `VLLM_XPU_ZERO_FRESH_GDN_STATE=1`
++  - Added env-gated explicit zeroing of GDN `conv_state` and `ssm_state` for
++    fresh prefill state indices before the prefill convolution/recurrent core.
++  - JSON still failed at repeat `139`.
++  - Artifact:
++    `data/qwen36-quark-int8-tp4-seq1-localargmax-directsanitize-zerofreshgdn-fixed-json-repeat512-20260613q.json`
++
++- `VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE=0`
++  - JSON still failed at repeat `139`.
++  - Artifact:
++    `data/qwen36-quark-int8-tp4-seq1-localargmax-directsanitize-nopackedrec-fixed-json-repeat512-20260613q.json`
++
++- `VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0`
++  - Startup failed in `parallel_state.graph_capture` because the communicator
++    graph-capture context asserts `CudaCommunicator`.
++  - Root error: `AssertionError` at `parallel_state.py:565`.
++  - Artifact:
++    `data/qwen36-localargmax-directsanitize-realcommgraph-20260613q.log`
++  - Conclusion: the current XPU path cannot capture communicator context via
++    the CUDA graph-capture helper; noop communicator capture is required unless
++    we implement an XPU-specific context.
++
++- `VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=0`
++  and `VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=0`
++  - Launcher flags are now overrideable.
++  - JSON still failed at repeat `139`.
++  - Artifact:
++    `data/qwen36-quark-int8-tp4-seq1-localargmax-directsanitize-stockcollectives-fixed-json-repeat512-20260613q.json`
++
++Current conclusion:
++
++- The corruption is still tied to decode graph replay, but not fixed by:
++  first-decode eager, GDN quant-reuse changes, explicit fresh GDN state zeroing,
++  disabling packed recurrent decode, or stock compile-time collectives.
++- The repeat-139 stability of several variants suggests a deterministic replay
++  state/buffer lifetime bug rather than random numerical instability.
++
++Next best ideas:
++
++1. Selectively bypass graph replay for GDN/Mamba subgraphs only, if the
++   piecewise runner can route that family eager while keeping MoE/dense replay.
++2. Add a layer-family replay microscope or state fingerprint around GDN cache
++   writes: record state indices, `has_initial_state`, conv/SSM state norms for
++   fresh prefill blocks, and per-layer GDN output digests.
++3. Investigate the XPU graph/noop communicator capture path. A proper XPU
++   communicator graph-capture context may be required if noop capture lets
++   replayed collectives interact with stale external state.
++4. Test static input and metadata sanitation before every PIECEWISE replay:
++   zero unused/padded request rows, block-table rows, logits indices, and
++   metadata tensors before copying active data.
++5. If selective family bypass is not practical, implement a low-overhead
++   periodic replay quarantine that disables replay for an entire request after
++   a fixed number of successful graph-replayed requests, then use canaries to
++   find whether corruption is count-based or request-content-based.
++
++## 2026-06-13y/ad Follow-Up: No-Async Boundary Isolation
++
++New positive control:
++
++- `COMPILATION_CONFIG='{"cudagraph_mode":"NONE"}'`
++- `VLLM_XPU_SANITIZE_LOGITS_NAN=1`
++- `VLLM_XPU_ZERO_FRESH_GDN_STATE=1`
++- `VLLM_EXTRA_ARGS='--no-async-scheduling'`
++- Artifacts:
++  - `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-graphnone-fixed-json-repeat512-20260613y.json`
++    - `512/512` pass.
++  - `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-graphnone-fixed-color-repeat512-20260613y.json`
++    - `512/512` pass.
++
++Interpretation:
++
++- With async scheduling disabled and native fresh-GDN state zeroing enabled,
++  full graph replay disablement is clean for both fixed canaries.
++- This confirms the remaining no-async corruption is still tied to
++  PIECEWISE/compiled graph replay, not to HTTP, tokenizer, sampling, or fresh
++  GDN state initialization.
++
++Native GDN zeroing update:
++
++- Moving `VLLM_XPU_ZERO_FRESH_GDN_STATE=1` into the native XPU GDN wrapper fixed
++  the previous async/direct-sanitize JSON repeat:
++  - `data/qwen36-quark-int8-tp4-seq1-localargmax-directsanitize-zeronative-fixed-json-repeat512-20260613r.json`
++    - `512/512` pass.
++- It did not fully repair color on the async/direct path:
++  - `data/qwen36-quark-int8-tp4-seq1-localargmax-directsanitize-zeronative-fixed-color-repeat512-20260613r.json`
++    - failed at repeat `56`.
++- The GDN trace for no-async JSON showed fresh prefill GDN states are zero for
++  adjacent good/bad requests, but layer-0 projected GDN inputs already differ
++  before the native GDN core. That points upstream of GDN state reuse.
++  - Trace:
++    `data/qwen36-gdn-trace-zeronative-noasync-json-052-053-20260613x.jsonl`
++
++No-async PIECEWISE observations:
++
++- Plain no-async + PIECEWISE + native GDN zero:
++  - Color passed:
++    `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-fixed-color-repeat512-20260613u.json`
++    - `512/512` pass.
++  - JSON failed:
++    `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-fixed-json-repeat512-20260613u.json`
++    - failed at repeat `372`.
++- No-async replay microscope, focused on the JSON fail shifted by tracing:
++  - `data/qwen36-replay-microscope-zeronative-noasync-json-052-053-20260613w.jsonl`
++  - All TP ranks agreed within each request.
++  - Good and bad requests had identical prompt IDs/positions/logits indices.
++  - First sampled token was `{` for both, but first-step logits/top-k already
++    differed. The second token diverged to `answer` vs `question`.
++  - This is request-to-request model/graph state contamination, not rank-local
++    sampling disagreement.
++
++Repairs tested in this follow-up:
++
++- `VLLM_XPU_SKIP_COMPILED_PREFILL=1`
++  - Startup initially failed during capture/profile with
++    `Shape: 8193 out of considered ranges: [(1, 8192)]`.
++  - Patched capture/profile to ignore this live-runtime knob.
++  - Runtime still failed JSON:
++    `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-skipprefill-fixed-json-repeat512-20260613z2.json`
++    - failed at repeat `54`.
++  - Conclusion: bypassing only the top-level compiled prefill call is not
++    enough; the bad state is not solely top-level prefill compilation.
++
++- `VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1`
++  - Added as a live-only env guard to set non-uniform prefill
++    `cudagraph_mode=NONE` while preserving uniform decode replay.
++  - Startup first failed when the guard applied during dummy/capture; patched
++    it to require `force_uniform_decode is None` and `not force_eager`.
++  - Runtime still failed JSON:
++    `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-prefillgraphoff-fixed-json-repeat512-20260613ab.json`
++    - failed at repeat `54`.
++  - Conclusion: prefill replay alone is not the full bad boundary.
++
++- `VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1`
++  plus `VLLM_XPU_DISABLE_FIRST_DECODE_CUDAGRAPH_REPLAY=1`
++  - JSON passed:
++    `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-prefillfirstoff-fixed-json-repeat512-20260613ac.json`
++    - `512/512` pass.
++  - Color failed later:
++    `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-prefillfirstoff-fixed-color-repeat512-20260613ac.json`
++    - failed at repeat `120` with
++      `blue, green, orange,\n</think>\n\nred`.
++  - Server log during JSON showed short-repeat generation around `52 tok/s`,
++    so this is a useful partial boundary, but it is not correctness-safe.
++
++- `VLLM_XPU_DISABLE_INITIAL_DECODE_CUDAGRAPH_REPLAY_STEPS=6`
++  plus prefill replay off:
++  - Added a generalized live-only first-N decode replay quarantine.
++  - Color failed earlier:
++    `data/qwen36-quark-int8-tp4-seq1-zeronative-noasync-prefilloff-decode6off-fixed-color-repeat512-20260613ad.json`
++    - failed at repeat `24` with `blue, green, red, yellow`.
++  - Conclusion: a token-count quarantine is not monotonic and can perturb the
++    generation path. Do not promote.
++
++- `cudagraph_copy_inputs=true`
++  - Launch config:
++    `COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","cudagraph_copy_inputs":true}'`
++  - Startup failed in generated inductor kernels during profiling:
++    `Assertion index out of bounds: 0 <= ... < 1048576`, then worker
++    cancellation.
++  - Log:
++    `data/qwen36-zeronative-noasync-copyinputs-20260613ae.log`
++  - Conclusion: promising failure class match, but the stock copy-input path is
++    not currently launchable on this XPU/AOT path.
++
++Current best correctness state:
++
++- Clean and safe: `cudagraph_mode=NONE` or full uniform-decode replay bypass.
++- Fast but unsafe: PIECEWISE replay.
++- Best partial speed/correctness boundary so far:
++  prefill replay off + first-decode replay off; JSON clean at 512 and short
++  server-log decode around `52 tok/s`, but color still fails, so it is not
++  promotable.
++
++Next deeper repair targets:
++
++1. Add replay call-site/family counters and a per-request graph replay trace to
++   identify which PIECEWISE subgraph is replayed immediately before the color
++   branch flip.
++2. Try selective family-level replay bypass, starting with GDN/Mamba and then
++   logits/LM-head, instead of request-level first-N decode heuristics.
++3. Repair or replace the `cudagraph_copy_inputs=true` path for XPU. The stock
++   path matches the suspected stale-input class but fails at startup with an
++   inductor bounds assertion.
++4. Add static metadata sanitation before replay for positions, logits indices,
++   slot mappings, and block tables. This is lower overhead than global graph
++   disablement and directly targets stale/padded replay inputs.
++5. Keep the graph-disabled lane as the only quality-safe fallback until both
++   JSON and color pass at 512 repeats under any faster replay candidate.
++
++## Replay Boundary Follow-Up
++
++Patch snapshot:
++
++- `patches/vllm-qwen36-decode-replay-boundary-followup-20260613af.patch`
++
++Added opt-in replay tracing in `vllm/compilation/cuda_graph.py`:
++
++- `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_FILE`
++- `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_MAX_LINES`
++- `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_RANK`
++- `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX`
++- `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_REQ_REGEX`
++- `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS`
++- `VLLM_XPU_CUDAGRAPH_DISABLE_SUBMOD_REGEX`
++
++Artifacts:
++
++- `data/qwen36-cgtrace-noasync-20260613af.log`
++- `data/qwen36-quark-int8-tp4-seq1-cgtrace-noasync-json-repeat80-20260613af.json`
++- `data/qwen36-cg-replay-trace-noasync-json-20260613af-r0.jsonl`
++- `data/qwen36-cg-replay-trace-noasync-json-20260613af-r1.jsonl`
++- `data/qwen36-cg-replay-trace-noasync-json-20260613af-r2.jsonl`
++- `data/qwen36-cg-replay-trace-noasync-json-20260613af-r3.jsonl`
++- `data/qwen36-cgbypass-firsthalf-20260613ag.log`
++- `data/qwen36-cgbypass-secondhalf-20260613ag.log`
++- `data/qwen36-quark-int8-tp4-seq1-cgbypass-firsthalf-json-repeat96-20260613ag.json`
++- `data/qwen36-quark-int8-tp4-seq1-cgbypass-secondhalf-json-repeat96-20260613ag.json`
++
++Findings:
++
++- The focused JSON canary still failed at repeat `53` with
++  `{"question": "12 30.", "unit": "widgets"}`.
++- Prompt pass for the adjacent good/bad requests was direct:
++  `cudagraph_mode=NONE`, `36` tokens.
++- Every decode token replayed all `41` PIECEWISE graph wrappers.
++- The traced wrappers map to even `submod_N` entries from the compiled
++  backbone graph: `submod_0, submod_2, ..., submod_80`.
++- The bad request has more replay events only because the already-corrupt
++  branch generates a longer/wrong continuation. The count difference does not
++  identify the first bad subgraph by itself.
++
++Selective hybrid replay bypass was not a valid repair path yet:
++
++- First-half direct / second-half replay failed immediately at repeat `0` with
++  `{"\n\n`.
++- Second-half direct / first-half replay failed at repeat `4` with
++  `{"answer": "42", "unit":baka": "widgets"}`.
++- Interpretation: once a subgraph is run direct, downstream captured graphs are
++  still replaying against their captured/static input addresses. Per-subgraph
++  bypass is therefore invalid unless the replay boundary buffers are refreshed
++  or all downstream graph segments are also forced direct.
++
++Next action:
++
++- Run `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_INPUTS=1` on the same adjacent JSON
++  request pair.
++- Compare captured input addresses against live replay tensor addresses for
++  the first good/bad decode steps.
++- If live dynamic tensor addresses differ from captured graph inputs, add an
++  opt-in small/dynamic replay-input copy path before `cudagraph.replay()`.
++
++## Replay Correctness Follow-Up 2026-06-13am-ar
++
++Patch snapshot:
++
++- `patches/vllm-qwen36-decode-replay-directdigest-nativequantoff-20260613am.patch`
++
++New instrumentation and knobs:
++
++- `direct_start` / `direct_finish` replay trace events, including optional
++  output digests.
++- Recursive output digest tracing with
++  `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_DIGEST=1`.
++- `VLLM_XPU_DISABLE_NATIVE_INT8_ACTIVATION_QUANT=1`, which keeps W8A8 GEMM
++  but falls back from native XPU per-token activation quant to the Python
++  `per_token_quant_int8` path.
++- `VLLM_XPU_CUDAGRAPH_CLEAR_ON_PREFILL=1`, a rejected request-boundary graph
++  clear/recapture diagnostic.
++- `VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL=1` and
++  `VLLM_XPU_CUDAGRAPH_NO_GLOBAL_POOL=1`, per-wrapper/no-global graph pool
++  diagnostics.
++
++Artifacts:
++
++- `data/qwen36-cgtrace-inputs-20260613ah.log`
++- `data/qwen36-quark-int8-tp4-seq1-cgtrace-inputs-json-repeat80-20260613ah.json`
++- `data/qwen36-cg-replay-trace-inputs-json-20260613ah-r0.jsonl`
++- `data/qwen36-cgtrace-digest-20260613ai.log`
++- `data/qwen36-quark-int8-tp4-seq1-cgtrace-digest-json-repeat80-20260613ai.json`
++- `data/qwen36-cg-replay-trace-digest-json-20260613ai-r0.jsonl`
++- `data/qwen36-cgtrace-directdigest-20260613aj.log`
++- `data/qwen36-quark-int8-tp4-seq1-cgtrace-directdigest-json-repeat80-20260613aj.json`
++- `data/qwen36-cg-replay-trace-directdigest-json-20260613aj-r0.jsonl`
++- `data/qwen36-gdnreuseoff-20260613ak.log`
++- `data/qwen36-quark-int8-tp4-seq1-gdnreuseoff-noasync-fixed-json-repeat512-20260613ak.json`
++- `data/qwen36-syncreplay-20260613al.log`
++- `data/qwen36-quark-int8-tp4-seq1-syncreplay-zeronative-noasync-fixed-json-repeat512-20260613al.json`
++- `data/qwen36-nativequantoff-20260613am.log`
++- `data/qwen36-quark-int8-tp4-seq1-nativequantoff-noasync-fixed-json-repeat512-20260613am.json`
++- `data/qwen36-clearprefill-20260613an.log`
++- `data/qwen36-quark-int8-tp4-seq1-clearprefill-noasync-fixed-json-repeat512-20260613an.json`
++- `data/qwen36-decodeoff-trace-20260613ao.log`
++- `data/qwen36-quark-int8-tp4-seq1-decodeoff-directdigest-json-repeat80-20260613ao.json`
++- `data/qwen36-cg-replay-trace-decodeoff-directdigest-json-20260613ao-r0.jsonl`
++- `data/qwen36-perpool-20260613ap.log`
++- `data/qwen36-quark-int8-tp4-seq1-perpool-noasync-fixed-json-repeat80-20260613ap.json`
++- `data/qwen36-stockcollectives-20260613aq.log`
++- `data/qwen36-quark-int8-tp4-seq1-stockcollectives-noasync-fixed-json-repeat80-20260613aq.json`
++- `data/qwen36-stockcollectives-fresh-20260613ar.log`
++- `data/qwen36-quark-int8-tp4-seq1-stockcollectives-fresh-noasync-fixed-json-repeat80-20260613ar.json`
++
++Findings:
++
++- Input-address replay trace ruled out a simple stale pointer bug. Captured
++  graph input addresses and live replay tensor addresses matched for the
++  failing JSON request.
++- Digest tracing narrowed the first adjacent good/bad divergence to the
++  boundary between replayed `submod_0` and direct `submod_1`
++  `gdn_attention_core_xpu` in the first layer.
++- Direct-output tracing showed the bad request is already corrupt during the
++  next direct prefill `submod_0`: identical prompt inputs produced tiny garbage
++  and NaNs in rank-0 BF16 outputs such as the `[36, 2048]` tensor.
++- With `VLLM_XPU_DISABLE_DECODE_CUDAGRAPH_REPLAY=1`, the JSON canary passed
++  `80/80` repeats and the request `52`/`53` `submod_0` direct prefill digests
++  were identical and NaN-free. This confirms the direct prefill corruption is a
++  downstream effect of repeated decode graph replay.
++
++Rejected candidates:
++
++- `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=0`: still failed at repeat `53`.
++- `VLLM_XPU_SYNC_CUDAGRAPH_REPLAY=1`: still failed at repeat `53`.
++- `VLLM_XPU_DISABLE_NATIVE_INT8_ACTIVATION_QUANT=1`: still failed at repeat
++  `53`; native activation quant is not the primary trigger.
++- `VLLM_XPU_CUDAGRAPH_CLEAR_ON_PREFILL=1`: failed immediately with
++  `CachingHostAllocator.h:773 it->second->use_count > 0` during runtime graph
++  recapture. Runtime recapture remains unsafe on this XPU stack.
++- `VLLM_XPU_CUDAGRAPH_PER_WRAPPER_POOL=1`: startup passed, but JSON still
++  failed at repeat `53`; shared graph-pool aliasing is not sufficient.
++- Custom collective lowering off with a fresh cache root
++  (`VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=0`,
++  `VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=0`) still failed at repeat `53`.
++  The fresh compile log no longer showed `vllm::all_reduce` alias warnings, so
++  the custom collective op path is not the primary trigger.
++
++Current interpretation:
++
++- The failure is not tokenizer, sampler, HTTP, weak output refs, activation
++  quant, GDN quant-buffer reuse, simple async replay ordering, graph-pool
++  sharing, or custom collective lowering.
++- The remaining likely trigger is a graph-captured custom kernel or custom op
++  with hidden mutable/scratch state that corrupts later direct prefill
++  allocations or writes after enough decode replays.
++
++Next actions:
++
++1. Add a selective W8A8 INT8 linear BF16 fallback diagnostic. If it survives
++   replay-on JSON past repeat `53`, the native `int8_gemm_w8a8` path is the
++   leading suspect.
++2. If the BF16 fallback is too large to fit globally, add a layer/submod-scoped
++   fallback or trace around layer-0 dense projections first.
++3. Add replay-count-triggered direct-output digest around `submod_0` with the
++   normal replay-on path to confirm whether the corruption appears abruptly at a
++   specific replay count.
++4. Keep `VLLM_XPU_DISABLE_DECODE_CUDAGRAPH_REPLAY=1` as the correctness-safe
++   fallback while searching for a replay-on repair.
++
++## INT8 Linear / MoE Fallback Follow-Up 2026-06-13as-av
++
++Patch snapshot:
++
++- `patches/vllm-qwen36-decode-replay-moe-bf16fallback-20260613av.patch`
++
++New diagnostics:
++
++- `VLLM_XPU_INT8_LINEAR_BF16_FALLBACK=1`
++  - Dequantizes each XPU W8A8 linear weight to BF16 once after loading and
++    runs `F.linear` instead of the native XPU INT8 GEMM path.
++- `VLLM_XPU_INT8_MOE_BF16_FALLBACK=decode`
++  - Dequantizes Quark W8A8 MoE weights to BF16 once after loading and uses a
++    Python/Torch exact-ish routed MoE fallback only for single-token decode.
++  - Keeps the native XPU MoE path for prefill to avoid the larger memory and
++    compile blast radius.
++
++Artifacts:
++
++- `data/qwen36-int8linear-bf16fallback-20260613as.log`
++- `data/qwen36-quark-int8-tp4-seq1-int8linear-bf16fallback-noasync-fixed-json-repeat80-20260613as.json`
++- `data/qwen36-tritonmoe-20260613at.log`
++- `data/qwen36-moebf16decode-lowmem-20260613au.log`
++- `data/qwen36-moebf16decode-20260613av.log`
++- `data/qwen36-quark-int8-tp4-seq1-moe-bf16decode-noasync-fixed-json-repeat80-20260613av.json`
++
++Findings:
++
++- Global INT8 linear BF16 fallback still failed at repeat `53` with a
++  runaway `!` sequence. Native XPU W8A8 dense GEMM is not sufficient to explain
++  the replay corruption.
++- Forced `--moe-backend triton` did not start because the Triton backend does
++  not support the Quark INT8 activation/weight quant key combination for this
++  model.
++- Decode-only BF16 MoE fallback loaded successfully at
++  `gpu_memory_utilization=0.95`:
++  - model load memory: `23.59 GiB`
++  - available KV cache memory: `6.49 GiB`
++  - graph capture memory: `0.34 GiB`
++- Decode-only BF16 MoE fallback still failed at repeat `53` with
++  `{"question": "12 30.", "unit": "widgets"}`. The native XPU fused MoE decode
++  kernel is also not sufficient to explain the replay corruption.
++
++Updated interpretation:
++
++- The remaining high-probability zone is now the GDN/attention decode path or
++  its metadata/state/scratch interaction with replay, because direct digest
++  already showed the first adjacent good/bad difference entering
++  `gdn_attention_core_xpu`, while dense INT8, activation quant, custom
++  collectives, and native MoE have all been rejected as sole causes.
++
++Next actions:
++
++1. Inspect `gdn_attn.py` and `gdn_linear_attn.py` for persistent decode
++   metadata, state-index tensors, temporary buffers, and XPU custom op calls
++   that may be captured by graph replay.
++2. Add the smallest GDN-specific correctness knob:
++   either force the GDN decode core to run outside replay, clone/zero its
++   mutable state inputs, or disable a suspicious XPU fused path.
++3. Re-run the same JSON canary to check whether the repeat-53 failure moves or
++   disappears.
++
++## GDN Native Fallback Follow-Up 2026-06-13aw-ay
++
++Patch snapshot:
++
++- `patches/vllm-qwen36-decode-replay-gdn-native-fallback-20260613ay.patch`
++
++New diagnostic knob:
++
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=decode`
++  - For non-spec decode only, bypasses the fused native
++    `torch.ops._xpu_C.gdn_attention` path and unpacks the projected QKV/Z/B/A
++    tensors before calling the existing Python/Triton GDN core.
++  - Prefill remains on the native fused XPU GDN op.
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=all`
++  - Intended to bypass native fused XPU GDN for both prefill and decode.
++  - Currently rejected because the prefill FLA/Triton path fails under Intel
++    Triton on the first live request.
++- The decode fallback now calls `_forward_core(...)`, so
++  `VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE=0` can switch the fallback from the
++  packed recurrent decode path to the alternate recurrent update path.
++
++Artifacts:
++
++- `data/qwen36-gdnfallbackdecode-20260613aw.log`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-noasync-fixed-json-repeat80-20260613aw.json`
++- `data/qwen36-gdnfallbackall-20260613ax.log`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackall-noasync-fixed-json-repeat80-20260613ax.json`
++- `data/qwen36-gdnfallbackdecode-nopacked-20260613ay.log`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-nopacked-noasync-fixed-json-repeat80-20260613ay.json`
++
++Results:
++
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=decode`
++  - Startup passed.
++  - Model load memory: `8.58 GiB`.
++  - Available KV cache memory: `20.67 GiB`.
++  - Graph capture reported `-6.16 GiB`.
++  - JSON canary failed at repeat `66` after `67` completed requests.
++  - Mismatch:
++    `{"answer": "42", " whiskey whiskey whiskey whiskey": "widgets"}`.
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=all`
++  - Startup passed, but the first live request returned HTTP 500.
++  - Root failure:
++    `RuntimeError: PassManager::run failed` inside Intel Triton while compiling
++    the FLA prefill `chunk_gated_delta_rule` path.
++  - Rejected as a correctness test until the prefill fallback can be made
++    compile-safe.
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=decode` plus
++  `VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE=0`
++  - Startup passed.
++  - Graph capture reported `-0.04 GiB`.
++  - JSON canary again failed at repeat `66` after `67` completed requests.
++  - Mismatch:
++    `{"answer": "42", " whiskey whiskey whiskey whiskey "unit": "widgets"}`.
++
++Updated interpretation:
++
++- Bypassing fused native XPU GDN decode moves the failure from repeat `53` to
++  repeat `66`, so native GDN decode is implicated in the original corruption
++  window.
++- The remaining repeat-66 failure is not explained by the packed recurrent
++  fallback path, because disabling packed recurrent decode did not move the
++  failure.
++- The next trace should compare adjacent good/bad requests under
++  `VLLM_XPU_GDN_NATIVE_FALLBACK=decode` to determine whether the first
++  divergence has moved past the GDN boundary or remains in graph replay output.
++
++Next actions:
++
++1. Run replay output digest tracing for adjacent requests `65` and `66` with
++   `VLLM_XPU_GDN_NATIVE_FALLBACK=decode`.
++2. If the first divergence is still before/at the first GDN boundary, add GDN
++   fallback-branch state/output trace and compare selected conv/SSM state.
++3. If the first divergence moves to a later subgraph, target that graph family
++   next rather than continuing to widen GDN fallbacks.
++
++## Sampler And Prefill Replay Repair 2026-06-14ba-bd
++
++Patch snapshots:
++
++- `patches/vllm-qwen36-decode-replay-gdn-native-fallback-20260613ay.patch`
++- `patches/vllm-qwen36-xpu-greedy-topk-fallback-20260614bd.patch`
++
++New diagnostic/correctness knob:
++
++- `VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK=1`
++  - On XPU, replaces greedy `logits.argmax(dim=-1)` with
++    `torch.topk(logits, k=1, dim=-1).indices`.
++  - This is mathematically equivalent for greedy sampling, so it should not
++    change quality when the logits are correct.
++
++Key trace finding:
++
++- With `VLLM_XPU_GDN_NATIVE_FALLBACK=decode`, the JSON canary moved from the
++  original repeat-53 failure to repeat 66.
++- Replay microscope on adjacent requests showed the model logits were already
++  correct at the first remaining JSON failure:
++  - good and bad request top-1 logit token was `3715` on all ranks.
++  - `sampler_output.sampled_token_ids` was wrong on the bad request
++    (`62085` on rank 0 and `5` on ranks 1-3).
++- Replacing XPU greedy `argmax` with top-k fixed that sampler-side corruption.
++
++Artifacts:
++
++- `data/qwen36-gdnfallbackdecode-microscope-20260614ba.log`
++- `data/qwen36-replay-microscope-gdnfallbackdecode-json-20260614ba-r{rank}.jsonl`
++- `data/qwen36-gdnfallbackdecode-topkgreedy-20260614bb.log`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-topkgreedy-json-repeat96-20260614bb.json`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-topkgreedy-color-repeat96-20260614bb.json`
++- `data/qwen36-gdnfallbackdecode-topkgreedy-colortrace-20260614bc.log`
++- `data/qwen36-replay-microscope-topkgreedy-color-20260614bc.jsonl`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-topkgreedy-json-repeat96-20260614bc.json`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-topkgreedy-color-repeat96-20260614bc.json`
++
++Results before the prefill replay guard:
++
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=decode` plus
++  `VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK=1`:
++  - JSON canary passed `96/96`.
++  - Color canary still failed after JSON warmup at repeat `74`.
++- The color microscope showed a different failure class:
++  - The first generated color token was already wrong.
++  - At `num_computed_tokens_cpu=0`, request `73` produced the expected
++    first-token top-1 `11855` (`blue`), while request `74` produced top-1
++    `9092`.
++  - The sampler followed the top logit correctly.
++  - `sample_hidden_states` were corrupt before logits and split by rank group:
++    ranks 0-1 and ranks 2-3 had different fingerprints.
++
++Working correctness stack:
++
++- `VLLM_XPU_GDN_NATIVE_FALLBACK=decode`
++- `VLLM_XPU_ZERO_FRESH_GDN_STATE=1`
++- `VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK=1`
++- `VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1`
++- `--no-async-scheduling`
++
++Validation artifacts:
++
++- `data/qwen36-gdnfallbackdecode-topkgreedy-prefillbypass-20260614bd.log`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-topkgreedy-prefillbypass-json-repeat96-20260614bd.json`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-topkgreedy-prefillbypass-color-repeat96-20260614bd.json`
++- `data/qwen36-quark-int8-tp4-seq1-gdnfallbackdecode-topkgreedy-prefillbypass-color-repeat256-20260614bd.json`
++- `data/qwen36-quark-int8-tp4-replaycorrectness-quality-suite-20260614bd.json`
++- `data/qwen36-quark-int8-tp4-replaycorrectness-p512o512-metrics-20260614bd.json`
++
++Validation results:
++
++- JSON canary: `96/96` passed.
++- Color canary immediately after JSON warmup: `96/96` passed.
++- Extended color canary after that: `256/256` passed.
++- Text quality suite with thinking disabled: passed exact-answer, copy,
++  arithmetic, JSON schema, 8-run repeat hash stability, and 4k-token needle
++  recall.
++- Short p512/o512 speed read, completions, stream, EOS ignored, two measured
++  repeats after a 64-token warmup:
++  - corrected after-first-chunk output throughput: `85.85 tok/s` mean.
++  - end-to-end output throughput: `84.50 tok/s` mean.
++  - client TTFT: `106.49 ms` mean.
++  - vLLM decode time per generation token: `11.65 ms` mean.
++- Startup provenance:
++  - model load memory: `8.58 GiB`.
++  - available KV cache memory: `20.66 GiB`.
++  - graph capture memory delta: `-0.05 GiB`.
++  - graph capture still active for mixed prefill/decode buckets, but the
++    non-uniform prefill runtime replay boundary is bypassed.
++
++Updated interpretation:
++
++- The original repeat-53 JSON failure needed the GDN decode fallback.
++- The next repeat-66 JSON failure was an XPU greedy `argmax` correctness issue.
++- The next repeat-74 color failure was non-uniform prefill PIECEWISE replay
++  corruption, not sampling.
++- The current exact-output correctness stack passes the canaries that previously
++  failed, without changing model weights or logits semantics.
++
++Next actions:
++
++1. Promote the working stack into a reproducible launcher or model-slot file so
++   it is not lost.
++2. Run a small quality suite against the working stack and the BF16/eager
++   fallback where practical, comparing token IDs on deterministic prompts.
++3. Measure the speed cost of `VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1`.
++   If decode speed is unaffected, keep it for correctness and move performance
++   work back to decode/MoE.
++4. If prefill speed matters, localize the bad non-uniform prefill subgraph with
++   `VLLM_XPU_CUDAGRAPH_REPLAY_TRACE_SUBMOD_REGEX` and replace the broad prefill
++   bypass with a narrower submodule or batch-boundary guard.
++
++Promotion:
++
++- `scripts/launch-qwen36-quark-int8-accepted.sh` now defaults to the passing
++  correctness stack:
++  - `VLLM_XPU_GDN_NATIVE_FALLBACK=decode`
++  - `VLLM_XPU_ZERO_FRESH_GDN_STATE=1`
++  - `VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK=1`
++  - `VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1`
++  - `VLLM_EXTRA_ARGS=--no-async-scheduling` when no extra args are supplied.
++- Each value remains environment-overridable for controlled A/B tests.
+diff --git a/scripts/launch-qwen36-quark-int8-accepted.sh b/scripts/launch-qwen36-quark-int8-accepted.sh
+index 2669a43..46a25f3 100755
+--- a/scripts/launch-qwen36-quark-int8-accepted.sh
++++ b/scripts/launch-qwen36-quark-int8-accepted.sh
+@@ -36,13 +36,17 @@ export XPU_GRAPH="${XPU_GRAPH:-1}"
+ export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-1}"
+ export VLLM_XPU_FORCE_GRAPH_WITH_COMM="${VLLM_XPU_FORCE_GRAPH_WITH_COMM:-1}"
+ export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-1}"
+-export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES=1
+-export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP=1
+-export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT=1
+-export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT=1
++export VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES="${VLLM_XPU_USE_CUSTOM_OP_COLLECTIVES:-1}"
++export VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP="${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-1}"
++export VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-1}"
++export VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT="${VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT:-1}"
+ export VLLM_XPU_QUARK_W8A8_MOE=1
+ export VLLM_XPU_FORCE_QUARK_REPACK=0
+-export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone
++export VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT="${VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT:-clone}"
++export VLLM_XPU_GDN_NATIVE_FALLBACK="${VLLM_XPU_GDN_NATIVE_FALLBACK:-decode}"
++export VLLM_XPU_ZERO_FRESH_GDN_STATE="${VLLM_XPU_ZERO_FRESH_GDN_STATE:-1}"
++export VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK="${VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK:-1}"
++export VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY="${VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY:-1}"
+ export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0,1,2,3}"
+ export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1,2,3}"
+ export CCL_ATL_TRANSPORT=ofi
+@@ -134,6 +138,10 @@ fi
+ 
+ source /home/steve/.venvs/vllm-xpu/bin/activate
+ 
++if [[ -z "${VLLM_EXTRA_ARGS:-}" ]]; then
++  VLLM_EXTRA_ARGS="--no-async-scheduling"
++fi
++
+ EXTRA_ARGS=()
+ if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+   # shellcheck disable=SC2206

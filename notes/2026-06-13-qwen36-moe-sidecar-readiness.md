@@ -1,0 +1,963 @@
+# Qwen3.6 MoE Sidecar Readiness
+
+## Current Decision
+
+The all-rank layer-family timing points at the W8A8 MoE path, not collectives,
+as the next best no-quality-loss optimization target for c1 decode. The next
+engineering path stays on a resident/persistent MoE layerlet until replay data
+contradicts it.
+
+## Existing Replay Evidence
+
+- File-backed oneDNN layer-9/rank-0 MoE island:
+  `data/qwen36-onednn-moe-island-layer9-r1-20260612ay/onednn_moe_island_result.json`.
+  GEMM1 mean `34.462620 us`, GEMM2 mean `24.756200 us`.
+  `gemm1_vs_xpu_max_abs_diff`, `gemm2_vs_xpu_max_abs_diff`, and
+  `onednn_island_vs_xpu_fused_moe_max_abs_diff` were all `0.0`.
+- Resident two-GEMM pair:
+  `data/qwen36-onednn-moe-island-layer9-r1-resident-pair-rerun-20260612az.json`.
+  Pair mean `54.340054 us`, p50 `49.954 us`, min `28.714 us`, with exact raw
+  checksums for both GEMM outputs.
+- Multi-window oneDNN island:
+  `data/qwen36-onednn-moe-island-layer9-r1-multiwindow-20260612bc/multi_window_onednn_moe_island_result.json`.
+  `16/16` windows were exact. Aggregate max abs diffs were all `0.0`.
+  Mean GEMM1 across windows was `53.810433 us`; mean GEMM2 was `33.440583 us`.
+- Offset/active-offset layer-floor replay:
+  `data/qwen36-replay-digest-moe-layerfloor-offsetactive-20260613f.json` and
+  `data/qwen36-moe-fusion-target-budget-offsetactive-20260613h.md`.
+  Current exact `xpu_fused_moe` was `315.291681 us/layer`.
+  Exact fused-prologue offset-GEMM was `209.052431 us/layer`.
+  Exact fused-prologue active-offset-GEMM was `211.169644 us/layer`.
+  The candidate target for >200 tok/s is `189.100588 us/layer`, so the
+  current exact lower-bound candidates are useful but not endpoint-ready.
+
+## Rank Skew Check
+
+`data/qwen36-rank-route-forward-overlay-20260613n.json` rejects the simple
+route-skew explanation. Route counters were identical across ranks for all 40
+layers, while forward-end wait still varied:
+
+| rank | mean forward-end wait ms |
+|---:|---:|
+| 0 | 4.214303 |
+| 1 | 4.470655 |
+| 2 | 4.769202 |
+| 3 | 4.820472 |
+
+This keeps the focus on implementation overhead, dispatch boundaries, and
+possibly rank/device execution variance rather than rank-specific route
+distribution.
+
+## Source Readiness Change
+
+Patch artifact:
+`patches/vllm-xpu-qwen36-onednn-sidecar-end-offsets-20260613.patch`.
+
+The Python sidecar helper `_make_onednn_grouped_offsets` in
+`/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`
+now returns cumulative end offsets, matching the exact oneDNN grouped-memory
+runner. Smoke result:
+`data/qwen36-onednn-sidecar-offset-helper-smoke-20260613.json`.
+
+This is sidecar-readiness only. The accepted endpoint is unaffected unless the
+opt-in oneDNN sidecar probe/execution path is enabled.
+
+## One-GEMM Execute Prototype
+
+Patch artifact:
+`patches/vllm-xpu-qwen36-onednn-sidecar-execute-onegemm-20260613.patch`.
+
+This extends the existing sidecar probe with an opt-in
+`VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE` mode:
+
+- `0`, `false`, `off`, `dry`: descriptor/USM-wrap probe only.
+- `gemm1` or `1`: execute oneDNN grouped GEMM1 into `gemm1_output`.
+- `gemm2` or `2`: execute oneDNN grouped GEMM2 into `gemm2_output`.
+
+The default remains no execution. The probe still requires the existing
+sidecar env gate, max-call gate, rank/layer filters, and no active stream
+capture.
+
+Validation artifact:
+`data/qwen36-onednn-sidecar-execute-build-smoke-20260613.json`.
+
+- Targeted C++ build succeeded in
+  `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612`.
+- The built extension registered the new schema with `int execute_mode`.
+- A direct synthetic XPU smoke through standalone `importlib` was blocked by
+  oneDNN engine creation: `RuntimeError: could not create an engine` with
+  `bad engine kind`. This is the same shared oneDNN engine path used by the
+  vLLM process, so the next runtime test should run inside the normal vLLM
+  endpoint context, not via standalone import.
+
+Follow-up parity logging patch:
+`patches/vllm-xpu-qwen36-onednn-sidecar-parity-log-20260613.patch`.
+Validation:
+`data/qwen36-onednn-sidecar-parity-log-smoke-20260613.json`.
+
+When execute mode is `gemm1` or `gemm2`, the Python probe now clones the target
+scratch tensor before sidecar execution and logs:
+
+- target scratch tensor name,
+- pre-execute f32 checksum,
+- post-execute f32 checksum,
+- `max_abs_diff_f32` between post-execute oneDNN scratch and pre-execute XPU
+  scratch.
+
+This adds an intentional diagnostic sync for that single gated call. Promotion
+requires `max_abs_diff_f32 == 0.0`.
+
+## Next Tasks
+
+1. Done: run the one-GEMM execute prototype inside a normal vLLM process
+   context with `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`, max calls `1`,
+   rank `0`, and `layers.9`.
+2. Done: require `parity.max_abs_diff_f32 == 0.0` for GEMM1.
+3. Done: repeat for GEMM2 and require `parity.max_abs_diff_f32 == 0.0`.
+4. Extend to resident two-GEMM execution with cached descriptors/primitives.
+5. Add activation/quant2 and gather/combine parity until the full island
+   returns `max_abs_diff=0.0` versus `xpu_fused_moe`.
+6. Only then run endpoint A/B. Promotion requires exact canary token IDs,
+   four measured repeats after warmup, peak VRAM/power/thermal provenance, and
+   the accepted quality gates.
+
+## Success Gate
+
+The non-speculative layerlet needs to beat roughly `189 us/layer`, ideally with
+one resident/fused dispatch boundary. If a replay-exact layerlet cannot beat
+that budget, shift the next >200 tok/s effort toward exact target-verified
+speculation parity.
+
+## Live Endpoint Sidecar GEMM Parity
+
+Date: 2026-06-13.
+
+Summary artifact:
+`data/qwen36-onednn-sidecar-execute-live-sycl8-20260613.json`.
+
+Launcher patch artifact:
+`patches/qwen36-sidecar-launcher-sycl8-runtime-20260613.patch`.
+
+The first endpoint-side one-GEMM execute attempt used the earlier sidecar build
+from `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-20260612`.
+That build pulled in oneAPI 2026 and linked `_xpu_C.abi3.so` against
+`libsycl.so.9`. In the accepted PyTorch/vLLM runtime lane, the extension could
+not infer the XPU device type. When forced toward the oneAPI 2026 runtime, the
+import failed with an unresolved `urDeviceWaitExp` symbol from
+`LIBUR_LOADER_0.12`.
+
+Runtime lesson: sidecar builds must stay in the PyTorch-compatible SYCL 8 lane.
+Do not source global oneAPI 2026 into the accepted vLLM process.
+
+Rebuilt sidecar:
+
+```bash
+BUILD_DIR=/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-probe-sycl8-20260613 \
+INSTALL_PREFIX=/tmp/qwen36-sidecar-probe-sycl8-20260613 \
+ONEAPI_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh \
+JOBS=4 GDN_KERNELS=ON CLEAN=1 \
+scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+```
+
+The new `_xpu_C.abi3.so` links against `libsycl.so.8`. With the vLLM launcher
+LD path active, import, schema registration, and vLLM XPU platform detection
+passed. Plain `ldd` outside that launcher still reports missing oneAPI/PyTorch
+runtime libraries, so use the launcher environment for validation.
+
+GEMM1 endpoint-side parity:
+
+- tmux tag: `sidecar-exec-gemm1-20260613`
+- JSONL:
+  `data/qwen36-onednn-sidecar-execute-gemm1-live-20260613--2043961.jsonl`
+- layer: `language_model.model.layers.9.mlp.experts`
+- `execute_mode`: `1`
+- `execute_ok`: `1`
+- `construct_us`: `15`
+- `execute_wait_us`: `3244`
+- parity target: `gemm1_output`
+- `before_checksum_f32`: `-1768229.0`
+- `after_checksum_f32`: `-1768229.0`
+- `max_abs_diff_f32`: `0.0`
+
+GEMM2 endpoint-side parity:
+
+- tmux tag: `sidecar-exec-gemm2-20260613`
+- JSONL:
+  `data/qwen36-onednn-sidecar-execute-gemm2-live-20260613--2045166.jsonl`
+- layer: `language_model.model.layers.9.mlp.experts`
+- `execute_mode`: `2`
+- `execute_ok`: `1`
+- `construct_us`: `8`
+- `execute_wait_us`: `14433`
+- parity target: `gemm2_output`
+- `before_checksum_f32`: `-8468.5048828125`
+- `after_checksum_f32`: `-8468.5048828125`
+- `max_abs_diff_f32`: `0.0`
+
+The `elapsed_ms` fields in these one-shot logs include diagnostic clone/sync
+work and possibly one-time setup effects. They are not promotion-grade
+steady-state layerlet timing.
+
+The accepted endpoint was restored after the sidecar probes:
+
+- tmux: `qwen36-tp4-accepted-restored-after-sidecar-gemm-20260613`
+- launch log:
+  `/tmp/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-gemm-20260613.log`
+- no-thinking text smoke:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-gemm-quality-nothink-smoke-20260613.json`
+- result: `pass_all=true`, `baseline_match_all=true`
+
+Next engineering gate: implement a resident two-GEMM sidecar path with cached
+descriptors/primitives and a parity-only diagnostic mode. Only then should the
+activation/quant2 and gather/combine stages be pulled into the same island.
+
+## Cached Two-GEMM Sidecar Diagnostic
+
+Date: 2026-06-13.
+
+Patch artifact:
+`patches/vllm-xpu-qwen36-onednn-sidecar-both-cached-20260613.patch`.
+
+Summary artifact:
+`data/qwen36-onednn-sidecar-both-cached-live-20260613.json`.
+
+Build:
+
+```bash
+BUILD_DIR=/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613 \
+INSTALL_PREFIX=/tmp/qwen36-sidecar-both-sycl8-20260613 \
+ONEAPI_VARS=/opt/intel/oneapi/compiler/2025.3/env/vars.sh \
+JOBS=4 GDN_KERNELS=ON CLEAN=1 \
+scripts/build-vllm-xpu-kernels-xpu-c-only.sh
+```
+
+Result: build passed. New extension:
+`/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-both-sycl8-20260613/_xpu_C.abi3.so`,
+size `55794984` bytes, linked against `libsycl.so.8`.
+
+Import/schema check passed in overlay
+`/tmp/qwen36-vllm-xpu-sidecar-overlay-both-import-20260613`.
+The parser maps `both`, `two_gemm`, and `3` to execute mode `3`, and vLLM
+still detects `XPUPlatform xpu`.
+
+Implementation:
+
+- Add `execute_mode=3` for a diagnostic two-GEMM sidecar call.
+- Cache oneDNN grouped matmul primitive/descriptors by
+  `(device, m, k, n, num_experts, dst_dtype, weight_layout)`.
+- Submit GEMM1 and GEMM2 through one sidecar call and wait once after GEMM2.
+- Expand stats from 24 to 32 fields:
+  - `24`: GEMM1 cache hit
+  - `25`: GEMM1 construct us
+  - `26`: GEMM1 execute/submit us
+  - `27`: GEMM2 cache hit
+  - `28`: GEMM2 construct us
+  - `29`: GEMM2 execute/wait us
+  - `30`: both-wall us
+  - `31`: cache size
+- Python parity now supports multiple targets for `execute_mode=3`.
+
+First live probe:
+`data/qwen36-onednn-sidecar-execute-both-cached-live-20260613--2055696.jsonl`.
+
+- `MAX_CALLS=2`
+- Both calls passed exact parity for `gemm1_output` and `gemm2_output`.
+- Call 1: `num_rows=8192`, `num_moe_inputs=65536`, `both_wall_us=19871`,
+  no cache hits, cache size `2`.
+- Call 2: `num_rows=48`, `num_moe_inputs=384`, `both_wall_us=1351`,
+  no cache hits, cache size `4`.
+- This validated the `both` mode, but not cache reuse because the two shapes
+  differed.
+
+Repeat live probe:
+`data/qwen36-onednn-sidecar-execute-both-cached-repeat-live-20260613--2056910.jsonl`.
+
+- `MAX_CALLS=5`
+- All five calls passed exact parity for both GEMM outputs.
+- Call 1: `num_rows=8192`, `both_wall_us=21116`, no cache hits.
+- Call 2: `num_rows=48`, `both_wall_us=1138`, no cache hits.
+- Call 3: `num_rows=8`, `both_wall_us=1088`, no cache hits.
+- Call 4: `num_rows=1`, `both_wall_us=309`, no cache hits, cache size `8`.
+- Call 5: `num_rows=1`, `both_wall_us=66`, GEMM1 cache hit `1`,
+  GEMM2 cache hit `1`, GEMM1 execute `24 us`, GEMM2 execute `29 us`,
+  cache size `8`.
+
+Interpretation:
+
+- This is a real correctness step and a useful timing signal for the two-GEMM
+  boundary.
+- It is not yet a production speed win. The sidecar still runs after the
+  accepted `xpu_fused_moe` path and the parity mode clones/synchronizes output
+  tensors for diagnostics.
+- The useful result is that repeated decode-shape oneDNN grouped GEMM
+  primitives can be cached and both GEMMs can complete inside one diagnostic
+  boundary with exact scratch parity.
+
+Accepted endpoint restored afterward:
+
+- tmux: `qwen36-tp4-accepted-restored-after-sidecar-both-20260613`
+- model endpoint: `qwen36-35b-a3b-fp8`, max model length `32768`
+- no-thinking smoke:
+  `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-both-quality-nothink-smoke-20260613.json`
+- result: `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`
+
+Next gate: move the sidecar boundary earlier so the oneDNN GEMM1 output feeds
+activation/quant2 and then cached GEMM2, still under exact parity mode. Only
+after that should we include gather/combine and run endpoint A/B.
+
+## GEMM1 Replacement Gate
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-gemm1-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-gemm1-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-gemm1-live-20260613--2059780.jsonl`
+- `data/qwen36-onednn-sidecar-replace-gemm1-quality-live-20260613--2060920.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-gemm1-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-eager-control-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-replace-gemm1-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Added opt-in `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_GEMM1=1`.
+- Replacement is active only with `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=gemm1`.
+- The hook runs after accepted GEMM1 and before activation/quant2.
+- oneDNN writes into the live `gemm1_output` buffer, then the existing
+  activation/quant2 and GEMM2 path consumes that buffer.
+- The normal post-gather sidecar probe is skipped while replacement mode is
+  active, avoiding a second diagnostic sidecar invocation.
+
+Validation:
+
+- `python3 -m py_compile` passed for `fused_moe_interface.py`.
+- Short completion probe: 5 live layer-9 rank-0 calls, all exact parity,
+  `max_abs_diff_f32=0.0`.
+- Repeated decode-shape replacement call reported stats construct `6 us` and
+  execute/wait `44 us`.
+- No-thinking quality with replacement failed arithmetic: expected `60`,
+  observed `58`.
+- Crucial control: no-thinking quality on the same sidecar/eager endpoint with
+  sidecar probing disabled also failed the same arithmetic case with the same
+  observed `58` and the same output hash.
+- Accepted graph endpoint restored on `18080` and passed:
+  `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`.
+
+Decision:
+
+- Do not promote this as a speed path yet.
+- GEMM1 replacement parity is exact, and the quality failure is not attributed
+  to replacement because the eager no-replacement control produces the same
+  drift.
+- The current sidecar/eager endpoint is therefore not a sufficient quality
+  oracle for promotion. The next gate needs graph-compatible tensor parity or a
+  replay harness that compares full-island output against accepted-path tensors.
+
+Next:
+
+1. Compare final `gemm2_output` and gathered output after replacement, not just
+   `gemm1_output`.
+2. Add a replay harness using captured accepted-path inputs so the full island
+   can be validated outside the endpoint scheduler/eager mismatch.
+3. Once full-island parity is exact, measure without diagnostic clone/sync.
+
+## Live Both-Mode Gathered-Output Parity
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-both-gather-parity-20260613.patch`
+- `data/qwen36-onednn-sidecar-both-gather-parity-live-20260613.json`
+- `data/qwen36-onednn-sidecar-both-gather-parity-live-20260613--2066195.jsonl`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-both-gather-parity-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Extended the live sidecar diagnostic only.
+- For `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=both`, after oneDNN writes GEMM1
+  and GEMM2 scratch outputs, Python gathers the sidecar GEMM2 output into a
+  temporary output tensor.
+- The diagnostic compares that temporary gathered output against the accepted
+  already-gathered output and logs it as `target=gathered_output`.
+- The accepted output tensor is not mutated by this extra parity check.
+
+Result:
+
+- Five live layer-9/rank-0 calls were recorded.
+- Each call logged three parity targets: `gemm1_output`, `gemm2_output`, and
+  `gathered_output`.
+- Max abs diff was `0.0` for all three targets across all calls.
+- Repeated decode-shape call showed cached oneDNN primitives:
+  `gemm1_cache_hit=1`, `gemm2_cache_hit=1`, `gemm1_execute_us=24`,
+  `gemm2_execute_us=31`, `both_wall_us=69`, cache size `8`.
+- Accepted endpoint restored afterward and passed the no-thinking baseline
+  smoke: `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`.
+
+Decision:
+
+- This closes the live diagnostic parity gap for the sampled full island:
+  GEMM1, GEMM2, and gathered output are exact.
+- It is still not a speed result because the diagnostic runs after the existing
+  accepted MoE path and pays clone/sync/temporary-gather overhead.
+- Next promotion gate is a resident replacement island using this same
+  three-target parity check before timing.
+
+## Two-GEMM Live Replacement Gate
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-both-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-both-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-both-live-20260613--2070387.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-both-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-replace-both-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Added opt-in `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH=1`.
+- The Python wrapper calls the sidecar before existing W8A8 GEMM1 and before
+  existing W8A8 GEMM2.
+- Each replacement call uses an explicit execute-mode override:
+  `1` for GEMM1 and `2` for GEMM2, so the launcher can keep
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=off`.
+- The path is fail-closed per GEMM. If the sidecar helper returns `None`
+  because the op is unavailable, rank/layer filters do not match, stream
+  capture is active, or an exception disables the sidecar, the existing XPU
+  W8A8 GEMM runs for that GEMM.
+- After the capped log count is reached, `required_execution=True` keeps the
+  sidecar executing for matching calls without adding more JSONL rows.
+- The normal post-gather diagnostic sidecar probe is skipped while two-GEMM
+  replacement is active, avoiding an accidental extra sidecar invocation.
+
+Validation:
+
+- `python3 -m py_compile` passed for
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`.
+- Endpoint launched in eager sidecar mode on `18081` with replacement gated to
+  rank `0`, `layers\.9\.`.
+- Short completion returned successfully and the endpoint remained healthy.
+- JSONL captured `32` replacement records: `16` GEMM1 and `16` GEMM2.
+- No sidecar errors or disable messages were found in the server log.
+- Final logged decode-shape stats:
+  - GEMM1: cache hit `1`, construct `6 us`, execute/wait `47 us`
+  - GEMM2: cache hit `1`, construct `5 us`, execute/wait `39 us`
+- Median logged wrapper elapsed time was about `0.420 ms` for GEMM1 and
+  `0.345 ms` for GEMM2. These include Python/logging/sync effects and are not
+  promotion-grade timing.
+- Replacement-mode parity fields are expected to be nonzero because the
+  diagnostic clones pre-write scratch, then compares it with the sidecar output.
+  The exactness proof remains the earlier diagnostic `execute=both` gathered
+  parity gate where all sampled targets had `max_abs_diff_f32=0.0`.
+- The no-thinking smoke on the sidecar/eager replacement endpoint matched the
+  known eager-control weakness: exact OK, copy phrase, JSON, and repeat
+  stability passed, but arithmetic returned `58` instead of accepted `60`.
+- Accepted graph endpoint was restored on `18080` and passed the same
+  no-thinking smoke with `pass_all=true`, `baseline_match_all=true`, and
+  `repeat_pass=true`.
+
+Decision:
+
+- Keep the two-GEMM replacement gate as a useful plumbing step.
+- Do not promote or benchmark it as a speed win yet.
+- The next correctness gate must compare replacement output against a reference
+  tensor in the same request, or replay accepted-path captured tensors outside
+  the endpoint scheduler. Text quality on the eager sidecar endpoint is not
+  enough because that endpoint has a known arithmetic canary mismatch even
+  without replacement.
+
+Next:
+
+1. Add replacement-vs-reference parity using separate scratch buffers, not
+   pre-write scratch.
+2. Compare final gathered output under replacement before any broader rank or
+   layer rollout.
+3. Once exact, run a narrow timing A/B without diagnostic clone/sync.
+4. If timing is promising, broaden layer/rank coverage incrementally and run
+   the accepted quality/reliability protocol before any Localmaxxing update.
+
+## Same-Request Replacement Reference Parity
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-replace-reference-parity-20260613.patch`
+- `data/qwen36-onednn-sidecar-replace-reference-parity-live-20260613.json`
+- `data/qwen36-onednn-sidecar-replace-reference-parity-live-20260613--2074280.jsonl`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-reference-parity-quality-nothink-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-refparity-quality-nothink-smoke-20260613.json`
+
+Implementation:
+
+- Added opt-in
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_REFERENCE_PARITY=1`.
+- Under the existing two-GEMM replacement gate, the wrapper now computes the
+  current XPU W8A8 reference path into separate tensors while sidecar writes
+  the live replacement tensors.
+- The diagnostic logs exact parity for:
+  - `gemm1_output`
+  - `gemm2_a`
+  - `gemm2_a_scales`
+  - `gemm2_output`
+  - `gathered_output`
+- This is same-request parity, not pre-write scratch parity. It directly
+  compares the replacement transaction against the existing XPU path.
+- The diagnostic remains capped by `VLLM_XPU_MOE_ONEDNN_SIDECAR_MAX_CALLS` and
+  uses the existing rank/layer filters.
+
+Validation:
+
+- `python3 -m py_compile` passed for
+  `/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/fused_moe_interface.py`.
+- Endpoint launched in eager sidecar mode on `18081`, gated to rank `0` and
+  `layers\.9\.`.
+- Short completion and no-thinking smoke both completed without sidecar errors.
+- JSONL captured `48` rows:
+  - `24` sidecar execute records
+  - `24` replacement-reference parity records
+- All `24` reference records reported `gemm1_replaced=true` and
+  `gemm2_replaced=true`.
+- Aggregate max diff was `0.0` for every tracked target:
+  - `gemm1_output`: `0.0`
+  - `gemm2_a`: `0.0`
+  - `gemm2_a_scales`: `0.0`
+  - `gemm2_output`: `0.0`
+  - `gathered_output`: `0.0`
+- Final logged decode-shape sidecar stats remained in the same range:
+  - GEMM1: cache hit `1`, construct `6 us`, execute/wait `46 us`
+  - GEMM2: cache hit `1`, construct `5 us`, execute/wait `35 us`
+- The sidecar/eager no-thinking text smoke retained the known eager arithmetic
+  weakness: arithmetic returned `58`, while exact OK, copy phrase, JSON, and
+  repeat stability passed.
+- Accepted graph endpoint was restored on `18080` and passed no-thinking smoke
+  with `pass_all=true`, `baseline_match_all=true`, and `repeat_pass=true`.
+
+Decision:
+
+- This closes the replacement parity gap for the sampled layer/rank. The
+  two-GEMM replacement path is tensor-exact against same-request XPU reference
+  for all tracked outputs.
+- It is still not a speed result. Reference buffers, extra XPU reference work,
+  checksum syncs, and JSONL logging are all diagnostic overhead.
+- The next step is now benchmarkable in principle: run a narrow
+  diagnostic-off timing A/B for rank-0/layer-9 replacement, then re-enable this
+  parity gate at every broader rollout step.
+
+Next:
+
+1. Run diagnostic-off narrow timing A/B for rank-0/layer-9 replacement.
+2. If positive, expand one dimension at a time: more layers on rank 0, then all
+   ranks for one layer, then selected layer groups.
+3. Re-run same-request reference parity after every expansion before trusting
+   any timing.
+4. Keep accepted graph quality/reliability gates separate from eager sidecar
+   text smoke.
+
+## Diagnostic-Off Timing, Graph Compatibility, And Collective Replay
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/qwen36-sidecar-launcher-graph-switch-20260613.patch`
+- `data/qwen36-sidecar-diagnostic-off-collective-replay-summary-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-refparity-control-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-eager-control-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-replace-diagoff-capped-r0l9-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-graph-control-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-graph-replace-r0l9-p512o512-r4-20260613.json`
+- `data/qwen36-quark-int8-tp4-sidecar-graph-replace-r0l9-quality-nothink-smoke-20260613.json`
+- `data/qwen36-b70-collective-replay-allreduce-tp4-20260613.log`
+- `data/qwen36-b70-collective-replay-agrs-tp4-h2048-20260613.log`
+- `data/qwen36-collective-replay-devicelost-recovery-20260613/`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-collective-replay-quality-nothink-smoke-serial-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-collective-replay-serial-20260613.json`
+
+Implementation:
+
+- Made `scripts/launch-qwen36-quark-int8-sidecar-probe.sh`
+  graph-switchable with `ENFORCE_EAGER=0` and optional
+  `COMPILATION_CONFIG`.
+- Kept eager as the default sidecar mode so existing diagnostic runs are
+  unchanged.
+- Confirmed graph-mode sidecar overlay can match the accepted graph launcher
+  when replacement is disabled.
+
+Timing:
+
+- Accepted graph control: `99.975721 tok/s`, `10.022441 ms/token`.
+- Sidecar eager control: `10.606164 tok/s`, `94.470476 ms/token`.
+- Capped eager rank-0/layer-9 replacement:
+  `10.474151 tok/s`, `95.655093 ms/token`, `-1.244676%` versus eager
+  control.
+- Sidecar graph control: `99.984597 tok/s`, `10.021935 ms/token`,
+  `+0.008879%` versus accepted graph control.
+- Sidecar graph rank-0/layer-9 replacement:
+  `99.711101 tok/s`, `10.049177 ms/token`, `-0.273539%` versus sidecar graph
+  control.
+- The first attempted diagnostic-off run was invalid for speed: an empty log
+  env fell back to the default JSONL path and high `MAX_CALLS` kept clone,
+  checksum, and per-call logging active for thousands of calls.
+
+Quality:
+
+- Sidecar graph rank-0/layer-9 replacement passed the no-thinking smoke and
+  matched the accepted baseline.
+- After collective replay and XPU recovery, the accepted graph endpoint was
+  restored and passed serial no-thinking quality plus serial provenance.
+- A parallel quality/provenance attempt failed the arithmetic/provenance gates;
+  keep that as a negative artifact and avoid concurrent quality gates on this
+  single-request canary path.
+
+Collective replay:
+
+- TP4 all-reduce replay with the accepted rank map was fast for the tested
+  small payloads: in-place cases were roughly `0.051-0.056 ms`, clone cases
+  `0.071-0.075 ms`, and empty-copy cases `0.072-0.082 ms`.
+- AG/RS tensor forms for hidden `2048` and `1-64` tokens were roughly
+  `0.056-0.066 ms`.
+- vLLM-compatible all-gather forms were roughly `0.076-0.091 ms`.
+- List-based all-gather/reduce-scatter forms were roughly `0.116-0.160 ms`,
+  about `2-3x` slower than tensor forms for these small shapes.
+- The AG/RS stress run reached `all_gather_into_tensor_equal` at `96` tokens,
+  then the subsequent list/compat case did not complete. The thrown
+  `UR_RESULT_ERROR_DEVICE_LOST` was captured by the recovery copy-smoke
+  artifact rather than the tee'd replay log. Re-sourcing the accepted oneAPI
+  lane and running a fresh torch XPU copy smoke recovered without reboot.
+
+Decision:
+
+- Do not broaden the current sidecar replacement path. It is tensor-exact and
+  graph-compatible for the narrow sampled layer/rank, but it is not faster.
+- Small TP4 all-reduces are not the missing `~5 ms/token` by themselves.
+- Avoid list-style AG/RS paths where tensor collectives are possible, and do
+  not run broader AG/RS stress without isolation because the 96-token replay
+  exposed a device-lost stability hazard.
+- The next real MoE speed path must remove more fixed dispatch overhead than
+  the current Python sidecar replacement. A true persistent graph/layerlet or
+  device-resident command queue is still the right direction.
+
+Next:
+
+1. Keep the graph-switchable sidecar launcher for future exactness tests, but
+   do not treat current rank-0/layer-9 replacement as a speed candidate.
+2. Build the next MoE prototype around a persistent resident layerlet or
+   command queue, not another post-hoc helper call.
+3. Continue oracle `k=1` verifier/KV parity repair in parallel, because it
+   remains the strongest no-quality-loss route to a `2x` c1 decode gain.
+4. For any future candidate, run adjacent graph-control A/B, serial quality
+   gates, provenance, peak VRAM/power/thermal capture, and no parallel gate
+   interference.
+
+## Cached/No-Wait Sidecar Substrate
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-cached-nowait-20260613.patch`
+- `data/qwen36-onednn-sidecar-nowait-summary-20260613.json`
+- `data/qwen36-onednn-sidecar-nowait-parity-live-20260613.jsonl`
+- `data/qwen36-onednn-sidecar-nowait-cache-live-20260613.jsonl`
+- `data/qwen36-onednn-sidecar-nowait-parity-completion-20260613.json`
+- `data/qwen36-onednn-sidecar-nowait-cache-completion-20260613.json`
+- `data/qwen36-quark-int8-tp4-nowait-sidecar-devicelost-recovery-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-nowait-sidecar-retry-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-nowait-sidecar-quality-nothink-frontdoor-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-nowait-sidecar-retry-completion-ok-20260613.json`
+
+Implementation:
+
+- Added cached per-GEMM sidecar execute modes:
+  - `11`: GEMM1 cached path, no explicit post-execute wait.
+  - `12`: GEMM2 cached path, no explicit post-execute wait.
+  - `13`: two-GEMM cached path, no explicit final wait.
+- Added `VLLM_XPU_MOE_ONEDNN_SIDECAR_NO_WAIT=1` so the existing
+  `REPLACE_BOTH` path can use mode `11` for GEMM1 and mode `12` for GEMM2.
+- Extended sidecar stats from 32 to 40 entries and added named JSON fields for
+  wait flags and cached execution path.
+- Built `_xpu_C.abi3.so` in
+  `/home/steve/src/vllm-xpu-kernels/build/qwen36-sidecar-nowait-sycl8-20260613`.
+- Loader/schema smoke passed through the sidecar overlay.
+
+Validation:
+
+- Temporarily stopped the accepted `18080` endpoint because it occupied all four
+  XPUs; restored it after diagnostics.
+- Narrow parity endpoint ran on `18081`, eager, rank `0`, `layers\.9\.`,
+  `REPLACE_BOTH=1`, reference parity enabled, no-wait enabled.
+- Same-request replacement parity captured `8` records with both sidecar GEMMs
+  active.
+- Every tracked target stayed exact with aggregate max diff `0.0`:
+  `gemm1_output`, `gemm2_a`, `gemm2_a_scales`, `gemm2_output`, and
+  `gathered_output`.
+- Cache probe captured `64` sidecar records with parity disabled and no-wait
+  enabled.
+- Repeated decode shape `num_rows=1, num_moe_inputs=8` hit cached oneDNN
+  primitives after the first shape instance:
+  - mode `11`: `28/29` records hit cache, median construct `0 us`, median
+    execute field `27 us`.
+  - mode `12`: `28/29` records hit cache, median construct `0 us`, median
+    execute field `23 us`.
+
+Reliability:
+
+- The first accepted-lane restore reached `/v1/models`, then hit
+  `UR_RESULT_ERROR_DEVICE_LOST` on the first direct chat quality request at
+  `block_table.copy_to_gpu`.
+- Stopping the failed service and running a fresh torch XPU copy smoke recovered
+  all four B70s without reboot.
+- A second accepted-lane launch on `18080` passed:
+  - completion execution smoke,
+  - accepted provenance/token sentinel check with `ok=true`,
+  - local no-thinking frontdoor quality smoke with `pass_all=true`.
+- Lesson: sidecar diagnostics remain capable of leaving the driver/runtime in a
+  fragile state even after tensor parity passes. Keep the restore sequence as:
+  stop diagnostic endpoint, run XPU copy smoke, relaunch accepted endpoint,
+  run provenance, then run isolated no-thinking frontdoor quality.
+
+Decision:
+
+- Accept this as an exact, scoped substrate for future layerlet work.
+- Do not promote it as a speed win. The Python sidecar helper is guarded out
+  during XPU graph capture, and graph-mode production speed needs a captured
+  custom-op or persistent layerlet boundary.
+- Do not broaden the Python helper to all ranks/all layers as a performance
+  candidate. Broadening should happen only after the same cached/no-wait
+  semantics move inside a graph-captured boundary.
+- Treat the post-diagnostic device-lost restore failure as a reliability cost
+  that must be solved or avoided before any all-layer sidecar/layerlet work.
+
+Next:
+
+1. Build the captured persistent MoE layerlet/custom-op boundary using this
+   cached/no-wait sidecar behavior as the exactness reference.
+2. Add staged all-rank/all-layer parity gates before broad rollout.
+3. Keep oracle `k=1` KV/block-table parity repair active as the parallel
+   no-quality-loss speed path.
+
+## Middle Layerlet Prototype
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-middle-layerlet-20260613.patch`
+- `data/qwen36-onednn-sidecar-middle-layerlet-summary-20260613.json`
+- `data/qwen36-onednn-sidecar-middle-parity-live-20260613-2147490.jsonl`
+- `data/qwen36-pre-middle-sidecar-recovery-20260613/`
+- `data/qwen36-post-middle-sidecar-recovery-20260613/`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-middle-sidecar-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-middle-sidecar-chat-ok-nothink-20260613.json`
+
+Implementation:
+
+- Added a one-call middle sidecar execute path in `_xpu_C`:
+  cached oneDNN GEMM1, exact XPU `silu_and_mul_quant_int8_xpu_out`, then
+  cached oneDNN GEMM2.
+- Added execute modes:
+  - `23`: middle path with GEMM2 wait.
+  - `33`: middle path without the final explicit GEMM2 wait.
+- Added parser aliases including `middle`, `layerlet`,
+  `gemm1_silu_quant_gemm2`, and `middle_nowait`.
+- Extended sidecar stats with `middle_activation_quant_us` and
+  `middle_wall_us`.
+- Kept replacement opt-in and fail-closed behind the existing sidecar gates:
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_PROBE=1`,
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_REPLACE_BOTH=1`, and
+  `VLLM_XPU_MOE_ONEDNN_SIDECAR_EXECUTE=middle_nowait`.
+
+Validation:
+
+- Loader/schema smoke passed with the rebuilt artifact at
+  `/tmp/qwen36-sidecar-middle-sycl8-20260613/vllm_xpu_kernels/_xpu_C.abi3.so`.
+- Temporarily stopped the accepted `18080` service, ran pre-diagnostic XPU copy
+  smoke, and launched the candidate on `18081`.
+- Scope: eager, rank `0`, `layers\.9\.`, `execute_mode=33`,
+  `REPLACE_BOTH=1`, reference parity enabled, `DRY_DESCRIPTORS=0`, and
+  `MAX_CALLS=16`.
+- Captured `16` sidecar execute rows and `16` replacement parity rows.
+- Replacement flags were `(True, True)` for all `16` parity rows.
+- All tracked reference comparisons were exact with max diff `0.0`:
+  `gemm1_output`, `gemm2_a`, `gemm2_a_scales`, `gemm2_output`, and
+  `gathered_output`.
+- Warm cached decode-shape stats:
+  - `middle_wall_us`: median `78 us`, min `71 us`.
+  - `middle_activation_quant_us`: median `12.5 us`, min `11 us`.
+  - GEMM cache hits were active after first-shape construction.
+
+Reliability:
+
+- The candidate stayed healthy through the canary requests and did not hit
+  device lost.
+- Direct backend chat quality canary is not a promotion signal here because the
+  direct backend did not inject no-thinking template kwargs and therefore
+  emitted thinking text; one multimodal case also correctly failed because this
+  text-only launch permits zero images.
+- After stopping the candidate, the post-diagnostic XPU copy smoke passed on
+  all four B70s.
+- Restored the accepted graph service on `127.0.0.1:18080`.
+- Accepted provenance passed with `ok=true`, and a no-thinking chat smoke
+  returned exactly `OK`.
+
+Decision:
+
+- Keep this as an exact substrate for the next MoE layerlet branch.
+- Do not count it as an endpoint speed win. It is still an eager diagnostic
+  helper and does not run inside the accepted XPU graph capture path.
+- Do not broaden to all layers/ranks until the same boundary is available as a
+  graph-captured custom op, persistent layerlet, or device-resident command
+  queue.
+
+Next:
+
+1. Convert this exact middle boundary into a graph-captured registered op or
+   persistent layerlet that can replace the existing graph MoE body.
+2. Add a parity harness for the captured op before any endpoint benchmark:
+   rank `0`/layer `9`, then all ranks for layer `9`, then a small layer set.
+3. If the captured op remains exact, run adjacent graph-control A/B with warm
+   repeats, provenance, canary token checks, VRAM, and thermal/power capture.
+4. Keep oracle `k=1` verifier/KV parity repair active because it remains the
+   larger no-quality-loss speed path.
+
+## Stats-Free XPU Graph Capture Smoke
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `patches/vllm-xpu-qwen36-onednn-sidecar-statsfree-capture-20260613.patch`
+- `data/qwen36-sidecar-middle-statsfree-capture-summary-20260613.json`
+- `data/qwen36-sidecar-middle-statsfree-xpugraph-smoke-20260613.json`
+- `data/qwen36-pre-sidecar-capture-smoke-recovery-20260613/`
+- `data/qwen36-post-sidecar-capture-smoke-recovery-20260613/`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-sidecar-capture-smoke-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-provenance-after-sidecar-capture-smoke-rerun-20260613.json`
+- `data/qwen36-quark-int8-tp4-accepted-restored-after-sidecar-capture-smoke-chat-ok-nothink-20260613.json`
+
+Implementation:
+
+- Added stats-free execute aliases:
+  - `123`: middle path with GEMM2 wait, return existing `gemm2_output`.
+  - `133`: middle no-wait path, return existing `gemm2_output`.
+- The body is the same exact middle path as `23`/`33`; the difference is only
+  the return path. It avoids allocating the CPU stats tensor after the device
+  work, which was the obvious capture blocker.
+- Parser aliases include `middle_nowait_return_output` and
+  `layerlet_nowait_return_output`.
+- Built `_xpu_C.abi3.so` into
+  `/tmp/qwen36-sidecar-middle-capture-sycl8-20260613/vllm_xpu_kernels/_xpu_C.abi3.so`.
+
+Validation:
+
+- Import/mode smoke passed: `middle_nowait_return_output` maps to
+  `execute_mode=133`.
+- With accepted stopped and XPUs freed, a standalone smoke saw all four XPUs.
+- A tiny baseline `torch.xpu.XPUGraph` add/copy capture replayed correctly.
+- The stats-free sidecar middle op captured and replayed inside
+  `torch.xpu.XPUGraph`.
+- The returned tensor shares the `gemm2_output` storage.
+- Capture elapsed time in the smoke was `0.007206 s`; this is a capture
+  feasibility signal, not a throughput metric.
+
+Reliability:
+
+- Running the same graph smoke while the accepted service owned all four cards
+  made a standalone PyTorch process report `device_count=0`; do not run capture
+  diagnostics beside the accepted service.
+- Pre- and post-capture XPU copy smokes passed.
+- Accepted service was restored on `127.0.0.1:18080`.
+- The first old-token provenance run after restore had a natural-prompt
+  sentinel drift; an immediate rerun passed all sentinels. Record both rather
+  than hiding the warmup/cache sensitivity.
+- No-thinking chat smoke returned exactly `OK`.
+
+Decision:
+
+- This is the first proof that the one-call middle sidecar boundary can be
+  graph captured in isolation once stats allocation is removed.
+- Still not a speed win: the accepted vLLM graph MoE path does not call this
+  stats-free op yet.
+- Next implementation should wire `execute_mode=133` into the graph path with a
+  captured-op parity gate, not broaden the eager diagnostic helper.
+
+Next:
+
+1. Add a capture-safe replacement gate that can run during vLLM graph capture
+   without tensor logging/checksum work.
+2. Start with rank `0`/layer `9` only and compare graph-control versus
+   captured sidecar graph using token sentinels and same-request tensor parity
+   where possible.
+3. If endpoint graph capture works, move timing from synthetic capture smoke to
+   adjacent c1 A/B repeats.
+
+## vLLM Graph Gate Rejection
+
+Date: 2026-06-13.
+
+Artifacts:
+
+- `data/qwen36-sidecar-capture-gate-summary-20260613.json`
+- `patches/vllm-xpu-qwen36-onednn-sidecar-capture-gate-20260613.patch`
+- `data/qwen36-sidecar-capture-gate-mode133-l9-r0-20260613.log`
+- `data/qwen36-onednn-sidecar-capture-gate-20260613-2168129.jsonl`
+- `data/qwen36-sidecar-capture-gate-provenance-20260613.json`
+- `data/qwen36-post-sidecar-capture-gate-devicelost-recovery-20260613/`
+- `data/qwen36-sidecar-capture-gate-mode123-l9-r0-20260613.log`
+- `data/qwen36-onednn-sidecar-capture-gate-mode123-20260613-2175292.jsonl`
+- `data/qwen36-sidecar-capture-gate-mode123-chat-ok-nothink-20260613.json`
+- `data/qwen36-post-sidecar-capture-gate-mode123-recovery-20260613/`
+- `data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-provenance-20260613.json`
+- `data/qwen36-accepted-restored-after-sidecar-capture-gate-mode123-provenance-rerun-20260613.json`
+
+Implementation:
+
+- Added a narrow capture gate in `_maybe_probe_onednn_sidecar`:
+  - compute `execute_mode` before the stream-capture early return;
+  - allow captured execution only when `required_execution` is true and the
+    mode returns an existing output tensor (`123` or `133`);
+  - keep tensor logging, parity clones, CPU copies, and stats parsing disabled
+    during capture;
+  - return `gemm2_output` from the fake registration for `123/133`.
+- Tested only rank `0`, layer `9`, `REPLACE_BOTH=1`, `DRY_DESCRIPTORS=0`,
+  and `OFFSETS=1`.
+
+Results:
+
+- Mode `133` (`middle_nowait_return_output`) reached endpoint health and graph
+  capture finished. The sidecar log captured nine rank-0/layer-9 startup rows
+  with `execute_mode=133`, no stats tensor, and return tensors pointing at
+  `gemm2_output`.
+- The first real request returned HTTP 500. Rank 0 then reported
+  `UR_RESULT_ERROR_DEVICE_LOST` while the next host-to-device metadata copy was
+  running. The stack points at `block_table.copy_to_gpu` and
+  `num_computed_tokens.copy_`, which is likely downstream of an invalid queue
+  state caused by replaying the captured oneDNN stream work.
+- Mode `123` (`middle_return_output`) also reached endpoint health, but during
+  graph capture the sidecar hit
+  `wait cannot be called for a queue which is recording to a command graph`.
+  The helper disabled itself, graph capture completed, and a request returned
+  HTTP 200 with `OK.`. This is stable because it fell back to the baseline, not
+  because the sidecar ran.
+
+Decision:
+
+- Reject both direct vLLM graph-captured oneDNN sidecar modes.
+- Do not promote or benchmark. There is no speed result.
+- The standalone `XPUGraph` smoke remains useful, but vLLM replay is stricter:
+  mode `133` is replay-unsafe and mode `123` cannot wait inside capture.
+
+Next:
+
+1. Stop trying to replay oneDNN engine-stream work inside vLLM XPU graphs.
+2. Move the middle MoE boundary to a graph-native SYCL/custom-op layerlet where
+   all work is enqueued on the captured XPU stream, or to a persistent
+   device-resident command queue with explicit graph-safe synchronization.
+3. Keep the eager oneDNN sidecar as an exact oracle and timing substrate for
+   the native layerlet implementation.
+4. Continue oracle `k=1` speculation parity work in parallel because it is still
+   the most plausible larger no-quality-loss speed path.

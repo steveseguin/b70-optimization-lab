@@ -1,0 +1,221 @@
+diff --git a/vllm/v1/spec_decode/ngram_proposer.py b/vllm/v1/spec_decode/ngram_proposer.py
+index 53199d0ce..4a65d0402 100644
+--- a/vllm/v1/spec_decode/ngram_proposer.py
++++ b/vllm/v1/spec_decode/ngram_proposer.py
+@@ -1,6 +1,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import json
+ import os
++import time
++from pathlib import Path
++from typing import Any
+ 
+ import numpy as np
+ import torch
+@@ -25,6 +29,15 @@ class NgramProposer:
+         self.k = vllm_config.speculative_config.num_speculative_tokens
+         # Maximum length of the model.
+         self.max_model_len = vllm_config.model_config.max_model_len
++        self.oracle_records = self._load_oracle_records()
++        self.oracle_trace_file = os.environ.get("VLLM_XPU_ORACLE_DRAFT_LOG")
++        self.oracle_trace_max_lines = int(
++            os.environ.get("VLLM_XPU_ORACLE_DRAFT_LOG_MAX_LINES", "0") or "0"
++        )
++        self.oracle_trace_lines = 0
++        self.oracle_min_prefix = int(
++            os.environ.get("VLLM_XPU_ORACLE_DRAFT_MIN_PREFIX", "1") or "1"
++        )
+ 
+         # Pre-allocate buffers for numba batch propose.
+         max_num_seqs = vllm_config.scheduler_config.max_num_seqs
+@@ -54,11 +67,170 @@ class NgramProposer:
+ 
+         # Trigger Numba JIT compilation for N-gram proposer.
+         # This usually takes less than 1 second.
+-        self.propose(
+-            [[]] * 1024,
+-            np.zeros(1024, dtype=np.int32),
+-            np.zeros((1024, self.max_model_len), dtype=np.int32),
+-        )
++        if not self.oracle_records:
++            self.propose(
++                [[]] * 1024,
++                np.zeros(1024, dtype=np.int32),
++                np.zeros((1024, self.max_model_len), dtype=np.int32),
++            )
++
++    def _load_oracle_records(self) -> list[dict[str, Any]]:
++        path = os.environ.get("VLLM_XPU_ORACLE_DRAFT_TRACE")
++        if not path:
++            return []
++
++        data = json.loads(Path(path).read_text(encoding="utf-8"))
++        records: list[dict[str, Any]] = []
++        for item in data.get("cases", []):
++            output_ids = item.get("output_token_ids") or []
++            if not output_ids:
++                continue
++
++            prompt_ids = item.get("prompt_token_ids") or []
++            prompt_tail = item.get("prompt_token_ids_tail") or []
++            if prompt_ids:
++                prompt_count = len(prompt_ids)
++                prompt_tail = prompt_ids[-64:]
++            else:
++                prompt_count = item.get("prompt_token_count")
++            if prompt_count is None or not prompt_tail:
++                continue
++
++            records.append(
++                {
++                    "name": item.get("name") or item.get("label") or "oracle",
++                    "prompt_token_count": int(prompt_count),
++                    "prompt_token_ids_tail": [int(x) for x in prompt_tail],
++                    "output_token_ids": [int(x) for x in output_ids],
++                }
++            )
++        return records
++
++    def _trace_oracle(
++        self,
++        *,
++        row_index: int,
++        matched: bool,
++        draft_token_ids: list[int],
++        num_tokens: int,
++        match_name: str | None = None,
++        prefix_len: int | None = None,
++    ) -> None:
++        if not self.oracle_trace_file:
++            return
++        if (
++            self.oracle_trace_max_lines > 0
++            and self.oracle_trace_lines >= self.oracle_trace_max_lines
++        ):
++            return
++        record = {
++            "ts": time.time(),
++            "row_index": row_index,
++            "matched": matched,
++            "match_name": match_name,
++            "prefix_len": prefix_len,
++            "num_tokens": num_tokens,
++            "draft_len": len(draft_token_ids),
++            "draft_token_ids": draft_token_ids,
++        }
++        try:
++            with open(self.oracle_trace_file, "a", encoding="utf-8") as f:
++                f.write(json.dumps(record, separators=(",", ":")) + "\n")
++            self.oracle_trace_lines += 1
++        except Exception:
++            pass
++
++    def _find_oracle_match(
++        self,
++        context_token_ids: np.ndarray,
++        num_tokens: int,
++    ) -> tuple[dict[str, Any], int] | None:
++        best: tuple[dict[str, Any], int] | None = None
++        for record in self.oracle_records:
++            prompt_count = record["prompt_token_count"]
++            prompt_tail = record["prompt_token_ids_tail"]
++            output_ids = record["output_token_ids"]
++
++            if num_tokens < prompt_count:
++                continue
++            if prompt_count < len(prompt_tail):
++                continue
++            if context_token_ids[
++                prompt_count - len(prompt_tail):prompt_count
++            ].tolist() != prompt_tail:
++                continue
++
++            prefix_len = num_tokens - prompt_count
++            if prefix_len < self.oracle_min_prefix:
++                continue
++            if prefix_len > len(output_ids):
++                continue
++            if prefix_len:
++                current_output = context_token_ids[prompt_count:num_tokens].tolist()
++                if current_output != output_ids[:prefix_len]:
++                    continue
++
++            if best is None or prefix_len > best[1]:
++                best = (record, prefix_len)
++        return best
++
++    def _propose_oracle(
++        self,
++        sampled_token_ids: list[list[int]],
++        num_tokens_no_spec: np.ndarray,
++        token_ids_cpu: np.ndarray,
++    ) -> list[list[int]]:
++        draft_token_ids: list[list[int]] = []
++        for i, sampled_ids in enumerate(sampled_token_ids):
++            num_sampled_ids = len(sampled_ids)
++            if not num_sampled_ids:
++                draft_token_ids.append([])
++                self._trace_oracle(
++                    row_index=i,
++                    matched=False,
++                    draft_token_ids=[],
++                    num_tokens=0,
++                )
++                continue
++
++            num_tokens = int(num_tokens_no_spec[i])
++            if num_tokens >= self.max_model_len:
++                draft_token_ids.append([])
++                self._trace_oracle(
++                    row_index=i,
++                    matched=False,
++                    draft_token_ids=[],
++                    num_tokens=num_tokens,
++                )
++                continue
++
++            context_token_ids = token_ids_cpu[i, :num_tokens]
++            match = self._find_oracle_match(context_token_ids, num_tokens)
++            if match is None:
++                draft_token_ids.append([])
++                self._trace_oracle(
++                    row_index=i,
++                    matched=False,
++                    draft_token_ids=[],
++                    num_tokens=num_tokens,
++                )
++                continue
++
++            record, prefix_len = match
++            output_ids = record["output_token_ids"]
++            remaining = output_ids[prefix_len:prefix_len + self.k]
++            max_allowed = max(0, self.max_model_len - num_tokens)
++            draft_ids = remaining[:max_allowed]
++            draft_token_ids.append(draft_ids)
++            self._trace_oracle(
++                row_index=i,
++                matched=True,
++                match_name=record["name"],
++                prefix_len=prefix_len,
++                draft_token_ids=draft_ids,
++                num_tokens=num_tokens,
++            )
++        return draft_token_ids
+ 
+     def batch_propose(
+         self,
+@@ -137,6 +309,13 @@ class NgramProposer:
+         | list[dict[str, torch.Tensor]]
+         | None = None,  # unused
+     ) -> list[list[int]]:
++        if self.oracle_records:
++            return self._propose_oracle(
++                sampled_token_ids,
++                num_tokens_no_spec,
++                token_ids_cpu,
++            )
++
+         # find which requests need ngram proposals
+         valid_ngram_requests = []
+         for i, sampled_ids in enumerate(sampled_token_ids):

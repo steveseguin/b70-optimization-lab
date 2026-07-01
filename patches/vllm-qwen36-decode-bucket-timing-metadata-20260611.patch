@@ -1,0 +1,74 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 000000000..000000000 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4377,17 +4377,69 @@ class GPUModelRunner(
+         skip_compiled = has_encoder_input or (
+             os.environ.get("VLLM_XPU_SKIP_COMPILED_PREFILL", "0") == "1"
+             and num_tokens_padded > 1
+         )
+ 
++        scheduled_token_counts = [
++            int(value) for value in num_scheduled_tokens_np[:num_reqs]
++        ]
++        scheduled_token_histogram: dict[str, int] = {}
++        for count in scheduled_token_counts:
++            key = str(count)
++            scheduled_token_histogram[key] = (
++                scheduled_token_histogram.get(key, 0) + 1
++            )
++
++        spec_tokens_by_req = scheduler_output.scheduled_spec_decode_tokens
++        scheduled_spec_lengths = [
++            int(len(spec_tokens_by_req.get(req_id, ())))
++            for req_id in req_ids[:num_reqs]
++        ]
++        scheduled_spec_histogram: dict[str, int] = {}
++        for count in scheduled_spec_lengths:
++            key = str(count)
++            scheduled_spec_histogram[key] = (
++                scheduled_spec_histogram.get(key, 0) + 1
++            )
++        max_scheduled_spec_tokens = (
++            max(scheduled_spec_lengths) if scheduled_spec_lengths else 0
++        )
++
++        computed_token_counts = [
++            int(value)
++            for value in self.input_batch.num_computed_tokens_cpu[:num_reqs]
++        ]
++        decode_req_count = sum(1 for count in computed_token_counts if count > 0)
++        prefill_req_count = int(num_reqs - decode_req_count)
++        is_pure_decode = prefill_req_count == 0 and num_reqs > 0
++        decode_bucket = int(max_num_scheduled_tokens) if is_pure_decode else None
++        num_tokens_across_dp_metadata = (
++            None if num_tokens_across_dp is None else int(num_tokens_across_dp)
++        )
++
+         self._xpu_timing_step_active = begin_timing_step(
+             {
+                 "num_reqs": int(num_reqs),
+                 "num_tokens_unpadded": int(num_tokens_unpadded),
+                 "num_tokens_padded": int(num_tokens_padded),
+                 "max_num_scheduled_tokens": int(max_num_scheduled_tokens),
++                "scheduled_token_counts": scheduled_token_counts,
++                "scheduled_token_histogram": scheduled_token_histogram,
++                "scheduled_spec_lengths": scheduled_spec_lengths,
++                "scheduled_spec_histogram": scheduled_spec_histogram,
++                "max_scheduled_spec_tokens": int(max_scheduled_spec_tokens),
++                "computed_token_counts": computed_token_counts,
++                "decode_req_count": int(decode_req_count),
++                "prefill_req_count": int(prefill_req_count),
++                "is_pure_decode": bool(is_pure_decode),
++                "decode_bucket": decode_bucket,
+                 "cudagraph_mode": str(cudagraph_mode),
++                "batch_desc_num_tokens": int(batch_desc.num_tokens),
++                "batch_desc_num_reqs": None
++                if batch_desc.num_reqs is None
++                else int(batch_desc.num_reqs),
++                "num_tokens_across_dp": num_tokens_across_dp_metadata,
+                 "skip_compiled": bool(skip_compiled),
+                 "use_spec_decode": bool(use_spec_decode),
+                 "should_ubatch": bool(should_ubatch),
+             }
+         )

@@ -1,0 +1,718 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 0b39a4000..e82414821 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -1,16 +1,22 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+-from typing import TYPE_CHECKING
++import json
++import os
++import re
++import time
++from typing import TYPE_CHECKING, Any
+ 
+ import torch
+ from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+ 
+ from vllm.logger import init_logger
+ from vllm.platforms import current_platform
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ logger = init_logger(__name__)
++_XPU_GDN_TRACE_LINES = 0
+ 
+ if TYPE_CHECKING:
+ 
+@@ -92,6 +98,272 @@ if hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
+         return torch.empty((M, N), dtype=input.dtype, device=input.device)
+ 
+ 
++def _xpu_gdn_trace_int_env(name: str, default: int) -> int:
++    try:
++        return int(os.environ.get(name, str(default)) or default)
++    except ValueError:
++        return default
++
++
++def _xpu_gdn_trace_rank() -> int:
++    try:
++        from vllm.distributed import get_tensor_model_parallel_rank
++
++        return int(get_tensor_model_parallel_rank())
++    except Exception:
++        try:
++            return int(os.environ.get("LOCAL_RANK", "0") or "0")
++        except ValueError:
++            return 0
++
++
++def _xpu_gdn_json_number(value: Any) -> int | float | str | None:
++    try:
++        if value is None:
++            return None
++        if isinstance(value, bool):
++            return bool(value)
++        if isinstance(value, int):
++            return int(value)
++        if isinstance(value, float):
++            if value == float("inf"):
++                return "inf"
++            if value == float("-inf"):
++                return "-inf"
++            if value != value:
++                return "nan"
++            return value
++    except Exception:
++        return repr(value)
++    return value
++
++
++def _xpu_gdn_tensor_digest(
++    tensor: torch.Tensor | None,
++    *,
++    head_limit: int,
++    include_head: bool = False,
++) -> dict[str, Any] | None:
++    if tensor is None:
++        return None
++    try:
++        with torch.no_grad():
++            t = tensor.detach()
++            record: dict[str, Any] = {
++                "shape": list(t.shape),
++                "dtype": str(t.dtype),
++                "device": str(t.device),
++                "numel": int(t.numel()),
++            }
++            if t.numel() == 0:
++                record.update({"finite": 0, "nan": 0, "posinf": 0, "neginf": 0})
++                return record
++            stats_t = t.float() if not t.is_floating_point() else t
++            finite_mask = torch.isfinite(stats_t)
++            nan_mask = torch.isnan(stats_t)
++            posinf_mask = stats_t == float("inf")
++            neginf_mask = stats_t == float("-inf")
++            finite_count = int(finite_mask.sum().item())
++            record.update(
++                {
++                    "finite": finite_count,
++                    "nan": int(nan_mask.sum().item()),
++                    "posinf": int(posinf_mask.sum().item()),
++                    "neginf": int(neginf_mask.sum().item()),
++                }
++            )
++            if finite_count:
++                finite_vals = stats_t[finite_mask].float()
++                record.update(
++                    {
++                        "min": _xpu_gdn_json_number(finite_vals.min().item()),
++                        "max": _xpu_gdn_json_number(finite_vals.max().item()),
++                        "mean": _xpu_gdn_json_number(finite_vals.mean().item()),
++                        "sum": _xpu_gdn_json_number(finite_vals.sum().item()),
++                        "l2": _xpu_gdn_json_number(
++                            torch.linalg.vector_norm(finite_vals).item()
++                        ),
++                    }
++                )
++            if include_head and head_limit > 0:
++                head = t.reshape(-1)[:head_limit].to("cpu").tolist()
++                record["head"] = [_xpu_gdn_json_number(v) for v in head]
++            return record
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _xpu_gdn_selected_state_digest(
++    state: torch.Tensor | None,
++    indices: torch.Tensor | None,
++    *,
++    head_limit: int,
++    state_limit: int,
++) -> dict[str, Any] | None:
++    if state is None or indices is None:
++        return None
++    try:
++        flat_indices = indices.detach().reshape(-1)
++        valid = flat_indices[(flat_indices >= 0) & (flat_indices < state.shape[0])]
++        if state_limit > 0:
++            valid = valid[:state_limit]
++        record: dict[str, Any] = {
++            "indices_shape": list(indices.shape),
++            "indices_head": [
++                int(v) for v in flat_indices[: max(0, head_limit)].to("cpu").tolist()
++            ],
++            "selected_count": int(valid.numel()),
++        }
++        if valid.numel() > 0:
++            selected = state.index_select(0, valid.to(device=state.device).long())
++            record["selected"] = _xpu_gdn_tensor_digest(
++                selected, head_limit=head_limit, include_head=True
++            )
++        return record
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _xpu_gdn_trace_enabled(
++    forward_context: Any,
++    layer_name: str,
++    attn_metadata: Any,
++) -> tuple[bool, dict[str, Any]]:
++    trace_file = os.environ.get("VLLM_XPU_GDN_TRACE_FILE", "")
++    if not trace_file:
++        return False, {}
++
++    global _XPU_GDN_TRACE_LINES
++    max_lines = _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_MAX_LINES", 0)
++    if max_lines > 0 and _XPU_GDN_TRACE_LINES >= max_lines:
++        return False, {}
++
++    tp_rank = _xpu_gdn_trace_rank()
++    rank_filter = os.environ.get("VLLM_XPU_GDN_TRACE_RANK", "")
++    if rank_filter and rank_filter not in ("*", "all") and str(tp_rank) != rank_filter:
++        return False, {}
++
++    layer_regex = os.environ.get("VLLM_XPU_GDN_TRACE_LAYER_REGEX", "")
++    if layer_regex:
++        try:
++            if not re.search(layer_regex, layer_name):
++                return False, {}
++        except re.error:
++            return False, {}
++
++    if (
++        os.environ.get("VLLM_XPU_GDN_TRACE_PREFILL_ONLY", "0") == "1"
++        and getattr(attn_metadata, "num_prefills", 0) <= 0
++    ):
++        return False, {}
++    if (
++        os.environ.get("VLLM_XPU_GDN_TRACE_DECODE_ONLY", "0") == "1"
++        and getattr(attn_metadata, "num_decodes", 0) <= 0
++    ):
++        return False, {}
++
++    extra = getattr(forward_context, "additional_kwargs", {}) or {}
++    req_ids = [str(req_id) for req_id in extra.get("xpu_req_ids", [])]
++    req_regex = os.environ.get("VLLM_XPU_GDN_TRACE_REQ_REGEX", "")
++    matched_req_ids = req_ids
++    if req_regex:
++        try:
++            matched_req_ids = [req_id for req_id in req_ids if re.search(req_regex, req_id)]
++        except re.error:
++            matched_req_ids = []
++        if not matched_req_ids:
++            return False, {}
++
++    return True, {
++        "trace_file": trace_file,
++        "tp_rank": tp_rank,
++        "req_ids": req_ids,
++        "matched_req_ids": matched_req_ids,
++        "forward_context_extra": extra,
++    }
++
++
++def _xpu_gdn_trace_write(
++    *,
++    stage: str,
++    trace_context: dict[str, Any],
++    layer_name: str,
++    attn_metadata: Any,
++    core_attn_out: torch.Tensor | None,
++    z: torch.Tensor | None,
++    projected_states_qkvz: torch.Tensor | None,
++    projected_states_ba: torch.Tensor | None,
++    conv_state: torch.Tensor | None,
++    ssm_state: torch.Tensor | None,
++    non_spec_state_indices_tensor: torch.Tensor | None,
++) -> None:
++    global _XPU_GDN_TRACE_LINES
++    max_lines = _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_MAX_LINES", 0)
++    if max_lines > 0 and _XPU_GDN_TRACE_LINES >= max_lines:
++        return
++    head_limit = max(0, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_TENSOR_LIMIT", 8))
++    state_limit = max(1, _xpu_gdn_trace_int_env("VLLM_XPU_GDN_TRACE_STATE_LIMIT", 2))
++    try:
++        has_initial_state = getattr(attn_metadata, "has_initial_state", None)
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "stage": stage,
++            "tp_rank": trace_context.get("tp_rank"),
++            "layer": layer_name,
++            "req_ids": trace_context.get("req_ids", []),
++            "matched_req_ids": trace_context.get("matched_req_ids", []),
++            "forward_context_extra": trace_context.get("forward_context_extra", {}),
++            "metadata": {
++                "num_prefills": int(getattr(attn_metadata, "num_prefills", 0)),
++                "num_decodes": int(getattr(attn_metadata, "num_decodes", 0)),
++                "num_actual_tokens": int(
++                    getattr(attn_metadata, "num_actual_tokens", 0)
++                ),
++                "has_initial_state": None
++                if has_initial_state is None
++                else [
++                    bool(v)
++                    for v in has_initial_state.detach()
++                    .reshape(-1)[:head_limit]
++                    .to("cpu")
++                    .tolist()
++                ],
++            },
++            "projected_states_qkvz": _xpu_gdn_tensor_digest(
++                projected_states_qkvz, head_limit=head_limit, include_head=True
++            ),
++            "projected_states_ba": _xpu_gdn_tensor_digest(
++                projected_states_ba, head_limit=head_limit, include_head=True
++            ),
++            "core_attn_out": _xpu_gdn_tensor_digest(
++                core_attn_out, head_limit=head_limit, include_head=True
++            ),
++            "z": _xpu_gdn_tensor_digest(z, head_limit=head_limit, include_head=True),
++            "conv_state": _xpu_gdn_selected_state_digest(
++                conv_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++            "ssm_state": _xpu_gdn_selected_state_digest(
++                ssm_state,
++                non_spec_state_indices_tensor,
++                head_limit=head_limit,
++                state_limit=state_limit,
++            ),
++        }
++        trace_file = str(trace_context["trace_file"])
++        trace_dir = os.path.dirname(trace_file)
++        if trace_dir:
++            os.makedirs(trace_dir, exist_ok=True)
++        with open(trace_file, "a", encoding="utf-8") as f:
++            f.write(json.dumps(record, separators=(",", ":")) + "\n")
++        _XPU_GDN_TRACE_LINES += 1
++    except Exception:
++        logger.exception("Failed to write XPU GDN trace")
++
++
+ def _gdn_attention_core_xpu_impl(
+     core_attn_out: torch.Tensor,
+     z: torch.Tensor,
+@@ -114,38 +386,209 @@ def _gdn_attention_core_xpu_impl(
+     attn_metadata = attn_metadata_raw[self.prefix]
+     assert isinstance(attn_metadata, GDNAttentionMetadata)
+ 
+-    # TODO: xpu does not support speculative decoding yet
+-    assert attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++    def unpack_projected_states() -> tuple[
++        torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
++    ]:
++        if self.gqa_interleaved_layout:
++            from einops import rearrange
++
++            query, key, value, z_generic, b, a = self.fix_query_key_value_ordering(
++                projected_states_qkvz, projected_states_ba
++            )
++            query, key, value = map(
++                lambda x: rearrange(x, "l p d -> l (p d)"), (query, key, value)
++            )
++            mixed_qkv = torch.cat((query, key, value), dim=-1)
++        else:
++            qkv_size = (self.key_dim * 2 + self.value_dim) // self.tp_size
++            z_size = self.value_dim // self.tp_size
++            mixed_qkv, z_generic = projected_states_qkvz.split(
++                [qkv_size, z_size], dim=-1
++            )
++            z_generic = z_generic.reshape(z_generic.size(0), -1, self.head_v_dim)
++            b, a = projected_states_ba.chunk(2, dim=-1)
++            b = b.contiguous()
++            a = a.contiguous()
++        return mixed_qkv, z_generic, b, a
++
++    gdn_native_fallback = os.environ.get(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK", ""
++    ).strip().lower()
++    initial_decode_fallback_steps = _xpu_gdn_trace_int_env(
++        "VLLM_XPU_GDN_NATIVE_FALLBACK_INITIAL_DECODE_STEPS", 0
++    )
++    initial_decode_fallback = False
++    if (
++        initial_decode_fallback_steps > 0
++        and attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++        and attn_metadata.num_prefills == 0  # type: ignore[attr-defined]
++        and attn_metadata.num_decodes > 0  # type: ignore[attr-defined]
++    ):
++        try:
++            extra = getattr(forward_context, "additional_kwargs", {}) or {}
++            prompt_tokens = extra.get("xpu_num_prompt_tokens") or []
++            computed_tokens = extra.get("xpu_num_computed_tokens") or []
++            for prompt_count, computed_count in zip(prompt_tokens, computed_tokens):
++                decode_index = int(computed_count) - int(prompt_count)
++                if 0 <= decode_index < initial_decode_fallback_steps:
++                    initial_decode_fallback = True
++                    break
++        except Exception:
++            logger.exception("Failed to inspect initial GDN decode fallback state")
++    decode_only_fallback = gdn_native_fallback in ("decode", "decode_only") and (
++        attn_metadata.spec_sequence_masks is None  # type: ignore[attr-defined]
++        and attn_metadata.num_prefills == 0  # type: ignore[attr-defined]
++        and attn_metadata.num_decodes > 0  # type: ignore[attr-defined]
++    )
++    if decode_only_fallback or initial_decode_fallback:
++        mixed_qkv, z_generic, b, a = unpack_projected_states()
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
++    if gdn_native_fallback in ("1", "true", "all"):
++        mixed_qkv, z_generic, b, a = unpack_projected_states()
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
++
++    if attn_metadata.spec_sequence_masks is not None:  # type: ignore[attr-defined]
++        mixed_qkv, z_generic, b, a = unpack_projected_states()
++        z.copy_(z_generic)
++        self._forward_core(
++            mixed_qkv=mixed_qkv,
++            b=b,
++            a=a,
++            core_attn_out=core_attn_out,
++        )
++        return
+ 
+     conv_weights = self.conv1d.weight.view(
+         self.conv1d.weight.size(0), self.conv1d.weight.size(2)
+     )
+ 
+-    torch.ops._xpu_C.gdn_attention(
+-        core_attn_out,
+-        z,
+-        projected_states_qkvz,
+-        projected_states_ba,
+-        self.num_k_heads,
+-        self.num_v_heads,
+-        self.head_k_dim,
+-        self.head_v_dim,
+-        conv_state=self.kv_cache[0],
+-        ssm_state=self.kv_cache[1],
+-        conv_weights=conv_weights,
+-        conv_bias=self.conv1d.bias,
+-        activation=self.activation,
+-        A_log=self.A_log,
+-        dt_bias=self.dt_bias,
+-        num_prefills=attn_metadata.num_prefills,  # type: ignore[attr-defined]
+-        num_decodes=attn_metadata.num_decodes,  # type: ignore[attr-defined]
+-        has_initial_state=attn_metadata.has_initial_state,  # type: ignore[attr-defined]
+-        non_spec_query_start_loc=attn_metadata.non_spec_query_start_loc,  # type: ignore[attr-defined]
+-        non_spec_state_indices_tensor=attn_metadata.non_spec_state_indices_tensor,  # type: ignore[attr-defined]
+-        num_actual_tokens=attn_metadata.num_actual_tokens,  # type: ignore[attr-defined]
+-        tp_size=self.tp_size,
+-        reorder_input=not self.gqa_interleaved_layout,
++    non_spec_state_indices_tensor = attn_metadata.non_spec_state_indices_tensor  # type: ignore[attr-defined]
++    if non_spec_state_indices_tensor is not None:
++        non_spec_state_indices_tensor = non_spec_state_indices_tensor.contiguous()
++
++    non_spec_query_start_loc = attn_metadata.non_spec_query_start_loc  # type: ignore[attr-defined]
++    if non_spec_query_start_loc is not None:
++        non_spec_query_start_loc = non_spec_query_start_loc.contiguous()
++
++    conv_state = self.kv_cache[0]
++    ssm_state = self.kv_cache[1]
++    trace_enabled, trace_context = _xpu_gdn_trace_enabled(
++        forward_context, self.prefix, attn_metadata
++    )
++    if trace_enabled:
++        _xpu_gdn_trace_write(
++            stage="pre_native",
++            trace_context=trace_context,
++            layer_name=self.prefix,
++            attn_metadata=attn_metadata,
++            core_attn_out=core_attn_out,
++            z=z,
++            projected_states_qkvz=projected_states_qkvz,
++            projected_states_ba=projected_states_ba,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++        )
++
++    zero_all_prefill_gdn_state = (
++        os.environ.get("VLLM_XPU_ZERO_ALL_PREFILL_GDN_STATE", "0") == "1"
+     )
++    if (
++        (
++            os.environ.get("VLLM_XPU_ZERO_FRESH_GDN_STATE", "0") == "1"
++            or zero_all_prefill_gdn_state
++        )
++        and getattr(attn_metadata, "num_prefills", 0) > 0
++        and non_spec_state_indices_tensor is not None
++        and (
++            zero_all_prefill_gdn_state
++            or getattr(attn_metadata, "has_initial_state", None) is not None
++        )
++    ):
++        try:
++            if zero_all_prefill_gdn_state:
++                fresh_state_indices = non_spec_state_indices_tensor.reshape(-1)
++            else:
++                has_initial_state = attn_metadata.has_initial_state  # type: ignore[attr-defined]
++                fresh_state_mask = ~has_initial_state
++                fresh_state_indices = non_spec_state_indices_tensor[fresh_state_mask]
++            conv_state[fresh_state_indices] = 0
++            ssm_state[fresh_state_indices] = 0
++            if trace_enabled:
++                _xpu_gdn_trace_write(
++                    stage=(
++                        "post_prefill_state_zero"
++                        if zero_all_prefill_gdn_state
++                        else "post_fresh_state_zero"
++                    ),
++                    trace_context=trace_context,
++                    layer_name=self.prefix,
++                    attn_metadata=attn_metadata,
++                    core_attn_out=core_attn_out,
++                    z=z,
++                    projected_states_qkvz=projected_states_qkvz,
++                    projected_states_ba=projected_states_ba,
++                    conv_state=conv_state,
++                    ssm_state=ssm_state,
++                    non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++                )
++        except Exception:
++            logger.exception("Failed to zero fresh XPU GDN state")
++
++    with timed_region("gdn_attention_core_xpu.native"):
++        torch.ops._xpu_C.gdn_attention(
++            core_attn_out,
++            z,
++            projected_states_qkvz,
++            projected_states_ba,
++            self.num_k_heads,
++            self.num_v_heads,
++            self.head_k_dim,
++            self.head_v_dim,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            conv_weights=conv_weights,
++            conv_bias=self.conv1d.bias,
++            activation=self.activation,
++            A_log=self.A_log,
++            dt_bias=self.dt_bias,
++            num_prefills=attn_metadata.num_prefills,  # type: ignore[attr-defined]
++            num_decodes=attn_metadata.num_decodes,  # type: ignore[attr-defined]
++            has_initial_state=attn_metadata.has_initial_state,  # type: ignore[attr-defined]
++            non_spec_query_start_loc=non_spec_query_start_loc,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++            num_actual_tokens=attn_metadata.num_actual_tokens,  # type: ignore[attr-defined]
++            tp_size=self.tp_size,
++            reorder_input=not self.gqa_interleaved_layout,
++        )
++    if trace_enabled:
++        _xpu_gdn_trace_write(
++            stage="post_native",
++            trace_context=trace_context,
++            layer_name=self.prefix,
++            attn_metadata=attn_metadata,
++            core_attn_out=core_attn_out,
++            z=z,
++            projected_states_qkvz=projected_states_qkvz,
++            projected_states_ba=projected_states_ba,
++            conv_state=conv_state,
++            ssm_state=ssm_state,
++            non_spec_state_indices_tensor=non_spec_state_indices_tensor,
++        )
+ 
+ 
+ def _gdn_attention_core_xpu_fake(
+diff --git a/vllm/v1/sample/sampler.py b/vllm/v1/sample/sampler.py
+index a77eafba2..e631cdca9 100644
+--- a/vllm/v1/sample/sampler.py
++++ b/vllm/v1/sample/sampler.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """A layer that samples the next tokens from the model's outputs."""
+ 
++import os
++
+ import torch
+ import torch.nn as nn
+ 
+@@ -16,6 +18,36 @@ from vllm.v1.sample.ops.topk_topp_sampler import TopKTopPSampler
+ from vllm.v1.worker.gpu.sample.logprob import compute_token_logprobs
+ 
+ _SAMPLING_EPS = 1e-5
++_XPU_SAMPLER_DEVICE_TIMING = (
++    os.environ.get("VLLM_XPU_SAMPLER_DEVICE_TIMING", "0") == "1"
++)
++
++
++def _xpu_sampler_record_event(device_type: str):
++    if not _XPU_SAMPLER_DEVICE_TIMING:
++        return None
++    try:
++        if device_type == "xpu" and hasattr(torch, "xpu"):
++            event = torch.xpu.Event(enable_timing=True)
++        elif device_type == "cuda" and torch.cuda.is_available():
++            event = torch.cuda.Event(enable_timing=True)
++        else:
++            return None
++        event.record()
++        return event
++    except Exception:
++        return None
++
++
++def _xpu_sampler_mark(timeline: dict[str, object] | None, key: str) -> None:
++    if timeline is None:
++        return
++    device_type = timeline.get("device_type")
++    if not isinstance(device_type, str):
++        return
++    event = _xpu_sampler_record_event(device_type)
++    if event is not None:
++        timeline[key] = event
+ 
+ 
+ class Sampler(nn.Module):
+@@ -73,6 +105,28 @@ class Sampler(nn.Module):
+         logprobs_mode_override: LogprobsMode | None = None,
+     ) -> SamplerOutput:
+         logprobs_mode = logprobs_mode_override or self.logprobs_mode
++        sampler_timeline: dict[str, object] | None = None
++        if _XPU_SAMPLER_DEVICE_TIMING:
++            device_type = getattr(logits.device, "type", "")
++            if device_type in ("xpu", "cuda"):
++                sampler_timeline = {
++                    "device_type": device_type,
++                    "sampler_logprobs_mode": str(logprobs_mode),
++                    "sampler_num_logprobs": sampling_metadata.max_num_logprobs,
++                    "sampler_all_greedy": bool(sampling_metadata.all_greedy),
++                    "sampler_all_random": bool(sampling_metadata.all_random),
++                    "sampler_no_penalties": bool(sampling_metadata.no_penalties),
++                    "sampler_has_allowed_token_mask": (
++                        sampling_metadata.allowed_token_ids_mask is not None
++                    ),
++                    "sampler_bad_words_count": len(
++                        sampling_metadata.bad_words_token_ids or ()
++                    ),
++                    "sampler_logprob_token_ids_count": len(
++                        sampling_metadata.logprob_token_ids or {}
++                    ),
++                }
++                _xpu_sampler_mark(sampler_timeline, "sampler_entry_event")
+         # NOTE(woosuk): Use the original logits (before any penalties or
+         # temperature scaling) for the top-k logprobs.
+         # This is different from the V0 sampler, which uses the logits that
+@@ -86,15 +140,23 @@ class Sampler(nn.Module):
+                     raw_logprobs = logits.clone()
+                 else:
+                     raw_logprobs = logits.to(torch.float32)
++        _xpu_sampler_mark(sampler_timeline, "sampler_raw_logprobs_end_event")
+ 
+         # Use float32 for the logits.
+         logits = logits.to(torch.float32)
++        _xpu_sampler_mark(sampler_timeline, "sampler_fp32_cast_end_event")
+ 
+         logits = self.apply_logits_processors(
+             logits, sampling_metadata, predict_bonus_token
+         )
++        _xpu_sampler_mark(sampler_timeline, "sampler_processors_end_event")
+         # Sample the next token.
+-        sampled, processed_logprobs = self.sample(logits, sampling_metadata)
++        self._xpu_sampler_timeline = sampler_timeline
++        try:
++            sampled, processed_logprobs = self.sample(logits, sampling_metadata)
++        finally:
++            self._xpu_sampler_timeline = None
++        _xpu_sampler_mark(sampler_timeline, "sampler_sample_call_end_event")
+         if processed_logprobs is not None:
+             raw_logprobs = processed_logprobs
+         # Convert sampled token ids to int64 (long) type to ensure compatibility
+@@ -102,6 +164,7 @@ class Sampler(nn.Module):
+         # This conversion is necessary because FlashInfer sampling operations
+         # return int32 (while PyTorch argmax and topk return int64).
+         sampled = sampled.long()
++        _xpu_sampler_mark(sampler_timeline, "sampler_long_end_event")
+ 
+         # Handle logprob_token_ids if specified (more efficient than full vocab)
+         # This is used by generative_scoring API to get logprobs for specific tokens
+@@ -110,6 +173,7 @@ class Sampler(nn.Module):
+             logprob_token_ids_tensors = self.gather_specific_token_logprobs(
+                 logits, sampling_metadata.logprob_token_ids, sampled
+             )
++        _xpu_sampler_mark(sampler_timeline, "sampler_specific_logprobs_end_event")
+ 
+         if num_logprobs is None:
+             logprobs_tensors = logprob_token_ids_tensors
+@@ -131,6 +195,7 @@ class Sampler(nn.Module):
+ 
+         # Use int32 to reduce the tensor size.
+         sampled = sampled.to(torch.int32)
++        _xpu_sampler_mark(sampler_timeline, "sampler_int32_end_event")
+ 
+         # These are GPU tensors.
+         sampler_output = SamplerOutput(
+@@ -140,6 +205,9 @@ class Sampler(nn.Module):
+             sampled_token_ids=sampled.unsqueeze(-1),
+             logprobs_tensors=logprobs_tensors,
+         )
++        _xpu_sampler_mark(sampler_timeline, "sampler_output_ready_event")
++        if sampler_timeline is not None:
++            sampler_output._xpu_sampler_timeline = sampler_timeline
+         return sampler_output
+ 
+     def gather_specific_token_logprobs(
+@@ -227,6 +295,26 @@ class Sampler(nn.Module):
+ 
+     @staticmethod
+     def greedy_sample(logits: torch.Tensor) -> torch.Tensor:
++        if logits.device.type == "xpu":
++            fallback = os.environ.get(
++                "VLLM_XPU_GREEDY_SAMPLE_XPU_FALLBACK", ""
++            ).strip().lower()
++            if (
++                not fallback
++                and os.environ.get("VLLM_XPU_GREEDY_SAMPLE_TOPK_FALLBACK", "0")
++                == "1"
++            ):
++                fallback = "topk"
++            if fallback == "topk":
++                return torch.topk(logits, k=1, dim=-1).indices.view(-1)
++            if fallback == "max":
++                return torch.max(logits, dim=-1).indices.view(-1)
++            if fallback == "clone_argmax":
++                return logits.clone().argmax(dim=-1).view(-1)
++            if fallback == "contiguous_argmax":
++                return logits.contiguous().argmax(dim=-1).view(-1)
++            if fallback == "float_argmax":
++                return logits.float().argmax(dim=-1).view(-1)
+         return logits.argmax(dim=-1).view(-1)
+ 
+     def sample(
+@@ -246,7 +334,15 @@ class Sampler(nn.Module):
+         if sampling_metadata.all_random:
+             greedy_sampled = None
+         else:
++            _xpu_sampler_mark(
++                getattr(self, "_xpu_sampler_timeline", None),
++                "sampler_greedy_start_event",
++            )
+             greedy_sampled = self.greedy_sample(logits)
++            _xpu_sampler_mark(
++                getattr(self, "_xpu_sampler_timeline", None),
++                "sampler_greedy_end_event",
++            )
+             if sampling_metadata.all_greedy:
+                 processed_logprobs = None
+                 if sampling_metadata.max_num_logprobs is not None:

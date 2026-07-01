@@ -1,0 +1,13 @@
+[Unit]
+Description=Apply quiet Supermicro fan baseline
+Documentation=file:/home/steve/llm-optimizations/scripts/set-supermicro-fan-quiet.sh
+After=multi-user.target openipmi.service
+ConditionPathExists=/usr/bin/ipmitool
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/set-supermicro-fan-quiet
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

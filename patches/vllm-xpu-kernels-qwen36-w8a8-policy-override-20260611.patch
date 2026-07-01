@@ -1,0 +1,68 @@
+Subject: qwen36: add W8A8 grouped-GEMM decode policy override
+
+This focused patch applies on top of the local Quark W8A8 INT8 vllm-xpu-kernels
+tree, not clean upstream. It records only the policy-screen override used for
+the 2026-06-11 route-exact microbench.
+
+The default/unset path preserves the existing heuristic. Setting
+`VLLM_XPU_W8A8_GROUPED_GEMM_POLICY=m16|m32|base` forces the W8A8 grouped GEMM
+policy for decode-shape screens.
+
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@
+ namespace MoE {
+ using namespace cute;
+ 
++static inline int get_w8a8_grouped_gemm_policy_override() {
++  const char* env_val = std::getenv("VLLM_XPU_W8A8_GROUPED_GEMM_POLICY");
++  if (env_val == nullptr) {
++    return 0;
++  }
++  const std::string value(env_val);
++  if (value == "m16" || value == "M16" || value == "16") {
++    return 16;
++  }
++  if (value == "m32" || value == "M32" || value == "32") {
++    return 32;
++  }
++  if (value == "base" || value == "BASE" || value == "w8a8" ||
++      value == "W8A8") {
++    return 128;
++  }
++  return 0;
++}
++
+@@
+-  if (A_avg_M <= 8) {
+-    using policy = w8a16_policy_m_16;
+-    W8A8LauncherCallER(policy);
+-  } else if (A_avg_M <= 32) {
+-    using policy = w8a16_policy_m_32;
+-    W8A8LauncherCallER(policy);
+-  } else {
+-    using policy = w8a8_policy;
+-    W8A8LauncherCallER(policy);
+-  }
++  const int policy_override = get_w8a8_grouped_gemm_policy_override();
++  if (policy_override == 16) {
++    using policy = w8a16_policy_m_16;
++    W8A8LauncherCallER(policy);
++  } else if (policy_override == 32) {
++    using policy = w8a16_policy_m_32;
++    W8A8LauncherCallER(policy);
++  } else if (policy_override == 128) {
++    using policy = w8a8_policy;
++    W8A8LauncherCallER(policy);
++  } else {
++    if (A_avg_M <= 8) {
++      using policy = w8a16_policy_m_16;
++      W8A8LauncherCallER(policy);
++    } else if (A_avg_M <= 32) {
++      using policy = w8a16_policy_m_32;
++      W8A8LauncherCallER(policy);
++    } else {
++      using policy = w8a8_policy;
++      W8A8LauncherCallER(policy);
++    }
++  }

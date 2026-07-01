@@ -1,0 +1,114 @@
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@
+ def _minimax_moe_output_allreduce_inside_custom_op_enabled() -> bool:
+     return (
+         os.environ.get(
+             "VLLM_MINIMAX_MOE_OUTPUT_ALLREDUCE_INSIDE_CUSTOM_OP", "0"
+         )
+         == "1"
+     )
+
+
++def _xpu_moe_shared_add_allreduce_custom_op_enabled() -> bool:
++    return (
++        os.environ.get("VLLM_XPU_MOE_SHARED_ADD_ALLREDUCE_CUSTOM_OP", "0")
++        == "1"
++    )
++
++
+ def get_layer_from_name(layer_name: str) -> torch.nn.Module:
+@@
+ def _moe_forward_shared_fake(
+     hidden_states: torch.Tensor,
+     router_logits: torch.Tensor,
+     shared_experts_input: torch.Tensor | None,
+     input_ids: torch.Tensor | None,
+     layer_name: _layer_name_type,
+ ) -> tuple[torch.Tensor, torch.Tensor]:
+@@
+     return shared_out, fused_out
+
+
++def _moe_shared_add_allreduce(
++    shared_output: torch.Tensor,
++    fused_output: torch.Tensor,
++) -> torch.Tensor:
++    with timed_region("moe_shared_add_allreduce.custom_op"):
++        return tensor_model_parallel_all_reduce(shared_output + fused_output)
++
++
++def _moe_shared_add_allreduce_fake(
++    shared_output: torch.Tensor,
++    fused_output: torch.Tensor,
++) -> torch.Tensor:
++    return torch.empty_like(fused_output)
++
++
+ direct_register_custom_op(
+     op_name="moe_forward",
+@@
+ direct_register_custom_op(
+     op_name="moe_forward_shared",
+     op_func=_moe_forward_shared,
+     fake_impl=_moe_forward_shared_fake,
+     tags=(torch.Tag.needs_fixed_stride_order,),
+ )
+
+
++direct_register_custom_op(
++    op_name="moe_shared_add_allreduce",
++    op_func=_moe_shared_add_allreduce,
++    fake_impl=_moe_shared_add_allreduce_fake,
++    tags=(torch.Tag.needs_fixed_stride_order,),
++)
++
++
+ def _unpack(
+@@
+     def _allreduce_output_inside_custom_op_active(self) -> bool:
+         return (
+             _minimax_moe_output_allreduce_inside_custom_op_enabled()
+             and self._shared_experts is None
+             and self.routed_output_transform is None
+@@
+             and not _minimax_moe_delay_allreduce_enabled()
+         )
+
++    def _shared_add_allreduce_inside_custom_op_active(
++        self,
++        shared_output: torch.Tensor | None,
++        *,
++        hidden_dim_was_padded: bool,
++    ) -> bool:
++        return (
++            _xpu_moe_shared_add_allreduce_custom_op_enabled()
++            and shared_output is not None
++            and not hidden_dim_was_padded
++            and self.routed_output_transform is None
++            and not self.moe_config.is_sequence_parallel
++            and (self.moe_config.tp_size > 1 or self.moe_config.ep_size > 1)
++            and not self._fused_output_is_reduced
++            and not _minimax_moe_delay_allreduce_enabled()
++        )
++
+     def _maybe_reduce_final_output(
+@@
+         # Apply output transform (e.g. latent -> full dim)
+         fused_output = self.apply_routed_output_transform(fused_output)
+
+-        if shared_output is not None:
++        if self._shared_add_allreduce_inside_custom_op_active(
++            shared_output,
++            hidden_dim_was_padded=hidden_dim_was_padded,
++        ):
++            result = torch.ops.vllm.moe_shared_add_allreduce(
++                shared_output,
++                fused_output,
++            )
++            self._last_quant_output_reduced = True
++        elif shared_output is not None:
+             result = shared_output + fused_output
+         else:
+             result = fused_output
