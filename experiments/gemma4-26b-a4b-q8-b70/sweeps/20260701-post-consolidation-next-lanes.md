@@ -97,3 +97,18 @@ prototype only if the implementation can preserve exact Q8 target verification,
 bonus semantics, and the current multi-row verifier efficiency. If that proves
 too invasive for a bounded patch, switch to the SWA-left-bound service lane and
 keep it separate from LocalMaxxing short-decode claims.
+
+## Update: SWA left-bound fast builder closed negative
+
+The first prompt-processing source lane after consolidation was tested and closed
+negative: `20260701-swa-left-bound-fast-negative.md`. The default-off
+`LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_FAST=1` host moving-left-bound builder
+passed exact long-context validation and `cached_tokens=0`, but lost about
+`0.77%` median prefill throughput versus same-window controls. Do not promote
+that flag; keep the patch/result only as a preserved negative artifact.
+
+The build issue encountered during this lane was environmental, not source-level:
+the existing `q8reorder-vdr2` build directory is a oneAPI 2026.0 build and must
+be rebuilt with `/opt/intel/oneapi/setvars.sh --force` sourced so the SYCL/OpenMP
+link and AOT device build can find the proper runtime libraries.
+

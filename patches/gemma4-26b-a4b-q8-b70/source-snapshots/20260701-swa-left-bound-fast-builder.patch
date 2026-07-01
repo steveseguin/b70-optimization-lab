@@ -1,0 +1,233 @@
+diff --git a/src/llama-kv-cache.cpp b/src/llama-kv-cache.cpp
+index 2802103bd..4d2f38007 100644
+--- a/src/llama-kv-cache.cpp
++++ b/src/llama-kv-cache.cpp
+@@ -8,11 +8,24 @@
+ #include <algorithm>
+ #include <cassert>
+ #include <cmath>
++#include <cstdlib>
+ #include <cstring>
+ #include <limits>
+ #include <map>
+ #include <stdexcept>
+ 
++
++static bool llama_kv_cache_swa_left_bound_fast_enabled() {
++    const char * env = std::getenv("LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_FAST");
++    if (env == nullptr || env[0] == '\0') {
++        return false;
++    }
++
++    return strcmp(env, "1") == 0 || strcmp(env, "true") == 0 ||
++        strcmp(env, "TRUE") == 0 || strcmp(env, "yes") == 0 ||
++        strcmp(env, "on") == 0;
++}
++
+ static bool ggml_is_power_of_2(int n) {
+     return (n & (n - 1)) == 0;
+ }
+@@ -1405,6 +1418,20 @@ ggml_tensor * llama_kv_cache::build_input_v_idxs(ggml_context * ctx, const llama
+     return v_idxs;
+ }
+ 
++ggml_tensor * llama_kv_cache::build_input_kq_left_bound(ggml_context * ctx, const llama_ubatch & ubatch) const {
++    const uint32_t n_tokens = ubatch.n_tokens;
++    const uint32_t n_stream_cur = n_stream == 1 ? 1 : ubatch.n_seqs_unq;
++
++    GGML_ASSERT(n_tokens % n_stream_cur == 0);
++
++    ggml_tensor * left_bound = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, n_tokens/n_stream_cur, n_stream_cur);
++
++    ggml_set_input(left_bound);
++    ggml_set_name(left_bound, "attn_inp_kq_left_bound");
++
++    return left_bound;
++}
++
+ ggml_tensor * llama_kv_cache::build_input_k_rot(ggml_context * ctx) const {
+     ggml_tensor * res = nullptr;
+ 
+@@ -1750,6 +1777,160 @@ void llama_kv_cache::set_input_kq_mask(ggml_tensor * dst, const llama_ubatch * u
+     //LLAMA_LOG_ERROR("%s: kq mask time: %0.3f ms\n", __func__, (t_end - t_start)/1000.0);
+ }
+ 
++void llama_kv_cache::set_input_kq_left_bound(ggml_tensor * dst, const llama_ubatch * ubatch, bool causal_attn) const {
++    const uint32_t n_tokens = ubatch->n_tokens;
++
++    GGML_ASSERT(ggml_backend_buffer_is_host(dst->buffer));
++    GGML_ASSERT(dst->type == GGML_TYPE_I32);
++    GGML_ASSERT(ggml_is_contiguous(dst));
++
++    const int64_t n_tps    = dst->ne[0];
++    const int64_t n_stream = dst->ne[1];
++
++    GGML_ASSERT(dst->ne[2] == 1);
++    GGML_ASSERT(dst->ne[3] == 1);
++    GGML_ASSERT(n_tokens == (uint32_t) (n_tps*n_stream));
++
++    int32_t * data = (int32_t *) dst->data;
++
++    const bool is_2d = ubatch->is_pos_2d();
++
++    if (llama_kv_cache_swa_left_bound_fast_enabled() &&
++            causal_attn &&
++            !is_2d &&
++            swa_type == LLAMA_SWA_TYPE_STANDARD &&
++            n_swa > 0) {
++        bool fast_ok = true;
++
++        for (uint32_t s = 0; fast_ok && s < (uint32_t) n_stream; ++s) {
++            const uint32_t stream_base = s*(uint32_t) n_tps;
++            if (ubatch->n_seq_id[stream_base] != 1) {
++                fast_ok = false;
++                break;
++            }
++
++            const llama_seq_id seq_id = ubatch->seq_id[stream_base][0];
++            const auto & cells = v_cells.at(seq_to_stream[seq_id]);
++            const uint32_t used_min = cells.used_min();
++            const uint32_t used_max = cells.used_max_p1();
++
++            llama_pos prev_cell_pos = std::numeric_limits<llama_pos>::min();
++            for (uint32_t j = used_min; j < used_max; ++j) {
++                if (cells.is_empty(j) || !cells.seq_has(j, seq_id)) {
++                    fast_ok = false;
++                    break;
++                }
++                const llama_pos p0 = cells.pos_get(j);
++                if (p0 < prev_cell_pos) {
++                    fast_ok = false;
++                    break;
++                }
++                prev_cell_pos = p0;
++            }
++            if (!fast_ok) {
++                break;
++            }
++
++            llama_pos prev_q_pos = std::numeric_limits<llama_pos>::min();
++            for (uint32_t ii = 0; ii < (uint32_t) n_tps; ++ii) {
++                const uint32_t i = stream_base + ii;
++                if (ubatch->n_seq_id[i] != 1 || ubatch->seq_id[i][0] != seq_id) {
++                    fast_ok = false;
++                    break;
++                }
++                if (ubatch->pos[i] < prev_q_pos) {
++                    fast_ok = false;
++                    break;
++                }
++                prev_q_pos = ubatch->pos[i];
++            }
++            if (!fast_ok) {
++                break;
++            }
++
++            uint32_t left_idx = used_min;
++            for (uint32_t ii = 0; ii < (uint32_t) n_tps; ++ii) {
++                const uint32_t i = stream_base + ii;
++                const llama_pos p1 = ubatch->pos[i];
++
++                while (left_idx < used_max) {
++                    const llama_pos p0 = cells.pos_get(left_idx);
++                    if (p0 > p1) {
++                        break;
++                    }
++                    if (!llama_hparams::is_masked_swa(n_swa, swa_type, p0, p1)) {
++                        break;
++                    }
++                    ++left_idx;
++                }
++
++                if (left_idx < used_max) {
++                    const llama_pos p0 = cells.pos_get(left_idx);
++                    data[s*n_tps + ii] =
++                        (p0 <= p1 && !llama_hparams::is_masked_swa(n_swa, swa_type, p0, p1)) ?
++                        (int32_t) left_idx : (int32_t) cells.size();
++                } else {
++                    data[s*n_tps + ii] = (int32_t) cells.size();
++                }
++            }
++        }
++
++        if (fast_ok) {
++            return;
++        }
++    }
++
++    for (uint32_t s = 0; s < (uint32_t) n_stream; ++s) {
++        for (uint32_t ii = 0; ii < (uint32_t) n_tps; ++ii) {
++            const uint32_t i = s*n_tps + ii;
++
++            const llama_seq_id seq_id = ubatch->seq_id[i][0];
++            const auto & cells = v_cells.at(seq_to_stream[seq_id]);
++
++            const llama_pos p1 = ubatch->pos[i];
++
++            const llama_pos p1_x = is_2d ? ubatch->pos[i + ubatch->n_tokens*2] : 0;
++            const llama_pos p1_y = is_2d ? ubatch->pos[i + ubatch->n_tokens]   : 0;
++
++            int32_t left = (int32_t) cells.size();
++
++            for (uint32_t j = 0; j < cells.size(); ++j) {
++                if (cells.is_empty(j)) {
++                    continue;
++                }
++
++                if (!cells.seq_has(j, seq_id)) {
++                    continue;
++                }
++
++                const llama_pos p0 = cells.pos_get(j);
++
++                if (causal_attn) {
++                    if (p0 > p1) {
++                        continue;
++                    }
++
++                    if (is_2d && p0 == p1) {
++                        const auto & p0_ext = cells.ext_get(j);
++
++                        if (p0_ext.is_2d_gt(p1_x, p1_y)) {
++                            continue;
++                        }
++                    }
++                }
++
++                if (llama_hparams::is_masked_swa(n_swa, swa_type, p0, p1)) {
++                    continue;
++                }
++
++                left = std::min<int32_t>(left, (int32_t) j);
++            }
++
++            data[s*n_tps + ii] = left;
++        }
++    }
++}
++
+ void llama_kv_cache::set_input_pos_bucket(ggml_tensor * dst, const llama_ubatch * ubatch) const {
+     const int64_t n_tokens = ubatch->n_tokens;
+ 
+@@ -2595,6 +2776,10 @@ ggml_tensor * llama_kv_cache_context::build_input_v_idxs(ggml_context * ctx, con
+     return kv->build_input_v_idxs(ctx, ubatch);
+ }
+ 
++ggml_tensor * llama_kv_cache_context::build_input_kq_left_bound(ggml_context * ctx, const llama_ubatch & ubatch) const {
++    return kv->build_input_kq_left_bound(ctx, ubatch);
++}
++
+ ggml_tensor * llama_kv_cache_context::build_input_k_rot(ggml_context * ctx) const {
+     return kv->build_input_k_rot(ctx);
+ }
+@@ -2619,6 +2804,10 @@ void llama_kv_cache_context::set_input_kq_mask(ggml_tensor * dst, const llama_ub
+     kv->set_input_kq_mask(dst, ubatch, causal_attn);
+ }
+ 
++void llama_kv_cache_context::set_input_kq_left_bound(ggml_tensor * dst, const llama_ubatch * ubatch, bool causal_attn) const {
++    kv->set_input_kq_left_bound(dst, ubatch, causal_attn);
++}
++
+ void llama_kv_cache_context::set_input_pos_bucket(ggml_tensor * dst, const llama_ubatch * ubatch) const {
+     kv->set_input_pos_bucket(dst, ubatch);
+ }

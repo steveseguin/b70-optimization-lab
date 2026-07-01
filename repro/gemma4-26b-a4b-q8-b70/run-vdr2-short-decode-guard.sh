@@ -76,7 +76,7 @@ from pathlib import Path
 
 out = Path(sys.argv[1])
 labels = sys.argv[2:]
-root = Path("/home/steve/qwen36-results-main")
+root = out.parent.parent
 rows = []
 
 for label in labels:
