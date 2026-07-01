@@ -5,8 +5,7 @@ Date: 2026-07-01
 ## Active Workspace
 
 Use `/home/steve/llm-optimizations` as the only active workspace for new
-optimization work. It is the branch-attached `main` checkout and is current at
-`261300e0` as of the latest 2026-07-01 verifier-top2 diagnostic preservation commit.
+optimization work. It is the branch-attached `main` checkout and should track `origin/main`; run `git status --short --branch` and `git log -1 --oneline` for the exact current head.
 
 Do not run new experiments from `/home/steve/qwen36-results-main`; it is a
 detached linked worktree retained for audit/back-reference only. See

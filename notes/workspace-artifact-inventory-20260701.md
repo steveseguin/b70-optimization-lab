@@ -7,8 +7,8 @@ or stale detached-worktree output.
 ## Active Workspace
 
 Use `/home/steve/llm-optimizations` for all new optimization work. It is the
-branch-attached `main` checkout and is current at `261300e0` after the
-verifier-top2 diagnostic preservation commit.
+branch-attached `main` checkout and should track `origin/main`; run
+`git status --short --branch` and `git log -1 --oneline` for exact live state.
 
 Do not start new work from `/home/steve/qwen36-results-main`. That checkout is
 a detached audit/back-reference worktree at `4b33bb2f`; the commit is reachable

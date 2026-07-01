@@ -8,8 +8,7 @@ Intel Arc Pro B70 LLM optimization work.
 ## Active Workspace Policy
 
 Use `/home/steve/llm-optimizations` as the single active workspace for new
-Gemma/Qwen/MiniMax work. It is the branch-attached `main` checkout and is
-current at `261300e0` as of the latest 2026-07-01 verifier-top2 diagnostic preservation commit.
+Gemma/Qwen/MiniMax work. It is the branch-attached `main` checkout and should track `origin/main`; run `git status --short --branch` and `git log -1 --oneline` for the exact current head.
 
 Do not start new experiments from `/home/steve/qwen36-results-main`; it is a
 detached linked worktree retained only for audit/back-reference. The detached

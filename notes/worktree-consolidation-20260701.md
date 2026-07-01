@@ -19,8 +19,9 @@ across detached worktrees.
 - Fast-forwarded `/home/steve/llm-optimizations` to `4b33bb2f`.
 - Later same-day canonical Gemma documentation/result commits advanced
   `/home/steve/llm-optimizations` through `46b4733d`, then the verifier-top2
-  diagnostic preservation commit advanced it to `261300e0`, matching
-  `origin/main`.
+  diagnostic preservation commit advanced it to `261300e0`. Subsequent
+  workspace-policy commits keep the branch-attached checkout tracking
+  `origin/main`; use `git log -1 --oneline` for exact live state.
   `/home/steve/qwen36-results-main` remains detached at `4b33bb2f` and is
   still archive/back-reference only.
 
@@ -29,7 +30,7 @@ across detached worktrees.
 ```text
 /home/steve/llm-optimizations
   branch: main
-  HEAD:   261300e0
+  HEAD:   branch-attached main; verify exact commit with `git log -1 --oneline`
   role:   single active workspace
 
 /home/steve/qwen36-results-main
