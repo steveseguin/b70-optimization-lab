@@ -1,0 +1,61 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+  "group_summaries": {
+    "batch2048_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 119.02224440171835,
+      "median_tok_s_1_100_by_lane": [
+        117.01889042612623,
+        121.02559837731047
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-shortguard-phase2048-kvmin-short-control-a-ctx32768-o512-20260701Tkvmin-short-control1",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu0-shortguard-phase2048-kvmin-short-control-a-ctx32768-o512-20260701Tkvmin-short-control1",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 118.9825496769768,
+      "tok_s_1_100_after_ttft_median": 117.01889042612623,
+      "tok_s_1_100_after_ttft_p10": 108.72761338985715,
+      "tok_s_after_ttft_full_median": 110.23386248022791,
+      "tok_s_wall_full_median": 105.28063772097963,
+      "ttft_ms_median": 178.52802254492417,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-shortguard-phase2048-kvmin-short-control-c-ctx32768-o512-20260701Tkvmin-short-control1",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu2-shortguard-phase2048-kvmin-short-control-c-ctx32768-o512-20260701Tkvmin-short-control1",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 121.15440491577682,
+      "tok_s_1_100_after_ttft_median": 121.02559837731047,
+      "tok_s_1_100_after_ttft_p10": 109.08065228107505,
+      "tok_s_after_ttft_full_median": 111.40927540276999,
+      "tok_s_wall_full_median": 107.06895660347516,
+      "ttft_ms_median": 176.7158279544674,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

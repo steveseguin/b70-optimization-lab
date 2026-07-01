@@ -104,6 +104,12 @@ valid and useful as a service-lane candidate (`2048/1024 + prefill2048`:
 short-decode record and is not a LocalMaxxing submission. `prefill2304` and
 `prefill2560` were valid but not better balanced in the paired screen. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md).
+The next SYCL FlashAttention idea, mask-derived `KV_min` left-bound skipping,
+is only a preserved partial result: it improved validated long-context prefill
+by about `+4.7%` to `+6.1%`, but the fixed short-decode guard showed a
+`~1-2%` regression risk. The patch was archived and the active source reverted;
+do not enable it in promoted service or LocalMaxxing headline recipes. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-sycl-fattn-kv-min-left-bound-partial.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-sycl-fattn-kv-min-left-bound-partial.md).
 
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly

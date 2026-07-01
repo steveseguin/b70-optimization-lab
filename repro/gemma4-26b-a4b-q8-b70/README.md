@@ -73,6 +73,18 @@ Follow-up high/fine ladders through `3072` and near-2048 values
 and
 `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-high-and-fine-ladders.md`.
 
+## Partial Prompt-Processing Experiments
+
+Do not enable the archived `KV_min` left-bound FlashAttention scan in promoted
+recipes. It repeatedly improved long-context prefill by about `+4.7%` to
+`+6.1%`, but the fixed short-decode guard showed a `~1-2%` regression risk, so
+it fails the "no short decode loss" rule. The active source was reverted after
+the patch and results were preserved. Future versions need a prefill-only
+dispatch/kernel or another design that leaves generation untouched.
+
+Primary note:
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-sycl-fattn-kv-min-left-bound-partial.md`
+
 ## Negative Prompt-Processing Knobs
 
 Do not repeat these without a source/kernel change:
@@ -81,6 +93,7 @@ Do not repeat these without a source/kernel change:
 - forced one or all KQ parallel blocks;
 - forced `nbatch_fa=128`;
 - disabling the KV max scan for the current shape.
+- enabling the archived `KV_min` left-bound scan in the current form.
 
 See:
 
@@ -88,3 +101,4 @@ See:
 - `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-gqa8-midubatch-balance-screen.md`;
 - `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`;
 - `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`.
+- `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-sycl-fattn-kv-min-left-bound-partial.md`.

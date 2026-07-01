@@ -1889,6 +1889,19 @@ Text speed is first. After text baseline:
     should move to SWA-specific FlashAttention tile/mask handling or a more
     detailed attention timing split, not more ubatch sweeps. Details:
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-high-and-fine-ladders.md`.
+25. **KV-min left-bound FlashAttention skip is a partial prefill win, not
+    promotable.** A default-off SYCL experiment scanned the attention mask for
+    a left bound (`KV_min`) so long SWA prompts could skip old all-masked KV
+    tiles. The long-context gate repeatedly improved prefill by about
+    `+4.7%` to `+6.1%` at `16213`, `22730`, and `30400` actual prompt tokens,
+    with exact JSON validation, `cached_tokens=0`, and canaries clean. The
+    fixed short-decode guard did not clear the no-regression rule: paired
+    candidates were down about `1.3%`, and the `MIN_Q=2048` screen was down
+    about `1.9%`. Do not enable this patch in the default service or record
+    recipe. The active source was reverted after archiving the patch; future
+    work should use a prefill-only dispatch/kernel or host-level SWA left-bound
+    path that leaves short decode untouched. Details:
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-sycl-fattn-kv-min-left-bound-partial.md`.
 
 ## Stop Conditions
 

@@ -1,0 +1,61 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+  "group_summaries": {
+    "batch2048_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 117.03790978628913,
+      "median_tok_s_1_100_by_lane": [
+        113.7701632367006,
+        120.30565633587766
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "1",
+      "label": "gemma4-q8-gpu1-shortguard-phase2048-kvmin-short-on-b-ctx32768-o512-20260701Tkvmin-short-on1",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu1-shortguard-phase2048-kvmin-short-on-b-ctx32768-o512-20260701Tkvmin-short-on1",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 114.67140033274556,
+      "tok_s_1_100_after_ttft_median": 113.7701632367006,
+      "tok_s_1_100_after_ttft_p10": 103.4219938200864,
+      "tok_s_after_ttft_full_median": 110.77407690952288,
+      "tok_s_wall_full_median": 105.20864953129336,
+      "ttft_ms_median": 178.07117954362184,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "3",
+      "label": "gemma4-q8-gpu3-shortguard-phase2048-kvmin-short-on-d-ctx32768-o512-20260701Tkvmin-short-on1",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/qwen36-results-main/data/gemma4-q8-gpu3-shortguard-phase2048-kvmin-short-on-d-ctx32768-o512-20260701Tkvmin-short-on1",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 119.53917196628844,
+      "tok_s_1_100_after_ttft_median": 120.30565633587766,
+      "tok_s_1_100_after_ttft_p10": 108.13532872671749,
+      "tok_s_after_ttft_full_median": 109.88670972091276,
+      "tok_s_wall_full_median": 105.96096519994302,
+      "ttft_ms_median": 178.50228399038315,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}
