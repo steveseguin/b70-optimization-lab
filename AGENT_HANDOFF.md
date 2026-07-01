@@ -5,6 +5,22 @@ Last updated: 2026-07-01
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
 
+## Active Workspace Policy
+
+Use `/home/steve/llm-optimizations` as the single active workspace for new
+Gemma/Qwen/MiniMax work. It is the branch-attached `main` checkout and is
+current at `4b33bb2f` as of 2026-07-01.
+
+Do not start new experiments from `/home/steve/qwen36-results-main`; it is a
+detached linked worktree retained only for audit/back-reference. The detached
+commit is preserved locally as
+`preserve/gemma-mtp-postnormcombo-20260701` and is also reachable from
+`origin/main`. Before deleting, cleaning, or reusing that worktree, audit its
+untracked `data/` files and promote any useful artifacts explicitly.
+
+Never use broad `git add -A` in either worktree. Stage result packets, patches,
+scripts, and notes by explicit path from the active workspace.
+
 ## Current Objective
 
 Primary target:

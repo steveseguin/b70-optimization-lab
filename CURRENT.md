@@ -2,6 +2,16 @@
 
 Date: 2026-07-01
 
+## Active Workspace
+
+Use `/home/steve/llm-optimizations` as the only active workspace for new
+optimization work. It is the branch-attached `main` checkout and is current at
+`4b33bb2f` as of the 2026-07-01 consolidation.
+
+Do not run new experiments from `/home/steve/qwen36-results-main`; it is a
+detached linked worktree retained for audit/back-reference only. See
+`notes/worktree-consolidation-20260701.md`.
+
 ## Active Gemma 4 26B A4B Q8 Lane
 
 Current active optimization target:
