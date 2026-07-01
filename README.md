@@ -1,59 +1,79 @@
 # B70 Optimization Lab
 
-Reproducible notes, scripts, patches, and result packets for optimizing local
-LLM inference on Intel Arc Pro B70 / Battlemage hardware.
+Practical recipes, patches, result packets, and lessons for making local LLM
+inference work well on Intel Arc Pro B70 / Battlemage hardware.
 
-This is primarily Steve Seguin's lab notebook and public resource, not a broad
-community project. Contributions and reproductions are welcome, but the main
-goal is to leave enough evidence that another B70 owner, Intel XPU user, or
-optimization agent can understand what worked, what failed, and how to repeat
-the best known runs.
+This is Steve Seguin's public lab notebook. It is not a generic benchmark
+landing page: the goal is to show what B70s can run, how the fast paths were
+built, and which results are reproducible enough to trust.
 
-## Why This Repo Exists
+## What This Helps With
 
-Many people can buy or access a B70-class Intel card, but the practical path
-from "the hardware is visible" to "this model runs fast and correctly" is still
-thin. Consumer inference support for Intel GPUs is improving, but a lot of the
-usable knowledge lives in local patches, model-specific launchers, runtime
-quirks, quality gates, and failed experiments that never fit cleanly into a
-single upstream issue or PR.
+- Run useful models on B70 hardware instead of guessing from scattered posts.
+- Compare realistic tok/s ranges for MiniMax, Gemma, Qwen, and related lanes.
+- Pull model-specific vLLM, llama.cpp, SYCL, and kernel ideas into upstream work.
+- Reproduce records without accidentally counting cache, stale AOT, or invalid
+  speculative output as speed.
+- Use the repo as a template for agent-driven model optimization on local GPUs.
 
-This repo turns those record runs into something people can reuse:
+Some wins here are too model-specific to become clean upstream patches as-is.
+The repo still makes them useful: exact commands, caveats, failure notes, and
+patch evidence are preserved so humans and AI agents can extract the general
+parts later.
 
-- B70 and Battlemage owners get concrete model recipes, expected tok/s ranges,
-  setup notes, and caveats instead of only seeing that a record happened.
-- vLLM, llama.cpp, Intel, oneAPI, and kernel maintainers get a searchable set
-  of patches, traces, failures, and result packets they can mine for upstream
-  fixes or better default behavior.
-- Auto-optimization agents get a template for how to explore a model without
-  losing the thread: define the metric, lock the identity, gate quality, save
-  failures, and promote only reproducible wins.
-- Steve gets durable operational recipes for his own inference deployments, plus
-  a history of what was tried so future work does not churn through the same
-  mistakes again.
-- Buyers, vendors, and GPU teams get evidence that Intel hardware can be a real
-  local-inference option when the stack is tuned, with enough detail to judge
-  price/performance claims instead of relying on vague comparisons.
+## Fast Paths
 
-Some of the fastest paths here are too specific to a model, quantization,
-prompt shape, or XPU runtime corner to be dropped directly into upstream code.
-That does not make them throwaway work. The repo is the bridge: it exposes the
-exact customizations, makes the evidence indexable, and gives future maintainers
-and AI agents enough context to extract the parts that can become general.
+- Deploy a useful 4x B70 endpoint:
+  [MiniMax fresh Ubuntu 24 deploy](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md)
+- Browse model-specific setup and result recipes:
+  [Model recipes](docs/model-recipes.md)
+- Find the full artifact map:
+  [Current reproducibility map](docs/current-reproducibility-map.md)
+- Inspect the top MiniMax structured result:
+  [MiniMax structured `94.406 tok/s` recipe](repro/minimax-m27-b70-94tps-structured-20260522/README.md)
+- Inspect the Gemma 26B record identity:
+  [Gemma 26B Q8 record identity note](repro/gemma4-26b-a4b-q8-b70-current-20260701/README.md)
+- Review Qwen3.6 35B validity lessons:
+  [Qwen3.6 35B result packet](results/qwen36-35b-quark-int8-b70/README.md)
+- Check local credentials and submission rules:
+  [Local ops](docs/local-ops.md) and [LocalMaxxing notes](docs/localmaxxing.md)
 
-## Start Here
+## Headline Results
 
-- Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
-- Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
-- Docs index: [docs/README.md](docs/README.md)
-- Local operations and credentials policy: [docs/local-ops.md](docs/local-ops.md)
-- LocalMaxxing submission rules: [docs/localmaxxing.md](docs/localmaxxing.md)
-- MiniMax fresh Ubuntu 24 deploy: [repro/minimax-m27-b70-110tps-ubuntu24-20260523](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md)
-- MiniMax strict speed repro: [repro/minimax-m27-b70-89tps-20260520](repro/minimax-m27-b70-89tps-20260520/README.md)
-- MiniMax structured `94.406 tok/s` repro: [repro/minimax-m27-b70-94tps-structured-20260522](repro/minimax-m27-b70-94tps-structured-20260522/README.md)
-- Gemma 26B Q8 current repro note: [repro/gemma4-26b-a4b-q8-b70-current-20260701](repro/gemma4-26b-a4b-q8-b70-current-20260701/README.md)
-- Qwen3.6 35B result packet: [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md)
-- Gemma 12B INT4 production profile: [experiments/gemma4-12b-int4-autoround-vllm](experiments/gemma4-12b-int4-autoround-vllm/README.md)
+These are pointers, not apples-to-apples claims. Throughput depends on model,
+quantization, prompt/output shape, context, concurrency, cache policy, and
+engine identity.
+
+- Gemma 4 26B A4B Q8 target + Q4_0 MTP draft:
+  `124.98 tok/s` verified short-decode record on one B70, up from a
+  `74.30 tok/s` no-spec control.
+- Gemma 4 12B INT4 service:
+  `780.97 tok/s` aggregate at c8 for practical 32K text+image serving.
+- MiniMax M2.7 INT4 AutoRound:
+  `83.17-94.41 tok/s` across deployable, strict, and structured 4x B70 lanes.
+- Qwen3.6 35B Quark INT8:
+  `93.55 tok/s` strict current baseline, with benchmark-identity lessons.
+- Qwen3.6 27B Q4_0 / FP8:
+  `50.13 tok/s` Q4 and `49.58 tok/s` FP8 from source-level runtime work.
+- MiniMax M2.7 GGUF UD-IQ4_XS:
+  `17.70 tok/s` on the valid llama.cpp RPC/SYCL path.
+
+## How To Read This Repo
+
+- If you are a B70 owner, start with the recipes and deployable MiniMax path.
+- If you maintain vLLM, llama.cpp, Intel XPU, oneAPI, or kernels, jump to the
+  detailed evidence sections and patch/result folders.
+- If you are optimizing a new model, copy the workflow: define the metric, lock
+  the run identity, gate quality, save failed attempts, then promote only
+  reproducible wins.
+- If a number looks surprisingly fast, read its caveat before comparing it to
+  another GPU or another LocalMaxxing row.
+
+The sections below are intentionally denser. They keep enough detail for
+reproduction, upstream mining, and future optimization agents.
+
+<details>
+<summary><strong>Detailed Decode Scorecard</strong></summary>
 
 ## Decode Scorecard
 
@@ -85,17 +105,27 @@ Q8-target comparison:
 - <https://www.localmaxxing.com/en/models/Lasimeri/MiniMax-M2.7-int4-AutoRound>
 - <https://www.localmaxxing.com/en/models/google/gemma-4-26B-A4B-it>
 
+</details>
+
+<details>
+<summary><strong>Repro Folders And Evidence Map</strong></summary>
+
 ## What The Repro Folders Prove
 
 | Path | What it reproduces | Important caveat |
 | --- | --- | --- |
-| [repro/gemma4-26b-a4b-q8-b70-current-20260701](repro/gemma4-26b-a4b-q8-b70-current-20260701/README.md) | Current Gemma 26B Q8-target fixed cold-suite record identity and command wrapper. | This branch may not contain the full Gemma 26B harness; the runner checks for it and points at the required import if missing. |
+| [repro/gemma4-26b-a4b-q8-b70-current-20260701](repro/gemma4-26b-a4b-q8-b70-current-20260701/README.md) | Current Gemma 26B Q8-target fixed cold-suite record identity and command wrapper. | This is a record identity note until the full harness is imported into this branch; the wrapper checks for the missing harness and exits clearly. |
 | [repro/minimax-m27-b70-94tps-structured-20260522](repro/minimax-m27-b70-94tps-structured-20260522/README.md) | MiniMax constrained simple-HTML fast lane using the compact public runner. | It is not unconstrained website generation. The grammar/scaffold is part of the benchmark identity. |
 | [repro/minimax-m27-b70-110tps-ubuntu24-20260523](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md) | Fresh Ubuntu 24 setup, model download, stack build, quality gate, and OpenAI-compatible 32K endpoint. | The score is the deployable 32K serving baseline, not the fastest MiniMax output-token row. |
 | [repro/minimax-m27-b70-89tps-20260520](repro/minimax-m27-b70-89tps-20260520/README.md) | Older strict p512/n1536 MiniMax speed lane and quality gates. | Context is 2048 and the setup is more speed-focused than service-focused. |
 | [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md) | Closed Qwen35 result packet: valid baselines, invalid fast lanes, and reproduction commands. | Do not compare runs unless PIECEWISE graph and all identity fields match. |
 | [experiments/gemma4-12b-int4-autoround-vllm](experiments/gemma4-12b-int4-autoround-vllm/README.md) | Production model-slot profile for Gemma 12B text+image serving. | This is a production/service profile, not a single-request LocalMaxxing-style short-decode record. |
 | [experiments/minimax-m27-reap-autoround-vllm](experiments/minimax-m27-reap-autoround-vllm/REPRO.md) | REAP MiniMax bring-up, best archived result, and current caveats. | The best archived `89.499 tok/s` row is not currently reproduced by the live source with the same quality status. |
+
+</details>
+
+<details>
+<summary><strong>Optimization Lessons</strong></summary>
 
 ## What Worked
 
@@ -122,6 +152,8 @@ Q8-target comparison:
 - Relying on broad environment roulette after the main path was understood.
   Useful gains tended to come from measured bottlenecks and source-level fixes.
 - Promoting warm or stale AOT-cache artifacts without a fresh quality pass.
+
+</details>
 
 ## Optimization Workflow
 

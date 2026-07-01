@@ -1,9 +1,13 @@
-# Gemma 4 26B A4B Q8 Current Repro Note
+# Gemma 4 26B A4B Q8 Record Identity Note
 
 This folder captures the current best Gemma 4 26B A4B Q8-target B70 result
 identity so the top-level README has a reproducible pointer for the `124.977`
 row. The full Gemma 26B harness landed on `main`; this branch may need those
 scripts imported before the runner below works from a fresh checkout.
+
+This is not yet a standalone public repro folder. It is a record identity note
+plus a wrapper for Steve's lab checkout or a branch where the full Gemma harness
+has been imported.
 
 ## Result
 

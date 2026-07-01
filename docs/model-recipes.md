@@ -26,7 +26,7 @@ output length, context length, batch/concurrency, and quality gate are clear.
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../repro/gemma4-26b-a4b-q8-b70-current-20260701/` | Current top-score identity | Gemma 4 26B A4B Q8 target with Q4_0 MTP draft, fixed cold realistic suite, and the `124.977 tok/s` record identity. The runner needs the full Gemma 26 harness imported or `HARNESS_ROOT` pointed at a checkout that has it. |
+| `../repro/gemma4-26b-a4b-q8-b70-current-20260701/` | Record identity note | Gemma 4 26B A4B Q8 target with Q4_0 MTP draft, fixed cold realistic suite, and the `124.977 tok/s` record identity. This is not yet a standalone public repro because the full Gemma 26 harness still needs to be imported into this branch. |
 | `../repro/minimax-m27-b70-94tps-structured-20260522/` | Structured speed lane | MiniMax M2.7 INT4 constrained simple-HTML lane at `94.406 tok/s` effective accepted output. This is not unconstrained website generation. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
@@ -135,8 +135,9 @@ The current top-score identity is:
 
 Start with
 [`../repro/gemma4-26b-a4b-q8-b70-current-20260701/`](../repro/gemma4-26b-a4b-q8-b70-current-20260701/README.md).
-This branch records the identity and wrapper; if the full Gemma 26 harness has
-not been imported into the current checkout, run with
+This branch records the identity and wrapper, not a fully standalone public
+repro yet. If the full Gemma 26 harness has not been imported into the current
+checkout, run with
 `HARNESS_ROOT=/home/steve/qwen36-results-main` or import the harness from
 `main`.
 
@@ -152,7 +153,7 @@ before comparing or promoting any new Qwen run.
 
 ## Future Recipe Slots
 
-These are useful community targets to add as separate repro folders:
+These are useful targets to add as separate repro folders:
 
 - Single active model-slot profiles for MiniMax, Qwen text, and Qwen-VL
   serving. See [Single Model Slot Switching](model-slot-switching.md).
