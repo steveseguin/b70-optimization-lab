@@ -1874,6 +1874,21 @@ Text speed is first. After text baseline:
     actually avoids target rows before LM-head work, or a different
     target-verified draft/verifier arrangement. Details:
     `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-verifier-acceptprefix-v2-and-latehead-negative.md`.
+24. **Phase-prefill high/fine ladders keep 2048 as the balanced service
+    default.** Two four-lane valid long-context service screens tested
+    `LLAMA_PREFILL_UBATCH_SIZE=2304/2816/3072` and the near-2048 values
+    `2112/2176/2240`, all with decode `UBATCH_SIZE=1024`.
+    Every lane passed exact JSON validation, canary, unique prompts, and
+    `cached_tokens=0`, but no non-2048 lane preserved decode. Best high-ladder
+    prefill was `2816` at `1067.3838649693312 tok/s`, but decode fell to
+    `114.84024527473669 tok/s`; fine-ladder `2240` reached only
+    `1056.7940 tok/s` prefill while decode fell to `116.8961 tok/s`.
+    Keep the balanced service recipe at `BATCH_SIZE=2048`,
+    `UBATCH_SIZE=1024`, `LLAMA_PREFILL_UBATCH_SIZE=2048`,
+    `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`. Future prompt-processing work
+    should move to SWA-specific FlashAttention tile/mask handling or a more
+    detailed attention timing split, not more ubatch sweeps. Details:
+    `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-high-and-fine-ladders.md`.
 
 ## Stop Conditions
 

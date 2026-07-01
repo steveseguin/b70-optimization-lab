@@ -66,8 +66,12 @@ For direct four-GPU service comparisons,
 `GPU:BATCH:UBATCH:TAG:PREFILL_UBATCH_SIZE`.
 The per-lane ladder kept `2048` as the balanced phase-prefill default; `2304`
 and `2560` are valid pure-prefill diagnostics but lower long-context decode.
-See
-`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-per-lane-ladder.md`.
+Follow-up high/fine ladders through `3072` and near-2048 values
+`2112/2176/2240` did not find a no-decode-regression improvement, so keep
+`LLAMA_PREFILL_UBATCH_SIZE=2048` for the balanced service recipe. See
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-per-lane-ladder.md`
+and
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-high-and-fine-ladders.md`.
 
 ## Negative Prompt-Processing Knobs
 
