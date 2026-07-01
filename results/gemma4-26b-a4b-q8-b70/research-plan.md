@@ -372,6 +372,15 @@ full512 candidates were `115.40` and `115.04 tok/s` against controls
 default-off research artifact only. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-packed-gateup-geglu-epilogue-negative.md`.
 
+2026-07-01 final-postnorm + packed GEGLU-all interaction screen: retested the
+broad `LLAMA_GEMMA4_MOE_GATEUP_GEGLU_EPILOGUE=all` path against the current
+promoted final-postnorm identity. All four strict128 lanes passed the fixed
+cold gate, `cached_tokens=0`, and 256-row canary, but candidates again lost:
+same-window controls averaged `119.458241 tok/s` while packed-GEGLU-all lanes
+averaged `117.615440 tok/s`. Decision: closed negative; do not full512-confirm
+this interaction. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpost-packed-geglu-all-ab1.md`.
+
 2026-06-29 Q8 LM-head one-column DMMV screen: a default-off guard
 `LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV=1` kept DMMV enabled for the large-vocab
 one-column Q8_0 LM-head shape instead of suppressing it in favor of reordered
