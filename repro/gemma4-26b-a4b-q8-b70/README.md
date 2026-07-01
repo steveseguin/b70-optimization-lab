@@ -60,6 +60,14 @@ Its validation note is
 New phase-prefill runs should record `prefill_ubatch_size` in each server log
 header and `summary.json` launcher identity; use that field when comparing
 service artifacts.
+For direct four-GPU service comparisons,
+`run-vdr2-long-context-service-gate.sh` also accepts an optional fifth
+`LANE_SPECS` field:
+`GPU:BATCH:UBATCH:TAG:PREFILL_UBATCH_SIZE`.
+The per-lane ladder kept `2048` as the balanced phase-prefill default; `2304`
+and `2560` are valid pure-prefill diagnostics but lower long-context decode.
+See
+`experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-per-lane-ladder.md`.
 
 ## Negative Prompt-Processing Knobs
 

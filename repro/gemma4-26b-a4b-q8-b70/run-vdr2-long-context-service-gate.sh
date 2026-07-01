@@ -13,7 +13,7 @@ LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS="${LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS:-
 LONG_CONTEXT_CASE_IDS="${LONG_CONTEXT_CASE_IDS:-}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 
-# Format: GPU_INDEX:BATCH_SIZE:UBATCH_SIZE:TAG
+# Format: GPU_INDEX:BATCH_SIZE:UBATCH_SIZE:TAG[:PREFILL_UBATCH_SIZE]
 LANE_SPECS="${LANE_SPECS:-0:1024:1024:ub1024-a 1:2048:2048:ub2048-a 2:1024:1024:ub1024-b 3:2048:2048:ub2048-b}"
 
 echo "[gemma4-long-context-service] stamp=$STAMP"
@@ -27,9 +27,13 @@ pids=()
 labels=()
 
 for spec in $LANE_SPECS; do
-  IFS=: read -r gpu batch ubatch tag <<<"$spec"
+  IFS=: read -r gpu batch ubatch tag prefill_ubatch extra <<<"$spec"
   if [[ -z "$gpu" || -z "$batch" || -z "$ubatch" || -z "$tag" ]]; then
     echo "[gemma4-long-context-service] invalid lane spec: $spec" >&2
+    exit 2
+  fi
+  if [[ -n "${extra:-}" ]]; then
+    echo "[gemma4-long-context-service] invalid lane spec with too many fields: $spec" >&2
     exit 2
   fi
 
@@ -38,8 +42,11 @@ for spec in $LANE_SPECS; do
   driver_log="$ROOT/data/${label}.driver.log"
   labels+=("$label")
 
-  echo "[gemma4-long-context-service] launching $label port=$port batch=$batch ubatch=$ubatch"
+  echo "[gemma4-long-context-service] launching $label port=$port batch=$batch ubatch=$ubatch prefill_ubatch=${prefill_ubatch:-<inherited>}"
   (
+    if [[ -n "${prefill_ubatch:-}" ]]; then
+      export LLAMA_PREFILL_UBATCH_SIZE="$prefill_ubatch"
+    fi
     GPU_INDEX="$gpu" \
     PORT="$port" \
     LABEL="$label" \
@@ -120,6 +127,7 @@ for label in labels:
         "gpu_index": launcher.get("gpu_index"),
         "batch_size": launcher.get("batch_size"),
         "ubatch_size": launcher.get("ubatch_size"),
+        "prefill_ubatch_size": launcher.get("prefill_ubatch_size"),
         "ctx_size": launcher.get("ctx_size"),
         "flash_attn": launcher.get("flash_attn"),
         "vmm": launcher.get("ggml_sycl_enable_vmm"),
@@ -153,11 +161,17 @@ for label in labels:
 groups = defaultdict(list)
 for row in rows:
     if row.get("status") == "ok":
-        groups[(row.get("batch_size"), row.get("ubatch_size"))].append(row)
+        groups[
+            (
+                row.get("batch_size"),
+                row.get("ubatch_size"),
+                row.get("prefill_ubatch_size"),
+            )
+        ].append(row)
 
 group_summaries = {}
 for key, group_rows in groups.items():
-    batch, ubatch = key
+    batch, ubatch, prefill_ubatch = key
     med_prefills = []
     med_decode = []
     gate_passes = []
@@ -167,8 +181,11 @@ for key, group_rows in groups.items():
         med_prefills.append(prefill.get("median"))
         med_decode.append(decode.get("median"))
         gate_passes.append((row.get("long_context_gate") or {}).get("passed") is True)
-    group_summaries[f"batch{batch}_ubatch{ubatch}"] = {
+    group_summaries[f"batch{batch}_ubatch{ubatch}_prefill{prefill_ubatch or 'unset'}"] = {
         "lanes": len(group_rows),
+        "batch_size": batch,
+        "ubatch_size": ubatch,
+        "prefill_ubatch_size": prefill_ubatch,
         "all_long_context_gates_passed": all(gate_passes) if gate_passes else False,
         "median_prefill_tok_s_by_lane": med_prefills,
         "median_prefill_tok_s_avg": statistics.fmean([v for v in med_prefills if isinstance(v, (int, float))]) if any(isinstance(v, (int, float)) for v in med_prefills) else None,

@@ -263,6 +263,19 @@ recorded `prefill_ubatch_size=2048` in all summaries/log headers, and measured
 reproducibility/service evidence only, not a LocalMaxxing claim. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-next-lane-audit-and-phase-prefill-identity.md`.
 
+2026-07-01 phase-prefill per-lane ladder: the long-context service wrapper now
+supports optional per-lane `LLAMA_PREFILL_UBATCH_SIZE` via
+`LANE_SPECS=GPU:BATCH:UBATCH:TAG:PREFILL_UBATCH_SIZE`, and aggregate summaries
+group by that field. A valid four-lane ladder showed `2304`/`2560` can improve
+pure prefill (`1078.9997` / `1071.8658 tok/s`) but lower long-context decode
+(`116.9092` / `116.3453 tok/s`). A crossed two-lane A/B ruled out `1792` as a
+better balanced default: `2048` averaged `1052.6123` prefill and `119.7308`
+decode, versus `1792` at `1047.0015` and `119.3035`. Decision: keep the
+balanced phase-prefill service recipe at `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`,
+`LLAMA_PREFILL_UBATCH_SIZE=2048`; keep `2304`/`2560` as pure-prefill
+diagnostics only. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-per-lane-ladder.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact
