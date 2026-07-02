@@ -40,6 +40,12 @@ Do not run new work from the detached checkout. Do not bulk-add or delete the
 detached backlog; either promote named result packets into the active checkout
 or archive/remove the entire detached worktree after explicit approval.
 
+Branch cleanup follow-up: local branch labels now only include `main`. Two
+remote Qwen `origin/codex/*-achieved` refs remain as remote archives. The local
+artifact-heavy branch was converted to local tag
+`archive/qwen36-artifact-heavy-20260628204326`; the tag was not pushed because
+that history contains a multi-GB artifact object.
+
 Measured again on 2026-07-01 after adding ignore rules for historical raw
 `data/qwen36-*` and `data/xpu-recovery-*` backlogs. No files were moved or
 deleted. The old artifacts remain on disk for audit, but they no longer swamp

@@ -47,6 +47,26 @@ back, and when it should be removed.
 
 ## Untracked Backlog
 
+Refresh on 2026-07-02 branch cleanup follow-up:
+
+- Deleted merged local branch labels `codex/qwen36-results-main` and
+  `preserve/gemma-mtp-postnormcombo-20260701`.
+- Deleted stale local branch labels `codex/qwen36-quark-int8-tracking` and
+  `codex/qwen36-quark-int8-tracking-pushable`; their tips are still preserved
+  by remote archive refs `origin/codex/qwen36-quark-int8-tracking-achieved`
+  and `origin/codex/qwen36-quark-int8-tracking-pushable-achieved`.
+- Deleted local branch label `local/qwen36-artifact-heavy-20260628204326`
+  after preserving its tip as local annotated tag
+  `archive/qwen36-artifact-heavy-20260628204326`. The tag was not pushed:
+  pushing it attempted to transfer the historical multi-GB artifact object that
+  also made `format-patch` generate a `3.2G` patch. Keep this as a local
+  recovery pointer only unless an explicit external/LFS archive is requested.
+- Verified `/home/steve/llm-optimizations` has no untracked files.
+- Verified the detached `/home/steve/qwen36-results-main` backlog is NOT already
+  tracked in active `main`: `2920/2920` visible untracked files are unique to
+  that detached worktree. Do not remove the worktree unless those files are
+  intentionally archived or discarded.
+
 Refresh on 2026-07-02:
 
 - `/home/steve/llm-optimizations` is clean on branch-attached `main` at
