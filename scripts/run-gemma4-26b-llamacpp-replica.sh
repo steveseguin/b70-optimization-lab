@@ -205,6 +205,8 @@ mkdir -p "$OUT_DIR"
   echo "GGML_SYCL_ENABLE_VMM=${GGML_SYCL_ENABLE_VMM:-<unset>}"
   echo "GGML_SYCL_DISABLE_GRAPH=${GGML_SYCL_DISABLE_GRAPH:-<unset>}"
   echo "GGML_SYCL_DISABLE_DNN=${GGML_SYCL_DISABLE_DNN:-<unset>}"
+  echo "GGML_SYCL_FATTN_DV512_GQA_NCOLS2=${GGML_SYCL_FATTN_DV512_GQA_NCOLS2:-<unset>}"
+  echo "GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=${GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST:-<unset>}"
   "$LLAMA_SERVER" --version 2>&1 || true
   sycl-ls 2>&1 || true
   echo "--- server ---"

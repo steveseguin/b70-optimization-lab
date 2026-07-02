@@ -1,0 +1,65 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 124.97714084813418,
+  "group_summaries": {
+    "batch1024_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 120.0502462930886,
+      "median_tok_s_1_100_by_lane": [
+        124.44366195427651,
+        115.6568306319007
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "ggml_sycl_fattn_dv512_gqa8_kq_reg_bcast": "1",
+      "ggml_sycl_fattn_dv512_gqa_ncols2": "8",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-shortguard-kqregbcast-gpu0-ctx32768-o512-20260702T112211Z-kqregbcast-short-full512-ab-waveB-candidate",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/llm-optimizations/data/gemma4-q8-gpu0-shortguard-kqregbcast-gpu0-ctx32768-o512-20260702T112211Z-kqregbcast-short-full512-ab-waveB-candidate",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 120.98492247870676,
+      "tok_s_1_100_after_ttft_median": 124.44366195427651,
+      "tok_s_1_100_after_ttft_p10": 104.48195471566258,
+      "tok_s_after_ttft_full_median": 112.23811335384812,
+      "tok_s_wall_full_median": 107.43385806880283,
+      "ttft_ms_median": 179.10707602277398,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 128,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "ggml_sycl_fattn_dv512_gqa8_kq_reg_bcast": "1",
+      "ggml_sycl_fattn_dv512_gqa_ncols2": "8",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-shortguard-kqregbcast-gpu2-ctx32768-o512-20260702T112211Z-kqregbcast-short-full512-ab-waveB-candidate",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/llm-optimizations/data/gemma4-q8-gpu2-shortguard-kqregbcast-gpu2-ctx32768-o512-20260702T112211Z-kqregbcast-short-full512-ab-waveB-candidate",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 115.78772387991653,
+      "tok_s_1_100_after_ttft_median": 115.6568306319007,
+      "tok_s_1_100_after_ttft_p10": 105.7712483415496,
+      "tok_s_after_ttft_full_median": 113.6251274623423,
+      "tok_s_wall_full_median": 108.53079257988236,
+      "ttft_ms_median": 179.1970884660259,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

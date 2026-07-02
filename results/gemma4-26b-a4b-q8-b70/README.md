@@ -154,7 +154,11 @@ four-wave long-context A/B + crossover with exact JSON validation and
 `cached_tokens=0` on all 48 rows, improving approximate prefill by `+0.722%`
 mean / `+0.813%` median and TTFT by `-0.765%`, positive by GPU and by case.
 The candidate short-decode smoke guard also passed four lanes at
-`MAX_TOKENS=256`, `CANARY_REPEATS=8`, `cached_tokens=0`. This is
+`MAX_TOKENS=256`, `CANARY_REPEATS=8`, `cached_tokens=0`. A full512 short-decode
+follow-up later passed all gates but did not promote the flag for the short
+headline: controls `117.584/124.161/115.228/116.737`, candidates
+`116.760/117.590/124.444/115.657`, paired median-ratio CI
+`-2.666% / -0.040% / +3.119%`, decision `no_win`. This remains
 service/prefill only, not a LocalMaxxing headline decode result.
 Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md).

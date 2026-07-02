@@ -84,12 +84,18 @@ Current active optimization target:
   prefill by `+0.722%` mean / `+0.813%` median, TTFT by `-0.765%`, and was
   positive on every GPU and every long-context case. A candidate short-decode
   guard also passed four lanes at `MAX_TOKENS=256`, `CANARY_REPEATS=8`,
-  `cached_tokens=0`, with no regression signal. This is a small
-  service/prefill win only, not a LocalMaxxing headline decode result.
+  `cached_tokens=0`, with no regression signal. A later full512 short-decode
+  A/B isolated `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1` on top of
+  `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`; all eight lanes passed the fixed cold
+  gate with `cached_tokens=0`, but the paired median-ratio CI was
+  `-2.666% / -0.040% / +3.119%`, decision `no_win`. This is a small
+  service/prefill win only, not a LocalMaxxing headline decode result, and KQ
+  reg-bcast should not be added to the short-decode record recipe.
   Evidence:
-  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`
-  and
-  `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`.
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`,
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-short-full512-no-win.md`,
+  `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`, and
+  `data/gemma4-kqregbcast-short-full512-ab-20260702T112211Z-kqregbcast-short-full512-ab.json`.
 - Latest global FlashAttention vec-dispatch follow-up:
   forcing the profiled Gemma global GQA shape (`Q=[512,2,16,1]`,
   `K/V=[512,256,2,1]`) from the current tile path to the existing vec kernel is

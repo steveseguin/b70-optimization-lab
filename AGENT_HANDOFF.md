@@ -159,11 +159,17 @@ Primary target:
   48/48 exact JSON rows valid, `cached_tokens=0`, prefill `+0.722%` mean /
   `+0.813%` median, TTFT `-0.765%`, positive by GPU and by case. A candidate
   short-decode guard also passed four lanes at `MAX_TOKENS=256`,
-  `CANARY_REPEATS=8`, `cached_tokens=0`, with no regression signal. This is
-  service/prefill only, not a LocalMaxxing headline decode result. Evidence:
-  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`
-  and
-  `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`.
+  `CANARY_REPEATS=8`, `cached_tokens=0`, with no regression signal. A later
+  full512 short-decode A/B isolated the KQ flag on top of
+  `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`; all eight lanes passed the fixed cold
+  gate with `cached_tokens=0`, but paired median-ratio CI was
+  `-2.666% / -0.040% / +3.119%`, decision `no_win`. This is service/prefill
+  only, not a LocalMaxxing headline decode result; do not add it to the short
+  recipe or submit it. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`,
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-short-full512-no-win.md`,
+  `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`, and
+  `data/gemma4-kqregbcast-short-full512-ab-20260702T112211Z-kqregbcast-short-full512-ab.json`.
 - Latest sampled-ID egress follow-up:
   `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS=1` is a closed negative /
   incomplete implementation. The first parity smoke passed only because the

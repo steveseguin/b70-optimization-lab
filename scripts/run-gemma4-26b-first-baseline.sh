@@ -142,6 +142,7 @@ LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_DIRECT_VDR2="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REO
 LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_ROWPACK="${LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER_ROWPACK:-}" \
 LLAMA_SYCL_F16_P021_SMALL_NCOLS="${LLAMA_SYCL_F16_P021_SMALL_NCOLS:-}" \
 GGML_SYCL_FATTN_DV512_GQA_NCOLS2="${GGML_SYCL_FATTN_DV512_GQA_NCOLS2:-}" \
+GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST="${GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST:-}" \
 LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS="${LLAMA_SYCL_Q8_MMVQ_SMALL_NCOLS:-}" \
 LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV="${LLAMA_SYCL_Q8_0_LM_HEAD_1COL_DMMV:-}" \
 LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER="${LLAMA_SYCL_Q8_0_LM_HEAD_1COL_NO_REORDER:-}" \
@@ -483,6 +484,7 @@ out = {
         "ggml_sycl_disable_graph": env_or_log("GGML_SYCL_DISABLE_GRAPH"),
         "ggml_sycl_disable_dnn": env_or_log("GGML_SYCL_DISABLE_DNN"),
         "ggml_sycl_fattn_dv512_gqa_ncols2": env_or_log("GGML_SYCL_FATTN_DV512_GQA_NCOLS2"),
+        "ggml_sycl_fattn_dv512_gqa8_kq_reg_bcast": env_or_log("GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST"),
         "llama_cpp_commit": server_env.get("llama_cpp_commit"),
         "llama_server": server_env.get("llama_server"),
     },

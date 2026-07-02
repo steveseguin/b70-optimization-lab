@@ -103,6 +103,8 @@ for label in labels:
         "ctx_size": launcher.get("ctx_size"),
         "flash_attn": launcher.get("flash_attn"),
         "vmm": launcher.get("ggml_sycl_enable_vmm"),
+        "ggml_sycl_fattn_dv512_gqa_ncols2": launcher.get("ggml_sycl_fattn_dv512_gqa_ncols2"),
+        "ggml_sycl_fattn_dv512_gqa8_kq_reg_bcast": launcher.get("ggml_sycl_fattn_dv512_gqa8_kq_reg_bcast"),
         "canary_pass_all": summary.get("canary_pass_all"),
         "canary_rows_completed": summary.get("canary_rows_completed"),
         "realistic_gate_passed": gate.get("passed"),

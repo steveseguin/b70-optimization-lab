@@ -116,6 +116,22 @@ Short-decode guard with the candidate flag enabled:
   - UB1024: `117.801`, `114.569 tok/s`
   - UB2048: `118.541`, `117.336 tok/s`
 
+Full512 short-decode follow-up, after the service win:
+
+- `data/gemma4-kqregbcast-short-full512-ab-20260702T112211Z-kqregbcast-short-full512-ab.json`
+- all eight lanes passed the fixed realistic gate, canaries, and
+  `cached_tokens=0`;
+- isolated variable: control `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`, candidate
+  adds `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1`;
+- control medians: `117.584`, `124.161`, `115.228`, `116.737 tok/s`;
+- candidate medians: `116.760`, `117.590`, `124.444`, `115.657 tok/s`;
+- paired prompt median ratio 95% CI:
+  `-2.666% / -0.040% / +3.119%`, decision `no_win`.
+
+This confirms the KQ flag remains service/prefill-only; it should not be added
+to the short-decode headline recipe or submitted to LocalMaxxing. See
+`20260702-kq-reg-bcast-short-full512-no-win.md`.
+
 ## Result
 
 Balanced A/B/C/D comparison:
@@ -157,8 +173,8 @@ Per-case prefill deltas were also positive:
 Decision: **service-prefill win, default-off.** Promote the DKQ576 extension
 as part of the optional `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1` service
 flag. This is not a LocalMaxxing headline decode result and should not be
-submitted as one. The short-decode smoke did not show a regression signal, but
-the current short-record recipe remains the separate UB1024 record path.
+submitted as one. The full512 short-decode A/B did not promote the flag for the
+short headline; keep the current short-record recipe separate.
 
 ## Reproduction
 
