@@ -17,8 +17,8 @@ tokens 1-100 after TTFT as the primary metric.
 
 Current valid headline record at time of writing:
 
-- `123.67689864739785 tok/s`;
-- `data/gemma4-q8-gpu0-finalpostnorm-on-full512-20260630T024027Z-finalpost-full512/summary.json`;
+- `124.97714084813418 tok/s`;
+- `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`;
 - model: `gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`.
 
 ## Long-Prefill Service Gate
@@ -41,7 +41,7 @@ Promoted service optimization:
   purely long-prefill oriented.
 - middle ubatches (`1280/1536/1792/1920`) were screened after the GQA8 win;
   UB1280 was the best compromise but still dropped the fixed short-decode guard
-  to `118.73 tok/s`, below the `123.68 tok/s` record.
+  to `118.73 tok/s`, below the `124.98 tok/s` record.
 
 Primary note:
 `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`

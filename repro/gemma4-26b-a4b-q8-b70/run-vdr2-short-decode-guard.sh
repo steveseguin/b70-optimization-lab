@@ -139,7 +139,7 @@ for key, group_rows in groups.items():
 payload = {
     "kind": "gemma4_q8_short_decode_guard",
     "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
-    "current_record_tok_s_1_100_after_ttft": 123.67689864739785,
+    "current_record_tok_s_1_100_after_ttft": 124.97714084813418,
     "rows": rows,
     "group_summaries": group_summaries,
 }

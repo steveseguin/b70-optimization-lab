@@ -48,7 +48,7 @@ for spec in $LADDER_SPECS; do
     BENCH_REPEATS="$BENCH_REPEATS" \
     CANARY_REPEATS="$CANARY_REPEATS" \
     REALISTIC_GATE=0 \
-    /home/steve/qwen36-results-main/repro/gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh
+    "$ROOT/repro/gemma4-26b-a4b-q8-b70/run-vdr2-selecteddown-record.sh"
   ) >"$driver_log" 2>&1 &
   pids+=("$!")
 done
@@ -74,7 +74,7 @@ from pathlib import Path
 
 out = Path(sys.argv[1])
 labels = sys.argv[2:]
-root = Path("/home/steve/qwen36-results-main")
+root = Path("/home/steve/llm-optimizations")
 rows = []
 
 for label in labels:
