@@ -169,6 +169,20 @@ Current active optimization target:
   `120.296 tok/s`; this is restore evidence only, not a full512 record claim.
   Evidence:
   `data/gemma4-q8-gpu0-postnbk-restore-sanity-20260702T053257Z-postnbk-restore-sanity/summary.json`.
+- Latest spec-profile diagnostic:
+  `LLAMA_SERVER_SPEC_PROFILE=1` on the current Gemma Q8 record recipe passed
+  the fixed cold realistic gate (`cached_tokens=0`, `32/32` canary rows) but
+  reached only `117.22735440926772 tok/s` median for tokens 1-100 after TTFT,
+  below the current `124.97714084813418 tok/s` record. The useful breakdown is
+  that draft/process/sample/accept overheads are negligible, while target
+  generation (`20.005 ms/call`) and prompt/prefill (`74.929 ms/call`) dominate.
+  Treat this as diagnostic evidence only. It supports focusing next on exact
+  FlashAttention right-bound / KV-max service work or a real backend
+  row-adaptive verifier design, not on more MTP wrapper/config roulette.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-spec-profile-and-next-lanes.md`
+  and
+  `data/gemma4-q8-gpu0-specprofile-20260702T053810Z/summary.json`.
 - Prior prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The default-off source branch rebuilt, but both candidate
   lanes failed the first JSON canary with empty text before long-context cases
