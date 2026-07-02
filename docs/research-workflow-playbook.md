@@ -4,6 +4,10 @@ This page captures the prompts and approaches that produced the best outcomes
 across the MiniMax, Gemma, and Qwen36 B70 work. Use it when starting a new model
 lane or when an experiment series starts losing structure.
 
+For the full start-to-finish operating manual, use
+`model-optimization-guide.md`. This playbook is the shorter prompt and workflow
+companion.
+
 ## Start With A Clear Target
 
 Good opening prompt for a model lane:

@@ -10,6 +10,7 @@ This docs folder is the human entry point for the B70 optimization work. The exe
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
 - [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
 - [Model Effort Index](model-effort-index.md): cross-model status, closed lanes, and where to put the next model packet.
+- [Model Optimization Guide](model-optimization-guide.md): start-to-finish guide for an AI agent optimizing a new model lane.
 - [Research Workflow Playbook](research-workflow-playbook.md): reusable prompts, validation ladders, and experiment discipline that produced the best outcomes.
 - [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.

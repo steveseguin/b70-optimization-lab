@@ -12,6 +12,10 @@ more realistic to validate under the same quality rules.
 
 ## How To Add A Model Effort
 
+For the full optimization lifecycle, read
+[`model-optimization-guide.md`](model-optimization-guide.md) before creating a
+new lane.
+
 Create or update the smallest set of files that makes the lane understandable:
 
 1. `results/<model>-<hardware>/README.md` for promoted or closed-out outcomes.

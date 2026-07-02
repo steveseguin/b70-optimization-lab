@@ -7,6 +7,7 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 - Docs index: [docs/README.md](docs/README.md)
 - Model effort index: [docs/model-effort-index.md](docs/model-effort-index.md)
 - Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
+- Model optimization guide: [docs/model-optimization-guide.md](docs/model-optimization-guide.md)
 - Research workflow playbook: [docs/research-workflow-playbook.md](docs/research-workflow-playbook.md)
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
 - Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
