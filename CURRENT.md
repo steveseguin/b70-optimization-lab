@@ -147,6 +147,18 @@ Current active optimization target:
   prefix-tail, or post-hoc accept-prefix masking without a deeper row-adaptive
   verifier design. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-conditional-bonus-negative.md`.
+- Latest accept-prefix top1-epilogue follow-up:
+  `LLAMA_SYCL_ACCEPT_PREFIX_TOP1_EPILOGUE=1` plus
+  `LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_ARGMAX=1` is closed negative. It preserved
+  exact target verification and all four A/B lanes passed the fixed cold suite
+  with `cached_tokens=0`, but candidates averaged `105.080 tok/s` versus
+  controls at `116.498 tok/s` (`-9.80%`). The source was restored exactly to
+  the preedit record stack and rebuilt; `libggml-sycl.so.0.15.2` is back to
+  `61c364b690ea6f852ad71c77abd65605c33de967dc9186c19d322c28e4ea8864`. Do not
+  repeat row-by-row accept-prefix variants; future verifier work needs a
+  non-serial backend row-adaptive design or a real candidate-bound certificate.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-acceptprefix-top1-epilogue-negative.md`.
 - Latest frontier audit:
   a source/flag inventory after the conditional-bonus and global-right-bound
   closures found no hidden easy knob. Adaptive MTP, accept-prefix v1/v2,

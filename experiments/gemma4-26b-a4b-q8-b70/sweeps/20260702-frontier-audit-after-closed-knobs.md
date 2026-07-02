@@ -41,6 +41,8 @@ Short-decode / verifier paths already closed for the current record identity:
 - accept-prefix v1: exact but serial row tile/reduce per verifier row;
 - accept-prefix v2: computes all rows then masks after mismatch, so it saves no
   actual LM-head work;
+- accept-prefix top1 epilogue (`LLAMA_SYCL_ACCEPT_PREFIX_TOP1_EPILOGUE=1`):
+  exact but still row-by-row/serial; four-lane A/B lost `-9.80%`;
 - regular Q8 top1 epilogue and partial top1 epilogue: valid but slower than the
   current sampled-ID path;
 - direct sampled-ID egress / pointer-only variants: parity failures or crashes;

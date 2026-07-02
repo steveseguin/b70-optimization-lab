@@ -72,6 +72,14 @@ passed the fixed cold gate, `cached_tokens=0`, and 128/128 canary at
 `117.604 tok/s`, but it intentionally adds checking work and is diagnostic
 only. See the latest sweep notes under
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/).
+The subsequent accept-prefix top1-epilogue verifier path is also closed:
+`LLAMA_SYCL_ACCEPT_PREFIX_TOP1_EPILOGUE=1` plus
+`LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_ARGMAX=1` preserved exact verification and
+passed the fixed cold gate, but four-lane A/B candidates averaged only
+`105.080 tok/s` versus controls at `116.498 tok/s` (`-9.80%`). Do not reopen
+row-by-row accept-prefix variants; future verifier work needs a non-serial
+backend row-adaptive design or a genuine candidate-bound certificate. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-acceptprefix-top1-epilogue-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-acceptprefix-top1-epilogue-negative.md).
 
 Current service/prefill candidate: keep the promoted short-decode reproduction
 on `UBATCH_SIZE=1024`, but use the default-off SYCL FlashAttention tile patch
