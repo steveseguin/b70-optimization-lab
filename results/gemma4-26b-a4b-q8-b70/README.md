@@ -88,10 +88,18 @@ because `GGML_SYCL_NODE_PROFILE=1` disables SYCL graph execution and the run
 used `MAX_TOKENS=128`. Do not submit its speed. The useful result is the
 hotspot ordering: target/verifier full-vocab LM-head (`MUL_MAT:node_1715`) is
 rank 1, three MTP draft argmax LM-head nodes
-(`mtp_direct_argmax_unroll_token_0/1/2`) are each large enough that batching or
-fusing them may be a credible next short-decode source lane, and host
-bookkeeping/sync remains negligible. Evidence:
-[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md).
+(`mtp_direct_argmax_unroll_token_0/1/2`) are each large, and host
+bookkeeping/sync remains negligible. Follow-up source audit found the backend
+already supports multi-column `MUL_MAT_ARGMAX`, but these draft heads are
+autoregressive and cannot be naively batched because each sampled token feeds
+the next draft step. Future draft work needs a new single-node `q6_K` argmax
+kernel design or a different draft algorithm. The bounded current-record screen
+of `LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS=16` on the draft path is closed
+no-win: all eight full512 lanes passed with `cached_tokens=0`, but paired
+median-ratio CI was `-2.594% / +0.001% / +4.021%` and no candidate beat the
+`124.977 tok/s` record. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md),
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-argmaxtile16-draft-q6k-no-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-argmaxtile16-draft-q6k-no-win.md).
 
 Current service/prefill candidate: keep the promoted short-decode reproduction
 on `UBATCH_SIZE=1024`, but use the default-off SYCL FlashAttention tile patch

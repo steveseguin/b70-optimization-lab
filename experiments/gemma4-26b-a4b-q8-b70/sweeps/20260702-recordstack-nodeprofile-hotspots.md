@@ -115,9 +115,16 @@ full-vocabulary LM head:
 Q8_0 token_embd.weight [2816,262144] x GET_ROWS:result_norm
 ```
 
-The three separate draft nodes are the Q4_0 MTP draft direct-argmax LM-head
-work for the unrolled draft positions. Together they are roughly the same
-profile scale as the target verifier LM-head node in this diagnostic mode.
+The three separate draft nodes are MTP draft direct-argmax LM-head work for the
+unrolled draft positions. Log detail shows these use `q6_K` output weights:
+
+```text
+src0{NONE:token_embd.weight type=q6_K ne=[1024,262144,1,1]}
+src1{MUL:result_norm type=f32 ne=[1024,1,1,1]}
+```
+
+Together they are roughly the same profile scale as the target verifier LM-head
+node in this diagnostic mode.
 
 ## Server / MTP Profile
 
@@ -151,12 +158,20 @@ Interpretation:
 
 ## Next Credible Lanes
 
-1. **Draft argmax batching/fusion.**
-   Inspect the `mtp_direct_argmax_unroll_token_0/1/2` path and determine
-   whether the three Q4_0 draft LM-head argmax nodes can be represented as one
-   batched/multi-column backend op without changing target verification. This
-   is distinct from the closed verifier accept-prefix work and is now the most
-   promising short-decode source lane exposed by the profile.
+1. **Draft argmax batching/fusion is not a simple win.**
+   Source audit after the profile found the backend already supports
+   multi-column `MUL_MAT_ARGMAX`, but these three unrolled draft heads are
+   autoregressive: token 0 feeds draft step 1, and token 1 feeds draft step 2.
+   They cannot be represented as one independent multi-column argmax without
+   changing the draft algorithm. Existing `MUL_MAT_ARGMAX` tile/reorder/
+   multi-reuse knobs also have prior negative coverage. A current-record
+   full512 A/B of `LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS=16` on the draft
+   path passed all gates but did not win (paired median-ratio CI
+   `-2.594% / +0.001% / +4.021%`). Future draft-side work should target a new
+   single-node `q6_K` argmax kernel design or a different draft algorithm, not
+   a naive batch of `mtp_direct_argmax_unroll_token_0/1/2` or another
+   tile-subgroup retest. Evidence:
+   `20260702-argmaxtile16-draft-q6k-no-win.md`.
 
 2. **Exact verifier LM-head reduction, only if non-serial.**
    The target/verifier LM-head is still rank 1, but prior audits show a simple

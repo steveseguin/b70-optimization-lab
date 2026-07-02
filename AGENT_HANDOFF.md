@@ -283,12 +283,20 @@ Primary target:
   record rows. The useful hotspot order is target/verifier LM-head
   (`MUL_MAT:node_1715`, `817.753 ms`), MoE gate-up, and three separate MTP
   draft argmax LM-head nodes (`mtp_direct_argmax_unroll_token_0/1/2`,
-  about `239-240 ms` each). Host sync/bookkeeping is negligible. The best new
-  short-decode lane is to inspect whether the three draft argmax heads can be
-  batched/fused as one backend op; verifier LM-head work should only be
-  reopened for exact, non-serial row-adaptive or candidate-bound designs.
+  about `239-240 ms` each, `q6_K` draft output weights). Host sync/bookkeeping
+  is negligible. Follow-up source audit found the backend already supports
+  multi-column `MUL_MAT_ARGMAX`, but these draft heads are autoregressive and
+  cannot be naively batched because each sampled token feeds the next draft
+  step. Future draft work needs a new single-node `q6_K` argmax kernel design or
+  a different draft algorithm; verifier LM-head work should only be reopened
+  for exact, non-serial row-adaptive or candidate-bound designs. A full512
+  current-record A/B of `LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS=16` on this
+  draft path is also closed no-win: all 8 lanes passed with `cached_tokens=0`,
+  but paired median-ratio CI was `-2.594% / +0.001% / +4.021%`.
   Evidence:
-  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md`.
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md`
+  and
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-argmaxtile16-draft-q6k-no-win.md`.
 - Latest p_min gap follow-up: `0.04625`, `0.04725`, `0.047625`, and `0.04875`
   were tested under the current FA-on 32K/VMM selected-down VDR2 strict128
   identity. All passed, but best was only `118.41776692242152 tok/s`, below
