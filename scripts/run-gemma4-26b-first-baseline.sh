@@ -77,6 +77,7 @@ REASONING="$REASONING" \
 EXTRA_LLAMA_ARGS="$EXTRA_LLAMA_ARGS" \
 LLAMA_MTP_DRAFT_TOP_K="${LLAMA_MTP_DRAFT_TOP_K:-}" \
 LLAMA_MTP_DRAFT_LOGIT_GAP_MIN="${LLAMA_MTP_DRAFT_LOGIT_GAP_MIN:-}" \
+LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS="${LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS:-}" \
 LLAMA_MTP_DRAFT_FAST_TOPK="${LLAMA_MTP_DRAFT_FAST_TOPK:-}" \
 LLAMA_MTP_DRAFT_FAST_ARGMAX="${LLAMA_MTP_DRAFT_FAST_ARGMAX:-}" \
 LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS="${LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS:-}" \
@@ -352,6 +353,7 @@ out = {
         "long_context_max_target_prompt_tokens": os.environ.get("LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS"),
         "llama_mtp_draft_top_k": env_or_log("LLAMA_MTP_DRAFT_TOP_K"),
         "llama_mtp_draft_logit_gap_min": env_or_log("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN"),
+        "llama_mtp_draft_logit_gap_min_start_pos": env_or_log("LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS"),
         "llama_mtp_draft_fast_topk": env_or_log("LLAMA_MTP_DRAFT_FAST_TOPK"),
         "llama_mtp_draft_fast_argmax": env_or_log("LLAMA_MTP_DRAFT_FAST_ARGMAX"),
         "llama_mtp_draft_direct_argmax_ids": env_or_log("LLAMA_MTP_DRAFT_DIRECT_ARGMAX_IDS"),

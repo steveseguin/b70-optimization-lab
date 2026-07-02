@@ -99,6 +99,19 @@ Primary target:
   path cheaper than its earlier serialized prototype. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-bound-lmhead-proof-design.md`
   and `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+- Latest direct-confidence / logit-gap follow-up:
+  Tail-only MTP direct-confidence producer is closed negative. A source patch
+  made `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=1` compute top2 score rows only
+  at/after `LLAMA_MTP_DRAFT_LOGIT_GAP_MIN_START_POS`, padding earlier ID-only
+  rows so the fixed score-mode stride remained intact. The patch built and all
+  four strict128 cold-suite lanes passed with `cached_tokens=0`, but the best
+  candidate (`tail3-gap0`) reached only `118.4709837563259 tok/s` versus the
+  same-window control at `120.49223560283977 tok/s`, and the real gap-filter
+  lane (`tail3-gap050`) reached only `117.52940584638576 tok/s`. Do not
+  promote, submit, or continue simple draft-confidence filtering as a record
+  lane. The patch/result are preserved, and the active source/binary were
+  restored to the pre-experiment record stack. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-tail-only-direct-confidence-negative.md`.
 - Latest post-norm combo MTP follow-up:
   The only bounded follow-up from no-spec calibration was tested in a four-GPU
   same-window MTP full512 run. All lanes passed the fixed realistic gate with
