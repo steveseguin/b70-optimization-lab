@@ -1,0 +1,34 @@
+diff --git a/ggml/src/ggml-sycl/fattn.cpp b/ggml/src/ggml-sycl/fattn.cpp
+index 7c6e6112f..165268c5b 100644
+--- a/ggml/src/ggml-sycl/fattn.cpp
++++ b/ggml/src/ggml-sycl/fattn.cpp
+@@ -99,6 +99,14 @@ enum best_fattn_kernel {
+     BEST_FATTN_KERNEL_TILE     = 200,
+ };
+ 
++static bool ggml_sycl_fattn_dv512_gqa_global_vec_enabled() {
++    static const bool value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_DV512_GQA_GLOBAL_VEC");
++        return env && std::atoi(env) != 0;
++    }();
++    return value;
++}
++
+ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const ggml_tensor * dst) {
+     GGML_UNUSED(device);
+ #ifndef SYCL_FLASH_ATTN
+@@ -120,6 +128,14 @@ static best_fattn_kernel ggml_sycl_get_best_fattn_kernel(const int device, const
+     float max_bias = 0.0f;
+     memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
+ 
++    if (ggml_sycl_fattn_dv512_gqa_global_vec_enabled()
++            && Q->ne[0] == 512 && K->ne[0] == 512 && V->ne[0] == 512
++            && Q->ne[1] == 2 && gqa_ratio == 8 && K->ne[1] == FATTN_KQ_STRIDE
++            && K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16
++            && mask && !dst->src[5] && max_bias == 0.0f) {
++        return BEST_FATTN_KERNEL_VEC;
++    }
++
+     bool gqa_opt_applies = gqa_ratio >= 2 && mask && max_bias == 0.0f && K->ne[1] % FATTN_KQ_STRIDE == 0;
+     for (const ggml_tensor * t : {Q, K, V, mask}) {
+         if (t == nullptr || ggml_is_quantized(t->type)) {

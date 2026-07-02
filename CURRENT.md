@@ -75,6 +75,17 @@ Current active optimization target:
   FlashAttention tile/scheduling changes for `DKQ=576`, `DV=512`, not more
   SWA/ubatch/right-bound roulette. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-service-nodeprofile-swalb-global-fattn.md`.
+- Latest global FlashAttention vec-dispatch follow-up:
+  forcing the profiled Gemma global GQA shape (`Q=[512,2,16,1]`,
+  `K/V=[512,256,2,1]`) from the current tile path to the existing vec kernel is
+  closed negative. The default-off patch built and passed exact long-context
+  validation with `cached_tokens=0`, but a four-GPU same-window A/B over
+  `lc-12288-early`, `lc-16384-late`, and `lc-22000-middle` regressed paired
+  mean approximate prefill by `-0.165%`, decode by `-0.088%`, and TTFT by
+  `+0.166%`. The active source was restored; do not promote or retest this
+  existing-vec dispatch route. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-vecdispatch-negative.md`
+  and `data/gemma4-global-fattn-vecdispatch-comparison-20260702.json`.
 - Latest verifier-top2 diagnostic:
   closed as an instrumentation failure, not a performance result.
   The v2 patch built and made the host top2 profile path non-missing, but raw
