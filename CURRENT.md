@@ -99,6 +99,15 @@ Current active optimization target:
   path cheaper than its earlier serialized prototype. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-bound-lmhead-proof-design.md`
   and `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
+- Latest conditional-bonus verifier follow-up:
+  `LLAMA_SPEC_VERIFY_CONDITIONAL_BONUS_ARGMAX=1` is closed negative. The
+  tracked A/B lanes were valid fixed cold-suite diagnostics (`cached_tokens=0`,
+  canary pass, unchanged Q8 target/verifier), but candidates reached only
+  about `101-102 tok/s` versus same-window controls at about `113-116 tok/s`.
+  Do not retest conditional bonus, no-bonus, adaptive bonus, late-head,
+  prefix-tail, or post-hoc accept-prefix masking without a deeper row-adaptive
+  verifier design. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-conditional-bonus-negative.md`.
 - Latest direct-confidence / logit-gap follow-up:
   Tail-only MTP direct-confidence producer is closed negative. A source patch
   made `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=1` compute top2 score rows only
