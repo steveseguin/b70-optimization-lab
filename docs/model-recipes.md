@@ -19,19 +19,22 @@ Every complete recipe should include:
 
 Do not compare two results unless their model, quantization, prompt length, output length, context length, batch/concurrency, and quality gate are clear.
 
-## Current Recipes
+## Recipe Index
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the policy-compliant VDR2 selected-down fused weighted-sum plus FA-on 32K/VMM plus final post-norm `124.977 tok/s` realistic cold-suite result. Older `100+` and `170+ tok/s` rows are diagnostic/pre-final-gate only. |
-| `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | Current copy-ready speed repro | Standalone Gemma 4 26B A4B Q8 target recipe for the current `124.977 tok/s` strict cold-suite result on one B70. |
-| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Prior speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` pre-final-gate result. |
-| `../results/gemma4-26b-a4b-q8-b70/` | Active lab packet | Full Gemma 4 26B A4B Q8/INT8 B70 optimization history, including older baselines, failed paths, validity gates, and vLLM comparison lanes. |
+| `../results/gemma4-26b-a4b-q8-b70/` | Result packet | Gemma 4 26B A4B Q8/INT8 one-B70 speed frontier, long-context service lane, older baselines, failed paths, validity gates, vLLM comparison lanes, and LocalMaxxing evidence. |
+| `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | Copy-ready strict speed repro | Standalone Gemma 4 26B A4B Q8 target recipe for the `124.977 tok/s` strict cold-suite result on one B70. |
+| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Archived prior speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` pre-final-gate result. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
 | `../results/qwen36-35b-quark-int8-b70/` | Closed reference packet | Qwen3.6 35B A3B Quark W8A8 INT8 on 2x/4x B70. Best strict 4x baseline, invalid fast lanes, reproduction commands, and carryover notes. |
 | `../experiments/minimax_xpu_kv_offload/` | Experimental | Session-cache c2/c4/c8, TurboQuant, and CPU-paged attention research. Use for review and experiments, not as the production recipe. |
 | `../experiments/gemma4-12b-int4-autoround-vllm/` | Production slot plus research profiles | Gemma 4 12B IT INT4 AutoRound image+text endpoint on vLLM/XPU. Current production is c8 with 32K context and 8 active generations; c10/c12/c16/c64 are documented research or rejected profiles. |
+
+The word "current" in older recipe folders means "current at the time that
+recipe was promoted." Use [model-effort-index.md](model-effort-index.md) and
+[../results/README.md](../results/README.md) for the live cross-model view.
 
 ## MiniMax M2.7 INT4 AutoRound
 
@@ -105,18 +108,18 @@ results for shared-prefix plus unique-tail prompts.
 
 ## Gemma 4 26B A4B Q8 / INT8
 
-The current command and validation packet is
+The promoted strict command and validation packet is
 [`../results/gemma4-26b-a4b-q8-b70/reproduce.md`](../results/gemma4-26b-a4b-q8-b70/reproduce.md).
 The standalone
 [`../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/`](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
-folder packages the current 125 tok/s strict cold-suite recipe, 32K context
+folder packages the 125 tok/s strict cold-suite recipe, 32K context
 settings, validity rules, and links to the promoted evidence.
 The older
 [`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
 folder packages the older superseded 95 tok/s llama.cpp patch, Q8 target,
 Q4_0 MTP draft preparation, command line, and LocalMaxxing artifacts.
 
-The deeper active lab packet is
+The deeper lab packet is
 [`../results/gemma4-26b-a4b-q8-b70/`](../results/gemma4-26b-a4b-q8-b70/README.md).
 This lane intentionally avoids tensor-parallel splitting at first: run one
 complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel

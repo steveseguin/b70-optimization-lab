@@ -1,21 +1,32 @@
 # B70 Optimization Lab Docs
 
-This docs folder is the human entry point for the B70 optimization work. The executable install recipes live under `../repro/`; docs link to those folders instead of duplicating every script.
+This docs folder is the navigation layer for a multi-model Intel XPU
+optimization lab. Executable recipes live under `../repro/`, promoted or
+closed-out model packets live under `../results/`, active research lanes live
+under `../experiments/`, and chronological evidence lives under `../notes/`.
+Docs should point to those artifacts instead of duplicating every script.
 
 ## Start Here
 
-- [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
-- [MiniMax Production C1 Service](minimax-production-c1-service.md): run the current 32K endpoint under systemd with health and benchmark checks.
-- [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): current one-B70 Q8 target plus Q4_0 MTP draft settings, optimization history, validity notes, and LocalMaxxing context.
-- [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
-- [Current Reproducibility Map](current-reproducibility-map.md): one-page map for the stable endpoint, session-cache work, TurboQuant patch, and CPU-paged attention research.
 - [Model Effort Index](model-effort-index.md): cross-model status, closed lanes, and where to put the next model packet.
 - [Model Optimization Guide](model-optimization-guide.md): start-to-finish guide for an AI agent optimizing a new model lane.
 - [Research Workflow Playbook](research-workflow-playbook.md): reusable prompts, validation ladders, and experiment discipline that produced the best outcomes.
-- [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
-- [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
+- [Current Reproducibility Map](current-reproducibility-map.md): current service map and promoted reproduction pointers.
 - [Results Index](../results/README.md): promoted model-specific result packets and how to promote a lane.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
+- [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
+
+## Model Lane Entry Points
+
+- [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): one-B70 Q8/INT8-quality speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
+- [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
+- [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
+- [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
+- [MiniMax Production C1 Service](minimax-production-c1-service.md): run the 32K MiniMax endpoint under systemd with health and benchmark checks.
+- [Gemma 4 12B INT4 AutoRound profile](../experiments/gemma4-12b-int4-autoround-vllm/README.md): current model-slot production profile and related research profiles.
+
+## Community And Operations
+
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.
@@ -73,9 +84,14 @@ more independent Intel test systems, larger-VRAM Intel devices, clean
 driver/runtime repros, and help turning local findings into upstream issues or
 patches.
 
-## Current Deployable Baseline
+## Deployable Baselines And Current Frontiers
 
-The current clean "start from Ubuntu 24 and serve on the LAN" baseline is:
+There are multiple useful "current" paths depending on the task. Treat these as
+entry points, not a single global winner.
+
+### MiniMax 32K Deployable Endpoint
+
+The clean "start from Ubuntu 24 and serve on the LAN" baseline is:
 
 - Recipe: `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/`
 - Model: `Lasimeri/MiniMax-M2.7-int4-AutoRound`
@@ -107,20 +123,24 @@ The session-cache, TurboQuant, and full-context research work is indexed in
 `current-reproducibility-map.md` and
 `../experiments/minimax_xpu_kv_offload/REPRODUCE.md`.
 
+### Qwen3.6 35B Reference Packet
+
 The Qwen3.6 35B lane is indexed in
 [qwen36-research-map.md](qwen36-research-map.md), with its final result packet in
 [../results/qwen36-35b-quark-int8-b70/](../results/qwen36-35b-quark-int8-b70/).
 
-The current Gemma 4 26B one-B70 settings are documented in
+### Gemma 4 26B Short Decode And Service Lanes
+
+The Gemma 4 26B one-B70 settings are documented in
 [../results/gemma4-26b-a4b-q8-b70/reproduce.md](../results/gemma4-26b-a4b-q8-b70/reproduce.md).
-The standalone current repro is
+The standalone strict short-decode repro is
 [../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/).
 The older
 [../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/)
 folder remains useful as a standalone prior recipe, but it is superseded by
-the current `124.97714084813418 tok/s` fixed realistic-suite record in the
-Gemma result packet. The current service/prompt-processing baseline is separate
-from that short record: `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`, SWA left-bound,
+the `124.97714084813418 tok/s` fixed realistic-suite record in the Gemma
+result packet. The service/prompt-processing baseline is separate from that
+short record: `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`, SWA left-bound,
 KQ register/broadcast, phase prefill ubatch `2048`, 32K context, FA on, and
 VMM. The 2026-07-02 service ladder passed all 32 long-context rows with exact
 JSON validation and `cached_tokens=0`; average lane median prefill was
@@ -134,3 +154,19 @@ and
 Older prefill diagnostics, including KV-max scan, forced `ncols1`,
 `nbatch_fa=128`, and phase-ubatch screens, remain archived under
 `../experiments/gemma4-26b-a4b-q8-b70/sweeps/`.
+
+## Writing Future Docs
+
+When adding or refreshing docs for another model:
+
+- make the target audience explicit: operator, optimizer, upstream developer,
+  or benchmark reader;
+- link to the model packet instead of copying long command blocks into several
+  places;
+- label active, paused, closed, superseded, invalid, and diagnostic lanes
+  plainly;
+- keep model-specific lessons in the model packet and cross-model lessons in
+  [model-effort-index.md](model-effort-index.md) or
+  [research-workflow-playbook.md](research-workflow-playbook.md);
+- do not expand the top-level README with every run. Promote summaries into
+  `results/`, `repro/`, `experiments/`, `notes/`, `patches/`, and `data/`.

@@ -1,187 +1,141 @@
-# Unofficial Intel XPU Community Lab
+# Unofficial Intel XPU Optimization Lab
 
-Community setup guides, benchmark recipes, troubleshooting notes, and patches for Intel XPU local AI work.
+Community setup guides, benchmark recipes, troubleshooting notes, and patches
+for local AI work on Intel XPUs. This is not a single-model repo. It is a
+working lab notebook and reproducibility collection for multiple model lanes
+that we revisit as new runtime, compiler, and kernel ideas appear.
+
+## Who This Is For
+
+- Local AI users who want reproducible Intel Arc/B-series commands rather than
+  benchmark screenshots.
+- Optimization agents that need a clean map of current work, archived lessons,
+  failed patches, and validity rules before touching code.
+- Upstream vLLM, llama.cpp, oneAPI, SYCL, and Intel/XPU developers looking for
+  concrete repros, failure signatures, and performance packets.
+- LocalMaxxing/community benchmark readers who need to distinguish real
+  fresh-response records from synthetic diagnostics.
 
 ## Start Here
 
-- Docs index: [docs/README.md](docs/README.md)
-- Model effort index: [docs/model-effort-index.md](docs/model-effort-index.md)
-- Current reproducibility map: [docs/current-reproducibility-map.md](docs/current-reproducibility-map.md)
-- Model optimization guide: [docs/model-optimization-guide.md](docs/model-optimization-guide.md)
-- Research workflow playbook: [docs/research-workflow-playbook.md](docs/research-workflow-playbook.md)
-- MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
-- Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
-- Gemma 4 26B B70 current result packet: [results/gemma4-26b-a4b-q8-b70](results/gemma4-26b-a4b-q8-b70/README.md)
-- Gemma 4 26B B70 current 125 tok/s repro: [repro/gemma4-26b-a4b-q8-b70-125tps-20260701](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
-- Qwen3.6 35B result packet: [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md)
-- Local ops and Codex delegation: [docs/local-ops.md](docs/local-ops.md)
-- Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
-- Results index: [results/README.md](results/README.md)
-- FAQ: [docs/faq.md](docs/faq.md)
-- LocalMaxxing submissions: [docs/localmaxxing.md](docs/localmaxxing.md)
+| Need | Entry Point |
+| --- | --- |
+| Understand the repo structure | [Docs index](docs/README.md) |
+| See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
+| Reproduce promoted results | [Results index](results/README.md) and [model recipes](docs/model-recipes.md) |
+| Start optimizing a new model | [Model optimization guide](docs/model-optimization-guide.md) |
+| Reuse the best research prompts/workflows | [Research workflow playbook](docs/research-workflow-playbook.md) |
+| Find the current host/service map | [Current reproducibility map](docs/current-reproducibility-map.md) |
+| Submit or audit LocalMaxxing records | [LocalMaxxing submissions](docs/localmaxxing.md) |
+| Handle local ops, secrets, sudo, and cross-agent delegation | [Local ops](docs/local-ops.md) |
+| Review Intel-facing issues and asks | [Feedback for Intel](docs/feedback-for-intel.md) |
 
-## What This Is
+## How The Repo Is Organized
 
-This repository is meant to become a stable community hub for Intel XPU local AI:
+The repo is organized around model lanes, not branches or one-off leaderboard
+rows. A serious lane should leave behind:
 
-- setup guides for Linux and Windows
-- Docker/container notes people can actually run
-- comparable benchmark templates and results
-- patch notes for vLLM, llama.cpp, OpenVINO, oneAPI, and SYCL
-- troubleshooting for drivers, PCIe topology, XPU visibility, and runtime mismatches
-- research leads and reproducible optimization notes
+- `results/<model>-<quant>-<hardware>/`: promoted or closed-out result packet,
+  validity gates, best commands, invalid fast lanes, and lessons.
+- `repro/<model>-.../`: copy-ready runnable recipe for a promoted result.
+- `experiments/<model>-.../`: active research lanes that are not production
+  recipes yet.
+- `notes/`: chronological lab notebook entries, including negative results and
+  postmortems.
+- `patches/`: patch snapshots and source/config deltas, including failed
+  experiments worth preserving.
+- `data/`: compact structured benchmark records, payloads, responses, and logs.
+- `scripts/`: reusable harnesses, analyzers, launchers, and submission helpers.
 
-Hardware coverage note: the current lab is four Arc Pro B70 32 GB cards
-(`128 GB` aggregate VRAM). That is enough to produce useful vLLM/XPU,
-llama.cpp/SYCL, driver, and model-port feedback, but it is also now the main
-coverage limit for larger model families. Higher-VRAM Intel eval hardware,
-especially Crescent Island-class `160-480 GB` devices or comparable future XPU
-parts, would directly expand this work into larger targets such as GLM 5.2,
-DeepSeek Flash-class models, and long-context service lanes that cannot be
-kept resident on 32 GB cards. Steve Seguin maintains this repo and posts ongoing
-build notes at <https://x.com/xyster>. The lab also has spare EPYC 9015 host
-capacity with up to ten PCIe 5.0 x16 slots, so the limiting factor for broader
-Intel coverage is increasingly GPU memory and hardware availability, not a lack
-of chassis or reproducibility workflow.
+The point is to make model switching cheap. Gemma, Qwen, MiniMax, and future
+lanes should all share validation discipline, result-packet shape, and reusable
+kernel/runtime lessons without dragging stale worktrees or huge artifacts
+forward.
 
-## How To Help This Research
+## Current Lane Highlights
 
-This project is most useful when it turns individual lab time into reusable
-public evidence: commands, patches, canaries, negative results, driver
-failures, and result packets that other Intel/XPU users can find and repeat.
-B70 has become one of the more visible cards in LocalMaxxing-style community
-benchmarks partly because these runs are documented, submitted, discussed on X,
-and indexed by GitHub for future users and agents.
+These are entry points, not the whole repo:
+
+| Lane | Status | Best Current Pointer |
+| --- | --- | --- |
+| Gemma 4 26B A4B Q8 / INT8 on 1x B70 | Current strict fresh-response speed frontier; noisy near-record support band | [result packet](results/gemma4-26b-a4b-q8-b70/README.md), [125 tok/s repro](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) |
+| Gemma 4 26B long-context/prompt-processing service lane | Separate from short-decode record; service gates must not regress short decode | [Gemma result packet](results/gemma4-26b-a4b-q8-b70/README.md), [service gate script](repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh) |
+| Qwen3.6 35B A3B Quark W8A8 INT8 on B70 | Closed reference packet for now; preserve lessons for future return | [Qwen result packet](results/qwen36-35b-quark-int8-b70/README.md), [research map](docs/qwen36-research-map.md) |
+| MiniMax M2.7 INT4 AutoRound on 4x B70 | Deployable baseline plus older strict-speed and source-fusion research leads | [Ubuntu 24 deploy repro](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md), [production service notes](docs/minimax-production-c1-service.md) |
+| Gemma 4 12B IT INT4 AutoRound | Current model-slot production profile and multimodal service lane | [experiment packet](experiments/gemma4-12b-int4-autoround-vllm/README.md), [slot switching](docs/model-slot-switching.md) |
+
+For the full queue and archive, use [docs/model-effort-index.md](docs/model-effort-index.md).
+
+## Validity Rules For Speed Claims
+
+Diagnostic runs are allowed and useful, but headline records require the
+model-lane gate. For Gemma/Qwen-style fresh-response records, that means:
+
+- fixed realistic prompt suite;
+- each prompt run once as a cold response;
+- `cached_tokens=0` for every request;
+- no prompt/KV cache reuse, context checkpoints, response reuse, warmed
+  repeated prompts, or n-gram/history acceleration;
+- target model and quantization unchanged;
+- speculative decoding/MTP allowed only when accepted tokens are verified by
+  the declared target model;
+- primary metric is median generated-token throughput for tokens 1-100 after
+  TTFT, with p10, mean, TTFT, wall-clock full-output throughput, full-output
+  after-TTFT throughput, hashes, runtime identity, env vars, flags, and logs.
+
+Synthetic, repeated, warmed, cached, or history-assisted rows stay diagnostic
+unless revalidated by the lane's promotion gate. This matters because several
+very fast historical rows were useful optimization clues but not real-world
+fresh-response claims.
+
+## Hardware Scope
+
+The active local lab has four Intel Arc Pro B70 32 GB cards (`128 GB`
+aggregate VRAM). That is enough for useful vLLM/XPU, llama.cpp/SYCL, driver,
+and model-port feedback, and it lets us run four independent one-GPU screens
+when a model fits. It also limits larger model families and simultaneous
+service/optimization lanes.
+
+Higher-VRAM Intel eval hardware, especially Crescent Island-class `160-480 GB`
+devices or comparable future XPUs, would directly expand the work into larger
+GLM, DeepSeek Flash-class, long-context, and multi-service targets that cannot
+be kept resident on 32 GB cards. The host side has spare EPYC 9015 capacity
+with up to ten PCIe 5.0 x16 slots, so the practical limit is increasingly XPU
+memory and hardware availability rather than chassis or workflow.
+
+Steve Seguin maintains this repo and posts ongoing build notes at
+<https://x.com/xyster>.
+
+<img height="600" alt="quad" src="https://github.com/user-attachments/assets/e6ce5633-17ff-4a73-924d-31dcbc913ede" />
+
+<img width="1666" height="478" alt="Gemma 4 26B B70 result context" src="https://github.com/user-attachments/assets/14602c6b-5c72-483d-aec7-415fbc4a8114" />
+
+## How To Contribute
 
 Useful contributions include:
 
 - reproducing a result on another Intel/XPU stack and sharing exact versions;
-- testing a failed lane after a driver, PyTorch XPU, vLLM, or oneAPI update;
-- turning local patches into clean vLLM, vllm-xpu-kernels, llama.cpp, or docs
-  issues/PRs;
+- testing a failed lane after a driver, PyTorch XPU, vLLM, llama.cpp, or oneAPI
+  update;
+- turning local patches into clean upstream issues or PRs;
 - adding quality canaries for new model families;
 - sharing high-signal failure logs with model, quantization, graph mode, and
   hardware identity intact;
 - providing temporary access to larger Intel hardware for models that do not
   fit cleanly on 32 GB cards.
 
-The slow part is not writing down another benchmark command. Each serious model
-lane can take days or weeks because the cards are occupied by build/test loops,
-quality gates, compiler/runtime failures, LocalMaxxing validation, and
-near-record repeat checks. More high-VRAM Intel hardware would let the project
-keep a working inference endpoint available while also optimizing multiple
-larger models in parallel. A community lab with roughly `400-1000 GB` of Intel
-VRAM across high-memory devices would change which models can be optimized at
-home, not just how many jobs can queue at once.
+When opening an issue or discussion, include GPU, OS, model, quantization,
+runtime, exact command, benchmark shape, quality gate, result JSON/log paths,
+and what changed from the closest known-good run.
 
-## Quick Paths
+## Deep Historical Notes Below
 
-| I want to... | Go here |
-| --- | --- |
-| Reproduce the current work | [Current reproducibility map](docs/current-reproducibility-map.md) |
-| Pick the next model lane | [Model effort index](docs/model-effort-index.md) |
-| Reuse the best research workflow | [Research workflow playbook](docs/research-workflow-playbook.md) |
-| Deploy MiniMax M2.7 INT4 on 4x B70 | [MiniMax Ubuntu 24 guide](docs/b70-minimax-ubuntu24-deployment.md) |
-| Copy the current Gemma 4 26B B70 settings | [Gemma 26B result packet](results/gemma4-26b-a4b-q8-b70/reproduce.md) |
-| Review the Gemma 4 26B optimization history | [Gemma 26B result packet](results/gemma4-26b-a4b-q8-b70/README.md) |
-| Run the endpoint as a service | [Production c1 service](docs/minimax-production-c1-service.md) |
-| Find model-specific recipes | [Model recipes](docs/model-recipes.md) |
-| Review Qwen3.6 35B B70 results | [Qwen result packet](results/qwen36-35b-quark-int8-b70/README.md) |
-| Browse promoted result packets | [Results index](results/README.md) |
-| Share a benchmark | [Community results guide](docs/community-results.md) |
-| Submit a LocalMaxxing record | [LocalMaxxing submissions](docs/localmaxxing.md) |
-| Compare GPUs | [GPU comparison](docs/gpu-comparison-local-ai.md) |
-| Send Intel feedback | [Feedback for Intel](docs/feedback-for-intel.md) |
+The rest of this README is dense historical lab context from earlier model
+lanes. New readers should start with the links above; future model work should
+be summarized into `results/`, `repro/`, `experiments/`, `notes/`, `patches/`,
+and `data/` rather than expanding this top-level historical section further.
 
-## Current Practical Baseline
-
-The best documented fresh install today is:
-
-- Model: MiniMax M2.7 INT4 AutoRound
-- Hardware: 4x Intel Arc Pro B70 32GB
-- OS: Ubuntu 24.04
-- Server: no-auth OpenAI-compatible LAN frontdoor on `0.0.0.0:8000`,
-  forwarding to vLLM on `127.0.0.1:18080`
-- Served context: `32768` tokens by default
-- Result: `110.90` total tok/s, `83.17` output tok/s for the strict p512/n1536
-  2K comparison lane; warm OpenAI-compatible serving reached `84.12` output
-  tok/s at the 32K served setting.
-- Production service near-32K smoke: prompt `32264`, output `64`, TTFT
-  `23.336 s`, output `63.91 tok/s` after TTFT; accepted on LocalMaxxing as
-  `cmpm35jsa0003rt01zghtmwip`.
-- Recipe: [repro/minimax-m27-b70-110tps-ubuntu24-20260523](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md)
-- Service wrapper: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
-
-This is a deployable baseline, not the final speed ceiling. The strict
-benchmark/quality lane remains p512/n1536 at context `2048` for comparability;
-the served OpenAI-compatible endpoint now defaults to `32768` and validated a
-32,408-token prompt plus 64 generated tokens without OOM.
-
-Experimental RAM-backed session-cache and TurboQuant work is tracked separately
-under [experiments/minimax_xpu_kv_offload](experiments/minimax_xpu_kv_offload/README.md).
-The current known-good session-cache profile is c2 for two parked `32768`-token
-window sessions. A smaller `22.5K` live smoke is documented as an operations
-canary, not as the desired context limit. c4/c8 and TurboQuant remain research
-modes, not production defaults.
-
-<img  height="600" alt="quad" src="https://github.com/user-attachments/assets/e6ce5633-17ff-4a73-924d-31dcbc913ede" />
-
-## Current Gemma 4 26B Copy Path
-
-For users who want to copy the current Gemma 4 26B B70 settings directly, start
-with the promoted result packet:
-
-- Current command: [results/gemma4-26b-a4b-q8-b70/reproduce.md](results/gemma4-26b-a4b-q8-b70/reproduce.md)
-- Standalone current repro: [repro/gemma4-26b-a4b-q8-b70-125tps-20260701](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
-- Prior superseded repro: [repro/gemma4-26b-a4b-q8-b70-95tps-20260624](repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
-- Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, `UD-Q8_K_XL` target
-- Draft: local `Q4_0` Gemma MTP draft only; accepted tokens are verified by the
-  Q8 target
-- Hardware for the submitted result: Supermicro AMD Threadripper PRO 5955WX
-  platform, 128 GB DDR4, headless, 1x Intel Arc Pro B70 32 GB used for the run
-- Result: `124.97714084813418 tok/s` median generated-token throughput for
-  streamed tokens 1-100 after TTFT across the fixed realistic cold prompt
-  suite, `cached_tokens=0` on every prompt, 512/512 chat canary, LocalMaxxing
-  `cmr1u77na01k2ld01kalwzs1e`
-- Runtime: llama.cpp `c926ad098`, reordered-Q8 VDR2, Q4_0 MTP draft verified
-  by the Q8 target, `FLASH_ATTN=on`, `CTX_SIZE=32768`, VMM on, `n_max=3`,
-  `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, selected-down fused
-  weighted-sum, bulk sampled-ID verifier host read, and final post-norm
-  residual fusion
-
-The deeper lab history, including older 42/48/90/94 tok/s milestones and the
-invalid warmed n-gram submissions, remains in
-[results/gemma4-26b-a4b-q8-b70](results/gemma4-26b-a4b-q8-b70/README.md).
-
-<img width="1666" height="478" alt="image" src="https://github.com/user-attachments/assets/14602c6b-5c72-483d-aec7-415fbc4a8114" />
-
-## How To Contribute
-
-Open a discussion with:
-
-- your GPU and OS
-- model and quantization
-- exact command or guide followed
-- what worked
-- what failed
-- benchmark shape and tok/s, if benchmarking
-- logs or screenshots if useful
-
-Good categories for discussion:
-
-- setup help
-- benchmarks
-- guides
-- patches
-- research leads
-- build photos
-- driver/runtime bugs
-
-## Deep Lab Notes Below
-
-The rest of this README is dense historical lab context. New users should start with the links above.
-
-## Current B70 Findings
+## Historical B70 Findings And Open Leads
 
 - Host: Ubuntu 24.04.4 LTS, kernel 6.17.0-23-generic.
 - GPUs: 4x Intel Arc Pro B70 / BMG-G31, 32 GB VRAM each.

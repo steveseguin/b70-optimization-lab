@@ -1,15 +1,19 @@
 # Results Index
 
-This folder is the promoted result ledger. Use it for model-specific outcome
-packets, record summaries, and links to reproducible evidence. Keep active
-experiments in `../experiments/`, chronological investigation notes in
-`../notes/`, and reusable reproduction recipes in `../repro/`.
+This folder is the promoted and closed-out result ledger for the lab. It is not
+limited to the currently active model. Use it for model-specific outcome
+packets, record summaries, validity gates, reproduction commands, and links to
+evidence.
 
-## Current Model Packets
+Keep active experiments in `../experiments/`, chronological investigation notes
+in `../notes/`, patch snapshots in `../patches/`, compact run evidence in
+`../data/`, and copy-ready recipes in `../repro/`.
+
+## Model Packets
 
 | Model / Lane | Folder | Status | Best Valid Result |
 | --- | --- | --- | --- |
-| Gemma 4 26B A4B Q8 / INT8 on B70 | [gemma4-26b-a4b-q8-b70](gemma4-26b-a4b-q8-b70/README.md); current repro: [../repro/gemma4-26b-a4b-q8-b70-125tps-20260701](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) | Active optimization | Current policy-compliant one-B70 result: llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier with Q4_0 MTP draft verified by the target, fixed realistic cold prompt suite, `cached_tokens=0` every request, no cache/history reuse. Current submitted strict high is reordered-Q8 VDR2 plus selected-down fused weighted-sum, bulk sampled-ID verifier host read, FA-on 32K/VMM, final post-norm residual fusion, `LLAMA_SYCL_F16_P021_SMALL_NCOLS=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`, and `UBATCH_SIZE=1024`: `124.97714084813418` median tok/s for generated tokens 1-100 after TTFT, p10 `103.83610041293295`, mean `122.4743547166875`, full512 after-TTFT `114.87107033590775`; LocalMaxxing `cmr1u77na01k2ld01kalwzs1e`. Same-family support includes `123.67689864739785`, `121.59076340768573`, `121.41411987308553`, `119.94842631460949`, `119.26425148518223`, and `113.63257982764395 tok/s`; the prior `98.340`, `95.824`, VDR2 `90-91`, and VDR4 `87.611` submissions are superseded. Synthetic 170+ and warmed n-gram 245-280 tok/s rows are diagnostic only, not real-world headline throughput. |
+| Gemma 4 26B A4B Q8 / INT8 on B70 | [gemma4-26b-a4b-q8-b70](gemma4-26b-a4b-q8-b70/README.md); strict repro: [../repro/gemma4-26b-a4b-q8-b70-125tps-20260701](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) | Current frontier/reference | One-B70 llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier with Q4_0 MTP draft verified by target, fixed realistic cold suite, `cached_tokens=0`: strict high `124.97714084813418` median tok/s for generated tokens 1-100 after TTFT; LocalMaxxing `cmr1u77na01k2ld01kalwzs1e`. Same-family support and variance notes are in the packet; synthetic/warmed rows are diagnostic only. |
 | Qwen3.6 35B A3B Quark W8A8 INT8 on B70 | [qwen36-35b-quark-int8-b70](qwen36-35b-quark-int8-b70/README.md) | Closed reference packet | 4x strict-valid `93.55 tok/s`; TP2 safe smoke `85.87 tok/s` |
 | MiniMax M2.7 INT4 AutoRound on B70 | [../repro/minimax-m27-b70-110tps-ubuntu24-20260523](../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md) | Deployable baseline | 32K endpoint, about `83-84 tok/s` output on current host |
 | MiniMax M2.7 strict speed lane | [../repro/minimax-m27-b70-89tps-20260520](../repro/minimax-m27-b70-89tps-20260520/README.md) | Older strict-speed baseline | Historical `89+ tok/s` class strict packet |
@@ -27,5 +31,9 @@ Promote a result into this folder only when:
 - raw JSON/log evidence is linked from `../data/` or an external path is
   recorded;
 - negative or invalid fast lanes are labeled as such rather than hidden.
+
+If a model lane is paused or closed, keep the packet. Paused packets are how
+future work avoids rediscovering the same dead ends when we switch back to a
+model after learning something from another lane.
 
 For LocalMaxxing submissions, see [../docs/localmaxxing.md](../docs/localmaxxing.md).
