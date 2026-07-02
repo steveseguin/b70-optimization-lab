@@ -1,0 +1,96 @@
+{
+  "group_summaries": {
+    "batch2048_ubatch1024_prefill2048_swa_fastunset": {
+      "all_long_context_gates_passed": false,
+      "batch_size": "2048",
+      "lanes": 1,
+      "median_decode_tok_s_avg": 91.58053258222012,
+      "median_decode_tok_s_by_lane": [
+        91.58053258222012
+      ],
+      "median_prefill_tok_s_avg": 1199.6807198592928,
+      "median_prefill_tok_s_by_lane": [
+        1199.6807198592928
+      ],
+      "prefill_ubatch_size": "2048",
+      "swa_left_bound_fast": null,
+      "ubatch_size": "1024"
+    }
+  },
+  "kind": "gemma4_q8_long_context_service_gate",
+  "policy": "service/prefill validation only; not a short-decode LocalMaxxing headline",
+  "rows": [
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 4,
+      "case_rows": [
+        {
+          "actual_prompt_tokens": 16213,
+          "cached_tokens": 0,
+          "case_id": "lc-12288-early",
+          "output_sha256": "9c754e698e57ea842c7c5907ffa247a6b5e865bcf38c8f01199b485a94e6a576",
+          "prefill_tok_s_approx": 1199.6807198592928,
+          "prompt_sha256": "dd33eeee9a7e9c923807fa26a62f86b74f56b9c38c195a1658c4d2f8c9df29b9",
+          "target_prompt_tokens": 12288,
+          "tok_s_after_ttft": 91.58053258222012,
+          "ttft_s": 13.514429074013606,
+          "validation_pass": false
+        }
+      ],
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-longctx-service-nodeprofile-swalb-ctx32768-o32-20260702T065350Z-service-nodeprofile-swalb1",
+      "long_context_gate": {
+        "passed": false,
+        "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+      },
+      "prefill_tok_s_approx": {
+        "count": 1,
+        "max": 1199.6807198592928,
+        "mean": 1199.6807198592928,
+        "median": 1199.6807198592928,
+        "min": 1199.6807198592928,
+        "p10": 1199.6807198592928,
+        "stdev": 0.0
+      },
+      "prefill_ubatch_size": "2048",
+      "prompts_unique": true,
+      "quality_pass_all": false,
+      "run_dir": "/home/steve/llm-optimizations/data/gemma4-q8-gpu0-longctx-service-nodeprofile-swalb-ctx32768-o32-20260702T065350Z-service-nodeprofile-swalb1",
+      "status": "ok",
+      "swa_left_bound_fast": null,
+      "tok_s_after_ttft": {
+        "count": 1,
+        "max": 91.58053258222012,
+        "mean": 91.58053258222012,
+        "median": 91.58053258222012,
+        "min": 91.58053258222012,
+        "p10": 91.58053258222012,
+        "stdev": 0.0
+      },
+      "tok_s_wall": {
+        "count": 1,
+        "max": 2.3081614337929013,
+        "mean": 2.3081614337929013,
+        "median": 2.3081614337929013,
+        "min": 2.3081614337929013,
+        "p10": 2.3081614337929013,
+        "stdev": 0.0
+      },
+      "ttft_s": {
+        "count": 1,
+        "max": 13.514429074013606,
+        "mean": 13.514429074013606,
+        "median": 13.514429074013606,
+        "min": 13.514429074013606,
+        "p10": 13.514429074013606,
+        "stdev": 0.0
+      },
+      "ubatch_size": "1024",
+      "vmm": "1"
+    }
+  ]
+}

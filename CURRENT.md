@@ -62,6 +62,18 @@ Current active optimization target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-right-bound-negative.md`
   and
   `data/gemma4-globalrb-comparison-20260702T061900Z-globalrb-onecase.json`.
+- Latest service node-profile diagnostic:
+  a profiler-only run of the current validated service recipe (`ncols2=8`,
+  prefill ubatch `2048`, SWA left-bound min-Q `2048`) intentionally used
+  `MAX_TOKENS=32`, so the exact long-context JSON gate failed by truncation and
+  this is not a headline result. The useful finding is the hotspot map: after
+  SWA left-bound, the dominant prompt-processing nodes are full/global
+  FlashAttention layers `5/17/23/11/29` at about `16 ms` average each, with
+  global GQA shapes like `Q=[512,2,16,1]`, `K/V=[512,256,2,1]`,
+  `mask=[256,2,1,1]`. Further service work should target structural global
+  FlashAttention tile/scheduling changes, not more SWA/ubatch/right-bound
+  roulette. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-service-nodeprofile-swalb-global-fattn.md`.
 - Latest verifier-top2 diagnostic:
   closed as an instrumentation failure, not a performance result.
   The v2 patch built and made the host top2 profile path non-missing, but raw
