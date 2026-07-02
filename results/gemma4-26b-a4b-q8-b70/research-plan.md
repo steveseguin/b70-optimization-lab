@@ -213,6 +213,20 @@ service/prefill micro-win, not a LocalMaxxing headline decode result. See
 and
 `../../data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`.
 
+2026-07-02 KQ register/broadcast no-KQ-LSM follow-up: tested a second
+default-off flag,
+`GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST_NO_KQ_LSM=1`, to elide the unused KQ
+local-memory scratch region in the promoted KQ register/broadcast path. The
+patch built and passed smoke plus the full 48-row long-context A/B + crossover
+with exact JSON validation and `cached_tokens=0`, but performance was noise:
+mean prefill delta `-0.034%`, median prefill delta `+0.067%`, mixed wave/GPU
+behavior, and no decode/TTFT signal large enough to matter. Decision: closed
+negative and reverted; keep only `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1`.
+See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-no-kq-lsm-negative.md`
+and
+`../../data/gemma4-global-fattn-kq-reg-bcast-no-kq-lsm-comparison-20260702.json`.
+
 2026-06-30 attention post-norm residual fusion: implemented default-off
 `LLAMA_GEMMA4_FUSED_ATTN_POST_NORM_RESIDUAL=1`, updated the harness to pass and
 record it, rebuilt the AOT BMG-G31 llama-server under oneAPI, and ran a verified

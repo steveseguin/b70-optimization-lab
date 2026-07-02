@@ -151,6 +151,14 @@ service/prefill only, not a LocalMaxxing headline decode result.
 Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md).
 
+Follow-up no-KQ-local-memory elision for the same KQ register/broadcast path is
+closed negative/noise. The candidate added
+`GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST_NO_KQ_LSM=1`, built successfully, and
+passed a 48-row exact long-context A/B + crossover with `cached_tokens=0`, but
+measured only `-0.034%` mean / `+0.067%` median prefill delta with mixed
+wave/GPU behavior. It was reverted and should not be promoted. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-no-kq-lsm-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-no-kq-lsm-negative.md).
+
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly
 pointed at `FLASH_ATTN_EXT` / KV-cache attention rather than verifier LM-head
