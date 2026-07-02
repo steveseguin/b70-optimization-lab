@@ -94,8 +94,8 @@ and awkward for future Gemma/Qwen work.
 
 ## Detached Worktree Backlog
 
-`/home/steve/qwen36-results-main` is a detached audit worktree at
-`4b33bb2f`. It has no tracked dirty files, but it still has a local untracked
+`/home/steve/qwen36-results-main` was a detached audit worktree at
+`4b33bb2f`. It had no tracked dirty files, but it still had a local untracked
 `data/` backlog:
 
 ```text
@@ -104,14 +104,26 @@ all under: data/
 tracked in active main: 0/2920
 ```
 
-Do not run new work there. Do not delete it blindly. If disk pressure or final
-cleanup is needed, first either:
+The backlog was archived locally and the linked worktree was removed on
+2026-07-02 so normal work has a single active checkout:
+
+```text
+archive: /home/steve/qwen36-raw-archives/qwen36-results-main-detached-4b33bb2f-20260702.tar.zst
+compressed size: 187M
+uncompressed payload verified by zstd -t: 1,600,215,040 bytes
+sha256: 0a474341b4360209559938c8fbeee84d86e1f9be28f16aa0b7dcb22fd6523517
+```
+
+Do not run new work from restored copies of that archive. If a future Qwen task
+needs a raw packet, extract the archive into a temporary non-worktree location,
+promote a compact summary or selected small evidence file into `main`, then
+delete the extraction.
+
+If disk pressure or final cleanup is needed, first either:
 
 1. promote named result packets into `main` as compact summaries; or
-2. move/compress the whole detached worktree outside the repo as a local raw
-   archive; or
-3. explicitly discard it after confirming no future Qwen work needs those raw
-   packets.
+2. explicitly discard the raw archive after confirming no future Qwen work needs
+   those packets.
 
 ## Recommended Cleanup State
 
@@ -120,8 +132,7 @@ For day-to-day work:
 - keep only local branch `main`;
 - keep `origin/main` as the normal remote target;
 - leave remote `origin/codex/*-achieved` refs as historical remote archives;
-- delete local archive tags that point at multi-GB artifact history after this
-  manifest is committed and pushed;
+- do not keep local archive tags that point at multi-GB artifact history;
 - keep raw Qwen checkpoints/traces out of Git and rely on this manifest plus the
   tracked Qwen notes/results/patches for future restart context.
 
