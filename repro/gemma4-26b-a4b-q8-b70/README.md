@@ -79,10 +79,21 @@ global-GQA8 KQ register/broadcast service flag:
 - candidate flag: `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1`;
 - source patch:
   `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch`;
+- DKQ576 extension source patch:
+  `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch`;
 - balanced A/B/C/D result: 48/48 valid long-context rows, `cached_tokens=0`,
   approximate prefill `+0.730%` mean, decode `+0.431%` mean;
+- DKQ576 balanced A/B/C/D result: 48/48 valid long-context rows,
+  `cached_tokens=0`, approximate prefill `+0.722%` mean / `+0.813%` median,
+  TTFT `-0.765%`, positive by GPU and by case;
+- DKQ576 short-decode guard:
+  `data/gemma4-short-decode-guard-20260702Tkqregbcast-dkq576-shortguard.json`,
+  four lanes passed the fixed realistic gate and `cached_tokens=0` at
+  `MAX_TOKENS=256`, `CANARY_REPEATS=8`;
 - note:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-service-win.md`.
+- DKQ576 note:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`.
 
 This is a service/prefill micro-win, not a short-decode LocalMaxxing headline
 record.

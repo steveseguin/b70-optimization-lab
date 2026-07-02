@@ -14,9 +14,12 @@ Q=[512,2,16,1], K/V=[512,256,2,1], mask=[256,2,1,1]
 
 The previous DV-split patch was neutral because it duplicated KQ/softmax work.
 This experiment instead kept a single tile pass and removed local-memory KQ
-handoff for the hot `DKQ=512`, `DV=512`, `ncols1=2`, `ncols2=8`, `nbatch_fa=64`
-shape. Softmax values are retained in a tiny per-lane register array and read by
-the V@KQ phase with subgroup lane selection.
+handoff for the hot `DKQ=512`, `DV=512`, `ncols1=2`, `ncols2=8`,
+`nbatch_fa=64` shape. Softmax values are retained in a tiny per-lane register
+array and read by the V@KQ phase with subgroup lane selection. A later
+follow-up extended the same default-off dispatch to the profiled `DKQ=576`,
+`DV=512` Gemma global-service shape; see
+`20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`.
 
 ## Patch
 
@@ -132,6 +135,10 @@ Per-case prefill deltas were also positive and grow with context length:
 Decision: **service-prefill win, default-off, promote as an optional service
 flag after keeping the source patch available.** This is not a LocalMaxxing
 headline decode record and should not be submitted as one.
+
+Follow-up: the same flag was extended to `DKQ=576`, passed another balanced
+48-row service A/B, and is documented at
+`20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`.
 
 ## Reproduction
 

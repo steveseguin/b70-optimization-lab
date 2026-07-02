@@ -139,6 +139,19 @@ Primary target:
   Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-lmhead1col-subgroups.md`
   and `data/gemma4-q8-nospec-lmheadsg2-ab-20260701T140828Z.md`.
+- Latest service/prefill source win:
+  `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1` is a default-off global
+  FlashAttention service flag that now covers both `DKQ=512` and the profiled
+  `DKQ=576`, `DV=512`, `ncols=16` Gemma global GQA shape. The DKQ576 extension
+  built and passed a balanced four-wave long-context A/B + crossover:
+  48/48 exact JSON rows valid, `cached_tokens=0`, prefill `+0.722%` mean /
+  `+0.813%` median, TTFT `-0.765%`, positive by GPU and by case. A candidate
+  short-decode guard also passed four lanes at `MAX_TOKENS=256`,
+  `CANARY_REPEATS=8`, `cached_tokens=0`, with no regression signal. This is
+  service/prefill only, not a LocalMaxxing headline decode result. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`
+  and
+  `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`.
 - Latest sampled-ID egress follow-up:
   `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS=1` is a closed negative /
   incomplete implementation. The first parity smoke passed only because the

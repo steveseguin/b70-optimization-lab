@@ -181,7 +181,14 @@ Record identity:
   `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-dv512-gqa8-ncols2.patch`
   with `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`. Use UB2048 as the balanced
   long-service setting, UB2304 for pure prefill, and keep UB1024 as the
-  short-record reproduction setting. The KV-max mask pre-scan threshold
+  short-record reproduction setting. The optional KQ register/broadcast service
+  flag `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1` is preserved in
+  `../patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch`
+  and the DKQ576 extension
+  `../patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-dkq576-source.patch`;
+  it is documented as a small service/prefill win in
+  `../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`
+  and is not a LocalMaxxing headline decode result. The KV-max mask pre-scan threshold
   diagnostic is preserved at
   `../patches/gemma4-26b-a4b-q8-b70/20260630-sycl-fattn-kv-max-scan-threshold.patch`
   and documented as a negative in

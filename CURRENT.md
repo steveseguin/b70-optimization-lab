@@ -75,6 +75,21 @@ Current active optimization target:
   FlashAttention tile/scheduling changes for `DKQ=576`, `DV=512`, not more
   SWA/ubatch/right-bound roulette. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-service-nodeprofile-swalb-global-fattn.md`.
+- Latest global FlashAttention KQ handoff follow-up:
+  the default-off `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1` patch now covers
+  both the original `DKQ=512` path and the profiled `DKQ=576`, `DV=512`,
+  `ncols=16` global service shape. The DKQ576 extension built and passed a
+  four-wave service A/B + crossover with exact long-context JSON validation and
+  `cached_tokens=0` on all 48 rows. Candidate vs control improved approximate
+  prefill by `+0.722%` mean / `+0.813%` median, TTFT by `-0.765%`, and was
+  positive on every GPU and every long-context case. A candidate short-decode
+  guard also passed four lanes at `MAX_TOKENS=256`, `CANARY_REPEATS=8`,
+  `cached_tokens=0`, with no regression signal. This is a small
+  service/prefill win only, not a LocalMaxxing headline decode result.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`
+  and
+  `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`.
 - Latest global FlashAttention vec-dispatch follow-up:
   forcing the profiled Gemma global GQA shape (`Q=[512,2,16,1]`,
   `K/V=[512,256,2,1]`) from the current tile path to the existing vec kernel is

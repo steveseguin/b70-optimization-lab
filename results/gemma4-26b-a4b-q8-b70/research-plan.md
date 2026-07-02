@@ -198,6 +198,21 @@ no full512 confirmation, no LocalMaxxing submission, and do not renew this
 UBATCH interaction unless another source/runtime change alters the shape. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-finalpost-ub1152-screen.md`.
 
+2026-07-02 global FlashAttention KQ register/broadcast service follow-up:
+the default-off `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1` path was extended
+from the original `DKQ=512`, `DV=512` dispatch to include the profiled
+`DKQ=576`, `DV=512`, `ncols=16` Gemma global GQA service shape. The candidate
+built and passed a balanced four-wave long-context A/B + crossover with exact
+JSON validation and `cached_tokens=0` on all 48 rows. Candidate vs control
+improved approximate prefill by `+0.722%` mean / `+0.813%` median, TTFT by
+`-0.765%`, and was positive by every GPU and every long-context case. The
+candidate short-decode smoke guard also passed four lanes at `MAX_TOKENS=256`,
+`CANARY_REPEATS=8`, `cached_tokens=0`. Treat it as an optional
+service/prefill micro-win, not a LocalMaxxing headline decode result. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`
+and
+`../../data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`.
+
 2026-06-30 attention post-norm residual fusion: implemented default-off
 `LLAMA_GEMMA4_FUSED_ATTN_POST_NORM_RESIDUAL=1`, updated the harness to pass and
 record it, rebuilt the AOT BMG-G31 llama-server under oneAPI, and ran a verified

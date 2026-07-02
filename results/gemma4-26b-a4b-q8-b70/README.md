@@ -137,6 +137,20 @@ as the current validated service/prefill recipe, not a LocalMaxxing short-decode
 headline. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-postclean-baseline-swalb-service-confirm.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-postclean-baseline-swalb-service-confirm.md).
 
+The latest structural global-FlashAttention service micro-win is the
+default-off KQ register/broadcast path:
+`GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1`. It was first validated on the
+`DKQ=512`, `DV=512` tile path, then extended to the profiled `DKQ=576`,
+`DV=512`, `ncols=16` global GQA shape. The DKQ576 extension passed a balanced
+four-wave long-context A/B + crossover with exact JSON validation and
+`cached_tokens=0` on all 48 rows, improving approximate prefill by `+0.722%`
+mean / `+0.813%` median and TTFT by `-0.765%`, positive by GPU and by case.
+The candidate short-decode smoke guard also passed four lanes at
+`MAX_TOKENS=256`, `CANARY_REPEATS=8`, `cached_tokens=0`. This is
+service/prefill only, not a LocalMaxxing headline decode result.
+Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md).
+
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly
 pointed at `FLASH_ATTN_EXT` / KV-cache attention rather than verifier LM-head
