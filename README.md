@@ -123,6 +123,9 @@ window sessions. A smaller `22.5K` live smoke is documented as an operations
 canary, not as the desired context limit. c4/c8 and TurboQuant remain research
 modes, not production defaults.
 
+<img  height="600" alt="quad" src="https://github.com/user-attachments/assets/e6ce5633-17ff-4a73-924d-31dcbc913ede" />
+
+
 ## Current Gemma 4 26B Copy Path
 
 For users who want to copy the current Gemma 4 26B B70 settings directly, start
