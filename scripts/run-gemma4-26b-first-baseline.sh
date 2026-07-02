@@ -180,6 +180,8 @@ LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE_PARTIAL="${LLAMA_SYCL_MUL_MAT_TOP1_EPILOGUE_PAR
 LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS="${LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS:-}" \
 LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE="${LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE:-}" \
 LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS="${LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS:-}" \
+LLAMA_SYCL_MUL_MAT_ARGMAX_PROFILE="${LLAMA_SYCL_MUL_MAT_ARGMAX_PROFILE:-}" \
+LLAMA_SYCL_MUL_MAT_ARGMAX_PROFILE_EVERY="${LLAMA_SYCL_MUL_MAT_ARGMAX_PROFILE_EVERY:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP="${LLAMA_SPEC_ADAPTIVE_MTP:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP_WARMUP="${LLAMA_SPEC_ADAPTIVE_MTP_WARMUP:-}" \
 LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX="${LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX:-}" \
@@ -469,6 +471,8 @@ out = {
         "llama_sycl_mul_mat_argmax_tile_subgroups": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_TILE_SUBGROUPS"),
         "llama_sycl_mul_mat_argmax_multi_reuse": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_MULTI_REUSE"),
         "llama_sycl_mul_mat_argmax_reorder_ncols": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_REORDER_NCOLS"),
+        "llama_sycl_mul_mat_argmax_profile": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_PROFILE"),
+        "llama_sycl_mul_mat_argmax_profile_every": env_or_log("LLAMA_SYCL_MUL_MAT_ARGMAX_PROFILE_EVERY"),
         "llama_spec_adaptive_mtp": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP"),
         "llama_spec_adaptive_mtp_warmup": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_WARMUP"),
         "llama_spec_adaptive_mtp_low_n_max": env_or_log("LLAMA_SPEC_ADAPTIVE_MTP_LOW_N_MAX"),
