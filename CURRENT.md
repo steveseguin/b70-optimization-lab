@@ -108,6 +108,17 @@ Current active optimization target:
   prefix-tail, or post-hoc accept-prefix masking without a deeper row-adaptive
   verifier design. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-conditional-bonus-negative.md`.
+- Latest frontier audit:
+  a source/flag inventory after the conditional-bonus and global-right-bound
+  closures found no hidden easy knob. Adaptive MTP, accept-prefix v1/v2,
+  top1-epilogue/partial, sampled-ID pointer/copy variants, post-norm combo,
+  draft quant/depth, global fast-mask, global right-bound, and hot-shape
+  `nbatch_K` retunes are all closed or non-promotable for the current identity.
+  The only credible short-decode frontier is a real backend row-adaptive
+  verifier path or a mathematically sound candidate-bound LM-head certificate
+  that avoids full-vocab work; the only credible service frontier is structural
+  global FlashAttention tile/scheduling work. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-frontier-audit-after-closed-knobs.md`.
 - Latest direct-confidence / logit-gap follow-up:
   Tail-only MTP direct-confidence producer is closed negative. A source patch
   made `LLAMA_MTP_DRAFT_DIRECT_ARGMAX_SCORES=1` compute top2 score rows only
