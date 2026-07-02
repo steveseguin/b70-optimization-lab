@@ -47,6 +47,19 @@ back, and when it should be removed.
 
 ## Untracked Backlog
 
+Refresh on 2026-07-02:
+
+- `/home/steve/llm-optimizations` is clean on branch-attached `main` at
+  `606a4a4c`, with `origin/main` matching after push.
+- `/home/steve/qwen36-results-main` remains detached at `4b33bb2f`, with no
+  tracked dirty state.
+- The detached worktree still has a large untracked `data/` backlog:
+  `2920` visible untracked files, total worktree size about `1.6G`.
+- The newest useful postnorm-combo/no-spec packets checked during the refresh
+  are already present in the active checkout and tracked on `main`, including
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-mtp-postnormcombo-full512.md`
+  and the `20260701T143822Z-mtp-postnormcombo-full512` result packet.
+
 No recent `20260701T140828Z-nospec-retest` or
 `20260701T143822Z-mtp-postnormcombo-full512` artifacts were stranded as
 untracked files; those result files are tracked in the pushed commits.

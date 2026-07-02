@@ -17,6 +17,29 @@ reported pushed to `origin/main`.
 
 ## Inventory Snapshot
 
+Refresh on 2026-07-02 after pushing `606a4a4c`:
+
+```text
+/home/steve/llm-optimizations
+  branch: main
+  state: clean; origin/main matches local main
+  visible untracked count: 0
+
+/home/steve/qwen36-results-main
+  branch: detached
+  HEAD: 4b33bb2fda02d2f85c7101f5c5b34f4286d0e0db
+  tracked dirty entries: 0
+  visible untracked count: 2920
+  top-level split: data/: 2920
+  total worktree size: ~1.6G
+```
+
+The recent postnorm-combo/no-spec result clusters checked during this refresh
+are already present in `/home/steve/llm-optimizations` and tracked on `main`.
+Do not run new work from the detached checkout. Do not bulk-add or delete the
+detached backlog; either promote named result packets into the active checkout
+or archive/remove the entire detached worktree after explicit approval.
+
 Measured again on 2026-07-01 after adding ignore rules for historical raw
 `data/qwen36-*` and `data/xpu-recovery-*` backlogs. No files were moved or
 deleted. The old artifacts remain on disk for audit, but they no longer swamp
