@@ -11,6 +11,10 @@ or a dated addendum over editing old conclusions in place.
   current experiment queue, exhausted neighborhoods, and next patch targets.
 - [../experiments/gemma4-26b-a4b-q8-b70/sweeps/](../experiments/gemma4-26b-a4b-q8-b70/sweeps/):
   chronological sweep notes for valid wins, losses, and failed source patches.
+- [2026-07-02-gemma-125-rerun-variance-diagnostic.md](2026-07-02-gemma-125-rerun-variance-diagnostic.md):
+  why the exact 125 tok/s Gemma repro reran at about 120 tok/s; records the
+  identity diff, per-prompt movement, and duplicate-prompt nondeterminism
+  diagnostic. The duplicate-prompt data is diagnostic-only, not promotable.
 
 ## Current Qwen Entry Points
 
