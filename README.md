@@ -11,7 +11,7 @@ Community setup guides, benchmark recipes, troubleshooting notes, and patches fo
 - MiniMax install guide: [docs/b70-minimax-ubuntu24-deployment.md](docs/b70-minimax-ubuntu24-deployment.md)
 - Production service notes: [docs/minimax-production-c1-service.md](docs/minimax-production-c1-service.md)
 - Gemma 4 26B B70 current result packet: [results/gemma4-26b-a4b-q8-b70](results/gemma4-26b-a4b-q8-b70/README.md)
-- Gemma 4 26B B70 prior 95 tok/s repro: [repro/gemma4-26b-a4b-q8-b70-95tps-20260624](repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
+- Gemma 4 26B B70 current 125 tok/s repro: [repro/gemma4-26b-a4b-q8-b70-125tps-20260701](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
 - Qwen3.6 35B result packet: [results/qwen36-35b-quark-int8-b70](results/qwen36-35b-quark-int8-b70/README.md)
 - Local ops and Codex delegation: [docs/local-ops.md](docs/local-ops.md)
 - Model recipes: [docs/model-recipes.md](docs/model-recipes.md)
@@ -132,15 +132,22 @@ For users who want to copy the current Gemma 4 26B B70 settings directly, start
 with the promoted result packet:
 
 - Current command: [results/gemma4-26b-a4b-q8-b70/reproduce.md](results/gemma4-26b-a4b-q8-b70/reproduce.md)
-- Prior repro: [repro/gemma4-26b-a4b-q8-b70-95tps-20260624](repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
+- Standalone current repro: [repro/gemma4-26b-a4b-q8-b70-125tps-20260701](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
+- Prior superseded repro: [repro/gemma4-26b-a4b-q8-b70-95tps-20260624](repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
 - Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, `UD-Q8_K_XL` target
 - Draft: local `Q4_0` Gemma MTP draft only; accepted tokens are verified by the
   Q8 target
 - Hardware for the submitted result: Supermicro AMD Threadripper PRO 5955WX
   platform, 128 GB DDR4, headless, 1x Intel Arc Pro B70 32 GB used for the run
-- Result: `103.299 tok/s` first fresh no-cache request after TTFT,
-  `102.193 tok/s` supporting mean, 1536/1536 chat canary, LocalMaxxing
-  `cmqsylo2l011nqr011yydjvne`
+- Result: `124.97714084813418 tok/s` median generated-token throughput for
+  streamed tokens 1-100 after TTFT across the fixed realistic cold prompt
+  suite, `cached_tokens=0` on every prompt, 512/512 chat canary, LocalMaxxing
+  `cmr1u77na01k2ld01kalwzs1e`
+- Runtime: llama.cpp `c926ad098`, reordered-Q8 VDR2, Q4_0 MTP draft verified
+  by the Q8 target, `FLASH_ATTN=on`, `CTX_SIZE=32768`, VMM on, `n_max=3`,
+  `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`, selected-down fused
+  weighted-sum, bulk sampled-ID verifier host read, and final post-norm
+  residual fusion
 
 The deeper lab history, including older 42/48/90/94 tok/s milestones and the
 invalid warmed n-gram submissions, remains in

@@ -2,8 +2,10 @@
 
 This is a **superseded historical reproduction recipe** for the verified
 Gemma 4 26B A4B single-GPU B70 result from 2026-06-24. The current valid
-fresh-response Q8-target record is `103.2992004295621 tok/s`, LocalMaxxing
-`cmqsylo2l011nqr011yydjvne`; start from
+fresh-response Q8-target record is `124.97714084813418 tok/s`, LocalMaxxing
+`cmr1u77na01k2ld01kalwzs1e`; start from
+[`../gemma4-26b-a4b-q8-b70-125tps-20260701/`](../gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
+or
 [`../../results/gemma4-26b-a4b-q8-b70/reproduce.md`](../../results/gemma4-26b-a4b-q8-b70/reproduce.md)
 for current record attempts.
 

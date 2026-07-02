@@ -164,7 +164,19 @@ Gemma-specific lessons from the Q8 run:
   noise band. It keeps fresh prompts and `cached_tokens=0`, but disables
   speculation, cache reuse, and history acceleration so target-kernel changes
   can be measured with much lower variance.
-- Mine the existing result tree before new runs. The 103.299 tok/s record came
-  from targeted source/runtime improvements plus narrow neighborhood checks;
-  repeated flag roulette after acceptance was already saturated mostly found
-  noise.
+- Mine the existing result tree before new runs. The 125 tok/s strict
+  cold-suite result came from a sequence of targeted changes, not generic flag
+  roulette: Q8 reorder VDR2, selected-down fused weighted-sum, bulk sampled-ID
+  verifier host read, FA-on 32K/VMM, and final post-norm residual fusion.
+- Preserve the realistic-suite prompt hashes and output hashes for promoted
+  runs. A speedup is not headline-worthy unless it remains a fresh response:
+  each fixed-suite prompt once, no prompt/KV/context/response reuse, no
+  n-gram/history acceleration, and `cached_tokens=0`.
+- Use the 4-GPU host for same-window A/B and cross-over screens, then confirm
+  promising candidates with a clean solo run. The measured no-spec calibration
+  spread was about `4.4%` p90 pairwise absolute run-median delta, so sub-1%
+  changes need paired analysis rather than single-run comparison.
+- Capture thermal/frequency telemetry when investigating variance. The
+  2026-07-01 Gemma sweep found no throttle explanation for the spread
+  (`77-78 C` active core, `86-90 C` memory, near-max frequency), which is why
+  the repo treats close single-run deltas as inconclusive.

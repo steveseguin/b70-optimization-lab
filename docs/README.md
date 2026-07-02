@@ -112,31 +112,24 @@ The Qwen3.6 35B lane is indexed in
 
 The current Gemma 4 26B one-B70 settings are documented in
 [../results/gemma4-26b-a4b-q8-b70/reproduce.md](../results/gemma4-26b-a4b-q8-b70/reproduce.md).
+The standalone current repro is
+[../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/).
 The older
 [../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/)
 folder remains useful as a standalone prior recipe, but it is superseded by
 the current `124.97714084813418 tok/s` fixed realistic-suite record in the
-Gemma result packet. The current long-context service candidate is the
-default-off SYCL FlashAttention DV512/GQA8 tile patch documented in
-`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-prefill-win.md`;
-it improves validated prefill/service shapes without replacing the UB1024
-short-record reproduction. A follow-up KV-max mask pre-scan threshold
-diagnostic is archived at
-`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-kv-max-scan-threshold-negative.md`;
-it showed scan-off is slower, so keep the scan enabled.
-The follow-up forced-`ncols1` tile-width diagnostic is archived at
-`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-ncols1-negative.md`;
-it showed forced `ncols1=1` and `ncols1=4` are both slower than the current
-implicit `ncols1=2` GQA8 path.
-The follow-up compile-time `nbatch_fa=128` retune for that selected tile is
-archived at
-`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-sycl-fattn-dv512-gqa8-nbatchfa128-negative.md`;
-it matched controls rather than improving them, so keep the current
-`nbatch_fa=64` tile config.
-The phase-specific prompt/decode ubatch source patch is archived at
-`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-phase-prefill-ubatch-service.md`;
-the v2 patch is valid as a service candidate (`LLAMA_PREFILL_UBATCH_SIZE=2048`
-with `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`), but it does not beat the current
-short-decode record and should not be submitted to LocalMaxxing. The runnable
-service wrapper is
-`../repro/gemma4-26b-a4b-q8-b70/run-vdr2-gqa8-phase-prefill-service.sh`.
+Gemma result packet. The current service/prompt-processing baseline is separate
+from that short record: `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`, SWA left-bound,
+KQ register/broadcast, phase prefill ubatch `2048`, 32K context, FA on, and
+VMM. The 2026-07-02 service ladder passed all 32 long-context rows with exact
+JSON validation and `cached_tokens=0`; average lane median prefill was
+`1192.965 tok/s`, average lane median long-context decode was `131.786 tok/s`,
+and the longest `32571` actual-token prompt stayed around `991-1006 tok/s`
+prefill and `114-115 tok/s` decode. Start with
+`../repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh`,
+`../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md`,
+and
+`../data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json`.
+Older prefill diagnostics, including KV-max scan, forced `ncols1`,
+`nbatch_fa=128`, and phase-ubatch screens, remain archived under
+`../experiments/gemma4-26b-a4b-q8-b70/sweeps/`.

@@ -104,6 +104,10 @@ documented in the result packet:
 
 `../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 
+Standalone current repro:
+
+`../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md`
+
 Use it when the goal is to reproduce the current fixed-suite cold-response
 frontier rather than the older synthetic filled-long diagnostics. The older
 standalone

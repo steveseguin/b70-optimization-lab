@@ -31,6 +31,11 @@ includes exact-reproduction rows at `121.59076340768573`,
 `119.94842631460949 tok/s` confirmation and lower variance rows at
 `113.572`, `114.088`, and `111.988 tok/s`; treat this as a higher-variance
 baseline lane, not as a default-off LM-head source-flag win.
+The 2026-07-02 documentation-pass rerun of the same wrapper measured
+`120.92334534956485 tok/s` with `512/512` canary rows, `cached_tokens=0` on all
+12 prompts, and `realistic_final_gate.passed=true`; it is valid same-recipe
+support, not a new record. Evidence:
+`../../data/gemma4-q8-gpu0-125repro-docpass-20260702T231635Z/summary.json`.
 The 2026-07-01 GPU0 thermal sweep ran four exact same-GPU full512 repeats with
 privileged `xpu-smi` telemetry and found no thermal-throttle explanation for
 the variance: medians were `115.515`, `119.019`, `114.520`, and `120.202
@@ -54,10 +59,12 @@ Current no-spec control:
 
 ## 1. Build llama.cpp with SYCL
 
-The current diagnostic `176.216 tok/s` recipe is not plain upstream llama.cpp.
-It uses the local Gemma research stack based on upstream commit `c926ad098`;
-apply the current cumulative stack plus the Q8 MoE-ID reorder patch snapshot
-and VDR compile-knob patch:
+The current strict `124.977 tok/s` cold-suite recipe is not plain upstream
+llama.cpp. It uses the local Gemma research stack based on upstream commit
+`c926ad098`; apply the current cumulative stack plus the Q8 MoE-ID reorder
+patch snapshot, selected-down VDR2 source snapshot, and VDR compile-knob patch.
+The older `176.216 tok/s` synthetic recipe used the same general research
+lineage, but it is diagnostic only and is not the promoted build target.
 
 - `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.patch`
 - `../../patches/gemma4-26b-a4b-q8-b70/20260626T2225-llamacpp-gemma4-current-record-stack.md`
@@ -190,7 +197,16 @@ scripts/run-gemma4-26b-first-baseline.sh
 
 ## Representative Realistic Final Gate Reproduction
 
-The promoted record can be reproduced with:
+The promoted record can be reproduced with the standalone wrapper:
+
+```bash
+cd /home/steve/llm-optimizations
+GPU_INDEX=0 PORT=19350 \
+  LABEL=gemma4-q8-gpu0-125repro-$(date -u +%Y%m%dT%H%M%SZ) \
+  bash repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh
+```
+
+Or directly through the active record script:
 
 ```bash
 cd /home/steve/llm-optimizations
@@ -461,10 +477,13 @@ claim or as a 32K-context result.
 
 Historical synthetic filled-long draft-MTP diagnostic:
 
-For a copy-ready version of this historical diagnostic path, including the exact patch,
+For a copy-ready version of the current strict path, start with
+[`../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/`](../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md).
+
+For a copy-ready version of the older historical diagnostic path, including the exact patch,
 configuration, scripts, and copied result artifacts, start with
 [`../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
-for the older superseded recipe. The current 176.216 tok/s recipe is the same
+for the older superseded recipe. The diagnostic 176.216 tok/s recipe is the same
 family plus direct argmax-ID unroll, q-only Gemma4Assistant attention inputs,
 verifier backend argmax IDs, deferred target `h_nextn`, selected-softmax +
 weighted-sum Gemma4 MoE source guards, route cache, fused assistant output

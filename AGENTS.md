@@ -149,6 +149,8 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 
 - result packet: `results/gemma4-26b-a4b-q8-b70/README.md`;
 - reproduction: `results/gemma4-26b-a4b-q8-b70/reproduce.md`;
+- standalone current repro:
+  `repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md`;
 - realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
 - best strict cold-suite result:
   `124.97714084813418 tok/s` median generated-token throughput for tokens
@@ -156,6 +158,10 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
   `realistic_final_gate.passed=true`;
 - evidence:
   `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`;
+- latest same-recipe doc-pass rerun:
+  `data/gemma4-q8-gpu0-125repro-docpass-20260702T231635Z/summary.json`
+  at `120.92334534956485 tok/s`, valid/fresh/cached-zero with `512/512`
+  canary rows; support only, not a new record;
 - config:
   llama.cpp `c926ad098`, reordered-Q8 VDR2, Q4_0 MTP draft,
   `FLASH_ATTN=on`, `CTX_SIZE=32768`, `GGML_SYCL_ENABLE_VMM=1`,

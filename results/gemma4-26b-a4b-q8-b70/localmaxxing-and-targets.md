@@ -58,7 +58,9 @@ Current policy-compliant LocalMaxxing submission:
   `114.87107033590866`, median wall full-512 `108.58112847853889`;
 - caveat: valid but high-variance. Same exact reproduction batch support lanes
   were `121.59076340768573`, `119.26425148518223`, and
-  `113.63257982764395`. Use repeat confirmations for effect-size claims;
+  `113.63257982764395`. A later documentation-pass rerun of the same wrapper
+  measured `120.92334534956485 tok/s` with `cached_tokens=0` and `512/512`
+  canary rows. Use repeat confirmations for effect-size claims;
 - payload:
   `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-124tok-20260701.queue.json`;
 - LocalMaxxing: `cmr1u77na01k2ld01kalwzs1e`;

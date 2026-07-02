@@ -254,14 +254,23 @@ they are pre-final-gate diagnostics only.
 The older `92.397 tok/s` result from `2026-06-23T222838Z` was also
 `UD-Q8_K_XL`, not `Q8_0`; it used the pre-final-gate filled-long diagnostic
 shape and is therefore not directly comparable to the current fixed
-realistic-suite `90.322 tok/s` record.
+realistic-suite `124.977 tok/s` record.
 
-Prior copy-ready reproduction recipe:
+The 2026-07-02 repro documentation pass reran the current 125 wrapper exactly
+(`CTX_SIZE=32768`, FA on, VMM on, Q4_0 draft verified by Q8 target) and passed
+the strict gate at `120.92334534956485 tok/s`, with `cached_tokens=0` on all
+12 prompts and `512/512` canary rows. This is valid support for the recipe, not
+a new high. Evidence:
+`../../data/gemma4-q8-gpu0-125repro-docpass-20260702T231635Z/summary.json`.
+
+Current copy-ready reproduction recipe:
+[`../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/`](../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md).
+
+Prior superseded reproduction recipe:
 [`../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md).
 Use that folder for the older 95 tok/s Gemma 26B settings. The current
 176.216 tok/s diagnostic result is documented in this result ledger, the active
-Gemma sweep notes, and the LocalMaxxing submission ledger until a realistic-gate
-reproduction folder is promoted.
+Gemma sweep notes, and the LocalMaxxing submission ledger as diagnostic only.
 
 Draftless `ngram-mod` later reached `245-280 tok/s`, but only after repeated
 benchmark requests made the same continuation predictable from generated
@@ -506,6 +515,7 @@ prompt/output shape and canary depth match.
 - [Research plan and experiment queue](research-plan.md)
 - [Model and runtime options](model-options.md)
 - [LocalMaxxing targets and submission packet](localmaxxing-and-targets.md)
+- [Current 125 tok/s reproduction recipe](../../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
 - [Prior 95 tok/s reproduction recipe](../../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
 - [Bugs and failed paths](bugs-failed-paths.md)
 - [Active experiment folder](../../experiments/gemma4-26b-a4b-q8-b70/README.md)

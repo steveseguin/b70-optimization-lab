@@ -23,8 +23,9 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
-| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the policy-compliant VDR2 selected-down fused weighted-sum `115.846 tok/s` realistic cold-suite result. Older `100+` and `170+ tok/s` rows are diagnostic/pre-final-gate only. |
-| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Prior copy-ready speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` fresh-response result. |
+| `../results/gemma4-26b-a4b-q8-b70/` | Current speed packet | Gemma 4 26B A4B Q8 target on one B70 with Q4_0 MTP draft, llama.cpp SYCL, current commands, validity rules, and LocalMaxxing evidence for the policy-compliant VDR2 selected-down fused weighted-sum plus FA-on 32K/VMM plus final post-norm `124.977 tok/s` realistic cold-suite result. Older `100+` and `170+ tok/s` rows are diagnostic/pre-final-gate only. |
+| `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | Current copy-ready speed repro | Standalone Gemma 4 26B A4B Q8 target recipe for the current `124.977 tok/s` strict cold-suite result on one B70. |
+| `../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/` | Prior speed repro | Superseded standalone Gemma 4 26B A4B Q8 target recipe for the older `95.264 tok/s` pre-final-gate result. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Active lab packet | Full Gemma 4 26B A4B Q8/INT8 B70 optimization history, including older baselines, failed paths, validity gates, and vLLM comparison lanes. |
 | `../repro/minimax-m27-b70-110tps-ubuntu24-20260523/` | Deployable baseline | Fresh Ubuntu 24.04 setup for 4x B70, MiniMax M2.7 INT4 AutoRound, vLLM OpenAI-compatible endpoint on `0.0.0.0:8000`. |
 | `../repro/minimax-m27-b70-89tps-20260520/` | Strict speed baseline | Older strict quality-passed MiniMax M2.7 INT4 lane with higher output-token throughput. Useful for optimization comparisons. |
@@ -107,6 +108,10 @@ results for shared-prefix plus unique-tail prompts.
 The current command and validation packet is
 [`../results/gemma4-26b-a4b-q8-b70/reproduce.md`](../results/gemma4-26b-a4b-q8-b70/reproduce.md).
 The standalone
+[`../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/`](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
+folder packages the current 125 tok/s strict cold-suite recipe, 32K context
+settings, validity rules, and links to the promoted evidence.
+The older
 [`../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/`](../repro/gemma4-26b-a4b-q8-b70-95tps-20260624/README.md)
 folder packages the older superseded 95 tok/s llama.cpp patch, Q8 target,
 Q4_0 MTP draft preparation, command line, and LocalMaxxing artifacts.
@@ -116,11 +121,13 @@ The deeper active lab packet is
 This lane intentionally avoids tensor-parallel splitting at first: run one
 complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel
 research. Current promoted result is the realistic cold-suite lane at
-`90.322 tok/s` median generated-token throughput for tokens 1-100 after TTFT:
+`124.97714084813418 tok/s` median generated-token throughput for tokens 1-100 after TTFT:
 llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
-reordered-Q8 VDR2, `n_max=3`, `n_min=2`, `p_min=0.0475`,
-`UBATCH_SIZE=1024`, `cached_tokens=0` on every fixed-suite prompt, and no
-cache/history reuse. Older `103-176 tok/s` filled-long rows are
+reordered-Q8 VDR2, selected-down fused weighted-sum, bulk sampled-ID verifier
+host read, `FLASH_ATTN=on`, `CTX_SIZE=32768`, VMM on, final post-norm
+residual fusion, `n_max=3`, `n_min=2`, `p_min=0.0475`, `UBATCH_SIZE=1024`,
+`cached_tokens=0` on every fixed-suite prompt, and no cache/history reuse.
+Older `103-176 tok/s` filled-long rows are
 diagnostic/pre-final-gate artifacts unless revalidated by the fixed realistic
 suite.
 
@@ -132,14 +139,14 @@ scripts/download-gemma4-26b-q8-gguf.sh
 GPU_INDEX=0 PORT=18260 scripts/run-gemma4-26b-llamacpp-replica.sh
 ```
 
-For the older standalone 95 tok/s path, use the repro wrapper:
+For the current standalone 125 tok/s path, use the repro wrapper:
 
 ```bash
-cd repro/gemma4-26b-a4b-q8-b70-95tps-20260624
-bash scripts/00-build-llama-cpp-record-stack.sh
-bash scripts/01-prepare-models.sh
-bash scripts/02-run-record.sh
+GPU_INDEX=0 PORT=19350 bash repro/gemma4-26b-a4b-q8-b70-125tps-20260701/run.sh
 ```
+
+The older 95 tok/s folder remains as an archival artifact, not the current copy
+path.
 
 The vLLM comparison lane should use `google/gemma-4-26B-A4B-it` with
 `--quantization int8_per_channel_weight_only`, one DP=1 process per GPU. Do not
@@ -153,8 +160,9 @@ These are useful community targets to add as separate repro folders:
   serving. See [Single Model Slot Switching](model-slot-switching.md).
 - Gemma 4 12B INT4 AutoRound full fresh-install repro folder once the
   `gemma4_unified` backport is either upstream or packaged as a smaller patch.
-- Gemma 4 26B A4B Q8/INT8 service-oriented repro once the current speed recipe
-  is turned into a long-running endpoint profile.
+- Gemma 4 26B A4B Q8/INT8 long-running endpoint profile that combines the
+  current short-decode recipe with the validated service/prompt-processing
+  gate without regressing the 125 tok/s short record.
 - Qwen3.6 27B Q4_0 GGUF on llama.cpp/SYCL.
 - Qwen3.6 27B FP8 on vLLM/XPU.
 - Qwen3-VL 30B-A3B FP8 on vLLM/XPU for image+text requests.

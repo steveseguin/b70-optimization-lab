@@ -34,6 +34,8 @@ Primary target:
   `124.97714084813418 tok/s` median generated-token throughput for tokens
   1-100 after TTFT across the fixed cold prompt suite. Evidence:
   `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`.
+  Standalone current repro:
+  `repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md`.
   It uses llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
   reordered-Q8 VDR2, `FLASH_ATTN=on`, `CTX_SIZE=32768`,
   `GGML_SYCL_ENABLE_VMM=1`, `n_max=3`, `n_min=2`, `p_min=0.0475`,
@@ -43,6 +45,11 @@ Primary target:
   `LLAMA_GEMMA4_FUSED_FINAL_POST_NORM_RESIDUAL=1`,
   `cached_tokens=0` on every prompt, and
   `realistic_final_gate.passed=true`.
+- Latest same-recipe doc-pass rerun:
+  `data/gemma4-q8-gpu0-125repro-docpass-20260702T231635Z/summary.json`
+  passed the strict gate at `120.92334534956485 tok/s`, with `cached_tokens=0`
+  on all 12 prompts and `512/512` canary rows. This supports the promoted
+  recipe but does not replace the `124.977` high.
 - Representative / submitted status: this is the confirmed strict-gate VDR2
   selected-down fused weighted-sum family, now with FA-on 32K/VMM and final
   post-norm residual fusion. The current high is approved by LocalMaxxing as

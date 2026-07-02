@@ -16,4 +16,5 @@ Q4_0 MTP draft run. It touches only `common/sampling.cpp` and
 
 Later experiment patches in the Gemma lane are not included in this standalone
 historical reproduction recipe. The main Gemma result packet supersedes this
-folder with the newer `103.299 tok/s` fresh-response Q8-target record.
+folder with the newer `124.977 tok/s` strict cold-suite Q8-target record; see
+`../../gemma4-26b-a4b-q8-b70-125tps-20260701/README.md`.

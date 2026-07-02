@@ -37,7 +37,7 @@ the strict `n_max=3`, `n_min=2`, `UBATCH_SIZE=1024` family, with FA-on
 `cmqztiqdn02vnoe01egox6q3f` for `121.41411987308553 tok/s`, preceded by
 `cmqzq5zu402troe01t774uyox` for `117.91456485086059 tok/s`. Same-family
 support includes exact reproduction rows at `121.59076340768573`,
-`119.26425148518223`, and `113.63257982764395`, plus an older
+`120.92334534956485`, `119.26425148518223`, and `113.63257982764395`, plus an older
 `119.94842631460949 tok/s` row and lower variance rows at
 `113.572`, `114.088`, and `111.988 tok/s`; earlier same-identity confirmations measured
 `116.45776605647993`, `117.41509141115063`, `115.08942949119734`, and
