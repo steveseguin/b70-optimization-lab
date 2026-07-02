@@ -88,6 +88,10 @@ LLAMA_MTP_DRAFT_BACKEND_ARGMAX="${LLAMA_MTP_DRAFT_BACKEND_ARGMAX:-}" \
 LLAMA_MTP_DRAFT_BACKEND_TOPK="${LLAMA_MTP_DRAFT_BACKEND_TOPK:-}" \
 LLAMA_MTP_DRAFT_PROFILE="${LLAMA_MTP_DRAFT_PROFILE:-}" \
 LLAMA_SERVER_SPEC_PROFILE="${LLAMA_SERVER_SPEC_PROFILE:-}" \
+LLAMA_SPEC_VERIFY_SYNC_PROFILE="${LLAMA_SPEC_VERIFY_SYNC_PROFILE:-}" \
+GGML_SYCL_NODE_PROFILE="${GGML_SYCL_NODE_PROFILE:-}" \
+GGML_SYCL_NODE_PROFILE_EVERY="${GGML_SYCL_NODE_PROFILE_EVERY:-}" \
+GGML_SYCL_NODE_PROFILE_DETAIL="${GGML_SYCL_NODE_PROFILE_DETAIL:-}" \
 LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY="${LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY:-}" \
 LLAMA_MTP_DEFER_TARGET_H_NEXTN="${LLAMA_MTP_DEFER_TARGET_H_NEXTN:-}" \
 LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY="${LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY:-}" \
@@ -368,6 +372,10 @@ out = {
         "llama_mtp_draft_backend_topk": env_or_log("LLAMA_MTP_DRAFT_BACKEND_TOPK"),
         "llama_mtp_draft_profile": env_or_log("LLAMA_MTP_DRAFT_PROFILE"),
         "llama_server_spec_profile": env_or_log("LLAMA_SERVER_SPEC_PROFILE"),
+        "llama_spec_verify_sync_profile": env_or_log("LLAMA_SPEC_VERIFY_SYNC_PROFILE"),
+        "ggml_sycl_node_profile": env_or_log("GGML_SYCL_NODE_PROFILE"),
+        "ggml_sycl_node_profile_every": env_or_log("GGML_SYCL_NODE_PROFILE_EVERY"),
+        "ggml_sycl_node_profile_detail": env_or_log("GGML_SYCL_NODE_PROFILE_DETAIL"),
         "llama_mtp_draft_terminal_logits_only": env_or_log("LLAMA_MTP_DRAFT_TERMINAL_LOGITS_ONLY"),
         "llama_mtp_defer_target_h_nextn": env_or_log("LLAMA_MTP_DEFER_TARGET_H_NEXTN"),
         "llama_mtp_defer_verifier_pending_h_copy": env_or_log("LLAMA_MTP_DEFER_VERIFIER_PENDING_H_COPY"),

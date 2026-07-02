@@ -270,6 +270,24 @@ Current active optimization target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-spec-profile-and-next-lanes.md`
   and
   `data/gemma4-q8-gpu0-specprofile-20260702T053810Z/summary.json`.
+- Latest node-profile diagnostic:
+  a profiler-only refresh of the current record stack also passed the fixed
+  cold gate (`cached_tokens=0`, `16/16` canary rows), but is diagnostic only:
+  `GGML_SYCL_NODE_PROFILE=1` disables SYCL graph execution and the run used
+  `MAX_TOKENS=128`, so its `76.928 tok/s` median is not a LocalMaxxing or
+  record claim. The useful signal is hotspot order. The final profile block
+  shows the target/verifier full-vocab LM-head as rank 1
+  (`MUL_MAT:node_1715`, `817.753 ms` total), followed by MoE gate-up and three
+  separate MTP draft argmax LM-head nodes:
+  `mtp_direct_argmax_unroll_token_0/1/2` at about `239-240 ms` each. Host
+  bookkeeping and verifier sync remain negligible (`0.394 ms` total sync over
+  `512` calls). Next short-decode source work should inspect whether the three
+  draft argmax heads can be batched/fused into one backend op, while treating
+  verifier LM-head reduction as high-risk unless it is exact and non-serial.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md`
+  and
+  `data/gemma4-q8-gpu0-recordstack-profile128-20260702T113037Z/summary.json`.
 - Prior prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The default-off source branch rebuilt, but both candidate
   lanes failed the first JSON canary with empty text before long-context cases

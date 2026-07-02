@@ -275,6 +275,20 @@ Primary target:
   implementation risk is high. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-verifier-row-shape-and-accept-prefix-audit.md`.
   Do not reopen row-shape/config screens without new profile evidence.
+- Latest node-profile refresh:
+  `gemma4-q8-gpu0-recordstack-profile128-20260702T113037Z` passed the fixed
+  cold gate (`cached_tokens=0`, `16/16` canary rows), but is diagnostic only
+  because `GGML_SYCL_NODE_PROFILE=1` disables SYCL graph execution and the run
+  used `MAX_TOKENS=128`. Do not submit or compare its `76.928 tok/s` median to
+  record rows. The useful hotspot order is target/verifier LM-head
+  (`MUL_MAT:node_1715`, `817.753 ms`), MoE gate-up, and three separate MTP
+  draft argmax LM-head nodes (`mtp_direct_argmax_unroll_token_0/1/2`,
+  about `239-240 ms` each). Host sync/bookkeeping is negligible. The best new
+  short-decode lane is to inspect whether the three draft argmax heads can be
+  batched/fused as one backend op; verifier LM-head work should only be
+  reopened for exact, non-serial row-adaptive or candidate-bound designs.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md`.
 - Latest p_min gap follow-up: `0.04625`, `0.04725`, `0.047625`, and `0.04875`
   were tested under the current FA-on 32K/VMM selected-down VDR2 strict128
   identity. All passed, but best was only `118.41776692242152 tok/s`, below

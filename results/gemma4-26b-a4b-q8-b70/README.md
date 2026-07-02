@@ -81,6 +81,18 @@ row-by-row accept-prefix variants; future verifier work needs a non-serial
 backend row-adaptive design or a genuine candidate-bound certificate. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-acceptprefix-top1-epilogue-negative.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-acceptprefix-top1-epilogue-negative.md).
 
+Latest short-decode profiler refresh:
+`gemma4-q8-gpu0-recordstack-profile128-20260702T113037Z` passed the fixed cold
+gate (`cached_tokens=0`, `16/16` canary rows), but it is diagnostic only
+because `GGML_SYCL_NODE_PROFILE=1` disables SYCL graph execution and the run
+used `MAX_TOKENS=128`. Do not submit its speed. The useful result is the
+hotspot ordering: target/verifier full-vocab LM-head (`MUL_MAT:node_1715`) is
+rank 1, three MTP draft argmax LM-head nodes
+(`mtp_direct_argmax_unroll_token_0/1/2`) are each large enough that batching or
+fusing them may be a credible next short-decode source lane, and host
+bookkeeping/sync remains negligible. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-recordstack-nodeprofile-hotspots.md).
+
 Current service/prefill candidate: keep the promoted short-decode reproduction
 on `UBATCH_SIZE=1024`, but use the default-off SYCL FlashAttention tile patch
 with `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` for long-context service lanes. The
