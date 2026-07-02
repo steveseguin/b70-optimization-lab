@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -198,6 +198,18 @@ Primary target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md`
   and
   `data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json`.
+- Latest Q-global FlashAttention staging follow-up:
+  `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST_QGLOBAL=1` is closed negative. The
+  patch built and passed an exact one-case long-context smoke with
+  `cached_tokens=0`, but same-binary same-case control showed Q-global was
+  slower: prefill `1188.722` vs `1232.948 tok/s` (`-3.59%`), decode `123.438`
+  vs `128.226 tok/s` (`-3.73%`), and TTFT `+3.72%`. The source was restored to
+  the known record-stack hash
+  `7220e022ae836b2a885f6e1ba5d73422f1ddd9c74e0c3e4582a0d7066fa295e3`, and
+  `libggml-sycl.so.0.15.2` was rebuilt to baseline hash
+  `61c364b690ea6f852ad71c77abd65605c33de967dc9186c19d322c28e4ea8864`.
+  Do not retest direct global-Q reload for this hot service shape. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-qglobal-qstaging-negative.md`.
 - Latest sampled-ID egress follow-up:
   `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS=1` is a closed negative /
   incomplete implementation. The first parity smoke passed only because the

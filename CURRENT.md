@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-07-01
+Date: 2026-07-02
 
 ## Active Workspace
 
@@ -132,6 +132,19 @@ Current active optimization target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md`
   and
   `data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json`.
+- Latest Q-global FlashAttention staging follow-up:
+  `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST_QGLOBAL=1` is closed negative. The
+  default-off source patch built and passed exact one-case long-context
+  validation with `cached_tokens=0`, but same-binary same-case control showed
+  Q-global regressed prefill from `1232.948` to `1188.722 tok/s` (`-3.59%`),
+  decode from `128.226` to `123.438 tok/s` (`-3.73%`), and TTFT by `+3.72%`.
+  The active source was restored to the known record-stack hash
+  `7220e022ae836b2a885f6e1ba5d73422f1ddd9c74e0c3e4582a0d7066fa295e3`, and the
+  active `libggml-sycl.so.0.15.2` was rebuilt to baseline hash
+  `61c364b690ea6f852ad71c77abd65605c33de967dc9186c19d322c28e4ea8864`. Do not
+  retest Q-global Q staging for this hot shape; direct global Q reloads lose
+  more than the saved local-memory staging buys. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-qglobal-qstaging-negative.md`.
 - Latest global FlashAttention vec-dispatch follow-up:
   forcing the profiled Gemma global GQA shape (`Q=[512,2,16,1]`,
   `K/V=[512,256,2,1]`) from the current tile path to the existing vec kernel is
