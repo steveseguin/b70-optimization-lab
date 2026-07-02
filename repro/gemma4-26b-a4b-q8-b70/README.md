@@ -73,6 +73,20 @@ Follow-up high/fine ladders through `3072` and near-2048 values
 and
 `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-high-and-fine-ladders.md`.
 
+Use `run-vdr2-kqregbcast-service-confirm.sh` to reproduce the optional
+global-GQA8 KQ register/broadcast service flag:
+
+- candidate flag: `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1`;
+- source patch:
+  `patches/gemma4-26b-a4b-q8-b70/source-snapshots/20260702-kq-reg-bcast-source.patch`;
+- balanced A/B/C/D result: 48/48 valid long-context rows, `cached_tokens=0`,
+  approximate prefill `+0.730%` mean, decode `+0.431%` mean;
+- note:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-service-win.md`.
+
+This is a service/prefill micro-win, not a short-decode LocalMaxxing headline
+record.
+
 ## Partial Prompt-Processing Experiments
 
 Do not enable the archived `KV_min` left-bound FlashAttention scan in promoted

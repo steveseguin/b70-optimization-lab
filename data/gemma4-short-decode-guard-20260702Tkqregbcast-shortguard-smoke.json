@@ -1,0 +1,113 @@
+{
+  "current_record_tok_s_1_100_after_ttft": 124.97714084813418,
+  "group_summaries": {
+    "batch1024_ubatch1024": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 118.70457576320925,
+      "median_tok_s_1_100_by_lane": [
+        117.23650143469823,
+        120.17265009172027
+      ]
+    },
+    "batch2048_ubatch2048": {
+      "all_cached_tokens_zero": true,
+      "all_realistic_gates_passed": true,
+      "lanes": 2,
+      "median_tok_s_1_100_avg": 118.81059012104993,
+      "median_tok_s_1_100_by_lane": [
+        120.35971123835363,
+        117.26146900374624
+      ]
+    }
+  },
+  "kind": "gemma4_q8_short_decode_guard",
+  "policy": "fixed realistic suite regression guard for service/prefill candidate; submit only if it beats the current record independently",
+  "rows": [
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 32,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "0",
+      "label": "gemma4-q8-gpu0-shortguard-kqregbcast-ub1024-a-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/llm-optimizations/data/gemma4-q8-gpu0-shortguard-kqregbcast-ub1024-a-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 116.94679382921004,
+      "tok_s_1_100_after_ttft_median": 117.23650143469823,
+      "tok_s_1_100_after_ttft_p10": 106.02248817039747,
+      "tok_s_after_ttft_full_median": 108.8253037428614,
+      "tok_s_wall_full_median": 100.9502818314541,
+      "ttft_ms_median": 179.2904395260848,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "1024",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 32,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "1",
+      "label": "gemma4-q8-gpu1-shortguard-kqregbcast-ub1024-b-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/llm-optimizations/data/gemma4-q8-gpu1-shortguard-kqregbcast-ub1024-b-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 118.76236190279371,
+      "tok_s_1_100_after_ttft_median": 120.17265009172027,
+      "tok_s_1_100_after_ttft_p10": 107.32066319610206,
+      "tok_s_after_ttft_full_median": 112.36578080682642,
+      "tok_s_wall_full_median": 102.27088170973266,
+      "ttft_ms_median": 178.6019319551997,
+      "ubatch_size": "1024",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 32,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "2",
+      "label": "gemma4-q8-gpu2-shortguard-kqregbcast-ub2048-a-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/llm-optimizations/data/gemma4-q8-gpu2-shortguard-kqregbcast-ub2048-a-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 117.55781196846574,
+      "tok_s_1_100_after_ttft_median": 120.35971123835363,
+      "tok_s_1_100_after_ttft_p10": 102.93637648237465,
+      "tok_s_after_ttft_full_median": 112.38587908180584,
+      "tok_s_wall_full_median": 103.03123088834643,
+      "ttft_ms_median": 178.06239397032186,
+      "ubatch_size": "2048",
+      "vmm": "1"
+    },
+    {
+      "batch_size": "2048",
+      "cached_tokens_all_zero": true,
+      "canary_pass_all": true,
+      "canary_rows_completed": 32,
+      "ctx_size": "32768",
+      "flash_attn": "on",
+      "gpu_index": "3",
+      "label": "gemma4-q8-gpu3-shortguard-kqregbcast-ub2048-b-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "realistic_gate_passed": true,
+      "run_dir": "/home/steve/llm-optimizations/data/gemma4-q8-gpu3-shortguard-kqregbcast-ub2048-b-ctx32768-o256-20260702Tkqregbcast-shortguard-smoke",
+      "status": "ok",
+      "tok_s_1_100_after_ttft_mean": 115.80622292591353,
+      "tok_s_1_100_after_ttft_median": 117.26146900374624,
+      "tok_s_1_100_after_ttft_p10": 105.44768438070197,
+      "tok_s_after_ttft_full_median": 112.38951082810391,
+      "tok_s_wall_full_median": 104.02713787906919,
+      "ttft_ms_median": 179.04767353320494,
+      "ubatch_size": "2048",
+      "vmm": "1"
+    }
+  ]
+}

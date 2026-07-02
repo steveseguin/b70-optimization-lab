@@ -1,0 +1,122 @@
+diff --git a/ggml/src/ggml-sycl/fattn-tile.hpp b/ggml/src/ggml-sycl/fattn-tile.hpp
+index 9ba529696..124304899 100644
+--- a/ggml/src/ggml-sycl/fattn-tile.hpp
++++ b/ggml/src/ggml-sycl/fattn-tile.hpp
+@@ -5,6 +5,7 @@
+ #include "fattn-common.hpp"
+ 
+ #include <cmath>
++#include <cstdlib>
+ #include <float.h>
+ 
+ namespace syclex = sycl::ext::oneapi::experimental;
+@@ -190,6 +191,14 @@ static constexpr int ggml_sycl_fattn_tile_get_nbatch_K(const int DKQ, const int
+     return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 23) & ((1 << 9) - 1);
+ }
+ 
++static int ggml_sycl_fattn_dv512_gqa_ncols2_override() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_DV512_GQA_NCOLS2");
++        return env ? std::atoi(env) : 0;
++    }();
++    return value;
++}
++
+ template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
+ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
+                                                       sycl::half2 * const __restrict__ tile_KV,
+@@ -664,6 +673,7 @@ static void flash_attn_tile(const char *  Q,
+                             const char *  mask,
+                             const char *  sinks,
+                             const int *  KV_max,
++                            const int *  KV_min,
+                             float *  dst,
+                             sycl::float2 *  dst_meta,
+                             const float          scale,
+@@ -699,7 +709,7 @@ static void flash_attn_tile(const char *  Q,
+     // Skip unused kernel variants for faster compilation:
+     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+     if ((use_logit_softcap && !(DV == 128 || DV == 256))) {
+-        GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
++        GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, KV_min, dst, dst_meta, scale,
+             max_bias, m0, m1, n_head_log2, logit_softcap,
+             ne00, ne01, ne02, ne03,
+                   nb01, nb02, nb03,
+@@ -860,17 +870,34 @@ static void flash_attn_tile(const char *  Q,
+     item_ct1.barrier(sycl::access::fence_space::local_space);
+ 
+     // Main loop over KV cache:
+-    const int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
++    int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
++    int k_VKQ_min = 0;
++    if (KV_min) {
++        int k_min = k_VKQ_max;
++#pragma unroll
++        for (int jq = 0; jq < ncols1; ++jq) {
++            const int q_col = col_Q_0 + jq;
++            if (q_col < int(ne01.z())) {
++                k_min = sycl::min(k_min, KV_min[sequence * int(ne01.z()) + q_col]);
++            }
++        }
++        k_VKQ_min = sycl::min(sycl::max(k_min, 0), k_VKQ_max);
++    }
++
+     if (ncols2 == 1) {
+         // Branch with out-of-bounds checks.
++        const int k_VKQ_stride = item_ct1.get_group_range(1) * nbatch_fa;
+         int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa;
++        while (k_VKQ_0 + nbatch_fa <= k_VKQ_min) {
++            k_VKQ_0 += k_VKQ_stride;
++        }
+         while (k_VKQ_0 < k_VKQ_max - nbatch_fa) {
+             constexpr bool oob_check = false;
+             flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+                                  oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, slope, KQ, KV_tmp, stride_K2,
+                                             stride_V2, stride_mask, KQ_max, KQ_sum, VKQ, k_VKQ_0, k_VKQ_max, col_Q_0,
+                                             KQ_max_new_shared);
+-            k_VKQ_0 += item_ct1.get_group_range(1) * nbatch_fa;
++            k_VKQ_0 += k_VKQ_stride;
+         }
+         if (k_VKQ_0 < k_VKQ_max) {
+             constexpr bool oob_check = true;
+@@ -881,8 +908,12 @@ static void flash_attn_tile(const char *  Q,
+         }
+     } else {
+         // Branch without out-of-bounds checks.
+-        for (int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa; k_VKQ_0 < k_VKQ_max;
+-             k_VKQ_0 += item_ct1.get_group_range(1) * nbatch_fa) {
++        const int k_VKQ_stride = item_ct1.get_group_range(1) * nbatch_fa;
++        int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa;
++        while (k_VKQ_0 + nbatch_fa <= k_VKQ_min) {
++            k_VKQ_0 += k_VKQ_stride;
++        }
++        for (; k_VKQ_0 < k_VKQ_max; k_VKQ_0 += k_VKQ_stride) {
+ 
+             constexpr bool oob_check = false;
+             flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+@@ -1056,7 +1087,7 @@ static void flash_attn_tile(const char *  Q,
+         }
+     }
+ #else
+-    GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
++    GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, KV_min, dst, dst_meta, scale,
+         max_bias, m0, m1, n_head_log2, logit_softcap,
+         ne00, ne01, ne02, ne03,
+               nb01, nb02, nb03,
+@@ -1169,6 +1200,11 @@ static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggm
+     const bool use_gqa_opt = mask && max_bias == 0.0f && Q->ne[1] <= gqa_limit && K->ne[1] % FATTN_KQ_STRIDE == 0;
+ 
+     if constexpr (DV == 512) {
++        const int forced_ncols2 = ggml_sycl_fattn_dv512_gqa_ncols2_override();
++        if (use_gqa_opt && forced_ncols2 == 8 && gqa_ratio % 8 == 0) {
++            launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap>(ctx, dst);
++            return;
++        }
+         if (use_gqa_opt && gqa_ratio % 16 == 0) {
+             launch_fattn_tile_switch_ncols1<DKQ, DV, 16, use_logit_softcap>(ctx, dst);
+             return;
+@@ -1243,4 +1279,3 @@ extern DECL_FATTN_TILE_CASE(128, 128);
+ extern DECL_FATTN_TILE_CASE(256, 256);
+ extern DECL_FATTN_TILE_CASE(512, 512);
+ extern DECL_FATTN_TILE_CASE(576, 512);
+-

@@ -291,6 +291,21 @@ so future global-FlashAttention work needs a true one-pass tile improvement or
 work-skipping mask/bound optimization. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-dvsplit-neutral.md`.
 
+2026-07-02 global FlashAttention KQ register/broadcast hot-shape test: a
+default-off `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1` source patch kept the
+same profiled global GQA8 tile in one pass but avoided the local-memory KQ
+handoff for `DKQ=512`, `DV=512`, `ncols1=2`, `ncols2=8`, `nbatch_fa=64` by
+retaining softmax values in per-lane registers and using subgroup selection
+during V@KQ. It built cleanly, passed a smoke, then passed a balanced four-wave
+service A/B across all B70s: 48/48 long-context rows valid, exact JSON pass,
+`cached_tokens=0`. The balanced result was a small service-prefill win:
+approximate prefill `+0.730%` mean / `+0.701%` median, decode `+0.431%` mean,
+TTFT `-0.782%`; same-GPU prefill deltas were positive on GPUs 0-3. A candidate
+short-decode guard smoke also passed, but this is **not** a LocalMaxxing
+headline record. Decision: keep as optional service flag and patch artifact;
+use it only in service/prefill recipes that explicitly enable the env var. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-service-win.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact
