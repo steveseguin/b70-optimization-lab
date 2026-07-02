@@ -1,0 +1,541 @@
+{
+  "baseline": "DKQ=576 DV=512 ncols=16 nthreads=256 occupancy=2 nbatch_fa=64 nbatch_K=64",
+  "date": "2026-07-02",
+  "kind": "gemma4_q8_fattn_nbatchk_sweep",
+  "policy": "service/prompt-processing diagnostic only; fixed long-context suite; cached_tokens=0; exact JSON validation; not LocalMaxxing headline",
+  "service_recipe": {
+    "BATCH_SIZE": "2048",
+    "CTX_SIZE": "32768",
+    "FLASH_ATTN": "on",
+    "GGML_SYCL_FATTN_DV512_GQA_NCOLS2": "8",
+    "LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND": "1",
+    "LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q": "2048",
+    "LLAMA_PREFILL_UBATCH_SIZE": "2048",
+    "MAX_TOKENS": "96",
+    "UBATCH_SIZE": "1024"
+  },
+  "variants": {
+    "nbk128": {
+      "all_passed": true,
+      "candidate": "DKQ=576 DV=512 ncols=16 nbatch_K=128",
+      "candidate_prefill_mean_avg": 1117.0349067103602,
+      "candidate_prefill_median_avg": 1121.8467078122926,
+      "control_prefill_mean_avg": 1115.8749239744027,
+      "control_prefill_median_avg": 1120.294732166902,
+      "decision": "rejected_noise_below_1p5pct_service_threshold",
+      "prefill_mean_avg_ratio_pct": 0.1039527559079989,
+      "prefill_median_avg_ratio_pct": 0.13853279863138557,
+      "rows": [
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1213.3570918955838,
+              "ttft_s": 13.362100990954787,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1124.2193558613762,
+              "ttft_s": 20.218474162975326,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1023.8883174163993,
+              "ttft_s": 29.690738221048377,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.98086342336741,
+          "label": "gemma4-q8-gpu0-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-ab",
+          "passed": true,
+          "prefill_mean": 1120.4882550577865,
+          "prefill_median": 1124.2193558613762,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu0-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-ab/summary.json",
+          "ttft_median": 20.218474162975326,
+          "variant": "control"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1202.975580054044,
+              "ttft_s": 13.477414062945172,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1113.4099053078724,
+              "ttft_s": 20.41476359392982,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1009.6371180108581,
+              "ttft_s": 30.10982803395018,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.45800212964349,
+          "label": "gemma4-q8-gpu1-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-ab",
+          "passed": true,
+          "prefill_mean": 1108.6742011242582,
+          "prefill_median": 1113.4099053078724,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu1-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-ab/summary.json",
+          "ttft_median": 20.41476359392982,
+          "variant": "nbk128"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1213.9713812116215,
+              "ttft_s": 13.35533954994753,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1126.007993481374,
+              "ttft_s": 20.186357585014775,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1026.287819373351,
+              "ttft_s": 29.621320087928325,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.79201544400989,
+          "label": "gemma4-q8-gpu2-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-ab",
+          "passed": true,
+          "prefill_mean": 1122.0890646887822,
+          "prefill_median": 1126.007993481374,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu2-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-ab/summary.json",
+          "ttft_median": 20.186357585014775,
+          "variant": "control"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1212.7802587696324,
+              "ttft_s": 13.368456389987841,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1122.2541099744687,
+              "ttft_s": 20.253879935014993,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1022.1432099525466,
+              "ttft_s": 29.74142928700894,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.80840000365482,
+          "label": "gemma4-q8-gpu3-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-ab",
+          "passed": true,
+          "prefill_mean": 1119.0591928988827,
+          "prefill_median": 1122.2541099744687,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu3-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-ab/summary.json",
+          "ttft_median": 20.253879935014993,
+          "variant": "nbk128"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1209.1521751773241,
+              "ttft_s": 13.408568692044355,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1123.1645193494167,
+              "ttft_s": 20.237462640972808,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1022.768533286525,
+              "ttft_s": 29.723245300003327,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.9989157525929,
+          "label": "gemma4-q8-gpu0-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-xover",
+          "passed": true,
+          "prefill_mean": 1118.3617426044218,
+          "prefill_median": 1123.1645193494167,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu0-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-xover/summary.json",
+          "ttft_median": 20.237462640972808,
+          "variant": "nbk128"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1196.8806957414977,
+              "ttft_s": 13.546045197057538,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1109.317454432457,
+              "ttft_s": 20.490076947025955,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1006.8130706653075,
+              "ttft_s": 30.1942842080025,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.29600437474859,
+          "label": "gemma4-q8-gpu1-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-xover",
+          "passed": true,
+          "prefill_mean": 1104.3370736130873,
+          "prefill_median": 1109.317454432457,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu1-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-xover/summary.json",
+          "ttft_median": 20.490076947025955,
+          "variant": "control"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1212.6096582671016,
+              "ttft_s": 13.370337181026116,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1128.5582966174131,
+              "ttft_s": 20.140740684932098,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1024.9655157571192,
+              "ttft_s": 29.659534425940365,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.8035431970472,
+          "label": "gemma4-q8-gpu2-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-xover",
+          "passed": true,
+          "prefill_mean": 1122.044490213878,
+          "prefill_median": 1128.5582966174131,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu2-longctx-nbk128-nbk128-20260702T052339Z-fattn-nbk128-long-xover/summary.json",
+          "ttft_median": 20.140740684932098,
+          "variant": "nbk128"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1208.4821046877812,
+              "ttft_s": 13.416003379039466,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1121.6341248924002,
+              "ttft_s": 20.265075300005265,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1019.6396780336815,
+              "ttft_s": 29.814453728031367,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.55530263719815,
+          "label": "gemma4-q8-gpu3-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-xover",
+          "passed": true,
+          "prefill_mean": 1116.5853025379545,
+          "prefill_median": 1121.6341248924002,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu3-longctx-control-nbk128-20260702T052339Z-fattn-nbk128-long-xover/summary.json",
+          "ttft_median": 20.265075300005265,
+          "variant": "control"
+        }
+      ]
+    },
+    "nbk32": {
+      "all_passed": true,
+      "candidate": "DKQ=576 DV=512 ncols=16 nbatch_K=32",
+      "candidate_prefill_mean_avg": 1118.529768526501,
+      "candidate_prefill_median_avg": 1123.0651182090182,
+      "control_prefill_mean_avg": 1117.338576647312,
+      "control_prefill_median_avg": 1122.1419575152547,
+      "decision": "rejected_noise_below_1p5pct_service_threshold",
+      "prefill_mean_avg_ratio_pct": 0.10660975142944284,
+      "prefill_median_avg_ratio_pct": 0.08226772803394677,
+      "rows": [
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1212.581935923876,
+              "ttft_s": 13.370642856927589,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1125.0879382729242,
+              "ttft_s": 20.20286523993127,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1022.0511695950678,
+              "ttft_s": 29.74410763802007,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.9357234743023,
+          "label": "gemma4-q8-gpu0-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-ab",
+          "passed": true,
+          "prefill_mean": 1119.9070145972894,
+          "prefill_median": 1125.0879382729242,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu0-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-ab/summary.json",
+          "ttft_median": 20.20286523993127,
+          "variant": "control"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1199.9830998825612,
+              "ttft_s": 13.511023614904843,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1112.330717553286,
+              "ttft_s": 20.434570080018602,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1009.7509974116759,
+              "ttft_s": 30.10643225698732,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.37481188869955,
+          "label": "gemma4-q8-gpu1-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-ab",
+          "passed": true,
+          "prefill_mean": 1107.3549382825076,
+          "prefill_median": 1112.330717553286,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu1-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-ab/summary.json",
+          "ttft_median": 20.434570080018602,
+          "variant": "nbk32"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1217.1978910882242,
+              "ttft_s": 13.319937636028044,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1128.6552350043046,
+              "ttft_s": 20.139010829036124,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1027.3420231073344,
+              "ttft_s": 29.59092426497955,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.8452254321936,
+          "label": "gemma4-q8-gpu2-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-ab",
+          "passed": true,
+          "prefill_mean": 1124.3983830666211,
+          "prefill_median": 1128.6552350043046,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu2-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-ab/summary.json",
+          "ttft_median": 20.139010829036124,
+          "variant": "control"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1216.4931977557267,
+              "ttft_s": 13.327653644024394,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1124.5345441855875,
+              "ttft_s": 20.212807261035778,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1022.7551736795582,
+              "ttft_s": 29.72363355604466,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.80850729255324,
+          "label": "gemma4-q8-gpu3-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-ab",
+          "passed": true,
+          "prefill_mean": 1121.2609718736242,
+          "prefill_median": 1124.5345441855875,
+          "round": "long-ab",
+          "summary_path": "data/gemma4-q8-gpu3-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-ab/summary.json",
+          "ttft_median": 20.212807261035778,
+          "variant": "nbk32"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1214.7649856890464,
+              "ttft_s": 13.34661452297587,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1125.617070965633,
+              "ttft_s": 20.19336823001504,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1021.9818335790378,
+              "ttft_s": 29.746125617064536,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.76993927097837,
+          "label": "gemma4-q8-gpu0-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-xover",
+          "passed": true,
+          "prefill_mean": 1120.787963411239,
+          "prefill_median": 1125.617070965633,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu0-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-xover/summary.json",
+          "ttft_median": 20.19336823001504,
+          "variant": "nbk32"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1199.7274842171294,
+              "ttft_s": 13.513902293052524,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1111.0897544765742,
+              "ttft_s": 20.457393210963346,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1009.9135718752143,
+              "ttft_s": 30.101585765951313,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.40939853820689,
+          "label": "gemma4-q8-gpu1-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-xover",
+          "passed": true,
+          "prefill_mean": 1106.9102701896393,
+          "prefill_median": 1111.0897544765742,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu1-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-xover/summary.json",
+          "ttft_median": 20.457393210963346,
+          "variant": "control"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1217.7057801663273,
+              "ttft_s": 13.314382065087557,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1129.778140131566,
+              "ttft_s": 20.118994334014133,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1026.6616813180062,
+              "ttft_s": 29.610533394967206,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.82435409608462,
+          "label": "gemma4-q8-gpu2-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-xover",
+          "passed": true,
+          "prefill_mean": 1124.715200538633,
+          "prefill_median": 1129.778140131566,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu2-longctx-nbk32-nbk32-20260702T050943Z-fattn-nbk32-long-xover/summary.json",
+          "ttft_median": 20.118994334014133,
+          "variant": "nbk32"
+        },
+        {
+          "cases": {
+            "lc-12288-early": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1212.4747416241692,
+              "ttft_s": 13.371824948932044,
+              "validation_pass": true
+            },
+            "lc-16384-late": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1123.7349023072159,
+              "ttft_s": 20.227190552977845,
+              "validation_pass": true
+            },
+            "lc-22000-middle": {
+              "cached_tokens": 0,
+              "prefill_tok_s_approx": 1018.2062722757116,
+              "ttft_s": 29.856425783014856,
+              "validation_pass": true
+            }
+          },
+          "decode_median": 119.52961436018977,
+          "label": "gemma4-q8-gpu3-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-xover",
+          "passed": true,
+          "prefill_mean": 1118.1386387356988,
+          "prefill_median": 1123.7349023072159,
+          "round": "long-xover",
+          "summary_path": "data/gemma4-q8-gpu3-longctx-control-nbk32-20260702T050943Z-fattn-nbk32-long-xover/summary.json",
+          "ttft_median": 20.227190552977845,
+          "variant": "control"
+        }
+      ]
+    }
+  }
+}

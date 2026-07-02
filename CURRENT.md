@@ -119,6 +119,14 @@ Current active optimization target:
   The post-norm combo is the only eligible bounded MTP same-window follow-up; do
   not submit or promote no-spec-only results. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-nospec-retest-candidates.md`.
+- Latest post-clean no-spec anchor:
+  Four GPUs passed the fixed realistic cold suite with `cached_tokens=0`,
+  canary pass, and `realistic_final_gate.passed=true`; lane medians were
+  `76.923`, `76.718`, `76.289`, and `76.682 tok/s`, average `76.653 tok/s`,
+  spread `0.828%`. Use this as the current low-variance target-side
+  micro-change reference, not as a headline record. Evidence:
+  `data/gemma4-nospec-anchor-20260702T045339Z-nospec-anchor.json` and
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-fattn-nbatchk-and-nospec-anchor.md`.
 - Latest LM-head subgroup calibration:
   `LLAMA_SYCL_Q8_0_LM_HEAD_1COL_SUBGROUPS=2` is closed by the lower-variance
   no-spec calibration workflow. The candidate and controls all passed the fixed
@@ -146,7 +154,17 @@ Current active optimization target:
   actual sampled-row producer and prove null-sensitive direct-vs-copied parity
   first. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-direct-sampled-egress-negative.md`.
-- Latest prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
+- Latest prompt-processing source follow-up:
+  DV512/Gemma GQA hot-shape `nbatch_K` retune is closed as valid but noise.
+  For `DKQ=576`, `DV=512`, `ncols=16`, baseline `nbatch_K=64`, both
+  `nbatch_K=32` and `nbatch_K=128` passed eight-lane long-context A/B +
+  crossover with exact JSON validation and `cached_tokens=0`, but improved
+  prefill by only about `+0.1%` (`+0.082%` / `+0.139%` median-prefill average),
+  far below the `+1.5%` service-lane promotion threshold. Do not retest these
+  constants for the current FlashAttention kernel. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-fattn-nbatchk-and-nospec-anchor.md`
+  and `data/gemma4-fattn-nbatchk-sweep-20260702.json`.
+- Prior prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The default-off source branch rebuilt, but both candidate
   lanes failed the first JSON canary with empty text before long-context cases
   could run. The validated `ncols2=8` service/prefill lane remains the current
