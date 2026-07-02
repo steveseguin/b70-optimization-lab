@@ -164,6 +164,11 @@ Current active optimization target:
   constants for the current FlashAttention kernel. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-fattn-nbatchk-and-nospec-anchor.md`
   and `data/gemma4-fattn-nbatchk-sweep-20260702.json`.
+  A compact post-restore GPU0 sanity then passed the fixed cold gate with
+  `cached_tokens=0`, `64/64` canary rows, and median tokens 1-50 after TTFT
+  `120.296 tok/s`; this is restore evidence only, not a full512 record claim.
+  Evidence:
+  `data/gemma4-q8-gpu0-postnbk-restore-sanity-20260702T053257Z-postnbk-restore-sanity/summary.json`.
 - Prior prompt-processing source follow-up: DV512 Gemma GQA `ncols2=16` is a
   closed negative. The default-off source branch rebuilt, but both candidate
   lanes failed the first JSON canary with empty text before long-context cases

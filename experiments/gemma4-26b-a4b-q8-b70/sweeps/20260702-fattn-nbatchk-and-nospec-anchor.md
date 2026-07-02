@@ -153,3 +153,24 @@ LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q=2048
 Do not retest `nbatch_K=32` or `nbatch_K=128` for this exact
 `DKQ=576/DV=512/ncols=16` service lane unless a future FlashAttention rewrite
 materially changes the kernel economics.
+
+## Post-Restore Short Decode Sanity
+
+After restoring the active llama.cpp source/build to the pre-`nbatch_K` record
+stack, a compact GPU0 sanity run reconfirmed that the record lane still passes
+the fixed cold realistic gate:
+
+- evidence:
+  `data/gemma4-q8-gpu0-postnbk-restore-sanity-20260702T053257Z-postnbk-restore-sanity/summary.json`
+- canary: `64/64` rows pass
+- realistic final gate: pass; every row had `cached_tokens=0`
+- `MAX_TOKENS=64`, primary metric window `50` generated tokens after TTFT
+- median tokens 1-50 after TTFT: `120.296 tok/s`
+- p10 / mean tokens 1-50 after TTFT: `104.498` / `119.734 tok/s`
+- median full-output tokens after TTFT: `114.594 tok/s`
+- median wall-clock full-output throughput: `86.941 tok/s`
+- median TTFT: `178.152 ms`
+
+Decision: **sanity only, not a record claim**. This run is useful evidence that
+the active binary was restored correctly after the source experiment, but it is
+not a full512 LocalMaxxing submission candidate.
