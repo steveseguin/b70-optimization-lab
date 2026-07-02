@@ -10,12 +10,14 @@ Intel Arc Pro B70 LLM optimization work.
 Use `/home/steve/llm-optimizations` as the single active workspace for new
 Gemma/Qwen/MiniMax work. It is the branch-attached `main` checkout and should track `origin/main`; run `git status --short --branch` and `git log -1 --oneline` for the exact current head.
 
-Do not start new experiments from `/home/steve/qwen36-results-main`; it is a
-detached linked worktree retained only for audit/back-reference. The detached
-commit is preserved locally as
-`preserve/gemma-mtp-postnormcombo-20260701` and is also reachable from
-`origin/main`. Before deleting, cleaning, or reusing that worktree, audit its
-untracked `data/` files and promote any useful artifacts explicitly.
+Do not start new experiments from `/home/steve/qwen36-results-main`; that
+stale detached linked worktree was archived and removed during cleanup. Raw
+packets from that worktree are preserved locally at
+`/home/steve/qwen36-raw-archives/qwen36-results-main-detached-4b33bb2f-20260702.tar.zst`;
+use `results/qwen36-35b-quark-int8-b70/archive-retention.md` for the checksum,
+retention policy, and future Qwen restart procedure. Restore raw packets only
+into a temporary non-worktree directory, then promote compact summaries into
+`main` if needed.
 
 Never use broad `git add -A` in either worktree. Stage result packets, patches,
 scripts, and notes by explicit path from the active workspace.

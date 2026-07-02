@@ -202,7 +202,7 @@ GPU_INDEX=1 PORT=18421 \
 Use this command for the current representative draft-MTP realistic-suite
 candidate. It reproduces the VDR2 selected-down `n_max=3`, `n_min=2`,
 `p_min=0.0475`, `UBATCH_SIZE=1024` family, whose current strict row is
-`123.677 tok/s` on the fixed cold suite. The previous FA-on `121.414`,
+`124.977 tok/s` on the fixed cold suite. The previous FA-on `121.414`,
 selected-down `117.915` / `115.728`, prior `98.340`, F16-p021
 `95.825`, VDR2 `90.983`, `90.322`, and VDR4 `87.611 tok/s` rows remain valid
 evidence but are no longer the promoted headline.
@@ -254,12 +254,28 @@ Balanced service candidate:
 ```bash
 cd /home/steve/llm-optimizations
 GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8 \
-STAMP=$(date -u +%Y%m%dT%H%M%SZ)-gqa8-service \
+LLAMA_PREFILL_UBATCH_SIZE=2048 \
+LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND=1 \
+LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q=2048 \
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)-swalb-service \
 LONG_CONTEXT_CASE_IDS='lc-12288-early lc-16384-late lc-22000-middle' \
 LONG_CONTEXT_MAX_TARGET_PROMPT_TOKENS=24000 \
-LANE_SPECS='0:2048:2048:ub2048-gqa8' \
+LANE_SPECS='0:2048:1024:phase2048-swalb:2048' \
 CANARY_REPEATS=2 MAX_TOKENS=96 BASE_PORT=18520 \
 repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh
+```
+
+This service recipe is separate from the short-decode record. The 2026-07-02
+post-clean confirmation measured a combined `+6.927%` long-prefill gain versus
+same-window controls, exact JSON validation, `cached_tokens=0`, and no
+short-decode regression signal in a full512 guard. Evidence:
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-postclean-baseline-swalb-service-confirm.md`.
+
+To rerun the full four-GPU A/B, cross-over, and short guard:
+
+```bash
+cd /home/steve/llm-optimizations
+repro/gemma4-26b-a4b-q8-b70/run-vdr2-swalb-service-confirm.sh
 ```
 
 Pure prefill candidate:

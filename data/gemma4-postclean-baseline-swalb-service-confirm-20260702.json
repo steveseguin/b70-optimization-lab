@@ -1,0 +1,439 @@
+{
+  "baseline_mtp": {
+    "rows": [
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 108.84322461649292,
+        "gate": true,
+        "gpu": "0",
+        "label": "gemma4-q8-gpu0-shortguard-baseline-a-ctx32768-o512-20260702Tbaseline-020014Z",
+        "mean_1_100": 114.48601196771567,
+        "median_1_100": 111.39252250242004,
+        "p10_1_100": 103.91136847182072,
+        "ttft_ms": 178.2879265374504,
+        "wall512": 104.40878130445421
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 109.14010860917631,
+        "gate": true,
+        "gpu": "1",
+        "label": "gemma4-q8-gpu1-shortguard-baseline-b-ctx32768-o512-20260702Tbaseline-020014Z",
+        "mean_1_100": 117.3009419078677,
+        "median_1_100": 118.58324809924554,
+        "p10_1_100": 105.00283757389377,
+        "ttft_ms": 178.51473193150014,
+        "wall512": 104.95609666272938
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 109.89599934238007,
+        "gate": true,
+        "gpu": "2",
+        "label": "gemma4-q8-gpu2-shortguard-baseline-c-ctx32768-o512-20260702Tbaseline-020014Z",
+        "mean_1_100": 114.85176717790408,
+        "median_1_100": 111.248303951543,
+        "p10_1_100": 108.25039978889353,
+        "ttft_ms": 179.11079002078623,
+        "wall512": 105.53048681737744
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 110.86746680826293,
+        "gate": true,
+        "gpu": "3",
+        "label": "gemma4-q8-gpu3-shortguard-baseline-d-ctx32768-o512-20260702Tbaseline-020014Z",
+        "mean_1_100": 117.17602889479552,
+        "median_1_100": 116.70667371344663,
+        "p10_1_100": 104.74372809049638,
+        "ttft_ms": 179.91367651848122,
+        "wall512": 106.06255193987124
+      }
+    ],
+    "summary": {
+      "avg": 114.4826870666638,
+      "count": 4,
+      "max": 118.58324809924554,
+      "median": 114.04959810793333,
+      "min": 111.248303951543
+    }
+  },
+  "date": "2026-07-02",
+  "kind": "gemma4_postclean_baseline_swalb_service_confirm",
+  "nospec_calibration": {
+    "rows": [
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 75.46854104708979,
+        "gate": true,
+        "gpu": "0",
+        "label": "gemma4-q8-gpu0-nospec-calib-postclean-full512-20260702Tnospec-020259Z",
+        "mean_1_100": 76.8854236255119,
+        "median_1_100": 76.89584960783111,
+        "p10_1_100": 76.85611128455851,
+        "ttft_ms": 179.4016160420142,
+        "wall512": 73.50952646518178
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 75.34896545111766,
+        "gate": true,
+        "gpu": "1",
+        "label": "gemma4-q8-gpu1-nospec-calib-postclean-full512-20260702Tnospec-020259Z",
+        "mean_1_100": 76.74991086158622,
+        "median_1_100": 76.76825891834551,
+        "p10_1_100": 76.66194875562165,
+        "ttft_ms": 179.74571703234687,
+        "wall512": 73.38849233843293
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 75.513207902134,
+        "gate": true,
+        "gpu": "2",
+        "label": "gemma4-q8-gpu2-nospec-calib-postclean-full512-20260702Tnospec-020259Z",
+        "mean_1_100": 76.89243151514275,
+        "median_1_100": 76.91169903856955,
+        "p10_1_100": 76.83303241890297,
+        "ttft_ms": 180.22323248442262,
+        "wall512": 73.54413912259795
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 75.29125791946561,
+        "gate": true,
+        "gpu": "3",
+        "label": "gemma4-q8-gpu3-nospec-calib-postclean-full512-20260702Tnospec-020259Z",
+        "mean_1_100": 76.64729651111104,
+        "median_1_100": 76.63953532747094,
+        "p10_1_100": 76.59777170728495,
+        "ttft_ms": 179.263160971459,
+        "wall512": 73.32781489153777
+      }
+    ],
+    "summary": {
+      "avg": 76.80383572305428,
+      "count": 4,
+      "max": 76.91169903856955,
+      "median": 76.83205426308831,
+      "min": 76.63953532747094
+    }
+  },
+  "policy": "structured evidence; short decode is not a new headline record; SWA left-bound is a long-context service/prefill recipe",
+  "swalb_long_context": {
+    "combined_decode_delta_pct": 0.3627035933210898,
+    "combined_prefill_delta_pct": 6.927435244416014,
+    "decode_by_variant": {
+      "control": {
+        "avg": 119.48890779285664,
+        "count": 4,
+        "max": 119.73339277619799,
+        "median": 119.48187129034386,
+        "min": 119.25849581454084
+      },
+      "swalb": {
+        "avg": 119.92229835504146,
+        "count": 4,
+        "max": 120.10829296113552,
+        "median": 119.9500729607235,
+        "min": 119.6807545375833
+      }
+    },
+    "prefill_by_variant": {
+      "control": {
+        "avg": 1050.425205776937,
+        "count": 4,
+        "max": 1056.8631626320582,
+        "median": 1053.3005788381092,
+        "min": 1038.2365027994713
+      },
+      "swalb": {
+        "avg": 1123.192731698158,
+        "count": 4,
+        "max": 1128.9296965087258,
+        "median": 1126.3319650850137,
+        "min": 1111.177300113879
+      }
+    },
+    "rows": [
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 119.52332827800024,
+        "gate": true,
+        "gpu": "0",
+        "label": "gemma4-q8-gpu0-longctx-control-phase2048-20260702Tswalb-long-ab1-020810Z",
+        "prefill_mean": 1054.8999208716762,
+        "prefill_median": 1054.4334777482345,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-ab1-020810Z",
+        "ttft_s": 21.556599330040626,
+        "variant": "control"
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 119.6807545375833,
+        "gate": true,
+        "gpu": "1",
+        "label": "gemma4-q8-gpu1-longctx-swalb-phase2048-20260702Tswalb-long-ab1-020810Z",
+        "prefill_mean": 1106.942396009925,
+        "prefill_median": 1111.177300113879,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-ab1-020810Z",
+        "ttft_s": 20.455781447002664,
+        "variant": "swalb"
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 119.44041430268747,
+        "gate": true,
+        "gpu": "2",
+        "label": "gemma4-q8-gpu2-longctx-control-phase2048-20260702Tswalb-long-ab1-020810Z",
+        "prefill_mean": 1056.708385470247,
+        "prefill_median": 1056.8631626320582,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-ab1-020810Z",
+        "ttft_s": 21.507041595992632,
+        "variant": "control"
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 119.89144475042696,
+        "gate": true,
+        "gpu": "3",
+        "label": "gemma4-q8-gpu3-longctx-swalb-phase2048-20260702Tswalb-long-ab1-020810Z",
+        "prefill_mean": 1120.3764088224027,
+        "prefill_median": 1125.460894476889,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-ab1-020810Z",
+        "ttft_s": 20.196170396986417,
+        "variant": "swalb"
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 120.10829296113552,
+        "gate": true,
+        "gpu": "0",
+        "label": "gemma4-q8-gpu0-longctx-swalb-phase2048-20260702Tswalb-long-xover1-021034Z",
+        "prefill_mean": 1121.394826186618,
+        "prefill_median": 1127.2030356931384,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-xover1-021034Z",
+        "ttft_s": 20.16495633905288,
+        "variant": "swalb"
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 119.25849581454084,
+        "gate": true,
+        "gpu": "1",
+        "label": "gemma4-q8-gpu1-longctx-control-phase2048-20260702Tswalb-long-xover1-021034Z",
+        "prefill_mean": 1038.615548433997,
+        "prefill_median": 1038.2365027994713,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-xover1-021034Z",
+        "ttft_s": 21.892892359988764,
+        "variant": "control"
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 120.00870117102006,
+        "gate": true,
+        "gpu": "2",
+        "label": "gemma4-q8-gpu2-longctx-swalb-phase2048-20260702Tswalb-long-xover1-021034Z",
+        "prefill_mean": 1124.3299370582774,
+        "prefill_median": 1128.9296965087258,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-xover1-021034Z",
+        "ttft_s": 20.13411470199935,
+        "variant": "swalb"
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "decode_median": 119.73339277619799,
+        "gate": true,
+        "gpu": "3",
+        "label": "gemma4-q8-gpu3-longctx-control-phase2048-20260702Tswalb-long-xover1-021034Z",
+        "prefill_mean": 1052.7159873038663,
+        "prefill_median": 1052.1676799279842,
+        "quality_pass_all": true,
+        "round": "20260702Tswalb-long-xover1-021034Z",
+        "ttft_s": 21.60302053904161,
+        "variant": "control"
+      }
+    ]
+  },
+  "swalb_short_guard": {
+    "combined_full512_delta_pct": 1.1628999100516735,
+    "combined_metric_delta_pct": 0.22280414020794392,
+    "full512_by_variant": {
+      "control": {
+        "avg": 109.85155526615945,
+        "count": 4,
+        "max": 111.6809705967077,
+        "median": 109.9950138427753,
+        "min": 107.73522278237951
+      },
+      "swalb": {
+        "avg": 111.12901890353999,
+        "count": 4,
+        "max": 113.59880959499438,
+        "median": 110.80250130297227,
+        "min": 109.31226341322102
+      }
+    },
+    "metric_by_variant": {
+      "control": {
+        "avg": 117.88432771889562,
+        "count": 4,
+        "max": 121.8533328849081,
+        "median": 116.96212879912164,
+        "min": 115.75972039243108
+      },
+      "swalb": {
+        "avg": 118.14697888170961,
+        "count": 4,
+        "max": 120.23594430009398,
+        "median": 118.34466110274337,
+        "min": 115.66264902125774
+      }
+    },
+    "rows": [
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 111.6809705967077,
+        "gate": true,
+        "gpu": "0",
+        "label": "gemma4-q8-gpu0-shortguard-control-swalb2048-20260702Tswalb-shortguard-ab1-021304Z",
+        "mean_1_100": 118.06417453854988,
+        "median_1_100": 117.19991054613958,
+        "p10_1_100": 107.9871270693128,
+        "round": "20260702Tswalb-shortguard-ab1-021304Z",
+        "ttft_ms": 178.92608646070585,
+        "variant": "control",
+        "wall512": 105.49933046317818
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 113.59880959499438,
+        "gate": true,
+        "gpu": "1",
+        "label": "gemma4-q8-gpu1-shortguard-swalb-swalb2048-20260702Tswalb-shortguard-ab1-021304Z",
+        "mean_1_100": 118.43858038554059,
+        "median_1_100": 120.23594430009398,
+        "p10_1_100": 105.55005000660391,
+        "round": "20260702Tswalb-shortguard-ab1-021304Z",
+        "ttft_ms": 177.8114500339143,
+        "variant": "swalb",
+        "wall512": 109.221457798445
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 109.24256944530484,
+        "gate": true,
+        "gpu": "2",
+        "label": "gemma4-q8-gpu2-shortguard-control-swalb2048-20260702Tswalb-shortguard-ab1-021304Z",
+        "mean_1_100": 115.86665822372602,
+        "median_1_100": 115.75972039243108,
+        "p10_1_100": 101.76781884119444,
+        "round": "20260702Tswalb-shortguard-ab1-021304Z",
+        "ttft_ms": 177.8771834797226,
+        "variant": "control",
+        "wall512": 105.06310060887586
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 109.53311612623104,
+        "gate": true,
+        "gpu": "3",
+        "label": "gemma4-q8-gpu3-shortguard-swalb-swalb2048-20260702Tswalb-shortguard-ab1-021304Z",
+        "mean_1_100": 116.73398224655115,
+        "median_1_100": 116.61180918899383,
+        "p10_1_100": 107.77593596912195,
+        "round": "20260702Tswalb-shortguard-ab1-021304Z",
+        "ttft_ms": 178.41294349636883,
+        "variant": "swalb",
+        "wall512": 105.332072814888
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 112.07188647971353,
+        "gate": true,
+        "gpu": "0",
+        "label": "gemma4-q8-gpu0-shortguard-swalb-swalb2048-20260702Tswalb-shortguard-xover1-021535Z",
+        "mean_1_100": 117.94573113598771,
+        "median_1_100": 120.07751301649293,
+        "p10_1_100": 105.85437191762959,
+        "round": "20260702Tswalb-shortguard-xover1-021535Z",
+        "ttft_ms": 178.71262202970684,
+        "variant": "swalb",
+        "wall512": 107.51318578456878
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 107.73522278237951,
+        "gate": true,
+        "gpu": "1",
+        "label": "gemma4-q8-gpu1-shortguard-control-swalb2048-20260702Tswalb-shortguard-xover1-021535Z",
+        "mean_1_100": 118.3391908330526,
+        "median_1_100": 121.8533328849081,
+        "p10_1_100": 100.4082561795022,
+        "round": "20260702Tswalb-shortguard-xover1-021535Z",
+        "ttft_ms": 178.17615601234138,
+        "variant": "control",
+        "wall512": 103.23333524544366
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 109.31226341322102,
+        "gate": true,
+        "gpu": "2",
+        "label": "gemma4-q8-gpu2-shortguard-swalb-swalb2048-20260702Tswalb-shortguard-xover1-021535Z",
+        "mean_1_100": 116.59011523679165,
+        "median_1_100": 115.66264902125774,
+        "p10_1_100": 105.18914568822152,
+        "round": "20260702Tswalb-shortguard-xover1-021535Z",
+        "ttft_ms": 178.79342392552644,
+        "variant": "swalb",
+        "wall512": 104.90445682486056
+      },
+      {
+        "cached_tokens_all_zero": true,
+        "canary": true,
+        "full512": 110.74745824024575,
+        "gate": true,
+        "gpu": "3",
+        "label": "gemma4-q8-gpu3-shortguard-control-swalb2048-20260702Tswalb-shortguard-xover1-021535Z",
+        "mean_1_100": 116.33809603607735,
+        "median_1_100": 116.72434705210371,
+        "p10_1_100": 107.33440584081636,
+        "round": "20260702Tswalb-shortguard-xover1-021535Z",
+        "ttft_ms": 179.33413747232407,
+        "variant": "control",
+        "wall512": 106.82684076578161
+      }
+    ]
+  }
+}

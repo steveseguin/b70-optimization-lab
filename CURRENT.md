@@ -141,6 +141,18 @@ Current active optimization target:
   stack and rebuilt; `llama-server --version` reports `c926ad098`, and the
   failed branch is absent. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-fattn-dv512-gqa-ncols16-negative.md`.
+- Latest post-clean baseline/service confirmation:
+  `20260702-postclean-baseline-swalb-service-confirm.md` re-established the
+  clean-workspace Gemma state. Exact MTP record recipe passed on all four GPUs
+  but averaged `114.483 tok/s` in this window (normal MTP variance below the
+  historical `124.977` high). The no-spec calibration lane was very tight at
+  `76.804 tok/s` average with only `0.35%` range, so use it for target-side
+  micro-change comparisons. The long-context service recipe
+  `GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8` + phase prefill `2048/1024` +
+  `LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q=2048` reconfirmed a
+  `+6.927%` median-prefill win with exact JSON validation, `cached_tokens=0`,
+  and no short-decode regression signal. This is a service/prefill result, not
+  a LocalMaxxing short-decode headline.
 - Recent non-promoted follow-up:
   `LLAMA_SPEC_VERIFY_CLIP_DRAFT_AT_EOG=1` was valid and trimmed real terminal
   draft work, but four full512 lanes topped out at `113.58569073629727 tok/s`,

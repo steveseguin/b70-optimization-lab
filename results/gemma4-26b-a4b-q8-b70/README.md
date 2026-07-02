@@ -123,6 +123,20 @@ by about `+4.7%` to `+6.1%`, but the fixed short-decode guard showed a
 do not enable it in promoted service or LocalMaxxing headline recipes. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-sycl-fattn-kv-min-left-bound-partial.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-sycl-fattn-kv-min-left-bound-partial.md).
 
+Post-cleanup service confirmation on 2026-07-02 revalidated the promoted
+host-derived SWA left-bound service recipe in the single active workspace:
+`BATCH_SIZE=2048`, `UBATCH_SIZE=1024`, `LLAMA_PREFILL_UBATCH_SIZE=2048`,
+`GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`,
+`LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND=1`, and
+`LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q=2048`. The long-context A/B plus
+cross-over passed exact JSON validation and `cached_tokens=0`, improving median
+prefill by **+6.927%** while long-context decode was flat/slightly positive.
+The paired full512 short-decode guard also passed and showed no regression
+signal (`+0.223%` on the 1-100 metric, within normal MTP variance). Treat this
+as the current validated service/prefill recipe, not a LocalMaxxing short-decode
+headline. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-postclean-baseline-swalb-service-confirm.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-postclean-baseline-swalb-service-confirm.md).
+
 The earlier UBATCH-only service work remains useful background: UB2048 was the
 best unpatched long-prefill candidate, and the profile that followed correctly
 pointed at `FLASH_ATTN_EXT` / KV-cache attention rather than verifier LM-head
