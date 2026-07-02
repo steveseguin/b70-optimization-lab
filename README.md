@@ -126,7 +126,6 @@ modes, not production defaults.
 
 <img  height="600" alt="quad" src="https://github.com/user-attachments/assets/e6ce5633-17ff-4a73-924d-31dcbc913ede" />
 
-
 ## Current Gemma 4 26B Copy Path
 
 For users who want to copy the current Gemma 4 26B B70 settings directly, start
@@ -153,6 +152,8 @@ with the promoted result packet:
 The deeper lab history, including older 42/48/90/94 tok/s milestones and the
 invalid warmed n-gram submissions, remains in
 [results/gemma4-26b-a4b-q8-b70](results/gemma4-26b-a4b-q8-b70/README.md).
+
+<img width="1666" height="478" alt="image" src="https://github.com/user-attachments/assets/14602c6b-5c72-483d-aec7-415fbc4a8114" />
 
 ## How To Contribute
 
