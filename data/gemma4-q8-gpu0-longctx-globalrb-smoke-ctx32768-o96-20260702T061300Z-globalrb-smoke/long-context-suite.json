@@ -1,0 +1,141 @@
+{
+  "rows": [
+    {
+      "case_id": "lc-12288-early",
+      "chunks": 77,
+      "completion_tokens": 78,
+      "elapsed_s": 13.890645880019292,
+      "needle_position": "early",
+      "post_ttft_s": 0.6128805159823969,
+      "prefill_tok_s_approx": 1221.0639031107787,
+      "prompt_chars": 73728,
+      "prompt_preview": "You are validating long-context retrieval quality and prompt processing. Most of this prompt is filler. Only the fact block named lc-12288-early is authoritative.\n\nbenchmark latency memory throughput validation repeatability scheduler cache kernel sycl level-zero b70 q8 deterministic prompt prefill context retrieval se",
+      "prompt_sha256": "dd33eeee9a7e9c923807fa26a62f86b74f56b9c38c195a1658c4d2f8c9df29b9",
+      "prompt_tokens": 16213,
+      "sha256": "1bd0af5b46b00b789d8e85dcd7616b196d68fef4b2e82a71ab1f6d800a50b1dc",
+      "target_prompt_tokens": 12288,
+      "text": "{\"case_id\": \"lc-12288-early\", \"project_code\": \"MIRROR-12288\", \"answer_phrase\": \"LONG-CONTEXT-MIRROR-12288\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 24581}",
+      "text_preview": "{\"case_id\": \"lc-12288-early\", \"project_code\": \"MIRROR-12288\", \"answer_phrase\": \"LONG-CONTEXT-MIRROR-12288\", \"sort_order\": \"blue, green, orange, red\", \"arithmetic_result\": 24581}",
+      "tok_s_after_ttft": 127.26787353481524,
+      "tok_s_wall": 5.6152896469844835,
+      "ttft_s": 13.277765364036895,
+      "usage": {
+        "completion_tokens": 78,
+        "prompt_tokens": 16213,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 16291
+      },
+      "validation": {
+        "expected": {
+          "answer_phrase": "LONG-CONTEXT-MIRROR-12288",
+          "arithmetic_result": 24581,
+          "case_id": "lc-12288-early",
+          "project_code": "MIRROR-12288",
+          "sort_order": "blue, green, orange, red"
+        },
+        "field_pass": {
+          "answer_phrase": true,
+          "arithmetic_result": true,
+          "case_id": true,
+          "project_code": true,
+          "sort_order": true
+        },
+        "parsed_json": {
+          "answer_phrase": "LONG-CONTEXT-MIRROR-12288",
+          "arithmetic_result": 24581,
+          "case_id": "lc-12288-early",
+          "project_code": "MIRROR-12288",
+          "sort_order": "blue, green, orange, red"
+        },
+        "pass": true
+      }
+    }
+  ],
+  "run_identity": {
+    "api_mode": "chat",
+    "base_url": "http://127.0.0.1:18620",
+    "case_ids": [
+      "lc-12288-early"
+    ],
+    "created_at_utc": "2026-07-02T06:14:37.037621+00:00",
+    "max_target_prompt_tokens": 13000,
+    "max_tokens": 96,
+    "model": "gemma4-26b-a4b-q8",
+    "prompt_sha256s": [
+      "dd33eeee9a7e9c923807fa26a62f86b74f56b9c38c195a1658c4d2f8c9df29b9"
+    ],
+    "seed": 1,
+    "suite": "/home/steve/llm-optimizations/repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json",
+    "suite_id": "gemma4-26b-a4b-q8-b70-long-context-v1",
+    "suite_sha256": "7d9b0c5e48e3f5bcb828e0a4c89555e011568f1d69fff54a6040691379346a36"
+  },
+  "summary": {
+    "cached_tokens": [
+      0
+    ],
+    "cached_tokens_all_zero": true,
+    "completion_tokens": {
+      "count": 1,
+      "max": 78,
+      "mean": 78.0,
+      "median": 78,
+      "min": 78,
+      "p10": 78,
+      "stdev": 0.0
+    },
+    "long_context_gate": {
+      "passed": true,
+      "required_policy": "fixed deterministic long-context suite; each prompt once; cached_tokens=0 every row; exact JSON retrieval fields pass"
+    },
+    "prefill_tok_s_approx": {
+      "count": 1,
+      "max": 1221.0639031107787,
+      "mean": 1221.0639031107787,
+      "median": 1221.0639031107787,
+      "min": 1221.0639031107787,
+      "p10": 1221.0639031107787,
+      "stdev": 0.0
+    },
+    "prompt_tokens": {
+      "count": 1,
+      "max": 16213,
+      "mean": 16213.0,
+      "median": 16213,
+      "min": 16213,
+      "p10": 16213,
+      "stdev": 0.0
+    },
+    "prompts_unique": true,
+    "quality_pass_all": true,
+    "requests": 1,
+    "tok_s_after_ttft": {
+      "count": 1,
+      "max": 127.26787353481524,
+      "mean": 127.26787353481524,
+      "median": 127.26787353481524,
+      "min": 127.26787353481524,
+      "p10": 127.26787353481524,
+      "stdev": 0.0
+    },
+    "tok_s_wall": {
+      "count": 1,
+      "max": 5.6152896469844835,
+      "mean": 5.6152896469844835,
+      "median": 5.6152896469844835,
+      "min": 5.6152896469844835,
+      "p10": 5.6152896469844835,
+      "stdev": 0.0
+    },
+    "ttft_s": {
+      "count": 1,
+      "max": 13.277765364036895,
+      "mean": 13.277765364036895,
+      "median": 13.277765364036895,
+      "min": 13.277765364036895,
+      "p10": 13.277765364036895,
+      "stdev": 0.0
+    }
+  }
+}

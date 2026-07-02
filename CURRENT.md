@@ -52,6 +52,16 @@ Current active optimization target:
   `74.29709476830473 tok/s` median on the same realistic suite. Evidence:
   `data/gemma4-q8-gpu0-vdr4default-nospec-realistic-gate-v2-20260627T165335Z/summary.json`.
   Treat it as the simplest target-side quality/control baseline for new work.
+- Latest service/prefill source lane:
+  global FlashAttention right-bound is closed negative. The default-off source
+  patch built and passed one-case long-context exact JSON validation with
+  `cached_tokens=0`, but a four-GPU A/B+crossover on `lc-12288-early` showed
+  the candidate regressed mean approximate prefill from `1221.324446` to
+  `1206.916212 tok/s` (`-1.179722%`). Do not leave the patch active or promote
+  it. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-right-bound-negative.md`
+  and
+  `data/gemma4-globalrb-comparison-20260702T061900Z-globalrb-onecase.json`.
 - Latest verifier-top2 diagnostic:
   closed as an instrumentation failure, not a performance result.
   The v2 patch built and made the host top2 profile path non-missing, but raw
