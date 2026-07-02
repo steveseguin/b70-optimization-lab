@@ -1,0 +1,377 @@
+diff --git a/ggml/src/ggml-sycl/fattn-common.hpp b/ggml/src/ggml-sycl/fattn-common.hpp
+index c6cc13cfb..904f53bc2 100644
+--- a/ggml/src/ggml-sycl/fattn-common.hpp
++++ b/ggml/src/ggml-sycl/fattn-common.hpp
+@@ -11,6 +11,7 @@
+ 
+ #include <cstdint>
+ #include <cmath>
++#include <cstdlib>
+ #include <float.h>
+ 
+ 
+@@ -19,6 +20,14 @@
+ #define SOFTMAX_FTZ_THRESHOLD -20.0f                   // Softmax exp. of values smaller than this are flushed to zero to avoid NaNs.
+ #define FATTN_KQ_MAX_OFFSET (3.0f*0.6931f)
+ 
++static int ggml_sycl_fattn_kv_max_scan_min_q() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_KV_MAX_SCAN_MIN_Q");
++        return env ? std::atoi(env) : 1024;
++    }();
++    return value;
++}
++
+ typedef void (*fattn_kernel_t)(
+     const char* Q,
+     const char* K,
+@@ -26,6 +35,7 @@ typedef void (*fattn_kernel_t)(
+     const char* mask,
+     const char* sinks,
+     const int* KV_max,
++    const int* KV_min,
+     float* dst,
+     sycl::float2* dst_meta,
+     const float scale,
+@@ -777,7 +787,7 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
+     *dst = dst_val / rowsum;
+ }
+ 
+-template <int D>  // D == head size
++template <int D, int D_DST = D, int D_OFFSET = 0>  // D == head size
+ 
+ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
+                                        const sycl::float2 * __restrict__ VKQ_meta,
+@@ -800,9 +810,9 @@ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
+ 
+     const int j_dst_unrolled = (sequence*ne01 + col)*ne02 + head;
+ 
+-    VKQ_parts += j_dst_unrolled * parallel_blocks*D;
++    VKQ_parts += j_dst_unrolled * parallel_blocks*D_DST + D_OFFSET;
+     VKQ_meta  += j_dst_unrolled * parallel_blocks;
+-    dst       += j_dst_unrolled *                 D;
++    dst       += j_dst_unrolled *                 D_DST + D_OFFSET;
+ 
+     const int tid = item_ct1.get_local_id(2);
+     __builtin_assume(tid < D);
+@@ -824,7 +834,7 @@ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
+     for (int l = 0; l < parallel_blocks; ++l) {
+         const float KQ_max_scale = sycl::native::exp(meta[l].x() - kqmax);
+ 
+-        VKQ_numerator   += KQ_max_scale * VKQ_parts[l*D + tid];
++        VKQ_numerator   += KQ_max_scale * VKQ_parts[l*D_DST + tid];
+         VKQ_denominator += KQ_max_scale * meta[l].y();
+     }
+ 
+@@ -843,6 +853,7 @@ static void lauch_kernel(
+     const char* __restrict__ mask,
+     const char* __restrict__ sinks,
+     const int* __restrict__ KV_max,
++    const int* __restrict__ KV_min,
+     float* __restrict__ dst,
+     sycl::float2* __restrict__ dst_meta,
+     const float scale,
+@@ -882,7 +893,7 @@ static void lauch_kernel(
+                 static_cast<sycl::range<3>>(local_range)),
+             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
+                 GGML_UNUSED(item_ct1);
+-                fattn_kernel(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
++                fattn_kernel(Q, K, V, mask, sinks, KV_max, KV_min, dst, dst_meta, scale,
+                              max_bias, m0, m1, n_head_log2, logit_softcap, ne00,
+                              ne01, ne02, ne03, nb01, nb02, nb03, ne10, ne11,
+                              ne12, ne13, nb11, nb12, nb13, nb21, nb22, nb23,
+@@ -891,7 +902,8 @@ static void lauch_kernel(
+     });
+ }
+ 
+-template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size>
++template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size,
++          int DV_DST = DV, int DV_OFFSET = 0>
+ void launch_fattn(
+     ggml_backend_sycl_context & ctx, ggml_tensor * dst, const int nwarps, const size_t nbytes_shared,
+     const int nbatch_fa, const bool need_f16_K, const bool need_f16_V, const bool stream_k) {
+@@ -904,8 +916,9 @@ void launch_fattn(
+ 
+     const bool V_is_K_view = V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
+ 
+-    const ggml_tensor * mask  = dst->src[3];
+-    const ggml_tensor * sinks = dst->src[4];
++    const ggml_tensor * mask   = dst->src[3];
++    const ggml_tensor * sinks  = dst->src[4];
++    const ggml_tensor * KV_min = dst->src[5];
+ 
+     ggml_tensor * KQV = dst;
+ 
+@@ -917,6 +930,9 @@ void launch_fattn(
+     GGML_ASSERT(V->nb[0] == ggml_element_size(V));
+ 
+     GGML_ASSERT(!mask || mask->type == GGML_TYPE_F16);
++    GGML_ASSERT(!KV_min || KV_min->type == GGML_TYPE_I32);
++    GGML_ASSERT(!KV_min || ggml_is_contiguous(KV_min));
++    GGML_ASSERT(!KV_min || (KV_min->ne[0] == Q->ne[1] && KV_min->ne[1] == Q->ne[3]));
+ 
+     ggml_sycl_pool & pool = ctx.pool();
+     ggml_sycl_fattn_kv_buffers & fbuf = ctx.fattn_buffers();
+@@ -1010,7 +1026,9 @@ void launch_fattn(
+     // Optional optimization where the mask is scanned to determine whether part of the calculation can be skipped.
+     // Only worth the overhead if there is at lease one FATTN_KQ_STRIDE x FATTN_KQ_STRIDE square to be skipped or
+     //     multiple sequences of possibly different lengths.
+-    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && (Q->ne[1] >= 1024 || Q->ne[3] > 1)) {
++    const int kv_max_scan_min_q = ggml_sycl_fattn_kv_max_scan_min_q();
++    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && kv_max_scan_min_q >= 0
++            && (Q->ne[1] >= kv_max_scan_min_q || Q->ne[3] > 1)) {
+         const int s31 = mask->nb[1] / sizeof(sycl::half2);
+         const int s33 = mask->nb[3] / sizeof(sycl::half2);
+ 
+@@ -1127,6 +1145,7 @@ void launch_fattn(
+     lauch_kernel<fattn_kernel, warp_size>(
+         blocks_num, block_dim, main_stream, (unsigned int) nbytes_shared, (const char *) Q->data, K_data, V_data,
+         mask ? ((const char *) mask->data) : nullptr, sinks ? ((const char *) sinks->data) : nullptr, KV_max.ptr,
++        KV_min ? ((const int *) KV_min->data) : nullptr,
+         !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (float *) KQV->data, (sycl::float2 *)dst_tmp_meta.ptr, scale, max_bias, m0, m1,
+         n_head_log2, logit_softcap, Q->ne[0], ne01, Q->ne[2], Q->ne[3], Q->nb[1], Q->nb[2], Q->nb[3], K->ne[0],
+         K->ne[1], K->ne[2], K->ne[3], nb11, nb12, nb13, nb21, nb22, nb23, mask ? mask->ne[1] : 0,
+@@ -1171,7 +1190,7 @@ void launch_fattn(
+             cgh.parallel_for(sycl::nd_range<3>(blocks_num_combine * block_dim_combine, block_dim_combine),
+                              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
+                                  GGML_UNUSED(item_ct1);
+-                                 flash_attn_combine_results<DV>(
++                                 flash_attn_combine_results<DV, DV_DST, DV_OFFSET>(
+                                      dst_tmp_ptr_ct0, dst_tmp_meta_ptr_ct1, KQV_data_ct2, parallel_blocks,
+                                      dpct_local_acc_ct1.get_multi_ptr<sycl::access::decorated::no>().get());
+                              });
+diff --git a/ggml/src/ggml-sycl/fattn-tile.hpp b/ggml/src/ggml-sycl/fattn-tile.hpp
+index 9ba529696..5a80b6bf9 100644
+--- a/ggml/src/ggml-sycl/fattn-tile.hpp
++++ b/ggml/src/ggml-sycl/fattn-tile.hpp
+@@ -5,6 +5,7 @@
+ #include "fattn-common.hpp"
+ 
+ #include <cmath>
++#include <cstdlib>
+ #include <float.h>
+ 
+ namespace syclex = sycl::ext::oneapi::experimental;
+@@ -67,6 +68,8 @@ static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp16(const int DKQ, co
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(256, 256, 16, 256, 2,  64,  64)
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(256, 256, 32, 256, 2,  64,  64)
+ 
++    GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 256, 16, 256, 2,  64,  64)
++
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 512,  2,  64, 2,  64,  64)
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 512,  4, 128, 2,  64,  64)
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 512,  8, 256, 2,  64,  64)
+@@ -130,6 +133,8 @@ static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp32(const int DKQ, co
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(256, 256, 16, 256, 2,  32, 128)
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(256, 256, 32, 256, 2,  32,  64)
+ 
++    GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 256, 16, 256, 2,  64,  64)
++
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 512,  2, 128, 2,  64,  64)
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 512,  4, 128, 2,  64,  64)
+     GGML_SYCL_FATTN_TILE_CONFIG_CASE(512, 512,  8, 256, 2,  64,  64)
+@@ -190,6 +195,22 @@ static constexpr int ggml_sycl_fattn_tile_get_nbatch_K(const int DKQ, const int
+     return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 23) & ((1 << 9) - 1);
+ }
+ 
++static int ggml_sycl_fattn_dv512_gqa_ncols2_override() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_DV512_GQA_NCOLS2");
++        return env ? std::atoi(env) : 0;
++    }();
++    return value;
++}
++
++static int ggml_sycl_fattn_global_gqa8_dvsplit() {
++    static const int value = []() {
++        const char * env = std::getenv("GGML_SYCL_FATTN_GLOBAL_GQA8_DVSPLIT");
++        return env ? std::atoi(env) : 0;
++    }();
++    return value;
++}
++
+ template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
+ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
+                                                       sycl::half2 * const __restrict__ tile_KV,
+@@ -654,7 +675,8 @@ static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
+     }
+ }
+ 
+-template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, int warp_size>  // D == head size
++template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, int warp_size,
++          int DV_DST = DV, int DV_OFFSET = 0>  // D == head size
+ /*
+ The total declared local variable size in device function flash_attn_tile exceeds 128 bytes and may cause high register pressure. Consult with your hardware vendor to find the total register size available and adjust the code, or use smaller sub-group size to avoid high register pressure.
+ */
+@@ -664,6 +686,7 @@ static void flash_attn_tile(const char *  Q,
+                             const char *  mask,
+                             const char *  sinks,
+                             const int *  KV_max,
++                            const int *  KV_min,
+                             float *  dst,
+                             sycl::float2 *  dst_meta,
+                             const float          scale,
+@@ -699,7 +722,7 @@ static void flash_attn_tile(const char *  Q,
+     // Skip unused kernel variants for faster compilation:
+     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+     if ((use_logit_softcap && !(DV == 128 || DV == 256))) {
+-        GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
++        GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, KV_min, dst, dst_meta, scale,
+             max_bias, m0, m1, n_head_log2, logit_softcap,
+             ne00, ne01, ne02, ne03,
+                   nb01, nb02, nb03,
+@@ -728,8 +751,12 @@ static void flash_attn_tile(const char *  Q,
+     const int gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
+     const float * Q_f  = (const float *) (Q + nb03*sequence + nb02* head0);
+     const sycl::half2 * K_h2      = (const sycl::half2 *) (K + nb13 * sequence + nb12 * (head0 / gqa_ratio));
++    static_assert(DV_DST >= DV + DV_OFFSET, "bad DV slice");
++    static_assert(DV_OFFSET % 2 == 0, "DV slice offset must preserve half2 alignment");
++
+     const sycl::half2 * V_h2 =
+-        (const sycl::half2 *) (V + nb23 * sequence + nb22 * (head0 / gqa_ratio));  // K and V have same shape
++        (const sycl::half2 *) (V + nb23 * sequence + nb22 * (head0 / gqa_ratio)
++                               + DV_OFFSET * int(sizeof(sycl::half)));  // K and V have same shape
+ 
+     const sycl::half * maskh = mask ? (const sycl::half *) (mask + nb33 * (sequence % ne33)) : nullptr;
+ 
+@@ -860,17 +887,34 @@ static void flash_attn_tile(const char *  Q,
+     item_ct1.barrier(sycl::access::fence_space::local_space);
+ 
+     // Main loop over KV cache:
+-    const int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
++    int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
++    int k_VKQ_min = 0;
++    if (KV_min) {
++        int k_min = k_VKQ_max;
++#pragma unroll
++        for (int jq = 0; jq < ncols1; ++jq) {
++            const int q_col = col_Q_0 + jq;
++            if (q_col < int(ne01.z())) {
++                k_min = sycl::min(k_min, KV_min[sequence * int(ne01.z()) + q_col]);
++            }
++        }
++        k_VKQ_min = sycl::min(sycl::max(k_min, 0), k_VKQ_max);
++    }
++
+     if (ncols2 == 1) {
+         // Branch with out-of-bounds checks.
++        const int k_VKQ_stride = item_ct1.get_group_range(1) * nbatch_fa;
+         int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa;
++        while (k_VKQ_0 + nbatch_fa <= k_VKQ_min) {
++            k_VKQ_0 += k_VKQ_stride;
++        }
+         while (k_VKQ_0 < k_VKQ_max - nbatch_fa) {
+             constexpr bool oob_check = false;
+             flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+                                  oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, slope, KQ, KV_tmp, stride_K2,
+                                             stride_V2, stride_mask, KQ_max, KQ_sum, VKQ, k_VKQ_0, k_VKQ_max, col_Q_0,
+                                             KQ_max_new_shared);
+-            k_VKQ_0 += item_ct1.get_group_range(1) * nbatch_fa;
++            k_VKQ_0 += k_VKQ_stride;
+         }
+         if (k_VKQ_0 < k_VKQ_max) {
+             constexpr bool oob_check = true;
+@@ -881,8 +925,12 @@ static void flash_attn_tile(const char *  Q,
+         }
+     } else {
+         // Branch without out-of-bounds checks.
+-        for (int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa; k_VKQ_0 < k_VKQ_max;
+-             k_VKQ_0 += item_ct1.get_group_range(1) * nbatch_fa) {
++        const int k_VKQ_stride = item_ct1.get_group_range(1) * nbatch_fa;
++        int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa;
++        while (k_VKQ_0 + nbatch_fa <= k_VKQ_min) {
++            k_VKQ_0 += k_VKQ_stride;
++        }
++        for (; k_VKQ_0 < k_VKQ_max; k_VKQ_0 += k_VKQ_stride) {
+ 
+             constexpr bool oob_check = false;
+             flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+@@ -1031,7 +1079,8 @@ static void flash_attn_tile(const char *  Q,
+             }
+             if (i0 + warp_size * cpy_ne_D <= DV / 2 || i0 + item_ct1.get_local_id(2) * cpy_ne_D < DV / 2) {
+                 ggml_sycl_memcpy_1<sizeof(tmp)>(
+-                    &dst[j_dst_unrolled * DV + 2 * i0 + item_ct1.get_local_id(2) * (2 * cpy_ne_D)], tmp);
++                    &dst[j_dst_unrolled * DV_DST + DV_OFFSET + 2 * i0 +
++                         item_ct1.get_local_id(2) * (2 * cpy_ne_D)], tmp);
+             }
+         }
+ #else
+@@ -1045,7 +1094,7 @@ static void flash_attn_tile(const char *  Q,
+                     VKQ[jc0*((DVp/2)/warp_size) + i0/(2*warp_size) + i1].y() *= scale;
+                 }
+                 ggml_sycl_memcpy_1<cpy_ne_D*4>(
+-                    &dst[j_dst_unrolled*DV + i0 + item_ct1.get_local_id(2)*cpy_ne_D],
++                    &dst[j_dst_unrolled*DV_DST + DV_OFFSET + i0 + item_ct1.get_local_id(2)*cpy_ne_D],
+                     &VKQ[jc0*((DVp/2)/warp_size) + i0/(2*warp_size)]);
+             }
+         }
+@@ -1056,7 +1105,7 @@ static void flash_attn_tile(const char *  Q,
+         }
+     }
+ #else
+-    GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
++    GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, KV_min, dst, dst_meta, scale,
+         max_bias, m0, m1, n_head_log2, logit_softcap,
+         ne00, ne01, ne02, ne03,
+               nb01, nb02, nb03,
+@@ -1154,8 +1203,15 @@ static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggm
+     const ggml_tensor * KQV  = dst;
+     const ggml_tensor * Q    = dst->src[0];
+     const ggml_tensor * K    = dst->src[1];
++    const ggml_tensor * V    = dst->src[2];
+     const ggml_tensor * mask = dst->src[3];
+ 
++    const int id        = ggml_sycl_get_device();
++    const int cc        = ggml_sycl_info().devices[id].cc;
++    const int warp_size = WARP_32_SIZE; // can't support WARP_16_SIZE
++
++    constexpr size_t nbytes_shared = 0;
++
+     float max_bias = 0.0f;
+     memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
+ 
+@@ -1169,6 +1225,39 @@ static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggm
+     const bool use_gqa_opt = mask && max_bias == 0.0f && Q->ne[1] <= gqa_limit && K->ne[1] % FATTN_KQ_STRIDE == 0;
+ 
+     if constexpr (DV == 512) {
++        const int forced_ncols2 = ggml_sycl_fattn_dv512_gqa_ncols2_override();
++        if constexpr (DKQ == 512 && !use_logit_softcap) {
++            if (ggml_sycl_fattn_global_gqa8_dvsplit() == 2 &&
++                    forced_ncols2 == 8 &&
++                    use_gqa_opt &&
++                    gqa_ratio == 8 &&
++                    max_bias == 0.0f &&
++                    Q->type == GGML_TYPE_F32 &&
++                    K->type == GGML_TYPE_F16 &&
++                    V->type == GGML_TYPE_F16 &&
++                    Q->ne[0] == 512 && Q->ne[1] == 2 && Q->ne[2] == 16 && Q->ne[3] == 1 &&
++                    K->ne[0] == 512 && K->ne[1] == 256 && K->ne[2] == 2 && K->ne[3] == 1 &&
++                    V->ne[0] == 512 && V->ne[1] == 256 && V->ne[2] == 2 && V->ne[3] == 1 &&
++                    mask && mask->type == GGML_TYPE_F16 &&
++                    mask->ne[0] == 256 && mask->ne[1] == 2 && mask->ne[2] == 1 && mask->ne[3] == 1) {
++                constexpr int cols_per_block = 16;
++                const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, 256, cols_per_block, cc) / warp_size;
++                const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, 256, cols_per_block, cc);
++                launch_fattn<256, cols_per_block / 8, 8,
++                    flash_attn_tile<DKQ, 256, cols_per_block / 8, 8, use_logit_softcap, warp_size, 512, 0>,
++                    warp_size, 512, 0>
++                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
++                launch_fattn<256, cols_per_block / 8, 8,
++                    flash_attn_tile<DKQ, 256, cols_per_block / 8, 8, use_logit_softcap, warp_size, 512, 256>,
++                    warp_size, 512, 256>
++                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
++                return;
++            }
++        }
++        if (use_gqa_opt && forced_ncols2 == 8 && gqa_ratio % 8 == 0) {
++            launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap>(ctx, dst);
++            return;
++        }
+         if (use_gqa_opt && gqa_ratio % 16 == 0) {
+             launch_fattn_tile_switch_ncols1<DKQ, DV, 16, use_logit_softcap>(ctx, dst);
+             return;
+@@ -1243,4 +1332,3 @@ extern DECL_FATTN_TILE_CASE(128, 128);
+ extern DECL_FATTN_TILE_CASE(256, 256);
+ extern DECL_FATTN_TILE_CASE(512, 512);
+ extern DECL_FATTN_TILE_CASE(576, 512);
+-

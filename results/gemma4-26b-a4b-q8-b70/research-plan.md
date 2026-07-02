@@ -279,6 +279,18 @@ balanced phase-prefill service recipe at `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`,
 diagnostics only. See
 `../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-phase-prefill-per-lane-ladder.md`.
 
+2026-07-02 global FlashAttention DV-split hot-shape test: a default-off
+`GGML_SYCL_FATTN_GLOBAL_GQA8_DVSPLIT=2` source patch split the profiled global
+GQA8 shape (`Q=[512,2,16,1]`, `K/V=[512,256,2,1]`) into two `DV=256` tile
+launches writing back to the original `DV=512` output. The patch built and
+passed the long-context gate (`cached_tokens=0`) in smoke and four-GPU
+A/B/crossover validation, but performance was flat: combined approximate
+prefill delta was `-0.009%` mean / `-0.036%` median. Decision: neutral/no win;
+do not promote or leave active. The simple DV split duplicates KQ/softmax work,
+so future global-FlashAttention work needs a true one-pass tile improvement or
+work-skipping mask/bound optimization. See
+`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-dvsplit-neutral.md`.
+
 2026-06-29 verifier LM-head candidate-threshold audit: shifted
 `t_inp_tokens[r + 1]` does provide the draft candidate ID for narrow standard
 MTP verifier rows, but this is not a good next record implementation. Exact
