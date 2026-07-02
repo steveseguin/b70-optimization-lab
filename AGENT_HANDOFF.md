@@ -170,6 +170,21 @@ Primary target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-short-full512-no-win.md`,
   `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`, and
   `data/gemma4-kqregbcast-short-full512-ab-20260702T112211Z-kqregbcast-short-full512-ab.json`.
+- Latest hot global FlashAttention scheduler follow-up:
+  `GGML_SYCL_FATTN_DV512_GQA8_GLOBAL_PB1=1` is closed no-win. A default-off
+  source patch forced `parallel_blocks=1` only for the profiled global GQA8
+  service shape and excluded SWA/decode paths. It built and passed a one-case
+  exact JSON smoke, then a four-wave service A/B + crossover on top of the KQ
+  register/broadcast service stack. All 48 rows were exact-valid with
+  `cached_tokens=0`, but prefill moved only `+0.102%` mean / `+0.260%`
+  median, below the service threshold. The patch was reverted exactly and the
+  active binary rebuilt to the baseline `libggml-sycl.so.0.15.2` hash
+  `61c364b690ea6f852ad71c77abd65605c33de967dc9186c19d322c28e4ea8864`. Do not
+  repeat broad or narrow one-pass `parallel_blocks=1` retunes unless the tile
+  implementation changes materially. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md`
+  and
+  `data/gemma4-global-fattn-hotglobalpb1-comparison-20260702Thotglobalpb1-service-ab1.json`.
 - Latest sampled-ID egress follow-up:
   `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS=1` is a closed negative /
   incomplete implementation. The first parity smoke passed only because the
@@ -218,9 +233,14 @@ Primary target:
 - Latest verifier-design audit: exact LM-head candidate-vs-max has usable row
   plumbing in the narrow full-output MTP verifier shape, but it is not a
   current record lane. Exact speculative verification still needs the true
-  target top token on mismatch, so the full-vocab max/challenger work remains
-  unless a future design actually removes verifier rows or proves a cheaper
-  exact candidate path. Evidence:
+  target top token on mismatch, so the full-vocab max/challenger work remains.
+  A follow-up row-semantics audit confirmed no small exact accept-prefix patch
+  remains: the current accept-prefix backend is already the simple serial
+  row-gated design and it lost. Future verifier work needs a non-serial backend
+  row-adaptive LM-head path or a real candidate-bound certificate that avoids
+  full-vocab work; do not repeat post-hoc masks, conditional/no-bonus variants,
+  or row-by-row accept-prefix variants. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-verifier-row-adaptive-readonly-audit.md`,
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260629-candidate-threshold-lmhead-no-go.md`.
 - Latest selected-down rowpack follow-up: `ROWPACK=2` for the VDR2
   selected-down weighted-sum path is valid but rejected for the short-record

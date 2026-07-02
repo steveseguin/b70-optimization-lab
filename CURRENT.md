@@ -96,6 +96,25 @@ Current active optimization target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-kq-reg-bcast-short-full512-no-win.md`,
   `data/gemma4-global-fattn-kq-reg-bcast-dkq576-comparison-20260702.json`, and
   `data/gemma4-kqregbcast-short-full512-ab-20260702T112211Z-kqregbcast-short-full512-ab.json`.
+- Latest hot global FlashAttention scheduler follow-up:
+  `GGML_SYCL_FATTN_DV512_GQA8_GLOBAL_PB1=1` is closed no-win. A default-off
+  source patch forced `parallel_blocks=1` only for the profiled global GQA8
+  service shape (`DV=512`, `ncols1=2`, `ncols2=8`, `Q=[*,2,16,1]`,
+  `K=[*,256,2,1]`, mask present, no `KV_min`) while leaving SWA and decode
+  paths alone. The one-case smoke passed exact long-context validation and
+  `cached_tokens=0`. The four-wave A/B + crossover on top of the current KQ
+  register/broadcast service stack also passed all 48 exact rows with
+  `cached_tokens=0`, but improved prefill by only `+0.102%` mean /
+  `+0.260%` median, below the service promotion threshold. The source patch was
+  reverted exactly and the active binary rebuilt to the baseline
+  `libggml-sycl.so.0.15.2` hash
+  `61c364b690ea6f852ad71c77abd65605c33de967dc9186c19d322c28e4ea8864`.
+  Do not retest broad `PARALLEL_BLOCKS=1`; future global FlashAttention service
+  work needs a structural tile/scheduling redesign, not another static one-pass
+  override. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md`
+  and
+  `data/gemma4-global-fattn-hotglobalpb1-comparison-20260702Thotglobalpb1-service-ab1.json`.
 - Latest global FlashAttention vec-dispatch follow-up:
   forcing the profiled Gemma global GQA shape (`Q=[512,2,16,1]`,
   `K/V=[512,256,2,1]`) from the current tile path to the existing vec kernel is
@@ -138,11 +157,17 @@ Current active optimization target:
 - Latest verifier-lane audit:
   Candidate-bound LM-head proof is not a credible exact shortcut unless it can
   avoid full-vocab Q8 LM-head work; the current design cannot, and exact
-  verification still needs the target top token on the first mismatch. The next
-  source lane is exact accept-prefix row economics: preserve one target decode
-  boundary and the full-match bonus row, but make the existing row-gated backend
-  path cheaper than its earlier serialized prototype. Evidence:
-  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-bound-lmhead-proof-design.md`
+  verification still needs the target top token on the first mismatch. A
+  follow-up read-only row-semantics audit confirmed there is no small credible
+  exact accept-prefix patch in the current architecture: the existing
+  `LLAMA_SPEC_VERIFY_ACCEPT_PREFIX_ARGMAX` mode is already the simple exact
+  row-gated design, and it lost because it serializes per-row LM-head
+  launch/reduce work. Future verifier work needs a new non-serial backend
+  row-adaptive LM-head path or a mathematically sound candidate-bound
+  certificate, not another post-hoc mask or serial accept-prefix variant.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-verifier-row-adaptive-readonly-audit.md`,
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260701-candidate-bound-lmhead-proof-design.md`,
   and `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260630-row-economics-profile.md`.
 - Latest conditional-bonus verifier follow-up:
   `LLAMA_SPEC_VERIFY_CONDITIONAL_BONUS_ARGMAX=1` is closed negative. The

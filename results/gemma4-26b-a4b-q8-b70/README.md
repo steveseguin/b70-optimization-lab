@@ -183,6 +183,19 @@ service/prefill only, not a LocalMaxxing headline decode result.
 Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-global-fattn-kq-reg-bcast-dkq576-service-win.md).
 
+The bounded follow-up one-pass scheduler gate for that same profiled global
+GQA8 service shape is closed no-win. The default-off source flag
+`GGML_SYCL_FATTN_DV512_GQA8_GLOBAL_PB1=1` forced `parallel_blocks=1` only for
+the hot global shape, excluding SWA/decode paths. It passed a one-case exact
+JSON smoke and a four-wave service A/B + crossover on top of the KQ
+register/broadcast service stack with all 48 rows exact-valid and
+`cached_tokens=0`, but moved prefill only `+0.102%` mean / `+0.260%` median.
+The patch was reverted and the active binary rebuilt to the baseline
+`libggml-sycl.so.0.15.2` hash
+`61c364b690ea6f852ad71c77abd65605c33de967dc9186c19d322c28e4ea8864`. Do not
+carry this flag or retest broad `PARALLEL_BLOCKS=1` as-is. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md).
+
 Follow-up no-KQ-local-memory elision for the same KQ register/broadcast path is
 closed negative/noise. The candidate added
 `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST_NO_KQ_LSM=1`, built successfully, and
