@@ -115,6 +115,23 @@ Current active optimization target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md`
   and
   `data/gemma4-global-fattn-hotglobalpb1-comparison-20260702Thotglobalpb1-service-ab1.json`.
+- Latest current-service context ladder:
+  the validated service recipe (`GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`,
+  `LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND=1`,
+  `LLAMA_EXPERIMENTAL_SWA_FATTN_LEFT_BOUND_MIN_Q=2048`,
+  `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST=1`, `BATCH_SIZE=2048`,
+  `UBATCH_SIZE=1024`, `LLAMA_PREFILL_UBATCH_SIZE=2048`, `CTX_SIZE=32768`,
+  FA on, VMM on) was re-run across all four B70s on the full long-context
+  ladder from 512 through 24K target prompt tokens. All 32 long-context rows
+  passed exact JSON validation with `cached_tokens=0`; all 64 canary rows
+  passed. Average lane median prefill was `1192.965 tok/s`, average lane median
+  long-context decode was `131.786 tok/s`; at the longest `32571` actual-token
+  case, prefill stayed about `991-1006 tok/s` and decode about `114-115 tok/s`.
+  This is the current service/prompt-processing baseline only, not a short
+  LocalMaxxing headline. Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md`
+  and
+  `data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json`.
 - Latest global FlashAttention vec-dispatch follow-up:
   forcing the profiled Gemma global GQA shape (`Q=[512,2,16,1]`,
   `K/V=[512,256,2,1]`) from the current tile path to the existing vec kernel is

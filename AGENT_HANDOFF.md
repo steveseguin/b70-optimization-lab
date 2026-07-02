@@ -185,6 +185,19 @@ Primary target:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md`
   and
   `data/gemma4-global-fattn-hotglobalpb1-comparison-20260702Thotglobalpb1-service-ab1.json`.
+- Latest current-service context ladder:
+  the current service stack (`GQA_NCOLS2=8`, SWA left-bound min-Q `2048`, KQ
+  register/broadcast, phase prefill ubatch `2048`, `BATCH_SIZE=2048`,
+  `UBATCH_SIZE=1024`, 32K context, FA/VMM on) was validated across all four
+  B70s on all long-context suite cases from 512 through 24K target prompt
+  tokens. All 32 long-context rows were exact-valid with `cached_tokens=0`, and
+  all 64 canary rows passed. Average lane median prefill was `1192.965 tok/s`;
+  average lane median long-context decode was `131.786 tok/s`. This is the
+  service/prompt-processing baseline, not a short-decode LocalMaxxing headline.
+  Evidence:
+  `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md`
+  and
+  `data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json`.
 - Latest sampled-ID egress follow-up:
   `LLAMA_SPEC_VERIFY_DIRECT_SAMPLED_EGRESS=1` is a closed negative /
   incomplete implementation. The first parity smoke passed only because the

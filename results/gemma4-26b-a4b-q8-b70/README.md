@@ -196,6 +196,19 @@ The patch was reverted and the active binary rebuilt to the baseline
 carry this flag or retest broad `PARALLEL_BLOCKS=1` as-is. Evidence:
 [`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-hotglobalpb1-service-no-win.md).
 
+Current service-context ladder baseline: the validated service stack
+(`GGML_SYCL_FATTN_DV512_GQA_NCOLS2=8`, SWA left-bound min-Q `2048`, KQ
+register/broadcast, phase prefill ubatch `2048`, `BATCH_SIZE=2048`,
+`UBATCH_SIZE=1024`, `CTX_SIZE=32768`, FA/VMM on) passed the full cold
+long-context suite across all four B70s, from 512 through 24K target prompt
+tokens. All 32 long-context rows were exact-valid with `cached_tokens=0`, and
+all 64 canary rows passed. Average lane median prefill was `1192.965 tok/s`;
+average lane median long-context decode was `131.786 tok/s`. At the longest
+`32571` actual-token case, prefill stayed about `991-1006 tok/s` and decode
+about `114-115 tok/s`. This is a service/prompt-processing reference only, not
+a short-decode LocalMaxxing headline. Evidence:
+[`../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md`](../../experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md).
+
 Follow-up no-KQ-local-memory elision for the same KQ register/broadcast path is
 closed negative/noise. The candidate added
 `GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST_NO_KQ_LSM=1`, built successfully, and
