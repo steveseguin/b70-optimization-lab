@@ -140,3 +140,57 @@ Possible source entry points for the next design pass:
 The goal is not another environment knob sweep. The profile says to make the
 global full-attention tile/scheduling path cheaper for Gemma GQA at long
 context while leaving the current short decode record recipe untouched.
+
+## Addendum: one-token prefill-focused profile
+
+The first diagnostic used `MAX_TOKENS=32`, so it mixed prompt processing with
+32 generated tokens. A follow-up profiler-only run used `MAX_TOKENS=1` and
+`CANARY_REPEATS=0` to isolate TTFT/prefill as much as the harness permits:
+
+- stamp: `20260702Tprefill1-nodeprofile-swalb1`
+- aggregate:
+  `data/gemma4-long-context-service-gate-20260702Tprefill1-nodeprofile-swalb1.json`
+- run summary:
+  `data/gemma4-q8-gpu0-longctx-service-nodeprofile-prefill1-swalb-ctx32768-o1-20260702Tprefill1-nodeprofile-swalb1/summary.json`
+- local raw profiler log, ignored by Git via `data/**/*.log`:
+  `data/gemma4-q8-gpu0-longctx-service-nodeprofile-prefill1-swalb-ctx32768-o1-20260702Tprefill1-nodeprofile-swalb1/server.stdout.log`
+
+Validity is still diagnostic only:
+
+- `bench_rc=1`, exact long-context JSON failed because `MAX_TOKENS=1` truncates
+  the required answer;
+- canary rows completed: `0` by design;
+- `cached_tokens=0`;
+- prompt tokens: `16213`;
+- approximate prefill: `1197.266494005386 tok/s`;
+- TTFT: `13.541680220048875 s`.
+
+The one-token profile confirms that the same full/global FlashAttention layers
+dominate TTFT/prefill, and their isolated per-call cost is larger than the
+32-token mixed profile suggested:
+
+| Rank | Total ms | Calls | Avg ms | Node |
+| ---: | ---: | ---: | ---: | --- |
+| 1 | 616.143 | 11 | 56.013 | `FLASH_ATTN_EXT:__fattn__-5` |
+| 2 | 608.342 | 11 | 55.304 | `FLASH_ATTN_EXT:__fattn__-23` |
+| 3 | 606.263 | 11 | 55.115 | `FLASH_ATTN_EXT:__fattn__-17` |
+| 4 | 605.759 | 11 | 55.069 | `FLASH_ATTN_EXT:__fattn__-11` |
+| 5 | 602.447 | 11 | 54.768 | `FLASH_ATTN_EXT:__fattn__-29` |
+| 6 | 173.335 | 11 | 15.758 | `MUL_MAT_ID:ffn_moe_gate_up-29` |
+| 7 | 165.421 | 11 | 15.038 | `MUL_MAT_ID:ffn_moe_gate_up-0` |
+| 8 | 149.002 | 12 | 12.417 | `FLASH_ATTN_EXT:__fattn__-0` |
+| 9 | 135.533 | 11 | 12.321 | `FLASH_ATTN_EXT:__fattn__-12` |
+
+The top global detail shape remained:
+
+```text
+node{FLASH_ATTN_EXT:__fattn__-5 type=f32 ne=[512,16,2,1]}
+src0{PERMUTE:Qcur_pos-5 type=f32 ne=[512,2,16,1]}
+src1{PERMUTE:cache_k_l5 type=f16 ne=[512,256,2,1]}
+src2{PERMUTE:cache_v_l5 type=f16 ne=[512,256,2,1]}
+src3{NONE:SYCL0#attn_inp_kq_mask#0 type=f16 ne=[256,2,1,1]}
+```
+
+This strengthens the conclusion: the next service/prefill source work should
+target the global `DKQ=576`, `DV=512`, GQA tile path for this shape. It should
+not be justified from the earlier mixed decode profile alone.

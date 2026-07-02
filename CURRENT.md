@@ -65,14 +65,15 @@ Current active optimization target:
 - Latest service node-profile diagnostic:
   a profiler-only run of the current validated service recipe (`ncols2=8`,
   prefill ubatch `2048`, SWA left-bound min-Q `2048`) intentionally used
-  `MAX_TOKENS=32`, so the exact long-context JSON gate failed by truncation and
-  this is not a headline result. The useful finding is the hotspot map: after
-  SWA left-bound, the dominant prompt-processing nodes are full/global
-  FlashAttention layers `5/17/23/11/29` at about `16 ms` average each, with
-  global GQA shapes like `Q=[512,2,16,1]`, `K/V=[512,256,2,1]`,
+  short outputs, so the exact long-context JSON gate failed by truncation and
+  this is not a headline result. A follow-up `MAX_TOKENS=1`,
+  `CANARY_REPEATS=0` profile confirmed the hotspot is real TTFT/prefill, not
+  just decode mixing: after SWA left-bound, full/global FlashAttention layers
+  `5/23/17/11/29` dominate at about `55 ms` isolated average each, with global
+  GQA shapes like `Q=[512,2,16,1]`, `K/V=[512,256,2,1]`,
   `mask=[256,2,1,1]`. Further service work should target structural global
-  FlashAttention tile/scheduling changes, not more SWA/ubatch/right-bound
-  roulette. Evidence:
+  FlashAttention tile/scheduling changes for `DKQ=576`, `DV=512`, not more
+  SWA/ubatch/right-bound roulette. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-service-nodeprofile-swalb-global-fattn.md`.
 - Latest verifier-top2 diagnostic:
   closed as an instrumentation failure, not a performance result.
