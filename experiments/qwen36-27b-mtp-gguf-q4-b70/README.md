@@ -63,6 +63,14 @@ history.
   `unsloth/Qwen3.6-27B-MTP-GGUF:Qwen3.6-27B-UD-Q4_K_XL.gguf` into
   `/mnt/usb-models/models/qwen36-27b-mtp-gguf`. File size from Hugging Face
   metadata is `17,909,097,600` bytes.
+- 2026-07-03: Download completed, one-slot llama.cpp server smoke passed, and
+  the first strict fresh-response sweep closed. Best GGUF row is
+  `30.679 tok/s` median tokens 1-100 after TTFT (`draft-mtp n_max=3`), while
+  no-spec is `23.567 tok/s`. MTP helps but this lane is far behind the
+  separate Intel AutoRound vLLM/XPU lane at `53.522 tok/s`. Config-only GGUF
+  sweeps of MTP4/5, `n_min/p_min`, ubatch, VMM, FlashAttention, immediate
+  command lists, and Q8 KV did not produce a win. See
+  `../../results/qwen36-27b-mtp-gguf-q4-b70/initial-realistic-sweep-20260703.json`.
 
 ## Research Notes
 
@@ -73,3 +81,5 @@ history.
   headline candidates.
 - Early bring-up should use one B70 per process, not tensor parallel, to avoid
   PCIe/collective overhead and to allow four independent research replicas.
+- For this GGUF, `n_max=3` is the only useful MTP depth found so far. `n_max=4`
+  and `n_max=5` lower acceptance and throughput.

@@ -12,6 +12,7 @@ BATCH_SIZE="${BATCH_SIZE:-1024}"
 UBATCH_SIZE="${UBATCH_SIZE:-256}"
 N_GPU_LAYERS="${N_GPU_LAYERS:-99}"
 THREADS="${THREADS:-8}"
+N_PARALLEL="${N_PARALLEL:-1}"
 POLL="${POLL:-50}"
 FLASH_ATTN="${FLASH_ATTN:-on}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
@@ -73,6 +74,7 @@ mkdir -p "$OUT_DIR"
   echo "ubatch_size=$UBATCH_SIZE"
   echo "n_gpu_layers=$N_GPU_LAYERS"
   echo "threads=$THREADS"
+  echo "n_parallel=$N_PARALLEL"
   echo "poll=$POLL"
   echo "flash_attn=$FLASH_ATTN"
   echo "cache_type_k=$CACHE_TYPE_K"
@@ -103,6 +105,7 @@ exec "$LLAMA_SERVER" \
   -dev "$LLAMA_DEVICES" \
   -ngl "$N_GPU_LAYERS" \
   -c "$CTX_SIZE" \
+  -np "$N_PARALLEL" \
   -b "$BATCH_SIZE" \
   -ub "$UBATCH_SIZE" \
   -t "$THREADS" \

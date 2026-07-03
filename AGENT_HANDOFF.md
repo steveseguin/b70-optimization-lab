@@ -50,6 +50,12 @@ Active target as of the latest switch request:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 - LocalMaxxing approved this strict/fresh result as `cmr4gokx90061nv01lhoe3ft8`.
   Do not submit synthetic MTP5/cg16 or invalid postprocess-skip rows.
+- Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
+  up and swept under the same fresh-response policy. It is valid but not
+  competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus
+  `23.567 tok/s` no-spec, with all config-only sweeps below the current
+  AutoRound vLLM result. See
+  `results/qwen36-27b-mtp-gguf-q4-b70/README.md`.
 
 Previous bookmarked target:
 

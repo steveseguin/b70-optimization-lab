@@ -46,6 +46,13 @@ Prior stable baseline without the promote-source env delta was `47.624` /
 Synthetic MTP5/cg16 reaches `81.773 tok/s` on `vllm-random` p512/o512, but
 that is diagnostic only and is not the headline/fresh-response number.
 
+Alternate Unsloth GGUF Q4/MTP lane status: bring-up succeeded, but the first
+strict fresh-response sweep topped out at `30.679 tok/s` on one B70
+(`draft-mtp n_max=3`) versus `23.567 tok/s` no-spec. It is valid but not
+competitive with the Intel AutoRound vLLM lane. See
+`results/qwen36-27b-mtp-gguf-q4-b70/README.md` and
+`results/qwen36-27b-mtp-gguf-q4-b70/initial-realistic-sweep-20260703.json`.
+
 ## Gemma 26B Bookmark
 
 Gemma 4 26B A4B Q8 is captured as a production-servable one-B70 backend and a
