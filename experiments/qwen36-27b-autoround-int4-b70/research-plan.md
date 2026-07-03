@@ -225,6 +225,30 @@ Next attempts should be source-level and exact:
    candidate-vs-max kernel that avoids materializing full vocab logits for
    greedy verification.
 
+### Phase 7: External Target-Verified Drafters
+
+External drafters remain valid in principle if every accepted token is verified
+by the declared Intel AutoRound target and the final gate stays fresh-response
+valid. The first EAGLE3 compressed compatibility branch is closed for now:
+
+- `Ex0bit/Qwen3.6-27B-PRISM-EAGLE3` compressed loaded locally and k=1 passed
+  the strict suite with `cached_tokens=0`, but only reached `30.063 tok/s` with
+  `8734 ms` median TTFT;
+- k=2 graph crashed with `UR_RESULT_ERROR_DEVICE_LOST`;
+- k=3 graph with default accepted-state handling stalled after 8 prompts and
+  hit zero-acceptance intervals;
+- k=3 eager also crashed with `UR_RESULT_ERROR_DEVICE_LOST`.
+
+Evidence:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`.
+
+Do not retest EAGLE3 compressed as config roulette. Revisit only if upstream
+vLLM/XPU EAGLE3 changes land, or if testing against stock BF16
+`Qwen/Qwen3.6-27B` is needed to separate AutoRound-target mismatch from local
+runtime instability. DFlash remains an explicit compatibility candidate, but
+the model card references a vLLM PR requirement, so treat it as higher-risk
+bring-up rather than a known-good record route.
+
 Variance rule for this lane: same-recipe promoted rows currently span
 `53.522-54.861 tok/s` (`2.48%` range of mean, stdev `0.612`). Treat sub-1%
 candidate deltas as inconclusive unless a same-window paired/crossover check

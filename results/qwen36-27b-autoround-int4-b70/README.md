@@ -175,6 +175,14 @@ Current realistic research interpretation:
   `53.0196 tok/s` average and candidates at `52.9727 tok/s` average
   (`-0.088%`), below the variance floor. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-draft-local-argmax-no-win.md`.
+- external EAGLE3 compressed drafter compatibility is closed for now. The
+  `Ex0bit/Qwen3.6-27B-PRISM-EAGLE3` compressed drafter loaded locally and k=1
+  passed the strict fresh gate, but it reached only `30.063 tok/s` with
+  `8734 ms` median TTFT. k=2 graph and k=3 eager crashed with
+  `UR_RESULT_ERROR_DEVICE_LOST`; k=3 graph with default accepted-state handling
+  stalled after 8 prompts and hit zero-acceptance intervals. Do not use EAGLE3
+  compressed as a current record route without source/runtime fixes. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`.
 - variance floor: same-recipe promoted rows currently span `53.522-54.861 tok/s`
   (`2.48%` range of mean, stdev `0.612`). Any sub-1% candidate needs a
   same-window paired/crossover check before a decision.
