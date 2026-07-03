@@ -1,0 +1,111 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index local-qwen27-stack..state-copy-trace 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@
+ logger = init_logger(__name__)
+ _XPU_GDN_TRACE_LINES = 0
++_XPU_GDN_STATE_COPY_TRACE_LINES = 0
+@@
++def _xpu_gdn_state_copy_trace_enabled() -> bool:
++    trace_file = os.environ.get("VLLM_XPU_GDN_STATE_COPY_TRACE_FILE", "")
++    if not trace_file:
++        return False
++    try:
++        max_lines = int(
++            os.environ.get("VLLM_XPU_GDN_STATE_COPY_TRACE_MAX_LINES", "2000")
++            or "2000")
++    except ValueError:
++        max_lines = 2000
++    return (max_lines <= 0
++            or _XPU_GDN_STATE_COPY_TRACE_LINES < max_lines)
++
++
++def _xpu_gdn_state_copy_trace(record: dict[str, Any]) -> None:
++    global _XPU_GDN_STATE_COPY_TRACE_LINES
++    if not _xpu_gdn_state_copy_trace_enabled():
++        return
++    trace_file = os.environ["VLLM_XPU_GDN_STATE_COPY_TRACE_FILE"]
++    trace_dir = os.path.dirname(trace_file)
++    if trace_dir:
++        os.makedirs(trace_dir, exist_ok=True)
++    record.setdefault("ts", time.time())
++    record.setdefault("pid", os.getpid())
++    try:
++        with open(trace_file, "a", encoding="utf-8") as handle:
++            handle.write(json.dumps(record, sort_keys=True) + "\n")
++        _XPU_GDN_STATE_COPY_TRACE_LINES += 1
++    except Exception:
++        return
++
++
+ def _xpu_gdn_copy_state_rows_native(
+     *,
+     conv_state: torch.Tensor,
+     ssm_state: torch.Tensor,
+     dest_indices: torch.Tensor,
+     src_indices: torch.Tensor,
++    trace_stage: str = "copy_state_rows_native",
+ ) -> None:
++    trace_enabled = _xpu_gdn_state_copy_trace_enabled()
++    trace_sync = (
++        trace_enabled
++        and os.environ.get("VLLM_XPU_GDN_STATE_COPY_TRACE_SYNC", "0") == "1"
++        and torch.xpu.is_available()
++    )
+     dest = dest_indices.to(torch.long)
+     src = src_indices.to(torch.long)
+     copy_mask = (dest > 0) & (src > 0) & (dest != src)
+     if not torch.any(copy_mask):
++        if trace_enabled:
++            _xpu_gdn_state_copy_trace({
++                "stage": trace_stage,
++                "copied_rows": 0,
++                "requested_rows": int(min(dest.numel(), src.numel())),
++                "conv_shape": list(conv_state.shape),
++                "ssm_shape": list(ssm_state.shape),
++                "reason": "empty_or_same",
++            })
+         return
+     dest = dest[copy_mask]
+     src = src[copy_mask]
++    copied_rows = int(dest.numel()) if trace_enabled else 0
++    bytes_per_row = 0
++    start_ns = time.perf_counter_ns() if trace_enabled else 0
++    if trace_enabled:
++        bytes_per_row = (
++            int(conv_state[0].numel()) * int(conv_state.element_size())
++            + int(ssm_state[0].numel()) * int(ssm_state.element_size())
++        )
++        if trace_sync:
++            torch.xpu.synchronize()
++            start_ns = time.perf_counter_ns()
+     conv_state.index_copy_(0, dest,
+                            conv_state.index_select(0, src).clone())
+     ssm_state.index_copy_(0, dest,
+                           ssm_state.index_select(0, src).clone())
++    if trace_enabled:
++        if trace_sync:
++            torch.xpu.synchronize()
++        _xpu_gdn_state_copy_trace({
++            "stage": trace_stage,
++            "copied_rows": copied_rows,
++            "requested_rows": int(min(dest_indices.numel(),
++                                      src_indices.numel())),
++            "copy_bytes": int(copied_rows * bytes_per_row),
++            "bytes_per_row": int(bytes_per_row),
++            "conv_shape": list(conv_state.shape),
++            "ssm_shape": list(ssm_state.shape),
++            "elapsed_ms_sync": (
++                (time.perf_counter_ns() - start_ns) / 1e6
++                if trace_sync else None
++            ),
++        })
+@@
+     _xpu_gdn_copy_state_rows_native(
+         conv_state=conv_state,
+         ssm_state=ssm_state,
+         dest_indices=dest_indices[:n],
+         src_indices=source_indices[:n],
++        trace_stage="promote_running_state_native",
+     )

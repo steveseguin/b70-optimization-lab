@@ -153,13 +153,26 @@ Current realistic research interpretation:
   `32/36` postprocess copies. The trace run is diagnostic-only, but it makes
   the current source target explicit: preserve full-accept semantics while
   avoiding or structurally replacing the physical state copy;
+- however, a later promoted-recipe row-copy trace found zero records for
+  `_xpu_gdn_copy_state_rows_native` /
+  `_xpu_gdn_promote_running_state_native`, so the current
+  promote-source/no-accepted-postprocess recipe appears to have removed that
+  promoted physical row-copy hot path. The latest synchronized timing diagnostic
+  instead shows full logits / LM-head dominating the current MTP3 path:
+  draft `spec_decode.greedy_sample.compute_logits` averaged `4.452 ms`, target
+  `gpu_model_runner.compute_logits` averaged `4.424 ms`, and proposer forward
+  was only `0.65-0.83 ms`. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`.
 - completions-mode rows can be faster (for example MTP5/cg8 full-output
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.
 
 Next milestone: beat the promote-source/no-accepted-postprocess result without
-changing model identity or using warmed/history/cache effects. Keep synthetic
-screens for candidate search only, then rerun the Qwen realistic suite with
+changing model identity or using warmed/history/cache effects. Current best
+bet is exact greedy verifier / LM-head cost reduction, starting with a
+default-off exact argmax-only target verification path that preserves target
+replacement and target-owned bonus semantics. Keep synthetic screens for
+candidate search only, then rerun the Qwen realistic suite with
 `--return-token-ids` and the quality suite before promotion.
 
 First diagnostic realistic-suite run (not a headline result):

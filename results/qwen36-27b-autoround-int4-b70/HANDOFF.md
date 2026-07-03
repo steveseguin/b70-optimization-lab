@@ -85,6 +85,19 @@ Post-baseline follow-up:
   out before readiness and were cleaned up. Treat MBT tuning as inconclusive.
 - Reusable one-shot runner for future bounded candidates:
   `../../scripts/run-qwen36-27b-autoround-vllm-candidate.sh`.
+- Latest post-GGUF diagnostics moved the next source target away from blind
+  GDN row-copy tuning and toward exact verifier / LM-head cost. A promoted
+  row-copy trace run passed the strict fresh gate at median `53.316 tok/s`, but
+  the trace file had zero records, meaning the current
+  promote-source/no-accepted-postprocess recipe does not exercise
+  `_xpu_gdn_copy_state_rows_native` / `_xpu_gdn_promote_running_state_native`.
+  A synchronized timing diagnostic passed the strict gate but slowed to
+  `48.776 tok/s`; its timing summary showed logits dominating:
+  `spec_decode.greedy_sample.compute_logits` averaged `4.452 ms` across `1740`
+  draft samples, target `gpu_model_runner.compute_logits` averaged `4.424 ms`
+  across `580` target steps, while proposer model forward was only
+  `0.65-0.83 ms` and metadata/copy regions were tiny. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`.
 - `MAX_NUM_BATCHED_TOKENS` strict same-window sweep (`512`, `768`, `2048`) did
   not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
   same-window control was `48.884`; directional only and below the current
@@ -186,13 +199,16 @@ Continue INT4 optimization without promoting synthetic scores:
   repeat batch; the first repeat fell to `47.045 tok/s`;
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
   MTP/speculation or kernel change;
-- inspect the GDN/spec accepted-state path for the next safe optimization;
+- prioritize exact greedy verifier / LM-head cost next. The current promoted
+  recipe is no longer hitting the traced promoted row-copy helper, and timing
+  shows full logits / LM-head work dominates;
 - do not skip full-accept GDN postprocess blindly; it breaks long-context state
   recall. The current win is specifically source-slot promotion plus disabling
   the redundant accepted-state copy, not a semantic elision;
-- next useful GDN work is reducing the remaining copy/metadata overhead or
-  upstreaming a cleaner version of the source-slot promotion path. Larger
-  memcpy block sizes did not help, so focus on slot semantics and timing around
-  metadata/H2D/copy, not blind kernel chunk tuning;
+- a useful bounded source experiment is an exact greedy spec argmax-only target
+  verification path that preserves target replacement and target-owned bonus
+  semantics. Do not reuse the existing draft-only shortcut as a headline path;
+- deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
+  candidate-vs-max kernel that avoids materializing full vocab logits;
 - keep long-context/prompt-processing optimization separate from the short
   decode record.

@@ -142,7 +142,9 @@ collectives, and any multi-GPU result needs its own LocalMaxxing lane.
 
 ### Phase 5: Accepted-State Copy Optimization
 
-This is now the highest-value INT4 source lane.
+This was the first highest-value INT4 source lane. It produced the current
+valid env-pair win, but latest diagnostics show it is no longer the immediate
+hot path for the promoted recipe.
 
 Known facts:
 
@@ -166,8 +168,15 @@ Known facts:
   The p512/o128 diagnostic recorded `36` accepted-state copy launches, `96`
   entries per launch, `5.65 GB` copied total, `~156.9 MB` copied per launch,
   and `32/36` full-accept copies. Temporal state copy dominates byte volume.
+- Later promoted-recipe row-copy tracing found zero records for
+  `_xpu_gdn_copy_state_rows_native` /
+  `_xpu_gdn_promote_running_state_native`, so the current
+  promote-source/no-accepted-postprocess recipe appears to have removed that
+  promoted physical row-copy path. Do not keep tuning `batch_memcpy` or row
+  copy mechanics without a new trace proving that path is active.
 
-Next attempts should be source-level and bounded:
+Source-level cleanup remains useful, but it is no longer the next performance
+bottleneck:
 
 1. Turn the promote-source env pair into a clean, reviewed source design:
    understand `running_state_source_indices_tensor`, `req_state.block_ids`,
@@ -182,6 +191,36 @@ Next attempts should be source-level and bounded:
    state layout reduction. Preserve the patch and run the quality suite before
    any strict-suite promotion.
 4. Never use the invalid skip flags as service or LocalMaxxing evidence.
+
+### Phase 6: Exact verifier / LM-head cost
+
+This is the current next source lane.
+
+Latest synchronized timing on the promoted recipe:
+
+- `spec_decode.greedy_sample.compute_logits`: `1740` calls, average
+  `4.451731 ms`;
+- `gpu_model_runner.compute_logits`: `580` calls, average `4.423842 ms`;
+- `gpu_model_runner.rejection_sampler`: `568` calls, average `0.440750 ms`;
+- proposer model forward: `0.650451-0.830007 ms`;
+- metadata / hidden-state selection / copy-buffer regions: small.
+
+Evidence:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`.
+
+Next attempts should be source-level and exact:
+
+1. Add a default-off exact greedy spec path that uses precomputed target argmax
+   ids plus target bonus argmax ids, rather than passing full logits through the
+   normal sampler. It must preserve exact target replacement on first mismatch
+   and the target-owned bonus token on full accept. The existing draft-only
+   shortcut is not valid for promoted use.
+2. Test proposer-side `use_local_argmax_reduction` only as a bounded screen.
+   On TP1 it likely still computes the full LM-head, so expect small or no
+   speedup.
+3. For a larger win, investigate an AutoRound/INC W4A16 LM-head top-1 or
+   candidate-vs-max kernel that avoids materializing full vocab logits for
+   greedy verification.
 
 ## Possible Alternate Checkpoints
 
