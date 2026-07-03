@@ -98,8 +98,14 @@ Smoke status on 2026-07-03:
 - exact JSON retrieval validation passed, `cached_tokens=0`, prompt was unique;
 - measured TTFT `32.682 s`, approximate prefill `996.600 tok/s`, decode after
   TTFT `115.179 tok/s`;
+- LocalMaxxing service/prompt-processing result:
+  `cmr47ivql0045nv011pfdjlaa` (not the short-decode headline);
 - evidence:
   `../../data/gemma4-26b-prod-service-32k-smoke-20260703T002811Z.json`;
+- payload/response:
+  `../../data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.payload.json`
+  and
+  `../../data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.submit.log`;
 - server log:
   `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/replica-gpu0-port19350-20260703T002742Z.log`;
 - the manual 32K smoke server was stopped afterward.

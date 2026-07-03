@@ -67,6 +67,30 @@ Current policy-compliant LocalMaxxing submission:
 - response:
   `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-realistic-finalpostnorm-faon-vmm-ctx32768-full512-124tok-20260701.submit.log`.
 
+Current service/prompt-processing LocalMaxxing submission, separate from the
+short-decode headline:
+
+- `gemma4-26b-a4b-q8-b70-llamacpp-service-32k-smoke-20260703`, llama.cpp
+  `c926ad098` on one B70, UD-Q8_K_XL target/verifier with Q4_0 MTP draft
+  verified by target, `GEMMA4_26B_PROFILE=service`;
+- one cold request from the long-context suite case `lc-24000-late`, actual
+  prompt tokens `32571`, generated tokens `76`, `cached_tokens=0`, exact JSON
+  retrieval passed, unique prompt, no prompt/KV/context/response reuse and no
+  warmed n-gram/history acceleration;
+- metrics: `996.599888707516` approximate prompt/prefill tok/s,
+  `115.17935520385454` decode tok/s after TTFT, `979.1564965957195`
+  prompt+output wall tok/s, TTFT `32682.12285498157 ms`;
+- LocalMaxxing: `cmr47ivql0045nv011pfdjlaa`;
+- payload:
+  `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.payload.json`;
+- response:
+  `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.submit.log`;
+- supporting ladder:
+  `data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json`
+  passed `32/32` long-context rows and `64/64` canary rows across four B70
+  lanes. Average lane median prefill was `1192.965 tok/s`; average lane median
+  long-context decode was `131.786 tok/s`.
+
 Previous policy-compliant LocalMaxxing submission, now superseded:
 
 - `gemma4-q8-gpu3-q8lmhead-noreorder-control-full512-20260629T224927Z`,

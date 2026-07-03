@@ -145,7 +145,11 @@ Current active optimization target:
   long-context decode was `131.786 tok/s`; at the longest `32571` actual-token
   case, prefill stayed about `991-1006 tok/s` and decode about `114-115 tok/s`.
   This is the current service/prompt-processing baseline only, not a short
-  LocalMaxxing headline. Evidence:
+  LocalMaxxing headline. A one-case near-32K service/prompt-processing
+  submission from this lane was approved by LocalMaxxing as
+  `cmr47ivql0045nv011pfdjlaa` with `996.600` prompt tok/s, `115.179` decode
+  tok/s after TTFT, `32571` prompt tokens, `cached_tokens=0`, and exact JSON
+  validation. Evidence:
   `experiments/gemma4-26b-a4b-q8-b70/sweeps/20260702-current-service-context-ladder.md`
   and
   `data/gemma4-long-context-service-gate-20260702Tservice-ladder-current-rep4.json`.

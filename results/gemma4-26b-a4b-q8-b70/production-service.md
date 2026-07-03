@@ -18,6 +18,8 @@ A healthy deployment should look like this:
 - Current observed 32K service smoke performance on one B70:
   TTFT about `32.682 s`, approximate prefill about `996.600 tok/s`, and decode
   after TTFT about `115.179 tok/s`.
+- The 32K service/prompt-processing result was accepted by LocalMaxxing as
+  `cmr47ivql0045nv011pfdjlaa`.
 
 These numbers are deployment expectations, not a LocalMaxxing short-decode
 record claim. The short-decode record remains the fixed realistic-suite
@@ -94,7 +96,11 @@ Tracked result:
 `data/gemma4-26b-prod-service-32k-smoke-20260703T002811Z.json`.
 It used `32571` prompt tokens, `cached_tokens=0`, passed exact JSON retrieval,
 and measured about `996.600` prompt tok/s plus `115.179` decode tok/s after
-TTFT.
+TTFT. The matching LocalMaxxing service-lane submission is
+`cmr47ivql0045nv011pfdjlaa`; its payload and response are:
+
+- `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.payload.json`;
+- `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.submit.log`.
 
 ## Install Systemd Backend
 
