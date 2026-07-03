@@ -194,7 +194,11 @@ bottleneck:
 
 ### Phase 6: Exact verifier / LM-head cost
 
-This is the current next source lane.
+This is the current next source lane. The active frontier is now documented in:
+
+```text
+../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-next-source-target-fused-lmhead-top1.md
+```
 
 Latest synchronized timing on the promoted recipe:
 
@@ -221,9 +225,12 @@ Next attempts should be source-level and exact:
    controls at `53.0196 tok/s` average and candidates at `52.9727 tok/s`
    average (`-0.088%`). Evidence:
    `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-draft-local-argmax-no-win.md`.
-3. For a larger win, investigate an AutoRound/INC W4A16 LM-head top-1 or
-   candidate-vs-max kernel that avoids materializing full vocab logits for
-   greedy verification.
+3. For a larger win, implement a true exact BF16 LM-head top-1 path for
+   `LogitsProcessor.get_top_tokens()` that avoids materializing full vocab
+   logits, then re-enable Qwen MTP draft local argmax and target argmax-only
+   rejection on top of that. This must be default-off and greedy-only with
+   strict fallbacks; prior argmax-only/local-argmax plumbing no-won because it
+   still paid the full LM-head projection.
 
 ### Phase 7: External Target-Verified Drafters
 

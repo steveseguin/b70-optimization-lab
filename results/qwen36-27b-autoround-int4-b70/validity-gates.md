@@ -98,3 +98,30 @@ Current gate-passing best:
 - quality: `quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024`
   passed exact canaries, repeat32, and 1024-token needle with
   `baseline_match_all=true`.
+
+## JSON Field Checklist
+
+For Qwen27 promotion-style runs, validate these fields before interpreting
+throughput:
+
+- `.fresh_response_validity.valid == true`;
+- `.fresh_response_validity.cached_tokens_all_zero == true`;
+- `.fresh_response_validity.cached_tokens` contains only `0`;
+- `.fresh_response_validity.return_token_ids_requested == true`;
+- `.fresh_response_validity.token_timing_source == "openai_stream_token_ids_chunk_timestamp"`;
+- `.realistic_final_gate.passed == true`;
+- `.realistic_final_gate.cached_tokens_all_zero == true`;
+- `.realistic_final_gate.metric_token_id_events_at_least_window == true`;
+- `.realistic_final_gate.stream_token_id_counts[] >= 100`;
+- `.rows[].usage.prompt_tokens_details.cached_tokens == 0`;
+- `.rows[].stream_token_id_count >= 100`;
+- `.rows[].token_id_offsets_s` is present;
+- `.rows[].tok_s_1_100_after_ttft` is non-null;
+- `.summary.tok_s_1_100_after_ttft.{median,p10,mean,stdev}` is present;
+- prompt and output hashes are present (`prompt_sha256s` / `output_sha256s` or
+  row-level equivalents).
+
+Do not reject a valid Qwen27 streamed run only because
+`.realistic_final_gate.metric_chunk_events_at_least_window == false`. vLLM can
+group multiple generated tokens into one text delta for this model. The current
+promotion path uses token-id timing, not chunk counts.
