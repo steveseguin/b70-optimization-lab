@@ -27,6 +27,9 @@ realistic gate now has a valid baseline. Current Qwen27 INT4 baseline:
   mean `48.403`, TTFT median `637.3 ms`;
 - evidence:
   `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`.
+- same-config support:
+  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-windowcheck-20260703T035522Z.json`
+  at median `48.536 tok/s`, `cached_tokens=0` on every prompt.
 
 Synthetic MTP5/cg16 reaches `81.773 tok/s` on `vllm-random` p512/o512, but
 that is diagnostic only and is not the headline/fresh-response number.

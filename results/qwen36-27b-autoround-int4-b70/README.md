@@ -60,6 +60,10 @@ Current valid fresh-response baseline:
 - supporting same-config Qwen-suite artifact:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-20260703T033403Z.json`
   at median `48.003 tok/s`.
+- same-window cg8 control repeat:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-windowcheck-20260703T035522Z.json`
+  at median `48.536 tok/s`, p10 `43.924`, mean `49.067`, TTFT median
+  `636.6 ms`, `cached_tokens=0` on every prompt.
 
 Current best synthetic diagnostic:
 
@@ -81,8 +85,8 @@ Current realistic research interpretation:
 - MTP2/cg8 reached `45.638 tok/s` but had one suspicious repetitive first
   response and is not a quality baseline;
 - MTP4/cg8 reached median `45.669 tok/s` under the same gate;
-- MTP3/cg8 is the best valid realistic chat setting so far, with two
-  Qwen-suite passes at `48.003` and `47.624 tok/s`;
+- MTP3/cg8 is the best valid realistic chat setting so far, with three
+  clean support rows at `47.624`, `48.003`, and `48.536 tok/s`;
 - MTP3/cg16 produced one high row at `50.750 tok/s`, but the immediate repeat
   fell to `47.045 tok/s`, so it is variance/inconclusive and not promoted;
 - completions-mode rows can be faster (for example MTP5/cg8 full-output

@@ -488,6 +488,7 @@ fresh-response policy.
 | MTP2 cg8 | chat | on | 2 | 8 | 45.638 | 43.494 | 45.406 | 46.449 | 40.603 | 389.0 | valid speed gate but no-win; one suspicious repetitive first output | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp2-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T035043Z.json` |
 | MTP3 cg16 | chat | on | 3 | 16 | 50.750 | 43.744 | 49.847 | 49.113 | 40.771 | 541.3 | high observation, not promoted | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg16-realistic128-chat-tokenids-qwensuite-20260703T035043Z.json` |
 | MTP3 cg16 repeat | chat | on | 3 | 16 | 47.045 | 42.268 | 47.662 | 47.928 | 38.788 | 630.6 | valid but confirms cg16 is variance/inconclusive | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg16-realistic128-chat-tokenids-qwensuite-confirm-20260703T035252Z.json` |
+| MTP3 cg8 same-window control | chat | on | 3 | 8 | 48.536 | 43.924 | 49.067 | 49.426 | 39.937 | 636.6 | valid support row; confirms cg8 remains stable around 48 tok/s | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-windowcheck-20260703T035522Z.json` |
 
 Interpretation:
 
@@ -497,7 +498,7 @@ Interpretation:
   punctuation/section markers. Do not use it as the quality baseline without a
   separate quality review.
 - MTP3 with capture size 16 can produce a high row, but the immediate repeat
-  fell below the existing MTP3/cg8 repro (`47.045` vs `47.624`). Treat cg16 as
-  inconclusive/no-promote unless a larger paired repeat shows a stable win.
+  fell below the existing MTP3/cg8 repro (`47.045` vs `47.624`). A same-window
+  cg8 control then landed at `48.536`, so the cg16 high is not promotable.
 - Current stable baseline to beat remains MTP3/cg8 with the Qwen-suite repro
-  artifact at `47.624 tok/s` and support at `48.003 tok/s`.
+  artifact at `47.624 tok/s` and support rows at `48.003` and `48.536 tok/s`.

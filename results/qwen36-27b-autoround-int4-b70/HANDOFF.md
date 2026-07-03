@@ -41,6 +41,12 @@ Current valid fresh-response baseline:
 - supporting same-config Qwen-suite artifact:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-20260703T033403Z.json`
   at median `48.003 tok/s`.
+- same-window cg8 control repeat:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-windowcheck-20260703T035522Z.json`
+  at median `48.536 tok/s`, p10 `43.924`, mean `49.067`, TTFT median
+  `636.6 ms`, `cached_tokens=0` on every prompt. This supports cg8 as the
+  stable baseline and reinforces that the single cg16 `50.750 tok/s` row should
+  not be promoted without a larger paired win.
 
 Recent ladder controls:
 
