@@ -98,6 +98,10 @@ Current realistic research interpretation:
 - MTP2/cg8 reached `45.638 tok/s` but had one suspicious repetitive first
   response and is not a quality baseline;
 - MTP4/cg8 reached median `45.669 tok/s` under the same gate;
+- retesting deeper MTP with the valid promote-source/no-accepted-postprocess
+  env pair still did not beat MTP3: promote-source MTP4/cg8 reached
+  `49.918 tok/s`, and promote-source MTP5/cg8 reached `47.439 tok/s` with a
+  first-prompt quality warning;
 - plain MTP3/cg8 is the stable control family at `47.624`, `48.003`, and
   `48.536 tok/s`;
 - promote-source/no-accepted-postprocess is the current best valid family at

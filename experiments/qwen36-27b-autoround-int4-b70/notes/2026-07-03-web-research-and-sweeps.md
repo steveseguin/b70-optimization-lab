@@ -709,3 +709,37 @@ Conclusion:
   `patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
 - Next source work: make this two-flag mechanism explicit, minimal, and
   upstreamable, then search for the remaining verifier/GDN overhead.
+
+## Promote-Source MTP Depth Check: MTP4/MTP5 Do Not Transfer
+
+After the MTP3 promote-source/no-accepted-postprocess win, deeper MTP was
+retested under the strict Qwen fresh-response gate using the same accepted-slot
+promotion env pair:
+
+```text
+VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1
+VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0
+COMPILATION_CONFIG={"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}
+MAX_NUM_BATCHED_TOKENS=1024
+```
+
+| label | MTP tokens | median tok/s 1-100 after TTFT | p10 | mean | median TTFT ms | status | file |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| promote-source MTP3/cg8 conservative | 3 | **53.522** | 48.406 | 53.986 | 628.9 | current valid headline | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json` |
+| promote-source MTP4/cg8 | 4 | 49.918 | 46.618 | 51.402 | 683.4 | valid/no-win | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp4-xpugraph1-cg8-promotesource-noacceptedpost-realistic128-chat-tokenids-qwensuite-20260703T050126Z.json` |
+| promote-source MTP5/cg8 | 5 | 47.439 | 42.375 | 46.049 | 867.4 | valid/no-win; quality concern | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp5-xpugraph1-cg8-promotesource-noacceptedpost-realistic128-chat-tokenids-qwensuite-20260703T050126Z.json` |
+
+Both MTP4 and MTP5 were fresh-response valid (`cached_tokens=0` on all 12
+prompts, unique prompts, token-ID timing available), but neither beat MTP3.
+MTP5 also showed a degenerate first response and only `112` streamed token IDs
+on the first prompt, so treat it as a rejected quality/performance branch.
+
+Interpretation:
+
+- The accepted-slot promotion reduces one GDN/Mamba copy path, but deeper MTP
+  still pays more verifier/proposer overhead than it earns on realistic chat.
+- Keep MTP3/cg8 as the promoted runtime depth for now.
+- Use MTP4/MTP5 only for synthetic diagnostics or after a source change that
+  materially reduces verifier/GDN overhead.
+- Next config-level sweep should stay on MTP3 and test graph-capture sizing or
+  similarly isolated variables with same-window strict controls.

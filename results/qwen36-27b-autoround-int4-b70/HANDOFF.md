@@ -71,6 +71,13 @@ Post-baseline follow-up:
   not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
   same-window control was `48.884`; directional only and below the current
   noise floor.
+- Promote-source deeper-MTP checks did not transfer. With the same accepted-slot
+  promotion env pair and `max_cudagraph_capture_size=8`, MTP4 reached median
+  `49.918 tok/s` and MTP5 reached `47.439 tok/s` under the strict Qwen suite,
+  both below the MTP3 promote-source baseline. MTP5 also showed a degenerate
+  first response / only `112` streamed token IDs on the first prompt, so treat
+  MTP5 as a rejected quality/performance branch until verifier/GDN overhead is
+  reduced by source work.
 - `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is **invalid**. It is fast
   (`51.273 tok/s` strict Qwen-suite median and `74.877 tok/s` synthetic), but
   the 1024-token needle quality check failed with `B!!!!...` while baseline
@@ -139,6 +146,8 @@ Continue INT4 optimization without promoting synthetic scores:
   bypasses the chat template and emits `<think>` text;
 - treat promote-source/no-accepted-postprocess MTP3/cg8 as the current valid
   realistic-chat baseline to beat;
+- do not pursue MTP4/MTP5 as config-only changes; promote-source MTP4/MTP5 were
+  strict-gate no-wins, and MTP5 had a quality warning;
 - do not promote MTP3/cg16 from the single `50.750 tok/s` row without a paired
   repeat batch; the first repeat fell to `47.045 tok/s`;
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
