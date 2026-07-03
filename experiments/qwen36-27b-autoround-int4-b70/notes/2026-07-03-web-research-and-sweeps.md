@@ -502,3 +502,98 @@ Interpretation:
   cg8 control then landed at `48.536`, so the cg16 high is not promotable.
 - Current stable baseline to beat remains MTP3/cg8 with the Qwen-suite repro
   artifact at `47.624 tok/s` and support rows at `48.003` and `48.536 tok/s`.
+
+## Same-Window `max_num_batched_tokens` Strict Sweep
+
+After the first strict baseline, ports/GPU replicas were reused for a
+same-window strict Qwen-suite sweep of smaller/larger
+`MAX_NUM_BATCHED_TOKENS` values. All rows below are chat-mode Qwen realistic
+suite rows with each prompt sent once, `cached_tokens=0` on every request, and
+token-id timing for tokens 1-100 after TTFT.
+
+| label | graph | MTP tokens | max capture | max batched | median tok/s 1-100 after TTFT | p10 | mean | median TTFT ms | status | file |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| cg8 window control | on | 3 | 8 | 1024 | 46.822 | 43.481 | 48.034 | 639.5 | valid control, low row | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-windowcontrol-realistic128-chat-tokenids-qwensuite-20260703T040453Z.json` |
+| cg8 MBT512 | on | 3 | 8 | 512 | 48.504 | 43.210 | 48.928 | 533.3 | directional only | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-mbt512-realistic128-chat-tokenids-qwensuite-20260703T040453Z.json` |
+| cg8 MBT2048 | on | 3 | 8 | 2048 | 47.933 | 43.734 | 48.342 | 538.4 | no clear win | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-mbt2048-realistic128-chat-tokenids-qwensuite-20260703T040453Z.json` |
+| cg8 window repeat | on | 3 | 8 | 1024 | 46.485 | 45.009 | 47.956 | 640.9 | valid control, low row | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-windowcontrol-repeat-realistic128-chat-tokenids-qwensuite-20260703T040756Z.json` |
+| cg8 MBT512 repeat | on | 3 | 8 | 512 | 47.563 | 44.058 | 47.174 | 636.6 | repeat fell back | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-mbt512-repeat-realistic128-chat-tokenids-qwensuite-20260703T040755Z.json` |
+| cg8 window control 2 | on | 3 | 8 | 1024 | 48.884 | 42.931 | 48.863 | 639.8 | valid control | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-windowcontrol2-realistic128-chat-tokenids-qwensuite-20260703T041204Z.json` |
+| cg8 MBT768 | on | 3 | 8 | 768 | 49.352 | 44.790 | 49.289 | 535.5 | directional only, not promoted | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-mbt768-realistic128-chat-tokenids-qwensuite-20260703T041204Z.json` |
+
+Interpretation:
+
+- `MAX_NUM_BATCHED_TOKENS=768` produced the best strict median in this sweep
+  (`49.352`), but the same-window control was `48.884`, so the apparent lift
+  is only about `+0.96%` and below the noise floor for this 12-prompt suite.
+- `512` initially looked positive against a low control, but its repeat fell
+  to `47.563`.
+- Keep `MAX_NUM_BATCHED_TOKENS=1024` as the reproducible baseline. MBT768 is a
+  possible retest candidate only if future paired statistics get tighter; do
+  not promote it from this row.
+
+## Accepted-State Postprocess Subcase Probes
+
+The earlier diagnostic `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`
+showed that accepted-state postprocess is hot, but changed outputs. A narrower
+existing gate was tested next:
+
+```text
+VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0
+```
+
+This keeps zero/partial accepted-state handling but skips the full-accept
+source-state copy in `postprocess_mamba_non_align_spec`.
+
+Results:
+
+| label | graph | MTP tokens | changed env | metric | result | status | file |
+| --- | --- | ---: | --- | --- | ---: | --- | --- |
+| full-accept postprocess off | on | 3 | `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` | synthetic p512/o512 corrected tok/s | 74.877 | fast but invalid | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-fullacceptpost0-specmetrics-p512o512-r3-20260703T041521Z.json` |
+| full-accept postprocess off | on | 3 | same | strict Qwen-suite median tok/s | 51.273 | speed candidate but invalidated by quality | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-fullacceptpost0-realistic128-chat-tokenids-qwensuite-20260703T041613Z.json` |
+
+Quality gate:
+
+- Baseline MTP3/cg8 with 32 repeat color canaries and 1024-token needle recall:
+  **pass** (`quality-baseline-mtp3-cg8-repeat32-ctx1024-20260703T041717Z.json`).
+- Full-accept-off candidate: exact short canaries and 32 repeat color canaries
+  passed, but 1024-token needle recall **failed**. The model returned
+  `B!!!!!!!!!!!!!!!!...` instead of `B70_QWEN36_NEEDLE_20260609`
+  (`quality-fullacceptpost0-mtp3-cg8-repeat32-ctx1024-20260703T041718Z.json`).
+
+Conclusion: the full-accept copy is required for recurrent state correctness.
+Do not use `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` for any promoted
+or service result. The speed lift proves this copy path is hot; the valid
+engineering direction is making the copy cheaper while preserving it.
+
+## Mamba/GDN Batch-Copy Kernel Block-Size Probe
+
+To keep the required copy but reduce overhead, a default-equivalent patch added
+an experimental env to change the Triton `batch_memcpy` loop chunk:
+
+```text
+patches/qwen36-27b-autoround-int4-b70/vllm-mamba-batch-memcpy-block-size-env-20260703.patch
+VLLM_XPU_MAMBA_BATCH_MEMCPY_BLOCK_SIZE=4096
+```
+
+The active source was reverted after testing; the patch is kept only as an
+artifact.
+
+Result:
+
+| label | graph | MTP tokens | changed env | corrected synthetic tok/s | decode ms/token | acceptance | status | file |
+| --- | --- | ---: | --- | ---: | ---: | ---: | --- | --- |
+| MTP3 cg8 copy block 4096 | on | 3 | `VLLM_XPU_MAMBA_BATCH_MEMCPY_BLOCK_SIZE=4096` | 66.908 | 14.889 | 97.692% | no-win | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-mambacopybs4096-specmetrics-p512o512-r3-20260703T042104Z.json` |
+
+Interpretation: larger byte chunks in the existing per-entry Triton copy
+kernel do not recover the full-accept-copy cost. The bottleneck is likely
+Python/metadata setup and/or the need for many per-layer state copies, not the
+inner 1024-byte loop.
+
+Next best engineering direction:
+
+- instrument accepted-state postprocess case counts and timing on the strict
+  suite (`accepted_count` distribution, number of copy entries, bytes copied,
+  CPU metadata time, H2D metadata copy time, batch copy time);
+- then target metadata generation or a device-side copy plan, not blind copy
+  elision.

@@ -15,6 +15,22 @@ bad flags, invalid fast paths, and negative optimizations here as they happen.
   `105` accepted draft tokens out of `108`.
 - Bring-up used XPU graph off. Do not infer graph safety from the smoke.
 
+## Invalid Fast Paths
+
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is fast but invalid. It
+  produced `51.273 tok/s` median on the strict Qwen realistic suite and
+  `74.877 tok/s` on synthetic p512/o512, but failed the 1024-token needle
+  quality check with `B!!!!!!!!!!!!!!!!...` while the normal MTP3/cg8 baseline
+  passed. The full-accept GDN/Mamba state copy is required; future work should
+  make that copy cheaper, not skip it.
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0` is also diagnostic-only.
+  It showed a speed lift but changed realistic-suite output hashes. Do not use
+  it for service, LocalMaxxing, or promoted claims.
+- `VLLM_XPU_MAMBA_BATCH_MEMCPY_BLOCK_SIZE=4096` via the preserved experiment
+  patch `../../patches/qwen36-27b-autoround-int4-b70/vllm-mamba-batch-memcpy-block-size-env-20260703.patch`
+  was no-win (`66.908 tok/s` synthetic vs clean MTP3/cg8 around `66.807`).
+  The active source was reverted after the test.
+
 ## Watch List
 
 - AutoRound loader mapping: ensure `quant_method=auto-round` and

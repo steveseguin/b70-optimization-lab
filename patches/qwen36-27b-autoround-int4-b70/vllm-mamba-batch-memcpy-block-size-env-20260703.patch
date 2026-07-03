@@ -1,0 +1,18 @@
+diff --git a/vllm/v1/worker/mamba_utils.py b/vllm/v1/worker/mamba_utils.py
+index fbb2e6e76..b364465d2 100644
+--- a/vllm/v1/worker/mamba_utils.py
++++ b/vllm/v1/worker/mamba_utils.py
+@@ -189,7 +189,12 @@ def batch_memcpy(src_ptrs, dst_ptrs, sizes):
+     assert sizes.shape[0] == batch
+ 
+     grid = (batch,)
+-    BLOCK_SIZE = 1024
++    try:
++        block_size = int(
++            os.environ.get("VLLM_XPU_MAMBA_BATCH_MEMCPY_BLOCK_SIZE", "1024"))
++    except ValueError:
++        block_size = 1024
++    BLOCK_SIZE = max(1024, block_size)
+     batch_memcpy_kernel[grid](src_ptrs, dst_ptrs, sizes, BLOCK_SIZE=BLOCK_SIZE)
+ 
+ 

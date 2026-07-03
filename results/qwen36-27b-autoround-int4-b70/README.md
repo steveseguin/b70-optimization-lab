@@ -89,6 +89,14 @@ Current realistic research interpretation:
   clean support rows at `47.624`, `48.003`, and `48.536 tok/s`;
 - MTP3/cg16 produced one high row at `50.750 tok/s`, but the immediate repeat
   fell to `47.045 tok/s`, so it is variance/inconclusive and not promoted;
+- `MAX_NUM_BATCHED_TOKENS=768` reached `49.352 tok/s` in a later strict
+  same-window sweep, but its paired control was `48.884`, so this is
+  directional only and not promoted;
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is an invalid fast path:
+  it reached `51.273 tok/s` on the strict suite, but failed 1024-token needle
+  quality (`B!!!!...` instead of the needle) while baseline passed;
+- the Mamba/GDN `batch_memcpy` block-size patch at `4096` was no-win and the
+  active source was reverted; preserve the patch artifact only for reference;
 - completions-mode rows can be faster (for example MTP5/cg8 full-output
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.

@@ -56,6 +56,22 @@ Recent ladder controls:
 - MTP3/cg16: one high row at `50.750 tok/s`, immediate repeat `47.045 tok/s`.
   Treat as variance/inconclusive, not a new baseline.
 
+Post-baseline follow-up:
+
+- `MAX_NUM_BATCHED_TOKENS` strict same-window sweep (`512`, `768`, `2048`) did
+  not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
+  same-window control was `48.884`; directional only and below the current
+  noise floor.
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is **invalid**. It is fast
+  (`51.273 tok/s` strict Qwen-suite median and `74.877 tok/s` synthetic), but
+  the 1024-token needle quality check failed with `B!!!!...` while baseline
+  passed. Do not use this flag for service, LocalMaxxing, or promoted claims.
+- A default-off/default-equivalent patch to sweep the Mamba/GDN
+  `batch_memcpy` block size was tested at `4096`; it was no-win
+  (`66.908 tok/s` synthetic vs clean baseline around `66.807`). The active
+  vLLM source was reverted; patch artifact is preserved at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-mamba-batch-memcpy-block-size-env-20260703.patch`.
+
 Current synthetic diagnostic optimization state:
 
 - best synthetic search row so far: Intel checkpoint, TP1, XPU graph on,
@@ -105,5 +121,8 @@ Continue INT4 optimization without promoting synthetic scores:
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
   MTP/speculation or kernel change;
 - inspect the GDN/spec accepted-state postprocess path for a safe optimization;
+- do not skip full-accept GDN postprocess; it breaks long-context state recall;
+- next useful GDN work is instrumentation of accepted-state postprocess counts
+  and timing, then reducing metadata/copy overhead while preserving the copy;
 - keep long-context/prompt-processing optimization separate from the short
   decode record.
