@@ -216,11 +216,19 @@ Next attempts should be source-level and exact:
    Do not repeat unless `get_top_tokens` / LM-head internals change. Evidence:
    `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-exact-argmax-verifier-no-win.md`.
 2. Test proposer-side `use_local_argmax_reduction` only as a bounded screen.
-   On TP1 it likely still computes the full LM-head, so expect small or no
-   speedup.
+   Closed no-win. After adding `get_top_tokens()` to the active Qwen MTP draft
+   class, the path was active, but same-window GPU crossover measured
+   controls at `53.0196 tok/s` average and candidates at `52.9727 tok/s`
+   average (`-0.088%`). Evidence:
+   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-draft-local-argmax-no-win.md`.
 3. For a larger win, investigate an AutoRound/INC W4A16 LM-head top-1 or
    candidate-vs-max kernel that avoids materializing full vocab logits for
    greedy verification.
+
+Variance rule for this lane: same-recipe promoted rows currently span
+`53.522-54.861 tok/s` (`2.48%` range of mean, stdev `0.612`). Treat sub-1%
+candidate deltas as inconclusive unless a same-window paired/crossover check
+supports them.
 
 ## Possible Alternate Checkpoints
 

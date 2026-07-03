@@ -107,6 +107,21 @@ Post-baseline follow-up:
   full LM-head matmul, so bypassing sampler/logits plumbing is not enough.
   Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-exact-argmax-verifier-no-win.md`.
+- Draft proposer `use_local_argmax_reduction` is also closed no-win. A minimal
+  patch added `get_top_tokens()` to the Qwen MTP draft classes and the server
+  confirmed the path was active. The first strict row was `53.237 tok/s`, close
+  enough to require variance handling. Same-window GPU crossover produced
+  controls averaging `53.0196 tok/s` and candidates averaging `52.9727 tok/s`
+  (`-0.088%`), so the effect is flat/no-win. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-draft-local-argmax-no-win.md`.
+- Variance note: current same-recipe promoted rows are `54.861`, `53.992`,
+  `53.522`, and `53.608 tok/s` (mean `53.996`, stdev `0.612`, range `2.48%`
+  of mean). Treat sub-1% Qwen27 changes as inconclusive unless a same-window
+  paired/crossover check supports them.
+- The long-lived GPU0 server on port `19410` died during a live reconfirmation
+  attempt with `UR_RESULT_ERROR_DEVICE_LOST`. Do not use that failed live
+  server result for performance claims. `xpu-smi discovery` later saw all four
+  B70s, but future reconfirmation should start a fresh server.
 - `MAX_NUM_BATCHED_TOKENS` strict same-window sweep (`512`, `768`, `2048`) did
   not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
   same-window control was `48.884`; directional only and below the current
@@ -216,6 +231,7 @@ Continue INT4 optimization without promoting synthetic scores:
   the redundant accepted-state copy, not a semantic elision;
 - exact greedy spec argmax-only target verification has been tested and closed
   no-win; do not repeat it unless `get_top_tokens` / LM-head internals change;
+- draft proposer local-argmax reduction has been tested and closed flat/no-win;
 - deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
   candidate-vs-max kernel that avoids materializing full vocab logits;
 - keep long-context/prompt-processing optimization separate from the short

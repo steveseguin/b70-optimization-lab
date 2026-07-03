@@ -169,17 +169,26 @@ Current realistic research interpretation:
   Since target `get_top_tokens` still pays the TP1 LM-head matmul, avoiding
   sampler/logits plumbing was not enough. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-exact-argmax-verifier-no-win.md`.
+- draft proposer `use_local_argmax_reduction` is closed no-win. After adding
+  `get_top_tokens()` to the active Qwen MTP draft class, the server confirmed
+  local argmax reduction was active. Same-window GPU crossover gave controls at
+  `53.0196 tok/s` average and candidates at `52.9727 tok/s` average
+  (`-0.088%`), below the variance floor. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-draft-local-argmax-no-win.md`.
+- variance floor: same-recipe promoted rows currently span `53.522-54.861 tok/s`
+  (`2.48%` range of mean, stdev `0.612`). Any sub-1% candidate needs a
+  same-window paired/crossover check before a decision.
 - completions-mode rows can be faster (for example MTP5/cg8 full-output
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.
 
 Next milestone: beat the promote-source/no-accepted-postprocess result without
 changing model identity or using warmed/history/cache effects. Current best
-bet remains verifier / LM-head cost reduction, but the exact argmax-only
-target-verifier plumbing shortcut is closed no-win. Next bounded screen is
-proposer-side local argmax; a larger win likely needs an AutoRound/INC LM-head
-top-1 or candidate-vs-max kernel. Keep synthetic screens for candidate search
-only, then rerun the Qwen realistic suite with
+bet remains verifier / LM-head cost reduction, but both exact target
+argmax-only plumbing and draft proposer local argmax are closed no-win. A
+larger win likely needs an AutoRound/INC LM-head top-1 or candidate-vs-max
+kernel. Keep synthetic screens for candidate search only, then rerun the Qwen
+realistic suite with
 `--return-token-ids` and the quality suite before promotion.
 
 First diagnostic realistic-suite run (not a headline result):
