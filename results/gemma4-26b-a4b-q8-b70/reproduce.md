@@ -1,5 +1,9 @@
 # Reproduce Gemma 4 26B A4B Q8 Baseline
 
+For the current pause/resume bookmark and production backend recipe, read
+[`HANDOFF.md`](HANDOFF.md) and [`production-service.md`](production-service.md)
+first. This file is the deeper reproduction packet.
+
 These commands set up the current llama.cpp/SYCL Gemma 4 26B Q8 lane. Under
 the 2026-06-27 policy, synthetic filled-long scores are diagnostic only. The
 promoted reproduction target is the fixed realistic cold prompt suite:

@@ -18,7 +18,8 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Model Lane Entry Points
 
-- [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): one-B70 Q8/INT8-quality speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
+- [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.
+- [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
 - [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
@@ -130,6 +131,11 @@ The Qwen3.6 35B lane is indexed in
 [../results/qwen36-35b-quark-int8-b70/](../results/qwen36-35b-quark-int8-b70/).
 
 ### Gemma 4 26B Short Decode And Service Lanes
+
+Start with the handoff and production backend recipe:
+[../results/gemma4-26b-a4b-q8-b70/HANDOFF.md](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md)
+and
+[../results/gemma4-26b-a4b-q8-b70/production-service.md](../results/gemma4-26b-a4b-q8-b70/production-service.md).
 
 The Gemma 4 26B one-B70 settings are documented in
 [../results/gemma4-26b-a4b-q8-b70/reproduce.md](../results/gemma4-26b-a4b-q8-b70/reproduce.md).

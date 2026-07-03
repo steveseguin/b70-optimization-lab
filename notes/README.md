@@ -5,6 +5,11 @@ or a dated addendum over editing old conclusions in place.
 
 ## Gemma Entry Points
 
+- [../results/gemma4-26b-a4b-q8-b70/HANDOFF.md](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md):
+  pause/resume bookmark, production backend recipe, smoke commands, and the
+  remaining useful optimization work.
+- [../results/gemma4-26b-a4b-q8-b70/production-service.md](../results/gemma4-26b-a4b-q8-b70/production-service.md):
+  persistent llama.cpp backend operation for Gemma 4 26B Q8.
 - [../results/gemma4-26b-a4b-q8-b70/README.md](../results/gemma4-26b-a4b-q8-b70/README.md):
   Gemma 4 26B A4B Q8 result packet, current strict record, service lane, and
   archived invalid/diagnostic paths.

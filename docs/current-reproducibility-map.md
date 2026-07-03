@@ -104,6 +104,20 @@ documented in the result packet:
 
 `../results/gemma4-26b-a4b-q8-b70/reproduce.md`
 
+Current handoff and production backend recipe:
+
+- `../results/gemma4-26b-a4b-q8-b70/HANDOFF.md`
+- `../results/gemma4-26b-a4b-q8-b70/production-service.md`
+- backend launcher:
+  `../scripts/serve-gemma4-26b-q8-production.sh`
+- health/smoke:
+  `../scripts/gemma4-26b-prod-health.py`
+
+This is a localhost llama.cpp backend recipe, not the current public `:8000`
+systemd frontdoor profile. The tracked systemd unit
+`../deploy/systemd/gemma4-26b-q8-llamacpp.service` starts the backend on
+`127.0.0.1:19350`; wire the frontdoor to that backend only after smoke passes.
+
 Standalone current repro:
 
 `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md`

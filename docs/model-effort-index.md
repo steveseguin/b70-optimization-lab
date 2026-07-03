@@ -37,15 +37,18 @@ path.
 
 Main entries:
 
+- [handoff / production bookmark](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md)
+- [production service recipe](../results/gemma4-26b-a4b-q8-b70/production-service.md)
 - [result packet](../results/gemma4-26b-a4b-q8-b70/README.md)
 - [125 tok/s strict repro](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md)
 - [research plan](../results/gemma4-26b-a4b-q8-b70/research-plan.md)
 - [reliability protocol](../results/gemma4-26b-a4b-q8-b70/reliability-protocol.md)
 - [VDR2 selected-down record note](../results/gemma4-26b-a4b-q8-b70/20260629-vdr2-selected-down-record.md)
 
-Status: current frontier/reference, with diminishing returns unless the next
-change is a larger verifier/router/speculation or service-prefill design rather
-than another small flag sweep.
+Status: production-servable one-B70 backend plus current frontier/reference,
+with diminishing returns unless the next change is a larger
+verifier/router/speculation or service-prefill design rather than another small
+flag sweep.
 
 Best strict fresh-response result:
 

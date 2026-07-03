@@ -16,6 +16,7 @@ Read these in order before changing runtime behavior:
 6. `docs/local-ops.md`
 7. `docs/localmaxxing.md`
 8. Current lane packet, for example
+   `results/gemma4-26b-a4b-q8-b70/HANDOFF.md`,
    `results/gemma4-26b-a4b-q8-b70/README.md` and
    `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
 

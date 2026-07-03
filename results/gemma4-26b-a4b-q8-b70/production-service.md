@@ -1,0 +1,98 @@
+# Gemma 4 26B Q8 Production Service
+
+This page is the operational recipe for serving Gemma 4 26B A4B Q8 as a
+localhost OpenAI-compatible backend on one Intel Arc Pro B70.
+
+## Start Manually
+
+Record/short-decode profile:
+
+```bash
+cd /home/steve/llm-optimizations
+GPU_INDEX=0 PORT=19350 GEMMA4_26B_PROFILE=record \
+  scripts/serve-gemma4-26b-q8-production.sh
+```
+
+Balanced prompt/long-context service profile:
+
+```bash
+cd /home/steve/llm-optimizations
+GPU_INDEX=0 PORT=19350 GEMMA4_26B_PROFILE=service \
+  scripts/serve-gemma4-26b-q8-production.sh
+```
+
+The server listens on `127.0.0.1` by default. Set `HOST=0.0.0.0` only if you
+intentionally want to expose llama-server directly; the preferred LAN exposure
+pattern is still the repo frontdoor.
+
+## Smoke
+
+```bash
+cd /home/steve/llm-optimizations
+scripts/gemma4-26b-prod-health.py \
+  --base-url http://127.0.0.1:19350 \
+  --model gemma4-26b-a4b-q8 \
+  --output-json data/gemma4-26b-prod-health-$(date -u +%Y%m%dT%H%M%SZ).json
+```
+
+Last tracked smoke: `data/gemma4-26b-prod-health-20260703T002144Z.json`
+passed against `GEMMA4_26B_PROFILE=record` on GPU0 / port `19350` with
+`cached_tokens=0` on the smoke requests.
+
+Optional fuller text canary:
+
+```bash
+python3 scripts/gemma4-text-canary.py \
+  --base-url http://127.0.0.1:19350 \
+  --model gemma4-26b-a4b-q8 \
+  --repeats 32 \
+  --out data/gemma4-26b-prod-canary-$(date -u +%Y%m%dT%H%M%SZ).json
+```
+
+Last tracked compact canary:
+`data/gemma4-26b-prod-canary-20260703T002151Z.json`, `32/32` rows passed.
+
+## Install Systemd Backend
+
+The tracked unit is:
+
+```text
+deploy/systemd/gemma4-26b-q8-llamacpp.service
+```
+
+Install and enable it:
+
+```bash
+cd /home/steve/llm-optimizations
+scripts/install-gemma4-26b-q8-service.sh
+```
+
+Start/restart immediately:
+
+```bash
+scripts/install-gemma4-26b-q8-service.sh --restart
+```
+
+The unit starts only the localhost backend at `127.0.0.1:19350`. It does not
+replace the current public `:8000` frontdoor. To expose Gemma 26B through the
+LAN endpoint, point the frontdoor/backend profile at
+`http://127.0.0.1:19350` after the smoke passes.
+
+## Profile Notes
+
+`record` profile:
+
+- exact current short-decode identity;
+- UD-Q8_K_XL target/verifier and Q4_0 MTP draft;
+- 32K context, FA on, VMM on;
+- `n_max=3`, `n_min=2`, `p_min=0.0475`;
+- preferred when reproducing the `124.977 tok/s` strict gate.
+
+`service` profile:
+
+- same target/verifier and MTP safety rules;
+- service/prefill knobs from the validated long-context lane;
+- preferred when users will send long prompts or care about prompt processing.
+
+Neither profile permits warmed/cache/history speed claims. A production smoke
+proves the endpoint is usable; it is not a LocalMaxxing submission.

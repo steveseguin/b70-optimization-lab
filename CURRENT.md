@@ -2,6 +2,16 @@
 
 Date: 2026-07-02
 
+## Gemma 26B Bookmark
+
+Gemma 4 26B A4B Q8 is captured as a production-servable one-B70 backend and a
+paused research frontier. Before doing more Gemma work, read
+`results/gemma4-26b-a4b-q8-b70/HANDOFF.md`. For operations, use
+`results/gemma4-26b-a4b-q8-b70/production-service.md` and
+`scripts/serve-gemma4-26b-q8-production.sh`. If the user switches to another
+model, treat this Gemma section as the bookmark rather than an instruction to
+continue Gemma by inertia.
+
 ## Active Workspace
 
 Use `/home/steve/llm-optimizations` as the only active workspace for new
@@ -11,7 +21,7 @@ Do not run new experiments from `/home/steve/qwen36-results-main`; it is a
 detached linked worktree retained for audit/back-reference only. See
 `notes/worktree-consolidation-20260701.md`.
 
-## Active Gemma 4 26B A4B Q8 Lane
+## Bookmarked Gemma 4 26B A4B Q8 Lane
 
 Current active optimization target:
 

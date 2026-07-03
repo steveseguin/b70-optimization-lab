@@ -1,5 +1,12 @@
 # Gemma 4 26B A4B Q8 B70 Research Plan
 
+Bookmark update: 2026-07-03. Gemma 26B is now captured as a production-servable
+one-B70 backend plus a research frontier. Start future work from
+[`HANDOFF.md`](HANDOFF.md); use [`production-service.md`](production-service.md)
+for serving and smoke instructions. The remaining optimization work is mostly
+verifier/MoE/source design and service-prefill work, not another generic flag
+sweep.
+
 Research snapshot: 2026-07-01. Goal: maximize valid single-session decode for
 one complete Q8/INT8-quality Gemma 4 26B A4B replica per B70, then run four
 replicas on four GPUs for parallel research and aggregate service capacity.

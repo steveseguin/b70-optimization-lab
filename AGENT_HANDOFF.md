@@ -5,6 +5,13 @@ Last updated: 2026-07-02
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
 
+Gemma 4 26B A4B Q8 pause/resume bookmark: read
+`results/gemma4-26b-a4b-q8-b70/HANDOFF.md` before doing more Gemma work. It
+now contains the production backend recipe, smoke commands, current record
+identity, and what remains worth trying. If the user switches to a different
+model, treat Gemma as bookmarked/reference rather than continuing it by
+inertia.
+
 ## Active Workspace Policy
 
 Use `/home/steve/llm-optimizations` as the single active workspace for new
