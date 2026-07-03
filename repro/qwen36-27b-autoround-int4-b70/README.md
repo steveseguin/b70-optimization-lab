@@ -65,21 +65,26 @@ Evidence:
 The fastest current practical variant is separate from the original
 BF16-LM-head AutoRound quantization:
 
-- label: `AutoRound W4A16 + runtime INT8 LM-head`;
+- label: `webhie AutoRound W4A16 + runtime INT8 LM-head (BF16 scales)`;
 - patch:
-  `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`;
-- env delta: `VLLM_XPU_LM_HEAD_INT8=1`;
-- strict fresh median: `62.628 tok/s`, p10 `58.104`, mean `62.998`,
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-active-stack-with-lmhead-bf16-scale-20260703.patch`;
+- env delta: `VLLM_XPU_LM_HEAD_INT8=1` and
+  `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`;
+- strict fresh median: `65.276 tok/s`, p10 `59.609`, mean `65.077`,
   `cached_tokens=0`;
+- supporting BF16-scale rows: `65.005` and `64.864 tok/s`;
+- FP32-scale controls: `64.234` and `64.090 tok/s`; prior submitted webhie
+  INT8-LM-head row: `64.306 tok/s`;
 - full quality: `pass_all=true`, `baseline_match_all=true`, 1K long-context
   needle passed;
 - packet:
-  `../../results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`.
+  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
 
-For the exact submitted max-throughput row, leave
-`VLLM_XPU_LM_HEAD_INT8_SCOPE` unset (default `all`). For service/max-context
-experiments, prefer `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`: it passed the full
-quality gate and measured `61.898 tok/s` while preparing only the target
+For the exact current max-throughput row, leave `VLLM_XPU_LM_HEAD_INT8_SCOPE`
+unset (default `all`) and set `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`.
+For service/max-context experiments, prefer `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`
+as the first lower-memory variant: it passed the full quality gate and measured
+`61.898 tok/s` before the BF16-scale follow-up while preparing only the target
 verifier INT8 LM-head copy. See
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md`.
 
@@ -87,9 +92,11 @@ Run one strict check for this variant:
 
 ```bash
 cd /home/steve/llm-optimizations
-LABEL=intel-mtp3-cg8-promotesource-int8lmhead-realistic128-chat-tokenids-qwensuite \
+LABEL=qwen27-webhie-int8lmhead-bf16scale-mtp3-cg8-realistic128-chat-tokenids-qwensuite \
+MODEL_DIR=/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e \
 GPU_INDEX=0 PORT=19410 \
 VLLM_XPU_LM_HEAD_INT8=1 \
+VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16 \
 scripts/run-qwen36-27b-autoround-vllm-candidate.sh
 ```
 
@@ -108,24 +115,25 @@ Run the full quality gate after a speed pass:
 
 ```bash
 cd /home/steve/llm-optimizations
+MODEL_DIR=/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e \
 GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 \
   QWEN36_27B_ENABLE_MTP=1 NUM_SPECULATIVE_TOKENS=3 \
   QWEN36_27B_ENABLE_XPU_GRAPH=1 \
   VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
   VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
   VLLM_XPU_LM_HEAD_INT8=1 \
-  VLLM_XPU_LM_HEAD_INT8_SCOPE=target \
+  VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16 \
   COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
   experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
 
 /home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-text-quality-suite.py \
   --base-url http://127.0.0.1:19410 \
   --model qwen36-27b-int4-autoround \
-  --tokenizer /mnt/fast-ai/llm-cache/hf/hub/models--Intel--Qwen3.6-27B-int4-AutoRound/snapshots/abc86de19eb1ebbf6a7df4582341325c22ddcb7d \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e \
   --repeat-runs 32 \
   --long-context-tokens 1024 \
   --chat-template-kwargs-json '{"enable_thinking":false}' \
-  --baseline-json data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json
+  --baseline-json data/qwen36-27b-autoround-int4-b70-baselines/quality-webhie-int8lmhead-mtp3-cg8-repeat32-ctx1024-20260703T170941Z.json
 ```
 
 ## Realistic Suite
@@ -142,11 +150,14 @@ Launch the current best service:
 
 ```bash
 cd /home/steve/llm-optimizations
+MODEL_DIR=/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e \
 GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 \
   QWEN36_27B_ENABLE_MTP=1 NUM_SPECULATIVE_TOKENS=3 \
   QWEN36_27B_ENABLE_XPU_GRAPH=1 \
   VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
   VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
+  VLLM_XPU_LM_HEAD_INT8=1 \
+  VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16 \
   COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
   experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
 ```

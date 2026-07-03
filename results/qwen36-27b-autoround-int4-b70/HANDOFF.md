@@ -59,30 +59,40 @@ Current best valid fresh-response result:
 
 Current fastest quality-gated variant:
 
-- runtime quantization label: **webhie AutoRound W4A16 + INT8 LM-head**.
+- runtime quantization label: **webhie AutoRound W4A16 + INT8 LM-head
+  (BF16 scales)**.
   This is a distinct AutoRound checkpoint from the Intel reference, so keep it
   separate in claims and submissions;
 - config: same promote-source MTP3/cg8 recipe plus
-  `VLLM_XPU_LM_HEAD_INT8=1`;
+  `VLLM_XPU_LM_HEAD_INT8=1` and
+  `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`;
 - strict fresh primary artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-autoround-int8lmhead-repeat-gpu2-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T171159Z.json`;
-- primary result: median `64.30618876596424 tok/s`, p10
-  `59.49563660285311`, mean `63.61518423375664`, TTFT median
-  `605.938 ms`, `cached_tokens=0` on every request;
-- initial webhie row:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-autoround-int8lmhead-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T170250Z.json`
-  at median `63.33596589025419 tok/s`;
-- same-window Intel INT8-LM-head control:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-intel-int8lmhead-control-gpu3-samewindow-webhie-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T171159Z.json`
-  at median `62.36616020083166 tok/s`;
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-gpu2-crossover-codex-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T222859Z.json`;
+- primary result: median `65.27648650325429 tok/s`, p10
+  `59.608527188588106`, mean `65.07685647020962`, TTFT median
+  `603.580 ms`, `cached_tokens=0` on every request;
+- supporting BF16-scale rows:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-gpu3-samewindow-codex-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T222647Z.json`
+  at median `65.00467502982892 tok/s`, and
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-repeat-gpu3-codex-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T223150Z.json`
+  at median `64.86390312076414 tok/s`;
+- same-window/crossover FP32-scale controls:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-fp32scale-control-gpu2-samewindow-codex-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T222647Z.json`
+  at median `64.23417302894208 tok/s`, and
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-fp32scale-control-gpu3-crossover-codex-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T222859Z.json`
+  at median `64.09039492601592 tok/s`;
 - quality:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-webhie-int8lmhead-mtp3-cg8-repeat32-ctx1024-20260703T170941Z.json`,
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-webhie-int8lmhead-bf16scale-mtp3-cg8-repeat32-ctx1024-20260703T223138Z.json`,
   `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
 - compact packet:
-  `webhie-int8-lmhead-20260703.json`;
+  `webhie-int8-lmhead-bf16scale-20260703.json`;
 - note:
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-webhie-autoround-variant-quality-pass.md`;
-- LocalMaxxing: approved as `cmr576apv0079q901i6dvsh0l`.
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-bf16-scale-quality-pass.md`;
+- LocalMaxxing: queued in
+  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json`;
+- previous webhie INT8-LM-head packet:
+  `webhie-int8-lmhead-20260703.json`, LocalMaxxing
+  `cmr576apv0079q901i6dvsh0l`.
 
 Prior Intel-checkpoint quality-gated runtime-quantized variant:
 

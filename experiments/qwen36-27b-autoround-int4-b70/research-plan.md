@@ -283,6 +283,26 @@ passes a fresh speculative control again, and treat sub-1% candidate deltas as
 inconclusive unless repeated/crossover checks support them. Evidence:
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-current-best-reconfirm-and-variance.md`.
 
+Latest control update: the active webhie runtime INT8-LM-head lane now uses
+BF16 scale storage as the practical control:
+
+- `VLLM_XPU_LM_HEAD_INT8=1`
+- `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`
+- strict fresh best: `65.276 tok/s`, with support rows at `65.005` and
+  `64.864 tok/s`
+- FP32-scale controls in the same windows: `64.234` and `64.090 tok/s`
+- full quality matched the prior webhie INT8-LM-head baseline, including
+  repeat32 and the 1K needle
+
+Evidence:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-bf16-scale-quality-pass.md`.
+
+Use this BF16-scale recipe as the next source-work control. Do not resume
+closed sampler/logits plumbing ideas (output buffer reuse, bonus argmax,
+draft-only row counts, chunked top-1); the remaining meaningful work is a real
+fused verifier/LM-head design or a service/max-context variant that preserves
+the short-context decode record.
+
 ## Possible Alternate Checkpoints
 
 Use these only after Intel's requested checkpoint has a recorded baseline:

@@ -1,0 +1,2018 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+index 3b2397bbe..7b6298ee9 100644
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@ -23,6 +23,7 @@ from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ logger = init_logger(__name__)
+ _XPU_GDN_TRACE_LINES = 0
++_XPU_GDN_STATE_COPY_TRACE_LINES = 0
+ 
+ if TYPE_CHECKING:
+ 
+@@ -186,6 +187,30 @@ def _xpu_gdn_decode_layer_fallback_enabled(layer_name: str) -> bool:
+     return False
+ 
+ 
++def _xpu_gdn_spec_serial_layer_enabled(layer_name: str) -> bool:
++    if _xpu_gdn_layer_list_match(
++        layer_name, "VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL_LAYERS"
++    ):
++        return True
++
++    max_layer = _xpu_gdn_trace_int_env(
++        "VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL_MAX_LAYER", -1
++    )
++    layer_idx = _xpu_gdn_layer_index(layer_name)
++    if max_layer >= 0 and layer_idx is not None and layer_idx <= max_layer:
++        return True
++
++    layer_regex = os.environ.get(
++        "VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL_LAYER_REGEX", ""
++    )
++    if layer_regex:
++        try:
++            return re.search(layer_regex, layer_name) is not None
++        except re.error:
++            return False
++    return False
++
++
+ def _xpu_gdn_trace_rank() -> int:
+     try:
+         from vllm.distributed import get_tensor_model_parallel_rank
+@@ -534,24 +559,100 @@ def _xpu_gdn_mirror_prefill_spec_state_native(
+                               ssm_state.index_select(0, src).clone())
+ 
+ 
++def _xpu_gdn_state_copy_trace_enabled() -> bool:
++    trace_file = os.environ.get("VLLM_XPU_GDN_STATE_COPY_TRACE_FILE", "")
++    if not trace_file:
++        return False
++    try:
++        max_lines = int(
++            os.environ.get("VLLM_XPU_GDN_STATE_COPY_TRACE_MAX_LINES", "2000")
++            or "2000")
++    except ValueError:
++        max_lines = 2000
++    return (max_lines <= 0
++            or _XPU_GDN_STATE_COPY_TRACE_LINES < max_lines)
++
++
++def _xpu_gdn_state_copy_trace(record: dict[str, Any]) -> None:
++    global _XPU_GDN_STATE_COPY_TRACE_LINES
++    if not _xpu_gdn_state_copy_trace_enabled():
++        return
++    trace_file = os.environ["VLLM_XPU_GDN_STATE_COPY_TRACE_FILE"]
++    trace_dir = os.path.dirname(trace_file)
++    if trace_dir:
++        os.makedirs(trace_dir, exist_ok=True)
++    record.setdefault("ts", time.time())
++    record.setdefault("pid", os.getpid())
++    try:
++        with open(trace_file, "a", encoding="utf-8") as handle:
++            handle.write(json.dumps(record, sort_keys=True) + "\n")
++        _XPU_GDN_STATE_COPY_TRACE_LINES += 1
++    except Exception:
++        return
++
++
+ def _xpu_gdn_copy_state_rows_native(
+     *,
+     conv_state: torch.Tensor,
+     ssm_state: torch.Tensor,
+     dest_indices: torch.Tensor,
+     src_indices: torch.Tensor,
++    trace_stage: str = "copy_state_rows_native",
+ ) -> None:
++    trace_enabled = _xpu_gdn_state_copy_trace_enabled()
++    trace_sync = (
++        trace_enabled
++        and os.environ.get("VLLM_XPU_GDN_STATE_COPY_TRACE_SYNC", "0") == "1"
++        and torch.xpu.is_available()
++    )
+     dest = dest_indices.to(torch.long)
+     src = src_indices.to(torch.long)
+     copy_mask = (dest > 0) & (src > 0) & (dest != src)
+     if not torch.any(copy_mask):
++        if trace_enabled:
++            _xpu_gdn_state_copy_trace({
++                "stage": trace_stage,
++                "copied_rows": 0,
++                "requested_rows": int(min(dest.numel(), src.numel())),
++                "conv_shape": list(conv_state.shape),
++                "ssm_shape": list(ssm_state.shape),
++                "reason": "empty_or_same",
++            })
+         return
+     dest = dest[copy_mask]
+     src = src[copy_mask]
++    copied_rows = int(dest.numel()) if trace_enabled else 0
++    bytes_per_row = 0
++    start_ns = time.perf_counter_ns() if trace_enabled else 0
++    if trace_enabled:
++        bytes_per_row = (
++            int(conv_state[0].numel()) * int(conv_state.element_size())
++            + int(ssm_state[0].numel()) * int(ssm_state.element_size())
++        )
++        if trace_sync:
++            torch.xpu.synchronize()
++            start_ns = time.perf_counter_ns()
+     conv_state.index_copy_(0, dest,
+                            conv_state.index_select(0, src).clone())
+     ssm_state.index_copy_(0, dest,
+                           ssm_state.index_select(0, src).clone())
++    if trace_enabled:
++        if trace_sync:
++            torch.xpu.synchronize()
++        _xpu_gdn_state_copy_trace({
++            "stage": trace_stage,
++            "copied_rows": copied_rows,
++            "requested_rows": int(min(dest_indices.numel(),
++                                      src_indices.numel())),
++            "copy_bytes": int(copied_rows * bytes_per_row),
++            "bytes_per_row": int(bytes_per_row),
++            "conv_shape": list(conv_state.shape),
++            "ssm_shape": list(ssm_state.shape),
++            "elapsed_ms_sync": (
++                (time.perf_counter_ns() - start_ns) / 1e6
++                if trace_sync else None
++            ),
++        })
+ 
+ 
+ def _xpu_gdn_promote_running_state_native(
+@@ -572,6 +673,7 @@ def _xpu_gdn_promote_running_state_native(
+         ssm_state=ssm_state,
+         dest_indices=dest_indices[:n],
+         src_indices=source_indices[:n],
++        trace_stage="promote_running_state_native",
+     )
+ 
+ 
+@@ -806,14 +908,19 @@ def _gdn_attention_core_xpu_impl(
+         in ("0", "false", "no", "off")
+         or _xpu_gdn_truthy_env("VLLM_XPU_GDN_REPLAYSSM_SPEC")
+     )
++    native_spec_decode_serial = _xpu_gdn_truthy_env(
++        "VLLM_XPU_GDN_NATIVE_SPEC_DECODE_SERIAL"
++    ) or _xpu_gdn_spec_serial_layer_enabled(self.prefix)
+     native_spec_decode = (
+         attn_metadata.spec_sequence_masks is not None  # type: ignore[attr-defined]
+         and attn_metadata.num_prefills == 0  # type: ignore[attr-defined]
+         and not native_spec_decode_disabled
++        and not native_spec_decode_serial
+     )
+     if (
+         attn_metadata.spec_sequence_masks is not None  # type: ignore[attr-defined]
+         and not native_spec_decode
++        and not native_spec_decode_serial
+     ):
+         mixed_qkv, z_generic, b, a = unpack_projected_states()
+         z.copy_(z_generic)
+@@ -944,6 +1051,24 @@ def _gdn_attention_core_xpu_impl(
+                 tp_size=self.tp_size,
+                 reorder_input=not self.gqa_interleaved_layout,
+             )
++            if (
++                _xpu_gdn_truthy_env(
++                    "VLLM_XPU_GDN_SYNC_AFTER_NATIVE_SPEC_DECODE")
++                or _xpu_gdn_layer_list_match(
++                    self.prefix,
++                    "VLLM_XPU_GDN_SYNC_AFTER_NATIVE_SPEC_DECODE_LAYERS",
++                )
++            ):
++                logger.info(
++                    "Synchronizing after native XPU GDN spec decode for %s",
++                    self.prefix,
++                )
++                try:
++                    torch.xpu.synchronize()
++                except Exception as exc:
++                    raise RuntimeError(
++                        "XPU sync failed after native GDN spec decode for "
++                        f"{self.prefix}") from exc
+ 
+         if (
+             attn_metadata.num_decodes > 0  # type: ignore[attr-defined]
+@@ -984,7 +1109,10 @@ def _gdn_attention_core_xpu_impl(
+         return
+ 
+     if (
+-        _xpu_gdn_truthy_env("VLLM_XPU_GDN_NATIVE_SPEC_DECODE")
++        (
++            native_spec_decode_serial
++            or _xpu_gdn_truthy_env("VLLM_XPU_GDN_NATIVE_SPEC_DECODE")
++        )
+         and attn_metadata.spec_sequence_masks is not None  # type: ignore[attr-defined]
+         and attn_metadata.num_prefills == 0  # type: ignore[attr-defined]
+     ):
+diff --git a/vllm/entrypoints/openai/chat_completion/serving.py b/vllm/entrypoints/openai/chat_completion/serving.py
+index 694ff8004..615e19863 100644
+--- a/vllm/entrypoints/openai/chat_completion/serving.py
++++ b/vllm/entrypoints/openai/chat_completion/serving.py
+@@ -1091,7 +1091,8 @@ class OpenAIServingChat(OpenAIServing):
+                     completion_tokens=completion_tokens,
+                     total_tokens=num_prompt_tokens + completion_tokens,
+                 )
+-                if self.enable_prompt_tokens_details and num_cached_tokens:
++                if (self.enable_prompt_tokens_details
++                        and num_cached_tokens is not None):
+                     final_usage.prompt_tokens_details = PromptTokenUsageInfo(
+                         cached_tokens=num_cached_tokens
+                     )
+@@ -1499,7 +1500,8 @@ class OpenAIServingChat(OpenAIServing):
+             completion_tokens=num_generated_tokens,
+             total_tokens=num_prompt_tokens + num_generated_tokens,
+         )
+-        if self.enable_prompt_tokens_details and final_res.num_cached_tokens:
++        if (self.enable_prompt_tokens_details
++                and final_res.num_cached_tokens is not None):
+             usage.prompt_tokens_details = PromptTokenUsageInfo(
+                 cached_tokens=final_res.num_cached_tokens
+             )
+diff --git a/vllm/entrypoints/openai/completion/serving.py b/vllm/entrypoints/openai/completion/serving.py
+index 454b170a5..23cf43ef5 100644
+--- a/vllm/entrypoints/openai/completion/serving.py
++++ b/vllm/entrypoints/openai/completion/serving.py
+@@ -430,7 +430,8 @@ class OpenAIServingCompletion(OpenAIServing):
+                 total_tokens=total_prompt_tokens + total_completion_tokens,
+             )
+ 
+-            if self.enable_prompt_tokens_details and num_cached_tokens:
++            if (self.enable_prompt_tokens_details
++                    and num_cached_tokens is not None):
+                 final_usage_info.prompt_tokens_details = PromptTokenUsageInfo(
+                     cached_tokens=num_cached_tokens
+                 )
+@@ -557,7 +558,7 @@ class OpenAIServingCompletion(OpenAIServing):
+         if (
+             self.enable_prompt_tokens_details
+             and last_final_res
+-            and last_final_res.num_cached_tokens
++            and last_final_res.num_cached_tokens is not None
+         ):
+             usage.prompt_tokens_details = PromptTokenUsageInfo(
+                 cached_tokens=last_final_res.num_cached_tokens
+diff --git a/vllm/entrypoints/serve/disagg/serving.py b/vllm/entrypoints/serve/disagg/serving.py
+index d510125fd..055d6b598 100644
+--- a/vllm/entrypoints/serve/disagg/serving.py
++++ b/vllm/entrypoints/serve/disagg/serving.py
+@@ -249,7 +249,8 @@ class ServingTokens(OpenAIServing):
+             completion_tokens=num_generated_tokens,
+             total_tokens=num_prompt_tokens + num_generated_tokens,
+         )
+-        if self.enable_prompt_tokens_details and final_res.num_cached_tokens:
++        if (self.enable_prompt_tokens_details
++                and final_res.num_cached_tokens is not None):
+             # This info is not available at the /coordinator level
+             usage.prompt_tokens_details = PromptTokenUsageInfo(
+                 cached_tokens=final_res.num_cached_tokens
+@@ -366,7 +367,8 @@ class ServingTokens(OpenAIServing):
+                 total_tokens=num_prompt_tokens + total_completion_tokens,
+             )
+ 
+-            if self.enable_prompt_tokens_details and num_cached_tokens:
++            if (self.enable_prompt_tokens_details
++                    and num_cached_tokens is not None):
+                 final_usage_info.prompt_tokens_details = PromptTokenUsageInfo(
+                     cached_tokens=num_cached_tokens
+                 )
+diff --git a/vllm/model_executor/layers/logits_processor.py b/vllm/model_executor/layers/logits_processor.py
+index e649beed6..5b4feb956 100644
+--- a/vllm/model_executor/layers/logits_processor.py
++++ b/vllm/model_executor/layers/logits_processor.py
+@@ -13,12 +13,31 @@ from vllm.distributed import (
+     tensor_model_parallel_all_gather,
+     tensor_model_parallel_gather,
+ )
++from vllm.logger import init_logger
+ from vllm.model_executor.custom_op import PluggableLayer
+ from vllm.model_executor.layers.vocab_parallel_embedding import VocabParallelEmbedding
+ from vllm.platforms import current_platform
+ from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.utils.xpu_finite_trace import trace_tensor
+ 
++logger = init_logger(__name__)
++
++
++def _xpu_logits_sync_debug_stage(stage: str) -> None:
++    stages = {
++        item.strip()
++        for item in os.environ.get("VLLM_XPU_LOGITS_SYNC_DEBUG_STAGES", "").split(",")
++        if item.strip()
++    }
++    if "*" not in stages and stage not in stages:
++        return
++    logger.info("XPU logits sync debug stage begin: %s", stage)
++    try:
++        torch.xpu.synchronize()
++    except Exception as exc:
++        raise RuntimeError(f"XPU logits sync failed at {stage}") from exc
++    logger.info("XPU logits sync debug stage end: %s", stage)
++
+ 
+ # --8<-- [start:logits_processor]
+ @PluggableLayer.register("logits_processor")
+@@ -171,9 +190,10 @@ class LogitsProcessor(PluggableLayer):
+                 "non-positive logit scaling factors."
+             )
+         tp_size = get_tensor_model_parallel_world_size()
+-
++        _xpu_logits_sync_debug_stage("before_local_argmax_lm_head")
+         logits = lm_head.quant_method.apply(lm_head, hidden_states, bias=embedding_bias)
+         trace_tensor("logits_processor.local_argmax_logits", logits)
++        _xpu_logits_sync_debug_stage("after_local_argmax_lm_head")
+         if self.soft_cap is not None:
+             logits = torch.tanh(logits / self.soft_cap) * self.soft_cap
+         if self.scale != 1.0:
+@@ -189,11 +209,57 @@ class LogitsProcessor(PluggableLayer):
+                 posinf=torch.finfo(logits.dtype).max,
+                 neginf=-float("inf"),
+             )
++        _xpu_logits_sync_debug_stage("after_local_argmax_transform")
+ 
+         # Mask out padding entries beyond org_vocab_size on this shard.
+         num_pad = lm_head.shard_indices.num_org_vocab_padding
+         if num_pad > 0:
+             logits[..., -num_pad:] = -float("inf")
++        _xpu_logits_sync_debug_stage("after_local_argmax_padding")
++
++        if (
++            os.environ.get("VLLM_XPU_LOCAL_ARGMAX_CPU_REDUCE", "0") == "1"
++            and logits.device.type == "xpu"
++        ):
++            with timed_region("logits.local_argmax_cpu_reduce"):
++                _xpu_logits_sync_debug_stage("before_local_argmax_cpu_copy")
++                local_logits_cpu = logits.detach().float().cpu()
++                _xpu_logits_sync_debug_stage("after_local_argmax_cpu_copy")
++                local_max_vals_cpu, local_max_indices_cpu = local_logits_cpu.max(
++                    dim=-1
++                )
++                vocab_start = lm_head.shard_indices.org_vocab_start_index
++                global_indices_cpu = local_max_indices_cpu.to(torch.int64) + vocab_start
++                local_vals = local_max_vals_cpu.reshape(-1).tolist()
++                local_indices = global_indices_cpu.reshape(-1).tolist()
++                local_obj = [
++                    (float(value), int(index))
++                    for value, index in zip(local_vals, local_indices, strict=True)
++                ]
++                gathered_obj: list[list[tuple[float, int]] | None] = [None] * tp_size
++                dist.all_gather_object(
++                    gathered_obj, local_obj, group=get_tp_group().cpu_group
++                )
++                top_tokens: list[int] = []
++                for batch_idx in range(len(local_obj)):
++                    best_value = None
++                    best_token = 0
++                    for rank_obj in gathered_obj:
++                        if rank_obj is None:
++                            continue
++                        value, token = rank_obj[batch_idx]
++                        if best_value is None or value > best_value:
++                            best_value = value
++                            best_token = token
++                    top_tokens.append(best_token)
++                result = torch.tensor(
++                    top_tokens, dtype=torch.int64, device=hidden_states.device
++                )
++            trace_tensor(
++                "logits_processor.local_argmax_cpu_reduce_top_tokens",
++                result,
++            )
++            return result
+ 
+         with timed_region("logits.local_argmax_local_max"):
+             local_max_vals, local_max_indices = logits.max(dim=-1)
+diff --git a/vllm/model_executor/layers/rotary_embedding/mrope.py b/vllm/model_executor/layers/rotary_embedding/mrope.py
+index 3c946dd13..866121c25 100644
+--- a/vllm/model_executor/layers/rotary_embedding/mrope.py
++++ b/vllm/model_executor/layers/rotary_embedding/mrope.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ 
++import os
++
+ import numpy as np
+ import torch
+ 
+@@ -279,6 +281,20 @@ class MRotaryEmbedding(RotaryEmbeddingBase):
+         assert positions.ndim == 1 or positions.ndim == 2
+         assert key is not None
+ 
++        if (
++            query.device.type == "xpu"
++            and positions.ndim == 2
++            and positions.shape[0] == 3
++            and os.environ.get("VLLM_XPU_MROPE_TEXT_ONLY_FASTPATH", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        ):
++            # Text-only M-RoPE repeats the same positions in T/H/W rows. In that
++            # case the ordinary RoPE XPU kernel is equivalent and avoids the
++            # PyTorch split/cat path.
++            return self._forward_xpu_rotary_embedding(positions[0], query, key)
++
+         cos_sin_cache = self._match_cos_sin_cache_dtype(query)
+         num_tokens = positions.shape[-1]
+         cos_sin = cos_sin_cache[positions]
+@@ -321,6 +337,56 @@ class MRotaryEmbedding(RotaryEmbeddingBase):
+         key = torch.cat((key_rot, key_pass), dim=-1).reshape(key_shape)
+         return query, key
+ 
++    def _forward_xpu_rotary_embedding(
++        self,
++        positions: torch.Tensor,
++        query: torch.Tensor,
++        key: torch.Tensor,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        from vllm import _custom_ops as ops
++
++        cos_sin_cache = self._match_cos_sin_cache_dtype(query)
++        ops.rotary_embedding(
++            positions,
++            query,
++            key,
++            self.head_size,
++            cos_sin_cache,
++            self.is_neox_style,
++        )
++        return query, key
++
++    def forward_xpu(
++        self,
++        positions: torch.Tensor,
++        query: torch.Tensor,
++        key: torch.Tensor | None = None,
++        offsets: torch.Tensor | None = None,
++    ) -> tuple[torch.Tensor, torch.Tensor | None]:
++        if key is None:
++            return self.forward_native(positions, query, key, offsets)
++
++        positions_1d: torch.Tensor | None = None
++        if positions.ndim == 1:
++            positions_1d = positions
++        elif (
++            positions.ndim == 2
++            and positions.shape[0] == 3
++            and os.environ.get("VLLM_XPU_MROPE_TEXT_ONLY_FASTPATH", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        ):
++            # Text-only M-RoPE repeats the same positions in T/H/W rows. In that
++            # case the ordinary RoPE XPU kernel is equivalent and avoids the
++            # PyTorch split/cat path.
++            positions_1d = positions[0]
++
++        if positions_1d is None:
++            return self.forward_native(positions, query, key, offsets)
++
++        return self._forward_xpu_rotary_embedding(positions_1d, query, key)
++
+     def forward_cuda(
+         self,
+         positions: torch.Tensor,
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index ddae01856..a45be46dc 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -3,6 +3,7 @@
+ 
+ from collections.abc import Sequence
+ from dataclasses import dataclass
++import os
+ 
+ import torch
+ import torch.nn.functional as F
+@@ -25,11 +26,14 @@ from vllm.model_executor.layers.quantization.base_config import (
+     method_has_implemented_embedding,
+ )
+ from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
++from vllm.logger import init_logger
+ from vllm.model_executor.parameter import BasevLLMParameter
+ from vllm.model_executor.utils import set_weight_attrs
+ from vllm.platforms import current_platform
++from vllm.utils.xpu_decode_timing import timed_region
+ 
+ DEFAULT_VOCAB_PADDING_SIZE = 64
++logger = init_logger(__name__)
+ 
+ 
+ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+@@ -63,6 +67,118 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             from vllm.model_executor.layers.utils import dispatch_cpu_unquantized_gemm
+ 
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=False)
++        self._maybe_prepare_xpu_int8_lm_head(layer)
++
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in (
++            "1",
++            "true",
++            "yes",
++            "on",
++        )
++
++    def _maybe_prepare_xpu_int8_lm_head(self, layer: torch.nn.Module) -> None:
++        if not self._env_enabled("VLLM_XPU_LM_HEAD_INT8"):
++            return
++        if layer.__class__.__name__ != "ParallelLMHead":
++            return
++        scope = os.environ.get("VLLM_XPU_LM_HEAD_INT8_SCOPE", "all").strip().lower()
++        prefix = str(getattr(layer, "_vllm_prefix", ""))
++        prefix_parts = {part for part in prefix.replace("/", ".").split(".") if part}
++        # Qwen3Next target head is loaded as "language_model.lm_head"; the
++        # bundled MTP drafter remaps shared weights into a bare "lm_head".
++        # Other MTP models include an explicit "mtp" prefix segment.
++        is_mtp_head = "mtp" in prefix_parts or prefix == "lm_head"
++        if scope in ("target", "target-only", "target_only") and is_mtp_head:
++            return
++        if scope in ("draft", "draft-only", "draft_only", "mtp") and not is_mtp_head:
++            return
++        if scope not in (
++            "all",
++            "target",
++            "target-only",
++            "target_only",
++            "draft",
++            "draft-only",
++            "draft_only",
++            "mtp",
++        ):
++            logger.warning(
++                "Unknown VLLM_XPU_LM_HEAD_INT8_SCOPE=%r; using all lm_head layers.",
++                scope,
++            )
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            return
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but lm_head weight dtype is %s; "
++                "falling back to the default BF16/FP16 path.",
++                weight.dtype,
++            )
++            return
++        try:
++            import vllm_xpu_kernels._xpu_C  # noqa: F401
++        except Exception as exc:
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but vllm_xpu_kernels._xpu_C "
++                "could not be imported (%r); falling back to default lm_head.",
++                exc,
++            )
++            return
++        required_ops = ("int8_gemm_w8a8", "per_token_quant_int8_xpu")
++        if any(not hasattr(torch.ops._xpu_C, op) for op in required_ops):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but required _xpu_C ops are "
++                "unavailable; falling back to default lm_head.")
++            return
++
++        # Dense Qwen3.6 lm_head is BF16 even in the AutoRound INT4 checkpoint.
++        # This experimental path keeps the original weight intact and adds a
++        # transient per-output-channel INT8 copy. It is default-off and must pass
++        # the quality gate before being treated as a candidate result.
++        with torch.no_grad():
++            weight_f = weight.detach().float()
++            scales = weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
++            weight_q_t = (
++                torch.round(weight_f / scales.view(-1, 1))
++                .clamp(-127, 127)
++                .to(torch.int8)
++                .t()
++                .contiguous()
++            )
++            scale_dtype = os.environ.get(
++                "VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE", "fp32"
++            ).strip().lower()
++            if scale_dtype in ("bf16", "bfloat16"):
++                scales = scales.to(torch.bfloat16)
++            elif scale_dtype in ("fp16", "float16", "half"):
++                scales = scales.to(torch.float16)
++            elif scale_dtype not in ("", "fp32", "float32"):
++                logger.warning(
++                    "Unknown VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=%r; using fp32.",
++                    scale_dtype,
++                )
++            scales = scales.contiguous()
++
++        for name, tensor in (
++            ("_xpu_lm_head_int8_weight_t", weight_q_t),
++            ("_xpu_lm_head_int8_scale", scales),
++        ):
++            if name in layer._buffers:
++                layer._buffers[name] = tensor
++            else:
++                layer.register_buffer(name, tensor, persistent=False)
++        logger.info(
++            "Prepared experimental XPU INT8 lm_head: prefix=%s scope=%s "
++            "weight_t=%s scale=%s scale_dtype=%s",
++            prefix or "<unknown>",
++            scope or "all",
++            tuple(weight_q_t.shape),
++            tuple(scales.shape),
++            scales.dtype,
++        )
+ 
+     def apply(
+         self,
+@@ -70,6 +186,26 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_LM_HEAD_INT8")
++            and bias is None
++            and x.device.type == "xpu"
++            and hasattr(layer, "_xpu_lm_head_int8_weight_t")
++            and hasattr(layer, "_xpu_lm_head_int8_scale")
++        ):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            with timed_region("lm_head_int8.per_token_quant"):
++                x_q, x_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(
++                    x_contiguous)
++            with timed_region("lm_head_int8.gemm_w8a8"):
++                return torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q,
++                    x_scale,
++                    layer._xpu_lm_head_int8_weight_t,
++                    layer._xpu_lm_head_int8_scale,
++                    layer.weight.dtype,
++                    None,
++                )
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)
+@@ -241,6 +377,7 @@ class VocabParallelEmbedding(PluggableLayer):
+         prefix: str = "",
+     ):
+         super().__init__()
++        self._vllm_prefix = prefix
+ 
+         # Keep the input dimensions.
+         tp_rank = get_tensor_model_parallel_rank()
+diff --git a/vllm/v1/attention/backends/gdn_attn.py b/vllm/v1/attention/backends/gdn_attn.py
+index d768c4527..550c22505 100644
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -201,6 +201,16 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             dtype=torch.int32,
+             device=device,
+         )
++        self.cudagraph_spec_token_indx: torch.Tensor = torch.arange(
++            self.decode_cudagraph_max_bs * (self.num_spec + 1),
++            dtype=torch.int32,
++            device=device,
++        )
++        self.cudagraph_non_spec_token_indx: torch.Tensor = torch.empty(
++            0,
++            dtype=torch.int32,
++            device=device,
++        )
+         self.spec_query_start_loc: torch.Tensor = torch.empty(
+             (self.decode_cudagraph_max_bs + 1,),
+             dtype=torch.int32,
+@@ -216,6 +226,17 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             dtype=torch.int32,
+             device=device,
+         )
++        self.cudagraph_num_accepted_tokens: torch.Tensor = torch.full(
++            (self.decode_cudagraph_max_bs,),
++            self.num_spec + 1 if self.use_spec_decode else 1,
++            dtype=torch.int32,
++            device=device,
++        )
++        self.cudagraph_spec_sequence_masks: torch.Tensor = torch.ones(
++            (self.decode_cudagraph_max_bs,),
++            dtype=torch.bool,
++            device=device,
++        )
+ 
+     def build(  # type: ignore[override]
+         self,
+@@ -224,12 +245,13 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+         num_accepted_tokens: torch.Tensor | None = None,
+         num_decode_draft_tokens_cpu: torch.Tensor | None = None,
+         fast_build: bool = False,
++        is_cudagraph_capture: bool = False,
+     ) -> GDNAttentionMetadata:
+         m = common_attn_metadata
+ 
+         query_start_loc = m.query_start_loc
+         query_start_loc_cpu = m.query_start_loc_cpu
+-        context_lens_tensor = m.compute_num_computed_tokens()
++        context_lens_tensor: torch.Tensor | None = None
+         nums_dict, batch_ptr, token_chunk_offset_ptr = None, None, None
+         block_table_tensor = mamba_get_block_table_tensor(
+             m.block_table_tensor,
+@@ -257,9 +279,19 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                 spec_sequence_masks = None
+                 spec_sequence_masks_cpu = None
+             else:
+-                spec_sequence_masks = spec_sequence_masks_cpu.to(
+-                    query_start_loc.device, non_blocking=True
+-                )
++                if num_accepted_tokens is not None:
++                    if is_cudagraph_capture:
++                        spec_sequence_masks = self.cudagraph_spec_sequence_masks[
++                            : spec_sequence_masks_cpu.size(0)
++                        ]
++                    else:
++                        spec_sequence_masks = (
++                            num_accepted_tokens[: spec_sequence_masks_cpu.size(0)] > 1
++                        )
++                else:
++                    spec_sequence_masks = spec_sequence_masks_cpu.to(
++                        query_start_loc.device, non_blocking=True
++                    )
+ 
+         if spec_sequence_masks is None:
+             num_decodes, num_prefills, num_decode_tokens, num_prefill_tokens = (
+@@ -340,7 +372,7 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             else:
+                 num_accepted_tokens = None
+         else:
+-            query_lens = query_start_loc[1:] - query_start_loc[:-1]
++            query_lens: torch.Tensor | None = None
+             assert spec_sequence_masks_cpu is not None
+             query_lens_cpu = query_start_loc_cpu[1:] - query_start_loc_cpu[:-1]
+ 
+@@ -363,17 +395,22 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                     num_spec_decodes * (self.num_spec + 1),
+                     query_start_loc_cpu[-1].item(),
+                 )
+-                spec_token_indx = torch.arange(
+-                    spec_token_size,
+-                    dtype=torch.int32,
+-                    device=query_start_loc.device,
+-                )
+-                non_spec_token_indx = torch.empty(
+-                    0, dtype=torch.int32, device=query_start_loc.device
+-                )
+-                # Filter by spec_sequence_masks to exclude padded sequences
++                if is_cudagraph_capture:
++                    spec_token_indx = self.cudagraph_spec_token_indx[:spec_token_size]
++                    non_spec_token_indx = self.cudagraph_non_spec_token_indx
++                else:
++                    spec_token_indx = torch.arange(
++                        spec_token_size,
++                        dtype=torch.int32,
++                        device=query_start_loc.device,
++                    )
++                    non_spec_token_indx = torch.empty(
++                        0, dtype=torch.int32, device=query_start_loc.device
++                    )
++                # Padded sequences are at the back in this decode-only
++                # capture path, so avoid CPU-mask indexing into an XPU tensor.
+                 spec_state_indices_tensor = block_table_tensor[
+-                    spec_sequence_masks_cpu, : self.num_spec + 1
++                    :num_spec_decodes, : self.num_spec + 1
+                 ]
+                 non_spec_state_indices_tensor = None
+                 prefill_mirror_state_indices_tensor = None
+@@ -385,6 +422,7 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                 non_spec_query_start_loc = None
+                 non_spec_query_start_loc_cpu = None
+             else:
++                query_lens = query_start_loc[1:] - query_start_loc[:-1]
+                 spec_token_masks = torch.repeat_interleave(
+                     spec_sequence_masks,
+                     query_lens,
+@@ -435,7 +473,10 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                 )
+ 
+             assert num_accepted_tokens is not None
+-            num_accepted_tokens = num_accepted_tokens[spec_sequence_masks_cpu]
++            if num_prefills == 0 and num_decodes == 0:
++                num_accepted_tokens = num_accepted_tokens[:num_spec_decodes]
++            else:
++                num_accepted_tokens = num_accepted_tokens[spec_sequence_masks_cpu]
+ 
+         chunk_indices: torch.Tensor | None = None
+         chunk_offsets: torch.Tensor | None = None
+@@ -458,6 +499,7 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             ).to(device=gpu_device, non_blocking=True)
+ 
+         if num_prefills > 0:
++            context_lens_tensor = m.compute_num_computed_tokens()
+             has_initial_state = context_lens_tensor > 0
+             if spec_sequence_masks_cpu is not None:
+                 has_initial_state = has_initial_state[~spec_sequence_masks_cpu]
+@@ -497,43 +539,54 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             and not disable_spec_static_graph_metadata
+         ):
+             assert spec_sequence_masks is not None
+-            self.spec_state_indices_tensor[:num_spec_decodes].copy_(
+-                spec_state_indices_tensor, non_blocking=True
+-            )
+-            spec_state_indices_tensor = self.spec_state_indices_tensor[:batch_size]
+-            spec_state_indices_tensor[num_spec_decodes:].fill_(NULL_BLOCK_ID)
++            assert non_spec_token_indx is not None and spec_token_indx is not None
++            if not is_cudagraph_capture:
++                self.spec_state_indices_tensor[:num_spec_decodes].copy_(
++                    spec_state_indices_tensor, non_blocking=True
++                )
++                spec_state_indices_tensor = self.spec_state_indices_tensor[:batch_size]
++                spec_state_indices_tensor[num_spec_decodes:].fill_(NULL_BLOCK_ID)
+ 
+-            self.spec_sequence_masks[:num_spec_decodes].copy_(
+-                spec_sequence_masks[:num_spec_decodes], non_blocking=True
+-            )
+-            spec_sequence_masks = self.spec_sequence_masks[:batch_size]
+-            spec_sequence_masks[num_spec_decodes:].fill_(False)
++                self.spec_sequence_masks[:num_spec_decodes].copy_(
++                    spec_sequence_masks[:num_spec_decodes], non_blocking=True
++                )
++                spec_sequence_masks = self.spec_sequence_masks[:batch_size]
++                spec_sequence_masks[num_spec_decodes:].fill_(False)
+ 
+-            assert non_spec_token_indx is not None and spec_token_indx is not None
+-            self.non_spec_token_indx[: non_spec_token_indx.size(0)].copy_(
+-                non_spec_token_indx, non_blocking=True
+-            )
+-            non_spec_token_indx = self.non_spec_token_indx[
+-                : non_spec_token_indx.size(0)
+-            ]
++                self.non_spec_token_indx[: non_spec_token_indx.size(0)].copy_(
++                    non_spec_token_indx, non_blocking=True
++                )
++                non_spec_token_indx = self.non_spec_token_indx[
++                    : non_spec_token_indx.size(0)
++                ]
+ 
+-            self.spec_token_indx[: spec_token_indx.size(0)].copy_(
+-                spec_token_indx, non_blocking=True
+-            )
+-            spec_token_indx = self.spec_token_indx[: spec_token_indx.size(0)]
++                self.spec_token_indx[: spec_token_indx.size(0)].copy_(
++                    spec_token_indx, non_blocking=True
++                )
++                spec_token_indx = self.spec_token_indx[: spec_token_indx.size(0)]
+ 
+-            self.spec_query_start_loc[: num_spec_decodes + 1].copy_(
+-                spec_query_start_loc, non_blocking=True
+-            )
+-            spec_num_query_tokens = spec_query_start_loc[-1]  # type: ignore[index]
+-            spec_query_start_loc = self.spec_query_start_loc[: batch_size + 1]
+-            spec_query_start_loc[num_spec_decodes + 1 :].fill_(spec_num_query_tokens)
++                self.spec_query_start_loc[: num_spec_decodes + 1].copy_(
++                    spec_query_start_loc, non_blocking=True
++                )
++                spec_num_query_tokens = spec_query_start_loc[-1]  # type: ignore[index]
++                spec_query_start_loc = self.spec_query_start_loc[: batch_size + 1]
++                spec_query_start_loc[num_spec_decodes + 1 :].fill_(
++                    spec_num_query_tokens)
+ 
+-            self.num_accepted_tokens[:num_spec_decodes].copy_(
+-                num_accepted_tokens, non_blocking=True
+-            )
+-            num_accepted_tokens = self.num_accepted_tokens[:batch_size]
+-            num_accepted_tokens[num_spec_decodes:].fill_(1)
++                self.num_accepted_tokens[:num_spec_decodes].copy_(
++                    num_accepted_tokens, non_blocking=True
++                )
++                num_accepted_tokens = self.num_accepted_tokens[:batch_size]
++                num_accepted_tokens[num_spec_decodes:].fill_(1)
++            else:
++                spec_state_indices_tensor = self.spec_state_indices_tensor[:batch_size]
++                spec_sequence_masks = self.spec_sequence_masks[:batch_size]
++                non_spec_token_indx = self.non_spec_token_indx[
++                    : non_spec_token_indx.size(0)
++                ]
++                spec_token_indx = self.spec_token_indx[: spec_token_indx.size(0)]
++                spec_query_start_loc = self.spec_query_start_loc[: batch_size + 1]
++                num_accepted_tokens = self.num_accepted_tokens[:batch_size]
+ 
+         if (
+             self.use_full_cuda_graph
+@@ -640,7 +693,19 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             f"cudagraph capture sizes ({self.decode_cudagraph_max_bs})."
+         )
+ 
+-        num_accepted_tokens = torch.diff(m.query_start_loc)
+-        num_decode_draft_tokens_cpu = (num_accepted_tokens - 1).cpu()
++        num_accepted_tokens = self.cudagraph_num_accepted_tokens[: m.num_reqs]
++        num_decode_draft_tokens_cpu = (
++            m.query_start_loc_cpu[1 : m.num_reqs + 1]
++            - m.query_start_loc_cpu[: m.num_reqs]
++            - 1
++        )
+ 
+-        return self.build(0, m, num_accepted_tokens, num_decode_draft_tokens_cpu)
++        is_graph_capturing = bool(
++            getattr(self, "_xpu_is_graph_capturing", False))
++        return self.build(
++            0,
++            m,
++            num_accepted_tokens,
++            num_decode_draft_tokens_cpu,
++            is_cudagraph_capture=is_graph_capturing,
++        )
+diff --git a/vllm/v1/sample/rejection_sampler.py b/vllm/v1/sample/rejection_sampler.py
+index ba3e72a76..0c947d649 100644
+--- a/vllm/v1/sample/rejection_sampler.py
++++ b/vllm/v1/sample/rejection_sampler.py
+@@ -70,6 +70,69 @@ def _xpu_spec_decode_draft_only_enabled() -> bool:
+     )
+ 
+ 
++def _xpu_rejection_sync_debug_stage(stage: str) -> None:
++    stages = {
++        item.strip()
++        for item in os.environ.get(
++            "VLLM_XPU_REJECTION_SYNC_DEBUG_STAGES", "").split(",")
++        if item.strip()
++    }
++    if "*" not in stages and stage not in stages:
++        return
++    try:
++        torch.xpu.synchronize()
++    except Exception as exc:
++        raise RuntimeError(
++            f"XPU rejection sampler sync failed at {stage}") from exc
++
++
++def _select_spec_logits_rows(
++    logits: torch.Tensor,
++    indices: torch.Tensor,
++    num_draft_tokens: list[int],
++    *,
++    target_rows: bool,
++    draft_only: bool,
++) -> torch.Tensor:
++    if (
++        os.environ.get("VLLM_XPU_SAFE_SPEC_LOGITS_SELECT", "0") != "1"
++        or logits.device.type != "xpu"
++    ):
++        return logits[indices]
++
++    total_target_rows = sum(num_draft_tokens)
++    if target_rows:
++        if total_target_rows == 0:
++            return logits.new_empty((0, *logits.shape[1:]))
++        if draft_only and logits.shape[0] == total_target_rows:
++            return logits
++        selected = torch.empty(
++            (total_target_rows, *logits.shape[1:]),
++            dtype=logits.dtype,
++            device=logits.device,
++        )
++        src = 0
++        dst = 0
++        for num_draft in num_draft_tokens:
++            if num_draft > 0:
++                selected[dst:dst + num_draft].copy_(
++                    logits[src:src + num_draft])
++                dst += num_draft
++            src += num_draft if draft_only else num_draft + 1
++        return selected
++
++    selected = torch.empty(
++        (len(num_draft_tokens), *logits.shape[1:]),
++        dtype=logits.dtype,
++        device=logits.device,
++    )
++    src = 0
++    for req_idx, num_draft in enumerate(num_draft_tokens):
++        selected[req_idx].copy_(logits[src + num_draft])
++        src += num_draft + 1
++    return selected
++
++
+ class RejectionSampler(nn.Module):
+     """
+     The implementation strictly follows the algorithm described in
+@@ -174,7 +237,14 @@ class RejectionSampler(nn.Module):
+             bonus_sampler_output = None
+             bonus_token_ids = None
+         else:
+-            bonus_logits = logits[bonus_logits_indices]
++            bonus_logits = _select_spec_logits_rows(
++                logits,
++                bonus_logits_indices,
++                metadata.num_draft_tokens,
++                target_rows=False,
++                draft_only=False,
++            )
++            _xpu_rejection_sync_debug_stage("after_bonus_logits_index")
+             bonus_sampler_output = self.sampler(
+                 logits=bonus_logits,
+                 sampling_metadata=replace(
+@@ -188,6 +258,7 @@ class RejectionSampler(nn.Module):
+                 if self.is_processed_logprobs_mode
+                 else "raw_logits",
+             )
++            _xpu_rejection_sync_debug_stage("after_bonus_sampler")
+             bonus_token_ids = bonus_sampler_output.sampled_token_ids
+         xpu_suppressed_bonus_mask = None
+         xpu_suppressed_replacement_mask = None
+@@ -195,18 +266,28 @@ class RejectionSampler(nn.Module):
+         # Just like `bonus_logits`, `target_logits` is a new tensor with
+         # separate storage from the original `logits` tensor. Therefore,
+         # it is safe to update `target_logits` in place.
+-        raw_target_logits = logits[target_logits_indices]
++        raw_target_logits = _select_spec_logits_rows(
++            logits,
++            target_logits_indices,
++            metadata.num_draft_tokens,
++            target_rows=True,
++            draft_only=draft_only,
++        )
++        _xpu_rejection_sync_debug_stage("after_target_logits_index")
+         # Use float32 for the target_logits.
+         raw_target_logits = raw_target_logits.to(torch.float32)
++        _xpu_rejection_sync_debug_stage("after_target_logits_float")
+         target_logits = raw_target_logits
+         if not self.is_processed_logprobs_mode:
+             # Clone raw_target_logits before applying processors to preserve
+             # the original raw logits for logprobs computation, since
+             # apply_logits_processors modifies the tensor in-place.
+             target_logits = target_logits.clone()
++            _xpu_rejection_sync_debug_stage("after_target_logits_clone")
+         target_logits = self.apply_logits_processors(
+             target_logits, sampling_metadata, metadata
+         )
++        _xpu_rejection_sync_debug_stage("after_logits_processors")
+         # [num_tokens, vocab_size]
+         # NOTE(woosuk): `target_logits` can be updated in place inside the
+         # `apply_sampling_constraints` function.
+@@ -215,6 +296,7 @@ class RejectionSampler(nn.Module):
+             metadata.cu_num_draft_tokens,
+             sampling_metadata,
+         )
++        _xpu_rejection_sync_debug_stage("after_sampling_constraints")
+ 
+         if draft_only:
+             if not sampling_metadata.all_greedy or self.synthetic_mode:
+@@ -241,6 +323,7 @@ class RejectionSampler(nn.Module):
+                 metadata.cu_num_draft_tokens,
+                 target_logits,
+             )
++            _xpu_rejection_sync_debug_stage("after_draft_only_greedy_sample")
+             # This experimental XPU path is used only for deterministic
+             # throughput/parity work. Returning token IDs without logprobs keeps
+             # the verifier transaction target-owned and avoids the known-bad
+@@ -274,6 +357,7 @@ class RejectionSampler(nn.Module):
+             synthetic_mode=self.synthetic_mode,
+             synthetic_conditional_rates=self.synthetic_conditional_rates,
+         )
++        _xpu_rejection_sync_debug_stage("after_rejection_sample")
+         self._trace_xpu_bonus_logits(
+             metadata=metadata,
+             bonus_logits=bonus_logits,
+@@ -712,6 +796,7 @@ def rejection_sample(
+         dtype=torch.int32,  # Consistent with SamplerOutput.sampled_token_ids.
+         device=device,
+     )
++    _xpu_rejection_sync_debug_stage("after_rejection_output_alloc")
+ 
+     if sampling_metadata.all_greedy:
+         is_greedy = None
+@@ -734,6 +819,7 @@ def rejection_sample(
+     if not sampling_metadata.all_random:
+         # Rejection sampling for greedy sampling requests.
+         target_argmax = target_logits.argmax(dim=-1)
++        _xpu_rejection_sync_debug_stage("after_rejection_target_argmax")
+         rejection_greedy_sample_kernel[(batch_size,)](
+             output_token_ids,
+             cu_num_draft_tokens,
+@@ -746,11 +832,13 @@ def rejection_sample(
+             synthetic_conditional_rates,
+             SYNTHETIC_MODE=synthetic_mode,
+         )
++        _xpu_rejection_sync_debug_stage("after_rejection_greedy_kernel")
+         if sampling_metadata.all_greedy:
+             return output_token_ids
+ 
+     # Compute probability distribution from target logits.
+     target_probs = target_logits.softmax(dim=-1, dtype=torch.float32)
++    _xpu_rejection_sync_debug_stage("after_rejection_target_softmax")
+     assert target_probs.is_contiguous()
+ 
+     # Sample recovered tokens for each position.
+@@ -820,10 +908,12 @@ def draft_only_greedy_sample(
+         dtype=torch.int32,
+         device=device,
+     )
++    _xpu_rejection_sync_debug_stage("after_draft_only_output_alloc")
+     if num_tokens == 0:
+         return output_token_ids
+ 
+     target_argmax = target_logits.argmax(dim=-1)
++    _xpu_rejection_sync_debug_stage("after_draft_only_target_argmax")
+     draft_only_greedy_sample_kernel[(batch_size,)](
+         output_token_ids,
+         cu_num_draft_tokens,
+@@ -831,6 +921,7 @@ def draft_only_greedy_sample(
+         target_argmax,
+         max_spec_len,
+     )
++    _xpu_rejection_sync_debug_stage("after_draft_only_kernel")
+     return output_token_ids
+ 
+ 
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 0c4034b0b..373082a19 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -249,6 +249,94 @@ def _select_sample_hidden_states(
+     return hidden_states[logits_indices]
+ 
+ 
++def _compute_logits(
++    model: nn.Module, sample_hidden_states: torch.Tensor
++) -> torch.Tensor:
++    chunk_rows_s = os.environ.get("VLLM_XPU_CHUNKED_COMPUTE_LOGITS_ROWS", "0")
++    try:
++        chunk_rows = int(chunk_rows_s)
++    except ValueError:
++        chunk_rows = 0
++    if (
++        chunk_rows <= 0
++        or sample_hidden_states.device.type != "xpu"
++        or sample_hidden_states.shape[0] <= chunk_rows
++    ):
++        logits = model.compute_logits(sample_hidden_states)
++        _xpu_sync_debug_stage("after_compute_logits_direct")
++        return logits
++
++    logits: torch.Tensor | None = None
++    for start in range(0, sample_hidden_states.shape[0], chunk_rows):
++        end = min(start + chunk_rows, sample_hidden_states.shape[0])
++        logits_chunk = model.compute_logits(sample_hidden_states[start:end])
++        _xpu_sync_debug_stage(f"after_compute_logits_chunk_{start}_{end}")
++        if logits is None:
++            logits = torch.empty(
++                (sample_hidden_states.shape[0],) + tuple(logits_chunk.shape[1:]),
++                dtype=logits_chunk.dtype,
++                device=logits_chunk.device,
++            )
++            _xpu_sync_debug_stage("after_compute_logits_alloc")
++        logits[start:end].copy_(logits_chunk)
++        _xpu_sync_debug_stage(f"after_compute_logits_copy_{start}_{end}")
++
++    assert logits is not None
++    return logits
++
++
++def _get_top_tokens(
++    model: nn.Module, sample_hidden_states: torch.Tensor
++) -> torch.Tensor:
++    chunk_rows_s = os.environ.get("VLLM_XPU_CHUNKED_LOCAL_ARGMAX_ROWS", "0")
++    try:
++        chunk_rows = int(chunk_rows_s)
++    except ValueError:
++        chunk_rows = 0
++    if (
++        chunk_rows <= 0
++        or sample_hidden_states.device.type != "xpu"
++        or sample_hidden_states.shape[0] <= chunk_rows
++    ):
++        sampled_token_ids = model.get_top_tokens(sample_hidden_states)
++        _xpu_sync_debug_stage("after_local_argmax_direct")
++        return sampled_token_ids
++
++    sampled_token_ids: torch.Tensor | None = None
++    for start in range(0, sample_hidden_states.shape[0], chunk_rows):
++        end = min(start + chunk_rows, sample_hidden_states.shape[0])
++        chunk_token_ids = model.get_top_tokens(sample_hidden_states[start:end])
++        _xpu_sync_debug_stage(f"after_local_argmax_chunk_{start}_{end}")
++        if sampled_token_ids is None:
++            sampled_token_ids = torch.empty(
++                (sample_hidden_states.shape[0],) + tuple(chunk_token_ids.shape[1:]),
++                dtype=chunk_token_ids.dtype,
++                device=chunk_token_ids.device,
++            )
++            _xpu_sync_debug_stage("after_local_argmax_alloc")
++        sampled_token_ids[start:end].copy_(chunk_token_ids)
++        _xpu_sync_debug_stage(f"after_local_argmax_copy_{start}_{end}")
++
++    assert sampled_token_ids is not None
++    return sampled_token_ids
++
++
++def _xpu_sync_debug_stage(stage: str) -> None:
++    stages = {
++        item.strip()
++        for item in os.environ.get("VLLM_XPU_SYNC_DEBUG_STAGES", "").split(",")
++        if item.strip()
++    }
++    if "*" not in stages and stage not in stages:
++        return
++    logger.info("XPU sync debug stage begin: %s", stage)
++    try:
++        torch.xpu.synchronize()
++    except Exception as exc:
++        raise RuntimeError(f"XPU sync failed at {stage}") from exc
++    logger.info("XPU sync debug stage end: %s", stage)
++
++
+ AttnMetadataDict: TypeAlias = dict[str, AttentionMetadata]
+ # list when ubatching is enabled
+ PerLayerAttnMetadata: TypeAlias = list[AttnMetadataDict] | AttnMetadataDict
+@@ -1533,6 +1621,12 @@ class GPUModelRunner(
+         ).strip()
+         self._xpu_dummy_logit_indices_device: torch.Tensor | None = None
+         self._xpu_dummy_logit_indices_cpu: torch.Tensor | None = None
++        self._xpu_dummy_logit_indices_key: tuple[int, ...] | None = None
++        self._xpu_dummy_logit_indices_cache: dict[tuple[int, ...], torch.Tensor] = {}
++        self._xpu_dummy_metadata_cache: dict[
++            tuple[tuple[int, ...], tuple[int, ...]], tuple[torch.Tensor, torch.Tensor]
++        ] = {}
++        self._xpu_dummy_static_graph_context = False
+         try:
+             self.tp_rank = get_tp_group().rank_in_group
+         except Exception:
+@@ -3107,7 +3201,7 @@ class GPUModelRunner(
+                             self._xpu_mamba_snapshot_records(
+                                 snapshots, include_current=True),
+                         },
+-                    )
++                )
+                 for state, block_id, saved in snapshots:
+                     state[block_id].copy_(saved)
+                 if self._xpu_cow_worker_trace_enabled():
+@@ -3229,7 +3323,7 @@ class GPUModelRunner(
+                             "snapshots": self._xpu_mamba_snapshot_records(
+                                 snapshots, include_current=True),
+                         },
+-                    )
++                )
+                 for state, block_id, saved in snapshots:
+                     state[block_id].copy_(saved)
+                 if self._xpu_cow_worker_trace_enabled():
+@@ -3333,6 +3427,7 @@ class GPUModelRunner(
+         # tokens gives us the first -1 position (i.e., number of accepted).
+         num_reqs = output_token_ids.size(0)
+         accepted_token_counts = (output_token_ids != -1).sum(dim=1)
++        _xpu_sync_debug_stage("after_accepted_count")
+         scheduled_spec_decode_tokens = scheduler_output.scheduled_spec_decode_tokens
+         accepted_token_counts, draft_partial_restore_req_ids = (
+             self._xpu_restore_mamba_running_states_for_draft_partial_reject(
+@@ -3607,6 +3702,7 @@ class GPUModelRunner(
+                         )
+                 accepted_token_counts = corrected_counts
+         self.num_accepted_tokens.gpu[:num_reqs] = accepted_token_counts
++        _xpu_sync_debug_stage("after_accepted_gpu_write")
+         skip_replayssm_commit_req_ids: set[str] | None = None
+         if draft_partial_restore_req_ids or draft_full_accept_restore_req_ids:
+             skip_replayssm_commit_req_ids = set(draft_partial_restore_req_ids)
+@@ -3623,6 +3719,7 @@ class GPUModelRunner(
+             num_reqs,
+             skip_req_ids=skip_replayssm_commit_req_ids,
+         )
++        _xpu_sync_debug_stage("after_gdn_commit")
+ 
+         if self.cache_config.mamba_cache_mode == "align":
+             for i, num_tokens in enumerate(
+@@ -6184,6 +6281,7 @@ class GPUModelRunner(
+         logits_indices: torch.Tensor | None = None,
+         use_spec_decode: bool = False,
+         for_cudagraph_capture: bool = False,
++        is_graph_capturing: bool = False,
+         num_scheduled_tokens: dict[str, int] | None = None,
+         cascade_attn_prefix_lens: list[list[int]] | None = None,
+         slot_mappings: dict[int, torch.Tensor] | None = None,
+@@ -6338,9 +6436,20 @@ class GPUModelRunner(
+                 )
+ 
+             if for_cudagraph_capture:
+-                attn_metadata_i = builder.build_for_cudagraph_capture(
+-                    common_attn_metadata
+-                )
++                sentinel = object()
++                previous_graph_capturing = getattr(
++                    builder, "_xpu_is_graph_capturing", sentinel)
++                setattr(builder, "_xpu_is_graph_capturing", is_graph_capturing)
++                try:
++                    attn_metadata_i = builder.build_for_cudagraph_capture(
++                        common_attn_metadata
++                    )
++                finally:
++                    if previous_graph_capturing is sentinel:
++                        delattr(builder, "_xpu_is_graph_capturing")
++                    else:
++                        setattr(builder, "_xpu_is_graph_capturing",
++                                previous_graph_capturing)
+             elif (
+                 cache_key in cached_attn_metadata
+                 and builder.supports_update_block_table
+@@ -7627,6 +7736,11 @@ class GPUModelRunner(
+ 
+         if os.environ.get("VLLM_XPU_LOCAL_ARGMAX_DECODE", "0") != "1":
+             return disabled("env flag is not enabled")
++        if (
++            spec_decode_metadata is None
++            and os.environ.get("VLLM_XPU_LOCAL_ARGMAX_SPEC_ONLY", "0") == "1"
++        ):
++            return disabled("spec-only local argmax is enabled")
+         if spec_decode_metadata is not None:
+             return disabled("spec decode metadata is present")
+         if os.environ.get("VLLM_XPU_LOCAL_ARGMAX_ASSUME_SAFE", "0") == "1":
+@@ -9131,6 +9245,7 @@ class GPUModelRunner(
+                 )
+             if route_overlay_enabled():
+                 reset_route_overlay_snapshot()
++            _xpu_sync_debug_stage("before_model_forward")
+             model_output = self._model_forward(
+                 input_ids=input_ids,
+                 positions=positions,
+@@ -9138,6 +9253,7 @@ class GPUModelRunner(
+                 inputs_embeds=inputs_embeds,
+                 **model_kwargs,
+             )
++            _xpu_sync_debug_stage("after_model_forward")
+             if execute_device_timeline is not None:
+                 execute_device_timeline["forward_end_event"] = (
+                     _xpu_async_output_record_timeline_event(
+@@ -9269,10 +9385,12 @@ class GPUModelRunner(
+                     execute_device_timeline["host_select_sample_hidden_start_ns"] = (
+                         time.perf_counter_ns()
+                     )
++                _xpu_sync_debug_stage("before_select_sample_hidden")
+                 with timed_region("gpu_model_runner.select_sample_hidden"):
+                     sample_hidden_states = _select_sample_hidden_states(
+                         hidden_states, logits_indices
+                     )
++                _xpu_sync_debug_stage("after_select_sample_hidden")
+                 self._trace_xpu_replay_microscope(
+                     stage="sample_hidden",
+                     scheduler_output=scheduler_output,
+@@ -9334,7 +9452,9 @@ class GPUModelRunner(
+                         execute_device_timeline["host_local_argmax_start_ns"] = (
+                             time.perf_counter_ns()
+                         )
+-                    sampled_token_ids = self.model.get_top_tokens(sample_hidden_states)
++                    sampled_token_ids = _get_top_tokens(
++                        self.model, sample_hidden_states)
++                    _xpu_sync_debug_stage("after_local_argmax")
+                     if execute_device_timeline is not None:
+                         execute_device_timeline["local_argmax_end_event"] = (
+                             _xpu_async_output_record_timeline_event(
+@@ -9384,7 +9504,8 @@ class GPUModelRunner(
+                             time.perf_counter_ns()
+                         )
+                     with timed_region("gpu_model_runner.compute_logits"):
+-                        logits = self.model.compute_logits(sample_hidden_states)
++                        logits = _compute_logits(self.model, sample_hidden_states)
++                    _xpu_sync_debug_stage("after_compute_logits")
+                     if execute_device_timeline is not None:
+                         execute_device_timeline["compute_logits_end_event"] = (
+                             _xpu_async_output_record_timeline_event(
+@@ -9488,7 +9609,8 @@ class GPUModelRunner(
+                             time.perf_counter_ns()
+                         )
+                     with timed_region("gpu_model_runner.compute_logits"):
+-                        logits = self.model.compute_logits(sample_hidden_states)
++                        logits = _compute_logits(self.model, sample_hidden_states)
++                    _xpu_sync_debug_stage("after_compute_logits")
+                     if execute_device_timeline is not None:
+                         execute_device_timeline["compute_logits_end_event"] = (
+                             _xpu_async_output_record_timeline_event(
+@@ -9638,6 +9760,7 @@ class GPUModelRunner(
+             timed_region("gpu_model_runner.sample_total"),
+         ):
+             sampler_output = self._sample(logits, spec_decode_metadata)
++        _xpu_sync_debug_stage("after_sample")
+         sampler_output.sampled_token_ids = (
+             self._sync_xpu_sampled_token_ids_across_tp(
+                 sampler_output.sampled_token_ids,
+@@ -11038,6 +11161,214 @@ class GPUModelRunner(
+             )
+         )
+ 
++    def _xpu_static_dummy_logit_indices_enabled(self) -> bool:
++        return (
++            os.environ.get("VLLM_XPU_DUMMY_LOGIT_INDICES_STATIC", "0") == "1"
++            and self.device.type == "xpu"
++        )
++
++    def _xpu_dummy_schedule_for_shape(
++        self,
++        num_tokens: int,
++        uniform_decode: bool,
++        create_mixed_batch: bool = False,
++    ) -> tuple[np.ndarray, int]:
++        max_query_len = self.uniform_decode_query_len if uniform_decode else num_tokens
++        max_num_reqs = self.scheduler_config.max_num_seqs
++        if create_mixed_batch:
++            assert not uniform_decode
++            num_decode_tokens = min(max_num_reqs - 1, num_tokens // 2)
++            num_prefill_tokens = num_tokens - num_decode_tokens
++            num_scheduled_tokens_list = [1] * num_decode_tokens + [num_prefill_tokens]
++            max_query_len = num_prefill_tokens
++        elif uniform_decode:
++            num_reqs = min(max_num_reqs, cdiv(num_tokens, max_query_len))
++            num_scheduled_tokens_list = [max_query_len] * num_reqs
++            if num_tokens % max_query_len != 0:
++                num_scheduled_tokens_list[-1] = num_tokens % max_query_len
++        else:
++            num_reqs = min(num_tokens, max_num_reqs)
++            min_tokens_per_req = num_tokens // num_reqs
++            num_scheduled_tokens_list = [min_tokens_per_req] * num_reqs
++            num_scheduled_tokens_list[-1] += num_tokens % num_reqs
++
++        num_scheduled_tokens = np.array(num_scheduled_tokens_list, dtype=np.int32)
++        return num_scheduled_tokens, max_query_len
++
++    def _xpu_dummy_logit_indices_key_for_shape(
++        self,
++        num_tokens: int,
++        uniform_decode: bool,
++        create_mixed_batch: bool = False,
++    ) -> tuple[int, ...] | None:
++        num_scheduled_tokens, _ = self._xpu_dummy_schedule_for_shape(
++            num_tokens, uniform_decode, create_mixed_batch
++        )
++        if np.all(num_scheduled_tokens == 1):
++            return None
++        logit_indices = np.cumsum(num_scheduled_tokens) - 1
++        return tuple(int(index) for index in logit_indices)
++
++    def _xpu_dummy_metadata_key_for_shape(
++        self,
++        num_tokens: int,
++        uniform_decode: bool,
++        create_mixed_batch: bool = False,
++        profile_seq_lens: int | None = None,
++    ) -> tuple[tuple[int, ...], tuple[int, ...]]:
++        num_scheduled_tokens, max_query_len = self._xpu_dummy_schedule_for_shape(
++            num_tokens, uniform_decode, create_mixed_batch
++        )
++        num_reqs = len(num_scheduled_tokens)
++        if profile_seq_lens is not None:
++            seq_lens = np.full(num_reqs, profile_seq_lens, dtype=np.int32)
++        elif create_mixed_batch:
++            num_decode_tokens = num_reqs - 1
++            num_prefill_tokens = int(num_scheduled_tokens[-1])
++            seq_lens = np.array(
++                [1] * num_decode_tokens + [num_prefill_tokens + 1],
++                dtype=np.int32,
++            )
++        else:
++            seq_lens = np.full(num_reqs, max_query_len, dtype=np.int32)
++
++        query_start_loc = np.empty(num_reqs + 1, dtype=np.int32)
++        query_start_loc[0] = 0
++        query_start_loc[1:] = np.cumsum(num_scheduled_tokens)
++        return (
++            tuple(int(seq_len) for seq_len in seq_lens),
++            tuple(int(loc) for loc in query_start_loc),
++        )
++
++    @torch.inference_mode()
++    def _xpu_get_dummy_metadata_device(
++        self, metadata_key: tuple[tuple[int, ...], tuple[int, ...]]
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        cached = self._xpu_dummy_metadata_cache.get(metadata_key)
++        if cached is not None:
++            return cached
++
++        seq_lens_key, query_start_loc_key = metadata_key
++        seq_lens_device = torch.zeros_like(self.seq_lens)
++        query_start_loc_device = torch.zeros_like(self.query_start_loc.gpu)
++        seq_lens_cpu = torch.tensor(seq_lens_key, dtype=self.seq_lens.dtype)
++        query_start_loc_cpu = torch.tensor(
++            query_start_loc_key, dtype=self.query_start_loc.cpu.dtype
++        )
++        seq_lens_device[: len(seq_lens_key)].copy_(seq_lens_cpu)
++        query_start_loc_device[: len(query_start_loc_key)].copy_(query_start_loc_cpu)
++        if len(query_start_loc_key) < query_start_loc_device.numel():
++            query_start_loc_device[len(query_start_loc_key) :].fill_(
++                query_start_loc_key[-1]
++            )
++        self._xpu_dummy_metadata_cache[metadata_key] = (
++            seq_lens_device,
++            query_start_loc_device,
++        )
++        return seq_lens_device, query_start_loc_device
++
++    def _xpu_restore_dummy_metadata_from_cache(
++        self, metadata_key: tuple[tuple[int, ...], tuple[int, ...]]
++    ) -> None:
++        cached = self._xpu_dummy_metadata_cache.get(metadata_key)
++        if cached is None:
++            if self._xpu_dummy_static_graph_context:
++                raise RuntimeError(
++                    "VLLM_XPU_DUMMY_LOGIT_INDICES_STATIC requires preseeded "
++                    "dummy metadata before XPU graph capture."
++                )
++            cached = self._xpu_get_dummy_metadata_device(metadata_key)
++        seq_lens_device, query_start_loc_device = cached
++        self.seq_lens.copy_(seq_lens_device, non_blocking=True)
++        self.query_start_loc.gpu.copy_(query_start_loc_device, non_blocking=True)
++
++    @torch.inference_mode()
++    def _xpu_get_dummy_logit_indices_device(
++        self, logit_indices_key: tuple[int, ...]
++    ) -> torch.Tensor:
++        cached = self._xpu_dummy_logit_indices_cache.get(logit_indices_key)
++        if cached is not None:
++            return cached
++
++        num_reqs = len(logit_indices_key)
++        if (
++            self._xpu_dummy_logit_indices_cpu is None
++            or self._xpu_dummy_logit_indices_cpu.numel() < num_reqs
++        ):
++            self._xpu_dummy_logit_indices_cpu = torch.empty(
++                self.max_num_reqs, dtype=torch.long, pin_memory=self.pin_memory
++            )
++        device_indices = torch.empty(
++            self.max_num_reqs, dtype=torch.long, device=self.device
++        )
++        self._xpu_dummy_logit_indices_cpu[:num_reqs].copy_(
++            torch.tensor(logit_indices_key, dtype=torch.long)
++        )
++        device_indices[:num_reqs].copy_(self._xpu_dummy_logit_indices_cpu[:num_reqs])
++        self._xpu_dummy_logit_indices_cache[logit_indices_key] = device_indices
++        self._xpu_dummy_logit_indices_device = device_indices
++        self._xpu_dummy_logit_indices_key = logit_indices_key
++        return device_indices
++
++    def _xpu_prepare_dummy_logit_indices_for_cudagraphs(
++        self, batch_descriptors: list[BatchDescriptor]
++    ) -> None:
++        if not self._xpu_static_dummy_logit_indices_enabled():
++            return
++
++        prepared = False
++        for desc in batch_descriptors:
++            logit_indices_key = self._xpu_dummy_logit_indices_key_for_shape(
++                desc.num_tokens, desc.uniform
++            )
++            if logit_indices_key is None:
++                continue
++            self._xpu_get_dummy_logit_indices_device(logit_indices_key)
++            prepared = True
++        if prepared:
++            torch.accelerator.synchronize()
++
++    def _xpu_prepare_dummy_static_tensors_for_cudagraphs(
++        self,
++        capture_descs: list[tuple[CUDAGraphMode, list[BatchDescriptor]]],
++        profile_seq_lens_by_desc: dict[BatchDescriptor, int] | None = None,
++    ) -> None:
++        if not self._xpu_static_dummy_logit_indices_enabled():
++            return
++
++        prepared = False
++        for _, descs in capture_descs:
++            for desc in descs:
++                logit_indices_key = self._xpu_dummy_logit_indices_key_for_shape(
++                    desc.num_tokens, desc.uniform
++                )
++                if logit_indices_key is not None:
++                    self._xpu_get_dummy_logit_indices_device(logit_indices_key)
++                    prepared = True
++
++                metadata_key = self._xpu_dummy_metadata_key_for_shape(
++                    desc.num_tokens, desc.uniform
++                )
++                self._xpu_get_dummy_metadata_device(metadata_key)
++                prepared = True
++
++                profile_seq_lens = (
++                    profile_seq_lens_by_desc.get(desc)
++                    if profile_seq_lens_by_desc is not None
++                    else None
++                )
++                if profile_seq_lens is not None:
++                    metadata_key = self._xpu_dummy_metadata_key_for_shape(
++                        desc.num_tokens, desc.uniform, profile_seq_lens=profile_seq_lens
++                    )
++                    self._xpu_get_dummy_metadata_device(metadata_key)
++                    prepared = True
++
++        self.input_batch.block_table.commit_block_table(self.max_num_reqs)
++        prepared = True
++        if prepared:
++            torch.accelerator.synchronize()
++
+     @torch.inference_mode()
+     def _dummy_run(
+         self,
+@@ -11053,6 +11384,7 @@ class GPUModelRunner(
+         is_graph_capturing: bool = False,
+         num_active_loras: int = 0,
+         profile_seq_lens: int | None = None,
++        xpu_static_dummy_metadata: bool = False,
+     ) -> tuple[torch.Tensor, torch.Tensor]:
+         """
+         Run a dummy forward pass to warm up/profile run or capture the
+@@ -11231,6 +11563,10 @@ class GPUModelRunner(
+                 or cudagraph_runtime_mode == CUDAGraphMode.FULL
+                 or spec_decode_capture_shape
+             ):
++                use_static_metadata = (
++                    xpu_static_dummy_metadata
++                    and self._xpu_static_dummy_logit_indices_enabled()
++                )
+                 if profile_seq_lens is not None:
+                     seq_lens = profile_seq_lens  # type: ignore[assignment]
+                 elif create_mixed_batch:
+@@ -11245,19 +11581,37 @@ class GPUModelRunner(
+                     seq_lens = max_query_len  # type: ignore[assignment]
+                 self.optimistic_seq_lens_cpu[:num_reqs] = seq_lens
+                 self.optimistic_seq_lens_cpu[num_reqs:].fill_(0)
+-                self.seq_lens.copy_(self.optimistic_seq_lens_cpu, non_blocking=True)
+ 
+                 cum_num_tokens = self._get_cumsum_and_arange(
+                     num_scheduled_tokens, self.query_pos.np
+                 )
++                self.query_start_loc.np[0] = 0
+                 self.query_start_loc.np[1 : num_reqs + 1] = cum_num_tokens
+-                self.query_start_loc.copy_to_gpu()
++                if num_reqs_padded > num_reqs:
++                    self.query_start_loc.np[
++                        num_reqs + 1 : num_reqs_padded + 1
++                    ].fill_(cum_num_tokens[-1])
++
++                if use_static_metadata:
++                    metadata_key = self._xpu_dummy_metadata_key_for_shape(
++                        num_tokens,
++                        uniform_decode,
++                        create_mixed_batch,
++                        profile_seq_lens,
++                    )
++                    if not is_graph_capturing:
++                        self._xpu_restore_dummy_metadata_from_cache(metadata_key)
++                else:
++                    self.seq_lens.copy_(
++                        self.optimistic_seq_lens_cpu, non_blocking=True
++                    )
++                    self.query_start_loc.copy_to_gpu()
+ 
+-                # Sync block table CPU->GPU so cleared rows from
+-                # remove_request() are visible to the attention metadata
+-                # builder. Without this, stale block IDs from finished
+-                # requests can corrupt Mamba state.
+-                self.input_batch.block_table.commit_block_table(num_reqs_padded)
++                    # Sync block table CPU->GPU so cleared rows from
++                    # remove_request() are visible to the attention metadata
++                    # builder. Without this, stale block IDs from finished
++                    # requests can corrupt Mamba state.
++                    self.input_batch.block_table.commit_block_table(num_reqs_padded)
+ 
+                 pad_attn = cudagraph_runtime_mode == CUDAGraphMode.FULL
+                 attn_metadata, _ = self._build_attention_metadata(
+@@ -11269,6 +11623,7 @@ class GPUModelRunner(
+                     for_cudagraph_capture=(
+                         is_graph_capturing or spec_decode_capture_shape
+                     ),
++                    is_graph_capturing=is_graph_capturing,
+                     slot_mappings=slot_mappings_by_group,
+                     use_spec_decode=self.speculative_config is not None,
+                 )
+@@ -11426,33 +11781,22 @@ class GPUModelRunner(
+             self.eplb_step(is_dummy=True, is_profile=is_profile)
+ 
+         logit_indices = np.cumsum(num_scheduled_tokens) - 1
+-        if (
+-            os.environ.get("VLLM_XPU_DUMMY_LOGIT_INDICES_STATIC", "0") == "1"
+-            and self.device.type == "xpu"
+-        ):
++        if self._xpu_static_dummy_logit_indices_enabled():
+             if np.all(num_scheduled_tokens == 1):
+                 return hidden_states, hidden_states[:num_reqs]
+-            if (
+-                self._xpu_dummy_logit_indices_cpu is None
+-                or self._xpu_dummy_logit_indices_cpu.numel() < num_reqs
+-            ):
+-                self._xpu_dummy_logit_indices_cpu = torch.empty(
+-                    self.max_num_reqs, dtype=torch.long, pin_memory=self.pin_memory
+-                )
+-            if (
+-                self._xpu_dummy_logit_indices_device is None
+-                or self._xpu_dummy_logit_indices_device.numel() < num_reqs
+-            ):
+-                self._xpu_dummy_logit_indices_device = torch.empty(
+-                    self.max_num_reqs, dtype=torch.long, device=self.device
++            logit_indices_key = tuple(int(index) for index in logit_indices)
++            cached_device = self._xpu_dummy_logit_indices_cache.get(logit_indices_key)
++            if cached_device is not None:
++                logit_indices_device = cached_device[:num_reqs]
++                return hidden_states, hidden_states[logit_indices_device]
++            if is_graph_capturing:
++                raise RuntimeError(
++                    "VLLM_XPU_DUMMY_LOGIT_INDICES_STATIC requires preseeded "
++                    "dummy logit indices before XPU graph capture."
+                 )
+-            self._xpu_dummy_logit_indices_cpu[:num_reqs].copy_(
+-                torch.from_numpy(logit_indices).to(torch.long)
+-            )
+-            self._xpu_dummy_logit_indices_device[:num_reqs].copy_(
+-                self._xpu_dummy_logit_indices_cpu[:num_reqs], non_blocking=True
+-            )
+-            logit_indices_device = self._xpu_dummy_logit_indices_device[:num_reqs]
++            logit_indices_device = self._xpu_get_dummy_logit_indices_device(
++                logit_indices_key
++            )[:num_reqs]
+         else:
+             logit_indices_device = torch.from_numpy(logit_indices).to(
+                 self.device, non_blocking=True
+@@ -11883,6 +12227,70 @@ class GPUModelRunner(
+ 
+         logger.debug("Cleaned up profiling KV cache and CUDA graphs")
+ 
++    def _xpu_filter_cudagraph_capture_descs(
++        self,
++        capture_descs: list[tuple[CUDAGraphMode, list[BatchDescriptor]]],
++    ) -> list[tuple[CUDAGraphMode, list[BatchDescriptor]]]:
++        if self.device.type != "xpu":
++            return capture_descs
++
++        skip_prefill = (
++            os.environ.get("VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY", "0")
++            == "1"
++        )
++        skip_spec_decode = (
++            os.environ.get("VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY",
++                           "0") == "1" and self.num_spec_tokens > 0
++        )
++        skip_decode = (
++            os.environ.get("VLLM_XPU_DISABLE_DECODE_CUDAGRAPH_REPLAY", "0")
++            == "1"
++        )
++        if not (skip_prefill or skip_spec_decode or skip_decode):
++            return capture_descs
++
++        filtered: list[tuple[CUDAGraphMode, list[BatchDescriptor]]] = []
++        skipped_prefill = 0
++        skipped_spec_decode = 0
++        skipped_decode = 0
++        for mode, descs in capture_descs:
++            kept_descs: list[BatchDescriptor] = []
++            for desc in descs:
++                if mode == CUDAGraphMode.PIECEWISE and skip_prefill and not desc.uniform:
++                    skipped_prefill += 1
++                    continue
++                if mode == CUDAGraphMode.PIECEWISE and desc.uniform:
++                    if skip_decode:
++                        skipped_decode += 1
++                        continue
++                    if skip_spec_decode:
++                        skipped_spec_decode += 1
++                        continue
++                kept_descs.append(desc)
++            if kept_descs:
++                filtered.append((mode, kept_descs))
++
++        if skipped_prefill:
++            logger.info_once(
++                "Skipping %d non-uniform PIECEWISE CUDA graph captures "
++                "because VLLM_XPU_DISABLE_PREFILL_CUDAGRAPH_REPLAY=1.",
++                skipped_prefill,
++            )
++        if skipped_spec_decode:
++            logger.info_once(
++                "Skipping %d uniform PIECEWISE speculative decode CUDA graph "
++                "captures because "
++                "VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1.",
++                skipped_spec_decode,
++            )
++        if skipped_decode:
++            logger.info_once(
++                "Skipping %d uniform PIECEWISE decode CUDA graph captures "
++                "because VLLM_XPU_DISABLE_DECODE_CUDAGRAPH_REPLAY=1.",
++                skipped_decode,
++            )
++        return filtered
++
+     @torch.inference_mode()
+     def profile_cudagraph_memory(self) -> int:
+         with set_current_vllm_config(self.vllm_config):
+@@ -11890,7 +12298,8 @@ class GPUModelRunner(
+ 
+         saved_num_cudagraph_captured = compilation_counter.num_cudagraph_captured
+ 
+-        capture_descs = self.cudagraph_dispatcher.get_capture_descs()
++        capture_descs = self._xpu_filter_cudagraph_capture_descs(
++            self.cudagraph_dispatcher.get_capture_descs())
+ 
+         total_graphs = sum(len(descs) for _, descs in capture_descs)
+         if total_graphs == 0:
+@@ -11914,50 +12323,67 @@ class GPUModelRunner(
+             original_pools[id(instance)] = instance.graph_pool
+             instance.graph_pool = profiling_pool
+ 
++        profile_seq_lens_by_desc: dict[BatchDescriptor, int] = {}
++        for mode, descs in capture_descs:
++            if mode == CUDAGraphMode.FULL and descs:
++                desc = descs[0]
++                profile_seq_lens_by_desc[desc] = min(
++                    self.max_model_len,
++                    self.max_num_tokens // desc.num_tokens,
++                )
++        self._xpu_prepare_dummy_static_tensors_for_cudagraphs(
++            capture_descs, profile_seq_lens_by_desc
++        )
++
+         set_cudagraph_capturing_enabled(True)
+-        with self._freeze_gc(), graph_capture(device=self.device):
+-            shared_memory_estimate = {}
+-            per_graph_estimate = {}
+-            torch.accelerator.synchronize()
+-            torch.accelerator.empty_cache()
+-
+-            for mode, descs in capture_descs:
+-                profile_descs = descs[:2]
+-                mem_samples: list[int] = []
+-
+-                for i, desc in enumerate(profile_descs):
+-                    mem_before = torch.cuda.mem_get_info()[0]
+-                    self._warmup_and_capture(
+-                        desc,
+-                        cudagraph_runtime_mode=mode,
+-                        profile_seq_lens=(
+-                            min(
+-                                self.max_model_len,
+-                                self.max_num_tokens // desc.num_tokens,
+-                            )
+-                            if mode == CUDAGraphMode.FULL and i == 0
+-                            else None
+-                        ),
++        self._xpu_dummy_static_graph_context = (
++            self._xpu_static_dummy_logit_indices_enabled()
++        )
++        try:
++            with self._freeze_gc(), graph_capture(device=self.device):
++                shared_memory_estimate = {}
++                per_graph_estimate = {}
++                torch.accelerator.synchronize()
++                torch.accelerator.empty_cache()
++
++                for mode, descs in capture_descs:
++                    profile_descs = descs[:2]
++                    mem_samples: list[int] = []
++
++                    for i, desc in enumerate(profile_descs):
++                        mem_before = torch.cuda.mem_get_info()[0]
++                        self._warmup_and_capture(
++                            desc,
++                            cudagraph_runtime_mode=mode,
++                            profile_seq_lens=(
++                                profile_seq_lens_by_desc[desc]
++                                if mode == CUDAGraphMode.FULL and i == 0
++                                else None
++                            ),
++                        )
++                        torch.accelerator.synchronize()
++                        free_after = torch.cuda.mem_get_info()[0]
++                        mem_samples.append(mem_before - free_after)
++
++                    first_capture = mem_samples[0]
++                    # Use at least 1 MiB per graph for driver overhead
++                    per_graph = max(
++                        mem_samples[1] if len(mem_samples) > 1 else 0, 1 << 20
+                     )
+-                    torch.accelerator.synchronize()
+-                    free_after = torch.cuda.mem_get_info()[0]
+-                    mem_samples.append(mem_before - free_after)
+-
+-                first_capture = mem_samples[0]
+-                # Use at least 1 MiB per graph for driver overhead
+-                per_graph = max(mem_samples[1] if len(mem_samples) > 1 else 0, 1 << 20)
+ 
+-                shared_memory_estimate[mode] = first_capture
+-                per_graph_estimate[mode] = per_graph * (len(descs) - 1)
++                    shared_memory_estimate[mode] = first_capture
++                    per_graph_estimate[mode] = per_graph * (len(descs) - 1)
+ 
+-                logger.debug(
+-                    "Estimated %s CUDA graph memory: "
+-                    "%.2f MiB first-capture + (%d-1) × %.2f MiB per-graph",
+-                    mode.name,
+-                    first_capture / (1 << 20),
+-                    len(descs),
+-                    per_graph / (1 << 20),
+-                )
++                    logger.debug(
++                        "Estimated %s CUDA graph memory: "
++                        "%.2f MiB first-capture + (%d-1) × %.2f MiB per-graph",
++                        mode.name,
++                        first_capture / (1 << 20),
++                        len(descs),
++                        per_graph / (1 << 20),
++                    )
++        finally:
++            self._xpu_dummy_static_graph_context = False
+ 
+         set_cudagraph_capturing_enabled(False)
+         CUDAGraphWrapper.clear_all_graphs()
+@@ -12039,28 +12465,38 @@ class GPUModelRunner(
+         # Trigger CUDA graph capture for specific shapes.
+         # Capture the large shapes first so that the smaller shapes
+         # can reuse the memory pool allocated for the large shapes.
+-        set_cudagraph_capturing_enabled(True)
+-        with self._freeze_gc(), graph_capture(device=self.device):
+-            torch.accelerator.synchronize()
+-            torch.accelerator.empty_cache()
+-            start_free_gpu_memory = torch.cuda.mem_get_info()[0]
++        capture_descs = self._xpu_filter_cudagraph_capture_descs(
++            self.cudagraph_dispatcher.get_capture_descs())
++        self._xpu_prepare_dummy_static_tensors_for_cudagraphs(capture_descs)
+ 
+-            for (
+-                runtime_mode,
+-                batch_descs,
+-            ) in self.cudagraph_dispatcher.get_capture_descs():
+-                self._capture_cudagraphs(
+-                    batch_descriptors=batch_descs,
+-                    cudagraph_runtime_mode=runtime_mode,
+-                )
++        set_cudagraph_capturing_enabled(True)
++        self._xpu_dummy_static_graph_context = (
++            self._xpu_static_dummy_logit_indices_enabled()
++        )
++        try:
++            with self._freeze_gc(), graph_capture(device=self.device):
+                 torch.accelerator.synchronize()
++                torch.accelerator.empty_cache()
++                start_free_gpu_memory = torch.cuda.mem_get_info()[0]
++
++                for (
++                    runtime_mode,
++                    batch_descs,
++                ) in capture_descs:
++                    self._capture_cudagraphs(
++                        batch_descriptors=batch_descs,
++                        cudagraph_runtime_mode=runtime_mode,
++                    )
++                    torch.accelerator.synchronize()
+ 
+-            # Capture encoder CUDA graphs if enabled
+-            if self.encoder_cudagraph_manager is not None:
+-                self.encoder_cudagraph_manager.capture()
++                # Capture encoder CUDA graphs if enabled
++                if self.encoder_cudagraph_manager is not None:
++                    self.encoder_cudagraph_manager.capture()
+ 
+-            torch.accelerator.synchronize()
+-            end_free_gpu_memory = torch.cuda.mem_get_info()[0]
++                torch.accelerator.synchronize()
++                end_free_gpu_memory = torch.cuda.mem_get_info()[0]
++        finally:
++            self._xpu_dummy_static_graph_context = False
+ 
+         # Disable cudagraph capturing globally, so any unexpected cudagraph
+         # capturing will be detected and raise an error after here.
+@@ -12100,6 +12536,7 @@ class GPUModelRunner(
+         if num_warmups is None:
+             num_warmups = self.compilation_config.cudagraph_num_of_warmups
+         force_attention = cudagraph_runtime_mode == CUDAGraphMode.FULL
++        xpu_static_dummy_metadata = self._xpu_dummy_static_graph_context
+         for _ in range(num_warmups):
+             self._dummy_run(
+                 desc.num_tokens,
+@@ -12111,6 +12548,7 @@ class GPUModelRunner(
+                 remove_lora=False,
+                 num_active_loras=desc.num_active_loras,
+                 profile_seq_lens=profile_seq_lens,
++                xpu_static_dummy_metadata=xpu_static_dummy_metadata,
+             )
+         self._dummy_run(
+             desc.num_tokens,
+@@ -12122,6 +12560,7 @@ class GPUModelRunner(
+             num_active_loras=desc.num_active_loras,
+             is_graph_capturing=True,
+             profile_seq_lens=profile_seq_lens,
++            xpu_static_dummy_metadata=xpu_static_dummy_metadata,
+         )
+ 
+     def _capture_cudagraphs(
+@@ -12137,6 +12576,8 @@ class GPUModelRunner(
+         if not batch_descriptors:
+             return
+ 
++        self._xpu_prepare_dummy_logit_indices_for_cudagraphs(batch_descriptors)
++
+         uniform_decode = batch_descriptors[0].uniform
+ 
+         # Only rank 0 should print progress bar during capture
+@@ -12349,7 +12790,19 @@ class GPUModelRunner(
+                 | DraftModelProposer
+                 | ExtractHiddenStatesProposer,
+             )
+-            self.drafter.initialize_cudagraph_keys(cudagraph_mode)
++            drafter_cudagraph_mode = cudagraph_mode
++            if (
++                self.device.type == "xpu"
++                and os.environ.get("VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY",
++                                   "0") == "1"
++                and drafter_cudagraph_mode != CUDAGraphMode.NONE
++            ):
++                logger.info_once(
++                    "Disabling speculative drafter CUDA graph keys on XPU "
++                    "because VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY=1."
++                )
++                drafter_cudagraph_mode = CUDAGraphMode.NONE
++            self.drafter.initialize_cudagraph_keys(drafter_cudagraph_mode)
+ 
+     def calculate_reorder_batch_threshold(self) -> None:
+         """
