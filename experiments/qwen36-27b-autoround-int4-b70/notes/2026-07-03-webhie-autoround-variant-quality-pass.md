@@ -89,6 +89,10 @@ final JSON because `transformers` was unavailable. The successful rerun used
   `experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-20260703.queue.json`;
 - LocalMaxxing payload:
   `experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-20260703.payload.json`.
+- LocalMaxxing approved id:
+  `cmr576apv0079q901i6dvsh0l`;
+- submission response:
+  `data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-20260703.submit.log`.
 
 ## Next Follow-Ups
 

@@ -52,8 +52,8 @@ Fastest quality-gated practical variant:
 - full quality gate passed with baseline match and 1024-token needle pass;
 - compact packet:
   `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-20260703.json`;
-- LocalMaxxing: pending submission; prior Intel INT8-LM-head record is
-  `cmr4zkcxb003yq9018408i1pn`;
+- LocalMaxxing: approved as `cmr576apv0079q901i6dvsh0l`; prior Intel
+  INT8-LM-head record is `cmr4zkcxb003yq9018408i1pn`;
 - prior Intel packet:
   `results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`;
 - service recommendation: use `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` first. It

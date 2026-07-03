@@ -69,7 +69,7 @@ the production LAN endpoint:
   generated-token throughput for tokens 1-100 after TTFT with webhie AutoRound
   + runtime INT8 LM-head, `cached_tokens=0` on every prompt, and quality suite
   baseline parity
-- LocalMaxxing: pending submission for webhie; prior Intel INT8 row
+- LocalMaxxing: `cmr576apv0079q901i6dvsh0l`; prior Intel INT8 row
   `cmr4zkcxb003yq9018408i1pn`
 - result packet:
   `../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-20260703.json`

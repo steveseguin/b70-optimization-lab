@@ -102,7 +102,7 @@ Current fastest quality-gated variant:
   `webhie-int8-lmhead-20260703.json`;
 - note:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-webhie-autoround-variant-quality-pass.md`;
-- LocalMaxxing: pending submission.
+- LocalMaxxing: approved as `cmr576apv0079q901i6dvsh0l`.
 
 Prior Intel-checkpoint quality-gated runtime-quantized variant:
 
