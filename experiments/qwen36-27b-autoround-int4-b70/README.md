@@ -92,10 +92,14 @@ Next milestone:
 2. Keep synthetic `vllm-random` metrics diagnostic-only.
 3. Rerun the Qwen realistic suite with `--return-token-ids` before promoting
    any change.
-4. Investigate LM-head/verifier cost. The INT8 LM-head path is the fastest
-   quality-gated practical lane, but it changes runtime LM-head precision. A
-   same-quantization win still needs exact BF16 top-1/candidate-bound work or a
-   cleaner verifier design.
+4. Investigate LM-head/verifier cost with a real mechanism. Recent no-win
+   screens closed output-buffer reuse, bonus-token argmax plumbing, draft-only
+   row-count shortcuts, and Python/chunked INT8 top-1. The remaining credible
+   lane is a fused LM-head top-1 / candidate-vs-max verifier path that avoids
+   materializing `[rows, vocab]` logits and avoids multiple oneDNN GEMM calls.
+   The INT8 LM-head path is the fastest quality-gated practical lane, but it
+   changes runtime LM-head precision. A same-quantization win still needs exact
+   BF16 top-1/candidate-bound work or a cleaner verifier design.
 5. Do not keep config-sweeping the current INT8 lane without a new mechanism:
    MTP depth remains k=3, capture size remains cg8, and target-only attribution
    shows the target verifier LM-head is the real bottleneck.
@@ -131,8 +135,9 @@ dominates. Bad candidates already closed: blind copy skips, skipping
 full-accept state, changing the Triton memcpy block size, exact argmax plumbing
 that still computes full logits, draft local-argmax plumbing that still
 computes full logits, FP8 LM-head (quality fail), INT8 MTP k2/k4/k5,
-INT8 cg4/cg16/cg32, draft-only INT8 LM-head, compressed/full EAGLE3
-(device-loss or too slow), and DFlash (no-win locally).
+INT8 cg4/cg16/cg32, draft-only INT8 LM-head, output-buffer reuse, bonus-token
+argmax fast-path, chunked INT8 top-1 argmax-only verification, compressed/full
+EAGLE3 (device-loss or too slow), and DFlash (no-win locally).
 
 ## Current Entry Points
 

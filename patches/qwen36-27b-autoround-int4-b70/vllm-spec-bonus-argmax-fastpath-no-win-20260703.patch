@@ -1,0 +1,329 @@
+diff --git a/vllm/v1/sample/rejection_sampler.py b/vllm/v1/sample/rejection_sampler.py
+index ba3e72a76..3ce93d50b 100644
+--- a/vllm/v1/sample/rejection_sampler.py
++++ b/vllm/v1/sample/rejection_sampler.py
+@@ -70,6 +70,120 @@ def _xpu_spec_decode_draft_only_enabled() -> bool:
+     )
+ 
+ 
++def _xpu_spec_bonus_argmax_fastpath_enabled() -> bool:
++    return (
++        os.environ.get("VLLM_XPU_SPEC_DECODE_BONUS_ARGMAX_FASTPATH", "")
++        .strip()
++        .lower()
++        in ("1", "true", "yes", "on")
++    )
++
++
++def _xpu_non_argmax_processors_inactive(
++    sampling_metadata: SamplingMetadata,
++) -> bool:
++    for processor in sampling_metadata.logitsprocs.non_argmax_invariant:
++        if hasattr(processor, "min_toks"):
++            if getattr(processor, "min_toks"):
++                return False
++            continue
++        if hasattr(processor, "biases"):
++            if getattr(processor, "biases"):
++                return False
++            continue
++        return False
++    return True
++
++
++def _xpu_can_use_bonus_argmax_fastpath(
++    sampling_metadata: SamplingMetadata,
++    bonus_logits: torch.Tensor,
++) -> bool:
++    if not _xpu_spec_bonus_argmax_fastpath_enabled():
++        return False
++    if bonus_logits.ndim != 2 or bonus_logits.shape[0] == 0:
++        return False
++    if not sampling_metadata.all_greedy or sampling_metadata.all_random:
++        return False
++    if sampling_metadata.max_num_logprobs is not None:
++        return False
++    if sampling_metadata.logprob_token_ids:
++        return False
++    if not sampling_metadata.no_penalties:
++        return False
++    if sampling_metadata.allowed_token_ids_mask is not None:
++        return False
++    if sampling_metadata.bad_words_token_ids:
++        return False
++    holder = sampling_metadata.thinking_budget_state_holder
++    if holder is not None and holder.has_tracked_requests():
++        return False
++    return _xpu_non_argmax_processors_inactive(sampling_metadata)
++
++
++def _xpu_rejection_sync_debug_stage(stage: str) -> None:
++    stages = {
++        item.strip()
++        for item in os.environ.get(
++            "VLLM_XPU_REJECTION_SYNC_DEBUG_STAGES", "").split(",")
++        if item.strip()
++    }
++    if "*" not in stages and stage not in stages:
++        return
++    try:
++        torch.xpu.synchronize()
++    except Exception as exc:
++        raise RuntimeError(
++            f"XPU rejection sampler sync failed at {stage}") from exc
++
++
++def _select_spec_logits_rows(
++    logits: torch.Tensor,
++    indices: torch.Tensor,
++    num_draft_tokens: list[int],
++    *,
++    target_rows: bool,
++    draft_only: bool,
++) -> torch.Tensor:
++    if (
++        os.environ.get("VLLM_XPU_SAFE_SPEC_LOGITS_SELECT", "0") != "1"
++        or logits.device.type != "xpu"
++    ):
++        return logits[indices]
++
++    total_target_rows = sum(num_draft_tokens)
++    if target_rows:
++        if total_target_rows == 0:
++            return logits.new_empty((0, *logits.shape[1:]))
++        if draft_only and logits.shape[0] == total_target_rows:
++            return logits
++        selected = torch.empty(
++            (total_target_rows, *logits.shape[1:]),
++            dtype=logits.dtype,
++            device=logits.device,
++        )
++        src = 0
++        dst = 0
++        for num_draft in num_draft_tokens:
++            if num_draft > 0:
++                selected[dst:dst + num_draft].copy_(
++                    logits[src:src + num_draft])
++                dst += num_draft
++            src += num_draft if draft_only else num_draft + 1
++        return selected
++
++    selected = torch.empty(
++        (len(num_draft_tokens), *logits.shape[1:]),
++        dtype=logits.dtype,
++        device=logits.device,
++    )
++    src = 0
++    for req_idx, num_draft in enumerate(num_draft_tokens):
++        selected[req_idx].copy_(logits[src + num_draft])
++        src += num_draft + 1
++    return selected
++
++
+ class RejectionSampler(nn.Module):
+     """
+     The implementation strictly follows the algorithm described in
+@@ -174,39 +288,64 @@ class RejectionSampler(nn.Module):
+             bonus_sampler_output = None
+             bonus_token_ids = None
+         else:
+-            bonus_logits = logits[bonus_logits_indices]
+-            bonus_sampler_output = self.sampler(
+-                logits=bonus_logits,
+-                sampling_metadata=replace(
+-                    sampling_metadata,
+-                    max_num_logprobs=-1,
+-                ),
+-                predict_bonus_token=True,
+-                # Override the logprobs mode to return logits because they are
+-                # needed later to compute the accepted token logprobs.
+-                logprobs_mode_override="processed_logits"
+-                if self.is_processed_logprobs_mode
+-                else "raw_logits",
++            bonus_logits = _select_spec_logits_rows(
++                logits,
++                bonus_logits_indices,
++                metadata.num_draft_tokens,
++                target_rows=False,
++                draft_only=False,
+             )
+-            bonus_token_ids = bonus_sampler_output.sampled_token_ids
++            _xpu_rejection_sync_debug_stage("after_bonus_logits_index")
++            if _xpu_can_use_bonus_argmax_fastpath(
++                sampling_metadata, bonus_logits):
++                bonus_sampler_output = None
++                bonus_token_ids = bonus_logits.argmax(dim=-1).to(
++                    torch.int32).unsqueeze(-1).contiguous()
++                _xpu_rejection_sync_debug_stage("after_bonus_argmax_fastpath")
++            else:
++                bonus_sampler_output = self.sampler(
++                    logits=bonus_logits,
++                    sampling_metadata=replace(
++                        sampling_metadata,
++                        max_num_logprobs=-1,
++                    ),
++                    predict_bonus_token=True,
++                    # Override the logprobs mode to return logits because they
++                    # are needed later to compute the accepted token logprobs.
++                    logprobs_mode_override="processed_logits"
++                    if self.is_processed_logprobs_mode
++                    else "raw_logits",
++                )
++                _xpu_rejection_sync_debug_stage("after_bonus_sampler")
++                bonus_token_ids = bonus_sampler_output.sampled_token_ids
+         xpu_suppressed_bonus_mask = None
+         xpu_suppressed_replacement_mask = None
+ 
+         # Just like `bonus_logits`, `target_logits` is a new tensor with
+         # separate storage from the original `logits` tensor. Therefore,
+         # it is safe to update `target_logits` in place.
+-        raw_target_logits = logits[target_logits_indices]
++        raw_target_logits = _select_spec_logits_rows(
++            logits,
++            target_logits_indices,
++            metadata.num_draft_tokens,
++            target_rows=True,
++            draft_only=draft_only,
++        )
++        _xpu_rejection_sync_debug_stage("after_target_logits_index")
+         # Use float32 for the target_logits.
+         raw_target_logits = raw_target_logits.to(torch.float32)
++        _xpu_rejection_sync_debug_stage("after_target_logits_float")
+         target_logits = raw_target_logits
+         if not self.is_processed_logprobs_mode:
+             # Clone raw_target_logits before applying processors to preserve
+             # the original raw logits for logprobs computation, since
+             # apply_logits_processors modifies the tensor in-place.
+             target_logits = target_logits.clone()
++            _xpu_rejection_sync_debug_stage("after_target_logits_clone")
+         target_logits = self.apply_logits_processors(
+             target_logits, sampling_metadata, metadata
+         )
++        _xpu_rejection_sync_debug_stage("after_logits_processors")
+         # [num_tokens, vocab_size]
+         # NOTE(woosuk): `target_logits` can be updated in place inside the
+         # `apply_sampling_constraints` function.
+@@ -215,6 +354,7 @@ class RejectionSampler(nn.Module):
+             metadata.cu_num_draft_tokens,
+             sampling_metadata,
+         )
++        _xpu_rejection_sync_debug_stage("after_sampling_constraints")
+ 
+         if draft_only:
+             if not sampling_metadata.all_greedy or self.synthetic_mode:
+@@ -241,6 +381,7 @@ class RejectionSampler(nn.Module):
+                 metadata.cu_num_draft_tokens,
+                 target_logits,
+             )
++            _xpu_rejection_sync_debug_stage("after_draft_only_greedy_sample")
+             # This experimental XPU path is used only for deterministic
+             # throughput/parity work. Returning token IDs without logprobs keeps
+             # the verifier transaction target-owned and avoids the known-bad
+@@ -274,6 +415,7 @@ class RejectionSampler(nn.Module):
+             synthetic_mode=self.synthetic_mode,
+             synthetic_conditional_rates=self.synthetic_conditional_rates,
+         )
++        _xpu_rejection_sync_debug_stage("after_rejection_sample")
+         self._trace_xpu_bonus_logits(
+             metadata=metadata,
+             bonus_logits=bonus_logits,
+@@ -295,6 +437,7 @@ class RejectionSampler(nn.Module):
+ 
+         logprobs_tensors = None
+         if sampling_metadata.max_num_logprobs is not None:
++            assert bonus_sampler_output is not None
+             logprobs_tensors = self._get_logprobs_tensors(
+                 sampling_metadata.max_num_logprobs,
+                 metadata,
+@@ -712,6 +855,7 @@ def rejection_sample(
+         dtype=torch.int32,  # Consistent with SamplerOutput.sampled_token_ids.
+         device=device,
+     )
++    _xpu_rejection_sync_debug_stage("after_rejection_output_alloc")
+ 
+     if sampling_metadata.all_greedy:
+         is_greedy = None
+@@ -734,6 +878,7 @@ def rejection_sample(
+     if not sampling_metadata.all_random:
+         # Rejection sampling for greedy sampling requests.
+         target_argmax = target_logits.argmax(dim=-1)
++        _xpu_rejection_sync_debug_stage("after_rejection_target_argmax")
+         rejection_greedy_sample_kernel[(batch_size,)](
+             output_token_ids,
+             cu_num_draft_tokens,
+@@ -746,11 +891,13 @@ def rejection_sample(
+             synthetic_conditional_rates,
+             SYNTHETIC_MODE=synthetic_mode,
+         )
++        _xpu_rejection_sync_debug_stage("after_rejection_greedy_kernel")
+         if sampling_metadata.all_greedy:
+             return output_token_ids
+ 
+     # Compute probability distribution from target logits.
+     target_probs = target_logits.softmax(dim=-1, dtype=torch.float32)
++    _xpu_rejection_sync_debug_stage("after_rejection_target_softmax")
+     assert target_probs.is_contiguous()
+ 
+     # Sample recovered tokens for each position.
+@@ -809,21 +956,50 @@ def draft_only_greedy_sample(
+     assert cu_num_draft_tokens.ndim == 1
+     assert target_logits.ndim == 2
+ 
+-    batch_size = len(num_draft_tokens)
+     num_tokens = draft_token_ids.shape[0]
+-    device = target_logits.device
+     assert target_logits.shape[0] == num_tokens
+ 
++    target_argmax = target_logits.argmax(dim=-1)
++    _xpu_rejection_sync_debug_stage("after_draft_only_target_argmax")
++    return draft_only_greedy_sample_from_argmax(
++        draft_token_ids,
++        num_draft_tokens,
++        max_spec_len,
++        cu_num_draft_tokens,
++        target_argmax,
++    )
++
++
++def draft_only_greedy_sample_from_argmax(
++    # [num_tokens]
++    draft_token_ids: torch.Tensor,
++    # [batch_size]
++    num_draft_tokens: list[int],
++    max_spec_len: int,
++    # [batch_size]
++    cu_num_draft_tokens: torch.Tensor,
++    # [num_tokens]
++    target_argmax: torch.Tensor,
++) -> torch.Tensor:
++    assert draft_token_ids.ndim == 1
++    assert cu_num_draft_tokens.ndim == 1
++    assert target_argmax.ndim == 1
++
++    batch_size = len(num_draft_tokens)
++    num_tokens = draft_token_ids.shape[0]
++    device = target_argmax.device
++    assert target_argmax.shape[0] == num_tokens
++
+     output_token_ids = torch.full(
+         (batch_size, max_spec_len + 1),
+         PLACEHOLDER_TOKEN_ID,
+         dtype=torch.int32,
+         device=device,
+     )
++    _xpu_rejection_sync_debug_stage("after_draft_only_output_alloc")
+     if num_tokens == 0:
+         return output_token_ids
+ 
+-    target_argmax = target_logits.argmax(dim=-1)
+     draft_only_greedy_sample_kernel[(batch_size,)](
+         output_token_ids,
+         cu_num_draft_tokens,
+@@ -831,6 +1007,7 @@ def draft_only_greedy_sample(
+         target_argmax,
+         max_spec_len,
+     )
++    _xpu_rejection_sync_debug_stage("after_draft_only_kernel")
+     return output_token_ids
+ 
+ 

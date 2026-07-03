@@ -64,6 +64,13 @@ Fastest quality-gated practical variant:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-quality-pass.md`.
 - scope attribution:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md`.
+- latest no-win follow-ups preserved as patches/notes:
+  output-buffer reuse (`62.428 tok/s`), bonus-token argmax fast-path
+  (same-window candidate `62.320` vs control `62.609`), draft-only row-count
+  shortcut (collapsed, invalid), and chunked INT8 top-1 argmax-only verifier
+  (`61.410 tok/s`). Conclusion: the next credible speed lane is a real fused
+  LM-head top-1 / candidate-vs-max verifier kernel or verifier redesign, not
+  sampler plumbing or multiple oneDNN chunks.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

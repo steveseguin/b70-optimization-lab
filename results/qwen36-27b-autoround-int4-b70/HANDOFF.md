@@ -175,6 +175,17 @@ Post-baseline follow-up:
   was noisy at `62.821`, then `61.398`/`63.158` with worse p10/mean, and cg16
   device-lost); target-only INT8 passed quality and is the better service
   recipe, but it is not a new throughput record.
+- Later INT8 LM-head source follow-ups did not improve the `62.628 tok/s`
+  strict record. Output-buffer reuse passed the strict gate at
+  `62.427810578115064 tok/s` and is no-win; bonus-token argmax fast-path
+  reached `62.551370267657624 tok/s` standalone, but same-window A/B measured
+  candidate `62.32029632557057` vs control `62.60860919531282`, no-win; the
+  draft-only row-count screen collapsed to single-digit tok/s and was
+  interrupted as invalid; chunked INT8 top-1 argmax-only verification passed the
+  strict gate at `61.40954015865033 tok/s`, no-win. Preserve those patches as
+  evidence, but do not keep them active. The useful conclusion is that compact
+  verifier work needs a real fused LM-head top-1/candidate-vs-max kernel, not
+  Python/chunked oneDNN calls or sampler plumbing shortcuts.
 - Variance note: current same-recipe promoted rows are `54.861`, `53.992`,
   `53.522`, and `53.608 tok/s` (mean `53.996`, stdev `0.612`, range `2.48%`
   of mean). Treat sub-1% Qwen27 changes as inconclusive unless a same-window

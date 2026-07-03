@@ -1,0 +1,280 @@
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 4303f45..1e79a8b 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -6040,7 +6040,10 @@ struct gdn_replayssm_commit_pending_kernel {
+       const int rows,
+       const int conv_dim,
+       const int conv_base_len) {
+-    const int elems_per_row = std::max(1, conv_dim * conv_base_len);
++    // One work item per (row, d) so each item snapshots all conv_base_len
++    // columns locally before writing — avoids the cross-work-item read/write
++    // race in the old per-element layout when accepted > 0.
++    const int elems_per_row = std::max(1, conv_dim);
+     const int total = rows * elems_per_row;
+     sycl::range<1> local(group_size);
+     sycl::range<1> global((total + group_size - 1) / group_size);
+@@ -6077,7 +6080,10 @@ struct gdn_replayssm_commit_pending_kernel {
+   }
+ 
+   void operator()(sycl::nd_item<1> item) const {
+-    const int elems_per_row = sycl::max(1, conv_dim * conv_base_len);
++    // elems_per_row is now conv_dim (not conv_dim*conv_base_len):
++    // each work item owns one d-dimension element and handles all
++    // conv_base_len columns internally via a snapshot to avoid races.
++    const int elems_per_row = sycl::max(1, conv_dim);
+     const int linear = item.get_global_linear_id();
+     const int total = rows * elems_per_row;
+     if (linear >= total) {
+@@ -6085,32 +6091,40 @@ struct gdn_replayssm_commit_pending_kernel {
+     }
+ 
+     const int row = linear / elems_per_row;
+-    const int elem = linear - row * elems_per_row;
++    const int d = linear - row * elems_per_row;  // conv_dim index
+     const int slot = slot_for_row(row);
+     const int accepted = accepted_for_row(row, slot);
+ 
+-    if (conv_base_len > 0 && elem < conv_dim * conv_base_len) {
+-      const int state_pos = elem / conv_dim;
+-      const int conv_elem = elem - state_pos * conv_dim;
+-      const int source_pos = accepted + state_pos;
+-      T value = T(0);
+-      if (source_pos < conv_base_len) {
+-        value = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                           static_cast<int64_t>(conv_elem) * conv_stride_1 +
+-                           static_cast<int64_t>(source_pos) * conv_stride_2];
+-      } else {
+-        const int pending_pos = source_pos - conv_base_len;
+-        value =
+-            conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
+-                         static_cast<int64_t>(pending_pos) * pending_stride_1 +
+-                         static_cast<int64_t>(conv_elem) * pending_stride_2];
++    // Two-phase conv window shift for this (slot, d) lane.
++    // Phase 1: read all source columns into a stack snapshot.
++    // Phase 2: write from snapshot — no race because all reads are done.
++    // conv_base_len <= 4 for Qwen GDN; tmp is stack-safe in SYCL device code.
++    if (conv_base_len > 0 && d < conv_dim) {
++      T tmp[4] = {};
++      const int n = sycl::min(conv_base_len, 4);
++      for (int s = 0; s < n; ++s) {
++        const int source_pos = accepted + s;
++        if (source_pos < conv_base_len) {
++          tmp[s] = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                              static_cast<int64_t>(d) * conv_stride_1 +
++                              static_cast<int64_t>(source_pos) * conv_stride_2];
++        } else {
++          const int pending_pos = source_pos - conv_base_len;
++          tmp[s] =
++              conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
++                           static_cast<int64_t>(pending_pos) * pending_stride_1 +
++                           static_cast<int64_t>(d) * pending_stride_2];
++        }
++      }
++      for (int s = 0; s < n; ++s) {
++        conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                   static_cast<int64_t>(d) * conv_stride_1 +
++                   static_cast<int64_t>(s) * conv_stride_2] = tmp[s];
+       }
+-      conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                 static_cast<int64_t>(conv_elem) * conv_stride_1 +
+-                 static_cast<int64_t>(state_pos) * conv_stride_2] = value;
+     }
+ 
+-    if (elem == 0) {
++    // Cursor update: run once per row on work item d==0.
++    if (d == 0) {
+       const int old_wp = write_pos[slot];
+       const int old_base = cache_base[slot];
+       const bool old_flush = is_flush[slot] != 0;
+diff --git a/csrc/xpu/moe_layerlet.cpp b/csrc/xpu/moe_layerlet.cpp
+index 68e9418..9310ae3 100644
+--- a/csrc/xpu/moe_layerlet.cpp
++++ b/csrc/xpu/moe_layerlet.cpp
+@@ -88,10 +88,10 @@ void require_optional_same_device(
+   require_same_device(reference, tensor.value(), name);
+ }
+ 
+-template <typename scalar_t>
++template <typename scalar_t, typename topk_t>
+ void qwen36_single_token_prologue_quant1_out_impl(
+     const scalar_t* hidden_states,
+-    const int64_t* topk_ids,
++    const topk_t* topk_ids,
+     int64_t* expert_first_token_offset,
+     int* unpermuted_row_to_permuted_row,
+     int8_t* gemm1_a,
+@@ -118,7 +118,7 @@ void qwen36_single_token_prologue_quant1_out_impl(
+                    expert += local_range) {
+                 int count = 0;
+                 for (int k = 0; k < topk; ++k) {
+-                  if (topk_ids[k] < expert) {
++                  if (static_cast<int64_t>(topk_ids[k]) < expert) {
+                     count += 1;
+                   }
+                 }
+@@ -127,11 +127,12 @@ void qwen36_single_token_prologue_quant1_out_impl(
+ 
+               for (int row_id = local_id; row_id < topk;
+                    row_id += local_range) {
+-                const int64_t selected_expert = topk_ids[row_id];
++                const int64_t selected_expert =
++                    static_cast<int64_t>(topk_ids[row_id]);
+                 int less = 0;
+                 int prior_equal = 0;
+                 for (int k = 0; k < topk; ++k) {
+-                  const int64_t other = topk_ids[k];
++                  const int64_t other = static_cast<int64_t>(topk_ids[k]);
+                   if (other < selected_expert) {
+                     less += 1;
+                   }
+@@ -395,42 +396,52 @@ void qwen36_single_token_prologue_quant1_out(
+       "qwen36 fused prologue+quant1 only supports bf16, fp16, and fp32 hidden_states");
+   require_dtype(gemm1_a, "gemm1_a", torch::kInt8);
+   require_dtype(gemm1_a_scales, "gemm1_a_scales", torch::kFloat32);
++  TORCH_CHECK(
++      topk_ids.scalar_type() == torch::kInt64 ||
++          topk_ids.scalar_type() == torch::kInt32,
++      "topk_ids dtype mismatch: expected Long or Int got ",
++      topk_ids.scalar_type());
++
++#define QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(HIDDEN_PTR)            \
++  do {                                                                      \
++    if (topk_ids.scalar_type() == torch::kInt64) {                          \
++      qwen36_single_token_prologue_quant1_out_impl(                         \
++          HIDDEN_PTR,                                                       \
++          topk_ids.data_ptr<int64_t>(),                                     \
++          expert_first_token_offset.data_ptr<int64_t>(),                    \
++          unpermuted_row_to_permuted_row.data_ptr<int>(),                   \
++          gemm1_a.data_ptr<int8_t>(),                                       \
++          gemm1_a_scales.data_ptr<float>(),                                 \
++          hidden_size,                                                      \
++          8,                                                                \
++          num_experts);                                                     \
++    } else {                                                                \
++      qwen36_single_token_prologue_quant1_out_impl(                         \
++          HIDDEN_PTR,                                                       \
++          topk_ids.data_ptr<int>(),                                         \
++          expert_first_token_offset.data_ptr<int64_t>(),                    \
++          unpermuted_row_to_permuted_row.data_ptr<int>(),                   \
++          gemm1_a.data_ptr<int8_t>(),                                       \
++          gemm1_a_scales.data_ptr<float>(),                                 \
++          hidden_size,                                                      \
++          8,                                                                \
++          num_experts);                                                     \
++    }                                                                       \
++  } while (false)
+ 
+   if (hidden_states.scalar_type() == torch::kBFloat16) {
+-    qwen36_single_token_prologue_quant1_out_impl(
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
+         reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
+-            hidden_states.data_ptr()),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++            hidden_states.data_ptr()));
+   } else if (hidden_states.scalar_type() == torch::kFloat16) {
+-    qwen36_single_token_prologue_quant1_out_impl(
+-        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
++        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()));
+   } else {
+-    qwen36_single_token_prologue_quant1_out_impl(
+-        hidden_states.data_ptr<float>(),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
++        hidden_states.data_ptr<float>());
+   }
++
++#undef QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1
+ }
+ 
+ template <typename scalar_t>
+@@ -1112,7 +1123,11 @@ torch::Tensor qwen36_moe_w8a8_full_layerlet(
+                         "expert_first_token_offset");
+     require_same_device(hidden_states, output, "output");
+ 
+-    require_dtype(topk_ids, "topk_ids", torch::kInt64);
++    TORCH_CHECK(
++        topk_ids.scalar_type() == torch::kInt64 ||
++            topk_ids.scalar_type() == torch::kInt32,
++        "topk_ids dtype mismatch: expected Long or Int got ",
++        topk_ids.scalar_type());
+     require_dtype(topk_weights, "topk_weights", torch::kFloat32);
+     require_dtype(workspace, "workspace", torch::kUInt8);
+     require_dtype(
+diff --git a/csrc/xpu/onednn/onednn_matmul.cpp b/csrc/xpu/onednn/onednn_matmul.cpp
+index 5f5b2b4..032ab84 100644
+--- a/csrc/xpu/onednn/onednn_matmul.cpp
++++ b/csrc/xpu/onednn/onednn_matmul.cpp
+@@ -52,6 +52,19 @@ torch::Tensor check_and_create_output_tensor(
+   return at::empty_strided(result_shape, res_stride, options);
+ }
+ 
++std::vector<int64_t> matmul_output_shape(
++    const torch::Tensor& A,
++    const torch::Tensor& B) {
++  TORCH_CHECK(
++      A.dim() == 2 || A.dim() == 3,
++      "OneDNN Matmul only support 2D and 3D inputs!\n");
++  TORCH_CHECK(B.dim() == 2, "OneDNN Matmul only support 2D weights!\n");
++  if (A.dim() == 2) {
++    return {A.size(0), B.size(1)};
++  }
++  return {A.size(0), A.size(1), B.size(1)};
++}
++
+ torch::Tensor fp8_gemm(
+     const torch::Tensor& A,  // [b, m ,k]
+     const torch::Tensor& B,  // [k, n]
+@@ -197,14 +210,13 @@ torch::Tensor int8_gemm_w8a8_out(
+     torch::Tensor& output,
+     const std::optional<torch::Tensor>& bias_) {
+   const at::DeviceGuard device_guard(A.device());
+-  torch::Tensor expected = check_and_create_output_tensor(
+-      A, B, output.scalar_type());
++  std::vector<int64_t> expected_shape = matmul_output_shape(A, B);
+   TORCH_CHECK(output.is_xpu(), "int8_gemm_w8a8_out output must be XPU");
+   TORCH_CHECK(output.is_contiguous(), "int8_gemm_w8a8_out output must be contiguous");
+   TORCH_CHECK(
+-      output.sizes() == expected.sizes(),
++      output.sizes().vec() == expected_shape,
+       "int8_gemm_w8a8_out output shape mismatch: expected ",
+-      expected.sizes(),
++      expected_shape,
+       " got ",
+       output.sizes());
+   TORCH_CHECK(
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 327562f..d49931f 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -2204,6 +2204,7 @@ def xpu_fused_moe(hidden_states,
+             "num_rows": int(num_rows),
+             "hidden_size": int(hidden_size),
+             "n_experts_per_token": int(n_experts_per_token),
++            "topk_ids_dtype": str(topk_ids.dtype).replace("torch.", ""),
+             "expert_map_is_none": expert_map is None,
+             "ep_size": int(ep_size),
+             "has_int8_scratch": int8_scratch is not None,

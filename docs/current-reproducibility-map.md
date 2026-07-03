@@ -63,12 +63,14 @@ the production LAN endpoint:
 - revision: `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
 - hardware: one Intel Arc Pro B70 32 GB per replica first
 - engine: local vLLM/XPU from `/home/steve/src/vllm`
-- current strict fresh-response best: `53.522 tok/s` median generated-token
-  throughput for tokens 1-100 after TTFT, with `cached_tokens=0` on every
-  prompt and quality suite pass
-- LocalMaxxing: `cmr4gokx90061nv01lhoe3ft8`
+- current strict fresh-response practical best: `62.628 tok/s` median
+  generated-token throughput for tokens 1-100 after TTFT with runtime INT8
+  LM-head, `cached_tokens=0` on every prompt, and quality suite pass
+- LocalMaxxing: `cmr4zkcxb003yq9018408i1pn`
 - result packet:
-  `../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`
+  `../results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`
+- BF16-LM-head baseline best: `53.522 tok/s`, LocalMaxxing
+  `cmr4gokx90061nv01lhoe3ft8`
 - handoff:
   `../results/qwen36-27b-autoround-int4-b70/HANDOFF.md`
 - repro:
