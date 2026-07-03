@@ -48,7 +48,8 @@ serving works for `Intel/Qwen3.6-27B-int4-AutoRound` at revision
 gate exists. Current best valid row is the env-only promote-source path at a
 conservative `53.522 tok/s` median generated-token throughput for tokens
 1-100 after TTFT, with two support rows at `54.861` and `53.992`, quality
-suite pass, and `cached_tokens=0` on every prompt. Compact packet:
+suite pass, `cached_tokens=0` on every prompt, and LocalMaxxing approval
+`cmr4gokx90061nv01lhoe3ft8`. Compact packet:
 `../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 
 ### Gemma 4 26B A4B Q8 / INT8 On B70

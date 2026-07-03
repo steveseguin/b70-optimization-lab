@@ -30,6 +30,15 @@ only**, even if their original labels used `fresh` or the first measured row had
 `cached_tokens=0`. A single synthetic/filled-long row0 is not enough for a
 current headline claim or a new LocalMaxxing submission.
 
+Date: 2026-07-03
+
+Model: `Intel/Qwen3.6-27B-int4-AutoRound`, AutoRound INT4 W4A16, vLLM/XPU on
+one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `qwen36-27b-int4-autoround-b70-vllm-realistic-promotesource-mtp3-cg8-53tok-20260703` | `cmr4gokx90061nv01lhoe3ft8` | 1 | 69 | 128 | **53.522 median 1-100 after TTFT** | 42.545 median wall full128 | **policy-compliant realistic suite**: fixed `qwen36-27b-autoround-int4-b70-realistic-v1`, each prompt once, `cached_tokens=0` every row, no prompt/KV/context/response reuse, no n-gram/history acceleration, target model/quant unchanged, `qwen3_next_mtp` accepted tokens verified by the target model. Config: TP1, XPU graph on, `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`, `MAX_NUM_BATCHED_TOKENS=1024`, `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1`, `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`. Quality suite passed and matched baseline. Support rows: `54.861` and `53.992`; same-window plain-MTP3/cg8 control: `48.345`. Result packet `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.md`, queue `experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-int4-promotesource-20260703.queue.json`, approved response `data/localmaxxing-responses/qwen36-27b-int4-promotesource-20260703.submit2.log`. First POST failed only because top-level `promptTokens` was `68.5`; queue was corrected to integer `69` while preserving per-prompt token counts in `engineFlags`. |
+
 | Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `gemma4-26b-a4b-q8-b70-llamacpp-service-32k-smoke-20260703` | `cmr47ivql0045nv011pfdjlaa` | 1 | 32571 | 76 | **115.179 after TTFT** | 979.156 prompt+output wall | **approved long-context service / prompt-processing result, not the short-decode headline**: one cold near-32K request from `lc-24000-late`, `cached_tokens=0`, unique prompt, exact JSON retrieval passed, UD-Q8_K_XL target/verifier with Q4_0 MTP draft verified by target; `tokSPrefill=996.600`, TTFT `32682 ms`; supporting service ladder passed `32/32` long-context rows and `64/64` canary rows across four B70 lanes with average lane median prefill `1192.965 tok/s` and long-context decode `131.786 tok/s`; payload `data/localmaxxing-gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.payload.json`, response `data/localmaxxing-responses/gemma4-26b-a4b-q8-b70-llamacpp-service-32k-20260703.submit.log` |

@@ -36,6 +36,7 @@ Current Qwen27 INT4 best:
   needle all passed and matched baseline;
 - compact result packet:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`;
+- LocalMaxxing: approved as `cmr4gokx90061nv01lhoe3ft8`;
 - conservative evidence:
   `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json`.
 

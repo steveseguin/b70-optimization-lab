@@ -48,8 +48,8 @@ Active target as of the latest switch request:
   `54.861` and `53.992`; same-window baseline control was `48.345`.
   Quality suite passed and matched baseline. Start from
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
-- LocalMaxxing submission is now eligible only for this strict/fresh result
-  packet, not for synthetic MTP5/cg16 or invalid postprocess-skip rows.
+- LocalMaxxing approved this strict/fresh result as `cmr4gokx90061nv01lhoe3ft8`.
+  Do not submit synthetic MTP5/cg16 or invalid postprocess-skip rows.
 
 Previous bookmarked target:
 

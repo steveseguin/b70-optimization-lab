@@ -54,7 +54,8 @@ Current best valid fresh-response result:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json`
   with `pass_all=true` and `baseline_match_all=true`;
 - compact packet:
-  `promote-source-noacceptedpost-20260703.json`.
+  `promote-source-noacceptedpost-20260703.json`;
+- LocalMaxxing: approved as `cmr4gokx90061nv01lhoe3ft8`.
 
 Recent ladder controls:
 

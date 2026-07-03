@@ -23,8 +23,9 @@ The model card reports ten safetensor shards plus
 ## Current Status
 
 Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
-a strict fresh-response baseline and one validated env-only speed win. No
-LocalMaxxing submission has been made from the Qwen27 INT4 lane yet.
+a strict fresh-response baseline and one validated env-only speed win.
+LocalMaxxing approved the current strict/fresh result as
+`cmr4gokx90061nv01lhoe3ft8`.
 
 Validated so far:
 
@@ -73,6 +74,7 @@ Current best valid fresh-response result:
   `pass_all=true`, `baseline_match_all=true`;
 - compact packet:
   `promote-source-noacceptedpost-20260703.json`;
+- LocalMaxxing: `cmr4gokx90061nv01lhoe3ft8`;
 - vLLM patch-stack snapshot:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
 

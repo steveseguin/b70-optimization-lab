@@ -49,6 +49,17 @@ Quality artifact:
 
 The quality suite reports `pass_all=true` and `baseline_match_all=true`.
 
+LocalMaxxing:
+
+- status: `APPROVED`
+- ID: `cmr4gokx90061nv01lhoe3ft8`
+- label:
+  `qwen36-27b-int4-autoround-b70-vllm-realistic-promotesource-mtp3-cg8-53tok-20260703`
+- queue:
+  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-int4-promotesource-20260703.queue.json`
+- response:
+  `../../data/localmaxxing-responses/qwen36-27b-int4-promotesource-20260703.submit2.log`
+
 ## Config
 
 Base config:
