@@ -261,6 +261,18 @@ strict fresh gate at k=8/10/12, but topped out at `49.994 tok/s` median
 `UR_RESULT_ERROR_DEVICE_LOST`. Evidence:
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-dflash-drafter-no-win.md`.
 
+Remaining built-in speculative routes are not promising record paths under the
+fresh-response gates. `ngram`, `ngram_gpu`, and `suffix` are history/pattern
+accelerators and should not be promoted as fresh-response throughput.
+`mlp_speculator` is disabled/not wired in this local V1 runtime. `medusa`
+requires a trained compatible head that is not available locally. Tree drafting
+is target-verified in principle but adds top-k/logits work while LM-head/logits
+is already the measured bottleneck. The only remaining non-kernel screen worth
+doing is metadata-only discovery for a small external `draft_model`/PARD
+candidate with the same `vocab_size=248320` and matching tokenizer; absent that,
+stop speculative config exploration and focus on the fused LM-head top-1 source
+target.
+
 Variance rule for this lane: older same-recipe promoted rows span
 `53.522-54.861 tok/s` (`2.48%` range of mean, stdev `0.612`). The latest
 same-window reconfirmation on healthy GPUs 1-3 was much tighter:
