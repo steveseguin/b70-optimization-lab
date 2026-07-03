@@ -286,6 +286,7 @@ def request_completion(
     stream: bool,
     seed: int,
     ignore_eos: bool,
+    request_extra: dict[str, Any],
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -299,6 +300,7 @@ def request_completion(
         payload["ignore_eos"] = True
     if stream:
         payload["stream_options"] = {"include_usage": True}
+    payload.update(request_extra)
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/completions",
         data=json.dumps(payload).encode("utf-8"),
@@ -372,6 +374,7 @@ def request_chat_completion(
     stream: bool,
     seed: int,
     ignore_eos: bool,
+    request_extra: dict[str, Any],
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -385,6 +388,7 @@ def request_chat_completion(
         payload["ignore_eos"] = True
     if stream:
         payload["stream_options"] = {"include_usage": True}
+    payload.update(request_extra)
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/chat/completions",
         data=json.dumps(payload).encode("utf-8"),
@@ -403,7 +407,7 @@ def request_chat_completion(
             data = json.loads(resp.read())
             choices = data.get("choices") or []
             message = choices[0].get("message") if choices else {}
-            text = (message or {}).get("content") or ""
+            text = (message or {}).get("content") or (message or {}).get("reasoning") or ""
             chunks.append(text)
             usage = data.get("usage")
             return {
@@ -431,7 +435,7 @@ def request_chat_completion(
             choices = event.get("choices") or []
             if choices:
                 delta = choices[0].get("delta") or {}
-                text = delta.get("content") or ""
+                text = delta.get("content") or delta.get("reasoning") or ""
                 if text and first is None:
                     first = time.perf_counter()
                     first_chunk_text = text
@@ -488,6 +492,11 @@ def summarize_repeats(records: list[dict[str, Any]]) -> dict[str, Any]:
         "time_per_output_token_ms_vllm_histogram",
         "inter_token_ms_vllm_histogram",
         "iteration_tokens_per_step_vllm_histogram",
+        "spec_decode_drafts",
+        "spec_decode_draft_tokens",
+        "spec_decode_accepted_tokens",
+        "spec_decode_acceptance_fraction",
+        "spec_decode_accepted_tokens_per_generation_token",
     ]:
         xs = vals(key)
         if xs:
@@ -555,8 +564,19 @@ def main() -> int:
         action="store_true",
         help="Force generation to the requested output token count for decode throughput measurements.",
     )
+    parser.add_argument(
+        "--request-extra-json",
+        default="{}",
+        help=(
+            "JSON object merged into every request payload. Use for model-specific "
+            "controls such as '{\"chat_template_kwargs\":{\"enable_thinking\":false}}'."
+        ),
+    )
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
+    request_extra = json.loads(args.request_extra_json)
+    if not isinstance(request_extra, dict):
+        raise SystemExit("--request-extra-json must decode to a JSON object")
 
     models = get_json(f"{args.base_url.rstrip('/')}/v1/models")
     model = args.model or models["data"][0]["id"]
@@ -583,6 +603,7 @@ def main() -> int:
             stream=args.mode == "stream",
             seed=args.seed - 1,
             ignore_eos=args.ignore_eos,
+            request_extra=request_extra,
         )
 
     records: list[dict[str, Any]] = []
@@ -601,6 +622,7 @@ def main() -> int:
             stream=args.mode == "stream",
             seed=args.seed,
             ignore_eos=args.ignore_eos,
+            request_extra=request_extra,
         )
         request_finished_at_unix = time.time()
         vram_post = {} if args.skip_vram else xpu_vram_mib()
@@ -628,6 +650,15 @@ def main() -> int:
 
         prompt_delta = metric_delta(metrics_before, metrics_after, "vllm:prompt_tokens_total")
         gen_delta = metric_delta(metrics_before, metrics_after, "vllm:generation_tokens_total")
+        spec_drafts_delta = metric_delta(
+            metrics_before, metrics_after, "vllm:spec_decode_num_drafts_total"
+        )
+        spec_draft_tokens_delta = metric_delta(
+            metrics_before, metrics_after, "vllm:spec_decode_num_draft_tokens_total"
+        )
+        spec_accepted_tokens_delta = metric_delta(
+            metrics_before, metrics_after, "vllm:spec_decode_num_accepted_tokens_total"
+        )
         ttft_count = metric_delta(
             metrics_before, metrics_after, "vllm:time_to_first_token_seconds_count"
         )
@@ -677,6 +708,9 @@ def main() -> int:
                 "vllm_metric_deltas": {
                     "prompt_tokens": prompt_delta,
                     "generation_tokens": gen_delta,
+                    "spec_decode_drafts": spec_drafts_delta,
+                    "spec_decode_draft_tokens": spec_draft_tokens_delta,
+                    "spec_decode_accepted_tokens": spec_accepted_tokens_delta,
                     "ttft_count": ttft_count,
                     "ttft_sum_s": ttft_sum,
                     "e2e_count": e2e_count,
@@ -711,6 +745,15 @@ def main() -> int:
                 "iteration_tokens_per_step_vllm_histogram": (
                     histogram_deltas["vllm:iteration_tokens_total"].get("mean")
                 ),
+                "spec_decode_drafts": spec_drafts_delta,
+                "spec_decode_draft_tokens": spec_draft_tokens_delta,
+                "spec_decode_accepted_tokens": spec_accepted_tokens_delta,
+                "spec_decode_acceptance_fraction": None
+                if spec_draft_tokens_delta <= 0
+                else spec_accepted_tokens_delta / spec_draft_tokens_delta,
+                "spec_decode_accepted_tokens_per_generation_token": None
+                if gen_delta <= 0
+                else spec_accepted_tokens_delta / gen_delta,
                 "vram_mib_before": vram_pre,
                 "vram_mib_after": vram_post,
                 "first_chunk_tokens_client_estimate": first_chunk_tokens,
@@ -738,6 +781,7 @@ def main() -> int:
         "output_tokens_requested": args.output_tokens,
         "mode": args.mode,
         "ignore_eos": args.ignore_eos,
+        "request_extra": request_extra,
         "skip_vram": args.skip_vram,
         "repeats": args.repeats,
         "measurement_notes": [

@@ -1,0 +1,35 @@
+diff --git a/vllm/entrypoints/openai/chat_completion/serving.py b/vllm/entrypoints/openai/chat_completion/serving.py
+index 694ff8004..615e19863 100644
+--- a/vllm/entrypoints/openai/chat_completion/serving.py
++++ b/vllm/entrypoints/openai/chat_completion/serving.py
+@@ -1094 +1094,2 @@ class OpenAIServingChat(OpenAIServing):
+-                if self.enable_prompt_tokens_details and num_cached_tokens:
++                if (self.enable_prompt_tokens_details
++                        and num_cached_tokens is not None):
+@@ -1502 +1503,2 @@ class OpenAIServingChat(OpenAIServing):
+-        if self.enable_prompt_tokens_details and final_res.num_cached_tokens:
++        if (self.enable_prompt_tokens_details
++                and final_res.num_cached_tokens is not None):
+diff --git a/vllm/entrypoints/openai/completion/serving.py b/vllm/entrypoints/openai/completion/serving.py
+index 454b170a5..23cf43ef5 100644
+--- a/vllm/entrypoints/openai/completion/serving.py
++++ b/vllm/entrypoints/openai/completion/serving.py
+@@ -433 +433,2 @@ class OpenAIServingCompletion(OpenAIServing):
+-            if self.enable_prompt_tokens_details and num_cached_tokens:
++            if (self.enable_prompt_tokens_details
++                    and num_cached_tokens is not None):
+@@ -560 +561 @@ class OpenAIServingCompletion(OpenAIServing):
+-            and last_final_res.num_cached_tokens
++            and last_final_res.num_cached_tokens is not None
+diff --git a/vllm/entrypoints/serve/disagg/serving.py b/vllm/entrypoints/serve/disagg/serving.py
+index d510125fd..055d6b598 100644
+--- a/vllm/entrypoints/serve/disagg/serving.py
++++ b/vllm/entrypoints/serve/disagg/serving.py
+@@ -252 +252,2 @@ class ServingTokens(OpenAIServing):
+-        if self.enable_prompt_tokens_details and final_res.num_cached_tokens:
++        if (self.enable_prompt_tokens_details
++                and final_res.num_cached_tokens is not None):
+@@ -369 +370,2 @@ class ServingTokens(OpenAIServing):
+-            if self.enable_prompt_tokens_details and num_cached_tokens:
++            if (self.enable_prompt_tokens_details
++                    and num_cached_tokens is not None):

@@ -13,9 +13,23 @@ after TP1 smoke works. Start from:
 - `experiments/qwen36-27b-autoround-int4-b70/README.md`;
 - `repro/qwen36-27b-autoround-int4-b70/README.md`.
 
-First milestone: download/pin revision
-`abc86de19eb1ebbf6a7df4582341325c22ddcb7d`, serve TP1 via vLLM/XPU at
-`max_model_len=2048`, run the OpenAI smoke, then build a real baseline gate.
+First milestone complete: revision
+`abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU
+serving works at `max_model_len=2048`, the OpenAI smoke passed, and the strict
+realistic gate now has a valid baseline. Current Qwen27 INT4 baseline:
+
+- TP1, one B70, XPU graph on, `qwen3_next_mtp`,
+  `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,
+  `MAX_NUM_BATCHED_TOKENS=1024`;
+- Qwen realistic suite, chat mode, each prompt once, `cached_tokens=0`,
+  `return_token_ids=true`;
+- median `47.624 tok/s` for generated tokens 1-100 after TTFT, p10 `43.998`,
+  mean `48.403`, TTFT median `637.3 ms`;
+- evidence:
+  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`.
+
+Synthetic MTP5/cg16 reaches `81.773 tok/s` on `vllm-random` p512/o512, but
+that is diagnostic only and is not the headline/fresh-response number.
 
 ## Gemma 26B Bookmark
 

@@ -22,8 +22,9 @@ The model card reports ten safetensor shards plus
 
 ## Current Status
 
-Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. This is not a
-speed claim yet.
+Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
+a strict fresh-response baseline, but no LocalMaxxing submission has been made
+from it yet.
 
 Validated so far:
 
@@ -35,9 +36,58 @@ Validated so far:
 - MTP2 is active and accepted `105/108` draft tokens across the smoke/manual
   probes, so the Intel checkpoint is not showing the public 0%-acceptance MTP
   packaging failure in this local runtime.
+- four independent TP1 replicas have been used for parallel screening across
+  the four B70s;
+- local vLLM can now report explicit zero cached-token details after applying
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-prompt-tokens-details-zero-20260703.patch`
+  and restarting the server.
 
-Next milestone: no-spec versus MTP2 fresh-response baselines, then XPU graph
-and `num_speculative_tokens` sweeps under the fixed validity gate.
+Current valid fresh-response baseline:
+
+- config: TP1, Intel checkpoint, XPU graph on, `qwen3_next_mtp`,
+  `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,
+  `max_num_batched_tokens=1024`;
+- API/gate: chat mode, Qwen-specific fixed realistic suite, 12 unique prompts,
+  each prompt once, `cached_tokens=0` for every request,
+  `return_token_ids=true`, thinking disabled;
+- primary metric: median generated-token throughput for tokens 1-100 after
+  TTFT, timed from streamed token-id receipt timestamps;
+- current Qwen-suite artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`;
+- result: median `47.624 tok/s`, p10 `43.998`, mean `48.403`,
+  full-output after-TTFT median `48.484`, wall median `39.072`,
+  TTFT median `637.3 ms`;
+- supporting same-config Qwen-suite artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-20260703T033403Z.json`
+  at median `48.003 tok/s`.
+
+Current best synthetic diagnostic:
+
+- config: TP1, Intel checkpoint, XPU graph on, `qwen3_next_mtp`,
+  `num_speculative_tokens=5`, `max_cudagraph_capture_size=16`,
+  `max_num_batched_tokens=1024`;
+- file:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp5-xpugraph1-cg16-specmetrics-p512o512-r3-20260703T031846Z.json`;
+- synthetic `vllm-random` p512/o512 corrected after-first throughput:
+  `81.773 tok/s`, decode `12.182 ms/token`, draft acceptance `95.51%`;
+- status: **diagnostic only**, not a headline result, because it uses a
+  repetitive synthetic prompt and is not the fixed realistic cold suite.
+
+Current realistic research interpretation:
+
+- MTP5/cg16 wins the synthetic p512/o512 screen at `81.773 tok/s`, but loses
+  under realistic chat at median `43.771 tok/s`;
+- MTP4/cg8 reached median `45.669 tok/s` under the same gate;
+- MTP3/cg8 is the best valid realistic chat setting so far, with two
+  Qwen-suite passes at `48.003` and `47.624 tok/s`;
+- completions-mode rows can be faster (for example MTP5/cg8 full-output
+  after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
+  bypasses the chat template and emits `<think>` text.
+
+Next milestone: beat the MTP3/cg8 valid baseline without changing model
+identity or using warmed/history/cache effects. Keep synthetic screens for
+candidate search only, then rerun the Qwen realistic suite with
+`--return-token-ids`.
 
 First diagnostic realistic-suite run (not a headline result):
 
@@ -77,10 +127,12 @@ First diagnostic realistic-suite run (not a headline result):
    `quant_method=auto-round` / `auto_round:auto_gptq` to an XPU-supported
    W4A16 path without silently dequantizing or CPU fallback.
 
-## Do Not Claim Yet
+## Claiming Rules
 
-- Do not submit LocalMaxxing results until the fixed realistic gate exists and
-  passes.
+- Do not submit LocalMaxxing results unless the Qwen realistic gate passes and
+  the result improves a matching prior record.
 - Do not average warmed repeated prompts into fresh-response throughput.
+- Do not promote `vllm-random`, repeated-output, completions-with-raw-thinking,
+  or server-metric-only rows as real-world throughput.
 - Do not compare this INT4 quality lane directly against Gemma Q8 or Qwen35
   W8A8 without labeling the quantization and quality differences.

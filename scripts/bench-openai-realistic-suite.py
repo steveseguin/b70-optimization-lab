@@ -24,6 +24,7 @@ def post_stream(
     api_mode: str,
     seed: int | None,
     request_extra: dict[str, Any],
+    return_token_ids: bool,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": model,
@@ -35,6 +36,8 @@ def post_stream(
     }
     if seed is not None:
         payload["seed"] = seed
+    if return_token_ids:
+        payload["return_token_ids"] = True
     if api_mode == "chat":
         endpoint = "chat/completions"
         payload["messages"] = [{"role": "user", "content": prompt}]
@@ -54,6 +57,7 @@ def post_stream(
     first_text_at: float | None = None
     text_parts: list[str] = []
     chunk_offsets: list[float] = []
+    token_id_offsets: list[float] = []
     content_delta_count = 0
     reasoning_delta_count = 0
     usage: dict[str, Any] = {}
@@ -70,6 +74,14 @@ def post_stream(
             if event.get("usage"):
                 usage = event["usage"]
             for choice in event.get("choices", []):
+                choice_token_ids = choice.get("token_ids")
+                if isinstance(choice_token_ids, list):
+                    now = time.perf_counter()
+                    if first_text_at is None and choice_token_ids:
+                        first_text_at = now
+                    token_id_offsets.extend(
+                        [now - started] * len(choice_token_ids)
+                    )
                 if api_mode == "chat":
                     delta = choice.get("delta") or {}
                     token_text = delta.get("content") or ""
@@ -108,9 +120,11 @@ def post_stream(
         "ttft_s": ttft_s,
         "post_ttft_s": post_ttft_s,
         "chunk_count": len(chunk_offsets),
+        "stream_token_id_count": len(token_id_offsets),
         "content_delta_count": content_delta_count,
         "reasoning_delta_count": reasoning_delta_count,
         "chunk_offsets_s": chunk_offsets,
+        "token_id_offsets_s": token_id_offsets,
         "usage": usage,
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
@@ -199,6 +213,15 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--out", type=Path)
     parser.add_argument(
+        "--return-token-ids",
+        action="store_true",
+        help=(
+            "Request vLLM stream token_ids and use cumulative token-id timing "
+            "for the primary tokens-1-100 metric. This is required when text "
+            "chunks contain multiple generated tokens."
+        ),
+    )
+    parser.add_argument(
         "--request-extra-json",
         default="{}",
         help=(
@@ -225,11 +248,17 @@ def main() -> int:
             api_mode=args.api_mode,
             seed=args.seed,
             request_extra=request_extra,
+            return_token_ids=args.return_token_ids,
         )
         row["prompt_index"] = index
         row["prompt_id"] = item["id"]
         row["prompt_sha256"] = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-        offsets = row["chunk_offsets_s"]
+        if args.return_token_ids and row.get("stream_token_id_count"):
+            offsets = row["token_id_offsets_s"]
+            timing_source = "openai_stream_token_ids_chunk_timestamp"
+        else:
+            offsets = row["chunk_offsets_s"]
+            timing_source = "openai_stream_content_or_reasoning_delta"
         if len(offsets) >= args.metric_tokens:
             duration = offsets[args.metric_tokens - 1] - offsets[0]
             row["tok_s_1_100_after_ttft"] = (
@@ -243,7 +272,10 @@ def main() -> int:
         row["metric_chunk_events_at_least_window"] = (
             row.get("chunk_count") >= args.metric_tokens
         )
-        row["token_timing_source"] = "openai_stream_content_or_reasoning_delta"
+        row["metric_token_id_events_at_least_window"] = (
+            row.get("stream_token_id_count") >= args.metric_tokens
+        )
+        row["token_timing_source"] = timing_source
         row["cached_tokens"] = cached_tokens(row)
         rows.append(row)
 
@@ -271,10 +303,22 @@ def main() -> int:
     prompt_hashes = [row["prompt_sha256"] for row in rows]
     completion_counts = [row.get("completion_tokens") for row in rows]
     chunk_counts = [row.get("chunk_count") for row in rows]
+    token_id_counts = [row.get("stream_token_id_count") for row in rows]
     chunk_counts_match = [bool(row.get("chunk_count_equals_completion_tokens")) for row in rows]
     chunks_cover_metric = [
         isinstance(v, int) and v >= args.metric_tokens for v in chunk_counts
     ]
+    token_ids_cover_metric = [
+        isinstance(v, int) and v >= args.metric_tokens for v in token_id_counts
+    ]
+    metric_events_cover = (
+        token_ids_cover_metric if args.return_token_ids else chunks_cover_metric
+    )
+    token_timing_source = (
+        "openai_stream_token_ids_chunk_timestamp"
+        if args.return_token_ids else
+        "openai_stream_content_or_reasoning_delta"
+    )
 
     gate = {
         "passed": (
@@ -282,13 +326,14 @@ def main() -> int:
             and len(metric_values) == len(rows)
             and all(isinstance(v, int) and v == 0 for v in cached_values)
             and len(set(prompt_hashes)) == len(prompt_hashes)
-            and all(chunks_cover_metric)
+            and all(metric_events_cover)
             and all(isinstance(v, int) and v >= args.metric_tokens for v in completion_counts)
         ),
         "required_policy": "fixed realistic prompt suite; each prompt once; cached_tokens=0 every row; no repeated/warmed prompt averaging; metric is median tokens 1-100 after TTFT",
         "metric_name": "median_tok_s_1_100_after_ttft",
         "metric_tokens": args.metric_tokens,
-        "token_timing_source": "openai_stream_content_or_reasoning_delta",
+        "token_timing_source": token_timing_source,
+        "return_token_ids_requested": args.return_token_ids,
         "cached_tokens_all_zero": all(isinstance(v, int) and v == 0 for v in cached_values),
         "cached_tokens": cached_values,
         "prompts_unique": len(set(prompt_hashes)) == len(prompt_hashes),
@@ -300,6 +345,8 @@ def main() -> int:
         ),
         "metric_chunk_events_at_least_window": all(chunks_cover_metric),
         "chunk_counts": chunk_counts,
+        "metric_token_id_events_at_least_window": all(token_ids_cover_metric),
+        "stream_token_id_counts": token_id_counts,
         "completion_tokens_at_least_metric_window": all(
             isinstance(v, int) and v >= args.metric_tokens for v in completion_counts
         ),
@@ -327,6 +374,7 @@ def main() -> int:
         "primary_metric_name": gate["metric_name"],
         "primary_metric_tokens": args.metric_tokens,
         "token_timing_source": gate["token_timing_source"],
+        "return_token_ids_requested": args.return_token_ids,
         "chat_reasoning_delta_counts": [
             row.get("reasoning_delta_count") for row in rows
         ],
@@ -348,6 +396,7 @@ def main() -> int:
             "max_tokens": args.max_tokens,
             "seed": args.seed,
             "request_extra": request_extra,
+            "return_token_ids": args.return_token_ids,
         },
         "realistic_final_gate": gate,
         "fresh_response_validity": fresh_response_validity,

@@ -31,19 +31,34 @@ A baseline result requires:
 
 Current vLLM/Qwen27 caveats:
 
-- This vLLM build may omit `prompt_tokens_details` when cached tokens are zero,
-  even if prompt-token details are enabled. Diagnostic rows with
-  `cached_tokens=null` are not promoted under the strict policy. Before
-  LocalMaxxing submission, either patch/enable explicit zero reporting or
-  capture an auditable no-cache exception approved for this lane.
+- Unpatched vLLM omitted `prompt_tokens_details` when cached tokens were zero,
+  even if prompt-token details were enabled. Diagnostic rows with
+  `cached_tokens=null` are not promoted under the strict policy.
+- A local reporting-only patch is preserved at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-prompt-tokens-details-zero-20260703.patch`.
+  It changes the OpenAI usage checks to emit `cached_tokens=0` whenever the
+  value is known. Servers must be restarted after applying it.
+- Patch smoke on the restarted MTP5/cg16 server proved non-stream chat and
+  completions return `usage.prompt_tokens_details.cached_tokens=0`.
+- The current valid gate path is chat streaming with
+  `--return-token-ids`. vLLM returns `choices[].token_ids` for each stream
+  event; the harness expands those counts into token-id receipt timestamps and
+  uses that for the primary generated-token window.
 - Chat streaming for this Qwen setup can emit generated text in
   `delta.reasoning` rather than `delta.content`. The benchmark harness records
   both counts. This is acceptable for diagnostics, but promoted artifacts must
   clearly state the timing source.
 - vLLM can group multiple generated tokens into one SSE text delta. Do not use
   chunk counts as token counts for the primary "tokens 1-100 after TTFT"
-  metric unless token-per-delta is proven. Prefer server metric deltas or
-  token-id-level timing.
+  metric unless token-per-delta is proven. Use token-id-level timing for
+  promotion-style runs.
+- Token-id timing is still stream-chunk granularity: multiple token IDs in the
+  same SSE chunk share one client receipt timestamp. This is acceptable for the
+  current Qwen baseline because it measures streamed availability more
+  directly than text chunks, but report the timing source in every result.
+- Text completions bypass the chat template and can expose `<think>` text even
+  when the server default disables thinking for chat. Prefer chat-mode final
+  gates unless the prompt is manually chat-templated and quality-checked.
 
 ## Promoted / LocalMaxxing Candidate
 
@@ -62,3 +77,16 @@ Use the same realistic final-gate policy as Gemma:
   declared target model.
 
 No LocalMaxxing submission should happen before this gate exists and passes.
+
+Current gate-passing baseline:
+
+- config: Intel checkpoint, TP1, one B70, XPU graph on, `qwen3_next_mtp`,
+  `num_speculative_tokens=3`,
+  `COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}'`,
+  chat mode, thinking disabled;
+- suite: `../../repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json`;
+- artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`;
+- result: median `47.624 tok/s` for generated tokens 1-100 after TTFT, p10
+  `43.998`, mean `48.403`, TTFT median `637.3 ms`, `cached_tokens=0` for all
+  12 requests, `realistic_final_gate.passed=true`.

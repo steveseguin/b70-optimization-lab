@@ -49,3 +49,35 @@ parallel source audits, independent review of risky changes, log/result
 classification, and research synthesis. The main Codex agent remains
 responsible for final decisions, edits, verification, and not disturbing active
 experiment processes.
+
+## Local Model Storage
+
+Primary hot-path model cache is still on the internal NVMe:
+
+```text
+/mnt/fast-ai/llm-cache/hf
+```
+
+As of 2026-07-03, an external 4 TB USB drive is available for overflow model
+storage and archived benchmark artifacts:
+
+```text
+/mnt/usb-models
+```
+
+Device identity observed at setup:
+
+- block device: `/dev/sda2`;
+- filesystem: `ntfs3`;
+- label: `CorsairExternal`;
+- mount path: `/mnt/usb-models`;
+- created folders:
+  - `/mnt/usb-models/llm-cache/hf`;
+  - `/mnt/usb-models/bench-results`;
+  - `/mnt/usb-models/models`.
+
+Use the internal NVMe cache for active benchmark hot paths unless disk pressure
+or model count makes that impractical. Use the USB drive for alternate model
+variants, overflow downloads, and archived large artifacts. Do not commit model
+weights, USB paths full of artifacts, or generated cache contents to Git; record
+only the model identity, local path, checksum if useful, and result summaries.

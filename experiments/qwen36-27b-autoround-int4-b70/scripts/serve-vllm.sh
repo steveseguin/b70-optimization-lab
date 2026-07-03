@@ -21,8 +21,11 @@ if [[ -f /home/steve/.config/huggingface/token && -z "${HF_TOKEN:-}" ]]; then
 fi
 
 export HF_HOME TRANSFORMERS_CACHE HF_HUB_DISABLE_XET HF_HUB_ENABLE_HF_TRANSFER
-export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:$GPU_INDEX}"
 export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-$GPU_INDEX}"
+# ZE_AFFINITY_MASK narrows visibility to one physical GPU. Inside that masked
+# view, the visible XPU is logical index 0; using level_zero:$GPU_INDEX makes
+# torch see zero devices for GPU_INDEX > 0.
+export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0}"
 export VLLM_NO_USAGE_STATS="${VLLM_NO_USAGE_STATS:-1}"
 export LD_LIBRARY_PATH="$QWEN36_27B_AR_VENV/lib:$QWEN36_27B_AR_VENV/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-}"
 
@@ -40,6 +43,9 @@ echo "  gpu: $GPU_INDEX"
 echo "  max_model_len: $MAX_MODEL_LEN"
 echo "  mtp: $QWEN36_27B_ENABLE_MTP tokens=$NUM_SPECULATIVE_TOKENS"
 echo "  default_enable_thinking: $QWEN36_27B_DEFAULT_ENABLE_THINKING"
+echo "  prompt_token_details: $QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS"
+echo "  compilation_config: ${COMPILATION_CONFIG:-<default>}"
+echo "  extra_args: ${VLLM_EXTRA_ARGS:-<none>}"
 "$QWEN36_27B_AR_VENV/bin/python" - <<'PY'
 import sys
 import torch
@@ -67,8 +73,24 @@ if [[ "$QWEN36_27B_DEFAULT_ENABLE_THINKING" == "0" ]]; then
   args+=(--default-chat-template-kwargs '{"enable_thinking": false}')
 fi
 
+if [[ "$QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS" != "0" ]]; then
+  args+=(--enable-prompt-tokens-details)
+fi
+
+if [[ -n "${COMPILATION_CONFIG:-}" ]]; then
+  args+=(--compilation-config "$COMPILATION_CONFIG")
+fi
+
 if [[ "$QWEN36_27B_ENABLE_MTP" != "0" ]]; then
   args+=(--speculative-config "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":$NUM_SPECULATIVE_TOKENS}")
 fi
+
+if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+  # Simple scalar flag passthrough for controlled sweeps. For arguments with
+  # embedded whitespace, add them explicitly above as array elements.
+  read -r -a extra_args <<< "$VLLM_EXTRA_ARGS"
+  args+=("${extra_args[@]}")
+fi
+unset VLLM_EXTRA_ARGS
 
 exec "$QWEN36_27B_AR_VENV/bin/vllm" "${args[@]}"

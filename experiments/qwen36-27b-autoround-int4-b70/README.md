@@ -11,9 +11,9 @@ This experiment lane tracks bring-up and optimization for:
 
 ## Immediate Goal
 
-The initial TP1 single-B70 OpenAI-compatible endpoint now works. The next goal
-is to turn the working endpoint into measured no-spec/MTP fresh-response
-baselines, then optimize.
+The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
+has a strict fresh-response baseline. The current task is to beat that baseline
+without changing model identity or using warmed/cache/history effects.
 
 Completed first milestone:
 
@@ -30,12 +30,34 @@ Current evidence:
 - smoke JSON:
   `data/qwen36-27b-autoround-openai-smoke-20260703T013020Z.json`.
 
+Current strict baseline:
+
+- config: Intel checkpoint, TP1, one B70, XPU graph on, `qwen3_next_mtp`,
+  `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,
+  `max_num_batched_tokens=1024`;
+- gate: Qwen realistic suite, chat mode, 12 unique prompts, each prompt once,
+  `cached_tokens=0` every row, `return_token_ids=true`;
+- result: median `47.624 tok/s` for generated tokens 1-100 after TTFT,
+  p10 `43.998`, mean `48.403`;
+- evidence:
+  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`.
+
+Synthetic search reference:
+
+- config: MTP5/cg16;
+- p512/o512 synthetic `vllm-random`: `81.773 tok/s`;
+- evidence:
+  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp5-xpugraph1-cg16-specmetrics-p512o512-r3-20260703T031846Z.json`;
+- status: diagnostic only. It loses under the realistic chat gate.
+
 Next milestone:
 
-1. Run no-spec TP1 baseline.
-2. Run MTP1/2/3/4 TP1 sweeps with acceptance metrics.
-3. Test XPU graph only with correctness gates.
-4. Scale to four independent TP1 replicas for parallel optimization.
+1. Use four independent TP1 replicas for parallel candidate screening.
+2. Keep synthetic `vllm-random` metrics diagnostic-only.
+3. Rerun the Qwen realistic suite with `--return-token-ids` before promoting
+   any change.
+4. Investigate GDN/spec accepted-state postprocess and verifier overhead as
+   the likely next performance levers.
 
 ## Folder Map
 
@@ -60,6 +82,20 @@ GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 \
 BASE_URL=http://127.0.0.1:19410/v1 MODEL=qwen36-27b-int4-autoround \
   experiments/qwen36-27b-autoround-int4-b70/scripts/smoke-openai.sh
 ```
+
+## Local Storage
+
+The pinned Intel snapshot currently lives on the internal NVMe HF cache:
+
+```text
+/mnt/fast-ai/llm-cache/hf/hub/models--Intel--Qwen3.6-27B-int4-AutoRound/snapshots/abc86de19eb1ebbf6a7df4582341325c22ddcb7d
+```
+
+An external 4 TB USB drive is mounted at `/mnt/usb-models` for overflow model
+variants and archived artifacts. Keep active hot-path benchmarks on the
+internal NVMe when practical; use `/mnt/usb-models/llm-cache/hf` or
+`/mnt/usb-models/models` for additional variants if internal space becomes a
+constraint. Do not commit model weights or generated cache contents.
 
 ## External References
 
