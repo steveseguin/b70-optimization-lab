@@ -121,7 +121,10 @@ Post-baseline follow-up:
 - The long-lived GPU0 server on port `19410` died during a live reconfirmation
   attempt with `UR_RESULT_ERROR_DEVICE_LOST`. Do not use that failed live
   server result for performance claims. `xpu-smi discovery` later saw all four
-  B70s, but future reconfirmation should start a fresh server.
+  B70s. A fresh single-lane GPU0 control server then passed the strict gate at
+  `53.53356374896342 tok/s`, `cached_tokens=0`, confirming the current best
+  recipe still reproduces:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-control-gpu0-freshreconfirm-realistic128-chat-tokenids-qwensuite-20260703T112954Z.json`.
 - `MAX_NUM_BATCHED_TOKENS` strict same-window sweep (`512`, `768`, `2048`) did
   not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
   same-window control was `48.884`; directional only and below the current
