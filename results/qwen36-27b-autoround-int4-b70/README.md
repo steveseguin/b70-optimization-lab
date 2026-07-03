@@ -102,6 +102,10 @@ Current realistic research interpretation:
   env pair still did not beat MTP3: promote-source MTP4/cg8 reached
   `49.918 tok/s`, and promote-source MTP5/cg8 reached `47.439 tok/s` with a
   first-prompt quality warning;
+- retesting MTP3 graph-capture size with the valid promote-source env pair did
+  not beat cg8: cg4's initial `54.449 tok/s` row fell to `52.697` and `53.238`
+  in paired repeats against cg8 controls at `53.509` and `53.518`; cg16
+  crashed with device lost, and cg32 was no-win;
 - plain MTP3/cg8 is the stable control family at `47.624`, `48.003`, and
   `48.536 tok/s`;
 - promote-source/no-accepted-postprocess is the current best valid family at

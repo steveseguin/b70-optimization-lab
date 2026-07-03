@@ -743,3 +743,38 @@ Interpretation:
   materially reduces verifier/GDN overhead.
 - Next config-level sweep should stay on MTP3 and test graph-capture sizing or
   similarly isolated variables with same-window strict controls.
+
+## Promote-Source MTP3 Capture-Size Sweep
+
+Fixed-depth MTP3 was retested with the same promote-source/no-accepted-state
+postprocess env pair while varying only
+`max_cudagraph_capture_size`. A four-way first pass used cg8 as the current
+control and tested cg4/cg16/cg32 on the other B70s.
+
+| label | max capture | median tok/s 1-100 after TTFT | p10 | mean | median TTFT ms | status | file |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| cg8 control, parallel pass | 8 | 53.248 | 48.162 | 53.512 | 632.7 | valid control | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-capsweep-control-realistic128-chat-tokenids-qwensuite-20260703T051233Z.json` |
+| cg4, parallel pass | 4 | 54.449 | 46.887 | 53.654 | 531.0 | directional only | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg4-promotesource-noacceptedpost-capsweep-realistic128-chat-tokenids-qwensuite-20260703T051233Z.json` |
+| cg16, parallel pass | 16 | n/a | n/a | n/a | n/a | rejected: server died | no complete JSON; server hit `UR_RESULT_ERROR_DEVICE_LOST` |
+| cg32, parallel pass | 32 | 53.390 | 47.155 | 53.555 | 570.9 | valid/no-win; first-request TTFT outlier | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg32-promotesource-noacceptedpost-capsweep-realistic128-chat-tokenids-qwensuite-20260703T051233Z.json` |
+
+Because cg4 looked directionally positive in the parallel pass, it was rerun
+sequentially against cg8 controls in an A/B/B/A order:
+
+| label | max capture | median tok/s 1-100 after TTFT | p10 | mean | median TTFT ms | status | file |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| cg8 pairedA control | 8 | 53.509 | 48.406 | 53.890 | 628.8 | valid control | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-capsweep-pairedA-control-realistic128-chat-tokenids-qwensuite-20260703T051416Z.json` |
+| cg4 pairedA | 4 | 52.697 | 46.377 | 52.512 | 630.9 | valid/no-win | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg4-promotesource-noacceptedpost-capsweep-pairedA-realistic128-chat-tokenids-qwensuite-20260703T051452Z.json` |
+| cg4 pairedB | 4 | 53.238 | 48.277 | 53.503 | 630.2 | valid/no-win | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg4-promotesource-noacceptedpost-capsweep-pairedB-realistic128-chat-tokenids-qwensuite-20260703T051529Z.json` |
+| cg8 pairedB control | 8 | 53.518 | 48.369 | 54.024 | 629.7 | valid control | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-capsweep-pairedB-control-realistic128-chat-tokenids-qwensuite-20260703T051605Z.json` |
+
+Conclusion:
+
+- No capture-size change beats the current MTP3/cg8 promote-source baseline.
+- The cg4 first-pass bump was variance; paired repeats put cg4 below cg8.
+- cg16 is unstable on this stack: it died during prompt 5 with
+  `UR_RESULT_ERROR_DEVICE_LOST` at
+  `gpu_model_runner.py:_prepare_inputs -> num_accepted_tokens_event.synchronize()`.
+- cg32 has no median benefit and produced a first-request TTFT outlier
+  (`25.7 s`), so it is not a service default candidate.
+- Keep `max_cudagraph_capture_size=8` for the short-context MTP3 lane.

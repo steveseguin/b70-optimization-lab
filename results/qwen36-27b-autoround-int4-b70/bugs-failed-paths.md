@@ -35,6 +35,12 @@ bad flags, invalid fast paths, and negative optimizations here as they happen.
   patch `../../patches/qwen36-27b-autoround-int4-b70/vllm-mamba-batch-memcpy-block-size-env-20260703.patch`
   was no-win (`66.908 tok/s` synthetic vs clean MTP3/cg8 around `66.807`).
   The active source was reverted after the test.
+- `max_cudagraph_capture_size=16` with the valid promote-source MTP3 env pair
+  is unstable on this stack. During the strict Qwen suite it died with
+  `UR_RESULT_ERROR_DEVICE_LOST` at
+  `gpu_model_runner.py:_prepare_inputs -> num_accepted_tokens_event.synchronize()`.
+  Do not retry cg16 as a config-only speed candidate unless the underlying XPU
+  graph/event issue is fixed.
 
 ## Current Hot Path
 

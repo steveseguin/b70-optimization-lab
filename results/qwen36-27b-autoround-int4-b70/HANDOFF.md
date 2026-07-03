@@ -78,6 +78,12 @@ Post-baseline follow-up:
   first response / only `112` streamed token IDs on the first prompt, so treat
   MTP5 as a rejected quality/performance branch until verifier/GDN overhead is
   reduced by source work.
+- Promote-source MTP3 capture-size sweep also did not move the baseline.
+  cg4 looked directionally positive in one parallel pass (`54.449 tok/s`), but
+  paired sequential repeats were lower than cg8 controls (`52.697`, `53.238`
+  vs `53.509`, `53.518`). cg16 crashed with
+  `UR_RESULT_ERROR_DEVICE_LOST`; cg32 was no-win and had a first-request TTFT
+  outlier. Keep `max_cudagraph_capture_size=8`.
 - `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is **invalid**. It is fast
   (`51.273 tok/s` strict Qwen-suite median and `74.877 tok/s` synthetic), but
   the 1024-token needle quality check failed with `B!!!!...` while baseline
@@ -148,6 +154,8 @@ Continue INT4 optimization without promoting synthetic scores:
   realistic-chat baseline to beat;
 - do not pursue MTP4/MTP5 as config-only changes; promote-source MTP4/MTP5 were
   strict-gate no-wins, and MTP5 had a quality warning;
+- do not keep sweeping `max_cudagraph_capture_size` for MTP3; cg4/cg16/cg32
+  were rejected, and cg8 remains the best service candidate;
 - do not promote MTP3/cg16 from the single `50.750 tok/s` row without a paired
   repeat batch; the first repeat fell to `47.045 tok/s`;
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
