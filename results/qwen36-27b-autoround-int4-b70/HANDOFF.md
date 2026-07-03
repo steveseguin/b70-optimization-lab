@@ -23,30 +23,38 @@ Known-good smoke:
   quantization auto-detected as `inc`, XPU graph off;
 - MTP2 acceptance observed: `105/108` accepted draft tokens.
 
-Current valid fresh-response baseline:
+Current best valid fresh-response result:
 
 - config: Intel checkpoint, TP1, one B70, vLLM/XPU chat endpoint, XPU graph on,
   `qwen3_next_mtp`, `num_speculative_tokens=3`,
   `COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}'`,
   `MAX_NUM_BATCHED_TOKENS=1024`, thinking disabled;
+- env delta:
+  `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` and
+  `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`;
 - final-gate policy: Qwen-specific fixed realistic suite, each prompt once,
   `cached_tokens=0` on all 12 requests, no prefix/KV/context/response reuse,
   `return_token_ids=true`, primary metric timed from streamed token-id counts
   for generated tokens 1-100 after TTFT;
-- current best Qwen-suite artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`;
-- primary result: median `47.624 tok/s`, p10 `43.998`, mean `48.403`,
-  full-output after-TTFT median `48.484`, wall median `39.072`,
-  TTFT median `637.3 ms`;
-- supporting same-config Qwen-suite artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-20260703T033403Z.json`
-  at median `48.003 tok/s`.
-- same-window cg8 control repeat:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-windowcheck-20260703T035522Z.json`
-  at median `48.536 tok/s`, p10 `43.924`, mean `49.067`, TTFT median
-  `636.6 ms`, `cached_tokens=0` on every prompt. This supports cg8 as the
-  stable baseline and reinforces that the single cg16 `50.750 tok/s` row should
-  not be promoted without a larger paired win.
+- conservative Qwen-suite artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json`;
+- primary result: median `53.522 tok/s`, p10 `48.406`, mean `53.986`,
+  full-output after-TTFT median `53.817`, wall median `42.545`,
+  TTFT median `628.9 ms`;
+- supporting same-config Qwen-suite artifacts:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-realistic128-chat-tokenids-qwensuite-20260703T044123Z.json`
+  at `54.861 tok/s`, and
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json`
+  at `53.992 tok/s`;
+- same-window plain-MTP3/cg8 control:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-samewindow-control-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json`
+  at median `48.345 tok/s`, so the conservative promote-source row is
+  `+10.71%`;
+- quality artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json`
+  with `pass_all=true` and `baseline_match_all=true`;
+- compact packet:
+  `promote-source-noacceptedpost-20260703.json`.
 
 Recent ladder controls:
 
@@ -66,11 +74,24 @@ Post-baseline follow-up:
   (`51.273 tok/s` strict Qwen-suite median and `74.877 tok/s` synthetic), but
   the 1024-token needle quality check failed with `B!!!!...` while baseline
   passed. Do not use this flag for service, LocalMaxxing, or promoted claims.
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0` by itself is also
+  invalid / diagnostic. It becomes the current valid speed win only when paired
+  with `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1`, which changes the running
+  source metadata to the accepted speculative slot instead of simply dropping
+  accepted-state postprocess.
 - A default-off/default-equivalent patch to sweep the Mamba/GDN
   `batch_memcpy` block size was tested at `4096`; it was no-win
   (`66.908 tok/s` synthetic vs clean baseline around `66.807`). The active
   vLLM source was reverted; patch artifact is preserved at
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-mamba-batch-memcpy-block-size-env-20260703.patch`.
+- Accepted-state copy tracing now identifies the concrete hot path:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json`.
+  In a short MTP3/cg8 p512/o128 diagnostic, full accepts dominated
+  (`accepted_count=4` in `32/36` postprocess copies), every copy launch had
+  `96` entries, and the run copied `5.65 GB` of GDN/Mamba state total
+  (`~156.9 MB` per launch). Temporal state copy was `5.44 GB`; conv state was
+  only `0.21 GB`. The throughput from this trace run is diagnostic-only
+  because tracing was enabled.
 
 Current synthetic diagnostic optimization state:
 
@@ -115,14 +136,19 @@ Continue INT4 optimization without promoting synthetic scores:
 - use MTP5/cg16 as the current synthetic reference for quick screens;
 - prefer chat-mode realistic-suite checks for quality because completions mode
   bypasses the chat template and emits `<think>` text;
-- treat MTP3/cg8 as the current valid realistic-chat baseline to beat;
+- treat promote-source/no-accepted-postprocess MTP3/cg8 as the current valid
+  realistic-chat baseline to beat;
 - do not promote MTP3/cg16 from the single `50.750 tok/s` row without a paired
   repeat batch; the first repeat fell to `47.045 tok/s`;
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
   MTP/speculation or kernel change;
-- inspect the GDN/spec accepted-state postprocess path for a safe optimization;
-- do not skip full-accept GDN postprocess; it breaks long-context state recall;
-- next useful GDN work is instrumentation of accepted-state postprocess counts
-  and timing, then reducing metadata/copy overhead while preserving the copy;
+- inspect the GDN/spec accepted-state path for the next safe optimization;
+- do not skip full-accept GDN postprocess blindly; it breaks long-context state
+  recall. The current win is specifically source-slot promotion plus disabling
+  the redundant accepted-state copy, not a semantic elision;
+- next useful GDN work is reducing the remaining copy/metadata overhead or
+  upstreaming a cleaner version of the source-slot promotion path. Larger
+  memcpy block sizes did not help, so focus on slot semantics and timing around
+  metadata/H2D/copy, not blind kernel chunk tuning;
 - keep long-context/prompt-processing optimization separate from the short
   decode record.

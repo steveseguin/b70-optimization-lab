@@ -23,13 +23,30 @@ bad flags, invalid fast paths, and negative optimizations here as they happen.
   quality check with `B!!!!!!!!!!!!!!!!...` while the normal MTP3/cg8 baseline
   passed. The full-accept GDN/Mamba state copy is required; future work should
   make that copy cheaper, not skip it.
-- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0` is also diagnostic-only.
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0` alone is diagnostic-only.
   It showed a speed lift but changed realistic-suite output hashes. Do not use
-  it for service, LocalMaxxing, or promoted claims.
+  it by itself for service, LocalMaxxing, or promoted claims. Important
+  exception: pairing it with `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` is
+  the current valid speed win because the forward metadata reads the accepted
+  speculative slot as the running source instead of simply dropping the
+  accepted-state transition. See
+  `promote-source-noacceptedpost-20260703.json`.
 - `VLLM_XPU_MAMBA_BATCH_MEMCPY_BLOCK_SIZE=4096` via the preserved experiment
   patch `../../patches/qwen36-27b-autoround-int4-b70/vllm-mamba-batch-memcpy-block-size-env-20260703.patch`
   was no-win (`66.908 tok/s` synthetic vs clean MTP3/cg8 around `66.807`).
   The active source was reverted after the test.
+
+## Current Hot Path
+
+- Accepted-state copy tracing on MTP3/cg8 shows the postprocess copy is
+  volume-heavy, not just a small launch overhead:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json`.
+  A p512/o128 diagnostic recorded `36` postprocess copy launches, `96` entries
+  per launch, `5.65 GB` copied total, and `~156.9 MB` copied per launch. Full
+  accepts accounted for `32/36` copies, and temporal state copy accounted for
+  `5.44 GB`. Do not repeat simple memcpy block-size tuning; the next useful
+  fix must preserve full-accept recurrent-state semantics while avoiding,
+  rotating, or otherwise reducing the physical state-copy volume.
 
 ## Watch List
 

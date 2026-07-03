@@ -1,7 +1,7 @@
 # Qwen3.6 27B AutoRound Repro
 
-This repro folder is the current Qwen3.6 27B AutoRound INT4 one-B70 baseline
-entry point. It covers the initial smoke and the current strict fresh-response
+This repro folder is the current Qwen3.6 27B AutoRound INT4 one-B70 entry
+point. It covers the initial smoke and the current strict fresh-response
 benchmark recipe.
 
 ## Model
@@ -36,9 +36,9 @@ Known passed smoke:
   `../../data/qwen36-27b-autoround-openai-smoke-20260703T013020Z.json`;
 - MTP2 acceptance after smoke/manual probes: `105/108` accepted draft tokens.
 
-## Current Valid Baseline
+## Current Valid Best
 
-Current best strict baseline:
+Current best strict result:
 
 - TP1, one B70, Intel checkpoint revision
   `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`;
@@ -46,15 +46,18 @@ Current best strict baseline:
   `num_speculative_tokens=3`;
 - `COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}'`;
 - `MAX_NUM_BATCHED_TOKENS=1024`, `MAX_MODEL_LEN=2048`, thinking disabled;
+- `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1`;
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`;
 - Qwen realistic suite, each prompt once, `cached_tokens=0` for all 12
   requests, `return_token_ids=true`;
-- median `47.624 tok/s` for generated tokens 1-100 after TTFT, p10 `43.998`,
-  mean `48.403`, TTFT median `637.3 ms`.
+- conservative median `53.522 tok/s` for generated tokens 1-100 after TTFT,
+  p10 `48.406`, mean `53.986`, TTFT median `628.9 ms`.
 
 Evidence:
 
 ```text
-../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json
+../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json
+../../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json
 ```
 
 ## Realistic Suite
@@ -67,13 +70,15 @@ prompt shapes as the Gemma lane, but has its own suite ID:
 qwen36-27b-autoround-int4-b70-realistic-v1
 ```
 
-Launch the current baseline service:
+Launch the current best service:
 
 ```bash
 cd /home/steve/llm-optimizations
 GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 \
   QWEN36_27B_ENABLE_MTP=1 NUM_SPECULATIVE_TOKENS=3 \
   QWEN36_27B_ENABLE_XPU_GRAPH=1 \
+  VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
+  VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
   COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
   experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
 ```

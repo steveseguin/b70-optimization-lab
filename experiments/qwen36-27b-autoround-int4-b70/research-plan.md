@@ -140,6 +140,49 @@ screen configs in parallel. TP2/TP4 are secondary experiments; PCIe/CCL overhead
 is likely not helpful unless weight bandwidth dominates enough to offset
 collectives, and any multi-GPU result needs its own LocalMaxxing lane.
 
+### Phase 5: Accepted-State Copy Optimization
+
+This is now the highest-value INT4 source lane.
+
+Known facts:
+
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is fast but invalid. It
+  proves the full-accept GDN/Mamba state update is hot, but it failed the
+  1024-token needle quality gate.
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0` by itself is invalid /
+  diagnostic because it changes realistic-suite output hashes. Do not use it
+  alone.
+- Pairing `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` with
+  `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0` is the current valid
+  env-only win. It passed three strict fresh Qwen-suite rows at `54.861`,
+  `53.992`, and `53.522 tok/s`, with a same-window plain-MTP3/cg8 control at
+  `48.345 tok/s`. The quality suite also passed with baseline-match. Compact
+  packet:
+  `../../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
+- `VLLM_XPU_MAMBA_BATCH_MEMCPY_BLOCK_SIZE=4096` was no-win. The issue is not
+  the inner copy chunk size.
+- Trace summary:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json`.
+  The p512/o128 diagnostic recorded `36` accepted-state copy launches, `96`
+  entries per launch, `5.65 GB` copied total, `~156.9 MB` copied per launch,
+  and `32/36` full-accept copies. Temporal state copy dominates byte volume.
+
+Next attempts should be source-level and bounded:
+
+1. Turn the promote-source env pair into a clean, reviewed source design:
+   understand `running_state_source_indices_tensor`, `req_state.block_ids`,
+   `mamba_state_idx`, and the block-table contract, then make the accepted
+   speculative slot promotion explicit rather than a fragile two-flag combo.
+   Keep the flags default-off until strict and quality gates pass.
+2. If further slot rotation is unsafe, instrument timing around CPU metadata
+   generation, metadata H2D copies, and the `batch_memcpy` kernel separately.
+   The result should say whether Python metadata or raw state bandwidth is the
+   limiting cost.
+3. If raw bandwidth still dominates, prototype a device-side persistent copy plan or
+   state layout reduction. Preserve the patch and run the quality suite before
+   any strict-suite promotion.
+4. Never use the invalid skip flags as service or LocalMaxxing evidence.
+
 ## Possible Alternate Checkpoints
 
 Use these only after Intel's requested checkpoint has a recorded baseline:

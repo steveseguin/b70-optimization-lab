@@ -42,10 +42,14 @@ Main entries:
 - [bring-up repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-Status: active bring-up target as of 2026-07-03. The first milestone is a TP1
-single-B70 vLLM/XPU smoke for `Intel/Qwen3.6-27B-int4-AutoRound` at revision
-`abc86de19eb1ebbf6a7df4582341325c22ddcb7d`. Optimize only after the model
-serves and a baseline gate exists.
+Status: active optimization target as of 2026-07-03. TP1 single-B70 vLLM/XPU
+serving works for `Intel/Qwen3.6-27B-int4-AutoRound` at revision
+`abc86de19eb1ebbf6a7df4582341325c22ddcb7d`, and the strict fresh-response
+gate exists. Current best valid row is the env-only promote-source path at a
+conservative `53.522 tok/s` median generated-token throughput for tokens
+1-100 after TTFT, with two support rows at `54.861` and `53.992`, quality
+suite pass, and `cached_tokens=0` on every prompt. Compact packet:
+`../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 
 ### Gemma 4 26B A4B Q8 / INT8 On B70
 

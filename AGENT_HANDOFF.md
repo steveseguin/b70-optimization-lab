@@ -37,10 +37,19 @@ Active target as of the latest switch request:
 - Work in the single active workspace `/home/steve/llm-optimizations`.
 - Start with `results/qwen36-27b-autoround-int4-b70/HANDOFF.md` and
   `experiments/qwen36-27b-autoround-int4-b70/README.md`.
-- Immediate milestone: TP1 vLLM/XPU load at `max_model_len=2048`, then
-  `experiments/qwen36-27b-autoround-int4-b70/scripts/smoke-openai.sh`.
-- Do not submit LocalMaxxing or optimize speculative decode until the model
-  serves and a fresh-response baseline gate exists.
+- Immediate milestone is complete. TP1 vLLM/XPU serves at
+  `max_model_len=2048`, the smoke passed, and the fixed Qwen realistic
+  fresh-response gate exists.
+- Current best valid row is the env-only promote-source candidate:
+  `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` plus
+  `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`, MTP3/cg8, one B70,
+  XPU graph on. Conservative strict-suite headline is `53.522 tok/s` median
+  generated-token throughput for tokens 1-100 after TTFT, with support rows
+  `54.861` and `53.992`; same-window baseline control was `48.345`.
+  Quality suite passed and matched baseline. Start from
+  `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
+- LocalMaxxing submission is now eligible only for this strict/fresh result
+  packet, not for synthetic MTP5/cg16 or invalid postprocess-skip rows.
 
 Previous bookmarked target:
 

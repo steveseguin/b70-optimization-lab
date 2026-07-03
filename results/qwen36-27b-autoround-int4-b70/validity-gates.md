@@ -78,15 +78,23 @@ Use the same realistic final-gate policy as Gemma:
 
 No LocalMaxxing submission should happen before this gate exists and passes.
 
-Current gate-passing baseline:
+Current gate-passing best:
 
 - config: Intel checkpoint, TP1, one B70, XPU graph on, `qwen3_next_mtp`,
   `num_speculative_tokens=3`,
   `COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}'`,
   chat mode, thinking disabled;
+- env delta:
+  `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` and
+  `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`;
 - suite: `../../repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json`;
 - artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`;
-- result: median `47.624 tok/s` for generated tokens 1-100 after TTFT, p10
-  `43.998`, mean `48.403`, TTFT median `637.3 ms`, `cached_tokens=0` for all
-  12 requests, `realistic_final_gate.passed=true`.
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json`;
+- result: median `53.522 tok/s` for generated tokens 1-100 after TTFT, p10
+  `48.406`, mean `53.986`, TTFT median `628.9 ms`, `cached_tokens=0` for all
+  12 requests, `realistic_final_gate.passed=true`;
+- support: two earlier strict repeats at `54.861` and `53.992 tok/s`, plus a
+  same-window plain-MTP3/cg8 control at `48.345 tok/s`;
+- quality: `quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024`
+  passed exact canaries, repeat32, and 1024-token needle with
+  `baseline_match_all=true`.

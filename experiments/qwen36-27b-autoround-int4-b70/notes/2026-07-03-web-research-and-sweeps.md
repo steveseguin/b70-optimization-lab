@@ -466,7 +466,8 @@ Strict Qwen-suite chat results, all with:
 
 Interpretation:
 
-- MTP3/cg8 is the current best valid fresh-response Qwen27 INT4 baseline.
+- MTP3/cg8 was the then-current best valid fresh-response Qwen27 INT4
+  baseline before the later promote-source/no-accepted-postprocess result.
 - MTP5/cg16 remains the best synthetic `vllm-random` screen (`81.773 tok/s`),
   but it loses badly on realistic chat. Do not promote synthetic acceptance as
   real-world throughput.
@@ -500,8 +501,9 @@ Interpretation:
 - MTP3 with capture size 16 can produce a high row, but the immediate repeat
   fell below the existing MTP3/cg8 repro (`47.045` vs `47.624`). A same-window
   cg8 control then landed at `48.536`, so the cg16 high is not promotable.
-- Current stable baseline to beat remains MTP3/cg8 with the Qwen-suite repro
-  artifact at `47.624 tok/s` and support rows at `48.003` and `48.536 tok/s`.
+- At this point in the chronology, the stable baseline to beat remained
+  MTP3/cg8 with the Qwen-suite repro artifact at `47.624 tok/s` and support
+  rows at `48.003` and `48.536 tok/s`.
 
 ## Same-Window `max_num_batched_tokens` Strict Sweep
 
@@ -597,3 +599,113 @@ Next best engineering direction:
   CPU metadata time, H2D metadata copy time, batch copy time);
 - then target metadata generation or a device-side copy plan, not blind copy
   elision.
+
+## Accepted-State Copy Trace
+
+Trace-enabled MTP3/cg8 server on GPU0/port 19410:
+
+```text
+VLLM_XPU_MAMBA_COPY_TRACE_FILE=data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-mtp3-cg8-p512o128-20260703T042542Z.jsonl
+VLLM_XPU_MAMBA_COPY_TRACE_MAX_LINES=20000
+```
+
+Diagnostic request: synthetic `vllm-random`, p512/o128, repeat 1. The
+throughput from this run is not a headline result because trace overhead was
+enabled. Compact summary:
+
+```text
+data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json
+```
+
+Key trace facts:
+
+- `3608` trace records total.
+- `36` accepted-state postprocess copy launches.
+- every copy launch had `96` entries.
+- postprocess accepted counts: `accepted_count=4` occurred `32/36`,
+  `accepted_count=2` occurred `2/36`, `accepted_count=3` occurred `2/36`.
+- total copied bytes: `5,648,154,624` (`~5.65 GB`) in this short run.
+- average copied bytes per launch: `156,893,184` (`~156.9 MB`).
+- bytes by copy function:
+  - `get_temporal_copy_spec`: `5,435,817,984`;
+  - `get_conv_copy_spec`: `212,336,640`.
+
+Interpretation:
+
+- Full accepts dominate, and temporal state copy dominates byte volume.
+- This explains why `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is fast
+  and also why it is unsafe: it removes the state transition that the long
+  context needle needs.
+- The failed `batch_memcpy` block-size probe means the next useful source work
+  is not inner-loop chunk tuning. The target is copy volume or copy semantics:
+  slot/metadata rotation if safe, a device-side persistent copy plan, or
+  precise timing to separate CPU metadata from raw state bandwidth.
+
+## Promote Accepted Spec State + Disable Accepted-State Postprocess
+
+Source audit found an existing non-align GDN/Mamba hook:
+
+```text
+VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1
+```
+
+It constructs `running_state_source_indices_tensor` from the accepted
+speculative slot. That is materially different from the invalid blind skip
+flags: instead of dropping accepted-state postprocess, it asks the next forward
+to read the accepted slot as the running source.
+
+Tested env delta:
+
+```text
+VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1
+VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0
+```
+
+All other key config stayed at the current plain-MTP3/cg8 baseline:
+
+```text
+TP1, Intel checkpoint rev abc86de19eb1ebbf6a7df4582341325c22ddcb7d,
+XPU graph on, qwen3_next_mtp, num_speculative_tokens=3,
+COMPILATION_CONFIG={"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8},
+MAX_NUM_BATCHED_TOKENS=1024, chat mode, thinking disabled.
+```
+
+Quality:
+
+- `data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json`
+- `pass_all=true`, `baseline_match_all=true`
+- exact short canaries, repeat32 color/order, and 1024-token needle passed.
+
+Strict fresh-response Qwen-suite rows:
+
+| label | median tok/s 1-100 after TTFT | p10 | mean | median TTFT ms | status | file |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| promote-source first | 54.861 | 48.225 | 53.556 | 623.7 | valid | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-realistic128-chat-tokenids-qwensuite-20260703T044123Z.json` |
+| promote-source repeat1 | 53.992 | 47.065 | 53.932 | 630.4 | valid | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json` |
+| promote-source repeat2 | **53.522** | 48.406 | 53.986 | 628.9 | valid / conservative headline | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json` |
+| same-window plain-MTP3/cg8 control | 48.345 | 43.733 | 49.290 | 642.3 | valid control | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-samewindow-control-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json` |
+
+Every strict row used the fixed Qwen suite, each prompt once, `cached_tokens=0`
+for every request, and token-ID timing for the generated-token 1-100 window.
+The conservative promote-source row is `+10.71%` versus the same-window control
+and `+10.27%` versus the prior stable plain-MTP3/cg8 support row at
+`48.536 tok/s`.
+
+Synthetic diagnostic only:
+
+- p512/o512 `vllm-random`, repeat3:
+  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-specmetrics-p512o512-r3-20260703T044037Z.json`
+- corrected after-first median `75.817 tok/s`, decode mean `13.109 ms/token`,
+  iteration tokens/step median `7.817`, acceptance median `97.692%`.
+- This is useful for search only; it is not the headline.
+
+Conclusion:
+
+- This is the current valid Qwen27 INT4 one-B70 best.
+- It avoids the large accepted-state postprocess copy without failing the
+  quality suite because the accepted speculative slot is promoted as the
+  running source.
+- Keep the full vLLM source snapshot for reproducibility:
+  `patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
+- Next source work: make this two-flag mechanism explicit, minimal, and
+  upstreamable, then search for the remaining verifier/GDN overhead.

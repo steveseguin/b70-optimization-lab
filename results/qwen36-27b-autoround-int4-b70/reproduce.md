@@ -12,18 +12,28 @@ The script reads the Hugging Face token from
 shared cache under `/mnt/fast-ai/llm-cache/hf`. The token is never stored in the
 repo.
 
-## Serve One Replica
+## Serve Current Best One-Replica Result
 
-Initial conservative smoke profile:
+Current strict/fresh best profile:
 
 ```bash
 cd /home/steve/llm-optimizations
-GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 \
+GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 \
+  QWEN36_27B_ENABLE_MTP=1 NUM_SPECULATIVE_TOKENS=3 \
+  QWEN36_27B_ENABLE_XPU_GRAPH=1 \
+  VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
+  VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
+  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
   experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
 ```
 
-By default the script uses `qwen3_next_mtp` with
-`NUM_SPECULATIVE_TOKENS=2`, matching the model card. Disable speculation while
+The two `VLLM_XPU_GDN_*` env vars are the current validated speed delta: the
+forward metadata reads the accepted speculative slot as the running source, so
+the separate accepted-state postprocess copy can be disabled without dropping
+the recurrent-state transition.
+
+Initial conservative smoke / model-card profile is still available by omitting
+the env delta and using the script defaults. Disable speculation while
 debugging loader correctness with:
 
 ```bash
@@ -66,12 +76,32 @@ Summary:
 - server metrics after smoke/manual probes: `105/108` MTP draft tokens
   accepted.
 
-## Next Baseline Steps
+## Strict Gate
 
-After the first smoke passes:
+Run the fixed realistic suite:
 
-1. Run a no-spec baseline with `QWEN36_27B_ENABLE_MTP=0`.
-2. Run the model-card MTP baseline with `NUM_SPECULATIVE_TOKENS=2`.
-3. Scale the same recipe to four independent GPUs, one process per B70, to
-   support parallel screening.
-4. Only then add a fixed realistic prompt suite and LocalMaxxing payload.
+```bash
+python3 scripts/bench-openai-realistic-suite.py \
+  --base-url http://127.0.0.1:19410 \
+  --model qwen36-27b-int4-autoround \
+  --api-mode chat \
+  --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json \
+  --max-tokens 128 \
+  --metric-tokens 100 \
+  --return-token-ids \
+  --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false}}'
+```
+
+Current conservative evidence is:
+
+```text
+../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json
+```
+
+Median `53.522 tok/s` for generated tokens 1-100 after TTFT, p10 `48.406`,
+mean `53.986`, `cached_tokens=0` for all 12 prompts, quality suite pass and
+baseline match:
+
+```text
+../../data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json
+```

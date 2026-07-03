@@ -54,6 +54,25 @@ Latest full-32K concurrency conclusion:
   content. In the half-shared synthetic test, c8 near-32K TTFT improved from
   about `22.20 s` to `12.45 s`.
 
+## Active Optimization Lane
+
+Qwen3.6 27B INT4 AutoRound is the current optimization target, separate from
+the production LAN endpoint:
+
+- model: `Intel/Qwen3.6-27B-int4-AutoRound`
+- revision: `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
+- hardware: one Intel Arc Pro B70 32 GB per replica first
+- engine: local vLLM/XPU from `/home/steve/src/vllm`
+- current strict fresh-response best: `53.522 tok/s` median generated-token
+  throughput for tokens 1-100 after TTFT, with `cached_tokens=0` on every
+  prompt and quality suite pass
+- result packet:
+  `../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`
+- handoff:
+  `../results/qwen36-27b-autoround-int4-b70/HANDOFF.md`
+- repro:
+  `../repro/qwen36-27b-autoround-int4-b70/README.md`
+
 ## MiniMax Deployable Baseline
 
 The MiniMax 32K FP16-family KV c1 endpoint remains the deployable baseline

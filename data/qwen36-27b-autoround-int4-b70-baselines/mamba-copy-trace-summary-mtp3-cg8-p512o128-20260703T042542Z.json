@@ -1,0 +1,147 @@
+{
+  "config": {
+    "cudagraph_mode": "PIECEWISE",
+    "max_cudagraph_capture_size": 8,
+    "max_num_batched_tokens": 1024,
+    "num_speculative_tokens": 3,
+    "output_tokens": 128,
+    "prompt_tokens": 512,
+    "repeats": 1
+  },
+  "interpretation": [
+    "Full accepts dominate this p512/o128 trace: accepted_count=4 occurred 32/36 postprocess copies.",
+    "Each postprocess copy launch has 96 entries, representing all GDN/Mamba state copy segments for the request.",
+    "Temporal state copy dominates byte volume: about 5.44GB of 5.65GB total copied in this short diagnostic run.",
+    "The no-full-accept-postprocess flag is fast because it removes this copy volume, but quality validation failed long-context needle recall, so it is invalid.",
+    "The next useful optimization is avoiding or replacing the physical source speculative slot to destination running slot copy while preserving state semantics; changing inner memcpy block size did not help."
+  ],
+  "model": "Intel/Qwen3.6-27B-int4-AutoRound",
+  "revision": "abc86de19eb1ebbf6a7df4582341325c22ddcb7d",
+  "runtime": "vLLM/XPU TP1 one B70 diagnostic trace server",
+  "schema": "qwen36_27b_int4_mamba_copy_trace_summary_v1",
+  "source_files": {
+    "specmetrics_json": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-copytrace-specmetrics-p512o128-r1-20260703T042712Z.json",
+    "trace_jsonl": "data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-mtp3-cg8-p512o128-20260703T042542Z.jsonl"
+  },
+  "specmetrics": {
+    "corrected_after_first_tok_s_median": 58.2557174344182,
+    "decode_ms_per_generation_token_vllm_mean": 16.900852288927126,
+    "iteration_tokens_per_step_median": 18.285714285714285,
+    "spec_decode_acceptance_fraction": {
+      "max": 0.9117647058823529,
+      "mean": 0.9117647058823529,
+      "median": 0.9117647058823529,
+      "min": 0.9117647058823529
+    },
+    "spec_decode_accepted_tokens_per_generation_token": {
+      "max": 0.7265625,
+      "mean": 0.7265625,
+      "median": 0.7265625,
+      "min": 0.7265625
+    }
+  },
+  "trace": {
+    "average_copy_bytes_per_launch": 156893184.0,
+    "bytes_by_copy_func": {
+      "get_conv_copy_spec": 212336640,
+      "get_temporal_copy_spec": 5435817984
+    },
+    "collect_entry_count": 3456,
+    "copy_launch_count": 36,
+    "copy_launch_entries": {
+      "max": 96,
+      "min": 96,
+      "unique": [
+        96
+      ]
+    },
+    "postprocess_accepted_counts": {
+      "2": 2,
+      "3": 2,
+      "4": 32
+    },
+    "postprocess_source_block_idx": {
+      "1": 2,
+      "2": 2,
+      "3": 32
+    },
+    "records": 3608,
+    "sample_postprocess_reqs": [
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 2,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8b8f8aa7678d9107-0-816fd3d1",
+        "source_block_idx": 1
+      },
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 3,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8b8f8aa7678d9107-0-816fd3d1",
+        "source_block_idx": 2
+      },
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 4,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8b8f8aa7678d9107-0-816fd3d1",
+        "source_block_idx": 3
+      },
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 2,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8d4d6bdc06a94937-0-9e969ea4",
+        "source_block_idx": 1
+      },
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 3,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8d4d6bdc06a94937-0-9e969ea4",
+        "source_block_idx": 2
+      },
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 4,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8d4d6bdc06a94937-0-9e969ea4",
+        "source_block_idx": 3
+      },
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 4,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8d4d6bdc06a94937-0-9e969ea4",
+        "source_block_idx": 3
+      },
+      {
+        "dest_block_idx": 0,
+        "input_batch_index": 0,
+        "num_accepted_tokens_cpu": 4,
+        "num_draft_tokens": 3,
+        "req_id": "cmpl-8d4d6bdc06a94937-0-9e969ea4",
+        "source_block_idx": 3
+      }
+    ],
+    "stages": {
+      "collect_begin": 36,
+      "collect_entry": 3456,
+      "copy_done": 36,
+      "copy_launch": 36,
+      "copy_skip_empty": 4,
+      "non_align_postprocess_req": 36,
+      "non_align_postprocess_skip_no_accepted_draft": 4
+    },
+    "total_copy_bytes": 5648154624
+  },
+  "validity": "diagnostic only; trace overhead enabled; not a headline throughput result"
+}

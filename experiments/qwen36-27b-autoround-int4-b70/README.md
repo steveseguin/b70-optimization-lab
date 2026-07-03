@@ -12,8 +12,9 @@ This experiment lane tracks bring-up and optimization for:
 ## Immediate Goal
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
-has a strict fresh-response baseline. The current task is to beat that baseline
-without changing model identity or using warmed/cache/history effects.
+has a strict fresh-response baseline plus one validated env-only speed win. The
+current task is to beat the promote-source result without changing model
+identity or using warmed/cache/history effects.
 
 Completed first milestone:
 
@@ -30,17 +31,21 @@ Current evidence:
 - smoke JSON:
   `data/qwen36-27b-autoround-openai-smoke-20260703T013020Z.json`.
 
-Current strict baseline:
+Current strict best:
 
 - config: Intel checkpoint, TP1, one B70, XPU graph on, `qwen3_next_mtp`,
   `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,
   `max_num_batched_tokens=1024`;
+- env delta: `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` and
+  `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`;
 - gate: Qwen realistic suite, chat mode, 12 unique prompts, each prompt once,
   `cached_tokens=0` every row, `return_token_ids=true`;
-- result: median `47.624 tok/s` for generated tokens 1-100 after TTFT,
-  p10 `43.998`, mean `48.403`;
+- conservative result: median `53.522 tok/s` for generated tokens 1-100 after
+  TTFT, p10 `48.406`, mean `53.986`;
 - evidence:
-  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`.
+  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json`;
+- compact packet:
+  `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 
 Synthetic search reference:
 
@@ -56,8 +61,10 @@ Next milestone:
 2. Keep synthetic `vllm-random` metrics diagnostic-only.
 3. Rerun the Qwen realistic suite with `--return-token-ids` before promoting
    any change.
-4. Investigate GDN/spec accepted-state postprocess and verifier overhead as
-   the likely next performance levers.
+4. Investigate remaining GDN/spec accepted-state overhead and verifier cost.
+   The current valid win avoids the separate accepted-state postprocess copy
+   through source-slot promotion. The next useful source work is making that
+   path cleaner/upstreamable or reducing remaining metadata/copy overhead.
 
 ## Folder Map
 
@@ -68,6 +75,27 @@ Next milestone:
 - `results/`: compact experiment summaries.
 - `quality/`: quality gates and prompt suites as they mature.
 - `localmaxxing/`: queued payloads and response copies after valid records.
+
+## Current Research Frontier
+
+The plain MTP3/cg8 strict baseline is about `47.6-48.5 tok/s` on the Qwen
+realistic suite. The current promote-source/no-accepted-postprocess result is
+`53.5-54.9 tok/s` under the same strict fresh gate. A fast invalid flag,
+`VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0`, reached `51.273 tok/s` on the
+strict suite and `74.877 tok/s` synthetically, but failed 1024-token needle
+recall. Tracing explains the lift: the valid path copies large GDN/Mamba state
+from the accepted speculative slot back to the running slot after verification.
+
+Current trace summary:
+`data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json`.
+
+The current valid env-only win appears to preserve the accepted-state transition
+by reading from the accepted speculative slot as the running source, then
+disabling the now-redundant accepted-state postprocess copy. Next code work
+should make that mechanism explicit, minimal, and upstreamable, then search for
+remaining verifier/GDN overhead. Bad candidates already closed: blind copy
+skips, skipping full-accept state, and simply changing the Triton memcpy block
+size.
 
 ## Current Entry Points
 

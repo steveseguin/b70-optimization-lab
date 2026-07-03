@@ -16,20 +16,31 @@ after TP1 smoke works. Start from:
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU
 serving works at `max_model_len=2048`, the OpenAI smoke passed, and the strict
-realistic gate now has a valid baseline. Current Qwen27 INT4 baseline:
+realistic gate now has a valid baseline plus one validated env-only speed win.
+Current Qwen27 INT4 best:
 
 - TP1, one B70, XPU graph on, `qwen3_next_mtp`,
   `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,
   `MAX_NUM_BATCHED_TOKENS=1024`;
+- env delta:
+  `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` and
+  `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`;
 - Qwen realistic suite, chat mode, each prompt once, `cached_tokens=0`,
   `return_token_ids=true`;
-- median `47.624 tok/s` for generated tokens 1-100 after TTFT, p10 `43.998`,
-  mean `48.403`, TTFT median `637.3 ms`;
-- evidence:
-  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`.
-- same-config support:
-  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-windowcheck-20260703T035522Z.json`
-  at median `48.536 tok/s`, `cached_tokens=0` on every prompt.
+- conservative headline: median `53.522 tok/s` for generated tokens 1-100
+  after TTFT, p10 `48.406`, mean `53.986`, TTFT median `628.9 ms`;
+- support rows: `54.861` and `53.992 tok/s`, same strict gate;
+- same-window baseline control: `48.345 tok/s`, so the conservative row is
+  `+10.71%`;
+- quality suite: exact short canaries, repeat32 color/order, and 1024-token
+  needle all passed and matched baseline;
+- compact result packet:
+  `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`;
+- conservative evidence:
+  `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json`.
+
+Prior stable baseline without the promote-source env delta was `47.624` /
+`48.003` / `48.536 tok/s`; keep it as the control family, not the current best.
 
 Synthetic MTP5/cg16 reaches `81.773 tok/s` on `vllm-random` p512/o512, but
 that is diagnostic only and is not the headline/fresh-response number.

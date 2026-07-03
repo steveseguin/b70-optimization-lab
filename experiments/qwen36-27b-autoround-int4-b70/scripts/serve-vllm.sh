@@ -45,6 +45,8 @@ echo "  mtp: $QWEN36_27B_ENABLE_MTP tokens=$NUM_SPECULATIVE_TOKENS"
 echo "  default_enable_thinking: $QWEN36_27B_DEFAULT_ENABLE_THINKING"
 echo "  prompt_token_details: $QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS"
 echo "  compilation_config: ${COMPILATION_CONFIG:-<default>}"
+echo "  promote_accepted_spec_state: ${VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE:-0}"
+echo "  nonspec_postprocess_accepted_state: ${VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE:-1}"
 echo "  extra_args: ${VLLM_EXTRA_ARGS:-<none>}"
 "$QWEN36_27B_AR_VENV/bin/python" - <<'PY'
 import sys

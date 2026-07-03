@@ -1,0 +1,107 @@
+{
+  "artifacts": {
+    "candidate_first": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-realistic128-chat-tokenids-qwensuite-20260703T044123Z.json",
+    "candidate_repeat1": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json",
+    "candidate_repeat2": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json",
+    "copy_trace_summary": "data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json",
+    "quality": "data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json",
+    "same_window_control": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-samewindow-control-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json",
+    "synthetic": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-specmetrics-p512o512-r3-20260703T044037Z.json"
+  },
+  "config": {
+    "api_mode": "chat",
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE",
+      "max_cudagraph_capture_size": 8
+    },
+    "env_delta": {
+      "VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE": "0",
+      "VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE": "1"
+    },
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 3
+    },
+    "tensor_parallel": 1,
+    "thinking_disabled": true,
+    "xpu_graph": true
+  },
+  "deltas": {
+    "headline_vs_prior_stable_mtp3_cg8_48_535646558_pct": 10.273490000118501,
+    "headline_vs_same_window_control_pct": 10.708227164055351
+  },
+  "diagnostic_synthetic": {
+    "acceptance_fraction_median": 0.9769230769230769,
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-specmetrics-p512o512-r3-20260703T044037Z.json",
+    "corrected_after_first_median": 75.81675599528684,
+    "decode_ms_per_generation_token_mean": 13.108653826823987,
+    "iteration_tokens_per_step_median": 7.816793893129771,
+    "status": "diagnostic_only_not_headline"
+  },
+  "hardware": "1x Intel Arc Pro B70 32GB",
+  "headline_conservative": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json",
+    "tok_s_1_100_after_ttft_mean": 53.986013488006655,
+    "tok_s_1_100_after_ttft_median": 53.5219513537644,
+    "tok_s_1_100_after_ttft_p10": 48.405989992323235,
+    "tok_s_full_after_ttft_median": 53.816810733378766,
+    "tok_s_wall_full_median": 42.54467924737972,
+    "ttft_ms_median": 628.9249174878933
+  },
+  "label": "qwen36-27b-int4-autoround-mtp3-cg8-promotesource-noacceptedpost-20260703",
+  "model": "Intel/Qwen3.6-27B-int4-AutoRound",
+  "model_revision": "abc86de19eb1ebbf6a7df4582341325c22ddcb7d",
+  "runtime": "vLLM/XPU local /home/steve/src/vllm",
+  "same_window_control": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-samewindow-control-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json",
+    "full_after_ttft_median": 48.483530610283964,
+    "mean": 49.289553377483685,
+    "median": 48.34505323118557,
+    "p10": 43.733100861503466,
+    "stdev": 4.831063808565578,
+    "ttft_ms_median": 642.2652309993282,
+    "wall_median": 39.00368021439601
+  },
+  "status": "current_best_valid_fresh_response_candidate",
+  "supporting_strict_repeats": [
+    {
+      "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-realistic128-chat-tokenids-qwensuite-20260703T044123Z.json",
+      "full_after_ttft_median": 54.201325265539325,
+      "mean": 53.55607406353292,
+      "median": 54.86105059933885,
+      "p10": 48.2252590222595,
+      "stdev": 5.442658108009681,
+      "ttft_ms_median": 623.6938224174082,
+      "wall_median": 42.67561430854389
+    },
+    {
+      "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json",
+      "full_after_ttft_median": 54.11778388122701,
+      "mean": 53.93215426261647,
+      "median": 53.992370113053354,
+      "p10": 47.064939523039186,
+      "stdev": 6.267477932623386,
+      "ttft_ms_median": 630.4197635035962,
+      "wall_median": 42.717073397887
+    }
+  ],
+  "validity": {
+    "cached_tokens_all_zero": true,
+    "each_prompt_once": true,
+    "fixed_unique_prompts": 12,
+    "primary_metric": "median_tok_s_1_100_after_ttft",
+    "quality_baseline_match_all": true,
+    "quality_suite_pass_all": true,
+    "return_token_ids": true,
+    "suite_id": "qwen36-27b-autoround-int4-b70-realistic-v1",
+    "suite_path": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp"
+  },
+  "vllm_source": {
+    "branch": "codex/qwen36-quark-int8-tracking",
+    "dirty_patch": "patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch",
+    "head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a"
+  }
+}

@@ -23,8 +23,8 @@ The model card reports ten safetensor shards plus
 ## Current Status
 
 Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
-a strict fresh-response baseline, but no LocalMaxxing submission has been made
-from it yet.
+a strict fresh-response baseline and one validated env-only speed win. No
+LocalMaxxing submission has been made from the Qwen27 INT4 lane yet.
 
 Validated so far:
 
@@ -42,28 +42,39 @@ Validated so far:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-prompt-tokens-details-zero-20260703.patch`
   and restarting the server.
 
-Current valid fresh-response baseline:
+Current best valid fresh-response result:
 
 - config: TP1, Intel checkpoint, XPU graph on, `qwen3_next_mtp`,
   `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,
   `max_num_batched_tokens=1024`;
+- env delta: `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` and
+  `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`;
 - API/gate: chat mode, Qwen-specific fixed realistic suite, 12 unique prompts,
   each prompt once, `cached_tokens=0` for every request,
   `return_token_ids=true`, thinking disabled;
 - primary metric: median generated-token throughput for tokens 1-100 after
   TTFT, timed from streamed token-id receipt timestamps;
-- current Qwen-suite artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T034112Z.json`;
-- result: median `47.624 tok/s`, p10 `43.998`, mean `48.403`,
-  full-output after-TTFT median `48.484`, wall median `39.072`,
-  TTFT median `637.3 ms`;
-- supporting same-config Qwen-suite artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-20260703T033403Z.json`
-  at median `48.003 tok/s`.
-- same-window cg8 control repeat:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-windowcheck-20260703T035522Z.json`
-  at median `48.536 tok/s`, p10 `43.924`, mean `49.067`, TTFT median
-  `636.6 ms`, `cached_tokens=0` on every prompt.
+- conservative Qwen-suite artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json`;
+- result: median `53.522 tok/s`, p10 `48.406`, mean `53.986`,
+  full-output after-TTFT median `53.817`, wall median `42.545`,
+  TTFT median `628.9 ms`;
+- support rows:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-realistic128-chat-tokenids-qwensuite-20260703T044123Z.json`
+  at `54.861 tok/s`, and
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json`
+  at `53.992 tok/s`;
+- same-window baseline control:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-samewindow-control-realistic128-chat-tokenids-qwensuite-20260703T044221Z.json`
+  at median `48.345 tok/s`, p10 `43.733`, mean `49.290`, TTFT median
+  `642.3 ms`;
+- quality evidence:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json`,
+  `pass_all=true`, `baseline_match_all=true`;
+- compact packet:
+  `promote-source-noacceptedpost-20260703.json`;
+- vLLM patch-stack snapshot:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
 
 Current best synthetic diagnostic:
 
@@ -85,8 +96,11 @@ Current realistic research interpretation:
 - MTP2/cg8 reached `45.638 tok/s` but had one suspicious repetitive first
   response and is not a quality baseline;
 - MTP4/cg8 reached median `45.669 tok/s` under the same gate;
-- MTP3/cg8 is the best valid realistic chat setting so far, with three
-  clean support rows at `47.624`, `48.003`, and `48.536 tok/s`;
+- plain MTP3/cg8 is the stable control family at `47.624`, `48.003`, and
+  `48.536 tok/s`;
+- promote-source/no-accepted-postprocess is the current best valid family at
+  `54.861`, `53.992`, and `53.522 tok/s`; the conservative row is `+10.71%`
+  over the same-window plain MTP3/cg8 control;
 - MTP3/cg16 produced one high row at `50.750 tok/s`, but the immediate repeat
   fell to `47.045 tok/s`, so it is variance/inconclusive and not promoted;
 - `MAX_NUM_BATCHED_TOKENS=768` reached `49.352 tok/s` in a later strict
@@ -95,16 +109,30 @@ Current realistic research interpretation:
 - `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is an invalid fast path:
   it reached `51.273 tok/s` on the strict suite, but failed 1024-token needle
   quality (`B!!!!...` instead of the needle) while baseline passed;
+- `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0` by itself is invalid /
+  diagnostic only, but paired with
+  `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` it is currently quality-passing:
+  the forward metadata reads the accepted speculative slot as the running
+  source, avoiding the separate postprocess copy without dropping the accepted
+  state transition;
 - the Mamba/GDN `batch_memcpy` block-size patch at `4096` was no-win and the
   active source was reverted; preserve the patch artifact only for reference;
+- accepted-state copy tracing shows why the invalid skip flag was fast:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json`
+  recorded `36` postprocess copy launches in a short MTP3/cg8 p512/o128
+  diagnostic, `96` copy entries per launch, `~156.9 MB` copied per launch,
+  and `5.44 GB / 5.65 GB` of bytes in temporal state copy. Full accepts were
+  `32/36` postprocess copies. The trace run is diagnostic-only, but it makes
+  the current source target explicit: preserve full-accept semantics while
+  avoiding or structurally replacing the physical state copy;
 - completions-mode rows can be faster (for example MTP5/cg8 full-output
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.
 
-Next milestone: beat the MTP3/cg8 valid baseline without changing model
-identity or using warmed/history/cache effects. Keep synthetic screens for
-candidate search only, then rerun the Qwen realistic suite with
-`--return-token-ids`.
+Next milestone: beat the promote-source/no-accepted-postprocess result without
+changing model identity or using warmed/history/cache effects. Keep synthetic
+screens for candidate search only, then rerun the Qwen realistic suite with
+`--return-token-ids` and the quality suite before promotion.
 
 First diagnostic realistic-suite run (not a headline result):
 
