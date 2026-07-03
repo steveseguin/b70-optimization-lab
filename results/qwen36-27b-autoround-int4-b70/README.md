@@ -163,16 +163,23 @@ Current realistic research interpretation:
   `gpu_model_runner.compute_logits` averaged `4.424 ms`, and proposer forward
   was only `0.65-0.83 ms`. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`.
+- exact greedy target argmax-only verification is closed no-win. The
+  default-off patch preserved normal greedy spec semantics and passed the
+  strict fresh gate with `cached_tokens=0`, but reached only `52.543 tok/s`.
+  Since target `get_top_tokens` still pays the TP1 LM-head matmul, avoiding
+  sampler/logits plumbing was not enough. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-exact-argmax-verifier-no-win.md`.
 - completions-mode rows can be faster (for example MTP5/cg8 full-output
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.
 
 Next milestone: beat the promote-source/no-accepted-postprocess result without
 changing model identity or using warmed/history/cache effects. Current best
-bet is exact greedy verifier / LM-head cost reduction, starting with a
-default-off exact argmax-only target verification path that preserves target
-replacement and target-owned bonus semantics. Keep synthetic screens for
-candidate search only, then rerun the Qwen realistic suite with
+bet remains verifier / LM-head cost reduction, but the exact argmax-only
+target-verifier plumbing shortcut is closed no-win. Next bounded screen is
+proposer-side local argmax; a larger win likely needs an AutoRound/INC LM-head
+top-1 or candidate-vs-max kernel. Keep synthetic screens for candidate search
+only, then rerun the Qwen realistic suite with
 `--return-token-ids` and the quality suite before promotion.
 
 First diagnostic realistic-suite run (not a headline result):

@@ -1,0 +1,143 @@
+diff --git a/vllm/v1/sample/rejection_sampler.py b/vllm/v1/sample/rejection_sampler.py
+index local-qwen27-stack..exact-spec-argmax-only 100644
+--- a/vllm/v1/sample/rejection_sampler.py
++++ b/vllm/v1/sample/rejection_sampler.py
+@@
++def greedy_sample_from_argmax(
++    # [num_tokens]
++    draft_token_ids: torch.Tensor,
++    # [batch_size]
++    num_draft_tokens: list[int],
++    max_spec_len: int,
++    # [batch_size]
++    cu_num_draft_tokens: torch.Tensor,
++    # [num_tokens]
++    target_argmax: torch.Tensor,
++    # [batch_size] or [batch_size, 1]
++    bonus_token_ids: torch.Tensor,
++) -> torch.Tensor:
++    """Exact greedy speculative sampling from precomputed target argmax ids.
++
++    This is semantically equivalent to the greedy branch of
++    ``rejection_sample``: accepted draft prefix, target replacement on first
++    mismatch, and target-owned bonus token on full accept. It deliberately
++    supports only the all-greedy, no-synthetic path where argmax IDs are enough
++    to reproduce the normal full-logits sampler.
++    """
++    assert draft_token_ids.ndim == 1
++    assert cu_num_draft_tokens.ndim == 1
++    assert target_argmax.ndim == 1
++    assert bonus_token_ids.ndim in (1, 2)
++
++    batch_size = len(num_draft_tokens)
++    num_tokens = draft_token_ids.shape[0]
++    device = target_argmax.device
++    assert target_argmax.shape[0] == num_tokens
++
++    bonus_token_ids = bonus_token_ids.reshape(-1).to(torch.int32).contiguous()
++    assert bonus_token_ids.shape[0] == batch_size
++
++    output_token_ids = torch.full(
++        (batch_size, max_spec_len + 1),
++        PLACEHOLDER_TOKEN_ID,
++        dtype=torch.int32,
++        device=device,
++    )
++    if num_tokens == 0:
++        return output_token_ids
++
++    rejection_greedy_sample_kernel[(batch_size,)](
++        output_token_ids,
++        cu_num_draft_tokens,
++        draft_token_ids,
++        target_argmax.to(torch.int32).contiguous(),
++        bonus_token_ids,
++        None,
++        max_spec_len,
++        None,
++        None,
++        SYNTHETIC_MODE=False,
++    )
++    return output_token_ids
++
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index local-qwen27-stack..exact-spec-argmax-only 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+ from vllm.v1.sample.rejection_sampler import (
+     PLACEHOLDER_TOKEN_ID,
+     RejectionSampler,
+     draft_only_greedy_sample_from_argmax,
++    greedy_sample_from_argmax,
+ )
+@@
+     def _sample(
+         self,
+         logits: torch.Tensor | None,
+         spec_decode_metadata: SpecDecodeMetadata | None,
+     ) -> SamplerOutput:
+         precomputed_sampled_token_ids = getattr(
+             self, "_xpu_local_argmax_sampled_token_ids", None
+         )
++        spec_argmax_only = (
++            spec_decode_metadata is not None
++            and os.environ.get("VLLM_XPU_SPEC_DECODE_ARGMAX_ONLY", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        if (
++            logits is None
++            and precomputed_sampled_token_ids is not None
++            and spec_argmax_only
++        ):
++            self._xpu_local_argmax_sampled_token_ids = None
++            sampled_argmax = precomputed_sampled_token_ids.reshape(-1).to(
++                spec_decode_metadata.draft_token_ids.dtype)
++            target_argmax = sampled_argmax[
++                spec_decode_metadata.target_logits_indices].contiguous()
++            bonus_token_ids = sampled_argmax[
++                spec_decode_metadata.bonus_logits_indices].contiguous()
++            output_token_ids = greedy_sample_from_argmax(
++                spec_decode_metadata.draft_token_ids,
++                spec_decode_metadata.num_draft_tokens,
++                spec_decode_metadata.max_spec_len,
++                spec_decode_metadata.cu_num_draft_tokens,
++                target_argmax,
++                bonus_token_ids,
++            )
++            return SamplerOutput(
++                sampled_token_ids=output_token_ids,
++                logprobs_tensors=None,
++                xpu_suppressed_bonus_mask=None,
++                xpu_suppressed_replacement_mask=None,
++            )
+@@
+         spec_draft_only = (
+             spec_decode_metadata is not None
+             and os.environ.get("VLLM_XPU_SPEC_DECODE_DRAFT_ONLY", "")
+             .strip()
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        spec_argmax_only = (
++            spec_decode_metadata is not None
++            and os.environ.get("VLLM_XPU_SPEC_DECODE_ARGMAX_ONLY", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+@@
+-        if spec_decode_metadata is not None and not spec_draft_only:
++        if (
++            spec_decode_metadata is not None
++            and not spec_draft_only
++            and not spec_argmax_only
++        ):
+             return disabled("spec decode metadata is present")
++        if (
++            spec_argmax_only
++            and getattr(self.rejection_sampler, "synthetic_mode", False)
++        ):
++            return disabled("spec argmax-only does not support synthetic mode")

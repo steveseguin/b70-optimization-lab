@@ -210,11 +210,11 @@ Evidence:
 
 Next attempts should be source-level and exact:
 
-1. Add a default-off exact greedy spec path that uses precomputed target argmax
-   ids plus target bonus argmax ids, rather than passing full logits through the
-   normal sampler. It must preserve exact target replacement on first mismatch
-   and the target-owned bonus token on full accept. The existing draft-only
-   shortcut is not valid for promoted use.
+1. Exact target argmax-only verifier plumbing is closed no-win. It preserved
+   exact target replacement / target-owned bonus semantics and passed the
+   strict fresh gate with `cached_tokens=0`, but reached only `52.543 tok/s`.
+   Do not repeat unless `get_top_tokens` / LM-head internals change. Evidence:
+   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-exact-argmax-verifier-no-win.md`.
 2. Test proposer-side `use_local_argmax_reduction` only as a bounded screen.
    On TP1 it likely still computes the full LM-head, so expect small or no
    speedup.

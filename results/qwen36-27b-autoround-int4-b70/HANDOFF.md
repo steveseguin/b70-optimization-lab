@@ -98,6 +98,15 @@ Post-baseline follow-up:
   across `580` target steps, while proposer model forward was only
   `0.65-0.83 ms` and metadata/copy regions were tiny. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`.
+- Exact greedy target argmax-only verification is closed no-win. The
+  default-off patch reused the normal greedy rejection kernel and preserved
+  target replacement / target-owned bonus semantics. Debug logs confirmed the
+  path was active, and the strict fresh gate passed with `cached_tokens=0`, but
+  median throughput was only `52.543 tok/s`, below the `53.522 tok/s`
+  conservative record. Interpretation: on TP1, `get_top_tokens` still pays the
+  full LM-head matmul, so bypassing sampler/logits plumbing is not enough.
+  Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-exact-argmax-verifier-no-win.md`.
 - `MAX_NUM_BATCHED_TOKENS` strict same-window sweep (`512`, `768`, `2048`) did
   not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
   same-window control was `48.884`; directional only and below the current
@@ -205,9 +214,8 @@ Continue INT4 optimization without promoting synthetic scores:
 - do not skip full-accept GDN postprocess blindly; it breaks long-context state
   recall. The current win is specifically source-slot promotion plus disabling
   the redundant accepted-state copy, not a semantic elision;
-- a useful bounded source experiment is an exact greedy spec argmax-only target
-  verification path that preserves target replacement and target-owned bonus
-  semantics. Do not reuse the existing draft-only shortcut as a headline path;
+- exact greedy spec argmax-only target verification has been tested and closed
+  no-win; do not repeat it unless `get_top_tokens` / LM-head internals change;
 - deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
   candidate-vs-max kernel that avoids materializing full vocab logits;
 - keep long-context/prompt-processing optimization separate from the short
