@@ -64,9 +64,11 @@ Fastest quality-gated practical variant:
   INT8-LM-head LocalMaxxing: `cmr4zkcxb003yq9018408i1pn`;
 - prior Intel packet:
   `results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`;
-- service recommendation: use `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` first. It
-  passed the full quality gate and measured `61.898 tok/s` in same-window
-  attribution while preparing only the target verifier INT8 LM-head copy;
+- service note: the older Intel-checkpoint
+  `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` attribution lane passed quality and
+  measured `61.898 tok/s`, but the later webhie BF16-scale target-only
+  follow-up failed repeat32 once. Treat target-only as a checkpoint-specific
+  service idea that must be revalidated, not as the current production recipe;
 - max-throughput patch:
   `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`;
 - scoped/service patch:
@@ -80,10 +82,14 @@ Fastest quality-gated practical variant:
 - latest no-win follow-ups preserved as patches/notes:
   output-buffer reuse (`62.428 tok/s`), bonus-token argmax fast-path
   (same-window candidate `62.320` vs control `62.609`), draft-only row-count
-  shortcut (collapsed, invalid), and chunked INT8 top-1 argmax-only verifier
-  (`61.410 tok/s`). Conclusion: the next credible speed lane is a real fused
-  LM-head top-1 / candidate-vs-max verifier kernel or verifier redesign, not
-  sampler plumbing or multiple oneDNN chunks.
+  shortcut (collapsed, invalid), chunked/scalar INT8 top-1 argmax-only verifier
+  (`61.410 tok/s` / microbench ~1000x slower), FP16 scale storage
+  (`62.902 tok/s`), and webhie BF16-scale target-only scope (strict speed
+  `64.800 tok/s` but repeat32 quality failure). Conclusion: the next credible
+  speed lane is a real tiled fused LM-head top-1 / candidate-vs-max verifier
+  kernel or verifier redesign, not sampler plumbing, multiple oneDNN chunks, or
+  scale/scope config sweeps. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

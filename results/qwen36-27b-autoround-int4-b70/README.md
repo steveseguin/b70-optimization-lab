@@ -26,7 +26,8 @@ Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
 a strict fresh-response BF16-LM-head baseline, one validated env-only speed win,
 and one faster quality-gated runtime INT8-LM-head variant. LocalMaxxing approved
 the BF16-LM-head result as `cmr4gokx90061nv01lhoe3ft8` and the runtime
-INT8-LM-head variant as `cmr4zkcxb003yq9018408i1pn`.
+INT8-LM-head variants as `cmr4zkcxb003yq9018408i1pn`,
+`cmr576apv0079q901i6dvsh0l`, and `cmr5iu3gk00bfq901nidgcana`.
 
 Validated so far:
 
@@ -155,8 +156,11 @@ Service-oriented scoped variant:
   `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
 - interpretation: target verifier LM-head is the bottleneck. Target-only INT8
   is nearly throughput-equivalent to all-head INT8 while avoiding the extra MTP
-  INT8 LM-head copy. Use all-head INT8 for the submitted max-throughput row;
-  prefer target-only first for service/max-context experiments.
+  INT8 LM-head copy. Use all-head INT8 for the submitted max-throughput row.
+  This older Intel-checkpoint target-only variant passed quality, but the later
+  webhie BF16-scale target-only follow-up failed repeat32 once, so target-only
+  is an attribution/service idea that must be quality-gated per checkpoint and
+  scale dtype before use.
 
 Post-GGUF recheck:
 

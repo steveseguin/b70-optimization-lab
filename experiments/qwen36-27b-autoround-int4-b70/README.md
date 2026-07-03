@@ -13,9 +13,9 @@ This experiment lane tracks bring-up and optimization for:
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
 has a strict fresh-response BF16-LM-head baseline plus a faster quality-gated
-runtime INT8-LM-head variant. Current optimization work must beat the `62.628`
-tok/s INT8-head row or improve service/max-context behavior without using
-warmed/cache/history effects.
+runtime INT8-LM-head variant. Current optimization work must beat the
+`65.27648650325429` tok/s webhie BF16-scale INT8-LM-head row or improve
+service/max-context behavior without using warmed/cache/history effects.
 
 Completed first milestone:
 
@@ -91,8 +91,11 @@ Service-oriented INT8-head variant:
 - full quality gate passed against the BF16-LM-head baseline;
 - interpretation: target verifier LM-head dominates the speedup; draft-only
   INT8 was essentially BF16 control. Use all-head INT8 for the submitted
-  max-throughput row, and prefer target-only first for service/max-context work
-  because it avoids the extra MTP INT8 LM-head copy;
+  max-throughput row. The older Intel-checkpoint target-only lane passed its
+  quality gate, but the later webhie BF16-scale target-only follow-up failed
+  repeat32 stability once (`blue, green, red`), so treat target-only as an
+  attribution/service idea that must be revalidated per checkpoint/revision and
+  scale dtype;
 - note:
   `notes/2026-07-03-int8-lmhead-scope-attribution.md`;
 - patch:
@@ -122,7 +125,11 @@ Next milestone:
    BF16 top-1/candidate-bound work or a cleaner verifier design.
 5. Do not keep config-sweeping the current INT8 lane without a new mechanism:
    MTP depth remains k=3, capture size remains cg8, and target-only attribution
-   shows the target verifier LM-head is the real bottleneck.
+   shows the target verifier LM-head is the real bottleneck. The latest
+   follow-up closed FP16 scales and webhie target-only BF16 scales as no-promote
+   variants; see
+   `notes/2026-07-03-scale-scope-followup-no-headline-win.md` and
+   `notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
 
 ## Folder Map
 

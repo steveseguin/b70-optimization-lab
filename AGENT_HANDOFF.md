@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -40,7 +40,7 @@ Active target as of the latest switch request:
 - Immediate milestone is complete. TP1 vLLM/XPU serves at
   `max_model_len=2048`, the smoke passed, and the fixed Qwen realistic
   fresh-response gate exists.
-- Current best valid row is the env-only promote-source candidate:
+- Current baseline valid row is the env-only promote-source candidate:
   `VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1` plus
   `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0`, MTP3/cg8, one B70,
   XPU graph on. Conservative strict-suite headline is `53.522 tok/s` median
@@ -50,6 +50,23 @@ Active target as of the latest switch request:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 - LocalMaxxing approved this strict/fresh result as `cmr4gokx90061nv01lhoe3ft8`.
   Do not submit synthetic MTP5/cg16 or invalid postprocess-skip rows.
+- Current fastest quality-gated practical row is the separate
+  `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 LM-head (BF16 scales)`
+  lane: `VLLM_XPU_LM_HEAD_INT8=1`,
+  `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`, MTP3/cg8, one B70. Strict fresh
+  headline is `65.27648650325429 tok/s` median tokens 1-100 after TTFT, with
+  support rows `65.005` and `64.864`, `cached_tokens=0` every row, repeat32
+  and 1K needle quality passed. LocalMaxxing approved it as
+  `cmr5iu3gk00bfq901nidgcana`. Start from
+  `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
+- Latest closed follow-up: BF16-scale controls reconfirmed below the record,
+  FP16 scale storage was slower, and webhie target-only BF16 scope had lower
+  TTFT but failed repeat32 quality once. Do not promote target-only webhie
+  without a new stability fix. The next credible speed lane is a real native
+  tiled fused LM-head top-1 / candidate-vs-max verifier kernel; existing
+  oneDNN INT8 matmul writes dense logits, and existing sampler/top-k kernels
+  only reduce after logits exist. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

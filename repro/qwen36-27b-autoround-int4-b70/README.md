@@ -82,11 +82,15 @@ BF16-LM-head AutoRound quantization:
 
 For the exact current max-throughput row, leave `VLLM_XPU_LM_HEAD_INT8_SCOPE`
 unset (default `all`) and set `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`.
-For service/max-context experiments, prefer `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`
-as the first lower-memory variant: it passed the full quality gate and measured
-`61.898 tok/s` before the BF16-scale follow-up while preparing only the target
-verifier INT8 LM-head copy. See
-`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md`.
+For service/max-context experiments, `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`
+remains an attribution idea, not a promoted webhie BF16-scale service recipe:
+the older Intel-checkpoint target-only lane passed quality at `61.898 tok/s`,
+but the webhie BF16-scale target-only follow-up failed repeat32 once
+(`blue, green, red`). Revalidate target-only for the exact checkpoint/revision
+and scale dtype before use. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md`
+and
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-scale-scope-followup-no-headline-win.md`.
 
 Run one strict check for this variant:
 
@@ -100,7 +104,8 @@ VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16 \
 scripts/run-qwen36-27b-autoround-vllm-candidate.sh
 ```
 
-Run the target-only service variant:
+Run a target-only service experiment (diagnostic until it passes a matching
+quality gate):
 
 ```bash
 cd /home/steve/llm-optimizations
