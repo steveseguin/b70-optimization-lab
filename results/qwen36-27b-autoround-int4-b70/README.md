@@ -45,7 +45,7 @@ Validated so far:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-prompt-tokens-details-zero-20260703.patch`
   and restarting the server.
 
-Current best valid fresh-response result:
+Current Intel-checkpoint baseline valid fresh-response result:
 
 - config: TP1, Intel checkpoint, XPU graph on, `qwen3_next_mtp`,
   `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,

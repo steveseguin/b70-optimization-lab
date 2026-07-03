@@ -36,9 +36,9 @@ Known passed smoke:
   `../../data/qwen36-27b-autoround-openai-smoke-20260703T013020Z.json`;
 - MTP2 acceptance after smoke/manual probes: `105/108` accepted draft tokens.
 
-## Current Valid Best
+## Intel Baseline Recipe
 
-Current best strict result:
+Current Intel-checkpoint strict baseline:
 
 - TP1, one B70, Intel checkpoint revision
   `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`;

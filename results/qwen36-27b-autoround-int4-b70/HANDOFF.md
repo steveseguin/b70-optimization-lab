@@ -23,7 +23,7 @@ Known-good smoke:
   quantization auto-detected as `inc`, XPU graph off;
 - MTP2 acceptance observed: `105/108` accepted draft tokens.
 
-Current best valid fresh-response result:
+Current Intel-checkpoint baseline valid fresh-response result:
 
 - config: Intel checkpoint, TP1, one B70, vLLM/XPU chat endpoint, XPU graph on,
   `qwen3_next_mtp`, `num_speculative_tokens=3`,
@@ -140,9 +140,11 @@ Service-oriented scoped INT8 variant:
   `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
 - interpretation: the target verifier LM-head dominates the speedup. Draft-only
   INT8 measured `52.858609 tok/s`, essentially BF16 control (`52.707415`).
-  Use all-head INT8 for the submitted max-throughput row; prefer target-only
-  first for service/max-context experiments because it avoids the extra MTP
-  INT8 LM-head copy.
+  Use all-head INT8 for submitted max-throughput rows. This older
+  Intel-checkpoint target-only lane passed quality, but the later webhie
+  BF16-scale target-only follow-up failed repeat32 stability once, so
+  target-only is checkpoint/revision/scale-dtype specific and must be
+  revalidated before service or max-context use.
 
 Recent ladder controls:
 
@@ -204,17 +206,19 @@ Post-baseline follow-up:
 - FP8 LM-head is rejected. It reached `64.824 tok/s` on the strict short suite,
   but failed the full 1K long-context quality gate (`B!!!!...` output). Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fp8-lmhead-quality-rejected.md`.
-- INT8 LM-head is quality-passing and fast. It is not exact BF16 LM-head math,
-  but it passed the current full quality gate and repeated at `62.276-62.628
-  tok/s`. Treat it as the current practical speed lane while continuing exact
-  BF16 top-1/candidate-bound research separately.
-- INT8 LM-head follow-ups: MTP depth remains best at k=3 (`k2=59.162`,
-  `k3=61.921`, `k4=58.372`, `k5=57.401`); capture size remains cg8 (`cg32`
-  was noisy at `62.821`, then `61.398`/`63.158` with worse p10/mean, and cg16
-  device-lost); target-only INT8 passed quality and is the better service
-  recipe, but it is not a new throughput record.
-- Later INT8 LM-head source follow-ups did not improve the `62.628 tok/s`
-  strict record. Output-buffer reuse passed the strict gate at
+- Runtime INT8 LM-head is quality-passing and fast. It is not exact BF16
+  LM-head math. The older Intel-checkpoint lane passed quality at
+  `62.276-62.628 tok/s`; the current fastest quality-gated practical lane is
+  the separate webhie BF16-scale variant at `65.27648650325429 tok/s`.
+  Continue exact BF16 top-1/candidate-bound research separately if same
+  runtime-precision claims matter.
+- Older Intel INT8 LM-head follow-ups: MTP depth remained best at k=3
+  (`k2=59.162`, `k3=61.921`, `k4=58.372`, `k5=57.401`); capture size remained
+  cg8 (`cg32` was noisy at `62.821`, then `61.398`/`63.158` with worse
+  p10/mean, and cg16 device-lost). Treat this as historical attribution, not
+  the row to beat.
+- Later INT8 LM-head source follow-ups did not improve the older `62.628 tok/s`
+  Intel strict record. Output-buffer reuse passed the strict gate at
   `62.427810578115064 tok/s` and is no-win; bonus-token argmax fast-path
   reached `62.551370267657624 tok/s` standalone, but same-window A/B measured
   candidate `62.32029632557057` vs control `62.60860919531282`, no-win; the
@@ -224,7 +228,16 @@ Post-baseline follow-up:
   evidence, but do not keep them active. The useful conclusion is that compact
   verifier work needs a real fused LM-head top-1/candidate-vs-max kernel, not
   Python/chunked oneDNN calls or sampler plumbing shortcuts.
-- Variance note: current same-recipe promoted rows are `54.861`, `53.992`,
+- Latest webhie BF16-scale follow-ups did not improve the `65.27648650325429`
+  tok/s row. BF16-scale controls reconfirmed at `64.971` and `64.738 tok/s`;
+  FP16 scale storage was slower at `62.902 tok/s`; webhie target-only BF16
+  scope reached `64.800 tok/s` with lower TTFT but failed repeat32 quality
+  once (`blue, green, red`). Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-scale-scope-followup-no-headline-win.md`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+- Variance note for the older promote-source Intel recipe: same-recipe rows are
+  `54.861`, `53.992`,
   `53.522`, and `53.608 tok/s` (mean `53.996`, stdev `0.612`, range `2.48%`
   of mean). Treat sub-1% Qwen27 changes as inconclusive unless a same-window
   paired/crossover check supports them.
@@ -232,8 +245,8 @@ Post-baseline follow-up:
   attempt with `UR_RESULT_ERROR_DEVICE_LOST`. Do not use that failed live
   server result for performance claims. `xpu-smi discovery` later saw all four
   B70s. A fresh single-lane GPU0 control server then passed the strict gate at
-  `53.53356374896342 tok/s`, `cached_tokens=0`, confirming the current best
-  recipe still reproduces:
+  `53.53356374896342 tok/s`, `cached_tokens=0`, confirming the older
+  promote-source Intel recipe still reproduces:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-control-gpu0-freshreconfirm-realistic128-chat-tokenids-qwensuite-20260703T112954Z.json`.
 - `MAX_NUM_BATCHED_TOKENS` strict same-window sweep (`512`, `768`, `2048`) did
   not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
