@@ -1,0 +1,278 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9340c77..ebc5dc7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -535,6 +535,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/torch_bindings.cpp"
+       "csrc/xpu/lora/lora_shrink.cpp"
+       "csrc/xpu/lora/lora_expand.cpp"
++      "csrc/xpu/int8_lm_head_top1.cpp"
+       "csrc/xpu/quantization/int8_quant.cpp"
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 293bf35..de80fe8 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -68,6 +68,15 @@ torch::Tensor int8_gemm_w8a8_out(
+     torch::Tensor& output,
+     const std::optional<torch::Tensor>& bias);
+ 
++std::tuple<torch::Tensor, torch::Tensor> int8_lm_head_top1_out(
++    const torch::Tensor& hidden,
++    const torch::Tensor& weight_t,
++    const torch::Tensor& weight_scales,
++    int64_t valid_vocab_size,
++    int64_t vocab_start,
++    torch::Tensor& top_ids,
++    torch::Tensor& top_scores);
++
+ std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu(
+     const torch::Tensor& x);
+ 
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index ae07b01..36d5238 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -47,6 +47,13 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "Tensor! output, Tensor? bias) -> Tensor");
+   xpu_ops.impl("int8_gemm_w8a8_out", torch::kXPU, &int8_gemm_w8a8_out);
+ 
++  xpu_ops.def(
++      "int8_lm_head_top1_out(Tensor hidden, Tensor weight_t, "
++      "Tensor weight_scales, int valid_vocab_size, int vocab_start, "
++      "Tensor! top_ids, Tensor! top_scores) -> (Tensor, Tensor)");
++  xpu_ops.impl(
++      "int8_lm_head_top1_out", torch::kXPU, &int8_lm_head_top1_out);
++
+   xpu_ops.def("per_token_quant_int8_xpu(Tensor x) -> (Tensor, Tensor)");
+   xpu_ops.impl("per_token_quant_int8_xpu", torch::kXPU, &per_token_quant_int8_xpu);
+ 
+diff --git a/csrc/xpu/int8_lm_head_top1.cpp b/csrc/xpu/int8_lm_head_top1.cpp
+new file mode 100644
+index 0000000..9cb18b0
+--- /dev/null
++++ b/csrc/xpu/int8_lm_head_top1.cpp
+@@ -0,0 +1,222 @@
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include <limits>
++
++#include "utils.h"
++
++namespace {
++
++template <typename scalar_t>
++float to_float(scalar_t value) {
++  return static_cast<float>(value);
++}
++
++template <typename scalar_t>
++void launch_int8_lm_head_top1(
++    const scalar_t* hidden,
++    const int8_t* weight_t,
++    const float* weight_scales,
++    int64_t* top_ids,
++    float* top_scores,
++    int64_t rows,
++    int64_t hidden_size,
++    int64_t vocab_size,
++    int64_t valid_vocab_size,
++    int64_t vocab_start) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(rows * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_absmax(local, cgh);
++    sycl::local_accessor<float, 1> local_best_score(local, cgh);
++    sycl::local_accessor<int64_t, 1> local_best_id(local, cgh);
++
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int64_t row = item.get_group(0);
++              const int lid = item.get_local_id(0);
++              const int lsize = item.get_local_range(0);
++              const int64_t row_offset = row * hidden_size;
++
++              float absmax = 0.0f;
++              for (int64_t col = lid; col < hidden_size; col += lsize) {
++                absmax = sycl::fmax(
++                    absmax, sycl::fabs(to_float(hidden[row_offset + col])));
++              }
++              local_absmax[lid] = absmax;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = lsize / 2; stride > 0; stride >>= 1) {
++                if (lid < stride) {
++                  local_absmax[lid] =
++                      sycl::fmax(local_absmax[lid], local_absmax[lid + stride]);
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              const float row_absmax = sycl::fmax(local_absmax[0], 1.0e-10f);
++              const float inv_hidden_scale = 127.0f / row_absmax;
++              const float hidden_scale = row_absmax / 127.0f;
++
++              float thread_best_score = -std::numeric_limits<float>::infinity();
++              int64_t thread_best_id = 0;
++              for (int64_t vocab = lid; vocab < valid_vocab_size;
++                   vocab += lsize) {
++                int32_t acc = 0;
++                for (int64_t col = 0; col < hidden_size; ++col) {
++                  float h = to_float(hidden[row_offset + col]);
++                  h = sycl::round(h * inv_hidden_scale);
++                  h = sycl::fmin(127.0f, sycl::fmax(-127.0f, h));
++                  const int32_t hq = static_cast<int32_t>(h);
++                  const int32_t wq =
++                      static_cast<int32_t>(weight_t[col * vocab_size + vocab]);
++                  acc += hq * wq;
++                }
++                const float score =
++                    static_cast<float>(acc) * hidden_scale * weight_scales[vocab];
++                const int64_t global_id = vocab + vocab_start;
++                if (score > thread_best_score ||
++                    (score == thread_best_score && global_id < thread_best_id)) {
++                  thread_best_score = score;
++                  thread_best_id = global_id;
++                }
++              }
++
++              local_best_score[lid] = thread_best_score;
++              local_best_id[lid] = thread_best_id;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = lsize / 2; stride > 0; stride >>= 1) {
++                if (lid < stride) {
++                  const float other_score = local_best_score[lid + stride];
++                  const int64_t other_id = local_best_id[lid + stride];
++                  const float cur_score = local_best_score[lid];
++                  const int64_t cur_id = local_best_id[lid];
++                  if (other_score > cur_score ||
++                      (other_score == cur_score && other_id < cur_id)) {
++                    local_best_score[lid] = other_score;
++                    local_best_id[lid] = other_id;
++                  }
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              if (lid == 0) {
++                top_scores[row] = local_best_score[0];
++                top_ids[row] = local_best_id[0];
++              }
++            });
++  });
++}
++
++void check_top1_inputs(
++    const torch::Tensor& hidden,
++    const torch::Tensor& weight_t,
++    const torch::Tensor& weight_scales,
++    const torch::Tensor& top_ids,
++    const torch::Tensor& top_scores,
++    int64_t valid_vocab_size) {
++  TORCH_CHECK(hidden.is_xpu(), "hidden must be an XPU tensor");
++  TORCH_CHECK(weight_t.is_xpu(), "weight_t must be an XPU tensor");
++  TORCH_CHECK(weight_scales.is_xpu(), "weight_scales must be an XPU tensor");
++  TORCH_CHECK(top_ids.is_xpu(), "top_ids must be an XPU tensor");
++  TORCH_CHECK(top_scores.is_xpu(), "top_scores must be an XPU tensor");
++  TORCH_CHECK(hidden.is_contiguous(), "hidden must be contiguous");
++  TORCH_CHECK(weight_t.is_contiguous(), "weight_t must be contiguous");
++  TORCH_CHECK(weight_scales.is_contiguous(), "weight_scales must be contiguous");
++  TORCH_CHECK(top_ids.is_contiguous(), "top_ids must be contiguous");
++  TORCH_CHECK(top_scores.is_contiguous(), "top_scores must be contiguous");
++  TORCH_CHECK(hidden.dim() == 2, "hidden must be [rows, hidden_size]");
++  TORCH_CHECK(weight_t.dim() == 2, "weight_t must be [hidden_size, vocab_size]");
++  TORCH_CHECK(weight_scales.dim() == 1, "weight_scales must be [vocab_size]");
++  TORCH_CHECK(hidden.size(1) == weight_t.size(0), "hidden/weight size mismatch");
++  TORCH_CHECK(
++      weight_scales.size(0) == weight_t.size(1), "weight scale size mismatch");
++  TORCH_CHECK(top_ids.dim() == 1, "top_ids must be [rows]");
++  TORCH_CHECK(top_scores.dim() == 1, "top_scores must be [rows]");
++  TORCH_CHECK(top_ids.size(0) == hidden.size(0), "top_ids row mismatch");
++  TORCH_CHECK(top_scores.size(0) == hidden.size(0), "top_scores row mismatch");
++  TORCH_CHECK(top_ids.scalar_type() == torch::kInt64, "top_ids must be int64");
++  TORCH_CHECK(
++      top_scores.scalar_type() == torch::kFloat32, "top_scores must be float32");
++  TORCH_CHECK(weight_t.scalar_type() == torch::kInt8, "weight_t must be int8");
++  TORCH_CHECK(
++      weight_scales.scalar_type() == torch::kFloat32,
++      "weight_scales must be float32");
++  TORCH_CHECK(
++      hidden.scalar_type() == torch::kFloat16 ||
++          hidden.scalar_type() == torch::kBFloat16 ||
++          hidden.scalar_type() == torch::kFloat32,
++      "hidden must be fp16, bf16, or fp32");
++  TORCH_CHECK(valid_vocab_size >= 0, "valid_vocab_size must be non-negative");
++  TORCH_CHECK(
++      valid_vocab_size <= weight_t.size(1),
++      "valid_vocab_size exceeds local vocab size");
++}
++
++}  // namespace
++
++std::tuple<torch::Tensor, torch::Tensor> int8_lm_head_top1_out(
++    const torch::Tensor& hidden,
++    const torch::Tensor& weight_t,
++    const torch::Tensor& weight_scales,
++    int64_t valid_vocab_size,
++    int64_t vocab_start,
++    torch::Tensor& top_ids,
++    torch::Tensor& top_scores) {
++  const at::DeviceGuard device_guard(hidden.device());
++  check_top1_inputs(
++      hidden, weight_t, weight_scales, top_ids, top_scores, valid_vocab_size);
++
++  if (hidden.size(0) == 0 || hidden.size(1) == 0 || valid_vocab_size == 0) {
++    return {top_ids, top_scores};
++  }
++
++  const int64_t rows = hidden.size(0);
++  const int64_t hidden_size = hidden.size(1);
++  const int64_t vocab_size = weight_t.size(1);
++
++  if (hidden.scalar_type() == torch::kFloat32) {
++    launch_int8_lm_head_top1(
++        hidden.data_ptr<float>(),
++        weight_t.data_ptr<int8_t>(),
++        weight_scales.data_ptr<float>(),
++        top_ids.data_ptr<int64_t>(),
++        top_scores.data_ptr<float>(),
++        rows,
++        hidden_size,
++        vocab_size,
++        valid_vocab_size,
++        vocab_start);
++  } else if (hidden.scalar_type() == torch::kFloat16) {
++    launch_int8_lm_head_top1(
++        reinterpret_cast<const sycl::half*>(hidden.data_ptr()),
++        weight_t.data_ptr<int8_t>(),
++        weight_scales.data_ptr<float>(),
++        top_ids.data_ptr<int64_t>(),
++        top_scores.data_ptr<float>(),
++        rows,
++        hidden_size,
++        vocab_size,
++        valid_vocab_size,
++        vocab_start);
++  } else {
++    launch_int8_lm_head_top1(
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(hidden.data_ptr()),
++        weight_t.data_ptr<int8_t>(),
++        weight_scales.data_ptr<float>(),
++        top_ids.data_ptr<int64_t>(),
++        top_scores.data_ptr<float>(),
++        rows,
++        hidden_size,
++        vocab_size,
++        valid_vocab_size,
++        vocab_start);
++  }
++  return {top_ids, top_scores};
++}

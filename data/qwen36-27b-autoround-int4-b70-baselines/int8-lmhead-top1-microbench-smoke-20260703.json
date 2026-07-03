@@ -1,0 +1,31 @@
+{
+  "kind": "diagnostic_microbench_only",
+  "xpu_so": "/home/steve/src/vllm-xpu-kernels/build/int8-top1-microbench-20260703-2025/_xpu_C.abi3.so",
+  "device": "xpu:0",
+  "hidden_size": 5120,
+  "vocab_size": 248320,
+  "valid_vocab_size": 248320,
+  "dtype": "bf16",
+  "warmup": 1,
+  "repeats": 3,
+  "results": [
+    {
+      "rows": 1,
+      "baseline_ms_median": 2.6897770585492253,
+      "fused_ms_median": 2704.2867310810834,
+      "speedup": 0.0009946345657932294,
+      "top1_mismatches_vs_baseline": 0,
+      "baseline_ms_samples": [
+        2.757142,
+        2.689777,
+        2.671783
+      ],
+      "fused_ms_samples": [
+        2708.636994,
+        2686.800821,
+        2704.286731
+      ]
+    }
+  ],
+  "note": "Synthetic tensors; useful only for comparing LM-head top-1 kernel cost. Not a model-quality or fresh-response throughput benchmark."
+}
