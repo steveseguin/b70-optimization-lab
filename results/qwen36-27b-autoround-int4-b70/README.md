@@ -77,9 +77,14 @@ Current realistic research interpretation:
 
 - MTP5/cg16 wins the synthetic p512/o512 screen at `81.773 tok/s`, but loses
   under realistic chat at median `43.771 tok/s`;
+- no-spec graph-on control is `31.179 tok/s` after TTFT on the same Qwen suite;
+- MTP2/cg8 reached `45.638 tok/s` but had one suspicious repetitive first
+  response and is not a quality baseline;
 - MTP4/cg8 reached median `45.669 tok/s` under the same gate;
 - MTP3/cg8 is the best valid realistic chat setting so far, with two
   Qwen-suite passes at `48.003` and `47.624 tok/s`;
+- MTP3/cg16 produced one high row at `50.750 tok/s`, but the immediate repeat
+  fell to `47.045 tok/s`, so it is variance/inconclusive and not promoted;
 - completions-mode rows can be faster (for example MTP5/cg8 full-output
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.

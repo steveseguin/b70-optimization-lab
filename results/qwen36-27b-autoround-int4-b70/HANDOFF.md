@@ -42,6 +42,14 @@ Current valid fresh-response baseline:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-realistic128-chat-tokenids-20260703T033403Z.json`
   at median `48.003 tok/s`.
 
+Recent ladder controls:
+
+- no-spec, graph on, cg8: valid control at median `31.179 tok/s` after TTFT;
+- MTP2/cg8: valid but no-win at `45.638 tok/s`, with one suspicious
+  repetitive first output;
+- MTP3/cg16: one high row at `50.750 tok/s`, immediate repeat `47.045 tok/s`.
+  Treat as variance/inconclusive, not a new baseline.
+
 Current synthetic diagnostic optimization state:
 
 - best synthetic search row so far: Intel checkpoint, TP1, XPU graph on,
@@ -86,6 +94,8 @@ Continue INT4 optimization without promoting synthetic scores:
 - prefer chat-mode realistic-suite checks for quality because completions mode
   bypasses the chat template and emits `<think>` text;
 - treat MTP3/cg8 as the current valid realistic-chat baseline to beat;
+- do not promote MTP3/cg16 from the single `50.750 tok/s` row without a paired
+  repeat batch; the first repeat fell to `47.045 tok/s`;
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
   MTP/speculation or kernel change;
 - inspect the GDN/spec accepted-state postprocess path for a safe optimization;

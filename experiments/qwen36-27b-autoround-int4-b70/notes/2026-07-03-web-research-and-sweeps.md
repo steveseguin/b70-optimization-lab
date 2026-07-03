@@ -475,3 +475,29 @@ Interpretation:
   increasing speculative-token count.
 - The Qwen-suite rerun is the clean repro artifact because its embedded suite
   id is `qwen36-27b-autoround-int4-b70-realistic-v1`.
+
+## Post-Gate Realistic Ladder: No-Spec, MTP2, MTP3 cg16
+
+After committing the first token-ID gate checkpoint, three missing realistic
+controls were run against patched servers while keeping the same Qwen suite and
+fresh-response policy.
+
+| label | API mode | graph | MTP tokens | max capture | median tok/s 1-100 after TTFT | p10 | mean | median full-output tok/s after TTFT | median wall tok/s | median TTFT ms | validity | file |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| no-spec cg8 | chat | on | 0 | 8 | 31.179 | 31.136 | 31.196 | 31.231 | 29.961 | 174.6 | valid control; one first-request graph/prefill TTFT outlier | `data/qwen36-27b-autoround-int4-b70-baselines/intel-nospec-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T035124Z.json` |
+| MTP2 cg8 | chat | on | 2 | 8 | 45.638 | 43.494 | 45.406 | 46.449 | 40.603 | 389.0 | valid speed gate but no-win; one suspicious repetitive first output | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp2-xpugraph1-cg8-realistic128-chat-tokenids-qwensuite-20260703T035043Z.json` |
+| MTP3 cg16 | chat | on | 3 | 16 | 50.750 | 43.744 | 49.847 | 49.113 | 40.771 | 541.3 | high observation, not promoted | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg16-realistic128-chat-tokenids-qwensuite-20260703T035043Z.json` |
+| MTP3 cg16 repeat | chat | on | 3 | 16 | 47.045 | 42.268 | 47.662 | 47.928 | 38.788 | 630.6 | valid but confirms cg16 is variance/inconclusive | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg16-realistic128-chat-tokenids-qwensuite-confirm-20260703T035252Z.json` |
+
+Interpretation:
+
+- No-spec is a useful clean control at ~31.2 tok/s after TTFT; speculation is
+  contributing roughly +50% on this realistic suite.
+- MTP2 is not better than MTP3 and showed a poor first response with repeated
+  punctuation/section markers. Do not use it as the quality baseline without a
+  separate quality review.
+- MTP3 with capture size 16 can produce a high row, but the immediate repeat
+  fell below the existing MTP3/cg8 repro (`47.045` vs `47.624`). Treat cg16 as
+  inconclusive/no-promote unless a larger paired repeat shows a stable win.
+- Current stable baseline to beat remains MTP3/cg8 with the Qwen-suite repro
+  artifact at `47.624 tok/s` and support at `48.003 tok/s`.
