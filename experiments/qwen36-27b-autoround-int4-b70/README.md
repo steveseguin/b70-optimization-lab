@@ -50,6 +50,22 @@ Current strict best:
 
 Current fastest quality-gated variant:
 
+- label: `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 LM-head`;
+- config: same promote-source MTP3/cg8 recipe plus
+  `VLLM_XPU_LM_HEAD_INT8=1`;
+- strict fresh median: `64.306 tok/s`, p10 `59.496`, mean `63.615`,
+  `cached_tokens=0`;
+- initial webhie support row: `63.336 tok/s`;
+- same-window Intel INT8-LM-head control: `62.366 tok/s`;
+- full quality gate passed against the Intel INT8-LM-head baseline, including
+  1K long-context needle;
+- evidence:
+  `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-20260703.json`;
+- note:
+  `notes/2026-07-03-webhie-autoround-variant-quality-pass.md`.
+
+Prior Intel-checkpoint fastest quality-gated variant:
+
 - label: `AutoRound W4A16 + runtime INT8 LM-head`;
 - config: same promote-source MTP3/cg8 recipe plus
   `VLLM_XPU_LM_HEAD_INT8=1`;

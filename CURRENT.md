@@ -42,17 +42,20 @@ Current Qwen27 INT4 best:
 
 Fastest quality-gated practical variant:
 
-- label separately as `AutoRound W4A16 + runtime INT8 LM-head`; do not call it
-  the original BF16-LM-head AutoRound quantization;
+- label separately as `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8
+  LM-head`; do not merge it into the Intel-checkpoint row;
 - same promote-source MTP3/cg8 recipe plus `VLLM_XPU_LM_HEAD_INT8=1`;
-- strict fresh result: median `62.628 tok/s`, p10 `58.104`, mean `62.998`,
-  `cached_tokens=0` on every request;
-- same-window repeat on GPU3: `62.276 tok/s`;
-- same-window BF16-LM-head control on GPU2: `53.332 tok/s`;
+- strict fresh primary repeat: median `64.306 tok/s`, p10 `59.496`, mean
+  `63.615`, `cached_tokens=0` on every request;
+- initial webhie strict row: `63.336 tok/s`;
+- same-window Intel INT8-LM-head control: `62.366 tok/s`;
 - full quality gate passed with baseline match and 1024-token needle pass;
 - compact packet:
+  `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-20260703.json`;
+- LocalMaxxing: pending submission; prior Intel INT8-LM-head record is
+  `cmr4zkcxb003yq9018408i1pn`;
+- prior Intel packet:
   `results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`;
-- LocalMaxxing: approved as `cmr4zkcxb003yq9018408i1pn`;
 - service recommendation: use `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` first. It
   passed the full quality gate and measured `61.898 tok/s` in same-window
   attribution while preparing only the target verifier INT8 LM-head copy;
@@ -61,7 +64,7 @@ Fastest quality-gated practical variant:
 - scoped/service patch:
   `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-scope-target-quality-pass-20260703.patch`;
 - note:
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-quality-pass.md`.
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-webhie-autoround-variant-quality-pass.md`.
 - scope attribution:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md`.
 - latest no-win follow-ups preserved as patches/notes:

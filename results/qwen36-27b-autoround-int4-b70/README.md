@@ -79,7 +79,32 @@ Current best valid fresh-response result:
 - vLLM patch-stack snapshot:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
 
-Current best quality-gated runtime-quantized variant:
+Current fastest quality-gated variant:
+
+- label this separately as **webhie AutoRound W4A16 + runtime INT8 LM-head**.
+  Do not merge it into the Intel-checkpoint row;
+- env delta on top of the current promote-source MTP3/cg8 recipe:
+  `VLLM_XPU_LM_HEAD_INT8=1`;
+- strict fresh primary artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-autoround-int8lmhead-repeat-gpu2-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T171159Z.json`;
+- result: median **`64.306 tok/s`**, p10 `59.496`, mean `63.615`,
+  TTFT median `605.9 ms`, `cached_tokens=0` on every request;
+- initial webhie support row:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-autoround-int8lmhead-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T170250Z.json`
+  at median `63.336 tok/s`;
+- same-window Intel INT8-LM-head control:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-intel-int8lmhead-control-gpu3-samewindow-webhie-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T171159Z.json`
+  at median `62.366 tok/s`;
+- full quality gate:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-webhie-int8lmhead-mtp3-cg8-repeat32-ctx1024-20260703T170941Z.json`,
+  `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
+- compact packet:
+  `webhie-int8-lmhead-20260703.json`;
+- note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-webhie-autoround-variant-quality-pass.md`;
+- LocalMaxxing: pending submission.
+
+Prior Intel-checkpoint quality-gated runtime-quantized variant:
 
 - label this separately as **AutoRound W4A16 + runtime INT8 LM-head**. Do not
   call it the original BF16-LM-head AutoRound quantization;

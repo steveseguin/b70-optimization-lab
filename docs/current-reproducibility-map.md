@@ -59,15 +59,21 @@ Latest full-32K concurrency conclusion:
 Qwen3.6 27B INT4 AutoRound is the current optimization target, separate from
 the production LAN endpoint:
 
-- model: `Intel/Qwen3.6-27B-int4-AutoRound`
-- revision: `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
+- current fastest variant: `webhie/Qwen3.6-27B-int4-AutoRound`
+- webhie revision: `f5750c90b3776db658594df5fe8051098226dd8e`
+- prior Intel reference: `Intel/Qwen3.6-27B-int4-AutoRound`
+- Intel revision: `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
 - hardware: one Intel Arc Pro B70 32 GB per replica first
 - engine: local vLLM/XPU from `/home/steve/src/vllm`
-- current strict fresh-response practical best: `62.628 tok/s` median
-  generated-token throughput for tokens 1-100 after TTFT with runtime INT8
-  LM-head, `cached_tokens=0` on every prompt, and quality suite pass
-- LocalMaxxing: `cmr4zkcxb003yq9018408i1pn`
+- current strict fresh-response practical best: `64.306 tok/s` median
+  generated-token throughput for tokens 1-100 after TTFT with webhie AutoRound
+  + runtime INT8 LM-head, `cached_tokens=0` on every prompt, and quality suite
+  baseline parity
+- LocalMaxxing: pending submission for webhie; prior Intel INT8 row
+  `cmr4zkcxb003yq9018408i1pn`
 - result packet:
+  `../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-20260703.json`
+- prior Intel INT8 packet:
   `../results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`
 - BF16-LM-head baseline best: `53.522 tok/s`, LocalMaxxing
   `cmr4gokx90061nv01lhoe3ft8`
