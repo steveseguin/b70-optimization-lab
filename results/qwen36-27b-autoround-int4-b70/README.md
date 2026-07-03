@@ -107,6 +107,22 @@ Current best quality-gated runtime-quantized variant:
 - LocalMaxxing: approved as `cmr4zkcxb003yq9018408i1pn` with explicit
   `AutoRound INT4 W4A16 + runtime INT8 LM-head` quantization/mode label.
 
+Service-oriented scoped variant:
+
+- patch:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-scope-target-quality-pass-20260703.patch`;
+- env delta on top of the INT8 lane: `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`;
+- attribution result:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-int8lmhead-scopefix-target-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T140331Z.json`
+  at median `61.898 tok/s`, p10 `57.494`, mean `62.432`;
+- target-only quality:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-int8lmhead-targetonly-mtp3-cg8-repeat32-ctx1024-20260703T140623Z.json`,
+  `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
+- interpretation: target verifier LM-head is the bottleneck. Target-only INT8
+  is nearly throughput-equivalent to all-head INT8 while avoiding the extra MTP
+  INT8 LM-head copy. Use all-head INT8 for the submitted max-throughput row;
+  prefer target-only first for service/max-context experiments.
+
 Post-GGUF recheck:
 
 - the same promoted recipe reproduced at `53.608 tok/s`, p10 `49.574`, mean
@@ -236,12 +252,14 @@ Current realistic research interpretation:
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.
 
-Next milestone: either (1) harden and service-test the runtime INT8-LM-head
-variant, which is the current fastest quality-gated practical lane, or (2) beat
-it without changing LM-head precision via a true exact BF16 top-1 /
-candidate-vs-max design. Keep synthetic screens for candidate search only, then
-rerun the Qwen realistic suite with `--return-token-ids` and the quality suite
-before promotion.
+Next milestone: beat the runtime INT8-LM-head row with a real source change.
+The bounded retests after the record closed as no-promo: MTP depth remains best
+at k=3, capture size remains best at cg8, and target-only attribution shows the
+target verifier LM-head dominates the win. The next meaningful decode-rate work
+is a true exact target LM-head top-1 / candidate-vs-max design, not another flag
+sweep. Keep synthetic screens for candidate search only, then rerun the Qwen
+realistic suite with `--return-token-ids` and the quality suite before
+promotion.
 
 First diagnostic realistic-suite run (not a headline result):
 

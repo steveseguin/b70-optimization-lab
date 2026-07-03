@@ -76,6 +76,13 @@ BF16-LM-head AutoRound quantization:
 - packet:
   `../../results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`.
 
+For the exact submitted max-throughput row, leave
+`VLLM_XPU_LM_HEAD_INT8_SCOPE` unset (default `all`). For service/max-context
+experiments, prefer `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`: it passed the full
+quality gate and measured `61.898 tok/s` while preparing only the target
+verifier INT8 LM-head copy. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md`.
+
 Run one strict check for this variant:
 
 ```bash
@@ -83,6 +90,17 @@ cd /home/steve/llm-optimizations
 LABEL=intel-mtp3-cg8-promotesource-int8lmhead-realistic128-chat-tokenids-qwensuite \
 GPU_INDEX=0 PORT=19410 \
 VLLM_XPU_LM_HEAD_INT8=1 \
+scripts/run-qwen36-27b-autoround-vllm-candidate.sh
+```
+
+Run the target-only service variant:
+
+```bash
+cd /home/steve/llm-optimizations
+LABEL=qwen27-int8lmhead-targetonly-mtp3-cg8-realistic128-chat-tokenids-qwensuite \
+GPU_INDEX=0 PORT=19410 \
+VLLM_XPU_LM_HEAD_INT8=1 \
+VLLM_XPU_LM_HEAD_INT8_SCOPE=target \
 scripts/run-qwen36-27b-autoround-vllm-candidate.sh
 ```
 
@@ -96,6 +114,7 @@ GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 \
   VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
   VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
   VLLM_XPU_LM_HEAD_INT8=1 \
+  VLLM_XPU_LM_HEAD_INT8_SCOPE=target \
   COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
   experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
 

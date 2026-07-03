@@ -87,6 +87,25 @@ Current fastest quality-gated variant:
 - LocalMaxxing: approved as `cmr4zkcxb003yq9018408i1pn` with explicit runtime
   INT8-LM-head quantization/mode labeling.
 
+Service-oriented scoped INT8 variant:
+
+- patch:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-scope-target-quality-pass-20260703.patch`;
+- use `VLLM_XPU_LM_HEAD_INT8=1` and
+  `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`;
+- target-only attribution row:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-int8lmhead-scopefix-target-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T140331Z.json`
+  at median `61.897978899825404 tok/s`, p10 `57.49406998953655`, mean
+  `62.431560666785316`;
+- target-only quality:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-int8lmhead-targetonly-mtp3-cg8-repeat32-ctx1024-20260703T140623Z.json`,
+  `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
+- interpretation: the target verifier LM-head dominates the speedup. Draft-only
+  INT8 measured `52.858609 tok/s`, essentially BF16 control (`52.707415`).
+  Use all-head INT8 for the submitted max-throughput row; prefer target-only
+  first for service/max-context experiments because it avoids the extra MTP
+  INT8 LM-head copy.
+
 Recent ladder controls:
 
 - no-spec, graph on, cg8: valid control at median `31.179 tok/s` after TTFT;
@@ -151,6 +170,11 @@ Post-baseline follow-up:
   but it passed the current full quality gate and repeated at `62.276-62.628
   tok/s`. Treat it as the current practical speed lane while continuing exact
   BF16 top-1/candidate-bound research separately.
+- INT8 LM-head follow-ups: MTP depth remains best at k=3 (`k2=59.162`,
+  `k3=61.921`, `k4=58.372`, `k5=57.401`); capture size remains cg8 (`cg32`
+  was noisy at `62.821`, then `61.398`/`63.158` with worse p10/mean, and cg16
+  device-lost); target-only INT8 passed quality and is the better service
+  recipe, but it is not a new throughput record.
 - Variance note: current same-recipe promoted rows are `54.861`, `53.992`,
   `53.522`, and `53.608 tok/s` (mean `53.996`, stdev `0.612`, range `2.48%`
   of mean). Treat sub-1% Qwen27 changes as inconclusive unless a same-window

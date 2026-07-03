@@ -12,9 +12,10 @@ This experiment lane tracks bring-up and optimization for:
 ## Immediate Goal
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
-has a strict fresh-response baseline plus one validated env-only speed win. The
-current task is to beat the promote-source result without changing model
-identity or using warmed/cache/history effects.
+has a strict fresh-response BF16-LM-head baseline plus a faster quality-gated
+runtime INT8-LM-head variant. Current optimization work must beat the `62.628`
+tok/s INT8-head row or improve service/max-context behavior without using
+warmed/cache/history effects.
 
 Completed first milestone:
 
@@ -63,6 +64,20 @@ Current fastest quality-gated variant:
 - patch:
   `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`.
 
+Service-oriented INT8-head variant:
+
+- config: same recipe plus `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`;
+- strict fresh median: `61.898 tok/s`, p10 `57.494`, mean `62.432`;
+- full quality gate passed against the BF16-LM-head baseline;
+- interpretation: target verifier LM-head dominates the speedup; draft-only
+  INT8 was essentially BF16 control. Use all-head INT8 for the submitted
+  max-throughput row, and prefer target-only first for service/max-context work
+  because it avoids the extra MTP INT8 LM-head copy;
+- note:
+  `notes/2026-07-03-int8-lmhead-scope-attribution.md`;
+- patch:
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-scope-target-quality-pass-20260703.patch`.
+
 Synthetic search reference:
 
 - config: MTP5/cg16;
@@ -81,6 +96,9 @@ Next milestone:
    quality-gated practical lane, but it changes runtime LM-head precision. A
    same-quantization win still needs exact BF16 top-1/candidate-bound work or a
    cleaner verifier design.
+5. Do not keep config-sweeping the current INT8 lane without a new mechanism:
+   MTP depth remains k=3, capture size remains cg8, and target-only attribution
+   shows the target verifier LM-head is the real bottleneck.
 
 ## Folder Map
 
@@ -112,7 +130,8 @@ the current frontier away from that copy path: full LM-head/logits work now
 dominates. Bad candidates already closed: blind copy skips, skipping
 full-accept state, changing the Triton memcpy block size, exact argmax plumbing
 that still computes full logits, draft local-argmax plumbing that still
-computes full logits, FP8 LM-head (quality fail), compressed/full EAGLE3
+computes full logits, FP8 LM-head (quality fail), INT8 MTP k2/k4/k5,
+INT8 cg4/cg16/cg32, draft-only INT8 LM-head, compressed/full EAGLE3
 (device-loss or too slow), and DFlash (no-win locally).
 
 ## Current Entry Points

@@ -1,0 +1,164 @@
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index ddae01856..797b22aad 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -3,6 +3,7 @@
+
+ from collections.abc import Sequence
+ from dataclasses import dataclass
++import os
+
+ import torch
+ import torch.nn.functional as F
+@@ -25,11 +26,13 @@ from vllm.model_executor.layers.quantization.base_config import (
+     method_has_implemented_embedding,
+ )
+ from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
++from vllm.logger import init_logger
+ from vllm.model_executor.parameter import BasevLLMParameter
+ from vllm.model_executor.utils import set_weight_attrs
+ from vllm.platforms import current_platform
+
+ DEFAULT_VOCAB_PADDING_SIZE = 64
++logger = init_logger(__name__)
+
+
+ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+@@ -63,6 +66,105 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             from vllm.model_executor.layers.utils import dispatch_cpu_unquantized_gemm
+
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=False)
++        self._maybe_prepare_xpu_int8_lm_head(layer)
++
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in (
++            "1",
++            "true",
++            "yes",
++            "on",
++        )
++
++    def _maybe_prepare_xpu_int8_lm_head(self, layer: torch.nn.Module) -> None:
++        if not self._env_enabled("VLLM_XPU_LM_HEAD_INT8"):
++            return
++        if layer.__class__.__name__ != "ParallelLMHead":
++            return
++        scope = os.environ.get("VLLM_XPU_LM_HEAD_INT8_SCOPE", "all").strip().lower()
++        prefix = str(getattr(layer, "_vllm_prefix", ""))
++        prefix_parts = {part for part in prefix.replace("/", ".").split(".") if part}
++        # Qwen3Next target head is loaded as "language_model.lm_head"; the
++        # bundled MTP drafter remaps shared weights into a bare "lm_head".
++        # Other MTP models include an explicit "mtp" prefix segment.
++        is_mtp_head = "mtp" in prefix_parts or prefix == "lm_head"
++        if scope in ("target", "target-only", "target_only") and is_mtp_head:
++            return
++        if scope in ("draft", "draft-only", "draft_only", "mtp") and not is_mtp_head:
++            return
++        if scope not in (
++            "all",
++            "target",
++            "target-only",
++            "target_only",
++            "draft",
++            "draft-only",
++            "draft_only",
++            "mtp",
++        ):
++            logger.warning(
++                "Unknown VLLM_XPU_LM_HEAD_INT8_SCOPE=%r; using all lm_head layers.",
++                scope,
++            )
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            return
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but lm_head weight dtype is %s; "
++                "falling back to the default BF16/FP16 path.",
++                weight.dtype,
++            )
++            return
++        try:
++            import vllm_xpu_kernels._xpu_C  # noqa: F401
++        except Exception as exc:
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but vllm_xpu_kernels._xpu_C "
++                "could not be imported (%r); falling back to default lm_head.",
++                exc,
++            )
++            return
++        required_ops = ("int8_gemm_w8a8", "per_token_quant_int8_xpu")
++        if any(not hasattr(torch.ops._xpu_C, op) for op in required_ops):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but required _xpu_C ops are "
++                "unavailable; falling back to default lm_head.")
++            return
++
++        # Dense Qwen3.6 lm_head is BF16 even in the AutoRound INT4 checkpoint.
++        # This experimental path keeps the original weight intact and adds a
++        # transient per-output-channel INT8 copy. It is default-off and must pass
++        # the quality gate before being treated as a candidate result.
++        with torch.no_grad():
++            weight_f = weight.detach().float()
++            scales = weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
++            weight_q_t = (
++                torch.round(weight_f / scales.view(-1, 1))
++                .clamp(-127, 127)
++                .to(torch.int8)
++                .t()
++                .contiguous()
++            )
++            scales = scales.contiguous()
++
++        for name, tensor in (
++            ("_xpu_lm_head_int8_weight_t", weight_q_t),
++            ("_xpu_lm_head_int8_scale", scales),
++        ):
++            if name in layer._buffers:
++                layer._buffers[name] = tensor
++            else:
++                layer.register_buffer(name, tensor, persistent=False)
++        logger.info(
++            "Prepared experimental XPU INT8 lm_head: prefix=%s scope=%s "
++            "weight_t=%s scale=%s",
++            prefix or "<unknown>",
++            scope or "all",
++            tuple(weight_q_t.shape),
++            tuple(scales.shape),
++        )
+
+     def apply(
+         self,
+@@ -70,6 +172,23 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_LM_HEAD_INT8")
++            and bias is None
++            and x.device.type == "xpu"
++            and hasattr(layer, "_xpu_lm_head_int8_weight_t")
++            and hasattr(layer, "_xpu_lm_head_int8_scale")
++        ):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            x_q, x_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(x_contiguous)
++            return torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q,
++                x_scale,
++                layer._xpu_lm_head_int8_weight_t,
++                layer._xpu_lm_head_int8_scale,
++                layer.weight.dtype,
++                None,
++            )
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)
+@@ -241,6 +360,7 @@ class VocabParallelEmbedding(PluggableLayer):
+         prefix: str = "",
+     ):
+         super().__init__()
++        self._vllm_prefix = prefix
+
+         # Keep the input dimensions.
+         tp_rank = get_tensor_model_parallel_rank()

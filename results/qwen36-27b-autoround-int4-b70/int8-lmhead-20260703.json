@@ -97,5 +97,56 @@
     "queue": "experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-int4-int8lmhead-20260703.queue.json",
     "response_log": "data/localmaxxing-responses/qwen36-27b-int4-int8lmhead-20260703.submit.log",
     "labeling_note": "Submitted as AutoRound INT4 W4A16 + runtime INT8 LM-head, separate from the original BF16-LM-head AutoRound quantization identity."
+  },
+  "service_target_only_variant": {
+    "status": "quality_gated_service_candidate_not_new_record",
+    "env_delta": {
+      "VLLM_XPU_LM_HEAD_INT8": "1",
+      "VLLM_XPU_LM_HEAD_INT8_SCOPE": "target"
+    },
+    "patch": "patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-scope-target-quality-pass-20260703.patch",
+    "strict_fresh_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-int8lmhead-scopefix-target-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T140331Z.json",
+    "tok_s_1_100_after_ttft_median": 61.897978899825404,
+    "tok_s_1_100_after_ttft_p10": 57.49406998953655,
+    "tok_s_1_100_after_ttft_mean": 62.431560666785316,
+    "ttft_ms_median": 520.8609215333126,
+    "quality_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-int8lmhead-targetonly-mtp3-cg8-repeat32-ctx1024-20260703T140623Z.json",
+    "quality_pass_all": true,
+    "quality_baseline_match_all": true,
+    "long_context_pass": true,
+    "interpretation": "Target verifier LM-head dominates the speedup. Target-only INT8 is nearly throughput-equivalent to all-head INT8 while avoiding the extra MTP INT8 LM-head copy; prefer it for service/max-context experiments unless max headline throughput is being reconfirmed."
+  },
+  "closed_followups": {
+    "int8_lmhead_mtp_depth_sweep": {
+      "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-mtp-depth-sweep.md",
+      "decision": "keep NUM_SPECULATIVE_TOKENS=3; k2/k4/k5 did not beat k3",
+      "medians": {
+        "k2": 59.161535131156185,
+        "k3": 61.921262680266736,
+        "k4": 58.37236649300607,
+        "k5": 57.4014879265615
+      }
+    },
+    "int8_lmhead_capture_size_sweep": {
+      "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-capture-size-sweep.md",
+      "decision": "keep max_cudagraph_capture_size=8; cg32 did not reliably separate and cg16 device-lost",
+      "medians": {
+        "cg4": 62.353185913825584,
+        "cg8": 62.142980867664534,
+        "cg32_first": 62.8210978487758,
+        "cg32_repeatA": 61.39831702704507,
+        "cg32_repeatB": 63.157682127855864
+      }
+    },
+    "int8_lmhead_scope_attribution": {
+      "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md",
+      "decision": "speedup comes from target verifier LM-head; draft-only is no-win",
+      "medians": {
+        "all": 62.101032432215845,
+        "target": 61.897978899825404,
+        "draft": 52.85860941214655,
+        "bf16_control": 52.70741520588043
+      }
+    }
   }
 }

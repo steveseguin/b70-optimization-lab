@@ -53,10 +53,17 @@ Fastest quality-gated practical variant:
 - compact packet:
   `results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`;
 - LocalMaxxing: approved as `cmr4zkcxb003yq9018408i1pn`;
-- patch:
+- service recommendation: use `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` first. It
+  passed the full quality gate and measured `61.898 tok/s` in same-window
+  attribution while preparing only the target verifier INT8 LM-head copy;
+- max-throughput patch:
   `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`;
+- scoped/service patch:
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-scope-target-quality-pass-20260703.patch`;
 - note:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-quality-pass.md`.
+- scope attribution:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-scope-attribution.md`.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.
