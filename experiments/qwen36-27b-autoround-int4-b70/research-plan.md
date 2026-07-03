@@ -245,9 +245,14 @@ Evidence:
 Do not retest EAGLE3 compressed as config roulette. Revisit only if upstream
 vLLM/XPU EAGLE3 changes land, or if testing against stock BF16
 `Qwen/Qwen3.6-27B` is needed to separate AutoRound-target mismatch from local
-runtime instability. DFlash remains an explicit compatibility candidate, but
-the model card references a vLLM PR requirement, so treat it as higher-risk
-bring-up rather than a known-good record route.
+runtime instability.
+
+DFlash was also tested locally and is closed no-win for the current Intel
+AutoRound target/runtime. `z-lab/Qwen3.6-27B-DFlash` loaded and passed the
+strict fresh gate at k=8/10/12, but topped out at `49.994 tok/s` median
+(`cached_tokens=0`) and k=15 crashed before readiness with
+`UR_RESULT_ERROR_DEVICE_LOST`. Evidence:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-dflash-drafter-no-win.md`.
 
 Variance rule for this lane: same-recipe promoted rows currently span
 `53.522-54.861 tok/s` (`2.48%` range of mean, stdev `0.612`). Treat sub-1%

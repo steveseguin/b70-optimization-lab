@@ -183,6 +183,14 @@ Current realistic research interpretation:
   stalled after 8 prompts and hit zero-acceptance intervals. Do not use EAGLE3
   compressed as a current record route without source/runtime fixes. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`.
+- external DFlash drafter compatibility is also closed no-win locally.
+  `z-lab/Qwen3.6-27B-DFlash` loaded and passed the strict fresh gate at k=8,
+  k=10, and k=12, but the best median was only `49.994 tok/s` and k=15
+  crashed before readiness with `UR_RESULT_ERROR_DEVICE_LOST`. The DFlash model
+  card warns that full engine support may require a vLLM PR for interleaved SWA
+  and target hidden-state handling, so keep this as a local Intel AutoRound/XPU
+  result rather than a universal DFlash claim. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-dflash-drafter-no-win.md`.
 - variance floor: same-recipe promoted rows currently span `53.522-54.861 tok/s`
   (`2.48%` range of mean, stdev `0.612`). Any sub-1% candidate needs a
   same-window paired/crossover check before a decision.
