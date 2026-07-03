@@ -66,6 +66,7 @@ Current fastest quality-gated variant:
   `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`;
 - note:
   `notes/2026-07-03-int8-lmhead-bf16-scale-quality-pass.md`.
+- LocalMaxxing: approved as `cmr5iu3gk00bfq901nidgcana`.
 
 Prior Intel-checkpoint fastest quality-gated variant:
 

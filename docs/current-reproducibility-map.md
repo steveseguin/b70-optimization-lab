@@ -69,8 +69,10 @@ the production LAN endpoint:
   generated-token throughput for tokens 1-100 after TTFT with webhie AutoRound
   + runtime INT8 LM-head using BF16 scale storage, `cached_tokens=0` on every
   prompt, and quality suite baseline parity
-- LocalMaxxing: BF16-scale row queued in
-  `../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json`;
+- LocalMaxxing: BF16-scale row approved as `cmr5iu3gk00bfq901nidgcana`,
+  with queue/response at
+  `../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json` and
+  `../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.submit.log`;
   prior webhie INT8 row `cmr576apv0079q901i6dvsh0l`; prior Intel INT8 row
   `cmr4zkcxb003yq9018408i1pn`
 - result packet:

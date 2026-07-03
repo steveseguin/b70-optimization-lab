@@ -55,8 +55,9 @@ Fastest quality-gated practical variant:
   (`cached_tokens=0`);
 - compact packet:
   `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`;
-- LocalMaxxing: queued in
-  `experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json`;
+- LocalMaxxing: approved as `cmr5iu3gk00bfq901nidgcana`, queue/response in
+  `experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json` and
+  `data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.submit.log`;
 - prior webhie packet:
   `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-20260703.json`;
 - prior webhie LocalMaxxing: `cmr576apv0079q901i6dvsh0l`; prior Intel

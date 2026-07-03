@@ -107,8 +107,9 @@ Current fastest quality-gated variant:
   `webhie-int8-lmhead-bf16scale-20260703.json`;
 - note:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-bf16-scale-quality-pass.md`;
-- LocalMaxxing: queued in
-  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json`;
+- LocalMaxxing: approved as `cmr5iu3gk00bfq901nidgcana`, with queue/response at
+  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json` and
+  `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.submit.log`;
 - previous webhie INT8-LM-head packet:
   `webhie-int8-lmhead-20260703.json`, LocalMaxxing
   `cmr576apv0079q901i6dvsh0l`.

@@ -33,6 +33,12 @@ LocalMaxxing payload:
 experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json
 ```
 
+LocalMaxxing accepted this as `cmr5iu3gk00bfq901nidgcana`; response log:
+
+```text
+data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.submit.log
+```
+
 ## Why This Was Tried
 
 The synchronized timing run on the prior webhie INT8-LM-head recipe confirmed
