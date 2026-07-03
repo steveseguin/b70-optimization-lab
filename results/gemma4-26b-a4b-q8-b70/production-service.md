@@ -52,6 +52,30 @@ python3 scripts/gemma4-text-canary.py \
 Last tracked compact canary:
 `data/gemma4-26b-prod-canary-20260703T002151Z.json`, `32/32` rows passed.
 
+## 32K Smoke
+
+The service profile was also tested against the largest long-context suite case:
+
+```bash
+cd /home/steve/llm-optimizations
+GPU_INDEX=0 PORT=19350 GEMMA4_26B_PROFILE=service \
+  scripts/serve-gemma4-26b-q8-production.sh
+
+python3 scripts/bench-openai-long-context-suite.py \
+  --base-url http://127.0.0.1:19350 \
+  --model gemma4-26b-a4b-q8 \
+  --suite repro/gemma4-26b-a4b-q8-b70/long-context-suite-v1.json \
+  --case-id lc-24000-late \
+  --max-tokens 96 \
+  --out data/gemma4-26b-prod-service-32k-smoke-$(date -u +%Y%m%dT%H%M%SZ).json
+```
+
+Tracked result:
+`data/gemma4-26b-prod-service-32k-smoke-20260703T002811Z.json`.
+It used `32571` prompt tokens, `cached_tokens=0`, passed exact JSON retrieval,
+and measured about `996.600` prompt tok/s plus `115.179` decode tok/s after
+TTFT.
+
 ## Install Systemd Backend
 
 The tracked unit is:

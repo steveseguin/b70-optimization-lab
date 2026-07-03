@@ -88,6 +88,22 @@ Smoke status on 2026-07-03:
 - the manual smoke server was stopped afterward so GPU0 is free for the next
   model.
 
+32K service-profile smoke on 2026-07-03:
+
+- manual `GEMMA4_26B_PROFILE=service` backend started on GPU0 at
+  `http://127.0.0.1:19350/v1`;
+- `/v1/models` reported `n_ctx=32768`;
+- largest long-context suite case `lc-24000-late` produced an actual
+  `32571` prompt-token request plus `76` generated tokens;
+- exact JSON retrieval validation passed, `cached_tokens=0`, prompt was unique;
+- measured TTFT `32.682 s`, approximate prefill `996.600 tok/s`, decode after
+  TTFT `115.179 tok/s`;
+- evidence:
+  `../../data/gemma4-26b-prod-service-32k-smoke-20260703T002811Z.json`;
+- server log:
+  `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/servers/replica-gpu0-port19350-20260703T002742Z.log`;
+- the manual 32K smoke server was stopped afterward.
+
 The systemd unit is localhost-only on port `19350`. It does not rewire the
 public `:8000` frontdoor. If Gemma 26B should become the public LAN model,
 point the frontdoor at `http://127.0.0.1:19350` after the backend smoke passes.
