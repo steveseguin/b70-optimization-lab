@@ -1,0 +1,205 @@
+{
+  "created_at_utc": "2026-07-03T06:50:00Z",
+  "status": "no_new_promoted_record",
+  "interpretation": [
+    "The current promoted vLLM AutoRound recipe reproduced at 53.608 tok/s with cached_tokens=0.",
+    "QWEN36_27B_REASONING_PARSER empty/no-parser was a no-win at 53.081 tok/s.",
+    "Shorter max_model_len (512/768/1024) showed small positive/neutral rows but crossover indicates GPU/variance confounding; do not promote as a general replacement for the 2048 recipe.",
+    "MAX_NUM_BATCHED_TOKENS=384 produced one high row at 54.791 tok/s but repeat fell to 53.373, so it is inconclusive/no-promote. 256 was no-win. 320 and 448 timed out before readiness and were cleaned up."
+  ],
+  "failed_lanes": [
+    {
+      "label": "intel-mtp3-cg8-mbt320-realistic128-chat-tokenids-qwensuite-20260703T064231Z",
+      "reason": "timed out waiting for /v1/models; spare process cleaned up",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/intel-mtp3-cg8-mbt320-realistic128-chat-tokenids-qwensuite-20260703T064231Z"
+    },
+    {
+      "label": "intel-mtp3-cg8-mbt448-realistic128-chat-tokenids-qwensuite-20260703T064231Z",
+      "reason": "timed out waiting for /v1/models; spare process cleaned up",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/intel-mtp3-cg8-mbt448-realistic128-chat-tokenids-qwensuite-20260703T064231Z"
+    },
+    {
+      "label": "intel-mtp3-cg8-disablelog-realistic128-chat-tokenids-qwensuite-20260703T062431Z",
+      "reason": "vLLM CLI rejected --disable-log-requests",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/intel-mtp3-cg8-disablelog-realistic128-chat-tokenids-qwensuite-20260703T062431Z"
+    }
+  ],
+  "rows": [
+    {
+      "label": "intel-mtp3-cg8-mbt384-realistic128-chat-tokenids-qwensuite-20260703T063810Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-mbt384-realistic128-chat-tokenids-qwensuite-20260703T063810Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 54.790913145540856,
+      "p10_tok_s_1_100_after_ttft": 49.41225355296494,
+      "mean_tok_s_1_100_after_ttft": 55.29339422518692,
+      "median_full_after_ttft": 53.73792354055498,
+      "median_ttft_ms": 527.0941349444911
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx1024-realistic128-chat-tokenids-qwensuite-20260703T062431Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx1024-realistic128-chat-tokenids-qwensuite-20260703T062431Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 54.38782699529725,
+      "p10_tok_s_1_100_after_ttft": 49.69223350555471,
+      "mean_tok_s_1_100_after_ttft": 54.79090028126234,
+      "median_full_after_ttft": 54.4036272476836,
+      "median_ttft_ms": 529.6480120159686
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx768-probe-samewindow-realistic128-chat-tokenids-qwensuite-20260703T063205Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx768-probe-samewindow-realistic128-chat-tokenids-qwensuite-20260703T063205Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 54.14721241505726,
+      "p10_tok_s_1_100_after_ttft": 49.43865098090705,
+      "mean_tok_s_1_100_after_ttft": 54.534561784895324,
+      "median_full_after_ttft": 54.16152116446432,
+      "median_ttft_ms": 529.3235220015049
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx512-probe-samewindow-realistic128-chat-tokenids-qwensuite-20260703T062819Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx512-probe-samewindow-realistic128-chat-tokenids-qwensuite-20260703T062819Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 54.131630193217696,
+      "p10_tok_s_1_100_after_ttft": 47.17278793849206,
+      "mean_tok_s_1_100_after_ttft": 53.98235571039191,
+      "median_full_after_ttft": 54.18351377834467,
+      "median_ttft_ms": 530.6711279554293
+    },
+    {
+      "label": "intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-current-repeat-realistic128-chat-tokenids-qwensuite-20260703T062204Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-current-repeat-realistic128-chat-tokenids-qwensuite-20260703T062204Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.60801536513279,
+      "p10_tok_s_1_100_after_ttft": 49.57447712630217,
+      "mean_tok_s_1_100_after_ttft": 54.71600372196554,
+      "median_full_after_ttft": 52.765091034295494,
+      "median_ttft_ms": 630.5232834420167
+    },
+    {
+      "label": "intel-mtp3-cg8-mbt384-repeat-realistic128-chat-tokenids-qwensuite-20260703T064231Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-mbt384-repeat-realistic128-chat-tokenids-qwensuite-20260703T064231Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.373135972710884,
+      "p10_tok_s_1_100_after_ttft": 47.22683626889249,
+      "mean_tok_s_1_100_after_ttft": 53.45935632811776,
+      "median_full_after_ttft": 53.1169464354768,
+      "median_ttft_ms": 523.9269749145024
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx768-cross-gpu2-realistic128-chat-tokenids-qwensuite-20260703T063553Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx768-cross-gpu2-realistic128-chat-tokenids-qwensuite-20260703T063553Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.25035588636783,
+      "p10_tok_s_1_100_after_ttft": 49.393786403692374,
+      "mean_tok_s_1_100_after_ttft": 53.791379463329434,
+      "median_full_after_ttft": 53.52391895321898,
+      "median_ttft_ms": 526.2931045144796
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx1024-repeat-samewindow-realistic128-chat-tokenids-qwensuite-20260703T062818Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx1024-repeat-samewindow-realistic128-chat-tokenids-qwensuite-20260703T062818Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.23873324333917,
+      "p10_tok_s_1_100_after_ttft": 49.09989338905771,
+      "mean_tok_s_1_100_after_ttft": 53.73183950100566,
+      "median_full_after_ttft": 53.26912622718576,
+      "median_ttft_ms": 528.3278920105658
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx512-repeat-samewindow-realistic128-chat-tokenids-qwensuite-20260703T063205Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx512-repeat-samewindow-realistic128-chat-tokenids-qwensuite-20260703T063205Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.12632410922512,
+      "p10_tok_s_1_100_after_ttft": 49.07771891626694,
+      "mean_tok_s_1_100_after_ttft": 53.85275636751283,
+      "median_full_after_ttft": 52.87534513257482,
+      "median_ttft_ms": 526.2991749332286
+    },
+    {
+      "label": "intel-mtp3-cg8-mbt256-realistic128-chat-tokenids-qwensuite-20260703T063810Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-mbt256-realistic128-chat-tokenids-qwensuite-20260703T063810Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.095022066540565,
+      "p10_tok_s_1_100_after_ttft": 49.23296853148293,
+      "mean_tok_s_1_100_after_ttft": 53.91499767633414,
+      "median_full_after_ttft": 53.34773059958137,
+      "median_ttft_ms": 528.7468239548616
+    },
+    {
+      "label": "intel-mtp3-cg8-noreasonparser-realistic128-chat-tokenids-qwensuite-20260703T062431Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-noreasonparser-realistic128-chat-tokenids-qwensuite-20260703T062431Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.08144583299254,
+      "p10_tok_s_1_100_after_ttft": 47.84966655168512,
+      "mean_tok_s_1_100_after_ttft": 54.262874274874434,
+      "median_full_after_ttft": 53.32307124500724,
+      "median_ttft_ms": 534.9591809790581
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx768-cross-gpu1-realistic128-chat-tokenids-qwensuite-20260703T063553Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx768-cross-gpu1-realistic128-chat-tokenids-qwensuite-20260703T063553Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 53.0637343754223,
+      "p10_tok_s_1_100_after_ttft": 49.13361226645961,
+      "mean_tok_s_1_100_after_ttft": 53.67155620827774,
+      "median_full_after_ttft": 53.28084878071546,
+      "median_ttft_ms": 531.482036516536
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx2048-control-cross-gpu3-realistic128-chat-tokenids-qwensuite-20260703T063553Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx2048-control-cross-gpu3-realistic128-chat-tokenids-qwensuite-20260703T063553Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 52.93760649712543,
+      "p10_tok_s_1_100_after_ttft": 47.92314839669264,
+      "mean_tok_s_1_100_after_ttft": 54.21292040324286,
+      "median_full_after_ttft": 53.21184343469296,
+      "median_ttft_ms": 529.0011609322391
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx2048-control2-samewindow-realistic128-chat-tokenids-qwensuite-20260703T063205Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx2048-control2-samewindow-realistic128-chat-tokenids-qwensuite-20260703T063205Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 52.91088731801371,
+      "p10_tok_s_1_100_after_ttft": 47.83467585631221,
+      "mean_tok_s_1_100_after_ttft": 54.12093412398513,
+      "median_full_after_ttft": 53.15364570441443,
+      "median_ttft_ms": 532.8857564600185
+    },
+    {
+      "label": "intel-mtp3-cg8-ctx2048-control-samewindow-realistic128-chat-tokenids-qwensuite-20260703T062818Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-ctx2048-control-samewindow-realistic128-chat-tokenids-qwensuite-20260703T062818Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 52.89395356161279,
+      "p10_tok_s_1_100_after_ttft": 47.727500749816436,
+      "mean_tok_s_1_100_after_ttft": 54.07944036550045,
+      "median_full_after_ttft": 53.143679347086746,
+      "median_ttft_ms": 533.513899485115
+    },
+    {
+      "label": "intel-mtp3-cg8-mbt1024-control-realistic128-chat-tokenids-qwensuite-20260703T063810Z",
+      "path": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-mbt1024-control-realistic128-chat-tokenids-qwensuite-20260703T063810Z.json",
+      "passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 52.73711627240614,
+      "p10_tok_s_1_100_after_ttft": 47.58261275947879,
+      "mean_tok_s_1_100_after_ttft": 54.00164211238664,
+      "median_full_after_ttft": 53.00373326643954,
+      "median_ttft_ms": 532.8571430291049
+    }
+  ]
+}

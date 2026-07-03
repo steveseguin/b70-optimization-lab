@@ -43,6 +43,7 @@ echo "  gpu: $GPU_INDEX"
 echo "  max_model_len: $MAX_MODEL_LEN"
 echo "  mtp: $QWEN36_27B_ENABLE_MTP tokens=$NUM_SPECULATIVE_TOKENS"
 echo "  default_enable_thinking: $QWEN36_27B_DEFAULT_ENABLE_THINKING"
+echo "  reasoning_parser: ${QWEN36_27B_REASONING_PARSER:-<none>}"
 echo "  prompt_token_details: $QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS"
 echo "  compilation_config: ${COMPILATION_CONFIG:-<default>}"
 echo "  promote_accepted_spec_state: ${VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE:-0}"
@@ -68,8 +69,11 @@ args=(
   --max-num-seqs "$MAX_NUM_SEQS"
   --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS"
   --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION"
-  --reasoning-parser qwen3
 )
+
+if [[ -n "${QWEN36_27B_REASONING_PARSER:-}" ]]; then
+  args+=(--reasoning-parser "$QWEN36_27B_REASONING_PARSER")
+fi
 
 if [[ "$QWEN36_27B_DEFAULT_ENABLE_THINKING" == "0" ]]; then
   args+=(--default-chat-template-kwargs '{"enable_thinking": false}')

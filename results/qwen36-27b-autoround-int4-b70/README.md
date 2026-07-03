@@ -78,6 +78,19 @@ Current best valid fresh-response result:
 - vLLM patch-stack snapshot:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
 
+Post-GGUF recheck:
+
+- the same promoted recipe reproduced at `53.608 tok/s`, p10 `49.574`, mean
+  `54.716`, with `cached_tokens=0` for every request:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-current-repeat-realistic128-chat-tokenids-qwensuite-20260703T062204Z.json`;
+- later no-parser, shorter-context, and `MAX_NUM_BATCHED_TOKENS` probes did
+  not produce a stable promotable record. `MAX_NUM_BATCHED_TOKENS=384` had one
+  high row at `54.791 tok/s`, but the repeat fell to `53.373`; shorter context
+  rows were confounded by GPU/window variance. Summary:
+  `post-gguf-config-sweeps-20260703.json`;
+- use `../../scripts/run-qwen36-27b-autoround-vllm-candidate.sh` for future
+  one-shot vLLM candidate checks before promoting any config.
+
 Current best synthetic diagnostic:
 
 - config: TP1, Intel checkpoint, XPU graph on, `qwen3_next_mtp`,

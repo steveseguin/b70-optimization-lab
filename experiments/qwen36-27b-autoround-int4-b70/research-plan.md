@@ -209,3 +209,11 @@ Use these only after Intel's requested checkpoint has a recorded baseline:
 - Local vLLM source is dirty on branch `codex/qwen36-quark-int8-tracking`.
   Record it for all baselines; do not modify it for Qwen27 until a loader or
   correctness failure demands it.
+- Post-GGUF bounded vLLM config sweeps reproduced the current promoted
+  AutoRound recipe at `53.608 tok/s` and found no stable replacement:
+  no-parser was no-win, shorter max context rows were variance-confounded, and
+  `MAX_NUM_BATCHED_TOKENS=384` produced one high row (`54.791`) that did not
+  repeat (`53.373`). Summary:
+  `../../results/qwen36-27b-autoround-int4-b70/post-gguf-config-sweeps-20260703.json`.
+  The one-shot runner for future controlled candidates is
+  `../../scripts/run-qwen36-27b-autoround-vllm-candidate.sh`.

@@ -67,6 +67,24 @@ Recent ladder controls:
 
 Post-baseline follow-up:
 
+- The promoted recipe reproduced after the GGUF sweep at median
+  `53.608 tok/s`, p10 `49.574`, mean `54.716`, cached tokens all zero:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-current-repeat-realistic128-chat-tokenids-qwensuite-20260703T062204Z.json`.
+- Bounded config follow-ups after the GGUF lane did not produce a promotable
+  replacement for the `53.522 tok/s` conservative record. Evidence summary:
+  `post-gguf-config-sweeps-20260703.json`.
+- `QWEN36_27B_REASONING_PARSER=` / no-parser was a no-win at
+  `53.081 tok/s`. The launcher now supports this empty override for testing,
+  but the default remains `qwen3`.
+- Shorter `MAX_MODEL_LEN` (`512`, `768`, `1024`) produced small positive or
+  neutral rows (`~53.1-54.4 tok/s`), but crossover runs across GPUs showed
+  GPU/variance/context-window confounding. Do not promote a shorter context as
+  a general replacement for the `2048` recipe without a paired repeat ladder.
+- `MAX_NUM_BATCHED_TOKENS=384` produced one high row (`54.791 tok/s`) but the
+  immediate repeat fell to `53.373`; `256` was no-win; `320` and `448` timed
+  out before readiness and were cleaned up. Treat MBT tuning as inconclusive.
+- Reusable one-shot runner for future bounded candidates:
+  `../../scripts/run-qwen36-27b-autoround-vllm-candidate.sh`.
 - `MAX_NUM_BATCHED_TOKENS` strict same-window sweep (`512`, `768`, `2048`) did
   not produce a promotable win. `768` reached `49.352 tok/s`, but the paired
   same-window control was `48.884`; directional only and below the current
