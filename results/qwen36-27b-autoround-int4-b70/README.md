@@ -191,9 +191,14 @@ Current realistic research interpretation:
   and target hidden-state handling, so keep this as a local Intel AutoRound/XPU
   result rather than a universal DFlash claim. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-dflash-drafter-no-win.md`.
-- variance floor: same-recipe promoted rows currently span `53.522-54.861 tok/s`
-  (`2.48%` range of mean, stdev `0.612`). Any sub-1% candidate needs a
-  same-window paired/crossover check before a decision.
+- variance floor: older same-recipe promoted rows span `53.522-54.861 tok/s`
+  (`2.48%` range of mean, stdev `0.612`). A fresh four-GPU reconfirmation after
+  the DFlash/EAGLE experiments showed GPUs 1-3 tightly clustered at
+  `52.836`, `53.048`, and `52.865 tok/s` (`0.40%` range), while GPU0
+  device-lost in speculative decode. Use GPUs 1-3 for near-term same-window
+  candidate/control comparisons and treat sub-1% deltas as inconclusive unless
+  repeated/crossover runs agree. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-current-best-reconfirm-and-variance.md`.
 - completions-mode rows can be faster (for example MTP5/cg8 full-output
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.

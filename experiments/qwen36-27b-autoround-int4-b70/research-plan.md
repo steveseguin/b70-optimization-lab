@@ -254,10 +254,15 @@ strict fresh gate at k=8/10/12, but topped out at `49.994 tok/s` median
 `UR_RESULT_ERROR_DEVICE_LOST`. Evidence:
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-dflash-drafter-no-win.md`.
 
-Variance rule for this lane: same-recipe promoted rows currently span
-`53.522-54.861 tok/s` (`2.48%` range of mean, stdev `0.612`). Treat sub-1%
-candidate deltas as inconclusive unless a same-window paired/crossover check
-supports them.
+Variance rule for this lane: older same-recipe promoted rows span
+`53.522-54.861 tok/s` (`2.48%` range of mean, stdev `0.612`). The latest
+same-window reconfirmation on healthy GPUs 1-3 was much tighter:
+`52.836`, `53.048`, and `52.865 tok/s` (`0.40%` range), while GPU0
+device-lost in speculative decode. Use GPUs 1-3 for near-term
+candidate/control comparisons, avoid GPU0 for precision comparisons until it
+passes a fresh speculative control again, and treat sub-1% candidate deltas as
+inconclusive unless repeated/crossover checks support them. Evidence:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-current-best-reconfirm-and-variance.md`.
 
 ## Possible Alternate Checkpoints
 
