@@ -41,6 +41,12 @@ bad flags, invalid fast paths, and negative optimizations here as they happen.
   `gpu_model_runner.py:_prepare_inputs -> num_accepted_tokens_event.synchronize()`.
   Do not retry cg16 as a config-only speed candidate unless the underlying XPU
   graph/event issue is fixed.
+- `VLLM_XPU_SPEC_DECODE_KEEP_ACCEPTED_COUNTS_GPU=1` is no-win. The idea was to
+  avoid the scalar accepted-count GPU -> CPU -> GPU round trip in the
+  single-request non-align promote-source lane. It passed the strict fresh
+  Qwen suite, but the clean same-source comparison lost to the flag-off
+  control (`52.542` vs `53.420 tok/s`). The active vLLM source was reverted;
+  patch/result are preserved in the July 3 experiment note.
 
 ## Current Hot Path
 

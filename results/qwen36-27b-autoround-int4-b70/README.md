@@ -106,6 +106,11 @@ Current realistic research interpretation:
   not beat cg8: cg4's initial `54.449 tok/s` row fell to `52.697` and `53.238`
   in paired repeats against cg8 controls at `53.509` and `53.518`; cg16
   crashed with device lost, and cg32 was no-win;
+- keeping accepted counts GPU-resident between spec steps was no-win. The
+  default-off `VLLM_XPU_SPEC_DECODE_KEEP_ACCEPTED_COUNTS_GPU=1` source
+  experiment passed the strict gate, but same-source control beat candidate
+  (`53.420` vs `52.542 tok/s`), so the active source was reverted and the
+  patch is retained only as a failed experiment artifact;
 - plain MTP3/cg8 is the stable control family at `47.624`, `48.003`, and
   `48.536 tok/s`;
 - promote-source/no-accepted-postprocess is the current best valid family at

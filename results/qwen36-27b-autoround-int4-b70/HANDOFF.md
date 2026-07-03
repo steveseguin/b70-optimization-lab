@@ -84,6 +84,14 @@ Post-baseline follow-up:
   vs `53.509`, `53.518`). cg16 crashed with
   `UR_RESULT_ERROR_DEVICE_LOST`; cg32 was no-win and had a first-request TTFT
   outlier. Keep `max_cudagraph_capture_size=8`.
+- GPU-resident accepted-count shortcut is closed no-win. A default-off source
+  experiment (`VLLM_XPU_SPEC_DECODE_KEEP_ACCEPTED_COUNTS_GPU=1`) tried to keep
+  the scalar accepted-count tensor on GPU between spec steps for the
+  single-request non-align lane. The strict suite passed, but the clean
+  same-source comparison lost to control (`52.542` vs `53.420 tok/s`). The
+  patch is preserved at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-keep-accepted-counts-gpu-20260703.patch`
+  and the active source was reverted.
 - `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0` is **invalid**. It is fast
   (`51.273 tok/s` strict Qwen-suite median and `74.877 tok/s` synthetic), but
   the 1024-token needle quality check failed with `B!!!!...` while baseline

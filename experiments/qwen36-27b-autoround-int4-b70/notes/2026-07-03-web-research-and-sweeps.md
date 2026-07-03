@@ -778,3 +778,48 @@ Conclusion:
 - cg32 has no median benefit and produced a first-request TTFT outlier
   (`25.7 s`), so it is not a service default candidate.
 - Keep `max_cudagraph_capture_size=8` for the short-context MTP3 lane.
+
+## GPU-Resident Accepted Counts: No-Win
+
+Hypothesis: after the valid promote-source/no-accepted-state-postprocess win,
+the remaining accepted-count path still copied one scalar GPU -> CPU after the
+spec step, then CPU -> GPU before the next forward. For the current
+single-request, non-align, max-num-seqs=1 lane, row order cannot change, so a
+default-off experiment tried keeping the accepted-count tensor resident on GPU
+between steps.
+
+Patch snapshot before revert:
+
+```text
+patches/qwen36-27b-autoround-int4-b70/vllm-keep-accepted-counts-gpu-20260703.patch
+```
+
+The patch was gated by:
+
+```text
+VLLM_XPU_SPEC_DECODE_KEEP_ACCEPTED_COUNTS_GPU=1
+```
+
+Validation used the strict Qwen realistic suite, chat mode, each prompt once,
+`cached_tokens=0`, `return_token_ids=true`, MTP3/cg8 promote-source/no-accepted
+state postprocess. All rows below passed the fresh-response gate.
+
+| label | median tok/s 1-100 after TTFT | p10 | mean | median TTFT ms | status | file |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| keep-accepted-gpu vs long-running control | 53.183 | 48.087 | 54.415 | 532.9 | valid/directional only | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-keepacceptedgpu-realistic128-chat-tokenids-qwensuite-20260703T052553Z.json` |
+| long-running control, same window | 52.108 | 48.263 | 53.800 | 628.2 | valid control, but older process/GPU0 | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-keepacceptedgpu-samewindow-control-realistic128-chat-tokenids-qwensuite-20260703T052553Z.json` |
+| keep-accepted-gpu, same-source A | 52.542 | 48.250 | 52.561 | 632.4 | valid/no-win | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-keepacceptedgpu-samesourceA-realistic128-chat-tokenids-qwensuite-20260703T052812Z.json` |
+| flag-off same-source A control | 53.420 | 48.301 | 54.612 | 527.9 | valid control | `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-samesourceA-control-realistic128-chat-tokenids-qwensuite-20260703T052812Z.json` |
+
+Conclusion:
+
+- No-win. The cleaner same-source comparison put the candidate below control
+  (`52.542` vs `53.420` tok/s).
+- The initial directionally positive comparison was not sufficient because it
+  compared a fresh GPU1 process against the long-running GPU0 control.
+- The code was reverted from the active vLLM source after syntax and
+  `git diff --check` validation. Do not promote, submit, or keep this flag in
+  service recipes.
+- The remaining GDN/spec work should not focus on scalar accepted-count
+  residency. The bigger opportunity remains verifier/GDN state transition cost
+  or a cleaner upstreamable form of accepted-source promotion.
