@@ -3,6 +3,26 @@
 This page is the operational recipe for serving Gemma 4 26B A4B Q8 as a
 localhost OpenAI-compatible backend on one Intel Arc Pro B70.
 
+## Expected Healthy Outcome
+
+A healthy deployment should look like this:
+
+- `/v1/models` returns model id `gemma4-26b-a4b-q8` with `n_ctx=32768`.
+- Short production smoke passes JSON and color-sort checks with
+  `cached_tokens=0`.
+- Compact text canary passes all rows; the last tracked deployment check passed
+  `32/32`.
+- 32K service smoke can process the largest current long-context case,
+  `lc-24000-late`, as an actual `32571` prompt-token request with
+  `cached_tokens=0` and exact JSON retrieval passing.
+- Current observed 32K service smoke performance on one B70:
+  TTFT about `32.682 s`, approximate prefill about `996.600 tok/s`, and decode
+  after TTFT about `115.179 tok/s`.
+
+These numbers are deployment expectations, not a LocalMaxxing short-decode
+record claim. The short-decode record remains the fixed realistic-suite
+`124.977 tok/s` result documented in `HANDOFF.md` and `reproduce.md`.
+
 ## Start Manually
 
 Record/short-decode profile:
