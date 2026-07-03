@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-07-02
+Date: 2026-07-03
 
 ## Active Target: Qwen3.6 27B INT4 AutoRound
 
@@ -39,6 +39,24 @@ Current Qwen27 INT4 best:
 - LocalMaxxing: approved as `cmr4gokx90061nv01lhoe3ft8`;
 - conservative evidence:
   `data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json`.
+
+Fastest quality-gated practical variant:
+
+- label separately as `AutoRound W4A16 + runtime INT8 LM-head`; do not call it
+  the original BF16-LM-head AutoRound quantization;
+- same promote-source MTP3/cg8 recipe plus `VLLM_XPU_LM_HEAD_INT8=1`;
+- strict fresh result: median `62.628 tok/s`, p10 `58.104`, mean `62.998`,
+  `cached_tokens=0` on every request;
+- same-window repeat on GPU3: `62.276 tok/s`;
+- same-window BF16-LM-head control on GPU2: `53.332 tok/s`;
+- full quality gate passed with baseline match and 1024-token needle pass;
+- compact packet:
+  `results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`;
+- LocalMaxxing: approved as `cmr4zkcxb003yq9018408i1pn`;
+- patch:
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`;
+- note:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-quality-pass.md`.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

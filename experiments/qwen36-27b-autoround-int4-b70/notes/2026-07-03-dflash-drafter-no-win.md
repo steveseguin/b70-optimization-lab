@@ -125,7 +125,8 @@ DFlash is closed no-win for the current Intel AutoRound INT4 target and local
 vLLM/XPU runtime:
 
 - it is valid and fresh-response clean at k=8/10/12;
-- it does not beat the current strict record (`53.522 tok/s`);
+- it does not beat the conservative BF16-LM-head strict record (`53.522 tok/s`)
+  or the later runtime INT8-LM-head variant (`62.628 tok/s`);
 - k=15, the model-card-style high draft length, device-losses before readiness;
 - the model-card caveat about PR `40898` remains relevant, so this result should
   not be interpreted as a general DFlash failure on all runtimes or target

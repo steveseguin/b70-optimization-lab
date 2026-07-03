@@ -62,9 +62,10 @@ XPU local argmax rank=0: using precomputed sampled_token_ids for exact spec argm
 
 ## Decision
 
-No-win. The current conservative promoted record is `53.522 tok/s`, and the
-same-family support rows are `53.992` and `54.861 tok/s`. Exact argmax-only
-target verification is correct but does not beat the current recipe.
+No-win. The conservative BF16-LM-head promoted record is `53.522 tok/s`, and
+the same-family support rows are `53.992` and `54.861 tok/s`. Exact argmax-only
+target verification is correct but does not beat that recipe; it is also below
+the later runtime INT8-LM-head variant at `62.628 tok/s`.
 
 Interpretation: on TP1, target `get_top_tokens` still pays the full LM-head
 matmul; this patch only avoids some full-logits sampler plumbing and therefore

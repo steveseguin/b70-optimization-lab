@@ -1,0 +1,101 @@
+{
+  "label": "qwen36-27b-int4-autoround-mtp3-cg8-promotesource-int8-lmhead-20260703",
+  "status": "quality_gated_runtime_quantization_candidate",
+  "model": "Intel/Qwen3.6-27B-int4-AutoRound",
+  "model_revision": "abc86de19eb1ebbf6a7df4582341325c22ddcb7d",
+  "runtime": "vLLM/XPU local /home/steve/src/vllm",
+  "hardware": "1x Intel Arc Pro B70 32GB",
+  "quantization_label": "AutoRound W4A16 + runtime INT8 LM-head",
+  "important_labeling_note": "Do not label as the original BF16-LM-head AutoRound quantization. The runtime keeps the BF16 lm_head resident but uses a default-off INT8 copy for projection when VLLM_XPU_LM_HEAD_INT8=1.",
+  "config": {
+    "api_mode": "chat",
+    "tensor_parallel": 1,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "thinking_disabled": true,
+    "xpu_graph": true,
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE",
+      "max_cudagraph_capture_size": 8
+    },
+    "speculative_config": {
+      "method": "qwen3_next_mtp",
+      "num_speculative_tokens": 3
+    },
+    "env_delta": {
+      "VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE": "1",
+      "VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE": "0",
+      "VLLM_XPU_LM_HEAD_INT8": "1"
+    }
+  },
+  "headline_candidate": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-int8lmhead-realistic128-chat-tokenids-qwensuite-20260703T133109Z.json",
+    "tok_s_1_100_after_ttft_median": 62.62792826965406,
+    "tok_s_1_100_after_ttft_p10": 58.10368015123676,
+    "tok_s_1_100_after_ttft_mean": 62.997843075167445,
+    "ttft_ms_median": 606.5752394497395,
+    "passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "same_window_repeat": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-int8lmhead-repeat-gpu3-realistic128-chat-tokenids-qwensuite-20260703T133535Z.json",
+    "tok_s_1_100_after_ttft_median": 62.276492398420544,
+    "tok_s_1_100_after_ttft_p10": 57.89575369361654,
+    "tok_s_1_100_after_ttft_mean": 62.72443347316918,
+    "ttft_ms_median": 606.8579329294153,
+    "passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "same_window_bf16_lmhead_control": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-bf16lmhead-control-gpu2-realistic128-chat-tokenids-qwensuite-20260703T133535Z.json",
+    "tok_s_1_100_after_ttft_median": 53.33195697867582,
+    "tok_s_1_100_after_ttft_p10": 48.24059291131892,
+    "tok_s_1_100_after_ttft_mean": 54.43245870896934,
+    "ttft_ms_median": 528.9009770494886,
+    "passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "deltas": {
+    "candidate_vs_same_window_bf16_control_pct": 17.42757187493234,
+    "candidate_vs_prior_conservative_53_5219513537644_pct": 17.01437931018519,
+    "repeat_vs_same_window_bf16_control_pct": 16.77236916831665
+  },
+  "quality": {
+    "full_quality_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-int8lmhead-mtp3-cg8-repeat32-ctx1024-20260703T133323Z.json",
+    "smoke_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-int8lmhead-smoke-20260703T132934Z.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "repeat_pass": true,
+    "long_context_pass": true,
+    "long_context_tokens": 1024
+  },
+  "validity": {
+    "suite_id": "qwen36-27b-autoround-int4-b70-realistic-v1",
+    "suite_path": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+    "fixed_unique_prompts": 12,
+    "each_prompt_once": true,
+    "cached_tokens_all_zero": true,
+    "return_token_ids": true,
+    "primary_metric": "median_tok_s_1_100_after_ttft",
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp",
+    "no_warmed_history_or_cache": true,
+    "target_verified_speculation": true,
+    "quality_suite_pass_all": true,
+    "quality_baseline_match_all": true
+  },
+  "artifacts": {
+    "patch": "patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch",
+    "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-quality-pass.md",
+    "fp8_rejected_note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fp8-lmhead-quality-rejected.md"
+  },
+  "localmaxxing": {
+    "status": "submitted_approved",
+    "id": "cmr4zkcxb003yq9018408i1pn",
+    "submitted_at_utc": "2026-07-03",
+    "label": "qwen36-27b-int4-autoround-b70-vllm-realistic-int8lmhead-mtp3-cg8-62tok-20260703",
+    "payload": "experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-int4-int8lmhead-20260703.payload.json",
+    "queue": "experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-int4-int8lmhead-20260703.queue.json",
+    "response_log": "data/localmaxxing-responses/qwen36-27b-int4-int8lmhead-20260703.submit.log",
+    "labeling_note": "Submitted as AutoRound INT4 W4A16 + runtime INT8 LM-head, separate from the original BF16-LM-head AutoRound quantization identity."
+  }
+}

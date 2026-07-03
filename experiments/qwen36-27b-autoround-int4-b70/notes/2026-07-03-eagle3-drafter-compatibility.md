@@ -173,8 +173,9 @@ Outcome:
 - median TTFT: `8734.193 ms`.
 
 Interpretation: stable enough to prove EAGLE3 compressed can run at k=1, but
-far below both the current MTP3 promote-source record (`53.522 tok/s`) and the
-no-spec control family. Not a viable optimization route.
+far below both the conservative MTP3 promote-source BF16-LM-head record
+(`53.522 tok/s`) and the later runtime INT8-LM-head variant (`62.628 tok/s`).
+Not a viable optimization route.
 
 ### k=2, graph on, promote-source env pair
 
@@ -278,3 +279,56 @@ Future revisit conditions:
 The next external-drafter candidate is DFlash, but it carries higher bring-up
 risk because the model card references a vLLM PR requirement. Keep it as an
 explicitly labeled compatibility attempt, not as a known-good route.
+
+## Follow-up: full-vocab EAGLE3 also device-lost
+
+After the compressed-draft-vocab result above, the `full/` EAGLE3 variant was
+downloaded because the model card describes it as the widest-compatibility
+variant:
+
+```text
+/mnt/fast-ai/llm-cache/hf/manual/Ex0bit--Qwen3.6-27B-PRISM-EAGLE3/full
+config.json
+model.safetensors (3308299584 bytes)
+```
+
+Run:
+
+```text
+qwen27-eagle3-full-k2-cg8-realistic128-chat-tokenids-qwensuite-20260703T132429Z
+```
+
+Command shape:
+
+```bash
+DRAFTER=/mnt/fast-ai/llm-cache/hf/manual/Ex0bit--Qwen3.6-27B-PRISM-EAGLE3/full
+QWEN36_27B_ENABLE_MTP=0
+QWEN36_27B_ENABLE_XPU_GRAPH=1
+VLLM_EXTRA_ARGS='--speculative-config {"method":"eagle3","model":".../full","num_speculative_tokens":2}'
+```
+
+Outcome:
+
+- target and full drafter loaded successfully;
+- graph capture completed;
+- early acceptance was only about `37-53%`, with mean acceptance length around
+  `1.74-2.08` and server-reported generation throughput around `5-13 tok/s`;
+- strict suite crashed with HTTP 500 before producing a result JSON;
+- fatal error:
+
+```text
+RuntimeError: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+gpu_model_runner.py:_prepare_inputs
+self.num_accepted_tokens_event.synchronize()
+```
+
+Evidence:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-eagle3-full-k2-cg8-realistic128-chat-tokenids-qwensuite-20260703T132429Z/server.stdout.log
+```
+
+Interpretation: the failure is not specific to the compressed draft vocabulary.
+Both compressed and full EAGLE3 are closed for this local vLLM/XPU + Intel
+AutoRound target until the EAGLE/XPU accepted-token bookkeeping/device-loss
+path is fixed upstream or locally.

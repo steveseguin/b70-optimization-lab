@@ -60,6 +60,55 @@ Evidence:
 ../../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json
 ```
 
+## Fastest Quality-Gated Variant
+
+The fastest current practical variant is separate from the original
+BF16-LM-head AutoRound quantization:
+
+- label: `AutoRound W4A16 + runtime INT8 LM-head`;
+- patch:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`;
+- env delta: `VLLM_XPU_LM_HEAD_INT8=1`;
+- strict fresh median: `62.628 tok/s`, p10 `58.104`, mean `62.998`,
+  `cached_tokens=0`;
+- full quality: `pass_all=true`, `baseline_match_all=true`, 1K long-context
+  needle passed;
+- packet:
+  `../../results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`.
+
+Run one strict check for this variant:
+
+```bash
+cd /home/steve/llm-optimizations
+LABEL=intel-mtp3-cg8-promotesource-int8lmhead-realistic128-chat-tokenids-qwensuite \
+GPU_INDEX=0 PORT=19410 \
+VLLM_XPU_LM_HEAD_INT8=1 \
+scripts/run-qwen36-27b-autoround-vllm-candidate.sh
+```
+
+Run the full quality gate after a speed pass:
+
+```bash
+cd /home/steve/llm-optimizations
+GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 \
+  QWEN36_27B_ENABLE_MTP=1 NUM_SPECULATIVE_TOKENS=3 \
+  QWEN36_27B_ENABLE_XPU_GRAPH=1 \
+  VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
+  VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
+  VLLM_XPU_LM_HEAD_INT8=1 \
+  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
+  experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
+
+/home/steve/.venvs/vllm-xpu/bin/python scripts/qwen36-text-quality-suite.py \
+  --base-url http://127.0.0.1:19410 \
+  --model qwen36-27b-int4-autoround \
+  --tokenizer /mnt/fast-ai/llm-cache/hf/hub/models--Intel--Qwen3.6-27B-int4-AutoRound/snapshots/abc86de19eb1ebbf6a7df4582341325c22ddcb7d \
+  --repeat-runs 32 \
+  --long-context-tokens 1024 \
+  --chat-template-kwargs-json '{"enable_thinking":false}' \
+  --baseline-json data/qwen36-27b-autoround-int4-b70-baselines/quality-promotesource-noacceptedpost-mtp3-cg8-repeat32-ctx1024-20260703T043946Z.json
+```
+
 ## Realistic Suite
 
 `realistic-suite-v1.json` is the Qwen27 copy of the fixed cold-response suite

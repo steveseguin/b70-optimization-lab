@@ -1,0 +1,133 @@
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index ddae01856..15e3366f7 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -3,6 +3,7 @@
+
+ from collections.abc import Sequence
+ from dataclasses import dataclass
++import os
+
+ import torch
+ import torch.nn.functional as F
+@@ -25,11 +26,13 @@ from vllm.model_executor.layers.quantization.base_config import (
+     method_has_implemented_embedding,
+ )
+ from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
++from vllm.logger import init_logger
+ from vllm.model_executor.parameter import BasevLLMParameter
+ from vllm.model_executor.utils import set_weight_attrs
+ from vllm.platforms import current_platform
+
+ DEFAULT_VOCAB_PADDING_SIZE = 64
++logger = init_logger(__name__)
+
+
+ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+@@ -63,6 +66,86 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             from vllm.model_executor.layers.utils import dispatch_cpu_unquantized_gemm
+
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=False)
++        self._maybe_prepare_xpu_fp8_lm_head(layer)
++
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in (
++            "1",
++            "true",
++            "yes",
++            "on",
++        )
++
++    def _maybe_prepare_xpu_fp8_lm_head(self, layer: torch.nn.Module) -> None:
++        if not self._env_enabled("VLLM_XPU_LM_HEAD_FP8"):
++            return
++        if layer.__class__.__name__ != "ParallelLMHead":
++            return
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            return
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_FP8 requested but lm_head weight dtype is %s; "
++                "falling back to the default BF16/FP16 path.",
++                weight.dtype,
++            )
++            return
++        try:
++            import vllm_xpu_kernels._xpu_C  # noqa: F401
++        except Exception as exc:
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_FP8 requested but vllm_xpu_kernels._xpu_C "
++                "could not be imported (%r); falling back to default lm_head.",
++                exc,
++            )
++            return
++        if not hasattr(torch.ops._xpu_C, "fp8_gemm_w8a16"):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_FP8 requested but _xpu_C.fp8_gemm_w8a16 is "
++                "unavailable; falling back to default lm_head.")
++            return
++
++        fp8_dtype_name = os.environ.get(
++            "VLLM_XPU_LM_HEAD_FP8_DTYPE", "e4m3fn").strip().lower()
++        if fp8_dtype_name == "e5m2":
++            fp8_dtype = torch.float8_e5m2
++        elif fp8_dtype_name in ("e4m3", "e4m3fn"):
++            fp8_dtype = torch.float8_e4m3fn
++        else:
++            raise ValueError(
++                "VLLM_XPU_LM_HEAD_FP8_DTYPE must be e4m3fn or e5m2, got "
++                f"{fp8_dtype_name!r}")
++
++        # Dense Qwen3.6 lm_head is not quantized by the AutoRound checkpoint.
++        # This experimental path keeps the original BF16/FP16 weight intact and
++        # adds a transient per-output-channel FP8 copy for quality-gated speed
++        # experiments. It is intentionally default-off.
++        with torch.no_grad():
++            max_value = torch.finfo(fp8_dtype).max
++            weight_f = weight.detach()
++            scales = weight_f.abs().amax(dim=1).float() / max_value
++            scales = scales.clamp_min(torch.finfo(torch.float32).tiny)
++            scales = scales.to(weight.dtype).contiguous()
++            weight_t_fp8 = (
++                weight_f.t().contiguous() / scales.view(1, -1)
++            ).to(fp8_dtype)
++
++        for name, tensor in (
++            ("_xpu_lm_head_fp8_weight_t", weight_t_fp8),
++            ("_xpu_lm_head_fp8_scale", scales),
++        ):
++            if name in layer._buffers:
++                layer._buffers[name] = tensor
++            else:
++                layer.register_buffer(name, tensor, persistent=False)
++        logger.info(
++            "Prepared experimental XPU FP8 lm_head: weight_t=%s scale=%s dtype=%s",
++            tuple(weight_t_fp8.shape),
++            tuple(scales.shape),
++            fp8_dtype,
++        )
+
+     def apply(
+         self,
+@@ -70,6 +153,19 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_LM_HEAD_FP8")
++            and bias is None
++            and x.device.type == "xpu"
++            and hasattr(layer, "_xpu_lm_head_fp8_weight_t")
++            and hasattr(layer, "_xpu_lm_head_fp8_scale")
++        ):
++            return torch.ops._xpu_C.fp8_gemm_w8a16(
++                x,
++                layer._xpu_lm_head_fp8_weight_t,
++                layer._xpu_lm_head_fp8_scale,
++                None,
++            )
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)

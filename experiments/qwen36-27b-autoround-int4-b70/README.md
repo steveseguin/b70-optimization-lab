@@ -47,6 +47,22 @@ Current strict best:
 - compact packet:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 
+Current fastest quality-gated variant:
+
+- label: `AutoRound W4A16 + runtime INT8 LM-head`;
+- config: same promote-source MTP3/cg8 recipe plus
+  `VLLM_XPU_LM_HEAD_INT8=1`;
+- strict fresh median: `62.628 tok/s`, p10 `58.104`, mean `62.998`,
+  `cached_tokens=0`;
+- repeat: `62.276 tok/s` on GPU3;
+- same-window BF16-LM-head control: `53.332 tok/s`;
+- full quality gate passed against the BF16-LM-head baseline, including
+  1K long-context needle;
+- evidence:
+  `results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`;
+- patch:
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`.
+
 Synthetic search reference:
 
 - config: MTP5/cg16;
@@ -61,10 +77,10 @@ Next milestone:
 2. Keep synthetic `vllm-random` metrics diagnostic-only.
 3. Rerun the Qwen realistic suite with `--return-token-ids` before promoting
    any change.
-4. Investigate remaining GDN/spec accepted-state overhead and verifier cost.
-   The current valid win avoids the separate accepted-state postprocess copy
-   through source-slot promotion. The next useful source work is making that
-   path cleaner/upstreamable or reducing remaining metadata/copy overhead.
+4. Investigate LM-head/verifier cost. The INT8 LM-head path is the fastest
+   quality-gated practical lane, but it changes runtime LM-head precision. A
+   same-quantization win still needs exact BF16 top-1/candidate-bound work or a
+   cleaner verifier design.
 
 ## Folder Map
 
@@ -91,11 +107,13 @@ Current trace summary:
 
 The current valid env-only win appears to preserve the accepted-state transition
 by reading from the accepted speculative slot as the running source, then
-disabling the now-redundant accepted-state postprocess copy. Next code work
-should make that mechanism explicit, minimal, and upstreamable, then search for
-remaining verifier/GDN overhead. Bad candidates already closed: blind copy
-skips, skipping full-accept state, and simply changing the Triton memcpy block
-size.
+disabling the now-redundant accepted-state postprocess copy. Later timing moved
+the current frontier away from that copy path: full LM-head/logits work now
+dominates. Bad candidates already closed: blind copy skips, skipping
+full-accept state, changing the Triton memcpy block size, exact argmax plumbing
+that still computes full logits, draft local-argmax plumbing that still
+computes full logits, FP8 LM-head (quality fail), compressed/full EAGLE3
+(device-loss or too slow), and DFlash (no-win locally).
 
 ## Current Entry Points
 

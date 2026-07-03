@@ -23,9 +23,10 @@ The model card reports ten safetensor shards plus
 ## Current Status
 
 Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
-a strict fresh-response baseline and one validated env-only speed win.
-LocalMaxxing approved the current strict/fresh result as
-`cmr4gokx90061nv01lhoe3ft8`.
+a strict fresh-response BF16-LM-head baseline, one validated env-only speed win,
+and one faster quality-gated runtime INT8-LM-head variant. LocalMaxxing approved
+the BF16-LM-head result as `cmr4gokx90061nv01lhoe3ft8` and the runtime
+INT8-LM-head variant as `cmr4zkcxb003yq9018408i1pn`.
 
 Validated so far:
 
@@ -77,6 +78,34 @@ Current best valid fresh-response result:
 - LocalMaxxing: `cmr4gokx90061nv01lhoe3ft8`;
 - vLLM patch-stack snapshot:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
+
+Current best quality-gated runtime-quantized variant:
+
+- label this separately as **AutoRound W4A16 + runtime INT8 LM-head**. Do not
+  call it the original BF16-LM-head AutoRound quantization;
+- source patch:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`;
+- env delta on top of the current promote-source MTP3/cg8 recipe:
+  `VLLM_XPU_LM_HEAD_INT8=1`;
+- strict fresh Qwen-suite artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-int8lmhead-realistic128-chat-tokenids-qwensuite-20260703T133109Z.json`;
+- result: median **`62.628 tok/s`**, p10 `58.104`, mean `62.998`,
+  TTFT median `606.6 ms`, `cached_tokens=0` on every request;
+- same-window repeat on GPU3:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-int8lmhead-repeat-gpu3-realistic128-chat-tokenids-qwensuite-20260703T133535Z.json`
+  at median `62.276 tok/s`;
+- same-window BF16-LM-head control on GPU2:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-bf16lmhead-control-gpu2-realistic128-chat-tokenids-qwensuite-20260703T133535Z.json`
+  at median `53.332 tok/s`;
+- full quality gate:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-int8lmhead-mtp3-cg8-repeat32-ctx1024-20260703T133323Z.json`,
+  `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
+- compact packet:
+  `int8-lmhead-20260703.json`;
+- note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-quality-pass.md`;
+- LocalMaxxing: approved as `cmr4zkcxb003yq9018408i1pn` with explicit
+  `AutoRound INT4 W4A16 + runtime INT8 LM-head` quantization/mode label.
 
 Post-GGUF recheck:
 
@@ -181,7 +210,11 @@ Current realistic research interpretation:
   `8734 ms` median TTFT. k=2 graph and k=3 eager crashed with
   `UR_RESULT_ERROR_DEVICE_LOST`; k=3 graph with default accepted-state handling
   stalled after 8 prompts and hit zero-acceptance intervals. Do not use EAGLE3
-  compressed as a current record route without source/runtime fixes. Evidence:
+  compressed as a current record route without source/runtime fixes. The
+  full-vocab EAGLE3 variant was also tested at k=2; it loaded and captured
+  graphs, but crashed with the same `UR_RESULT_ERROR_DEVICE_LOST` at
+  `num_accepted_tokens_event.synchronize()` and was slow before crashing.
+  Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`.
 - external DFlash drafter compatibility is also closed no-win locally.
   `z-lab/Qwen3.6-27B-DFlash` loaded and passed the strict fresh gate at k=8,
@@ -203,14 +236,12 @@ Current realistic research interpretation:
   after-TTFT `63.840 tok/s`) but are diagnostic only because completions mode
   bypasses the chat template and emits `<think>` text.
 
-Next milestone: beat the promote-source/no-accepted-postprocess result without
-changing model identity or using warmed/history/cache effects. Current best
-bet remains verifier / LM-head cost reduction, but both exact target
-argmax-only plumbing and draft proposer local argmax are closed no-win. A
-larger win likely needs an AutoRound/INC LM-head top-1 or candidate-vs-max
-kernel. Keep synthetic screens for candidate search only, then rerun the Qwen
-realistic suite with
-`--return-token-ids` and the quality suite before promotion.
+Next milestone: either (1) harden and service-test the runtime INT8-LM-head
+variant, which is the current fastest quality-gated practical lane, or (2) beat
+it without changing LM-head precision via a true exact BF16 top-1 /
+candidate-vs-max design. Keep synthetic screens for candidate search only, then
+rerun the Qwen realistic suite with `--return-token-ids` and the quality suite
+before promotion.
 
 First diagnostic realistic-suite run (not a headline result):
 

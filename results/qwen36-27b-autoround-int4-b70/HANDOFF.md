@@ -57,6 +57,36 @@ Current best valid fresh-response result:
   `promote-source-noacceptedpost-20260703.json`;
 - LocalMaxxing: approved as `cmr4gokx90061nv01lhoe3ft8`.
 
+Current fastest quality-gated variant:
+
+- runtime quantization label: **AutoRound W4A16 + INT8 LM-head**. This is not
+  the original BF16-LM-head AutoRound quantization, so keep it separate in
+  claims and submissions;
+- patch:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-lm-head-int8-quality-pass-20260703.patch`;
+- config: same promote-source MTP3/cg8 recipe plus
+  `VLLM_XPU_LM_HEAD_INT8=1`;
+- strict fresh artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-int8lmhead-realistic128-chat-tokenids-qwensuite-20260703T133109Z.json`;
+- primary result: median `62.62792826965406 tok/s`, p10
+  `58.10368015123676`, mean `62.997843075167445`, TTFT median
+  `606.575 ms`, `cached_tokens=0` on every request;
+- same-window repeat on GPU3:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-int8lmhead-repeat-gpu3-realistic128-chat-tokenids-qwensuite-20260703T133535Z.json`
+  at median `62.276492398420544 tok/s`;
+- same-window BF16-LM-head control:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-cg8-promotesource-bf16lmhead-control-gpu2-realistic128-chat-tokenids-qwensuite-20260703T133535Z.json`
+  at median `53.33195697867582 tok/s`;
+- quality:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-int8lmhead-mtp3-cg8-repeat32-ctx1024-20260703T133323Z.json`,
+  `pass_all=true`, `baseline_match_all=true`, `long_context_pass=true`;
+- compact packet:
+  `int8-lmhead-20260703.json`;
+- note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-int8-lmhead-quality-pass.md`;
+- LocalMaxxing: approved as `cmr4zkcxb003yq9018408i1pn` with explicit runtime
+  INT8-LM-head quantization/mode labeling.
+
 Recent ladder controls:
 
 - no-spec, graph on, cg8: valid control at median `31.179 tok/s` after TTFT;
@@ -114,6 +144,13 @@ Post-baseline follow-up:
   controls averaging `53.0196 tok/s` and candidates averaging `52.9727 tok/s`
   (`-0.088%`), so the effect is flat/no-win. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-draft-local-argmax-no-win.md`.
+- FP8 LM-head is rejected. It reached `64.824 tok/s` on the strict short suite,
+  but failed the full 1K long-context quality gate (`B!!!!...` output). Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fp8-lmhead-quality-rejected.md`.
+- INT8 LM-head is quality-passing and fast. It is not exact BF16 LM-head math,
+  but it passed the current full quality gate and repeated at `62.276-62.628
+  tok/s`. Treat it as the current practical speed lane while continuing exact
+  BF16 top-1/candidate-bound research separately.
 - Variance note: current same-recipe promoted rows are `54.861`, `53.992`,
   `53.522`, and `53.608 tok/s` (mean `53.996`, stdev `0.612`, range `2.48%`
   of mean). Treat sub-1% Qwen27 changes as inconclusive unless a same-window
@@ -226,9 +263,11 @@ Continue INT4 optimization without promoting synthetic scores:
   repeat batch; the first repeat fell to `47.045 tok/s`;
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
   MTP/speculation or kernel change;
-- prioritize exact greedy verifier / LM-head cost next. The current promoted
-  recipe is no longer hitting the traced promoted row-copy helper, and timing
-  shows full logits / LM-head work dominates;
+- prioritize LM-head cost next. The current promoted recipe is no longer
+  hitting the traced promoted row-copy helper, and timing shows full logits /
+  LM-head work dominates. The INT8 LM-head patch is the current fastest
+  quality-gated practical lane; an exact BF16 top-1/candidate-bound kernel is
+  still the cleaner same-quantization research goal;
 - do not skip full-accept GDN postprocess blindly; it breaks long-context state
   recall. The current win is specifically source-slot promotion plus disabling
   the redundant accepted-state copy, not a semantic elision;
