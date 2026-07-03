@@ -121,6 +121,7 @@ stays single-model.
 | Profile | Status | Modalities | Purpose |
 | --- | --- | --- | --- |
 | `minimax-m27-c1` | baseline | text | Deployable MiniMax M2.7 INT4 AutoRound baseline endpoint, 32K context, one active generation. |
+| `qwen36-27b-int4-autoround` | experimental-bringup | text | New Qwen3.6 27B INT4 AutoRound TP1 profile. Use only after the manual smoke in `results/qwen36-27b-autoround-int4-b70` passes. |
 | `qwen36-35b-a3b-int4-autoround` | research | text,image | Preferred Qwen 35B candidate. Public W4A16 AutoRound checkpoint, working after the local XPU Mamba pointer patch. |
 | `gemma3-12b-it-int4-autoround` | research | text,image | Tested Gemma fallback. Public 12B INT4 AutoRound checkpoint, much faster than Qwen 35B on the 2K/128 concurrency ladder. |
 | `gemma4-12b-it-int4-autoround` | research | text,image | Current Gemma 4 candidate. Intel W4A16 AutoRound checkpoint, working after Transformers `5.10.2` plus the local vLLM `gemma4_unified` backport. |

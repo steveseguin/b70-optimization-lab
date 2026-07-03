@@ -2,6 +2,21 @@
 
 Date: 2026-07-02
 
+## Active Target: Qwen3.6 27B INT4 AutoRound
+
+The current model switch target is `Intel/Qwen3.6-27B-int4-AutoRound` on one
+Intel Arc Pro B70 first, with four independent replicas for parallel screening
+after TP1 smoke works. Start from:
+
+- `results/qwen36-27b-autoround-int4-b70/HANDOFF.md`;
+- `results/qwen36-27b-autoround-int4-b70/README.md`;
+- `experiments/qwen36-27b-autoround-int4-b70/README.md`;
+- `repro/qwen36-27b-autoround-int4-b70/README.md`.
+
+First milestone: download/pin revision
+`abc86de19eb1ebbf6a7df4582341325c22ddcb7d`, serve TP1 via vLLM/XPU at
+`max_model_len=2048`, run the OpenAI smoke, then build a real baseline gate.
+
 ## Gemma 26B Bookmark
 
 Gemma 4 26B A4B Q8 is captured as a production-servable one-B70 backend and a

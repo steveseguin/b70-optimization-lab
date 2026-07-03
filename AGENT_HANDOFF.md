@@ -31,7 +31,18 @@ scripts, and notes by explicit path from the active workspace.
 
 ## Current Objective
 
-Primary target:
+Active target as of the latest switch request:
+
+- `Intel/Qwen3.6-27B-int4-AutoRound` on Intel Arc Pro B70.
+- Work in the single active workspace `/home/steve/llm-optimizations`.
+- Start with `results/qwen36-27b-autoround-int4-b70/HANDOFF.md` and
+  `experiments/qwen36-27b-autoround-int4-b70/README.md`.
+- Immediate milestone: TP1 vLLM/XPU load at `max_model_len=2048`, then
+  `experiments/qwen36-27b-autoround-int4-b70/scripts/smoke-openai.sh`.
+- Do not submit LocalMaxxing or optimize speculative decode until the model
+  serves and a fresh-response baseline gate exists.
+
+Previous bookmarked target:
 
 - Gemma 4 26B A4B Q8/INT8-quality on Intel Arc Pro B70.
 - Run one Q8 target/verifier replica per GPU where practical, using four GPUs

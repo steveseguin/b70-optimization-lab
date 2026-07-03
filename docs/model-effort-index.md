@@ -33,6 +33,20 @@ path.
 
 ## Active / Recent Efforts
 
+### Qwen3.6 27B INT4 AutoRound On B70
+
+Main entries:
+
+- [result packet](../results/qwen36-27b-autoround-int4-b70/README.md)
+- [handoff](../results/qwen36-27b-autoround-int4-b70/HANDOFF.md)
+- [bring-up repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
+- [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
+
+Status: active bring-up target as of 2026-07-03. The first milestone is a TP1
+single-B70 vLLM/XPU smoke for `Intel/Qwen3.6-27B-int4-AutoRound` at revision
+`abc86de19eb1ebbf6a7df4582341325c22ddcb7d`. Optimize only after the model
+serves and a baseline gate exists.
+
 ### Gemma 4 26B A4B Q8 / INT8 On B70
 
 Main entries:

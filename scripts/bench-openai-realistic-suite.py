@@ -23,6 +23,7 @@ def post_stream(
     timeout: int,
     api_mode: str,
     seed: int | None,
+    request_extra: dict[str, Any],
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": model,
@@ -40,6 +41,7 @@ def post_stream(
     else:
         endpoint = "completions"
         payload["prompt"] = prompt
+    payload.update(request_extra)
 
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/{endpoint}",
@@ -52,6 +54,8 @@ def post_stream(
     first_text_at: float | None = None
     text_parts: list[str] = []
     chunk_offsets: list[float] = []
+    content_delta_count = 0
+    reasoning_delta_count = 0
     usage: dict[str, Any] = {}
 
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -67,7 +71,14 @@ def post_stream(
                 usage = event["usage"]
             for choice in event.get("choices", []):
                 if api_mode == "chat":
-                    token_text = (choice.get("delta") or {}).get("content") or ""
+                    delta = choice.get("delta") or {}
+                    token_text = delta.get("content") or ""
+                    if token_text:
+                        content_delta_count += 1
+                    else:
+                        token_text = delta.get("reasoning") or ""
+                        if token_text:
+                            reasoning_delta_count += 1
                 else:
                     token_text = choice.get("text") or ""
                 if not token_text:
@@ -97,6 +108,8 @@ def post_stream(
         "ttft_s": ttft_s,
         "post_ttft_s": post_ttft_s,
         "chunk_count": len(chunk_offsets),
+        "content_delta_count": content_delta_count,
+        "reasoning_delta_count": reasoning_delta_count,
         "chunk_offsets_s": chunk_offsets,
         "usage": usage,
         "prompt_tokens": prompt_tokens,
@@ -185,7 +198,19 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--out", type=Path)
+    parser.add_argument(
+        "--request-extra-json",
+        default="{}",
+        help=(
+            "JSON object merged into every request payload. Use for "
+            "model-specific controls such as "
+            "'{\"chat_template_kwargs\":{\"enable_thinking\":false}}'."
+        ),
+    )
     args = parser.parse_args()
+    request_extra = json.loads(args.request_extra_json)
+    if not isinstance(request_extra, dict):
+        raise SystemExit("--request-extra-json must decode to a JSON object")
 
     suite_meta, prompts = load_suite(args.suite)
     rows: list[dict[str, Any]] = []
@@ -199,6 +224,7 @@ def main() -> int:
             timeout=args.timeout,
             api_mode=args.api_mode,
             seed=args.seed,
+            request_extra=request_extra,
         )
         row["prompt_index"] = index
         row["prompt_id"] = item["id"]
@@ -217,7 +243,7 @@ def main() -> int:
         row["metric_chunk_events_at_least_window"] = (
             row.get("chunk_count") >= args.metric_tokens
         )
-        row["token_timing_source"] = "openai_stream_text_delta"
+        row["token_timing_source"] = "openai_stream_content_or_reasoning_delta"
         row["cached_tokens"] = cached_tokens(row)
         rows.append(row)
 
@@ -262,7 +288,7 @@ def main() -> int:
         "required_policy": "fixed realistic prompt suite; each prompt once; cached_tokens=0 every row; no repeated/warmed prompt averaging; metric is median tokens 1-100 after TTFT",
         "metric_name": "median_tok_s_1_100_after_ttft",
         "metric_tokens": args.metric_tokens,
-        "token_timing_source": "openai_stream_text_delta",
+        "token_timing_source": "openai_stream_content_or_reasoning_delta",
         "cached_tokens_all_zero": all(isinstance(v, int) and v == 0 for v in cached_values),
         "cached_tokens": cached_values,
         "prompts_unique": len(set(prompt_hashes)) == len(prompt_hashes),
@@ -301,6 +327,9 @@ def main() -> int:
         "primary_metric_name": gate["metric_name"],
         "primary_metric_tokens": args.metric_tokens,
         "token_timing_source": gate["token_timing_source"],
+        "chat_reasoning_delta_counts": [
+            row.get("reasoning_delta_count") for row in rows
+        ],
         "note": (
             "Fixed realistic suite; each prompt is sent once as a cold response. "
             "Do not average synthetic repeated prompts, warmed continuations, "
@@ -318,6 +347,7 @@ def main() -> int:
             "prompt_count": len(prompts),
             "max_tokens": args.max_tokens,
             "seed": args.seed,
+            "request_extra": request_extra,
         },
         "realistic_final_gate": gate,
         "fresh_response_validity": fresh_response_validity,
