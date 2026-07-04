@@ -129,6 +129,13 @@ Current prompt-processing / long-context service baseline:
 Current next-execution plan:
 
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-next-optimization-execution-plan.md`;
+- strict candidate runner:
+  `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh`.
+  Use it for future source/config/checkpoint screens that might become
+  headline candidates; it captures the server log, smoke result, fixed Qwen
+  realistic suite with token IDs and `cached_tokens=0`, optional quality suite,
+  and a compact summary. Synthetic or repeated-prompt diagnostics remain
+  separate and must not be submitted as headline throughput;
 - Phase 0/1 update:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-phase0-phase1-baseline-and-timing.md`.
   The current record family reproduced at `65.56930784255283 tok/s` median

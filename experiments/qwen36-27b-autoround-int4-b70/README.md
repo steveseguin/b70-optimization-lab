@@ -119,6 +119,9 @@ Next milestone:
 3. Keep synthetic `vllm-random` metrics diagnostic-only.
 4. Rerun the Qwen realistic suite with `--return-token-ids` before promoting
    any change.
+   Use `scripts/run-vllm-candidate.sh` for single-replica strict candidate
+   screens so server logs, smoke output, strict fresh gate results, optional
+   quality checks, and compact summaries are captured consistently.
 5. Investigate LM-head/verifier cost with a real mechanism. Recent no-win
    screens closed output-buffer reuse, bonus-token argmax plumbing, draft-only
    row-count shortcuts, Python/chunked INT8 top-1, top-token sampler plumbing,
