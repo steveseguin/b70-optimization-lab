@@ -80,9 +80,19 @@ Likely upside:
    integrated top-ID/candidate-score epilogue, fewer LM-head calls/rows before
    GEMM, or a single-launch reduction design that beats dense oneDNN. Do not
    repeat another wrapper around the same full-vocab scan plus second reduction.
-2. Improving accepted tokens/step toward `3.3-4.0` without increasing step cost
+2. Draft-side LM-head calls are the larger avoidable bucket, but sequential
+   MTP3 cannot simply batch them: each next draft hidden state depends on the
+   previously sampled draft token. The dedicated audit is
+   `2026-07-04-draft-lmhead-batching-and-dflash-next-blocker.md`. Avoid
+   repeating draft row-batching or local-argmax wrappers unless the producer
+   changes materially.
+3. Improving accepted tokens/step toward `3.3-4.0` without increasing step cost
    is the route toward `90-100 tok/s`.
-3. TTFT/prompt work is valuable separately: median TTFT is about `604 ms`, so
+4. DFlash/parallel drafting is the architectural way to remove sequential draft
+   generation, but mixed full/sliding support needs multi-KV-group drafter
+   metadata and per-group future-query block tables. Do not delete the
+   single-KV assertion as a shortcut.
+5. TTFT/prompt work is valuable separately: median TTFT is about `604 ms`, so
    wall-clock full128 is only about `49 tok/s` even though after-TTFT decode is
    about `64-65 tok/s`.
 

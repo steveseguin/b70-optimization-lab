@@ -204,6 +204,14 @@ Current next-execution plan:
   strict reruns landed `63.973-64.741 tok/s`, all gate-passing with
   `cached_tokens=0`. No LocalMaxxing update. Use `~1-1.5%` as the practical
   same-window inconclusive band for this recipe;
+- current record reproduction support:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-current-record-repro-support.md`.
+  A fresh one-GPU strict run on GPU0 with the approved webhie/BF16-scale recipe
+  passed at `65.40973148473643 tok/s`, p10 `58.292274675044496`, mean
+  `64.10997285648747`, median TTFT `605.8498464990407 ms`, and
+  `cached_tokens=0` on all `12/12` prompts. It is a live reproducibility support
+  row only, not a LocalMaxxing update, because the recipe is unchanged and the
+  delta over `65.27648650325429` is inside the variance band;
 - current source audit:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-callcount-source-audit.md`.
   The exact spec top-ID consumer is already present and quality-safe for
@@ -235,6 +243,15 @@ Current next-execution plan:
   target verifier only if fused with a better producer or pursued as a later
   small cleanup; (4) true partial-group support only if committing to deeper
   metadata/graph engineering.
+- draft LM-head batching / DFlash blocker audit:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-lmhead-batching-and-dflash-next-blocker.md`.
+  Sequential MTP3 cannot batch the three draft LM-head rows because each next
+  draft hidden state depends on the previously sampled draft token. DFlash is
+  the real parallel-draft route, but mixed full/sliding attention requires
+  full multi-KV-group drafter metadata and future-query block tables; deleting
+  the single-KV assertion would risk silent draft-cache corruption. Do not
+  repeat draft row batching, local-argmax wrappers, or unsafe DFlash assertion
+  removal.
 - held-out calibration trace lane:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-heldout-calibration-trace.md`.
   The benchmark harness now records absolute request windows and deterministic

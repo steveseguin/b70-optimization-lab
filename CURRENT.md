@@ -49,6 +49,11 @@ Fastest quality-gated practical variant:
 - strict fresh headline: median `65.276 tok/s`, p10 `59.609`, mean
   `65.077`, `cached_tokens=0` on every request;
 - support rows: `65.005` and `64.864 tok/s`;
+- latest same-recipe support row:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-current-record-repro-20260704-codex-20260704T111830Z.json`
+  at `65.40973148473643 tok/s`, strict fresh gate passed with
+  `cached_tokens=0`; support only, not a LocalMaxxing update, because the
+  recipe is unchanged and the delta is inside the variance band;
 - same-window/crossover FP32-scale controls: `64.234` and `64.090 tok/s`;
 - prior submitted webhie INT8-LM-head record: `64.306 tok/s`;
 - full quality gate passed with baseline match and 1024-token needle pass
