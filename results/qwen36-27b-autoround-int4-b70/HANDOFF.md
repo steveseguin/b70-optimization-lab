@@ -205,6 +205,12 @@ Current next-execution plan:
   cg4 `64.507`, cg8 control `65.153`, cg16 `63.500`, cg32 `64.071`, all
   `cached_tokens=0` and gate-passing. Do not retest capture size for this exact
   recipe unless a source change alters graph shapes, row counts, or acceptance;
+- closed INT8 GEMM scratchpad ring-size screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-int8-gemm-scratchpad-ring-screen-no-win.md`.
+  `VLLM_XPU_INT8_GEMM_SCRATCHPAD_RING_SIZE=4` produced high support rows
+  (`65.708`, `65.817`), but same-window crossover against ring1 controls showed
+  only `+0.42%` and `+0.27%` median deltas, below the practical variance band.
+  Keep the default ring behavior for headline claims; no LocalMaxxing update;
 - current webhie/BF16-scale 4-GPU reconfirmation:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-reconfirm4gpu-variance.md`.
   The later high support row (`66.389 tok/s`) did not reproduce; four same-window

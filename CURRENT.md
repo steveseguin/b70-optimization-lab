@@ -140,6 +140,13 @@ Fastest quality-gated practical variant:
   `63.500`, cg32 `64.071`, all gate-passing with `cached_tokens=0`.
   Keep `max_cudagraph_capture_size=8` unless a source change materially alters
   graph shapes, row counts, or acceptance.
+- INT8 GEMM scratchpad ring-size closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-int8-gemm-scratchpad-ring-screen-no-win.md`.
+  A low-level same-window/crossover screen of
+  `VLLM_XPU_INT8_GEMM_SCRATCHPAD_RING_SIZE=1/2/4/8` found ring4 highs
+  (`65.708`, `65.817`) but paired crossover deltas of only `+0.42%` and
+  `+0.27%` versus ring1 controls. Treat as support/variance only; no
+  LocalMaxxing update and no recipe change.
 - dynamic-drafter-depth source closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   A proposer-side variable-depth prototype crashed on the first partial

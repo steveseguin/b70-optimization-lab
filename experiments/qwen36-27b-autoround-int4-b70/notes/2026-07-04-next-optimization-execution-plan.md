@@ -62,6 +62,11 @@ Phase 0 and Phase 1 are complete and captured in
   cg4 `64.507`, cg8 control `65.153`, cg16 `63.500`, cg32 `64.071`, all with
   `cached_tokens=0`. Do not repeat capture-size sweeps for this exact recipe
   unless a source change alters graph shapes, row counts, or acceptance.
+- The INT8 oneDNN GEMM scratchpad ring-size question is closed no-promo:
+  `2026-07-04-int8-gemm-scratchpad-ring-screen-no-win.md`. Ring4 produced
+  high support rows (`65.708`, `65.817`), but paired crossover deltas against
+  ring1 controls were only `+0.42%` and `+0.27%`, so the movement is variance,
+  not a new recipe.
 
 ## Current waste estimate
 

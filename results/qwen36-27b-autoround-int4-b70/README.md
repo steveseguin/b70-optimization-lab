@@ -346,7 +346,10 @@ target-only attribution shows the target verifier LM-head dominates the win,
 and the standalone native compact full-vocab top-1 kernel is exact but slower
 than dense oneDNN. The semantic candidate-max version is also closed no-win:
 exact top IDs/values plus candidate scores, but only `1.010x` at rows `1` and
-slower at rows `2-4`.
+slower at rows `2-4`. A low-level INT8 GEMM scratchpad ring-size screen is also
+closed no-promo: ring4 produced high support rows (`65.708`, `65.817`) but
+crossover deltas versus ring1 controls were only `+0.42%` and `+0.27%`; see
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-int8-gemm-scratchpad-ring-screen-no-win.md`.
 The next meaningful decode-rate work is reducing LM-head call/row count per
 verifier step, improving accepted tokens per target verifier step, or finding
 a oneDNN-integrated top-1/top-k/candidate-score post-op that avoids a second
