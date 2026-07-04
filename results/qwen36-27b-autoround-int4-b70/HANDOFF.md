@@ -145,9 +145,13 @@ Current next-execution plan:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-autoround-variant-screening-and-stepidx-audit.md`.
   Same-window strict screens for local AutoRound variants found
   `webhie-Code` at `63.963 tok/s` and `acyildirimer` at `64.326 tok/s`
-  versus webhie control `64.813 tok/s`; both are valid no-wins. The possible
-  `spec_step_idx` MTP plumbing fix is a no-op for this lane because all local
-  Qwen27 AutoRound checkpoints report `mtp_num_hidden_layers=1`.
+  versus webhie control `64.813 tok/s`; `poma-ai` passed later at
+  `62.951 tok/s`; all are valid no-wins. The webhie no-parser probe was also
+  no-win (`64.932` vs parser control `65.179`). The local vrfai FP8 full model
+  failed before readiness at `_xpu_C.fp8_gemm_w8a16` with
+  `could not set scales primitive attribute`. The possible `spec_step_idx` MTP
+  plumbing fix is a no-op for this lane because all checked Qwen27 AutoRound
+  checkpoints report `mtp_num_hidden_layers=1`.
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
   adaptive-depth heuristics unless the proposer and verifier are both made
