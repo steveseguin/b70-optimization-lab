@@ -1,0 +1,125 @@
+{
+  "classification": "diagnostic_only_eagle_corpus_v2_4gpu_heldout_screen",
+  "status": "closed_no_endpoint_candidate",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "model_snapshot": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "hardware": "4x Intel Arc Pro B70 for corpus collection, xpu:0 for heldout training/eval",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z",
+  "suite": "experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v2-suite.json",
+  "collection": {
+    "runner": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-eagle-chat-corpus-v2-4gpu.sh",
+    "shards": 4,
+    "total_prompts": 96,
+    "total_rows": 15360,
+    "total_samples": 96,
+    "total_samples_with_metadata": 96,
+    "total_continuity_breaks": 0,
+    "families_by_shard": {
+      "shard-0": [
+        "database-operations",
+        "incident-response",
+        "security-review"
+      ],
+      "shard-1": [
+        "api-design",
+        "capacity-planning",
+        "performance-debug"
+      ],
+      "shard-2": [
+        "code-review",
+        "quality-gates",
+        "release-planning"
+      ],
+      "shard-3": [
+        "architecture-tradeoff",
+        "long-context",
+        "support-escalation"
+      ]
+    }
+  },
+  "training": {
+    "train_dataset_shards": [
+      "shard-0",
+      "shard-1",
+      "shard-2"
+    ],
+    "heldout_dataset_shards": [
+      "shard-3"
+    ],
+    "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z/draft-v2-heldout-e4-r3-lr3e5-tok01",
+    "epochs": 4,
+    "batch_size": 1,
+    "lr": 3e-5,
+    "max_len": 128,
+    "rollout_steps": 3,
+    "token_loss_weight": 0.1,
+    "intermediate_size": 4096,
+    "num_attention_heads": 16,
+    "num_key_value_heads": 2,
+    "head_dim": 128,
+    "final_metrics": {
+      "epoch": 4,
+      "step": 288,
+      "loss": 1.2338991165161133,
+      "feature_loss": 0.828125,
+      "token_loss": 4.057741165161133,
+      "top1": 0.20967741310596466,
+      "top3": 0.3629032075405121
+    }
+  },
+  "offline_heldout_eval": {
+    "eval_file": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z/eval-heldout-e4-r3-lr3e5-tok01.json",
+    "dataset": "shard-3",
+    "starts": 1024,
+    "start_stride": 2,
+    "max_steps": 3,
+    "topk": 3,
+    "mean_accepted": 0.4892578125,
+    "acceptance_histogram": {
+      "0": 707,
+      "1": 189,
+      "2": 72,
+      "3": 56
+    },
+    "per_step": [
+      {
+        "step": 1,
+        "conditional_denominator": 1024,
+        "exact_rate": 0.3095703125,
+        "topk_rate": 0.4072265625
+      },
+      {
+        "step": 2,
+        "conditional_denominator": 317,
+        "exact_rate": 0.4037854889589905,
+        "topk_rate": 0.5299684542586751
+      },
+      {
+        "step": 3,
+        "conditional_denominator": 128,
+        "exact_rate": 0.4375,
+        "topk_rate": 0.6015625
+      }
+    ],
+    "family_rows": [
+      {
+        "family": "long-context",
+        "mean_accepted": 0.46314102564102566,
+        "samples": 8,
+        "starts": 624
+      },
+      {
+        "family": "support-escalation",
+        "mean_accepted": 0.53,
+        "samples": 6,
+        "starts": 400
+      }
+    ]
+  },
+  "interpretation": {
+    "endpoint_candidate": false,
+    "localmaxxing_candidate": false,
+    "reason": "The four-GPU corpus/data path is healthy, but this compact EAGLE draft reaches only 0.489 mean accepted tokens on held-out families, far below the prior 2.1016 offline draft that still failed endpoint quality.",
+    "next_action": "Do not endpoint-test this draft. Future EAGLE work needs materially stronger training/data/init before endpoint validation."
+  }
+}

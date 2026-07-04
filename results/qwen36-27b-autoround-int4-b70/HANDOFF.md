@@ -277,6 +277,15 @@ Current next-execution plan:
   suffix-tolerant request-ID join fix. The tiny draft trained from it reached
   only `0.240` mean accepted offline, so do not endpoint-test it; use the
   metadata path for a larger held-out v2 corpus instead.
+- EAGLE corpus/eval v2 four-GPU heldout screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
+  The four-GPU runner collected `96` chat prompts, `15360` hidden rows,
+  `96` samples, metadata on `96/96` samples, and `0` continuity breaks. A
+  compact draft trained on shards `0-2` reached only `0.489` mean accepted on
+  heldout shard `3`, far below the prior `2.1016` offline draft that still
+  failed endpoint quality. This draft is not an endpoint candidate; the useful
+  result is that corpus v2 collection is healthy and draft quality is now the
+  blocker.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

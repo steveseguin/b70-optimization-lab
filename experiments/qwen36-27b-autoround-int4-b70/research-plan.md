@@ -70,6 +70,15 @@ only `0.240` mean accepted offline. This proves the metadata path, not draft
 quality. Next EAGLE work needs a larger diverse v2 corpus and held-out family
 validation before endpoint testing.
 
+The four-GPU v2 heldout screen is captured in
+`notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`, with compact summary
+`../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle-corpus-v2-4gpu-heldout-20260704T102338Z-summary.json`.
+The new four-GPU runner collected `96` chat prompts, `15360` hidden rows, `96`
+samples, metadata on `96/96` samples, and `0` continuity breaks. A compact
+draft trained on shards `0-2` reached only `0.489` mean accepted on heldout
+shard `3`, so it is not an endpoint candidate. The corpus plumbing is now
+healthy; draft quality is the blocker.
+
 ## Sources Checked
 
 - Intel model card:

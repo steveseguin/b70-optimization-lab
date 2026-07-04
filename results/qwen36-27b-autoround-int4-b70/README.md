@@ -299,6 +299,16 @@ Current realistic research interpretation:
   `num_accepted_tokens_event.synchronize()` and was slow before crashing.
   Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`.
+- local EAGLE1 drafter training is mechanically usable but not a record route
+  yet. The first 128-sample hidden-state corpus reached `2.1016` heldout mean
+  accepted offline but failed endpoint quality/speed; endpoint isolation
+  controls also failed. The newer corpus/eval v2 path fixes metadata and
+  collection hygiene, and the four-GPU runner collected `96` chat prompts,
+  `15360` hidden rows, `96/96` metadata-bearing samples, and `0` continuity
+  breaks, but a compact draft trained on three shards reached only `0.489`
+  heldout mean accepted. Do not endpoint-test that draft; future EAGLE work
+  needs stronger data/training/init before serving. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
 - external DFlash drafter compatibility is also closed no-win locally.
   `z-lab/Qwen3.6-27B-DFlash` loaded and passed the strict fresh gate at k=8,
   k=10, and k=12, but the best median was only `49.994 tok/s` and k=15

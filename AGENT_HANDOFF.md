@@ -103,6 +103,12 @@ Active target as of the latest switch request:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`:
   `3840` rows and metadata on `24/24` samples, but only `0.240` mean accepted
   for a tiny two-epoch draft. It proves metadata plumbing, not draft quality.
+  The four-GPU v2 heldout screen is
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`:
+  `96` chat prompts, `15360` rows, `96/96` sample metadata, and `0` continuity
+  breaks, but only `0.489` mean accepted on heldout shard `3` after training on
+  shards `0-2`. Do not endpoint-test this compact draft; future EAGLE work
+  needs materially stronger data/training/init first.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

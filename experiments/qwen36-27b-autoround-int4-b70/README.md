@@ -211,6 +211,14 @@ Next milestone:
     fixing suffix-tolerant request-ID matching. A tiny two-epoch draft reached
     only `0.240` mean accepted offline, so it is not an endpoint candidate; it
     only proves the metadata path works.
+18. EAGLE corpus/eval v2 four-GPU heldout screen:
+    `notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
+    The four-GPU runner collected `96` chat prompts, `15360` hidden rows, `96`
+    samples, metadata on `96/96` samples, and `0` continuity breaks. A compact
+    draft trained on shards `0-2` and evaluated on heldout shard `3` reached
+    only `0.489` mean accepted over `1024` starts, far below the prior `2.1016`
+    offline draft that still failed endpoint quality. Do not endpoint-test this
+    draft; future EAGLE work needs materially stronger data/training/init first.
 
 ## Folder Map
 

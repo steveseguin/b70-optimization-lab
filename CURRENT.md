@@ -162,6 +162,12 @@ Fastest quality-gated practical variant:
   on `24/24` samples, but the tiny draft reached only `0.240` mean accepted;
   see
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`.
+  The four-GPU v2 heldout screen collected `96` prompts / `15360` rows with
+  metadata on `96/96` samples and `0` continuity breaks, but the compact draft
+  reached only `0.489` mean accepted on heldout shard `3`; see
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
+  Do not endpoint-test this draft; corpus v2 collection is healthy, draft
+  quality is the blocker.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.
