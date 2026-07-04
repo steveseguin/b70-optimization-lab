@@ -98,6 +98,26 @@ Useful references:
   before establishing the official Qwen baseline; treat it as a second-pass
   variant if the official checkpoint is valid but leaves obvious headroom.
 
+2026-07-04 Qwen3-Coder next-candidate note:
+
+- Next rapid lane: `unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF`
+  `Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf`, HF revision
+  `b17cb02dd882d5b6ab62fc777ad2995f19668350`, expected size
+  `17665334432` bytes. Download target:
+  `/mnt/usb-models/llm-models/qwen3-coder-30b-a3b-instruct-gguf/`.
+- Rationale: same practical MoE size class as the promoted
+  `Qwen3-30B-A3B-Instruct-2507` GGUF row (`107.484 tok/s`), but coder-tuned
+  and very user-relevant. Qwen's public model card describes
+  `Qwen3-Coder-30B-A3B-Instruct` as 30.5B total / 3.3B active, 48 layers, 128
+  experts with 8 active, native 262K context, and non-thinking output. Use the
+  same strict rapid suite and llama.cpp settings first.
+- Available Q4-class Unsloth GGUF sizes from HF metadata at setup time:
+  `IQ4_XS` `16378076320`, `IQ4_NL` `17310784672`, `Q4_0` `17379990688`,
+  `UD-Q4_K_XL` `17665334432`, `Q4_K_S` `17456012448`, `Q4_K_M`
+  `18556689568`, and `Q4_1` `19192503456` bytes. Start with `UD-Q4_K_XL` for
+  continuity with the Qwen3 30B snapshot; only compare `IQ4_NL`/`Q4_K_M` if
+  the first row is useful and download time is justified.
+
 ## Mistral Small 3.2 24B Instruct
 
 Why first llama.cpp dense target:
@@ -241,6 +261,25 @@ Why queued:
   skipped as too large for this pass.
 - `deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct`: smaller MoE coder reference;
   useful if Qwen3-Coder setup is blocked or to compare runtime behavior.
+
+2026-07-04 HF/GGUF metadata refresh while Qwen3-Coder downloaded:
+
+- `unsloth/GLM-4.7-Flash-GGUF` has `UD-Q4_K_XL` at `17520169312` bytes and
+  `Q4_K_M` at `18312339808` bytes; likely the best next 30B-class rapid model
+  after Qwen3-Coder if we want another high-value MoE snapshot.
+- `bartowski/zai-org_GLM-4.7-Flash-GGUF` has `IQ4_XS` `16250044288`,
+  `Q4_K_M` `18474983296`, and `Q4_K_L` `18710400896` bytes. Use only if the
+  Unsloth GLM file fails or if we specifically want a bartowski/imatrix
+  comparison.
+- `bartowski/nvidia_Nemotron-Cascade-2-30B-A3B-GGUF` has `IQ4_XS`
+  `18166698432`, `Q4_K_M` `24725740992`, and `Q4_K_L` `24857861568` bytes.
+  The Q4_K_M/L files are larger and may be slower to load, but this is a useful
+  model-family snapshot if we continue the rapid pass.
+- `bartowski/microsoft_Phi-4-mini-instruct-GGUF` is small enough to run quickly:
+  `Q4_K_M` `2491874688` bytes and `Q8_0` `4084611456` bytes. Use as a compact
+  sanity/reference lane after the 30B-class candidates; do not compare its
+  throughput directly against 30B-class MoE models as a quality-equivalent
+  result.
 
 Treat these as candidates, not claims. Each still needs model-size, quant,
 runtime-support, quality, and strict fresh-response validation before promotion.
