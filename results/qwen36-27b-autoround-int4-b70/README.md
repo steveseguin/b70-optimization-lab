@@ -373,7 +373,11 @@ The follow-up source audit in
 narrows that further: small Python-level row/call shortcuts are unlikely to
 win because they still use dense LM-head primitives. Future Qwen27 work should
 start with a real fused/top-ID LM-head primitive, a native row-adaptive verifier,
-or DFlash multi-KV-group draft metadata support, not another config sweep.
+or DFlash multi-KV-group draft metadata support, not another config sweep. The
+latest frontier audit also tested oneDNN Graph `MatMul -> ReduceMax` directly:
+BF16 stayed as two one-op partitions and the tested INT8 graph form was
+rejected, so there is no cheap oneDNN Graph wrapper shortcut to promote. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`.
 The DFlash mixed-SWA audit is captured in
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`:
 the target runner is multi-KV aware, but the DFlash/EAGLE drafter path assumes

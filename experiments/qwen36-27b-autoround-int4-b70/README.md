@@ -134,15 +134,18 @@ Next milestone:
    Use `scripts/run-vllm-candidate.sh` for single-replica strict candidate
    screens so server logs, smoke output, strict fresh gate results, optional
    quality checks, and compact summaries are captured consistently.
-5. Investigate LM-head/verifier cost with a real mechanism. Recent no-win
-   screens closed output-buffer reuse, bonus-token argmax plumbing, draft-only
-   row-count shortcuts, Python/chunked INT8 top-1, top-token sampler plumbing,
-   and a native compact full-vocab INT8 LM-head top-1 kernel. The compact
-   kernel built and was exact, but oneDNN dense GEMM plus argmax was still
-   faster at the real Qwen27 shape. The remaining credible lanes are reducing
-   the number of LM-head calls/rows per verifier step, improving accepted tokens
-   per target verifier step, or finding a oneDNN-integrated top-1/top-k post-op
-   that avoids a second reduction launch.
+5. Investigate LM-head/verifier cost only with a real producer or drafter
+   mechanism. Recent no-win screens closed output-buffer reuse, bonus-token
+   argmax plumbing, draft-only row-count shortcuts, Python/chunked INT8 top-1,
+   top-token sampler plumbing, and native compact full-vocab INT8 LM-head
+   top-1/candidate-max kernels. The compact kernels built and were exact, but
+   oneDNN dense GEMM plus reduction was still faster at the real Qwen27 shape.
+   The latest oneDNN Graph check also found that BF16 `MatMul -> ReduceMax`
+   stays as two partitions and the tested INT8 graph form is rejected, so do
+   not expect a wrapper-level oneDNN Graph shortcut. Remaining credible lanes
+   are a real oneDNN/XPU-class top-ID LM-head producer, a materially stronger
+   target-matched drafter, or deeper partial-group/branch-regenerate support.
+   See `notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`.
 6. Do not keep config-sweeping the current INT8 lane without a new mechanism:
    MTP depth remains k=3, capture size remains cg8, and target-only attribution
    shows the target verifier LM-head is the real bottleneck. The latest

@@ -152,10 +152,15 @@ Current next-execution plan:
   LM-head/logits materialization: `2258` LM-head/logits calls over `540`
   verifier steps (`~4.18` calls/step), with `lm_head_int8.gemm_w8a8` alone
   costing about `10.61 ms` per verifier step under sync instrumentation;
-- current focus: the standalone native compact full-vocab LM-head top-1 route
-  is now closed no-win. Shift to reducing LM-head call/row count per verifier
-  step, improving accepted tokens per target verifier step, or finding a
-  oneDNN-integrated top-1/top-k post-op that avoids an extra reduction launch;
+- current focus: the standalone native compact full-vocab LM-head top-1 /
+  candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
+  also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found
+  BF16 stays as two one-op partitions and the tested INT8 graph form is
+  rejected; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`.
+  Future decode work needs a real oneDNN/XPU-class top-ID LM-head producer, a
+  materially stronger target-matched drafter, or deeper partial-group /
+  branch-regenerate support, not another wrapper-level reduction tweak;
 - closed Phase 2 precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-backend-microbench-no-win.md`.
   Existing Xe2 grouped W8A8 as a single-expert dense LM-head backend is slower

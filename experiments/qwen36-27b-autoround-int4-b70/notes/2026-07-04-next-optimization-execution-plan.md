@@ -480,6 +480,12 @@ Two independent source/result audits agreed on the current frontier:
   argmax/top-k/candidate-reduced values for this LM-head use case. Fresh refs:
   `https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html` and
   `https://uxlfoundation.github.io/oneDNN/dev_guide_graph_matmul_fusion_patterns.html`.
+- The local oneDNN Graph partition inspector now closes the cheap fusion
+  question directly: BF16 `MatMul -> ReduceMax` at Qwen LM-head shapes stays as
+  two one-op partitions under the fusion policy, while the tested s8/s8 ->
+  BF16 graph MatMul form is rejected. See
+  `2026-07-04-frontier-audit-onednn-graph-and-drafter.md` and
+  `../../../scripts/inspect-onednn-graph-matmul-reducemax.cpp`.
 - Partial speculative groups are not a small scheduler tweak on this XPU/GDN
   stack. The scheduler has an explicit
   `VLLM_XPU_SPEC_DECODE_DISABLE_PARTIAL_DRAFT_GROUPS` escape hatch, and the

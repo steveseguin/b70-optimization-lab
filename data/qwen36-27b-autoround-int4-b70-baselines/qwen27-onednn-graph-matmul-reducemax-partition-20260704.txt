@@ -1,0 +1,40 @@
+case=bf16_matmul_reducemax rows=1 hidden=5120 vocab=248320
+  add_matmul_status=0 add_reduce_status=0
+  policy=fusion partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+  policy=debug partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+case=s8_s8_bf16_matmul_reducemax rows=1 hidden=5120 vocab=248320
+  add_matmul_status=8 add_reduce_status=0
+case=bf16_matmul_reducemax rows=2 hidden=5120 vocab=248320
+  add_matmul_status=0 add_reduce_status=0
+  policy=fusion partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+  policy=debug partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+case=s8_s8_bf16_matmul_reducemax rows=2 hidden=5120 vocab=248320
+  add_matmul_status=8 add_reduce_status=0
+case=bf16_matmul_reducemax rows=3 hidden=5120 vocab=248320
+  add_matmul_status=0 add_reduce_status=0
+  policy=fusion partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+  policy=debug partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+case=s8_s8_bf16_matmul_reducemax rows=3 hidden=5120 vocab=248320
+  add_matmul_status=8 add_reduce_status=0
+case=bf16_matmul_reducemax rows=4 hidden=5120 vocab=248320
+  add_matmul_status=0 add_reduce_status=0
+  policy=fusion partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+  policy=debug partitions=2
+    partition[0] supported=yes ops_num=1 ops=0 inputs=2 outputs=1
+    partition[1] supported=yes ops_num=1 ops=1 inputs=1 outputs=1
+case=s8_s8_bf16_matmul_reducemax rows=4 hidden=5120 vocab=248320
+  add_matmul_status=8 add_reduce_status=0

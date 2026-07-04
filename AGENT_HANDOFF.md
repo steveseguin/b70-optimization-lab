@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -66,13 +66,18 @@ Active target as of the latest switch request:
   be repeated unless compressed-tensors W4A16 performance materially changes.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-cyankiwi-awq-int4-screen-no-win.md`.
-- Latest closed follow-up: BF16-scale controls reconfirmed below the record,
-  FP16 scale storage was slower, and webhie target-only BF16 scope had lower
-  TTFT but failed repeat32 quality once. Do not promote target-only webhie
-  without a new stability fix. The next credible speed lane is a real native
-  tiled fused LM-head top-1 / candidate-vs-max verifier kernel; existing
-  oneDNN INT8 matmul writes dense logits, and existing sampler/top-k kernels
-  only reduce after logits exist. See
+- Latest frontier audit: BF16-scale controls reconfirmed below the record,
+  FP16 scale storage was slower, webhie target-only BF16 scope had lower TTFT
+  but failed repeat32 quality once, standalone compact full-vocab
+  top-1/candidate-max kernels were exact but slower than dense oneDNN, and a
+  oneDNN Graph `MatMul -> ReduceMax` inspector did not find a fusion shortcut
+  (BF16 stayed as two partitions; the tested INT8 graph MatMul form was
+  rejected). Do not promote target-only webhie without a new stability fix, and
+  do not spend more endpoint runs on wrapper-level sampler/reduction tweaks.
+  The next credible speed lanes are a real oneDNN/XPU-class top-ID LM-head
+  producer, a materially stronger target-matched drafter, or deeper
+  partial-group / branch-regenerate support. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md` and
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
 - Latest draft top-k follow-up is closed as diagnostic-only. K64 tracing shows
   the target token is in draft alternatives very often, but Qwen27 MTP drafting
