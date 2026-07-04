@@ -201,6 +201,10 @@ Fastest quality-gated practical variant:
   stayed weak (`0.201-0.616` mean accepted), including all-96 training on a
   separate calibration suite at only `0.438`, so compact EAGLE v2 is closed
   again.
+  A final stronger offline-only screen with residual/two-layer variants reached
+  only `0.6953125` heldout mean accepted and `0.44091796875` on separate
+  calibration, so it also is not an endpoint candidate; see
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

@@ -255,6 +255,12 @@ Next milestone:
     transferred poorly to v2 heldout (`0.201`), and all-96 training scored only
     `0.438` on the separate calibration suite. Current compact v2 EAGLE is
     closed again; do not endpoint-test these drafts.
+24. EAGLE v2 stronger offline screen:
+    `notes/2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`.
+    The stronger residual/two-layer screen improved heldout only to `0.695`
+    mean accepted and separate calibration only to `0.441`. It is
+    diagnostic-only and not an endpoint candidate. The reusable runner is
+    `scripts/run-eagle-v2-stronger-offline-screen.sh`.
 
 ## Folder Map
 

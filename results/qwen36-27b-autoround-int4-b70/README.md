@@ -314,8 +314,12 @@ Current realistic research interpretation:
   needs stronger data/training/init before serving. Followups did not rescue
   it: staged curriculum `0.616`, balanced task holdout `0.601`, old-draft
   transfer `0.201`, and all-96 training on a separate calibration suite
-  `0.438`. Evidence:
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-followups-closed.md`.
+  `0.438`. A later stronger residual/two-layer offline screen reached only
+  `0.695` heldout mean accepted and `0.441` on separate calibration, so it is
+  also not an endpoint candidate. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-followups-closed.md`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`.
 - external DFlash drafter compatibility is also closed no-win locally.
   `z-lab/Qwen3.6-27B-DFlash` loaded and passed the strict fresh gate at k=8,
   k=10, and k=12, but the best median was only `49.994 tok/s` and k=15

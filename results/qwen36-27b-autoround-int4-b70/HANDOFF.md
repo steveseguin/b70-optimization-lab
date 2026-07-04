@@ -347,6 +347,13 @@ Current next-execution plan:
   and all-96 staged training reached only `0.438` on the separate calibration
   suite. These are not endpoint candidates. Current compact EAGLE v2 is closed
   until there is stronger data/training/init or a source/runtime fix.
+- EAGLE v2 stronger offline screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`.
+  A bounded four-GPU stronger-draft screen tested larger MLPs plus a residual
+  two-layer variant. The best heldout result improved only to `0.6953125` mean
+  accepted (`step3` conditional `0.5327`), and all-96-to-calibration scored
+  only `0.44091796875`. This remains diagnostic-only; no endpoint test and no
+  LocalMaxxing submission.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

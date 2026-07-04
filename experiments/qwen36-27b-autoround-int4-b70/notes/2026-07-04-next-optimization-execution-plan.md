@@ -72,6 +72,13 @@ Phase 0 and Phase 1 are complete and captured in
   high support rows (`65.708`, `65.817`), but paired crossover deltas against
   ring1 controls were only `+0.42%` and `+0.27%`, so the movement is variance,
   not a new recipe.
+- EAGLE v2 is also closed after one bounded stronger-draft screen:
+  `2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`. A four-GPU
+  offline diagnostic tested larger one-layer drafts and a residual two-layer
+  variant. Best heldout mean accepted was only `0.6953125`, and all-96 training
+  to separate calibration was only `0.44091796875`, so there is no endpoint
+  candidate and no LocalMaxxing result. Do not reopen EAGLE endpoint sweeps
+  without a materially better data/training/init idea.
 
 ## Current waste estimate
 
