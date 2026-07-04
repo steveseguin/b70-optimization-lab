@@ -93,3 +93,14 @@ setup. Record them as skipped with the reason instead.
 Use `results/rapid-model-snapshots-b70/README.md` for promoted or useful final
 snapshots. Use this experiment folder for active notes, failed ideas, and
 diagnostic-only screens.
+
+Current promoted rapid row:
+
+- `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF`
+  `Qwen3-30B-A3B-Instruct-2507-UD-Q4_K_XL.gguf`, llama.cpp/SYCL on one B70:
+  `107.48388363267362 tok/s` median tokens 1-100 after TTFT under the strict
+  fresh-response gate. See
+  `results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md`.
+  The key policy fix was disabling llama.cpp request prompt reuse with
+  `{"cache_prompt":false}`; default `cache_prompt=true` produced
+  `cached_tokens=3` and is invalid for headline fresh-response throughput.

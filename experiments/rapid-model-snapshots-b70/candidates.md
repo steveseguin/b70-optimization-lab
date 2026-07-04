@@ -53,6 +53,29 @@ Download/setup notes:
 - Pivot for the rapid lane: try a Q4+ GGUF under llama.cpp first, starting with
   `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF` `UD-Q4_K_XL`.
 
+2026-07-04 llama.cpp/GGUF strict result:
+
+- Download completed on the USB drive:
+  `/mnt/usb-models/llm-models/qwen3-30b-a3b-instruct-2507-gguf/Qwen3-30B-A3B-Instruct-2507-UD-Q4_K_XL.gguf`.
+  File size was verified as `17690497440` bytes, matching the remote object.
+- HF revision: `eea7b2be5805a5f151f8847ede8e5f9a9284bf77`.
+- First diagnostic llama.cpp run with default `cache_prompt=true` was invalid:
+  it reported `cached_tokens=3` after the first prompt. Keep the rapid
+  llama.cpp runner default `{"cache_prompt":false}` for strict headline rows.
+- Promoted first-pass strict row:
+  `results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md`.
+  Representative evidence:
+  `data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json`.
+  Result: `107.48388363267362 tok/s` median tokens 1-100 after TTFT,
+  p10 `106.89774398673791`, mean `104.9928121456826`, median TTFT
+  `166.9534610118717 ms`, `cached_tokens=0` on all `12/12` prompts.
+- Same-window quick knob screen did not find a reproducible win:
+  `UBATCH_SIZE=512`, `BATCH_SIZE=512`, `POLL=0`, `POLL=100`,
+  `POLL=100 UBATCH_SIZE=1024`, `THREADS=16`, and `GGML_SYCL_ENABLE_VMM=0`
+  all landed within noise or below the simple default. The one `POLL=0`
+  `108.00493036986039 tok/s` high did not repeat (`106.14230746788732`), so do
+  not promote it as a recipe change.
+
 Watch-outs:
 
 - do not reuse Qwen3.6-specific GDN/MTP assumptions blindly;

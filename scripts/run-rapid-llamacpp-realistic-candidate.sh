@@ -16,7 +16,11 @@ MAX_TOKENS="${MAX_TOKENS:-128}"
 METRIC_TOKENS="${METRIC_TOKENS:-100}"
 API_MODE="${API_MODE:-chat}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
-REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{}}"
+# Strict fresh-response runs must not reuse llama.cpp's per-request prompt KV
+# cache. Keep this default here instead of relying on fragile shell-provided
+# JSON at the call site; callers can still override REQUEST_EXTRA_JSON when
+# intentionally running a diagnostic non-headline benchmark.
+REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{\"cache_prompt\":false}}"
 LLAMA_SRC="${LLAMA_SRC:-/home/steve/src/llama.cpp}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"

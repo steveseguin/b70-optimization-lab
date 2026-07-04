@@ -44,6 +44,15 @@ one Intel Arc Pro B70.
 
 Date: 2026-07-04
 
+Model: `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF`, GGUF
+`UD-Q4_K_XL`, llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `qwen3-30b-a3b-instruct-2507-udq4-llamacpp-realistic128` | `cmr6rr2kv008imn019frg0x3m` | 1 | suite median 65 | 128 | **107.484 median 1-100 after TTFT** | 94.118 median wall full128 | **policy-compliant rapid realistic suite**: fixed `rapid-model-snapshots-b70-realistic-v1`, 12 unique prompts, each prompt once, llama.cpp `cache_prompt=false`, `cached_tokens=0` every row, no prompt/KV/context checkpoint/response reuse, no n-gram/history acceleration, no speculation. Config: `Qwen3-30B-A3B-Instruct-2507-UD-Q4_K_XL.gguf`, HF revision `eea7b2be5805a5f151f8847ede8e5f9a9284bf77`, llama.cpp/SYCL on one B70, `ctx=4096`, `batch=1024`, `ubatch=256`, FlashAttention on, f16 KV. Primary p10 `106.898`, mean `104.993`, full-output after-TTFT median `107.421`, TTFT median `166.953 ms`. Result packet `results/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4/README.md`, evidence `data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-realistic128-20260704.submit.log`. A quick four-GPU runtime sweep found no reproducible sub-percent knob win; this is a first-pass rapid snapshot, not a deep per-model optimization lane. |
+
+Date: 2026-07-04
+
 Model: `unsloth/Qwen3.6-27B-MTP-GGUF`, GGUF `UD-Q4_K_XL`, llama.cpp/SYCL on
 one Intel Arc Pro B70.
 

@@ -125,6 +125,31 @@ def main() -> int:
         "ttftMsMean": ttft["mean"],
     }
 
+    if identity.get("llama_server"):
+        model_path = identity.get("model", "<model>")
+        ctx_size = identity.get("ctx_size", str(args.context_length))
+        batch_size = identity.get("batch_size", "1024")
+        ubatch_size = identity.get("ubatch_size", "256")
+        flash_attn = identity.get("flash_attn", "on")
+        n_parallel = identity.get("n_parallel", "1")
+        cache_k = identity.get("cache_type_k", "f16")
+        cache_v = identity.get("cache_type_v", "f16")
+        engine_flags.update({
+            "commandSnippet": (
+                f"llama-server -m {model_path} -c {ctx_size} -ngl 99 "
+                f"-b {batch_size} -ub {ubatch_size} -fa {flash_attn} "
+                "--ctx-checkpoints 0 --jinja --reasoning off"
+            ),
+            "gpuLayers": 99,
+            "kvCacheDtype": f"K={cache_k} V={cache_v}",
+            "flashAttn": flash_attn == "on",
+            "prefixCaching": False,
+            "specDecoding": False,
+            "concurrency": int(n_parallel),
+            "temperature": 0.0,
+            "topP": 1.0,
+        })
+
     for key in (
         "gpu_index",
         "port",

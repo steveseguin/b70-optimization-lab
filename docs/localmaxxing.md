@@ -83,6 +83,12 @@ The submission helper fails closed unless payload `engineFlags` include a
 realistic-suite gate pass marker and `primaryMetricName` is
 `median_tok_s_1_100_after_ttft`.
 
+The public API expects `engineFlags` as a typed object and requires a
+`commandSnippet` when the object is supplied. The local queue files may retain
+richer typed audit metadata for preflight; `scripts/submit_localmaxxing_results.py`
+sanitizes that object into the documented API shape at POST time while keeping
+the local preflight policy checks intact.
+
 `--allow-non-headline` is for local `--dry-run` inspection only. It must not be
 used to post diagnostic synthetic, repeated, warmed, history, or n-gram
 artifacts to LocalMaxxing.

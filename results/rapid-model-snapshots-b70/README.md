@@ -18,7 +18,8 @@ Strict headline rows use:
 
 | Model | Runtime | Quantization | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Qwen3 30B-A3B / Qwen3-Coder 30B-A3B | vLLM/XPU first, llama.cpp fallback | GPTQ/INT4/FP8 or GGUF Q4/Q6 | GPTQ vLLM runtime-blocked; GGUF downloading | Official Qwen3 30B GPTQ Int4 file is validated locally, but current XPU vLLM lacks GPTQ CUDA-style ops (`gptq_shuffle`/`gptq_gemm`/marlin). Pivoting to Unsloth Qwen3 30B Instruct 2507 UD-Q4_K_XL under llama.cpp for a practical one-B70 rapid result. |
+| Qwen3 30B-A3B Instruct 2507 | llama.cpp/SYCL on one B70 | GGUF UD-Q4_K_XL | Strict-valid first-pass row promoted | `107.48388363267362 tok/s` median tokens 1-100 after TTFT, `cached_tokens=0`, prompt cache disabled. Packet: [qwen3-30b-a3b-instruct-2507-udq4](qwen3-30b-a3b-instruct-2507-udq4/README.md). Official GPTQ vLLM path is runtime-blocked on the current local XPU build by missing GPTQ ops. |
+| Qwen3-Coder 30B-A3B | vLLM/XPU or llama.cpp | GPTQ/INT4/FP8 or GGUF Q4+ | Queued second pass | Use the Qwen3 30B setup and strict-gate process as the template. |
 | Mistral Small 3.2 24B Instruct | llama.cpp first | GGUF Q4/Q6/Q8 | Downloading first GGUF target | Practical one-B70 dense model; good first rapid llama.cpp snapshot. |
 | Gemma 4 12B | vLLM and/or llama.cpp | INT4/AutoRound or GGUF | Quick TP1 failed | TP1 graph and eager vLLM/XPU strict attempts both failed on first prompt with XPU FlashAttention `UR_RESULT_ERROR_OUT_OF_RESOURCES`; use existing TP4/c8 production docs as reference. |
 | Phi-4 family | llama.cpp/vLLM | Q4+ | Queued | Small practical reference if setup is quick. |
@@ -35,7 +36,9 @@ Strict headline rows use:
 
 ## Published / Promoted Rows
 
-No rapid-snapshot rows have been promoted yet.
+| Model | Runtime | Quantization | GPUs | Strict median tok/s | Evidence | LocalMaxxing |
+| --- | --- | --- | ---: | ---: | --- | --- |
+| Qwen3 30B-A3B Instruct 2507 | llama.cpp/SYCL | GGUF UD-Q4_K_XL | 1 | `107.48388363267362` | [result packet](qwen3-30b-a3b-instruct-2507-udq4/README.md), `data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json` | `cmr6rr2kv008imn019frg0x3m` |
 
 Existing non-rapid reference rows remain in their model result folders:
 

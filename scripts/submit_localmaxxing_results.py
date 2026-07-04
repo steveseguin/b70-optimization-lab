@@ -70,8 +70,63 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
     return [] if allow_non_headline else problems
 
 
+def api_engine_flags(engine_flags: dict) -> dict:
+    command = engine_flags.get("commandSnippet")
+    if not command:
+        model = engine_flags.get("modelPath") or "<model>"
+        ctx = engine_flags.get("ctx_size") or engine_flags.get("contextLength") or "<ctx>"
+        batch = engine_flags.get("batch_size") or "<batch>"
+        ubatch = engine_flags.get("ubatch_size") or "<ubatch>"
+        flash = engine_flags.get("flash_attn")
+        command = (
+            f"llama-server -m {model} -c {ctx} -ngl 99 -b {batch} "
+            f"-ub {ubatch} -fa {flash}"
+        )
+
+    cache_k = engine_flags.get("cache_type_k")
+    cache_v = engine_flags.get("cache_type_v")
+    kv_cache = None
+    if cache_k or cache_v:
+        kv_cache = f"K={cache_k or '?'} V={cache_v or '?'}"
+
+    extra = {
+        "benchmarkJson": engine_flags.get("benchmarkJson"),
+        "realisticSuiteGatePassed": engine_flags.get("realisticSuiteGatePassed"),
+        "realisticSuiteCachedTokensAllZero": engine_flags.get("realisticSuiteCachedTokensAllZero"),
+        "primaryMetricName": engine_flags.get("primaryMetricName"),
+        "tokenTimingSource": engine_flags.get("tokenTimingSource"),
+        "githubResultPacket": engine_flags.get("githubResultPacket"),
+        "requestPolicy": "cache_prompt=false; no prefix/KV/history/response reuse",
+    }
+    extra_text = json.dumps(
+        {k: v for k, v in extra.items() if v is not None},
+        sort_keys=True,
+    )
+    if len(extra_text) > 1000:
+        extra_text = extra_text[:997] + "..."
+
+    api_flags = {
+        "commandSnippet": str(command),
+        "gpuLayers": 99,
+        "kvCacheDtype": kv_cache or "f16",
+        "flashAttn": str(engine_flags.get("flash_attn", "")).lower() == "on",
+        "attentionBackend": "llama.cpp SYCL/Level Zero flash attention",
+        "concurrency": int(engine_flags.get("n_parallel") or 1),
+        "prefixCaching": False,
+        "specDecoding": False,
+        "temperature": float(engine_flags.get("temperature") or 0),
+        "topP": 1.0,
+        "extraFlags": extra_text,
+    }
+    return api_flags
+
+
 def post_payload(key: str, payload: dict) -> tuple[int, str, int | None]:
-    body = json.dumps(payload).encode("utf-8")
+    post_payload = dict(payload)
+    engine_flags = post_payload.get("engineFlags")
+    if isinstance(engine_flags, dict):
+        post_payload["engineFlags"] = api_engine_flags(engine_flags)
+    body = json.dumps(post_payload).encode("utf-8")
     req = urllib.request.Request(
         API_URL,
         data=body,
