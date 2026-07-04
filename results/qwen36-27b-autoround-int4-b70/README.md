@@ -307,8 +307,11 @@ Current realistic research interpretation:
   `15360` hidden rows, `96/96` metadata-bearing samples, and `0` continuity
   breaks, but a compact draft trained on three shards reached only `0.489`
   heldout mean accepted. Do not endpoint-test that draft; future EAGLE work
-  needs stronger data/training/init before serving. Evidence:
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
+  needs stronger data/training/init before serving. Followups did not rescue
+  it: staged curriculum `0.616`, balanced task holdout `0.601`, old-draft
+  transfer `0.201`, and all-96 training on a separate calibration suite
+  `0.438`. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-followups-closed.md`.
 - external DFlash drafter compatibility is also closed no-win locally.
   `z-lab/Qwen3.6-27B-DFlash` loaded and passed the strict fresh gate at k=8,
   k=10, and k=12, but the best median was only `49.994 tok/s` and k=15

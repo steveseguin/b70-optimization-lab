@@ -79,6 +79,15 @@ draft trained on shards `0-2` reached only `0.489` mean accepted on heldout
 shard `3`, so it is not an endpoint candidate. The corpus plumbing is now
 healthy; draft quality is the blocker.
 
+The v2 followups are captured in
+`notes/2026-07-04-eagle-corpus-v2-followups-closed.md`, with compact summary
+`../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle-corpus-v2-followups-20260704T104229Z-summary.json`.
+Staged curriculum, balanced task holdout, old-draft transfer, and all-96
+training all remained weak (`0.201-0.616` mean accepted), so current compact
+EAGLE v2 is closed again. Do not endpoint-test these drafts; return to
+LM-head/verifier cost or accepted-token-per-step work unless a materially
+stronger EAGLE data/training/source idea appears.
+
 ## Sources Checked
 
 - Intel model card:

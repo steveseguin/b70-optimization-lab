@@ -109,6 +109,11 @@ Active target as of the latest switch request:
   breaks, but only `0.489` mean accepted on heldout shard `3` after training on
   shards `0-2`. Do not endpoint-test this compact draft; future EAGLE work
   needs materially stronger data/training/init first.
+  Followups in
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-followups-closed.md`
+  did not rescue the lane: staged curriculum `0.616`, balanced task holdout
+  `0.601`, old-draft transfer `0.201`, and all-96 training evaluated on a
+  separate calibration suite `0.438`. Current compact EAGLE v2 is closed again.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

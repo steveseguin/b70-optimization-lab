@@ -286,6 +286,13 @@ Current next-execution plan:
   failed endpoint quality. This draft is not an endpoint candidate; the useful
   result is that corpus v2 collection is healthy and draft quality is now the
   blocker.
+- EAGLE corpus/eval v2 followups:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-followups-closed.md`.
+  Staged curriculum only reached `0.616` on OOD-family heldout, balanced
+  task-holdout reached `0.601`, old strong v1 draft transfer reached `0.201`,
+  and all-96 staged training reached only `0.438` on the separate calibration
+  suite. These are not endpoint candidates. Current compact EAGLE v2 is closed
+  until there is stronger data/training/init or a source/runtime fix.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

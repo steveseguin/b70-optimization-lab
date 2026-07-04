@@ -1,0 +1,95 @@
+{
+  "classification": "diagnostic_only_eagle_corpus_v2_training_followups",
+  "status": "closed_no_endpoint_candidate",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "source_run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z",
+  "baseline_v2_heldout": {
+    "draft": "draft-v2-heldout-e4-r3-lr3e5-tok01",
+    "train_split": "shards 0-2",
+    "eval_split": "shard 3 OOD-family heldout",
+    "mean_accepted": 0.4892578125,
+    "acceptance_histogram": {
+      "0": 707,
+      "1": 189,
+      "2": 72,
+      "3": 56
+    }
+  },
+  "followups": [
+    {
+      "name": "staged_curriculum_on_original_ood_family_split",
+      "draft": "draft-v2-staged-r3-e2-lr3e5-max128",
+      "recipe": "r1 e2 lr1e-4 max64 -> r2 e2 lr5e-5 max128 -> r3 e2 lr3e-5 max128",
+      "train_split": "shards 0-2",
+      "eval_file": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z/eval-v2-staged-r3-e2-lr3e5-max128-heldout.json",
+      "eval_split": "shard 3 OOD-family heldout",
+      "starts": 1024,
+      "mean_accepted": 0.6162109375,
+      "acceptance_histogram": {
+        "0": 655,
+        "1": 196,
+        "2": 84,
+        "3": 89
+      },
+      "interpretation": "Small improvement over direct r3 training, still far below endpoint-worthy."
+    },
+    {
+      "name": "old_strong_v1_draft_transfer_to_v2_heldout",
+      "draft": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e6-r3-lr3e5-tok01",
+      "eval_file": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z/eval-oldstrong-draft-e6-r3-on-v2-heldout.json",
+      "eval_split": "shard 3 OOD-family heldout",
+      "starts": 1024,
+      "mean_accepted": 0.201171875,
+      "acceptance_histogram": {
+        "0": 846,
+        "1": 154,
+        "2": 20,
+        "3": 4
+      },
+      "interpretation": "The older 2.1016 offline draft does not transfer to the v2 chat heldout distribution."
+    },
+    {
+      "name": "balanced_task_holdout_staged_curriculum",
+      "split": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z/splits/taskholdout-review-testplan",
+      "holdout_tasks": [
+        "review",
+        "test-plan"
+      ],
+      "draft": "draft-v2-balanced-taskholdout-r3-e2-lr3e5-max128",
+      "recipe": "r1 e2 lr1e-4 max64 -> r2 e2 lr5e-5 max128 -> r3 e2 lr3e-5 max128",
+      "eval_file": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z/eval-v2-balanced-taskholdout-r3-e2-lr3e5-max128.json",
+      "starts": 1024,
+      "mean_accepted": 0.6005859375,
+      "acceptance_histogram": {
+        "0": 633,
+        "1": 223,
+        "2": 112,
+        "3": 56
+      },
+      "interpretation": "Balanced in-family split is not materially better; OOD-family split was not the only problem."
+    },
+    {
+      "name": "all96_staged_train_eval_separate_calibration",
+      "draft": "draft-v2-all96-r3-e2-lr3e5-max128",
+      "recipe": "r1 e2 lr1e-4 max64 -> r2 e2 lr5e-5 max128 -> r3 e2 lr3e-5 max128",
+      "train_split": "all 96 v2 chat samples",
+      "eval_file": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z/eval-v2-all96-r3-e2-lr3e5-max128-on-calib.json",
+      "eval_split": "separate calibration-suite dataset",
+      "starts": 1024,
+      "mean_accepted": 0.4375,
+      "acceptance_histogram": {
+        "0": 720,
+        "1": 202,
+        "2": 60,
+        "3": 42
+      },
+      "interpretation": "Training on all v2 data still does not generalize to the separate calibration suite."
+    }
+  ],
+  "decision": {
+    "endpoint_test": false,
+    "localmaxxing_submission": false,
+    "reason": "All v2 followups remain far below the prior 2.1016 offline draft that itself failed endpoint quality/speed; endpoint runs would be roulette.",
+    "next_action": "Close current compact EAGLE v2 training branch. Revisit only with materially larger/diverse corpus, stronger initialization/training architecture, or source/runtime changes that address the previous endpoint corruption."
+  }
+}

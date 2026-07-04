@@ -168,6 +168,11 @@ Fastest quality-gated practical variant:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
   Do not endpoint-test this draft; corpus v2 collection is healthy, draft
   quality is the blocker.
+  Followups in
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-followups-closed.md`
+  stayed weak (`0.201-0.616` mean accepted), including all-96 training on a
+  separate calibration suite at only `0.438`, so compact EAGLE v2 is closed
+  again.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

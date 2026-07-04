@@ -219,6 +219,13 @@ Next milestone:
     only `0.489` mean accepted over `1024` starts, far below the prior `2.1016`
     offline draft that still failed endpoint quality. Do not endpoint-test this
     draft; future EAGLE work needs materially stronger data/training/init first.
+19. EAGLE corpus/eval v2 followups:
+    `notes/2026-07-04-eagle-corpus-v2-followups-closed.md`.
+    The staged curriculum improved OOD-family heldout only to `0.616`, a
+    balanced task-holdout split scored `0.601`, the old stronger v1 draft
+    transferred poorly to v2 heldout (`0.201`), and all-96 training scored only
+    `0.438` on the separate calibration suite. Current compact v2 EAGLE is
+    closed again; do not endpoint-test these drafts.
 
 ## Folder Map
 
