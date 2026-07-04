@@ -152,6 +152,13 @@ Current next-execution plan:
   `could not set scales primitive attribute`. The possible `spec_step_idx` MTP
   plumbing fix is a no-op for this lane because all checked Qwen27 AutoRound
   checkpoints report `mtp_num_hidden_layers=1`.
+- closed current-recipe depth screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-depth-screen-no-win.md`.
+  A four-GPU strict same-window pass on the fastest webhie/BF16-scale
+  INT8-LM-head recipe confirmed MTP3/cg8 remains best: control `65.809 tok/s`,
+  MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, MTP5/cg16 `59.817`, all
+  `cached_tokens=0` and gate-passing. Do not promote the `65.809` row; it is
+  within variance of the approved `65.276` record and has no recipe change.
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
   adaptive-depth heuristics unless the proposer and verifier are both made

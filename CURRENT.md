@@ -105,6 +105,13 @@ Fastest quality-gated practical variant:
   it lowered emitted tokens per verifier step and increased total verifier
   steps. A same-window fixed-MTP3 repeat reached `65.986 tok/s`, but that is
   recorded as variance/support only, not a promoted LocalMaxxing row.
+- current-recipe MTP depth closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-depth-screen-no-win.md`.
+  A four-GPU strict same-window pass on the fastest webhie/BF16-scale
+  INT8-LM-head recipe found MTP4/cg8 (`60.478 tok/s`), MTP5/cg8 (`59.257`),
+  and MTP5/cg16 (`59.817`) all lose to the MTP3/cg8 control (`65.809`).
+  The control is support only, not a new record, because it is within variance
+  of the approved `65.276` row and does not change the recipe.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

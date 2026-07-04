@@ -199,6 +199,13 @@ Current realistic research interpretation:
   env pair still did not beat MTP3: promote-source MTP4/cg8 reached
   `49.918 tok/s`, and promote-source MTP5/cg8 reached `47.439 tok/s` with a
   first-prompt quality warning;
+- retesting deeper MTP again on the later fastest webhie BF16-scale
+  INT8-LM-head recipe also did not beat MTP3: same-window strict rows were
+  MTP3/cg8 control `65.809 tok/s`, MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, and
+  MTP5/cg16 `59.817`, all with `cached_tokens=0`. The MTP3 control is support
+  only and not promoted because it is within variance of the approved `65.276`
+  row. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-depth-screen-no-win.md`;
 - retesting MTP3 graph-capture size with the valid promote-source env pair did
   not beat cg8: cg4's initial `54.449 tok/s` row fell to `52.697` and `53.238`
   in paired repeats against cg8 controls at `53.509` and `53.518`; cg16

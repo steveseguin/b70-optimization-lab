@@ -153,6 +153,12 @@ Next milestone:
    gate but were slower than the same-window webhie control, and the possible
    `spec_step_idx` MTP fix is a no-op for this lane because the checked
    Qwen27 AutoRound configs all have `mtp_num_hidden_layers=1`.
+10. Latest current-recipe depth screen:
+    `notes/2026-07-04-webhie-depth-screen-no-win.md`. On the fastest
+    webhie/BF16-scale INT8-LM-head recipe, strict same-window MTP4/cg8
+    (`60.478 tok/s`), MTP5/cg8 (`59.257 tok/s`), and MTP5/cg16
+    (`59.817 tok/s`) all lost to the MTP3/cg8 control (`65.809 tok/s`).
+    Treat the control as support/variance only, not a new LocalMaxxing row.
 
 ## Folder Map
 
