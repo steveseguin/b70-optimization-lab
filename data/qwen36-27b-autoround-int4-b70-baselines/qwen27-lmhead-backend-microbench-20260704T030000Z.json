@@ -1,0 +1,193 @@
+{
+  "created_at_utc": "2026-07-04T02:17:13.267430+00:00",
+  "purpose": "Diagnostic LM-head backend microbench for Qwen27 runtime INT8 LM-head. Not a headline endpoint throughput result.",
+  "torch": "2.11.0+xpu",
+  "op_library": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+  "env": {
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "SYCL_CACHE_PERSISTENT": null
+  },
+  "shape": {
+    "hidden": 5120,
+    "vocab": 248320,
+    "rows": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "warmup": 20,
+  "iterations": 80,
+  "results": [
+    {
+      "rows": 1,
+      "backends": [
+        {
+          "name": "onednn_int8_gemm_w8a8_bf16scale",
+          "count": 80,
+          "median_ms": 2.509903977625072,
+          "mean_ms": 2.508178135030903,
+          "p10_ms": 2.4594297632575035,
+          "p90_ms": 2.547947899438441,
+          "min_ms": 2.4271439760923386,
+          "max_ms": 2.5800608564168215,
+          "stdev_ms": 0.034617190318421226
+        },
+        {
+          "name": "onednn_int8_gemm_w8a8_f32scale",
+          "count": 80,
+          "median_ms": 2.5170835433527827,
+          "mean_ms": 2.509857522090897,
+          "p10_ms": 2.456576772965491,
+          "p90_ms": 2.5606569601222873,
+          "min_ms": 2.413629088550806,
+          "max_ms": 2.5889980606734753,
+          "stdev_ms": 0.040473739219764465
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_bf16scale",
+          "error": "RuntimeError('ptr_B_scales must be float')"
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_f32scale",
+          "count": 80,
+          "median_ms": 2.6302709011361003,
+          "mean_ms": 2.630625377059914,
+          "p10_ms": 2.6111389277502894,
+          "p90_ms": 2.6476808125153184,
+          "min_ms": 2.6012009475380182,
+          "max_ms": 2.6597611140459776,
+          "stdev_ms": 0.013664934155918306
+        }
+      ]
+    },
+    {
+      "rows": 2,
+      "backends": [
+        {
+          "name": "onednn_int8_gemm_w8a8_bf16scale",
+          "count": 80,
+          "median_ms": 2.5472050765529275,
+          "mean_ms": 2.546116997837089,
+          "p10_ms": 2.4991637095808983,
+          "p90_ms": 2.5883873691782355,
+          "min_ms": 2.4005139712244272,
+          "max_ms": 2.773693995550275,
+          "stdev_ms": 0.046132266895888806
+        },
+        {
+          "name": "onednn_int8_gemm_w8a8_f32scale",
+          "count": 80,
+          "median_ms": 2.550355507992208,
+          "mean_ms": 2.548977523110807,
+          "p10_ms": 2.4974898202344775,
+          "p90_ms": 2.5944578228518367,
+          "min_ms": 2.3661900777369738,
+          "max_ms": 2.7586258947849274,
+          "stdev_ms": 0.04875058967207092
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_bf16scale",
+          "error": "RuntimeError('ptr_B_scales must be float')"
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_f32scale",
+          "count": 80,
+          "median_ms": 2.6691585080698133,
+          "mean_ms": 2.6705229945946485,
+          "p10_ms": 2.645367057994008,
+          "p90_ms": 2.698863111436367,
+          "min_ms": 2.6242949534207582,
+          "max_ms": 2.7211459819227457,
+          "stdev_ms": 0.019926127339547375
+        }
+      ]
+    },
+    {
+      "rows": 3,
+      "backends": [
+        {
+          "name": "onednn_int8_gemm_w8a8_bf16scale",
+          "count": 80,
+          "median_ms": 2.494816086255014,
+          "mean_ms": 2.48763887793757,
+          "p10_ms": 2.4211796233430505,
+          "p90_ms": 2.5370010873302817,
+          "min_ms": 2.3118979297578335,
+          "max_ms": 2.5681289844214916,
+          "stdev_ms": 0.05166272446722212
+        },
+        {
+          "name": "onednn_int8_gemm_w8a8_f32scale",
+          "count": 80,
+          "median_ms": 2.489000093191862,
+          "mean_ms": 2.484777770587243,
+          "p10_ms": 2.4364635813981295,
+          "p90_ms": 2.5267989374697213,
+          "min_ms": 2.312198979780078,
+          "max_ms": 2.6067011058330536,
+          "stdev_ms": 0.04782621540206112
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_bf16scale",
+          "error": "RuntimeError('ptr_B_scales must be float')"
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_f32scale",
+          "count": 80,
+          "median_ms": 2.6839158963412046,
+          "mean_ms": 2.682339839520864,
+          "p10_ms": 2.6575685245916247,
+          "p90_ms": 2.7083351742476225,
+          "min_ms": 2.6321180630475283,
+          "max_ms": 2.720193937420845,
+          "stdev_ms": 0.020226084535370472
+        }
+      ]
+    },
+    {
+      "rows": 4,
+      "backends": [
+        {
+          "name": "onednn_int8_gemm_w8a8_bf16scale",
+          "count": 80,
+          "median_ms": 2.5098344776779413,
+          "mean_ms": 2.498589042806998,
+          "p10_ms": 2.4399568559601903,
+          "p90_ms": 2.5462269317358732,
+          "min_ms": 2.3611511569470167,
+          "max_ms": 2.574580954387784,
+          "stdev_ms": 0.04503757128197227
+        },
+        {
+          "name": "onednn_int8_gemm_w8a8_f32scale",
+          "count": 80,
+          "median_ms": 2.508396515622735,
+          "mean_ms": 2.492604378494434,
+          "p10_ms": 2.4252635426819324,
+          "p90_ms": 2.5398842291906476,
+          "min_ms": 2.3136509116739035,
+          "max_ms": 2.565243048593402,
+          "stdev_ms": 0.04849045948707843
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_bf16scale",
+          "error": "RuntimeError('ptr_B_scales must be float')"
+        },
+        {
+          "name": "xe2_grouped_w8a8_singleexpert_f32scale",
+          "count": 80,
+          "median_ms": 2.7318214997649193,
+          "mean_ms": 2.7371335978386924,
+          "p10_ms": 2.7073655975982547,
+          "p90_ms": 2.772488468326628,
+          "min_ms": 2.6689190417528152,
+          "max_ms": 2.815613988786936,
+          "stdev_ms": 0.02812390072868782
+        }
+      ]
+    }
+  ]
+}

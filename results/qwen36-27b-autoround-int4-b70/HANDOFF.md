@@ -110,6 +110,11 @@ Current next-execution plan:
   candidate-max route, or add a narrow accepted-token/logits-call diagnostic if
   the native kernel path needs more acceptance context; close either path with
   preserved patch/results if it is a no-win;
+- closed Phase 2 precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-backend-microbench-no-win.md`.
+  Existing Xe2 grouped W8A8 as a single-expert dense LM-head backend is slower
+  than oneDNN for rows `1-4` and rejects BF16 weight scales, so do not spend
+  endpoint runs on a oneDNN -> grouped-GEMM LM-head swap;
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts.
 

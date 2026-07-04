@@ -35,6 +35,10 @@ Phase 0 and Phase 1 are complete and captured in
   LM-head top-1/candidate-max prototype, or first add a narrow accepted-token /
   logits-call diagnostic if the native kernel path needs better acceptance
   context.
+- A cheap Phase 2 precheck tested the existing Xe2 grouped W8A8 kernel as a
+  single-expert dense LM-head backend. It is closed as a no-win:
+  `2026-07-04-lmhead-backend-microbench-no-win.md`. oneDNN remains faster for
+  rows `1-4`, and grouped W8A8 rejects BF16 weight scales.
 
 ## Current waste estimate
 
