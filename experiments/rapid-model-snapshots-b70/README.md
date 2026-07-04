@@ -116,6 +116,14 @@ Current promoted rapid rows:
   `results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md`. This is a
   valid expected-performance snapshot, not a frontier row; faster concurrent
   four-GPU screen rows were not used as the headline.
+- `bartowski/microsoft_Phi-4-mini-instruct-GGUF`
+  `microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`, llama.cpp/SYCL on one B70:
+  `96.54834088986573 tok/s` median tokens 1-100 after TTFT under the strict
+  fresh-response gate. The Q8_0 reference row is `72.24629337909391 tok/s`.
+  See `results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md`.
+  This lane showed why small-model records must be confirmed standalone: the
+  four-GPU concurrent screen underreported the same Q4 recipe at about
+  `74.8 tok/s`.
 
 ## Helpers
 

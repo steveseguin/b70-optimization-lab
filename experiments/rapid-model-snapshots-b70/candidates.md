@@ -265,6 +265,30 @@ Why queued:
 - compact high-speed reference;
 - useful baseline for users who want smaller models.
 
+2026-07-04 Phi-4 mini strict result:
+
+- `bartowski/microsoft_Phi-4-mini-instruct-GGUF` downloaded cleanly to the USB
+  model store at revision `7ff82c2aaa4dde30121698a973765f39be5288c0`.
+  Files:
+  `/mnt/usb-models/llm-models/phi-4-mini-instruct-gguf/microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`
+  (`2491874688` bytes) and
+  `/mnt/usb-models/llm-models/phi-4-mini-instruct-gguf/microsoft_Phi-4-mini-instruct-Q8_0.gguf`
+  (`4084611456` bytes).
+- Promoted strict rows:
+  `results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md`.
+  Q4_K_M: `96.54834088986573 tok/s` median tokens 1-100 after TTFT,
+  p10 `96.35076872947823`, mean `97.46057019933751`, median TTFT
+  `69.93722857441753 ms`, `cached_tokens=0` on all `12/12` prompts,
+  LocalMaxxing `cmr6yazhe00hcmn01i5gz2xe0`. Same-recipe repeat:
+  `96.5741088959735 tok/s`.
+  Q8_0: `72.24629337909391 tok/s`, p10 `71.90777370054381`, mean
+  `72.58812815357142`, median TTFT `119.45722799282521 ms`,
+  `cached_tokens=0`, LocalMaxxing `cmr6yazvy00hgmn01s5rtowwa`. Same-recipe
+  support row: `72.88395951540713 tok/s`.
+- Four-GPU concurrent screen rows were much lower (`~74.8` Q4 and `~60.2`
+  Q8). For small models, use four-GPU screens only to choose candidates and
+  require standalone confirmations for headline rows.
+
 ## LocalMaxxing-Derived Second-Pass Candidates
 
 2026-07-04 model-index scan:

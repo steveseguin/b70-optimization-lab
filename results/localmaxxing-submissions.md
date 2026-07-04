@@ -71,6 +71,16 @@ llama.cpp/SYCL on one Intel Arc Pro B70.
 
 Date: 2026-07-04
 
+Model: `bartowski/microsoft_Phi-4-mini-instruct-GGUF`, GGUF Q4_K_M and Q8_0,
+llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `phi4-mini-instruct-q4km-llamacpp-realistic128` | `cmr6yazhe00hcmn01i5gz2xe0` | 1 | suite median 60 | 128 | **96.548 median 1-100 after TTFT** | 91.750 median wall full128 | **policy-compliant rapid realistic suite, Q4_K_M compact reference**: fixed `rapid-model-snapshots-b70-realistic-v1`, 12 unique prompts, each prompt once, llama.cpp server prompt cache disabled with `--cache-ram 0`, per-request `cache_prompt=false`, `cached_tokens=0` every row, no prompt/KV/context checkpoint/response reuse, no n-gram/history acceleration, no speculation. Config: `microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`, HF revision `7ff82c2aaa4dde30121698a973765f39be5288c0`, llama.cpp/SYCL on one B70, `ctx=4096`, `batch=1024`, `ubatch=256`, FlashAttention on, f16 KV. Primary p10 `96.351`, mean `97.461`, full-output after-TTFT median `96.580`, TTFT median `69.937 ms`; same-recipe standalone repeat `96.574 tok/s`. Result packet `results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md`, evidence `data/rapid-model-snapshots-b70/phi4-mini-instruct-q4km-llamacpp-faon-cacheoff-confirm-ctx4096-realistic128-20260704T224303Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/phi4-mini-instruct-q4km-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/phi4-mini-instruct-q4km-llamacpp-realistic128-20260704.submit.log`. Concurrent four-GPU screen rows were lower and are support-only. |
+| `phi4-mini-instruct-q8-llamacpp-realistic128` | `cmr6yazvy00hgmn01s5rtowwa` | 1 | suite median 60 | 128 | **72.246 median 1-100 after TTFT** | 67.592 median wall full128 | **policy-compliant rapid realistic suite, Q8_0 compact higher-quality reference**: same strict suite and no-cache policy as the Q4 row, no speculation or history acceleration. Config: `microsoft_Phi-4-mini-instruct-Q8_0.gguf`, HF revision `7ff82c2aaa4dde30121698a973765f39be5288c0`, llama.cpp/SYCL on one B70, `ctx=4096`, `batch=1024`, `ubatch=256`, FlashAttention on, f16 KV. Primary p10 `71.908`, mean `72.588`, full-output after-TTFT median `72.159`, TTFT median `119.457 ms`; same-recipe support row `72.884 tok/s`. Result packet `results/rapid-model-snapshots-b70/phi4-mini-instruct-gguf/README.md`, evidence `data/rapid-model-snapshots-b70/phi4-mini-instruct-q8-llamacpp-faon-cacheoff-confirm2-ctx4096-realistic128-20260704T224430Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/phi4-mini-instruct-q8-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/phi4-mini-instruct-q8-llamacpp-realistic128-20260704.submit.log`. |
+
+Date: 2026-07-04
+
 Model: `unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF`, GGUF
 `UD-Q4_K_XL`, llama.cpp/SYCL on one Intel Arc Pro B70.
 
