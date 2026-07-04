@@ -238,6 +238,11 @@ Current next-execution plan:
   `cached_tokens=0` on all `12/12` prompts. It is a live reproducibility support
   row only, not a LocalMaxxing update, because the recipe is unchanged and the
   delta over `65.27648650325429` is inside the variance band;
+- candidate-runner repro support:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-runner-repro-support.md`.
+  `run-vllm-candidate.sh` reproduced the same recipe at
+  `64.84180902803895 tok/s`, strict fresh gate passed, `cached_tokens=0` on
+  all `12/12`, smoke passed. Support only; no LocalMaxxing update;
 - current source audit:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-callcount-source-audit.md`.
   The exact spec top-ID consumer is already present and quality-safe for

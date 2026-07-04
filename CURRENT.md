@@ -54,6 +54,11 @@ Fastest quality-gated practical variant:
   at `65.40973148473643 tok/s`, strict fresh gate passed with
   `cached_tokens=0`; support only, not a LocalMaxxing update, because the
   recipe is unchanged and the delta is inside the variance band;
+- candidate-runner support row:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-runner-repro-candidate-summary-20260704T124725Z.json`
+  at `64.84180902803895 tok/s`, strict fresh gate passed with
+  `cached_tokens=0`; support only, not a LocalMaxxing update. This validates
+  `experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh`;
 - same-window/crossover FP32-scale controls: `64.234` and `64.090 tok/s`;
 - prior submitted webhie INT8-LM-head record: `64.306 tok/s`;
 - full quality gate passed with baseline match and 1024-token needle pass
