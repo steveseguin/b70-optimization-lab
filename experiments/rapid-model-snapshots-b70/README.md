@@ -48,8 +48,9 @@ or submitted.
 3. Gemma 4 12B INT4/AutoRound or GGUF: small high-throughput production
    baseline and useful vLLM vs llama.cpp comparison.
 4. Phi-4 family: smaller high-throughput reference; include if setup is quick.
-5. DeepSeek-R1-Distill-Qwen 14B/32B: reasoning-family reference if the first
-   three lanes are stable.
+5. DeepSeek-Coder / DeepSeek-R1-Distill references: include when the selected
+   Q4+ file fits one B70 cleanly and gives users a useful expected-performance
+   row without a deep optimization pass.
 
 Do not spend rapid-lane time on Kimi K2.x, GLM 5.2, DeepSeek V4 Flash, or other
 models whose local footprint clearly exceeds a clean one-B70 or practical TP
@@ -124,6 +125,13 @@ Current promoted rapid rows:
   This lane showed why small-model records must be confirmed standalone: the
   four-GPU concurrent screen underreported the same Q4 recipe at about
   `74.8 tok/s`.
+- `bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF`
+  `DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M.gguf`, llama.cpp/SYCL on one B70:
+  `57.09651439511314 tok/s` median tokens 1-100 after TTFT under the strict
+  fresh-response gate. See
+  `results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md`.
+  `ctx=2048` was a small standalone win over `ctx=4096`; concurrent four-GPU
+  screens underreported and are support only.
 
 ## Helpers
 

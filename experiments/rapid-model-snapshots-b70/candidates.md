@@ -258,6 +258,40 @@ Why sampled:
   revisited only if we specifically care about Gemma E4B or have a better
   runtime/quant candidate.
 
+## DeepSeek-Coder-V2-Lite-Instruct
+
+Why sampled:
+
+- useful coder-specialized MoE reference in the 16B total / 2.4B active class;
+- small enough for a clean one-B70 GGUF Q4 rapid pass;
+- complements the faster Qwen3-Coder 30B-A3B row with a different coder model
+  family and older-but-still-common checkpoint;
+- HF download is modest enough to keep on the USB model store for later
+  comparisons.
+
+2026-07-04 strict result:
+
+- Downloaded `bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF`
+  `DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M.gguf` to
+  `/mnt/usb-models/llm-models/deepseek-coder-v2-lite-instruct-gguf/`.
+  HF revision: `8f248fa2072348f77a8bc37754e470de1f61866e`; local file size
+  verified as `10364416768` bytes.
+- Promoted strict one-B70 row:
+  `results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md`.
+  Representative evidence:
+  `data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json`.
+  Result: `57.09651439511314 tok/s` median tokens 1-100 after TTFT,
+  p10 `56.93158901082582`, mean `57.08323191156333`, median TTFT
+  `139.8265556199476 ms`, `cached_tokens=0` on all `12/12` prompts.
+- Same-recipe support / screen:
+  first `ctx=2048` standalone `57.21192316867396`; `ctx=4096` baseline
+  `56.03330573597446`; `ctx=4096 UBATCH_SIZE=512` `56.12564201373243`.
+  Concurrent four-GPU screens underreported (`38-43 tok/s`) and are support
+  only, not headline candidates.
+- FlashAttention on with F16 KV worked cleanly. Older DeepSeek V2 GGUF
+  community reports warned about FlashAttention/KV-quantized cache issues, so
+  keep F16 KV as the conservative starting point if this lane is revisited.
+
 ## Phi-4 Family
 
 Why queued:
@@ -301,7 +335,8 @@ Why queued:
   throughput signals. Keep distinct from the larger GLM 5.x variants that were
   skipped as too large for this pass.
 - `deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct`: smaller MoE coder reference;
-  useful if Qwen3-Coder setup is blocked or to compare runtime behavior.
+  completed as the Q4_K_M rapid snapshot above. Keep in the index as a
+  different coder-family comparison to Qwen3-Coder.
 
 2026-07-04 HF/GGUF metadata refresh while Qwen3-Coder downloaded:
 

@@ -62,6 +62,15 @@ Model: `unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF`, GGUF
 
 Date: 2026-07-04
 
+Model: `bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF`, GGUF `Q4_K_M`,
+llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `deepseek-coder-v2-lite-q4km-llamacpp-realistic128` | `cmr6zbkbw00hpmn01nq858vcg` | 1 | suite median 64 | 128 | **57.097 median 1-100 after TTFT** | 53.414 median wall full128 | **policy-compliant rapid realistic suite, coder-model reference**: fixed `rapid-model-snapshots-b70-realistic-v1`, 12 unique prompts, each prompt once, llama.cpp server prompt cache disabled with `--cache-ram 0`, per-request `cache_prompt=false`, `cached_tokens=0` every row, no prompt/KV/context checkpoint/response reuse, no n-gram/history acceleration, no speculation. Config: `DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M.gguf`, HF revision `8f248fa2072348f77a8bc37754e470de1f61866e`, llama.cpp/SYCL on one B70, `ctx=2048`, `batch=1024`, `ubatch=256`, FlashAttention on, f16 KV. Primary p10 `56.932`, mean `57.083`, full-output after-TTFT median `56.711`, TTFT median `139.827 ms`; same-recipe support row `57.212 tok/s`; `ctx=4096` baseline `56.033 tok/s`. Result packet `results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md`, evidence `data/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T231049Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/deepseek-coder-v2-lite-q4km-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/deepseek-coder-v2-lite-q4km-llamacpp-realistic128-20260704.submit.log`. Concurrent four-GPU screen rows underreported and were not used as headline. |
+
+Date: 2026-07-04
+
 Model: `unsloth/GLM-4.7-Flash-GGUF`, GGUF `UD-Q4_K_XL`,
 llama.cpp/SYCL on one Intel Arc Pro B70.
 
