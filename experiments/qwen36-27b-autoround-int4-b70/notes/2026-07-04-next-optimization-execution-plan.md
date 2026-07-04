@@ -335,3 +335,19 @@ For every meaningful attempt:
 - update the Qwen27 handoff if the current recommendation changes;
 - commit and push focused artifacts;
 - submit to LocalMaxxing only for a new valid record.
+
+## Status update: 2026-07-04
+
+Phase 2 was executed far enough to close the standalone compact full-vocab
+top-1 kernel route as a no-win. The native
+`torch.ops._xpu_C.int8_lm_head_top1_w8a8` prototype built, exported, and was
+token-exact against dense `int8_gemm_w8a8(...)->argmax`, but the final 8x64
+policy still measured slower than oneDNN dense plus argmax on the real Qwen27
+LM-head shape: compact `2.66-2.68 ms` versus dense `2.57-2.61 ms` for rows
+`1-4`. Evidence and patch are recorded in
+`2026-07-04-compact-lmhead-top1-kernel-no-win.md`.
+
+The plan should now continue with the non-standalone verifier lanes: reduce
+LM-head call/row count per verifier step, improve accepted tokens per target
+verifier step, or find a oneDNN-integrated top-1/top-k post-op that avoids a
+second reduction launch.

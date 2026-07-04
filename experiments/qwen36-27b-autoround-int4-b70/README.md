@@ -121,12 +121,13 @@ Next milestone:
    any change.
 5. Investigate LM-head/verifier cost with a real mechanism. Recent no-win
    screens closed output-buffer reuse, bonus-token argmax plumbing, draft-only
-   row-count shortcuts, and Python/chunked INT8 top-1. The remaining credible
-   lane is a fused LM-head top-1 / candidate-vs-max verifier path that avoids
-   materializing `[rows, vocab]` logits and avoids multiple oneDNN GEMM calls.
-   The INT8 LM-head path is the fastest quality-gated practical lane, but it
-   changes runtime LM-head precision. A same-quantization win still needs exact
-   BF16 top-1/candidate-bound work or a cleaner verifier design.
+   row-count shortcuts, Python/chunked INT8 top-1, top-token sampler plumbing,
+   and a native compact full-vocab INT8 LM-head top-1 kernel. The compact
+   kernel built and was exact, but oneDNN dense GEMM plus argmax was still
+   faster at the real Qwen27 shape. The remaining credible lanes are reducing
+   the number of LM-head calls/rows per verifier step, improving accepted tokens
+   per target verifier step, or finding a oneDNN-integrated top-1/top-k post-op
+   that avoids a second reduction launch.
 6. Do not keep config-sweeping the current INT8 lane without a new mechanism:
    MTP depth remains k=3, capture size remains cg8, and target-only attribution
    shows the target verifier LM-head is the real bottleneck. The latest
@@ -134,13 +135,18 @@ Next milestone:
    variants; see
    `notes/2026-07-03-scale-scope-followup-no-headline-win.md` and
    `notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
-7. Latest closed source precheck: the default-off spec greedy top-token-ID
+7. Closed source precheck: the default-off spec greedy top-token-ID
    verifier path passed the strict gate at `65.25583870721442 tok/s`, but it
    was flat versus the `65.27648650325429 tok/s` record because
    `get_top_tokens()` still pays the dense LM-head. Treat
    `notes/2026-07-04-spec-greedy-topids-no-headline-win.md` as integration
    groundwork for a future true compact LM-head kernel, not a path to retest by
    itself.
+8. Latest closed kernel precheck:
+   `notes/2026-07-04-compact-lmhead-top1-kernel-no-win.md`. The native
+   `int8_lm_head_top1_w8a8` prototype was exact but slower than dense oneDNN:
+   final 8x64 policy measured compact `2.66-2.68 ms` versus dense
+   `2.57-2.61 ms` for rows `1-4`, so do not wire it into vLLM.
 
 ## Folder Map
 

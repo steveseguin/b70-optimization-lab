@@ -106,10 +106,10 @@ Current next-execution plan:
   LM-head/logits materialization: `2258` LM-head/logits calls over `540`
   verifier steps (`~4.18` calls/step), with `lm_head_int8.gemm_w8a8` alone
   costing about `10.61 ms` per verifier step under sync instrumentation;
-- current focus: pursue only a real native fused/tiled LM-head top-1 /
-  candidate-max route, or add a narrow accepted-token/logits-call diagnostic if
-  the native kernel path needs more acceptance context; close either path with
-  preserved patch/results if it is a no-win;
+- current focus: the standalone native compact full-vocab LM-head top-1 route
+  is now closed no-win. Shift to reducing LM-head call/row count per verifier
+  step, improving accepted tokens per target verifier step, or finding a
+  oneDNN-integrated top-1/top-k post-op that avoids an extra reduction launch;
 - closed Phase 2 precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-backend-microbench-no-win.md`.
   Existing Xe2 grouped W8A8 as a single-expert dense LM-head backend is slower
@@ -123,6 +123,13 @@ Current next-execution plan:
   `get_top_tokens()` still computes the dense LM-head internally. Keep the
   patch as integration groundwork only; do not retest it as a headline lane
   until a true compact LM-head top-1/candidate-max primitive exists;
+- closed Phase 2 kernel precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-compact-lmhead-top1-kernel-no-win.md`.
+  `int8_lm_head_top1_w8a8` was buildable and exact versus dense logits on
+  synthetic Qwen27 shapes, but the final 8x64 policy still lost to dense oneDNN
+  plus argmax (`2.66-2.68 ms` compact vs `2.57-2.61 ms` dense for rows `1-4`).
+  Preserve the patch and JSON evidence, but do not wire this op into endpoint
+  serving;
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts.
 
@@ -255,10 +262,13 @@ Post-baseline follow-up:
   candidate `62.32029632557057` vs control `62.60860919531282`, no-win; the
   draft-only row-count screen collapsed to single-digit tok/s and was
   interrupted as invalid; chunked INT8 top-1 argmax-only verification passed the
-  strict gate at `61.40954015865033 tok/s`, no-win. Preserve those patches as
-  evidence, but do not keep them active. The useful conclusion is that compact
-  verifier work needs a real fused LM-head top-1/candidate-vs-max kernel, not
-  Python/chunked oneDNN calls or sampler plumbing shortcuts.
+  strict gate at `61.40954015865033 tok/s`, no-win; the native compact
+  full-vocab `int8_lm_head_top1_w8a8` kernel was exact but slower than dense
+  oneDNN. Preserve those patches as evidence, but do not keep them active. The
+  useful conclusion is that the next verifier work should reduce LM-head
+  call/row count or improve accepted tokens per verifier step, not use
+  Python/chunked oneDNN calls, sampler plumbing shortcuts, or standalone
+  full-vocab top-1 kernels.
 - Latest webhie BF16-scale follow-ups did not improve the `65.27648650325429`
   tok/s row. BF16-scale controls reconfirmed at `64.971` and `64.738 tok/s`;
   FP16 scale storage was slower at `62.902 tok/s`; webhie target-only BF16
