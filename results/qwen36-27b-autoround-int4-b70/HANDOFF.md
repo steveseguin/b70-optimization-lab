@@ -208,12 +208,16 @@ Current next-execution plan:
   `mtp_num_hidden_layers=1`, so there is no easy multi-layer MTP knob hiding in
   current checkpoints; oneDNN still exposes dense MatMul/post-op fusion rather
   than an argmax/top-k-emitting LM-head primitive; and partial speculative
-  groups remain a broad scheduler/metadata/GDN/graph task. Ranked next lanes:
-  (1) native lazy greedy verifier op that conditionally computes target rows
-  inside one native transaction; (2) oneDNN/XPU-integrated top-ID producer
-  behind `get_top_tokens()`; (3) true partial-group support only if committing
-  to deeper metadata/graph engineering; (4) target-matched drafter calibration
-  on held-out data, with exact target verification.
+  groups remain a broad scheduler/metadata/GDN/graph task. A later arithmetic
+  correction in the plan notes says a target-only lazy verifier would save only
+  about `0.81 ms/step` (`~65.3 -> ~66.6 tok/s` best case), because draft
+  LM-head calls are the larger avoidable bucket. Corrected ranked lanes:
+  (1) oneDNN/XPU-integrated top-ID producer behind `get_top_tokens()` that helps
+  both draft and target greedy LM-head calls; (2) target-matched drafter
+  calibration on held-out data, with exact target verification; (3) native lazy
+  target verifier only if fused with a better producer or pursued as a later
+  small cleanup; (4) true partial-group support only if committing to deeper
+  metadata/graph engineering.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

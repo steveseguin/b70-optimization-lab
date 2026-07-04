@@ -397,28 +397,41 @@ Two independent source/result audits agreed on the current frontier:
   group. A real fix must update scheduler, `SpecDecodeMetadata`, graph capture
   assumptions, and GDN/Mamba state postprocess together.
 
-Ranked next implementation lanes:
+Target-only lazy-verifier arithmetic correction:
 
-1. **Native lazy greedy verifier op**: one default-off native operation that
-   takes sample hidden states, draft IDs, target/bonus row indices, and INT8
-   LM-head buffers, then emits the same IDs as
-   `rejection_greedy_sample_from_argmax`. It must compute row 0, conditionally
-   compute later verifier rows only if prior rows accepted, and compute the
-   bonus row only on full accept. This is the cleanest way to reduce target
-   LM-head rows without turning one rows-4 oneDNN GEMM into multiple Python
-   rows-1 launches.
-2. **oneDNN/XPU-integrated top-ID producer**: replace dense-logit production
-   behind `get_top_tokens()` with a primitive that preserves oneDNN-class GEMM
-   efficiency while returning exact top IDs/values. This is high-risk kernel
-   work because the standalone full-vocab top-1 op already lost.
-3. **True partial-group support for dynamic drafter depth**: only worth doing
+- Recorded timing: `2258` LM-head calls over `540` verifier steps, with
+  `lm_head_int8.gemm_w8a8` at about `10.61 ms/step`.
+- Estimated draft LM-head cost: `~7.91 ms/step`; target verifier LM-head cost:
+  `~2.54 ms/step`.
+- With the recorded per-position acceptance (`0.784`, `0.559`, `0.381`), a
+  perfect conditional target verifier would need `1 + p0 + p1 + p2 = 2.724`
+  target rows instead of `4`.
+- Even if row cost scaled linearly inside a native op, target-only lazy
+  verification saves only about `0.81 ms/step`, estimating
+  `65.28 -> ~66.58 tok/s`. That is useful but too close to variance to be the
+  first expensive implementation lane.
+
+Corrected ranked next implementation lanes:
+
+1. **oneDNN/XPU-integrated top-ID producer for all greedy LM-head calls**:
+   replace dense-logit production behind `get_top_tokens()` with a primitive
+   that preserves oneDNN-class GEMM efficiency while returning exact top
+   IDs/values. This must help both the three serial draft greedy calls
+   (`~7.9 ms/step`) and the target verifier call (`~2.5 ms/step`). This is the
+   only direct LM-head route with enough theoretical upside to matter, but it is
+   high-risk kernel work because the standalone full-vocab top-1 op already
+   lost.
+2. **Target-matched drafter training/calibration**: improve accepted tokens per
+   verifier step on held-out realistic-style data, with exact target
+   verification and no final-suite leakage. This attacks the other large lever:
+   moving emitted tokens/step toward `3.3-4.0` without increasing step cost.
+3. **Native lazy greedy target verifier op**: still valid as a later cleanup
+   once a better top-ID producer exists, or if it can be fused with the
+   producer, but target-only row skipping is not enough by itself.
+4. **True partial-group support for dynamic drafter depth**: only worth doing
    if the goal is deeper metadata/graph engineering. Do not retry the old
    Python/scheduler-only adaptive-depth patches; they either paid full proposer
    cost or crashed partial groups.
-4. **Target-matched drafter training/calibration**: potentially valid if the
-   training data is held out from the final benchmark suite and target
-   verification remains exact, but it is a model-building lane rather than a
-   local runtime patch.
 
 Immediate rule: do not launch more endpoint benchmarks until the candidate is
 one of the ranked mechanisms above. The current repo has enough evidence that
