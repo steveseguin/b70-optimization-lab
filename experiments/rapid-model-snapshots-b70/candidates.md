@@ -33,6 +33,20 @@ Download/setup notes:
   known to be the same raw object. HF/Xet redirects can make bad resumes look
   successful until `safetensors` validation catches them.
 
+2026-07-04 vLLM/XPU GPTQ result:
+
+- Official `Qwen/Qwen3-30B-A3B-GPTQ-Int4` downloaded and validated on the USB
+  drive at `/mnt/usb-models/llm-models/qwen3-30b-a3b-gptq-int4`.
+- Strict vLLM/XPU one-B70 startup attempt failed before readiness:
+  `torch.ops._C.gptq_shuffle` is missing from this XPU build, and quick op
+  inspection also showed `gptq_gemm`, `gptq_marlin_repack`, and `marlin_gemm`
+  absent. Artifact directory:
+  `/mnt/fast-ai/bench-results/rapid-model-snapshots-b70/vllm-runs/qwen3-30b-a3b-gptq-int4-vllm-tp1-cg8-noprefix-realistic128-20260704T185920Z`.
+- Do not count as a benchmark result; it never served. Treat as a runtime
+  support blocker for GPTQ on the current local vLLM/XPU build.
+- Pivot for the rapid lane: try a Q4+ GGUF under llama.cpp first, starting with
+  `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF` `UD-Q4_K_XL`.
+
 Watch-outs:
 
 - do not reuse Qwen3.6-specific GDN/MTP assumptions blindly;

@@ -18,7 +18,7 @@ Strict headline rows use:
 
 | Model | Runtime | Quantization | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Qwen3 30B-A3B / Qwen3-Coder 30B-A3B | vLLM/XPU first, llama.cpp fallback | GPTQ/INT4/FP8 or GGUF Q4/Q6 | Next vLLM target | Best new-model fit for Intel/vLLM XPU MoE work; useful general/coder comparison. |
+| Qwen3 30B-A3B / Qwen3-Coder 30B-A3B | vLLM/XPU first, llama.cpp fallback | GPTQ/INT4/FP8 or GGUF Q4/Q6 | GPTQ vLLM runtime-blocked; GGUF downloading | Official Qwen3 30B GPTQ Int4 file is validated locally, but current XPU vLLM lacks GPTQ CUDA-style ops (`gptq_shuffle`/`gptq_gemm`/marlin). Pivoting to Unsloth Qwen3 30B Instruct 2507 UD-Q4_K_XL under llama.cpp for a practical one-B70 rapid result. |
 | Mistral Small 3.2 24B Instruct | llama.cpp first | GGUF Q4/Q6/Q8 | Downloading first GGUF target | Practical one-B70 dense model; good first rapid llama.cpp snapshot. |
 | Gemma 4 12B | vLLM and/or llama.cpp | INT4/AutoRound or GGUF | Quick TP1 failed | TP1 graph and eager vLLM/XPU strict attempts both failed on first prompt with XPU FlashAttention `UR_RESULT_ERROR_OUT_OF_RESOURCES`; use existing TP4/c8 production docs as reference. |
 | Phi-4 family | llama.cpp/vLLM | Q4+ | Queued | Small practical reference if setup is quick. |
