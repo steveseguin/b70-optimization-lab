@@ -523,6 +523,18 @@ Continue INT4 optimization without promoting synthetic scores:
 - draft proposer local-argmax reduction has been tested and closed flat/no-win;
 - deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
   candidate-vs-max kernel that avoids materializing full vocab logits;
+- for accepted-token / drafter-calibration work, use the compact verifier
+  sampler trace, not the scheduler spec trace. Scheduler
+  `scheduled_spec_token_ids` are async placeholders (`[-1, -1, -1]`) on this
+  XPU path. The useful diagnostic is
+  `VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE`, summarized by
+  `../../scripts/summarize-qwen27-spec-verify-trace.py`; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-verify-trace-for-drafter-calibration.md`.
+  A strict traced support run passed at `64.900 tok/s`, with real verifier
+  totals: `561` steps, `0.5983` prefix acceptance, `2.795` target-verified
+  tokens/step, and `0.4064` full-accept rate. Heavy replay microscope tracing
+  wedged after one request and should be kept for narrow single-failure debug,
+  not full-suite collection;
 - DFlash mixed-SWA was audited and is blocked by a real drafter architecture
   issue, not a config typo. Mixed full/sliding draft attention creates multiple
   KV-cache groups, while the speculative DFlash/EAGLE drafter still assumes one

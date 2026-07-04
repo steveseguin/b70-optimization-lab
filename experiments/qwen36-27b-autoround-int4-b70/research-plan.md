@@ -310,6 +310,34 @@ draft-only row counts, chunked top-1); the remaining meaningful work is a real
 fused verifier/LM-head design or a service/max-context variant that preserves
 the short-context decode record.
 
+Latest accepted-token instrumentation update: scheduler spec traces are not a
+valid draft-vs-target source on async XPU because they contain placeholder
+`scheduled_spec_token_ids` (`[-1, -1, -1]`). A heavy worker replay microscope
+captured real rows but wedged the service after one request, so keep it for
+narrow failure debugging only. The usable diagnostic is the new compact,
+default-off sampler trace:
+
+```bash
+VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_FILE=<run>/verify-trace.jsonl
+VLLM_XPU_SPEC_DECODE_VERIFY_TRACE_MAX_LINES=5000
+```
+
+Summarize it with:
+
+```bash
+scripts/summarize-qwen27-spec-verify-trace.py
+```
+
+First strict traced support run:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-verify-trace-for-drafter-calibration.md`.
+It passed the final gate at `64.900 tok/s` with `cached_tokens=0`; trace totals
+were `561` verifier steps, `0.5983` prefix acceptance, `2.795` target-verified
+tokens per step, and `0.4064` full-accept rate. This supports drafter
+calibration as a real lane, but also bounds it: perfect MTP3 acceptance at the
+same step cost is only about `65 * 4 / 2.795 ~= 93 tok/s`, so cracking `100`
+reliably needs either lower verifier/LM-head step cost, deeper speculation that
+keeps acceptance, or both.
+
 ## Possible Alternate Checkpoints
 
 Use these only after Intel's requested checkpoint has a recorded baseline:

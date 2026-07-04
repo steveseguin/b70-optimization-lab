@@ -1,0 +1,335 @@
+{
+  "trace_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-int8lmhead-bf16scale-verifytrace-20260704T070717Z/verify-trace.jsonl",
+  "result_path": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-verifytrace-20260704T070717Z-20260704T070717Z.json",
+  "classification": "diagnostic_only",
+  "totals": {
+    "trace_rows": 563,
+    "stage_hist": {
+      "dense": 563
+    },
+    "steps": 561,
+    "draft_tokens": 1683,
+    "prefix_accepted_tokens": 1007,
+    "independent_matching_tokens": 1196,
+    "output_tokens": 1568,
+    "prefix_acceptance_fraction": 0.5983363042186571,
+    "independent_match_fraction": 0.7106357694592988,
+    "mean_prefix_acceptance_length": 1.7950089126559714,
+    "mean_output_tokens_per_verifier_step": 2.7950089126559714,
+    "mean_target_verified_tokens_per_step": 2.7950089126559714,
+    "full_accept_steps": 228,
+    "full_accept_rate": 0.40641711229946526,
+    "accepted_hist": {
+      "0": 113,
+      "1": 117,
+      "2": 103,
+      "3": 228
+    },
+    "draft_hist": {
+      "3": 561
+    },
+    "per_position_match_rate": {
+      "0": 0.7985739750445633,
+      "1": 0.7183600713012478,
+      "2": 0.6149732620320856
+    },
+    "stage_prefix_accepted_hist": {
+      "dense": {
+        "0": 113,
+        "1": 117,
+        "2": 103,
+        "3": 228
+      }
+    },
+    "skipped_zero_draft_warmup_rows": 2,
+    "first_reject_examples": [
+      {
+        "line_no": 3,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 3746,
+        "target_argmax_token_id": 10082,
+        "output_token_ids": [
+          37947,
+          1653,
+          10082
+        ]
+      },
+      {
+        "line_no": 8,
+        "stage": "dense",
+        "position": 0,
+        "draft_token_id": 1851,
+        "target_argmax_token_id": 37947,
+        "output_token_ids": [
+          37947
+        ]
+      },
+      {
+        "line_no": 9,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 25,
+        "target_argmax_token_id": 64700,
+        "output_token_ids": [
+          1653,
+          2937,
+          64700
+        ]
+      },
+      {
+        "line_no": 11,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 19,
+        "target_argmax_token_id": 18,
+        "output_token_ids": [
+          17,
+          18
+        ]
+      },
+      {
+        "line_no": 14,
+        "stage": "dense",
+        "position": 0,
+        "draft_token_id": 1851,
+        "target_argmax_token_id": 63380,
+        "output_token_ids": [
+          63380
+        ]
+      },
+      {
+        "line_no": 15,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 220,
+        "target_argmax_token_id": 387,
+        "output_token_ids": [
+          64700,
+          387
+        ]
+      },
+      {
+        "line_no": 16,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 1460,
+        "target_argmax_token_id": 40621,
+        "output_token_ids": [
+          16,
+          318,
+          40621
+        ]
+      },
+      {
+        "line_no": 18,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 18,
+        "target_argmax_token_id": 19,
+        "output_token_ids": [
+          64700,
+          220,
+          19
+        ]
+      },
+      {
+        "line_no": 20,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 23288,
+        "target_argmax_token_id": 1737,
+        "output_token_ids": [
+          2442,
+          64700,
+          1737
+        ]
+      },
+      {
+        "line_no": 24,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 264,
+        "target_argmax_token_id": 220,
+        "output_token_ids": [
+          11,
+          220
+        ]
+      },
+      {
+        "line_no": 26,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 5492,
+        "target_argmax_token_id": 5839,
+        "output_token_ids": [
+          11,
+          279,
+          5839
+        ]
+      },
+      {
+        "line_no": 28,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 220,
+        "target_argmax_token_id": 4434,
+        "output_token_ids": [
+          264,
+          4434
+        ]
+      },
+      {
+        "line_no": 29,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 1332,
+        "target_argmax_token_id": 26982,
+        "output_token_ids": [
+          85093,
+          26982
+        ]
+      },
+      {
+        "line_no": 31,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 3719,
+        "target_argmax_token_id": 4393,
+        "output_token_ids": [
+          4,
+          314,
+          4393
+        ]
+      },
+      {
+        "line_no": 33,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 264,
+        "target_argmax_token_id": 10503,
+        "output_token_ids": [
+          5073,
+          557,
+          10503
+        ]
+      },
+      {
+        "line_no": 34,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 76531,
+        "target_argmax_token_id": 45341,
+        "output_token_ids": [
+          430,
+          264,
+          45341
+        ]
+      }
+    ]
+  },
+  "speed_stats": {
+    "count": 12,
+    "p10": 57.15735989632373,
+    "median": 64.8999288973447,
+    "mean": 63.71935288222712,
+    "min": 51.6340202733901,
+    "max": 72.70954001510789,
+    "stdev": 5.727714819756575
+  },
+  "realistic_final_gate": {
+    "cached_tokens": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "cached_tokens_all_zero": true,
+    "chunk_count_matches_completion_tokens_all": false,
+    "chunk_count_matches_completion_tokens_note": "Informational only: llama.cpp usage may count an EOS/final token that is not emitted as a text delta. Promotion requires enough streamed text deltas to measure the first metric window.",
+    "chunk_counts": [
+      45,
+      48,
+      52,
+      42,
+      46,
+      47,
+      45,
+      45,
+      46,
+      46,
+      54,
+      48
+    ],
+    "completion_tokens_at_least_metric_window": true,
+    "metric_chunk_events_at_least_window": false,
+    "metric_name": "median_tok_s_1_100_after_ttft",
+    "metric_token_id_events_at_least_window": true,
+    "metric_tokens": 100,
+    "passed": true,
+    "prompts_unique": true,
+    "required_policy": "fixed realistic prompt suite; each prompt once; cached_tokens=0 every row; no repeated/warmed prompt averaging; metric is median tokens 1-100 after TTFT",
+    "return_token_ids_requested": true,
+    "stream_token_id_counts": [
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128
+    ],
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp"
+  },
+  "result_summary": {
+    "tok_s_1_100_after_ttft": {
+      "count": 12,
+      "max": 72.70954001510789,
+      "mean": 63.71935288222712,
+      "median": 64.8999288973447,
+      "min": 51.6340202733901,
+      "p10": 57.15735989632373,
+      "stdev": 5.727714819756575
+    },
+    "tok_s_after_ttft_full": {
+      "count": 12,
+      "max": 70.88387069880928,
+      "mean": 63.69950903981831,
+      "median": 64.57151481297497,
+      "min": 54.7937827790864,
+      "p10": 58.42487282831341,
+      "stdev": 4.250650380392575
+    },
+    "tok_s_wall_full": {
+      "count": 12,
+      "max": 53.72285988535805,
+      "mean": 46.355962295840705,
+      "median": 48.68539700453119,
+      "min": 19.504613016101644,
+      "p10": 43.599484103821474,
+      "stdev": 8.82663551841159
+    },
+    "ttft_ms": {
+      "count": 12,
+      "max": 4613.090493017808,
+      "mean": 939.9810861796141,
+      "median": 609.6218960592523,
+      "min": 560.5182079598308,
+      "p10": 562.9094882169738,
+      "stdev": 1157.3746873925872
+    }
+  }
+}
