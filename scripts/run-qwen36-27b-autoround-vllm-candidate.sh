@@ -14,7 +14,20 @@ READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-600}"
 SUITE="${SUITE:-repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}"
 BENCH_MAX_TOKENS="${BENCH_MAX_TOKENS:-128}"
 BENCH_METRIC_TOKENS="${BENCH_METRIC_TOKENS:-100}"
-BENCH_REQUEST_EXTRA_JSON="${BENCH_REQUEST_EXTRA_JSON:-{\"chat_template_kwargs\":{\"enable_thinking\":false}}}"
+BENCH_REQUEST_EXTRA_JSON_DEFAULT='{"chat_template_kwargs":{"enable_thinking":false}}'
+BENCH_REQUEST_EXTRA_JSON="${BENCH_REQUEST_EXTRA_JSON:-$BENCH_REQUEST_EXTRA_JSON_DEFAULT}"
+
+python3 - "$BENCH_REQUEST_EXTRA_JSON" <<'PY'
+import json
+import sys
+
+try:
+    value = json.loads(sys.argv[1])
+except Exception as exc:
+    raise SystemExit(f"invalid BENCH_REQUEST_EXTRA_JSON: {exc}") from exc
+if not isinstance(value, dict):
+    raise SystemExit("invalid BENCH_REQUEST_EXTRA_JSON: expected JSON object")
+PY
 
 export GPU_INDEX PORT
 export MAX_MODEL_LEN="${MAX_MODEL_LEN:-2048}"

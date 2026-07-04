@@ -89,6 +89,14 @@ Active target as of the latest switch request:
   or repeat this exact endpoint attempt. Future EAGLE work needs a larger and
   more diverse non-final training corpus plus stricter held-out quality checks
   before endpoint validation.
+  A follow-up isolation matrix also failed: default GDN state, graph-off/eager,
+  and k1 depth did not rescue the draft (`19.828-22.410 tok/s`, all failed),
+  while current-state graph k3 stalled before JSON output. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`
+  and the compact ignored-data summary force-tracked at
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-endpoint-isolation-20260704T094450Z-summary.json`.
+  If EAGLE is revisited, start with corpus/eval v2 rather than endpoint config
+  sweeps.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

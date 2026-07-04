@@ -254,6 +254,16 @@ Current next-execution plan:
   a speed result; do not submit or repeat this exact endpoint attempt. Future
   EAGLE work needs larger/diverse non-final training data and stricter held-out
   quality checks before endpoint validation.
+- closed EAGLE1 endpoint isolation matrix:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`.
+  The obvious endpoint controls did not rescue the local EAGLE1 draft:
+  current-state eager k3 failed at `19.828 tok/s`, default-state graph k3
+  failed at `20.698 tok/s`, and current-state graph k1 still failed at
+  `22.410 tok/s`; the current-state graph k3 arm stalled before JSON output.
+  The in-repo summary is
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-endpoint-isolation-20260704T094450Z-summary.json`.
+  Treat this EAGLE1 endpoint lane as closed-negative for now; future EAGLE work
+  should start with corpus/eval v2, not more endpoint config sweeps.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

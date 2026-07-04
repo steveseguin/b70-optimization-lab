@@ -185,6 +185,18 @@ Next milestone:
     fresh gate but lost to the current `65.276 tok/s` record family; disabling
     chunked prefill is invalid for `MAX_MODEL_LEN=2048` / MBT1024. Keep
     `MAX_NUM_BATCHED_TOKENS=1024` and chunked prefill enabled.
+15. Latest local EAGLE1 endpoint isolation:
+    `notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`.
+    The first local EAGLE1 draft looked promising offline (`2.1016` mean
+    accepted tokens on held-out calibration starts) but did not survive endpoint
+    isolation. Current-state eager k3, default-state graph k3, and
+    current-state graph k1 all failed the calibration gate at only
+    `19.828-22.410 tok/s`; current-state graph k3 stalled before JSON output.
+    The compact summary is
+    `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-endpoint-isolation-20260704T094450Z-summary.json`.
+    Do not repeat endpoint config sweeps for this draft; future EAGLE work
+    starts with diverse chat-style corpus/eval v2 and stronger held-out
+    diagnostics.
 
 ## Folder Map
 

@@ -150,6 +150,13 @@ Fastest quality-gated practical variant:
   below the `65.276 tok/s` record family; disabling chunked prefill is invalid
   for the current 2048-context / MBT1024 recipe. Keep MBT1024 and chunked
   prefill enabled.
+- EAGLE1 endpoint isolation closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`.
+  The local EAGLE1 draft remains closed-negative: default GDN state,
+  graph-off/eager, and k1 depth did not rescue endpoint quality or speed
+  (`19.828-22.410 tok/s`, all failed), and current-state graph k3 stalled.
+  Future EAGLE work should begin with diverse chat-style corpus/eval v2, not
+  another endpoint config sweep.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

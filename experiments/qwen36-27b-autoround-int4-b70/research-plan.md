@@ -46,6 +46,16 @@ this exact EAGLE endpoint attempt or submit it. Future EAGLE work requires a
 larger/diverse non-final training corpus and stricter held-out quality checks
 before any endpoint benchmark.
 
+The endpoint-isolation follow-up is also closed-negative:
+`notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`, with compact summary
+`../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-endpoint-isolation-20260704T094450Z-summary.json`.
+Default GDN state, graph-off/eager mode, and k1 depth did not rescue the local
+draft (`19.828-22.410 tok/s`, all failed), and current-state graph k3 stalled
+without a JSON result. Treat the current EAGLE1 endpoint lane as closed. If
+EAGLE is revisited, build corpus/eval v2 first: diverse chat prompts, preserved
+prompt/family metadata, stronger held-out repetition diagnostics, and a
+non-final calibration endpoint pass before the final strict suite.
+
 ## Sources Checked
 
 - Intel model card:
