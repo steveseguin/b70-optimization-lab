@@ -18,6 +18,21 @@ Initial plan:
 4. disable thinking where appropriate for apples-to-apples short decode;
 5. compare against GGUF only if vLLM setup is poor or blocked.
 
+Download/setup notes:
+
+- `model.safetensors` is large enough that interrupted downloads should be
+  verified before use. A 2026-07-04 resume attempt produced an oversized file
+  that `safetensors` rejected with `file not fully covered`; it was quarantined
+  in place with a `.corrupt-*` suffix and a fresh download was started into
+  `model.safetensors.download`.
+- Promote the download to `model.safetensors` only after both checks pass:
+  exact byte size `16933256392` and a successful `safetensors.safe_open()`
+  metadata read from the vLLM environment.
+- `aria2c -c` is acceptable for speeding up a clean `.download` partial, but
+  do not resume across files produced by different tools unless the partial is
+  known to be the same raw object. HF/Xet redirects can make bad resumes look
+  successful until `safetensors` validation catches them.
+
 Watch-outs:
 
 - do not reuse Qwen3.6-specific GDN/MTP assumptions blindly;
