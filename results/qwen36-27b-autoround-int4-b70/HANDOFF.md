@@ -115,6 +115,14 @@ Current next-execution plan:
   Existing Xe2 grouped W8A8 as a single-expert dense LM-head backend is slower
   than oneDNN for rows `1-4` and rejects BF16 weight scales, so do not spend
   endpoint runs on a oneDNN -> grouped-GEMM LM-head swap;
+- closed Phase 2 integration precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-spec-greedy-topids-no-headline-win.md`.
+  A default-off all-greedy spec verifier path that consumes precomputed target
+  top-token IDs passed the strict fresh gate at `65.25583870721442 tok/s`, but
+  it did not beat the `65.27648650325429 tok/s` record because current
+  `get_top_tokens()` still computes the dense LM-head internally. Keep the
+  patch as integration groundwork only; do not retest it as a headline lane
+  until a true compact LM-head top-1/candidate-max primitive exists;
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts.
 

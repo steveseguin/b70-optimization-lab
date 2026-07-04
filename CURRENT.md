@@ -84,12 +84,16 @@ Fastest quality-gated practical variant:
   (same-window candidate `62.320` vs control `62.609`), draft-only row-count
   shortcut (collapsed, invalid), chunked/scalar INT8 top-1 argmax-only verifier
   (`61.410 tok/s` / microbench ~1000x slower), FP16 scale storage
-  (`62.902 tok/s`), and webhie BF16-scale target-only scope (strict speed
-  `64.800 tok/s` but repeat32 quality failure). Conclusion: the next credible
-  speed lane is a real tiled fused LM-head top-1 / candidate-vs-max verifier
-  kernel or verifier redesign, not sampler plumbing, multiple oneDNN chunks, or
-  scale/scope config sweeps. See
+  (`62.902 tok/s`), webhie BF16-scale target-only scope (strict speed
+  `64.800 tok/s` but repeat32 quality failure), and spec greedy top-token-ID
+  sampler plumbing (`65.256 tok/s`, strict-valid but below the `65.276` record
+  because `get_top_tokens()` still pays dense LM-head). Conclusion: the next
+  credible speed lane is a real tiled fused LM-head top-1 / candidate-vs-max
+  verifier kernel or verifier redesign, not sampler plumbing, multiple oneDNN
+  chunks, or scale/scope config sweeps. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+  Latest closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-spec-greedy-topids-no-headline-win.md`.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

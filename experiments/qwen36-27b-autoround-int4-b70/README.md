@@ -134,6 +134,13 @@ Next milestone:
    variants; see
    `notes/2026-07-03-scale-scope-followup-no-headline-win.md` and
    `notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+7. Latest closed source precheck: the default-off spec greedy top-token-ID
+   verifier path passed the strict gate at `65.25583870721442 tok/s`, but it
+   was flat versus the `65.27648650325429 tok/s` record because
+   `get_top_tokens()` still pays the dense LM-head. Treat
+   `notes/2026-07-04-spec-greedy-topids-no-headline-win.md` as integration
+   groundwork for a future true compact LM-head kernel, not a path to retest by
+   itself.
 
 ## Folder Map
 
