@@ -42,15 +42,21 @@ Main entries:
 - [bring-up repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-Status: active optimization target as of 2026-07-03. TP1 single-B70 vLLM/XPU
-serving works for `Intel/Qwen3.6-27B-int4-AutoRound` at revision
-`abc86de19eb1ebbf6a7df4582341325c22ddcb7d`, and the strict fresh-response
-gate exists. Current best valid row is the env-only promote-source path at a
-conservative `53.522 tok/s` median generated-token throughput for tokens
-1-100 after TTFT, with two support rows at `54.861` and `53.992`, quality
-suite pass, `cached_tokens=0` on every prompt, and LocalMaxxing approval
-`cmr4gokx90061nv01lhoe3ft8`. Compact packet:
-`../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
+Status: active optimization target as of 2026-07-04. TP1 single-B70 vLLM/XPU
+serving works for the Intel reference checkpoint and the current fastest
+`webhie/Qwen3.6-27B-int4-AutoRound` checkpoint. Current best valid strict
+fresh-response row is the webhie AutoRound W4A16 recipe with runtime INT8
+LM-head and BF16 scales at `65.276 tok/s` median generated-token throughput
+for tokens 1-100 after TTFT, with quality suite pass, `cached_tokens=0` on
+every prompt, and LocalMaxxing approval `cmr5iu3gk00bfq901nidgcana`. Compact
+packet:
+`../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
+The older Intel-checkpoint promote-source row (`53.522 tok/s`,
+`cmr4gokx90061nv01lhoe3ft8`) remains a baseline/reference. Separate
+service/prompt-processing work is captured in
+`../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md`,
+including a 32K-capability exact-retrieval anchor through `17706` actual prompt
+tokens with `cached_tokens=0`.
 
 ### Gemma 4 26B A4B Q8 / INT8 On B70
 

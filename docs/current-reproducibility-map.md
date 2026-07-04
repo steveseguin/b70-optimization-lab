@@ -87,6 +87,14 @@ the production LAN endpoint:
   `../results/qwen36-27b-autoround-int4-b70/HANDOFF.md`
 - repro:
   `../repro/qwen36-27b-autoround-int4-b70/README.md`
+- service / prompt-processing ladder:
+  `../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md`.
+  This is separate from the short-decode headline. The current 32K-capability
+  anchor uses `MAX_MODEL_LEN=32768`, exact cold JSON retrieval, `cached_tokens=0`,
+  and reaches `17706` actual prompt tokens with TTFT median `22.443s`,
+  approximate prefill median `224.67 tok/s`, and after-TTFT short-output median
+  `60.19 tok/s`. Qwen answers currently stream as reasoning deltas under this
+  API path, so visible-content production behavior still needs separate review.
 
 ## MiniMax Deployable Baseline
 

@@ -198,16 +198,39 @@ Next milestone:
 
 ## Current Research Frontier
 
-The plain MTP3/cg8 strict baseline is about `47.6-48.5 tok/s` on the Qwen
-realistic suite. The current promote-source/no-accepted-postprocess result is
-`53.5-54.9 tok/s` under the same strict fresh gate. A fast invalid flag,
-`VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0`, reached `51.273 tok/s` on the
-strict suite and `74.877 tok/s` synthetically, but failed 1024-token needle
-recall. Tracing explains the lift: the valid path copies large GDN/Mamba state
-from the accepted speculative slot back to the running slot after verification.
+The active headline family is now
+`webhie/Qwen3.6-27B-int4-AutoRound` with the current promote-source MTP3/cg8
+recipe plus default-off runtime INT8 LM-head and BF16 scale storage:
+`65.27648650325429 tok/s` median generated-token throughput for tokens 1-100
+after TTFT on the strict fresh Qwen realistic suite, with `cached_tokens=0` on
+every request and repeat32/1K-needle quality passing. Later same-recipe support
+rows reached `65.8-66.4 tok/s`, but a four-GPU reconfirmation landed
+`63.97-64.74 tok/s`, so those higher rows are variance/support only and should
+not be resubmitted as records.
+
+Older reference points remain useful for attribution: plain MTP3/cg8 was about
+`47.6-48.5 tok/s`, and promote-source/no-accepted-postprocess lifted the lane
+to `53.5-54.9 tok/s` before the webhie variant and INT8 LM-head work. A fast
+invalid flag, `VLLM_XPU_GDN_NONSPEC_POSTPROCESS_FULL_ACCEPT=0`, reached
+`51.273 tok/s` on the strict suite and `74.877 tok/s` synthetically, but failed
+1024-token needle recall. Tracing explains the lift: the valid path copies
+large GDN/Mamba state from the accepted speculative slot back to the running
+slot after verification.
 
 Current trace summary:
 `data/qwen36-27b-autoround-int4-b70-baselines/mamba-copy-trace-summary-mtp3-cg8-p512o128-20260703T042542Z.json`.
+
+Prompt-processing / long-context service work is tracked separately from the
+short-decode record. The current service ladder lives in
+`notes/2026-07-04-long-context-ladder-baseline.md`, with suite
+`../../repro/qwen36-27b-autoround-int4-b70/long-context-suite-v1.json` and
+runner `scripts/run-long-context-ladder.sh`. The latest 32K-capability anchor
+uses the same webhie/BF16-scale INT8-LM-head MTP3/cg8 recipe at
+`MAX_MODEL_LEN=32768` and passes exact JSON retrieval through `17706` actual
+prompt tokens with `cached_tokens=0`, TTFT median `22.443s`, approximate
+prefill median `224.67 tok/s`, and after-TTFT short-output median
+`60.19 tok/s`. This is a service-lane baseline, not a LocalMaxxing headline
+decode row.
 
 The current valid env-only win appears to preserve the accepted-state transition
 by reading from the accepted speculative slot as the running source, then

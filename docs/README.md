@@ -20,6 +20,7 @@ Docs should point to those artifacts instead of duplicating every script.
 
 - [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.
 - [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
+- [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): active one-B70 vLLM/XPU optimization lane, strict fresh decode record, long-context service ladder, and closed no-win paths.
 - [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
@@ -129,6 +130,17 @@ The session-cache, TurboQuant, and full-context research work is indexed in
 The Qwen3.6 35B lane is indexed in
 [qwen36-research-map.md](qwen36-research-map.md), with its final result packet in
 [../results/qwen36-35b-quark-int8-b70/](../results/qwen36-35b-quark-int8-b70/).
+
+### Qwen3.6 27B INT4 AutoRound
+
+The active Qwen27 one-B70 optimization lane is indexed in
+[../results/qwen36-27b-autoround-int4-b70/](../results/qwen36-27b-autoround-int4-b70/).
+The current strict fresh-response decode record is `65.276 tok/s` with the
+`webhie` AutoRound checkpoint plus runtime INT8 LM-head BF16 scales. The
+service/prompt-processing lane is separate: see
+[../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md](../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md)
+for the cold long-context ladder, including the 32K-capability anchor through
+`17706` actual prompt tokens with exact JSON retrieval and `cached_tokens=0`.
 
 ### Gemma 4 26B Short Decode And Service Lanes
 

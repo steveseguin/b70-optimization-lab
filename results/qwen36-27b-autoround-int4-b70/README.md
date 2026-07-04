@@ -115,6 +115,27 @@ Current fastest quality-gated variant:
   `webhie-int8-lmhead-20260703.json`, LocalMaxxing
   `cmr576apv0079q901i6dvsh0l`.
 
+Current prompt-processing / long-context service baseline:
+
+- lane note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md`;
+- suite:
+  `../../repro/qwen36-27b-autoround-int4-b70/long-context-suite-v1.json`;
+- runner:
+  `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-long-context-ladder.sh`;
+- policy: service/prefill lane only, not a short-decode LocalMaxxing headline;
+  rows are cold, unique prompts, `cached_tokens=0`, exact JSON retrieval;
+- current 32K-capability anchor: `MAX_MODEL_LEN=32768`,
+  `MAX_NUM_BATCHED_TOKENS=4096`, six rows through `17706` actual prompt tokens,
+  exact retrieval pass, TTFT median `22.443s`, approximate prefill median
+  `224.67 tok/s`, after-TTFT output median `60.19 tok/s`, KV cache size
+  `141,784` tokens, max concurrency `4.33x` at 32K;
+- important caveat: under the current Qwen/vLLM setup, JSON answers stream as
+  reasoning deltas rather than visible content deltas even with thinking
+  disabled. The harness validates those deltas like the strict decode harness;
+  production clients that require visible `content` need a separate
+  reasoning/parser fix.
+
 Prior Intel-checkpoint quality-gated runtime-quantized variant:
 
 - label this separately as **AutoRound W4A16 + runtime INT8 LM-head**. Do not

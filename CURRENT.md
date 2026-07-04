@@ -64,6 +64,16 @@ Fastest quality-gated practical variant:
   INT8-LM-head LocalMaxxing: `cmr4zkcxb003yq9018408i1pn`;
 - prior Intel packet:
   `results/qwen36-27b-autoround-int4-b70/int8-lmhead-20260703.json`;
+- prompt-processing / long-context service baseline:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md`.
+  This is not a short-decode headline result. The current 32K-capability anchor
+  uses the same webhie/BF16-scale INT8-LM-head recipe at
+  `MAX_MODEL_LEN=32768`, passes exact cold JSON retrieval through `17706`
+  actual prompt tokens with `cached_tokens=0`, and records TTFT median
+  `22.443s`, approximate prefill median `224.67 tok/s`, after-TTFT
+  short-output median `60.19 tok/s`, and KV max concurrency `4.33x` at 32K.
+  Note that answers currently stream as reasoning deltas, not visible content
+  deltas, under the current Qwen/vLLM API plumbing;
 - service note: the older Intel-checkpoint
   `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` attribution lane passed quality and
   measured `61.898 tok/s`, but the later webhie BF16-scale target-only

@@ -95,6 +95,29 @@ Current fastest quality-gated variant:
   `webhie-int8-lmhead-20260703.json`, LocalMaxxing
   `cmr576apv0079q901i6dvsh0l`.
 
+Current prompt-processing / long-context service baseline:
+
+- note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md`;
+- suite:
+  `../../repro/qwen36-27b-autoround-int4-b70/long-context-suite-v1.json`;
+- runner:
+  `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-long-context-ladder.sh`;
+- classification: service/prefill lane only, not a short-decode headline;
+- validation policy: deterministic cold prompts, one request per prompt,
+  `cached_tokens=0`, exact JSON retrieval fields passing;
+- 32K-capability anchor:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-baseline-20260704T061716Z.json`;
+  `MAX_MODEL_LEN=32768`, `MAX_NUM_BATCHED_TOKENS=4096`, six rows through
+  `17706` actual prompt tokens, exact retrieval pass, TTFT median `22.443s`,
+  approximate prefill median `224.67 tok/s`, after-TTFT output median
+  `60.19 tok/s`, KV cache size `141,784` tokens, max concurrency `4.33x` at
+  32K;
+- caveat: Qwen answers currently stream through reasoning deltas
+  (`content_delta_count=0`) even with thinking disabled. The harness validates
+  them correctly, but production-visible `content` should be fixed separately
+  before treating the endpoint as final API behavior.
+
 Current next-execution plan:
 
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-next-optimization-execution-plan.md`;

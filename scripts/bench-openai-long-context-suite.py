@@ -29,6 +29,8 @@ def stream_chat(
     max_tokens: int,
     timeout: int,
     seed: int | None,
+    request_extra: dict[str, Any],
+    return_token_ids: bool,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": model,
@@ -41,6 +43,9 @@ def stream_chat(
     }
     if seed is not None:
         payload["seed"] = seed
+    if return_token_ids:
+        payload["return_token_ids"] = True
+    payload.update(request_extra)
 
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/chat/completions",
@@ -52,8 +57,11 @@ def stream_chat(
     started = time.perf_counter()
     first_text_at: float | None = None
     text_parts: list[str] = []
+    chunk_offsets: list[float] = []
+    token_id_offsets: list[float] = []
+    content_delta_count = 0
+    reasoning_delta_count = 0
     usage: dict[str, Any] = {}
-    chunks = 0
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         for raw in resp:
             line = raw.decode("utf-8", errors="replace").strip()
@@ -66,12 +74,30 @@ def stream_chat(
             if event.get("usage"):
                 usage = event["usage"]
             for choice in event.get("choices", []):
-                token_text = (choice.get("delta") or {}).get("content") or ""
+                choice_token_ids = choice.get("token_ids")
+                if isinstance(choice_token_ids, list):
+                    now = time.perf_counter()
+                    if first_text_at is None and choice_token_ids:
+                        first_text_at = now
+                    token_id_offsets.extend(
+                        [now - started] * len(choice_token_ids)
+                    )
+
+                delta = choice.get("delta") or {}
+                token_text = delta.get("content") or ""
                 if token_text:
+                    content_delta_count += 1
+                else:
+                    token_text = delta.get("reasoning") or ""
+                    if token_text:
+                        reasoning_delta_count += 1
+
+                if token_text:
+                    now = time.perf_counter()
                     if first_text_at is None:
-                        first_text_at = time.perf_counter()
+                        first_text_at = now
                     text_parts.append(token_text)
-                    chunks += 1
+                    chunk_offsets.append(now - started)
 
     ended = time.perf_counter()
     text = "".join(text_parts)
@@ -91,7 +117,12 @@ def stream_chat(
         "elapsed_s": elapsed_s,
         "ttft_s": ttft_s,
         "post_ttft_s": post_ttft_s,
-        "chunks": chunks,
+        "chunk_count": len(chunk_offsets),
+        "stream_token_id_count": len(token_id_offsets),
+        "content_delta_count": content_delta_count,
+        "reasoning_delta_count": reasoning_delta_count,
+        "chunk_offsets_s": chunk_offsets,
+        "token_id_offsets_s": token_id_offsets,
         "usage": usage,
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
@@ -306,7 +337,27 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=1800)
     parser.add_argument("--out", type=Path)
+    parser.add_argument(
+        "--request-extra-json",
+        default="{}",
+        help=(
+            "JSON object merged into every request payload, for example "
+            "'{\"chat_template_kwargs\":{\"enable_thinking\":false}}'."
+        ),
+    )
+    parser.add_argument(
+        "--return-token-ids",
+        action="store_true",
+        help=(
+            "Request vLLM stream token_ids so TTFT/decode timing is still "
+            "available when text deltas are coalesced or routed through "
+            "reasoning fields."
+        ),
+    )
     args = parser.parse_args()
+    request_extra = json.loads(args.request_extra_json)
+    if not isinstance(request_extra, dict):
+        raise SystemExit("--request-extra-json must decode to a JSON object")
 
     suite, cases = load_cases(args)
     rows: list[dict[str, Any]] = []
@@ -322,6 +373,8 @@ def main() -> int:
             args.max_tokens,
             args.timeout,
             args.seed,
+            request_extra,
+            args.return_token_ids,
         )
         row.update({
             "case_id": case["id"],
@@ -332,6 +385,7 @@ def main() -> int:
             "prompt_preview": prompt[:320],
             "validation": validate(case, row["text"]),
         })
+        row["cached_tokens"] = cached_tokens(row)
         rows.append(row)
 
     run_identity = {
@@ -346,6 +400,8 @@ def main() -> int:
         "max_tokens": args.max_tokens,
         "seed": args.seed,
         "api_mode": "chat",
+        "request_extra": request_extra,
+        "return_token_ids": args.return_token_ids,
         "prompt_sha256s": prompt_hashes,
     }
     result = {
