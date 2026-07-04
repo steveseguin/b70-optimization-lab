@@ -113,10 +113,11 @@ Current prompt-processing / long-context service baseline:
   approximate prefill median `224.67 tok/s`, after-TTFT output median
   `60.19 tok/s`, KV cache size `141,784` tokens, max concurrency `4.33x` at
   32K;
-- caveat: Qwen answers currently stream through reasoning deltas
-  (`content_delta_count=0`) even with thinking disabled. The harness validates
-  them correctly, but production-visible `content` should be fixed separately
-  before treating the endpoint as final API behavior.
+- production-visible service variant: set `QWEN36_27B_REASONING_PARSER=`. The
+  32K no-parser content check passed exact retrieval through `17706` actual
+  prompt tokens with all rows streaming visible `content` deltas and
+  `reasoning_delta_count=0`. Keep it labeled as a service variant and rerun the
+  short strict decode suite after any future parser/template change.
 
 Current next-execution plan:
 

@@ -130,11 +130,11 @@ Current prompt-processing / long-context service baseline:
   exact retrieval pass, TTFT median `22.443s`, approximate prefill median
   `224.67 tok/s`, after-TTFT output median `60.19 tok/s`, KV cache size
   `141,784` tokens, max concurrency `4.33x` at 32K;
-- important caveat: under the current Qwen/vLLM setup, JSON answers stream as
-  reasoning deltas rather than visible content deltas even with thinking
-  disabled. The harness validates those deltas like the strict decode harness;
-  production clients that require visible `content` need a separate
-  reasoning/parser fix.
+- production-visible service variant: set `QWEN36_27B_REASONING_PARSER=`. The
+  32K no-parser content check passed the same exact retrieval gate through
+  `17706` actual prompt tokens with all rows streaming visible `content`
+  deltas (`reasoning_delta_count=0`). Keep it labeled as a service variant and
+  rerun the short strict decode suite after any future parser/template change.
 
 Prior Intel-checkpoint quality-gated runtime-quantized variant:
 

@@ -230,7 +230,9 @@ uses the same webhie/BF16-scale INT8-LM-head MTP3/cg8 recipe at
 prompt tokens with `cached_tokens=0`, TTFT median `22.443s`, approximate
 prefill median `224.67 tok/s`, and after-TTFT short-output median
 `60.19 tok/s`. This is a service-lane baseline, not a LocalMaxxing headline
-decode row.
+decode row. For production-visible OpenAI content deltas, use the validated
+no-parser service variant (`QWEN36_27B_REASONING_PARSER=`), which passed the
+same 32K exact-retrieval gate with `reasoning_delta_count=0`.
 
 The current valid env-only win appears to preserve the accepted-state transition
 by reading from the accepted speculative slot as the running source, then

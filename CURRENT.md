@@ -72,8 +72,10 @@ Fastest quality-gated practical variant:
   actual prompt tokens with `cached_tokens=0`, and records TTFT median
   `22.443s`, approximate prefill median `224.67 tok/s`, after-TTFT
   short-output median `60.19 tok/s`, and KV max concurrency `4.33x` at 32K.
-  Note that answers currently stream as reasoning deltas, not visible content
-  deltas, under the current Qwen/vLLM API plumbing;
+  For production-visible OpenAI `content`, set
+  `QWEN36_27B_REASONING_PARSER=`; the no-parser 32K content check passed exact
+  retrieval through the same `17706` actual-token case with all rows streaming
+  visible content deltas;
 - service note: the older Intel-checkpoint
   `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` attribution lane passed quality and
   measured `61.898 tok/s`, but the later webhie BF16-scale target-only

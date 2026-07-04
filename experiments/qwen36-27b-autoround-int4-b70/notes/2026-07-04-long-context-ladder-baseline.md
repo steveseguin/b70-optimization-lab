@@ -33,13 +33,18 @@ completion tokens. The harness now:
 - records `cached_tokens` directly per row and requires all rows to be `0`;
 - uses `LONG_MAX_TOKENS=128` by default because `64` truncated the JSON answer.
 
-Important API detail: under this current vLLM/Qwen setup, the long-context JSON
-answers are emitted as reasoning deltas (`content_delta_count=0`,
-`reasoning_delta_count=19-20`) even with thinking disabled. The harness treats
-reasoning deltas as generated text for validation and timing, as the strict
-decode harness already does. If production clients require visible `content`,
-revisit the reasoning parser / chat-template plumbing separately from the
-throughput recipe.
+Important API detail: with the default `--reasoning-parser qwen3`, the
+long-context JSON answers are emitted as reasoning deltas
+(`content_delta_count=0`, `reasoning_delta_count=19-20`) even with thinking
+disabled. The harness treats reasoning deltas as generated text for validation
+and timing, as the strict decode harness already does.
+
+For production-visible OpenAI `content`, set
+`QWEN36_27B_REASONING_PARSER=` (empty). This no-parser mode was already
+strict/fresh-valid at `64.932 tok/s` on the short decode suite, within the
+current Qwen27 variance band of the approved `65.276 tok/s` row, and the
+long-context content check below confirms it keeps exact retrieval while
+streaming visible content.
 
 ## Early failures preserved
 
@@ -132,6 +137,27 @@ prompt-speed changes. The approximate prefill metric is `prompt_tokens / TTFT`;
 it is useful for relative service-lane comparisons but is not a pure kernel
 prefill measurement.
 
+### Production-visible no-parser content check
+
+Same 32K-capability service lane, but with `QWEN36_27B_REASONING_PARSER=`:
+
+- Result:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser-contentcheck-20260704T063156Z.json`
+- Run dir:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser-contentcheck-20260704T063156Z`
+- Rows: 6; max actual prompt tokens `17706`.
+- Gate: exact JSON retrieval pass, `cached_tokens=0`, unique prompts.
+- Output routing: every row streamed visible content deltas
+  (`content_delta_count=19-20`, `reasoning_delta_count=0`).
+- Summary: TTFT median `15.376s`, approximate prefill median
+  `219.59 tok/s`, after-TTFT short-output median `61.71 tok/s`, wall median
+  `4.96 tok/s`.
+
+Recommendation: for production API behavior where clients read
+`choices[].delta.content`, use the no-parser service variant. Keep it labeled
+as the no-parser service variant and rerun the short strict decode suite if a
+future change tries to replace the submitted `qwen3` parser headline recipe.
+
 ## Reproduction
 
 Use the current validated decode recipe plus the long-context runner:
@@ -151,6 +177,14 @@ GPU_INDEX=0 PORT=19410 \
 LABEL=qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768 \
 MAX_MODEL_LEN=32768 MAX_NUM_BATCHED_TOKENS=4096 \
 MAX_TARGET_PROMPT_TOKENS=12288 LONG_MAX_TOKENS=128 \
+experiments/qwen36-27b-autoround-int4-b70/scripts/run-long-context-ladder.sh
+
+# 32K context with visible OpenAI content deltas.
+GPU_INDEX=1 PORT=19411 \
+LABEL=qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser \
+MAX_MODEL_LEN=32768 MAX_NUM_BATCHED_TOKENS=4096 \
+MAX_TARGET_PROMPT_TOKENS=12288 LONG_MAX_TOKENS=128 \
+QWEN36_27B_REASONING_PARSER= \
 experiments/qwen36-27b-autoround-int4-b70/scripts/run-long-context-ladder.sh
 ```
 
@@ -176,8 +210,9 @@ Default recipe baked into the runner:
 3. Evaluate `MAX_NUM_BATCHED_TOKENS` for long prompts (`2048`, `4096`, `8192`)
    only as a service-lane setting, and always rerun the short strict decode
    suite afterward before adopting a service config.
-4. If production clients need visible `content`, fix Qwen reasoning/content
-   routing before treating this as production API-ready.
+4. If production clients need visible `content`, prefer the validated
+   `QWEN36_27B_REASONING_PARSER=` service variant and rerun the short strict
+   decode suite after any future parser/template change.
 5. Calibrate the deterministic filler if future notes need target labels to
    match actual prompt tokens more closely; current results always record actual
    `usage.prompt_tokens`, which is the source of truth.

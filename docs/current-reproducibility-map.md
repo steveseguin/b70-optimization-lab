@@ -93,8 +93,9 @@ the production LAN endpoint:
   anchor uses `MAX_MODEL_LEN=32768`, exact cold JSON retrieval, `cached_tokens=0`,
   and reaches `17706` actual prompt tokens with TTFT median `22.443s`,
   approximate prefill median `224.67 tok/s`, and after-TTFT short-output median
-  `60.19 tok/s`. Qwen answers currently stream as reasoning deltas under this
-  API path, so visible-content production behavior still needs separate review.
+  `60.19 tok/s`. For production-visible OpenAI `content`, set
+  `QWEN36_27B_REASONING_PARSER=`; the no-parser 32K content check passed the
+  same exact retrieval gate with all rows streaming visible content deltas.
 
 ## MiniMax Deployable Baseline
 
