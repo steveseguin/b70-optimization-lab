@@ -67,6 +67,11 @@ Current fastest quality-gated variant:
 - note:
   `notes/2026-07-03-int8-lmhead-bf16-scale-quality-pass.md`.
 - LocalMaxxing: approved as `cmr5iu3gk00bfq901nidgcana`.
+- latest continuation bookmark:
+  `notes/2026-07-04-continuation-source-and-awq-state.md`. This preserves the
+  active source snapshots, closes another no-repeat audit of cheap env/config
+  knobs, and records the unscreened `cyankiwi/Qwen3.6-27B-AWQ-INT4` strict
+  screen plan once the checkpoint download completes.
 
 Prior Intel-checkpoint fastest quality-gated variant:
 

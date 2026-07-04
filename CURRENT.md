@@ -59,6 +59,11 @@ Fastest quality-gated practical variant:
   at `64.84180902803895 tok/s`, strict fresh gate passed with
   `cached_tokens=0`; support only, not a LocalMaxxing update. This validates
   `experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh`;
+- continuation bookmark:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
+  It preserves active source snapshots, records that no cheap env-only
+  candidate remains, and identifies `cyankiwi/Qwen3.6-27B-AWQ-INT4` as the
+  current unscreened same-quality-class variant once its download completes;
 - same-window/crossover FP32-scale controls: `64.234` and `64.090 tok/s`;
 - prior submitted webhie INT8-LM-head record: `64.306 tok/s`;
 - full quality gate passed with baseline match and 1024-token needle pass

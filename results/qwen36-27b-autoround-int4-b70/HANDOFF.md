@@ -94,6 +94,11 @@ Current fastest quality-gated variant:
 - previous webhie INT8-LM-head packet:
   `webhie-int8-lmhead-20260703.json`, LocalMaxxing
   `cmr576apv0079q901i6dvsh0l`.
+- continuation bookmark:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
+  It records the latest source-state snapshots, the no-repeat audit for closed
+  env/config knobs, and the current `cyankiwi/Qwen3.6-27B-AWQ-INT4` download /
+  strict-screen plan.
 
 Current prompt-processing / long-context service baseline:
 
