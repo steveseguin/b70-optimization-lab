@@ -56,6 +56,13 @@ Phase 0 and Phase 1 are complete and captured in
   emitted tokens/step and increased verifier steps. Do not resume
   scheduler-only adaptive depth unless proposer generation and verifier rows
   are both made dynamically depth-aware.
+- True shorter proposer groups remain blocked:
+  `2026-07-04-dynamic-depth-placeholder-reject-retry-no-win.md`. Retrying the
+  dynamic drafter-depth prototype with upstream-style placeholder `-1` rejection
+  still crashed the second strict-suite request with the same XPU
+  `Indexing.h:622` assert. Partial groups are not a sampler-only fix; they need
+  explicit support across proposer output, verifier metadata, sampler rows, GDN
+  state commit, and graph capture shapes.
 - The current recipe's shallow-depth gap is now closed too:
   `2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md`. MTP1/cg8 reached
   `51.246`, MTP2/cg8 `59.589`, MTP3/cg8 control `64.730`, and MTP4/cg8
@@ -449,8 +456,9 @@ Two independent source/result audits agreed on the current frontier:
   stack. The scheduler has an explicit
   `VLLM_XPU_SPEC_DECODE_DISABLE_PARTIAL_DRAFT_GROUPS` escape hatch, and the
   previous dynamic-drafter prototype crashed as soon as it created a shorter
-  group. A real fix must update scheduler, `SpecDecodeMetadata`, graph capture
-  assumptions, and GDN/Mamba state postprocess together.
+  group. The upstream-style placeholder `-1` rejection retry failed the same
+  way, so a real fix must update scheduler, `SpecDecodeMetadata`, graph capture
+  assumptions, sampler row handling, and GDN/Mamba state postprocess together.
 
 Target-only lazy-verifier arithmetic correction:
 

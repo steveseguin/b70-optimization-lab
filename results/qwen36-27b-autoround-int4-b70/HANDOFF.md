@@ -195,6 +195,16 @@ Current next-execution plan:
   versus fixed-MTP3 baseline `65.986 tok/s`. The patch is preserved as
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-scheduler-adaptive-spec-depth-no-win-20260704.patch`
   and reverted from the active vLLM source;
+- closed dynamic-depth placeholder retry:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-depth-placeholder-reject-retry-no-win.md`.
+  Retrying true shorter proposer groups after manually applying the upstream
+  placeholder `-1` rejection guard still crashed on the second strict-suite
+  request with the same XPU `Indexing.h:622` assert. The retry patch is
+  preserved as
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-dynamic-drafter-depth-placeholder-reject-retry-20260704T151200Z.patch`.
+  Conclusion: this is not sampler-only; partial groups need explicit support
+  across proposer output, verifier metadata, sampler rows, GDN state commit,
+  and graph capture shapes;
 - closed variant / MTP-layer audit:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-autoround-variant-screening-and-stepidx-audit.md`.
   Same-window strict screens for local AutoRound variants found
@@ -402,8 +412,11 @@ Current next-execution plan:
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype
   actually shortened the MTP proposer loop, but the first partial speculative
   group crashed the XPU verifier path with an `Indexing.h:622` out-of-bounds
-  assert. Do not retry variable-depth MTP heuristics until partial groups are
-  supported in the Qwen/GDN XPU verifier/metadata path.
+  assert. A follow-up with upstream-style placeholder `-1` rejection failed the
+  same way:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-depth-placeholder-reject-retry-no-win.md`.
+  Do not retry variable-depth MTP heuristics until partial groups are supported
+  in the Qwen/GDN XPU verifier/metadata path.
 - closed DFlash SWA revisit:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-swa-revisit.md`.
   The local DFlash implementation ignores the draft model's mixed

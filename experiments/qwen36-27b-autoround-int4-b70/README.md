@@ -197,8 +197,12 @@ Next milestone:
     `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
     A default-off prototype that actually shortened the MTP proposer loop
     crashed with an XPU indexing assert when it created partial speculative
-    groups. Do not retry dynamic depth until the Qwen/GDN XPU verifier supports
-    partial groups end-to-end.
+    groups. A follow-up with upstream-style placeholder `-1` rejection applied
+    also failed the same way:
+    `notes/2026-07-04-dynamic-depth-placeholder-reject-retry-no-win.md`.
+    Do not retry dynamic depth by changing only sampler placeholder handling;
+    partial groups need explicit support across proposer output, verifier
+    metadata, sampler rows, GDN state commit, and graph capture shapes.
 15. Latest DFlash revisit:
     `notes/2026-07-04-dflash-swa-revisit.md`. Real mixed SWA support crashes
     before readiness because the current DFlash/EAGLE proposer assumes all
