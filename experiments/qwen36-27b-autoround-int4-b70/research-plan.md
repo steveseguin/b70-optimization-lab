@@ -62,6 +62,14 @@ suite-driven chat requests and stable request IDs, the dataset builder preserves
 collector metadata in samples, and offline eval reports `family_rows`; use this
 tooling before training another local EAGLE draft.
 
+The first v2 chat calibration smoke is captured in
+`notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`. It collected `3840`
+chat hidden rows with `0` continuity breaks and metadata on `24/24` samples
+after suffix-tolerant request-ID matching, but a tiny two-epoch draft reached
+only `0.240` mean accepted offline. This proves the metadata path, not draft
+quality. Next EAGLE work needs a larger diverse v2 corpus and held-out family
+validation before endpoint testing.
+
 ## Sources Checked
 
 - Intel model card:

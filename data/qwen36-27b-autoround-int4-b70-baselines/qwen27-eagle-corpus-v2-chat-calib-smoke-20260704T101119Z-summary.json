@@ -1,0 +1,184 @@
+{
+  "classification": "diagnostic_only_eagle_corpus_v2_smoke",
+  "collector": {
+    "api_mode": "chat",
+    "families": [
+      "api-design-review",
+      "architecture-summary",
+      "benchmark-policy",
+      "cache-bug",
+      "capacity-plan",
+      "code-path-audit",
+      "customer-root-cause",
+      "handoff-note",
+      "incident-questions",
+      "indexing-plan",
+      "kernel-change-review",
+      "long-context-plan",
+      "migration-memo",
+      "ops-runbook",
+      "optimization-stop-rule",
+      "perf-experiment-template",
+      "quality-gate-design",
+      "release-retro",
+      "router-design",
+      "runtime-risk-register",
+      "scheduler-debug",
+      "security-brief",
+      "support-playbook",
+      "variance-method"
+    ],
+    "num_prompts": 24,
+    "suite": "experiments/qwen36-27b-autoround-int4-b70/calibration-suite-v1.json",
+    "suite_meta": {
+      "classification": "diagnostic_only",
+      "description": "Held-out diagnostic prompt suite for Qwen27 drafter calibration and verifier-trace analysis. These prompts are not promotion prompts and must not be used as LocalMaxxing headline evidence.",
+      "policy": "Use for acceptance tracing, prompt-level MTP diagnostics, and drafter-calibration research only. Final promoted results must still use repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json with cold one-shot prompts and cached_tokens=0.",
+      "suite_id": "qwen36-27b-autoround-int4-b70-calibration-v1",
+      "version": 1
+    },
+    "total_output_tokens_actual": 3840
+  },
+  "dataset": {
+    "continuity_breaks": 0,
+    "metadata_request_keys": 48,
+    "reconstructed_current_token_rows": 3840,
+    "reconstructed_position_rows": 3840,
+    "samples_saved": 24,
+    "samples_with_metadata": 24,
+    "usable_rows": 3840
+  },
+  "draft_smoke": {
+    "acceptance_histogram": {
+      "0": 414,
+      "1": 77,
+      "2": 17,
+      "3": 4
+    },
+    "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-calib-20260704T101119Z/draft-v2-smoke-e2-r3-lr3e5-tok01",
+    "eval_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-calib-20260704T101119Z/eval-v2-smoke-e2-r3-lr3e5-tok01.json",
+    "family_rows": [
+      {
+        "family": "api-design-review",
+        "mean_accepted": 0.38461538461538464,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "benchmark-policy",
+        "mean_accepted": 0.23076923076923078,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "cache-bug",
+        "mean_accepted": 0.20512820512820512,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "capacity-plan",
+        "mean_accepted": 0.3333333333333333,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "code-path-audit",
+        "mean_accepted": 0.20512820512820512,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "customer-root-cause",
+        "mean_accepted": 0.10256410256410256,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "incident-questions",
+        "mean_accepted": 0.10256410256410256,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "indexing-plan",
+        "mean_accepted": 0.28205128205128205,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "migration-memo",
+        "mean_accepted": 0.2564102564102564,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "ops-runbook",
+        "mean_accepted": 0.15384615384615385,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "perf-experiment-template",
+        "mean_accepted": 0.4,
+        "samples": 1,
+        "starts": 5
+      },
+      {
+        "family": "quality-gate-design",
+        "mean_accepted": 0.2564102564102564,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "router-design",
+        "mean_accepted": 0.3333333333333333,
+        "samples": 1,
+        "starts": 39
+      },
+      {
+        "family": "security-brief",
+        "mean_accepted": 0.2564102564102564,
+        "samples": 1,
+        "starts": 39
+      }
+    ],
+    "mean_accepted": 0.240234375,
+    "per_step": [
+      {
+        "conditional_denominator": 512,
+        "exact_hits": 98,
+        "exact_rate": 0.19140625,
+        "step": 1,
+        "topk_hits": 143,
+        "topk_rate": 0.279296875,
+        "unconditional_exact_rate": 0.19140625,
+        "unconditional_topk_rate": 0.279296875
+      },
+      {
+        "conditional_denominator": 98,
+        "exact_hits": 21,
+        "exact_rate": 0.21428571428571427,
+        "step": 2,
+        "topk_hits": 33,
+        "topk_rate": 0.336734693877551,
+        "unconditional_exact_rate": 0.041015625,
+        "unconditional_topk_rate": 0.064453125
+      },
+      {
+        "conditional_denominator": 21,
+        "exact_hits": 4,
+        "exact_rate": 0.19047619047619047,
+        "step": 3,
+        "topk_hits": 4,
+        "topk_rate": 0.19047619047619047,
+        "unconditional_exact_rate": 0.0078125,
+        "unconditional_topk_rate": 0.0078125
+      }
+    ],
+    "starts": 512,
+    "train_log": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-calib-20260704T101119Z/logs/train-v2-smoke.stdout.log"
+  },
+  "policy": "Calibration-suite corpus and offline eval only; not final-suite, not LocalMaxxing, not a throughput claim.",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-calib-20260704T101119Z"
+}

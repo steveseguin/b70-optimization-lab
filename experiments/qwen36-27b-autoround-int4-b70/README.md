@@ -204,6 +204,13 @@ Next milestone:
     into `.pt` samples; and offline eval reports acceptance by prompt family.
     This is preparation only, not a speed result, but it is the correct restart
     point if EAGLE is revisited.
+17. EAGLE corpus/eval v2 chat smoke:
+    `notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`.
+    A one-GPU calibration-suite chat collection produced `3840` hidden rows,
+    `24` samples, `0` continuity breaks, and metadata on `24/24` samples after
+    fixing suffix-tolerant request-ID matching. A tiny two-epoch draft reached
+    only `0.240` mean accepted offline, so it is not an endpoint candidate; it
+    only proves the metadata path works.
 
 ## Folder Map
 

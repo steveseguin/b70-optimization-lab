@@ -270,6 +270,13 @@ Current next-execution plan:
   and prompt metadata; the dataset builder carries that metadata into samples;
   offline eval reports acceptance by prompt family. This is preparation only,
   not a speed result, but it is the restart point for any future EAGLE work.
+- EAGLE corpus/eval v2 chat smoke:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`.
+  The calibration-suite chat collection produced `3840` usable rows,
+  `24` samples, `0` continuity breaks, and metadata on `24/24` samples after a
+  suffix-tolerant request-ID join fix. The tiny draft trained from it reached
+  only `0.240` mean accepted offline, so do not endpoint-test it; use the
+  metadata path for a larger held-out v2 corpus instead.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

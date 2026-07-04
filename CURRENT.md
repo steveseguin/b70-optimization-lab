@@ -158,6 +158,10 @@ Fastest quality-gated practical variant:
   Future EAGLE work should begin with diverse chat-style corpus/eval v2, not
   another endpoint config sweep. The corpus/eval v2 tooling entry point is
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-tooling.md`.
+  The first v2 chat calibration smoke produced `3840` usable rows and metadata
+  on `24/24` samples, but the tiny draft reached only `0.240` mean accepted;
+  see
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

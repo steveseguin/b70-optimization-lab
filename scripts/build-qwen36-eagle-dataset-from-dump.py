@@ -145,6 +145,23 @@ def load_request_metadata(paths: list[str]) -> dict[str, dict[str, Any]]:
     return out
 
 
+def lookup_request_metadata(
+    req_id: str,
+    request_metadata: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    exact = request_metadata.get(req_id)
+    if exact is not None:
+        return exact
+    # vLLM may append a short unique suffix to the response/request id used in
+    # hidden-state dump rows, e.g. collector response_id
+    # "chatcmpl-qwen27-eagle-v2-000000-ops-runbook" can appear in dumps as
+    # "chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71".
+    for key, metadata in request_metadata.items():
+        if key and req_id.startswith(f"{key}-"):
+            return metadata
+    return {}
+
+
 def cast_hidden(hidden: torch.Tensor, dtype_name: str) -> torch.Tensor:
     if dtype_name == "native":
         return hidden
@@ -180,7 +197,7 @@ def save_buffer(
     )
     safe_req = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in req_id)
     path = os.path.join(out_dir, f"sample-{sample_index:06d}-{safe_req}.pt")
-    metadata = request_metadata.get(req_id, {})
+    metadata = lookup_request_metadata(req_id, request_metadata)
     torch.save(
         {
             "format": "qwen36_eagle_sequence_v1",
@@ -237,7 +254,7 @@ def main() -> int:
             hidden_dtype=args.hidden_dtype,
             request_metadata=request_metadata,
         ):
-            if req_id in request_metadata:
+            if lookup_request_metadata(req_id, request_metadata):
                 samples_with_metadata += 1
             sample_count += 1
 

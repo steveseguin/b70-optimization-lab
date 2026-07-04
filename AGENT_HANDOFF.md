@@ -99,6 +99,10 @@ Active target as of the latest switch request:
   sweeps.
   The corpus/eval v2 tooling entry point is
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-tooling.md`.
+  The first v2 chat calibration smoke is
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`:
+  `3840` rows and metadata on `24/24` samples, but only `0.240` mean accepted
+  for a tiny two-epoch draft. It proves metadata plumbing, not draft quality.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus
