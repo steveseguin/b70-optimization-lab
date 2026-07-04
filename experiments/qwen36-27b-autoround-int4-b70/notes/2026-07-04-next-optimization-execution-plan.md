@@ -79,13 +79,17 @@ Phase 0 and Phase 1 are complete and captured in
   high support rows (`65.708`, `65.817`), but paired crossover deltas against
   ring1 controls were only `+0.42%` and `+0.27%`, so the movement is variance,
   not a new recipe.
-- EAGLE v2 is also closed after one bounded stronger-draft screen:
+- EAGLE v2/v3 are also closed after bounded stronger-draft screens:
   `2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`. A four-GPU
   offline diagnostic tested larger one-layer drafts and a residual two-layer
   variant. Best heldout mean accepted was only `0.6953125`, and all-96 training
-  to separate calibration was only `0.44091796875`, so there is no endpoint
-  candidate and no LocalMaxxing result. Do not reopen EAGLE endpoint sweeps
-  without a materially better data/training/init idea.
+  to separate calibration was only `0.44091796875`. The v3 follow-up
+  `2026-07-04-eagle-v3-target-loss-offline-no-endpoint.md` tested
+  target-architecture drafts and token-heavy losses; best result fell to
+  `0.64697265625` heldout and `0.4228515625` separate calibration. There is no
+  endpoint candidate and no LocalMaxxing result. Do not reopen larger/compact
+  EAGLE endpoint or offline sweeps on this same v2 corpus without a materially
+  new data source, architecture, or branch/regenerate design.
 - Draft top-k calibration is now measured and bounded:
   `2026-07-04-draft-topk-calibration-diagnostic.md`. The target verifier token
   is inside the built-in draft top-32 for `96-99%` of positions, and an

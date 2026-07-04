@@ -283,7 +283,16 @@ Next milestone:
     mean accepted and separate calibration only to `0.441`. It is
     diagnostic-only and not an endpoint candidate. The reusable runner is
     `scripts/run-eagle-v2-stronger-offline-screen.sh`.
-25. Draft top-k calibration diagnostic:
+25. EAGLE v3 target-architecture/loss offline screen:
+    `notes/2026-07-04-eagle-v3-target-loss-offline-no-endpoint.md`.
+    Target-shaped one-layer drafts and token-heavy losses did not help on the
+    current v2 corpus. Best row was the compact frozen-base residual variant at
+    only `0.647` heldout mean accepted and `0.423` separate-calibration mean
+    accepted, below the prior v2 stronger screen and far below the offline
+    endpoint gate. Do not rerun larger/target-shaped EAGLE on this same corpus
+    without a materially new data or architecture idea. Reusable runner:
+    `scripts/run-eagle-v3-target-loss-offline-screen.sh`.
+26. Draft top-k calibration diagnostic:
     `notes/2026-07-04-draft-topk-calibration-diagnostic.md`.
     The target verifier token is in the built-in draft top-32 for `96-99%` of
     MTP positions and an oracle reranker would reach `3.910` target-verified
@@ -295,7 +304,7 @@ Next milestone:
     trace/analyzers; do not ship a heuristic or tiny top-k reranker. Future
     accepted-token work needs a materially stronger drafter/reranker on
     isolated non-final data.
-26. Draft top-k64 / sequential-reranker limit:
+27. Draft top-k64 / sequential-reranker limit:
     `notes/2026-07-04-draft-topk64-and-sequential-reranker-limit.md`.
     A full 96-prompt K64 diagnostic found target-in-top64 rates of
     `99.7%`, `98.4%`, and `96.8%` by draft position, but held-out margin
@@ -304,7 +313,7 @@ Next milestone:
     the final-slot upper bound still needs recomputing/branching the target
     bonus row while adding only about `+0.16` target tokens/step. Do not
     reopen cheap top-k reranker endpoint patches.
-27. Token-tree mechanical screen:
+28. Token-tree mechanical screen:
     `notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
     Existing vLLM `speculative_token_tree` support works mechanically for
     Qwen27/XPU, but config-only tree shapes do not beat MTP3/cg8. A same-suite
@@ -314,7 +323,7 @@ Next milestone:
     checkpoint load, and root top-3 already closed the same root-alternative
     idea. Do not reopen token-tree sweeps unless the branch design avoids the
     current full-logits tree proposer cost or uses a stronger legal drafter.
-28. Short-decode `MAX_NUM_BATCHED_TOKENS` screen:
+29. Short-decode `MAX_NUM_BATCHED_TOKENS` screen:
     `notes/2026-07-04-short-decode-mbt-screen-no-win.md`.
     The current record recipe should stay at MBT1024 for short decode.
     Same-window candidates MBT1536, MBT2048, and MBT4096 all passed the strict

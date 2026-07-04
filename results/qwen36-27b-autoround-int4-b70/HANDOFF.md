@@ -440,6 +440,15 @@ Current next-execution plan:
   accepted (`step3` conditional `0.5327`), and all-96-to-calibration scored
   only `0.44091796875`. This remains diagnostic-only; no endpoint test and no
   LocalMaxxing submission.
+- EAGLE v3 target-architecture/loss offline screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v3-target-loss-offline-no-endpoint.md`.
+  Target-shaped one-layer drafts and token-heavy losses did not rescue the
+  lane. Best result was the compact frozen-base residual variant at only
+  `0.64697265625` heldout mean accepted (`step3` conditional `0.5178`) and
+  `0.4228515625` separate-calibration mean accepted. This is worse than the
+  v2 stronger screen and far below the offline endpoint gate; do not repeat
+  larger/target-shaped EAGLE on this same v2 corpus without a materially new
+  data or architecture idea.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

@@ -147,6 +147,13 @@ Active target as of the latest switch request:
   did not rescue the lane: staged curriculum `0.616`, balanced task holdout
   `0.601`, old-draft transfer `0.201`, and all-96 training evaluated on a
   separate calibration suite `0.438`. Current compact EAGLE v2 is closed again.
+  A v3 target-architecture/loss screen is also closed no-endpoint:
+  target-shaped one-layer drafts and token-heavy losses underperformed, with
+  the best compact frozen-base residual variant only `0.647` heldout mean
+  accepted and `0.423` separate-calibration mean accepted. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v3-target-loss-offline-no-endpoint.md`.
+  Do not repeat larger/target-shaped EAGLE on the same v2 corpus without a
+  materially new data or architecture idea.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

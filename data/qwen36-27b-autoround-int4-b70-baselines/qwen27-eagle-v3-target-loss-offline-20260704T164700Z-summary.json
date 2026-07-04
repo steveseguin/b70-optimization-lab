@@ -1,0 +1,304 @@
+{
+  "best": {
+    "calib": {
+      "family_rows": [
+        {
+          "family": "unknown",
+          "mean_accepted": 0.4228515625,
+          "samples": 14,
+          "starts": 2048
+        }
+      ],
+      "histogram": {
+        "0": 1440,
+        "1": 430,
+        "2": 98,
+        "3": 80
+      },
+      "mean_accepted": 0.4228515625,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-calib-compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160.json",
+      "starts": 2048,
+      "step1_exact": 0.296875,
+      "step2_conditional": 0.29276315789473684,
+      "step3_conditional": 0.449438202247191
+    },
+    "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160",
+    "endpoint_candidate": false,
+    "heldout": {
+      "family_rows": [
+        {
+          "family": "long-context",
+          "mean_accepted": 0.6073717948717948,
+          "samples": 8,
+          "starts": 1248
+        },
+        {
+          "family": "support-escalation",
+          "mean_accepted": 0.70875,
+          "samples": 6,
+          "starts": 800
+        }
+      ],
+      "histogram": {
+        "0": 1277,
+        "1": 406,
+        "2": 176,
+        "3": 189
+      },
+      "mean_accepted": 0.64697265625,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-heldout-compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160.json",
+      "starts": 2048,
+      "step1_exact": 0.37646484375,
+      "step2_conditional": 0.47341115434500647,
+      "step3_conditional": 0.5178082191780822
+    },
+    "label": "compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160",
+    "train_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160/summary.json",
+    "training_metrics": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160/training_metrics.json"
+  },
+  "calib_dataset": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-calib-20260704T101119Z/dataset",
+  "classification": "diagnostic_only_eagle_v3_target_loss_offline_screen",
+  "date": "2026-07-04",
+  "decision": "no_endpoint_candidate",
+  "endpoint_policy": {
+    "calib_mean_accepted_min": 1.5,
+    "heldout_mean_accepted_min": 2.0,
+    "heldout_step3_conditional_min": 0.65,
+    "reason": "Offline acceptance is not a speed claim. Endpoint validation is allowed only after a materially stronger draft clears held-out and separate-calibration acceptance gates."
+  },
+  "max_starts": 2048,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "rows": [
+    {
+      "calib": {
+        "family_rows": [
+          {
+            "family": "unknown",
+            "mean_accepted": 0.4228515625,
+            "samples": 14,
+            "starts": 2048
+          }
+        ],
+        "histogram": {
+          "0": 1440,
+          "1": 430,
+          "2": 98,
+          "3": 80
+        },
+        "mean_accepted": 0.4228515625,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-calib-compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.296875,
+        "step2_conditional": 0.29276315789473684,
+        "step3_conditional": 0.449438202247191
+      },
+      "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160",
+      "endpoint_candidate": false,
+      "heldout": {
+        "family_rows": [
+          {
+            "family": "long-context",
+            "mean_accepted": 0.6073717948717948,
+            "samples": 8,
+            "starts": 1248
+          },
+          {
+            "family": "support-escalation",
+            "mean_accepted": 0.70875,
+            "samples": 6,
+            "starts": 800
+          }
+        ],
+        "histogram": {
+          "0": 1277,
+          "1": 406,
+          "2": 176,
+          "3": 189
+        },
+        "mean_accepted": 0.64697265625,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-heldout-compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.37646484375,
+        "step2_conditional": 0.47341115434500647,
+        "step3_conditional": 0.5178082191780822
+      },
+      "label": "compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160",
+      "train_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160/summary.json",
+      "training_metrics": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/compact2-residual-freezebase-r3-e8-lr2e5-feature02-token1-max160/training_metrics.json"
+    },
+    {
+      "calib": {
+        "family_rows": [
+          {
+            "family": "unknown",
+            "mean_accepted": 0.341796875,
+            "samples": 14,
+            "starts": 2048
+          }
+        ],
+        "histogram": {
+          "0": 1536,
+          "1": 374,
+          "2": 88,
+          "3": 50
+        },
+        "mean_accepted": 0.341796875,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-calib-targetarch-r3-e4-lr2e5-feature05-token05-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.25,
+        "step2_conditional": 0.26953125,
+        "step3_conditional": 0.36231884057971014
+      },
+      "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e4-lr2e5-feature05-token05-max160",
+      "endpoint_candidate": false,
+      "heldout": {
+        "family_rows": [
+          {
+            "family": "long-context",
+            "mean_accepted": 0.5296474358974359,
+            "samples": 8,
+            "starts": 1248
+          },
+          {
+            "family": "support-escalation",
+            "mean_accepted": 0.6275,
+            "samples": 6,
+            "starts": 800
+          }
+        ],
+        "histogram": {
+          "0": 1325,
+          "1": 416,
+          "2": 174,
+          "3": 133
+        },
+        "mean_accepted": 0.56787109375,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-heldout-targetarch-r3-e4-lr2e5-feature05-token05-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.35302734375,
+        "step2_conditional": 0.42461964038727523,
+        "step3_conditional": 0.43322475570032576
+      },
+      "label": "targetarch-r3-e4-lr2e5-feature05-token05-max160",
+      "train_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e4-lr2e5-feature05-token05-max160/summary.json",
+      "training_metrics": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e4-lr2e5-feature05-token05-max160/training_metrics.json"
+    },
+    {
+      "calib": {
+        "family_rows": [
+          {
+            "family": "unknown",
+            "mean_accepted": 0.29248046875,
+            "samples": 14,
+            "starts": 2048
+          }
+        ],
+        "histogram": {
+          "0": 1597,
+          "1": 329,
+          "2": 96,
+          "3": 26
+        },
+        "mean_accepted": 0.29248046875,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-calib-targetarch-r3-e4-lr1e5-feature02-token1-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.22021484375,
+        "step2_conditional": 0.270509977827051,
+        "step3_conditional": 0.21311475409836064
+      },
+      "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e4-lr1e5-feature02-token1-max160",
+      "endpoint_candidate": false,
+      "heldout": {
+        "family_rows": [
+          {
+            "family": "long-context",
+            "mean_accepted": 0.4423076923076923,
+            "samples": 8,
+            "starts": 1248
+          },
+          {
+            "family": "support-escalation",
+            "mean_accepted": 0.5075,
+            "samples": 6,
+            "starts": 800
+          }
+        ],
+        "histogram": {
+          "0": 1409,
+          "1": 405,
+          "2": 149,
+          "3": 85
+        },
+        "mean_accepted": 0.4677734375,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-heldout-targetarch-r3-e4-lr1e5-feature02-token1-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.31201171875,
+        "step2_conditional": 0.36619718309859156,
+        "step3_conditional": 0.36324786324786323
+      },
+      "label": "targetarch-r3-e4-lr1e5-feature02-token1-max160",
+      "train_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e4-lr1e5-feature02-token1-max160/summary.json",
+      "training_metrics": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e4-lr1e5-feature02-token1-max160/training_metrics.json"
+    },
+    {
+      "calib": {
+        "family_rows": [
+          {
+            "family": "unknown",
+            "mean_accepted": 0.26416015625,
+            "samples": 14,
+            "starts": 2048
+          }
+        ],
+        "histogram": {
+          "0": 1637,
+          "1": 305,
+          "2": 82,
+          "3": 24
+        },
+        "mean_accepted": 0.26416015625,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-calib-targetarch-r3-e6-lr5e6-tokenonly-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.20068359375,
+        "step2_conditional": 0.25790754257907544,
+        "step3_conditional": 0.22641509433962265
+      },
+      "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e6-lr5e6-tokenonly-max160",
+      "endpoint_candidate": false,
+      "heldout": {
+        "family_rows": [
+          {
+            "family": "long-context",
+            "mean_accepted": 0.41346153846153844,
+            "samples": 8,
+            "starts": 1248
+          },
+          {
+            "family": "support-escalation",
+            "mean_accepted": 0.46375,
+            "samples": 6,
+            "starts": 800
+          }
+        ],
+        "histogram": {
+          "0": 1435,
+          "1": 398,
+          "2": 156,
+          "3": 59
+        },
+        "mean_accepted": 0.43310546875,
+        "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/eval-heldout-targetarch-r3-e6-lr5e6-tokenonly-max160.json",
+        "starts": 2048,
+        "step1_exact": 0.29931640625,
+        "step2_conditional": 0.35073409461663946,
+        "step3_conditional": 0.2744186046511628
+      },
+      "label": "targetarch-r3-e6-lr5e6-tokenonly-max160",
+      "train_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e6-lr5e6-tokenonly-max160/summary.json",
+      "training_metrics": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z/targetarch-r3-e6-lr5e6-tokenonly-max160/training_metrics.json"
+    }
+  ],
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle-v3-target-loss-offline-20260704T164700Z",
+  "v2_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-4gpu-20260704T102338Z",
+  "variant_rc": 0
+}
