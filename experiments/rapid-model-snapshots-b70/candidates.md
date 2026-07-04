@@ -24,6 +24,18 @@ Watch-outs:
 - record `COMPILATION_CONFIG`, XPU graph flags, TP/PP, and quant identity;
 - keep prefix caching/APC off for headline rows.
 
+Useful references:
+
+- vLLM XPU supported-models table lists `Qwen/Qwen3-30B-A3B`,
+  `Qwen/Qwen3-30B-A3B-GPTQ-Int4`, and
+  `Qwen/Qwen3-coder-30B-A3B-Instruct` as XPU-supported:
+  <https://docs.vllm.ai/en/stable/models/hardware_supported_models/xpu/>.
+- Intel/vLLM Arc Pro B-series notes describe MoE support and the persistent
+  MoE GEMM direction for Qwen3-style MoE models:
+  <https://vllm.ai/blog/2025-11-11-intel-arc-pro-b>.
+- Qwen model card for the selected first checkpoint:
+  <https://huggingface.co/Qwen/Qwen3-30B-A3B-GPTQ-Int4>.
+
 ## Mistral Small 3.2 24B Instruct
 
 Why first llama.cpp dense target:
@@ -54,6 +66,21 @@ Watch-outs:
 
 - keep distinct from Gemma 4 26B Q8 production lane;
 - do not move the Gemma 26B hot model while testing 12B.
+
+2026-07-04 quick TP1 result:
+
+- `gemma4-12b-int4-autoround-vllm-tp1-cg8-noprefix-realistic128`:
+  `MAX_MODEL_LEN=4096`, graph PIECEWISE/capture 8, prefix caching disabled.
+  Startup compiled after an `ocloc` error fallback, then first strict prompt
+  failed with `UR_RESULT_ERROR_OUT_OF_RESOURCES` in XPU FlashAttention.
+- `gemma4-12b-int4-autoround-vllm-tp1-eager-noprefix-ctx2k-realistic128`:
+  `MAX_MODEL_LEN=2048`, `--enforce-eager`, prefix caching disabled. First
+  strict prompt failed with the same FlashAttention `UR_RESULT_ERROR_OUT_OF_RESOURCES`.
+- Conclusion: do not count Gemma 4 12B as a clean one-B70 rapid snapshot yet.
+  Existing useful Gemma 12B material remains the documented TP4/c8 production
+  profile in `experiments/gemma4-12b-int4-autoround-vllm/`; revisit TP1 only if
+  we intentionally debug XPU FlashAttention/resource behavior or try another
+  runtime/quant.
 
 ## Phi-4 Family
 

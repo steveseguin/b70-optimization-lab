@@ -20,7 +20,7 @@ Strict headline rows use:
 | --- | --- | --- | --- | --- |
 | Qwen3 30B-A3B / Qwen3-Coder 30B-A3B | vLLM/XPU first, llama.cpp fallback | GPTQ/INT4/FP8 or GGUF Q4/Q6 | Next vLLM target | Best new-model fit for Intel/vLLM XPU MoE work; useful general/coder comparison. |
 | Mistral Small 3.2 24B Instruct | llama.cpp first | GGUF Q4/Q6/Q8 | Downloading first GGUF target | Practical one-B70 dense model; good first rapid llama.cpp snapshot. |
-| Gemma 4 12B | vLLM and/or llama.cpp | INT4/AutoRound or GGUF | Queued | Smaller high-speed reference; compare runtimes. |
+| Gemma 4 12B | vLLM and/or llama.cpp | INT4/AutoRound or GGUF | Quick TP1 failed | TP1 graph and eager vLLM/XPU strict attempts both failed on first prompt with XPU FlashAttention `UR_RESULT_ERROR_OUT_OF_RESOURCES`; use existing TP4/c8 production docs as reference. |
 | Phi-4 family | llama.cpp/vLLM | Q4+ | Queued | Small practical reference if setup is quick. |
 | DeepSeek-R1-Distill-Qwen 14B/32B | llama.cpp/vLLM | Q4+ | Later | Reasoning-family reference after first three lanes. |
 

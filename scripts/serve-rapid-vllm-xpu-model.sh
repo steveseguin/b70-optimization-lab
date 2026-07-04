@@ -16,6 +16,7 @@ GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
 TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
 TRUST_REMOTE_CODE="${TRUST_REMOTE_CODE:-1}"
 ENABLE_PROMPT_TOKEN_DETAILS="${ENABLE_PROMPT_TOKEN_DETAILS:-1}"
+ENABLE_PREFIX_CACHING="${ENABLE_PREFIX_CACHING:-0}"
 DEFAULT_CHAT_TEMPLATE_KWARGS="${DEFAULT_CHAT_TEMPLATE_KWARGS:-}"
 COMPILATION_CONFIG="${COMPILATION_CONFIG:-}"
 SPECULATIVE_CONFIG="${SPECULATIVE_CONFIG:-}"
@@ -52,6 +53,7 @@ echo "  max_num_seqs: $MAX_NUM_SEQS"
 echo "  tensor_parallel_size: $TENSOR_PARALLEL_SIZE"
 echo "  compilation_config: ${COMPILATION_CONFIG:-<default>}"
 echo "  speculative_config: ${SPECULATIVE_CONFIG:-<none>}"
+echo "  enable_prefix_caching: $ENABLE_PREFIX_CACHING"
 echo "  extra_args: ${VLLM_EXTRA_ARGS:-<none>}"
 "$VLLM_VENV/bin/python" - <<'PY'
 import sys
@@ -79,6 +81,11 @@ if [[ "$TRUST_REMOTE_CODE" != "0" ]]; then
 fi
 if [[ "$ENABLE_PROMPT_TOKEN_DETAILS" != "0" ]]; then
   args+=(--enable-prompt-tokens-details)
+fi
+if [[ "$ENABLE_PREFIX_CACHING" == "0" ]]; then
+  args+=(--no-enable-prefix-caching)
+else
+  args+=(--enable-prefix-caching)
 fi
 if [[ -n "$DEFAULT_CHAT_TEMPLATE_KWARGS" ]]; then
   args+=(--default-chat-template-kwargs "$DEFAULT_CHAT_TEMPLATE_KWARGS")
