@@ -119,6 +119,40 @@ def parse_args() -> argparse.Namespace:
         help="Save an intermediate draft checkpoint every N optimizer steps.",
     )
     parser.add_argument("--shuffle-seed", type=int, default=0)
+    parser.add_argument(
+        "--hidden-size",
+        type=int,
+        default=0,
+        help=(
+            "Override draft hidden size. Defaults to target config/dataset "
+            "hidden size because EAGLE hidden states must match the target."
+        ),
+    )
+    parser.add_argument(
+        "--intermediate-size",
+        type=int,
+        default=0,
+        help=(
+            "Override draft MLP intermediate size. Defaults to the compact "
+            "trainer default, not the target model intermediate size."
+        ),
+    )
+    parser.add_argument("--num-attention-heads", type=int, default=0)
+    parser.add_argument("--num-key-value-heads", type=int, default=0)
+    parser.add_argument("--head-dim", type=int, default=0)
+    parser.add_argument("--vocab-size", type=int, default=0)
+    parser.add_argument("--max-position-embeddings", type=int, default=0)
+    parser.add_argument("--rope-theta", type=float, default=0.0)
+    parser.add_argument("--rms-norm-eps", type=float, default=0.0)
+    parser.add_argument(
+        "--copy-target-draft-architecture",
+        action="store_true",
+        help=(
+            "Also copy intermediate/head shape fields from target config. "
+            "This is usually slower/larger than a compact draft; use only as "
+            "an explicit experiment."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -145,6 +179,152 @@ def torch_load(path: str) -> dict[str, Any]:
         return torch.load(path, map_location="cpu", weights_only=False)
     except TypeError:
         return torch.load(path, map_location="cpu")
+
+
+def _target_text_config(target_model: str) -> dict[str, Any]:
+    config_path = os.path.join(target_model, "config.json")
+    if not os.path.exists(config_path):
+        return {}
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+    text_config = config.get("text_config")
+    if isinstance(text_config, dict):
+        return text_config
+    language_config = config.get("language_config")
+    if isinstance(language_config, dict):
+        return language_config
+    return config
+
+
+def _set_shape_if_present(
+    shape: DraftShape,
+    config: dict[str, Any],
+    config_key: str,
+    attr: str,
+) -> None:
+    value = config.get(config_key)
+    if value is None:
+        return
+    setattr(shape, attr, value)
+
+
+def apply_target_shape(
+    shape: DraftShape,
+    target_model: str,
+    *,
+    copy_target_draft_architecture: bool,
+) -> dict[str, Any]:
+    """Apply target-facing dimensions from the target config.
+
+    EAGLE draft hidden states and shared target embed/head tensors must match
+    the target model. The draft's internal MLP/head topology can remain compact,
+    so only copy those larger target architecture fields when explicitly asked.
+    """
+    config = _target_text_config(target_model)
+    if not config:
+        return {}
+
+    for key in (
+        "hidden_size",
+        "vocab_size",
+        "max_position_embeddings",
+        "rope_theta",
+        "rms_norm_eps",
+    ):
+        _set_shape_if_present(shape, config, key, key)
+
+    if copy_target_draft_architecture:
+        for key in (
+            "intermediate_size",
+            "num_attention_heads",
+            "num_key_value_heads",
+            "head_dim",
+        ):
+            _set_shape_if_present(shape, config, key, key)
+    return config
+
+
+def apply_shape_overrides(shape: DraftShape, args: argparse.Namespace) -> None:
+    overrides = {
+        "hidden_size": args.hidden_size,
+        "intermediate_size": args.intermediate_size,
+        "num_attention_heads": args.num_attention_heads,
+        "num_key_value_heads": args.num_key_value_heads,
+        "head_dim": args.head_dim,
+        "vocab_size": args.vocab_size,
+        "max_position_embeddings": args.max_position_embeddings,
+        "rope_theta": args.rope_theta,
+        "rms_norm_eps": args.rms_norm_eps,
+    }
+    for attr, value in overrides.items():
+        if value:
+            setattr(shape, attr, value)
+
+
+def infer_dataset_hidden_size(dataset: "EagleDataset") -> int:
+    first = torch_load(dataset.paths[0])
+    hidden = first.get("hidden_state")
+    if not isinstance(hidden, torch.Tensor) or hidden.ndim < 2:
+        raise ValueError(
+            f"{dataset.paths[0]} does not contain a 2-D hidden_state tensor"
+        )
+    return int(hidden.shape[-1])
+
+
+def validate_shape(
+    shape: DraftShape,
+    *,
+    dataset_hidden_size: int,
+    embed_weight: torch.Tensor,
+    lm_head_weight: torch.Tensor,
+) -> None:
+    errors: list[str] = []
+    if shape.hidden_size != dataset_hidden_size:
+        errors.append(
+            f"shape.hidden_size={shape.hidden_size} but dataset hidden_size="
+            f"{dataset_hidden_size}"
+        )
+    if embed_weight.ndim != 2:
+        errors.append(f"embed weight must be 2-D, got {tuple(embed_weight.shape)}")
+    else:
+        if int(embed_weight.shape[1]) != shape.hidden_size:
+            errors.append(
+                f"embed hidden={int(embed_weight.shape[1])} but shape.hidden_size="
+                f"{shape.hidden_size}"
+            )
+        if int(embed_weight.shape[0]) != shape.vocab_size:
+            errors.append(
+                f"embed vocab={int(embed_weight.shape[0])} but shape.vocab_size="
+                f"{shape.vocab_size}"
+            )
+    if lm_head_weight.ndim != 2:
+        errors.append(
+            f"lm_head weight must be 2-D, got {tuple(lm_head_weight.shape)}"
+        )
+    else:
+        if int(lm_head_weight.shape[1]) != shape.hidden_size:
+            errors.append(
+                f"lm_head hidden={int(lm_head_weight.shape[1])} but "
+                f"shape.hidden_size={shape.hidden_size}"
+            )
+        if int(lm_head_weight.shape[0]) != shape.vocab_size:
+            errors.append(
+                f"lm_head vocab={int(lm_head_weight.shape[0])} but "
+                f"shape.vocab_size={shape.vocab_size}"
+            )
+    if shape.num_key_value_heads < 1:
+        errors.append("num_key_value_heads must be >= 1")
+    if shape.num_attention_heads < 1:
+        errors.append("num_attention_heads must be >= 1")
+    if shape.num_attention_heads % shape.num_key_value_heads != 0:
+        errors.append(
+            "num_attention_heads must be divisible by num_key_value_heads "
+            f"({shape.num_attention_heads} vs {shape.num_key_value_heads})"
+        )
+    if shape.head_dim < 1:
+        errors.append("head_dim must be >= 1")
+    if errors:
+        raise ValueError("Invalid EAGLE draft shape:\n- " + "\n- ".join(errors))
 
 
 class EagleDataset(Dataset):
@@ -589,6 +769,12 @@ def freeze_init_base_layers(model: Eagle1Draft, init_dir: str) -> int:
 def main() -> int:
     args = parse_args()
     shape = DraftShape()
+    target_config = apply_target_shape(
+        shape,
+        args.target_model,
+        copy_target_draft_architecture=args.copy_target_draft_architecture,
+    )
+    apply_shape_overrides(shape, args)
     if args.num_layers < 1:
         raise ValueError("--num-layers must be at least 1")
     shape.num_hidden_layers = args.num_layers
@@ -597,7 +783,15 @@ def main() -> int:
     export_dtype = dtype_from_name(args.export_dtype)
 
     os.makedirs(args.out_dir, exist_ok=True)
+    dataset = EagleDataset(args.dataset_dir, args.max_len)
+    dataset_hidden_size = infer_dataset_hidden_size(dataset)
     embed_weight, lm_head_weight = load_target_shared_weights(args.target_model)
+    validate_shape(
+        shape,
+        dataset_hidden_size=dataset_hidden_size,
+        embed_weight=embed_weight,
+        lm_head_weight=lm_head_weight,
+    )
     embed_weight = embed_weight.to(device=device, dtype=train_dtype)
     lm_head_weight = lm_head_weight.to(device=device, dtype=train_dtype)
 
@@ -616,7 +810,6 @@ def main() -> int:
     )
     model.train()
 
-    dataset = EagleDataset(args.dataset_dir, args.max_len)
     generator = torch.Generator()
     generator.manual_seed(args.shuffle_seed)
     loader = DataLoader(
@@ -777,6 +970,23 @@ def main() -> int:
         "checkpoint_every": args.checkpoint_every,
         "num_layers": args.num_layers,
         "shuffle_seed": args.shuffle_seed,
+        "copy_target_draft_architecture": args.copy_target_draft_architecture,
+        "dataset_hidden_size": dataset_hidden_size,
+        "target_config_fields_used": {
+            key: target_config.get(key)
+            for key in (
+                "hidden_size",
+                "vocab_size",
+                "max_position_embeddings",
+                "rope_theta",
+                "rms_norm_eps",
+                "intermediate_size",
+                "num_attention_heads",
+                "num_key_value_heads",
+                "head_dim",
+            )
+            if key in target_config
+        },
         "shape": asdict(shape),
         "final_metrics": metrics[-1] if metrics else {},
     }
