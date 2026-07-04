@@ -81,6 +81,13 @@ Active target as of the latest switch request:
   improve acceptance, and the legal final-slot upper bound is too small to
   justify endpoint work. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-topk64-and-sequential-reranker-limit.md`.
+- Latest token-tree follow-up is closed as config-only no-win. Existing vLLM
+  `speculative_token_tree` works mechanically for Qwen27/XPU, but the current
+  proposer still pays full draft logits for tree alternatives. Same-suite
+  calibration results: MTP3/cg8 control `63.871 tok/s`, binary depth-2 tree
+  `60.526`, root top-3 `63.107`; root top-2 stalled during drafter checkpoint
+  load. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
 - Latest draft-only subset follow-up is closed-negative. A default-off
   hot-vocab INT8 LM-head top-1 patch for Qwen MTP drafting passed the strict
   fresh gate but lost badly in a same-window four-GPU screen: dense control

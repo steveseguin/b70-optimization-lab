@@ -301,6 +301,16 @@ Next milestone:
     the final-slot upper bound still needs recomputing/branching the target
     bonus row while adding only about `+0.16` target tokens/step. Do not
     reopen cheap top-k reranker endpoint patches.
+27. Token-tree mechanical screen:
+    `notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
+    Existing vLLM `speculative_token_tree` support works mechanically for
+    Qwen27/XPU, but config-only tree shapes do not beat MTP3/cg8. A same-suite
+    24-prompt control reached `63.871 tok/s`; binary depth-2 tree reached
+    `60.526 tok/s`; root top-3 reached `63.107 tok/s`; all completed rows were
+    strict fresh/cached-zero diagnostics. Root top-2 stalled during drafter
+    checkpoint load, and root top-3 already closed the same root-alternative
+    idea. Do not reopen token-tree sweeps unless the branch design avoids the
+    current full-logits tree proposer cost or uses a stronger legal drafter.
 
 ## Folder Map
 

@@ -110,6 +110,14 @@ Phase 0 and Phase 1 are complete and captured in
   rows; the final-slot upper bound (`2.787207`) still requires recomputing or
   branching the target bonus row and is below the threshold worth endpoint
   work. Do not reopen cheap post-hoc top-k reranker patches.
+- Token-tree config-only branching is now closed:
+  `2026-07-04-token-tree-mechanical-screen-no-win.md`. Existing vLLM
+  `speculative_token_tree` support is mechanically usable, but the current
+  tree proposer computes full draft logits for the root and later tree levels,
+  so the added alternatives cost more than they return. Same-suite calibration
+  control MTP3/cg8 was `63.871 tok/s`; binary depth-2 tree was `60.526`;
+  root top-3 was `63.107`; root top-2 stalled during drafter checkpoint load.
+  Do not repeat config-only token-tree sweeps for this recipe.
 
 ## Current waste estimate
 

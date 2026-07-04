@@ -357,6 +357,15 @@ Current next-execution plan:
   because Qwen27 MTP drafting is sequential; the final-slot upper bound
   (`2.7872`) still needs bonus-row recompute/branching and is not enough by
   itself. Do not reopen cheap top-k reranker patches.
+- token-tree mechanical screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
+  Existing vLLM `speculative_token_tree` support works mechanically but is a
+  config-only no-win for this recipe. On the same 24-prompt calibration suite,
+  MTP3/cg8 control was `63.871 tok/s`, binary depth-2 tree was `60.526`, and
+  root top-3 was `63.107`, all strict fresh/cached-zero diagnostics. Root
+  top-2 stalled during drafter checkpoint load. Do not repeat token-tree sweeps
+  unless a future branch design avoids the current full-logits proposer cost or
+  uses a materially stronger legal drafter.
 - EAGLE1 local training pipeline:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`.
   The local pipeline now works end-to-end for Qwen27 hidden size `5120`:
