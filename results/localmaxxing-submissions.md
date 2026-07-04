@@ -53,6 +53,15 @@ Model: `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF`, GGUF
 
 Date: 2026-07-04
 
+Model: `unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF`, GGUF
+`UD-Q4_K_XL`, llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `qwen3-coder-30b-a3b-instruct-udq4-llamacpp-realistic128` | `cmr6w2ekt00gimn01orbith22` | 1 | suite median 65 | 128 | **108.117 median 1-100 after TTFT** | 94.754 median wall full128 | **policy-compliant rapid realistic suite**: fixed `rapid-model-snapshots-b70-realistic-v1`, 12 unique prompts, each prompt once, llama.cpp server prompt cache disabled with `--cache-ram 0`, per-request `cache_prompt=false`, `cached_tokens=0` every row, no prompt/KV/context checkpoint/response reuse, no n-gram/history acceleration, no speculation. Config: `Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf`, HF revision `b17cb02dd882d5b6ab62fc777ad2995f19668350`, llama.cpp/SYCL on one B70, `ctx=4096`, `batch=1024`, `ubatch=256`, `POLL=100`, FlashAttention on, f16 KV. Primary p10 `106.573`, mean `105.328`, full-output after-TTFT median `107.897`, TTFT median `164.129 ms`. Result packet `results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md`, evidence `data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-realistic128-20260704.submit.log`. Same-window quick screen found only sub-percent movement, so treat this as a useful first-pass model snapshot, not a deep optimization lane. |
+
+Date: 2026-07-04
+
 Model: `unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF`, GGUF
 `UD-Q4_K_XL`, llama.cpp/SYCL on one Intel Arc Pro B70.
 

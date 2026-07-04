@@ -118,6 +118,23 @@ Useful references:
   continuity with the Qwen3 30B snapshot; only compare `IQ4_NL`/`Q4_K_M` if
   the first row is useful and download time is justified.
 
+2026-07-04 Qwen3-Coder strict result:
+
+- `UD-Q4_K_XL` downloaded cleanly to USB and matched size `17665334432` bytes.
+- Promoted strict one-B70 row:
+  `results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md`.
+  Representative evidence:
+  `data/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T214053Z.json`.
+  Result: `108.1165394591524 tok/s` median tokens 1-100 after TTFT,
+  p10 `106.57270050892973`, mean `105.32833006465762`, median TTFT
+  `164.12943904288113 ms`, `cached_tokens=0` on all `12/12` prompts.
+  LocalMaxxing approved it as `cmr6w2ekt00gimn01orbith22`.
+- Quick four-GPU screen found only sub-percent movement: default ctx4096
+  `107.76` / repeat `107.59`, ctx2048 high `108.30` but repeat `107.51`,
+  ctx1024 `107.17`, ub512 `107.16`, poll0 `106.25`, poll100 `108.05` /
+  confirm `108.12`. Treat `POLL=100`, ctx4096 as the representative first-pass
+  row, not as a deep optimization.
+
 ## Mistral Small 3.2 24B Instruct
 
 Why first llama.cpp dense target:
