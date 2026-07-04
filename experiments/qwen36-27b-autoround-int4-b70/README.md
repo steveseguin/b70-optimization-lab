@@ -147,6 +147,12 @@ Next milestone:
    `int8_lm_head_top1_w8a8` prototype was exact but slower than dense oneDNN:
    final 8x64 policy measured compact `2.66-2.68 ms` versus dense
    `2.57-2.61 ms` for rows `1-4`, so do not wire it into vLLM.
+9. Latest model-variant / MTP-layer audit:
+   `notes/2026-07-04-autoround-variant-screening-and-stepidx-audit.md`.
+   Local `webhie-Code` and `acyildirimer` AutoRound variants passed the strict
+   gate but were slower than the same-window webhie control, and the possible
+   `spec_step_idx` MTP fix is a no-op for this lane because the checked
+   Qwen27 AutoRound configs all have `mtp_num_hidden_layers=1`.
 
 ## Folder Map
 

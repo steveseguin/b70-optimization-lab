@@ -141,6 +141,13 @@ Current next-execution plan:
   versus fixed-MTP3 baseline `65.986 tok/s`. The patch is preserved as
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-scheduler-adaptive-spec-depth-no-win-20260704.patch`
   and reverted from the active vLLM source;
+- closed variant / MTP-layer audit:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-autoround-variant-screening-and-stepidx-audit.md`.
+  Same-window strict screens for local AutoRound variants found
+  `webhie-Code` at `63.963 tok/s` and `acyildirimer` at `64.326 tok/s`
+  versus webhie control `64.813 tok/s`; both are valid no-wins. The possible
+  `spec_step_idx` MTP plumbing fix is a no-op for this lane because all local
+  Qwen27 AutoRound checkpoints report `mtp_num_hidden_layers=1`.
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
   adaptive-depth heuristics unless the proposer and verifier are both made
