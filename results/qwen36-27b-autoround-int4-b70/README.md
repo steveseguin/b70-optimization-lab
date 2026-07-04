@@ -306,6 +306,12 @@ full-vocab top-1 kernel is exact but slower than dense oneDNN. The next
 meaningful decode-rate work is reducing LM-head call/row count per verifier
 step, improving accepted tokens per target verifier step, or finding a
 oneDNN-integrated top-1/top-k post-op that avoids a second reduction launch.
+The follow-up source audit in
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-callcount-source-audit.md`
+narrows that further: small Python-level row/call shortcuts are unlikely to
+win because they still use dense LM-head primitives. Future Qwen27 work should
+start with a real fused/top-ID LM-head primitive, a native row-adaptive verifier,
+or DFlash multi-KV-group draft metadata support, not another config sweep.
 Keep synthetic screens for candidate search only, then rerun the Qwen realistic
 suite with `--return-token-ids` and the quality suite before promotion.
 

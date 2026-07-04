@@ -159,6 +159,18 @@ Current next-execution plan:
   MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, MTP5/cg16 `59.817`, all
   `cached_tokens=0` and gate-passing. Do not promote the `65.809` row; it is
   within variance of the approved `65.276` record and has no recipe change.
+- current source audit:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-callcount-source-audit.md`.
+  The exact spec top-ID consumer is already present and quality-safe for
+  all-greedy requests, but the producer still materializes dense logits:
+  `get_top_tokens()` calls the LM-head quant method before `max`, and draft
+  greedy sampling calls `compute_logits().argmax()` once per drafted token.
+  A Python-level lazy verifier would likely lose because rows `1-4` dense
+  oneDNN W8A8 LM-head timings are nearly flat; it would turn one efficient
+  rows-4 GEMM into several rows-1 launches. The next credible Qwen27 work is a
+  real fused/top-ID LM-head primitive, a native row-adaptive verifier, or deeper
+  DFlash multi-KV-group draft metadata support. Treat other Qwen27 config work
+  as likely roulette.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype
