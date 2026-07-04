@@ -198,6 +198,12 @@ Current next-execution plan:
   MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, MTP5/cg16 `59.817`, all
   `cached_tokens=0` and gate-passing. Do not promote the `65.809` row; it is
   within variance of the approved `65.276` record and has no recipe change;
+- closed current-recipe shallow-depth screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md`.
+  A same-window strict pass filled the MTP1/MTP2 gap on the fastest
+  webhie/BF16-scale recipe: MTP1/cg8 `51.246`, MTP2/cg8 `59.589`, MTP3/cg8
+  control `64.730`, MTP4/cg8 `59.886`, all `cached_tokens=0` and
+  gate-passing. MTP3/cg8 remains the policy;
 - closed current-recipe capture-size screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`.
   A same-window four-GPU strict pass on the fastest webhie/BF16-scale

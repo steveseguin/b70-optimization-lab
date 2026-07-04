@@ -338,7 +338,10 @@ Current realistic research interpretation:
 
 Next milestone: beat the runtime INT8-LM-head row with a real source change.
 The bounded retests after the record closed as no-promo: MTP depth remains best
-at k=3, current webhie/BF16-scale capture size remains best at cg8
+at k=3, including the later shallow-depth coverage pass where MTP1/cg8
+`51.246` and MTP2/cg8 `59.589` both lost to MTP3/cg8 control `64.730`
+(`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md`),
+current webhie/BF16-scale capture size remains best at cg8
 (`65.153` same-window control versus cg4 `64.507`, cg16 `63.500`, cg32
 `64.071`; see
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`),

@@ -133,6 +133,11 @@ Fastest quality-gated practical variant:
   and MTP5/cg16 (`59.817`) all lose to the MTP3/cg8 control (`65.809`).
   The control is support only, not a new record, because it is within variance
   of the approved `65.276` row and does not change the recipe.
+- current-recipe shallow-depth closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md`.
+  A follow-up same-window strict pass filled the MTP1/MTP2 gap: MTP1/cg8
+  `51.246`, MTP2/cg8 `59.589`, MTP3/cg8 control `64.730`, MTP4/cg8
+  `59.886`, all gate-passing with `cached_tokens=0`. Keep MTP3/cg8.
 - current-recipe capture-size closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`.
   A same-window four-GPU strict screen on the fastest webhie/BF16-scale

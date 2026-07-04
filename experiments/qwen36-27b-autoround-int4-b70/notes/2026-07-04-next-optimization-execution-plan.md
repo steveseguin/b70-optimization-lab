@@ -56,6 +56,11 @@ Phase 0 and Phase 1 are complete and captured in
   emitted tokens/step and increased verifier steps. Do not resume
   scheduler-only adaptive depth unless proposer generation and verifier rows
   are both made dynamically depth-aware.
+- The current recipe's shallow-depth gap is now closed too:
+  `2026-07-04-webhie-mtp1-mtp2-depth-coverage-no-win.md`. MTP1/cg8 reached
+  `51.246`, MTP2/cg8 `59.589`, MTP3/cg8 control `64.730`, and MTP4/cg8
+  `59.886`, all strict/fresh with `cached_tokens=0`. MTP3/cg8 remains the
+  policy.
 - The current webhie/BF16-scale capture-size question is now closed:
   `2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`. A strict
   same-window four-GPU pass found cg8 remains best on the active recipe:
