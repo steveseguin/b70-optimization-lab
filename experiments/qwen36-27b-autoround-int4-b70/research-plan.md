@@ -21,6 +21,14 @@ drafter research. The first run is diagnostic-only (`cached_tokens=0`, median
 `63.118 tok/s`, `2.686` target-verified tokens/step, acceptance/speed
 correlation `r ~= 0.696`); do not use it as a LocalMaxxing claim.
 
+Latest EAGLE1 local training pipeline smoke:
+`notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`. Qwen27 shape
+inference, async no-spec hidden dumping, reconstructed dataset building, compact
+EAGLE1 training, and offline acceptance evaluation now work end-to-end on a
+small diagnostic corpus (`1536` usable rows, `16` samples, `0` continuity
+breaks). This is not a speed result; it unblocks larger held-out
+target-matched drafter experiments while preserving final-suite isolation.
+
 ## Sources Checked
 
 - Intel model card:

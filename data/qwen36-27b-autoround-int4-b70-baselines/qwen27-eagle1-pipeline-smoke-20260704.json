@@ -1,0 +1,131 @@
+{
+  "artifact_paths": {
+    "collection": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/collection.json",
+    "dataset_small_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/dataset-small-summary.json",
+    "dataset_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/dataset-summary.json",
+    "dump_debug": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/dump-debug.jsonl",
+    "identity": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/identity.env",
+    "offline_eval": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/draft-smoke-offline-eval.json",
+    "train_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/draft-smoke-compact/summary.json",
+    "training_metrics": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/draft-smoke-compact/training_metrics.json"
+  },
+  "classification": "diagnostic_only_not_localmaxxing",
+  "collection": {
+    "families": [
+      "algorithm",
+      "api-contract",
+      "code-review",
+      "comparison",
+      "debug-log",
+      "design-critique",
+      "longform-summary",
+      "math-planning",
+      "ops-runbook",
+      "python-patch",
+      "shell-runbook",
+      "sql-analysis",
+      "structured-json",
+      "test-plan",
+      "user-support",
+      "xpu-debug"
+    ],
+    "num_prompts": 16,
+    "total_output_tokens_actual": 1536
+  },
+  "dataset": {
+    "allow_missing_current_token_ids": true,
+    "continuity_breaks": 0,
+    "continuity_matches": 1520,
+    "input_files": 1536,
+    "reconstruct_positions_from_num_tokens": true,
+    "reconstructed_current_token_rows": 1536,
+    "reconstructed_position_rows": 1536,
+    "samples_saved": 16,
+    "total_rows": 1536,
+    "usable_rows": 1536
+  },
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "model_snapshot": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "offline_eval_smoke": {
+    "acceptance_histogram": {
+      "0": 29,
+      "1": 22,
+      "2": 4,
+      "3": 1
+    },
+    "elapsed_s": 1.7480916839558631,
+    "max_steps": 3,
+    "mean_accepted": 0.5892857142857143,
+    "per_step": [
+      {
+        "conditional_denominator": 56,
+        "exact_hits": 27,
+        "exact_rate": 0.48214285714285715,
+        "step": 1,
+        "topk_hits": 32,
+        "topk_rate": 0.5714285714285714,
+        "unconditional_exact_rate": 0.48214285714285715,
+        "unconditional_topk_rate": 0.5714285714285714
+      },
+      {
+        "conditional_denominator": 27,
+        "exact_hits": 5,
+        "exact_rate": 0.18518518518518517,
+        "step": 2,
+        "topk_hits": 7,
+        "topk_rate": 0.25925925925925924,
+        "unconditional_exact_rate": 0.08928571428571429,
+        "unconditional_topk_rate": 0.125
+      },
+      {
+        "conditional_denominator": 5,
+        "exact_hits": 1,
+        "exact_rate": 0.2,
+        "step": 3,
+        "topk_hits": 2,
+        "topk_rate": 0.4,
+        "unconditional_exact_rate": 0.017857142857142856,
+        "unconditional_topk_rate": 0.03571428571428571
+      }
+    ],
+    "samples_seen": 4,
+    "start_stride": 2,
+    "starts": 56,
+    "topk": 3
+  },
+  "purpose": "Qwen27 EAGLE1 local data/training pipeline smoke",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z",
+  "small_dataset": {
+    "max_len": 32,
+    "samples_saved": 4,
+    "usable_rows": 1536
+  },
+  "training_smoke": {
+    "dataset_hidden_size": 5120,
+    "dataset_samples": 4,
+    "final_metrics": {
+      "epoch": 1,
+      "feature_loss": 1.1015625,
+      "loss": 1.4799232482910156,
+      "rollout_steps": 1,
+      "step": 4,
+      "token_loss": 3.7836079597473145,
+      "tokens": 15,
+      "top1": 0.40000003576278687,
+      "top3": 0.5333333611488342
+    },
+    "out_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-nospec-calib-fallback-20260704T074631Z/draft-smoke-compact",
+    "shape": {
+      "head_dim": 128,
+      "hidden_size": 5120,
+      "intermediate_size": 4096,
+      "max_position_embeddings": 262144,
+      "num_attention_heads": 16,
+      "num_hidden_layers": 1,
+      "num_key_value_heads": 2,
+      "rms_norm_eps": 1e-06,
+      "rope_theta": 10000000.0,
+      "vocab_size": 248320
+    }
+  }
+}

@@ -67,6 +67,17 @@ Active target as of the latest switch request:
   oneDNN INT8 matmul writes dense logits, and existing sampler/top-k kernels
   only reduce after logits exist. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+- Latest active non-kernel lane: Qwen27 EAGLE1 local data/training pipeline is
+  now mechanically unblocked. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`
+  and compact packet
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-pipeline-smoke-20260704.json`.
+  The diagnostic no-spec corpus has `1536` usable rows, `16` samples, `0`
+  continuity breaks; a compact 5120-hidden EAGLE1 smoke trained and offline
+  evaluation ran. This is not a speed result. Next credible work is larger
+  held-out target-matched draft training with final-suite isolation, followed
+  by strict fresh endpoint validation only if offline acceptance materially
+  improves.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

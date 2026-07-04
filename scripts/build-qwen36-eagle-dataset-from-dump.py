@@ -85,6 +85,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--glob", default="step-*.pt")
     parser.add_argument("--hidden-dtype", default="native",
                         choices=("native", "float32", "float16", "bfloat16"))
+    parser.add_argument(
+        "--allow-missing-current-token-ids",
+        action="store_true",
+        help=(
+            "Allow async no-spec dump shards where current_token_ids are -1. "
+            "Continuity is reconstructed from per-request sampled_next IDs."
+        ),
+    )
+    parser.add_argument(
+        "--reconstruct-positions-from-num-tokens",
+        action="store_true",
+        help=(
+            "When positions are missing, use num_tokens_no_spec - 2. In vLLM "
+            "async no-spec dumps, num_tokens_no_spec has already advanced by "
+            "the sampled token, so -2 recovers the current hidden row position."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -153,6 +170,8 @@ def main() -> int:
     position_matches = 0
     position_breaks = 0
     missing_position_rows = 0
+    reconstructed_current_token_rows = 0
+    reconstructed_position_rows = 0
     skipped_bad_files: list[str] = []
 
     def maybe_save(req_id: str) -> None:
@@ -184,6 +203,7 @@ def main() -> int:
             current_ids = shard["current_token_ids"]
             positions = shard.get("positions")
             sampled_ids = shard["sampled_token_ids"]
+            num_tokens_no_spec = shard.get("num_tokens_no_spec")
         except Exception:
             skipped_bad_files.append(path)
             continue
@@ -199,9 +219,31 @@ def main() -> int:
                 missing_position_rows += 1
             else:
                 position = int(positions[row])
+            if (
+                position < 0
+                and args.reconstruct_positions_from_num_tokens
+                and num_tokens_no_spec is not None
+                and row < len(num_tokens_no_spec)
+            ):
+                try:
+                    candidate_position = int(num_tokens_no_spec[row]) - 2
+                    if candidate_position >= 0:
+                        position = candidate_position
+                        reconstructed_position_rows += 1
+                except Exception:
+                    pass
             if current_token_id < 0:
-                invalid_current_token_rows += 1
-                continue
+                if not args.allow_missing_current_token_ids:
+                    invalid_current_token_rows += 1
+                    continue
+                buffer = buffers[req_id]
+                if buffer.sampled_next_ids:
+                    current_token_id = buffer.sampled_next_ids[-1]
+                else:
+                    # The trainer consumes sampled_next_token_ids for draft
+                    # inputs; input_ids are retained for audit/continuity only.
+                    current_token_id = sampled_token_id
+                reconstructed_current_token_rows += 1
 
             buffer = buffers[req_id]
             if buffer.sampled_next_ids:
@@ -242,15 +284,21 @@ def main() -> int:
         "total_rows": total_rows,
         "usable_rows": usable_rows,
         "invalid_current_token_rows": invalid_current_token_rows,
+        "reconstructed_current_token_rows": reconstructed_current_token_rows,
         "continuity_matches": continuity_matches,
         "continuity_breaks": continuity_breaks,
         "position_matches": position_matches,
         "position_breaks": position_breaks,
         "missing_position_rows": missing_position_rows,
+        "reconstructed_position_rows": reconstructed_position_rows,
         "samples_saved": sample_count,
         "min_len": args.min_len,
         "max_len": args.max_len,
         "hidden_dtype": args.hidden_dtype,
+        "allow_missing_current_token_ids": args.allow_missing_current_token_ids,
+        "reconstruct_positions_from_num_tokens": (
+            args.reconstruct_positions_from_num_tokens
+        ),
     }
     summary_path = args.summary or os.path.join(args.out_dir, "summary.json")
     with open(summary_path, "w", encoding="utf-8") as f:
