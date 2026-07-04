@@ -252,6 +252,17 @@ Current next-execution plan:
   the single-KV assertion would risk silent draft-cache corruption. Do not
   repeat draft row batching, local-argmax wrappers, or unsafe DFlash assertion
   removal.
+- DFlash mixed-SWA multi-KV attempt:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-multikv-mixed-swa-attempt.md`.
+  A real DFlash multi-KV patch now gets mixed full/sliding DFlash through
+  startup and graph capture (`Initialized DFlash draft attention over KV groups
+  [64, 65, 66, 67, 68]`), so the old single-KV assertion is no longer the
+  first blocker for that patch. Endpoint testing is still closed no-win:
+  graph mode device-loses during the strict suite, while graph-off/no-async
+  avoids immediate device loss but shows only about `2-3%` draft acceptance and
+  single-digit/low-teens generation throughput. Preserve the patch, but do not
+  spend more record-chasing time on DFlash mixed-SWA unless draft quality or
+  upstream graph stability changes materially.
 - held-out calibration trace lane:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-heldout-calibration-trace.md`.
   The benchmark harness now records absolute request windows and deterministic

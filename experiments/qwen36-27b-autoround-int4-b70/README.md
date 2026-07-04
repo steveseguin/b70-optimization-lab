@@ -172,20 +172,30 @@ Next milestone:
     `all-sliding` single-group diagnostic passed the fresh gate but dropped to
     `20.630 tok/s`, so DFlash remains closed no-win until multi-KV-group draft
     metadata is implemented.
-13. Latest service-memory flag screen:
+13. Latest DFlash multi-KV implementation attempt:
+    `notes/2026-07-04-dflash-multikv-mixed-swa-attempt.md`. The experimental
+    patch
+    `../../patches/qwen36-27b-autoround-int4-b70/vllm-dflash-multikv-mixed-swa-attempt-20260704.patch`
+    gets mixed full/sliding DFlash through startup and graph capture with draft
+    KV groups `[64, 65, 66, 67, 68]`, but endpoint testing is still no-win:
+    graph mode device-loses during the strict suite, and graph-off/no-async
+    shows only about `2-3%` draft acceptance with low-teens or worse generation
+    throughput. Preserve the patch as upstream/plumbing research, not as a
+    record lane.
+14. Latest service-memory flag screen:
     `notes/2026-07-04-language-model-only-no-win.md`.
     `--language-model-only` correctly enters text-only mode and reduced model
     memory from `19.02 GiB` to `18.15 GiB`, but the MTP3/cg8 XPU graph path
     hung before readiness at `Capturing CUDA graphs (decode, PIECEWISE): 0/1`.
     Do not use it for the current strict decode recipe; only revisit for
     non-MTP/non-graph service-memory work or after XPU graph capture changes.
-14. Latest scheduler screen:
+15. Latest scheduler screen:
     `notes/2026-07-04-scheduler-mbt-and-chunked-prefill-screen.md`.
     MBT768 (`64.131 tok/s`) and MBT1280 (`64.346 tok/s`) passed the strict
     fresh gate but lost to the current `65.276 tok/s` record family; disabling
     chunked prefill is invalid for `MAX_MODEL_LEN=2048` / MBT1024. Keep
     `MAX_NUM_BATCHED_TOKENS=1024` and chunked prefill enabled.
-15. Latest local EAGLE1 endpoint isolation:
+16. Latest local EAGLE1 endpoint isolation:
     `notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`.
     The first local EAGLE1 draft looked promising offline (`2.1016` mean
     accepted tokens on held-out calibration starts) but did not survive endpoint
@@ -197,14 +207,14 @@ Next milestone:
     Do not repeat endpoint config sweeps for this draft; future EAGLE work
     starts with diverse chat-style corpus/eval v2 and stronger held-out
     diagnostics.
-16. EAGLE corpus/eval v2 tooling:
+17. EAGLE corpus/eval v2 tooling:
     `notes/2026-07-04-eagle-corpus-v2-tooling.md`.
     The collector now supports `--suite`, chat mode, request extra JSON, stable
     request IDs, and prompt metadata; the dataset builder copies that metadata
     into `.pt` samples; and offline eval reports acceptance by prompt family.
     This is preparation only, not a speed result, but it is the correct restart
     point if EAGLE is revisited.
-17. EAGLE corpus/eval v2 chat smoke:
+18. EAGLE corpus/eval v2 chat smoke:
     `notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`.
     A one-GPU calibration-suite chat collection produced `3840` hidden rows,
     `24` samples, `0` continuity breaks, and metadata on `24/24` samples after
