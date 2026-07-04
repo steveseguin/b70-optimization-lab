@@ -21,6 +21,12 @@ READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 # JSON at the call site; callers can still override REQUEST_EXTRA_JSON when
 # intentionally running a diagnostic non-headline benchmark.
 REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{\"cache_prompt\":false}}"
+# Disable llama.cpp's server-side prompt cache for the same reason. Request
+# `cache_prompt=false` is the policy-critical guard and is verified via
+# `cached_tokens=0`, but leaving the server prompt cache enabled is confusing in
+# logs and can add cache-save/update overhead. Callers can still append/replace
+# this through EXTRA_LLAMA_ARGS for explicit diagnostics.
+EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:---cache-ram 0}"
 LLAMA_SRC="${LLAMA_SRC:-/home/steve/src/llama.cpp}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"

@@ -184,6 +184,28 @@ Watch-outs:
   we intentionally debug XPU FlashAttention/resource behavior or try another
   runtime/quant.
 
+## Gemma 4 E4B
+
+Why sampled:
+
+- already present locally as a small GGUF;
+- useful sanity check for the rapid llama.cpp harness while larger downloads
+  are in flight.
+
+2026-07-04 quick result:
+
+- `gemma-4-E4B-it-Q4_0.gguf`, one B70, llama.cpp/SYCL, `ctx=4096`, FA-on,
+  F16 KV, strict realistic suite with `cached_tokens=0` passed the gate but was
+  unexpectedly slow: `23.05365781067809 tok/s` median tokens 1-100 after TTFT,
+  p10 `22.396720763242648`, mean `23.218213001293122`, median TTFT
+  `277.40637050010264 ms`.
+- Evidence:
+  `data/rapid-model-snapshots-b70/gemma4-e4b-it-q4-llamacpp-faon-ctx4096-realistic128-20260704T203603Z.json`.
+- Treat as a valid internal reference only, not a promoted/public row. This
+  model/quant/runtime combination is too slow for its size and should be
+  revisited only if we specifically care about Gemma E4B or have a better
+  runtime/quant candidate.
+
 ## Phi-4 Family
 
 Why queued:
