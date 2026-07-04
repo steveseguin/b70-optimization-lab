@@ -367,3 +367,60 @@ The plan should now continue with the non-standalone verifier lanes: reduce
 LM-head call/row count per verifier step, improve accepted tokens per target
 verifier step, or find a oneDNN-integrated top-1/top-k post-op that avoids a
 second reduction launch.
+
+## Status update: 2026-07-04 explorer synthesis
+
+Two independent source/result audits agreed on the current frontier:
+
+- `get_top_tokens()` is already the right semantic integration point, and the
+  all-greedy rejection sampler can already consume precomputed target
+  top-token IDs, but the producer still materializes dense logits through the
+  INT8 LM-head path before reducing. Repeating sampler plumbing or local
+  argmax flags is therefore no-win until the producer changes.
+- Current Qwen3.6 27B public MTP variants still appear to use a single MTP
+  layer (`mtp_num_hidden_layers=1`) recursively rather than a true
+  multi-layer per-position drafter. This matches the local checkpoint audit and
+  explains why MTP4/MTP5 lowers acceptance. Fresh external references checked:
+  `https://huggingface.co/sakamakismile/Qwen3.6-27B-Text-NVFP4-MTP`,
+  `https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF/discussions/2`,
+  `https://huggingface.co/originalGeek/Qwen3.6-27B-unsloth-MTP-Q8_0-HEAD-ONLY`,
+  and `https://huggingface.co/kradih/Qwen3.6-27B-MTP-4bit-MLX`.
+- oneDNN public docs still describe dense MatMul output plus supported
+  post-op/fusion patterns, not an exposed MatMul primitive that directly emits
+  argmax/top-k/candidate-reduced values for this LM-head use case. Fresh refs:
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_matmul.html` and
+  `https://uxlfoundation.github.io/oneDNN/dev_guide_graph_matmul_fusion_patterns.html`.
+- Partial speculative groups are not a small scheduler tweak on this XPU/GDN
+  stack. The scheduler has an explicit
+  `VLLM_XPU_SPEC_DECODE_DISABLE_PARTIAL_DRAFT_GROUPS` escape hatch, and the
+  previous dynamic-drafter prototype crashed as soon as it created a shorter
+  group. A real fix must update scheduler, `SpecDecodeMetadata`, graph capture
+  assumptions, and GDN/Mamba state postprocess together.
+
+Ranked next implementation lanes:
+
+1. **Native lazy greedy verifier op**: one default-off native operation that
+   takes sample hidden states, draft IDs, target/bonus row indices, and INT8
+   LM-head buffers, then emits the same IDs as
+   `rejection_greedy_sample_from_argmax`. It must compute row 0, conditionally
+   compute later verifier rows only if prior rows accepted, and compute the
+   bonus row only on full accept. This is the cleanest way to reduce target
+   LM-head rows without turning one rows-4 oneDNN GEMM into multiple Python
+   rows-1 launches.
+2. **oneDNN/XPU-integrated top-ID producer**: replace dense-logit production
+   behind `get_top_tokens()` with a primitive that preserves oneDNN-class GEMM
+   efficiency while returning exact top IDs/values. This is high-risk kernel
+   work because the standalone full-vocab top-1 op already lost.
+3. **True partial-group support for dynamic drafter depth**: only worth doing
+   if the goal is deeper metadata/graph engineering. Do not retry the old
+   Python/scheduler-only adaptive-depth patches; they either paid full proposer
+   cost or crashed partial groups.
+4. **Target-matched drafter training/calibration**: potentially valid if the
+   training data is held out from the final benchmark suite and target
+   verification remains exact, but it is a model-building lane rather than a
+   local runtime patch.
+
+Immediate rule: do not launch more endpoint benchmarks until the candidate is
+one of the ranked mechanisms above. The current repo has enough evidence that
+configuration roulette around MTP depth, parser mode, capture size, MBT, scale
+dtype, target-only scope, and sampler plumbing is exhausted.

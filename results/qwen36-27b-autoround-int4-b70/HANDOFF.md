@@ -201,6 +201,19 @@ Current next-execution plan:
   real fused/top-ID LM-head primitive, a native row-adaptive verifier, or deeper
   DFlash multi-KV-group draft metadata support. Treat other Qwen27 config work
   as likely roulette.
+- latest explorer synthesis:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-next-optimization-execution-plan.md`.
+  Two independent audits agreed that the next useful implementation is not an
+  endpoint/config sweep. Public Qwen3.6 27B MTP variants still appear to use
+  `mtp_num_hidden_layers=1`, so there is no easy multi-layer MTP knob hiding in
+  current checkpoints; oneDNN still exposes dense MatMul/post-op fusion rather
+  than an argmax/top-k-emitting LM-head primitive; and partial speculative
+  groups remain a broad scheduler/metadata/GDN/graph task. Ranked next lanes:
+  (1) native lazy greedy verifier op that conditionally computes target rows
+  inside one native transaction; (2) oneDNN/XPU-integrated top-ID producer
+  behind `get_top_tokens()`; (3) true partial-group support only if committing
+  to deeper metadata/graph engineering; (4) target-matched drafter calibration
+  on held-out data, with exact target verification.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype
