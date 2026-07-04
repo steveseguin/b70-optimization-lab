@@ -159,6 +159,12 @@ Next milestone:
     (`60.478 tok/s`), MTP5/cg8 (`59.257 tok/s`), and MTP5/cg16
     (`59.817 tok/s`) all lost to the MTP3/cg8 control (`65.809 tok/s`).
     Treat the control as support/variance only, not a new LocalMaxxing row.
+11. Latest variable-depth source precheck:
+    `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
+    A default-off prototype that actually shortened the MTP proposer loop
+    crashed with an XPU indexing assert when it created partial speculative
+    groups. Do not retry dynamic depth until the Qwen/GDN XPU verifier supports
+    partial groups end-to-end.
 
 ## Folder Map
 

@@ -159,6 +159,13 @@ Current next-execution plan:
   MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, MTP5/cg16 `59.817`, all
   `cached_tokens=0` and gate-passing. Do not promote the `65.809` row; it is
   within variance of the approved `65.276` record and has no recipe change.
+- closed dynamic-drafter-depth source precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
+  Unlike the earlier scheduler-only adaptive-depth patch, this prototype
+  actually shortened the MTP proposer loop, but the first partial speculative
+  group crashed the XPU verifier path with an `Indexing.h:622` out-of-bounds
+  assert. Do not retry variable-depth MTP heuristics until partial groups are
+  supported in the Qwen/GDN XPU verifier/metadata path.
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
   adaptive-depth heuristics unless the proposer and verifier are both made

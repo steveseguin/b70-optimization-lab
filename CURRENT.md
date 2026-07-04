@@ -112,6 +112,12 @@ Fastest quality-gated practical variant:
   and MTP5/cg16 (`59.817`) all lose to the MTP3/cg8 control (`65.809`).
   The control is support only, not a new record, because it is within variance
   of the approved `65.276` row and does not change the recipe.
+- dynamic-drafter-depth source closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
+  A proposer-side variable-depth prototype crashed on the first partial
+  speculative group with an XPU `Indexing.h:622` out-of-bounds assert. This
+  closes dynamic-depth heuristics until partial-group support is fixed in the
+  Qwen/GDN XPU verifier path.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.
