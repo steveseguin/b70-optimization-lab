@@ -175,6 +175,12 @@ Current next-execution plan:
   diagnostic remained strict/fresh and `cached_tokens=0`, but collapsed to
   `20.630 tok/s`, so DFlash is still no-win until multi-KV-group draft metadata
   is implemented.
+- closed `--language-model-only` screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-language-model-only-no-win.md`.
+  The flag saves service memory on the webhie checkpoint (`19.02 GiB` ->
+  `18.15 GiB`) and logs text-only mode, but with the current MTP3/cg8 XPU graph
+  recipe the server hangs before readiness at decode graph capture. Treat it as
+  a service-memory clue only, not a strict decode optimization.
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
   adaptive-depth heuristics unless the proposer and verifier are both made

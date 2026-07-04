@@ -125,6 +125,13 @@ Fastest quality-gated practical variant:
   target-verified `all-sliding` workaround passed the strict fresh gate but
   only reached `20.630 tok/s`. Do not continue DFlash sweeps without
   implementing multi-KV-group draft metadata.
+- `--language-model-only` screen closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-language-model-only-no-win.md`.
+  It saves about `0.87 GiB` of model memory on the webhie checkpoint and logs
+  text-only mode, but the current MTP3/cg8 XPU graph recipe hangs before
+  readiness at decode graph capture. Do not use it for the current strict
+  decode record; only revisit for non-MTP/non-graph service-memory work or
+  after the graph-capture path changes.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.
