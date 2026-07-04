@@ -158,7 +158,13 @@ Current next-execution plan:
   INT8-LM-head recipe confirmed MTP3/cg8 remains best: control `65.809 tok/s`,
   MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, MTP5/cg16 `59.817`, all
   `cached_tokens=0` and gate-passing. Do not promote the `65.809` row; it is
-  within variance of the approved `65.276` record and has no recipe change.
+  within variance of the approved `65.276` record and has no recipe change;
+- current webhie/BF16-scale 4-GPU reconfirmation:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-reconfirm4gpu-variance.md`.
+  The later high support row (`66.389 tok/s`) did not reproduce; four same-window
+  strict reruns landed `63.973-64.741 tok/s`, all gate-passing with
+  `cached_tokens=0`. No LocalMaxxing update. Use `~1-1.5%` as the practical
+  same-window inconclusive band for this recipe;
 - current source audit:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-callcount-source-audit.md`.
   The exact spec top-ID consumer is already present and quality-safe for
