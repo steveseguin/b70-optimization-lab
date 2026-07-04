@@ -338,11 +338,15 @@ Current realistic research interpretation:
 
 Next milestone: beat the runtime INT8-LM-head row with a real source change.
 The bounded retests after the record closed as no-promo: MTP depth remains best
-at k=3, capture size remains best at cg8, target-only attribution shows the
-target verifier LM-head dominates the win, and the standalone native compact
-full-vocab top-1 kernel is exact but slower than dense oneDNN. The semantic
-candidate-max version is also closed no-win: exact top IDs/values plus
-candidate scores, but only `1.010x` at rows `1` and slower at rows `2-4`.
+at k=3, current webhie/BF16-scale capture size remains best at cg8
+(`65.153` same-window control versus cg4 `64.507`, cg16 `63.500`, cg32
+`64.071`; see
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`),
+target-only attribution shows the target verifier LM-head dominates the win,
+and the standalone native compact full-vocab top-1 kernel is exact but slower
+than dense oneDNN. The semantic candidate-max version is also closed no-win:
+exact top IDs/values plus candidate scores, but only `1.010x` at rows `1` and
+slower at rows `2-4`.
 The next meaningful decode-rate work is reducing LM-head call/row count per
 verifier step, improving accepted tokens per target verifier step, or finding
 a oneDNN-integrated top-1/top-k/candidate-score post-op that avoids a second

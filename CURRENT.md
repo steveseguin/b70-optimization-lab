@@ -133,6 +133,13 @@ Fastest quality-gated practical variant:
   and MTP5/cg16 (`59.817`) all lose to the MTP3/cg8 control (`65.809`).
   The control is support only, not a new record, because it is within variance
   of the approved `65.276` row and does not change the recipe.
+- current-recipe capture-size closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`.
+  A same-window four-GPU strict screen on the fastest webhie/BF16-scale
+  recipe found cg8 remains best: cg4 `64.507`, cg8 control `65.153`, cg16
+  `63.500`, cg32 `64.071`, all gate-passing with `cached_tokens=0`.
+  Keep `max_cudagraph_capture_size=8` unless a source change materially alters
+  graph shapes, row counts, or acceptance.
 - dynamic-drafter-depth source closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   A proposer-side variable-depth prototype crashed on the first partial

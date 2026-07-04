@@ -198,6 +198,13 @@ Current next-execution plan:
   MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, MTP5/cg16 `59.817`, all
   `cached_tokens=0` and gate-passing. Do not promote the `65.809` row; it is
   within variance of the approved `65.276` record and has no recipe change;
+- closed current-recipe capture-size screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`.
+  A same-window four-GPU strict pass on the fastest webhie/BF16-scale
+  INT8-LM-head recipe confirmed `max_cudagraph_capture_size=8` remains best:
+  cg4 `64.507`, cg8 control `65.153`, cg16 `63.500`, cg32 `64.071`, all
+  `cached_tokens=0` and gate-passing. Do not retest capture size for this exact
+  recipe unless a source change alters graph shapes, row counts, or acceptance;
 - current webhie/BF16-scale 4-GPU reconfirmation:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-reconfirm4gpu-variance.md`.
   The later high support row (`66.389 tok/s`) did not reproduce; four same-window

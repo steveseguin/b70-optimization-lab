@@ -56,6 +56,12 @@ Phase 0 and Phase 1 are complete and captured in
   emitted tokens/step and increased verifier steps. Do not resume
   scheduler-only adaptive depth unless proposer generation and verifier rows
   are both made dynamically depth-aware.
+- The current webhie/BF16-scale capture-size question is now closed:
+  `2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`. A strict
+  same-window four-GPU pass found cg8 remains best on the active recipe:
+  cg4 `64.507`, cg8 control `65.153`, cg16 `63.500`, cg32 `64.071`, all with
+  `cached_tokens=0`. Do not repeat capture-size sweeps for this exact recipe
+  unless a source change alters graph shapes, row counts, or acceptance.
 
 ## Current waste estimate
 

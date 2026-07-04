@@ -159,20 +159,27 @@ Next milestone:
     (`60.478 tok/s`), MTP5/cg8 (`59.257 tok/s`), and MTP5/cg16
     (`59.817 tok/s`) all lost to the MTP3/cg8 control (`65.809 tok/s`).
     Treat the control as support/variance only, not a new LocalMaxxing row.
-11. Latest variable-depth source precheck:
+11. Latest current-recipe capture-size screen:
+    `notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`.
+    On the same webhie/BF16-scale MTP3 recipe, a four-GPU strict same-window
+    screen found cg8 remains best: cg4 `64.507`, cg8 control `65.153`, cg16
+    `63.500`, cg32 `64.071`, all `cached_tokens=0` and gate-passing. Keep
+    `max_cudagraph_capture_size=8` unless a source change alters graph shapes,
+    row counts, or acceptance.
+12. Latest variable-depth source precheck:
     `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
     A default-off prototype that actually shortened the MTP proposer loop
     crashed with an XPU indexing assert when it created partial speculative
     groups. Do not retry dynamic depth until the Qwen/GDN XPU verifier supports
     partial groups end-to-end.
-12. Latest DFlash revisit:
+13. Latest DFlash revisit:
     `notes/2026-07-04-dflash-swa-revisit.md`. Real mixed SWA support crashes
     before readiness because the current DFlash/EAGLE proposer assumes all
     draft layers belong to one KV-cache group. The target-verified
     `all-sliding` single-group diagnostic passed the fresh gate but dropped to
     `20.630 tok/s`, so DFlash remains closed no-win until multi-KV-group draft
     metadata is implemented.
-13. Latest DFlash multi-KV implementation attempt:
+14. Latest DFlash multi-KV implementation attempt:
     `notes/2026-07-04-dflash-multikv-mixed-swa-attempt.md`. The experimental
     patch
     `../../patches/qwen36-27b-autoround-int4-b70/vllm-dflash-multikv-mixed-swa-attempt-20260704.patch`
@@ -182,20 +189,20 @@ Next milestone:
     shows only about `2-3%` draft acceptance with low-teens or worse generation
     throughput. Preserve the patch as upstream/plumbing research, not as a
     record lane.
-14. Latest service-memory flag screen:
+15. Latest service-memory flag screen:
     `notes/2026-07-04-language-model-only-no-win.md`.
     `--language-model-only` correctly enters text-only mode and reduced model
     memory from `19.02 GiB` to `18.15 GiB`, but the MTP3/cg8 XPU graph path
     hung before readiness at `Capturing CUDA graphs (decode, PIECEWISE): 0/1`.
     Do not use it for the current strict decode recipe; only revisit for
     non-MTP/non-graph service-memory work or after XPU graph capture changes.
-15. Latest scheduler screen:
+16. Latest scheduler screen:
     `notes/2026-07-04-scheduler-mbt-and-chunked-prefill-screen.md`.
     MBT768 (`64.131 tok/s`) and MBT1280 (`64.346 tok/s`) passed the strict
     fresh gate but lost to the current `65.276 tok/s` record family; disabling
     chunked prefill is invalid for `MAX_MODEL_LEN=2048` / MBT1024. Keep
     `MAX_NUM_BATCHED_TOKENS=1024` and chunked prefill enabled.
-16. Latest local EAGLE1 endpoint isolation:
+17. Latest local EAGLE1 endpoint isolation:
     `notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`.
     The first local EAGLE1 draft looked promising offline (`2.1016` mean
     accepted tokens on held-out calibration starts) but did not survive endpoint
@@ -207,21 +214,21 @@ Next milestone:
     Do not repeat endpoint config sweeps for this draft; future EAGLE work
     starts with diverse chat-style corpus/eval v2 and stronger held-out
     diagnostics.
-17. EAGLE corpus/eval v2 tooling:
+18. EAGLE corpus/eval v2 tooling:
     `notes/2026-07-04-eagle-corpus-v2-tooling.md`.
     The collector now supports `--suite`, chat mode, request extra JSON, stable
     request IDs, and prompt metadata; the dataset builder copies that metadata
     into `.pt` samples; and offline eval reports acceptance by prompt family.
     This is preparation only, not a speed result, but it is the correct restart
     point if EAGLE is revisited.
-18. EAGLE corpus/eval v2 chat smoke:
+19. EAGLE corpus/eval v2 chat smoke:
     `notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`.
     A one-GPU calibration-suite chat collection produced `3840` hidden rows,
     `24` samples, `0` continuity breaks, and metadata on `24/24` samples after
     fixing suffix-tolerant request-ID matching. A tiny two-epoch draft reached
     only `0.240` mean accepted offline, so it is not an endpoint candidate; it
     only proves the metadata path works.
-18. EAGLE corpus/eval v2 four-GPU heldout screen:
+20. EAGLE corpus/eval v2 four-GPU heldout screen:
     `notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
     The four-GPU runner collected `96` chat prompts, `15360` hidden rows, `96`
     samples, metadata on `96/96` samples, and `0` continuity breaks. A compact
@@ -229,7 +236,7 @@ Next milestone:
     only `0.489` mean accepted over `1024` starts, far below the prior `2.1016`
     offline draft that still failed endpoint quality. Do not endpoint-test this
     draft; future EAGLE work needs materially stronger data/training/init first.
-19. EAGLE corpus/eval v2 followups:
+21. EAGLE corpus/eval v2 followups:
     `notes/2026-07-04-eagle-corpus-v2-followups-closed.md`.
     The staged curriculum improved OOD-family heldout only to `0.616`, a
     balanced task-holdout split scored `0.601`, the old stronger v1 draft
