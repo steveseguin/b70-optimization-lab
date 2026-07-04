@@ -1,0 +1,177 @@
+{
+  "stamp": "20260704T110712Z",
+  "classification": "diagnostic_only_not_localmaxxing",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "recipe": "runtime INT8 LM-head BF16 scales, MTP3/cg8, current record stack",
+  "strict_policy": "fixed Qwen realistic suite, each prompt once, cached_tokens=0, target-verified MTP",
+  "rows": [
+    {
+      "gpu": 0,
+      "result_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu0-20260704T110712Z-20260704T110712Z.json",
+      "verify_summary_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu0-20260704T110712Z-verify-summary.json",
+      "verify_summary_md": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu0-20260704T110712Z-verify-summary.md",
+      "strict_gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 64.18047612967074,
+      "p10_tok_s_1_100_after_ttft": 56.604982899042184,
+      "mean_tok_s_1_100_after_ttft": 63.04922741988084,
+      "median_ttft_ms": 615.6917144544423,
+      "verifier_steps": 561,
+      "mean_target_verified_tokens_per_step": 2.7950089126559714,
+      "prefix_acceptance_fraction": 0.5983363042186571,
+      "full_accept_rate": 0.40463458110516937,
+      "per_position_match_rate": {
+        "0": 0.7985739750445633,
+        "1": 0.7183600713012478,
+        "2": 0.6078431372549019
+      }
+    },
+    {
+      "gpu": 1,
+      "result_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu1-20260704T110712Z-20260704T110712Z.json",
+      "verify_summary_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu1-20260704T110712Z-verify-summary.json",
+      "verify_summary_md": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu1-20260704T110712Z-verify-summary.md",
+      "strict_gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 63.89308930597479,
+      "p10_tok_s_1_100_after_ttft": 56.17076834846764,
+      "mean_tok_s_1_100_after_ttft": 62.54640915710834,
+      "median_ttft_ms": 621.7613404151052,
+      "verifier_steps": 562,
+      "mean_target_verified_tokens_per_step": 2.790035587188612,
+      "prefix_acceptance_fraction": 0.5966785290628707,
+      "full_accept_rate": 0.40569395017793597,
+      "per_position_match_rate": {
+        "0": 0.7953736654804271,
+        "1": 0.7188612099644128,
+        "2": 0.6138790035587188
+      }
+    },
+    {
+      "gpu": 2,
+      "result_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu2-20260704T110712Z-20260704T110712Z.json",
+      "verify_summary_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu2-20260704T110712Z-verify-summary.json",
+      "verify_summary_md": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu2-20260704T110712Z-verify-summary.md",
+      "strict_gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 62.633029082926726,
+      "p10_tok_s_1_100_after_ttft": 51.98288321615073,
+      "mean_tok_s_1_100_after_ttft": 59.03213097576745,
+      "median_ttft_ms": 623.3284724876285,
+      "verifier_steps": 563,
+      "mean_target_verified_tokens_per_step": 2.785079928952043,
+      "prefix_acceptance_fraction": 0.5950266429840142,
+      "full_accept_rate": 0.40319715808170514,
+      "per_position_match_rate": {
+        "0": 0.7921847246891652,
+        "1": 0.7246891651865008,
+        "2": 0.6127886323268206
+      }
+    },
+    {
+      "gpu": 3,
+      "result_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu3-20260704T110712Z-20260704T110712Z.json",
+      "verify_summary_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu3-20260704T110712Z-verify-summary.json",
+      "verify_summary_md": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-recordstack-verifytrace4gpu-gpu3-20260704T110712Z-verify-summary.md",
+      "strict_gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "median_tok_s_1_100_after_ttft": 63.18131146140029,
+      "p10_tok_s_1_100_after_ttft": 56.42623820042934,
+      "mean_tok_s_1_100_after_ttft": 62.75251415238648,
+      "median_ttft_ms": 617.5250364467502,
+      "verifier_steps": 562,
+      "mean_target_verified_tokens_per_step": 2.790035587188612,
+      "prefix_acceptance_fraction": 0.5966785290628707,
+      "full_accept_rate": 0.40569395017793597,
+      "per_position_match_rate": {
+        "0": 0.7953736654804271,
+        "1": 0.7188612099644128,
+        "2": 0.6120996441281139
+      }
+    }
+  ],
+  "speed_median_range": [
+    62.633029082926726,
+    64.18047612967074
+  ],
+  "speed_spread_pct_of_mean": 2.438000409308317,
+  "mean_target_verified_tokens_per_step_range": [
+    2.785079928952043,
+    2.7950089126559714
+  ],
+  "topline_decision": "All rows passed the strict gate but were below the 65.276 record; acceptance was nearly identical across GPUs, so this window does not justify acceptance-heuristic tuning or a LocalMaxxing submission.",
+  "lowest_acceptance_prompts": [
+    {
+      "prompt_id": "performance-hypotheses",
+      "mean_target_verified_tokens_per_step": 2.4814814814814814,
+      "prefix_acceptance_fraction": 0.49382716049382713,
+      "mean_tok_s_1_100_after_ttft": 51.15896040731402,
+      "steps": 216
+    },
+    {
+      "prompt_id": "customer-email",
+      "mean_target_verified_tokens_per_step": 2.5735294117647056,
+      "prefix_acceptance_fraction": 0.5245098039215687,
+      "mean_tok_s_1_100_after_ttft": 56.20669089569374,
+      "steps": 204
+    },
+    {
+      "prompt_id": "release-plan",
+      "mean_target_verified_tokens_per_step": 2.6847826086956523,
+      "prefix_acceptance_fraction": 0.5615942028985508,
+      "mean_tok_s_1_100_after_ttft": 63.34892594957718,
+      "steps": 184
+    },
+    {
+      "prompt_id": "code-review",
+      "mean_target_verified_tokens_per_step": 2.729166666666667,
+      "prefix_acceptance_fraction": 0.5763888888888888,
+      "mean_tok_s_1_100_after_ttft": 59.20316764719807,
+      "steps": 192
+    },
+    {
+      "prompt_id": "decision-memo",
+      "mean_target_verified_tokens_per_step": 2.7435897435897436,
+      "prefix_acceptance_fraction": 0.5811965811965812,
+      "mean_tok_s_1_100_after_ttft": 64.28769619335773,
+      "steps": 156
+    },
+    {
+      "prompt_id": "technical-guide",
+      "mean_target_verified_tokens_per_step": 2.7727272727272725,
+      "prefix_acceptance_fraction": 0.5909090909090909,
+      "mean_tok_s_1_100_after_ttft": 64.04303243985342,
+      "steps": 176
+    }
+  ],
+  "highest_acceptance_prompts": [
+    {
+      "prompt_id": "incident-retrospective",
+      "mean_target_verified_tokens_per_step": 2.8363636363636364,
+      "prefix_acceptance_fraction": 0.6121212121212121,
+      "mean_tok_s_1_100_after_ttft": 59.947095026515285,
+      "steps": 220
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "mean_target_verified_tokens_per_step": 2.9555555555555557,
+      "prefix_acceptance_fraction": 0.6518518518518519,
+      "mean_tok_s_1_100_after_ttft": 65.908167384544,
+      "steps": 180
+    },
+    {
+      "prompt_id": "architecture-tradeoff",
+      "mean_target_verified_tokens_per_step": 3.0,
+      "prefix_acceptance_fraction": 0.6666666666666666,
+      "mean_tok_s_1_100_after_ttft": 68.04855569395377,
+      "steps": 176
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "mean_target_verified_tokens_per_step": 3.1941176470588237,
+      "prefix_acceptance_fraction": 0.7313725490196078,
+      "mean_tok_s_1_100_after_ttft": 67.02921890955828,
+      "steps": 170
+    }
+  ]
+}
