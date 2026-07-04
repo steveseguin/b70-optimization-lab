@@ -449,6 +449,13 @@ Current next-execution plan:
   v2 stronger screen and far below the offline endpoint gate; do not repeat
   larger/target-shaped EAGLE on this same v2 corpus without a materially new
   data or architecture idea.
+- current frontier closure:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-closure-and-next-projects.md`.
+  Independent audits found no unclosed non-cheating config/runtime lane and no
+  bounded atomic/single-pass/fused-quant LM-head kernel tweak likely to beat
+  dense oneDNN by `>10%`. Future Qwen27 work should only start if it is a real
+  top-ID LM-head producer, materially stronger drafter/branch-regenerate
+  architecture, or full partial-group source-support project.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

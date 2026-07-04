@@ -331,6 +331,14 @@ Next milestone:
     below the `65.276` record and inside recipe variance. The MBT1024 control
     row is invalid because GPU0 device-lost during the first benchmark request
     after smoke passed; existing support rows already cover the default recipe.
+30. Frontier closure:
+    `notes/2026-07-04-frontier-closure-and-next-projects.md`.
+    Independent audits found no unclosed non-cheating config/runtime lane and
+    no bounded atomic/single-pass/fused-quant LM-head kernel tweak likely to
+    beat dense oneDNN by `>10%`. Do not launch more Qwen27 endpoint/config
+    screens until the candidate is a real top-ID LM-head producer, a materially
+    stronger drafter/branch-regenerate architecture, or full partial-group
+    source support.
 
 ## Folder Map
 

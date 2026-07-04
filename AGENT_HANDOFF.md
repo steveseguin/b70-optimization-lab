@@ -154,6 +154,13 @@ Active target as of the latest switch request:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v3-target-loss-offline-no-endpoint.md`.
   Do not repeat larger/target-shaped EAGLE on the same v2 corpus without a
   materially new data or architecture idea.
+- Qwen27 current frontier closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-closure-and-next-projects.md`.
+  Independent audits found no unclosed non-cheating config/runtime lane and no
+  bounded atomic/single-pass/fused-quant LM-head tweak likely to beat dense
+  oneDNN by `>10%`. Continue Qwen27 only for a deeper top-ID LM-head producer,
+  materially stronger drafter/branch-regenerate architecture, or full
+  partial-group source-support project; otherwise switch models.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

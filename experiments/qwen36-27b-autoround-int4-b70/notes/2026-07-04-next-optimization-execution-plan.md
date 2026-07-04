@@ -546,3 +546,10 @@ Immediate rule: do not launch more endpoint benchmarks until the candidate is
 one of the ranked mechanisms above. The current repo has enough evidence that
 configuration roulette around MTP depth, parser mode, capture size, MBT, scale
 dtype, target-only scope, and sampler plumbing is exhausted.
+
+Final frontier closure is now recorded in
+`2026-07-04-frontier-closure-and-next-projects.md`: independent audits also
+closed bounded atomic/single-pass/fused-quant LM-head tweaks and found no
+unclosed non-cheating config/runtime lane. Continue Qwen27 only for a deeper
+top-ID producer, materially stronger drafter/branch-regenerate architecture, or
+full partial-group source-support project.
