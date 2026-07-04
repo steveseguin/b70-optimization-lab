@@ -280,10 +280,11 @@ Next milestone:
     `notes/2026-07-04-draft-topk-calibration-diagnostic.md`.
     The target verifier token is in the built-in draft top-32 for `96-99%` of
     MTP positions and an oracle reranker would reach `3.910` target-verified
-    tokens/step, but simple static token-bias and margin rerankers were flat on
-    held-out split. Preserve the trace/analyzer; do not ship a heuristic
-    reranker. Future accepted-token work needs a learned reranker/drafter on
-    isolated non-final data.
+    tokens/step on the 24-prompt trace; a larger 96-prompt non-final trace
+    confirmed base `2.595` vs oracle `3.864`, but simple static token-bias and
+    margin rerankers were flat or worse on prompt-heldout split. Preserve the
+    trace/analyzers; do not ship a heuristic reranker. Future accepted-token
+    work needs a learned reranker/drafter on isolated non-final data.
 
 ## Folder Map
 

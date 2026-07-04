@@ -53,6 +53,7 @@ Added analyzer:
 
 ```text
 scripts/analyze-qwen27-draft-topk-trace.py
+scripts/evaluate-qwen27-draft-topk-rerankers.py
 ```
 
 Important implementation detail: the draft stream contained `1171` proposer
@@ -122,7 +123,7 @@ Top-k oracle:
 This is a real signal: the draft distribution usually contains the target
 token, but not at rank 1.
 
-## Cheap calibration sanity checks
+## Cheap calibration sanity checks on the 24-prompt run
 
 Two offline split checks were run before considering endpoint code:
 
@@ -144,6 +145,63 @@ Results:
 Interpretation: the top-k oracle headroom is not captured by a trivial static
 token bias or margin heuristic. Shipping such a heuristic would be noise-level
 at best and likely brittle.
+
+## Larger 96-prompt corpus confirmation
+
+To avoid over-reading the 24-prompt diagnostic, ran the same trace on the
+non-final EAGLE chat corpus suite:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v2-suite.json
+```
+
+Run directory:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z
+```
+
+Tracked compact artifacts:
+
+```text
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z-20260704T144949Z.json
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z-20260704T144949Z-verify-summary.md
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z-20260704T144949Z-verify-summary.json
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z-20260704T144949Z-draft-topk-analysis.json
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z-20260704T144949Z-draft-topk-reranker-eval.json
+```
+
+Classification:
+
+- diagnostic-only; no LocalMaxxing submission;
+- `96/96` prompts completed;
+- final gate passed mechanically with `cached_tokens=0`;
+- paired speed was `52.322 tok/s`, but this is trace-overhead diagnostic speed,
+  not a record or regression signal;
+- server logs show prefix cache hit rate `0.0%`.
+
+Verifier/top-k result:
+
+- verifier steps: `4796`;
+- mean target-verified tokens/step: `2.5950792326939114`;
+- full target-in-top-32 oracle: `3.863844870725605`;
+- exact sampled-draft tuple alignment: `4796/4796`;
+- skipped extra draft groups: `96`;
+- target-in-top-32:
+  - pos0 `0.9918682235195997`;
+  - pos1 `0.9666388657214345`;
+  - pos2 `0.9493327773144287`.
+
+Prompt-parity heldout reranker result:
+
+- test split base: `2.5930717863105173` target tokens/step;
+- test split oracle: `3.8497495826377297`;
+- best margin rule: `2.5930717863105173` (flat);
+- best sparse token-bias perceptron: `2.5897328881469113` (regressed).
+
+This larger non-final corpus confirms the conclusion: the draft top-k list
+contains the target token, but simple static reranking does not know which
+candidate is correct.
 
 ## Decision
 
