@@ -89,6 +89,12 @@ richer typed audit metadata for preflight; `scripts/submit_localmaxxing_results.
 sanitizes that object into the documented API shape at POST time while keeping
 the local preflight policy checks intact.
 
+The public API also validates enum and scalar field types strictly. Use
+`engineName="llama.cpp"` for llama.cpp/SYCL rapid snapshots, and keep
+top-level `promptTokens` / `outputTokens` as integers. Per-prompt token-count
+arrays can stay in `engineFlags` for audit detail. The rapid-suite payload
+builder rounds suite medians to integer top-level token counts for this reason.
+
 `--allow-non-headline` is for local `--dry-run` inspection only. It must not be
 used to post diagnostic synthetic, repeated, warmed, history, or n-gram
 artifacts to LocalMaxxing.

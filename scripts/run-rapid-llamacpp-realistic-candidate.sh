@@ -27,6 +27,7 @@ REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{\"cache_prompt\":false}}"
 # logs and can add cache-save/update overhead. Callers can still append/replace
 # this through EXTRA_LLAMA_ARGS for explicit diagnostics.
 EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:---cache-ram 0}"
+export EXTRA_LLAMA_ARGS
 LLAMA_SRC="${LLAMA_SRC:-/home/steve/src/llama.cpp}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"

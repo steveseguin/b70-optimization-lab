@@ -147,14 +147,29 @@ Initial plan:
   Treat as a valid diagnostic/fit result, not a useful promoted row unless a
   high-quality Q8 baseline is explicitly needed.
 - The first `UD-Q4_K_XL` file was contaminated by a failed multi-range
-  `aria2c` resume: byte size matched `14548880928`, but local SHA
-  `b9ba590957befd5fdb970de3668337883c59b70d54f9718f495bb8e9f3b71433`
-  did not match the HF ETag/SHA
-  `b735208f3cf85b9a11fe508e520fa9aa3afb8c384563e5755a7ab5a6bcce74f5`.
-  The invalid run emitted no stream text chunks despite `completion_tokens=128`;
-  do not treat it as a model/runtime result. The file was quarantined on USB
-  with a `.corrupt-sha-b9ba-20260704T2027` suffix and a clean single-stream
-  download was started.
+  `aria2c` resume. Byte size matched `14548880928`, but the local SHA was
+  `b9ba590957befd5fdb970de3668337883c59b70d54f9718f495bb8e9f3b71433` and
+  the invalid run emitted no stream text chunks despite `completion_tokens=128`.
+  Do not treat it as a model/runtime result. The file was quarantined on USB
+  with a `.corrupt-sha-b9ba-20260704T2027` suffix.
+- A clean single-stream `curl` download produced local SHA
+  `bcf82c1d4963f91d744d202efeee0724c0987625cd97a737ea2af68b49f141cf`
+  and streamed normal text. The earlier HTTP ETag
+  `b735208f3cf85b9a11fe508e520fa9aa3afb8c384563e5755a7ab5a6bcce74f5`
+  should not be treated as the file SHA for this object.
+- Promoted strict `UD-Q4_K_XL` row, with server prompt cache disabled via
+  `--cache-ram 0`: `27.29674347655439 tok/s` median tokens 1-100 after TTFT,
+  p10 `27.126019755475596`, mean `27.356226121944818`, TTFT median
+  `1501.7739470349625 ms`, `cached_tokens=0` on all `12/12` prompts. Evidence:
+  `data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json`.
+  LocalMaxxing approved it as `cmr6ura7300e4mn01yrdw7wto`; queue/response are
+  `experiments/rapid-model-snapshots-b70/localmaxxing/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-realistic128-20260704.queue.json`
+  and
+  `data/localmaxxing-responses/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-realistic128-20260704.submit.log`.
+- Quick four-GPU screen found no simple win over the cache-off baseline:
+  `POLL=100` `24.956425259573045`, `UBATCH_SIZE=512`
+  `25.267271232446316`, `CTX_SIZE=2048` `24.978475041077193`; FA-off did not
+  reach readiness promptly and was killed during model fitting/loading.
 
 ## Gemma 4 12B
 

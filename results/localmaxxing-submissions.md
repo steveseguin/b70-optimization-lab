@@ -53,6 +53,15 @@ Model: `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF`, GGUF
 
 Date: 2026-07-04
 
+Model: `unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF`, GGUF
+`UD-Q4_K_XL`, llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-realistic128` | `cmr6ura7300e4mn01yrdw7wto` | 1 | suite median 616 | 128 | **27.297 median 1-100 after TTFT** | 20.634 median wall full128 | **policy-compliant rapid realistic suite, valid/modest dense-model reference**: fixed `rapid-model-snapshots-b70-realistic-v1`, 12 unique prompts, each prompt once, llama.cpp server prompt cache disabled with `--cache-ram 0`, per-request `cache_prompt=false`, `cached_tokens=0` every row, no prompt/KV/context checkpoint/response reuse, no n-gram/history acceleration, no speculation. Config: `Mistral-Small-3.2-24B-Instruct-2506-UD-Q4_K_XL.gguf`, HF revision `b750ec2299225e492f1bd27cab88a0a595fa848f`, llama.cpp/SYCL on one B70, `ctx=4096`, `batch=1024`, `ubatch=256`, FlashAttention on, f16 KV. Primary p10 `27.126`, mean `27.356`, full-output after-TTFT median `27.224`, TTFT median `1501.774 ms`. Result packet `results/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4/README.md`, evidence `data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-realistic128-20260704.submit.log`. Q8 fit check passed but was only `16.380 tok/s`; quick Q4 knob screen found no easy win, so this is a useful expected-performance snapshot rather than a frontier lane. |
+
+Date: 2026-07-04
+
 Model: `unsloth/Qwen3.6-27B-MTP-GGUF`, GGUF `UD-Q4_K_XL`, llama.cpp/SYCL on
 one Intel Arc Pro B70.
 

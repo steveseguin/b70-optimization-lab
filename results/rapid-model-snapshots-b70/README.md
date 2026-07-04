@@ -19,8 +19,8 @@ Strict headline rows use:
 | Model | Runtime | Quantization | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Qwen3 30B-A3B Instruct 2507 | llama.cpp/SYCL on one B70 | GGUF UD-Q4_K_XL | Strict-valid first-pass row promoted | `107.48388363267362 tok/s` median tokens 1-100 after TTFT, `cached_tokens=0`, prompt cache disabled. Packet: [qwen3-30b-a3b-instruct-2507-udq4](qwen3-30b-a3b-instruct-2507-udq4/README.md). Official GPTQ vLLM path is runtime-blocked on the current local XPU build by missing GPTQ ops. |
+| Mistral Small 3.2 24B Instruct 2506 | llama.cpp/SYCL on one B70 | GGUF UD-Q4_K_XL | Strict-valid rapid row promoted as valid/modest | `27.29674347655439 tok/s` median tokens 1-100 after TTFT, `cached_tokens=0`, server prompt cache disabled with `--cache-ram 0`. Packet: [mistral-small-3.2-24b-instruct-2506-udq4](mistral-small-3.2-24b-instruct-2506-udq4/README.md). Q8 fit check passed at only `16.38 tok/s`; quick Q4 knobs found no win. |
 | Qwen3-Coder 30B-A3B | vLLM/XPU or llama.cpp | GPTQ/INT4/FP8 or GGUF Q4+ | Queued second pass | Use the Qwen3 30B setup and strict-gate process as the template. |
-| Mistral Small 3.2 24B Instruct | llama.cpp first | GGUF Q4/Q6/Q8 | Downloading first GGUF target | Practical one-B70 dense model; good first rapid llama.cpp snapshot. |
 | Gemma 4 12B | vLLM and/or llama.cpp | INT4/AutoRound or GGUF | Quick TP1 failed | TP1 graph and eager vLLM/XPU strict attempts both failed on first prompt with XPU FlashAttention `UR_RESULT_ERROR_OUT_OF_RESOURCES`; use existing TP4/c8 production docs as reference. |
 | Phi-4 family | llama.cpp/vLLM | Q4+ | Queued | Small practical reference if setup is quick. |
 | DeepSeek-R1-Distill-Qwen 14B/32B | llama.cpp/vLLM | Q4+ | Later | Reasoning-family reference after first three lanes. |
@@ -39,6 +39,7 @@ Strict headline rows use:
 | Model | Runtime | Quantization | GPUs | Strict median tok/s | Evidence | LocalMaxxing |
 | --- | --- | --- | ---: | ---: | --- | --- |
 | Qwen3 30B-A3B Instruct 2507 | llama.cpp/SYCL | GGUF UD-Q4_K_XL | 1 | `107.48388363267362` | [result packet](qwen3-30b-a3b-instruct-2507-udq4/README.md), `data/rapid-model-snapshots-b70/qwen3-30b-a3b-instruct-2507-udq4-llamacpp-faon-nocacheprompt-realistic128-20260704T193409Z.json` | `cmr6rr2kv008imn019frg0x3m` |
+| Mistral Small 3.2 24B Instruct 2506 | llama.cpp/SYCL | GGUF UD-Q4_K_XL | 1 | `27.29674347655439` | [result packet](mistral-small-3.2-24b-instruct-2506-udq4/README.md), `data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq4-llamacpp-faon-cacheoff-v2-ctx4096-realistic128-20260704T205443Z.json` | `cmr6ura7300e4mn01yrdw7wto` |
 
 Existing non-rapid reference rows remain in their model result folders:
 

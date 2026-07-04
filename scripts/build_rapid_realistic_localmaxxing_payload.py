@@ -25,6 +25,10 @@ def median(values: list[float]) -> float:
     return float(statistics.median(values))
 
 
+def rounded_median_int(values: list[float]) -> int:
+    return int(round(statistics.median(values)))
+
+
 def load_strict_bench(path: Path) -> dict:
     bench = json.loads(path.read_text())
     gate = bench.get("realistic_final_gate") or {}
@@ -193,8 +197,8 @@ def main() -> int:
         },
         "contextLength": args.context_length,
         "batchSize": 1,
-        "promptTokens": median(prompt_tokens),
-        "outputTokens": median(completion_tokens),
+        "promptTokens": rounded_median_int(prompt_tokens),
+        "outputTokens": rounded_median_int(completion_tokens),
         "tokSOut": primary["median"],
         "tokSTotal": wall["median"],
         "ttftMs": ttft["median"],
