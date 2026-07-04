@@ -62,6 +62,15 @@ Model: `unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF`, GGUF
 
 Date: 2026-07-04
 
+Model: `unsloth/GLM-4.7-Flash-GGUF`, GGUF `UD-Q4_K_XL`,
+llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `glm-4.7-flash-udq4-llamacpp-realistic128` | `cmr6xkr2f00gomn01k4u2dua8` | 1 | suite median 62 | 128 | **40.769 median 1-100 after TTFT** | 38.165 median wall full128 | **policy-compliant rapid realistic suite, valid/modest GLM-4.7-Flash reference**: fixed `rapid-model-snapshots-b70-realistic-v1`, 12 unique prompts, each prompt once, llama.cpp server prompt cache disabled with `--cache-ram 0`, per-request `cache_prompt=false`, `cached_tokens=0` every row, no prompt/KV/context checkpoint/response reuse, no n-gram/history acceleration, no speculation. Config: `GLM-4.7-Flash-UD-Q4_K_XL.gguf`, HF revision `0d32489ecb9db6d2a4fc93bd27ef01519f95474d`, llama.cpp/SYCL on one B70, `ctx=4096`, `batch=1024`, `ubatch=256`, `POLL=100`, FlashAttention on, f16 KV. Primary p10 `40.019`, mean `40.261`, full-output after-TTFT median `40.678`, TTFT median `206.206 ms`. Result packet `results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md`, evidence `data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/glm-4.7-flash-udq4-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/glm-4.7-flash-udq4-llamacpp-realistic128-20260704.submit.log`. Faster `~44 tok/s` rows appeared only in concurrent four-GPU screens, so the promoted row uses the conservative standalone confirmation. |
+
+Date: 2026-07-04
+
 Model: `unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF`, GGUF
 `UD-Q4_K_XL`, llama.cpp/SYCL on one Intel Arc Pro B70.
 

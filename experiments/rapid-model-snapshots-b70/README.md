@@ -94,7 +94,7 @@ Use `results/rapid-model-snapshots-b70/README.md` for promoted or useful final
 snapshots. Use this experiment folder for active notes, failed ideas, and
 diagnostic-only screens.
 
-Current promoted rapid row:
+Current promoted rapid rows:
 
 - `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF`
   `Qwen3-30B-A3B-Instruct-2507-UD-Q4_K_XL.gguf`, llama.cpp/SYCL on one B70:
@@ -104,3 +104,25 @@ Current promoted rapid row:
   The key policy fix was disabling llama.cpp request prompt reuse with
   `{"cache_prompt":false}`; default `cache_prompt=true` produced
   `cached_tokens=3` and is invalid for headline fresh-response throughput.
+- `unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF`
+  `Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf`, llama.cpp/SYCL on one B70:
+  `108.1165394591524 tok/s` median tokens 1-100 after TTFT under the same
+  strict fresh-response gate. See
+  `results/rapid-model-snapshots-b70/qwen3-coder-30b-a3b-instruct-udq4/README.md`.
+- `unsloth/GLM-4.7-Flash-GGUF`
+  `GLM-4.7-Flash-UD-Q4_K_XL.gguf`, llama.cpp/SYCL on one B70:
+  `40.7691297367011 tok/s` median tokens 1-100 after TTFT under the strict
+  fresh-response gate. See
+  `results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md`. This is a
+  valid expected-performance snapshot, not a frontier row; faster concurrent
+  four-GPU screen rows were not used as the headline.
+
+## Helpers
+
+- `scripts/run-rapid-llamacpp-realistic-candidate.sh` runs one strict
+  llama.cpp/SYCL candidate with prompt cache disabled and writes compact JSON
+  evidence plus raw logs.
+- `scripts/run-rapid-llamacpp-fourway-screen.sh` launches up to four one-GPU
+  strict candidate variants in parallel across the B70s. Use it for first-pass
+  screens only; promote from a standalone confirmation row after reviewing the
+  best variant.

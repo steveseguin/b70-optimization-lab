@@ -284,6 +284,22 @@ Why queued:
 - `unsloth/GLM-4.7-Flash-GGUF` has `UD-Q4_K_XL` at `17520169312` bytes and
   `Q4_K_M` at `18312339808` bytes; likely the best next 30B-class rapid model
   after Qwen3-Coder if we want another high-value MoE snapshot.
+  Download target:
+  `/mnt/usb-models/llm-models/glm-4.7-flash-gguf/GLM-4.7-Flash-UD-Q4_K_XL.gguf`,
+  revision `0d32489ecb9db6d2a4fc93bd27ef01519f95474d`.
+  Architecture notes from `zai-org/GLM-4.7-Flash`: `30B-A3B` MoE,
+  `Glm4MoeLiteForCausalLM`, 64 routed experts + 1 shared expert, 4 experts per
+  token, MLA-style attention. Q8 is `~31.8GB` (`Q8_0`) to `~35.6GB`
+  (`UD-Q8_K_XL`), so it is too tight or impossible for a clean one-B70 strict
+  row with KV/cache overhead; start with `UD-Q4_K_XL`.
+  Runtime plan for the first strict row: llama.cpp/SYCL, one B70, `ctx=4096`,
+  F16 KV, FlashAttention on, `--jinja`, `--reasoning off`, `--cache-ram 0`,
+  per-request `{"cache_prompt":false}`. Avoid KV quant on the first pass:
+  public llama.cpp GLM-4.7-Flash reports include FlashAttention + KV-quant
+  failures, especially on longer prompts. General-use sampling guidance from
+  Z.ai/Unsloth (`temp=1.0`, `top_p=0.95`, `min_p=0.01`, neutral repeat
+  penalty) is useful for deployments but not for strict benchmark rows, which
+  stay deterministic (`temperature=0`, `top_p=1`).
 - `bartowski/zai-org_GLM-4.7-Flash-GGUF` has `IQ4_XS` `16250044288`,
   `Q4_K_M` `18474983296`, and `Q4_K_L` `18710400896` bytes. Use only if the
   Unsloth GLM file fails or if we specifically want a bartowski/imatrix
@@ -300,6 +316,29 @@ Why queued:
 
 Treat these as candidates, not claims. Each still needs model-size, quant,
 runtime-support, quality, and strict fresh-response validation before promotion.
+
+2026-07-04 GLM-4.7-Flash strict result:
+
+- `GLM-4.7-Flash-UD-Q4_K_XL.gguf` downloaded cleanly to the USB model store
+  and matched the expected byte size `17520169312`.
+- Promoted strict one-B70 row:
+  `results/rapid-model-snapshots-b70/glm-4.7-flash-udq4/README.md`.
+  Representative evidence:
+  `data/rapid-model-snapshots-b70/glm-4.7-flash-udq4-llamacpp-faon-cacheoff-poll100-confirm-ctx4096-realistic128-20260704T221455Z.json`.
+  Result: `40.7691297367011 tok/s` median tokens 1-100 after TTFT,
+  p10 `40.01936615541169`, mean `40.26057811873019`, median TTFT
+  `206.20633498765528 ms`, `cached_tokens=0` on all `12/12` prompts.
+  LocalMaxxing approved it as `cmr6xkr2f00gomn01k4u2dua8`.
+- Faster `~44 tok/s` rows appeared in concurrent four-GPU screens, but
+  standalone confirmations on GPU0/GPU1 landed around `40.7 tok/s`, so the
+  conservative standalone row is the headline.
+- A temporary GPU0 frequency lock to `2800,2800` MHz held under load and
+  reported no throttling, but did not improve throughput; the GPU was restored
+  to the default `400,2800` range. This points to model/runtime architecture
+  cost rather than a simple clocking issue.
+- Treat this lane as a valid expected-performance snapshot, not a frontier
+  target. Revisit only for a new GLM-specific llama.cpp/SYCL kernel path,
+  another materially better GLM quant, or a vLLM/XPU runtime path.
 
 ## Distill / Reasoning References
 
