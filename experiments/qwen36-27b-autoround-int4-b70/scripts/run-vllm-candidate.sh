@@ -101,6 +101,7 @@ trap cleanup EXIT
   echo "lm_head_int8=$VLLM_XPU_LM_HEAD_INT8"
   echo "lm_head_int8_scale_dtype=$VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE"
   echo "request_extra_json=$REQUEST_EXTRA_JSON"
+  echo "qwen36_27b_speculative_config=${QWEN36_27B_SPECULATIVE_CONFIG:-}"
   echo "quality_repeat_runs=$QUALITY_REPEAT_RUNS"
   echo "quality_long_context_tokens=$QUALITY_LONG_CONTEXT_TOKENS"
   echo "quality_baseline_json=$QUALITY_BASELINE_JSON"

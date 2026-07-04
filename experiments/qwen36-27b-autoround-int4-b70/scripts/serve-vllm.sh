@@ -48,6 +48,7 @@ echo "  prompt_token_details: $QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS"
 echo "  compilation_config: ${COMPILATION_CONFIG:-<default>}"
 echo "  promote_accepted_spec_state: ${VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE:-0}"
 echo "  nonspec_postprocess_accepted_state: ${VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE:-1}"
+echo "  speculative_config: ${QWEN36_27B_SPECULATIVE_CONFIG:-<builtin/default>}"
 echo "  extra_args: ${VLLM_EXTRA_ARGS:-<none>}"
 "$QWEN36_27B_AR_VENV/bin/python" - <<'PY'
 import sys
@@ -87,13 +88,16 @@ if [[ -n "${COMPILATION_CONFIG:-}" ]]; then
   args+=(--compilation-config "$COMPILATION_CONFIG")
 fi
 
-if [[ "$QWEN36_27B_ENABLE_MTP" != "0" ]]; then
+if [[ -n "${QWEN36_27B_SPECULATIVE_CONFIG:-}" ]]; then
+  args+=(--speculative-config "$QWEN36_27B_SPECULATIVE_CONFIG")
+elif [[ "$QWEN36_27B_ENABLE_MTP" != "0" ]]; then
   args+=(--speculative-config "{\"method\":\"qwen3_next_mtp\",\"num_speculative_tokens\":$NUM_SPECULATIVE_TOKENS}")
 fi
 
 if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
   # Simple scalar flag passthrough for controlled sweeps. For arguments with
-  # embedded whitespace, add them explicitly above as array elements.
+  # embedded whitespace, add them explicitly above as array elements. For
+  # speculative decoding JSON, prefer QWEN36_27B_SPECULATIVE_CONFIG.
   read -r -a extra_args <<< "$VLLM_EXTRA_ARGS"
   args+=("${extra_args[@]}")
 fi
