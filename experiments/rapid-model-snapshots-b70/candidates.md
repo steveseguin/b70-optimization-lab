@@ -116,6 +116,24 @@ Initial plan:
 4. screen quick knobs (`ctx`, `ubatch`, FlashAttention, VMM, poll, threads);
 5. try MTP/spec only if a target-verified draft path exists and is fresh-valid.
 
+2026-07-04 setup note:
+
+- Starting with `unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF`
+  `Mistral-Small-3.2-24B-Instruct-2506-UD-Q8_K_XL.gguf`, HF revision
+  `b750ec2299225e492f1bd27cab88a0a595fa848f`.
+- Expected object size: `28991868448` bytes.
+- The partial Q8 download was moved off NVMe to
+  `/mnt/usb-models/llm-models/mistral-small-3.2-24b-instruct-2506-gguf/`
+  and resumed there. Do not use NVMe for this large Q8 candidate unless it
+  becomes the active hot path.
+- LocalMaxxing public API had two existing base-model rows near `39.5 tok/s`,
+  but none for the Unsloth GGUF HF ID at time of setup. Treat our row as a
+  useful one-B70 B70/Q8 snapshot if it serves and passes the strict gate.
+- Because Q8 is about `29 GB`, first try a fully-GPU fit. If `ctx=4096` spills
+  layers to CPU or fails, use `ctx=2048` before lowering KV precision. If Q8 is
+  fundamentally too tight, pivot to Q6 or `UD-Q4_K_XL` and label the quality
+  class separately.
+
 ## Gemma 4 12B
 
 Why queued:
