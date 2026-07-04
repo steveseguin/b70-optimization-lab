@@ -17,6 +17,7 @@ METRIC_TOKENS="${METRIC_TOKENS:-100}"
 API_MODE="${API_MODE:-chat}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{}}"
+LLAMA_SRC="${LLAMA_SRC:-/home/steve/src/llama.cpp}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"
 
@@ -51,9 +52,27 @@ cd "$ROOT"
   echo "cache_type_k=${CACHE_TYPE_K:-f16}"
   echo "cache_type_v=${CACHE_TYPE_V:-f16}"
   echo "llama_server=${LLAMA_SERVER:-/home/steve/src/llama.cpp/build-sycl-b70-aot-bmg-g31/bin/llama-server}"
+  echo "llama_src=$LLAMA_SRC"
+  if git -C "$LLAMA_SRC" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "llama_git_commit=$(git -C "$LLAMA_SRC" rev-parse HEAD)"
+    echo "llama_git_short_commit=$(git -C "$LLAMA_SRC" rev-parse --short HEAD)"
+    if [[ -n "$(git -C "$LLAMA_SRC" status --short)" ]]; then
+      echo "llama_git_dirty=1"
+    else
+      echo "llama_git_dirty=0"
+    fi
+  else
+    echo "llama_git_commit=<not-a-git-worktree>"
+    echo "llama_git_dirty=<unknown>"
+  fi
   echo "extra_llama_args=${EXTRA_LLAMA_ARGS:-}"
   echo "request_extra_json=$REQUEST_EXTRA_JSON"
 } > "$RUN_DIR/identity.env"
+
+if git -C "$LLAMA_SRC" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$LLAMA_SRC" status --short > "$RUN_DIR/llama-status.txt"
+  git -C "$LLAMA_SRC" diff --binary > "$RUN_DIR/llama.patch"
+fi
 
 GPU_INDEX="$GPU_INDEX" PORT="$PORT" MODEL="$MODEL" MODEL_ALIAS="$MODEL_ALIAS" \
   scripts/serve-rapid-llamacpp-model.sh \

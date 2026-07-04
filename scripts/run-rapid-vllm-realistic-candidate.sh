@@ -20,6 +20,7 @@ METRIC_TOKENS="${METRIC_TOKENS:-100}"
 REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{}}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-1200}"
 VLLM_VENV="${VLLM_VENV:-/home/steve/.venvs/vllm-xpu}"
+VLLM_SRC="${VLLM_SRC:-/home/steve/src/vllm}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"
 
@@ -58,7 +59,25 @@ cd "$ROOT"
   echo "compilation_config=${COMPILATION_CONFIG:-}"
   echo "speculative_config=${SPECULATIVE_CONFIG:-}"
   echo "vllm_extra_args=${VLLM_EXTRA_ARGS:-}"
+  echo "vllm_src=$VLLM_SRC"
+  if git -C "$VLLM_SRC" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "vllm_git_commit=$(git -C "$VLLM_SRC" rev-parse HEAD)"
+    echo "vllm_git_short_commit=$(git -C "$VLLM_SRC" rev-parse --short HEAD)"
+    if [[ -n "$(git -C "$VLLM_SRC" status --short)" ]]; then
+      echo "vllm_git_dirty=1"
+    else
+      echo "vllm_git_dirty=0"
+    fi
+  else
+    echo "vllm_git_commit=<not-a-git-worktree>"
+    echo "vllm_git_dirty=<unknown>"
+  fi
 } > "$RUN_DIR/identity.env"
+
+if git -C "$VLLM_SRC" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$VLLM_SRC" status --short > "$RUN_DIR/vllm-status.txt"
+  git -C "$VLLM_SRC" diff --binary > "$RUN_DIR/vllm.patch"
+fi
 
 MODEL_DIR="$MODEL_DIR" GPU_INDEX="$GPU_INDEX" PORT="$PORT" HOST="$HOST" \
 SERVED_MODEL_NAME="$SERVED_MODEL_NAME" VLLM_VENV="$VLLM_VENV" \

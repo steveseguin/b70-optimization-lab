@@ -35,6 +35,10 @@ Useful references:
   <https://vllm.ai/blog/2025-11-11-intel-arc-pro-b>.
 - Qwen model card for the selected first checkpoint:
   <https://huggingface.co/Qwen/Qwen3-30B-A3B-GPTQ-Int4>.
+- Possible later variant: `JunHowie/Qwen3-30B-A3B-Instruct-2507-GPTQ-Int4`
+  claims a newer 2507 base and `desc_act=False` GPTQ Int4 setup. Do not switch
+  before establishing the official Qwen baseline; treat it as a second-pass
+  variant if the official checkpoint is valid but leaves obvious headroom.
 
 ## Mistral Small 3.2 24B Instruct
 
