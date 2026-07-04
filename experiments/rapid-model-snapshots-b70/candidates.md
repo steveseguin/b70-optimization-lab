@@ -44,6 +44,12 @@ Download/setup notes:
   `/mnt/fast-ai/bench-results/rapid-model-snapshots-b70/vllm-runs/qwen3-30b-a3b-gptq-int4-vllm-tp1-cg8-noprefix-realistic128-20260704T185920Z`.
 - Do not count as a benchmark result; it never served. Treat as a runtime
   support blocker for GPTQ on the current local vLLM/XPU build.
+- This appears aligned with upstream reports such as
+  <https://github.com/vllm-project/vllm/issues/39474> ("GPTQ models fail to
+  load on Intel XPU" with missing `_C.gptq_shuffle`). Newer vLLM XPU docs still
+  list this model as supported, so a later recovery lane should try an updated
+  Intel/vLLM container or v0.22.x+ XPU build before writing off GPTQ entirely:
+  <https://docs.vllm.ai/en/v0.22.1/models/hardware_supported_models/xpu/>.
 - Pivot for the rapid lane: try a Q4+ GGUF under llama.cpp first, starting with
   `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF` `UD-Q4_K_XL`.
 
