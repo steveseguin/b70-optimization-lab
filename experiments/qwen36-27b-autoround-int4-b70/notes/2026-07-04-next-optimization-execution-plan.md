@@ -85,9 +85,12 @@ Phase 0 and Phase 1 are complete and captured in
   impossible oracle reranker would raise the diagnostic run from `2.712` to
   `3.910` target-verified tokens/step. A larger 96-prompt non-final trace
   confirmed base `2.595` vs oracle `3.864`, but prompt-heldout margin reranking
-  was flat and sparse token-bias reranking regressed. Do not ship a heuristic
-  top-k reranker. Future accepted-token work needs a real learned
-  reranker/drafter on isolated non-final data, then held-out evaluation before
+  was flat and sparse token-bias reranking regressed. A small learned top-k MLP
+  trained on the 96-prompt trace and evaluated on the separate 24-prompt trace
+  improved only `2.7123 -> 2.7184` target tokens/step, too little to justify
+  runtime overhead. Do not ship a heuristic or small top-k reranker. Future
+  accepted-token work needs a materially stronger reranker/drafter or
+  architecture on isolated non-final data, then held-out evaluation before
   endpoint testing.
 
 ## Current waste estimate
@@ -481,8 +484,10 @@ Corrected ranked next implementation lanes:
    moving emitted tokens/step toward `3.3-4.0` without increasing step cost.
    Draft top-k tracing shows the target is usually present in the built-in
    draft top-32, but simple token-bias/margin reranking is flat or worse on
-   prompt-heldout splits; the next attempt needs a real learned reranker/drafter
-   or stronger architectural draft path, not a static heuristic.
+   prompt-heldout splits, and a small learned top-k MLP barely moved cross-suite
+   target tokens/step (`+0.006`). The next attempt needs a materially stronger
+   learned drafter/reranker or stronger architectural draft path, not a static
+   heuristic or tiny top-k scorer.
 3. **Native lazy greedy target verifier op**: still valid as a later cleanup
    once a better top-ID producer exists, or if it can be fused with the
    producer, but target-only row skipping is not enough by itself.

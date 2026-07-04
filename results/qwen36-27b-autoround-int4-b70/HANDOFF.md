@@ -329,9 +329,12 @@ Current next-execution plan:
   confirmed the same signal: base `2.595`, oracle `3.864`, target-in-top-32
   `95-99%`, exact alignment `4796/4796`; prompt-heldout margin reranking was
   flat and sparse token-bias reranking regressed (`2.5897` vs `2.5931` base).
-  Do not ship a heuristic top-k reranker. If accepted-token work continues,
-  train/evaluate a real learned reranker or drafter on larger isolated
-  non-final data before endpoint testing.
+  A small learned top-k MLP trained on the 96-prompt trace and evaluated on the
+  separate 24-prompt calibration trace improved only `2.7123 -> 2.7184`
+  target tokens/step, far too small for runtime overhead. Do not ship a
+  heuristic or small top-k reranker. If accepted-token work continues, it needs
+  a materially stronger drafter/reranker or architecture on isolated non-final
+  data before endpoint testing.
 - EAGLE1 local training pipeline:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`.
   The local pipeline now works end-to-end for Qwen27 hidden size `5120`:

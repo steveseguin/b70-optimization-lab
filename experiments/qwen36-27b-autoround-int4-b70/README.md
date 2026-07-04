@@ -282,9 +282,12 @@ Next milestone:
     MTP positions and an oracle reranker would reach `3.910` target-verified
     tokens/step on the 24-prompt trace; a larger 96-prompt non-final trace
     confirmed base `2.595` vs oracle `3.864`, but simple static token-bias and
-    margin rerankers were flat or worse on prompt-heldout split. Preserve the
-    trace/analyzers; do not ship a heuristic reranker. Future accepted-token
-    work needs a learned reranker/drafter on isolated non-final data.
+    margin rerankers were flat or worse on prompt-heldout split. A small
+    learned top-k MLP also moved only `2.7123 -> 2.7184` target tokens/step on
+    a separate calibration trace, too little for runtime overhead. Preserve the
+    trace/analyzers; do not ship a heuristic or tiny top-k reranker. Future
+    accepted-token work needs a materially stronger drafter/reranker on
+    isolated non-final data.
 
 ## Folder Map
 

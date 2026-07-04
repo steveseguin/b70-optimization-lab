@@ -203,16 +203,47 @@ This larger non-final corpus confirms the conclusion: the draft top-k list
 contains the target token, but simple static reranking does not know which
 candidate is correct.
 
+## Learned reranker cross-suite sanity
+
+Ran one offline learned-reranker sanity check before considering endpoint code:
+
+- train source: 96-prompt EAGLE chat trace above;
+- eval source: separate 24-prompt calibration trace;
+- model: candidate-wise MLP scoring top-32 candidates with token embedding,
+  MTP position embedding, rank embedding, relative draft-logit features, and a
+  learned scale on the original relative draft logits;
+- training objective: cross-entropy to select the target verifier token when
+  the target is inside top-32;
+- evaluation metric: target-verified tokens/step after replacing the draft
+  candidate with the learned top candidate and applying the usual accepted
+  prefix rule.
+
+Result:
+
+- train base: `2.5950792326939114`;
+- eval base: `2.71229293809939`;
+- best eval across seeds/epochs: `2.718395815170009`
+  (`seed=2`, `epoch=2`);
+- best eval token match rate: `0.6907875617553036`, equal to base token match
+  rate and only slightly better prefix composition;
+- later epochs overfit train and regress eval.
+
+Interpretation: even a small learned top-k reranker gets only about `+0.006`
+target tokens/step cross-suite. That is far below what would justify runtime
+top-k/reranker overhead in the vLLM hot path.
+
 ## Decision
 
 Close **simple static draft calibration** for now. Do not implement a runtime
-token-bias or rank-margin reranker from this trace.
+token-bias, rank-margin reranker, or small learned top-k reranker from these
+traces.
 
-The useful follow-up is a real learned drafter/reranker trained on a larger,
-isolated non-final corpus, or an architectural draft path that uses more of the
-target-model signal without violating target verification. The final Qwen
-realistic suite must remain isolated from tuning and promotion must still use
-the strict cold/fresh gate.
+The useful follow-up, if accepted-token work continues, is a materially
+stronger learned drafter/reranker trained on a larger isolated non-final corpus,
+or an architectural draft path that uses more of the target-model signal
+without violating target verification. The final Qwen realistic suite must
+remain isolated from tuning and promotion must still use the strict cold/fresh
+gate.
 
 No LocalMaxxing submission.
 
