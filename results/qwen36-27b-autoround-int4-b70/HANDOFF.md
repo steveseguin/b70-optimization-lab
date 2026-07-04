@@ -181,6 +181,12 @@ Current next-execution plan:
   `18.15 GiB`) and logs text-only mode, but with the current MTP3/cg8 XPU graph
   recipe the server hangs before readiness at decode graph capture. Treat it as
   a service-memory clue only, not a strict decode optimization.
+- closed scheduler MBT/chunked-prefill screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-scheduler-mbt-and-chunked-prefill-screen.md`.
+  `MAX_NUM_BATCHED_TOKENS=768` and `1280` both passed strict/fresh but were
+  slower (`64.131` / `64.346 tok/s`) than the approved `65.276` record family;
+  disabling chunked prefill is invalid for the current 2048-context / MBT1024
+  recipe. Keep MBT1024 and chunked prefill enabled.
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
   adaptive-depth heuristics unless the proposer and verifier are both made

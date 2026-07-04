@@ -132,6 +132,12 @@ Fastest quality-gated practical variant:
   readiness at decode graph capture. Do not use it for the current strict
   decode record; only revisit for non-MTP/non-graph service-memory work or
   after the graph-capture path changes.
+- scheduler MBT / chunked-prefill screen closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-scheduler-mbt-and-chunked-prefill-screen.md`.
+  MBT768 (`64.131 tok/s`) and MBT1280 (`64.346 tok/s`) were strict-valid but
+  below the `65.276 tok/s` record family; disabling chunked prefill is invalid
+  for the current 2048-context / MBT1024 recipe. Keep MBT1024 and chunked
+  prefill enabled.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

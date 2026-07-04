@@ -179,6 +179,12 @@ Next milestone:
     hung before readiness at `Capturing CUDA graphs (decode, PIECEWISE): 0/1`.
     Do not use it for the current strict decode recipe; only revisit for
     non-MTP/non-graph service-memory work or after XPU graph capture changes.
+14. Latest scheduler screen:
+    `notes/2026-07-04-scheduler-mbt-and-chunked-prefill-screen.md`.
+    MBT768 (`64.131 tok/s`) and MBT1280 (`64.346 tok/s`) passed the strict
+    fresh gate but lost to the current `65.276 tok/s` record family; disabling
+    chunked prefill is invalid for `MAX_MODEL_LEN=2048` / MBT1024. Keep
+    `MAX_NUM_BATCHED_TOKENS=1024` and chunked prefill enabled.
 
 ## Folder Map
 
