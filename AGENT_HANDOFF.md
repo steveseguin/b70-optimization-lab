@@ -88,6 +88,13 @@ Active target as of the latest switch request:
   `60.526`, root top-3 `63.107`; root top-2 stalled during drafter checkpoint
   load. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
+- Latest short-decode `MAX_NUM_BATCHED_TOKENS` follow-up is closed no-win.
+  MBT1536/2048/4096 passed the strict fresh gate at `63.829`, `64.239`, and
+  `64.779 tok/s`, all below the `65.276` record. The same-window MBT1024
+  control is invalid because GPU0 hit `UR_RESULT_ERROR_DEVICE_LOST` during
+  bench after smoke passed. Keep MBT1024 for short decode and MBT4096 only for
+  the separate 32K service lane. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-short-decode-mbt-screen-no-win.md`.
 - Latest draft-only subset follow-up is closed-negative. A default-off
   hot-vocab INT8 LM-head top-1 patch for Qwen MTP drafting passed the strict
   fresh gate but lost badly in a same-window four-GPU screen: dense control

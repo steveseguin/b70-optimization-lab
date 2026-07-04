@@ -118,6 +118,13 @@ Phase 0 and Phase 1 are complete and captured in
   control MTP3/cg8 was `63.871 tok/s`; binary depth-2 tree was `60.526`;
   root top-3 was `63.107`; root top-2 stalled during drafter checkpoint load.
   Do not repeat config-only token-tree sweeps for this recipe.
+- Short-decode `MAX_NUM_BATCHED_TOKENS` is closed for the current recipe:
+  `2026-07-04-short-decode-mbt-screen-no-win.md`. MBT1536/2048/4096 passed
+  the strict fresh gate at `63.829`, `64.239`, and `64.779 tok/s`, all below
+  the `65.276` record and inside variance. MBT1024 control hit
+  `UR_RESULT_ERROR_DEVICE_LOST` on GPU0 and is invalid, but existing default
+  recipe support rows already cover MBT1024. Keep MBT1024 for short decode and
+  MBT4096 only for the separate 32K service lane.
 
 ## Current waste estimate
 

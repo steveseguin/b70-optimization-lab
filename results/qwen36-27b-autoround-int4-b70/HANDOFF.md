@@ -366,6 +366,13 @@ Current next-execution plan:
   top-2 stalled during drafter checkpoint load. Do not repeat token-tree sweeps
   unless a future branch design avoids the current full-logits proposer cost or
   uses a materially stronger legal drafter.
+- short-decode `MAX_NUM_BATCHED_TOKENS` screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-short-decode-mbt-screen-no-win.md`.
+  MBT1536/2048/4096 passed the strict fresh/cached-zero gate but landed below
+  the record at `63.829`, `64.239`, and `64.779 tok/s`. The MBT1024 same-window
+  control is invalid due GPU0 `UR_RESULT_ERROR_DEVICE_LOST` during the first
+  benchmark request. Keep MBT1024 for short decode; keep MBT4096 only in the
+  separate 32K service/prompt-processing lane.
 - EAGLE1 local training pipeline:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`.
   The local pipeline now works end-to-end for Qwen27 hidden size `5120`:

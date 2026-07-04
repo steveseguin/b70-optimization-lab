@@ -311,6 +311,14 @@ Next milestone:
     checkpoint load, and root top-3 already closed the same root-alternative
     idea. Do not reopen token-tree sweeps unless the branch design avoids the
     current full-logits tree proposer cost or uses a stronger legal drafter.
+28. Short-decode `MAX_NUM_BATCHED_TOKENS` screen:
+    `notes/2026-07-04-short-decode-mbt-screen-no-win.md`.
+    The current record recipe should stay at MBT1024 for short decode.
+    Same-window candidates MBT1536, MBT2048, and MBT4096 all passed the strict
+    fresh/cached-zero gate but landed at `63.829`, `64.239`, and `64.779 tok/s`,
+    below the `65.276` record and inside recipe variance. The MBT1024 control
+    row is invalid because GPU0 device-lost during the first benchmark request
+    after smoke passed; existing support rows already cover the default recipe.
 
 ## Folder Map
 
