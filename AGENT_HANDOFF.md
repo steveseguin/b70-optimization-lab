@@ -59,6 +59,13 @@ Active target as of the latest switch request:
   and 1K needle quality passed. LocalMaxxing approved it as
   `cmr5iu3gk00bfq901nidgcana`. Start from
   `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
+- The same-quality-class `cyankiwi/Qwen3.6-27B-AWQ-INT4` checkpoint was
+  screened after download. It loads in vLLM/XPU with
+  `--quantization compressed-tensors` and passes the strict fresh/cached-zero
+  gate, but only reaches `56.565 tok/s`, so it is closed no-win and should not
+  be repeated unless compressed-tensors W4A16 performance materially changes.
+  See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-cyankiwi-awq-int4-screen-no-win.md`.
 - Latest closed follow-up: BF16-scale controls reconfirmed below the record,
   FP16 scale storage was slower, and webhie target-only BF16 scope had lower
   TTFT but failed repeat32 quality once. Do not promote target-only webhie

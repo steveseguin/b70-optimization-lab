@@ -70,8 +70,10 @@ Current fastest quality-gated variant:
 - latest continuation bookmark:
   `notes/2026-07-04-continuation-source-and-awq-state.md`. This preserves the
   active source snapshots, closes another no-repeat audit of cheap env/config
-  knobs, and records the unscreened `cyankiwi/Qwen3.6-27B-AWQ-INT4` strict
-  screen plan once the checkpoint download completes.
+  knobs, and records the `cyankiwi/Qwen3.6-27B-AWQ-INT4` strict screen result:
+  compressed-tensors AWQ loaded and passed the fresh/cached-zero gate
+  mechanically, but only reached `56.565 tok/s` and is closed no-win. See
+  `notes/2026-07-04-cyankiwi-awq-int4-screen-no-win.md`.
 
 Prior Intel-checkpoint fastest quality-gated variant:
 

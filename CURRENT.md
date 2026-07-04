@@ -62,8 +62,11 @@ Fastest quality-gated practical variant:
 - continuation bookmark:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It preserves active source snapshots, records that no cheap env-only
-  candidate remains, and identifies `cyankiwi/Qwen3.6-27B-AWQ-INT4` as the
-  current unscreened same-quality-class variant once its download completes;
+  candidate remains, and now closes `cyankiwi/Qwen3.6-27B-AWQ-INT4` as a
+  strict-valid checkpoint no-win: it loaded with `--quantization
+  compressed-tensors`, passed the fresh/cached-zero gate at `56.565 tok/s`, and
+  stayed well below the `65.276 tok/s` webhie/BF16-scale record. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-cyankiwi-awq-int4-screen-no-win.md`;
 - same-window/crossover FP32-scale controls: `64.234` and `64.090 tok/s`;
 - prior submitted webhie INT8-LM-head record: `64.306 tok/s`;
 - full quality gate passed with baseline match and 1024-token needle pass

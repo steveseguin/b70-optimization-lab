@@ -71,7 +71,7 @@ for another near-parity full-vocab scan.
 
 ## AWQ INT4 variant status
 
-Current unscreened same-quality-class candidate:
+Closed same-quality-class candidate:
 
 ```text
 cyankiwi/Qwen3.6-27B-AWQ-INT4
@@ -79,23 +79,32 @@ revision 8f269fb53eb3fe3be8f01f9755f20570cef0ebe0
 total size about 19.06 GiB
 ```
 
-Rationale: it is a same-family Qwen3.6 27B INT4/AWQ checkpoint and therefore a
-plausible strict-screen candidate, unlike FP8/NVFP4 lanes which need separate
-quality/quantization labeling.
+Rationale for screening: it is a same-family Qwen3.6 27B INT4/AWQ checkpoint
+and therefore a plausible strict-screen candidate, unlike FP8/NVFP4 lanes which
+need separate quality/quantization labeling.
 
-A download was started into the normal internal HF cache:
+Outcome: the checkpoint was downloaded into the standalone local model directory
+below, loaded successfully with `--quantization compressed-tensors`, and passed
+the strict fresh/cached-zero speed gate mechanically, but it was a no-win:
+median **56.565477988590345 tok/s**, well below the current
+`65.27648650325429 tok/s` webhie/BF16-scale record. No LocalMaxxing submission.
+See:
 
 ```text
-/mnt/fast-ai/llm-cache/hf/hub/models--cyankiwi--Qwen3.6-27B-AWQ-INT4
+experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-cyankiwi-awq-int4-screen-no-win.md
 ```
 
-Detached shell children were killed by the tool environment, so the active
-download must run as a tracked foreground/tool session if it is still needed.
-If the snapshot completes, first strict screen should use:
+Local model directory:
+
+```text
+/mnt/fast-ai/llm-models/qwen36-27b-awq-int4-cyankiwi-8f269fb
+```
+
+The strict screen used:
 
 ```bash
 cd /home/steve/llm-optimizations
-MODEL_DIR=/mnt/fast-ai/llm-cache/hf/hub/models--cyankiwi--Qwen3.6-27B-AWQ-INT4/snapshots/8f269fb53eb3fe3be8f01f9755f20570cef0ebe0 \
+MODEL_DIR=/mnt/fast-ai/llm-models/qwen36-27b-awq-int4-cyankiwi-8f269fb \
 QWEN36_27B_AR_REPO=cyankiwi/Qwen3.6-27B-AWQ-INT4 \
 LABEL=qwen27-cyankiwi-awq-int4-int8lmhead-bf16scale-mtp3-cg8 \
 SERVED_MODEL_NAME=qwen36-27b-cyankiwi-awq-int4 \
@@ -117,7 +126,8 @@ RUN_QUALITY=1 READINESS_TIMEOUT_S=1200 \
 experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh
 ```
 
-Promotion requires the full strict gate plus quality:
+Promotion would have required the full strict gate plus quality, but this row is
+closed no-win on speed:
 
 - fixed Qwen realistic suite, each prompt once, `cached_tokens=0`;
 - same target quant/checkpoint identity clearly labeled as AWQ INT4;
@@ -130,8 +140,6 @@ Promotion requires the full strict gate plus quality:
 
 ## Next action
 
-If the AWQ checkpoint finishes, screen it first because it is a clean
-checkpoint-level candidate. If it does not finish promptly, do not block the
-lane on network transfer: continue only with a deliberate deep source patch
-cycle from the four remaining lanes above, with a preserved patch and a
-microbench/strict stop criterion before endpoint promotion.
+The AWQ checkpoint-level screen is closed. Continue only with a deliberate deep
+source patch cycle from the four remaining lanes above, with a preserved patch
+and a microbench/strict stop criterion before endpoint promotion.

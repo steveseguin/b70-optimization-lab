@@ -97,8 +97,11 @@ Current fastest quality-gated variant:
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed
-  env/config knobs, and the current `cyankiwi/Qwen3.6-27B-AWQ-INT4` download /
-  strict-screen plan.
+  env/config knobs, and the `cyankiwi/Qwen3.6-27B-AWQ-INT4` strict screen
+  closure. The AWQ checkpoint loaded with `--quantization compressed-tensors`
+  and passed the fresh/cached-zero gate, but only reached `56.565 tok/s`, so it
+  is a no-win versus the `65.276 tok/s` webhie/BF16-scale record. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-cyankiwi-awq-int4-screen-no-win.md`.
 
 Current prompt-processing / long-context service baseline:
 
