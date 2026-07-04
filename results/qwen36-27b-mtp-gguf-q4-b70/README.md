@@ -22,6 +22,12 @@ Best strict GGUF row so far:
   `../../data/qwen36-27b-mtp-gguf-q4-b70-baselines/llamacpp-mtp3-aot-np1-realistic128-20260703T060748Z.json`;
 - compact sweep ledger:
   `initial-realistic-sweep-20260703.json`.
+- LocalMaxxing reference:
+  `cmr6mn5ct0076mn01on3dnpyn`, submitted as a valid but non-competitive
+  model/runtime variation; queue and response are
+  `../../experiments/qwen36-27b-mtp-gguf-q4-b70/localmaxxing/qwen36-27b-gguf-q4-mtp3-20260703.queue.json`
+  and
+  `../../data/localmaxxing-responses/qwen36-27b-gguf-q4-mtp3-20260703.submit.log`.
 
 The current valid INT4/Q4 Qwen27 headline remains the separate
 `Intel/Qwen3.6-27B-int4-AutoRound` vLLM/XPU lane at median `53.522 tok/s` on
