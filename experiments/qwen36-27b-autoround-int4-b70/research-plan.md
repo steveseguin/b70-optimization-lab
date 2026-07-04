@@ -5,6 +5,13 @@ Date: 2026-07-03
 This plan captures web and local-source research done while the Intel
 AutoRound checkpoint was downloading.
 
+Current execution plan: use
+`notes/2026-07-04-next-optimization-execution-plan.md` for the next Qwen27
+optimization lane. It incorporates the current `65.27648650325429 tok/s`
+webhie BF16-scale INT8-LM-head record, LocalMaxxing status, variance policy,
+prior no-win source attempts, and the completion gates for the fused
+LM-head/top-1 candidate-max route.
+
 ## Sources Checked
 
 - Intel model card:

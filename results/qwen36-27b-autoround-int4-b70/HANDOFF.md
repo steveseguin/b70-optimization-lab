@@ -1,6 +1,6 @@
 # Qwen3.6 27B AutoRound Handoff
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 This is the bookmark for `Intel/Qwen3.6-27B-int4-AutoRound` on Intel Arc Pro
 B70.
@@ -94,6 +94,15 @@ Current fastest quality-gated variant:
 - previous webhie INT8-LM-head packet:
   `webhie-int8-lmhead-20260703.json`, LocalMaxxing
   `cmr576apv0079q901i6dvsh0l`.
+
+Current next-execution plan:
+
+- `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-next-optimization-execution-plan.md`;
+- focus: reproduce the `65.27648650325429 tok/s` BF16-scale control, refresh
+  timing, then pursue only a real native fused LM-head top-1 / candidate-max
+  route or close it with preserved patch/results;
+- do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
+  Python/chunked oneDNN top-1 attempts.
 
 Prior Intel-checkpoint quality-gated runtime-quantized variant:
 
