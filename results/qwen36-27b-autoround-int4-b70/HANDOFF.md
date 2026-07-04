@@ -264,6 +264,12 @@ Current next-execution plan:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-endpoint-isolation-20260704T094450Z-summary.json`.
   Treat this EAGLE1 endpoint lane as closed-negative for now; future EAGLE work
   should start with corpus/eval v2, not more endpoint config sweeps.
+- EAGLE corpus/eval v2 tooling:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-tooling.md`.
+  The collector can now use suite-driven chat requests with stable request IDs
+  and prompt metadata; the dataset builder carries that metadata into samples;
+  offline eval reports acceptance by prompt family. This is preparation only,
+  not a speed result, but it is the restart point for any future EAGLE work.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

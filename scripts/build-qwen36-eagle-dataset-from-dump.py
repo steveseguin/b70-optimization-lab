@@ -79,6 +79,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dump-dir", required=True)
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--summary", default="")
+    parser.add_argument(
+        "--metadata",
+        action="append",
+        default=[],
+        help=(
+            "Collector summary JSON from collect-qwen36-eagle-hidden-corpus.py. "
+            "May repeat; request metadata is copied into saved samples."
+        ),
+    )
     parser.add_argument("--min-len", type=int, default=8)
     parser.add_argument("--max-len", type=int, default=2048)
     parser.add_argument("--max-samples", type=int, default=0)
@@ -105,6 +114,37 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def load_request_metadata(paths: list[str]) -> dict[str, dict[str, Any]]:
+    out: dict[str, dict[str, Any]] = {}
+    for path in paths:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        for record in payload.get("records", []):
+            if not isinstance(record, dict):
+                continue
+            compact = {
+                "source_metadata_path": path,
+                "index": record.get("index"),
+                "offset": record.get("offset"),
+                "suite_index": record.get("suite_index"),
+                "prompt_id": record.get("prompt_id"),
+                "family": record.get("family"),
+                "prompt_sha256": record.get("prompt_sha256"),
+                "text_sha256": record.get("text_sha256"),
+                "output_tokens_actual": record.get("output_tokens_actual"),
+                "metadata": record.get("metadata"),
+            }
+            for key in (
+                "request_id",
+                "response_x_request_id",
+                "response_id",
+            ):
+                value = record.get(key)
+                if isinstance(value, str) and value:
+                    out[value] = compact
+    return out
+
+
 def cast_hidden(hidden: torch.Tensor, dtype_name: str) -> torch.Tensor:
     if dtype_name == "native":
         return hidden
@@ -126,6 +166,7 @@ def save_buffer(
     min_len: int,
     max_len: int,
     hidden_dtype: str,
+    request_metadata: dict[str, dict[str, Any]],
 ) -> bool:
     if len(buffer.hidden) < min_len:
         return False
@@ -139,10 +180,15 @@ def save_buffer(
     )
     safe_req = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in req_id)
     path = os.path.join(out_dir, f"sample-{sample_index:06d}-{safe_req}.pt")
+    metadata = request_metadata.get(req_id, {})
     torch.save(
         {
             "format": "qwen36_eagle_sequence_v1",
             "req_id": req_id,
+            "request_metadata": metadata,
+            "prompt_id": metadata.get("prompt_id"),
+            "family": metadata.get("family"),
+            "prompt_sha256": metadata.get("prompt_sha256"),
             "hidden_state": hidden,
             "input_ids": input_ids,
             "positions": positions,
@@ -159,6 +205,7 @@ def main() -> int:
     args = parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     paths = sorted(glob.glob(os.path.join(args.dump_dir, args.glob)))
+    request_metadata = load_request_metadata(args.metadata)
 
     buffers: dict[str, SequenceBuffer] = defaultdict(SequenceBuffer)
     sample_count = 0
@@ -173,9 +220,10 @@ def main() -> int:
     reconstructed_current_token_rows = 0
     reconstructed_position_rows = 0
     skipped_bad_files: list[str] = []
+    samples_with_metadata = 0
 
     def maybe_save(req_id: str) -> None:
-        nonlocal sample_count
+        nonlocal sample_count, samples_with_metadata
         if args.max_samples and sample_count >= args.max_samples:
             return
         buffer = buffers[req_id]
@@ -187,7 +235,10 @@ def main() -> int:
             min_len=args.min_len,
             max_len=args.max_len,
             hidden_dtype=args.hidden_dtype,
+            request_metadata=request_metadata,
         ):
+            if req_id in request_metadata:
+                samples_with_metadata += 1
             sample_count += 1
 
     for path in paths:
@@ -299,6 +350,9 @@ def main() -> int:
         "reconstruct_positions_from_num_tokens": (
             args.reconstruct_positions_from_num_tokens
         ),
+        "metadata_files": args.metadata,
+        "metadata_request_keys": len(request_metadata),
+        "samples_with_metadata": samples_with_metadata,
     }
     summary_path = args.summary or os.path.join(args.out_dir, "summary.json")
     with open(summary_path, "w", encoding="utf-8") as f:

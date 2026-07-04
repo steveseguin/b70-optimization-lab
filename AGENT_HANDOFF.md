@@ -97,6 +97,8 @@ Active target as of the latest switch request:
   `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-endpoint-isolation-20260704T094450Z-summary.json`.
   If EAGLE is revisited, start with corpus/eval v2 rather than endpoint config
   sweeps.
+  The corpus/eval v2 tooling entry point is
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-tooling.md`.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

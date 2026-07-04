@@ -5,7 +5,7 @@ The endpoint must be launched separately with:
 
   VLLM_XPU_EAGLE_DATA_DUMP_DIR=<dump-dir>
 
-This script only sends deterministic completion requests and records request
+This script sends deterministic completion or chat requests and records request
 metadata. The vLLM worker hook writes the actual hidden-state shards.
 """
 
@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import time
 import urllib.request
 from dataclasses import dataclass
@@ -316,11 +317,61 @@ def fit_prompt(tokenizer: Any, spec: PromptSpec, target_tokens: int,
     return tokenizer.decode(ids[:target_tokens], skip_special_tokens=True)
 
 
-def request_completion(base_url: str, model: str, prompt: str, max_tokens: int,
-                       seed: int, ignore_eos: bool) -> dict[str, Any]:
+def safe_request_id(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.:-]+", "-", value).strip("-")[:180]
+
+
+def load_suite(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    suite = json.loads(path.read_text())
+    if isinstance(suite, list):
+        meta = {"suite_id": path.stem, "version": None}
+        prompts = suite
+    else:
+        meta = {k: v for k, v in suite.items() if k != "prompts"}
+        prompts = suite["prompts"]
+    out: list[dict[str, Any]] = []
+    for index, item in enumerate(prompts):
+        if isinstance(item, dict):
+            prompt_id = str(item.get("id", f"prompt-{index:02d}"))
+            prompt = str(item.get("prompt", ""))
+            messages = item.get("messages")
+            family = str(item.get("family", item.get("category", prompt_id)))
+            metadata = {k: v for k, v in item.items()
+                        if k not in ("prompt", "messages")}
+        else:
+            prompt_id = f"prompt-{index:02d}"
+            prompt = str(item)
+            messages = None
+            family = prompt_id
+            metadata = {"id": prompt_id}
+        if not prompt and not messages:
+            raise ValueError(f"suite prompt {prompt_id!r} has no prompt/messages")
+        out.append({
+            "suite_index": index,
+            "prompt_id": prompt_id,
+            "family": family,
+            "prompt": prompt,
+            "messages": messages,
+            "metadata": metadata,
+        })
+    return meta, out
+
+
+def request_generation(
+    base_url: str,
+    model: str,
+    *,
+    api_mode: str,
+    prompt: str,
+    messages: list[dict[str, Any]] | None,
+    max_tokens: int,
+    seed: int,
+    ignore_eos: bool,
+    request_extra: dict[str, Any],
+    request_id: str,
+) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": model,
-        "prompt": prompt,
         "max_tokens": max_tokens,
         "temperature": 0,
         "seed": seed,
@@ -328,21 +379,40 @@ def request_completion(base_url: str, model: str, prompt: str, max_tokens: int,
     }
     if ignore_eos:
         payload["ignore_eos"] = True
+    if api_mode == "chat":
+        endpoint = "chat/completions"
+        if messages is not None:
+            payload["messages"] = messages
+        else:
+            payload["messages"] = [{"role": "user", "content": prompt}]
+    else:
+        endpoint = "completions"
+        payload["prompt"] = prompt
+    payload.update(request_extra)
     req = urllib.request.Request(
-        f"{base_url.rstrip('/')}/v1/completions",
+        f"{base_url.rstrip('/')}/v1/{endpoint}",
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "X-Request-Id": request_id},
         method="POST",
     )
     t0 = time.perf_counter()
     with urllib.request.urlopen(req, timeout=max(120, max_tokens * 8)) as resp:
+        response_x_request_id = resp.headers.get("X-Request-Id")
         data = json.loads(resp.read())
     elapsed = time.perf_counter() - t0
     choices = data.get("choices") or []
-    text = choices[0].get("text") if choices else ""
+    text = ""
+    if choices:
+        if api_mode == "chat":
+            message = choices[0].get("message") or {}
+            text = message.get("content") or message.get("reasoning") or ""
+        else:
+            text = choices[0].get("text") or ""
     usage = data.get("usage") or {}
     return {
-        "request_id": data.get("id"),
+        "request_id": request_id,
+        "response_id": data.get("id"),
+        "response_x_request_id": response_x_request_id,
         "elapsed_s": elapsed,
         "text": text or "",
         "usage": usage,
@@ -355,13 +425,25 @@ def main() -> int:
     parser.add_argument("--model", required=True)
     parser.add_argument("--tokenizer", required=True)
     parser.add_argument("--out", required=True)
-    parser.add_argument("--num-prompts", type=int, default=48)
+    parser.add_argument("--suite", default="")
+    parser.add_argument("--api-mode", choices=("chat", "completions"),
+                        default="completions")
+    parser.add_argument("--request-extra-json", default="{}")
+    parser.add_argument("--request-id-prefix", default="qwen27-eagle")
+    parser.add_argument("--num-prompts", type=int, default=0)
     parser.add_argument("--start-index", type=int, default=0)
     parser.add_argument("--output-tokens", type=int, default=96)
     parser.add_argument("--prompt-token-sizes", default="96,128,192,256,384")
     parser.add_argument("--seed", type=int, default=1000)
     parser.add_argument("--ignore-eos", action="store_true")
     args = parser.parse_args()
+
+    try:
+        request_extra = json.loads(args.request_extra_json)
+    except Exception as exc:
+        raise SystemExit(f"invalid --request-extra-json: {exc}") from exc
+    if not isinstance(request_extra, dict):
+        raise SystemExit("--request-extra-json must decode to a JSON object")
 
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, trust_remote_code=True)
     sizes = [
@@ -371,20 +453,56 @@ def main() -> int:
     if not sizes:
         raise ValueError("--prompt-token-sizes produced no sizes")
 
+    suite_meta: dict[str, Any] | None = None
+    suite_prompts: list[dict[str, Any]] = []
+    if args.suite:
+        suite_meta, suite_prompts = load_suite(Path(args.suite))
+    num_prompts = args.num_prompts
+    if num_prompts <= 0:
+        num_prompts = len(suite_prompts) if suite_prompts else 48
+    if num_prompts <= 0:
+        raise ValueError("no prompts selected")
+
     records: list[dict[str, Any]] = []
-    for offset in range(args.num_prompts):
+    for offset in range(num_prompts):
         i = args.start_index + offset
-        spec = PROMPTS[i % len(PROMPTS)]
-        prompt_tokens_target = sizes[i % len(sizes)]
-        prompt = fit_prompt(tokenizer, spec, prompt_tokens_target, i)
-        prompt_tokens_actual = len(tokenizer.encode(prompt, add_special_tokens=False))
-        result = request_completion(
+        if suite_prompts:
+            item = suite_prompts[i % len(suite_prompts)]
+            family = str(item["family"])
+            prompt_id = str(item["prompt_id"])
+            prompt = str(item.get("prompt") or "")
+            messages = item.get("messages")
+            prompt_tokens_target = None
+            suite_index = item["suite_index"]
+            item_metadata = item["metadata"]
+        else:
+            spec = PROMPTS[i % len(PROMPTS)]
+            family = spec.family
+            prompt_id = f"{spec.family}-{i:04d}"
+            prompt_tokens_target = sizes[i % len(sizes)]
+            prompt = fit_prompt(tokenizer, spec, prompt_tokens_target, i)
+            messages = None
+            suite_index = None
+            item_metadata = {"id": prompt_id, "family": family}
+        prompt_for_hash = prompt
+        if not prompt_for_hash and messages is not None:
+            prompt_for_hash = json.dumps(messages, sort_keys=True)
+        prompt_tokens_actual = len(
+            tokenizer.encode(prompt_for_hash, add_special_tokens=False)
+        )
+        request_id = safe_request_id(
+            f"{args.request_id_prefix}-{i:06d}-{prompt_id}")
+        result = request_generation(
             args.base_url,
             args.model,
-            prompt,
-            args.output_tokens,
+            api_mode=args.api_mode,
+            prompt=prompt,
+            messages=messages,
+            max_tokens=args.output_tokens,
             seed=args.seed + i,
             ignore_eos=args.ignore_eos,
+            request_extra=request_extra,
+            request_id=request_id,
         )
         text = result["text"]
         usage = result.get("usage") or {}
@@ -394,8 +512,12 @@ def main() -> int:
         record = {
             "index": i,
             "offset": offset,
-            "family": spec.family,
+            "suite_index": suite_index,
+            "prompt_id": prompt_id,
+            "family": family,
             "request_id": result.get("request_id"),
+            "response_id": result.get("response_id"),
+            "response_x_request_id": result.get("response_x_request_id"),
             "prompt_tokens_target": prompt_tokens_target,
             "prompt_tokens_actual": prompt_tokens_actual,
             "output_tokens_requested": args.output_tokens,
@@ -403,8 +525,11 @@ def main() -> int:
             "elapsed_s": result["elapsed_s"],
             "tok_s_e2e": (float(output_tokens) / result["elapsed_s"]
                           if result["elapsed_s"] > 0 else None),
+            "prompt_sha256": hashlib.sha256(
+                prompt_for_hash.encode("utf-8")).hexdigest(),
             "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
             "text_preview": text[:160],
+            "metadata": item_metadata,
         }
         records.append(record)
         print(json.dumps(record, sort_keys=True), flush=True)
@@ -414,7 +539,12 @@ def main() -> int:
         "base_url": args.base_url,
         "model": args.model,
         "tokenizer": args.tokenizer,
-        "num_prompts": args.num_prompts,
+        "api_mode": args.api_mode,
+        "suite": args.suite,
+        "suite_meta": suite_meta,
+        "request_extra_json": request_extra,
+        "request_id_prefix": args.request_id_prefix,
+        "num_prompts": num_prompts,
         "start_index": args.start_index,
         "output_tokens_requested": args.output_tokens,
         "prompt_token_sizes": sizes,

@@ -56,6 +56,12 @@ EAGLE is revisited, build corpus/eval v2 first: diverse chat prompts, preserved
 prompt/family metadata, stronger held-out repetition diagnostics, and a
 non-final calibration endpoint pass before the final strict suite.
 
+The corpus/eval v2 tooling pass is captured in
+`notes/2026-07-04-eagle-corpus-v2-tooling.md`. The collector now supports
+suite-driven chat requests and stable request IDs, the dataset builder preserves
+collector metadata in samples, and offline eval reports `family_rows`; use this
+tooling before training another local EAGLE draft.
+
 ## Sources Checked
 
 - Intel model card:

@@ -21,6 +21,7 @@ import json
 import os
 import sys
 import time
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -226,10 +227,20 @@ def main() -> int:
     topk_hits = [0 for _ in range(args.max_steps)]
     sample_rows: list[dict[str, Any]] = []
     examples: list[dict[str, Any]] = []
+    family_stats: dict[str, dict[str, float | int]] = defaultdict(
+        lambda: {"samples": 0, "starts": 0, "accepted": 0}
+    )
 
     with torch.no_grad():
         for sample_index, path in enumerate(paths):
             sample = torch_load(path)
+            request_metadata = sample.get("request_metadata") or {}
+            family = str(
+                sample.get("family")
+                or request_metadata.get("family")
+                or "unknown"
+            )
+            prompt_id = sample.get("prompt_id") or request_metadata.get("prompt_id")
             hidden = sample["hidden_state"].to(torch.float32)
             if "sampled_next_token_ids" not in sample:
                 continue
@@ -272,13 +283,20 @@ def main() -> int:
                 if len(examples) < 20 and (accepted < args.max_steps):
                     examples.append({
                         "sample": os.path.basename(path),
+                        "family": family,
+                        "prompt_id": prompt_id,
                         "start": start,
                         "accepted": accepted,
                         "rows": rows,
                     })
             if sample_starts:
+                family_stats[family]["samples"] += 1
+                family_stats[family]["starts"] += sample_starts
+                family_stats[family]["accepted"] += sample_accepted
                 sample_rows.append({
                     "sample": os.path.basename(path),
+                    "family": family,
+                    "prompt_id": prompt_id,
                     "starts": sample_starts,
                     "mean_accepted": sample_accepted / sample_starts,
                     "tokens": int(length),
@@ -310,6 +328,19 @@ def main() -> int:
             "unconditional_topk_rate": topk_hits[i] / starts,
         })
 
+    family_rows = []
+    for family, stats_row in sorted(family_stats.items()):
+        family_starts = int(stats_row["starts"])
+        family_accepted = float(stats_row["accepted"])
+        family_rows.append({
+            "family": family,
+            "samples": int(stats_row["samples"]),
+            "starts": family_starts,
+            "mean_accepted": (
+                family_accepted / family_starts if family_starts else 0.0
+            ),
+        })
+
     summary = {
         "draft_dir": args.draft_dir,
         "target_model": args.target_model,
@@ -326,6 +357,7 @@ def main() -> int:
         "per_step": per_step,
         "elapsed_s": elapsed,
         "starts_per_s": starts / elapsed if elapsed else 0.0,
+        "family_rows": family_rows,
         "sample_rows": sample_rows[:200],
         "first_mismatch_examples": examples,
     }

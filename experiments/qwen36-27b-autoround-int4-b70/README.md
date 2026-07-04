@@ -197,6 +197,13 @@ Next milestone:
     Do not repeat endpoint config sweeps for this draft; future EAGLE work
     starts with diverse chat-style corpus/eval v2 and stronger held-out
     diagnostics.
+16. EAGLE corpus/eval v2 tooling:
+    `notes/2026-07-04-eagle-corpus-v2-tooling.md`.
+    The collector now supports `--suite`, chat mode, request extra JSON, stable
+    request IDs, and prompt metadata; the dataset builder copies that metadata
+    into `.pt` samples; and offline eval reports acceptance by prompt family.
+    This is preparation only, not a speed result, but it is the correct restart
+    point if EAGLE is revisited.
 
 ## Folder Map
 
