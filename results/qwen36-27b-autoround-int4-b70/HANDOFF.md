@@ -345,6 +345,18 @@ Current next-execution plan:
   heuristic or small top-k reranker. If accepted-token work continues, it needs
   a materially stronger drafter/reranker or architecture on isolated non-final
   data before endpoint testing.
+- draft top-k64 follow-up:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-topk64-and-sequential-reranker-limit.md`.
+  A 96-prompt fresh/cached-zero diagnostic with draft top-64 tracing passed the
+  mechanical gate, but throughput was slowed to `52.140 tok/s` by trace
+  logging and is diagnostic-only. The useful result is acceptance evidence:
+  base `2.6243` target tokens/step, independent top-k64 oracle `3.9271`,
+  target-in-top64 rates `99.7%`, `98.4%`, `96.8%` by draft position. Held-out
+  margin reranking was flat (`2.6262`) and sparse-bias reranking regressed
+  (`2.6213`). The independent oracle is invalid as a post-hoc endpoint patch
+  because Qwen27 MTP drafting is sequential; the final-slot upper bound
+  (`2.7872`) still needs bonus-row recompute/branching and is not enough by
+  itself. Do not reopen cheap top-k reranker patches.
 - EAGLE1 local training pipeline:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`.
   The local pipeline now works end-to-end for Qwen27 hidden size `5120`:
@@ -719,6 +731,10 @@ Continue INT4 optimization without promoting synthetic scores:
   `56.418` hot2048/1779-usable. Output hashes matched control on only `11/12`
   prompts. Do not repeat subset-vocab draft approximation; see
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-hot-vocab-top1-no-win.md`;
+- simple draft top-k reranking is closed. Top-k64 proves the target is usually
+  present in alternatives, but sequential MTP makes independent post-hoc
+  replacement invalid and the legal final-slot upper bound is too small without
+  a deeper branch/regenerate or stronger-drafter design;
 - deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
   candidate-vs-max kernel that avoids materializing full vocab logits;
 - for accepted-token / drafter-calibration work, use the compact verifier

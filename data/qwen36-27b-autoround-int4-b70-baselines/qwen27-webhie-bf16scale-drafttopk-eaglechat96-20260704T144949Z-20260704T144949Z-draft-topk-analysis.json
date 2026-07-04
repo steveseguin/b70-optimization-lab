@@ -14,7 +14,11 @@
   "draft_groups": 4892,
   "draft_rows": 14676,
   "draft_topk": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z/draft-topk.jsonl",
-  "oracle_topk_mean_target_tokens_per_step": 3.863844870725605,
+  "oracle_topk_independent_upper_bound": {
+    "mean_target_tokens_per_step": 3.863844870725605,
+    "runtime_interpretation": "Diagnostic upper bound only. Not directly implementable for sequential MTP unless later draft positions are regenerated or a branch/tree drafter is made correct."
+  },
+  "oracle_topk_mean_target_tokens_per_step_deprecated": 3.863844870725605,
   "per_position": {
     "0": {
       "attempts": 4796,

@@ -74,6 +74,13 @@ Active target as of the latest switch request:
   oneDNN INT8 matmul writes dense logits, and existing sampler/top-k kernels
   only reduce after logits exist. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+- Latest draft top-k follow-up is closed as diagnostic-only. K64 tracing shows
+  the target token is in draft alternatives very often, but Qwen27 MTP drafting
+  is sequential, so independent post-hoc reranking invalidates later draft rows
+  and the target-owned bonus row. Held-out margin/sparse-bias reranking did not
+  improve acceptance, and the legal final-slot upper bound is too small to
+  justify endpoint work. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-topk64-and-sequential-reranker-limit.md`.
 - Latest draft-only subset follow-up is closed-negative. A default-off
   hot-vocab INT8 LM-head top-1 patch for Qwen MTP drafting passed the strict
   fresh gate but lost badly in a same-window four-GPU screen: dense control

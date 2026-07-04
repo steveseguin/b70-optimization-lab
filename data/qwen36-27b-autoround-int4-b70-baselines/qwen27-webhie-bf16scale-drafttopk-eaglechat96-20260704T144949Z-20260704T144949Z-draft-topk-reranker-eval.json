@@ -399,7 +399,8 @@
   ],
   "classification": "diagnostic_only_offline_reranker_eval",
   "draft_topk": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z/draft-topk.jsonl",
-  "oracle_topk": {
+  "oracle_topk_independent_upper_bound": {
+    "runtime_interpretation": "Not directly implementable for sequential MTP unless later draft positions are regenerated or a branch/tree drafter is made correct.",
     "test": {
       "accepted_hist": {
         "0": 24,
@@ -433,6 +434,33 @@
       "steps": 2400,
       "target_in_topk_rate": 0.9722222222222222,
       "token_match_rate": 0.9722222222222222
+    }
+  },
+  "oracle_topk_last_position_recomputed_bonus_upper_bound": {
+    "runtime_interpretation": "Changes only the final MTP slot, but the existing bonus row was computed from the original final draft token. A real implementation would need to recompute or branch the target bonus row; this is not a cheap post-hoc patch.",
+    "test": {
+      "accepted_hist": {
+        "0": 576,
+        "1": 592,
+        "2": 55,
+        "3": 1173
+      },
+      "changed_final_position_steps": 404,
+      "eligible_steps_base_pos0_pos1_match": 1228,
+      "mean_target_tokens_per_step": 2.761686143572621,
+      "steps": 2396
+    },
+    "train": {
+      "accepted_hist": {
+        "0": 565,
+        "1": 622,
+        "2": 40,
+        "3": 1173
+      },
+      "changed_final_position_steps": 388,
+      "eligible_steps_base_pos0_pos1_match": 1213,
+      "mean_target_tokens_per_step": 2.75875,
+      "steps": 2400
     }
   },
   "result_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafttopk-eaglechat96-20260704T144949Z-20260704T144949Z.json",

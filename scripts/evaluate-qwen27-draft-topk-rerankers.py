@@ -4,6 +4,15 @@
 Diagnostic only. This script uses draft top-k traces plus verifier traces to
 estimate whether cheap reranking rules can improve accepted tokens per MTP
 step before any endpoint/source experiment is attempted.
+
+Qwen27's current MTP proposer is sequential. If token 0 is changed after the
+fact, the recorded token-1 and token-2 top-k rows were generated from the old
+token 0, so the independent per-position oracle is only a headroom number for a
+future branch/regenerate/stronger-drafter design. The final draft position is
+less entangled with later draft rows, but changing it after target verification
+still invalidates the already-computed target bonus row. Treat the final-slot
+oracle as an upper bound for a verifier that can recompute/branch the bonus,
+not as a cheap post-hoc patch.
 """
 
 from __future__ import annotations
@@ -268,6 +277,42 @@ def evaluate_steps(steps: list[dict[str, Any]], predictor) -> dict[str, Any]:
     }
 
 
+def evaluate_last_position_oracle(steps: list[dict[str, Any]]) -> dict[str, Any]:
+    """Upper bound for changing only the final MTP draft slot.
+
+    Positions 0 and 1 remain the actual draft top-1. Position 2 changes to the
+    target only when positions 0 and 1 already match and the target appears in
+    the final-position draft top-k list. The resulting bonus token would need
+    to be recomputed from the corrected final token in a real implementation.
+    """
+    prefix_sum = 0
+    changed = 0
+    eligible = 0
+    accepted_hist: Counter[int] = Counter()
+    for step in steps:
+        positions = step["positions"]
+        pred_ids = [predict_base(pos) for pos in positions]
+        target_ids = [int(pos["target"]) for pos in positions]
+        if pred_ids[:2] == target_ids[:2]:
+            eligible += 1
+            final_target = target_ids[2]
+            if final_target in positions[2]["ids"] and pred_ids[2] != final_target:
+                pred_ids[2] = final_target
+                changed += 1
+        prefix = accepted_len(pred_ids, target_ids)
+        prefix_sum += prefix
+        accepted_hist[prefix] += 1
+    if not steps:
+        return {"steps": 0}
+    return {
+        "steps": len(steps),
+        "mean_target_tokens_per_step": 1.0 + prefix_sum / len(steps),
+        "eligible_steps_base_pos0_pos1_match": eligible,
+        "changed_final_position_steps": changed,
+        "accepted_hist": {str(k): v for k, v in sorted(accepted_hist.items())},
+    }
+
+
 def split_steps(steps: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
                                                      list[dict[str, Any]], str]:
     if all(step["prompt_index"] is not None for step in steps):
@@ -387,6 +432,8 @@ def main() -> int:
             else predict_base(pos)
         ),
     )
+    last_position_oracle_train = evaluate_last_position_oracle(train)
+    last_position_oracle_test = evaluate_last_position_oracle(test)
     margin = find_margin_rule(train, test)
     sparse_bias = train_sparse_bias(train, test)
 
@@ -401,7 +448,25 @@ def main() -> int:
         "train_steps": len(train),
         "test_steps": len(test),
         "base": {"train": base_train, "test": base_test},
-        "oracle_topk": {"train": oracle_train, "test": oracle_test},
+        "oracle_topk_independent_upper_bound": {
+            "train": oracle_train,
+            "test": oracle_test,
+            "runtime_interpretation": (
+                "Not directly implementable for sequential MTP unless later "
+                "draft positions are regenerated or a branch/tree drafter is "
+                "made correct."
+            ),
+        },
+        "oracle_topk_last_position_recomputed_bonus_upper_bound": {
+            "train": last_position_oracle_train,
+            "test": last_position_oracle_test,
+            "runtime_interpretation": (
+                "Changes only the final MTP slot, but the existing bonus row "
+                "was computed from the original final draft token. A real "
+                "implementation would need to recompute or branch the target "
+                "bonus row; this is not a cheap post-hoc patch."
+            ),
+        },
         "best_margin_rule": margin,
         "best_sparse_bias": sparse_bias,
     }

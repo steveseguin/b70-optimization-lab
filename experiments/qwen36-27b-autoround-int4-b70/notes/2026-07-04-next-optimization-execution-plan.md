@@ -99,6 +99,17 @@ Phase 0 and Phase 1 are complete and captured in
   accepted-token work needs a materially stronger reranker/drafter or
   architecture on isolated non-final data, then held-out evaluation before
   endpoint testing.
+- Draft top-k64 confirms the same limit:
+  `2026-07-04-draft-topk64-and-sequential-reranker-limit.md`. A 96-prompt
+  fresh/cached-zero diagnostic trace found target-in-top64 rates of
+  `99.7%`, `98.4%`, and `96.8%` by draft position, but held-out margin
+  reranking stayed flat (`2.626226` target tokens/step) and sparse token-bias
+  reranking regressed (`2.621322`). The independent top-k64 oracle
+  (`3.924200` heldout target tokens/step) is not directly implementable for
+  sequential MTP because changing earlier draft tokens invalidates later draft
+  rows; the final-slot upper bound (`2.787207`) still requires recomputing or
+  branching the target bonus row and is below the threshold worth endpoint
+  work. Do not reopen cheap post-hoc top-k reranker patches.
 
 ## Current waste estimate
 
@@ -130,7 +141,9 @@ Likely upside:
    repeating draft row-batching or local-argmax wrappers unless the producer
    changes materially.
 3. Improving accepted tokens/step toward `3.3-4.0` without increasing step cost
-   is the route toward `90-100 tok/s`.
+   is the route toward `90-100 tok/s`, but the top-k64 diagnostic shows this
+   likely requires a real stronger drafter/branching design rather than
+   post-hoc reranking.
 4. DFlash/parallel drafting is the architectural way to remove sequential draft
    generation, but mixed full/sliding support needs multi-KV-group drafter
    metadata and per-group future-query block tables. Do not delete the

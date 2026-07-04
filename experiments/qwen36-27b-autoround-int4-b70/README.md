@@ -292,6 +292,15 @@ Next milestone:
     trace/analyzers; do not ship a heuristic or tiny top-k reranker. Future
     accepted-token work needs a materially stronger drafter/reranker on
     isolated non-final data.
+26. Draft top-k64 / sequential-reranker limit:
+    `notes/2026-07-04-draft-topk64-and-sequential-reranker-limit.md`.
+    A full 96-prompt K64 diagnostic found target-in-top64 rates of
+    `99.7%`, `98.4%`, and `96.8%` by draft position, but held-out margin
+    reranking was flat and sparse-bias reranking regressed. The independent
+    oracle is an invalid post-hoc endpoint shortcut for sequential MTP, and
+    the final-slot upper bound still needs recomputing/branching the target
+    bonus row while adding only about `+0.16` target tokens/step. Do not
+    reopen cheap top-k reranker endpoint patches.
 
 ## Folder Map
 
@@ -355,7 +364,8 @@ that still computes full logits, draft local-argmax plumbing that still
 computes full logits, FP8 LM-head (quality fail), INT8 MTP k2/k4/k5,
 INT8 cg4/cg16/cg32, draft-only INT8 LM-head, output-buffer reuse, bonus-token
 argmax fast-path, chunked INT8 top-1 argmax-only verification, compressed/full
-EAGLE3 (device-loss or too slow), and DFlash (no-win locally).
+EAGLE3 (device-loss or too slow), DFlash (no-win locally), and simple draft
+top-k reranking.
 
 ## Current Entry Points
 

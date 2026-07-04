@@ -3,7 +3,10 @@
 
 This is diagnostic-only. It estimates whether a draft-only calibration layer
 has useful headroom by checking whether target verifier top IDs appear in the
-draft model's top-k alternatives for each MTP position.
+draft model's top-k alternatives for each MTP position. The reported top-k
+oracle is an independent per-position upper bound; Qwen27's current MTP
+proposer is sequential, so changing an early draft token would require
+regenerating later draft positions or using a correct branch/tree drafter.
 """
 
 from __future__ import annotations
@@ -171,7 +174,7 @@ def main() -> int:
         2: Counter(),
     }
     base_prefix = 0
-    oracle_topk_prefix = 0
+    oracle_topk_independent_prefix = 0
     aligned_steps = 0
     aligned_first_choice = 0
 
@@ -184,7 +187,7 @@ def main() -> int:
             continue
         aligned_steps += 1
         base_prefix += accepted_len(draft_ids, target_ids)
-        oracle_ids = list(draft_ids)
+        independent_oracle_ids = list(draft_ids)
         for pos in range(3):
             sampled = group[pos].get("sampled_token_ids") or []
             if sampled and int(sampled[0]) == draft_ids[pos]:
@@ -199,10 +202,11 @@ def main() -> int:
                 rank = top_ids.index(target) + 1
                 per_pos_in_topk[pos] += 1
                 per_pos_rank_hist[pos][rank] += 1
-                oracle_ids[pos] = target
+                independent_oracle_ids[pos] = target
             else:
                 per_pos_rank_hist[pos]["miss"] += 1
-        oracle_topk_prefix += accepted_len(oracle_ids, target_ids)
+        oracle_topk_independent_prefix += accepted_len(
+            independent_oracle_ids, target_ids)
 
     summary = {
         "classification": "diagnostic_only_draft_topk_join",
@@ -224,10 +228,22 @@ def main() -> int:
         "base_mean_target_tokens_per_step": (
             None if aligned_steps == 0 else 1.0 + base_prefix / aligned_steps
         ),
-        "oracle_topk_mean_target_tokens_per_step": (
+        "oracle_topk_independent_upper_bound": {
+            "mean_target_tokens_per_step": (
+                None
+                if aligned_steps == 0
+                else 1.0 + oracle_topk_independent_prefix / aligned_steps
+            ),
+            "runtime_interpretation": (
+                "Diagnostic upper bound only. Not directly implementable for "
+                "sequential MTP unless later draft positions are regenerated "
+                "or a branch/tree drafter is made correct."
+            ),
+        },
+        "oracle_topk_mean_target_tokens_per_step_deprecated": (
             None
             if aligned_steps == 0
-            else 1.0 + oracle_topk_prefix / aligned_steps
+            else 1.0 + oracle_topk_independent_prefix / aligned_steps
         ),
         "per_position": {
             str(pos): {
