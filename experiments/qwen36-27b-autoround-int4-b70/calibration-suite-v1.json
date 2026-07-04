@@ -1,0 +1,105 @@
+{
+  "suite_id": "qwen36-27b-autoround-int4-b70-calibration-v1",
+  "version": 1,
+  "description": "Held-out diagnostic prompt suite for Qwen27 drafter calibration and verifier-trace analysis. These prompts are not promotion prompts and must not be used as LocalMaxxing headline evidence.",
+  "classification": "diagnostic_only",
+  "policy": "Use for acceptance tracing, prompt-level MTP diagnostics, and drafter-calibration research only. Final promoted results must still use repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json with cold one-shot prompts and cached_tokens=0.",
+  "prompts": [
+    {
+      "id": "ops-runbook",
+      "prompt": "Write an operational runbook for a database failover drill in a SaaS environment. Include pre-checks, roles, commands to validate replication health, customer-impact controls, monitoring signals, rollback criteria, and the exact evidence that should be captured after the drill."
+    },
+    {
+      "id": "api-design-review",
+      "prompt": "Review an API proposal that adds bulk user imports with CSV upload, validation jobs, and webhook callbacks. Identify edge cases, abuse risks, idempotency requirements, schema evolution issues, observability needs, and a practical rollout plan."
+    },
+    {
+      "id": "incident-questions",
+      "prompt": "Create a structured list of questions an incident commander should ask during the first ten minutes of a major latency regression. Group the questions by user impact, blast radius, recent changes, telemetry, mitigation options, and communication needs."
+    },
+    {
+      "id": "security-brief",
+      "prompt": "Draft an internal security brief about rotating long-lived service credentials after a suspected leak. Cover containment, audit scope, rotation sequencing, validation, customer messaging, and how to prevent recurrence."
+    },
+    {
+      "id": "indexing-plan",
+      "prompt": "A multi-tenant analytics dashboard is slow for accounts with millions of events. Propose a PostgreSQL indexing and query-shaping plan, including partial indexes, covering indexes, partitioning, statistics, EXPLAIN ANALYZE checks, and rollout safety."
+    },
+    {
+      "id": "benchmark-policy",
+      "prompt": "Write a policy for publishing local model benchmark results. Explain how to separate cold fresh-response throughput from warmed-cache throughput, what metadata must be recorded, how to handle variance, and which results should be rejected."
+    },
+    {
+      "id": "migration-memo",
+      "prompt": "Write a decision memo comparing two migration strategies for moving an inference endpoint from one runtime to another: blue-green cutover versus gradual traffic shifting. Discuss correctness validation, latency, rollback, cost, and operational risk."
+    },
+    {
+      "id": "quality-gate-design",
+      "prompt": "Design a quality gate for an optimization that changes an LLM inference kernel. Include deterministic canaries, semantic tests, long-context retrieval, output hashing, variance handling, and criteria for rejecting a faster but unsafe result."
+    },
+    {
+      "id": "cache-bug",
+      "prompt": "Synthesize a debugging plan for a bug where a model server occasionally returns tokens that seem to belong to an earlier request. Include hypotheses, instrumentation, request correlation, cache invalidation checks, concurrency tests, and mitigation."
+    },
+    {
+      "id": "capacity-plan",
+      "prompt": "Create a capacity plan for running four independent one-GPU model replicas on a workstation with four accelerators. Include memory budgets, port layout, health checks, load routing, failure handling, benchmark scheduling, and logging."
+    },
+    {
+      "id": "code-path-audit",
+      "prompt": "Describe how to audit a performance-critical code path before making an optimization. Cover source reading, trace points, microbenchmarks, false bottlenecks, exactness requirements, and how to preserve failed patches for future reference."
+    },
+    {
+      "id": "customer-root-cause",
+      "prompt": "Write a customer-visible root cause summary for an outage caused by a queue consumer silently falling behind. Keep the tone accountable and precise. Include impact, detection, mitigation, permanent fixes, and what will be reported next."
+    },
+    {
+      "id": "router-design",
+      "prompt": "Design a local router that sends single-session inference requests to one of four model replicas. Discuss queueing policy, timeout handling, health probes, request IDs, streaming behavior, cold-start handling, and metrics."
+    },
+    {
+      "id": "perf-experiment-template",
+      "prompt": "Create a template for documenting a performance experiment in an optimization repository. Include hypothesis, exact patch, command, environment, benchmark identity, validity classification, results, negative findings, and follow-up."
+    },
+    {
+      "id": "runtime-risk-register",
+      "prompt": "Build a risk register for enabling graph capture in a model runtime. Include risks around stale buffers, dynamic shapes, request reuse, correctness, startup latency, memory pressure, debugging, and rollback."
+    },
+    {
+      "id": "release-retro",
+      "prompt": "Write a release retrospective for a feature rollout that improved throughput but briefly caused incorrect responses for a small number of users. Include timeline, contributing factors, missed tests, remediation, and process changes."
+    },
+    {
+      "id": "support-playbook",
+      "prompt": "Create a support playbook for reports of slow model responses. Include triage questions, logs to gather, how to distinguish TTFT from decode speed, cache indicators, reproduction steps, and escalation criteria."
+    },
+    {
+      "id": "architecture-summary",
+      "prompt": "Summarize the architecture of a local benchmarking lab for LLM inference optimization. Include model storage, experiment scripts, result ledgers, patch snapshots, validation gates, production services, and how agents should coordinate."
+    },
+    {
+      "id": "scheduler-debug",
+      "prompt": "Explain how to debug a scheduler that sometimes records placeholder speculative tokens rather than real draft tokens. Include what to inspect in the worker, how to correlate requests, and why scheduler-only traces can be misleading."
+    },
+    {
+      "id": "kernel-change-review",
+      "prompt": "Review a proposed GPU kernel change that fuses an INT8 matrix multiply with top-1 reduction. Discuss exactness, tie behavior, scale handling, padding, benchmark design, quality gates, and fallback behavior."
+    },
+    {
+      "id": "handoff-note",
+      "prompt": "Write a handoff note for another engineer taking over a model optimization lane. Include current best result, rejected ideas, dirty worktree risks, where artifacts live, how to reproduce, and the next three credible experiments."
+    },
+    {
+      "id": "long-context-plan",
+      "prompt": "Plan a long-context validation ladder for a model server. Include prompt sizes, retrieval checks, TTFT, prefill tokens per second, decode windows, memory use, quality checks, and how to prove short-context decode did not regress."
+    },
+    {
+      "id": "variance-method",
+      "prompt": "Explain a method for deciding whether a small benchmark improvement is real. Include same-window A/B testing, crossover across GPUs, temperature and clock checks, confidence bands, repeated controls, and when to call a result inconclusive."
+    },
+    {
+      "id": "optimization-stop-rule",
+      "prompt": "Write a stop-rule for a model optimization project. Include how to decide when config sweeps are exhausted, when kernel work is justified, what evidence must be preserved, and when to switch to another model family."
+    }
+  ]
+}

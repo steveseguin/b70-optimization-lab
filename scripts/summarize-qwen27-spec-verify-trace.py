@@ -172,6 +172,124 @@ def summarize_trace(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _empty_prompt_bucket(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "prompt_index": row.get("prompt_index"),
+        "prompt_id": row.get("prompt_id"),
+        "request_id": row.get("request_id"),
+        "request_started_epoch_s": row.get("request_started_epoch_s"),
+        "request_ended_epoch_s": row.get("request_ended_epoch_s"),
+        "tok_s_1_100_after_ttft": row.get("tok_s_1_100_after_ttft"),
+        "completion_tokens": row.get("completion_tokens"),
+        "steps": 0,
+        "draft_tokens": 0,
+        "prefix_accepted_tokens": 0,
+        "output_tokens": 0,
+        "full_accept_steps": 0,
+        "accepted_hist": Counter(),
+        "per_pos_attempts": Counter(),
+        "per_pos_matches": Counter(),
+    }
+
+
+def summarize_by_prompt(
+    rows: list[dict[str, Any]],
+    result: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Assign verifier trace rows to benchmark prompt windows.
+
+    Benchmark rows need absolute request start/end epoch timestamps. This is
+    intended for single-concurrency calibration runs: a verifier-sampler row
+    belongs to the prompt whose request window contains its trace timestamp.
+    """
+
+    result_rows = (result or {}).get("rows") or []
+    if not result_rows:
+        return []
+    windows: list[dict[str, Any]] = []
+    for row in result_rows:
+        start = row.get("request_started_epoch_s")
+        end = row.get("request_ended_epoch_s")
+        if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
+            return []
+        windows.append(_empty_prompt_bucket(row))
+    windows.sort(key=lambda item: float(item["request_started_epoch_s"]))
+
+    def bucket_for_ts(ts: float) -> dict[str, Any] | None:
+        for bucket in windows:
+            start = float(bucket["request_started_epoch_s"])
+            end = float(bucket["request_ended_epoch_s"])
+            if start - 1.0 <= ts <= end + 1.0:
+                return bucket
+        return None
+
+    for trace_row in rows:
+        ts = trace_row.get("ts")
+        if not isinstance(ts, (int, float)):
+            continue
+        bucket = bucket_for_ts(float(ts))
+        if bucket is None:
+            continue
+        for record in trace_row.get("records") or []:
+            num_draft = int(record.get("num_draft_tokens") or 0)
+            if num_draft <= 0:
+                continue
+            draft_ids = [int(tok) for tok in record.get("draft_token_ids") or []]
+            if draft_ids and all(tok == 0 for tok in draft_ids):
+                continue
+            accepted = int(record.get("prefix_accepted") or 0)
+            target_ids = [
+                int(tok) for tok in record.get("target_argmax_token_ids") or []
+            ]
+            bucket["steps"] += 1
+            bucket["draft_tokens"] += num_draft
+            bucket["prefix_accepted_tokens"] += accepted
+            bucket["output_tokens"] += len(record.get("output_token_ids") or [])
+            bucket["accepted_hist"][accepted] += 1
+            if bool(record.get("full_accept")):
+                bucket["full_accept_steps"] += 1
+            for pos, (draft_id, target_id) in enumerate(zip(draft_ids, target_ids)):
+                bucket["per_pos_attempts"][pos] += 1
+                if draft_id == target_id:
+                    bucket["per_pos_matches"][pos] += 1
+
+    out: list[dict[str, Any]] = []
+    for bucket in windows:
+        steps = int(bucket.pop("steps"))
+        draft_tokens = int(bucket.pop("draft_tokens"))
+        accepted_tokens = int(bucket.pop("prefix_accepted_tokens"))
+        output_tokens = int(bucket.pop("output_tokens"))
+        full_accept_steps = int(bucket.pop("full_accept_steps"))
+        accepted_hist = bucket.pop("accepted_hist")
+        attempts = bucket.pop("per_pos_attempts")
+        matches = bucket.pop("per_pos_matches")
+        item = dict(bucket)
+        item.update({
+            "steps": steps,
+            "draft_tokens": draft_tokens,
+            "prefix_accepted_tokens": accepted_tokens,
+            "output_tokens": output_tokens,
+            "prefix_acceptance_fraction": (
+                None if draft_tokens <= 0 else accepted_tokens / draft_tokens
+            ),
+            "mean_target_verified_tokens_per_step": (
+                None if steps <= 0 else 1.0 + accepted_tokens / steps
+            ),
+            "mean_output_tokens_per_verifier_step": (
+                None if steps <= 0 else output_tokens / steps
+            ),
+            "full_accept_rate": None if steps <= 0 else full_accept_steps / steps,
+            "accepted_hist": dict(sorted(accepted_hist.items())),
+            "per_position_match_rate": {
+                str(pos): matches[pos] / attempts[pos]
+                for pos in sorted(attempts)
+                if attempts[pos]
+            },
+        })
+        out.append(item)
+    return out
+
+
 def render_md(summary: dict[str, Any]) -> str:
     totals = summary["totals"]
     lines = [
@@ -206,6 +324,27 @@ def render_md(summary: dict[str, Any]) -> str:
             f"- final gate: `{summary.get('realistic_final_gate')}`",
             "",
         ])
+    per_prompt = summary.get("per_prompt") or []
+    if per_prompt:
+        lines.extend([
+            "## Per-Prompt Trace Attribution",
+            "",
+            "| prompt | steps | accepted/draft | mean target tokens/step | full accept | tok/s |",
+            "| --- | ---: | ---: | ---: | ---: | ---: |",
+        ])
+        for item in per_prompt:
+            lines.append(
+                "| {prompt} | {steps} | {accepted}/{draft} | {mean} | {full} | {speed} |".format(
+                    prompt=item.get("prompt_id"),
+                    steps=item.get("steps"),
+                    accepted=item.get("prefix_accepted_tokens"),
+                    draft=item.get("draft_tokens"),
+                    mean=item.get("mean_target_verified_tokens_per_step"),
+                    full=item.get("full_accept_rate"),
+                    speed=item.get("tok_s_1_100_after_ttft"),
+                )
+            )
+        lines.append("")
     lines.extend([
         "## First Reject Examples",
         "",
@@ -242,6 +381,7 @@ def main() -> int:
         "result_path": str(args.result_json) if args.result_json else None,
         "classification": "diagnostic_only",
         "totals": summarize_trace(rows),
+        "per_prompt": summarize_by_prompt(rows, result),
         "speed_stats": stats(prompt_speeds),
         "realistic_final_gate": (result or {}).get("realistic_final_gate"),
         "result_summary": (result or {}).get("summary"),

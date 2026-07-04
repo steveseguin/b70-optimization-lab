@@ -11,6 +11,10 @@ RUN_DIR="${RUN_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/run
 OUT_DIR="${OUT_DIR:-$ROOT/data/qwen36-27b-autoround-int4-b70-baselines}"
 OUT="${OUT:-$OUT_DIR/${LABEL}-${STAMP}.json}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-600}"
+SUITE="${SUITE:-repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json}"
+BENCH_MAX_TOKENS="${BENCH_MAX_TOKENS:-128}"
+BENCH_METRIC_TOKENS="${BENCH_METRIC_TOKENS:-100}"
+BENCH_REQUEST_EXTRA_JSON="${BENCH_REQUEST_EXTRA_JSON:-{\"chat_template_kwargs\":{\"enable_thinking\":false}}}"
 
 export GPU_INDEX PORT
 export MAX_MODEL_LEN="${MAX_MODEL_LEN:-2048}"
@@ -50,6 +54,10 @@ cd "$ROOT"
   echo "label=$LABEL"
   echo "run_dir=$RUN_DIR"
   echo "out=$OUT"
+  echo "suite=$SUITE"
+  echo "bench_max_tokens=$BENCH_MAX_TOKENS"
+  echo "bench_metric_tokens=$BENCH_METRIC_TOKENS"
+  echo "bench_request_extra_json=$BENCH_REQUEST_EXTRA_JSON"
   echo "max_model_len=$MAX_MODEL_LEN"
   echo "max_num_batched_tokens=$MAX_NUM_BATCHED_TOKENS"
   echo "max_num_seqs=$MAX_NUM_SEQS"
@@ -86,11 +94,11 @@ python3 scripts/bench-openai-realistic-suite.py \
   --base-url "http://127.0.0.1:${PORT}" \
   --model "${SERVED_MODEL_NAME:-qwen36-27b-int4-autoround}" \
   --api-mode chat \
-  --suite repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json \
-  --max-tokens 128 \
-  --metric-tokens 100 \
+  --suite "$SUITE" \
+  --max-tokens "$BENCH_MAX_TOKENS" \
+  --metric-tokens "$BENCH_METRIC_TOKENS" \
   --return-token-ids \
-  --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false}}' \
+  --request-extra-json "$BENCH_REQUEST_EXTRA_JSON" \
   --out "$OUT" \
   > "$RUN_DIR/bench.stdout.log" 2>&1
 

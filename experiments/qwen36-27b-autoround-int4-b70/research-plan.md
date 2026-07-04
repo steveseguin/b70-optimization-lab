@@ -12,6 +12,15 @@ webhie BF16-scale INT8-LM-head record, LocalMaxxing status, variance policy,
 prior no-win source attempts, and the completion gates for the fused
 LM-head/top-1 candidate-max route.
 
+Latest held-out drafter-calibration setup:
+`notes/2026-07-04-heldout-calibration-trace.md`. The strict benchmark harness
+now records absolute request windows and request IDs, the compact verifier trace
+summarizer can attribute acceptance back to prompt IDs, and
+`calibration-suite-v1.json` provides non-promotion prompts for target-matched
+drafter research. The first run is diagnostic-only (`cached_tokens=0`, median
+`63.118 tok/s`, `2.686` target-verified tokens/step, acceptance/speed
+correlation `r ~= 0.696`); do not use it as a LocalMaxxing claim.
+
 ## Sources Checked
 
 - Intel model card:

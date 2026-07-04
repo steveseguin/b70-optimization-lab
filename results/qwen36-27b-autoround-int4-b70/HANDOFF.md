@@ -220,6 +220,16 @@ Current next-execution plan:
   target verifier only if fused with a better producer or pursued as a later
   small cleanup; (4) true partial-group support only if committing to deeper
   metadata/graph engineering.
+- held-out calibration trace lane:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-heldout-calibration-trace.md`.
+  The benchmark harness now records absolute request windows and deterministic
+  request IDs, and `summarize-qwen27-spec-verify-trace.py` can attribute compact
+  verifier trace rows back to prompt IDs. The first 24-prompt held-out
+  diagnostic run passed cold mechanics (`cached_tokens=0`) at median
+  `63.118 tok/s`, with `2.686` target-verified tokens/step and prompt-level
+  acceptance/speed correlation `r ~= 0.696`. This is diagnostic-only, not a
+  LocalMaxxing result. Use it as the starting point for target-matched drafter
+  calibration; keep final-suite prompts isolated from tuning.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

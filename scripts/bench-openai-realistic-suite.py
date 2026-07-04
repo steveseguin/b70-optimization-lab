@@ -7,6 +7,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 import statistics
 import time
 import urllib.request
@@ -25,6 +26,7 @@ def post_stream(
     seed: int | None,
     request_extra: dict[str, Any],
     return_token_ids: bool,
+    request_id: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": model,
@@ -46,23 +48,32 @@ def post_stream(
         payload["prompt"] = prompt
     payload.update(request_extra)
 
+    headers = {"Content-Type": "application/json"}
+    if request_id:
+        headers["X-Request-Id"] = request_id
+
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/{endpoint}",
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
 
+    started_epoch_s = time.time()
     started = time.perf_counter()
     first_text_at: float | None = None
+    first_text_epoch_s: float | None = None
     text_parts: list[str] = []
     chunk_offsets: list[float] = []
     token_id_offsets: list[float] = []
+    response_ids: list[str] = []
     content_delta_count = 0
     reasoning_delta_count = 0
     usage: dict[str, Any] = {}
+    response_x_request_id: str | None = None
 
     with urllib.request.urlopen(req, timeout=timeout) as resp:
+        response_x_request_id = resp.headers.get("X-Request-Id")
         for raw in resp:
             line = raw.decode("utf-8", errors="replace").strip()
             if not line.startswith("data:"):
@@ -71,6 +82,9 @@ def post_stream(
             if data == "[DONE]":
                 break
             event = json.loads(data)
+            event_id = event.get("id")
+            if isinstance(event_id, str):
+                response_ids.append(event_id)
             if event.get("usage"):
                 usage = event["usage"]
             for choice in event.get("choices", []):
@@ -79,6 +93,7 @@ def post_stream(
                     now = time.perf_counter()
                     if first_text_at is None and choice_token_ids:
                         first_text_at = now
+                        first_text_epoch_s = time.time()
                     token_id_offsets.extend(
                         [now - started] * len(choice_token_ids)
                     )
@@ -98,9 +113,11 @@ def post_stream(
                 now = time.perf_counter()
                 if first_text_at is None:
                     first_text_at = now
+                    first_text_epoch_s = time.time()
                 text_parts.append(token_text)
                 chunk_offsets.append(now - started)
 
+    ended_epoch_s = time.time()
     ended = time.perf_counter()
     text = "".join(text_parts)
     completion_tokens = usage.get("completion_tokens")
@@ -117,6 +134,13 @@ def post_stream(
 
     return {
         "elapsed_s": elapsed_s,
+        "request_id": request_id,
+        "response_x_request_id": response_x_request_id,
+        "response_id_first": response_ids[0] if response_ids else None,
+        "response_id_last": response_ids[-1] if response_ids else None,
+        "request_started_epoch_s": started_epoch_s,
+        "first_text_epoch_s": first_text_epoch_s,
+        "request_ended_epoch_s": ended_epoch_s,
         "ttft_s": ttft_s,
         "post_ttft_s": post_ttft_s,
         "chunk_count": len(chunk_offsets),
@@ -133,6 +157,10 @@ def post_stream(
         "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         "text_preview": text[:320],
     }
+
+
+def safe_request_id(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.:-]+", "-", value).strip("-")[:180]
 
 
 def percentile(values: list[float], pct: float) -> float | None:
@@ -237,8 +265,12 @@ def main() -> int:
 
     suite_meta, prompts = load_suite(args.suite)
     rows: list[dict[str, Any]] = []
+    suite_id = safe_request_id(str(suite_meta.get("suite_id") or args.suite.stem))
     for index, item in enumerate(prompts):
         prompt = item["prompt"]
+        request_id = safe_request_id(
+            f"bench-{suite_id}-{index:02d}-{item['id']}"
+        )
         row = post_stream(
             base_url=args.base_url,
             model=args.model,
@@ -249,6 +281,7 @@ def main() -> int:
             seed=args.seed,
             request_extra=request_extra,
             return_token_ids=args.return_token_ids,
+            request_id=request_id,
         )
         row["prompt_index"] = index
         row["prompt_id"] = item["id"]
