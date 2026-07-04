@@ -399,6 +399,8 @@ Two independent source/result audits agreed on the current frontier:
 
 Target-only lazy-verifier arithmetic correction:
 
+- Full note:
+  `2026-07-04-lmhead-upper-bound-and-priority-correction.md`.
 - Recorded timing: `2258` LM-head calls over `540` verifier steps, with
   `lm_head_int8.gemm_w8a8` at about `10.61 ms/step`.
 - Estimated draft LM-head cost: `~7.91 ms/step`; target verifier LM-head cost:

@@ -211,7 +211,9 @@ Current next-execution plan:
   groups remain a broad scheduler/metadata/GDN/graph task. A later arithmetic
   correction in the plan notes says a target-only lazy verifier would save only
   about `0.81 ms/step` (`~65.3 -> ~66.6 tok/s` best case), because draft
-  LM-head calls are the larger avoidable bucket. Corrected ranked lanes:
+  LM-head calls are the larger avoidable bucket; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-upper-bound-and-priority-correction.md`.
+  Corrected ranked lanes:
   (1) oneDNN/XPU-integrated top-ID producer behind `get_top_tokens()` that helps
   both draft and target greedy LM-head calls; (2) target-matched drafter
   calibration on held-out data, with exact target verification; (3) native lazy
