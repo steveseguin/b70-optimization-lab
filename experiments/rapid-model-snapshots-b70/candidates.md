@@ -108,6 +108,23 @@ Why queued:
 - compact high-speed reference;
 - useful baseline for users who want smaller models.
 
+## LocalMaxxing-Derived Second-Pass Candidates
+
+2026-07-04 model-index scan:
+
+- `Qwen/Qwen3-Coder-30B-A3B-Instruct`: practical 30B-A3B coder-family
+  comparison after the base/instruct Qwen3 30B baseline.
+- `nvidia/Nemotron-Cascade-2-30B-A3B`: reported in the same practical size
+  class and likely worth a rapid vLLM probe if setup is not blocked.
+- `zai-org/GLM-4.7-Flash`: 31B-class flash model with strong community
+  throughput signals. Keep distinct from the larger GLM 5.x variants that were
+  skipped as too large for this pass.
+- `deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct`: smaller MoE coder reference;
+  useful if Qwen3-Coder setup is blocked or to compare runtime behavior.
+
+Treat these as candidates, not claims. Each still needs model-size, quant,
+runtime-support, quality, and strict fresh-response validation before promotion.
+
 ## Distill / Reasoning References
 
 DeepSeek-R1-Distill-Qwen 14B/32B or similar can be sampled after the practical
