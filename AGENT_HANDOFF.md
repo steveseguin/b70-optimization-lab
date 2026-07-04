@@ -67,6 +67,13 @@ Active target as of the latest switch request:
   oneDNN INT8 matmul writes dense logits, and existing sampler/top-k kernels
   only reduce after logits exist. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+- Latest draft-only subset follow-up is closed-negative. A default-off
+  hot-vocab INT8 LM-head top-1 patch for Qwen MTP drafting passed the strict
+  fresh gate but lost badly in a same-window four-GPU screen: dense control
+  `65.631 tok/s`, hot512 `50.126`, hot1024 `52.614`, hot2048/1779-usable
+  `56.418`; output hashes matched dense control on only `11/12` prompts. Do
+  not repeat subset-vocab draft approximation. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-hot-vocab-top1-no-win.md`.
 - Latest EAGLE1 local drafter lane is closed-negative for the current draft.
   The pipeline is mechanically useful, but not a record path yet. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`

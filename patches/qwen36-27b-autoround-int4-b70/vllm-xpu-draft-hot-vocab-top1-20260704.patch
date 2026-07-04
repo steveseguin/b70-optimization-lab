@@ -1,0 +1,512 @@
+diff --git a/vllm/model_executor/layers/logits_processor.py b/vllm/model_executor/layers/logits_processor.py
+index e649beed6..6450f843f 100644
+--- a/vllm/model_executor/layers/logits_processor.py
++++ b/vllm/model_executor/layers/logits_processor.py
+@@ -13,12 +13,31 @@ from vllm.distributed import (
+     tensor_model_parallel_all_gather,
+     tensor_model_parallel_gather,
+ )
++from vllm.logger import init_logger
+ from vllm.model_executor.custom_op import PluggableLayer
+ from vllm.model_executor.layers.vocab_parallel_embedding import VocabParallelEmbedding
+ from vllm.platforms import current_platform
+ from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.utils.xpu_finite_trace import trace_tensor
+
++logger = init_logger(__name__)
++
++
++def _xpu_logits_sync_debug_stage(stage: str) -> None:
++    stages = {
++        item.strip()
++        for item in os.environ.get("VLLM_XPU_LOGITS_SYNC_DEBUG_STAGES", "").split(",")
++        if item.strip()
++    }
++    if "*" not in stages and stage not in stages:
++        return
++    logger.info("XPU logits sync debug stage begin: %s", stage)
++    try:
++        torch.xpu.synchronize()
++    except Exception as exc:
++        raise RuntimeError(f"XPU logits sync failed at {stage}") from exc
++    logger.info("XPU logits sync debug stage end: %s", stage)
++
+
+ # --8<-- [start:logits_processor]
+ @PluggableLayer.register("logits_processor")
+@@ -153,6 +172,36 @@ class LogitsProcessor(PluggableLayer):
+             trace_tensor("logits_processor.trimmed_logits", logits)
+         return logits
+
++    def get_hot_vocab_top_tokens(
++        self,
++        lm_head: VocabParallelEmbedding,
++        hidden_states: torch.Tensor,
++    ) -> torch.Tensor:
++        """Return draft top tokens from a prepared hot-vocab INT8 lm_head.
++
++        This is intentionally narrower than get_top_tokens(): it is an
++        experimental proposal-only path for TP1 Qwen MTP drafting. The target
++        verifier still computes exact target logits, so a hot-vocab miss can
++        only reduce acceptance/throughput, not change accepted output quality.
++        """
++        if self.soft_cap is not None:
++            logger.warning_once(
++                "Hot-vocab draft top-token path ignores soft_cap because the "
++                "Qwen27 MTP draft head uses no soft cap. Falling back is safer "
++                "for other models."
++            )
++            raise RuntimeError("hot-vocab top-token path does not support soft_cap")
++        if self.scale <= 0.0 and self.scale != 1.0:
++            raise RuntimeError(
++                "hot-vocab top-token path does not support non-positive scale"
++            )
++        with timed_region("logits.hot_vocab_top_tokens"):
++            top_tokens = lm_head.quant_method.apply_hot_vocab_top_tokens(
++                lm_head, hidden_states
++            )
++        trace_tensor("logits_processor.hot_vocab_top_tokens", top_tokens)
++        return top_tokens
++
+     def get_top_tokens(
+         self,
+         lm_head: VocabParallelEmbedding,
+@@ -171,9 +220,10 @@ class LogitsProcessor(PluggableLayer):
+                 "non-positive logit scaling factors."
+             )
+         tp_size = get_tensor_model_parallel_world_size()
+-
++        _xpu_logits_sync_debug_stage("before_local_argmax_lm_head")
+         logits = lm_head.quant_method.apply(lm_head, hidden_states, bias=embedding_bias)
+         trace_tensor("logits_processor.local_argmax_logits", logits)
++        _xpu_logits_sync_debug_stage("after_local_argmax_lm_head")
+         if self.soft_cap is not None:
+             logits = torch.tanh(logits / self.soft_cap) * self.soft_cap
+         if self.scale != 1.0:
+@@ -189,11 +239,57 @@ class LogitsProcessor(PluggableLayer):
+                 posinf=torch.finfo(logits.dtype).max,
+                 neginf=-float("inf"),
+             )
++        _xpu_logits_sync_debug_stage("after_local_argmax_transform")
+
+         # Mask out padding entries beyond org_vocab_size on this shard.
+         num_pad = lm_head.shard_indices.num_org_vocab_padding
+         if num_pad > 0:
+             logits[..., -num_pad:] = -float("inf")
++        _xpu_logits_sync_debug_stage("after_local_argmax_padding")
++
++        if (
++            os.environ.get("VLLM_XPU_LOCAL_ARGMAX_CPU_REDUCE", "0") == "1"
++            and logits.device.type == "xpu"
++        ):
++            with timed_region("logits.local_argmax_cpu_reduce"):
++                _xpu_logits_sync_debug_stage("before_local_argmax_cpu_copy")
++                local_logits_cpu = logits.detach().float().cpu()
++                _xpu_logits_sync_debug_stage("after_local_argmax_cpu_copy")
++                local_max_vals_cpu, local_max_indices_cpu = local_logits_cpu.max(
++                    dim=-1
++                )
++                vocab_start = lm_head.shard_indices.org_vocab_start_index
++                global_indices_cpu = local_max_indices_cpu.to(torch.int64) + vocab_start
++                local_vals = local_max_vals_cpu.reshape(-1).tolist()
++                local_indices = global_indices_cpu.reshape(-1).tolist()
++                local_obj = [
++                    (float(value), int(index))
++                    for value, index in zip(local_vals, local_indices, strict=True)
++                ]
++                gathered_obj: list[list[tuple[float, int]] | None] = [None] * tp_size
++                dist.all_gather_object(
++                    gathered_obj, local_obj, group=get_tp_group().cpu_group
++                )
++                top_tokens: list[int] = []
++                for batch_idx in range(len(local_obj)):
++                    best_value = None
++                    best_token = 0
++                    for rank_obj in gathered_obj:
++                        if rank_obj is None:
++                            continue
++                        value, token = rank_obj[batch_idx]
++                        if best_value is None or value > best_value:
++                            best_value = value
++                            best_token = token
++                    top_tokens.append(best_token)
++                result = torch.tensor(
++                    top_tokens, dtype=torch.int64, device=hidden_states.device
++                )
++            trace_tensor(
++                "logits_processor.local_argmax_cpu_reduce_top_tokens",
++                result,
++            )
++            return result
+
+         with timed_region("logits.local_argmax_local_max"):
+             local_max_vals, local_max_indices = logits.max(dim=-1)
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index ddae01856..ed434a00b 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -3,6 +3,8 @@
+
+ from collections.abc import Sequence
+ from dataclasses import dataclass
++import json
++import os
+
+ import torch
+ import torch.nn.functional as F
+@@ -25,11 +27,14 @@ from vllm.model_executor.layers.quantization.base_config import (
+     method_has_implemented_embedding,
+ )
+ from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
++from vllm.logger import init_logger
+ from vllm.model_executor.parameter import BasevLLMParameter
+ from vllm.model_executor.utils import set_weight_attrs
+ from vllm.platforms import current_platform
++from vllm.utils.xpu_decode_timing import timed_region
+
+ DEFAULT_VOCAB_PADDING_SIZE = 64
++logger = init_logger(__name__)
+
+
+ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+@@ -63,6 +68,197 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+             from vllm.model_executor.layers.utils import dispatch_cpu_unquantized_gemm
+
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=False)
++        self._maybe_prepare_xpu_int8_lm_head(layer)
++
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in (
++            "1",
++            "true",
++            "yes",
++            "on",
++        )
++
++    def _maybe_prepare_xpu_int8_lm_head(self, layer: torch.nn.Module) -> None:
++        if not self._env_enabled("VLLM_XPU_LM_HEAD_INT8"):
++            return
++        if layer.__class__.__name__ != "ParallelLMHead":
++            return
++        scope = os.environ.get("VLLM_XPU_LM_HEAD_INT8_SCOPE", "all").strip().lower()
++        prefix = str(getattr(layer, "_vllm_prefix", ""))
++        prefix_parts = {part for part in prefix.replace("/", ".").split(".") if part}
++        # Qwen3Next target head is loaded as "language_model.lm_head"; the
++        # bundled MTP drafter remaps shared weights into a bare "lm_head".
++        # Other MTP models include an explicit "mtp" prefix segment.
++        is_mtp_head = "mtp" in prefix_parts or prefix == "lm_head"
++        if scope in ("target", "target-only", "target_only") and is_mtp_head:
++            return
++        if scope in ("draft", "draft-only", "draft_only", "mtp") and not is_mtp_head:
++            return
++        if scope not in (
++            "all",
++            "target",
++            "target-only",
++            "target_only",
++            "draft",
++            "draft-only",
++            "draft_only",
++            "mtp",
++        ):
++            logger.warning(
++                "Unknown VLLM_XPU_LM_HEAD_INT8_SCOPE=%r; using all lm_head layers.",
++                scope,
++            )
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            return
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but lm_head weight dtype is %s; "
++                "falling back to the default BF16/FP16 path.",
++                weight.dtype,
++            )
++            return
++        try:
++            import vllm_xpu_kernels._xpu_C  # noqa: F401
++        except Exception as exc:
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but vllm_xpu_kernels._xpu_C "
++                "could not be imported (%r); falling back to default lm_head.",
++                exc,
++            )
++            return
++        required_ops = ("int8_gemm_w8a8", "per_token_quant_int8_xpu")
++        if any(not hasattr(torch.ops._xpu_C, op) for op in required_ops):
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8 requested but required _xpu_C ops are "
++                "unavailable; falling back to default lm_head.")
++            return
++
++        # Dense Qwen3.6 lm_head is BF16 even in the AutoRound INT4 checkpoint.
++        # This experimental path keeps the original weight intact and adds a
++        # transient per-output-channel INT8 copy. It is default-off and must pass
++        # the quality gate before being treated as a candidate result.
++        with torch.no_grad():
++            weight_f = weight.detach().float()
++            scales = weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
++            weight_q_t = (
++                torch.round(weight_f / scales.view(-1, 1))
++                .clamp(-127, 127)
++                .to(torch.int8)
++                .t()
++                .contiguous()
++            )
++            scale_dtype = os.environ.get(
++                "VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE", "fp32"
++            ).strip().lower()
++            if scale_dtype in ("bf16", "bfloat16"):
++                scales = scales.to(torch.bfloat16)
++            elif scale_dtype in ("fp16", "float16", "half"):
++                scales = scales.to(torch.float16)
++            elif scale_dtype not in ("", "fp32", "float32"):
++                logger.warning(
++                    "Unknown VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=%r; using fp32.",
++                    scale_dtype,
++                )
++            scales = scales.contiguous()
++
++        for name, tensor in (
++            ("_xpu_lm_head_int8_weight_t", weight_q_t),
++            ("_xpu_lm_head_int8_scale", scales),
++        ):
++            if name in layer._buffers:
++                layer._buffers[name] = tensor
++            else:
++                layer.register_buffer(name, tensor, persistent=False)
++        logger.info(
++            "Prepared experimental XPU INT8 lm_head: prefix=%s scope=%s "
++            "weight_t=%s scale=%s scale_dtype=%s",
++            prefix or "<unknown>",
++            scope or "all",
++            tuple(weight_q_t.shape),
++            tuple(scales.shape),
++            scales.dtype,
++        )
++        hot_vocab_path = os.environ.get("VLLM_XPU_LM_HEAD_INT8_HOT_VOCAB_FILE")
++        if hot_vocab_path:
++            self._maybe_prepare_xpu_int8_lm_head_hot_vocab(
++                layer, weight_q_t, scales, hot_vocab_path)
++
++    def _maybe_prepare_xpu_int8_lm_head_hot_vocab(
++        self,
++        layer: torch.nn.Module,
++        weight_q_t: torch.Tensor,
++        scales: torch.Tensor,
++        hot_vocab_path: str,
++    ) -> None:
++        if get_tensor_model_parallel_world_size() != 1:
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8_HOT_VOCAB_FILE is only implemented for "
++                "TP1; falling back to dense draft lm_head.")
++            return
++        try:
++            with open(hot_vocab_path, encoding="utf-8") as f:
++                payload = json.load(f)
++            token_ids_obj = (
++                payload.get("token_ids")
++                if isinstance(payload, dict)
++                else payload
++            )
++            token_ids: list[int] = []
++            seen: set[int] = set()
++            actual_vocab_size = int(
++                getattr(
++                    layer,
++                    "org_vocab_size",
++                    getattr(layer, "num_embeddings", weight_q_t.shape[1]),
++                )
++            )
++            for value in token_ids_obj:
++                token_id = int(value)
++                if token_id < 0 or token_id >= actual_vocab_size:
++                    continue
++                if token_id in seen:
++                    continue
++                seen.add(token_id)
++                token_ids.append(token_id)
++        except Exception as exc:
++            logger.warning(
++                "Failed to load VLLM_XPU_LM_HEAD_INT8_HOT_VOCAB_FILE=%r "
++                "(%r); falling back to dense draft lm_head.",
++                hot_vocab_path,
++                exc,
++            )
++            return
++        if not token_ids:
++            logger.warning(
++                "VLLM_XPU_LM_HEAD_INT8_HOT_VOCAB_FILE=%r produced no usable "
++                "token ids; falling back to dense draft lm_head.",
++                hot_vocab_path,
++            )
++            return
++
++        ids_cpu = torch.tensor(token_ids, dtype=torch.long)
++        ids = ids_cpu.to(device=weight_q_t.device, non_blocking=True)
++        hot_weight_t = weight_q_t.index_select(1, ids).contiguous()
++        hot_scales = scales.index_select(0, ids).contiguous()
++        for name, tensor in (
++            ("_xpu_lm_head_hot_token_ids", ids),
++            ("_xpu_lm_head_int8_hot_weight_t", hot_weight_t),
++            ("_xpu_lm_head_int8_hot_scale", hot_scales),
++        ):
++            if name in layer._buffers:
++                layer._buffers[name] = tensor
++            else:
++                layer.register_buffer(name, tensor, persistent=False)
++        logger.info(
++            "Prepared experimental XPU INT8 lm_head hot vocab: path=%s "
++            "tokens=%d weight_t=%s scale=%s",
++            hot_vocab_path,
++            len(token_ids),
++            tuple(hot_weight_t.shape),
++            tuple(hot_scales.shape),
++        )
+
+     def apply(
+         self,
+@@ -70,10 +266,63 @@ class UnquantizedEmbeddingMethod(QuantizeMethodBase):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_LM_HEAD_INT8")
++            and bias is None
++            and x.device.type == "xpu"
++            and hasattr(layer, "_xpu_lm_head_int8_weight_t")
++            and hasattr(layer, "_xpu_lm_head_int8_scale")
++        ):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            with timed_region("lm_head_int8.per_token_quant"):
++                x_q, x_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(
++                    x_contiguous)
++            with timed_region("lm_head_int8.gemm_w8a8"):
++                return torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q,
++                    x_scale,
++                    layer._xpu_lm_head_int8_weight_t,
++                    layer._xpu_lm_head_int8_scale,
++                    layer.weight.dtype,
++                    None,
++                )
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)
+
++    def apply_hot_vocab_top_tokens(
++        self,
++        layer: torch.nn.Module,
++        x: torch.Tensor,
++    ) -> torch.Tensor:
++        if (
++            not self._env_enabled("VLLM_XPU_LM_HEAD_INT8")
++            or x.device.type != "xpu"
++            or not hasattr(layer, "_xpu_lm_head_hot_token_ids")
++            or not hasattr(layer, "_xpu_lm_head_int8_hot_weight_t")
++            or not hasattr(layer, "_xpu_lm_head_int8_hot_scale")
++        ):
++            raise RuntimeError("XPU INT8 hot-vocab lm_head is not prepared")
++        x_contiguous = x if x.is_contiguous() else x.contiguous()
++        with timed_region("lm_head_int8.hot_vocab.per_token_quant"):
++            x_q, x_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(
++                x_contiguous)
++        with timed_region("lm_head_int8.hot_vocab.gemm_w8a8"):
++            logits = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q,
++                x_scale,
++                layer._xpu_lm_head_int8_hot_weight_t,
++                layer._xpu_lm_head_int8_hot_scale,
++                layer.weight.dtype,
++                None,
++            )
++        with timed_region("lm_head_int8.hot_vocab.argmax"):
++            local_indices = logits.argmax(dim=-1)
++            top_tokens = torch.index_select(
++                layer._xpu_lm_head_hot_token_ids, 0, local_indices.reshape(-1)
++            )
++            return top_tokens.reshape(local_indices.shape)
++
+     def embedding(self, layer: torch.nn.Module, input_: torch.Tensor) -> torch.Tensor:
+         return F.embedding(input_, layer.weight)
+
+@@ -241,6 +490,7 @@ class VocabParallelEmbedding(PluggableLayer):
+         prefix: str = "",
+     ):
+         super().__init__()
++        self._vllm_prefix = prefix
+
+         # Keep the input dimensions.
+         tp_rank = get_tensor_model_parallel_rank()
+diff --git a/vllm/model_executor/models/qwen3_5_mtp.py b/vllm/model_executor/models/qwen3_5_mtp.py
+index 9cac4d954..8061db9d0 100644
+--- a/vllm/model_executor/models/qwen3_5_mtp.py
++++ b/vllm/model_executor/models/qwen3_5_mtp.py
+@@ -471,6 +471,11 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
+     ) -> torch.Tensor | None:
+         return self.logits_processor(self.lm_head, hidden_states)
+
++    def get_hot_vocab_top_tokens(self, hidden_states: torch.Tensor) -> torch.Tensor:
++        return self.logits_processor.get_hot_vocab_top_tokens(
++            self.lm_head, hidden_states
++        )
++
+     def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+         def remap_weight_names(weights):
+             for name, weight in weights:
+diff --git a/vllm/v1/spec_decode/llm_base_proposer.py b/vllm/v1/spec_decode/llm_base_proposer.py
+index e554860a9..9d542636d 100644
+--- a/vllm/v1/spec_decode/llm_base_proposer.py
++++ b/vllm/v1/spec_decode/llm_base_proposer.py
+@@ -114,6 +114,12 @@ class SpecDecodeBaseProposer:
+         self.use_local_argmax_reduction: bool = (
+             self.speculative_config.use_local_argmax_reduction
+         )
++        self.use_xpu_draft_hot_vocab_top1: bool = (
++            os.environ.get("VLLM_XPU_DRAFT_HOT_VOCAB_TOP1", "0")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+
+         self.max_batch_size = vllm_config.scheduler_config.max_num_seqs
+         self.max_num_tokens = vllm_config.scheduler_config.max_num_batched_tokens
+@@ -409,6 +415,9 @@ class SpecDecodeBaseProposer:
+     def _greedy_sample(self, hidden_states: torch.Tensor) -> torch.Tensor:
+         """Greedy-sample draft tokens from hidden states."""
+         with timed_region("spec_decode.greedy_sample_total"):
++            if self.use_xpu_draft_hot_vocab_top1:
++                with timed_region("spec_decode.greedy_sample.hot_vocab_top1"):
++                    return self.model.get_hot_vocab_top_tokens(hidden_states)
+             if self.use_local_argmax_reduction:
+                 with timed_region("spec_decode.greedy_sample.local_argmax"):
+                     return self.model.get_top_tokens(hidden_states)
+@@ -1600,6 +1609,27 @@ class SpecDecodeBaseProposer:
+                     "Using local argmax reduction for draft token generation "
+                     "(communication: O(2*tp_size) vs O(vocab_size))."
+                 )
++        if self.use_xpu_draft_hot_vocab_top1:
++            if not hasattr(self.model, "get_hot_vocab_top_tokens"):
++                raise ValueError(
++                    "VLLM_XPU_DRAFT_HOT_VOCAB_TOP1 is enabled but draft model "
++                    f"{self.model.__class__.__name__} does not implement "
++                    "get_hot_vocab_top_tokens()."
++                )
++            if (
++                hasattr(self.model, "draft_id_to_target_id")
++                and self.model.draft_id_to_target_id is not None
++            ):
++                raise ValueError(
++                    "VLLM_XPU_DRAFT_HOT_VOCAB_TOP1 does not support draft "
++                    "vocab remapping."
++                )
++            logger.warning(
++                "Using experimental XPU hot-vocab top-1 draft generation. "
++                "This is proposal-only and must not be promoted unless the "
++                "strict cold suite and quality gates pass with target "
++                "verification unchanged."
++            )
+
+     @torch.inference_mode()
+     def dummy_run(

@@ -1,0 +1,76 @@
+{
+  "classification": "closed_negative_diagnostic; do not promote or submit",
+  "conclusion": "Hot-vocab draft top1 lowers acceptance enough that all tested sizes lose badly versus dense INT8 LM-head control, despite strict fresh gate passing.",
+  "current_record_tok_s": 65.27648650325429,
+  "date_utc": "2026-07-04",
+  "entries": [
+    {
+      "cached_tokens_all_zero": true,
+      "delta_vs_control_pct": 0.0,
+      "hot_vocab_tokens_prepared": null,
+      "label": "qwen27-webhie-bf16scale-control-hotvocab-window-20260704-20260704T083418Z",
+      "mean_tok_s_1_100_after_ttft": 64.89755981374189,
+      "median_tok_s_1_100_after_ttft": 65.63129544184056,
+      "median_ttft_ms": 605.1602704683319,
+      "name": "control",
+      "output_hash_matches_control": "12/12",
+      "p10_tok_s_1_100_after_ttft": 58.07165973517413,
+      "result_json": "/home/steve/llm-optimizations/data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-control-hotvocab-window-20260704-20260704T083418Z.json",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-control-hotvocab-window-20260704-20260704T083418Z",
+      "strict_gate_passed": true
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "delta_vs_control_pct": -23.624326729651447,
+      "hot_vocab_tokens_prepared": 512,
+      "label": "qwen27-webhie-bf16scale-hotvocab512-20260704-20260704T083418Z",
+      "mean_tok_s_1_100_after_ttft": 50.72517186082149,
+      "median_tok_s_1_100_after_ttft": 50.12634376975731,
+      "median_ttft_ms": 603.4153955988586,
+      "name": "hot512",
+      "output_hash_matches_control": "11/12",
+      "p10_tok_s_1_100_after_ttft": 46.14416582550536,
+      "result_json": "/home/steve/llm-optimizations/data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-hotvocab512-20260704-20260704T083418Z.json",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-hotvocab512-20260704-20260704T083418Z",
+      "strict_gate_passed": true
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "delta_vs_control_pct": -19.834063769672273,
+      "hot_vocab_tokens_prepared": 1024,
+      "label": "qwen27-webhie-bf16scale-hotvocab1024-20260704-20260704T083418Z",
+      "mean_tok_s_1_100_after_ttft": 53.957207528232765,
+      "median_tok_s_1_100_after_ttft": 52.6139424510439,
+      "median_ttft_ms": 599.6569950366393,
+      "name": "hot1024",
+      "output_hash_matches_control": "11/12",
+      "p10_tok_s_1_100_after_ttft": 48.63636044007048,
+      "result_json": "/home/steve/llm-optimizations/data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-hotvocab1024-20260704-20260704T083418Z.json",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-hotvocab1024-20260704-20260704T083418Z",
+      "strict_gate_passed": true
+    },
+    {
+      "cached_tokens_all_zero": true,
+      "delta_vs_control_pct": -14.038340792117266,
+      "hot_vocab_tokens_prepared": 1779,
+      "label": "qwen27-webhie-bf16scale-hotvocab2048-20260704-20260704T083418Z",
+      "mean_tok_s_1_100_after_ttft": 58.470772445007945,
+      "median_tok_s_1_100_after_ttft": 56.41775052143366,
+      "median_ttft_ms": 598.5539190005511,
+      "name": "hot2048",
+      "output_hash_matches_control": "11/12",
+      "p10_tok_s_1_100_after_ttft": 52.825873507770275,
+      "result_json": "/home/steve/llm-optimizations/data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-hotvocab2048-20260704-20260704T083418Z.json",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-hotvocab2048-20260704-20260704T083418Z",
+      "strict_gate_passed": true
+    }
+  ],
+  "experiment": "Qwen27 draft-only hot-vocab top1 screen",
+  "hot_vocab_files": [
+    "experiments/qwen36-27b-autoround-int4-b70/hot-vocab/qwen27-calibration-hotvocab-top1024-20260704.json",
+    "experiments/qwen36-27b-autoround-int4-b70/hot-vocab/qwen27-calibration-hotvocab-top2048-20260704.json",
+    "experiments/qwen36-27b-autoround-int4-b70/hot-vocab/qwen27-calibration-hotvocab-top512-20260704.json"
+  ],
+  "patch": "patches/qwen36-27b-autoround-int4-b70/vllm-xpu-draft-hot-vocab-top1-20260704.patch",
+  "same_window_control_tok_s": 65.63129544184056
+}

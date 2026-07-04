@@ -336,6 +336,16 @@ draft-only row counts, chunked top-1); the remaining meaningful work is a real
 fused verifier/LM-head design or a service/max-context variant that preserves
 the short-context decode record.
 
+Draft-only hot-vocab/subset top-1 is now also closed negative. A default-off
+patch added a TP1 hot-vocab INT8 LM-head path for Qwen MTP drafting, using
+calibration-derived token sets of 512, 1024, and 2048 requested IDs. Same-window
+strict fresh-screen rows all passed the gate but lost badly versus the dense
+control: control `65.631 tok/s`, hot512 `50.126`, hot1024 `52.614`, hot2048
+(`1779` usable IDs) `56.418`. Output hashes matched the dense control on only
+`11/12` prompts. Do not repeat subset-vocab draft approximation; it reduces
+proposal quality more than it saves LM-head time. Evidence:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-hot-vocab-top1-no-win.md`.
+
 Latest accepted-token instrumentation update: scheduler spec traces are not a
 valid draft-vs-target source on async XPU because they contain placeholder
 `scheduled_spec_token_ids` (`[-1, -1, -1]`). A heavy worker replay microscope

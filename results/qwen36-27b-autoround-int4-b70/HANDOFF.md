@@ -547,6 +547,14 @@ Continue INT4 optimization without promoting synthetic scores:
 - exact greedy spec argmax-only target verification has been tested and closed
   no-win; do not repeat it unless `get_top_tokens` / LM-head internals change;
 - draft proposer local-argmax reduction has been tested and closed flat/no-win;
+- draft-only hot-vocab/subset top-1 has been tested and closed no-win. The
+  2026-07-04 TP1 patch made Qwen MTP draft proposals use calibration-derived
+  hot-vocab INT8 LM-head buffers while leaving target verification exact. A
+  same-window strict fresh run passed the gate but lost badly against dense
+  control: `65.631 tok/s` control, `50.126` hot512, `52.614` hot1024, and
+  `56.418` hot2048/1779-usable. Output hashes matched control on only `11/12`
+  prompts. Do not repeat subset-vocab draft approximation; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-hot-vocab-top1-no-win.md`;
 - deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
   candidate-vs-max kernel that avoids materializing full vocab logits;
 - for accepted-token / drafter-calibration work, use the compact verifier
