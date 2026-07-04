@@ -96,8 +96,24 @@ If the snapshot completes, first strict screen should use:
 ```bash
 cd /home/steve/llm-optimizations
 MODEL_DIR=/mnt/fast-ai/llm-cache/hf/hub/models--cyankiwi--Qwen3.6-27B-AWQ-INT4/snapshots/8f269fb53eb3fe3be8f01f9755f20570cef0ebe0 \
-LABEL=qwen27-cyankiwi-awq-int4-mtp3-cg8-strict \
-GPU_INDEX=0 PORT=19420 RUN_QUALITY=0 \
+QWEN36_27B_AR_REPO=cyankiwi/Qwen3.6-27B-AWQ-INT4 \
+LABEL=qwen27-cyankiwi-awq-int4-int8lmhead-bf16scale-mtp3-cg8 \
+SERVED_MODEL_NAME=qwen36-27b-cyankiwi-awq-int4 \
+GPU_INDEX=0 PORT=19420 \
+MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 MAX_NUM_SEQS=1 \
+GPU_MEMORY_UTILIZATION=0.95 \
+QWEN36_27B_ENABLE_MTP=1 NUM_SPECULATIVE_TOKENS=3 \
+QWEN36_27B_ENABLE_XPU_GRAPH=1 \
+COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
+VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
+VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
+VLLM_XPU_LM_HEAD_INT8=1 \
+VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16 \
+VLLM_EXTRA_ARGS='--quantization compressed-tensors' \
+QWEN36_27B_DEFAULT_ENABLE_THINKING=0 \
+QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS=1 \
+QUALITY_BASELINE_JSON=data/qwen36-27b-autoround-int4-b70-baselines/quality-webhie-int8lmhead-bf16scale-mtp3-cg8-repeat32-ctx1024-20260703T223138Z.json \
+RUN_QUALITY=1 READINESS_TIMEOUT_S=1200 \
 experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh
 ```
 
@@ -107,6 +123,9 @@ Promotion requires the full strict gate plus quality:
 - same target quant/checkpoint identity clearly labeled as AWQ INT4;
 - deterministic quality suite and baseline comparison before any LocalMaxxing
   submission;
+- explicit compressed-tensors quantization in the launch identity;
+- no graph-none fallback, CPU fallback, silent dequantization, or speculative
+  state shortcut in server logs;
 - same-window webhie control if the result is inside the known variance band.
 
 ## Next action
