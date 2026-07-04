@@ -276,6 +276,14 @@ Next milestone:
     mean accepted and separate calibration only to `0.441`. It is
     diagnostic-only and not an endpoint candidate. The reusable runner is
     `scripts/run-eagle-v2-stronger-offline-screen.sh`.
+25. Draft top-k calibration diagnostic:
+    `notes/2026-07-04-draft-topk-calibration-diagnostic.md`.
+    The target verifier token is in the built-in draft top-32 for `96-99%` of
+    MTP positions and an oracle reranker would reach `3.910` target-verified
+    tokens/step, but simple static token-bias and margin rerankers were flat on
+    held-out split. Preserve the trace/analyzer; do not ship a heuristic
+    reranker. Future accepted-token work needs a learned reranker/drafter on
+    isolated non-final data.
 
 ## Folder Map
 

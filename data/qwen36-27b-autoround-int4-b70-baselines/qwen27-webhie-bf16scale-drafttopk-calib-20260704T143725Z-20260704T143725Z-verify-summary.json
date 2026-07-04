@@ -1,0 +1,1038 @@
+{
+  "trace_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-bf16scale-drafttopk-calib-20260704T143725Z/verify-trace.jsonl",
+  "result_path": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafttopk-calib-20260704T143725Z-20260704T143725Z.json",
+  "classification": "diagnostic_only",
+  "totals": {
+    "trace_rows": 1149,
+    "stage_hist": {
+      "dense": 1149
+    },
+    "steps": 1147,
+    "draft_tokens": 3441,
+    "prefix_accepted_tokens": 1964,
+    "independent_matching_tokens": 2377,
+    "output_tokens": 3111,
+    "prefix_acceptance_fraction": 0.5707643126997965,
+    "independent_match_fraction": 0.6907875617553036,
+    "mean_prefix_acceptance_length": 1.7122929380993896,
+    "mean_output_tokens_per_verifier_step": 2.71229293809939,
+    "mean_target_verified_tokens_per_step": 2.71229293809939,
+    "full_accept_steps": 413,
+    "full_accept_rate": 0.36006974716652135,
+    "accepted_hist": {
+      "0": 227,
+      "1": 289,
+      "2": 218,
+      "3": 413
+    },
+    "draft_hist": {
+      "3": 1147
+    },
+    "per_position_match_rate": {
+      "0": 0.8020924149956408,
+      "1": 0.6765475152571927,
+      "2": 0.5937227550130776
+    },
+    "stage_prefix_accepted_hist": {
+      "dense": {
+        "0": 227,
+        "1": 289,
+        "2": 218,
+        "3": 413
+      }
+    },
+    "skipped_zero_draft_warmup_rows": 2,
+    "first_reject_examples": [
+      {
+        "line_no": 7,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 1510,
+        "target_argmax_token_id": 79995,
+        "output_token_ids": [
+          2937,
+          64700,
+          79995
+        ]
+      },
+      {
+        "line_no": 9,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 12,
+        "target_argmax_token_id": 198,
+        "output_token_ids": [
+          15,
+          16,
+          198
+        ]
+      },
+      {
+        "line_no": 13,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 13384,
+        "target_argmax_token_id": 5237,
+        "output_token_ids": [
+          498,
+          5237
+        ]
+      },
+      {
+        "line_no": 15,
+        "stage": "dense",
+        "position": 0,
+        "draft_token_id": 82105,
+        "target_argmax_token_id": 13405,
+        "output_token_ids": [
+          13405
+        ]
+      },
+      {
+        "line_no": 16,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 498,
+        "target_argmax_token_id": 9698,
+        "output_token_ids": [
+          64700,
+          9698
+        ]
+      },
+      {
+        "line_no": 17,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 28905,
+        "target_argmax_token_id": 7659,
+        "output_token_ids": [
+          16107,
+          7659
+        ]
+      },
+      {
+        "line_no": 18,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 82105,
+        "target_argmax_token_id": 37332,
+        "output_token_ids": [
+          198,
+          332,
+          37332
+        ]
+      },
+      {
+        "line_no": 19,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 4962,
+        "target_argmax_token_id": 71855,
+        "output_token_ids": [
+          64700,
+          71855
+        ]
+      },
+      {
+        "line_no": 20,
+        "stage": "dense",
+        "position": 0,
+        "draft_token_id": 318,
+        "target_argmax_token_id": 271,
+        "output_token_ids": [
+          271
+        ]
+      },
+      {
+        "line_no": 24,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 1817,
+        "target_argmax_token_id": 16456,
+        "output_token_ids": [
+          3564,
+          1908,
+          16456
+        ]
+      },
+      {
+        "line_no": 25,
+        "stage": "dense",
+        "position": 2,
+        "draft_token_id": 24298,
+        "target_argmax_token_id": 5839,
+        "output_token_ids": [
+          314,
+          279,
+          5839
+        ]
+      },
+      {
+        "line_no": 26,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 25165,
+        "target_argmax_token_id": 10337,
+        "output_token_ids": [
+          4475,
+          10337
+        ]
+      },
+      {
+        "line_no": 27,
+        "stage": "dense",
+        "position": 0,
+        "draft_token_id": 310,
+        "target_argmax_token_id": 11,
+        "output_token_ids": [
+          11
+        ]
+      },
+      {
+        "line_no": 28,
+        "stage": "dense",
+        "position": 0,
+        "draft_token_id": 21873,
+        "target_argmax_token_id": 5790,
+        "output_token_ids": [
+          5790
+        ]
+      },
+      {
+        "line_no": 29,
+        "stage": "dense",
+        "position": 1,
+        "draft_token_id": 16126,
+        "target_argmax_token_id": 27224,
+        "output_token_ids": [
+          795,
+          27224
+        ]
+      },
+      {
+        "line_no": 30,
+        "stage": "dense",
+        "position": 0,
+        "draft_token_id": 318,
+        "target_argmax_token_id": 1881,
+        "output_token_ids": [
+          1881
+        ]
+      }
+    ]
+  },
+  "per_prompt": [
+    {
+      "prompt_index": 0,
+      "prompt_id": "ops-runbook",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-00-ops-runbook",
+      "request_started_epoch_s": 1783175922.046695,
+      "request_ended_epoch_s": 1783175929.1389773,
+      "tok_s_1_100_after_ttft": 55.946566195146715,
+      "completion_tokens": 128,
+      "steps": 54,
+      "draft_tokens": 162,
+      "prefix_accepted_tokens": 99,
+      "output_tokens": 153,
+      "prefix_acceptance_fraction": 0.6111111111111112,
+      "mean_target_verified_tokens_per_step": 2.833333333333333,
+      "mean_output_tokens_per_verifier_step": 2.8333333333333335,
+      "full_accept_rate": 0.42592592592592593,
+      "accepted_hist": {
+        "0": 10,
+        "1": 12,
+        "2": 9,
+        "3": 23
+      },
+      "per_position_match_rate": {
+        "0": 0.8148148148148148,
+        "1": 0.7222222222222222,
+        "2": 0.5925925925925926
+      }
+    },
+    {
+      "prompt_index": 1,
+      "prompt_id": "api-design-review",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-01-api-design-review",
+      "request_started_epoch_s": 1783175929.1391242,
+      "request_ended_epoch_s": 1783175931.9866781,
+      "tok_s_1_100_after_ttft": 56.835012995452466,
+      "completion_tokens": 128,
+      "steps": 49,
+      "draft_tokens": 147,
+      "prefix_accepted_tokens": 94,
+      "output_tokens": 143,
+      "prefix_acceptance_fraction": 0.6394557823129252,
+      "mean_target_verified_tokens_per_step": 2.9183673469387754,
+      "mean_output_tokens_per_verifier_step": 2.9183673469387754,
+      "full_accept_rate": 0.4489795918367347,
+      "accepted_hist": {
+        "0": 8,
+        "1": 10,
+        "2": 9,
+        "3": 22
+      },
+      "per_position_match_rate": {
+        "0": 0.8367346938775511,
+        "1": 0.7755102040816326,
+        "2": 0.6122448979591837
+      }
+    },
+    {
+      "prompt_index": 2,
+      "prompt_id": "incident-questions",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-02-incident-questions",
+      "request_started_epoch_s": 1783175931.986778,
+      "request_ended_epoch_s": 1783175934.912942,
+      "tok_s_1_100_after_ttft": 53.702026821124996,
+      "completion_tokens": 128,
+      "steps": 48,
+      "draft_tokens": 144,
+      "prefix_accepted_tokens": 71,
+      "output_tokens": 119,
+      "prefix_acceptance_fraction": 0.4930555555555556,
+      "mean_target_verified_tokens_per_step": 2.479166666666667,
+      "mean_output_tokens_per_verifier_step": 2.4791666666666665,
+      "full_accept_rate": 0.22916666666666666,
+      "accepted_hist": {
+        "0": 10,
+        "1": 16,
+        "2": 11,
+        "3": 11
+      },
+      "per_position_match_rate": {
+        "0": 0.7916666666666666,
+        "1": 0.5416666666666666,
+        "2": 0.5625
+      }
+    },
+    {
+      "prompt_index": 3,
+      "prompt_id": "security-brief",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-03-security-brief",
+      "request_started_epoch_s": 1783175934.9130342,
+      "request_ended_epoch_s": 1783175937.5966458,
+      "tok_s_1_100_after_ttft": 63.866113404325844,
+      "completion_tokens": 128,
+      "steps": 45,
+      "draft_tokens": 135,
+      "prefix_accepted_tokens": 86,
+      "output_tokens": 131,
+      "prefix_acceptance_fraction": 0.6370370370370371,
+      "mean_target_verified_tokens_per_step": 2.9111111111111114,
+      "mean_output_tokens_per_verifier_step": 2.911111111111111,
+      "full_accept_rate": 0.4222222222222222,
+      "accepted_hist": {
+        "0": 6,
+        "1": 11,
+        "2": 9,
+        "3": 19
+      },
+      "per_position_match_rate": {
+        "0": 0.8666666666666667,
+        "1": 0.7333333333333333,
+        "2": 0.6222222222222222
+      }
+    },
+    {
+      "prompt_index": 4,
+      "prompt_id": "indexing-plan",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-04-indexing-plan",
+      "request_started_epoch_s": 1783175937.5967393,
+      "request_ended_epoch_s": 1783175940.8921075,
+      "tok_s_1_100_after_ttft": 46.361935847969804,
+      "completion_tokens": 128,
+      "steps": 51,
+      "draft_tokens": 153,
+      "prefix_accepted_tokens": 85,
+      "output_tokens": 136,
+      "prefix_acceptance_fraction": 0.5555555555555556,
+      "mean_target_verified_tokens_per_step": 2.666666666666667,
+      "mean_output_tokens_per_verifier_step": 2.6666666666666665,
+      "full_accept_rate": 0.37254901960784315,
+      "accepted_hist": {
+        "0": 11,
+        "1": 14,
+        "2": 7,
+        "3": 19
+      },
+      "per_position_match_rate": {
+        "0": 0.7843137254901961,
+        "1": 0.5882352941176471,
+        "2": 0.7254901960784313
+      }
+    },
+    {
+      "prompt_index": 5,
+      "prompt_id": "benchmark-policy",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-05-benchmark-policy",
+      "request_started_epoch_s": 1783175940.8922036,
+      "request_ended_epoch_s": 1783175943.7613132,
+      "tok_s_1_100_after_ttft": 55.26122951708548,
+      "completion_tokens": 128,
+      "steps": 48,
+      "draft_tokens": 144,
+      "prefix_accepted_tokens": 74,
+      "output_tokens": 122,
+      "prefix_acceptance_fraction": 0.5138888888888888,
+      "mean_target_verified_tokens_per_step": 2.541666666666667,
+      "mean_output_tokens_per_verifier_step": 2.5416666666666665,
+      "full_accept_rate": 0.2916666666666667,
+      "accepted_hist": {
+        "0": 11,
+        "1": 14,
+        "2": 9,
+        "3": 14
+      },
+      "per_position_match_rate": {
+        "0": 0.7708333333333334,
+        "1": 0.6666666666666666,
+        "2": 0.5416666666666666
+      }
+    },
+    {
+      "prompt_index": 6,
+      "prompt_id": "migration-memo",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-06-migration-memo",
+      "request_started_epoch_s": 1783175943.7614093,
+      "request_ended_epoch_s": 1783175946.6767023,
+      "tok_s_1_100_after_ttft": 58.440243299794545,
+      "completion_tokens": 128,
+      "steps": 49,
+      "draft_tokens": 147,
+      "prefix_accepted_tokens": 72,
+      "output_tokens": 121,
+      "prefix_acceptance_fraction": 0.4897959183673469,
+      "mean_target_verified_tokens_per_step": 2.4693877551020407,
+      "mean_output_tokens_per_verifier_step": 2.4693877551020407,
+      "full_accept_rate": 0.2653061224489796,
+      "accepted_hist": {
+        "0": 12,
+        "1": 15,
+        "2": 9,
+        "3": 13
+      },
+      "per_position_match_rate": {
+        "0": 0.7551020408163265,
+        "1": 0.5714285714285714,
+        "2": 0.4897959183673469
+      }
+    },
+    {
+      "prompt_index": 7,
+      "prompt_id": "quality-gate-design",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-07-quality-gate-design",
+      "request_started_epoch_s": 1783175946.6767979,
+      "request_ended_epoch_s": 1783175949.6004875,
+      "tok_s_1_100_after_ttft": 56.78733390270022,
+      "completion_tokens": 128,
+      "steps": 48,
+      "draft_tokens": 144,
+      "prefix_accepted_tokens": 92,
+      "output_tokens": 140,
+      "prefix_acceptance_fraction": 0.6388888888888888,
+      "mean_target_verified_tokens_per_step": 2.916666666666667,
+      "mean_output_tokens_per_verifier_step": 2.9166666666666665,
+      "full_accept_rate": 0.4375,
+      "accepted_hist": {
+        "0": 7,
+        "1": 11,
+        "2": 9,
+        "3": 21
+      },
+      "per_position_match_rate": {
+        "0": 0.8541666666666666,
+        "1": 0.7291666666666666,
+        "2": 0.6458333333333334
+      }
+    },
+    {
+      "prompt_index": 8,
+      "prompt_id": "cache-bug",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-08-cache-bug",
+      "request_started_epoch_s": 1783175949.6005783,
+      "request_ended_epoch_s": 1783175952.2484741,
+      "tok_s_1_100_after_ttft": 63.698417400205514,
+      "completion_tokens": 128,
+      "steps": 43,
+      "draft_tokens": 129,
+      "prefix_accepted_tokens": 86,
+      "output_tokens": 129,
+      "prefix_acceptance_fraction": 0.6666666666666666,
+      "mean_target_verified_tokens_per_step": 3.0,
+      "mean_output_tokens_per_verifier_step": 3.0,
+      "full_accept_rate": 0.4883720930232558,
+      "accepted_hist": {
+        "0": 5,
+        "1": 11,
+        "2": 6,
+        "3": 21
+      },
+      "per_position_match_rate": {
+        "0": 0.8837209302325582,
+        "1": 0.7209302325581395,
+        "2": 0.6744186046511628
+      }
+    },
+    {
+      "prompt_index": 9,
+      "prompt_id": "capacity-plan",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-09-capacity-plan",
+      "request_started_epoch_s": 1783175952.2485921,
+      "request_ended_epoch_s": 1783175955.0682836,
+      "tok_s_1_100_after_ttft": 57.84084861125781,
+      "completion_tokens": 128,
+      "steps": 46,
+      "draft_tokens": 138,
+      "prefix_accepted_tokens": 73,
+      "output_tokens": 119,
+      "prefix_acceptance_fraction": 0.5289855072463768,
+      "mean_target_verified_tokens_per_step": 2.5869565217391304,
+      "mean_output_tokens_per_verifier_step": 2.5869565217391304,
+      "full_accept_rate": 0.2391304347826087,
+      "accepted_hist": {
+        "0": 8,
+        "1": 14,
+        "2": 13,
+        "3": 11
+      },
+      "per_position_match_rate": {
+        "0": 0.8260869565217391,
+        "1": 0.6086956521739131,
+        "2": 0.391304347826087
+      }
+    },
+    {
+      "prompt_index": 10,
+      "prompt_id": "code-path-audit",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-10-code-path-audit",
+      "request_started_epoch_s": 1783175955.0683787,
+      "request_ended_epoch_s": 1783175957.839527,
+      "tok_s_1_100_after_ttft": 63.87865765161491,
+      "completion_tokens": 128,
+      "steps": 45,
+      "draft_tokens": 135,
+      "prefix_accepted_tokens": 86,
+      "output_tokens": 131,
+      "prefix_acceptance_fraction": 0.6370370370370371,
+      "mean_target_verified_tokens_per_step": 2.9111111111111114,
+      "mean_output_tokens_per_verifier_step": 2.911111111111111,
+      "full_accept_rate": 0.4,
+      "accepted_hist": {
+        "0": 7,
+        "1": 8,
+        "2": 12,
+        "3": 18
+      },
+      "per_position_match_rate": {
+        "0": 0.8444444444444444,
+        "1": 0.8222222222222222,
+        "2": 0.4666666666666667
+      }
+    },
+    {
+      "prompt_index": 11,
+      "prompt_id": "customer-root-cause",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-11-customer-root-cause",
+      "request_started_epoch_s": 1783175957.8396475,
+      "request_ended_epoch_s": 1783175961.20716,
+      "tok_s_1_100_after_ttft": 47.50378466114864,
+      "completion_tokens": 128,
+      "steps": 56,
+      "draft_tokens": 168,
+      "prefix_accepted_tokens": 70,
+      "output_tokens": 126,
+      "prefix_acceptance_fraction": 0.4166666666666667,
+      "mean_target_verified_tokens_per_step": 2.25,
+      "mean_output_tokens_per_verifier_step": 2.25,
+      "full_accept_rate": 0.16071428571428573,
+      "accepted_hist": {
+        "0": 19,
+        "1": 13,
+        "2": 15,
+        "3": 9
+      },
+      "per_position_match_rate": {
+        "0": 0.6607142857142857,
+        "1": 0.5892857142857143,
+        "2": 0.375
+      }
+    },
+    {
+      "prompt_index": 12,
+      "prompt_id": "router-design",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-12-router-design",
+      "request_started_epoch_s": 1783175961.2072542,
+      "request_ended_epoch_s": 1783175964.1824288,
+      "tok_s_1_100_after_ttft": 52.46800307097182,
+      "completion_tokens": 128,
+      "steps": 49,
+      "draft_tokens": 147,
+      "prefix_accepted_tokens": 90,
+      "output_tokens": 139,
+      "prefix_acceptance_fraction": 0.6122448979591837,
+      "mean_target_verified_tokens_per_step": 2.836734693877551,
+      "mean_output_tokens_per_verifier_step": 2.836734693877551,
+      "full_accept_rate": 0.4489795918367347,
+      "accepted_hist": {
+        "0": 12,
+        "1": 6,
+        "2": 9,
+        "3": 22
+      },
+      "per_position_match_rate": {
+        "0": 0.7551020408163265,
+        "1": 0.8163265306122449,
+        "2": 0.673469387755102
+      }
+    },
+    {
+      "prompt_index": 13,
+      "prompt_id": "perf-experiment-template",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-13-perf-experiment-template",
+      "request_started_epoch_s": 1783175964.182524,
+      "request_ended_epoch_s": 1783175966.9389527,
+      "tok_s_1_100_after_ttft": 61.40430137715765,
+      "completion_tokens": 128,
+      "steps": 44,
+      "draft_tokens": 132,
+      "prefix_accepted_tokens": 88,
+      "output_tokens": 132,
+      "prefix_acceptance_fraction": 0.6666666666666666,
+      "mean_target_verified_tokens_per_step": 3.0,
+      "mean_output_tokens_per_verifier_step": 3.0,
+      "full_accept_rate": 0.4772727272727273,
+      "accepted_hist": {
+        "0": 5,
+        "1": 11,
+        "2": 7,
+        "3": 21
+      },
+      "per_position_match_rate": {
+        "0": 0.8863636363636364,
+        "1": 0.6818181818181818,
+        "2": 0.6818181818181818
+      }
+    },
+    {
+      "prompt_index": 14,
+      "prompt_id": "runtime-risk-register",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-14-runtime-risk-register",
+      "request_started_epoch_s": 1783175966.9390523,
+      "request_ended_epoch_s": 1783175969.8912253,
+      "tok_s_1_100_after_ttft": 56.55466190080585,
+      "completion_tokens": 128,
+      "steps": 48,
+      "draft_tokens": 144,
+      "prefix_accepted_tokens": 81,
+      "output_tokens": 129,
+      "prefix_acceptance_fraction": 0.5625,
+      "mean_target_verified_tokens_per_step": 2.6875,
+      "mean_output_tokens_per_verifier_step": 2.6875,
+      "full_accept_rate": 0.3333333333333333,
+      "accepted_hist": {
+        "0": 7,
+        "1": 17,
+        "2": 8,
+        "3": 16
+      },
+      "per_position_match_rate": {
+        "0": 0.8541666666666666,
+        "1": 0.6041666666666666,
+        "2": 0.6875
+      }
+    },
+    {
+      "prompt_index": 15,
+      "prompt_id": "release-retro",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-15-release-retro",
+      "request_started_epoch_s": 1783175969.891321,
+      "request_ended_epoch_s": 1783175972.9077067,
+      "tok_s_1_100_after_ttft": 54.92643614549047,
+      "completion_tokens": 128,
+      "steps": 49,
+      "draft_tokens": 147,
+      "prefix_accepted_tokens": 74,
+      "output_tokens": 123,
+      "prefix_acceptance_fraction": 0.5034013605442177,
+      "mean_target_verified_tokens_per_step": 2.510204081632653,
+      "mean_output_tokens_per_verifier_step": 2.510204081632653,
+      "full_accept_rate": 0.2857142857142857,
+      "accepted_hist": {
+        "0": 12,
+        "1": 14,
+        "2": 9,
+        "3": 14
+      },
+      "per_position_match_rate": {
+        "0": 0.7551020408163265,
+        "1": 0.6326530612244898,
+        "2": 0.5306122448979592
+      }
+    },
+    {
+      "prompt_index": 16,
+      "prompt_id": "support-playbook",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-16-support-playbook",
+      "request_started_epoch_s": 1783175972.9077916,
+      "request_ended_epoch_s": 1783175975.878496,
+      "tok_s_1_100_after_ttft": 52.439868422599204,
+      "completion_tokens": 128,
+      "steps": 47,
+      "draft_tokens": 141,
+      "prefix_accepted_tokens": 82,
+      "output_tokens": 129,
+      "prefix_acceptance_fraction": 0.5815602836879432,
+      "mean_target_verified_tokens_per_step": 2.74468085106383,
+      "mean_output_tokens_per_verifier_step": 2.74468085106383,
+      "full_accept_rate": 0.3404255319148936,
+      "accepted_hist": {
+        "0": 8,
+        "1": 12,
+        "2": 11,
+        "3": 16
+      },
+      "per_position_match_rate": {
+        "0": 0.8297872340425532,
+        "1": 0.7021276595744681,
+        "2": 0.5319148936170213
+      }
+    },
+    {
+      "prompt_index": 17,
+      "prompt_id": "architecture-summary",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-17-architecture-summary",
+      "request_started_epoch_s": 1783175975.878588,
+      "request_ended_epoch_s": 1783175978.804078,
+      "tok_s_1_100_after_ttft": 60.16350902689853,
+      "completion_tokens": 128,
+      "steps": 48,
+      "draft_tokens": 144,
+      "prefix_accepted_tokens": 80,
+      "output_tokens": 128,
+      "prefix_acceptance_fraction": 0.5555555555555556,
+      "mean_target_verified_tokens_per_step": 2.666666666666667,
+      "mean_output_tokens_per_verifier_step": 2.6666666666666665,
+      "full_accept_rate": 0.4166666666666667,
+      "accepted_hist": {
+        "0": 12,
+        "1": 12,
+        "2": 4,
+        "3": 20
+      },
+      "per_position_match_rate": {
+        "0": 0.75,
+        "1": 0.6041666666666666,
+        "2": 0.75
+      }
+    },
+    {
+      "prompt_index": 18,
+      "prompt_id": "scheduler-debug",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-18-scheduler-debug",
+      "request_started_epoch_s": 1783175978.8041706,
+      "request_ended_epoch_s": 1783175981.920288,
+      "tok_s_1_100_after_ttft": 51.13276092238773,
+      "completion_tokens": 128,
+      "steps": 51,
+      "draft_tokens": 153,
+      "prefix_accepted_tokens": 76,
+      "output_tokens": 127,
+      "prefix_acceptance_fraction": 0.49673202614379086,
+      "mean_target_verified_tokens_per_step": 2.4901960784313726,
+      "mean_output_tokens_per_verifier_step": 2.4901960784313726,
+      "full_accept_rate": 0.27450980392156865,
+      "accepted_hist": {
+        "0": 14,
+        "1": 12,
+        "2": 11,
+        "3": 14
+      },
+      "per_position_match_rate": {
+        "0": 0.7254901960784313,
+        "1": 0.6862745098039216,
+        "2": 0.5686274509803921
+      }
+    },
+    {
+      "prompt_index": 19,
+      "prompt_id": "kernel-change-review",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-19-kernel-change-review",
+      "request_started_epoch_s": 1783175981.9204104,
+      "request_ended_epoch_s": 1783175985.1416547,
+      "tok_s_1_100_after_ttft": 51.00724652571919,
+      "completion_tokens": 128,
+      "steps": 52,
+      "draft_tokens": 156,
+      "prefix_accepted_tokens": 82,
+      "output_tokens": 134,
+      "prefix_acceptance_fraction": 0.5256410256410257,
+      "mean_target_verified_tokens_per_step": 2.5769230769230766,
+      "mean_output_tokens_per_verifier_step": 2.576923076923077,
+      "full_accept_rate": 0.3076923076923077,
+      "accepted_hist": {
+        "0": 12,
+        "1": 14,
+        "2": 10,
+        "3": 16
+      },
+      "per_position_match_rate": {
+        "0": 0.7692307692307693,
+        "1": 0.6538461538461539,
+        "2": 0.5769230769230769
+      }
+    },
+    {
+      "prompt_index": 20,
+      "prompt_id": "handoff-note",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-20-handoff-note",
+      "request_started_epoch_s": 1783175985.1417458,
+      "request_ended_epoch_s": 1783175988.0734036,
+      "tok_s_1_100_after_ttft": 61.96583248184213,
+      "completion_tokens": 128,
+      "steps": 47,
+      "draft_tokens": 141,
+      "prefix_accepted_tokens": 85,
+      "output_tokens": 132,
+      "prefix_acceptance_fraction": 0.6028368794326241,
+      "mean_target_verified_tokens_per_step": 2.8085106382978724,
+      "mean_output_tokens_per_verifier_step": 2.8085106382978724,
+      "full_accept_rate": 0.3829787234042553,
+      "accepted_hist": {
+        "0": 9,
+        "1": 9,
+        "2": 11,
+        "3": 18
+      },
+      "per_position_match_rate": {
+        "0": 0.8085106382978723,
+        "1": 0.7446808510638298,
+        "2": 0.574468085106383
+      }
+    },
+    {
+      "prompt_index": 21,
+      "prompt_id": "long-context-plan",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-21-long-context-plan",
+      "request_started_epoch_s": 1783175988.0735006,
+      "request_ended_epoch_s": 1783175990.9664528,
+      "tok_s_1_100_after_ttft": 58.26347833764724,
+      "completion_tokens": 128,
+      "steps": 46,
+      "draft_tokens": 138,
+      "prefix_accepted_tokens": 83,
+      "output_tokens": 129,
+      "prefix_acceptance_fraction": 0.6014492753623188,
+      "mean_target_verified_tokens_per_step": 2.8043478260869565,
+      "mean_output_tokens_per_verifier_step": 2.8043478260869565,
+      "full_accept_rate": 0.34782608695652173,
+      "accepted_hist": {
+        "0": 5,
+        "1": 15,
+        "2": 10,
+        "3": 16
+      },
+      "per_position_match_rate": {
+        "0": 0.8913043478260869,
+        "1": 0.6521739130434783,
+        "2": 0.6521739130434783
+      }
+    },
+    {
+      "prompt_index": 22,
+      "prompt_id": "variance-method",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-22-variance-method",
+      "request_started_epoch_s": 1783175990.9665494,
+      "request_ended_epoch_s": 1783175993.7453334,
+      "tok_s_1_100_after_ttft": 62.03316634486819,
+      "completion_tokens": 128,
+      "steps": 45,
+      "draft_tokens": 135,
+      "prefix_accepted_tokens": 90,
+      "output_tokens": 135,
+      "prefix_acceptance_fraction": 0.6666666666666666,
+      "mean_target_verified_tokens_per_step": 3.0,
+      "mean_output_tokens_per_verifier_step": 3.0,
+      "full_accept_rate": 0.4888888888888889,
+      "accepted_hist": {
+        "0": 6,
+        "1": 10,
+        "2": 7,
+        "3": 22
+      },
+      "per_position_match_rate": {
+        "0": 0.8666666666666667,
+        "1": 0.7555555555555555,
+        "2": 0.7111111111111111
+      }
+    },
+    {
+      "prompt_index": 23,
+      "prompt_id": "optimization-stop-rule",
+      "request_id": "bench-qwen36-27b-autoround-int4-b70-calibration-v1-23-optimization-stop-rule",
+      "request_started_epoch_s": 1783175993.7454286,
+      "request_ended_epoch_s": 1783175996.670943,
+      "tok_s_1_100_after_ttft": 55.12217026506211,
+      "completion_tokens": 128,
+      "steps": 39,
+      "draft_tokens": 117,
+      "prefix_accepted_tokens": 65,
+      "output_tokens": 104,
+      "prefix_acceptance_fraction": 0.5555555555555556,
+      "mean_target_verified_tokens_per_step": 2.666666666666667,
+      "mean_output_tokens_per_verifier_step": 2.6666666666666665,
+      "full_accept_rate": 0.4358974358974359,
+      "accepted_hist": {
+        "0": 11,
+        "1": 8,
+        "2": 3,
+        "3": 17
+      },
+      "per_position_match_rate": {
+        "0": 0.717948717948718,
+        "1": 0.6666666666666666,
+        "2": 0.6666666666666666
+      }
+    }
+  ],
+  "speed_stats": {
+    "count": 24,
+    "p10": 51.04490084471975,
+    "median": 56.67099790175303,
+    "mean": 56.56681688038654,
+    "min": 46.361935847969804,
+    "max": 63.87865765161491,
+    "stdev": 4.919900029371626
+  },
+  "realistic_final_gate": {
+    "cached_tokens": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "cached_tokens_all_zero": true,
+    "chunk_count_matches_completion_tokens_all": false,
+    "chunk_count_matches_completion_tokens_note": "Informational only: llama.cpp usage may count an EOS/final token that is not emitted as a text delta. Promotion requires enough streamed text deltas to measure the first metric window.",
+    "chunk_counts": [
+      46,
+      46,
+      51,
+      44,
+      52,
+      48,
+      50,
+      50,
+      43,
+      47,
+      46,
+      57,
+      49,
+      43,
+      49,
+      49,
+      49,
+      48,
+      51,
+      53,
+      47,
+      46,
+      44,
+      47
+    ],
+    "completion_tokens_at_least_metric_window": true,
+    "metric_chunk_events_at_least_window": false,
+    "metric_name": "median_tok_s_1_100_after_ttft",
+    "metric_token_id_events_at_least_window": true,
+    "metric_tokens": 100,
+    "passed": true,
+    "prompts_unique": true,
+    "required_policy": "fixed realistic prompt suite; each prompt once; cached_tokens=0 every row; no repeated/warmed prompt averaging; metric is median tokens 1-100 after TTFT",
+    "return_token_ids_requested": true,
+    "stream_token_id_counts": [
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128,
+      128
+    ],
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp"
+  },
+  "result_summary": {
+    "tok_s_1_100_after_ttft": {
+      "count": 24,
+      "max": 63.87865765161491,
+      "mean": 56.56681688038654,
+      "median": 56.67099790175303,
+      "min": 46.361935847969804,
+      "p10": 51.04490084471975,
+      "stdev": 4.919900029371626
+    },
+    "tok_s_after_ttft_full": {
+      "count": 24,
+      "max": 62.1000117582686,
+      "mean": 55.765882008391806,
+      "median": 56.16453511748395,
+      "min": 46.59648857608615,
+      "p10": 50.87138505553424,
+      "stdev": 3.998537355827567
+    },
+    "tok_s_wall_full": {
+      "count": 24,
+      "max": 48.340266937262705,
+      "mean": 42.67274946022311,
+      "median": 43.7531687233804,
+      "min": 18.047786235971575,
+      "p10": 39.11053698783425,
+      "stdev": 5.809423381805611
+    },
+    "ttft_ms": {
+      "count": 24,
+      "max": 4862.32567881234,
+      "mean": 801.8287790182512,
+      "median": 639.4904374610633,
+      "min": 524.3188249878585,
+      "p10": 565.7732567517087,
+      "stdev": 866.1583606058311
+    }
+  }
+}

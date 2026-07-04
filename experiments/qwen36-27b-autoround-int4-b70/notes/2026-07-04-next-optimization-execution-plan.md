@@ -79,6 +79,15 @@ Phase 0 and Phase 1 are complete and captured in
   to separate calibration was only `0.44091796875`, so there is no endpoint
   candidate and no LocalMaxxing result. Do not reopen EAGLE endpoint sweeps
   without a materially better data/training/init idea.
+- Draft top-k calibration is now measured and bounded:
+  `2026-07-04-draft-topk-calibration-diagnostic.md`. The target verifier token
+  is inside the built-in draft top-32 for `96-99%` of positions, and an
+  impossible oracle reranker would raise the diagnostic run from `2.712` to
+  `3.910` target-verified tokens/step. However, simple static token-bias and
+  rank-margin rerankers did not generalize beyond noise on an even/odd split,
+  so do not ship a heuristic top-k reranker. Future accepted-token work needs a
+  real learned reranker/drafter on isolated non-final data, then held-out
+  evaluation before endpoint testing.
 
 ## Current waste estimate
 
@@ -469,6 +478,10 @@ Corrected ranked next implementation lanes:
    verifier step on held-out realistic-style data, with exact target
    verification and no final-suite leakage. This attacks the other large lever:
    moving emitted tokens/step toward `3.3-4.0` without increasing step cost.
+   Draft top-k tracing shows the target is usually present in the built-in
+   draft top-32, but simple token-bias/margin reranking is flat on held-out
+   split; the next attempt needs a real learned reranker/drafter or stronger
+   architectural draft path, not a static heuristic.
 3. **Native lazy greedy target verifier op**: still valid as a later cleanup
    once a better top-ID producer exists, or if it can be fused with the
    producer, but target-only row skipping is not enough by itself.

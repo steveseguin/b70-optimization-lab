@@ -319,6 +319,16 @@ Current next-execution plan:
   acceptance/speed correlation `r ~= 0.696`. This is diagnostic-only, not a
   LocalMaxxing result. Use it as the starting point for target-matched drafter
   calibration; keep final-suite prompts isolated from tuning.
+- draft top-k calibration diagnostic:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-topk-calibration-diagnostic.md`.
+  A default-off draft-top-k trace joined cleanly to verifier records after
+  skipping `24` extra proposer groups (`1147/1147` exact sampled-draft tuple
+  matches). The target token was in the draft top-32 for `96-99%` of positions,
+  and an impossible oracle reranker would move the run from `2.712` to `3.910`
+  target-verified tokens/step. Simple static token-bias and rank-margin
+  rerankers were flat on held-out split, so do not ship a heuristic reranker.
+  If accepted-token work continues, train/evaluate a real learned reranker or
+  drafter on larger isolated non-final data before endpoint testing.
 - EAGLE1 local training pipeline:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`.
   The local pipeline now works end-to-end for Qwen27 hidden size `5120`:
