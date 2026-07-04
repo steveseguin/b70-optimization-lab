@@ -134,6 +134,28 @@ Initial plan:
   fundamentally too tight, pivot to Q6 or `UD-Q4_K_XL` and label the quality
   class separately.
 
+2026-07-04 Q8/Q4 first-pass notes:
+
+- `Mistral-Small-3.2-24B-Instruct-2506-UD-Q8_K_XL.gguf` downloaded cleanly to
+  the USB model store and matched the expected byte size `28991868448`.
+- Q8 strict one-B70 `ctx=4096`, FA-on, F16 KV, prompt cache disabled per
+  request passed the strict gate but was not competitive:
+  `16.380395177161446 tok/s` median tokens 1-100 after TTFT, p10
+  `16.33483296767248`, mean `16.394351802026414`, median TTFT
+  `2686.1701778834686 ms`, `cached_tokens=0` on all `12/12` prompts. Evidence:
+  `data/rapid-model-snapshots-b70/mistral-small-3.2-24b-instruct-2506-udq8-llamacpp-faon-ctx4096-realistic128-20260704T201848Z.json`.
+  Treat as a valid diagnostic/fit result, not a useful promoted row unless a
+  high-quality Q8 baseline is explicitly needed.
+- The first `UD-Q4_K_XL` file was contaminated by a failed multi-range
+  `aria2c` resume: byte size matched `14548880928`, but local SHA
+  `b9ba590957befd5fdb970de3668337883c59b70d54f9718f495bb8e9f3b71433`
+  did not match the HF ETag/SHA
+  `b735208f3cf85b9a11fe508e520fa9aa3afb8c384563e5755a7ab5a6bcce74f5`.
+  The invalid run emitted no stream text chunks despite `completion_tokens=128`;
+  do not treat it as a model/runtime result. The file was quarantined on USB
+  with a `.corrupt-sha-b9ba-20260704T2027` suffix and a clean single-stream
+  download was started.
+
 ## Gemma 4 12B
 
 Why queued:
