@@ -1,0 +1,609 @@
+{
+  "classification": "diagnostic_only_nonfinal_eagle_training",
+  "families": [
+    "api-design",
+    "architecture-tradeoff",
+    "capacity-planning",
+    "code-review",
+    "database-operations",
+    "incident-response",
+    "long-context",
+    "performance-debug",
+    "quality-gates",
+    "release-planning",
+    "security-review",
+    "support-escalation"
+  ],
+  "policy": "Use only for EAGLE corpus collection, held-out calibration, and draft research. Do not use as a final promotion benchmark or LocalMaxxing throughput claim.",
+  "prompt_count": 96,
+  "prompts": [
+    {
+      "family": "incident-response",
+      "id": "incident-response-runbook",
+      "prompt": "Write an operational runbook for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nUse numbered steps with commands or concrete checks where relevant.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "incident-response",
+      "id": "incident-response-memo",
+      "prompt": "Write a decision memo for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nState the recommendation, rejected options, risks, and follow-up owners.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "incident-response",
+      "id": "incident-response-review",
+      "prompt": "Review the proposal as a senior engineer for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nPut blocking issues first, then non-blocking improvements and tests.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "incident-response",
+      "id": "incident-response-debug-plan",
+      "prompt": "Create a debugging plan for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "incident-response",
+      "id": "incident-response-json-plan",
+      "prompt": "Return compact JSON for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nInclude keys summary, risks, experiments, validation, and rollback.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "incident-response",
+      "id": "incident-response-checklist",
+      "prompt": "Create a launch checklist for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "incident-response",
+      "id": "incident-response-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "incident-response",
+      "id": "incident-response-test-plan",
+      "prompt": "Write a test plan for a production API outage caused by a cache invalidation rule.\n\nFocus on impact, timeline, detection gaps, mitigation, and owner handoff.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-runbook",
+      "prompt": "Write an operational runbook for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nUse numbered steps with commands or concrete checks where relevant.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-memo",
+      "prompt": "Write a decision memo for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nState the recommendation, rejected options, risks, and follow-up owners.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-review",
+      "prompt": "Review the proposal as a senior engineer for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nPut blocking issues first, then non-blocking improvements and tests.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-debug-plan",
+      "prompt": "Create a debugging plan for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-json-plan",
+      "prompt": "Return compact JSON for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nInclude keys summary, risks, experiments, validation, and rollback.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-checklist",
+      "prompt": "Create a launch checklist for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "database-operations",
+      "id": "database-operations-test-plan",
+      "prompt": "Write a test plan for a multi-tenant database migration with strict availability goals.\n\nFocus on replication checks, rollback criteria, customer impact, and evidence.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-runbook",
+      "prompt": "Write an operational runbook for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nUse numbered steps with commands or concrete checks where relevant.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-memo",
+      "prompt": "Write a decision memo for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nState the recommendation, rejected options, risks, and follow-up owners.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-review",
+      "prompt": "Review the proposal as a senior engineer for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nPut blocking issues first, then non-blocking improvements and tests.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-debug-plan",
+      "prompt": "Create a debugging plan for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-json-plan",
+      "prompt": "Return compact JSON for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nInclude keys summary, risks, experiments, validation, and rollback.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-checklist",
+      "prompt": "Create a launch checklist for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "security-review",
+      "id": "security-review-test-plan",
+      "prompt": "Write a test plan for a credential-rotation incident after a leaked deployment token.\n\nFocus on blast radius, abuse paths, containment, audit logs, and prevention.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-runbook",
+      "prompt": "Write an operational runbook for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nUse numbered steps with commands or concrete checks where relevant.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-memo",
+      "prompt": "Write a decision memo for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nState the recommendation, rejected options, risks, and follow-up owners.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-review",
+      "prompt": "Review the proposal as a senior engineer for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nPut blocking issues first, then non-blocking improvements and tests.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-debug-plan",
+      "prompt": "Create a debugging plan for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-json-plan",
+      "prompt": "Return compact JSON for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nInclude keys summary, risks, experiments, validation, and rollback.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-checklist",
+      "prompt": "Create a launch checklist for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "performance-debug",
+      "id": "performance-debug-test-plan",
+      "prompt": "Write a test plan for a local inference server with unstable decode throughput.\n\nFocus on benchmark identity, device telemetry, variance controls, and next probes.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-runbook",
+      "prompt": "Write an operational runbook for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nUse numbered steps with commands or concrete checks where relevant.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-memo",
+      "prompt": "Write a decision memo for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nState the recommendation, rejected options, risks, and follow-up owners.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-review",
+      "prompt": "Review the proposal as a senior engineer for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nPut blocking issues first, then non-blocking improvements and tests.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-debug-plan",
+      "prompt": "Create a debugging plan for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-json-plan",
+      "prompt": "Return compact JSON for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nInclude keys summary, risks, experiments, validation, and rollback.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-checklist",
+      "prompt": "Create a launch checklist for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "api-design",
+      "id": "api-design-test-plan",
+      "prompt": "Write a test plan for a bulk import API with validation jobs and webhook callbacks.\n\nFocus on idempotency, abuse limits, schema evolution, observability, and rollout.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-runbook",
+      "prompt": "Write an operational runbook for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nUse numbered steps with commands or concrete checks where relevant.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-memo",
+      "prompt": "Write a decision memo for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nState the recommendation, rejected options, risks, and follow-up owners.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-review",
+      "prompt": "Review the proposal as a senior engineer for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nPut blocking issues first, then non-blocking improvements and tests.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-debug-plan",
+      "prompt": "Create a debugging plan for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-json-plan",
+      "prompt": "Return compact JSON for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nInclude keys summary, risks, experiments, validation, and rollback.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-checklist",
+      "prompt": "Create a launch checklist for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-teaching-note",
+      "prompt": "Explain the topic to a new teammate for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "capacity-planning",
+      "id": "capacity-planning-test-plan",
+      "prompt": "Write a test plan for four independent GPU replicas serving single-session workloads.\n\nFocus on routing, queueing, saturation signals, memory limits, and failover.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-runbook",
+      "prompt": "Write an operational runbook for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nUse numbered steps with commands or concrete checks where relevant.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-memo",
+      "prompt": "Write a decision memo for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nState the recommendation, rejected options, risks, and follow-up owners.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-review",
+      "prompt": "Review the proposal as a senior engineer for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nPut blocking issues first, then non-blocking improvements and tests.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-debug-plan",
+      "prompt": "Create a debugging plan for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-json-plan",
+      "prompt": "Return compact JSON for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nInclude keys summary, risks, experiments, validation, and rollback.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-checklist",
+      "prompt": "Create a launch checklist for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "code-review",
+      "id": "code-review-test-plan",
+      "prompt": "Write a test plan for a worker that batches writes, retries failures, and persists dead letters.\n\nFocus on correctness, concurrency, durability, metrics, and tests.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-runbook",
+      "prompt": "Write an operational runbook for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nUse numbered steps with commands or concrete checks where relevant.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-memo",
+      "prompt": "Write a decision memo for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nState the recommendation, rejected options, risks, and follow-up owners.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-review",
+      "prompt": "Review the proposal as a senior engineer for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nPut blocking issues first, then non-blocking improvements and tests.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-debug-plan",
+      "prompt": "Create a debugging plan for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-json-plan",
+      "prompt": "Return compact JSON for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nInclude keys summary, risks, experiments, validation, and rollback.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-checklist",
+      "prompt": "Create a launch checklist for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "quality-gates",
+      "id": "quality-gates-test-plan",
+      "prompt": "Write a test plan for a benchmark promotion process for local model optimization.\n\nFocus on fresh prompts, cache controls, quality checks, variance, and audit logs.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-runbook",
+      "prompt": "Write an operational runbook for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nUse numbered steps with commands or concrete checks where relevant.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-memo",
+      "prompt": "Write a decision memo for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nState the recommendation, rejected options, risks, and follow-up owners.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-review",
+      "prompt": "Review the proposal as a senior engineer for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nPut blocking issues first, then non-blocking improvements and tests.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-debug-plan",
+      "prompt": "Create a debugging plan for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-json-plan",
+      "prompt": "Return compact JSON for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nInclude keys summary, risks, experiments, validation, and rollback.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-checklist",
+      "prompt": "Create a launch checklist for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "release-planning",
+      "id": "release-planning-test-plan",
+      "prompt": "Write a test plan for a risky runtime optimization behind environment flags.\n\nFocus on rollout stages, monitoring, rollback, owner checklist, and user impact.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-runbook",
+      "prompt": "Write an operational runbook for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nUse numbered steps with commands or concrete checks where relevant.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-memo",
+      "prompt": "Write a decision memo for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nState the recommendation, rejected options, risks, and follow-up owners.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-review",
+      "prompt": "Review the proposal as a senior engineer for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nPut blocking issues first, then non-blocking improvements and tests.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-debug-plan",
+      "prompt": "Create a debugging plan for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-json-plan",
+      "prompt": "Return compact JSON for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nInclude keys summary, risks, experiments, validation, and rollback.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-checklist",
+      "prompt": "Create a launch checklist for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "long-context",
+      "id": "long-context-test-plan",
+      "prompt": "Write a test plan for a 32K-context model service with retrieval-style prompts.\n\nFocus on TTFT, prefill throughput, recall checks, memory pressure, and regressions.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-runbook",
+      "prompt": "Write an operational runbook for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nUse numbered steps with commands or concrete checks where relevant.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-memo",
+      "prompt": "Write a decision memo for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nState the recommendation, rejected options, risks, and follow-up owners.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-review",
+      "prompt": "Review the proposal as a senior engineer for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nPut blocking issues first, then non-blocking improvements and tests.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-debug-plan",
+      "prompt": "Create a debugging plan for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-json-plan",
+      "prompt": "Return compact JSON for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nInclude keys summary, risks, experiments, validation, and rollback.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-checklist",
+      "prompt": "Create a launch checklist for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "support-escalation",
+      "id": "support-escalation-test-plan",
+      "prompt": "Write a test plan for a customer report of slower responses after a model-server upgrade.\n\nFocus on questions to ask, local diagnostics, escalation data, and safe rollback.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-runbook",
+      "prompt": "Write an operational runbook for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nUse numbered steps with commands or concrete checks where relevant.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "runbook"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-memo",
+      "prompt": "Write a decision memo for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nState the recommendation, rejected options, risks, and follow-up owners.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "memo"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-review",
+      "prompt": "Review the proposal as a senior engineer for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nPut blocking issues first, then non-blocking improvements and tests.\nBe concise but include enough detail for another engineer to execute.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "review"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-debug-plan",
+      "prompt": "Create a debugging plan for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nSeparate evidence, hypotheses, experiments, expected outcomes, and stop conditions.\nDo not assume access to proprietary tools beyond logs, shell commands, and metrics.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "debug-plan"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-json-plan",
+      "prompt": "Return compact JSON for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nInclude keys summary, risks, experiments, validation, and rollback.\nCall out what evidence would change the recommendation.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "json-plan"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-checklist",
+      "prompt": "Create a launch checklist for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nInclude preflight, live monitoring, quality gates, rollback, and postmortem evidence.\nInclude at least one concrete validation step and one rollback condition.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "checklist"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-teaching-note",
+      "prompt": "Explain the topic to a new teammate for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nDefine terms, show tradeoffs, mention common traps, and end with next actions.\nAvoid repeating the same sentence structure across sections.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "teaching-note"
+    },
+    {
+      "family": "architecture-tradeoff",
+      "id": "architecture-tradeoff-test-plan",
+      "prompt": "Write a test plan for a decision between kernel work, speculative decoding, and service caching.\n\nFocus on expected gains, correctness risks, validation cost, and sequencing.\nInclude unit, integration, load, failure, and quality checks with pass/fail gates.\nKeep the answer practical and avoid marketing language.\nUse realistic names for systems, metrics, and artifacts, but do not refer to any benchmark final-suite prompt.",
+      "task": "test-plan"
+    }
+  ],
+  "suite_id": "qwen36-27b-autoround-int4-b70-eagle-chat-corpus-v2",
+  "tasks": [
+    "checklist",
+    "debug-plan",
+    "json-plan",
+    "memo",
+    "review",
+    "runbook",
+    "teaching-note",
+    "test-plan"
+  ],
+  "version": "2026-07-04"
+}
