@@ -99,6 +99,13 @@ Current prompt-processing / long-context service baseline:
 
 - note:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md`;
+- MBT follow-up:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-mbt-screen.md`.
+  Same-window 32K no-parser service screen kept
+  `MAX_NUM_BATCHED_TOKENS=4096`: MBT2048 passed but was slower (`22.330s`
+  TTFT median, `176.01` approx prefill tok/s), MBT4096 passed (`15.948s`
+  TTFT median, `207.91` approx prefill tok/s), and MBT8192 stalled on the
+  final long request with no complete gate artifact;
 - suite:
   `../../repro/qwen36-27b-autoround-int4-b70/long-context-suite-v1.json`;
 - runner:

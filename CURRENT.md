@@ -76,6 +76,10 @@ Fastest quality-gated practical variant:
   `QWEN36_27B_REASONING_PARSER=`; the no-parser 32K content check passed exact
   retrieval through the same `17706` actual-token case with all rows streaming
   visible content deltas;
+  latest MBT service screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-mbt-screen.md`.
+  Keep `MAX_NUM_BATCHED_TOKENS=4096` for the 32K no-parser service lane:
+  MBT2048 was slower and MBT8192 stalled without a complete gate artifact;
 - service note: the older Intel-checkpoint
   `VLLM_XPU_LM_HEAD_INT8_SCOPE=target` attribution lane passed quality and
   measured `61.898 tok/s`, but the later webhie BF16-scale target-only

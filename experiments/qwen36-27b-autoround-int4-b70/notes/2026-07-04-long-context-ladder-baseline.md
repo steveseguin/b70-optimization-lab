@@ -202,6 +202,13 @@ Default recipe baked into the runner:
 
 ## Next prompt-processing work
 
+Latest MBT follow-up: `2026-07-04-long-context-mbt-screen.md`. Same-window 32K
+no-parser service screening found `MAX_NUM_BATCHED_TOKENS=4096` remains the
+best completed setting: MBT2048 passed but was slower (`22.330s` TTFT median,
+`176.01` approx prefill tok/s), MBT4096 passed (`15.948s` TTFT median,
+`207.91` approx prefill tok/s), and MBT8192 stalled on the final long request
+with no complete gate artifact. Keep MBT4096 for this service lane.
+
 1. Separate first-request cold service overhead from steady prompt processing
    with an explicit optional warmup request, while keeping promoted fresh rows
    cold and labeled.

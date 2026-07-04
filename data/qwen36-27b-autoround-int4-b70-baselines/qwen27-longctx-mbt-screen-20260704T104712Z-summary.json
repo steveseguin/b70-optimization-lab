@@ -1,0 +1,60 @@
+{
+  "classification": "service_lane_long_context_mbt_screen",
+  "status": "closed_no_win",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "mode": "runtime INT8 LM-head BF16 scales, MTP3/cg8, no reasoning parser, max_model_len=32768",
+  "suite": "repro/qwen36-27b-autoround-int4-b70/long-context-suite-v1.json",
+  "policy": {
+    "headline_decode_result": false,
+    "localmaxxing_candidate": false,
+    "reason": "Prompt-processing/service-lane screen, not short-context decode record; every completed row used cold deterministic prompts and cached_tokens=0."
+  },
+  "stamp": "20260704T104712Z",
+  "runs": [
+    {
+      "max_num_batched_tokens": 2048,
+      "gpu": 0,
+      "port": 19440,
+      "result": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser-mbt2048-20260704T104712Z-20260704T104712Z.json",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser-mbt2048-20260704T104712Z-20260704T104712Z",
+      "gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "quality_pass_all": true,
+      "ttft_s_median": 22.32984897948336,
+      "prefill_tok_s_approx_median": 176.0066748584797,
+      "tok_s_after_ttft_median": 58.92888366117809,
+      "tok_s_wall_median": 2.6828282351544397,
+      "decision": "slower_than_4096_control"
+    },
+    {
+      "max_num_batched_tokens": 4096,
+      "gpu": 1,
+      "port": 19441,
+      "result": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser-mbt4096-20260704T104712Z-20260704T104712Z.json",
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser-mbt4096-20260704T104712Z-20260704T104712Z",
+      "gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "quality_pass_all": true,
+      "ttft_s_median": 15.947620405466296,
+      "prefill_tok_s_approx_median": 207.91305629932984,
+      "tok_s_after_ttft_median": 57.337909136908166,
+      "tok_s_wall_median": 4.65131413861355,
+      "decision": "best_completed_setting_in_this_screen"
+    },
+    {
+      "max_num_batched_tokens": 8192,
+      "gpu": 2,
+      "port": 19442,
+      "result": null,
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/runs/qwen27-webhie-int8lmhead-bf16scale-longctx12288-mml32768-noparser-mbt8192-20260704T104712Z-20260704T104712Z",
+      "completed_posts_before_interrupt": 5,
+      "failure_mode": "stalled_or_extremely_slow_on_final_long_request; client interrupted after MBT4096 and MBT2048 completed",
+      "decision": "negative_no_complete_gate"
+    }
+  ],
+  "decision": {
+    "recommended_max_num_batched_tokens_for_32k_service_lane": 4096,
+    "reason": "4096 completed the gate with better TTFT/prefill/wall median than 2048; 8192 did not complete in the same-window run.",
+    "short_decode_followup_required_before_production_change": true
+  }
+}

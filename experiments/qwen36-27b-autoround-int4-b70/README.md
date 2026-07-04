@@ -274,6 +274,10 @@ prefill median `224.67 tok/s`, and after-TTFT short-output median
 decode row. For production-visible OpenAI content deltas, use the validated
 no-parser service variant (`QWEN36_27B_REASONING_PARSER=`), which passed the
 same 32K exact-retrieval gate with `reasoning_delta_count=0`.
+The MBT follow-up is `notes/2026-07-04-long-context-mbt-screen.md`: same-window
+screening kept `MAX_NUM_BATCHED_TOKENS=4096` for the 32K no-parser service lane;
+MBT2048 passed but was slower, and MBT8192 stalled without a complete gate
+artifact.
 
 The current valid env-only win appears to preserve the accepted-state transition
 by reading from the accepted speculative slot as the running source, then

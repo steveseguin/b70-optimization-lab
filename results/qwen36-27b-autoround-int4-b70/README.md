@@ -130,6 +130,10 @@ Current prompt-processing / long-context service baseline:
   exact retrieval pass, TTFT median `22.443s`, approximate prefill median
   `224.67 tok/s`, after-TTFT output median `60.19 tok/s`, KV cache size
   `141,784` tokens, max concurrency `4.33x` at 32K;
+- same-window 32K no-parser MBT screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-mbt-screen.md`.
+  Keep `MAX_NUM_BATCHED_TOKENS=4096`; MBT2048 passed but was slower, and
+  MBT8192 stalled on the final long request without a complete gate artifact;
 - production-visible service variant: set `QWEN36_27B_REASONING_PARSER=`. The
   32K no-parser content check passed the same exact retrieval gate through
   `17706` actual prompt tokens with all rows streaming visible `content`
