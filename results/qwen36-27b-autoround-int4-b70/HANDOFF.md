@@ -166,6 +166,15 @@ Current next-execution plan:
   group crashed the XPU verifier path with an `Indexing.h:622` out-of-bounds
   assert. Do not retry variable-depth MTP heuristics until partial groups are
   supported in the Qwen/GDN XPU verifier/metadata path.
+- closed DFlash SWA revisit:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-swa-revisit.md`.
+  The local DFlash implementation ignores the draft model's mixed
+  `4 sliding + 1 full` layer layout. Honoring that layout exposes a real
+  backend gap: `llm_base_proposer.py` assumes all draft layers share one
+  KV-cache group and crashes before readiness. A single-group `all-sliding`
+  diagnostic remained strict/fresh and `cached_tokens=0`, but collapsed to
+  `20.630 tok/s`, so DFlash is still no-win until multi-KV-group draft metadata
+  is implemented.
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
   adaptive-depth heuristics unless the proposer and verifier are both made

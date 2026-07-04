@@ -118,6 +118,13 @@ Fastest quality-gated practical variant:
   speculative group with an XPU `Indexing.h:622` out-of-bounds assert. This
   closes dynamic-depth heuristics until partial-group support is fixed in the
   Qwen/GDN XPU verifier path.
+- DFlash SWA revisit closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-swa-revisit.md`.
+  True mixed `sliding_attention`/`full_attention` DFlash support currently
+  hits the proposer single-KV-group assertion before readiness, and a
+  target-verified `all-sliding` workaround passed the strict fresh gate but
+  only reached `20.630 tok/s`. Do not continue DFlash sweeps without
+  implementing multi-KV-group draft metadata.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

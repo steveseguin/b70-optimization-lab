@@ -165,6 +165,13 @@ Next milestone:
     crashed with an XPU indexing assert when it created partial speculative
     groups. Do not retry dynamic depth until the Qwen/GDN XPU verifier supports
     partial groups end-to-end.
+12. Latest DFlash revisit:
+    `notes/2026-07-04-dflash-swa-revisit.md`. Real mixed SWA support crashes
+    before readiness because the current DFlash/EAGLE proposer assumes all
+    draft layers belong to one KV-cache group. The target-verified
+    `all-sliding` single-group diagnostic passed the fresh gate but dropped to
+    `20.630 tok/s`, so DFlash remains closed no-win until multi-KV-group draft
+    metadata is implemented.
 
 ## Folder Map
 

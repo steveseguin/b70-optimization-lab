@@ -1,0 +1,71 @@
+diff --git a/vllm/model_executor/models/qwen3_dflash.py b/vllm/model_executor/models/qwen3_dflash.py
+index cffe6267a..061260b03 100644
+--- a/vllm/model_executor/models/qwen3_dflash.py
++++ b/vllm/model_executor/models/qwen3_dflash.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+
++import os
+ from collections.abc import Iterable
+
+ import torch
+@@ -68,6 +69,7 @@ class DFlashQwen3Attention(nn.Module):
+         quant_config: QuantizationConfig | None = None,
+         prefix: str = "",
+         attn_type: str = AttentionType.DECODER,
++        per_layer_sliding_window: int | None = None,
+     ) -> None:
+         super().__init__()
+         self.layer_name = prefix
+@@ -116,6 +118,7 @@ class DFlashQwen3Attention(nn.Module):
+             num_kv_heads=self.num_kv_heads,
+             cache_config=cache_config,
+             quant_config=quant_config,
++            per_layer_sliding_window=per_layer_sliding_window,
+             prefix=f"{prefix}.attn",
+             attn_type=attn_type,
+         )
+@@ -158,12 +161,26 @@ class DFlashQwen3DecoderLayer(nn.Module):
+         config: Qwen3Config,
+         cache_config: CacheConfig | None = None,
+         quant_config: QuantizationConfig | None = None,
++        layer_idx: int = 0,
+         prefix: str = "",
+     ) -> None:
+         super().__init__()
+         self.hidden_size = config.hidden_size
+         set_default_rope_theta(config, default_theta=1000000)
+         attn_type = AttentionType.DECODER
++        sliding_window = None
++        layer_types = getattr(config, "layer_types", None)
++        dflash_layer_type_mode = os.environ.get(
++            "VLLM_XPU_QWEN3_DFLASH_LAYER_TYPES", "off").strip().lower()
++        if dflash_layer_type_mode == "all-sliding":
++            sliding_window = getattr(config, "sliding_window", None)
++        elif layer_types and dflash_layer_type_mode in ("1", "true", "on", "mixed"):
++            if layer_idx >= len(layer_types):
++                raise ValueError(
++                    f"DFlash layer_idx {layer_idx} is out of bounds for "
++                    f"layer_types length {len(layer_types)}")
++            if layer_types[layer_idx] == "sliding_attention":
++                sliding_window = getattr(config, "sliding_window", None)
+
+         self.self_attn = DFlashQwen3Attention(
+             hidden_size=self.hidden_size,
+@@ -178,6 +195,7 @@ class DFlashQwen3DecoderLayer(nn.Module):
+             rope_parameters=config.rope_parameters,
+             prefix=f"{prefix}.self_attn",
+             attn_type=attn_type,
++            per_layer_sliding_window=sliding_window,
+         )
+         self.mlp = Qwen3MLP(
+             hidden_size=self.hidden_size,
+@@ -249,6 +267,7 @@ class DFlashQwen3Model(nn.Module):
+                     current_vllm_config,
+                     prefix=maybe_prefix(prefix, f"layers.{layer_idx + start_layer_id}"),
+                     config=self.config,
++                    layer_idx=layer_idx,
+                 )
+                 for layer_idx in range(self.config.num_hidden_layers)
+             ]
