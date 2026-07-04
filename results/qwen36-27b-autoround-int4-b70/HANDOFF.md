@@ -474,5 +474,11 @@ Continue INT4 optimization without promoting synthetic scores:
 - draft proposer local-argmax reduction has been tested and closed flat/no-win;
 - deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
   candidate-vs-max kernel that avoids materializing full vocab logits;
+- DFlash mixed-SWA was audited and is blocked by a real drafter architecture
+  issue, not a config typo. Mixed full/sliding draft attention creates multiple
+  KV-cache groups, while the speculative DFlash/EAGLE drafter still assumes one
+  `kv_cache_gid`, one block table, and one slot mapping. Do not remove the
+  assertion blindly; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`;
 - keep long-context/prompt-processing optimization separate from the short
   decode record.

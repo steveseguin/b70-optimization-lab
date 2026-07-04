@@ -312,6 +312,10 @@ narrows that further: small Python-level row/call shortcuts are unlikely to
 win because they still use dense LM-head primitives. Future Qwen27 work should
 start with a real fused/top-ID LM-head primitive, a native row-adaptive verifier,
 or DFlash multi-KV-group draft metadata support, not another config sweep.
+The DFlash mixed-SWA audit is captured in
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`:
+the target runner is multi-KV aware, but the DFlash/EAGLE drafter path assumes
+one KV group, so deleting the assertion would risk invalid draft-cache writes.
 Keep synthetic screens for candidate search only, then rerun the Qwen realistic
 suite with `--return-token-ids` and the quality suite before promotion.
 
