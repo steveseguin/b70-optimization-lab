@@ -1,0 +1,408 @@
+{
+  "best_offline_draft": {
+    "hist": {
+      "0": 153,
+      "1": 129,
+      "2": 203,
+      "3": 539
+    },
+    "label": "e6-r3-lr3e5-tok01",
+    "mean_accepted": 2.1015625,
+    "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e6-r3-lr3e5-tok01-offline-eval.json",
+    "starts": 1024,
+    "step1": 0.8505859375,
+    "step2_cond": 0.851894374282434,
+    "step3_cond": 0.7264150943396226
+  },
+  "collection_summary": {
+    "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z",
+    "shards": [
+      {
+        "continuity_breaks": 0,
+        "dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/shard0-gpu0",
+        "prompts": 32,
+        "samples": 32,
+        "tokens": 4096,
+        "usable_rows": 4096
+      },
+      {
+        "continuity_breaks": 0,
+        "dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/shard1-gpu1",
+        "prompts": 32,
+        "samples": 32,
+        "tokens": 4096,
+        "usable_rows": 4096
+      },
+      {
+        "continuity_breaks": 0,
+        "dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/shard2-gpu2",
+        "prompts": 32,
+        "samples": 32,
+        "tokens": 4096,
+        "usable_rows": 4096
+      },
+      {
+        "continuity_breaks": 0,
+        "dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/shard3-gpu3",
+        "prompts": 32,
+        "samples": 32,
+        "tokens": 4096,
+        "usable_rows": 4096
+      }
+    ],
+    "total_continuity_breaks": 0,
+    "total_prompts": 128,
+    "total_samples": 128,
+    "total_tokens": 16384,
+    "total_usable_rows": 16384
+  },
+  "conclusion": "The local EAGLE1 training pipeline is mechanically useful and offline held-out acceptance improved to 2.10 accepted draft tokens over calibration starts, but the endpoint candidate fails the fixed realistic suite with repeated-token corruption and low/invalid throughput. Do not promote or submit. Future EAGLE work needs a larger/diverse non-final training corpus and stricter held-out validation before endpoint testing.",
+  "current_valid_record_unchanged": {
+    "localmaxxing_id": "cmr5iu3gk00bfq901nidgcana",
+    "median_tok_s_1_100_after_ttft": 65.27648650325429,
+    "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "recipe": "runtime INT8 LM-head BF16 scales, MTP3/cg8, one B70, strict fresh Qwen suite"
+  },
+  "date_utc": "2026-07-04",
+  "endpoint_smoke": {
+    "cached_tokens": 0,
+    "content": "{\"answer\": 42, \"unit\": \"widgets\"}",
+    "pass": true,
+    "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/eagle-endpoint-smoke.json"
+  },
+  "endpoint_strict_suite": {
+    "bad_previews": [
+      {
+        "preview": "This Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa",
+        "prompt_id": "architecture-tradeoff",
+        "prompt_index": 6,
+        "stream_token_id_count": 128,
+        "tok_s_1_100_after_ttft": 66.88327860440084
+      },
+      {
+        "preview": "Here Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa",
+        "prompt_id": "bug-report-synthesis",
+        "prompt_index": 7,
+        "stream_token_id_count": 128,
+        "tok_s_1_100_after_ttft": 66.83473468355074
+      },
+      {
+        "preview": "# Guide:\n\n# Technical Guide to a to an optimization repo.",
+        "prompt_id": "technical-guide",
+        "prompt_index": 8,
+        "stream_token_id_count": 15,
+        "tok_s_1_100_after_ttft": null
+      },
+      {
+        "preview": "Here is a comprehensive risk register for switching a production inference endpoint from one runtime to another.",
+        "prompt_id": "risk-register",
+        "prompt_index": 9,
+        "stream_token_id_count": 19,
+        "tok_s_1_100_after_ttft": null
+      },
+      {
+        "preview": "Based on the on the on the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, the, th",
+        "prompt_id": "performance-hypotheses",
+        "prompt_index": 10,
+        "stream_token_id_count": 128,
+        "tok_s_1_100_after_ttft": 16.70669664451074
+      },
+      {
+        "preview": "** Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa Cooperativa C",
+        "prompt_id": "decision-memo",
+        "prompt_index": 11,
+        "stream_token_id_count": 128,
+        "tok_s_1_100_after_ttft": 66.62517978980446
+      }
+    ],
+    "fresh_response_validity": {
+      "cached_tokens": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "cached_tokens_all_zero": true,
+      "chat_reasoning_delta_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "classification": "invalid-or-incomplete",
+      "context_checkpoints_or_prefix_reuse": false,
+      "each_prompt_run_once": true,
+      "history_acceleration": false,
+      "ngram_history_acceleration": false,
+      "note": "Fixed realistic suite; each prompt is sent once as a cold response. Do not average synthetic repeated prompts, warmed continuations, or n-gram/history-accelerated rows into this metric.",
+      "primary_metric_name": "median_tok_s_1_100_after_ttft",
+      "primary_metric_tokens": 100,
+      "prompt_count": 12,
+      "prompts_are_unique": true,
+      "response_reuse": false,
+      "return_token_ids_requested": true,
+      "suite_id": "qwen36-27b-autoround-int4-b70-realistic-v1",
+      "suite_version": 1,
+      "token_timing_source": "openai_stream_token_ids_chunk_timestamp",
+      "valid": false
+    },
+    "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/qwen27-local-eagle1-e6r3-cg8-realistic128-chat-tokenids-qwensuite.json",
+    "realistic_final_gate": {
+      "cached_tokens": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "cached_tokens_all_zero": true,
+      "chunk_count_matches_completion_tokens_all": false,
+      "chunk_count_matches_completion_tokens_note": "Informational only: llama.cpp usage may count an EOS/final token that is not emitted as a text delta. Promotion requires enough streamed text deltas to measure the first metric window.",
+      "chunk_counts": [
+        104,
+        110,
+        108,
+        105,
+        104,
+        34,
+        34,
+        34,
+        13,
+        15,
+        126,
+        34
+      ],
+      "completion_tokens_at_least_metric_window": false,
+      "metric_chunk_events_at_least_window": false,
+      "metric_name": "median_tok_s_1_100_after_ttft",
+      "metric_token_id_events_at_least_window": false,
+      "metric_tokens": 100,
+      "passed": false,
+      "prompts_unique": true,
+      "required_policy": "fixed realistic prompt suite; each prompt once; cached_tokens=0 every row; no repeated/warmed prompt averaging; metric is median tokens 1-100 after TTFT",
+      "return_token_ids_requested": true,
+      "stream_token_id_counts": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        15,
+        19,
+        128,
+        128
+      ],
+      "token_timing_source": "openai_stream_token_ids_chunk_timestamp"
+    },
+    "summary": {
+      "tok_s_1_100_after_ttft": {
+        "count": 10,
+        "max": 66.88327860440084,
+        "mean": 38.65146310806087,
+        "median": 21.740786723521186,
+        "min": 16.70669664451074,
+        "p10": 18.82968357474846,
+        "stdev": 23.991069673629884
+      },
+      "tok_s_after_ttft_full": {
+        "count": 12,
+        "max": 67.41144459749626,
+        "mean": 35.93404423775727,
+        "median": 21.429757719005266,
+        "min": 16.90602209234083,
+        "p10": 19.772026617657666,
+        "stdev": 23.00142986291034
+      },
+      "tok_s_wall_full": {
+        "count": 12,
+        "max": 10.129260567300872,
+        "mean": 7.072988460417842,
+        "median": 7.629676818043733,
+        "min": 1.2922388178700186,
+        "p10": 1.9783775771647236,
+        "stdev": 2.980280746293498
+      },
+      "ttft_ms": {
+        "count": 12,
+        "max": 17562.759584048763,
+        "mean": 11487.935032501506,
+        "median": 10948.12429905869,
+        "min": 10289.33320287615,
+        "p10": 10589.831705833785,
+        "stdev": 1945.8617823548466
+      }
+    }
+  },
+  "headline_status": "diagnostic_negative_no_localmaxxing",
+  "kind": "qwen27_eagle1_heldout_and_endpoint_negative",
+  "loader_notes": {
+    "draft_path_loaded": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e6-r3-lr3e5-tok01",
+    "failure": "KeyError layers.64.mlp.down_proj.weight; vLLM nested module loader expects original layers.0.* after prefix stripping.",
+    "offset64_converted_copy_failed": true,
+    "original_trained_checkpoint_loaded": true
+  },
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z",
+  "variant_rows": [
+    {
+      "hist": {
+        "0": 153,
+        "1": 129,
+        "2": 203,
+        "3": 539
+      },
+      "label": "e6-r3-lr3e5-tok01",
+      "mean_accepted": 2.1015625,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e6-r3-lr3e5-tok01-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.8505859375,
+      "step2_cond": 0.851894374282434,
+      "step3_cond": 0.7264150943396226
+    },
+    {
+      "hist": {
+        "0": 153,
+        "1": 120,
+        "2": 309,
+        "3": 442
+      },
+      "label": "e8-r2-lr2e5-tok01",
+      "mean_accepted": 2.015625,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e8-r2-lr2e5-tok01-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.8505859375,
+      "step2_cond": 0.8622273249138921,
+      "step3_cond": 0.5885486018641811
+    },
+    {
+      "hist": {
+        "0": 151,
+        "1": 126,
+        "2": 308,
+        "3": 439
+      },
+      "label": "e6-r2-lr3e5-tok02",
+      "mean_accepted": 2.0107421875,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e6-r2-lr3e5-tok02-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.8525390625,
+      "step2_cond": 0.8556701030927835,
+      "step3_cond": 0.5876840696117804
+    },
+    {
+      "hist": {
+        "0": 153,
+        "1": 124,
+        "2": 312,
+        "3": 435
+      },
+      "label": "e6-r2-lr3e5-tok01",
+      "mean_accepted": 2.0048828125,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e6-r2-lr3e5-tok01-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.8505859375,
+      "step2_cond": 0.8576349024110218,
+      "step3_cond": 0.5823293172690763
+    },
+    {
+      "hist": {
+        "0": 162,
+        "1": 187,
+        "2": 347,
+        "3": 328
+      },
+      "label": "e4-r2-max128-cont",
+      "mean_accepted": 1.8212890625,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e4-r2-max128-cont-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.841796875,
+      "step2_cond": 0.7830626450116009,
+      "step3_cond": 0.48592592592592593
+    },
+    {
+      "hist": {
+        "0": 172,
+        "1": 426,
+        "2": 187,
+        "3": 239
+      },
+      "label": "layer2-e3-r1-residual",
+      "mean_accepted": 1.4814453125,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-layer2-e3-r1-residual-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.83203125,
+      "step2_cond": 0.5,
+      "step3_cond": 0.5610328638497653
+    },
+    {
+      "hist": {
+        "0": 183,
+        "1": 436,
+        "2": 182,
+        "3": 223
+      },
+      "label": "wide8192-e3-r1-max128",
+      "mean_accepted": 1.4345703125,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-wide8192-e3-r1-max128-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.8212890625,
+      "step2_cond": 0.4815695600475624,
+      "step3_cond": 0.5506172839506173
+    },
+    {
+      "hist": {
+        "0": 169,
+        "1": 454,
+        "2": 205,
+        "3": 196
+      },
+      "label": "e4-r1-max128-cont",
+      "mean_accepted": 1.41796875,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-e4-r1-max128-cont-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.8349609375,
+      "step2_cond": 0.46900584795321637,
+      "step3_cond": 0.48877805486284287
+    },
+    {
+      "hist": {
+        "0": 369,
+        "1": 368,
+        "2": 143,
+        "3": 144
+      },
+      "label": "baseline-e2-r1-max64",
+      "mean_accepted": 1.060546875,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-4gpu-trainheldout-20260704T075504Z/draft-compact-train3-heldout1-epoch2-offline-eval.json",
+      "starts": 1024,
+      "step1": 0.6396484375,
+      "step2_cond": 0.4381679389312977,
+      "step3_cond": 0.5017421602787456
+    }
+  ]
+}

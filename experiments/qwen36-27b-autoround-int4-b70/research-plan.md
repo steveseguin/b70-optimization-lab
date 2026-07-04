@@ -21,13 +21,22 @@ drafter research. The first run is diagnostic-only (`cached_tokens=0`, median
 `63.118 tok/s`, `2.686` target-verified tokens/step, acceptance/speed
 correlation `r ~= 0.696`); do not use it as a LocalMaxxing claim.
 
-Latest EAGLE1 local training pipeline smoke:
+Latest EAGLE1 local training / endpoint result:
 `notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`. Qwen27 shape
 inference, async no-spec hidden dumping, reconstructed dataset building, compact
 EAGLE1 training, and offline acceptance evaluation now work end-to-end on a
 small diagnostic corpus (`1536` usable rows, `16` samples, `0` continuity
 breaks). This is not a speed result; it unblocks larger held-out
 target-matched drafter experiments while preserving final-suite isolation.
+The first larger follow-up is closed-negative:
+`notes/2026-07-04-eagle1-heldout-endpoint-negative.md`. A four-GPU corpus built
+cleanly (`16384` usable rows, `128` samples, `0` continuity breaks), and the
+best held-out draft reached `2.1016` mean accepted tokens on calibration starts,
+but endpoint EAGLE failed the fixed Qwen realistic suite with repeated-token
+corruption and only `21.7408 tok/s` median over measurable rows. Do not repeat
+this exact EAGLE endpoint attempt or submit it. Future EAGLE work requires a
+larger/diverse non-final training corpus and stricter held-out quality checks
+before any endpoint benchmark.
 
 ## Sources Checked
 

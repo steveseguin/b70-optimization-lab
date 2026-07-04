@@ -230,16 +230,22 @@ Current next-execution plan:
   acceptance/speed correlation `r ~= 0.696`. This is diagnostic-only, not a
   LocalMaxxing result. Use it as the starting point for target-matched drafter
   calibration; keep final-suite prompts isolated from tuning.
-- EAGLE1 local training pipeline smoke:
+- EAGLE1 local training pipeline:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`.
   The local pipeline now works end-to-end for Qwen27 hidden size `5120`:
   no-spec hidden dump -> reconstructed async dataset -> compact EAGLE1 training
   -> offline evaluator. The diagnostic corpus has `1536` usable rows,
   `16` samples, and `0` continuity breaks; the 4-sample trainer smoke exported
-  a compact draft and offline eval ran. This is not a speed result. Next
-  credible work is larger held-out drafter training with final-suite isolation,
-  then strict fresh endpoint validation only if offline acceptance materially
-  improves.
+  a compact draft and offline eval ran. The larger held-out follow-up is
+  documented in
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-heldout-endpoint-negative.md`.
+  It built a four-GPU corpus with `16384` usable rows and trained a draft that
+  reached `2.1016` mean accepted tokens on the held-out calibration shard, but
+  endpoint EAGLE failed the fixed Qwen realistic suite with repeated-token
+  corruption and only `21.7408 tok/s` median over measurable rows. This is not
+  a speed result; do not submit or repeat this exact endpoint attempt. Future
+  EAGLE work needs larger/diverse non-final training data and stricter held-out
+  quality checks before endpoint validation.
 - closed dynamic-drafter-depth source precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
   Unlike the earlier scheduler-only adaptive-depth patch, this prototype

@@ -67,17 +67,21 @@ Active target as of the latest switch request:
   oneDNN INT8 matmul writes dense logits, and existing sampler/top-k kernels
   only reduce after logits exist. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
-- Latest active non-kernel lane: Qwen27 EAGLE1 local data/training pipeline is
-  now mechanically unblocked. See
+- Latest EAGLE1 local drafter lane is closed-negative for the current draft.
+  The pipeline is mechanically useful, but not a record path yet. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-local-training-pipeline-smoke.md`
-  and compact packet
-  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-eagle1-pipeline-smoke-20260704.json`.
-  The diagnostic no-spec corpus has `1536` usable rows, `16` samples, `0`
-  continuity breaks; a compact 5120-hidden EAGLE1 smoke trained and offline
-  evaluation ran. This is not a speed result. Next credible work is larger
-  held-out target-matched draft training with final-suite isolation, followed
-  by strict fresh endpoint validation only if offline acceptance materially
-  improves.
+  and
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle1-heldout-endpoint-negative.md`.
+  A four-GPU no-spec corpus produced `16384` usable hidden rows, `128` samples,
+  and `0` continuity breaks. The best held-out local EAGLE1 draft reached
+  `2.1016` mean accepted draft tokens over `1024` calibration starts, but the
+  endpoint strict Qwen realistic suite failed badly: `cached_tokens=0` on all
+  requests, but only 10 rows had enough token-id events for the primary metric,
+  measurable-row median was `21.7408 tok/s`, and several prompts looped
+  repeated tokens such as `Cooperativa` / `the, the`. Do not promote, submit,
+  or repeat this exact endpoint attempt. Future EAGLE work needs a larger and
+  more diverse non-final training corpus plus stricter held-out quality checks
+  before endpoint validation.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus
