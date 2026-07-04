@@ -12,6 +12,14 @@ webhie BF16-scale INT8-LM-head record, LocalMaxxing status, variance policy,
 prior no-win source attempts, and the completion gates for the fused
 LM-head/top-1 candidate-max route.
 
+Latest LM-head kernel status:
+`notes/2026-07-04-lmhead-candidate-max-kernel-no-win.md`. The standalone
+candidate-max native op was exact but no-win (`1.010x`, `0.984x`, `0.971x`,
+`0.961x` for rows `1-4`), so do not repeat the full-vocab scan plus second
+reduction route. Future LM-head work needs a materially different
+oneDNN/XPU-integrated top-ID/candidate-score primitive or fewer LM-head
+calls/rows before GEMM.
+
 Latest held-out drafter-calibration setup:
 `notes/2026-07-04-heldout-calibration-trace.md`. The strict benchmark harness
 now records absolute request windows and request IDs, the compact verifier trace

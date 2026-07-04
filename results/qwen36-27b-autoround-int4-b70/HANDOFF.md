@@ -154,6 +154,14 @@ Current next-execution plan:
   plus argmax (`2.66-2.68 ms` compact vs `2.57-2.61 ms` dense for rows `1-4`).
   Preserve the patch and JSON evidence, but do not wire this op into endpoint
   serving;
+- closed candidate-max kernel precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-candidate-max-kernel-no-win.md`.
+  `int8_lm_head_candidate_max_w8a8` preserved the exact semantics needed by
+  target-verified speculation (true top IDs/values plus per-row candidate
+  scores) and matched dense logits exactly, but it did not meet the speed gate:
+  rows `1,2,3,4` measured `1.010x`, `0.984x`, `0.971x`, `0.961x` versus dense.
+  The standalone full-vocab scan plus cross-tile reduction route is now closed
+  unless a materially different oneDNN/XPU-integrated primitive is found;
 - closed acceptance/depth precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-spec-acceptance-and-adaptive-depth-no-win.md`.
   A strict trace of the current fixed-MTP3 recipe showed the real next

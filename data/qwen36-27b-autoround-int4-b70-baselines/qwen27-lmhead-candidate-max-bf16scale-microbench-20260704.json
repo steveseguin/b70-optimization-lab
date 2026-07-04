@@ -1,0 +1,206 @@
+{
+  "kind": "diagnostic_microbench_only",
+  "xpu_so": "/tmp/vllm-xpu-kernels-lmhead-candidate-20260704/build/xpu-c-candidate-20260704/_xpu_C.abi3.so",
+  "device": "xpu:0",
+  "hidden_size": 5120,
+  "vocab_size": 248320,
+  "valid_vocab_size": 248320,
+  "dtype": "bf16",
+  "scale_dtype": "bf16",
+  "warmup": 3,
+  "repeats": 10,
+  "results": [
+    {
+      "rows": 1,
+      "baseline_ms_median": 2.6962149422615767,
+      "candidate_max_ms_median": 2.6682574534788728,
+      "speedup": 1.0104778078090826,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        201915
+      ],
+      "baseline_ids": [
+        227778
+      ],
+      "candidate_max_ids": [
+        227778
+      ],
+      "baseline_ms_samples": [
+        2.747607,
+        2.705217,
+        2.739943,
+        2.744442,
+        2.712421,
+        2.654271,
+        2.687213,
+        2.652668,
+        2.638341,
+        2.56332
+      ],
+      "candidate_max_ms_samples": [
+        2.678047,
+        2.661034,
+        2.687324,
+        2.672626,
+        2.664501,
+        2.664871,
+        2.666145,
+        2.670201,
+        2.673118,
+        2.666314
+      ]
+    },
+    {
+      "rows": 2,
+      "baseline_ms_median": 2.63323204126209,
+      "candidate_max_ms_median": 2.674895105883479,
+      "speedup": 0.9844244118097378,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        80023,
+        96243
+      ],
+      "baseline_ids": [
+        151770,
+        1043
+      ],
+      "candidate_max_ids": [
+        151770,
+        1043
+      ],
+      "baseline_ms_samples": [
+        2.622552,
+        2.710347,
+        2.656306,
+        2.628063,
+        2.692213,
+        2.648671,
+        2.599107,
+        2.57925,
+        2.633372,
+        2.633092
+      ],
+      "candidate_max_ms_samples": [
+        2.665793,
+        2.662787,
+        2.67986,
+        2.675271,
+        2.686773,
+        2.688606,
+        2.674519,
+        2.672876,
+        2.656576,
+        2.677735
+      ]
+    },
+    {
+      "rows": 3,
+      "baseline_ms_median": 2.596913371235132,
+      "candidate_max_ms_median": 2.673802897334099,
+      "speedup": 0.9712433829076822,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        57374,
+        63862,
+        183620
+      ],
+      "baseline_ids": [
+        132000,
+        158624,
+        126980
+      ],
+      "candidate_max_ids": [
+        132000,
+        158624,
+        126980
+      ],
+      "baseline_ms_samples": [
+        2.719073,
+        2.618685,
+        2.617282,
+        2.55791,
+        2.576775,
+        2.564542,
+        2.581374,
+        2.59491,
+        2.620247,
+        2.598917
+      ],
+      "candidate_max_ms_samples": [
+        2.684598,
+        2.701841,
+        2.686903,
+        2.673778,
+        2.678668,
+        2.673828,
+        2.655154,
+        2.665122,
+        2.669831,
+        2.65843
+      ]
+    },
+    {
+      "rows": 4,
+      "baseline_ms_median": 2.5703534483909607,
+      "candidate_max_ms_median": 2.674269024282694,
+      "speedup": 0.9611424374480776,
+      "top_id_mismatches_vs_baseline": 0,
+      "candidate_is_top_mismatches": 0,
+      "max_top_value_abs_diff": 0.0,
+      "max_candidate_value_abs_diff": 0.0,
+      "candidate_ids": [
+        223682,
+        75034,
+        200707,
+        232919
+      ],
+      "baseline_ids": [
+        23506,
+        161070,
+        20097,
+        84130
+      ],
+      "candidate_max_ids": [
+        23506,
+        161070,
+        20097,
+        84130
+      ],
+      "baseline_ms_samples": [
+        2.632891,
+        2.501053,
+        2.522493,
+        2.538073,
+        2.52054,
+        2.625427,
+        2.704847,
+        2.634083,
+        2.514148,
+        2.602634
+      ],
+      "candidate_max_ms_samples": [
+        2.70091,
+        2.678076,
+        2.655143,
+        2.6692,
+        2.671844,
+        2.678808,
+        2.661765,
+        2.676694,
+        2.657357,
+        2.687383
+      ]
+    }
+  ],
+  "promotion_rule": "Do not integrate unless exact and clearly faster than dense logits, roughly <2.3 ms or >1.10x on rows 1-4.",
+  "note": "Synthetic tensors; useful only for LM-head primitive cost. Not a model-quality or fresh-response throughput benchmark."
+}
