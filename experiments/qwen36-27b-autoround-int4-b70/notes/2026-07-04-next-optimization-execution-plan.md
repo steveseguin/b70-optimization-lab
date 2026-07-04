@@ -18,6 +18,24 @@ cache/history effects:
 This plan supersedes further config roulette. The next credible speed lane is
 source/kernel work around full LM-head/logits materialization.
 
+## Progress update - 2026-07-04
+
+Phase 0 and Phase 1 are complete and captured in
+`2026-07-04-phase0-phase1-baseline-and-timing.md`.
+
+- Phase 0 reproduced the current record family at `65.56930784255283 tok/s`
+  median for generated tokens 1-100 after TTFT, with `cached_tokens=0` on all
+  prompts.
+- Phase 1 refreshed timing on the same BF16-scale INT8-LM-head recipe. The
+  timing run is diagnostic only because sync instrumentation perturbs
+  throughput, but it confirmed the main waste: `2258` LM-head/logits calls over
+  `540` verifier steps (`~4.18` calls/step), with
+  `lm_head_int8.gemm_w8a8` alone costing about `10.61 ms` per verifier step.
+- The current next step is Phase 2: either build a real native tiled/XMX
+  LM-head top-1/candidate-max prototype, or first add a narrow accepted-token /
+  logits-call diagnostic if the native kernel path needs better acceptance
+  context.
+
 ## Current waste estimate
 
 The best available timing for this record family shows the MTP3 path still

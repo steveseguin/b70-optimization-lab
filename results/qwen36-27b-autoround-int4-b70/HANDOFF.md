@@ -98,9 +98,18 @@ Current fastest quality-gated variant:
 Current next-execution plan:
 
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-next-optimization-execution-plan.md`;
-- focus: reproduce the `65.27648650325429 tok/s` BF16-scale control, refresh
-  timing, then pursue only a real native fused LM-head top-1 / candidate-max
-  route or close it with preserved patch/results;
+- Phase 0/1 update:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-phase0-phase1-baseline-and-timing.md`.
+  The current record family reproduced at `65.56930784255283 tok/s` median
+  generated-token throughput for tokens 1-100 after TTFT, with `cached_tokens=0`
+  on all prompts. Fresh timing confirmed the main remaining waste as
+  LM-head/logits materialization: `2258` LM-head/logits calls over `540`
+  verifier steps (`~4.18` calls/step), with `lm_head_int8.gemm_w8a8` alone
+  costing about `10.61 ms` per verifier step under sync instrumentation;
+- current focus: pursue only a real native fused/tiled LM-head top-1 /
+  candidate-max route, or add a narrow accepted-token/logits-call diagnostic if
+  the native kernel path needs more acceptance context; close either path with
+  preserved patch/results if it is a no-win;
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
   Python/chunked oneDNN top-1 attempts.
 

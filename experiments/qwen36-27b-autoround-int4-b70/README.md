@@ -111,11 +111,15 @@ Synthetic search reference:
 
 Next milestone:
 
-1. Use four independent TP1 replicas for parallel candidate screening.
-2. Keep synthetic `vllm-random` metrics diagnostic-only.
-3. Rerun the Qwen realistic suite with `--return-token-ids` before promoting
+1. Treat Phase 0/1 as complete. The current record family reproduced at
+   `65.56930784255283 tok/s`, and the timing refresh is captured in
+   `notes/2026-07-04-phase0-phase1-baseline-and-timing.md`.
+2. Use four independent TP1 replicas for parallel candidate screening when the
+   candidate is cheap enough to run as a config/source screen.
+3. Keep synthetic `vllm-random` metrics diagnostic-only.
+4. Rerun the Qwen realistic suite with `--return-token-ids` before promoting
    any change.
-4. Investigate LM-head/verifier cost with a real mechanism. Recent no-win
+5. Investigate LM-head/verifier cost with a real mechanism. Recent no-win
    screens closed output-buffer reuse, bonus-token argmax plumbing, draft-only
    row-count shortcuts, and Python/chunked INT8 top-1. The remaining credible
    lane is a fused LM-head top-1 / candidate-vs-max verifier path that avoids
@@ -123,7 +127,7 @@ Next milestone:
    The INT8 LM-head path is the fastest quality-gated practical lane, but it
    changes runtime LM-head precision. A same-quantization win still needs exact
    BF16 top-1/candidate-bound work or a cleaner verifier design.
-5. Do not keep config-sweeping the current INT8 lane without a new mechanism:
+6. Do not keep config-sweeping the current INT8 lane without a new mechanism:
    MTP depth remains k=3, capture size remains cg8, and target-only attribution
    shows the target verifier LM-head is the real bottleneck. The latest
    follow-up closed FP16 scales and webhie target-only BF16 scales as no-promote
