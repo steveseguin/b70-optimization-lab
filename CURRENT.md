@@ -97,6 +97,14 @@ Fastest quality-gated practical variant:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
   Latest closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-compact-lmhead-top1-kernel-no-win.md`.
+- acceptance-trace closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-spec-acceptance-and-adaptive-depth-no-win.md`.
+  The fixed MTP3 record-family trace emitted about `2.70` tokens/step with
+  `0.38` full-accept rate. Scheduler-only adaptive depth passed strict
+  validity but lost badly (`45.75`, `61.51`, `60.91 tok/s` variants) because
+  it lowered emitted tokens per verifier step and increased total verifier
+  steps. A same-window fixed-MTP3 repeat reached `65.986 tok/s`, but that is
+  recorded as variance/support only, not a promoted LocalMaxxing row.
 
 Prior stable baseline without the promote-source env delta was `47.624` /
 `48.003` / `48.536 tok/s`; keep it as the control family, not the current best.

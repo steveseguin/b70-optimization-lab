@@ -130,8 +130,21 @@ Current next-execution plan:
   plus argmax (`2.66-2.68 ms` compact vs `2.57-2.61 ms` dense for rows `1-4`).
   Preserve the patch and JSON evidence, but do not wire this op into endpoint
   serving;
+- closed acceptance/depth precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-spec-acceptance-and-adaptive-depth-no-win.md`.
+  A strict trace of the current fixed-MTP3 recipe showed the real next
+  bottleneck: about `2.70` emitted tokens per verifier step, `0.38`
+  full-accept rate, and strong per-prompt speed correlation with acceptance.
+  However, scheduler-only adaptive verifier-depth truncation is a no-win:
+  aggressive `min1/low1` dropped to `45.748 tok/s`, and same-window
+  `min2/low0` / `min2/low1` variants landed at `61.514` / `60.913 tok/s`
+  versus fixed-MTP3 baseline `65.986 tok/s`. The patch is preserved as
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-scheduler-adaptive-spec-depth-no-win-20260704.patch`
+  and reverted from the active vLLM source;
 - do not resume scale/scope config sweeps, target-only webhie BF16 scope, or
-  Python/chunked oneDNN top-1 attempts.
+  Python/chunked oneDNN top-1 attempts. Also do not resume scheduler-only
+  adaptive-depth heuristics unless the proposer and verifier are both made
+  dynamically depth-aware.
 
 Prior Intel-checkpoint quality-gated runtime-quantized variant:
 

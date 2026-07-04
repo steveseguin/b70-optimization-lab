@@ -39,6 +39,18 @@ Phase 0 and Phase 1 are complete and captured in
   single-expert dense LM-head backend. It is closed as a no-win:
   `2026-07-04-lmhead-backend-microbench-no-win.md`. oneDNN remains faster for
   rows `1-4`, and grouped W8A8 rejects BF16 weight scales.
+- The compact native `int8_lm_head_top1_w8a8` full-vocab top-1 kernel was
+  also closed as a no-win:
+  `2026-07-04-compact-lmhead-top1-kernel-no-win.md`. It was exact, but the
+  best 8x64 policy measured `2.66-2.68 ms` versus dense oneDNN + argmax
+  `2.57-2.61 ms` for rows `1-4`.
+- Acceptance tracing and scheduler-only adaptive MTP depth are now closed:
+  `2026-07-04-spec-acceptance-and-adaptive-depth-no-win.md`. Fixed MTP3 emits
+  about `2.70` tokens/verifier step; adaptive truncation passed strict
+  validity but lost (`45.75`, `61.51`, `60.91 tok/s`) because it reduced
+  emitted tokens/step and increased verifier steps. Do not resume
+  scheduler-only adaptive depth unless proposer generation and verifier rows
+  are both made dynamically depth-aware.
 
 ## Current waste estimate
 
@@ -59,7 +71,11 @@ implies roughly `2.6 generated tokens/verifier step` and about `40 ms/step`.
 Likely upside:
 
 1. A real fused LM-head top-1 / candidate-max path could plausibly save
-   `5-9 ms/step`, moving `65 tok/s` toward `75-85 tok/s` if quality holds.
+   `5-9 ms/step`, moving `65 tok/s` toward `75-85 tok/s` if quality holds,
+   but the first standalone full-vocab native kernel attempt was not enough:
+   future work needs a genuinely better primitive, fewer LM-head calls, fewer
+   rows, or fusion with existing oneDNN/XPU execution rather than another
+   standalone full-vocab reduction.
 2. Improving accepted tokens/step toward `3.3-4.0` without increasing step cost
    is the route toward `90-100 tok/s`.
 3. TTFT/prompt work is valuable separately: median TTFT is about `604 ms`, so

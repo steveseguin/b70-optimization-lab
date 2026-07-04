@@ -1,0 +1,123 @@
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 124a3b867..c9675588b 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -437,6 +437,30 @@ class Scheduler(SchedulerInterface):
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        self.xpu_spec_decode_adaptive_depth = (
++            os.environ.get("VLLM_XPU_SPEC_DECODE_ADAPTIVE_DEPTH", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        try:
++            self.xpu_spec_decode_adaptive_min_depth = max(
++                1,
++                int(
++                    os.environ.get(
++                        "VLLM_XPU_SPEC_DECODE_ADAPTIVE_MIN_DEPTH", "1")
++                    or "1"))
++        except ValueError:
++            self.xpu_spec_decode_adaptive_min_depth = 1
++        try:
++            self.xpu_spec_decode_adaptive_low_accept = max(
++                0,
++                int(
++                    os.environ.get(
++                        "VLLM_XPU_SPEC_DECODE_ADAPTIVE_LOW_ACCEPT", "1")
++                    or "1"))
++        except ValueError:
++            self.xpu_spec_decode_adaptive_low_accept = 1
+         self.xpu_spec_decode_all_or_nothing = (
+             os.environ.get("VLLM_XPU_SPEC_DECODE_ALL_OR_NOTHING", "")
+             .strip()
+@@ -709,6 +733,21 @@ class Scheduler(SchedulerInterface):
+                 # terminal/partial groups finish via ordinary decode; this is
+                 # quality-neutral and costs only the leftover tail tokens.
+                 request.spec_token_ids = []
++            if (
++                self.xpu_spec_decode_adaptive_depth
++                and request.spec_token_ids
++                and self.num_spec_tokens > 1
++            ):
++                depth = int(
++                    getattr(request, "xpu_spec_decode_adaptive_depth",
++                            self.num_spec_tokens) or self.num_spec_tokens)
++                depth = max(
++                    self.xpu_spec_decode_adaptive_min_depth,
++                    min(self.num_spec_tokens, depth),
++                )
++                request.xpu_spec_decode_adaptive_depth = depth  # type: ignore[attr-defined]
++                if len(request.spec_token_ids) > depth:
++                    request.spec_token_ids = request.spec_token_ids[:depth]
+
+             if (
+                 request.num_output_placeholders > 0
+@@ -1780,6 +1819,10 @@ class Scheduler(SchedulerInterface):
+             scheduled_spec_token_ids = (
+                 scheduler_output.scheduled_spec_decode_tokens.get(req_id)
+             )
++            adaptive_depth_before = int(
++                getattr(request, "xpu_spec_decode_adaptive_depth",
++                        self.num_spec_tokens) or self.num_spec_tokens)
++            adaptive_depth_after = adaptive_depth_before
+             if (
+                 scheduled_spec_token_ids
+                 and getattr(request,
+@@ -1836,6 +1879,23 @@ class Scheduler(SchedulerInterface):
+                 else:
+                     num_accepted = len(generated_token_ids) - 1
+                 num_rejected = num_draft_tokens - num_accepted
++                if self.xpu_spec_decode_adaptive_depth:
++                    current_depth = max(
++                        self.xpu_spec_decode_adaptive_min_depth,
++                        min(self.num_spec_tokens, adaptive_depth_before),
++                    )
++                    if num_accepted <= self.xpu_spec_decode_adaptive_low_accept:
++                        adaptive_depth_after = max(
++                            self.xpu_spec_decode_adaptive_min_depth,
++                            min(current_depth - 1, num_accepted + 1),
++                        )
++                    elif num_accepted >= num_draft_tokens:
++                        adaptive_depth_after = min(
++                            self.num_spec_tokens, current_depth + 1)
++                    else:
++                        adaptive_depth_after = current_depth
++                    request.xpu_spec_decode_adaptive_depth = (  # type: ignore[attr-defined]
++                        adaptive_depth_after)
+                 suppressed_bonus_token_id = None
+                 suppressed_replacement_token_id = None
+                 num_suppressed_bonus_tokens = 0
+@@ -1993,6 +2053,10 @@ class Scheduler(SchedulerInterface):
+                     self.xpu_spec_decode_draft_full_accept_force_single_extra_steps,
+                     "draft_reject_force_single_steps":
+                     self.xpu_spec_decode_draft_reject_force_single_steps,
++                    "adaptive_depth_enabled":
++                    self.xpu_spec_decode_adaptive_depth,
++                    "adaptive_depth_before": adaptive_depth_before,
++                    "adaptive_depth_after": adaptive_depth_after,
+                     "num_draft_tokens": num_draft_tokens,
+                     "num_accepted": num_accepted,
+                     "num_rejected": num_rejected,
+@@ -2952,6 +3016,9 @@ class Scheduler(SchedulerInterface):
+         restore_draft_full_accept_gdn_state: bool,
+         draft_full_accept_force_single_extra_steps: int,
+         draft_reject_force_single_steps: int,
++        adaptive_depth_enabled: bool,
++        adaptive_depth_before: int,
++        adaptive_depth_after: int,
+         num_draft_tokens: int,
+         num_accepted: int,
+         num_rejected: int,
+@@ -3020,6 +3087,9 @@ class Scheduler(SchedulerInterface):
+             draft_full_accept_force_single_extra_steps,
+             "draft_reject_force_single_steps":
+             draft_reject_force_single_steps,
++            "adaptive_depth_enabled": adaptive_depth_enabled,
++            "adaptive_depth_before": adaptive_depth_before,
++            "adaptive_depth_after": adaptive_depth_after,
+             "stopped": stopped,
+             "status_before_stop_check": status_before_stop_check,
+             "request_state_before_reject_adjust":
