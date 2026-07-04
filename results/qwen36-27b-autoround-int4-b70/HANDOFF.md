@@ -246,6 +246,13 @@ Current next-execution plan:
   `cached_tokens=0` on all `12/12` prompts. It is a live reproducibility support
   row only, not a LocalMaxxing update, because the recipe is unchanged and the
   delta over `65.27648650325429` is inside the variance band;
+- post-AWQ current record reproduction support:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-post-awq-record-repro-support.md`.
+  After the cyankiwi AWQ no-win screen, the same approved webhie/BF16-scale
+  recipe passed the strict fresh gate again at `66.12771533602819 tok/s`, p10
+  `58.38213638742408`, mean `64.54120315866675`, median TTFT
+  `619.981024065055 ms`, and `cached_tokens=0` on `12/12` prompts. This is
+  support only: unchanged recipe, no quality rerun, no LocalMaxxing update;
 - candidate-runner repro support:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-runner-repro-support.md`.
   `run-vllm-candidate.sh` reproduced the same recipe at

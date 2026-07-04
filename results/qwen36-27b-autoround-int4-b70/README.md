@@ -96,6 +96,13 @@ Current fastest quality-gated variant:
   at median `65.005 tok/s`, and
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-bf16scale-repeat-gpu3-codex-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T223150Z.json`
   at median `64.864 tok/s`;
+- latest unchanged-recipe support rows:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-current-record-repro-support.md`
+  at `65.410 tok/s` and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-post-awq-record-repro-support.md`
+  at `66.128 tok/s`. Both passed the strict fresh/cached-zero gate and are
+  support only, not new records or LocalMaxxing updates, because the recipe is
+  unchanged and the lane has a known variance band;
 - same-window/crossover FP32-scale controls:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-int8lmhead-fp32scale-control-gpu2-samewindow-codex-mtp3-cg8-realistic128-chat-tokenids-qwensuite-20260703T222647Z.json`
   at median `64.234 tok/s`, and

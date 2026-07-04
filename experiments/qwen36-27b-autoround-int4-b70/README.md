@@ -58,6 +58,11 @@ Current fastest quality-gated variant:
 - strict fresh median: `65.276 tok/s`, p10 `59.609`, mean `65.077`,
   `cached_tokens=0`;
 - support rows: `65.005` and `64.864 tok/s`;
+- latest unchanged-recipe support:
+  `notes/2026-07-04-post-awq-record-repro-support.md` at
+  `66.12771533602819 tok/s`, strict fresh/cached-zero gate passed, smoke
+  passed, no LocalMaxxing update because the recipe is unchanged and no fresh
+  quality rerun was required for a support check;
 - same-window/crossover FP32-scale controls: `64.234` and `64.090 tok/s`;
 - prior webhie INT8-LM-head record: `64.306 tok/s`;
 - full quality gate passed against the Intel INT8-LM-head baseline, including

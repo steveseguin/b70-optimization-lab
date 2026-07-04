@@ -54,6 +54,13 @@ Fastest quality-gated practical variant:
   at `65.40973148473643 tok/s`, strict fresh gate passed with
   `cached_tokens=0`; support only, not a LocalMaxxing update, because the
   recipe is unchanged and the delta is inside the variance band;
+- post-AWQ same-recipe support row:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-current-record-repro-post-awq-candidate-summary-20260704T140017Z.json`
+  at `66.12771533602819 tok/s`, p10 `58.38213638742408`, mean
+  `64.54120315866675`, strict fresh gate passed with `cached_tokens=0` on
+  `12/12` prompts and smoke passed; support only, not a LocalMaxxing update,
+  because the recipe is unchanged and no fresh quality rerun was needed for a
+  same-recipe support check;
 - candidate-runner support row:
   `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-runner-repro-candidate-summary-20260704T124725Z.json`
   at `64.84180902803895 tok/s`, strict fresh gate passed with
