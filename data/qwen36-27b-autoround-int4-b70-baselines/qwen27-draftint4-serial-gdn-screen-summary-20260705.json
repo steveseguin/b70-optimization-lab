@@ -1,0 +1,131 @@
+{
+  "classification": "qwen27_draft_int4_serial_gdn_screen_summary",
+  "date": "2026-07-05",
+  "target": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "hardware": "1x Intel Arc Pro B70 per run",
+  "policy": "strict fresh Qwen realistic suite for speed; quality required for promotion; cached_tokens=0 for completed strict runs",
+  "current_record_tok_s": 65.27648650325429,
+  "common_env": {
+    "VLLM_XPU_DRAFT_LM_HEAD_INT4": "1",
+    "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE": "128",
+    "VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE": "bf16",
+    "VLLM_XPU_LM_HEAD_INT8": "1",
+    "VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE": "bf16",
+    "NUM_SPECULATIVE_TOKENS": "3",
+    "COMPILATION_CONFIG": "{\"cudagraph_mode\":\"PIECEWISE\",\"max_cudagraph_capture_size\":8}",
+    "QUALITY_REPEAT_RUNS": "64",
+    "QUALITY_SKIP_LONG_CONTEXT": "1"
+  },
+  "native_on_screen": {
+    "stamp": "20260705Tserialgdn01",
+    "caveat": "VLLM_XPU_GDN_NATIVE_SPEC_DECODE was not forced off, so SERIAL_SPEC flags may have been bypassed by native spec decode.",
+    "results": [
+      {
+        "label": "qwen27-draftint4-fast-control-serialscreen",
+        "median_tok_s_1_100_after_ttft": 70.22901272866198,
+        "p10": 66.60522318441525,
+        "mean": 71.1937552357044,
+        "strict_fresh_passed": true,
+        "cached_tokens_all_zero": true,
+        "quality_pass_all": false,
+        "repeat_signature": "55/64 blue, green, red, yellow; 8/64 blue, green, red; 1/64 repeated-yellow runaway"
+      },
+      {
+        "label": "qwen27-draftint4-serialspec-basic",
+        "median_tok_s_1_100_after_ttft": 71.54393645281692,
+        "p10": 64.86804043196918,
+        "mean": 71.23700881981155,
+        "strict_fresh_passed": true,
+        "cached_tokens_all_zero": true,
+        "quality_pass_all": false,
+        "repeat_signature": "55/64 blue, green, red, yellow; 9/64 blue, green, red"
+      },
+      {
+        "label": "qwen27-draftint4-serialspec-packed",
+        "median_tok_s_1_100_after_ttft": 72.13033020830608,
+        "p10": 65.2357047553499,
+        "mean": 71.68821404289845,
+        "strict_fresh_passed": true,
+        "cached_tokens_all_zero": true,
+        "quality_pass_all": false,
+        "repeat_signature": "55/64 blue, green, red, yellow; 9/64 blue, green, red"
+      },
+      {
+        "label": "qwen27-draftint4-serialspec-conv-packed-promote",
+        "median_tok_s_1_100_after_ttft": 71.72303678479715,
+        "p10": 64.87603039546627,
+        "mean": 71.34428885721569,
+        "strict_fresh_passed": true,
+        "cached_tokens_all_zero": true,
+        "quality_pass_all": false,
+        "repeat_signature": "55/64 blue, green, red, yellow; 9/64 blue, green, red"
+      }
+    ]
+  },
+  "native_off_screen": {
+    "stamp": "20260705Tserialgdn02",
+    "results": [
+      {
+        "label": "qwen27-draftint4-fallback-nonserial-nativeoff",
+        "env_delta": {
+          "VLLM_XPU_GDN_NATIVE_SPEC_DECODE": "0"
+        },
+        "median_tok_s_1_100_after_ttft": 12.347576421857404,
+        "p10": 10.197834236251225,
+        "mean": 12.463237661551439,
+        "strict_fresh_passed": true,
+        "cached_tokens_all_zero": true,
+        "quality_pass_all": false,
+        "quality_failure": "json_schema exact failed; repeat passed"
+      },
+      {
+        "label": "qwen27-draftint4-serialspec-generic-nativeoff",
+        "env_delta": {
+          "VLLM_XPU_GDN_NATIVE_SPEC_DECODE": "0",
+          "VLLM_XPU_GDN_SERIAL_SPEC_DECODE": "1",
+          "VLLM_XPU_GDN_SERIAL_SPEC_CONV": "1",
+          "VLLM_XPU_GDN_SERIAL_SPEC_PACKED_DECODE": "0"
+        },
+        "median_tok_s_1_100_after_ttft": 10.001432945734685,
+        "p10": 7.841657804718346,
+        "mean": 10.701435333745238,
+        "strict_fresh_passed": true,
+        "cached_tokens_all_zero": true,
+        "quality_pass_all": null,
+        "termination": "terminated during quality because speed was already far below current record"
+      },
+      {
+        "label": "qwen27-draftint4-serialspec-packed-nativeoff",
+        "env_delta": {
+          "VLLM_XPU_GDN_NATIVE_SPEC_DECODE": "0",
+          "VLLM_XPU_GDN_SERIAL_SPEC_DECODE": "1",
+          "VLLM_XPU_GDN_SERIAL_SPEC_CONV": "1",
+          "VLLM_XPU_GDN_SERIAL_SPEC_PACKED_DECODE": "1"
+        },
+        "median_tok_s_1_100_after_ttft": 9.683626612854205,
+        "p10": 7.846438868351132,
+        "mean": 10.367990894882857,
+        "strict_fresh_passed": true,
+        "cached_tokens_all_zero": true,
+        "quality_pass_all": null,
+        "termination": "terminated during quality because speed was already far below current record"
+      },
+      {
+        "label": "qwen27-draftint4-serialspec-packed-promote-nativeoff",
+        "env_delta": {
+          "VLLM_XPU_GDN_NATIVE_SPEC_DECODE": "0",
+          "VLLM_XPU_GDN_SERIAL_SPEC_DECODE": "1",
+          "VLLM_XPU_GDN_SERIAL_SPEC_CONV": "1",
+          "VLLM_XPU_GDN_SERIAL_SPEC_PACKED_DECODE": "1",
+          "VLLM_XPU_GDN_SPEC_PROMOTE_RUNNING_AFTER_SPEC": "1"
+        },
+        "median_tok_s_1_100_after_ttft": null,
+        "strict_fresh_passed": null,
+        "quality_pass_all": null,
+        "server_log_gen_tok_s_range": "2.3-13.2; last sampled 6.3",
+        "termination": "terminated during strict suite because live throughput was orders of magnitude below current record"
+      }
+    ]
+  },
+  "decision": "Python serial GDN is closed as a no-win for Qwen27 draft-INT4. Native-on serial flags are not a valid serial-path test and still fail quality. Native-off serial is too slow by an order of magnitude. Next credible work is an exact accepted-prefix GDN/DeltaNet state transaction/tape with GPU-side commit, not more SERIAL_SPEC offset/source sweeps."
+}

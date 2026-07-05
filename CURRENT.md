@@ -76,10 +76,13 @@ Fastest quality-gated practical variant:
   repeat64 (`blue, green, red` vs `blue, green, red, yellow`). Follow-up
   bisections closed the cheap explanations: keep-scheduled-spec-row routing
   still failed, graph-off still failed, graph-off/no-async still failed, and
-  normal align/restore still failed. ReplaySSM+align is quality-clean at
-  `61-62 tok/s`, below the current `65.276 tok/s` record. No LocalMaxxing
-  submission; next credible work is reducing ReplaySSM/full-accept
-  state-transaction overhead, not promoting the invalid fast rows;
+  normal align/restore still failed. Serial GDN flags are also closed:
+  native-on `SERIAL_SPEC_*` rows stayed quality-invalid at `70-72 tok/s`, and
+  native-off serial/fallback collapsed to `~9.7-12.3 tok/s`. ReplaySSM+align
+  is quality-clean at `61-62 tok/s`, below the current `65.276 tok/s` record.
+  No LocalMaxxing submission; next credible work is a fixed-shape exact
+  accepted-prefix GDN/DeltaNet state tape with GPU-side commit, not promoting
+  invalid fast rows or sweeping serial offsets;
 - latest timing/frontier correction:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
   A 2026-07-05 timing refresh corrected the stale "LM-head dominates" model for

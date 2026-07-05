@@ -64,11 +64,17 @@ Active target as of the latest switch request:
   crashes, but fast target-INT8 + draft-INT4 rows at `68-72 tok/s` fail repeat
   quality (`55/64` `blue, green, red, yellow`, `9/64` `blue, green, red`).
   Keeping scheduled spec rows on the spec path, graph-off, graph-off/no-async,
-  cg4, and normal align/restore all failed the same way. ReplaySSM+align is
-  the only clean draft-INT4 family seen so far, but it is `61-62 tok/s`, below
-  the `65.276` record. Do not submit these rows; next credible work is
-  reducing ReplaySSM/full-accept GDN state-transaction overhead or designing a
-  cheaper exact GDN tape/replay. A later Python-only SSM promotion switch
+  cg4, and normal align/restore all failed the same way. Serial GDN flags are
+  also closed: native-on `SERIAL_SPEC_*` runs were fast (`70-72 tok/s`) but
+  still invalid and likely bypassed the Python serial path, while forcing
+  `VLLM_XPU_GDN_NATIVE_SPEC_DECODE=0` exercised the serial/fallback path and
+  collapsed to `~9.7-12.3 tok/s`, with no promotable quality result. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-serial-gdn-nativeoff-no-win.md`.
+  ReplaySSM+align is the only clean draft-INT4 family seen so far, but it is
+  `61-62 tok/s`, below the `65.276` record. Do not submit these rows; next
+  credible work is a fixed-shape exact accepted-prefix GDN/DeltaNet state tape
+  with GPU-side commit, or a stronger drafter/branch-regenerate path, not more
+  `SERIAL_SPEC_*` source/offset sweeps. A later Python-only SSM promotion switch
   crashed before artifacts, and the matched C++ conv pre-copy disablement made
   repeat64 quality worse (`62/64` `blue, green red yellow`), so do not rerun
   blind conv-copy disablement. See

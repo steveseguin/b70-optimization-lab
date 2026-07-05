@@ -477,6 +477,13 @@ align/restore all kept the same repeat64 failure (`55/64` expected
 `blue, green, red, yellow`, `9/64` truncated `blue, green, red`) despite
 strict fresh `cached_tokens=0` speed rows at `68-72 tok/s`; see
 `notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`.
+Serial GDN is closed as well: native-on `SERIAL_SPEC_*` rows were fast but
+still repeat-invalid and likely bypassed the Python serial path, while
+native-off serial/fallback actually exercised the path and fell to
+`~9.7-12.3 tok/s`; see
+`notes/2026-07-05-draft-int4-serial-gdn-nativeoff-no-win.md`.
+The next GDN-state implementation lane should be a fixed-shape exact
+accepted-prefix tape / GPU-side commit, not more serial source/offset sweeps.
 The corrected Ex0bit EAGLE3 nested-aux-layer patch is preserved as a
 compatibility artifact, but the retest still showed prompt-dependent
 acceptance collapse and unusable endpoint throughput, so EAGLE3 remains closed

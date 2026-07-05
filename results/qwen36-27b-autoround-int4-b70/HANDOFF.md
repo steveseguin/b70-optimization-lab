@@ -103,10 +103,20 @@ Current fastest quality-gated variant:
   repeat64 consistently splits `55/64` correct
   `blue, green, red, yellow` and `9/64` truncated `blue, green, red`.
   Keeping scheduled spec rows on the spec path, graph-off, graph-off/no-async,
-  cg4, and normal align/restore did not fix it. ReplaySSM+align remains the
-  only clean draft-INT4 family, but at `61-62 tok/s` it is below the current
-  record. No LocalMaxxing submission; preserve the no-win patch artifact at
-  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`.
+  cg4, and normal align/restore did not fix it. Serial GDN has now been
+  closed too: native-on `SERIAL_SPEC_*` rows still failed repeat quality and
+  likely bypassed the Python serial code, while native-off serial/fallback
+  exercised the path but fell to `~9.7-12.3 tok/s`. ReplaySSM+align remains
+  the only clean draft-INT4 family, but at `61-62 tok/s` it is below the
+  current record. No LocalMaxxing submission; preserve the no-win patch
+  artifact at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`
+  and the serial closure note
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-serial-gdn-nativeoff-no-win.md`.
+  Next credible source work is a fixed-shape exact accepted-prefix
+  GDN/DeltaNet state tape with GPU-side commit, or a stronger
+  target-matched drafter/branch-regenerate design, not more serial offset
+  sweeps.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed
