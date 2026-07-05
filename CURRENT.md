@@ -82,7 +82,10 @@ Fastest quality-gated practical variant:
   is quality-clean at `61-62 tok/s`, below the current `65.276 tok/s` record.
   No LocalMaxxing submission; next credible work is a fixed-shape exact
   accepted-prefix GDN/DeltaNet state tape with GPU-side commit, not promoting
-  invalid fast rows or sweeping serial offsets;
+  invalid fast rows or sweeping serial offsets. The current executable unit
+  target is `scripts/check-gdn-spec-recurrent-exact.py`, which now validates
+  exact recurrent prefix state and accepted-prefix SSM+conv commit equality on
+  XPU for k=3/4/5;
 - latest timing/frontier correction:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
   A 2026-07-05 timing refresh corrected the stale "LM-head dominates" model for

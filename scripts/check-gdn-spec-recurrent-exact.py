@@ -187,6 +187,107 @@ def main() -> int:
     output_equal = torch.equal(candidate_out, reference_out)
     old_equal = torch.equal(old_selected, ref_selected)
 
+    # Accepted-prefix tape contract prototype:
+    # prefix 0 is the base state before verifier spec rows; prefix i is the
+    # exact state after accepting the first i draft/verifier rows. A future
+    # native implementation should publish these prefix rows and commit one
+    # selected prefix row per request with a GPU-side mask/gather, without
+    # Python per-layer loops in the decode hot path.
+    prefix_rows = torch.arange(
+        1,
+        1 + num_reqs * (spec_len + 1),
+        device=device,
+        dtype=torch.int64,
+    ).reshape(num_reqs, spec_len + 1)
+    commit_rows = torch.arange(
+        1 + num_reqs * (spec_len + 1),
+        1 + num_reqs * (spec_len + 2),
+        device=device,
+        dtype=torch.int64,
+    )
+    prefix_row_count = 1 + num_reqs * (spec_len + 2)
+
+    ssm_prefix_table = torch.zeros((prefix_row_count, heads, dim, dim),
+                                   device=device,
+                                   dtype=state_dtype)
+    ssm_prefix_table.index_copy_(0, prefix_rows[:, 0], initial_state)
+    for pos in range(spec_len):
+        ssm_prefix_table.index_copy_(
+            0,
+            prefix_rows[:, pos + 1],
+            reference_columns.index_select(0, state_table[:, pos]),
+        )
+
+    conv_dim = heads * dim
+    conv_len = 4
+    base_conv = torch.randn((num_reqs, conv_dim, conv_len),
+                            device=device,
+                            dtype=state_dtype)
+    raw_conv_tokens = torch.randn((total_tokens, conv_dim),
+                                  device=device,
+                                  dtype=state_dtype)
+    conv_prefix_table = torch.zeros((prefix_row_count, conv_dim, conv_len),
+                                    device=device,
+                                    dtype=state_dtype)
+    conv_prefix_table.index_copy_(0, prefix_rows[:, 0], base_conv)
+    for req_idx in range(num_reqs):
+        start = int(query_offsets[req_idx].item())
+        base_history = base_conv[req_idx].transpose(0, 1).contiguous()
+        for prefix_len in range(1, spec_len + 1):
+            accepted_tokens = raw_conv_tokens[start:start + prefix_len]
+            history = torch.cat((base_history, accepted_tokens), dim=0)
+            window = history[-conv_len:].transpose(0, 1).contiguous()
+            conv_prefix_table[prefix_rows[req_idx, prefix_len]] = window
+
+    def commit_prefix_rows(
+        state: torch.Tensor,
+        accepted_prefix: torch.Tensor,
+    ) -> torch.Tensor:
+        committed = state.clone()
+        source_rows = prefix_rows.gather(
+            1, accepted_prefix.to(torch.long).unsqueeze(1)).squeeze(1)
+        committed.index_copy_(
+            0,
+            commit_rows,
+            committed.index_select(0, source_rows).clone(),
+        )
+        return committed
+
+    ssm_commit_equal = True
+    conv_commit_equal = True
+    ssm_commit_max_abs_diff = 0.0
+    conv_commit_max_abs_diff = 0.0
+    accepted_cases: list[torch.Tensor] = [
+        torch.full((num_reqs,), i, device=device, dtype=torch.int64)
+        for i in range(spec_len + 1)
+    ]
+    accepted_cases.append(
+        torch.arange(num_reqs, device=device, dtype=torch.int64)
+        % (spec_len + 1))
+    for accepted_prefix in accepted_cases:
+        committed_ssm = commit_prefix_rows(ssm_prefix_table, accepted_prefix)
+        committed_conv = commit_prefix_rows(conv_prefix_table, accepted_prefix)
+        expected_ssm_rows = prefix_rows.gather(
+            1, accepted_prefix.unsqueeze(1)).squeeze(1)
+        expected_ssm = ssm_prefix_table.index_select(0, expected_ssm_rows)
+        expected_conv = conv_prefix_table.index_select(0, expected_ssm_rows)
+        observed_ssm = committed_ssm.index_select(0, commit_rows)
+        observed_conv = committed_conv.index_select(0, commit_rows)
+        ssm_case_equal = torch.equal(observed_ssm, expected_ssm)
+        conv_case_equal = torch.equal(observed_conv, expected_conv)
+        ssm_commit_equal = ssm_commit_equal and bool(ssm_case_equal)
+        conv_commit_equal = conv_commit_equal and bool(conv_case_equal)
+        ssm_commit_max_abs_diff = max(
+            ssm_commit_max_abs_diff,
+            float((observed_ssm.float() - expected_ssm.float()).abs().max()
+                  .item()),
+        )
+        conv_commit_max_abs_diff = max(
+            conv_commit_max_abs_diff,
+            float((observed_conv.float() - expected_conv.float()).abs().max()
+                  .item()),
+        )
+
     result = {
         "device": str(device),
         "num_reqs": num_reqs,
@@ -194,12 +295,18 @@ def main() -> int:
         "state_equal": bool(state_equal),
         "output_equal": bool(output_equal),
         "old_accepted_count_path_equal": bool(old_equal),
+        "accepted_prefix_commit_ssm_equal": bool(ssm_commit_equal),
+        "accepted_prefix_commit_conv_equal": bool(conv_commit_equal),
         "candidate_state_max_abs_diff": float(
             (cand_selected.float() - ref_selected.float()).abs().max().item()),
         "candidate_output_max_abs_diff": float(
             (candidate_out.float() - reference_out.float()).abs().max().item()),
         "old_state_max_abs_diff": float(
             (old_selected.float() - ref_selected.float()).abs().max().item()),
+        "accepted_prefix_commit_ssm_max_abs_diff":
+            float(ssm_commit_max_abs_diff),
+        "accepted_prefix_commit_conv_max_abs_diff":
+            float(conv_commit_max_abs_diff),
     }
     print(json.dumps(result, sort_keys=True))
 
@@ -207,6 +314,8 @@ def main() -> int:
         raise SystemExit("exact serial spec recurrent path did not match reference")
     if old_equal:
         raise SystemExit("old accepted-count packed path unexpectedly matched")
+    if not ssm_commit_equal or not conv_commit_equal:
+        raise SystemExit("accepted-prefix commit prototype did not match")
     return 0
 
 

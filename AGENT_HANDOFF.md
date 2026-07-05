@@ -82,8 +82,13 @@ Active target as of the latest switch request:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`,
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-promote-ssm-only-crash.md`,
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-conv-copy-gate-no-win.md`,
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-accepted-prefix-tape-contract.md`,
   and
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`.
+  The executable contract starts at
+  `scripts/check-gdn-spec-recurrent-exact.py`: it now verifies exact recurrent
+  prefix state plus accepted-prefix SSM and conv commit equality on XPU for
+  k=3/4/5. Run it before touching native GDN tape/commit code.
 - The same-quality-class `cyankiwi/Qwen3.6-27B-AWQ-INT4` checkpoint was
   screened after download. It loads in vLLM/XPU with
   `--quantization compressed-tensors` and passes the strict fresh/cached-zero

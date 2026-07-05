@@ -484,6 +484,10 @@ native-off serial/fallback actually exercised the path and fell to
 `notes/2026-07-05-draft-int4-serial-gdn-nativeoff-no-win.md`.
 The next GDN-state implementation lane should be a fixed-shape exact
 accepted-prefix tape / GPU-side commit, not more serial source/offset sweeps.
+The executable contract is `../../scripts/check-gdn-spec-recurrent-exact.py`;
+as of 2026-07-05 it validates exact recurrent prefix state plus
+accepted-prefix SSM and conv commit equality on XPU for k=3/4/5. See
+`notes/2026-07-05-accepted-prefix-tape-contract.md`.
 The corrected Ex0bit EAGLE3 nested-aux-layer patch is preserved as a
 compatibility artifact, but the retest still showed prompt-dependent
 acceptance collapse and unusable endpoint throughput, so EAGLE3 remains closed

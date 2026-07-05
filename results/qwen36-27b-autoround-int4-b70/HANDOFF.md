@@ -116,7 +116,11 @@ Current fastest quality-gated variant:
   Next credible source work is a fixed-shape exact accepted-prefix
   GDN/DeltaNet state tape with GPU-side commit, or a stronger
   target-matched drafter/branch-regenerate design, not more serial offset
-  sweeps.
+  sweeps. The executable unit contract is
+  `../../scripts/check-gdn-spec-recurrent-exact.py`, updated on 2026-07-05 to
+  verify exact recurrent prefix state plus accepted-prefix SSM and conv commit
+  equality on XPU; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-accepted-prefix-tape-contract.md`.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed
