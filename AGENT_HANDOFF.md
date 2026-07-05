@@ -98,6 +98,17 @@ Active target as of the latest switch request:
   partial-group / branch-regenerate support. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md` and
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+- Latest wrapper-level MTP dispatch shortcut is closed no-win. A default-off
+  `VLLM_XPU_MTP_TEXT_INPUT_IDS_NEXT=1` spike tried to pass token IDs into
+  text-only recurrent Qwen3.5 MTP draft forwards instead of external
+  `inputs_embeds`; it first crashed on `inputs_embeds=None` dynamic-shape
+  sizing, then a compile-shape workaround stalled during decode PIECEWISE graph
+  capture. Active vLLM source was reverted; preserve only the note and patch:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-mtp-text-inputids-next-no-win.md`
+  and
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-text-inputids-next-no-win-20260705.patch`.
+  Do not repeat this exact shortcut without a deeper compile/cudagraph design
+  change.
 - Latest draft top-k follow-up is closed as diagnostic-only. K64 tracing shows
   the target token is in draft alternatives very often, but Qwen27 MTP drafting
   is sequential, so independent post-hoc reranking invalidates later draft rows

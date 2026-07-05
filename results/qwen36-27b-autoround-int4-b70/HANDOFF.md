@@ -206,6 +206,17 @@ Current next-execution plan:
   Disabling both native conv promotion paths produced invalid/incomplete strict
   output and repeat64 quality failure (`62/64` `blue, green red yellow`, plus
   one runaway repetition);
+- closed MTP text `input_ids` dispatch shortcut:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-mtp-text-inputids-next-no-win.md`.
+  A default-off spike tried to pass token IDs into text-only recurrent
+  Qwen3.5 MTP draft forwards so embedding lookup could stay inside the captured
+  draft graph. Attempt 1 crashed before readiness because the compile decorator
+  still tried to size `inputs_embeds=None`; a dynamic-dim workaround got past
+  profiling but stalled during decode PIECEWISE graph capture and was killed.
+  Active vLLM source was reverted. Preserve the patch artifact at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-text-inputids-next-no-win-20260705.patch`,
+  but do not repeat this wrapper-level shortcut without a deeper
+  compile/cudagraph design change;
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found

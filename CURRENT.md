@@ -133,6 +133,15 @@ Fastest quality-gated practical variant:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-conv-copy-gate-no-win.md`
   disabled both native conv promotion paths and failed quality hard (`62/64`
   `blue, green red yellow`, plus one runaway repetition);
+- MTP text `input_ids` dispatch shortcut closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-mtp-text-inputids-next-no-win.md`.
+  A default-off spike tried to route text-only recurrent Qwen3.5 MTP draft
+  calls through `input_ids` instead of external `inputs_embeds`. Attempt 1
+  crashed before readiness on `inputs_embeds=None` dynamic-shape sizing; a
+  compile-shape workaround got past that but stalled during decode PIECEWISE
+  graph capture. Active vLLM source was reverted. Preserve the patch artifact
+  but do not rerun this wrapper-level shortcut without a deeper compile/graph
+  design change;
 - latest EAGLE3 compatibility retest:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and

@@ -1,0 +1,100 @@
+diff --git a/vllm/v1/spec_decode/llm_base_proposer.py b/vllm/v1/spec_decode/llm_base_proposer.py
+--- a/vllm/v1/spec_decode/llm_base_proposer.py
++++ b/vllm/v1/spec_decode/llm_base_proposer.py
+@@
++        self.xpu_mtp_text_input_ids_next = (
++            os.environ.get("VLLM_XPU_MTP_TEXT_INPUT_IDS_NEXT", "0")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+@@
++    def _xpu_use_text_input_ids_for_mtp(
++        self,
++        mm_embed_inputs: tuple[list[torch.Tensor], torch.Tensor] | None = None,
++    ) -> bool:
++        """Use token ids for text-only MTP even when the target supports MM.
++
++        Multimodal-capable models normally precompute embeddings outside the
++        graph so image/audio soft tokens can be merged. Qwen3.5 MTP text decode
++        does not need that path; passing token ids lets the embedding lookup
++        stay inside the captured draft forward. Keep this default-off because
++        multimodal/prompt-embed batches still require inputs_embeds.
++        """
++        return (
++            self.xpu_mtp_text_input_ids_next
++            and self.method == "mtp"
++            and self.supports_mm_inputs
++            and mm_embed_inputs is None
++        )
+@@
+-            if self.supports_mm_inputs:
++            if self.supports_mm_inputs and not self._xpu_use_text_input_ids_for_mtp(
++                mm_embed_inputs
++            ):
+@@
+-        if self.supports_mm_inputs:
++        if self.supports_mm_inputs and not self._xpu_use_text_input_ids_for_mtp(
++            mm_embed_inputs
++        ):
+@@
+-                if self.supports_mm_inputs:
++                if self.supports_mm_inputs and not self._xpu_use_text_input_ids_for_mtp(
++                    mm_embed_inputs=None
++                ):
+diff --git a/vllm/model_executor/models/qwen3_5_mtp.py b/vllm/model_executor/models/qwen3_5_mtp.py
+--- a/vllm/model_executor/models/qwen3_5_mtp.py
++++ b/vllm/model_executor/models/qwen3_5_mtp.py
+@@
++def _env_enabled(name: str) -> bool:
++    return os.environ.get(name, "0").strip().lower() in (
++        "1",
++        "true",
++        "yes",
++        "on",
++    )
++
++
++_QWEN3_5_MTP_DYNAMIC_ARG_DIMS = {
++    "input_ids": 0,
++    "positions": -1,
++    "intermediate_tensors": 0,
++    "inputs_embeds": 0,
++    "hidden_states": 0,
++}
++if _env_enabled("VLLM_XPU_MTP_TEXT_INPUT_IDS_NEXT"):
++    # The text-only MTP experiment passes input_ids and leaves inputs_embeds as
++    # None so the embedding lookup stays inside the captured MTP forward. The
++    # compile decorator's dynamic-shape marker cannot size(None), so do not mark
++    # inputs_embeds dynamic in this mode.
++    _QWEN3_5_MTP_DYNAMIC_ARG_DIMS = {
++        key: value
++        for key, value in _QWEN3_5_MTP_DYNAMIC_ARG_DIMS.items()
++        if key != "inputs_embeds"
++    }
+@@
+-@support_torch_compile(
+-    dynamic_arg_dims={
+-        "input_ids": 0,
+-        "positions": -1,
+-        "intermediate_tensors": 0,
+-        "inputs_embeds": 0,
+-        "hidden_states": 0,
+-    }
+-)
++@support_torch_compile(
++    dynamic_arg_dims=_QWEN3_5_MTP_DYNAMIC_ARG_DIMS
++)
+@@
+-@support_torch_compile(
+-    dynamic_arg_dims={
+-        "input_ids": 0,
+-        "positions": -1,
+-        "intermediate_tensors": 0,
+-        "inputs_embeds": 0,
+-        "hidden_states": 0,
+-    }
+-)
++@support_torch_compile(
++    dynamic_arg_dims=_QWEN3_5_MTP_DYNAMIC_ARG_DIMS
++)

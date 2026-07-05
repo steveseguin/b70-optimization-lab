@@ -238,7 +238,19 @@ Next milestone:
     `blue, green red yellow`, plus one runaway repetition). Do not rerun blind
     conv-copy disablement; future GDN state work needs a traced/taped exact
     conv-window transaction.
-19. Latest variable-depth source precheck:
+19. Latest MTP text `input_ids` dispatch shortcut:
+    `notes/2026-07-05-mtp-text-inputids-next-no-win.md`.
+    Dispatch tracing showed recurrent Qwen3.5 MTP-next draft calls used
+    `inputs_embeds=[1,5120]` with `input_ids=None`, so a default-off source
+    spike tried to keep text-only embedding lookup inside the captured draft
+    forward by passing token IDs. Attempt 1 crashed before readiness because
+    torch compile tried to size `inputs_embeds=None`; the compile-shape
+    workaround got past that but stalled during decode PIECEWISE graph capture.
+    Active vLLM source was reverted, and the no-win patch is preserved at
+    `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-text-inputids-next-no-win-20260705.patch`.
+    Do not repeat this wrapper-level shortcut without a deeper compile/cudagraph
+    design change.
+20. Latest variable-depth source precheck:
     `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
     A default-off prototype that actually shortened the MTP proposer loop
     crashed with an XPU indexing assert when it created partial speculative
