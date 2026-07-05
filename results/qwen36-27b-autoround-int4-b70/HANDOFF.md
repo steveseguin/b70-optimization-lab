@@ -386,25 +386,20 @@ Current next-execution plan:
   upstream plumbing, but the later feasibility closure shows this draft is not
   accepting enough tokens on the fixed realistic suite to justify record
   chasing. Treat other Qwen27 config work as likely roulette.
-- latest explorer synthesis:
+- historical explorer synthesis:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-next-optimization-execution-plan.md`.
-  Two independent audits agreed that the next useful implementation is not an
-  endpoint/config sweep. Public Qwen3.6 27B MTP variants still appear to use
-  `mtp_num_hidden_layers=1`, so there is no easy multi-layer MTP knob hiding in
-  current checkpoints; oneDNN still exposes dense MatMul/post-op fusion rather
-  than an argmax/top-k-emitting LM-head primitive; and partial speculative
-  groups remain a broad scheduler/metadata/GDN/graph task. A later arithmetic
-  correction in the plan notes says a target-only lazy verifier would save only
-  about `0.81 ms/step` (`~65.3 -> ~66.6 tok/s` best case), because draft
-  LM-head calls are the larger avoidable bucket; see
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-upper-bound-and-priority-correction.md`.
-  Corrected ranked lanes:
-  (1) oneDNN/XPU-integrated top-ID producer behind `get_top_tokens()` that helps
-  both draft and target greedy LM-head calls; (2) target-matched drafter
-  calibration on held-out data, with exact target verification; (3) native lazy
-  target verifier only if fused with a better producer or pursued as a later
-  small cleanup; (4) true partial-group support only if committing to deeper
-  metadata/graph engineering.
+  Keep this note for the history of the LM-head/top-ID kernel lane, but do not
+  use its older "LM-head dominates" estimates as current guidance. The
+  2026-07-05 synchronized timing refresh supersedes it: the active INT8
+  LM-head/local-argmax path is small, the apparent `~11 ms`
+  recurrent-MTP-next timing was async attribution, and the live frontier is
+  target verifier forward cost plus emitted tokens per target step. Current
+  ranked lanes are: (1) materially stronger fresh-request drafter/branching
+  that raises target-verified tokens per target step; (2) target-forward
+  kernel/runtime reductions in the Qwen3.5/Next body; (3) graph-safe exact
+  GDN/spec-state transactions for stronger drafting; (4) LM-head producer work
+  only if a genuinely new backend primitive first beats dense oneDNN in
+  microbench.
 - draft LM-head batching / DFlash blocker audit:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-draft-lmhead-batching-and-dflash-next-blocker.md`.
   Sequential MTP3 cannot batch the three draft LM-head rows because each next

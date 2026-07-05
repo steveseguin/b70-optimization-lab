@@ -100,6 +100,12 @@ Artifacts:
   `24.904 tok/s`;
 - note:
   `../../experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-cacheoff-selector-refresh.md`.
+- p-min/deeper-MTP follow-up:
+  `../../experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-pmin-screen-and-harness-fix.md`.
+  A harness bug in the cache-off JSON default was fixed, then MTP5/7/9 p-min
+  rows were screened across four B70s. Best row was MTP7, `n_min=1`,
+  `p_min=0.65` at `31.480 tok/s`, strict fresh/cached-zero, still far below
+  vLLM's `65.276 tok/s`. Treat GGUF p-min/depth sweeps as closed no-win.
 
 All rows passed the fixed realistic gate with `cached_tokens=0`; no
 LocalMaxxing update was made because the recipe is unchanged in kind, remains
@@ -111,6 +117,8 @@ All of these passed the fresh gate but were no-wins versus the best GGUF row:
 
 - `MTP_N_MAX=4` and `MTP_N_MAX=5`;
 - `MTP_N_MIN=2 MTP_P_MIN=0.0475`;
+- deeper p-min variants: MTP5 `p_min=0.75`, MTP7 `p_min=0.65/0.75`, and MTP9
+  `p_min=0.75`;
 - `UBATCH_SIZE=512` and `UBATCH_SIZE=1024`;
 - `POLL=100` plus `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1`;
 - `GGML_SYCL_ENABLE_VMM=0`;

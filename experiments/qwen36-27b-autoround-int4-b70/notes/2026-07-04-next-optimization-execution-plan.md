@@ -1,5 +1,24 @@
 # 2026-07-04 - Qwen27 next optimization execution plan
 
+## Supersession note - 2026-07-05
+
+This file is kept as the historical execution plan that led through the
+LM-head/top-ID kernel work, but its bottleneck model is **not current** for the
+promoted Qwen27 record recipe. The synchronized timing refresh in
+`2026-07-05-replayssm-stage-profile-and-frontier.md` showed that the current
+runtime INT8 LM-head/local-argmax path is already small, and that the old
+`~11 ms` recurrent MTP-next timing was async attribution. For new optimization
+work, start from the July 5 frontier note and treat the main remaining unlocks
+as:
+
+- more target-verified emitted tokens per target verifier step;
+- materially stronger fresh-request draft sources;
+- target-forward/runtime/kernel reductions in the Qwen3.5/Next target body;
+- graph-safe exact GDN/spec-state transactions for stronger drafting.
+
+Do not use the older "LM-head dominates" estimates below as next-action
+guidance except for understanding why the LM-head kernel lane was closed.
+
 ## Objective
 
 Beat the current valid Qwen27 one-B70 record without lowering quality or using

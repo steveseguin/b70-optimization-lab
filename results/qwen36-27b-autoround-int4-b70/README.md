@@ -284,8 +284,9 @@ Current realistic research interpretation:
   diagnostic next suggested full logits / LM-head dominated the MTP3 path; that
   was useful historically, but the 2026-07-05 timing refresh corrected the
   current frontier after the INT8 LM-head/local-argmax path matured. Current
-  record-family timing shows LM-head is small and target forward plus recurrent
-  MTP draft forward now dominates. Evidence:
+  synchronized timing shows LM-head is small, the apparent `~11 ms`
+  recurrent-MTP-next timing was async attribution, and the real blockers are
+  target verifier forward cost plus emitted tokens per target step. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
@@ -371,18 +372,22 @@ current webhie/BF16-scale capture size remains best at cg8
 (`65.153` same-window control versus cg4 `64.507`, cg16 `63.500`, cg32
 `64.071`; see
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-capture-size-screen-no-win.md`),
-target-only attribution shows the target verifier LM-head dominates the win,
-and the standalone native compact full-vocab top-1 kernel is exact but slower
-than dense oneDNN. The semantic candidate-max version is also closed no-win:
-exact top IDs/values plus candidate scores, but only `1.010x` at rows `1` and
-slower at rows `2-4`. A low-level INT8 GEMM scratchpad ring-size screen is also
-closed no-promo: ring4 produced high support rows (`65.708`, `65.817`) but
-crossover deltas versus ring1 controls were only `+0.42%` and `+0.27%`; see
+older target-only attribution was enough to justify the LM-head kernel lane,
+but the latest synchronized timing shows the active INT8 LM-head/local-argmax
+path is now small. The standalone native compact full-vocab top-1 kernel is
+exact but slower than dense oneDNN, and the semantic candidate-max version is
+also closed no-win: exact top IDs/values plus candidate scores, but only
+`1.010x` at rows `1` and slower at rows `2-4`. A low-level INT8 GEMM scratchpad
+ring-size screen is also closed no-promo: ring4 produced high support rows
+(`65.708`, `65.817`) but crossover deltas versus ring1 controls were only
+`+0.42%` and `+0.27%`; see
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-int8-gemm-scratchpad-ring-screen-no-win.md`.
-The next meaningful decode-rate work is reducing LM-head call/row count per
-verifier step, improving accepted tokens per target verifier step, or finding
-a oneDNN-integrated top-1/top-k/candidate-score post-op that avoids a second
-reduction launch.
+The next meaningful decode-rate work is improving accepted/generated tokens per
+target verifier step, finding a stronger fresh-request draft source, reducing
+target-forward cost in the Qwen3.5/Next body, or building a graph-safe exact
+GDN/spec-state transaction that lets stronger drafting remain correct. LM-head
+producer work is now a secondary cleanup unless it is a genuinely new backend
+primitive with microbench evidence.
 The follow-up source audit in
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-callcount-source-audit.md`
 narrows that further: small Python-level row/call shortcuts are unlikely to

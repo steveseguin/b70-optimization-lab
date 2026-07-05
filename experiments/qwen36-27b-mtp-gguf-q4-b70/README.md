@@ -80,6 +80,11 @@ history.
   Every row passed the fixed realistic gate with `cached_tokens=0`, but the
   lane remains far below the vLLM AutoRound `65.276 tok/s` row. See
   `notes/2026-07-05-cacheoff-selector-refresh.md`.
+- 2026-07-05: fixed a Bash JSON-default bug in the GGUF benchmark wrapper and
+  screened deeper MTP with `p_min` across four B70s. Best row was MTP7 with
+  `n_min=1`, `p_min=0.65` at `31.480 tok/s`; all rows were strict
+  fresh/cached-zero, but none changed the conclusion. See
+  `notes/2026-07-05-pmin-screen-and-harness-fix.md`.
 
 ## Research Notes
 
@@ -90,5 +95,5 @@ history.
   headline candidates.
 - Early bring-up should use one B70 per process, not tensor parallel, to avoid
   PCIe/collective overhead and to allow four independent research replicas.
-- For this GGUF, `n_max=3` is the only useful MTP depth found so far. `n_max=4`
-  and `n_max=5` lower acceptance and throughput.
+- For this GGUF, `n_max=3` remains the useful default depth. Deeper p-min
+  screens reached only `31.48 tok/s` at best and remain far behind vLLM.

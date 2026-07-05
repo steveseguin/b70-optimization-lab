@@ -100,11 +100,23 @@ Validated same-suite rows:
 | four-way MTP5 | `24.904` | `22.471` | `25.057` | `423.9` | no win |
 | four-way no-spec | `23.675` | `23.424` | `23.646` | `411.0` | control |
 
+Follow-up p-min/deeper-MTP screen after fixing the cache-off JSON wrapper:
+
+| Label | Median tok/s | p10 | mean | TTFT ms | Outcome |
+| --- | ---: | ---: | ---: | ---: | --- |
+| MTP5, `n_min=1`, `p_min=0.75` | `31.040` | `29.144` | `31.203` | `421.0` | no win versus vLLM |
+| MTP7, `n_min=1`, `p_min=0.75` | `30.990` | `28.869` | `30.921` | `428.0` | no win |
+| MTP7, `n_min=1`, `p_min=0.65` | `31.480` | `29.492` | `31.751` | `424.7` | best p-min row, still noncompetitive |
+| MTP9, `n_min=2`, `p_min=0.75` | `27.312` | `24.493` | `27.712` | `427.3` | regression |
+
 Conclusion unchanged: Qwen27 GGUF/llama.cpp is valid and useful as a
 same-quality-class reference, but it is not competitive with the vLLM
 AutoRound `65.276 tok/s` row. Do not spend more config-screen time here unless
 there is a new source-level llama.cpp Qwen/GDN mechanism or a materially
 different GGUF quant/backend.
+
+P-min evidence:
+`../../experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-pmin-screen-and-harness-fix.md`.
 
 ## Promotion Requirements
 
