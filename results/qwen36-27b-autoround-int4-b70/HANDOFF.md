@@ -792,5 +792,13 @@ Continue INT4 optimization without promoting synthetic scores:
   `kv_cache_gid`, one block table, and one slot mapping. Do not remove the
   assertion blindly; see
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`;
+- Hipfire's open-source AMD DFlash stack was audited as the next stronger-drafter
+  lead. Its `185-218 tok/s` Qwen27 rows are code-prompt/RDNA/Hipfire-MQ4
+  results, not valid local headline claims, but the implementation provides a
+  useful blueprint: target-hidden-conditioned block drafter, target-owned
+  LM-head, batched verifier, fixed-buffer hidden ring, and exact GDN tape
+  rollback/replay. The next local step is an acceptance/tau feasibility probe
+  on the fixed realistic suite before any Intel kernel port; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-hipfire-dflash-intel-port-audit.md`;
 - keep long-context/prompt-processing optimization separate from the short
   decode record.

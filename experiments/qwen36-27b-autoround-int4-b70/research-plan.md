@@ -12,6 +12,14 @@ webhie BF16-scale INT8-LM-head record, LocalMaxxing status, variance policy,
 prior no-win source attempts, and the completion gates for the fused
 LM-head/top-1 candidate-max route.
 
+New stronger-drafter lead:
+`notes/2026-07-05-hipfire-dflash-intel-port-audit.md` audits Hipfire's
+open-source Qwen3.6 27B DFlash path. Treat Hipfire's `185-218 tok/s` rows as
+AMD/code-prompt evidence only, not local headline claims. The reusable path is
+to first measure DFlash tau/acceptance on the fixed realistic suite, then only
+if it is strong implement mixed-KV-group DFlash proposer support plus
+graph-safe GDN accepted-prefix replay in vLLM/XPU.
+
 Latest LM-head kernel status:
 `notes/2026-07-04-lmhead-candidate-max-kernel-no-win.md`. The standalone
 candidate-max native op was exact but no-win (`1.010x`, `0.984x`, `0.971x`,
