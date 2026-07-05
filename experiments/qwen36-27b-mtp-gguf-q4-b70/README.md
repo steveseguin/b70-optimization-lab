@@ -71,6 +71,15 @@ history.
   sweeps of MTP4/5, `n_min/p_min`, ubatch, VMM, FlashAttention, immediate
   command lists, and Q8 KV did not produce a win. See
   `../../results/qwen36-27b-mtp-gguf-q4-b70/initial-realistic-sweep-20260703.json`.
+- 2026-07-05: refreshed the lane after fixing harness defaults for strict
+  cache-off B70 runs. The server wrappers now default to
+  `ONEAPI_DEVICE_SELECTOR=level_zero:*` and `ZE_AFFINITY_MASK=$GPU_INDEX`;
+  Qwen GGUF bench wrappers default to `{"cache_prompt":false}`. The current
+  MTP3 refresh reached `30.812 tok/s`, and a four-GPU depth screen produced
+  no-spec `23.675`, MTP3 `29.514`, MTP4 `28.599`, and MTP5 `24.904 tok/s`.
+  Every row passed the fixed realistic gate with `cached_tokens=0`, but the
+  lane remains far below the vLLM AutoRound `65.276 tok/s` row. See
+  `notes/2026-07-05-cacheoff-selector-refresh.md`.
 
 ## Research Notes
 

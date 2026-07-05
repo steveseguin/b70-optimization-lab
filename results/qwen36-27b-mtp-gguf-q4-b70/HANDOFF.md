@@ -1,6 +1,6 @@
 # Qwen3.6 27B MTP GGUF Q4 Handoff
 
-Last updated: 2026-07-03
+Last updated: 2026-07-05
 
 Use this file when resuming the Unsloth GGUF Q4/MTP lane.
 
@@ -34,10 +34,11 @@ Completed as of this note:
 4. Parallel MTP/config sweep completed on GPUs 1-3.
 
 Conclusion: this GGUF lane is valid but not competitive. Best strict row is
-`30.679 tok/s` median generated-token throughput for tokens 1-100 after TTFT,
-while the Intel AutoRound vLLM lane is `53.522 tok/s` under the same Qwen
-realistic policy. Treat the GGUF lane as a preserved fallback/reference, not
-the active path unless a new source-level llama.cpp Qwen/GDN idea appears.
+`30.812 tok/s` median generated-token throughput for tokens 1-100 after TTFT
+after the 2026-07-05 cache-off/selector refresh, while the fastest practical
+Qwen27 vLLM AutoRound lane is `65.276 tok/s` under the same Qwen realistic
+policy. Treat the GGUF lane as a preserved fallback/reference, not the active
+path unless a new source-level llama.cpp Qwen/GDN idea appears.
 
 Build status:
 
@@ -46,6 +47,9 @@ Build status:
 - JIT SYCL fallback build completed.
 - If invoking `llama-server` directly, source `/opt/intel/oneapi/setvars.sh`
   first. A raw shell can fail with `libsvml.so` missing.
+- Use `ONEAPI_DEVICE_SELECTOR=level_zero:*` with `ZE_AFFINITY_MASK=$GPU_INDEX`
+  for B70 replica selection. The older `level_zero:$GPU_INDEX` selector can
+  fail device discovery in a fresh shell.
 - Launcher now defaults to one server slot with `N_PARALLEL=1` / `-np 1`;
   keep that for single-session decode comparisons.
 
@@ -64,7 +68,7 @@ Then run the Qwen realistic suite against the OpenAI-compatible endpoint:
 ```bash
 BASE_URL=http://127.0.0.1:19431 \
   LABEL=llamacpp-mtp3-aot-np1-realistic128 \
-  REQUEST_EXTRA_JSON='{}' \
+  REQUEST_EXTRA_JSON='{"cache_prompt":false}' \
   scripts/bench-qwen36-27b-mtp-gguf-realistic.sh
 ```
 
@@ -80,7 +84,26 @@ GPU_INDEX=1 PORT=19431 \
 
 Do not pass vLLM-only `chat_template_kwargs` to llama.cpp. The server launcher
 sets `--reasoning off`; the benchmark wrapper defaults to
-`REQUEST_EXTRA_JSON='{}'`.
+`REQUEST_EXTRA_JSON='{"cache_prompt":false}'` and the server runs with
+`--cache-ram 0` in the strict one-shot runner.
+
+## 2026-07-05 Refresh
+
+Artifacts:
+
+- best current support row:
+  `../../data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-llamacpp-mtp3-faon-cacheoff-qwensuite128-20260705T224527Z.json`
+  at `30.81175134560796 tok/s`;
+- four-GPU depth screen:
+  `../../data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-llamacpp-mtp-depth-screen-cacheoff-qwensuite128-*.json`
+  with no-spec `23.675`, MTP3 `29.514`, MTP4 `28.599`, and MTP5
+  `24.904 tok/s`;
+- note:
+  `../../experiments/qwen36-27b-mtp-gguf-q4-b70/notes/2026-07-05-cacheoff-selector-refresh.md`.
+
+All rows passed the fixed realistic gate with `cached_tokens=0`; no
+LocalMaxxing update was made because the recipe is unchanged in kind, remains
+far below the existing GGUF submission, and is far below the Qwen27 vLLM best.
 
 ## Closed Initial Knobs
 

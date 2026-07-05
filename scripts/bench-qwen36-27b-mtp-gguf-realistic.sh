@@ -11,9 +11,7 @@ OUT_DIR="${OUT_DIR:-data/qwen36-27b-mtp-gguf-q4-b70-baselines}"
 LABEL="${LABEL:-llamacpp-mtp3-realistic128}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT="${OUT:-$OUT_DIR/${LABEL}-$STAMP.json}"
-if [[ "${REQUEST_EXTRA_JSON+x}" != "x" ]]; then
-  REQUEST_EXTRA_JSON="{}"
-fi
+REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{\"cache_prompt\":false}}"
 
 mkdir -p "$OUT_DIR"
 

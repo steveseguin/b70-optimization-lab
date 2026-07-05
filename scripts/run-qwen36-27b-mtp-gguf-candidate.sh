@@ -69,7 +69,7 @@ BASE_URL="http://127.0.0.1:${PORT}" \
 MODEL="${MODEL:-qwen36-27b-mtp-gguf-q4}" \
 LABEL="$LABEL" \
 OUT="$OUT" \
-REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{}}" \
+REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-{\"cache_prompt\":false}}" \
   scripts/bench-qwen36-27b-mtp-gguf-realistic.sh \
   > "$RUN_DIR/bench.stdout.log" 2>&1
 

@@ -16,10 +16,14 @@ Best strict GGUF row so far:
   `batch=1024`, `ubatch=256`, `--ctx-checkpoints 0`;
 - fixed Qwen realistic suite, each prompt once, `cached_tokens=0` on all
   requests, no prompt/KV/context checkpoint/history reuse;
-- median `30.679 tok/s` for generated tokens 1-100 after TTFT, p10 `27.589`,
-  mean `30.405`, full-output median `29.860`, TTFT median `499.8 ms`;
+- latest cache-off/selector-fixed refresh:
+  median `30.812 tok/s` for generated tokens 1-100 after TTFT, p10 `27.982`,
+  mean `30.668`, full-output median `30.393`, TTFT median `419.0 ms`;
 - evidence:
-  `../../data/qwen36-27b-mtp-gguf-q4-b70-baselines/llamacpp-mtp3-aot-np1-realistic128-20260703T060748Z.json`;
+  `../../data/qwen36-27b-mtp-gguf-q4-b70-baselines/qwen36-27b-udq4xl-gguf-llamacpp-mtp3-faon-cacheoff-qwensuite128-20260705T224527Z.json`;
+- original 2026-07-03 support row:
+  `../../data/qwen36-27b-mtp-gguf-q4-b70-baselines/llamacpp-mtp3-aot-np1-realistic128-20260703T060748Z.json`
+  at `30.679 tok/s`;
 - compact sweep ledger:
   `initial-realistic-sweep-20260703.json`.
 - LocalMaxxing reference:
@@ -29,9 +33,11 @@ Best strict GGUF row so far:
   and
   `../../data/localmaxxing-responses/qwen36-27b-gguf-q4-mtp3-20260703.submit.log`.
 
-The current valid INT4/Q4 Qwen27 headline remains the separate
-`Intel/Qwen3.6-27B-int4-AutoRound` vLLM/XPU lane at median `53.522 tok/s` on
-the fixed Qwen realistic suite:
+The current valid INT4/Q4 Qwen27 headline remains the separate vLLM/XPU
+AutoRound lane. The fastest quality-gated practical row is
+`webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 LM-head (BF16 scales)` at
+median `65.276 tok/s` on the fixed Qwen realistic suite. The older Intel
+checkpoint promote-source row is `53.522 tok/s`.
 
 `../qwen36-27b-autoround-int4-b70/README.md`
 
@@ -68,6 +74,37 @@ Interpretation: llama.cpp MTP helps this GGUF (`30.7` vs `23.6 tok/s`) but the
 target path itself is too slow compared with vLLM AutoRound. Config-only GGUF
 tuning is low priority unless a source-level llama.cpp Qwen/GDN optimization or
 a materially different GGUF quant appears.
+
+## 2026-07-05 Refresh
+
+This refresh fixed local harness defaults rather than changing the runtime:
+
+- `serve-qwen36-27b-mtp-gguf-llamacpp.sh` and the generic rapid llama.cpp
+  server wrapper now default to `ONEAPI_DEVICE_SELECTOR=level_zero:*` plus
+  `ZE_AFFINITY_MASK=$GPU_INDEX`. The previous `level_zero:$GPU_INDEX` selector
+  can fail device discovery in a fresh shell.
+- Qwen GGUF benchmark wrappers now default to
+  `REQUEST_EXTRA_JSON='{"cache_prompt":false}'`; strict rows also pass
+  `--cache-ram 0` to the server. The gate verified `cached_tokens=0` on every
+  row.
+- Model checksum:
+  `4085665ee36d82a672a238a43f0e5643f2f0e39f2d7bd5d373f0ef10ecf53095`.
+
+Validated same-suite rows:
+
+| Label | Median tok/s | p10 | mean | TTFT ms | Outcome |
+| --- | ---: | ---: | ---: | ---: | --- |
+| one-off MTP3 refresh | `30.812` | `27.982` | `30.668` | `419.0` | best current support row |
+| four-way MTP3 | `29.514` | `26.607` | `29.718` | `423.2` | support / variance |
+| four-way MTP4 | `28.599` | `24.305` | `28.005` | `422.7` | no win |
+| four-way MTP5 | `24.904` | `22.471` | `25.057` | `423.9` | no win |
+| four-way no-spec | `23.675` | `23.424` | `23.646` | `411.0` | control |
+
+Conclusion unchanged: Qwen27 GGUF/llama.cpp is valid and useful as a
+same-quality-class reference, but it is not competitive with the vLLM
+AutoRound `65.276 tok/s` row. Do not spend more config-screen time here unless
+there is a new source-level llama.cpp Qwen/GDN mechanism or a materially
+different GGUF quant/backend.
 
 ## Promotion Requirements
 
