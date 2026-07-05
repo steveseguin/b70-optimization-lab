@@ -124,3 +124,49 @@ quality by restricting the vocabulary. Continue focusing on:
   drafter;
 - native verifier-row/LM-head integration that avoids dense logits without a
   low-coverage subset approximation.
+
+## 2026-07-05 Follow-Up: Default-Off Hook Revalidated The No-Win
+
+A cleaner default-off implementation was restored and screened:
+
+```text
+VLLM_XPU_DRAFT_HOT_VOCAB_FILE=experiments/qwen36-27b-autoround-int4-b70/hot-vocab/qwen27-calibration-hotvocab-top2048-20260704.json
+VLLM_XPU_DRAFT_HOT_VOCAB_LIMIT=2048
+```
+
+Patch snapshot:
+
+```text
+patches/qwen36-27b-autoround-int4-b70/vllm-xpu-draft-hot-vocab-top1-defaultoff-no-win-20260705.patch
+```
+
+Strict/fresh screening run:
+
+```text
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafthotvocab2048-mtp3-cg8-20260705A-candidate-summary-20260705T033712Z.json
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-webhie-bf16scale-drafthotvocab2048-mtp3-cg8-20260705A-realistic128-chat-tokenids-qwensuite-20260705T033712Z.json
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-webhie-bf16scale-drafthotvocab2048-mtp3-cg8-20260705A-20260705T033712Z
+```
+
+Result:
+
+- strict final gate passed mechanically: `12/12` unique prompts, each prompt
+  once, `cached_tokens=0` for every request, token-id timing;
+- median tokens 1-100 after TTFT: `55.578241845557955 tok/s`;
+- p10 `52.55494150335682`, mean `57.85156599228912`;
+- no quality ladder was run because it is far below the `65.27648650325429`
+  record and the earlier same-window screen already showed the acceptance loss.
+
+Server logs confirmed the active hook:
+
+```text
+Loaded XPU draft hot-vocab proposal set: tokens=1779
+Prepared XPU draft hot-vocab head: rows=1779 hidden=5120 dtype=torch.bfloat16
+Using XPU draft hot-vocab proposal head for draft token generation only; target verification remains full-vocab exact.
+```
+
+Interpretation is unchanged: shrinking draft LM-head compute is not enough when
+the subset draft lowers acceptance. The next `100+ tok/s` route must either
+raise accepted tokens per verifier step with a stronger/branched drafter, or
+remove whole exact verifier/draft LM-head calls without changing the proposal
+distribution.

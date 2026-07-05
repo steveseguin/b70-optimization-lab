@@ -1,0 +1,287 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index b519b3e5a..5f5985b71 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -975,8 +975,8 @@ def gdn_replayssm_spec_decode(
+         not _gdn_row_trace_bool_env(
+             "VLLM_XPU_GDN_REPLAYSSM_TORCH_FALLBACK", False)
+         and hasattr(torch.ops._xpu_C, "gdn_replayssm_spec_decode")
+-        and max_spec_len <= 2
+-        and max_cache_len in (2, 4)
++        and max_spec_len <= 4
++        and max_cache_len in (2, 4, 8)
+     ):
+         sync_trace("native_entry")
+         torch.ops._xpu_C.gdn_replayssm_spec_decode(
+diff --git a/vllm/v1/attention/backends/gdn_attn.py b/vllm/v1/attention/backends/gdn_attn.py
+index d768c4527..ee53df5db 100644
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -201,6 +201,16 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             dtype=torch.int32,
+             device=device,
+         )
++        self.cudagraph_spec_token_indx: torch.Tensor = torch.arange(
++            self.decode_cudagraph_max_bs * (self.num_spec + 1),
++            dtype=torch.int32,
++            device=device,
++        )
++        self.cudagraph_non_spec_token_indx: torch.Tensor = torch.empty(
++            0,
++            dtype=torch.int32,
++            device=device,
++        )
+         self.spec_query_start_loc: torch.Tensor = torch.empty(
+             (self.decode_cudagraph_max_bs + 1,),
+             dtype=torch.int32,
+@@ -216,6 +226,17 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             dtype=torch.int32,
+             device=device,
+         )
++        self.cudagraph_num_accepted_tokens: torch.Tensor = torch.full(
++            (self.decode_cudagraph_max_bs,),
++            self.num_spec + 1 if self.use_spec_decode else 1,
++            dtype=torch.int32,
++            device=device,
++        )
++        self.cudagraph_spec_sequence_masks: torch.Tensor = torch.ones(
++            (self.decode_cudagraph_max_bs,),
++            dtype=torch.bool,
++            device=device,
++        )
+ 
+     def build(  # type: ignore[override]
+         self,
+@@ -224,12 +245,13 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+         num_accepted_tokens: torch.Tensor | None = None,
+         num_decode_draft_tokens_cpu: torch.Tensor | None = None,
+         fast_build: bool = False,
++        is_cudagraph_capture: bool = False,
+     ) -> GDNAttentionMetadata:
+         m = common_attn_metadata
+ 
+         query_start_loc = m.query_start_loc
+         query_start_loc_cpu = m.query_start_loc_cpu
+-        context_lens_tensor = m.compute_num_computed_tokens()
++        context_lens_tensor: torch.Tensor | None = None
+         nums_dict, batch_ptr, token_chunk_offset_ptr = None, None, None
+         block_table_tensor = mamba_get_block_table_tensor(
+             m.block_table_tensor,
+@@ -257,9 +279,34 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                 spec_sequence_masks = None
+                 spec_sequence_masks_cpu = None
+             else:
+-                spec_sequence_masks = spec_sequence_masks_cpu.to(
+-                    query_start_loc.device, non_blocking=True
+-                )
++                if num_accepted_tokens is not None:
++                    if is_cudagraph_capture:
++                        spec_sequence_masks = self.cudagraph_spec_sequence_masks[
++                            : spec_sequence_masks_cpu.size(0)
++                        ]
++                    elif (
++                        os.environ.get("VLLM_XPU_GDN_REPLAYSSM_SPEC", "")
++                        .strip()
++                        .lower()
++                        in ("1", "true", "yes", "on")
++                    ):
++                        # ReplaySSM is a verify-row transaction: a scheduled
++                        # spec row must stay on the spec path even when the
++                        # sampler emits only one token (zero accepted drafts
++                        # plus the target replacement). Demoting
++                        # accepted_count == 1 rows to the non-spec path lets
++                        # GDN advance through the rejected verifier tail,
++                        # corrupting state for arbitrary drafter patterns.
++                        spec_sequence_masks = spec_sequence_masks_cpu.to(
++                            query_start_loc.device, non_blocking=True)
++                    else:
++                        spec_sequence_masks = (
++                            num_accepted_tokens[: spec_sequence_masks_cpu.size(0)] > 1
++                        )
++                else:
++                    spec_sequence_masks = spec_sequence_masks_cpu.to(
++                        query_start_loc.device, non_blocking=True
++                    )
+ 
+         if spec_sequence_masks is None:
+             num_decodes, num_prefills, num_decode_tokens, num_prefill_tokens = (
+@@ -340,7 +387,7 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             else:
+                 num_accepted_tokens = None
+         else:
+-            query_lens = query_start_loc[1:] - query_start_loc[:-1]
++            query_lens: torch.Tensor | None = None
+             assert spec_sequence_masks_cpu is not None
+             query_lens_cpu = query_start_loc_cpu[1:] - query_start_loc_cpu[:-1]
+ 
+@@ -363,17 +410,22 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                     num_spec_decodes * (self.num_spec + 1),
+                     query_start_loc_cpu[-1].item(),
+                 )
+-                spec_token_indx = torch.arange(
+-                    spec_token_size,
+-                    dtype=torch.int32,
+-                    device=query_start_loc.device,
+-                )
+-                non_spec_token_indx = torch.empty(
+-                    0, dtype=torch.int32, device=query_start_loc.device
+-                )
+-                # Filter by spec_sequence_masks to exclude padded sequences
++                if is_cudagraph_capture:
++                    spec_token_indx = self.cudagraph_spec_token_indx[:spec_token_size]
++                    non_spec_token_indx = self.cudagraph_non_spec_token_indx
++                else:
++                    spec_token_indx = torch.arange(
++                        spec_token_size,
++                        dtype=torch.int32,
++                        device=query_start_loc.device,
++                    )
++                    non_spec_token_indx = torch.empty(
++                        0, dtype=torch.int32, device=query_start_loc.device
++                    )
++                # Padded sequences are at the back in this decode-only
++                # capture path, so avoid CPU-mask indexing into an XPU tensor.
+                 spec_state_indices_tensor = block_table_tensor[
+-                    spec_sequence_masks_cpu, : self.num_spec + 1
++                    :num_spec_decodes, : self.num_spec + 1
+                 ]
+                 non_spec_state_indices_tensor = None
+                 prefill_mirror_state_indices_tensor = None
+@@ -385,6 +437,7 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                 non_spec_query_start_loc = None
+                 non_spec_query_start_loc_cpu = None
+             else:
++                query_lens = query_start_loc[1:] - query_start_loc[:-1]
+                 spec_token_masks = torch.repeat_interleave(
+                     spec_sequence_masks,
+                     query_lens,
+@@ -435,7 +488,10 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                 )
+ 
+             assert num_accepted_tokens is not None
+-            num_accepted_tokens = num_accepted_tokens[spec_sequence_masks_cpu]
++            if num_prefills == 0 and num_decodes == 0:
++                num_accepted_tokens = num_accepted_tokens[:num_spec_decodes]
++            else:
++                num_accepted_tokens = num_accepted_tokens[spec_sequence_masks_cpu]
+ 
+         chunk_indices: torch.Tensor | None = None
+         chunk_offsets: torch.Tensor | None = None
+@@ -458,6 +514,7 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             ).to(device=gpu_device, non_blocking=True)
+ 
+         if num_prefills > 0:
++            context_lens_tensor = m.compute_num_computed_tokens()
+             has_initial_state = context_lens_tensor > 0
+             if spec_sequence_masks_cpu is not None:
+                 has_initial_state = has_initial_state[~spec_sequence_masks_cpu]
+@@ -497,43 +554,54 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             and not disable_spec_static_graph_metadata
+         ):
+             assert spec_sequence_masks is not None
+-            self.spec_state_indices_tensor[:num_spec_decodes].copy_(
+-                spec_state_indices_tensor, non_blocking=True
+-            )
+-            spec_state_indices_tensor = self.spec_state_indices_tensor[:batch_size]
+-            spec_state_indices_tensor[num_spec_decodes:].fill_(NULL_BLOCK_ID)
++            assert non_spec_token_indx is not None and spec_token_indx is not None
++            if not is_cudagraph_capture:
++                self.spec_state_indices_tensor[:num_spec_decodes].copy_(
++                    spec_state_indices_tensor, non_blocking=True
++                )
++                spec_state_indices_tensor = self.spec_state_indices_tensor[:batch_size]
++                spec_state_indices_tensor[num_spec_decodes:].fill_(NULL_BLOCK_ID)
+ 
+-            self.spec_sequence_masks[:num_spec_decodes].copy_(
+-                spec_sequence_masks[:num_spec_decodes], non_blocking=True
+-            )
+-            spec_sequence_masks = self.spec_sequence_masks[:batch_size]
+-            spec_sequence_masks[num_spec_decodes:].fill_(False)
++                self.spec_sequence_masks[:num_spec_decodes].copy_(
++                    spec_sequence_masks[:num_spec_decodes], non_blocking=True
++                )
++                spec_sequence_masks = self.spec_sequence_masks[:batch_size]
++                spec_sequence_masks[num_spec_decodes:].fill_(False)
+ 
+-            assert non_spec_token_indx is not None and spec_token_indx is not None
+-            self.non_spec_token_indx[: non_spec_token_indx.size(0)].copy_(
+-                non_spec_token_indx, non_blocking=True
+-            )
+-            non_spec_token_indx = self.non_spec_token_indx[
+-                : non_spec_token_indx.size(0)
+-            ]
++                self.non_spec_token_indx[: non_spec_token_indx.size(0)].copy_(
++                    non_spec_token_indx, non_blocking=True
++                )
++                non_spec_token_indx = self.non_spec_token_indx[
++                    : non_spec_token_indx.size(0)
++                ]
+ 
+-            self.spec_token_indx[: spec_token_indx.size(0)].copy_(
+-                spec_token_indx, non_blocking=True
+-            )
+-            spec_token_indx = self.spec_token_indx[: spec_token_indx.size(0)]
++                self.spec_token_indx[: spec_token_indx.size(0)].copy_(
++                    spec_token_indx, non_blocking=True
++                )
++                spec_token_indx = self.spec_token_indx[: spec_token_indx.size(0)]
+ 
+-            self.spec_query_start_loc[: num_spec_decodes + 1].copy_(
+-                spec_query_start_loc, non_blocking=True
+-            )
+-            spec_num_query_tokens = spec_query_start_loc[-1]  # type: ignore[index]
+-            spec_query_start_loc = self.spec_query_start_loc[: batch_size + 1]
+-            spec_query_start_loc[num_spec_decodes + 1 :].fill_(spec_num_query_tokens)
++                self.spec_query_start_loc[: num_spec_decodes + 1].copy_(
++                    spec_query_start_loc, non_blocking=True
++                )
++                spec_num_query_tokens = spec_query_start_loc[-1]  # type: ignore[index]
++                spec_query_start_loc = self.spec_query_start_loc[: batch_size + 1]
++                spec_query_start_loc[num_spec_decodes + 1 :].fill_(
++                    spec_num_query_tokens)
+ 
+-            self.num_accepted_tokens[:num_spec_decodes].copy_(
+-                num_accepted_tokens, non_blocking=True
+-            )
+-            num_accepted_tokens = self.num_accepted_tokens[:batch_size]
+-            num_accepted_tokens[num_spec_decodes:].fill_(1)
++                self.num_accepted_tokens[:num_spec_decodes].copy_(
++                    num_accepted_tokens, non_blocking=True
++                )
++                num_accepted_tokens = self.num_accepted_tokens[:batch_size]
++                num_accepted_tokens[num_spec_decodes:].fill_(1)
++            else:
++                spec_state_indices_tensor = self.spec_state_indices_tensor[:batch_size]
++                spec_sequence_masks = self.spec_sequence_masks[:batch_size]
++                non_spec_token_indx = self.non_spec_token_indx[
++                    : non_spec_token_indx.size(0)
++                ]
++                spec_token_indx = self.spec_token_indx[: spec_token_indx.size(0)]
++                spec_query_start_loc = self.spec_query_start_loc[: batch_size + 1]
++                num_accepted_tokens = self.num_accepted_tokens[:batch_size]
+ 
+         if (
+             self.use_full_cuda_graph
+@@ -640,7 +708,19 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+             f"cudagraph capture sizes ({self.decode_cudagraph_max_bs})."
+         )
+ 
+-        num_accepted_tokens = torch.diff(m.query_start_loc)
+-        num_decode_draft_tokens_cpu = (num_accepted_tokens - 1).cpu()
++        num_accepted_tokens = self.cudagraph_num_accepted_tokens[: m.num_reqs]
++        num_decode_draft_tokens_cpu = (
++            m.query_start_loc_cpu[1 : m.num_reqs + 1]
++            - m.query_start_loc_cpu[: m.num_reqs]
++            - 1
++        )
+ 
+-        return self.build(0, m, num_accepted_tokens, num_decode_draft_tokens_cpu)
++        is_graph_capturing = bool(
++            getattr(self, "_xpu_is_graph_capturing", False))
++        return self.build(
++            0,
++            m,
++            num_accepted_tokens,
++            num_decode_draft_tokens_cpu,
++            is_cudagraph_capture=is_graph_capturing,
++        )

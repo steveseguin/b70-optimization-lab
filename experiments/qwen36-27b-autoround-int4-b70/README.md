@@ -403,7 +403,12 @@ computes full logits, FP8 LM-head (quality fail), INT8 MTP k2/k4/k5,
 INT8 cg4/cg16/cg32, draft-only INT8 LM-head, output-buffer reuse, bonus-token
 argmax fast-path, chunked INT8 top-1 argmax-only verification, compressed/full
 EAGLE3 (device-loss or too slow), DFlash (no-win locally), and simple draft
-top-k reranking.
+top-k reranking. The latest draft-INT4 fast-path screens are also closed:
+keep-scheduled-spec-row routing, graph-off, graph-off/no-async, cg4, and normal
+align/restore all kept the same repeat64 failure (`55/64` expected
+`blue, green, red, yellow`, `9/64` truncated `blue, green, red`) despite
+strict fresh `cached_tokens=0` speed rows at `68-72 tok/s`; see
+`notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`.
 
 ## Current Entry Points
 

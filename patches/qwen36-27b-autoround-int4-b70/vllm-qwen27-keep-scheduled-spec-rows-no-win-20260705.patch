@@ -1,0 +1,37 @@
+diff --git a/vllm/v1/attention/backends/gdn_attn.py b/vllm/v1/attention/backends/gdn_attn.py
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@ -288,17 +288,28 @@ class GDNAttentionMetadataBuilder(AttentionMetadataBuilder[GDNAttentionMetadata]
+                         os.environ.get("VLLM_XPU_GDN_REPLAYSSM_SPEC", "")
+                         .strip()
+                         .lower()
+                         in ("1", "true", "yes", "on")
++                        or os.environ.get(
++                            "VLLM_XPU_GDN_KEEP_SCHEDULED_SPEC_ROWS", "")
++                        .strip()
++                        .lower()
++                        in ("1", "true", "yes", "on")
+                     ):
+-                        # ReplaySSM is a verify-row transaction: a scheduled
+-                        # spec row must stay on the spec path even when the
+-                        # sampler emits only one token (zero accepted drafts
+-                        # plus the target replacement). Demoting
+-                        # accepted_count == 1 rows to the non-spec path lets
+-                        # GDN advance through the rejected verifier tail,
+-                        # corrupting state for arbitrary drafter patterns.
++                        # A scheduled spec row must stay on the spec path even
++                        # when the sampler emits only one token (zero accepted
++                        # drafts plus the target replacement). Demoting
++                        # accepted_count == 1 rows to the non-spec path lets
++                        # GDN advance through the rejected verifier tail,
++                        # corrupting state for arbitrary drafter patterns.
++                        # ReplaySSM needs this for its verify-row transaction;
++                        # the explicit KEEP flag lets the normal cheaper
++                        # sequence-spec state publication path use the same
++                        # routing without enabling ReplaySSM rings/replay.
+                         spec_sequence_masks = spec_sequence_masks_cpu.to(
+                             query_start_loc.device, non_blocking=True)
+                     else:
+                         spec_sequence_masks = (
+                             num_accepted_tokens[: spec_sequence_masks_cpu.size(0)] > 1
+                         )

@@ -66,6 +66,20 @@ Fastest quality-gated practical variant:
   at `64.84180902803895 tok/s`, strict fresh gate passed with
   `cached_tokens=0`; support only, not a LocalMaxxing update. This validates
   `experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh`;
+- latest draft-INT4 follow-up:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-gdn-runtime-metadata-and-replayssm.md`
+  and
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`.
+  A runtime GDN metadata patch fixed the graph-bypass device-lost crash
+  (`patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-gdn-runtime-mode-metadata-20260705.patch`),
+  but the fast target-INT8 + draft-INT4 lanes at `70-72 tok/s` still fail
+  repeat64 (`blue, green, red` vs `blue, green, red, yellow`). Follow-up
+  bisections closed the cheap explanations: keep-scheduled-spec-row routing
+  still failed, graph-off still failed, graph-off/no-async still failed, and
+  normal align/restore still failed. ReplaySSM+align is quality-clean at
+  `61-62 tok/s`, below the current `65.276 tok/s` record. No LocalMaxxing
+  submission; next credible work is reducing ReplaySSM/full-accept
+  state-transaction overhead, not promoting the invalid fast rows;
 - continuation bookmark:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It preserves active source snapshots, records that no cheap env-only

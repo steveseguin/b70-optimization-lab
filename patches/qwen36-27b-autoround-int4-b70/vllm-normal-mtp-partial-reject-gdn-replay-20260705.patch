@@ -1,0 +1,257 @@
+diff --git a/vllm/v1/core/sched/async_scheduler.py b/vllm/v1/core/sched/async_scheduler.py
+index 0b3958dbc..d0b1ddc94 100644
+--- a/vllm/v1/core/sched/async_scheduler.py
++++ b/vllm/v1/core/sched/async_scheduler.py
+@@ -28,11 +28,30 @@ class AsyncScheduler(Scheduler):
+             )
+             # The request will generate a new token plus num_spec_tokens
+             # in this scheduling step.
+-            cur_num_spec_tokens = len(spec_decode_tokens.get(req_id, ()))
++            block_spec_placeholders = (
++                int(getattr(request, "xpu_force_single_steps_remaining", 0)
++                    or 0) > 0
++                or bool(getattr(request, "xpu_skip_next_spec_decode", False))
++                or int(
++                    getattr(
++                        request,
++                        "xpu_normal_partial_reject_recovery_remaining",
++                        0,
++                    )
++                    or 0) > 0
++            )
++            cur_num_spec_tokens = (
++                0 if block_spec_placeholders
++                else len(spec_decode_tokens.get(req_id, ()))
++            )
+             request.num_output_placeholders += 1 + cur_num_spec_tokens
+             # Add placeholders for the new draft/spec tokens.
+             # We will update the actual spec token ids in the worker process.
+-            request.spec_token_ids = self._spec_token_placeholders
++            request.spec_token_ids = (
++                []
++                if block_spec_placeholders
++                else self._spec_token_placeholders
++            )
+ 
+     def _update_request_with_output(
+         self, request: Request, new_token_ids: list[int]
+@@ -50,6 +69,19 @@ class AsyncScheduler(Scheduler):
+ 
+         # Update the number of output placeholders.
+         request.num_output_placeholders -= len(new_token_ids)
++        recovery_remaining = int(
++            getattr(
++                request,
++                "xpu_normal_partial_reject_recovery_remaining",
++                0,
++            )
++            or 0
++        )
++        if recovery_remaining > 0:
++            request.xpu_normal_partial_reject_recovery_remaining = max(  # type: ignore[attr-defined]
++                0, recovery_remaining - len(new_token_ids))
++            request.num_output_placeholders = max(
++                0, request.num_output_placeholders)
+         assert request.num_output_placeholders >= 0
+ 
+         # Cache the new tokens. Preempted requests should be skipped.
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 124a3b867..08523f529 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -486,6 +486,15 @@ class Scheduler(SchedulerInterface):
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        self.xpu_spec_decode_replay_normal_partial_reject_gdn_state = (
++            os.environ.get(
++                "VLLM_XPU_SPEC_DECODE_REPLAY_NORMAL_PARTIAL_REJECT_GDN_STATE",
++                "",
++            )
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+         self.xpu_spec_decode_restore_draft_full_accept_gdn_state = (
+             os.environ.get(
+                 "VLLM_XPU_SPEC_DECODE_RESTORE_DRAFT_FULL_ACCEPT_GDN_STATE",
+@@ -1846,6 +1855,7 @@ class Scheduler(SchedulerInterface):
+                 replay_suppressed_replacement_accepted = False
+                 replay_row_after_token_id = None
+                 stateful_replay_row_after_token = False
++                replay_normal_partial_reject_state = False
+                 suppress_bonus_for_req = req_id in xpu_suppressed_bonus_req_ids
+                 suppress_replacement_for_req = (
+                     req_id in xpu_suppressed_replacement_req_ids)
+@@ -1946,6 +1956,26 @@ class Scheduler(SchedulerInterface):
+                         stateful_replay_row_after_token = (
+                             self
+                             .xpu_spec_decode_replay_row_stateful_recovery)
++                if (
++                    not self.xpu_spec_decode_draft_only
++                    and self
++                    .xpu_spec_decode_replay_normal_partial_reject_gdn_state
++                    and self
++                    .xpu_spec_decode_restore_draft_partial_reject_gdn_state
++                    and num_draft_tokens
++                    and num_rejected > 0
++                    and num_accepted > 0
++                    and not recompute_suppressed_replacement_row
++                    and not replay_suppressed_replacement_accepted
++                    and replay_row_after_token_id is None
++                ):
++                    # Normal MTP verifier rows can leave Qwen3.6 GDN state
++                    # beyond the accepted-prefix boundary after a partial
++                    # reject. The worker restores the pre-spec snapshot; drop
++                    # the packed-row visible output and replay the accepted
++                    # prefix plus replacement as ordinary one-token decode.
++                    emitted_token_ids = []
++                    replay_normal_partial_reject_state = True
+                 spec_trace_data = {
+                     "req_id": req_id,
+                     "scheduled_spec_token_ids": scheduled_spec_token_ids,
+@@ -1981,12 +2011,16 @@ class Scheduler(SchedulerInterface):
+                     "replay_row_after_token_id": replay_row_after_token_id,
+                     "stateful_replay_row_after_token":
+                     stateful_replay_row_after_token,
++                    "replay_normal_partial_reject_state":
++                    replay_normal_partial_reject_state,
+                     "draft_only_commit_full_accept_state":
+                     self.xpu_spec_decode_draft_only_commit_full_accept_state,
+                     "draft_only_full_accept_placeholder":
+                     self.xpu_spec_decode_draft_only_full_accept_placeholder,
+                     "restore_draft_partial_reject_gdn_state":
+                     self.xpu_spec_decode_restore_draft_partial_reject_gdn_state,
++                    "replay_normal_partial_reject_gdn_state":
++                    self.xpu_spec_decode_replay_normal_partial_reject_gdn_state,
+                     "restore_draft_full_accept_gdn_state":
+                     self.xpu_spec_decode_restore_draft_full_accept_gdn_state,
+                     "draft_full_accept_force_single_extra_steps":
+@@ -2037,6 +2071,12 @@ class Scheduler(SchedulerInterface):
+                     # Same replay policy as above, but selected by an emitted
+                     # token ID rather than the replacement-suppression mask.
+                     num_uncommitted_tokens = num_tokens_scheduled
++                elif replay_normal_partial_reject_state:
++                    # The worker restored the pre-spec state and this packed
++                    # row emitted no visible tokens. Roll back the whole row so
++                    # ordinary decode can rebuild the accepted prefix plus
++                    # replacement from the canonical boundary.
++                    num_uncommitted_tokens = num_tokens_scheduled
+                 elif rollback_suppressed_replacement_tail:
+                     # Keep accepted draft tokens visible, but replay the next
+                     # target token from the accepted prefix. The scheduled row
+@@ -2223,6 +2263,12 @@ class Scheduler(SchedulerInterface):
+                             request.num_output_placeholders
+                             - num_uncommitted_tokens,
+                         )
++                    elif replay_normal_partial_reject_state:
++                        request.num_output_placeholders = max(
++                            0,
++                            request.num_output_placeholders
++                            - num_uncommitted_tokens,
++                        )
+                     else:
+                         request.num_output_placeholders -= num_uncommitted_tokens
+                 if stateful_replay_row_after_token:
+@@ -2240,6 +2286,27 @@ class Scheduler(SchedulerInterface):
+                         request.num_computed_tokens,
+                         max(0, request.num_tokens - 1),
+                     )
++                if replay_normal_partial_reject_state:
++                    # No token from this packed row is visible, and the worker
++                    # has restored the recurrent state to the pre-spec
++                    # boundary. Also reset scheduler-side speculative
++                    # placeholders to that same visible boundary; merely
++                    # subtracting the scheduled row can leave num_computed and
++                    # placeholders ahead by the stale draft span.
++                    request.spec_token_ids = []
++                    if self.__class__.__name__ == "AsyncScheduler":
++                        # Async scheduling needs one placeholder to request
++                        # the first forced replay token. The async scheduling
++                        # hook will keep the placeholder pipeline moving while
++                        # xpu_force_single_steps_remaining is non-zero.
++                        request.num_output_placeholders = 1
++                    else:
++                        request.num_output_placeholders = 0
++                    request.xpu_recovery_output_placeholders_remaining = 0  # type: ignore[attr-defined]
++                    request.num_computed_tokens = min(
++                        request.num_computed_tokens,
++                        request.num_tokens,
++                    )
+                 if (
+                     self.xpu_spec_decode_draft_only
+                     and num_rejected > 0
+@@ -2278,6 +2345,31 @@ class Scheduler(SchedulerInterface):
+                         # overrun and can stall the request after the first
+                         # rejected draft.
+                         needs_spec_recovery_preempt = True
++                elif replay_normal_partial_reject_state:
++                    request.xpu_skip_next_spec_decode = True  # type: ignore[attr-defined]
++                    replay_steps = max(
++                        1,
++                        num_accepted
++                        + self.xpu_spec_decode_draft_reject_force_single_steps,
++                    )
++                    request.xpu_normal_partial_reject_recovery_remaining = (  # type: ignore[attr-defined]
++                        max(
++                            int(
++                                getattr(
++                                    request,
++                                    "xpu_normal_partial_reject_recovery_remaining",
++                                    0,
++                                )
++                                or 0),
++                            replay_steps,
++                        )
++                    )
++                    request.xpu_force_single_steps_remaining = max(  # type: ignore[attr-defined]
++                        int(
++                            getattr(request,
++                                    "xpu_force_single_steps_remaining", 0)
++                            or 0),
++                        replay_steps)
+                 elif (
+                     self.xpu_spec_decode_draft_only
+                     and self.xpu_spec_decode_restore_draft_full_accept_gdn_state
+@@ -2816,6 +2908,12 @@ class Scheduler(SchedulerInterface):
+             "xpu_disable_spec_decode_for_request": bool(
+                 getattr(request,
+                         "xpu_disable_spec_decode_for_request", False)),
++            "xpu_normal_partial_reject_recovery_remaining": int(
++                getattr(
++                    request,
++                    "xpu_normal_partial_reject_recovery_remaining",
++                    0,
++                ) or 0),
+             "xpu_draft_only_full_accept_placeholders_remaining": int(
+                 getattr(
+                     request,
+@@ -2946,9 +3044,11 @@ class Scheduler(SchedulerInterface):
+         replay_suppressed_replacement_accepted: bool,
+         replay_row_after_token_id: int | None,
+         stateful_replay_row_after_token: bool,
++        replay_normal_partial_reject_state: bool,
+         draft_only_commit_full_accept_state: bool,
+         draft_only_full_accept_placeholder: bool,
+         restore_draft_partial_reject_gdn_state: bool,
++        replay_normal_partial_reject_gdn_state: bool,
+         restore_draft_full_accept_gdn_state: bool,
+         draft_full_accept_force_single_extra_steps: int,
+         draft_reject_force_single_steps: int,
+@@ -3008,12 +3108,16 @@ class Scheduler(SchedulerInterface):
+             "replay_row_after_token_id": replay_row_after_token_id,
+             "stateful_replay_row_after_token":
+             stateful_replay_row_after_token,
++            "replay_normal_partial_reject_state":
++            replay_normal_partial_reject_state,
+             "draft_only_commit_full_accept_state":
+             draft_only_commit_full_accept_state,
+             "draft_only_full_accept_placeholder":
+             draft_only_full_accept_placeholder,
+             "restore_draft_partial_reject_gdn_state":
+             restore_draft_partial_reject_gdn_state,
++            "replay_normal_partial_reject_gdn_state":
++            replay_normal_partial_reject_gdn_state,
+             "restore_draft_full_accept_gdn_state":
+             restore_draft_full_accept_gdn_state,
+             "draft_full_accept_force_single_extra_steps":

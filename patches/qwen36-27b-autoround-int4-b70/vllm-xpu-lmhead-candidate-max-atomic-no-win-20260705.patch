@@ -1,0 +1,911 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9340c77..aabe772 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -536,6 +536,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/lora/lora_shrink.cpp"
+       "csrc/xpu/lora/lora_expand.cpp"
+       "csrc/xpu/quantization/int8_quant.cpp"
++      "csrc/xpu/lm_head_top1.cpp"
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+       "csrc/xpu/sycl/multimodal_rope.cpp"
+@@ -578,13 +579,13 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+     SOURCES
+     ${VLLM_EXT_XPU_SRC}
+     COMPILE_FLAGS
+-    ${VLLM_GPU_COMPILE_FLAGS}
++    ${VLLM_GPU_COMPILE_FLAGS};${VLLM_CUTLASS_FLAGS}
+     LINK_FLAGS
+     ${VLLM_GPU_LINK_FLAGS}
+     ARCHITECTURES
+     ${VLLM_GPU_ARCHES}
+     INCLUDE_DIRECTORIES
+-    ${VLLM_XPU_INCLUDE_DIR}
++    ${VLLM_XPU_INCLUDE_DIR};${SYCL_TLA_INCLUDE_DIRS}
+     LIBRARIES
+     ${GROUPED_GEMM_LIB_NAME};${GDN_ATTN_LIB_NAME};${MQA_LOGITS_LIB_NAME}
+     USE_SABI
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 293bf35..673e985 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -68,6 +68,34 @@ torch::Tensor int8_gemm_w8a8_out(
+     torch::Tensor& output,
+     const std::optional<torch::Tensor>& bias);
+ 
++std::tuple<torch::Tensor, torch::Tensor> int8_lm_head_top1_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    std::optional<c10::ScalarType> out_dtype,
++    int64_t org_vocab_size);
++
++std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
++int8_lm_head_candidate_max_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& candidate_ids,
++    std::optional<c10::ScalarType> out_dtype,
++    int64_t org_vocab_size);
++
++std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
++int8_lm_head_candidate_max_atomic_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& candidate_ids,
++    std::optional<c10::ScalarType> out_dtype,
++    int64_t org_vocab_size);
++
+ std::tuple<torch::Tensor, torch::Tensor> per_token_quant_int8_xpu(
+     const torch::Tensor& x);
+ 
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index ae07b01..f62ce5f 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -47,6 +47,31 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "Tensor! output, Tensor? bias) -> Tensor");
+   xpu_ops.impl("int8_gemm_w8a8_out", torch::kXPU, &int8_gemm_w8a8_out);
+ 
++  xpu_ops.def(
++      "int8_lm_head_top1_w8a8(Tensor A, Tensor A_scale, Tensor B, "
++      "Tensor B_scale, ScalarType? out_dtype, int org_vocab_size) -> "
++      "(Tensor, Tensor)");
++  xpu_ops.impl(
++      "int8_lm_head_top1_w8a8", torch::kXPU, &int8_lm_head_top1_w8a8);
++
++  xpu_ops.def(
++      "int8_lm_head_candidate_max_w8a8(Tensor A, Tensor A_scale, Tensor B, "
++      "Tensor B_scale, Tensor candidate_ids, ScalarType? out_dtype, "
++      "int org_vocab_size) -> (Tensor, Tensor, Tensor, Tensor)");
++  xpu_ops.impl(
++      "int8_lm_head_candidate_max_w8a8",
++      torch::kXPU,
++      &int8_lm_head_candidate_max_w8a8);
++
++  xpu_ops.def(
++      "int8_lm_head_candidate_max_atomic_w8a8(Tensor A, Tensor A_scale, "
++      "Tensor B, Tensor B_scale, Tensor candidate_ids, ScalarType? out_dtype, "
++      "int org_vocab_size) -> (Tensor, Tensor, Tensor, Tensor)");
++  xpu_ops.impl(
++      "int8_lm_head_candidate_max_atomic_w8a8",
++      torch::kXPU,
++      &int8_lm_head_candidate_max_atomic_w8a8);
++
+   xpu_ops.def("per_token_quant_int8_xpu(Tensor x) -> (Tensor, Tensor)");
+   xpu_ops.impl("per_token_quant_int8_xpu", torch::kXPU, &per_token_quant_int8_xpu);
+ 
+diff --git a/csrc/xpu/lm_head_top1.cpp b/csrc/xpu/lm_head_top1.cpp
+new file mode 100644
+index 0000000..3080ab6
+--- /dev/null
++++ b/csrc/xpu/lm_head_top1.cpp
+@@ -0,0 +1,802 @@
++#include <cstdint>
++#include <limits>
++#include <tuple>
++
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include "csrc/utils.h"
++#include "xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp"
++#include "xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp"
++
++namespace {
++
++template <typename ElementD, class Policy>
++class Qwen27LmHeadTop1TileKernel;
++
++template <typename ElementD, class Policy>
++class Qwen27LmHeadTop1AtomicTileKernel;
++
++template <typename ElementD>
++class Qwen27LmHeadTop1ReduceKernel;
++
++template <typename ElementD>
++class Qwen27LmHeadTop1DecodeKernel;
++
++template <typename T>
++inline float host_to_float_dtype(T value) {
++  return static_cast<float>(value);
++}
++
++template <typename ElementD>
++inline ElementD* output_ptr(torch::Tensor& tensor) {
++  return reinterpret_cast<ElementD*>(tensor.data_ptr());
++}
++
++inline uint32_t ordered_float_bits(float value) {
++  const uint32_t bits = sycl::bit_cast<uint32_t>(value);
++  return (bits & 0x80000000u) ? ~bits : (bits ^ 0x80000000u);
++}
++
++inline float ordered_bits_to_float(uint32_t ordered) {
++  const uint32_t bits =
++      (ordered & 0x80000000u) ? (ordered ^ 0x80000000u) : ~ordered;
++  return sycl::bit_cast<float>(bits);
++}
++
++inline uint64_t pack_top1_key(float value, int32_t token_id) {
++  const uint32_t ordered = ordered_float_bits(value);
++  const uint32_t tie_break = 0xffffffffu - static_cast<uint32_t>(token_id);
++  return (static_cast<uint64_t>(ordered) << 32) |
++      static_cast<uint64_t>(tie_break);
++}
++
++inline int32_t unpack_top1_token_id(uint64_t key) {
++  return static_cast<int32_t>(0xffffffffu - static_cast<uint32_t>(key));
++}
++
++inline float unpack_top1_value(uint64_t key) {
++  return ordered_bits_to_float(static_cast<uint32_t>(key >> 32));
++}
++
++template <typename ElementD>
++void launch_top1_reduce(
++    sycl::queue& queue,
++    const float* partial_vals,
++    const int32_t* partial_ids,
++    const int64_t* candidate_ids,
++    int64_t* top_ids,
++    float* top_vals,
++    bool* candidate_is_top,
++    int rows,
++    int n_tiles) {
++  constexpr int kBlockSize = 256;
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(rows * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_vals(local, cgh);
++    sycl::local_accessor<int32_t, 1> local_ids(local, cgh);
++    cgh.parallel_for<Qwen27LmHeadTop1ReduceKernel<ElementD>>(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int row = item.get_group(0);
++              const int lid = item.get_local_id(0);
++              const int lrange = item.get_local_range(0);
++
++              float best_val = -std::numeric_limits<float>::infinity();
++              int32_t best_id = 0;
++              for (int tile = lid; tile < n_tiles; tile += lrange) {
++                const int offset = row * n_tiles + tile;
++                const float val = partial_vals[offset];
++                const int32_t id = partial_ids[offset];
++                if (val > best_val || (val == best_val && id < best_id)) {
++                  best_val = val;
++                  best_id = id;
++                }
++              }
++
++              local_vals[lid] = best_val;
++              local_ids[lid] = best_id;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = lrange / 2; stride > 0; stride >>= 1) {
++                if (lid < stride) {
++                  const float other_val = local_vals[lid + stride];
++                  const int32_t other_id = local_ids[lid + stride];
++                  if (other_val > local_vals[lid] ||
++                      (other_val == local_vals[lid] &&
++                       other_id < local_ids[lid])) {
++                    local_vals[lid] = other_val;
++                    local_ids[lid] = other_id;
++                  }
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              if (lid == 0) {
++                top_vals[row] = local_vals[0];
++                top_ids[row] = static_cast<int64_t>(local_ids[0]);
++                if (candidate_is_top != nullptr) {
++                  candidate_is_top[row] =
++                      candidate_ids[row] == static_cast<int64_t>(local_ids[0]);
++                }
++              }
++            });
++  });
++}
++
++template <typename ElementD, class Policy>
++void launch_top1_tiles(
++    sycl::queue& queue,
++    const int8_t* activations,
++    const float* activation_scales,
++    const int8_t* weights,
++    const void* weight_scales,
++    const int64_t* candidate_ids,
++    bool weight_scales_bf16,
++    float* partial_vals,
++    int32_t* partial_ids,
++    uint64_t* top_keys,
++    float* candidate_vals,
++    int rows,
++    int gemm_n,
++    int org_vocab_size,
++    int gemm_k,
++    int n_tiles) {
++  using namespace cute;
++  using namespace MoE;
++
++  auto op = XE_DPAS_TT<8, int32_t, int8_t>{};
++  using WGTile = typename Policy::WGTile;
++  using SGLayout = typename Policy::SGLayout;
++  using MMA = typename TiledMMAHelper<
++      MMA_Atom<decltype(op)>,
++      Layout<WGTile>,
++      SGLayout>::TiledMMA;
++  auto mma = MMA{};
++  auto max_threads_per_workgroup = size(mma);
++
++  const int wg_tile_m = get<0>(mma.tile_mnk());
++  const int wg_tile_n = get<1>(mma.tile_mnk());
++  const int m_tiles = (rows + wg_tile_m - 1) / wg_tile_m;
++  TORCH_CHECK(
++      n_tiles == (gemm_n + wg_tile_n - 1) / wg_tile_n,
++      "internal top1 tile count mismatch");
++
++  sycl::range<3> local(1, 1, max_threads_per_workgroup);
++  sycl::range<3> global(m_tiles, n_tiles, 1);
++
++  namespace syclex = sycl::ext::oneapi::experimental;
++  namespace intelex = sycl::ext::intel::experimental;
++  syclex::properties kernel_props{
++      syclex::sub_group_size<16>, intelex::grf_size<256>};
++
++  using GmemTiledCopyA = typename Policy::GmemTiledCopyA;
++  using GmemTiledCopyB = typename Policy::GmemTiledCopyB;
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::range<1> local_mem(
++        static_cast<size_t>(max_threads_per_workgroup * wg_tile_m));
++    sycl::local_accessor<float, 1> local_vals(local_mem, cgh);
++    sycl::local_accessor<int32_t, 1> local_ids(local_mem, cgh);
++    cgh.parallel_for<Qwen27LmHeadTop1TileKernel<ElementD, Policy>>(
++        sycl::nd_range<3>{global * local, local},
++        kernel_props,
++        [=](sycl::nd_item<3> item) {
++          using namespace cute;
++          using namespace MoE;
++
++          const int m_tile = item.get_group(0);
++          const int wg_n = item.get_group(1);
++          const int local_id = item.get_local_linear_id();
++
++          auto A_tensor = make_moe_tensor<int8_t, 'R'>(
++              const_cast<int8_t*>(activations),
++              rows,
++              gemm_k);
++          auto B_tensor = make_moe_tensor<int8_t, 'C'>(
++              const_cast<int8_t*>(weights), gemm_n, gemm_k);
++          auto C_tensor = make_moe_tensor<ElementD, 'R'>(
++              static_cast<ElementD*>(nullptr),
++              rows,
++              gemm_n);
++
++          Tensor cA = make_identity_tensor(A_tensor.shape());
++          Tensor cB = make_identity_tensor(B_tensor.shape());
++          Tensor cC = make_identity_tensor(C_tensor.shape());
++          auto wg_tile = mma.tile_mnk();
++          Tensor gA =
++              local_tile(cA, select<0, 2>(wg_tile), make_coord(m_tile, _));
++          Tensor gB =
++              local_tile(cB, select<1, 2>(wg_tile), make_coord(wg_n, _));
++          Tensor gC =
++              local_tile(cC, wg_tile, make_coord(m_tile, wg_n, 0), Step<_1, _1, X>{});
++
++          auto copy_a = get_block_2d_copy_A<GmemTiledCopyA>(mma, A_tensor);
++          auto copy_b = get_block_2d_copy_B<GmemTiledCopyB>(mma, B_tensor);
++          auto thr_mma = mma.get_slice(local_id);
++          auto thr_copy_a = copy_a.get_slice(local_id);
++          auto thr_copy_b = copy_b.get_slice(local_id);
++
++          auto tCrA = thr_mma.partition_sg_fragment_A(gA(_, _, 0));
++          auto tCrB = thr_mma.partition_sg_fragment_B(gB(_, _, 0));
++          auto tArA = thr_copy_a.partition_sg_fragment_D(gA(_, _, 0));
++          auto tBrB = thr_copy_b.partition_sg_fragment_D(gB(_, _, 0));
++          Tensor tAgA = thr_copy_a.partition_S(gA);
++          Tensor tBgB = thr_copy_b.partition_S(gB);
++          auto tCrC = thr_mma.partition_sg_fragment_C(gC);
++
++          auto prefetch_a = make_block_2d_prefetch(copy_a);
++          auto prefetch_b = make_block_2d_prefetch(copy_b);
++          auto thr_prefetch_A = prefetch_a.get_slice(local_id);
++          auto thr_prefetch_B = prefetch_b.get_slice(local_id);
++          auto pAgA = thr_prefetch_A.partition_S(gA);
++          auto pBgB = thr_prefetch_B.partition_S(gB);
++
++          constexpr int prefetch_dist = 3;
++          constexpr int barrier_scope = 2;
++          const int k_tile_count = ceil_div(shape<1>(A_tensor), get<2>(wg_tile));
++          int k_tile_prefetch = 0;
++          clear(tCrC);
++
++          CUTE_UNROLL
++          for (; k_tile_prefetch < prefetch_dist; k_tile_prefetch++) {
++            prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++            prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++          }
++
++          for (int k_tile = 0; k_tile < k_tile_count;
++               k_tile++, k_tile_prefetch++) {
++            barrier_arrive(barrier_scope);
++            copy(copy_a, tAgA(_, _, _, k_tile), tArA);
++            copy(copy_b, tBgB(_, _, _, k_tile), tBrB);
++            if (k_tile_prefetch < k_tile_count) {
++              prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++              prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++            }
++            reorder(tArA, tCrA);
++            reorder(tBrB, tCrB);
++            cute::gemm(mma, tCrA, tCrB, tCrC);
++            barrier_wait(barrier_scope);
++          }
++
++          static constexpr auto ATOM_M =
++              get<1>(typename MMA::ThrLayoutVMNK{}.shape());
++          static constexpr auto ATOM_N =
++              get<2>(typename MMA::ThrLayoutVMNK{}.shape());
++          const int sg_local_m_coord = cutlass::get_sub_group_id() / ATOM_N;
++          const int sg_local_n_coord = cutlass::get_sub_group_id() % ATOM_N;
++          static constexpr auto tile_m = get<0>(wg_tile);
++          static constexpr int kTileM = decltype(tile_m)::value;
++          static constexpr auto tile_n = get<1>(wg_tile);
++          static constexpr auto SG_M = tile_m / ATOM_M;
++          static constexpr auto SG_N = tile_n / ATOM_N;
++          const int sg_local_id = cutlass::get_sub_group_local_id();
++          static constexpr int sg_local_range = 16;
++          const int m_sg_start = sg_local_m_coord * SG_M;
++          const int n_tile_start = wg_n * tile_n;
++          const int n_sg_start = sg_local_n_coord * SG_N;
++          const int row_start = m_tile * kTileM;
++
++          float thread_best_vals[kTileM];
++          int32_t thread_best_ids[kTileM];
++          CUTLASS_PRAGMA_UNROLL
++          for (int tm = 0; tm < kTileM; ++tm) {
++            thread_best_vals[tm] = -std::numeric_limits<float>::infinity();
++            thread_best_ids[tm] = 0;
++          }
++
++          CUTLASS_PRAGMA_UNROLL
++          for (int sn = 0; sn < SG_N / sg_local_range; ++sn) {
++            const int sg_local_n = sn * sg_local_range + sg_local_id;
++            const int col = n_tile_start + n_sg_start + sg_local_n;
++            float b_scale = 1.0f;
++            if (col < gemm_n) {
++              if (weight_scales_bf16) {
++                const auto* scales_bf16 =
++                    static_cast<const sycl::ext::oneapi::bfloat16*>(weight_scales);
++                b_scale = static_cast<float>(scales_bf16[col]);
++              } else {
++                const auto* scales_f32 = static_cast<const float*>(weight_scales);
++                b_scale = scales_f32[col];
++              }
++            }
++            CUTLASS_PRAGMA_UNROLL
++            for (int sm = 0; sm < SG_M; ++sm) {
++              const int idx = sn * SG_M + sm;
++              const int row_in_tile = m_sg_start + sm;
++              const int global_row = row_start + row_in_tile;
++              if (row_in_tile < kTileM && global_row < rows &&
++                  col < org_vocab_size) {
++                const float a_scale =
++                    activation_scales != nullptr ? activation_scales[global_row] : 1.0f;
++                const float raw =
++                    static_cast<float>(tCrC(idx)) * a_scale * b_scale;
++                const float rounded =
++                    static_cast<float>(static_cast<ElementD>(raw));
++                if (candidate_vals != nullptr && candidate_ids != nullptr &&
++                    candidate_ids[global_row] == static_cast<int64_t>(col)) {
++                  candidate_vals[global_row] = rounded;
++                }
++                if (rounded > thread_best_vals[row_in_tile] ||
++                    (rounded == thread_best_vals[row_in_tile] &&
++                     col < thread_best_ids[row_in_tile])) {
++                  thread_best_vals[row_in_tile] = rounded;
++                  thread_best_ids[row_in_tile] = col;
++                }
++              }
++            }
++          }
++
++          CUTLASS_PRAGMA_UNROLL
++          for (int tm = 0; tm < kTileM; ++tm) {
++            const int local_offset =
++                tm * item.get_local_range(2) + local_id;
++            local_vals[local_offset] = thread_best_vals[tm];
++            local_ids[local_offset] = thread_best_ids[tm];
++          }
++          item.barrier(sycl::access::fence_space::local_space);
++
++          CUTLASS_PRAGMA_UNROLL
++          for (int tm = 0; tm < kTileM; ++tm) {
++            const int local_base = tm * item.get_local_range(2);
++            for (int stride = item.get_local_range(2) / 2; stride > 0;
++                 stride >>= 1) {
++              if (local_id < stride) {
++                const float other_val = local_vals[local_base + local_id + stride];
++                const int32_t other_id = local_ids[local_base + local_id + stride];
++                if (other_val > local_vals[local_base + local_id] ||
++                    (other_val == local_vals[local_base + local_id] &&
++                     other_id < local_ids[local_base + local_id])) {
++                  local_vals[local_base + local_id] = other_val;
++                  local_ids[local_base + local_id] = other_id;
++                }
++              }
++              item.barrier(sycl::access::fence_space::local_space);
++            }
++
++            const int global_row = row_start + tm;
++            if (local_id == 0 && global_row < rows) {
++              if (top_keys != nullptr) {
++                const uint64_t key =
++                    pack_top1_key(local_vals[local_base], local_ids[local_base]);
++                auto atomic_key = sycl::atomic_ref<
++                    uint64_t,
++                    sycl::memory_order::relaxed,
++                    sycl::memory_scope::device,
++                    sycl::access::address_space::global_space>(
++                    top_keys[global_row]);
++                uint64_t old_key = atomic_key.load();
++                while (key > old_key &&
++                       !atomic_key.compare_exchange_weak(old_key, key)) {
++                }
++              } else {
++                const int partial_offset = global_row * n_tiles + wg_n;
++                partial_vals[partial_offset] = local_vals[local_base];
++                partial_ids[partial_offset] = local_ids[local_base];
++              }
++            }
++            item.barrier(sycl::access::fence_space::local_space);
++          }
++        });
++  });
++}
++
++template <typename ElementD>
++void launch_top1_decode(
++    sycl::queue& queue,
++    const uint64_t* top_keys,
++    const int64_t* candidate_ids,
++    int64_t* top_ids,
++    float* top_vals,
++    bool* candidate_is_top,
++    int rows) {
++  sycl::range<1> local(64);
++  sycl::range<1> global(((rows + 63) / 64) * 64);
++
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for<Qwen27LmHeadTop1DecodeKernel<ElementD>>(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(16)]] {
++          const int row = item.get_global_id(0);
++          if (row >= rows) {
++            return;
++          }
++          const uint64_t key = top_keys[row];
++          const int32_t token_id = unpack_top1_token_id(key);
++          top_ids[row] = static_cast<int64_t>(token_id);
++          top_vals[row] = unpack_top1_value(key);
++          if (candidate_is_top != nullptr) {
++            candidate_is_top[row] =
++                candidate_ids[row] == static_cast<int64_t>(token_id);
++          }
++        });
++  });
++}
++
++template <typename ElementD>
++std::tuple<torch::Tensor, torch::Tensor> int8_lm_head_top1_w8a8_dispatch(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    int64_t org_vocab_size) {
++  const at::DeviceGuard device_guard(A.device());
++  auto& queue = vllm::xpu::vllmGetQueue(A.device().index());
++
++  const int rows = static_cast<int>(A.size(0));
++  const int gemm_k = static_cast<int>(A.size(1));
++  const int gemm_n = static_cast<int>(B.size(1));
++  TORCH_CHECK(org_vocab_size > 0, "org_vocab_size must be positive");
++  TORCH_CHECK(
++      org_vocab_size <= gemm_n,
++      "org_vocab_size must be <= B.size(1), got ",
++      org_vocab_size,
++      " > ",
++      gemm_n);
++
++  using Policy = MoE::w8a16_policy_m_8;
++  auto op = cute::XE_DPAS_TT<8, int32_t, int8_t>{};
++  using MMA = typename cute::TiledMMAHelper<
++      cute::MMA_Atom<decltype(op)>,
++      cute::Layout<typename Policy::WGTile>,
++      typename Policy::SGLayout>::TiledMMA;
++  auto mma = MMA{};
++  const int wg_tile_n = cute::get<1>(mma.tile_mnk());
++  const int n_tiles = (gemm_n + wg_tile_n - 1) / wg_tile_n;
++
++  auto partial_vals =
++      torch::empty({rows, n_tiles}, A.options().dtype(torch::kFloat32));
++  auto partial_ids =
++      torch::empty({rows, n_tiles}, A.options().dtype(torch::kInt32));
++  auto top_vals = torch::empty({rows}, A.options().dtype(torch::kFloat32));
++  auto top_ids = torch::empty({rows}, A.options().dtype(torch::kInt64));
++
++  const bool scales_bf16 = B_scale.scalar_type() == torch::kBFloat16;
++  launch_top1_tiles<ElementD, Policy>(
++      queue,
++      reinterpret_cast<const int8_t*>(A.data_ptr()),
++      reinterpret_cast<const float*>(A_scale.data_ptr()),
++      reinterpret_cast<const int8_t*>(B.data_ptr()),
++      B_scale.data_ptr(),
++      nullptr,
++      scales_bf16,
++      reinterpret_cast<float*>(partial_vals.data_ptr()),
++      reinterpret_cast<int32_t*>(partial_ids.data_ptr()),
++      nullptr,
++      nullptr,
++      rows,
++      gemm_n,
++      static_cast<int>(org_vocab_size),
++      gemm_k,
++      n_tiles);
++  launch_top1_reduce<ElementD>(
++      queue,
++      reinterpret_cast<const float*>(partial_vals.data_ptr()),
++      reinterpret_cast<const int32_t*>(partial_ids.data_ptr()),
++      nullptr,
++      reinterpret_cast<int64_t*>(top_ids.data_ptr()),
++      reinterpret_cast<float*>(top_vals.data_ptr()),
++      nullptr,
++      rows,
++      n_tiles);
++  return {top_ids, top_vals};
++}
++
++template <typename ElementD>
++std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
++int8_lm_head_candidate_max_w8a8_dispatch(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& candidate_ids,
++    int64_t org_vocab_size) {
++  const at::DeviceGuard device_guard(A.device());
++  auto& queue = vllm::xpu::vllmGetQueue(A.device().index());
++
++  const int rows = static_cast<int>(A.size(0));
++  const int gemm_k = static_cast<int>(A.size(1));
++  const int gemm_n = static_cast<int>(B.size(1));
++  TORCH_CHECK(org_vocab_size > 0, "org_vocab_size must be positive");
++  TORCH_CHECK(
++      org_vocab_size <= gemm_n,
++      "org_vocab_size must be <= B.size(1), got ",
++      org_vocab_size,
++      " > ",
++      gemm_n);
++
++  using Policy = MoE::w8a16_policy_m_8;
++  auto op = cute::XE_DPAS_TT<8, int32_t, int8_t>{};
++  using MMA = typename cute::TiledMMAHelper<
++      cute::MMA_Atom<decltype(op)>,
++      cute::Layout<typename Policy::WGTile>,
++      typename Policy::SGLayout>::TiledMMA;
++  auto mma = MMA{};
++  const int wg_tile_n = cute::get<1>(mma.tile_mnk());
++  const int n_tiles = (gemm_n + wg_tile_n - 1) / wg_tile_n;
++
++  auto partial_vals =
++      torch::empty({rows, n_tiles}, A.options().dtype(torch::kFloat32));
++  auto partial_ids =
++      torch::empty({rows, n_tiles}, A.options().dtype(torch::kInt32));
++  auto top_vals = torch::empty({rows}, A.options().dtype(torch::kFloat32));
++  auto top_ids = torch::empty({rows}, A.options().dtype(torch::kInt64));
++  auto candidate_vals =
++      torch::empty({rows}, A.options().dtype(torch::kFloat32));
++  auto candidate_is_top =
++      torch::empty({rows}, A.options().dtype(torch::kBool));
++
++  const bool scales_bf16 = B_scale.scalar_type() == torch::kBFloat16;
++  launch_top1_tiles<ElementD, Policy>(
++      queue,
++      reinterpret_cast<const int8_t*>(A.data_ptr()),
++      reinterpret_cast<const float*>(A_scale.data_ptr()),
++      reinterpret_cast<const int8_t*>(B.data_ptr()),
++      B_scale.data_ptr(),
++      reinterpret_cast<const int64_t*>(candidate_ids.data_ptr()),
++      scales_bf16,
++      reinterpret_cast<float*>(partial_vals.data_ptr()),
++      reinterpret_cast<int32_t*>(partial_ids.data_ptr()),
++      nullptr,
++      reinterpret_cast<float*>(candidate_vals.data_ptr()),
++      rows,
++      gemm_n,
++      static_cast<int>(org_vocab_size),
++      gemm_k,
++      n_tiles);
++  launch_top1_reduce<ElementD>(
++      queue,
++      reinterpret_cast<const float*>(partial_vals.data_ptr()),
++      reinterpret_cast<const int32_t*>(partial_ids.data_ptr()),
++      reinterpret_cast<const int64_t*>(candidate_ids.data_ptr()),
++      reinterpret_cast<int64_t*>(top_ids.data_ptr()),
++      reinterpret_cast<float*>(top_vals.data_ptr()),
++      reinterpret_cast<bool*>(candidate_is_top.data_ptr()),
++      rows,
++      n_tiles);
++  return {top_ids, top_vals, candidate_vals, candidate_is_top};
++}
++
++template <typename ElementD>
++std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
++int8_lm_head_candidate_max_atomic_w8a8_dispatch(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& candidate_ids,
++    int64_t org_vocab_size) {
++  const at::DeviceGuard device_guard(A.device());
++  auto& queue = vllm::xpu::vllmGetQueue(A.device().index());
++
++  const int rows = static_cast<int>(A.size(0));
++  const int gemm_k = static_cast<int>(A.size(1));
++  const int gemm_n = static_cast<int>(B.size(1));
++  TORCH_CHECK(org_vocab_size > 0, "org_vocab_size must be positive");
++  TORCH_CHECK(
++      org_vocab_size <= gemm_n,
++      "org_vocab_size must be <= B.size(1), got ",
++      org_vocab_size,
++      " > ",
++      gemm_n);
++
++  using Policy = MoE::w8a16_policy_m_8;
++  auto op = cute::XE_DPAS_TT<8, int32_t, int8_t>{};
++  using MMA = typename cute::TiledMMAHelper<
++      cute::MMA_Atom<decltype(op)>,
++      cute::Layout<typename Policy::WGTile>,
++      typename Policy::SGLayout>::TiledMMA;
++  auto mma = MMA{};
++  const int wg_tile_n = cute::get<1>(mma.tile_mnk());
++  const int n_tiles = (gemm_n + wg_tile_n - 1) / wg_tile_n;
++
++  auto top_keys = torch::zeros({rows}, A.options().dtype(torch::kInt64));
++  auto top_vals = torch::empty({rows}, A.options().dtype(torch::kFloat32));
++  auto top_ids = torch::empty({rows}, A.options().dtype(torch::kInt64));
++  auto candidate_vals =
++      torch::empty({rows}, A.options().dtype(torch::kFloat32));
++  auto candidate_is_top =
++      torch::empty({rows}, A.options().dtype(torch::kBool));
++
++  const bool scales_bf16 = B_scale.scalar_type() == torch::kBFloat16;
++  launch_top1_tiles<ElementD, Policy>(
++      queue,
++      reinterpret_cast<const int8_t*>(A.data_ptr()),
++      reinterpret_cast<const float*>(A_scale.data_ptr()),
++      reinterpret_cast<const int8_t*>(B.data_ptr()),
++      B_scale.data_ptr(),
++      reinterpret_cast<const int64_t*>(candidate_ids.data_ptr()),
++      scales_bf16,
++      nullptr,
++      nullptr,
++      reinterpret_cast<uint64_t*>(top_keys.data_ptr<int64_t>()),
++      reinterpret_cast<float*>(candidate_vals.data_ptr()),
++      rows,
++      gemm_n,
++      static_cast<int>(org_vocab_size),
++      gemm_k,
++      n_tiles);
++  launch_top1_decode<ElementD>(
++      queue,
++      reinterpret_cast<const uint64_t*>(top_keys.data_ptr<int64_t>()),
++      reinterpret_cast<const int64_t*>(candidate_ids.data_ptr()),
++      reinterpret_cast<int64_t*>(top_ids.data_ptr()),
++      reinterpret_cast<float*>(top_vals.data_ptr()),
++      reinterpret_cast<bool*>(candidate_is_top.data_ptr()),
++      rows);
++  return {top_ids, top_vals, candidate_vals, candidate_is_top};
++}
++
++}  // namespace
++
++std::tuple<torch::Tensor, torch::Tensor> int8_lm_head_top1_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    std::optional<c10::ScalarType> out_dtype,
++    int64_t org_vocab_size) {
++  TORCH_CHECK(A.is_xpu(), "A must be XPU");
++  TORCH_CHECK(B.is_xpu(), "B must be XPU");
++  TORCH_CHECK(A.is_contiguous(), "A must be contiguous");
++  TORCH_CHECK(A_scale.is_contiguous(), "A_scale must be contiguous");
++  TORCH_CHECK(B.is_contiguous(), "B must be contiguous");
++  TORCH_CHECK(B_scale.is_contiguous(), "B_scale must be contiguous");
++  TORCH_CHECK(A.scalar_type() == torch::kInt8, "A must be int8");
++  TORCH_CHECK(B.scalar_type() == torch::kInt8, "B must be int8");
++  TORCH_CHECK(A.dim() == 2, "A must be [rows, K]");
++  TORCH_CHECK(B.dim() == 2, "B must be [K, N]");
++  TORCH_CHECK(A.size(1) == B.size(0), "A.size(1) must match B.size(0)");
++  TORCH_CHECK(A.size(0) > 0, "A must have at least one row");
++  TORCH_CHECK(A.size(0) <= 8, "prototype supports rows <= 8");
++  TORCH_CHECK(B.size(1) % 32 == 0, "B.size(1) must be divisible by 32");
++  TORCH_CHECK(
++      A_scale.scalar_type() == torch::kFloat32,
++      "A_scale must be float32");
++  TORCH_CHECK(
++      A_scale.numel() == A.size(0),
++      "A_scale must have one scale per row");
++  TORCH_CHECK(
++      B_scale.scalar_type() == torch::kFloat32 ||
++          B_scale.scalar_type() == torch::kBFloat16,
++      "B_scale must be float32 or bfloat16");
++  TORCH_CHECK(
++      B_scale.numel() == B.size(1),
++      "B_scale must have one scale per output channel");
++
++  const auto dtype = out_dtype.value_or(torch::kBFloat16);
++  if (dtype == torch::kBFloat16) {
++    return int8_lm_head_top1_w8a8_dispatch<sycl::ext::oneapi::bfloat16>(
++        A, A_scale, B, B_scale, org_vocab_size);
++  }
++  if (dtype == torch::kFloat16) {
++    return int8_lm_head_top1_w8a8_dispatch<sycl::half>(
++        A, A_scale, B, B_scale, org_vocab_size);
++  }
++  TORCH_CHECK(false, "out_dtype must be bfloat16 or float16");
++}
++
++std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
++int8_lm_head_candidate_max_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& candidate_ids,
++    std::optional<c10::ScalarType> out_dtype,
++    int64_t org_vocab_size) {
++  TORCH_CHECK(A.is_xpu(), "A must be XPU");
++  TORCH_CHECK(B.is_xpu(), "B must be XPU");
++  TORCH_CHECK(candidate_ids.is_xpu(), "candidate_ids must be XPU");
++  TORCH_CHECK(A.is_contiguous(), "A must be contiguous");
++  TORCH_CHECK(A_scale.is_contiguous(), "A_scale must be contiguous");
++  TORCH_CHECK(B.is_contiguous(), "B must be contiguous");
++  TORCH_CHECK(B_scale.is_contiguous(), "B_scale must be contiguous");
++  TORCH_CHECK(candidate_ids.is_contiguous(), "candidate_ids must be contiguous");
++  TORCH_CHECK(A.scalar_type() == torch::kInt8, "A must be int8");
++  TORCH_CHECK(B.scalar_type() == torch::kInt8, "B must be int8");
++  TORCH_CHECK(
++      candidate_ids.scalar_type() == torch::kInt64,
++      "candidate_ids must be int64");
++  TORCH_CHECK(A.dim() == 2, "A must be [rows, K]");
++  TORCH_CHECK(B.dim() == 2, "B must be [K, N]");
++  TORCH_CHECK(candidate_ids.dim() == 1, "candidate_ids must be [rows]");
++  TORCH_CHECK(A.size(1) == B.size(0), "A.size(1) must match B.size(0)");
++  TORCH_CHECK(candidate_ids.size(0) == A.size(0), "candidate_ids rows mismatch");
++  TORCH_CHECK(A.size(0) > 0, "A must have at least one row");
++  TORCH_CHECK(A.size(0) <= 8, "prototype supports rows <= 8");
++  TORCH_CHECK(B.size(1) % 32 == 0, "B.size(1) must be divisible by 32");
++  TORCH_CHECK(
++      A_scale.scalar_type() == torch::kFloat32,
++      "A_scale must be float32");
++  TORCH_CHECK(
++      A_scale.numel() == A.size(0),
++      "A_scale must have one scale per row");
++  TORCH_CHECK(
++      B_scale.scalar_type() == torch::kFloat32 ||
++          B_scale.scalar_type() == torch::kBFloat16,
++      "B_scale must be float32 or bfloat16");
++  TORCH_CHECK(
++      B_scale.numel() == B.size(1),
++      "B_scale must have one scale per output channel");
++  TORCH_CHECK(org_vocab_size > 0, "org_vocab_size must be positive");
++  TORCH_CHECK(
++      org_vocab_size <= B.size(1),
++      "org_vocab_size must be <= B.size(1)");
++
++  const auto dtype = out_dtype.value_or(torch::kBFloat16);
++  if (dtype == torch::kBFloat16) {
++    return int8_lm_head_candidate_max_w8a8_dispatch<
++        sycl::ext::oneapi::bfloat16>(
++        A, A_scale, B, B_scale, candidate_ids, org_vocab_size);
++  }
++  if (dtype == torch::kFloat16) {
++    return int8_lm_head_candidate_max_w8a8_dispatch<sycl::half>(
++        A, A_scale, B, B_scale, candidate_ids, org_vocab_size);
++  }
++  TORCH_CHECK(false, "out_dtype must be bfloat16 or float16");
++}
++
++std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
++int8_lm_head_candidate_max_atomic_w8a8(
++    const torch::Tensor& A,
++    const torch::Tensor& A_scale,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& candidate_ids,
++    std::optional<c10::ScalarType> out_dtype,
++    int64_t org_vocab_size) {
++  TORCH_CHECK(A.is_xpu(), "A must be XPU");
++  TORCH_CHECK(B.is_xpu(), "B must be XPU");
++  TORCH_CHECK(candidate_ids.is_xpu(), "candidate_ids must be XPU");
++  TORCH_CHECK(A.is_contiguous(), "A must be contiguous");
++  TORCH_CHECK(A_scale.is_contiguous(), "A_scale must be contiguous");
++  TORCH_CHECK(B.is_contiguous(), "B must be contiguous");
++  TORCH_CHECK(B_scale.is_contiguous(), "B_scale must be contiguous");
++  TORCH_CHECK(candidate_ids.is_contiguous(), "candidate_ids must be contiguous");
++  TORCH_CHECK(A.scalar_type() == torch::kInt8, "A must be int8");
++  TORCH_CHECK(B.scalar_type() == torch::kInt8, "B must be int8");
++  TORCH_CHECK(
++      candidate_ids.scalar_type() == torch::kInt64,
++      "candidate_ids must be int64");
++  TORCH_CHECK(A.dim() == 2, "A must be [rows, K]");
++  TORCH_CHECK(B.dim() == 2, "B must be [K, N]");
++  TORCH_CHECK(candidate_ids.dim() == 1, "candidate_ids must be [rows]");
++  TORCH_CHECK(A.size(1) == B.size(0), "A.size(1) must match B.size(0)");
++  TORCH_CHECK(candidate_ids.size(0) == A.size(0), "candidate_ids rows mismatch");
++  TORCH_CHECK(A.size(0) > 0, "A must have at least one row");
++  TORCH_CHECK(A.size(0) <= 8, "prototype supports rows <= 8");
++  TORCH_CHECK(B.size(1) % 32 == 0, "B.size(1) must be divisible by 32");
++  TORCH_CHECK(
++      A_scale.scalar_type() == torch::kFloat32,
++      "A_scale must be float32");
++  TORCH_CHECK(
++      A_scale.numel() == A.size(0),
++      "A_scale must have one scale per row");
++  TORCH_CHECK(
++      B_scale.scalar_type() == torch::kFloat32 ||
++          B_scale.scalar_type() == torch::kBFloat16,
++      "B_scale must be float32 or bfloat16");
++  TORCH_CHECK(
++      B_scale.numel() == B.size(1),
++      "B_scale must have one scale per output channel");
++  TORCH_CHECK(org_vocab_size > 0, "org_vocab_size must be positive");
++  TORCH_CHECK(
++      org_vocab_size <= B.size(1),
++      "org_vocab_size must be <= B.size(1)");
++
++  const auto dtype = out_dtype.value_or(torch::kBFloat16);
++  if (dtype == torch::kBFloat16) {
++    return int8_lm_head_candidate_max_atomic_w8a8_dispatch<
++        sycl::ext::oneapi::bfloat16>(
++        A, A_scale, B, B_scale, candidate_ids, org_vocab_size);
++  }
++  if (dtype == torch::kFloat16) {
++    return int8_lm_head_candidate_max_atomic_w8a8_dispatch<sycl::half>(
++        A, A_scale, B, B_scale, candidate_ids, org_vocab_size);
++  }
++  TORCH_CHECK(false, "out_dtype must be bfloat16 or float16");
++}

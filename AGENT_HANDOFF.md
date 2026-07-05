@@ -59,6 +59,20 @@ Active target as of the latest switch request:
   and 1K needle quality passed. LocalMaxxing approved it as
   `cmr5iu3gk00bfq901nidgcana`. Start from
   `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
+- Latest draft-INT4 follow-up is closed diagnostic/no-win. The runtime GDN
+  metadata patch remains useful because it fixes graph-bypass device-lost
+  crashes, but fast target-INT8 + draft-INT4 rows at `68-72 tok/s` fail repeat
+  quality (`55/64` `blue, green, red, yellow`, `9/64` `blue, green, red`).
+  Keeping scheduled spec rows on the spec path, graph-off, graph-off/no-async,
+  cg4, and normal align/restore all failed the same way. ReplaySSM+align is
+  the only clean draft-INT4 family seen so far, but it is `61-62 tok/s`, below
+  the `65.276` record. Do not submit these rows; next credible work is
+  reducing ReplaySSM/full-accept GDN state-transaction overhead or designing a
+  cheaper exact GDN tape/replay. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-gdn-runtime-metadata-and-replayssm.md`,
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`,
+  and
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`.
 - The same-quality-class `cyankiwi/Qwen3.6-27B-AWQ-INT4` checkpoint was
   screened after download. It loads in vLLM/XPU with
   `--quantization compressed-tensors` and passes the strict fresh/cached-zero

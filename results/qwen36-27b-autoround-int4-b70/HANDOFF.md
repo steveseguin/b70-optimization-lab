@@ -94,6 +94,19 @@ Current fastest quality-gated variant:
 - previous webhie INT8-LM-head packet:
   `webhie-int8-lmhead-20260703.json`, LocalMaxxing
   `cmr576apv0079q901i6dvsh0l`.
+- latest draft-INT4 closure:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-gdn-runtime-metadata-and-replayssm.md`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`.
+  Runtime GDN metadata is a real stability fix for graph-bypass experiments,
+  but the fast target-INT8 + draft-INT4 rows at `68-72 tok/s` are invalid:
+  repeat64 consistently splits `55/64` correct
+  `blue, green, red, yellow` and `9/64` truncated `blue, green, red`.
+  Keeping scheduled spec rows on the spec path, graph-off, graph-off/no-async,
+  cg4, and normal align/restore did not fix it. ReplaySSM+align remains the
+  only clean draft-INT4 family, but at `61-62 tok/s` it is below the current
+  record. No LocalMaxxing submission; preserve the no-win patch artifact at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed

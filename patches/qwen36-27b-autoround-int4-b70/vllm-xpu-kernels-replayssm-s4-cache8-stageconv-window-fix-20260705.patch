@@ -1,0 +1,121 @@
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 4303f45..ab6c802 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -2526,7 +2526,11 @@ struct gdn_replayssm_stage_conv_kernel {
+       const int dim,
+       const int rel_pos) const {
+     if (rel_pos < 0) {
+-      const int state_pos = state_len + rel_pos;
++      // ReplaySSM keeps the active causal-conv history in the first
++      // Width-1 columns of conv_state.  Do not read from the physical tail:
++      // Qwen GDN conv_state can have an extra column, while commit/fallback
++      // both treat columns [0, Width-2] as the window to shift.
++      const int state_pos = (Width - 1) + rel_pos;
+       if (!valid_slot || state_pos < 0 || state_pos >= state_len) {
+         return T(0);
+       }
+@@ -5827,6 +5831,9 @@ void gdn_replayssm_spec_cache_dispatch(
+     case 4:
+       REPLAY_CACHE_CASE(4);
+       break;
++    case 8:
++      REPLAY_CACHE_CASE(8);
++      break;
+     default:
+       TORCH_CHECK(false, "Unsupported ReplaySSM cache length: ", max_cache_len);
+   }
+@@ -5868,6 +5875,8 @@ void gdn_replayssm_spec_len_dispatch(
+     REPLAY_SPEC_CASE(1);
+   } else if (max_spec_len <= 2) {
+     REPLAY_SPEC_CASE(2);
++  } else if (max_spec_len <= 4) {
++    REPLAY_SPEC_CASE(4);
+   } else {
+     TORCH_CHECK(false, "Unsupported ReplaySSM max_spec_len: ", max_spec_len);
+   }
+@@ -6040,7 +6049,10 @@ struct gdn_replayssm_commit_pending_kernel {
+       const int rows,
+       const int conv_dim,
+       const int conv_base_len) {
+-    const int elems_per_row = std::max(1, conv_dim * conv_base_len);
++    // One work item per (row, d) so each item snapshots all conv_base_len
++    // columns locally before writing — avoids the cross-work-item read/write
++    // race in the old per-element layout when accepted > 0.
++    const int elems_per_row = std::max(1, conv_dim);
+     const int total = rows * elems_per_row;
+     sycl::range<1> local(group_size);
+     sycl::range<1> global((total + group_size - 1) / group_size);
+@@ -6077,7 +6089,10 @@ struct gdn_replayssm_commit_pending_kernel {
+   }
+ 
+   void operator()(sycl::nd_item<1> item) const {
+-    const int elems_per_row = sycl::max(1, conv_dim * conv_base_len);
++    // elems_per_row is now conv_dim (not conv_dim*conv_base_len):
++    // each work item owns one d-dimension element and handles all
++    // conv_base_len columns internally via a snapshot to avoid races.
++    const int elems_per_row = sycl::max(1, conv_dim);
+     const int linear = item.get_global_linear_id();
+     const int total = rows * elems_per_row;
+     if (linear >= total) {
+@@ -6085,32 +6100,40 @@ struct gdn_replayssm_commit_pending_kernel {
+     }
+ 
+     const int row = linear / elems_per_row;
+-    const int elem = linear - row * elems_per_row;
++    const int d = linear - row * elems_per_row;  // conv_dim index
+     const int slot = slot_for_row(row);
+     const int accepted = accepted_for_row(row, slot);
+ 
+-    if (conv_base_len > 0 && elem < conv_dim * conv_base_len) {
+-      const int state_pos = elem / conv_dim;
+-      const int conv_elem = elem - state_pos * conv_dim;
+-      const int source_pos = accepted + state_pos;
+-      T value = T(0);
+-      if (source_pos < conv_base_len) {
+-        value = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                           static_cast<int64_t>(conv_elem) * conv_stride_1 +
+-                           static_cast<int64_t>(source_pos) * conv_stride_2];
+-      } else {
+-        const int pending_pos = source_pos - conv_base_len;
+-        value =
+-            conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
+-                         static_cast<int64_t>(pending_pos) * pending_stride_1 +
+-                         static_cast<int64_t>(conv_elem) * pending_stride_2];
++    // Two-phase conv window shift for this (slot, d) lane.
++    // Phase 1: read all source columns into a stack snapshot.
++    // Phase 2: write from snapshot — no race because all reads are done.
++    // conv_base_len <= 4 for Qwen GDN; tmp is stack-safe in SYCL device code.
++    if (conv_base_len > 0 && d < conv_dim) {
++      T tmp[4] = {};
++      const int n = sycl::min(conv_base_len, 4);
++      for (int s = 0; s < n; ++s) {
++        const int source_pos = accepted + s;
++        if (source_pos < conv_base_len) {
++          tmp[s] = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                              static_cast<int64_t>(d) * conv_stride_1 +
++                              static_cast<int64_t>(source_pos) * conv_stride_2];
++        } else {
++          const int pending_pos = source_pos - conv_base_len;
++          tmp[s] =
++              conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
++                           static_cast<int64_t>(pending_pos) * pending_stride_1 +
++                           static_cast<int64_t>(d) * pending_stride_2];
++        }
++      }
++      for (int s = 0; s < n; ++s) {
++        conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                   static_cast<int64_t>(d) * conv_stride_1 +
++                   static_cast<int64_t>(s) * conv_stride_2] = tmp[s];
+       }
+-      conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                 static_cast<int64_t>(conv_elem) * conv_stride_1 +
+-                 static_cast<int64_t>(state_pos) * conv_stride_2] = value;
+     }
+ 
+-    if (elem == 0) {
++    // Cursor update: run once per row on work item d==0.
++    if (d == 0) {
+       const int old_wp = write_pos[slot];
+       const int old_base = cache_base[slot];
+       const bool old_flush = is_flush[slot] != 0;

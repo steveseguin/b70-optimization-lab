@@ -1,0 +1,133 @@
+diff --git a/scripts/bench-int8-lm-head-candidate-max.py b/scripts/bench-int8-lm-head-candidate-max.py
+index 8ef870be9..6d9a9ac20 100755
+--- a/scripts/bench-int8-lm-head-candidate-max.py
++++ b/scripts/bench-int8-lm-head-candidate-max.py
+@@ -66,6 +66,8 @@ def main() -> None:
+     if not hasattr(torch.ops._xpu_C, "int8_lm_head_candidate_max_w8a8"):
+         raise RuntimeError(
+             "loaded _xpu_C does not expose int8_lm_head_candidate_max_w8a8")
++    has_atomic = hasattr(
++        torch.ops._xpu_C, "int8_lm_head_candidate_max_atomic_w8a8")
+ 
+     dtype = {"bf16": torch.bfloat16, "fp16": torch.float16}[args.dtype]
+     scale_dtype = torch.bfloat16 if args.scale_dtype == "bf16" else torch.float32
+@@ -134,15 +136,38 @@ def main() -> None:
+                 args.valid_vocab_size,
+             )
+ 
++        def candidate_max_atomic():
++            x_q, x_scale = quantize_hidden()
++            return torch.ops._xpu_C.int8_lm_head_candidate_max_atomic_w8a8(
++                x_q,
++                x_scale,
++                weight_t,
++                weight_scales,
++                candidate_ids,
++                dtype,
++                args.valid_vocab_size,
++            )
++
+         for _ in range(args.warmup):
+             baseline()
+             candidate_max()
++            if has_atomic:
++                candidate_max_atomic()
+         torch.xpu.synchronize()
+ 
+         base_ids, base_vals, base_candidate_vals, base_candidate_is_top = baseline()
+         cand_ids, cand_vals, cand_candidate_vals, cand_candidate_is_top = (
+             candidate_max()
+         )
++        if has_atomic:
++            (
++                atomic_ids,
++                atomic_vals,
++                atomic_candidate_vals,
++                atomic_candidate_is_top,
++            ) = candidate_max_atomic()
++        else:
++            atomic_ids = atomic_vals = atomic_candidate_vals = atomic_candidate_is_top = None
+         torch.xpu.synchronize()
+ 
+         id_mismatches = int((base_ids != cand_ids).sum().item())
+@@ -158,31 +183,72 @@ def main() -> None:
+             .cpu()
+             .item()
+         )
++        if has_atomic:
++            atomic_id_mismatches = int((base_ids != atomic_ids).sum().item())
++            atomic_candidate_flag_mismatches = int(
++                (base_candidate_is_top != atomic_candidate_is_top).sum().item()
++            )
++            atomic_max_top_abs_diff = float(
++                torch.max(torch.abs(base_vals - atomic_vals)).detach().cpu().item()
++            )
++            atomic_max_candidate_abs_diff = float(
++                torch.max(torch.abs(base_candidate_vals - atomic_candidate_vals))
++                .detach()
++                .cpu()
++                .item()
++            )
++        else:
++            atomic_id_mismatches = None
++            atomic_candidate_flag_mismatches = None
++            atomic_max_top_abs_diff = None
++            atomic_max_candidate_abs_diff = None
+ 
+         baseline_times = time_op(baseline, args.repeats)
+         candidate_times = time_op(candidate_max, args.repeats)
++        atomic_times = (
++            time_op(candidate_max_atomic, args.repeats) if has_atomic else []
++        )
+         baseline_med = median_ms(baseline_times)
+         candidate_med = median_ms(candidate_times)
++        atomic_med = median_ms(atomic_times) if atomic_times else None
+ 
+         results.append(
+             {
+                 "rows": rows,
+                 "baseline_ms_median": baseline_med,
+                 "candidate_max_ms_median": candidate_med,
++                "candidate_max_atomic_ms_median": atomic_med,
+                 "speedup": baseline_med / candidate_med if candidate_med else None,
++                "atomic_speedup": (
++                    baseline_med / atomic_med if atomic_med else None
++                ),
+                 "top_id_mismatches_vs_baseline": id_mismatches,
+                 "candidate_is_top_mismatches": candidate_flag_mismatches,
+                 "max_top_value_abs_diff": max_top_abs_diff,
+                 "max_candidate_value_abs_diff": max_candidate_abs_diff,
++                "atomic_top_id_mismatches_vs_baseline": atomic_id_mismatches,
++                "atomic_candidate_is_top_mismatches": (
++                    atomic_candidate_flag_mismatches
++                ),
++                "atomic_max_top_value_abs_diff": atomic_max_top_abs_diff,
++                "atomic_max_candidate_value_abs_diff": (
++                    atomic_max_candidate_abs_diff
++                ),
+                 "candidate_ids": candidate_ids.detach().cpu().tolist(),
+                 "baseline_ids": base_ids.detach().cpu().tolist(),
+                 "candidate_max_ids": cand_ids.detach().cpu().tolist(),
++                "candidate_max_atomic_ids": (
++                    atomic_ids.detach().cpu().tolist() if has_atomic else None
++                ),
+                 "baseline_ms_samples": [
+                     round(sample * 1000.0, 6) for sample in baseline_times
+                 ],
+                 "candidate_max_ms_samples": [
+                     round(sample * 1000.0, 6) for sample in candidate_times
+                 ],
++                "candidate_max_atomic_ms_samples": [
++                    round(sample * 1000.0, 6) for sample in atomic_times
++                ],
+             }
+         )
+ 
+@@ -197,6 +263,7 @@ def main() -> None:
+         "scale_dtype": args.scale_dtype,
+         "warmup": args.warmup,
+         "repeats": args.repeats,
++        "has_atomic_candidate_max": has_atomic,
+         "results": results,
+         "promotion_rule": (
+             "Do not integrate unless exact and clearly faster than dense logits, "

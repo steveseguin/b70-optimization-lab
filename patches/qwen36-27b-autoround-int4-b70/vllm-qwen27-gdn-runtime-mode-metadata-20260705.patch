@@ -1,0 +1,129 @@
+diff --git a/vllm/v1/attention/backends/gdn_attn.py b/vllm/v1/attention/backends/gdn_attn.py
+--- a/vllm/v1/attention/backends/gdn_attn.py
++++ b/vllm/v1/attention/backends/gdn_attn.py
+@@
+     def build(
+         self,
+         common_prefix_len: int,
+         common_attn_metadata: CommonAttentionMetadata,
+         num_accepted_tokens: torch.Tensor | None = None,
+         num_decode_draft_tokens_cpu: torch.Tensor | None = None,
+         fast_build: bool = False,
+         is_cudagraph_capture: bool = False,
++        xpu_cudagraph_runtime_mode: CUDAGraphMode | None = None,
+     ) -> GDNAttentionMetadata:
+@@
+-        use_static_spec_graph_metadata = (
+-            self.use_full_cuda_graph
+-            or self.compilation_config.cudagraph_mode == CUDAGraphMode.PIECEWISE
+-        )
++        use_static_spec_graph_metadata = (
++            self.use_full_cuda_graph
++            or (
++                xpu_cudagraph_runtime_mode is None
++                and self.compilation_config.cudagraph_mode
++                == CUDAGraphMode.PIECEWISE
++            )
++            or xpu_cudagraph_runtime_mode == CUDAGraphMode.PIECEWISE
++        )
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+     def _build_attention_metadata(
+         self,
+         num_tokens: int,
+         num_reqs: int,
+         max_query_len: int,
+         num_tokens_padded: int | None = None,
+         num_reqs_padded: int | None = None,
+         ubatch_slices: UBatchSlices | None = None,
+         logits_indices: torch.Tensor | None = None,
+         use_spec_decode: bool = False,
+         for_cudagraph_capture: bool = False,
+         is_graph_capturing: bool = False,
++        xpu_cudagraph_runtime_mode: CUDAGraphMode | None = None,
+         num_scheduled_tokens: dict[str, int] | None = None,
+         cascade_attn_prefix_lens: list[list[int]] | None = None,
+         slot_mappings: dict[int, torch.Tensor] | None = None,
+@@
+             if (self.speculative_config is not None) and isinstance(
+                 builder, (Mamba2AttentionMetadataBuilder, GDNAttentionMetadataBuilder)
+             ):
+                 assert ubid is None, "UBatching not supported with GDN yet"
+                 extra_attn_metadata_args = dict(
+                     num_accepted_tokens=self.num_accepted_tokens.gpu[:num_reqs_padded],
+                     num_decode_draft_tokens_cpu=self.num_decode_draft_tokens.cpu[
+                         :num_reqs_padded
+                     ],
+                 )
++                if isinstance(builder, GDNAttentionMetadataBuilder):
++                    extra_attn_metadata_args["xpu_cudagraph_runtime_mode"] = (
++                        xpu_cudagraph_runtime_mode
++                    )
+@@
+                     use_spec_decode=use_spec_decode,
+                     num_scheduled_tokens=scheduler_output.num_scheduled_tokens,
+                     cascade_attn_prefix_lens=cascade_attn_prefix_lens,
+                     slot_mappings=slot_mappings_by_group,
++                    xpu_cudagraph_runtime_mode=cudagraph_mode,
+                 )
+             )
+@@
+                     for_cudagraph_capture=(
+                         is_graph_capturing or spec_decode_capture_shape
+                     ),
+                     is_graph_capturing=is_graph_capturing,
++                    xpu_cudagraph_runtime_mode=cudagraph_runtime_mode,
+                     slot_mappings=slot_mappings_by_group,
+                     use_spec_decode=self.speculative_config is not None,
+                 )
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+             self.input_ids.gpu[:num_common_tokens].copy_(
+                 self.input_batch.token_ids_cpu[:num_common_tokens],
+                 non_blocking=True,
+             )
+             if self.enable_prompt_embeds:
+                 self.is_token_ids.gpu[:num_common_tokens] = True
+-            return
+-        # Upload the index tensors asynchronously so the scatter can be non-blocking.
+-        sampled_tokens_index_tensor = torch.tensor(
+-            sample_flattened_indices, dtype=torch.int64, pin_memory=self.pin_memory
+-        ).to(self.device, non_blocking=True)
+-        prev_common_req_indices_tensor = torch.tensor(
+-            prev_indices, dtype=torch.int64, pin_memory=self.pin_memory
+-        ).to(self.device, non_blocking=True)
+-        self.input_ids.gpu.scatter_(
+-            dim=0,
+-            index=sampled_tokens_index_tensor,
+-            src=self.input_batch.prev_sampled_token_ids[
+-                prev_common_req_indices_tensor, 0
+-            ],
+-        )
++            if not spec_flattened_indices:
++                return
++        else:
++            # Upload the index tensors asynchronously so the scatter can be
++            # non-blocking.
++            sampled_tokens_index_tensor = torch.tensor(
++                sample_flattened_indices,
++                dtype=torch.int64,
++                pin_memory=self.pin_memory,
++            ).to(self.device, non_blocking=True)
++            prev_common_req_indices_tensor = torch.tensor(
++                prev_indices, dtype=torch.int64, pin_memory=self.pin_memory
++            ).to(self.device, non_blocking=True)
++            self.input_ids.gpu.scatter_(
++                dim=0,
++                index=sampled_tokens_index_tensor,
++                src=self.input_batch.prev_sampled_token_ids[
++                    prev_common_req_indices_tensor, 0
++                ],
++            )
+ 
+         # Scatter the draft tokens after the sampled tokens are scattered.
+         if self._draft_token_ids is None or not spec_flattened_indices:
+             return
