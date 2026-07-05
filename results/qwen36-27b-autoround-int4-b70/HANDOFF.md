@@ -282,9 +282,11 @@ Current next-execution plan:
   A Python-level lazy verifier would likely lose because rows `1-4` dense
   oneDNN W8A8 LM-head timings are nearly flat; it would turn one efficient
   rows-4 GEMM into several rows-1 launches. The next credible Qwen27 work is a
-  real fused/top-ID LM-head primitive, a native row-adaptive verifier, or deeper
-  DFlash multi-KV-group draft metadata support. Treat other Qwen27 config work
-  as likely roulette.
+  real fused/top-ID LM-head primitive, a native row-adaptive verifier, or a
+  materially stronger held-out drafter. DFlash multi-KV support is useful
+  upstream plumbing, but the later feasibility closure shows this draft is not
+  accepting enough tokens on the fixed realistic suite to justify record
+  chasing. Treat other Qwen27 config work as likely roulette.
 - latest explorer synthesis:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-next-optimization-execution-plan.md`.
   Two independent audits agreed that the next useful implementation is not an
@@ -792,13 +794,19 @@ Continue INT4 optimization without promoting synthetic scores:
   `kv_cache_gid`, one block table, and one slot mapping. Do not remove the
   assertion blindly; see
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`;
-- Hipfire's open-source AMD DFlash stack was audited as the next stronger-drafter
-  lead. Its `185-218 tok/s` Qwen27 rows are code-prompt/RDNA/Hipfire-MQ4
-  results, not valid local headline claims, but the implementation provides a
-  useful blueprint: target-hidden-conditioned block drafter, target-owned
-  LM-head, batched verifier, fixed-buffer hidden ring, and exact GDN tape
-  rollback/replay. The next local step is an acceptance/tau feasibility probe
-  on the fixed realistic suite before any Intel kernel port; see
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-hipfire-dflash-intel-port-audit.md`;
+- Hipfire's open-source AMD DFlash stack was audited and then closed for the
+  current Qwen27 Intel AutoRound record lane. Its `185-218 tok/s` Qwen27 rows
+  are code-prompt/RDNA/Hipfire-MQ4 results, not valid local headline claims.
+  The implementation remains a useful blueprint: target-hidden-conditioned
+  block drafter, target-owned LM-head, batched verifier, fixed-buffer hidden
+  ring, and exact GDN tape rollback/replay. But the local gate failed:
+  default DFlash reached only about `50 tok/s` with mean acceptance length
+  roughly `2.8-3.0`, and true mixed sliding/full DFlash showed only about
+  `1.1-1.2` mean acceptance before device-loss or manual stop. Do not port
+  Hipfire/DFlash to Intel for this lane unless a stronger draft/upstream
+  implementation changes the fixed-suite tau result; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-hipfire-dflash-intel-port-audit.md`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-dflash-feasibility-plan-closure.md`;
 - keep long-context/prompt-processing optimization separate from the short
   decode record.

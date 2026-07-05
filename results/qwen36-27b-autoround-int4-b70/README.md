@@ -335,6 +335,12 @@ Current realistic research interpretation:
   and target hidden-state handling, so keep this as a local Intel AutoRound/XPU
   result rather than a universal DFlash claim. Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-dflash-drafter-no-win.md`.
+  The later Hipfire/DFlash feasibility gate is also closed: the true mixed
+  sliding/full draft architecture initialized with the preserved multi-KV
+  patch, but showed only about `1.1-1.2` mean acceptance before device-loss or
+  manual stop, so an Intel Hipfire/DFlash port is not justified for this lane.
+  Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-dflash-feasibility-plan-closure.md`.
 - variance floor: older same-recipe promoted rows span `53.522-54.861 tok/s`
   (`2.48%` range of mean, stdev `0.612`). A fresh four-GPU reconfirmation after
   the DFlash/EAGLE experiments showed GPUs 1-3 tightly clustered at
@@ -373,7 +379,7 @@ The follow-up source audit in
 narrows that further: small Python-level row/call shortcuts are unlikely to
 win because they still use dense LM-head primitives. Future Qwen27 work should
 start with a real fused/top-ID LM-head primitive, a native row-adaptive verifier,
-or DFlash multi-KV-group draft metadata support, not another config sweep. The
+or a materially stronger target-matched drafter, not another config sweep. The
 latest frontier audit also tested oneDNN Graph `MatMul -> ReduceMax` directly:
 BF16 stayed as two one-op partitions and the tested INT8 graph form was
 rejected, so there is no cheap oneDNN Graph wrapper shortcut to promote. See
@@ -382,6 +388,9 @@ The DFlash mixed-SWA audit is captured in
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`:
 the target runner is multi-KV aware, but the DFlash/EAGLE drafter path assumes
 one KV group, so deleting the assertion would risk invalid draft-cache writes.
+The later mixed-SWA implementation attempt and Hipfire feasibility closure found
+the real mixed DFlash draft was not accepting enough tokens on this fixed suite,
+so do not reopen it for record chasing without a stronger draft.
 Keep synthetic screens for candidate search only, then rerun the Qwen realistic
 suite with `--return-token-ids` and the quality suite before promotion.
 

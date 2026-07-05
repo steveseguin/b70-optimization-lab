@@ -12,13 +12,17 @@ webhie BF16-scale INT8-LM-head record, LocalMaxxing status, variance policy,
 prior no-win source attempts, and the completion gates for the fused
 LM-head/top-1 candidate-max route.
 
-New stronger-drafter lead:
+Closed stronger-drafter lead:
 `notes/2026-07-05-hipfire-dflash-intel-port-audit.md` audits Hipfire's
 open-source Qwen3.6 27B DFlash path. Treat Hipfire's `185-218 tok/s` rows as
-AMD/code-prompt evidence only, not local headline claims. The reusable path is
-to first measure DFlash tau/acceptance on the fixed realistic suite, then only
-if it is strong implement mixed-KV-group DFlash proposer support plus
-graph-safe GDN accepted-prefix replay in vLLM/XPU.
+AMD/code-prompt evidence only, not local headline claims. The follow-up
+closure `notes/2026-07-05-dflash-feasibility-plan-closure.md` implements the
+proposed gate: existing strict local DFlash runs topped out around `50 tok/s`
+with mean acceptance length roughly `2.8-3.0`, and the true mixed sliding/full
+DFlash architecture showed only about `1.1-1.2` mean acceptance before
+device-loss or manual stop. Do not port Hipfire/DFlash to Intel for this
+current AutoRound INT4 B70 record lane unless a stronger draft or upstream
+implementation changes the fixed-suite tau result.
 
 Latest LM-head kernel status:
 `notes/2026-07-04-lmhead-candidate-max-kernel-no-win.md`. The standalone
@@ -351,6 +355,9 @@ strict fresh gate at k=8/10/12, but topped out at `49.994 tok/s` median
 (`cached_tokens=0`) and k=15 crashed before readiness with
 `UR_RESULT_ERROR_DEVICE_LOST`. Evidence:
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-dflash-drafter-no-win.md`.
+The later Hipfire/DFlash feasibility closure also covers the real mixed
+sliding/full architecture and closes the Intel-port gate:
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-dflash-feasibility-plan-closure.md`.
 
 Remaining built-in speculative routes are not promising record paths under the
 fresh-response gates. `ngram`, `ngram_gpu`, and `suffix` are history/pattern

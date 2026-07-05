@@ -2,6 +2,12 @@
 
 Status: **closed as a quick patch; useful as direction for deeper work**.
 
+Supersession: the later feasibility gate in
+`2026-07-05-dflash-feasibility-plan-closure.md` closes DFlash as a Qwen27
+record lane for the current Intel AutoRound target. The mixed-KV plumbing
+remains useful upstream knowledge, but this draft did not accept enough tokens
+on the fixed realistic suite to justify record-chasing work.
+
 Active target:
 
 - `webhie/Qwen3.6-27B-int4-AutoRound`;

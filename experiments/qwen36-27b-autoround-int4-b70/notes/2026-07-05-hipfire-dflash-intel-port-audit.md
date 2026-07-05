@@ -1,5 +1,15 @@
 # 2026-07-05: Hipfire DFlash Audit For Intel B70 Qwen27
 
+Follow-up closure:
+`2026-07-05-dflash-feasibility-plan-closure.md`. Existing strict local DFlash
+artifacts and the mixed-SWA multi-KV attempt already satisfy the proposed
+acceptance/tau gate. The default DFlash path topped out around `50 tok/s` with
+mean acceptance length roughly `2.8-3.0`, while the true mixed sliding/full
+path showed only about `1.1-1.2` mean acceptance before device-loss or manual
+stop. DFlash is therefore closed no-port/no-record for the current Qwen27
+AutoRound INT4 B70 lane unless a stronger draft or upstream implementation
+materially changes the tau result.
+
 ## Goal
 
 The user asked whether Hipfire's open-source Qwen3.6 27B DFlash path, which
