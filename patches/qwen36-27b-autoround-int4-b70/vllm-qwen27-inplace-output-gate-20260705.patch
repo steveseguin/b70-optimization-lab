@@ -1,0 +1,22 @@
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@
+         if self.attn_output_gate:
+             with timed_region("qwen3_next.full_attention.output_gate"):
+-                gate = torch.sigmoid(gate)
+-                attn_output = attn_output * gate
++                if (
++                    os.environ.get(
++                        "VLLM_XPU_QWEN3_NEXT_INPLACE_OUTPUT_GATE", "0"
++                    )
++                    == "1"
++                ):
++                    gate.sigmoid_()
++                    attn_output.mul_(gate)
++                else:
++                    gate = torch.sigmoid(gate)
++                    attn_output = attn_output * gate
+ 
+         with timed_region("qwen3_next.full_attention.o_proj"):
+             output[:], _ = self.o_proj(attn_output)

@@ -133,3 +133,31 @@ Decision:
 - do not revisit empty scratch unless a lower-level trace proves the zero-fill
   is still on the critical path and a kernel-level write-coverage guarantee is
   available.
+
+## Follow-up implementation: full-attention output-gate in-place is a no-win
+
+Patch artifact:
+
+- `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-inplace-output-gate-20260705.patch`
+
+Patch:
+
+- added default-off `VLLM_XPU_QWEN3_NEXT_INPLACE_OUTPUT_GATE=1`;
+- changed `gate = torch.sigmoid(gate); attn_output = attn_output * gate` to
+  `gate.sigmoid_(); attn_output.mul_(gate)` only when the flag is set;
+- live source hunk was reverted after the screen because the result was a
+  no-win.
+
+Result:
+
+| Mode | Summary | Median tok/s | p10 | Mean | Gate |
+| --- | --- | ---: | ---: | ---: | --- |
+| control | `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-outputgate-control-20260705T181209Z-candidate-summary-20260705T181209Z.json` | `64.25056198308314` | `58.241777082177464` | `64.45746668530738` | pass |
+| in-place output gate | `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-outputgate-inplace-20260705T181209Z-candidate-summary-20260705T181209Z.json` | `63.897688728122496` | `59.34183614149787` | `63.67442462586174` | pass |
+
+Decision:
+
+- no quality run, no LocalMaxxing submission;
+- keep the ordinary out-of-place sigmoid/multiply for the current recipe;
+- this is too small and compiler-sensitive to chase further unless a graph
+  trace later shows `qwen3_next.full_attention.output_gate` as a new hotspot.
