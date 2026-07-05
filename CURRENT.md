@@ -91,6 +91,14 @@ Fastest quality-gated practical variant:
   drafter, more accepted tokens per target step, target-forward/kernel
   reduction, or graph-safe exact GDN/spec-state transactions, not more
   wrapper-level LM-head/sampler plumbing;
+- GDN qkvz/ba quant-reuse closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-qkvz-ba-quant-reuse-no-win.md`.
+  A same-window four-GPU strict fresh screen of
+  `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone`, `clone-ba`, and `clone-qkvz`
+  found no credible win over control (`64.40` control vs best `64.82`
+  `clone-qkvz`, inside variance). Do not carry this knob in the promoted
+  recipe or repeat it without a source change that materially alters GDN
+  projection costs;
 - latest EAGLE3 compatibility retest:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and

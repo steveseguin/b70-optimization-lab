@@ -167,6 +167,12 @@ Current next-execution plan:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
   Current measured record-family timing shows the INT8 LM-head/local-argmax path
   is small and target forward plus recurrent MTP draft forward dominates;
+- closed GDN qkvz/ba quant-reuse screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-qkvz-ba-quant-reuse-no-win.md`.
+  A same-window four-GPU strict fresh pass of
+  `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone`, `clone-ba`, and `clone-qkvz`
+  found no credible speed win: control `64.398 tok/s`, best clone-qkvz
+  `64.824 tok/s`, inside variance. Keep the promoted recipe unchanged;
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found
