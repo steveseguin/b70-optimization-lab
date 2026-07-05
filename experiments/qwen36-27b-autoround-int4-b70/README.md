@@ -201,7 +201,13 @@ Next milestone:
     found no credible win over control: control `64.398 tok/s`, best
     `clone-qkvz` `64.824 tok/s`, inside variance. Keep the promoted recipe
     unchanged.
-15. Latest variable-depth source precheck:
+15. Latest target-forward quick screens and backlog:
+    `notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
+    M-RoPE text-only fast path (`65.797` vs control `65.960`) and GDN fallback
+    `prefill` only (`65.655` vs control `65.967`) both passed the strict fresh
+    gate but did not beat controls. Continue with source/kernel work, not more
+    easy env knobs.
+16. Latest variable-depth source precheck:
     `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
     A default-off prototype that actually shortened the MTP proposer loop
     crashed with an XPU indexing assert when it created partial speculative

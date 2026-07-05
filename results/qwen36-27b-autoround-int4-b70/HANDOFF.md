@@ -173,6 +173,12 @@ Current next-execution plan:
   `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone`, `clone-ba`, and `clone-qkvz`
   found no credible speed win: control `64.398 tok/s`, best clone-qkvz
   `64.824 tok/s`, inside variance. Keep the promoted recipe unchanged;
+- closed target-forward quick screens and next backlog:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
+  M-RoPE text-only fast path and GDN fallback `prefill` only both lost
+  slightly to controls under the strict fresh gate. The next credible lane is
+  source/kernel work around GDN output norm, GDN zero-fill scratch, QK-norm/RoPE
+  fusion, or full-attention output-gate fusion;
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found

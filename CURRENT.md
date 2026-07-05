@@ -99,6 +99,13 @@ Fastest quality-gated practical variant:
   `clone-qkvz`, inside variance). Do not carry this knob in the promoted
   recipe or repeat it without a source change that materially alters GDN
   projection costs;
+- target-forward quick-screen closure/backlog:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
+  `VLLM_XPU_MROPE_TEXT_ONLY_FASTPATH=1` and
+  `VLLM_XPU_GDN_NATIVE_FALLBACK=prefill` both passed the strict fresh gate but
+  lost slightly to same-window controls. Next Qwen27 speed work should be real
+  source/kernel work, led by GDN output-norm specialization or safe removal of
+  GDN zero-fill scratch, with unit parity before endpoint claims;
 - latest EAGLE3 compatibility retest:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and
