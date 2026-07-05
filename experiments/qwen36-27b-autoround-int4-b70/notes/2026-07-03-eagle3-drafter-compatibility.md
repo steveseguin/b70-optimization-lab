@@ -2,20 +2,19 @@
 
 ## Why
 
-The current valid Qwen3.6 27B INT4 AutoRound record is the internal
-`qwen3_next_mtp` MTP3 recipe at about `53.522 tok/s` on the strict fresh
-Qwen realistic suite. Timing diagnostics show that the current path is dominated
-by repeated full BF16 LM-head/logits calls:
+The current valid Qwen3.6 27B INT4 AutoRound record was later raised to the
+webhie/BF16-scale runtime INT8-LM-head MTP3 recipe at
+`65.27648650325429 tok/s` on the strict fresh Qwen realistic suite. This note
+started from an older 2026-07-03 hypothesis that repeated BF16 LM-head/logits
+calls dominated the path. That was useful at the time, but the latest
+2026-07-05 timing refresh showed the current record family has already made the
+INT8 LM-head/local-argmax path small; the remaining ceiling is target forward
+plus the recurrent MTP draft forward passes.
 
-- target `gpu_model_runner.compute_logits`: about `4.42 ms` per target step;
-- draft `spec_decode.greedy_sample.compute_logits`: about `4.45 ms` per draft
-  sample;
-- MTP proposer forward itself: about `0.65-0.83 ms`.
-
-Raising accepted tokens per target forward is likely higher value than more
-small sampler/plumbing work. External target-verified drafters are a plausible
-route, provided the result remains fresh-response valid and does not depend on
-warmed continuation history.
+The EAGLE3 question remains valid for a different reason: a materially stronger
+target-matched external drafter could raise accepted tokens per target verifier
+step. It is only useful if it remains fresh-response valid, does not depend on
+warmed continuation history, and is operationally stable in local vLLM/XPU.
 
 ## Candidate
 
@@ -332,3 +331,69 @@ Interpretation: the failure is not specific to the compressed draft vocabulary.
 Both compressed and full EAGLE3 are closed for this local vLLM/XPU + Intel
 AutoRound target until the EAGLE/XPU accepted-token bookkeeping/device-loss
 path is fixed upstream or locally.
+
+## 2026-07-05 corrected-aux-layer retest: still no-win
+
+A later audit found one real compatibility gap in the local vLLM EAGLE3 path:
+Ex0bit stores the intended aux capture layers under nested
+`eagle_config.eagle_aux_hidden_state_layer_ids`, while local vLLM only checked a
+top-level `eagle_aux_hidden_state_layer_ids` field in two places. The intended
+layers are `[1, 31, 60]`; the old path could fall back to the model default
+instead.
+
+Patch artifact:
+
+```text
+patches/qwen36-27b-autoround-int4-b70/vllm-eagle3-nested-aux-layers-compat-20260705.patch
+```
+
+Retest:
+
+```text
+label: qwen27-eagle3-compressed-k3-auxfix-cg8-20260705T170305Z
+run dir: /mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-eagle3-compressed-k3-auxfix-cg8-20260705T170305Z-20260705T170305Z
+smoke: data/qwen36-27b-autoround-int4-b70-baselines/smoke-qwen27-eagle3-compressed-k3-auxfix-cg8-20260705T170305Z-20260705T170305Z.json
+server log: /mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-eagle3-compressed-k3-auxfix-cg8-20260705T170305Z-20260705T170305Z/server.stdout.log
+```
+
+Command shape:
+
+```bash
+LABEL=qwen27-eagle3-compressed-k3-auxfix-cg8-20260705T170305Z \
+GPU_INDEX=1 PORT=19630 RUN_QUALITY=0 \
+QWEN36_27B_ENABLE_MTP=0 \
+QWEN36_27B_ENABLE_XPU_GRAPH=1 \
+MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 MAX_NUM_SEQS=1 \
+COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
+QWEN36_27B_SPECULATIVE_CONFIG='{"method":"eagle3","model":"/mnt/fast-ai/llm-cache/hf/manual/Ex0bit--Qwen3.6-27B-PRISM-EAGLE3/compressed","num_speculative_tokens":3}' \
+bash experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh
+```
+
+Observed:
+
+- server loaded target + compressed drafter and graph-captured successfully;
+- log confirmed the corrected intended layers:
+  `Using auxiliary layers from speculative config: (1, 31, 60)`;
+- smoke passed with `cached_tokens=0`, exact JSON output, elapsed `55.33s`;
+- strict bench did not reach a JSON artifact before manual stop;
+- server metrics reproduced the old bad behavior: acceptance varied wildly and
+  included zero/near-zero intervals, with generation throughput only about
+  `0.4-1.3 tok/s` during the active benchmark request.
+
+Key metric snippets:
+
+```text
+Mean acceptance length: 3.33, Avg Draft acceptance rate: 77.8%
+Mean acceptance length: 1.00, Avg Draft acceptance rate: 0.0%
+Mean acceptance length: 1.25, Avg Draft acceptance rate: 8.3%
+Mean acceptance length: 3.25, Avg Draft acceptance rate: 75.0%
+generation throughput: 0.4-1.3 tok/s while one strict-suite request was active
+```
+
+Decision: the aux-layer fix is mechanically correct and should be kept as a
+compatibility patch artifact, but it does **not** reopen Ex0bit EAGLE3 as a
+near-term Qwen27 record lane. The compressed drafter still has prompt-dependent
+acceptance collapse and operationally unusable endpoint speed on this local
+vLLM/XPU + webhie/Intel AutoRound target. Do not rerun EAGLE3 unless the next
+attempt changes the accepted-token bookkeeping/state path, draft runtime, or
+target/drafter pairing materially.

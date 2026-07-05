@@ -161,10 +161,12 @@ Current next-execution plan:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-phase0-phase1-baseline-and-timing.md`.
   The current record family reproduced at `65.56930784255283 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT, with `cached_tokens=0`
-  on all prompts. Fresh timing confirmed the main remaining waste as
-  LM-head/logits materialization: `2258` LM-head/logits calls over `540`
-  verifier steps (`~4.18` calls/step), with `lm_head_int8.gemm_w8a8` alone
-  costing about `10.61 ms` per verifier step under sync instrumentation;
+  on all prompts. This older timing note was useful for closing LM-head
+  experiments, but it is superseded for next-action purposes by the 2026-07-05
+  timing refresh:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
+  Current measured record-family timing shows the INT8 LM-head/local-argmax path
+  is small and target forward plus recurrent MTP draft forward dominates;
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found
@@ -764,11 +766,13 @@ Continue INT4 optimization without promoting synthetic scores:
   repeat batch; the first repeat fell to `47.045 tok/s`;
 - rerun the realistic Qwen suite with `--return-token-ids` before promoting any
   MTP/speculation or kernel change;
-- prioritize LM-head cost next. The current promoted recipe is no longer
-  hitting the traced promoted row-copy helper, and timing shows full logits /
-  LM-head work dominates. The INT8 LM-head patch is the current fastest
-  quality-gated practical lane; an exact BF16 top-1/candidate-bound kernel is
-  still the cleaner same-quantization research goal;
+- do not prioritize wrapper-level LM-head cost next. The current promoted recipe
+  is no longer hitting the traced promoted row-copy helper, and the 2026-07-05
+  timing refresh shows full logits / LM-head work is no longer the dominant
+  measured block in the fastest INT8-LM-head path. The INT8 LM-head patch is the
+  current fastest quality-gated practical lane; future LM-head work only makes
+  sense if it is a genuinely new backend top-ID/candidate producer rather than
+  another reduction around dense logits;
 - do not skip full-accept GDN postprocess blindly; it breaks long-context state
   recall. The current win is specifically source-slot promotion plus disabling
   the redundant accepted-state copy, not a semantic elision;
@@ -787,8 +791,10 @@ Continue INT4 optimization without promoting synthetic scores:
   present in alternatives, but sequential MTP makes independent post-hoc
   replacement invalid and the legal final-slot upper bound is too small without
   a deeper branch/regenerate or stronger-drafter design;
-- deeper wins likely need an AutoRound/INC W4A16 LM-head top-1 or
-  candidate-vs-max kernel that avoids materializing full vocab logits;
+- deeper wins likely need stronger verified speculation, target-forward/kernel
+  reduction, graph-safe exact GDN/spec-state transactions, or a genuinely new
+  AutoRound/INC W4A16 top-ID/candidate primitive that avoids materializing full
+  vocab logits;
 - for accepted-token / drafter-calibration work, use the compact verifier
   sampler trace, not the scheduler spec trace. Scheduler
   `scheduled_spec_token_ids` are async placeholders (`[-1, -1, -1]`) on this

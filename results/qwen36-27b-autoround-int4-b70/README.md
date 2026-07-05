@@ -280,12 +280,15 @@ Current realistic research interpretation:
   `_xpu_gdn_copy_state_rows_native` /
   `_xpu_gdn_promote_running_state_native`, so the current
   promote-source/no-accepted-postprocess recipe appears to have removed that
-  promoted physical row-copy hot path. The latest synchronized timing diagnostic
-  instead shows full logits / LM-head dominating the current MTP3 path:
-  draft `spec_decode.greedy_sample.compute_logits` averaged `4.452 ms`, target
-  `gpu_model_runner.compute_logits` averaged `4.424 ms`, and proposer forward
-  was only `0.65-0.83 ms`. Evidence:
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`.
+  promoted physical row-copy hot path. A 2026-07-03 synchronized timing
+  diagnostic next suggested full logits / LM-head dominated the MTP3 path; that
+  was useful historically, but the 2026-07-05 timing refresh corrected the
+  current frontier after the INT8 LM-head/local-argmax path matured. Current
+  record-family timing shows LM-head is small and target forward plus recurrent
+  MTP draft forward now dominates. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-lmhead-verifier-bottleneck.md`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
 - exact greedy target argmax-only verification is closed no-win. The
   default-off patch preserved normal greedy spec semantics and passed the
   strict fresh gate with `cached_tokens=0`, but reached only `52.543 tok/s`.
@@ -308,6 +311,12 @@ Current realistic research interpretation:
   full-vocab EAGLE3 variant was also tested at k=2; it loaded and captured
   graphs, but crashed with the same `UR_RESULT_ERROR_DEVICE_LOST` at
   `num_accepted_tokens_event.synchronize()` and was slow before crashing.
+  A 2026-07-05 retest fixed a real compatibility gap for nested
+  `eagle_config.eagle_aux_hidden_state_layer_ids=[1,31,60]` and confirmed the
+  intended aux layers were used, but endpoint acceptance still collapsed and
+  throughput was operationally unusable. Preserve the patch as a compatibility
+  artifact, not a current record route:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-eagle3-nested-aux-layers-compat-20260705.patch`.
   Evidence:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`.
 - local EAGLE1 drafter training is mechanically usable but not a record route

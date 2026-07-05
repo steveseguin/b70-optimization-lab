@@ -134,25 +134,23 @@ Next milestone:
    Use `scripts/run-vllm-candidate.sh` for single-replica strict candidate
    screens so server logs, smoke output, strict fresh gate results, optional
    quality checks, and compact summaries are captured consistently.
-5. Investigate LM-head/verifier cost only with a real producer or drafter
-   mechanism. Recent no-win screens closed output-buffer reuse, bonus-token
-   argmax plumbing, draft-only row-count shortcuts, Python/chunked INT8 top-1,
-   top-token sampler plumbing, and native compact full-vocab INT8 LM-head
-   top-1/candidate-max kernels. The compact kernels built and were exact, but
-   oneDNN dense GEMM plus reduction was still faster at the real Qwen27 shape.
-   The latest oneDNN Graph check also found that BF16 `MatMul -> ReduceMax`
-   stays as two partitions and the tested INT8 graph form is rejected, so do
-   not expect a wrapper-level oneDNN Graph shortcut. Remaining credible lanes
-   are a real oneDNN/XPU-class top-ID LM-head producer, a materially stronger
-   target-matched drafter, or deeper partial-group/branch-regenerate support.
-   See `notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`.
-6. Do not keep config-sweeping the current INT8 lane without a new mechanism:
-   MTP depth remains k=3, capture size remains cg8, and target-only attribution
-   shows the target verifier LM-head is the real bottleneck. The latest
-   follow-up closed FP16 scales and webhie target-only BF16 scales as no-promote
-   variants; see
-   `notes/2026-07-03-scale-scope-followup-no-headline-win.md` and
-   `notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+5. Do not keep config-sweeping the current INT8 lane without a new mechanism:
+   MTP depth remains k=3, capture size remains cg8, MBT1024 remains the short
+   decode setting, and the cheap LM-head/sampler/logits wrappers are closed.
+   The 2026-07-05 timing refresh shows the current measured path is no longer
+   dominated by a large dense LM-head block: INT8 LM-head/local-argmax is small,
+   while target forward plus recurrent MTP draft forward dominates. See
+   `notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
+6. Remaining credible lanes need a real mechanism: a materially stronger
+   target-matched drafter, accepted-token-per-target-step gains that keep exact
+   verification, target-forward/kernel reductions, or graph-safe
+   GDN/DeltaNet/spec-state transactions. Older LM-head/verifier notes remain
+   useful historical context, but do not rerun wrapper-level LM-head work
+   unless the candidate is a genuinely new backend producer rather than another
+   reduction around dense logits. See
+   `notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`,
+   `notes/2026-07-04-compact-lmhead-top1-kernel-no-win.md`, and
+   `notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
 7. Closed source precheck: the default-off spec greedy top-token-ID
    verifier path passed the strict gate at `65.25583870721442 tok/s`, but it
    was flat versus the `65.27648650325429 tok/s` record because
@@ -394,9 +392,11 @@ artifact.
 
 The current valid env-only win appears to preserve the accepted-state transition
 by reading from the accepted speculative slot as the running source, then
-disabling the now-redundant accepted-state postprocess copy. Later timing moved
-the current frontier away from that copy path: full LM-head/logits work now
-dominates. Bad candidates already closed: blind copy skips, skipping
+disabling the now-redundant accepted-state postprocess copy. Later timing first
+moved attention toward full LM-head/logits, but the 2026-07-05 refresh corrected
+that for the current record family: INT8 LM-head/local-argmax is already small,
+and the active frontier is target forward plus recurrent MTP draft forward.
+Bad candidates already closed: blind copy skips, skipping
 full-accept state, changing the Triton memcpy block size, exact argmax plumbing
 that still computes full logits, draft local-argmax plumbing that still
 computes full logits, FP8 LM-head (quality fail), INT8 MTP k2/k4/k5,
@@ -409,6 +409,12 @@ align/restore all kept the same repeat64 failure (`55/64` expected
 `blue, green, red, yellow`, `9/64` truncated `blue, green, red`) despite
 strict fresh `cached_tokens=0` speed rows at `68-72 tok/s`; see
 `notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`.
+The corrected Ex0bit EAGLE3 nested-aux-layer patch is preserved as a
+compatibility artifact, but the retest still showed prompt-dependent
+acceptance collapse and unusable endpoint throughput, so EAGLE3 remains closed
+for this local vLLM/XPU + webhie/Intel AutoRound target unless the drafter
+runtime, accepted-token bookkeeping, or target/draft pairing changes
+materially.
 
 ## Current Entry Points
 

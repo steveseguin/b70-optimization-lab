@@ -80,6 +80,27 @@ Fastest quality-gated practical variant:
   `61-62 tok/s`, below the current `65.276 tok/s` record. No LocalMaxxing
   submission; next credible work is reducing ReplaySSM/full-accept
   state-transaction overhead, not promoting the invalid fast rows;
+- latest timing/frontier correction:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
+  A 2026-07-05 timing refresh corrected the stale "LM-head dominates" model for
+  the current record family: `VLLM_XPU_LM_HEAD_INT8=1` with local argmax makes
+  full logits small in the measured path, while target forward plus recurrent
+  MTP draft forward dominates. ReplaySSM is quality-clean but loses about
+  `4 ms/step` versus the record family and only gets back near `65 tok/s` if
+  made perfect. Current >100 tok/s work needs a stronger target-matched
+  drafter, more accepted tokens per target step, target-forward/kernel
+  reduction, or graph-safe exact GDN/spec-state transactions, not more
+  wrapper-level LM-head/sampler plumbing;
+- latest EAGLE3 compatibility retest:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
+  and
+  `patches/qwen36-27b-autoround-int4-b70/vllm-eagle3-nested-aux-layers-compat-20260705.patch`.
+  Local vLLM now has a narrow patch artifact to read Ex0bit's nested
+  `eagle_config.eagle_aux_hidden_state_layer_ids=[1,31,60]`, and the retest
+  confirmed the intended layers were used. The drafter still collapsed on
+  prompt-dependent acceptance and endpoint speed, so EAGLE3 remains closed
+  unless the drafter runtime, accepted-token bookkeeping, or target/drafter
+  pairing changes materially;
 - continuation bookmark:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It preserves active source snapshots, records that no cheap env-only
@@ -145,10 +166,12 @@ Fastest quality-gated practical variant:
   because `get_top_tokens()` still pays dense LM-head), and the native compact
   INT8 LM-head top-1 kernel (`int8_lm_head_top1_w8a8`, exact but slower than
   dense oneDNN: compact `2.66-2.68 ms` vs dense `2.57-2.61 ms` for rows `1-4`).
-  Conclusion: the next credible speed lane is verifier redesign that reduces
-  LM-head call/row count or improves accepted tokens per target step, not
-  sampler plumbing, multiple oneDNN chunks, standalone full-vocab top-1
-  kernels, or scale/scope config sweeps. See
+  Conclusion updated 2026-07-05: the no-win LM-head work remains valuable
+  history, but the current measured record path is not dominated by a large
+  LM-head block anymore. The next credible speed lane is stronger verified
+  speculation, target-forward/kernel reduction, graph-safe state handling, or a
+  genuinely new backend top-ID producer, not sampler plumbing, multiple oneDNN
+  chunks, standalone full-vocab top-1 kernels, or scale/scope config sweeps. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
   Latest closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-compact-lmhead-top1-kernel-no-win.md`.
