@@ -85,7 +85,16 @@ Fastest quality-gated practical variant:
   invalid fast rows or sweeping serial offsets. The current executable unit
   target is `scripts/check-gdn-spec-recurrent-exact.py`, which now validates
   exact recurrent prefix state and accepted-prefix SSM+conv commit equality on
-  XPU for k=3/4/5;
+  XPU for k=3/4/5. Native packed prefix-source semantics were then checked
+  directly with `scripts/check-gdn-native-spec-prefix.py`; it confirms
+  `spec_state_indices_tensor[:, j]` means state after packed row `j` and
+  `num_accepted_tokens=N` selects source column `N - 1`, with varied GPU/shape
+  artifacts under
+  `data/qwen36-27b-autoround-int4-b70-baselines/gdn-native-spec-prefix-check-20260705-*.json`.
+  See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-prefix-contract-check.md`.
+  Do not rerun accepted-count plus-one/prefix-count patches; continue with a
+  real ReplaySSM/tape commit transaction;
 - latest timing/frontier correction:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
   A 2026-07-05 timing refresh corrected the stale "LM-head dominates" model for

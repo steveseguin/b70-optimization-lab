@@ -1,6 +1,6 @@
 # Codex Agent Handoff
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 This file is the first thing a new Codex agent should read when continuing the
 Intel Arc Pro B70 LLM optimization work.
@@ -88,7 +88,15 @@ Active target as of the latest switch request:
   The executable contract starts at
   `scripts/check-gdn-spec-recurrent-exact.py`: it now verifies exact recurrent
   prefix state plus accepted-prefix SSM and conv commit equality on XPU for
-  k=3/4/5. Run it before touching native GDN tape/commit code.
+  k=3/4/5. Run it before touching native GDN tape/commit code. A second native
+  prefix harness, `scripts/check-gdn-native-spec-prefix.py`, directly validates
+  the packed `gdn_attention_spec_decode` column contract on XPU: column `j` is
+  the state after packed row `j`, and `num_accepted_tokens=N` selects source
+  column `N - 1`. It passed varied GPU/shape checks; see
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-prefix-contract-check.md`.
+  Do not reopen plus-one/prefix-count source-column patches; the next credible
+  patch is making ReplaySSM/tape commit exact and graph-safe, not changing the
+  accepted-count convention.
 - The same-quality-class `cyankiwi/Qwen3.6-27B-AWQ-INT4` checkpoint was
   screened after download. It loads in vLLM/XPU with
   `--quantization compressed-tensors` and passes the strict fresh/cached-zero

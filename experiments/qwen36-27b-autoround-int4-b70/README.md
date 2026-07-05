@@ -488,6 +488,13 @@ The executable contract is `../../scripts/check-gdn-spec-recurrent-exact.py`;
 as of 2026-07-05 it validates exact recurrent prefix state plus
 accepted-prefix SSM and conv commit equality on XPU for k=3/4/5. See
 `notes/2026-07-05-accepted-prefix-tape-contract.md`.
+The native packed spec prefix contract is also now checked directly by
+`../../scripts/check-gdn-native-spec-prefix.py`; see
+`notes/2026-07-05-native-spec-prefix-contract-check.md`. It confirms the native
+op publishes column `j` as the state after packed row `j` and selects source
+column `num_accepted_tokens - 1`. That closes the simple off-by-one/source
+column explanation for the invalid fast draft-INT4 rows and points future work
+at an exact ReplaySSM/tape commit transaction.
 The corrected Ex0bit EAGLE3 nested-aux-layer patch is preserved as a
 compatibility artifact, but the retest still showed prompt-dependent
 acceptance collapse and unusable endpoint throughput, so EAGLE3 remains closed

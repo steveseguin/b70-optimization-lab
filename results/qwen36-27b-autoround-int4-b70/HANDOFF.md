@@ -121,6 +121,13 @@ Current fastest quality-gated variant:
   verify exact recurrent prefix state plus accepted-prefix SSM and conv commit
   equality on XPU; see
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-accepted-prefix-tape-contract.md`.
+  The companion native prefix-source check is
+  `../../scripts/check-gdn-native-spec-prefix.py`; it validates on XPU that
+  packed native `gdn_attention_spec_decode` publishes state column `j` after
+  packed row `j`, and that `num_accepted_tokens=N` selects source column
+  `N - 1`. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-prefix-contract-check.md`.
+  This closes simple source-column offset patches as a credible next step.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed
