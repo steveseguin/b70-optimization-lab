@@ -109,6 +109,16 @@ Active target as of the latest switch request:
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-text-inputids-next-no-win-20260705.patch`.
   Do not repeat this exact shortcut without a deeper compile/cudagraph design
   change.
+- Latest GDN accepted-source packed decode precheck is also closed no-win. A
+  default-off `VLLM_XPU_GDN_PACKED_DECODE_WITH_SOURCE=1` patch promoted conv
+  and SSM accepted-source rows before the packed one-token helper. Same-window
+  strict fresh screen passed but lost to control (`65.077` vs `65.631 tok/s`).
+  Active vLLM source was reverted; preserve only
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-packed-decode-with-source-no-win.md`
+  and
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-gdn-packed-decode-with-source-no-win-20260705.patch`.
+  Do not repeat Python-level source-promotion shortcuts; future GDN work should
+  be an exact accepted-prefix tape/transaction or a native graph-safe commit.
 - Latest draft top-k follow-up is closed as diagnostic-only. K64 tracing shows
   the target token is in draft alternatives very often, but Qwen27 MTP drafting
   is sequential, so independent post-hoc reranking invalidates later draft rows

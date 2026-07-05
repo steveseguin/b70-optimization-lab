@@ -250,6 +250,18 @@ Next milestone:
     `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-text-inputids-next-no-win-20260705.patch`.
     Do not repeat this wrapper-level shortcut without a deeper compile/cudagraph
     design change.
+20. Latest GDN accepted-source packed decode precheck:
+    `notes/2026-07-05-gdn-packed-decode-with-source-no-win.md`.
+    A default-off `VLLM_XPU_GDN_PACKED_DECODE_WITH_SOURCE=1` patch allowed the
+    packed one-token GDN decode helper when accepted source rows were present
+    and promoted both conv and SSM before the packed update. Same-window strict
+    fresh/cached-zero screen passed mechanically, but the candidate lost to
+    control (`65.077` vs `65.631 tok/s`). Active vLLM source was reverted, and
+    the no-win patch is preserved at
+    `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-gdn-packed-decode-with-source-no-win-20260705.patch`.
+    Do not repeat Python-level accepted-source promotion shortcuts; future GDN
+    state work needs a traced exact accepted-prefix transaction or native
+    graph-safe tape/commit path.
 20. Latest variable-depth source precheck:
     `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
     A default-off prototype that actually shortened the MTP proposer loop

@@ -1,0 +1,40 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@
+ def _xpu_gdn_replayssm_spec_enabled() -> bool:
+     return _gdn_row_trace_bool_env("VLLM_XPU_GDN_REPLAYSSM_SPEC", False)
++def _xpu_gdn_packed_decode_with_source_enabled() -> bool:
++    return _gdn_row_trace_bool_env(
++        "VLLM_XPU_GDN_PACKED_DECODE_WITH_SOURCE", False)
++
++
+ def _xpu_gdn_replayssm_commit_in_forward_enabled() -> bool:
+     return _gdn_row_trace_bool_env(
+         "VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD", False)
+@@
+         if (
+             self.enable_packed_recurrent_decode
+             and attn_metadata.spec_sequence_masks is None
+             and attn_metadata.num_prefills == 0
+             and attn_metadata.num_decodes > 0
+-            and attn_metadata.running_state_source_indices_tensor is None
++            and (
++                attn_metadata.running_state_source_indices_tensor is None
++                or (
++                    _xpu_gdn_packed_decode_with_source_enabled()
++                    and not _xpu_gdn_replayssm_spec_enabled()
++                )
++            )
+         ):
+             return self._forward_core_decode_non_spec(
+                 mixed_qkv=mixed_qkv,
+@@
+                 non_spec_state_indices_tensor,
+                 attn_metadata.running_state_source_indices_tensor,
+                 attn_metadata.num_decodes,
+-                promote_conv=False,
++                promote_conv=_xpu_gdn_packed_decode_with_source_enabled(),
+             )
+         mixed_qkv_non_spec = causal_conv1d_update(
+             mixed_qkv,

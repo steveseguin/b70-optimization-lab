@@ -142,6 +142,14 @@ Fastest quality-gated practical variant:
   graph capture. Active vLLM source was reverted. Preserve the patch artifact
   but do not rerun this wrapper-level shortcut without a deeper compile/graph
   design change;
+- GDN packed decode with accepted-source precheck:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-packed-decode-with-source-no-win.md`.
+  A default-off `VLLM_XPU_GDN_PACKED_DECODE_WITH_SOURCE=1` patch allowed the
+  packed one-token GDN decode helper when accepted source rows were present and
+  promoted conv+SSM before the packed update. Same-window strict fresh screen
+  passed mechanically but lost to control (`65.077` vs `65.631 tok/s`), so it
+  is closed no-win. Active vLLM source was reverted; preserve only the patch
+  artifact and note;
 - latest EAGLE3 compatibility retest:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and

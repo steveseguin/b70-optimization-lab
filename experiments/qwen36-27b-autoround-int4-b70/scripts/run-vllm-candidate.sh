@@ -98,6 +98,7 @@ trap cleanup EXIT
   echo "compilation_config=$COMPILATION_CONFIG"
   echo "promote_accepted_spec_state=$VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE"
   echo "nonspec_postprocess_accepted_state=$VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE"
+  echo "gdn_packed_decode_with_source=${VLLM_XPU_GDN_PACKED_DECODE_WITH_SOURCE:-}"
   echo "lm_head_int8=$VLLM_XPU_LM_HEAD_INT8"
   echo "lm_head_int8_scale_dtype=$VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE"
   echo "mtp_text_input_ids_next=${VLLM_XPU_MTP_TEXT_INPUT_IDS_NEXT:-}"

@@ -217,6 +217,13 @@ Current next-execution plan:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-text-inputids-next-no-win-20260705.patch`,
   but do not repeat this wrapper-level shortcut without a deeper
   compile/cudagraph design change;
+- closed GDN accepted-source packed decode precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-packed-decode-with-source-no-win.md`.
+  A default-off patch promoted conv+SSM accepted-source rows and then used the
+  packed one-token GDN helper. It passed the strict fresh/cached-zero gate but
+  lost to same-window control (`65.077` vs `65.631 tok/s`), so no quality run
+  or promotion was warranted. Active vLLM source was reverted; preserve
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-gdn-packed-decode-with-source-no-win-20260705.patch`;
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found
