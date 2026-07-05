@@ -437,3 +437,23 @@ runtime-support, quality, and strict fresh-response validation before promotion.
 DeepSeek-R1-Distill-Qwen 14B/32B or similar can be sampled after the practical
 instruct/coder models. Treat them as useful model-variation snapshots, not as
 the main speed frontier.
+
+2026-07-05 DeepSeek-R1-Distill-Qwen-14B Q4_K_M diagnostic:
+
+- `bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF`
+  `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` downloaded cleanly to USB at
+  revision `9f5d77d401799416e0702290a691038b44012e0c`, file size
+  `8988110240` bytes.
+- Default llama.cpp reasoning parsing (`--reasoning off` or `on`) generated
+  `completion_tokens=128` and `cached_tokens=0`, but emitted zero streamable
+  content/reasoning deltas, so the strict timing metric could not be measured.
+- `EXTRA_LLAMA_ARGS='--cache-ram 0 --reasoning-format none'` exposed raw
+  `<think>` tokens and produced valid token-timing rows. Best standalone:
+  `35.28487506272765 tok/s` median tokens 1-100 after TTFT. However, a
+  512-token strict sanity run and a manual 512-token request still remained
+  inside the `<think>` block and did not reach a final answer.
+- `REASONING=off` did not suppress thinking for this checkpoint. Concurrent
+  four-GPU screens underreported at `~28.7-29.0 tok/s`, so they are support
+  only.
+- Do not submit these rows as ordinary answer throughput. Diagnostic packet:
+  `experiments/rapid-model-snapshots-b70/deepseek-r1-distill-qwen-14b-q4km.md`.

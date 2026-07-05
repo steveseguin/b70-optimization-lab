@@ -141,6 +141,14 @@ Current promoted rapid rows:
   around `50.7-50.9 tok/s`, so this is a useful expected-performance snapshot
   rather than a deep model-specific optimization result. LocalMaxxing approved
   it as `cmr7128uq00jdmn01dn0uttm7`.
+- `bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF`
+  `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf`, llama.cpp/SYCL on one B70:
+  **diagnostic only, not promoted**. Default reasoning parsing emitted
+  `completion_tokens=128` but zero streamable deltas, so the strict timing
+  metric could not be measured. `--reasoning-format none` exposed raw `<think>`
+  tokens at `35.28487506272765 tok/s`, but a 512-token sanity check still did
+  not reach a final answer. See
+  `experiments/rapid-model-snapshots-b70/deepseek-r1-distill-qwen-14b-q4km.md`.
 
 ## Helpers
 
