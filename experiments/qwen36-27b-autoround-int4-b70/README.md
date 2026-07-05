@@ -232,7 +232,12 @@ Next milestone:
     a speed or quality result. The next attempt must add a matching default-off
     C++ gate around `copy_conv_rows_to_indices` in `gdn_attention_spec_decode`
     so the packed native path and Python promotion agree on whether conv rows
-    are copied.
+    are copied. That follow-up is now closed no-win too:
+    `notes/2026-07-05-native-spec-conv-copy-gate-no-win.md` disabled both
+    native conv promotion paths and made repeat64 quality worse (`62/64`
+    `blue, green red yellow`, plus one runaway repetition). Do not rerun blind
+    conv-copy disablement; future GDN state work needs a traced/taped exact
+    conv-window transaction.
 19. Latest variable-depth source precheck:
     `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
     A default-off prototype that actually shortened the MTP proposer loop

@@ -1,0 +1,79 @@
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index 18c79cd..e9d96cd 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -1,4 +1,7 @@
+ #include <algorithm>
++#include <cctype>
++#include <cstdlib>
++#include <string>
+ 
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+@@ -14,6 +17,38 @@
+   #include "xe_2/chunk_gated_delta_rule_xe2.h"
+ #endif
+ 
++namespace {
++
++bool env_flag_enabled(const char* name, const bool default_value) {
++  const char* raw = std::getenv(name);
++  if (raw == nullptr || raw[0] == '\0') {
++    return default_value;
++  }
++
++  std::string value(raw);
++  std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
++    return static_cast<char>(std::tolower(c));
++  });
++
++  if (value == "0" || value == "false" || value == "no" ||
++      value == "off") {
++    return false;
++  }
++  if (value == "1" || value == "true" || value == "yes" ||
++      value == "on") {
++    return true;
++  }
++  return default_value;
++}
++
++bool gdn_native_spec_copy_conv_state_enabled() {
++  static const bool enabled = env_flag_enabled(
++      "VLLM_XPU_GDN_NATIVE_SPEC_COPY_CONV_STATE", true);
++  return enabled;
++}
++
++}  // namespace
++
+ void gdn_attention(
+     torch::Tensor&
+         core_attn_out,  // [total_seqlen, num_v_heads / tp_size, head_v_dim]
+@@ -624,6 +659,8 @@ void gdn_attention_spec_decode(
+   torch::Tensor a = torch::empty(
+       {total_spec_tokens, local_num_v_heads},
+       torch::dtype(dtype).device(device).requires_grad(false));
++  const bool copy_spec_conv_state =
++      gdn_native_spec_copy_conv_state_enabled();
+ 
+ #define SPEC_LAUNCHER(scalar_t)                                           \
+   do {                                                                    \
+@@ -645,11 +682,13 @@ void gdn_attention_spec_decode(
+         conv_state,                                                       \
+         accepted_state_indices,                                           \
+         std::nullopt);                                                    \
+-    gdn::spec_decode::copy_conv_rows_to_indices<scalar_t>(                \
+-        queue,                                                            \
+-        conv_state,                                                       \
+-        base_conv_state,                                                  \
+-        running_state_indices);                                           \
++    if (copy_spec_conv_state) {                                           \
++      gdn::spec_decode::copy_conv_rows_to_indices<scalar_t>(              \
++          queue,                                                          \
++          conv_state,                                                     \
++          base_conv_state,                                                \
++          running_state_indices);                                         \
++    }                                                                     \
+     gdn::spec_decode::copy_ssm_rows_dispatch(                             \
+         queue, ssm_state, running_state_indices, accepted_state_indices);  \
+     gdn::spec_decode::gather_inputs<scalar_t>(                            \

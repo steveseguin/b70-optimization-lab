@@ -200,7 +200,12 @@ Current next-execution plan:
   `UR_RESULT_ERROR_DEVICE_LOST` during the strict run. It is crash/inconclusive,
   and it does not test the packed C++ `gdn_attention_spec_decode` pre-copy.
   Next attempt should gate the C++ `copy_conv_rows_to_indices` path as well and
-  require repeat64 before speed interpretation;
+  require repeat64 before speed interpretation. That C++ follow-up is now
+  closed no-win too:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-conv-copy-gate-no-win.md`.
+  Disabling both native conv promotion paths produced invalid/incomplete strict
+  output and repeat64 quality failure (`62/64` `blue, green red yellow`, plus
+  one runaway repetition);
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found

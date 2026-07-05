@@ -68,9 +68,14 @@ Active target as of the latest switch request:
   the only clean draft-INT4 family seen so far, but it is `61-62 tok/s`, below
   the `65.276` record. Do not submit these rows; next credible work is
   reducing ReplaySSM/full-accept GDN state-transaction overhead or designing a
-  cheaper exact GDN tape/replay. See
+  cheaper exact GDN tape/replay. A later Python-only SSM promotion switch
+  crashed before artifacts, and the matched C++ conv pre-copy disablement made
+  repeat64 quality worse (`62/64` `blue, green red yellow`), so do not rerun
+  blind conv-copy disablement. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-gdn-runtime-metadata-and-replayssm.md`,
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`,
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-promote-ssm-only-crash.md`,
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-conv-copy-gate-no-win.md`,
   and
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`.
 - The same-quality-class `cyankiwi/Qwen3.6-27B-AWQ-INT4` checkpoint was

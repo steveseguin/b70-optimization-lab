@@ -128,7 +128,11 @@ Fastest quality-gated practical variant:
   benchmark/quality artifacts. Treat it as crash/inconclusive. If continuing
   this lane, add a matching default-off C++ gate around
   `copy_conv_rows_to_indices` in `gdn_attention_spec_decode`; do not rerun the
-  Python-only partial switch as if it tested the packed native path;
+  Python-only partial switch as if it tested the packed native path. The C++
+  follow-up is now closed no-win as well:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-conv-copy-gate-no-win.md`
+  disabled both native conv promotion paths and failed quality hard (`62/64`
+  `blue, green red yellow`, plus one runaway repetition);
 - latest EAGLE3 compatibility retest:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and
