@@ -1,0 +1,32 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@
+         # ============================================================
+         # Part 2: Core Attention
+         # ============================================================
+-        core_attn_out = torch.zeros(
+-            (num_tokens, self.num_v_heads // self.tp_size, self.head_v_dim),
+-            dtype=hidden_states.dtype,
+-            device=hidden_states.device,
+-        )
++        core_shape = (
++            num_tokens,
++            self.num_v_heads // self.tp_size,
++            self.head_v_dim,
++        )
++        if os.environ.get("VLLM_XPU_GDN_CORE_EMPTY_OUTPUT", "0") == "1":
++            core_attn_out = torch.empty(
++                core_shape,
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
++        else:
++            core_attn_out = torch.zeros(
++                core_shape,
++                dtype=hidden_states.dtype,
++                device=hidden_states.device,
++            )
+         z = torch.empty_like(core_attn_out)
+ 
+         with timed_region("qwen3_next.gdn.core_op"):

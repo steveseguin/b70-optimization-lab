@@ -103,3 +103,33 @@ Closed/not worth immediate repeat:
   screen on 2026-07-05 found no credible speed win;
 - wrapper-level LM-head/sampler/top-token plumbing: already closed for the
   current record family; the INT8 LM-head/local-argmax path is small.
+
+## Follow-up implementation: GDN core empty scratch is a no-win
+
+Patch artifact:
+
+- `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-gdn-core-empty-output-20260705.patch`
+
+Patch:
+
+- added default-off `VLLM_XPU_GDN_CORE_EMPTY_OUTPUT=1`;
+- changed only the XPU `gdn_attention_core_xpu` allocation from
+  `torch.zeros(...)` to `torch.empty(...)` when the flag is set;
+- did not change default behavior;
+- live source hunk was reverted after the screen because the result was a
+  no-win.
+
+Result:
+
+| Mode | Summary | Median tok/s | p10 | Mean | Gate |
+| --- | --- | ---: | ---: | ---: | --- |
+| zero control | `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-gdncorezero-control-20260705T180618Z-candidate-summary-20260705T180618Z.json` | `65.86053213047938` | `58.11977144204768` | `64.11720788924745` | pass |
+| empty output | `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-gdncoreempty-on-20260705T180618Z-candidate-summary-20260705T180618Z.json` | `64.0721804176446` | `58.0498815506641` | `63.954491283999914` | pass |
+
+Decision:
+
+- no quality run, no LocalMaxxing submission;
+- keep `torch.zeros` for the current recipe;
+- do not revisit empty scratch unless a lower-level trace proves the zero-fill
+  is still on the critical path and a kernel-level write-coverage guarantee is
+  available.
