@@ -96,7 +96,14 @@ Active target as of the latest switch request:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-prefix-contract-check.md`.
   Do not reopen plus-one/prefix-count source-column patches; the next credible
   patch is making ReplaySSM/tape commit exact and graph-safe, not changing the
-  accepted-count convention.
+  accepted-count convention. A first default-off commit-overhead patch,
+  `VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1` with the separate post-verify
+  commit skipped when no restore correction is active, passed strict fresh and
+  repeat64 quality at `63.854 tok/s`. It recovers some ReplaySSM overhead but
+  remains below the `65.276` record, so keep it as no-promote evidence:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-commit-in-forward-skippost-no-promote.md`
+  and
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replayssm-commit-in-forward-skippost-no-promote-20260705.patch`.
 - The same-quality-class `cyankiwi/Qwen3.6-27B-AWQ-INT4` checkpoint was
   screened after download. It loads in vLLM/XPU with
   `--quantization compressed-tensors` and passes the strict fresh/cached-zero

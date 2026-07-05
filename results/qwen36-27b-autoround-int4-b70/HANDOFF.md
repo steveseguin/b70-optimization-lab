@@ -128,6 +128,12 @@ Current fastest quality-gated variant:
   `N - 1`. See
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-prefix-contract-check.md`.
   This closes simple source-column offset patches as a credible next step.
+  The first commit-overhead follow-up,
+  `VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1` with post-verify commit skipped
+  when no restore correction is active, is valid but no-promote: strict fresh
+  median `63.853743411579195 tok/s`, repeat64 and cached-zero gate passed, but
+  still below the `65.276` record. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-commit-in-forward-skippost-no-promote.md`.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed

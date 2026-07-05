@@ -1,0 +1,72 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+         replay_ssm_enabled = (
+             os.environ.get("VLLM_XPU_GDN_REPLAYSSM_SPEC", "")
+             .strip()
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        replayssm_commit_in_forward = (
++            replay_ssm_enabled
++            and os.environ.get("VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+         replayssm_commit_token_counts = self.num_accepted_tokens.gpu[:num_reqs]
+         if (
+             replay_ssm_enabled
+             and (draft_partial_restore_req_ids or draft_full_accept_restore_req_ids)
+         ):
+@@
+         elif draft_partial_restore_req_ids or draft_full_accept_restore_req_ids:
+             skip_replayssm_commit_req_ids = set(draft_partial_restore_req_ids)
+             skip_replayssm_commit_req_ids.update(
+                 draft_full_accept_restore_req_ids)
+-        mamba_utils.commit_gdn_replayssm_after_verify(
+-            scheduler_output,
+-            self.kv_cache_config,
+-            self.input_batch,
+-            self.requests,
+-            self.mamba_state_idx,
+-            self.compilation_config.static_forward_context,
+-            replayssm_commit_token_counts,
+-            num_reqs,
+-            skip_req_ids=skip_replayssm_commit_req_ids,
+-        )
++        replayssm_skip_post_verify_commit = (
++            replayssm_commit_in_forward
++            and not draft_partial_restore_req_ids
++            and not draft_full_accept_restore_req_ids
++        )
++        if not replayssm_skip_post_verify_commit:
++            mamba_utils.commit_gdn_replayssm_after_verify(
++                scheduler_output,
++                self.kv_cache_config,
++                self.input_batch,
++                self.requests,
++                self.mamba_state_idx,
++                self.compilation_config.static_forward_context,
++                replayssm_commit_token_counts,
++                num_reqs,
++                skip_req_ids=skip_replayssm_commit_req_ids,
++            )
+         if (
+             spec_state_trace_step_id is not None
+             and self._xpu_cow_worker_trace_enabled()
+         ):
+             self._trace_xpu_cow_worker_event(
+@@
+                     "spec_state_trace_step_id": int(spec_state_trace_step_id),
+                     "num_reqs": int(num_reqs),
+                     "replay_ssm_enabled": bool(replay_ssm_enabled),
++                    "replayssm_commit_in_forward": bool(
++                        replayssm_commit_in_forward),
++                    "replayssm_skip_post_verify_commit": bool(
++                        replayssm_skip_post_verify_commit),
+                     "skip_replayssm_commit_req_ids": sorted(
+                         skip_replayssm_commit_req_ids or set()),
+                 },
+             )

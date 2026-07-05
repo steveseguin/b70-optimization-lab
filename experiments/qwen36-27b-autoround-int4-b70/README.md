@@ -495,6 +495,13 @@ op publishes column `j` as the state after packed row `j` and selects source
 column `num_accepted_tokens - 1`. That closes the simple off-by-one/source
 column explanation for the invalid fast draft-INT4 rows and points future work
 at an exact ReplaySSM/tape commit transaction.
+A first commit-overhead reduction for that direction was tested:
+`VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1` plus skipping the redundant
+post-verify commit when no restore correction is active. It passed strict fresh
+and repeat64 quality at `63.854 tok/s`, improving over prior ReplaySSM rows but
+still below the `65.276 tok/s` record. Preserve it as no-promote evidence:
+`notes/2026-07-05-replayssm-commit-in-forward-skippost-no-promote.md` and
+`../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replayssm-commit-in-forward-skippost-no-promote-20260705.patch`.
 The corrected Ex0bit EAGLE3 nested-aux-layer patch is preserved as a
 compatibility artifact, but the retest still showed prompt-dependent
 acceptance collapse and unusable endpoint throughput, so EAGLE3 remains closed

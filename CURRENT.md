@@ -94,7 +94,12 @@ Fastest quality-gated practical variant:
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-prefix-contract-check.md`.
   Do not rerun accepted-count plus-one/prefix-count patches; continue with a
-  real ReplaySSM/tape commit transaction;
+  real ReplaySSM/tape commit transaction. A first overhead-reduction screen,
+  `VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1` plus skipping the redundant
+  post-verify commit when no restore correction is active, passed strict fresh
+  and repeat64 quality at `63.854 tok/s`. It is a useful no-promote patch, not
+  a record; see
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-commit-in-forward-skippost-no-promote.md`;
 - latest timing/frontier correction:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
   A 2026-07-05 timing refresh corrected the stale "LM-head dominates" model for
