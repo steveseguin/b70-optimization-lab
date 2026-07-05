@@ -385,3 +385,81 @@ Next diagnostic:
   perturbs timing;
 - use it only to decide whether to optimize the MTP-next model body or search
   for the true downstream synchronization point.
+
+## Follow-up: narrow sync timing changes the attribution
+
+Run:
+
+```text
+label: qwen27-mtp-next-sync-timing-20260705T173740Z
+summary: data/qwen36-27b-autoround-int4-b70-baselines/qwen27-mtp-next-sync-timing-20260705T173740Z-candidate-summary-20260705T173740Z.json
+bench: data/qwen36-27b-autoround-int4-b70-baselines/qwen27-mtp-next-sync-timing-20260705T173740Z-realistic128-chat-tokenids-qwensuite-20260705T173740Z.json
+server log: /mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-mtp-next-sync-timing-20260705T173740Z-20260705T173740Z/server.stdout.log
+```
+
+Timing config:
+
+```text
+VLLM_XPU_DECODE_TIMING=1
+VLLM_XPU_DECODE_TIMING_SUMMARY=1
+VLLM_XPU_DECODE_TIMING_SYNC=1
+VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX='^(spec_decode\.propose\.(model_forward_first|model_forward_next)|gpu_model_runner\.(model_forward|draft_total))$'
+```
+
+Gate:
+
+- strict fresh/cached-zero gate passed (`cached_tokens=0` on `12/12`);
+- quality intentionally skipped;
+- median `61.64202365197704 tok/s`, p10 `54.28829601649468`, mean
+  `60.048796993896936`;
+- this is **not** a candidate because synchronization perturbs the runtime.
+
+Synchronized timing summary:
+
+| Label | Count | Total ms | Avg ms |
+| --- | ---: | ---: | ---: |
+| `gpu_model_runner.model_forward` | `2177` | `71146.661` | `32.681` |
+| `gpu_model_runner.draft_total` | `2177` | `23340.775` | `10.722` |
+| `spec_decode.propose.model_forward_next` | `4374` | `2874.573` | `0.657` |
+| `spec_decode.propose.model_forward_first` | `2177` | `1574.687` | `0.723` |
+| `spec_decode.greedy_sample_total` | `6571` | `1068.771` | `0.163` |
+| `logits.local_argmax_lm_head` | `8770` | `754.649` | `0.086` |
+| `spec_decode.greedy_sample.compute_logits` | `6571` | `721.088` | `0.110` |
+| `gpu_model_runner.compute_logits` | `2177` | `257.969` | `0.118` |
+| `spec_decode.propose.update_slot_metadata_next` | `4374` | `251.542` | `0.058` |
+| `spec_decode.propose.copy_buffers_next` | `4374` | `128.509` | `0.029` |
+
+Interpretation correction:
+
+- The earlier `~11.45 ms` unsynchronized
+  `spec_decode.propose.model_forward_next` number was **async attribution**,
+  not the actual MTP-next model body cost. With narrow synchronization,
+  recurrent MTP-next is about `0.66 ms` per call and the first MTP pass is about
+  `0.72 ms`.
+- The true synchronized target forward is about `32.7 ms` per verifier step.
+  That matches the no-spec graph-on control (`~31.18 tok/s`) and explains why
+  current MTP3 reaches only about `65 tok/s`: it averages roughly `2.76`
+  target-verified generated tokens per expensive target step.
+- `gpu_model_runner.draft_total` remains about `10.7 ms`, but most of that is
+  end-to-end proposal/state/output ordering rather than the recurrent MTP-next
+  body itself. It is not enough, by itself, to create a `100+ tok/s` record.
+
+Revised frontier:
+
+- current valid MTP3 record: `65.27648650325429 tok/s`;
+- no-spec graph-on control: about `31.18 tok/s`;
+- target-verified tokens per step: about `2.76`;
+- rough wall math: `2.76 tokens / ~42 ms step = ~65 tok/s`.
+
+To break `100 tok/s` without cache/history cheating, this lane now needs one of:
+
+1. a materially stronger fresh-response drafter that raises verified emitted
+   tokens per target step to roughly `4.3+` at similar target-step cost;
+2. a major target-forward kernel/runtime reduction, especially in the
+   Qwen3-Next target model's GDN/linear-attention and full-attention layers;
+3. a verifier design that reduces target forward work while preserving exact
+   target verification.
+
+Do **not** spend the next block optimizing `model_forward_next` as if it were an
+`11 ms` kernel. That was the wrong attribution. MTP-next body micro-optimizing
+can still trim latency, but it is not the >100 unlock.
