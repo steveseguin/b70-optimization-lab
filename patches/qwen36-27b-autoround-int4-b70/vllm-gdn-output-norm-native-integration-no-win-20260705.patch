@@ -1,0 +1,70 @@
+diff --git a/vllm/_xpu_ops.py b/vllm/_xpu_ops.py
+--- a/vllm/_xpu_ops.py
++++ b/vllm/_xpu_ops.py
+@@
+ if hasattr(torch.ops._xpu_C, "int4_gemm_w4a16"):
+@@
+         N = q_weight.size(1)
+         return torch.empty((M, N), dtype=input.dtype, device=input.device)
+ 
++if hasattr(torch.ops._xpu_C, "gdn_rms_norm_gated_xpu"):
++
++    @register_fake("_xpu_C::gdn_rms_norm_gated_xpu")
++    def _gdn_rms_norm_gated_xpu_fake(
++        x: torch.Tensor,
++        z: torch.Tensor,
++        weight: torch.Tensor,
++        epsilon: float,
++        sigmoid_gate: bool = False,
++    ) -> torch.Tensor:
++        return torch.empty_like(x)
++
++
++if hasattr(torch.ops._xpu_C, "gdn_rms_norm_gated_xpu_out"):
++
++    @register_fake("_xpu_C::gdn_rms_norm_gated_xpu_out")
++    def _gdn_rms_norm_gated_xpu_out_fake(
++        x: torch.Tensor,
++        z: torch.Tensor,
++        weight: torch.Tensor,
++        out: torch.Tensor,
++        epsilon: float,
++        sigmoid_gate: bool = False,
++    ) -> torch.Tensor:
++        return out
++
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@
+         self.xpu_reuse_qkvz_ba_quant = current_platform.is_xpu() and (
+             xpu_gdn_reuse_qkvz_ba_quant_mode
+             in ("1", "true", "clone", "clone-ba", "clone-qkvz")
+         )
++        self.xpu_gdn_native_output_norm = (
++            current_platform.is_xpu()
++            and _gdn_row_trace_bool_env("VLLM_XPU_GDN_NATIVE_OUTPUT_NORM",
++                                        False)
++        )
+@@
+         core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+         z = z.reshape(-1, z.shape[-1])
+         with timed_region("qwen3_next.gdn.output_norm"):
+-            core_attn_out = self.norm(core_attn_out, z)
++            if (
++                self.xpu_gdn_native_output_norm
++                and hasattr(torch.ops._xpu_C, "gdn_rms_norm_gated_xpu_out")
++                and self.norm.group_size is None
++                and self.norm.norm_before_gate
++            ):
++                norm_out = torch.empty_like(core_attn_out)
++                core_attn_out = torch.ops._xpu_C.gdn_rms_norm_gated_xpu_out(
++                    core_attn_out,
++                    z,
++                    self.norm.weight,
++                    norm_out,
++                    self.norm.eps,
++                    self.norm.activation == "sigmoid",
++                )
++            else:
++                core_attn_out = self.norm(core_attn_out, z)

@@ -115,6 +115,20 @@ Fastest quality-gated practical variant:
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-qk-norm-rope-fused-spike-20260705.patch`.
   Do not repeat this endpoint lane unless a new kernel first beats the separate
   Q/K norm + RoPE primitives in a standalone microbench;
+- GDN output norm native spike closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-output-norm-native-no-win.md`.
+  The standalone `_xpu_C.gdn_rms_norm_gated_xpu_out` microbench was fast and
+  repeat32 quality passed, but same-window strict fresh controls beat the
+  native path on average (`65.299` control vs `64.569` native). The live source
+  and local `_xpu_C` binary were restored; preserve the no-win patches only;
+- Native GDN SSM-only promotion precheck:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-promote-ssm-only-crash.md`.
+  The Python-only `VLLM_XPU_GDN_NATIVE_PROMOTE_CONV_STATE=0` switch passed
+  smoke but hit `UR_RESULT_ERROR_DEVICE_LOST` during the strict run, before
+  benchmark/quality artifacts. Treat it as crash/inconclusive. If continuing
+  this lane, add a matching default-off C++ gate around
+  `copy_conv_rows_to_indices` in `gdn_attention_spec_decode`; do not rerun the
+  Python-only partial switch as if it tested the packed native path;
 - latest EAGLE3 compatibility retest:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and

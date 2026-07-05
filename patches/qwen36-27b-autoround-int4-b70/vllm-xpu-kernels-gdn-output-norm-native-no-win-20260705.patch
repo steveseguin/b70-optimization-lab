@@ -1,0 +1,243 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9340c77..115df69 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -540,6 +540,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+       "csrc/xpu/sycl/multimodal_rope.cpp"
+       "csrc/xpu/rand/exponential.cpp"
++      "csrc/xpu/gdn_rmsnorm.cpp"
+       "csrc/xpu/utils.cpp")
+   if(MOE_KERNELS_ENABLED)
+     list(APPEND VLLM_EXT_XPU_SRC
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 293bf35..637bef4 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -84,6 +84,21 @@ std::tuple<torch::Tensor, torch::Tensor> silu_and_mul_quant_int8_xpu_out(
+     torch::Tensor& q,
+     torch::Tensor& scales);
+ 
++torch::Tensor gdn_rms_norm_gated_xpu(
++    const torch::Tensor& x,
++    const torch::Tensor& z,
++    const torch::Tensor& weight,
++    double epsilon,
++    bool sigmoid_gate);
++
++torch::Tensor gdn_rms_norm_gated_xpu_out(
++    const torch::Tensor& x,
++    const torch::Tensor& z,
++    const torch::Tensor& weight,
++    torch::Tensor& out,
++    double epsilon,
++    bool sigmoid_gate);
++
+ #ifdef VLLM_MOE_ENABLED
+ torch::Tensor cutlass_grouped_gemm_interface(
+     torch::Tensor ptr_A,
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index ae07b01..80daccb 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -72,6 +72,20 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       torch::kXPU,
+       &silu_and_mul_quant_int8_xpu_out);
+ 
++  xpu_ops.def(
++      "gdn_rms_norm_gated_xpu(Tensor x, Tensor z, Tensor weight, float "
++      "epsilon, bool sigmoid_gate=False) -> Tensor");
++  xpu_ops.impl(
++      "gdn_rms_norm_gated_xpu", torch::kXPU, &gdn_rms_norm_gated_xpu);
++
++  xpu_ops.def(
++      "gdn_rms_norm_gated_xpu_out(Tensor x, Tensor z, Tensor weight, "
++      "Tensor! out, float epsilon, bool sigmoid_gate=False) -> Tensor");
++  xpu_ops.impl(
++      "gdn_rms_norm_gated_xpu_out",
++      torch::kXPU,
++      &gdn_rms_norm_gated_xpu_out);
++
+ #ifdef VLLM_MOE_ENABLED
+   xpu_ops.def(
+       "cutlass_grouped_gemm_interface(Tensor ptr_A, Tensor ptr_B, Tensor? "
+diff --git a/csrc/xpu/gdn_rmsnorm.cpp b/csrc/xpu/gdn_rmsnorm.cpp
+new file mode 100644
+index 0000000..4969b22
+--- /dev/null
++++ b/csrc/xpu/gdn_rmsnorm.cpp
+@@ -0,0 +1,174 @@
++#include <ATen/DeviceGuard.h>
++#include <sycl/sycl.hpp>
++
++#include "dispatch_utils.h"
++#include "ops.h"
++#include "utils.h"
++
++namespace {
++
++inline void check_gdn_rms_norm_gated_inputs(
++    const torch::Tensor& x,
++    const torch::Tensor& z,
++    const torch::Tensor& weight,
++    const torch::Tensor& out) {
++  TORCH_CHECK(x.is_xpu(), "x must be an XPU tensor");
++  TORCH_CHECK(z.is_xpu(), "z must be an XPU tensor");
++  TORCH_CHECK(weight.is_xpu(), "weight must be an XPU tensor");
++  TORCH_CHECK(out.is_xpu(), "out must be an XPU tensor");
++  TORCH_CHECK(x.dim() == 2, "x must be 2D [rows, hidden]");
++  TORCH_CHECK(z.sizes() == x.sizes(), "z must match x shape");
++  TORCH_CHECK(out.sizes() == x.sizes(), "out must match x shape");
++  TORCH_CHECK(weight.dim() == 1, "weight must be 1D [hidden]");
++  TORCH_CHECK(weight.size(0) == x.size(1), "weight size must match hidden");
++  TORCH_CHECK(x.is_contiguous(), "x must be contiguous");
++  TORCH_CHECK(z.is_contiguous(), "z must be contiguous");
++  TORCH_CHECK(weight.is_contiguous(), "weight must be contiguous");
++  TORCH_CHECK(out.is_contiguous(), "out must be contiguous");
++  TORCH_CHECK(z.scalar_type() == x.scalar_type(), "z dtype must match x");
++  TORCH_CHECK(out.scalar_type() == x.scalar_type(), "out dtype must match x");
++  TORCH_CHECK(
++      weight.scalar_type() == x.scalar_type() ||
++          weight.scalar_type() == torch::kFloat32,
++      "weight dtype must be float32 or match x dtype");
++}
++
++template <typename scalar_t, typename weight_t, bool sigmoid_gate>
++class gdn_rms_norm_gated_kernel {
++ public:
++  gdn_rms_norm_gated_kernel(
++      const scalar_t* __restrict__ x_,
++      const scalar_t* __restrict__ z_,
++      const weight_t* __restrict__ weight_,
++      scalar_t* __restrict__ out_,
++      float epsilon_,
++      int hidden_size_)
++      : x(x_),
++        z(z_),
++        weight(weight_),
++        out(out_),
++        epsilon(epsilon_),
++        hidden_size(hidden_size_) {}
++
++  void operator()(sycl::nd_item<1> item) const {
++    const int tid = item.get_local_id(0);
++    const int stride = item.get_local_range(0);
++    const int64_t row = item.get_group(0);
++    const int64_t row_offset = row * hidden_size;
++
++    auto& inv_rms =
++        *sycl::ext::oneapi::group_local_memory_for_overwrite<float[1]>(
++            item.get_group());
++
++    float variance = 0.0f;
++    for (int i = tid; i < hidden_size; i += stride) {
++      const float xv = static_cast<float>(x[row_offset + i]);
++      variance += xv * xv;
++    }
++    variance = sycl::reduce_over_group(
++        item.get_group(), variance, sycl::plus<float>());
++    if (tid == 0) {
++      inv_rms[0] = sycl::rsqrt(variance / hidden_size + epsilon);
++    }
++    sycl::group_barrier(item.get_group());
++
++    const float rcp = inv_rms[0];
++    for (int i = tid; i < hidden_size; i += stride) {
++      const float xv = static_cast<float>(x[row_offset + i]);
++      const float zv = static_cast<float>(z[row_offset + i]);
++      const float gate =
++          sigmoid_gate ? (1.0f / (1.0f + sycl::exp(-zv)))
++                       : (zv / (1.0f + sycl::exp(-zv)));
++      const float y =
++          xv * rcp * static_cast<float>(weight[i]) * gate;
++      out[row_offset + i] = static_cast<scalar_t>(y);
++    }
++  }
++
++ private:
++  const scalar_t* __restrict__ x;
++  const scalar_t* __restrict__ z;
++  const weight_t* __restrict__ weight;
++  scalar_t* __restrict__ out;
++  const float epsilon;
++  const int hidden_size;
++};
++
++template <typename scalar_t, typename weight_t, bool sigmoid_gate>
++void launch_gdn_rms_norm_gated(
++    const torch::Tensor& x,
++    const torch::Tensor& z,
++    const torch::Tensor& weight,
++    torch::Tensor& out,
++    float epsilon) {
++  using sycl_t = typename vllm::xpu::SyclTypeTrait<scalar_t>::Type;
++  using sycl_weight_t = typename vllm::xpu::SyclTypeTrait<weight_t>::Type;
++
++  const int rows = static_cast<int>(x.size(0));
++  const int hidden = static_cast<int>(x.size(1));
++  const int block = std::min(256, std::max(32, hidden));
++
++  auto& queue = vllm::xpu::vllmGetQueue();
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for(
++        sycl::nd_range<1>(sycl::range<1>(rows * block),
++                          sycl::range<1>(block)),
++        gdn_rms_norm_gated_kernel<sycl_t, sycl_weight_t, sigmoid_gate>(
++            reinterpret_cast<const sycl_t*>(x.data_ptr<scalar_t>()),
++            reinterpret_cast<const sycl_t*>(z.data_ptr<scalar_t>()),
++            reinterpret_cast<const sycl_weight_t*>(
++                weight.data_ptr<weight_t>()),
++            reinterpret_cast<sycl_t*>(out.data_ptr<scalar_t>()),
++            epsilon,
++            hidden));
++  });
++}
++
++template <typename scalar_t, bool sigmoid_gate>
++void dispatch_gdn_rms_norm_gated_weight(
++    const torch::Tensor& x,
++    const torch::Tensor& z,
++    const torch::Tensor& weight,
++    torch::Tensor& out,
++    float epsilon) {
++  if (weight.scalar_type() == torch::kFloat32) {
++    launch_gdn_rms_norm_gated<scalar_t, float, sigmoid_gate>(
++        x, z, weight, out, epsilon);
++  } else {
++    launch_gdn_rms_norm_gated<scalar_t, scalar_t, sigmoid_gate>(
++        x, z, weight, out, epsilon);
++  }
++}
++
++}  // namespace
++
++torch::Tensor gdn_rms_norm_gated_xpu_out(
++    const torch::Tensor& x,
++    const torch::Tensor& z,
++    const torch::Tensor& weight,
++    torch::Tensor& out,
++    double epsilon,
++    bool sigmoid_gate) {
++  const at::DeviceGuard device_guard(x.device());
++  check_gdn_rms_norm_gated_inputs(x, z, weight, out);
++  VLLM_DISPATCH_HALF_TYPES(x.scalar_type(), "gdn_rms_norm_gated_xpu", [&] {
++    if (sigmoid_gate) {
++      dispatch_gdn_rms_norm_gated_weight<scalar_t, true>(
++          x, z, weight, out, static_cast<float>(epsilon));
++    } else {
++      dispatch_gdn_rms_norm_gated_weight<scalar_t, false>(
++          x, z, weight, out, static_cast<float>(epsilon));
++    }
++  });
++  return out;
++}
++
++torch::Tensor gdn_rms_norm_gated_xpu(
++    const torch::Tensor& x,
++    const torch::Tensor& z,
++    const torch::Tensor& weight,
++    double epsilon,
++    bool sigmoid_gate) {
++  torch::Tensor out = torch::empty_like(x);
++  return gdn_rms_norm_gated_xpu_out(x, z, weight, out, epsilon, sigmoid_gate);
++}

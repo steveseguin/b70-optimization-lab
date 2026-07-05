@@ -187,6 +187,20 @@ Current next-execution plan:
   standalone microbench. The next credible target-forward source/kernel lanes
   are GDN output norm, GDN zero-fill scratch, or full-attention output-gate
   fusion;
+- closed GDN output norm native spike:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-output-norm-native-no-win.md`.
+  A default-off `_xpu_C.gdn_rms_norm_gated_xpu_out` path passed direct
+  microbench and repeat32 quality, but did not improve endpoint decode:
+  same-window controls averaged `65.299 tok/s` while native output norm averaged
+  `64.569 tok/s`. The live source and local extension binary were restored.
+  Preserve the no-win patch artifacts only;
+- native GDN SSM-only promote precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-promote-ssm-only-crash.md`.
+  The Python-only conv-skip promotion switch passed smoke but hit
+  `UR_RESULT_ERROR_DEVICE_LOST` during the strict run. It is crash/inconclusive,
+  and it does not test the packed C++ `gdn_attention_spec_decode` pre-copy.
+  Next attempt should gate the C++ `copy_conv_rows_to_indices` path as well and
+  require repeat64 before speed interpretation;
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found
