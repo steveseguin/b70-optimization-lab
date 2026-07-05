@@ -71,6 +71,15 @@ llama.cpp/SYCL on one Intel Arc Pro B70.
 
 Date: 2026-07-04
 
+Model: `bartowski/nvidia_Nemotron-Cascade-2-30B-A3B-GGUF`, GGUF `Q4_K_M`,
+llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `nemotron-cascade-2-30b-a3b-q4km-llamacpp-realistic128` | `cmr7128uq00jdmn01dn0uttm7` | 1 | suite median 65 | 128 | **50.904 median 1-100 after TTFT** | 43.119 median wall full128 | **policy-compliant rapid realistic suite, Nemotron-family reference**: fixed `rapid-model-snapshots-b70-realistic-v1`, 12 unique prompts, each prompt once, llama.cpp server prompt cache disabled with `--cache-ram 0`, per-request `cache_prompt=false`, `cached_tokens=0` every row, no prompt/KV/context checkpoint/response reuse, no n-gram/history acceleration, no speculation. Config: `nvidia_Nemotron-Cascade-2-30B-A3B-Q4_K_M.gguf`, HF revision `931b595fc71b7ca14fb9d935af011f69f7c0434c`, llama.cpp/SYCL on one B70, `ctx=2048`, `batch=1024`, `ubatch=256`, `poll=50`, FlashAttention on, f16 KV, `--jinja`, `--reasoning off`. Primary p10 `50.877`, mean `50.896`, full-output after-TTFT median `50.789`, TTFT median `449.159 ms`; output preview check showed normal prose, zero reasoning deltas, and no visible `<think>` leakage. Quick ctx/batch/ubatch/poll/thread probes all landed around `50.7-50.9 tok/s`, so this is an expected-performance snapshot, not a frontier optimization lane. Result packet `results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md`, evidence `data/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T235714Z.json`, queue `experiments/rapid-model-snapshots-b70/localmaxxing/nemotron-cascade-2-30b-a3b-q4km-llamacpp-realistic128-20260704.queue.json`, approved response `data/localmaxxing-responses/nemotron-cascade-2-30b-a3b-q4km-llamacpp-realistic128-20260704.submit2.log`. First POST failed only because the payload used `engineName=llama.cpp-sycl`; the accepted queue uses LocalMaxxing's `llama.cpp` enum and keeps SYCL details in notes/runtime metadata. |
+
+Date: 2026-07-04
+
 Model: `unsloth/GLM-4.7-Flash-GGUF`, GGUF `UD-Q4_K_XL`,
 llama.cpp/SYCL on one Intel Arc Pro B70.
 

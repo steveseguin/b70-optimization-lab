@@ -399,6 +399,39 @@ runtime-support, quality, and strict fresh-response validation before promotion.
   target. Revisit only for a new GLM-specific llama.cpp/SYCL kernel path,
   another materially better GLM quant, or a vLLM/XPU runtime path.
 
+2026-07-04 Nemotron-Cascade-2-30B-A3B strict result:
+
+- `nvidia_Nemotron-Cascade-2-30B-A3B-Q4_K_M.gguf` downloaded cleanly to the
+  USB model store and matched the expected byte size `24725740992`.
+- Source: `bartowski/nvidia_Nemotron-Cascade-2-30B-A3B-GGUF`, revision
+  `931b595fc71b7ca14fb9d935af011f69f7c0434c`. Original model:
+  `nvidia/Nemotron-Cascade-2-30B-A3B`.
+- Architecture notes from the official config/model card: hybrid
+  attention/Mamba MoE, 52 layers, 128 routed experts, 6 experts/token, 1 shared
+  expert, 2 KV heads, and 262K advertised max positions. Official vLLM use
+  wants `--trust_remote_code`, `--reasoning-parser nemotron_v3`, and
+  `--mamba-ssm-cache-dtype float32`, but the rapid lane used llama.cpp/SYCL for
+  a calibrated one-B70 GGUF snapshot.
+- Promoted strict one-B70 row:
+  `results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md`.
+  Representative evidence:
+  `data/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km-llamacpp-faon-cacheoff-ctx2048-confirm-realistic128-20260704T235714Z.json`.
+  Result: `50.90422891211857 tok/s` median tokens 1-100 after TTFT,
+  p10 `50.87692021463055`, mean `50.895997279462044`, median TTFT
+  `449.1593260318041 ms`, `cached_tokens=0` on all `12/12` prompts.
+  LocalMaxxing approved it as `cmr7128uq00jdmn01dn0uttm7`.
+- Template/output check: llama.cpp `--jinja` + `--reasoning off` produced
+  normal non-thinking prose, zero reasoning deltas, and no visible `<think>`
+  leakage in the promoted strict run. No manual ChatML prefill was needed.
+- Quick quality-preserving knob screen was flat: `ctx=4096` `50.731`,
+  `ctx=2048` `50.775`, `ctx=1024` `50.739`, `ub512` `50.706-50.830`,
+  `poll25` `50.856`, `poll100` `50.805`, `threads4` `50.768`,
+  `threads12` `50.838`, and `batch512` `50.799`. Treat this as an expected
+  performance snapshot around `50.7-50.9 tok/s`, not a deep optimization lane.
+- Keep F16 KV and FlashAttention as the conservative first-pass recipe. Q5/Q6
+  or Q8 GGUF variants are separate quality/performance rows if downloaded
+  later.
+
 ## Distill / Reasoning References
 
 DeepSeek-R1-Distill-Qwen 14B/32B or similar can be sampled after the practical

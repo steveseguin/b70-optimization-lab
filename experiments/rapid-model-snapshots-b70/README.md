@@ -132,6 +132,15 @@ Current promoted rapid rows:
   `results/rapid-model-snapshots-b70/deepseek-coder-v2-lite-q4km/README.md`.
   `ctx=2048` was a small standalone win over `ctx=4096`; concurrent four-GPU
   screens underreported and are support only.
+- `bartowski/nvidia_Nemotron-Cascade-2-30B-A3B-GGUF`
+  `nvidia_Nemotron-Cascade-2-30B-A3B-Q4_K_M.gguf`, llama.cpp/SYCL on one B70:
+  `50.90422891211857 tok/s` median tokens 1-100 after TTFT under the strict
+  fresh-response gate. See
+  `results/rapid-model-snapshots-b70/nemotron-cascade-2-30b-a3b-q4km/README.md`.
+  The rapid lane tried ctx, batch, ubatch, poll, and thread knobs; all landed
+  around `50.7-50.9 tok/s`, so this is a useful expected-performance snapshot
+  rather than a deep model-specific optimization result. LocalMaxxing approved
+  it as `cmr7128uq00jdmn01dn0uttm7`.
 
 ## Helpers
 
