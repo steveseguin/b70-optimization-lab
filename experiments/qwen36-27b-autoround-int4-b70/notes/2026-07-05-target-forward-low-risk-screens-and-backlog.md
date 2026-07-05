@@ -161,3 +161,21 @@ Decision:
 - keep the ordinary out-of-place sigmoid/multiply for the current recipe;
 - this is too small and compiler-sensitive to chase further unless a graph
   trace later shows `qwen3_next.full_attention.output_gate` as a new hotspot.
+
+## Follow-up diagnostic: FlashAttention serial spec mode is a no-win
+
+Hypothesis: if q_len > 1 FlashAttention is pathological for short speculative
+verification rows on XPU, serializing spec rows into q_len=1 calls could help.
+
+Result:
+
+| Mode | Summary | Median tok/s | p10 | Mean | Gate |
+| --- | --- | ---: | ---: | ---: | --- |
+| control | `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-faserial-control-20260705T181747Z-candidate-summary-20260705T181747Z.json` | `65.76072804962041` | `58.17815200727375` | `64.23660647445976` | pass |
+| `VLLM_XPU_FA_SERIAL_SPEC_MODE=progressive` | `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-faserial-progressive-20260705T181747Z-candidate-summary-20260705T181747Z.json` | `56.92913757535642` | `51.60511435923629` | `57.265795187046315` | pass |
+
+Decision:
+
+- no quality run, no LocalMaxxing submission;
+- keep normal grouped FlashAttention for the current recipe;
+- q_len > 1 FlashAttention is not the speed blocker for this Qwen27 MTP3 path.
