@@ -1,0 +1,925 @@
+# vllm-xpu-kernels diff
+diff --git a/csrc/fused_qknorm_rope.cpp b/csrc/fused_qknorm_rope.cpp
+index a76b638..b098237 100644
+--- a/csrc/fused_qknorm_rope.cpp
++++ b/csrc/fused_qknorm_rope.cpp
+@@ -368,6 +368,348 @@ class fused_qk_norm_rope_n_heads_kernel {
+   sycl::local_accessor<scalar_t_cache, 1> slm_cos_sin;
+ };
+ 
++template <
++    typename scalar_t,
++    typename scalar_t_cache,
++    int head_dim,
++    bool IS_NEOX>
++class fused_qwen3next_qk_norm_rope_kernel {
++ public:
++  static constexpr int SUB_GROUP_SIZE = 32;
++  static constexpr int NUM_ELEMS_PER_THREAD = head_dim / SUB_GROUP_SIZE;
++
++  static_assert(
++      head_dim % (SUB_GROUP_SIZE * 2) == 0, "head_dim must be divisible by 64");
++
++  fused_qwen3next_qk_norm_rope_kernel(
++      scalar_t* __restrict__ qkv_,
++      const int num_heads_q_,
++      const int num_heads_k_,
++      const float eps_,
++      const scalar_t* __restrict__ q_weight_,
++      const scalar_t* __restrict__ k_weight_,
++      const scalar_t_cache* __restrict__ cos_sin_cache_,
++      const int64_t* __restrict__ position_ids_,
++      const int num_tokens_,
++      const int rotary_dim_)
++      : qkv(qkv_),
++        num_heads_q(num_heads_q_),
++        num_heads_k(num_heads_k_),
++        eps(eps_),
++        q_weight(q_weight_),
++        k_weight(k_weight_),
++        cos_sin_cache(cos_sin_cache_),
++        position_ids(position_ids_),
++        num_tokens(num_tokens_),
++        rotary_dim(rotary_dim_) {}
++
++  void operator() [[sycl::reqd_sub_group_size(SUB_GROUP_SIZE)]] (
++      const sycl::nd_item<1>& item) const {
++    auto sg = item.get_sub_group();
++    const int lane_id = sg.get_local_linear_id();
++    const int sg_id_in_wg = sg.get_group_linear_id();
++    const int sgs_per_wg = sg.get_group_linear_range();
++    const int global_sg_id = item.get_group(0) * sgs_per_wg + sg_id_in_wg;
++
++    const int total_qk_heads = num_heads_q + num_heads_k;
++    const int token_idx = global_sg_id / total_qk_heads;
++    const int local_head_idx = global_sg_id % total_qk_heads;
++
++    if (token_idx >= num_tokens) return;
++
++    const bool is_q = local_head_idx < num_heads_q;
++    const int head_idx = is_q ? local_head_idx : local_head_idx - num_heads_q;
++    const int row_stride = (2 * num_heads_q + 2 * num_heads_k) * head_dim;
++    const int k_head_offset = 2 * num_heads_q * head_dim;
++
++    int offset_warp;
++    if (is_q) {
++      offset_warp = token_idx * row_stride + head_idx * head_dim;
++    } else {
++      offset_warp =
++          token_idx * row_stride + k_head_offset + head_idx * head_dim;
++    }
++    int offset_thread = offset_warp + lane_id * NUM_ELEMS_PER_THREAD;
++
++    float elements[NUM_ELEMS_PER_THREAD];
++    float sum_of_squares = 0.0f;
++
++#pragma unroll
++    for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++      float val = static_cast<float>(qkv[offset_thread + i]);
++      elements[i] = val;
++      sum_of_squares += val * val;
++    }
++
++    sum_of_squares =
++        sycl::reduce_over_group(sg, sum_of_squares, sycl::plus<float>());
++
++    float rms_rcp =
++        sycl::rsqrt(sum_of_squares / static_cast<float>(head_dim) + eps);
++
++    const scalar_t* weight = is_q ? q_weight : k_weight;
++#pragma unroll
++    for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++      int dim = lane_id * NUM_ELEMS_PER_THREAD + i;
++      float w = 1.0f + static_cast<float>(weight[dim]);
++      elements[i] *= rms_rcp * w;
++    }
++
++    const int64_t pos_id = position_ids[token_idx];
++    const int embed_dim = rotary_dim / 2;
++    const scalar_t_cache* cache_ptr = cos_sin_cache + pos_id * rotary_dim;
++    const scalar_t_cache* cos_ptr = cache_ptr;
++    const scalar_t_cache* sin_ptr = cache_ptr + embed_dim;
++
++    const int rotary_lanes = rotary_dim / NUM_ELEMS_PER_THREAD;
++
++    if (lane_id < rotary_lanes) {
++      if constexpr (!IS_NEOX) {
++#pragma unroll
++        for (int i = 0; i < NUM_ELEMS_PER_THREAD / 2; ++i) {
++          const int idx0 = 2 * i;
++          const int idx1 = 2 * i + 1;
++          const int dim_idx = lane_id * NUM_ELEMS_PER_THREAD + idx0;
++
++          const float val0 = elements[idx0];
++          const float val1 = elements[idx1];
++
++          const int half_dim = dim_idx / 2;
++          const float cos_val = static_cast<float>(cos_ptr[half_dim]);
++          const float sin_val = static_cast<float>(sin_ptr[half_dim]);
++
++          elements[idx0] = val0 * cos_val - val1 * sin_val;
++          elements[idx1] = val0 * sin_val + val1 * cos_val;
++        }
++      } else {
++        const int pair_offset = (rotary_dim / 2) / NUM_ELEMS_PER_THREAD;
++
++#pragma unroll
++        for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++          float partner_val =
++              sycl::permute_group_by_xor(sg, elements[i], pair_offset);
++
++          if (lane_id < pair_offset) {
++            partner_val = -partner_val;
++          }
++
++          int dim_idx = lane_id * NUM_ELEMS_PER_THREAD + i;
++          dim_idx = (dim_idx * 2) % rotary_dim;
++          int half_dim = dim_idx / 2;
++
++          const float cos_val = static_cast<float>(cos_ptr[half_dim]);
++          const float sin_val = static_cast<float>(sin_ptr[half_dim]);
++
++          elements[i] = elements[i] * cos_val + partner_val * sin_val;
++        }
++      }
++    }
++
++#pragma unroll
++    for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++      qkv[offset_thread + i] = static_cast<scalar_t>(elements[i]);
++    }
++  }
++
++ private:
++  scalar_t* __restrict__ qkv;
++  const int num_heads_q;
++  const int num_heads_k;
++  const float eps;
++  const scalar_t* __restrict__ q_weight;
++  const scalar_t* __restrict__ k_weight;
++  const scalar_t_cache* __restrict__ cos_sin_cache;
++  const int64_t* __restrict__ position_ids;
++  const int num_tokens;
++  const int rotary_dim;
++};
++
++template <
++    typename scalar_t,
++    typename scalar_t_cache,
++    int head_dim,
++    bool IS_NEOX,
++    int HEADS_PER_SG>
++class fused_qwen3next_qk_norm_rope_n_heads_kernel {
++ public:
++  static constexpr int SUB_GROUP_SIZE = 32;
++  static constexpr int NUM_ELEMS_PER_THREAD = head_dim / SUB_GROUP_SIZE;
++
++  static_assert(
++      head_dim % (SUB_GROUP_SIZE * 2) == 0, "head_dim must be divisible by 64");
++
++  fused_qwen3next_qk_norm_rope_n_heads_kernel(
++      scalar_t* __restrict__ qkv_,
++      const int num_heads_q_,
++      const int num_heads_k_,
++      const float eps_,
++      const scalar_t* __restrict__ q_weight_,
++      const scalar_t* __restrict__ k_weight_,
++      const scalar_t_cache* __restrict__ cos_sin_cache_,
++      const int64_t* __restrict__ position_ids_,
++      const int num_tokens_,
++      const int rotary_dim_,
++      sycl::local_accessor<scalar_t_cache, 1> slm_cos_sin_)
++      : qkv(qkv_),
++        num_heads_q(num_heads_q_),
++        num_heads_k(num_heads_k_),
++        eps(eps_),
++        q_weight(q_weight_),
++        k_weight(k_weight_),
++        cos_sin_cache(cos_sin_cache_),
++        position_ids(position_ids_),
++        num_tokens(num_tokens_),
++        rotary_dim(rotary_dim_),
++        slm_cos_sin(slm_cos_sin_) {}
++
++  void operator() [[sycl::reqd_sub_group_size(SUB_GROUP_SIZE)]] (
++      const sycl::nd_item<1>& item) const {
++    auto sg = item.get_sub_group();
++    const int lane_id = sg.get_local_linear_id();
++    const int sg_id_in_wg = sg.get_group_linear_id();
++    const int sgs_per_wg = sg.get_group_linear_range();
++    const int global_sg_id = item.get_group(0) * sgs_per_wg + sg_id_in_wg;
++
++    const int total_qk_heads = num_heads_q + num_heads_k;
++    const int head_chunks_per_token =
++        (total_qk_heads + HEADS_PER_SG - 1) / HEADS_PER_SG;
++
++    const int token_idx = global_sg_id / head_chunks_per_token;
++    const int head_chunk = global_sg_id % head_chunks_per_token;
++    const int first_head = head_chunk * HEADS_PER_SG;
++    const int num_heads_this_sg = (first_head + HEADS_PER_SG <= total_qk_heads)
++                                      ? HEADS_PER_SG
++                                      : (total_qk_heads - first_head);
++
++    if (token_idx >= num_tokens) return;
++
++    const int64_t pos_id = position_ids[token_idx];
++    const int embed_dim = rotary_dim / 2;
++    const scalar_t_cache* cache_ptr = cos_sin_cache + pos_id * rotary_dim;
++
++    scalar_t_cache* my_slm =
++        slm_cos_sin.template get_multi_ptr<sycl::access::decorated::no>()
++            .get() +
++        sg_id_in_wg * rotary_dim;
++
++    const int elems_per_lane =
++        (rotary_dim + SUB_GROUP_SIZE - 1) / SUB_GROUP_SIZE;
++    for (int i = 0; i < elems_per_lane; i++) {
++      int idx = lane_id + i * SUB_GROUP_SIZE;
++      if (idx < rotary_dim) {
++        my_slm[idx] = cache_ptr[idx];
++      }
++    }
++    sycl::group_barrier(sg);
++
++    const scalar_t_cache* cos_ptr = my_slm;
++    const scalar_t_cache* sin_ptr = my_slm + embed_dim;
++    const int rotary_lanes = rotary_dim / NUM_ELEMS_PER_THREAD;
++
++    float q_w[NUM_ELEMS_PER_THREAD];
++    float k_w[NUM_ELEMS_PER_THREAD];
++#pragma unroll
++    for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++      int dim = lane_id * NUM_ELEMS_PER_THREAD + i;
++      // Qwen3Next uses Gemma RMSNorm semantics: multiply by (1 + weight).
++      q_w[i] = 1.0f + static_cast<float>(q_weight[dim]);
++      k_w[i] = 1.0f + static_cast<float>(k_weight[dim]);
++    }
++
++    const int row_stride =
++        (2 * num_heads_q + 2 * num_heads_k) * head_dim;
++    const int k_head_offset = 2 * num_heads_q * head_dim;
++
++    for (int k = 0; k < num_heads_this_sg; ++k) {
++      const int local_head_idx = first_head + k;
++      const bool is_q = local_head_idx < num_heads_q;
++      const int head_idx = is_q ? local_head_idx : local_head_idx - num_heads_q;
++
++      int offset_warp;
++      if (is_q) {
++        offset_warp = token_idx * row_stride + head_idx * head_dim;
++      } else {
++        offset_warp =
++            token_idx * row_stride + k_head_offset + head_idx * head_dim;
++      }
++      int offset_thread = offset_warp + lane_id * NUM_ELEMS_PER_THREAD;
++
++      float elements[NUM_ELEMS_PER_THREAD];
++      float sum_of_squares = 0.0f;
++
++#pragma unroll
++      for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++        float val = static_cast<float>(qkv[offset_thread + i]);
++        elements[i] = val;
++        sum_of_squares += val * val;
++      }
++
++      sum_of_squares =
++          sycl::reduce_over_group(sg, sum_of_squares, sycl::plus<float>());
++
++      float rms_rcp =
++          sycl::rsqrt(sum_of_squares / static_cast<float>(head_dim) + eps);
++
++#pragma unroll
++      for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++        elements[i] *= rms_rcp * (is_q ? q_w[i] : k_w[i]);
++      }
++
++      if (lane_id < rotary_lanes) {
++        if constexpr (!IS_NEOX) {
++#pragma unroll
++          for (int i = 0; i < NUM_ELEMS_PER_THREAD / 2; ++i) {
++            const int idx0 = 2 * i;
++            const int idx1 = 2 * i + 1;
++            const int dim_idx = lane_id * NUM_ELEMS_PER_THREAD + idx0;
++            const float val0 = elements[idx0];
++            const float val1 = elements[idx1];
++            const int half_dim = dim_idx / 2;
++            const float cos_val = static_cast<float>(cos_ptr[half_dim]);
++            const float sin_val = static_cast<float>(sin_ptr[half_dim]);
++            elements[idx0] = val0 * cos_val - val1 * sin_val;
++            elements[idx1] = val0 * sin_val + val1 * cos_val;
++          }
++        } else {
++          const int pair_offset = (rotary_dim / 2) / NUM_ELEMS_PER_THREAD;
++#pragma unroll
++          for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++            float partner_val =
++                sycl::permute_group_by_xor(sg, elements[i], pair_offset);
++            if (lane_id < pair_offset) {
++              partner_val = -partner_val;
++            }
++            int dim_idx = lane_id * NUM_ELEMS_PER_THREAD + i;
++            dim_idx = (dim_idx * 2) % rotary_dim;
++            int half_dim = dim_idx / 2;
++            const float cos_val = static_cast<float>(cos_ptr[half_dim]);
++            const float sin_val = static_cast<float>(sin_ptr[half_dim]);
++            elements[i] = elements[i] * cos_val + partner_val * sin_val;
++          }
++        }
++      }
++
++#pragma unroll
++      for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++        qkv[offset_thread + i] = static_cast<scalar_t>(elements[i]);
++      }
++    }
++  }
++
++ private:
++  scalar_t* __restrict__ qkv;
++  const int num_heads_q;
++  const int num_heads_k;
++  const float eps;
++  const scalar_t* __restrict__ q_weight;
++  const scalar_t* __restrict__ k_weight;
++  const scalar_t_cache* __restrict__ cos_sin_cache;
++  const int64_t* __restrict__ position_ids;
++  const int num_tokens;
++  const int rotary_dim;
++  sycl::local_accessor<scalar_t_cache, 1> slm_cos_sin;
++};
++
+ template <typename scalar_t, typename scalar_t_cache>
+ void launch_fused_qk_norm_rope(
+     torch::Tensor& qkv,
+@@ -530,6 +872,159 @@ void launch_fused_qk_norm_rope(
+ #undef DISPATCH_KERNEL
+ }
+ 
++template <typename scalar_t, typename scalar_t_cache>
++void launch_fused_qwen3next_qk_norm_rope(
++    torch::Tensor& qkv,
++    int num_tokens,
++    int num_heads_q,
++    int num_heads_k,
++    int head_dim,
++    int rotary_dim,
++    float eps,
++    torch::Tensor& q_weight,
++    torch::Tensor& k_weight,
++    torch::Tensor& cos_sin_cache,
++    bool is_neox,
++    torch::Tensor& position_ids,
++    int forced_token_heads_per_warp) {
++  using sycl_t = typename vllm::xpu::SyclTypeTrait<scalar_t>::Type;
++  using sycl_cache_t = typename vllm::xpu::SyclTypeTrait<scalar_t_cache>::Type;
++
++  constexpr int block_size = 256;
++  constexpr int sgs_per_wg = block_size / 32;
++
++  const int total_qk_heads = num_heads_q + num_heads_k;
++
++  auto qkv_ptr = reinterpret_cast<sycl_t*>(qkv.data_ptr<scalar_t>());
++  auto q_weight_ptr =
++      reinterpret_cast<const sycl_t*>(q_weight.data_ptr<scalar_t>());
++  auto k_weight_ptr =
++      reinterpret_cast<const sycl_t*>(k_weight.data_ptr<scalar_t>());
++  auto cos_sin_cache_ptr = reinterpret_cast<const sycl_cache_t*>(
++      cos_sin_cache.data_ptr<scalar_t_cache>());
++  auto position_ids_ptr = position_ids.data_ptr<int64_t>();
++
++  auto& queue = vllm::xpu::vllmGetQueue();
++
++  int heads_per_sg = 1;
++  if (forced_token_heads_per_warp > 0) {
++    heads_per_sg = forced_token_heads_per_warp;
++  }
++  if (heads_per_sg > total_qk_heads) {
++    heads_per_sg = total_qk_heads;
++  }
++
++#define DISPATCH_KERNEL(HEAD_DIM, IS_NEOX_V, HEADS_PER_SG_V)              \
++  do {                                                                    \
++    if constexpr (HEADS_PER_SG_V == 1) {                                  \
++      const int total_sgs = num_tokens * total_qk_heads;                  \
++      const int grid_sz = (total_sgs + sgs_per_wg - 1) / sgs_per_wg;      \
++      queue.submit([&](sycl::handler& cgh) {                              \
++        cgh.parallel_for(                                                 \
++            sycl::nd_range<1>(grid_sz * block_size, block_size),          \
++            fused_qwen3next_qk_norm_rope_kernel<                          \
++                sycl_t,                                                   \
++                sycl_cache_t,                                             \
++                HEAD_DIM,                                                 \
++                IS_NEOX_V>(                                               \
++                qkv_ptr,                                                  \
++                num_heads_q,                                              \
++                num_heads_k,                                              \
++                eps,                                                      \
++                q_weight_ptr,                                             \
++                k_weight_ptr,                                             \
++                cos_sin_cache_ptr,                                        \
++                position_ids_ptr,                                         \
++                num_tokens,                                               \
++                rotary_dim));                                             \
++      });                                                                 \
++    } else {                                                              \
++      const int head_chunks_per_token =                                   \
++          (total_qk_heads + HEADS_PER_SG_V - 1) / HEADS_PER_SG_V;         \
++      const int total_sgs = num_tokens * head_chunks_per_token;           \
++      const int grid_sz = (total_sgs + sgs_per_wg - 1) / sgs_per_wg;      \
++      const int slm_size = sgs_per_wg * rotary_dim;                       \
++      queue.submit([&](sycl::handler& cgh) {                              \
++        sycl::local_accessor<sycl_cache_t, 1> slm(                        \
++            sycl::range<1>(slm_size), cgh);                                \
++        cgh.parallel_for(                                                 \
++            sycl::nd_range<1>(grid_sz * block_size, block_size),          \
++            fused_qwen3next_qk_norm_rope_n_heads_kernel<                  \
++                sycl_t,                                                   \
++                sycl_cache_t,                                             \
++                HEAD_DIM,                                                 \
++                IS_NEOX_V,                                                \
++                HEADS_PER_SG_V>(                                          \
++                qkv_ptr,                                                  \
++                num_heads_q,                                              \
++                num_heads_k,                                              \
++                eps,                                                      \
++                q_weight_ptr,                                             \
++                k_weight_ptr,                                             \
++                cos_sin_cache_ptr,                                        \
++                position_ids_ptr,                                         \
++                num_tokens,                                               \
++                rotary_dim,                                               \
++                slm));                                                    \
++      });                                                                 \
++    }                                                                     \
++  } while (0)
++
++#define DISPATCH_HEADS_PER_SG(HEAD_DIM, IS_NEOX_V) \
++  do {                                             \
++    switch (heads_per_sg) {                        \
++      case 1:                                      \
++        DISPATCH_KERNEL(HEAD_DIM, IS_NEOX_V, 1);   \
++        break;                                     \
++      case 2:                                      \
++        DISPATCH_KERNEL(HEAD_DIM, IS_NEOX_V, 2);   \
++        break;                                     \
++      case 4:                                      \
++        DISPATCH_KERNEL(HEAD_DIM, IS_NEOX_V, 4);   \
++        break;                                     \
++      case 8:                                      \
++        DISPATCH_KERNEL(HEAD_DIM, IS_NEOX_V, 8);   \
++        break;                                     \
++      default:                                     \
++        DISPATCH_KERNEL(HEAD_DIM, IS_NEOX_V, 1);   \
++        break;                                     \
++    }                                              \
++  } while (0)
++
++#define DISPATCH_HEAD_DIM(HEAD_DIM)           \
++  do {                                        \
++    if (is_neox) {                            \
++      DISPATCH_HEADS_PER_SG(HEAD_DIM, true);  \
++    } else {                                  \
++      DISPATCH_HEADS_PER_SG(HEAD_DIM, false); \
++    }                                         \
++  } while (0)
++
++  switch (head_dim) {
++    case 64:
++      DISPATCH_HEAD_DIM(64);
++      break;
++    case 128:
++      DISPATCH_HEAD_DIM(128);
++      break;
++    case 256:
++      DISPATCH_HEAD_DIM(256);
++      break;
++    case 512:
++      DISPATCH_HEAD_DIM(512);
++      break;
++    default:
++      TORCH_CHECK(
++          false,
++          "Unsupported head dimension for fused_qwen3next_qk_norm_rope: ",
++          head_dim);
++  }
++
++#undef DISPATCH_HEAD_DIM
++#undef DISPATCH_HEADS_PER_SG
++#undef DISPATCH_KERNEL
++}
++
+ }  // namespace vllm
+ 
+ void fused_qk_norm_rope(
+@@ -619,3 +1114,91 @@ void fused_qk_norm_rope(
+         });
+   });
+ }
++
++void fused_qwen3next_qk_norm_rope(
++    torch::Tensor& qkv,
++    int64_t num_heads_q,
++    int64_t num_heads_k,
++    int64_t head_dim,
++    double eps,
++    torch::Tensor& q_weight,
++    torch::Tensor& k_weight,
++    torch::Tensor& cos_sin_cache,
++    bool is_neox,
++    torch::Tensor& position_ids,
++    int64_t forced_token_heads_per_warp) {
++  const at::DeviceGuard device_guard(qkv.device());
++
++  CHECK_DEVICE(qkv);
++  CHECK_CONTIGUOUS(qkv);
++  CHECK_DEVICE(position_ids);
++  CHECK_CONTIGUOUS(position_ids);
++  CHECK_DEVICE(q_weight);
++  CHECK_CONTIGUOUS(q_weight);
++  CHECK_DEVICE(k_weight);
++  CHECK_CONTIGUOUS(k_weight);
++  CHECK_DEVICE(cos_sin_cache);
++  CHECK_CONTIGUOUS(cos_sin_cache);
++
++  TORCH_CHECK(
++      position_ids.scalar_type() == torch::kInt64,
++      "position_ids must be int64");
++  TORCH_CHECK(
++      qkv.dim() == 2,
++      "Qwen3Next gated QKV tensor must be 2D: [num_tokens, "
++      "(2*num_heads_q+2*num_heads_k)*head_dim]");
++  TORCH_CHECK(position_ids.dim() == 1, "Position IDs must be 1D: [num_tokens]");
++  TORCH_CHECK(q_weight.dim() == 1, "Query weights must be 1D: [head_dim]");
++  TORCH_CHECK(k_weight.dim() == 1, "Key weights must be 1D: [head_dim]");
++  TORCH_CHECK(
++      cos_sin_cache.dim() == 2,
++      "Cos/sin cache must be 2D: [max_position, rotary_dim]");
++  TORCH_CHECK(
++      q_weight.size(0) == head_dim,
++      "Query weights size must match head dimension");
++  TORCH_CHECK(
++      k_weight.size(0) == head_dim,
++      "Key weights size must match head dimension");
++  TORCH_CHECK(cos_sin_cache.size(1) % 2 == 0, "rotary_dim must be even");
++  TORCH_CHECK(
++      cos_sin_cache.size(1) <= head_dim,
++      "rotary_dim must be less than or equal to head_dim");
++  TORCH_CHECK(
++      qkv.scalar_type() == q_weight.scalar_type() &&
++          qkv.scalar_type() == k_weight.scalar_type(),
++      "qkv, q_weight and k_weight must have the same dtype");
++
++  int64_t num_tokens = qkv.size(0);
++  TORCH_CHECK(
++      position_ids.size(0) == num_tokens,
++      "Number of tokens in position_ids must match QKV");
++
++  int64_t total_width = (2 * num_heads_q + 2 * num_heads_k) * head_dim;
++  TORCH_CHECK(
++      qkv.size(1) == total_width,
++      "Qwen3Next gated QKV width must match [q, gate, k, v] layout");
++
++  VLLM_DISPATCH_HALF_TYPES(qkv.scalar_type(), "fused_qwen3next_qk_norm_rope", [&] {
++    using qkv_scalar_t = scalar_t;
++    VLLM_DISPATCH_FLOATING_TYPES(
++        cos_sin_cache.scalar_type(), "fused_qwen3next_qk_norm_rope_cache", [&] {
++          using cache_scalar_t = scalar_t;
++          vllm::launch_fused_qwen3next_qk_norm_rope<
++              qkv_scalar_t,
++              cache_scalar_t>(
++              qkv,
++              static_cast<int>(num_tokens),
++              static_cast<int>(num_heads_q),
++              static_cast<int>(num_heads_k),
++              static_cast<int>(head_dim),
++              static_cast<int>(cos_sin_cache.size(1)),
++              static_cast<float>(eps),
++              q_weight,
++              k_weight,
++              cos_sin_cache,
++              is_neox,
++              position_ids,
++              static_cast<int>(forced_token_heads_per_warp));
++        });
++  });
++}
+diff --git a/csrc/ops.h b/csrc/ops.h
+index 4fee815..b7e64d9 100644
+--- a/csrc/ops.h
++++ b/csrc/ops.h
+@@ -95,6 +95,19 @@ void fused_qk_norm_rope(
+     torch::Tensor& position_ids,
+     int64_t forced_token_heads_per_warp);
+ 
++void fused_qwen3next_qk_norm_rope(
++    torch::Tensor& qkv,
++    int64_t num_heads_q,
++    int64_t num_heads_k,
++    int64_t head_dim,
++    double eps,
++    torch::Tensor& q_weight,
++    torch::Tensor& k_weight,
++    torch::Tensor& cos_sin_cache,
++    bool is_neox,
++    torch::Tensor& position_ids,
++    int64_t forced_token_heads_per_warp);
++
+ void reshape_and_cache(
+     torch::Tensor& key,
+     torch::Tensor& value,
+diff --git a/csrc/torch_bindings.cpp b/csrc/torch_bindings.cpp
+index d36c6a2..88caac7 100644
+--- a/csrc/torch_bindings.cpp
++++ b/csrc/torch_bindings.cpp
+@@ -116,6 +116,18 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
+       "int forced_token_heads_per_warp=-1) -> ()");
+   ops.impl("fused_qk_norm_rope", torch::kXPU, &fused_qk_norm_rope);
+ 
++  // Qwen3Next gated QKV layout: [q, gate, k, v]. Applies Gemma-style
++  // RMSNorm (1 + weight) and RoPE to q/k in-place while leaving gate/v intact.
++  ops.def(
++      "fused_qwen3next_qk_norm_rope(Tensor! qkv, int num_heads_q, "
++      "int num_heads_k, int head_dim, float eps, Tensor q_weight, "
++      "Tensor k_weight, Tensor cos_sin_cache, bool is_neox, "
++      "Tensor position_ids, int forced_token_heads_per_warp=-1) -> ()");
++  ops.impl(
++      "fused_qwen3next_qk_norm_rope",
++      torch::kXPU,
++      &fused_qwen3next_qk_norm_rope);
++
+   // Compute FP8 quantized tensor for given scaling factor.
+   ops.def(
+       "static_scaled_fp8_quant(Tensor! result, Tensor input, Tensor scale, "
+diff --git a/tests/test_fused_qk_norm_rope.py b/tests/test_fused_qk_norm_rope.py
+index 95471fe..0bba8c2 100644
+--- a/tests/test_fused_qk_norm_rope.py
++++ b/tests/test_fused_qk_norm_rope.py
+@@ -112,6 +112,47 @@ def _reference_fused_qk_norm_rope(
+     return torch.cat([q, k, v], dim=-1)
+ 
+ 
++def _reference_fused_qwen3next_qk_norm_rope(
++    qkv: torch.Tensor,
++    num_heads_q: int,
++    num_heads_kv: int,
++    head_dim: int,
++    eps: float,
++    q_weight: torch.Tensor,
++    k_weight: torch.Tensor,
++    cos_sin_cache: torch.Tensor,
++    is_neox: bool,
++    positions: torch.Tensor,
++) -> torch.Tensor:
++    """Pure PyTorch reference for Qwen3Next gated [q, gate, k, v]."""
++    q_size = num_heads_q * head_dim
++    kv_size = num_heads_kv * head_dim
++
++    q, gate, k, v = qkv.split([q_size, q_size, kv_size, kv_size], dim=-1)
++
++    # Qwen3Next uses Gemma RMSNorm, where the learned weight is a delta and
++    # the effective multiplicative weight is (1 + weight).
++    q_by_head = q.view(-1, num_heads_q, head_dim)
++    q_by_head = _rms_norm(q_by_head, q_weight + 1, eps)
++
++    k_by_head = k.view(-1, num_heads_kv, head_dim)
++    k_by_head = _rms_norm(k_by_head, k_weight + 1, eps)
++
++    rotary_dim = cos_sin_cache.shape[1]
++    embed_dim = rotary_dim // 2
++    cos_sin = cos_sin_cache[positions]
++    cos = cos_sin[:, :embed_dim].float()
++    sin = cos_sin[:, embed_dim:].float()
++
++    q_by_head = _apply_rotary_emb(q_by_head, cos, sin, is_neox)
++    k_by_head = _apply_rotary_emb(k_by_head, cos, sin, is_neox)
++
++    q = q_by_head.view(-1, q_size)
++    k = k_by_head.view(-1, kv_size)
++
++    return torch.cat([q, gate, k, v], dim=-1)
++
++
+ @pytest.mark.parametrize("device", XPU_DEVICES)
+ @pytest.mark.parametrize("dtype", DTYPES)
+ @pytest.mark.parametrize("is_neox", IS_NEOX)
+@@ -205,6 +246,86 @@ def test_fused_qk_norm_rope(
+     )
+ 
+ 
++@pytest.mark.parametrize("device", XPU_DEVICES)
++@pytest.mark.parametrize("num_tokens", [1, 4, 32])
++@pytest.mark.parametrize("forced_token_heads_per_warp", [-1, 1])
++@torch.inference_mode()
++def test_fused_qwen3next_qk_norm_rope_qwen27_shape(
++    device: str,
++    num_tokens: int,
++    forced_token_heads_per_warp: int,
++) -> None:
++    torch.manual_seed(20260705 + num_tokens)
++    torch.set_default_device("xpu")
++    torch.xpu.set_device(device)
++
++    dtype = torch.bfloat16
++    is_neox = True
++    eps = 1e-6
++    head_dim = 256
++    rotary_dim = 64
++    num_heads_q = 24
++    num_heads_kv = 4
++    max_position = 4096
++
++    q_size = num_heads_q * head_dim
++    kv_size = num_heads_kv * head_dim
++    total_dim = 2 * q_size + 2 * kv_size
++    qkv_base = torch.randn(num_tokens, total_dim, dtype=dtype, device=device)
++    qkv_fused = qkv_base.clone()
++    positions = torch.randint(0,
++                              max_position, (num_tokens, ),
++                              dtype=torch.long,
++                              device=device)
++
++    q_weight = torch.empty(head_dim, dtype=dtype, device=device)
++    q_weight.normal_(mean=0.0, std=0.05)
++    k_weight = torch.empty(head_dim, dtype=dtype, device=device)
++    k_weight.normal_(mean=0.0, std=0.05)
++
++    inv_freq = 1.0 / (10000.0**(
++        torch.arange(0, rotary_dim // 2, dtype=torch.float32, device=device) /
++        (rotary_dim // 2)))
++    t = torch.arange(max_position, dtype=torch.float32, device=device)
++    freqs = torch.outer(t, inv_freq)
++    cos_sin_cache = torch.cat([freqs.cos(), freqs.sin()], dim=-1)
++
++    ref_result = _reference_fused_qwen3next_qk_norm_rope(
++        qkv_base,
++        num_heads_q,
++        num_heads_kv,
++        head_dim,
++        eps,
++        q_weight,
++        k_weight,
++        cos_sin_cache,
++        is_neox,
++        positions,
++    )
++
++    torch.ops._C.fused_qwen3next_qk_norm_rope(
++        qkv_fused,
++        num_heads_q,
++        num_heads_kv,
++        head_dim,
++        eps,
++        q_weight,
++        k_weight,
++        cos_sin_cache,
++        is_neox,
++        positions,
++        forced_token_heads_per_warp,
++    )
++
++    torch.testing.assert_close(qkv_fused, ref_result, atol=1e-2, rtol=1e-2)
++
++    # The fused op must leave the gate and V slices untouched.
++    gate = slice(q_size, 2 * q_size)
++    value = slice(2 * q_size + kv_size, total_dim)
++    torch.testing.assert_close(qkv_fused[:, gate], qkv_base[:, gate])
++    torch.testing.assert_close(qkv_fused[:, value], qkv_base[:, value])
++
++
+ @pytest.mark.parametrize("device", XPU_DEVICES)
+ @pytest.mark.parametrize("dtype", DTYPES)
+ @pytest.mark.parametrize("is_neox", IS_NEOX)
+
+# vllm diff
+diff --git a/vllm/_custom_ops.py b/vllm/_custom_ops.py
+index 19bb4b7b5..216547dd7 100644
+--- a/vllm/_custom_ops.py
++++ b/vllm/_custom_ops.py
+@@ -468,6 +468,34 @@ def fused_qk_norm_rope(
+     )
+ 
+ 
++def fused_qwen3next_qk_norm_rope(
++    qkv: torch.Tensor,
++    num_heads_q: int,
++    num_heads_k: int,
++    head_dim: int,
++    eps: float,
++    q_weight: torch.Tensor,
++    k_weight: torch.Tensor,
++    cos_sin_cache: torch.Tensor,
++    is_neox: bool,
++    position_ids: torch.Tensor,
++    forced_token_heads_per_warp: int = -1,
++) -> None:
++    torch.ops._C.fused_qwen3next_qk_norm_rope(
++        qkv,
++        num_heads_q,
++        num_heads_k,
++        head_dim,
++        eps,
++        q_weight,
++        k_weight,
++        cos_sin_cache,
++        is_neox,
++        position_ids,
++        forced_token_heads_per_warp,
++    )
++
++
+ def apply_repetition_penalties_torch(
+     logits: torch.Tensor,
+     prompt_mask: torch.Tensor,
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+index db13f533e..4f28c45a5 100644
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -96,6 +96,10 @@ def _env_int(name: str, default: int) -> int:
+         return default
+ 
+ 
++def _env_enabled(name: str) -> bool:
++    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
++
++
+ def _tensor_digest(tensor: torch.Tensor, row: int) -> dict[str, object]:
+     row_tensor = tensor[row].detach().to(torch.float32)
+     row_cpu = row_tensor.cpu()
+@@ -498,6 +502,48 @@ class Qwen3NextAttention(nn.Module):
+         with timed_region("qwen3_next.full_attention.qkv_proj"):
+             qkv, _ = self.qkv_proj(hidden_states)
+ 
++        fused_qk_norm_rope = False
++        if (
++            self.attn_output_gate
++            and qkv.device.type == "xpu"
++            and _env_enabled("VLLM_XPU_QWEN3NEXT_FUSED_QK_ROPE")
++            and self.q_norm.weight.dtype == qkv.dtype
++            and self.k_norm.weight.dtype == qkv.dtype
++        ):
++            positions_1d: torch.Tensor | None = None
++            if positions.ndim == 1:
++                positions_1d = positions
++            elif positions.ndim == 2 and positions.shape[0] == 3:
++                # Text-only M-RoPE repeats T/H/W positions. This env-gated
++                # experimental path assumes that text-only condition, matching
++                # the existing MRotaryEmbedding XPU fast path.
++                positions_1d = positions[0]
++            if positions_1d is not None and positions_1d.is_contiguous():
++                try:
++                    from vllm import _custom_ops as ops
++
++                    cos_sin_cache = self.rotary_emb._match_cos_sin_cache_dtype(
++                        qkv)
++                    with timed_region(
++                            "qwen3_next.full_attention.fused_qk_norm_rope"):
++                        ops.fused_qwen3next_qk_norm_rope(
++                            qkv,
++                            self.num_heads,
++                            self.num_kv_heads,
++                            self.head_dim,
++                            self.q_norm.variance_epsilon,
++                            self.q_norm.weight,
++                            self.k_norm.weight,
++                            cos_sin_cache,
++                            self.rotary_emb.is_neox_style,
++                            positions_1d,
++                        )
++                    fused_qk_norm_rope = True
++                except Exception:
++                    logger.exception(
++                        "Qwen3Next fused qk-norm+rope failed; falling back")
++                    fused_qk_norm_rope = False
++
+         if self.attn_output_gate:
+             q_gate, k, v = qkv.split(
+                 [self.q_size * 2, self.kv_size, self.kv_size], dim=-1
+@@ -510,16 +556,18 @@ class Qwen3NextAttention(nn.Module):
+         else:
+             q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
+ 
+-        with timed_region("qwen3_next.full_attention.qk_norm"):
+-            q = self.q_norm(q.view(-1, self.num_heads, self.head_dim)).view(
+-                -1, self.num_heads * self.head_dim
+-            )
+-            k = self.k_norm(k.view(-1, self.num_kv_heads, self.head_dim)).view(
+-                -1, self.num_kv_heads * self.head_dim
+-            )
++        if not fused_qk_norm_rope:
++            with timed_region("qwen3_next.full_attention.qk_norm"):
++                q = self.q_norm(q.view(-1, self.num_heads, self.head_dim)).view(
++                    -1, self.num_heads * self.head_dim
++                )
++                k = self.k_norm(k.view(-1, self.num_kv_heads,
++                                       self.head_dim)).view(
++                    -1, self.num_kv_heads * self.head_dim
++                )
+ 
+-        with timed_region("qwen3_next.full_attention.rotary"):
+-            q, k = self.rotary_emb(positions, q, k)
++            with timed_region("qwen3_next.full_attention.rotary"):
++                q, k = self.rotary_emb(positions, q, k)
+ 
+         with timed_region("qwen3_next.full_attention.attn"):
+             attn_output = self.attn(q, k, v)

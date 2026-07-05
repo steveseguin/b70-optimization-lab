@@ -106,6 +106,15 @@ Fastest quality-gated practical variant:
   lost slightly to same-window controls. Next Qwen27 speed work should be real
   source/kernel work, led by GDN output-norm specialization or safe removal of
   GDN zero-fill scratch, with unit parity before endpoint claims;
+- QK-norm + RoPE fusion spike closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-qk-norm-rope-fused-spike-no-win.md`.
+  A default-off Qwen3Next-specific XPU op for the gated `[q, gate, k, v]`
+  layout passed direct BF16 parity, but the strict fresh endpoint run regressed
+  to `45.980 tok/s` versus the `65.276 tok/s` record. The patch is preserved
+  at
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-qk-norm-rope-fused-spike-20260705.patch`.
+  Do not repeat this endpoint lane unless a new kernel first beats the separate
+  Q/K norm + RoPE primitives in a standalone microbench;
 - latest EAGLE3 compatibility retest:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and

@@ -1,6 +1,6 @@
 # Qwen3.6 27B AutoRound Handoff
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 This is the bookmark for `Intel/Qwen3.6-27B-int4-AutoRound` on Intel Arc Pro
 B70.
@@ -176,9 +176,17 @@ Current next-execution plan:
 - closed target-forward quick screens and next backlog:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
   M-RoPE text-only fast path and GDN fallback `prefill` only both lost
-  slightly to controls under the strict fresh gate. The next credible lane is
-  source/kernel work around GDN output norm, GDN zero-fill scratch, QK-norm/RoPE
-  fusion, or full-attention output-gate fusion;
+  slightly to controls under the strict fresh gate;
+- closed QK-norm + RoPE fusion spike:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-qk-norm-rope-fused-spike-no-win.md`.
+  The Qwen3Next-specific gated-layout XPU fusion passed direct BF16 parity but
+  regressed the strict fresh endpoint to `45.980 tok/s`, far below the
+  `65.276 tok/s` record. Preserve the patch for reference:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-qk-norm-rope-fused-spike-20260705.patch`.
+  Do not repeat this endpoint lane unless a new kernel first wins in a
+  standalone microbench. The next credible target-forward source/kernel lanes
+  are GDN output norm, GDN zero-fill scratch, or full-attention output-gate
+  fusion;
 - current focus: the standalone native compact full-vocab LM-head top-1 /
   candidate-max route is closed no-win, and the cheap oneDNN Graph shortcut is
   also closed. A diagnostic `MatMul -> ReduceMax` partition inspector found

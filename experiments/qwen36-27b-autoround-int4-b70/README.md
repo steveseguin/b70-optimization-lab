@@ -207,7 +207,16 @@ Next milestone:
     `prefill` only (`65.655` vs control `65.967`) both passed the strict fresh
     gate but did not beat controls. Continue with source/kernel work, not more
     easy env knobs.
-16. Latest variable-depth source precheck:
+16. Latest QK-norm + RoPE fusion spike:
+    `notes/2026-07-05-qk-norm-rope-fused-spike-no-win.md`.
+    A default-off Qwen3Next-specific XPU fusion for the gated
+    `[q, gate, k, v]` layout passed direct BF16 parity, but regressed the
+    strict fresh endpoint to `45.980 tok/s` versus the `65.276 tok/s` record.
+    The patch is preserved at
+    `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-qk-norm-rope-fused-spike-20260705.patch`.
+    Do not repeat this endpoint lane unless a new kernel first beats the
+    existing separate Q/K norm + RoPE primitives in a standalone microbench.
+17. Latest variable-depth source precheck:
     `notes/2026-07-04-dynamic-drafter-depth-partial-group-crash.md`.
     A default-off prototype that actually shortened the MTP proposer loop
     crashed with an XPU indexing assert when it created partial speculative
@@ -217,14 +226,14 @@ Next milestone:
     Do not retry dynamic depth by changing only sampler placeholder handling;
     partial groups need explicit support across proposer output, verifier
     metadata, sampler rows, GDN state commit, and graph capture shapes.
-15. Latest DFlash revisit:
+18. Latest DFlash revisit:
     `notes/2026-07-04-dflash-swa-revisit.md`. Real mixed SWA support crashes
     before readiness because the current DFlash/EAGLE proposer assumes all
     draft layers belong to one KV-cache group. The target-verified
     `all-sliding` single-group diagnostic passed the fresh gate but dropped to
     `20.630 tok/s`, so DFlash remains closed no-win until multi-KV-group draft
     metadata is implemented.
-16. Latest DFlash multi-KV implementation attempt:
+19. Latest DFlash multi-KV implementation attempt:
     `notes/2026-07-04-dflash-multikv-mixed-swa-attempt.md`. The experimental
     patch
     `../../patches/qwen36-27b-autoround-int4-b70/vllm-dflash-multikv-mixed-swa-attempt-20260704.patch`
@@ -234,20 +243,20 @@ Next milestone:
     shows only about `2-3%` draft acceptance with low-teens or worse generation
     throughput. Preserve the patch as upstream/plumbing research, not as a
     record lane.
-17. Latest service-memory flag screen:
+20. Latest service-memory flag screen:
     `notes/2026-07-04-language-model-only-no-win.md`.
     `--language-model-only` correctly enters text-only mode and reduced model
     memory from `19.02 GiB` to `18.15 GiB`, but the MTP3/cg8 XPU graph path
     hung before readiness at `Capturing CUDA graphs (decode, PIECEWISE): 0/1`.
     Do not use it for the current strict decode recipe; only revisit for
     non-MTP/non-graph service-memory work or after XPU graph capture changes.
-18. Latest scheduler screen:
+21. Latest scheduler screen:
     `notes/2026-07-04-scheduler-mbt-and-chunked-prefill-screen.md`.
     MBT768 (`64.131 tok/s`) and MBT1280 (`64.346 tok/s`) passed the strict
     fresh gate but lost to the current `65.276 tok/s` record family; disabling
     chunked prefill is invalid for `MAX_MODEL_LEN=2048` / MBT1024. Keep
     `MAX_NUM_BATCHED_TOKENS=1024` and chunked prefill enabled.
-19. Latest local EAGLE1 endpoint isolation:
+22. Latest local EAGLE1 endpoint isolation:
     `notes/2026-07-04-eagle1-endpoint-isolation-matrix.md`.
     The first local EAGLE1 draft looked promising offline (`2.1016` mean
     accepted tokens on held-out calibration starts) but did not survive endpoint
@@ -259,21 +268,21 @@ Next milestone:
     Do not repeat endpoint config sweeps for this draft; future EAGLE work
     starts with diverse chat-style corpus/eval v2 and stronger held-out
     diagnostics.
-20. EAGLE corpus/eval v2 tooling:
+23. EAGLE corpus/eval v2 tooling:
     `notes/2026-07-04-eagle-corpus-v2-tooling.md`.
     The collector now supports `--suite`, chat mode, request extra JSON, stable
     request IDs, and prompt metadata; the dataset builder copies that metadata
     into `.pt` samples; and offline eval reports acceptance by prompt family.
     This is preparation only, not a speed result, but it is the correct restart
     point if EAGLE is revisited.
-21. EAGLE corpus/eval v2 chat smoke:
+24. EAGLE corpus/eval v2 chat smoke:
     `notes/2026-07-04-eagle-corpus-v2-chat-calib-smoke.md`.
     A one-GPU calibration-suite chat collection produced `3840` hidden rows,
     `24` samples, `0` continuity breaks, and metadata on `24/24` samples after
     fixing suffix-tolerant request-ID matching. A tiny two-epoch draft reached
     only `0.240` mean accepted offline, so it is not an endpoint candidate; it
     only proves the metadata path works.
-22. EAGLE corpus/eval v2 four-GPU heldout screen:
+25. EAGLE corpus/eval v2 four-GPU heldout screen:
     `notes/2026-07-04-eagle-corpus-v2-4gpu-heldout.md`.
     The four-GPU runner collected `96` chat prompts, `15360` hidden rows, `96`
     samples, metadata on `96/96` samples, and `0` continuity breaks. A compact
@@ -281,20 +290,20 @@ Next milestone:
     only `0.489` mean accepted over `1024` starts, far below the prior `2.1016`
     offline draft that still failed endpoint quality. Do not endpoint-test this
     draft; future EAGLE work needs materially stronger data/training/init first.
-23. EAGLE corpus/eval v2 followups:
+26. EAGLE corpus/eval v2 followups:
     `notes/2026-07-04-eagle-corpus-v2-followups-closed.md`.
     The staged curriculum improved OOD-family heldout only to `0.616`, a
     balanced task-holdout split scored `0.601`, the old stronger v1 draft
     transferred poorly to v2 heldout (`0.201`), and all-96 training scored only
     `0.438` on the separate calibration suite. Current compact v2 EAGLE is
     closed again; do not endpoint-test these drafts.
-24. EAGLE v2 stronger offline screen:
+27. EAGLE v2 stronger offline screen:
     `notes/2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`.
     The stronger residual/two-layer screen improved heldout only to `0.695`
     mean accepted and separate calibration only to `0.441`. It is
     diagnostic-only and not an endpoint candidate. The reusable runner is
     `scripts/run-eagle-v2-stronger-offline-screen.sh`.
-25. EAGLE v3 target-architecture/loss offline screen:
+28. EAGLE v3 target-architecture/loss offline screen:
     `notes/2026-07-04-eagle-v3-target-loss-offline-no-endpoint.md`.
     Target-shaped one-layer drafts and token-heavy losses did not help on the
     current v2 corpus. Best row was the compact frozen-base residual variant at
@@ -303,7 +312,7 @@ Next milestone:
     endpoint gate. Do not rerun larger/target-shaped EAGLE on this same corpus
     without a materially new data or architecture idea. Reusable runner:
     `scripts/run-eagle-v3-target-loss-offline-screen.sh`.
-26. Draft top-k calibration diagnostic:
+29. Draft top-k calibration diagnostic:
     `notes/2026-07-04-draft-topk-calibration-diagnostic.md`.
     The target verifier token is in the built-in draft top-32 for `96-99%` of
     MTP positions and an oracle reranker would reach `3.910` target-verified
@@ -315,7 +324,7 @@ Next milestone:
     trace/analyzers; do not ship a heuristic or tiny top-k reranker. Future
     accepted-token work needs a materially stronger drafter/reranker on
     isolated non-final data.
-27. Draft top-k64 / sequential-reranker limit:
+30. Draft top-k64 / sequential-reranker limit:
     `notes/2026-07-04-draft-topk64-and-sequential-reranker-limit.md`.
     A full 96-prompt K64 diagnostic found target-in-top64 rates of
     `99.7%`, `98.4%`, and `96.8%` by draft position, but held-out margin
@@ -324,7 +333,7 @@ Next milestone:
     the final-slot upper bound still needs recomputing/branching the target
     bonus row while adding only about `+0.16` target tokens/step. Do not
     reopen cheap top-k reranker endpoint patches.
-28. Token-tree mechanical screen:
+31. Token-tree mechanical screen:
     `notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
     Existing vLLM `speculative_token_tree` support works mechanically for
     Qwen27/XPU, but config-only tree shapes do not beat MTP3/cg8. A same-suite
@@ -334,7 +343,7 @@ Next milestone:
     checkpoint load, and root top-3 already closed the same root-alternative
     idea. Do not reopen token-tree sweeps unless the branch design avoids the
     current full-logits tree proposer cost or uses a stronger legal drafter.
-29. Short-decode `MAX_NUM_BATCHED_TOKENS` screen:
+32. Short-decode `MAX_NUM_BATCHED_TOKENS` screen:
     `notes/2026-07-04-short-decode-mbt-screen-no-win.md`.
     The current record recipe should stay at MBT1024 for short decode.
     Same-window candidates MBT1536, MBT2048, and MBT4096 all passed the strict
@@ -342,7 +351,7 @@ Next milestone:
     below the `65.276` record and inside recipe variance. The MBT1024 control
     row is invalid because GPU0 device-lost during the first benchmark request
     after smoke passed; existing support rows already cover the default recipe.
-30. Frontier closure:
+33. Frontier closure:
     `notes/2026-07-04-frontier-closure-and-next-projects.md`.
     Independent audits found no unclosed non-cheating config/runtime lane and
     no bounded atomic/single-pass/fused-quant LM-head kernel tweak likely to
