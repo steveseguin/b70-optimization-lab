@@ -156,9 +156,14 @@ Current fastest quality-gated variant:
   adaptation `0.539` to `0.6003787878787878` heldout mean accepted, but the
   rollout still collapses after token 1 (`48.65%` step-1 exact, `20.10%`
   step-2 conditional exact). This remains far below current MTP3 accepted
-  depth. Do not endpoint-test this draft; the next credible EAGLE/DFlash action
-  is a multi-step rollout / accepted-prefix training objective, not endpoint
-  plumbing.
+  depth. A first multi-step rollout objective has since been implemented in
+  `../../scripts/train-qwen27-ex0bit-eagle3-adapter.py` and screened with
+  `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-ex0bit-eagle3-rollout-train-v3-4gpu.sh`.
+  Best heldout mean accepted improved to `0.6693046536796536` from original
+  Ex0bit init (`43.19%` step-1 exact, `38.09%` step-2 conditional, `33.31%`
+  step-3 conditional), but it is still far below endpoint threshold. Do not
+  endpoint-test this draft; continue only as training research until offline
+  acceptance reaches at least `1.5-2.0`.
 
 Previous fastest quality-gated variant:
 

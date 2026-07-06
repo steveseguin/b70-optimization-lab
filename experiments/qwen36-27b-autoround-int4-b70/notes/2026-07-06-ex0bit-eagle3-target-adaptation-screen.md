@@ -234,3 +234,61 @@ new training objective: multi-step rollout / accepted-prefix training that
 directly optimizes consecutive accepted tokens, plus a larger target-owned
 corpus if needed. Without that, more endpoint plumbing would only create a slow
 and low-acceptance speculative path.
+
+## Multi-step rollout objective screen
+
+Implemented `--rollout-steps` in:
+
+```text
+scripts/train-qwen27-ex0bit-eagle3-adapter.py
+```
+
+This keeps the original row-wise teacher-forced objective when
+`--rollout-steps=1`, but for `>1` it starts from target aux hidden state at
+step 1, then feeds the draft's own predicted hidden states plus teacher token
+IDs for later steps. This directly targets the observed failure mode: good-ish
+step-1 exact with poor consecutive acceptance.
+
+Reusable four-GPU runner:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/scripts/run-ex0bit-eagle3-rollout-train-v3-4gpu.sh
+```
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T202134Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706.json
+```
+
+Screened four variants on the same heldout shard (`14,784` starts):
+
+| variant | init | rollout | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|
+| `original-r3-lr1e-5-decay1` | Ex0bit original | 3 | `0.6693046536796536` | `43.19%` | `38.09%` | `33.31%` |
+| `v3full-r3-lr3e-6-decay1` | v3 one-step adapted | 3 | `0.6228354978354979` | `48.02%` | `24.61%` | `17.80%` |
+| `v3full-r3-lr3e-6-decay1p5` | v3 one-step adapted | 3 | `0.6227002164502164` | `47.97%` | `24.62%` | `18.16%` |
+| `v3full-r5-lr2e-6-decay1` | v3 one-step adapted | 5 | `0.6141774891774892` | `48.55%` | `22.16%` | `16.97%` |
+
+Interpretation:
+
+- The rollout objective is mechanically correct and improves consecutive-token
+  behavior when trained from original Ex0bit (`0.600` -> `0.669` mean accepted,
+  with much stronger step-2/step-3 conditional exact).
+- Starting from the one-step-adapted checkpoint preserves better first-token
+  exact but does not improve rollout depth; it appears biased toward step-1 CE
+  rather than stable recurrence.
+- Even the best `0.669` remains far below current MTP3 accepted depth, so it is
+  still **not endpoint-worthy** and not a LocalMaxxing/result candidate.
+
+Next screen, if continuing this lane: train from original Ex0bit with rollout
+objective only, sweeping LR/epochs/late-step weighting, because that was the
+only variant that improved conditional step-2/step-3 behavior. Do not spend
+endpoint/kernel work until mean accepted moves into the `1.5-2.0` range at
+minimum, and ideally approaches current MTP3 depth.

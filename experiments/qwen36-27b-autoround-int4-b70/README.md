@@ -97,7 +97,10 @@ Latest stronger-drafter result:
   `20.10%` step-2 conditional exact. This is still far below current MTP3
   accepted depth and not endpoint-worthy. Next EAGLE/DFlash work needs a
   multi-step rollout / accepted-prefix training objective, not endpoint
-  plumbing. See
+  plumbing. A first rollout-objective implementation and 4-GPU screen improved
+  the best heldout mean to `0.6693046536796536` from original Ex0bit init, but
+  this is still below endpoint threshold; continue as training research only.
+  See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 
 Previous fastest quality-gated variant:

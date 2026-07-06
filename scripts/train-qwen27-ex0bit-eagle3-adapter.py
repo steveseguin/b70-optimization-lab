@@ -11,6 +11,12 @@ Initial intended lane:
 
 which freezes the Ex0bit EAGLE3 body and adapts only the compressed draft LM
 head over target-owned qwen36_eagle_sequence_v2 samples.
+
+Use ``--rollout-steps > 1`` to train the autoregressive failure mode directly:
+step 1 starts from target aux hidden states, then later steps feed the draft's
+own predicted hidden states plus teacher token IDs. This is still diagnostic;
+the exported checkpoint must pass the offline rollout evaluator before endpoint
+work is justified.
 """
 
 from __future__ import annotations
@@ -56,6 +62,25 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--eval-every", type=int, default=100)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--rollout-steps",
+        type=int,
+        default=1,
+        help=(
+            "Train N autoregressive draft steps. 1 preserves the original "
+            "teacher-forced row objective; >1 trains later steps using prior "
+            "predicted hidden states and teacher token IDs."
+        ),
+    )
+    parser.add_argument(
+        "--rollout-loss-decay",
+        type=float,
+        default=1.0,
+        help=(
+            "Multiplicative weight decay per rollout step. 1.0 weights every "
+            "step equally; 0.5 halves the loss weight each later step."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -181,6 +206,84 @@ def load_rows(
     return dataset, summary
 
 
+def load_windows(
+    *,
+    dataset_dirs: list[str],
+    target_to_draft: torch.Tensor,
+    rollout_steps: int,
+    max_rows: int,
+) -> tuple[TensorDataset, dict[str, Any]]:
+    aux_rows: list[torch.Tensor] = []
+    input_windows: list[torch.Tensor] = []
+    position_windows: list[torch.Tensor] = []
+    label_windows: list[torch.Tensor] = []
+    samples = 0
+    windows = 0
+    rows = 0
+    covered = 0
+    skipped_samples = 0
+    for path in iter_sample_paths(dataset_dirs):
+        sample = torch_load(path)
+        if sample.get("format") != "qwen36_eagle_sequence_v2":
+            skipped_samples += 1
+            continue
+        if "aux_hidden_states" not in sample or "sampled_next_token_ids" not in sample:
+            skipped_samples += 1
+            continue
+        aux = sample["aux_hidden_states"]
+        next_ids = sample["sampled_next_token_ids"].to(torch.long)
+        length = min(aux.shape[0], next_ids.shape[0])
+        if length <= rollout_steps:
+            skipped_samples += 1
+            continue
+        pos = make_positions(sample, length)
+        available_starts = length - rollout_steps
+        if max_rows:
+            remaining_windows = max(0, (max_rows - rows) // rollout_steps)
+            available_starts = min(available_starts, remaining_windows)
+        if available_starts <= 0:
+            break
+        starts = torch.arange(available_starts, dtype=torch.long)
+        offsets = torch.arange(rollout_steps + 1, dtype=torch.long)
+        label_offsets = torch.arange(1, rollout_steps + 1, dtype=torch.long)
+        input_idx = starts[:, None] + offsets[None, :]
+        label_idx = starts[:, None] + label_offsets[None, :]
+        row_aux = aux[starts].contiguous()
+        row_inputs = next_ids[input_idx].contiguous()
+        row_positions = pos[input_idx].contiguous()
+        row_labels = target_to_draft[next_ids[label_idx]].contiguous()
+        aux_rows.append(row_aux)
+        input_windows.append(row_inputs)
+        position_windows.append(row_positions)
+        label_windows.append(row_labels)
+        samples += 1
+        windows += int(row_labels.shape[0])
+        row_count = int(row_labels.numel())
+        rows += row_count
+        covered += int((row_labels != -100).sum().item())
+        if max_rows and rows >= max_rows:
+            break
+    if rows == 0:
+        raise RuntimeError("No rollout windows loaded")
+    dataset = TensorDataset(
+        torch.cat(aux_rows, dim=0),
+        torch.cat(input_windows, dim=0),
+        torch.cat(position_windows, dim=0),
+        torch.cat(label_windows, dim=0),
+    )
+    summary = {
+        "dataset_dirs": dataset_dirs,
+        "samples": samples,
+        "windows": windows,
+        "rows": rows,
+        "covered_rows": covered,
+        "coverage": covered / rows if rows else 0.0,
+        "rollout_steps": rollout_steps,
+        "skipped_samples": skipped_samples,
+    }
+    return dataset, summary
+
+
 def configure_train_scope(model: Any, scope: str) -> list[torch.nn.Parameter]:
     model.requires_grad_(False)
     if scope == "lm-head":
@@ -244,6 +347,79 @@ def evaluate_teacher_forced(
     }
 
 
+def compute_rollout_loss(
+    *,
+    model: Any,
+    aux: torch.Tensor,
+    input_windows: torch.Tensor,
+    position_windows: torch.Tensor,
+    labels: torch.Tensor,
+    device: torch.device,
+    dtype: torch.dtype,
+    loss_decay: float,
+) -> tuple[torch.Tensor, dict[str, Any]]:
+    batch = int(labels.shape[0])
+    steps = int(labels.shape[1])
+    aux = aux.to(device=device, dtype=dtype).reshape(batch, 1, -1)
+    input_windows = input_windows.to(device=device)
+    position_windows = position_windows.to(device=device)
+    labels = labels.to(device=device)
+    current_hidden = model.combine_hidden_states(aux)
+    current_ids = input_windows[:, :1]
+    current_positions = position_windows[:, :1]
+    loss_terms: list[torch.Tensor] = []
+    loss_weight_total = 0.0
+    covered_by_step: list[int] = []
+    exact_by_step: list[int] = []
+    loss_by_step: list[float] = []
+    for step in range(steps):
+        pred = model(current_ids, current_positions, current_hidden)[:, -1, :]
+        logits = model.lm_head(pred).float() * float(model.shape.logit_scale)
+        step_labels = labels[:, step]
+        mask = step_labels != -100
+        covered = int(mask.sum().item())
+        covered_by_step.append(covered)
+        exact = 0
+        step_loss_value = 0.0
+        if covered:
+            step_loss = F.cross_entropy(logits[mask], step_labels[mask])
+            weight = loss_decay ** step
+            loss_terms.append(step_loss * weight)
+            loss_weight_total += weight
+            proposed = torch.argmax(logits, dim=-1)
+            exact = int((proposed[mask] == step_labels[mask]).sum().item())
+            step_loss_value = float(step_loss.detach().item())
+        exact_by_step.append(exact)
+        loss_by_step.append(step_loss_value)
+        if step + 1 < input_windows.shape[1]:
+            current_hidden = torch.cat(
+                [current_hidden, pred.reshape(batch, 1, -1)],
+                dim=1,
+            )
+            current_ids = torch.cat(
+                [current_ids, input_windows[:, step + 1:step + 2]],
+                dim=1,
+            )
+            current_positions = torch.cat(
+                [current_positions, position_windows[:, step + 1:step + 2]],
+                dim=1,
+            )
+    if not loss_terms:
+        raise RuntimeError("Rollout batch has no covered labels")
+    loss = torch.stack(loss_terms).sum() / max(loss_weight_total, 1e-12)
+    stats = {
+        "covered_by_step": covered_by_step,
+        "exact_by_step": exact_by_step,
+        "loss_by_step": loss_by_step,
+        "exact_rate_by_step": [
+            (exact_by_step[i] / covered_by_step[i])
+            if covered_by_step[i] else 0.0
+            for i in range(steps)
+        ],
+    }
+    return loss, stats
+
+
 def export_model(model: Any, out_dir: str, source_draft_dir: str,
                  meta: dict[str, Any]) -> None:
     os.makedirs(out_dir, exist_ok=True)
@@ -293,6 +469,10 @@ def main() -> int:
         raise ValueError("--epochs must be >= 1")
     if args.batch_size < 1:
         raise ValueError("--batch-size must be >= 1")
+    if args.rollout_steps < 1:
+        raise ValueError("--rollout-steps must be >= 1")
+    if args.rollout_loss_decay <= 0.0:
+        raise ValueError("--rollout-loss-decay must be > 0")
     torch.manual_seed(args.seed)
     eval_module = load_eval_module()
     device = eval_module.choose_device(args.device)
@@ -304,11 +484,25 @@ def main() -> int:
         dtype=dtype,
     )
     target_to_draft = make_target_to_draft(model)
-    train_dataset, train_summary = load_rows(
+    train_rows_dataset, train_summary = load_rows(
         dataset_dirs=args.dataset_dir,
         target_to_draft=target_to_draft,
         max_rows=args.max_train_rows,
     )
+    train_dataset = train_rows_dataset
+    train_objective = "teacher_forced_rows"
+    if args.rollout_steps > 1:
+        train_dataset, rollout_train_summary = load_windows(
+            dataset_dirs=args.dataset_dir,
+            target_to_draft=target_to_draft,
+            rollout_steps=args.rollout_steps,
+            max_rows=args.max_train_rows,
+        )
+        train_objective = "autoregressive_rollout_windows"
+        train_summary = {
+            "row_dataset": train_summary,
+            "rollout_dataset": rollout_train_summary,
+        }
     heldout_dataset = None
     heldout_summary = None
     if args.heldout_dir:
@@ -329,6 +523,11 @@ def main() -> int:
         DataLoader(heldout_dataset, batch_size=args.batch_size, shuffle=False)
         if heldout_dataset is not None else None
     )
+    train_eval_loader = DataLoader(
+        train_rows_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+    )
     trainable_params = configure_train_scope(model, args.train_scope)
     optimizer = torch.optim.AdamW(
         trainable_params,
@@ -340,26 +539,43 @@ def main() -> int:
     step = 0
     model.train()
     for epoch in range(args.epochs):
-        for aux, input_ids, positions, labels in train_loader:
+        for batch in train_loader:
             step += 1
-            aux = aux.to(device=device, dtype=dtype).reshape(aux.shape[0], 1, -1)
-            input_ids = input_ids.to(device=device).view(-1, 1)
-            positions = positions.to(device=device).view(-1, 1)
-            labels = labels.to(device=device)
-            mask = labels != -100
-            if not torch.any(mask):
-                continue
             optimizer.zero_grad(set_to_none=True)
-            hidden = model.combine_hidden_states(aux)
-            pred = model(input_ids, positions, hidden)[:, -1, :]
-            logits = model.lm_head(pred).float() * float(model.shape.logit_scale)
-            loss = F.cross_entropy(logits[mask], labels[mask])
+            if args.rollout_steps <= 1:
+                aux, input_ids, positions, labels = batch
+                aux = aux.to(device=device, dtype=dtype).reshape(
+                    aux.shape[0], 1, -1)
+                input_ids = input_ids.to(device=device).view(-1, 1)
+                positions = positions.to(device=device).view(-1, 1)
+                labels = labels.to(device=device)
+                mask = labels != -100
+                if not torch.any(mask):
+                    continue
+                hidden = model.combine_hidden_states(aux)
+                pred = model(input_ids, positions, hidden)[:, -1, :]
+                logits = (
+                    model.lm_head(pred).float() * float(model.shape.logit_scale))
+                loss = F.cross_entropy(logits[mask], labels[mask])
+                batch_stats: dict[str, Any] = {}
+            else:
+                aux, input_windows, position_windows, labels = batch
+                loss, batch_stats = compute_rollout_loss(
+                    model=model,
+                    aux=aux,
+                    input_windows=input_windows,
+                    position_windows=position_windows,
+                    labels=labels,
+                    device=device,
+                    dtype=dtype,
+                    loss_decay=args.rollout_loss_decay,
+                )
             loss.backward()
             optimizer.step()
             if args.eval_every and step % args.eval_every == 0:
                 train_eval = evaluate_teacher_forced(
                     model=model,
-                    loader=train_loader,
+                    loader=train_eval_loader,
                     device=device,
                     dtype=dtype,
                     max_batches=16,
@@ -368,9 +584,12 @@ def main() -> int:
                     "step": step,
                     "epoch": epoch,
                     "train_loss_batch": float(loss.item()),
+                    "train_objective": train_objective,
                     "train_probe": train_eval,
                     "elapsed_s": time.perf_counter() - start,
                 }
+                if batch_stats:
+                    row["rollout_batch_probe"] = batch_stats
                 if heldout_loader is not None:
                     row["heldout_probe"] = evaluate_teacher_forced(
                         model=model,
@@ -383,7 +602,7 @@ def main() -> int:
                 print(json.dumps(row, sort_keys=True), flush=True)
     final_train = evaluate_teacher_forced(
         model=model,
-        loader=train_loader,
+        loader=train_eval_loader,
         device=device,
         dtype=dtype,
         max_batches=0,
@@ -406,6 +625,9 @@ def main() -> int:
         "out_dir": args.out_dir,
         "shape": asdict(model.shape),
         "train_scope": args.train_scope,
+        "train_objective": train_objective,
+        "rollout_steps": args.rollout_steps,
+        "rollout_loss_decay": args.rollout_loss_decay,
         "epochs": args.epochs,
         "batch_size": args.batch_size,
         "lr": args.lr,

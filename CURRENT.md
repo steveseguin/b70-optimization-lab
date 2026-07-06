@@ -274,9 +274,12 @@ Previous fastest quality-gated practical variant:
   path and Ex0bit-format trainer improved direct Ex0bit acceptance from `0.289`
   to `0.6003787878787878` heldout mean accepted on a 384-prompt/61,440-row
   four-GPU corpus, but rollout still collapses after token 1 (`20.10%` step-2
-  conditional exact). Do not endpoint-test this draft. Future EAGLE/DFlash work
-  needs multi-step rollout / accepted-prefix training or a materially stronger
-  draft architecture, not more endpoint config.
+  conditional exact). A first multi-step rollout objective improved the best
+  heldout mean to `0.6693046536796536` from original Ex0bit init, but this is
+  still far below current MTP3 depth and below any endpoint threshold. Do not
+  endpoint-test this draft. Future EAGLE/DFlash work needs much stronger
+  rollout / accepted-prefix training or a materially stronger draft
+  architecture, not more endpoint config.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;
 - continuation bookmark:
