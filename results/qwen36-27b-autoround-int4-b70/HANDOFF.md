@@ -181,20 +181,18 @@ Current fastest quality-gated variant:
   plus
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json`.
   The current best diagnostic checkpoint is rollout-5 continuation
-  (`decay=1.0`, `lr=2e-5`) at `1.1766323953823954` mean accepted (`56.48%`
-  step-1 exact, `53.54%` step-2 conditional, `55.39%` step-3 conditional,
-  `1107` full-5 accepts). Checkpoint:
-  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T223638Z/cont-r5-lr2e-5-decay1/checkpoint`.
-  Summaries:
-  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json`
-  and
+  (`decay=1.0`, `lr=2e-5`) at `1.189033189033189` mean accepted (`56.59%`
+  step-1 exact, `53.61%` step-2 conditional, `55.63%` step-3 conditional,
+  `1215` full-5 accepts). Checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T224851Z/cont-r5-lr2e-5-decay1/checkpoint`.
+  Key continuation summaries:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json`,
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json`,
-  plus
-  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation2-v4-summary-20260706.json`
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation2-v4-summary-20260706.json`,
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation3-v4-summary-20260706.json`,
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation-v4-summary-20260706.json`,
   and
-  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation3-v4-summary-20260706.json`.
-  plus
-  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation-v4-summary-20260706.json`.
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation2-v4-summary-20260706.json`.
   Rollout-5 is now the preferred continuation objective; still do not endpoint
   integrate until offline mean accepted reaches at least `1.5-2.0`.
 

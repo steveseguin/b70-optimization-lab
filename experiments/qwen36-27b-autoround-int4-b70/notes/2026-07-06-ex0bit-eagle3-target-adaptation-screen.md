@@ -658,3 +658,40 @@ Interpretation:
 - Still below endpoint threshold (`1.5-2.0` minimum), so do not endpoint-test
   or submit. But rollout-5 is now the preferred training objective for the next
   EAGLE/DFlash continuation.
+
+## Second rollout-5 continuation: still improves accepted depth
+
+Continued from the first rollout-5 best checkpoint and repeated the rollout-5
+screen.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T224851Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation2-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond | full-5 accepts |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `cont-r5-lr2e-5-decay1` | `2e-5` | `1.0` | **`1.189033189033189`** | `56.59%` | `53.61%` | `55.63%` | `1215` |
+| `cont-r5-lr2e-5-decay1p1` | `2e-5` | `1.1` | `1.1798791486291487` | `56.20%` | `53.43%` | `55.56%` | `1216` |
+| `cont-r5-lr1e-5-decay1` | `1e-5` | `1.0` | `1.1769029581529582` | `56.49%` | `53.48%` | `55.31%` | `1118` |
+| `cont-r5-lr2e-5-decay1p25` | `2e-5` | `1.25` | `1.1690566378066378` | `55.72%` | `53.27%` | `55.44%` | `1224` |
+
+Interpretation:
+
+- Current best diagnostic checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T224851Z/cont-r5-lr2e-5-decay1/checkpoint`.
+- Rollout-5 is still improving mean accepted: `1.1766` -> `1.1890`.
+- As before, mean accepted improves through more full-5 accepts while
+  first-token exact stays below the rollout-3 plateau.
+- Still below endpoint threshold. Continue rollout-5 training only while it
+  keeps improving; otherwise the next real jump likely requires more data or a
+  stronger architecture/objective.
