@@ -74,6 +74,26 @@ DOMAINS = [
         "a decision between kernel work, speculative decoding, and service caching",
         "expected gains, correctness risks, validation cost, and sequencing",
     ),
+    (
+        "cost-optimization",
+        "an inference service whose GPU cost per successful request is rising",
+        "utilization, batching tradeoffs, quality constraints, cache boundaries, and reporting",
+    ),
+    (
+        "edge-deployment",
+        "a model endpoint being moved from a central cluster to local edge devices",
+        "hardware variance, observability, rollout safety, fallback routing, and support load",
+    ),
+    (
+        "data-pipeline",
+        "a nightly analytics pipeline that feeds model-quality dashboards",
+        "schema drift, late data, validation, lineage, and reproducibility",
+    ),
+    (
+        "incident-postmortem",
+        "a production regression caused by a performance optimization that passed smoke tests",
+        "root cause, missed signals, impact accounting, action items, and owner follow-up",
+    ),
 ]
 
 
@@ -117,6 +137,26 @@ TASKS = [
         "test-plan",
         "Write a test plan",
         "Include unit, integration, load, failure, and quality checks with pass/fail gates.",
+    ),
+    (
+        "risk-register",
+        "Create a risk register",
+        "List risks, likelihood, impact, detection signal, mitigation, owner, and review date.",
+    ),
+    (
+        "migration-plan",
+        "Write a migration plan",
+        "Include phases, compatibility checks, data validation, cutover, rollback, and communication.",
+    ),
+    (
+        "slo-analysis",
+        "Analyze service-level objectives",
+        "Cover user-facing metrics, measurement windows, alert thresholds, error budget, and tradeoffs.",
+    ),
+    (
+        "customer-response",
+        "Draft a customer-facing response",
+        "Be transparent, technically accurate, action-oriented, and avoid overpromising.",
     ),
 ]
 
