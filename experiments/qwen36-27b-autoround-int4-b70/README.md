@@ -103,9 +103,15 @@ Latest stronger-drafter result:
   `0.973146645021645` (`52.81%` step-1 exact, `50.04%` step-2 conditional,
   `49.40%` step-3 conditional). This reopens the lane as training research but
   is still below endpoint threshold. A continuation sweep reached only
-  `1.0142045454545454` and widened the train/heldout gap, so the next move is
-  larger/more diverse target-owned data or a survival-weighted objective, not
-  endpoint/kernel integration.
+  `1.0142045454545454` and widened the train/heldout gap. A larger v4 corpus
+  then collected 576 prompts / 92,160 rows and improved the best heldout mean
+  only modestly to `1.0592532467532467` (`55.98%` step-1 exact, `52.39%`
+  step-2 conditional, `50.55%` step-3 conditional). This is useful progress
+  but remains below the `1.5-2.0` offline threshold for endpoint/kernel
+  integration; the next move needs an objective or train-scope change, not
+  simple endpoint plumbing. See compact summaries
+  `diagnostics/qwen27-eagle3-aux-v4-corpus-summary-20260706.json` and
+  `diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v4-summary-20260706.json`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

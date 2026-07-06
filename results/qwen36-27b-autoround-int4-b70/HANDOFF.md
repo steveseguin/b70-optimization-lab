@@ -165,9 +165,16 @@ Current fastest quality-gated variant:
   `49.40%` step-3 conditional). This reopens Ex0bit EAGLE3/DFlash as a real
   target-matched training lane, but it is still below endpoint threshold. A
   continuation sweep reached only `1.0142045454545454` and widened the
-  train/heldout gap, so more epochs on the same split are likely data-limited.
-  Do not endpoint-test this draft; continue only as training research until
-  offline acceptance reaches at least `1.5-2.0`.
+  train/heldout gap. A broader v4 corpus then collected 576 prompts / 92,160
+  rows with zero continuity breaks and improved the best original-init
+  rollout-3 recipe to `1.0592532467532467` heldout mean accepted (`55.98%`
+  step-1 exact, `52.39%` step-2 conditional, `50.55%` step-3 conditional).
+  This is real but modest progress, not an endpoint candidate. Do not
+  endpoint-test this draft; continue only as training research until offline
+  acceptance reaches at least `1.5-2.0`. Compact v4 summaries:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v4-corpus-summary-20260706.json`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v4-summary-20260706.json`.
 
 Previous fastest quality-gated variant:
 

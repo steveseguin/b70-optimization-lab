@@ -373,3 +373,55 @@ Interpretation:
 Next credible move is a larger/more diverse target-owned corpus and/or a loss
 that rewards accepted-prefix survival more directly. More continuation epochs
 on this same split are unlikely to be the main unlock.
+
+## V4 larger corpus rollout sweep: modest improvement, still below endpoint threshold
+
+The next screen expanded the target-owned corpus from `384` prompts / `61,440`
+rows to `576` prompts / `92,160` rows, using the same aux-layer dump path
+(`VLLM_XPU_EAGLE_DATA_DUMP_AUX_LAYERS=1,31,60`). The corpus is broader and
+balanced across `12` families, with `0` continuity breaks and all aux rows
+present.
+
+Corpus root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v2-chat-4gpu-20260706T205107Z-v4
+```
+
+Training/eval root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T210606Z
+```
+
+Repo summaries:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v4-corpus-summary-20260706.json
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | rollout | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `original-r3-lr2e-5-decay1` | 3 | `2e-5` | `1.0` | **`1.0592532467532467`** | `55.98%` | `52.39%` | `50.55%` |
+| `original-r3-lr1e-5-decay1p5` | 3 | `1e-5` | `1.5` | `0.6679743867243867` | `41.93%` | `39.24%` | `37.71%` |
+| `original-r5-lr1e-5-decay1` | 5 | `1e-5` | `1.0` | `0.6601731601731602` | `42.04%` | `36.99%` | `35.11%` |
+| `original-r3-lr5e-6-decay1` | 3 | `5e-6` | `1.0` | `0.4390782828282828` | `32.86%` | `27.58%` | `18.76%` |
+
+Interpretation:
+
+- Larger/more diverse data helped, but only modestly: best heldout mean
+  accepted moved from `1.014` to `1.059`.
+- The best recipe remains stable: original Ex0bit init, rollout-3,
+  `lr=2e-5`, equal step weights. Lower LR, rollout-5 at `1e-5`, and simple
+  late-step weighting remain underfit.
+- This is **not endpoint-worthy**. The drafter is still below the `1.5-2.0`
+  minimum offline threshold and far below the accepted depth needed for a
+  realistic `>100 tok/s` endpoint.
+- The next useful attempt should change the objective or train more of the
+  draft, not merely add a few more epochs. Candidate directions:
+  survival-weighted rollout loss at the working `2e-5` LR, a larger v5 corpus
+  with more output styles, or selectively unfreezing the draft layer once the
+  fc/lm-head plateau is confirmed.

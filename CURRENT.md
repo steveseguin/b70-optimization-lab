@@ -121,6 +121,16 @@ Fastest quality-gated practical variant:
   the measured MTP3 branch surface is too narrow to be the primary `125+ tok/s`
   path by itself. Continue only if it is paired with a deeper target-tail /
   graph-safe state transaction or stronger draft source;
+- latest stronger-drafter training screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
+  Ex0bit EAGLE3/DFlash direct import is not viable, but the target-owned
+  training lane is mechanically working. The v4 corpus collected 576 prompts /
+  92,160 rows with aux layers `1,31,60` and zero continuity breaks; the best
+  original-init rollout-3 recipe reached `1.0592532467532467` heldout mean
+  accepted (`55.98%` step-1 exact, `52.39%` step-2 conditional, `50.55%`
+  step-3 conditional). This is still below the `1.5-2.0` offline threshold
+  for endpoint/kernel work. Next work should change objective or train scope,
+  not wire the drafter into vLLM yet;
 
 Previous fastest quality-gated practical variant:
 

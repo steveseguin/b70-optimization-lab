@@ -272,10 +272,15 @@ Active target as of the latest switch request:
   sweep at `lr=2e-5` then reached `0.973146645021645` (`52.81%` step-1 exact,
   `50.04%` step-2 conditional, `49.40%` step-3 conditional). This is meaningful
   training progress, but still below endpoint threshold. Continuation training
-  reached only `1.0142045454545454` and widened train/heldout overfit, so the
-  next move is larger/more diverse target-owned data or a survival-weighted
-  objective. Do not endpoint-test this adapted draft unless offline mean
-  accepted reaches at least `1.5-2.0`.
+  reached only `1.0142045454545454` and widened train/heldout overfit. A
+  larger v4 corpus then collected 576 prompts / 92,160 rows and improved the
+  best original-init rollout-3 recipe only modestly to
+  `1.0592532467532467` (`55.98%` step-1 exact, `52.39%` step-2 conditional,
+  `50.55%` step-3 conditional). This confirms the pipeline is learning, but
+  not fast enough to justify endpoint plumbing. Next work should change the
+  objective or train scope, not merely add endpoint/kernel integration. Do not
+  endpoint-test this adapted draft unless offline mean accepted reaches at
+  least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and
