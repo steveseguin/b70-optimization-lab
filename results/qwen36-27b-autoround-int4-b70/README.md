@@ -440,6 +440,15 @@ latest frontier audit also tested oneDNN Graph `MatMul -> ReduceMax` directly:
 BF16 stayed as two one-op partitions and the tested INT8 graph form was
 rejected, so there is no cheap oneDNN Graph wrapper shortcut to promote. See
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`.
+The 2026-07-06 draft-side `mtp.fc` runtime INT8 experiment is also closed:
+it targeted only the BF16 Qwen3.5 MTP `mtp.fc` layer and preserved exact target
+verification, but the completed candidate (`66.777 tok/s`) lost to same-window
+controls (`67.954` and `67.994 tok/s`), while another candidate exposed a
+TorchDynamo fake-tensor unsupported-op failure for `_xpu_C.int8_gemm_w8a8`
+inside compiled MTP. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-mtp-fc-int8-no-win.md`
+and
+`../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-fc-int8-no-win-20260706.patch`.
 The DFlash mixed-SWA audit is captured in
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`:
 the target runner is multi-KV aware, but the DFlash/EAGLE drafter path assumes

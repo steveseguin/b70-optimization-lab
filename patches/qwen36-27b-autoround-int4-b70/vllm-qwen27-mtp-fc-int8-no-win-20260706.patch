@@ -1,0 +1,153 @@
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 6a4c1f3c4..4b11bdc4a 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import itertools
++import os
+ from abc import abstractmethod
+ 
+ import torch
+@@ -39,6 +40,7 @@ from vllm.model_executor.parameter import (
+ )
+ from vllm.model_executor.utils import set_weight_attrs
+ from vllm.platforms import current_platform
++from vllm.utils.xpu_decode_timing import timed_region
+ 
+ logger = init_logger(__name__)
+ 
+@@ -216,6 +218,101 @@ class UnquantizedLinearMethod(LinearMethodBase):
+             from vllm.model_executor.layers.utils import dispatch_cpu_unquantized_gemm
+ 
+             dispatch_cpu_unquantized_gemm(layer, remove_weight=True)
++        self._maybe_prepare_xpu_mtp_fc_int8(layer)
++
++    @staticmethod
++    def _env_enabled(name: str) -> bool:
++        return os.environ.get(name, "0").strip().lower() in (
++            "1",
++            "true",
++            "yes",
++            "on",
++        )
++
++    def _maybe_prepare_xpu_mtp_fc_int8(self, layer: torch.nn.Module) -> None:
++        if not self._env_enabled("VLLM_XPU_MTP_FC_INT8"):
++            return
++        prefix = str(getattr(layer, "prefix", ""))
++        prefix_parts = {part for part in prefix.replace("/", ".").split(".") if part}
++        if "mtp" not in prefix_parts or not prefix.endswith(".fc"):
++            return
++        weight = getattr(layer, "weight", None)
++        if weight is None or weight.device.type != "xpu":
++            return
++        if weight.dtype not in (torch.float16, torch.bfloat16):
++            logger.warning(
++                "VLLM_XPU_MTP_FC_INT8 requested for %s but weight dtype is %s; "
++                "falling back to the default linear path.",
++                prefix or "<unknown>",
++                weight.dtype,
++            )
++            return
++        if getattr(layer, "bias", None) is not None:
++            logger.warning(
++                "VLLM_XPU_MTP_FC_INT8 requested for %s but bias is present; "
++                "falling back to the default linear path.",
++                prefix or "<unknown>",
++            )
++            return
++        try:
++            import vllm_xpu_kernels._xpu_C  # noqa: F401
++        except Exception as exc:
++            logger.warning(
++                "VLLM_XPU_MTP_FC_INT8 requested but vllm_xpu_kernels._xpu_C "
++                "could not be imported (%r); falling back to default linear.",
++                exc,
++            )
++            return
++        required_ops = ("int8_gemm_w8a8", "per_token_quant_int8_xpu")
++        if any(not hasattr(torch.ops._xpu_C, op) for op in required_ops):
++            logger.warning(
++                "VLLM_XPU_MTP_FC_INT8 requested but required _xpu_C ops are "
++                "unavailable; falling back to default linear.")
++            return
++
++        with torch.no_grad():
++            weight_f = weight.detach().float()
++            scales = weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
++            weight_q_t = (
++                torch.round(weight_f / scales.view(-1, 1))
++                .clamp(-127, 127)
++                .to(torch.int8)
++                .t()
++                .contiguous()
++            )
++            scale_dtype = os.environ.get(
++                "VLLM_XPU_MTP_FC_INT8_SCALE_DTYPE", "bf16"
++            ).strip().lower()
++            if scale_dtype in ("fp16", "float16", "half"):
++                scales = scales.to(torch.float16)
++            elif scale_dtype in ("fp32", "float32"):
++                scales = scales.to(torch.float32)
++            elif scale_dtype in ("", "bf16", "bfloat16"):
++                scales = scales.to(torch.bfloat16)
++            else:
++                logger.warning(
++                    "Unknown VLLM_XPU_MTP_FC_INT8_SCALE_DTYPE=%r; using bf16.",
++                    scale_dtype,
++                )
++                scales = scales.to(torch.bfloat16)
++            scales = scales.contiguous()
++
++        for name, tensor in (
++            ("_xpu_mtp_fc_int8_weight_t", weight_q_t),
++            ("_xpu_mtp_fc_int8_scale", scales),
++        ):
++            if name in layer._buffers:
++                layer._buffers[name] = tensor
++            else:
++                layer.register_buffer(name, tensor, persistent=False)
++        logger.info(
++            "Prepared experimental XPU INT8 MTP fc: prefix=%s weight_t=%s "
++            "scale=%s scale_dtype=%s",
++            prefix or "<unknown>",
++            tuple(weight_q_t.shape),
++            tuple(scales.shape),
++            scales.dtype,
++        )
+ 
+     def apply(
+         self,
+@@ -223,6 +320,30 @@ class UnquantizedLinearMethod(LinearMethodBase):
+         x: torch.Tensor,
+         bias: torch.Tensor | None = None,
+     ) -> torch.Tensor:
++        if (
++            self._env_enabled("VLLM_XPU_MTP_FC_INT8")
++            and bias is None
++            and x.device.type == "xpu"
++            and hasattr(layer, "_xpu_mtp_fc_int8_weight_t")
++            and hasattr(layer, "_xpu_mtp_fc_int8_scale")
++        ):
++            x_contiguous = x if x.is_contiguous() else x.contiguous()
++            out_shape = x_contiguous.shape[:-1] + (
++                layer._xpu_mtp_fc_int8_weight_t.shape[1],
++            )
++            flat_x = x_contiguous.reshape(-1, x_contiguous.shape[-1])
++            with timed_region("mtp_fc_int8.per_token_quant"):
++                x_q, x_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(flat_x)
++            with timed_region("mtp_fc_int8.gemm_w8a8"):
++                out = torch.ops._xpu_C.int8_gemm_w8a8(
++                    x_q,
++                    x_scale,
++                    layer._xpu_mtp_fc_int8_weight_t,
++                    layer._xpu_mtp_fc_int8_scale,
++                    layer.weight.dtype,
++                    None,
++                )
++            return out.reshape(out_shape)
+         if envs.VLLM_BATCH_INVARIANT and current_platform.is_cuda_alike():
+             return linear_batch_invariant(x, layer.weight, bias)
+         return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)

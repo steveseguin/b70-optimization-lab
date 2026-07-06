@@ -913,6 +913,16 @@ Continue INT4 optimization without promoting synthetic scores:
   current fastest quality-gated practical lane; future LM-head work only makes
   sense if it is a genuinely new backend top-ID/candidate producer rather than
   another reduction around dense logits;
+- draft-side `mtp.fc` runtime INT8 is closed no-win. The 2026-07-06 patch
+  quantized only the BF16 Qwen3.5 MTP `mtp.fc` (`10240 -> 5120`) behind
+  `VLLM_XPU_MTP_FC_INT8=1`, leaving target verification exact. Same-window
+  controls landed at `67.954` and `67.994 tok/s`; the completed candidate was
+  slower at `66.777 tok/s`, and another candidate failed compile with
+  `torch._subclasses.fake_tensor.UnsupportedOperatorException:
+  _xpu_C.int8_gemm_w8a8.default`. Preserve the patch only as a reference:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-fc-int8-no-win-20260706.patch`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-mtp-fc-int8-no-win.md`;
 - do not skip full-accept GDN postprocess blindly; it breaks long-context state
   recall. The current win is specifically source-slot promotion plus disabling
   the redundant accepted-state copy, not a semantic elision;

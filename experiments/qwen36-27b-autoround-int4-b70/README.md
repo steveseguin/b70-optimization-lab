@@ -523,6 +523,14 @@ acceptance collapse and unusable endpoint throughput, so EAGLE3 remains closed
 for this local vLLM/XPU + webhie/Intel AutoRound target unless the drafter
 runtime, accepted-token bookkeeping, or target/draft pairing changes
 materially.
+Draft-side `mtp.fc` runtime INT8 is closed too: the default-off patch quantized
+only the BF16 Qwen3.5 MTP `mtp.fc` layer and kept target verification exact, but
+same-window strict fresh screening showed the completed candidate slower
+(`66.777 tok/s`) than controls (`67.954` and `67.994 tok/s`), while another
+candidate hit TorchDynamo fake-tensor unsupported-op handling for the custom
+INT8 GEMM inside compiled MTP. See
+`notes/2026-07-06-mtp-fc-int8-no-win.md` and
+`../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-fc-int8-no-win-20260706.patch`.
 
 ## Current Entry Points
 
