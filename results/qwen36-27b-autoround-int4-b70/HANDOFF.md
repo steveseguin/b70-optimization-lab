@@ -297,6 +297,15 @@ Current next-execution plan:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
   Current measured record-family timing shows the INT8 LM-head/local-argmax path
   is small and target forward plus recurrent MTP draft forward dominates;
+- synchronized MTP-forward correction:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draft-proposer-timing-split.md`.
+  A follow-up diagnostic shows recurrent MTP-next dispatches are `PIECEWISE`
+  graph mode and synchronized `model_forward_first/next` are sub-millisecond.
+  The earlier apparent `~11 ms` recurrent next cost was async timing
+  attribution, not an eager-kernel bug. Do not spend more endpoint runs trying
+  to "restore graph" for MTP-next; next real speed attempts need accepted-token
+  gains, a stronger target-matched drafter, target-forward/kernel reduction, or
+  graph-safe exact GDN/DeltaNet state transactions;
 - closed GDN qkvz/ba quant-reuse screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-gdn-qkvz-ba-quant-reuse-no-win.md`.
   A same-window four-GPU strict fresh pass of

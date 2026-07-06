@@ -89,6 +89,12 @@ Fastest quality-gated practical variant:
   multiple Qwen MTP layers. The active webhie Qwen27 snapshot only has
   `mtp.layers.0`, so this is not a current record candidate and no endpoint
   run was spent on it;
+- latest MTP timing correction:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draft-proposer-timing-split.md`
+  now records that recurrent MTP-next dispatch is already `PIECEWISE` graph
+  mode and synchronized `model_forward_first/next` are under `1 ms`; the old
+  apparent `~11 ms` recurrent-next cost was async timing attribution. Do not
+  chase MTP-next as an eager-kernel bug;
 
 Previous fastest quality-gated practical variant:
 

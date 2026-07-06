@@ -1,0 +1,72 @@
+{
+  "date": "2026-07-06",
+  "label": "qwen27-mtp-forward-syncdiag-20260706Tcont",
+  "status": "diagnostic_only_quality_skipped",
+  "validity": {
+    "fresh_response_gate_passed": true,
+    "cached_tokens_all_zero": true,
+    "quality_run": false,
+    "headline_promotable": false,
+    "reason_not_promoted": "Timing instrumentation inserted synchronization and quality was intentionally skipped."
+  },
+  "model": {
+    "name": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "path": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+    "runtime": "vLLM/XPU",
+    "hardware": "1x Intel Arc Pro B70"
+  },
+  "config": {
+    "num_speculative_tokens": 3,
+    "xpu_graph": true,
+    "cudagraph_mode": "PIECEWISE",
+    "max_cudagraph_capture_size": 8,
+    "max_num_batched_tokens": 1024,
+    "target_lm_head": "runtime INT8, BF16 scales",
+    "draft_lm_head": "runtime INT4, group 128, BF16 scales",
+    "replayssm": true
+  },
+  "strict_suite_result": {
+    "median_tok_s_1_100_after_ttft": 65.59240696362383,
+    "p10": 60.17870185922705,
+    "mean": 65.38588634003443,
+    "ttft_ms_median": 486.8820214178413
+  },
+  "timing_summary_avg_ms": {
+    "gpu_model_runner.forward_total": 23.69722,
+    "gpu_model_runner.model_forward": 23.640069,
+    "gpu_model_runner.draft_total": 17.564919,
+    "spec_decode.propose.model_forward_first": 0.746578,
+    "spec_decode.propose.model_forward_next": 0.673998
+  },
+  "dispatch_trace_summary": {
+    "sampled_lines": 24,
+    "cudagraph_runtime_modes": {
+      "PIECEWISE": 24
+    },
+    "batch_size": {
+      "1": 24
+    },
+    "input_batch_size": {
+      "1": 24
+    },
+    "token_index": {
+      "0": 12,
+      "1": 12
+    },
+    "max_seq_len_min": 46,
+    "max_seq_len_max": 108
+  },
+  "conclusion": [
+    "The earlier apparent ~11 ms recurrent MTP-next timing was async attribution, not an eager-kernel bug.",
+    "Recurrent MTP-next dispatch is already PIECEWISE graph mode, and synchronized first/next model-forward calls are sub-millisecond.",
+    "Do not spend future endpoint runs trying to restore graph for recurrent MTP-next.",
+    "Next speed work should target accepted-token-per-target-step gains, a stronger drafter, target-forward/kernel reduction, or graph-safe GDN/DeltaNet state transactions."
+  ],
+  "evidence": {
+    "tracked_note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draft-proposer-timing-split.md",
+    "candidate_summary_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-mtp-forward-syncdiag-20260706Tcont-candidate-summary-20260706Tsyncdiag.json",
+    "strict_suite_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-mtp-forward-syncdiag-20260706Tcont-realistic128-chat-tokenids-qwensuite-20260706Tsyncdiag.json",
+    "server_log": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-mtp-forward-syncdiag-20260706Tcont-20260706Tsyncdiag/server.stdout.log",
+    "dispatch_trace_jsonl": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-mtp-forward-syncdiag-20260706Tcont-20260706Tsyncdiag/mtp-next-dispatch.jsonl"
+  }
+}

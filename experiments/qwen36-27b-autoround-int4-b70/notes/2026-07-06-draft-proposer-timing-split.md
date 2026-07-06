@@ -179,3 +179,67 @@ Decision:
 Next action: stop wrapper-level draft LM-head work and move to higher-leverage
 work: stronger accepted-token-per-target-step mechanisms, legal branch/regenerate
 infrastructure with exact GDN state, or target-forward/kernel reduction.
+
+## Follow-up sync diagnostic: recurrent MTP-next is not an 11 ms eager kernel
+
+Run:
+
+- label: `qwen27-mtp-forward-syncdiag-20260706Tcont`
+- summary:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-mtp-forward-syncdiag-20260706Tcont-candidate-summary-20260706Tsyncdiag.json`
+- raw strict-suite JSON:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-mtp-forward-syncdiag-20260706Tcont-realistic128-chat-tokenids-qwensuite-20260706Tsyncdiag.json`
+- server log:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-mtp-forward-syncdiag-20260706Tcont-20260706Tsyncdiag/server.stdout.log`
+- MTP-next dispatch trace:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-mtp-forward-syncdiag-20260706Tcont-20260706Tsyncdiag/mtp-next-dispatch.jsonl`
+
+This was a diagnostic-only strict fresh run. The final gate passed mechanically
+(`cached_tokens=0` on all 12 prompts), but quality was intentionally skipped and
+the inserted synchronization perturbs throughput, so do not promote it:
+
+- median: `65.592 tok/s`, p10 `60.179`, mean `65.386`
+- TTFT median: `486.882 ms`
+- graph capture: `PIECEWISE`, 5 captures, `0.32 GiB`
+- MTP-next trace: 24/24 recurrent dispatches were `PIECEWISE`, `batch_size=1`,
+  `input_batch_size=1`, `num_actual_tokens=1`, `max_query_len=1`
+
+Timing summary with synchronization only on
+`spec_decode.propose.model_forward_first|next`:
+
+| label | count | avg ms |
+| --- | ---: | ---: |
+| `gpu_model_runner.forward_total` | 2148 | `23.697` |
+| `gpu_model_runner.model_forward` | 2148 | `23.640` |
+| `gpu_model_runner.draft_total` | 2148 | `17.565` |
+| `spec_decode.propose.model_forward_first` | 2148 | `0.747` |
+| `spec_decode.propose.model_forward_next` | 4306 | `0.674` |
+
+Interpretation:
+
+- The earlier apparent `~11 ms` recurrent MTP-next result was async timing
+  attribution. It is not evidence that recurrent MTP-next is falling out of XPU
+  graph or running as an 11 ms eager kernel.
+- The narrow synchronized labels prove the MTP layer calls themselves are
+  sub-millisecond in this graph-dispatched shape.
+- The large `draft_total` under this diagnostic is not a clean endpoint bucket:
+  the sync labels inside it force ordering and make the enclosing host timer
+  absorb dependency waits from target/sample/state work. It should not be used
+  as a normal per-step cost estimate.
+
+Closed:
+
+- Do not optimize `model_forward_next` as an 11 ms kernel bug.
+- Do not spend endpoint runs trying to "restore graph" for recurrent MTP-next;
+  the dispatch trace already shows `PIECEWISE`.
+
+Still credible:
+
+1. Improve accepted tokens per target step with a stronger target-matched
+   drafter or legal branch/regenerate support.
+2. Reduce the target verifier forward / GDN exact-state transaction cost.
+3. Add a real graph-safe GDN/DeltaNet state tape or equivalent transaction if
+   deeper speculation depends on exact state rollback/commit.
+4. Treat text-only recurrent `input_ids` MTP and static metadata reuse as small
+   bounded cleanups only; previous quick attempts stalled graph capture, and
+   the expected gain is sub-ms per MTP3 step.

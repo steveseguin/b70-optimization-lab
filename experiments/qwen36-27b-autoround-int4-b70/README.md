@@ -177,6 +177,13 @@ Next milestone:
    `notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`,
    `notes/2026-07-04-compact-lmhead-top1-kernel-no-win.md`, and
    `notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
+   The latest synchronized MTP-forward diagnostic in
+   `notes/2026-07-06-draft-proposer-timing-split.md` closes the apparent
+   `~11 ms` recurrent MTP-next cost as async timing attribution: recurrent
+   dispatches are `PIECEWISE` graph mode and synchronized
+   `model_forward_first/next` are sub-millisecond. Do not chase MTP-next as an
+   eager-kernel bug; use accepted-token, target-forward, stronger-drafter, or
+   graph-safe state-transaction work for the next real speed attempt.
    The 2026-07-06 replacement-suppression plumbing/margin follow-up is also
    closed no-win: active scheduler recovery passed quality only at `~34-49
    tok/s`, and margin gating stayed below record. See
