@@ -490,9 +490,12 @@ native-off serial/fallback actually exercised the path and fell to
 The next GDN-state implementation lane should be a fixed-shape exact
 accepted-prefix tape / GPU-side commit, not more serial source/offset sweeps.
 The executable contract is `../../scripts/check-gdn-spec-recurrent-exact.py`;
-as of 2026-07-05 it validates exact recurrent prefix state plus
-accepted-prefix SSM and conv commit equality on XPU for k=3/4/5. See
-`notes/2026-07-05-accepted-prefix-tape-contract.md`.
+as of 2026-07-06 it validates exact recurrent prefix state,
+accepted-prefix SSM/conv commit equality on XPU for k=3/4/5, and the
+endpoint row-to-draft-prefix mapping for full reject, partial reject, full
+accept with bonus, shifted full accept, draft-only, and suppressed
+bonus/replacement tails. See `notes/2026-07-05-accepted-prefix-tape-contract.md`
+and `notes/2026-07-06-gdn-endpoint-row-contract-extension.md`.
 The native packed spec prefix contract is also now checked directly by
 `../../scripts/check-gdn-native-spec-prefix.py`; see
 `notes/2026-07-05-native-spec-prefix-contract-check.md`. It confirms the native

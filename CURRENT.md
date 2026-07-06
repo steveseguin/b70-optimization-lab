@@ -84,9 +84,11 @@ Fastest quality-gated practical variant:
   accepted-prefix GDN/DeltaNet state tape with GPU-side commit, not promoting
   invalid fast rows or sweeping serial offsets. The current executable unit
   target is `scripts/check-gdn-spec-recurrent-exact.py`, which now validates
-  exact recurrent prefix state and accepted-prefix SSM+conv commit equality on
-  XPU for k=3/4/5. Native packed prefix-source semantics were then checked
-  directly with `scripts/check-gdn-native-spec-prefix.py`; it confirms
+  exact recurrent prefix state, accepted-prefix SSM+conv commit equality on
+  XPU for k=3/4/5, and endpoint row-to-draft-prefix mapping for full reject,
+  partial reject, full accept with bonus, shifted full accept, draft-only, and
+  suppressed bonus/replacement tails. Native packed prefix-source semantics
+  were then checked directly with `scripts/check-gdn-native-spec-prefix.py`; it confirms
   `spec_state_indices_tensor[:, j]` means state after packed row `j` and
   `num_accepted_tokens=N` selects source column `N - 1`, with varied GPU/shape
   artifacts under

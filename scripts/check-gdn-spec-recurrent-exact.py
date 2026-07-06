@@ -253,6 +253,76 @@ def main() -> int:
         )
         return committed
 
+    placeholder_token_id = -1
+
+    def visible_count(row: torch.Tensor) -> int:
+        return int((row != placeholder_token_id).sum().item())
+
+    def commit_prefix_from_visible_row(
+        row: torch.Tensor,
+        scheduled_spec_ids: torch.Tensor,
+        *,
+        draft_only: bool = False,
+        suppressed_target_owned_tail: bool = False,
+    ) -> int:
+        """Map scheduler-visible speculative output to draft prefix length.
+
+        The sampler row may include a target-owned replacement on partial
+        reject, or a target-owned bonus token on full accept. Neither token is
+        part of the accepted draft prefix that a native GDN/DeltaNet state
+        commit may select. This mirrors the endpoint contract while staying
+        small and deterministic enough for a synthetic XPU guard.
+        """
+        count = visible_count(row)
+        num_draft_tokens = int(scheduled_spec_ids.numel())
+        if count <= 0:
+            return 0
+
+        row_valid = row[:count]
+        if draft_only:
+            return min(count, num_draft_tokens)
+
+        # Some scheduler paths emit accepted scheduled tokens shifted by one
+        # position. They are still draft-owned rows, not target replacement
+        # rows, so commit exactly the visible accepted prefix.
+        if (
+            num_draft_tokens > 1
+            and count == num_draft_tokens - 1
+            and torch.equal(row_valid, scheduled_spec_ids[1:1 + count])
+        ):
+            return count
+
+        # A full accept row is k accepted draft tokens plus a target-owned
+        # bonus. If the bonus is suppressed for recompute, the draft prefix is
+        # still k.
+        if count == num_draft_tokens + 1:
+            return num_draft_tokens
+
+        # If a target-owned replacement/bonus was already marked for
+        # suppression by the sampler, the prefix is the row without that tail.
+        if suppressed_target_owned_tail:
+            return min(max(count - 1, 0), num_draft_tokens)
+
+        # Normal partial reject row: p accepted draft tokens plus one
+        # target-owned replacement. The replacement cannot be committed from
+        # verifier draft-prefix state.
+        if count <= num_draft_tokens:
+            return max(count - 1, 0)
+
+        raise ValueError(
+            f"invalid speculative row count={count} k={num_draft_tokens}")
+
+    def make_row(tokens: list[int]) -> torch.Tensor:
+        row = torch.full((spec_len + 1,),
+                         placeholder_token_id,
+                         device=device,
+                         dtype=torch.int64)
+        if tokens:
+            row[:len(tokens)] = torch.tensor(tokens,
+                                             device=device,
+                                             dtype=torch.int64)
+        return row
+
     ssm_commit_equal = True
     conv_commit_equal = True
     ssm_commit_max_abs_diff = 0.0
@@ -264,6 +334,88 @@ def main() -> int:
     accepted_cases.append(
         torch.arange(num_reqs, device=device, dtype=torch.int64)
         % (spec_len + 1))
+    scheduled_base = torch.arange(1000,
+                                  1000 + spec_len,
+                                  device=device,
+                                  dtype=torch.int64)
+    scheduled_tokens = [1000 + i for i in range(spec_len)]
+    scheduler_endpoint_cases = [
+        {
+            "name": "full_reject",
+            "row": make_row([]),
+            "expected": 0,
+        },
+        {
+            "name": "partial_reject_at_0_replacement_only",
+            "row": make_row([9000]),
+            "expected": 0,
+        },
+        {
+            "name": "partial_reject_after_1",
+            "row": make_row(scheduled_tokens[:1] + [9001]),
+            "expected": min(1, spec_len),
+        },
+        {
+            "name": "partial_reject_after_2",
+            "row": make_row(scheduled_tokens[:min(2, spec_len)] + [9002]),
+            "expected": min(2, spec_len),
+        },
+        {
+            "name": "full_accept_with_bonus",
+            "row": make_row(scheduled_tokens + [9100]),
+            "expected": spec_len,
+        },
+        {
+            "name": "draft_only_two",
+            "row": make_row(scheduled_tokens[:min(2, spec_len)]),
+            "expected": min(2, spec_len),
+            "draft_only": True,
+        },
+        {
+            "name": "shifted_full_accept",
+            "row": make_row(scheduled_tokens[1:]),
+            "expected": max(spec_len - 1, 0),
+        },
+        {
+            "name": "suppressed_bonus_tail",
+            "row": make_row(scheduled_tokens + [9101]),
+            "expected": spec_len,
+            "suppressed_target_owned_tail": True,
+        },
+        {
+            "name": "suppressed_replacement_after_2",
+            "row": make_row(scheduled_tokens[:min(2, spec_len)] + [9003]),
+            "expected": min(2, spec_len),
+            "suppressed_target_owned_tail": True,
+        },
+    ]
+    scheduler_case_failures: list[dict[str, object]] = []
+    scheduler_case_names: list[str] = []
+    for endpoint_case in scheduler_endpoint_cases:
+        expected_prefix = min(int(endpoint_case["expected"]), spec_len)
+        observed_prefix = commit_prefix_from_visible_row(
+            endpoint_case["row"],
+            scheduled_base,
+            draft_only=bool(endpoint_case.get("draft_only", False)),
+            suppressed_target_owned_tail=bool(
+                endpoint_case.get("suppressed_target_owned_tail", False)),
+        )
+        scheduler_case_names.append(str(endpoint_case["name"]))
+        if observed_prefix != expected_prefix:
+            scheduler_case_failures.append({
+                "name": str(endpoint_case["name"]),
+                "observed": int(observed_prefix),
+                "expected": int(expected_prefix),
+                "row": [
+                    int(token)
+                    for token in endpoint_case["row"].detach().cpu().tolist()
+                ],
+            })
+        accepted_cases.append(
+            torch.full((num_reqs,),
+                       observed_prefix,
+                       device=device,
+                       dtype=torch.int64))
     for accepted_prefix in accepted_cases:
         committed_ssm = commit_prefix_rows(ssm_prefix_table, accepted_prefix)
         committed_conv = commit_prefix_rows(conv_prefix_table, accepted_prefix)
@@ -297,6 +449,10 @@ def main() -> int:
         "old_accepted_count_path_equal": bool(old_equal),
         "accepted_prefix_commit_ssm_equal": bool(ssm_commit_equal),
         "accepted_prefix_commit_conv_equal": bool(conv_commit_equal),
+        "scheduler_endpoint_cases_equal": not scheduler_case_failures,
+        "scheduler_endpoint_case_count": len(scheduler_endpoint_cases),
+        "scheduler_endpoint_case_names": scheduler_case_names,
+        "scheduler_endpoint_case_failures": scheduler_case_failures,
         "candidate_state_max_abs_diff": float(
             (cand_selected.float() - ref_selected.float()).abs().max().item()),
         "candidate_output_max_abs_diff": float(
@@ -314,6 +470,8 @@ def main() -> int:
         raise SystemExit("exact serial spec recurrent path did not match reference")
     if old_equal:
         raise SystemExit("old accepted-count packed path unexpectedly matched")
+    if scheduler_case_failures:
+        raise SystemExit("scheduler endpoint row-to-prefix contract failed")
     if not ssm_commit_equal or not conv_commit_equal:
         raise SystemExit("accepted-prefix commit prototype did not match")
     return 0

@@ -87,8 +87,13 @@ Active target as of the latest switch request:
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`.
   The executable contract starts at
   `scripts/check-gdn-spec-recurrent-exact.py`: it now verifies exact recurrent
-  prefix state plus accepted-prefix SSM and conv commit equality on XPU for
-  k=3/4/5. Run it before touching native GDN tape/commit code. A second native
+  prefix state, accepted-prefix SSM/conv commit equality on XPU for k=3/4/5,
+  and endpoint row-to-draft-prefix mapping for full reject, partial reject,
+  full accept with bonus, shifted full accept, draft-only, and suppressed
+  bonus/replacement tails. Run it before touching native GDN tape/commit code;
+  see
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-gdn-endpoint-row-contract-extension.md`.
+  A second native
   prefix harness, `scripts/check-gdn-native-spec-prefix.py`, directly validates
   the packed `gdn_attention_spec_decode` column contract on XPU: column `j` is
   the state after packed row `j`, and `num_accepted_tokens=N` selects source

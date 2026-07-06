@@ -117,10 +117,14 @@ Current fastest quality-gated variant:
   GDN/DeltaNet state tape with GPU-side commit, or a stronger
   target-matched drafter/branch-regenerate design, not more serial offset
   sweeps. The executable unit contract is
-  `../../scripts/check-gdn-spec-recurrent-exact.py`, updated on 2026-07-05 to
-  verify exact recurrent prefix state plus accepted-prefix SSM and conv commit
-  equality on XPU; see
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-accepted-prefix-tape-contract.md`.
+  `../../scripts/check-gdn-spec-recurrent-exact.py`, updated on 2026-07-06 to
+  verify exact recurrent prefix state, accepted-prefix SSM/conv commit
+  equality on XPU, and endpoint row-to-draft-prefix mapping for full reject,
+  partial reject, full accept with bonus, shifted full accept, draft-only, and
+  suppressed bonus/replacement tails; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-accepted-prefix-tape-contract.md`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-gdn-endpoint-row-contract-extension.md`.
   The companion native prefix-source check is
   `../../scripts/check-gdn-native-spec-prefix.py`; it validates on XPU that
   packed native `gdn_attention_spec_decode` publishes state column `j` after
