@@ -1,0 +1,168 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+         self.num_accepted_tokens = self._make_buffer(
+             self.max_num_reqs, dtype=torch.int32
+         )
++        self.xpu_gdn_accepted_prefix_tokens = self._make_buffer(
++            self.max_num_reqs, dtype=torch.int32
++        )
++        self.xpu_gdn_accepted_prefix_tokens.gpu.fill_(1)
+@@
+     def _xpu_restore_mamba_running_states_for_draft_full_reject(
+         self,
+         scheduler_output: "SchedulerOutput",
+         accepted_token_counts: torch.Tensor,
+         num_reqs: int,
+@@
+         finally:
+             for req_id in scheduler_output.scheduled_spec_decode_tokens:
+                 self.xpu_spec_decode_state_snapshots.pop(str(req_id), None)
++
++    def _xpu_gdn_accepted_prefix_counts_enabled(self) -> bool:
++        return (
++            os.environ.get("VLLM_XPU_GDN_ACCEPTED_PREFIX_COUNTS", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++
++    def _xpu_compute_gdn_accepted_prefix_counts(
++        self,
++        output_token_ids: torch.Tensor,
++        scheduler_output: "SchedulerOutput",
++        raw_accepted_token_counts: torch.Tensor,
++        num_reqs: int,
++        xpu_suppressed_bonus_mask: torch.Tensor | None,
++        xpu_suppressed_replacement_mask: torch.Tensor | None,
++    ) -> torch.Tensor | None:
++        """Map scheduler-visible verifier rows to draft-owned prefix lengths.
++
++        ``num_accepted_tokens`` is shared with scheduler/Mamba bookkeeping and
++        can include target-owned replacement/bonus rows. GDN/DeltaNet state
++        commits must instead select only the draft-owned prefix row that was
++        actually verified. Keep this separate and default-off so existing
++        state accounting remains unchanged.
++        """
++        if (
++            not self._xpu_gdn_accepted_prefix_counts_enabled()
++            or not scheduler_output.scheduled_spec_decode_tokens
++        ):
++            return None
++
++        prefix_counts = torch.ones_like(raw_accepted_token_counts)
++        draft_only = (
++            os.environ.get("VLLM_XPU_SPEC_DECODE_DRAFT_ONLY", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        for i, req_id in enumerate(self.input_batch.req_ids[:num_reqs]):
++            if req_id is None:
++                continue
++            scheduled_spec_ids = (
++                scheduler_output.scheduled_spec_decode_tokens.get(req_id)
++            )
++            if not scheduled_spec_ids:
++                continue
++            try:
++                visible_count = int(raw_accepted_token_counts[i].item())
++            except Exception:
++                visible_count = 0
++            num_draft_tokens = len(scheduled_spec_ids)
++            if visible_count <= 0 or num_draft_tokens <= 0:
++                prefix_counts[i] = 0
++                continue
++
++            visible_count = min(visible_count, int(output_token_ids.size(1)))
++            row_valid = output_token_ids[i, :visible_count]
++            prefix_count = 0
++            if draft_only:
++                prefix_count = min(visible_count, num_draft_tokens)
++            else:
++                scheduled_tensor = torch.tensor(
++                    scheduled_spec_ids,
++                    dtype=output_token_ids.dtype,
++                    device=output_token_ids.device,
++                )
++                direct_full_accept = (
++                    visible_count == num_draft_tokens
++                    and torch.equal(row_valid, scheduled_tensor)
++                )
++                shifted_full_accept = (
++                    num_draft_tokens > 1
++                    and visible_count == num_draft_tokens - 1
++                    and torch.equal(
++                        row_valid,
++                        scheduled_tensor[1:1 + visible_count],
++                    )
++                )
++                suppressed_target_owned_tail = (
++                    _xpu_mask_row_true(xpu_suppressed_bonus_mask, i)
++                    or _xpu_mask_row_true(xpu_suppressed_replacement_mask, i)
++                )
++                if direct_full_accept:
++                    prefix_count = num_draft_tokens
++                elif shifted_full_accept:
++                    prefix_count = visible_count
++                elif visible_count == num_draft_tokens + 1:
++                    prefix_count = num_draft_tokens
++                elif suppressed_target_owned_tail:
++                    prefix_count = min(
++                        max(visible_count - 1, 0),
++                        num_draft_tokens,
++                    )
++                elif visible_count <= num_draft_tokens:
++                    prefix_count = max(visible_count - 1, 0)
++                else:
++                    prefix_count = num_draft_tokens
++            prefix_counts[i] = max(0, min(prefix_count, num_draft_tokens))
++        return prefix_counts
+@@
+         num_reqs = output_token_ids.size(0)
+         accepted_token_counts = (output_token_ids != -1).sum(dim=1)
+         raw_accepted_token_counts = accepted_token_counts.clone()
++        self.xpu_gdn_accepted_prefix_tokens.gpu[:num_reqs].fill_(1)
+         scheduled_spec_decode_tokens = scheduler_output.scheduled_spec_decode_tokens
+@@
+             elif scheduled_spec_decode_tokens:
+                 corrected_counts = accepted_token_counts.clone()
+                 for i, req_id in enumerate(self.input_batch.req_ids[:num_reqs]):
+@@
+                             )
+                 accepted_token_counts = corrected_counts
++        gdn_accepted_prefix_counts = (
++            self._xpu_compute_gdn_accepted_prefix_counts(
++                output_token_ids,
++                scheduler_output,
++                raw_accepted_token_counts,
++                num_reqs,
++                xpu_suppressed_bonus_mask,
++                xpu_suppressed_replacement_mask,
++            )
++        )
++        if gdn_accepted_prefix_counts is not None:
++            self.xpu_gdn_accepted_prefix_tokens.gpu[:num_reqs].copy_(
++                gdn_accepted_prefix_counts[:num_reqs], non_blocking=True)
+         self.num_accepted_tokens.gpu[:num_reqs] = accepted_token_counts
+@@
+             if (self.speculative_config is not None) and isinstance(
+                 builder, (Mamba2AttentionMetadataBuilder, GDNAttentionMetadataBuilder)
+             ):
+                 assert ubid is None, "UBatching not supported with GDN yet"
++                gdn_num_accepted_tokens = self.num_accepted_tokens.gpu[
++                    :num_reqs_padded]
++                if (
++                    isinstance(builder, GDNAttentionMetadataBuilder)
++                    and self._xpu_gdn_accepted_prefix_counts_enabled()
++                ):
++                    gdn_num_accepted_tokens = (
++                        self.xpu_gdn_accepted_prefix_tokens.gpu[
++                            :num_reqs_padded])
+                 extra_attn_metadata_args = dict(
+-                    num_accepted_tokens=self.num_accepted_tokens.gpu[:num_reqs_padded],
++                    num_accepted_tokens=gdn_num_accepted_tokens,
+                     num_decode_draft_tokens_cpu=self.num_decode_draft_tokens.cpu[
+                         :num_reqs_padded
+                     ],

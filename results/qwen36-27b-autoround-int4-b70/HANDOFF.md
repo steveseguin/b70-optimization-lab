@@ -169,6 +169,13 @@ Previous fastest quality-gated variant:
   `N - 1`. See
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-native-spec-prefix-contract-check.md`.
   This closes simple source-column offset patches as a credible next step.
+  A metadata-only accepted-prefix-count buffer was then tested and closed
+  no-win:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-gdn-accepted-prefix-counts-no-win.md`.
+  It passed contracts and repeat64 quality, but the strict fresh candidate was
+  not promotable and slowed to `37.451 tok/s`; preserve the patch only as
+  negative evidence and continue with a real fixed-shape transaction or
+  branch/regenerate design instead.
   The first commit-overhead follow-up,
   `VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1` with post-verify commit skipped
   when no restore correction is active, is valid but no-promote: strict fresh

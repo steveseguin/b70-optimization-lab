@@ -539,6 +539,13 @@ op publishes column `j` as the state after packed row `j` and selects source
 column `num_accepted_tokens - 1`. That closes the simple off-by-one/source
 column explanation for the invalid fast draft-INT4 rows and points future work
 at an exact ReplaySSM/tape commit transaction.
+A metadata-only attempt to feed a separate GDN accepted-prefix count buffer
+into attention metadata is closed no-win:
+`notes/2026-07-06-gdn-accepted-prefix-counts-no-win.md` and
+`../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-gdn-accepted-prefix-counts-no-win-20260706.patch`.
+It passed GDN contracts and repeat64 quality, but the strict candidate was not
+promotable and slowed to `37.451 tok/s`; do not confuse this with the deeper
+fixed-shape GDN transaction still on the backlog.
 A first commit-overhead reduction for that direction was tested:
 `VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1` plus skipping the redundant
 post-verify commit when no restore correction is active. It passed strict fresh
