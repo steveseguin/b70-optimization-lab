@@ -115,6 +115,12 @@ Current fastest quality-gated variant:
   after active-slot filtering in the native kernel and Python fallback. This is
   required groundwork for partial-group / branch-regenerate, not a speed record
   and not a LocalMaxxing submission.
+- branch-fork composition guard:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-branch-fork-composition-guard.md`.
+  `copy_slots` + compacted `commit_pending` passes BF16/FP16/FP32 and leaves
+  source slots unchanged. The important rule is to compact valid source/dest
+  branch rows before commit; raw destination commits after invalid-source copy
+  can mutate unrelated pending state.
 - latest native prefix-base/exact-state rescreen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
   This refreshed the stale July 5 exact-native/prefill replay flags after the

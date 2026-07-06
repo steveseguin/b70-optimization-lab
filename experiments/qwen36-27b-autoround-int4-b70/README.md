@@ -192,6 +192,13 @@ Next milestone:
    plus native prefix/recurrent checks after an active-slot guard. This is
    infrastructure for partial-group / branch-regenerate work, not a throughput
    win or LocalMaxxing row.
+   The follow-up branch-fork composition guard is
+   `notes/2026-07-06-replayssm-branch-fork-composition-guard.md`: native
+   `copy_slots` + compacted native `commit_pending` can fork a valid branch
+   slot and commit an accepted prefix exactly, but committing raw destination
+   rows after invalid-source copies corrupts unrelated pending slots. Any
+   branch/regenerate endpoint prototype must compact valid `(src, dst)` rows
+   before commit.
    The 2026-07-06 replacement-suppression plumbing/margin follow-up is also
    closed no-win: active scheduler recovery passed quality only at `~34-49
    tok/s`, and margin gating stayed below record. See

@@ -79,6 +79,11 @@ Fastest quality-gated practical variant:
   `scripts/check-gdn-replayssm-commit-pending.py` now passes BF16/FP16/FP32
   plus native prefix/recurrent checks after active-slot filtering. Treat this
   as partial-group / branch-regenerate infrastructure, not a benchmark result;
+- branch-fork composition guard:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-branch-fork-composition-guard.md`.
+  It validates conv-state copy + native ReplaySSM `copy_slots` + compacted
+  native `commit_pending` for BF16/FP16/FP32 and records the rule that invalid
+  branch rows must be compacted away before commit;
 - latest native prefix-base closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
   The stale July 5 exact-state/native-prefill replay flags were rescreened
