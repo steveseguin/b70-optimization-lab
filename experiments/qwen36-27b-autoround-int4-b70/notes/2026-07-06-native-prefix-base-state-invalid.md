@@ -229,3 +229,31 @@ would still need the broader accepted-prefix transaction fixed. That is too
 large for this already-negative lane, so prefix-base is closed as **invalid /
 not promotable**. Preserve the patch as a reference, but do not continue simple
 source-column or metadata-column sweeps.
+
+## Follow-up: extra Mamba block fixes table width but not quality
+
+Later the allocator/table-width blocker was fixed by widening the Mamba state
+allocation itself behind `VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE=1`; see:
+
+`experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-base-extra-block-partial.md`
+
+The successful endpoint metadata trace exposed five columns:
+
+```json
+{
+  "block_table_tensor": {"shape": [1, 5], "head": [1, 2, 3, 4, 5]},
+  "spec_state_cols": 5,
+  "num_spec_decode_tokens": 4
+}
+```
+
+That candidate reached `70.15392515866824 tok/s` strict fresh median and passed
+smoke, exact cases, long-context, and baseline-match checks, but repeat64 still
+failed `2/64` with the early-stop text `blue, green, red`. No-async was slower
+and less stable. The updated conclusion is:
+
+- allocator/block-table width is no longer the blocker;
+- the remaining native prefix-base blocker is accepted-prefix / replacement /
+  bonus-token transaction correctness;
+- the extra-block patch is a useful partial artifact, but still not promotable
+  and must not be submitted to LocalMaxxing.

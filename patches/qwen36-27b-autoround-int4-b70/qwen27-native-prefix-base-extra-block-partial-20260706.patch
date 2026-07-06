@@ -1,0 +1,28 @@
+diff --git a/vllm/model_executor/layers/mamba/abstract.py b/vllm/model_executor/layers/mamba/abstract.py
+index 9982f7d2f..a99f59565 100644
+--- a/vllm/model_executor/layers/mamba/abstract.py
++++ b/vllm/model_executor/layers/mamba/abstract.py
+@@ -66,6 +66,23 @@ class MambaBase(AttentionLayerBase):
+                 if ngram_no_mamba_spec_blocks and is_ngram_spec
+                 else vllm_config.speculative_config.num_speculative_tokens
+             )
++            prefix_base_spec_state = (
++                os.environ.get("VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE", "")
++                .strip()
++                .lower()
++                in ("1", "true", "yes", "on")
++            )
++            if (
++                prefix_base_spec_state
++                and num_speculative_blocks > 0
++                and vllm_config.cache_config.mamba_cache_mode != "all"
++            ):
++                # GDN prefix-base native spec decode needs one state slot for
++                # the running/base state plus one slot per draft-prefix state.
++                # The scheduler still emits the same number of speculative
++                # tokens; this only widens the Mamba state block table so the
++                # metadata builder does not clamp away the backup/base column.
++                num_speculative_blocks += 1
+         return MambaSpec(
+             shapes=tuple(self.get_state_shape()),
+             dtypes=self.get_state_dtype(),
