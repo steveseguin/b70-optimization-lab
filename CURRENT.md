@@ -129,8 +129,10 @@ Fastest quality-gated practical variant:
   original-init rollout-3 recipe reached `1.0592532467532467` heldout mean
   accepted (`55.98%` step-1 exact, `52.39%` step-2 conditional, `50.55%`
   step-3 conditional). This is still below the `1.5-2.0` offline threshold
-  for endpoint/kernel work. Next work should change objective or train scope,
-  not wire the drafter into vLLM yet;
+  for endpoint/kernel work. A bounded all-scope follow-up from the v4 best
+  checkpoint reached only `1.0707972582972582` mean accepted, so simple
+  full-draft unfreezing is not the unlock. Next work should change the
+  objective, not wire the drafter into vLLM yet;
 
 Previous fastest quality-gated practical variant:
 

@@ -112,6 +112,10 @@ Latest stronger-drafter result:
   simple endpoint plumbing. See compact summaries
   `diagnostics/qwen27-eagle3-aux-v4-corpus-summary-20260706.json` and
   `diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v4-summary-20260706.json`.
+  A bounded all-scope follow-up from the v4 best checkpoint moved heldout mean
+  only to `1.0707972582972582`, while original all-scope low-LR runs underfit;
+  preserve it as no-endpoint evidence in
+  `diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

@@ -425,3 +425,44 @@ Interpretation:
   survival-weighted rollout loss at the working `2e-5` LR, a larger v5 corpus
   with more output styles, or selectively unfreezing the draft layer once the
   fc/lm-head plateau is confirmed.
+
+## All-scope draft training screen: tiny gain, still no endpoint
+
+The next bounded test selectively reopened train scope by training the whole
+one-layer Ex0bit draft (`--train-scope all`, embedding still frozen in the
+trainer) instead of only `fc` + `lm_head`. It used the v4 corpus and heldout
+split above, four B70s, four epochs, and low learning rates to avoid an
+unbounded overfit run.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T212451Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | init | scope | lr | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---|---|---:|---:|---:|---:|---:|
+| `continue-all-r3-lr2e-6-decay1` | v4 best | all | `2e-6` | **`1.0707972582972582`** | `56.14%` | `52.77%` | `51.13%` |
+| `continue-all-r3-lr1e-6-decay1` | v4 best | all | `1e-6` | `1.0630411255411256` | `56.03%` | `52.50%` | `50.74%` |
+| `original-all-r3-lr2e-6-decay1` | original Ex0bit | all | `2e-6` | `0.3504689754689755` | `27.05%` | `24.85%` | `16.70%` |
+| `original-all-r3-lr1e-6-decay1` | original Ex0bit | all | `1e-6` | `0.30104617604617606` | `24.48%` | `19.92%` | `14.06%` |
+
+Interpretation:
+
+- Continuing from the v4 best checkpoint and unfreezing the draft layer gives
+  only a tiny improvement (`1.0593` -> `1.0708` mean accepted).
+- Starting all-scope training from original Ex0bit with low LR underfits badly
+  in four epochs.
+- This closes simple all-scope unfreezing as an endpoint trigger. It may still
+  be useful after a better objective, but by itself it does not move the lane
+  toward the `1.5-2.0` minimum.
+- Next credible move is objective-level: train for accepted-prefix survival or
+  row selection more directly, rather than more low-LR full-scope sweeps.

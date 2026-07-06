@@ -277,10 +277,12 @@ Active target as of the latest switch request:
   best original-init rollout-3 recipe only modestly to
   `1.0592532467532467` (`55.98%` step-1 exact, `52.39%` step-2 conditional,
   `50.55%` step-3 conditional). This confirms the pipeline is learning, but
-  not fast enough to justify endpoint plumbing. Next work should change the
-  objective or train scope, not merely add endpoint/kernel integration. Do not
-  endpoint-test this adapted draft unless offline mean accepted reaches at
-  least `1.5-2.0`.
+  not fast enough to justify endpoint plumbing. A bounded all-scope follow-up
+  from the v4 best checkpoint reached only `1.0707972582972582`, and original
+  all-scope low-LR runs underfit, so simple full-draft unfreezing is not the
+  unlock. Next work should change the objective, not merely add endpoint/kernel
+  integration. Do not endpoint-test this adapted draft unless offline mean
+  accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and
