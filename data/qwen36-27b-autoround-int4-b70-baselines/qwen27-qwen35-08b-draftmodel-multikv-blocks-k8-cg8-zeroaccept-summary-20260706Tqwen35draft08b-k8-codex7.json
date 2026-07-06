@@ -1,0 +1,48 @@
+{
+  "classification": "strict_fresh_qwen27_candidate_summary",
+  "label": "qwen27-qwen35-08b-draftmodel-multikv-blocks-k8-cg8",
+  "status": {
+    "served": true,
+    "smoke_pass": true,
+    "bench_completed": false,
+    "bench_aborted_reason": "0% draft acceptance during live smoke/initial benchmark; full 512-token strict run would only measure rejected-draft slowdown.",
+    "fresh_response_valid": false,
+    "localmaxxing_submitted": false
+  },
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "draft_model_dir": "/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.5-0.8B/snapshots/2fc06364715b967f1860aea9cf38778875588b17",
+  "speculative_config": {
+    "method": "draft_model",
+    "num_speculative_tokens": 8,
+    "draft_tensor_parallel_size": 1
+  },
+  "compatibility_result": {
+    "explicit_draft_model_preserved": true,
+    "qwen35_08b_loaded_as": "Qwen3_5ForConditionalGeneration",
+    "text_only_multimodal_override": true,
+    "flat_1d_mrope_override": true,
+    "mixed_kv_groups_initialized": [11, 12, 13, 14],
+    "mixed_block_sizes_supported": true,
+    "xpu_graph_captured": true
+  },
+  "acceptance_observation": {
+    "accepted_tokens": 0,
+    "drafted_tokens_observed_per_log_interval": [176, 200, 208, 200, 208],
+    "per_position_acceptance_rate": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "avg_generation_throughput_log_range_tok_s": [2.3, 2.6],
+    "interpretation": "Mechanically compatible but not useful as a fresh-response Qwen27 draft source in this vLLM/XPU path."
+  },
+  "artifacts": {
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-qwen35-08b-draftmodel-multikv-blocks-k8-cg8-20260706Tqwen35draft08b-k8-codex7",
+    "server_log": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-qwen35-08b-draftmodel-multikv-blocks-k8-cg8-20260706Tqwen35draft08b-k8-codex7/server.stdout.log",
+    "identity": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-qwen35-08b-draftmodel-multikv-blocks-k8-cg8-20260706Tqwen35draft08b-k8-codex7/identity.env",
+    "smoke": "data/qwen36-27b-autoround-int4-b70-baselines/smoke-qwen27-qwen35-08b-draftmodel-multikv-blocks-k8-cg8-20260706Tqwen35draft08b-k8-codex7.json",
+    "patch": "patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-qwen35-08b-explicit-draftmodel-compat-zeroaccept-20260706.patch"
+  },
+  "fresh_response_validity": {
+    "cached_tokens_all_zero": true,
+    "strict_gate_completed": false,
+    "headline_claim_allowed": false,
+    "reason": "No completed strict realistic suite and no speed win; acceptance was 0%."
+  }
+}

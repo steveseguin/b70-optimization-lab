@@ -254,6 +254,14 @@ Active target as of the latest switch request:
   oneDNN by `>10%`. Continue Qwen27 only for a deeper top-ID LM-head producer,
   materially stronger drafter/branch-regenerate architecture, or full
   partial-group source-support project; otherwise switch models.
+- External `Qwen/Qwen3.5-0.8B` draft-model probe is closed no-win:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-qwen35-08b-external-draftmodel-zero-acceptance.md`.
+  A compatibility patch got explicit `draft_model` serving, text-only Qwen3.5
+  M-RoPE, mixed draft KV groups, mixed block sizes, graph capture, and smoke
+  passing, but the live k8 run accepted `0` draft tokens and fell to
+  `~2.3-2.6 tok/s`. Do not repeat this exact target/draft pairing without a
+  separate fresh-prompt acceptance oracle showing nonzero target-verified
+  acceptance.
 - Alternate `unsloth/Qwen3.6-27B-MTP-GGUF` Q4 llama.cpp/SYCL lane was brought
   up and swept under the same fresh-response policy. It is valid but not
   competitive: best strict row `30.679 tok/s` (`draft-mtp n_max=3`) versus

@@ -176,6 +176,13 @@ Next milestone:
    tok/s`, and margin gating stayed below record. See
    `notes/2026-07-06-replacement-mask-plumbing-and-margin-no-win.md` and
    `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replacement-mask-plumbing-margin-no-win-20260706.patch`.
+   The external `Qwen/Qwen3.5-0.8B` draft-model probe is also closed no-win:
+   compatibility work got explicit `draft_model` serving, text-only Qwen3.5
+   M-RoPE, mixed draft KV groups, and mixed block sizes past startup, but the
+   live k8 run accepted `0` draft tokens and fell to only `~2.3-2.6 tok/s`
+   while rejecting every draft. See
+   `notes/2026-07-06-qwen35-08b-external-draftmodel-zero-acceptance.md` and
+   `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-qwen35-08b-explicit-draftmodel-compat-zeroaccept-20260706.patch`.
 7. Closed source precheck: the default-off spec greedy top-token-ID
    verifier path passed the strict gate at `65.25583870721442 tok/s`, but it
    was flat versus the `65.27648650325429 tok/s` record because

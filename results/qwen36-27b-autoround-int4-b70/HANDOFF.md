@@ -193,6 +193,17 @@ Previous fastest quality-gated variant:
   below record. Preserve the focused source snapshot at
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replacement-mask-plumbing-margin-no-win-20260706.patch`;
   do not promote or repeat this Python/scheduler recovery lane.
+- External Qwen3.5 0.8B draft-model probe is closed no-win:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-qwen35-08b-external-draftmodel-zero-acceptance.md`.
+  The compatibility patch got explicit `draft_model` serving working far enough
+  to load `Qwen/Qwen3.5-0.8B`, handle text-only M-RoPE, initialize mixed draft
+  KV groups `[11, 12, 13, 14]`, capture graphs, and pass smoke, but live k8
+  metrics accepted `0` draft tokens and dropped to only `~2.3-2.6 tok/s`.
+  Preserve the patch artifact at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-qwen35-08b-explicit-draftmodel-compat-zeroaccept-20260706.patch`,
+  but do not repeat this exact target/draft pairing without a separate
+  acceptance oracle showing nonzero target-verified acceptance on fresh
+  chat-style prompts.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed

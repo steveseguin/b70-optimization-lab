@@ -330,12 +330,20 @@ Previous fastest quality-gated practical variant:
   closes dynamic-depth heuristics until partial-group support is fixed in the
   Qwen/GDN XPU verifier path.
 - DFlash SWA revisit closure:
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-swa-revisit.md`.
-  True mixed `sliding_attention`/`full_attention` DFlash support currently
-  hits the proposer single-KV-group assertion before readiness, and a
-  target-verified `all-sliding` workaround passed the strict fresh gate but
-  only reached `20.630 tok/s`. Do not continue DFlash sweeps without
-  implementing multi-KV-group draft metadata.
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-dflash-swa-pr40898-repair-no-record.md`.
+  A local repair inspired by upstream vLLM PR #40898 fixed the old catastrophic
+  mixed-SWA DFlash symptom and produced strict fresh diagnostic rows, but
+  remained below record: k2 `49.087`, k4 `54.836`, k8 `50.918 tok/s`, all
+  quality-skipped and not promotable. Preserve the patch as future reference,
+  but do not repeat k/capture-size DFlash sweeps for this draft.
+- external Qwen3.5 0.8B draft-model closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-qwen35-08b-external-draftmodel-zero-acceptance.md`.
+  Compatibility work got explicit `draft_model` serving, text-only Qwen3.5
+  M-RoPE, mixed draft KV groups, mixed block sizes, graph capture, and smoke
+  passing, but live k8 metrics accepted `0` draft tokens and fell to
+  `~2.3-2.6 tok/s`. Do not repeat this exact target/draft pairing without a
+  separate fresh-prompt acceptance oracle showing nonzero target-verified
+  acceptance.
 - `--language-model-only` screen closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-language-model-only-no-win.md`.
   It saves about `0.87 GiB` of model memory on the webhie checkpoint and logs
