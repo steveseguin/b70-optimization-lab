@@ -116,6 +116,11 @@ Latest stronger-drafter result:
   only to `1.0707972582972582`, while original all-scope low-LR runs underfit;
   preserve it as no-endpoint evidence in
   `diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json`.
+  A later-step weighted continuation (`decay=1.25`, `lr=2e-5`) is the current
+  best diagnostic checkpoint at `1.0922619047619047` mean accepted, with
+  `56.50%` step-1 exact, `53.32%` step-2 conditional, and `53.17%` step-3
+  conditional; still below endpoint threshold. Summary:
+  `diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

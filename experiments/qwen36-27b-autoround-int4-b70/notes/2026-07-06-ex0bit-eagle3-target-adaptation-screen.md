@@ -466,3 +466,45 @@ Interpretation:
   toward the `1.5-2.0` minimum.
 - Next credible move is objective-level: train for accepted-prefix survival or
   row selection more directly, rather than more low-LR full-scope sweeps.
+
+## Late-step weighted rollout: current best diagnostic EAGLE result
+
+The next objective-level screen kept the useful `fc-lm-head` train scope and
+tested later-step loss upweighting at the working `2e-5` LR. This directly
+targets the accepted-prefix survival problem without endpoint work.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T215224Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | init | scope | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| `continue-r3-lr2e-5-decay1p25` | v4 best | fc+lm | `2e-5` | `1.25` | **`1.0922619047619047`** | `56.50%` | `53.32%` | `53.17%` |
+| `continue-r3-lr1e-5-decay1p25` | v4 best | fc+lm | `1e-5` | `1.25` | `1.0550595238095237` | `55.61%` | `52.36%` | `51.14%` |
+| `original-r3-lr2e-5-decay1p25` | original Ex0bit | fc+lm | `2e-5` | `1.25` | `1.0400883838383839` | `54.68%` | `52.28%` | `51.70%` |
+| `original-r3-lr2e-5-decay1p5` | original Ex0bit | fc+lm | `2e-5` | `1.5` | `1.0185786435786435` | `53.45%` | `52.01%` | `52.46%` |
+
+Interpretation:
+
+- This is the current best offline EAGLE/DFlash diagnostic checkpoint:
+  `1.0923` mean accepted, up from v4 equal-step `1.0593` and all-scope
+  `1.0708`.
+- The gain is in later conditional steps, not just first-token exact
+  (`step-3 conditional 53.17%`, the best seen so far in this lane).
+- Still **not endpoint-worthy**. It remains below the `1.5-2.0` minimum and
+  below current MTP3 accepted depth, so do not wire it into vLLM or submit any
+  LocalMaxxing result from it.
+- Next continuation candidate:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T215224Z/continue-r3-lr2e-5-decay1p25/checkpoint`.
+  If continuing, keep testing objective variants around decay `1.25`; simple
+  decay `1.5` from original traded first-token accuracy away and did not win.
