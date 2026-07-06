@@ -12,9 +12,9 @@ This experiment lane tracks bring-up and optimization for:
 ## Immediate Goal
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
-has a strict fresh-response BF16-LM-head baseline plus a faster quality-gated
-runtime INT8-LM-head variant. Current optimization work must beat the
-`65.27648650325429` tok/s webhie BF16-scale INT8-LM-head row or improve
+has a strict fresh-response BF16-LM-head baseline plus faster quality-gated
+runtime INT8/INT4 LM-head variants. Current optimization work must beat the
+`67.51904968102535` tok/s ReplaySSM target-INT8/draft-INT4 row or improve
 service/max-context behavior without using warmed/cache/history effects.
 
 Completed first milestone:
@@ -49,6 +49,26 @@ Current strict best:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 
 Current fastest quality-gated variant:
+
+- label: `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target
+  LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)`;
+- config: same promote-source MTP3/cg8 recipe plus ReplaySSM exact GDN state
+  handling, commit-in-forward, target INT8 LM-head BF16 scales, draft INT4
+  LM-head BF16 scales, and conservative PyTorch slot-management fallback;
+- strict fresh median: `67.519 tok/s`, p10 `62.663`, mean `68.154`,
+  `cached_tokens=0`;
+- support rows: `68.481` native-slot-copy smoke, `66.871`
+  native-slot-copy confirm, and `67.300` PyTorch-slot-management same-window
+  control. Use `67.519` as the conservative headline, not the one-off
+  `68.481`;
+- quality: repeat64 passed, baseline matched, strict fresh gate passed;
+- evidence:
+  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+- note:
+  `notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
+- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`.
+
+Previous fastest quality-gated variant:
 
 - label: `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 LM-head
   (BF16 scales)`;
@@ -370,7 +390,16 @@ Next milestone:
     endpoint gate. Do not rerun larger/target-shaped EAGLE on this same corpus
     without a materially new data or architecture idea. Reusable runner:
     `scripts/run-eagle-v3-target-loss-offline-screen.sh`.
-31. Draft top-k calibration diagnostic:
+31. EAGLE v4 large-corpus offline screen:
+    `notes/2026-07-06-eagle-v4-large-corpus-no-endpoint.md`.
+    A larger four-GPU non-final chat corpus collected `384` prompts,
+    `61,440` hidden rows, `384` samples, metadata on `384/384` samples, and
+    `0` continuity breaks. The best larger compact draft reached only
+    `0.718` heldout mean accepted and `0.512` separate-calibration mean
+    accepted, far below the endpoint gate (`2.0` heldout / `1.5` calibration).
+    This closes "just more non-final data and hparams on the same compact
+    EAGLE architecture"; no endpoint run and no LocalMaxxing submission.
+32. Draft top-k calibration diagnostic:
     `notes/2026-07-04-draft-topk-calibration-diagnostic.md`.
     The target verifier token is in the built-in draft top-32 for `96-99%` of
     MTP positions and an oracle reranker would reach `3.910` target-verified
@@ -382,7 +411,7 @@ Next milestone:
     trace/analyzers; do not ship a heuristic or tiny top-k reranker. Future
     accepted-token work needs a materially stronger drafter/reranker on
     isolated non-final data.
-32. Draft top-k64 / sequential-reranker limit:
+33. Draft top-k64 / sequential-reranker limit:
     `notes/2026-07-04-draft-topk64-and-sequential-reranker-limit.md`.
     A full 96-prompt K64 diagnostic found target-in-top64 rates of
     `99.7%`, `98.4%`, and `96.8%` by draft position, but held-out margin

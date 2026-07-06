@@ -605,6 +605,15 @@ Current next-execution plan:
   v2 stronger screen and far below the offline endpoint gate; do not repeat
   larger/target-shaped EAGLE on this same v2 corpus without a materially new
   data or architecture idea.
+- EAGLE v4 larger-corpus offline screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-eagle-v4-large-corpus-no-endpoint.md`.
+  A four-GPU non-final chat corpus collected `384` prompts, `61,440` hidden
+  rows, `384` samples, metadata on `384/384` samples, and `0` continuity
+  breaks. The best larger compact draft was still far below the endpoint gate:
+  `0.717529296875` heldout mean accepted and `0.5122863247863247`
+  separate-calibration mean accepted. This is diagnostic-only, not endpoint
+  throughput, and closes "just more data/hparams on the same compact EAGLE
+  architecture" for this Qwen27 lane.
 - current frontier closure:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-closure-and-next-projects.md`.
   Independent audits found no unclosed non-cheating config/runtime lane and no
