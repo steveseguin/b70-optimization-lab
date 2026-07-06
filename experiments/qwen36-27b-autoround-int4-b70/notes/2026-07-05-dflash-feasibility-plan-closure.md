@@ -2,6 +2,14 @@
 
 Status: **closed no-port / no-record for current Qwen27 Intel B70 lane**.
 
+2026-07-06 update: this lane was reopened once after finding upstream vLLM PR
+#40898's DFlash SWA/full-KV repair strategy. The local PR40898-style repair
+fixed the catastrophic mixed-SWA plumbing symptom and produced stable
+fresh-response DFlash rows, but the best repaired row was only `54.835514 tok/s`
+(`k=4`, quality skipped) versus the current valid Qwen27 record
+`67.51904968102535 tok/s`. DFlash remains closed for this record lane. See
+`2026-07-06-dflash-swa-pr40898-repair-no-record.md`.
+
 ## Goal
 
 The plan was to avoid blindly porting Hipfire's AMD DFlash stack, first prove

@@ -47,6 +47,13 @@ bad flags, invalid fast paths, and negative optimizations here as they happen.
   Qwen suite, but the clean same-source comparison lost to the flag-off
   control (`52.542` vs `53.420 tok/s`). The active vLLM source was reverted;
   patch/result are preserved in the July 3 experiment note.
+- DFlash SWA/full-KV repair is no-record for this target/draft pair. The
+  2026-07-06 PR40898-style patch fixed the old mixed-SWA plumbing failure and
+  produced strict fresh diagnostic rows, but the best repaired row was only
+  k4 `54.836 tok/s` versus the current `67.519 tok/s` record; k2 was `49.087`
+  and k8 was `50.918`, all quality-skipped. Preserve the patch for future
+  DFlash/upstream reference, but do not repeat k/capture-size sweeps for
+  `z-lab/Qwen3.6-27B-DFlash` on this record lane.
 
 ## Current Hot Path
 

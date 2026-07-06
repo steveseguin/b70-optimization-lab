@@ -1,6 +1,6 @@
 # Qwen3.6 27B AutoRound Handoff
 
-Last updated: 2026-07-05
+Last updated: 2026-07-06
 
 This is the bookmark for `Intel/Qwen3.6-27B-int4-AutoRound` on Intel Arc Pro
 B70.
@@ -1031,6 +1031,14 @@ Continue INT4 optimization without promoting synthetic scores:
   implementation changes the fixed-suite tau result; see
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-hipfire-dflash-intel-port-audit.md`
   and
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-dflash-feasibility-plan-closure.md`;
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-dflash-feasibility-plan-closure.md`.
+  The 2026-07-06 PR40898-style DFlash SWA/full-KV repair fixes the old
+  catastrophic mixed-SWA plumbing symptom but still misses the record: k2
+  `49.087`, k4 `54.836`, k8 `50.918` tok/s on strict fresh diagnostic rows
+  with quality skipped. Preserve the patch as reference only and do not repeat
+  k/capture sweeps for this draft; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-dflash-swa-pr40898-repair-no-record.md`
+  and
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-dflash-pr40898-swa-repair-no-record-20260706.patch`;
 - keep long-context/prompt-processing optimization separate from the short
   decode record.

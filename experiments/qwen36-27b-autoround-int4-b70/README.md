@@ -610,6 +610,14 @@ AOT spill warnings. See
 `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replayssm-cache16-spec6-no-win-20260706.patch`.
 Do not repeat config-only or simple dispatch-widening MTP4/MTP5 sweeps on this
 recipe.
+The latest DFlash revisit is also closed:
+`notes/2026-07-06-dflash-swa-pr40898-repair-no-record.md`. After reviewing
+upstream vLLM PR #40898, a local DFlash SWA/full-KV repair was implemented and
+syntax-checked. It fixed the old catastrophic mixed-SWA acceptance symptom and
+produced strict fresh diagnostic rows, but remained far below the `67.519 tok/s`
+record: k2 `49.087`, k4 `54.836`, k8 `50.918` tok/s, all quality-skipped and
+not promotable. Preserve the patch for future upstream/DFlash comparison, but
+do not repeat k/capture-size DFlash sweeps for this draft.
 
 ## Current Entry Points
 
