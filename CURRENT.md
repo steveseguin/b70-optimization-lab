@@ -133,9 +133,10 @@ Fastest quality-gated practical variant:
   checkpoint reached only `1.0707972582972582` mean accepted, so simple
   full-draft unfreezing is not the unlock. Late-step weighted continuation is
   the current best diagnostic family; the best checkpoint uses `decay=1.1`,
-  `lr=2e-5` and reaches `1.1205357142857142` mean accepted (`57.26%` step-1
-  exact, `54.11%` step-2 conditional, `54.31%` step-3 conditional). Next work
-  should continue objective research, not wire the drafter into vLLM yet;
+  `lr=2e-5` and reaches `1.1271645021645023` mean accepted (`57.47%` step-1
+  exact, `54.38%` step-2 conditional, `54.32%` step-3 conditional). The
+  rollout-3 continuation curve is flattening; next work should change
+  objective shape, not wire the drafter into vLLM yet;
 
 Previous fastest quality-gated practical variant:
 

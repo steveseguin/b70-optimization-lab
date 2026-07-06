@@ -582,3 +582,41 @@ Interpretation:
 - Still below endpoint threshold and current MTP3 depth. Continue only as
   training research unless another objective/data change produces a much
   larger jump.
+
+## Fourth late-continuation: smaller gain, plateau warning
+
+Continued from the third-pass best checkpoint and repeated the same focused
+screen once more.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T222601Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation3-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|
+| `cont2-r3-lr2e-5-decay1p1` | `2e-5` | `1.1` | **`1.1271645021645023`** | `57.47%` | `54.38%` | `54.32%` |
+| `cont2-r3-lr2e-5-decay1p25` | `2e-5` | `1.25` | `1.1240530303030303` | `57.24%` | `54.31%` | `54.71%` |
+| `cont2-r3-lr1e-5-decay1p25` | `1e-5` | `1.25` | `1.120806277056277` | `57.28%` | `54.08%` | `54.34%` |
+| `cont2-r3-lr2e-5-decay1p5` | `2e-5` | `1.5` | `1.1207611832611832` | `57.03%` | `54.18%` | `55.06%` |
+
+Interpretation:
+
+- Current best diagnostic checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T222601Z/cont2-r3-lr2e-5-decay1p1/checkpoint`.
+- The continuation curve is flattening: `1.0923` -> `1.1073` -> `1.1205`
+  -> `1.1272`. More identical continuation is unlikely to jump to the
+  `1.5-2.0` endpoint threshold.
+- If continuing this lane, change objective shape next: train rollout-5 from
+  this checkpoint, enlarge data again, or add a more direct accepted-prefix /
+  survival objective. Do not keep repeating the same rollout-3 continuation
+  indefinitely.

@@ -282,11 +282,11 @@ Active target as of the latest switch request:
   all-scope low-LR runs underfit, so simple full-draft unfreezing is not the
   unlock. Late-step weighted continuation is the current best diagnostic
   family; the best checkpoint uses `decay=1.1`, `lr=2e-5` and reaches
-  `1.1205357142857142` mean accepted (`57.26%` step-1 exact, `54.11%`
-  step-2 conditional, `54.31%` step-3 conditional). Next work should continue
-  objective research, not merely add endpoint/kernel integration. Do not
-  endpoint-test this adapted draft unless offline mean accepted reaches at
-  least `1.5-2.0`.
+  `1.1271645021645023` mean accepted (`57.47%` step-1 exact, `54.38%`
+  step-2 conditional, `54.32%` step-3 conditional). The rollout-3 continuation
+  curve is flattening; next work should change objective shape, not merely add
+  endpoint/kernel integration. Do not endpoint-test this adapted draft unless
+  offline mean accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

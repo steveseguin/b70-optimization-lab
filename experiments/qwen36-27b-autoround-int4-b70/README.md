@@ -117,14 +117,17 @@ Latest stronger-drafter result:
   preserve it as no-endpoint evidence in
   `diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json`.
   A later-step weighted continuation (`decay=1.25`, `lr=2e-5`) is the current
-  best diagnostic family. A third continuation with lighter late weighting
-  (`decay=1.1`, `lr=2e-5`) reached `1.1205357142857142` mean accepted, with
-  `57.26%` step-1 exact, `54.11%` step-2 conditional, and `54.31%` step-3
-  conditional; still below endpoint threshold. Summaries:
+  best diagnostic family. A fourth continuation with lighter late weighting
+  (`decay=1.1`, `lr=2e-5`) reached `1.1271645021645023` mean accepted, with
+  `57.47%` step-1 exact, `54.38%` step-2 conditional, and `54.32%` step-3
+  conditional; still below endpoint threshold and the continuation gain is
+  flattening. Summaries:
   `diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json` and
   `diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json`
   plus
-  `diagnostics/qwen27-ex0bit-eagle3-late-continuation2-v4-summary-20260706.json`.
+  `diagnostics/qwen27-ex0bit-eagle3-late-continuation2-v4-summary-20260706.json`
+  and
+  `diagnostics/qwen27-ex0bit-eagle3-late-continuation3-v4-summary-20260706.json`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 
