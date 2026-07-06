@@ -149,12 +149,16 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
   New trainer `../../scripts/train-qwen27-ex0bit-eagle3-adapter.py` exports
   Ex0bit-format adapted checkpoints. Head-only training was weak (`0.316`
-  heldout rollout), `fc-lm-head` was the useful path (`0.539` heldout rollout
-  after training on 72 prompts), and all-params subset training was weaker
-  (`0.436`). This is a positive research signal but still far below current
-  MTP3 accepted depth. Do not endpoint-test yet; next credible action is a
-  larger target-owned aux corpus plus `fc-lm-head` adaptation with strict
-  heldout rollout gates.
+  heldout rollout), `fc-lm-head` was the useful path, and all-params subset
+  training was weaker (`0.436`). The larger four-GPU follow-up collected
+  384 target-owned prompts / 61,440 rows, trained `fc-lm-head` on 288 prompts,
+  and held out 96 prompts. It improved direct Ex0bit `0.289` and the first
+  adaptation `0.539` to `0.6003787878787878` heldout mean accepted, but the
+  rollout still collapses after token 1 (`48.65%` step-1 exact, `20.10%`
+  step-2 conditional exact). This remains far below current MTP3 accepted
+  depth. Do not endpoint-test this draft; the next credible EAGLE/DFlash action
+  is a multi-step rollout / accepted-prefix training objective, not endpoint
+  plumbing.
 
 Previous fastest quality-gated variant:
 

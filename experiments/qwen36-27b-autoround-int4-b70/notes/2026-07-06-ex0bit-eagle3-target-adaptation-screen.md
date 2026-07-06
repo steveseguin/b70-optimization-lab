@@ -156,14 +156,81 @@ rollout from `0.289` to `0.539`, which is a useful research signal but nowhere
 near a record path. The DFlash/EAGLE3 route remains open only as a target-
 matched training project, not as a direct Ex0bit import.
 
-## Next action
+## Larger-corpus follow-up completed
 
-Collect a larger EAGLE3 aux corpus with the same no-spec target-owned method
-and train `fc-lm-head` first:
+The proposed scale-up was run immediately after the first screen.
 
-1. use all 4 B70s;
-2. keep a strict heldout split by prompt family/shard;
-3. evaluate rollout before endpoint work;
-4. stop if heldout accepted depth does not move toward at least `1.5-2.0`;
-5. only consider endpoint integration if offline acceptance approaches or beats
-   current MTP3 accepted depth.
+Corpus:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v2-chat-4gpu-20260706T195742Z
+```
+
+- 4 B70 shards, one no-spec target replica per GPU.
+- 384 prompts total, 96 prompts per shard.
+- 61,440 generated rows total.
+- Aux layers: `1,31,60`.
+- All aux rows present; `continuity_breaks=0`.
+- Train split: shards `0-2` (`288` prompts, `45,792` rows).
+- Heldout split: shard `3` (`96` prompts, `15,264` rows).
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-fcheadadapt-v3full-20260706T200821Z
+```
+
+Training:
+
+- scope: `fc-lm-head`;
+- epochs: `6`;
+- lr: `1e-5`;
+- batch size: `64`;
+- train covered rows: `44,510`;
+- heldout covered rows: `15,052`.
+
+Teacher-forced result:
+
+- train exact: `58.80%`;
+- heldout exact: `49.25%`;
+- heldout loss: `2.345`.
+
+Rollout result:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-fcheadadapt-v3full-20260706T200821Z/heldout-rollout-all-summary.json
+```
+
+- heldout starts: `14,784`;
+- mean accepted: `0.6003787878787878`;
+- histogram: `0=7591`, `1=5747`, `2=1227`, `3=202`, `4=16`, `5=1`;
+- step-1 exact: `48.65%`;
+- step-1 top-5: `75.57%`;
+- step-2 conditional exact: `20.10%`;
+- step-3 conditional exact: `15.15%`;
+- family means: `architecture-tradeoff=0.559`, `long-context=0.613`,
+  `support-escalation=0.629`.
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v3full-rollout-summary-20260706.json
+```
+
+## Updated decision
+
+Still do **not** endpoint-test or kernel-optimize this adapted draft.
+
+The larger corpus improved the line from direct Ex0bit (`0.289`) and the first
+small adaptation (`0.539`) to `0.600` mean accepted, and the one-step
+teacher-forced signal is now real (`~49%` heldout exact). But the rollout still
+collapses after the first token: step-2 conditional exact is only `20.10%`.
+That is far below current target-verified MTP3 depth and nowhere near the
+`tau >= 4.5` region needed to justify Hipfire/DFlash-style endpoint work for
+this model.
+
+The next credible EAGLE/DFlash effort is **not** endpoint integration. It is a
+new training objective: multi-step rollout / accepted-prefix training that
+directly optimizes consecutive accepted tokens, plus a larger target-owned
+corpus if needed. Without that, more endpoint plumbing would only create a slow
+and low-acceptance speculative path.

@@ -260,6 +260,19 @@ Active target as of the latest switch request:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v3-target-loss-offline-no-endpoint.md`.
   Do not repeat larger/target-shaped EAGLE on the same v2 corpus without a
   materially new data or architecture idea.
+  Ex0bit EAGLE3/DFlash was then revisited with target-owned aux hidden states
+  (`1,31,60`) and an Ex0bit-format adaptation path. Direct Ex0bit remained
+  unusable (`0.289908` mean accepted); the larger four-GPU v3 adaptation used
+  384 prompts / 61,440 rows, trained `fc-lm-head` on 288 prompts, and improved
+  heldout rollout to `0.6003787878787878` mean accepted. This is positive
+  training signal but still not an endpoint path: step-1 exact is `48.65%`,
+  while step-2 conditional exact collapses to `20.10%`, far below current MTP3
+  accepted depth. Do not endpoint-test this adapted draft; next credible
+  EAGLE/DFlash work needs a multi-step rollout / accepted-prefix training
+  objective or materially stronger draft architecture. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
+  and
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 - Qwen27 current frontier closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-closure-and-next-projects.md`.
   Independent audits found no unclosed non-cheating config/runtime lane and no

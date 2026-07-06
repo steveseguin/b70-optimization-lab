@@ -263,16 +263,22 @@ Previous fastest quality-gated practical variant:
   passed mechanically but lost to control (`65.077` vs `65.631 tok/s`), so it
   is closed no-win. Active vLLM source was reverted; preserve only the patch
   artifact and note;
-- latest EAGLE3 compatibility retest:
+- latest EAGLE3 / DFlash target-adaptation status:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
   and
   `patches/qwen36-27b-autoround-int4-b70/vllm-eagle3-nested-aux-layers-compat-20260705.patch`.
   Local vLLM now has a narrow patch artifact to read Ex0bit's nested
   `eagle_config.eagle_aux_hidden_state_layer_ids=[1,31,60]`, and the retest
   confirmed the intended layers were used. The drafter still collapsed on
-  prompt-dependent acceptance and endpoint speed, so EAGLE3 remains closed
-  unless the drafter runtime, accepted-token bookkeeping, or target/drafter
-  pairing changes materially;
+  prompt-dependent acceptance and endpoint speed. A later target-owned aux dump
+  path and Ex0bit-format trainer improved direct Ex0bit acceptance from `0.289`
+  to `0.6003787878787878` heldout mean accepted on a 384-prompt/61,440-row
+  four-GPU corpus, but rollout still collapses after token 1 (`20.10%` step-2
+  conditional exact). Do not endpoint-test this draft. Future EAGLE/DFlash work
+  needs multi-step rollout / accepted-prefix training or a materially stronger
+  draft architecture, not more endpoint config.
+  See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;
 - continuation bookmark:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It preserves active source snapshots, records that no cheap env-only

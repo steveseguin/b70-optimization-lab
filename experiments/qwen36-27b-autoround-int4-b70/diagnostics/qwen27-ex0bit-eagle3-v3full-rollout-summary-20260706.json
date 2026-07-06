@@ -1,0 +1,54 @@
+{
+  "purpose": "diagnostic_ex0bit_eagle3_v3_target_adaptation_rollout",
+  "valid_headline_throughput": false,
+  "classification": "diagnostic_only_no_endpoint_no_localmaxxing",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "target_model_path": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "draft_init": "Ex0bit/Qwen3.6-27B-PRISM-EAGLE3 compressed",
+  "draft_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-fcheadadapt-v3full-20260706T200821Z/checkpoint",
+  "corpus": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v2-chat-4gpu-20260706T195742Z",
+  "train_shards": [
+    "shard-0",
+    "shard-1",
+    "shard-2"
+  ],
+  "heldout_shards": [
+    "shard-3"
+  ],
+  "train_prompts": 288,
+  "heldout_prompts": 96,
+  "train_rows": 45792,
+  "heldout_rows": 15264,
+  "train_scope": "fc-lm-head",
+  "epochs": 6,
+  "lr": 0.00001,
+  "teacher_forced_final": {
+    "train_exact_rate": 0.5879577623006066,
+    "heldout_exact_rate": 0.492492692001063,
+    "heldout_loss": 2.3450420463129524
+  },
+  "rollout_heldout": {
+    "summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-fcheadadapt-v3full-20260706T200821Z/heldout-rollout-all-summary.json",
+    "starts": 14784,
+    "mean_accepted": 0.6003787878787878,
+    "histogram": {
+      "0": 7591,
+      "1": 5747,
+      "2": 1227,
+      "3": 202,
+      "4": 16,
+      "5": 1
+    },
+    "step1_exact_rate": 0.48653950216450215,
+    "step1_top5_rate": 0.7556818181818182,
+    "step2_conditional_exact_rate": 0.20102877797859028,
+    "step3_conditional_exact_rate": 0.15145228215767634,
+    "family_mean_accepted": {
+      "architecture-tradeoff": 0.5592532467532467,
+      "long-context": 0.6128246753246753,
+      "support-escalation": 0.6290584415584416
+    }
+  },
+  "decision": "no_endpoint_integration",
+  "interpretation": "Larger target-owned EAGLE3 adaptation improves first-token exact and mean accepted from 0.289 original to 0.600, but accepted depth still collapses after the first token and remains far below current MTP3. Future EAGLE/DFlash work needs a multi-step rollout/accepted-prefix training objective or materially stronger draft architecture before endpoint or kernel integration."
+}
