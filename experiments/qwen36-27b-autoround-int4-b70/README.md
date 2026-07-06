@@ -119,9 +119,10 @@ Latest stronger-drafter result:
   A later-step weighted continuation (`decay=1.25`, `lr=2e-5`) is the current
   best diagnostic family. After rollout-3 continuation flattened at
   `1.1271645021645023`, switching continuation training to rollout-5 produced
-  the current best diagnostic checkpoint at `1.189033189033189` mean accepted
-  (`56.59%` step-1 exact, `53.61%` step-2 conditional, `55.63%` step-3
-  conditional, `1215` full-5 accepts). It remains below endpoint threshold.
+  the current best diagnostic checkpoint at `1.1957070707070707` mean accepted
+  (`56.68%` step-1 exact, `53.61%` step-2 conditional, `55.79%` step-3
+  conditional, `1267` full-5 accepts). It remains below endpoint threshold and
+  repeated rollout-5 continuation is showing diminishing returns.
   Summaries:
   `diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json` and
   `diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json`
@@ -132,7 +133,9 @@ Latest stronger-drafter result:
   plus
   `diagnostics/qwen27-ex0bit-eagle3-deep-continuation-v4-summary-20260706.json`
   and
-  `diagnostics/qwen27-ex0bit-eagle3-deep-continuation2-v4-summary-20260706.json`.
+  `diagnostics/qwen27-ex0bit-eagle3-deep-continuation2-v4-summary-20260706.json`
+  and
+  `diagnostics/qwen27-ex0bit-eagle3-deep-continuation3-v4-summary-20260706.json`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

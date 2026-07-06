@@ -133,10 +133,11 @@ Fastest quality-gated practical variant:
   checkpoint reached only `1.0707972582972582` mean accepted, so simple
   full-draft unfreezing is not the unlock. Rollout-5 continuation is the
   current best diagnostic family; the best checkpoint uses `decay=1.0`,
-  `lr=2e-5` and reaches `1.189033189033189` mean accepted (`56.59%` step-1
-  exact, `53.61%` step-2 conditional, `55.63%` step-3 conditional, `1215`
-  full-5 accepts). This is still below endpoint threshold; next work should
-  continue training research, not wire the drafter into vLLM yet;
+  `lr=2e-5` and reaches `1.1957070707070707` mean accepted (`56.68%` step-1
+  exact, `53.61%` step-2 conditional, `55.79%` step-3 conditional, `1267`
+  full-5 accepts). This is still below endpoint threshold and repeated
+  rollout-5 continuation is diminishing; next work should use more data or a
+  different objective, not wire the drafter into vLLM yet;
 
 Previous fastest quality-gated practical variant:
 

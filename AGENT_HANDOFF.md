@@ -282,11 +282,12 @@ Active target as of the latest switch request:
   all-scope low-LR runs underfit, so simple full-draft unfreezing is not the
   unlock. Rollout-5 continuation is the current best diagnostic family; the
   best checkpoint uses `decay=1.0`, `lr=2e-5` and reaches
-  `1.189033189033189` mean accepted (`56.59%` step-1 exact, `53.61%`
-  step-2 conditional, `55.63%` step-3 conditional, `1215` full-5 accepts).
-  This is still below endpoint threshold; next work should continue training
-  research, not merely add endpoint/kernel integration. Do not endpoint-test
-  this adapted draft unless offline mean accepted reaches at least `1.5-2.0`.
+  `1.1957070707070707` mean accepted (`56.68%` step-1 exact, `53.61%`
+  step-2 conditional, `55.79%` step-3 conditional, `1267` full-5 accepts).
+  This is still below endpoint threshold and repeated rollout-5 continuation
+  is diminishing; next work should use more data or a different objective, not
+  merely add endpoint/kernel integration. Do not endpoint-test this adapted
+  draft unless offline mean accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

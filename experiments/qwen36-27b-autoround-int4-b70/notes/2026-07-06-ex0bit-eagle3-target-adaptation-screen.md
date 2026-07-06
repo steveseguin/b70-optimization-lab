@@ -695,3 +695,39 @@ Interpretation:
 - Still below endpoint threshold. Continue rollout-5 training only while it
   keeps improving; otherwise the next real jump likely requires more data or a
   stronger architecture/objective.
+
+## Third rollout-5 continuation: marginal improvement, diminishing returns
+
+Continued again from the second rollout-5 best checkpoint.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T230122Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation3-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond | full-5 accepts |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `cont-r5-lr2e-5-decay1` | `2e-5` | `1.0` | **`1.1957070707070707`** | `56.68%` | `53.61%` | `55.79%` | `1267` |
+| `cont-r5-lr1e-5-decay1` | `1e-5` | `1.0` | `1.1899350649350648` | `56.66%` | `53.59%` | `55.51%` | `1216` |
+| `cont-r5-lr2e-5-decay1p1` | `2e-5` | `1.1` | `1.187905844155844` | `56.37%` | `53.46%` | `55.71%` | `1270` |
+| `cont-r5-lr2e-5-decay1p25` | `2e-5` | `1.25` | `1.1775793650793651` | `55.92%` | `53.42%` | `55.47%` | `1266` |
+
+Interpretation:
+
+- Current best diagnostic checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T230122Z/cont-r5-lr2e-5-decay1/checkpoint`.
+- The rollout-5 curve is now clearly diminishing: `1.1766` -> `1.1890`
+  -> `1.1957`.
+- Repeating rollout-5 can still add a little accepted depth, but it is unlikely
+  to reach the `1.5-2.0` threshold by itself. The next larger move should be
+  more/broader target-owned data, a more explicit survival objective, or a
+  stronger drafter architecture.
