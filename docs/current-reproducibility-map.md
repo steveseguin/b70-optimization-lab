@@ -65,17 +65,20 @@ the production LAN endpoint:
 - Intel revision: `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
 - hardware: one Intel Arc Pro B70 32 GB per replica first
 - engine: local vLLM/XPU from `/home/steve/src/vllm`
-- current strict fresh-response practical best: `65.276 tok/s` median
+- current strict fresh-response practical best: `67.519 tok/s` median
   generated-token throughput for tokens 1-100 after TTFT with webhie AutoRound
-  + runtime INT8 LM-head using BF16 scale storage, `cached_tokens=0` on every
-  prompt, and quality suite baseline parity
-- LocalMaxxing: BF16-scale row approved as `cmr5iu3gk00bfq901nidgcana`,
-  with queue/response at
-  `../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.queue.json` and
-  `../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-20260703.submit.log`;
-  prior webhie INT8 row `cmr576apv0079q901i6dvsh0l`; prior Intel INT8 row
-  `cmr4zkcxb003yq9018408i1pn`
+  + runtime INT8 target LM-head BF16 scales + runtime INT4 draft LM-head BF16
+  scales + ReplaySSM exact GDN state handling, `cached_tokens=0` on every
+  prompt, and repeat64 quality baseline parity
+- LocalMaxxing: ReplaySSM draft-INT4 row approved as
+  `cmr8rg5d900glqr01g4fesy6i`, with queue/response at
+  `../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.queue.json` and
+  `../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.submit2.log`;
+  previous BF16-scale row `cmr5iu3gk00bfq901nidgcana`; prior webhie INT8 row
+  `cmr576apv0079q901i6dvsh0l`; prior Intel INT8 row `cmr4zkcxb003yq9018408i1pn`
 - result packet:
+  `../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`
+- previous BF16-scale packet:
   `../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`
 - prior webhie INT8 packet:
   `../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-20260703.json`

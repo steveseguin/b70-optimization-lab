@@ -51,15 +51,25 @@ Active target as of the latest switch request:
 - LocalMaxxing approved this strict/fresh result as `cmr4gokx90061nv01lhoe3ft8`.
   Do not submit synthetic MTP5/cg16 or invalid postprocess-skip rows.
 - Current fastest quality-gated practical row is the separate
-  `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 LM-head (BF16 scales)`
-  lane: `VLLM_XPU_LM_HEAD_INT8=1`,
-  `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`, MTP3/cg8, one B70. Strict fresh
-  headline is `65.27648650325429 tok/s` median tokens 1-100 after TTFT, with
-  support rows `65.005` and `64.864`, `cached_tokens=0` every row, repeat32
-  and 1K needle quality passed. LocalMaxxing approved it as
-  `cmr5iu3gk00bfq901nidgcana`. Start from
-  `results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
-- Latest draft-INT4 follow-up is closed diagnostic/no-win. The runtime GDN
+  `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target LM-head
+  (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)` ReplaySSM lane:
+  MTP3/cg8, one B70, exact GDN state handling, commit-in-forward, and
+  conservative PyTorch slot management fallback. Strict fresh headline is
+  `67.51904968102535 tok/s` median tokens 1-100 after TTFT, p10
+  `62.6631682840432`, mean `68.15364467092054`, `cached_tokens=0` every row,
+  repeat64 quality passed and matched baseline. LocalMaxxing approved it as
+  `cmr8rg5d900glqr01g4fesy6i`. Start from
+  `results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`
+  and
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`.
+- Important attribution for that current row: the native ReplaySSM slot-copy
+  op passed direct BF16/FP16/FP32 parity, but endpoint A/B did not show a speed
+  win (`66.871` native vs `67.300` PyTorch slot-management fallback), so do
+  not credit native slot-copy as the source of the record. The previous
+  BF16-scale INT8-LM-head record was `65.27648650325429 tok/s`, LocalMaxxing
+  `cmr5iu3gk00bfq901nidgcana`.
+- Historical pre-20260706 draft-INT4 follow-up is closed diagnostic/no-win for
+  the non-ReplaySSM recovery lanes. The runtime GDN
   metadata patch remains useful because it fixes graph-bypass device-lost
   crashes, but fast target-INT8 + draft-INT4 rows at `68-72 tok/s` fail repeat
   quality (`55/64` `blue, green, red, yellow`, `9/64` `blue, green, red`).
@@ -70,11 +80,12 @@ Active target as of the latest switch request:
   `VLLM_XPU_GDN_NATIVE_SPEC_DECODE=0` exercised the serial/fallback path and
   collapsed to `~9.7-12.3 tok/s`, with no promotable quality result. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-serial-gdn-nativeoff-no-win.md`.
-  ReplaySSM+align is the only clean draft-INT4 family seen so far, but it is
-  `61-62 tok/s`, below the `65.276` record. Do not submit these rows; next
-  credible work is a fixed-shape exact accepted-prefix GDN/DeltaNet state tape
-  with GPU-side commit, or a stronger drafter/branch-regenerate path, not more
-  `SERIAL_SPEC_*` source/offset sweeps. A later Python-only SSM promotion switch
+  The later ReplaySSM+commit-in-forward+draft-INT4-LM-head lane supersedes the
+  earlier `61-62 tok/s` clean ReplaySSM rows and is now the current record.
+  Do not repeat the failed non-ReplaySSM rows; next credible work is a
+  fixed-shape exact accepted-prefix GDN/DeltaNet state tape with GPU-side
+  commit, a verifier/LM-head shortcut, or a stronger drafter/branch-regenerate
+  path, not more `SERIAL_SPEC_*` source/offset sweeps. A later Python-only SSM promotion switch
   crashed before artifacts, and the matched C++ conv pre-copy disablement made
   repeat64 quality worse (`62/64` `blue, green red yellow`), so do not rerun
   blind conv-copy disablement. See

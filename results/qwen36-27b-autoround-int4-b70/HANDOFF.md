@@ -59,6 +59,43 @@ Current Intel-checkpoint baseline valid fresh-response result:
 
 Current fastest quality-gated variant:
 
+- runtime quantization label: **webhie AutoRound W4A16 + runtime INT8 target
+  LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)**.
+  This is a distinct AutoRound checkpoint from the Intel reference, so keep it
+  separate in claims and submissions;
+- config: same promote-source MTP3/cg8 recipe plus ReplaySSM exact GDN state
+  handling, commit-in-forward, target INT8 LM-head BF16 scales, and draft INT4
+  LM-head BF16 scales. Conservative headline sets
+  `VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1` because native
+  slot-copy/reset parity passed but did not show an endpoint speed win;
+- strict fresh primary artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-realistic128-chat-tokenids-qwensuite-20260706T050135Z.json`;
+- primary result: median `67.51904968102535 tok/s`, p10
+  `62.6631682840432`, mean `68.15364467092054`, TTFT median
+  `477.85088047385216 ms`, `cached_tokens=0` on every request;
+- support rows:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-draftint4-replayssm-slotcopy-native-20260706T045223Z-candidate-summary-20260706T045223Z.json`
+  at `68.48075611477094 tok/s`,
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-native-confirm-gpu1-20260706T045712Z-candidate-summary-20260706T045712Z.json`
+  at `66.87138386688892 tok/s`, and
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-torchfallback-control-gpu2-20260706T045712Z-candidate-summary-20260706T045712Z.json`
+  at `67.29981507165695 tok/s`;
+- quality:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-repeat64-ctx1024-20260706T050135Z.json`,
+  `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`;
+- compact packet:
+  `webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+- note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
+- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`, with queue/response at
+  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.queue.json` and
+  `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.submit2.log`;
+- important attribution: do not claim native ReplaySSM slot-copy caused the
+  win. It passed direct BF16/FP16/FP32 parity, but same-window endpoint control
+  measured `66.871` native vs `67.300` PyTorch slot-management fallback.
+
+Previous fastest quality-gated variant:
+
 - runtime quantization label: **webhie AutoRound W4A16 + INT8 LM-head
   (BF16 scales)**.
   This is a distinct AutoRound checkpoint from the Intel reference, so keep it
@@ -94,7 +131,7 @@ Current fastest quality-gated variant:
 - previous webhie INT8-LM-head packet:
   `webhie-int8-lmhead-20260703.json`, LocalMaxxing
   `cmr576apv0079q901i6dvsh0l`.
-- latest draft-INT4 closure:
+- historical pre-record draft-INT4 closure:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-gdn-runtime-metadata-and-replayssm.md`
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`.
@@ -106,10 +143,10 @@ Current fastest quality-gated variant:
   cg4, and normal align/restore did not fix it. Serial GDN has now been
   closed too: native-on `SERIAL_SPEC_*` rows still failed repeat quality and
   likely bypassed the Python serial code, while native-off serial/fallback
-  exercised the path but fell to `~9.7-12.3 tok/s`. ReplaySSM+align remains
-  the only clean draft-INT4 family, but at `61-62 tok/s` it is below the
-  current record. No LocalMaxxing submission; preserve the no-win patch
-  artifact at
+  exercised the path but fell to `~9.7-12.3 tok/s`. The later
+  ReplaySSM+commit-in-forward+draft-INT4-LM-head lane superseded the old clean
+  `61-62 tok/s` ReplaySSM rows with the current `67.519 tok/s` record.
+  Preserve the no-win patch artifact at
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`
   and the serial closure note
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-serial-gdn-nativeoff-no-win.md`.
@@ -136,7 +173,7 @@ Current fastest quality-gated variant:
   `VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1` with post-verify commit skipped
   when no restore correction is active, is valid but no-promote: strict fresh
   median `63.853743411579195 tok/s`, repeat64 and cached-zero gate passed, but
-  still below the `65.276` record. See
+  later draft-INT4 work superseded it. See
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-commit-in-forward-skippost-no-promote.md`.
   The follow-up replacement-suppression plumbing and margin-gate attempt is
   also closed no-win:
@@ -716,8 +753,9 @@ Post-baseline follow-up:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fp8-lmhead-quality-rejected.md`.
 - Runtime INT8 LM-head is quality-passing and fast. It is not exact BF16
   LM-head math. The older Intel-checkpoint lane passed quality at
-  `62.276-62.628 tok/s`; the current fastest quality-gated practical lane is
-  the separate webhie BF16-scale variant at `65.27648650325429 tok/s`.
+  `62.276-62.628 tok/s`; the later webhie BF16-scale variant reached
+  `65.27648650325429 tok/s`, and the current fastest quality-gated practical
+  lane is the ReplaySSM draft-INT4 variant at `67.51904968102535 tok/s`.
   Continue exact BF16 top-1/candidate-bound research separately if same
   runtime-precision claims matter.
 - Older Intel INT8 LM-head follow-ups: MTP depth remained best at k=3
@@ -739,7 +777,7 @@ Post-baseline follow-up:
   call/row count or improve accepted tokens per verifier step, not use
   Python/chunked oneDNN calls, sampler plumbing shortcuts, or standalone
   full-vocab top-1 kernels.
-- Latest webhie BF16-scale follow-ups did not improve the `65.27648650325429`
+- Historical webhie BF16-scale follow-ups did not improve the `65.27648650325429`
   tok/s row. BF16-scale controls reconfirmed at `64.971` and `64.738 tok/s`;
   FP16 scale storage was slower at `62.902 tok/s`; webhie target-only BF16
   scope reached `64.800 tok/s` with lower TTFT but failed repeat32 quality

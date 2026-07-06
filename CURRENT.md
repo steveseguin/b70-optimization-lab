@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-07-03
+Date: 2026-07-06
 
 ## Active Target: Qwen3.6 27B INT4 AutoRound
 
@@ -43,6 +43,30 @@ Current Qwen27 INT4 best:
 Fastest quality-gated practical variant:
 
 - label separately as `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8
+  target LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)`;
+  do not merge it into the Intel-checkpoint row;
+- same promote-source MTP3/cg8 family plus ReplaySSM exact GDN state handling,
+  commit-in-forward, target INT8 LM-head BF16 scales, draft INT4 LM-head BF16
+  scales, and conservative PyTorch slot management fallback
+  (`VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1`);
+- strict fresh headline: median `67.519 tok/s`, p10 `62.663`, mean
+  `68.154`, TTFT median `477.851 ms`, `cached_tokens=0` on every request;
+- support rows: `68.481` native-slot-copy smoke, `66.871` native-slot-copy
+  confirm, and `67.300` PyTorch-slot-management same-window control. Use
+  `67.519` as the conservative headline, not the one-off `68.481`;
+- quality: repeat64 passed, baseline matched, strict fresh gate passed;
+- compact packet:
+  `results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+- note:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
+- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`;
+- attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
+  but did not improve endpoint speed in A/B, so preserve the patch as an
+  experiment artifact, not as the source of the record;
+
+Previous fastest quality-gated practical variant:
+
+- label separately as `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8
   LM-head (BF16 scales)`; do not merge it into the Intel-checkpoint row;
 - same promote-source MTP3/cg8 recipe plus `VLLM_XPU_LM_HEAD_INT8=1` and
   `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`;
@@ -66,7 +90,7 @@ Fastest quality-gated practical variant:
   at `64.84180902803895 tok/s`, strict fresh gate passed with
   `cached_tokens=0`; support only, not a LocalMaxxing update. This validates
   `experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh`;
-- latest draft-INT4 follow-up:
+- historical pre-record draft-INT4 follow-up:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-gdn-runtime-metadata-and-replayssm.md`
   and
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-draft-int4-specrows-and-graph-bisect-no-win.md`.
@@ -78,12 +102,12 @@ Fastest quality-gated practical variant:
   still failed, graph-off still failed, graph-off/no-async still failed, and
   normal align/restore still failed. Serial GDN flags are also closed:
   native-on `SERIAL_SPEC_*` rows stayed quality-invalid at `70-72 tok/s`, and
-  native-off serial/fallback collapsed to `~9.7-12.3 tok/s`. ReplaySSM+align
-  is quality-clean at `61-62 tok/s`, below the current `65.276 tok/s` record.
-  No LocalMaxxing submission; next credible work is a fixed-shape exact
-  accepted-prefix GDN/DeltaNet state tape with GPU-side commit, not promoting
-  invalid fast rows or sweeping serial offsets. The current executable unit
-  target is `scripts/check-gdn-spec-recurrent-exact.py`, which now validates
+  native-off serial/fallback collapsed to `~9.7-12.3 tok/s`. Later
+  ReplaySSM+commit-in-forward+draft-INT4-LM-head work superseded the old clean
+  `61-62 tok/s` ReplaySSM rows with the current `67.519 tok/s` record above.
+  Do not promote invalid fast rows or sweep serial offsets. The current
+  executable unit target is `scripts/check-gdn-spec-recurrent-exact.py`, which
+  now validates
   exact recurrent prefix state, accepted-prefix SSM+conv commit equality on
   XPU for k=3/4/5, and endpoint row-to-draft-prefix mapping for full reject,
   partial reject, full accept with bonus, shifted full accept, draft-only, and

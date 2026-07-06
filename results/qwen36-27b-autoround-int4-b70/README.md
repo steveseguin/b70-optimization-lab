@@ -24,10 +24,11 @@ The model card reports ten safetensor shards plus
 
 Initial TP1 single-B70 vLLM/XPU bring-up passed on 2026-07-03. The lane now has
 a strict fresh-response BF16-LM-head baseline, one validated env-only speed win,
-and one faster quality-gated runtime INT8-LM-head variant. LocalMaxxing approved
+and faster quality-gated runtime INT8/draft-INT4 variants. LocalMaxxing approved
 the BF16-LM-head result as `cmr4gokx90061nv01lhoe3ft8` and the runtime
 INT8-LM-head variants as `cmr4zkcxb003yq9018408i1pn`,
-`cmr576apv0079q901i6dvsh0l`, and `cmr5iu3gk00bfq901nidgcana`.
+`cmr576apv0079q901i6dvsh0l`, `cmr5iu3gk00bfq901nidgcana`, and
+`cmr8rg5d900glqr01g4fesy6i`.
 
 Validated so far:
 
@@ -81,6 +82,47 @@ Current Intel-checkpoint baseline valid fresh-response result:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
 
 Current fastest quality-gated variant:
+
+- label this separately as **webhie AutoRound W4A16 + runtime INT8 target
+  LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)**. Do not
+  merge it into the Intel-checkpoint row;
+- config: same promote-source MTP3/cg8 recipe plus ReplaySSM exact GDN state
+  handling, `VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1`,
+  `VLLM_XPU_LM_HEAD_INT8=1`,
+  `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`,
+  `VLLM_XPU_DRAFT_LM_HEAD_INT4=1`,
+  `VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=128`,
+  `VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE=bf16`, and
+  `VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1` for the conservative
+  headline;
+- strict fresh primary artifact:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-realistic128-chat-tokenids-qwensuite-20260706T050135Z.json`;
+- result: median **`67.519 tok/s`**, p10 `62.663`, mean `68.154`,
+  TTFT median `477.851 ms`, `cached_tokens=0` on every request;
+- support rows:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-draftint4-replayssm-slotcopy-native-20260706T045223Z-candidate-summary-20260706T045223Z.json`
+  at median `68.481 tok/s`,
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-native-confirm-gpu1-20260706T045712Z-candidate-summary-20260706T045712Z.json`
+  at median `66.871 tok/s`, and
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-torchfallback-control-gpu2-20260706T045712Z-candidate-summary-20260706T045712Z.json`
+  at median `67.300 tok/s`;
+- full quality gate:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-repeat64-ctx1024-20260706T050135Z.json`,
+  `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`;
+- compact packet:
+  `webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+- note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
+- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`, with queue/response at
+  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.queue.json` and
+  `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.submit2.log`;
+- important attribution: native ReplaySSM slot-copy/reset ops passed direct XPU
+  parity, but same-window endpoint control did not show a speed win (`66.871`
+  native vs `67.300` PyTorch slot-management fallback), so the native slot-copy
+  patch is preserved as an experiment artifact rather than the promoted source
+  of this record.
+
+Previous fastest quality-gated variant:
 
 - label this separately as **webhie AutoRound W4A16 + runtime INT8 LM-head
   (BF16 scales)**. Do not merge it into the Intel-checkpoint row;
@@ -231,12 +273,12 @@ Current realistic research interpretation:
   env pair still did not beat MTP3: promote-source MTP4/cg8 reached
   `49.918 tok/s`, and promote-source MTP5/cg8 reached `47.439 tok/s` with a
   first-prompt quality warning;
-- retesting deeper MTP again on the later fastest webhie BF16-scale
-  INT8-LM-head recipe also did not beat MTP3: same-window strict rows were
+- retesting deeper MTP again on the then-fastest webhie BF16-scale
+  INT8-LM-head recipe also did not beat that recipe's MTP3: same-window strict rows were
   MTP3/cg8 control `65.809 tok/s`, MTP4/cg8 `60.478`, MTP5/cg8 `59.257`, and
   MTP5/cg16 `59.817`, all with `cached_tokens=0`. The MTP3 control is support
-  only and not promoted because it is within variance of the approved `65.276`
-  row. See
+  only and not promoted because it was within variance of the then-approved
+  `65.276` row. See
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-depth-screen-no-win.md`;
 - retesting MTP3 graph-capture size with the valid promote-source env pair did
   not beat cg8: cg4's initial `54.449 tok/s` row fell to `52.697` and `53.238`

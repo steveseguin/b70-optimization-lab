@@ -65,23 +65,36 @@ Evidence:
 The fastest current practical variant is separate from the original
 BF16-LM-head AutoRound quantization:
 
-- label: `webhie AutoRound W4A16 + runtime INT8 LM-head (BF16 scales)`;
-- patch:
-  `../../patches/qwen36-27b-autoround-int4-b70/vllm-active-stack-with-lmhead-bf16-scale-20260703.patch`;
-- env delta: `VLLM_XPU_LM_HEAD_INT8=1` and
-  `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`;
-- strict fresh median: `65.276 tok/s`, p10 `59.609`, mean `65.077`,
-  `cached_tokens=0`;
-- supporting BF16-scale rows: `65.005` and `64.864 tok/s`;
-- FP32-scale controls: `64.234` and `64.090 tok/s`; prior submitted webhie
-  INT8-LM-head row: `64.306 tok/s`;
-- full quality: `pass_all=true`, `baseline_match_all=true`, 1K long-context
-  needle passed;
+- label: `webhie AutoRound W4A16 + runtime INT8 target LM-head (BF16 scales)
+  + runtime INT4 draft LM-head (BF16 scales) + ReplaySSM exact GDN state`;
+- source patch snapshot:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-active-source-diff-replayssm-draftint4-record-20260706.patch`;
+- kernel experiment patch snapshot:
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-active-diff-replayssm-slotcopy-20260706.patch`
+  (parity-tested but not the endpoint speed source);
+- strict fresh median: `67.519 tok/s`, p10 `62.663`, mean `68.154`,
+  TTFT median `477.851 ms`, `cached_tokens=0` on every prompt;
+- support rows: `68.481` one-off native-slot-copy smoke, `66.871` native
+  slot-copy confirm, and `67.300` PyTorch slot-management fallback control;
+- full quality: repeat64 `pass_all=true`, `baseline_match_all=true`,
+  `repeat_pass=true`;
+- LocalMaxxing: `cmr8rg5d900glqr01g4fesy6i`;
 - packet:
-  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
+  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+- experiment note:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`.
+
+The previous fastest practical variant was `webhie AutoRound W4A16 + runtime
+INT8 LM-head (BF16 scales)` at `65.276 tok/s`, LocalMaxxing
+`cmr5iu3gk00bfq901nidgcana`; keep
+`../../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`
+as the superseded baseline for attribution.
 
 For the exact current max-throughput row, leave `VLLM_XPU_LM_HEAD_INT8_SCOPE`
-unset (default `all`) and set `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`.
+unset (default `all`), set `VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16`, enable
+the ReplaySSM/draft-INT4 flags documented in the result packet, and keep
+`VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1` for the conservative
+headline unless retesting native slot-copy as an attribution experiment.
 For service/max-context experiments, `VLLM_XPU_LM_HEAD_INT8_SCOPE=target`
 remains an attribution idea, not a promoted webhie BF16-scale service recipe:
 the older Intel-checkpoint target-only lane passed quality at `61.898 tok/s`,

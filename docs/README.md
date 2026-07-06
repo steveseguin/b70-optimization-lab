@@ -135,8 +135,12 @@ The Qwen3.6 35B lane is indexed in
 
 The active Qwen27 one-B70 optimization lane is indexed in
 [../results/qwen36-27b-autoround-int4-b70/](../results/qwen36-27b-autoround-int4-b70/).
-The current strict fresh-response decode record is `65.276 tok/s` with the
-`webhie` AutoRound checkpoint plus runtime INT8 LM-head BF16 scales. The
+The current strict fresh-response decode record is `67.519 tok/s` with the
+`webhie` AutoRound checkpoint plus runtime INT8 target LM-head BF16 scales,
+runtime INT4 draft LM-head BF16 scales, ReplaySSM exact GDN state handling,
+and conservative PyTorch slot management fallback. LocalMaxxing approved it as
+`cmr8rg5d900glqr01g4fesy6i`; the previous BF16-scale INT8-LM-head-only record
+was `65.276 tok/s`. The
 service/prompt-processing lane is separate: see
 [../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md](../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md)
 for the cold long-context ladder, including the 32K-capability anchor through
