@@ -1,0 +1,146 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@
+ def _gdn_row_trace_write(
+     *,
+     stage: str,
+     layer_name: str,
+@@
+     except Exception:
+         logger.exception("Failed to write XPU GDN row trace")
+
+
++def _gdn_row_trace_int_list(tensor: torch.Tensor | None,
++                            limit: int = 16) -> object:
++    if tensor is None:
++        return None
++    try:
++        return [int(x) for x in tensor.detach().to(torch.int64).cpu().flatten()
++                [:limit].tolist()]
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _gdn_replayssm_commit_trace(
++    *,
++    stage: str,
++    layer_name: str,
++    layer_idx: int | None,
++    num_accepted_tokens: torch.Tensor | None,
++    state_indices: torch.Tensor | None,
++    write_pos: torch.Tensor | None,
++    cache_base: torch.Tensor | None,
++    is_flush: torch.Tensor | None,
++    pending: torch.Tensor | None,
++    pending_len: torch.Tensor | None,
++) -> None:
++    stage_filter = os.environ.get("VLLM_XPU_GDN_ROW_TRACE_STAGES", "")
++    if stage_filter:
++        wanted_stages = {
++            item.strip() for item in stage_filter.split(",") if item.strip()
++        }
++        if stage not in wanted_stages:
++            return
++    if not _gdn_row_trace_enabled(layer_name, layer_idx):
++        return
++
++    global _XPU_GDN_ROW_TRACE_LINES
++    try:
++        try:
++            tp_rank = get_tensor_model_parallel_rank()
++        except Exception:
++            tp_rank = int(os.environ.get("RANK", "0") or "0")
++
++        slots = None
++        if state_indices is not None:
++            slots = state_indices.detach().to(torch.long).flatten()
++            slots = slots[slots > 0]
++        slot_limit = max(1, _gdn_row_trace_int_env(
++            "VLLM_XPU_GDN_ROW_TRACE_STATE_LIMIT", 4))
++        if slots is not None:
++            slots = slots[:slot_limit]
++
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "tp_rank": tp_rank,
++            "stage": stage,
++            "layer": layer_name,
++            "layer_idx": layer_idx,
++            "num_accepted_tokens": _gdn_row_trace_int_list(num_accepted_tokens),
++            "state_indices": _gdn_row_trace_int_list(state_indices),
++            "slots_sample": _gdn_row_trace_int_list(slots),
++            "write_pos": _gdn_row_trace_int_list(
++                None if write_pos is None or slots is None
++                else write_pos.index_select(0, slots.to(write_pos.device))),
++            "cache_base": _gdn_row_trace_int_list(
++                None if cache_base is None or slots is None
++                else cache_base.index_select(0, slots.to(cache_base.device))),
++            "is_flush": _gdn_row_trace_int_list(
++                None if is_flush is None or slots is None
++                else is_flush.index_select(0, slots.to(is_flush.device))),
++            "pending": _gdn_row_trace_int_list(
++                None if pending is None or slots is None
++                else pending.index_select(0, slots.to(pending.device))),
++            "pending_len": _gdn_row_trace_int_list(
++                None if pending_len is None or slots is None
++                else pending_len.index_select(0, slots.to(pending_len.device))),
++        }
++        trace_file = os.environ["VLLM_XPU_GDN_ROW_TRACE_FILE"]
++        trace_dir = os.path.dirname(trace_file)
++        if trace_dir:
++            os.makedirs(trace_dir, exist_ok=True)
++        with open(trace_file, "a", encoding="utf-8") as f:
++            f.write(json.dumps(record, separators=(",", ":")) + "\n")
++        _XPU_GDN_ROW_TRACE_LINES += 1
++    except Exception:
++        logger.exception("Failed to write XPU GDN ReplaySSM commit trace")
++
++
+ def _xpu_gdn_promote_running_state(
+     conv_state: torch.Tensor,
+     ssm_state: torch.Tensor,
+@@
+     def _commit_gdn_replayssm_pending(
+         self,
+         conv_state: torch.Tensor,
+         num_accepted_tokens: torch.Tensor | None,
+@@
+             or self._gdn_replayssm_conv_pending is None
+         ):
+             return
++        _gdn_replayssm_commit_trace(
++            stage="replayssm_commit_pending_before",
++            layer_name=self.prefix,
++            layer_idx=self.layer_idx,
++            num_accepted_tokens=num_accepted_tokens,
++            state_indices=state_indices,
++            write_pos=self._gdn_replayssm_write_pos,
++            cache_base=self._gdn_replayssm_cache_base,
++            is_flush=self._gdn_replayssm_is_flush,
++            pending=self._gdn_replayssm_pending,
++            pending_len=self._gdn_replayssm_pending_len,
++        )
+         _xpu_gdn_replayssm_commit_pending(
+             conv_state=conv_state,
+             write_pos=self._gdn_replayssm_write_pos,
+@@
+             max_spec_len=self._gdn_replayssm_spec_max_spec_len,
+             conv_base_len=self.conv_kernel_size - 1,
+         )
++        _gdn_replayssm_commit_trace(
++            stage="replayssm_commit_pending_after",
++            layer_name=self.prefix,
++            layer_idx=self.layer_idx,
++            num_accepted_tokens=num_accepted_tokens,
++            state_indices=state_indices,
++            write_pos=self._gdn_replayssm_write_pos,
++            cache_base=self._gdn_replayssm_cache_base,
++            is_flush=self._gdn_replayssm_is_flush,
++            pending=self._gdn_replayssm_pending,
++            pending_len=self._gdn_replayssm_pending_len,
++        )
+
+     def _flush_gdn_replayssm_slots(
+         self,

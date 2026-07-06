@@ -1,0 +1,39 @@
+diff --git a/vllm/v1/worker/mamba_utils.py b/vllm/v1/worker/mamba_utils.py
+index fbb2e6e76..c4019d6e3 100644
+--- a/vllm/v1/worker/mamba_utils.py
++++ b/vllm/v1/worker/mamba_utils.py
+@@ -399,6 +399,28 @@ def commit_gdn_replayssm_after_verify(
+             state_slots, dtype=torch.long, device=device)
+         accepted = num_accepted_tokens_gpu.index_select(
+             0, row_indices).to(torch.int32).contiguous()
++        trace_rows = []
++        if _xpu_mamba_copy_trace_enabled():
++            try:
++                accepted_cpu = accepted.detach().cpu().tolist()
++            except Exception:
++                accepted_cpu = []
++            for local_i, (row, req_id, slot) in enumerate(
++                zip(valid_rows, active_req_ids, state_slots)
++            ):
++                scheduled = scheduled_spec_decode_tokens_dict.get(req_id, ())
++                trace_rows.append({
++                    "row": int(row),
++                    "req_id": str(req_id),
++                    "state_slot": int(slot),
++                    "scheduled_spec_len": int(len(scheduled)),
++                    "scheduled_spec_ids": [int(x) for x in list(scheduled)[:8]],
++                    "commit_count": (
++                        None
++                        if local_i >= len(accepted_cpu)
++                        else int(accepted_cpu[local_i])
++                    ),
++                })
+         layer_names = kv_cache_config.kv_cache_groups[mamba_group_id].layer_names
+         for layer_name in layer_names:
+             attention = forward_context[layer_name]
+@@ -417,6 +439,7 @@ def commit_gdn_replayssm_after_verify(
+             "mamba_group_id": int(mamba_group_id),
+             "num_rows": int(len(state_slots)),
+             "state_slots": [int(slot) for slot in state_slots[:8]],
++            "rows": trace_rows,
+        })
