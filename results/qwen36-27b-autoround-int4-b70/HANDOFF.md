@@ -534,6 +534,12 @@ Current next-execution plan:
   top-2 stalled during drafter checkpoint load. Do not repeat token-tree sweeps
   unless a future branch design avoids the current full-logits proposer cost or
   uses a materially stronger legal drafter.
+- token-tree retest on current ReplaySSM/draft-INT4 recipe:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-token-tree-current-recipe-no-win.md`.
+  Same-window strict fresh diagnostics with the current target-INT8/draft-INT4
+  ReplaySSM recipe found no win: ordinary MTP3 control `67.797 tok/s`, root-3
+  `67.691`, root-2 `59.159`, and binary-depth-2 `12.709`. No quality run was
+  warranted. Do not repeat config-only token-tree sweeps on this recipe.
 - short-decode `MAX_NUM_BATCHED_TOKENS` screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-short-decode-mbt-screen-no-win.md`.
   MBT1536/2048/4096 passed the strict fresh/cached-zero gate but landed below

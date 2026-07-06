@@ -430,7 +430,14 @@ Next milestone:
     checkpoint load, and root top-3 already closed the same root-alternative
     idea. Do not reopen token-tree sweeps unless the branch design avoids the
     current full-logits tree proposer cost or uses a stronger legal drafter.
-34. Short-decode `MAX_NUM_BATCHED_TOKENS` screen:
+34. Token-tree retest on current ReplaySSM/draft-INT4 recipe:
+    `notes/2026-07-06-token-tree-current-recipe-no-win.md`.
+    Same-window strict fresh diagnostics with the current target-INT8/draft-INT4
+    ReplaySSM recipe found no win: ordinary MTP3 control `67.797 tok/s`,
+    root-3 `67.691`, root-2 `59.159`, and binary-depth-2 `12.709`. No quality
+    run was warranted. Do not repeat config-only token-tree sweeps on this
+    recipe.
+35. Short-decode `MAX_NUM_BATCHED_TOKENS` screen:
     `notes/2026-07-04-short-decode-mbt-screen-no-win.md`.
     The current record recipe should stay at MBT1024 for short decode.
     Same-window candidates MBT1536, MBT2048, and MBT4096 all passed the strict
