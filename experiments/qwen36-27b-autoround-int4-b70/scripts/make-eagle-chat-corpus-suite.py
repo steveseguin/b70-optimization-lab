@@ -131,26 +131,68 @@ CONSTRAINTS = [
 ]
 
 
-def build_prompts() -> list[dict[str, str]]:
+VARIANT_GUIDANCE = [
+    (
+        "baseline",
+        "Use a balanced answer with short sections and concrete examples.",
+    ),
+    (
+        "executive",
+        "Use a concise leadership-facing tone, but keep technical evidence.",
+    ),
+    (
+        "implementation",
+        "Emphasize exact implementation steps, commands, data paths, and tests.",
+    ),
+    (
+        "failure-analysis",
+        "Focus on failure modes, rollback triggers, and evidence quality.",
+    ),
+    (
+        "handoff",
+        "Write for a teammate who must continue the work without prior context.",
+    ),
+    (
+        "audit",
+        "Treat the answer as an audit artifact with assumptions and residual risk.",
+    ),
+]
+
+
+def build_prompts(*, variants_per_pair: int = 1) -> list[dict[str, str]]:
+    if variants_per_pair < 1:
+        raise ValueError("--variants-per-pair must be >= 1")
+    if variants_per_pair > len(VARIANT_GUIDANCE):
+        raise ValueError(
+            f"--variants-per-pair must be <= {len(VARIANT_GUIDANCE)}"
+        )
     prompts: list[dict[str, str]] = []
     for domain_index, (domain_id, scenario, focus) in enumerate(DOMAINS):
         for task_index, (task_id, instruction, task_constraint) in enumerate(TASKS):
-            constraint = CONSTRAINTS[(domain_index + task_index) % len(CONSTRAINTS)]
-            prompt_id = f"{domain_id}-{task_id}"
-            prompt = (
-                f"{instruction} for {scenario}.\n\n"
-                f"Focus on {focus}.\n"
-                f"{task_constraint}\n"
-                f"{constraint}\n"
-                "Use realistic names for systems, metrics, and artifacts, but do not "
-                "refer to any benchmark final-suite prompt."
-            )
-            prompts.append({
-                "id": prompt_id,
-                "family": domain_id,
-                "task": task_id,
-                "prompt": prompt,
-            })
+            for variant_index in range(variants_per_pair):
+                constraint = CONSTRAINTS[
+                    (domain_index + task_index + variant_index)
+                    % len(CONSTRAINTS)
+                ]
+                variant_id, variant_guidance = VARIANT_GUIDANCE[variant_index]
+                suffix = "" if variants_per_pair == 1 else f"-{variant_id}"
+                prompt_id = f"{domain_id}-{task_id}{suffix}"
+                prompt = (
+                    f"{instruction} for {scenario}.\n\n"
+                    f"Focus on {focus}.\n"
+                    f"{task_constraint}\n"
+                    f"{constraint}\n"
+                    f"{variant_guidance}\n"
+                    "Use realistic names for systems, metrics, and artifacts, "
+                    "but do not refer to any benchmark final-suite prompt."
+                )
+                prompts.append({
+                    "id": prompt_id,
+                    "family": domain_id,
+                    "task": task_id,
+                    "variant": variant_id,
+                    "prompt": prompt,
+                })
     return prompts
 
 
@@ -164,11 +206,26 @@ def main() -> int:
             "eagle-chat-corpus-v2-suite.json"
         ),
     )
+    parser.add_argument(
+        "--variants-per-pair",
+        type=int,
+        default=1,
+        help=(
+            "Number of deterministic prompt variants to emit for each "
+            "domain/task pair. Default 1 preserves the original 96-prompt v2 "
+            "suite; 4 emits a 384-prompt non-final training suite."
+        ),
+    )
+    parser.add_argument(
+        "--suite-id",
+        default="qwen36-27b-autoround-int4-b70-eagle-chat-corpus-v2",
+    )
+    parser.add_argument("--version", default="2026-07-04")
     args = parser.parse_args()
-    prompts = build_prompts()
+    prompts = build_prompts(variants_per_pair=args.variants_per_pair)
     payload = {
-        "suite_id": "qwen36-27b-autoround-int4-b70-eagle-chat-corpus-v2",
-        "version": "2026-07-04",
+        "suite_id": args.suite_id,
+        "version": args.version,
         "classification": "diagnostic_only_nonfinal_eagle_training",
         "policy": (
             "Use only for EAGLE corpus collection, held-out calibration, and "
@@ -176,8 +233,10 @@ def main() -> int:
             "LocalMaxxing throughput claim."
         ),
         "prompt_count": len(prompts),
+        "variants_per_pair": args.variants_per_pair,
         "families": sorted({p["family"] for p in prompts}),
         "tasks": sorted({p["task"] for p in prompts}),
+        "variants": sorted({p["variant"] for p in prompts}),
         "prompts": prompts,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
