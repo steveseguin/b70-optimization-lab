@@ -114,8 +114,16 @@ case "$SWEEP" in
       "3|continue-r3-lr2e-5-decay1p25|$CONTINUE_DRAFT|3|1.25|2e-5|fc-lm-head"
     )
     ;;
+  late-continuation)
+    variants=(
+      "0|cont2-r3-lr1e-5-decay1p25|$CONTINUE_DRAFT|3|1.25|1e-5|fc-lm-head"
+      "1|cont2-r3-lr2e-5-decay1p1|$CONTINUE_DRAFT|3|1.1|2e-5|fc-lm-head"
+      "2|cont2-r3-lr2e-5-decay1p25|$CONTINUE_DRAFT|3|1.25|2e-5|fc-lm-head"
+      "3|cont2-r3-lr2e-5-decay1p5|$CONTINUE_DRAFT|3|1.5|2e-5|fc-lm-head"
+    )
+    ;;
   *)
-    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, continuation-rollout, all-scope, or late-weight)" >&2
+    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, continuation-rollout, all-scope, late-weight, or late-continuation)" >&2
     exit 2
     ;;
 esac
