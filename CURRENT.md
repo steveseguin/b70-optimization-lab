@@ -100,6 +100,15 @@ Fastest quality-gated practical variant:
   and repeat64 quality at `63.854 tok/s`. It is a useful no-promote patch, not
   a record; see
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-commit-in-forward-skippost-no-promote.md`;
+- latest replacement-suppression closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replacement-mask-plumbing-and-margin-no-win.md`.
+  Top-token-ID replacement-mask propagation and placeholder-mask retention
+  exposed that prior fast draft-INT4 recovery rows were mostly inert. Active
+  scheduler recovery was quality-clean only at `~34-49 tok/s`, and k>1
+  replacement-margin gating stayed below the `65.276 tok/s` record. Preserve
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replacement-mask-plumbing-margin-no-win-20260706.patch`
+  as diagnostic plumbing, but do not submit or continue this Python/scheduler
+  recovery lane;
 - latest timing/frontier correction:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-stage-profile-and-frontier.md`.
   A 2026-07-05 timing refresh corrected the stale "LM-head dominates" model for

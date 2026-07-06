@@ -1,0 +1,126 @@
+Focused patch snapshot for the 2026-07-06 Qwen27 replacement-suppression
+diagnostic lane.
+
+This is intentionally not the full `/home/steve/src/vllm` worktree diff because
+that tree contains many older experiments. It records only the source hooks
+tested in:
+
+  experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replacement-mask-plumbing-and-margin-no-win.md
+
+Status: no-promote / no-submit. The hooks are useful diagnostic plumbing, but
+active replacement recovery passed quality only far below the current
+`65.27648650325429 tok/s` record.
+
+diff --git a/vllm/v1/sample/rejection_sampler.py b/vllm/v1/sample/rejection_sampler.py
+--- a/vllm/v1/sample/rejection_sampler.py
++++ b/vllm/v1/sample/rejection_sampler.py
+@@
+         self._trace_xpu_spec_verify_tokens(
+             stage="top_token_ids",
+             metadata=metadata,
+             output_token_ids=output_token_ids,
+             target_argmax=target_argmax,
+             bonus_token_ids=bonus_token_ids,
+             sampling_metadata=sampling_metadata,
+             draft_only=False,
+         )
++        xpu_suppressed_replacement_mask = None
++        if _xpu_spec_suppress_replacement_enabled():
++            xpu_suppressed_replacement_mask = (
++                self._xpu_spec_decode_replacement_mask(
++                    metadata=metadata,
++                    output_token_ids=output_token_ids,
++                )
++            )
+ 
+         return SamplerOutput(
+             sampled_token_ids=output_token_ids,
+             logprobs_tensors=None,
+             xpu_suppressed_bonus_mask=None,
+-            xpu_suppressed_replacement_mask=None,
++            xpu_suppressed_replacement_mask=xpu_suppressed_replacement_mask,
+         )
+@@
+         """Return opt-in low-confidence spec rows to recompute normally.
+ 
+         This is deliberately conservative.  Bonus rows can be gated for any
+         speculative length because bonus logits are one row per request.
+-        Replacement-margin gating remains limited to k=1 because target logits
+-        are flattened by draft token and need row-specific mapping for k>1.
+         The scheduler still receives the full sampler result for acceptance
+         accounting; these masks only tell it which target-owned token should
+         not become user-visible because the verifier row is too low-margin to
+@@
+         if replacement_min_margin > 0.0 and target_logits.shape[0]:
+             target_top2 = torch.topk(
+                 target_logits.to(torch.float32), k=2, dim=-1)
+-            target_margin = target_top2.values[:, 0] - target_top2.values[:, 1]
+-            if metadata.max_spec_len == 1:
+-                suppressed_replacement_mask = target_margin < replacement_min_margin
++            target_argmax = target_top2.indices[:, 0].to(
++                metadata.draft_token_ids.dtype)
++            target_margin = target_top2.values[:, 0] - target_top2.values[:, 1]
++            draft_ids = metadata.draft_token_ids.reshape(-1)
++            masks: list[torch.Tensor] = []
++            start = 0
++            for num_draft_tokens in metadata.num_draft_tokens:
++                num = int(num_draft_tokens)
++                end = start + num
++                if num <= 0 or end > draft_ids.numel():
++                    masks.append(
++                        torch.tensor(False, device=target_logits.device))
++                    start = end
++                    continue
++                row_mismatch = target_argmax[start:end] != draft_ids[start:end]
++                has_reject = torch.any(row_mismatch)
++                first_reject = torch.argmax(row_mismatch.to(torch.int32))
++                reject_margin = target_margin[start + first_reject]
++                masks.append(has_reject & (reject_margin < replacement_min_margin))
++                start = end
++            if masks:
++                suppressed_replacement_mask = torch.stack(masks).to(
++                    dtype=torch.bool)
+ 
+         return suppressed_bonus_mask, suppressed_replacement_mask
+
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+                         try:
+                             accepted = int(accepted_token_counts[i].item())
+                         except Exception:
+                             accepted = 0
+@@
+-                        remaining = accepted + extra
++                        # The scheduler replays accepted draft tokens plus the
++                        # target-owned replacement token. The previous counter
++                        # only covered the accepted prefix, allowing the
++                        # replacement recovery step itself to re-enter captured
++                        # decode and recreate the partial-reject truncation.
++                        remaining = accepted + 1 + extra
+                         self.xpu_spec_decode_eager_replacement_recovery_remaining[
+                             str(req_id)
+                         ] = max(1, remaining)
+@@
+     def _xpu_clear_placeholder_only_replacement_suppression(
+         self,
+         sampler_output: SamplerOutput,
+         scheduler_output: "SchedulerOutput",
+     ) -> None:
+@@
+         """
++        if (
++            os.environ.get(
++                "VLLM_XPU_SPEC_DECODE_KEEP_PLACEHOLDER_REPLACEMENT_SUPPRESSION",
++                "",
++            )
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        ):
++            return
+         mask = sampler_output.xpu_suppressed_replacement_mask
+         if mask is None or not scheduler_output.scheduled_spec_decode_tokens:
+             return
+

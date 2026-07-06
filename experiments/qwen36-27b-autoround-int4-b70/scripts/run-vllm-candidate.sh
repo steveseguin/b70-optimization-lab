@@ -149,6 +149,7 @@ trap cleanup EXIT
   echo "spec_eager_all_recovery_steps=${VLLM_XPU_SPEC_DECODE_EAGER_ALL_RECOVERY_STEPS:-}"
   echo "spec_filter_suppressed_bonus_next_input=${VLLM_XPU_SPEC_DECODE_FILTER_SUPPRESSED_BONUS_NEXT_INPUT:-}"
   echo "spec_skip_replayed_mamba_postprocess=${VLLM_XPU_SPEC_DECODE_SKIP_REPLAYED_MAMBA_POSTPROCESS:-}"
+  echo "spec_keep_placeholder_replacement_suppression=${VLLM_XPU_SPEC_DECODE_KEEP_PLACEHOLDER_REPLACEMENT_SUPPRESSION:-}"
   echo "spec_force_eager=${VLLM_XPU_SPEC_DECODE_FORCE_EAGER:-}"
   echo "xpu_spec_decode_draft_only=${VLLM_XPU_SPEC_DECODE_DRAFT_ONLY:-}"
   echo "lm_head_int8=$VLLM_XPU_LM_HEAD_INT8"

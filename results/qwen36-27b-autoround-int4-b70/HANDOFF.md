@@ -134,6 +134,17 @@ Current fastest quality-gated variant:
   median `63.853743411579195 tok/s`, repeat64 and cached-zero gate passed, but
   still below the `65.276` record. See
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-replayssm-commit-in-forward-skippost-no-promote.md`.
+  The follow-up replacement-suppression plumbing and margin-gate attempt is
+  also closed no-win:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replacement-mask-plumbing-and-margin-no-win.md`.
+  It found that the earlier fast `66-67 tok/s` replacement-suppression rows
+  were mostly inert because masks were not reaching the scheduler
+  (`forward_from_top_token_ids` did not return a mask, and placeholder-only
+  cleanup erased Qwen MTP masks). Once masks were active, quality-clean
+  scheduler recovery only reached `~34-49 tok/s`, and margin gating remained
+  below record. Preserve the focused source snapshot at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replacement-mask-plumbing-margin-no-win-20260706.patch`;
+  do not promote or repeat this Python/scheduler recovery lane.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed
