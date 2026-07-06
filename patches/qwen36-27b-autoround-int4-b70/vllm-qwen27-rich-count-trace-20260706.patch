@@ -1,0 +1,61 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+         if (
+             spec_state_trace_step_id is not None
+             and self._xpu_cow_worker_trace_enabled()
+         ):
+             try:
+                 final_counts_cpu = accepted_token_counts.detach().cpu()
+                 raw_counts_cpu = raw_accepted_token_counts.detach().cpu()
+                 rows = []
+                 for i, req_id in enumerate(self.input_batch.req_ids[:num_reqs]):
++                    scheduled_spec_ids = (
++                        scheduled_spec_decode_tokens.get(req_id, ())
++                        if req_id is not None else ()
++                    )
++                    suppress_bonus = _xpu_mask_row_true(
++                        xpu_suppressed_bonus_mask, i)
++                    suppress_replacement = _xpu_mask_row_true(
++                        xpu_suppressed_replacement_mask, i)
++                    raw_count = int(raw_counts_cpu[i].item())
++                    draft_prefix_count_candidate = raw_count
++                    if suppress_replacement:
++                        draft_prefix_count_candidate = max(0, raw_count - 1)
++                    elif suppress_bonus:
++                        draft_prefix_count_candidate = min(
++                            raw_count, len(scheduled_spec_ids))
++                    output_row = output_token_ids[i].detach().cpu().tolist()
+                     rows.append({
+                         "row": int(i),
+                         "req_id": None if req_id is None else str(req_id),
+-                        "raw_accepted_count": int(raw_counts_cpu[i].item()),
++                        "raw_accepted_count": raw_count,
+                         "final_accepted_count": int(
+                             final_counts_cpu[i].item()),
++                        "draft_prefix_count_candidate": int(
++                            draft_prefix_count_candidate),
++                        "suppressed_bonus": bool(suppress_bonus),
++                        "suppressed_replacement": bool(suppress_replacement),
++                        "scheduled_spec_len": int(len(scheduled_spec_ids)),
++                        "scheduled_spec_ids": [int(x) for x in list(
++                            scheduled_spec_ids)[:8]],
++                        "output_token_ids": [
++                            int(tok) for tok in output_row
++                            if int(tok) != int(PLACEHOLDER_TOKEN_ID)
++                        ],
+                         "draft_partial_restore": (
+                             req_id is not None
+                             and str(req_id) in draft_partial_restore_req_ids
+@@
+                     "replayssm_skip_post_verify_commit": bool(
+                         replayssm_skip_post_verify_commit),
+                     "skip_replayssm_commit_req_ids": sorted(
+                         skip_replayssm_commit_req_ids or set()),
++                    "replayssm_commit_token_counts": [
++                        int(x) for x in replayssm_commit_token_counts.detach()
++                        .cpu()[:num_reqs].tolist()
++                    ],
+                 },
+             )

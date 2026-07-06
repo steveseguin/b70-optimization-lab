@@ -133,3 +133,51 @@ final accepted-count correction:
 
 Do not change behavior until that trace proves whether count 2 is leaking
 target-owned rows into ReplaySSM commit.
+
+## Follow-up: rich accepted-count trace closed the leak hypothesis
+
+Patch snapshot:
+
+```text
+patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-rich-count-trace-20260706.patch
+```
+
+Run:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/traces/qwen27-replayssm-rich-count-trace-20260706T160507Z
+```
+
+The trace added default-off fields to `mamba_state_update_counts_final`:
+
+- raw accepted count;
+- final accepted count;
+- output token ids;
+- scheduled spec length / ids;
+- suppressed replacement / bonus masks;
+- trace-only draft-prefix-count candidate.
+
+Result:
+
+- 63 final-count rows;
+- raw/final/mask distribution:
+  - `(4, 4, false, false)`: 30;
+  - `(1, 1, false, false)`: 24;
+  - `(2, 2, false, false)`: 9.
+- Every raw-count-2 row had `suppressed_replacement=false` and
+  `suppressed_bonus=false`; the common row was ordinary visible color-output
+  token ids `[11,5983]` (`, green`), not a target-owned replacement row.
+- Layer-0 ReplaySSM in-forward commit had the same distribution as the earlier
+  trace: 52 pairs, with `[4,1,1,1]` x31, `[1,1,1,1]` x13, `[2,1,1,1]` x8.
+- Quality outputs were correct. `baseline_match_all=false` only because this
+  diagnostic used a 128-token long-context prompt while the saved baseline was
+  keyed for 1024-token long context, so the long-context baseline entry was not
+  considered present.
+
+Conclusion: the visible-count-2 ReplaySSM commits observed in layer 0 are not
+evidence of target-owned replacement/bonus rows leaking into the ring
+transaction. Do **not** implement a behavior change that subtracts one from
+these rows. The next speed work should move back to the larger surfaces:
+acceptance/tokens per verifier step, verifier/LM-head cost, or a stronger
+fresh-request drafter such as DFlash if its acceptance oracle justifies the
+engineering cost.
