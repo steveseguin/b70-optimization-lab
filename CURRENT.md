@@ -83,6 +83,12 @@ Fastest quality-gated practical variant:
   serial/prefill flag sweeps cannot make the fast native prefix-base lane both
   exact and fast. Continue only with a real graph-safe transaction/tape,
   target-tail projection/branch-regenerate support, or a stronger drafter;
+- future-use Qwen MTP cleanup:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-qwen-mtp-spec-step-idx-pass-through.md`
+  preserves a focused `spec_step_idx` pass-through patch for checkpoints with
+  multiple Qwen MTP layers. The active webhie Qwen27 snapshot only has
+  `mtp.layers.0`, so this is not a current record candidate and no endpoint
+  run was spent on it;
 
 Previous fastest quality-gated practical variant:
 

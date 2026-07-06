@@ -206,7 +206,13 @@ Next milestone:
    Local `webhie-Code` and `acyildirimer` AutoRound variants passed the strict
    gate but were slower than the same-window webhie control, and the possible
    `spec_step_idx` MTP fix is a no-op for this lane because the checked
-   Qwen27 AutoRound configs all have `mtp_num_hidden_layers=1`.
+   Qwen27 AutoRound configs all have `mtp_num_hidden_layers=1`. The focused
+   future-use patch is preserved at
+   `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen-mtp-spec-step-idx-pass-through-future-20260706.patch`
+   and documented in
+   `notes/2026-07-06-qwen-mtp-spec-step-idx-pass-through.md`; do not treat it
+   as a current Qwen27 speed candidate unless a checkpoint with multiple
+   `mtp.layers.N` tensors is introduced.
 10. Latest current-recipe depth screen:
     `notes/2026-07-04-webhie-depth-screen-no-win.md`. On the fastest
     webhie/BF16-scale INT8-LM-head recipe, strict same-window MTP4/cg8

@@ -422,7 +422,13 @@ Current next-execution plan:
   failed before readiness at `_xpu_C.fp8_gemm_w8a16` with
   `could not set scales primitive attribute`. The possible `spec_step_idx` MTP
   plumbing fix is a no-op for this lane because all checked Qwen27 AutoRound
-  checkpoints report `mtp_num_hidden_layers=1`.
+  checkpoints report `mtp_num_hidden_layers=1`. A focused future-use patch now
+  exists at
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen-mtp-spec-step-idx-pass-through-future-20260706.patch`
+  with note
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-qwen-mtp-spec-step-idx-pass-through.md`;
+  it is compile-checked only and should not be benchmarked as a current Qwen27
+  win unless a multi-MTP-layer checkpoint appears.
 - closed current-recipe depth screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-depth-screen-no-win.md`.
   A four-GPU strict same-window pass on the fastest webhie/BF16-scale

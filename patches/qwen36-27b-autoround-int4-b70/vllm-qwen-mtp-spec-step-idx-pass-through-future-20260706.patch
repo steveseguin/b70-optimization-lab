@@ -1,0 +1,76 @@
+diff --git a/vllm/model_executor/models/qwen3_5_mtp.py b/vllm/model_executor/models/qwen3_5_mtp.py
+--- a/vllm/model_executor/models/qwen3_5_mtp.py
++++ b/vllm/model_executor/models/qwen3_5_mtp.py
+@@ -457,10 +457,16 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
+         hidden_states: torch.Tensor,
+         intermediate_tensors: IntermediateTensors | None = None,
+         inputs_embeds: torch.Tensor | None = None,
++        spec_step_idx: int = 0,
+         **kwargs: object,
+     ):
+         hidden_states = self.model(
+-            input_ids, positions, hidden_states, intermediate_tensors, inputs_embeds
++            input_ids,
++            positions,
++            hidden_states,
++            intermediate_tensors,
++            inputs_embeds,
++            spec_step_idx=spec_step_idx,
+         )
+         return hidden_states
+ 
+diff --git a/vllm/model_executor/models/qwen3_next_mtp.py b/vllm/model_executor/models/qwen3_next_mtp.py
+--- a/vllm/model_executor/models/qwen3_next_mtp.py
++++ b/vllm/model_executor/models/qwen3_next_mtp.py
+@@ -268,10 +268,16 @@ class Qwen3NextMTP(nn.Module, QwenNextMixtureOfExperts):
+         hidden_states: torch.Tensor,
+         intermediate_tensors: IntermediateTensors | None = None,
+         inputs_embeds: torch.Tensor | None = None,
++        spec_step_idx: int = 0,
+         **kwargs: object,
+     ):
+         hidden_states = self.model(
+-            input_ids, positions, hidden_states, intermediate_tensors, inputs_embeds
++            input_ids,
++            positions,
++            hidden_states,
++            intermediate_tensors,
++            inputs_embeds,
++            spec_step_idx=spec_step_idx,
+         )
+         return hidden_states
+ 
+diff --git a/vllm/v1/spec_decode/llm_base_proposer.py b/vllm/v1/spec_decode/llm_base_proposer.py
+--- a/vllm/v1/spec_decode/llm_base_proposer.py
++++ b/vllm/v1/spec_decode/llm_base_proposer.py
+@@ -90,6 +90,11 @@ class SpecDecodeBaseProposer:
+         # shape (T, hc_mult * hidden_size). Expand the hidden_states buffer
+         # so target_hidden_states fits; detect DeepseekV4 via draft hf_config.
+         draft_hf_config = self.draft_model_config.hf_config
++        draft_model_type = str(getattr(draft_hf_config, "model_type", ""))
++        self.use_mtp_spec_step_idx = draft_model_type in (
++            "qwen3_5_mtp",
++            "qwen3_next_mtp",
++        )
+         if hasattr(draft_hf_config, "compress_ratios") and hasattr(
+             draft_hf_config, "hc_mult"
+         ):
+@@ -740,7 +745,9 @@ class SpecDecodeBaseProposer:
+         with timed_region("spec_decode.propose.build_model_inputs_first"):
+             model_kwargs, slot_mapping_size = self.build_model_inputs_first_pass(
+                 num_tokens, num_input_tokens, mm_embed_inputs
+             )
++            if self.use_mtp_spec_step_idx:
++                model_kwargs["spec_step_idx"] = 0
+ 
+         with timed_region("spec_decode.propose.forward_context_first_total"):
+             with set_forward_context(
+@@ -995,6 +1002,8 @@ class SpecDecodeBaseProposer:
+             )
+ 
+             with timed_region("spec_decode.propose.forward_context_next_total"):
++                if self.use_mtp_spec_step_idx:
++                    model_kwargs["spec_step_idx"] = token_index + 1
+                 with set_forward_context(
+                     per_layer_attn_metadata,
+                     self.vllm_config,

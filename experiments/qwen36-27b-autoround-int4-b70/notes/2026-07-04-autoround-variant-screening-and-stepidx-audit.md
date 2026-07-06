@@ -127,8 +127,16 @@ For the active local checkpoints, this is a no-op:
 | `acyildirimer/Qwen3.6-27B-int4-AutoRound` | `1` | `None` |
 | `poma-ai/Qwen3.6-27B-int4-AutoRound` | `1` | `None` |
 
-Conclusion: do not patch `spec_step_idx` for this Qwen27 lane. It is a valid
-future audit item only for checkpoints with `mtp_num_hidden_layers > 1`.
+Conclusion: do not spend Qwen27 GPU benchmark time on `spec_step_idx` for this
+lane. It is a valid future audit item only for checkpoints with
+`mtp_num_hidden_layers > 1`.
+
+2026-07-06 follow-up: the future-use pass-through patch is now preserved at
+`patches/qwen36-27b-autoround-int4-b70/vllm-qwen-mtp-spec-step-idx-pass-through-future-20260706.patch`
+and documented in
+`experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-qwen-mtp-spec-step-idx-pass-through.md`.
+It compile-checks, but it is still expected to be a no-op for the current
+Qwen27 AutoRound checkpoints because they expose only `mtp.layers.0`.
 
 ## Next Direction
 
