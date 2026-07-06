@@ -54,6 +54,13 @@ Fastest quality-gated practical variant:
 - support rows: `68.481` native-slot-copy smoke, `66.871` native-slot-copy
   confirm, and `67.300` PyTorch-slot-management same-window control. Use
   `67.519` as the conservative headline, not the one-off `68.481`;
+- latest reproducibility repair/support row:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-regressionfix-quality-confirm-20260706T102729Z-candidate-summary-20260706T102729Z.json`
+  at `67.33805616805299 tok/s`, strict fresh/cached-zero with repeat64
+  quality and baseline match all. This restored the record path after the
+  external-draft experiment accidentally enabled mixed draft-KV metadata on
+  normal intrinsic MTP. Focused patch:
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mixed-draft-kv-metadata-guard-20260706.patch`;
 - quality: repeat64 passed, baseline matched, strict fresh gate passed;
 - compact packet:
   `results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
@@ -344,6 +351,15 @@ Previous fastest quality-gated practical variant:
   `~2.3-2.6 tok/s`. Do not repeat this exact target/draft pairing without a
   separate fresh-prompt acceptance oracle showing nonzero target-verified
   acceptance.
+- mixed draft-KV metadata regression repair and draft INT4 group/scale closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-mixed-draft-kv-metadata-guard-and-draft-int4-group-screen.md`.
+  The external-draft patch broadened per-draft-KV metadata onto normal MTP and
+  dropped the record recipe to `~60-61 tok/s`. The active source now keeps that
+  metadata path DFlash-only by default, with explicit opt-in
+  `VLLM_XPU_SPEC_DECODE_MIXED_DRAFT_KV_METADATA=1` for future external-draft
+  experiments. The restored recipe quality-confirmed at `67.338 tok/s`; a
+  same-window screen closed draft INT4 group64, group256, and fp32-scale as
+  no-win versus group128/BF16 scales.
 - `--language-model-only` screen closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-language-model-only-no-win.md`.
   It saves about `0.87 GiB` of model memory on the webhie checkpoint and logs

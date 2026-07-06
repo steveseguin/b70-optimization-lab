@@ -80,6 +80,12 @@ Current fastest quality-gated variant:
   at `66.87138386688892 tok/s`, and
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-torchfallback-control-gpu2-20260706T045712Z-candidate-summary-20260706T045712Z.json`
   at `67.29981507165695 tok/s`;
+- latest reproducibility repair/support:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-regressionfix-quality-confirm-20260706T102729Z-candidate-summary-20260706T102729Z.json`
+  at `67.33805616805299 tok/s`, strict fresh/cached-zero with repeat64
+  quality and baseline match all. This validates the mixed draft-KV metadata
+  guard after the external-draft experiment had dropped the same recipe to
+  `~60-61 tok/s`;
 - quality:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-repeat64-ctx1024-20260706T050135Z.json`,
   `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`;
@@ -204,6 +210,14 @@ Previous fastest quality-gated variant:
   but do not repeat this exact target/draft pairing without a separate
   acceptance oracle showing nonzero target-verified acceptance on fresh
   chat-style prompts.
+- Mixed draft-KV metadata regression repair and draft INT4 group/scale closure:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-mixed-draft-kv-metadata-guard-and-draft-int4-group-screen.md`.
+  The active source now keeps the mixed draft-KV metadata path DFlash-only by
+  default, with explicit opt-in
+  `VLLM_XPU_SPEC_DECODE_MIXED_DRAFT_KV_METADATA=1` for future external-draft
+  experiments. The restored record recipe quality-confirmed at `67.338 tok/s`;
+  a same-window screen closed draft INT4 group64, group256, and fp32-scale as
+  no-win versus group128/BF16 scales.
 - continuation bookmark:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-continuation-source-and-awq-state.md`.
   It records the latest source-state snapshots, the no-repeat audit for closed

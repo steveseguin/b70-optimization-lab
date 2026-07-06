@@ -65,6 +65,31 @@ The patch artifact includes the relevant active source diff for:
 
 It is an experiment artifact, not a promoted production patch.
 
+## Follow-up correction: keep mixed draft-KV metadata opt-in
+
+Later on 2026-07-06, the current ReplaySSM record recipe reproduced at only
+`~60-61 tok/s` after this external-draft patch because the patch broadened
+mixed draft-KV metadata construction from DFlash-only to any
+`draft_kv_cache_gids`. Normal intrinsic Qwen MTP then carried
+`_draft_common_attn_metadata_by_gid` and paid the slower per-group slot-mapping
+path even though the record recipe does not need mixed external-draft KV
+metadata.
+
+The active source was repaired by guarding that behavior:
+
+- DFlash still gets mixed draft-KV metadata by default;
+- future external-draft experiments must opt in with
+  `VLLM_XPU_SPEC_DECODE_MIXED_DRAFT_KV_METADATA=1`;
+- normal intrinsic Qwen MTP returns to the record path.
+
+Focused follow-up patch and note:
+
+- `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mixed-draft-kv-metadata-guard-20260706.patch`
+- `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-mixed-draft-kv-metadata-guard-and-draft-int4-group-screen.md`
+
+Do not reapply the broad mixed-KV metadata behavior from this patch to the
+normal MTP record path.
+
 ## Evidence
 
 Final run:
@@ -113,4 +138,3 @@ valid result remains:
 - `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target LM-head BF16 scales + runtime INT4 draft LM-head BF16 scales`
 - strict fresh median `67.51904968102535 tok/s`
 - LocalMaxxing `cmr8rg5d900glqr01g4fesy6i`
-

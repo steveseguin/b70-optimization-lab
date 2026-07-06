@@ -61,6 +61,11 @@ Current fastest quality-gated variant:
   native-slot-copy confirm, and `67.300` PyTorch-slot-management same-window
   control. Use `67.519` as the conservative headline, not the one-off
   `68.481`;
+- latest reproducibility repair/support:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-regressionfix-quality-confirm-20260706T102729Z-candidate-summary-20260706T102729Z.json`
+  at `67.33805616805299 tok/s`, strict fresh/cached-zero with repeat64
+  quality and baseline match all. The focused source guard is captured at
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mixed-draft-kv-metadata-guard-20260706.patch`;
 - quality: repeat64 passed, baseline matched, strict fresh gate passed;
 - evidence:
   `../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
@@ -625,6 +630,15 @@ produced strict fresh diagnostic rows, but remained far below the `67.519 tok/s`
 record: k2 `49.087`, k4 `54.836`, k8 `50.918` tok/s, all quality-skipped and
 not promotable. Preserve the patch for future upstream/DFlash comparison, but
 do not repeat k/capture-size DFlash sweeps for this draft.
+The latest source-drift repair is
+`notes/2026-07-06-mixed-draft-kv-metadata-guard-and-draft-int4-group-screen.md`.
+The external `Qwen/Qwen3.5-0.8B` draft-model experiment accidentally enabled
+mixed draft-KV metadata for normal intrinsic MTP and dropped the record recipe
+to `~60-61 tok/s`. Active source now keeps mixed draft-KV metadata DFlash-only
+by default, with `VLLM_XPU_SPEC_DECODE_MIXED_DRAFT_KV_METADATA=1` as an
+explicit opt-in for future external-draft work. A quality-backed confirm
+restored `67.338 tok/s`. Same-window screens closed draft INT4 group64,
+group256, and fp32-scale as no-win versus group128/BF16 scales.
 
 ## Current Entry Points
 

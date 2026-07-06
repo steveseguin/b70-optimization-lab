@@ -1,0 +1,28 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -6732,8 +6732,15 @@ class GPUModelRunner:
+         draft_common_attn_metadata_by_gid: dict[int, CommonAttentionMetadata] | None
+         draft_common_attn_metadata_by_gid = None
+         drafter = getattr(self, "drafter", None)
+         draft_kv_cache_gids = getattr(drafter, "draft_kv_cache_gids", None)
+-        if draft_kv_cache_gids:
++        mixed_draft_kv_metadata = bool(draft_kv_cache_gids) and (
++            isinstance(drafter, DFlashProposer)
++            or os.environ.get(
++                "VLLM_XPU_SPEC_DECODE_MIXED_DRAFT_KV_METADATA", "0"
++            ).strip().lower() in ("1", "true", "yes", "on")
++        )
++        if mixed_draft_kv_metadata:
+             draft_common_attn_metadata_by_gid = {}
+         for kv_cache_gid, kv_cache_group in enumerate(kv_cache_groups):
+             cm = copy(cm_base)  # shallow copy
+@@ -6760,7 +6767,7 @@ class GPUModelRunner:
+             if self.speculative_config and spec_decode_common_attn_metadata is None:
+                 if (
+                     isinstance(drafter, (EagleProposer, DFlashProposer))
+-                    or draft_kv_cache_gids
++                    or mixed_draft_kv_metadata
+                 ):
+                     if drafter.kv_cache_gid == kv_cache_gid:
+                         spec_decode_common_attn_metadata = cm
