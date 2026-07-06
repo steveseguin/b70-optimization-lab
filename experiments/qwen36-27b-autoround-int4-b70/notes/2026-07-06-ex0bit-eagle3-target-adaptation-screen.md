@@ -620,3 +620,41 @@ Interpretation:
   this checkpoint, enlarge data again, or add a more direct accepted-prefix /
   survival objective. Do not keep repeating the same rollout-3 continuation
   indefinitely.
+
+## Rollout-5 continuation: deeper objective gives the largest recent jump
+
+Continued from the rollout-3 plateau checkpoint and switched the training
+objective to five autoregressive draft steps.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T223638Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond | full-5 accepts |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `cont-r5-lr2e-5-decay1` | `2e-5` | `1.0` | **`1.1766323953823954`** | `56.48%` | `53.54%` | `55.39%` | `1107` |
+| `cont-r5-lr2e-5-decay1p1` | `2e-5` | `1.1` | `1.1691919191919191` | `56.08%` | `53.36%` | `55.48%` | `1128` |
+| `cont-r5-lr2e-5-decay1p25` | `2e-5` | `1.25` | `1.1548520923520924` | `55.57%` | `53.01%` | `55.14%` | `1135` |
+| `cont-r5-lr1e-5-decay1` | `1e-5` | `1.0` | `1.1343344155844155` | `56.70%` | `53.60%` | `54.86%` | `552` |
+
+Interpretation:
+
+- Current best diagnostic checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T223638Z/cont-r5-lr2e-5-decay1/checkpoint`.
+- This is the strongest recent move: `1.1272` -> `1.1766` mean accepted.
+- The win comes from deeper full accepts, not step-1 exact. First-token exact
+  is lower than the rollout-3 plateau, but the histogram has many more `5`
+  accepts (`1107` vs `314` in the prior best).
+- Still below endpoint threshold (`1.5-2.0` minimum), so do not endpoint-test
+  or submit. But rollout-5 is now the preferred training objective for the next
+  EAGLE/DFlash continuation.

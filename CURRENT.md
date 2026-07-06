@@ -131,12 +131,12 @@ Fastest quality-gated practical variant:
   step-3 conditional). This is still below the `1.5-2.0` offline threshold
   for endpoint/kernel work. A bounded all-scope follow-up from the v4 best
   checkpoint reached only `1.0707972582972582` mean accepted, so simple
-  full-draft unfreezing is not the unlock. Late-step weighted continuation is
-  the current best diagnostic family; the best checkpoint uses `decay=1.1`,
-  `lr=2e-5` and reaches `1.1271645021645023` mean accepted (`57.47%` step-1
-  exact, `54.38%` step-2 conditional, `54.32%` step-3 conditional). The
-  rollout-3 continuation curve is flattening; next work should change
-  objective shape, not wire the drafter into vLLM yet;
+  full-draft unfreezing is not the unlock. Rollout-5 continuation is the
+  current best diagnostic family; the best checkpoint uses `decay=1.0`,
+  `lr=2e-5` and reaches `1.1766323953823954` mean accepted (`56.48%` step-1
+  exact, `53.54%` step-2 conditional, `55.39%` step-3 conditional, `1107`
+  full-5 accepts). This is still below endpoint threshold; next work should
+  continue training research, not wire the drafter into vLLM yet;
 
 Previous fastest quality-gated practical variant:
 

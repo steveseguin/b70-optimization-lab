@@ -180,11 +180,11 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v4-summary-20260706.json`,
   plus
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json`.
-  The current best diagnostic checkpoint is the fourth late-step weighted
-  continuation (`decay=1.1`, `lr=2e-5`) at `1.1271645021645023` mean accepted
-  (`57.47%` step-1 exact, `54.38%` step-2 conditional, `54.32%` step-3
-  conditional). Checkpoint:
-  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T222601Z/cont2-r3-lr2e-5-decay1p1/checkpoint`.
+  The current best diagnostic checkpoint is rollout-5 continuation
+  (`decay=1.0`, `lr=2e-5`) at `1.1766323953823954` mean accepted (`56.48%`
+  step-1 exact, `53.54%` step-2 conditional, `55.39%` step-3 conditional,
+  `1107` full-5 accepts). Checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T223638Z/cont-r5-lr2e-5-decay1/checkpoint`.
   Summaries:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json`
   and
@@ -193,8 +193,10 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation2-v4-summary-20260706.json`
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation3-v4-summary-20260706.json`.
-  More identical rollout-3 continuation is flattening; the next attempt should
-  change objective shape.
+  plus
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation-v4-summary-20260706.json`.
+  Rollout-5 is now the preferred continuation objective; still do not endpoint
+  integrate until offline mean accepted reaches at least `1.5-2.0`.
 
 Previous fastest quality-gated variant:
 
