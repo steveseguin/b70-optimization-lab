@@ -1,0 +1,68 @@
+diff --git a/vllm/model_executor/layers/fla/ops/layernorm_guard.py b/vllm/model_executor/layers/fla/ops/layernorm_guard.py
+index 8b9e27573..06754510d 100644
+--- a/vllm/model_executor/layers/fla/ops/layernorm_guard.py
++++ b/vllm/model_executor/layers/fla/ops/layernorm_guard.py
+@@ -13,6 +13,8 @@
+ # This backward pass is faster for dimensions up to 8k, but after that it's much slower due to register spilling.
+ # The models we train have hidden dim up to 8k anyway (e.g. Llama 70B), so this is fine.
+
++import os
++
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+@@ -85,6 +87,7 @@ def layer_norm_fwd_kernel(
+     NORM_BEFORE_GATE: tl.constexpr,
+     IS_RMS_NORM: tl.constexpr,
+     ACTIVATION: tl.constexpr,
++    STORE_RSTD: tl.constexpr,
+ ):
+     # Map the program id to the starting row of X and Y it should compute.
+     row_start = tl.program_id(0) * ROWS_PER_BLOCK
+@@ -135,10 +138,13 @@ def layer_norm_fwd_kernel(
+
+     rstd = tl.rsqrt(var + eps)  # Shape: [ROWS_PER_BLOCK]
+
+-    # Store rstd for each row
+-    rstd_offsets = group * M + rows
+-    rstd_mask = rows < M
+-    tl.store(Rstd + rstd_offsets, rstd, mask=rstd_mask)
++    if STORE_RSTD:
++        # Store rstd for each row. In inference-only RMSNorm callers this is
++        # often ignored, so a default-off experiment can skip the allocation
++        # and writeback without changing the returned normalized output.
++        rstd_offsets = group * M + rows
++        rstd_mask = rows < M
++        tl.store(Rstd + rstd_offsets, rstd, mask=rstd_mask)
+
+     # Load weights and biases (broadcast across rows)
+     w_offsets = cols + group * N
+@@ -212,7 +218,16 @@ def layer_norm_fwd(
+         if not is_rms_norm
+         else None
+     )
+-    rstd = torch.empty((ngroups * M,), dtype=torch.float32, device=x.device)
++    skip_rstd = (
++        is_rms_norm
++        and os.environ.get("VLLM_XPU_RMSNORM_SKIP_RSTD", "0").strip().lower()
++        in ("1", "true", "yes", "on")
++    )
++    rstd = (
++        out.reshape(-1)
++        if skip_rstd
++        else torch.empty((ngroups * M,), dtype=torch.float32, device=x.device)
++    )
+     # Less than 64KB per feature: enqueue fused kernel
+     MAX_FUSED_SIZE = 65536 // x.element_size()
+     BLOCK_N = min(MAX_FUSED_SIZE, triton.next_power_of_2(group_size))
+@@ -246,8 +261,9 @@ def layer_norm_fwd(
+         IS_RMS_NORM=is_rms_norm,
+         num_warps=num_warps,
+         ACTIVATION=activation,
++        STORE_RSTD=not skip_rstd,
+     )
+-    return out, mean, rstd
++    return out, mean, None if skip_rstd else rstd
+
+
+ def _layer_norm_fn_impl(

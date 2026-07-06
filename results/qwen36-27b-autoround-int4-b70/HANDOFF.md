@@ -923,6 +923,13 @@ Continue INT4 optimization without promoting synthetic scores:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-fc-int8-no-win-20260706.patch`
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-mtp-fc-int8-no-win.md`;
+- GDN gated-RMSNorm `rstd` skip is closed no-win. The default-off
+  `VLLM_XPU_RMSNORM_SKIP_RSTD=1` patch avoided an ignored Triton `rstd`
+  writeback, but strict same-window candidates (`66.329`, `66.595 tok/s`) lost
+  to controls (`67.716`, `67.910 tok/s`). See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-rmsnorm-skip-rstd-no-win.md`
+  and
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-rmsnorm-skip-rstd-no-win-20260706.patch`;
 - do not skip full-accept GDN postprocess blindly; it breaks long-context state
   recall. The current win is specifically source-slot promotion plus disabling
   the redundant accepted-state copy, not a semantic elision;

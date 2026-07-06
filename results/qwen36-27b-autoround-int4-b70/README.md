@@ -449,6 +449,13 @@ inside compiled MTP. See
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-mtp-fc-int8-no-win.md`
 and
 `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-fc-int8-no-win-20260706.patch`.
+The GDN gated-RMSNorm `rstd` skip is also closed no-win: skipping an ignored
+Triton `rstd` allocation/writeback via `VLLM_XPU_RMSNORM_SKIP_RSTD=1` produced
+`66.329` and `66.595 tok/s`, below same-window controls at `67.716` and
+`67.910 tok/s`; see
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-rmsnorm-skip-rstd-no-win.md`
+and
+`../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-rmsnorm-skip-rstd-no-win-20260706.patch`.
 The DFlash mixed-SWA audit is captured in
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-dflash-mixed-swa-multikv-blocker.md`:
 the target runner is multi-KV aware, but the DFlash/EAGLE drafter path assumes

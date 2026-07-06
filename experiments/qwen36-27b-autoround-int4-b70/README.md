@@ -531,6 +531,12 @@ candidate hit TorchDynamo fake-tensor unsupported-op handling for the custom
 INT8 GEMM inside compiled MTP. See
 `notes/2026-07-06-mtp-fc-int8-no-win.md` and
 `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mtp-fc-int8-no-win-20260706.patch`.
+GDN gated-RMSNorm `rstd` skip is another closed model-body micro-optimization:
+the patch skipped an ignored Triton `rstd` allocation/writeback behind
+`VLLM_XPU_RMSNORM_SKIP_RSTD=1`, but strict fresh candidates (`66.329` and
+`66.595 tok/s`) lost to controls (`67.716` and `67.910 tok/s`). See
+`notes/2026-07-06-rmsnorm-skip-rstd-no-win.md` and
+`../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-rmsnorm-skip-rstd-no-win-20260706.patch`.
 
 ## Current Entry Points
 
