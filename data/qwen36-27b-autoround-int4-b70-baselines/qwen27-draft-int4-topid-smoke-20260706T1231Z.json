@@ -1,0 +1,69 @@
+{
+  "created_at_utc": "2026-07-06T12:31:07.269988+00:00",
+  "purpose": "Diagnostic current-backend Qwen27 draft INT4 LM-head microbench; not an endpoint throughput result.",
+  "torch": "2.11.0+xpu",
+  "shape": {
+    "hidden": 5120,
+    "vocab": 248320,
+    "group_size": 128,
+    "packed_k": 640,
+    "num_groups": 40,
+    "rows": [
+      1
+    ]
+  },
+  "warmup": 2,
+  "iterations": 5,
+  "results": [
+    {
+      "rows": 1,
+      "correctness": {
+        "top1_available": true,
+        "id_match_all": true,
+        "dense_ids": [
+          46893
+        ],
+        "top1_ids": [
+          46893
+        ],
+        "max_value_abs_diff": 0.11138534545898438,
+        "mean_value_abs_diff": 0.11138534545898438
+      },
+      "backends": [
+        {
+          "name": "int4_gemm_w4a16_dense_logits",
+          "count": 5,
+          "median_ms": 2.6357488241046667,
+          "mean_ms": 2.647538995370269,
+          "p10_ms": 2.6319298427551985,
+          "p90_ms": 2.669305820018053,
+          "min_ms": 2.6314209681004286,
+          "max_ms": 2.6708650402724743,
+          "stdev_ms": 0.019626189502975504
+        },
+        {
+          "name": "int4_gemm_w4a16_dense_logits_argmax",
+          "count": 5,
+          "median_ms": 2.281032968312502,
+          "mean_ms": 2.282918756827712,
+          "p10_ms": 2.2675599437206984,
+          "p90_ms": 2.302194945514202,
+          "min_ms": 2.2668458987027407,
+          "max_ms": 2.314806915819645,
+          "stdev_ms": 0.019254971145987457
+        },
+        {
+          "name": "int4_gemm_w4a16_top1_experimental",
+          "count": 5,
+          "median_ms": 9.550883900374174,
+          "mean_ms": 9.55449235625565,
+          "p10_ms": 9.526357101276517,
+          "p90_ms": 9.589091641828418,
+          "min_ms": 9.52589581720531,
+          "max_ms": 9.608192136511207,
+          "stdev_ms": 0.033552089610578324
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,420 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9340c77..e3ca453 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -539,6 +539,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
+       "csrc/xpu/sycl/multimodal_rope.cpp"
++      "csrc/xpu/int4_topid.cpp"
+       "csrc/xpu/rand/exponential.cpp"
+       "csrc/xpu/utils.cpp")
+   if(MOE_KERNELS_ENABLED)
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 293bf35..35aba74 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -41,6 +41,14 @@ torch::Tensor int4_gemm_w4a16(
+     int64_t group_size,
+     const std::optional<torch::Tensor>& g_idx);
+ 
++std::tuple<torch::Tensor, torch::Tensor> int4_gemm_w4a16_top1(
++    const torch::Tensor& A_,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& B_zp,
++    int64_t group_size,
++    const std::optional<torch::Tensor>& g_idx);
++
+ torch::Tensor int4_gemm_w4a8(
+     const torch::Tensor& A_,
+     const torch::Tensor& A_scale,
+@@ -369,6 +377,30 @@ void gdn_replayssm_stage_conv(
+     const std::string& activation,
+     const int64_t null_block_id);
+ 
++void gdn_replayssm_copy_slots(
++    torch::Tensor& d_cache,
++    torch::Tensor& k_cache,
++    torch::Tensor& g_cache,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    torch::Tensor& conv_pending,
++    const torch::Tensor& src_indices,
++    const torch::Tensor& dst_indices,
++    const int64_t null_block_id);
++
++void gdn_replayssm_reset_slots(
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const torch::Tensor& state_indices,
++    const int64_t init_flush,
++    const int64_t null_block_id);
++
+ void gdn_replayssm_commit_pending(
+     torch::Tensor& conv_state,
+     torch::Tensor& write_pos,
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index ae07b01..3d65a73 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -30,6 +30,10 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "int4_gemm_w4a16(Tensor A, Tensor B, Tensor? bias, Tensor B_scale, "
+       "Tensor B_zp, int group_size, Tensor? g_idx) -> Tensor");
+   xpu_ops.impl("int4_gemm_w4a16", torch::kXPU, &int4_gemm_w4a16);
++  xpu_ops.def(
++      "int4_gemm_w4a16_top1(Tensor A, Tensor B, Tensor B_scale, Tensor B_zp, "
++      "int group_size, Tensor? g_idx) -> (Tensor, Tensor)");
++  xpu_ops.impl("int4_gemm_w4a16_top1", torch::kXPU, &int4_gemm_w4a16_top1);
+ 
+   xpu_ops.def(
+       "int4_gemm_w4a8(Tensor A_, Tensor A_scale, Tensor A_zp, Tensor B, "
+@@ -292,6 +296,23 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "gdn_replayssm_stage_conv",
+       torch::kXPU,
+       &gdn_replayssm_stage_conv);
++  xpu_ops.def(
++      "gdn_replayssm_copy_slots(Tensor! d_cache, Tensor! k_cache, Tensor! "
++      "g_cache, Tensor! write_pos, Tensor! cache_base, Tensor! is_flush, "
++      "Tensor! pending, Tensor! pending_len, Tensor! conv_pending, Tensor "
++      "src_indices, Tensor dst_indices, int null_block_id) -> ()");
++  xpu_ops.impl(
++      "gdn_replayssm_copy_slots",
++      torch::kXPU,
++      &gdn_replayssm_copy_slots);
++  xpu_ops.def(
++      "gdn_replayssm_reset_slots(Tensor! write_pos, Tensor! cache_base, "
++      "Tensor! is_flush, Tensor! pending, Tensor! pending_len, Tensor "
++      "state_indices, int init_flush, int null_block_id) -> ()");
++  xpu_ops.impl(
++      "gdn_replayssm_reset_slots",
++      torch::kXPU,
++      &gdn_replayssm_reset_slots);
+   xpu_ops.def(
+       "gdn_replayssm_commit_pending(Tensor! conv_state, Tensor! write_pos, "
+       "Tensor! cache_base, Tensor! is_flush, Tensor! pending, Tensor "
+diff --git a/csrc/xpu/int4_topid.cpp b/csrc/xpu/int4_topid.cpp
+new file mode 100644
+index 0000000..e81916d
+--- /dev/null
++++ b/csrc/xpu/int4_topid.cpp
+@@ -0,0 +1,313 @@
++#include <limits>
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include "utils.h"
++
++namespace {
++
++template <typename scalar_t>
++inline float to_float(scalar_t value) {
++  return static_cast<float>(value);
++}
++
++template <typename scalar_t, typename scale_t>
++void launch_int4_w4a16_top1(
++    const scalar_t* a,
++    const int32_t* b,
++    const scale_t* scale,
++    int64_t* out_ids,
++    float* out_values,
++    int64_t rows,
++    int64_t k,
++    int64_t vocab,
++    int64_t group_size,
++    int64_t b_stride0,
++    int64_t b_stride1,
++    int64_t scale_stride0,
++    int64_t scale_stride1) {
++  constexpr int kLocalSize = 128;
++  constexpr int kColsPerGroup = 128;
++  const int64_t groups_per_row = (vocab + kColsPerGroup - 1) / kColsPerGroup;
++
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kLocalSize);
++  sycl::range<1> global(rows * groups_per_row * kLocalSize);
++
++  auto partial_values = torch::empty(
++      {rows, groups_per_row},
++      torch::TensorOptions().dtype(torch::kFloat32).device(torch::kXPU));
++  auto partial_ids = torch::empty(
++      {rows, groups_per_row},
++      torch::TensorOptions().dtype(torch::kInt64).device(torch::kXPU));
++  float* partial_values_ptr = partial_values.data_ptr<float>();
++  int64_t* partial_ids_ptr = partial_ids.data_ptr<int64_t>();
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_values(local, cgh);
++    sycl::local_accessor<int64_t, 1> local_ids(local, cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(16)]] {
++          const int64_t group = item.get_group(0);
++          const int local_id = item.get_local_id(0);
++          const int64_t row = group / groups_per_row;
++          const int64_t col_group = group - row * groups_per_row;
++          const int64_t col = col_group * kColsPerGroup + local_id;
++
++          float best_value = -std::numeric_limits<float>::infinity();
++          int64_t best_id = -1;
++          if (col < vocab) {
++            float acc = 0.0f;
++            const int64_t a_row = row * k;
++            const int64_t packed_k = k / 8;
++            for (int64_t packed = 0; packed < packed_k; ++packed) {
++              const int32_t packed_weight = b[packed * b_stride0 + col * b_stride1];
++#pragma unroll
++              for (int inner = 0; inner < 8; ++inner) {
++                const int64_t k_idx = packed * 8 + inner;
++                const int32_t q =
++                    ((packed_weight >> (inner * 4)) & 0xF) - 8;
++                const int64_t scale_group = k_idx / group_size;
++                const float s = to_float(
++                    scale[scale_group * scale_stride0 + col * scale_stride1]);
++                acc += to_float(a[a_row + k_idx]) * (static_cast<float>(q) * s);
++              }
++            }
++            best_value = acc;
++            best_id = col;
++          }
++
++          local_values[local_id] = best_value;
++          local_ids[local_id] = best_id;
++          item.barrier(sycl::access::fence_space::local_space);
++
++          for (int stride = kLocalSize / 2; stride > 0; stride >>= 1) {
++            if (local_id < stride) {
++              const float other_value = local_values[local_id + stride];
++              const int64_t other_id = local_ids[local_id + stride];
++              const bool better =
++                  other_value > local_values[local_id] ||
++                  (other_value == local_values[local_id] &&
++                   other_id >= 0 && other_id < local_ids[local_id]);
++              if (better) {
++                local_values[local_id] = other_value;
++                local_ids[local_id] = other_id;
++              }
++            }
++            item.barrier(sycl::access::fence_space::local_space);
++          }
++
++          if (local_id == 0) {
++            partial_values_ptr[group] = local_values[0];
++            partial_ids_ptr[group] = local_ids[0];
++          }
++        });
++  });
++
++  sycl::range<1> final_local(kLocalSize);
++  sycl::range<1> final_global(rows * kLocalSize);
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_values(final_local, cgh);
++    sycl::local_accessor<int64_t, 1> local_ids(final_local, cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(final_global, final_local),
++        [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(16)]] {
++          const int64_t row = item.get_group(0);
++          const int local_id = item.get_local_id(0);
++          float best_value = -std::numeric_limits<float>::infinity();
++          int64_t best_id = -1;
++
++          for (int64_t g = local_id; g < groups_per_row; g += kLocalSize) {
++            const float value = partial_values_ptr[row * groups_per_row + g];
++            const int64_t id = partial_ids_ptr[row * groups_per_row + g];
++            const bool better =
++                value > best_value ||
++                (value == best_value && id >= 0 && id < best_id);
++            if (better) {
++              best_value = value;
++              best_id = id;
++            }
++          }
++
++          local_values[local_id] = best_value;
++          local_ids[local_id] = best_id;
++          item.barrier(sycl::access::fence_space::local_space);
++
++          for (int stride = kLocalSize / 2; stride > 0; stride >>= 1) {
++            if (local_id < stride) {
++              const float other_value = local_values[local_id + stride];
++              const int64_t other_id = local_ids[local_id + stride];
++              const bool better =
++                  other_value > local_values[local_id] ||
++                  (other_value == local_values[local_id] &&
++                   other_id >= 0 && other_id < local_ids[local_id]);
++              if (better) {
++                local_values[local_id] = other_value;
++                local_ids[local_id] = other_id;
++              }
++            }
++            item.barrier(sycl::access::fence_space::local_space);
++          }
++
++          if (local_id == 0) {
++            out_values[row] = local_values[0];
++            out_ids[row] = local_ids[0];
++          }
++        });
++  });
++}
++
++}  // namespace
++
++std::tuple<torch::Tensor, torch::Tensor> int4_gemm_w4a16_top1(
++    const torch::Tensor& A_,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& B_zp,
++    int64_t group_size,
++    const std::optional<torch::Tensor>& g_idx) {
++  TORCH_CHECK(A_.is_xpu(), "A must be an XPU tensor");
++  TORCH_CHECK(B.is_xpu(), "B must be an XPU tensor");
++  TORCH_CHECK(B_scale.is_xpu(), "B_scale must be an XPU tensor");
++  TORCH_CHECK(B_zp.is_xpu(), "B_zp must be an XPU tensor");
++  TORCH_CHECK(!g_idx.has_value(), "int4_gemm_w4a16_top1 does not support g_idx");
++  TORCH_CHECK(A_.dim() == 2, "A must be 2D [rows, hidden]");
++  TORCH_CHECK(B.dim() == 2, "B must be 2D [hidden/8, vocab]");
++  TORCH_CHECK(B_scale.dim() == 2, "B_scale must be 2D [groups, vocab]");
++  TORCH_CHECK(A_.is_contiguous(), "A must be contiguous");
++  TORCH_CHECK(B.scalar_type() == torch::kInt32, "B must be int32 packed int4");
++  TORCH_CHECK(B_zp.dim() == 1, "Only symmetric zp=[8] is supported");
++  TORCH_CHECK(group_size > 0, "group_size must be positive");
++
++  const int64_t rows = A_.size(0);
++  const int64_t k = A_.size(1);
++  const int64_t packed_k = B.size(0);
++  const int64_t vocab = B.size(1);
++  TORCH_CHECK(k % 8 == 0, "hidden size must be divisible by 8");
++  TORCH_CHECK(k / 8 == packed_k, "B first dim must be hidden/8");
++  TORCH_CHECK(k % group_size == 0, "group_size must divide hidden size");
++  TORCH_CHECK(B_scale.size(0) == k / group_size, "B_scale groups mismatch");
++  TORCH_CHECK(B_scale.size(1) == vocab, "B_scale vocab mismatch");
++  TORCH_CHECK(
++      B_scale.scalar_type() == torch::kFloat32 ||
++          B_scale.scalar_type() == torch::kFloat16 ||
++          B_scale.scalar_type() == torch::kBFloat16,
++      "B_scale must be fp32/fp16/bf16");
++
++  auto ids = torch::empty({rows}, A_.options().dtype(torch::kInt64));
++  auto values = torch::empty({rows}, A_.options().dtype(torch::kFloat32));
++  if (rows == 0 || vocab == 0) {
++    return {ids, values};
++  }
++
++  const int64_t b_stride0 = B.stride(0);
++  const int64_t b_stride1 = B.stride(1);
++  const int64_t scale_stride0 = B_scale.stride(0);
++  const int64_t scale_stride1 = B_scale.stride(1);
++
++  if (A_.scalar_type() == torch::kBFloat16) {
++    const auto* a =
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(A_.data_ptr());
++    if (B_scale.scalar_type() == torch::kBFloat16) {
++      launch_int4_w4a16_top1(
++          a,
++          B.data_ptr<int32_t>(),
++          reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++              B_scale.data_ptr()),
++          ids.data_ptr<int64_t>(),
++          values.data_ptr<float>(),
++          rows,
++          k,
++          vocab,
++          group_size,
++          b_stride0,
++          b_stride1,
++          scale_stride0,
++          scale_stride1);
++    } else if (B_scale.scalar_type() == torch::kFloat16) {
++      launch_int4_w4a16_top1(
++          a,
++          B.data_ptr<int32_t>(),
++          reinterpret_cast<const sycl::half*>(B_scale.data_ptr()),
++          ids.data_ptr<int64_t>(),
++          values.data_ptr<float>(),
++          rows,
++          k,
++          vocab,
++          group_size,
++          b_stride0,
++          b_stride1,
++          scale_stride0,
++          scale_stride1);
++    } else {
++      launch_int4_w4a16_top1(
++          a,
++          B.data_ptr<int32_t>(),
++          B_scale.data_ptr<float>(),
++          ids.data_ptr<int64_t>(),
++          values.data_ptr<float>(),
++          rows,
++          k,
++          vocab,
++          group_size,
++          b_stride0,
++          b_stride1,
++          scale_stride0,
++          scale_stride1);
++    }
++  } else if (A_.scalar_type() == torch::kFloat16) {
++    const auto* a = reinterpret_cast<const sycl::half*>(A_.data_ptr());
++    if (B_scale.scalar_type() == torch::kBFloat16) {
++      launch_int4_w4a16_top1(
++          a,
++          B.data_ptr<int32_t>(),
++          reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++              B_scale.data_ptr()),
++          ids.data_ptr<int64_t>(),
++          values.data_ptr<float>(),
++          rows,
++          k,
++          vocab,
++          group_size,
++          b_stride0,
++          b_stride1,
++          scale_stride0,
++          scale_stride1);
++    } else if (B_scale.scalar_type() == torch::kFloat16) {
++      launch_int4_w4a16_top1(
++          a,
++          B.data_ptr<int32_t>(),
++          reinterpret_cast<const sycl::half*>(B_scale.data_ptr()),
++          ids.data_ptr<int64_t>(),
++          values.data_ptr<float>(),
++          rows,
++          k,
++          vocab,
++          group_size,
++          b_stride0,
++          b_stride1,
++          scale_stride0,
++          scale_stride1);
++    } else {
++      launch_int4_w4a16_top1(
++          a,
++          B.data_ptr<int32_t>(),
++          B_scale.data_ptr<float>(),
++          ids.data_ptr<int64_t>(),
++          values.data_ptr<float>(),
++          rows,
++          k,
++          vocab,
++          group_size,
++          b_stride0,
++          b_stride1,
++          scale_stride0,
++          scale_stride1);
++    }
++  } else {
++    TORCH_CHECK(false, "A must be fp16 or bf16");
++  }
++
++  return {ids, values};
++}
