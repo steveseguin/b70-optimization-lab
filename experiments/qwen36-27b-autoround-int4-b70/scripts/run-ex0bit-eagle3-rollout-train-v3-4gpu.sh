@@ -29,6 +29,7 @@ run_variant() {
   local steps="$4"
   local decay="$5"
   local lr="$6"
+  local scope="${7:-fc-lm-head}"
   local out="$RUN_ROOT/$label"
   mkdir -p "$out"
   (
@@ -44,7 +45,7 @@ run_variant() {
       --draft-dir "$draft" \
       --target-model "$TARGET_MODEL" \
       --out-dir "$out/checkpoint" \
-      --train-scope fc-lm-head \
+      --train-scope "$scope" \
       --rollout-steps "$steps" \
       --rollout-loss-decay "$decay" \
       --epochs "$EPOCHS" \
@@ -97,17 +98,26 @@ case "$SWEEP" in
       "3|cont-r5-lr5e-6-decay1|$CONTINUE_DRAFT|5|1.0|5e-6"
     )
     ;;
+  all-scope)
+    variants=(
+      "0|original-all-r3-lr1e-6-decay1|$ORIGINAL_DRAFT|3|1.0|1e-6|all"
+      "1|original-all-r3-lr2e-6-decay1|$ORIGINAL_DRAFT|3|1.0|2e-6|all"
+      "2|continue-all-r3-lr1e-6-decay1|$CONTINUE_DRAFT|3|1.0|1e-6|all"
+      "3|continue-all-r3-lr2e-6-decay1|$CONTINUE_DRAFT|3|1.0|2e-6|all"
+    )
+    ;;
   *)
-    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, or continuation-rollout)" >&2
+    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, continuation-rollout, or all-scope)" >&2
     exit 2
     ;;
 esac
 
 pids=()
 for item in "${variants[@]}"; do
-  IFS='|' read -r gpu label draft steps decay lr <<< "$item"
-  echo "launch label=$label gpu=$gpu steps=$steps decay=$decay lr=$lr draft=$draft"
-  run_variant "$gpu" "$label" "$draft" "$steps" "$decay" "$lr" &
+  IFS='|' read -r gpu label draft steps decay lr scope <<< "$item"
+  scope="${scope:-fc-lm-head}"
+  echo "launch label=$label gpu=$gpu steps=$steps decay=$decay lr=$lr scope=$scope draft=$draft"
+  run_variant "$gpu" "$label" "$draft" "$steps" "$decay" "$lr" "$scope" &
   pids+=("$!")
 done
 
@@ -138,6 +148,7 @@ for variant in sorted(p for p in root.iterdir() if p.is_dir()):
         train = json.loads(train_meta_path.read_text())
         row.update({
             "train_objective": train.get("train_objective"),
+            "train_scope": train.get("train_scope"),
             "rollout_steps": train.get("rollout_steps"),
             "rollout_loss_decay": train.get("rollout_loss_decay"),
             "lr": train.get("lr"),
