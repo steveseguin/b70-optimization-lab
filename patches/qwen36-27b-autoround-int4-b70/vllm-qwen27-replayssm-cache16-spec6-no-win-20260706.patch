@@ -1,0 +1,32 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@
+-        and max_spec_len <= 4
+-        and max_cache_len in (2, 4, 8)
++        and max_spec_len <= 6
++        and max_cache_len in (2, 4, 8, 16)
+     ):
+         sync_trace("native_entry")
+         torch.ops._xpu_C.gdn_replayssm_spec_decode(
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@
+     case 8:
+       REPLAY_CACHE_CASE(8);
+       break;
++    case 16:
++      REPLAY_CACHE_CASE(16);
++      break;
+     default:
+       TORCH_CHECK(false, "Unsupported ReplaySSM cache length: ", max_cache_len);
+   }
+@@
+   } else if (max_spec_len <= 4) {
+     REPLAY_SPEC_CASE(4);
++  } else if (max_spec_len <= 6) {
++    REPLAY_SPEC_CASE(6);
+   } else {
+     TORCH_CHECK(false, "Unsupported ReplaySSM max_spec_len: ", max_spec_len);
+   }

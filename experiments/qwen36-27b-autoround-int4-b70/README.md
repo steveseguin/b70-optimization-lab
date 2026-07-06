@@ -596,17 +596,20 @@ the patch skipped an ignored Triton `rstd` allocation/writeback behind
 `66.595 tok/s`) lost to controls (`67.716` and `67.910 tok/s`). See
 `notes/2026-07-06-rmsnorm-skip-rstd-no-win.md` and
 `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-rmsnorm-skip-rstd-no-win-20260706.patch`.
-Current-recipe deeper MTP is also closed until ReplaySSM cache16 has a native
-fast path. MTP4/MTP5 require `VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN>=16`
-because the ring length must satisfy `ring_len >= 2 * max_spec_len`; with
-cache8 they fail readiness (`got 8 < 10` / `got 8 < 12`). When retested with
-cache16, even MTP3 collapsed from the normal `66-68 tok/s` band to
-`12.519 tok/s`, and MTP4/MTP5 stayed around `12-13 tok/s`. The likely source
-reason is the current `gdn_linear_attn.py` fast-path gate:
-`max_spec_len <= 4` and `max_cache_len in (2, 4, 8)`, so cache16 falls to the
-slow generic ReplaySSM path. See
-`notes/2026-07-06-draftint4-depth-cachelen-no-win.md`. Do not repeat
-config-only deeper-MTP sweeps until cache16 is optimized.
+Current-recipe deeper MTP is closed. MTP4/MTP5 require
+`VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN>=16` because the ring length must
+satisfy `ring_len >= 2 * max_spec_len`; with cache8 they fail readiness
+(`got 8 < 10` / `got 8 < 12`). A follow-up native cache16/spec6 dispatch patch
+compiled and passed direct native-vs-fallback parity for BF16/FP16/FP32, but
+endpoint screening still lost: same-window MTP3/cache8 control was
+`67.816 tok/s`, MTP3/cache16 `65.410`, MTP4/cache16/cg16 `61.637`, and
+MTP5/cache16/cg16 `58.140`. The wider ReplaySSM templates also emitted heavy
+AOT spill warnings. See
+`notes/2026-07-06-draftint4-depth-cachelen-no-win.md`,
+`notes/2026-07-06-replayssm-cache16-native-s6-no-win.md`, and
+`../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replayssm-cache16-spec6-no-win-20260706.patch`.
+Do not repeat config-only or simple dispatch-widening MTP4/MTP5 sweeps on this
+recipe.
 
 ## Current Entry Points
 

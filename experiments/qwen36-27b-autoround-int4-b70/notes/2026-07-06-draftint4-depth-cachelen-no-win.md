@@ -108,13 +108,13 @@ No endpoint candidate.
 
 Do not repeat config-only MTP4/MTP5/deeper-MTP sweeps on the current
 ReplaySSM/draft-INT4 recipe while cache16 is outside the optimized native path.
-Future deeper-spec work first needs a source/kernel change that keeps
-ReplaySSM cache length `16` on a fast exact path, then a same-window retest:
 
-1. MTP3/cg8/cache8 control;
-2. MTP3/cg8/cache16 isolation;
-3. MTP4/cg8/cache16;
-4. MTP5/cg16/cache16.
-
-Only after cache16 no longer collapses should deeper MTP acceptance and quality
-be re-evaluated.
+Follow-up closed the obvious source experiment:
+`2026-07-06-replayssm-cache16-native-s6-no-win.md` added a cache16/spec6 native
+dispatch, built `_xpu_C`, passed direct native-vs-fallback parity for
+BF16/FP16/FP32, and reran the same-window endpoint matrix. It fixed the
+readiness failure, but not throughput: MTP3/cache8 control was `67.816 tok/s`,
+MTP3/cache16 `65.410`, MTP4/cache16/cg16 `61.637`, and MTP5/cache16/cg16
+`58.140`. The simple dispatch-widening patch is therefore closed no-win; future
+deeper-spec work needs a lower-pressure ReplaySSM transaction or stronger
+acceptance, not another cache16 config retest.

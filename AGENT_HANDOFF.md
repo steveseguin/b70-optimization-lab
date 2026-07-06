@@ -68,15 +68,17 @@ Active target as of the latest switch request:
   not credit native slot-copy as the source of the record. The previous
   BF16-scale INT8-LM-head record was `65.27648650325429 tok/s`, LocalMaxxing
   `cmr5iu3gk00bfq901nidgcana`.
-- Current-recipe deeper MTP is blocked by ReplaySSM cache16. MTP4/MTP5 need a
-  ring length of at least `16`; leaving cache8 fails readiness, while setting
-  cache16 collapses even MTP3 from the normal `66-68 tok/s` band to
-  `12.519 tok/s`, with MTP4/MTP5 also around `12-13 tok/s`. The likely source
-  blocker is the native ReplaySSM fast-path condition in
-  `gdn_linear_attn.py`, which currently admits `max_cache_len in (2, 4, 8)`
-  but not `16`. Do not repeat config-only MTP4/MTP5 sweeps until cache16 has
-  an exact native fast path. See
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draftint4-depth-cachelen-no-win.md`.
+- Current-recipe deeper MTP is closed, not merely blocked on a missing
+  cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
+  cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and
+  passed direct BF16/FP16/FP32 parity, but endpoint screening still lost:
+  MTP3/cache8 control `67.816 tok/s`, MTP3/cache16 `65.410`,
+  MTP4/cache16/cg16 `61.637`, and MTP5/cache16/cg16 `58.140`, with heavy AOT
+  spill warnings. Do not repeat config-only or simple dispatch-widening
+  MTP4/MTP5 sweeps on this recipe. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draftint4-depth-cachelen-no-win.md`,
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-cache16-native-s6-no-win.md`, and
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replayssm-cache16-spec6-no-win-20260706.patch`.
 - Historical pre-20260706 draft-INT4 follow-up is closed diagnostic/no-win for
   the non-ReplaySSM recovery lanes. The runtime GDN
   metadata patch remains useful because it fixes graph-bypass device-lost

@@ -983,17 +983,19 @@ Continue INT4 optimization without promoting synthetic scores:
   envelope tightened this further: MTP3 branch/regenerate has only a narrow
   zero-overhead `~101.8 tok/s` ceiling and cannot reach `125+` at the current
   step cost;
-- current-recipe deeper MTP is blocked by ReplaySSM cache length, not just
-  acceptance. MTP4/MTP5 require cache16 because
-  `ring_len >= 2 * max_spec_len`; cache8 fails readiness (`got 8 < 10` /
-  `got 8 < 12`). With cache16, even MTP3 collapses to `12.519 tok/s`, and
-  MTP4/MTP5 stay around `12-13 tok/s`, while MTP3/cache8 remains normal
-  (`66-68 tok/s`). The likely source blocker is
-  `gdn_linear_attn.py` only entering native ReplaySSM spec decode for
-  `max_cache_len in (2, 4, 8)`, so cache16 falls to a slow generic path. See
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draftint4-depth-cachelen-no-win.md`.
-  Do not repeat config-only MTP4/MTP5 sweeps until cache16 has an exact native
-  fast path;
+- current-recipe deeper MTP is closed, not merely waiting on a cache16 gate.
+  MTP4/MTP5 require cache16 because `ring_len >= 2 * max_spec_len`; cache8
+  fails readiness (`got 8 < 10` / `got 8 < 12`). A native cache16/spec6
+  dispatch patch compiled and passed direct parity for BF16/FP16/FP32, but
+  same-window endpoint screening still lost: MTP3/cache8 control
+  `67.816 tok/s`, MTP3/cache16 `65.410`, MTP4/cache16/cg16 `61.637`, and
+  MTP5/cache16/cg16 `58.140`, with heavy AOT spill warnings on the wider
+  ReplaySSM templates. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draftint4-depth-cachelen-no-win.md`,
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-cache16-native-s6-no-win.md`, and
+  `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replayssm-cache16-spec6-no-win-20260706.patch`.
+  Do not repeat config-only or simple dispatch-widening MTP4/MTP5 sweeps on
+  this recipe;
 - deeper wins likely need stronger verified speculation, target-forward/kernel
   reduction, graph-safe exact GDN/spec-state transactions, or a genuinely new
   AutoRound/INC W4A16 top-ID/candidate primitive that avoids materializing full
