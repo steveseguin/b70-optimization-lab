@@ -1,0 +1,150 @@
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 124a3b867..1dceca28e 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -450,6 +450,25 @@ class Scheduler(SchedulerInterface):
+             .lower()
+             in ("1", "true", "yes", "on")
+         )
++        self.xpu_spec_decode_force_single_after_draft_reject = (
++            os.environ.get(
++                "VLLM_XPU_SPEC_DECODE_FORCE_SINGLE_AFTER_DRAFT_REJECT", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
++        self.xpu_gdn_native_spec_target_tail_recovery = (
++            os.environ.get(
++                "VLLM_XPU_GDN_NATIVE_SPEC_TARGET_TAIL_RECOVERY", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++            and os.environ.get(
++                "VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE", "")
++            .strip()
++            .lower()
++            in ("1", "true", "yes", "on")
++        )
+         try:
+             self.xpu_spec_decode_draft_reject_force_single_steps = max(
+                 1,
+@@ -1846,6 +1865,7 @@ class Scheduler(SchedulerInterface):
+                 replay_suppressed_replacement_accepted = False
+                 replay_row_after_token_id = None
+                 stateful_replay_row_after_token = False
++                target_tail_recovery = False
+                 suppress_bonus_for_req = req_id in xpu_suppressed_bonus_req_ids
+                 suppress_replacement_for_req = (
+                     req_id in xpu_suppressed_replacement_req_ids)
+@@ -1981,6 +2001,7 @@ class Scheduler(SchedulerInterface):
+                     "replay_row_after_token_id": replay_row_after_token_id,
+                     "stateful_replay_row_after_token":
+                     stateful_replay_row_after_token,
++                    "target_tail_recovery": target_tail_recovery,
+                     "draft_only_commit_full_accept_state":
+                     self.xpu_spec_decode_draft_only_commit_full_accept_state,
+                     "draft_only_full_accept_placeholder":
+@@ -2119,6 +2140,35 @@ class Scheduler(SchedulerInterface):
+                         num_rejected
+                         + num_suppressed_bonus_tokens
+                     )
++                target_tail_recovery = (
++                    self.xpu_gdn_native_spec_target_tail_recovery
++                    and not self.xpu_spec_decode_draft_only
++                    and num_draft_tokens > 0
++                    and bool(generated_token_ids)
++                    and len(generated_token_ids) > num_accepted
++                )
++                if target_tail_recovery:
++                    # Native prefix-base GDN columns represent the state after
++                    # the accepted draft prefix. The sampler-visible tail is
++                    # target-owned: a replacement on partial reject, or the
++                    # bonus token on full accept. Keep that token visible to
++                    # the user/scheduler, but leave it uncomputed so the next
++                    # step consumes it through ordinary single-token decode
++                    # before another packed verifier row can run.
++                    num_uncommitted_tokens = min(
++                        num_tokens_scheduled,
++                        num_uncommitted_tokens + 1,
++                    )
++                    request.xpu_skip_next_spec_decode = True  # type: ignore[attr-defined]
++                    request.xpu_force_single_steps_remaining = max(  # type: ignore[attr-defined]
++                        int(
++                            getattr(request,
++                                    "xpu_force_single_steps_remaining", 0)
++                            or 0),
++                        1)
++                    spec_trace_data["target_tail_recovery"] = True
++                    spec_trace_data["target_tail_recovery_uncommitted"] = (
++                        num_uncommitted_tokens)
+                 if (
+                     (
+                         self.xpu_spec_decode_recompute_suppressed_bonus
+@@ -2129,6 +2179,24 @@ class Scheduler(SchedulerInterface):
+                          or num_suppressed_replacement_tokens)
+                 ):
+                     request.xpu_skip_next_spec_decode = True  # type: ignore[attr-defined]
++                if (
++                    num_rejected > 0
++                    and not self.xpu_spec_decode_draft_only
++                    and self.xpu_spec_decode_force_single_after_draft_reject
++                ):
++                    # Normal verifier rows still emit the target-owned
++                    # replacement token on partial reject, but the packed GDN
++                    # state transaction may not have processed that token as an
++                    # input yet. Force the immediate recovery step(s) through
++                    # ordinary one-token scheduling before another packed
++                    # verifier row is allowed.
++                    request.xpu_skip_next_spec_decode = True  # type: ignore[attr-defined]
++                    request.xpu_force_single_steps_remaining = max(  # type: ignore[attr-defined]
++                        int(
++                            getattr(request,
++                                    "xpu_force_single_steps_remaining", 0)
++                            or 0),
++                        self.xpu_spec_decode_draft_reject_force_single_steps)
+                 if recompute_suppressed_replacement_row:
+                     request.xpu_force_single_steps_remaining = max(  # type: ignore[attr-defined]
+                         int(
+@@ -2225,6 +2293,16 @@ class Scheduler(SchedulerInterface):
+                         )
+                     else:
+                         request.num_output_placeholders -= num_uncommitted_tokens
++                if (
++                    target_tail_recovery
++                    and self.__class__.__name__ == "AsyncScheduler"
++                ):
++                    # We deliberately keep the target-owned tail visible while
++                    # rewinding computed-token accounting by one extra token.
++                    # Async scheduling separately tracks the optimistic output
++                    # placeholders for this in-flight step; compensate before
++                    # _update_request_with_output consumes the visible tokens.
++                    request.num_output_placeholders += 1
+                 if stateful_replay_row_after_token:
+                     # Keep the request running at the last exact visible
+                     # boundary instead of using _preempt_request(), which
+@@ -2946,6 +3024,7 @@ class Scheduler(SchedulerInterface):
+         replay_suppressed_replacement_accepted: bool,
+         replay_row_after_token_id: int | None,
+         stateful_replay_row_after_token: bool,
++        target_tail_recovery: bool,
+         draft_only_commit_full_accept_state: bool,
+         draft_only_full_accept_placeholder: bool,
+         restore_draft_partial_reject_gdn_state: bool,
+@@ -2964,6 +3043,7 @@ class Scheduler(SchedulerInterface):
+         status_before_stop_check: str,
+         recovery_preempted: bool = False,
+         request_state_after_recovery_preempt: dict[str, Any] | None = None,
++        target_tail_recovery_uncommitted: int | None = None,
+     ) -> None:
+         if not self.spec_decode_trace_file:
+             return
+@@ -3008,6 +3088,9 @@ class Scheduler(SchedulerInterface):
+             "replay_row_after_token_id": replay_row_after_token_id,
+             "stateful_replay_row_after_token":
+             stateful_replay_row_after_token,
++            "target_tail_recovery": target_tail_recovery,
++            "target_tail_recovery_uncommitted":
++            target_tail_recovery_uncommitted,
+             "draft_only_commit_full_accept_state":
+             draft_only_commit_full_accept_state,
+             "draft_only_full_accept_placeholder":
