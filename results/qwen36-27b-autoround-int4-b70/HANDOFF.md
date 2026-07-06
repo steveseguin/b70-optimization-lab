@@ -133,6 +133,18 @@ Current fastest quality-gated variant:
   forward; future fast-and-correct work needs a graph-safe GDN/DeltaNet
   transaction/tape, target-tail projection/branch-regenerate support, or a
   stronger drafter that avoids the tail boundary more often.
+- latest stronger-drafter gate:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`.
+  The vLLM aux-dump hook now supports target-owned no-spec EAGLE3 aux hidden
+  capture with `VLLM_XPU_EAGLE_DATA_DUMP_AUX_LAYERS=1,31,60`, and the
+  dataset builder emits `qwen36_eagle_sequence_v2` samples. A four-GPU corpus
+  collected 96 prompts / 15,360 rows with aux states and zero continuity
+  breaks. Offline Ex0bit EAGLE3 acceptance is not usable for this target:
+  compressed mean accepted `0.289908` over 14,784 starts, and full-vocab spot
+  check `0.291016` over 512 starts. This closes direct Ex0bit/DFlash import
+  and makes the next credible >100 tok/s route a target-matched EAGLE3/DFlash
+  training/adaptation attempt, not endpoint/kernel integration of this
+  checkpoint as-is.
 
 Previous fastest quality-gated variant:
 

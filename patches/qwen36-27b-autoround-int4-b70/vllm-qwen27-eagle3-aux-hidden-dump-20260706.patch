@@ -1,0 +1,97 @@
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+         self.xpu_eagle_data_dump_debug_max_lines = int(
+             os.environ.get("VLLM_XPU_EAGLE_DATA_DUMP_DEBUG_MAX_LINES", "200")
+             or "200"
+         )
++        aux_layer_env = os.environ.get("VLLM_XPU_EAGLE_DATA_DUMP_AUX_LAYERS", "")
++        self.xpu_eagle_data_dump_aux_layers: tuple[int, ...] = ()
++        if aux_layer_env.strip():
++            self.xpu_eagle_data_dump_aux_layers = tuple(
++                int(part.strip())
++                for part in aux_layer_env.split(",")
++                if part.strip()
++            )
+         self.xpu_eagle_data_dump_debug_lines = 0
+@@
+-        # Set up speculative decoding.
++        self.use_aux_hidden_state_outputs = bool(
++            self.xpu_eagle_data_dump_aux_layers
++        )
++        # Set up speculative decoding.
+@@
+     def _dump_xpu_eagle_training_step(
+         self,
+         *,
+         sample_hidden_states: torch.Tensor | None,
++        aux_hidden_states: list[torch.Tensor] | None,
+         input_ids: torch.Tensor | None,
+         positions: torch.Tensor | None,
+@@
+             hidden_cpu = self._xpu_eagle_data_dump_hidden_dtype(
+                 sample_hidden_states.index_select(0, row_tensor).detach()
+             ).to("cpu")
++            aux_hidden_cpu: list[torch.Tensor] | None = None
++            if aux_hidden_states:
++                source_rows = row_tensor
++                if logits_indices is not None and torch.is_tensor(logits_indices):
++                    logits_rows = logits_indices
++                    if logits_rows.device != row_tensor.device:
++                        logits_rows = logits_rows.to(row_tensor.device)
++                    logits_rows = logits_rows.to(torch.long)
++                    if int(logits_rows.numel()) >= rows:
++                        source_rows = logits_rows.index_select(0, row_tensor)
++                aux_hidden_cpu = []
++                for aux_hidden in aux_hidden_states:
++                    if not torch.is_tensor(aux_hidden):
++                        continue
++                    gather_rows = source_rows
++                    if gather_rows.device != aux_hidden.device:
++                        gather_rows = gather_rows.to(aux_hidden.device)
++                    gather_rows = gather_rows.to(torch.long)
++                    aux_hidden_cpu.append(
++                        self._xpu_eagle_data_dump_hidden_dtype(
++                            aux_hidden.index_select(0, gather_rows).detach()
++                        ).to("cpu")
++                    )
+@@
+                     "num_scheduled_tokens": selected_num_scheduled_tokens,
+                     "hidden_states": hidden_cpu,
++                    "aux_hidden_states": aux_hidden_cpu,
+                     "hidden_dtype": str(hidden_cpu.dtype),
+                 },
+                 output_path,
+@@
+-            hidden_states = model_output
++            if self.use_aux_hidden_state_outputs:
++                hidden_states, aux_hidden_states = model_output
++            else:
++                hidden_states = model_output
++                aux_hidden_states = None
+@@
+         self._dump_xpu_eagle_training_step(
+             sample_hidden_states=sample_hidden_states,
++            aux_hidden_states=aux_hidden_states,
+             input_ids=input_ids,
+             positions=positions,
+@@
+-                    aux_layers = self._get_eagle3_aux_layers_from_config()
++                    # The dump-only override lets us collect EAGLE3 training
++                    # corpora from target-owned no-spec generations without
++                    # loading an external drafter. Otherwise use the
++                    # speculative config or the model default.
++                    aux_layers = self.xpu_eagle_data_dump_aux_layers
++                    if aux_layers:
++                        logger.info(
++                            "Using auxiliary layers from XPU EAGLE dump env: %s",
++                            aux_layers,
++                        )
++                    else:
++                        aux_layers = self._get_eagle3_aux_layers_from_config()
++                        if aux_layers:
++                            logger.info(
++                                "Using auxiliary layers from speculative config: %s",
++                                aux_layers,
++                            )

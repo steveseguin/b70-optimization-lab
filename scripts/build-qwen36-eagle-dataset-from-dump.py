@@ -44,6 +44,7 @@ def torch_load(path: str) -> dict[str, Any]:
 @dataclass
 class SequenceBuffer:
     hidden: list[torch.Tensor] = field(default_factory=list)
+    aux_hidden: list[torch.Tensor] = field(default_factory=list)
     input_ids: list[int] = field(default_factory=list)
     positions: list[int] = field(default_factory=list)
     sampled_next_ids: list[int] = field(default_factory=list)
@@ -54,12 +55,15 @@ class SequenceBuffer:
         self,
         *,
         hidden_row: torch.Tensor,
+        aux_hidden_row: torch.Tensor | None = None,
         current_token_id: int,
         position: int,
         sampled_token_id: int,
         source_file: str,
     ) -> None:
         self.hidden.append(hidden_row.detach().cpu().contiguous())
+        if aux_hidden_row is not None:
+            self.aux_hidden.append(aux_hidden_row.detach().cpu().contiguous())
         self.input_ids.append(int(current_token_id))
         self.positions.append(int(position))
         self.sampled_next_ids.append(int(sampled_token_id))
@@ -67,6 +71,7 @@ class SequenceBuffer:
 
     def clear(self) -> None:
         self.hidden.clear()
+        self.aux_hidden.clear()
         self.input_ids.clear()
         self.positions.clear()
         self.sampled_next_ids.clear()
@@ -189,6 +194,10 @@ def save_buffer(
         return False
     hidden = torch.stack(buffer.hidden[:max_len], dim=0)
     hidden = cast_hidden(hidden, hidden_dtype)
+    aux_hidden = None
+    if len(buffer.aux_hidden) == len(buffer.hidden):
+        aux_hidden = torch.stack(buffer.aux_hidden[:max_len], dim=0)
+        aux_hidden = cast_hidden(aux_hidden, hidden_dtype)
     input_ids = torch.tensor(buffer.input_ids[:max_len], dtype=torch.long)
     positions = torch.tensor(buffer.positions[:max_len], dtype=torch.long)
     loss_mask = torch.ones(input_ids.shape[0], dtype=torch.long)
@@ -198,23 +207,27 @@ def save_buffer(
     safe_req = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in req_id)
     path = os.path.join(out_dir, f"sample-{sample_index:06d}-{safe_req}.pt")
     metadata = lookup_request_metadata(req_id, request_metadata)
-    torch.save(
-        {
-            "format": "qwen36_eagle_sequence_v1",
-            "req_id": req_id,
-            "request_metadata": metadata,
-            "prompt_id": metadata.get("prompt_id"),
-            "family": metadata.get("family"),
-            "prompt_sha256": metadata.get("prompt_sha256"),
-            "hidden_state": hidden,
-            "input_ids": input_ids,
-            "positions": positions,
-            "loss_mask": loss_mask,
-            "sampled_next_token_ids": sampled_next_ids,
-            "source_files": list(buffer.source_files[:max_len]),
-        },
-        path,
-    )
+    payload = {
+        "format": (
+            "qwen36_eagle_sequence_v2"
+            if aux_hidden is not None
+            else "qwen36_eagle_sequence_v1"
+        ),
+        "req_id": req_id,
+        "request_metadata": metadata,
+        "prompt_id": metadata.get("prompt_id"),
+        "family": metadata.get("family"),
+        "prompt_sha256": metadata.get("prompt_sha256"),
+        "hidden_state": hidden,
+        "input_ids": input_ids,
+        "positions": positions,
+        "loss_mask": loss_mask,
+        "sampled_next_token_ids": sampled_next_ids,
+        "source_files": list(buffer.source_files[:max_len]),
+    }
+    if aux_hidden is not None:
+        payload["aux_hidden_states"] = aux_hidden
+    torch.save(payload, path)
     return True
 
 
@@ -238,6 +251,9 @@ def main() -> int:
     reconstructed_position_rows = 0
     skipped_bad_files: list[str] = []
     samples_with_metadata = 0
+    aux_rows_available = 0
+    aux_rows_saved = 0
+    aux_bad_files = 0
 
     def maybe_save(req_id: str) -> None:
         nonlocal sample_count, samples_with_metadata
@@ -267,6 +283,20 @@ def main() -> int:
                 skipped_bad_files.append(path)
                 continue
             hidden = shard["hidden_states"]
+            aux_hidden_rows = None
+            raw_aux_hidden = shard.get("aux_hidden_states")
+            if isinstance(raw_aux_hidden, list) and raw_aux_hidden:
+                if all(torch.is_tensor(t) for t in raw_aux_hidden):
+                    try:
+                        # Dump format stores one tensor per aux layer,
+                        # [rows, hidden]. Dataset format keeps rows first:
+                        # [rows, aux_layers, hidden].
+                        aux_hidden_rows = torch.stack(raw_aux_hidden, dim=1)
+                    except Exception:
+                        aux_bad_files += 1
+                        aux_hidden_rows = None
+            elif torch.is_tensor(raw_aux_hidden):
+                aux_hidden_rows = raw_aux_hidden
             req_ids = shard["req_ids"]
             current_ids = shard["current_token_ids"]
             positions = shard.get("positions")
@@ -277,6 +307,9 @@ def main() -> int:
             continue
 
         rows = min(len(req_ids), len(current_ids), len(sampled_ids), hidden.shape[0])
+        if aux_hidden_rows is not None:
+            rows = min(rows, int(aux_hidden_rows.shape[0]))
+            aux_rows_available += rows
         total_rows += rows
         for row in range(rows):
             req_id = str(req_ids[row])
@@ -330,12 +363,17 @@ def main() -> int:
 
             buffer.append(
                 hidden_row=hidden[row],
+                aux_hidden_row=(
+                    aux_hidden_rows[row] if aux_hidden_rows is not None else None
+                ),
                 current_token_id=current_token_id,
                 position=position,
                 sampled_token_id=sampled_token_id,
                 source_file=os.path.basename(path),
             )
             usable_rows += 1
+            if aux_hidden_rows is not None:
+                aux_rows_saved += 1
 
     if not (args.max_samples and sample_count >= args.max_samples):
         for req_id in list(buffers):
@@ -370,6 +408,9 @@ def main() -> int:
         "metadata_files": args.metadata,
         "metadata_request_keys": len(request_metadata),
         "samples_with_metadata": samples_with_metadata,
+        "aux_rows_available": aux_rows_available,
+        "aux_rows_saved": aux_rows_saved,
+        "aux_bad_files": aux_bad_files,
     }
     summary_path = args.summary or os.path.join(args.out_dir, "summary.json")
     with open(summary_path, "w", encoding="utf-8") as f:

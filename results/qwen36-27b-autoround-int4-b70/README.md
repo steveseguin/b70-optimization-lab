@@ -374,8 +374,18 @@ Current realistic research interpretation:
   throughput was operationally unusable. Preserve the patch as a compatibility
   artifact, not a current record route:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-eagle3-nested-aux-layers-compat-20260705.patch`.
+  A 2026-07-06 offline aux-hidden acceptance probe makes the closure stronger:
+  the target-owned no-spec aux corpus path now works (`96` prompts, `15360`
+  rows, aux layers `1,31,60`, zero continuity breaks), but Ex0bit compressed
+  averaged only `0.289908` accepted tokens over `14784` starts and the
+  full-vocab checkpoint spot check averaged `0.291016`. This is far below the
+  current MTP3 accepted-token depth, so do not port/integrate this checkpoint
+  as-is; use the aux corpus tooling only for a target-matched EAGLE3/DFlash
+  training attempt.
   Evidence:
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`.
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-eagle3-drafter-compatibility.md`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`.
 - local EAGLE1 drafter training is mechanically usable but not a record route
   yet. The first 128-sample hidden-state corpus reached `2.1016` heldout mean
   accepted offline but failed endpoint quality/speed; endpoint isolation

@@ -74,6 +74,20 @@ Current fastest quality-gated variant:
   `notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`;
 - LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`.
 
+Latest stronger-drafter result:
+
+- Ex0bit EAGLE3/DFlash aux-hidden probing is closed as a direct import path.
+  The new target-owned aux corpus runner collected 96 prompts / 15,360 rows
+  with aux layers `1,31,60` and no continuity breaks, and the new offline
+  evaluator successfully loads both Ex0bit compressed and full-vocab EAGLE3
+  checkpoints. Acceptance is far too low: compressed mean accepted
+  `0.289908` over 14,784 starts (`24.40%` step-1 exact), while the full-vocab
+  spot check is the same class at `0.291016` over 512 starts. Do not spend
+  endpoint/kernel work on the off-the-shelf Ex0bit checkpoint as-is. The useful
+  artifact is the EAGLE3 aux collection/eval path, which can now support a
+  target-matched EAGLE3/DFlash training attempt. See
+  `notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`.
+
 Previous fastest quality-gated variant:
 
 - label: `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 LM-head
