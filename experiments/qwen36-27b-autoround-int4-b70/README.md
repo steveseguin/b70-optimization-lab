@@ -596,6 +596,17 @@ the patch skipped an ignored Triton `rstd` allocation/writeback behind
 `66.595 tok/s`) lost to controls (`67.716` and `67.910 tok/s`). See
 `notes/2026-07-06-rmsnorm-skip-rstd-no-win.md` and
 `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-rmsnorm-skip-rstd-no-win-20260706.patch`.
+Current-recipe deeper MTP is also closed until ReplaySSM cache16 has a native
+fast path. MTP4/MTP5 require `VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN>=16`
+because the ring length must satisfy `ring_len >= 2 * max_spec_len`; with
+cache8 they fail readiness (`got 8 < 10` / `got 8 < 12`). When retested with
+cache16, even MTP3 collapsed from the normal `66-68 tok/s` band to
+`12.519 tok/s`, and MTP4/MTP5 stayed around `12-13 tok/s`. The likely source
+reason is the current `gdn_linear_attn.py` fast-path gate:
+`max_spec_len <= 4` and `max_cache_len in (2, 4, 8)`, so cache16 falls to the
+slow generic ReplaySSM path. See
+`notes/2026-07-06-draftint4-depth-cachelen-no-win.md`. Do not repeat
+config-only deeper-MTP sweeps until cache16 is optimized.
 
 ## Current Entry Points
 

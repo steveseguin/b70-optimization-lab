@@ -983,6 +983,17 @@ Continue INT4 optimization without promoting synthetic scores:
   envelope tightened this further: MTP3 branch/regenerate has only a narrow
   zero-overhead `~101.8 tok/s` ceiling and cannot reach `125+` at the current
   step cost;
+- current-recipe deeper MTP is blocked by ReplaySSM cache length, not just
+  acceptance. MTP4/MTP5 require cache16 because
+  `ring_len >= 2 * max_spec_len`; cache8 fails readiness (`got 8 < 10` /
+  `got 8 < 12`). With cache16, even MTP3 collapses to `12.519 tok/s`, and
+  MTP4/MTP5 stay around `12-13 tok/s`, while MTP3/cache8 remains normal
+  (`66-68 tok/s`). The likely source blocker is
+  `gdn_linear_attn.py` only entering native ReplaySSM spec decode for
+  `max_cache_len in (2, 4, 8)`, so cache16 falls to a slow generic path. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draftint4-depth-cachelen-no-win.md`.
+  Do not repeat config-only MTP4/MTP5 sweeps until cache16 has an exact native
+  fast path;
 - deeper wins likely need stronger verified speculation, target-forward/kernel
   reduction, graph-safe exact GDN/spec-state transactions, or a genuinely new
   AutoRound/INC W4A16 top-ID/candidate primitive that avoids materializing full

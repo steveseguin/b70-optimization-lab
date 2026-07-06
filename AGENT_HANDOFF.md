@@ -68,6 +68,15 @@ Active target as of the latest switch request:
   not credit native slot-copy as the source of the record. The previous
   BF16-scale INT8-LM-head record was `65.27648650325429 tok/s`, LocalMaxxing
   `cmr5iu3gk00bfq901nidgcana`.
+- Current-recipe deeper MTP is blocked by ReplaySSM cache16. MTP4/MTP5 need a
+  ring length of at least `16`; leaving cache8 fails readiness, while setting
+  cache16 collapses even MTP3 from the normal `66-68 tok/s` band to
+  `12.519 tok/s`, with MTP4/MTP5 also around `12-13 tok/s`. The likely source
+  blocker is the native ReplaySSM fast-path condition in
+  `gdn_linear_attn.py`, which currently admits `max_cache_len in (2, 4, 8)`
+  but not `16`. Do not repeat config-only MTP4/MTP5 sweeps until cache16 has
+  an exact native fast path. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-draftint4-depth-cachelen-no-win.md`.
 - Historical pre-20260706 draft-INT4 follow-up is closed diagnostic/no-win for
   the non-ReplaySSM recovery lanes. The runtime GDN
   metadata patch remains useful because it fixes graph-bypass device-lost
