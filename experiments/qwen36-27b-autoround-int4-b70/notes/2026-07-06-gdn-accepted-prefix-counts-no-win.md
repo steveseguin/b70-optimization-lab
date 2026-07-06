@@ -116,7 +116,8 @@ current ReplaySSM MTP3 recipe. The quality pass is useful: it suggests the row
 mapping is not obviously corrupting outputs. The throughput loss is decisive:
 feeding draft-prefix counts into the graph/ReplaySSM path changes the runtime
 shape/accounting enough to collapse the speed lane, and it does not beat the
-current `67.519 tok/s` record.
+then-current `67.519 tok/s` record. It is further below the later
+same-recipe current-confirm `68.236 tok/s` row.
 
 Keep the patch for reference, but do not carry it in active source. Future GDN
 work should be a real fixed-shape transaction or branch/regenerate design, not

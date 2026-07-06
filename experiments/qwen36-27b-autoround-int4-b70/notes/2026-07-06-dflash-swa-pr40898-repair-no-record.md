@@ -148,7 +148,8 @@ acceptance failure.
 
 It is still not competitive:
 
-- current valid Qwen27 record: `67.51904968102535 tok/s`;
+- then-current valid Qwen27 record: `67.51904968102535 tok/s`
+  (later same-recipe current-confirm row: `68.23626314761921 tok/s`);
 - best repaired DFlash row: `54.83551385325532 tok/s`;
 - the target verifier forward dominates once k grows, while k=2 trims verifier
   cost but cannot emit enough verified tokens per step.

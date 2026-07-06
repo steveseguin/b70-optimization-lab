@@ -14,7 +14,47 @@ repo.
 
 ## Serve Current Best One-Replica Result
 
-Current strict/fresh best profile:
+Current strict/fresh best profile is the `webhie/Qwen3.6-27B-int4-AutoRound`
+variant with runtime INT8 target LM-head, runtime INT4 draft LM-head, and
+ReplaySSM exact GDN state handling:
+
+```bash
+cd /home/steve/llm-optimizations
+MODEL_DIR=/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e \
+GPU_INDEX=0 PORT=19410 MAX_MODEL_LEN=2048 MAX_NUM_BATCHED_TOKENS=1024 \
+  QWEN36_27B_ENABLE_MTP=1 NUM_SPECULATIVE_TOKENS=3 \
+  QWEN36_27B_ENABLE_XPU_GRAPH=1 \
+  VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE=1 \
+  VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE=0 \
+  VLLM_XPU_GDN_REPLAYSSM_SPEC=1 \
+  VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN=8 \
+  VLLM_XPU_GDN_REPLAYSSM_TORCH_FALLBACK=0 \
+  VLLM_XPU_GDN_REPLAYSSM_STAGE_CONV_TORCH_FALLBACK=0 \
+  VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD=1 \
+  VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1 \
+  VLLM_XPU_LM_HEAD_INT8=1 \
+  VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16 \
+  VLLM_XPU_DRAFT_LM_HEAD_INT4=1 \
+  VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE=128 \
+  VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE=bf16 \
+  COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}' \
+  experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
+```
+
+Current best evidence:
+
+```text
+results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-candidate-summary-20260706T140317Z.json
+```
+
+Median `68.236 tok/s` for generated tokens 1-100 after TTFT, p10 `62.317`,
+mean `67.830`, `cached_tokens=0` for all 12 prompts, repeat64 quality pass,
+LocalMaxxing `cmr9atqb800msqr01u760xh0t`. Treat this as a small
+variance-sensitive same-recipe confirm over the prior `67.519` row.
+
+The older Intel-checkpoint-only strict/fresh profile is still useful as a
+baseline and can be served with:
 
 ```bash
 cd /home/steve/llm-optimizations
@@ -92,7 +132,7 @@ python3 scripts/bench-openai-realistic-suite.py \
   --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false}}'
 ```
 
-Current conservative evidence is:
+Current Intel-checkpoint conservative evidence is:
 
 ```text
 ../../data/qwen36-27b-autoround-int4-b70-baselines/intel-mtp3-xpugraph1-cg8-promotesource-noacceptedpost-repeat2-realistic128-chat-tokenids-qwensuite-20260703T044519Z.json

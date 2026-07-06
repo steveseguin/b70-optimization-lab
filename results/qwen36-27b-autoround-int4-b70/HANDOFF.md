@@ -69,11 +69,18 @@ Current fastest quality-gated variant:
   `VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1` because native
   slot-copy/reset parity passed but did not show an endpoint speed win;
 - strict fresh primary artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-realistic128-chat-tokenids-qwensuite-20260706T050135Z.json`;
-- primary result: median `67.51904968102535 tok/s`, p10
-  `62.6631682840432`, mean `68.15364467092054`, TTFT median
-  `477.85088047385216 ms`, `cached_tokens=0` on every request;
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-realistic128-chat-tokenids-qwensuite-20260706T140317Z.json`;
+- primary result: median `68.23626314761921 tok/s`, p10
+  `62.316569643325344`, mean `67.82964696710413`, TTFT median
+  `479.1464500594884 ms`, `cached_tokens=0` on every request;
+- interpretation: same recipe as the approved `67.51904968102535 tok/s` row;
+  treat this as the current best measured valid row with variance caution, not
+  as a new source mechanism;
 - support rows:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-realistic128-chat-tokenids-qwensuite-20260706T050135Z.json`
+  at `67.51904968102535 tok/s`,
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-textonlymtp-control-20260706T140004Z-candidate-summary-20260706T140004Z.json`
+  at `68.39666292601191 tok/s` with quality skipped,
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-draftint4-replayssm-slotcopy-native-20260706T045223Z-candidate-summary-20260706T045223Z.json`
   at `68.48075611477094 tok/s`,
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-native-confirm-gpu1-20260706T045712Z-candidate-summary-20260706T045712Z.json`
@@ -87,15 +94,15 @@ Current fastest quality-gated variant:
   guard after the external-draft experiment had dropped the same recipe to
   `~60-61 tok/s`;
 - quality:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-repeat64-ctx1024-20260706T050135Z.json`,
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-repeat64-ctx1024-20260706T140317Z.json`,
   `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`;
 - compact packet:
-  `webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+  `webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`;
 - note:
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
-- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`, with queue/response at
-  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.queue.json` and
-  `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.submit2.log`;
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`;
+- LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`, with queue/response at
+  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.queue.json` and
+  `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.submit.log`;
 - important attribution: do not claim native ReplaySSM slot-copy caused the
   win. It passed direct BF16/FP16/FP32 parity, but same-window endpoint control
   measured `66.871` native vs `67.300` PyTorch slot-management fallback.
@@ -151,7 +158,7 @@ Previous fastest quality-gated variant:
   likely bypassed the Python serial code, while native-off serial/fallback
   exercised the path but fell to `~9.7-12.3 tok/s`. The later
   ReplaySSM+commit-in-forward+draft-INT4-LM-head lane superseded the old clean
-  `61-62 tok/s` ReplaySSM rows with the current `67.519 tok/s` record.
+  `61-62 tok/s` ReplaySSM rows with the current `68.236 tok/s` record.
   Preserve the no-win patch artifact at
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-keep-scheduled-spec-rows-no-win-20260705.patch`
   and the serial closure note
@@ -820,7 +827,7 @@ Post-baseline follow-up:
   LM-head math. The older Intel-checkpoint lane passed quality at
   `62.276-62.628 tok/s`; the later webhie BF16-scale variant reached
   `65.27648650325429 tok/s`, and the current fastest quality-gated practical
-  lane is the ReplaySSM draft-INT4 variant at `67.51904968102535 tok/s`.
+  lane is the ReplaySSM draft-INT4 variant at `68.23626314761921 tok/s`.
   Continue exact BF16 top-1/candidate-bound research separately if same
   runtime-precision claims matter.
 - Older Intel INT8 LM-head follow-ups: MTP depth remained best at k=3

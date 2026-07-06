@@ -27,8 +27,8 @@ a strict fresh-response BF16-LM-head baseline, one validated env-only speed win,
 and faster quality-gated runtime INT8/draft-INT4 variants. LocalMaxxing approved
 the BF16-LM-head result as `cmr4gokx90061nv01lhoe3ft8` and the runtime
 INT8-LM-head variants as `cmr4zkcxb003yq9018408i1pn`,
-`cmr576apv0079q901i6dvsh0l`, `cmr5iu3gk00bfq901nidgcana`, and
-`cmr8rg5d900glqr01g4fesy6i`.
+`cmr576apv0079q901i6dvsh0l`, `cmr5iu3gk00bfq901nidgcana`,
+`cmr8rg5d900glqr01g4fesy6i`, and `cmr9atqb800msqr01u760xh0t`.
 
 Validated so far:
 
@@ -96,10 +96,17 @@ Current fastest quality-gated variant:
   `VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1` for the conservative
   headline;
 - strict fresh primary artifact:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-realistic128-chat-tokenids-qwensuite-20260706T050135Z.json`;
-- result: median **`67.519 tok/s`**, p10 `62.663`, mean `68.154`,
-  TTFT median `477.851 ms`, `cached_tokens=0` on every request;
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-realistic128-chat-tokenids-qwensuite-20260706T140317Z.json`;
+- result: median **`68.236 tok/s`**, p10 `62.317`, mean `67.830`,
+  TTFT median `479.146 ms`, `cached_tokens=0` on every request;
+- interpretation: this is the current best measured valid same-recipe row, not
+  a new mechanism; the improvement over the approved `67.519` row is small and
+  should be treated with the lane's variance caution;
 - support rows:
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-realistic128-chat-tokenids-qwensuite-20260706T050135Z.json`
+  at median `67.519 tok/s`,
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-textonlymtp-control-20260706T140004Z-candidate-summary-20260706T140004Z.json`
+  at median `68.397 tok/s` with quality skipped,
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-draftint4-replayssm-slotcopy-native-20260706T045223Z-candidate-summary-20260706T045223Z.json`
   at median `68.481 tok/s`,
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-native-confirm-gpu1-20260706T045712Z-candidate-summary-20260706T045712Z.json`
@@ -107,15 +114,15 @@ Current fastest quality-gated variant:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-torchfallback-control-gpu2-20260706T045712Z-candidate-summary-20260706T045712Z.json`
   at median `67.300 tok/s`;
 - full quality gate:
-  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-repeat64-ctx1024-20260706T050135Z.json`,
+  `../../data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-repeat64-ctx1024-20260706T140317Z.json`,
   `pass_all=true`, `baseline_match_all=true`, `repeat_pass=true`;
 - compact packet:
-  `webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+  `webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`;
 - note:
-  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
-- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`, with queue/response at
-  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.queue.json` and
-  `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-20260706.submit2.log`;
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`;
+- LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`, with queue/response at
+  `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.queue.json` and
+  `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.submit.log`;
 - important attribution: native ReplaySSM slot-copy/reset ops passed direct XPU
   parity, but same-window endpoint control did not show a speed win (`66.871`
   native vs `67.300` PyTorch slot-management fallback), so the native slot-copy

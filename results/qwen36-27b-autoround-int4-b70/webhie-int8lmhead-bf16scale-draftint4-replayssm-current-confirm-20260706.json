@@ -1,0 +1,201 @@
+{
+  "status": "quality_gated_variant_record_support_current_confirm",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "base_model": "Qwen/Qwen3.6-27B",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "comparison_prior_record": {
+    "model": "webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)",
+    "median_tok_s_1_100_after_ttft": 67.51904968102535,
+    "localmaxxing_id": "cmr8rg5d900glqr01g4fesy6i",
+    "result_packet": "results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json",
+    "note": "Same recipe; improvement is small and should be treated as a current-confirm/support record with variance caution rather than a new mechanism."
+  },
+  "localmaxxing": {
+    "status": "submitted_approved",
+    "id": "cmr9atqb800msqr01u760xh0t",
+    "submitted_at_utc": "2026-07-06",
+    "queue": "experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.queue.json",
+    "response_log": "data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.submit.log",
+    "note": "Same recipe as the approved 67.519 row; 68.236 full-quality confirm is the current best measured valid row, but the delta is inside the lane variance band."
+  },
+  "quantization": "AutoRound INT4 W4A16 target + runtime INT8 target LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)",
+  "hardware": {
+    "gpu_count": 1,
+    "gpu_name": "Intel Arc Pro B70",
+    "vram_gb": 32,
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+    "ram_gb": 128,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "runtime": {
+    "engine": "vllm",
+    "engine_version": "0.20.2rc1.dev13+g9557d9108.d20260620 local XPU patch stack",
+    "vllm_source_branch": "codex/qwen36-quark-int8-tracking",
+    "vllm_source_head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "xpu_kernels_source_head": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "xpu_c_sha256": "9ffb840adbf45a1cd52b42fedde62532a1643a1b8c8b25076728c6548f5de84a"
+  },
+  "serving_config": {
+    "tp": 1,
+    "concurrency": 1,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": 0.95,
+    "spec_method": "qwen3_next_mtp",
+    "num_speculative_tokens": 3,
+    "xpu_graph": true,
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE",
+      "max_cudagraph_capture_size": 8
+    },
+    "env": {
+      "VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE": "1",
+      "VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE": "0",
+      "VLLM_XPU_GDN_REPLAYSSM_SPEC": "1",
+      "VLLM_XPU_GDN_REPLAYSSM_SPEC_CACHE_LEN": "8",
+      "VLLM_XPU_GDN_REPLAYSSM_TORCH_FALLBACK": "0",
+      "VLLM_XPU_GDN_REPLAYSSM_STAGE_CONV_TORCH_FALLBACK": "0",
+      "VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD": "1",
+      "VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK": "1",
+      "VLLM_XPU_LM_HEAD_INT8": "1",
+      "VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE": "bf16",
+      "VLLM_XPU_DRAFT_LM_HEAD_INT4": "1",
+      "VLLM_XPU_DRAFT_LM_HEAD_INT4_GROUP_SIZE": "128",
+      "VLLM_XPU_DRAFT_LM_HEAD_INT4_SCALE_DTYPE": "bf16",
+      "QWEN36_27B_DEFAULT_ENABLE_THINKING": "0",
+      "QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS": "1"
+    }
+  },
+  "strict_fresh_result": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-realistic128-chat-tokenids-qwensuite-20260706T140317Z.json",
+    "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-candidate-summary-20260706T140317Z.json",
+    "passed": true,
+    "cached_tokens_all_zero": true,
+    "median_tok_s_1_100_after_ttft": 68.23626314761921,
+    "p10_tok_s_1_100_after_ttft": 62.316569643325344,
+    "mean_tok_s_1_100_after_ttft": 67.82964696710413,
+    "stdev_tok_s_1_100_after_ttft": 4.235099349033698,
+    "median_ttft_ms": 479.1464500594884,
+    "median_wall_tok_s_full": 61.55082634072362,
+    "median_full_after_ttft_tok_s": 66.38809882890125,
+    "prompt_tokens": [
+      87,
+      90,
+      77,
+      83,
+      68,
+      65,
+      67,
+      71,
+      69,
+      61,
+      64,
+      60
+    ],
+    "completion_tokens": [
+      512,
+      512,
+      186,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "cached_tokens": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "prompt_sha256": [
+      "b6c5ea9e2495278fbe9314b60c34cb3eb51421c6489478812e598f7b3cc83538",
+      "5a92dcc76e641515c54d71d2d3fef6e3b12a88baa616cc967eba6c897e684a33",
+      "6ade325d82c3926f6a1b770d04828e63579e882b6d8de31ad31ad4a986dba43f",
+      "21229aa5f10636f028248b73cc066b2d49b48580f6a005e110109cd0e4a4320b",
+      "2aff657de0093a2b612f97a696a85e74cd7c7f36e1cdb1f97ae69ca44479e9e9",
+      "ad01f6d7127de18807a1f11c9bfc86a2ea86fd3639c40581818dec4a7ea4664d",
+      "850f7db6d007b66cb1d37440e19c25e69bf6c762c3d3a92a9b18bc3d91de1678",
+      "9b645eae54d2e851f5182a77a7a68361ee52869baf8eb3cec1afe25535256c1a",
+      "9fbc35260d4e350f5280a3cb75c0ae8d4371461f18086805e90dd5fb65896cb0",
+      "2dcb017f7bb740ae3a8205fcb464068fcfe82189d61be31850d5e6c6492354bf",
+      "07d3df497692ad49145544fc0388001879fe6a7201aca3f9eaa4e14288f0bfeb",
+      "e1fcb91edf9a4e6048cd5a5738cebcc0f71edc15281607b795bf2a6dddd6adeb"
+    ],
+    "output_sha256": [
+      "f8f6f1e05a9a8921640ace362828de136d5775b139bd18a28ef39773e844c2ba",
+      "9c99da5598b066b5d7d55d7a338c8054f813fe376f8639e1eec75f394d454a20",
+      "b7456bad4145a4cdfcfb72fad7bb113465c184c0082d135d1d4f31b124f80032",
+      "09a7c1f77600e9639c00e44cf7a434456aa4f68658d9b5ce58044141aca25507",
+      "16a13bf921af65e38d6d3d02d4c89fdbe5118148a42d92f9a4685ecbdfe3154a",
+      "ba790c8c6b69943cbd85bc05947f0cafe4f8ed2d365b04ce32a8a698401e635d",
+      "b784fb2ecafd4e1f7624f253b7987a879c5ed7efbc0c31b33cc1efec01feb237",
+      "bc3376bfe312a1e3cc35a49e164fd39888f48eb58ceac9cc771b4e168c65576a",
+      "b07ec5b9a8a679696756e4cbfac17eb89807944594c5076aea9d58b73317028e",
+      "47985fdf2d3eb4e5fbacc7ed83857f77795093dbdefd8a1c6f4837e0feff128e",
+      "a68299ff81aed91fac59a73ea00677b82681773b607ac7f3ebe29c2d9493e8e4",
+      "771ec52ee12c7c42e438135da024045da5bff2cbf4dff8124776c3590763b6de"
+    ],
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp"
+  },
+  "quality": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-repeat64-ctx1024-20260706T140317Z.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "repeat_pass": true,
+    "long_context_pass": null,
+    "repeat_runs": 64
+  },
+  "supporting_runs": [
+    {
+      "label": "current-confirm control, quality skipped",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-textonlymtp-control-20260706T140004Z-candidate-summary-20260706T140004Z.json",
+      "median_tok_s_1_100_after_ttft": 68.39666292601191,
+      "quality_pass_all": null,
+      "cached_tokens_all_zero": true,
+      "note": "Same recipe, strict fresh/cached-zero only; quality intentionally skipped because the full confirm below provides quality."
+    },
+    {
+      "label": "native slot-copy one-off high",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-draftint4-replayssm-slotcopy-native-20260706T045223Z-candidate-summary-20260706T045223Z.json",
+      "median_tok_s_1_100_after_ttft": 68.48075611477094,
+      "quality_pass_all": true,
+      "cached_tokens_all_zero": true,
+      "note": "Valid but treated as support, not headline, because same-window native/control did not attribute the gain to native slot copy."
+    },
+    {
+      "label": "same-window native slot-copy",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-native-confirm-gpu1-20260706T045712Z-candidate-summary-20260706T045712Z.json",
+      "median_tok_s_1_100_after_ttft": 66.87138386688892,
+      "quality_pass_all": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "label": "same-window torch slot-management fallback",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-slotcopy-torchfallback-control-gpu2-20260706T045712Z-candidate-summary-20260706T045712Z.json",
+      "median_tok_s_1_100_after_ttft": 67.29981507165695,
+      "quality_pass_all": true,
+      "cached_tokens_all_zero": true
+    }
+  ],
+  "interpretation": {
+    "headline_choice": "Use 68.236 tok/s as the current best valid same-recipe row because it passed the strict fresh gate and repeat64 quality. Treat the improvement over 67.519 as small/variance-sensitive, not a new source mechanism.",
+    "variance_caution": "Prior same-recipe/support rows ranged roughly 67.3-68.5 tok/s depending on GPU/window. Do not use sub-1% endpoint deltas as proof without same-window or multi-GPU variance checks.",
+    "native_slot_copy_status": "Direct XPU parity passed for BF16/FP16/FP32, but endpoint same-window control did not show a speed win. Preserve as an experiment patch, not as the promoted source of the record.",
+    "fresh_response_validity": "Fixed Qwen realistic prompt suite; each prompt sent once as a cold response; cached_tokens=0 for every request; no prefix/KV/history/response reuse; qwen3_next_mtp accepted tokens verified by target model.",
+    "text_only_mtp_shortcut": "VLLM_XPU_SPEC_DECODE_TEXT_ONLY_MULTIMODAL_OK=1/flat-position shortcut was rechecked and failed before readiness with the known inputs_embeds=None torch dynamo size error; preserve as closed no-win."
+  }
+}

@@ -14,7 +14,7 @@ This experiment lane tracks bring-up and optimization for:
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
 has a strict fresh-response BF16-LM-head baseline plus faster quality-gated
 runtime INT8/INT4 LM-head variants. Current optimization work must beat the
-`67.51904968102535` tok/s ReplaySSM target-INT8/draft-INT4 row or improve
+`68.23626314761921` tok/s ReplaySSM target-INT8/draft-INT4 row or improve
 service/max-context behavior without using warmed/cache/history effects.
 
 Completed first milestone:
@@ -55,12 +55,13 @@ Current fastest quality-gated variant:
 - config: same promote-source MTP3/cg8 recipe plus ReplaySSM exact GDN state
   handling, commit-in-forward, target INT8 LM-head BF16 scales, draft INT4
   LM-head BF16 scales, and conservative PyTorch slot-management fallback;
-- strict fresh median: `67.519 tok/s`, p10 `62.663`, mean `68.154`,
+- strict fresh median: `68.236 tok/s`, p10 `62.317`, mean `67.830`,
   `cached_tokens=0`;
-- support rows: `68.481` native-slot-copy smoke, `66.871`
+- support rows: `67.519` prior approved confirm, `68.397` same-recipe
+  quality-skipped control, `68.481` native-slot-copy smoke, `66.871`
   native-slot-copy confirm, and `67.300` PyTorch-slot-management same-window
-  control. Use `67.519` as the conservative headline, not the one-off
-  `68.481`;
+  control. Use `68.236` as the current quality-confirmed headline, not the
+  quality-skipped `68.397` or the one-off `68.481`;
 - latest reproducibility repair/support:
   `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-regressionfix-quality-confirm-20260706T102729Z-candidate-summary-20260706T102729Z.json`
   at `67.33805616805299 tok/s`, strict fresh/cached-zero with repeat64
@@ -68,10 +69,10 @@ Current fastest quality-gated variant:
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mixed-draft-kv-metadata-guard-20260706.patch`;
 - quality: repeat64 passed, baseline matched, strict fresh gate passed;
 - evidence:
-  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`;
 - note:
-  `notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
-- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`.
+  `notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`;
+- LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`.
 
 Previous fastest quality-gated variant:
 
@@ -468,7 +469,7 @@ Next milestone:
 37. Branch/regenerate feasibility envelope:
     `notes/2026-07-06-branch-regenerate-feasibility-envelope.md`.
     The existing top-k64 trace was converted into a legal cost envelope. With
-    the current `67.519 tok/s` record and `2.6243` target-verified tokens/step,
+    the then-current `67.519 tok/s` record and `2.6243` target-verified tokens/step,
     the inferred verifier step is `38.87 ms`. A perfect MTP3 first-reject
     branch/regenerate path with top-64 access reaches only `3.9565`
     tokens/step, or `101.8 tok/s` if it adds zero step cost; it has only
@@ -492,12 +493,13 @@ The active headline family is now
 `webhie/Qwen3.6-27B-int4-AutoRound` with the current promote-source MTP3/cg8
 recipe plus runtime INT8 target LM-head BF16 scales, runtime INT4 draft LM-head
 BF16 scales, and ReplaySSM exact GDN state handling:
-`67.51904968102535 tok/s` median generated-token throughput for tokens 1-100
+`68.23626314761921 tok/s` median generated-token throughput for tokens 1-100
 after TTFT on the strict fresh Qwen realistic suite, with `cached_tokens=0` on
-every request and repeat64 quality passing. The prior `65.27648650325429 tok/s`
-row remains the comparison baseline; the conservative promoted `67.519` packet
-is
-`../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`.
+every request and repeat64 quality passing. This is a small same-recipe confirm
+over the prior approved `67.51904968102535 tok/s` row, not a new mechanism.
+The prior `65.27648650325429 tok/s` row remains the older BF16-scale comparison
+baseline; the current promoted packet is
+`../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`.
 
 Older reference points remain useful for attribution: plain MTP3/cg8 was about
 `47.6-48.5 tok/s`, and promote-source/no-accepted-postprocess lifted the lane

@@ -96,6 +96,9 @@ def api_engine_flags(engine_flags: dict) -> dict:
         "primaryMetricName": engine_flags.get("primaryMetricName"),
         "tokenTimingSource": engine_flags.get("tokenTimingSource"),
         "githubResultPacket": engine_flags.get("githubResultPacket"),
+        "specMethod": engine_flags.get("specMethod"),
+        "specNumTokens": engine_flags.get("specNumTokens"),
+        "targetModelVerifiedAcceptedTokens": engine_flags.get("targetModelVerifiedAcceptedTokens"),
         "requestPolicy": "cache_prompt=false; no prefix/KV/history/response reuse",
     }
     extra_text = json.dumps(
@@ -105,15 +108,32 @@ def api_engine_flags(engine_flags: dict) -> dict:
     if len(extra_text) > 1000:
         extra_text = extra_text[:997] + "..."
 
+    attention_backend = engine_flags.get("attentionBackend")
+    if not attention_backend:
+        attention_backend = "llama.cpp SYCL/Level Zero flash attention"
+
+    flash_attn_value = engine_flags.get("flashAttn")
+    if flash_attn_value is None:
+        flash_attn_value = str(engine_flags.get("flash_attn", "")).lower() == "on"
+
+    concurrency = (
+        engine_flags.get("n_parallel")
+        or engine_flags.get("concurrency")
+        or 1
+    )
+
     api_flags = {
         "commandSnippet": str(command),
         "gpuLayers": 99,
-        "kvCacheDtype": kv_cache or "f16",
-        "flashAttn": str(engine_flags.get("flash_attn", "")).lower() == "on",
-        "attentionBackend": "llama.cpp SYCL/Level Zero flash attention",
-        "concurrency": int(engine_flags.get("n_parallel") or 1),
-        "prefixCaching": False,
-        "specDecoding": False,
+        "kvCacheDtype": kv_cache or str(engine_flags.get("kvCacheDtype") or "f16"),
+        "flashAttn": bool(flash_attn_value),
+        "attentionBackend": str(attention_backend),
+        "concurrency": int(concurrency),
+        "prefixCaching": bool(engine_flags.get("prefixCaching", False)),
+        "specDecoding": bool(
+            engine_flags.get("specDecoding", False)
+            or engine_flags.get("mtpEnabled", False)
+        ),
         "temperature": float(engine_flags.get("temperature") or 0),
         "topP": 1.0,
         "extraFlags": extra_text,

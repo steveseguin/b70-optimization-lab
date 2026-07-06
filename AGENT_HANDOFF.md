@@ -55,13 +55,16 @@ Active target as of the latest switch request:
   (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)` ReplaySSM lane:
   MTP3/cg8, one B70, exact GDN state handling, commit-in-forward, and
   conservative PyTorch slot management fallback. Strict fresh headline is
-  `67.51904968102535 tok/s` median tokens 1-100 after TTFT, p10
-  `62.6631682840432`, mean `68.15364467092054`, `cached_tokens=0` every row,
+  `68.23626314761921 tok/s` median tokens 1-100 after TTFT, p10
+  `62.316569643325344`, mean `67.82964696710413`, `cached_tokens=0` every row,
   repeat64 quality passed and matched baseline. LocalMaxxing approved it as
-  `cmr8rg5d900glqr01g4fesy6i`. Start from
-  `results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`
+  `cmr9atqb800msqr01u760xh0t`. This is the current best measured valid
+  same-recipe row; the improvement over the prior approved `67.519` row is
+  small and should be treated with variance caution, not as a new mechanism.
+  Start from
+  `results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`
   and
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`.
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`.
 - Important attribution for that current row: the native ReplaySSM slot-copy
   op passed direct BF16/FP16/FP32 parity, but endpoint A/B did not show a speed
   win (`66.871` native vs `67.300` PyTorch slot-management fallback), so do

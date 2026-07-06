@@ -49,11 +49,13 @@ Fastest quality-gated practical variant:
   commit-in-forward, target INT8 LM-head BF16 scales, draft INT4 LM-head BF16
   scales, and conservative PyTorch slot management fallback
   (`VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1`);
-- strict fresh headline: median `67.519 tok/s`, p10 `62.663`, mean
-  `68.154`, TTFT median `477.851 ms`, `cached_tokens=0` on every request;
-- support rows: `68.481` native-slot-copy smoke, `66.871` native-slot-copy
-  confirm, and `67.300` PyTorch-slot-management same-window control. Use
-  `67.519` as the conservative headline, not the one-off `68.481`;
+- strict fresh headline: median `68.236 tok/s`, p10 `62.317`, mean
+  `67.830`, TTFT median `479.146 ms`, `cached_tokens=0` on every request;
+- support rows: `67.519` prior approved confirm, `68.397` same-recipe
+  quality-skipped control, `68.481` native-slot-copy smoke, `66.871`
+  native-slot-copy confirm, and `67.300` PyTorch-slot-management same-window
+  control. Use `68.236` as the current quality-confirmed headline, not the
+  quality-skipped `68.397` or the one-off `68.481`;
 - latest reproducibility repair/support row:
   `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-regressionfix-quality-confirm-20260706T102729Z-candidate-summary-20260706T102729Z.json`
   at `67.33805616805299 tok/s`, strict fresh/cached-zero with repeat64
@@ -63,10 +65,10 @@ Fastest quality-gated practical variant:
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-mixed-draft-kv-metadata-guard-20260706.patch`;
 - quality: repeat64 passed, baseline matched, strict fresh gate passed;
 - compact packet:
-  `results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+  `results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`;
 - note:
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`;
-- LocalMaxxing: approved as `cmr8rg5d900glqr01g4fesy6i`;
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`;
+- LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`;
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;
@@ -111,7 +113,7 @@ Previous fastest quality-gated practical variant:
   native-on `SERIAL_SPEC_*` rows stayed quality-invalid at `70-72 tok/s`, and
   native-off serial/fallback collapsed to `~9.7-12.3 tok/s`. Later
   ReplaySSM+commit-in-forward+draft-INT4-LM-head work superseded the old clean
-  `61-62 tok/s` ReplaySSM rows with the current `67.519 tok/s` record above.
+  `61-62 tok/s` ReplaySSM rows with the current `68.236 tok/s` record above.
   Do not promote invalid fast rows or sweep serial offsets. The current
   executable unit target is `scripts/check-gdn-spec-recurrent-exact.py`, which
   now validates

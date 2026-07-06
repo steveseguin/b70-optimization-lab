@@ -138,9 +138,10 @@ diagnostic acceptance measurements only.
 
 ## Implications
 
-The current `67.519 tok/s` record is still the valid headline. To move toward
-`100+ tok/s`, the credible next work is not another small EAGLE data/hparam
-sweep. The remaining routes are:
+The then-current `67.519 tok/s` record stayed the valid headline at the time
+of this note; it was later superseded by the same-recipe `68.236 tok/s`
+current-confirm row. To move toward `100+ tok/s`, the credible next work is
+not another small EAGLE data/hparam sweep. The remaining routes are:
 
 - exact accepted-prefix GDN/DeltaNet transaction work, likely a low-70s
   cleanup rather than a 100+ path by itself;

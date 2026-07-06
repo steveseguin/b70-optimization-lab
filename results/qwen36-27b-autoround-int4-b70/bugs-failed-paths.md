@@ -50,7 +50,7 @@ bad flags, invalid fast paths, and negative optimizations here as they happen.
 - DFlash SWA/full-KV repair is no-record for this target/draft pair. The
   2026-07-06 PR40898-style patch fixed the old mixed-SWA plumbing failure and
   produced strict fresh diagnostic rows, but the best repaired row was only
-  k4 `54.836 tok/s` versus the current `67.519 tok/s` record; k2 was `49.087`
+  k4 `54.836 tok/s` versus the current `68.236 tok/s` record; k2 was `49.087`
   and k8 was `50.918`, all quality-skipped. Preserve the patch for future
   DFlash/upstream reference, but do not repeat k/capture-size sweeps for
   `z-lab/Qwen3.6-27B-DFlash` on this record lane.
