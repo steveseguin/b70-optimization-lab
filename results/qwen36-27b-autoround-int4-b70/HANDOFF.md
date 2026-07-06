@@ -106,6 +106,15 @@ Current fastest quality-gated variant:
 - important attribution: do not claim native ReplaySSM slot-copy caused the
   win. It passed direct BF16/FP16/FP32 parity, but same-window endpoint control
   measured `66.871` native vs `67.300` PyTorch slot-management fallback.
+- latest graph-safe transaction precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-commit-pending-active-slot-guard.md`.
+  Native `gdn_replayssm_commit_pending` had a real contract bug: null,
+  out-of-range, and inactive rows could still mutate cursor metadata. The new
+  guard `../../scripts/check-gdn-replayssm-commit-pending.py` passes BF16,
+  FP16, FP32, zero-row, null-row, native-prefix, and recurrent-exact checks
+  after active-slot filtering in the native kernel and Python fallback. This is
+  required groundwork for partial-group / branch-regenerate, not a speed record
+  and not a LocalMaxxing submission.
 - latest native prefix-base/exact-state rescreen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
   This refreshed the stale July 5 exact-native/prefill replay flags after the

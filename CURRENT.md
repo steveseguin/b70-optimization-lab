@@ -72,6 +72,13 @@ Fastest quality-gated practical variant:
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;
+- latest graph-safe transaction precheck:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-commit-pending-active-slot-guard.md`.
+  The native ReplaySSM pending-commit op previously mutated metadata for
+  null/out-of-range/inactive rows; the new guard
+  `scripts/check-gdn-replayssm-commit-pending.py` now passes BF16/FP16/FP32
+  plus native prefix/recurrent checks after active-slot filtering. Treat this
+  as partial-group / branch-regenerate infrastructure, not a benchmark result;
 - latest native prefix-base closure:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
   The stale July 5 exact-state/native-prefill replay flags were rescreened

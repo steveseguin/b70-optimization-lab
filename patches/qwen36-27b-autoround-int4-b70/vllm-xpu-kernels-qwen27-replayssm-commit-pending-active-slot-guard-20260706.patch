@@ -1,0 +1,50 @@
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@
+ struct gdn_replayssm_commit_pending_kernel {
+@@
+   inline int slot_for_row(const int row) const {
+     const int64_t raw_slot = state_indices[row];
+-    if (raw_slot < 0) {
++    if (raw_slot <= static_cast<int64_t>(null_block_id)) {
+       return 0;
+     }
+     if (raw_slot >= static_cast<int64_t>(num_slots)) {
+-      return num_slots - 1;
++      return 0;
+     }
+     return static_cast<int>(raw_slot);
+   }
+-  inline int accepted_for_row(const int row, const int slot) const {
+-    const bool active =
+-        state_indices[row] > static_cast<int64_t>(null_block_id) &&
+-        pending[slot] != 0;
++  inline bool active_for_row(const int row, const int slot) const {
++    const int64_t raw_slot = state_indices[row];
++    return raw_slot > static_cast<int64_t>(null_block_id) &&
++           raw_slot < static_cast<int64_t>(num_slots) &&
++           pending[slot] != 0;
++  }
++
++  inline int accepted_for_row(
++      const int row,
++      const int slot,
++      const bool active) const {
+     if (!active) {
+       return 0;
+     }
+@@
+     const int row = linear / elems_per_row;
+     const int elem = linear - row * elems_per_row;
+     const int slot = slot_for_row(row);
+-    const int accepted = accepted_for_row(row, slot);
++    const bool active = active_for_row(row, slot);
++    const int accepted = accepted_for_row(row, slot, active);
++    if (!active) {
++      return;
++    }
+@@
+-    if (elem == 0) {
++    // Cursor update: run once per row on work item d==0.
++    if (elem == 0) {

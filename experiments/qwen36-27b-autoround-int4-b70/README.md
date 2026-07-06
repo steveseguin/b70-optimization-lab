@@ -184,6 +184,14 @@ Next milestone:
    `model_forward_first/next` are sub-millisecond. Do not chase MTP-next as an
    eager-kernel bug; use accepted-token, target-forward, stronger-drafter, or
    graph-safe state-transaction work for the next real speed attempt.
+   The latest graph-safe transaction precheck is
+   `notes/2026-07-06-replayssm-commit-pending-active-slot-guard.md`: native
+   `gdn_replayssm_commit_pending` used to mutate metadata for null,
+   out-of-range, or inactive rows; the new guard script
+   `../../scripts/check-gdn-replayssm-commit-pending.py` now passes BF16/FP16/FP32
+   plus native prefix/recurrent checks after an active-slot guard. This is
+   infrastructure for partial-group / branch-regenerate work, not a throughput
+   win or LocalMaxxing row.
    The 2026-07-06 replacement-suppression plumbing/margin follow-up is also
    closed no-win: active scheduler recovery passed quality only at `~34-49
    tok/s`, and margin gating stayed below record. See

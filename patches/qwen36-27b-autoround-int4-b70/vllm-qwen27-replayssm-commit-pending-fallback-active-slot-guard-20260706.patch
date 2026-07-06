@@ -1,0 +1,60 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@
+ def _xpu_gdn_replayssm_commit_pending(
+@@
+-    slots = state_indices[:n].to(torch.long)
+-    safe_slots = torch.clamp(slots, min=0)
+-    active = (slots > 0) & (pending.index_select(0, safe_slots) != 0)
+-    accepted = num_accepted_tokens[:n].to(
+-        dtype=torch.long, device=slots.device)
+-    prev_len = pending_len.index_select(0, safe_slots).to(torch.long)
++    slots = state_indices[:n].to(torch.long)
++    valid = (slots > 0) & (slots < int(write_pos.numel()))
++    if not torch.any(valid):
++        return
++    slots = slots[valid]
++    active = pending.index_select(0, slots) != 0
++    if not torch.any(active):
++        return
++    slots = slots[active]
++    accepted = num_accepted_tokens[:n].to(
++        dtype=torch.long, device=slots.device)[valid][active]
++    prev_len = pending_len.index_select(0, slots).to(torch.long)
+     accepted = torch.clamp(accepted, min=0)
+     accepted = torch.minimum(accepted, prev_len)
+-    accepted = torch.where(active, accepted, torch.zeros_like(accepted))
+     if conv_base_len > 0:
+         old_conv = conv_state.index_select(
+-            0, safe_slots)[:, :, :conv_base_len]
+-        raw = conv_pending.index_select(0, safe_slots)
++            0, slots)[:, :, :conv_base_len]
++        raw = conv_pending.index_select(0, slots)
+@@
+         conv_state.index_copy_(
+-            0, safe_slots, torch.cat(
++            0, slots, torch.cat(
+                 (
+                     new_conv.transpose(1, 2).to(conv_state.dtype),
+                     conv_state.index_select(
+-                        0, safe_slots)[:, :, conv_base_len:],
++                        0, slots)[:, :, conv_base_len:],
+                 ),
+                 dim=2,
+             ))
+-    old_wp = write_pos.index_select(0, safe_slots).to(torch.long)
+-    old_base = cache_base.index_select(0, safe_slots).to(torch.long)
+-    old_flush = is_flush.index_select(0, safe_slots) != 0
++    old_wp = write_pos.index_select(0, slots).to(torch.long)
++    old_base = cache_base.index_select(0, slots).to(torch.long)
++    old_flush = is_flush.index_select(0, slots) != 0
+@@
+-    write_pos.index_copy_(0, safe_slots, new_wp.to(write_pos.dtype))
+-    cache_base.index_copy_(0, safe_slots, new_base.to(cache_base.dtype))
+-    is_flush.index_copy_(0, safe_slots, next_flush.to(is_flush.dtype))
+-    pending.index_fill_(0, safe_slots, 0)
++    write_pos.index_copy_(0, slots, new_wp.to(write_pos.dtype))
++    cache_base.index_copy_(0, slots, new_base.to(cache_base.dtype))
++    is_flush.index_copy_(0, slots, next_flush.to(is_flush.dtype))
++    pending.index_fill_(0, slots, 0)
