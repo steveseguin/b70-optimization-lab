@@ -292,3 +292,45 @@ objective only, sweeping LR/epochs/late-step weighting, because that was the
 only variant that improved conditional step-2/step-3 behavior. Do not spend
 endpoint/kernel work until mean accepted moves into the `1.5-2.0` range at
 minimum, and ideally approaches current MTP3 depth.
+
+## Original-init rollout sweep: lane is reopened, not endpoint-ready
+
+The recommended follow-up was run with `SWEEP=original-rollout EPOCHS=10`.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T203023Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-original-sweep-20260706.json
+```
+
+Heldout shard `3`, all `14,784` starts:
+
+| variant | rollout | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `original-r3-lr2e-5-decay1` | 3 | `2e-5` | `1.0` | **`0.973146645021645`** | `52.81%` | `50.04%` | `49.40%` |
+| `original-r3-lr1e-5-decay1p5` | 3 | `1e-5` | `1.5` | `0.6321699134199135` | `40.49%` | `38.01%` | `35.82%` |
+| `original-r5-lr1e-5-decay1` | 5 | `1e-5` | `1.0` | `0.6291937229437229` | `40.79%` | `36.07%` | `33.66%` |
+| `original-r3-lr5e-6-decay1` | 3 | `5e-6` | `1.0` | `0.4318858225108225` | `32.37%` | `27.18%` | `19.52%` |
+
+Interpretation:
+
+- This is the first Ex0bit EAGLE3/DFlash adaptation result that materially
+  trains consecutive acceptance. Step-2/step-3 conditional exact near `50%`
+  means the earlier "rollout collapses after token 1" failure is no longer
+  absolute.
+- It is still diagnostic only. `0.973` accepted draft tokens/start is below the
+  rough endpoint threshold (`1.5-2.0` minimum) and below current MTP3 accepted
+  depth, so do not spend endpoint/kernel integration yet.
+- The useful recipe is specific: original Ex0bit init, rollout-3 objective,
+  `lr=2e-5`, equal step weights, 10 epochs. Lower LR underfits; late-step
+  weighting at `1e-5` underfits; rollout-5 at `1e-5` underfits.
+
+Next screen: narrow around `lr=2e-5` and continuation training from this best
+checkpoint. Stop endpoint work until offline accepted depth moves materially
+past `1.0` and approaches `1.5-2.0`.

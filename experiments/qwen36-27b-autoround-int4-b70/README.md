@@ -99,7 +99,11 @@ Latest stronger-drafter result:
   multi-step rollout / accepted-prefix training objective, not endpoint
   plumbing. A first rollout-objective implementation and 4-GPU screen improved
   the best heldout mean to `0.6693046536796536` from original Ex0bit init, but
-  this is still below endpoint threshold; continue as training research only.
+  a narrowed original-init sweep improved it further to
+  `0.973146645021645` (`52.81%` step-1 exact, `50.04%` step-2 conditional,
+  `49.40%` step-3 conditional). This reopens the lane as training research but
+  is still below endpoint threshold; do not run endpoint/kernel integration
+  until offline depth approaches at least `1.5-2.0`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

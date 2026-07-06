@@ -159,11 +159,13 @@ Current fastest quality-gated variant:
   depth. A first multi-step rollout objective has since been implemented in
   `../../scripts/train-qwen27-ex0bit-eagle3-adapter.py` and screened with
   `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-ex0bit-eagle3-rollout-train-v3-4gpu.sh`.
-  Best heldout mean accepted improved to `0.6693046536796536` from original
-  Ex0bit init (`43.19%` step-1 exact, `38.09%` step-2 conditional, `33.31%`
-  step-3 conditional), but it is still far below endpoint threshold. Do not
-  endpoint-test this draft; continue only as training research until offline
-  acceptance reaches at least `1.5-2.0`.
+  Best heldout mean accepted first improved to `0.6693046536796536`, then the
+  original-init `lr=2e-5`, rollout-3, 10-epoch sweep reached
+  `0.973146645021645` (`52.81%` step-1 exact, `50.04%` step-2 conditional,
+  `49.40%` step-3 conditional). This reopens Ex0bit EAGLE3/DFlash as a real
+  target-matched training lane, but it is still below endpoint threshold. Do
+  not endpoint-test this draft; continue only as training research until
+  offline acceptance reaches at least `1.5-2.0`.
 
 Previous fastest quality-gated variant:
 

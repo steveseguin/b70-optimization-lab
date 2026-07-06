@@ -17,6 +17,7 @@ MAX_TRAIN_ROWS="${MAX_TRAIN_ROWS:-0}"
 MAX_HELDOUT_ROWS="${MAX_HELDOUT_ROWS:-0}"
 EVAL_EVERY="${EVAL_EVERY:-1000}"
 DTYPE="${DTYPE:-bfloat16}"
+SWEEP="${SWEEP:-mixed}"
 
 mkdir -p "$RUN_ROOT"
 
@@ -70,12 +71,28 @@ run_variant() {
   )
 }
 
-variants=(
-  "0|v3full-r3-lr3e-6-decay1|$ADAPTED_DRAFT|3|1.0|3e-6"
-  "1|v3full-r3-lr3e-6-decay1p5|$ADAPTED_DRAFT|3|1.5|3e-6"
-  "2|v3full-r5-lr2e-6-decay1|$ADAPTED_DRAFT|5|1.0|2e-6"
-  "3|original-r3-lr1e-5-decay1|$ORIGINAL_DRAFT|3|1.0|1e-5"
-)
+case "$SWEEP" in
+  mixed)
+    variants=(
+      "0|v3full-r3-lr3e-6-decay1|$ADAPTED_DRAFT|3|1.0|3e-6"
+      "1|v3full-r3-lr3e-6-decay1p5|$ADAPTED_DRAFT|3|1.5|3e-6"
+      "2|v3full-r5-lr2e-6-decay1|$ADAPTED_DRAFT|5|1.0|2e-6"
+      "3|original-r3-lr1e-5-decay1|$ORIGINAL_DRAFT|3|1.0|1e-5"
+    )
+    ;;
+  original-rollout)
+    variants=(
+      "0|original-r3-lr5e-6-decay1|$ORIGINAL_DRAFT|3|1.0|5e-6"
+      "1|original-r3-lr1e-5-decay1p5|$ORIGINAL_DRAFT|3|1.5|1e-5"
+      "2|original-r3-lr2e-5-decay1|$ORIGINAL_DRAFT|3|1.0|2e-5"
+      "3|original-r5-lr1e-5-decay1|$ORIGINAL_DRAFT|5|1.0|1e-5"
+    )
+    ;;
+  *)
+    echo "Unknown SWEEP=$SWEEP (expected mixed or original-rollout)" >&2
+    exit 2
+    ;;
+esac
 
 pids=()
 for item in "${variants[@]}"; do

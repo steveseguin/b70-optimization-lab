@@ -275,11 +275,13 @@ Previous fastest quality-gated practical variant:
   to `0.6003787878787878` heldout mean accepted on a 384-prompt/61,440-row
   four-GPU corpus, but rollout still collapses after token 1 (`20.10%` step-2
   conditional exact). A first multi-step rollout objective improved the best
-  heldout mean to `0.6693046536796536` from original Ex0bit init, but this is
-  still far below current MTP3 depth and below any endpoint threshold. Do not
-  endpoint-test this draft. Future EAGLE/DFlash work needs much stronger
-  rollout / accepted-prefix training or a materially stronger draft
-  architecture, not more endpoint config.
+  heldout mean to `0.6693046536796536` from original Ex0bit init; a narrowed
+  original-init rollout-3 sweep then reached `0.973146645021645` mean accepted
+  at `lr=2e-5`, with step-2/step-3 conditional exact near `50%`. This is
+  meaningful progress but still below current MTP3 depth and below endpoint
+  threshold. Do not endpoint-test this draft. Future EAGLE/DFlash work should
+  continue the rollout / accepted-prefix training lane until offline accepted
+  depth approaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;
 - continuation bookmark:

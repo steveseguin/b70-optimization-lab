@@ -268,10 +268,12 @@ Active target as of the latest switch request:
   training signal but still not an endpoint path: step-1 exact is `48.65%`,
   while step-2 conditional exact collapses to `20.10%`, far below current MTP3
   accepted depth. A first multi-step rollout objective improved the best
-  heldout mean to `0.6693046536796536` from original Ex0bit init (`38.09%`
-  step-2 conditional, `33.31%` step-3 conditional), but this remains far below
-  endpoint threshold. Do not endpoint-test this adapted draft; continue only as
-  training research unless offline mean accepted reaches at least `1.5-2.0`.
+  heldout mean to `0.6693046536796536`; a narrowed original-init rollout-3
+  sweep at `lr=2e-5` then reached `0.973146645021645` (`52.81%` step-1 exact,
+  `50.04%` step-2 conditional, `49.40%` step-3 conditional). This is meaningful
+  training progress, but still below endpoint threshold. Do not endpoint-test
+  this adapted draft; continue only as training research unless offline mean
+  accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and
