@@ -271,8 +271,10 @@ Active target as of the latest switch request:
   heldout mean to `0.6693046536796536`; a narrowed original-init rollout-3
   sweep at `lr=2e-5` then reached `0.973146645021645` (`52.81%` step-1 exact,
   `50.04%` step-2 conditional, `49.40%` step-3 conditional). This is meaningful
-  training progress, but still below endpoint threshold. Do not endpoint-test
-  this adapted draft; continue only as training research unless offline mean
+  training progress, but still below endpoint threshold. Continuation training
+  reached only `1.0142045454545454` and widened train/heldout overfit, so the
+  next move is larger/more diverse target-owned data or a survival-weighted
+  objective. Do not endpoint-test this adapted draft unless offline mean
   accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`

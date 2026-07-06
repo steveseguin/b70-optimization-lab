@@ -10,6 +10,7 @@ CORPUS="${CORPUS:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle
 TARGET_MODEL="${TARGET_MODEL:-/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e}"
 ORIGINAL_DRAFT="${ORIGINAL_DRAFT:-/mnt/fast-ai/llm-cache/hf/manual/Ex0bit--Qwen3.6-27B-PRISM-EAGLE3/compressed}"
 ADAPTED_DRAFT="${ADAPTED_DRAFT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-fcheadadapt-v3full-20260706T200821Z/checkpoint}"
+CONTINUE_DRAFT="${CONTINUE_DRAFT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T203023Z/original-r3-lr2e-5-decay1/checkpoint}"
 PY="${PY:-/home/steve/.venvs/vllm-xpu/bin/python}"
 BATCH_SIZE="${BATCH_SIZE:-64}"
 EPOCHS="${EPOCHS:-6}"
@@ -88,8 +89,16 @@ case "$SWEEP" in
       "3|original-r5-lr1e-5-decay1|$ORIGINAL_DRAFT|5|1.0|1e-5"
     )
     ;;
+  continuation-rollout)
+    variants=(
+      "0|cont-r3-lr5e-6-decay1|$CONTINUE_DRAFT|3|1.0|5e-6"
+      "1|cont-r3-lr1e-5-decay1|$CONTINUE_DRAFT|3|1.0|1e-5"
+      "2|cont-r3-lr2e-5-decay1|$CONTINUE_DRAFT|3|1.0|2e-5"
+      "3|cont-r5-lr5e-6-decay1|$CONTINUE_DRAFT|5|1.0|5e-6"
+    )
+    ;;
   *)
-    echo "Unknown SWEEP=$SWEEP (expected mixed or original-rollout)" >&2
+    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, or continuation-rollout)" >&2
     exit 2
     ;;
 esac

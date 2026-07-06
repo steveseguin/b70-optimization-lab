@@ -334,3 +334,42 @@ Interpretation:
 Next screen: narrow around `lr=2e-5` and continuation training from this best
 checkpoint. Stop endpoint work until offline accepted depth moves materially
 past `1.0` and approaches `1.5-2.0`.
+
+## Continuation rollout sweep: small gain, likely data/objective bottleneck
+
+Ran continuation from the best checkpoint above using
+`SWEEP=continuation-rollout EPOCHS=6`.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T204204Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-continuation-sweep-20260706.json
+```
+
+Heldout shard `3`, all `14,784` starts:
+
+| variant | rollout | lr | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|
+| `cont-r3-lr2e-5-decay1` | 3 | `2e-5` | **`1.0142045454545454`** | `54.06%` | `50.89%` | `51.07%` |
+| `cont-r3-lr1e-5-decay1` | 3 | `1e-5` | `0.9760551948051948` | `52.88%` | `50.13%` | `49.63%` |
+| `cont-r3-lr5e-6-decay1` | 3 | `5e-6` | `0.9749729437229437` | `52.85%` | `50.19%` | `49.45%` |
+| `cont-r5-lr5e-6-decay1` | 5 | `5e-6` | `0.9683441558441559` | `52.29%` | `49.62%` | `49.71%` |
+
+Interpretation:
+
+- Continuation training does improve the best `0.973` result to `1.014`, but
+  the improvement is small.
+- The best continuation has train exact `83.38%` vs heldout exact `54.68%`,
+  indicating the current `288`-prompt training split is becoming overfit.
+- Endpoint integration is still premature. The draft remains below the
+  `1.5-2.0` minimum offline threshold and below current MTP3 accepted depth.
+
+Next credible move is a larger/more diverse target-owned corpus and/or a loss
+that rewards accepted-prefix survival more directly. More continuation epochs
+on this same split are unlikely to be the main unlock.

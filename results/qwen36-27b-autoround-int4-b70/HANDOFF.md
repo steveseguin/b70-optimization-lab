@@ -163,8 +163,10 @@ Current fastest quality-gated variant:
   original-init `lr=2e-5`, rollout-3, 10-epoch sweep reached
   `0.973146645021645` (`52.81%` step-1 exact, `50.04%` step-2 conditional,
   `49.40%` step-3 conditional). This reopens Ex0bit EAGLE3/DFlash as a real
-  target-matched training lane, but it is still below endpoint threshold. Do
-  not endpoint-test this draft; continue only as training research until
+  target-matched training lane, but it is still below endpoint threshold. A
+  continuation sweep reached only `1.0142045454545454` and widened the
+  train/heldout gap, so more epochs on the same split are likely data-limited.
+  Do not endpoint-test this draft; continue only as training research until
   offline acceptance reaches at least `1.5-2.0`.
 
 Previous fastest quality-gated variant:

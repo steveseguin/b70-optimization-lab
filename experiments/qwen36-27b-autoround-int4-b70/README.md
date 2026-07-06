@@ -102,8 +102,10 @@ Latest stronger-drafter result:
   a narrowed original-init sweep improved it further to
   `0.973146645021645` (`52.81%` step-1 exact, `50.04%` step-2 conditional,
   `49.40%` step-3 conditional). This reopens the lane as training research but
-  is still below endpoint threshold; do not run endpoint/kernel integration
-  until offline depth approaches at least `1.5-2.0`.
+  is still below endpoint threshold. A continuation sweep reached only
+  `1.0142045454545454` and widened the train/heldout gap, so the next move is
+  larger/more diverse target-owned data or a survival-weighted objective, not
+  endpoint/kernel integration.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

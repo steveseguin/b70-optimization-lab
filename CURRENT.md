@@ -279,9 +279,10 @@ Previous fastest quality-gated practical variant:
   original-init rollout-3 sweep then reached `0.973146645021645` mean accepted
   at `lr=2e-5`, with step-2/step-3 conditional exact near `50%`. This is
   meaningful progress but still below current MTP3 depth and below endpoint
-  threshold. Do not endpoint-test this draft. Future EAGLE/DFlash work should
-  continue the rollout / accepted-prefix training lane until offline accepted
-  depth approaches at least `1.5-2.0`.
+  threshold. Continuation training reached only `1.0142045454545454` and shows
+  overfit, so the next move is larger/more diverse target-owned data or a
+  survival-weighted objective. Do not endpoint-test this draft until offline
+  accepted depth approaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;
 - continuation bookmark:
