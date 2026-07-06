@@ -544,3 +544,41 @@ Interpretation:
   some step-1 exact; mean accepted favored the lighter `1.1` weighting.
 - This is still below endpoint threshold. Continue objective research only if
   chasing this lane further; do not submit or endpoint-integrate yet.
+
+## Third late-continuation: current best, still below endpoint threshold
+
+Continued from the previous best (`cont2-r3-lr2e-5-decay1p1`) and repeated the
+focused decay/LR screen.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T221610Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation2-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|
+| `cont2-r3-lr2e-5-decay1p1` | `2e-5` | `1.1` | **`1.1205357142857142`** | `57.26%` | `54.11%` | `54.31%` |
+| `cont2-r3-lr2e-5-decay1p25` | `2e-5` | `1.25` | `1.1167027417027418` | `57.03%` | `54.04%` | `54.51%` |
+| `cont2-r3-lr2e-5-decay1p5` | `2e-5` | `1.5` | `1.1103896103896105` | `56.66%` | `53.96%` | `54.76%` |
+| `cont2-r3-lr1e-5-decay1p25` | `1e-5` | `1.25` | `1.107593795093795` | `56.91%` | `53.75%` | `53.91%` |
+
+Interpretation:
+
+- Current best diagnostic checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T221610Z/cont2-r3-lr2e-5-decay1p1/checkpoint`.
+- The lane continues to climb slowly: `1.1073` -> `1.1205`.
+- The lighter `1.1` late weighting remains best on mean accepted. Heavier
+  weighting improves step-3 conditional exact but loses enough step-1/step-2
+  mass to reduce the mean.
+- Still below endpoint threshold and current MTP3 depth. Continue only as
+  training research unless another objective/data change produces a much
+  larger jump.

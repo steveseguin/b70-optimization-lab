@@ -180,15 +180,17 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v4-summary-20260706.json`,
   plus
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json`.
-  The current best diagnostic checkpoint is the second late-step weighted
-  continuation (`decay=1.1`, `lr=2e-5`) at `1.1073232323232323` mean accepted
-  (`56.96%` step-1 exact, `53.75%` step-2 conditional, `53.65%` step-3
+  The current best diagnostic checkpoint is the third late-step weighted
+  continuation (`decay=1.1`, `lr=2e-5`) at `1.1205357142857142` mean accepted
+  (`57.26%` step-1 exact, `54.11%` step-2 conditional, `54.31%` step-3
   conditional). Checkpoint:
-  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T220622Z/cont2-r3-lr2e-5-decay1p1/checkpoint`.
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T221610Z/cont2-r3-lr2e-5-decay1p1/checkpoint`.
   Summaries:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json`
   and
-  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json`.
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json`,
+  plus
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation2-v4-summary-20260706.json`.
 
 Previous fastest quality-gated variant:
 
