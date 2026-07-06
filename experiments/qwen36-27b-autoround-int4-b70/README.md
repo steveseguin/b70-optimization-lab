@@ -87,6 +87,14 @@ Latest stronger-drafter result:
   artifact is the EAGLE3 aux collection/eval path, which can now support a
   target-matched EAGLE3/DFlash training attempt. See
   `notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`.
+- First target-matched adaptation screen is also diagnostic-only. The new
+  `scripts/train-qwen27-ex0bit-eagle3-adapter.py` can adapt Ex0bit-format
+  checkpoints from `qwen36_eagle_sequence_v2` data. Best screen so far is
+  `fc-lm-head` training on 72 prompts: heldout rollout improved from `0.289`
+  to `0.539` mean accepted, but this is still far below current MTP3 accepted
+  depth and not endpoint-worthy. Continue only with larger target-owned data
+  and offline acceptance gates. See
+  `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 
 Previous fastest quality-gated variant:
 

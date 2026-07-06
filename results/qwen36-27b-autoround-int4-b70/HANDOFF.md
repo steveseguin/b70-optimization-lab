@@ -145,6 +145,16 @@ Current fastest quality-gated variant:
   and makes the next credible >100 tok/s route a target-matched EAGLE3/DFlash
   training/adaptation attempt, not endpoint/kernel integration of this
   checkpoint as-is.
+- latest target-matched EAGLE3 adaptation screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
+  New trainer `../../scripts/train-qwen27-ex0bit-eagle3-adapter.py` exports
+  Ex0bit-format adapted checkpoints. Head-only training was weak (`0.316`
+  heldout rollout), `fc-lm-head` was the useful path (`0.539` heldout rollout
+  after training on 72 prompts), and all-params subset training was weaker
+  (`0.436`). This is a positive research signal but still far below current
+  MTP3 accepted depth. Do not endpoint-test yet; next credible action is a
+  larger target-owned aux corpus plus `fc-lm-head` adaptation with strict
+  heldout rollout gates.
 
 Previous fastest quality-gated variant:
 

@@ -1,0 +1,428 @@
+#!/usr/bin/env python3
+"""Fine-tune Ex0bit EAGLE3/DFlash weights on Qwen27 aux-hidden samples.
+
+This is a bounded diagnostic trainer for target-matching a stronger drafter. It
+does not produce a benchmark claim by itself; exported checkpoints must pass the
+offline acceptance evaluator before endpoint work is justified.
+
+Initial intended lane:
+
+  --train-scope lm-head
+
+which freezes the Ex0bit EAGLE3 body and adapts only the compressed draft LM
+head over target-owned qwen36_eagle_sequence_v2 samples.
+"""
+
+from __future__ import annotations
+
+import argparse
+import glob
+import importlib.util
+import json
+import os
+import shutil
+import sys
+import time
+from dataclasses import asdict
+from pathlib import Path
+from typing import Any
+
+import torch
+import torch.nn.functional as F
+from safetensors.torch import save_file
+from torch.utils.data import DataLoader, TensorDataset
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset-dir", required=True, action="append")
+    parser.add_argument("--heldout-dir", action="append", default=[])
+    parser.add_argument("--draft-dir", required=True)
+    parser.add_argument("--target-model", required=True)
+    parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--epochs", type=int, default=2)
+    parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--lr", type=float, default=2e-5)
+    parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument("--max-train-rows", type=int, default=0)
+    parser.add_argument("--max-heldout-rows", type=int, default=4096)
+    parser.add_argument("--device", default="auto")
+    parser.add_argument("--dtype", default="bfloat16",
+                        choices=("float32", "bfloat16", "float16"))
+    parser.add_argument(
+        "--train-scope",
+        default="lm-head",
+        choices=("lm-head", "fc-lm-head", "all"),
+    )
+    parser.add_argument("--eval-every", type=int, default=100)
+    parser.add_argument("--seed", type=int, default=0)
+    return parser.parse_args()
+
+
+def load_eval_module() -> Any:
+    path = Path(__file__).with_name("evaluate-qwen27-ex0bit-eagle3-offline.py")
+    spec = importlib.util.spec_from_file_location("qwen27_eagle3_eval", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load evaluator module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def torch_load(path: str) -> dict[str, Any]:
+    try:
+        return torch.load(path, map_location="cpu", weights_only=False)
+    except TypeError:
+        return torch.load(path, map_location="cpu")
+
+
+def iter_sample_paths(dataset_dirs: list[str]) -> list[str]:
+    paths: list[str] = []
+    for dataset_dir in dataset_dirs:
+        paths.extend(sorted(glob.glob(os.path.join(dataset_dir, "*.pt"))))
+    if not paths:
+        raise FileNotFoundError(f"No .pt samples found in {dataset_dirs}")
+    return paths
+
+
+def make_positions(sample: dict[str, Any], length: int) -> torch.Tensor:
+    if "positions" in sample:
+        positions = sample["positions"][:length].to(torch.long)
+        if positions.numel() == length and torch.all(positions >= 0):
+            return positions
+    return torch.arange(length, dtype=torch.long)
+
+
+def make_target_to_draft(model: Any) -> torch.Tensor:
+    mapping = torch.full(
+        (model.shape.vocab_size,),
+        -100,
+        dtype=torch.long,
+    )
+    if model.draft_id_to_target_id is None:
+        upper = min(model.shape.vocab_size, model.shape.draft_vocab_size)
+        mapping[:upper] = torch.arange(upper, dtype=torch.long)
+        return mapping
+    d2t = model.draft_id_to_target_id.detach().to("cpu", dtype=torch.long)
+    targets = torch.arange(d2t.numel(), dtype=torch.long) + d2t
+    valid = (targets >= 0) & (targets < model.shape.vocab_size)
+    draft_ids = torch.arange(d2t.numel(), dtype=torch.long)[valid]
+    mapping[targets[valid]] = draft_ids
+    return mapping
+
+
+def load_rows(
+    *,
+    dataset_dirs: list[str],
+    target_to_draft: torch.Tensor,
+    max_rows: int,
+) -> tuple[TensorDataset, dict[str, Any]]:
+    aux_rows: list[torch.Tensor] = []
+    input_ids: list[torch.Tensor] = []
+    positions: list[torch.Tensor] = []
+    labels: list[torch.Tensor] = []
+    samples = 0
+    rows = 0
+    covered = 0
+    skipped_samples = 0
+    for path in iter_sample_paths(dataset_dirs):
+        sample = torch_load(path)
+        if sample.get("format") != "qwen36_eagle_sequence_v2":
+            skipped_samples += 1
+            continue
+        if "aux_hidden_states" not in sample or "sampled_next_token_ids" not in sample:
+            skipped_samples += 1
+            continue
+        aux = sample["aux_hidden_states"]
+        next_ids = sample["sampled_next_token_ids"].to(torch.long)
+        length = min(aux.shape[0], next_ids.shape[0])
+        if length < 2:
+            skipped_samples += 1
+            continue
+        pos = make_positions(sample, length)
+        row_aux = aux[: length - 1].contiguous()
+        row_inputs = next_ids[: length - 1].contiguous()
+        row_positions = pos[: length - 1].contiguous()
+        row_labels = target_to_draft[next_ids[1:length]].contiguous()
+        if max_rows and rows + int(row_labels.numel()) > max_rows:
+            keep = max(0, max_rows - rows)
+            row_aux = row_aux[:keep]
+            row_inputs = row_inputs[:keep]
+            row_positions = row_positions[:keep]
+            row_labels = row_labels[:keep]
+        if row_labels.numel() == 0:
+            break
+        aux_rows.append(row_aux)
+        input_ids.append(row_inputs)
+        positions.append(row_positions)
+        labels.append(row_labels)
+        samples += 1
+        rows += int(row_labels.numel())
+        covered += int((row_labels != -100).sum().item())
+        if max_rows and rows >= max_rows:
+            break
+    if rows == 0:
+        raise RuntimeError("No trainable rows loaded")
+    dataset = TensorDataset(
+        torch.cat(aux_rows, dim=0),
+        torch.cat(input_ids, dim=0),
+        torch.cat(positions, dim=0),
+        torch.cat(labels, dim=0),
+    )
+    summary = {
+        "dataset_dirs": dataset_dirs,
+        "samples": samples,
+        "rows": rows,
+        "covered_rows": covered,
+        "coverage": covered / rows if rows else 0.0,
+        "skipped_samples": skipped_samples,
+    }
+    return dataset, summary
+
+
+def configure_train_scope(model: Any, scope: str) -> list[torch.nn.Parameter]:
+    model.requires_grad_(False)
+    if scope == "lm-head":
+        model.lm_head.requires_grad_(True)
+    elif scope == "fc-lm-head":
+        model.fc.requires_grad_(True)
+        model.lm_head.requires_grad_(True)
+    elif scope == "all":
+        model.requires_grad_(True)
+        if hasattr(model, "embed_weight"):
+            model.embed_weight.requires_grad_(False)
+    else:
+        raise ValueError(scope)
+    params = [p for p in model.parameters() if p.requires_grad]
+    if not params:
+        raise RuntimeError("No trainable parameters")
+    return params
+
+
+def evaluate_teacher_forced(
+    *,
+    model: Any,
+    loader: DataLoader,
+    device: torch.device,
+    dtype: torch.dtype,
+    max_batches: int = 0,
+) -> dict[str, float | int]:
+    model.eval()
+    rows = 0
+    covered = 0
+    exact = 0
+    loss_total = 0.0
+    with torch.no_grad():
+        for batch_idx, (aux, input_ids, positions, labels) in enumerate(loader):
+            if max_batches and batch_idx >= max_batches:
+                break
+            aux = aux.to(device=device, dtype=dtype).reshape(aux.shape[0], 1, -1)
+            input_ids = input_ids.to(device=device).view(-1, 1)
+            positions = positions.to(device=device).view(-1, 1)
+            labels = labels.to(device=device)
+            mask = labels != -100
+            if not torch.any(mask):
+                rows += int(labels.numel())
+                continue
+            hidden = model.combine_hidden_states(aux)
+            pred = model(input_ids, positions, hidden)[:, -1, :]
+            logits = model.lm_head(pred).float() * float(model.shape.logit_scale)
+            loss = F.cross_entropy(logits[mask], labels[mask])
+            proposed = torch.argmax(logits, dim=-1)
+            exact += int((proposed[mask] == labels[mask]).sum().item())
+            covered += int(mask.sum().item())
+            rows += int(labels.numel())
+            loss_total += float(loss.item()) * int(mask.sum().item())
+    model.train()
+    return {
+        "rows": rows,
+        "covered_rows": covered,
+        "loss": loss_total / covered if covered else 0.0,
+        "exact": exact,
+        "exact_rate": exact / covered if covered else 0.0,
+    }
+
+
+def export_model(model: Any, out_dir: str, source_draft_dir: str,
+                 meta: dict[str, Any]) -> None:
+    os.makedirs(out_dir, exist_ok=True)
+    state: dict[str, torch.Tensor] = {
+        "fc.weight": model.fc.weight.detach().cpu().to(torch.bfloat16),
+        "norm.weight": model.norm.weight.detach().cpu().to(torch.bfloat16),
+        "lm_head.weight": model.lm_head.weight.detach().cpu().to(torch.bfloat16),
+    }
+    if model.draft_id_to_target_id is not None:
+        state["d2t"] = model.draft_id_to_target_id.detach().cpu().to(torch.long)
+    for i, layer in enumerate(model.layers):
+        prefix = f"layers.{i}"
+        state[f"{prefix}.hidden_norm.weight"] = (
+            layer.hidden_norm.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.input_layernorm.weight"] = (
+            layer.input_layernorm.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.self_attn.q_proj.weight"] = (
+            layer.q_proj.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.self_attn.k_proj.weight"] = (
+            layer.k_proj.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.self_attn.v_proj.weight"] = (
+            layer.v_proj.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.self_attn.o_proj.weight"] = (
+            layer.o_proj.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.post_attention_layernorm.weight"] = (
+            layer.post_attention_layernorm.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.mlp.gate_proj.weight"] = (
+            layer.gate_proj.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.mlp.up_proj.weight"] = (
+            layer.up_proj.weight.detach().cpu().to(torch.bfloat16))
+        state[f"{prefix}.mlp.down_proj.weight"] = (
+            layer.down_proj.weight.detach().cpu().to(torch.bfloat16))
+    save_file(state, os.path.join(out_dir, "model.safetensors"))
+    for name in ("config.json", "generation_config.json", "tokenizer_config.json"):
+        src = os.path.join(source_draft_dir, name)
+        if os.path.exists(src):
+            shutil.copy2(src, os.path.join(out_dir, name))
+    with open(os.path.join(out_dir, "training_meta.json"), "w",
+              encoding="utf-8") as f:
+        json.dump(meta, f, indent=2, sort_keys=True)
+        f.write("\n")
+
+
+def main() -> int:
+    args = parse_args()
+    if args.epochs < 1:
+        raise ValueError("--epochs must be >= 1")
+    if args.batch_size < 1:
+        raise ValueError("--batch-size must be >= 1")
+    torch.manual_seed(args.seed)
+    eval_module = load_eval_module()
+    device = eval_module.choose_device(args.device)
+    dtype = eval_module.dtype_from_name(args.dtype)
+    model = eval_module.load_model(
+        draft_dir=args.draft_dir,
+        target_model=args.target_model,
+        device=device,
+        dtype=dtype,
+    )
+    target_to_draft = make_target_to_draft(model)
+    train_dataset, train_summary = load_rows(
+        dataset_dirs=args.dataset_dir,
+        target_to_draft=target_to_draft,
+        max_rows=args.max_train_rows,
+    )
+    heldout_dataset = None
+    heldout_summary = None
+    if args.heldout_dir:
+        heldout_dataset, heldout_summary = load_rows(
+            dataset_dirs=args.heldout_dir,
+            target_to_draft=target_to_draft,
+            max_rows=args.max_heldout_rows,
+        )
+    generator = torch.Generator()
+    generator.manual_seed(args.seed)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        generator=generator,
+    )
+    heldout_loader = (
+        DataLoader(heldout_dataset, batch_size=args.batch_size, shuffle=False)
+        if heldout_dataset is not None else None
+    )
+    trainable_params = configure_train_scope(model, args.train_scope)
+    optimizer = torch.optim.AdamW(
+        trainable_params,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+    )
+    metrics: list[dict[str, Any]] = []
+    start = time.perf_counter()
+    step = 0
+    model.train()
+    for epoch in range(args.epochs):
+        for aux, input_ids, positions, labels in train_loader:
+            step += 1
+            aux = aux.to(device=device, dtype=dtype).reshape(aux.shape[0], 1, -1)
+            input_ids = input_ids.to(device=device).view(-1, 1)
+            positions = positions.to(device=device).view(-1, 1)
+            labels = labels.to(device=device)
+            mask = labels != -100
+            if not torch.any(mask):
+                continue
+            optimizer.zero_grad(set_to_none=True)
+            hidden = model.combine_hidden_states(aux)
+            pred = model(input_ids, positions, hidden)[:, -1, :]
+            logits = model.lm_head(pred).float() * float(model.shape.logit_scale)
+            loss = F.cross_entropy(logits[mask], labels[mask])
+            loss.backward()
+            optimizer.step()
+            if args.eval_every and step % args.eval_every == 0:
+                train_eval = evaluate_teacher_forced(
+                    model=model,
+                    loader=train_loader,
+                    device=device,
+                    dtype=dtype,
+                    max_batches=16,
+                )
+                row: dict[str, Any] = {
+                    "step": step,
+                    "epoch": epoch,
+                    "train_loss_batch": float(loss.item()),
+                    "train_probe": train_eval,
+                    "elapsed_s": time.perf_counter() - start,
+                }
+                if heldout_loader is not None:
+                    row["heldout_probe"] = evaluate_teacher_forced(
+                        model=model,
+                        loader=heldout_loader,
+                        device=device,
+                        dtype=dtype,
+                        max_batches=0,
+                    )
+                metrics.append(row)
+                print(json.dumps(row, sort_keys=True), flush=True)
+    final_train = evaluate_teacher_forced(
+        model=model,
+        loader=train_loader,
+        device=device,
+        dtype=dtype,
+        max_batches=0,
+    )
+    final_heldout = (
+        evaluate_teacher_forced(
+            model=model,
+            loader=heldout_loader,
+            device=device,
+            dtype=dtype,
+            max_batches=0,
+        )
+        if heldout_loader is not None else None
+    )
+    meta = {
+        "purpose": "diagnostic_qwen27_ex0bit_eagle3_target_adaptation",
+        "valid_headline_throughput": False,
+        "draft_dir": args.draft_dir,
+        "target_model": args.target_model,
+        "out_dir": args.out_dir,
+        "shape": asdict(model.shape),
+        "train_scope": args.train_scope,
+        "epochs": args.epochs,
+        "batch_size": args.batch_size,
+        "lr": args.lr,
+        "weight_decay": args.weight_decay,
+        "dtype": args.dtype,
+        "device": str(device),
+        "train_summary": train_summary,
+        "heldout_summary": heldout_summary,
+        "final_train": final_train,
+        "final_heldout": final_heldout,
+        "metrics": metrics,
+        "elapsed_s": time.perf_counter() - start,
+    }
+    export_model(model, args.out_dir, args.draft_dir, meta)
+    print(json.dumps(meta, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
