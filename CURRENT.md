@@ -107,6 +107,20 @@ Fastest quality-gated practical variant:
   mode and synchronized `model_forward_first/next` are under `1 ms`; the old
   apparent `~11 ms` recurrent-next cost was async timing attribution. Do not
   chase MTP-next as an eager-kernel bug;
+- latest branch/regenerate trace probe:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-branch-regen-trace-probe-and-sycl8-restore.md`.
+  This added a default-off trace-only hook,
+  `VLLM_XPU_BRANCH_REGEN_TRACE=1`, and restored the local XPU kernel runtime
+  after oneAPI 2026-built `_C`, `_moe_C`, `_vllm_fa2_C`, and
+  `libattn_kernels_xe_2` binaries were found linked against `libsycl.so.9`.
+  The successful strict fresh trace row passed `cached_tokens=0` with
+  diagnostic median `65.078 tok/s` and summarized `220` scheduled verifier
+  rows: mean accepted draft prefix `1.6727`, mean raw visible tokens `2.6727`,
+  full accept rate `39.09%`, and `292` remaining branchable draft rows after
+  partial rejects. Conclusion: branch/regenerate is useful infrastructure, but
+  the measured MTP3 branch surface is too narrow to be the primary `125+ tok/s`
+  path by itself. Continue only if it is paired with a deeper target-tail /
+  graph-safe state transaction or stronger draft source;
 
 Previous fastest quality-gated practical variant:
 

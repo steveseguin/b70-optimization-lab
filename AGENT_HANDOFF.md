@@ -154,6 +154,16 @@ Active target as of the latest switch request:
   partial-group / branch-regenerate support. See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md` and
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-03-fused-verifier-top1-design-blocker.md`.
+- Latest branch/regenerate trace probe: after repairing local sycl9-built
+  XPU extension binaries back to sycl8 (`_C`, `_moe_C`, `_vllm_fa2_C`, and
+  `libattn_kernels_xe_2`), the default-off
+  `VLLM_XPU_BRANCH_REGEN_TRACE=1` hook completed a strict fresh diagnostic row
+  at `65.078 tok/s` with `cached_tokens=0`. It measured `220` scheduled
+  verifier rows, mean accepted draft prefix `1.6727`, mean raw visible tokens
+  `2.6727`, full accept `39.09%`, and `292` remaining branchable draft rows
+  after partial rejects. This is useful transaction/tape evidence, but too
+  narrow to be the primary `125+ tok/s` path alone. See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-branch-regen-trace-probe-and-sycl8-restore.md`.
 - Latest wrapper-level MTP dispatch shortcut is closed no-win. A default-off
   `VLLM_XPU_MTP_TEXT_INPUT_IDS_NEXT=1` spike tried to pass token IDs into
   text-only recurrent Qwen3.5 MTP draft forwards instead of external

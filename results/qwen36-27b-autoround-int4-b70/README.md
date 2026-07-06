@@ -454,6 +454,17 @@ latest frontier audit also tested oneDNN Graph `MatMul -> ReduceMax` directly:
 BF16 stayed as two one-op partitions and the tested INT8 graph form was
 rejected, so there is no cheap oneDNN Graph wrapper shortcut to promote. See
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-frontier-audit-onednn-graph-and-drafter.md`.
+The 2026-07-06 branch/regenerate trace probe added default-off
+`VLLM_XPU_BRANCH_REGEN_TRACE=1`, repaired the local XPU runtime after sycl9
+`_C`/`_moe_C`/FA2 binaries broke device inference and FA2 `varlen_fwd`, and
+completed a strict fresh diagnostic row at `65.078 tok/s` with `cached_tokens=0`
+on every prompt. The trace summarized `220` scheduled verifier rows:
+`1.6727` mean accepted draft-prefix tokens, `2.6727` mean raw visible tokens,
+`39.09%` full accept, and `292` branchable remaining draft rows after partial
+rejects. Treat this as branch/tape infrastructure evidence, not a headline
+result: by itself the measured MTP3 branch surface is too narrow to be the
+primary `125+ tok/s` path. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-branch-regen-trace-probe-and-sycl8-restore.md`.
 The 2026-07-06 draft-side `mtp.fc` runtime INT8 experiment is also closed:
 it targeted only the BF16 Qwen3.5 MTP `mtp.fc` layer and preserved exact target
 verification, but the completed candidate (`66.777 tok/s`) lost to same-window
