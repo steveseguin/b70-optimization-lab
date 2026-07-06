@@ -72,6 +72,17 @@ Fastest quality-gated practical variant:
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;
+- latest native prefix-base closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
+  The stale July 5 exact-state/native-prefill replay flags were rescreened
+  after the July 6 extra state-column fix. Offset/writeout exact-native modes
+  fell to `~4.6-4.9 tok/s` and failed quality, prefill-column replay collapsed
+  acceptance to zero, and replaypartial reached only `6.3 tok/s`. The useful
+  conclusion is architectural: the sampled target-owned replacement/bonus token
+  has no projected GDN input row inside the same verifier forward, so more
+  serial/prefill flag sweeps cannot make the fast native prefix-base lane both
+  exact and fast. Continue only with a real graph-safe transaction/tape,
+  target-tail projection/branch-regenerate support, or a stronger drafter;
 
 Previous fastest quality-gated practical variant:
 

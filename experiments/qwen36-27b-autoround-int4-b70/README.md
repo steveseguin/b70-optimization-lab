@@ -476,6 +476,19 @@ Next milestone:
     `0.697 ms/step` budget for a `100 tok/s` endpoint and cannot reach `125+`
     at the current step cost. Treat MTP3 branch work as a narrow `~100 tok/s`
     infrastructure lane, not the main `125+` route.
+38. Native prefix-base exact-state rescreen after the extra state-column fix:
+    `notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
+    The old July 5 exact-native/prefill replay flags were stale because
+    prefix-base later gained the needed extra state column. Rescreening them on
+    four GPUs closed the lane anyway: offset/writeout exact-native rows landed
+    at `~4.6-4.9 tok/s` and failed quality, prefill-column replay collapsed
+    acceptance to zero, and replaypartial passed local repeat16 but only
+    reached `6.323 tok/s`. The durable lesson is that same-forward exact
+    target-tail GDN state is impossible with current data flow because the
+    verifier-sampled replacement/bonus token has no projected GDN input row yet.
+    Do not continue native serial/prefill flag sweeps; move to a real
+    graph-safe state transaction/tape, target-tail projection/branch-regenerate
+    support, or a stronger drafter.
 
 ## Folder Map
 

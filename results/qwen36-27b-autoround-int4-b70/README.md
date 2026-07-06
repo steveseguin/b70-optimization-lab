@@ -123,6 +123,13 @@ Current fastest quality-gated variant:
 - LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`, with queue/response at
   `../../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.queue.json` and
   `../../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.submit.log`;
+- latest closed native-prefix follow-up:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
+  After the prefix-base extra state-column repair, exact-native offset/writeout
+  rows still failed quality at single-digit speed, prefill-column replay
+  collapsed acceptance, and replaypartial reached only `6.323 tok/s`. The
+  native fast path remains blocked by the missing projected GDN row for the
+  target-owned replacement/bonus token sampled after verifier logits.
 - important attribution: native ReplaySSM slot-copy/reset ops passed direct XPU
   parity, but same-window endpoint control did not show a speed win (`66.871`
   native vs `67.300` PyTorch slot-management fallback), so the native slot-copy

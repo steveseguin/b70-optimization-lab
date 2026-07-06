@@ -106,6 +106,18 @@ Current fastest quality-gated variant:
 - important attribution: do not claim native ReplaySSM slot-copy caused the
   win. It passed direct BF16/FP16/FP32 parity, but same-window endpoint control
   measured `66.871` native vs `67.300` PyTorch slot-management fallback.
+- latest native prefix-base/exact-state rescreen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
+  This refreshed the stale July 5 exact-native/prefill replay flags after the
+  extra state-column fix. Offset/writeout exact-native modes were strict-fresh
+  but invalid and only `~4.6-4.9 tok/s`; prefill-column replay collapsed
+  acceptance to zero; replaypartial was quality-diagnostic only at `6.323
+  tok/s`. Do not spend more time on serial/prefill flag roulette. The blocker
+  is that the sampled target-owned replacement/bonus token is known only after
+  verifier logits, so its projected GDN row is not available inside the same
+  forward; future fast-and-correct work needs a graph-safe GDN/DeltaNet
+  transaction/tape, target-tail projection/branch-regenerate support, or a
+  stronger drafter that avoids the tail boundary more often.
 
 Previous fastest quality-gated variant:
 
