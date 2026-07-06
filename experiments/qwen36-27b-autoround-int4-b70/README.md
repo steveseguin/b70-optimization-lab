@@ -199,14 +199,21 @@ Next milestone:
     `+0.27%`, below the practical variance band. Do not promote or submit;
     keep default ring behavior unless a future trace shows scratchpad reuse as
     a real issue.
-14. Latest GDN qkvz/ba quant-reuse screen:
+14. Latest INT4 W4A16 GEMM scratchpad ring-size screen:
+    `notes/2026-07-06-int4-gemm-scratchpad-ring-no-win.md`.
+    A default-off `VLLM_XPU_INT4_GEMM_SCRATCHPAD_RING_SIZE` patch built and
+    endpoint-ran, but ring1 only measured `+0.08%` mean / `+0.18%`
+    median-of-runs over ring0 controls after crossover, while ring2/ring4 did
+    not help. The active source and live `_C` binary were restored; preserve
+    the patch as negative evidence only.
+15. Latest GDN qkvz/ba quant-reuse screen:
     `notes/2026-07-05-gdn-qkvz-ba-quant-reuse-no-win.md`.
     A same-window four-GPU strict fresh screen of
     `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone`, `clone-ba`, and `clone-qkvz`
     found no credible win over control: control `64.398 tok/s`, best
     `clone-qkvz` `64.824 tok/s`, inside variance. Keep the promoted recipe
     unchanged.
-15. Latest target-forward quick screens and backlog:
+16. Latest target-forward quick screens and backlog:
     `notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
     M-RoPE text-only fast path (`65.797` vs control `65.960`) and GDN fallback
     `prefill` only (`65.655` vs control `65.967`) both passed the strict fresh

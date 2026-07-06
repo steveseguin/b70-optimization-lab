@@ -398,6 +398,14 @@ Current next-execution plan:
   (`65.708`, `65.817`), but same-window crossover against ring1 controls showed
   only `+0.42%` and `+0.27%` median deltas, below the practical variance band.
   Keep the default ring behavior for headline claims; no LocalMaxxing update;
+- closed INT4 W4A16 GEMM scratchpad ring-size screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-int4-gemm-scratchpad-ring-no-win.md`.
+  A default-off `VLLM_XPU_INT4_GEMM_SCRATCHPAD_RING_SIZE` patch built and
+  endpoint-ran, but same-window/crossover testing showed ring1 only
+  `+0.08%` mean / `+0.18%` median-of-runs over ring0 controls, while ring2
+  and ring4 lost. The active source and live `_C` binary were restored; keep
+  only the preserved patch artifact and do not retest scratchpad reuse without
+  a trace showing allocation as a real bottleneck;
 - current webhie/BF16-scale 4-GPU reconfirmation:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-webhie-bf16scale-reconfirm4gpu-variance.md`.
   The later high support row (`66.389 tok/s`) did not reproduce; four same-window
