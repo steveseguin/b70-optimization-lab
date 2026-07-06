@@ -525,6 +525,16 @@ Current next-execution plan:
   because Qwen27 MTP drafting is sequential; the final-slot upper bound
   (`2.7872`) still needs bonus-row recompute/branching and is not enough by
   itself. Do not reopen cheap top-k reranker patches.
+- branch/regenerate feasibility envelope:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-branch-regenerate-feasibility-envelope.md`.
+  The existing top-k64 trace now has a legal cost envelope. Normalized to the
+  current valid `67.519 tok/s` record, the trace implies `2.6243`
+  target-verified tokens/step and `38.87 ms` per verifier step. A perfect MTP3
+  first-reject branch/regenerate path with top-64 access reaches only `3.9565`
+  tokens/step, or `101.8 tok/s` at zero extra step cost; it has only
+  `0.697 ms/step` budget for a `100 tok/s` endpoint and cannot reach `125+`
+  at the current step cost. Treat MTP3 branch work as a narrow `~100 tok/s`
+  infrastructure lane, not the main `125+` route.
 - token-tree mechanical screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
   Existing vLLM `speculative_token_tree` support works mechanically but is a
@@ -969,7 +979,10 @@ Continue INT4 optimization without promoting synthetic scores:
 - simple draft top-k reranking is closed. Top-k64 proves the target is usually
   present in alternatives, but sequential MTP makes independent post-hoc
   replacement invalid and the legal final-slot upper bound is too small without
-  a deeper branch/regenerate or stronger-drafter design;
+  a deeper branch/regenerate or stronger-drafter design. A 2026-07-06 cost
+  envelope tightened this further: MTP3 branch/regenerate has only a narrow
+  zero-overhead `~101.8 tok/s` ceiling and cannot reach `125+` at the current
+  step cost;
 - deeper wins likely need stronger verified speculation, target-forward/kernel
   reduction, graph-safe exact GDN/spec-state transactions, or a genuinely new
   AutoRound/INC W4A16 top-ID/candidate primitive that avoids materializing full

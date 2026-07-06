@@ -445,7 +445,7 @@ Next milestone:
     below the `65.276` record and inside recipe variance. The MBT1024 control
     row is invalid because GPU0 device-lost during the first benchmark request
     after smoke passed; existing support rows already cover the default recipe.
-35. Frontier closure:
+36. Frontier closure:
     `notes/2026-07-04-frontier-closure-and-next-projects.md`.
     Independent audits found no unclosed non-cheating config/runtime lane and
     no bounded atomic/single-pass/fused-quant LM-head kernel tweak likely to
@@ -453,6 +453,16 @@ Next milestone:
     screens until the candidate is a real top-ID LM-head producer, a materially
     stronger drafter/branch-regenerate architecture, or full partial-group
     source support.
+37. Branch/regenerate feasibility envelope:
+    `notes/2026-07-06-branch-regenerate-feasibility-envelope.md`.
+    The existing top-k64 trace was converted into a legal cost envelope. With
+    the current `67.519 tok/s` record and `2.6243` target-verified tokens/step,
+    the inferred verifier step is `38.87 ms`. A perfect MTP3 first-reject
+    branch/regenerate path with top-64 access reaches only `3.9565`
+    tokens/step, or `101.8 tok/s` if it adds zero step cost; it has only
+    `0.697 ms/step` budget for a `100 tok/s` endpoint and cannot reach `125+`
+    at the current step cost. Treat MTP3 branch work as a narrow `~100 tok/s`
+    infrastructure lane, not the main `125+` route.
 
 ## Folder Map
 
@@ -468,13 +478,14 @@ Next milestone:
 
 The active headline family is now
 `webhie/Qwen3.6-27B-int4-AutoRound` with the current promote-source MTP3/cg8
-recipe plus default-off runtime INT8 LM-head and BF16 scale storage:
-`65.27648650325429 tok/s` median generated-token throughput for tokens 1-100
+recipe plus runtime INT8 target LM-head BF16 scales, runtime INT4 draft LM-head
+BF16 scales, and ReplaySSM exact GDN state handling:
+`67.51904968102535 tok/s` median generated-token throughput for tokens 1-100
 after TTFT on the strict fresh Qwen realistic suite, with `cached_tokens=0` on
-every request and repeat32/1K-needle quality passing. Later same-recipe support
-rows reached `65.8-66.4 tok/s`, but a four-GPU reconfirmation landed
-`63.97-64.74 tok/s`, so those higher rows are variance/support only and should
-not be resubmitted as records.
+every request and repeat64 quality passing. The prior `65.27648650325429 tok/s`
+row remains the comparison baseline; the conservative promoted `67.519` packet
+is
+`../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`.
 
 Older reference points remain useful for attribution: plain MTP3/cg8 was about
 `47.6-48.5 tok/s`, and promote-source/no-accepted-postprocess lifted the lane
@@ -532,6 +543,11 @@ native-off serial/fallback actually exercised the path and fell to
 `notes/2026-07-05-draft-int4-serial-gdn-nativeoff-no-win.md`.
 The next GDN-state implementation lane should be a fixed-shape exact
 accepted-prefix tape / GPU-side commit, not more serial source/offset sweeps.
+The 2026-07-06 branch/regenerate feasibility model further narrows the MTP3
+branch lane: even a perfect legal MTP3 first-reject correction and regenerated
+suffix reaches only `~101.8 tok/s` at zero overhead and cannot reach `125+`
+without reducing verifier-step cost or increasing speculative depth. See
+`notes/2026-07-06-branch-regenerate-feasibility-envelope.md`.
 The executable contract is `../../scripts/check-gdn-spec-recurrent-exact.py`;
 as of 2026-07-06 it validates exact recurrent prefix state,
 accepted-prefix SSM/conv commit equality on XPU for k=3/4/5, and the
