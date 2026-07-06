@@ -16,6 +16,16 @@ contract:
 There is no independent base column in the native packed table; the running
 column is copied from the selected accepted source and then overwritten with
 the first published prefix row.
+
+With ``--prefix-base-state``, the experimental contract is:
+
+  * ``spec_state_indices_tensor[:, 0]`` stays the selected base/running state.
+  * ``spec_state_indices_tensor[:, j + 1]`` is the state after packed row ``j``.
+  * ``num_accepted_tokens=N`` selects source column ``N`` for the next packed
+    spec step, because column 0 is the base state and column ``N`` is the state
+    after accepting ``N`` tokens.
+  * overflow rows (for example the target-owned bonus row when rows == columns)
+    produce outputs but do not overwrite the final stored prefix column.
 """
 
 from __future__ import annotations
@@ -51,6 +61,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--with-bias", action="store_true")
     parser.add_argument("--reorder-input", action=argparse.BooleanOptionalAction,
                         default=True)
+    parser.add_argument("--prefix-base-state", action="store_true",
+                        help="Verify VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE=1.")
     parser.add_argument("--atol", type=float, default=1e-2,
                         help="Tolerance for packed-vs-one-step numeric parity.")
     parser.add_argument("--rtol", type=float, default=0.0)
@@ -293,8 +305,11 @@ def compare_case(
     if accepted_counts is None:
         source_cols = torch.zeros((num_reqs,), dtype=torch.long, device=device)
     else:
-        source_cols = torch.clamp(accepted_counts.to(torch.long) - 1,
-                                  min=0, max=spec_len - 1)
+        source_offset = 0 if args.prefix_base_state else -1
+        source_cols = torch.clamp(
+            accepted_counts.to(torch.long) + source_offset,
+            min=0,
+            max=spec_len - 1)
     source_rows = state_table.gather(1, source_cols.unsqueeze(1)).squeeze(1)
     ref_conv.index_copy_(0, running_rows,
                          ref_conv.index_select(0, source_rows).clone())
@@ -329,7 +344,12 @@ def compare_case(
     conv_max = 0.0
     ssm_max = 0.0
     for pos in range(spec_len):
-        rows = state_table[:, pos]
+        if args.prefix_base_state:
+            if pos + 1 >= state_table.size(1):
+                continue
+            rows = state_table[:, pos + 1]
+        else:
+            rows = state_table[:, pos]
         observed_conv = spec_conv.index_select(0, rows)
         observed_ssm = spec_ssm.index_select(0, rows)
         expected_conv = ref_conv_prefixes[pos]
@@ -344,6 +364,25 @@ def compare_case(
             torch, observed_conv, expected_conv, atol=args.atol, rtol=args.rtol)
         ssm_close = ssm_close and close_enough(
             torch, observed_ssm, expected_ssm, atol=args.atol, rtol=args.rtol)
+
+    base_conv_close = True
+    base_ssm_close = True
+    base_conv_max = 0.0
+    base_ssm_max = 0.0
+    if args.prefix_base_state:
+        base_rows = state_table[:, 0]
+        observed_base_conv = spec_conv.index_select(0, base_rows)
+        observed_base_ssm = spec_ssm.index_select(0, base_rows)
+        expected_base_conv = initial_conv_table.index_select(0, source_rows)
+        expected_base_ssm = initial_ssm_table.index_select(0, source_rows)
+        base_conv_max = max_abs(torch, observed_base_conv, expected_base_conv)
+        base_ssm_max = max_abs(torch, observed_base_ssm, expected_base_ssm)
+        base_conv_close = close_enough(
+            torch, observed_base_conv, expected_base_conv, atol=args.atol,
+            rtol=args.rtol)
+        base_ssm_close = close_enough(
+            torch, observed_base_ssm, expected_base_ssm, atol=args.atol,
+            rtol=args.rtol)
 
     out_diff = max_abs(torch, spec_out, ref_out)
     z_diff = max_abs(torch, spec_z, ref_z)
@@ -364,12 +403,15 @@ def compare_case(
         "ssm_prefix_equal": bool(ssm_ok),
         "conv_prefix_close": bool(conv_close),
         "ssm_prefix_close": bool(ssm_close),
+        "base_column_close": bool(base_conv_close and base_ssm_close),
         "core_output_equal": out_equal,
         "z_output_equal": z_equal,
         "core_output_close": bool(out_close),
         "z_output_close": bool(z_close),
         "conv_prefix_max_abs_diff": conv_max,
         "ssm_prefix_max_abs_diff": ssm_max,
+        "base_conv_max_abs_diff": base_conv_max,
+        "base_ssm_max_abs_diff": base_ssm_max,
         "core_output_max_abs_diff": out_diff,
         "z_output_max_abs_diff": z_diff,
     }
@@ -387,6 +429,8 @@ def main() -> int:
         raise SystemExit("head-k-dim must be a multiple of 32")
 
     os.environ.setdefault("VLLM_TARGET_DEVICE", "xpu")
+    os.environ["VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE"] = (
+        "1" if args.prefix_base_state else "0")
     add_kernel_repo_to_path(args.kernel_repo)
 
     import torch
@@ -406,12 +450,13 @@ def main() -> int:
     conv_cols = inputs["conv_cols"]
     device = args.device
 
+    state_cols = args.spec_len
     state_table = torch.arange(
         1,
-        1 + args.num_reqs * args.spec_len,
+        1 + args.num_reqs * state_cols,
         dtype=torch.long,
         device=device,
-    ).reshape(args.num_reqs, args.spec_len)
+    ).reshape(args.num_reqs, state_cols)
     row_count = int(state_table.max().detach().cpu().item()) + 1
 
     initial_conv = torch.randn((row_count, args.width - 1, conv_cols),
@@ -462,9 +507,16 @@ def main() -> int:
         running_rows=running_rows,
         token_base=0,
     )
-    for pos in range(args.spec_len):
-        restart_conv.index_copy_(0, state_table[:, pos], conv_prefixes[pos])
-        restart_ssm.index_copy_(0, state_table[:, pos], ssm_prefixes[pos])
+    if args.prefix_base_state:
+        for pos in range(max(0, args.spec_len - 1)):
+            restart_conv.index_copy_(0, state_table[:, pos + 1],
+                                     conv_prefixes[pos])
+            restart_ssm.index_copy_(0, state_table[:, pos + 1],
+                                    ssm_prefixes[pos])
+    else:
+        for pos in range(args.spec_len):
+            restart_conv.index_copy_(0, state_table[:, pos], conv_prefixes[pos])
+            restart_ssm.index_copy_(0, state_table[:, pos], ssm_prefixes[pos])
 
     varied_counts = (
         torch.arange(args.num_reqs, dtype=torch.int32, device=device)
@@ -496,15 +548,29 @@ def main() -> int:
         "atol": args.atol,
         "rtol": args.rtol,
         "contract": {
-            "state_column_j": "state after packed spec row j",
-            "source_column": "clamp(num_accepted_tokens - 1, 0, spec_len - 1)",
-            "base_column": "no separate base column in native packed table",
+            "state_column_j": (
+                "column j+1 is state after packed spec row j"
+                if args.prefix_base_state
+                else "column j is state after packed spec row j"
+            ),
+            "source_column": (
+                "clamp(num_accepted_tokens, 0, spec_len - 1)"
+                if args.prefix_base_state
+                else "clamp(num_accepted_tokens - 1, 0, spec_len - 1)"
+            ),
+            "base_column": (
+                "column 0 is selected base/running state"
+                if args.prefix_base_state
+                else "no separate base column in native packed table"
+            ),
+            "prefix_base_state": bool(args.prefix_base_state),
         },
         "cases": cases,
     }
     result["passed"] = all(
         case["conv_prefix_close"]
         and case["ssm_prefix_close"]
+        and case["base_column_close"]
         and case["core_output_close"]
         and case["z_output_close"]
         for case in cases

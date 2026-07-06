@@ -1,0 +1,657 @@
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index 18c79cd..4b32464 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -1,4 +1,7 @@
+ #include <algorithm>
++#include <cctype>
++#include <cstdlib>
++#include <string>
+ 
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+@@ -14,6 +17,22 @@
+   #include "xe_2/chunk_gated_delta_rule_xe2.h"
+ #endif
+ 
++namespace {
++
++bool gdn_env_truthy(const char* name) {
++  const char* raw = std::getenv(name);
++  if (raw == nullptr) {
++    return false;
++  }
++  std::string value(raw);
++  std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
++    return static_cast<char>(std::tolower(c));
++  });
++  return value == "1" || value == "true" || value == "yes" || value == "on";
++}
++
++}  // namespace
++
+ void gdn_attention(
+     torch::Tensor&
+         core_attn_out,  // [total_seqlen, num_v_heads / tp_size, head_v_dim]
+@@ -588,6 +607,8 @@ void gdn_attention_spec_decode(
+ 
+   const int64_t total_spec_tokens = spec_token_indices.numel();
+   const int64_t conv_history_len = conv_weights.size(1) - 1;
++  const bool native_spec_prefix_base_state =
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE");
+   torch::Tensor accepted_state_indices = torch::empty(
+       {num_spec_decodes},
+       torch::dtype(at::kInt).device(device).requires_grad(false));
+@@ -632,7 +653,8 @@ void gdn_attention_spec_decode(
+         accepted_state_indices,                                           \
+         spec_state_indices_tensor,                                        \
+         num_accepted_tokens,                                              \
+-        num_spec_decodes);                                                \
++        num_spec_decodes,                                                 \
++        native_spec_prefix_base_state);                                   \
+     gdn::spec_decode::select_state_column(                                \
+         queue,                                                            \
+         running_state_indices,                                            \
+@@ -698,7 +720,15 @@ void gdn_attention_spec_decode(
+         head_k_dim,                                                       \
+         local_num_v_heads,                                                \
+         head_v_dim,                                                       \
+-        reorder_input);                                                   \
++        reorder_input,                                                    \
++        native_spec_prefix_base_state);                                   \
++    if (native_spec_prefix_base_state) {                                  \
++      gdn::spec_decode::copy_conv_rows_to_indices<scalar_t>(              \
++          queue,                                                          \
++          conv_state,                                                     \
++          base_conv_state,                                                \
++          running_state_indices);                                         \
++    }                                                                     \
+     gdn::spec_decode::gated_delta_rule_spec<scalar_t>(                    \
+         queue,                                                            \
+         core_attn_out,                                                    \
+@@ -715,7 +745,8 @@ void gdn_attention_spec_decode(
+         spec_state_indices_tensor,                                        \
+         std::nullopt,                                                     \
+         num_spec_decodes,                                                 \
+-        num_actual_tokens);                                               \
++        num_actual_tokens,                                                \
++        native_spec_prefix_base_state);                                   \
+   } while (0)
+ 
+   if (dtype == at::kBFloat16) {
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 4303f45..03cac18 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -384,7 +384,8 @@ struct select_accepted_state_indices_kernel {
+       const int accepted_stride_0,
+       const int rows,
+       const int state_cols,
+-      const bool has_num_accepted_tokens)
++      const bool has_num_accepted_tokens,
++      const bool prefix_base_state)
+       : accepted_state_indices(accepted_state_indices),
+         state_indices(state_indices),
+         num_accepted_tokens(num_accepted_tokens),
+@@ -393,7 +394,8 @@ struct select_accepted_state_indices_kernel {
+         accepted_stride_0(accepted_stride_0),
+         rows(rows),
+         state_cols(state_cols),
+-        has_num_accepted_tokens(has_num_accepted_tokens) {}
++        has_num_accepted_tokens(has_num_accepted_tokens),
++        prefix_base_state(prefix_base_state) {}
+ 
+   static inline sycl::nd_range<1> get_nd_range(const int rows) {
+     sycl::range<1> local(group_size);
+@@ -408,7 +410,13 @@ struct select_accepted_state_indices_kernel {
+     }
+     int offset = 0;
+     if (has_num_accepted_tokens) {
+-      offset = num_accepted_tokens[row * accepted_stride_0] - 1;
++      // Native packed state tables normally publish "state after packed row j"
++      // in column j, so accepted N tokens means the next spec pass starts from
++      // column N-1.  Prefix-base mode reserves column 0 for the unmodified
++      // running/base state and shifts exact prefix state after row j to column
++      // j+1, so the source column becomes N.
++      offset = num_accepted_tokens[row * accepted_stride_0] -
++               (prefix_base_state ? 0 : 1);
+       offset = sycl::max(0, sycl::min(offset, state_cols - 1));
+     }
+     accepted_state_indices[row] =
+@@ -425,6 +433,7 @@ struct select_accepted_state_indices_kernel {
+   const int rows;
+   const int state_cols;
+   const bool has_num_accepted_tokens;
++  const bool prefix_base_state;
+ };
+ 
+ struct select_state_column_kernel {
+@@ -770,7 +779,8 @@ struct store_conv_states_exact_kernel {
+       const int num_v_heads,
+       const int head_v_dim,
+       const int qkvz_elems,
+-      const int conv_elems)
++      const int conv_elems,
++      const bool prefix_base_state)
+       : conv_states(conv_states),
+         conv_states_stride_0(conv_states_stride_0),
+         base_conv_states(base_conv_states),
+@@ -789,7 +799,8 @@ struct store_conv_states_exact_kernel {
+         num_v_heads(num_v_heads),
+         head_v_dim(head_v_dim),
+         qkvz_elems(qkvz_elems),
+-        conv_elems(conv_elems) {}
++        conv_elems(conv_elems),
++        prefix_base_state(prefix_base_state) {}
+ 
+   static inline sycl::nd_range<3> get_nd_range(
+       const int rows,
+@@ -879,8 +890,18 @@ struct store_conv_states_exact_kernel {
+     if (seq_start + spec_pos >= seq_end) {
+       return;
+     }
++    int dst_col = spec_pos;
++    if (prefix_base_state) {
++      // Column 0 is reserved as the unmodified base/running state. Publish
++      // exact prefixes to columns 1..N and leave any overflow row (normally the
++      // target-owned bonus row) as output-only.
++      dst_col = spec_pos + 1;
++      if (dst_col >= spec_loop_len) {
++        return;
++      }
++    }
+     const int dst_state =
+-        state_indices[row * state_stride_0 + spec_pos * state_stride_1];
++        state_indices[row * state_stride_0 + dst_col * state_stride_1];
+     if (dst_state <= 0) {
+       return;
+     }
+@@ -910,6 +931,7 @@ struct store_conv_states_exact_kernel {
+   const int head_v_dim;
+   const int qkvz_elems;
+   const int conv_elems;
++  const bool prefix_base_state;
+ };
+ 
+ template <typename StateT>
+@@ -2148,7 +2170,8 @@ struct gated_delta_rule_spec_kernel {
+       const int num_k_heads,
+       const int head_k_dim,
+       const int num_v_heads,
+-      const int head_v_dim)
++      const int head_v_dim,
++      const bool prefix_base_state)
+       : core_attn_out(core_attn_out),
+         q(q),
+         k(k),
+@@ -2174,7 +2197,8 @@ struct gated_delta_rule_spec_kernel {
+         num_k_heads(num_k_heads),
+         head_k_dim(head_k_dim),
+         num_v_heads(num_v_heads),
+-        head_v_dim(head_v_dim) {}
++        head_v_dim(head_v_dim),
++        prefix_base_state(prefix_base_state) {}
+ 
+   static inline sycl::nd_range<3> get_nd_range(
+       const int batch_size,
+@@ -2349,8 +2373,15 @@ struct gated_delta_rule_spec_kernel {
+         }
+       }
+ 
++      int dst_col = spec_pos;
++      if (prefix_base_state) {
++        dst_col = spec_pos + 1;
++        if (dst_col >= state_cols) {
++          continue;
++        }
++      }
+       const int dst_state_id =
+-          state_indices[batch_id * state_stride_0 + spec_pos * state_stride_1];
++          state_indices[batch_id * state_stride_0 + dst_col * state_stride_1];
+       if (dst_state_id > 0) {
+         StateT* dst_state_ptr =
+             ssm_state +
+@@ -2394,6 +2425,7 @@ struct gated_delta_rule_spec_kernel {
+   const int head_k_dim;
+   const int num_v_heads;
+   const int head_v_dim;
++  const bool prefix_base_state;
+ };
+ 
+ template <
+@@ -2526,7 +2558,11 @@ struct gdn_replayssm_stage_conv_kernel {
+       const int dim,
+       const int rel_pos) const {
+     if (rel_pos < 0) {
+-      const int state_pos = state_len + rel_pos;
++      // ReplaySSM keeps the active causal-conv history in the first
++      // Width-1 columns of conv_state.  Do not read from the physical tail:
++      // Qwen GDN conv_state can have an extra column, while commit/fallback
++      // both treat columns [0, Width-2] as the window to shift.
++      const int state_pos = (Width - 1) + rel_pos;
+       if (!valid_slot || state_pos < 0 || state_pos >= state_len) {
+         return T(0);
+       }
+@@ -3360,7 +3396,8 @@ inline void select_accepted_state_indices(
+     torch::Tensor& accepted_state_indices,
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+-    const int num_spec_decodes) {
++    const int num_spec_decodes,
++    const bool prefix_base_state = false) {
+   using KERNEL = select_accepted_state_indices_kernel;
+   const bool has_num_accepted_tokens = num_accepted_tokens.has_value();
+   auto range = KERNEL::get_nd_range(num_spec_decodes);
+@@ -3376,7 +3413,8 @@ inline void select_accepted_state_indices(
+         has_num_accepted_tokens ? num_accepted_tokens->stride(0) : 0,
+         num_spec_decodes,
+         state_indices.size(1),
+-        has_num_accepted_tokens);
++        has_num_accepted_tokens,
++        prefix_base_state);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -3664,7 +3702,8 @@ void store_conv_states_exact_launcher(
+     const int num_k_heads,
+     const int head_k_dim,
+     const int num_v_heads,
+-    const int head_v_dim) {
++    const int head_v_dim,
++    const bool prefix_base_state) {
+   using KERNEL = store_conv_states_exact_kernel<T, Width, ReorderInput>;
+   auto range =
+       KERNEL::get_nd_range(num_spec_decodes, spec_loop_len, conv_states.size(2));
+@@ -3688,7 +3727,8 @@ void store_conv_states_exact_launcher(
+         num_v_heads,
+         head_v_dim,
+         mixed_qkvz.size(1),
+-        conv_states.size(2));
++        conv_states.size(2),
++        prefix_base_state);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -3709,7 +3749,8 @@ void store_conv_states_exact(
+     const int head_k_dim,
+     const int num_v_heads,
+     const int head_v_dim,
+-    const bool reorder_input) {
++    const bool reorder_input,
++    const bool prefix_base_state = false) {
+   const int width = base_conv_states.size(1) + 1;
+ #define STORE_EXACT_WIDTH_CASE(width_value, reorder_value)                 \
+   store_conv_states_exact_launcher<T, width_value, reorder_value>(         \
+@@ -3726,7 +3767,8 @@ void store_conv_states_exact(
+       num_k_heads,                                                         \
+       head_k_dim,                                                          \
+       num_v_heads,                                                         \
+-      head_v_dim)
++      head_v_dim,                                                          \
++      prefix_base_state)
+ 
+ #define STORE_EXACT_WIDTH_DISPATCH(reorder_value) \
+   switch (width) {                                \
+@@ -4897,7 +4939,8 @@ void gated_delta_rule_spec_launcher(
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+     const int num_spec_decodes,
+-    const int num_actual_tokens) {
++    const int num_actual_tokens,
++    const bool prefix_base_state = false) {
+   using KERNEL = gated_delta_rule_spec_kernel<T, StateT, k_bucket_size>;
+   auto range =
+       KERNEL::get_nd_range(num_spec_decodes, v.size(1), v.size(2));
+@@ -4931,7 +4974,8 @@ void gated_delta_rule_spec_launcher(
+         q.size(1),
+         q.size(2),
+         v.size(1),
+-        v.size(2));
++        v.size(2),
++        prefix_base_state);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -4953,7 +4997,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+     const int num_spec_decodes,
+-    const int num_actual_tokens) {
++    const int num_actual_tokens,
++    const bool prefix_base_state = false) {
+   const int k_bucket_size = q.size(2) / 32;
+   switch (k_bucket_size) {
+     case 1:
+@@ -4973,7 +5018,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     case 2:
+       gated_delta_rule_spec_launcher<T, StateT, 2>(
+@@ -4992,7 +5038,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     case 4:
+       gated_delta_rule_spec_launcher<T, StateT, 4>(
+@@ -5011,7 +5058,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     case 8:
+       gated_delta_rule_spec_launcher<T, StateT, 8>(
+@@ -5030,7 +5078,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     default:
+       TORCH_CHECK(false, "Unsupported GDN head_k_dim bucket: ", k_bucket_size);
+@@ -5054,7 +5103,8 @@ void gated_delta_rule_spec(
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+     const int num_spec_decodes,
+-    const int num_actual_tokens) {
++    const int num_actual_tokens,
++    const bool prefix_base_state = false) {
+   if (ssm_state.scalar_type() == at::kFloat) {
+     gated_delta_rule_spec_bucket_dispatch<T, float>(
+         queue,
+@@ -5072,7 +5122,8 @@ void gated_delta_rule_spec(
+         state_indices,
+         num_accepted_tokens,
+         num_spec_decodes,
+-        num_actual_tokens);
++        num_actual_tokens,
++        prefix_base_state);
+   } else if (ssm_state.scalar_type() == at::kBFloat16) {
+     gated_delta_rule_spec_bucket_dispatch<T, sycl::ext::oneapi::bfloat16>(
+         queue,
+@@ -5090,7 +5141,8 @@ void gated_delta_rule_spec(
+         state_indices,
+         num_accepted_tokens,
+         num_spec_decodes,
+-        num_actual_tokens);
++        num_actual_tokens,
++        prefix_base_state);
+   } else if (ssm_state.scalar_type() == at::kHalf) {
+     gated_delta_rule_spec_bucket_dispatch<T, sycl::half>(
+         queue,
+@@ -5108,7 +5160,8 @@ void gated_delta_rule_spec(
+         state_indices,
+         num_accepted_tokens,
+         num_spec_decodes,
+-        num_actual_tokens);
++        num_actual_tokens,
++        prefix_base_state);
+   } else {
+     TORCH_CHECK(
+         false,
+@@ -5827,6 +5880,9 @@ void gdn_replayssm_spec_cache_dispatch(
+     case 4:
+       REPLAY_CACHE_CASE(4);
+       break;
++    case 8:
++      REPLAY_CACHE_CASE(8);
++      break;
+     default:
+       TORCH_CHECK(false, "Unsupported ReplaySSM cache length: ", max_cache_len);
+   }
+@@ -5868,6 +5924,8 @@ void gdn_replayssm_spec_len_dispatch(
+     REPLAY_SPEC_CASE(1);
+   } else if (max_spec_len <= 2) {
+     REPLAY_SPEC_CASE(2);
++  } else if (max_spec_len <= 4) {
++    REPLAY_SPEC_CASE(4);
+   } else {
+     TORCH_CHECK(false, "Unsupported ReplaySSM max_spec_len: ", max_spec_len);
+   }
+@@ -6040,7 +6098,10 @@ struct gdn_replayssm_commit_pending_kernel {
+       const int rows,
+       const int conv_dim,
+       const int conv_base_len) {
+-    const int elems_per_row = std::max(1, conv_dim * conv_base_len);
++    // One work item per (row, d) so each item snapshots all conv_base_len
++    // columns locally before writing — avoids the cross-work-item read/write
++    // race in the old per-element layout when accepted > 0.
++    const int elems_per_row = std::max(1, conv_dim);
+     const int total = rows * elems_per_row;
+     sycl::range<1> local(group_size);
+     sycl::range<1> global((total + group_size - 1) / group_size);
+@@ -6077,7 +6138,10 @@ struct gdn_replayssm_commit_pending_kernel {
+   }
+ 
+   void operator()(sycl::nd_item<1> item) const {
+-    const int elems_per_row = sycl::max(1, conv_dim * conv_base_len);
++    // elems_per_row is now conv_dim (not conv_dim*conv_base_len):
++    // each work item owns one d-dimension element and handles all
++    // conv_base_len columns internally via a snapshot to avoid races.
++    const int elems_per_row = sycl::max(1, conv_dim);
+     const int linear = item.get_global_linear_id();
+     const int total = rows * elems_per_row;
+     if (linear >= total) {
+@@ -6085,32 +6149,40 @@ struct gdn_replayssm_commit_pending_kernel {
+     }
+ 
+     const int row = linear / elems_per_row;
+-    const int elem = linear - row * elems_per_row;
++    const int d = linear - row * elems_per_row;  // conv_dim index
+     const int slot = slot_for_row(row);
+     const int accepted = accepted_for_row(row, slot);
+ 
+-    if (conv_base_len > 0 && elem < conv_dim * conv_base_len) {
+-      const int state_pos = elem / conv_dim;
+-      const int conv_elem = elem - state_pos * conv_dim;
+-      const int source_pos = accepted + state_pos;
+-      T value = T(0);
+-      if (source_pos < conv_base_len) {
+-        value = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                           static_cast<int64_t>(conv_elem) * conv_stride_1 +
+-                           static_cast<int64_t>(source_pos) * conv_stride_2];
+-      } else {
+-        const int pending_pos = source_pos - conv_base_len;
+-        value =
+-            conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
+-                         static_cast<int64_t>(pending_pos) * pending_stride_1 +
+-                         static_cast<int64_t>(conv_elem) * pending_stride_2];
++    // Two-phase conv window shift for this (slot, d) lane.
++    // Phase 1: read all source columns into a stack snapshot.
++    // Phase 2: write from snapshot — no race because all reads are done.
++    // conv_base_len <= 4 for Qwen GDN; tmp is stack-safe in SYCL device code.
++    if (conv_base_len > 0 && d < conv_dim) {
++      T tmp[4] = {};
++      const int n = sycl::min(conv_base_len, 4);
++      for (int s = 0; s < n; ++s) {
++        const int source_pos = accepted + s;
++        if (source_pos < conv_base_len) {
++          tmp[s] = conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                              static_cast<int64_t>(d) * conv_stride_1 +
++                              static_cast<int64_t>(source_pos) * conv_stride_2];
++        } else {
++          const int pending_pos = source_pos - conv_base_len;
++          tmp[s] =
++              conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
++                           static_cast<int64_t>(pending_pos) * pending_stride_1 +
++                           static_cast<int64_t>(d) * pending_stride_2];
++        }
++      }
++      for (int s = 0; s < n; ++s) {
++        conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                   static_cast<int64_t>(d) * conv_stride_1 +
++                   static_cast<int64_t>(s) * conv_stride_2] = tmp[s];
+       }
+-      conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+-                 static_cast<int64_t>(conv_elem) * conv_stride_1 +
+-                 static_cast<int64_t>(state_pos) * conv_stride_2] = value;
+     }
+ 
+-    if (elem == 0) {
++    // Cursor update: run once per row on work item d==0.
++    if (d == 0) {
+       const int old_wp = write_pos[slot];
+       const int old_base = cache_base[slot];
+       const bool old_flush = is_flush[slot] != 0;
+diff --git a/csrc/xpu/moe_layerlet.cpp b/csrc/xpu/moe_layerlet.cpp
+index 68e9418..9310ae3 100644
+--- a/csrc/xpu/moe_layerlet.cpp
++++ b/csrc/xpu/moe_layerlet.cpp
+@@ -88,10 +88,10 @@ void require_optional_same_device(
+   require_same_device(reference, tensor.value(), name);
+ }
+ 
+-template <typename scalar_t>
++template <typename scalar_t, typename topk_t>
+ void qwen36_single_token_prologue_quant1_out_impl(
+     const scalar_t* hidden_states,
+-    const int64_t* topk_ids,
++    const topk_t* topk_ids,
+     int64_t* expert_first_token_offset,
+     int* unpermuted_row_to_permuted_row,
+     int8_t* gemm1_a,
+@@ -118,7 +118,7 @@ void qwen36_single_token_prologue_quant1_out_impl(
+                    expert += local_range) {
+                 int count = 0;
+                 for (int k = 0; k < topk; ++k) {
+-                  if (topk_ids[k] < expert) {
++                  if (static_cast<int64_t>(topk_ids[k]) < expert) {
+                     count += 1;
+                   }
+                 }
+@@ -127,11 +127,12 @@ void qwen36_single_token_prologue_quant1_out_impl(
+ 
+               for (int row_id = local_id; row_id < topk;
+                    row_id += local_range) {
+-                const int64_t selected_expert = topk_ids[row_id];
++                const int64_t selected_expert =
++                    static_cast<int64_t>(topk_ids[row_id]);
+                 int less = 0;
+                 int prior_equal = 0;
+                 for (int k = 0; k < topk; ++k) {
+-                  const int64_t other = topk_ids[k];
++                  const int64_t other = static_cast<int64_t>(topk_ids[k]);
+                   if (other < selected_expert) {
+                     less += 1;
+                   }
+@@ -395,42 +396,52 @@ void qwen36_single_token_prologue_quant1_out(
+       "qwen36 fused prologue+quant1 only supports bf16, fp16, and fp32 hidden_states");
+   require_dtype(gemm1_a, "gemm1_a", torch::kInt8);
+   require_dtype(gemm1_a_scales, "gemm1_a_scales", torch::kFloat32);
++  TORCH_CHECK(
++      topk_ids.scalar_type() == torch::kInt64 ||
++          topk_ids.scalar_type() == torch::kInt32,
++      "topk_ids dtype mismatch: expected Long or Int got ",
++      topk_ids.scalar_type());
++
++#define QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(HIDDEN_PTR)            \
++  do {                                                                      \
++    if (topk_ids.scalar_type() == torch::kInt64) {                          \
++      qwen36_single_token_prologue_quant1_out_impl(                         \
++          HIDDEN_PTR,                                                       \
++          topk_ids.data_ptr<int64_t>(),                                     \
++          expert_first_token_offset.data_ptr<int64_t>(),                    \
++          unpermuted_row_to_permuted_row.data_ptr<int>(),                   \
++          gemm1_a.data_ptr<int8_t>(),                                       \
++          gemm1_a_scales.data_ptr<float>(),                                 \
++          hidden_size,                                                      \
++          8,                                                                \
++          num_experts);                                                     \
++    } else {                                                                \
++      qwen36_single_token_prologue_quant1_out_impl(                         \
++          HIDDEN_PTR,                                                       \
++          topk_ids.data_ptr<int>(),                                         \
++          expert_first_token_offset.data_ptr<int64_t>(),                    \
++          unpermuted_row_to_permuted_row.data_ptr<int>(),                   \
++          gemm1_a.data_ptr<int8_t>(),                                       \
++          gemm1_a_scales.data_ptr<float>(),                                 \
++          hidden_size,                                                      \
++          8,                                                                \
++          num_experts);                                                     \
++    }                                                                       \
++  } while (false)
+ 
+   if (hidden_states.scalar_type() == torch::kBFloat16) {
+-    qwen36_single_token_prologue_quant1_out_impl(
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
+         reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
+-            hidden_states.data_ptr()),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++            hidden_states.data_ptr()));
+   } else if (hidden_states.scalar_type() == torch::kFloat16) {
+-    qwen36_single_token_prologue_quant1_out_impl(
+-        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
++        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()));
+   } else {
+-    qwen36_single_token_prologue_quant1_out_impl(
+-        hidden_states.data_ptr<float>(),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
++        hidden_states.data_ptr<float>());
+   }
++
++#undef QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1
+ }
+ 
+ template <typename scalar_t>
+@@ -1112,7 +1123,11 @@ torch::Tensor qwen36_moe_w8a8_full_layerlet(
+                         "expert_first_token_offset");
+     require_same_device(hidden_states, output, "output");
+ 
+-    require_dtype(topk_ids, "topk_ids", torch::kInt64);
++    TORCH_CHECK(
++        topk_ids.scalar_type() == torch::kInt64 ||
++            topk_ids.scalar_type() == torch::kInt32,
++        "topk_ids dtype mismatch: expected Long or Int got ",
++        topk_ids.scalar_type());
+     require_dtype(topk_weights, "topk_weights", torch::kFloat32);
+     require_dtype(workspace, "workspace", torch::kUInt8);
+     require_dtype(
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 327562f..d49931f 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -2204,6 +2204,7 @@ def xpu_fused_moe(hidden_states,
+             "num_rows": int(num_rows),
+             "hidden_size": int(hidden_size),
+             "n_experts_per_token": int(n_experts_per_token),
++            "topk_ids_dtype": str(topk_ids.dtype).replace("torch.", ""),
+             "expert_map_is_none": expert_map is None,
+             "ep_size": int(ep_size),
+             "has_int8_scratch": int8_scratch is not None,

@@ -26,8 +26,10 @@ export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-$GPU_INDEX}"
 # view, the visible XPU is logical index 0; using level_zero:$GPU_INDEX makes
 # torch see zero devices for GPU_INDEX > 0.
 export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0}"
+export VLLM_TARGET_DEVICE="${VLLM_TARGET_DEVICE:-xpu}"
 export VLLM_NO_USAGE_STATS="${VLLM_NO_USAGE_STATS:-1}"
-export LD_LIBRARY_PATH="$QWEN36_27B_AR_VENV/lib:$QWEN36_27B_AR_VENV/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-}"
+export VLLM_XPU_KERNELS_SRC="${VLLM_XPU_KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
+export LD_LIBRARY_PATH="$VLLM_XPU_KERNELS_SRC/vllm_xpu_kernels:$QWEN36_27B_AR_VENV/lib:$QWEN36_27B_AR_VENV/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-}"
 
 if [[ "$QWEN36_27B_ENABLE_XPU_GRAPH" == "1" ]]; then
   export XPU_GRAPH="${XPU_GRAPH:-1}"
@@ -45,6 +47,8 @@ echo "  mtp: $QWEN36_27B_ENABLE_MTP tokens=$NUM_SPECULATIVE_TOKENS"
 echo "  default_enable_thinking: $QWEN36_27B_DEFAULT_ENABLE_THINKING"
 echo "  reasoning_parser: ${QWEN36_27B_REASONING_PARSER:-<none>}"
 echo "  prompt_token_details: $QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS"
+echo "  vllm_target_device: $VLLM_TARGET_DEVICE"
+echo "  xpu_kernels_src: $VLLM_XPU_KERNELS_SRC"
 echo "  compilation_config: ${COMPILATION_CONFIG:-<default>}"
 echo "  promote_accepted_spec_state: ${VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE:-0}"
 echo "  nonspec_postprocess_accepted_state: ${VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE:-1}"
