@@ -280,12 +280,13 @@ Active target as of the latest switch request:
   not fast enough to justify endpoint plumbing. A bounded all-scope follow-up
   from the v4 best checkpoint reached only `1.0707972582972582`, and original
   all-scope low-LR runs underfit, so simple full-draft unfreezing is not the
-  unlock. A late-step weighted continuation (`decay=1.25`, `lr=2e-5`) is the
-  current best diagnostic checkpoint at `1.0922619047619047` mean accepted
-  (`56.50%` step-1 exact, `53.32%` step-2 conditional, `53.17%` step-3
-  conditional). Next work should continue objective research, not merely add
-  endpoint/kernel integration. Do not endpoint-test this adapted draft unless
-  offline mean accepted reaches at least `1.5-2.0`.
+  unlock. Late-step weighted continuation is the current best diagnostic
+  family; the best checkpoint uses `decay=1.1`, `lr=2e-5` and reaches
+  `1.1073232323232323` mean accepted (`56.96%` step-1 exact, `53.75%`
+  step-2 conditional, `53.65%` step-3 conditional). Next work should continue
+  objective research, not merely add endpoint/kernel integration. Do not
+  endpoint-test this adapted draft unless offline mean accepted reaches at
+  least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

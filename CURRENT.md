@@ -131,11 +131,11 @@ Fastest quality-gated practical variant:
   step-3 conditional). This is still below the `1.5-2.0` offline threshold
   for endpoint/kernel work. A bounded all-scope follow-up from the v4 best
   checkpoint reached only `1.0707972582972582` mean accepted, so simple
-  full-draft unfreezing is not the unlock. A late-step weighted continuation
-  (`decay=1.25`, `lr=2e-5`) is the current best diagnostic at
-  `1.0922619047619047` mean accepted (`56.50%` step-1 exact, `53.32%` step-2
-  conditional, `53.17%` step-3 conditional). Next work should continue
-  objective research, not wire the drafter into vLLM yet;
+  full-draft unfreezing is not the unlock. Late-step weighted continuation is
+  the current best diagnostic family; the best checkpoint uses `decay=1.1`,
+  `lr=2e-5` and reaches `1.1073232323232323` mean accepted (`56.96%` step-1
+  exact, `53.75%` step-2 conditional, `53.65%` step-3 conditional). Next work
+  should continue objective research, not wire the drafter into vLLM yet;
 
 Previous fastest quality-gated practical variant:
 

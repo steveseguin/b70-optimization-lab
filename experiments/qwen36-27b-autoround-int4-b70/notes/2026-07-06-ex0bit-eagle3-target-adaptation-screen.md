@@ -508,3 +508,39 @@ Interpretation:
   `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T215224Z/continue-r3-lr2e-5-decay1p25/checkpoint`.
   If continuing, keep testing objective variants around decay `1.25`; simple
   decay `1.5` from original traded first-token accuracy away and did not win.
+
+## Late-continuation from the weighted checkpoint: still climbing slowly
+
+Continued from the previous best late-weight checkpoint and tightened around
+decay `1.1-1.5`.
+
+Run root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T220622Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json
+```
+
+Heldout shard `3`, all `22,176` starts:
+
+| variant | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|
+| `cont2-r3-lr2e-5-decay1p1` | `2e-5` | `1.1` | **`1.1073232323232323`** | `56.96%` | `53.75%` | `53.65%` |
+| `cont2-r3-lr2e-5-decay1p25` | `2e-5` | `1.25` | `1.104301948051948` | `56.71%` | `53.79%` | `53.89%` |
+| `cont2-r3-lr2e-5-decay1p5` | `2e-5` | `1.5` | `1.100604256854257` | `56.37%` | `53.70%` | `54.49%` |
+| `cont2-r3-lr1e-5-decay1p25` | `1e-5` | `1.25` | `1.0928932178932178` | `56.51%` | `53.45%` | `53.14%` |
+
+Interpretation:
+
+- Current best diagnostic checkpoint is now
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T220622Z/cont2-r3-lr2e-5-decay1p1/checkpoint`.
+- The lane is still improving, but only slowly: `1.0923` -> `1.1073`.
+- Stronger late weighting improves later conditional exact but trades away
+  some step-1 exact; mean accepted favored the lighter `1.1` weighting.
+- This is still below endpoint threshold. Continue objective research only if
+  chasing this lane further; do not submit or endpoint-integrate yet.
