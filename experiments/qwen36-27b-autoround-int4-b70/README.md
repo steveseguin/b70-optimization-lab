@@ -136,6 +136,10 @@ Latest stronger-drafter result:
   `diagnostics/qwen27-ex0bit-eagle3-deep-continuation2-v4-summary-20260706.json`
   and
   `diagnostics/qwen27-ex0bit-eagle3-deep-continuation3-v4-summary-20260706.json`.
+  A broader v5 diagnostic corpus is now collected (`1152` prompts / `184,320`
+  rows / zero continuity breaks) at
+  `diagnostics/qwen27-eagle3-aux-v5-corpus-summary-20260706.json`; use it for
+  the next training pass rather than repeating v4-only continuation.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

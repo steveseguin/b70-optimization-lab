@@ -731,3 +731,36 @@ Interpretation:
   to reach the `1.5-2.0` threshold by itself. The next larger move should be
   more/broader target-owned data, a more explicit survival objective, or a
   stronger drafter architecture.
+
+## V5 target-owned corpus collected
+
+Generated `eagle-chat-corpus-v5-suite.json` by expanding the non-final
+training suite to `16` domains, `12` tasks, and `6` variants per pair
+(`1152` prompts). Collected aux-hidden data across all four B70s with the same
+aux layers `1,31,60`.
+
+Corpus root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v2-chat-4gpu-20260706T231458Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v5-corpus-summary-20260706.json
+```
+
+Collection result:
+
+- `1152` prompts, `184,320` usable rows;
+- all `184,320` aux rows saved;
+- `0` continuity breaks, `0` aux bad files;
+- shard families:
+  - shard 0: database-operations, incident-response, performance-debug, security-review;
+  - shard 1: api-design, capacity-planning, code-review, quality-gates;
+  - shard 2: architecture-tradeoff, long-context, release-planning, support-escalation;
+  - shard 3: cost-optimization, data-pipeline, edge-deployment, incident-postmortem.
+
+Next training run should use shard 0-2 for training and shard 3 as a heldout
+domain split, starting from the current best rollout-5 checkpoint.
