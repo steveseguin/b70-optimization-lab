@@ -56,3 +56,40 @@ Future native commit/rollback work should run this harness before endpoint
 tests. It now catches both low-level recurrent prefix equality and high-level
 MTP row/accounting mistakes that previously created attractive but invalid
 `66-72 tok/s` rows.
+
+## 2026-07-06 follow-up: native prefix-base reject case guard
+
+`scripts/check-gdn-native-spec-prefix.py` was extended to cover the missing
+native prefix-base reject case:
+
+- `full_reject_source_base_col0`: `num_accepted_tokens=[0, 0, 0]` must select
+  prefix column `0`, the base/running state, not the first speculative row;
+- `restart_from_varied_accepted_counts` now includes `0` in prefix-base mode
+  (`[0, 1, 2]`) instead of starting at `1`.
+
+Validation:
+
+```text
+/home/steve/.venvs/vllm-xpu/bin/python -m py_compile scripts/check-gdn-native-spec-prefix.py
+VLLM_TARGET_DEVICE=xpu PYTHONPATH=/home/steve/src/vllm-xpu-kernels:/home/steve/src/vllm \
+  /home/steve/.venvs/vllm-xpu/bin/python scripts/check-gdn-native-spec-prefix.py --device xpu:0 --spec-len 3
+VLLM_TARGET_DEVICE=xpu PYTHONPATH=/home/steve/src/vllm-xpu-kernels:/home/steve/src/vllm \
+  /home/steve/.venvs/vllm-xpu/bin/python scripts/check-gdn-native-spec-prefix.py --device xpu:0 --spec-len 4 --prefix-base-state
+VLLM_TARGET_DEVICE=xpu PYTHONPATH=/home/steve/src/vllm-xpu-kernels:/home/steve/src/vllm \
+  /home/steve/.venvs/vllm-xpu/bin/python scripts/check-gdn-native-spec-prefix.py --device xpu:0 --spec-len 5 --prefix-base-state --dtype fp16
+```
+
+All passed. In prefix-base mode the new cases reported:
+
+- `full_reject_source_base_col0`: `source_cols=[0, 0, 0]`,
+  `base_column_close=true`, `conv_prefix_close=true`,
+  `ssm_prefix_close=true`;
+- `restart_from_varied_accepted_counts`: `source_cols=[0, 1, 2]`,
+  `base_column_close=true`, `conv_prefix_close=true`,
+  `ssm_prefix_close=true`.
+
+Conclusion: the native kernel/source-column contract can represent a reject
+rollback correctly in isolation. The remaining blocker is endpoint transaction
+plumbing: deriving the accepted draft-prefix count at the right boundary and
+committing/rolling state without corrupting target-owned replacement/bonus
+tokens or scheduler-visible output.

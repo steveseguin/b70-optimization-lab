@@ -466,6 +466,20 @@ def main() -> int:
                               device=device) * 0.01
 
     cases: list[dict[str, Any]] = []
+    if args.prefix_base_state:
+        zero_counts = torch.zeros((args.num_reqs,), dtype=torch.int32,
+                                  device=device)
+        cases.append(compare_case(
+            torch,
+            args,
+            inputs,
+            case_name="full_reject_source_base_col0",
+            initial_conv_table=initial_conv,
+            initial_ssm_table=initial_ssm,
+            state_table=state_table,
+            accepted_counts=zero_counts,
+            token_base=0,
+        ))
     first_counts = torch.ones((args.num_reqs,), dtype=torch.int32,
                               device=device)
     cases.append(compare_case(
@@ -518,10 +532,16 @@ def main() -> int:
             restart_conv.index_copy_(0, state_table[:, pos], conv_prefixes[pos])
             restart_ssm.index_copy_(0, state_table[:, pos], ssm_prefixes[pos])
 
-    varied_counts = (
-        torch.arange(args.num_reqs, dtype=torch.int32, device=device)
-        % args.spec_len
-    ) + 1
+    if args.prefix_base_state:
+        varied_counts = (
+            torch.arange(args.num_reqs, dtype=torch.int32, device=device)
+            % args.spec_len
+        )
+    else:
+        varied_counts = (
+            torch.arange(args.num_reqs, dtype=torch.int32, device=device)
+            % args.spec_len
+        ) + 1
     cases.append(compare_case(
         torch,
         args,
