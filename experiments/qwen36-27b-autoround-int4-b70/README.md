@@ -198,11 +198,14 @@ Latest stronger-drafter result:
   `notes/2026-07-07-eagle3-hidden-distill-no-endpoint.md`). This closes small
   EAGLE data/objective/all-scope/hidden-distill sweeps until there is a new
   mechanism.
-  New mechanism now in progress:
+  New five-aux mechanism screen:
   `notes/2026-07-07-eagle3-five-aux-tooling.md` adds `--aux-count 5` support
   for aux layers `[1,16,31,46,61]`, expanding old three-aux checkpoints into
-  slots `[0,2,4]`; keep it diagnostic until heldout offline acceptance reaches
-  the prior `1.5-2.0` endpoint gate.
+  slots `[0,2,4]`. The first v7 five-aux survival screen is closed in
+  `notes/2026-07-07-eagle3-five-aux-survival-no-endpoint.md`: clean corpus
+  (`61,307` rows, zero aux bad files), training improved the expanded source
+  baseline `0.873 -> 1.082` mean accepted, but stayed below prior `~1.10`
+  diagnostics and far below the `1.5-2.0` endpoint gate.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 - Target-body timing refresh:
