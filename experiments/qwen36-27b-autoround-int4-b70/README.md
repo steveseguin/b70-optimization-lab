@@ -81,6 +81,11 @@ Latest transaction diagnostic:
   commit/stage/spec-decode boundary digests for layer 0 at `67.453 tok/s`
   strict-fresh/cached-zero with quality skipped. Use it for future
   graph-safe GDN/DeltaNet transaction/tape work, not as a promoted benchmark.
+- `notes/2026-07-07-replayssm-stage-decode-fusion-pregate.md` records a
+  direct native-op microbench of `gdn_replayssm_stage_conv` +
+  `gdn_replayssm_spec_decode` at current MTP3/cache8 shape. Paired cost was
+  only `0.045 ms/layer` (`~2.18 ms` over 48 GDN layers), so a fused op is
+  future ReplaySSM polish, not the main `>100 tok/s` path.
 
 Latest stronger-drafter result:
 

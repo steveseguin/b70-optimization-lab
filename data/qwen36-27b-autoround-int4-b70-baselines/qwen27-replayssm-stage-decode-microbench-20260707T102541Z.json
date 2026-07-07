@@ -1,0 +1,44 @@
+{
+  "candidate_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+  "classification": "diagnostic_microbench_not_endpoint_not_localmaxxing",
+  "env": {
+    "LD_LIBRARY_PATH": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+    "ONEAPI_DEVICE_SELECTOR": null,
+    "ZE_AFFINITY_MASK": null
+  },
+  "hypothesis": "ReplaySSM stage_conv + spec_decode fusion pre-gate",
+  "records": [
+    {
+      "mean_ms": 0.023022142937406898,
+      "mean_us": 23.022142937406898,
+      "name": "stage_conv"
+    },
+    {
+      "mean_ms": 0.03884692885912955,
+      "mean_us": 38.84692885912955,
+      "name": "spec_decode"
+    },
+    {
+      "mean_ms": 0.04538951790891588,
+      "mean_us": 45.38951790891588,
+      "name": "stage_then_decode",
+      "python_pair_overhead_ms": -0.01647955388762057,
+      "separate_sum_ms": 0.061869071796536446
+    }
+  ],
+  "shape": {
+    "cache_len": 8,
+    "conv_dim": 10240,
+    "conv_width": 4,
+    "dtype": "bf16",
+    "head_k_dim": 128,
+    "head_v_dim": 128,
+    "num_k_heads": 16,
+    "num_slots": 2,
+    "num_v_heads": 48,
+    "rows": 1,
+    "spec_len": 4,
+    "state_dtype": "bf16",
+    "total_tokens": 4
+  }
+}

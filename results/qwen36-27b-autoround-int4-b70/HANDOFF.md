@@ -287,6 +287,12 @@ Current fastest quality-gated variant:
   The diagnostic run passed strict fresh/cached-zero mechanics at `67.453 tok/s`
   with quality skipped and captured 80 layer-0 state records. Treat this as
   graph-safe transaction/tape evidence only.
+- Latest ReplaySSM stage+decode fusion pre-gate:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-replayssm-stage-decode-fusion-pregate.md`.
+  A direct BF16 native-op microbench measured `gdn_replayssm_stage_conv` +
+  `gdn_replayssm_spec_decode` at only `0.045 ms/layer` paired cost
+  (`~2.18 ms` across 48 GDN layers). A fused op may be future polish but is
+  not the main `>100 tok/s` route.
 - Latest current-recipe subtiming check:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-mtp3-subtiming.md`.
   The diagnostic run reproduced the current recipe at `68.296 tok/s` with

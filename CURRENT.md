@@ -82,6 +82,12 @@ Fastest quality-gated practical variant:
   boundaries plus `scripts/summarize-qwen27-replayssm-state-trace.py`; the
   trace run was strict-fresh/cached-zero at `67.453 tok/s` with quality skipped.
   Use it as transaction/tape evidence only, not as a headline benchmark;
+- latest ReplaySSM stage+decode fusion pre-gate:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-replayssm-stage-decode-fusion-pregate.md`.
+  A direct BF16 XPU microbench at current MTP3/cache8 shape measured
+  `stage_then_decode` at only `0.045 ms/layer` (`~2.18 ms` over 48 GDN layers),
+  so a fused native op cannot be the main `>100 tok/s` route. Keep it as
+  future ReplaySSM polish only;
 - latest current-recipe subtiming check:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-mtp3-subtiming.md`.
   It reproduced the current recipe at `68.296 tok/s` with strict
