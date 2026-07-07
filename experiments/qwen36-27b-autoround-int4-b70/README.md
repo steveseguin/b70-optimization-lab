@@ -185,6 +185,12 @@ Latest stronger-drafter result:
   is a new mechanism.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
+- Target-body timing refresh:
+  `notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md` records a
+  graph-none/no-spec timing run, an enforce-eager layer split, and a closed
+  no-win screen for `VLLM_XPU_SHARED_EXPERT_ACT_WORKSPACE=1`. This Qwen27
+  checkpoint is dense `qwen3_5_text`, not MoE; do not route current work toward
+  MoE layerlets or the workspace flag.
 
 Previous fastest quality-gated variant:
 

@@ -69,6 +69,13 @@ Fastest quality-gated practical variant:
 - note:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`;
 - LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`;
+- latest target-body timing/no-win screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
+  It confirms this Qwen27 checkpoint is dense `qwen3_5_text` (not MoE),
+  records graph-none/no-spec model-forward vs LM-head timing, captures an
+  enforce-eager layer split, and closes
+  `VLLM_XPU_SHARED_EXPERT_ACT_WORKSPACE=1` for this recipe after compile /
+  graph-split failures. Use it before trying more wrapper-level MLP flags;
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;

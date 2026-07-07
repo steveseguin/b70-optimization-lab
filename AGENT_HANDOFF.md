@@ -71,6 +71,18 @@ Active target as of the latest switch request:
   not credit native slot-copy as the source of the record. The previous
   BF16-scale INT8-LM-head record was `65.27648650325429 tok/s`, LocalMaxxing
   `cmr5iu3gk00bfq901nidgcana`.
+- Latest target-body timing/no-win screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
+  The checkpoint is dense `qwen3_5_text`, not MoE, so MoE layerlets are a
+  distraction for this model. The graph-none/no-spec profile measured
+  `39.971 ms/token` model-forward plus `2.755 ms/token` logits, and the
+  enforce-eager split showed linear-attention/GDN, full-attention, dense MLP,
+  and norms as the visible body buckets. The easy dense-MLP
+  `VLLM_XPU_SHARED_EXPERT_ACT_WORKSPACE=1` idea is closed: it first failed
+  Dynamo on `ContextVar.get`; after a compile guard patch it still failed
+  vLLM graph splitting. Patch preserved at
+  `patches/qwen36-27b-autoround-int4-b70/vllm-qwen2moe-act-workspace-compileguard-no-win-20260707.patch`;
+  active source was reverted.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

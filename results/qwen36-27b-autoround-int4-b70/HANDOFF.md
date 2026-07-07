@@ -238,6 +238,13 @@ Current fastest quality-gated variant:
   only to `1.0597349643221203` mean accepted:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`.
   This is not endpoint-worthy and should not be submitted to LocalMaxxing.
+- Latest target-body timing/no-win screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
+  It confirms the webhie/AutoRound Qwen27 checkpoint is dense `qwen3_5_text`
+  rather than MoE, records graph-none/no-spec model-forward vs LM-head timing,
+  and closes `VLLM_XPU_SHARED_EXPERT_ACT_WORKSPACE=1` after compile/graph
+  failures. Do not pursue MoE layerlets or this workspace flag for the current
+  Qwen27 recipe.
 
 Previous fastest quality-gated variant:
 
