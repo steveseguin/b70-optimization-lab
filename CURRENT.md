@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-07-06
+Date: 2026-07-07
 
 ## Active Target: Qwen3.6 27B INT4 AutoRound
 
@@ -106,6 +106,15 @@ Fastest quality-gated practical variant:
   headline and the `68.296 tok/s` current-recipe subtiming support row. Active
   source and runtime binary were restored; patches/results are preserved only
   as no-win evidence;
+- latest true native gated RMSNorm kernel screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-rmsnorm-gated-native-xpu-kernel-no-win.md`.
+  A new `_C.rms_norm_gated` op exactly matched the FLA `norm_before_gate=True`
+  expression order for Qwen GDN output norm and was a real isolated microbench
+  win (`~3.6x` faster wrapper path, `max diff=0` for hidden size `128`).
+  Endpoint evidence did not promote: standalone strict screen reached
+  `68.453 tok/s`, but same-window A/B was baseline `67.980` vs native
+  `67.928`, so the apparent gain is variance. Active source and `_C.abi3.so`
+  were restored; keep the patch only as a future GDN-body fusion reference;
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;

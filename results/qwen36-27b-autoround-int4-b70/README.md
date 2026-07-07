@@ -139,6 +139,12 @@ Current fastest quality-gated variant:
   isolated full-attention section in microbench, but the strict endpoint screen
   regressed to `66.953 tok/s` with quality skipped. See
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-qgate-direct-qkrope-no-win.md`.
+- latest true native gated RMSNorm kernel no-win: a new `_C.rms_norm_gated`
+  op exactly matched the Qwen GDN output norm and was `~3.6x` faster in
+  isolated hidden-size-128 microbench, but strict endpoint A/B did not improve
+  (`67.980` baseline vs `67.928` native). Active source and `_C.abi3.so` were
+  restored; see
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-rmsnorm-gated-native-xpu-kernel-no-win.md`.
 
 Previous fastest quality-gated variant:
 

@@ -114,6 +114,16 @@ Active target as of the latest switch request:
   current `68.236 tok/s` record and `68.296 tok/s` current-recipe support row.
   Active source and `_C.abi3.so` were restored; patches/results are preserved
   only so we do not rediscover the same dead end.
+- Latest true native gated RMSNorm kernel screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-rmsnorm-gated-native-xpu-kernel-no-win.md`.
+  A purpose-built `_C.rms_norm_gated` op exactly matched Qwen's
+  `norm_before_gate=True` GDN output norm (`max diff=0`) and was about `3.6x`
+  faster in isolated hidden-size-128 microbench. The endpoint did not move:
+  strict screen `68.453 tok/s` was within variance, and same-window A/B was
+  baseline `67.980` vs native `67.928`. Active source and `_C.abi3.so` were
+  restored. Do not repeat small RMS/GDN-output wrapper fusion as the next
+  speed lane; target accepted tokens per verifier step, graph-safe GDN
+  transaction work, or a producer-integrated LM-head shortcut instead.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

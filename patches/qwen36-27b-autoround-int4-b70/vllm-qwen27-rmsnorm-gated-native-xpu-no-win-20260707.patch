@@ -1,0 +1,63 @@
+diff --git a/vllm/model_executor/layers/layernorm.py b/vllm/model_executor/layers/layernorm.py
+index 4b9af832c..556c2fa4a 100644
+--- a/vllm/model_executor/layers/layernorm.py
++++ b/vllm/model_executor/layers/layernorm.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Custom normalization layers."""
+ 
++import os
++
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+@@ -17,6 +19,17 @@ from vllm.model_executor.layers.batch_invariant import rms_norm_batch_invariant
+ logger = init_logger(__name__)
+ 
+ 
++def _env_bool(name: str, default: bool = False) -> bool:
++    raw = getattr(envs, name, None)
++    if raw is None:
++        raw = os.environ.get(name)
++    if raw is None:
++        return default
++    if isinstance(raw, bool):
++        return raw
++    return str(raw).strip().lower() in ("1", "true", "yes", "on")
++
++
+ def poly_norm(
+     x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor, variance_epsilon: float
+ ) -> torch.Tensor:
+@@ -297,6 +310,31 @@ class RMSNormGated(CustomOp):
+     def forward_xpu(
+         self, x: torch.Tensor, z: torch.Tensor | None = None
+     ) -> torch.Tensor:
++        if (
++            _env_bool("VLLM_XPU_RMS_NORM_GATED_NATIVE")
++            and z is not None
++            and self.bias is None
++            and self.group_size is None
++            and self.norm_before_gate
++            and self.activation in ("silu", "swish", "sigmoid")
++            and x.device.type == "xpu"
++            and x.dim() == 2
++            and z.shape == x.shape
++            and x.stride(-1) == 1
++            and z.stride(-1) == 1
++            and self.weight.dtype == x.dtype
++            and hasattr(torch.ops._C, "rms_norm_gated")
++        ):
++            out = torch.empty_like(x, memory_format=torch.contiguous_format)
++            torch.ops._C.rms_norm_gated(
++                out,
++                x,
++                self.weight,
++                z,
++                self.eps,
++                self.activation == "sigmoid",
++            )
++            return out
+         return self.forward_cuda(x, z)
+ 
+ 
