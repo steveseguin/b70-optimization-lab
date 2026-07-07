@@ -773,6 +773,11 @@ The first direct rank-promotion screen is closed in
 loss tooling worked, but best heldout accepted depth moved only
 `1.10146 -> 1.10506`, so simple loss weighting around this checkpoint is not
 the missing extractor.
+The follow-up wide top-k MLP reranker screen is closed in
+`notes/2026-07-07-eagle3-wide-topk-reranker-no-endpoint.md`: top-64/top-128
+with hidden sizes `512/1024` peaked at `1.11539`, below the prior small top-8
+MLP reranker (`1.11927`). Cheap selected-candidate extraction from this frozen
+draft is therefore closed.
 The latest draft-INT4 fast-path screens are also closed:
 keep-scheduled-spec-row routing, graph-off, graph-off/no-async, cg4, and normal
 align/restore all kept the same repeat64 failure (`55/64` expected

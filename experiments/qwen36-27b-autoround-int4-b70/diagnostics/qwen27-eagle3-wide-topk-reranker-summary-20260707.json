@@ -1,0 +1,93 @@
+{
+  "schema": "qwen27_eagle3_wide_topk_reranker_summary",
+  "date_utc": "2026-07-07",
+  "classification": "diagnostic_only_no_endpoint",
+  "valid_headline_throughput": false,
+  "objective": "Screen stronger top-64/top-128 MLP rerankers after the wide top-k oracle showed enough target-token signal only under a magic extractor.",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-wide-topk-reranker-4gpu-20260707T104909Z",
+  "draft_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-allscope-20260707T075425Z/all-r5-lr3e-6-decay0p25/checkpoint",
+  "heldout_dataset": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset",
+  "baseline_top1_mean_accepted": 1.1014610941216445,
+  "prior_best_small_mlp_reranker_mean_accepted": 1.1192660550458715,
+  "rows": [
+    {
+      "label": "k64-h512-lr1e-3",
+      "topk": 64,
+      "hidden": 512,
+      "lr": 0.001,
+      "mean_accepted": 1.1153924566768603,
+      "starts": 14715,
+      "histogram": {
+        "0": 6202,
+        "1": 4221,
+        "2": 2284,
+        "3": 999,
+        "4": 418,
+        "5": 591
+      },
+      "step1_exact": 0.5785253143051308,
+      "step2_conditional_exact": 0.5041700927992482,
+      "step3_conditional_exact": 0.4678471575023299
+    },
+    {
+      "label": "k64-h1024-lr5e-4",
+      "topk": 64,
+      "hidden": 1024,
+      "lr": 0.0005,
+      "mean_accepted": 1.091063540604825,
+      "starts": 14715,
+      "histogram": {
+        "0": 6307,
+        "1": 4199,
+        "2": 2273,
+        "3": 983,
+        "4": 404,
+        "5": 549
+      },
+      "step1_exact": 0.5713897383622154,
+      "step2_conditional_exact": 0.5005946717411989,
+      "step3_conditional_exact": 0.45996673794250414
+    },
+    {
+      "label": "k128-h512-lr5e-4",
+      "topk": 128,
+      "hidden": 512,
+      "lr": 0.0005,
+      "mean_accepted": 1.0834522595990486,
+      "starts": 14715,
+      "histogram": {
+        "0": 6340,
+        "1": 4207,
+        "2": 2258,
+        "3": 963,
+        "4": 404,
+        "5": 543
+      },
+      "step1_exact": 0.5691471287801563,
+      "step2_conditional_exact": 0.4976716417910448,
+      "step3_conditional_exact": 0.45825335892514396
+    },
+    {
+      "label": "k128-h1024-lr3e-4",
+      "topk": 128,
+      "hidden": 1024,
+      "lr": 0.0003,
+      "mean_accepted": 1.0831124702684336,
+      "starts": 14715,
+      "histogram": {
+        "0": 6366,
+        "1": 4179,
+        "2": 2236,
+        "3": 984,
+        "4": 415,
+        "5": 535
+      },
+      "step1_exact": 0.5673802242609582,
+      "step2_conditional_exact": 0.49946101329500536,
+      "step3_conditional_exact": 0.46378896882494003
+    }
+  ],
+  "best_label": "k64-h512-lr1e-3",
+  "best_mean_accepted": 1.1153924566768603,
+  "decision": "No endpoint speed run and no LocalMaxxing submission. Wider K and larger MLPs did not extract the oracle signal; the best result is below the prior small top-8 MLP reranker and far below the 1.5-2.0 offline endpoint gate. Cheap selected-candidate extraction from this frozen draft is closed."
+}

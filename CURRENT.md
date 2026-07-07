@@ -313,6 +313,12 @@ Fastest quality-gated practical variant:
   `1.10146 -> 1.10506`. This closes simple top-k rank-promotion loss sweeps as
   an endpoint route; the remaining EAGLE/DFlash route needs a stronger
   architecture or data change that makes near-miss candidates rank-1;
+- latest EAGLE wide-reranker screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-wide-topk-reranker-no-endpoint.md`.
+  A stronger top-64/top-128 MLP reranker screen also failed to extract the
+  oracle signal: best `1.11539` mean accepted, below the prior small top-8 MLP
+  reranker `1.11927` and far below the offline endpoint gate. Treat cheap
+  selected-candidate extraction from this frozen Ex0bit-format draft as closed;
 - latest current-recipe branch/regenerate envelope:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-recipe-strict-topk64-branch-envelope.md`.
   A strict-suite top-k64 trace on the current `68.236 tok/s` ReplaySSM

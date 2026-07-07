@@ -284,7 +284,11 @@ Current fastest quality-gated variant:
   the new listwise top-k rank loss and four-GPU runner worked mechanically, but
   best heldout mean accepted only moved `1.10146 -> 1.10506`. The signal is
   still extractor-gated, but simple loss weighting around this checkpoint is
-  not enough.
+  not enough. A stronger wide top-k MLP reranker is also closed in
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-wide-topk-reranker-no-endpoint.md`:
+  top-64/top-128 with hidden sizes `512/1024` peaked at `1.11539` mean
+  accepted, below the prior small top-8 MLP reranker (`1.11927`). Cheap
+  selected-candidate extraction from this frozen Ex0bit-format draft is closed.
 - Latest target-body timing/no-win screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
   It confirms the webhie/AutoRound Qwen27 checkpoint is dense `qwen3_5_text`
