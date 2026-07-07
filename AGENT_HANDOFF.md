@@ -297,10 +297,15 @@ Active target as of the latest switch request:
   A v6 survival-objective sweep from that checkpoint improved v6 heldout to
   `1.0069670776061594` mean accepted, and a first-step-emphasis continuation
   (`rollout_loss_decay=0.5`) improved it to `1.0401492607812575`, still below
-  endpoint threshold. Current next move is offline-only: continue from the
-  `decay0p5` v6 best with stronger first-step emphasis / shorter rollout, or
-  improve v6 data quality with concrete snippets. Do not endpoint-test this
-  adapted draft unless offline mean accepted reaches at least `1.5-2.0`.
+  endpoint threshold. A v6 step-focus follow-up from that checkpoint reached
+  only `1.0493835907609466` mean accepted
+  (`v6sf-r3-lr1e-5-decay0p25-rank0p1`), with compact summary
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-stepfocus-summary-20260707.json`.
+  Current next move is offline-only but should not be another same-corpus
+  first-step-emphasis sweep: improve v6 data quality with concrete snippets,
+  tables, logs, and code fragments, or switch back to verifier/LM-head /
+  graph-safe state-transaction work. Do not endpoint-test this adapted draft
+  unless offline mean accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

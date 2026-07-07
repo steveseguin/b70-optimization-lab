@@ -151,9 +151,17 @@ Fastest quality-gated practical variant:
   step-2 conditional, `47.27%` step-3 conditional). A continuation sweep then
   showed first-step weighting is useful: `rollout_loss_decay=0.5` improved v6
   heldout to `1.0401492607812575` mean accepted (`55.14%` step-1 exact,
-  `48.21%` step-2 conditional, `47.24%` step-3 conditional). This is progress,
-  but still below endpoint threshold. Continue offline training research, not
-  vLLM endpoint wiring, until offline mean accepted reaches at least `1.5-2.0`;
+  `48.21%` step-2 conditional, `47.24%` step-3 conditional). A step-focus
+  follow-up from that checkpoint is now closed too: best result
+  `v6sf-r3-lr1e-5-decay0p25-rank0p1` reached only
+  `1.0493835907609466` mean accepted (`55.80%` step-1 exact, `48.29%`
+  step-2 conditional, `46.94%` step-3 conditional), with compact summary
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-stepfocus-summary-20260707.json`.
+  This is progress, but still below endpoint threshold. Do not endpoint-wire
+  this draft and do not keep sweeping the same v6 corpus/objective family
+  without a new mechanism. Next credible offline move is v6b data quality with
+  concrete snippets/tables/logs embedded in prompts, or a return to
+  verifier/LM-head / graph-safe state-transaction work;
 
 Previous fastest quality-gated practical variant:
 

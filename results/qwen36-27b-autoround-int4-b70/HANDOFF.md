@@ -224,8 +224,13 @@ Current fastest quality-gated variant:
   still below endpoint threshold. V6 continuation summary:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-continuation-summary-20260707.json`,
   best `1.0401492607812575` mean accepted from `rollout_loss_decay=0.5`.
-  Still do not endpoint integrate until offline mean accepted reaches at least
-  `1.5-2.0`.
+  V6 step-focus summary:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-stepfocus-summary-20260707.json`,
+  best `1.0493835907609466` mean accepted from
+  `v6sf-r3-lr1e-5-decay0p25-rank0p1`. This closes the same-corpus
+  first-step-emphasis sweep as diagnostic-only. Still do not endpoint integrate
+  until offline mean accepted reaches at least `1.5-2.0`; next EAGLE work
+  should improve corpus quality or change mechanism.
 
 Previous fastest quality-gated variant:
 

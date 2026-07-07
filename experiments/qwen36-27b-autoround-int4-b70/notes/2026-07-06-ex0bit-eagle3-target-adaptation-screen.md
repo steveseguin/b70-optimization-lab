@@ -1190,3 +1190,51 @@ and screen stronger first-step emphasis / shorter rollout objectives
 (`decay=0.25`, `rollout_steps=3`) against one equal-weight control. If the mean
 accepted curve stays below roughly `1.1`, switch to data quality (v6b concrete
 snippet/log/table prompts) or a wider train scope rather than endpoint work.
+
+## V6 step-focus sweep
+
+Training run:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6-stepfocus-20260707T025529Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-stepfocus-summary-20260707.json
+```
+
+Setup: initialized from the v6 continuation best checkpoint
+`v6cont-r5-lr1e-5-decay0p5-rank0p1`, trained on v6 shards 0-2, evaluated on
+v6 heldout shard 3 (`42342` starts), and screened shorter rollout / stronger
+first-token emphasis variants with the tracked wrapper case
+`SWEEP=v6-stepfocus`.
+
+Results:
+
+| variant | rollout steps | decay | lr | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `v6sf-r3-lr1e-5-decay0p25-rank0p1` | 3 | 0.25 | `1e-5` | **`1.0493835907609466`** | `55.80%` | `48.29%` | `46.94%` |
+| `v6sf-r3-lr1e-5-decay0p5-rank0p1` | 3 | 0.50 | `1e-5` | `1.0482027301497332` | `55.56%` | `48.40%` | `47.40%` |
+| `v6sf-r5-lr1e-5-decay0p25-rank0p1` | 5 | 0.25 | `1e-5` | `1.047588682631902` | `55.73%` | `48.27%` | `46.85%` |
+| `v6sf-r5-lr5e-6-decay0p5-rank0p1` | 5 | 0.50 | `5e-6` | `1.0402437296301545` | `55.13%` | `48.22%` | `47.29%` |
+
+Interpretation:
+
+- shorter rollout / stronger first-token weighting gives only a small lift over
+  the previous v6 continuation best (`1.0401492607812575 -> 1.0493835907609466`);
+- the probe exact rate improved during training (`~56.7%`), but full rollout
+  survival did not move enough: conditional step-2 remains around `48%` and
+  conditional step-3 around `47%`;
+- this closes another same-corpus training sweep as diagnostic-only. It is
+  useful evidence that the v6 lane is learning, but not an endpoint trigger and
+  not a LocalMaxxing result.
+
+Next move: stop spending full 4-GPU sweeps on this exact v6 corpus/objective
+family unless there is a new mechanism. The higher-value follow-up is v6b data
+quality: rebuild a smaller target-owned corpus with concrete snippets, tables,
+logs, and code fragments embedded directly in prompts so the model cannot
+answer "No context provided", then evaluate whether better data lifts step-1
+and multi-step survival. If data quality does not move mean accepted toward
+`1.5-2.0`, return to verifier/LM-head or graph-safe state-transaction work.

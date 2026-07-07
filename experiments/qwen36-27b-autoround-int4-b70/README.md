@@ -167,6 +167,13 @@ Latest stronger-drafter result:
   still below endpoint threshold. V6 continuation summary:
   `diagnostics/qwen27-ex0bit-eagle3-v6-continuation-summary-20260707.json`,
   best `1.0401492607812575` mean accepted from `rollout_loss_decay=0.5`.
+  V6 step-focus summary:
+  `diagnostics/qwen27-ex0bit-eagle3-v6-stepfocus-summary-20260707.json`,
+  best `1.0493835907609466` mean accepted from
+  `v6sf-r3-lr1e-5-decay0p25-rank0p1`. This is a small diagnostic lift, not an
+  endpoint candidate. Do not keep sweeping the same v6 corpus/objective family
+  unless there is a new mechanism; next EAGLE move should improve data quality
+  with concrete embedded context or return to non-EAGLE speed work.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 
