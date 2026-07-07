@@ -1238,3 +1238,83 @@ logs, and code fragments embedded directly in prompts so the model cannot
 answer "No context provided", then evaluate whether better data lifts step-1
 and multi-step survival. If data quality does not move mean accepted toward
 `1.5-2.0`, return to verifier/LM-head or graph-safe state-transaction work.
+
+## V6b concrete-context corpus
+
+The v6b follow-up keeps the broader chat-style direction but fixes the observed
+v6 data-quality issue where some prompts requested pasted context without
+including enough concrete material. The generator now has a tracked
+`chat-v6b` preset in
+`experiments/qwen36-27b-autoround-int4-b70/scripts/make-eagle-chat-corpus-suite.py`,
+and the generated suite is:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v6b-suite.json
+```
+
+Suite shape:
+
+- `384` prompts total;
+- `12` concrete-context families;
+- `8` task types;
+- `4` variants per domain/task pair;
+- every prompt includes an explicit `Context:` block with logs, SQL tables,
+  YAML/systemd config, stack traces, benchmark tables, customer tickets,
+  code snippets, capacity sheets, API/webhook payloads, release notes, or test
+  failure artifacts.
+
+Collection run:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v6b-corpus-summary-20260707.json
+```
+
+Collection result:
+
+- total prompts: `384`;
+- usable rows: `61268`;
+- samples saved / with metadata: `384 / 384`;
+- aux rows available/saved: `61268 / 61268`;
+- aux layers: `1,31,60`;
+- continuity breaks: `0`;
+- aux bad files: `0`;
+- shard family split:
+  - shard 0: `incident-log-triage`, `sql-analytics-table`, `yaml-systemd-config`;
+  - shard 1: `benchmark-variance-table`, `customer-ticket-debug`, `python-stacktrace`;
+  - shard 2: `capacity-sheet`, `code-review-worker`, `security-audit-snippet`;
+  - shard 3: `api-payload-webhook`, `release-note-draft`, `test-failure-report`.
+
+Heldout baseline on v6b shard 3:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6sf-best-on-v6b-heldout-summary-20260707.json
+```
+
+The best v6 step-focus checkpoint
+`v6sf-r3-lr1e-5-decay0p25-rank0p1` scored `1.036561331974176` mean accepted
+on v6b shard 3 (`14715` starts):
+
+| family | mean accepted |
+|---|---:|
+| `api-payload-webhook` | `1.0996347402597402` |
+| `release-note-draft` | `1.0080263428689031` |
+| `test-failure-report` | `1.0016233766233766` |
+
+Per-step exact:
+
+- step 1: `56.05%`;
+- step 2 conditional: `47.84%`;
+- step 3 conditional: `43.74%`;
+- step 4 conditional: `49.83%`;
+- step 5 conditional: `55.00%`.
+
+Interpretation: v6b is clean but not easier out of the box. A bounded v6b
+training screen is worth running because the data no longer has the v6
+"missing context" defect, but the bar for endpoint work is unchanged:
+offline mean accepted needs to approach at least `1.5-2.0`.
