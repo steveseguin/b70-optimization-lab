@@ -1318,3 +1318,52 @@ Interpretation: v6b is clean but not easier out of the box. A bounded v6b
 training screen is worth running because the data no longer has the v6
 "missing context" defect, but the bar for endpoint work is unchanged:
 offline mean accepted needs to approach at least `1.5-2.0`.
+
+## V6b step-focus training screen
+
+Training run:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-stepfocus-20260707T033620Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json
+```
+
+Setup:
+
+- initialized from best v6 step-focus checkpoint
+  `v6sf-r3-lr1e-5-decay0p25-rank0p1`;
+- trained on v6b shards 0-2 (`288` samples, `45689` rows);
+- held out v6b shard 3 (`14715` starts);
+- `epochs=8`, `batch_size=64`, `eval_every=500`;
+- four-GPU screen over the same bounded first-step / short-rollout variants.
+
+Results:
+
+| variant | rollout steps | decay | lr | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `v6sf-r5-lr1e-5-decay0p25-rank0p1` | 5 | 0.25 | `1e-5` | **`1.0597349643221203`** | `57.04%` | `48.43%` | `43.32%` |
+| `v6sf-r3-lr1e-5-decay0p5-rank0p1` | 3 | 0.50 | `1e-5` | `1.0585796805980292` | `56.76%` | `48.61%` | `43.74%` |
+| `v6sf-r3-lr1e-5-decay0p25-rank0p1` | 3 | 0.25 | `1e-5` | `1.0585117227319063` | `56.98%` | `48.43%` | `43.35%` |
+| `v6sf-r5-lr5e-6-decay0p5-rank0p1` | 5 | 0.50 | `5e-6` | `1.0424057084607543` | `56.22%` | `47.95%` | `43.99%` |
+
+Interpretation:
+
+- v6b data quality helped on this distribution:
+  `1.036561331974176 -> 1.0597349643221203`;
+- the gain is only `+0.02317` mean accepted, about the same scale as the v6
+  step-focus lift and still nowhere near endpoint threshold;
+- step-1 exact improved to `~57%`, but step-2 conditional remains `~48%` and
+  step-3 conditional fell to `~43%`, so multi-token survival remains the
+  bottleneck;
+- this closes v6b concrete-context data as useful evidence, not a breakthrough.
+
+Decision: do not endpoint-test this draft and do not submit anything to
+LocalMaxxing. The EAGLE/DFlash target-adaptation lane is mechanically working
+but still too weak. Further progress likely needs a different mechanism
+(architecture/loss/train scope) rather than another small corpus or
+first-step-emphasis sweep.

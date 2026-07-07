@@ -230,7 +230,14 @@ Current fastest quality-gated variant:
   `v6sf-r3-lr1e-5-decay0p25-rank0p1`. This closes the same-corpus
   first-step-emphasis sweep as diagnostic-only. Still do not endpoint integrate
   until offline mean accepted reaches at least `1.5-2.0`; next EAGLE work
-  should improve corpus quality or change mechanism.
+  should improve corpus quality or change mechanism. The corpus-quality branch
+  was tried with v6b concrete-context prompts:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v6b-corpus-summary-20260707.json`
+  (`384` prompts, `61268` usable rows, zero continuity breaks). The best v6
+  draft scored `1.036561331974176` on v6b heldout, and v6b training improved
+  only to `1.0597349643221203` mean accepted:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`.
+  This is not endpoint-worthy and should not be submitted to LocalMaxxing.
 
 Previous fastest quality-gated variant:
 

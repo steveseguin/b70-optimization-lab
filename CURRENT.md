@@ -157,11 +157,17 @@ Fastest quality-gated practical variant:
   `1.0493835907609466` mean accepted (`55.80%` step-1 exact, `48.29%`
   step-2 conditional, `46.94%` step-3 conditional), with compact summary
   `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-stepfocus-summary-20260707.json`.
-  This is progress, but still below endpoint threshold. Do not endpoint-wire
-  this draft and do not keep sweeping the same v6 corpus/objective family
-  without a new mechanism. Next credible offline move is v6b data quality with
-  concrete snippets/tables/logs embedded in prompts, or a return to
-  verifier/LM-head / graph-safe state-transaction work;
+  The v6b concrete-context follow-up is now complete too: collection produced
+  `384` prompts / `61268` usable rows / zero continuity breaks at
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v6b-corpus-summary-20260707.json`;
+  the best v6 draft scored `1.036561331974176` on v6b heldout, and v6b
+  training improved only to `1.0597349643221203` mean accepted
+  (`57.04%` step-1 exact, `48.43%` step-2 conditional, `43.32%`
+  step-3 conditional), summarized at
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`.
+  This remains far below endpoint threshold. Do not endpoint-wire this draft,
+  do not submit it to LocalMaxxing, and do not keep spending 4-GPU sweeps on
+  small EAGLE corpus/objective variations without a new mechanism;
 
 Previous fastest quality-gated practical variant:
 

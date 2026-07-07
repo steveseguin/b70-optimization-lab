@@ -174,6 +174,15 @@ Latest stronger-drafter result:
   endpoint candidate. Do not keep sweeping the same v6 corpus/objective family
   unless there is a new mechanism; next EAGLE move should improve data quality
   with concrete embedded context or return to non-EAGLE speed work.
+  That data-quality follow-up is also complete: v6b concrete-context corpus
+  summary
+  `diagnostics/qwen27-eagle3-aux-v6b-corpus-summary-20260707.json` has
+  `384` prompts / `61268` usable rows / zero continuity breaks; the best v6
+  draft scored `1.036561331974176` on v6b heldout; v6b training summary
+  `diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`
+  improved only to `1.0597349643221203` mean accepted. This is still far below
+  endpoint threshold and closes small EAGLE data/objective sweeps until there
+  is a new mechanism.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

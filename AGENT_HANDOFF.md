@@ -306,6 +306,16 @@ Active target as of the latest switch request:
   tables, logs, and code fragments, or switch back to verifier/LM-head /
   graph-safe state-transaction work. Do not endpoint-test this adapted draft
   unless offline mean accepted reaches at least `1.5-2.0`.
+  That concrete-context v6b data-quality screen is now complete:
+  `experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v6b-suite.json`
+  produced `384` prompts / `61268` usable rows / zero continuity breaks
+  (`diagnostics/qwen27-eagle3-aux-v6b-corpus-summary-20260707.json`).
+  The best v6 draft scored `1.036561331974176` on v6b heldout, and v6b
+  training improved only to `1.0597349643221203` mean accepted
+  (`diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`).
+  Treat this as diagnostic evidence that data quality helps but is not enough;
+  do not repeat small EAGLE corpus/objective sweeps without a different
+  architecture/loss/train-scope mechanism.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and
