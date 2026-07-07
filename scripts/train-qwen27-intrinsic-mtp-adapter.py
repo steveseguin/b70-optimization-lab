@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Train mergeable Qwen3.6 27B intrinsic-MTP parameters offline.
+"""Train Qwen3.6 27B intrinsic-MTP parameters offline.
 
 This script is an experimental draft-acceptance tool. It trains a small,
-mergeable subset of the built-in Qwen MTP module against recorded target
-hidden-state sequence shards, then exports an updated
-model_extra_tensors.safetensors candidate. It does not change the target model
-or produce a throughput claim; endpoint validation is still required.
+optionally mergeable subset of the built-in Qwen MTP module against recorded
+target hidden-state sequence shards. FC/norm-only scopes export an updated
+model_extra_tensors.safetensors candidate; deeper attention/MLP scopes export
+diagnostic dense updates only because the endpoint checkpoint stores those
+weights as GPTQ-packed tensors. This does not change the target model or
+produce a throughput claim; endpoint validation is still required.
 """
 
 from __future__ import annotations
@@ -38,6 +40,35 @@ def load_eval_module() -> Any:
 
 
 EVAL = load_eval_module()
+
+
+NORM_ATTRS = [
+    "pre_fc_norm_embedding",
+    "pre_fc_norm_hidden",
+    "input_layernorm",
+    "post_attention_layernorm",
+    "q_norm",
+    "k_norm",
+    "final_norm",
+]
+ATTN_ATTRS = [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "input_layernorm",
+    "post_attention_layernorm",
+    "q_norm",
+    "k_norm",
+]
+MLP_ATTRS = [
+    "gate_proj",
+    "up_proj",
+    "down_proj",
+    "post_attention_layernorm",
+    "final_norm",
+]
+MERGEABLE_MODEL_EXTRA_ATTRS = set(["fc", *NORM_ATTRS])
 
 
 @dataclass(frozen=True)
@@ -84,8 +115,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--scope",
         default="fc",
-        choices=("fc", "fc-norms"),
-        help="Mergeable MTP parameter subset to train.",
+        choices=("fc", "fc-norms", "attn", "mlp", "attn-mlp", "all-dense"),
+        help=(
+            "MTP parameter subset to train. attn/mlp/attn-mlp/all-dense are "
+            "diagnostic only unless a later GPTQ re-quant/export path is added."
+        ),
     )
     parser.add_argument("--eval-every", type=int, default=0)
     parser.add_argument("--print-every", type=int, default=50)
@@ -127,17 +161,20 @@ def collect_starts(samples: list[dict[str, Any]], max_steps: int,
 
 
 def make_trainable(model: torch.nn.Module, scope: str) -> list[torch.nn.Parameter]:
-    names = ["fc"]
-    if scope == "fc-norms":
-        names.extend([
-            "pre_fc_norm_embedding",
-            "pre_fc_norm_hidden",
-            "input_layernorm",
-            "post_attention_layernorm",
-            "q_norm",
-            "k_norm",
-            "final_norm",
-        ])
+    if scope == "fc":
+        names = ["fc"]
+    elif scope == "fc-norms":
+        names = ["fc", *NORM_ATTRS]
+    elif scope == "attn":
+        names = ATTN_ATTRS
+    elif scope == "mlp":
+        names = MLP_ATTRS
+    elif scope == "attn-mlp":
+        names = sorted(set([*ATTN_ATTRS, *MLP_ATTRS]))
+    elif scope == "all-dense":
+        names = sorted(set(["fc", *NORM_ATTRS, *ATTN_ATTRS, *MLP_ATTRS]))
+    else:
+        raise ValueError(scope)
 
     params: list[torch.nn.Parameter] = []
     for name in names:
@@ -145,6 +182,8 @@ def make_trainable(model: torch.nn.Module, scope: str) -> list[torch.nn.Paramete
         param = torch.nn.Parameter(tensor.detach().clone())
         setattr(model, name, param)
         params.append(param)
+    model._diagnostic_trainable_names = names
+    model._diagnostic_trainable_param_count = sum(p.numel() for p in params)
     return params
 
 
@@ -278,21 +317,41 @@ def save_candidate(out_dir: Path, model: Any, base_tensors: dict[str, torch.Tens
                    args: argparse.Namespace, before: dict[str, Any],
                    after: dict[str, Any], elapsed_s: float) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    tensors = {k: v.detach().cpu() for k, v in base_tensors.items()}
-    tensors["mtp.fc.weight"] = model.fc.detach().cpu().to(torch.bfloat16)
-    for name, key in [
-        ("pre_fc_norm_embedding", "mtp.pre_fc_norm_embedding.weight"),
-        ("pre_fc_norm_hidden", "mtp.pre_fc_norm_hidden.weight"),
-        ("input_layernorm", "mtp.layers.0.input_layernorm.weight"),
-        ("post_attention_layernorm", "mtp.layers.0.post_attention_layernorm.weight"),
-        ("q_norm", "mtp.layers.0.self_attn.q_norm.weight"),
-        ("k_norm", "mtp.layers.0.self_attn.k_norm.weight"),
-        ("final_norm", "mtp.norm.weight"),
-    ]:
-        value = getattr(model, name)
-        if isinstance(value, torch.nn.Parameter):
-            tensors[key] = value.detach().cpu().to(torch.bfloat16)
-    save_file(tensors, str(out_dir / "model_extra_tensors.safetensors"))
+    trainable_names = list(getattr(model, "_diagnostic_trainable_names", []))
+    trainable_param_count = int(
+        getattr(model, "_diagnostic_trainable_param_count", 0))
+
+    dense_updates = {
+        f"dense.{name}": getattr(model, name).detach().cpu().to(torch.bfloat16)
+        for name in trainable_names
+    }
+    dense_update_path = ""
+    if dense_updates:
+        dense_update_path = "diagnostic_dense_updates.safetensors"
+        save_file(dense_updates, str(out_dir / dense_update_path))
+
+    endpoint_candidate_compatible = (
+        set(trainable_names).issubset(MERGEABLE_MODEL_EXTRA_ATTRS)
+    )
+    model_extra_export = ""
+    if endpoint_candidate_compatible:
+        model_extra_export = "model_extra_tensors.safetensors"
+        tensors = {k: v.detach().cpu() for k, v in base_tensors.items()}
+        tensors["mtp.fc.weight"] = model.fc.detach().cpu().to(torch.bfloat16)
+        for name, key in [
+            ("pre_fc_norm_embedding", "mtp.pre_fc_norm_embedding.weight"),
+            ("pre_fc_norm_hidden", "mtp.pre_fc_norm_hidden.weight"),
+            ("input_layernorm", "mtp.layers.0.input_layernorm.weight"),
+            ("post_attention_layernorm",
+             "mtp.layers.0.post_attention_layernorm.weight"),
+            ("q_norm", "mtp.layers.0.self_attn.q_norm.weight"),
+            ("k_norm", "mtp.layers.0.self_attn.k_norm.weight"),
+            ("final_norm", "mtp.norm.weight"),
+        ]:
+            value = getattr(model, name)
+            if isinstance(value, torch.nn.Parameter):
+                tensors[key] = value.detach().cpu().to(torch.bfloat16)
+        save_file(tensors, str(out_dir / model_extra_export))
     summary = {
         "purpose": "diagnostic_intrinsic_mtp_mergeable_adapter_training",
         "valid_headline_throughput": False,
@@ -307,6 +366,10 @@ def save_candidate(out_dir: Path, model: Any, base_tensors: dict[str, torch.Tens
         "draft_lm_head_group_size": args.draft_lm_head_group_size,
         "draft_lm_head_scale_dtype": args.draft_lm_head_scale_dtype,
         "max_steps": args.max_steps,
+        "trainable_names": trainable_names,
+        "trainable_param_count": trainable_param_count,
+        "endpoint_candidate_compatible": endpoint_candidate_compatible,
+        "diagnostic_dense_update_path": dense_update_path,
         "train_starts": args.train_starts,
         "heldout_starts": args.heldout_starts,
         "heldout_samples": args.heldout_samples,
@@ -318,7 +381,8 @@ def save_candidate(out_dir: Path, model: Any, base_tensors: dict[str, torch.Tens
         "before": before,
         "after": after,
         "elapsed_s": elapsed_s,
-        "export": "model_extra_tensors.safetensors",
+        "export": model_extra_export or dense_update_path,
+        "model_extra_export": model_extra_export,
     }
     (out_dir / "training_summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n",

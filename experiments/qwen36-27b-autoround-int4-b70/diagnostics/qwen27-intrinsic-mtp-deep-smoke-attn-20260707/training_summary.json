@@ -1,0 +1,81 @@
+{
+  "after": {
+    "conditional_denominators": [
+      16,
+      12,
+      7
+    ],
+    "conditional_exact": [
+      0.75,
+      0.5833333333333334,
+      0.2857142857142857
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 4,
+      "1": 5,
+      "2": 5,
+      "3": 2
+    },
+    "mean_accepted_draft_tokens": 1.3125,
+    "mean_visible_tokens_if_k_step_spec": 2.3125,
+    "starts": 16
+  },
+  "batch_size": 2,
+  "before": {
+    "conditional_denominators": [
+      16,
+      12,
+      7
+    ],
+    "conditional_exact": [
+      0.75,
+      0.5833333333333334,
+      0.2857142857142857
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 4,
+      "1": 5,
+      "2": 5,
+      "3": 2
+    },
+    "mean_accepted_draft_tokens": 1.3125,
+    "mean_visible_tokens_if_k_step_spec": 2.3125,
+    "starts": 16
+  },
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-0/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset"
+  ],
+  "diagnostic_dense_update_path": "diagnostic_dense_updates.safetensors",
+  "draft_lm_head": "int4-dequant",
+  "draft_lm_head_group_size": 128,
+  "draft_lm_head_scale_dtype": "bf16",
+  "elapsed_s": 1.2850408451631665,
+  "endpoint_candidate_compatible": false,
+  "epochs": 1,
+  "export": "diagnostic_dense_updates.safetensors",
+  "headline_warning": "Offline draft acceptance only; endpoint strict fresh validation is required before any throughput claim or LocalMaxxing submission.",
+  "heldout_samples": 4,
+  "heldout_starts": 16,
+  "lr": 1e-06,
+  "max_steps": 3,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "model_extra_export": "",
+  "purpose": "diagnostic_intrinsic_mtp_mergeable_adapter_training",
+  "scope": "attn",
+  "seed": 27,
+  "train_starts": 16,
+  "trainable_names": [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "input_layernorm",
+    "post_attention_layernorm",
+    "q_norm",
+    "k_norm"
+  ],
+  "trainable_param_count": 104868352,
+  "valid_headline_throughput": false,
+  "weight_decay": 0.0
+}

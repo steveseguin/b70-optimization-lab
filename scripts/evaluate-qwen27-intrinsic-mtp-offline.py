@@ -70,6 +70,15 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--diagnostic-dense-update-path",
+        default="",
+        help=(
+            "Optional diagnostic_dense_updates.safetensors produced by the "
+            "offline trainer. Keys are dense.<attribute>; this is not an "
+            "endpoint-compatible model artifact."
+        ),
+    )
+    parser.add_argument(
         "--dataset-dir",
         default=[],
         action="append",
@@ -481,6 +490,30 @@ class IntrinsicMTP(torch.nn.Module):
         return F.linear(hidden, self.lm_head)
 
 
+def apply_diagnostic_dense_updates(
+    model: IntrinsicMTP,
+    update_path: str,
+    *,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> list[str]:
+    updates = load_file(update_path, device="cpu")
+    applied: list[str] = []
+    for key, value in updates.items():
+        if not key.startswith("dense."):
+            continue
+        attr = key.removeprefix("dense.")
+        if not hasattr(model, attr):
+            raise KeyError(
+                f"Diagnostic dense update {key!r} maps to unknown attribute "
+                f"{attr!r}")
+        setattr(model, attr, value.to(device=device, dtype=dtype))
+        applied.append(attr)
+    if not applied:
+        raise ValueError(f"No dense.* updates found in {update_path}")
+    return sorted(applied)
+
+
 def iter_sample_paths(dataset_dirs: list[str], max_samples: int) -> list[str]:
     paths: list[str] = []
     for dataset_dir in dataset_dirs:
@@ -748,9 +781,19 @@ def main() -> int:
         draft_lm_head_group_size=args.draft_lm_head_group_size,
         draft_lm_head_scale_dtype=args.draft_lm_head_scale_dtype,
     ).eval()
+    diagnostic_dense_updates = []
+    if args.diagnostic_dense_update_path:
+        diagnostic_dense_updates = apply_diagnostic_dense_updates(
+            model,
+            args.diagnostic_dense_update_path,
+            device=device,
+            dtype=dtype,
+        )
 
     paths = iter_sample_paths(args.dataset_dir, args.max_samples)
     summary = summarize(args, paths, model, device, dtype)
+    summary["diagnostic_dense_update_path"] = args.diagnostic_dense_update_path
+    summary["diagnostic_dense_updates_applied"] = diagnostic_dense_updates
     text = json.dumps(summary, indent=2, sort_keys=True)
     if args.out:
         out_path = Path(args.out)

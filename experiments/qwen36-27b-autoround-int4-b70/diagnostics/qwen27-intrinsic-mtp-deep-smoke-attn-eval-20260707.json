@@ -1,0 +1,253 @@
+{
+  "conditional_denominators": [
+    32,
+    25,
+    16
+  ],
+  "conditional_exact": [
+    0.78125,
+    0.64,
+    0.5625
+  ],
+  "conditional_topk": [
+    1.0,
+    0.92,
+    0.875
+  ],
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset"
+  ],
+  "device": "xpu:0",
+  "diagnostic_dense_update_path": "experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-intrinsic-mtp-deep-smoke-attn-20260707/diagnostic_dense_updates.safetensors",
+  "diagnostic_dense_updates_applied": [
+    "input_layernorm",
+    "k_norm",
+    "k_proj",
+    "o_proj",
+    "post_attention_layernorm",
+    "q_norm",
+    "q_proj",
+    "v_proj"
+  ],
+  "draft_lm_head": "int4-dequant",
+  "dtype": "bfloat16",
+  "elapsed_s": 1.7324801469221711,
+  "families": {
+    "api-payload-webhook": {
+      "mean_accepted": 1.5625,
+      "samples": 1,
+      "starts": 32
+    }
+  },
+  "first_mismatch_examples": [
+    {
+      "accepted": 1,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 264,
+        "step": 2,
+        "target": 279,
+        "target_index": 2,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 0
+    },
+    {
+      "accepted": 0,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 264,
+        "step": 1,
+        "target": 279,
+        "target_index": 2,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 1
+    },
+    {
+      "accepted": 2,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 29006,
+        "step": 3,
+        "target": 2849,
+        "target_index": 6,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 3
+    },
+    {
+      "accepted": 2,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 8242,
+        "step": 3,
+        "target": 6522,
+        "target_index": 7,
+        "topk_hit": false
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 4
+    },
+    {
+      "accepted": 2,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 321,
+        "step": 3,
+        "target": 8242,
+        "target_index": 8,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 5
+    },
+    {
+      "accepted": 0,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 8242,
+        "step": 1,
+        "target": 6522,
+        "target_index": 7,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 6
+    },
+    {
+      "accepted": 1,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 11,
+        "step": 2,
+        "target": 3018,
+        "target_index": 9,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 7
+    },
+    {
+      "accepted": 0,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 11,
+        "step": 1,
+        "target": 3018,
+        "target_index": 9,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 8
+    },
+    {
+      "accepted": 1,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 678,
+        "step": 2,
+        "target": 279,
+        "target_index": 11,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 9
+    },
+    {
+      "accepted": 1,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 332,
+        "step": 2,
+        "target": 13962,
+        "target_index": 16,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 14
+    },
+    {
+      "accepted": 1,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 2972,
+        "step": 2,
+        "target": 46676,
+        "target_index": 17,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 15
+    },
+    {
+      "accepted": 0,
+      "family": "api-payload-webhook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 2972,
+        "step": 1,
+        "target": 46676,
+        "target_index": 17,
+        "topk_hit": true
+      },
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "start": 16
+    }
+  ],
+  "headline_warning": "Offline draft acceptance only; not an endpoint speed, not a fresh-response throughput claim, not LocalMaxxing-submit eligible.",
+  "histogram_accepted_draft_tokens": {
+    "0": 7,
+    "1": 9,
+    "2": 7,
+    "3": 9
+  },
+  "max_samples": 4,
+  "max_starts": 32,
+  "max_steps": 3,
+  "mean_accepted_draft_tokens": 1.5625,
+  "mean_visible_tokens_if_k_step_spec": 2.5625,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "model_extra_path": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e/model_extra_tensors.safetensors",
+  "num_files_seen": 4,
+  "purpose": "diagnostic_intrinsic_mtp_offline_acceptance_probe",
+  "rope": "local_text_only_neox_rope_fallback",
+  "samples": [
+    {
+      "family": "api-payload-webhook",
+      "mean_accepted": 1.5625,
+      "prompt_id": "api-payload-webhook-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000288-api-payload-webhook-summarize-context-messy-user-a7fc5a7f.pt",
+      "starts": 32
+    }
+  ],
+  "start_stride": 1,
+  "starts": 32,
+  "valid_headline_throughput": false
+}
