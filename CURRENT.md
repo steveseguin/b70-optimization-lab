@@ -191,16 +191,17 @@ Fastest quality-gated practical variant:
   cache16/MTP5 endpoint overhead. No endpoint speed run was spent. Do not
   repeat FC-only / FC-norms MTP5 training as the next >100 tok/s lane;
 - latest producer-side INT4 LM-head shortcut screen:
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-runtime-hang.md`.
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-sycl8-no-win.md`.
   A diagnostic `_xpu_C.int4_gemm_w4a16_top1` prototype was added in the XPU
   kernel tree and preserved as
-  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-runtime-hang-20260707.patch`.
-  It is not wired into vLLM and produced no benchmark result: the BMG-only
-  oneAPI 2026 build required `libsycl.so.9`, the Qwen27 microbench hung with
-  oneDNN `bad engine kind` while the GPU was idle, and the normal sycl8 package
-  binary was restored. Do not retry endpoint integration until the op builds in
-  the normal runtime and passes a tiny dense-argmax correctness smoke plus a
-  microbench win;
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-sycl8-no-win-20260707.patch`.
+  The first oneAPI 2026 build hung due the sycl9/runtime mismatch, but the
+  follow-up oneAPI 2025/sycl8 build imported and passed top-id correctness.
+  It is still a no-win: full-vocab rows `1..4` were slower than dense logits
+  plus argmax (`2.30/5.82/6.52/9.15 ms` top1 vs
+  `1.95/1.37/1.21/1.22 ms` dense+argmax). Do not wire this naive tile-scan
+  op into the endpoint; future LM-head work needs candidate-only extraction or
+  a matrix-tile-aware top-k/max primitive;
 - latest stronger-drafter training screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
   Ex0bit EAGLE3/DFlash direct import is not viable, but the target-owned

@@ -1,0 +1,183 @@
+{
+  "created_at_utc": "2026-07-07T07:46:36.072982+00:00",
+  "purpose": "Diagnostic current-backend Qwen27 draft INT4 LM-head microbench; not an endpoint throughput result.",
+  "torch": "2.11.0+xpu",
+  "shape": {
+    "hidden": 5120,
+    "vocab": 248320,
+    "group_size": 128,
+    "packed_k": 640,
+    "num_groups": 40,
+    "rows": [
+      2,
+      3,
+      4
+    ]
+  },
+  "warmup": 2,
+  "iterations": 5,
+  "results": [
+    {
+      "rows": 2,
+      "correctness": {
+        "top1_available": true,
+        "id_match_all": true,
+        "dense_ids": [
+          46893,
+          184269
+        ],
+        "top1_ids": [
+          46893,
+          184269
+        ],
+        "max_value_abs_diff": 0.1372222900390625,
+        "mean_value_abs_diff": 0.12430381774902344
+      },
+      "backends": [
+        {
+          "name": "int4_gemm_w4a16_dense_logits",
+          "count": 5,
+          "median_ms": 1.4762929640710354,
+          "mean_ms": 1.4744671527296305,
+          "p10_ms": 1.4656229875981808,
+          "p90_ms": 1.4823513105511665,
+          "min_ms": 1.4623170718550682,
+          "max_ms": 1.4854688197374344,
+          "stdev_ms": 0.008622366317017295
+        },
+        {
+          "name": "int4_gemm_w4a16_dense_logits_argmax",
+          "count": 5,
+          "median_ms": 1.3659249525517225,
+          "mean_ms": 1.364797167479992,
+          "p10_ms": 1.3626428321003914,
+          "p90_ms": 1.3663005083799362,
+          "min_ms": 1.3622180558741093,
+          "max_ms": 1.3663768768310547,
+          "stdev_ms": 0.001913748819182455
+        },
+        {
+          "name": "int4_gemm_w4a16_top1_experimental",
+          "count": 5,
+          "median_ms": 5.820822902023792,
+          "mean_ms": 5.2527598105371,
+          "p10_ms": 4.372159717604518,
+          "p90_ms": 5.838934751227498,
+          "min_ms": 4.32163686491549,
+          "max_ms": 5.847883177921176,
+          "stdev_ms": 0.793667299688722
+        }
+      ]
+    },
+    {
+      "rows": 3,
+      "correctness": {
+        "top1_available": true,
+        "id_match_all": true,
+        "dense_ids": [
+          135520,
+          154533,
+          161274
+        ],
+        "top1_ids": [
+          135520,
+          154533,
+          161274
+        ],
+        "max_value_abs_diff": 0.2224884033203125,
+        "mean_value_abs_diff": 0.086151123046875
+      },
+      "backends": [
+        {
+          "name": "int4_gemm_w4a16_dense_logits",
+          "count": 5,
+          "median_ms": 1.1535261292010546,
+          "mean_ms": 1.1587960179895163,
+          "p10_ms": 1.1510049924254417,
+          "p90_ms": 1.1716085951775312,
+          "min_ms": 1.1509810574352741,
+          "max_ms": 1.1811789590865374,
+          "stdev_ms": 0.012770709404346747
+        },
+        {
+          "name": "int4_gemm_w4a16_dense_logits_argmax",
+          "count": 5,
+          "median_ms": 1.212948001921177,
+          "mean_ms": 1.2085238471627235,
+          "p10_ms": 1.1996716726571321,
+          "p90_ms": 1.214965432882309,
+          "min_ms": 1.1980601120740175,
+          "max_ms": 1.2157829478383064,
+          "stdev_ms": 0.00791144766266052
+        },
+        {
+          "name": "int4_gemm_w4a16_top1_experimental",
+          "count": 5,
+          "median_ms": 6.517610978335142,
+          "mean_ms": 6.536422343924642,
+          "p10_ms": 6.482959957793355,
+          "p90_ms": 6.600975524634123,
+          "min_ms": 6.475541973486543,
+          "max_ms": 6.615133956074715,
+          "stdev_ms": 0.059000693271142976
+        }
+      ]
+    },
+    {
+      "rows": 4,
+      "correctness": {
+        "top1_available": true,
+        "id_match_all": true,
+        "dense_ids": [
+          205806,
+          236778,
+          101833,
+          118060
+        ],
+        "top1_ids": [
+          205806,
+          236778,
+          101833,
+          118060
+        ],
+        "max_value_abs_diff": 0.1304931640625,
+        "mean_value_abs_diff": 0.04953289031982422
+      },
+      "backends": [
+        {
+          "name": "int4_gemm_w4a16_dense_logits",
+          "count": 5,
+          "median_ms": 1.1691360268741846,
+          "mean_ms": 1.1659159790724516,
+          "p10_ms": 1.155740860849619,
+          "p90_ms": 1.175257470458746,
+          "min_ms": 1.1553200893104076,
+          "max_ms": 1.17878383025527,
+          "stdev_ms": 0.00994646525400572
+        },
+        {
+          "name": "int4_gemm_w4a16_dense_logits_argmax",
+          "count": 5,
+          "median_ms": 1.219351077452302,
+          "mean_ms": 1.2157758232206106,
+          "p10_ms": 1.2047568336129189,
+          "p90_ms": 1.225508190691471,
+          "min_ms": 1.2044720351696014,
+          "max_ms": 1.227797009050846,
+          "stdev_ms": 0.01045146157633667
+        },
+        {
+          "name": "int4_gemm_w4a16_top1_experimental",
+          "count": 5,
+          "median_ms": 9.145226096734405,
+          "mean_ms": 9.171954402700067,
+          "p10_ms": 9.075405355542898,
+          "p90_ms": 9.280133387073874,
+          "min_ms": 9.050698950886726,
+          "max_ms": 9.29790292866528,
+          "stdev_ms": 0.10181549950975863
+        }
+      ]
+    }
+  ]
+}

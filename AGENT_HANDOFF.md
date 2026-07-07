@@ -145,14 +145,16 @@ Active target as of the latest switch request:
   Closed without endpoint run. Next drafter work needs a materially stronger
   architecture or endpoint-trace accepted-prefix lift, not FC-only MTP5 tuning.
 - Latest producer-side INT4 LM-head shortcut screen:
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-runtime-hang.md`.
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-sycl8-no-win.md`.
   A default-unwired `_xpu_C.int4_gemm_w4a16_top1` prototype was preserved as
-  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-runtime-hang-20260707.patch`,
-  but it is not a win: the oneAPI 2026 BMG-only build required `libsycl.so.9`,
-  the Qwen27 microbench hung with GPU idle and oneDNN `bad engine kind`, and
-  the sycl8 runtime package binary was restored. Before revisiting this lane,
-  make the op build/import in the normal runtime and prove dense-argmax
-  correctness plus an isolated microbench win.
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-sycl8-no-win-20260707.patch`,
+  but it is closed no-win. The oneAPI 2026 BMG-only build hit the sycl9/runtime
+  mismatch and hung; the oneAPI 2025/sycl8 follow-up imported and passed
+  dense-argmax top-id correctness, but full-vocab rows `1..4` were slower than
+  dense logits plus argmax (`2.30/5.82/6.52/9.15 ms` vs
+  `1.95/1.37/1.21/1.22 ms`). Do not endpoint-test this naive tile-scan op.
+  Future LM-head work needs candidate-only score extraction or a
+  matrix-tile-aware top-k/max primitive.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

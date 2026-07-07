@@ -1,4 +1,4 @@
-# Qwen27 INT4 top-1 LM-head prototype runtime hang
+# Qwen27 INT4 top-1 LM-head prototype sycl8 no-win
 
 Date: 2026-07-07
 
@@ -20,7 +20,7 @@ draft token is needed.
 
 Patch artifact:
 
-`patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-runtime-hang-20260707.patch`
+`patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-sycl8-no-win-20260707.patch`
 
 It adds a default-unwired native XPU op:
 
@@ -36,9 +36,11 @@ Prototype design:
 - scalar zero point only, hardcoded to `8` inside the prototype after an
   earlier version incorrectly dereferenced the XPU scalar tensor on host.
 
-The patch is intentionally not integrated into vLLM endpoint code.
+The patch is intentionally not integrated into vLLM endpoint code. It applies
+against the current local XPU-kernel research tree, where older ReplaySSM/GDN
+patches are already present.
 
-## Build and Runtime Result
+## First Build Attempt: oneAPI 2026 / sycl9 Runtime Hang
 
 The local kernel tree is already a dirty research tree with ReplaySSM/GDN
 changes in the same binding files. The prototype was built in a BMG-only build
@@ -89,19 +91,58 @@ has top1 False
 
 No JSON result was produced.
 
+## Follow-Up: sycl8 Build, Correct but Slower
+
+The same prototype was then applied with correct local hunk placement and built
+in the known-good oneAPI 2025.3 / sycl8 build tree:
+
+```bash
+cd /home/steve/src/vllm-xpu-kernels
+source /opt/intel/oneapi/compiler/2025.3/env/vars.sh
+cmake --build build/int8-top1-microbench-20260703-2025 --target _xpu_C -j2
+```
+
+That build succeeded, imported in the normal runtime, and exposed
+`torch.ops._xpu_C.int4_gemm_w4a16_top1`. The test extension was copied into the
+package only for the smoke/microbench and then the original sycl8 package
+binary was restored. Post-restore import check again shows `has top1 False`.
+
+Small-shape smoke (`hidden=128`, `vocab=4096`, rows `1..4`) passed top-id
+correctness, but was already slower than dense logits plus argmax:
+
+- row 1: dense+argmax `0.10195 ms`, top1 `0.13901 ms`;
+- row 2: dense+argmax `0.08965 ms`, top1 `0.12383 ms`;
+- row 3: dense+argmax `0.08920 ms`, top1 `0.12249 ms`;
+- row 4: dense+argmax `0.08995 ms`, top1 `0.12287 ms`.
+
+Full Qwen27 vocabulary diagnostics (`hidden=5120`, `vocab=248320`) also passed
+top-id correctness, but scaled badly:
+
+- row 1: dense+argmax `1.94522 ms`, top1 `2.30077 ms`;
+- row 2: dense+argmax `1.36592 ms`, top1 `5.82082 ms`;
+- row 3: dense+argmax `1.21295 ms`, top1 `6.51761 ms`;
+- row 4: dense+argmax `1.21935 ms`, top1 `9.14523 ms`.
+
+Diagnostic JSON:
+
+- `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-int4-top1-prototype-smoke-small-20260707.json`;
+- `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-int4-top1-prototype-fullvocab-row1-20260707.json`;
+- `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-int4-top1-prototype-fullvocab-rows2-4-20260707.json`.
+
 ## Status
 
-Closed as an unpromoted diagnostic failure for now.
+Closed as a no-win diagnostic.
 
-Do not wire this op into the endpoint or spend a strict benchmark on it until:
+Do not wire this op into the endpoint or spend a strict benchmark on it. The
+prototype now has enough evidence:
 
-1. the extension builds against the normal sycl8-compatible runtime, or the
-   test harness is isolated so it cannot break the production package import;
-2. a tiny correctness smoke proves the op returns the same top ids as dense
-   `int4_gemm_w4a16(...).argmax()` for rows `1..4`;
-3. the microbench produces a clear speed win over dense logits plus argmax.
+1. sycl8 build/import is possible;
+2. dense-argmax top-id correctness passes;
+3. performance loses to dense logits plus argmax, especially at rows `2..4`,
+   which are the relevant MTP verification/proposer row counts.
 
-The route is still conceptually valid because full-logit materialization is a
-real waste target, but this implementation did not produce usable evidence.
-The next credible version should start with a sycl8-compatible minimal
-correctness smoke before restoring the full Qwen27 vocabulary shape.
+The broader route remains conceptually valid because full-logit materialization
+is a real waste target, but a naive vocabulary-tile scan is not the right
+implementation. A future attempt needs a different primitive, such as
+candidate-only score extraction or an optimized top-k/max design that reuses
+matrix-tile structure instead of serially recomputing every token score.

@@ -1,12 +1,21 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -535,0 +536 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+@@ -535,6 +535,7 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
+       "csrc/xpu/torch_bindings.cpp"
+       "csrc/xpu/lora/lora_shrink.cpp"
+       "csrc/xpu/lora/lora_expand.cpp"
 +      "csrc/xpu/quantization/int4_top1.cpp"
+       "csrc/xpu/quantization/int8_quant.cpp"
+       "csrc/xpu/sampler/topk_topp_sampler.cpp"
+       "csrc/xpu/sycl/deepseek_scaling_rope.cpp"
 diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
 --- a/csrc/xpu/ops.h
 +++ b/csrc/xpu/ops.h
-@@ -48,0 +49,9 @@ torch::Tensor int4_gemm_w4a16(
+@@ -42,6 +42,15 @@ torch::Tensor int4_gemm_w4a16(
+     int64_t group_size,
+     const std::optional<torch::Tensor>& g_idx);
+
 +std::tuple<torch::Tensor, torch::Tensor> int4_gemm_w4a16_top1(
 +    const torch::Tensor& A_,
 +    const torch::Tensor& B,
@@ -16,16 +25,27 @@ diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
 +    const std::optional<torch::Tensor>& g_idx,
 +    int64_t tile_size);
 +
+ torch::Tensor int4_gemm_w4a8(
+     const torch::Tensor& A_,
+     const torch::Tensor& A_scale,
 diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
 --- a/csrc/xpu/torch_bindings.cpp
 +++ b/csrc/xpu/torch_bindings.cpp
-@@ -33,0 +34,6 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+@@ -29,9 +29,14 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+   xpu_ops.def(
+       "int4_gemm_w4a16(Tensor A, Tensor B, Tensor? bias, Tensor B_scale, "
+       "Tensor B_zp, int group_size, Tensor? g_idx) -> Tensor");
+   xpu_ops.impl("int4_gemm_w4a16", torch::kXPU, &int4_gemm_w4a16);
 +  xpu_ops.def(
 +      "int4_gemm_w4a16_top1(Tensor A, Tensor B, Tensor B_scale, Tensor B_zp, "
 +      "int group_size, Tensor? g_idx, int tile_size=2048) -> "
 +      "(Tensor, Tensor)");
 +  xpu_ops.impl("int4_gemm_w4a16_top1", torch::kXPU, &int4_gemm_w4a16_top1);
-+
+   xpu_ops.def(
+       "int4_gemm_w4a8(Tensor A_, Tensor A_scale, Tensor A_zp, Tensor B, "
+       "Tensor B_scale, Tensor B_zp, int group_size, Tensor? g_idx, Tensor? "
+       "bias) -> Tensor");
+   xpu_ops.impl("int4_gemm_w4a8", torch::kXPU, &int4_gemm_w4a8);
 diff --git a/csrc/xpu/quantization/int4_top1.cpp b/csrc/xpu/quantization/int4_top1.cpp
 new file mode 100644
 index 0000000..7650265
