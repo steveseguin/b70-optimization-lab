@@ -159,8 +159,16 @@ case "$SWEEP" in
       "3|v6cont-r5-lr1e-5-decay0p5-rank0p1|$CONTINUE_DRAFT|5|0.5|1e-5|fc-lm-head|hard|0.05|0.1|0.0"
     )
     ;;
+  v6-stepfocus)
+    variants=(
+      "0|v6sf-r5-lr1e-5-decay0p25-rank0p1|$CONTINUE_DRAFT|5|0.25|1e-5|fc-lm-head|hard|0.05|0.1|0.0"
+      "1|v6sf-r5-lr5e-6-decay0p5-rank0p1|$CONTINUE_DRAFT|5|0.5|5e-6|fc-lm-head|hard|0.05|0.1|0.0"
+      "2|v6sf-r3-lr1e-5-decay0p5-rank0p1|$CONTINUE_DRAFT|3|0.5|1e-5|fc-lm-head|hard|0.05|0.1|0.0"
+      "3|v6sf-r3-lr1e-5-decay0p25-rank0p1|$CONTINUE_DRAFT|3|0.25|1e-5|fc-lm-head|hard|0.05|0.1|0.0"
+    )
+    ;;
   *)
-    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, continuation-rollout, all-scope, late-weight, late-continuation, deep-continuation, survival-objective, or v6-continuation)" >&2
+    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, continuation-rollout, all-scope, late-weight, late-continuation, deep-continuation, survival-objective, v6-continuation, or v6-stepfocus)" >&2
     exit 2
     ;;
 esac
