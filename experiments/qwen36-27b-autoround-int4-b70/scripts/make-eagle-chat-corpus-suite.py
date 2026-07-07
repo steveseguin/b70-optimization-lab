@@ -375,6 +375,269 @@ V6_VARIANT_GUIDANCE = [
 ]
 
 
+V6B_CONTEXT_DOMAINS = [
+    {
+        "id": "incident-log-triage",
+        "scenario": "a production API incident with logs and partial metrics",
+        "focus": "timeline, root-cause hypotheses, missing evidence, and rollback",
+        "context": """Context:
+2026-07-06T14:03:12Z api-gateway-7 WARN cache_miss_rate=0.41 route=/v1/chat tenant=acme
+2026-07-06T14:04:55Z api-gateway-7 ERROR upstream_timeout_ms=30000 route=/v1/chat request_id=req-1882
+2026-07-06T14:05:18Z worker-2 INFO deploy_sha=9f31a2c feature_cache_key_v2=true
+2026-07-06T14:07:44Z redis-3 WARN evicted_keys=18421 used_memory=29.7GiB maxmemory=30.0GiB
+metric p95_latency_ms: 820 -> 6400, 5xx_rate: 0.2% -> 6.8%, cache_hit_rate: 83% -> 49%
+Change window: cache key normalization deployed at 14:02Z to 50% of tenants.""",
+    },
+    {
+        "id": "sql-analytics-table",
+        "scenario": "a product analytics question with table schemas and sample rows",
+        "focus": "joins, assumptions, validation queries, and decision-ready numbers",
+        "context": """Context:
+tables:
+users(user_id, signup_at, plan, region)
+events(event_id, user_id, event_name, occurred_at, session_id)
+invoices(invoice_id, user_id, amount_usd, status, paid_at)
+sample users: u1 pro us, u2 free eu, u3 pro us, u4 team apac
+sample events: u1 export_clicked 2026-07-01, u1 export_done 2026-07-01, u3 export_clicked 2026-07-02
+sample invoices: u1 49 paid, u3 49 failed, u4 199 paid
+Question: estimate paid-pro export completion rate for July 1-7 and list validation checks.""",
+    },
+    {
+        "id": "yaml-systemd-config",
+        "scenario": "a deployment controlled by YAML, environment variables, and systemd",
+        "focus": "safe defaults, drift, smoke tests, logging, and rollback",
+        "context": """Context:
+service file:
+[Service]
+Environment=MODEL_PATH=/mnt/models/qwen27
+Environment=MAX_MODEL_LEN=2048
+Environment=ENABLE_GRAPH=1
+ExecStart=/opt/serve-vllm.sh --port 19410 --gpu-memory-utilization 0.90
+Restart=on-failure
+YAML override:
+max_num_batched_tokens: 1024
+enable_prompt_cache: false
+speculative_tokens: 3
+Recent drift: staging has MAX_MODEL_LEN=32768 and gpu-memory-utilization=0.82.""",
+    },
+    {
+        "id": "python-stacktrace",
+        "scenario": "a Python patch that fixed one bug but introduced intermittent failures",
+        "focus": "minimal reproduction, likely cause, patch review, and tests",
+        "context": """Context:
+Traceback:
+  File "scheduler.py", line 188, in assign_slot
+    state.blocks[slot].copy_(saved)
+IndexError: index 32 is out of bounds for dimension 0 with size 32
+Patch:
+- if slot:
+-     restore(slot)
++ if slot is not None:
++     restore(slot)
+Observed: failure appears only when slot=32 after a rejected speculative batch.
+Test gap: existing tests cover slot None, slot 0, and slot 3, not upper-bound slots.""",
+    },
+    {
+        "id": "benchmark-variance-table",
+        "scenario": "a local inference benchmark with variance and temperature concerns",
+        "focus": "fair comparison, variance controls, telemetry, and promotion rules",
+        "context": """Context:
+run,label,gpu,temp_c,median_tok_s,p10_tok_s,cached_tokens
+1,baseline,gpu0,54,67.3,62.1,0
+2,candidate,gpu1,56,68.0,62.0,0
+3,baseline,gpu2,71,64.1,58.4,0
+4,candidate,gpu3,70,64.8,58.5,0
+Known variance band from crossover tests: about 4.4%.
+Rule: do not promote if the candidate gain is inside variance without same-window or crossover evidence.""",
+    },
+    {
+        "id": "customer-ticket-debug",
+        "scenario": "a customer report with partial symptoms and unclear cause",
+        "focus": "clarifying questions, hypothesis ranking, safe response, and escalation",
+        "context": """Context:
+Ticket:
+"Since Friday the assistant is slower and sometimes repeats the same sentence. We changed nothing except enabling long context. It happens on invoice summaries."
+Known facts:
+- account beta-17 moved from profile q8-fast to q8-long at 09:20 Friday
+- prompt tokens rose from 900 median to 11800 median
+- decode tokens per second stayed near 120 on short prompts
+- TTFT rose from 0.8s to 7.4s on long prompts
+- no quality logs include the repeated-sentence example yet""",
+    },
+    {
+        "id": "security-audit-snippet",
+        "scenario": "a data-handling workflow with security and compliance risk",
+        "focus": "scope, policy assumptions, audit evidence, and risk reduction",
+        "context": """Context:
+Workflow:
+1. Support downloads a CSV from the billing admin.
+2. CSV columns: email, company, last4_card, invoice_total, freeform_notes.
+3. A local script sends rows to an LLM endpoint for classification.
+4. Logs keep request bodies for 14 days for debugging.
+Policy note: emails and freeform notes are personal data; last4_card is sensitive billing metadata.
+Proposed change: hash email, redact notes, and keep request hashes instead of bodies.""",
+    },
+    {
+        "id": "code-review-worker",
+        "scenario": "a worker that batches writes, retries failures, and persists dead letters",
+        "focus": "correctness, concurrency, durability, metrics, and tests",
+        "context": """Context:
+def flush(batch):
+    for item in batch:
+        try:
+            db.write(item.key, item.value)
+        except TimeoutError:
+            retry_queue.append(item)
+    ack(batch)
+
+Known issue: if db.write succeeds but ack(batch) fails, the whole batch is replayed.
+Metric gap: retry_queue length is exported, but duplicate write count is not.
+Requirement: at-least-once is acceptable, but duplicate billing writes are not.""",
+    },
+    {
+        "id": "capacity-sheet",
+        "scenario": "four independent GPU replicas serving short single-session requests",
+        "focus": "routing, queueing, saturation, memory limits, and failover",
+        "context": """Context:
+GPU inventory: 4 x Intel Arc Pro B70, 32GiB each.
+Profile A: 125 tok/s decode, TTFT 0.55s, max_model_len 2048, one replica per GPU.
+Profile B: 112 tok/s decode, TTFT 1.9s, max_model_len 32768, one replica per GPU.
+Traffic: 12 requests/minute peak, p95 output 420 tokens, occasional 16K prompts.
+Goal: preserve short-prompt speed while offering a safe long-context route.""",
+    },
+    {
+        "id": "api-payload-webhook",
+        "scenario": "a client library integrating pagination, retries, auth refresh, and webhooks",
+        "focus": "error handling, idempotency, rate limits, example code, and observability",
+        "context": """Context:
+POST /imports returns {"job_id":"job_82","status":"queued"}.
+GET /imports/job_82?page=2 returns {"items":[...],"next_page":3}.
+Webhook payload: {"job_id":"job_82","event":"completed","signature":"sha256=..."}.
+Rate limit headers: x-ratelimit-remaining=12, retry-after=3.
+Failure reports: duplicate webhooks, expired OAuth tokens mid-pagination, and 429 retry storms.""",
+    },
+    {
+        "id": "release-note-draft",
+        "scenario": "a messy internal draft that needs a concise technical announcement",
+        "focus": "structure, tone, factual precision, missing context, and final wording",
+        "context": """Context:
+Rough draft:
+"we changed the serving thing to be faster. it should be around 120 tokens now maybe. dont use old config. long context should work but the first token can be slower. quality tests were fine. also no cache cheating."
+Facts:
+- strict fresh median is 124.98 tok/s on the short suite
+- cached_tokens must be 0 for headline claims
+- 32K service smoke passed, but expected decode is about 115 tok/s in that mode
+- rollback is profile q8-stable-20260630""",
+    },
+    {
+        "id": "test-failure-report",
+        "scenario": "a flaky workflow where unit tests pass but production behavior regresses",
+        "focus": "test gaps, deterministic reproduction, fixtures, and owner actions",
+        "context": """Context:
+Unit tests: 218 passed.
+Integration test: skipped because TEST_WITH_XPU=0.
+Production symptom: every 30-60 requests, first generated token is wrong, then output recovers.
+Recent change: graph capture enabled for decode; prefill remains eager.
+Canary failures:
+expected: blue, green, orange, red
+observed: blue, green, red, yellow
+Hypothesis in ticket: eager state restore races captured decode replay.""",
+    },
+]
+
+
+V6B_TASKS = [
+    (
+        "summarize-context",
+        "Summarize the pasted context",
+        "Separate known facts, interpretation, risks, and next actions.",
+    ),
+    (
+        "diagnose-evidence",
+        "Diagnose the issue from the evidence",
+        "Rank hypotheses, identify missing data, and avoid overclaiming.",
+    ),
+    (
+        "extract-decision-table",
+        "Extract a decision table",
+        "Include only fields that affect priority, risk, owner, or next step.",
+    ),
+    (
+        "write-json",
+        "Return compact JSON",
+        "Use stable keys and concrete values; include uncertainty where relevant.",
+    ),
+    (
+        "direct-answer",
+        "Answer the user's question directly",
+        "Start with the answer, then give short reasoning and caveats.",
+    ),
+    (
+        "review-plan",
+        "Review the proposed plan as a senior engineer",
+        "Put blockers first, then fixes, validation, and residual risk.",
+    ),
+    (
+        "write-code-or-query",
+        "Write the command, query, or code needed for the scenario",
+        "Keep it runnable and add a short explanation of how to validate it.",
+    ),
+    (
+        "draft-response",
+        "Draft the message or handoff that should be sent next",
+        "Be accurate, specific, and action-oriented without overpromising.",
+    ),
+]
+
+
+def build_context_prompts(
+    *,
+    variants_per_pair: int = 1,
+    domains: list[dict[str, str]] | None = None,
+    tasks: list[tuple[str, str, str]] | None = None,
+    variant_guidance: list[tuple[str, str]] | None = None,
+) -> list[dict[str, str]]:
+    domains = domains or V6B_CONTEXT_DOMAINS
+    tasks = tasks or V6B_TASKS
+    variant_guidance = variant_guidance or V6_VARIANT_GUIDANCE
+    if variants_per_pair < 1:
+        raise ValueError("--variants-per-pair must be >= 1")
+    if variants_per_pair > len(variant_guidance):
+        raise ValueError(
+            f"--variants-per-pair must be <= {len(variant_guidance)}"
+        )
+    prompts: list[dict[str, str]] = []
+    for domain_index, domain in enumerate(domains):
+        for task_index, (task_id, instruction, task_constraint) in enumerate(tasks):
+            for variant_index in range(variants_per_pair):
+                constraint = CONSTRAINTS[
+                    (domain_index + task_index + variant_index)
+                    % len(CONSTRAINTS)
+                ]
+                variant_id, guidance = variant_guidance[variant_index]
+                suffix = "" if variants_per_pair == 1 else f"-{variant_id}"
+                prompt_id = f"{domain['id']}-{task_id}{suffix}"
+                prompt = (
+                    f"{instruction} for {domain['scenario']}.\n\n"
+                    f"{domain['context']}\n\n"
+                    f"Focus on {domain['focus']}.\n"
+                    f"{task_constraint}\n"
+                    f"{constraint}\n"
+                    f"{guidance}\n"
+                    "Use only the pasted context plus clearly stated assumptions. "
+                    "Do not say no context was provided, and do not refer to any "
+                    "benchmark final-suite prompt."
+                )
+                prompts.append({
+                    "id": prompt_id,
+                    "family": domain["id"],
+                    "task": task_id,
+                    "variant": variant_id,
+                    "prompt": prompt,
+                })
+    return prompts
+
+
 def build_prompts(
     *,
     variants_per_pair: int = 1,
@@ -448,16 +711,22 @@ def main() -> int:
     parser.add_argument(
         "--preset",
         default="ops",
-        choices=("ops", "chat-v6"),
+        choices=("ops", "chat-v6", "chat-v6b"),
         help=(
             "Prompt-family preset. 'ops' preserves the existing v2-v5 "
             "engineering/business suite shape; 'chat-v6' emits broader "
-            "non-final chat-style prompts for EAGLE/DFlash training."
+            "non-final chat-style prompts for EAGLE/DFlash training; "
+            "'chat-v6b' emits concrete pasted-context prompts to avoid "
+            "no-context answers in summarization/extraction tasks."
         ),
     )
     parser.add_argument("--version", default="2026-07-04")
     args = parser.parse_args()
-    if args.preset == "chat-v6":
+    if args.preset == "chat-v6b":
+        prompts = build_context_prompts(
+            variants_per_pair=args.variants_per_pair,
+        )
+    elif args.preset == "chat-v6":
         prompts = build_prompts(
             variants_per_pair=args.variants_per_pair,
             domains=V6_DOMAINS,
