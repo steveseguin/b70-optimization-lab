@@ -218,14 +218,18 @@ Fastest quality-gated practical variant:
   `1.95/1.37/1.21/1.22 ms` dense+argmax). Do not wire this naive tile-scan
   op into the endpoint; future LM-head work needs candidate-only extraction or
   a matrix-tile-aware top-k/max primitive;
-- pending target-body code lane:
-  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-gdn-fused-out-proj-int4-plan.md`.
-  If stronger-drafter screens stay below accepted-depth threshold, the next
-  bounded kernel experiment is a default-off TP1 prototype that fuses Qwen GDN
-  `RMSNormGated(core_attn_out, z)` into the following INT4 `out_proj` prologue.
-  Do not repeat standalone RMSNormGated; the only plausible win is eliminating
-  the boundary/materialization before `out_proj`, while preserving the BF16
-  materialization semantics before activation quantization;
+- latest target-body code lane:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-gdn-fused-outproj-prototype-positive.md`.
+  The default-off TP1 native prototype
+  `_xpu_C.qwen_gdn_out_proj_int4_w4a16` fuses Qwen GDN
+  `RMSNormGated(core_attn_out, z)` into the following INT4 W4A16 `out_proj`
+  prologue. It built with oneAPI 2025.3, imported from a temporary `_xpu_C`,
+  passed FP16/BF16 synthetic parity, and measured `~5-6.7x` faster than the
+  local PyTorch-workspace + existing INT4 GEMM subpath on Qwen27 shapes
+  (`~0.208 ms` -> `~0.031-0.042 ms`). This is diagnostic only, not a
+  benchmark result. Next action is endpoint wiring behind an env flag for TP1
+  INC W4A16 `out_proj`, followed by strict fresh same-window validation and
+  repeat64 quality before any promotion;
 - latest full-vocab five-aux EAGLE3/DFlash rank-push screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-fullvocab-5aux-rankpush-earlystop.md`.
   This stronger-drafter pre-gate was stopped early after four GPU-parallel

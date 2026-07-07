@@ -1,0 +1,102 @@
+{
+  "created_at": "2026-07-07",
+  "model_lane": "webhie/Qwen3.6-27B-int4-AutoRound on Intel Arc Pro B70",
+  "experiment": "GDN gated RMSNorm plus INT4 W4A16 out-proj fused prologue prototype",
+  "status": "native_op_build_import_parity_and_synthetic_microbench_passed_endpoint_not_wired",
+  "headline_validity": "diagnostic_only_not_a_realistic_fresh_response_benchmark",
+  "source_trees": {
+    "vllm_xpu_kernels": "/home/steve/src/vllm-xpu-kernels",
+    "vllm": "/home/steve/src/vllm"
+  },
+  "temporary_install": "/tmp/vllm-xpu-20260707-gdn-fused-outproj/vllm_xpu_kernels/_xpu_C.abi3.so",
+  "patches": {
+    "vllm_xpu_kernels": "patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-gdn-fused-outproj-prototype-20260707.patch",
+    "vllm_fake_registration": "patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-gdn-fused-outproj-fake-reg-20260707.patch"
+  },
+  "build": {
+    "oneapi_compiler_env": "/opt/intel/oneapi/compiler/2025.3/env/vars.sh",
+    "build_dir": "/home/steve/src/vllm-xpu-kernels/build/20260707-gdn-fused-outproj",
+    "aot_device": "bmg-g21-a0",
+    "target": "_xpu_C",
+    "result": "success",
+    "installed_so_size_bytes": 110262360
+  },
+  "import_check": {
+    "torch_version": "2.11.0+xpu",
+    "devices_seen": 4,
+    "device0": "Intel(R) Arc(TM) Pro B70 Graphics",
+    "module_loaded": "/tmp/vllm-xpu-20260707-gdn-fused-outproj/vllm_xpu_kernels/_xpu_C.abi3.so",
+    "torch_op": "_xpu_C.qwen_gdn_out_proj_int4_w4a16",
+    "registered": true
+  },
+  "parity_smoke": {
+    "shape": {
+      "tokens": 2,
+      "heads": 2,
+      "head_dim": 128,
+      "out_features": 64,
+      "group_size": 128
+    },
+    "reference": "PyTorch gated RMSNorm workspace followed by existing torch.ops._xpu_C.int4_gemm_w4a16",
+    "tested_dtypes": [
+      {
+        "dtype": "torch.float16",
+        "max_abs": 0.0,
+        "max_rel": 0.0
+      },
+      {
+        "dtype": "torch.bfloat16",
+        "max_abs": 0.0,
+        "max_rel": 0.0
+      }
+    ],
+    "result": "pass"
+  },
+  "microbench": {
+    "shape": {
+      "heads": 48,
+      "head_dim": 128,
+      "hidden_in": 6144,
+      "out_features": 5120,
+      "group_size": 128,
+      "dtype": "torch.bfloat16"
+    },
+    "method": "40 synchronized iterations after warmup on one B70; synthetic random packed INT4 weights and BF16 scales; compares local subpath only",
+    "rows": [
+      {
+        "tokens": 1,
+        "ref_ms": 0.20761069608852267,
+        "fused_ms": 0.04158442607149482,
+        "speedup": 4.992510795546006,
+        "max_abs": 0.001953125
+      },
+      {
+        "tokens": 2,
+        "ref_ms": 0.21107899956405163,
+        "fused_ms": 0.03481665044091642,
+        "speedup": 6.06258778173538,
+        "max_abs": 0.0
+      },
+      {
+        "tokens": 4,
+        "ref_ms": 0.20748847746290267,
+        "fused_ms": 0.031137472251430154,
+        "speedup": 6.663626250309148,
+        "max_abs": 0.0
+      },
+      {
+        "tokens": 8,
+        "ref_ms": 0.2077805227600038,
+        "fused_ms": 0.030924298334866762,
+        "speedup": 6.719005246619738,
+        "max_abs": 0.0009765625
+      }
+    ]
+  },
+  "next_steps": [
+    "Wire into GatedDeltaNetAttention behind a default-off env flag for TP1 INC W4A16 out_proj only.",
+    "Use actual loaded Qwen27 out_proj quant tensors for endpoint parity before a server benchmark.",
+    "Run strict fresh realistic suite with quality skipped for first endpoint screen, then repeat64 quality if speed beats current same-window control.",
+    "Do not submit or advertise this diagnostic microbench as throughput."
+  ]
+}

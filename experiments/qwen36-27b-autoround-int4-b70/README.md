@@ -467,6 +467,17 @@ Next milestone:
     `64.569` native). The live vLLM/XPU source and local extension binary were
     restored. Keep only the preserved no-win patches; do not repeat this lane
     unless a future trace shows GDN output norm as a large standalone region.
+17a. Latest GDN output norm + INT4 out-proj prototype:
+    `notes/2026-07-07-gdn-fused-outproj-prototype-positive.md`.
+    A default-off native `_xpu_C.qwen_gdn_out_proj_int4_w4a16` prototype now
+    fuses the Qwen GDN gated RMSNorm workspace into the following INT4 W4A16
+    `out_proj` prologue. It built with oneAPI 2025.3, imported from a temporary
+    `_xpu_C`, passed FP16/BF16 synthetic parity, and measured `~5-6.7x` faster
+    than the local PyTorch-workspace + existing INT4 GEMM subpath on Qwen27
+    shapes (`~0.208 ms` -> `~0.031-0.042 ms`). This is diagnostic-only, not an
+    endpoint or LocalMaxxing result. Next step is TP1 INC W4A16 endpoint wiring
+    behind an env flag, then strict fresh same-window validation and repeat64
+    quality before promotion.
 18. Native GDN SSM-only promotion precheck:
     `notes/2026-07-05-native-promote-ssm-only-crash.md`.
     The Python-only `VLLM_XPU_GDN_NATIVE_PROMOTE_CONV_STATE=0` switch passed

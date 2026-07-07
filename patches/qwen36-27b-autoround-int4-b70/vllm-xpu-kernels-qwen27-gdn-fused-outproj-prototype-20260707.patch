@@ -1,0 +1,235 @@
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 293bf35..a2c1703 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -43,0 +44,11 @@ torch::Tensor int4_gemm_w4a16(
++torch::Tensor qwen_gdn_out_proj_int4_w4a16(
++    const torch::Tensor& core_attn_out,
++    const torch::Tensor& z,
++    const torch::Tensor& norm_weight,
++    const torch::Tensor& B,
++    const std::optional<torch::Tensor>& bias,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& B_zp,
++    int64_t group_size,
++    double eps);
++
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index ae07b01..cde8dd6 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -33,0 +34,9 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
++  xpu_ops.def(
++      "qwen_gdn_out_proj_int4_w4a16(Tensor core_attn_out, Tensor z, "
++      "Tensor norm_weight, Tensor B, Tensor? bias, Tensor B_scale, "
++      "Tensor B_zp, int group_size, float eps) -> Tensor");
++  xpu_ops.impl(
++      "qwen_gdn_out_proj_int4_w4a16",
++      torch::kXPU,
++      &qwen_gdn_out_proj_int4_w4a16);
++
+diff --git a/csrc/xpu/onednn/qwen_gdn_out_proj.cpp b/csrc/xpu/onednn/qwen_gdn_out_proj.cpp
+new file mode 100644
+index 0000000..287d72a
+--- /dev/null
++++ b/csrc/xpu/onednn/qwen_gdn_out_proj.cpp
+@@ -0,0 +1,199 @@
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include "xpu/ops.h"
++#include "utils.h"
++
++namespace {
++
++template <typename scalar_t>
++inline float to_float(scalar_t value) {
++  return static_cast<float>(value);
++}
++
++template <typename scalar_t>
++inline scalar_t from_float(float value) {
++  return static_cast<scalar_t>(value);
++}
++
++template <typename scalar_t, typename weight_t>
++void launch_qwen_gdn_norm_gate_workspace(
++    const scalar_t* core,
++    const scalar_t* z,
++    const weight_t* weight,
++    scalar_t* workspace,
++    int64_t tokens,
++    int64_t heads,
++    int64_t dim,
++    float eps) {
++  constexpr int kBlockSize = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kBlockSize);
++  sycl::range<1> global(tokens * heads * kBlockSize);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_sum(local, cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++              const int64_t row = item.get_group(0);
++              const int local_id = item.get_local_id(0);
++              const int local_range = item.get_local_range(0);
++              const int64_t token = row / heads;
++              const int64_t head = row - token * heads;
++              const int64_t src_offset = (token * heads + head) * dim;
++              const int64_t dst_offset = token * (heads * dim) + head * dim;
++
++              float thread_sum = 0.0f;
++              for (int64_t d = local_id; d < dim; d += local_range) {
++                const float x = to_float(core[src_offset + d]);
++                thread_sum += x * x;
++              }
++              local_sum[local_id] = thread_sum;
++              item.barrier(sycl::access::fence_space::local_space);
++
++              for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++                if (local_id < stride) {
++                  local_sum[local_id] += local_sum[local_id + stride];
++                }
++                item.barrier(sycl::access::fence_space::local_space);
++              }
++
++              const float inv_rms =
++                  sycl::rsqrt(local_sum[0] / static_cast<float>(dim) + eps);
++              for (int64_t d = local_id; d < dim; d += local_range) {
++                const float x = to_float(core[src_offset + d]);
++                const float gate = to_float(z[src_offset + d]);
++                const float w = to_float(weight[d]);
++                const float silu = gate / (1.0f + sycl::exp(-gate));
++                const float out = x * inv_rms * w * silu;
++                workspace[dst_offset + d] = from_float<scalar_t>(out);
++              }
++            });
++  });
++}
++
++template <typename scalar_t>
++void dispatch_weight_dtype(
++    const torch::Tensor& core,
++    const torch::Tensor& z,
++    const torch::Tensor& norm_weight,
++    torch::Tensor& workspace,
++    float eps) {
++  const int64_t tokens = core.size(0);
++  const int64_t heads = core.size(1);
++  const int64_t dim = core.size(2);
++  const auto* core_ptr = reinterpret_cast<const scalar_t*>(core.data_ptr());
++  const auto* z_ptr = reinterpret_cast<const scalar_t*>(z.data_ptr());
++  auto* workspace_ptr = reinterpret_cast<scalar_t*>(workspace.data_ptr());
++
++  if (norm_weight.scalar_type() == torch::kFloat32) {
++    launch_qwen_gdn_norm_gate_workspace(
++        core_ptr,
++        z_ptr,
++        norm_weight.data_ptr<float>(),
++        workspace_ptr,
++        tokens,
++        heads,
++        dim,
++        eps);
++  } else if (norm_weight.scalar_type() == torch::kFloat16) {
++    launch_qwen_gdn_norm_gate_workspace(
++        core_ptr,
++        z_ptr,
++        reinterpret_cast<const sycl::half*>(norm_weight.data_ptr()),
++        workspace_ptr,
++        tokens,
++        heads,
++        dim,
++        eps);
++  } else if (norm_weight.scalar_type() == torch::kBFloat16) {
++    launch_qwen_gdn_norm_gate_workspace(
++        core_ptr,
++        z_ptr,
++        reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
++            norm_weight.data_ptr()),
++        workspace_ptr,
++        tokens,
++        heads,
++        dim,
++        eps);
++  } else {
++    TORCH_CHECK(
++        false,
++        "qwen_gdn_out_proj_int4_w4a16 only supports fp32/fp16/bf16 "
++        "norm_weight, got ",
++        norm_weight.scalar_type());
++  }
++}
++
++}  // namespace
++
++torch::Tensor qwen_gdn_out_proj_int4_w4a16(
++    const torch::Tensor& core_attn_out,
++    const torch::Tensor& z,
++    const torch::Tensor& norm_weight,
++    const torch::Tensor& B,
++    const std::optional<torch::Tensor>& bias,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& B_zp,
++    int64_t group_size,
++    double eps) {
++  const at::DeviceGuard device_guard(core_attn_out.device());
++  TORCH_CHECK(core_attn_out.is_xpu(), "core_attn_out must be an XPU tensor");
++  TORCH_CHECK(z.is_xpu(), "z must be an XPU tensor");
++  TORCH_CHECK(norm_weight.is_xpu(), "norm_weight must be an XPU tensor");
++  TORCH_CHECK(B.is_xpu(), "B must be an XPU tensor");
++  TORCH_CHECK(B_scale.is_xpu(), "B_scale must be an XPU tensor");
++  TORCH_CHECK(B_zp.is_xpu(), "B_zp must be an XPU tensor");
++  TORCH_CHECK(
++      core_attn_out.device() == z.device() &&
++          core_attn_out.device() == norm_weight.device() &&
++          core_attn_out.device() == B.device() &&
++          core_attn_out.device() == B_scale.device() &&
++          core_attn_out.device() == B_zp.device(),
++      "all tensors must be on the same XPU device");
++  TORCH_CHECK(core_attn_out.dim() == 3, "core_attn_out must be [T,H,D]");
++  TORCH_CHECK(z.sizes() == core_attn_out.sizes(), "z shape mismatch");
++  TORCH_CHECK(norm_weight.dim() == 1, "norm_weight must be 1D");
++  TORCH_CHECK(
++      norm_weight.size(0) == core_attn_out.size(2),
++      "norm_weight size must match head dim");
++  TORCH_CHECK(
++      core_attn_out.scalar_type() == torch::kFloat16 ||
++          core_attn_out.scalar_type() == torch::kBFloat16,
++      "core_attn_out must be fp16 or bf16");
++  TORCH_CHECK(
++      z.scalar_type() == core_attn_out.scalar_type(),
++      "z dtype must match core_attn_out dtype");
++  TORCH_CHECK(core_attn_out.is_contiguous(), "core_attn_out must be contiguous");
++  TORCH_CHECK(z.is_contiguous(), "z must be contiguous");
++  TORCH_CHECK(norm_weight.is_contiguous(), "norm_weight must be contiguous");
++  TORCH_CHECK(
++      B.dim() == 2 && B.size(0) * 8 == core_attn_out.size(1) * core_attn_out.size(2),
++      "B packed K dimension does not match H*D");
++
++  const int64_t tokens = core_attn_out.size(0);
++  const int64_t heads = core_attn_out.size(1);
++  const int64_t dim = core_attn_out.size(2);
++  auto workspace = torch::empty(
++      {tokens, heads * dim},
++      core_attn_out.options());
++
++  if (tokens == 0 || heads == 0 || dim == 0) {
++    return int4_gemm_w4a16(
++        workspace, B, bias, B_scale, B_zp, group_size, std::nullopt);
++  }
++
++  if (core_attn_out.scalar_type() == torch::kFloat16) {
++    dispatch_weight_dtype<sycl::half>(
++        core_attn_out, z, norm_weight, workspace, static_cast<float>(eps));
++  } else {
++    dispatch_weight_dtype<sycl::ext::oneapi::bfloat16>(
++        core_attn_out, z, norm_weight, workspace, static_cast<float>(eps));
++  }
++
++  return int4_gemm_w4a16(
++      workspace, B, bias, B_scale, B_zp, group_size, std::nullopt);
++}
