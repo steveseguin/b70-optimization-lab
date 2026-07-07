@@ -289,9 +289,13 @@ Active target as of the latest switch request:
   step-1 exact, `56.26%` step-2 conditional, `58.50%` step-3 conditional,
   `3602` full-5 accepts). This confirms the lane is learning but is still
   below endpoint threshold; continue training research, not endpoint/kernel
-  integration. V6 broader chat-style aux-data collection is the active next
-  move. Do not endpoint-test this adapted draft unless offline mean accepted
-  reaches at least `1.5-2.0`.
+  integration. V6 broader chat-style aux-data collection completed at
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z`
+  with `179650` usable rows, zero continuity breaks, zero aux bad files, and
+  one omitted five-token sample. Current next move is v6 heldout evaluation of
+  the v5 survival checkpoint, then v6 train-on-shards-0-2/eval-shard-3. Do not
+  endpoint-test this adapted draft unless offline mean accepted reaches at
+  least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

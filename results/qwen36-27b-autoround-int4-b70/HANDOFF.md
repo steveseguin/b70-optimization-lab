@@ -209,8 +209,14 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-continuation4-summary-20260707.json`
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-survival-objective-summary-20260707.json`.
-  V6 broader chat-style aux-data collection is the active next move; suite:
-  `../../experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v6-suite.json`.
+  V6 broader chat-style aux-data collection is complete; compact summary:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v6-corpus-summary-20260707.json`,
+  suite:
+  `../../experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v6-suite.json`,
+  raw root:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z`.
+  Current next move is v6 heldout baseline, then train from the v5 survival
+  best on v6 shards 0-2.
   Still do not endpoint integrate until offline mean accepted reaches at least
   `1.5-2.0`.
 

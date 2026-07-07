@@ -1024,7 +1024,41 @@ RUN_ROOT=/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwe
 experiments/qwen36-27b-autoround-int4-b70/scripts/run-eagle3-aux-corpus-v2-4gpu.sh
 ```
 
-QC gate: require `total_prompts=1152`, `total_rows=184320`,
-`total_continuity_breaks=0`, and `total_aux_bad_files=0`. This remains
-diagnostic draft-training data only; do not use it as a promotion benchmark or
-LocalMaxxing throughput claim.
+QC gate before training: require all shards to finish, zero continuity breaks,
+zero aux bad files, and all available aux rows saved. The theoretical max is
+`1152 * 160 = 184320` rows, but some prompts can terminate early and should be
+recorded honestly rather than padded. This remains diagnostic draft-training
+data only; do not use it as a promotion benchmark or LocalMaxxing throughput
+claim.
+
+## V6 corpus collected
+
+Collected with the command above:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z
+```
+
+Repo compact summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v6-corpus-summary-20260707.json
+```
+
+QC outcome:
+
+- `total_prompts=1152` attempted across four one-B70 replicas;
+- `total_rows=179650` usable aux rows, `total_aux_rows_saved=179650`;
+- `total_continuity_breaks=0`;
+- `total_aux_bad_files=0`;
+- `total_samples=1151`, not `1152`, because shard 1 prompt
+  `quantitative-planning-summarize-context-terse` produced only five tokens
+  (`No context provided.`) and yielded no useful sample tensor;
+- shard 3 remains the heldout/audit split:
+  `customer-debugging`, `migration-support`, `observability-logs`,
+  `shell-automation`.
+
+This is good enough for the next diagnostic training step: evaluate the current
+v5-survival best checkpoint on the v6 heldout shard, then train from that
+checkpoint on v6 shards 0-2 and evaluate on shard 3. Do not promote any offline
+accepted-depth result as endpoint throughput.

@@ -140,8 +140,13 @@ Fastest quality-gated practical variant:
   later improved the offline diagnostic best to `1.340886544011544` mean
   accepted (`59.92%` step-1 exact, `56.26%` step-2 conditional, `58.50%`
   step-3 conditional, `3602` full-5 accepts). V6 broader chat-style aux-data
-  collection is the current next move. Continue training research, not vLLM
-  endpoint wiring, until offline mean accepted reaches at least `1.5-2.0`;
+  collection completed at
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z`
+  with `179650` usable rows, zero continuity breaks, zero aux bad files, and
+  one omitted five-token sample. Current next move: evaluate the v5 survival
+  best on v6 heldout shard 3, then train from it on v6 shards 0-2. Continue
+  training research, not vLLM endpoint wiring, until offline mean accepted
+  reaches at least `1.5-2.0`;
 
 Previous fastest quality-gated practical variant:
 
@@ -304,8 +309,9 @@ Previous fastest quality-gated practical variant:
   overfit, so the next move is larger/more diverse target-owned data or a
   survival-weighted objective. The later v5 plus survival-objective best is
   `1.340886544011544` mean accepted, and v6 broader chat-style data collection
-  is now in progress. Do not endpoint-test this draft until offline
-  accepted depth approaches at least `1.5-2.0`.
+  is complete (`179650` usable rows, zero continuity breaks). Do not
+  endpoint-test this draft until offline accepted depth approaches at least
+  `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;
 - continuation bookmark:
