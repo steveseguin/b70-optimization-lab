@@ -182,6 +182,14 @@ Fastest quality-gated practical variant:
   speed candidate. Future drafter work needs a better non-final-prompt corpus
   that matches the strict suite distribution, or endpoint-trace accepted-prefix
   improvement before any speed run;
+- latest MTP5 intrinsic adaptation screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-intrinsic-mtp5-adaptation-no-endpoint.md`.
+  Four parallel INT4-dequant MTP5 adapter runs improved offline heldout
+  accepted draft tokens from about `1.374` to at best `1.78198` (`2.78198`
+  visible tokens/step), but this is only about `+0.11` above the current
+  endpoint MTP3 branch-trace prefix and below the threshold needed to justify
+  cache16/MTP5 endpoint overhead. No endpoint speed run was spent. Do not
+  repeat FC-only / FC-norms MTP5 training as the next >100 tok/s lane;
 - latest stronger-drafter training screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
   Ex0bit EAGLE3/DFlash direct import is not viable, but the target-owned

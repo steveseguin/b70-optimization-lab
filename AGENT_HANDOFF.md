@@ -136,6 +136,14 @@ Active target as of the latest switch request:
   `1.6727`. Do not repeat the same v6 FC-only intrinsic-MTP training loop; use
   endpoint-trace accepted-prefix behavior as the arbiter before spending speed
   runs on future drafter candidates.
+- Latest MTP5 intrinsic adaptation screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-intrinsic-mtp5-adaptation-no-endpoint.md`.
+  Parallel MTP5 INT4-dequant runs improved offline heldout accepted draft
+  tokens from about `1.374` to at best `1.78198` (`2.78198` visible
+  tokens/step), but this is not enough to justify cache16/MTP5 endpoint
+  overhead and is only modestly above the current endpoint MTP3 branch trace.
+  Closed without endpoint run. Next drafter work needs a materially stronger
+  architecture or endpoint-trace accepted-prefix lift, not FC-only MTP5 tuning.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

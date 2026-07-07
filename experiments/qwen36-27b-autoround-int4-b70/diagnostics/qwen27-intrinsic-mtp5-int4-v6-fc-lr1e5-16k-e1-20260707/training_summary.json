@@ -1,0 +1,81 @@
+{
+  "after": {
+    "conditional_denominators": [
+      8192,
+      6050,
+      3764,
+      2133,
+      1192
+    ],
+    "conditional_exact": [
+      0.738525390625,
+      0.6221487603305785,
+      0.5666843783209352,
+      0.5588373183309893,
+      0.537751677852349
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 2142,
+      "1": 2286,
+      "2": 1631,
+      "3": 941,
+      "4": 551,
+      "5": 641
+    },
+    "mean_accepted_draft_tokens": 1.68212890625,
+    "mean_visible_tokens_if_k_step_spec": 2.68212890625,
+    "starts": 8192
+  },
+  "batch_size": 4,
+  "before": {
+    "conditional_denominators": [
+      8192,
+      5683,
+      3112,
+      1480,
+      675
+    ],
+    "conditional_exact": [
+      0.6937255859375,
+      0.5475980995952842,
+      0.4755784061696658,
+      0.4560810810810811,
+      0.4562962962962963
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 2509,
+      "1": 2571,
+      "2": 1632,
+      "3": 805,
+      "4": 367,
+      "5": 308
+    },
+    "mean_accepted_draft_tokens": 1.374267578125,
+    "mean_visible_tokens_if_k_step_spec": 2.374267578125,
+    "starts": 8192
+  },
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-0/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-1/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-2/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-3/dataset"
+  ],
+  "draft_lm_head": "int4-dequant",
+  "draft_lm_head_group_size": 128,
+  "draft_lm_head_scale_dtype": "bf16",
+  "elapsed_s": 427.6938140389975,
+  "epochs": 1,
+  "export": "model_extra_tensors.safetensors",
+  "headline_warning": "Offline draft acceptance only; endpoint strict fresh validation is required before any throughput claim or LocalMaxxing submission.",
+  "heldout_samples": 288,
+  "heldout_starts": 8192,
+  "lr": 1e-05,
+  "max_steps": 5,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "purpose": "diagnostic_intrinsic_mtp_mergeable_adapter_training",
+  "scope": "fc",
+  "seed": 27,
+  "train_starts": 16384,
+  "valid_headline_throughput": false,
+  "weight_decay": 0.0
+}

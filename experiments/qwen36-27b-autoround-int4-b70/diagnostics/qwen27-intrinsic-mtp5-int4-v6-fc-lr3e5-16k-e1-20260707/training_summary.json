@@ -1,0 +1,81 @@
+{
+  "after": {
+    "conditional_denominators": [
+      8192,
+      6187,
+      3972,
+      2288,
+      1337
+    ],
+    "conditional_exact": [
+      0.7552490234375,
+      0.6419912720219816,
+      0.5760322255790534,
+      0.5843531468531469,
+      0.5893792071802543
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 2005,
+      "1": 2215,
+      "2": 1684,
+      "3": 951,
+      "4": 549,
+      "5": 788
+    },
+    "mean_accepted_draft_tokens": 1.77880859375,
+    "mean_visible_tokens_if_k_step_spec": 2.77880859375,
+    "starts": 8192
+  },
+  "batch_size": 4,
+  "before": {
+    "conditional_denominators": [
+      8192,
+      5683,
+      3113,
+      1483,
+      677
+    ],
+    "conditional_exact": [
+      0.6937255859375,
+      0.5477740629948971,
+      0.4763893350465789,
+      0.45650708024275116,
+      0.4549483013293944
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 2509,
+      "1": 2570,
+      "2": 1630,
+      "3": 806,
+      "4": 369,
+      "5": 308
+    },
+    "mean_accepted_draft_tokens": 1.375,
+    "mean_visible_tokens_if_k_step_spec": 2.375,
+    "starts": 8192
+  },
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-0/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-1/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-2/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-3/dataset"
+  ],
+  "draft_lm_head": "int4-dequant",
+  "draft_lm_head_group_size": 128,
+  "draft_lm_head_scale_dtype": "bf16",
+  "elapsed_s": 427.9876252580434,
+  "epochs": 1,
+  "export": "model_extra_tensors.safetensors",
+  "headline_warning": "Offline draft acceptance only; endpoint strict fresh validation is required before any throughput claim or LocalMaxxing submission.",
+  "heldout_samples": 288,
+  "heldout_starts": 8192,
+  "lr": 3e-05,
+  "max_steps": 5,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "purpose": "diagnostic_intrinsic_mtp_mergeable_adapter_training",
+  "scope": "fc",
+  "seed": 27,
+  "train_starts": 16384,
+  "valid_headline_throughput": false,
+  "weight_decay": 0.0
+}
