@@ -1,0 +1,89 @@
+{
+  "best_probe": {
+    "elapsed_s": 1892.3272234720644,
+    "heldout_exact_rate": 0.3436279296875,
+    "heldout_loss": 3.0455943439270357,
+    "step": 6000
+  },
+  "best_variant_by_probe": "fullvocab-5aux-lr3e-6-decay0p25-rank0p2-topk0p5",
+  "date_utc": "2026-07-07",
+  "decision": "early_closed_no_endpoint_work",
+  "headline_validity": "invalid for headline throughput; offline training probes only; no endpoint, no LocalMaxxing",
+  "purpose": "early-stop diagnostic full-vocab five-aux EAGLE3/DFlash rank-push screen",
+  "reason": "Best heldout step-1 exact stayed far below a plausible accepted-depth gate; at the latest probes, even the impossible upper bound 5*step1_exact is below the 3+ accepted-draft target for >100 tok/s.",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-fullvocab-5aux-rankpush-20260707T114027Z",
+  "variants": [
+    {
+      "best_probe": {
+        "elapsed_s": 1726.8327042029705,
+        "heldout_exact_rate": 0.2978515625,
+        "heldout_loss": 3.4093210942054952,
+        "step": 5500
+      },
+      "hard_upper_bound_mean_accepted_from_last_step1": 1.4892578125,
+      "label": "fullvocab-5aux-lr1e-6-decay0p25-rank0p2-topk0p5",
+      "last_probe": {
+        "elapsed_s": 1887.3241847150493,
+        "heldout_exact_rate": 0.2978515625,
+        "heldout_loss": 3.4065539043329522,
+        "step": 6000
+      },
+      "probe_count": 12,
+      "train_log": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-fullvocab-5aux-rankpush-20260707T114027Z/fullvocab-5aux-lr1e-6-decay0p25-rank0p2-topk0p5/train.log"
+    },
+    {
+      "best_probe": {
+        "elapsed_s": 1567.544631466968,
+        "heldout_exact_rate": 0.2962646484375,
+        "heldout_loss": 3.422417159435298,
+        "step": 5000
+      },
+      "hard_upper_bound_mean_accepted_from_last_step1": 1.478271484375,
+      "label": "fullvocab-5aux-lr1e-6-decay0p5-rank0p1-topk0p25",
+      "last_probe": {
+        "elapsed_s": 1889.086637040833,
+        "heldout_exact_rate": 0.295654296875,
+        "heldout_loss": 3.4170531113195466,
+        "step": 6000
+      },
+      "probe_count": 12,
+      "train_log": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-fullvocab-5aux-rankpush-20260707T114027Z/fullvocab-5aux-lr1e-6-decay0p5-rank0p1-topk0p25/train.log"
+    },
+    {
+      "best_probe": {
+        "elapsed_s": 1892.3272234720644,
+        "heldout_exact_rate": 0.3436279296875,
+        "heldout_loss": 3.0455943439270357,
+        "step": 6000
+      },
+      "hard_upper_bound_mean_accepted_from_last_step1": 1.7181396484375,
+      "label": "fullvocab-5aux-lr3e-6-decay0p25-rank0p2-topk0p5",
+      "last_probe": {
+        "elapsed_s": 1892.3272234720644,
+        "heldout_exact_rate": 0.3436279296875,
+        "heldout_loss": 3.0455943439270357,
+        "step": 6000
+      },
+      "probe_count": 12,
+      "train_log": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-fullvocab-5aux-rankpush-20260707T114027Z/fullvocab-5aux-lr3e-6-decay0p25-rank0p2-topk0p5/train.log"
+    },
+    {
+      "best_probe": {
+        "elapsed_s": 1737.819281586213,
+        "heldout_exact_rate": 0.337646484375,
+        "heldout_loss": 3.072355859347738,
+        "step": 5500
+      },
+      "hard_upper_bound_mean_accepted_from_last_step1": 1.688232421875,
+      "label": "fullvocab-5aux-lr3e-6-decay0p5-rank0p1-topk0p25",
+      "last_probe": {
+        "elapsed_s": 1737.819281586213,
+        "heldout_exact_rate": 0.337646484375,
+        "heldout_loss": 3.072355859347738,
+        "step": 5500
+      },
+      "probe_count": 11,
+      "train_log": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-fullvocab-5aux-rankpush-20260707T114027Z/fullvocab-5aux-lr3e-6-decay0p5-rank0p1-topk0p25/train.log"
+    }
+  ]
+}

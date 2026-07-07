@@ -883,6 +883,14 @@ checkpoint. See
 `diagnostics/qwen27-intrinsic-mtp-deep-scope-4gpu-summary-20260707.json`.
 Do not repeat these intrinsic-MTP sweeps unless a new mechanism can prove
 `3+` accepted draft tokens before endpoint work.
+The full-vocab five-aux EAGLE3/DFlash rank-push route is closed too. The
+four-GPU screen using the full Ex0bit draft and v7 five-aux corpus was stopped
+early because the best heldout step-1 exact rate reached only `0.343628` at
+step `6000`, giving an impossible upper bound of just `1.718` accepted draft
+tokens (`5 * step1_exact`) versus the `3+` accepted-token endpoint gate. See
+`notes/2026-07-07-eagle3-fullvocab-5aux-rankpush-earlystop.md` and
+`diagnostics/qwen27-eagle3-fullvocab-5aux-rankpush-earlystop-summary-20260707.json`.
+Do not continue this exact rank-push recipe or endpoint-wire this draft.
 The latest DFlash revisit is also closed:
 `notes/2026-07-06-dflash-swa-pr40898-repair-no-record.md`. After reviewing
 upstream vLLM PR #40898, a local DFlash SWA/full-KV repair was implemented and

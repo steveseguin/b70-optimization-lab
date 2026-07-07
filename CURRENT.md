@@ -226,6 +226,13 @@ Fastest quality-gated practical variant:
   Do not repeat standalone RMSNormGated; the only plausible win is eliminating
   the boundary/materialization before `out_proj`, while preserving the BF16
   materialization semantics before activation quantization;
+- latest full-vocab five-aux EAGLE3/DFlash rank-push screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-fullvocab-5aux-rankpush-earlystop.md`.
+  This stronger-drafter pre-gate was stopped early after four GPU-parallel
+  variants reached only `0.343628` heldout step-1 exact at best (step `6000`),
+  giving even an impossible upper bound of only `1.718` accepted draft tokens
+  versus the `3+` accepted-token gate for `>100 tok/s`. No endpoint run, no
+  LocalMaxxing submission, and no continuation of this exact rank-push recipe;
 - latest stronger-drafter training screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
   Ex0bit EAGLE3/DFlash direct import is not viable, but the target-owned
