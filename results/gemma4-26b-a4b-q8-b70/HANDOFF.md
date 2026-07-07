@@ -69,10 +69,26 @@ Profiles:
 Tracked service artifacts:
 
 - `../../scripts/serve-gemma4-26b-q8-production.sh`;
+- `../../scripts/serve-gemma4-26b-q8-quad-production.sh`;
+- `../../scripts/run-gemma4-26b-q8-quad-frontdoor.sh`;
 - `../../scripts/gemma4-26b-prod-health.py`;
 - `../../deploy/systemd/gemma4-26b-q8-llamacpp.service`;
+- `../../deploy/systemd/gemma4-26b-q8-quad-backends.service`;
+- `../../deploy/systemd/gemma4-26b-q8-quad-frontdoor.service`;
 - `../../scripts/install-gemma4-26b-q8-service.sh`;
-- `production-service.md`.
+- `../../scripts/install-gemma4-26b-q8-quad-service.sh`;
+- `production-service.md`;
+- `production-quad-service.md`.
+
+Temporary quad deployment on 2026-07-07:
+
+- public no-auth LAN endpoint: `http://0.0.0.0:8000/v1`;
+- four local service-profile replicas on `127.0.0.1:19350-19353`;
+- one active generation per backend, four active generations total;
+- health passed on all four backends and the frontdoor;
+- c4/512 frontdoor smoke produced `417.888 tok/s` aggregate wall throughput;
+- operational note:
+  `../../notes/2026-07-07-gemma4-26b-quad-service.md`.
 
 Smoke status on 2026-07-03:
 

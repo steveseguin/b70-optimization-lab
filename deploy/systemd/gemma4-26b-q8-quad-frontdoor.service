@@ -1,0 +1,20 @@
+[Unit]
+Description=No-auth LAN OpenAI-compatible frontdoor for Gemma 4 26B quad replicas
+Documentation=https://github.com/steveseguin/b70-optimization-lab
+Wants=network-online.target gemma4-26b-q8-quad-backends.service
+After=network-online.target gemma4-26b-q8-quad-backends.service
+Conflicts=b70-openai-frontdoor.service minimax-openai-frontdoor.service
+
+[Service]
+Type=simple
+User=steve
+Group=steve
+WorkingDirectory=/home/steve/llm-optimizations
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/steve/llm-optimizations/scripts/run-gemma4-26b-q8-quad-frontdoor.sh
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
