@@ -419,13 +419,19 @@ Next milestone:
     found no credible win over control: control `64.398 tok/s`, best
     `clone-qkvz` `64.824 tok/s`, inside variance. Keep the promoted recipe
     unchanged.
-16. Latest target-forward quick screens and backlog:
+16. Latest GDN qkvz+ba projection-pack microbench:
+    `notes/2026-07-07-gdn-qkvz-ba-proj-pack-no-win.md`.
+    Packing `ba` into one wider W4A16 `qkvzba` projection saved only
+    `0.0034 ms/layer` at rows=4 (`~0.16 ms` projected over 48 GDN layers),
+    far below the `>=0.025 ms/layer` gate. Do not implement endpoint/loader
+    packing from this signal.
+17. Latest target-forward quick screens and backlog:
     `notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
     M-RoPE text-only fast path (`65.797` vs control `65.960`) and GDN fallback
     `prefill` only (`65.655` vs control `65.967`) both passed the strict fresh
     gate but did not beat controls. Continue with source/kernel work, not more
     easy env knobs.
-16. Latest QK-norm + RoPE fusion spike:
+18. Latest QK-norm + RoPE fusion spike:
     `notes/2026-07-05-qk-norm-rope-fused-spike-no-win.md`.
     A default-off Qwen3Next-specific XPU fusion for the gated
     `[q, gate, k, v]` layout passed direct BF16 parity, but regressed the

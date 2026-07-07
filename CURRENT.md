@@ -382,6 +382,12 @@ Previous fastest quality-gated practical variant:
   `clone-qkvz`, inside variance). Do not carry this knob in the promoted
   recipe or repeat it without a source change that materially alters GDN
   projection costs;
+- GDN qkvz+ba projection-pack closure:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-gdn-qkvz-ba-proj-pack-no-win.md`.
+  A direct W4A16 XPU microbench of one packed `qkvzba` projection versus the
+  current `qkvz` + `ba` GEMMs saved only `0.0034 ms/layer` at rows=4
+  (`~0.16 ms` projected over 48 GDN layers), far below the `>=0.025 ms/layer`
+  implementation gate. Do not spend endpoint/loader work on this packing lane;
 - target-forward quick-screen closure/backlog:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
   `VLLM_XPU_MROPE_TEXT_ONLY_FASTPATH=1` and

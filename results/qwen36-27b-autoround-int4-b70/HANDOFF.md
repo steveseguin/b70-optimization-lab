@@ -489,6 +489,12 @@ Current next-execution plan:
   `VLLM_XPU_GDN_REUSE_QKVZ_BA_QUANT=clone`, `clone-ba`, and `clone-qkvz`
   found no credible speed win: control `64.398 tok/s`, best clone-qkvz
   `64.824 tok/s`, inside variance. Keep the promoted recipe unchanged;
+- closed GDN qkvz+ba projection-pack microbench:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-gdn-qkvz-ba-proj-pack-no-win.md`.
+  Packing `ba` rows into one wider W4A16 `qkvzba` projection saved only
+  `0.0034 ms/layer` at rows=4 (`~0.16 ms` projected over 48 GDN layers), far
+  below the `>=0.025 ms/layer` implementation gate. Do not spend endpoint or
+  loader work on this packing lane;
 - closed target-forward quick screens and next backlog:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-05-target-forward-low-risk-screens-and-backlog.md`.
   M-RoPE text-only fast path and GDN fallback `prefill` only both lost
