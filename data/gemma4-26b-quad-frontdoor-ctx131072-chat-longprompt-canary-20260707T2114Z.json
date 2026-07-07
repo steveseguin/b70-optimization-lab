@@ -1,0 +1,59 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "elapsed_s": 234.674,
+  "endpoint": "/v1/chat/completions",
+  "expected_phrase": "LONG-CONTEXT-131072-CHAT-CANARY",
+  "filler_repeats": 120000,
+  "model": "gemma4-26b-a4b-q8",
+  "ok": true,
+  "phrase_present": true,
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "LONG-CONTEXT-131072-CHAT-CANARY",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1783458938,
+    "id": "chatcmpl-9K1qXTj8BSGJpGfeUxPbchMqfCkdexvw",
+    "model": "gemma4-26b-a4b-q8",
+    "object": "chat.completion",
+    "system_fingerprint": "b9769-c926ad098",
+    "timings": {
+      "cache_n": 0,
+      "draft_n": 12,
+      "draft_n_accepted": 12,
+      "predicted_ms": 227.689,
+      "predicted_n": 16,
+      "predicted_per_second": 70.27129110321535,
+      "predicted_per_token_ms": 14.2305625,
+      "prompt_ms": 233462.91,
+      "prompt_n": 120060,
+      "prompt_per_second": 514.257275384771,
+      "prompt_per_token_ms": 1.9445519740129935
+    },
+    "usage": {
+      "completion_tokens": 16,
+      "prompt_tokens": 120060,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 120076
+    }
+  },
+  "started_at": "2026-07-07T21:11:43Z",
+  "status": 200,
+  "text_preview": "LONG-CONTEXT-131072-CHAT-CANARY",
+  "usage": {
+    "completion_tokens": 16,
+    "prompt_tokens": 120060,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 120076
+  }
+}

@@ -17,7 +17,7 @@ Runtime shape:
 - backend profile: `GEMMA4_26B_PROFILE=service`;
 - target/verifier: UD-Q8_K_XL target with Q4_0 MTP draft, accepted tokens
   verified by the Q8 target;
-- context: `49152` after the follow-up increase from the original 32K
+- context: `131072` after follow-up increases from the original 32K
   deployment;
 - service knobs: `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`,
   `LLAMA_PREFILL_UBATCH_SIZE=2048`, FA/VMM enabled.
@@ -63,6 +63,51 @@ Follow-up context increase:
   aggregate wall throughput `398.503 tok/s`;
 - post-bump idle/near-idle `xpu-smi` sample showed roughly `29.5-29.8 GB`
   used per card, `90.4-91.2%` memory utilization.
+
+Second context increase:
+
+- changed `gemma4-26b-q8-quad-backends.service` to export
+  `CTX_SIZE=65536`;
+- all four local backends restarted cleanly and health passed:
+  `data/gemma4-26b-prod-health-quad-frontdoor-ctx65536-20260707T2103Z.json`,
+  `data/gemma4-26b-prod-health-port19350-ctx65536-20260707T2103Z.json`,
+  `data/gemma4-26b-prod-health-port19351-ctx65536-20260707T2103Z.json`,
+  `data/gemma4-26b-prod-health-port19352-ctx65536-20260707T2103Z.json`, and
+  `data/gemma4-26b-prod-health-port19353-ctx65536-20260707T2103Z.json`;
+- idle/near-idle `xpu-smi` sample showed roughly `29.9 GB` used per card,
+  `91.6-91.7%` memory utilization.
+
+Final high-context increase for the temporary service:
+
+- changed `gemma4-26b-q8-quad-backends.service` to export
+  `CTX_SIZE=131072`;
+- process launch arguments include `-c 131072` for all four replicas, and the
+  backend logs show `new slot, n_ctx = 131072`;
+- idle/near-idle `xpu-smi` sample after restart showed roughly `31.67-31.69 GB`
+  used per card, `96.97-97.05%` memory utilization;
+- while a 120K-token prompt canary was active, the busy card peaked around
+  `31.97 GB`, `97.89%` memory utilization;
+- frontdoor and per-backend health passed:
+  `data/gemma4-26b-prod-health-quad-frontdoor-ctx131072-20260707T2108Z.json`,
+  `data/gemma4-26b-prod-health-port19350-ctx131072-20260707T2108Z.json`,
+  `data/gemma4-26b-prod-health-port19351-ctx131072-20260707T2108Z.json`,
+  `data/gemma4-26b-prod-health-port19352-ctx131072-20260707T2108Z.json`, and
+  `data/gemma4-26b-prod-health-port19353-ctx131072-20260707T2108Z.json`;
+- raw completions capacity canary completed without truncation:
+  `data/gemma4-26b-quad-frontdoor-ctx131072-longprompt-canary-20260707T2109Z.json`,
+  `120067` prompt tokens, `cached_tokens=0`, HTTP 200, server log
+  `truncated = 0`; the content assertion is not counted because the raw
+  completion prompt ended with the marker and the model completed it with a
+  period;
+- chat long-prompt canary passed:
+  `data/gemma4-26b-quad-frontdoor-ctx131072-chat-longprompt-canary-20260707T2114Z.json`,
+  `120060` prompt tokens, `cached_tokens=0`, expected marker returned;
+- four-way frontdoor smoke at 128K passed:
+  `data/gemma4-26b-quad-frontdoor-c4-smoke-ctx131072-20260707T2118Z.json`,
+  aggregate wall throughput `394.492 tok/s`;
+- MTP startup logs still report the single-sequence fast path requirements
+  (`requires shared memory + single seq`), so doubling per-GPU concurrency is a
+  separate experiment and not part of this production config.
 
 Operational state after validation:
 

@@ -84,13 +84,20 @@ Temporary quad deployment on 2026-07-07:
 
 - public no-auth LAN endpoint: `http://0.0.0.0:8000/v1`;
 - four local service-profile replicas on `127.0.0.1:19350-19353`;
-- current context per replica: `49152` tokens, increased from the original 32K
+- current context per replica: `131072` tokens, increased from the original 32K
   deployment after health and long-prompt smoke passed;
 - one active generation per backend, four active generations total;
 - health passed on all four backends and the frontdoor;
 - c4/512 frontdoor smoke produced `417.888 tok/s` aggregate wall throughput;
-- post-bump c4/160 frontdoor smoke produced `398.503 tok/s` aggregate wall
-  throughput, and a `43073` prompt-token canary passed with `cached_tokens=0`;
+- latest 128K c4/160 frontdoor smoke produced `394.492 tok/s` aggregate wall
+  throughput, and a `120060` prompt-token chat canary passed with
+  `cached_tokens=0`;
+- observed memory at 128K was about `31.67-31.69 GB` per idle/near-idle card
+  and about `31.97 GB` / `97.89%` on the busy card during the 120K-token
+  canary;
+- per-GPU concurrency remains `1`; doubling it is a separate test because the
+  current MTP logs require shared memory plus single-sequence execution for the
+  fast path;
 - operational note:
   `../../notes/2026-07-07-gemma4-26b-quad-service.md`.
 

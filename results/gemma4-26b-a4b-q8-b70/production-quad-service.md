@@ -25,9 +25,11 @@ http://127.0.0.1:19353/v1  GPU 3
 The frontdoor keeps one active generation per backend and four active
 generations total. Extra generation requests queue at the frontdoor.
 
-The current temporary deployment uses a `49152` token context per GPU/backend.
-This is a conservative increase from the original 32K service profile and keeps
-one replica per card.
+The current temporary deployment uses a `131072` token context per GPU/backend.
+This is an increase from the original 32K service profile and keeps one
+replica per card. A 120K-token prompt canary pushed the active card to about
+`31.97 GB` / `97.9%` memory utilization, so this is the current high-utilization
+context target.
 
 ## Profile
 
@@ -35,7 +37,7 @@ Backends use the validated Gemma service profile:
 
 ```text
 GEMMA4_26B_PROFILE=service
-CTX_SIZE=49152
+CTX_SIZE=131072
 BATCH_SIZE=2048
 UBATCH_SIZE=1024
 FLASH_ATTN=on
@@ -75,7 +77,19 @@ scripts/gemma4-26b-prod-health.py \
   --model gemma4-26b-a4b-q8
 ```
 
-Latest 49K validation artifacts:
+Latest 128K validation artifacts:
+
+- `data/gemma4-26b-prod-health-quad-frontdoor-ctx131072-20260707T2108Z.json`;
+- `data/gemma4-26b-prod-health-port19350-ctx131072-20260707T2108Z.json`;
+- `data/gemma4-26b-prod-health-port19351-ctx131072-20260707T2108Z.json`;
+- `data/gemma4-26b-prod-health-port19352-ctx131072-20260707T2108Z.json`;
+- `data/gemma4-26b-prod-health-port19353-ctx131072-20260707T2108Z.json`;
+- `data/gemma4-26b-quad-frontdoor-ctx131072-chat-longprompt-canary-20260707T2114Z.json`
+  (`120060` prompt tokens, `cached_tokens=0`, marker returned);
+- `data/gemma4-26b-quad-frontdoor-c4-smoke-ctx131072-20260707T2118Z.json`
+  (`4` concurrent requests, `394.492 tok/s` aggregate wall throughput).
+
+Earlier 49K validation artifacts:
 
 - `data/gemma4-26b-prod-health-quad-frontdoor-ctx49152-20260707T2057Z.json`;
 - `data/gemma4-26b-quad-frontdoor-ctx49152-longprompt-canary-20260707T2058Z.json`
