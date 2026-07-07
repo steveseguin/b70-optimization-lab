@@ -883,6 +883,31 @@ The retry run root is expected to be:
 /mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T004308Z
 ```
 
+Retry result:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-continuation4-summary-20260707.json
+```
+
+- `cont-r5-lr2e-5-decay1` completed after the disk cleanup and atomic export
+  patch;
+- mean accepted improved to **`1.3147772366522366`** over `44,352` starts;
+- step-1 exact `59.54%`, step-2 conditional `55.91%`, step-3 conditional
+  `58.01%`;
+- histogram: `0=17946, 1=11642, 2=6199, 3=3252, 4=2048, 5=3265`;
+- checkpoint:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T004308Z/cont-r5-lr2e-5-decay1/checkpoint
+```
+
+The wrapper process exited nonzero only because the shell script was edited
+while that already-running instance later reached the summary block. The
+training, atomic export, heldout evaluator, and `summary.json` all completed.
+This is still diagnostic-only and below the `1.5-2.0` endpoint trigger, but it
+is the new best offline EAGLE/DFlash checkpoint for the next survival-objective
+screen.
+
 ## Next objective patch: accepted-prefix survival gating
 
 The next code-level objective change targets an objective/evaluator mismatch:

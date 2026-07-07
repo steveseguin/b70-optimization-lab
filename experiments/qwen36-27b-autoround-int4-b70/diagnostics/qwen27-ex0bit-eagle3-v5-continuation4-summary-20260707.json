@@ -1,0 +1,35 @@
+{
+  "classification": "diagnostic_only_qwen27_ex0bit_eagle3_v5_continuation4",
+  "note": "Single-label retry after disk cleanup; shell exited nonzero only because wrapper was edited while running after summary generation.",
+  "rows": [
+    {
+      "elapsed_s": 902.6070718239062,
+      "final_heldout_exact": 0.6087443193266023,
+      "final_train_exact": 0.7804426391087482,
+      "histogram": {
+        "0": 17946,
+        "1": 11642,
+        "2": 6199,
+        "3": 3252,
+        "4": 2048,
+        "5": 3265
+      },
+      "label": "cont-r5-lr2e-5-decay1",
+      "lr": 2e-05,
+      "mean_accepted": 1.3147772366522366,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T004308Z/cont-r5-lr2e-5-decay1",
+      "rollout_loss_decay": 1.0,
+      "rollout_steps": 5,
+      "rollout_summary_exists": true,
+      "starts": 44352,
+      "step1_exact": 0.5953733766233766,
+      "step2_conditional_exact": 0.5591153525713853,
+      "step3_conditional_exact": 0.5801273367651043,
+      "train_meta_exists": true,
+      "train_objective": "autoregressive_rollout_windows",
+      "train_scope": "fc-lm-head"
+    }
+  ],
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T004308Z",
+  "valid_headline_throughput": false
+}
