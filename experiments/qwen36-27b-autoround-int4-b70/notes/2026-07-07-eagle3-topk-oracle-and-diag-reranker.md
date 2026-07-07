@@ -187,3 +187,20 @@ the next credible options are:
 
 The diagnostic says top-k candidate information is useful, but the cheap
 single-token extractors tried here are too weak.
+
+## Wide top-k follow-up
+
+Later on 2026-07-07, the same best v6b all-scope checkpoint and heldout shard
+were rerun at `K=32,64,128`; see:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-wide-topk-oracle-extractor-gate.md
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-v6b-wide-topk-oracle-summary-20260707.json
+```
+
+Result: top-64/top-128 oracle accepted depth is high enough to cross `100 tok/s`
+only under an impossible same-cost magic extractor (`103.76` / `111.23 tok/s`).
+This does **not** make the oracle a benchmark or endpoint design, but it does
+mean the branch is extractor-gated rather than signal-starved. Continue with
+rank-promotion or selected-candidate extraction; keep naive full-tree verifier
+plumbing closed.

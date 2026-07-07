@@ -1,0 +1,108 @@
+{
+  "schema": "qwen27_ex0bit_eagle3_v6b_rankpush_summary",
+  "date_utc": "2026-07-07",
+  "classification": "diagnostic_only_no_endpoint",
+  "valid_headline_throughput": false,
+  "objective": "Screen a listwise top-k rank-promotion loss after the wide top-k oracle showed target tokens are often present in top-64/top-128 but not rank 1.",
+  "code": {
+    "trainer": "scripts/train-qwen27-ex0bit-eagle3-adapter.py",
+    "runner": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-ex0bit-eagle3-v6b-rankpush-4gpu.sh"
+  },
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-rankpush-4gpu-20260707T103859Z",
+  "start_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-allscope-20260707T075425Z/all-r5-lr3e-6-decay0p25/checkpoint",
+  "heldout_dataset": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset",
+  "baseline_mean_accepted": 1.1014610941216445,
+  "rows": [
+    {
+      "label": "rankpush-k64-w0p25-m0-lr1e-5-d0p25",
+      "mean_accepted": 1.1050628610261637,
+      "starts": 14715,
+      "histogram": {
+        "0": 6161,
+        "1": 4273,
+        "2": 2339,
+        "3": 972,
+        "4": 456,
+        "5": 514
+      },
+      "step1_exact": 0.581311586816174,
+      "step2_conditional_exact": 0.5004676174888941,
+      "step3_conditional_exact": 0.45363232889511795,
+      "final_heldout_exact": 0.5901639344262295,
+      "lr": 1e-05,
+      "rollout_loss_decay": 0.25,
+      "rollout_topk_rank_loss_weight": 0.25,
+      "rollout_topk_rank_k": 64,
+      "rollout_topk_rank_margin": 0.0
+    },
+    {
+      "label": "rankpush-k128-w0p5-m0-lr5e-6-d0p25",
+      "mean_accepted": 1.1031600407747197,
+      "starts": 14715,
+      "histogram": {
+        "0": 6162,
+        "1": 4289,
+        "2": 2327,
+        "3": 973,
+        "4": 449,
+        "5": 515
+      },
+      "step1_exact": 0.581243628950051,
+      "step2_conditional_exact": 0.49853852449432945,
+      "step3_conditional_exact": 0.45426829268292684,
+      "final_heldout_exact": 0.5900970224155235,
+      "lr": 5e-06,
+      "rollout_loss_decay": 0.25,
+      "rollout_topk_rank_loss_weight": 0.5,
+      "rollout_topk_rank_k": 128,
+      "rollout_topk_rank_margin": 0.0
+    },
+    {
+      "label": "rankpush-k64-w0p5-m0-lr5e-6-d0p25",
+      "mean_accepted": 1.1018008834522597,
+      "starts": 14715,
+      "histogram": {
+        "0": 6169,
+        "1": 4286,
+        "2": 2329,
+        "3": 970,
+        "4": 446,
+        "5": 515
+      },
+      "step1_exact": 0.5807679238871899,
+      "step2_conditional_exact": 0.4984788205008191,
+      "step3_conditional_exact": 0.45328638497652585,
+      "final_heldout_exact": 0.5896286383405821,
+      "lr": 5e-06,
+      "rollout_loss_decay": 0.25,
+      "rollout_topk_rank_loss_weight": 0.5,
+      "rollout_topk_rank_k": 64,
+      "rollout_topk_rank_margin": 0.0
+    },
+    {
+      "label": "rankpush-k64-w1-m0p1-lr3e-6-d0p5",
+      "mean_accepted": 1.1004417261297996,
+      "starts": 14715,
+      "histogram": {
+        "0": 6177,
+        "1": 4290,
+        "2": 2316,
+        "3": 971,
+        "4": 447,
+        "5": 514
+      },
+      "step1_exact": 0.5802242609582059,
+      "step2_conditional_exact": 0.49754040758959944,
+      "step3_conditional_exact": 0.4548022598870056,
+      "final_heldout_exact": 0.5890264302442288,
+      "lr": 3e-06,
+      "rollout_loss_decay": 0.5,
+      "rollout_topk_rank_loss_weight": 1.0,
+      "rollout_topk_rank_k": 64,
+      "rollout_topk_rank_margin": 0.1
+    }
+  ],
+  "best_label": "rankpush-k64-w0p25-m0-lr1e-5-d0p25",
+  "best_mean_accepted": 1.1050628610261637,
+  "decision": "No endpoint speed run and no LocalMaxxing submission. The new listwise top-k rank loss is mechanically useful and reproducible, but the best lift over v6b all-scope is only +0.0036 accepted tokens, far below the 1.5-2.0 offline gate and far below what the top-64/top-128 oracle implies. The target-token signal exists in the candidate list, but simple rank-promotion of this Ex0bit-format draft does not extract it."
+}

@@ -762,6 +762,17 @@ top-k reranking. Later target-matched EAGLE3 top-k oracle showed real
 candidate-list headroom, but diagonal and small MLP rerankers were closed
 no-win (`1.1069` and `1.1193` accepted draft tokens versus `2.249` top-8
 oracle); see `notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
+The wider top-k oracle in
+`notes/2026-07-07-eagle3-wide-topk-oracle-extractor-gate.md` shows top-64 and
+top-128 contain enough signal to cross `100 tok/s` only under an impossible
+same-cost magic extractor (`103.76` / `111.23 tok/s`). Treat that as direction
+for rank-promotion or selected-candidate extraction research, not as a
+throughput claim and not as justification for naive full-tree verification.
+The first direct rank-promotion screen is closed in
+`notes/2026-07-07-eagle3-v6b-rankpush-no-endpoint.md`: listwise top-k rank
+loss tooling worked, but best heldout accepted depth moved only
+`1.10146 -> 1.10506`, so simple loss weighting around this checkpoint is not
+the missing extractor.
 The latest draft-INT4 fast-path screens are also closed:
 keep-scheduled-spec-row routing, graph-off, graph-off/no-async, cg4, and normal
 align/restore all kept the same repeat64 failure (`55/64` expected

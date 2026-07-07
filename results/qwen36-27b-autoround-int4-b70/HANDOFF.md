@@ -270,9 +270,21 @@ Current fastest quality-gated variant:
   The same note now includes a tree-cost model:
   even impossible same-cost top-16 would estimate only `91.65 tok/s`, while a
   legal full top-2 depth-5 tree estimates only `4.06 tok/s`.
-  Continue this branch only with a materially stronger drafter or much cheaper
-  branch verifier shape, not more diagonal/MLP reranker sweeps or naive full
-  tree plumbing.
+  A wider oracle pass is recorded in
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-wide-topk-oracle-extractor-gate.md`:
+  top-32/top-64/top-128 reached `2.886` / `3.177` / `3.478` accepted draft
+  tokens, i.e. `96.53` / `103.76` / `111.23 tok/s` under an impossible
+  same-cost magic extractor. These rows are not headline throughput, but they
+  prove the candidate list contains enough signal for `>100` if a cheap
+  extractor/rank-promotion path can make it rank-1. Continue this branch only
+  with materially stronger rank-promotion/candidate-extraction work or a much
+  cheaper branch verifier shape, not more diagonal/MLP reranker sweeps or
+  naive full-tree plumbing. A direct rank-promotion follow-up is now closed in
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-rankpush-no-endpoint.md`:
+  the new listwise top-k rank loss and four-GPU runner worked mechanically, but
+  best heldout mean accepted only moved `1.10146 -> 1.10506`. The signal is
+  still extractor-gated, but simple loss weighting around this checkpoint is
+  not enough.
 - Latest target-body timing/no-win screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
   It confirms the webhie/AutoRound Qwen27 checkpoint is dense `qwen3_5_text`

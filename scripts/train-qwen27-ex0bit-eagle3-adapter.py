@@ -135,6 +135,29 @@ def parse_args() -> argparse.Namespace:
         help="Margin used by --rollout-rank-loss-weight.",
     )
     parser.add_argument(
+        "--rollout-topk-rank-loss-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Optional live-prefix listwise top-k rank loss weight. This "
+            "penalizes each of the strongest non-target logits in the current "
+            "batch row instead of only the single max wrong logit. Diagnostic "
+            "rank-promotion tool for EAGLE near-miss candidates."
+        ),
+    )
+    parser.add_argument(
+        "--rollout-topk-rank-k",
+        type=int,
+        default=64,
+        help="Number of strongest non-target logits for top-k rank loss.",
+    )
+    parser.add_argument(
+        "--rollout-topk-rank-margin",
+        type=float,
+        default=0.0,
+        help="Margin used by --rollout-topk-rank-loss-weight.",
+    )
+    parser.add_argument(
         "--hidden-loss-weight",
         type=float,
         default=0.0,
@@ -507,6 +530,9 @@ def compute_rollout_loss(
     dead_loss_floor: float,
     rank_loss_weight: float,
     rank_margin: float,
+    topk_rank_loss_weight: float,
+    topk_rank_k: int,
+    topk_rank_margin: float,
     hidden_loss_weight: float,
     hidden_loss_type: str,
 ) -> tuple[torch.Tensor, dict[str, Any]]:
@@ -530,6 +556,7 @@ def compute_rollout_loss(
     exact_by_step: list[int] = []
     loss_by_step: list[float] = []
     rank_loss_by_step: list[float] = []
+    topk_rank_loss_by_step: list[float] = []
     hidden_loss_by_step: list[float] = []
     for step in range(steps):
         pred = model(current_ids, current_positions, current_hidden)[:, -1, :]
@@ -551,6 +578,7 @@ def compute_rollout_loss(
         exact = 0
         step_loss_value = 0.0
         rank_loss_value = 0.0
+        topk_rank_loss_value = 0.0
         hidden_loss_value = 0.0
         proposed = torch.argmax(logits, dim=-1)
         if live:
@@ -578,6 +606,22 @@ def compute_rollout_loss(
                 loss_terms.append(rank_loss * rank_weight)
                 loss_weight_total += rank_weight
                 rank_loss_value = float(rank_loss.detach().item())
+            if topk_rank_loss_weight > 0.0:
+                rank_labels = step_labels[primary_mask]
+                rank_logits = logits[primary_mask]
+                target_logits = rank_logits.gather(
+                    1, rank_labels.view(-1, 1)).squeeze(1)
+                other_logits = rank_logits.clone()
+                other_logits.scatter_(1, rank_labels.view(-1, 1), -float("inf"))
+                k = min(max(1, topk_rank_k), other_logits.shape[-1] - 1)
+                topk_other = torch.topk(other_logits, k=k, dim=-1).values
+                topk_rank_loss = F.softplus(
+                    topk_other - target_logits[:, None] + topk_rank_margin
+                ).mean()
+                topk_rank_weight = weight * topk_rank_loss_weight
+                loss_terms.append(topk_rank_loss * topk_rank_weight)
+                loss_weight_total += topk_rank_weight
+                topk_rank_loss_value = float(topk_rank_loss.detach().item())
             if hidden_loss_weight > 0.0 and target_hidden_windows is not None:
                 hidden_loss_mask = primary_mask
                 target_hidden = target_hidden_windows[:, step, :]
@@ -598,6 +642,7 @@ def compute_rollout_loss(
         exact_by_step.append(exact)
         loss_by_step.append(step_loss_value)
         rank_loss_by_step.append(rank_loss_value)
+        topk_rank_loss_by_step.append(topk_rank_loss_value)
         hidden_loss_by_step.append(hidden_loss_value)
         if survival_mode == "hard":
             alive = alive & covered_mask & (proposed == step_labels)
@@ -624,6 +669,7 @@ def compute_rollout_loss(
         "exact_by_step": exact_by_step,
         "loss_by_step": loss_by_step,
         "rank_loss_by_step": rank_loss_by_step,
+        "topk_rank_loss_by_step": topk_rank_loss_by_step,
         "hidden_loss_by_step": hidden_loss_by_step,
         "exact_rate_by_step": [
             (exact_by_step[i] / live_by_step[i])
@@ -634,6 +680,9 @@ def compute_rollout_loss(
         "dead_loss_floor": dead_loss_floor,
         "rank_loss_weight": rank_loss_weight,
         "rank_margin": rank_margin,
+        "topk_rank_loss_weight": topk_rank_loss_weight,
+        "topk_rank_k": topk_rank_k,
+        "topk_rank_margin": topk_rank_margin,
         "hidden_loss_weight": hidden_loss_weight,
         "hidden_loss_type": hidden_loss_type,
     }
@@ -704,6 +753,10 @@ def main() -> int:
         raise ValueError("--rollout-dead-loss-floor must be >= 0")
     if args.rollout_rank_loss_weight < 0.0:
         raise ValueError("--rollout-rank-loss-weight must be >= 0")
+    if args.rollout_topk_rank_loss_weight < 0.0:
+        raise ValueError("--rollout-topk-rank-loss-weight must be >= 0")
+    if args.rollout_topk_rank_k < 1:
+        raise ValueError("--rollout-topk-rank-k must be >= 1")
     if args.hidden_loss_weight < 0.0:
         raise ValueError("--hidden-loss-weight must be >= 0")
     torch.manual_seed(args.seed)
@@ -847,6 +900,9 @@ def main() -> int:
                     dead_loss_floor=args.rollout_dead_loss_floor,
                     rank_loss_weight=args.rollout_rank_loss_weight,
                     rank_margin=args.rollout_rank_margin,
+                    topk_rank_loss_weight=args.rollout_topk_rank_loss_weight,
+                    topk_rank_k=args.rollout_topk_rank_k,
+                    topk_rank_margin=args.rollout_topk_rank_margin,
                     hidden_loss_weight=args.hidden_loss_weight,
                     hidden_loss_type=args.hidden_loss_type,
                 )
@@ -915,6 +971,9 @@ def main() -> int:
         "rollout_dead_loss_floor": args.rollout_dead_loss_floor,
         "rollout_rank_loss_weight": args.rollout_rank_loss_weight,
         "rollout_rank_margin": args.rollout_rank_margin,
+        "rollout_topk_rank_loss_weight": args.rollout_topk_rank_loss_weight,
+        "rollout_topk_rank_k": args.rollout_topk_rank_k,
+        "rollout_topk_rank_margin": args.rollout_topk_rank_margin,
         "hidden_loss_weight": args.hidden_loss_weight,
         "hidden_loss_type": args.hidden_loss_type,
         "epochs": args.epochs,

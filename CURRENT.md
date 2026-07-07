@@ -296,6 +296,23 @@ Fastest quality-gated practical variant:
   tree estimates only `4.06 tok/s`. Do not repeat diagonal/small-MLP reranker
   sweeps or naive full-tree endpoint plumbing; next accepted-depth work needs
   a materially stronger drafter or a much cheaper branch verifier shape;
+- wide EAGLE top-k oracle update:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-wide-topk-oracle-extractor-gate.md`.
+  Extending the same v6b heldout oracle to top-32/top-64/top-128 gives
+  accepted draft tokens `2.886` / `3.177` / `3.478`, or visible tokens/step
+  `3.886` / `4.177` / `4.478`. Under the impossible same-cost magic-extractor
+  assumption, top-64/top-128 would estimate `103.76` / `111.23 tok/s`. This is
+  not a valid endpoint path or LocalMaxxing result, but it reopens the branch
+  as extractor-gated: continue with rank-promotion / selected-candidate
+  extraction, not naive full-tree verification;
+- latest EAGLE rank-promotion screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-rankpush-no-endpoint.md`.
+  A new default-off listwise top-k rank loss was added to
+  `scripts/train-qwen27-ex0bit-eagle3-adapter.py` plus a four-GPU runner,
+  but the best v6b all-scope continuation improved heldout mean accepted only
+  `1.10146 -> 1.10506`. This closes simple top-k rank-promotion loss sweeps as
+  an endpoint route; the remaining EAGLE/DFlash route needs a stronger
+  architecture or data change that makes near-miss candidates rank-1;
 - latest current-recipe branch/regenerate envelope:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-recipe-strict-topk64-branch-envelope.md`.
   A strict-suite top-k64 trace on the current `68.236 tok/s` ReplaySSM

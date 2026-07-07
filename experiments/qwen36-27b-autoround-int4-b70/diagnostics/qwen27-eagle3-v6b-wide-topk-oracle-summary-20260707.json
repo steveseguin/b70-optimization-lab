@@ -1,0 +1,65 @@
+{
+  "schema": "qwen27_eagle3_v6b_wide_topk_oracle_summary",
+  "date_utc": "2026-07-07",
+  "classification": "diagnostic_only_not_headline",
+  "valid_headline_throughput": false,
+  "meaning": "Upper-bound diagnostic only: accepts when the verified target token is anywhere in the frozen EAGLE draft top-k list, then continues with the verified target token. This assumes a magic free reranker/extractor and is not an implemented endpoint path.",
+  "draft_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-allscope-20260707T075425Z/all-r5-lr3e-6-decay0p25/checkpoint",
+  "heldout_dataset": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset",
+  "target_model": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "raw_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-v6b-topk-wide-oracle-20260707T103008Z",
+  "current_valid_tok_s": 68.23626314761921,
+  "current_step_ms": 40.256513914139006,
+  "target_tok_s": 100.0,
+  "rows": [
+    {
+      "topk": 32,
+      "starts": 14715,
+      "mean_accepted_draft_tokens": 2.886102616377846,
+      "visible_tokens_per_step": 3.886102616377846,
+      "same_cost_magic_tok_s": 96.5335106926126,
+      "acceptance_histogram": {
+        "0": 1221,
+        "1": 2553,
+        "2": 2754,
+        "3": 2357,
+        "4": 1813,
+        "5": 4017
+      },
+      "summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-v6b-topk-wide-oracle-20260707T103008Z/topk32/summary.json"
+    },
+    {
+      "topk": 64,
+      "starts": 14715,
+      "mean_accepted_draft_tokens": 3.1770302412504248,
+      "visible_tokens_per_step": 4.177030241250424,
+      "same_cost_magic_tok_s": 103.76035665083647,
+      "acceptance_histogram": {
+        "0": 897,
+        "1": 2119,
+        "2": 2442,
+        "3": 2322,
+        "4": 1894,
+        "5": 5041
+      },
+      "summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-v6b-topk-wide-oracle-20260707T103008Z/topk64/summary.json"
+    },
+    {
+      "topk": 128,
+      "starts": 14715,
+      "mean_accepted_draft_tokens": 3.4775399252463473,
+      "visible_tokens_per_step": 4.477539925246347,
+      "same_cost_magic_tok_s": 111.2252276686515,
+      "acceptance_histogram": {
+        "0": 659,
+        "1": 1693,
+        "2": 2093,
+        "3": 2086,
+        "4": 1885,
+        "5": 6299
+      },
+      "summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-v6b-topk-wide-oracle-20260707T103008Z/topk128/summary.json"
+    }
+  ],
+  "decision": "Wide top-k changes the branch from closed to extractor-gated: top-64/top-128 contain enough target-token signal to clear 100 tok/s only under an impossible same-cost magic reranker, but naive full tree verification is still completely infeasible. Continue only with a cheap candidate extractor/ranker or a stronger drafter trained to promote these near-miss candidates into rank 1; do not publish these oracle numbers as throughput."
+}
