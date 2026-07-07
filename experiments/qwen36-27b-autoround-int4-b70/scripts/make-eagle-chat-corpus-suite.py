@@ -199,22 +199,207 @@ VARIANT_GUIDANCE = [
 ]
 
 
-def build_prompts(*, variants_per_pair: int = 1) -> list[dict[str, str]]:
+V6_DOMAINS = [
+    (
+        "code-debugging",
+        "a Python service patch that fixed one bug but introduced intermittent failures",
+        "stack traces, minimal reproduction, patch review, tests, and rollback criteria",
+    ),
+    (
+        "sql-data-analysis",
+        "a product analytics question answered from partially documented SQL tables",
+        "joins, missing data, assumptions, validation queries, and decision-ready summary",
+    ),
+    (
+        "config-devops",
+        "a deployment controlled by YAML, environment variables, and systemd units",
+        "configuration drift, safe defaults, smoke tests, logging, and rollback",
+    ),
+    (
+        "api-client-integration",
+        "a client library integrating pagination, retries, auth refresh, and webhooks",
+        "error handling, idempotency, rate limits, example code, and observability",
+    ),
+    (
+        "product-support",
+        "a user report that a new feature is confusing and sometimes produces wrong output",
+        "clarifying questions, reproduction steps, user-facing response, and escalation",
+    ),
+    (
+        "personal-productivity",
+        "a busy technical lead trying to organize a week of meetings and deliverables",
+        "prioritization, tradeoffs, schedule constraints, communication, and follow-through",
+    ),
+    (
+        "document-editing",
+        "a messy internal draft that needs to become a concise technical announcement",
+        "structure, tone, factual precision, missing context, and final wording",
+    ),
+    (
+        "quantitative-planning",
+        "a capacity or budget question with approximate numbers and uncertain assumptions",
+        "calculation steps, sensitivity ranges, constraints, caveats, and recommendation",
+    ),
+    (
+        "compliance-security-advice",
+        "a team asking whether a data-handling workflow creates security or compliance risk",
+        "scope, policy assumptions, risk reduction, audit evidence, and safe language",
+    ),
+    (
+        "general-technical-qa",
+        "a practical engineering question that needs a direct but nuanced answer",
+        "definitions, tradeoffs, examples, limitations, and next checks",
+    ),
+    (
+        "dependency-upgrade",
+        "a framework upgrade that changes APIs, performance characteristics, and packaging",
+        "migration order, compatibility, test coverage, deprecation risk, and rollback",
+    ),
+    (
+        "testing-strategy",
+        "a flaky workflow where unit tests pass but production behavior still regresses",
+        "test gaps, fixtures, deterministic reproduction, monitoring, and owner actions",
+    ),
+    (
+        "observability-logs",
+        "a pasted log excerpt with mixed warnings, errors, timestamps, and metric names",
+        "signal extraction, likely root cause, unknowns, next commands, and alert tuning",
+    ),
+    (
+        "shell-automation",
+        "a local automation task that should be reliable, idempotent, and easy to audit",
+        "shell commands, dry-run behavior, file safety, logging, and failure recovery",
+    ),
+    (
+        "migration-support",
+        "a customer-facing migration from one runtime or model profile to another",
+        "compatibility, quality expectations, validation, communication, and fallback",
+    ),
+    (
+        "customer-debugging",
+        "a support case where the user has partial symptoms and may be misattributing cause",
+        "questions, hypothesis ranking, plain-language explanation, and concrete next steps",
+    ),
+]
+
+
+V6_TASKS = [
+    (
+        "direct-answer",
+        "Answer the user's question directly",
+        "Start with the answer, then give the reasoning and caveats.",
+    ),
+    (
+        "compare-options",
+        "Compare the viable options",
+        "Use a compact table or clearly separated tradeoffs, then choose a default.",
+    ),
+    (
+        "rewrite",
+        "Rewrite the provided rough material",
+        "Improve clarity and structure while preserving technical meaning.",
+    ),
+    (
+        "summarize-context",
+        "Summarize the pasted context",
+        "Separate known facts, likely interpretation, unknowns, and next actions.",
+    ),
+    (
+        "extract-table",
+        "Extract the important details into a table",
+        "Include only fields that would change a decision or follow-up task.",
+    ),
+    (
+        "emit-json-yaml",
+        "Return a structured JSON or YAML artifact",
+        "Use stable keys, concrete values, and short explanatory strings.",
+    ),
+    (
+        "write-code-tests",
+        "Write code or tests for the scenario",
+        "Include a short explanation of the assumptions and how to run it.",
+    ),
+    (
+        "diagnose-logs",
+        "Diagnose the symptoms from the available evidence",
+        "Rank hypotheses, list checks, and avoid claiming certainty too early.",
+    ),
+    (
+        "calculate",
+        "Calculate the likely outcome from approximate inputs",
+        "Show the math, note uncertainty, and provide a decision threshold.",
+    ),
+    (
+        "draft-email",
+        "Draft a concise message to a stakeholder",
+        "Be accurate, action-oriented, and avoid overpromising.",
+    ),
+    (
+        "ambiguous-answer",
+        "Answer under ambiguity",
+        "State assumptions, give a useful answer, and identify what would change it.",
+    ),
+    (
+        "step-by-step-plan",
+        "Create a step-by-step plan",
+        "Keep the steps executable and include validation checkpoints.",
+    ),
+]
+
+
+V6_VARIANT_GUIDANCE = [
+    (
+        "messy-user",
+        "The user wording is informal and slightly messy; answer clearly without correcting their style.",
+    ),
+    (
+        "terse",
+        "Use a terse answer with minimal formatting and no unnecessary preamble.",
+    ),
+    (
+        "code-first",
+        "Lead with the concrete command, code, query, or config when one is useful.",
+    ),
+    (
+        "table-first",
+        "Lead with a compact table when it improves scanability.",
+    ),
+    (
+        "structured-only",
+        "Use a structured artifact only; avoid narrative except short field values.",
+    ),
+    (
+        "reviewer",
+        "Respond as a skeptical reviewer who wants evidence and clear failure modes.",
+    ),
+]
+
+
+def build_prompts(
+    *,
+    variants_per_pair: int = 1,
+    domains: list[tuple[str, str, str]] | None = None,
+    tasks: list[tuple[str, str, str]] | None = None,
+    variant_guidance: list[tuple[str, str]] | None = None,
+) -> list[dict[str, str]]:
+    domains = domains or DOMAINS
+    tasks = tasks or TASKS
+    variant_guidance = variant_guidance or VARIANT_GUIDANCE
     if variants_per_pair < 1:
         raise ValueError("--variants-per-pair must be >= 1")
-    if variants_per_pair > len(VARIANT_GUIDANCE):
+    if variants_per_pair > len(variant_guidance):
         raise ValueError(
-            f"--variants-per-pair must be <= {len(VARIANT_GUIDANCE)}"
+            f"--variants-per-pair must be <= {len(variant_guidance)}"
         )
     prompts: list[dict[str, str]] = []
-    for domain_index, (domain_id, scenario, focus) in enumerate(DOMAINS):
-        for task_index, (task_id, instruction, task_constraint) in enumerate(TASKS):
+    for domain_index, (domain_id, scenario, focus) in enumerate(domains):
+        for task_index, (task_id, instruction, task_constraint) in enumerate(tasks):
             for variant_index in range(variants_per_pair):
                 constraint = CONSTRAINTS[
                     (domain_index + task_index + variant_index)
                     % len(CONSTRAINTS)
                 ]
-                variant_id, variant_guidance = VARIANT_GUIDANCE[variant_index]
+                variant_id, guidance = variant_guidance[variant_index]
                 suffix = "" if variants_per_pair == 1 else f"-{variant_id}"
                 prompt_id = f"{domain_id}-{task_id}{suffix}"
                 prompt = (
@@ -222,7 +407,7 @@ def build_prompts(*, variants_per_pair: int = 1) -> list[dict[str, str]]:
                     f"Focus on {focus}.\n"
                     f"{task_constraint}\n"
                     f"{constraint}\n"
-                    f"{variant_guidance}\n"
+                    f"{guidance}\n"
                     "Use realistic names for systems, metrics, and artifacts, "
                     "but do not refer to any benchmark final-suite prompt."
                 )
@@ -260,9 +445,27 @@ def main() -> int:
         "--suite-id",
         default="qwen36-27b-autoround-int4-b70-eagle-chat-corpus-v2",
     )
+    parser.add_argument(
+        "--preset",
+        default="ops",
+        choices=("ops", "chat-v6"),
+        help=(
+            "Prompt-family preset. 'ops' preserves the existing v2-v5 "
+            "engineering/business suite shape; 'chat-v6' emits broader "
+            "non-final chat-style prompts for EAGLE/DFlash training."
+        ),
+    )
     parser.add_argument("--version", default="2026-07-04")
     args = parser.parse_args()
-    prompts = build_prompts(variants_per_pair=args.variants_per_pair)
+    if args.preset == "chat-v6":
+        prompts = build_prompts(
+            variants_per_pair=args.variants_per_pair,
+            domains=V6_DOMAINS,
+            tasks=V6_TASKS,
+            variant_guidance=V6_VARIANT_GUIDANCE,
+        )
+    else:
+        prompts = build_prompts(variants_per_pair=args.variants_per_pair)
     payload = {
         "suite_id": args.suite_id,
         "version": args.version,

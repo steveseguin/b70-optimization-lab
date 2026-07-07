@@ -941,3 +941,51 @@ integrate or submit anything unless a locked heldout run reaches at least the
 `1.5-2.0` mean-accepted trigger and does not regress on the current v5
 heldout. The current endpoint headline remains the strict fresh
 `68.236 tok/s` ReplaySSM result, not any offline EAGLE score.
+
+## V6 data preset prepared while survival sweep runs
+
+Added a `chat-v6` preset to
+`experiments/qwen36-27b-autoround-int4-b70/scripts/make-eagle-chat-corpus-suite.py`
+and generated:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v6-suite.json
+```
+
+Purpose: if the survival-objective sweep does not clear the offline threshold,
+the next higher-upside lever is broader target-owned data rather than more
+same-distribution v5 continuation. V5 was mostly ops/business/infra prompts;
+v6 adds broader fresh chat-style coverage: code debugging, SQL/data analysis,
+config/devops, API integration, product support, personal planning, document
+editing, quantitative planning, compliance/security advice, general technical
+QA, dependency upgrades, testing strategy, observability/log diagnosis, shell
+automation, migration support, and customer debugging.
+
+Validation of the generated suite:
+
+- `1152` prompts;
+- `16` families x `12` tasks x `6` variants;
+- `288` prompts per shard;
+- shard split keeps whole families together, avoiding row-level leakage:
+  - shard 0: `api-client-integration`, `code-debugging`, `config-devops`,
+    `sql-data-analysis`;
+  - shard 1: `document-editing`, `personal-productivity`,
+    `product-support`, `quantitative-planning`;
+  - shard 2: `compliance-security-advice`, `dependency-upgrade`,
+    `general-technical-qa`, `testing-strategy`;
+  - shard 3 heldout/audit-style: `customer-debugging`, `migration-support`,
+    `observability-logs`, `shell-automation`.
+
+Suggested collection command after GPUs are free:
+
+```bash
+SUITE=experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v6-suite.json \
+SHARD_PROMPTS=288 OUTPUT_TOKENS=160 EAGLE3_AUX_LAYERS=1,31,60 \
+RUN_ROOT=/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-$(date -u +%Y%m%dT%H%M%SZ) \
+experiments/qwen36-27b-autoround-int4-b70/scripts/run-eagle3-aux-corpus-v2-4gpu.sh
+```
+
+QC gate: require `total_prompts=1152`, `total_rows=184320`,
+`total_continuity_breaks=0`, and `total_aux_bad_files=0`. This remains
+diagnostic draft-training data only; do not use it as a promotion benchmark or
+LocalMaxxing throughput claim.
