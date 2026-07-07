@@ -84,9 +84,13 @@ Temporary quad deployment on 2026-07-07:
 
 - public no-auth LAN endpoint: `http://0.0.0.0:8000/v1`;
 - four local service-profile replicas on `127.0.0.1:19350-19353`;
+- current context per replica: `49152` tokens, increased from the original 32K
+  deployment after health and long-prompt smoke passed;
 - one active generation per backend, four active generations total;
 - health passed on all four backends and the frontdoor;
 - c4/512 frontdoor smoke produced `417.888 tok/s` aggregate wall throughput;
+- post-bump c4/160 frontdoor smoke produced `398.503 tok/s` aggregate wall
+  throughput, and a `43073` prompt-token canary passed with `cached_tokens=0`;
 - operational note:
   `../../notes/2026-07-07-gemma4-26b-quad-service.md`.
 

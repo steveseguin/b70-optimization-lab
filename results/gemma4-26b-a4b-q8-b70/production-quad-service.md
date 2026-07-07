@@ -25,13 +25,17 @@ http://127.0.0.1:19353/v1  GPU 3
 The frontdoor keeps one active generation per backend and four active
 generations total. Extra generation requests queue at the frontdoor.
 
+The current temporary deployment uses a `49152` token context per GPU/backend.
+This is a conservative increase from the original 32K service profile and keeps
+one replica per card.
+
 ## Profile
 
 Backends use the validated Gemma service profile:
 
 ```text
 GEMMA4_26B_PROFILE=service
-CTX_SIZE=32768
+CTX_SIZE=49152
 BATCH_SIZE=2048
 UBATCH_SIZE=1024
 FLASH_ATTN=on
@@ -70,6 +74,14 @@ scripts/gemma4-26b-prod-health.py \
   --base-url http://127.0.0.1:8000 \
   --model gemma4-26b-a4b-q8
 ```
+
+Latest 49K validation artifacts:
+
+- `data/gemma4-26b-prod-health-quad-frontdoor-ctx49152-20260707T2057Z.json`;
+- `data/gemma4-26b-quad-frontdoor-ctx49152-longprompt-canary-20260707T2058Z.json`
+  (`43073` prompt tokens, `cached_tokens=0`, retrieval passed);
+- `data/gemma4-26b-quad-frontdoor-c4-smoke-ctx49152-20260707T2059Z.json`
+  (`4` concurrent requests, `398.503 tok/s` aggregate wall throughput).
 
 Useful logs:
 
