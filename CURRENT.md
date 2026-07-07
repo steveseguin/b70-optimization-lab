@@ -218,6 +218,14 @@ Fastest quality-gated practical variant:
   `1.95/1.37/1.21/1.22 ms` dense+argmax). Do not wire this naive tile-scan
   op into the endpoint; future LM-head work needs candidate-only extraction or
   a matrix-tile-aware top-k/max primitive;
+- pending target-body code lane:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-gdn-fused-out-proj-int4-plan.md`.
+  If stronger-drafter screens stay below accepted-depth threshold, the next
+  bounded kernel experiment is a default-off TP1 prototype that fuses Qwen GDN
+  `RMSNormGated(core_attn_out, z)` into the following INT4 `out_proj` prologue.
+  Do not repeat standalone RMSNormGated; the only plausible win is eliminating
+  the boundary/materialization before `out_proj`, while preserving the BF16
+  materialization semantics before activation quantization;
 - latest stronger-drafter training screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
   Ex0bit EAGLE3/DFlash direct import is not viable, but the target-owned
