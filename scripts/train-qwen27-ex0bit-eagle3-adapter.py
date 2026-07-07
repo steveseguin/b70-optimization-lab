@@ -81,6 +81,40 @@ def parse_args() -> argparse.Namespace:
             "step equally; 0.5 halves the loss weight each later step."
         ),
     )
+    parser.add_argument(
+        "--rollout-survival-mode",
+        default="none",
+        choices=("none", "hard"),
+        help=(
+            "When hard, compute primary rollout loss only for prefixes that "
+            "would still be alive under greedy accepted-prefix evaluation."
+        ),
+    )
+    parser.add_argument(
+        "--rollout-dead-loss-floor",
+        type=float,
+        default=0.0,
+        help=(
+            "Optional CE weight multiplier for covered rows after their prefix "
+            "has died under --rollout-survival-mode=hard. 0 trains only live "
+            "prefixes; small values preserve some late-step signal."
+        ),
+    )
+    parser.add_argument(
+        "--rollout-rank-loss-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Optional live-prefix argmax-margin loss weight. This penalizes "
+            "the strongest non-target logit beating or approaching the target."
+        ),
+    )
+    parser.add_argument(
+        "--rollout-rank-margin",
+        type=float,
+        default=0.0,
+        help="Margin used by --rollout-rank-loss-weight.",
+    )
     return parser.parse_args()
 
 
@@ -357,6 +391,10 @@ def compute_rollout_loss(
     device: torch.device,
     dtype: torch.dtype,
     loss_decay: float,
+    survival_mode: str,
+    dead_loss_floor: float,
+    rank_loss_weight: float,
+    rank_margin: float,
 ) -> tuple[torch.Tensor, dict[str, Any]]:
     batch = int(labels.shape[0])
     steps = int(labels.shape[1])
@@ -369,28 +407,69 @@ def compute_rollout_loss(
     current_positions = position_windows[:, :1]
     loss_terms: list[torch.Tensor] = []
     loss_weight_total = 0.0
+    alive = torch.ones(batch, dtype=torch.bool, device=device)
     covered_by_step: list[int] = []
+    live_by_step: list[int] = []
+    dead_by_step: list[int] = []
     exact_by_step: list[int] = []
     loss_by_step: list[float] = []
+    rank_loss_by_step: list[float] = []
     for step in range(steps):
         pred = model(current_ids, current_positions, current_hidden)[:, -1, :]
         logits = model.lm_head(pred).float() * float(model.shape.logit_scale)
         step_labels = labels[:, step]
-        mask = step_labels != -100
-        covered = int(mask.sum().item())
+        covered_mask = step_labels != -100
+        if survival_mode == "hard":
+            primary_mask = covered_mask & alive
+            dead_mask = covered_mask & ~alive
+        else:
+            primary_mask = covered_mask
+            dead_mask = torch.zeros_like(covered_mask)
+        covered = int(covered_mask.sum().item())
+        live = int(primary_mask.sum().item())
+        dead = int(dead_mask.sum().item())
         covered_by_step.append(covered)
+        live_by_step.append(live)
+        dead_by_step.append(dead)
         exact = 0
         step_loss_value = 0.0
-        if covered:
-            step_loss = F.cross_entropy(logits[mask], step_labels[mask])
+        rank_loss_value = 0.0
+        proposed = torch.argmax(logits, dim=-1)
+        if live:
+            step_loss = F.cross_entropy(
+                logits[primary_mask], step_labels[primary_mask])
             weight = loss_decay ** step
             loss_terms.append(step_loss * weight)
             loss_weight_total += weight
-            proposed = torch.argmax(logits, dim=-1)
-            exact = int((proposed[mask] == step_labels[mask]).sum().item())
+            exact = int(
+                (proposed[primary_mask] == step_labels[primary_mask])
+                .sum()
+                .item())
             step_loss_value = float(step_loss.detach().item())
+            if rank_loss_weight > 0.0:
+                rank_labels = step_labels[primary_mask]
+                rank_logits = logits[primary_mask]
+                target_logits = rank_logits.gather(
+                    1, rank_labels.view(-1, 1)).squeeze(1)
+                other_logits = rank_logits.clone()
+                other_logits.scatter_(1, rank_labels.view(-1, 1), -float("inf"))
+                max_other = other_logits.max(dim=-1).values
+                rank_loss = F.softplus(
+                    max_other - target_logits + rank_margin).mean()
+                rank_weight = weight * rank_loss_weight
+                loss_terms.append(rank_loss * rank_weight)
+                loss_weight_total += rank_weight
+                rank_loss_value = float(rank_loss.detach().item())
+        if dead and dead_loss_floor > 0.0:
+            dead_loss = F.cross_entropy(logits[dead_mask], step_labels[dead_mask])
+            dead_weight = (loss_decay ** step) * dead_loss_floor
+            loss_terms.append(dead_loss * dead_weight)
+            loss_weight_total += dead_weight
         exact_by_step.append(exact)
         loss_by_step.append(step_loss_value)
+        rank_loss_by_step.append(rank_loss_value)
+        if survival_mode == "hard":
+            alive = alive & covered_mask & (proposed == step_labels)
         if step + 1 < input_windows.shape[1]:
             current_hidden = torch.cat(
                 [current_hidden, pred.reshape(batch, 1, -1)],
@@ -409,13 +488,20 @@ def compute_rollout_loss(
     loss = torch.stack(loss_terms).sum() / max(loss_weight_total, 1e-12)
     stats = {
         "covered_by_step": covered_by_step,
+        "live_by_step": live_by_step,
+        "dead_by_step": dead_by_step,
         "exact_by_step": exact_by_step,
         "loss_by_step": loss_by_step,
+        "rank_loss_by_step": rank_loss_by_step,
         "exact_rate_by_step": [
-            (exact_by_step[i] / covered_by_step[i])
-            if covered_by_step[i] else 0.0
+            (exact_by_step[i] / live_by_step[i])
+            if live_by_step[i] else 0.0
             for i in range(steps)
         ],
+        "survival_mode": survival_mode,
+        "dead_loss_floor": dead_loss_floor,
+        "rank_loss_weight": rank_loss_weight,
+        "rank_margin": rank_margin,
     }
     return loss, stats
 
@@ -480,6 +566,10 @@ def main() -> int:
         raise ValueError("--rollout-steps must be >= 1")
     if args.rollout_loss_decay <= 0.0:
         raise ValueError("--rollout-loss-decay must be > 0")
+    if args.rollout_dead_loss_floor < 0.0:
+        raise ValueError("--rollout-dead-loss-floor must be >= 0")
+    if args.rollout_rank_loss_weight < 0.0:
+        raise ValueError("--rollout-rank-loss-weight must be >= 0")
     torch.manual_seed(args.seed)
     eval_module = load_eval_module()
     device = eval_module.choose_device(args.device)
@@ -576,6 +666,10 @@ def main() -> int:
                     device=device,
                     dtype=dtype,
                     loss_decay=args.rollout_loss_decay,
+                    survival_mode=args.rollout_survival_mode,
+                    dead_loss_floor=args.rollout_dead_loss_floor,
+                    rank_loss_weight=args.rollout_rank_loss_weight,
+                    rank_margin=args.rollout_rank_margin,
                 )
             loss.backward()
             optimizer.step()
@@ -635,6 +729,10 @@ def main() -> int:
         "train_objective": train_objective,
         "rollout_steps": args.rollout_steps,
         "rollout_loss_decay": args.rollout_loss_decay,
+        "rollout_survival_mode": args.rollout_survival_mode,
+        "rollout_dead_loss_floor": args.rollout_dead_loss_floor,
+        "rollout_rank_loss_weight": args.rollout_rank_loss_weight,
+        "rollout_rank_margin": args.rollout_rank_margin,
         "epochs": args.epochs,
         "batch_size": args.batch_size,
         "lr": args.lr,

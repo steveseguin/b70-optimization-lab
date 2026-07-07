@@ -882,3 +882,37 @@ The retry run root is expected to be:
 ```text
 /mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T004308Z
 ```
+
+## Next objective patch: accepted-prefix survival gating
+
+The next code-level objective change targets an objective/evaluator mismatch:
+the trainer previously optimized CE for every rollout step even after an
+earlier step would have failed, while the offline accepted-prefix evaluator
+stops at the first mismatch. That spends gradient on dead prefixes that cannot
+increase accepted depth.
+
+Implemented in `scripts/train-qwen27-ex0bit-eagle3-adapter.py`:
+
+- `--rollout-survival-mode=hard`: primary CE is computed only for prefixes
+  still alive under greedy accepted-prefix semantics;
+- `--rollout-dead-loss-floor`: optional small CE weight for dead prefixes to
+  avoid starving late-step calibration entirely;
+- `--rollout-rank-loss-weight` and `--rollout-rank-margin`: optional live
+  argmax-margin loss that pushes the target logit above the strongest
+  non-target logit. This targets the observed top-5/top-1 gap.
+
+Implemented in
+`experiments/qwen36-27b-autoround-int4-b70/scripts/run-ex0bit-eagle3-rollout-train-v3-4gpu.sh`:
+
+- `SWEEP=survival-objective` with four 4-GPU variants:
+  - hard survival, no floor;
+  - hard survival with `0.05` dead-prefix floor;
+  - hard survival plus `0.05` rank loss;
+  - hard survival plus `0.1` rank loss;
+- `ONLY_LABELS=...` can narrow reruns to a single variant.
+
+Validation rule: this is still offline diagnostic work only. Do not endpoint
+integrate or submit anything unless a locked heldout run reaches at least the
+`1.5-2.0` mean-accepted trigger and does not regress on the current v5
+heldout. The current endpoint headline remains the strict fresh
+`68.236 tok/s` ReplaySSM result, not any offline EAGLE score.

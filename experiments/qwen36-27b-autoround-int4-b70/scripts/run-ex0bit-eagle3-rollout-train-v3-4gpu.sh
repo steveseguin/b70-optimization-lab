@@ -20,6 +20,10 @@ EVAL_EVERY="${EVAL_EVERY:-1000}"
 DTYPE="${DTYPE:-bfloat16}"
 SWEEP="${SWEEP:-mixed}"
 ONLY_LABELS="${ONLY_LABELS:-}"
+ROLLOUT_SURVIVAL_MODE="${ROLLOUT_SURVIVAL_MODE:-none}"
+ROLLOUT_DEAD_LOSS_FLOOR="${ROLLOUT_DEAD_LOSS_FLOOR:-0.0}"
+ROLLOUT_RANK_LOSS_WEIGHT="${ROLLOUT_RANK_LOSS_WEIGHT:-0.0}"
+ROLLOUT_RANK_MARGIN="${ROLLOUT_RANK_MARGIN:-0.0}"
 
 mkdir -p "$RUN_ROOT"
 
@@ -31,6 +35,10 @@ run_variant() {
   local decay="$5"
   local lr="$6"
   local scope="${7:-fc-lm-head}"
+  local survival_mode="${8:-$ROLLOUT_SURVIVAL_MODE}"
+  local dead_loss_floor="${9:-$ROLLOUT_DEAD_LOSS_FLOOR}"
+  local rank_loss_weight="${10:-$ROLLOUT_RANK_LOSS_WEIGHT}"
+  local rank_margin="${11:-$ROLLOUT_RANK_MARGIN}"
   local out="$RUN_ROOT/$label"
   mkdir -p "$out"
   (
@@ -49,6 +57,10 @@ run_variant() {
       --train-scope "$scope" \
       --rollout-steps "$steps" \
       --rollout-loss-decay "$decay" \
+      --rollout-survival-mode "$survival_mode" \
+      --rollout-dead-loss-floor "$dead_loss_floor" \
+      --rollout-rank-loss-weight "$rank_loss_weight" \
+      --rollout-rank-margin "$rank_margin" \
       --epochs "$EPOCHS" \
       --batch-size "$BATCH_SIZE" \
       --lr "$lr" \
@@ -131,8 +143,16 @@ case "$SWEEP" in
       "3|cont-r5-lr2e-5-decay1p25|$CONTINUE_DRAFT|5|1.25|2e-5|fc-lm-head"
     )
     ;;
+  survival-objective)
+    variants=(
+      "0|surv-r5-lr2e-5-hard-floor0|$CONTINUE_DRAFT|5|1.0|2e-5|fc-lm-head|hard|0.0|0.0|0.0"
+      "1|surv-r5-lr2e-5-hard-floor0p05|$CONTINUE_DRAFT|5|1.0|2e-5|fc-lm-head|hard|0.05|0.0|0.0"
+      "2|surv-r5-lr2e-5-hard-rank0p05|$CONTINUE_DRAFT|5|1.0|2e-5|fc-lm-head|hard|0.05|0.05|0.0"
+      "3|surv-r5-lr2e-5-hard-rank0p1|$CONTINUE_DRAFT|5|1.0|2e-5|fc-lm-head|hard|0.05|0.1|0.0"
+    )
+    ;;
   *)
-    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, continuation-rollout, all-scope, late-weight, late-continuation, or deep-continuation)" >&2
+    echo "Unknown SWEEP=$SWEEP (expected mixed, original-rollout, continuation-rollout, all-scope, late-weight, late-continuation, deep-continuation, or survival-objective)" >&2
     exit 2
     ;;
 esac
@@ -158,10 +178,14 @@ fi
 
 pids=()
 for item in "${variants[@]}"; do
-  IFS='|' read -r gpu label draft steps decay lr scope <<< "$item"
+  IFS='|' read -r gpu label draft steps decay lr scope survival_mode dead_loss_floor rank_loss_weight rank_margin <<< "$item"
   scope="${scope:-fc-lm-head}"
-  echo "launch label=$label gpu=$gpu steps=$steps decay=$decay lr=$lr scope=$scope draft=$draft"
-  run_variant "$gpu" "$label" "$draft" "$steps" "$decay" "$lr" "$scope" &
+  survival_mode="${survival_mode:-$ROLLOUT_SURVIVAL_MODE}"
+  dead_loss_floor="${dead_loss_floor:-$ROLLOUT_DEAD_LOSS_FLOOR}"
+  rank_loss_weight="${rank_loss_weight:-$ROLLOUT_RANK_LOSS_WEIGHT}"
+  rank_margin="${rank_margin:-$ROLLOUT_RANK_MARGIN}"
+  echo "launch label=$label gpu=$gpu steps=$steps decay=$decay lr=$lr scope=$scope survival=$survival_mode dead_floor=$dead_loss_floor rank_weight=$rank_loss_weight rank_margin=$rank_margin draft=$draft"
+  run_variant "$gpu" "$label" "$draft" "$steps" "$decay" "$lr" "$scope" "$survival_mode" "$dead_loss_floor" "$rank_loss_weight" "$rank_margin" &
   pids+=("$!")
 done
 
@@ -195,6 +219,10 @@ for variant in sorted(p for p in root.iterdir() if p.is_dir()):
             "train_scope": train.get("train_scope"),
             "rollout_steps": train.get("rollout_steps"),
             "rollout_loss_decay": train.get("rollout_loss_decay"),
+            "rollout_survival_mode": train.get("rollout_survival_mode"),
+            "rollout_dead_loss_floor": train.get("rollout_dead_loss_floor"),
+            "rollout_rank_loss_weight": train.get("rollout_rank_loss_weight"),
+            "rollout_rank_margin": train.get("rollout_rank_margin"),
             "lr": train.get("lr"),
             "final_train_exact": (train.get("final_train") or {}).get("exact_rate"),
             "final_heldout_exact": (train.get("final_heldout") or {}).get("exact_rate"),
