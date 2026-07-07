@@ -649,6 +649,15 @@ Next milestone:
     `0.697 ms/step` budget for a `100 tok/s` endpoint and cannot reach `125+`
     at the current step cost. Treat MTP3 branch work as a narrow `~100 tok/s`
     infrastructure lane, not the main `125+` route.
+    A 2026-07-07 refresh on the current `68.236 tok/s` recipe and the fixed
+    strict Qwen suite closes MTP3 branch/regenerate even harder for `>100`:
+    `notes/2026-07-07-current-recipe-strict-topk64-branch-envelope.md`.
+    Current target tokens/step is `2.74695`, inferred step cost is
+    `40.2565 ms`, and the perfect rank-64 suffix-regenerate envelope reaches
+    only `3.96813` tokens/step / `98.571 tok/s` if it adds zero overhead.
+    At this step cost, `100 tok/s` needs `4.02565` tokens/step, above the
+    MTP3 maximum of `4`. Do not implement MTP3-only branch/regenerate as a
+    `>100 tok/s` lane until step cost is reduced or speculation depth changes.
 38. Native prefix-base exact-state rescreen after the extra state-column fix:
     `notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
     The old July 5 exact-native/prefill replay flags were stale because

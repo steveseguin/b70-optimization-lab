@@ -280,6 +280,17 @@ Fastest quality-gated practical variant:
   tree estimates only `4.06 tok/s`. Do not repeat diagonal/small-MLP reranker
   sweeps or naive full-tree endpoint plumbing; next accepted-depth work needs
   a materially stronger drafter or a much cheaper branch verifier shape;
+- latest current-recipe branch/regenerate envelope:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-recipe-strict-topk64-branch-envelope.md`.
+  A strict-suite top-k64 trace on the current `68.236 tok/s` ReplaySSM
+  target-INT8/draft-INT4 recipe passed freshness mechanics (`cached_tokens=0`)
+  but is diagnostic-only because tracing slowed throughput. It shows current
+  MTP3 target tokens/step `2.74695`, inferred step cost `40.2565 ms`, and a
+  perfect rank-64 suffix-regenerate MTP3 envelope of only `3.96813`
+  tokens/step / `98.571 tok/s` at zero overhead. `100 tok/s` requires
+  `4.02565` tokens/step at this step cost, above the MTP3 maximum of `4`.
+  Therefore MTP3-only branch/regenerate is closed as a `>100 tok/s` path until
+  verifier-step cost is reduced or speculation depth changes;
 
 Previous fastest quality-gated practical variant:
 

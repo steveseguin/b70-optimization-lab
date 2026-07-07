@@ -413,9 +413,10 @@ def main() -> int:
          f"spend at most {best['extra_step_ms_budget']['100.0']:.3f} ms extra "
          "per verifier step. The budgets for 125/150 tok/s are much tighter and "
          "likely require reducing verifier/LM-head cost too."),
-        ("This uses the existing BF16-scale top-k64 trace as the acceptance-shape "
-         "evidence and normalizes step cost to the current valid 67.519 tok/s "
-         "record. A source prototype still needs strict fresh validation."),
+        ("This uses the supplied draft top-k and verifier traces as the "
+         "acceptance-shape evidence and normalizes step cost to the supplied "
+         f"{args.baseline_tok_s:.6f} tok/s baseline. A source prototype still "
+         "needs strict fresh validation."),
     ]
 
     summary = {

@@ -779,6 +779,14 @@ Current next-execution plan:
   `0.697 ms/step` budget for a `100 tok/s` endpoint and cannot reach `125+`
   at the current step cost. Treat MTP3 branch work as a narrow `~100 tok/s`
   infrastructure lane, not the main `125+` route.
+  A 2026-07-07 refresh on the current `68.236 tok/s` recipe and the fixed
+  strict Qwen suite closes MTP3 branch/regenerate as a `>100` route unless
+  step cost is reduced:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-recipe-strict-topk64-branch-envelope.md`.
+  Current target tokens/step is `2.74695`, inferred step cost is `40.2565 ms`,
+  and the perfect rank-64 suffix-regenerate envelope reaches only `3.96813`
+  tokens/step / `98.571 tok/s` at zero overhead. `100 tok/s` would require
+  `4.02565` tokens/step, above the MTP3 maximum of `4`.
 - token-tree mechanical screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-token-tree-mechanical-screen-no-win.md`.
   Existing vLLM `speculative_token_tree` support works mechanically but is a
@@ -1226,7 +1234,10 @@ Continue INT4 optimization without promoting synthetic scores:
   a deeper branch/regenerate or stronger-drafter design. A 2026-07-06 cost
   envelope tightened this further: MTP3 branch/regenerate has only a narrow
   zero-overhead `~101.8 tok/s` ceiling and cannot reach `125+` at the current
-  step cost;
+  step cost. A 2026-07-07 current-recipe strict-suite refresh tightens it
+  again: perfect MTP3 branch/regenerate projects to only `98.571 tok/s` at
+  zero overhead, so it cannot reach `100` without reducing verifier-step cost
+  or changing speculation depth;
 - current-recipe deeper MTP is closed, not merely waiting on a cache16 gate.
   MTP4/MTP5 require cache16 because `ring_len >= 2 * max_spec_len`; cache8
   fails readiness (`got 8 < 10` / `got 8 < 12`). A native cache16/spec6

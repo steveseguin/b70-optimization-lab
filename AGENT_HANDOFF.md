@@ -430,6 +430,14 @@ Active target as of the latest switch request:
   Do not repeat diagonal/small-MLP reranker sweeps or naive full-tree endpoint
   plumbing; continue only with a materially stronger drafter or a much cheaper
   branch verifier shape.
+  A current-recipe strict-suite top-k64 branch envelope is now closed too:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-recipe-strict-topk64-branch-envelope.md`.
+  On the `68.236 tok/s` ReplaySSM target-INT8/draft-INT4 recipe, current MTP3
+  target tokens/step is `2.74695`, inferred step cost is `40.2565 ms`, and a
+  perfect rank-64 suffix-regenerate MTP3 path reaches only `98.571 tok/s` at
+  zero overhead. Since `100 tok/s` would need `4.02565` tokens/step, above the
+  MTP3 maximum of `4`, do not implement MTP3-only branch/regenerate as the
+  next `>100` lane unless step cost is reduced or speculation depth changes.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and
