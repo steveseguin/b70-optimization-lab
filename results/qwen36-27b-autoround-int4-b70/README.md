@@ -413,6 +413,18 @@ Current realistic research interpretation:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-corpus-v2-followups-closed.md`
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-eagle-v2-stronger-offline-screen-no-endpoint.md`.
+- target-matched Ex0bit EAGLE3/DFlash training later made real but insufficient
+  offline progress. The best historical diagnostic line is still the v5
+  survival-objective checkpoint at `1.340886544011544` heldout mean accepted,
+  while v6/v6b data-quality and step-focus work stayed around `1.04-1.06`.
+  A four-GPU v6b all-scope continuation from the best r3/r5 step-focus
+  checkpoints reached only `1.1014610941216445` mean accepted over `14715`
+  heldout starts, below the v5 best and far below the `1.5-2.0` endpoint
+  threshold. Do not endpoint-test or port this draft family unless a new
+  mechanism materially improves offline accepted depth. Evidence:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`,
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`, and
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-allscope-summary-20260707.json`.
 - external DFlash drafter compatibility is also closed no-win locally.
   `z-lab/Qwen3.6-27B-DFlash` loaded and passed the strict fresh gate at k=8,
   k=10, and k=12, but the best median was only `49.994 tok/s` and k=15

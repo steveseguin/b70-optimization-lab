@@ -237,7 +237,13 @@ Current fastest quality-gated variant:
   draft scored `1.036561331974176` on v6b heldout, and v6b training improved
   only to `1.0597349643221203` mean accepted:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`.
+  A four-GPU all-scope continuation from the best v6b step-focus r3/r5
+  checkpoints reached only `1.1014610941216445` mean accepted:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-allscope-summary-20260707.json`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`.
   This is not endpoint-worthy and should not be submitted to LocalMaxxing.
+  Do not repeat simple full-draft unfreezing from these v6b checkpoints.
 - Latest target-body timing/no-win screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
   It confirms the webhie/AutoRound Qwen27 checkpoint is dense `qwen3_5_text`

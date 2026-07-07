@@ -397,9 +397,15 @@ Active target as of the latest switch request:
   The best v6 draft scored `1.036561331974176` on v6b heldout, and v6b
   training improved only to `1.0597349643221203` mean accepted
   (`diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`).
-  Treat this as diagnostic evidence that data quality helps but is not enough;
-  do not repeat small EAGLE corpus/objective sweeps without a different
-  architecture/loss/train-scope mechanism.
+  A four-GPU all-scope continuation from the best v6b step-focus r3/r5
+  checkpoints reached only `1.1014610941216445` mean accepted, below the older
+  v5 survival best and far below endpoint threshold
+  (`diagnostics/qwen27-ex0bit-eagle3-v6b-allscope-summary-20260707.json`;
+  note
+  `notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`). Treat this as
+  diagnostic evidence that data quality and simple all-parameter unfreezing
+  help only a little; do not repeat small EAGLE corpus/objective/train-scope
+  sweeps without a different architecture or loss mechanism.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

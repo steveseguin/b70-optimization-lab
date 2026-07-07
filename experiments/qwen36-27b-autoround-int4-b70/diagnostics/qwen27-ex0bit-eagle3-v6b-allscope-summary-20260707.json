@@ -1,0 +1,81 @@
+{
+  "schema": "qwen27_ex0bit_eagle3_v6b_allscope_summary",
+  "date_utc": "2026-07-07",
+  "classification": "diagnostic_only_no_endpoint",
+  "raw_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-allscope-20260707T075425Z",
+  "dataset_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z",
+  "target_model": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "heldout_dataset": "shard-3/dataset",
+  "train_datasets": [
+    "shard-0/dataset",
+    "shard-1/dataset",
+    "shard-2/dataset"
+  ],
+  "train_scope": "all",
+  "epochs": 4,
+  "batch_size": 16,
+  "device": "xpu",
+  "dtype": "bfloat16",
+  "baseline_references": {
+    "v6b_stepfocus_best_mean_accepted": 1.0597349643221203,
+    "v5_survival_best_mean_accepted": 1.340886544011544,
+    "endpoint_threshold_mean_accepted": "1.5-2.0 minimum before endpoint/kernel work"
+  },
+  "results": [
+    {
+      "label": "all-r3-lr1e-6-decay0p25",
+      "gpu": 0,
+      "start_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-stepfocus-20260707T033620Z/v6sf-r3-lr1e-5-decay0p25-rank0p1/checkpoint",
+      "rollout_steps_train": 3,
+      "lr": 0.000001,
+      "rollout_loss_decay": 0.25,
+      "final_train_exact_rate": 0.6001838235294118,
+      "final_heldout_exact_rate": 0.5806624289059886,
+      "heldout_rollout_mean_accepted": 1.0665307509344206,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {"0": 6301, "1": 4317, "2": 2302, "3": 899, "4": 404, "5": 492}
+    },
+    {
+      "label": "all-r3-lr3e-6-decay0p25",
+      "gpu": 1,
+      "start_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-stepfocus-20260707T033620Z/v6sf-r3-lr1e-5-decay0p25-rank0p1/checkpoint",
+      "rollout_steps_train": 3,
+      "lr": 0.000003,
+      "rollout_loss_decay": 0.25,
+      "final_train_exact_rate": 0.6153604734576757,
+      "final_heldout_exact_rate": 0.5894948143191703,
+      "heldout_rollout_mean_accepted": 1.1013931362555216,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {"0": 6171, "1": 4284, "2": 2326, "3": 977, "4": 445, "5": 512}
+    },
+    {
+      "label": "all-r5-lr1e-6-decay0p25",
+      "gpu": 2,
+      "start_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-stepfocus-20260707T033620Z/v6sf-r5-lr1e-5-decay0p25-rank0p1/checkpoint",
+      "rollout_steps_train": 5,
+      "lr": 0.000001,
+      "rollout_loss_decay": 0.25,
+      "final_train_exact_rate": 0.5996682209469153,
+      "final_heldout_exact_rate": 0.581197724991636,
+      "heldout_rollout_mean_accepted": 1.0689772341148487,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {"0": 6295, "1": 4315, "2": 2307, "3": 887, "4": 415, "5": 496}
+    },
+    {
+      "label": "all-r5-lr3e-6-decay0p25",
+      "gpu": 3,
+      "start_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-stepfocus-20260707T033620Z/v6sf-r5-lr1e-5-decay0p25-rank0p1/checkpoint",
+      "rollout_steps_train": 5,
+      "lr": 0.000003,
+      "rollout_loss_decay": 0.25,
+      "final_train_exact_rate": 0.6151811334289814,
+      "final_heldout_exact_rate": 0.5892271662763466,
+      "heldout_rollout_mean_accepted": 1.1014610941216445,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {"0": 6175, "1": 4287, "2": 2317, "3": 972, "4": 449, "5": 515}
+    }
+  ],
+  "best_label": "all-r5-lr3e-6-decay0p25",
+  "best_mean_accepted": 1.1014610941216445,
+  "decision": "No endpoint speed run and no LocalMaxxing submission. All-parameter continuation improves the v6b step-focus line by about 0.042 accepted tokens, but remains below the older v5 survival best and far below the endpoint threshold."
+}

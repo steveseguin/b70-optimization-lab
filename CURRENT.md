@@ -246,9 +246,16 @@ Fastest quality-gated practical variant:
   (`57.04%` step-1 exact, `48.43%` step-2 conditional, `43.32%`
   step-3 conditional), summarized at
   `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`.
+  A four-GPU all-scope continuation from the best v6b step-focus r3/r5
+  checkpoints is also closed: best result
+  `all-r5-lr3e-6-decay0p25` reached only
+  `1.1014610941216445` mean accepted over `14715` starts, summarized at
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-allscope-summary-20260707.json`
+  with note
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`.
   This remains far below endpoint threshold. Do not endpoint-wire this draft,
-  do not submit it to LocalMaxxing, and do not keep spending 4-GPU sweeps on
-  small EAGLE corpus/objective variations without a new mechanism;
+  do not submit it to LocalMaxxing, and do not repeat small EAGLE
+  corpus/objective/all-scope variations without a new mechanism;
 
 Previous fastest quality-gated practical variant:
 
