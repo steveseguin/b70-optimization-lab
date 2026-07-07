@@ -310,6 +310,12 @@ Next milestone:
    `model_forward_first/next` are sub-millisecond. Do not chase MTP-next as an
    eager-kernel bug; use accepted-token, target-forward, stronger-drafter, or
    graph-safe state-transaction work for the next real speed attempt.
+   The later current-recipe subtiming check
+   `notes/2026-07-07-current-mtp3-subtiming.md` reproduced the current recipe
+   at `68.296 tok/s` with quality skipped and showed the sampled decode bucket
+   is already fixed-shape MTP3 (`4` unpadded, `4` padded, `3` scheduled spec
+   tokens, `PIECEWISE` graph). It reinforces that padding cleanup and noisy
+   async draft labels are not the next speed lever.
    The latest graph-safe transaction precheck is
    `notes/2026-07-06-replayssm-commit-pending-active-slot-guard.md`: native
    `gdn_replayssm_commit_pending` used to mutate metadata for null,

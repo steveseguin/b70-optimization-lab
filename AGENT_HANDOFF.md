@@ -92,6 +92,14 @@ Active target as of the latest switch request:
   `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-state-digest-trace-20260707T041855Z-summary.*`.
   This is transaction/tape evidence, not a promoted benchmark or LocalMaxxing
   candidate.
+- Latest current-recipe subtiming check:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-mtp3-subtiming.md`.
+  It reproduced the current recipe at `68.296 tok/s` with strict
+  fresh/cached-zero mechanics and quality skipped. The sampled decode bucket is
+  already fixed-shape MTP3 (`4` unpadded, `4` padded, `3` scheduled spec
+  tokens, `PIECEWISE` graph). Do not chase padding cleanup or the noisy large
+  draft/proposer labels from this run; synchronized timing already closed
+  MTP-next as a sub-ms graph path.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

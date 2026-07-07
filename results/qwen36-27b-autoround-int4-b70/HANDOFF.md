@@ -252,6 +252,16 @@ Current fastest quality-gated variant:
   The diagnostic run passed strict fresh/cached-zero mechanics at `67.453 tok/s`
   with quality skipped and captured 80 layer-0 state records. Treat this as
   graph-safe transaction/tape evidence only.
+- Latest current-recipe subtiming check:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-mtp3-subtiming.md`.
+  The diagnostic run reproduced the current recipe at `68.296 tok/s` with
+  strict fresh/cached-zero mechanics but quality skipped. The sampled decode
+  bucket is already fixed-shape MTP3 (`num_tokens_unpadded=4`,
+  `num_tokens_padded=4`, `max_scheduled_spec_tokens=3`, `PIECEWISE` graph), so
+  there is no padding waste to remove. Large draft/proposer timing labels in
+  this run are async-attribution contaminated; keep
+  `2026-07-06-draft-proposer-timing-split.md` as the source of truth that
+  synchronized MTP-next forward is sub-ms.
 
 Previous fastest quality-gated variant:
 

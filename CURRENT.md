@@ -82,6 +82,15 @@ Fastest quality-gated practical variant:
   boundaries plus `scripts/summarize-qwen27-replayssm-state-trace.py`; the
   trace run was strict-fresh/cached-zero at `67.453 tok/s` with quality skipped.
   Use it as transaction/tape evidence only, not as a headline benchmark;
+- latest current-recipe subtiming check:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-current-mtp3-subtiming.md`.
+  It reproduced the current recipe at `68.296 tok/s` with strict
+  fresh/cached-zero mechanics and quality skipped. The decode bucket is already
+  fixed-shape MTP3 (`4` unpadded, `4` padded, `3` scheduled spec tokens,
+  `PIECEWISE` graph), so padding/shape cleanup is not the next speed lever.
+  Treat large draft labels in that run as async attribution and keep the
+  synchronized `2026-07-06-draft-proposer-timing-split.md` conclusion closed:
+  MTP-next forward is not an eager-kernel bug;
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;
