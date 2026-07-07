@@ -431,6 +431,9 @@ Current realistic research interpretation:
   peaked at only `1.1193`;
   see
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
+  The same note's tree-cost model closes naive full-tree verification too:
+  same-cost top-16 oracle estimates only `91.65 tok/s`, while legal full-tree
+  expansion is far too expensive.
 - external DFlash drafter compatibility is also closed no-win locally.
   `z-lab/Qwen3.6-27B-DFlash` loaded and passed the strict fresh gate at k=8,
   k=10, and k=12, but the best median was only `49.994 tok/s` and k=15

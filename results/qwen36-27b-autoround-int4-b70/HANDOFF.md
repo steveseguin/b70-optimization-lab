@@ -250,8 +250,12 @@ Current fastest quality-gated variant:
   reranker reached only `1.1069` and the small MLP follow-up peaked at
   `1.1193`. See
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
-  Continue this branch only with a materially stronger tree-aware/cross-token
-  mechanism or tree-cost model, not more diagonal/MLP reranker sweeps.
+  The same note now includes a tree-cost model:
+  even impossible same-cost top-16 would estimate only `91.65 tok/s`, while a
+  legal full top-2 depth-5 tree estimates only `4.06 tok/s`.
+  Continue this branch only with a materially stronger drafter or much cheaper
+  branch verifier shape, not more diagonal/MLP reranker sweeps or naive full
+  tree plumbing.
 - Latest target-body timing/no-win screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
   It confirms the webhie/AutoRound Qwen27 checkpoint is dense `qwen3_5_text`

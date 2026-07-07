@@ -266,9 +266,13 @@ Fastest quality-gated practical variant:
   reranker reached only `1.1069`, and the follow-up small MLP screen peaked at
   `1.1193`
   (`experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-topk-mlp-reranker-summary-20260707.json`).
-  Do not repeat diagonal or small MLP reranker sweeps; next candidate-rerank
-  work needs a materially stronger tree-aware/cross-token mechanism or a
-  tree-verifier cost model;
+  A follow-up tree-cost model
+  (`experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-tree-cost-model-20260707.json`)
+  also closes naive full-tree verification: even an impossible same-cost
+  top-16 oracle estimates only `91.65 tok/s`, and a legal full top-2 depth-5
+  tree estimates only `4.06 tok/s`. Do not repeat diagonal/small-MLP reranker
+  sweeps or naive full-tree endpoint plumbing; next accepted-depth work needs
+  a materially stronger drafter or a much cheaper branch verifier shape;
 
 Previous fastest quality-gated practical variant:
 

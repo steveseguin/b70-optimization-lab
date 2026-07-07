@@ -418,9 +418,13 @@ Active target as of the latest switch request:
   `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-v6b-topk-oracle-reranker-summary-20260707.json`
   plus
   `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-topk-mlp-reranker-summary-20260707.json`.
-  Do not repeat diagonal or small MLP reranker sweeps; continue only with a
-  materially stronger tree-aware/cross-token mechanism or a tree-verifier cost
-  model.
+  The follow-up cost model at
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-tree-cost-model-20260707.json`
+  closes naive tree verification too: same-cost top-16 oracle estimates only
+  `91.65 tok/s`, and legal full-tree expansion is far below useful speed.
+  Do not repeat diagonal/small-MLP reranker sweeps or naive full-tree endpoint
+  plumbing; continue only with a materially stronger drafter or a much cheaper
+  branch verifier shape.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

@@ -139,6 +139,41 @@ even the top-2 oracle (`1.5037`), let alone the top-8 oracle (`2.2488`).
 The result is too small to justify endpoint plumbing, tree verification, or a
 runtime pre-verification MLP.
 
+## Tree verifier cost model
+
+New diagnostic:
+
+```text
+scripts/analyze-qwen27-eagle3-tree-cost.py
+```
+
+Output:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-tree-cost-model-20260707.json
+```
+
+Inputs:
+
+- current valid strict Qwen27 median: `68.23626314761921 tok/s`;
+- current MTP3 visible tokens per verifier step: `2.6727` (`1.6727`
+  accepted draft prefix + 1 target bonus from the branch-regenerate trace);
+- current verifier row shape: `4` rows (`3` draft + `1` bonus);
+- tree depth: `5`.
+
+| top-k | oracle visible tokens/step | magic same-cost tok/s | full tree rows | full-tree tok/s |
+| ---: | ---: | ---: | ---: | ---: |
+| 2 | `2.5037` | `63.92` | `63` | `4.06` |
+| 4 | `2.8845` | `73.64` | `1365` | `0.216` |
+| 8 | `3.2488` | `82.94` | `37449` | `0.0089` |
+| 16 | `3.5896` | `91.65` | `1118481` | `0.00033` |
+
+Decision: close naive tree verification for this evidence. Even the impossible
+same-cost top-16 oracle is below `100 tok/s`, and the legal full tree is far
+too expensive. A useful branch/tree path would need a materially cheaper
+verifier shape than full breadth, or a stronger drafter that improves top-1
+accepted depth directly.
+
 ## Next implication
 
 Do not repeat diagonal or small MLP reranker sweeps. If this branch continues,
@@ -147,8 +182,8 @@ the next credible options are:
 - a materially stronger candidate model, e.g. cross-token/tree-aware scoring or
   training the drafter itself to put the target into rank 1 rather than trying
   to rescue rank after the fact; or
-- a real tree-verifier cost model, because top-8/top-16 oracle accepted depth
-  may not pay for the extra branch rows if implemented naively.
+- a verifier design with a much cheaper branch cost than full breadth; the
+  naive full-tree cost model is already closed.
 
 The diagnostic says top-k candidate information is useful, but the cheap
 single-token extractors tried here are too weak.
