@@ -136,10 +136,17 @@ Latest stronger-drafter result:
   `diagnostics/qwen27-ex0bit-eagle3-deep-continuation2-v4-summary-20260706.json`
   and
   `diagnostics/qwen27-ex0bit-eagle3-deep-continuation3-v4-summary-20260706.json`.
-  A broader v5 diagnostic corpus is now collected (`1152` prompts / `184,320`
+  A broader v5 diagnostic corpus was collected (`1152` prompts / `184,320`
   rows / zero continuity breaks) at
-  `diagnostics/qwen27-eagle3-aux-v5-corpus-summary-20260706.json`; use it for
-  the next training pass rather than repeating v4-only continuation.
+  `diagnostics/qwen27-eagle3-aux-v5-corpus-summary-20260706.json`. The
+  previous v4-trained best scored `1.2001713564213565` mean accepted on the v5
+  heldout shard, and v5 rollout-5 training improved that to
+  `1.2866838023088023` (`59.02%` step-1 exact, `55.32%` step-2 conditional,
+  `57.29%` step-3 conditional, `3056` full-5 accepts). This is the current
+  diagnostic best but still below endpoint threshold. Summaries:
+  `diagnostics/qwen27-ex0bit-eagle3-v5-heldout-baseline-summary-20260706.json`
+  and
+  `diagnostics/qwen27-ex0bit-eagle3-v5-deep-continuation-summary-20260707.json`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

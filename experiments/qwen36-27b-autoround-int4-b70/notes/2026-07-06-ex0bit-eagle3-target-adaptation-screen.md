@@ -764,3 +764,55 @@ Collection result:
 
 Next training run should use shard 0-2 for training and shard 3 as a heldout
 domain split, starting from the current best rollout-5 checkpoint.
+
+## V5 rollout-5 training: larger data is a real unlock
+
+Before training on v5, evaluated the previous v4-trained best checkpoint on
+the v5 heldout shard (`cost-optimization`, `data-pipeline`, `edge-deployment`,
+`incident-postmortem`):
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v5-heldout-baseline-20260706T234418Z
+```
+
+Repo baseline summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-heldout-baseline-summary-20260706.json
+```
+
+Baseline on v5 heldout: `1.2001713564213565` mean accepted over `44,352`
+starts (`56.92%` step-1 exact, `53.19%` step-2 conditional, `55.56%`
+step-3 conditional, `2647` full-5 accepts).
+
+Then trained on v5 shards 0-2 and evaluated on shard 3:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T234959Z
+```
+
+Repo training summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-deep-continuation-summary-20260707.json
+```
+
+Heldout shard `3`, all `44,352` starts:
+
+| variant | lr | decay | mean accepted | step-1 exact | step-2 cond | step-3 cond | full-5 accepts |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `cont-r5-lr2e-5-decay1` | `2e-5` | `1.0` | **`1.2866838023088023`** | `59.02%` | `55.32%` | `57.29%` | `3056` |
+| `cont-r5-lr2e-5-decay1p1` | `2e-5` | `1.1` | `1.2760416666666667` | `58.58%` | `55.01%` | `57.46%` | `3075` |
+| `cont-r5-lr2e-5-decay1p25` | `2e-5` | `1.25` | `1.2556592712842713` | `57.84%` | `54.52%` | `57.34%` | `3074` |
+| `cont-r5-lr1e-5-decay1` | `1e-5` | `1.0` | `1.2259424603174602` | `57.81%` | `53.50%` | `56.13%` | `2724` |
+
+Interpretation:
+
+- Current best diagnostic checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T234959Z/cont-r5-lr2e-5-decay1/checkpoint`.
+- V5 data produced the largest recent jump: v5 heldout baseline `1.2002`
+  -> trained `1.2867`; previous v4 heldout best was `1.1957`.
+- This confirms the EAGLE/DFlash lane was meaningfully data-limited, not only
+  objective-limited.
+- Still below the `1.5-2.0` endpoint threshold. Continue with v5 rollout-5
+  training and/or build v6 data; do not endpoint-integrate or submit yet.

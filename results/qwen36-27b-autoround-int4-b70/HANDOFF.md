@@ -180,11 +180,11 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-rollouttrain-v4-summary-20260706.json`,
   plus
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-all-scope-v4-summary-20260706.json`.
-  The current best diagnostic checkpoint is rollout-5 continuation
-  (`decay=1.0`, `lr=2e-5`) at `1.1957070707070707` mean accepted (`56.68%`
-  step-1 exact, `53.61%` step-2 conditional, `55.79%` step-3 conditional,
-  `1267` full-5 accepts). Checkpoint:
-  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T230122Z/cont-r5-lr2e-5-decay1/checkpoint`.
+  The current best diagnostic checkpoint is v5 rollout-5 training
+  (`decay=1.0`, `lr=2e-5`) at `1.2866838023088023` mean accepted (`59.02%`
+  step-1 exact, `55.32%` step-2 conditional, `57.29%` step-3 conditional,
+  `3056` full-5 accepts). Checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T234959Z/cont-r5-lr2e-5-decay1/checkpoint`.
   Key continuation summaries:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json`,
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json`,
@@ -194,9 +194,14 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation2-v4-summary-20260706.json`,
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-deep-continuation3-v4-summary-20260706.json`.
-  Rollout-5 is now the preferred continuation objective, but repeated
-  continuation is showing diminishing returns; still do not endpoint integrate
-  until offline mean accepted reaches at least `1.5-2.0`.
+  V5 data confirmed the lane was data-limited: previous best scored `1.20017`
+  on v5 heldout before training and `1.28668` after v5 training. V5 summaries:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-aux-v5-corpus-summary-20260706.json`,
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-heldout-baseline-summary-20260706.json`,
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-deep-continuation-summary-20260707.json`.
+  Still do not endpoint integrate until offline mean accepted reaches at least
+  `1.5-2.0`.
 
 Previous fastest quality-gated variant:
 

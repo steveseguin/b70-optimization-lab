@@ -1,0 +1,2268 @@
+{
+  "acceptance_histogram": {
+    "0": 19109,
+    "1": 11817,
+    "2": 5967,
+    "3": 3004,
+    "4": 1808,
+    "5": 2647
+  },
+  "dataset_dir": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v2-chat-4gpu-20260706T231458Z/shard-3/dataset"
+  ],
+  "device": "xpu:0",
+  "draft_dir": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T230122Z/cont-r5-lr2e-5-decay1/checkpoint",
+  "draft_vocab_size": 32768,
+  "dtype": "bfloat16",
+  "elapsed_s": 318.35606464603916,
+  "family_rows": [
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.167929292929293,
+      "samples": 72,
+      "starts": 11088
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.1066017316017316,
+      "samples": 72,
+      "starts": 11088
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.1015512265512266,
+      "samples": 72,
+      "starts": 11088
+    },
+    {
+      "family": "incident-postmortem",
+      "mean_accepted": 1.4246031746031746,
+      "samples": 72,
+      "starts": 11088
+    }
+  ],
+  "first_mismatch_examples": [
+    {
+      "accepted": 4,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 86223,
+          "step": 1,
+          "target": 86223,
+          "target_index": 1,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 6250,
+          "step": 2,
+          "target": 6250,
+          "target_index": 2,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 2121,
+          "step": 3,
+          "target": 2121,
+          "target_index": 3,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 25,
+          "step": 4,
+          "target": 25,
+          "target_index": 4,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 8509,
+          "step": 5,
+          "target": 21966,
+          "target_index": 5,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 0
+    },
+    {
+      "accepted": 3,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 6250,
+          "step": 1,
+          "target": 6250,
+          "target_index": 2,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 2121,
+          "step": 2,
+          "target": 2121,
+          "target_index": 3,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 25,
+          "step": 3,
+          "target": 25,
+          "target_index": 4,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 8509,
+          "step": 4,
+          "target": 21966,
+          "target_index": 5,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 1
+    },
+    {
+      "accepted": 2,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 2121,
+          "step": 1,
+          "target": 2121,
+          "target_index": 3,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 25,
+          "step": 2,
+          "target": 25,
+          "target_index": 4,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 8509,
+          "step": 3,
+          "target": 21966,
+          "target_index": 5,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 2
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 25,
+          "step": 1,
+          "target": 25,
+          "target_index": 4,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 8509,
+          "step": 2,
+          "target": 21966,
+          "target_index": 5,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 3
+    },
+    {
+      "accepted": 0,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": false,
+          "proposed": 733,
+          "step": 1,
+          "target": 21966,
+          "target_index": 5,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 4
+    },
+    {
+      "accepted": 2,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 733,
+          "step": 1,
+          "target": 733,
+          "target_index": 6,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 2133,
+          "step": 2,
+          "target": 2133,
+          "target_index": 7,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 733,
+          "step": 3,
+          "target": 10869,
+          "target_index": 8,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 5
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 2133,
+          "step": 1,
+          "target": 2133,
+          "target_index": 7,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 733,
+          "step": 2,
+          "target": 10869,
+          "target_index": 8,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 6
+    },
+    {
+      "accepted": 0,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": false,
+          "proposed": 5194,
+          "step": 1,
+          "target": 10869,
+          "target_index": 8,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 7
+    },
+    {
+      "accepted": 2,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 55804,
+          "step": 1,
+          "target": 55804,
+          "target_index": 9,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 271,
+          "step": 2,
+          "target": 271,
+          "target_index": 10,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 13962,
+          "step": 3,
+          "target": 332,
+          "target_index": 11,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 8
+    },
+    {
+      "accepted": 4,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 271,
+          "step": 1,
+          "target": 271,
+          "target_index": 10,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 332,
+          "step": 2,
+          "target": 332,
+          "target_index": 11,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 75620,
+          "step": 3,
+          "target": 75620,
+          "target_index": 12,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 64700,
+          "step": 4,
+          "target": 64700,
+          "target_index": 13,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 198,
+          "step": 5,
+          "target": 50402,
+          "target_index": 14,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 9
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 332,
+          "step": 1,
+          "target": 332,
+          "target_index": 11,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 1905,
+          "step": 2,
+          "target": 75620,
+          "target_index": 12,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 10
+    },
+    {
+      "accepted": 2,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 75620,
+          "step": 1,
+          "target": 75620,
+          "target_index": 12,
+          "topk_hit": true
+        },
+        {
+          "match": true,
+          "proposed": 64700,
+          "step": 2,
+          "target": 64700,
+          "target_index": 13,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 22558,
+          "step": 3,
+          "target": 50402,
+          "target_index": 14,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 11
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 64700,
+          "step": 1,
+          "target": 64700,
+          "target_index": 13,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 22558,
+          "step": 2,
+          "target": 50402,
+          "target_index": 14,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 12
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 50402,
+          "step": 1,
+          "target": 50402,
+          "target_index": 14,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 279,
+          "step": 2,
+          "target": 2695,
+          "target_index": 15,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 13
+    },
+    {
+      "accepted": 0,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": false,
+          "proposed": 279,
+          "step": 1,
+          "target": 2695,
+          "target_index": 15,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 14
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 791,
+          "step": 1,
+          "target": 791,
+          "target_index": 16,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 9104,
+          "step": 2,
+          "target": 6635,
+          "target_index": 17,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 15
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 6635,
+          "step": 1,
+          "target": 6635,
+          "target_index": 17,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 791,
+          "step": 2,
+          "target": 1622,
+          "target_index": 18,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 16
+    },
+    {
+      "accepted": 0,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": false,
+          "proposed": 6635,
+          "step": 1,
+          "target": 1622,
+          "target_index": 18,
+          "topk_hit": true
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 17
+    },
+    {
+      "accepted": 1,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": true,
+          "proposed": 539,
+          "step": 1,
+          "target": 539,
+          "target_index": 19,
+          "topk_hit": true
+        },
+        {
+          "match": false,
+          "proposed": 279,
+          "step": 2,
+          "target": 70558,
+          "target_index": 20,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 18
+    },
+    {
+      "accepted": 0,
+      "family": "cost-optimization",
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "rows": [
+        {
+          "match": false,
+          "proposed": 279,
+          "step": 1,
+          "target": 70558,
+          "target_index": 20,
+          "topk_hit": false
+        }
+      ],
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "start": 19
+    }
+  ],
+  "max_steps": 5,
+  "mean_accepted": 1.2001713564213565,
+  "per_step": [
+    {
+      "conditional_denominator": 44352,
+      "exact_hits": 25243,
+      "exact_rate": 0.5691513347763347,
+      "step": 1,
+      "topk_hits": 34568,
+      "topk_rate": 0.7794011544011544,
+      "unconditional_exact_rate": 0.5691513347763347,
+      "unconditional_topk_rate": 0.7794011544011544
+    },
+    {
+      "conditional_denominator": 25243,
+      "exact_hits": 13426,
+      "exact_rate": 0.53187022144753,
+      "step": 2,
+      "topk_hits": 18477,
+      "topk_rate": 0.7319652973101454,
+      "unconditional_exact_rate": 0.30271464646464646,
+      "unconditional_topk_rate": 0.416599025974026
+    },
+    {
+      "conditional_denominator": 13426,
+      "exact_hits": 7459,
+      "exact_rate": 0.5555638313719649,
+      "step": 3,
+      "topk_hits": 9995,
+      "topk_rate": 0.7444510650975719,
+      "unconditional_exact_rate": 0.1681773088023088,
+      "unconditional_topk_rate": 0.225356240981241
+    },
+    {
+      "conditional_denominator": 7459,
+      "exact_hits": 4455,
+      "exact_rate": 0.5972650489341735,
+      "step": 4,
+      "topk_hits": 5704,
+      "topk_rate": 0.7647137686016893,
+      "unconditional_exact_rate": 0.10044642857142858,
+      "unconditional_topk_rate": 0.12860750360750361
+    },
+    {
+      "conditional_denominator": 4455,
+      "exact_hits": 2647,
+      "exact_rate": 0.5941638608305275,
+      "step": 5,
+      "topk_hits": 3414,
+      "topk_rate": 0.7663299663299663,
+      "unconditional_exact_rate": 0.05968163780663781,
+      "unconditional_topk_rate": 0.07697510822510822
+    }
+  ],
+  "purpose": "diagnostic_ex0bit_eagle3_offline_acceptance",
+  "sample_rows": [
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1883116883116882,
+      "prompt_id": "cost-optimization-runbook-baseline",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-cost-optimization-runbook-baseline-9ca8568d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0194805194805194,
+      "prompt_id": "cost-optimization-runbook-executive",
+      "sample": "sample-000001-chatcmpl-qwen27-eagle3-aux-v2-s3-000865-cost-optimization-runbook-executive-ab26ccff.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2597402597402598,
+      "prompt_id": "cost-optimization-runbook-implementation",
+      "sample": "sample-000002-chatcmpl-qwen27-eagle3-aux-v2-s3-000866-cost-optimization-runbook-implementation-ba8a4f18.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1233766233766234,
+      "prompt_id": "cost-optimization-runbook-failure-analysis",
+      "sample": "sample-000003-chatcmpl-qwen27-eagle3-aux-v2-s3-000867-cost-optimization-runbook-failure-analysis-889535a6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.7337662337662337,
+      "prompt_id": "cost-optimization-runbook-handoff",
+      "sample": "sample-000004-chatcmpl-qwen27-eagle3-aux-v2-s3-000868-cost-optimization-runbook-handoff-a953190a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.3896103896103895,
+      "prompt_id": "cost-optimization-runbook-audit",
+      "sample": "sample-000005-chatcmpl-qwen27-eagle3-aux-v2-s3-000869-cost-optimization-runbook-audit-900a304f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.3051948051948052,
+      "prompt_id": "cost-optimization-memo-baseline",
+      "sample": "sample-000006-chatcmpl-qwen27-eagle3-aux-v2-s3-000870-cost-optimization-memo-baseline-858edcc4.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2857142857142858,
+      "prompt_id": "cost-optimization-memo-executive",
+      "sample": "sample-000007-chatcmpl-qwen27-eagle3-aux-v2-s3-000871-cost-optimization-memo-executive-a33b848d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.3831168831168832,
+      "prompt_id": "cost-optimization-memo-implementation",
+      "sample": "sample-000008-chatcmpl-qwen27-eagle3-aux-v2-s3-000872-cost-optimization-memo-implementation-98adf4cc.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2077922077922079,
+      "prompt_id": "cost-optimization-memo-failure-analysis",
+      "sample": "sample-000009-chatcmpl-qwen27-eagle3-aux-v2-s3-000873-cost-optimization-memo-failure-analysis-b5df844a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2922077922077921,
+      "prompt_id": "cost-optimization-memo-handoff",
+      "sample": "sample-000010-chatcmpl-qwen27-eagle3-aux-v2-s3-000874-cost-optimization-memo-handoff-809e02e2.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.474025974025974,
+      "prompt_id": "cost-optimization-memo-audit",
+      "sample": "sample-000011-chatcmpl-qwen27-eagle3-aux-v2-s3-000875-cost-optimization-memo-audit-8d072847.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1428571428571428,
+      "prompt_id": "cost-optimization-review-baseline",
+      "sample": "sample-000012-chatcmpl-qwen27-eagle3-aux-v2-s3-000876-cost-optimization-review-baseline-80063f73.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0909090909090908,
+      "prompt_id": "cost-optimization-review-executive",
+      "sample": "sample-000013-chatcmpl-qwen27-eagle3-aux-v2-s3-000877-cost-optimization-review-executive-acb9d198.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.4870129870129871,
+      "prompt_id": "cost-optimization-review-implementation",
+      "sample": "sample-000014-chatcmpl-qwen27-eagle3-aux-v2-s3-000878-cost-optimization-review-implementation-a63f7452.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2077922077922079,
+      "prompt_id": "cost-optimization-review-failure-analysis",
+      "sample": "sample-000015-chatcmpl-qwen27-eagle3-aux-v2-s3-000879-cost-optimization-review-failure-analysis-9a671007.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.3571428571428572,
+      "prompt_id": "cost-optimization-review-handoff",
+      "sample": "sample-000016-chatcmpl-qwen27-eagle3-aux-v2-s3-000880-cost-optimization-review-handoff-aced6612.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.5844155844155845,
+      "prompt_id": "cost-optimization-review-audit",
+      "sample": "sample-000017-chatcmpl-qwen27-eagle3-aux-v2-s3-000881-cost-optimization-review-audit-a7cca4c9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.922077922077922,
+      "prompt_id": "cost-optimization-debug-plan-baseline",
+      "sample": "sample-000018-chatcmpl-qwen27-eagle3-aux-v2-s3-000882-cost-optimization-debug-plan-baseline-a1e6b026.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.4025974025974026,
+      "prompt_id": "cost-optimization-debug-plan-executive",
+      "sample": "sample-000019-chatcmpl-qwen27-eagle3-aux-v2-s3-000883-cost-optimization-debug-plan-executive-b2aad8f6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0389610389610389,
+      "prompt_id": "cost-optimization-debug-plan-implementation",
+      "sample": "sample-000020-chatcmpl-qwen27-eagle3-aux-v2-s3-000884-cost-optimization-debug-plan-implementation-81ea8634.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0714285714285714,
+      "prompt_id": "cost-optimization-debug-plan-failure-analysis",
+      "sample": "sample-000021-chatcmpl-qwen27-eagle3-aux-v2-s3-000885-cost-optimization-debug-plan-failure-analysis-84ddee5a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1428571428571428,
+      "prompt_id": "cost-optimization-debug-plan-handoff",
+      "sample": "sample-000022-chatcmpl-qwen27-eagle3-aux-v2-s3-000886-cost-optimization-debug-plan-handoff-b833aa58.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.4935064935064934,
+      "prompt_id": "cost-optimization-debug-plan-audit",
+      "sample": "sample-000023-chatcmpl-qwen27-eagle3-aux-v2-s3-000887-cost-optimization-debug-plan-audit-be81fa6d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.344155844155844,
+      "prompt_id": "cost-optimization-json-plan-baseline",
+      "sample": "sample-000024-chatcmpl-qwen27-eagle3-aux-v2-s3-000888-cost-optimization-json-plan-baseline-8367f448.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2272727272727273,
+      "prompt_id": "cost-optimization-json-plan-executive",
+      "sample": "sample-000025-chatcmpl-qwen27-eagle3-aux-v2-s3-000889-cost-optimization-json-plan-executive-9c9ebf5d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.5649350649350648,
+      "prompt_id": "cost-optimization-json-plan-implementation",
+      "sample": "sample-000026-chatcmpl-qwen27-eagle3-aux-v2-s3-000890-cost-optimization-json-plan-implementation-95871ca1.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.5584415584415585,
+      "prompt_id": "cost-optimization-json-plan-failure-analysis",
+      "sample": "sample-000027-chatcmpl-qwen27-eagle3-aux-v2-s3-000891-cost-optimization-json-plan-failure-analysis-b0ff84d1.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.051948051948052,
+      "prompt_id": "cost-optimization-json-plan-handoff",
+      "sample": "sample-000028-chatcmpl-qwen27-eagle3-aux-v2-s3-000892-cost-optimization-json-plan-handoff-8b714bdf.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.6493506493506493,
+      "prompt_id": "cost-optimization-json-plan-audit",
+      "sample": "sample-000029-chatcmpl-qwen27-eagle3-aux-v2-s3-000893-cost-optimization-json-plan-audit-83684589.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2337662337662338,
+      "prompt_id": "cost-optimization-checklist-baseline",
+      "sample": "sample-000030-chatcmpl-qwen27-eagle3-aux-v2-s3-000894-cost-optimization-checklist-baseline-8e75b7d0.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1818181818181819,
+      "prompt_id": "cost-optimization-checklist-executive",
+      "sample": "sample-000031-chatcmpl-qwen27-eagle3-aux-v2-s3-000895-cost-optimization-checklist-executive-aefd8c92.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.5584415584415585,
+      "prompt_id": "cost-optimization-checklist-implementation",
+      "sample": "sample-000032-chatcmpl-qwen27-eagle3-aux-v2-s3-000896-cost-optimization-checklist-implementation-b68d81c0.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1948051948051948,
+      "prompt_id": "cost-optimization-checklist-failure-analysis",
+      "sample": "sample-000033-chatcmpl-qwen27-eagle3-aux-v2-s3-000897-cost-optimization-checklist-failure-analysis-87f4b7f2.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0454545454545454,
+      "prompt_id": "cost-optimization-checklist-handoff",
+      "sample": "sample-000034-chatcmpl-qwen27-eagle3-aux-v2-s3-000898-cost-optimization-checklist-handoff-a2d97f9d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.4415584415584415,
+      "prompt_id": "cost-optimization-checklist-audit",
+      "sample": "sample-000035-chatcmpl-qwen27-eagle3-aux-v2-s3-000899-cost-optimization-checklist-audit-a21d9772.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.948051948051948,
+      "prompt_id": "cost-optimization-teaching-note-baseline",
+      "sample": "sample-000036-chatcmpl-qwen27-eagle3-aux-v2-s3-000900-cost-optimization-teaching-note-baseline-83809999.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0844155844155845,
+      "prompt_id": "cost-optimization-teaching-note-executive",
+      "sample": "sample-000037-chatcmpl-qwen27-eagle3-aux-v2-s3-000901-cost-optimization-teaching-note-executive-87e9226e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.077922077922078,
+      "prompt_id": "cost-optimization-teaching-note-implementation",
+      "sample": "sample-000038-chatcmpl-qwen27-eagle3-aux-v2-s3-000902-cost-optimization-teaching-note-implementation-8e6ef44a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.3181818181818181,
+      "prompt_id": "cost-optimization-teaching-note-failure-analysis",
+      "sample": "sample-000039-chatcmpl-qwen27-eagle3-aux-v2-s3-000903-cost-optimization-teaching-note-failure-analysis-af28fcf6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0194805194805194,
+      "prompt_id": "cost-optimization-teaching-note-handoff",
+      "sample": "sample-000040-chatcmpl-qwen27-eagle3-aux-v2-s3-000904-cost-optimization-teaching-note-handoff-8564a13c.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2532467532467533,
+      "prompt_id": "cost-optimization-teaching-note-audit",
+      "sample": "sample-000041-chatcmpl-qwen27-eagle3-aux-v2-s3-000905-cost-optimization-teaching-note-audit-a5e50f4c.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.8961038961038961,
+      "prompt_id": "cost-optimization-test-plan-baseline",
+      "sample": "sample-000042-chatcmpl-qwen27-eagle3-aux-v2-s3-000906-cost-optimization-test-plan-baseline-93261d6e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1428571428571428,
+      "prompt_id": "cost-optimization-test-plan-executive",
+      "sample": "sample-000043-chatcmpl-qwen27-eagle3-aux-v2-s3-000907-cost-optimization-test-plan-executive-8c0d526a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.9675324675324676,
+      "prompt_id": "cost-optimization-test-plan-implementation",
+      "sample": "sample-000044-chatcmpl-qwen27-eagle3-aux-v2-s3-000908-cost-optimization-test-plan-implementation-b4a3353e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.935064935064935,
+      "prompt_id": "cost-optimization-test-plan-failure-analysis",
+      "sample": "sample-000045-chatcmpl-qwen27-eagle3-aux-v2-s3-000909-cost-optimization-test-plan-failure-analysis-90de88f9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.8831168831168831,
+      "prompt_id": "cost-optimization-test-plan-handoff",
+      "sample": "sample-000046-chatcmpl-qwen27-eagle3-aux-v2-s3-000910-cost-optimization-test-plan-handoff-96d976ad.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 2.012987012987013,
+      "prompt_id": "cost-optimization-test-plan-audit",
+      "sample": "sample-000047-chatcmpl-qwen27-eagle3-aux-v2-s3-000911-cost-optimization-test-plan-audit-8c22b4ff.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1883116883116882,
+      "prompt_id": "cost-optimization-risk-register-baseline",
+      "sample": "sample-000048-chatcmpl-qwen27-eagle3-aux-v2-s3-000912-cost-optimization-risk-register-baseline-8f1cfb3d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.8246753246753247,
+      "prompt_id": "cost-optimization-risk-register-executive",
+      "sample": "sample-000049-chatcmpl-qwen27-eagle3-aux-v2-s3-000913-cost-optimization-risk-register-executive-b898c7ec.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.077922077922078,
+      "prompt_id": "cost-optimization-risk-register-implementation",
+      "sample": "sample-000050-chatcmpl-qwen27-eagle3-aux-v2-s3-000914-cost-optimization-risk-register-implementation-a12942f3.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.8636363636363636,
+      "prompt_id": "cost-optimization-risk-register-failure-analysis",
+      "sample": "sample-000051-chatcmpl-qwen27-eagle3-aux-v2-s3-000915-cost-optimization-risk-register-failure-analysis-ba65b14f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0844155844155845,
+      "prompt_id": "cost-optimization-risk-register-handoff",
+      "sample": "sample-000052-chatcmpl-qwen27-eagle3-aux-v2-s3-000916-cost-optimization-risk-register-handoff-be6d4d73.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.3636363636363635,
+      "prompt_id": "cost-optimization-risk-register-audit",
+      "sample": "sample-000053-chatcmpl-qwen27-eagle3-aux-v2-s3-000917-cost-optimization-risk-register-audit-a45fd804.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.8701298701298701,
+      "prompt_id": "cost-optimization-migration-plan-baseline",
+      "sample": "sample-000054-chatcmpl-qwen27-eagle3-aux-v2-s3-000918-cost-optimization-migration-plan-baseline-a24ea2d1.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0909090909090908,
+      "prompt_id": "cost-optimization-migration-plan-executive",
+      "sample": "sample-000055-chatcmpl-qwen27-eagle3-aux-v2-s3-000919-cost-optimization-migration-plan-executive-a5dd669c.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0584415584415585,
+      "prompt_id": "cost-optimization-migration-plan-implementation",
+      "sample": "sample-000056-chatcmpl-qwen27-eagle3-aux-v2-s3-000920-cost-optimization-migration-plan-implementation-b72e837f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.025974025974026,
+      "prompt_id": "cost-optimization-migration-plan-failure-analysis",
+      "sample": "sample-000057-chatcmpl-qwen27-eagle3-aux-v2-s3-000921-cost-optimization-migration-plan-failure-analysis-a60c450b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0909090909090908,
+      "prompt_id": "cost-optimization-migration-plan-handoff",
+      "sample": "sample-000058-chatcmpl-qwen27-eagle3-aux-v2-s3-000922-cost-optimization-migration-plan-handoff-bbc8a87f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.3766233766233766,
+      "prompt_id": "cost-optimization-migration-plan-audit",
+      "sample": "sample-000059-chatcmpl-qwen27-eagle3-aux-v2-s3-000923-cost-optimization-migration-plan-audit-939136b7.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.0649350649350648,
+      "prompt_id": "cost-optimization-slo-analysis-baseline",
+      "sample": "sample-000060-chatcmpl-qwen27-eagle3-aux-v2-s3-000924-cost-optimization-slo-analysis-baseline-a467c68a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.9805194805194806,
+      "prompt_id": "cost-optimization-slo-analysis-executive",
+      "sample": "sample-000061-chatcmpl-qwen27-eagle3-aux-v2-s3-000925-cost-optimization-slo-analysis-executive-a610e2e7.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.7142857142857143,
+      "prompt_id": "cost-optimization-slo-analysis-implementation",
+      "sample": "sample-000062-chatcmpl-qwen27-eagle3-aux-v2-s3-000926-cost-optimization-slo-analysis-implementation-97be6963.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.8636363636363636,
+      "prompt_id": "cost-optimization-slo-analysis-failure-analysis",
+      "sample": "sample-000063-chatcmpl-qwen27-eagle3-aux-v2-s3-000927-cost-optimization-slo-analysis-failure-analysis-ba59a2e3.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.961038961038961,
+      "prompt_id": "cost-optimization-slo-analysis-handoff",
+      "sample": "sample-000064-chatcmpl-qwen27-eagle3-aux-v2-s3-000928-cost-optimization-slo-analysis-handoff-93017356.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.2857142857142858,
+      "prompt_id": "cost-optimization-slo-analysis-audit",
+      "sample": "sample-000065-chatcmpl-qwen27-eagle3-aux-v2-s3-000929-cost-optimization-slo-analysis-audit-b3d72cb5.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.8701298701298701,
+      "prompt_id": "cost-optimization-customer-response-baseline",
+      "sample": "sample-000066-chatcmpl-qwen27-eagle3-aux-v2-s3-000930-cost-optimization-customer-response-baseline-b2278e1c.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.9805194805194806,
+      "prompt_id": "cost-optimization-customer-response-executive",
+      "sample": "sample-000067-chatcmpl-qwen27-eagle3-aux-v2-s3-000931-cost-optimization-customer-response-executive-88fe5630.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.9675324675324676,
+      "prompt_id": "cost-optimization-customer-response-implementation",
+      "sample": "sample-000068-chatcmpl-qwen27-eagle3-aux-v2-s3-000932-cost-optimization-customer-response-implementation-966079ea.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 0.7207792207792207,
+      "prompt_id": "cost-optimization-customer-response-failure-analysis",
+      "sample": "sample-000069-chatcmpl-qwen27-eagle3-aux-v2-s3-000933-cost-optimization-customer-response-failure-analysis-8562cdff.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.1753246753246753,
+      "prompt_id": "cost-optimization-customer-response-handoff",
+      "sample": "sample-000070-chatcmpl-qwen27-eagle3-aux-v2-s3-000934-cost-optimization-customer-response-handoff-9efffade.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "cost-optimization",
+      "mean_accepted": 1.396103896103896,
+      "prompt_id": "cost-optimization-customer-response-audit",
+      "sample": "sample-000071-chatcmpl-qwen27-eagle3-aux-v2-s3-000935-cost-optimization-customer-response-audit-8020b1d4.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.025974025974026,
+      "prompt_id": "edge-deployment-runbook-baseline",
+      "sample": "sample-000072-chatcmpl-qwen27-eagle3-aux-v2-s3-000936-edge-deployment-runbook-baseline-99da6a61.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9155844155844156,
+      "prompt_id": "edge-deployment-runbook-executive",
+      "sample": "sample-000073-chatcmpl-qwen27-eagle3-aux-v2-s3-000937-edge-deployment-runbook-executive-89f7b8a7.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2467532467532467,
+      "prompt_id": "edge-deployment-runbook-implementation",
+      "sample": "sample-000074-chatcmpl-qwen27-eagle3-aux-v2-s3-000938-edge-deployment-runbook-implementation-b82ccaf3.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.155844155844156,
+      "prompt_id": "edge-deployment-runbook-failure-analysis",
+      "sample": "sample-000075-chatcmpl-qwen27-eagle3-aux-v2-s3-000939-edge-deployment-runbook-failure-analysis-b12c72bb.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9545454545454546,
+      "prompt_id": "edge-deployment-runbook-handoff",
+      "sample": "sample-000076-chatcmpl-qwen27-eagle3-aux-v2-s3-000940-edge-deployment-runbook-handoff-ad71a100.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.5844155844155845,
+      "prompt_id": "edge-deployment-runbook-audit",
+      "sample": "sample-000077-chatcmpl-qwen27-eagle3-aux-v2-s3-000941-edge-deployment-runbook-audit-9e44795d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.5,
+      "prompt_id": "edge-deployment-memo-baseline",
+      "sample": "sample-000078-chatcmpl-qwen27-eagle3-aux-v2-s3-000942-edge-deployment-memo-baseline-83d0989c.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2402597402597402,
+      "prompt_id": "edge-deployment-memo-executive",
+      "sample": "sample-000079-chatcmpl-qwen27-eagle3-aux-v2-s3-000943-edge-deployment-memo-executive-bbd78c69.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.525974025974026,
+      "prompt_id": "edge-deployment-memo-implementation",
+      "sample": "sample-000080-chatcmpl-qwen27-eagle3-aux-v2-s3-000944-edge-deployment-memo-implementation-841838dc.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2922077922077921,
+      "prompt_id": "edge-deployment-memo-failure-analysis",
+      "sample": "sample-000081-chatcmpl-qwen27-eagle3-aux-v2-s3-000945-edge-deployment-memo-failure-analysis-b5b4a901.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.3116883116883118,
+      "prompt_id": "edge-deployment-memo-handoff",
+      "sample": "sample-000082-chatcmpl-qwen27-eagle3-aux-v2-s3-000946-edge-deployment-memo-handoff-8ff07da2.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.6818181818181819,
+      "prompt_id": "edge-deployment-memo-audit",
+      "sample": "sample-000083-chatcmpl-qwen27-eagle3-aux-v2-s3-000947-edge-deployment-memo-audit-9b7f3700.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2012987012987013,
+      "prompt_id": "edge-deployment-review-baseline",
+      "sample": "sample-000084-chatcmpl-qwen27-eagle3-aux-v2-s3-000948-edge-deployment-review-baseline-88713ff9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2662337662337662,
+      "prompt_id": "edge-deployment-review-executive",
+      "sample": "sample-000085-chatcmpl-qwen27-eagle3-aux-v2-s3-000949-edge-deployment-review-executive-99a8cd51.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.974025974025974,
+      "prompt_id": "edge-deployment-review-implementation",
+      "sample": "sample-000086-chatcmpl-qwen27-eagle3-aux-v2-s3-000950-edge-deployment-review-implementation-b442f7e5.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.3636363636363635,
+      "prompt_id": "edge-deployment-review-failure-analysis",
+      "sample": "sample-000087-chatcmpl-qwen27-eagle3-aux-v2-s3-000951-edge-deployment-review-failure-analysis-927d37fc.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2207792207792207,
+      "prompt_id": "edge-deployment-review-handoff",
+      "sample": "sample-000088-chatcmpl-qwen27-eagle3-aux-v2-s3-000952-edge-deployment-review-handoff-a40faf87.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2012987012987013,
+      "prompt_id": "edge-deployment-review-audit",
+      "sample": "sample-000089-chatcmpl-qwen27-eagle3-aux-v2-s3-000953-edge-deployment-review-audit-92776f31.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.103896103896104,
+      "prompt_id": "edge-deployment-debug-plan-baseline",
+      "sample": "sample-000090-chatcmpl-qwen27-eagle3-aux-v2-s3-000954-edge-deployment-debug-plan-baseline-bfa5a207.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.7467532467532467,
+      "prompt_id": "edge-deployment-debug-plan-executive",
+      "sample": "sample-000091-chatcmpl-qwen27-eagle3-aux-v2-s3-000955-edge-deployment-debug-plan-executive-ab69f214.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8766233766233766,
+      "prompt_id": "edge-deployment-debug-plan-implementation",
+      "sample": "sample-000092-chatcmpl-qwen27-eagle3-aux-v2-s3-000956-edge-deployment-debug-plan-implementation-96d4aa4d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.0649350649350648,
+      "prompt_id": "edge-deployment-debug-plan-failure-analysis",
+      "sample": "sample-000093-chatcmpl-qwen27-eagle3-aux-v2-s3-000957-edge-deployment-debug-plan-failure-analysis-b5f5ad66.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8896103896103896,
+      "prompt_id": "edge-deployment-debug-plan-handoff",
+      "sample": "sample-000094-chatcmpl-qwen27-eagle3-aux-v2-s3-000958-edge-deployment-debug-plan-handoff-b6df2c42.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.551948051948052,
+      "prompt_id": "edge-deployment-debug-plan-audit",
+      "sample": "sample-000095-chatcmpl-qwen27-eagle3-aux-v2-s3-000959-edge-deployment-debug-plan-audit-988847a4.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.1883116883116882,
+      "prompt_id": "edge-deployment-json-plan-baseline",
+      "sample": "sample-000096-chatcmpl-qwen27-eagle3-aux-v2-s3-000960-edge-deployment-json-plan-baseline-9b3f777f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2142857142857142,
+      "prompt_id": "edge-deployment-json-plan-executive",
+      "sample": "sample-000097-chatcmpl-qwen27-eagle3-aux-v2-s3-000961-edge-deployment-json-plan-executive-bc5d8916.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2532467532467533,
+      "prompt_id": "edge-deployment-json-plan-implementation",
+      "sample": "sample-000098-chatcmpl-qwen27-eagle3-aux-v2-s3-000962-edge-deployment-json-plan-implementation-a1e0e944.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2467532467532467,
+      "prompt_id": "edge-deployment-json-plan-failure-analysis",
+      "sample": "sample-000099-chatcmpl-qwen27-eagle3-aux-v2-s3-000963-edge-deployment-json-plan-failure-analysis-b03cfb7e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2727272727272727,
+      "prompt_id": "edge-deployment-json-plan-handoff",
+      "sample": "sample-000100-chatcmpl-qwen27-eagle3-aux-v2-s3-000964-edge-deployment-json-plan-handoff-b46410f3.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.1753246753246753,
+      "prompt_id": "edge-deployment-json-plan-audit",
+      "sample": "sample-000101-chatcmpl-qwen27-eagle3-aux-v2-s3-000965-edge-deployment-json-plan-audit-be450864.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8831168831168831,
+      "prompt_id": "edge-deployment-checklist-baseline",
+      "sample": "sample-000102-chatcmpl-qwen27-eagle3-aux-v2-s3-000966-edge-deployment-checklist-baseline-a25dfb28.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8831168831168831,
+      "prompt_id": "edge-deployment-checklist-executive",
+      "sample": "sample-000103-chatcmpl-qwen27-eagle3-aux-v2-s3-000967-edge-deployment-checklist-executive-8c8eaf76.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2402597402597402,
+      "prompt_id": "edge-deployment-checklist-implementation",
+      "sample": "sample-000104-chatcmpl-qwen27-eagle3-aux-v2-s3-000968-edge-deployment-checklist-implementation-b93384c1.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9805194805194806,
+      "prompt_id": "edge-deployment-checklist-failure-analysis",
+      "sample": "sample-000105-chatcmpl-qwen27-eagle3-aux-v2-s3-000969-edge-deployment-checklist-failure-analysis-ae91813e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8766233766233766,
+      "prompt_id": "edge-deployment-checklist-handoff",
+      "sample": "sample-000106-chatcmpl-qwen27-eagle3-aux-v2-s3-000970-edge-deployment-checklist-handoff-8cbd7b25.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.0454545454545454,
+      "prompt_id": "edge-deployment-checklist-audit",
+      "sample": "sample-000107-chatcmpl-qwen27-eagle3-aux-v2-s3-000971-edge-deployment-checklist-audit-adefab7b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8766233766233766,
+      "prompt_id": "edge-deployment-teaching-note-baseline",
+      "sample": "sample-000108-chatcmpl-qwen27-eagle3-aux-v2-s3-000972-edge-deployment-teaching-note-baseline-86ca50ed.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9805194805194806,
+      "prompt_id": "edge-deployment-teaching-note-executive",
+      "sample": "sample-000109-chatcmpl-qwen27-eagle3-aux-v2-s3-000973-edge-deployment-teaching-note-executive-994a86ff.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.948051948051948,
+      "prompt_id": "edge-deployment-teaching-note-implementation",
+      "sample": "sample-000110-chatcmpl-qwen27-eagle3-aux-v2-s3-000974-edge-deployment-teaching-note-implementation-9e74078b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.051948051948052,
+      "prompt_id": "edge-deployment-teaching-note-failure-analysis",
+      "sample": "sample-000111-chatcmpl-qwen27-eagle3-aux-v2-s3-000975-edge-deployment-teaching-note-failure-analysis-a8e42737.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.1363636363636365,
+      "prompt_id": "edge-deployment-teaching-note-handoff",
+      "sample": "sample-000112-chatcmpl-qwen27-eagle3-aux-v2-s3-000976-edge-deployment-teaching-note-handoff-afe13af0.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.474025974025974,
+      "prompt_id": "edge-deployment-teaching-note-audit",
+      "sample": "sample-000113-chatcmpl-qwen27-eagle3-aux-v2-s3-000977-edge-deployment-teaching-note-audit-ba1df78e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.3636363636363635,
+      "prompt_id": "edge-deployment-test-plan-baseline",
+      "sample": "sample-000114-chatcmpl-qwen27-eagle3-aux-v2-s3-000978-edge-deployment-test-plan-baseline-9b11c770.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9805194805194806,
+      "prompt_id": "edge-deployment-test-plan-executive",
+      "sample": "sample-000115-chatcmpl-qwen27-eagle3-aux-v2-s3-000979-edge-deployment-test-plan-executive-84ac0910.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9675324675324676,
+      "prompt_id": "edge-deployment-test-plan-implementation",
+      "sample": "sample-000116-chatcmpl-qwen27-eagle3-aux-v2-s3-000980-edge-deployment-test-plan-implementation-a8b36928.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.948051948051948,
+      "prompt_id": "edge-deployment-test-plan-failure-analysis",
+      "sample": "sample-000117-chatcmpl-qwen27-eagle3-aux-v2-s3-000981-edge-deployment-test-plan-failure-analysis-9f17330b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.3246753246753247,
+      "prompt_id": "edge-deployment-test-plan-handoff",
+      "sample": "sample-000118-chatcmpl-qwen27-eagle3-aux-v2-s3-000982-edge-deployment-test-plan-handoff-b541b9bd.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.5389610389610389,
+      "prompt_id": "edge-deployment-test-plan-audit",
+      "sample": "sample-000119-chatcmpl-qwen27-eagle3-aux-v2-s3-000983-edge-deployment-test-plan-audit-90a5d545.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.103896103896104,
+      "prompt_id": "edge-deployment-risk-register-baseline",
+      "sample": "sample-000120-chatcmpl-qwen27-eagle3-aux-v2-s3-000984-edge-deployment-risk-register-baseline-83b7d8df.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8571428571428571,
+      "prompt_id": "edge-deployment-risk-register-executive",
+      "sample": "sample-000121-chatcmpl-qwen27-eagle3-aux-v2-s3-000985-edge-deployment-risk-register-executive-8e04a2b9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.935064935064935,
+      "prompt_id": "edge-deployment-risk-register-implementation",
+      "sample": "sample-000122-chatcmpl-qwen27-eagle3-aux-v2-s3-000986-edge-deployment-risk-register-implementation-949bcbd9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8961038961038961,
+      "prompt_id": "edge-deployment-risk-register-failure-analysis",
+      "sample": "sample-000123-chatcmpl-qwen27-eagle3-aux-v2-s3-000987-edge-deployment-risk-register-failure-analysis-84c8f9a9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.0129870129870129,
+      "prompt_id": "edge-deployment-risk-register-handoff",
+      "sample": "sample-000124-chatcmpl-qwen27-eagle3-aux-v2-s3-000988-edge-deployment-risk-register-handoff-87611e43.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.3181818181818181,
+      "prompt_id": "edge-deployment-risk-register-audit",
+      "sample": "sample-000125-chatcmpl-qwen27-eagle3-aux-v2-s3-000989-edge-deployment-risk-register-audit-8ea7fe97.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.0324675324675325,
+      "prompt_id": "edge-deployment-migration-plan-baseline",
+      "sample": "sample-000126-chatcmpl-qwen27-eagle3-aux-v2-s3-000990-edge-deployment-migration-plan-baseline-8d273a83.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9545454545454546,
+      "prompt_id": "edge-deployment-migration-plan-executive",
+      "sample": "sample-000127-chatcmpl-qwen27-eagle3-aux-v2-s3-000991-edge-deployment-migration-plan-executive-a5178949.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9025974025974026,
+      "prompt_id": "edge-deployment-migration-plan-implementation",
+      "sample": "sample-000128-chatcmpl-qwen27-eagle3-aux-v2-s3-000992-edge-deployment-migration-plan-implementation-b6c603d9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8571428571428571,
+      "prompt_id": "edge-deployment-migration-plan-failure-analysis",
+      "sample": "sample-000129-chatcmpl-qwen27-eagle3-aux-v2-s3-000993-edge-deployment-migration-plan-failure-analysis-917bfcdd.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.155844155844156,
+      "prompt_id": "edge-deployment-migration-plan-handoff",
+      "sample": "sample-000130-chatcmpl-qwen27-eagle3-aux-v2-s3-000994-edge-deployment-migration-plan-handoff-ae1ce9b6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.1818181818181819,
+      "prompt_id": "edge-deployment-migration-plan-audit",
+      "sample": "sample-000131-chatcmpl-qwen27-eagle3-aux-v2-s3-000995-edge-deployment-migration-plan-audit-b711da02.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8181818181818182,
+      "prompt_id": "edge-deployment-slo-analysis-baseline",
+      "sample": "sample-000132-chatcmpl-qwen27-eagle3-aux-v2-s3-000996-edge-deployment-slo-analysis-baseline-8aaca0c4.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.7987012987012987,
+      "prompt_id": "edge-deployment-slo-analysis-executive",
+      "sample": "sample-000133-chatcmpl-qwen27-eagle3-aux-v2-s3-000997-edge-deployment-slo-analysis-executive-af860ab3.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8181818181818182,
+      "prompt_id": "edge-deployment-slo-analysis-implementation",
+      "sample": "sample-000134-chatcmpl-qwen27-eagle3-aux-v2-s3-000998-edge-deployment-slo-analysis-implementation-a7d91124.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8116883116883117,
+      "prompt_id": "edge-deployment-slo-analysis-failure-analysis",
+      "sample": "sample-000135-chatcmpl-qwen27-eagle3-aux-v2-s3-000999-edge-deployment-slo-analysis-failure-analysis-95774711.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2922077922077921,
+      "prompt_id": "edge-deployment-slo-analysis-handoff",
+      "sample": "sample-000136-chatcmpl-qwen27-eagle3-aux-v2-s3-001000-edge-deployment-slo-analysis-handoff-bc234c95.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.4090909090909092,
+      "prompt_id": "edge-deployment-slo-analysis-audit",
+      "sample": "sample-000137-chatcmpl-qwen27-eagle3-aux-v2-s3-001001-edge-deployment-slo-analysis-audit-b23f7d67.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8831168831168831,
+      "prompt_id": "edge-deployment-customer-response-baseline",
+      "sample": "sample-000138-chatcmpl-qwen27-eagle3-aux-v2-s3-001002-edge-deployment-customer-response-baseline-ab6adfef.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.6493506493506493,
+      "prompt_id": "edge-deployment-customer-response-executive",
+      "sample": "sample-000139-chatcmpl-qwen27-eagle3-aux-v2-s3-001003-edge-deployment-customer-response-executive-aa6dbe4e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8571428571428571,
+      "prompt_id": "edge-deployment-customer-response-implementation",
+      "sample": "sample-000140-chatcmpl-qwen27-eagle3-aux-v2-s3-001004-edge-deployment-customer-response-implementation-90a943c8.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.8246753246753247,
+      "prompt_id": "edge-deployment-customer-response-failure-analysis",
+      "sample": "sample-000141-chatcmpl-qwen27-eagle3-aux-v2-s3-001005-edge-deployment-customer-response-failure-analysis-af4bd75b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 0.9090909090909091,
+      "prompt_id": "edge-deployment-customer-response-handoff",
+      "sample": "sample-000142-chatcmpl-qwen27-eagle3-aux-v2-s3-001006-edge-deployment-customer-response-handoff-80855e77.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "edge-deployment",
+      "mean_accepted": 1.2857142857142858,
+      "prompt_id": "edge-deployment-customer-response-audit",
+      "sample": "sample-000143-chatcmpl-qwen27-eagle3-aux-v2-s3-001007-edge-deployment-customer-response-audit-92bdb24b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.155844155844156,
+      "prompt_id": "data-pipeline-runbook-baseline",
+      "sample": "sample-000144-chatcmpl-qwen27-eagle3-aux-v2-s3-001008-data-pipeline-runbook-baseline-984c99b7.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.0844155844155845,
+      "prompt_id": "data-pipeline-runbook-executive",
+      "sample": "sample-000145-chatcmpl-qwen27-eagle3-aux-v2-s3-001009-data-pipeline-runbook-executive-84035d89.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.2727272727272727,
+      "prompt_id": "data-pipeline-runbook-implementation",
+      "sample": "sample-000146-chatcmpl-qwen27-eagle3-aux-v2-s3-001010-data-pipeline-runbook-implementation-91089983.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.961038961038961,
+      "prompt_id": "data-pipeline-runbook-failure-analysis",
+      "sample": "sample-000147-chatcmpl-qwen27-eagle3-aux-v2-s3-001011-data-pipeline-runbook-failure-analysis-90b13310.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.1493506493506493,
+      "prompt_id": "data-pipeline-runbook-handoff",
+      "sample": "sample-000148-chatcmpl-qwen27-eagle3-aux-v2-s3-001012-data-pipeline-runbook-handoff-a456e1a8.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.5909090909090908,
+      "prompt_id": "data-pipeline-runbook-audit",
+      "sample": "sample-000149-chatcmpl-qwen27-eagle3-aux-v2-s3-001013-data-pipeline-runbook-audit-a7d3016e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.0584415584415585,
+      "prompt_id": "data-pipeline-memo-baseline",
+      "sample": "sample-000150-chatcmpl-qwen27-eagle3-aux-v2-s3-001014-data-pipeline-memo-baseline-90ea580e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.1883116883116882,
+      "prompt_id": "data-pipeline-memo-executive",
+      "sample": "sample-000151-chatcmpl-qwen27-eagle3-aux-v2-s3-001015-data-pipeline-memo-executive-a1e43e3f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.1753246753246753,
+      "prompt_id": "data-pipeline-memo-implementation",
+      "sample": "sample-000152-chatcmpl-qwen27-eagle3-aux-v2-s3-001016-data-pipeline-memo-implementation-8a1db8bd.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.3116883116883118,
+      "prompt_id": "data-pipeline-memo-failure-analysis",
+      "sample": "sample-000153-chatcmpl-qwen27-eagle3-aux-v2-s3-001017-data-pipeline-memo-failure-analysis-a89f7702.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.2467532467532467,
+      "prompt_id": "data-pipeline-memo-handoff",
+      "sample": "sample-000154-chatcmpl-qwen27-eagle3-aux-v2-s3-001018-data-pipeline-memo-handoff-b16dcc87.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.37012987012987,
+      "prompt_id": "data-pipeline-memo-audit",
+      "sample": "sample-000155-chatcmpl-qwen27-eagle3-aux-v2-s3-001019-data-pipeline-memo-audit-8390f094.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.2792207792207793,
+      "prompt_id": "data-pipeline-review-baseline",
+      "sample": "sample-000156-chatcmpl-qwen27-eagle3-aux-v2-s3-001020-data-pipeline-review-baseline-bc923c4e.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.3376623376623376,
+      "prompt_id": "data-pipeline-review-executive",
+      "sample": "sample-000157-chatcmpl-qwen27-eagle3-aux-v2-s3-001021-data-pipeline-review-executive-b45245c6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.2792207792207793,
+      "prompt_id": "data-pipeline-review-implementation",
+      "sample": "sample-000158-chatcmpl-qwen27-eagle3-aux-v2-s3-001022-data-pipeline-review-implementation-9a14a6ab.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.2857142857142858,
+      "prompt_id": "data-pipeline-review-failure-analysis",
+      "sample": "sample-000159-chatcmpl-qwen27-eagle3-aux-v2-s3-001023-data-pipeline-review-failure-analysis-a8991286.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.2337662337662338,
+      "prompt_id": "data-pipeline-review-handoff",
+      "sample": "sample-000160-chatcmpl-qwen27-eagle3-aux-v2-s3-001024-data-pipeline-review-handoff-88884ec0.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.4350649350649352,
+      "prompt_id": "data-pipeline-review-audit",
+      "sample": "sample-000161-chatcmpl-qwen27-eagle3-aux-v2-s3-001025-data-pipeline-review-audit-8be5bbc8.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.9090909090909091,
+      "prompt_id": "data-pipeline-debug-plan-baseline",
+      "sample": "sample-000162-chatcmpl-qwen27-eagle3-aux-v2-s3-001026-data-pipeline-debug-plan-baseline-939d86d6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.9675324675324676,
+      "prompt_id": "data-pipeline-debug-plan-executive",
+      "sample": "sample-000163-chatcmpl-qwen27-eagle3-aux-v2-s3-001027-data-pipeline-debug-plan-executive-87f7976d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.103896103896104,
+      "prompt_id": "data-pipeline-debug-plan-implementation",
+      "sample": "sample-000164-chatcmpl-qwen27-eagle3-aux-v2-s3-001028-data-pipeline-debug-plan-implementation-8d5f13e6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.1623376623376624,
+      "prompt_id": "data-pipeline-debug-plan-failure-analysis",
+      "sample": "sample-000165-chatcmpl-qwen27-eagle3-aux-v2-s3-001029-data-pipeline-debug-plan-failure-analysis-83a26245.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.155844155844156,
+      "prompt_id": "data-pipeline-debug-plan-handoff",
+      "sample": "sample-000166-chatcmpl-qwen27-eagle3-aux-v2-s3-001030-data-pipeline-debug-plan-handoff-ac7acea0.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.051948051948052,
+      "prompt_id": "data-pipeline-debug-plan-audit",
+      "sample": "sample-000167-chatcmpl-qwen27-eagle3-aux-v2-s3-001031-data-pipeline-debug-plan-audit-ac3878b1.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.7142857142857142,
+      "prompt_id": "data-pipeline-json-plan-baseline",
+      "sample": "sample-000168-chatcmpl-qwen27-eagle3-aux-v2-s3-001032-data-pipeline-json-plan-baseline-b4045a4d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.7142857142857142,
+      "prompt_id": "data-pipeline-json-plan-executive",
+      "sample": "sample-000169-chatcmpl-qwen27-eagle3-aux-v2-s3-001033-data-pipeline-json-plan-executive-831c6ba7.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.7207792207792207,
+      "prompt_id": "data-pipeline-json-plan-implementation",
+      "sample": "sample-000170-chatcmpl-qwen27-eagle3-aux-v2-s3-001034-data-pipeline-json-plan-implementation-98107211.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.8051948051948052,
+      "prompt_id": "data-pipeline-json-plan-failure-analysis",
+      "sample": "sample-000171-chatcmpl-qwen27-eagle3-aux-v2-s3-001035-data-pipeline-json-plan-failure-analysis-827154d3.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 2.012987012987013,
+      "prompt_id": "data-pipeline-json-plan-handoff",
+      "sample": "sample-000172-chatcmpl-qwen27-eagle3-aux-v2-s3-001036-data-pipeline-json-plan-handoff-93e08bdf.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.6818181818181819,
+      "prompt_id": "data-pipeline-json-plan-audit",
+      "sample": "sample-000173-chatcmpl-qwen27-eagle3-aux-v2-s3-001037-data-pipeline-json-plan-audit-9c6a1737.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.0454545454545454,
+      "prompt_id": "data-pipeline-checklist-baseline",
+      "sample": "sample-000174-chatcmpl-qwen27-eagle3-aux-v2-s3-001038-data-pipeline-checklist-baseline-9bb601d4.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.922077922077922,
+      "prompt_id": "data-pipeline-checklist-executive",
+      "sample": "sample-000175-chatcmpl-qwen27-eagle3-aux-v2-s3-001039-data-pipeline-checklist-executive-abaf5f45.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.9025974025974026,
+      "prompt_id": "data-pipeline-checklist-implementation",
+      "sample": "sample-000176-chatcmpl-qwen27-eagle3-aux-v2-s3-001040-data-pipeline-checklist-implementation-ab8a8fc8.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.935064935064935,
+      "prompt_id": "data-pipeline-checklist-failure-analysis",
+      "sample": "sample-000177-chatcmpl-qwen27-eagle3-aux-v2-s3-001041-data-pipeline-checklist-failure-analysis-868ff88a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.6558441558441559,
+      "prompt_id": "data-pipeline-checklist-handoff",
+      "sample": "sample-000178-chatcmpl-qwen27-eagle3-aux-v2-s3-001042-data-pipeline-checklist-handoff-939fe5b5.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.1428571428571428,
+      "prompt_id": "data-pipeline-checklist-audit",
+      "sample": "sample-000179-chatcmpl-qwen27-eagle3-aux-v2-s3-001043-data-pipeline-checklist-audit-87cb2b9d.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.1428571428571428,
+      "prompt_id": "data-pipeline-teaching-note-baseline",
+      "sample": "sample-000180-chatcmpl-qwen27-eagle3-aux-v2-s3-001044-data-pipeline-teaching-note-baseline-a68e7ce2.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.9155844155844156,
+      "prompt_id": "data-pipeline-teaching-note-executive",
+      "sample": "sample-000181-chatcmpl-qwen27-eagle3-aux-v2-s3-001045-data-pipeline-teaching-note-executive-bca23e6b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.2272727272727273,
+      "prompt_id": "data-pipeline-teaching-note-implementation",
+      "sample": "sample-000182-chatcmpl-qwen27-eagle3-aux-v2-s3-001046-data-pipeline-teaching-note-implementation-9d327c67.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.9025974025974026,
+      "prompt_id": "data-pipeline-teaching-note-failure-analysis",
+      "sample": "sample-000183-chatcmpl-qwen27-eagle3-aux-v2-s3-001047-data-pipeline-teaching-note-failure-analysis-8c02ce04.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.935064935064935,
+      "prompt_id": "data-pipeline-teaching-note-handoff",
+      "sample": "sample-000184-chatcmpl-qwen27-eagle3-aux-v2-s3-001048-data-pipeline-teaching-note-handoff-87e2d432.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.922077922077922,
+      "prompt_id": "data-pipeline-teaching-note-audit",
+      "sample": "sample-000185-chatcmpl-qwen27-eagle3-aux-v2-s3-001049-data-pipeline-teaching-note-audit-840bd492.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.8766233766233766,
+      "prompt_id": "data-pipeline-test-plan-baseline",
+      "sample": "sample-000186-chatcmpl-qwen27-eagle3-aux-v2-s3-001050-data-pipeline-test-plan-baseline-a7b7bb06.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.0,
+      "prompt_id": "data-pipeline-test-plan-executive",
+      "sample": "sample-000187-chatcmpl-qwen27-eagle3-aux-v2-s3-001051-data-pipeline-test-plan-executive-a3d4ced6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.7857142857142857,
+      "prompt_id": "data-pipeline-test-plan-implementation",
+      "sample": "sample-000188-chatcmpl-qwen27-eagle3-aux-v2-s3-001052-data-pipeline-test-plan-implementation-881eb257.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.9675324675324676,
+      "prompt_id": "data-pipeline-test-plan-failure-analysis",
+      "sample": "sample-000189-chatcmpl-qwen27-eagle3-aux-v2-s3-001053-data-pipeline-test-plan-failure-analysis-b4f6a2f9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.987012987012987,
+      "prompt_id": "data-pipeline-test-plan-handoff",
+      "sample": "sample-000190-chatcmpl-qwen27-eagle3-aux-v2-s3-001054-data-pipeline-test-plan-handoff-844b39bd.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.577922077922078,
+      "prompt_id": "data-pipeline-test-plan-audit",
+      "sample": "sample-000191-chatcmpl-qwen27-eagle3-aux-v2-s3-001055-data-pipeline-test-plan-audit-bb94080b.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.8246753246753247,
+      "prompt_id": "data-pipeline-risk-register-baseline",
+      "sample": "sample-000192-chatcmpl-qwen27-eagle3-aux-v2-s3-001056-data-pipeline-risk-register-baseline-ba06599f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.6753246753246753,
+      "prompt_id": "data-pipeline-risk-register-executive",
+      "sample": "sample-000193-chatcmpl-qwen27-eagle3-aux-v2-s3-001057-data-pipeline-risk-register-executive-8ca5ed6f.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.8896103896103896,
+      "prompt_id": "data-pipeline-risk-register-implementation",
+      "sample": "sample-000194-chatcmpl-qwen27-eagle3-aux-v2-s3-001058-data-pipeline-risk-register-implementation-a78315c6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.8506493506493507,
+      "prompt_id": "data-pipeline-risk-register-failure-analysis",
+      "sample": "sample-000195-chatcmpl-qwen27-eagle3-aux-v2-s3-001059-data-pipeline-risk-register-failure-analysis-a7056ba9.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.8246753246753247,
+      "prompt_id": "data-pipeline-risk-register-handoff",
+      "sample": "sample-000196-chatcmpl-qwen27-eagle3-aux-v2-s3-001060-data-pipeline-risk-register-handoff-9ce56ca6.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.3051948051948052,
+      "prompt_id": "data-pipeline-risk-register-audit",
+      "sample": "sample-000197-chatcmpl-qwen27-eagle3-aux-v2-s3-001061-data-pipeline-risk-register-audit-84dcdf7a.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 0.8896103896103896,
+      "prompt_id": "data-pipeline-migration-plan-baseline",
+      "sample": "sample-000198-chatcmpl-qwen27-eagle3-aux-v2-s3-001062-data-pipeline-migration-plan-baseline-89fb96b3.pt",
+      "starts": 154,
+      "tokens": 160
+    },
+    {
+      "family": "data-pipeline",
+      "mean_accepted": 1.155844155844156,
+      "prompt_id": "data-pipeline-migration-plan-executive",
+      "sample": "sample-000199-chatcmpl-qwen27-eagle3-aux-v2-s3-001063-data-pipeline-migration-plan-executive-ab94d574.pt",
+      "starts": 154,
+      "tokens": 160
+    }
+  ],
+  "samples_seen": 288,
+  "script": "/home/steve/llm-optimizations/scripts/evaluate-qwen27-ex0bit-eagle3-offline.py",
+  "skipped_samples": [],
+  "start_stride": 1,
+  "starts": 44352,
+  "starts_per_s": 139.31570629669739,
+  "target_model": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "topk": 5,
+  "valid_headline_throughput": false
+}

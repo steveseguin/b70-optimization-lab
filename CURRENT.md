@@ -131,13 +131,12 @@ Fastest quality-gated practical variant:
   step-3 conditional). This is still below the `1.5-2.0` offline threshold
   for endpoint/kernel work. A bounded all-scope follow-up from the v4 best
   checkpoint reached only `1.0707972582972582` mean accepted, so simple
-  full-draft unfreezing is not the unlock. Rollout-5 continuation is the
+  full-draft unfreezing is not the unlock. V5 rollout-5 training is the
   current best diagnostic family; the best checkpoint uses `decay=1.0`,
-  `lr=2e-5` and reaches `1.1957070707070707` mean accepted (`56.68%` step-1
-  exact, `53.61%` step-2 conditional, `55.79%` step-3 conditional, `1267`
-  full-5 accepts). This is still below endpoint threshold and repeated
-  rollout-5 continuation is diminishing; next work should use more data or a
-  different objective, not wire the drafter into vLLM yet;
+  `lr=2e-5` and reaches `1.2866838023088023` mean accepted (`59.02%` step-1
+  exact, `55.32%` step-2 conditional, `57.29%` step-3 conditional, `3056`
+  full-5 accepts). This confirms the lane was data-limited but is still below
+  endpoint threshold; continue training research, not vLLM endpoint wiring;
 
 Previous fastest quality-gated practical variant:
 
