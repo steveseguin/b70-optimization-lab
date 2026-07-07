@@ -144,6 +144,15 @@ Active target as of the latest switch request:
   overhead and is only modestly above the current endpoint MTP3 branch trace.
   Closed without endpoint run. Next drafter work needs a materially stronger
   architecture or endpoint-trace accepted-prefix lift, not FC-only MTP5 tuning.
+- Latest producer-side INT4 LM-head shortcut screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-runtime-hang.md`.
+  A default-unwired `_xpu_C.int4_gemm_w4a16_top1` prototype was preserved as
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-runtime-hang-20260707.patch`,
+  but it is not a win: the oneAPI 2026 BMG-only build required `libsycl.so.9`,
+  the Qwen27 microbench hung with GPU idle and oneDNN `bad engine kind`, and
+  the sycl8 runtime package binary was restored. Before revisiting this lane,
+  make the op build/import in the normal runtime and prove dense-argmax
+  correctness plus an isolated microbench win.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

@@ -1,0 +1,318 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -535,0 +536 @@ if(XPU_SPECIFIC_KERNELS_ENABLED)
++      "csrc/xpu/quantization/int4_top1.cpp"
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -48,0 +49,9 @@ torch::Tensor int4_gemm_w4a16(
++std::tuple<torch::Tensor, torch::Tensor> int4_gemm_w4a16_top1(
++    const torch::Tensor& A_,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& B_zp,
++    int64_t group_size,
++    const std::optional<torch::Tensor>& g_idx,
++    int64_t tile_size);
++
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -33,0 +34,6 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
++  xpu_ops.def(
++      "int4_gemm_w4a16_top1(Tensor A, Tensor B, Tensor B_scale, Tensor B_zp, "
++      "int group_size, Tensor? g_idx, int tile_size=2048) -> "
++      "(Tensor, Tensor)");
++  xpu_ops.impl("int4_gemm_w4a16_top1", torch::kXPU, &int4_gemm_w4a16_top1);
++
+diff --git a/csrc/xpu/quantization/int4_top1.cpp b/csrc/xpu/quantization/int4_top1.cpp
+new file mode 100644
+index 0000000..7650265
+--- /dev/null
++++ b/csrc/xpu/quantization/int4_top1.cpp
+@@ -0,0 +1,284 @@
++#include <limits>
++#include <tuple>
++
++#include <sycl/sycl.hpp>
++#include <torch/all.h>
++
++#include "utils.h"
++
++namespace {
++
++template <typename scalar_t>
++float scalar_to_float(scalar_t value) {
++  return static_cast<float>(value);
++}
++
++template <typename scalar_t, typename scale_t>
++void launch_int4_w4a16_top1_stage1(
++    const scalar_t* a,
++    const int32_t* b,
++    const scale_t* scales,
++    int64_t* partial_ids,
++    float* partial_values,
++    int64_t rows,
++    int64_t hidden,
++    int64_t vocab,
++    int64_t group_size,
++    int64_t b_stride0,
++    int64_t b_stride1,
++    int64_t scale_stride0,
++    int64_t scale_stride1,
++    int zero_point,
++    int64_t tile_size,
++    int64_t num_tiles) {
++  constexpr int kLocal = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kLocal);
++  sycl::range<1> global(rows * num_tiles * kLocal);
++  const int packed_k = static_cast<int>(hidden / 8);
++  const int zp = zero_point;
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_values(local, cgh);
++    sycl::local_accessor<int64_t, 1> local_ids(local, cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++          const int64_t group = item.get_group(0);
++          const int local_id = item.get_local_id(0);
++          const int local_range = item.get_local_range(0);
++          const int64_t row = group / num_tiles;
++          const int64_t tile = group - row * num_tiles;
++          const int64_t vocab_start = tile * tile_size;
++          const int64_t vocab_end =
++              sycl::min<int64_t>(vocab_start + tile_size, vocab);
++
++          float best_value = -std::numeric_limits<float>::infinity();
++          int64_t best_id = -1;
++
++          for (int64_t token = vocab_start + local_id; token < vocab_end;
++               token += local_range) {
++            float acc = 0.0f;
++            for (int64_t packed = 0; packed < packed_k; ++packed) {
++              const uint32_t word = static_cast<uint32_t>(
++                  b[packed * b_stride0 + token * b_stride1]);
++              const int64_t group_idx = (packed * 8) / group_size;
++              const float scale = scalar_to_float(
++                  scales[group_idx * scale_stride0 + token * scale_stride1]);
++              const int64_t a_base = row * hidden + packed * 8;
++#pragma unroll
++              for (int lane = 0; lane < 8; ++lane) {
++                const int q =
++                    static_cast<int>((word >> (lane * 4)) & 0xFu) - zp;
++                acc += scalar_to_float(a[a_base + lane]) *
++                    static_cast<float>(q) * scale;
++              }
++            }
++            if (acc > best_value || (acc == best_value && token < best_id)) {
++              best_value = acc;
++              best_id = token;
++            }
++          }
++
++          local_values[local_id] = best_value;
++          local_ids[local_id] = best_id;
++          item.barrier(sycl::access::fence_space::local_space);
++
++          for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++            if (local_id < stride) {
++              const float other_value = local_values[local_id + stride];
++              const int64_t other_id = local_ids[local_id + stride];
++              const bool take_other =
++                  other_value > local_values[local_id] ||
++                  (other_value == local_values[local_id] &&
++                   other_id >= 0 && other_id < local_ids[local_id]);
++              if (take_other) {
++                local_values[local_id] = other_value;
++                local_ids[local_id] = other_id;
++              }
++            }
++            item.barrier(sycl::access::fence_space::local_space);
++          }
++
++          if (local_id == 0) {
++            partial_values[group] = local_values[0];
++            partial_ids[group] = local_ids[0];
++          }
++        });
++  });
++}
++
++void launch_int4_w4a16_top1_stage2(
++    const int64_t* partial_ids,
++    const float* partial_values,
++    int64_t* out_ids,
++    float* out_values,
++    int64_t rows,
++    int64_t num_tiles) {
++  constexpr int kLocal = 256;
++  auto& queue = vllm::xpu::vllmGetQueue();
++  sycl::range<1> local(kLocal);
++  sycl::range<1> global(rows * kLocal);
++
++  queue.submit([&](sycl::handler& cgh) {
++    sycl::local_accessor<float, 1> local_values(local, cgh);
++    sycl::local_accessor<int64_t, 1> local_ids(local, cgh);
++    cgh.parallel_for(
++        sycl::nd_range<1>(global, local),
++        [=](sycl::nd_item<1> item)
++            [[sycl::reqd_sub_group_size(16)]] {
++          const int64_t row = item.get_group(0);
++          const int local_id = item.get_local_id(0);
++          const int local_range = item.get_local_range(0);
++
++          float best_value = -std::numeric_limits<float>::infinity();
++          int64_t best_id = -1;
++          const int64_t base = row * num_tiles;
++          for (int64_t tile = local_id; tile < num_tiles; tile += local_range) {
++            const float value = partial_values[base + tile];
++            const int64_t id = partial_ids[base + tile];
++            if (value > best_value || (value == best_value && id < best_id)) {
++              best_value = value;
++              best_id = id;
++            }
++          }
++
++          local_values[local_id] = best_value;
++          local_ids[local_id] = best_id;
++          item.barrier(sycl::access::fence_space::local_space);
++
++          for (int stride = local_range / 2; stride > 0; stride >>= 1) {
++            if (local_id < stride) {
++              const float other_value = local_values[local_id + stride];
++              const int64_t other_id = local_ids[local_id + stride];
++              const bool take_other =
++                  other_value > local_values[local_id] ||
++                  (other_value == local_values[local_id] &&
++                   other_id >= 0 && other_id < local_ids[local_id]);
++              if (take_other) {
++                local_values[local_id] = other_value;
++                local_ids[local_id] = other_id;
++              }
++            }
++            item.barrier(sycl::access::fence_space::local_space);
++          }
++
++          if (local_id == 0) {
++            out_values[row] = local_values[0];
++            out_ids[row] = local_ids[0];
++          }
++        });
++  });
++}
++
++template <typename scalar_t, typename scale_t>
++std::tuple<torch::Tensor, torch::Tensor> int4_top1_impl(
++    const torch::Tensor& A,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& B_zp,
++    int64_t group_size,
++    int64_t tile_size) {
++  const int64_t rows = A.size(0);
++  const int64_t hidden = A.size(1);
++  const int64_t vocab = B.size(1);
++  const int64_t num_tiles = (vocab + tile_size - 1) / tile_size;
++  auto partial_ids = torch::empty({rows, num_tiles}, A.options().dtype(torch::kInt64));
++  auto partial_values =
++      torch::empty({rows, num_tiles}, A.options().dtype(torch::kFloat32));
++  auto out_ids = torch::empty({rows}, A.options().dtype(torch::kInt64));
++  auto out_values = torch::empty({rows}, A.options().dtype(torch::kFloat32));
++
++  launch_int4_w4a16_top1_stage1<scalar_t, scale_t>(
++      A.data_ptr<scalar_t>(),
++      B.data_ptr<int32_t>(),
++      B_scale.data_ptr<scale_t>(),
++      partial_ids.data_ptr<int64_t>(),
++      partial_values.data_ptr<float>(),
++      rows,
++      hidden,
++      vocab,
++      group_size,
++      B.stride(0),
++      B.stride(1),
++      B_scale.stride(0),
++      B_scale.stride(1),
++      8,
++      tile_size,
++      num_tiles);
++  launch_int4_w4a16_top1_stage2(
++      partial_ids.data_ptr<int64_t>(),
++      partial_values.data_ptr<float>(),
++      out_ids.data_ptr<int64_t>(),
++      out_values.data_ptr<float>(),
++      rows,
++      num_tiles);
++  return std::make_tuple(out_ids, out_values);
++}
++
++}  // namespace
++
++std::tuple<torch::Tensor, torch::Tensor> int4_gemm_w4a16_top1(
++    const torch::Tensor& A_,
++    const torch::Tensor& B,
++    const torch::Tensor& B_scale,
++    const torch::Tensor& B_zp,
++    int64_t group_size,
++    const std::optional<torch::Tensor>& g_idx,
++    int64_t tile_size) {
++  const at::DeviceGuard device_guard(A_.device());
++  TORCH_CHECK(A_.is_xpu(), "A must be on XPU");
++  TORCH_CHECK(B.is_xpu(), "B must be on XPU");
++  TORCH_CHECK(B_scale.is_xpu(), "B_scale must be on XPU");
++  TORCH_CHECK(B_zp.is_xpu(), "B_zp must be on XPU");
++  TORCH_CHECK(A_.dim() == 2, "A must be [rows, hidden]");
++  TORCH_CHECK(B.dim() == 2, "B must be [hidden/8, vocab]");
++  TORCH_CHECK(B.scalar_type() == torch::kInt32, "B must be int32 packed INT4");
++  TORCH_CHECK(B_zp.scalar_type() == torch::kInt8, "B_zp must be int8");
++  TORCH_CHECK(B_zp.numel() == 1, "prototype top1 only supports scalar zp");
++  TORCH_CHECK(group_size > 0, "group_size must be positive");
++  TORCH_CHECK(tile_size > 0, "tile_size must be positive");
++
++  const torch::Tensor A = g_idx.has_value() ? A_.index_select(-1, g_idx.value()) : A_;
++  TORCH_CHECK(A.is_contiguous(), "A must be contiguous");
++  TORCH_CHECK(A.size(1) % 8 == 0, "hidden must be divisible by 8");
++  TORCH_CHECK(A.size(1) % group_size == 0, "group_size must divide hidden");
++  TORCH_CHECK(B.size(0) == A.size(1) / 8, "B first dim must be hidden/8");
++  TORCH_CHECK(
++      B_scale.dim() == 2 && B_scale.size(0) == A.size(1) / group_size &&
++          B_scale.size(1) == B.size(1),
++      "B_scale must be [hidden/group_size, vocab]");
++  TORCH_CHECK(
++      A.scalar_type() == torch::kFloat16 || A.scalar_type() == torch::kBFloat16,
++      "A must be fp16 or bf16");
++  TORCH_CHECK(
++      B_scale.scalar_type() == torch::kFloat16 ||
++          B_scale.scalar_type() == torch::kBFloat16 ||
++          B_scale.scalar_type() == torch::kFloat32,
++      "B_scale must be fp16, bf16, or fp32");
++
++  if (A.scalar_type() == torch::kBFloat16) {
++    if (B_scale.scalar_type() == torch::kBFloat16) {
++      return int4_top1_impl<c10::BFloat16, c10::BFloat16>(
++          A, B, B_scale, B_zp, group_size, tile_size);
++    }
++    if (B_scale.scalar_type() == torch::kFloat16) {
++      return int4_top1_impl<c10::BFloat16, c10::Half>(
++          A, B, B_scale, B_zp, group_size, tile_size);
++    }
++    return int4_top1_impl<c10::BFloat16, float>(
++        A, B, B_scale, B_zp, group_size, tile_size);
++  }
++
++  if (B_scale.scalar_type() == torch::kBFloat16) {
++    return int4_top1_impl<c10::Half, c10::BFloat16>(
++        A, B, B_scale, B_zp, group_size, tile_size);
++  }
++  if (B_scale.scalar_type() == torch::kFloat16) {
++    return int4_top1_impl<c10::Half, c10::Half>(
++        A, B, B_scale, B_zp, group_size, tile_size);
++  }
++  return int4_top1_impl<c10::Half, float>(
++      A, B, B_scale, B_zp, group_size, tile_size);
++}

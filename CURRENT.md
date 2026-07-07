@@ -190,6 +190,17 @@ Fastest quality-gated practical variant:
   endpoint MTP3 branch-trace prefix and below the threshold needed to justify
   cache16/MTP5 endpoint overhead. No endpoint speed run was spent. Do not
   repeat FC-only / FC-norms MTP5 training as the next >100 tok/s lane;
+- latest producer-side INT4 LM-head shortcut screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-runtime-hang.md`.
+  A diagnostic `_xpu_C.int4_gemm_w4a16_top1` prototype was added in the XPU
+  kernel tree and preserved as
+  `patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-qwen27-int4-top1-prototype-runtime-hang-20260707.patch`.
+  It is not wired into vLLM and produced no benchmark result: the BMG-only
+  oneAPI 2026 build required `libsycl.so.9`, the Qwen27 microbench hung with
+  oneDNN `bad engine kind` while the GPU was idle, and the normal sycl8 package
+  binary was restored. Do not retry endpoint integration until the op builds in
+  the normal runtime and passes a tiny dense-argmax correctness smoke plus a
+  microbench win;
 - latest stronger-drafter training screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
   Ex0bit EAGLE3/DFlash direct import is not viable, but the target-owned
