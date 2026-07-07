@@ -86,6 +86,12 @@ Latest transaction diagnostic:
   `gdn_replayssm_spec_decode` at current MTP3/cache8 shape. Paired cost was
   only `0.045 ms/layer` (`~2.18 ms` over 48 GDN layers), so a fused op is
   future ReplaySSM polish, not the main `>100 tok/s` path.
+- `notes/2026-07-07-draft-oracle-trace-branch-tail-screen.md` records a
+  worker-side draft-token oracle trace on the current strict fresh recipe. It
+  paired `2143` verifier rows and found only `42` cases where the target-owned
+  bonus/replacement token appeared later in the unaccepted draft tail (`1.96%`
+  all rows, `3.13%` partial rejects). Treat simple branch/tail rescue as closed
+  unless verifier-step cost drops or speculation depth changes.
 
 Latest stronger-drafter result:
 
@@ -677,6 +683,11 @@ Next milestone:
     At this step cost, `100 tok/s` needs `4.02565` tokens/step, above the
     MTP3 maximum of `4`. Do not implement MTP3-only branch/regenerate as a
     `>100 tok/s` lane until step cost is reduced or speculation depth changes.
+    A worker-side draft-token trace then closed the narrower bonus-tail rescue
+    variant: `notes/2026-07-07-draft-oracle-trace-branch-tail-screen.md` found
+    target bonus/replacement tokens later in the unaccepted draft tail only
+    `1.96%` of all rows / `3.13%` of partial rejects on the strict fresh
+    current recipe.
 38. Native prefix-base exact-state rescreen after the extra state-column fix:
     `notes/2026-07-06-native-prefix-exact-state-rescreen-no-win.md`.
     The old July 5 exact-native/prefill replay flags were stale because

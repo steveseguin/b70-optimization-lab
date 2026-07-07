@@ -1,0 +1,97 @@
+Focused patch artifact for the Qwen27 draft-oracle trace hook.
+
+The active `/home/steve/src/vllm` tree already contains many Qwen27 research
+edits in `gpu_model_runner.py`, so this artifact records the intended focused
+delta rather than the whole dirty file diff.
+
+```diff
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@
+                 self._draft_token_ids = self.propose_draft_token_ids(
+                     scheduler_output,
+                     sampled_token_ids,
+                     self.input_batch.sampling_metadata,
+                     hidden_states,
+                     sample_hidden_states,
+                     aux_hidden_states,
+                     spec_decode_metadata,
+                     spec_decode_common_attn_metadata,
+                     slot_mappings,
+                 )
++                if (
++                    os.environ.get("VLLM_XPU_DRAFT_ORACLE_TRACE", "")
++                    .strip()
++                    .lower()
++                    in ("1", "true", "yes", "on")
++                    and self._xpu_cow_worker_trace_enabled()
++                ):
++                    try:
++                        rows = []
++                        if torch.is_tensor(self._draft_token_ids):
++                            draft_rows = (
++                                self._draft_token_ids.detach().cpu().tolist()
++                            )
++                        else:
++                            draft_rows = list(self._draft_token_ids)
++                        if torch.is_tensor(sampled_token_ids):
++                            sampled_rows = sampled_token_ids.detach().cpu().tolist()
++                        else:
++                            sampled_rows = sampled_token_ids
++                        for row_idx, req_id in enumerate(self.input_batch.req_ids):
++                            draft_ids = (
++                                draft_rows[row_idx]
++                                if row_idx < len(draft_rows) else []
++                            )
++                            sampled_ids = (
++                                sampled_rows[row_idx]
++                                if isinstance(sampled_rows, list)
++                                and row_idx < len(sampled_rows) else []
++                            )
++                            rows.append({
++                                "row": int(row_idx),
++                                "req_id": str(req_id),
++                                "draft_token_ids": [
++                                    int(tok) for tok in draft_ids
++                                ],
++                                "sampled_token_ids": [
++                                    int(tok) for tok in sampled_ids
++                                ] if isinstance(sampled_ids, list) else [],
++                                "num_tokens_no_spec": int(
++                                    self.input_batch.num_tokens_no_spec[
++                                        row_idx]),
++                                "num_computed_tokens_cpu": int(
++                                    self.input_batch
++                                    .num_computed_tokens_cpu[row_idx]),
++                                "num_accepted_tokens_cpu": int(
++                                    self.input_batch
++                                    .num_accepted_tokens_cpu[row_idx]),
++                            })
++                        self._trace_xpu_cow_worker_event(
++                            stage="draft_oracle_proposed_tokens",
++                            scheduler_output=scheduler_output,
++                            extra={
++                                "num_reqs": len(rows),
++                                "rows": rows,
++                                "trace_only": True,
++                            },
++                        )
++                    except Exception:
++                        logger.exception(
++                            "Failed to trace XPU draft oracle proposed tokens")
+                 if os.environ.get("VLLM_XPU_TRACE_NGRAM_PP"):
+```
+
+Validation:
+
+```bash
+cd /home/steve/src/vllm
+/home/steve/.venvs/vllm-xpu/bin/python -m py_compile \
+  vllm/v1/worker/gpu_model_runner.py
+```
+
+Diagnostic result:
+
+- note: `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-draft-oracle-trace-branch-tail-screen.md`
+- summary: `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-draft-oracle-trace-summary-20260707.json`

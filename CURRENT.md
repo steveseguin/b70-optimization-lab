@@ -330,6 +330,17 @@ Fastest quality-gated practical variant:
   `4.02565` tokens/step at this step cost, above the MTP3 maximum of `4`.
   Therefore MTP3-only branch/regenerate is closed as a `>100 tok/s` path until
   verifier-step cost is reduced or speculation depth changes;
+- latest worker-side draft oracle branch/tail trace:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-draft-oracle-trace-branch-tail-screen.md`.
+  This added `scripts/summarize-qwen27-draft-oracle-trace.py` plus a
+  default-off `VLLM_XPU_DRAFT_ORACLE_TRACE=1` hook to capture actual async
+  proposed draft IDs before scheduler placeholders. The strict fresh diagnostic
+  run passed `cached_tokens=0` and paired `2143` verifier rows. The
+  target-owned bonus/replacement token appeared later in the unaccepted draft
+  tail only `42` times (`1.96%` of all rows, `3.13%` of partial rejects), so a
+  simple branch/tail rescue path is too weak to justify graph-safe
+  fork/rollback/replay engineering. Keep this as diagnostic evidence only, not
+  a headline benchmark;
 
 Previous fastest quality-gated practical variant:
 
