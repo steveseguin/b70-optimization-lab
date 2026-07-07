@@ -71,6 +71,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dtype", default="bfloat16",
                         choices=("float32", "bfloat16", "float16"))
     parser.add_argument("--topk", type=int, default=5)
+    parser.add_argument(
+        "--accept-mode",
+        default="top1",
+        choices=("top1", "topk-oracle"),
+        help=(
+            "Diagnostic acceptance rule. top1 is the real linear-draft path. "
+            "topk-oracle accepts if the target token appears anywhere in the "
+            "draft top-k and continues with the verified target token; this is "
+            "an upper-bound probe for future tree/rerank verifier work, not a "
+            "valid endpoint throughput claim."
+        ),
+    )
     parser.add_argument("--out", default="")
     parser.add_argument("--print-every", type=int, default=50)
     return parser.parse_args()
@@ -426,6 +438,7 @@ def evaluate_start(
     start: int,
     max_steps: int,
     topk: int,
+    accept_mode: str,
     device: torch.device,
     dtype: torch.dtype,
 ) -> dict[str, Any]:
@@ -445,14 +458,16 @@ def evaluate_start(
         top_targets = model.proposed_target_ids(pred_hidden, max(1, topk))
         proposed = int(top_targets[0, 0].item())
         target = int(next_ids[target_index].item())
+        top1_match = proposed == target
         topk_hit = bool((top_targets[0] == target).any().item())
-        matched = proposed == target
+        matched = top1_match if accept_mode == "top1" else topk_hit
         rows.append({
             "step": step + 1,
             "target_index": target_index,
             "proposed": proposed,
             "target": target,
             "match": matched,
+            "top1_match": top1_match,
             "topk_hit": topk_hit,
         })
         if not matched:
@@ -504,6 +519,7 @@ def main() -> int:
     accepted_total = 0
     hist = [0 for _ in range(args.max_steps + 1)]
     conditional_den = [0 for _ in range(args.max_steps)]
+    accept_hits = [0 for _ in range(args.max_steps)]
     exact_hits = [0 for _ in range(args.max_steps)]
     topk_hits = [0 for _ in range(args.max_steps)]
     sample_rows: list[dict[str, Any]] = []
@@ -571,6 +587,7 @@ def main() -> int:
                     start=start,
                     max_steps=args.max_steps,
                     topk=args.topk,
+                    accept_mode=args.accept_mode,
                     device=device,
                     dtype=dtype,
                 )
@@ -585,6 +602,8 @@ def main() -> int:
                     step_index = int(row["step"]) - 1
                     conditional_den[step_index] += 1
                     if row["match"]:
+                        accept_hits[step_index] += 1
+                    if row["top1_match"]:
                         exact_hits[step_index] += 1
                     if row["topk_hit"]:
                         topk_hits[step_index] += 1
@@ -628,10 +647,13 @@ def main() -> int:
         per_step.append({
             "step": i + 1,
             "conditional_denominator": den,
+            "accept_hits": accept_hits[i],
+            "accept_rate": accept_hits[i] / den if den else 0.0,
             "exact_hits": exact_hits[i],
             "exact_rate": exact_hits[i] / den if den else 0.0,
             "topk_hits": topk_hits[i],
             "topk_rate": topk_hits[i] / den if den else 0.0,
+            "unconditional_accept_rate": accept_hits[i] / starts,
             "unconditional_exact_rate": exact_hits[i] / starts,
             "unconditional_topk_rate": topk_hits[i] / starts,
         })
@@ -662,6 +684,8 @@ def main() -> int:
         "device": str(device),
         "dtype": args.dtype,
         "topk": args.topk,
+        "accept_mode": args.accept_mode,
+        "topk_oracle_valid_headline_throughput": False,
         "draft_vocab_size": model.shape.draft_vocab_size,
         "mean_accepted": accepted_total / starts,
         "acceptance_histogram": {str(i): hist[i] for i in range(len(hist))},

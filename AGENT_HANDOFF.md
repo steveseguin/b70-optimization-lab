@@ -406,6 +406,18 @@ Active target as of the latest switch request:
   diagnostic evidence that data quality and simple all-parameter unfreezing
   help only a little; do not repeat small EAGLE corpus/objective/train-scope
   sweeps without a different architecture or loss mechanism.
+  The latest top-k/reranker diagnostic adds one important nuance:
+  `scripts/evaluate-qwen27-ex0bit-eagle3-offline.py --accept-mode topk-oracle`
+  shows candidate-list headroom on the best v6b all-scope checkpoint
+  (`top2=1.504`, `top4=1.884`, `top8=2.249`, `top16=2.590` mean accepted),
+  but the first cheap diagonal reranker
+  `scripts/train-qwen27-eagle3-topk-reranker.py` barely moved heldout top-1
+  (`1.1015 -> 1.1069`). See
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`
+  and
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-v6b-topk-oracle-reranker-summary-20260707.json`.
+  Do not repeat diagonal-reranker LR sweeps; continue only with a stronger
+  low-rank/MLP candidate reranker or a tree-verifier cost model.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

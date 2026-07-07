@@ -256,6 +256,16 @@ Fastest quality-gated practical variant:
   This remains far below endpoint threshold. Do not endpoint-wire this draft,
   do not submit it to LocalMaxxing, and do not repeat small EAGLE
   corpus/objective/all-scope variations without a new mechanism;
+- latest EAGLE top-k/reranker diagnostic:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
+  A default-off evaluator mode, `--accept-mode topk-oracle`, shows real
+  upper-bound candidate headroom on the best v6b all-scope checkpoint:
+  top-2/top-4/top-8/top-16 oracle mean accepted =
+  `1.504` / `1.884` / `2.249` / `2.590`, versus normal top-1 `1.101`.
+  But the first cheap diagonal reranker (`scripts/train-qwen27-eagle3-topk-reranker.py`)
+  did not extract it: best heldout mean accepted was only `1.1069`.
+  Do not repeat diagonal-reranker LR sweeps; next candidate-rerank work needs
+  a stronger low-rank/MLP reranker or a tree-verifier cost model;
 
 Previous fastest quality-gated practical variant:
 

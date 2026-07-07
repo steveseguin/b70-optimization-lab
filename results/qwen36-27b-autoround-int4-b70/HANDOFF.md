@@ -244,6 +244,13 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`.
   This is not endpoint-worthy and should not be submitted to LocalMaxxing.
   Do not repeat simple full-draft unfreezing from these v6b checkpoints.
+  A follow-up top-k oracle / reranker diagnostic found real candidate-list
+  headroom but no cheap extractor yet: top-2/top-4/top-8/top-16 oracle mean
+  accepted was `1.504` / `1.884` / `2.249` / `2.590`, but the first diagonal
+  reranker reached only `1.1069`. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
+  Continue this branch only with a stronger low-rank/MLP reranker or tree-cost
+  model, not more diagonal LR sweeps.
 - Latest target-body timing/no-win screen:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-targetbody-timing-and-mlp-workspace-no-win.md`.
   It confirms the webhie/AutoRound Qwen27 checkpoint is dense `qwen3_5_text`

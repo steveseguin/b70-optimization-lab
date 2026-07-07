@@ -1,0 +1,74 @@
+{
+  "schema": "qwen27_eagle3_v6b_topk_oracle_reranker_summary",
+  "date_utc": "2026-07-07",
+  "classification": "diagnostic_only_no_endpoint",
+  "draft_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-allscope-20260707T075425Z/all-r5-lr3e-6-decay0p25/checkpoint",
+  "heldout_dataset": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset",
+  "target_model": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "base_top1_mean_accepted": 1.1014610941216445,
+  "topk_oracle": {
+    "raw_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-topk-oracle-20260707T082454Z",
+    "valid_headline_throughput": false,
+    "meaning": "Upper-bound diagnostic: accepts when the verified target token is anywhere in draft top-k and continues with the verified target token. This is not an implemented endpoint path.",
+    "results": [
+      {
+        "topk": 2,
+        "mean_accepted": 1.5037037037037038,
+        "histogram": {"0": 4443, "1": 4160, "2": 2928, "3": 1517, "4": 775, "5": 892}
+      },
+      {
+        "topk": 4,
+        "mean_accepted": 1.8844716275908937,
+        "histogram": {"0": 3238, "1": 3815, "2": 3130, "3": 1929, "4": 1147, "5": 1456}
+      },
+      {
+        "topk": 8,
+        "mean_accepted": 2.2487937478763165,
+        "histogram": {"0": 2379, "1": 3374, "2": 3088, "3": 2157, "4": 1515, "5": 2202}
+      },
+      {
+        "topk": 16,
+        "mean_accepted": 2.5896024464831804,
+        "histogram": {"0": 1675, "1": 2998, "2": 2971, "3": 2270, "4": 1649, "5": 3152}
+      }
+    ]
+  },
+  "diag_reranker": {
+    "raw_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-topk-reranker-20260707T083126Z",
+    "script": "scripts/train-qwen27-eagle3-topk-reranker.py",
+    "valid_headline_throughput": false,
+    "model": "score(c)=alpha*draft_logit(c)+dot(pred_hidden*lm_head_weight[c],diag)+rank_bias[rank]",
+    "results": [
+      {
+        "label": "k4-lr3e-3",
+        "topk": 4,
+        "lr": 0.003,
+        "mean_accepted": 1.106897723411485,
+        "histogram": {"0": 6254, "1": 4210, "2": 2236, "3": 1016, "4": 437, "5": 562}
+      },
+      {
+        "label": "k4-lr1e-2",
+        "topk": 4,
+        "lr": 0.01,
+        "mean_accepted": 1.090519877675841,
+        "histogram": {"0": 6354, "1": 4164, "2": 2228, "3": 996, "4": 426, "5": 547}
+      },
+      {
+        "label": "k8-lr3e-3",
+        "topk": 8,
+        "lr": 0.003,
+        "mean_accepted": 1.0983350322799863,
+        "histogram": {"0": 6281, "1": 4211, "2": 2252, "3": 992, "4": 424, "5": 555}
+      },
+      {
+        "label": "k8-lr1e-2",
+        "topk": 8,
+        "lr": 0.01,
+        "mean_accepted": 1.072579001019368,
+        "histogram": {"0": 6437, "1": 4161, "2": 2207, "3": 965, "4": 412, "5": 533}
+      }
+    ],
+    "decision": "No endpoint. Best diagonal reranker reached only 1.1069 mean accepted, effectively equal to the frozen draft top1 baseline 1.1015 and far below the top-k oracle."
+  },
+  "decision": "Top-k branch/rerank has real upper-bound headroom, but the diagonal reranker is too weak. Next credible experiment is a stronger candidate reranker or a real tree verifier cost model, not more diagonal reranker LR sweeps."
+}
