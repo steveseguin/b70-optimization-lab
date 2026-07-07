@@ -1091,3 +1091,59 @@ endpoint recipe. The next training run should start from the v5-survival best,
 train on v6 shards 0-2, and try to beat `0.8867` on shard 3; only if offline
 mean accepted approaches at least `1.5-2.0` should endpoint/kernel integration
 restart.
+
+## V6 survival-objective training sweep
+
+Training run:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6-survival-train-20260707T020651Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-survival-train-summary-20260707.json
+```
+
+Setup:
+
+- initialized every variant from the v5 survival best checkpoint
+  `surv-r5-lr2e-5-hard-rank0p1`;
+- trained on v6 shards 0-2;
+- evaluated on v6 shard 3 (`42342` starts);
+- `rollout_steps=5`, `lr=2e-5`, `epochs=6`, `batch_size=64`;
+- four-GPU sweep over hard survival floor/rank-loss variants.
+
+Results:
+
+| variant | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|
+| `surv-r5-lr2e-5-hard-rank0p1` | **`1.0069670776061594`** | `53.78%` | `47.28%` | `47.27%` |
+| `surv-r5-lr2e-5-hard-floor0` | `1.0061168579660857` | `53.78%` | `47.21%` | `47.32%` |
+| `surv-r5-lr2e-5-hard-rank0p05` | `1.0061168579660857` | `53.73%` | `47.27%` | `47.34%` |
+| `surv-r5-lr2e-5-hard-floor0p05` | `1.005172169477115` | `53.70%` | `47.32%` | `47.21%` |
+
+Interpretation:
+
+- v6 training improved heldout mean accepted from `0.8866846157479571` to
+  `1.0069670776061594`, so broader target-owned data helps;
+- the gain is real but still far below the `1.5-2.0` threshold needed before
+  endpoint/kernel integration makes sense;
+- rank loss is slightly positive again but tiny (`+0.00085` over `floor0`);
+- the limiting factor is still step-1 exact and multi-step survival, not
+  endpoint wiring.
+
+Next credible offline moves:
+
+1. continue from the v6 best checkpoint with a smaller LR (`5e-6` / `1e-5`)
+   and/or longer run to test whether this is still climbing or plateauing;
+2. try a stronger objective focused directly on step-1 exact plus survivor
+   carry (`rollout_steps=3`, higher first-step weight) because current step-1
+   exact is only `~53.8%`;
+3. fix the v6 data prompt families that often answer "no context provided" by
+   embedding concrete snippets/tables/logs, then recollect a smaller v6b
+   corpus if data quality looks like the bottleneck.
+
+Do not submit these results to LocalMaxxing and do not describe them as
+throughput. They are offline acceptance diagnostics only.

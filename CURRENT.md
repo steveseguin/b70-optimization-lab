@@ -145,10 +145,12 @@ Fastest quality-gated practical variant:
   with `179650` usable rows, zero continuity breaks, zero aux bad files, and
   one omitted five-token sample. The v5-survival best then evaluated at only
   `0.8866846157479571` mean accepted on v6 heldout shard 3 (`42342` starts),
-  confirming a real distribution shift. Current next move: train from the v5
-  survival best on v6 shards 0-2 and evaluate on shard 3. Continue training
-  research, not vLLM endpoint wiring, until offline mean accepted reaches at
-  least `1.5-2.0`;
+  confirming a real distribution shift. V6 survival-objective training from
+  that checkpoint improved the v6 heldout result to
+  `1.0069670776061594` mean accepted (`53.78%` step-1 exact, `47.28%`
+  step-2 conditional, `47.27%` step-3 conditional). This is progress, but
+  still below endpoint threshold. Continue offline training research, not vLLM
+  endpoint wiring, until offline mean accepted reaches at least `1.5-2.0`;
 
 Previous fastest quality-gated practical variant:
 
@@ -312,10 +314,10 @@ Previous fastest quality-gated practical variant:
   survival-weighted objective. The later v5 plus survival-objective best is
   `1.340886544011544` mean accepted, and v6 broader chat-style data collection
   is complete (`179650` usable rows, zero continuity breaks). The current v5
-  survival checkpoint reaches only `0.8866846157479571` mean accepted on the
-  v6 heldout split, so v6 training has a clear baseline to beat. Do not
-  endpoint-test this draft until offline accepted depth approaches at least
-  `1.5-2.0`.
+  survival checkpoint reached only `0.8866846157479571` mean accepted on the
+  v6 heldout split; a v6 survival-objective training sweep improved that to
+  `1.0069670776061594`, still below endpoint threshold. Do not endpoint-test
+  this draft until offline accepted depth approaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;
 - continuation bookmark:
