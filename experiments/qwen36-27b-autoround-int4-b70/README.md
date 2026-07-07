@@ -158,8 +158,10 @@ Latest stronger-drafter result:
   `diagnostics/qwen27-eagle3-aux-v6-corpus-summary-20260707.json`, suite:
   `eagle-chat-corpus-v6-suite.json`, raw root:
   `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z`.
-  Current next move is v6 heldout baseline, then train from the v5 survival
-  best on v6 shards 0-2.
+  V5-survival-on-v6-heldout baseline:
+  `diagnostics/qwen27-ex0bit-eagle3-v5-survival-on-v6-heldout-summary-20260707.json`
+  at `0.8866846157479571` mean accepted. Current next move is training from
+  the v5 survival best on v6 shards 0-2 and evaluating on shard 3.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

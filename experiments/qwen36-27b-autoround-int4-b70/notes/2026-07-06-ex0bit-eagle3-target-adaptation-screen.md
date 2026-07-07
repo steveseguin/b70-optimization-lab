@@ -1062,3 +1062,32 @@ This is good enough for the next diagnostic training step: evaluate the current
 v5-survival best checkpoint on the v6 heldout shard, then train from that
 checkpoint on v6 shards 0-2 and evaluate on shard 3. Do not promote any offline
 accepted-depth result as endpoint throughput.
+
+## V5-survival checkpoint on V6 heldout
+
+Baseline evaluation of the best v5 survival checkpoint:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6-heldout-baseline-20260707T020043Z/surv-best-on-v6-heldout-summary.json
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-survival-on-v6-heldout-summary-20260707.json
+```
+
+Result on v6 shard 3 (`42342` starts, all `288` heldout samples):
+
+- mean accepted: **`0.8866846157479571`**;
+- histogram: `0=20970`, `1=12142`, `2=5239`, `3=2064`, `4=903`, `5=1024`;
+- family means: customer-debugging `0.8665`, migration-support `0.9167`,
+  observability-logs `0.9324`, shell-automation `0.8367`;
+- `valid_headline_throughput=false`.
+
+Interpretation: the v5 survival checkpoint does not generalize to the broader
+v6 heldout distribution. This is a useful baseline, not a regression in the
+endpoint recipe. The next training run should start from the v5-survival best,
+train on v6 shards 0-2, and try to beat `0.8867` on shard 3; only if offline
+mean accepted approaches at least `1.5-2.0` should endpoint/kernel integration
+restart.

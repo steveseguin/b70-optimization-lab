@@ -143,10 +143,12 @@ Fastest quality-gated practical variant:
   collection completed at
   `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z`
   with `179650` usable rows, zero continuity breaks, zero aux bad files, and
-  one omitted five-token sample. Current next move: evaluate the v5 survival
-  best on v6 heldout shard 3, then train from it on v6 shards 0-2. Continue
-  training research, not vLLM endpoint wiring, until offline mean accepted
-  reaches at least `1.5-2.0`;
+  one omitted five-token sample. The v5-survival best then evaluated at only
+  `0.8866846157479571` mean accepted on v6 heldout shard 3 (`42342` starts),
+  confirming a real distribution shift. Current next move: train from the v5
+  survival best on v6 shards 0-2 and evaluate on shard 3. Continue training
+  research, not vLLM endpoint wiring, until offline mean accepted reaches at
+  least `1.5-2.0`;
 
 Previous fastest quality-gated practical variant:
 
@@ -309,7 +311,9 @@ Previous fastest quality-gated practical variant:
   overfit, so the next move is larger/more diverse target-owned data or a
   survival-weighted objective. The later v5 plus survival-objective best is
   `1.340886544011544` mean accepted, and v6 broader chat-style data collection
-  is complete (`179650` usable rows, zero continuity breaks). Do not
+  is complete (`179650` usable rows, zero continuity breaks). The current v5
+  survival checkpoint reaches only `0.8866846157479571` mean accepted on the
+  v6 heldout split, so v6 training has a clear baseline to beat. Do not
   endpoint-test this draft until offline accepted depth approaches at least
   `1.5-2.0`.
   See

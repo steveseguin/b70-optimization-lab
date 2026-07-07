@@ -292,10 +292,11 @@ Active target as of the latest switch request:
   integration. V6 broader chat-style aux-data collection completed at
   `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z`
   with `179650` usable rows, zero continuity breaks, zero aux bad files, and
-  one omitted five-token sample. Current next move is v6 heldout evaluation of
-  the v5 survival checkpoint, then v6 train-on-shards-0-2/eval-shard-3. Do not
-  endpoint-test this adapted draft unless offline mean accepted reaches at
-  least `1.5-2.0`.
+  one omitted five-token sample. The v5 survival checkpoint reaches only
+  `0.8866846157479571` mean accepted on v6 heldout shard 3 (`42342` starts),
+  so current next move is v6 train-on-shards-0-2/eval-shard-3 from that
+  checkpoint. Do not endpoint-test this adapted draft unless offline mean
+  accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and
