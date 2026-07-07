@@ -19,6 +19,7 @@ MAX_HELDOUT_ROWS="${MAX_HELDOUT_ROWS:-0}"
 EVAL_EVERY="${EVAL_EVERY:-1000}"
 DTYPE="${DTYPE:-bfloat16}"
 SWEEP="${SWEEP:-mixed}"
+ONLY_LABELS="${ONLY_LABELS:-}"
 
 mkdir -p "$RUN_ROOT"
 
@@ -135,6 +136,25 @@ case "$SWEEP" in
     exit 2
     ;;
 esac
+
+if [[ -n "$ONLY_LABELS" ]]; then
+  filtered=()
+  for item in "${variants[@]}"; do
+    IFS='|' read -r _gpu label _draft _steps _decay _lr _scope <<< "$item"
+    IFS=',' read -ra requested_labels <<< "$ONLY_LABELS"
+    for requested in "${requested_labels[@]}"; do
+      if [[ "$label" == "$requested" ]]; then
+        filtered+=("$item")
+        break
+      fi
+    done
+  done
+  variants=("${filtered[@]}")
+  if [[ "${#variants[@]}" -eq 0 ]]; then
+    echo "ONLY_LABELS=$ONLY_LABELS did not match any variants for SWEEP=$SWEEP" >&2
+    exit 2
+  fi
+fi
 
 pids=()
 for item in "${variants[@]}"; do

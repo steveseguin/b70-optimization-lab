@@ -816,3 +816,69 @@ Interpretation:
   objective-limited.
 - Still below the `1.5-2.0` endpoint threshold. Continue with v5 rollout-5
   training and/or build v6 data; do not endpoint-integrate or submit yet.
+
+## V5 continuation rerun: disk-full interruption, then narrow retry
+
+Attempted one more v5 rollout-5 continuation from the `1.2867` checkpoint:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T001320Z
+```
+
+Repo partial-run summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-deep-continuation-partial-diskfull-summary-20260707.json
+```
+
+Outcome:
+
+- `cont-r5-lr1e-5-decay1` completed and reached `1.287608225108225`
+  mean accepted over `44,352` starts (`59.04%` step-1 exact, `55.28%`
+  step-2 conditional, `57.42%` step-3 conditional, histogram
+  `0=18166,1=11711,2=6164,3=3233,4=2020,5=3058`).
+- The three `lr=2e-5` variants trained to completion but failed while
+  serializing `model.safetensors` with `No space left on device`; their
+  partial corrupt checkpoint files were removed and the logs were preserved.
+- This is **not** a promotable result and not a headline throughput result.
+  It is a diagnostic continuation screen plus an operational failure record.
+
+Operational fix:
+
+- Root was full because `/mnt/fast-ai` is on the root filesystem.
+- Cleared transient `/tmp/icpx-*`, `/tmp/torchinductor_steve`, and
+  `/tmp/vllm-xpu-*` build scratch.
+- Offloaded the old vLLM graph/cache experiment tree from
+  `/mnt/fast-ai/vllm-cache-exp` to:
+
+```text
+/mnt/usb-models/offloaded/llm-optimizations/vllm-cache-exp-20260707
+```
+
+  The USB archive is about `91G`; the local cache directory is intentionally
+  left as an empty/regenerable directory for future runs.
+
+Harness hardening:
+
+- `scripts/train-qwen27-ex0bit-eagle3-adapter.py` now writes
+  `model.safetensors` atomically via a temporary file and `os.replace`, so
+  future failed exports do not leave plausible-looking broken checkpoints.
+- `run-ex0bit-eagle3-rollout-train-v3-4gpu.sh` now supports
+  `ONLY_LABELS=...` to rerun selected variants without repeating a full
+  four-variant sweep.
+
+Immediate retry:
+
+```bash
+CORPUS=/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v2-chat-4gpu-20260706T231458Z \
+CONTINUE_DRAFT=/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T234959Z/cont-r5-lr2e-5-decay1/checkpoint \
+SWEEP=deep-continuation ONLY_LABELS=cont-r5-lr2e-5-decay1 \
+EPOCHS=6 BATCH_SIZE=64 EVAL_EVERY=1000 \
+experiments/qwen36-27b-autoround-int4-b70/scripts/run-ex0bit-eagle3-rollout-train-v3-4gpu.sh
+```
+
+The retry run root is expected to be:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T004308Z
+```

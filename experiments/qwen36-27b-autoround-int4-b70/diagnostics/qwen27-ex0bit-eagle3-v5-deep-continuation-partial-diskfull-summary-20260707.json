@@ -1,0 +1,61 @@
+{
+  "classification": "diagnostic_only_qwen27_ex0bit_eagle3_rollout_training_screen",
+  "failure_cause": "No space left on device while serializing model.safetensors for three variants; completed training logs preserved, corrupt partial safetensors removed.",
+  "failure_classification": "partial_run_disk_full_during_checkpoint_export",
+  "local_cache_offload": {
+    "archive": "/mnt/usb-models/offloaded/llm-optimizations/vllm-cache-exp-20260707",
+    "archive_size": "91G",
+    "post_offload_local_dir_size": "100K",
+    "source": "/mnt/fast-ai/vllm-cache-exp"
+  },
+  "rows": [
+    {
+      "elapsed_s": 911.1587936908472,
+      "final_heldout_exact": 0.6036624952427858,
+      "final_train_exact": 0.769033182999313,
+      "histogram": {
+        "0": 18166,
+        "1": 11711,
+        "2": 6164,
+        "3": 3233,
+        "4": 2020,
+        "5": 3058
+      },
+      "label": "cont-r5-lr1e-5-decay1",
+      "lr": 1e-05,
+      "mean_accepted": 1.287608225108225,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T001320Z/cont-r5-lr1e-5-decay1",
+      "rollout_loss_decay": 1.0,
+      "rollout_steps": 5,
+      "rollout_summary_exists": true,
+      "starts": 44352,
+      "step1_exact": 0.5904130591630592,
+      "step2_conditional_exact": 0.5527762926754755,
+      "step3_conditional_exact": 0.5741623488773748,
+      "train_meta_exists": true,
+      "train_objective": "autoregressive_rollout_windows",
+      "train_scope": "fc-lm-head"
+    },
+    {
+      "label": "cont-r5-lr2e-5-decay1",
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T001320Z/cont-r5-lr2e-5-decay1",
+      "rollout_summary_exists": false,
+      "train_meta_exists": false
+    },
+    {
+      "label": "cont-r5-lr2e-5-decay1p1",
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T001320Z/cont-r5-lr2e-5-decay1p1",
+      "rollout_summary_exists": false,
+      "train_meta_exists": false
+    },
+    {
+      "label": "cont-r5-lr2e-5-decay1p25",
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T001320Z/cont-r5-lr2e-5-decay1p25",
+      "rollout_summary_exists": false,
+      "train_meta_exists": false
+    }
+  ],
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T001320Z",
+  "safe_to_promote": false,
+  "valid_headline_throughput": false
+}

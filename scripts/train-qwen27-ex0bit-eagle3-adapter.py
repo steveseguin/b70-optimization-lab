@@ -452,7 +452,14 @@ def export_model(model: Any, out_dir: str, source_draft_dir: str,
             layer.up_proj.weight.detach().cpu().to(torch.bfloat16))
         state[f"{prefix}.mlp.down_proj.weight"] = (
             layer.down_proj.weight.detach().cpu().to(torch.bfloat16))
-    save_file(state, os.path.join(out_dir, "model.safetensors"))
+    model_path = os.path.join(out_dir, "model.safetensors")
+    tmp_model_path = f"{model_path}.tmp.{os.getpid()}"
+    try:
+        save_file(state, tmp_model_path)
+        os.replace(tmp_model_path, model_path)
+    finally:
+        if os.path.exists(tmp_model_path):
+            os.unlink(tmp_model_path)
     for name in ("config.json", "generation_config.json", "tokenizer_config.json"):
         src = os.path.join(source_draft_dir, name)
         if os.path.exists(src):
