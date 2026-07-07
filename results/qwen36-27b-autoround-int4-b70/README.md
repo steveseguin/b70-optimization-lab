@@ -458,6 +458,11 @@ ring-size screen is also closed no-promo: ring4 produced high support rows
 (`65.708`, `65.817`) but crossover deltas versus ring1 controls were only
 `+0.42%` and `+0.27%`; see
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-int8-gemm-scratchpad-ring-screen-no-win.md`.
+A later producer-side INT4 draft-LM-head top-1 prototype also closed no-win:
+the sycl8 build passed top-id correctness, but full-vocab rows `1..4` were
+slower than dense logits plus argmax (`2.30/5.82/6.52/9.15 ms` vs
+`1.95/1.37/1.21/1.22 ms`); see
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-sycl8-no-win.md`.
 The next meaningful decode-rate work is improving accepted/generated tokens per
 target verifier step, finding a stronger fresh-request draft source, reducing
 target-forward cost in the Qwen3.5/Next body, or building a graph-safe exact

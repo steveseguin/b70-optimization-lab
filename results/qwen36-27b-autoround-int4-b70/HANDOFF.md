@@ -543,6 +543,14 @@ Current next-execution plan:
   plus argmax (`2.66-2.68 ms` compact vs `2.57-2.61 ms` dense for rows `1-4`).
   Preserve the patch and JSON evidence, but do not wire this op into endpoint
   serving;
+- closed producer-side INT4 draft-LM-head top-1 precheck:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-sycl8-no-win.md`.
+  A default-unwired `_xpu_C.int4_gemm_w4a16_top1` prototype first exposed the
+  oneAPI 2026/sycl9 runtime mismatch, then built cleanly in the oneAPI
+  2025/sycl8 tree and passed dense-argmax top-id correctness. It still lost
+  badly at the real Qwen27 shape: rows `1..4` were `2.30/5.82/6.52/9.15 ms`
+  versus `1.95/1.37/1.21/1.22 ms` for dense logits plus argmax. Do not wire
+  this naive W4A16 tile-scan op into endpoint serving;
 - closed candidate-max kernel precheck:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-lmhead-candidate-max-kernel-no-win.md`.
   `int8_lm_head_candidate_max_w8a8` preserved the exact semantics needed by
