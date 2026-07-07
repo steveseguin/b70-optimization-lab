@@ -723,7 +723,11 @@ computes full logits, FP8 LM-head (quality fail), INT8 MTP k2/k4/k5,
 INT8 cg4/cg16/cg32, draft-only INT8 LM-head, output-buffer reuse, bonus-token
 argmax fast-path, chunked INT8 top-1 argmax-only verification, compressed/full
 EAGLE3 (device-loss or too slow), DFlash (no-win locally), and simple draft
-top-k reranking. The latest draft-INT4 fast-path screens are also closed:
+top-k reranking. Later target-matched EAGLE3 top-k oracle showed real
+candidate-list headroom, but diagonal and small MLP rerankers were closed
+no-win (`1.1069` and `1.1193` accepted draft tokens versus `2.249` top-8
+oracle); see `notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
+The latest draft-INT4 fast-path screens are also closed:
 keep-scheduled-spec-row routing, graph-off, graph-off/no-async, cg4, and normal
 align/restore all kept the same repeat64 failure (`55/64` expected
 `blue, green, red, yellow`, `9/64` truncated `blue, green, red`) despite

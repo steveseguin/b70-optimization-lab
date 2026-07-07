@@ -1,4 +1,4 @@
-# 2026-07-07: EAGLE3 top-k oracle and diagonal reranker diagnostic
+# 2026-07-07: EAGLE3 top-k oracle and reranker diagnostics
 
 ## Classification
 
@@ -36,11 +36,20 @@ New diagnostic trainer:
 scripts/train-qwen27-eagle3-topk-reranker.py
 ```
 
-It trains a tiny diagonal reranker over frozen-draft top-k candidates:
+It trains tiny rerankers over frozen-draft top-k candidates. The first screen
+used a diagonal reranker:
 
 ```text
 score(c) = alpha * draft_logit(c)
          + dot(pred_hidden * lm_head_weight[c], diag)
+         + rank_bias[rank(c)]
+```
+
+The follow-up MLP screen added:
+
+```text
+score(c) = alpha * draft_logit(c)
+         + MLP(pred_hidden * lm_head_weight[c])
          + rank_bias[rank(c)]
 ```
 
@@ -103,16 +112,43 @@ Raw root:
 Decision: close the diagonal reranker as no-win. It barely moves the top-1
 baseline (`1.1015 -> 1.1069`) and does not extract the top-k oracle headroom.
 
+## MLP reranker follow-up
+
+Raw root:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-topk-reranker-mlp-20260707T084344Z
+```
+
+Compact summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-topk-mlp-reranker-summary-20260707.json
+```
+
+| label | top-k | hidden | lr | heldout mean accepted | histogram |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `k4-h64-lr1e-3` | 4 | 64 | `1e-3` | `1.1015970098538905` | `0=6250,1=4216,2=2271,3=1010,4=418,5=550` |
+| `k4-h256-lr1e-3` | 4 | 256 | `1e-3` | `1.1046551138294258` | `0=6237,1=4231,2=2260,3=1010,4=411,5=566` |
+| `k8-h64-lr1e-3` | 8 | 64 | `1e-3` | `1.1065579340808698` | `0=6195,1=4271,2=2270,3=1005,4=413,5=561` |
+| `k8-h256-lr1e-3` | 8 | 256 | `1e-3` | `1.1192660550458715` | `0=6153,1=4267,2=2289,3=984,4=437,5=585` |
+
+Decision: close this MLP shape as no-win. The best result improves the normal
+top-1 baseline by only `+0.0178` accepted draft tokens and remains far below
+even the top-2 oracle (`1.5037`), let alone the top-8 oracle (`2.2488`).
+The result is too small to justify endpoint plumbing, tree verification, or a
+runtime pre-verification MLP.
+
 ## Next implication
 
-Do not repeat diagonal-reranker LR sweeps. If this branch continues, the next
-credible options are:
+Do not repeat diagonal or small MLP reranker sweeps. If this branch continues,
+the next credible options are:
 
-- a stronger candidate reranker, e.g. low-rank bilinear or small MLP over
-  `pred_hidden * candidate_weight`, still cheap enough to run before target
-  verification; or
+- a materially stronger candidate model, e.g. cross-token/tree-aware scoring or
+  training the drafter itself to put the target into rank 1 rather than trying
+  to rescue rank after the fact; or
 - a real tree-verifier cost model, because top-8/top-16 oracle accepted depth
   may not pay for the extra branch rows if implemented naively.
 
-The diagnostic says top-k candidate information is useful, but the first cheap
-extractor was too weak.
+The diagnostic says top-k candidate information is useful, but the cheap
+single-token extractors tried here are too weak.

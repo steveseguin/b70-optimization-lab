@@ -426,7 +426,9 @@ Current realistic research interpretation:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`, and
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-allscope-summary-20260707.json`.
   A top-k oracle then showed upper-bound headroom (`top8=2.249`, `top16=2.590`
-  mean accepted), but the first cheap diagonal reranker reached only `1.1069`;
+  mean accepted), but cheap single-token rerankers did not extract it:
+  the diagonal reranker reached only `1.1069`, and the small MLP follow-up
+  peaked at only `1.1193`;
   see
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
 - external DFlash drafter compatibility is also closed no-win locally.

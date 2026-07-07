@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Train a tiny top-k reranker for Qwen27 Ex0bit EAGLE3 diagnostics.
+"""Train a top-k reranker for Qwen27 Ex0bit EAGLE3 diagnostics.
 
 This is an offline research tool, not an endpoint benchmark. The frozen draft
-still produces full logits and a top-k candidate list. The reranker learns a
-cheap diagonal reweighting of candidate LM-head dot products:
+still produces full logits and a top-k candidate list. The default diagonal
+reranker learns a cheap reweighting of candidate LM-head dot products:
 
     score(c) = alpha * draft_logit(c)
              + dot(pred_hidden * lm_head_weight[c], diag)
              + rank_bias[rank(c)]
+
+The MLP variant replaces the diagonal term with a small MLP over
+``pred_hidden * lm_head_weight[c]`` for each candidate.
 
 It can only choose among candidates the draft already placed in top-k. If this
 does not improve heldout accepted depth, top-k branch/rerank is not worth
@@ -45,6 +48,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=1e-2)
     parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument("--reranker-type",
+                        default="diag",
+                        choices=("diag", "mlp"))
+    parser.add_argument("--reranker-hidden", type=int, default=128)
     parser.add_argument("--max-train-rows", type=int, default=0)
     parser.add_argument("--max-heldout-starts", type=int, default=0)
     parser.add_argument("--eval-every", type=int, default=250)
@@ -86,6 +93,47 @@ class DiagTopKReranker(nn.Module):
         diag_score = (weights * hidden.unsqueeze(1) * self.diag.view(1, 1, -1)).sum(
             dim=-1)
         return self.alpha * logits + diag_score + self.rank_bias.view(1, -1)
+
+
+class MlpTopKReranker(nn.Module):
+    def __init__(self, hidden_size: int, topk: int, reranker_hidden: int) -> None:
+        super().__init__()
+        self.alpha = nn.Parameter(torch.tensor(1.0, dtype=torch.float32))
+        self.rank_bias = nn.Parameter(torch.zeros(topk, dtype=torch.float32))
+        self.net = nn.Sequential(
+            nn.Linear(hidden_size, reranker_hidden),
+            nn.SiLU(),
+            nn.Linear(reranker_hidden, 1),
+        )
+
+    def forward(
+        self,
+        *,
+        pred_hidden: torch.Tensor,
+        candidate_weights: torch.Tensor,
+        candidate_logits: torch.Tensor,
+    ) -> torch.Tensor:
+        hidden = pred_hidden.to(torch.float32)
+        weights = candidate_weights.to(torch.float32)
+        logits = candidate_logits.to(torch.float32)
+        features = weights * hidden.unsqueeze(1)
+        flat = features.reshape(-1, features.shape[-1])
+        mlp_score = self.net(flat).reshape(features.shape[0], features.shape[1])
+        return self.alpha * logits + mlp_score + self.rank_bias.view(1, -1)
+
+
+def make_reranker(
+    *,
+    reranker_type: str,
+    hidden_size: int,
+    topk: int,
+    reranker_hidden: int,
+) -> nn.Module:
+    if reranker_type == "diag":
+        return DiagTopKReranker(hidden_size, topk)
+    if reranker_type == "mlp":
+        return MlpTopKReranker(hidden_size, topk, reranker_hidden)
+    raise ValueError(reranker_type)
 
 
 def candidate_weights_for(model: Any, candidate_ids: torch.Tensor) -> torch.Tensor:
@@ -383,7 +431,12 @@ def main() -> int:
                         shuffle=True,
                         drop_last=False)
 
-    reranker = DiagTopKReranker(model.shape.hidden_size, args.topk).to(device)
+    reranker = make_reranker(
+        reranker_type=args.reranker_type,
+        hidden_size=model.shape.hidden_size,
+        topk=args.topk,
+        reranker_hidden=args.reranker_hidden,
+    ).to(device)
     opt = torch.optim.AdamW(reranker.parameters(),
                             lr=args.lr,
                             weight_decay=args.weight_decay)
@@ -423,7 +476,11 @@ def main() -> int:
                         if stats["trainable"] else 0.0
                     ),
                     "alpha": float(reranker.alpha.detach().cpu().item()),
-                    "diag_abs_mean": float(reranker.diag.detach().abs().mean().cpu().item()),
+                    "reranker_weight_abs_mean": float(
+                        torch.cat([
+                            p.detach().flatten().to("cpu", dtype=torch.float32).abs()
+                            for p in reranker.parameters()
+                        ]).mean().item()),
                 }
                 metrics.append(row)
                 print(json.dumps(row, sort_keys=True), flush=True)
@@ -442,10 +499,13 @@ def main() -> int:
     os.makedirs(args.out_dir, exist_ok=True)
     torch.save(
         {
-            "diag": reranker.diag.detach().cpu(),
-            "alpha": reranker.alpha.detach().cpu(),
-            "rank_bias": reranker.rank_bias.detach().cpu(),
+            "state_dict": {
+                key: value.detach().cpu()
+                for key, value in reranker.state_dict().items()
+            },
             "topk": args.topk,
+            "reranker_type": args.reranker_type,
+            "reranker_hidden": args.reranker_hidden,
         },
         os.path.join(args.out_dir, "reranker.pt"),
     )
@@ -458,6 +518,8 @@ def main() -> int:
         "dataset_dir": args.dataset_dir,
         "heldout_dir": args.heldout_dir,
         "topk": args.topk,
+        "reranker_type": args.reranker_type,
+        "reranker_hidden": args.reranker_hidden,
         "rollout_steps": args.rollout_steps,
         "epochs": args.epochs,
         "batch_size": args.batch_size,
@@ -470,7 +532,11 @@ def main() -> int:
         "heldout": heldout,
         "final_alpha": float(reranker.alpha.detach().cpu().item()),
         "final_rank_bias": reranker.rank_bias.detach().cpu().tolist(),
-        "final_diag_abs_mean": float(reranker.diag.detach().abs().mean().cpu().item()),
+        "final_reranker_weight_abs_mean": float(
+            torch.cat([
+                p.detach().flatten().to("cpu", dtype=torch.float32).abs()
+                for p in reranker.parameters()
+            ]).mean().item()),
     }
     out_path = os.path.join(args.out_dir, "summary.json")
     with open(out_path, "w", encoding="utf-8") as f:

@@ -1,0 +1,85 @@
+{
+  "base_top1_mean_accepted": 1.1014610941216445,
+  "classification": "diagnostic_only_no_endpoint",
+  "date_utc": "2026-07-07",
+  "decision": "No endpoint. The strongest MLP reranker reached only 1.119266 mean accepted, a tiny lift over the frozen draft top-1 baseline and far below the top-k oracle headroom. Do not keep sweeping tiny pre-verification rerankers unless the architecture changes materially.",
+  "draft_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-allscope-20260707T075425Z/all-r5-lr3e-6-decay0p25/checkpoint",
+  "heldout_dataset": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset",
+  "mlp_reranker": {
+    "model": "score(c)=alpha*draft_logit(c)+MLP(pred_hidden*lm_head_weight[c])+rank_bias[rank]",
+    "raw_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-topk-reranker-mlp-20260707T084344Z",
+    "results": [
+      {
+        "hidden": 64,
+        "histogram": {
+          "0": 6250,
+          "1": 4216,
+          "2": 2271,
+          "3": 1010,
+          "4": 418,
+          "5": 550
+        },
+        "label": "k4-h64-lr1e-3",
+        "lr": 0.001,
+        "mean_accepted": 1.1015970098538905,
+        "topk": 4
+      },
+      {
+        "hidden": 256,
+        "histogram": {
+          "0": 6237,
+          "1": 4231,
+          "2": 2260,
+          "3": 1010,
+          "4": 411,
+          "5": 566
+        },
+        "label": "k4-h256-lr1e-3",
+        "lr": 0.001,
+        "mean_accepted": 1.1046551138294258,
+        "topk": 4
+      },
+      {
+        "hidden": 64,
+        "histogram": {
+          "0": 6195,
+          "1": 4271,
+          "2": 2270,
+          "3": 1005,
+          "4": 413,
+          "5": 561
+        },
+        "label": "k8-h64-lr1e-3",
+        "lr": 0.001,
+        "mean_accepted": 1.1065579340808698,
+        "topk": 8
+      },
+      {
+        "hidden": 256,
+        "histogram": {
+          "0": 6153,
+          "1": 4267,
+          "2": 2289,
+          "3": 984,
+          "4": 437,
+          "5": 585
+        },
+        "label": "k8-h256-lr1e-3",
+        "lr": 0.001,
+        "mean_accepted": 1.1192660550458715,
+        "topk": 8
+      }
+    ],
+    "script": "scripts/train-qwen27-eagle3-topk-reranker.py",
+    "valid_headline_throughput": false
+  },
+  "schema": "qwen27_eagle3_topk_mlp_reranker_summary",
+  "target_model": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "topk_oracle_reference": {
+    "top2_mean_accepted": 1.5037037037037038,
+    "top4_mean_accepted": 1.8844716275908937,
+    "top8_mean_accepted": 2.2487937478763165,
+    "top16_mean_accepted": 2.5896024464831804
+  },
+  "valid_headline_throughput": false
+}

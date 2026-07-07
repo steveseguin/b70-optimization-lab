@@ -262,10 +262,13 @@ Fastest quality-gated practical variant:
   upper-bound candidate headroom on the best v6b all-scope checkpoint:
   top-2/top-4/top-8/top-16 oracle mean accepted =
   `1.504` / `1.884` / `2.249` / `2.590`, versus normal top-1 `1.101`.
-  But the first cheap diagonal reranker (`scripts/train-qwen27-eagle3-topk-reranker.py`)
-  did not extract it: best heldout mean accepted was only `1.1069`.
-  Do not repeat diagonal-reranker LR sweeps; next candidate-rerank work needs
-  a stronger low-rank/MLP reranker or a tree-verifier cost model;
+  But cheap single-token rerankers did not extract it: the first diagonal
+  reranker reached only `1.1069`, and the follow-up small MLP screen peaked at
+  `1.1193`
+  (`experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-topk-mlp-reranker-summary-20260707.json`).
+  Do not repeat diagonal or small MLP reranker sweeps; next candidate-rerank
+  work needs a materially stronger tree-aware/cross-token mechanism or a
+  tree-verifier cost model;
 
 Previous fastest quality-gated practical variant:
 
