@@ -196,6 +196,16 @@ Fastest quality-gated practical variant:
   endpoint MTP3 branch-trace prefix and below the threshold needed to justify
   cache16/MTP5 endpoint overhead. No endpoint speed run was spent. Do not
   repeat FC-only / FC-norms MTP5 training as the next >100 tok/s lane;
+- latest intrinsic-MTP deep-scope screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-intrinsic-mtp-deep-scope-no-endpoint.md`.
+  Four GPU-parallel diagnostic runs trained much larger dequantized MTP
+  attention/MLP scopes (`attn`, `mlp`, `attn-mlp`, `all-dense`) against the
+  v6b concrete-context corpus. Best heldout accepted draft depth was only
+  `1.416016` (`2.416016` visible tokens/step), a `+0.115` lift over baseline
+  and far below the `3+` accepted-draft threshold needed for a plausible
+  `>100 tok/s` endpoint. These dense updates are also not endpoint-compatible
+  with the GPTQ-packed checkpoint, so close this as no endpoint work and do not
+  repeat the same intrinsic-MTP deep-scope sweep without a new mechanism;
 - latest producer-side INT4 LM-head shortcut screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-int4-top1-prototype-sycl8-no-win.md`.
   A diagnostic `_xpu_C.int4_gemm_w4a16_top1` prototype was added in the XPU

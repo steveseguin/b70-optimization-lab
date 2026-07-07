@@ -1,0 +1,251 @@
+{
+  "best_variant": "attnmlp-lr5e-7",
+  "data_corpus": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-{0,1,2,3}/dataset",
+  "date_utc": "2026-07-07",
+  "decision": "closed_no_endpoint_work",
+  "draft_lm_head": "int4-dequant, group128, bf16 scales",
+  "endpoint_gate_threshold": "Needs accepted draft tokens near 3+ (4+ visible tokens/step) before endpoint work is plausible for >100 tok/s at current step cost.",
+  "headline_validity": "invalid for headline throughput; offline accepted-depth only; no LocalMaxxing submission",
+  "heldout_starts": 4096,
+  "max_steps": 5,
+  "model": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "next_lane": "Run full-vocab five-aux EAGLE3/DFlash rank-push pre-gate; if still low, pivot to target-body/kernel work rather than more intrinsic-MTP config sweeps.",
+  "purpose": "offline diagnostic intrinsic MTP deep-scope acceptance screen; not endpoint throughput",
+  "reason": "Best after mean accepted draft tokens was 1.416016 (2.416016 visible), far below threshold and endpoint_candidate_compatible=false.",
+  "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z",
+  "train_starts": 8192,
+  "variants": [
+    {
+      "after_conditional_exact": [
+        0.677490234375,
+        0.5798198198198198,
+        0.5040397762585457,
+        0.5043156596794082,
+        0.44987775061124696
+      ],
+      "after_histogram_accepted_draft_tokens": {
+        "0": 1321,
+        "1": 1166,
+        "2": 798,
+        "3": 402,
+        "4": 225,
+        "5": 184
+      },
+      "after_mean_accepted_draft_tokens": 1.4130859375,
+      "after_mean_visible_tokens_if_k_step_spec": 2.4130859375,
+      "before_conditional_exact": [
+        0.66650390625,
+        0.5358974358974359,
+        0.46274777853725224,
+        0.4711964549483013,
+        0.43260188087774293
+      ],
+      "before_histogram_accepted_draft_tokens": {
+        "0": 1366,
+        "1": 1267,
+        "2": 786,
+        "3": 358,
+        "4": 181,
+        "5": 138
+      },
+      "before_mean_accepted_draft_tokens": 1.300537109375,
+      "delta_mean_accepted_draft_tokens": 0.112548828125,
+      "diagnostic_dense_update_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/alldense-lr5e-7/diagnostic_dense_updates.safetensors",
+      "elapsed_s": 641.5571973829065,
+      "endpoint_candidate_compatible": false,
+      "label": "alldense-lr5e-7",
+      "lr": 5e-07,
+      "raw_summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/alldense-lr5e-7/training_summary.json",
+      "scope": "all-dense",
+      "starts": 4096,
+      "trainable_names": [
+        "down_proj",
+        "fc",
+        "final_norm",
+        "gate_proj",
+        "input_layernorm",
+        "k_norm",
+        "k_proj",
+        "o_proj",
+        "post_attention_layernorm",
+        "pre_fc_norm_embedding",
+        "pre_fc_norm_hidden",
+        "q_norm",
+        "q_proj",
+        "up_proj",
+        "v_proj"
+      ],
+      "trainable_param_count": 424699392,
+      "valid_headline_throughput": false
+    },
+    {
+      "after_conditional_exact": [
+        0.68115234375,
+        0.5688172043010753,
+        0.4952741020793951,
+        0.49872773536895676,
+        0.45663265306122447
+      ],
+      "after_histogram_accepted_draft_tokens": {
+        "0": 1306,
+        "1": 1203,
+        "2": 801,
+        "3": 394,
+        "4": 213,
+        "5": 179
+      },
+      "after_mean_accepted_draft_tokens": 1.39990234375,
+      "after_mean_visible_tokens_if_k_step_spec": 2.39990234375,
+      "before_conditional_exact": [
+        0.66650390625,
+        0.5355311355311355,
+        0.4630642954856361,
+        0.4726735598227474,
+        0.4375
+      ],
+      "before_histogram_accepted_draft_tokens": {
+        "0": 1366,
+        "1": 1268,
+        "2": 785,
+        "3": 357,
+        "4": 180,
+        "5": 140
+      },
+      "before_mean_accepted_draft_tokens": 1.301025390625,
+      "delta_mean_accepted_draft_tokens": 0.098876953125,
+      "diagnostic_dense_update_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/attn-lr1e-6/diagnostic_dense_updates.safetensors",
+      "elapsed_s": 445.57728584110737,
+      "endpoint_candidate_compatible": false,
+      "label": "attn-lr1e-6",
+      "lr": 1e-06,
+      "raw_summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/attn-lr1e-6/training_summary.json",
+      "scope": "attn",
+      "starts": 4096,
+      "trainable_names": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "input_layernorm",
+        "post_attention_layernorm",
+        "q_norm",
+        "k_norm"
+      ],
+      "trainable_param_count": 104868352,
+      "valid_headline_throughput": false
+    },
+    {
+      "after_conditional_exact": [
+        0.677001953125,
+        0.581319870176704,
+        0.5043424317617866,
+        0.5092250922509225,
+        0.45410628019323673
+      ],
+      "after_histogram_accepted_draft_tokens": {
+        "0": 1323,
+        "1": 1161,
+        "2": 799,
+        "3": 399,
+        "4": 226,
+        "5": 188
+      },
+      "after_mean_accepted_draft_tokens": 1.416015625,
+      "after_mean_visible_tokens_if_k_step_spec": 2.416015625,
+      "before_conditional_exact": [
+        0.66650390625,
+        0.5358974358974359,
+        0.46274777853725224,
+        0.4711964549483013,
+        0.43573667711598746
+      ],
+      "before_histogram_accepted_draft_tokens": {
+        "0": 1366,
+        "1": 1267,
+        "2": 786,
+        "3": 358,
+        "4": 180,
+        "5": 139
+      },
+      "before_mean_accepted_draft_tokens": 1.30078125,
+      "delta_mean_accepted_draft_tokens": 0.115234375,
+      "diagnostic_dense_update_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/attnmlp-lr5e-7/diagnostic_dense_updates.safetensors",
+      "elapsed_s": 607.6713453771081,
+      "endpoint_candidate_compatible": false,
+      "label": "attnmlp-lr5e-7",
+      "lr": 5e-07,
+      "raw_summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/attnmlp-lr5e-7/training_summary.json",
+      "scope": "attn-mlp",
+      "starts": 4096,
+      "trainable_names": [
+        "down_proj",
+        "final_norm",
+        "gate_proj",
+        "input_layernorm",
+        "k_norm",
+        "k_proj",
+        "o_proj",
+        "post_attention_layernorm",
+        "q_norm",
+        "q_proj",
+        "up_proj",
+        "v_proj"
+      ],
+      "trainable_param_count": 372260352,
+      "valid_headline_throughput": false
+    },
+    {
+      "after_conditional_exact": [
+        0.671630859375,
+        0.5816066884769174,
+        0.50625,
+        0.5172839506172839,
+        0.45346062052505964
+      ],
+      "after_histogram_accepted_draft_tokens": {
+        "0": 1345,
+        "1": 1151,
+        "2": 790,
+        "3": 391,
+        "4": 229,
+        "5": 190
+      },
+      "after_mean_accepted_draft_tokens": 1.40869140625,
+      "after_mean_visible_tokens_if_k_step_spec": 2.40869140625,
+      "before_conditional_exact": [
+        0.66650390625,
+        0.5355311355311355,
+        0.4630642954856361,
+        0.4711964549483013,
+        0.43573667711598746
+      ],
+      "before_histogram_accepted_draft_tokens": {
+        "0": 1366,
+        "1": 1268,
+        "2": 785,
+        "3": 358,
+        "4": 180,
+        "5": 139
+      },
+      "before_mean_accepted_draft_tokens": 1.300537109375,
+      "delta_mean_accepted_draft_tokens": 0.108154296875,
+      "diagnostic_dense_update_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/mlp-lr1e-6/diagnostic_dense_updates.safetensors",
+      "elapsed_s": 541.0056136480998,
+      "endpoint_candidate_compatible": false,
+      "label": "mlp-lr1e-6",
+      "lr": 1e-06,
+      "raw_summary_path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/intrinsic-mtp-deep-4gpu-20260707T112602Z/mlp-lr1e-6/training_summary.json",
+      "scope": "mlp",
+      "starts": 4096,
+      "trainable_names": [
+        "gate_proj",
+        "up_proj",
+        "down_proj",
+        "post_attention_layernorm",
+        "final_norm"
+      ],
+      "trainable_param_count": 267397120,
+      "valid_headline_throughput": false
+    }
+  ]
+}

@@ -869,6 +869,20 @@ AOT spill warnings. See
 `../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-replayssm-cache16-spec6-no-win-20260706.patch`.
 Do not repeat config-only or simple dispatch-widening MTP4/MTP5 sweeps on this
 recipe.
+Intrinsic-MTP adaptation is also closed for the currently tested corpus/scope
+families. FC-only and FC+norms improved offline acceptance but did not transfer
+to the endpoint; MTP5 FC+norms reached only `1.78198` accepted draft tokens
+offline, not enough to justify cache16 endpoint overhead. A later deep-scope
+diagnostic trained dequantized attention/MLP/all-dense MTP tensors on four
+GPUs and reached only `1.416016` accepted draft tokens (`2.416016` visible
+tokens/step), with dense updates that are not compatible with the packed INT4
+checkpoint. See
+`notes/2026-07-07-intrinsic-mtp-adaptation-screen.md`,
+`notes/2026-07-07-intrinsic-mtp5-adaptation-no-endpoint.md`,
+`notes/2026-07-07-intrinsic-mtp-deep-scope-no-endpoint.md`, and
+`diagnostics/qwen27-intrinsic-mtp-deep-scope-4gpu-summary-20260707.json`.
+Do not repeat these intrinsic-MTP sweeps unless a new mechanism can prove
+`3+` accepted draft tokens before endpoint work.
 The latest DFlash revisit is also closed:
 `notes/2026-07-06-dflash-swa-pr40898-repair-no-record.md`. After reviewing
 upstream vLLM PR #40898, a local DFlash SWA/full-KV repair was implemented and
