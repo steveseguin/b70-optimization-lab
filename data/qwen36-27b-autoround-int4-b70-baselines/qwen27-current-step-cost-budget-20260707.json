@@ -1,0 +1,78 @@
+{
+  "baseline": {
+    "branch_envelope_tokens_per_step": 3.9681349578256793,
+    "inferred_verifier_step_ms": 40.256513914139006,
+    "max_mtp3_tokens_per_step": 4.0,
+    "target_verified_tokens_per_step": 2.746954076850984,
+    "tok_s": 68.23626314761921
+  },
+  "classification": "diagnostic_only_qwen27_step_cost_budget",
+  "interpretation": [
+    "At fixed accepted depth, reaching a target tok/s requires reducing verifier step ms by the listed required_step_saving_ms.",
+    "At fixed step cost, reaching a target tok/s requires the listed required_tokens_per_step_at_current_step_ms.",
+    "MTP3 has a hard ceiling of 4 target-verified tokens/step; anything above that needs deeper speculation or a different verified-draft mechanism.",
+    "Negative branch_envelope_extra_step_budget_ms means even the optimistic rank-64 MTP3 branch/regenerate model misses that target before implementation overhead."
+  ],
+  "target_rows": [
+    {
+      "branch_envelope_can_reach_without_step_reduction": true,
+      "branch_envelope_extra_step_budget_ms": 9.34517305868198,
+      "branch_envelope_tok_s_at_current_step_ms": 98.57125150700095,
+      "current_mtp3_hard_ceiling_can_reach": true,
+      "current_mtp3_hard_ceiling_tok_s_at_current_step_ms": 99.36280147186586,
+      "required_step_ms_at_current_depth": 34.336925960637295,
+      "required_step_saving_ms": 5.919587953501711,
+      "required_step_saving_pct": 14.704671065475983,
+      "required_tokens_per_step_at_current_step_ms": 3.2205211131311207,
+      "target_tok_s": 80.0
+    },
+    {
+      "branch_envelope_can_reach_without_step_reduction": true,
+      "branch_envelope_extra_step_budget_ms": 3.8338745061463158,
+      "branch_envelope_tok_s_at_current_step_ms": 98.57125150700095,
+      "current_mtp3_hard_ceiling_can_reach": true,
+      "current_mtp3_hard_ceiling_tok_s_at_current_step_ms": 99.36280147186586,
+      "required_step_ms_at_current_depth": 30.52171196501093,
+      "required_step_saving_ms": 9.734801949128077,
+      "required_step_saving_pct": 24.18192983597865,
+      "required_tokens_per_step_at_current_step_ms": 3.6230862522725107,
+      "target_tok_s": 90.0
+    },
+    {
+      "branch_envelope_can_reach_without_step_reduction": false,
+      "branch_envelope_extra_step_budget_ms": -0.5751643358822136,
+      "branch_envelope_tok_s_at_current_step_ms": 98.57125150700095,
+      "current_mtp3_hard_ceiling_can_reach": false,
+      "current_mtp3_hard_ceiling_tok_s_at_current_step_ms": 99.36280147186586,
+      "required_step_ms_at_current_depth": 27.469540768509837,
+      "required_step_saving_ms": 12.786973145629169,
+      "required_step_saving_pct": 31.76373685238078,
+      "required_tokens_per_step_at_current_step_ms": 4.0256513914139,
+      "target_tok_s": 100.0
+    },
+    {
+      "branch_envelope_can_reach_without_step_reduction": false,
+      "branch_envelope_extra_step_budget_ms": -8.511434251533572,
+      "branch_envelope_tok_s_at_current_step_ms": 98.57125150700095,
+      "current_mtp3_hard_ceiling_can_reach": false,
+      "current_mtp3_hard_ceiling_tok_s_at_current_step_ms": 99.36280147186586,
+      "required_step_ms_at_current_depth": 21.97563261480787,
+      "required_step_saving_ms": 18.280881299331135,
+      "required_step_saving_pct": 45.41098948190462,
+      "required_tokens_per_step_at_current_step_ms": 5.032064239267376,
+      "target_tok_s": 125.0
+    },
+    {
+      "branch_envelope_can_reach_without_step_reduction": false,
+      "branch_envelope_extra_step_budget_ms": -13.802280861967812,
+      "branch_envelope_tok_s_at_current_step_ms": 98.57125150700095,
+      "current_mtp3_hard_ceiling_can_reach": false,
+      "current_mtp3_hard_ceiling_tok_s_at_current_step_ms": 99.36280147186586,
+      "required_step_ms_at_current_depth": 18.313027179006557,
+      "required_step_saving_ms": 21.94348673513245,
+      "required_step_saving_pct": 54.50915790158719,
+      "required_tokens_per_step_at_current_step_ms": 6.038477087120851,
+      "target_tok_s": 150.0
+    }
+  ]
+}
