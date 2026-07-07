@@ -1,0 +1,58 @@
+diff --git a/vllm/model_executor/layers/layernorm.py b/vllm/model_executor/layers/layernorm.py
+index 4b9af832c..1eb07bf08 100644
+--- a/vllm/model_executor/layers/layernorm.py
++++ b/vllm/model_executor/layers/layernorm.py
+@@ -2,6 +2,8 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Custom normalization layers."""
+ 
++import os
++
+ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+@@ -17,6 +19,15 @@ from vllm.model_executor.layers.batch_invariant import rms_norm_batch_invariant
+ logger = init_logger(__name__)
+ 
+ 
++def _truthy_env(name: str) -> bool:
++    return os.environ.get(name, "").strip().lower() in (
++        "1",
++        "true",
++        "yes",
++        "on",
++    )
++
++
+ def poly_norm(
+     x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor, variance_epsilon: float
+ ) -> torch.Tensor:
+@@ -297,6 +308,28 @@ class RMSNormGated(CustomOp):
+     def forward_xpu(
+         self, x: torch.Tensor, z: torch.Tensor | None = None
+     ) -> torch.Tensor:
++        if (
++            _truthy_env("VLLM_XPU_RMSNORM_GATED_NATIVE")
++            and z is not None
++            and self.bias is None
++            and self.group_size is None
++            and self.norm_before_gate
++            and x.device.type == "xpu"
++            and z.device.type == "xpu"
++            and x.dtype in (torch.float16, torch.bfloat16)
++            and self.weight.dtype == x.dtype
++            and x.stride(-1) == 1
++            and z.shape == x.shape
++            and z.stride(-1) == 1
++            and hasattr(torch.ops, "_C")
++            and hasattr(torch.ops._C, "rms_norm")
++        ):
++            out = torch.empty_like(x)
++            torch.ops._C.rms_norm(out, x, self.weight.data, self.eps)
++            if self.activation == "sigmoid":
++                return out.mul_(torch.sigmoid(z))
++            if self.activation in ("silu", "swish"):
++                return out.mul_(F.silu(z))
+         return self.forward_cuda(x, z)
+ 
+ 

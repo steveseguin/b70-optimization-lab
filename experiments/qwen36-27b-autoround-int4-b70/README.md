@@ -316,6 +316,12 @@ Next milestone:
    is already fixed-shape MTP3 (`4` unpadded, `4` padded, `3` scheduled spec
    tokens, `PIECEWISE` graph). It reinforces that padding cleanup and noisy
    async draft labels are not the next speed lever.
+   The target-body micro-screen
+   `notes/2026-07-07-rmsnorm-gated-native-route-no-win.md` is also closed:
+   existing `_C.rms_norm` plus SiLU multiply was faster in microbench, but not
+   bit-exact and not faster in same-window endpoint A/B. Do not repeat that
+   Python routing patch; only a true fused gated-RMSNorm kernel with better
+   numeric agreement would be a new idea.
    The latest graph-safe transaction precheck is
    `notes/2026-07-06-replayssm-commit-pending-active-slot-guard.md`: native
    `gdn_replayssm_commit_pending` used to mutate metadata for null,

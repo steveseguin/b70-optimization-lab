@@ -100,6 +100,12 @@ Active target as of the latest switch request:
   tokens, `PIECEWISE` graph). Do not chase padding cleanup or the noisy large
   draft/proposer labels from this run; synchronized timing already closed
   MTP-next as a sub-ms graph path.
+- Latest target-body micro-screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-rmsnorm-gated-native-route-no-win.md`.
+  A default-off `RMSNormGated.forward_xpu` route through existing `_C.rms_norm`
+  plus SiLU multiply was faster in microbench but not bit-exact and lost a
+  same-window 4-GPU endpoint A/B. Active source was reverted; patch artifact is
+  preserved as no-win evidence. Do not repeat this Python routing version.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

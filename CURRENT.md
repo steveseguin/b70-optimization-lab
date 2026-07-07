@@ -91,6 +91,11 @@ Fastest quality-gated practical variant:
   Treat large draft labels in that run as async attribution and keep the
   synchronized `2026-07-06-draft-proposer-timing-split.md` conclusion closed:
   MTP-next forward is not an eager-kernel bug;
+- latest target-body micro-screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-rmsnorm-gated-native-route-no-win.md`.
+  Existing `_C.rms_norm` plus SiLU multiply looked faster in microbench but did
+  not beat same-window controls and is not bit-exact to the FLA path. Source
+  reverted; patch preserved only as no-win evidence;
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;

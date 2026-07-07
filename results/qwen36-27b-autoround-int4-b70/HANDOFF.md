@@ -262,6 +262,13 @@ Current fastest quality-gated variant:
   this run are async-attribution contaminated; keep
   `2026-07-06-draft-proposer-timing-split.md` as the source of truth that
   synchronized MTP-next forward is sub-ms.
+- Latest target-body micro-screen:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-rmsnorm-gated-native-route-no-win.md`.
+  Routing GDN `RMSNormGated` through existing `_C.rms_norm` plus a SiLU multiply
+  was `~2x` faster in microbench but not bit-exact and did not survive a
+  4-GPU same-window endpoint A/B (`67.013` candidate average vs `67.138`
+  control average). Source was reverted; keep the patch only as no-win
+  evidence.
 
 Previous fastest quality-gated variant:
 
