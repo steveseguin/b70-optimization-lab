@@ -96,6 +96,16 @@ Fastest quality-gated practical variant:
   Existing `_C.rms_norm` plus SiLU multiply looked faster in microbench but did
   not beat same-window controls and is not bit-exact to the FLA path. Source
   reverted; patch preserved only as no-win evidence;
+- latest full-attention Q/K norm + RoPE micro-screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-qgate-direct-qkrope-no-win.md`.
+  A new native `_C.fused_qgate_qk_norm_rope` op read strided `q_gate`/`k`
+  directly, applied GemmaRMSNorm plus RoPE, and wrote contiguous `q`, `gate`,
+  and `k_out`. It was a real microbench win (`~0.056 ms` vs `~0.112 ms` for
+  the isolated section at T=1), but the strict endpoint screen regressed to
+  `66.953 tok/s` with quality skipped, below the current `68.236 tok/s`
+  headline and the `68.296 tok/s` current-recipe subtiming support row. Active
+  source and runtime binary were restored; patches/results are preserved only
+  as no-win evidence;
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;

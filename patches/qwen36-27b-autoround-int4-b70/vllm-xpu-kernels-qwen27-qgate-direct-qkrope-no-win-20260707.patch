@@ -1,0 +1,472 @@
+diff --git a/csrc/fused_qknorm_rope.cpp b/csrc/fused_qknorm_rope.cpp
+index a76b638..c1d91ab 100644
+--- a/csrc/fused_qknorm_rope.cpp
++++ b/csrc/fused_qknorm_rope.cpp
+@@ -530,6 +530,302 @@ void launch_fused_qk_norm_rope(
+ #undef DISPATCH_KERNEL
+ }
+ 
++template <
++    typename scalar_t,
++    typename scalar_t_cache,
++    int head_dim,
++    bool IS_NEOX>
++class fused_qgate_qk_norm_rope_kernel {
++ public:
++  static constexpr int SUB_GROUP_SIZE = 32;
++  static constexpr int NUM_ELEMS_PER_THREAD = head_dim / SUB_GROUP_SIZE;
++
++  static_assert(
++      head_dim % (SUB_GROUP_SIZE * 2) == 0, "head_dim must be divisible by 64");
++
++  fused_qgate_qk_norm_rope_kernel(
++      const scalar_t* __restrict__ q_gate_,
++      const scalar_t* __restrict__ k_,
++      scalar_t* __restrict__ q_out_,
++      scalar_t* __restrict__ gate_out_,
++      scalar_t* __restrict__ k_out_,
++      const int q_gate_stride_,
++      const int k_stride_,
++      const int num_heads_q_,
++      const int num_heads_k_,
++      const float eps_,
++      const scalar_t* __restrict__ q_weight_,
++      const scalar_t* __restrict__ k_weight_,
++      const scalar_t_cache* __restrict__ cos_sin_cache_,
++      const int64_t* __restrict__ position_ids_,
++      const int num_tokens_,
++      const int rotary_dim_)
++      : q_gate(q_gate_),
++        k(k_),
++        q_out(q_out_),
++        gate_out(gate_out_),
++        k_out(k_out_),
++        q_gate_stride(q_gate_stride_),
++        k_stride(k_stride_),
++        num_heads_q(num_heads_q_),
++        num_heads_k(num_heads_k_),
++        eps(eps_),
++        q_weight(q_weight_),
++        k_weight(k_weight_),
++        cos_sin_cache(cos_sin_cache_),
++        position_ids(position_ids_),
++        num_tokens(num_tokens_),
++        rotary_dim(rotary_dim_) {}
++
++  void operator() [[sycl::reqd_sub_group_size(SUB_GROUP_SIZE)]] (
++      const sycl::nd_item<1>& item) const {
++    auto sg = item.get_sub_group();
++    const int lane_id = sg.get_local_linear_id();
++    const int sg_id_in_wg = sg.get_group_linear_id();
++    const int sgs_per_wg = sg.get_group_linear_range();
++    const int global_sg_id = item.get_group(0) * sgs_per_wg + sg_id_in_wg;
++
++    const int total_qk_heads = num_heads_q + num_heads_k;
++    const int token_idx = global_sg_id / total_qk_heads;
++    const int local_head_idx = global_sg_id % total_qk_heads;
++
++    if (token_idx >= num_tokens) return;
++
++    const bool is_q = local_head_idx < num_heads_q;
++    const int head_idx = is_q ? local_head_idx : local_head_idx - num_heads_q;
++    const int elem_offset = lane_id * NUM_ELEMS_PER_THREAD;
++
++    float elements[NUM_ELEMS_PER_THREAD];
++    float sum_of_squares = 0.0f;
++
++    if (is_q) {
++      const int q_stride = num_heads_q * head_dim;
++      const int q_gate_base =
++          token_idx * q_gate_stride + head_idx * head_dim * 2 + elem_offset;
++      const int gate_base = q_gate_base + head_dim;
++      const int q_out_base =
++          token_idx * q_stride + head_idx * head_dim + elem_offset;
++
++#pragma unroll
++      for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++        float val = static_cast<float>(q_gate[q_gate_base + i]);
++        elements[i] = val;
++        sum_of_squares += val * val;
++        gate_out[q_out_base + i] = q_gate[gate_base + i];
++      }
++    } else {
++      const int k_base =
++          token_idx * k_stride + head_idx * head_dim + elem_offset;
++
++#pragma unroll
++      for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++        float val = static_cast<float>(k[k_base + i]);
++        elements[i] = val;
++        sum_of_squares += val * val;
++      }
++    }
++
++    sum_of_squares =
++        sycl::reduce_over_group(sg, sum_of_squares, sycl::plus<float>());
++
++    const float rms_rcp =
++        sycl::rsqrt(sum_of_squares / static_cast<float>(head_dim) + eps);
++    const scalar_t* weight = is_q ? q_weight : k_weight;
++
++#pragma unroll
++    for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++      int dim = elem_offset + i;
++      // Qwen3Next uses GemmaRMSNorm semantics: x * (1 + weight).
++      elements[i] *= rms_rcp * (1.0f + static_cast<float>(weight[dim]));
++    }
++
++    const int64_t pos_id = position_ids[token_idx];
++    const int embed_dim = rotary_dim / 2;
++    const scalar_t_cache* cache_ptr = cos_sin_cache + pos_id * rotary_dim;
++    const scalar_t_cache* cos_ptr = cache_ptr;
++    const scalar_t_cache* sin_ptr = cache_ptr + embed_dim;
++    const int rotary_lanes = rotary_dim / NUM_ELEMS_PER_THREAD;
++
++    if (lane_id < rotary_lanes) {
++      if constexpr (!IS_NEOX) {
++#pragma unroll
++        for (int i = 0; i < NUM_ELEMS_PER_THREAD / 2; ++i) {
++          const int idx0 = 2 * i;
++          const int idx1 = 2 * i + 1;
++          const int dim_idx = elem_offset + idx0;
++          const float val0 = elements[idx0];
++          const float val1 = elements[idx1];
++          const int half_dim = dim_idx / 2;
++          const float cos_val = static_cast<float>(cos_ptr[half_dim]);
++          const float sin_val = static_cast<float>(sin_ptr[half_dim]);
++          elements[idx0] = val0 * cos_val - val1 * sin_val;
++          elements[idx1] = val0 * sin_val + val1 * cos_val;
++        }
++      } else {
++        sycl::group_barrier(sg);
++        const int pair_offset = (rotary_dim / 2) / NUM_ELEMS_PER_THREAD;
++#pragma unroll
++        for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++          float partner_val =
++              sycl::permute_group_by_xor(sg, elements[i], pair_offset);
++          if (lane_id < pair_offset) {
++            partner_val = -partner_val;
++          }
++          int dim_idx = elem_offset + i;
++          dim_idx = (dim_idx * 2) % rotary_dim;
++          int half_dim = dim_idx / 2;
++          const float cos_val = static_cast<float>(cos_ptr[half_dim]);
++          const float sin_val = static_cast<float>(sin_ptr[half_dim]);
++          elements[i] = elements[i] * cos_val + partner_val * sin_val;
++        }
++        sycl::group_barrier(sg);
++      }
++    }
++
++    if (is_q) {
++      const int q_stride = num_heads_q * head_dim;
++      const int q_out_base =
++          token_idx * q_stride + head_idx * head_dim + elem_offset;
++#pragma unroll
++      for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++        q_out[q_out_base + i] = static_cast<scalar_t>(elements[i]);
++      }
++    } else {
++      const int k_stride = num_heads_k * head_dim;
++      const int k_out_base =
++          token_idx * k_stride + head_idx * head_dim + elem_offset;
++#pragma unroll
++      for (int i = 0; i < NUM_ELEMS_PER_THREAD; i++) {
++        k_out[k_out_base + i] = static_cast<scalar_t>(elements[i]);
++      }
++    }
++  }
++
++ private:
++  const scalar_t* __restrict__ q_gate;
++  const scalar_t* __restrict__ k;
++  scalar_t* __restrict__ q_out;
++  scalar_t* __restrict__ gate_out;
++  scalar_t* __restrict__ k_out;
++  const int q_gate_stride;
++  const int k_stride;
++  const int num_heads_q;
++  const int num_heads_k;
++  const float eps;
++  const scalar_t* __restrict__ q_weight;
++  const scalar_t* __restrict__ k_weight;
++  const scalar_t_cache* __restrict__ cos_sin_cache;
++  const int64_t* __restrict__ position_ids;
++  const int num_tokens;
++  const int rotary_dim;
++};
++
++template <typename scalar_t, typename scalar_t_cache>
++void launch_fused_qgate_qk_norm_rope(
++    torch::Tensor& q_gate,
++    torch::Tensor& k,
++    torch::Tensor& q_out,
++    torch::Tensor& gate_out,
++    torch::Tensor& k_out,
++    int num_tokens,
++    int q_gate_stride,
++    int k_stride,
++    int num_heads_q,
++    int num_heads_k,
++    int head_dim,
++    int rotary_dim,
++    float eps,
++    torch::Tensor& q_weight,
++    torch::Tensor& k_weight,
++    torch::Tensor& cos_sin_cache,
++    bool is_neox,
++    torch::Tensor& position_ids) {
++  using sycl_t = typename vllm::xpu::SyclTypeTrait<scalar_t>::Type;
++  using sycl_cache_t = typename vllm::xpu::SyclTypeTrait<scalar_t_cache>::Type;
++
++  constexpr int block_size = 256;
++  constexpr int sgs_per_wg = block_size / 32;
++  const int total_sgs = num_tokens * (num_heads_q + num_heads_k);
++  const int grid_sz = (total_sgs + sgs_per_wg - 1) / sgs_per_wg;
++
++  auto q_gate_ptr =
++      reinterpret_cast<const sycl_t*>(q_gate.data_ptr<scalar_t>());
++  auto k_ptr = reinterpret_cast<const sycl_t*>(k.data_ptr<scalar_t>());
++  auto q_out_ptr = reinterpret_cast<sycl_t*>(q_out.data_ptr<scalar_t>());
++  auto gate_out_ptr = reinterpret_cast<sycl_t*>(gate_out.data_ptr<scalar_t>());
++  auto k_out_ptr = reinterpret_cast<sycl_t*>(k_out.data_ptr<scalar_t>());
++  auto q_weight_ptr =
++      reinterpret_cast<const sycl_t*>(q_weight.data_ptr<scalar_t>());
++  auto k_weight_ptr =
++      reinterpret_cast<const sycl_t*>(k_weight.data_ptr<scalar_t>());
++  auto cos_sin_cache_ptr = reinterpret_cast<const sycl_cache_t*>(
++      cos_sin_cache.data_ptr<scalar_t_cache>());
++  auto position_ids_ptr = position_ids.data_ptr<int64_t>();
++
++  auto& queue = vllm::xpu::vllmGetQueue();
++
++#define DISPATCH_HEAD_DIM(HEAD_DIM, IS_NEOX_V)                           \
++  do {                                                                    \
++    queue.submit([&](sycl::handler& cgh) {                                \
++      cgh.parallel_for(                                                   \
++          sycl::nd_range<1>(grid_sz * block_size, block_size),            \
++          fused_qgate_qk_norm_rope_kernel<                                \
++              sycl_t,                                                     \
++              sycl_cache_t,                                               \
++              HEAD_DIM,                                                   \
++              IS_NEOX_V>(                                                 \
++              q_gate_ptr,                                                 \
++              k_ptr,                                                      \
++              q_out_ptr,                                                  \
++              gate_out_ptr,                                               \
++              k_out_ptr,                                                  \
++              q_gate_stride,                                              \
++              k_stride,                                                   \
++              num_heads_q,                                                \
++              num_heads_k,                                                \
++              eps,                                                        \
++              q_weight_ptr,                                               \
++              k_weight_ptr,                                               \
++              cos_sin_cache_ptr,                                          \
++              position_ids_ptr,                                           \
++              num_tokens,                                                 \
++              rotary_dim));                                               \
++    });                                                                   \
++  } while (0)
++
++#define DISPATCH_NEOX(HEAD_DIM)             \
++  do {                                      \
++    if (is_neox) {                          \
++      DISPATCH_HEAD_DIM(HEAD_DIM, true);    \
++    } else {                                \
++      DISPATCH_HEAD_DIM(HEAD_DIM, false);   \
++    }                                       \
++  } while (0)
++
++  switch (head_dim) {
++    case 64:
++      DISPATCH_NEOX(64);
++      break;
++    case 128:
++      DISPATCH_NEOX(128);
++      break;
++    case 256:
++      DISPATCH_NEOX(256);
++      break;
++    case 512:
++      DISPATCH_NEOX(512);
++      break;
++    default:
++      TORCH_CHECK(
++          false,
++          "Unsupported head dimension for fused_qgate_qk_norm_rope: ",
++          head_dim);
++  }
++
++#undef DISPATCH_NEOX
++#undef DISPATCH_HEAD_DIM
++}
++
+ }  // namespace vllm
+ 
+ void fused_qk_norm_rope(
+@@ -619,3 +915,118 @@ void fused_qk_norm_rope(
+         });
+   });
+ }
++
++void fused_qgate_qk_norm_rope(
++    torch::Tensor& q_gate,
++    torch::Tensor& k,
++    torch::Tensor& q_out,
++    torch::Tensor& gate_out,
++    torch::Tensor& k_out,
++    int64_t num_heads_q,
++    int64_t num_heads_k,
++    int64_t head_dim,
++    double eps,
++    torch::Tensor& q_weight,
++    torch::Tensor& k_weight,
++    torch::Tensor& cos_sin_cache,
++    bool is_neox,
++    torch::Tensor& position_ids) {
++  const at::DeviceGuard device_guard(q_gate.device());
++
++  CHECK_DEVICE(q_gate);
++  CHECK_DEVICE(k);
++  CHECK_DEVICE(q_out);
++  CHECK_CONTIGUOUS(q_out);
++  CHECK_DEVICE(gate_out);
++  CHECK_CONTIGUOUS(gate_out);
++  CHECK_DEVICE(k_out);
++  CHECK_CONTIGUOUS(k_out);
++  CHECK_DEVICE(position_ids);
++  CHECK_CONTIGUOUS(position_ids);
++  CHECK_DEVICE(q_weight);
++  CHECK_CONTIGUOUS(q_weight);
++  CHECK_DEVICE(k_weight);
++  CHECK_CONTIGUOUS(k_weight);
++  CHECK_DEVICE(cos_sin_cache);
++  CHECK_CONTIGUOUS(cos_sin_cache);
++
++  TORCH_CHECK(
++      position_ids.scalar_type() == torch::kInt64,
++      "position_ids must be int64");
++  TORCH_CHECK(q_gate.dim() == 2, "q_gate must be 2D");
++  TORCH_CHECK(k.dim() == 2, "k must be 2D");
++  TORCH_CHECK(q_gate.stride(1) == 1, "q_gate last dimension must be contiguous");
++  TORCH_CHECK(k.stride(1) == 1, "k last dimension must be contiguous");
++  TORCH_CHECK(q_out.dim() == 2, "q_out must be 2D");
++  TORCH_CHECK(gate_out.dim() == 2, "gate_out must be 2D");
++  TORCH_CHECK(k_out.dim() == 2, "k_out must be 2D");
++  TORCH_CHECK(position_ids.dim() == 1, "Position IDs must be 1D");
++  TORCH_CHECK(q_weight.dim() == 1, "Query weights must be 1D");
++  TORCH_CHECK(k_weight.dim() == 1, "Key weights must be 1D");
++  TORCH_CHECK(cos_sin_cache.dim() == 2, "Cos/sin cache must be 2D");
++  TORCH_CHECK(q_weight.size(0) == head_dim, "q_weight size mismatch");
++  TORCH_CHECK(k_weight.size(0) == head_dim, "k_weight size mismatch");
++  TORCH_CHECK(cos_sin_cache.size(1) % 2 == 0, "rotary_dim must be even");
++  TORCH_CHECK(cos_sin_cache.size(1) <= head_dim, "rotary_dim too large");
++
++  const int64_t num_tokens = q_gate.size(0);
++  TORCH_CHECK(k.size(0) == num_tokens, "k token count mismatch");
++  TORCH_CHECK(q_out.size(0) == num_tokens, "q_out token count mismatch");
++  TORCH_CHECK(gate_out.size(0) == num_tokens, "gate_out token count mismatch");
++  TORCH_CHECK(k_out.size(0) == num_tokens, "k_out token count mismatch");
++  TORCH_CHECK(
++      position_ids.size(0) == num_tokens, "position_ids token count mismatch");
++  TORCH_CHECK(
++      q_gate.size(1) == num_heads_q * head_dim * 2,
++      "q_gate shape must be [tokens, num_heads_q * head_dim * 2]");
++  TORCH_CHECK(
++      k.size(1) == num_heads_k * head_dim,
++      "k shape must be [tokens, num_heads_k * head_dim]");
++  TORCH_CHECK(
++      q_out.size(1) == num_heads_q * head_dim,
++      "q_out shape must be [tokens, num_heads_q * head_dim]");
++  TORCH_CHECK(
++      gate_out.size(1) == num_heads_q * head_dim,
++      "gate_out shape must be [tokens, num_heads_q * head_dim]");
++  TORCH_CHECK(
++      k_out.size(1) == num_heads_k * head_dim,
++      "k_out shape must be [tokens, num_heads_k * head_dim]");
++  TORCH_CHECK(
++      q_gate.scalar_type() == k.scalar_type() &&
++          q_gate.scalar_type() == q_out.scalar_type() &&
++          q_gate.scalar_type() == gate_out.scalar_type() &&
++          q_gate.scalar_type() == k_out.scalar_type() &&
++          q_gate.scalar_type() == q_weight.scalar_type() &&
++          q_gate.scalar_type() == k_weight.scalar_type(),
++      "q_gate, k, outputs, q_weight and k_weight must have the same dtype");
++
++  VLLM_DISPATCH_HALF_TYPES(
++      q_gate.scalar_type(), "fused_qgate_qk_norm_rope", [&] {
++        using qkv_scalar_t = scalar_t;
++        VLLM_DISPATCH_FLOATING_TYPES(
++            cos_sin_cache.scalar_type(), "fused_qgate_qk_norm_rope_cache", [&] {
++              using cache_scalar_t = scalar_t;
++              vllm::launch_fused_qgate_qk_norm_rope<
++                  qkv_scalar_t,
++                  cache_scalar_t>(
++                  q_gate,
++                  k,
++                  q_out,
++                  gate_out,
++                  k_out,
++                  static_cast<int>(num_tokens),
++                  static_cast<int>(q_gate.stride(0)),
++                  static_cast<int>(k.stride(0)),
++                  static_cast<int>(num_heads_q),
++                  static_cast<int>(num_heads_k),
++                  static_cast<int>(head_dim),
++                  static_cast<int>(cos_sin_cache.size(1)),
++                  static_cast<float>(eps),
++                  q_weight,
++                  k_weight,
++                  cos_sin_cache,
++                  is_neox,
++                  position_ids);
++            });
++      });
++}
+diff --git a/csrc/ops.h b/csrc/ops.h
+index 4fee815..162d452 100644
+--- a/csrc/ops.h
++++ b/csrc/ops.h
+@@ -95,6 +95,22 @@ void fused_qk_norm_rope(
+     torch::Tensor& position_ids,
+     int64_t forced_token_heads_per_warp);
+ 
++void fused_qgate_qk_norm_rope(
++    torch::Tensor& q_gate,
++    torch::Tensor& k,
++    torch::Tensor& q_out,
++    torch::Tensor& gate_out,
++    torch::Tensor& k_out,
++    int64_t num_heads_q,
++    int64_t num_heads_k,
++    int64_t head_dim,
++    double eps,
++    torch::Tensor& q_weight,
++    torch::Tensor& k_weight,
++    torch::Tensor& cos_sin_cache,
++    bool is_neox,
++    torch::Tensor& position_ids);
++
+ void reshape_and_cache(
+     torch::Tensor& key,
+     torch::Tensor& value,
+diff --git a/csrc/torch_bindings.cpp b/csrc/torch_bindings.cpp
+index d36c6a2..df2d994 100644
+--- a/csrc/torch_bindings.cpp
++++ b/csrc/torch_bindings.cpp
+@@ -116,6 +116,14 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
+       "int forced_token_heads_per_warp=-1) -> ()");
+   ops.impl("fused_qk_norm_rope", torch::kXPU, &fused_qk_norm_rope);
+ 
++  ops.def(
++      "fused_qgate_qk_norm_rope(Tensor q_gate, Tensor k, "
++      "Tensor! q_out, Tensor! gate_out, Tensor! k_out, "
++      "int num_heads_q, int num_heads_k, int head_dim, float eps, "
++      "Tensor q_weight, Tensor k_weight, Tensor cos_sin_cache, "
++      "bool is_neox, Tensor position_ids) -> ()");
++  ops.impl("fused_qgate_qk_norm_rope", torch::kXPU, &fused_qgate_qk_norm_rope);
++
+   // Compute FP8 quantized tensor for given scaling factor.
+   ops.def(
+       "static_scaled_fp8_quant(Tensor! result, Tensor input, Tensor scale, "

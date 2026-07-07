@@ -1,0 +1,112 @@
+diff --git a/vllm/model_executor/models/qwen3_next.py b/vllm/model_executor/models/qwen3_next.py
+index db13f533e..d63ffb7f0 100644
+--- a/vllm/model_executor/models/qwen3_next.py
++++ b/vllm/model_executor/models/qwen3_next.py
+@@ -96,6 +96,13 @@ def _env_int(name: str, default: int) -> int:
+         return default
+ 
+ 
++def _env_bool(name: str, default: bool = False) -> bool:
++    raw = os.environ.get(name)
++    if raw is None:
++        return default
++    return raw.strip().lower() in ("1", "true", "yes", "on")
++
++
+ def _tensor_digest(tensor: torch.Tensor, row: int) -> dict[str, object]:
+     row_tensor = tensor[row].detach().to(torch.float32)
+     row_cpu = row_tensor.cpu()
+@@ -498,7 +505,65 @@ class Qwen3NextAttention(nn.Module):
+         with timed_region("qwen3_next.full_attention.qkv_proj"):
+             qkv, _ = self.qkv_proj(hidden_states)
+ 
+-        if self.attn_output_gate:
++        use_fused_qgate_qk_rope = False
++        positions_for_rope = positions
++        if self.attn_output_gate and _env_bool(
++                "VLLM_XPU_QWEN3NEXT_FUSED_QGATE_QK_ROPE"):
++            if qkv.device.type != "xpu":
++                use_fused_qgate_qk_rope = False
++            elif positions.ndim == 1:
++                use_fused_qgate_qk_rope = True
++            elif (
++                positions.ndim == 2
++                and positions.shape[0] == 3
++                and _env_bool("VLLM_XPU_MROPE_TEXT_ONLY_FASTPATH")
++            ):
++                # Text-only M-RoPE repeats T/H/W positions; the ordinary XPU
++                # RoPE cache is equivalent and avoids the Python interleave path.
++                positions_for_rope = positions[0]
++                use_fused_qgate_qk_rope = True
++
++        if use_fused_qgate_qk_rope:
++            if not hasattr(torch.ops._C, "fused_qgate_qk_norm_rope"):
++                raise RuntimeError(
++                    "VLLM_XPU_QWEN3NEXT_FUSED_QGATE_QK_ROPE=1 but "
++                    "torch.ops._C.fused_qgate_qk_norm_rope is unavailable")
++            q_gate, k, v = qkv.split(
++                [self.q_size * 2, self.kv_size, self.kv_size], dim=-1
++            )
++            q = torch.empty(
++                qkv.shape[0],
++                self.q_size,
++                device=qkv.device,
++                dtype=qkv.dtype,
++            )
++            gate = torch.empty_like(q)
++            k_out = torch.empty(
++                qkv.shape[0],
++                self.kv_size,
++                device=qkv.device,
++                dtype=qkv.dtype,
++            )
++            cos_sin_cache = self.rotary_emb._match_cos_sin_cache_dtype(qkv)
++            with timed_region("qwen3_next.full_attention.qgate_qk_norm_rope"):
++                torch.ops._C.fused_qgate_qk_norm_rope(
++                    q_gate,
++                    k,
++                    q,
++                    gate,
++                    k_out,
++                    self.num_heads,
++                    self.num_kv_heads,
++                    self.head_dim,
++                    self.q_norm.variance_epsilon,
++                    self.q_norm.weight.data,
++                    self.k_norm.weight.data,
++                    cos_sin_cache,
++                    self.rotary_emb.is_neox_style,
++                    positions_for_rope.view(-1),
++                )
++            k = k_out
++        elif self.attn_output_gate:
+             q_gate, k, v = qkv.split(
+                 [self.q_size * 2, self.kv_size, self.kv_size], dim=-1
+             )
+@@ -510,16 +575,17 @@ class Qwen3NextAttention(nn.Module):
+         else:
+             q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
+ 
+-        with timed_region("qwen3_next.full_attention.qk_norm"):
+-            q = self.q_norm(q.view(-1, self.num_heads, self.head_dim)).view(
+-                -1, self.num_heads * self.head_dim
+-            )
+-            k = self.k_norm(k.view(-1, self.num_kv_heads, self.head_dim)).view(
+-                -1, self.num_kv_heads * self.head_dim
+-            )
++        if not use_fused_qgate_qk_rope:
++            with timed_region("qwen3_next.full_attention.qk_norm"):
++                q = self.q_norm(q.view(-1, self.num_heads, self.head_dim)).view(
++                    -1, self.num_heads * self.head_dim
++                )
++                k = self.k_norm(k.view(-1, self.num_kv_heads, self.head_dim)).view(
++                    -1, self.num_kv_heads * self.head_dim
++                )
+ 
+-        with timed_region("qwen3_next.full_attention.rotary"):
+-            q, k = self.rotary_emb(positions, q, k)
++            with timed_region("qwen3_next.full_attention.rotary"):
++                q, k = self.rotary_emb(positions, q, k)
+ 
+         with timed_region("qwen3_next.full_attention.attn"):
+             attn_output = self.attn(q, k, v)

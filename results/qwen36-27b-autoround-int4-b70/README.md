@@ -135,6 +135,10 @@ Current fastest quality-gated variant:
   native vs `67.300` PyTorch slot-management fallback), so the native slot-copy
   patch is preserved as an experiment artifact rather than the promoted source
   of this record.
+- latest target-body no-win: direct Q-gate Q/K norm + RoPE fusion beat the
+  isolated full-attention section in microbench, but the strict endpoint screen
+  regressed to `66.953 tok/s` with quality skipped. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-qgate-direct-qkrope-no-win.md`.
 
 Previous fastest quality-gated variant:
 

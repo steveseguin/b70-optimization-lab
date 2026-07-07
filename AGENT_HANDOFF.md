@@ -106,6 +106,14 @@ Active target as of the latest switch request:
   plus SiLU multiply was faster in microbench but not bit-exact and lost a
   same-window 4-GPU endpoint A/B. Active source was reverted; patch artifact is
   preserved as no-win evidence. Do not repeat this Python routing version.
+- Latest full-attention Q/K norm + RoPE screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-qgate-direct-qkrope-no-win.md`.
+  A purpose-built native `_C.fused_qgate_qk_norm_rope` op beat the isolated
+  section in microbench by about `0.06 ms` per full-attention layer, but the
+  strict endpoint screen lost (`66.953 tok/s`, quality skipped) against the
+  current `68.236 tok/s` record and `68.296 tok/s` current-recipe support row.
+  Active source and `_C.abi3.so` were restored; patches/results are preserved
+  only so we do not rediscover the same dead end.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and
