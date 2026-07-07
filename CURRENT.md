@@ -253,9 +253,16 @@ Fastest quality-gated practical variant:
   `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6b-allscope-summary-20260707.json`
   with note
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`.
-  This remains far below endpoint threshold. Do not endpoint-wire this draft,
-  do not submit it to LocalMaxxing, and do not repeat small EAGLE
-  corpus/objective/all-scope variations without a new mechanism;
+  A target-hidden trajectory distillation follow-up is also closed:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-hidden-distill-no-endpoint.md`
+  and
+  `experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-hidden-distill-screen-20260707.json`.
+  The best variant reached only `1.1023445463812436` mean accepted
+  (`+0.000883` over v6b all-scope baseline), so hidden-state auxiliary loss is
+  mechanically available but not an endpoint trigger. This remains far below
+  endpoint threshold. Do not endpoint-wire this draft, do not submit it to
+  LocalMaxxing, and do not repeat small EAGLE corpus/objective/all-scope or
+  hidden-distill variations without a new mechanism;
 - latest EAGLE top-k/reranker diagnostic:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
   A default-off evaluator mode, `--accept-mode topk-oracle`, shows real

@@ -1,0 +1,412 @@
+diff --git a/scripts/train-qwen27-ex0bit-eagle3-adapter.py b/scripts/train-qwen27-ex0bit-eagle3-adapter.py
+index bfb3f0aeb..34af5cb5d 100644
+--- a/scripts/train-qwen27-ex0bit-eagle3-adapter.py
++++ b/scripts/train-qwen27-ex0bit-eagle3-adapter.py
+@@ -115,6 +115,23 @@ def parse_args() -> argparse.Namespace:
+         default=0.0,
+         help="Margin used by --rollout-rank-loss-weight.",
+     )
++    parser.add_argument(
++        "--hidden-loss-weight",
++        type=float,
++        default=0.0,
++        help=(
++            "Optional target-hidden distillation weight. When >0, train the "
++            "draft hidden trajectory to match the next target hidden_state row "
++            "in addition to token CE. This is diagnostic and preserves the "
++            "exported checkpoint format."
++        ),
++    )
++    parser.add_argument(
++        "--hidden-loss-type",
++        default="cosine",
++        choices=("cosine", "mse"),
++        help="Hidden distillation loss used with --hidden-loss-weight.",
++    )
+     return parser.parse_args()
+ 
+ 
+@@ -176,14 +193,17 @@ def load_rows(
+     dataset_dirs: list[str],
+     target_to_draft: torch.Tensor,
+     max_rows: int,
++    include_target_hidden: bool = False,
+ ) -> tuple[TensorDataset, dict[str, Any]]:
+     aux_rows: list[torch.Tensor] = []
+     input_ids: list[torch.Tensor] = []
+     positions: list[torch.Tensor] = []
+     labels: list[torch.Tensor] = []
++    target_hidden_rows: list[torch.Tensor] = []
+     samples = 0
+     rows = 0
+     covered = 0
++    hidden_rows = 0
+     skipped_samples = 0
+     for path in iter_sample_paths(dataset_dirs):
+         sample = torch_load(path)
+@@ -199,23 +219,35 @@ def load_rows(
+         if length < 2:
+             skipped_samples += 1
+             continue
++        if include_target_hidden and "hidden_state" not in sample:
++            skipped_samples += 1
++            continue
+         pos = make_positions(sample, length)
+         row_aux = aux[: length - 1].contiguous()
+         row_inputs = next_ids[: length - 1].contiguous()
+         row_positions = pos[: length - 1].contiguous()
+         row_labels = target_to_draft[next_ids[1:length]].contiguous()
++        row_target_hidden = None
++        if include_target_hidden:
++            hidden = sample["hidden_state"]
++            row_target_hidden = hidden[1:length].contiguous()
+         if max_rows and rows + int(row_labels.numel()) > max_rows:
+             keep = max(0, max_rows - rows)
+             row_aux = row_aux[:keep]
+             row_inputs = row_inputs[:keep]
+             row_positions = row_positions[:keep]
+             row_labels = row_labels[:keep]
++            if row_target_hidden is not None:
++                row_target_hidden = row_target_hidden[:keep]
+         if row_labels.numel() == 0:
+             break
+         aux_rows.append(row_aux)
+         input_ids.append(row_inputs)
+         positions.append(row_positions)
+         labels.append(row_labels)
++        if row_target_hidden is not None:
++            target_hidden_rows.append(row_target_hidden)
++            hidden_rows += int(row_target_hidden.shape[0])
+         samples += 1
+         rows += int(row_labels.numel())
+         covered += int((row_labels != -100).sum().item())
+@@ -223,18 +255,26 @@ def load_rows(
+             break
+     if rows == 0:
+         raise RuntimeError("No trainable rows loaded")
+-    dataset = TensorDataset(
++    tensors = [
+         torch.cat(aux_rows, dim=0),
+         torch.cat(input_ids, dim=0),
+         torch.cat(positions, dim=0),
+         torch.cat(labels, dim=0),
+-    )
++    ]
++    if include_target_hidden:
++        if hidden_rows != rows:
++            raise RuntimeError(
++                f"Loaded {hidden_rows} target-hidden rows for {rows} labels")
++        tensors.append(torch.cat(target_hidden_rows, dim=0))
++    dataset = TensorDataset(*tensors)
+     summary = {
+         "dataset_dirs": dataset_dirs,
+         "samples": samples,
+         "rows": rows,
+         "covered_rows": covered,
+         "coverage": covered / rows if rows else 0.0,
++        "include_target_hidden": include_target_hidden,
++        "target_hidden_rows": hidden_rows,
+         "skipped_samples": skipped_samples,
+     }
+     return dataset, summary
+@@ -246,15 +286,18 @@ def load_windows(
+     target_to_draft: torch.Tensor,
+     rollout_steps: int,
+     max_rows: int,
++    include_target_hidden: bool = False,
+ ) -> tuple[TensorDataset, dict[str, Any]]:
+     aux_rows: list[torch.Tensor] = []
+     input_windows: list[torch.Tensor] = []
+     position_windows: list[torch.Tensor] = []
+     label_windows: list[torch.Tensor] = []
++    target_hidden_windows: list[torch.Tensor] = []
+     samples = 0
+     windows = 0
+     rows = 0
+     covered = 0
++    hidden_rows = 0
+     skipped_samples = 0
+     for path in iter_sample_paths(dataset_dirs):
+         sample = torch_load(path)
+@@ -270,6 +313,9 @@ def load_windows(
+         if length <= rollout_steps:
+             skipped_samples += 1
+             continue
++        if include_target_hidden and "hidden_state" not in sample:
++            skipped_samples += 1
++            continue
+         pos = make_positions(sample, length)
+         available_starts = length - rollout_steps
+         if max_rows:
+@@ -286,10 +332,16 @@ def load_windows(
+         row_inputs = next_ids[input_idx].contiguous()
+         row_positions = pos[input_idx].contiguous()
+         row_labels = target_to_draft[next_ids[label_idx]].contiguous()
++        row_target_hidden = None
++        if include_target_hidden:
++            row_target_hidden = sample["hidden_state"][label_idx].contiguous()
+         aux_rows.append(row_aux)
+         input_windows.append(row_inputs)
+         position_windows.append(row_positions)
+         label_windows.append(row_labels)
++        if row_target_hidden is not None:
++            target_hidden_windows.append(row_target_hidden)
++            hidden_rows += int(row_target_hidden.numel() // row_target_hidden.shape[-1])
+         samples += 1
+         windows += int(row_labels.shape[0])
+         row_count = int(row_labels.numel())
+@@ -299,12 +351,18 @@ def load_windows(
+             break
+     if rows == 0:
+         raise RuntimeError("No rollout windows loaded")
+-    dataset = TensorDataset(
++    tensors = [
+         torch.cat(aux_rows, dim=0),
+         torch.cat(input_windows, dim=0),
+         torch.cat(position_windows, dim=0),
+         torch.cat(label_windows, dim=0),
+-    )
++    ]
++    if include_target_hidden:
++        if hidden_rows != rows:
++            raise RuntimeError(
++                f"Loaded {hidden_rows} target-hidden rows for {rows} labels")
++        tensors.append(torch.cat(target_hidden_windows, dim=0))
++    dataset = TensorDataset(*tensors)
+     summary = {
+         "dataset_dirs": dataset_dirs,
+         "samples": samples,
+@@ -313,11 +371,28 @@ def load_windows(
+         "covered_rows": covered,
+         "coverage": covered / rows if rows else 0.0,
+         "rollout_steps": rollout_steps,
++        "include_target_hidden": include_target_hidden,
++        "target_hidden_rows": hidden_rows,
+         "skipped_samples": skipped_samples,
+     }
+     return dataset, summary
+ 
+ 
++def hidden_distill_loss(
++    pred: torch.Tensor,
++    target_hidden: torch.Tensor,
++    *,
++    loss_type: str,
++) -> torch.Tensor:
++    pred_float = pred.to(torch.float32)
++    target_float = target_hidden.to(device=pred.device, dtype=torch.float32)
++    if loss_type == "cosine":
++        return (1.0 - F.cosine_similarity(pred_float, target_float, dim=-1)).mean()
++    if loss_type == "mse":
++        return F.mse_loss(pred_float, target_float)
++    raise ValueError(loss_type)
++
++
+ def configure_train_scope(model: Any, scope: str) -> list[torch.nn.Parameter]:
+     model.requires_grad_(False)
+     if scope == "lm-head":
+@@ -351,9 +426,10 @@ def evaluate_teacher_forced(
+     exact = 0
+     loss_total = 0.0
+     with torch.no_grad():
+-        for batch_idx, (aux, input_ids, positions, labels) in enumerate(loader):
++        for batch_idx, batch in enumerate(loader):
+             if max_batches and batch_idx >= max_batches:
+                 break
++            aux, input_ids, positions, labels = batch[:4]
+             aux = aux.to(device=device, dtype=dtype).reshape(aux.shape[0], 1, -1)
+             input_ids = input_ids.to(device=device).view(-1, 1)
+             positions = positions.to(device=device).view(-1, 1)
+@@ -388,6 +464,7 @@ def compute_rollout_loss(
+     input_windows: torch.Tensor,
+     position_windows: torch.Tensor,
+     labels: torch.Tensor,
++    target_hidden_windows: torch.Tensor | None,
+     device: torch.device,
+     dtype: torch.dtype,
+     loss_decay: float,
+@@ -395,6 +472,8 @@ def compute_rollout_loss(
+     dead_loss_floor: float,
+     rank_loss_weight: float,
+     rank_margin: float,
++    hidden_loss_weight: float,
++    hidden_loss_type: str,
+ ) -> tuple[torch.Tensor, dict[str, Any]]:
+     batch = int(labels.shape[0])
+     steps = int(labels.shape[1])
+@@ -402,6 +481,8 @@ def compute_rollout_loss(
+     input_windows = input_windows.to(device=device)
+     position_windows = position_windows.to(device=device)
+     labels = labels.to(device=device)
++    if target_hidden_windows is not None:
++        target_hidden_windows = target_hidden_windows.to(device=device, dtype=dtype)
+     current_hidden = model.combine_hidden_states(aux)
+     current_ids = input_windows[:, :1]
+     current_positions = position_windows[:, :1]
+@@ -414,6 +495,7 @@ def compute_rollout_loss(
+     exact_by_step: list[int] = []
+     loss_by_step: list[float] = []
+     rank_loss_by_step: list[float] = []
++    hidden_loss_by_step: list[float] = []
+     for step in range(steps):
+         pred = model(current_ids, current_positions, current_hidden)[:, -1, :]
+         logits = model.lm_head(pred).float() * float(model.shape.logit_scale)
+@@ -434,6 +516,7 @@ def compute_rollout_loss(
+         exact = 0
+         step_loss_value = 0.0
+         rank_loss_value = 0.0
++        hidden_loss_value = 0.0
+         proposed = torch.argmax(logits, dim=-1)
+         if live:
+             step_loss = F.cross_entropy(
+@@ -460,6 +543,18 @@ def compute_rollout_loss(
+                 loss_terms.append(rank_loss * rank_weight)
+                 loss_weight_total += rank_weight
+                 rank_loss_value = float(rank_loss.detach().item())
++            if hidden_loss_weight > 0.0 and target_hidden_windows is not None:
++                hidden_loss_mask = primary_mask
++                target_hidden = target_hidden_windows[:, step, :]
++                h_loss = hidden_distill_loss(
++                    pred[hidden_loss_mask],
++                    target_hidden[hidden_loss_mask],
++                    loss_type=hidden_loss_type,
++                )
++                hidden_weight = weight * hidden_loss_weight
++                loss_terms.append(h_loss * hidden_weight)
++                loss_weight_total += hidden_weight
++                hidden_loss_value = float(h_loss.detach().item())
+         if dead and dead_loss_floor > 0.0:
+             dead_loss = F.cross_entropy(logits[dead_mask], step_labels[dead_mask])
+             dead_weight = (loss_decay ** step) * dead_loss_floor
+@@ -468,6 +563,7 @@ def compute_rollout_loss(
+         exact_by_step.append(exact)
+         loss_by_step.append(step_loss_value)
+         rank_loss_by_step.append(rank_loss_value)
++        hidden_loss_by_step.append(hidden_loss_value)
+         if survival_mode == "hard":
+             alive = alive & covered_mask & (proposed == step_labels)
+         if step + 1 < input_windows.shape[1]:
+@@ -493,6 +589,7 @@ def compute_rollout_loss(
+         "exact_by_step": exact_by_step,
+         "loss_by_step": loss_by_step,
+         "rank_loss_by_step": rank_loss_by_step,
++        "hidden_loss_by_step": hidden_loss_by_step,
+         "exact_rate_by_step": [
+             (exact_by_step[i] / live_by_step[i])
+             if live_by_step[i] else 0.0
+@@ -502,6 +599,8 @@ def compute_rollout_loss(
+         "dead_loss_floor": dead_loss_floor,
+         "rank_loss_weight": rank_loss_weight,
+         "rank_margin": rank_margin,
++        "hidden_loss_weight": hidden_loss_weight,
++        "hidden_loss_type": hidden_loss_type,
+     }
+     return loss, stats
+ 
+@@ -570,6 +669,8 @@ def main() -> int:
+         raise ValueError("--rollout-dead-loss-floor must be >= 0")
+     if args.rollout_rank_loss_weight < 0.0:
+         raise ValueError("--rollout-rank-loss-weight must be >= 0")
++    if args.hidden_loss_weight < 0.0:
++        raise ValueError("--hidden-loss-weight must be >= 0")
+     torch.manual_seed(args.seed)
+     eval_module = load_eval_module()
+     device = eval_module.choose_device(args.device)
+@@ -585,6 +686,7 @@ def main() -> int:
+         dataset_dirs=args.dataset_dir,
+         target_to_draft=target_to_draft,
+         max_rows=args.max_train_rows,
++        include_target_hidden=args.hidden_loss_weight > 0.0,
+     )
+     train_dataset = train_rows_dataset
+     train_objective = "teacher_forced_rows"
+@@ -594,6 +696,7 @@ def main() -> int:
+             target_to_draft=target_to_draft,
+             rollout_steps=args.rollout_steps,
+             max_rows=args.max_train_rows,
++            include_target_hidden=args.hidden_loss_weight > 0.0,
+         )
+         train_objective = "autoregressive_rollout_windows"
+         train_summary = {
+@@ -607,6 +710,7 @@ def main() -> int:
+             dataset_dirs=args.heldout_dir,
+             target_to_draft=target_to_draft,
+             max_rows=args.max_heldout_rows,
++            include_target_hidden=False,
+         )
+     generator = torch.Generator()
+     generator.manual_seed(args.seed)
+@@ -640,7 +744,12 @@ def main() -> int:
+             step += 1
+             optimizer.zero_grad(set_to_none=True)
+             if args.rollout_steps <= 1:
+-                aux, input_ids, positions, labels = batch
++                if args.hidden_loss_weight > 0.0:
++                    aux, input_ids, positions, labels, target_hidden = batch
++                    target_hidden = target_hidden.to(device=device, dtype=dtype)
++                else:
++                    aux, input_ids, positions, labels = batch
++                    target_hidden = None
+                 aux = aux.to(device=device, dtype=dtype).reshape(
+                     aux.shape[0], 1, -1)
+                 input_ids = input_ids.to(device=device).view(-1, 1)
+@@ -654,15 +763,39 @@ def main() -> int:
+                 logits = (
+                     model.lm_head(pred).float() * float(model.shape.logit_scale))
+                 loss = F.cross_entropy(logits[mask], labels[mask])
+-                batch_stats: dict[str, Any] = {}
++                hidden_loss_value = 0.0
++                if args.hidden_loss_weight > 0.0 and target_hidden is not None:
++                    h_loss = hidden_distill_loss(
++                        pred[mask],
++                        target_hidden[mask],
++                        loss_type=args.hidden_loss_type,
++                    )
++                    loss = loss + h_loss * args.hidden_loss_weight
++                    hidden_loss_value = float(h_loss.detach().item())
++                batch_stats = {
++                    "hidden_loss": hidden_loss_value,
++                    "hidden_loss_weight": args.hidden_loss_weight,
++                    "hidden_loss_type": args.hidden_loss_type,
++                }
+             else:
+-                aux, input_windows, position_windows, labels = batch
++                if args.hidden_loss_weight > 0.0:
++                    (
++                        aux,
++                        input_windows,
++                        position_windows,
++                        labels,
++                        target_hidden_windows,
++                    ) = batch
++                else:
++                    aux, input_windows, position_windows, labels = batch
++                    target_hidden_windows = None
+                 loss, batch_stats = compute_rollout_loss(
+                     model=model,
+                     aux=aux,
+                     input_windows=input_windows,
+                     position_windows=position_windows,
+                     labels=labels,
++                    target_hidden_windows=target_hidden_windows,
+                     device=device,
+                     dtype=dtype,
+                     loss_decay=args.rollout_loss_decay,
+@@ -670,6 +803,8 @@ def main() -> int:
+                     dead_loss_floor=args.rollout_dead_loss_floor,
+                     rank_loss_weight=args.rollout_rank_loss_weight,
+                     rank_margin=args.rollout_rank_margin,
++                    hidden_loss_weight=args.hidden_loss_weight,
++                    hidden_loss_type=args.hidden_loss_type,
+                 )
+             loss.backward()
+             optimizer.step()
+@@ -733,6 +868,8 @@ def main() -> int:
+         "rollout_dead_loss_floor": args.rollout_dead_loss_floor,
+         "rollout_rank_loss_weight": args.rollout_rank_loss_weight,
+         "rollout_rank_margin": args.rollout_rank_margin,
++        "hidden_loss_weight": args.hidden_loss_weight,
++        "hidden_loss_type": args.hidden_loss_type,
+         "epochs": args.epochs,
+         "batch_size": args.batch_size,
+         "lr": args.lr,

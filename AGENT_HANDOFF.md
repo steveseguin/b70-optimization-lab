@@ -404,8 +404,13 @@ Active target as of the latest switch request:
   note
   `notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`). Treat this as
   diagnostic evidence that data quality and simple all-parameter unfreezing
-  help only a little; do not repeat small EAGLE corpus/objective/train-scope
-  sweeps without a different architecture or loss mechanism.
+  help only a little. A target-hidden trajectory distillation follow-up is
+  closed too: best `1.1023445463812436` mean accepted, only `+0.000883` over
+  the v6b all-scope baseline
+  (`diagnostics/qwen27-eagle3-hidden-distill-screen-20260707.json`;
+  `notes/2026-07-07-eagle3-hidden-distill-no-endpoint.md`). Do not repeat
+  small EAGLE corpus/objective/train-scope/hidden-distill sweeps without a
+  different architecture or loss mechanism.
   The latest top-k/reranker diagnostic adds one important nuance:
   `scripts/evaluate-qwen27-ex0bit-eagle3-offline.py --accept-mode topk-oracle`
   shows candidate-list headroom on the best v6b all-scope checkpoint

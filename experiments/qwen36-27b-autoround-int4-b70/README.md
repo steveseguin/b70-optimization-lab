@@ -189,8 +189,15 @@ Latest stronger-drafter result:
   draft scored `1.036561331974176` on v6b heldout; v6b training summary
   `diagnostics/qwen27-ex0bit-eagle3-v6b-stepfocus-summary-20260707.json`
   improved only to `1.0597349643221203` mean accepted. This is still far below
-  endpoint threshold and closes small EAGLE data/objective sweeps until there
-  is a new mechanism.
+  endpoint threshold. A four-GPU all-scope follow-up reached only
+  `1.1014610941216445` mean accepted
+  (`diagnostics/qwen27-ex0bit-eagle3-v6b-allscope-summary-20260707.json`),
+  and a target-hidden trajectory distillation follow-up reached only
+  `1.1023445463812436` mean accepted
+  (`diagnostics/qwen27-eagle3-hidden-distill-screen-20260707.json`;
+  `notes/2026-07-07-eagle3-hidden-distill-no-endpoint.md`). This closes small
+  EAGLE data/objective/all-scope/hidden-distill sweeps until there is a new
+  mechanism.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 - Target-body timing refresh:

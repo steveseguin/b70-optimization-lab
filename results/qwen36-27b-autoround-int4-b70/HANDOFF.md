@@ -243,7 +243,15 @@ Current fastest quality-gated variant:
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-v6b-allscope-no-endpoint.md`.
   This is not endpoint-worthy and should not be submitted to LocalMaxxing.
-  Do not repeat simple full-draft unfreezing from these v6b checkpoints.
+  A target-hidden trajectory distillation follow-up from that all-scope line
+  also failed to move accepted depth: best
+  `1.1023445463812436` mean accepted (`+0.000883` over v6b all-scope),
+  summarized at
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-eagle3-hidden-distill-screen-20260707.json`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-hidden-distill-no-endpoint.md`.
+  Do not repeat simple full-draft unfreezing or hidden-distill sweeps from
+  these v6b checkpoints.
   A follow-up top-k oracle / reranker diagnostic found real candidate-list
   headroom but no cheap extractor: top-2/top-4/top-8/top-16 oracle mean
   accepted was `1.504` / `1.884` / `2.249` / `2.590`, but the first diagonal

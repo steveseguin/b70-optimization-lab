@@ -1,0 +1,152 @@
+{
+  "schema": "qwen27_eagle3_hidden_distill_screen",
+  "date_utc": "2026-07-07",
+  "classification": "diagnostic_only_no_endpoint",
+  "valid_headline_throughput": false,
+  "raw_root": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-hidden-distill-v6b-20260707T091438Z",
+  "dataset_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z",
+  "start_checkpoint": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6b-allscope-20260707T075425Z/all-r5-lr3e-6-decay0p25/checkpoint",
+  "target_model": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "train_datasets": [
+    "shard-0/dataset",
+    "shard-1/dataset",
+    "shard-2/dataset"
+  ],
+  "heldout_dataset": "shard-3/dataset",
+  "dataset_summary": {
+    "train_samples": 288,
+    "train_row_rows": 45689,
+    "train_rollout_rows": 222685,
+    "train_rollout_windows": 44537,
+    "train_coverage": 0.976248961537598,
+    "heldout_samples": 96,
+    "heldout_starts": 14715
+  },
+  "baseline_references": {
+    "v6b_all_scope_best_mean_accepted": 1.1014610941216445,
+    "v6b_stepfocus_best_mean_accepted": 1.0597349643221203,
+    "v5_survival_best_mean_accepted": 1.340886544011544,
+    "endpoint_threshold_mean_accepted": "1.5-2.0 minimum before endpoint/kernel work"
+  },
+  "tooling_change": {
+    "script": "scripts/train-qwen27-ex0bit-eagle3-adapter.py",
+    "new_args": [
+      "--hidden-loss-weight",
+      "--hidden-loss-type"
+    ],
+    "summary": "Adds optional target-hidden trajectory distillation on rollout windows. When hidden loss is enabled, qwen36_eagle_sequence_v2 samples must include hidden_state and the trainer adds a cosine or MSE loss between the predicted draft hidden row and the next target hidden_state row."
+  },
+  "results": [
+    {
+      "label": "hdist-all-r5-lr1e-6-w0p02-decay0p5",
+      "gpu": 2,
+      "train_scope": "all",
+      "lr": 0.000001,
+      "epochs": 3,
+      "batch_size": 64,
+      "rollout_steps": 5,
+      "rollout_loss_decay": 0.5,
+      "rollout_survival_mode": "hard",
+      "rollout_dead_loss_floor": 0.05,
+      "rollout_rank_loss_weight": 0.10,
+      "hidden_loss_type": "cosine",
+      "hidden_loss_weight": 0.02,
+      "heldout_rollout_mean_accepted": 1.1023445463812436,
+      "delta_vs_v6b_all_scope": 0.0008834522595991096,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {
+        "0": 6174,
+        "1": 4285,
+        "2": 2317,
+        "3": 970,
+        "4": 453,
+        "5": 516
+      },
+      "summary_path": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-hidden-distill-v6b-20260707T091438Z/hdist-all-r5-lr1e-6-w0p02-decay0p5/heldout-rollout-all-summary.json"
+    },
+    {
+      "label": "hdist-fc-r5-lr3e-6-w0p02-decay1",
+      "gpu": 0,
+      "train_scope": "fc-lm-head",
+      "lr": 0.000003,
+      "epochs": 3,
+      "batch_size": 64,
+      "rollout_steps": 5,
+      "rollout_loss_decay": 1.0,
+      "rollout_survival_mode": "hard",
+      "rollout_dead_loss_floor": 0.05,
+      "rollout_rank_loss_weight": 0.10,
+      "hidden_loss_type": "cosine",
+      "hidden_loss_weight": 0.02,
+      "heldout_rollout_mean_accepted": 1.1015290519877676,
+      "delta_vs_v6b_all_scope": 0.00006795786612316267,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {
+        "0": 6171,
+        "1": 4290,
+        "2": 2319,
+        "3": 973,
+        "4": 448,
+        "5": 514
+      },
+      "summary_path": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-hidden-distill-v6b-20260707T091438Z/hdist-fc-r5-lr3e-6-w0p02-decay1/heldout-rollout-all-summary.json"
+    },
+    {
+      "label": "hdist-fc-r5-lr3e-6-w0p05-decay1",
+      "gpu": 1,
+      "train_scope": "fc-lm-head",
+      "lr": 0.000003,
+      "epochs": 3,
+      "batch_size": 64,
+      "rollout_steps": 5,
+      "rollout_loss_decay": 1.0,
+      "rollout_survival_mode": "hard",
+      "rollout_dead_loss_floor": 0.05,
+      "rollout_rank_loss_weight": 0.10,
+      "hidden_loss_type": "cosine",
+      "hidden_loss_weight": 0.05,
+      "heldout_rollout_mean_accepted": 1.1014610941216445,
+      "delta_vs_v6b_all_scope": 0.0,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {
+        "0": 6174,
+        "1": 4290,
+        "2": 2314,
+        "3": 973,
+        "4": 449,
+        "5": 515
+      },
+      "summary_path": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-hidden-distill-v6b-20260707T091438Z/hdist-fc-r5-lr3e-6-w0p05-decay1/heldout-rollout-all-summary.json"
+    },
+    {
+      "label": "hdist-all-r5-lr1e-6-w0p05-decay0p5",
+      "gpu": 3,
+      "train_scope": "all",
+      "lr": 0.000001,
+      "epochs": 3,
+      "batch_size": 64,
+      "rollout_steps": 5,
+      "rollout_loss_decay": 0.5,
+      "rollout_survival_mode": "hard",
+      "rollout_dead_loss_floor": 0.05,
+      "rollout_rank_loss_weight": 0.10,
+      "hidden_loss_type": "cosine",
+      "hidden_loss_weight": 0.05,
+      "heldout_rollout_mean_accepted": 1.1011892626571527,
+      "delta_vs_v6b_all_scope": -0.00027183146449177055,
+      "heldout_rollout_starts": 14715,
+      "heldout_rollout_histogram": {
+        "0": 6174,
+        "1": 4290,
+        "2": 2315,
+        "3": 971,
+        "4": 454,
+        "5": 511
+      },
+      "summary_path": "/mnt/usb-models/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-hidden-distill-v6b-20260707T091438Z/hdist-all-r5-lr1e-6-w0p05-decay0p5/heldout-rollout-all-summary.json"
+    }
+  ],
+  "best_label": "hdist-all-r5-lr1e-6-w0p02-decay0p5",
+  "best_mean_accepted": 1.1023445463812436,
+  "decision": "No endpoint speed run and no LocalMaxxing submission. Target-hidden trajectory distillation is mechanically working but provides only a +0.000883 accepted-token lift over the v6b all-scope baseline and remains far below the 1.5-2.0 endpoint threshold."
+}
