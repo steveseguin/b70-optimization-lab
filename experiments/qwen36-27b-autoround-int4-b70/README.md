@@ -164,7 +164,9 @@ Latest stronger-drafter result:
   summary:
   `diagnostics/qwen27-ex0bit-eagle3-v6-survival-train-summary-20260707.json`,
   best `1.0069670776061594` mean accepted. This is a useful offline gain, but
-  still below endpoint threshold.
+  still below endpoint threshold. V6 continuation summary:
+  `diagnostics/qwen27-ex0bit-eagle3-v6-continuation-summary-20260707.json`,
+  best `1.0401492607812575` mean accepted from `rollout_loss_decay=0.5`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 

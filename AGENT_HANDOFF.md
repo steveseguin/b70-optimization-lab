@@ -295,11 +295,12 @@ Active target as of the latest switch request:
   one omitted five-token sample. The v5 survival checkpoint reaches only
   `0.8866846157479571` mean accepted on v6 heldout shard 3 (`42342` starts).
   A v6 survival-objective sweep from that checkpoint improved v6 heldout to
-  `1.0069670776061594` mean accepted, still below endpoint threshold. Current
-  next move is offline-only: continue from the v6 best with smaller LR/longer
-  training or improve v6 data quality with concrete snippets. Do not
-  endpoint-test this adapted draft unless offline mean accepted reaches at
-  least `1.5-2.0`.
+  `1.0069670776061594` mean accepted, and a first-step-emphasis continuation
+  (`rollout_loss_decay=0.5`) improved it to `1.0401492607812575`, still below
+  endpoint threshold. Current next move is offline-only: continue from the
+  `decay0p5` v6 best with stronger first-step emphasis / shorter rollout, or
+  improve v6 data quality with concrete snippets. Do not endpoint-test this
+  adapted draft unless offline mean accepted reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

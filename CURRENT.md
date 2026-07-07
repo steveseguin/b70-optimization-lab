@@ -148,9 +148,12 @@ Fastest quality-gated practical variant:
   confirming a real distribution shift. V6 survival-objective training from
   that checkpoint improved the v6 heldout result to
   `1.0069670776061594` mean accepted (`53.78%` step-1 exact, `47.28%`
-  step-2 conditional, `47.27%` step-3 conditional). This is progress, but
-  still below endpoint threshold. Continue offline training research, not vLLM
-  endpoint wiring, until offline mean accepted reaches at least `1.5-2.0`;
+  step-2 conditional, `47.27%` step-3 conditional). A continuation sweep then
+  showed first-step weighting is useful: `rollout_loss_decay=0.5` improved v6
+  heldout to `1.0401492607812575` mean accepted (`55.14%` step-1 exact,
+  `48.21%` step-2 conditional, `47.24%` step-3 conditional). This is progress,
+  but still below endpoint threshold. Continue offline training research, not
+  vLLM endpoint wiring, until offline mean accepted reaches at least `1.5-2.0`;
 
 Previous fastest quality-gated practical variant:
 
@@ -316,7 +319,8 @@ Previous fastest quality-gated practical variant:
   is complete (`179650` usable rows, zero continuity breaks). The current v5
   survival checkpoint reached only `0.8866846157479571` mean accepted on the
   v6 heldout split; a v6 survival-objective training sweep improved that to
-  `1.0069670776061594`, still below endpoint threshold. Do not endpoint-test
+  `1.0069670776061594`, and a first-step-emphasis continuation improved it to
+  `1.0401492607812575`, still below endpoint threshold. Do not endpoint-test
   this draft until offline accepted depth approaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;

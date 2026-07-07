@@ -1147,3 +1147,46 @@ Next credible offline moves:
 
 Do not submit these results to LocalMaxxing and do not describe them as
 throughput. They are offline acceptance diagnostics only.
+
+## V6 continuation / first-step-emphasis sweep
+
+Training run:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-v6-continuation-20260707T023130Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v6-continuation-summary-20260707.json
+```
+
+Setup: initialized from the prior v6 best checkpoint
+`surv-r5-lr2e-5-hard-rank0p1`, trained on v6 shards 0-2, evaluated on shard 3,
+and screened lower LR plus `rollout_loss_decay < 1` variants. This sweep used
+the tracked wrapper case `SWEEP=v6-continuation`.
+
+Results:
+
+| variant | mean accepted | step-1 exact | step-2 cond | step-3 cond |
+|---|---:|---:|---:|---:|
+| `v6cont-r5-lr1e-5-decay0p5-rank0p1` | **`1.0401492607812575`** | `55.14%` | `48.21%` | `47.24%` |
+| `v6cont-r5-lr1e-5-decay0p75-rank0p1` | `1.0270889424212366` | `54.46%` | `48.00%` | `47.53%` |
+| `v6cont-r5-lr1e-5-decay1-rank0p1` | `1.0134618109678333` | `53.93%` | `47.55%` | `47.56%` |
+| `v6cont-r5-lr5e-6-decay1-rank0p1` | `1.0072268669406264` | `53.79%` | `47.31%` | `47.35%` |
+
+Interpretation:
+
+- first-step emphasis is the useful lever: `decay=0.5` moved v6 heldout mean
+  accepted `1.0069670776061594 -> 1.0401492607812575`;
+- simply lowering LR with equal step weight is flat (`1.0072-1.0135`);
+- step-1 exact improved to `55.14%`, but downstream conditional exact remains
+  around `47-48%`, so this is not close to endpoint threshold yet;
+- still offline-only, `valid_headline_throughput=false`.
+
+Next credible offline move: continue from `v6cont-r5-lr1e-5-decay0p5-rank0p1`
+and screen stronger first-step emphasis / shorter rollout objectives
+(`decay=0.25`, `rollout_steps=3`) against one equal-weight control. If the mean
+accepted curve stays below roughly `1.1`, switch to data quality (v6b concrete
+snippet/log/table prompts) or a wider train scope rather than endpoint work.
