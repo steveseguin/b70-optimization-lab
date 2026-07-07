@@ -1,0 +1,669 @@
+{
+  "conditional_denominators": [
+    8192,
+    5923,
+    3335
+  ],
+  "conditional_exact": [
+    0.7230224609375,
+    0.5630592605098768,
+    0.5025487256371814
+  ],
+  "conditional_topk": [
+    0.9228515625,
+    0.8078676346446058,
+    0.7544227886056971
+  ],
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-3/dataset"
+  ],
+  "device": "xpu:0",
+  "draft_lm_head": "int4-dequant",
+  "dtype": "bfloat16",
+  "elapsed_s": 145.04059328208677,
+  "families": {
+    "observability-logs": {
+      "mean_accepted": 1.334716796875,
+      "samples": 62,
+      "starts": 8192
+    }
+  },
+  "first_mismatch_examples": [
+    {
+      "accepted": 1,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 4087,
+        "step": 2,
+        "target": 3300,
+        "target_index": 2,
+        "topk_hit": true
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 0
+    },
+    {
+      "accepted": 0,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 4087,
+        "step": 1,
+        "target": 3300,
+        "target_index": 2,
+        "topk_hit": true
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 1
+    },
+    {
+      "accepted": 0,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 449,
+        "step": 1,
+        "target": 264,
+        "target_index": 3,
+        "topk_hit": true
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 2
+    },
+    {
+      "accepted": 2,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 279,
+        "step": 3,
+        "target": 874,
+        "target_index": 7,
+        "topk_hit": false
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 4
+    },
+    {
+      "accepted": 1,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 279,
+        "step": 2,
+        "target": 874,
+        "target_index": 7,
+        "topk_hit": false
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 5
+    },
+    {
+      "accepted": 0,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 279,
+        "step": 1,
+        "target": 874,
+        "target_index": 7,
+        "topk_hit": false
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 6
+    },
+    {
+      "accepted": 1,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 557,
+        "step": 2,
+        "target": 47801,
+        "target_index": 9,
+        "topk_hit": false
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 7
+    },
+    {
+      "accepted": 0,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 557,
+        "step": 1,
+        "target": 47801,
+        "target_index": 9,
+        "topk_hit": false
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 8
+    },
+    {
+      "accepted": 1,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 3766,
+        "step": 2,
+        "target": 5064,
+        "target_index": 11,
+        "topk_hit": true
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 9
+    },
+    {
+      "accepted": 2,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 1622,
+        "step": 3,
+        "target": 1876,
+        "target_index": 14,
+        "topk_hit": true
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 11
+    },
+    {
+      "accepted": 2,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 248046,
+        "step": 3,
+        "target": 271,
+        "target_index": 16,
+        "topk_hit": false
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 13
+    },
+    {
+      "accepted": 2,
+      "family": "observability-logs",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 5328,
+        "step": 3,
+        "target": 1206,
+        "target_index": 17,
+        "topk_hit": true
+      },
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "start": 14
+    }
+  ],
+  "headline_warning": "Offline draft acceptance only; not an endpoint speed, not a fresh-response throughput claim, not LocalMaxxing-submit eligible.",
+  "histogram_accepted_draft_tokens": {
+    "0": 2269,
+    "1": 2588,
+    "2": 1659,
+    "3": 1676
+  },
+  "max_samples": 0,
+  "max_starts": 8192,
+  "max_steps": 3,
+  "mean_accepted_draft_tokens": 1.334716796875,
+  "mean_visible_tokens_if_k_step_spec": 2.334716796875,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "model_extra_path": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e/model_extra_tensors.safetensors",
+  "num_files_seen": 288,
+  "purpose": "diagnostic_intrinsic_mtp_offline_acceptance_probe",
+  "rope": "local_text_only_neox_rope_fallback",
+  "samples": [
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4130434782608696,
+      "prompt_id": "observability-logs-direct-answer-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s3-000864-observability-logs-direct-answer-messy-user-a79d3339.pt",
+      "starts": 138
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4285714285714286,
+      "prompt_id": "observability-logs-direct-answer-terse",
+      "sample": "sample-000001-chatcmpl-qwen27-eagle3-aux-v2-s3-000865-observability-logs-direct-answer-terse-a3b5e480.pt",
+      "starts": 42
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.5213675213675213,
+      "prompt_id": "observability-logs-direct-answer-code-first",
+      "sample": "sample-000002-chatcmpl-qwen27-eagle3-aux-v2-s3-000866-observability-logs-direct-answer-code-first-b911a700.pt",
+      "starts": 117
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2123287671232876,
+      "prompt_id": "observability-logs-direct-answer-table-first",
+      "sample": "sample-000003-chatcmpl-qwen27-eagle3-aux-v2-s3-000867-observability-logs-direct-answer-table-first-8bb48d9d.pt",
+      "starts": 146
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.25,
+      "prompt_id": "observability-logs-direct-answer-structured-only",
+      "sample": "sample-000004-chatcmpl-qwen27-eagle3-aux-v2-s3-000868-observability-logs-direct-answer-structured-only-a9a931d2.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3095238095238095,
+      "prompt_id": "observability-logs-direct-answer-reviewer",
+      "sample": "sample-000005-chatcmpl-qwen27-eagle3-aux-v2-s3-000869-observability-logs-direct-answer-reviewer-8ab91ab7.pt",
+      "starts": 84
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3205128205128205,
+      "prompt_id": "observability-logs-compare-options-messy-user",
+      "sample": "sample-000006-chatcmpl-qwen27-eagle3-aux-v2-s3-000870-observability-logs-compare-options-messy-user-ba5de28d.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.1217948717948718,
+      "prompt_id": "observability-logs-compare-options-terse",
+      "sample": "sample-000007-chatcmpl-qwen27-eagle3-aux-v2-s3-000871-observability-logs-compare-options-terse-830daf7b.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3717948717948718,
+      "prompt_id": "observability-logs-compare-options-code-first",
+      "sample": "sample-000008-chatcmpl-qwen27-eagle3-aux-v2-s3-000872-observability-logs-compare-options-code-first-96295e40.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.435897435897436,
+      "prompt_id": "observability-logs-compare-options-table-first",
+      "sample": "sample-000009-chatcmpl-qwen27-eagle3-aux-v2-s3-000873-observability-logs-compare-options-table-first-b233ab33.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2692307692307692,
+      "prompt_id": "observability-logs-compare-options-structured-only",
+      "sample": "sample-000010-chatcmpl-qwen27-eagle3-aux-v2-s3-000874-observability-logs-compare-options-structured-only-b78fee52.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.1474358974358974,
+      "prompt_id": "observability-logs-compare-options-reviewer",
+      "sample": "sample-000011-chatcmpl-qwen27-eagle3-aux-v2-s3-000875-observability-logs-compare-options-reviewer-91c6cc5d.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.5032258064516129,
+      "prompt_id": "observability-logs-rewrite-messy-user",
+      "sample": "sample-000012-chatcmpl-qwen27-eagle3-aux-v2-s3-000876-observability-logs-rewrite-messy-user-9f5e00e8.pt",
+      "starts": 155
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2469135802469136,
+      "prompt_id": "observability-logs-rewrite-terse",
+      "sample": "sample-000013-chatcmpl-qwen27-eagle3-aux-v2-s3-000877-observability-logs-rewrite-terse-bee30f47.pt",
+      "starts": 81
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4615384615384615,
+      "prompt_id": "observability-logs-rewrite-code-first",
+      "sample": "sample-000014-chatcmpl-qwen27-eagle3-aux-v2-s3-000878-observability-logs-rewrite-code-first-bbce3949.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2820512820512822,
+      "prompt_id": "observability-logs-rewrite-table-first",
+      "sample": "sample-000015-chatcmpl-qwen27-eagle3-aux-v2-s3-000879-observability-logs-rewrite-table-first-93f251ae.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.5512820512820513,
+      "prompt_id": "observability-logs-rewrite-structured-only",
+      "sample": "sample-000016-chatcmpl-qwen27-eagle3-aux-v2-s3-000880-observability-logs-rewrite-structured-only-8c9f70bd.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3717948717948718,
+      "prompt_id": "observability-logs-rewrite-reviewer",
+      "sample": "sample-000017-chatcmpl-qwen27-eagle3-aux-v2-s3-000881-observability-logs-rewrite-reviewer-b62ad5bf.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.5377358490566038,
+      "prompt_id": "observability-logs-summarize-context-messy-user",
+      "sample": "sample-000018-chatcmpl-qwen27-eagle3-aux-v2-s3-000882-observability-logs-summarize-context-messy-user-9b80563b.pt",
+      "starts": 106
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 0.38461538461538464,
+      "prompt_id": "observability-logs-summarize-context-terse",
+      "sample": "sample-000019-chatcmpl-qwen27-eagle3-aux-v2-s3-000883-observability-logs-summarize-context-terse-95bdcb0f.pt",
+      "starts": 13
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4102564102564104,
+      "prompt_id": "observability-logs-summarize-context-code-first",
+      "sample": "sample-000020-chatcmpl-qwen27-eagle3-aux-v2-s3-000884-observability-logs-summarize-context-code-first-83335239.pt",
+      "starts": 117
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4873949579831933,
+      "prompt_id": "observability-logs-summarize-context-table-first",
+      "sample": "sample-000021-chatcmpl-qwen27-eagle3-aux-v2-s3-000885-observability-logs-summarize-context-table-first-b0bb0d62.pt",
+      "starts": 119
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4807692307692308,
+      "prompt_id": "observability-logs-summarize-context-structured-only",
+      "sample": "sample-000022-chatcmpl-qwen27-eagle3-aux-v2-s3-000886-observability-logs-summarize-context-structured-only-bfe79e32.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.289655172413793,
+      "prompt_id": "observability-logs-summarize-context-reviewer",
+      "sample": "sample-000023-chatcmpl-qwen27-eagle3-aux-v2-s3-000887-observability-logs-summarize-context-reviewer-9b106889.pt",
+      "starts": 145
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.271186440677966,
+      "prompt_id": "observability-logs-extract-table-messy-user",
+      "sample": "sample-000024-chatcmpl-qwen27-eagle3-aux-v2-s3-000888-observability-logs-extract-table-messy-user-a5090723.pt",
+      "starts": 59
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2352941176470589,
+      "prompt_id": "observability-logs-extract-table-terse",
+      "sample": "sample-000025-chatcmpl-qwen27-eagle3-aux-v2-s3-000889-observability-logs-extract-table-terse-bde91499.pt",
+      "starts": 17
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3174603174603174,
+      "prompt_id": "observability-logs-extract-table-code-first",
+      "sample": "sample-000026-chatcmpl-qwen27-eagle3-aux-v2-s3-000890-observability-logs-extract-table-code-first-92f1ed62.pt",
+      "starts": 126
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4083333333333334,
+      "prompt_id": "observability-logs-extract-table-table-first",
+      "sample": "sample-000027-chatcmpl-qwen27-eagle3-aux-v2-s3-000891-observability-logs-extract-table-table-first-8f9a7ff8.pt",
+      "starts": 120
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.38,
+      "prompt_id": "observability-logs-extract-table-structured-only",
+      "sample": "sample-000028-chatcmpl-qwen27-eagle3-aux-v2-s3-000892-observability-logs-extract-table-structured-only-9b5cd18c.pt",
+      "starts": 50
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.1923076923076923,
+      "prompt_id": "observability-logs-extract-table-reviewer",
+      "sample": "sample-000029-chatcmpl-qwen27-eagle3-aux-v2-s3-000893-observability-logs-extract-table-reviewer-80072e4c.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.5,
+      "prompt_id": "observability-logs-emit-json-yaml-messy-user",
+      "sample": "sample-000030-chatcmpl-qwen27-eagle3-aux-v2-s3-000894-observability-logs-emit-json-yaml-messy-user-a4ccb627.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2884615384615385,
+      "prompt_id": "observability-logs-emit-json-yaml-terse",
+      "sample": "sample-000031-chatcmpl-qwen27-eagle3-aux-v2-s3-000895-observability-logs-emit-json-yaml-terse-92ba1500.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.314102564102564,
+      "prompt_id": "observability-logs-emit-json-yaml-code-first",
+      "sample": "sample-000032-chatcmpl-qwen27-eagle3-aux-v2-s3-000896-observability-logs-emit-json-yaml-code-first-98a24459.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4679487179487178,
+      "prompt_id": "observability-logs-emit-json-yaml-table-first",
+      "sample": "sample-000033-chatcmpl-qwen27-eagle3-aux-v2-s3-000897-observability-logs-emit-json-yaml-table-first-bbe9bbac.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.5256410256410255,
+      "prompt_id": "observability-logs-emit-json-yaml-structured-only",
+      "sample": "sample-000034-chatcmpl-qwen27-eagle3-aux-v2-s3-000898-observability-logs-emit-json-yaml-structured-only-b2036d0e.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4487179487179487,
+      "prompt_id": "observability-logs-emit-json-yaml-reviewer",
+      "sample": "sample-000035-chatcmpl-qwen27-eagle3-aux-v2-s3-000899-observability-logs-emit-json-yaml-reviewer-b6cd5fec.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2884615384615385,
+      "prompt_id": "observability-logs-write-code-tests-messy-user",
+      "sample": "sample-000036-chatcmpl-qwen27-eagle3-aux-v2-s3-000900-observability-logs-write-code-tests-messy-user-982dbe07.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.391025641025641,
+      "prompt_id": "observability-logs-write-code-tests-terse",
+      "sample": "sample-000037-chatcmpl-qwen27-eagle3-aux-v2-s3-000901-observability-logs-write-code-tests-terse-91bddaa3.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3461538461538463,
+      "prompt_id": "observability-logs-write-code-tests-code-first",
+      "sample": "sample-000038-chatcmpl-qwen27-eagle3-aux-v2-s3-000902-observability-logs-write-code-tests-code-first-83ed77d6.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4038461538461537,
+      "prompt_id": "observability-logs-write-code-tests-table-first",
+      "sample": "sample-000039-chatcmpl-qwen27-eagle3-aux-v2-s3-000903-observability-logs-write-code-tests-table-first-9d1c6729.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4935897435897436,
+      "prompt_id": "observability-logs-write-code-tests-structured-only",
+      "sample": "sample-000040-chatcmpl-qwen27-eagle3-aux-v2-s3-000904-observability-logs-write-code-tests-structured-only-93c69691.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.1217948717948718,
+      "prompt_id": "observability-logs-write-code-tests-reviewer",
+      "sample": "sample-000041-chatcmpl-qwen27-eagle3-aux-v2-s3-000905-observability-logs-write-code-tests-reviewer-9f0c2a1b.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.558139534883721,
+      "prompt_id": "observability-logs-diagnose-logs-messy-user",
+      "sample": "sample-000042-chatcmpl-qwen27-eagle3-aux-v2-s3-000906-observability-logs-diagnose-logs-messy-user-8b1b068e.pt",
+      "starts": 86
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.0833333333333333,
+      "prompt_id": "observability-logs-diagnose-logs-terse",
+      "sample": "sample-000043-chatcmpl-qwen27-eagle3-aux-v2-s3-000907-observability-logs-diagnose-logs-terse-a28a55e2.pt",
+      "starts": 12
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4,
+      "prompt_id": "observability-logs-diagnose-logs-code-first",
+      "sample": "sample-000044-chatcmpl-qwen27-eagle3-aux-v2-s3-000908-observability-logs-diagnose-logs-code-first-951d305d.pt",
+      "starts": 105
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.1987179487179487,
+      "prompt_id": "observability-logs-diagnose-logs-table-first",
+      "sample": "sample-000045-chatcmpl-qwen27-eagle3-aux-v2-s3-000909-observability-logs-diagnose-logs-table-first-954d869a.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3653846153846154,
+      "prompt_id": "observability-logs-diagnose-logs-structured-only",
+      "sample": "sample-000046-chatcmpl-qwen27-eagle3-aux-v2-s3-000910-observability-logs-diagnose-logs-structured-only-a47f2c62.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4615384615384615,
+      "prompt_id": "observability-logs-diagnose-logs-reviewer",
+      "sample": "sample-000047-chatcmpl-qwen27-eagle3-aux-v2-s3-000911-observability-logs-diagnose-logs-reviewer-b5a61c10.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4051724137931034,
+      "prompt_id": "observability-logs-calculate-messy-user",
+      "sample": "sample-000048-chatcmpl-qwen27-eagle3-aux-v2-s3-000912-observability-logs-calculate-messy-user-97c654d0.pt",
+      "starts": 116
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.1346153846153846,
+      "prompt_id": "observability-logs-calculate-terse",
+      "sample": "sample-000049-chatcmpl-qwen27-eagle3-aux-v2-s3-000913-observability-logs-calculate-terse-a590913a.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4294871794871795,
+      "prompt_id": "observability-logs-calculate-code-first",
+      "sample": "sample-000050-chatcmpl-qwen27-eagle3-aux-v2-s3-000914-observability-logs-calculate-code-first-91a4c372.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2884615384615385,
+      "prompt_id": "observability-logs-calculate-table-first",
+      "sample": "sample-000051-chatcmpl-qwen27-eagle3-aux-v2-s3-000915-observability-logs-calculate-table-first-baa474e4.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3782051282051282,
+      "prompt_id": "observability-logs-calculate-structured-only",
+      "sample": "sample-000052-chatcmpl-qwen27-eagle3-aux-v2-s3-000916-observability-logs-calculate-structured-only-ac6a5ec3.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3974358974358974,
+      "prompt_id": "observability-logs-calculate-reviewer",
+      "sample": "sample-000053-chatcmpl-qwen27-eagle3-aux-v2-s3-000917-observability-logs-calculate-reviewer-a71a210e.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.1153846153846154,
+      "prompt_id": "observability-logs-draft-email-messy-user",
+      "sample": "sample-000054-chatcmpl-qwen27-eagle3-aux-v2-s3-000918-observability-logs-draft-email-messy-user-a18a4d75.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 0.8525641025641025,
+      "prompt_id": "observability-logs-draft-email-terse",
+      "sample": "sample-000055-chatcmpl-qwen27-eagle3-aux-v2-s3-000919-observability-logs-draft-email-terse-bfd36494.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.0256410256410255,
+      "prompt_id": "observability-logs-draft-email-code-first",
+      "sample": "sample-000056-chatcmpl-qwen27-eagle3-aux-v2-s3-000920-observability-logs-draft-email-code-first-9b40fd74.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3461538461538463,
+      "prompt_id": "observability-logs-draft-email-table-first",
+      "sample": "sample-000057-chatcmpl-qwen27-eagle3-aux-v2-s3-000921-observability-logs-draft-email-table-first-b59da610.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.4038461538461537,
+      "prompt_id": "observability-logs-draft-email-structured-only",
+      "sample": "sample-000058-chatcmpl-qwen27-eagle3-aux-v2-s3-000922-observability-logs-draft-email-structured-only-ab683d00.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.2564102564102564,
+      "prompt_id": "observability-logs-draft-email-reviewer",
+      "sample": "sample-000059-chatcmpl-qwen27-eagle3-aux-v2-s3-000923-observability-logs-draft-email-reviewer-bddecaf3.pt",
+      "starts": 156
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 1.3277310924369747,
+      "prompt_id": "observability-logs-ambiguous-answer-messy-user",
+      "sample": "sample-000060-chatcmpl-qwen27-eagle3-aux-v2-s3-000924-observability-logs-ambiguous-answer-messy-user-a0367ae5.pt",
+      "starts": 119
+    },
+    {
+      "family": "observability-logs",
+      "mean_accepted": 0.9714285714285714,
+      "prompt_id": "observability-logs-ambiguous-answer-terse",
+      "sample": "sample-000061-chatcmpl-qwen27-eagle3-aux-v2-s3-000925-observability-logs-ambiguous-answer-terse-a46c8d3a.pt",
+      "starts": 35
+    }
+  ],
+  "start_stride": 1,
+  "starts": 8192,
+  "valid_headline_throughput": false
+}

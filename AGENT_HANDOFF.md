@@ -124,6 +124,18 @@ Active target as of the latest switch request:
   restored. Do not repeat small RMS/GDN-output wrapper fusion as the next
   speed lane; target accepted tokens per verifier step, graph-safe GDN
   transaction work, or a producer-integrated LM-head shortcut instead.
+- Latest intrinsic Qwen MTP adaptation screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-intrinsic-mtp-adaptation-screen.md`.
+  New scripts `scripts/evaluate-qwen27-intrinsic-mtp-offline.py` and
+  `scripts/train-qwen27-intrinsic-mtp-adapter.py` can evaluate and train
+  mergeable `model_extra_tensors.safetensors` MTP candidates. The best v6
+  direct `mtp.fc.weight` candidate improved offline acceptance under both BF16
+  and endpoint-style INT4-dequant draft heads, but endpoint validation was a
+  no-win: strict fresh speed `67.4025 tok/s` with quality skipped, and branch
+  trace accepted draft prefix `1.5773`, worse than the current recipe trace
+  `1.6727`. Do not repeat the same v6 FC-only intrinsic-MTP training loop; use
+  endpoint-trace accepted-prefix behavior as the arbiter before spending speed
+  runs on future drafter candidates.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

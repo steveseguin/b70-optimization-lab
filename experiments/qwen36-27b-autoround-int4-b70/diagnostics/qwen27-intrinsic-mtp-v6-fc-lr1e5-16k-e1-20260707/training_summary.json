@@ -1,0 +1,66 @@
+{
+  "after": {
+    "conditional_denominators": [
+      8192,
+      6129,
+      3750
+    ],
+    "conditional_exact": [
+      0.7481689453125,
+      0.6118453255017132,
+      0.5632
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 2063,
+      "1": 2379,
+      "2": 1638,
+      "3": 2112
+    },
+    "mean_accepted_draft_tokens": 1.4637451171875,
+    "mean_visible_tokens_if_k_step_spec": 2.4637451171875,
+    "starts": 8192
+  },
+  "batch_size": 4,
+  "before": {
+    "conditional_denominators": [
+      8192,
+      5704,
+      3046
+    ],
+    "conditional_exact": [
+      0.6962890625,
+      0.5340112201963534,
+      0.4855548260013132
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 2488,
+      "1": 2658,
+      "2": 1567,
+      "3": 1479
+    },
+    "mean_accepted_draft_tokens": 1.2486572265625,
+    "mean_visible_tokens_if_k_step_spec": 2.2486572265625,
+    "starts": 8192
+  },
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-0/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-1/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-2/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-3/dataset"
+  ],
+  "elapsed_s": 262.0354761099443,
+  "epochs": 1,
+  "export": "model_extra_tensors.safetensors",
+  "headline_warning": "Offline draft acceptance only; endpoint strict fresh validation is required before any throughput claim or LocalMaxxing submission.",
+  "heldout_samples": 288,
+  "heldout_starts": 8192,
+  "lr": 1e-05,
+  "max_steps": 3,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "purpose": "diagnostic_intrinsic_mtp_mergeable_adapter_training",
+  "scope": "fc",
+  "seed": 27,
+  "train_starts": 16384,
+  "valid_headline_throughput": false,
+  "weight_decay": 0.0
+}

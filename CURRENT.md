@@ -167,6 +167,21 @@ Fastest quality-gated practical variant:
   the measured MTP3 branch surface is too narrow to be the primary `125+ tok/s`
   path by itself. Continue only if it is paired with a deeper target-tail /
   graph-safe state transaction or stronger draft source;
+- latest intrinsic-MTP adaptation screen:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-intrinsic-mtp-adaptation-screen.md`.
+  New tooling can evaluate and train mergeable intrinsic Qwen MTP parameters
+  from recorded sequence shards:
+  `scripts/evaluate-qwen27-intrinsic-mtp-offline.py` and
+  `scripts/train-qwen27-intrinsic-mtp-adapter.py`. The best v6 direct
+  `mtp.fc.weight` candidate looked strong offline (`1.3347 -> 1.6208` accepted
+  draft tokens on v6 shard 3 under endpoint-style INT4-dequant logits), but did
+  not transfer to the fixed realistic suite: strict fresh speed screen was only
+  `67.4025 tok/s` with quality skipped, and endpoint branch trace measured
+  mean accepted draft prefix `1.5773`, worse than the current recipe trace
+  `1.6727`. Do not repeat the same v6 FC-only intrinsic-MTP training loop as a
+  speed candidate. Future drafter work needs a better non-final-prompt corpus
+  that matches the strict suite distribution, or endpoint-trace accepted-prefix
+  improvement before any speed run;
 - latest stronger-drafter training screen:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
   Ex0bit EAGLE3/DFlash direct import is not viable, but the target-owned

@@ -1,0 +1,73 @@
+{
+  "conditional_denominators": [
+    2,
+    2,
+    1
+  ],
+  "conditional_exact": [
+    1.0,
+    0.5,
+    1.0
+  ],
+  "conditional_topk": [
+    1.0,
+    0.5,
+    1.0
+  ],
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-calib-20260704T101119Z/dataset-metadata-v2"
+  ],
+  "device": "xpu:0",
+  "dtype": "bfloat16",
+  "elapsed_s": 1.3722013540100306,
+  "families": {
+    "ops-runbook": {
+      "mean_accepted": 2.0,
+      "samples": 1,
+      "starts": 2
+    }
+  },
+  "first_mismatch_examples": [
+    {
+      "accepted": 1,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 326,
+        "step": 2,
+        "target": 6250,
+        "target_index": 2,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 0
+    }
+  ],
+  "headline_warning": "Offline draft acceptance only; not an endpoint speed, not a fresh-response throughput claim, not LocalMaxxing-submit eligible.",
+  "histogram_accepted_draft_tokens": {
+    "1": 1,
+    "3": 1
+  },
+  "max_samples": 1,
+  "max_starts": 2,
+  "max_steps": 3,
+  "mean_accepted_draft_tokens": 2.0,
+  "mean_visible_tokens_if_k_step_spec": 3.0,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "num_files_seen": 1,
+  "purpose": "diagnostic_intrinsic_mtp_offline_acceptance_probe",
+  "rope": "local_text_only_neox_rope_fallback",
+  "samples": [
+    {
+      "family": "ops-runbook",
+      "mean_accepted": 2.0,
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "starts": 2
+    }
+  ],
+  "start_stride": 1,
+  "starts": 2,
+  "valid_headline_throughput": false
+}

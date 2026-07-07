@@ -1,0 +1,516 @@
+{
+  "conditional_denominators": [
+    3744,
+    2750,
+    1549
+  ],
+  "conditional_exact": [
+    0.7345085470085471,
+    0.5632727272727273,
+    0.49128469980632666
+  ],
+  "conditional_topk": [
+    0.9353632478632479,
+    0.7952727272727272,
+    0.7211103938024532
+  ],
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagledata-v2-chat-calib-20260704T101119Z/dataset-metadata-v2"
+  ],
+  "device": "xpu:0",
+  "dtype": "bfloat16",
+  "elapsed_s": 67.95831610215828,
+  "families": {
+    "api-design-review": {
+      "mean_accepted": 1.5256410256410255,
+      "samples": 1,
+      "starts": 156
+    },
+    "architecture-summary": {
+      "mean_accepted": 1.3717948717948718,
+      "samples": 1,
+      "starts": 156
+    },
+    "benchmark-policy": {
+      "mean_accepted": 1.314102564102564,
+      "samples": 1,
+      "starts": 156
+    },
+    "cache-bug": {
+      "mean_accepted": 1.3397435897435896,
+      "samples": 1,
+      "starts": 156
+    },
+    "capacity-plan": {
+      "mean_accepted": 1.3846153846153846,
+      "samples": 1,
+      "starts": 156
+    },
+    "code-path-audit": {
+      "mean_accepted": 1.5576923076923077,
+      "samples": 1,
+      "starts": 156
+    },
+    "customer-root-cause": {
+      "mean_accepted": 1.2179487179487178,
+      "samples": 1,
+      "starts": 156
+    },
+    "handoff-note": {
+      "mean_accepted": 1.4487179487179487,
+      "samples": 1,
+      "starts": 156
+    },
+    "incident-questions": {
+      "mean_accepted": 1.2307692307692308,
+      "samples": 1,
+      "starts": 156
+    },
+    "indexing-plan": {
+      "mean_accepted": 1.2628205128205128,
+      "samples": 1,
+      "starts": 156
+    },
+    "kernel-change-review": {
+      "mean_accepted": 1.358974358974359,
+      "samples": 1,
+      "starts": 156
+    },
+    "long-context-plan": {
+      "mean_accepted": 1.2884615384615385,
+      "samples": 1,
+      "starts": 156
+    },
+    "migration-memo": {
+      "mean_accepted": 1.391025641025641,
+      "samples": 1,
+      "starts": 156
+    },
+    "ops-runbook": {
+      "mean_accepted": 1.4615384615384615,
+      "samples": 1,
+      "starts": 156
+    },
+    "optimization-stop-rule": {
+      "mean_accepted": 1.3076923076923077,
+      "samples": 1,
+      "starts": 156
+    },
+    "perf-experiment-template": {
+      "mean_accepted": 1.3782051282051282,
+      "samples": 1,
+      "starts": 156
+    },
+    "quality-gate-design": {
+      "mean_accepted": 1.1987179487179487,
+      "samples": 1,
+      "starts": 156
+    },
+    "release-retro": {
+      "mean_accepted": 1.3974358974358974,
+      "samples": 1,
+      "starts": 156
+    },
+    "router-design": {
+      "mean_accepted": 1.3717948717948718,
+      "samples": 1,
+      "starts": 156
+    },
+    "runtime-risk-register": {
+      "mean_accepted": 1.358974358974359,
+      "samples": 1,
+      "starts": 156
+    },
+    "scheduler-debug": {
+      "mean_accepted": 1.314102564102564,
+      "samples": 1,
+      "starts": 156
+    },
+    "security-brief": {
+      "mean_accepted": 1.3846153846153846,
+      "samples": 1,
+      "starts": 156
+    },
+    "support-playbook": {
+      "mean_accepted": 1.2692307692307692,
+      "samples": 1,
+      "starts": 156
+    },
+    "variance-method": {
+      "mean_accepted": 1.3012820512820513,
+      "samples": 1,
+      "starts": 156
+    }
+  },
+  "first_mismatch_examples": [
+    {
+      "accepted": 1,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 326,
+        "step": 2,
+        "target": 6250,
+        "target_index": 2,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 0
+    },
+    {
+      "accepted": 1,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 6250,
+        "step": 2,
+        "target": 25,
+        "target_index": 4,
+        "topk_hit": true
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 2
+    },
+    {
+      "accepted": 1,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 6250,
+        "step": 2,
+        "target": 9698,
+        "target_index": 5,
+        "topk_hit": true
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 3
+    },
+    {
+      "accepted": 1,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 326,
+        "step": 2,
+        "target": 38333,
+        "target_index": 6,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 4
+    },
+    {
+      "accepted": 0,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 326,
+        "step": 1,
+        "target": 38333,
+        "target_index": 6,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 5
+    },
+    {
+      "accepted": 1,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 38333,
+        "step": 2,
+        "target": 74246,
+        "target_index": 8,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 6
+    },
+    {
+      "accepted": 2,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 62373,
+        "step": 3,
+        "target": 50,
+        "target_index": 10,
+        "topk_hit": true
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 7
+    },
+    {
+      "accepted": 0,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 12,
+        "step": 1,
+        "target": 318,
+        "target_index": 9,
+        "topk_hit": true
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 8
+    },
+    {
+      "accepted": 2,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 8,
+        "step": 3,
+        "target": 11253,
+        "target_index": 12,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 9
+    },
+    {
+      "accepted": 1,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 8,
+        "step": 2,
+        "target": 11253,
+        "target_index": 12,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 10
+    },
+    {
+      "accepted": 2,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 19739,
+        "step": 3,
+        "target": 332,
+        "target_index": 15,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 12
+    },
+    {
+      "accepted": 2,
+      "family": "ops-runbook",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 40621,
+        "step": 3,
+        "target": 7288,
+        "target_index": 16,
+        "topk_hit": false
+      },
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "start": 13
+    }
+  ],
+  "headline_warning": "Offline draft acceptance only; not an endpoint speed, not a fresh-response throughput claim, not LocalMaxxing-submit eligible.",
+  "histogram_accepted_draft_tokens": {
+    "0": 994,
+    "1": 1201,
+    "2": 788,
+    "3": 761
+  },
+  "max_samples": 0,
+  "max_starts": 8192,
+  "max_steps": 3,
+  "mean_accepted_draft_tokens": 1.3514957264957266,
+  "mean_visible_tokens_if_k_step_spec": 2.3514957264957266,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "num_files_seen": 24,
+  "purpose": "diagnostic_intrinsic_mtp_offline_acceptance_probe",
+  "rope": "local_text_only_neox_rope_fallback",
+  "samples": [
+    {
+      "family": "ops-runbook",
+      "mean_accepted": 1.4615384615384615,
+      "prompt_id": "ops-runbook",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle-v2-000000-ops-runbook-9b850c71.pt",
+      "starts": 156
+    },
+    {
+      "family": "api-design-review",
+      "mean_accepted": 1.5256410256410255,
+      "prompt_id": "api-design-review",
+      "sample": "sample-000001-chatcmpl-qwen27-eagle-v2-000001-api-design-review-88d5cab3.pt",
+      "starts": 156
+    },
+    {
+      "family": "incident-questions",
+      "mean_accepted": 1.2307692307692308,
+      "prompt_id": "incident-questions",
+      "sample": "sample-000002-chatcmpl-qwen27-eagle-v2-000002-incident-questions-bc3404c2.pt",
+      "starts": 156
+    },
+    {
+      "family": "security-brief",
+      "mean_accepted": 1.3846153846153846,
+      "prompt_id": "security-brief",
+      "sample": "sample-000003-chatcmpl-qwen27-eagle-v2-000003-security-brief-a4b9ba1a.pt",
+      "starts": 156
+    },
+    {
+      "family": "indexing-plan",
+      "mean_accepted": 1.2628205128205128,
+      "prompt_id": "indexing-plan",
+      "sample": "sample-000004-chatcmpl-qwen27-eagle-v2-000004-indexing-plan-ad3a4037.pt",
+      "starts": 156
+    },
+    {
+      "family": "benchmark-policy",
+      "mean_accepted": 1.314102564102564,
+      "prompt_id": "benchmark-policy",
+      "sample": "sample-000005-chatcmpl-qwen27-eagle-v2-000005-benchmark-policy-ae3cfd06.pt",
+      "starts": 156
+    },
+    {
+      "family": "migration-memo",
+      "mean_accepted": 1.391025641025641,
+      "prompt_id": "migration-memo",
+      "sample": "sample-000006-chatcmpl-qwen27-eagle-v2-000006-migration-memo-98f9d576.pt",
+      "starts": 156
+    },
+    {
+      "family": "quality-gate-design",
+      "mean_accepted": 1.1987179487179487,
+      "prompt_id": "quality-gate-design",
+      "sample": "sample-000007-chatcmpl-qwen27-eagle-v2-000007-quality-gate-design-89870c28.pt",
+      "starts": 156
+    },
+    {
+      "family": "cache-bug",
+      "mean_accepted": 1.3397435897435896,
+      "prompt_id": "cache-bug",
+      "sample": "sample-000008-chatcmpl-qwen27-eagle-v2-000008-cache-bug-b4cb96ff.pt",
+      "starts": 156
+    },
+    {
+      "family": "capacity-plan",
+      "mean_accepted": 1.3846153846153846,
+      "prompt_id": "capacity-plan",
+      "sample": "sample-000009-chatcmpl-qwen27-eagle-v2-000009-capacity-plan-a78b0614.pt",
+      "starts": 156
+    },
+    {
+      "family": "code-path-audit",
+      "mean_accepted": 1.5576923076923077,
+      "prompt_id": "code-path-audit",
+      "sample": "sample-000010-chatcmpl-qwen27-eagle-v2-000010-code-path-audit-8222b0f1.pt",
+      "starts": 156
+    },
+    {
+      "family": "customer-root-cause",
+      "mean_accepted": 1.2179487179487178,
+      "prompt_id": "customer-root-cause",
+      "sample": "sample-000011-chatcmpl-qwen27-eagle-v2-000011-customer-root-cause-9b8ec5f1.pt",
+      "starts": 156
+    },
+    {
+      "family": "router-design",
+      "mean_accepted": 1.3717948717948718,
+      "prompt_id": "router-design",
+      "sample": "sample-000012-chatcmpl-qwen27-eagle-v2-000012-router-design-80ab4e9e.pt",
+      "starts": 156
+    },
+    {
+      "family": "perf-experiment-template",
+      "mean_accepted": 1.3782051282051282,
+      "prompt_id": "perf-experiment-template",
+      "sample": "sample-000013-chatcmpl-qwen27-eagle-v2-000013-perf-experiment-template-a2d6c316.pt",
+      "starts": 156
+    },
+    {
+      "family": "runtime-risk-register",
+      "mean_accepted": 1.358974358974359,
+      "prompt_id": "runtime-risk-register",
+      "sample": "sample-000014-chatcmpl-qwen27-eagle-v2-000014-runtime-risk-register-89575ceb.pt",
+      "starts": 156
+    },
+    {
+      "family": "release-retro",
+      "mean_accepted": 1.3974358974358974,
+      "prompt_id": "release-retro",
+      "sample": "sample-000015-chatcmpl-qwen27-eagle-v2-000015-release-retro-aeb89164.pt",
+      "starts": 156
+    },
+    {
+      "family": "support-playbook",
+      "mean_accepted": 1.2692307692307692,
+      "prompt_id": "support-playbook",
+      "sample": "sample-000016-chatcmpl-qwen27-eagle-v2-000016-support-playbook-881018d0.pt",
+      "starts": 156
+    },
+    {
+      "family": "architecture-summary",
+      "mean_accepted": 1.3717948717948718,
+      "prompt_id": "architecture-summary",
+      "sample": "sample-000017-chatcmpl-qwen27-eagle-v2-000017-architecture-summary-aa807d29.pt",
+      "starts": 156
+    },
+    {
+      "family": "scheduler-debug",
+      "mean_accepted": 1.314102564102564,
+      "prompt_id": "scheduler-debug",
+      "sample": "sample-000018-chatcmpl-qwen27-eagle-v2-000018-scheduler-debug-8773cdb9.pt",
+      "starts": 156
+    },
+    {
+      "family": "kernel-change-review",
+      "mean_accepted": 1.358974358974359,
+      "prompt_id": "kernel-change-review",
+      "sample": "sample-000019-chatcmpl-qwen27-eagle-v2-000019-kernel-change-review-9d9b4dd5.pt",
+      "starts": 156
+    },
+    {
+      "family": "handoff-note",
+      "mean_accepted": 1.4487179487179487,
+      "prompt_id": "handoff-note",
+      "sample": "sample-000020-chatcmpl-qwen27-eagle-v2-000020-handoff-note-a0331630.pt",
+      "starts": 156
+    },
+    {
+      "family": "long-context-plan",
+      "mean_accepted": 1.2884615384615385,
+      "prompt_id": "long-context-plan",
+      "sample": "sample-000021-chatcmpl-qwen27-eagle-v2-000021-long-context-plan-bf6d18ee.pt",
+      "starts": 156
+    },
+    {
+      "family": "variance-method",
+      "mean_accepted": 1.3012820512820513,
+      "prompt_id": "variance-method",
+      "sample": "sample-000022-chatcmpl-qwen27-eagle-v2-000022-variance-method-b0047b11.pt",
+      "starts": 156
+    },
+    {
+      "family": "optimization-stop-rule",
+      "mean_accepted": 1.3076923076923077,
+      "prompt_id": "optimization-stop-rule",
+      "sample": "sample-000023-chatcmpl-qwen27-eagle-v2-000023-optimization-stop-rule-92900d08.pt",
+      "starts": 156
+    }
+  ],
+  "start_stride": 1,
+  "starts": 3744,
+  "valid_headline_throughput": false
+}
