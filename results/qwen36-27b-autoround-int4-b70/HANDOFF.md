@@ -185,6 +185,11 @@ Current fastest quality-gated variant:
   step-1 exact, `55.32%` step-2 conditional, `57.29%` step-3 conditional,
   `3056` full-5 accepts). Checkpoint:
   `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260706T234959Z/cont-r5-lr2e-5-decay1/checkpoint`.
+  A disk-cleanup retry and accepted-prefix survival objective then raised the
+  offline diagnostic best to `1.340886544011544` mean accepted (`59.92%`
+  step-1 exact, `56.26%` step-2 conditional, `58.50%` step-3 conditional,
+  `3602` full-5 accepts). Current best diagnostic checkpoint:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T010510Z/surv-r5-lr2e-5-hard-rank0p1/checkpoint`.
   Key continuation summaries:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-weight-v4-summary-20260706.json`,
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-late-continuation-v4-summary-20260706.json`,
@@ -200,6 +205,12 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-heldout-baseline-summary-20260706.json`,
   and
   `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-deep-continuation-summary-20260707.json`.
+  Survival-objective summaries:
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-continuation4-summary-20260707.json`
+  and
+  `../../experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-survival-objective-summary-20260707.json`.
+  V6 broader chat-style aux-data collection is the active next move; suite:
+  `../../experiments/qwen36-27b-autoround-int4-b70/eagle-chat-corpus-v6-suite.json`.
   Still do not endpoint integrate until offline mean accepted reaches at least
   `1.5-2.0`.
 

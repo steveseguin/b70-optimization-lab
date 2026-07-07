@@ -136,7 +136,12 @@ Fastest quality-gated practical variant:
   `lr=2e-5` and reaches `1.2866838023088023` mean accepted (`59.02%` step-1
   exact, `55.32%` step-2 conditional, `57.29%` step-3 conditional, `3056`
   full-5 accepts). This confirms the lane was data-limited but is still below
-  endpoint threshold; continue training research, not vLLM endpoint wiring;
+  endpoint threshold. A continuation plus accepted-prefix survival objective
+  later improved the offline diagnostic best to `1.340886544011544` mean
+  accepted (`59.92%` step-1 exact, `56.26%` step-2 conditional, `58.50%`
+  step-3 conditional, `3602` full-5 accepts). V6 broader chat-style aux-data
+  collection is the current next move. Continue training research, not vLLM
+  endpoint wiring, until offline mean accepted reaches at least `1.5-2.0`;
 
 Previous fastest quality-gated practical variant:
 
@@ -297,7 +302,9 @@ Previous fastest quality-gated practical variant:
   meaningful progress but still below current MTP3 depth and below endpoint
   threshold. Continuation training reached only `1.0142045454545454` and shows
   overfit, so the next move is larger/more diverse target-owned data or a
-  survival-weighted objective. Do not endpoint-test this draft until offline
+  survival-weighted objective. The later v5 plus survival-objective best is
+  `1.340886544011544` mean accepted, and v6 broader chat-style data collection
+  is now in progress. Do not endpoint-test this draft until offline
   accepted depth approaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`;

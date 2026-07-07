@@ -284,10 +284,14 @@ Active target as of the latest switch request:
   best checkpoint uses `decay=1.0`, `lr=2e-5` and reaches
   `1.2866838023088023` mean accepted (`59.02%` step-1 exact, `55.32%`
   step-2 conditional, `57.29%` step-3 conditional, `3056` full-5 accepts).
-  This confirms the lane was data-limited but is still below endpoint
-  threshold; continue training research, not endpoint/kernel integration. Do
-  not endpoint-test this adapted draft unless offline mean accepted reaches at
-  least `1.5-2.0`.
+  A disk-cleanup retry plus accepted-prefix survival objective then raised the
+  offline diagnostic best to `1.340886544011544` mean accepted (`59.92%`
+  step-1 exact, `56.26%` step-2 conditional, `58.50%` step-3 conditional,
+  `3602` full-5 accepts). This confirms the lane is learning but is still
+  below endpoint threshold; continue training research, not endpoint/kernel
+  integration. V6 broader chat-style aux-data collection is the active next
+  move. Do not endpoint-test this adapted draft unless offline mean accepted
+  reaches at least `1.5-2.0`.
   See
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-ex0bit-eagle3-aux-probe-no-win.md`
   and

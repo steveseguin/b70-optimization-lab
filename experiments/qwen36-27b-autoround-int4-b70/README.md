@@ -142,11 +142,20 @@ Latest stronger-drafter result:
   previous v4-trained best scored `1.2001713564213565` mean accepted on the v5
   heldout shard, and v5 rollout-5 training improved that to
   `1.2866838023088023` (`59.02%` step-1 exact, `55.32%` step-2 conditional,
-  `57.29%` step-3 conditional, `3056` full-5 accepts). This is the current
-  diagnostic best but still below endpoint threshold. Summaries:
+  `57.29%` step-3 conditional, `3056` full-5 accepts). A disk-cleanup retry
+  plus accepted-prefix survival objective improved the current offline
+  diagnostic best to `1.340886544011544` mean accepted (`59.92%` step-1 exact,
+  `56.26%` step-2 conditional, `58.50%` step-3 conditional, `3602` full-5
+  accepts). This is progress but still below endpoint threshold. Summaries:
   `diagnostics/qwen27-ex0bit-eagle3-v5-heldout-baseline-summary-20260706.json`
   and
-  `diagnostics/qwen27-ex0bit-eagle3-v5-deep-continuation-summary-20260707.json`.
+  `diagnostics/qwen27-ex0bit-eagle3-v5-deep-continuation-summary-20260707.json`,
+  plus
+  `diagnostics/qwen27-ex0bit-eagle3-v5-continuation4-summary-20260707.json`
+  and
+  `diagnostics/qwen27-ex0bit-eagle3-v5-survival-objective-summary-20260707.json`.
+  V6 broader chat-style aux-data collection is the active next move; suite:
+  `eagle-chat-corpus-v6-suite.json`.
   See
   `notes/2026-07-06-ex0bit-eagle3-target-adaptation-screen.md`.
 
