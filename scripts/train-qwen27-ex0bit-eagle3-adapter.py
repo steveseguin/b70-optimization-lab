@@ -56,6 +56,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dtype", default="bfloat16",
                         choices=("float32", "bfloat16", "float16"))
     parser.add_argument(
+        "--aux-count",
+        type=int,
+        default=0,
+        help=(
+            "Expected aux hidden-state count. 0 infers it from the draft "
+            "checkpoint. Use 5 with corpora collected from aux layers "
+            "1,16,31,46,61."
+        ),
+    )
+    parser.add_argument(
+        "--aux-source-target-slots",
+        default="",
+        help=(
+            "Comma-separated target aux slots used when expanding a smaller "
+            "source fc.weight into --aux-count. Default maps source 3 slots "
+            "to [0, mid, last]."
+        ),
+    )
+    parser.add_argument(
         "--train-scope",
         default="lm-head",
         choices=("lm-head", "fc-lm-head", "all"),
@@ -194,6 +213,8 @@ def load_rows(
     target_to_draft: torch.Tensor,
     max_rows: int,
     include_target_hidden: bool = False,
+    expected_aux_count: int = 0,
+    hidden_size: int = 0,
 ) -> tuple[TensorDataset, dict[str, Any]]:
     aux_rows: list[torch.Tensor] = []
     input_ids: list[torch.Tensor] = []
@@ -214,6 +235,12 @@ def load_rows(
             skipped_samples += 1
             continue
         aux = sample["aux_hidden_states"]
+        if expected_aux_count > 0 and aux.shape[1:] != (
+            expected_aux_count,
+            hidden_size,
+        ):
+            skipped_samples += 1
+            continue
         next_ids = sample["sampled_next_token_ids"].to(torch.long)
         length = min(aux.shape[0], next_ids.shape[0])
         if length < 2:
@@ -287,6 +314,8 @@ def load_windows(
     rollout_steps: int,
     max_rows: int,
     include_target_hidden: bool = False,
+    expected_aux_count: int = 0,
+    hidden_size: int = 0,
 ) -> tuple[TensorDataset, dict[str, Any]]:
     aux_rows: list[torch.Tensor] = []
     input_windows: list[torch.Tensor] = []
@@ -308,6 +337,12 @@ def load_windows(
             skipped_samples += 1
             continue
         aux = sample["aux_hidden_states"]
+        if expected_aux_count > 0 and aux.shape[1:] != (
+            expected_aux_count,
+            hidden_size,
+        ):
+            skipped_samples += 1
+            continue
         next_ids = sample["sampled_next_token_ids"].to(torch.long)
         length = min(aux.shape[0], next_ids.shape[0])
         if length <= rollout_steps:
@@ -680,6 +715,9 @@ def main() -> int:
         target_model=args.target_model,
         device=device,
         dtype=dtype,
+        aux_count=args.aux_count,
+        aux_source_target_slots=eval_module.parse_optional_int_list(
+            args.aux_source_target_slots),
     )
     target_to_draft = make_target_to_draft(model)
     train_rows_dataset, train_summary = load_rows(
@@ -687,6 +725,8 @@ def main() -> int:
         target_to_draft=target_to_draft,
         max_rows=args.max_train_rows,
         include_target_hidden=args.hidden_loss_weight > 0.0,
+        expected_aux_count=model.aux_count,
+        hidden_size=model.shape.hidden_size,
     )
     train_dataset = train_rows_dataset
     train_objective = "teacher_forced_rows"
@@ -697,6 +737,8 @@ def main() -> int:
             rollout_steps=args.rollout_steps,
             max_rows=args.max_train_rows,
             include_target_hidden=args.hidden_loss_weight > 0.0,
+            expected_aux_count=model.aux_count,
+            hidden_size=model.shape.hidden_size,
         )
         train_objective = "autoregressive_rollout_windows"
         train_summary = {
@@ -711,6 +753,8 @@ def main() -> int:
             target_to_draft=target_to_draft,
             max_rows=args.max_heldout_rows,
             include_target_hidden=False,
+            expected_aux_count=model.aux_count,
+            hidden_size=model.shape.hidden_size,
         )
     generator = torch.Generator()
     generator.manual_seed(args.seed)
@@ -860,6 +904,9 @@ def main() -> int:
         "target_model": args.target_model,
         "out_dir": args.out_dir,
         "shape": asdict(model.shape),
+        "aux_count": model.aux_count,
+        "requested_aux_count": args.aux_count,
+        "aux_source_target_slots": args.aux_source_target_slots,
         "train_scope": args.train_scope,
         "train_objective": train_objective,
         "rollout_steps": args.rollout_steps,

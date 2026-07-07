@@ -4,7 +4,7 @@
 This is a diagnostic gate, not a throughput benchmark. It consumes target-owned
 Qwen27 hidden-state dataset v2 samples:
 
-  aux_hidden_states[t]      = three target auxiliary hidden states
+  aux_hidden_states[t]      = target auxiliary hidden states
   sampled_next_token_ids[t] = target greedy token after row t
 
 and simulates greedy EAGLE3 draft rollout:
@@ -72,6 +72,24 @@ def parse_args() -> argparse.Namespace:
                         choices=("float32", "bfloat16", "float16"))
     parser.add_argument("--topk", type=int, default=5)
     parser.add_argument(
+        "--aux-count",
+        type=int,
+        default=0,
+        help=(
+            "Expected aux hidden-state count. 0 infers it from fc.weight. "
+            "Use 5 for DFlash-style layers such as 1,16,31,46,61."
+        ),
+    )
+    parser.add_argument(
+        "--aux-source-target-slots",
+        default="",
+        help=(
+            "Comma-separated target aux slots used when expanding a smaller "
+            "source fc.weight into --aux-count. Default maps source 3 slots "
+            "to [0, mid, last]."
+        ),
+    )
+    parser.add_argument(
         "--accept-mode",
         default="top1",
         choices=("top1", "topk-oracle"),
@@ -94,6 +112,12 @@ def dtype_from_name(name: str) -> torch.dtype:
         "bfloat16": torch.bfloat16,
         "float16": torch.float16,
     }[name]
+
+
+def parse_optional_int_list(raw: str) -> list[int] | None:
+    if not raw:
+        return None
+    return [int(item.strip()) for item in raw.split(",") if item.strip()]
 
 
 def choose_device(name: str) -> torch.device:
@@ -309,13 +333,21 @@ class Ex0bitEagle3Draft(nn.Module):
         self,
         shape: Eagle3Shape,
         embed_weight: torch.Tensor,
+        aux_count: int = 3,
     ) -> None:
         super().__init__()
+        if aux_count < 1:
+            raise ValueError(f"aux_count must be >= 1, got {aux_count}")
         self.shape = shape
+        self.aux_count = aux_count
         self.register_buffer("embed_weight", embed_weight, persistent=False)
-        self.fc = nn.Linear(3 * shape.hidden_size, shape.hidden_size, bias=False)
+        self.fc = nn.Linear(
+            aux_count * shape.hidden_size,
+            shape.hidden_size,
+            bias=False,
+        )
         self.input_norm = (
-            RMSNorm(3 * shape.hidden_size, shape.rms_norm_eps)
+            RMSNorm(aux_count * shape.hidden_size, shape.rms_norm_eps)
             if shape.norm_before_fc else None
         )
         self.layers = nn.ModuleList(
@@ -379,14 +411,52 @@ def load_model(
     target_model: str,
     device: torch.device,
     dtype: torch.dtype,
+    aux_count: int = 0,
+    aux_source_target_slots: list[int] | None = None,
 ) -> Ex0bitEagle3Draft:
     config = load_config(draft_dir)
     shape = shape_from_config(config)
     embed_weight = load_target_embed_weight(target_model).to(device=device, dtype=dtype)
-    model = Ex0bitEagle3Draft(shape, embed_weight).to(device=device, dtype=dtype)
     tensors = load_file(os.path.join(draft_dir, "model.safetensors"), device="cpu")
+    source_fc = tensors["fc.weight"]
+    if source_fc.shape[0] != shape.hidden_size or (
+        source_fc.shape[1] % shape.hidden_size
+    ) != 0:
+        raise ValueError(f"Unexpected fc.weight shape {tuple(source_fc.shape)}")
+    source_aux_count = int(source_fc.shape[1] // shape.hidden_size)
+    if aux_count <= 0:
+        aux_count = source_aux_count
+    model = Ex0bitEagle3Draft(
+        shape,
+        embed_weight,
+        aux_count=aux_count,
+    ).to(device=device, dtype=dtype)
     with torch.no_grad():
-        model.fc.weight.copy_(tensors["fc.weight"].to(device=device, dtype=dtype))
+        if source_aux_count == aux_count:
+            model.fc.weight.copy_(source_fc.to(device=device, dtype=dtype))
+        else:
+            expanded = torch.zeros_like(model.fc.weight, device=device, dtype=dtype)
+            if aux_source_target_slots is None:
+                if source_aux_count == 3 and aux_count >= 3:
+                    aux_source_target_slots = [0, aux_count // 2, aux_count - 1]
+                else:
+                    raise ValueError(
+                        "aux_source_target_slots is required when expanding "
+                        f"{source_aux_count} source aux states to {aux_count}")
+            if len(aux_source_target_slots) != source_aux_count:
+                raise ValueError(
+                    "aux_source_target_slots length must match source aux "
+                    f"count {source_aux_count}, got {aux_source_target_slots}")
+            source = source_fc.to(device=device, dtype=dtype)
+            h = shape.hidden_size
+            for source_slot, target_slot in enumerate(aux_source_target_slots):
+                if not (0 <= target_slot < aux_count):
+                    raise ValueError(
+                        f"target aux slot {target_slot} out of range for "
+                        f"aux_count={aux_count}")
+                expanded[:, target_slot * h:(target_slot + 1) * h].copy_(
+                    source[:, source_slot * h:(source_slot + 1) * h])
+            model.fc.weight.copy_(expanded)
         model.norm.weight.copy_(tensors["norm.weight"].to(device=device, dtype=dtype))
         model.lm_head.weight.copy_(
             tensors["lm_head.weight"].to(device=device, dtype=dtype))
@@ -511,6 +581,9 @@ def main() -> int:
         target_model=args.target_model,
         device=device,
         dtype=dtype,
+        aux_count=args.aux_count,
+        aux_source_target_slots=parse_optional_int_list(
+            args.aux_source_target_slots),
     )
     paths = iter_sample_paths(args.dataset_dir, args.max_samples)
 
@@ -566,7 +639,7 @@ def main() -> int:
                     "reason": "too short",
                 })
                 continue
-            if aux_hidden.shape[1:] != (3, model.shape.hidden_size):
+            if aux_hidden.shape[1:] != (model.aux_count, model.shape.hidden_size):
                 skipped_samples.append({
                     "sample": os.path.basename(path),
                     "reason": f"bad aux shape {tuple(aux_hidden.shape)}",
@@ -684,6 +757,8 @@ def main() -> int:
         "device": str(device),
         "dtype": args.dtype,
         "topk": args.topk,
+        "aux_count": model.aux_count,
+        "aux_source_target_slots": args.aux_source_target_slots,
         "accept_mode": args.accept_mode,
         "topk_oracle_valid_headline_throughput": False,
         "draft_vocab_size": model.shape.draft_vocab_size,

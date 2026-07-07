@@ -252,6 +252,11 @@ Current fastest quality-gated variant:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-hidden-distill-no-endpoint.md`.
   Do not repeat simple full-draft unfreezing or hidden-distill sweeps from
   these v6b checkpoints.
+  New accepted-depth mechanism now in progress:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-five-aux-tooling.md`
+  adds `--aux-count 5` support for aux layers `[1,16,31,46,61]`, expanding
+  old three-aux checkpoints into slots `[0,2,4]`. Keep this diagnostic until
+  heldout offline acceptance reaches the previous `1.5-2.0` endpoint gate.
   A follow-up top-k oracle / reranker diagnostic found real candidate-list
   headroom but no cheap extractor: top-2/top-4/top-8/top-16 oracle mean
   accepted was `1.504` / `1.884` / `2.249` / `2.590`, but the first diagonal

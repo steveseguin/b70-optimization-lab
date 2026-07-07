@@ -24,6 +24,8 @@ ROLLOUT_SURVIVAL_MODE="${ROLLOUT_SURVIVAL_MODE:-none}"
 ROLLOUT_DEAD_LOSS_FLOOR="${ROLLOUT_DEAD_LOSS_FLOOR:-0.0}"
 ROLLOUT_RANK_LOSS_WEIGHT="${ROLLOUT_RANK_LOSS_WEIGHT:-0.0}"
 ROLLOUT_RANK_MARGIN="${ROLLOUT_RANK_MARGIN:-0.0}"
+AUX_COUNT="${AUX_COUNT:-0}"
+AUX_SOURCE_TARGET_SLOTS="${AUX_SOURCE_TARGET_SLOTS:-}"
 
 mkdir -p "$RUN_ROOT"
 
@@ -54,6 +56,8 @@ run_variant() {
       --draft-dir "$draft" \
       --target-model "$TARGET_MODEL" \
       --out-dir "$out/checkpoint" \
+      --aux-count "$AUX_COUNT" \
+      --aux-source-target-slots "$AUX_SOURCE_TARGET_SLOTS" \
       --train-scope "$scope" \
       --rollout-steps "$steps" \
       --rollout-loss-decay "$decay" \
@@ -75,6 +79,8 @@ run_variant() {
       --dataset-dir "$CORPUS/shard-3/dataset" \
       --draft-dir "$out/checkpoint" \
       --target-model "$TARGET_MODEL" \
+      --aux-count "$AUX_COUNT" \
+      --aux-source-target-slots "$AUX_SOURCE_TARGET_SLOTS" \
       --max-steps 5 \
       --max-starts 0 \
       --topk 5 \

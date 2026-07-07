@@ -263,6 +263,13 @@ Fastest quality-gated practical variant:
   endpoint threshold. Do not endpoint-wire this draft, do not submit it to
   LocalMaxxing, and do not repeat small EAGLE corpus/objective/all-scope or
   hidden-distill variations without a new mechanism;
+- active EAGLE new-mechanism follow-up:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-five-aux-tooling.md`.
+  The evaluator/trainer now support `--aux-count 5` and can expand old
+  three-aux Ex0bit checkpoints into slots `[0,2,4]` for aux layers
+  `[1,16,31,46,61]`. This is diagnostic accepted-depth research only; no
+  endpoint work unless heldout offline acceptance reaches the previous
+  `1.5-2.0` mean-accepted gate;
 - latest EAGLE top-k/reranker diagnostic:
   `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-eagle3-topk-oracle-and-diag-reranker.md`.
   A default-off evaluator mode, `--accept-mode topk-oracle`, shows real
