@@ -245,6 +245,13 @@ Current fastest quality-gated variant:
   and closes `VLLM_XPU_SHARED_EXPERT_ACT_WORKSPACE=1` after compile/graph
   failures. Do not pursue MoE layerlets or this workspace flag for the current
   Qwen27 recipe.
+- Latest ReplaySSM state-digest trace:
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-replayssm-state-digest-trace.md`.
+  It adds a default-off diagnostic trace for ReplaySSM commit/stage/spec-decode
+  boundaries plus `../../scripts/summarize-qwen27-replayssm-state-trace.py`.
+  The diagnostic run passed strict fresh/cached-zero mechanics at `67.453 tok/s`
+  with quality skipped and captured 80 layer-0 state records. Treat this as
+  graph-safe transaction/tape evidence only.
 
 Previous fastest quality-gated variant:
 

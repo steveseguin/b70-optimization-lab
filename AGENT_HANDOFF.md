@@ -83,6 +83,15 @@ Active target as of the latest switch request:
   vLLM graph splitting. Patch preserved at
   `patches/qwen36-27b-autoround-int4-b70/vllm-qwen2moe-act-workspace-compileguard-no-win-20260707.patch`;
   active source was reverted.
+- Latest ReplaySSM state-digest trace:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-replayssm-state-digest-trace.md`.
+  A default-off trace-only patch records `conv_state`, ReplaySSM `d/k/g` ring,
+  `conv_pending`, and cursor metadata at commit/stage/spec-decode boundaries.
+  Diagnostic endpoint run passed strict fresh/cached-zero mechanics at
+  `67.453 tok/s` with quality skipped and wrote compact summaries under
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-state-digest-trace-20260707T041855Z-summary.*`.
+  This is transaction/tape evidence, not a promoted benchmark or LocalMaxxing
+  candidate.
 - Current-recipe deeper MTP is closed, not merely blocked on a missing
   cache16 dispatch. MTP4/MTP5 need a ring length of at least `16`; leaving
   cache8 fails readiness. A follow-up native cache16/spec6 patch compiled and

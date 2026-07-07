@@ -74,6 +74,14 @@ Current fastest quality-gated variant:
   `notes/2026-07-06-current-confirm-68tok-and-textonlymtp-no-win.md`;
 - LocalMaxxing: approved as `cmr9atqb800msqr01u760xh0t`.
 
+Latest transaction diagnostic:
+
+- `notes/2026-07-07-replayssm-state-digest-trace.md` records a default-off
+  ReplaySSM state-digest trace patch and diagnostic endpoint run. It captured
+  commit/stage/spec-decode boundary digests for layer 0 at `67.453 tok/s`
+  strict-fresh/cached-zero with quality skipped. Use it for future
+  graph-safe GDN/DeltaNet transaction/tape work, not as a promoted benchmark.
+
 Latest stronger-drafter result:
 
 - Ex0bit EAGLE3/DFlash aux-hidden probing is closed as a direct import path.

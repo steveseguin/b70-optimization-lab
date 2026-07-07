@@ -76,6 +76,12 @@ Fastest quality-gated practical variant:
   enforce-eager layer split, and closes
   `VLLM_XPU_SHARED_EXPERT_ACT_WORKSPACE=1` for this recipe after compile /
   graph-split failures. Use it before trying more wrapper-level MLP flags;
+- latest ReplaySSM transaction trace:
+  `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-07-replayssm-state-digest-trace.md`.
+  This added default-off diagnostic digests for ReplaySSM commit/stage/spec
+  boundaries plus `scripts/summarize-qwen27-replayssm-state-trace.py`; the
+  trace run was strict-fresh/cached-zero at `67.453 tok/s` with quality skipped.
+  Use it as transaction/tape evidence only, not as a headline benchmark;
 - attribution: native ReplaySSM slot-copy/reset ops passed direct XPU parity
   but did not improve endpoint speed in A/B, so preserve the patch as an
   experiment artifact, not as the source of the record;

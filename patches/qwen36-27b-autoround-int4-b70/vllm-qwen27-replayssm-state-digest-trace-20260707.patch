@@ -1,0 +1,433 @@
+diff --git a/vllm/model_executor/layers/mamba/gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+index b519b3e5a..e59be6ac7 100644
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -108,8 +108,12 @@ def _gdn_row_trace_wanted_exec_indices() -> set[int] | None:
+
+
+ def _xpu_gdn_spec_state_offset_plus_one_enabled() -> bool:
+-    return _gdn_row_trace_bool_env(
+-        "VLLM_XPU_GDN_SPEC_STATE_OFFSET_PLUS_ONE", False)
++    return (
++        _gdn_row_trace_bool_env(
++            "VLLM_XPU_GDN_SPEC_STATE_OFFSET_PLUS_ONE", False)
++        or _gdn_row_trace_bool_env(
++            "VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE", False)
++    )
+
+
+ def _xpu_gdn_replayssm_spec_enabled() -> bool:
+@@ -558,6 +562,110 @@ def _gdn_row_trace_write(
+         logger.exception("Failed to write XPU GDN row trace")
+
+
++def _gdn_row_trace_int_list(tensor: torch.Tensor | None,
++                            limit: int = 16) -> object:
++    if tensor is None:
++        return None
++    try:
++        return [int(x) for x in tensor.detach().to(torch.int64).cpu().flatten()
++                [:limit].tolist()]
++    except Exception as exc:
++        return {"error": repr(exc)}
++
++
++def _gdn_replayssm_commit_trace(
++    *,
++    stage: str,
++    layer_name: str,
++    layer_idx: int | None,
++    num_accepted_tokens: torch.Tensor | None,
++    state_indices: torch.Tensor | None,
++    conv_state: torch.Tensor | None = None,
++    d_cache: torch.Tensor | None = None,
++    k_cache: torch.Tensor | None = None,
++    g_cache: torch.Tensor | None = None,
++    conv_pending: torch.Tensor | None = None,
++    write_pos: torch.Tensor | None,
++    cache_base: torch.Tensor | None,
++    is_flush: torch.Tensor | None,
++    pending: torch.Tensor | None,
++    pending_len: torch.Tensor | None,
++) -> None:
++    stage_filter = os.environ.get("VLLM_XPU_GDN_ROW_TRACE_STAGES", "")
++    if stage_filter:
++        wanted_stages = {
++            item.strip() for item in stage_filter.split(",") if item.strip()
++        }
++        if stage not in wanted_stages:
++            return
++    if not _gdn_row_trace_enabled(layer_name, layer_idx):
++        return
++
++    global _XPU_GDN_ROW_TRACE_LINES
++    try:
++        try:
++            tp_rank = get_tensor_model_parallel_rank()
++        except Exception:
++            tp_rank = int(os.environ.get("RANK", "0") or "0")
++
++        slots = None
++        if state_indices is not None:
++            slots = state_indices.detach().to(torch.long).flatten()
++            slots = slots[slots > 0]
++        slot_limit = max(1, _gdn_row_trace_int_env(
++            "VLLM_XPU_GDN_ROW_TRACE_STATE_LIMIT", 4))
++        if slots is not None:
++            slots = slots[:slot_limit]
++
++        record = {
++            "ts": time.time(),
++            "pid": os.getpid(),
++            "tp_rank": tp_rank,
++            "stage": stage,
++            "layer": layer_name,
++            "layer_idx": layer_idx,
++            "num_accepted_tokens": _gdn_row_trace_int_list(num_accepted_tokens),
++            "state_indices": _gdn_row_trace_int_list(state_indices),
++            "slots_sample": _gdn_row_trace_int_list(slots),
++            "write_pos": _gdn_row_trace_int_list(
++                None if write_pos is None or slots is None
++                else write_pos.index_select(0, slots.to(write_pos.device))),
++            "cache_base": _gdn_row_trace_int_list(
++                None if cache_base is None or slots is None
++                else cache_base.index_select(0, slots.to(cache_base.device))),
++            "is_flush": _gdn_row_trace_int_list(
++                None if is_flush is None or slots is None
++                else is_flush.index_select(0, slots.to(is_flush.device))),
++            "pending": _gdn_row_trace_int_list(
++                None if pending is None or slots is None
++                else pending.index_select(0, slots.to(pending.device))),
++            "pending_len": _gdn_row_trace_int_list(
++                None if pending_len is None or slots is None
++                else pending_len.index_select(0, slots.to(pending_len.device))),
++        }
++        if _gdn_row_trace_bool_env(
++            "VLLM_XPU_GDN_ROW_TRACE_REPLAYSSM_STATE", False
++        ):
++            record["replayssm_state"] = {
++                "conv_state": _gdn_row_trace_selected_states(
++                    conv_state, slots),
++                "d_cache": _gdn_row_trace_selected_states(d_cache, slots),
++                "k_cache": _gdn_row_trace_selected_states(k_cache, slots),
++                "g_cache": _gdn_row_trace_selected_states(g_cache, slots),
++                "conv_pending": _gdn_row_trace_selected_states(
++                    conv_pending, slots),
++            }
++        trace_file = os.environ["VLLM_XPU_GDN_ROW_TRACE_FILE"]
++        trace_dir = os.path.dirname(trace_file)
++        if trace_dir:
++            os.makedirs(trace_dir, exist_ok=True)
++        with open(trace_file, "a", encoding="utf-8") as f:
++            f.write(json.dumps(record, separators=(",", ":")) + "\n")
++        _XPU_GDN_ROW_TRACE_LINES += 1
++    except Exception:
++        logger.exception("Failed to write XPU GDN ReplaySSM commit trace")
++
++
+ def _xpu_gdn_promote_running_state(
+     conv_state: torch.Tensor,
+     ssm_state: torch.Tensor,
+@@ -615,7 +723,12 @@ def _xpu_gdn_spec_accepted_state_indices(
+     )
+     if n <= 0:
+         return None
+-    max_state_col = min(int(spec_state_indices_tensor.size(1)), max_query_len) - 1
++    if _xpu_gdn_spec_state_offset_plus_one_enabled():
++        max_state_col = min(int(spec_state_indices_tensor.size(1)) - 1,
++                            max_query_len)
++    else:
++        max_state_col = min(int(spec_state_indices_tensor.size(1)),
++                            max_query_len) - 1
+     if max_state_col < 0:
+         return None
+     offsets = num_accepted_tokens[:n].to(torch.long)
+@@ -643,7 +756,11 @@ def _xpu_gdn_publish_spec_conv_states(
+         int(spec_query_start_loc.numel()) - 1,
+         int(base_conv_state.size(0)),
+     )
+-    max_query_len = min(max_query_len, int(spec_state_indices_tensor.size(1)))
++    state_col_offset = 1 if _xpu_gdn_spec_state_offset_plus_one_enabled() else 0
++    max_query_len = min(
++        max_query_len,
++        int(spec_state_indices_tensor.size(1)) - state_col_offset,
++    )
+     if n <= 0 or max_query_len <= 0:
+         return
+
+@@ -681,7 +798,9 @@ def _xpu_gdn_publish_spec_conv_states(
+     windows = flat_windows.reshape(
+         n, max_query_len, state_len, dim).permute(0, 1, 3, 2).contiguous()
+
+-    dest_indices = spec_state_indices_tensor[:n, :max_query_len].to(torch.long)
++    dest_indices = spec_state_indices_tensor[
++        :n, state_col_offset:state_col_offset + max_query_len
++    ].to(torch.long)
+     valid = valid_tokens & (dest_indices > 0)
+     if not torch.any(valid):
+         return
+@@ -708,7 +827,11 @@ def _xpu_gdn_publish_spec_recurrent_states(
+         int(spec_state_indices_tensor.size(0)),
+         int(spec_query_start_loc.numel()) - 1,
+     )
+-    max_query_len = min(max_query_len, int(spec_state_indices_tensor.size(1)))
++    state_col_offset = 1 if _xpu_gdn_spec_state_offset_plus_one_enabled() else 0
++    max_query_len = min(
++        max_query_len,
++        int(spec_state_indices_tensor.size(1)) - state_col_offset,
++    )
+     if n <= 0 or max_query_len <= 0:
+         return
+
+@@ -718,7 +841,9 @@ def _xpu_gdn_publish_spec_recurrent_states(
+     seq_ends = spec_query_start_loc[1:n + 1].to(torch.long)
+     token_indices = seq_starts.unsqueeze(1) + seq_offsets.unsqueeze(0)
+     valid = token_indices < seq_ends.unsqueeze(1)
+-    dest_indices = spec_state_indices_tensor[:n, :max_query_len].to(torch.long)
++    dest_indices = spec_state_indices_tensor[
++        :n, state_col_offset:state_col_offset + max_query_len
++    ].to(torch.long)
+     valid = valid & (dest_indices > 0)
+     if not torch.any(valid):
+         return
+@@ -811,47 +936,52 @@ def _xpu_gdn_replayssm_commit_pending(
+         )
+         return
+     slots = state_indices[:n].to(torch.long)
+-    safe_slots = torch.clamp(slots, min=0)
+-    active = (slots > 0) & (pending.index_select(0, safe_slots) != 0)
++    valid = (slots > 0) & (slots < int(write_pos.numel()))
++    if not torch.any(valid):
++        return
++    slots = slots[valid]
++    active = pending.index_select(0, slots) != 0
++    if not torch.any(active):
++        return
++    slots = slots[active]
+     accepted = num_accepted_tokens[:n].to(
+-        dtype=torch.long, device=slots.device)
+-    prev_len = pending_len.index_select(0, safe_slots).to(torch.long)
++        dtype=torch.long, device=slots.device)[valid][active]
++    prev_len = pending_len.index_select(0, slots).to(torch.long)
+     accepted = torch.clamp(accepted, min=0)
+     accepted = torch.minimum(accepted, prev_len)
+-    accepted = torch.where(active, accepted, torch.zeros_like(accepted))
+
+     if conv_base_len > 0:
+         old_conv = conv_state.index_select(
+-            0, safe_slots)[:, :, :conv_base_len]
+-        raw = conv_pending.index_select(0, safe_slots)
++            0, slots)[:, :, :conv_base_len]
++        raw = conv_pending.index_select(0, slots)
+         history = torch.cat((old_conv.transpose(1, 2).contiguous(), raw), dim=1)
+         offsets = torch.arange(conv_base_len, device=slots.device, dtype=torch.long)
+         window = accepted.unsqueeze(1) + offsets.unsqueeze(0)
+         new_conv = history.gather(
+             1, window.unsqueeze(-1).expand(-1, -1, history.size(-1)))
+         conv_state.index_copy_(
+-            0, safe_slots, torch.cat(
++            0, slots, torch.cat(
+                 (
+                     new_conv.transpose(1, 2).to(conv_state.dtype),
+                     conv_state.index_select(
+-                        0, safe_slots)[:, :, conv_base_len:],
++                        0, slots)[:, :, conv_base_len:],
+                 ),
+                 dim=2,
+             ))
+
+-    old_wp = write_pos.index_select(0, safe_slots).to(torch.long)
+-    old_base = cache_base.index_select(0, safe_slots).to(torch.long)
+-    old_flush = is_flush.index_select(0, safe_slots) != 0
++    old_wp = write_pos.index_select(0, slots).to(torch.long)
++    old_base = cache_base.index_select(0, slots).to(torch.long)
++    old_flush = is_flush.index_select(0, slots) != 0
+     flush_now = (accepted > 0) & old_flush
+     new_base = torch.where(flush_now, (old_base + old_wp) % max_cache_len,
+                            old_base)
+     new_wp = torch.where(old_flush, accepted, old_wp + accepted)
+     next_flush = (new_wp + 2 * max_spec_len) > max_cache_len
+
+-    write_pos.index_copy_(0, safe_slots, new_wp.to(write_pos.dtype))
+-    cache_base.index_copy_(0, safe_slots, new_base.to(cache_base.dtype))
+-    is_flush.index_copy_(0, safe_slots, next_flush.to(is_flush.dtype))
+-    pending.index_fill_(0, safe_slots, 0)
++    write_pos.index_copy_(0, slots, new_wp.to(write_pos.dtype))
++    cache_base.index_copy_(0, slots, new_base.to(cache_base.dtype))
++    is_flush.index_copy_(0, slots, next_flush.to(is_flush.dtype))
++    pending.index_fill_(0, slots, 0)
+
+
+ def _xpu_gdn_replayssm_flush_slots(
+@@ -975,8 +1105,8 @@ def gdn_replayssm_spec_decode(
+         not _gdn_row_trace_bool_env(
+             "VLLM_XPU_GDN_REPLAYSSM_TORCH_FALLBACK", False)
+         and hasattr(torch.ops._xpu_C, "gdn_replayssm_spec_decode")
+-        and max_spec_len <= 2
+-        and max_cache_len in (2, 4)
++        and max_spec_len <= 4
++        and max_cache_len in (2, 4, 8)
+     ):
+         sync_trace("native_entry")
+         torch.ops._xpu_C.gdn_replayssm_spec_decode(
+@@ -1788,6 +1918,28 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         device = self._gdn_replayssm_write_pos.device
+         src = torch.tensor([src_state_index], dtype=torch.long, device=device)
+         dst = torch.tensor([dst_state_index], dtype=torch.long, device=device)
++        if (
++            not _gdn_row_trace_bool_env(
++                "VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK",
++                False,
++            )
++            and hasattr(torch.ops._xpu_C, "gdn_replayssm_copy_slots")
++        ):
++            torch.ops._xpu_C.gdn_replayssm_copy_slots(
++                self._gdn_replayssm_d_cache,
++                self._gdn_replayssm_k_cache,
++                self._gdn_replayssm_g_cache,
++                self._gdn_replayssm_write_pos,
++                self._gdn_replayssm_cache_base,
++                self._gdn_replayssm_is_flush,
++                self._gdn_replayssm_pending,
++                self._gdn_replayssm_pending_len,
++                self._gdn_replayssm_conv_pending,
++                src,
++                dst,
++                0,
++            )
++            return
+         self._gdn_replayssm_d_cache.index_copy_(
+             0, dst, self._gdn_replayssm_d_cache.index_select(0, src))
+         self._gdn_replayssm_k_cache.index_copy_(
+@@ -1824,14 +1976,33 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+         slots = slots[slots > 0]
+         if int(slots.numel()) == 0:
+             return
+-        self._gdn_replayssm_write_pos.index_fill_(0, slots, 0)
+-        self._gdn_replayssm_cache_base.index_fill_(0, slots, 0)
+         init_flush = (
+             1
+             if 2 * self._gdn_replayssm_spec_max_spec_len
+             > self._gdn_replayssm_spec_cache_len
+             else 0
+         )
++        slots = slots.contiguous()
++        if (
++            not _gdn_row_trace_bool_env(
++                "VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK",
++                False,
++            )
++            and hasattr(torch.ops._xpu_C, "gdn_replayssm_reset_slots")
++        ):
++            torch.ops._xpu_C.gdn_replayssm_reset_slots(
++                self._gdn_replayssm_write_pos,
++                self._gdn_replayssm_cache_base,
++                self._gdn_replayssm_is_flush,
++                self._gdn_replayssm_pending,
++                self._gdn_replayssm_pending_len,
++                slots,
++                init_flush,
++                0,
++            )
++            return
++        self._gdn_replayssm_write_pos.index_fill_(0, slots, 0)
++        self._gdn_replayssm_cache_base.index_fill_(0, slots, 0)
+         self._gdn_replayssm_is_flush.index_fill_(0, slots, init_flush)
+         self._gdn_replayssm_pending.index_fill_(0, slots, 0)
+         self._gdn_replayssm_pending_len.index_fill_(0, slots, 0)
+@@ -1904,6 +2075,23 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             or self._gdn_replayssm_conv_pending is None
+         ):
+             return
++        _gdn_replayssm_commit_trace(
++            stage="replayssm_commit_pending_before",
++            layer_name=self.prefix,
++            layer_idx=self.layer_idx,
++            num_accepted_tokens=num_accepted_tokens,
++            state_indices=state_indices,
++            conv_state=conv_state,
++            d_cache=self._gdn_replayssm_d_cache,
++            k_cache=self._gdn_replayssm_k_cache,
++            g_cache=self._gdn_replayssm_g_cache,
++            conv_pending=self._gdn_replayssm_conv_pending,
++            write_pos=self._gdn_replayssm_write_pos,
++            cache_base=self._gdn_replayssm_cache_base,
++            is_flush=self._gdn_replayssm_is_flush,
++            pending=self._gdn_replayssm_pending,
++            pending_len=self._gdn_replayssm_pending_len,
++        )
+         _xpu_gdn_replayssm_commit_pending(
+             conv_state=conv_state,
+             write_pos=self._gdn_replayssm_write_pos,
+@@ -1918,6 +2106,23 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+             max_spec_len=self._gdn_replayssm_spec_max_spec_len,
+             conv_base_len=self.conv_kernel_size - 1,
+         )
++        _gdn_replayssm_commit_trace(
++            stage="replayssm_commit_pending_after",
++            layer_name=self.prefix,
++            layer_idx=self.layer_idx,
++            num_accepted_tokens=num_accepted_tokens,
++            state_indices=state_indices,
++            conv_state=conv_state,
++            d_cache=self._gdn_replayssm_d_cache,
++            k_cache=self._gdn_replayssm_k_cache,
++            g_cache=self._gdn_replayssm_g_cache,
++            conv_pending=self._gdn_replayssm_conv_pending,
++            write_pos=self._gdn_replayssm_write_pos,
++            cache_base=self._gdn_replayssm_cache_base,
++            is_flush=self._gdn_replayssm_is_flush,
++            pending=self._gdn_replayssm_pending,
++            pending_len=self._gdn_replayssm_pending_len,
++        )
+
+     def _flush_gdn_replayssm_slots(
+         self,
+@@ -2931,6 +3136,23 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                             spec_sequence_running_state_indices,
+                             raw_pad.to(self._gdn_replayssm_conv_pending.dtype),
+                         )
++                    _gdn_replayssm_commit_trace(
++                        stage="replayssm_after_stage_conv",
++                        layer_name=self.prefix,
++                        layer_idx=self.layer_idx,
++                        num_accepted_tokens=num_accepted_tokens,
++                        state_indices=spec_sequence_running_state_indices,
++                        conv_state=conv_state,
++                        d_cache=self._gdn_replayssm_d_cache,
++                        k_cache=self._gdn_replayssm_k_cache,
++                        g_cache=self._gdn_replayssm_g_cache,
++                        conv_pending=self._gdn_replayssm_conv_pending,
++                        write_pos=self._gdn_replayssm_write_pos,
++                        cache_base=self._gdn_replayssm_cache_base,
++                        is_flush=self._gdn_replayssm_is_flush,
++                        pending=self._gdn_replayssm_pending,
++                        pending_len=self._gdn_replayssm_pending_len,
++                    )
+                 else:
+                     accepted_state_indices = _xpu_gdn_spec_accepted_state_indices(
+                         spec_state_indices_tensor,
+@@ -3507,6 +3729,23 @@ class GatedDeltaNetAttention(PluggableLayer, MambaBase):
+                     0, spec_sequence_running_state_indices, 1)
+                 self._gdn_replayssm_pending_len.index_copy_(
+                     0, spec_sequence_running_state_indices, seq_lens)
++                _gdn_replayssm_commit_trace(
++                    stage="replayssm_after_spec_decode",
++                    layer_name=self.prefix,
++                    layer_idx=self.layer_idx,
++                    num_accepted_tokens=seq_lens,
++                    state_indices=spec_sequence_running_state_indices,
++                    conv_state=conv_state,
++                    d_cache=self._gdn_replayssm_d_cache,
++                    k_cache=self._gdn_replayssm_k_cache,
++                    g_cache=self._gdn_replayssm_g_cache,
++                    conv_pending=self._gdn_replayssm_conv_pending,
++                    write_pos=self._gdn_replayssm_write_pos,
++                    cache_base=self._gdn_replayssm_cache_base,
++                    is_flush=self._gdn_replayssm_is_flush,
++                    pending=self._gdn_replayssm_pending,
++                    pending_len=self._gdn_replayssm_pending_len,
++                )
+                 last_recurrent_state = None
+             elif xpu_sequence_spec_decode:
+                 assert spec_query_start_loc is not None
