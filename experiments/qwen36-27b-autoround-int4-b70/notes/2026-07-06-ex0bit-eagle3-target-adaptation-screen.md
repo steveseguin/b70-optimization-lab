@@ -942,6 +942,45 @@ integrate or submit anything unless a locked heldout run reaches at least the
 heldout. The current endpoint headline remains the strict fresh
 `68.236 tok/s` ReplaySSM result, not any offline EAGLE score.
 
+Survival-objective result:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T010510Z
+```
+
+Repo summary:
+
+```text
+experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-ex0bit-eagle3-v5-survival-objective-summary-20260707.json
+```
+
+Heldout shard `3`, all `44,352` starts:
+
+| variant | survival | floor | rank weight | mean accepted | step-1 exact | step-2 cond | step-3 cond | full-5 accepts |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `surv-r5-lr2e-5-hard-rank0p1` | hard | `0.05` | `0.1` | **`1.340886544011544`** | `59.92%` | `56.26%` | `58.50%` | `3602` |
+| `surv-r5-lr2e-5-hard-rank0p05` | hard | `0.05` | `0.05` | `1.3400297619047619` | `59.87%` | `56.29%` | `58.48%` | `3604` |
+| `surv-r5-lr2e-5-hard-floor0` | hard | `0.0` | `0.0` | `1.3386093073593073` | `59.84%` | `56.20%` | `58.53%` | `3590` |
+| `surv-r5-lr2e-5-hard-floor0p05` | hard | `0.05` | `0.0` | `1.3386093073593073` | `59.83%` | `56.26%` | `58.50%` | `3589` |
+
+Interpretation:
+
+- accepted-prefix survival gating is a real positive signal:
+  `1.3147772366522366` -> `1.340886544011544`;
+- rank loss helps slightly, but only by about `0.0023` mean accepted versus
+  hard survival without rank, so it is not a standalone unlock;
+- still below the `1.5-2.0` endpoint threshold. Do not wire this into vLLM or
+  submit anything. The best checkpoint is:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-ex0bit-eagle3-rollouttrain-v3-4gpu-20260707T010510Z/surv-r5-lr2e-5-hard-rank0p1/checkpoint
+```
+
+Next higher-upside move: collect and train on the broader v6 chat-style corpus,
+starting from the survival-objective best checkpoint. Repeating more v5
+continuation may add small gains, but the curve is still too far from the
+endpoint trigger.
+
 ## V6 data preset prepared while survival sweep runs
 
 Added a `chat-v6` preset to
