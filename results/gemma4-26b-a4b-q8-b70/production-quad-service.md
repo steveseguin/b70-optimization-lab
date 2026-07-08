@@ -22,21 +22,18 @@ http://127.0.0.1:19352/v1  GPU 2
 http://127.0.0.1:19353/v1  GPU 3
 ```
 
-The public contract remains a `65536`-token maximum context window. Internally,
-the current mixed fleet uses three dense short-context replicas plus one
-long-context replica:
+The current production profile serves two `65536`-token slots on every GPU:
 
 ```text
-GPU 0 / 127.0.0.1:19350: two 32768-token slots
-GPU 1 / 127.0.0.1:19351: two 32768-token slots
-GPU 2 / 127.0.0.1:19352: two 32768-token slots
+GPU 0 / 127.0.0.1:19350: two 65536-token slots
+GPU 1 / 127.0.0.1:19351: two 65536-token slots
+GPU 2 / 127.0.0.1:19352: two 65536-token slots
 GPU 3 / 127.0.0.1:19353: two 65536-token slots
 ```
 
-The frontdoor estimates prompt plus requested output size. Requests estimated
-to fit in `32768` tokens prefer the dense 32K pool. Larger requests route to
-the 64K backend. Short requests may overflow to the 64K backend when the dense
-pool is full unless the caller sends strict sticky affinity.
+The frontdoor still estimates prompt plus requested output size so exact
+over-window requests can fail before occupying a backend slot. Strict sticky
+affinity and prompt-cache routing are available for cache-sensitive agents.
 
 For agent workloads, configure clients for at most `8` concurrent generation
 requests. Send a stable per-agent or per-session identifier so the frontdoor can
@@ -59,9 +56,9 @@ GET http://<server-lan-ip>:8000/status
 GET http://<server-lan-ip>:8000/v1/frontdoor/status
 ```
 
-The JSON includes the OpenAI-compatible base URL, model name, mixed context
-tiers, concurrency limits, prompt-cache settings, sticky-routing keys, and an
-example chat-completions request.
+The JSON includes the OpenAI-compatible base URL, model name, context limits,
+concurrency limits, prompt-cache settings, sticky-routing keys, and an example
+chat-completions request.
 
 ## Profile
 
@@ -69,10 +66,8 @@ Backends use the validated Gemma service profile:
 
 ```text
 GEMMA4_26B_PROFILE=service
-CTX_SIZE=65536 on GPU0-2
-CTX_SIZE=131072 on GPU3
-PARALLEL=2 on GPU0-2
-PARALLEL=2 on GPU3
+CTX_SIZE=131072
+PARALLEL=2
 CACHE_RAM_MIB=8192
 BATCH_SIZE=2048
 UBATCH_SIZE=1024
@@ -92,8 +87,8 @@ scripts/warm-gemma4-frontdoor-cache.py \
   --system-file /path/to/shared-system-prefix.txt
 ```
 
-The helper sends `X-Sticky-Mode: strict` and warms both `short` and `long`
-context tiers by default.
+The helper sends `X-Sticky-Mode: strict` and warms the default `auto` context
+tier unless `--tiers` is provided.
 
 This favors production prompt/long-context behavior. The short-decode record
 profile remains documented separately in `reproduce.md`.
@@ -148,18 +143,30 @@ Latest 128K-total/parallel-2 validation artifacts:
 - `data/gemma4-26b-quad-frontdoor-c8-512-ctx131072-p2-cache8192-sticky-20260707T2228Z.json`
   (`8` concurrent requests, `550.934 tok/s` aggregate wall throughput).
 
-Latest mixed-router validation artifacts:
+Latest all-64K/sticky-router validation artifacts:
+
+- status:
+  `data/gemma4-26b-quad-frontdoor-status-all64k-20260708T032625Z.json`;
+- health:
+  `data/gemma4-26b-prod-health-quad-frontdoor-all64k-20260708T032625Z.json`;
+- c8 non-streaming smoke:
+  `data/gemma4-26b-quad-frontdoor-c8-nonstream-all64k-20260708T032701Z.json`;
+- c8 fixed-output streaming benchmark:
+  `data/gemma4-26b-quad-frontdoor-c8-stream-all64k-recheck-20260708T033139Z.json`
+  (`8` concurrent requests, `160` completion tokens each,
+  `556.124 tok/s` aggregate wall throughput).
+
+Mixed-router experiment artifacts:
 
 - rejected aggressive `4,4,4,2` / 14-slot screen:
   `data/gemma4-26b-quad-frontdoor-c14-smoke-mixed-20260707T2300Z.json`;
   short-pool tail latency made it unsuitable for production;
-- final active mixed profile status:
-  `data/gemma4-26b-quad-frontdoor-status-mixed-8slot-20260707T2315Z.json`;
-- final active mixed profile health:
-  `data/gemma4-26b-prod-health-quad-frontdoor-mixed-8slot-20260707T2315Z.json`;
-- final active mixed profile c8 smoke:
+- rejected `6x32K + 2x64K` fallback:
+  it kept the same total concurrency as `8x64K` while reducing context on
+  three GPUs, so it was superseded by the all-64K profile;
+- mixed-profile c8 smoke:
   `data/gemma4-26b-quad-frontdoor-c8-nonstream-mixed-8slot-20260707T2315Z.json`
-  (`8` concurrent requests, `397.072 tok/s` aggregate wall throughput for this
+  (`8` concurrent requests, `397.072 tok/s` aggregate wall throughput for that
   non-streaming prompt shape).
 
 Earlier 64K-total/parallel-2 validation artifacts:

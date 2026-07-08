@@ -84,13 +84,9 @@ Temporary quad deployment on 2026-07-07:
 
 - public no-auth LAN endpoint: `http://0.0.0.0:8000/v1`;
 - four local service-profile replicas on `127.0.0.1:19350-19353`;
-- public max context remains `65536` tokens, but the internal fleet is mixed:
-  GPU0-2 run `CTX_SIZE=65536 --parallel 2` for two `32768`-token slots each,
-  and GPU3 runs `CTX_SIZE=131072 --parallel 2` for two `65536`-token slots;
-- the frontdoor routes requests estimated at `<=32768` prompt+output tokens to
-  the dense 32K pool and larger requests to the 64K backend;
-- two active generations on each backend, eight
-  active generations total;
+- current backend context: `131072` tokens with `--parallel 2` on every GPU;
+  llama.cpp splits this into two `65536`-token slots per backend;
+- two active generations per backend, eight active generations total;
 - prompt cache enabled with `--cache-ram 8192`;
 - frontdoor sticky routing enabled by `X-Agent-Id`, `X-Session-Id`,
   `X-Conversation-Id`, or JSON fields such as `user` / `metadata.agent_id`;
@@ -119,10 +115,16 @@ Temporary quad deployment on 2026-07-07:
   send stable per-agent/per-session sticky identifiers;
 - remote clients can discover setup hints from `/status` or
   `/v1/frontdoor/status`;
-- aggressive `parallel=3` and `parallel=4` short-slot screens were rejected for
-  tail latency; final active mixed profile is
-  `mixed-6x32k-2x64k-cache8192-sticky`;
-- final active mixed c8 smoke:
+- final active all-64K/sticky-router status:
+  `../../data/gemma4-26b-quad-frontdoor-status-all64k-20260708T032625Z.json`;
+- final active all-64K/sticky-router c8 fixed-output streaming benchmark:
+  `../../data/gemma4-26b-quad-frontdoor-c8-stream-all64k-recheck-20260708T033139Z.json`
+  at `556.124 tok/s` aggregate wall throughput;
+- aggressive mixed-context `parallel=3` and `parallel=4` short-slot screens
+  were rejected for tail latency; the later `6x32K + 2x64K` fallback was also
+  rejected because it kept the same total concurrency as `8x64K` while reducing
+  context on three GPUs;
+- rejected mixed c8 smoke:
   `../../data/gemma4-26b-quad-frontdoor-c8-nonstream-mixed-8slot-20260707T2315Z.json`
   at `397.072 tok/s` aggregate wall throughput for that non-streaming prompt
   shape;

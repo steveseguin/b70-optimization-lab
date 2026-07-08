@@ -198,34 +198,37 @@ Prompt-cache and sticky-routing production update:
   concurrency limits, prompt-cache settings, sticky-routing keys, runtime
   details, and an example request.
 
-Mixed-context router update:
+Mixed-context router experiment and correction:
 
 - changed the temporary quad backend shape from four identical `64K x 2`
-  replicas to a mixed fleet:
+  replicas to a mixed fleet, then reverted the production default after review:
   - an initial `GPU0-2: PARALLEL=4` attempt exposed a pathological 14-way
     smoke result: the 64K backend completed quickly, but the 12 short-pool
     requests took roughly `126-161s`; that shape is not the production default;
   - a follow-up `GPU0-2: PARALLEL=3` attempt was also rejected: an 11-way
     non-streaming smoke drained most requests quickly but left a 3-request
     short-backend tail active for several minutes;
-  - GPU0-2 now use `CTX_SIZE=65536`, `PARALLEL=2`, two `32768`-token slots
-    each;
-  - GPU3 uses `CTX_SIZE=131072`, `PARALLEL=2`, two `65536`-token slots;
-- public endpoint contract remains `65536` max context; the frontdoor estimates
-  prompt plus requested output size and routes `<=32768` requests to the dense
-  32K pool while sending larger requests to the 64K backend;
+  - a final `6x32K + 2x64K` fallback was also rejected after review because it
+    kept the same eight-slot concurrency as `8x64K` while reducing context on
+    three GPUs;
+  - the corrected production default is back to `CTX_SIZE=131072`,
+    `PARALLEL=2` on every backend, i.e. eight `65536`-token slots total;
+- public endpoint contract remains `65536` max context; the frontdoor still
+  estimates prompt plus requested output size so exact over-window hints can
+  return `413 context_window_exceeded` before occupying a backend slot;
 - frontend capacity remains `8` active generation requests total
-  (`2,2,2,2` by backend), now split as six 32K slots and two 64K slots;
+  (`2,2,2,2` by backend);
 - added `X-Sticky-Mode: strict` so cache-sensitive agents can wait for their
   sticky backend instead of spilling and losing prompt-cache reuse;
 - added `Retry-After` on queue-timeout responses and a `413` guard when an
   exact client token hint exceeds available context windows;
-- added `scripts/warm-gemma4-frontdoor-cache.py` to warm stable agent IDs
-  across short and long context tiers.
+- added `scripts/warm-gemma4-frontdoor-cache.py` to warm stable agent IDs;
+  default warmup tier is `auto`, with explicit `--tiers short,long` available
+  for future mixed-fleet tests.
 
-Final mixed-profile validation:
+Rejected mixed-profile validation:
 
-- active profile:
+- rejected fallback profile:
   `mixed-6x32k-2x64k-cache8192-sticky`;
 - status artifact:
   `data/gemma4-26b-quad-frontdoor-status-mixed-8slot-20260707T2315Z.json`;
@@ -237,6 +240,26 @@ Final mixed-profile validation:
 - c8 non-streaming smoke:
   `data/gemma4-26b-quad-frontdoor-c8-nonstream-mixed-8slot-20260707T2315Z.json`,
   aggregate wall throughput `397.072 tok/s` for this prompt shape;
+
+Final all-64K/sticky-router validation after review:
+
+- active profile:
+  `ctx131072-parallel2-cache8192-sticky-router`;
+- all four backends report `n_ctx=65536`, `total_slots=2`, model alias
+  `gemma4-26b-a4b-q8`;
+- status artifact:
+  `data/gemma4-26b-quad-frontdoor-status-all64k-20260708T032625Z.json`;
+- health artifact:
+  `data/gemma4-26b-prod-health-quad-frontdoor-all64k-20260708T032625Z.json`;
+- routing probe passed: exact `40000` prompt-token hint returned HTTP `200`,
+  strict repeated sticky requests stayed on the same backend, and exact
+  `70000` prompt-token hint returned `413 context_window_exceeded`;
+- c8 non-streaming smoke:
+  `data/gemma4-26b-quad-frontdoor-c8-nonstream-all64k-20260708T032701Z.json`;
+- c8 fixed-output streaming benchmark:
+  `data/gemma4-26b-quad-frontdoor-c8-stream-all64k-recheck-20260708T033139Z.json`,
+  `8` concurrent requests, `160` completion tokens each,
+  aggregate wall throughput `556.124 tok/s`;
 - final service state after validation: both Gemma units active/running with
   `NRestarts=0`, frontdoor active `0`, queued `0`.
 

@@ -1,0 +1,201 @@
+{
+  "ok": true,
+  "model_slot": {
+    "name": "gemma4-26b-a4b-q8-quad",
+    "api_model": "gemma4-26b-a4b-q8",
+    "title": "Gemma 4 26B A4B Q8 quad replica",
+    "hf_id": "unsloth/gemma-4-26B-A4B-it-GGUF",
+    "modalities": "text",
+    "status": "temporary-production"
+  },
+  "frontdoor": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "backend": "http://127.0.0.1:19350",
+    "backends": [
+      {
+        "url": "http://127.0.0.1:19350",
+        "max_active_generations": 2,
+        "context_tokens_per_slot": 65536,
+        "active_generations": 0,
+        "total_generation_requests": 0
+      },
+      {
+        "url": "http://127.0.0.1:19351",
+        "max_active_generations": 2,
+        "context_tokens_per_slot": 65536,
+        "active_generations": 0,
+        "total_generation_requests": 0
+      },
+      {
+        "url": "http://127.0.0.1:19352",
+        "max_active_generations": 2,
+        "context_tokens_per_slot": 65536,
+        "active_generations": 0,
+        "total_generation_requests": 0
+      },
+      {
+        "url": "http://127.0.0.1:19353",
+        "max_active_generations": 2,
+        "context_tokens_per_slot": 65536,
+        "active_generations": 0,
+        "total_generation_requests": 0
+      }
+    ],
+    "max_active_generations": 8,
+    "queue_timeout_s": 3600.0,
+    "active_generations": 0,
+    "queued_generations": 0,
+    "total_generation_requests": 0,
+    "event_logging": true,
+    "sticky_routing": true,
+    "sticky_headers": [
+      "x-agent-id",
+      "x-session-id",
+      "x-conversation-id"
+    ],
+    "sticky_json_fields": [
+      "user",
+      "session_id",
+      "conversation_id",
+      "metadata.agent_id",
+      "metadata.session_id"
+    ],
+    "strict_sticky_by_default": false,
+    "backend_context_tokens": [
+      65536,
+      65536,
+      65536,
+      65536
+    ],
+    "short_context_limit_tokens": null,
+    "auth": "none"
+  },
+  "client_hints": {
+    "api": {
+      "type": "openai-compatible",
+      "base_url": "http://<server-lan-ip>:8000/v1",
+      "status_endpoint": "/status",
+      "base_url_relative_status_endpoint": "/v1/frontdoor/status",
+      "models_endpoint": "/v1/models",
+      "chat_completions_endpoint": "/v1/chat/completions",
+      "completions_endpoint": "/v1/completions",
+      "model": "gemma4-26b-a4b-q8",
+      "auth": "none"
+    },
+    "recommended": {
+      "max_concurrent_generation_requests": 8,
+      "max_agents": 8,
+      "max_strict_affinity_generation_requests": 8,
+      "max_strict_short_context_agents": null,
+      "max_long_context_generation_requests": 8,
+      "max_output_tokens": 4096,
+      "send_sticky_identifier": true
+    },
+    "limits": {
+      "context_tokens_per_request": 65536,
+      "total_context_tokens_per_backend": 131072,
+      "backend_context_tokens_per_slot": [
+        65536,
+        65536,
+        65536,
+        65536
+      ],
+      "short_context_limit_tokens": null,
+      "backend_count": 4,
+      "slots_per_backend": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "total_generation_slots": 8,
+      "queue_timeout_s": 3600.0,
+      "backend_timeout_s": 7200.0
+    },
+    "prompt_cache": {
+      "enabled": true,
+      "cache_ram_mib_per_backend": 8192,
+      "sticky_routing_required_for_best_reuse": true,
+      "avoid_request_overrides": [
+        {
+          "field": "cache_prompt",
+          "value": false,
+          "reason": "This disables llama.cpp prompt caching for the request."
+        }
+      ],
+      "headers": {
+        "X-Agent-Id": "<stable-agent-id>",
+        "X-Session-Id": "<stable-session-id>",
+        "X-Conversation-Id": "<stable-conversation-id>",
+        "X-Sticky-Mode": "strict",
+        "X-Estimated-Prompt-Tokens": "<optional exact-or-client-estimated prompt token count>"
+      },
+      "json_fields": [
+        "user",
+        "session_id",
+        "conversation_id",
+        "metadata.agent_id",
+        "metadata.session_id"
+      ]
+    },
+    "routing": {
+      "sticky_routing": true,
+      "sticky_headers": [
+        "x-agent-id",
+        "x-session-id",
+        "x-conversation-id"
+      ],
+      "sticky_json_fields": [
+        "user",
+        "session_id",
+        "conversation_id",
+        "metadata.agent_id",
+        "metadata.session_id"
+      ],
+      "strict_sticky_header": "X-Sticky-Mode: strict",
+      "context_tier_header": "X-Context-Tier: short|long|auto",
+      "prompt_token_hint_headers": [
+        "X-Prompt-Tokens",
+        "X-Estimated-Prompt-Tokens"
+      ],
+      "short_context_overflows_to_long": true,
+      "token_estimator": {
+        "chars_per_token": 3.0,
+        "fixed_overhead": 512,
+        "per_message_overhead": 8
+      },
+      "behavior": "Requests with the same sticky key prefer the same backend. X-Sticky-Mode: strict waits for that backend instead of spilling to another backend."
+    },
+    "runtime": {
+      "profile": "ctx131072-parallel2-cache8192-sticky-router",
+      "kv_cache_dtype": "f16",
+      "speculation": "draft-mtp q4_0 draft, n_max=3, n_min=2, p_min=0.0475",
+      "notes": [
+        "Use a stable sticky key per agent or conversation to benefit from prompt caching.",
+        "Keep client-side generation concurrency at or below the advertised max.",
+        "Each active request has the advertised context window; token hints are used for early over-window rejection."
+      ]
+    },
+    "example_request": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+        "Content-Type": "application/json",
+        "X-Agent-Id": "bug-agent-0",
+        "X-Sticky-Mode": "strict"
+      },
+      "json": {
+        "model": "gemma4-26b-a4b-q8",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect this code path and report likely bugs."
+          }
+        ],
+        "max_tokens": 4096,
+        "temperature": 0
+      }
+    }
+  }
+}

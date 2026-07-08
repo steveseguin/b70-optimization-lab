@@ -76,7 +76,7 @@ def main() -> int:
     parser.add_argument("--agent-count", type=int, default=8)
     parser.add_argument(
         "--tiers",
-        default="short,long",
+        default="auto",
         help="Comma-separated context tiers to warm: short,long,auto.",
     )
     parser.add_argument("--system-file")

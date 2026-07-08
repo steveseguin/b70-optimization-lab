@@ -524,6 +524,28 @@ def status_payload() -> dict[str, Any]:
         and context_tokens <= FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
     )
     long_slot_count = sum(BACKEND_CAPACITIES) - short_slot_count
+    if short_slot_count and long_slot_count:
+        routing_behavior = (
+            "Requests estimated to fit the short tier prefer short-context "
+            "backends; larger requests route to long-context backends. "
+            "Requests with the same sticky key prefer the same backend "
+            "within the selected tier. X-Sticky-Mode: strict waits for "
+            "that backend instead of spilling to another backend."
+        )
+        context_note = (
+            "The public service contract remains 64K context; common short "
+            "requests may run on denser 32K slots."
+        )
+    else:
+        routing_behavior = (
+            "Requests with the same sticky key prefer the same backend. "
+            "X-Sticky-Mode: strict waits for that backend instead of spilling "
+            "to another backend."
+        )
+        context_note = (
+            "Each active request has the advertised context window; token "
+            "hints are used for early over-window rejection."
+        )
     return {
         "ok": True,
         "model_slot": {
@@ -581,6 +603,7 @@ def status_payload() -> dict[str, Any]:
             "recommended": {
                 "max_concurrent_generation_requests": MAX_ACTIVE_GENERATIONS,
                 "max_agents": MAX_ACTIVE_GENERATIONS,
+                "max_strict_affinity_generation_requests": MAX_ACTIVE_GENERATIONS,
                 "max_strict_short_context_agents": short_slot_count or None,
                 "max_long_context_generation_requests": long_slot_count or None,
                 "max_output_tokens": (
@@ -647,13 +670,7 @@ def status_payload() -> dict[str, Any]:
                         FRONTDOOR_TOKEN_ESTIMATE_PER_MESSAGE_OVERHEAD
                     ),
                 },
-                "behavior": (
-                    "Requests estimated to fit the short tier prefer short-context "
-                    "backends; larger requests route to long-context backends. "
-                    "Requests with the same sticky key prefer the same backend "
-                    "within the selected tier. X-Sticky-Mode: strict waits for "
-                    "that backend instead of spilling to another backend."
-                ),
+                "behavior": routing_behavior,
             },
             "runtime": {
                 "profile": FRONTDOOR_SLOT_PROFILE or None,
@@ -662,7 +679,7 @@ def status_payload() -> dict[str, Any]:
                 "notes": [
                     "Use a stable sticky key per agent or conversation to benefit from prompt caching.",
                     "Keep client-side generation concurrency at or below the advertised max.",
-                    "The public service contract remains 64K context; common short requests may run on denser 32K slots.",
+                    context_note,
                 ],
             },
             "example_request": {
