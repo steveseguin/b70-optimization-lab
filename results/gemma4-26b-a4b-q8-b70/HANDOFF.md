@@ -84,8 +84,8 @@ Temporary quad deployment on 2026-07-07:
 
 - public no-auth LAN endpoint: `http://0.0.0.0:8000/v1`;
 - four local service-profile replicas on `127.0.0.1:19350-19353`;
-- current backend context: `65536` tokens with `--parallel 2`; llama.cpp splits
-  this into two `32768`-token slots per backend;
+- current backend context: `131072` tokens with `--parallel 2`; llama.cpp
+  splits this into two `65536`-token slots per backend;
 - two active generations per backend, eight active generations total;
 - health passed on all four backends and the frontdoor;
 - c4/512 frontdoor smoke produced `417.888 tok/s` aggregate wall throughput;
@@ -94,10 +94,11 @@ Temporary quad deployment on 2026-07-07:
   `cached_tokens=0`;
 - latest 64K/parallel-1 comparison run produced `408.062 tok/s` aggregate wall
   throughput with four active requests;
-- latest 64K/parallel-2 8-way run produced `554.136 tok/s` aggregate wall
-  throughput at 160 output tokens and `568.080 tok/s` at 512 output tokens;
-- observed memory at 64K/parallel-2 after load was about `30.31-30.34 GB` per
-  card, `92.83-92.91%` utilization;
+- corrected 64K-per-slot / parallel-2 8-way run produced `553.565 tok/s`
+  aggregate wall throughput at 160 output tokens and `568.059 tok/s` at 512
+  output tokens;
+- observed memory at 64K-per-slot / parallel-2 after load was about
+  `31.85-31.88 GB` per card, `97.53-97.61%` utilization;
 - multi-slot serving disables the single-sequence MTP fast knobs; the aggregate
   throughput still improved, but per-request throughput dropped to roughly
   `73 tok/s` in the 8-way runs;

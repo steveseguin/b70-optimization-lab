@@ -1,0 +1,48 @@
+{
+  "base_url": "http://127.0.0.1:19350",
+  "checks": {
+    "models": {
+      "body_preview": "{\"models\":[{\"name\":\"gemma4-26b-a4b-q8\",\"model\":\"gemma4-26b-a4b-q8\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilit",
+      "elapsed_s": 0.016,
+      "models": [
+        "gemma4-26b-a4b-q8"
+      ],
+      "status": 200
+    },
+    "smoke_cases": [
+      {
+        "content": "{\"answer\":42,\"unit\":\"widgets\"}",
+        "elapsed_s": 0.256,
+        "name": "json",
+        "ok": true,
+        "status": 200,
+        "usage": {
+          "completion_tokens": 11,
+          "prompt_tokens": 35,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 46
+        }
+      },
+      {
+        "content": "blue, green, orange, red",
+        "elapsed_s": 0.182,
+        "name": "sort",
+        "ok": true,
+        "status": 200,
+        "usage": {
+          "completion_tokens": 8,
+          "prompt_tokens": 37,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 45
+        }
+      }
+    ]
+  },
+  "errors": [],
+  "model": "gemma4-26b-a4b-q8",
+  "ok": true
+}

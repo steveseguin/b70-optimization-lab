@@ -25,10 +25,10 @@ http://127.0.0.1:19353/v1  GPU 3
 The frontdoor keeps two active generations per backend and eight active
 generations total. Extra generation requests queue at the frontdoor.
 
-The current temporary deployment uses `CTX_SIZE=65536` and `--parallel 2` per
+The current temporary deployment uses `CTX_SIZE=131072` and `--parallel 2` per
 GPU/backend. llama.cpp splits the context across parallel slots, so each of the
-two slots on a backend has `32768` tokens of context. This profile trades the
-previous 128K single-session context for higher aggregate throughput.
+two slots on a backend has `65536` tokens of context. This profile keeps 64K
+context per concurrent request and serves two active requests per card.
 
 ## Profile
 
@@ -36,7 +36,7 @@ Backends use the validated Gemma service profile:
 
 ```text
 GEMMA4_26B_PROFILE=service
-CTX_SIZE=65536
+CTX_SIZE=131072
 PARALLEL=2
 BATCH_SIZE=2048
 UBATCH_SIZE=1024
@@ -77,7 +77,20 @@ scripts/gemma4-26b-prod-health.py \
   --model gemma4-26b-a4b-q8
 ```
 
-Latest 64K/parallel-2 validation artifacts:
+Latest 128K-total/parallel-2 validation artifacts:
+
+- `data/gemma4-26b-prod-health-quad-frontdoor-ctx131072-p2-20260707T2139Z.json`;
+- `data/gemma4-26b-prod-health-port19350-ctx131072-p2-20260707T2139Z.json`;
+- `data/gemma4-26b-prod-health-port19351-ctx131072-p2-20260707T2139Z.json`;
+- `data/gemma4-26b-prod-health-port19352-ctx131072-p2-20260707T2139Z.json`;
+- `data/gemma4-26b-prod-health-port19353-ctx131072-p2-20260707T2139Z.json`;
+- `data/gemma4-26b-quad-frontdoor-c8-smoke-ctx131072-p2-20260707T2140Z.json`
+  (`8` concurrent requests, two `65536`-token slots per backend,
+  `553.565 tok/s` aggregate wall throughput);
+- `data/gemma4-26b-quad-frontdoor-c8-512-ctx131072-p2-20260707T2141Z.json`
+  (`8` concurrent requests, `568.059 tok/s` aggregate wall throughput).
+
+Earlier 64K-total/parallel-2 validation artifacts:
 
 - `data/gemma4-26b-prod-health-quad-frontdoor-ctx65536-p2-20260707T2132Z.json`;
 - `data/gemma4-26b-prod-health-port19350-ctx65536-p2-20260707T2132Z.json`;

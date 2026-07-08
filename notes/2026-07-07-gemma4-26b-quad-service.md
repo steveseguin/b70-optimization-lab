@@ -17,8 +17,8 @@ Runtime shape:
 - backend profile: `GEMMA4_26B_PROFILE=service`;
 - target/verifier: UD-Q8_K_XL target with Q4_0 MTP draft, accepted tokens
   verified by the Q8 target;
-- context: `65536` per backend with `PARALLEL=2`; llama.cpp splits this into
-  two `32768`-token slots per backend;
+- context: `131072` per backend with `PARALLEL=2`; llama.cpp splits this into
+  two `65536`-token slots per backend;
 - service knobs: `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`,
   `LLAMA_PREFILL_UBATCH_SIZE=2048`, FA/VMM enabled.
 
@@ -109,7 +109,7 @@ Final high-context increase for the temporary service:
   (`requires shared memory + single seq`), so doubling per-GPU concurrency is a
   separate experiment and not part of this production config.
 
-Concurrency retest and live profile change:
+Concurrency retest with 64K total context:
 
 - changed `gemma4-26b-q8-quad-backends.service` to export
   `CTX_SIZE=65536` and `PARALLEL=2`;
@@ -141,6 +141,32 @@ Concurrency retest and live profile change:
 - post-load status showed both services active, zero queued generations, and
   `xpu-smi` around `30.31-30.34 GB` used per card, `92.83-92.91%` memory
   utilization.
+
+Corrected 64K-per-slot concurrency profile:
+
+- corrected the backend context to `CTX_SIZE=131072` with `PARALLEL=2`;
+- process launch arguments include `-c 131072 --parallel 2` for all four
+  replicas;
+- llama.cpp initialized `n_slots = 2` and reported `new slot, n_ctx = 65536`
+  for each slot, which is the intended two 64K sessions per GPU;
+- frontdoor and per-backend health passed:
+  `data/gemma4-26b-prod-health-quad-frontdoor-ctx131072-p2-20260707T2139Z.json`,
+  `data/gemma4-26b-prod-health-port19350-ctx131072-p2-20260707T2139Z.json`,
+  `data/gemma4-26b-prod-health-port19351-ctx131072-p2-20260707T2139Z.json`,
+  `data/gemma4-26b-prod-health-port19352-ctx131072-p2-20260707T2139Z.json`, and
+  `data/gemma4-26b-prod-health-port19353-ctx131072-p2-20260707T2139Z.json`;
+- 8-way frontdoor smoke passed:
+  `data/gemma4-26b-quad-frontdoor-c8-smoke-ctx131072-p2-20260707T2140Z.json`,
+  aggregate wall throughput `553.565 tok/s`;
+- 8-way 512-token frontdoor smoke passed:
+  `data/gemma4-26b-quad-frontdoor-c8-512-ctx131072-p2-20260707T2141Z.json`,
+  aggregate wall throughput `568.059 tok/s` over `4096` output tokens;
+- post-load status showed both services active, zero queued generations, and
+  `xpu-smi` around `31.85-31.88 GB` used per card, `97.53-97.61%` memory
+  utilization;
+- throughput is effectively unchanged from the accidental 32K-per-slot profile
+  on short decode, but the corrected profile provides the intended 64K context
+  per active request.
 
 Operational state after validation:
 
