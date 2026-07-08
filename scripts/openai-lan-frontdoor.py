@@ -71,10 +71,30 @@ FRONTDOOR_STICKY_JSON_FIELDS = [
     if item.strip()
 ]
 MODEL_SLOT_NAME = os.environ.get("MODEL_SLOT_NAME", "")
+MODEL_SLOT_API_MODEL = os.environ.get("MODEL_SLOT_API_MODEL", MODEL_SLOT_NAME)
 MODEL_SLOT_TITLE = os.environ.get("MODEL_SLOT_TITLE", "")
 MODEL_SLOT_HF_ID = os.environ.get("MODEL_SLOT_HF_ID", "")
 MODEL_SLOT_MODALITIES = os.environ.get("MODEL_SLOT_MODALITIES", "")
 MODEL_SLOT_STATUS = os.environ.get("MODEL_SLOT_STATUS", "")
+FRONTDOOR_PUBLIC_BASE_URL_HINT = os.environ.get(
+    "FRONTDOOR_PUBLIC_BASE_URL_HINT",
+    f"http://<server-lan-ip>:{PORT}/v1",
+)
+FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST = int(
+    os.environ.get("FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST", "0") or "0"
+)
+FRONTDOOR_TOTAL_CONTEXT_TOKENS_PER_BACKEND = int(
+    os.environ.get("FRONTDOOR_TOTAL_CONTEXT_TOKENS_PER_BACKEND", "0") or "0"
+)
+FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS = int(
+    os.environ.get("FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS", "0") or "0"
+)
+FRONTDOOR_PROMPT_CACHE_RAM_MIB = int(
+    os.environ.get("FRONTDOOR_PROMPT_CACHE_RAM_MIB", "0") or "0"
+)
+FRONTDOOR_KV_CACHE_DTYPE = os.environ.get("FRONTDOOR_KV_CACHE_DTYPE", "")
+FRONTDOOR_SPECULATION = os.environ.get("FRONTDOOR_SPECULATION", "")
+FRONTDOOR_SLOT_PROFILE = os.environ.get("FRONTDOOR_SLOT_PROFILE", "")
 
 GENERATION_PATHS = {
     "/v1/completions",
@@ -192,6 +212,7 @@ def status_payload() -> dict[str, Any]:
         "ok": True,
         "model_slot": {
             "name": MODEL_SLOT_NAME,
+            "api_model": MODEL_SLOT_API_MODEL,
             "title": MODEL_SLOT_TITLE,
             "hf_id": MODEL_SLOT_HF_ID,
             "modalities": MODEL_SLOT_MODALITIES,
@@ -220,6 +241,99 @@ def status_payload() -> dict[str, Any]:
             "sticky_headers": FRONTDOOR_STICKY_HEADERS,
             "sticky_json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
             "auth": "none",
+        },
+        "client_hints": {
+            "api": {
+                "type": "openai-compatible",
+                "base_url": FRONTDOOR_PUBLIC_BASE_URL_HINT,
+                "status_endpoint": "/status",
+                "base_url_relative_status_endpoint": "/v1/frontdoor/status",
+                "models_endpoint": "/v1/models",
+                "chat_completions_endpoint": "/v1/chat/completions",
+                "completions_endpoint": "/v1/completions",
+                "model": MODEL_SLOT_API_MODEL,
+                "auth": "none",
+            },
+            "recommended": {
+                "max_concurrent_generation_requests": MAX_ACTIVE_GENERATIONS,
+                "max_agents": MAX_ACTIVE_GENERATIONS,
+                "max_output_tokens": (
+                    FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS or None
+                ),
+                "send_sticky_identifier": FRONTDOOR_STICKY_ROUTING,
+            },
+            "limits": {
+                "context_tokens_per_request": (
+                    FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST or None
+                ),
+                "total_context_tokens_per_backend": (
+                    FRONTDOOR_TOTAL_CONTEXT_TOKENS_PER_BACKEND or None
+                ),
+                "backend_count": len(backends),
+                "slots_per_backend": BACKEND_CAPACITIES,
+                "total_generation_slots": MAX_ACTIVE_GENERATIONS,
+                "queue_timeout_s": QUEUE_TIMEOUT_S,
+                "backend_timeout_s": BACKEND_TIMEOUT_S,
+            },
+            "prompt_cache": {
+                "enabled": FRONTDOOR_PROMPT_CACHE_RAM_MIB > 0,
+                "cache_ram_mib_per_backend": (
+                    FRONTDOOR_PROMPT_CACHE_RAM_MIB or None
+                ),
+                "sticky_routing_required_for_best_reuse": FRONTDOOR_STICKY_ROUTING,
+                "avoid_request_overrides": [
+                    {
+                        "field": "cache_prompt",
+                        "value": False,
+                        "reason": "This disables llama.cpp prompt caching for the request.",
+                    }
+                ],
+                "headers": {
+                    "X-Agent-Id": "<stable-agent-id>",
+                    "X-Session-Id": "<stable-session-id>",
+                    "X-Conversation-Id": "<stable-conversation-id>",
+                },
+                "json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
+            },
+            "routing": {
+                "sticky_routing": FRONTDOOR_STICKY_ROUTING,
+                "sticky_headers": FRONTDOOR_STICKY_HEADERS,
+                "sticky_json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
+                "behavior": (
+                    "Requests with the same sticky key prefer the same backend; "
+                    "if that backend is full, the frontdoor falls through to another "
+                    "backend to avoid unnecessary queueing."
+                ),
+            },
+            "runtime": {
+                "profile": FRONTDOOR_SLOT_PROFILE or None,
+                "kv_cache_dtype": FRONTDOOR_KV_CACHE_DTYPE or None,
+                "speculation": FRONTDOOR_SPECULATION or None,
+                "notes": [
+                    "Use a stable sticky key per agent or conversation to benefit from prompt caching.",
+                    "Keep client-side generation concurrency at or below the advertised max.",
+                    "For this temporary profile, each active request has a 64K-token context slot.",
+                ],
+            },
+            "example_request": {
+                "method": "POST",
+                "path": "/v1/chat/completions",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "X-Agent-Id": "bug-agent-0",
+                },
+                "json": {
+                    "model": MODEL_SLOT_API_MODEL,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "Inspect this code path and report likely bugs.",
+                        }
+                    ],
+                    "max_tokens": FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS or 4096,
+                    "temperature": 0,
+                },
+            },
         },
     }
 
@@ -366,7 +480,16 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
     def handle_request(self) -> None:
         path = self.path.split("?", 1)[0]
         body = self.read_body()
-        if path in {"/status", "/frontdoor/status"} and self.command == "GET":
+        if (
+            path
+            in {
+                "/status",
+                "/frontdoor/status",
+                "/v1/status",
+                "/v1/frontdoor/status",
+            }
+            and self.command == "GET"
+        ):
             self.write_json(200, status_payload())
             return
 

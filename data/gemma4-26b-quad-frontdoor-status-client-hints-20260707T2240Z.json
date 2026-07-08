@@ -1,0 +1,164 @@
+{
+  "client_hints": {
+    "api": {
+      "auth": "none",
+      "base_url": "http://<server-lan-ip>:8000/v1",
+      "base_url_relative_status_endpoint": "/v1/frontdoor/status",
+      "chat_completions_endpoint": "/v1/chat/completions",
+      "completions_endpoint": "/v1/completions",
+      "model": "gemma4-26b-a4b-q8",
+      "models_endpoint": "/v1/models",
+      "status_endpoint": "/status",
+      "type": "openai-compatible"
+    },
+    "example_request": {
+      "headers": {
+        "Content-Type": "application/json",
+        "X-Agent-Id": "bug-agent-0"
+      },
+      "json": {
+        "max_tokens": 4096,
+        "messages": [
+          {
+            "content": "Inspect this code path and report likely bugs.",
+            "role": "user"
+          }
+        ],
+        "model": "gemma4-26b-a4b-q8",
+        "temperature": 0
+      },
+      "method": "POST",
+      "path": "/v1/chat/completions"
+    },
+    "limits": {
+      "backend_count": 4,
+      "backend_timeout_s": 7200.0,
+      "context_tokens_per_request": 65536,
+      "queue_timeout_s": 3600.0,
+      "slots_per_backend": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "total_context_tokens_per_backend": 131072,
+      "total_generation_slots": 8
+    },
+    "prompt_cache": {
+      "avoid_request_overrides": [
+        {
+          "field": "cache_prompt",
+          "reason": "This disables llama.cpp prompt caching for the request.",
+          "value": false
+        }
+      ],
+      "cache_ram_mib_per_backend": 8192,
+      "enabled": true,
+      "headers": {
+        "X-Agent-Id": "<stable-agent-id>",
+        "X-Conversation-Id": "<stable-conversation-id>",
+        "X-Session-Id": "<stable-session-id>"
+      },
+      "json_fields": [
+        "user",
+        "session_id",
+        "conversation_id",
+        "metadata.agent_id",
+        "metadata.session_id"
+      ],
+      "sticky_routing_required_for_best_reuse": true
+    },
+    "recommended": {
+      "max_agents": 8,
+      "max_concurrent_generation_requests": 8,
+      "max_output_tokens": 4096,
+      "send_sticky_identifier": true
+    },
+    "routing": {
+      "behavior": "Requests with the same sticky key prefer the same backend; if that backend is full, the frontdoor falls through to another backend to avoid unnecessary queueing.",
+      "sticky_headers": [
+        "x-agent-id",
+        "x-session-id",
+        "x-conversation-id"
+      ],
+      "sticky_json_fields": [
+        "user",
+        "session_id",
+        "conversation_id",
+        "metadata.agent_id",
+        "metadata.session_id"
+      ],
+      "sticky_routing": true
+    },
+    "runtime": {
+      "kv_cache_dtype": "f16",
+      "notes": [
+        "Use a stable sticky key per agent or conversation to benefit from prompt caching.",
+        "Keep client-side generation concurrency at or below the advertised max.",
+        "For this temporary profile, each active request has a 64K-token context slot."
+      ],
+      "profile": "ctx131072-parallel2-cache8192-sticky",
+      "speculation": "draft-mtp q4_0 draft, n_max=3, n_min=2, p_min=0.0475"
+    }
+  },
+  "frontdoor": {
+    "active_generations": 0,
+    "auth": "none",
+    "backend": "http://127.0.0.1:19350",
+    "backends": [
+      {
+        "active_generations": 0,
+        "max_active_generations": 2,
+        "total_generation_requests": 0,
+        "url": "http://127.0.0.1:19350"
+      },
+      {
+        "active_generations": 0,
+        "max_active_generations": 2,
+        "total_generation_requests": 0,
+        "url": "http://127.0.0.1:19351"
+      },
+      {
+        "active_generations": 0,
+        "max_active_generations": 2,
+        "total_generation_requests": 0,
+        "url": "http://127.0.0.1:19352"
+      },
+      {
+        "active_generations": 0,
+        "max_active_generations": 2,
+        "total_generation_requests": 0,
+        "url": "http://127.0.0.1:19353"
+      }
+    ],
+    "event_logging": true,
+    "host": "0.0.0.0",
+    "max_active_generations": 8,
+    "port": 8000,
+    "queue_timeout_s": 3600.0,
+    "queued_generations": 0,
+    "sticky_headers": [
+      "x-agent-id",
+      "x-session-id",
+      "x-conversation-id"
+    ],
+    "sticky_json_fields": [
+      "user",
+      "session_id",
+      "conversation_id",
+      "metadata.agent_id",
+      "metadata.session_id"
+    ],
+    "sticky_routing": true,
+    "total_generation_requests": 0
+  },
+  "model_slot": {
+    "api_model": "gemma4-26b-a4b-q8",
+    "hf_id": "unsloth/gemma-4-26B-A4B-it-GGUF",
+    "modalities": "text",
+    "name": "gemma4-26b-a4b-q8-quad",
+    "status": "temporary-production",
+    "title": "Gemma 4 26B A4B Q8 quad replica"
+  },
+  "ok": true
+}

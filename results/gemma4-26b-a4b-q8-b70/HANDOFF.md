@@ -110,6 +110,8 @@ Temporary quad deployment on 2026-07-07:
   `7.827s` to `0.102s`;
 - advise the client app to use max concurrency `8` for generation requests and
   send stable per-agent/per-session sticky identifiers;
+- remote clients can discover setup hints from `/status` or
+  `/v1/frontdoor/status`;
 - operational note:
   `../../notes/2026-07-07-gemma4-26b-quad-service.md`.
 

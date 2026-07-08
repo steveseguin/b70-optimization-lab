@@ -193,6 +193,10 @@ Prompt-cache and sticky-routing production update:
   aggregate wall throughput `550.934 tok/s`;
 - operational guidance for the code/tool-agent app: set max active generation
   requests to `8`, and send a stable sticky key per agent or session.
+- machine-readable client setup hints are exposed at `/status` and
+  `/v1/frontdoor/status`; the JSON includes API paths, model id, context and
+  concurrency limits, prompt-cache settings, sticky-routing keys, runtime
+  details, and an example request.
 
 Operational state after validation:
 

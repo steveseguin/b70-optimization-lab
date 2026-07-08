@@ -43,6 +43,17 @@ If custom headers are hard to set, the frontdoor also accepts sticky routing
 keys in JSON fields such as `user`, `session_id`, `conversation_id`,
 `metadata.agent_id`, or `metadata.session_id`.
 
+Machine-readable client setup hints are available at:
+
+```text
+GET http://<server-lan-ip>:8000/status
+GET http://<server-lan-ip>:8000/v1/frontdoor/status
+```
+
+The JSON includes the OpenAI-compatible base URL, model name, context and
+concurrency limits, prompt-cache settings, sticky-routing keys, and an example
+chat-completions request.
+
 ## Profile
 
 Backends use the validated Gemma service profile:
