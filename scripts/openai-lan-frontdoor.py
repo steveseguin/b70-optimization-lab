@@ -11,6 +11,7 @@ from __future__ import annotations
 import http.client
 import hashlib
 import json
+import math
 import os
 import socket
 import sys
@@ -19,6 +20,18 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import urlsplit
+
+
+def env_truthy(name: str, default: str = "0") -> bool:
+    return os.environ.get(name, default) not in {"0", "false", "False"}
+
+
+def parse_csv_ints(raw: str) -> list[int]:
+    return [
+        int(item.strip())
+        for item in raw.replace("\n", ",").split(",")
+        if item.strip()
+    ]
 
 
 PAUSE_FILE = os.environ.get(
@@ -41,19 +54,11 @@ BACKEND_CAPACITIES_RAW = os.environ.get("FRONTDOOR_BACKEND_CAPACITIES", "")
 QUEUE_TIMEOUT_S = float(os.environ.get("FRONTDOOR_QUEUE_TIMEOUT_S", "3600"))
 BACKEND_TIMEOUT_S = float(os.environ.get("FRONTDOOR_BACKEND_TIMEOUT_S", "7200"))
 FRONTDOOR_CORS_ALLOW_ORIGIN = os.environ.get("FRONTDOOR_CORS_ALLOW_ORIGIN", "*")
-FRONTDOOR_LOG_EVENTS = os.environ.get("FRONTDOOR_LOG_EVENTS", "1") not in {
-    "0",
-    "false",
-    "False",
-}
+FRONTDOOR_LOG_EVENTS = env_truthy("FRONTDOOR_LOG_EVENTS", "1")
 FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON = os.environ.get(
     "FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON", ""
 )
-FRONTDOOR_STICKY_ROUTING = os.environ.get("FRONTDOOR_STICKY_ROUTING", "0") not in {
-    "0",
-    "false",
-    "False",
-}
+FRONTDOOR_STICKY_ROUTING = env_truthy("FRONTDOOR_STICKY_ROUTING", "0")
 FRONTDOOR_STICKY_HEADERS = [
     item.strip().lower()
     for item in os.environ.get(
@@ -95,6 +100,30 @@ FRONTDOOR_PROMPT_CACHE_RAM_MIB = int(
 FRONTDOOR_KV_CACHE_DTYPE = os.environ.get("FRONTDOOR_KV_CACHE_DTYPE", "")
 FRONTDOOR_SPECULATION = os.environ.get("FRONTDOOR_SPECULATION", "")
 FRONTDOOR_SLOT_PROFILE = os.environ.get("FRONTDOOR_SLOT_PROFILE", "")
+FRONTDOOR_BACKEND_CONTEXT_TOKENS_RAW = os.environ.get(
+    "FRONTDOOR_BACKEND_CONTEXT_TOKENS", ""
+)
+FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS = int(
+    os.environ.get("FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS", "0") or "0"
+)
+FRONTDOOR_TOKEN_ESTIMATE_CHARS_PER_TOKEN = float(
+    os.environ.get("FRONTDOOR_TOKEN_ESTIMATE_CHARS_PER_TOKEN", "3.0") or "3.0"
+)
+FRONTDOOR_TOKEN_ESTIMATE_FIXED_OVERHEAD = int(
+    os.environ.get("FRONTDOOR_TOKEN_ESTIMATE_FIXED_OVERHEAD", "512") or "512"
+)
+FRONTDOOR_TOKEN_ESTIMATE_PER_MESSAGE_OVERHEAD = int(
+    os.environ.get("FRONTDOOR_TOKEN_ESTIMATE_PER_MESSAGE_OVERHEAD", "8") or "8"
+)
+FRONTDOOR_SHORT_CAN_OVERFLOW_TO_LONG = env_truthy(
+    "FRONTDOOR_SHORT_CAN_OVERFLOW_TO_LONG", "1"
+)
+FRONTDOOR_STRICT_STICKY_BY_DEFAULT = env_truthy(
+    "FRONTDOOR_STRICT_STICKY_BY_DEFAULT", "0"
+)
+FRONTDOOR_RETRY_AFTER_S = int(
+    os.environ.get("FRONTDOOR_RETRY_AFTER_S", "15") or "15"
+)
 
 GENERATION_PATHS = {
     "/v1/completions",
@@ -143,11 +172,7 @@ for backend_url in BACKEND_BASE_URLS:
     backends.append(parsed_backend)
 
 if BACKEND_CAPACITIES_RAW:
-    BACKEND_CAPACITIES = [
-        int(item.strip())
-        for item in BACKEND_CAPACITIES_RAW.replace("\n", ",").split(",")
-        if item.strip()
-    ]
+    BACKEND_CAPACITIES = parse_csv_ints(BACKEND_CAPACITIES_RAW)
     if len(BACKEND_CAPACITIES) != len(backends):
         raise SystemExit(
             "FRONTDOOR_BACKEND_CAPACITIES must have one entry per backend: "
@@ -162,6 +187,29 @@ else:
 if any(capacity <= 0 for capacity in BACKEND_CAPACITIES):
     raise SystemExit("backend capacities must be positive integers")
 
+if FRONTDOOR_BACKEND_CONTEXT_TOKENS_RAW:
+    BACKEND_CONTEXT_TOKENS = parse_csv_ints(FRONTDOOR_BACKEND_CONTEXT_TOKENS_RAW)
+    if len(BACKEND_CONTEXT_TOKENS) != len(backends):
+        raise SystemExit(
+            "FRONTDOOR_BACKEND_CONTEXT_TOKENS must have one entry per backend: "
+            f"{len(BACKEND_CONTEXT_TOKENS)} contexts for {len(backends)} backends"
+        )
+else:
+    default_context_tokens = FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST or 0
+    BACKEND_CONTEXT_TOKENS = [default_context_tokens for _ in backends]
+
+if any(context < 0 for context in BACKEND_CONTEXT_TOKENS):
+    raise SystemExit("backend context tokens must be non-negative integers")
+
+MAX_BACKEND_CONTEXT_TOKENS = max(BACKEND_CONTEXT_TOKENS) if BACKEND_CONTEXT_TOKENS else 0
+if not FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST and MAX_BACKEND_CONTEXT_TOKENS:
+    FRONTDOOR_CONTEXT_TOKENS_PER_REQUEST = MAX_BACKEND_CONTEXT_TOKENS
+if not FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS and MAX_BACKEND_CONTEXT_TOKENS:
+    distinct_contexts = sorted({value for value in BACKEND_CONTEXT_TOKENS if value > 0})
+    if len(distinct_contexts) > 1:
+        FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS = distinct_contexts[0]
+
+USE_GLOBAL_GENERATION_LIMIT = MAX_ACTIVE_GENERATIONS < sum(BACKEND_CAPACITIES)
 generation_slots = threading.BoundedSemaphore(MAX_ACTIVE_GENERATIONS)
 backend_generation_slots = [
     threading.BoundedSemaphore(capacity) for capacity in BACKEND_CAPACITIES
@@ -201,6 +249,266 @@ def is_generation_path(path: str, method: str) -> bool:
     return method.upper() == "POST" and path in GENERATION_PATHS
 
 
+def parse_json_body(headers: Any, body: bytes | None) -> dict[str, Any] | None:
+    if body is None:
+        return None
+    content_type = headers.get("Content-Type", "")
+    if "json" not in content_type.lower():
+        return None
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def int_from_headers(headers: Any, names: tuple[str, ...]) -> tuple[int | None, str | None]:
+    for name in names:
+        raw = headers.get(name)
+        if raw is None:
+            continue
+        try:
+            value = int(str(raw).strip())
+        except ValueError:
+            continue
+        if value >= 0:
+            return value, f"header:{name.lower()}"
+    return None, None
+
+
+def collect_prompt_text(value: Any, parts: list[str]) -> None:
+    if value is None:
+        return
+    if isinstance(value, str):
+        parts.append(value)
+        return
+    if isinstance(value, (int, float, bool)):
+        parts.append(str(value))
+        return
+    if isinstance(value, list):
+        for item in value:
+            collect_prompt_text(item, parts)
+        return
+    if isinstance(value, dict):
+        for item in value.values():
+            collect_prompt_text(item, parts)
+
+
+def json_size_text(value: Any) -> str:
+    try:
+        return json.dumps(value, separators=(",", ":"), sort_keys=True)
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def get_nested_value(payload: dict[str, Any], field_path: str) -> Any:
+    current: Any = payload
+    for part in field_path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return None
+        current = current[part]
+    return current
+
+
+def estimate_prompt_tokens(
+    headers: Any,
+    payload: dict[str, Any] | None,
+) -> tuple[int | None, str, int]:
+    header_value, header_source = int_from_headers(
+        headers,
+        ("X-Prompt-Tokens", "X-Estimated-Prompt-Tokens"),
+    )
+    if header_value is not None and header_source is not None:
+        return header_value, header_source, 0
+
+    if payload is None:
+        return None, "unavailable", 0
+
+    for field in (
+        "prompt_tokens",
+        "estimated_prompt_tokens",
+        "metadata.prompt_tokens",
+        "metadata.estimated_prompt_tokens",
+    ):
+        value = get_nested_value(payload, field)
+        if isinstance(value, int) and value >= 0:
+            return value, f"json:{field}", 0
+        if isinstance(value, str):
+            try:
+                parsed = int(value)
+            except ValueError:
+                continue
+            if parsed >= 0:
+                return parsed, f"json:{field}", 0
+
+    parts: list[str] = []
+    message_count = 0
+    messages = payload.get("messages")
+    if isinstance(messages, list):
+        message_count = len(messages)
+        for message in messages:
+            if isinstance(message, dict):
+                for key in (
+                    "role",
+                    "name",
+                    "content",
+                    "tool_calls",
+                    "function_call",
+                    "tool_call_id",
+                ):
+                    collect_prompt_text(message.get(key), parts)
+            else:
+                collect_prompt_text(message, parts)
+
+    for key in ("prompt", "input", "instructions", "suffix"):
+        if key in payload:
+            collect_prompt_text(payload.get(key), parts)
+
+    for key in ("tools", "functions", "response_format"):
+        if key in payload:
+            parts.append(json_size_text(payload.get(key)))
+
+    char_count = sum(len(part) for part in parts)
+    estimated = math.ceil(char_count / FRONTDOOR_TOKEN_ESTIMATE_CHARS_PER_TOKEN)
+    estimated += FRONTDOOR_TOKEN_ESTIMATE_FIXED_OVERHEAD
+    estimated += message_count * FRONTDOOR_TOKEN_ESTIMATE_PER_MESSAGE_OVERHEAD
+    return max(0, estimated), "heuristic", char_count
+
+
+def requested_max_output_tokens(payload: dict[str, Any] | None) -> int:
+    if payload is None:
+        return FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS or 4096
+    for key in ("max_completion_tokens", "max_tokens", "n_predict"):
+        value = payload.get(key)
+        if isinstance(value, int) and value >= 0:
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = int(value)
+            except ValueError:
+                continue
+            if parsed >= 0:
+                return parsed
+    return FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS or 4096
+
+
+def ordered_backend_indices(indices: list[int], sticky_key: str | None) -> list[int]:
+    if not indices:
+        return []
+    if not sticky_key:
+        return indices
+    digest = hashlib.sha256(sticky_key.encode("utf-8")).digest()
+    start = int.from_bytes(digest[:8], "big") % len(indices)
+    return indices[start:] + indices[:start]
+
+
+def request_route_info(
+    headers: Any,
+    payload: dict[str, Any] | None,
+    sticky_key: str | None,
+) -> dict[str, Any]:
+    prompt_tokens, estimate_source, estimated_chars = estimate_prompt_tokens(
+        headers,
+        payload,
+    )
+    max_output_tokens = requested_max_output_tokens(payload)
+    required_tokens = None
+    if prompt_tokens is not None:
+        required_tokens = prompt_tokens + max_output_tokens
+
+    tier_override = (headers.get("X-Context-Tier") or "").strip().lower()
+    if tier_override not in {"short", "long", "auto"}:
+        tier_override = ""
+    if not tier_override and payload is not None:
+        metadata_tier = get_nested_value(payload, "metadata.context_tier")
+        if isinstance(metadata_tier, str) and metadata_tier.lower() in {
+            "short",
+            "long",
+            "auto",
+        }:
+            tier_override = metadata_tier.lower()
+
+    all_indices = list(range(len(backends)))
+    if required_tokens is None or not any(BACKEND_CONTEXT_TOKENS):
+        eligible = all_indices
+    else:
+        eligible = [
+            index
+            for index, context_tokens in enumerate(BACKEND_CONTEXT_TOKENS)
+            if context_tokens <= 0 or context_tokens >= required_tokens
+        ]
+
+    estimate_exact = estimate_source.startswith(("header:", "json:"))
+    estimate_exceeds_context = (
+        required_tokens is not None
+        and MAX_BACKEND_CONTEXT_TOKENS > 0
+        and required_tokens > MAX_BACKEND_CONTEXT_TOKENS
+    )
+    if not eligible and estimate_exceeds_context and not estimate_exact:
+        eligible = [
+            index
+            for index, context_tokens in enumerate(BACKEND_CONTEXT_TOKENS)
+            if context_tokens == MAX_BACKEND_CONTEXT_TOKENS
+        ]
+
+    short_indices = [
+        index
+        for index in eligible
+        if FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+        and BACKEND_CONTEXT_TOKENS[index] > 0
+        and BACKEND_CONTEXT_TOKENS[index] <= FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+    ]
+    long_indices = [
+        index
+        for index in eligible
+        if not FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+        or BACKEND_CONTEXT_TOKENS[index] == 0
+        or BACKEND_CONTEXT_TOKENS[index] > FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+    ]
+
+    if tier_override == "long":
+        preferred = long_indices or eligible
+        fallback: list[int] = []
+        selected_tier = "long"
+    elif tier_override == "short":
+        preferred = short_indices or eligible
+        fallback = []
+        selected_tier = "short"
+    elif (
+        required_tokens is not None
+        and FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+        and required_tokens <= FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+        and short_indices
+    ):
+        preferred = short_indices
+        fallback = [
+            index
+            for index in long_indices
+            if FRONTDOOR_SHORT_CAN_OVERFLOW_TO_LONG
+        ]
+        selected_tier = "short"
+    else:
+        preferred = long_indices or eligible
+        fallback = []
+        selected_tier = "long" if preferred else "none"
+
+    return {
+        "prompt_tokens_estimated": prompt_tokens,
+        "prompt_tokens_estimate_source": estimate_source,
+        "prompt_chars_estimated": estimated_chars,
+        "max_output_tokens": max_output_tokens,
+        "required_context_tokens_estimated": required_tokens,
+        "estimate_exceeds_public_context": estimate_exceeds_context,
+        "estimate_exact": estimate_exact,
+        "context_tier": selected_tier,
+        "context_tier_override": tier_override or None,
+        "sticky_key_present": bool(sticky_key),
+        "preferred_backend_indices": ordered_backend_indices(preferred, sticky_key),
+        "fallback_backend_indices": ordered_backend_indices(fallback, sticky_key),
+        "eligible_backend_indices": eligible,
+    }
+
+
 def status_payload() -> dict[str, Any]:
     with state_lock:
         active = active_generations
@@ -208,6 +516,14 @@ def status_payload() -> dict[str, Any]:
         total = total_generation_requests
         backend_active = list(backend_active_generations)
         backend_total = list(backend_total_generation_requests)
+    short_slot_count = sum(
+        capacity
+        for capacity, context_tokens in zip(BACKEND_CAPACITIES, BACKEND_CONTEXT_TOKENS)
+        if FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+        and context_tokens > 0
+        and context_tokens <= FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS
+    )
+    long_slot_count = sum(BACKEND_CAPACITIES) - short_slot_count
     return {
         "ok": True,
         "model_slot": {
@@ -226,6 +542,9 @@ def status_payload() -> dict[str, Any]:
                 {
                     "url": BACKEND_BASE_URLS[i],
                     "max_active_generations": BACKEND_CAPACITIES[i],
+                    "context_tokens_per_slot": (
+                        BACKEND_CONTEXT_TOKENS[i] or None
+                    ),
                     "active_generations": backend_active[i],
                     "total_generation_requests": backend_total[i],
                 }
@@ -240,6 +559,11 @@ def status_payload() -> dict[str, Any]:
             "sticky_routing": FRONTDOOR_STICKY_ROUTING,
             "sticky_headers": FRONTDOOR_STICKY_HEADERS,
             "sticky_json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
+            "strict_sticky_by_default": FRONTDOOR_STRICT_STICKY_BY_DEFAULT,
+            "backend_context_tokens": BACKEND_CONTEXT_TOKENS,
+            "short_context_limit_tokens": (
+                FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS or None
+            ),
             "auth": "none",
         },
         "client_hints": {
@@ -257,6 +581,8 @@ def status_payload() -> dict[str, Any]:
             "recommended": {
                 "max_concurrent_generation_requests": MAX_ACTIVE_GENERATIONS,
                 "max_agents": MAX_ACTIVE_GENERATIONS,
+                "max_strict_short_context_agents": short_slot_count or None,
+                "max_long_context_generation_requests": long_slot_count or None,
                 "max_output_tokens": (
                     FRONTDOOR_RECOMMENDED_MAX_OUTPUT_TOKENS or None
                 ),
@@ -268,6 +594,10 @@ def status_payload() -> dict[str, Any]:
                 ),
                 "total_context_tokens_per_backend": (
                     FRONTDOOR_TOTAL_CONTEXT_TOKENS_PER_BACKEND or None
+                ),
+                "backend_context_tokens_per_slot": BACKEND_CONTEXT_TOKENS,
+                "short_context_limit_tokens": (
+                    FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS or None
                 ),
                 "backend_count": len(backends),
                 "slots_per_backend": BACKEND_CAPACITIES,
@@ -292,6 +622,8 @@ def status_payload() -> dict[str, Any]:
                     "X-Agent-Id": "<stable-agent-id>",
                     "X-Session-Id": "<stable-session-id>",
                     "X-Conversation-Id": "<stable-conversation-id>",
+                    "X-Sticky-Mode": "strict",
+                    "X-Estimated-Prompt-Tokens": "<optional exact-or-client-estimated prompt token count>",
                 },
                 "json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
             },
@@ -299,10 +631,28 @@ def status_payload() -> dict[str, Any]:
                 "sticky_routing": FRONTDOOR_STICKY_ROUTING,
                 "sticky_headers": FRONTDOOR_STICKY_HEADERS,
                 "sticky_json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
+                "strict_sticky_header": "X-Sticky-Mode: strict",
+                "context_tier_header": "X-Context-Tier: short|long|auto",
+                "prompt_token_hint_headers": [
+                    "X-Prompt-Tokens",
+                    "X-Estimated-Prompt-Tokens",
+                ],
+                "short_context_overflows_to_long": (
+                    FRONTDOOR_SHORT_CAN_OVERFLOW_TO_LONG
+                ),
+                "token_estimator": {
+                    "chars_per_token": FRONTDOOR_TOKEN_ESTIMATE_CHARS_PER_TOKEN,
+                    "fixed_overhead": FRONTDOOR_TOKEN_ESTIMATE_FIXED_OVERHEAD,
+                    "per_message_overhead": (
+                        FRONTDOOR_TOKEN_ESTIMATE_PER_MESSAGE_OVERHEAD
+                    ),
+                },
                 "behavior": (
-                    "Requests with the same sticky key prefer the same backend; "
-                    "if that backend is full, the frontdoor falls through to another "
-                    "backend to avoid unnecessary queueing."
+                    "Requests estimated to fit the short tier prefer short-context "
+                    "backends; larger requests route to long-context backends. "
+                    "Requests with the same sticky key prefer the same backend "
+                    "within the selected tier. X-Sticky-Mode: strict waits for "
+                    "that backend instead of spilling to another backend."
                 ),
             },
             "runtime": {
@@ -312,7 +662,7 @@ def status_payload() -> dict[str, Any]:
                 "notes": [
                     "Use a stable sticky key per agent or conversation to benefit from prompt caching.",
                     "Keep client-side generation concurrency at or below the advertised max.",
-                    "For this temporary profile, each active request has a 64K-token context slot.",
+                    "The public service contract remains 64K context; common short requests may run on denser 32K slots.",
                 ],
             },
             "example_request": {
@@ -321,6 +671,7 @@ def status_payload() -> dict[str, Any]:
                 "headers": {
                     "Content-Type": "application/json",
                     "X-Agent-Id": "bug-agent-0",
+                    "X-Sticky-Mode": "strict",
                 },
                 "json": {
                     "model": MODEL_SLOT_API_MODEL,
@@ -338,24 +689,41 @@ def status_payload() -> dict[str, Any]:
     }
 
 
-def sticky_start_index(sticky_key: str | None) -> int | None:
-    if not FRONTDOOR_STICKY_ROUTING or not sticky_key:
-        return None
-    digest = hashlib.sha256(sticky_key.encode("utf-8")).digest()
-    return int.from_bytes(digest[:8], "big") % len(backend_generation_slots)
-
-
-def acquire_backend_slot(timeout_s: float, sticky_key: str | None = None) -> int | None:
+def acquire_backend_slot(
+    timeout_s: float,
+    preferred_indices: list[int],
+    fallback_indices: list[int],
+    strict_sticky: bool = False,
+    round_robin: bool = False,
+) -> int | None:
     global next_backend_index
+    if not preferred_indices and not fallback_indices:
+        return None
     deadline = time.perf_counter() + timeout_s
     while True:
         with backend_select_lock:
-            sticky_index = sticky_start_index(sticky_key)
-            start = sticky_index if sticky_index is not None else next_backend_index
-            for offset in range(len(backend_generation_slots)):
-                index = (start + offset) % len(backend_generation_slots)
+            preferred_search = preferred_indices
+            fallback_search = fallback_indices
+            if strict_sticky and preferred_indices:
+                preferred_search = preferred_indices[:1]
+                fallback_search = []
+
+            if round_robin and len(preferred_search) > 1:
+                if next_backend_index in preferred_search:
+                    start = preferred_search.index(next_backend_index)
+                else:
+                    start = next_backend_index % len(preferred_search)
+                preferred_search = preferred_search[start:] + preferred_search[:start]
+            if round_robin and len(fallback_search) > 1:
+                if next_backend_index in fallback_search:
+                    start = fallback_search.index(next_backend_index)
+                else:
+                    start = next_backend_index % len(fallback_search)
+                fallback_search = fallback_search[start:] + fallback_search[:start]
+
+            for index in preferred_search + fallback_search:
                 if backend_generation_slots[index].acquire(blocking=False):
-                    if sticky_index is None:
+                    if round_robin:
                         next_backend_index = (index + 1) % len(backend_generation_slots)
                     return index
 
@@ -365,7 +733,10 @@ def acquire_backend_slot(timeout_s: float, sticky_key: str | None = None) -> int
         time.sleep(min(0.05, remaining))
 
 
-def acquire_generation_slot(sticky_key: str | None = None) -> tuple[bool, int | None, float]:
+def acquire_generation_slot(
+    route_info: dict[str, Any],
+    strict_sticky: bool = False,
+) -> tuple[bool, int | None, float]:
     global active_generations, queued_generations, total_generation_requests
     started = time.perf_counter()
     deadline = started + QUEUE_TIMEOUT_S
@@ -373,15 +744,21 @@ def acquire_generation_slot(sticky_key: str | None = None) -> tuple[bool, int | 
         queued_generations += 1
         total_generation_requests += 1
 
-    acquired = generation_slots.acquire(timeout=QUEUE_TIMEOUT_S)
+    acquired = True
+    if USE_GLOBAL_GENERATION_LIMIT:
+        acquired = generation_slots.acquire(timeout=QUEUE_TIMEOUT_S)
     backend_index: int | None = None
     if acquired:
         backend_index = acquire_backend_slot(
             max(0.0, deadline - time.perf_counter()),
-            sticky_key=sticky_key,
+            preferred_indices=route_info["preferred_backend_indices"],
+            fallback_indices=route_info["fallback_backend_indices"],
+            strict_sticky=strict_sticky,
+            round_robin=not route_info["sticky_key_present"],
         )
         if backend_index is None:
-            generation_slots.release()
+            if USE_GLOBAL_GENERATION_LIMIT:
+                generation_slots.release()
             acquired = False
 
     waited = time.perf_counter() - started
@@ -403,7 +780,8 @@ def release_generation_slot(backend_index: int | None) -> None:
             backend_active_generations[backend_index] -= 1
     if backend_index is not None:
         backend_generation_slots[backend_index].release()
-    generation_slots.release()
+    if USE_GLOBAL_GENERATION_LIMIT:
+        generation_slots.release()
 
 
 def apply_request_defaults(path: str, body: bytes | None) -> bytes | None:
@@ -498,10 +876,47 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         backend_index: int | None = 0
         queue_wait_s = 0.0
         generation = is_generation_path(path, self.command)
-        sticky_key, sticky_source = self.sticky_key_for_request(body) if generation else (None, None)
+        payload = parse_json_body(self.headers, body) if generation else None
+        route_info: dict[str, Any] | None = None
+        sticky_key, sticky_source = (
+            self.sticky_key_for_request(body, payload) if generation else (None, None)
+        )
+        strict_sticky = (
+            self.strict_sticky_for_request() and bool(sticky_key)
+            if generation
+            else False
+        )
         if generation:
+            route_info = request_route_info(self.headers, payload, sticky_key)
+            if (
+                not route_info["preferred_backend_indices"]
+                and not route_info["fallback_backend_indices"]
+            ):
+                self.write_json(
+                    413,
+                    {
+                        "error": {
+                            "message": "estimated request context exceeds available context windows",
+                            "type": "context_window_exceeded",
+                            "estimate": {
+                                key: route_info[key]
+                                for key in (
+                                    "prompt_tokens_estimated",
+                                    "prompt_tokens_estimate_source",
+                                    "max_output_tokens",
+                                    "required_context_tokens_estimated",
+                                )
+                            },
+                            "backend_context_tokens_per_slot": BACKEND_CONTEXT_TOKENS,
+                        }
+                    },
+                )
+                return
             queued = True
-            acquired, backend_index, queue_wait_s = acquire_generation_slot(sticky_key)
+            acquired, backend_index, queue_wait_s = acquire_generation_slot(
+                route_info,
+                strict_sticky=strict_sticky,
+            )
             if not acquired:
                 self.write_json(
                     503,
@@ -511,6 +926,7 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                             "type": "queue_timeout",
                         }
                     },
+                    extra_headers={"Retry-After": str(FRONTDOOR_RETRY_AFTER_S)},
                 )
                 return
 
@@ -542,6 +958,30 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                         "path": path,
                         "status": status,
                         "backend": BACKEND_BASE_URLS[backend_index or 0],
+                        "backend_context_tokens": (
+                            BACKEND_CONTEXT_TOKENS[backend_index or 0]
+                            if BACKEND_CONTEXT_TOKENS
+                            else None
+                        ),
+                        "context_tier": (
+                            route_info.get("context_tier") if route_info else None
+                        ),
+                        "required_context_tokens_estimated": (
+                            route_info.get("required_context_tokens_estimated")
+                            if route_info
+                            else None
+                        ),
+                        "prompt_tokens_estimated": (
+                            route_info.get("prompt_tokens_estimated")
+                            if route_info
+                            else None
+                        ),
+                        "prompt_tokens_estimate_source": (
+                            route_info.get("prompt_tokens_estimate_source")
+                            if route_info
+                            else None
+                        ),
+                        "strict_sticky": strict_sticky,
                         "sticky": bool(sticky_key),
                         "sticky_source": sticky_source,
                         "sticky_hash": (
@@ -636,7 +1076,19 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         headers["X-Forwarded-Proto"] = "http"
         return headers
 
-    def sticky_key_for_request(self, body: bytes | None) -> tuple[str | None, str | None]:
+    def strict_sticky_for_request(self) -> bool:
+        mode = (self.headers.get("X-Sticky-Mode") or "").strip().lower()
+        if mode in {"strict", "affinity", "cache"}:
+            return True
+        if mode in {"loose", "prefer", "spill", "auto"}:
+            return False
+        return FRONTDOOR_STRICT_STICKY_BY_DEFAULT
+
+    def sticky_key_for_request(
+        self,
+        body: bytes | None,
+        payload: dict[str, Any] | None = None,
+    ) -> tuple[str | None, str | None]:
         if not FRONTDOOR_STICKY_ROUTING:
             return None, None
 
@@ -646,14 +1098,9 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
 
         if body is None or not FRONTDOOR_STICKY_JSON_FIELDS:
             return None, None
-        content_type = self.headers.get("Content-Type", "")
-        if "json" not in content_type.lower():
-            return None, None
-        try:
-            payload = json.loads(body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            return None, None
-        if not isinstance(payload, dict):
+        if payload is None:
+            payload = parse_json_body(self.headers, body)
+        if payload is None:
             return None, None
 
         for field in FRONTDOOR_STICKY_JSON_FIELDS:
@@ -662,11 +1109,18 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                 return f"json:{field}:{value}", f"json:{field}"
         return None, None
 
-    def write_json(self, status: int, payload: dict[str, Any]) -> None:
+    def write_json(
+        self,
+        status: int,
+        payload: dict[str, Any],
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
         body = json.dumps(payload, indent=2).encode("utf-8") + b"\n"
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.add_cors_headers()
+        for name, value in (extra_headers or {}).items():
+            self.send_header(name, value)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Connection", "close")
         self.end_headers()
@@ -680,7 +1134,8 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         self.send_header(
             "Access-Control-Allow-Headers",
             "Authorization, Content-Type, OpenAI-Beta, X-Requested-With, "
-            "X-Agent-Id, X-Session-Id, X-Conversation-Id",
+            "X-Agent-Id, X-Session-Id, X-Conversation-Id, X-Sticky-Mode, "
+            "X-Context-Tier, X-Prompt-Tokens, X-Estimated-Prompt-Tokens",
         )
 
 
@@ -702,9 +1157,15 @@ def main() -> int:
             "backends": BACKEND_BASE_URLS,
             "max_active_generations": MAX_ACTIVE_GENERATIONS,
             "backend_capacities": BACKEND_CAPACITIES,
+            "backend_context_tokens": BACKEND_CONTEXT_TOKENS,
+            "short_context_limit_tokens": (
+                FRONTDOOR_SHORT_CONTEXT_LIMIT_TOKENS or None
+            ),
+            "short_can_overflow_to_long": FRONTDOOR_SHORT_CAN_OVERFLOW_TO_LONG,
             "sticky_routing": FRONTDOOR_STICKY_ROUTING,
             "sticky_headers": FRONTDOOR_STICKY_HEADERS,
             "sticky_json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
+            "strict_sticky_by_default": FRONTDOOR_STRICT_STICKY_BY_DEFAULT,
             "auth": "none",
         }
     )

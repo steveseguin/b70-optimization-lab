@@ -22,13 +22,21 @@ http://127.0.0.1:19352/v1  GPU 2
 http://127.0.0.1:19353/v1  GPU 3
 ```
 
-The frontdoor keeps two active generations per backend and eight active
-generations total. Extra generation requests queue at the frontdoor.
+The public contract remains a `65536`-token maximum context window. Internally,
+the current mixed fleet uses three dense short-context replicas plus one
+long-context replica:
 
-The current temporary deployment uses `CTX_SIZE=131072` and `--parallel 2` per
-GPU/backend. llama.cpp splits the context across parallel slots, so each of the
-two slots on a backend has `65536` tokens of context. This profile keeps 64K
-context per concurrent request and serves two active requests per card.
+```text
+GPU 0 / 127.0.0.1:19350: two 32768-token slots
+GPU 1 / 127.0.0.1:19351: two 32768-token slots
+GPU 2 / 127.0.0.1:19352: two 32768-token slots
+GPU 3 / 127.0.0.1:19353: two 65536-token slots
+```
+
+The frontdoor estimates prompt plus requested output size. Requests estimated
+to fit in `32768` tokens prefer the dense 32K pool. Larger requests route to
+the 64K backend. Short requests may overflow to the 64K backend when the dense
+pool is full unless the caller sends strict sticky affinity.
 
 For agent workloads, configure clients for at most `8` concurrent generation
 requests. Send a stable per-agent or per-session identifier so the frontdoor can
@@ -37,6 +45,7 @@ keep repeated prompts on the same backend and make the prompt cache useful:
 ```text
 X-Agent-Id: bug-agent-0
 X-Session-Id: repo-audit-20260707
+X-Sticky-Mode: strict
 ```
 
 If custom headers are hard to set, the frontdoor also accepts sticky routing
@@ -50,9 +59,9 @@ GET http://<server-lan-ip>:8000/status
 GET http://<server-lan-ip>:8000/v1/frontdoor/status
 ```
 
-The JSON includes the OpenAI-compatible base URL, model name, context and
-concurrency limits, prompt-cache settings, sticky-routing keys, and an example
-chat-completions request.
+The JSON includes the OpenAI-compatible base URL, model name, mixed context
+tiers, concurrency limits, prompt-cache settings, sticky-routing keys, and an
+example chat-completions request.
 
 ## Profile
 
@@ -60,8 +69,10 @@ Backends use the validated Gemma service profile:
 
 ```text
 GEMMA4_26B_PROFILE=service
-CTX_SIZE=131072
-PARALLEL=2
+CTX_SIZE=65536 on GPU0-2
+CTX_SIZE=131072 on GPU3
+PARALLEL=2 on GPU0-2
+PARALLEL=2 on GPU3
 CACHE_RAM_MIB=8192
 BATCH_SIZE=2048
 UBATCH_SIZE=1024
@@ -71,6 +82,18 @@ target/verifier: gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf
 draft: gemma-4-26B-A4B-it-Q4_0-MTP.gguf
 spec: n_max=3, n_min=2, p_min=0.0475
 ```
+
+Warm a shared prompt prefix for stable agent IDs:
+
+```bash
+scripts/warm-gemma4-frontdoor-cache.py \
+  --base-url http://127.0.0.1:8000/v1 \
+  --agent-count 8 \
+  --system-file /path/to/shared-system-prefix.txt
+```
+
+The helper sends `X-Sticky-Mode: strict` and warms both `short` and `long`
+context tiers by default.
 
 This favors production prompt/long-context behavior. The short-decode record
 profile remains documented separately in `reproduce.md`.
@@ -124,6 +147,20 @@ Latest 128K-total/parallel-2 validation artifacts:
   (`8` concurrent requests, `574.527 tok/s` aggregate wall throughput).
 - `data/gemma4-26b-quad-frontdoor-c8-512-ctx131072-p2-cache8192-sticky-20260707T2228Z.json`
   (`8` concurrent requests, `550.934 tok/s` aggregate wall throughput).
+
+Latest mixed-router validation artifacts:
+
+- rejected aggressive `4,4,4,2` / 14-slot screen:
+  `data/gemma4-26b-quad-frontdoor-c14-smoke-mixed-20260707T2300Z.json`;
+  short-pool tail latency made it unsuitable for production;
+- final active mixed profile status:
+  `data/gemma4-26b-quad-frontdoor-status-mixed-8slot-20260707T2315Z.json`;
+- final active mixed profile health:
+  `data/gemma4-26b-prod-health-quad-frontdoor-mixed-8slot-20260707T2315Z.json`;
+- final active mixed profile c8 smoke:
+  `data/gemma4-26b-quad-frontdoor-c8-nonstream-mixed-8slot-20260707T2315Z.json`
+  (`8` concurrent requests, `397.072 tok/s` aggregate wall throughput for this
+  non-streaming prompt shape).
 
 Earlier 64K-total/parallel-2 validation artifacts:
 

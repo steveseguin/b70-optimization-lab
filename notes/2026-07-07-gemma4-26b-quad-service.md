@@ -198,6 +198,48 @@ Prompt-cache and sticky-routing production update:
   concurrency limits, prompt-cache settings, sticky-routing keys, runtime
   details, and an example request.
 
+Mixed-context router update:
+
+- changed the temporary quad backend shape from four identical `64K x 2`
+  replicas to a mixed fleet:
+  - an initial `GPU0-2: PARALLEL=4` attempt exposed a pathological 14-way
+    smoke result: the 64K backend completed quickly, but the 12 short-pool
+    requests took roughly `126-161s`; that shape is not the production default;
+  - a follow-up `GPU0-2: PARALLEL=3` attempt was also rejected: an 11-way
+    non-streaming smoke drained most requests quickly but left a 3-request
+    short-backend tail active for several minutes;
+  - GPU0-2 now use `CTX_SIZE=65536`, `PARALLEL=2`, two `32768`-token slots
+    each;
+  - GPU3 uses `CTX_SIZE=131072`, `PARALLEL=2`, two `65536`-token slots;
+- public endpoint contract remains `65536` max context; the frontdoor estimates
+  prompt plus requested output size and routes `<=32768` requests to the dense
+  32K pool while sending larger requests to the 64K backend;
+- frontend capacity remains `8` active generation requests total
+  (`2,2,2,2` by backend), now split as six 32K slots and two 64K slots;
+- added `X-Sticky-Mode: strict` so cache-sensitive agents can wait for their
+  sticky backend instead of spilling and losing prompt-cache reuse;
+- added `Retry-After` on queue-timeout responses and a `413` guard when an
+  exact client token hint exceeds available context windows;
+- added `scripts/warm-gemma4-frontdoor-cache.py` to warm stable agent IDs
+  across short and long context tiers.
+
+Final mixed-profile validation:
+
+- active profile:
+  `mixed-6x32k-2x64k-cache8192-sticky`;
+- status artifact:
+  `data/gemma4-26b-quad-frontdoor-status-mixed-8slot-20260707T2315Z.json`;
+- health artifact:
+  `data/gemma4-26b-prod-health-quad-frontdoor-mixed-8slot-20260707T2315Z.json`;
+- routing probe passed: short exact hint routed to a 32K backend, long exact
+  hint routed to the 64K backend, and an exact over-window hint returned
+  `413 context_window_exceeded`;
+- c8 non-streaming smoke:
+  `data/gemma4-26b-quad-frontdoor-c8-nonstream-mixed-8slot-20260707T2315Z.json`,
+  aggregate wall throughput `397.072 tok/s` for this prompt shape;
+- final service state after validation: both Gemma units active/running with
+  `NRestarts=0`, frontdoor active `0`, queued `0`.
+
 Operational state after validation:
 
 - `gemma4-26b-q8-quad-backends.service`: active/enabled.

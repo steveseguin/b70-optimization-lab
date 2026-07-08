@@ -14,7 +14,9 @@ Installs the temporary production Gemma 4 26B Q8 quad service:
 - four localhost llama.cpp replicas: 127.0.0.1:19350-19353
 - no-auth LAN OpenAI frontdoor: 0.0.0.0:8000
 - default profile: GEMMA4_26B_PROFILE=service
-- frontend generation cap: 4 active requests, one per backend
+- mixed frontend cap: 8 active requests
+  - GPU0-2: two 32K slots each
+  - GPU3: two 64K slots
 
 This stops the old :8000 frontdoor while the Gemma quad frontdoor is active.
 EOF
