@@ -1,0 +1,201 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "model": "gemma4-26b-a4b-q8",
+  "status_after": {
+    "frontdoor": {
+      "active_generations": 0,
+      "auth": "none",
+      "backend": "http://127.0.0.1:19350",
+      "backends": [
+        {
+          "active_generations": 0,
+          "max_active_generations": 2,
+          "total_generation_requests": 11,
+          "url": "http://127.0.0.1:19350"
+        },
+        {
+          "active_generations": 0,
+          "max_active_generations": 2,
+          "total_generation_requests": 11,
+          "url": "http://127.0.0.1:19351"
+        },
+        {
+          "active_generations": 0,
+          "max_active_generations": 2,
+          "total_generation_requests": 10,
+          "url": "http://127.0.0.1:19352"
+        },
+        {
+          "active_generations": 0,
+          "max_active_generations": 2,
+          "total_generation_requests": 14,
+          "url": "http://127.0.0.1:19353"
+        }
+      ],
+      "event_logging": true,
+      "host": "0.0.0.0",
+      "max_active_generations": 8,
+      "port": 8000,
+      "queue_timeout_s": 3600.0,
+      "queued_generations": 0,
+      "sticky_headers": [
+        "x-agent-id",
+        "x-session-id",
+        "x-conversation-id"
+      ],
+      "sticky_json_fields": [
+        "user",
+        "session_id",
+        "conversation_id",
+        "metadata.agent_id",
+        "metadata.session_id"
+      ],
+      "sticky_routing": true,
+      "total_generation_requests": 46
+    },
+    "model_slot": {
+      "hf_id": "unsloth/gemma-4-26B-A4B-it-GGUF",
+      "modalities": "text",
+      "name": "gemma4-26b-a4b-q8-quad",
+      "status": "temporary-production",
+      "title": "Gemma 4 26B A4B Q8 quad replica"
+    },
+    "ok": true
+  },
+  "tests": {
+    "eight_agent_sticky_probe": [
+      {
+        "agent": 0,
+        "elapsed_s": 0.402,
+        "text": "OK 0",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      },
+      {
+        "agent": 1,
+        "elapsed_s": 0.234,
+        "text": "OK 1",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      },
+      {
+        "agent": 2,
+        "elapsed_s": 0.233,
+        "text": "OK 2",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      },
+      {
+        "agent": 3,
+        "elapsed_s": 0.233,
+        "text": "OK 3",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      },
+      {
+        "agent": 4,
+        "elapsed_s": 0.401,
+        "text": "OK 4",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      },
+      {
+        "agent": 5,
+        "elapsed_s": 0.232,
+        "text": "OK 5",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      },
+      {
+        "agent": 6,
+        "elapsed_s": 0.196,
+        "text": "OK 6",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      },
+      {
+        "agent": 7,
+        "elapsed_s": 0.195,
+        "text": "OK 7",
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 28,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 32
+        }
+      }
+    ],
+    "repeated_sticky_prompt": [
+      {
+        "elapsed_s": 7.827,
+        "run": 1,
+        "text": "OK",
+        "usage": {
+          "completion_tokens": 2,
+          "prompt_tokens": 12029,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 12031
+        }
+      },
+      {
+        "elapsed_s": 0.102,
+        "run": 2,
+        "text": "OK",
+        "usage": {
+          "completion_tokens": 2,
+          "prompt_tokens": 12029,
+          "prompt_tokens_details": {
+            "cached_tokens": 12028
+          },
+          "total_tokens": 12031
+        }
+      }
+    ]
+  }
+}

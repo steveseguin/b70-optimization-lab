@@ -30,6 +30,19 @@ GPU/backend. llama.cpp splits the context across parallel slots, so each of the
 two slots on a backend has `65536` tokens of context. This profile keeps 64K
 context per concurrent request and serves two active requests per card.
 
+For agent workloads, configure clients for at most `8` concurrent generation
+requests. Send a stable per-agent or per-session identifier so the frontdoor can
+keep repeated prompts on the same backend and make the prompt cache useful:
+
+```text
+X-Agent-Id: bug-agent-0
+X-Session-Id: repo-audit-20260707
+```
+
+If custom headers are hard to set, the frontdoor also accepts sticky routing
+keys in JSON fields such as `user`, `session_id`, `conversation_id`,
+`metadata.agent_id`, or `metadata.session_id`.
+
 ## Profile
 
 Backends use the validated Gemma service profile:
@@ -38,6 +51,7 @@ Backends use the validated Gemma service profile:
 GEMMA4_26B_PROFILE=service
 CTX_SIZE=131072
 PARALLEL=2
+CACHE_RAM_MIB=8192
 BATCH_SIZE=2048
 UBATCH_SIZE=1024
 FLASH_ATTN=on
@@ -89,6 +103,16 @@ Latest 128K-total/parallel-2 validation artifacts:
   `553.565 tok/s` aggregate wall throughput);
 - `data/gemma4-26b-quad-frontdoor-c8-512-ctx131072-p2-20260707T2141Z.json`
   (`8` concurrent requests, `568.059 tok/s` aggregate wall throughput).
+- `data/gemma4-26b-prod-health-quad-frontdoor-ctx131072-p2-cache8192-sticky-20260707T2231Z.json`
+  confirms the cache/sticky frontdoor profile is healthy.
+- `data/gemma4-26b-quad-frontdoor-cache-sticky-probe-20260707T2231Z.json`
+  repeated a `12029` prompt-token request with the same `X-Agent-Id`; the
+  second request reported `12028` cached tokens and fell from `7.827s` to
+  `0.102s`.
+- `data/gemma4-26b-quad-frontdoor-c8-smoke-ctx131072-p2-cache8192-sticky-20260707T2229Z.json`
+  (`8` concurrent requests, `574.527 tok/s` aggregate wall throughput).
+- `data/gemma4-26b-quad-frontdoor-c8-512-ctx131072-p2-cache8192-sticky-20260707T2228Z.json`
+  (`8` concurrent requests, `550.934 tok/s` aggregate wall throughput).
 
 Earlier 64K-total/parallel-2 validation artifacts:
 

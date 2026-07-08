@@ -87,6 +87,9 @@ Temporary quad deployment on 2026-07-07:
 - current backend context: `131072` tokens with `--parallel 2`; llama.cpp
   splits this into two `65536`-token slots per backend;
 - two active generations per backend, eight active generations total;
+- prompt cache enabled with `--cache-ram 8192`;
+- frontdoor sticky routing enabled by `X-Agent-Id`, `X-Session-Id`,
+  `X-Conversation-Id`, or JSON fields such as `user` / `metadata.agent_id`;
 - health passed on all four backends and the frontdoor;
 - c4/512 frontdoor smoke produced `417.888 tok/s` aggregate wall throughput;
 - 128K c4/160 frontdoor smoke produced `394.492 tok/s` aggregate wall
@@ -102,6 +105,11 @@ Temporary quad deployment on 2026-07-07:
 - multi-slot serving disables the single-sequence MTP fast knobs; the aggregate
   throughput still improved, but per-request throughput dropped to roughly
   `73 tok/s` in the 8-way runs;
+- cache/sticky probe repeated a `12029` prompt-token request with the same
+  `X-Agent-Id`; the second request reported `12028` cached tokens and fell from
+  `7.827s` to `0.102s`;
+- advise the client app to use max concurrency `8` for generation requests and
+  send stable per-agent/per-session sticky identifiers;
 - operational note:
   `../../notes/2026-07-07-gemma4-26b-quad-service.md`.
 

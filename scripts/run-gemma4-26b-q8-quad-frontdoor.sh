@@ -18,5 +18,8 @@ export FRONTDOOR_QUEUE_TIMEOUT_S="${FRONTDOOR_QUEUE_TIMEOUT_S:-3600}"
 export FRONTDOOR_BACKEND_TIMEOUT_S="${FRONTDOOR_BACKEND_TIMEOUT_S:-7200}"
 export FRONTDOOR_PAUSE_FILE="${FRONTDOOR_PAUSE_FILE:-/home/steve/llm-optimizations/.pause-gemma4-26b-quad}"
 export FRONTDOOR_LOG_EVENTS="${FRONTDOOR_LOG_EVENTS:-1}"
+export FRONTDOOR_STICKY_ROUTING="${FRONTDOOR_STICKY_ROUTING:-1}"
+export FRONTDOOR_STICKY_HEADERS="${FRONTDOOR_STICKY_HEADERS:-x-agent-id,x-session-id,x-conversation-id}"
+export FRONTDOOR_STICKY_JSON_FIELDS="${FRONTDOOR_STICKY_JSON_FIELDS:-user,session_id,conversation_id,metadata.agent_id,metadata.session_id}"
 
 exec "$repo_dir/scripts/openai-lan-frontdoor.py"

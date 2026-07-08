@@ -168,6 +168,32 @@ Corrected 64K-per-slot concurrency profile:
   on short decode, but the corrected profile provides the intended 64K context
   per active request.
 
+Prompt-cache and sticky-routing production update:
+
+- enabled `CACHE_RAM_MIB=8192`, which starts llama.cpp with
+  `--cache-ram 8192`;
+- startup logs confirmed `prompt cache is enabled, size limit: 8192 MiB` and
+  `idle slots will be saved to prompt cache upon starting a new task`;
+- enabled frontdoor sticky routing using headers `X-Agent-Id`, `X-Session-Id`,
+  and `X-Conversation-Id`, plus JSON fields `user`, `session_id`,
+  `conversation_id`, `metadata.agent_id`, and `metadata.session_id`;
+- frontdoor health passed:
+  `data/gemma4-26b-prod-health-quad-frontdoor-ctx131072-p2-cache8192-sticky-20260707T2231Z.json`;
+- repeated sticky prompt probe passed:
+  `data/gemma4-26b-quad-frontdoor-cache-sticky-probe-20260707T2231Z.json`;
+  a repeated `12029` prompt-token request with the same `X-Agent-Id` went from
+  `7.827s`, `cached_tokens=0`, to `0.102s`, `cached_tokens=12028`;
+- eight distinct sticky agent IDs completed successfully and the frontdoor
+  stayed balanced across the four backends;
+- post-cache throughput smoke:
+  `data/gemma4-26b-quad-frontdoor-c8-smoke-ctx131072-p2-cache8192-sticky-20260707T2229Z.json`,
+  aggregate wall throughput `574.527 tok/s`;
+- post-cache 512-token smoke:
+  `data/gemma4-26b-quad-frontdoor-c8-512-ctx131072-p2-cache8192-sticky-20260707T2228Z.json`,
+  aggregate wall throughput `550.934 tok/s`;
+- operational guidance for the code/tool-agent app: set max active generation
+  requests to `8`, and send a stable sticky key per agent or session.
+
 Operational state after validation:
 
 - `gemma4-26b-q8-quad-backends.service`: active/enabled.

@@ -9,6 +9,7 @@ concurrency from the active profile.
 from __future__ import annotations
 
 import http.client
+import hashlib
 import json
 import os
 import socket
@@ -48,6 +49,27 @@ FRONTDOOR_LOG_EVENTS = os.environ.get("FRONTDOOR_LOG_EVENTS", "1") not in {
 FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON = os.environ.get(
     "FRONTDOOR_CHAT_TEMPLATE_KWARGS_JSON", ""
 )
+FRONTDOOR_STICKY_ROUTING = os.environ.get("FRONTDOOR_STICKY_ROUTING", "0") not in {
+    "0",
+    "false",
+    "False",
+}
+FRONTDOOR_STICKY_HEADERS = [
+    item.strip().lower()
+    for item in os.environ.get(
+        "FRONTDOOR_STICKY_HEADERS",
+        "x-agent-id,x-session-id,x-conversation-id",
+    ).split(",")
+    if item.strip()
+]
+FRONTDOOR_STICKY_JSON_FIELDS = [
+    item.strip()
+    for item in os.environ.get(
+        "FRONTDOOR_STICKY_JSON_FIELDS",
+        "user,session_id,conversation_id,metadata.agent_id,metadata.session_id",
+    ).split(",")
+    if item.strip()
+]
 MODEL_SLOT_NAME = os.environ.get("MODEL_SLOT_NAME", "")
 MODEL_SLOT_TITLE = os.environ.get("MODEL_SLOT_TITLE", "")
 MODEL_SLOT_HF_ID = os.environ.get("MODEL_SLOT_HF_ID", "")
@@ -194,21 +216,33 @@ def status_payload() -> dict[str, Any]:
             "queued_generations": queued,
             "total_generation_requests": total,
             "event_logging": FRONTDOOR_LOG_EVENTS,
+            "sticky_routing": FRONTDOOR_STICKY_ROUTING,
+            "sticky_headers": FRONTDOOR_STICKY_HEADERS,
+            "sticky_json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
             "auth": "none",
         },
     }
 
 
-def acquire_backend_slot(timeout_s: float) -> int | None:
+def sticky_start_index(sticky_key: str | None) -> int | None:
+    if not FRONTDOOR_STICKY_ROUTING or not sticky_key:
+        return None
+    digest = hashlib.sha256(sticky_key.encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big") % len(backend_generation_slots)
+
+
+def acquire_backend_slot(timeout_s: float, sticky_key: str | None = None) -> int | None:
     global next_backend_index
     deadline = time.perf_counter() + timeout_s
     while True:
         with backend_select_lock:
-            start = next_backend_index
+            sticky_index = sticky_start_index(sticky_key)
+            start = sticky_index if sticky_index is not None else next_backend_index
             for offset in range(len(backend_generation_slots)):
                 index = (start + offset) % len(backend_generation_slots)
                 if backend_generation_slots[index].acquire(blocking=False):
-                    next_backend_index = (index + 1) % len(backend_generation_slots)
+                    if sticky_index is None:
+                        next_backend_index = (index + 1) % len(backend_generation_slots)
                     return index
 
         remaining = deadline - time.perf_counter()
@@ -217,7 +251,7 @@ def acquire_backend_slot(timeout_s: float) -> int | None:
         time.sleep(min(0.05, remaining))
 
 
-def acquire_generation_slot() -> tuple[bool, int | None, float]:
+def acquire_generation_slot(sticky_key: str | None = None) -> tuple[bool, int | None, float]:
     global active_generations, queued_generations, total_generation_requests
     started = time.perf_counter()
     deadline = started + QUEUE_TIMEOUT_S
@@ -228,7 +262,10 @@ def acquire_generation_slot() -> tuple[bool, int | None, float]:
     acquired = generation_slots.acquire(timeout=QUEUE_TIMEOUT_S)
     backend_index: int | None = None
     if acquired:
-        backend_index = acquire_backend_slot(max(0.0, deadline - time.perf_counter()))
+        backend_index = acquire_backend_slot(
+            max(0.0, deadline - time.perf_counter()),
+            sticky_key=sticky_key,
+        )
         if backend_index is None:
             generation_slots.release()
             acquired = False
@@ -283,6 +320,19 @@ def apply_request_defaults(path: str, body: bytes | None) -> bytes | None:
     return json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
 
+def extract_json_field(payload: Any, field_path: str) -> str | None:
+    current = payload
+    for part in field_path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return None
+        current = current[part]
+    if isinstance(current, str) and current:
+        return current
+    if isinstance(current, (int, float, bool)):
+        return str(current)
+    return None
+
+
 class FrontdoorHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     server_version = "MiniMaxOpenAIFrontdoor/1.0"
@@ -315,6 +365,7 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
 
     def handle_request(self) -> None:
         path = self.path.split("?", 1)[0]
+        body = self.read_body()
         if path in {"/status", "/frontdoor/status"} and self.command == "GET":
             self.write_json(200, status_payload())
             return
@@ -324,9 +375,10 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         backend_index: int | None = 0
         queue_wait_s = 0.0
         generation = is_generation_path(path, self.command)
+        sticky_key, sticky_source = self.sticky_key_for_request(body) if generation else (None, None)
         if generation:
             queued = True
-            acquired, backend_index, queue_wait_s = acquire_generation_slot()
+            acquired, backend_index, queue_wait_s = acquire_generation_slot(sticky_key)
             if not acquired:
                 self.write_json(
                     503,
@@ -343,7 +395,7 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         status = 502
         error: str | None = None
         try:
-            status = self.forward_to_backend(backend_index or 0)
+            status = self.forward_to_backend(backend_index or 0, body)
         except Exception as exc:
             error = f"{type(exc).__name__}: {exc}"
             self.write_json(
@@ -367,6 +419,13 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                         "path": path,
                         "status": status,
                         "backend": BACKEND_BASE_URLS[backend_index or 0],
+                        "sticky": bool(sticky_key),
+                        "sticky_source": sticky_source,
+                        "sticky_hash": (
+                            hashlib.sha256(sticky_key.encode("utf-8")).hexdigest()[:12]
+                            if sticky_key
+                            else None
+                        ),
                         "queued": queued,
                         "queue_wait_s": round(queue_wait_s, 3),
                         "elapsed_s": round(time.perf_counter() - started, 3),
@@ -374,9 +433,8 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
                     }
                 )
 
-    def forward_to_backend(self, backend_index: int) -> int:
+    def forward_to_backend(self, backend_index: int, body: bytes | None) -> int:
         path = self.path.split("?", 1)[0]
-        body = self.read_body()
         selected_backend = backends[backend_index]
         headers = self.forward_headers(selected_backend)
         body = apply_request_defaults(path, body)
@@ -455,6 +513,32 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         headers["X-Forwarded-Proto"] = "http"
         return headers
 
+    def sticky_key_for_request(self, body: bytes | None) -> tuple[str | None, str | None]:
+        if not FRONTDOOR_STICKY_ROUTING:
+            return None, None
+
+        for name, value in self.headers.items():
+            if name.lower() in FRONTDOOR_STICKY_HEADERS and value.strip():
+                return f"header:{name.lower()}:{value.strip()}", f"header:{name.lower()}"
+
+        if body is None or not FRONTDOOR_STICKY_JSON_FIELDS:
+            return None, None
+        content_type = self.headers.get("Content-Type", "")
+        if "json" not in content_type.lower():
+            return None, None
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return None, None
+        if not isinstance(payload, dict):
+            return None, None
+
+        for field in FRONTDOOR_STICKY_JSON_FIELDS:
+            value = extract_json_field(payload, field)
+            if value:
+                return f"json:{field}:{value}", f"json:{field}"
+        return None, None
+
     def write_json(self, status: int, payload: dict[str, Any]) -> None:
         body = json.dumps(payload, indent=2).encode("utf-8") + b"\n"
         self.send_response(status)
@@ -472,7 +556,8 @@ class FrontdoorHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header(
             "Access-Control-Allow-Headers",
-            "Authorization, Content-Type, OpenAI-Beta, X-Requested-With",
+            "Authorization, Content-Type, OpenAI-Beta, X-Requested-With, "
+            "X-Agent-Id, X-Session-Id, X-Conversation-Id",
         )
 
 
@@ -493,6 +578,10 @@ def main() -> int:
             "backend": BACKEND_BASE_URLS[0],
             "backends": BACKEND_BASE_URLS,
             "max_active_generations": MAX_ACTIVE_GENERATIONS,
+            "backend_capacities": BACKEND_CAPACITIES,
+            "sticky_routing": FRONTDOOR_STICKY_ROUTING,
+            "sticky_headers": FRONTDOOR_STICKY_HEADERS,
+            "sticky_json_fields": FRONTDOOR_STICKY_JSON_FIELDS,
             "auth": "none",
         }
     )
