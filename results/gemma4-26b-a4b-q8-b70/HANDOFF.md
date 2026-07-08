@@ -84,20 +84,23 @@ Temporary quad deployment on 2026-07-07:
 
 - public no-auth LAN endpoint: `http://0.0.0.0:8000/v1`;
 - four local service-profile replicas on `127.0.0.1:19350-19353`;
-- current context per replica: `131072` tokens, increased from the original 32K
-  deployment after health and long-prompt smoke passed;
-- one active generation per backend, four active generations total;
+- current backend context: `65536` tokens with `--parallel 2`; llama.cpp splits
+  this into two `32768`-token slots per backend;
+- two active generations per backend, eight active generations total;
 - health passed on all four backends and the frontdoor;
 - c4/512 frontdoor smoke produced `417.888 tok/s` aggregate wall throughput;
-- latest 128K c4/160 frontdoor smoke produced `394.492 tok/s` aggregate wall
+- 128K c4/160 frontdoor smoke produced `394.492 tok/s` aggregate wall
   throughput, and a `120060` prompt-token chat canary passed with
   `cached_tokens=0`;
-- observed memory at 128K was about `31.67-31.69 GB` per idle/near-idle card
-  and about `31.97 GB` / `97.89%` on the busy card during the 120K-token
-  canary;
-- per-GPU concurrency remains `1`; doubling it is a separate test because the
-  current MTP logs require shared memory plus single-sequence execution for the
-  fast path;
+- latest 64K/parallel-1 comparison run produced `408.062 tok/s` aggregate wall
+  throughput with four active requests;
+- latest 64K/parallel-2 8-way run produced `554.136 tok/s` aggregate wall
+  throughput at 160 output tokens and `568.080 tok/s` at 512 output tokens;
+- observed memory at 64K/parallel-2 after load was about `30.31-30.34 GB` per
+  card, `92.83-92.91%` utilization;
+- multi-slot serving disables the single-sequence MTP fast knobs; the aggregate
+  throughput still improved, but per-request throughput dropped to roughly
+  `73 tok/s` in the 8-way runs;
 - operational note:
   `../../notes/2026-07-07-gemma4-26b-quad-service.md`.
 

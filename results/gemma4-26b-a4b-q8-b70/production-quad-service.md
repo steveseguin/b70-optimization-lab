@@ -22,14 +22,13 @@ http://127.0.0.1:19352/v1  GPU 2
 http://127.0.0.1:19353/v1  GPU 3
 ```
 
-The frontdoor keeps one active generation per backend and four active
+The frontdoor keeps two active generations per backend and eight active
 generations total. Extra generation requests queue at the frontdoor.
 
-The current temporary deployment uses a `131072` token context per GPU/backend.
-This is an increase from the original 32K service profile and keeps one
-replica per card. A 120K-token prompt canary pushed the active card to about
-`31.97 GB` / `97.9%` memory utilization, so this is the current high-utilization
-context target.
+The current temporary deployment uses `CTX_SIZE=65536` and `--parallel 2` per
+GPU/backend. llama.cpp splits the context across parallel slots, so each of the
+two slots on a backend has `32768` tokens of context. This profile trades the
+previous 128K single-session context for higher aggregate throughput.
 
 ## Profile
 
@@ -37,7 +36,8 @@ Backends use the validated Gemma service profile:
 
 ```text
 GEMMA4_26B_PROFILE=service
-CTX_SIZE=131072
+CTX_SIZE=65536
+PARALLEL=2
 BATCH_SIZE=2048
 UBATCH_SIZE=1024
 FLASH_ATTN=on
@@ -77,7 +77,21 @@ scripts/gemma4-26b-prod-health.py \
   --model gemma4-26b-a4b-q8
 ```
 
-Latest 128K validation artifacts:
+Latest 64K/parallel-2 validation artifacts:
+
+- `data/gemma4-26b-prod-health-quad-frontdoor-ctx65536-p2-20260707T2132Z.json`;
+- `data/gemma4-26b-prod-health-port19350-ctx65536-p2-20260707T2132Z.json`;
+- `data/gemma4-26b-prod-health-port19351-ctx65536-p2-20260707T2132Z.json`;
+- `data/gemma4-26b-prod-health-port19352-ctx65536-p2-20260707T2132Z.json`;
+- `data/gemma4-26b-prod-health-port19353-ctx65536-p2-20260707T2132Z.json`;
+- `data/gemma4-26b-quad-frontdoor-c4-smoke-ctx65536-p1-20260707T2130Z.json`
+  (`4` concurrent requests, `408.062 tok/s` aggregate wall throughput);
+- `data/gemma4-26b-quad-frontdoor-c8-smoke-ctx65536-p2-20260707T2133Z.json`
+  (`8` concurrent requests, `554.136 tok/s` aggregate wall throughput);
+- `data/gemma4-26b-quad-frontdoor-c8-512-ctx65536-p2-20260707T2134Z.json`
+  (`8` concurrent requests, `568.080 tok/s` aggregate wall throughput).
+
+Earlier 128K validation artifacts:
 
 - `data/gemma4-26b-prod-health-quad-frontdoor-ctx131072-20260707T2108Z.json`;
 - `data/gemma4-26b-prod-health-port19350-ctx131072-20260707T2108Z.json`;

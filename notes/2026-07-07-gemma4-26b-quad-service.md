@@ -13,12 +13,12 @@ Runtime shape:
 - public endpoint: `http://0.0.0.0:8000/v1`;
 - model id: `gemma4-26b-a4b-q8`;
 - local backends: `127.0.0.1:19350-19353`;
-- one active generation per backend, four active generations total;
+- two active generations per backend, eight active generations total;
 - backend profile: `GEMMA4_26B_PROFILE=service`;
 - target/verifier: UD-Q8_K_XL target with Q4_0 MTP draft, accepted tokens
   verified by the Q8 target;
-- context: `131072` after follow-up increases from the original 32K
-  deployment;
+- context: `65536` per backend with `PARALLEL=2`; llama.cpp splits this into
+  two `32768`-token slots per backend;
 - service knobs: `BATCH_SIZE=2048`, `UBATCH_SIZE=1024`,
   `LLAMA_PREFILL_UBATCH_SIZE=2048`, FA/VMM enabled.
 
@@ -108,6 +108,39 @@ Final high-context increase for the temporary service:
 - MTP startup logs still report the single-sequence fast path requirements
   (`requires shared memory + single seq`), so doubling per-GPU concurrency is a
   separate experiment and not part of this production config.
+
+Concurrency retest and live profile change:
+
+- changed `gemma4-26b-q8-quad-backends.service` to export
+  `CTX_SIZE=65536` and `PARALLEL=2`;
+- changed the quad frontdoor defaults to `FRONTDOOR_MAX_ACTIVE_GENERATIONS=8`
+  and backend capacities `2,2,2,2`;
+- process launch arguments include `-c 65536 --parallel 2` for all four
+  replicas;
+- llama.cpp initialized `n_slots = 2` and reported `new slot, n_ctx = 32768`
+  for each slot; the `65536` backend context is split across the two slots;
+- MTP fast-path knobs changed as expected for multi-slot serving:
+  `defer_target_h_nextn=0` and `draft_direct_argmax_unroll=1`, because the
+  faster values require shared memory plus single-sequence execution;
+- 64K/parallel-1 comparison run:
+  `data/gemma4-26b-quad-frontdoor-c4-smoke-ctx65536-p1-20260707T2130Z.json`,
+  four active requests, aggregate wall throughput `408.062 tok/s`;
+- frontdoor and per-backend health passed for 64K/parallel-2:
+  `data/gemma4-26b-prod-health-quad-frontdoor-ctx65536-p2-20260707T2132Z.json`,
+  `data/gemma4-26b-prod-health-port19350-ctx65536-p2-20260707T2132Z.json`,
+  `data/gemma4-26b-prod-health-port19351-ctx65536-p2-20260707T2132Z.json`,
+  `data/gemma4-26b-prod-health-port19352-ctx65536-p2-20260707T2132Z.json`, and
+  `data/gemma4-26b-prod-health-port19353-ctx65536-p2-20260707T2132Z.json`;
+- 8-way frontdoor smoke passed:
+  `data/gemma4-26b-quad-frontdoor-c8-smoke-ctx65536-p2-20260707T2133Z.json`,
+  aggregate wall throughput `554.136 tok/s`, roughly `35.8%` above the
+  64K/parallel-1 four-way comparison;
+- 8-way 512-token frontdoor smoke passed:
+  `data/gemma4-26b-quad-frontdoor-c8-512-ctx65536-p2-20260707T2134Z.json`,
+  aggregate wall throughput `568.080 tok/s` over `4096` output tokens;
+- post-load status showed both services active, zero queued generations, and
+  `xpu-smi` around `30.31-30.34 GB` used per card, `92.83-92.91%` memory
+  utilization.
 
 Operational state after validation:
 

@@ -35,6 +35,7 @@ export FLASH_ATTN="${FLASH_ATTN:-on}"
 export CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 export CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
 export REASONING="${REASONING:-off}"
+export PARALLEL="${PARALLEL:-1}"
 export GGML_SYCL_ENABLE_VMM="${GGML_SYCL_ENABLE_VMM:-1}"
 export GGML_SYCL_DISABLE_OPT="${GGML_SYCL_DISABLE_OPT:-0}"
 export GGML_SYCL_DISABLE_GRAPH="${GGML_SYCL_DISABLE_GRAPH:-0}"
@@ -77,7 +78,7 @@ if [[ "$profile" == "service" ]]; then
   export GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST="${GGML_SYCL_FATTN_DV512_GQA8_KQ_REG_BCAST:-1}"
 fi
 
-export EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:---parallel 1 --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0}"
+export EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:---parallel $PARALLEL --cache-ram 0 --spec-type draft-mtp --spec-draft-model /mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/MTP/gemma-4-26B-A4B-it-Q4_0-MTP.gguf --spec-draft-n-max 3 --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --spec-draft-n-min 2 --spec-draft-p-min 0.0475 --no-spec-draft-backend-sampling --spec-draft-threads 32 --spec-draft-threads-batch 32 --ctx-checkpoints 0}"
 
 echo "[gemma4-prod] profile=$profile gpu=$GPU_INDEX endpoint=http://$HOST:$PORT/v1"
 echo "[gemma4-prod] model=$MODEL"
