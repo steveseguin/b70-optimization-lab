@@ -77,6 +77,7 @@ Tracked service artifacts:
 - `../../deploy/systemd/gemma4-26b-q8-quad-frontdoor.service`;
 - `../../scripts/install-gemma4-26b-q8-service.sh`;
 - `../../scripts/install-gemma4-26b-q8-quad-service.sh`;
+- `../../docs/gemma4-26b-q8-service-runbook.md`;
 - `production-service.md`;
 - `production-quad-service.md`.
 

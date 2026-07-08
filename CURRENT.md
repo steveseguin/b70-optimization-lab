@@ -1,6 +1,15 @@
 # Current Promoted Results
 
-Date: 2026-07-07
+Date: 2026-07-08
+
+## Temporary Live Service
+
+As of 2026-07-08, the public LAN `:8000` endpoint is temporarily the Gemma 4
+26B A4B Q8 coding-agent service while optimization credit is paused. It serves
+`gemma4-26b-a4b-q8` through llama.cpp/SYCL replicas with 64K context per active
+request, prompt cache, sticky routing, and either one-GPU `2 x 64K` or four-GPU
+`8 x 64K` shapes. Restore, validate, or stop it from
+`docs/gemma4-26b-q8-service-runbook.md`.
 
 ## Active Target: Qwen3.6 27B INT4 AutoRound
 

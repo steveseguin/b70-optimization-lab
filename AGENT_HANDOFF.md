@@ -11,6 +11,9 @@ now contains the production backend recipe, smoke commands, current record
 identity, and what remains worth trying. If the user switches to a different
 model, treat Gemma as bookmarked/reference rather than continuing it by
 inertia.
+For quickly restoring or stopping the temporary Gemma 26B OpenAI-compatible
+coding-agent endpoint, including one-GPU and four-GPU shapes, start from
+`docs/gemma4-26b-q8-service-runbook.md`.
 
 ## Active Workspace Policy
 

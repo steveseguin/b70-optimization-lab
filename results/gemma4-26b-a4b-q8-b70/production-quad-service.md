@@ -3,6 +3,10 @@
 This is the temporary four-B70 deployment shape for serving Gemma 4 26B A4B Q8
 while optimization work is paused.
 
+For the quickest future restore/stop instructions, including one-GPU and
+four-GPU variants, use
+`../../docs/gemma4-26b-q8-service-runbook.md`.
+
 ## Endpoint
 
 Public LAN endpoint:

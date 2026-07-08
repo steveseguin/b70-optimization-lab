@@ -16,7 +16,26 @@ higher-memory XPU hardware rather than host expansion.
 
 ## What Is Production Today
 
-The active LAN endpoint on this host is the Gemma 4 c8 model-slot profile:
+As of 2026-07-08, the active LAN endpoint on this host is temporarily the
+Gemma 4 26B Q8 coding-agent service:
+
+- model: `gemma4-26b-a4b-q8`
+- local target model:
+  `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`
+- hardware: 4x Intel Arc Pro B70 32GB
+- engine: llama.cpp/SYCL replicas plus no-auth OpenAI frontdoor
+- endpoint: OpenAI-compatible API on `0.0.0.0:8000`
+- served context: `65536` tokens per active request
+- max active generations: `8`
+- prompt cache: enabled with strict sticky routing available
+- modalities: text
+- auth: none
+
+Restore or stop it from
+`docs/gemma4-26b-q8-service-runbook.md`.
+
+The usual model-slot production profile to restore after this temporary service
+is the Gemma 4 c8 profile:
 
 - model: `Intel/gemma-4-12B-it-int4-AutoRound`
 - local model path used in the lab: `/mnt/fast-ai/llm-models/gemma4-12b-it-int4-autoround-intel`
@@ -155,6 +174,8 @@ Current handoff and production backend recipe:
 
 - `../results/gemma4-26b-a4b-q8-b70/HANDOFF.md`
 - `../results/gemma4-26b-a4b-q8-b70/production-service.md`
+- `gemma4-26b-q8-service-runbook.md` for restoring the temporary
+  OpenAI-compatible coding-agent endpoint on one or four B70 GPUs
 - backend launcher:
   `../scripts/serve-gemma4-26b-q8-production.sh`
 - health/smoke:

@@ -19,6 +19,7 @@ Docs should point to those artifacts instead of duplicating every script.
 ## Model Lane Entry Points
 
 - [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.
+- [Gemma 4 26B Q8 Service Runbook](gemma4-26b-q8-service-runbook.md): restore or stop the temporary llama.cpp OpenAI endpoint on one or four B70 GPUs.
 - [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
 - [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): active one-B70 vLLM/XPU optimization lane, strict fresh decode record, long-context service ladder, and closed no-win paths.
 - [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
@@ -153,6 +154,10 @@ Start with the handoff and production backend recipe:
 [../results/gemma4-26b-a4b-q8-b70/HANDOFF.md](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md)
 and
 [../results/gemma4-26b-a4b-q8-b70/production-service.md](../results/gemma4-26b-a4b-q8-b70/production-service.md).
+For the temporary OpenAI-compatible Gemma 26B endpoint used by coding agents,
+start from [gemma4-26b-q8-service-runbook.md](gemma4-26b-q8-service-runbook.md);
+it covers both the validated four-GPU `8 x 64K` setup and a one-GPU `2 x 64K`
+setup.
 
 The Gemma 4 26B one-B70 settings are documented in
 [../results/gemma4-26b-a4b-q8-b70/reproduce.md](../results/gemma4-26b-a4b-q8-b70/reproduce.md).
