@@ -1,0 +1,160 @@
+{
+  "after": {
+    "conditional_denominators": [
+      16,
+      13,
+      10,
+      5,
+      4
+    ],
+    "conditional_exact": [
+      0.8125,
+      0.7692307692307693,
+      0.5,
+      0.8,
+      0.5
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 3,
+      "1": 3,
+      "2": 5,
+      "3": 1,
+      "4": 2,
+      "5": 2
+    },
+    "mean_accepted_draft_tokens": 2.125,
+    "mean_visible_tokens_if_k_step_spec": 3.125,
+    "starts": 16
+  },
+  "batch_size": 4,
+  "before": {
+    "conditional_denominators": [
+      16,
+      13,
+      10,
+      5,
+      4
+    ],
+    "conditional_exact": [
+      0.8125,
+      0.7692307692307693,
+      0.5,
+      0.8,
+      0.5
+    ],
+    "histogram_accepted_draft_tokens": {
+      "0": 3,
+      "1": 3,
+      "2": 5,
+      "3": 1,
+      "4": 2,
+      "5": 2
+    },
+    "mean_accepted_draft_tokens": 2.125,
+    "mean_visible_tokens_if_k_step_spec": 3.125,
+    "starts": 16
+  },
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z/shard-0/dataset"
+  ],
+  "diagnostic_dense_update_names": [
+    "position_fcs.0",
+    "position_fcs.1",
+    "position_fcs.2",
+    "position_fcs.3",
+    "position_fcs.4",
+    "position_adapters.0.down",
+    "position_adapters.0.up",
+    "position_adapters.1.down",
+    "position_adapters.1.up",
+    "position_adapters.2.down",
+    "position_adapters.2.up",
+    "position_adapters.3.down",
+    "position_adapters.3.up",
+    "position_adapters.4.down",
+    "position_adapters.4.up"
+  ],
+  "diagnostic_dense_update_path": "diagnostic_dense_updates.safetensors",
+  "draft_lm_head": "int4-dequant",
+  "draft_lm_head_group_size": 128,
+  "draft_lm_head_scale_dtype": "bf16",
+  "elapsed_s": 1.1337035421747714,
+  "endpoint_candidate_compatible": true,
+  "epochs": 1,
+  "export": "model_extra_tensors.safetensors",
+  "headline_warning": "Offline draft acceptance only; endpoint strict fresh validation is required before any throughput claim or LocalMaxxing submission.",
+  "heldout_samples": 4,
+  "heldout_starts": 16,
+  "loss_mode": "all-steps",
+  "lr": 0.0001,
+  "max_steps": 5,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/local/qwen27-position-fc-allfc-mtp5-20260709",
+  "model_extra_export": "model_extra_tensors.safetensors",
+  "model_extra_metadata": {
+    "xpu_mtp_position_adapter_count": "5",
+    "xpu_mtp_position_adapter_rank": "8",
+    "xpu_mtp_position_adapter_step_indexing": "zero_based_spec_step_idx_post_final_norm_residual"
+  },
+  "position_adapter_count": 5,
+  "position_adapter_initialization": "down_normal_std_0.01_seed_27;up_zeros",
+  "position_adapter_keys": [
+    "mtp.position_adapters.0.down.weight",
+    "mtp.position_adapters.0.up.weight",
+    "mtp.position_adapters.1.down.weight",
+    "mtp.position_adapters.1.up.weight",
+    "mtp.position_adapters.2.down.weight",
+    "mtp.position_adapters.2.up.weight",
+    "mtp.position_adapters.3.down.weight",
+    "mtp.position_adapters.3.up.weight",
+    "mtp.position_adapters.4.down.weight",
+    "mtp.position_adapters.4.up.weight"
+  ],
+  "position_adapter_rank": 8,
+  "position_adapter_seed": 27,
+  "position_adapter_step_indexing": "zero_based_spec_step_idx_post_final_norm_residual",
+  "position_adapter_total_param_count": 409600,
+  "position_adapter_trainable_count": 5,
+  "position_adapter_trainable_param_count": 409600,
+  "position_adapter_trainable_tensor_count": 10,
+  "position_fc_count": 5,
+  "position_fc_frozen_indices": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "position_fc_initialization": "loaded_existing_frozen",
+  "position_fc_keys": [
+    "mtp.position_fcs.0.weight",
+    "mtp.position_fcs.1.weight",
+    "mtp.position_fcs.2.weight",
+    "mtp.position_fcs.3.weight",
+    "mtp.position_fcs.4.weight"
+  ],
+  "position_fc_step_indexing": "zero_based_spec_step_idx",
+  "position_fc_total_param_count": 262144000,
+  "position_fc_trainable_count": 0,
+  "position_fc_trainable_indices": [],
+  "position_fc_trainable_param_count": 0,
+  "purpose": "diagnostic_intrinsic_mtp_mergeable_adapter_training",
+  "scope": "position-adapter",
+  "seed": 27,
+  "skipped_no_trainable_prefix_batches": 0,
+  "train_starts": 16,
+  "trainable_names": [
+    "position_adapters.0.down",
+    "position_adapters.0.up",
+    "position_adapters.1.down",
+    "position_adapters.1.up",
+    "position_adapters.2.down",
+    "position_adapters.2.up",
+    "position_adapters.3.down",
+    "position_adapters.3.up",
+    "position_adapters.4.down",
+    "position_adapters.4.up"
+  ],
+  "trainable_param_count": 409600,
+  "valid_headline_throughput": false,
+  "weight_decay": 0.0
+}

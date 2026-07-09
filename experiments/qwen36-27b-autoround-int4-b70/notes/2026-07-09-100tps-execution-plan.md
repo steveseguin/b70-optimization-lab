@@ -89,20 +89,71 @@ cost and are closed for these checkpoints.
 
 ## Phase 4: position-specific intrinsic MTP predictors - active
 
-The target checkpoint contains one MTP layer, and every speculative position
-reuses `mtp.layers.0`. MTP4/MTP5 therefore add verifier rows while later draft
-quality collapses. Implement an endpoint-compatible experiment with distinct
-predictors for positions 1..N:
+Architecture correction: this checkpoint resolves to `Qwen3_5MTP`; the legacy
+launcher method name `qwen3_next_mtp` is normalized to `mtp`. Its canonical
+depth field is `text_config.mtp_num_hidden_layers=1`. Every speculative
+position therefore reuses `mtp.layers.0`, and MTP4/MTP5 add verifier rows while
+later draft quality collapses.
 
-1. clone the existing MTP layer as initialization for each position;
-2. train each position on target-owned hidden-state/token trajectories, with
-   the fixed realistic suite held out from training;
-3. export standard `mtp.layers.{i}` weight keys plus the matching
-   `num_nextn_predict_layers` config;
-4. make the proposer select `spec_step_idx` without modulo collapse;
-5. acceptance-gate graph-off on cold unique prompts before endpoint tuning;
+Cloning full `mtp.layers.N` is not the first experiment: each layer owns a
+distinct draft KV cache, so clone-only layers do not reproduce the populated
+layer-0 prefix cache without additional writable-cache sharing. The active
+endpoint-compatible experiment instead keeps the one proven attention layer
+and specializes its full-precision `mtp.fc` input projection by draft depth:
+
+1. clone `mtp.fc.weight` into `mtp.position_fcs.{i}.weight` for each position;
+2. keep position 0 frozen in conservative variants so first-draft behavior is
+   exactly the current winner, while later positions specialize;
+3. train on target-owned hidden-state/token trajectories, using
+   conditional-prefix loss and holding the fixed realistic suite out;
+4. declare `text_config.xpu_mtp_num_position_fcs` in a candidate overlay and
+   select the FC by the zero-based `spec_step_idx` in active `Qwen3_5MTP`;
+5. start graph-off with
+   `--model-loader-extra-config '{"enable_weights_track":true}'`, then
+   acceptance-gate on cold unique prompts before endpoint tuning;
 6. test MTP4/MTP5 only if visible tokens/step materially exceeds `2.747` and
    projects to a plausible `100 tok/s` endpoint.
+
+The first three-position mechanical artifact already passed:
+
+- actual XPU training and safetensors export;
+- evaluator readback and step routing;
+- Qwen3.5 endpoint load with missing-weight tracking;
+- cold OpenAI smoke and a one-prompt, 512-token, `cached_tokens=0` request;
+- graph-off diagnostic throughput `52.595 tok/s` (not promotable; tiny smoke
+  training and quality intentionally skipped).
+
+The completed five-position FC matrix improved acceptance and transferred to a
+separate unseen corpus, but did not pass the endpoint pre-gate: the best
+all-FC candidate measured `2.763428` visible tokens/step on training-heldout
+starts and `2.773804` on unseen v6b, versus about `2.747` for the current MTP3
+endpoint. Two extra verifier rows would cost more than this small depth gain can
+recover, so FC-only specialization is closed without an endpoint run. See
+`2026-07-09-position-fc-mtp5-transfer-insufficient.md`.
+
+The active successor is a position-specific low-rank residual adapter after the
+shared MTP layer, initialized from the best all-FC candidate. It keeps the
+proven writable draft KV cache shared, adds substantially more predictor
+capacity, and screens four ranks concurrently over 65,536 unique training
+starts before a full unseen-corpus evaluation. Require at least `3.3` visible
+tokens/step for an endpoint trial. This is not the final speed gate: historical
+MTP5 cost is about `51 ms/step`, so acceptance alone needs about `5.1-5.2`
+visible tokens/step for `100 tok/s`; verifier/LM-head cost reductions can lower
+that requirement.
+
+If position-specific FCs do not raise acceptance enough, the next learned
+predictor step is full `mtp.layers.N` only after implementing one writable
+draft-KV cache shared across the cloned layers and proving clone parity before
+training.
+
+Training requirements remain:
+
+1. train each position on target-owned hidden-state/token trajectories, with
+   the fixed realistic suite held out from training;
+2. split heldout data by prompt/family for promoted training, not only lexical
+   file order;
+3. require endpoint acceptance traces because earlier shared-FC offline gains
+   did not transfer to the strict suite.
 
 Target output quality is unchanged because every emitted token remains verified
 by the declared target. Draft training data, checkpoint hashes, acceptance, and
@@ -127,5 +178,6 @@ cached continuation is valid.
 - Close a mechanism only after a measured same-window result or a quantitative
   pre-gate proves it cannot contribute multiple milliseconds or sufficient
   accepted depth.
-- Continue from Phase 1 into Phase 2/3 until the strict 100 tok/s gate passes
+- Continue through the active learned-predictor/kernel phases until the strict
+  100 tok/s gate passes
   or a concrete kernel/backend blocker is demonstrated and recorded.

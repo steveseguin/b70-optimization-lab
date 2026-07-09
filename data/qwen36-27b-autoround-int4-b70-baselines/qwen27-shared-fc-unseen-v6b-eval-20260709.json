@@ -1,0 +1,638 @@
+{
+  "conditional_denominators": [
+    8192,
+    5635,
+    3117,
+    1550,
+    698
+  ],
+  "conditional_exact": [
+    0.6878662109375,
+    0.5531499556344277,
+    0.4972730189284568,
+    0.4503225806451613,
+    0.4355300859598854
+  ],
+  "conditional_topk": [
+    0.8953857421875,
+    0.7788819875776397,
+    0.7314725697786333,
+    0.7264516129032258,
+    0.671919770773639
+  ],
+  "dataset_dirs": [
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-0/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-1/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-2/dataset",
+    "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6b-context-4gpu-20260707T032253Z/shard-3/dataset"
+  ],
+  "device": "xpu:0",
+  "diagnostic_dense_update_path": "",
+  "diagnostic_dense_updates_applied": [],
+  "draft_lm_head": "int4-dequant",
+  "dtype": "bfloat16",
+  "elapsed_s": 163.77229970507324,
+  "families": {
+    "incident-log-triage": {
+      "mean_accepted": 1.3955618892508144,
+      "samples": 32,
+      "starts": 4912
+    },
+    "sql-analytics-table": {
+      "mean_accepted": 1.3564024390243903,
+      "samples": 22,
+      "starts": 3280
+    }
+  },
+  "first_mismatch_examples": [
+    {
+      "accepted": 0,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 66413,
+        "step": 1,
+        "target": 46676,
+        "target_index": 1,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 0
+    },
+    {
+      "accepted": 0,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 66413,
+        "step": 1,
+        "target": 43483,
+        "target_index": 2,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 1
+    },
+    {
+      "accepted": 0,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 271,
+        "step": 1,
+        "target": 318,
+        "target_index": 3,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 2
+    },
+    {
+      "accepted": 1,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 8,
+        "step": 2,
+        "target": 594,
+        "target_index": 5,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 3
+    },
+    {
+      "accepted": 1,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 42249,
+        "step": 2,
+        "target": 2791,
+        "target_index": 6,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 4
+    },
+    {
+      "accepted": 0,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 42249,
+        "step": 1,
+        "target": 2791,
+        "target_index": 6,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 5
+    },
+    {
+      "accepted": 1,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 198,
+        "step": 2,
+        "target": 271,
+        "target_index": 8,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 6
+    },
+    {
+      "accepted": 4,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 1501,
+        "step": 5,
+        "target": 16,
+        "target_index": 12,
+        "topk_hit": false
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 7
+    },
+    {
+      "accepted": 4,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 17,
+        "step": 5,
+        "target": 19,
+        "target_index": 13,
+        "topk_hit": false
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 8
+    },
+    {
+      "accepted": 3,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 17,
+        "step": 4,
+        "target": 19,
+        "target_index": 13,
+        "topk_hit": false
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 9
+    },
+    {
+      "accepted": 4,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 16,
+        "step": 5,
+        "target": 15,
+        "target_index": 15,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 10
+    },
+    {
+      "accepted": 3,
+      "family": "incident-log-triage",
+      "first_mismatch": {
+        "match": false,
+        "proposed": 16,
+        "step": 4,
+        "target": 15,
+        "target_index": 15,
+        "topk_hit": true
+      },
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "start": 11
+    }
+  ],
+  "headline_warning": "Offline draft acceptance only; not an endpoint speed, not a fresh-response throughput claim, not LocalMaxxing-submit eligible.",
+  "histogram_accepted_draft_tokens": {
+    "0": 2557,
+    "1": 2518,
+    "2": 1567,
+    "3": 852,
+    "4": 394,
+    "5": 304
+  },
+  "max_samples": 0,
+  "max_starts": 8192,
+  "max_steps": 5,
+  "mean_accepted_draft_tokens": 1.3798828125,
+  "mean_visible_tokens_if_k_step_spec": 2.3798828125,
+  "model_dir": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e",
+  "model_extra_path": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e/model_extra_tensors.safetensors",
+  "num_files_seen": 384,
+  "position_adapter_count": 0,
+  "position_adapter_keys": [],
+  "position_adapter_rank": 0,
+  "position_adapter_selection": "none",
+  "position_fc_count": 0,
+  "position_fc_keys": [],
+  "position_fc_selection": "shared_mtp.fc.weight",
+  "purpose": "diagnostic_intrinsic_mtp_offline_acceptance_probe",
+  "rope": "local_text_only_neox_rope_fallback",
+  "samples": [
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3181818181818181,
+      "prompt_id": "incident-log-triage-summarize-context-messy-user",
+      "sample": "sample-000000-chatcmpl-qwen27-eagle3-aux-v2-s0-000000-incident-log-triage-summarize-context-messy-user-b1d525ec.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.4025974025974026,
+      "prompt_id": "incident-log-triage-summarize-context-terse",
+      "sample": "sample-000001-chatcmpl-qwen27-eagle3-aux-v2-s0-000001-incident-log-triage-summarize-context-terse-8ff10b03.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.4155844155844155,
+      "prompt_id": "incident-log-triage-summarize-context-code-first",
+      "sample": "sample-000002-chatcmpl-qwen27-eagle3-aux-v2-s0-000002-incident-log-triage-summarize-context-code-first-8c378845.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3181818181818181,
+      "prompt_id": "incident-log-triage-summarize-context-table-first",
+      "sample": "sample-000003-chatcmpl-qwen27-eagle3-aux-v2-s0-000003-incident-log-triage-summarize-context-table-first-9731d29e.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3506493506493507,
+      "prompt_id": "incident-log-triage-diagnose-evidence-messy-user",
+      "sample": "sample-000004-chatcmpl-qwen27-eagle3-aux-v2-s0-000004-incident-log-triage-diagnose-evidence-messy-user-8cec3131.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.2662337662337662,
+      "prompt_id": "incident-log-triage-diagnose-evidence-terse",
+      "sample": "sample-000005-chatcmpl-qwen27-eagle3-aux-v2-s0-000005-incident-log-triage-diagnose-evidence-terse-9fd85d86.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.2597402597402598,
+      "prompt_id": "incident-log-triage-diagnose-evidence-code-first",
+      "sample": "sample-000006-chatcmpl-qwen27-eagle3-aux-v2-s0-000006-incident-log-triage-diagnose-evidence-code-first-bb10c574.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.5584415584415585,
+      "prompt_id": "incident-log-triage-diagnose-evidence-table-first",
+      "sample": "sample-000007-chatcmpl-qwen27-eagle3-aux-v2-s0-000007-incident-log-triage-diagnose-evidence-table-first-94c602c0.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.6233766233766234,
+      "prompt_id": "incident-log-triage-extract-decision-table-messy-user",
+      "sample": "sample-000008-chatcmpl-qwen27-eagle3-aux-v2-s0-000008-incident-log-triage-extract-decision-table-messy-user-a311264f.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.5389610389610389,
+      "prompt_id": "incident-log-triage-extract-decision-table-terse",
+      "sample": "sample-000009-chatcmpl-qwen27-eagle3-aux-v2-s0-000009-incident-log-triage-extract-decision-table-terse-92a680d6.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.474025974025974,
+      "prompt_id": "incident-log-triage-extract-decision-table-code-first",
+      "sample": "sample-000010-chatcmpl-qwen27-eagle3-aux-v2-s0-000010-incident-log-triage-extract-decision-table-code-first-b6e758f4.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3181818181818181,
+      "prompt_id": "incident-log-triage-extract-decision-table-table-first",
+      "sample": "sample-000011-chatcmpl-qwen27-eagle3-aux-v2-s0-000011-incident-log-triage-extract-decision-table-table-first-8ab73fa1.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.7662337662337662,
+      "prompt_id": "incident-log-triage-write-json-messy-user",
+      "sample": "sample-000012-chatcmpl-qwen27-eagle3-aux-v2-s0-000012-incident-log-triage-write-json-messy-user-834e5f1d.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.9350649350649352,
+      "prompt_id": "incident-log-triage-write-json-terse",
+      "sample": "sample-000013-chatcmpl-qwen27-eagle3-aux-v2-s0-000013-incident-log-triage-write-json-terse-91566984.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.7662337662337662,
+      "prompt_id": "incident-log-triage-write-json-code-first",
+      "sample": "sample-000014-chatcmpl-qwen27-eagle3-aux-v2-s0-000014-incident-log-triage-write-json-code-first-99b522f8.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.8181818181818181,
+      "prompt_id": "incident-log-triage-write-json-table-first",
+      "sample": "sample-000015-chatcmpl-qwen27-eagle3-aux-v2-s0-000015-incident-log-triage-write-json-table-first-8118dedd.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3506493506493507,
+      "prompt_id": "incident-log-triage-direct-answer-messy-user",
+      "sample": "sample-000016-chatcmpl-qwen27-eagle3-aux-v2-s0-000016-incident-log-triage-direct-answer-messy-user-951643db.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.0144927536231885,
+      "prompt_id": "incident-log-triage-direct-answer-terse",
+      "sample": "sample-000017-chatcmpl-qwen27-eagle3-aux-v2-s0-000017-incident-log-triage-direct-answer-terse-81cfe5aa.pt",
+      "starts": 138
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.2077922077922079,
+      "prompt_id": "incident-log-triage-direct-answer-code-first",
+      "sample": "sample-000018-chatcmpl-qwen27-eagle3-aux-v2-s0-000018-incident-log-triage-direct-answer-code-first-bdf85e35.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.4285714285714286,
+      "prompt_id": "incident-log-triage-direct-answer-table-first",
+      "sample": "sample-000019-chatcmpl-qwen27-eagle3-aux-v2-s0-000019-incident-log-triage-direct-answer-table-first-89b1e3f6.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.344155844155844,
+      "prompt_id": "incident-log-triage-review-plan-messy-user",
+      "sample": "sample-000020-chatcmpl-qwen27-eagle3-aux-v2-s0-000020-incident-log-triage-review-plan-messy-user-9c3d0df3.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 0.987012987012987,
+      "prompt_id": "incident-log-triage-review-plan-terse",
+      "sample": "sample-000021-chatcmpl-qwen27-eagle3-aux-v2-s0-000021-incident-log-triage-review-plan-terse-8c65bcbb.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3831168831168832,
+      "prompt_id": "incident-log-triage-review-plan-code-first",
+      "sample": "sample-000022-chatcmpl-qwen27-eagle3-aux-v2-s0-000022-incident-log-triage-review-plan-code-first-a42f7471.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.4545454545454546,
+      "prompt_id": "incident-log-triage-review-plan-table-first",
+      "sample": "sample-000023-chatcmpl-qwen27-eagle3-aux-v2-s0-000023-incident-log-triage-review-plan-table-first-95091fde.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.103896103896104,
+      "prompt_id": "incident-log-triage-write-code-or-query-messy-user",
+      "sample": "sample-000024-chatcmpl-qwen27-eagle3-aux-v2-s0-000024-incident-log-triage-write-code-or-query-messy-user-be99aaaf.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3571428571428572,
+      "prompt_id": "incident-log-triage-write-code-or-query-terse",
+      "sample": "sample-000025-chatcmpl-qwen27-eagle3-aux-v2-s0-000025-incident-log-triage-write-code-or-query-terse-9e8fd317.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.2922077922077921,
+      "prompt_id": "incident-log-triage-write-code-or-query-code-first",
+      "sample": "sample-000026-chatcmpl-qwen27-eagle3-aux-v2-s0-000026-incident-log-triage-write-code-or-query-code-first-b1b63193.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.4545454545454546,
+      "prompt_id": "incident-log-triage-write-code-or-query-table-first",
+      "sample": "sample-000027-chatcmpl-qwen27-eagle3-aux-v2-s0-000027-incident-log-triage-write-code-or-query-table-first-b52ed16d.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.396103896103896,
+      "prompt_id": "incident-log-triage-draft-response-messy-user",
+      "sample": "sample-000028-chatcmpl-qwen27-eagle3-aux-v2-s0-000028-incident-log-triage-draft-response-messy-user-9e15d147.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.1623376623376624,
+      "prompt_id": "incident-log-triage-draft-response-terse",
+      "sample": "sample-000029-chatcmpl-qwen27-eagle3-aux-v2-s0-000029-incident-log-triage-draft-response-terse-ba462be4.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.1948051948051948,
+      "prompt_id": "incident-log-triage-draft-response-code-first",
+      "sample": "sample-000030-chatcmpl-qwen27-eagle3-aux-v2-s0-000030-incident-log-triage-draft-response-code-first-afba1b03.pt",
+      "starts": 154
+    },
+    {
+      "family": "incident-log-triage",
+      "mean_accepted": 1.3571428571428572,
+      "prompt_id": "incident-log-triage-draft-response-table-first",
+      "sample": "sample-000031-chatcmpl-qwen27-eagle3-aux-v2-s0-000031-incident-log-triage-draft-response-table-first-925b8c26.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.5454545454545454,
+      "prompt_id": "sql-analytics-table-summarize-context-messy-user",
+      "sample": "sample-000032-chatcmpl-qwen27-eagle3-aux-v2-s0-000032-sql-analytics-table-summarize-context-messy-user-b4b7a5ff.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.344155844155844,
+      "prompt_id": "sql-analytics-table-summarize-context-terse",
+      "sample": "sample-000033-chatcmpl-qwen27-eagle3-aux-v2-s0-000033-sql-analytics-table-summarize-context-terse-a4538837.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.3636363636363635,
+      "prompt_id": "sql-analytics-table-summarize-context-code-first",
+      "sample": "sample-000034-chatcmpl-qwen27-eagle3-aux-v2-s0-000034-sql-analytics-table-summarize-context-code-first-b8243ee2.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.5974025974025974,
+      "prompt_id": "sql-analytics-table-summarize-context-table-first",
+      "sample": "sample-000035-chatcmpl-qwen27-eagle3-aux-v2-s0-000035-sql-analytics-table-summarize-context-table-first-8be6d772.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.4935064935064934,
+      "prompt_id": "sql-analytics-table-diagnose-evidence-messy-user",
+      "sample": "sample-000036-chatcmpl-qwen27-eagle3-aux-v2-s0-000036-sql-analytics-table-diagnose-evidence-messy-user-a2e627ce.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 0.922077922077922,
+      "prompt_id": "sql-analytics-table-diagnose-evidence-terse",
+      "sample": "sample-000037-chatcmpl-qwen27-eagle3-aux-v2-s0-000037-sql-analytics-table-diagnose-evidence-terse-b8190af6.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.2337662337662338,
+      "prompt_id": "sql-analytics-table-diagnose-evidence-code-first",
+      "sample": "sample-000038-chatcmpl-qwen27-eagle3-aux-v2-s0-000038-sql-analytics-table-diagnose-evidence-code-first-851f8ecf.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.4545454545454546,
+      "prompt_id": "sql-analytics-table-diagnose-evidence-table-first",
+      "sample": "sample-000039-chatcmpl-qwen27-eagle3-aux-v2-s0-000039-sql-analytics-table-diagnose-evidence-table-first-bc8c38f6.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.5584415584415585,
+      "prompt_id": "sql-analytics-table-extract-decision-table-messy-user",
+      "sample": "sample-000040-chatcmpl-qwen27-eagle3-aux-v2-s0-000040-sql-analytics-table-extract-decision-table-messy-user-a57e7638.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.103896103896104,
+      "prompt_id": "sql-analytics-table-extract-decision-table-terse",
+      "sample": "sample-000041-chatcmpl-qwen27-eagle3-aux-v2-s0-000041-sql-analytics-table-extract-decision-table-terse-b3207ce4.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.0714285714285714,
+      "prompt_id": "sql-analytics-table-extract-decision-table-code-first",
+      "sample": "sample-000042-chatcmpl-qwen27-eagle3-aux-v2-s0-000042-sql-analytics-table-extract-decision-table-code-first-9e476cdf.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.4545454545454546,
+      "prompt_id": "sql-analytics-table-extract-decision-table-table-first",
+      "sample": "sample-000043-chatcmpl-qwen27-eagle3-aux-v2-s0-000043-sql-analytics-table-extract-decision-table-table-first-ae3b825d.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.6363636363636365,
+      "prompt_id": "sql-analytics-table-write-json-messy-user",
+      "sample": "sample-000044-chatcmpl-qwen27-eagle3-aux-v2-s0-000044-sql-analytics-table-write-json-messy-user-88749ea3.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.4870129870129871,
+      "prompt_id": "sql-analytics-table-write-json-terse",
+      "sample": "sample-000045-chatcmpl-qwen27-eagle3-aux-v2-s0-000045-sql-analytics-table-write-json-terse-8246b4c3.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.3571428571428572,
+      "prompt_id": "sql-analytics-table-write-json-code-first",
+      "sample": "sample-000046-chatcmpl-qwen27-eagle3-aux-v2-s0-000046-sql-analytics-table-write-json-code-first-ad72b7d2.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.3506493506493507,
+      "prompt_id": "sql-analytics-table-write-json-table-first",
+      "sample": "sample-000047-chatcmpl-qwen27-eagle3-aux-v2-s0-000047-sql-analytics-table-write-json-table-first-993b26c4.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.2012987012987013,
+      "prompt_id": "sql-analytics-table-direct-answer-messy-user",
+      "sample": "sample-000048-chatcmpl-qwen27-eagle3-aux-v2-s0-000048-sql-analytics-table-direct-answer-messy-user-b99f324d.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.1103896103896105,
+      "prompt_id": "sql-analytics-table-direct-answer-terse",
+      "sample": "sample-000049-chatcmpl-qwen27-eagle3-aux-v2-s0-000049-sql-analytics-table-direct-answer-terse-9158b1e8.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.5454545454545454,
+      "prompt_id": "sql-analytics-table-direct-answer-code-first",
+      "sample": "sample-000050-chatcmpl-qwen27-eagle3-aux-v2-s0-000050-sql-analytics-table-direct-answer-code-first-975807c6.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.577922077922078,
+      "prompt_id": "sql-analytics-table-direct-answer-table-first",
+      "sample": "sample-000051-chatcmpl-qwen27-eagle3-aux-v2-s0-000051-sql-analytics-table-direct-answer-table-first-acb09d61.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 1.2792207792207793,
+      "prompt_id": "sql-analytics-table-review-plan-messy-user",
+      "sample": "sample-000052-chatcmpl-qwen27-eagle3-aux-v2-s0-000052-sql-analytics-table-review-plan-messy-user-abcf0af2.pt",
+      "starts": 154
+    },
+    {
+      "family": "sql-analytics-table",
+      "mean_accepted": 0.6739130434782609,
+      "prompt_id": "sql-analytics-table-review-plan-terse",
+      "sample": "sample-000053-chatcmpl-qwen27-eagle3-aux-v2-s0-000053-sql-analytics-table-review-plan-terse-bd8981e9.pt",
+      "starts": 46
+    }
+  ],
+  "start_stride": 1,
+  "starts": 8192,
+  "valid_headline_throughput": false
+}

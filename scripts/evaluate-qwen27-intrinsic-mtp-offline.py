@@ -19,6 +19,7 @@ import glob
 import json
 import math
 import os
+import re
 import sys
 import time
 from collections import defaultdict
@@ -38,6 +39,14 @@ DEFAULT_MODEL_DIR = (
 DEFAULT_DATASET_DIR = (
     "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/"
     "qwen27-eagledata-v2-chat-calib-20260704T101119Z/dataset-metadata-v2"
+)
+POSITION_FC_KEY_RE = re.compile(r"^mtp\.position_fcs\.(\d+)\.weight$")
+POSITION_ADAPTER_KEY_RE = re.compile(
+    r"^mtp\.position_adapters\.(\d+)\.(down|up)\.weight$"
+)
+DIAGNOSTIC_POSITION_FC_ATTR_RE = re.compile(r"^position_fcs\.(\d+)$")
+DIAGNOSTIC_POSITION_ADAPTER_ATTR_RE = re.compile(
+    r"^position_adapters\.(\d+)\.(down|up)$"
 )
 
 
@@ -346,6 +355,89 @@ def fallback_apply_rope(
     return apply(q), apply(k)
 
 
+def find_position_fcs(
+    tensors: dict[str, torch.Tensor],
+) -> list[tuple[str, torch.Tensor]]:
+    indexed: dict[int, tuple[str, torch.Tensor]] = {}
+    for key, tensor in tensors.items():
+        match = POSITION_FC_KEY_RE.fullmatch(key)
+        if match is None:
+            continue
+        index = int(match.group(1))
+        if index in indexed:
+            raise ValueError(f"Duplicate position FC index {index} in {key!r}")
+        indexed[index] = (key, tensor)
+    if not indexed:
+        return []
+    expected = list(range(len(indexed)))
+    actual = sorted(indexed)
+    if actual != expected:
+        raise ValueError(
+            "Position FC keys must be contiguous and zero-based; "
+            f"found indices {actual}, expected {expected}"
+        )
+    return [indexed[index] for index in expected]
+
+
+def find_position_adapters(
+    tensors: dict[str, torch.Tensor],
+    hidden_size: int,
+) -> tuple[list[tuple[str, torch.Tensor, str, torch.Tensor]], int]:
+    indexed: dict[int, dict[str, tuple[str, torch.Tensor]]] = {}
+    for key, tensor in tensors.items():
+        match = POSITION_ADAPTER_KEY_RE.fullmatch(key)
+        if match is None:
+            continue
+        index = int(match.group(1))
+        direction = match.group(2)
+        indexed.setdefault(index, {})[direction] = (key, tensor)
+    if not indexed:
+        return [], 0
+
+    expected = list(range(len(indexed)))
+    actual = sorted(indexed)
+    if actual != expected:
+        raise ValueError(
+            "Position adapter keys must be contiguous and zero-based; "
+            f"found indices {actual}, expected {expected}"
+        )
+
+    adapters: list[tuple[str, torch.Tensor, str, torch.Tensor]] = []
+    adapter_rank = 0
+    for index in expected:
+        parts = indexed[index]
+        missing = sorted({"down", "up"} - set(parts))
+        if missing:
+            raise ValueError(
+                f"Position adapter {index} is missing {missing} weight key(s)"
+            )
+        down_key, down = parts["down"]
+        up_key, up = parts["up"]
+        if down.ndim != 2:
+            raise ValueError(
+                f"{down_key} must have shape [rank, H], got {tuple(down.shape)}"
+            )
+        rank = int(down.shape[0])
+        if rank < 1 or tuple(down.shape[1:]) != (hidden_size,):
+            raise ValueError(
+                f"{down_key} must have shape [rank, {hidden_size}] with rank > 0, "
+                f"got {tuple(down.shape)}"
+            )
+        if tuple(up.shape) != (hidden_size, rank):
+            raise ValueError(
+                f"{up_key} must have shape [{hidden_size}, {rank}], "
+                f"got {tuple(up.shape)}"
+            )
+        if adapter_rank and rank != adapter_rank:
+            raise ValueError(
+                "Position adapter ranks must match; "
+                f"adapter 0 has rank {adapter_rank}, adapter {index} has rank {rank}"
+            )
+        adapter_rank = rank
+        adapters.append((down_key, down, up_key, up))
+    return adapters, adapter_rank
+
+
 class IntrinsicMTP(torch.nn.Module):
     def __init__(
         self,
@@ -384,6 +476,49 @@ class IntrinsicMTP(torch.nn.Module):
         else:
             self.lm_head = lm_head_weight.to(device=device, dtype=dtype)
         self.fc = tensors["mtp.fc.weight"].to(device=device, dtype=dtype)
+        position_fcs = find_position_fcs(tensors)
+        self.position_fc_keys = tuple(key for key, _ in position_fcs)
+        self.position_fcs = [
+            tensor.to(device=device, dtype=dtype) for _, tensor in position_fcs
+        ]
+        for key, position_fc in zip(self.position_fc_keys, self.position_fcs):
+            if position_fc.shape != self.fc.shape:
+                raise ValueError(
+                    f"{key} shape {tuple(position_fc.shape)} does not match "
+                    f"mtp.fc.weight shape {tuple(self.fc.shape)}"
+                )
+        self.position_fc_count = len(self.position_fcs)
+        position_adapters, position_adapter_rank = find_position_adapters(
+            tensors, shape.hidden_size
+        )
+        self.position_adapter_down_keys = tuple(
+            down_key for down_key, _, _, _ in position_adapters
+        )
+        self.position_adapter_up_keys = tuple(
+            up_key for _, _, up_key, _ in position_adapters
+        )
+        self.position_adapter_keys = tuple(
+            key
+            for down_key, _, up_key, _ in position_adapters
+            for key in (down_key, up_key)
+        )
+        self.position_adapter_down = [
+            down.to(device=device, dtype=dtype)
+            for _, down, _, _ in position_adapters
+        ]
+        self.position_adapter_up = [
+            up.to(device=device, dtype=dtype)
+            for _, _, _, up in position_adapters
+        ]
+        self.position_adapter_count = len(position_adapters)
+        self.position_adapter_rank = position_adapter_rank
+        if (self.position_fc_count and self.position_adapter_count
+                and self.position_fc_count != self.position_adapter_count):
+            raise ValueError(
+                "Position FC and adapter counts must match when both are present; "
+                f"found {self.position_fc_count} FCs and "
+                f"{self.position_adapter_count} adapters"
+            )
         self.pre_fc_norm_embedding = tensors[
             "mtp.pre_fc_norm_embedding.weight"].to(device=device, dtype=dtype)
         self.pre_fc_norm_hidden = tensors["mtp.pre_fc_norm_hidden.weight"].to(
@@ -463,14 +598,42 @@ class IntrinsicMTP(torch.nn.Module):
         attn = attn * torch.sigmoid(gate)
         return self.matmul(attn, self.o_proj).view(bsz, seq_len, hidden_size)
 
+    def fc_for_step(self, spec_step_idx: int) -> torch.Tensor:
+        if spec_step_idx < 0:
+            raise IndexError(f"spec_step_idx must be non-negative, got {spec_step_idx}")
+        if not self.position_fcs:
+            return self.fc
+        if spec_step_idx >= len(self.position_fcs):
+            raise IndexError(
+                f"spec_step_idx {spec_step_idx} has no position FC; artifact "
+                f"contains {len(self.position_fcs)} position FCs"
+            )
+        return self.position_fcs[spec_step_idx]
+
+    def position_adapter_for_step(
+        self, spec_step_idx: int
+    ) -> tuple[torch.Tensor, torch.Tensor] | None:
+        if not self.position_adapter_count:
+            return None
+        if not 0 <= spec_step_idx < self.position_adapter_count:
+            raise IndexError(
+                f"spec_step_idx {spec_step_idx} has no position adapter; artifact "
+                f"contains {self.position_adapter_count} adapters"
+            )
+        return (
+            self.position_adapter_down[spec_step_idx],
+            self.position_adapter_up[spec_step_idx],
+        )
+
     def forward(self, hidden_states: torch.Tensor, input_ids: torch.Tensor,
-                positions: torch.Tensor) -> torch.Tensor:
+                positions: torch.Tensor, spec_step_idx: int = 0) -> torch.Tensor:
         embeds = self.embed[input_ids.to(self.device)]
         embeds = qwen_rms_norm(embeds, self.pre_fc_norm_embedding,
                                self.shape.rms_norm_eps)
         hidden = qwen_rms_norm(hidden_states, self.pre_fc_norm_hidden,
                                self.shape.rms_norm_eps)
-        hidden = self.matmul(torch.cat([embeds, hidden], dim=-1), self.fc.t())
+        fc = self.fc_for_step(spec_step_idx)
+        hidden = self.matmul(torch.cat([embeds, hidden], dim=-1), fc.t())
 
         residual = hidden
         hidden = qwen_rms_norm(hidden, self.input_layernorm,
@@ -484,6 +647,11 @@ class IntrinsicMTP(torch.nn.Module):
         hidden = self.matmul(F.silu(gate) * up, self.down_proj)
         hidden, _ = qwen_rms_norm_residual(hidden, residual, self.final_norm,
                                            self.shape.rms_norm_eps)
+        position_adapter = self.position_adapter_for_step(spec_step_idx)
+        if position_adapter is not None:
+            adapter_down, adapter_up = position_adapter
+            adapter = F.silu(F.linear(hidden, adapter_down))
+            hidden = hidden + F.linear(adapter, adapter_up)
         return hidden
 
     def logits(self, hidden: torch.Tensor) -> torch.Tensor:
@@ -499,16 +667,90 @@ def apply_diagnostic_dense_updates(
 ) -> list[str]:
     updates = load_file(update_path, device="cpu")
     applied: list[str] = []
+    position_updates: dict[int, torch.Tensor] = {}
+    position_adapter_updates: dict[int, dict[str, torch.Tensor]] = {}
     for key, value in updates.items():
         if not key.startswith("dense."):
             continue
         attr = key.removeprefix("dense.")
+        position_match = DIAGNOSTIC_POSITION_FC_ATTR_RE.fullmatch(attr)
+        if position_match is not None:
+            position_updates[int(position_match.group(1))] = value
+            applied.append(attr)
+            continue
+        adapter_match = DIAGNOSTIC_POSITION_ADAPTER_ATTR_RE.fullmatch(attr)
+        if adapter_match is not None:
+            index = int(adapter_match.group(1))
+            direction = adapter_match.group(2)
+            position_adapter_updates.setdefault(index, {})[direction] = value
+            applied.append(attr)
+            continue
         if not hasattr(model, attr):
             raise KeyError(
                 f"Diagnostic dense update {key!r} maps to unknown attribute "
                 f"{attr!r}")
         setattr(model, attr, value.to(device=device, dtype=dtype))
         applied.append(attr)
+    if position_updates:
+        expected = list(range(len(position_updates)))
+        actual = sorted(position_updates)
+        if actual != expected:
+            raise ValueError(
+                "Diagnostic position FC updates must be contiguous and zero-based; "
+                f"found indices {actual}, expected {expected}"
+            )
+        model.position_fcs = [
+            position_updates[index].to(device=device, dtype=dtype)
+            for index in expected
+        ]
+        for index, position_fc in enumerate(model.position_fcs):
+            if position_fc.shape != model.fc.shape:
+                raise ValueError(
+                    f"dense.position_fcs.{index} shape "
+                    f"{tuple(position_fc.shape)} does not match mtp.fc.weight "
+                    f"shape {tuple(model.fc.shape)}"
+                )
+        model.position_fc_keys = tuple(
+            f"mtp.position_fcs.{index}.weight" for index in expected
+        )
+        model.position_fc_count = len(model.position_fcs)
+    if position_adapter_updates:
+        adapter_tensors = {
+            f"mtp.position_adapters.{index}.{direction}.weight": value
+            for index, parts in position_adapter_updates.items()
+            for direction, value in parts.items()
+        }
+        position_adapters, adapter_rank = find_position_adapters(
+            adapter_tensors, model.shape.hidden_size
+        )
+        if (model.position_fc_count
+                and len(position_adapters) != model.position_fc_count):
+            raise ValueError(
+                "Diagnostic position adapter count must match position FC count; "
+                f"found {len(position_adapters)} adapters and "
+                f"{model.position_fc_count} FCs"
+            )
+        model.position_adapter_down_keys = tuple(
+            down_key for down_key, _, _, _ in position_adapters
+        )
+        model.position_adapter_up_keys = tuple(
+            up_key for _, _, up_key, _ in position_adapters
+        )
+        model.position_adapter_keys = tuple(
+            key
+            for down_key, _, up_key, _ in position_adapters
+            for key in (down_key, up_key)
+        )
+        model.position_adapter_down = [
+            down.to(device=device, dtype=dtype)
+            for _, down, _, _ in position_adapters
+        ]
+        model.position_adapter_up = [
+            up.to(device=device, dtype=dtype)
+            for _, _, _, up in position_adapters
+        ]
+        model.position_adapter_count = len(position_adapters)
+        model.position_adapter_rank = adapter_rank
     if not applied:
         raise ValueError(f"No dense.* updates found in {update_path}")
     return sorted(applied)
@@ -556,7 +798,12 @@ def evaluate_start(
         target_index = start + step + 1
         if target_index >= next_ids.shape[0]:
             break
-        pred_seq = model(current_hidden, current_ids, current_positions)
+        pred_seq = model(
+            current_hidden,
+            current_ids,
+            current_positions,
+            spec_step_idx=step,
+        )
         pred_hidden = pred_seq[:, -1, :]
         logits = model.logits(pred_hidden)
         proposed = int(torch.argmax(logits, dim=-1).item())
@@ -722,6 +969,19 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
         "device": str(device),
         "dtype": str(dtype).replace("torch.", ""),
         "draft_lm_head": getattr(model, "draft_lm_head", "bf16"),
+        "position_fc_count": model.position_fc_count,
+        "position_fc_keys": list(model.position_fc_keys),
+        "position_fc_selection": (
+            "zero_based_spec_step_idx" if model.position_fc_count
+            else "shared_mtp.fc.weight"
+        ),
+        "position_adapter_count": model.position_adapter_count,
+        "position_adapter_rank": model.position_adapter_rank,
+        "position_adapter_keys": list(model.position_adapter_keys),
+        "position_adapter_selection": (
+            "zero_based_spec_step_idx_post_final_norm_residual"
+            if model.position_adapter_count else "none"
+        ),
         "rope": "vllm_get_rope" if model.rope is not None else (
             "local_text_only_neox_rope_fallback"
         ),
