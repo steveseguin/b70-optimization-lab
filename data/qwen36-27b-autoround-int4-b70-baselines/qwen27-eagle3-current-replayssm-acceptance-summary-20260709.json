@@ -1,0 +1,43 @@
+{
+  "classification": "diagnostic_acceptance_no_go",
+  "date": "2026-07-09",
+  "target": {
+    "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+    "quantization": "AutoRound INT4 W4A16 body; runtime INT8 target LM-head"
+  },
+  "common": {
+    "num_speculative_tokens": 3,
+    "cudagraph_mode": "NONE",
+    "async_scheduling": false,
+    "replayssm": true,
+    "aux_hidden_state_layers": [1, 31, 60],
+    "prompts": 1,
+    "each_prompt_once": true,
+    "cached_tokens_all_zero": true,
+    "generated_tokens": 128,
+    "promotable": false
+  },
+  "current_intrinsic_mtp3_visible_tokens_per_step": 2.746954076850984,
+  "rows": [
+    {
+      "draft": "Ex0bit/Qwen3.6-27B-PRISM-EAGLE3 compressed",
+      "verifier_steps": 63,
+      "mean_accepted_drafts": 1.0476190476190477,
+      "visible_tokens_per_step": 2.0476190476190474,
+      "acceptance_histogram": {"0": 30, "1": 12, "2": 9, "3": 12},
+      "diagnostic_tok_s": 1.5113673652994264,
+      "result": "qwen27-eagle3-current-replayssm-compressed-k3-acceptance-oneprompt-20260709T221851Z.json"
+    },
+    {
+      "draft": "Ex0bit/Qwen3.6-27B-PRISM-EAGLE3 full",
+      "verifier_steps": 66,
+      "mean_accepted_drafts": 0.9696969696969697,
+      "visible_tokens_per_step": 1.9696969696969697,
+      "acceptance_histogram": {"0": 30, "1": 16, "2": 12, "3": 8},
+      "diagnostic_tok_s": 1.356827,
+      "result": "qwen27-eagle3-current-replayssm-full-k3-acceptance-oneprompt-20260709T221908Z.json"
+    }
+  ],
+  "decision": "Close both current EAGLE3 checkpoints before full-suite or graph-on work; both accept materially fewer visible tokens per verifier step than intrinsic MTP3."
+}

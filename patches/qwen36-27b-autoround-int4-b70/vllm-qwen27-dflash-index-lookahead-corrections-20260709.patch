@@ -1,0 +1,55 @@
+diff --git a/vllm/transformers_utils/configs/speculators/algos.py b/vllm/transformers_utils/configs/speculators/algos.py
+--- a/vllm/transformers_utils/configs/speculators/algos.py
++++ b/vllm/transformers_utils/configs/speculators/algos.py
+@@ -68,8 +68,10 @@ def update_dflash(config_dict: dict, pre_trained_config: dict) -> None:
+     aux_layer_ids = config_dict["aux_hidden_state_layer_ids"]
+     pre_trained_config["eagle_aux_hidden_state_layer_ids"] = aux_layer_ids
+
++    # DFlash configs use pre-layer indexing; the runner converts these back
++    # to the post-layer hidden-state indices captured from the target.
+     pre_trained_config["dflash_config"] = {
+         "mask_token_id": config_dict["mask_token_id"],
+-        "target_layer_ids": aux_layer_ids,
++        "target_layer_ids": [i - 1 for i in aux_layer_ids],
+     }
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -517,6 +517,10 @@ class Scheduler(SchedulerInterface):
+                 self.num_lookahead_tokens = self.num_spec_tokens
+             if speculative_config.uses_draft_model():
+                 self.num_lookahead_tokens = self.num_spec_tokens
++            if speculative_config.use_dflash():
++                # DFlash has one query for the last sampled token in addition
++                # to the query for each draft token.
++                self.num_lookahead_tokens = self.num_spec_tokens + 1
+
+         # Create the KV cache manager.
+         if hash_block_size is None:
+@@ -1126,8 +1130,9 @@ class Scheduler(SchedulerInterface):
+                 # extra block gets allocated which
+                 # creates a mismatch between the number
+                 # of local and remote blocks.
++                limit_lookahead_tokens = load_kv_async and self.use_eagle
+                 effective_lookahead_tokens = (
+-                    0 if request.num_computed_tokens == 0 else self.num_lookahead_tokens
++                    0 if limit_lookahead_tokens else self.num_lookahead_tokens
+                 )
+
+                 # Determine if we need to allocate cross-attention blocks.
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -10752,7 +10752,11 @@ class GPUModelRunner:
+         if not layer_ids:
+             dflash_config = getattr(hf_config, "dflash_config", None)
+             if dflash_config and isinstance(dflash_config, dict):
+-                layer_ids = dflash_config.get("target_layer_ids")
++                # DFlash stores pre-layer IDs; auxiliary captures are emitted
++                # after each target layer.
++                layer_ids = [
++                    i + 1 for i in (dflash_config.get("target_layer_ids") or [])
++                ]
+
+         if layer_ids and isinstance(layer_ids, (list, tuple)):
+             return tuple(layer_ids)

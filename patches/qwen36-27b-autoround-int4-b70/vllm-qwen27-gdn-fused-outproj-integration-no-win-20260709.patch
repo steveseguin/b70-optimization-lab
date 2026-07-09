@@ -1,0 +1,99 @@
+--- a/vllm/model_executor/layers/mamba/gdn_linear_attn.py
++++ b/vllm/model_executor/layers/mamba/gdn_linear_attn.py
+@@ -1811,6 +1811,31 @@
+             prefix=f"{prefix}.out_proj",
+         )
+
++        out_proj_quant = getattr(self.out_proj, "quant_method", None)
++        self.xpu_gdn_fused_out_proj_int4 = (
++            current_platform.is_xpu()
++            and _gdn_row_trace_bool_env(
++                "VLLM_XPU_GDN_FUSED_OUT_PROJ_INT4", False
++            )
++            and self.tp_size == 1
++            and self.head_v_dim == 128
++            and getattr(self.norm, "group_size", None) is None
++            and getattr(self.norm, "norm_before_gate", False)
++            and getattr(self.norm, "activation", None) in ("silu", "swish")
++            and getattr(self.norm, "bias", None) is None
++            and getattr(self.out_proj, "input_is_parallel", False)
++            and getattr(self.out_proj, "bias", None) is None
++            and out_proj_quant is not None
++            and out_proj_quant.__class__.__name__ == "INCXPULinearMethod"
++            and getattr(out_proj_quant, "weight_bits", None) == 4
++            and getattr(out_proj_quant, "group_size", None) == 128
++            and getattr(out_proj_quant, "sym", None) is True
++            and hasattr(self.out_proj, "qweight")
++            and hasattr(self.out_proj, "scales")
++            and hasattr(self.out_proj, "qzeros")
++            and hasattr(torch.ops._xpu_C, "qwen_gdn_out_proj_int4_w4a16")
++        )
++
+         self.chunk_gated_delta_rule = ChunkGatedDeltaRule()
+         self.enable_packed_recurrent_decode = (
+             envs.VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE
+@@ -2527,24 +2552,46 @@
+         # ============================================================
+         # Part 3: Output Projection
+         # ============================================================
+-        z_shape_og = z.shape
+-        # Reshape input data into 2D tensor
+-        core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
+-        z = z.reshape(-1, z.shape[-1])
+-        with timed_region("qwen3_next.gdn.output_norm"):
+-            core_attn_out = self.norm(core_attn_out, z)
+-        if isinstance(trace_attn_metadata, GDNAttentionMetadata):
+-            _gdn_row_trace_write(
+-                stage="forward_post_norm",
+-                layer_name=self.prefix,
+-                layer_idx=self.layer_idx,
+-                attn_metadata=trace_attn_metadata,
+-                tensors={"core_attn_out": core_attn_out.reshape(z_shape_og)},
+-            )
+-        core_attn_out = core_attn_out.reshape(z_shape_og)
+-        core_attn_out = rearrange(core_attn_out, "... h d -> ... (h d)")
+-        with timed_region("qwen3_next.gdn.out_proj"):
+-            output[:num_tokens], _ = self.out_proj(core_attn_out)
++        use_fused_out_proj = (
++            self.xpu_gdn_fused_out_proj_int4
++            and trace_attn_metadata is None
++            and core_attn_out.is_contiguous()
++            and z.is_contiguous()
++        )
++        if use_fused_out_proj:
++            with timed_region("qwen3_next.gdn.fused_output_norm_out_proj"):
++                output[:num_tokens] = (
++                    torch.ops._xpu_C.qwen_gdn_out_proj_int4_w4a16(
++                        core_attn_out,
++                        z,
++                        self.norm.weight,
++                        self.out_proj.qweight,
++                        None,
++                        self.out_proj.scales,
++                        self.out_proj.qzeros,
++                        self.out_proj.quant_method.group_size,
++                        self.norm.eps,
++                    )
++                )
++        else:
++            z_shape_og = z.shape
++            # Reshape input data into 2D tensor
++            core_attn_out = core_attn_out.reshape(-1, core_attn_out.shape[-1])
++            z = z.reshape(-1, z.shape[-1])
++            with timed_region("qwen3_next.gdn.output_norm"):
++                core_attn_out = self.norm(core_attn_out, z)
++            if isinstance(trace_attn_metadata, GDNAttentionMetadata):
++                _gdn_row_trace_write(
++                    stage="forward_post_norm",
++                    layer_name=self.prefix,
++                    layer_idx=self.layer_idx,
++                    attn_metadata=trace_attn_metadata,
++                    tensors={"core_attn_out": core_attn_out.reshape(z_shape_og)},
++                )
++            core_attn_out = core_attn_out.reshape(z_shape_og)
++            core_attn_out = rearrange(core_attn_out, "... h d -> ... (h d)")
++            with timed_region("qwen3_next.gdn.out_proj"):
++                output[:num_tokens], _ = self.out_proj(core_attn_out)
+         if isinstance(trace_attn_metadata, GDNAttentionMetadata):
+             _gdn_row_trace_write(
+                 stage="forward_post_out_proj",
