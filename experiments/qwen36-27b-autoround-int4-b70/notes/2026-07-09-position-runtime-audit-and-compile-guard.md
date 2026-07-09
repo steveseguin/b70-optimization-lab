@@ -1,7 +1,8 @@
 # 2026-07-09 - Position-specific MTP runtime audit and compile guard
 
-Status: **loader/runtime correctness fixes implemented; graph support pending**.
-This note corrects the earlier mechanical smoke interpretation.
+Status: **loader/runtime fixes plus graph specialization implemented; endpoint
+validation pending**. This note corrects the earlier mechanical smoke
+interpretation.
 
 ## Audit findings
 
@@ -36,13 +37,20 @@ It:
   loaded, and rejects unexpected position keys;
 - validates non-negative counts, count coverage of `num_speculative_tokens`,
   equal FC/adapter counts, positive rank, and rank divisibility by TP size;
-- disables torch compilation for Qwen3.5 MTP only when a position-specific FC
-  or adapter is configured.
+- opts the position-specific Qwen3.5 MTP lane into a narrowly preserved
+  `spec_step_idx` constant guard. vLLM still drops unrelated guards, but
+  torch.compile now creates and caches one optimized graph per draft depth
+  instead of silently reusing depth 0;
+- automatically falls back to eager for this opt-in mode when AOT compile or
+  the bytecode hook is active, because those modes cannot safely recompile by
+  depth yet.
 
-The ordinary checkpoint remains compiled. Experimental position candidates run
-eagerly for correctness until a graph-safe depth selector exists. Static Python
-compilation and `git diff --check` pass. A real rank-8 XPU train/export smoke
-also passes; its compact summary is:
+The ordinary checkpoint remains on the unchanged no-guard compile behavior.
+The generic guard-preservation capability is default-inert and covered by a
+test that selects depths `0,1,2,1,0` through one `ModuleList`; all outputs use
+the correct cached specialization. `tests/compile/test_wrapper.py` passes in
+full (`3 passed`). Static Python compilation and `git diff --check` also pass.
+A real rank-8 XPU train/export smoke passes; its compact summary is:
 
 ```text
 data/qwen36-27b-autoround-int4-b70-baselines/qwen27-position-adapter-rank8-smoke-20260709.json
@@ -61,8 +69,9 @@ Do not promote an endpoint result from this lane until both are true:
 
 1. an eager endpoint acceptance trace agrees directionally with the offline
    full-corpus result; and
-2. position selection is tensorized or otherwise keyed into separate compiled
-   graphs, then a graph-on acceptance trace matches the eager result.
+2. the new per-depth graph specialization produces the same acceptance trace
+   graph-on and the compile/capture logs show every configured depth.
 
-The graph-safe implementation is a required performance task, not an optional
-polish item: eager position dispatch cannot support the `100 tok/s` objective.
+The compile-wrapper unit proves the dispatch mechanism, not Qwen endpoint
+capture. A real candidate must still prove weight loading, five specializations,
+capture/replay, and acceptance parity before performance is trusted.

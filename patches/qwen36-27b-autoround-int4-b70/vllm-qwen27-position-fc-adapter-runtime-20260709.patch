@@ -1,27 +1,155 @@
+diff --git a/tests/compile/test_wrapper.py b/tests/compile/test_wrapper.py
+index 5e0755ff7..5cc87e996 100644
+--- a/tests/compile/test_wrapper.py
++++ b/tests/compile/test_wrapper.py
+@@ -34,6 +34,55 @@ class MyWrapper(TorchCompileWithNoGuardsWrapper):
+         return self.model(x)
+
+
++class StaticIndexMod(torch.nn.Module):
++    def __init__(self):
++        super().__init__()
++        self.layers = torch.nn.ModuleList(
++            torch.nn.Linear(4, 4, bias=False) for _ in range(3)
++        )
++        with torch.no_grad():
++            for index, layer in enumerate(self.layers):
++                layer.weight.copy_(torch.eye(4) * (index + 1))
++
++    def forward(self, x: torch.Tensor, spec_step_idx: int = 0):
++        return self.layers[spec_step_idx](x)
++
++
++class GuardSpecializedWrapper(TorchCompileWithNoGuardsWrapper):
++    _vllm_preserve_compile_guard_names = frozenset({"spec_step_idx"})
++
++    def __init__(self, model):
++        self.model = model
++        super().__init__()
++
++    def forward(self, x: torch.Tensor, spec_step_idx: int = 0):  # type: ignore[override]
++        return self.model(x, spec_step_idx)
++
++
++def test_preserved_compile_guard_specializes_python_index(monkeypatch):
++    monkeypatch.setenv("VLLM_USE_AOT_COMPILE", "0")
++    monkeypatch.setenv("VLLM_USE_BYTECODE_HOOK", "0")
++    monkeypatch.setenv("VLLM_DISABLE_COMPILE_CACHE", "1")
++
++    vllm_config = VllmConfig()
++    vllm_config.compilation_config = CompilationConfig()
++    vllm_config.compilation_config.mode = CompilationMode.DYNAMO_TRACE_ONCE
++    vllm_config.compilation_config.backend = "inductor"
++
++    with set_current_vllm_config(vllm_config):
++        torch._dynamo.reset()
++        wrapper = GuardSpecializedWrapper(StaticIndexMod())
++        x = torch.tensor([[1.0, 2.0, 3.0, 4.0]])
++        outputs = [
++            wrapper(x, spec_step_idx=index)
++            for index in (0, 1, 2, 1, 0)
++        ]
++
++    expected = [x, x * 2, x * 3, x * 2, x]
++    for actual, wanted in zip(outputs, expected):
++        assert torch.equal(actual, wanted)
++
++
+ @pytest.mark.parametrize("use_bytecode_hook", [True, False])
+ def test_torch_compile_wrapper(use_bytecode_hook, monkeypatch):
+     """Test basic functionality of TorchCompileWithNoGuardsWrapper."""
+diff --git a/vllm/compilation/decorators.py b/vllm/compilation/decorators.py
+index ad710a6fe..cdcb6e812 100644
+--- a/vllm/compilation/decorators.py
++++ b/vllm/compilation/decorators.py
+@@ -385,6 +385,21 @@ def _support_torch_compile(
+         self.vllm_config = vllm_config
+         self.compilation_config = self.vllm_config.compilation_config
+         enable_compile = enable_if is None or enable_if(vllm_config)
++        preserved_guard_names = frozenset(
++            getattr(self, "_vllm_preserve_compile_guard_names", ())
++        )
++        unsupported_preserved_guard_mode = bool(
++            preserved_guard_names
++            and (envs.VLLM_USE_AOT_COMPILE or envs.VLLM_USE_BYTECODE_HOOK)
++        )
++        if unsupported_preserved_guard_mode:
++            logger.warning_once(
++                "Disabling torch.compile for %s because preserved Python "
++                "guards %s are incompatible with AOT compile or the bytecode "
++                "hook.",
++                self.__class__.__name__,
++                sorted(preserved_guard_names),
++            )
+         # for CompilationMode.STOCK_TORCH_COMPILE , the upper level model runner
+         # will handle the compilation, so we don't need to do anything here.
+         self.do_not_compile = (
+@@ -392,6 +407,7 @@ def _support_torch_compile(
+             in [CompilationMode.NONE, CompilationMode.STOCK_TORCH_COMPILE]
+             or _should_ignore_torch_compile(self.__class__)
+             or not enable_compile
++            or unsupported_preserved_guard_mode
+         )
+         if self.do_not_compile:
+             return
+diff --git a/vllm/compilation/wrapper.py b/vllm/compilation/wrapper.py
+index 5635fe03a..40e6f5667 100644
+--- a/vllm/compilation/wrapper.py
++++ b/vllm/compilation/wrapper.py
+@@ -99,22 +99,28 @@ class TorchCompileWithNoGuardsWrapper:
+         self.evaluate_guards = (
+             vllm_config.compilation_config.dynamic_shapes_config.evaluate_guards
+         )
++        self.preserved_compile_guard_names = frozenset(
++            getattr(self, "_vllm_preserve_compile_guard_names", ())
++        )
+
+         ds_type = vllm_config.compilation_config.dynamic_shapes_config.type
+
+         if mode != CompilationMode.STOCK_TORCH_COMPILE:
+             # Drop all the guards.
+-            if self.evaluate_guards:
++            if self.evaluate_guards or self.preserved_compile_guard_names:
+                 assert not envs.VLLM_USE_BYTECODE_HOOK, (
+-                    "compilation_config.dynamic_shapes_config.evaluate_guards "
+-                    "requires VLLM_USE_BYTECODE_HOOK=0. "
++                    "evaluated or explicitly preserved compile guards require "
++                    "VLLM_USE_BYTECODE_HOOK=0. "
+                 )
+                 assert ds_type != DynamicShapesType.UNBACKED, (
+                     "UNBACKED dynamic shapes do not add guards"
+                 )
+
++                preserved_names = self.preserved_compile_guard_names
+                 options["guard_filter_fn"] = lambda x: [
+-                    entry.guard_type == "SHAPE_ENV" for entry in x
++                    entry.guard_type == "SHAPE_ENV"
++                    or entry.name in preserved_names
++                    for entry in x
+                 ]
+             else:
+                 if hasattr(torch.compiler, "skip_all_guards_unsafe"):
+@@ -189,7 +195,11 @@ class TorchCompileWithNoGuardsWrapper:
+         else:
+             ctx = (
+                 nullcontext()
+-                if self.first_compile or not self.evaluate_guards
++                if (
++                    self.first_compile
++                    or not self.evaluate_guards
++                    or self.preserved_compile_guard_names
++                )
+                 else torch.compiler.set_stance("fail_on_recompile")
+             )
+             self.first_compile = False
 diff --git a/vllm/model_executor/models/qwen3_5_mtp.py b/vllm/model_executor/models/qwen3_5_mtp.py
-index 9cac4d954..2fc612366 100644
+index 9cac4d954..03122bf85 100644
 --- a/vllm/model_executor/models/qwen3_5_mtp.py
 +++ b/vllm/model_executor/models/qwen3_5_mtp.py
-@@ -74,6 +74,51 @@ def _make_block_fp8_mtp_config(prefix: str) -> Fp8Config:
+@@ -74,6 +74,35 @@ def _make_block_fp8_mtp_config(prefix: str) -> Fp8Config:
      return quant_config
 
 
-+def _enable_qwen35_mtp_compile(vllm_config: VllmConfig) -> bool:
-+    """Position-selected weights need a graph-safe runtime selector first.
-+
-+    vLLM's model compile wrapper intentionally drops Python guards. Compiling
-+    the current ``ModuleList[spec_step_idx]`` implementation would therefore
-+    specialize the first graph to step 0 and silently reuse it at later draft
-+    depths. Keep the normal checkpoint compiled, but run experimental
-+    position-specific candidates eagerly until their selector is tensorized.
-+    """
-+    config = vllm_config.model_config.hf_text_config
-+    return not (
-+        int(getattr(config, "xpu_mtp_num_position_fcs", 0) or 0)
-+        or int(getattr(config, "xpu_mtp_position_adapter_count", 0) or 0)
-+    )
-+
-+
 +class Qwen3_5MTPPositionAdapter(nn.Module):
 +    def __init__(
 +        self,
@@ -54,17 +182,7 @@ index 9cac4d954..2fc612366 100644
  @support_torch_compile(
      dynamic_arg_dims={
          "input_ids": 0,
-@@ -83,7 +128,8 @@ def _make_block_fp8_mtp_config(prefix: str) -> Fp8Config:
-         "intermediate_tensors": 0,
-         "inputs_embeds": 0,
-         "hidden_states": 0,
--    }
-+    },
-+    enable_if=_enable_qwen35_mtp_compile,
- )
- class Qwen3_5MultiTokenPredictor(nn.Module):
-     def __init__(self, *, vllm_config: VllmConfig, prefix: str = ""):
-@@ -135,6 +181,85 @@ class Qwen3_5MultiTokenPredictor(nn.Module):
+@@ -135,6 +164,90 @@ class Qwen3_5MultiTokenPredictor(nn.Module):
              prefix=f"{prefix}.fc",
          )
 
@@ -112,6 +230,11 @@ index 9cac4d954..2fc612366 100644
 +                "position-specific FC and adapter counts must match: "
 +                f"{self.num_position_fcs} != {self.num_position_adapters}"
 +            )
++        self._vllm_preserve_compile_guard_names = (
++            frozenset({"spec_step_idx"})
++            if self.num_position_fcs or self.num_position_adapters
++            else frozenset()
++        )
 +        num_speculative_tokens = (
 +            vllm_config.speculative_config.num_speculative_tokens
 +            if vllm_config.speculative_config is not None
@@ -150,7 +273,7 @@ index 9cac4d954..2fc612366 100644
          self.layers = torch.nn.ModuleList(
              Qwen3_5DecoderLayer(
                  mtp_vllm_config,
-@@ -175,7 +300,16 @@ class Qwen3_5MultiTokenPredictor(nn.Module):
+@@ -175,7 +288,16 @@ class Qwen3_5MultiTokenPredictor(nn.Module):
              inputs_embeds = self.pre_fc_norm_embedding(inputs_embeds)
              hidden_states = self.pre_fc_norm_hidden(hidden_states)
              hidden_states = torch.cat([inputs_embeds, hidden_states], dim=-1)
@@ -168,7 +291,7 @@ index 9cac4d954..2fc612366 100644
              residual = None
          else:
              assert intermediate_tensors is not None
-@@ -195,6 +329,18 @@ class Qwen3_5MultiTokenPredictor(nn.Module):
+@@ -195,6 +317,18 @@ class Qwen3_5MultiTokenPredictor(nn.Module):
              )
 
          hidden_states, _ = self.norm(hidden_states, residual)
@@ -187,17 +310,24 @@ index 9cac4d954..2fc612366 100644
          return hidden_states
 
      def load_fused_expert_weights(
-@@ -387,7 +533,8 @@ class Qwen3_5MultiTokenPredictor(nn.Module):
-         "intermediate_tensors": 0,
-         "inputs_embeds": 0,
-         "hidden_states": 0,
--    }
-+    },
-+    enable_if=_enable_qwen35_mtp_compile,
- )
- class Qwen3_5MTP(nn.Module, SupportsMultiModal):
-     packed_modules_mapping = _QWEN3_5_MTP_PACKED_MODULES_MAPPING
-@@ -457,10 +604,16 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
+@@ -394,6 +528,16 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
+
+     def __init__(self, *, vllm_config: VllmConfig, prefix: str = ""):
+         config = vllm_config.model_config.hf_text_config
++        self._vllm_preserve_compile_guard_names = (
++            frozenset({"spec_step_idx"})
++            if (
++                int(getattr(config, "xpu_mtp_num_position_fcs", 0) or 0)
++                or int(
++                    getattr(config, "xpu_mtp_position_adapter_count", 0) or 0
++                )
++            )
++            else frozenset()
++        )
+         self.vllm_config = vllm_config
+         cache_config = vllm_config.cache_config
+         if cache_config.mamba_cache_mode == "all":
+@@ -457,10 +601,16 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
          hidden_states: torch.Tensor,
          intermediate_tensors: IntermediateTensors | None = None,
          inputs_embeds: torch.Tensor | None = None,
@@ -215,7 +345,7 @@ index 9cac4d954..2fc612366 100644
          )
          return hidden_states
 
-@@ -471,9 +624,45 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
+@@ -471,9 +621,45 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
      ) -> torch.Tensor | None:
          return self.logits_processor(self.lm_head, hidden_states)
 
@@ -261,7 +391,7 @@ index 9cac4d954..2fc612366 100644
                  if name.startswith("mtp."):
                      name = name.replace("mtp.", "model.")
                  elif any(key in name for key in ["embed_tokens", "lm_head"]):
-@@ -484,7 +673,28 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
+@@ -484,7 +670,28 @@ class Qwen3_5MTP(nn.Module, SupportsMultiModal):
                  yield name, weight
 
          loader = AutoWeightsLoader(self)
