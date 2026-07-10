@@ -70,6 +70,13 @@ for paired prompt/family analysis. It supports:
 - endpoint-matched mixed attention or historical public non-causal attention;
 - safetensors export of only the trained draft parameters.
 
+`scripts/merge-qwen27-dflash-adapter.py` provides the default-off endpoint
+bridge. It validates adapter keys, shapes, and dtypes; writes one merged
+checkpoint instead of relying on duplicate safetensor glob order; and records
+base, adapter, and output SHA-256 identities. A derived draft is still only an
+experiment artifact until the declared target verifies it through the strict
+fresh endpoint and quality gates.
+
 The first four-GPU smoke matrix is reproducible through
 `scripts/run-dflash-adaptation-smoke-4gpu.sh` in this experiment folder. It
 compares FC, transformer-layer, full-draft paper-decay, and full-draft
