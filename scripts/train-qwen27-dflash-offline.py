@@ -23,6 +23,7 @@ import json
 import math
 import os
 import random
+import statistics
 import sys
 import time
 from collections import Counter, defaultdict
@@ -61,11 +62,27 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dflash-source", default="/home/steve/src/dflash")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--device", default="xpu:0")
+    parser.add_argument(
+        "--lm-head-mode",
+        choices=("bf16", "int8-ste"),
+        default="int8-ste",
+        help=(
+            "Draft-token head used by the offline gate. int8-ste matches the "
+            "endpoint INT8/BF16-scale forward and uses BF16 straight-through "
+            "gradients during training."
+        ),
+    )
     parser.add_argument("--draft-tokens", type=int, default=8)
     parser.add_argument("--min-context", type=int, default=16)
     parser.add_argument("--max-context", type=int, default=160)
     parser.add_argument("--train-starts", type=int, default=0)
     parser.add_argument("--heldout-starts", type=int, default=2048)
+    parser.add_argument(
+        "--eval-repeats",
+        type=int,
+        default=3,
+        help="Odd repeat count for baseline/final per-anchor median acceptance.",
+    )
     parser.add_argument("--steps", type=int, default=0)
     parser.add_argument("--lr", type=float, default=1e-6)
     parser.add_argument("--weight-decay", type=float, default=0.0)
@@ -171,7 +188,9 @@ def load_named_tensor(model_dir: str, name: str) -> torch.Tensor:
         return handle.get_tensor(name)
 
 
-def load_runtime(args: argparse.Namespace) -> tuple[Any, torch.Tensor, torch.Tensor]:
+def load_runtime(
+    args: argparse.Namespace,
+) -> tuple[Any, torch.Tensor, dict[str, torch.Tensor]]:
     sys.path.insert(0, args.dflash_source)
     from dflash.model import DFlashDraftModel
     from transformers import Qwen3Config
@@ -197,9 +216,32 @@ def load_runtime(args: argparse.Namespace) -> tuple[Any, torch.Tensor, torch.Ten
     embedding = load_named_tensor(
         args.target_model, "model.language_model.embed_tokens.weight"
     ).to(args.device)
-    lm_head = load_named_tensor(args.target_model, "lm_head.weight").to(args.device)
+    lm_head_bf16 = load_named_tensor(args.target_model, "lm_head.weight").to(
+        args.device
+    )
     embedding.requires_grad_(False)
-    lm_head.requires_grad_(False)
+    lm_head_bf16.requires_grad_(False)
+    lm_head = {"bf16": lm_head_bf16}
+    if args.lm_head_mode == "int8-ste":
+        import vllm_xpu_kernels._xpu_C  # noqa: F401
+
+        required = ("per_token_quant_int8_xpu", "int8_gemm_w8a8")
+        missing = [name for name in required if not hasattr(torch.ops._xpu_C, name)]
+        if missing:
+            raise RuntimeError(f"Missing XPU INT8 LM-head ops: {missing}")
+        with torch.no_grad():
+            weight_f = lm_head_bf16.float()
+            scales = weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
+            weight_q_t = (
+                torch.round(weight_f / scales.view(-1, 1))
+                .clamp(-127, 127)
+                .to(torch.int8)
+                .t()
+                .contiguous()
+            )
+            lm_head["int8_t"] = weight_q_t
+            lm_head["scales"] = scales.to(torch.bfloat16).contiguous()
+            del weight_f, scales
     return model, embedding, lm_head
 
 
@@ -255,7 +297,7 @@ def make_block(
 def draft_logits(
     *,
     model: Any,
-    lm_head: torch.Tensor,
+    lm_head: dict[str, torch.Tensor],
     target_hidden: torch.Tensor,
     noise_embedding: torch.Tensor,
     position_ids: torch.Tensor,
@@ -266,7 +308,28 @@ def draft_logits(
         position_ids=position_ids,
         use_cache=False,
     )
-    return F.linear(hidden[:, 1:], lm_head)[0]
+    hidden = hidden[:, 1:]
+    hidden_flat = hidden.reshape(-1, hidden.shape[-1]).contiguous()
+    if "int8_t" not in lm_head:
+        return F.linear(hidden_flat, lm_head["bf16"])
+    with torch.no_grad():
+        hidden_q, hidden_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(
+            hidden_flat
+        )
+        int8_logits = torch.ops._xpu_C.int8_gemm_w8a8(
+            hidden_q,
+            hidden_scale,
+            lm_head["int8_t"],
+            lm_head["scales"],
+            torch.bfloat16,
+            None,
+        )
+    if model.training:
+        bf16_logits = F.linear(hidden_flat, lm_head["bf16"])
+        # Forward values and token IDs match the endpoint INT8 head exactly;
+        # gradients use the frozen BF16 head as a straight-through estimator.
+        int8_logits = bf16_logits + (int8_logits - bf16_logits).detach()
+    return int8_logits
 
 
 def accepted_prefix(prediction: torch.Tensor, labels: torch.Tensor) -> int:
@@ -277,7 +340,7 @@ def evaluate(
     *,
     model: Any,
     embedding: torch.Tensor,
-    lm_head: torch.Tensor,
+    lm_head: dict[str, torch.Tensor],
     anchors: list[Anchor],
     args: argparse.Namespace,
     include_records: bool = True,
@@ -363,6 +426,89 @@ def evaluate(
     return result
 
 
+def evaluate_repeated(
+    *,
+    model: Any,
+    embedding: torch.Tensor,
+    lm_head: dict[str, torch.Tensor],
+    anchors: list[Anchor],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    if args.eval_repeats < 1 or args.eval_repeats % 2 == 0:
+        raise ValueError("--eval-repeats must be a positive odd integer")
+    runs = [
+        evaluate(
+            model=model,
+            embedding=embedding,
+            lm_head=lm_head,
+            anchors=anchors,
+            args=args,
+        )
+        for _ in range(args.eval_repeats)
+    ]
+    if len(runs) == 1:
+        runs[0]["evaluation_repeats"] = 1
+        return runs[0]
+
+    by_key: dict[tuple[str, str, int], list[int]] = defaultdict(list)
+    templates: dict[tuple[str, str, int], dict[str, Any]] = {}
+    for run in runs:
+        for record in run["records"]:
+            key = (
+                str(record["prompt_id"]),
+                str(record["sample"]),
+                int(record["start"]),
+            )
+            by_key[key].append(int(record["accepted_drafts"]))
+            templates[key] = record
+    if any(len(values) != len(runs) for values in by_key.values()):
+        raise RuntimeError("Repeated evaluation records did not align")
+
+    records = []
+    histogram: Counter[int] = Counter()
+    by_family: dict[str, list[int]] = defaultdict(list)
+    for key in sorted(by_key):
+        accepted = int(statistics.median(by_key[key]))
+        record = dict(templates[key])
+        record["accepted_drafts"] = accepted
+        record["repeat_values"] = by_key[key]
+        records.append(record)
+        histogram[accepted] += 1
+        by_family[str(record["family"])].append(accepted)
+    mean_prefix = sum(row["accepted_drafts"] for row in records) / len(records)
+    result = dict(runs[0])
+    result.update(
+        {
+            "mean_accepted_drafts": mean_prefix,
+            "visible_tokens_per_step": 1.0 + mean_prefix,
+            "full_accept_rate": histogram[args.draft_tokens] / len(records),
+            "histogram": {
+                str(index): histogram[index]
+                for index in range(args.draft_tokens + 1)
+            },
+            "per_family": {
+                family: {
+                    "anchors": len(values),
+                    "mean_accepted_drafts": sum(values) / len(values),
+                }
+                for family, values in sorted(by_family.items())
+            },
+            "records": records,
+            "evaluation_repeats": len(runs),
+            "repeat_visible_tokens_per_step": [
+                run["visible_tokens_per_step"] for run in runs
+            ],
+            "elapsed_s": sum(run["elapsed_s"] for run in runs),
+        }
+    )
+    result["anchors_per_s"] = (
+        len(records) * len(runs) / result["elapsed_s"]
+        if result["elapsed_s"]
+        else None
+    )
+    return result
+
+
 def loss_weights(
     *,
     logits: torch.Tensor,
@@ -416,7 +562,7 @@ def train(
     *,
     model: Any,
     embedding: torch.Tensor,
-    lm_head: torch.Tensor,
+    lm_head: dict[str, torch.Tensor],
     train_anchors: list[Anchor],
     heldout_anchors: list[Anchor],
     baseline: dict[str, Any],
@@ -510,15 +656,22 @@ def train(
             eval_history.append({"step": step, "metrics": metrics})
             print(json.dumps(eval_history[-1]), flush=True)
             model.train()
-    final = evaluate(
+    final = evaluate_repeated(
         model=model,
         embedding=embedding,
         lm_head=lm_head,
         anchors=heldout_anchors,
         args=args,
     )
-    if not eval_history or eval_history[-1]["step"] != args.steps:
-        eval_history.append({"step": args.steps, "metrics": final})
+    final_history = {
+        "step": args.steps,
+        "metrics": final,
+        "final_repeated": True,
+    }
+    if eval_history and eval_history[-1]["step"] == args.steps:
+        eval_history[-1] = final_history
+    else:
+        eval_history.append(final_history)
     training = {
         "steps": args.steps,
         "lr": args.lr,
@@ -563,7 +716,7 @@ def main() -> int:
     # every anchor.
     heldout_anchors.sort(key=lambda anchor: (anchor.path, anchor.start))
     model, embedding, lm_head = load_runtime(args)
-    baseline = evaluate(
+    baseline = evaluate_repeated(
         model=model,
         embedding=embedding,
         lm_head=lm_head,
@@ -602,10 +755,12 @@ def main() -> int:
         "device": args.device,
         "seed": args.seed,
         "draft_tokens": args.draft_tokens,
+        "lm_head_mode": args.lm_head_mode,
         "min_context": args.min_context,
         "max_context": args.max_context,
         "train_anchor_count": len(train_anchors),
         "heldout_anchor_count": len(heldout_anchors),
+        "eval_repeats": args.eval_repeats,
         "baseline": baseline,
         "final": final,
         "training": training,
