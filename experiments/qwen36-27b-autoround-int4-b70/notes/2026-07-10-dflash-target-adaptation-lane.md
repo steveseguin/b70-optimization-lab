@@ -509,3 +509,11 @@ Offline acceptance is never a throughput or target-quality claim. A promoted
 candidate still needs the strict fresh endpoint suite, card/order crossover,
 repeat64 baseline-quality match, exact identity capture, and a new record above
 `68.236263 tok/s` before LocalMaxxing submission.
+
+The subsequent four-card verifier-row cost screen and native parent-state
+contract are recorded in
+[`2026-07-10-ddtree-row-cost-and-native-contract.md`](2026-07-10-ddtree-row-cost-and-native-contract.md).
+They select the 16-row `k15/b15` shape for the first integrated prototype and
+prove that the existing XPU indexed GDN primitive is bit-exact when submitted
+in race-free depth batches. This is still an implementation gate, not an
+endpoint speed or quality result.

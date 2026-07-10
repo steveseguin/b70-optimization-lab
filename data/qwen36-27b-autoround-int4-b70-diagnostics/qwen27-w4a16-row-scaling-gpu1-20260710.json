@@ -1,0 +1,2614 @@
+{
+  "arguments": {
+    "calls_per_sample": 16,
+    "device": "xpu:1",
+    "dry_run": false,
+    "iterations": 100,
+    "output_json": "data/qwen36-27b-autoround-int4-b70-diagnostics/qwen27-w4a16-row-scaling-gpu1-20260710.json",
+    "seed": 20260710,
+    "warmup": 20
+  },
+  "benchmark_scope": {
+    "baseline_rows": 4,
+    "benchmarked_rows": [
+      4,
+      9,
+      16,
+      17,
+      31,
+      33
+    ],
+    "full_attention_layers": 16,
+    "gdn_layers": 48,
+    "model_family": "Qwen3.6-27B INT4 AutoRound",
+    "projection_calls_per_target_step": 256,
+    "projections": [
+      {
+        "calls_per_target_step": 48,
+        "input_features": 5120,
+        "layer_family": "gdn",
+        "name": "gdn_qkvz",
+        "operator_mnk": {
+          "k": 5120,
+          "m": "rows",
+          "n": 16384
+        },
+        "operator_weight_shape": [
+          640,
+          16384
+        ],
+        "output_features": 16384,
+        "packed_weight_backing_shape": [
+          16384,
+          640
+        ],
+        "packed_weight_bytes": 41943040,
+        "scale_bytes": 1310720,
+        "scale_shape": [
+          40,
+          16384
+        ],
+        "synthetic_parameter_bytes": 43253761
+      },
+      {
+        "calls_per_target_step": 48,
+        "input_features": 6144,
+        "layer_family": "gdn",
+        "name": "gdn_out",
+        "operator_mnk": {
+          "k": 6144,
+          "m": "rows",
+          "n": 5120
+        },
+        "operator_weight_shape": [
+          768,
+          5120
+        ],
+        "output_features": 5120,
+        "packed_weight_backing_shape": [
+          5120,
+          768
+        ],
+        "packed_weight_bytes": 15728640,
+        "scale_bytes": 491520,
+        "scale_shape": [
+          48,
+          5120
+        ],
+        "synthetic_parameter_bytes": 16220161
+      },
+      {
+        "calls_per_target_step": 64,
+        "input_features": 5120,
+        "layer_family": "all_layers",
+        "name": "mlp_gateup",
+        "operator_mnk": {
+          "k": 5120,
+          "m": "rows",
+          "n": 34816
+        },
+        "operator_weight_shape": [
+          640,
+          34816
+        ],
+        "output_features": 34816,
+        "packed_weight_backing_shape": [
+          34816,
+          640
+        ],
+        "packed_weight_bytes": 89128960,
+        "scale_bytes": 2785280,
+        "scale_shape": [
+          40,
+          34816
+        ],
+        "synthetic_parameter_bytes": 91914241
+      },
+      {
+        "calls_per_target_step": 64,
+        "input_features": 17408,
+        "layer_family": "all_layers",
+        "name": "mlp_down",
+        "operator_mnk": {
+          "k": 17408,
+          "m": "rows",
+          "n": 5120
+        },
+        "operator_weight_shape": [
+          2176,
+          5120
+        ],
+        "output_features": 5120,
+        "packed_weight_backing_shape": [
+          5120,
+          2176
+        ],
+        "packed_weight_bytes": 44564480,
+        "scale_bytes": 1392640,
+        "scale_shape": [
+          136,
+          5120
+        ],
+        "synthetic_parameter_bytes": 45957121
+      },
+      {
+        "calls_per_target_step": 16,
+        "input_features": 5120,
+        "layer_family": "full_attention",
+        "name": "full_attention_qkvgate",
+        "operator_mnk": {
+          "k": 5120,
+          "m": "rows",
+          "n": 14336
+        },
+        "operator_weight_shape": [
+          640,
+          14336
+        ],
+        "output_features": 14336,
+        "packed_weight_backing_shape": [
+          14336,
+          640
+        ],
+        "packed_weight_bytes": 36700160,
+        "scale_bytes": 1146880,
+        "scale_shape": [
+          40,
+          14336
+        ],
+        "synthetic_parameter_bytes": 37847041
+      },
+      {
+        "calls_per_target_step": 16,
+        "input_features": 6144,
+        "layer_family": "full_attention",
+        "name": "full_attention_out",
+        "operator_mnk": {
+          "k": 6144,
+          "m": "rows",
+          "n": 5120
+        },
+        "operator_weight_shape": [
+          768,
+          5120
+        ],
+        "output_features": 5120,
+        "packed_weight_backing_shape": [
+          5120,
+          768
+        ],
+        "packed_weight_bytes": 15728640,
+        "scale_bytes": 491520,
+        "scale_shape": [
+          48,
+          5120
+        ],
+        "synthetic_parameter_bytes": 16220161
+      }
+    ],
+    "requested_rows": [
+      4,
+      9,
+      16,
+      17,
+      31,
+      33
+    ],
+    "target_body_layers": 64
+  },
+  "classification": {
+    "diagnostic": true,
+    "endpoint_benchmark": false,
+    "label": "diagnostic_microbenchmark_not_endpoint_not_localmaxxing",
+    "localmaxxing_eligible": false
+  },
+  "created_at_utc": "2026-07-10T13:46:21.694428+00:00",
+  "inc_layout": {
+    "bias": null,
+    "checkpoint_weight_layout": "int32 [K/8, N]",
+    "g_idx": null,
+    "group_size": 128,
+    "operator_weight_layout": "transposed int32 [K/8, N] view with stride (1, K/8)",
+    "pack_factor": 8,
+    "quantization": "symmetric_int4_weight_bfloat16_activation",
+    "scales_layout": "contiguous bfloat16 [K/128, N]",
+    "symmetric_zero_point": {
+      "dtype": "int8",
+      "shape": [
+        1
+      ],
+      "value": 8
+    },
+    "synthetic_backing_layout": "contiguous int32 [N, K/8]"
+  },
+  "measurement_protocol": {
+    "aggregate_quantile_caveat": "weighted p10/p90 values sum marginal per-projection quantiles; they are cost-model bounds, not end-to-end target-step quantiles",
+    "allocation_policy": "one projection weight/scale set and one activation shape live at a time; release and empty XPU cache between projections",
+    "calls_per_measured_sample": 16,
+    "measured_calls_per_case": 1600,
+    "measured_samples_per_case": 100,
+    "projection_primary_basis": "sum(calls_per_target_step * per_call_median_ms)",
+    "synchronization": "one event synchronization after each multi-call sample; no per-call synchronization",
+    "timer": "primary XPU event elapsed time plus secondary perf_counter_ns wall time, each divided by calls_per_measured_sample",
+    "torch_compile": false,
+    "warmup_calls_per_case": 20,
+    "xpu_graph": false
+  },
+  "projected_target_step_costs": [
+    {
+      "components": [
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.088488205,
+            "median": 0.07707049999999999,
+            "p10": 0.07688265,
+            "p90": 0.08768240000000073
+          },
+          "projection": "gdn_qkvz",
+          "weighted_ms_per_target_step": {
+            "mean": 4.24743384,
+            "median": 3.6993839999999993,
+            "p10": 3.6903672,
+            "p90": 4.208755200000035
+          }
+        },
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.029402684999999998,
+            "median": 0.026277875,
+            "p10": 0.025409800000000003,
+            "p90": 0.03688165
+          },
+          "projection": "gdn_out",
+          "weighted_ms_per_target_step": {
+            "mean": 1.41132888,
+            "median": 1.2613379999999998,
+            "p10": 1.2196704,
+            "p90": 1.7703192
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.16439569249999997,
+            "median": 0.16437687499999998,
+            "p10": 0.16357315,
+            "p90": 0.165210825
+          },
+          "projection": "mlp_gateup",
+          "weighted_ms_per_target_step": {
+            "mean": 10.521324319999998,
+            "median": 10.520119999999999,
+            "p10": 10.4686816,
+            "p90": 10.5734928
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.08597992,
+            "median": 0.086250125,
+            "p10": 0.08379995,
+            "p90": 0.08714290000000001
+          },
+          "projection": "mlp_down",
+          "weighted_ms_per_target_step": {
+            "mean": 5.50271488,
+            "median": 5.520008,
+            "p10": 5.3631968,
+            "p90": 5.577145600000001
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.0673686,
+            "median": 0.067198625,
+            "p10": 0.0662805,
+            "p90": 0.06881095
+          },
+          "projection": "full_attention_qkvgate",
+          "weighted_ms_per_target_step": {
+            "mean": 1.0778976,
+            "median": 1.075178,
+            "p10": 1.060488,
+            "p90": 1.1009752
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.028772314999999996,
+            "median": 0.026882375,
+            "p10": 0.025742599999999997,
+            "p90": 0.035755199999999994
+          },
+          "projection": "full_attention_out",
+          "weighted_ms_per_target_step": {
+            "mean": 0.46035703999999994,
+            "median": 0.430118,
+            "p10": 0.41188159999999996,
+            "p90": 0.5720831999999999
+          }
+        }
+      ],
+      "delta_vs_rows4_by_per_call_stat_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+      },
+      "delta_vs_rows4_by_per_call_stat_percent": {
+        "mean": 0.0,
+        "median": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+      },
+      "delta_vs_rows4_ms": 0.0,
+      "delta_vs_rows4_percent": 0.0,
+      "primary_timer": "xpu_event",
+      "projected_w4_ms_per_target_step": 22.506145999999998,
+      "rows": 4,
+      "weighted_projection_by_per_call_stat_ms": {
+        "mean": 23.221056559999997,
+        "median": 22.506145999999998,
+        "p10": 22.2142856,
+        "p90": 23.802771200000038
+      }
+    },
+    {
+      "components": [
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.08341073,
+            "median": 0.08348275,
+            "p10": 0.0825578,
+            "p90": 0.084582875
+          },
+          "projection": "gdn_qkvz",
+          "weighted_ms_per_target_step": {
+            "mean": 4.00371504,
+            "median": 4.007172,
+            "p10": 3.9627744,
+            "p90": 4.059978
+          }
+        },
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.035052875,
+            "median": 0.034996,
+            "p10": 0.034905,
+            "p90": 0.03517865
+          },
+          "projection": "gdn_out",
+          "weighted_ms_per_target_step": {
+            "mean": 1.6825379999999999,
+            "median": 1.679808,
+            "p10": 1.67544,
+            "p90": 1.6885751999999998
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.1786624775,
+            "median": 0.178686625,
+            "p10": 0.177515,
+            "p90": 0.17960247499999998
+          },
+          "projection": "mlp_gateup",
+          "weighted_ms_per_target_step": {
+            "mean": 11.43439856,
+            "median": 11.435944,
+            "p10": 11.36096,
+            "p90": 11.494558399999999
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.1121506425,
+            "median": 0.112285875,
+            "p10": 0.108365725,
+            "p90": 0.114813725
+          },
+          "projection": "mlp_down",
+          "weighted_ms_per_target_step": {
+            "mean": 7.17764112,
+            "median": 7.186296,
+            "p10": 6.9354064,
+            "p90": 7.3480784
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.07655751999999999,
+            "median": 0.076597625,
+            "p10": 0.07556184999999999,
+            "p90": 0.07772797499999999
+          },
+          "projection": "full_attention_qkvgate",
+          "weighted_ms_per_target_step": {
+            "mean": 1.2249203199999998,
+            "median": 1.225562,
+            "p10": 1.2089895999999998,
+            "p90": 1.2436475999999999
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.03654313,
+            "median": 0.036295999999999995,
+            "p10": 0.036110424999999995,
+            "p90": 0.037551475
+          },
+          "projection": "full_attention_out",
+          "weighted_ms_per_target_step": {
+            "mean": 0.58469008,
+            "median": 0.5807359999999999,
+            "p10": 0.5777667999999999,
+            "p90": 0.6008236
+          }
+        }
+      ],
+      "delta_vs_rows4_by_per_call_stat_ms": {
+        "mean": 2.8868465600000057,
+        "median": 3.609371999999997,
+        "p10": 3.507051599999997,
+        "p90": 2.6328899999999607
+      },
+      "delta_vs_rows4_by_per_call_stat_percent": {
+        "mean": 12.432020707329977,
+        "median": 16.037272663209407,
+        "p10": 15.787370627844979,
+        "p90": 11.061275083801824
+      },
+      "delta_vs_rows4_ms": 3.609371999999997,
+      "delta_vs_rows4_percent": 16.037272663209407,
+      "primary_timer": "xpu_event",
+      "projected_w4_ms_per_target_step": 26.115517999999994,
+      "rows": 9,
+      "weighted_projection_by_per_call_stat_ms": {
+        "mean": 26.107903120000003,
+        "median": 26.115517999999994,
+        "p10": 25.721337199999997,
+        "p90": 26.4356612
+      }
+    },
+    {
+      "components": [
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.0846685125,
+            "median": 0.084846125,
+            "p10": 0.08334495,
+            "p90": 0.085796425
+          },
+          "projection": "gdn_qkvz",
+          "weighted_ms_per_target_step": {
+            "mean": 4.0640886,
+            "median": 4.072614,
+            "p10": 4.0005576000000005,
+            "p90": 4.1182284
+          }
+        },
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.03750084,
+            "median": 0.03751475,
+            "p10": 0.036565425,
+            "p90": 0.038094875
+          },
+          "projection": "gdn_out",
+          "weighted_ms_per_target_step": {
+            "mean": 1.80004032,
+            "median": 1.800708,
+            "p10": 1.7551404,
+            "p90": 1.828554
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.182274235,
+            "median": 0.182336375,
+            "p10": 0.180751025,
+            "p90": 0.18363312499999998
+          },
+          "projection": "mlp_gateup",
+          "weighted_ms_per_target_step": {
+            "mean": 11.66555104,
+            "median": 11.669528,
+            "p10": 11.5680656,
+            "p90": 11.752519999999999
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.11802375,
+            "median": 0.118399125,
+            "p10": 0.11410717499999999,
+            "p90": 0.12038877499999999
+          },
+          "projection": "mlp_down",
+          "weighted_ms_per_target_step": {
+            "mean": 7.55352,
+            "median": 7.577544,
+            "p10": 7.302859199999999,
+            "p90": 7.704881599999999
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.07758328499999999,
+            "median": 0.07734512499999999,
+            "p10": 0.076244025,
+            "p90": 0.07882452499999999
+          },
+          "projection": "full_attention_qkvgate",
+          "weighted_ms_per_target_step": {
+            "mean": 1.2413325599999998,
+            "median": 1.2375219999999998,
+            "p10": 1.2199044,
+            "p90": 1.2611923999999999
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.037761945,
+            "median": 0.037752,
+            "p10": 0.036668124999999996,
+            "p90": 0.0382655
+          },
+          "projection": "full_attention_out",
+          "weighted_ms_per_target_step": {
+            "mean": 0.60419112,
+            "median": 0.604032,
+            "p10": 0.5866899999999999,
+            "p90": 0.612248
+          }
+        }
+      ],
+      "delta_vs_rows4_by_per_call_stat_ms": {
+        "mean": 3.7076670800000002,
+        "median": 4.455802000000002,
+        "p10": 4.218931600000001,
+        "p90": 3.474853199999963
+      },
+      "delta_vs_rows4_by_per_call_stat_percent": {
+        "mean": 15.9668319588297,
+        "median": 19.79815646801546,
+        "p10": 18.991975145939428,
+        "p90": 14.59852372147306
+      },
+      "delta_vs_rows4_ms": 4.455802000000002,
+      "delta_vs_rows4_percent": 19.79815646801546,
+      "primary_timer": "xpu_event",
+      "projected_w4_ms_per_target_step": 26.961948,
+      "rows": 16,
+      "weighted_projection_by_per_call_stat_ms": {
+        "mean": 26.928723639999998,
+        "median": 26.961948,
+        "p10": 26.4332172,
+        "p90": 27.2776244
+      }
+    },
+    {
+      "components": [
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.08834449,
+            "median": 0.08832362499999999,
+            "p10": 0.0870272,
+            "p90": 0.08977962499999999
+          },
+          "projection": "gdn_qkvz",
+          "weighted_ms_per_target_step": {
+            "mean": 4.24053552,
+            "median": 4.239533999999999,
+            "p10": 4.1773056,
+            "p90": 4.309422
+          }
+        },
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.037102357499999995,
+            "median": 0.037019125,
+            "p10": 0.036913499999999995,
+            "p90": 0.03737305
+          },
+          "projection": "gdn_out",
+          "weighted_ms_per_target_step": {
+            "mean": 1.7809131599999999,
+            "median": 1.776918,
+            "p10": 1.7718479999999999,
+            "p90": 1.7939064
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.21268627249999997,
+            "median": 0.21258412499999998,
+            "p10": 0.210860975,
+            "p90": 0.21438332499999999
+          },
+          "projection": "mlp_gateup",
+          "weighted_ms_per_target_step": {
+            "mean": 13.611921439999998,
+            "median": 13.605383999999999,
+            "p10": 13.4951024,
+            "p90": 13.720532799999999
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.1178660275,
+            "median": 0.119559375,
+            "p10": 0.1105065,
+            "p90": 0.1210794
+          },
+          "projection": "mlp_down",
+          "weighted_ms_per_target_step": {
+            "mean": 7.54342576,
+            "median": 7.6518,
+            "p10": 7.072416,
+            "p90": 7.7490816
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.0774807475,
+            "median": 0.07770749999999998,
+            "p10": 0.0751478,
+            "p90": 0.07893307499999999
+          },
+          "projection": "full_attention_qkvgate",
+          "weighted_ms_per_target_step": {
+            "mean": 1.23969196,
+            "median": 1.2433199999999998,
+            "p10": 1.2023648,
+            "p90": 1.2629291999999999
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.0370646575,
+            "median": 0.036911875,
+            "p10": 0.036854674999999996,
+            "p90": 0.037141324999999996
+          },
+          "projection": "full_attention_out",
+          "weighted_ms_per_target_step": {
+            "mean": 0.59303452,
+            "median": 0.59059,
+            "p10": 0.5896747999999999,
+            "p90": 0.5942611999999999
+          }
+        }
+      ],
+      "delta_vs_rows4_by_per_call_stat_ms": {
+        "mean": 5.788465800000004,
+        "median": 6.601399999999998,
+        "p10": 6.094426000000006,
+        "p90": 5.627361999999959
+      },
+      "delta_vs_rows4_by_per_call_stat_percent": {
+        "mean": 24.92765901949125,
+        "median": 29.33154348150056,
+        "p10": 27.43471525368345,
+        "p90": 23.64162539192054
+      },
+      "delta_vs_rows4_ms": 6.601399999999998,
+      "delta_vs_rows4_percent": 29.33154348150056,
+      "primary_timer": "xpu_event",
+      "projected_w4_ms_per_target_step": 29.107545999999996,
+      "rows": 17,
+      "weighted_projection_by_per_call_stat_ms": {
+        "mean": 29.009522360000002,
+        "median": 29.107545999999996,
+        "p10": 28.308711600000006,
+        "p90": 29.430133199999997
+      }
+    },
+    {
+      "components": [
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.106171195,
+            "median": 0.10458825,
+            "p10": 0.102242075,
+            "p90": 0.1163305
+          },
+          "projection": "gdn_qkvz",
+          "weighted_ms_per_target_step": {
+            "mean": 5.09621736,
+            "median": 5.020236,
+            "p10": 4.9076196,
+            "p90": 5.583864
+          }
+        },
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.04104139,
+            "median": 0.040066,
+            "p10": 0.039737749999999995,
+            "p90": 0.042355300000000005
+          },
+          "projection": "gdn_out",
+          "weighted_ms_per_target_step": {
+            "mean": 1.9699867199999999,
+            "median": 1.923168,
+            "p10": 1.9074119999999999,
+            "p90": 2.0330544
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.233661805,
+            "median": 0.232074375,
+            "p10": 0.2261012,
+            "p90": 0.242804575
+          },
+          "projection": "mlp_gateup",
+          "weighted_ms_per_target_step": {
+            "mean": 14.95435552,
+            "median": 14.85276,
+            "p10": 14.4704768,
+            "p90": 15.5394928
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.12326366,
+            "median": 0.123404125,
+            "p10": 0.120655925,
+            "p90": 0.125885825
+          },
+          "projection": "mlp_down",
+          "weighted_ms_per_target_step": {
+            "mean": 7.88887424,
+            "median": 7.897864,
+            "p10": 7.7219792,
+            "p90": 8.0566928
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.09299930249999999,
+            "median": 0.09237799999999999,
+            "p10": 0.09096294999999999,
+            "p90": 0.094491475
+          },
+          "projection": "full_attention_qkvgate",
+          "weighted_ms_per_target_step": {
+            "mean": 1.4879888399999999,
+            "median": 1.4780479999999998,
+            "p10": 1.4554071999999998,
+            "p90": 1.5118636
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.04066764,
+            "median": 0.03991,
+            "p10": 0.039781625,
+            "p90": 0.041061799999999996
+          },
+          "projection": "full_attention_out",
+          "weighted_ms_per_target_step": {
+            "mean": 0.65068224,
+            "median": 0.63856,
+            "p10": 0.636506,
+            "p90": 0.6569887999999999
+          }
+        }
+      ],
+      "delta_vs_rows4_by_per_call_stat_ms": {
+        "mean": 8.827048360000003,
+        "median": 9.304489999999998,
+        "p10": 8.885115200000001,
+        "p90": 9.579185199999962
+      },
+      "delta_vs_rows4_by_per_call_stat_percent": {
+        "mean": 38.01312113939403,
+        "median": 41.34199609297833,
+        "p10": 39.997303356899316,
+        "p90": 40.24399142230946
+      },
+      "delta_vs_rows4_ms": 9.304489999999998,
+      "delta_vs_rows4_percent": 41.34199609297833,
+      "primary_timer": "xpu_event",
+      "projected_w4_ms_per_target_step": 31.810635999999995,
+      "rows": 31,
+      "weighted_projection_by_per_call_stat_ms": {
+        "mean": 32.04810492,
+        "median": 31.810635999999995,
+        "p10": 31.0994008,
+        "p90": 33.3819564
+      }
+    },
+    {
+      "components": [
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.11338232749999999,
+            "median": 0.112809125,
+            "p10": 0.11172687499999999,
+            "p90": 0.115346075
+          },
+          "projection": "gdn_qkvz",
+          "weighted_ms_per_target_step": {
+            "mean": 5.44235172,
+            "median": 5.414838,
+            "p10": 5.362889999999999,
+            "p90": 5.5366116000000005
+          }
+        },
+        {
+          "calls_per_target_step": 48,
+          "per_call_ms": {
+            "mean": 0.0449600125,
+            "median": 0.044499,
+            "p10": 0.0438451,
+            "p90": 0.0475696
+          },
+          "projection": "gdn_out",
+          "weighted_ms_per_target_step": {
+            "mean": 2.1580806,
+            "median": 2.1359519999999996,
+            "p10": 2.1045648,
+            "p90": 2.2833408
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.272152205,
+            "median": 0.2727855,
+            "p10": 0.268613475,
+            "p90": 0.27437995
+          },
+          "projection": "mlp_gateup",
+          "weighted_ms_per_target_step": {
+            "mean": 17.41774112,
+            "median": 17.458272,
+            "p10": 17.1912624,
+            "p90": 17.5603168
+          }
+        },
+        {
+          "calls_per_target_step": 64,
+          "per_call_ms": {
+            "mean": 0.18332343249999997,
+            "median": 0.18241762499999997,
+            "p10": 0.170939925,
+            "p90": 0.1955889
+          },
+          "projection": "mlp_down",
+          "weighted_ms_per_target_step": {
+            "mean": 11.732699679999998,
+            "median": 11.674727999999998,
+            "p10": 10.9401552,
+            "p90": 12.5176896
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.100998365,
+            "median": 0.100881625,
+            "p10": 0.099647925,
+            "p90": 0.1025427
+          },
+          "projection": "full_attention_qkvgate",
+          "weighted_ms_per_target_step": {
+            "mean": 1.61597384,
+            "median": 1.614106,
+            "p10": 1.5943668,
+            "p90": 1.6406832
+          }
+        },
+        {
+          "calls_per_target_step": 16,
+          "per_call_ms": {
+            "mean": 0.04515277,
+            "median": 0.04443075,
+            "p10": 0.0443365,
+            "p90": 0.04759755
+          },
+          "projection": "full_attention_out",
+          "weighted_ms_per_target_step": {
+            "mean": 0.72244432,
+            "median": 0.710892,
+            "p10": 0.709384,
+            "p90": 0.7615608
+          }
+        }
+      ],
+      "delta_vs_rows4_by_per_call_stat_ms": {
+        "mean": 15.86823472,
+        "median": 16.502642000000005,
+        "p10": 15.6883376,
+        "p90": 16.497431599999956
+      },
+      "delta_vs_rows4_by_per_call_stat_percent": {
+        "mean": 68.33554140397823,
+        "median": 73.32504641176685,
+        "p10": 70.62274197104948,
+        "p90": 69.30886938072123
+      },
+      "delta_vs_rows4_ms": 16.502642000000005,
+      "delta_vs_rows4_percent": 73.32504641176685,
+      "primary_timer": "xpu_event",
+      "projected_w4_ms_per_target_step": 39.008788,
+      "rows": 33,
+      "weighted_projection_by_per_call_stat_ms": {
+        "mean": 39.08929128,
+        "median": 39.008788,
+        "p10": 37.9026232,
+        "p90": 40.300202799999994
+      }
+    }
+  ],
+  "purpose": "Measure row-scaling of current Qwen3.6-27B target-body INC W4A16 projections; projected totals are a kernel cost model only.",
+  "results": [
+    {
+      "calls_per_target_step": 48,
+      "input_features": 5120,
+      "layer_family": "gdn",
+      "name": "gdn_qkvz",
+      "observed_layout": {
+        "operator_weight_stride": [
+          1,
+          640
+        ],
+        "packed_weight_backing_stride": [
+          640,
+          1
+        ],
+        "packed_weight_dtype": "torch.int32",
+        "scale_dtype": "torch.bfloat16",
+        "scale_stride": [
+          16384,
+          1
+        ],
+        "zero_point_dtype": "torch.int8"
+      },
+      "operator_mnk": {
+        "k": 5120,
+        "m": "rows",
+        "n": 16384
+      },
+      "operator_weight_shape": [
+        640,
+        16384
+      ],
+      "output_features": 16384,
+      "packed_weight_backing_shape": [
+        16384,
+        640
+      ],
+      "packed_weight_bytes": 41943040,
+      "rows": [
+        {
+          "activation_shape": [
+            4,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            4,
+            16384
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.2950018125,
+              "mean": 0.10795572875,
+              "median": 0.0994845625,
+              "min": 0.0895455625,
+              "p10": 0.0899725,
+              "p90": 0.11144711875000074,
+              "population_stdev": 0.03951307913071338
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.234754,
+              "mean": 0.088488205,
+              "median": 0.07707049999999999,
+              "min": 0.0767455,
+              "p10": 0.07688265,
+              "p90": 0.08768240000000073,
+              "population_stdev": 0.03488091344715581
+            }
+          },
+          "rows": 4
+        },
+        {
+          "activation_shape": [
+            9,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            9,
+            16384
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1105844375,
+              "mean": 0.10681846625000001,
+              "median": 0.106723125,
+              "min": 0.1049075,
+              "p10": 0.10542850000000001,
+              "p90": 0.1082274375,
+              "population_stdev": 0.0010913586331029945
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.08559525,
+              "mean": 0.08341073,
+              "median": 0.08348275,
+              "min": 0.081549,
+              "p10": 0.0825578,
+              "p90": 0.084582875,
+              "population_stdev": 0.0008307089921266051
+            }
+          },
+          "rows": 9
+        },
+        {
+          "activation_shape": [
+            16,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            16,
+            16384
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1095763125,
+              "mean": 0.10792563812499999,
+              "median": 0.108152375,
+              "min": 0.10568025,
+              "p10": 0.10647711874999999,
+              "p90": 0.10897043125,
+              "population_stdev": 0.0009580187830187866
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.08622574999999999,
+              "mean": 0.0846685125,
+              "median": 0.084846125,
+              "min": 0.08138324999999999,
+              "p10": 0.08334495,
+              "p90": 0.085796425,
+              "population_stdev": 0.0009102688252482066
+            }
+          },
+          "rows": 16
+        },
+        {
+          "activation_shape": [
+            17,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            17,
+            16384
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1152344375,
+              "mean": 0.111400669375,
+              "median": 0.11166303125,
+              "min": 0.1013903125,
+              "p10": 0.10998305,
+              "p90": 0.1130545625,
+              "population_stdev": 0.002038737201356497
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.091793,
+              "mean": 0.08834449,
+              "median": 0.08832362499999999,
+              "min": 0.0866125,
+              "p10": 0.0870272,
+              "p90": 0.08977962499999999,
+              "population_stdev": 0.0010980918164707355
+            }
+          },
+          "rows": 17
+        },
+        {
+          "activation_shape": [
+            31,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            31,
+            16384
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1492939375,
+              "mean": 0.12945749125,
+              "median": 0.12782146875,
+              "min": 0.1177910625,
+              "p10": 0.1252278,
+              "p90": 0.139215625,
+              "population_stdev": 0.005510403368331606
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.126334,
+              "mean": 0.106171195,
+              "median": 0.10458825,
+              "min": 0.101556,
+              "p10": 0.102242075,
+              "p90": 0.1163305,
+              "population_stdev": 0.005298214509575372
+            }
+          },
+          "rows": 31
+        },
+        {
+          "activation_shape": [
+            33,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            33,
+            16384
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.150836875,
+              "mean": 0.13652398,
+              "median": 0.13604565625,
+              "min": 0.1253534375,
+              "p10": 0.13478713125,
+              "p90": 0.1389231,
+              "population_stdev": 0.0029745179961802224
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.12742599999999998,
+              "mean": 0.11338232749999999,
+              "median": 0.112809125,
+              "min": 0.110487,
+              "p10": 0.11172687499999999,
+              "p90": 0.115346075,
+              "population_stdev": 0.0024365973579191834
+            }
+          },
+          "rows": 33
+        }
+      ],
+      "scale_bytes": 1310720,
+      "scale_shape": [
+        40,
+        16384
+      ],
+      "seed": 20260710,
+      "synthetic_parameter_bytes": 43253761
+    },
+    {
+      "calls_per_target_step": 48,
+      "input_features": 6144,
+      "layer_family": "gdn",
+      "name": "gdn_out",
+      "observed_layout": {
+        "operator_weight_stride": [
+          1,
+          768
+        ],
+        "packed_weight_backing_stride": [
+          768,
+          1
+        ],
+        "packed_weight_dtype": "torch.int32",
+        "scale_dtype": "torch.bfloat16",
+        "scale_stride": [
+          5120,
+          1
+        ],
+        "zero_point_dtype": "torch.int8"
+      },
+      "operator_mnk": {
+        "k": 6144,
+        "m": "rows",
+        "n": 5120
+      },
+      "operator_weight_shape": [
+        768,
+        5120
+      ],
+      "output_features": 5120,
+      "packed_weight_backing_shape": [
+        5120,
+        768
+      ],
+      "packed_weight_bytes": 15728640,
+      "rows": [
+        {
+          "activation_shape": [
+            4,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            4,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.0779681875,
+              "mean": 0.053287978125,
+              "median": 0.04916478125,
+              "min": 0.047827875,
+              "p10": 0.0483949875,
+              "p90": 0.0629536375,
+              "population_stdev": 0.0066024882939323465
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.04736875,
+              "mean": 0.029402684999999998,
+              "median": 0.026277875,
+              "min": 0.025190749999999998,
+              "p10": 0.025409800000000003,
+              "p90": 0.03688165,
+              "population_stdev": 0.005147710056134184
+            }
+          },
+          "rows": 4
+        },
+        {
+          "activation_shape": [
+            9,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            9,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.06258375,
+              "mean": 0.057505209375000005,
+              "median": 0.05762034375,
+              "min": 0.0491885625,
+              "p10": 0.057178437500000005,
+              "p90": 0.05835795,
+              "population_stdev": 0.0014510382011784862
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.037076,
+              "mean": 0.035052875,
+              "median": 0.034996,
+              "min": 0.034852999999999995,
+              "p10": 0.034905,
+              "p90": 0.03517865,
+              "population_stdev": 0.0002587561339852642
+            }
+          },
+          "rows": 9
+        },
+        {
+          "activation_shape": [
+            16,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            16,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.069786,
+              "mean": 0.06096724125,
+              "median": 0.0608341875,
+              "min": 0.052418375,
+              "p10": 0.059283800000000005,
+              "p90": 0.0631875625,
+              "population_stdev": 0.0021729933568305462
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.043913999999999995,
+              "mean": 0.03750084,
+              "median": 0.03751475,
+              "min": 0.03649425,
+              "p10": 0.036565425,
+              "p90": 0.038094875,
+              "population_stdev": 0.0010217955632855328
+            }
+          },
+          "rows": 16
+        },
+        {
+          "activation_shape": [
+            17,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            17,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.06392125,
+              "mean": 0.059770825,
+              "median": 0.059752468749999996,
+              "min": 0.05063125,
+              "p10": 0.05915943125,
+              "p90": 0.060541325,
+              "population_stdev": 0.001217364297590033
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.040813499999999996,
+              "mean": 0.037102357499999995,
+              "median": 0.037019125,
+              "min": 0.03584425,
+              "p10": 0.036913499999999995,
+              "p90": 0.03737305,
+              "population_stdev": 0.0005882849939177014
+            }
+          },
+          "rows": 17
+        },
+        {
+          "activation_shape": [
+            31,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            31,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.0783589375,
+              "mean": 0.064873716875,
+              "median": 0.06336046875,
+              "min": 0.0536369375,
+              "p10": 0.062334681249999996,
+              "p90": 0.06883012499999999,
+              "population_stdev": 0.003542682996756031
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.05276375,
+              "mean": 0.04104139,
+              "median": 0.040066,
+              "min": 0.0395395,
+              "p10": 0.039737749999999995,
+              "p90": 0.042355300000000005,
+              "population_stdev": 0.002425397429886492
+            }
+          },
+          "rows": 31
+        },
+        {
+          "activation_shape": [
+            33,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            33,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.0738843125,
+              "mean": 0.068728806875,
+              "median": 0.06788803125000001,
+              "min": 0.0651296875,
+              "p10": 0.06691954375,
+              "p90": 0.07151646875,
+              "population_stdev": 0.002003984735998954
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.04825275,
+              "mean": 0.0449600125,
+              "median": 0.044499,
+              "min": 0.042880499999999995,
+              "p10": 0.0438451,
+              "p90": 0.0475696,
+              "population_stdev": 0.0012762898864359736
+            }
+          },
+          "rows": 33
+        }
+      ],
+      "scale_bytes": 491520,
+      "scale_shape": [
+        48,
+        5120
+      ],
+      "seed": 20261719,
+      "synthetic_parameter_bytes": 16220161
+    },
+    {
+      "calls_per_target_step": 64,
+      "input_features": 5120,
+      "layer_family": "all_layers",
+      "name": "mlp_gateup",
+      "observed_layout": {
+        "operator_weight_stride": [
+          1,
+          640
+        ],
+        "packed_weight_backing_stride": [
+          640,
+          1
+        ],
+        "packed_weight_dtype": "torch.int32",
+        "scale_dtype": "torch.bfloat16",
+        "scale_stride": [
+          34816,
+          1
+        ],
+        "zero_point_dtype": "torch.int8"
+      },
+      "operator_mnk": {
+        "k": 5120,
+        "m": "rows",
+        "n": 34816
+      },
+      "operator_weight_shape": [
+        640,
+        34816
+      ],
+      "output_features": 34816,
+      "packed_weight_backing_shape": [
+        34816,
+        640
+      ],
+      "packed_weight_bytes": 89128960,
+      "rows": [
+        {
+          "activation_shape": [
+            4,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            4,
+            34816
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.191878875,
+              "mean": 0.18794004812499998,
+              "median": 0.1878685625,
+              "min": 0.185397375,
+              "p10": 0.18689430624999998,
+              "p90": 0.18897506249999999,
+              "population_stdev": 0.0009532596170859213
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.16652999999999998,
+              "mean": 0.16439569249999997,
+              "median": 0.16437687499999998,
+              "min": 0.16255524999999998,
+              "p10": 0.16357315,
+              "p90": 0.165210825,
+              "population_stdev": 0.0006973069149009988
+            }
+          },
+          "rows": 4
+        },
+        {
+          "activation_shape": [
+            9,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            9,
+            34816
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.2052083125,
+              "mean": 0.20227612937500003,
+              "median": 0.20232915625,
+              "min": 0.1999565625,
+              "p10": 0.20090393125,
+              "p90": 0.20373058125,
+              "population_stdev": 0.0011180834838664428
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.1810965,
+              "mean": 0.1786624775,
+              "median": 0.178686625,
+              "min": 0.175929,
+              "p10": 0.177515,
+              "p90": 0.17960247499999998,
+              "population_stdev": 0.0009572037642888506
+            }
+          },
+          "rows": 9
+        },
+        {
+          "activation_shape": [
+            16,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            16,
+            34816
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.2086760625,
+              "mean": 0.206024481875,
+              "median": 0.20590178125000003,
+              "min": 0.203342875,
+              "p10": 0.20437430625,
+              "p90": 0.20769863125,
+              "population_stdev": 0.0011885644754116398
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.18451874999999998,
+              "mean": 0.182274235,
+              "median": 0.182336375,
+              "min": 0.17958849999999998,
+              "p10": 0.180751025,
+              "p90": 0.18363312499999998,
+              "population_stdev": 0.0010974975984142288
+            }
+          },
+          "rows": 16
+        },
+        {
+          "activation_shape": [
+            17,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            17,
+            34816
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.25842875,
+              "mean": 0.23901042249999999,
+              "median": 0.2381560625,
+              "min": 0.2267430625,
+              "p10": 0.23523135,
+              "p90": 0.24318595625,
+              "population_stdev": 0.004341354279845676
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.21662874999999998,
+              "mean": 0.21268627249999997,
+              "median": 0.21258412499999998,
+              "min": 0.209443,
+              "p10": 0.210860975,
+              "p90": 0.21438332499999999,
+              "population_stdev": 0.0014375643303409932
+            }
+          },
+          "rows": 17
+        },
+        {
+          "activation_shape": [
+            31,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            31,
+            34816
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.2703925625,
+              "mean": 0.25997700625,
+              "median": 0.2590349375,
+              "min": 0.2473843125,
+              "p10": 0.25338966875,
+              "p90": 0.2671077,
+              "population_stdev": 0.005298201580190768
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.24629474999999998,
+              "mean": 0.233661805,
+              "median": 0.232074375,
+              "min": 0.2217865,
+              "p10": 0.2261012,
+              "p90": 0.242804575,
+              "population_stdev": 0.005986820577274301
+            }
+          },
+          "rows": 31
+        },
+        {
+          "activation_shape": [
+            33,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            33,
+            34816
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.3199468125,
+              "mean": 0.29668554375,
+              "median": 0.29667996875,
+              "min": 0.289113875,
+              "p10": 0.292560725,
+              "p90": 0.29963970625,
+              "population_stdev": 0.004168054243649884
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.27772874999999997,
+              "mean": 0.272152205,
+              "median": 0.2727855,
+              "min": 0.2640885,
+              "p10": 0.268613475,
+              "p90": 0.27437995,
+              "population_stdev": 0.0024181176357809813
+            }
+          },
+          "rows": 33
+        }
+      ],
+      "scale_bytes": 2785280,
+      "scale_shape": [
+        40,
+        34816
+      ],
+      "seed": 20262728,
+      "synthetic_parameter_bytes": 91914241
+    },
+    {
+      "calls_per_target_step": 64,
+      "input_features": 17408,
+      "layer_family": "all_layers",
+      "name": "mlp_down",
+      "observed_layout": {
+        "operator_weight_stride": [
+          1,
+          2176
+        ],
+        "packed_weight_backing_stride": [
+          2176,
+          1
+        ],
+        "packed_weight_dtype": "torch.int32",
+        "scale_dtype": "torch.bfloat16",
+        "scale_stride": [
+          5120,
+          1
+        ],
+        "zero_point_dtype": "torch.int8"
+      },
+      "operator_mnk": {
+        "k": 17408,
+        "m": "rows",
+        "n": 5120
+      },
+      "operator_weight_shape": [
+        2176,
+        5120
+      ],
+      "output_features": 5120,
+      "packed_weight_backing_shape": [
+        5120,
+        2176
+      ],
+      "packed_weight_bytes": 44564480,
+      "rows": [
+        {
+          "activation_shape": [
+            4,
+            17408
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            4,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1485550625,
+              "mean": 0.109547068125,
+              "median": 0.10953653125,
+              "min": 0.101234375,
+              "p10": 0.1071659625,
+              "p90": 0.110684625,
+              "population_stdev": 0.004185574823221856
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.08790925,
+              "mean": 0.08597992,
+              "median": 0.086250125,
+              "min": 0.083369,
+              "p10": 0.08379995,
+              "p90": 0.08714290000000001,
+              "population_stdev": 0.0011292911066682503
+            }
+          },
+          "rows": 4
+        },
+        {
+          "activation_shape": [
+            9,
+            17408
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            9,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1395845,
+              "mean": 0.13524142875,
+              "median": 0.13555224999999999,
+              "min": 0.1257448125,
+              "p10": 0.13164485625000003,
+              "p90": 0.13834500625,
+              "population_stdev": 0.0026121070209522068
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.11656775,
+              "mean": 0.1121506425,
+              "median": 0.112285875,
+              "min": 0.10698674999999999,
+              "p10": 0.108365725,
+              "p90": 0.114813725,
+              "population_stdev": 0.002381438864755665
+            }
+          },
+          "rows": 9
+        },
+        {
+          "activation_shape": [
+            16,
+            17408
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            16,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1618074375,
+              "mean": 0.142829721875,
+              "median": 0.14263581250000001,
+              "min": 0.1306665,
+              "p10": 0.13907576875,
+              "p90": 0.14651369375,
+              "population_stdev": 0.003907398638144443
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.12194324999999999,
+              "mean": 0.11802375,
+              "median": 0.118399125,
+              "min": 0.11054549999999999,
+              "p10": 0.11410717499999999,
+              "p90": 0.12038877499999999,
+              "population_stdev": 0.002227704860388826
+            }
+          },
+          "rows": 16
+        },
+        {
+          "activation_shape": [
+            17,
+            17408
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            17,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1508475625,
+              "mean": 0.142865236875,
+              "median": 0.1436925,
+              "min": 0.13105975,
+              "p10": 0.13536303125000002,
+              "p90": 0.147613,
+              "population_stdev": 0.004439343666036602
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.12210575,
+              "mean": 0.1178660275,
+              "median": 0.119559375,
+              "min": 0.10778625,
+              "p10": 0.1105065,
+              "p90": 0.1210794,
+              "population_stdev": 0.004031843834075019
+            }
+          },
+          "rows": 17
+        },
+        {
+          "activation_shape": [
+            31,
+            17408
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            31,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.151046,
+              "mean": 0.146946863125,
+              "median": 0.1468471875,
+              "min": 0.141701625,
+              "p10": 0.14435455625000002,
+              "p90": 0.1498310125,
+              "population_stdev": 0.0022188302986648266
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.12713025,
+              "mean": 0.12326366,
+              "median": 0.123404125,
+              "min": 0.1162265,
+              "p10": 0.120655925,
+              "p90": 0.125885825,
+              "population_stdev": 0.0024104078963735577
+            }
+          },
+          "rows": 31
+        },
+        {
+          "activation_shape": [
+            33,
+            17408
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            33,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.2263899375,
+              "mean": 0.207114489375,
+              "median": 0.2058839375,
+              "min": 0.192058625,
+              "p10": 0.1953064125,
+              "p90": 0.22012804375000003,
+              "population_stdev": 0.008167217813847775
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.2009215,
+              "mean": 0.18332343249999997,
+              "median": 0.18241762499999997,
+              "min": 0.16801525,
+              "p10": 0.170939925,
+              "p90": 0.1955889,
+              "population_stdev": 0.007753654522050795
+            }
+          },
+          "rows": 33
+        }
+      ],
+      "scale_bytes": 1392640,
+      "scale_shape": [
+        136,
+        5120
+      ],
+      "seed": 20263737,
+      "synthetic_parameter_bytes": 45957121
+    },
+    {
+      "calls_per_target_step": 16,
+      "input_features": 5120,
+      "layer_family": "full_attention",
+      "name": "full_attention_qkvgate",
+      "observed_layout": {
+        "operator_weight_stride": [
+          1,
+          640
+        ],
+        "packed_weight_backing_stride": [
+          640,
+          1
+        ],
+        "packed_weight_dtype": "torch.int32",
+        "scale_dtype": "torch.bfloat16",
+        "scale_stride": [
+          14336,
+          1
+        ],
+        "zero_point_dtype": "torch.int8"
+      },
+      "operator_mnk": {
+        "k": 5120,
+        "m": "rows",
+        "n": 14336
+      },
+      "operator_weight_shape": [
+        640,
+        14336
+      ],
+      "output_features": 14336,
+      "packed_weight_backing_shape": [
+        14336,
+        640
+      ],
+      "packed_weight_bytes": 36700160,
+      "rows": [
+        {
+          "activation_shape": [
+            4,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            4,
+            14336
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1369414375,
+              "mean": 0.092216345625,
+              "median": 0.09141096875,
+              "min": 0.0886858125,
+              "p10": 0.08933223125,
+              "p90": 0.0948751875,
+              "population_stdev": 0.0050009182336960565
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.07178274999999999,
+              "mean": 0.0673686,
+              "median": 0.067198625,
+              "min": 0.064155,
+              "p10": 0.0662805,
+              "p90": 0.06881095,
+              "population_stdev": 0.0011211605036746514
+            }
+          },
+          "rows": 4
+        },
+        {
+          "activation_shape": [
+            9,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            9,
+            14336
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1052745,
+              "mean": 0.100501514375,
+              "median": 0.10040121875,
+              "min": 0.0915293125,
+              "p10": 0.09809693124999999,
+              "p90": 0.10309217500000001,
+              "population_stdev": 0.002270873939196768
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.07873125,
+              "mean": 0.07655751999999999,
+              "median": 0.076597625,
+              "min": 0.074776,
+              "p10": 0.07556184999999999,
+              "p90": 0.07772797499999999,
+              "population_stdev": 0.0009179138948452628
+            }
+          },
+          "rows": 9
+        },
+        {
+          "activation_shape": [
+            16,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            16,
+            14336
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1035055,
+              "mean": 0.100657570625,
+              "median": 0.1007421875,
+              "min": 0.0908555,
+              "p10": 0.09953096875,
+              "p90": 0.10222370625,
+              "population_stdev": 0.001729443867160928
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.07938774999999999,
+              "mean": 0.07758328499999999,
+              "median": 0.07734512499999999,
+              "min": 0.07474025,
+              "p10": 0.076244025,
+              "p90": 0.07882452499999999,
+              "population_stdev": 0.0009612299666442985
+            }
+          },
+          "rows": 16
+        },
+        {
+          "activation_shape": [
+            17,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            17,
+            14336
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.114617,
+              "mean": 0.10090509812500001,
+              "median": 0.10088028125000001,
+              "min": 0.0896695625,
+              "p10": 0.09836711875000001,
+              "p90": 0.1036346,
+              "population_stdev": 0.002827503980065377
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.08011575,
+              "mean": 0.0774807475,
+              "median": 0.07770749999999998,
+              "min": 0.0744445,
+              "p10": 0.0751478,
+              "p90": 0.07893307499999999,
+              "population_stdev": 0.001272264532976043
+            }
+          },
+          "rows": 17
+        },
+        {
+          "activation_shape": [
+            31,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            31,
+            14336
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1316145,
+              "mean": 0.11764918125,
+              "median": 0.1171408125,
+              "min": 0.107221875,
+              "p10": 0.11480655625000001,
+              "p90": 0.120392525,
+              "population_stdev": 0.0034621567548334753
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.10818599999999999,
+              "mean": 0.09299930249999999,
+              "median": 0.09237799999999999,
+              "min": 0.08967725,
+              "p10": 0.09096294999999999,
+              "p90": 0.094491475,
+              "population_stdev": 0.0028988585944072446
+            }
+          },
+          "rows": 31
+        },
+        {
+          "activation_shape": [
+            33,
+            5120
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            33,
+            14336
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.1316934375,
+              "mean": 0.12467984124999999,
+              "median": 0.12433396875,
+              "min": 0.1194098125,
+              "p10": 0.12295168125,
+              "p90": 0.1273630875,
+              "population_stdev": 0.0019335761487263542
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.10413649999999999,
+              "mean": 0.100998365,
+              "median": 0.100881625,
+              "min": 0.09752925,
+              "p10": 0.099647925,
+              "p90": 0.1025427,
+              "population_stdev": 0.001267107454214124
+            }
+          },
+          "rows": 33
+        }
+      ],
+      "scale_bytes": 1146880,
+      "scale_shape": [
+        40,
+        14336
+      ],
+      "seed": 20264746,
+      "synthetic_parameter_bytes": 37847041
+    },
+    {
+      "calls_per_target_step": 16,
+      "input_features": 6144,
+      "layer_family": "full_attention",
+      "name": "full_attention_out",
+      "observed_layout": {
+        "operator_weight_stride": [
+          1,
+          768
+        ],
+        "packed_weight_backing_stride": [
+          768,
+          1
+        ],
+        "packed_weight_dtype": "torch.int32",
+        "scale_dtype": "torch.bfloat16",
+        "scale_stride": [
+          5120,
+          1
+        ],
+        "zero_point_dtype": "torch.int8"
+      },
+      "operator_mnk": {
+        "k": 6144,
+        "m": "rows",
+        "n": 5120
+      },
+      "operator_weight_shape": [
+        768,
+        5120
+      ],
+      "output_features": 5120,
+      "packed_weight_backing_shape": [
+        5120,
+        768
+      ],
+      "packed_weight_bytes": 15728640,
+      "rows": [
+        {
+          "activation_shape": [
+            4,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            4,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.085821125,
+              "mean": 0.052413744375,
+              "median": 0.050190750000000006,
+              "min": 0.045409,
+              "p10": 0.048501999999999997,
+              "p90": 0.06157852500000001,
+              "population_stdev": 0.005636874087087567
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.06266,
+              "mean": 0.028772314999999996,
+              "median": 0.026882375,
+              "min": 0.025603499999999998,
+              "p10": 0.025742599999999997,
+              "p90": 0.035755199999999994,
+              "population_stdev": 0.004905318571028287
+            }
+          },
+          "rows": 4
+        },
+        {
+          "activation_shape": [
+            9,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            9,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.0660940625,
+              "mean": 0.059383733125,
+              "median": 0.059325406250000004,
+              "min": 0.0495824375,
+              "p10": 0.05855405625,
+              "p90": 0.06055745625,
+              "population_stdev": 0.0016610205653465873
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.0396955,
+              "mean": 0.03654313,
+              "median": 0.036295999999999995,
+              "min": 0.03548675,
+              "p10": 0.036110424999999995,
+              "p90": 0.037551475,
+              "population_stdev": 0.0007307673847401784
+            }
+          },
+          "rows": 9
+        },
+        {
+          "activation_shape": [
+            16,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            16,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.067022,
+              "mean": 0.061093576875,
+              "median": 0.060708,
+              "min": 0.0572330625,
+              "p10": 0.059964181250000005,
+              "p90": 0.06304863125,
+              "population_stdev": 0.0014836099812001798
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.0431145,
+              "mean": 0.037761945,
+              "median": 0.037752,
+              "min": 0.036380499999999996,
+              "p10": 0.036668124999999996,
+              "p90": 0.0382655,
+              "population_stdev": 0.0010518051296342875
+            }
+          },
+          "rows": 16
+        },
+        {
+          "activation_shape": [
+            17,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            17,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.0642888125,
+              "mean": 0.060125250625,
+              "median": 0.06001015625,
+              "min": 0.0590439375,
+              "p10": 0.059354675,
+              "p90": 0.06100201875,
+              "population_stdev": 0.0008601045271004404
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.039571999999999996,
+              "mean": 0.0370646575,
+              "median": 0.036911875,
+              "min": 0.03678025,
+              "p10": 0.036854674999999996,
+              "p90": 0.037141324999999996,
+              "population_stdev": 0.0005355764320512527
+            }
+          },
+          "rows": 17
+        },
+        {
+          "activation_shape": [
+            31,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            31,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.0778435625,
+              "mean": 0.064469,
+              "median": 0.06316040625,
+              "min": 0.061680125,
+              "p10": 0.06242586875,
+              "p90": 0.0671311125,
+              "population_stdev": 0.00290621504509893
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.051467,
+              "mean": 0.04066764,
+              "median": 0.03991,
+              "min": 0.039383499999999995,
+              "p10": 0.039781625,
+              "p90": 0.041061799999999996,
+              "population_stdev": 0.002189105155457362
+            }
+          },
+          "rows": 31
+        },
+        {
+          "activation_shape": [
+            33,
+            6144
+          ],
+          "output_all_finite": true,
+          "output_dtype": "torch.bfloat16",
+          "output_shape": [
+            33,
+            5120
+          ],
+          "per_call_ms": {
+            "wall": {
+              "count": 100,
+              "max": 0.071313875,
+              "mean": 0.06802316625,
+              "median": 0.06755240625,
+              "min": 0.0587728125,
+              "p10": 0.06695518125,
+              "p90": 0.070430825,
+              "population_stdev": 0.0015565352271807683
+            },
+            "xpu_event": {
+              "count": 100,
+              "max": 0.0487695,
+              "mean": 0.04515277,
+              "median": 0.04443075,
+              "min": 0.044278,
+              "p10": 0.0443365,
+              "p90": 0.04759755,
+              "population_stdev": 0.0012011580306520871
+            }
+          },
+          "rows": 33
+        }
+      ],
+      "scale_bytes": 491520,
+      "scale_shape": [
+        48,
+        5120
+      ],
+      "seed": 20265755,
+      "synthetic_parameter_bytes": 16220161
+    }
+  ],
+  "runtime_identity": {
+    "argv": [
+      "scripts/bench-qwen27-w4a16-row-scaling.py",
+      "--rows",
+      "4,9,16,17,31,33",
+      "--warmup",
+      "20",
+      "--iterations",
+      "100",
+      "--calls-per-sample",
+      "16",
+      "--device",
+      "xpu:1",
+      "--output-json",
+      "data/qwen36-27b-autoround-int4-b70-diagnostics/qwen27-w4a16-row-scaling-gpu1-20260710.json"
+    ],
+    "environment": {
+      "COMPILATION_CONFIG": null,
+      "DNNL_VERBOSE": null,
+      "GPU_MEMORY_UTILIZATION": null,
+      "LD_LIBRARY_PATH": null,
+      "ONEAPI_DEVICE_SELECTOR": null,
+      "ONEDNN_VERBOSE": null,
+      "SYCL_DEVICE_FILTER": null,
+      "SYCL_PI_LEVEL_ZERO_USE_COPY_ENGINE": null,
+      "SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS": null,
+      "UR_L0_USE_COPY_ENGINE": null,
+      "UR_L0_USE_IMMEDIATE_COMMANDLISTS": null,
+      "VLLM_XPU_ENABLE_XPU_GRAPH": null,
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM": null,
+      "VLLM_XPU_GDN_NATIVE_FALLBACK": null,
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": null,
+      "VLLM_XPU_INT4_GEMM_SCRATCHPAD_RING_SIZE": null,
+      "XPU_GRAPH": null,
+      "ZE_AFFINITY_MASK": null
+    },
+    "inc_layout_reference": {
+      "exists": true,
+      "path": "/home/steve/src/vllm/vllm/model_executor/layers/quantization/inc.py",
+      "sha256": "061732d0429b87f54db841c8827c710a2d0710a316398e35ae0c5c1af7ee1dc3"
+    },
+    "kernel_extension": {
+      "exists": true,
+      "path": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "sha256": "aaf055ad665fd222e8404641026191bbbd1dd9fce86ef273b8423cf2af725235"
+    },
+    "kernel_prefix": "/home/steve/src/vllm-xpu-kernels",
+    "operator": "torch.ops._xpu_C.int4_gemm_w4a16",
+    "operator_schema": "_xpu_C::int4_gemm_w4a16(Tensor A, Tensor B, Tensor? bias, Tensor B_scale, Tensor B_zp, int group_size, Tensor? g_idx) -> Tensor",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python_executable": "/home/steve/.venvs/vllm-xpu/bin/python",
+    "python_version": "3.12.13",
+    "selected_device_capability": {
+      "architecture": 21483225088,
+      "device_id": 57891,
+      "driver_version": "1.15.38308+1",
+      "gpu_eu_count": 256,
+      "gpu_subslice_count": 32,
+      "has_atomic64": true,
+      "has_bfloat16_conversions": true,
+      "has_fp16": true,
+      "has_fp64": true,
+      "has_subgroup_2d_block_io": true,
+      "has_subgroup_matrix_multiply_accumulate": true,
+      "has_subgroup_matrix_multiply_accumulate_tensor_float32": false,
+      "local_mem_size": 131072,
+      "max_compute_units": 256,
+      "max_num_sub_groups": 64,
+      "max_work_group_size": 1024,
+      "name": "Intel(R) Arc(TM) Pro B70 Graphics",
+      "platform_name": "Intel(R) oneAPI Unified Runtime over Level-Zero V2",
+      "sub_group_sizes": [
+        16,
+        32
+      ],
+      "total_memory": 34242297856,
+      "type": "gpu",
+      "vendor": "Intel(R) Corporation",
+      "version": "20.2.0"
+    },
+    "selected_device_index": 1,
+    "selected_device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+    "selected_device_properties": "_XpuDeviceProperties(name='Intel(R) Arc(TM) Pro B70 Graphics', platform_name='Intel(R) oneAPI Unified Runtime over Level-Zero V2', type='gpu', device_id=0xE223, uuid=868023e2-0000-0000-2700-000000000000, driver_version='1.15.38308+1', total_memory=32656MB, local_mem_size=128KB, max_compute_units=256, gpu_eu_count=256, gpu_subslice_count=32, max_work_group_size=1024, max_num_sub_groups=64, sub_group_sizes=[16 32], has_fp16=1, has_fp64=1, has_atomic64=1)",
+    "torch_config": "PyTorch built with:\n  - GCC 13.3\n  - C++ Version: 201703\n  - Intel(R) oneAPI Math Kernel Library Version 2025.3-Product Build 20251007 for Intel(R) 64 architecture applications\n  - Intel(R) MKL-DNN v3.10.2 (Git Hash f1d471933dc852f956fd05389f9313c7148783d5)\n  - OpenMP 201511 (a.k.a. OpenMP 4.5)\n  - LAPACK is enabled (usually provided by MKL)\n  - NNPACK is enabled\n  - CPU capability usage: AVX2\nXPU backend  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, COMMIT_SHA=70d99e998b4955e0049d13a98d77ae1b14db1f45, CXX_COMPILER=/opt/rh/gcc-toolset-13/root/usr/bin/c++, CXX_FLAGS= -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOCUPTI -DLIBKINETO_NOROCTRACER -DLIBKINETO_NOXPUPTI=OFF -DUSE_FBGEMM -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -DC10_NODEPRECATED -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Werror=range-loop-construct -Werror=bool-operation -Wnarrowing -Wno-missing-field-initializers -Wno-unknown-pragmas -Wno-unused-parameter -Wno-strict-overflow -Wno-strict-aliasing -Wno-stringop-overflow -Wsuggest-override -Wno-psabi -Wno-error=old-style-cast -faligned-new -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-dangling-reference -Wno-error=dangling-reference -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, TORCH_VERSION=2.11.0, USE_CUDA=0, USE_CUDNN=OFF, USE_CUSPARSELT=OFF, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_GLOO=ON, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=0, USE_NCCL=OFF, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, USE_ROCM_KERNEL_ASSERT=OFF, USE_XCCL=1, USE_XPU=ON, \n",
+    "torch_git_version": "70d99e998b4955e0049d13a98d77ae1b14db1f45",
+    "torch_version": "2.11.0+xpu",
+    "torch_xpu_version": "20250302",
+    "xpu_available": true,
+    "xpu_device_count": 4
+  },
+  "schema_version": 1,
+  "status": "completed"
+}
