@@ -1,0 +1,394 @@
+{
+  "classification": "diagnostic_offline_ddtree_acceptance_repeat_confirmation_not_throughput_not_localmaxxing",
+  "source_root": "/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/ddtree-confirm-4gpu-20260710T125120Z",
+  "validity": {
+    "target_owned_trace_labels": true,
+    "endpoint_mixed_dflash": true,
+    "runtime_int8_target_head": true,
+    "cache_or_history_acceleration": false,
+    "endpoint_throughput": false,
+    "localmaxxing_eligible": false
+  },
+  "lanes": [
+    {
+      "draft_tokens": 4,
+      "heldout_anchor_count": 1024,
+      "evaluation_repeats": 3,
+      "vanilla": {
+        "mean_visible_depth": 2.7822265625,
+        "repeat_disagreement_anchor_fraction": 0.013671875,
+        "repeat_mean_visible_depth": [
+          2.7783203125,
+          2.78125,
+          2.787109375
+        ]
+      },
+      "budgets": {
+        "16": {
+          "mean_visible_depth": 3.4306640625,
+          "full_horizon_accept_rate": 0.291015625,
+          "repeat_disagreement_anchor_fraction": 0.0146484375,
+          "repeat_mean_visible_depth": [
+            3.431640625,
+            3.43359375,
+            3.4296875
+          ],
+          "mean_tree_node_count": 16.0,
+          "mean_tree_max_depth": 3.4404296875,
+          "histogram": {
+            "accepted_depth": {
+              "0": 57,
+              "1": 229,
+              "2": 252,
+              "3": 188,
+              "4": 298
+            },
+            "visible_depth": {
+              "1": 57,
+              "2": 229,
+              "3": 252,
+              "4": 188,
+              "5": 298
+            }
+          }
+        },
+        "32": {
+          "mean_visible_depth": 3.6259765625,
+          "full_horizon_accept_rate": 0.34375,
+          "repeat_disagreement_anchor_fraction": 0.0146484375,
+          "repeat_mean_visible_depth": [
+            3.626953125,
+            3.6220703125,
+            3.6259765625
+          ],
+          "mean_tree_node_count": 32.0,
+          "mean_tree_max_depth": 3.6494140625,
+          "histogram": {
+            "accepted_depth": {
+              "0": 41,
+              "1": 181,
+              "2": 250,
+              "3": 200,
+              "4": 352
+            },
+            "visible_depth": {
+              "1": 41,
+              "2": 181,
+              "3": 250,
+              "4": 200,
+              "5": 352
+            }
+          }
+        }
+      }
+    },
+    {
+      "draft_tokens": 8,
+      "heldout_anchor_count": 1024,
+      "evaluation_repeats": 3,
+      "vanilla": {
+        "mean_visible_depth": 3.1171875,
+        "repeat_disagreement_anchor_fraction": 0.015625,
+        "repeat_mean_visible_depth": [
+          3.1103515625,
+          3.111328125,
+          3.1181640625
+        ]
+      },
+      "budgets": {
+        "16": {
+          "mean_visible_depth": 3.7646484375,
+          "full_horizon_accept_rate": 0.0458984375,
+          "repeat_disagreement_anchor_fraction": 0.015625,
+          "repeat_mean_visible_depth": [
+            3.7646484375,
+            3.7646484375,
+            3.76953125
+          ],
+          "mean_tree_node_count": 16.0,
+          "mean_tree_max_depth": 4.298828125,
+          "histogram": {
+            "accepted_depth": {
+              "0": 56,
+              "1": 227,
+              "2": 284,
+              "3": 173,
+              "4": 118,
+              "5": 64,
+              "6": 36,
+              "7": 19,
+              "8": 47
+            },
+            "visible_depth": {
+              "1": 56,
+              "2": 227,
+              "3": 284,
+              "4": 173,
+              "5": 118,
+              "6": 64,
+              "7": 36,
+              "8": 19,
+              "9": 47
+            }
+          }
+        },
+        "32": {
+          "mean_visible_depth": 4.015625,
+          "full_horizon_accept_rate": 0.05859375,
+          "repeat_disagreement_anchor_fraction": 0.0146484375,
+          "repeat_mean_visible_depth": [
+            4.015625,
+            4.0146484375,
+            4.015625
+          ],
+          "mean_tree_node_count": 32.0,
+          "mean_tree_max_depth": 4.7646484375,
+          "histogram": {
+            "accepted_depth": {
+              "0": 36,
+              "1": 188,
+              "2": 284,
+              "3": 193,
+              "4": 122,
+              "5": 81,
+              "6": 40,
+              "7": 20,
+              "8": 60
+            },
+            "visible_depth": {
+              "1": 36,
+              "2": 188,
+              "3": 284,
+              "4": 193,
+              "5": 122,
+              "6": 81,
+              "7": 40,
+              "8": 20,
+              "9": 60
+            }
+          }
+        }
+      }
+    },
+    {
+      "draft_tokens": 12,
+      "heldout_anchor_count": 1024,
+      "evaluation_repeats": 3,
+      "vanilla": {
+        "mean_visible_depth": 3.1875,
+        "repeat_disagreement_anchor_fraction": 0.013671875,
+        "repeat_mean_visible_depth": [
+          3.1904296875,
+          3.1826171875,
+          3.1875
+        ]
+      },
+      "budgets": {
+        "24": {
+          "mean_visible_depth": 4.041015625,
+          "full_horizon_accept_rate": 0.009765625,
+          "repeat_disagreement_anchor_fraction": 0.0224609375,
+          "repeat_mean_visible_depth": [
+            4.037109375,
+            4.0400390625,
+            4.041015625
+          ],
+          "mean_tree_node_count": 24.0,
+          "mean_tree_max_depth": 4.69921875,
+          "histogram": {
+            "accepted_depth": {
+              "0": 45,
+              "1": 196,
+              "10": 5,
+              "11": 6,
+              "12": 10,
+              "2": 272,
+              "3": 195,
+              "4": 124,
+              "5": 68,
+              "6": 43,
+              "7": 34,
+              "8": 13,
+              "9": 13
+            },
+            "visible_depth": {
+              "1": 45,
+              "10": 13,
+              "11": 5,
+              "12": 6,
+              "13": 10,
+              "2": 196,
+              "3": 272,
+              "4": 195,
+              "5": 124,
+              "6": 68,
+              "7": 43,
+              "8": 34,
+              "9": 13
+            }
+          }
+        },
+        "48": {
+          "mean_visible_depth": 4.2763671875,
+          "full_horizon_accept_rate": 0.015625,
+          "repeat_disagreement_anchor_fraction": 0.0224609375,
+          "repeat_mean_visible_depth": [
+            4.2783203125,
+            4.2744140625,
+            4.275390625
+          ],
+          "mean_tree_node_count": 48.0,
+          "mean_tree_max_depth": 5.1767578125,
+          "histogram": {
+            "accepted_depth": {
+              "0": 32,
+              "1": 172,
+              "10": 9,
+              "11": 3,
+              "12": 16,
+              "2": 252,
+              "3": 206,
+              "4": 137,
+              "5": 87,
+              "6": 40,
+              "7": 46,
+              "8": 15,
+              "9": 9
+            },
+            "visible_depth": {
+              "1": 32,
+              "10": 9,
+              "11": 9,
+              "12": 3,
+              "13": 16,
+              "2": 172,
+              "3": 252,
+              "4": 206,
+              "5": 137,
+              "6": 87,
+              "7": 40,
+              "8": 46,
+              "9": 15
+            }
+          }
+        }
+      }
+    },
+    {
+      "draft_tokens": 15,
+      "heldout_anchor_count": 1024,
+      "evaluation_repeats": 3,
+      "vanilla": {
+        "mean_visible_depth": 3.2919921875,
+        "repeat_disagreement_anchor_fraction": 0.0205078125,
+        "repeat_mean_visible_depth": [
+          3.2890625,
+          3.296875,
+          3.2890625
+        ]
+      },
+      "budgets": {
+        "15": {
+          "mean_visible_depth": 3.9287109375,
+          "full_horizon_accept_rate": 0.0009765625,
+          "repeat_disagreement_anchor_fraction": 0.0322265625,
+          "repeat_mean_visible_depth": [
+            3.9306640625,
+            3.9306640625,
+            3.927734375
+          ],
+          "mean_tree_node_count": 15.0,
+          "mean_tree_max_depth": 4.419921875,
+          "histogram": {
+            "accepted_depth": {
+              "0": 57,
+              "1": 227,
+              "10": 4,
+              "11": 4,
+              "12": 5,
+              "13": 4,
+              "14": 4,
+              "15": 1,
+              "2": 270,
+              "3": 174,
+              "4": 111,
+              "5": 71,
+              "6": 40,
+              "7": 24,
+              "8": 16,
+              "9": 12
+            },
+            "visible_depth": {
+              "1": 57,
+              "10": 12,
+              "11": 4,
+              "12": 4,
+              "13": 5,
+              "14": 4,
+              "15": 4,
+              "16": 1,
+              "2": 227,
+              "3": 270,
+              "4": 174,
+              "5": 111,
+              "6": 71,
+              "7": 40,
+              "8": 24,
+              "9": 16
+            }
+          }
+        },
+        "30": {
+          "mean_visible_depth": 4.1982421875,
+          "full_horizon_accept_rate": 0.0009765625,
+          "repeat_disagreement_anchor_fraction": 0.02734375,
+          "repeat_mean_visible_depth": [
+            4.197265625,
+            4.19921875,
+            4.2021484375
+          ],
+          "mean_tree_node_count": 30.0,
+          "mean_tree_max_depth": 4.9775390625,
+          "histogram": {
+            "accepted_depth": {
+              "0": 37,
+              "1": 200,
+              "10": 8,
+              "11": 5,
+              "12": 5,
+              "13": 3,
+              "14": 7,
+              "15": 1,
+              "2": 257,
+              "3": 197,
+              "4": 116,
+              "5": 73,
+              "6": 56,
+              "7": 28,
+              "8": 17,
+              "9": 14
+            },
+            "visible_depth": {
+              "1": 37,
+              "10": 14,
+              "11": 8,
+              "12": 5,
+              "13": 5,
+              "14": 3,
+              "15": 7,
+              "16": 1,
+              "2": 200,
+              "3": 257,
+              "4": 197,
+              "5": 116,
+              "6": 73,
+              "7": 56,
+              "8": 28,
+              "9": 17
+            }
+          }
+        }
+      }
+    }
+  ]
+}

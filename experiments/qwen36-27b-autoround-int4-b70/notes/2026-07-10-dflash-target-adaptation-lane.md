@@ -475,6 +475,28 @@ GDN chain. A valid implementation must consume parent/depth metadata, fork
 complete conv/SSM/ReplaySSM state per node, and promote only the target-verified
 winning path.
 
+Three-pass confirmation reproduced the selected points:
+
+| Horizon / budget | Vanilla visible | DDTree visible | Delta | DDTree repeat-mean range | Positive scenarios |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `k4 / 16` | 2.7822 | 3.4307 | +0.6484 | 0.0039 | 24/24 |
+| `k8 / 32` | 3.1172 | **4.0156** | **+0.8984** | **0.0010** | 24/24 |
+| `k12 / 24` | 3.1875 | 4.0410 | +0.8535 | 0.0039 | 24/24 |
+| `k15 / 30` | 3.2920 | **4.1982** | **+0.9063** | 0.0049 | 24/24 |
+
+Per-anchor repeat disagreement was `1.46%` for `k8/b32`, but the untouched
+vanilla baseline itself was `1.56%`; this is the known XPU argmax instability,
+not candidate-specific drift. The DDTree effect is roughly two orders larger
+than its repeat-mean movement and remains positive in every scenario. Treat the
+acceptance mechanism as confirmed enough for the cost/implementation gate, not
+as endpoint or quality evidence. Compact confirmation:
+`diagnostics/qwen27-dflash-ddtree-confirm-4gpu-20260710.json`; full reports:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
+ddtree-confirm-4gpu-20260710T125120Z
+```
+
 ## Advancement rule
 
 Do not use a fixed scalar acceptance cutoff as proof. Retain paired per-anchor
