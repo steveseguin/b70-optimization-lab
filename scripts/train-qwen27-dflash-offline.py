@@ -137,6 +137,7 @@ def parse_args() -> argparse.Namespace:
             "input-position-bias",
             "layer-position-bias",
             "layer-position-lora",
+            "layer-target-fusion",
         ),
         default="fc",
     )
@@ -292,6 +293,14 @@ def load_runtime(
                     model.config.hidden_size,
                     args.position_rank,
                 )
+            ),
+        )
+    elif args.train_scope == "layer-target-fusion":
+        target_layer_count = len(model.target_layer_ids)
+        model.register_parameter(
+            "xpu_layer_target_fusion",
+            torch.nn.Parameter(
+                torch.zeros(len(model.layers), target_layer_count)
             ),
         )
     if args.resume_adapter:
@@ -464,7 +473,24 @@ def endpoint_mixed_dflash_forward(
         hidden_states = hidden_states + input_position_bias[
             : hidden_states.shape[1]
         ].to(dtype=hidden_states.dtype)
-    projected_target = model.hidden_norm(model.fc(target_hidden))
+    projected_target_raw = model.fc(target_hidden)
+    target_fusion = getattr(model, "xpu_layer_target_fusion", None)
+    target_layers = None
+    if target_fusion is not None:
+        target_layer_count = target_fusion.shape[1]
+        expected_width = target_layer_count * model.config.hidden_size
+        if target_hidden.shape[-1] != expected_width:
+            raise ValueError(
+                "DFlash target fusion expected width "
+                f"{expected_width}, got {target_hidden.shape[-1]}"
+            )
+        target_layers = target_hidden.reshape(
+            *target_hidden.shape[:-1],
+            target_layer_count,
+            model.config.hidden_size,
+        )
+    else:
+        projected_target = model.hidden_norm(projected_target_raw)
     position_embeddings = model.rotary_emb(hidden_states, position_ids)
     layer_types = tuple(getattr(model.config, "layer_types", ()))
     if len(layer_types) != len(model.layers):
@@ -472,6 +498,17 @@ def endpoint_mixed_dflash_forward(
             f"DFlash layer_types={len(layer_types)} layers={len(model.layers)}"
         )
     for layer_idx, layer in enumerate(model.layers):
+        if target_fusion is not None:
+            assert target_layers is not None
+            fusion = target_fusion[layer_idx].to(dtype=target_layers.dtype)
+            target_residual = torch.einsum(
+                "bsth,t->bsh", target_layers, fusion
+            )
+            layer_target = model.hidden_norm(
+                projected_target_raw + target_residual
+            )
+        else:
+            layer_target = projected_target
         layer_position_bias = getattr(model, "xpu_layer_position_bias", None)
         if layer_position_bias is not None:
             hidden_states = hidden_states + layer_position_bias[
@@ -501,7 +538,7 @@ def endpoint_mixed_dflash_forward(
             )
         hidden_states = layer(
             hidden_states=hidden_states,
-            target_hidden=projected_target,
+            target_hidden=layer_target,
             attention_mask=attention_mask,
             position_ids=position_ids,
             past_key_value=None,
@@ -802,6 +839,8 @@ def configure_training(model: Any, scope: str) -> list[torch.nn.Parameter]:
     if scope == "layer-position-lora":
         model.xpu_layer_position_down.requires_grad_(True)
         model.xpu_layer_position_up.requires_grad_(True)
+    if scope == "layer-target-fusion":
+        model.xpu_layer_target_fusion.requires_grad_(True)
     parameters = [
         parameter for parameter in model.parameters() if parameter.requires_grad
     ]
@@ -935,6 +974,14 @@ def train(
 
 def main() -> int:
     args = parse_args()
+    if (
+        args.train_scope == "layer-target-fusion"
+        and args.attention_mode != "endpoint-mixed"
+    ):
+        raise ValueError(
+            "layer-target-fusion currently requires --attention-mode "
+            "endpoint-mixed"
+        )
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     out_dir = Path(args.out_dir)
@@ -1018,6 +1065,11 @@ def main() -> int:
         "heldout_anchor_count": len(heldout_anchors),
         "eval_repeats": args.eval_repeats,
         "position_conditioning_parameter_count": sum(
+            parameter.numel()
+            for name, parameter in model.named_parameters()
+            if name.startswith("xpu_")
+        ),
+        "adapter_parameter_count": sum(
             parameter.numel()
             for name, parameter in model.named_parameters()
             if name.startswith("xpu_")

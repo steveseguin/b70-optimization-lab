@@ -297,26 +297,41 @@ sources are:
   docs/source/features/speculative_decoding/dflare.md
 ```
 
+The inspected AngelSlim source identity is
+`3715056a434044f45e080e4411947b9aaabdfafb`. The independent upstream
+vLLM Speculators DFlash training reference was also captured locally at
+`73ec09f604f962f22f40859e86a39fd5b6ec1ba3`; it confirms that on-policy target
+responses and native target hidden-state extraction are the intended training
+shape, but it does not yet implement DFlare's layer-wise fusion.
+
 Our corrected corpus already contains five broad, endpoint-correct target
 layers (`2,17,32,47,62`), so the first screen can isolate the layer-wise fusion
 idea without collecting new traces. Preserve the public checkpoint exactly at
-initialization by splitting the existing `fc.weight` into five target-layer
-blocks, computing each block's contribution once, and learning zero-initialized
-per-draft-layer residual mixing coefficients:
+initialization by retaining the existing shared `fc` projection and learning
+zero-initialized per-draft-layer residual mixing coefficients over the five raw
+target states:
 
 ```text
-base = sum_t linear(aux[t], fc.weight[:, t])
-context[layer] = hidden_norm(base + sum_t delta[layer,t] * contribution[t])
+base = fc(concat(aux[0:5]))
+context[layer] = hidden_norm(base + sum_t delta[layer,t] * aux[t])
 ```
 
 `delta=0` is algebraically identical to the current checkpoint. The first
 screen adds only `draft_layers x target_layers = 25` parameters; its extra
-serving work is five tiny contribution projections plus a 25-coefficient mix,
-not another full draft layer. If this does not produce a material acceptance
+serving work is a 25-coefficient vector mix, not another matrix projection or
+draft layer. If this does not produce a material acceptance
 gain, the second DFlare mechanism is a separate context/noise K/V adapter,
 initialized from the existing shared K/V projections so the initial forward is
 exact. Both remain offline diagnostics until a candidate passes independent
 endpoint acceptance and strict fresh target-verified speed/quality gates.
+
+Implemented as the default-off `layer-target-fusion` training scope. A direct
+BF16 XPU check produced an all-zero residual and exact `base + residual`
+identity. A one-step real-model smoke used 25 FP32 parameters, completed with
+baseline/final both `2.828125` visible tokens/step on 64 anchors, and changed
+the intended adapter tensor to a maximum absolute value of `0.001`. The
+four-GPU screen compares cosine rates `1e-2`, `3e-3`, `1e-3`, and `3e-4` at
+`k=4` for 8,192 steps.
 
 ## Advancement rule
 
