@@ -101,6 +101,13 @@ Latest transaction diagnostic:
 
 Latest stronger-drafter result:
 
+- Target-matched DFlash adaptation is reopened as a new architecture lane, not
+  as a retry of the weak public checkpoint. A corrected five-aux target corpus,
+  offline block-prefix evaluator, paper-style position-decay trainer, and
+  four-GPU scope/loss matrix are documented in
+  `notes/2026-07-10-dflash-target-adaptation-lane.md`. No offline acceptance
+  number is a speed claim; final-suite endpoint validation remains mandatory.
+
 - Ex0bit EAGLE3/DFlash aux-hidden probing is closed as a direct import path.
   The new target-owned aux corpus runner collected 96 prompts / 15,360 rows
   with aux layers `1,31,60` and no continuity breaks, and the new offline
