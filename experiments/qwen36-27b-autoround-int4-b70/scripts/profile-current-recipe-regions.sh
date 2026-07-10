@@ -57,7 +57,7 @@ case "$PROFILE_FAMILY" in
     export VLLM_XPU_DECODE_TIMING_LABEL_REGEX='^(gpu_model_runner\.model_forward|qwen3_next\.(layer\.(linear_attention|full_attention|mlp)|final_norm))$'
     ;;
   gdn)
-    export VLLM_XPU_DECODE_TIMING_LABEL_REGEX='^(gpu_model_runner\.model_forward|qwen3_next\.layer\.linear_attention|qwen3_next\.gdn\.(input_quant|qkvz_gemm_w8a8|ba_gemm_w8a8|qkvz_proj|ba_proj|core_op|output_norm|out_proj)|gdn_attention_core_xpu\.native)$'
+    export VLLM_XPU_DECODE_TIMING_LABEL_REGEX='^(gpu_model_runner\.model_forward|qwen3_next\.layer\.linear_attention|qwen3_next\.gdn\.(input_quant|qkvz_gemm_w8a8|ba_gemm_w8a8|qkvz_proj|ba_proj|core_op|replayssm_commit|replayssm_stage_alloc|replayssm_stage_conv|replayssm_recurrent_alloc|replayssm_recurrent|replayssm_pending_metadata|core_output_merge|output_norm|out_proj)|gdn_attention_core_xpu\.native)$'
     ;;
   *)
     echo "Unknown PROFILE_FAMILY: $PROFILE_FAMILY" >&2

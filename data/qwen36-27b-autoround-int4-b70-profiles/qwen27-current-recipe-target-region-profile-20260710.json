@@ -15,7 +15,8 @@
   },
   "artifact_roots": {
     "coarse": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/profiles/qwen27-current-recipe-eager-region-profile-20260710T013903Z",
-    "gdn": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/profiles/qwen27-current-recipe-eager-gdn-region-profile-20260710T014224Z"
+    "gdn": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/profiles/qwen27-current-recipe-eager-gdn-region-profile-20260710T014224Z",
+    "replayssm_subregions": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/profiles/qwen27-current-recipe-eager-gdn-subregion-profile-20260710T015145Z"
   },
   "coarse_outlier_removed_median_ms_per_layer": {
     "linear_attention": 0.78534,
@@ -35,6 +36,16 @@
     "out_proj": 0.108065,
     "linear_attention_total": 1.217259,
     "unaccounted_allocation_layout_dispatch": 0.315664
+  },
+  "replayssm_nested_sync_median_ms_per_layer": {
+    "commit": 0.072671,
+    "stage_alloc": 0.043592,
+    "stage_conv": 0.059807,
+    "recurrent_alloc": 0.033172,
+    "recurrent": 0.10694,
+    "pending_metadata": 0.082293,
+    "core_output_merge": 0.044839,
+    "warning": "Nested device synchronization dominates tiny regions; values rank nodes and are not additive graph-replay savings."
   },
   "interpretation": "Relative target-body attribution only. ReplaySSM already uses fused stage-conv and recurrent spec-decode kernels; optimize the actual ReplaySSM boundary and validate graph-on."
 }

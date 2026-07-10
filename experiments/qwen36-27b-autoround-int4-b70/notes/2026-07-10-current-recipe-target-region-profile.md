@@ -67,13 +67,42 @@ gated-delta kernels. `VLLM_XPU_GDN_REPLAYSSM_SPEC=1` routes target verification
 through the already-fused `gdn_replayssm_stage_conv` and
 `gdn_replayssm_spec_decode` kernels. Do not duplicate that historical fusion.
 
+### ReplaySSM subregion drill-down
+
+A follow-up run added nested synchronized labels around the actual ReplaySSM
+transaction:
+
+```text
+/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/profiles/qwen27-current-recipe-eager-gdn-subregion-profile-20260710T015145Z
+```
+
+Its medians over 240 native spec calls were:
+
+| Subregion | Synchronized median per GDN layer |
+|---|---:|
+| prior pending-state commit/ensure | `0.073 ms` |
+| stage output allocation | `0.044 ms` |
+| native stage-conv | `0.060 ms` |
+| recurrent output allocation | `0.033 ms` |
+| native ReplaySSM recurrent | `0.107 ms` |
+| pending metadata publication | `0.082 ms` |
+| core output merge | `0.045 ms` |
+
+Nested synchronized scopes are not additive: each scope includes two device
+syncs, and the outer `core_op` median rose from `0.412` to `0.933 ms` merely by
+adding the labels. The table ranks graph nodes; it does not claim that deleting
+an allocation saves `0.044 ms` under graph replay. It does show that the
+recurrent arithmetic is not the only boundary cost and motivates a controlled
+transaction-fusion endpoint screen.
+
 ## Decision
 
-The next code experiment should measure and reduce work across the actual
-ReplaySSM boundary: staging allocation/layout, stage-conv, recurrent decode,
-pending-state metadata, and output merge. It must be default-off, parity-tested,
-and screened under graph-on endpoint execution. A candidate that only improves
-an intrusive eager microbenchmark is not a win.
+The active code experiment folds pending-state publication into the recurrent
+SYCL kernel and writes recurrent output directly into the final core buffer
+when the pure-spec layout permits. It is default-off, restores the historically
+required BF16 product-rounding rule in stage-conv source, and must pass bitwise
+stage/recurrent parity before an isolated graph-on endpoint screen. A candidate
+that only improves an intrusive eager microbenchmark is not a win.
 
 Acceptance-model pre-gates are also being changed from a fixed `3.3` cutoff to
 a paired confidence/ROI rule. A statistically credible gain below `3.3` may be

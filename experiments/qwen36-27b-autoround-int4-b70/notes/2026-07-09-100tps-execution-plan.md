@@ -135,15 +135,20 @@ The position-specific residual-adapter successor is also closed before an
 endpoint run. Four ranks over `65,536` starts peaked at `2.810669` visible
 tokens/step on separate unseen v6b data. A second rank-512 epoch across four
 learning rates reached only `2.857300` on training-heldout data, while larger
-rates regressed. Both are below the fixed `3.3` endpoint-trial gate and far
-below the `5.1-5.2` acceptance-only requirement. See
+rates regressed. The historical `3.3` endpoint-trial heuristic has since been
+retired: paired analysis confirms rank-256's small unseen improvement is real,
+but its calibrated strict projection is only about `81.8 tok/s` at zero added
+cost, while the continuation lacks unseen paired evidence. See
 `2026-07-10-position-adapter-converged-no-endpoint.md`.
 
 The full target-conditioned MTP refinement lane is also closed. Direct cloned
 replacement fell from a `2.218` base to at most `1.866`; a zero-preserving
-scalar/vector gate recovered base behavior but peaked at only `2.241883`, far
-below `3.3`. See `2026-07-10-direct-stacked-refinement-no-win.md` and
-`2026-07-10-gated-stacked-refinement-no-win.md`.
+scalar/vector gate recovered base behavior but peaked at only `2.241883`.
+Its apparent `+1.08%` gain has too little paired/unseen evidence and cannot
+offset the cost of another 372M-parameter layer. See
+`2026-07-10-direct-stacked-refinement-no-win.md`,
+`2026-07-10-gated-stacked-refinement-no-win.md`, and
+`2026-07-10-acceptance-gate-statistical-revision.md`.
 
 Acceptance-only adaptation is exhausted for this checkpoint. The active lane
 is target-body cost: use aggregate graph-none synchronized regions to rank
