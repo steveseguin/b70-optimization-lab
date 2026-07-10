@@ -22,6 +22,8 @@ CORPUS_ROOT="${CORPUS_ROOT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4
 OUT_ROOT="${OUT_ROOT:-/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/ddtree-oracle-4gpu-$STAMP}"
 HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
 SEED="${SEED:-27}"
+MODE="${MODE:-sweep}"
+EVAL_REPEATS="${EVAL_REPEATS:-3}"
 
 mkdir -p "$OUT_ROOT"
 
@@ -33,6 +35,10 @@ run_lane() {
   local out_dir="$OUT_ROOT/$label"
   mkdir -p "$out_dir/tmp" "$out_dir/cache"
   (
+    repeat_args=(--deterministic-one-pass)
+    if [[ "$MODE" == "confirm" ]]; then
+      repeat_args=(--eval-repeats "$EVAL_REPEATS")
+    fi
     export ZE_AFFINITY_MASK="$gpu"
     export ONEAPI_DEVICE_SELECTOR=level_zero:0
     export PYTORCH_ALLOC_CONF=expandable_segments:True
@@ -44,7 +50,7 @@ run_lane() {
       --corpus-dir "$CORPUS_ROOT/shard-3/dataset" \
       --draft-tokens "$draft_tokens" \
       --heldout-starts "$HELDOUT_STARTS" \
-      --deterministic-one-pass \
+      "${repeat_args[@]}" \
       --node-budgets "$budgets" \
       --seed "$SEED" \
       --device xpu:0 \
@@ -55,12 +61,24 @@ run_lane() {
   )
 }
 
-lanes=(
-  "0|k4|4|4,8,16,32,64"
-  "1|k8|8|8,16,32,64,128"
-  "2|k12|12|12,24,48,96,192"
-  "3|k15|15|15,30,60,120,240"
-)
+if [[ "$MODE" == "confirm" ]]; then
+  lanes=(
+    "0|k4|4|16,32"
+    "1|k8|8|16,32"
+    "2|k12|12|24,48"
+    "3|k15|15|15,30"
+  )
+elif [[ "$MODE" == "sweep" ]]; then
+  lanes=(
+    "0|k4|4|4,8,16,32,64"
+    "1|k8|8|8,16,32,64,128"
+    "2|k12|12|12,24,48,96,192"
+    "3|k15|15|15,30,60,120,240"
+  )
+else
+  echo "unknown MODE=$MODE (expected sweep or confirm)" >&2
+  exit 1
+fi
 
 pids=()
 for lane in "${lanes[@]}"; do

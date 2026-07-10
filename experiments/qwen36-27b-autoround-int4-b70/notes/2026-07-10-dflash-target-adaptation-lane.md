@@ -431,6 +431,50 @@ plausibly beat the current strict endpoint. Actual promotion would still need
 branch-aware GDN/DeltaNet state verification, graph-safe cache compaction, and
 the full strict fresh endpoint quality/speed gate.
 
+The 4-GPU sweep completed with 1,024 heldout anchors per lane:
+
+| Horizon | Vanilla visible | Small practical tree | Small-tree visible | Largest budget | Largest-budget visible |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 4 | 2.7832 | 16 | 3.4268 | 64 | 3.7617 |
+| 8 | 3.1143 | 32 | 4.0137 | 128 | 4.4619 |
+| 12 | 3.1914 | 24 | 4.0293 | 192 | 4.7236 |
+| 15 | 3.2979 | 30 | **4.2031** | 240 | **4.8906** |
+
+The gain was broad rather than one family dominating: the selected practical
+point for every horizon improved all `24/24` family-by-task scenarios. Scenario
+mean deltas were `+0.31` to `+0.82` for `k4/b16`, `+0.69` to `+1.50` for
+`k8/b32`, `+0.56` to `+1.14` for `k12/b24`, and `+0.62` to `+1.47` for
+`k15/b30`. A three-pass repeated confirmation is still required because the
+first sweep intentionally used one deterministic pass per horizon.
+
+This is a material training-free acceptance result, not a speed result. The
+most relevant low-row points are `k=15/budget=15` at `3.9355` visible depth
+(16 verifier rows including the root), `k=8/budget=16` at `3.7705` (17 rows),
+and `k=8/budget=32` at `4.0137` (33 rows). To reach `100 tok/s`, those shapes
+would need total target+draft steps below about `39.36`, `37.71`, and `40.14 ms`
+respectively. The current valid MTP3 step is about `40.26 ms` at only four
+linear verifier rows, while the corrected eager DFlash `k=8` endpoint was about
+`52.5 ms/step`; therefore DDTree is promising enough for a row-cost/GDN design
+gate, but it has not yet demonstrated a 100 tok/s cost envelope.
+
+Compact tracked result:
+`diagnostics/qwen27-dflash-ddtree-oracle-4gpu-20260710.json`. Full per-anchor
+reports remain under:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
+ddtree-oracle-4gpu-20260710T124417Z
+```
+
+Next implementation gate: measure exact target-body cost at verifier row shapes
+`9,16/17,31/33` with device events, then proceed only if a branch-aware GDN
+tree kernel plus draft/tree overhead has a conservative path above the current
+record and toward `100 tok/s`. The old July token-tree endpoints are not a cost
+control: source audit proved they flattened siblings into an invalid sequential
+GDN chain. A valid implementation must consume parent/depth metadata, fork
+complete conv/SSM/ReplaySSM state per node, and promote only the target-verified
+winning path.
+
 ## Advancement rule
 
 Do not use a fixed scalar acceptance cutoff as proof. Retain paired per-anchor
