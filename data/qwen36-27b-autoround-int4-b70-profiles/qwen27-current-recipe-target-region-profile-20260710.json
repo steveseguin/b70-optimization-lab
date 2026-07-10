@@ -1,0 +1,40 @@
+{
+  "classification": "diagnostic_graphnone_synchronized_region_profile",
+  "date": "2026-07-10",
+  "valid_headline_throughput": false,
+  "localmaxxing_eligible": false,
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "benchmark_conditions": {
+    "prompt_count": 1,
+    "prompt_reuse": false,
+    "cached_tokens": 0,
+    "graph_capture": false,
+    "enforce_eager": true,
+    "synchronized_regions": true
+  },
+  "artifact_roots": {
+    "coarse": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/profiles/qwen27-current-recipe-eager-region-profile-20260710T013903Z",
+    "gdn": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/profiles/qwen27-current-recipe-eager-gdn-region-profile-20260710T014224Z"
+  },
+  "coarse_outlier_removed_median_ms_per_layer": {
+    "linear_attention": 0.78534,
+    "full_attention": 1.250078,
+    "mlp": 0.332575
+  },
+  "coarse_approximate_target_ms": {
+    "linear_attention_48_layers": 37.69632,
+    "full_attention_16_layers": 20.001248,
+    "mlp_64_layers": 21.2848
+  },
+  "gdn_steady_decode_median_ms_per_layer": {
+    "qkvz_proj": 0.135211,
+    "ba_proj": 0.104565,
+    "core_op": 0.413073,
+    "output_norm": 0.140681,
+    "out_proj": 0.108065,
+    "linear_attention_total": 1.217259,
+    "unaccounted_allocation_layout_dispatch": 0.315664
+  },
+  "interpretation": "Relative target-body attribution only. ReplaySSM already uses fused stage-conv and recurrent spec-decode kernels; optimize the actual ReplaySSM boundary and validate graph-on."
+}
