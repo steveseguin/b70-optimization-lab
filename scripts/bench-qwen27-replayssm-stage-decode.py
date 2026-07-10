@@ -14,6 +14,7 @@ benchmark and not a LocalMaxxing result.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import sys
@@ -34,6 +35,7 @@ CONV_DIM = 2 * (NUM_K_HEADS * HEAD_K_DIM) + (NUM_V_HEADS * HEAD_V_DIM)
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--candidate-prefix", default="/home/steve/src/vllm-xpu-kernels")
+    parser.add_argument("--xpu-c-extension")
     parser.add_argument("--out", required=True)
     parser.add_argument("--device", default="xpu:0")
     parser.add_argument("--rows", type=int, default=1)
@@ -46,6 +48,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--iterations", type=int, default=500)
     parser.add_argument("--seed", type=int, default=20260707)
     return parser.parse_args()
+
+
+def load_extension(path: str) -> Any:
+    ext_path = str(Path(path).resolve())
+    spec = importlib.util.spec_from_file_location(
+        "vllm_xpu_kernels._xpu_C", ext_path)
+    if spec is None or spec.loader is None:
+        raise SystemExit(f"Could not load extension spec: {ext_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["vllm_xpu_kernels._xpu_C"] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def sync(torch_mod: Any) -> None:
@@ -84,7 +98,10 @@ def main() -> None:
     sys.path.insert(0, args.candidate_prefix)
 
     import torch
-    import vllm_xpu_kernels._xpu_C as xpu_c  # noqa: F401
+    if args.xpu_c_extension:
+        xpu_c = load_extension(args.xpu_c_extension)
+    else:
+        import vllm_xpu_kernels._xpu_C as xpu_c  # noqa: F401
 
     if not hasattr(torch.ops, "_xpu_C"):
         raise SystemExit("torch.ops._xpu_C is unavailable")

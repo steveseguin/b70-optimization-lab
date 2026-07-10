@@ -1,0 +1,44 @@
+{
+  "candidate_module": "/tmp/vllm-xpu-qwen27-replayssm-transaction-20260710/vllm_xpu_kernels/_xpu_C.abi3.so",
+  "classification": "diagnostic_microbench_not_endpoint_not_localmaxxing",
+  "env": {
+    "LD_LIBRARY_PATH": "/home/steve/src/vllm-xpu-kernels/build/qwen27-replayssm-transaction-20260710:/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "ZE_AFFINITY_MASK": "0"
+  },
+  "hypothesis": "ReplaySSM stage_conv + spec_decode fusion pre-gate",
+  "records": [
+    {
+      "mean_ms": 0.01602148893289268,
+      "mean_us": 16.02148893289268,
+      "name": "stage_conv"
+    },
+    {
+      "mean_ms": 0.04292989615350962,
+      "mean_us": 42.92989615350962,
+      "name": "spec_decode"
+    },
+    {
+      "mean_ms": 0.04396544792689383,
+      "mean_us": 43.96544792689383,
+      "name": "stage_then_decode",
+      "python_pair_overhead_ms": -0.014985937159508467,
+      "separate_sum_ms": 0.0589513850864023
+    }
+  ],
+  "shape": {
+    "cache_len": 8,
+    "conv_dim": 10240,
+    "conv_width": 4,
+    "dtype": "bf16",
+    "head_k_dim": 128,
+    "head_v_dim": 128,
+    "num_k_heads": 16,
+    "num_slots": 2,
+    "num_v_heads": 48,
+    "rows": 1,
+    "spec_len": 4,
+    "state_dtype": "bf16",
+    "total_tokens": 4
+  }
+}

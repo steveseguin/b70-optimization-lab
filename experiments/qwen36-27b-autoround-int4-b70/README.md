@@ -92,6 +92,12 @@ Latest transaction diagnostic:
   bonus/replacement token appeared later in the unaccepted draft tail (`1.96%`
   all rows, `3.13%` partial rejects). Treat simple branch/tail rescue as closed
   unless verifier-step cost drops or speculation depth changes.
+- `notes/2026-07-10-replayssm-vdim8-no-win.md` closes a wider ReplaySSM
+  recurrent value bucket after a two-GPU reversed-order ABBA microbenchmark.
+  The card-balanced recurrent change was `+0.024%` (slower) and the complete
+  stage+decode pair changed by only `-0.043%`; the initial cross-card apparent
+  gain was a cold/card artifact. The source was restored to `v_dim_per_sg=4`
+  without spending an endpoint run.
 
 Latest stronger-drafter result:
 

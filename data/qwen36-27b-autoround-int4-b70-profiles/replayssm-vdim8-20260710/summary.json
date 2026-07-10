@@ -1,0 +1,28 @@
+{
+  "classification": "diagnostic_microbench_no_win_not_endpoint_not_localmaxxing",
+  "candidate": "ReplaySSM recurrent v_dim_per_sg 4 -> 8",
+  "shape": {
+    "rows": 1,
+    "spec_len": 4,
+    "cache_len": 8,
+    "num_k_heads": 16,
+    "num_v_heads": 48,
+    "head_k_dim": 128,
+    "head_v_dim": 128
+  },
+  "method": "eight-process ABBA sequence on each of two GPUs with reversed variant order, 200 warmups and 3000 iterations per process",
+  "card_balanced": {
+    "spec_decode_vdim4_us": 36.567450704751536,
+    "spec_decode_vdim8_us": 36.57622978789732,
+    "spec_decode_candidate_change_percent": 0.02400791681287373,
+    "stage_then_decode_vdim4_us": 43.7662238740207,
+    "stage_then_decode_vdim8_us": 43.74753157996262,
+    "stage_then_decode_candidate_change_percent": -0.04270940557240532
+  },
+  "per_gpu_stage_then_decode_candidate_change_percent": {
+    "gpu0": -0.173297,
+    "gpu1": 0.08866
+  },
+  "decision": "no_win_restore_vdim4_skip_endpoint",
+  "reason": "The balanced effect is effectively zero and changes sign by GPU; the initial cross-card apparent recurrent gain was a card/cold-start artifact."
+}
