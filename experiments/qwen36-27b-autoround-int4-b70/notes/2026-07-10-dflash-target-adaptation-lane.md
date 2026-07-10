@@ -333,6 +333,36 @@ the intended adapter tensor to a maximum absolute value of `0.001`. The
 four-GPU screen compares cosine rates `1e-2`, `3e-3`, `1e-3`, and `3e-4` at
 `k=4` for 8,192 steps.
 
+That screen is closed as a no-win. Artifact root:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
+adaptation-target-fusion-k4-mixed-4gpu-20260710T122203Z
+```
+
+| Candidate | Baseline visible | Final visible | Raw delta | Scenario delta | Scenario 95% CI | Stability | Decision |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| fusion `1e-2` | 2.7832 | 2.8057 | +0.0225 | +0.0230 | `[-0.0010, 0.0469]` | pass | too small |
+| fusion `3e-3` | 2.7754 | 2.7891 | +0.0137 | +0.0157 | `[-0.0077, 0.0402]` | fail | no win |
+| fusion `1e-3` | 2.7842 | 2.7861 | +0.0020 | +0.0021 | `[-0.0116, 0.0148]` | fail | no win |
+| fusion `3e-4` | 2.7822 | 2.7813 | -0.0010 | +0.0001 | `[-0.0167, 0.0173]` | fail | no win |
+
+The best row changed only 5.8% of anchors and missed both the Holm-adjusted
+exploratory test and the `+0.25` useful-effect floor. This lightweight
+approximation does not reproduce DFlare's gain; do not continue scalar fusion
+rates. Compact analysis is
+`diagnostics/qwen27-dflash-target-fusion-k4-paired-20260710.json`.
+
+The remaining bounded DFlare mechanism is separate context/noise K/V. Clone
+each draft attention layer's current `k_proj` and `v_proj` into target-only
+weights after checkpoint loading, freeze the original noise projections, and
+train only the context copies. This is exact at initialization, retains the
+same two K and two V GEMM calls already present, and adds about `52.43M` BF16
+parameters (`100 MiB`) without adding inference FLOPs or launches. Preserve
+K-norm, RoPE, masks, positions, and endpoint mixed-attention behavior. Require
+same-process hidden/logit parity before training and the same paired material /
+stability gate afterward.
+
 ## Advancement rule
 
 Do not use a fixed scalar acceptance cutoff as proof. Retain paired per-anchor
