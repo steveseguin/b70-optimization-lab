@@ -8,7 +8,11 @@ STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 CORPUS_ROOT="${CORPUS_ROOT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-dflash-aux-v8-corrected5-v6b-4gpu-20260710T040000Z}"
 OUT_ROOT="${OUT_ROOT:-/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/adaptation-smoke-4gpu-$STAMP}"
 MATRIX="${MATRIX:-smoke}"
-if [[ "$MATRIX" == "long" || "$MATRIX" == "k4-highlr" ]]; then
+if [[ "$MATRIX" == "position-k4" ]]; then
+  STEPS="${STEPS:-4000}"
+  HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
+  EVAL_EVERY="${EVAL_EVERY:-1000}"
+elif [[ "$MATRIX" == "long" || "$MATRIX" == "k4-highlr" ]]; then
   STEPS="${STEPS:-2000}"
   HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
   EVAL_EVERY="${EVAL_EVERY:-500}"
@@ -79,7 +83,14 @@ run_variant() {
 
 # The public DFlash weights are already trained. These are conservative
 # adaptation rates, not the paper's from-scratch 6e-4 rate.
-if [[ "$MATRIX" == "k4-highlr" ]]; then
+if [[ "$MATRIX" == "position-k4" ]]; then
+  variants=(
+    "0|input-posbias-auf-lr1e-3|input-position-bias|accept-until-fail|1e-3|0.7788007830714049|0.1"
+    "1|layer-posbias-auf-lr3e-4|layer-position-bias|accept-until-fail|3e-4|0.7788007830714049|0.1"
+    "2|layer-posbias-auf-lr1e-3|layer-position-bias|accept-until-fail|1e-3|0.7788007830714049|0.1"
+    "3|layer-posbias-auf-lr3e-3|layer-position-bias|accept-until-fail|3e-3|0.7788007830714049|0.1"
+  )
+elif [[ "$MATRIX" == "k4-highlr" ]]; then
   variants=(
     "0|layers-paperdecay-lr3e-5|layers|position-decay|3e-5|0.7788007830714049|0.1"
     "1|layers-auf-lr3e-5|layers|accept-until-fail|3e-5|0.7788007830714049|0.1"
@@ -101,7 +112,7 @@ elif [[ "$MATRIX" == "smoke" ]]; then
     "3|all-auf-lr1e-6|all-draft|accept-until-fail|1e-6|0.7788007830714049"
   )
 else
-  echo "unknown MATRIX=$MATRIX (expected smoke, long, or k4-highlr)" >&2
+  echo "unknown MATRIX=$MATRIX (expected smoke, long, k4-highlr, or position-k4)" >&2
   exit 1
 fi
 

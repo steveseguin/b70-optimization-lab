@@ -152,14 +152,55 @@ initial labels implied:
    disagreement, rejects train/heldout prompt overlap, and requires a frozen
    confirmation on untouched data or endpoint traces before promotion.
 
-The corrected four-GPU matrix trains block width `k=4`, the fastest historical
+The corrected four-GPU matrix trained block width `k=4`, the fastest historical
 DFlash endpoint shape (`54.84 tok/s`, versus a much more expensive verifier at
-`k=8`). It compares stronger layer-only rates, hard prefix survival, and a soft
-expected-prefix objective. Active artifact root:
+`k=8`). It compared stronger layer-only rates, hard prefix survival, and a soft
+expected-prefix objective. Artifact root:
 
 ```text
 /mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
 adaptation-k4-mixed-highlr-4gpu-20260710T113610Z
+```
+
+Results:
+
+| Candidate | Baseline visible | Final visible | Scenario delta | Scenario 95% CI | Stability | Decision |
+| --- | ---: | ---: | ---: | --- | --- | --- |
+| layers, paper decay, `3e-5` | 2.7813 | 2.7871 | +0.0060 | `[-0.0033, 0.0157]` | fail | no win |
+| layers, hard survival, `3e-5` | 2.7773 | 2.7949 | +0.0188 | `[0.0053, 0.0326]` | fail | weak positive, too small |
+| layers, soft prefix, `1e-5` | 2.7803 | 2.7861 | +0.0074 | `[-0.0068, 0.0214]` | fail | no win |
+| layers, soft prefix, `3e-5` | 2.7813 | 2.7881 | +0.0077 | `[-0.0059, 0.0210]` | fail | no win |
+
+Hard survival passed the exploratory scenario/Holm zero-effect test
+(`p=0.0305`) but not the predeclared `+0.25` minimum useful effect. Its final
+per-anchor repeat disagreement was also `1.66%`, above the `1%` technical
+stability limit. A `+0.0188` token/step lift cannot move the historical
+`54.84 tok/s` DFlash endpoint past the valid `68.236 tok/s` record, much less
+to `100 tok/s`, so no adapter was merged and no endpoint run was spent. Compact
+analysis is preserved as
+`diagnostics/qwen27-dflash-k4-mixed-highlr-paired-20260710.json`.
+
+The next mechanism is zero-initialized block-position conditioning inside the
+DFlash queries/layers. Prior intrinsic-MTP work showed a transferable
+`+0.3939` visible-token gain from position-specific input projections, whereas
+adding capacity only at the final output seam plateaued. Position conditioning
+tests that architectural signal in DFlash without changing the target model;
+the target still verifies every emitted token.
+
+The implementation adds either one FP32 input-position bias (`25,600`
+parameters at `k=4`) or one FP32 per-layer position bias (`128,000`
+parameters), cast to the draft activation dtype at use. Both are initialized to
+zero. A 64-anchor three-way identity check matched every accepted prefix for
+control, input bias, and layer bias (`2.84375` visible tokens/step in all three
+cases). A one-step layer-bias smoke changed only
+`xpu_layer_position_bias`, proving the intended parameter boundary.
+
+The active four-GPU matrix compares input bias at `1e-3` and layer bias at
+`3e-4`, `1e-3`, and `3e-3` for 4,000 steps. Artifact root:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
+adaptation-position-k4-mixed-4gpu-20260710T114740Z
 ```
 
 ## Advancement rule

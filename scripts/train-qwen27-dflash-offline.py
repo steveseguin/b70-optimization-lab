@@ -129,7 +129,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--train-scope",
-        choices=("fc", "fc-norm", "layers", "all-draft"),
+        choices=(
+            "fc",
+            "fc-norm",
+            "layers",
+            "all-draft",
+            "input-position-bias",
+            "layer-position-bias",
+        ),
         default="fc",
     )
     parser.add_argument(
@@ -239,6 +246,23 @@ def load_runtime(
         local_files_only=True,
         dtype=torch.bfloat16,
     )
+    position_count = args.draft_tokens + 1
+    if args.train_scope == "input-position-bias":
+        model.register_parameter(
+            "xpu_input_position_bias",
+            torch.nn.Parameter(
+                torch.zeros(position_count, model.config.hidden_size)
+            ),
+        )
+    elif args.train_scope == "layer-position-bias":
+        model.register_parameter(
+            "xpu_layer_position_bias",
+            torch.nn.Parameter(
+                torch.zeros(
+                    len(model.layers), position_count, model.config.hidden_size
+                )
+            ),
+        )
     if args.resume_adapter:
         named_parameters = dict(model.named_parameters())
         with safe_open(
@@ -404,6 +428,11 @@ def endpoint_mixed_dflash_forward(
     position_ids: torch.Tensor,
 ) -> torch.Tensor:
     hidden_states = noise_embedding
+    input_position_bias = getattr(model, "xpu_input_position_bias", None)
+    if input_position_bias is not None:
+        hidden_states = hidden_states + input_position_bias[
+            : hidden_states.shape[1]
+        ].to(dtype=hidden_states.dtype)
     projected_target = model.hidden_norm(model.fc(target_hidden))
     position_embeddings = model.rotary_emb(hidden_states, position_ids)
     layer_types = tuple(getattr(model.config, "layer_types", ()))
@@ -412,6 +441,11 @@ def endpoint_mixed_dflash_forward(
             f"DFlash layer_types={len(layer_types)} layers={len(model.layers)}"
         )
     for layer_idx, layer in enumerate(model.layers):
+        layer_position_bias = getattr(model, "xpu_layer_position_bias", None)
+        if layer_position_bias is not None:
+            hidden_states = hidden_states + layer_position_bias[
+                layer_idx, : hidden_states.shape[1]
+            ].to(dtype=hidden_states.dtype)
         attention_mask = None
         if layer_types[layer_idx] == "sliding_attention":
             sliding_window = int(getattr(layer.self_attn, "sliding_window", 0) or 0)
@@ -719,6 +753,10 @@ def configure_training(model: Any, scope: str) -> list[torch.nn.Parameter]:
     if scope == "all-draft":
         for parameter in model.parameters():
             parameter.requires_grad_(True)
+    if scope == "input-position-bias":
+        model.xpu_input_position_bias.requires_grad_(True)
+    if scope == "layer-position-bias":
+        model.xpu_layer_position_bias.requires_grad_(True)
     parameters = [
         parameter for parameter in model.parameters() if parameter.requires_grad
     ]
@@ -934,6 +972,11 @@ def main() -> int:
         "train_anchor_count": len(train_anchors),
         "heldout_anchor_count": len(heldout_anchors),
         "eval_repeats": args.eval_repeats,
+        "position_conditioning_parameter_count": sum(
+            parameter.numel()
+            for name, parameter in model.named_parameters()
+            if name.startswith("xpu_")
+        ),
         "baseline": baseline,
         "final": final,
         "training": training,
