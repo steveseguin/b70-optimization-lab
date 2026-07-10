@@ -87,7 +87,7 @@ Current ReplaySSM EAGLE3 compressed/full produced `2.047619` and `1.969697`
 visible tokens/step. All are below intrinsic MTP3 (`2.746954`) before proposal
 cost and are closed for these checkpoints.
 
-## Phase 4: position-specific intrinsic MTP predictors - active
+## Phase 4: position-specific intrinsic MTP predictors - FC/adapter lanes closed
 
 Architecture correction: this checkpoint resolves to `Qwen3_5MTP`; the legacy
 launcher method name `qwen3_next_mtp` is normalized to `mtp`. Its canonical
@@ -131,20 +131,21 @@ endpoint. Two extra verifier rows would cost more than this small depth gain can
 recover, so FC-only specialization is closed without an endpoint run. See
 `2026-07-09-position-fc-mtp5-transfer-insufficient.md`.
 
-The active successor is a position-specific low-rank residual adapter after the
-shared MTP layer, initialized from the best all-FC candidate. It keeps the
-proven writable draft KV cache shared, adds substantially more predictor
-capacity, and screens four ranks concurrently over 65,536 unique training
-starts before a full unseen-corpus evaluation. Require at least `3.3` visible
-tokens/step for an endpoint trial. This is not the final speed gate: historical
-MTP5 cost is about `51 ms/step`, so acceptance alone needs about `5.1-5.2`
-visible tokens/step for `100 tok/s`; verifier/LM-head cost reductions can lower
-that requirement.
+The position-specific residual-adapter successor is also closed before an
+endpoint run. Four ranks over `65,536` starts peaked at `2.810669` visible
+tokens/step on separate unseen v6b data. A second rank-512 epoch across four
+learning rates reached only `2.857300` on training-heldout data, while larger
+rates regressed. Both are below the fixed `3.3` endpoint-trial gate and far
+below the `5.1-5.2` acceptance-only requirement. See
+`2026-07-10-position-adapter-converged-no-endpoint.md`.
 
-If position-specific FCs do not raise acceptance enough, the next learned
-predictor step is full `mtp.layers.N` only after implementing one writable
-draft-KV cache shared across the cloned layers and proving clone parity before
-training.
+The next learned-predictor pre-gate is an architectural change: one additional
+full target-conditioned MTP refinement layer, rather than more parameters at
+the same final-output seam. Train and measure it offline first. Runtime work is
+warranted only if it clears `3.3` visible tokens/step and then transfers to a
+separate corpus. In parallel, use Level Zero `unitrace` on the current
+graph-replayed endpoint to find a genuine multi-millisecond target-body kernel
+lane that can combine with deeper acceptance.
 
 Training requirements remain:
 

@@ -50,6 +50,20 @@ The generic guard-preservation capability is default-inert and covered by a
 test that selects depths `0,1,2,1,0` through one `ModuleList`; all outputs use
 the correct cached specialization. `tests/compile/test_wrapper.py` passes in
 full (`3 passed`). Static Python compilation and `git diff --check` also pass.
+A Qwen position-specific endpoint launcher on this host must explicitly set
+both of the following because their local defaults are currently enabled:
+
+```bash
+VLLM_USE_AOT_COMPILE=0
+VLLM_USE_BYTECODE_HOOK=0
+```
+
+Leaving either mode enabled makes the guarded position selector unsupported;
+the runtime intentionally disables torch compilation for the experimental MTP
+module instead of silently freezing the first depth. Graph-on evidence is not
+valid until the server log shows normal compile/capture with these overrides
+and all configured depth specializations are observed.
+
 A real rank-8 XPU train/export smoke passes; its compact summary is:
 
 ```text

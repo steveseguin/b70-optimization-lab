@@ -173,6 +173,15 @@ def parse_args() -> argparse.Namespace:
         help="Low-rank width used by the position-adapter scope.",
     )
     parser.add_argument(
+        "--resume-position-adapters",
+        action="store_true",
+        help=(
+            "Continue training position adapters already present in the model "
+            "overlay instead of reinitializing them. Count and rank must match "
+            "--max-steps and --position-adapter-rank."
+        ),
+    )
+    parser.add_argument(
         "--freeze-position-fcs",
         type=parse_position_fc_indices,
         default=(),
@@ -276,6 +285,7 @@ def make_trainable(
     frozen_position_fc_indices: tuple[int, ...] = (),
     position_adapter_rank: int = 64,
     position_adapter_seed: int = 27,
+    resume_position_adapters: bool = False,
 ) -> list[torch.nn.Parameter]:
     position_params: list[torch.nn.Parameter] = []
     position_adapter_params: list[torch.nn.Parameter] = []
@@ -306,28 +316,52 @@ def make_trainable(
             position_fc.requires_grad_(False)
 
         hidden_size = int(model.fc.shape[0])
-        generator = torch.Generator(device="cpu")
-        generator.manual_seed(position_adapter_seed)
         adapter_down: list[torch.nn.Parameter] = []
         adapter_up: list[torch.nn.Parameter] = []
-        for _ in range(max_steps):
-            down = torch.empty(
-                (position_adapter_rank, hidden_size), dtype=torch.float32
+        if resume_position_adapters:
+            existing_count = int(getattr(model, "position_adapter_count", 0))
+            existing_rank = int(getattr(model, "position_adapter_rank", 0))
+            if existing_count != max_steps or existing_rank != position_adapter_rank:
+                raise ValueError(
+                    "--resume-position-adapters requires matching existing "
+                    "adapters: "
+                    f"count={existing_count} rank={existing_rank}, expected "
+                    f"count={max_steps} rank={position_adapter_rank}"
+                )
+            adapter_down = [
+                torch.nn.Parameter(tensor.detach().clone())
+                for tensor in model.position_adapter_down
+            ]
+            adapter_up = [
+                torch.nn.Parameter(tensor.detach().clone())
+                for tensor in model.position_adapter_up
+            ]
+            position_adapter_initialization = "loaded_existing_resumed"
+        else:
+            generator = torch.Generator(device="cpu")
+            generator.manual_seed(position_adapter_seed)
+            for _ in range(max_steps):
+                down = torch.empty(
+                    (position_adapter_rank, hidden_size), dtype=torch.float32
+                )
+                torch.nn.init.normal_(
+                    down,
+                    mean=0.0,
+                    std=POSITION_ADAPTER_INIT_STD,
+                    generator=generator,
+                )
+                adapter_down.append(torch.nn.Parameter(
+                    down.to(device=model.fc.device, dtype=model.fc.dtype)
+                ))
+                adapter_up.append(torch.nn.Parameter(torch.zeros(
+                    (hidden_size, position_adapter_rank),
+                    device=model.fc.device,
+                    dtype=model.fc.dtype,
+                )))
+            position_adapter_initialization = (
+                f"down_normal_std_{POSITION_ADAPTER_INIT_STD:g}_seed_"
+                f"{position_adapter_seed};up_zeros"
             )
-            torch.nn.init.normal_(
-                down,
-                mean=0.0,
-                std=POSITION_ADAPTER_INIT_STD,
-                generator=generator,
-            )
-            adapter_down.append(torch.nn.Parameter(
-                down.to(device=model.fc.device, dtype=model.fc.dtype)
-            ))
-            adapter_up.append(torch.nn.Parameter(torch.zeros(
-                (hidden_size, position_adapter_rank),
-                device=model.fc.device,
-                dtype=model.fc.dtype,
-            )))
         model.position_adapter_down = torch.nn.ParameterList(adapter_down)
         model.position_adapter_up = torch.nn.ParameterList(adapter_up)
         model.position_adapter_count = max_steps
@@ -362,10 +396,6 @@ def make_trainable(
         trainable_indices: tuple[int, ...] = ()
         frozen_indices = tuple(range(max_steps))
         position_fc_initialization = "loaded_existing_frozen"
-        position_adapter_initialization = (
-            f"down_normal_std_{POSITION_ADAPTER_INIT_STD:g}_seed_"
-            f"{position_adapter_seed};up_zeros"
-        )
     elif scope in POSITION_FC_SCOPES:
         if max_steps is None or max_steps < 1:
             raise ValueError("position-fc scopes require max_steps >= 1")
@@ -457,7 +487,9 @@ def make_trainable(
     )
     model._position_adapter_initialization = position_adapter_initialization
     model._position_adapter_seed = (
-        position_adapter_seed if position_adapter_params else None
+        position_adapter_seed
+        if position_adapter_params and not resume_position_adapters
+        else None
     )
     return params
 
@@ -839,6 +871,10 @@ def main() -> int:
     if (args.scope == POSITION_ADAPTER_SCOPE
             and args.position_adapter_rank < 1):
         raise ValueError("--position-adapter-rank must be >= 1")
+    if args.resume_position_adapters and args.scope != POSITION_ADAPTER_SCOPE:
+        raise ValueError(
+            "--resume-position-adapters requires --scope position-adapter"
+        )
     if args.freeze_position_fcs and args.scope not in POSITION_FC_SCOPES:
         raise ValueError("--freeze-position-fcs requires a position-fc scope")
     invalid_frozen_indices = [
@@ -895,6 +931,7 @@ def main() -> int:
         args.freeze_position_fcs,
         position_adapter_rank=args.position_adapter_rank,
         position_adapter_seed=args.seed,
+        resume_position_adapters=args.resume_position_adapters,
     )
     if not params:
         raise ValueError("scope and freeze settings leave no trainable parameters")
