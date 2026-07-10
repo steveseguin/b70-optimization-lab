@@ -29,7 +29,8 @@ import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from types import MethodType
+from typing import Any, Callable, Iterable
 
 import torch
 import torch.nn.functional as F
@@ -138,6 +139,7 @@ def parse_args() -> argparse.Namespace:
             "layer-position-bias",
             "layer-position-lora",
             "layer-target-fusion",
+            "context-kv",
         ),
         default="fc",
     )
@@ -239,6 +241,77 @@ def load_named_tensor(model_dir: str, name: str) -> torch.Tensor:
         return handle.get_tensor(name)
 
 
+def dflash_attention_forward_context_kv(
+    self: Any,
+    hidden_states: torch.Tensor,
+    target_hidden: torch.Tensor,
+    position_embeddings: tuple[torch.Tensor, torch.Tensor],
+    attention_mask: torch.Tensor | None,
+    past_key_values: Any = None,
+    cache_position: torch.LongTensor | None = None,
+    **kwargs: Any,
+) -> tuple[torch.Tensor, torch.Tensor | None]:
+    """DFlash attention with target-only K/V weights and shared noise K/V."""
+    from dflash.model import apply_rotary_pos_emb
+    from transformers.models.qwen3.modeling_qwen3 import (
+        ALL_ATTENTION_FUNCTIONS,
+        eager_attention_forward,
+    )
+
+    bsz, q_len = hidden_states.shape[:-1]
+    ctx_len = target_hidden.shape[1]
+    q = self.q_proj(hidden_states)
+    q = q.view(bsz, q_len, -1, self.head_dim)
+    q = self.q_norm(q).transpose(1, 2)
+    k_ctx = F.linear(
+        target_hidden,
+        self.xpu_k_proj_target_weight,
+        getattr(self, "xpu_k_proj_target_bias", None),
+    )
+    v_ctx = F.linear(
+        target_hidden,
+        self.xpu_v_proj_target_weight,
+        getattr(self, "xpu_v_proj_target_bias", None),
+    )
+    k_noise = self.k_proj(hidden_states)
+    v_noise = self.v_proj(hidden_states)
+    k = torch.cat([k_ctx, k_noise], dim=1).view(
+        bsz, ctx_len + q_len, -1, self.head_dim
+    )
+    v = torch.cat([v_ctx, v_noise], dim=1).view(
+        bsz, ctx_len + q_len, -1, self.head_dim
+    )
+    k = self.k_norm(k).transpose(1, 2)
+    v = v.transpose(1, 2)
+    cos, sin = position_embeddings
+    q, k = apply_rotary_pos_emb(q, k, cos, sin)
+    if past_key_values is not None:
+        cache_kwargs = {
+            "sin": sin,
+            "cos": cos,
+            "cache_position": cache_position,
+        }
+        k, v = past_key_values.update(k, v, self.layer_idx, cache_kwargs)
+    attn_fn: Callable[..., Any] = eager_attention_forward
+    if self.config._attn_implementation != "eager":
+        attn_fn = ALL_ATTENTION_FUNCTIONS[
+            self.config._attn_implementation
+        ]
+    attn_output, attn_weights = attn_fn(
+        self,
+        q,
+        k,
+        v,
+        attention_mask,
+        dropout=0.0 if not self.training else self.attention_dropout,
+        scaling=self.scaling,
+        sliding_window=self.sliding_window,
+        **kwargs,
+    )
+    attn_output = attn_output.reshape(bsz, q_len, -1)
+    return self.o_proj(attn_output), attn_weights
+
+
 def load_runtime(
     args: argparse.Namespace,
 ) -> tuple[Any, torch.Tensor, dict[str, torch.Tensor]]:
@@ -303,6 +376,38 @@ def load_runtime(
                 torch.zeros(len(model.layers), target_layer_count)
             ),
         )
+    elif args.train_scope == "context-kv":
+        for layer in model.layers:
+            attention = layer.self_attn
+            attention.register_parameter(
+                "xpu_k_proj_target_weight",
+                torch.nn.Parameter(
+                    attention.k_proj.weight.detach().clone()
+                ),
+            )
+            attention.register_parameter(
+                "xpu_v_proj_target_weight",
+                torch.nn.Parameter(
+                    attention.v_proj.weight.detach().clone()
+                ),
+            )
+            if attention.k_proj.bias is not None:
+                attention.register_parameter(
+                    "xpu_k_proj_target_bias",
+                    torch.nn.Parameter(
+                        attention.k_proj.bias.detach().clone()
+                    ),
+                )
+            if attention.v_proj.bias is not None:
+                attention.register_parameter(
+                    "xpu_v_proj_target_bias",
+                    torch.nn.Parameter(
+                        attention.v_proj.bias.detach().clone()
+                    ),
+                )
+            attention.forward = MethodType(
+                dflash_attention_forward_context_kv, attention
+            )
     if args.resume_adapter:
         named_parameters = dict(model.named_parameters())
         with safe_open(
@@ -841,6 +946,18 @@ def configure_training(model: Any, scope: str) -> list[torch.nn.Parameter]:
         model.xpu_layer_position_up.requires_grad_(True)
     if scope == "layer-target-fusion":
         model.xpu_layer_target_fusion.requires_grad_(True)
+    if scope == "context-kv":
+        for layer in model.layers:
+            attention = layer.self_attn
+            attention.xpu_k_proj_target_weight.requires_grad_(True)
+            attention.xpu_v_proj_target_weight.requires_grad_(True)
+            for name in (
+                "xpu_k_proj_target_bias",
+                "xpu_v_proj_target_bias",
+            ):
+                parameter = getattr(attention, name, None)
+                if parameter is not None:
+                    parameter.requires_grad_(True)
     parameters = [
         parameter for parameter in model.parameters() if parameter.requires_grad
     ]
@@ -975,11 +1092,11 @@ def train(
 def main() -> int:
     args = parse_args()
     if (
-        args.train_scope == "layer-target-fusion"
+        args.train_scope in ("layer-target-fusion", "context-kv")
         and args.attention_mode != "endpoint-mixed"
     ):
         raise ValueError(
-            "layer-target-fusion currently requires --attention-mode "
+            f"{args.train_scope} currently requires --attention-mode "
             "endpoint-mixed"
         )
     random.seed(args.seed)
@@ -1067,12 +1184,12 @@ def main() -> int:
         "position_conditioning_parameter_count": sum(
             parameter.numel()
             for name, parameter in model.named_parameters()
-            if name.startswith("xpu_")
+            if any(part.startswith("xpu_") for part in name.split("."))
         ),
         "adapter_parameter_count": sum(
             parameter.numel()
             for name, parameter in model.named_parameters()
-            if name.startswith("xpu_")
+            if any(part.startswith("xpu_") for part in name.split("."))
         ),
         "position_rank": args.position_rank,
         "baseline": baseline,

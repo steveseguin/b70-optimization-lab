@@ -19,7 +19,11 @@ STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 CORPUS_ROOT="${CORPUS_ROOT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-dflash-aux-v8-corrected5-v6b-4gpu-20260710T040000Z}"
 OUT_ROOT="${OUT_ROOT:-/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/adaptation-smoke-4gpu-$STAMP}"
 MATRIX="${MATRIX:-smoke}"
-if [[ "$MATRIX" == "target-fusion-k4" ]]; then
+if [[ "$MATRIX" == "context-kv-k4" ]]; then
+  STEPS="${STEPS:-4096}"
+  HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
+  EVAL_EVERY="${EVAL_EVERY:-1024}"
+elif [[ "$MATRIX" == "target-fusion-k4" ]]; then
   STEPS="${STEPS:-8192}"
   HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
   EVAL_EVERY="${EVAL_EVERY:-2048}"
@@ -119,7 +123,14 @@ run_variant() {
 
 # The public DFlash weights are already trained. These are conservative
 # adaptation rates, not the paper's from-scratch 6e-4 rate.
-if [[ "$MATRIX" == "target-fusion-k4" ]]; then
+if [[ "$MATRIX" == "context-kv-k4" ]]; then
+  variants=(
+    "0|context-kv-lr3e-3|context-kv|accept-until-fail|3e-3|0.7788007830714049|0.1"
+    "1|context-kv-lr1e-3|context-kv|accept-until-fail|1e-3|0.7788007830714049|0.1"
+    "2|context-kv-lr3e-4|context-kv|accept-until-fail|3e-4|0.7788007830714049|0.1"
+    "3|context-kv-lr1e-4|context-kv|accept-until-fail|1e-4|0.7788007830714049|0.1"
+  )
+elif [[ "$MATRIX" == "target-fusion-k4" ]]; then
   variants=(
     "0|layer-target-fusion-lr1e-2|layer-target-fusion|accept-until-fail|1e-2|0.7788007830714049|0.1"
     "1|layer-target-fusion-lr3e-3|layer-target-fusion|accept-until-fail|3e-3|0.7788007830714049|0.1"
@@ -169,7 +180,7 @@ elif [[ "$MATRIX" == "smoke" ]]; then
     "3|all-auf-lr1e-6|all-draft|accept-until-fail|1e-6|0.7788007830714049"
   )
 else
-  echo "unknown MATRIX=$MATRIX (expected smoke, long, k4-highlr, position-k4, position-cont-k4, query-lora-k4, or target-fusion-k4)" >&2
+  echo "unknown MATRIX=$MATRIX (expected smoke, long, k4-highlr, position-k4, position-cont-k4, query-lora-k4, target-fusion-k4, or context-kv-k4)" >&2
   exit 1
 fi
 

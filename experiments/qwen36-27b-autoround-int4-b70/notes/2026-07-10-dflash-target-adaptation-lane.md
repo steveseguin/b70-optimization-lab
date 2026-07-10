@@ -363,6 +363,16 @@ K-norm, RoPE, masks, positions, and endpoint mixed-attention behavior. Require
 same-process hidden/logit parity before training and the same paired material /
 stability gate afterward.
 
+Implemented as the default-off `context-kv` scope. In a same-process real-model
+comparison, the original shared-K/V forward and the cloned context-K/V forward
+were exactly equal (`torch.equal=true`, max absolute hidden-state difference
+`0.0`), and all ten cloned tensors exactly matched their source weights. A
+one-step XPU smoke trained `52,428,800` BF16 parameters, saved ten adapter
+tensors, and changed all ten with maximum absolute update `0.001953125`.
+The first four-GPU screen uses 4,096 steps and cosine rates `3e-3`, `1e-3`,
+`3e-4`, and `1e-4`; this is still an offline acceptance diagnostic, not an
+endpoint speed or quality result.
+
 ## Advancement rule
 
 Do not use a fixed scalar acceptance cutoff as proof. Retain paired per-anchor
