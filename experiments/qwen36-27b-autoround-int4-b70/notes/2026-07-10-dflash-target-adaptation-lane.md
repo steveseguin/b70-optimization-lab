@@ -373,6 +373,64 @@ The first four-GPU screen uses 4,096 steps and cosine rates `3e-3`, `1e-3`,
 `3e-4`, and `1e-4`; this is still an offline acceptance diagnostic, not an
 endpoint speed or quality result.
 
+The context-K/V screen also closes below the material gate. Artifact root:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
+adaptation-context-kv-k4-mixed-4gpu-20260710T123451Z
+```
+
+| Candidate | Baseline visible | Final visible | Raw delta | Scenario delta | Scenario 95% CI | Stability | Decision |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| context K/V `3e-3` | 2.7822 | 2.1396 | -0.6426 | -0.6441 | `[-0.7529, -0.5444]` | fail | destructive |
+| context K/V `1e-3` | 2.7793 | 2.7617 | -0.0176 | -0.0156 | `[-0.0710, 0.0451]` | pass | no win |
+| context K/V `3e-4` | 2.7822 | **2.8779** | **+0.0957** | **+0.0966** | **`[0.0641, 0.1289]`** | fail | clear but too small |
+| context K/V `1e-4` | 2.7793 | 2.7998 | +0.0205 | +0.0206 | `[0.0013, 0.0390]` | fail | too small |
+
+The `3e-4` row passed the exploratory zero-effect/Holm test, but missed the
+`+0.25` useful-effect floor and had `1.07%` repeat disagreement. Its curve
+plateaued (`2.8545`, `2.8643`, `2.8633`, `2.8779`) rather than pointing to a
+large unfinished gain. Separate context K/V is mechanically valid and may be
+useful in a from-scratch DFlare checkpoint, but adapting only these weights on
+the current corpus cannot justify endpoint integration. Do not sweep more
+context-K/V rates in isolation. Compact analysis is
+`diagnostics/qwen27-dflash-context-kv-k4-paired-20260710.json`.
+
+## Training-free DDTree acceptance oracle
+
+The adapter screens revealed a different opportunity: at the first greedy
+DFlash rejection, the target token is already in the draft distribution's top
+4 about `57.6%` of the time, top 8 about `70.0%`, top 16 about `80.6%`, and top
+64 about `93.1%` (median rank `4`). A single argmax trajectory discards those
+alternatives. DDTree instead builds a best-first tree from the same independent
+per-position marginals and lets the target verify multiple paths. This is
+training-free and remains lossless when the target owns verification.
+
+The official DDTree source is cloned at `/home/steve/src/ddtree`, commit
+`c96427a185677bf4133ed865dd1626a5041aef9b`. New diagnostic
+`scripts/evaluate-qwen27-dflash-ddtree-offline.py` reuses the corrected
+endpoint-mixed DFlash forward, runtime INT8 target head, and target-owned trace
+labels. It performs one DFlash forward per anchor, reports the vanilla greedy
+path and every requested tree budget, and is explicitly not throughput,
+quality, or LocalMaxxing evidence. Its heap/tree output matched the official
+builder in 60 additional random structural parity cases.
+
+A 16-anchor `k=8` one-pass smoke was promising but is only a smoke:
+
+| Method | Mean visible depth |
+| --- | ---: |
+| vanilla DFlash greedy | 3.6875 |
+| DDTree budget 8 | 4.0000 |
+| DDTree budget 16 | 4.3125 |
+| DDTree budget 32 | **4.8750** |
+
+The next diagnostic runs four independent horizons (`k=4/8/12/15`) on four
+GPUs with 1,024 heldout anchors each and a budget ladder. Advancement requires
+a broad, stable accepted-depth gain whose conservative verifier-node cost can
+plausibly beat the current strict endpoint. Actual promotion would still need
+branch-aware GDN/DeltaNet state verification, graph-safe cache compaction, and
+the full strict fresh endpoint quality/speed gate.
+
 ## Advancement rule
 
 Do not use a fixed scalar acceptance cutoff as proof. Retain paired per-anchor
