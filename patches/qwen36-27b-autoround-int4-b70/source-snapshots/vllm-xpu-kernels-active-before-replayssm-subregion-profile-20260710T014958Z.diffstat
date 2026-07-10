@@ -1,0 +1,7 @@
+ csrc/xpu/gdn_attn/gdn_attn_interface.cpp | 169 +++++++++++-
+ csrc/xpu/gdn_attn/spec_decode.hpp        | 426 ++++++++++++++++++++++++++++---
+ csrc/xpu/moe_layerlet.cpp                |  87 ++++---
+ csrc/xpu/ops.h                           |  24 ++
+ csrc/xpu/torch_bindings.cpp              |  17 ++
+ vllm_xpu_kernels/fused_moe_interface.py  |   1 +
+ 6 files changed, 647 insertions(+), 77 deletions(-)
