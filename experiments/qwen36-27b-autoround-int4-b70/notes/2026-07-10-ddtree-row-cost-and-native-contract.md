@@ -112,3 +112,54 @@ Advance the 16-row lane in two stages:
 No endpoint claim, quality promotion, or LocalMaxxing submission is allowed
 until the fixed realistic cold suite, `cached_tokens=0`, repeat64 quality,
 same-window/card crossover, and full identity/log gates pass.
+
+## Implemented graph-static whole-tree op
+
+The row-16 follow-up is now implemented in the XPU extension as
+`torch.ops._xpu_C.gdn_attention_tree_indexed_decode`. The public call accepts
+one topologically ordered token/state/source table. Its two underlying kernels
+(causal conv and GDN recurrence) each loop through all rows inside one launch,
+so a parent publication is consumed by its children in program order without
+making persistent state writable. The established indexed op remains intact
+and is still the independent depth-batched comparison path.
+
+The implementation built successfully for `pvc`, `bmg`, `bmg-g21-a0`, and
+`bmg-g31-a0` from XPU-kernels source commit
+`3b4effeeffd83f6ef4696bbe7e76d924a0e9d171`. The installed diagnostic binary
+SHA-256 is
+`825173365a9b05fd78f56860a4823f9d9418b85fec08f43afd4244c4acdc558f`.
+Because that source checkout already contains related uncommitted ReplaySSM
+work, the exact four-file build state is preserved as a deliberately composite
+patch rather than mislabeled as a clean upstream delta:
+
+- `patches/qwen27-dflash-gdn-tree-loop-xpu-build-state-20260710.patch`;
+- patch SHA-256
+  `1861bf486e758909b6cac546bab5b4b34320730312965deb737c559a080f05d5`.
+
+At the real Qwen27 BF16 GDN shape, every four-card row-16 and row-33 run was
+bit-identical to independent native root-to-node replay for output, conv state,
+SSM state, `z`, and selected winner commits. Same-process XPU-event timing used
+20 warmups, 100 samples, and 16 reusable calls per sample:
+
+| shape | depth-batched median ms/layer (4-card range) | whole-tree median ms/layer (4-card range) | decision |
+| --- | ---: | ---: | --- |
+| 16 rows / 6 depths | `0.14396` to `0.16304` | **`0.08816` to `0.09280`** | win; about `2.7-3.4 ms` saved over 48 GDN layers |
+| 33 rows / 7 depths | **`0.26926` to `0.26970`** | `0.28592` to `0.28633` | loss; row loop loses occupancy, keep closed |
+
+The paired four-card result supersedes frequency-sensitive standalone timing.
+It also makes the boundary explicit: use the whole-tree op for the selected
+16-row topology, not as a universal replacement for depth batching.
+
+Raw reports are the `qwen27-gdn-tree-native-tree-loop-row16-gpu[0-3]` and
+`row33-gpu[0-3]` JSON files under
+`data/qwen36-27b-autoround-int4-b70-diagnostics/`. These are kernel diagnostics,
+not endpoint throughput or LocalMaxxing evidence.
+
+## Next integration gate
+
+Row 16 advances. The next implementation must carry DFlash/DDTree parent,
+depth, and active-node metadata through vLLM, invoke this op in every GDN
+layer, verify all candidate rows with the unchanged AutoRound INT4 target, and
+commit only the target-selected winner state. Completion of that gate requires
+an integrated step-cost and exact-token probe; only then is a strict fresh
+endpoint run justified.

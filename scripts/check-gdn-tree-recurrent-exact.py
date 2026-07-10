@@ -17,9 +17,10 @@ The projected-input convention matches Qwen3.5/Qwen3.6 GDN:
 * conv state stores the three prior raw projected rows in time-major order;
 * SSM state is ``[value_heads, value_dim, key_dim]``.
 
-No vLLM or native extension is imported, so the same contract runs on CPU and
-PyTorch/XPU.  The emitted parent/depth/path and state-row tables are intended
-as a concrete input/publication contract for a future native tree op.
+By default no vLLM or native extension is imported, so the high-level contract
+runs on CPU and PyTorch/XPU.  Optional native modes compare the production
+depth-batched indexed op and the graph-static whole-tree op against independent
+root-to-node native replay.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import statistics
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -36,7 +38,7 @@ import torch
 
 
 CLASSIFICATION = "correctness_harness_not_benchmark"
-SCHEMA = "qwen36_gdn_tree_recurrent_exact_v1"
+SCHEMA = "qwen36_gdn_tree_recurrent_exact_v2"
 WIDTH = 4
 DTYPE_NAMES = ("bf16", "fp16", "fp32")
 
@@ -145,6 +147,17 @@ class TreeExecution:
         return self.ssm_state_rows[1:]
 
 
+@dataclass
+class NativeIndexedWorkspace:
+    conv_state: torch.Tensor
+    ssm_state: torch.Tensor
+    output: torch.Tensor
+    z: torch.Tensor
+    depth_calls: tuple[tuple[torch.Tensor, torch.Tensor, torch.Tensor], ...]
+    tree_call: tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+    published_rows: torch.Tensor
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -162,7 +175,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--shape",
         action="append",
-        choices=("chain", "siblings", "binary", "ddtree_wide_deep"),
+        choices=(
+            "chain",
+            "siblings",
+            "binary",
+            "ddtree16",
+            "ddtree_wide_deep",
+        ),
         dest="shapes",
         help="Tree shape to check; repeat as needed. Default checks all.",
     )
@@ -200,9 +219,35 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--native-tree-loop",
+        action="store_true",
+        help=(
+            "also execute the graph-static gdn_attention_tree_indexed_decode "
+            "op once for the complete topologically ordered tree"
+        ),
+    )
+    parser.add_argument(
         "--kernel-prefix",
         default="/home/steve/src/vllm-xpu-kernels",
         help="path containing vllm_xpu_kernels._xpu_C",
+    )
+    parser.add_argument(
+        "--native-timing-samples",
+        type=int,
+        default=0,
+        help="XPU-event samples for the depth-batched native tree path",
+    )
+    parser.add_argument(
+        "--native-timing-calls-per-sample",
+        type=int,
+        default=8,
+        help="tree executions between one pair of XPU timing events",
+    )
+    parser.add_argument(
+        "--native-timing-warmup",
+        type=int,
+        default=8,
+        help="untimed native tree executions before event sampling",
     )
     return parser.parse_args()
 
@@ -225,6 +270,24 @@ def tree_shapes() -> dict[str, tuple[int, ...]]:
     chain = tuple([-1] + list(range(8)))
     siblings = tuple([-1] + [0] * 8)
     binary = tuple([-1] + [(node - 1) // 2 for node in range(1, 15)])
+    ddtree16 = (
+        -1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        2,
+        2,
+        3,
+        5,
+        5,
+        6,
+        7,
+        10,
+        14,
+    )
 
     # Root plus 32 verifier nodes distributed across broad early levels and a
     # six-edge tail.  This resembles a best-first DDTree result without tying
@@ -268,6 +331,7 @@ def tree_shapes() -> dict[str, tuple[int, ...]]:
         "chain": chain,
         "siblings": siblings,
         "binary": binary,
+        "ddtree16": ddtree16,
         "ddtree_wide_deep": ddtree_wide_deep,
     }
 
@@ -924,6 +988,280 @@ def run_native_indexed_tree(
     )
 
 
+def prepare_native_indexed_workspace(
+    contract: PackedTreeContract,
+    inputs: GDNInputs,
+    config: GDNConfig,
+) -> NativeIndexedWorkspace:
+    device = inputs.projected_states_qkvz.device
+    dtype = inputs.projected_states_qkvz.dtype
+    native_row_count = contract.num_nodes + 2
+    base_row = 1
+    native_conv = torch.zeros(
+        (native_row_count, config.width - 1, config.conv_dim),
+        dtype=dtype,
+        device=device,
+    )
+    native_ssm = torch.zeros(
+        (
+            native_row_count,
+            config.num_v_heads,
+            config.head_v_dim,
+            config.head_k_dim,
+        ),
+        dtype=dtype,
+        device=device,
+    )
+    native_conv[base_row].copy_(inputs.base_conv_state)
+    native_ssm[base_row].copy_(inputs.base_ssm_state)
+    native_out = torch.empty(
+        (contract.num_nodes, config.num_v_heads, config.head_v_dim),
+        dtype=dtype,
+        device=device,
+    )
+    native_z = torch.empty_like(native_out)
+    depth_calls: list[tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = []
+    for depth in range(contract.max_depth + 1):
+        nodes_cpu = torch.nonzero(contract.depths == depth, as_tuple=False).flatten()
+        token_indices = nodes_cpu.to(device=device, dtype=torch.int32)
+        state_indices = (nodes_cpu + 2).to(device=device, dtype=torch.int32)
+        parents = contract.parents.index_select(0, nodes_cpu)
+        source_indices = torch.where(
+            parents < 0,
+            torch.full_like(parents, base_row),
+            parents + 2,
+        ).to(device=device, dtype=torch.int32)
+        depth_calls.append((token_indices, state_indices, source_indices))
+    all_nodes = torch.arange(contract.num_nodes, dtype=torch.int32)
+    all_parents = contract.parents.to(dtype=torch.int32)
+    tree_call = (
+        all_nodes.to(device=device),
+        (all_nodes + 2).to(device=device),
+        torch.where(
+            all_parents < 0,
+            torch.full_like(all_parents, base_row),
+            all_parents + 2,
+        ).to(device=device),
+    )
+    published_rows = torch.cat(
+        (
+            torch.tensor([base_row], device=device, dtype=torch.long),
+            torch.arange(2, native_row_count, device=device, dtype=torch.long),
+        )
+    )
+    return NativeIndexedWorkspace(
+        conv_state=native_conv,
+        ssm_state=native_ssm,
+        output=native_out,
+        z=native_z,
+        depth_calls=tuple(depth_calls),
+        tree_call=tree_call,
+        published_rows=published_rows,
+    )
+
+
+def execute_native_indexed_workspace(
+    workspace: NativeIndexedWorkspace,
+    inputs: GDNInputs,
+    config: GDNConfig,
+    num_nodes: int,
+) -> None:
+    for token_indices, state_indices, source_indices in workspace.depth_calls:
+        torch.ops._xpu_C.gdn_attention_indexed_decode(
+            workspace.output,
+            workspace.z,
+            inputs.projected_states_qkvz,
+            inputs.projected_states_ba,
+            config.num_k_heads,
+            config.num_v_heads,
+            config.head_k_dim,
+            config.head_v_dim,
+            workspace.conv_state,
+            workspace.ssm_state,
+            inputs.conv_weights,
+            inputs.conv_bias,
+            "silu",
+            inputs.A_log,
+            inputs.dt_bias,
+            token_indices,
+            state_indices,
+            source_indices,
+            int(token_indices.numel()),
+            num_nodes,
+            1,
+            True,
+        )
+
+
+def execute_native_tree_loop_workspace(
+    workspace: NativeIndexedWorkspace,
+    inputs: GDNInputs,
+    config: GDNConfig,
+    num_nodes: int,
+) -> None:
+    token_indices, state_indices, source_indices = workspace.tree_call
+    torch.ops._xpu_C.gdn_attention_tree_indexed_decode(
+        workspace.output,
+        workspace.z,
+        inputs.projected_states_qkvz,
+        inputs.projected_states_ba,
+        config.num_k_heads,
+        config.num_v_heads,
+        config.head_k_dim,
+        config.head_v_dim,
+        workspace.conv_state,
+        workspace.ssm_state,
+        inputs.conv_weights,
+        inputs.conv_bias,
+        "silu",
+        inputs.A_log,
+        inputs.dt_bias,
+        token_indices,
+        state_indices,
+        source_indices,
+        num_nodes,
+        num_nodes,
+        1,
+        True,
+    )
+
+
+def run_native_tree_loop(
+    contract: PackedTreeContract,
+    inputs: GDNInputs,
+    config: GDNConfig,
+) -> tuple[TreeExecution, torch.Tensor]:
+    if not hasattr(torch.ops._xpu_C, "gdn_attention_tree_indexed_decode"):
+        raise RuntimeError(
+            "torch.ops._xpu_C.gdn_attention_tree_indexed_decode is unavailable"
+        )
+    workspace = prepare_native_indexed_workspace(contract, inputs, config)
+    execute_native_tree_loop_workspace(workspace, inputs, config, contract.num_nodes)
+    return (
+        TreeExecution(
+            outputs=workspace.output,
+            conv_state_rows=workspace.conv_state.index_select(
+                0, workspace.published_rows
+            ),
+            ssm_state_rows=workspace.ssm_state.index_select(
+                0, workspace.published_rows
+            ),
+        ),
+        workspace.z,
+    )
+
+
+def _percentile(values: list[float], quantile: float) -> float:
+    ordered = sorted(values)
+    position = (len(ordered) - 1) * quantile
+    lower = int(position)
+    upper = min(lower + 1, len(ordered) - 1)
+    fraction = position - lower
+    return ordered[lower] * (1.0 - fraction) + ordered[upper] * fraction
+
+
+def benchmark_native_indexed_tree(
+    contract: PackedTreeContract,
+    inputs: GDNInputs,
+    config: GDNConfig,
+    *,
+    warmup: int,
+    samples: int,
+    calls_per_sample: int,
+) -> dict[str, Any]:
+    workspace = prepare_native_indexed_workspace(contract, inputs, config)
+    for _ in range(warmup):
+        execute_native_indexed_workspace(workspace, inputs, config, contract.num_nodes)
+    torch.xpu.synchronize(inputs.projected_states_qkvz.device)
+
+    samples_ms: list[float] = []
+    for _ in range(samples):
+        start = torch.xpu.Event(enable_timing=True)
+        end = torch.xpu.Event(enable_timing=True)
+        start.record()
+        for _ in range(calls_per_sample):
+            execute_native_indexed_workspace(
+                workspace, inputs, config, contract.num_nodes
+            )
+        end.record()
+        end.synchronize()
+        samples_ms.append(float(start.elapsed_time(end)) / calls_per_sample)
+
+    return {
+        "classification": "diagnostic_device_event_not_endpoint",
+        "timer": "XPU event; reusable tensors; allocations excluded",
+        "samples": samples,
+        "calls_per_sample": calls_per_sample,
+        "warmup_calls": warmup,
+        "tree_depth_launches": len(workspace.depth_calls),
+        "native_ops_per_tree": len(workspace.depth_calls),
+        "underlying_conv_plus_gdn_kernels_per_tree": 2 * len(workspace.depth_calls),
+        "per_tree_ms": {
+            "median": statistics.median(samples_ms),
+            "mean": statistics.fmean(samples_ms),
+            "p10": _percentile(samples_ms, 0.10),
+            "p90": _percentile(samples_ms, 0.90),
+            "min": min(samples_ms),
+            "max": max(samples_ms),
+            "population_stdev": (
+                statistics.pstdev(samples_ms) if len(samples_ms) > 1 else 0.0
+            ),
+        },
+    }
+
+
+def benchmark_native_tree_loop(
+    contract: PackedTreeContract,
+    inputs: GDNInputs,
+    config: GDNConfig,
+    *,
+    warmup: int,
+    samples: int,
+    calls_per_sample: int,
+) -> dict[str, Any]:
+    workspace = prepare_native_indexed_workspace(contract, inputs, config)
+    for _ in range(warmup):
+        execute_native_tree_loop_workspace(
+            workspace, inputs, config, contract.num_nodes
+        )
+    torch.xpu.synchronize(inputs.projected_states_qkvz.device)
+
+    samples_ms: list[float] = []
+    for _ in range(samples):
+        start = torch.xpu.Event(enable_timing=True)
+        end = torch.xpu.Event(enable_timing=True)
+        start.record()
+        for _ in range(calls_per_sample):
+            execute_native_tree_loop_workspace(
+                workspace, inputs, config, contract.num_nodes
+            )
+        end.record()
+        end.synchronize()
+        samples_ms.append(float(start.elapsed_time(end)) / calls_per_sample)
+
+    return {
+        "classification": "diagnostic_device_event_not_endpoint",
+        "timer": "XPU event; reusable tensors; allocations excluded",
+        "samples": samples,
+        "calls_per_sample": calls_per_sample,
+        "warmup_calls": warmup,
+        "tree_depth_launches": 1,
+        "native_ops_per_tree": 1,
+        "underlying_conv_plus_gdn_kernels_per_tree": 2,
+        "per_tree_ms": {
+            "median": statistics.median(samples_ms),
+            "mean": statistics.fmean(samples_ms),
+            "p10": _percentile(samples_ms, 0.10),
+            "p90": _percentile(samples_ms, 0.90),
+            "min": min(samples_ms),
+            "max": max(samples_ms),
+            "population_stdev": (
+                statistics.pstdev(samples_ms) if len(samples_ms) > 1 else 0.0
+            ),
+        },
+    }
+
+
 def run_native_independent_paths(
     contract: PackedTreeContract,
     inputs: GDNInputs,
@@ -1133,6 +1471,91 @@ def validate_winning_commits(
     }
 
 
+def compare_native_execution(
+    *,
+    execution: str,
+    contract: PackedTreeContract,
+    inputs: GDNInputs,
+    config: GDNConfig,
+    native: TreeExecution,
+    native_z: torch.Tensor,
+    native_oracle: TreeExecution,
+    native_oracle_z: torch.Tensor,
+    math_oracle: TreeExecution,
+    atol: float,
+    rtol: float,
+) -> tuple[dict[str, Any], bool]:
+    native_output = tensor_comparison(
+        native.outputs, native_oracle.outputs, atol=0.0, rtol=0.0
+    )
+    native_conv = tensor_comparison(
+        native.conv_node_states,
+        native_oracle.conv_node_states,
+        atol=0.0,
+        rtol=0.0,
+    )
+    native_ssm = tensor_comparison(
+        native.ssm_node_states,
+        native_oracle.ssm_node_states,
+        atol=0.0,
+        rtol=0.0,
+    )
+    expected_z = inputs.projected_states_qkvz[:, config.conv_dim :].reshape(
+        contract.num_nodes, config.num_v_heads, config.head_v_dim
+    )
+    native_z_check = tensor_comparison(native_z, expected_z, atol=0.0, rtol=0.0)
+    native_oracle_z_check = tensor_comparison(
+        native_oracle_z, expected_z, atol=0.0, rtol=0.0
+    )
+    native_commit = validate_winning_commits(
+        contract, native, native_oracle, atol=0.0, rtol=0.0
+    )
+    math_output = tensor_comparison(
+        native.outputs, math_oracle.outputs, atol=atol, rtol=rtol
+    )
+    math_conv = tensor_comparison(
+        native.conv_node_states,
+        math_oracle.conv_node_states,
+        atol=atol,
+        rtol=rtol,
+    )
+    math_ssm = tensor_comparison(
+        native.ssm_node_states,
+        math_oracle.ssm_node_states,
+        atol=atol,
+        rtol=rtol,
+    )
+    passed = bool(
+        native_output["equal"]
+        and native_conv["equal"]
+        and native_ssm["equal"]
+        and native_z_check["equal"]
+        and native_oracle_z_check["equal"]
+        and native_commit["passed"]
+    )
+    return (
+        {
+            "execution": execution,
+            "base_native_state_row": 1,
+            "node_native_state_row_rule": "node i publishes to row i+2",
+            "outputs": native_output,
+            "conv_states": native_conv,
+            "ssm_states": native_ssm,
+            "z_passthrough": native_z_check,
+            "independent_path_z_passthrough": native_oracle_z_check,
+            "winning_path_commits": native_commit,
+            "python_math_reference_descriptive": {
+                "gating": "not used for native bit-exact pass/fail",
+                "outputs": math_output,
+                "conv_states": math_conv,
+                "ssm_states": math_ssm,
+            },
+            "passed": passed,
+        },
+        passed,
+    )
+
+
 def run_case(
     *,
     shape_name: str,
@@ -1145,6 +1568,10 @@ def run_case(
     atol: float,
     rtol: float,
     native_indexed: bool,
+    native_tree_loop: bool,
+    native_timing_samples: int,
+    native_timing_calls_per_sample: int,
+    native_timing_warmup: int,
 ) -> dict[str, Any]:
     dtype = dtype_from_name(dtype_name)
     inputs = build_inputs(
@@ -1218,77 +1645,65 @@ def run_case(
 
     native_report: dict[str, Any] | None = None
     native_passed = True
-    if native_indexed:
-        native, native_z = run_native_indexed_tree(contract, inputs, config)
+    native_tree_report: dict[str, Any] | None = None
+    native_tree_passed = True
+    native_oracle: TreeExecution | None = None
+    native_oracle_z: torch.Tensor | None = None
+    if native_indexed or native_tree_loop:
         native_oracle, native_oracle_z = run_native_independent_paths(
             contract, inputs, config
         )
-        native_output = tensor_comparison(
-            native.outputs, native_oracle.outputs, atol=0.0, rtol=0.0
-        )
-        native_conv = tensor_comparison(
-            native.conv_node_states,
-            native_oracle.conv_node_states,
-            atol=0.0,
-            rtol=0.0,
-        )
-        native_ssm = tensor_comparison(
-            native.ssm_node_states,
-            native_oracle.ssm_node_states,
-            atol=0.0,
-            rtol=0.0,
-        )
-        expected_z = inputs.projected_states_qkvz[:, config.conv_dim :].reshape(
-            contract.num_nodes, config.num_v_heads, config.head_v_dim
-        )
-        native_z_check = tensor_comparison(native_z, expected_z, atol=0.0, rtol=0.0)
-        native_oracle_z_check = tensor_comparison(
-            native_oracle_z, expected_z, atol=0.0, rtol=0.0
-        )
-        native_commit = validate_winning_commits(
-            contract, native, native_oracle, atol=0.0, rtol=0.0
-        )
-        math_output = tensor_comparison(
-            native.outputs, oracle.outputs, atol=atol, rtol=rtol
-        )
-        math_conv = tensor_comparison(
-            native.conv_node_states,
-            oracle.conv_node_states,
+    if native_indexed:
+        native, native_z = run_native_indexed_tree(contract, inputs, config)
+        assert native_oracle is not None and native_oracle_z is not None
+        native_report, native_passed = compare_native_execution(
+            execution="one native indexed op per tree depth",
+            contract=contract,
+            inputs=inputs,
+            config=config,
+            native=native,
+            native_z=native_z,
+            native_oracle=native_oracle,
+            native_oracle_z=native_oracle_z,
+            math_oracle=oracle,
             atol=atol,
             rtol=rtol,
         )
-        math_ssm = tensor_comparison(
-            native.ssm_node_states,
-            oracle.ssm_node_states,
+        if native_timing_samples > 0:
+            native_report["timing"] = benchmark_native_indexed_tree(
+                contract,
+                inputs,
+                config,
+                warmup=native_timing_warmup,
+                samples=native_timing_samples,
+                calls_per_sample=native_timing_calls_per_sample,
+            )
+
+    if native_tree_loop:
+        native_tree, native_tree_z = run_native_tree_loop(contract, inputs, config)
+        assert native_oracle is not None and native_oracle_z is not None
+        native_tree_report, native_tree_passed = compare_native_execution(
+            execution="one graph-static native op for the complete tree",
+            contract=contract,
+            inputs=inputs,
+            config=config,
+            native=native_tree,
+            native_z=native_tree_z,
+            native_oracle=native_oracle,
+            native_oracle_z=native_oracle_z,
+            math_oracle=oracle,
             atol=atol,
             rtol=rtol,
         )
-        native_passed = bool(
-            native_output["equal"]
-            and native_conv["equal"]
-            and native_ssm["equal"]
-            and native_z_check["equal"]
-            and native_oracle_z_check["equal"]
-            and native_commit["passed"]
-        )
-        native_report = {
-            "execution": "one native indexed launch per tree depth",
-            "base_native_state_row": 1,
-            "node_native_state_row_rule": "node i publishes to row i+2",
-            "outputs": native_output,
-            "conv_states": native_conv,
-            "ssm_states": native_ssm,
-            "z_passthrough": native_z_check,
-            "independent_path_z_passthrough": native_oracle_z_check,
-            "winning_path_commits": native_commit,
-            "python_math_reference_descriptive": {
-                "gating": "not used for native bit-exact pass/fail",
-                "outputs": math_output,
-                "conv_states": math_conv,
-                "ssm_states": math_ssm,
-            },
-            "passed": native_passed,
-        }
+        if native_timing_samples > 0:
+            native_tree_report["timing"] = benchmark_native_tree_loop(
+                contract,
+                inputs,
+                config,
+                warmup=native_timing_warmup,
+                samples=native_timing_samples,
+                calls_per_sample=native_timing_calls_per_sample,
+            )
 
     parity_passed = bool(
         output_check["close"]
@@ -1305,6 +1720,7 @@ def run_case(
         and commit_check["passed"]
         and negative_control_passed
         and native_passed
+        and native_tree_passed
     )
     return {
         "shape": shape_name,
@@ -1333,6 +1749,7 @@ def run_case(
             "passed": negative_control_passed,
         },
         "native_indexed": native_report,
+        "native_tree_loop": native_tree_report,
         "passed": passed,
     }
 
@@ -1362,8 +1779,22 @@ def validate_args(args: argparse.Namespace) -> GDNConfig:
             raise SystemExit(f"--{name} must be positive")
     if args.num_v_heads % args.num_k_heads != 0:
         raise SystemExit("--num-v-heads must be divisible by --num-k-heads")
-    if args.native_indexed and args.head_k_dim % 32 != 0:
-        raise SystemExit("--native-indexed requires --head-k-dim divisible by 32")
+    if (args.native_indexed or args.native_tree_loop) and args.head_k_dim % 32 != 0:
+        raise SystemExit(
+            "native indexed execution requires --head-k-dim divisible by 32"
+        )
+    if args.native_timing_samples < 0:
+        raise SystemExit("--native-timing-samples must be non-negative")
+    if args.native_timing_calls_per_sample <= 0:
+        raise SystemExit("--native-timing-calls-per-sample must be positive")
+    if args.native_timing_warmup < 0:
+        raise SystemExit("--native-timing-warmup must be non-negative")
+    if args.native_timing_samples and not (
+        args.native_indexed or args.native_tree_loop
+    ):
+        raise SystemExit(
+            "--native-timing-samples requires --native-indexed or --native-tree-loop"
+        )
     if args.atol < 0.0 or args.rtol < 0.0:
         raise SystemExit("tolerances must be non-negative")
     return GDNConfig(
@@ -1393,9 +1824,9 @@ def main() -> int:
     args = parse_args()
     config = validate_args(args)
     device = resolve_device(args.device)
-    if args.native_indexed:
+    if args.native_indexed or args.native_tree_loop:
         if device.type != "xpu":
-            raise SystemExit("--native-indexed requires an XPU device")
+            raise SystemExit("native indexed execution requires an XPU device")
         kernel_prefix = (
             str(args.kernel_prefix.expanduser().resolve())
             if isinstance(args.kernel_prefix, Path)
@@ -1439,6 +1870,12 @@ def main() -> int:
                     atol=args.atol,
                     rtol=args.rtol,
                     native_indexed=args.native_indexed,
+                    native_tree_loop=args.native_tree_loop,
+                    native_timing_samples=args.native_timing_samples,
+                    native_timing_calls_per_sample=(
+                        args.native_timing_calls_per_sample
+                    ),
+                    native_timing_warmup=args.native_timing_warmup,
                 )
             )
 
@@ -1466,6 +1903,7 @@ def main() -> int:
         },
         "tolerances": {"atol": args.atol, "rtol": args.rtol},
         "native_indexed_enabled": bool(args.native_indexed),
+        "native_tree_loop_enabled": bool(args.native_tree_loop),
         "expression_contract": {
             "projection_layout": "q,k,v,z and b,a; z is not recurrent",
             "conv_history": "three prior raw qkv rows, oldest to newest",
