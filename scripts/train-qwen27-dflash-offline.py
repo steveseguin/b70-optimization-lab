@@ -51,6 +51,9 @@ class Anchor:
     start: int
     family: str
     prompt_id: str
+    task: str
+    variant: str
+    scenario: str
 
 
 def parse_args() -> argparse.Namespace:
@@ -62,6 +65,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dflash-source", default="/home/steve/src/dflash")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--device", default="xpu:0")
+    parser.add_argument(
+        "--attention-mode",
+        choices=("endpoint-mixed", "public-noncausal"),
+        default="endpoint-mixed",
+        help=(
+            "endpoint-mixed reproduces the repaired vLLM Qwen3.6 DFlash "
+            "contract: causal sliding attention in sliding layers and "
+            "non-causal attention in full layers. public-noncausal preserves "
+            "the public Transformers reference behavior for comparisons."
+        ),
+    )
     parser.add_argument(
         "--lm-head-mode",
         choices=("bf16", "int8-ste"),
@@ -92,7 +106,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-every", type=int, default=20)
     parser.add_argument(
         "--loss-mode",
-        choices=("all", "position-decay", "accept-until-fail"),
+        choices=("all", "position-decay", "accept-until-fail", "soft-prefix"),
         default="accept-until-fail",
     )
     parser.add_argument(
@@ -102,6 +116,15 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Per-position multiplier for position-decay loss. The default is "
             "exp(-1/4), matching the DFlash paper's gamma=4 for block size 8."
+        ),
+    )
+    parser.add_argument(
+        "--soft-prefix-ce-weight",
+        type=float,
+        default=0.1,
+        help=(
+            "First-position cross-entropy floor used by soft-prefix loss. "
+            "The main term directly maximizes differentiable expected prefix."
         ),
     )
     parser.add_argument(
@@ -163,11 +186,24 @@ def collect_anchors(
         length = sample_length(sample)
         family = str(sample.get("family") or "unknown")
         prompt_id = str(sample.get("prompt_id") or Path(path).stem)
+        request_metadata = sample.get("request_metadata") or {}
+        prompt_metadata = request_metadata.get("metadata") or {}
+        task = str(prompt_metadata.get("task") or prompt_id)
+        variant = str(prompt_metadata.get("variant") or "unknown")
+        scenario = f"{family}::{task}"
         first = max(0, min_context - 1)
         last_exclusive = length - draft_tokens
         for start in range(first, max(first, last_exclusive)):
             anchors.append(
-                Anchor(path=path, start=start, family=family, prompt_id=prompt_id)
+                Anchor(
+                    path=path,
+                    start=start,
+                    family=family,
+                    prompt_id=prompt_id,
+                    task=task,
+                    variant=variant,
+                    scenario=scenario,
+                )
             )
     rng = random.Random(seed)
     rng.shuffle(anchors)
@@ -301,13 +337,22 @@ def draft_logits(
     target_hidden: torch.Tensor,
     noise_embedding: torch.Tensor,
     position_ids: torch.Tensor,
+    attention_mode: str,
 ) -> torch.Tensor:
-    hidden = model(
-        target_hidden=target_hidden,
-        noise_embedding=noise_embedding,
-        position_ids=position_ids,
-        use_cache=False,
-    )
+    if attention_mode == "public-noncausal":
+        hidden = model(
+            target_hidden=target_hidden,
+            noise_embedding=noise_embedding,
+            position_ids=position_ids,
+            use_cache=False,
+        )
+    else:
+        hidden = endpoint_mixed_dflash_forward(
+            model=model,
+            target_hidden=target_hidden,
+            noise_embedding=noise_embedding,
+            position_ids=position_ids,
+        )
     hidden = hidden[:, 1:]
     hidden_flat = hidden.reshape(-1, hidden.shape[-1]).contiguous()
     if "int8_t" not in lm_head:
@@ -332,6 +377,64 @@ def draft_logits(
     return int8_logits
 
 
+def endpoint_mixed_attention_mask(
+    *,
+    position_ids: torch.Tensor,
+    query_length: int,
+    sliding_window: int,
+    dtype: torch.dtype,
+) -> torch.Tensor:
+    key_positions = position_ids[:, None, :]
+    query_positions = position_ids[:, -query_length:, None]
+    allowed = key_positions <= query_positions
+    allowed &= key_positions > (query_positions - sliding_window)
+    mask = torch.zeros(
+        (*allowed.shape[:1], 1, *allowed.shape[1:]),
+        device=position_ids.device,
+        dtype=dtype,
+    )
+    return mask.masked_fill(~allowed[:, None], torch.finfo(dtype).min)
+
+
+def endpoint_mixed_dflash_forward(
+    *,
+    model: Any,
+    target_hidden: torch.Tensor,
+    noise_embedding: torch.Tensor,
+    position_ids: torch.Tensor,
+) -> torch.Tensor:
+    hidden_states = noise_embedding
+    projected_target = model.hidden_norm(model.fc(target_hidden))
+    position_embeddings = model.rotary_emb(hidden_states, position_ids)
+    layer_types = tuple(getattr(model.config, "layer_types", ()))
+    if len(layer_types) != len(model.layers):
+        raise ValueError(
+            f"DFlash layer_types={len(layer_types)} layers={len(model.layers)}"
+        )
+    for layer_idx, layer in enumerate(model.layers):
+        attention_mask = None
+        if layer_types[layer_idx] == "sliding_attention":
+            sliding_window = int(getattr(layer.self_attn, "sliding_window", 0) or 0)
+            if sliding_window <= 0:
+                raise ValueError(f"Missing sliding window for DFlash layer {layer_idx}")
+            attention_mask = endpoint_mixed_attention_mask(
+                position_ids=position_ids,
+                query_length=hidden_states.shape[1],
+                sliding_window=sliding_window,
+                dtype=hidden_states.dtype,
+            )
+        hidden_states = layer(
+            hidden_states=hidden_states,
+            target_hidden=projected_target,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_value=None,
+            use_cache=False,
+            position_embeddings=position_embeddings,
+        )
+    return model.norm(hidden_states)
+
+
 def accepted_prefix(prediction: torch.Tensor, labels: torch.Tensor) -> int:
     return int((prediction == labels).to(torch.int64).cumprod(0).sum().item())
 
@@ -351,6 +454,7 @@ def evaluate(
     step_correct = [0] * args.draft_tokens
     step_alive = [0] * args.draft_tokens
     by_family: dict[str, list[int]] = defaultdict(list)
+    by_scenario: dict[str, list[int]] = defaultdict(list)
     prefixes: list[int] = []
     records: list[dict[str, Any]] = []
     started = time.perf_counter()
@@ -371,6 +475,7 @@ def evaluate(
                 target_hidden=tensors[0],
                 noise_embedding=tensors[1],
                 position_ids=tensors[2],
+                attention_mode=args.attention_mode,
             )
             pred = logits.argmax(-1)
             labels = tensors[3]
@@ -381,6 +486,9 @@ def evaluate(
                     {
                         "prompt_id": anchor.prompt_id,
                         "family": anchor.family,
+                        "task": anchor.task,
+                        "variant": anchor.variant,
+                        "scenario": anchor.scenario,
                         "sample": Path(anchor.path).name,
                         "start": anchor.start,
                         "accepted_drafts": prefix,
@@ -388,6 +496,7 @@ def evaluate(
                 )
             histogram[prefix] += 1
             by_family[anchor.family].append(prefix)
+            by_scenario[anchor.scenario].append(prefix)
             alive = True
             for index in range(args.draft_tokens):
                 if alive:
@@ -417,6 +526,13 @@ def evaluate(
                 "mean_accepted_drafts": sum(values) / len(values),
             }
             for family, values in sorted(by_family.items())
+        },
+        "per_scenario": {
+            scenario: {
+                "anchors": len(values),
+                "mean_accepted_drafts": sum(values) / len(values),
+            }
+            for scenario, values in sorted(by_scenario.items())
         },
         "elapsed_s": elapsed,
         "anchors_per_s": len(prefixes) / elapsed if elapsed else None,
@@ -467,15 +583,28 @@ def evaluate_repeated(
     records = []
     histogram: Counter[int] = Counter()
     by_family: dict[str, list[int]] = defaultdict(list)
+    by_scenario: dict[str, list[int]] = defaultdict(list)
+    disagreement_anchors = 0
     for key in sorted(by_key):
         accepted = int(statistics.median(by_key[key]))
         record = dict(templates[key])
         record["accepted_drafts"] = accepted
         record["repeat_values"] = by_key[key]
+        if len(set(by_key[key])) > 1:
+            disagreement_anchors += 1
         records.append(record)
         histogram[accepted] += 1
         by_family[str(record["family"])].append(accepted)
+        by_scenario[str(record["scenario"])].append(accepted)
     mean_prefix = sum(row["accepted_drafts"] for row in records) / len(records)
+    step_alive = [
+        sum(int(row["accepted_drafts"]) >= index for row in records)
+        for index in range(args.draft_tokens)
+    ]
+    step_correct = [
+        sum(int(row["accepted_drafts"]) > index for row in records)
+        for index in range(args.draft_tokens)
+    ]
     result = dict(runs[0])
     result.update(
         {
@@ -493,8 +622,26 @@ def evaluate_repeated(
                 }
                 for family, values in sorted(by_family.items())
             },
+            "per_scenario": {
+                scenario: {
+                    "anchors": len(values),
+                    "mean_accepted_drafts": sum(values) / len(values),
+                }
+                for scenario, values in sorted(by_scenario.items())
+            },
+            "conditional_exact_by_position": [
+                step_correct[index] / step_alive[index]
+                if step_alive[index]
+                else 0.0
+                for index in range(args.draft_tokens)
+            ],
+            "alive_rows_by_position": step_alive,
             "records": records,
             "evaluation_repeats": len(runs),
+            "repeat_disagreement_anchors": disagreement_anchors,
+            "repeat_disagreement_anchor_fraction": disagreement_anchors
+            / len(records),
+            "repeat_exact_match_all": disagreement_anchors == 0,
             "repeat_visible_tokens_per_step": [
                 run["visible_tokens_per_step"] for run in runs
             ],
@@ -533,6 +680,28 @@ def loss_weights(
     # Include the first failure: it is the token that must be repaired to
     # lengthen the verifier-accepted prefix. Ignore positions beyond it.
     return alive_before.to(torch.float32)
+
+
+def training_loss(
+    *, logits: torch.Tensor, labels: torch.Tensor, args: argparse.Namespace
+) -> torch.Tensor:
+    per_position = F.cross_entropy(logits.float(), labels, reduction="none")
+    if args.loss_mode != "soft-prefix":
+        weights = loss_weights(
+            logits=logits,
+            labels=labels,
+            mode=args.loss_mode,
+            decay=args.position_decay,
+        )
+        return (per_position * weights).sum() / weights.sum().clamp_min(1.0)
+
+    target_log_probs = -per_position
+    survival = target_log_probs.cumsum(0).exp()
+    expected_prefix_fraction = survival.mean().clamp_min(1.0e-12)
+    return (
+        -expected_prefix_fraction.log()
+        + args.soft_prefix_ce_weight * per_position[0]
+    )
 
 
 def configure_training(model: Any, scope: str) -> list[torch.nn.Parameter]:
@@ -612,18 +781,10 @@ def train(
             target_hidden=tensors[0],
             noise_embedding=tensors[1],
             position_ids=tensors[2],
+            attention_mode=args.attention_mode,
         )
         labels = tensors[3]
-        per_position = F.cross_entropy(
-            logits.float(), labels, reduction="none"
-        )
-        weights = loss_weights(
-            logits=logits,
-            labels=labels,
-            mode=args.loss_mode,
-            decay=args.position_decay,
-        )
-        loss = (per_position * weights).sum() / weights.sum().clamp_min(1.0)
+        loss = training_loss(logits=logits, labels=labels, args=args)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(parameters, args.grad_clip)
@@ -678,6 +839,7 @@ def train(
         "weight_decay": args.weight_decay,
         "loss_mode": args.loss_mode,
         "position_decay": args.position_decay,
+        "soft_prefix_ce_weight": args.soft_prefix_ce_weight,
         "train_scope": args.train_scope,
         "lr_schedule": args.lr_schedule,
         "mean_loss": sum(losses) / len(losses) if losses else None,
@@ -696,6 +858,8 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     train_paths = sample_paths(args.dataset_dir)
+    if args.steps > 0 and not args.heldout_dir:
+        raise ValueError("Training requires an explicit disjoint --heldout-dir")
     heldout_paths = sample_paths(args.heldout_dir or args.dataset_dir)
     train_anchors = collect_anchors(
         train_paths,
@@ -711,6 +875,14 @@ def main() -> int:
         limit=args.heldout_starts,
         seed=args.seed + 1,
     )
+    if args.steps > 0:
+        train_prompts = {anchor.prompt_id for anchor in train_anchors}
+        heldout_prompts = {anchor.prompt_id for anchor in heldout_anchors}
+        overlap = sorted(train_prompts & heldout_prompts)
+        if overlap:
+            raise ValueError(
+                "Train/heldout prompt overlap is forbidden: " + ", ".join(overlap[:8])
+            )
     # Evaluation order does not affect the metric. Group by source file so the
     # single-sample cache avoids rereading multi-megabyte trace tensors for
     # every anchor.
@@ -756,6 +928,7 @@ def main() -> int:
         "seed": args.seed,
         "draft_tokens": args.draft_tokens,
         "lm_head_mode": args.lm_head_mode,
+        "attention_mode": args.attention_mode,
         "min_context": args.min_context,
         "max_context": args.max_context,
         "train_anchor_count": len(train_anchors),

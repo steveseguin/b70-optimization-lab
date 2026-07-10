@@ -17,6 +17,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out", required=True)
     parser.add_argument("--bootstrap-samples", type=int, default=20000)
     parser.add_argument("--seed", type=int, default=20260710)
+    parser.add_argument(
+        "--min-effect",
+        type=float,
+        default=0.0,
+        help="Minimum scenario-weighted accepted-draft delta for a positive screen.",
+    )
+    parser.add_argument(
+        "--max-repeat-disagreement",
+        type=float,
+        default=0.01,
+        help="Maximum allowed baseline/final per-anchor repeat disagreement fraction.",
+    )
     return parser.parse_args()
 
 
@@ -61,6 +73,10 @@ def paired_rows(summary: dict[str, Any]) -> list[dict[str, Any]]:
                 "sample": key[1],
                 "start": key[2],
                 "family": str(after["family"]),
+                "scenario": str(
+                    after.get("scenario")
+                    or f"{after['family']}::{after.get('task', after['prompt_id'])}"
+                ),
                 "baseline": int(before["accepted_drafts"]),
                 "candidate": int(after["accepted_drafts"]),
                 "delta": int(after["accepted_drafts"])
@@ -122,6 +138,7 @@ def analyze_one(
     summary = json.loads(Path(path).read_text())
     rows = paired_rows(summary)
     prompt_means = cluster_means(rows, "prompt_id")
+    scenario_means = cluster_means(rows, "scenario")
     family_means = cluster_means(rows, "family")
     prompt_boot = bootstrap_cluster_means(
         prompt_means, samples=samples, rng=random.Random(seed)
@@ -129,16 +146,20 @@ def analyze_one(
     family_boot = bootstrap_cluster_means(
         family_means, samples=samples, rng=random.Random(seed + 1)
     )
+    scenario_boot = bootstrap_cluster_means(
+        scenario_means, samples=samples, rng=random.Random(seed + 2)
+    )
     raw_mean = sum(float(row["delta"]) for row in rows) / len(rows)
     label = Path(path).parent.name
     pvalue = sign_flip_pvalue(
-        prompt_means, samples=samples, rng=random.Random(seed + 2)
+        scenario_means, samples=samples, rng=random.Random(seed + 3)
     )
     result = {
         "label": label,
         "summary": str(Path(path).resolve()),
         "paired_anchors": len(rows),
         "prompt_clusters": len(prompt_means),
+        "scenario_clusters": len(scenario_means),
         "family_clusters": len(family_means),
         "baseline_visible_tokens_per_step": summary["baseline"][
             "visible_tokens_per_step"
@@ -153,12 +174,25 @@ def analyze_one(
             percentile(prompt_boot, 0.975),
         ],
         "prompt_cluster_one_sided_95_lcb": percentile(prompt_boot, 0.05),
+        "scenario_cluster_mean_delta": sum(scenario_means.values())
+        / len(scenario_means),
+        "scenario_cluster_bootstrap_95_ci": [
+            percentile(scenario_boot, 0.025),
+            percentile(scenario_boot, 0.975),
+        ],
+        "scenario_cluster_one_sided_95_lcb": percentile(scenario_boot, 0.05),
         "family_cluster_mean_delta": sum(family_means.values()) / len(family_means),
         "family_cluster_bootstrap_95_ci": [
             percentile(family_boot, 0.025),
             percentile(family_boot, 0.975),
         ],
-        "one_sided_prompt_cluster_sign_flip_p": pvalue,
+        "one_sided_scenario_cluster_sign_flip_p": pvalue,
+        "baseline_repeat_disagreement_anchor_fraction": summary["baseline"].get(
+            "repeat_disagreement_anchor_fraction", 0.0
+        ),
+        "candidate_repeat_disagreement_anchor_fraction": summary["final"].get(
+            "repeat_disagreement_anchor_fraction", 0.0
+        ),
         "positive_anchor_fraction": sum(row["delta"] > 0 for row in rows)
         / len(rows),
         "negative_anchor_fraction": sum(row["delta"] < 0 for row in rows)
@@ -179,19 +213,36 @@ def main() -> int:
             seed=args.seed + index * 100,
         )
         analyses.append(result)
+        if label in pvalues:
+            raise ValueError(f"Duplicate candidate label: {label}")
         pvalues[label] = pvalue
     adjusted = holm_adjust(pvalues)
     for result in analyses:
-        result["holm_adjusted_one_sided_p"] = adjusted[result["label"]]
-        result["statistically_positive"] = bool(
-            result["prompt_cluster_one_sided_95_lcb"] > 0
+        result["holm_adjusted_one_sided_scenario_p"] = adjusted[result["label"]]
+        result["repeat_stability_passed"] = bool(
+            result["baseline_repeat_disagreement_anchor_fraction"]
+            <= args.max_repeat_disagreement
+            and result["candidate_repeat_disagreement_anchor_fraction"]
+            <= args.max_repeat_disagreement
+        )
+        result["exploratory_screen_positive"] = bool(
+            result["scenario_cluster_one_sided_95_lcb"] > args.min_effect
             and adjusted[result["label"]] < 0.05
+            and result["repeat_stability_passed"]
         )
     output = {
-        "classification": "diagnostic_paired_dflash_acceptance_not_endpoint_not_localmaxxing",
+        "classification": "exploratory_paired_dflash_acceptance_not_confirmatory_not_endpoint_not_localmaxxing",
         "bootstrap_samples": args.bootstrap_samples,
         "seed": args.seed,
-        "multiple_comparison_correction": "Holm over one-sided prompt-cluster sign-flip p-values",
+        "minimum_effect": args.min_effect,
+        "max_repeat_disagreement": args.max_repeat_disagreement,
+        "independent_screening_unit": "scenario (family x task); family inference is descriptive with only three heldout families",
+        "multiple_comparison_correction": "Holm over exploratory one-sided scenario-cluster sign-flip p-values",
+        "promotion_warning": (
+            "This heldout corpus and its checkpoints are adaptively inspected. "
+            "A positive screen still requires one frozen evaluation on untouched "
+            "families or an independent endpoint acceptance trace."
+        ),
         "candidates": analyses,
     }
     Path(args.out).write_text(json.dumps(output, indent=2, sort_keys=True) + "\n")

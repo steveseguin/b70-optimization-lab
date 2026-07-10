@@ -1,0 +1,116 @@
+{
+  "bootstrap_samples": 50000,
+  "candidates": [
+    {
+      "baseline_visible_tokens_per_step": 3.1083984375,
+      "candidate_visible_tokens_per_step": 3.1142578125,
+      "family_cluster_bootstrap_95_ci": [
+        -0.012012012012012012,
+        0.017391304347826087
+      ],
+      "family_cluster_mean_delta": 0.005646661992477524,
+      "family_clusters": 3,
+      "holm_adjusted_one_sided_p": 0.499190016199676,
+      "label": "all-auf-lr1e-5",
+      "negative_anchor_fraction": 0.013671875,
+      "one_sided_prompt_cluster_sign_flip_p": 0.249595008099838,
+      "paired_anchors": 1024,
+      "positive_anchor_fraction": 0.01171875,
+      "prompt_cluster_bootstrap_95_ci": [
+        -0.019553191311003807,
+        0.04116783534752285
+      ],
+      "prompt_cluster_mean_delta": 0.010661098161098162,
+      "prompt_cluster_one_sided_95_lcb": -0.014685713591963592,
+      "prompt_clusters": 96,
+      "raw_mean_delta_accepted_drafts": 0.005859375,
+      "statistically_positive": false,
+      "summary": "/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/adaptation-long-4gpu-20260710T041218Z/all-auf-lr1e-5/summary.json",
+      "zero_anchor_fraction": 0.974609375
+    },
+    {
+      "baseline_visible_tokens_per_step": 3.107421875,
+      "candidate_visible_tokens_per_step": 3.1279296875,
+      "family_cluster_bootstrap_95_ci": [
+        0.02023121387283237,
+        0.021021021021021023
+      ],
+      "family_cluster_mean_delta": 0.020514029988772386,
+      "family_clusters": 3,
+      "holm_adjusted_one_sided_p": 0.06935861282774344,
+      "label": "layers-auf-lr1e-5",
+      "negative_anchor_fraction": 0.0087890625,
+      "one_sided_prompt_cluster_sign_flip_p": 0.01733965320693586,
+      "paired_anchors": 1024,
+      "positive_anchor_fraction": 0.0146484375,
+      "prompt_cluster_bootstrap_95_ci": [
+        0.004306350478225479,
+        0.05113763189935066
+      ],
+      "prompt_cluster_mean_delta": 0.025347337847337847,
+      "prompt_cluster_one_sided_95_lcb": 0.007200029426591927,
+      "prompt_clusters": 96,
+      "raw_mean_delta_accepted_drafts": 0.0205078125,
+      "statistically_positive": false,
+      "summary": "/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/adaptation-long-4gpu-20260710T041218Z/layers-auf-lr1e-5/summary.json",
+      "zero_anchor_fraction": 0.9765625
+    },
+    {
+      "baseline_visible_tokens_per_step": 3.1005859375,
+      "candidate_visible_tokens_per_step": 3.1181640625,
+      "family_cluster_bootstrap_95_ci": [
+        0.002898550724637681,
+        0.03468208092485549
+      ],
+      "family_cluster_mean_delta": 0.017531882221502728,
+      "family_clusters": 3,
+      "holm_adjusted_one_sided_p": 0.11963760724785504,
+      "label": "layers-paperdecay-lr1e-5",
+      "negative_anchor_fraction": 0.0087890625,
+      "one_sided_prompt_cluster_sign_flip_p": 0.03987920241595168,
+      "paired_anchors": 1024,
+      "positive_anchor_fraction": 0.0126953125,
+      "prompt_cluster_bootstrap_95_ci": [
+        -0.00042684167684167647,
+        0.049712921626984125
+      ],
+      "prompt_cluster_mean_delta": 0.022820957977207974,
+      "prompt_cluster_one_sided_95_lcb": 0.0030353009259259265,
+      "prompt_clusters": 96,
+      "raw_mean_delta_accepted_drafts": 0.017578125,
+      "statistically_positive": false,
+      "summary": "/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/adaptation-long-4gpu-20260710T041218Z/layers-paperdecay-lr1e-5/summary.json",
+      "zero_anchor_fraction": 0.978515625
+    },
+    {
+      "baseline_visible_tokens_per_step": 3.1064453125,
+      "candidate_visible_tokens_per_step": 3.1025390625,
+      "family_cluster_bootstrap_95_ci": [
+        -0.02608695652173913,
+        0.014450867052023121
+      ],
+      "family_cluster_mean_delta": -0.003878696489905336,
+      "family_clusters": 3,
+      "holm_adjusted_one_sided_p": 1.0,
+      "label": "layers-paperdecay-lr3e-6",
+      "negative_anchor_fraction": 0.0078125,
+      "one_sided_prompt_cluster_sign_flip_p": 1.0,
+      "paired_anchors": 1024,
+      "positive_anchor_fraction": 0.0068359375,
+      "prompt_cluster_bootstrap_95_ci": [
+        -0.02158941897223147,
+        0.016584890803640805
+      ],
+      "prompt_cluster_mean_delta": -0.0029024794649794646,
+      "prompt_cluster_one_sided_95_lcb": -0.018479656917156917,
+      "prompt_clusters": 96,
+      "raw_mean_delta_accepted_drafts": -0.00390625,
+      "statistically_positive": false,
+      "summary": "/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/adaptation-long-4gpu-20260710T041218Z/layers-paperdecay-lr3e-6/summary.json",
+      "zero_anchor_fraction": 0.9853515625
+    }
+  ],
+  "classification": "diagnostic_paired_dflash_acceptance_not_endpoint_not_localmaxxing",
+  "multiple_comparison_correction": "Holm over one-sided prompt-cluster sign-flip p-values",
+  "seed": 20260710
+}
