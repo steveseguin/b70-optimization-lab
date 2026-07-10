@@ -1,0 +1,94 @@
+{
+  "accepted_counts": [
+    2,
+    4,
+    1
+  ],
+  "classification": "native_commit_stage_bitwise_parity_guard",
+  "comparisons": {
+    "a": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "b": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "cache_base": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "conv_pending": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "conv_state": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "is_flush": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "k": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "pending": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "pending_len": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "q": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "v": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    },
+    "write_pos": {
+      "max_abs": 0.0,
+      "nonzero_diff_count": 0,
+      "pass": true
+    }
+  },
+  "note": "row 2 clamps accepted 4 to pending_len 3; row 3 is inactive",
+  "pass": true,
+  "pending_lengths": [
+    4,
+    3,
+    4
+  ],
+  "shape": {
+    "conv_dim": 10240,
+    "conv_width": 4,
+    "dtype": "bfloat16",
+    "head_k_dim": 128,
+    "head_v_dim": 128,
+    "max_spec_len": 4,
+    "num_k_heads": 16,
+    "num_v_heads": 48,
+    "rows": 3,
+    "sequence_lengths": [
+      4,
+      2,
+      1
+    ]
+  },
+  "xpu_c_extension": "/tmp/vllm-xpu-qwen27-replayssm-commit-stage-20260710/vllm_xpu_kernels/_xpu_C.abi3.so"
+}

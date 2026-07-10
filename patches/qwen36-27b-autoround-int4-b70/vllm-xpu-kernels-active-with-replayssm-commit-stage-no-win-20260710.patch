@@ -1,0 +1,2264 @@
+diff --git a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+index 18c79cd..28183a9 100644
+--- a/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
++++ b/csrc/xpu/gdn_attn/gdn_attn_interface.cpp
+@@ -1,4 +1,7 @@
+ #include <algorithm>
++#include <cctype>
++#include <cstdlib>
++#include <string>
+ 
+ #include <sycl/sycl.hpp>
+ #include <torch/all.h>
+@@ -14,6 +17,22 @@
+   #include "xe_2/chunk_gated_delta_rule_xe2.h"
+ #endif
+ 
++namespace {
++
++bool gdn_env_truthy(const char* name) {
++  const char* raw = std::getenv(name);
++  if (raw == nullptr) {
++    return false;
++  }
++  std::string value(raw);
++  std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
++    return static_cast<char>(std::tolower(c));
++  });
++  return value == "1" || value == "true" || value == "yes" || value == "on";
++}
++
++}  // namespace
++
+ void gdn_attention(
+     torch::Tensor&
+         core_attn_out,  // [total_seqlen, num_v_heads / tp_size, head_v_dim]
+@@ -588,6 +607,8 @@ void gdn_attention_spec_decode(
+ 
+   const int64_t total_spec_tokens = spec_token_indices.numel();
+   const int64_t conv_history_len = conv_weights.size(1) - 1;
++  const bool native_spec_prefix_base_state =
++      gdn_env_truthy("VLLM_XPU_GDN_NATIVE_SPEC_PREFIX_BASE_STATE");
+   torch::Tensor accepted_state_indices = torch::empty(
+       {num_spec_decodes},
+       torch::dtype(at::kInt).device(device).requires_grad(false));
+@@ -632,7 +653,8 @@ void gdn_attention_spec_decode(
+         accepted_state_indices,                                           \
+         spec_state_indices_tensor,                                        \
+         num_accepted_tokens,                                              \
+-        num_spec_decodes);                                                \
++        num_spec_decodes,                                                 \
++        native_spec_prefix_base_state);                                   \
+     gdn::spec_decode::select_state_column(                                \
+         queue,                                                            \
+         running_state_indices,                                            \
+@@ -698,7 +720,15 @@ void gdn_attention_spec_decode(
+         head_k_dim,                                                       \
+         local_num_v_heads,                                                \
+         head_v_dim,                                                       \
+-        reorder_input);                                                   \
++        reorder_input,                                                    \
++        native_spec_prefix_base_state);                                   \
++    if (native_spec_prefix_base_state) {                                  \
++      gdn::spec_decode::copy_conv_rows_to_indices<scalar_t>(              \
++          queue,                                                          \
++          conv_state,                                                     \
++          base_conv_state,                                                \
++          running_state_indices);                                         \
++    }                                                                     \
+     gdn::spec_decode::gated_delta_rule_spec<scalar_t>(                    \
+         queue,                                                            \
+         core_attn_out,                                                    \
+@@ -715,7 +745,8 @@ void gdn_attention_spec_decode(
+         spec_state_indices_tensor,                                        \
+         std::nullopt,                                                     \
+         num_spec_decodes,                                                 \
+-        num_actual_tokens);                                               \
++        num_actual_tokens,                                                \
++        native_spec_prefix_base_state);                                   \
+   } while (0)
+ 
+   if (dtype == at::kBFloat16) {
+@@ -871,6 +902,180 @@ void gdn_replayssm_stage_conv(
+ #undef REPLAY_STAGE_LAUNCHER
+ }
+ 
++void gdn_replayssm_commit_stage_conv(
++    torch::Tensor& q,
++    torch::Tensor& k,
++    torch::Tensor& v,
++    torch::Tensor& a_out,
++    torch::Tensor& b_out,
++    const torch::Tensor& mixed_qkv,
++    const torch::Tensor& a,
++    const torch::Tensor& b,
++    torch::Tensor& conv_state,
++    const torch::Tensor& conv_weights,
++    const std::optional<torch::Tensor>& conv_bias,
++    torch::Tensor& conv_pending,
++    const torch::Tensor& spec_token_indices,
++    const torch::Tensor& query_start_loc,
++    const torch::Tensor& state_indices,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    const torch::Tensor& pending_len,
++    const torch::Tensor& num_accepted_tokens,
++    const int64_t num_spec_decodes,
++    const int64_t num_actual_tokens,
++    const int64_t max_spec_len,
++    const int64_t max_cache_len,
++    const std::string& activation,
++    const int64_t null_block_id) {
++  if (num_spec_decodes == 0 || spec_token_indices.numel() == 0 ||
++      max_spec_len <= 0) {
++    return;
++  }
++
++  TORCH_CHECK(q.is_contiguous(), "q must be contiguous");
++  TORCH_CHECK(k.is_contiguous(), "k must be contiguous");
++  TORCH_CHECK(v.is_contiguous(), "v must be contiguous");
++  TORCH_CHECK(a_out.is_contiguous(), "a_out must be contiguous");
++  TORCH_CHECK(b_out.is_contiguous(), "b_out must be contiguous");
++  TORCH_CHECK(a.is_contiguous(), "a must be contiguous");
++  TORCH_CHECK(b.is_contiguous(), "b must be contiguous");
++  TORCH_CHECK(conv_weights.is_contiguous(), "conv_weights must be contiguous");
++  TORCH_CHECK(conv_pending.is_contiguous(), "conv_pending must be contiguous");
++  TORCH_CHECK(write_pos.is_contiguous(), "write_pos must be contiguous");
++  TORCH_CHECK(cache_base.is_contiguous(), "cache_base must be contiguous");
++  TORCH_CHECK(is_flush.is_contiguous(), "is_flush must be contiguous");
++  TORCH_CHECK(pending.is_contiguous(), "pending must be contiguous");
++  TORCH_CHECK(pending_len.is_contiguous(), "pending_len must be contiguous");
++  TORCH_CHECK(
++      num_accepted_tokens.is_contiguous(),
++      "num_accepted_tokens must be contiguous");
++  TORCH_CHECK(
++      spec_token_indices.is_contiguous(),
++      "spec_token_indices must be contiguous");
++  TORCH_CHECK(
++      query_start_loc.is_contiguous(), "query_start_loc must be contiguous");
++  TORCH_CHECK(state_indices.is_contiguous(), "state_indices must be contiguous");
++
++  TORCH_CHECK(q.dim() == 4 && q.size(0) == 1);
++  TORCH_CHECK(k.dim() == 4 && k.size(0) == 1);
++  TORCH_CHECK(v.dim() == 4 && v.size(0) == 1);
++  TORCH_CHECK(a_out.dim() == 2);
++  TORCH_CHECK(b_out.dim() == 2);
++  TORCH_CHECK(mixed_qkv.dim() == 2);
++  TORCH_CHECK(a.dim() == 2);
++  TORCH_CHECK(b.dim() == 2);
++  TORCH_CHECK(conv_state.dim() == 3);
++  TORCH_CHECK(conv_weights.dim() == 2);
++  TORCH_CHECK(conv_pending.dim() == 3);
++
++  const int64_t rows = std::min<int64_t>(
++      num_spec_decodes,
++      std::min<int64_t>(
++          num_accepted_tokens.numel(),
++          std::min<int64_t>(
++              query_start_loc.size(0) - 1, state_indices.size(0))));
++  if (rows <= 0) {
++    return;
++  }
++  const int64_t total_spec_tokens = spec_token_indices.numel();
++  const int64_t num_k_heads = q.size(2);
++  const int64_t head_k_dim = q.size(3);
++  const int64_t num_v_heads = v.size(2);
++  const int64_t head_v_dim = v.size(3);
++  const int64_t conv_dim = conv_weights.size(0);
++
++  TORCH_CHECK(max_spec_len <= 8, "fused commit-stage supports spec_len <= 8");
++  TORCH_CHECK(max_cache_len > 0);
++  TORCH_CHECK((max_cache_len & (max_cache_len - 1)) == 0);
++  TORCH_CHECK(k.size(1) == total_spec_tokens);
++  TORCH_CHECK(v.size(1) == total_spec_tokens);
++  TORCH_CHECK(q.size(1) == total_spec_tokens);
++  TORCH_CHECK(k.size(2) == num_k_heads && k.size(3) == head_k_dim);
++  TORCH_CHECK(a_out.size(0) == total_spec_tokens);
++  TORCH_CHECK(b_out.size(0) == total_spec_tokens);
++  TORCH_CHECK(a_out.size(1) == num_v_heads);
++  TORCH_CHECK(b_out.size(1) == num_v_heads);
++  TORCH_CHECK(a.size(0) >= num_actual_tokens);
++  TORCH_CHECK(b.size(0) >= num_actual_tokens);
++  TORCH_CHECK(a.size(1) == num_v_heads);
++  TORCH_CHECK(b.size(1) == num_v_heads);
++  TORCH_CHECK(mixed_qkv.size(0) >= num_actual_tokens);
++  TORCH_CHECK(mixed_qkv.size(1) == conv_dim);
++  TORCH_CHECK(conv_state.size(1) == conv_dim);
++  TORCH_CHECK(conv_state.size(2) >= conv_weights.size(1) - 1);
++  TORCH_CHECK(conv_pending.size(0) == conv_state.size(0));
++  TORCH_CHECK(conv_pending.size(1) >= max_spec_len);
++  TORCH_CHECK(conv_pending.size(2) == conv_dim);
++  TORCH_CHECK(write_pos.size(0) >= conv_state.size(0));
++  TORCH_CHECK(cache_base.size(0) >= conv_state.size(0));
++  TORCH_CHECK(is_flush.size(0) >= conv_state.size(0));
++  TORCH_CHECK(pending.size(0) >= conv_state.size(0));
++  TORCH_CHECK(pending_len.size(0) >= conv_state.size(0));
++  TORCH_CHECK(
++      conv_dim == 2 * num_k_heads * head_k_dim + num_v_heads * head_v_dim);
++
++  auto dtype = mixed_qkv.dtype();
++  TORCH_CHECK(q.dtype() == dtype);
++  TORCH_CHECK(k.dtype() == dtype);
++  TORCH_CHECK(v.dtype() == dtype);
++  TORCH_CHECK(a_out.dtype() == dtype);
++  TORCH_CHECK(b_out.dtype() == dtype);
++  TORCH_CHECK(a.dtype() == dtype);
++  TORCH_CHECK(b.dtype() == dtype);
++  TORCH_CHECK(conv_state.dtype() == dtype);
++  TORCH_CHECK(conv_weights.dtype() == dtype);
++  TORCH_CHECK(conv_pending.dtype() == dtype);
++  if (conv_bias.has_value()) {
++    TORCH_CHECK(conv_bias->is_contiguous(), "conv_bias must be contiguous");
++    TORCH_CHECK(conv_bias->dtype() == dtype);
++    TORCH_CHECK(conv_bias->numel() == conv_dim);
++  }
++  TORCH_CHECK(spec_token_indices.scalar_type() == at::kInt);
++  TORCH_CHECK(query_start_loc.scalar_type() == at::kInt);
++  TORCH_CHECK(state_indices.scalar_type() == at::kLong);
++  TORCH_CHECK(write_pos.scalar_type() == at::kInt);
++  TORCH_CHECK(cache_base.scalar_type() == at::kInt);
++  TORCH_CHECK(is_flush.scalar_type() == at::kChar);
++  TORCH_CHECK(pending.scalar_type() == at::kChar);
++  TORCH_CHECK(pending_len.scalar_type() == at::kInt);
++  TORCH_CHECK(num_accepted_tokens.scalar_type() == at::kInt);
++
++  gdn::ActMode act_mode;
++  if (activation == "silu") {
++    act_mode = gdn::ActMode::silu;
++  } else if (activation == "swish") {
++    act_mode = gdn::ActMode::swish;
++  } else {
++    TORCH_CHECK(false, "Unsupported GDN activation: ", activation);
++  }
++
++  auto& queue = vllm::xpu::vllmGetQueue();
++#define REPLAY_COMMIT_STAGE_LAUNCHER(scalar_t)                             \
++  gdn::spec_decode::gdn_replayssm_commit_stage_conv<scalar_t>(             \
++      queue, q, k, v, a_out, b_out, mixed_qkv, a, b, conv_state,           \
++      conv_weights, conv_bias, conv_pending, spec_token_indices,           \
++      query_start_loc, state_indices, write_pos, cache_base, is_flush,      \
++      pending, pending_len, num_accepted_tokens, act_mode,                  \
++      static_cast<int>(rows), static_cast<int>(num_actual_tokens),         \
++      static_cast<int>(max_spec_len), static_cast<int>(max_cache_len),      \
++      static_cast<int>(null_block_id))
++
++  if (dtype == at::kBFloat16) {
++    using scalar_t = sycl::ext::oneapi::bfloat16;
++    REPLAY_COMMIT_STAGE_LAUNCHER(scalar_t);
++  } else if (dtype == at::kHalf) {
++    using scalar_t = sycl::half;
++    REPLAY_COMMIT_STAGE_LAUNCHER(scalar_t);
++  } else {
++    using scalar_t = float;
++    REPLAY_COMMIT_STAGE_LAUNCHER(scalar_t);
++  }
++#undef REPLAY_COMMIT_STAGE_LAUNCHER
++}
++
+ void gdn_replayssm_spec_decode(
+     torch::Tensor& out,  // [1, total_spec_tokens, num_v_heads, head_v_dim]
+     const torch::Tensor& q,  // [1, total_spec_tokens, num_k_heads, head_k_dim]
+@@ -889,6 +1094,9 @@ void gdn_replayssm_spec_decode(
+     const torch::Tensor& write_pos,          // [num_slots], int32
+     const torch::Tensor& cache_base,         // [num_slots], int32
+     const torch::Tensor& is_flush,           // [num_slots], int8
++    torch::Tensor& pending,                  // [num_slots], int8
++    torch::Tensor& pending_len,              // [num_slots], int32
++    const bool write_pending_metadata,
+     const int64_t max_cache_len,
+     const int64_t max_spec_len,
+     const double scale,
+@@ -918,6 +1126,8 @@ void gdn_replayssm_spec_decode(
+   TORCH_CHECK(write_pos.is_contiguous(), "write_pos must be contiguous");
+   TORCH_CHECK(cache_base.is_contiguous(), "cache_base must be contiguous");
+   TORCH_CHECK(is_flush.is_contiguous(), "is_flush must be contiguous");
++  TORCH_CHECK(pending.is_contiguous(), "pending must be contiguous");
++  TORCH_CHECK(pending_len.is_contiguous(), "pending_len must be contiguous");
+ 
+   TORCH_CHECK(q.dim() == 4 && q.size(0) == 1);
+   TORCH_CHECK(k.dim() == 4 && k.size(0) == 1);
+@@ -966,6 +1176,8 @@ void gdn_replayssm_spec_decode(
+   TORCH_CHECK(write_pos.size(0) >= checkpoint_state.size(0));
+   TORCH_CHECK(cache_base.size(0) >= checkpoint_state.size(0));
+   TORCH_CHECK(is_flush.size(0) >= checkpoint_state.size(0));
++  TORCH_CHECK(pending.size(0) >= checkpoint_state.size(0));
++  TORCH_CHECK(pending_len.size(0) >= checkpoint_state.size(0));
+ 
+   auto dtype = q.dtype();
+   TORCH_CHECK(k.dtype() == dtype);
+@@ -993,6 +1205,8 @@ void gdn_replayssm_spec_decode(
+   TORCH_CHECK(write_pos.scalar_type() == at::kInt);
+   TORCH_CHECK(cache_base.scalar_type() == at::kInt);
+   TORCH_CHECK(is_flush.scalar_type() == at::kChar);
++  TORCH_CHECK(pending.scalar_type() == at::kChar);
++  TORCH_CHECK(pending_len.scalar_type() == at::kInt);
+   TORCH_CHECK(head_k_dim % 32 == 0);
+   TORCH_CHECK(num_v_heads % num_k_heads == 0);
+   TORCH_CHECK(max_cache_len >= 2 * max_spec_len);
+@@ -1003,8 +1217,9 @@ void gdn_replayssm_spec_decode(
+   gdn::spec_decode::gdn_replayssm_spec_decode<scalar_t>(                  \
+       queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state, d_cache, \
+       k_cache, g_cache, query_start_loc, ssm_state_indices, write_pos,     \
+-      cache_base, is_flush, max_cache_len, max_spec_len,                   \
+-      static_cast<float>(scale), use_qk_l2norm_in_kernel,                 \
++      cache_base, is_flush, pending, pending_len, write_pending_metadata, \
++      max_cache_len, max_spec_len, static_cast<float>(scale),             \
++      use_qk_l2norm_in_kernel,                                            \
+       static_cast<int>(null_block_id))
+ 
+   if (dtype == at::kBFloat16) {
+@@ -1020,6 +1235,138 @@ void gdn_replayssm_spec_decode(
+ #undef REPLAY_LAUNCHER
+ }
+ 
++void gdn_replayssm_copy_slots(
++    torch::Tensor& d_cache,       // [num_slots, num_v_heads, L, head_v_dim]
++    torch::Tensor& k_cache,       // [num_slots, num_k_heads, L, head_k_dim]
++    torch::Tensor& g_cache,       // [num_slots, num_v_heads, L], fp32
++    torch::Tensor& write_pos,     // [num_slots], int32
++    torch::Tensor& cache_base,    // [num_slots], int32
++    torch::Tensor& is_flush,      // [num_slots], int8
++    torch::Tensor& pending,       // [num_slots], int8
++    torch::Tensor& pending_len,   // [num_slots], int32
++    torch::Tensor& conv_pending,  // [num_slots, max_spec_len, conv_dim]
++    const torch::Tensor& src_indices,  // [rows], int64
++    const torch::Tensor& dst_indices,  // [rows], int64
++    const int64_t null_block_id) {
++  const int64_t rows = std::min(src_indices.numel(), dst_indices.numel());
++  if (rows <= 0) {
++    return;
++  }
++
++  TORCH_CHECK(d_cache.dim() >= 1);
++  TORCH_CHECK(k_cache.dim() >= 1);
++  TORCH_CHECK(g_cache.dim() >= 1);
++  TORCH_CHECK(conv_pending.dim() >= 1);
++  TORCH_CHECK(d_cache.is_contiguous(), "d_cache must be contiguous");
++  TORCH_CHECK(k_cache.is_contiguous(), "k_cache must be contiguous");
++  TORCH_CHECK(g_cache.is_contiguous(), "g_cache must be contiguous");
++  TORCH_CHECK(write_pos.is_contiguous(), "write_pos must be contiguous");
++  TORCH_CHECK(cache_base.is_contiguous(), "cache_base must be contiguous");
++  TORCH_CHECK(is_flush.is_contiguous(), "is_flush must be contiguous");
++  TORCH_CHECK(pending.is_contiguous(), "pending must be contiguous");
++  TORCH_CHECK(pending_len.is_contiguous(), "pending_len must be contiguous");
++  TORCH_CHECK(conv_pending.is_contiguous(), "conv_pending must be contiguous");
++  TORCH_CHECK(src_indices.is_contiguous(), "src_indices must be contiguous");
++  TORCH_CHECK(dst_indices.is_contiguous(), "dst_indices must be contiguous");
++
++  const int64_t num_slots = d_cache.size(0);
++  TORCH_CHECK(num_slots > 0, "d_cache must have at least one slot");
++  TORCH_CHECK(k_cache.size(0) == num_slots);
++  TORCH_CHECK(g_cache.size(0) == num_slots);
++  TORCH_CHECK(conv_pending.size(0) == num_slots);
++  TORCH_CHECK(write_pos.size(0) >= num_slots);
++  TORCH_CHECK(cache_base.size(0) >= num_slots);
++  TORCH_CHECK(is_flush.size(0) >= num_slots);
++  TORCH_CHECK(pending.size(0) >= num_slots);
++  TORCH_CHECK(pending_len.size(0) >= num_slots);
++
++  auto dtype = d_cache.dtype();
++  TORCH_CHECK(k_cache.dtype() == dtype);
++  TORCH_CHECK(conv_pending.dtype() == dtype);
++  TORCH_CHECK(g_cache.scalar_type() == at::kFloat);
++  TORCH_CHECK(write_pos.scalar_type() == at::kInt);
++  TORCH_CHECK(cache_base.scalar_type() == at::kInt);
++  TORCH_CHECK(is_flush.scalar_type() == at::kChar);
++  TORCH_CHECK(pending.scalar_type() == at::kChar);
++  TORCH_CHECK(pending_len.scalar_type() == at::kInt);
++  TORCH_CHECK(src_indices.scalar_type() == at::kLong);
++  TORCH_CHECK(dst_indices.scalar_type() == at::kLong);
++
++  auto& queue = vllm::xpu::vllmGetQueue();
++#define REPLAY_COPY_SLOTS_LAUNCHER(scalar_t)                             \
++  gdn::spec_decode::gdn_replayssm_copy_slots<scalar_t>(                  \
++      queue, d_cache, k_cache, g_cache, write_pos, cache_base, is_flush,  \
++      pending, pending_len, conv_pending, src_indices, dst_indices,       \
++      static_cast<int>(null_block_id))
++
++  if (dtype == at::kBFloat16) {
++    using scalar_t = sycl::ext::oneapi::bfloat16;
++    REPLAY_COPY_SLOTS_LAUNCHER(scalar_t);
++  } else if (dtype == at::kHalf) {
++    using scalar_t = sycl::half;
++    REPLAY_COPY_SLOTS_LAUNCHER(scalar_t);
++  } else if (dtype == at::kFloat) {
++    using scalar_t = float;
++    REPLAY_COPY_SLOTS_LAUNCHER(scalar_t);
++  } else {
++    TORCH_CHECK(
++        false,
++        "ReplaySSM slot copy dtype must be float32/float16/bfloat16, but got ",
++        dtype);
++  }
++#undef REPLAY_COPY_SLOTS_LAUNCHER
++}
++
++void gdn_replayssm_reset_slots(
++    torch::Tensor& write_pos,    // [num_slots], int32
++    torch::Tensor& cache_base,   // [num_slots], int32
++    torch::Tensor& is_flush,     // [num_slots], int8
++    torch::Tensor& pending,      // [num_slots], int8
++    torch::Tensor& pending_len,  // [num_slots], int32
++    const torch::Tensor& state_indices,  // [rows], int64
++    const int64_t init_flush,
++    const int64_t null_block_id) {
++  if (state_indices.numel() <= 0) {
++    return;
++  }
++
++  TORCH_CHECK(write_pos.is_contiguous(), "write_pos must be contiguous");
++  TORCH_CHECK(cache_base.is_contiguous(), "cache_base must be contiguous");
++  TORCH_CHECK(is_flush.is_contiguous(), "is_flush must be contiguous");
++  TORCH_CHECK(pending.is_contiguous(), "pending must be contiguous");
++  TORCH_CHECK(pending_len.is_contiguous(), "pending_len must be contiguous");
++  TORCH_CHECK(
++      state_indices.is_contiguous(), "state_indices must be contiguous");
++  TORCH_CHECK(write_pos.dim() == 1);
++  TORCH_CHECK(cache_base.dim() == 1);
++  TORCH_CHECK(is_flush.dim() == 1);
++  TORCH_CHECK(pending.dim() == 1);
++  TORCH_CHECK(pending_len.dim() == 1);
++  const int64_t num_slots = write_pos.size(0);
++  TORCH_CHECK(cache_base.size(0) >= num_slots);
++  TORCH_CHECK(is_flush.size(0) >= num_slots);
++  TORCH_CHECK(pending.size(0) >= num_slots);
++  TORCH_CHECK(pending_len.size(0) >= num_slots);
++  TORCH_CHECK(write_pos.scalar_type() == at::kInt);
++  TORCH_CHECK(cache_base.scalar_type() == at::kInt);
++  TORCH_CHECK(is_flush.scalar_type() == at::kChar);
++  TORCH_CHECK(pending.scalar_type() == at::kChar);
++  TORCH_CHECK(pending_len.scalar_type() == at::kInt);
++  TORCH_CHECK(state_indices.scalar_type() == at::kLong);
++
++  auto& queue = vllm::xpu::vllmGetQueue();
++  gdn::spec_decode::gdn_replayssm_reset_slots(
++      queue,
++      write_pos,
++      cache_base,
++      is_flush,
++      pending,
++      pending_len,
++      state_indices,
++      static_cast<int>(init_flush),
++      static_cast<int>(null_block_id));
++}
++
+ void gdn_replayssm_commit_pending(
+     torch::Tensor& conv_state,  // [num_slots, conv_dim, state_len]
+     torch::Tensor& write_pos,   // [num_slots], int32
+diff --git a/csrc/xpu/gdn_attn/spec_decode.hpp b/csrc/xpu/gdn_attn/spec_decode.hpp
+index 4303f45..5d717bb 100644
+--- a/csrc/xpu/gdn_attn/spec_decode.hpp
++++ b/csrc/xpu/gdn_attn/spec_decode.hpp
+@@ -384,7 +384,8 @@ struct select_accepted_state_indices_kernel {
+       const int accepted_stride_0,
+       const int rows,
+       const int state_cols,
+-      const bool has_num_accepted_tokens)
++      const bool has_num_accepted_tokens,
++      const bool prefix_base_state)
+       : accepted_state_indices(accepted_state_indices),
+         state_indices(state_indices),
+         num_accepted_tokens(num_accepted_tokens),
+@@ -393,7 +394,8 @@ struct select_accepted_state_indices_kernel {
+         accepted_stride_0(accepted_stride_0),
+         rows(rows),
+         state_cols(state_cols),
+-        has_num_accepted_tokens(has_num_accepted_tokens) {}
++        has_num_accepted_tokens(has_num_accepted_tokens),
++        prefix_base_state(prefix_base_state) {}
+ 
+   static inline sycl::nd_range<1> get_nd_range(const int rows) {
+     sycl::range<1> local(group_size);
+@@ -408,7 +410,13 @@ struct select_accepted_state_indices_kernel {
+     }
+     int offset = 0;
+     if (has_num_accepted_tokens) {
+-      offset = num_accepted_tokens[row * accepted_stride_0] - 1;
++      // Native packed state tables normally publish "state after packed row j"
++      // in column j, so accepted N tokens means the next spec pass starts from
++      // column N-1.  Prefix-base mode reserves column 0 for the unmodified
++      // running/base state and shifts exact prefix state after row j to column
++      // j+1, so the source column becomes N.
++      offset = num_accepted_tokens[row * accepted_stride_0] -
++               (prefix_base_state ? 0 : 1);
+       offset = sycl::max(0, sycl::min(offset, state_cols - 1));
+     }
+     accepted_state_indices[row] =
+@@ -425,6 +433,7 @@ struct select_accepted_state_indices_kernel {
+   const int rows;
+   const int state_cols;
+   const bool has_num_accepted_tokens;
++  const bool prefix_base_state;
+ };
+ 
+ struct select_state_column_kernel {
+@@ -770,7 +779,8 @@ struct store_conv_states_exact_kernel {
+       const int num_v_heads,
+       const int head_v_dim,
+       const int qkvz_elems,
+-      const int conv_elems)
++      const int conv_elems,
++      const bool prefix_base_state)
+       : conv_states(conv_states),
+         conv_states_stride_0(conv_states_stride_0),
+         base_conv_states(base_conv_states),
+@@ -789,7 +799,8 @@ struct store_conv_states_exact_kernel {
+         num_v_heads(num_v_heads),
+         head_v_dim(head_v_dim),
+         qkvz_elems(qkvz_elems),
+-        conv_elems(conv_elems) {}
++        conv_elems(conv_elems),
++        prefix_base_state(prefix_base_state) {}
+ 
+   static inline sycl::nd_range<3> get_nd_range(
+       const int rows,
+@@ -879,8 +890,18 @@ struct store_conv_states_exact_kernel {
+     if (seq_start + spec_pos >= seq_end) {
+       return;
+     }
++    int dst_col = spec_pos;
++    if (prefix_base_state) {
++      // Column 0 is reserved as the unmodified base/running state. Publish
++      // exact prefixes to columns 1..N and leave any overflow row (normally the
++      // target-owned bonus row) as output-only.
++      dst_col = spec_pos + 1;
++      if (dst_col >= spec_loop_len) {
++        return;
++      }
++    }
+     const int dst_state =
+-        state_indices[row * state_stride_0 + spec_pos * state_stride_1];
++        state_indices[row * state_stride_0 + dst_col * state_stride_1];
+     if (dst_state <= 0) {
+       return;
+     }
+@@ -910,6 +931,7 @@ struct store_conv_states_exact_kernel {
+   const int head_v_dim;
+   const int qkvz_elems;
+   const int conv_elems;
++  const bool prefix_base_state;
+ };
+ 
+ template <typename StateT>
+@@ -2148,7 +2170,8 @@ struct gated_delta_rule_spec_kernel {
+       const int num_k_heads,
+       const int head_k_dim,
+       const int num_v_heads,
+-      const int head_v_dim)
++      const int head_v_dim,
++      const bool prefix_base_state)
+       : core_attn_out(core_attn_out),
+         q(q),
+         k(k),
+@@ -2174,7 +2197,8 @@ struct gated_delta_rule_spec_kernel {
+         num_k_heads(num_k_heads),
+         head_k_dim(head_k_dim),
+         num_v_heads(num_v_heads),
+-        head_v_dim(head_v_dim) {}
++        head_v_dim(head_v_dim),
++        prefix_base_state(prefix_base_state) {}
+ 
+   static inline sycl::nd_range<3> get_nd_range(
+       const int batch_size,
+@@ -2349,8 +2373,15 @@ struct gated_delta_rule_spec_kernel {
+         }
+       }
+ 
++      int dst_col = spec_pos;
++      if (prefix_base_state) {
++        dst_col = spec_pos + 1;
++        if (dst_col >= state_cols) {
++          continue;
++        }
++      }
+       const int dst_state_id =
+-          state_indices[batch_id * state_stride_0 + spec_pos * state_stride_1];
++          state_indices[batch_id * state_stride_0 + dst_col * state_stride_1];
+       if (dst_state_id > 0) {
+         StateT* dst_state_ptr =
+             ssm_state +
+@@ -2394,6 +2425,7 @@ struct gated_delta_rule_spec_kernel {
+   const int head_k_dim;
+   const int num_v_heads;
+   const int head_v_dim;
++  const bool prefix_base_state;
+ };
+ 
+ template <
+@@ -2526,7 +2558,11 @@ struct gdn_replayssm_stage_conv_kernel {
+       const int dim,
+       const int rel_pos) const {
+     if (rel_pos < 0) {
+-      const int state_pos = state_len + rel_pos;
++      // ReplaySSM keeps the active causal-conv history in the first
++      // Width-1 columns of conv_state.  Do not read from the physical tail:
++      // Qwen GDN conv_state can have an extra column, while commit/fallback
++      // both treat columns [0, Width-2] as the window to shift.
++      const int state_pos = (Width - 1) + rel_pos;
+       if (!valid_slot || state_pos < 0 || state_pos >= state_len) {
+         return T(0);
+       }
+@@ -2629,7 +2665,10 @@ struct gdn_replayssm_stage_conv_kernel {
+             slot, valid_slot, seq_start, seq_len, spec_pos, dim, rel_pos);
+         const T w = conv_weights[static_cast<int64_t>(dim) * weight_stride_0 +
+                                  static_cast<int64_t>(i) * weight_stride_1];
+-        res += static_cast<float>(x) * static_cast<float>(w);
++        // Match causal_conv1d_update: BF16/FP16 rounds each product before
++        // accumulation into FP32. Promoting both operands first changes Q/K/V
++        // by one or two ULPs and has failed endpoint canaries historically.
++        res += static_cast<float>(T(x * w));
+       }
+ 
+       if (act_mode == ActMode::silu) {
+@@ -2770,12 +2809,582 @@ void gdn_replayssm_stage_conv_launcher(
+         v.size(3),
+         conv_weights.size(0),
+         null_block_id);
+-    cgh.parallel_for(range, task);
++    cgh.parallel_for(range, task);
++  });
++}
++
++template <typename T>
++void gdn_replayssm_stage_conv(
++    sycl::queue& queue,
++    torch::Tensor& q,
++    torch::Tensor& k,
++    torch::Tensor& v,
++    torch::Tensor& a_out,
++    torch::Tensor& b_out,
++    const torch::Tensor& mixed_qkv,
++    const torch::Tensor& a,
++    const torch::Tensor& b,
++    torch::Tensor& conv_state,
++    const torch::Tensor& conv_weights,
++    const std::optional<torch::Tensor>& conv_bias,
++    torch::Tensor& conv_pending,
++    const torch::Tensor& spec_token_indices,
++    const torch::Tensor& query_start_loc,
++    const torch::Tensor& state_indices,
++    const ActMode& act_mode,
++    const int rows,
++    const int num_actual_tokens,
++    const int max_spec_len,
++    const int null_block_id) {
++#define REPLAY_STAGE_WIDTH_CASE(width_value)                              \
++  gdn_replayssm_stage_conv_launcher<T, width_value>(                      \
++      queue, q, k, v, a_out, b_out, mixed_qkv, a, b, conv_state,          \
++      conv_weights, conv_bias, conv_pending, spec_token_indices,          \
++      query_start_loc, state_indices, act_mode, rows, num_actual_tokens,  \
++      max_spec_len, null_block_id)
++
++  switch (conv_weights.size(1)) {
++    case 1:
++      REPLAY_STAGE_WIDTH_CASE(1);
++      break;
++    case 2:
++      REPLAY_STAGE_WIDTH_CASE(2);
++      break;
++    case 3:
++      REPLAY_STAGE_WIDTH_CASE(3);
++      break;
++    case 4:
++      REPLAY_STAGE_WIDTH_CASE(4);
++      break;
++    case 5:
++      REPLAY_STAGE_WIDTH_CASE(5);
++      break;
++    default:
++      TORCH_CHECK(false, "Unsupported ReplaySSM conv width: ",
++                  conv_weights.size(1));
++  }
++#undef REPLAY_STAGE_WIDTH_CASE
++}
++
++// Commit the previously accepted convolution prefix and stage the next
++// speculative block in one pass over the convolution dimensions.  The data
++// kernel deliberately leaves cursor/pending metadata untouched: every data
++// workgroup must observe the old pending flag, so metadata is updated by the
++// tiny row kernel queued immediately afterward.
++template <typename T, int Width>
++struct gdn_replayssm_commit_stage_conv_kernel {
++  static constexpr int group_size = 256;
++  static constexpr int elems_per_item = 4;
++  static constexpr int elems_per_group = group_size * elems_per_item;
++  static constexpr int max_pending_len = 8;
++
++  gdn_replayssm_commit_stage_conv_kernel(
++      T* q_out,
++      T* k_out,
++      T* v_out,
++      T* a_out,
++      T* b_out,
++      const T* mixed_qkv,
++      const int64_t mixed_stride_0,
++      const int64_t mixed_stride_1,
++      const T* a_src,
++      const int64_t a_stride_0,
++      const int64_t a_stride_1,
++      const T* b_src,
++      const int64_t b_stride_0,
++      const int64_t b_stride_1,
++      T* conv_state,
++      const int64_t conv_stride_0,
++      const int64_t conv_stride_1,
++      const int64_t conv_stride_2,
++      const T* conv_weights,
++      const int64_t weight_stride_0,
++      const int64_t weight_stride_1,
++      const T* conv_bias,
++      T* conv_pending,
++      const int64_t pending_stride_0,
++      const int64_t pending_stride_1,
++      const int64_t pending_stride_2,
++      const int* spec_token_indices,
++      const int* query_start_loc,
++      const int64_t* state_indices,
++      const int8_t* pending,
++      const int* pending_len,
++      const int* num_accepted_tokens,
++      const ActMode& act_mode,
++      const int rows,
++      const int total_spec_tokens,
++      const int num_actual_tokens,
++      const int max_spec_len,
++      const int num_slots,
++      const int state_len,
++      const int num_k_heads,
++      const int head_k_dim,
++      const int num_v_heads,
++      const int head_v_dim,
++      const int conv_dim,
++      const int null_block_id)
++      : q_out(q_out),
++        k_out(k_out),
++        v_out(v_out),
++        a_out(a_out),
++        b_out(b_out),
++        mixed_qkv(mixed_qkv),
++        mixed_stride_0(mixed_stride_0),
++        mixed_stride_1(mixed_stride_1),
++        a_src(a_src),
++        a_stride_0(a_stride_0),
++        a_stride_1(a_stride_1),
++        b_src(b_src),
++        b_stride_0(b_stride_0),
++        b_stride_1(b_stride_1),
++        conv_state(conv_state),
++        conv_stride_0(conv_stride_0),
++        conv_stride_1(conv_stride_1),
++        conv_stride_2(conv_stride_2),
++        conv_weights(conv_weights),
++        weight_stride_0(weight_stride_0),
++        weight_stride_1(weight_stride_1),
++        conv_bias(conv_bias),
++        conv_pending(conv_pending),
++        pending_stride_0(pending_stride_0),
++        pending_stride_1(pending_stride_1),
++        pending_stride_2(pending_stride_2),
++        spec_token_indices(spec_token_indices),
++        query_start_loc(query_start_loc),
++        state_indices(state_indices),
++        pending(pending),
++        pending_len(pending_len),
++        num_accepted_tokens(num_accepted_tokens),
++        act_mode(act_mode),
++        rows(rows),
++        total_spec_tokens(total_spec_tokens),
++        num_actual_tokens(num_actual_tokens),
++        max_spec_len(max_spec_len),
++        num_slots(num_slots),
++        state_len(state_len),
++        num_k_heads(num_k_heads),
++        head_k_dim(head_k_dim),
++        num_v_heads(num_v_heads),
++        head_v_dim(head_v_dim),
++        conv_dim(conv_dim),
++        null_block_id(null_block_id) {}
++
++  static inline sycl::nd_range<2> get_nd_range(
++      const int rows,
++      const int conv_dim) {
++    const int dim_groups = (conv_dim + elems_per_group - 1) / elems_per_group;
++    sycl::range<2> local(1, group_size);
++    sycl::range<2> global(rows, dim_groups * group_size);
++    return sycl::nd_range<2>(global, local);
++  }
++
++  static inline void act_swish(float& x, float beta = 1.0f) {
++    x = x / (1.0f + sycl::exp(-x * beta));
++  }
++
++  inline bool valid_source_token(const int token) const {
++    return token >= 0 && token < num_actual_tokens;
++  }
++
++  inline T load_raw(const int source_token, const int dim) const {
++    if (!valid_source_token(source_token) || dim < 0 || dim >= conv_dim) {
++      return T(0);
++    }
++    return mixed_qkv[static_cast<int64_t>(source_token) * mixed_stride_0 +
++                     static_cast<int64_t>(dim) * mixed_stride_1];
++  }
++
++  [[sycl::reqd_sub_group_size(32)]] void
++  operator()(sycl::nd_item<2> item) const {
++    const int row = item.get_group(0);
++    const int dim_base =
++        item.get_group(1) * elems_per_group +
++        item.get_local_linear_id() * elems_per_item;
++    if (row >= rows || dim_base >= conv_dim) {
++      return;
++    }
++
++    const int seq_start = query_start_loc[row];
++    const int seq_end = query_start_loc[row + 1];
++    const int seq_len = seq_end > seq_start ? seq_end - seq_start : 0;
++    const int64_t slot64 = state_indices[row];
++    const int slot = static_cast<int>(slot64);
++    const bool valid_slot =
++        slot64 > static_cast<int64_t>(null_block_id) && slot >= 0 &&
++        slot < num_slots;
++    const bool active = valid_slot && pending[slot] != 0;
++    int accepted = active ? num_accepted_tokens[row] : 0;
++    if (accepted < 0) {
++      accepted = 0;
++    }
++    if (active && accepted > pending_len[slot]) {
++      accepted = pending_len[slot];
++    }
++
++#pragma unroll
++    for (int e = 0; e < elems_per_item; ++e) {
++      const int dim = dim_base + e;
++      if (dim >= conv_dim) {
++        continue;
++      }
++
++      T old_state[Width];
++      T committed_state[Width];
++      T old_pending[max_pending_len];
++#pragma unroll
++      for (int state_pos = 0; state_pos < Width; ++state_pos) {
++        old_state[state_pos] = T(0);
++        committed_state[state_pos] = T(0);
++        if (state_pos < Width - 1 && valid_slot && state_pos < state_len) {
++          old_state[state_pos] =
++              conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                         static_cast<int64_t>(dim) * conv_stride_1 +
++                         static_cast<int64_t>(state_pos) * conv_stride_2];
++        }
++      }
++#pragma unroll
++      for (int pending_pos = 0; pending_pos < max_pending_len; ++pending_pos) {
++        old_pending[pending_pos] = T(0);
++        if (valid_slot && pending_pos < max_spec_len) {
++          old_pending[pending_pos] =
++              conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
++                           static_cast<int64_t>(pending_pos) * pending_stride_1 +
++                           static_cast<int64_t>(dim) * pending_stride_2];
++        }
++      }
++
++#pragma unroll
++      for (int state_pos = 0; state_pos < Width - 1; ++state_pos) {
++        T value = old_state[state_pos];
++        if (active) {
++          const int source_pos = accepted + state_pos;
++          value = source_pos < Width - 1
++                      ? old_state[source_pos]
++                      : old_pending[source_pos - (Width - 1)];
++          conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
++                     static_cast<int64_t>(dim) * conv_stride_1 +
++                     static_cast<int64_t>(state_pos) * conv_stride_2] = value;
++        }
++        committed_state[state_pos] = value;
++      }
++
++      for (int spec_pos = 0; spec_pos < max_spec_len; ++spec_pos) {
++        const bool valid_token_pos = spec_pos < seq_len;
++        const int compact_token = seq_start + spec_pos;
++        const int source_token =
++            valid_token_pos && compact_token < total_spec_tokens
++                ? spec_token_indices[compact_token]
++                : -1;
++        const bool valid_source = valid_source_token(source_token);
++        const T raw = valid_source ? load_raw(source_token, dim) : T(0);
++
++        if (valid_slot) {
++          conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
++                       static_cast<int64_t>(spec_pos) * pending_stride_1 +
++                       static_cast<int64_t>(dim) * pending_stride_2] = raw;
++        }
++
++        if (valid_token_pos && compact_token < total_spec_tokens &&
++            dim < num_v_heads) {
++          const T a_value =
++              valid_source
++                  ? a_src[static_cast<int64_t>(source_token) * a_stride_0 +
++                          static_cast<int64_t>(dim) * a_stride_1]
++                  : T(0);
++          const T b_value =
++              valid_source
++                  ? b_src[static_cast<int64_t>(source_token) * b_stride_0 +
++                          static_cast<int64_t>(dim) * b_stride_1]
++                  : T(0);
++          a_out[static_cast<int64_t>(compact_token) * num_v_heads + dim] =
++              a_value;
++          b_out[static_cast<int64_t>(compact_token) * num_v_heads + dim] =
++              b_value;
++        }
++
++        if (!valid_token_pos || compact_token >= total_spec_tokens) {
++          continue;
++        }
++
++        float res =
++            conv_bias == nullptr ? 0.0f : static_cast<float>(conv_bias[dim]);
++#pragma unroll
++        for (int i = 0; i < Width; ++i) {
++          const int rel_pos = spec_pos - (Width - 1 - i);
++          T x = T(0);
++          if (rel_pos < 0) {
++            const int state_pos = (Width - 1) + rel_pos;
++            if (valid_slot && state_pos >= 0 && state_pos < Width - 1) {
++              x = committed_state[state_pos];
++            }
++          } else if (rel_pos < seq_len) {
++            const int raw_compact_token = seq_start + rel_pos;
++            if (raw_compact_token >= 0 &&
++                raw_compact_token < total_spec_tokens) {
++              x = load_raw(spec_token_indices[raw_compact_token], dim);
++            }
++          }
++          const T w =
++              conv_weights[static_cast<int64_t>(dim) * weight_stride_0 +
++                           static_cast<int64_t>(i) * weight_stride_1];
++          res += static_cast<float>(T(x * w));
++        }
++
++        if (act_mode == ActMode::silu) {
++          act_swish(res);
++        } else if (act_mode == ActMode::swish) {
++          act_swish(res);
++        }
++
++        const int q_total = num_k_heads * head_k_dim;
++        const int k_total = q_total;
++        const int v_total = num_v_heads * head_v_dim;
++        if (dim < q_total) {
++          q_out[static_cast<int64_t>(compact_token) * q_total + dim] =
++              static_cast<T>(res);
++        } else if (dim < q_total + k_total) {
++          k_out[static_cast<int64_t>(compact_token) * k_total +
++                (dim - q_total)] = static_cast<T>(res);
++        } else if (dim < q_total + k_total + v_total) {
++          v_out[static_cast<int64_t>(compact_token) * v_total +
++                (dim - q_total - k_total)] = static_cast<T>(res);
++        }
++      }
++    }
++  }
++
++ private:
++  T* q_out;
++  T* k_out;
++  T* v_out;
++  T* a_out;
++  T* b_out;
++  const T* mixed_qkv;
++  const int64_t mixed_stride_0;
++  const int64_t mixed_stride_1;
++  const T* a_src;
++  const int64_t a_stride_0;
++  const int64_t a_stride_1;
++  const T* b_src;
++  const int64_t b_stride_0;
++  const int64_t b_stride_1;
++  T* conv_state;
++  const int64_t conv_stride_0;
++  const int64_t conv_stride_1;
++  const int64_t conv_stride_2;
++  const T* conv_weights;
++  const int64_t weight_stride_0;
++  const int64_t weight_stride_1;
++  const T* conv_bias;
++  T* conv_pending;
++  const int64_t pending_stride_0;
++  const int64_t pending_stride_1;
++  const int64_t pending_stride_2;
++  const int* spec_token_indices;
++  const int* query_start_loc;
++  const int64_t* state_indices;
++  const int8_t* pending;
++  const int* pending_len;
++  const int* num_accepted_tokens;
++  const ActMode act_mode;
++  const int rows;
++  const int total_spec_tokens;
++  const int num_actual_tokens;
++  const int max_spec_len;
++  const int num_slots;
++  const int state_len;
++  const int num_k_heads;
++  const int head_k_dim;
++  const int num_v_heads;
++  const int head_v_dim;
++  const int conv_dim;
++  const int null_block_id;
++};
++
++struct gdn_replayssm_commit_stage_metadata_kernel {
++  static constexpr int group_size = 256;
++
++  gdn_replayssm_commit_stage_metadata_kernel(
++      int* write_pos,
++      int* cache_base,
++      int8_t* is_flush,
++      int8_t* pending,
++      const int* pending_len,
++      const int* num_accepted_tokens,
++      const int64_t* state_indices,
++      const int rows,
++      const int num_slots,
++      const int max_cache_len,
++      const int max_spec_len,
++      const int null_block_id)
++      : write_pos(write_pos),
++        cache_base(cache_base),
++        is_flush(is_flush),
++        pending(pending),
++        pending_len(pending_len),
++        num_accepted_tokens(num_accepted_tokens),
++        state_indices(state_indices),
++        rows(rows),
++        num_slots(num_slots),
++        max_cache_len(max_cache_len),
++        max_spec_len(max_spec_len),
++        null_block_id(null_block_id) {}
++
++  static inline sycl::nd_range<1> get_nd_range(const int rows) {
++    sycl::range<1> local(group_size);
++    sycl::range<1> global((rows + group_size - 1) / group_size);
++    return sycl::nd_range<1>(global * local, local);
++  }
++
++  void operator()(sycl::nd_item<1> item) const {
++    const int row = item.get_global_linear_id();
++    if (row >= rows) {
++      return;
++    }
++    const int64_t slot64 = state_indices[row];
++    const int slot = static_cast<int>(slot64);
++    if (slot64 <= static_cast<int64_t>(null_block_id) || slot < 0 ||
++        slot >= num_slots || pending[slot] == 0) {
++      return;
++    }
++    int accepted = num_accepted_tokens[row];
++    accepted = sycl::max(0, sycl::min(accepted, pending_len[slot]));
++    const int old_wp = write_pos[slot];
++    const int old_base = cache_base[slot];
++    const bool old_flush = is_flush[slot] != 0;
++    const bool flush_now = accepted > 0 && old_flush;
++    const int new_base =
++        flush_now ? (old_base + old_wp) & (max_cache_len - 1) : old_base;
++    const int new_wp = old_flush ? accepted : old_wp + accepted;
++    const bool next_flush = (new_wp + 2 * max_spec_len) > max_cache_len;
++    write_pos[slot] = new_wp;
++    cache_base[slot] = new_base;
++    is_flush[slot] = next_flush ? int8_t(1) : int8_t(0);
++    pending[slot] = int8_t(0);
++  }
++
++ private:
++  int* write_pos;
++  int* cache_base;
++  int8_t* is_flush;
++  int8_t* pending;
++  const int* pending_len;
++  const int* num_accepted_tokens;
++  const int64_t* state_indices;
++  const int rows;
++  const int num_slots;
++  const int max_cache_len;
++  const int max_spec_len;
++  const int null_block_id;
++};
++
++template <typename T, int Width>
++void gdn_replayssm_commit_stage_conv_launcher(
++    sycl::queue& queue,
++    torch::Tensor& q,
++    torch::Tensor& k,
++    torch::Tensor& v,
++    torch::Tensor& a_out,
++    torch::Tensor& b_out,
++    const torch::Tensor& mixed_qkv,
++    const torch::Tensor& a,
++    const torch::Tensor& b,
++    torch::Tensor& conv_state,
++    const torch::Tensor& conv_weights,
++    const std::optional<torch::Tensor>& conv_bias,
++    torch::Tensor& conv_pending,
++    const torch::Tensor& spec_token_indices,
++    const torch::Tensor& query_start_loc,
++    const torch::Tensor& state_indices,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    const torch::Tensor& pending_len,
++    const torch::Tensor& num_accepted_tokens,
++    const ActMode& act_mode,
++    const int rows,
++    const int num_actual_tokens,
++    const int max_spec_len,
++    const int max_cache_len,
++    const int null_block_id) {
++  using DATA_KERNEL = gdn_replayssm_commit_stage_conv_kernel<T, Width>;
++  auto data_range =
++      DATA_KERNEL::get_nd_range(rows, static_cast<int>(conv_weights.size(0)));
++  queue.submit([&](sycl::handler& cgh) {
++    DATA_KERNEL task(
++        reinterpret_cast<T*>(q.data_ptr()),
++        reinterpret_cast<T*>(k.data_ptr()),
++        reinterpret_cast<T*>(v.data_ptr()),
++        reinterpret_cast<T*>(a_out.data_ptr()),
++        reinterpret_cast<T*>(b_out.data_ptr()),
++        reinterpret_cast<const T*>(mixed_qkv.data_ptr()),
++        mixed_qkv.stride(0),
++        mixed_qkv.stride(1),
++        reinterpret_cast<const T*>(a.data_ptr()),
++        a.stride(0),
++        a.stride(1),
++        reinterpret_cast<const T*>(b.data_ptr()),
++        b.stride(0),
++        b.stride(1),
++        reinterpret_cast<T*>(conv_state.data_ptr()),
++        conv_state.stride(0),
++        conv_state.stride(1),
++        conv_state.stride(2),
++        reinterpret_cast<const T*>(conv_weights.data_ptr()),
++        conv_weights.stride(0),
++        conv_weights.stride(1),
++        conv_bias.has_value() ? reinterpret_cast<const T*>(conv_bias->data_ptr())
++                              : nullptr,
++        reinterpret_cast<T*>(conv_pending.data_ptr()),
++        conv_pending.stride(0),
++        conv_pending.stride(1),
++        conv_pending.stride(2),
++        reinterpret_cast<const int*>(spec_token_indices.data_ptr()),
++        reinterpret_cast<const int*>(query_start_loc.data_ptr()),
++        reinterpret_cast<const int64_t*>(state_indices.data_ptr()),
++        reinterpret_cast<const int8_t*>(pending.data_ptr()),
++        reinterpret_cast<const int*>(pending_len.data_ptr()),
++        reinterpret_cast<const int*>(num_accepted_tokens.data_ptr()),
++        act_mode,
++        rows,
++        spec_token_indices.numel(),
++        num_actual_tokens,
++        max_spec_len,
++        conv_state.size(0),
++        conv_state.size(2),
++        q.size(2),
++        q.size(3),
++        v.size(2),
++        v.size(3),
++        conv_weights.size(0),
++        null_block_id);
++    cgh.parallel_for(data_range, task);
++  });
++
++  using META_KERNEL = gdn_replayssm_commit_stage_metadata_kernel;
++  auto meta_range = META_KERNEL::get_nd_range(rows);
++  queue.submit([&](sycl::handler& cgh) {
++    META_KERNEL task(
++        reinterpret_cast<int*>(write_pos.data_ptr()),
++        reinterpret_cast<int*>(cache_base.data_ptr()),
++        reinterpret_cast<int8_t*>(is_flush.data_ptr()),
++        reinterpret_cast<int8_t*>(pending.data_ptr()),
++        reinterpret_cast<const int*>(pending_len.data_ptr()),
++        reinterpret_cast<const int*>(num_accepted_tokens.data_ptr()),
++        reinterpret_cast<const int64_t*>(state_indices.data_ptr()),
++        rows,
++        write_pos.size(0),
++        max_cache_len,
++        max_spec_len,
++        null_block_id);
++    cgh.parallel_for(meta_range, task);
+   });
+ }
+ 
+ template <typename T>
+-void gdn_replayssm_stage_conv(
++void gdn_replayssm_commit_stage_conv(
+     sycl::queue& queue,
+     torch::Tensor& q,
+     torch::Tensor& k,
+@@ -2792,39 +3401,47 @@ void gdn_replayssm_stage_conv(
+     const torch::Tensor& spec_token_indices,
+     const torch::Tensor& query_start_loc,
+     const torch::Tensor& state_indices,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    const torch::Tensor& pending_len,
++    const torch::Tensor& num_accepted_tokens,
+     const ActMode& act_mode,
+     const int rows,
+     const int num_actual_tokens,
+     const int max_spec_len,
++    const int max_cache_len,
+     const int null_block_id) {
+-#define REPLAY_STAGE_WIDTH_CASE(width_value)                              \
+-  gdn_replayssm_stage_conv_launcher<T, width_value>(                      \
+-      queue, q, k, v, a_out, b_out, mixed_qkv, a, b, conv_state,          \
+-      conv_weights, conv_bias, conv_pending, spec_token_indices,          \
+-      query_start_loc, state_indices, act_mode, rows, num_actual_tokens,  \
+-      max_spec_len, null_block_id)
++#define REPLAY_COMMIT_STAGE_WIDTH_CASE(width_value)                         \
++  gdn_replayssm_commit_stage_conv_launcher<T, width_value>(                 \
++      queue, q, k, v, a_out, b_out, mixed_qkv, a, b, conv_state,            \
++      conv_weights, conv_bias, conv_pending, spec_token_indices,            \
++      query_start_loc, state_indices, write_pos, cache_base, is_flush,       \
++      pending, pending_len, num_accepted_tokens, act_mode, rows,             \
++      num_actual_tokens, max_spec_len, max_cache_len, null_block_id)
+ 
+   switch (conv_weights.size(1)) {
+     case 1:
+-      REPLAY_STAGE_WIDTH_CASE(1);
++      REPLAY_COMMIT_STAGE_WIDTH_CASE(1);
+       break;
+     case 2:
+-      REPLAY_STAGE_WIDTH_CASE(2);
++      REPLAY_COMMIT_STAGE_WIDTH_CASE(2);
+       break;
+     case 3:
+-      REPLAY_STAGE_WIDTH_CASE(3);
++      REPLAY_COMMIT_STAGE_WIDTH_CASE(3);
+       break;
+     case 4:
+-      REPLAY_STAGE_WIDTH_CASE(4);
++      REPLAY_COMMIT_STAGE_WIDTH_CASE(4);
+       break;
+     case 5:
+-      REPLAY_STAGE_WIDTH_CASE(5);
++      REPLAY_COMMIT_STAGE_WIDTH_CASE(5);
+       break;
+     default:
+       TORCH_CHECK(false, "Unsupported ReplaySSM conv width: ",
+                   conv_weights.size(1));
+   }
+-#undef REPLAY_STAGE_WIDTH_CASE
++#undef REPLAY_COMMIT_STAGE_WIDTH_CASE
+ }
+ 
+ template <
+@@ -3360,7 +3977,8 @@ inline void select_accepted_state_indices(
+     torch::Tensor& accepted_state_indices,
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+-    const int num_spec_decodes) {
++    const int num_spec_decodes,
++    const bool prefix_base_state = false) {
+   using KERNEL = select_accepted_state_indices_kernel;
+   const bool has_num_accepted_tokens = num_accepted_tokens.has_value();
+   auto range = KERNEL::get_nd_range(num_spec_decodes);
+@@ -3376,7 +3994,8 @@ inline void select_accepted_state_indices(
+         has_num_accepted_tokens ? num_accepted_tokens->stride(0) : 0,
+         num_spec_decodes,
+         state_indices.size(1),
+-        has_num_accepted_tokens);
++        has_num_accepted_tokens,
++        prefix_base_state);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -3664,7 +4283,8 @@ void store_conv_states_exact_launcher(
+     const int num_k_heads,
+     const int head_k_dim,
+     const int num_v_heads,
+-    const int head_v_dim) {
++    const int head_v_dim,
++    const bool prefix_base_state) {
+   using KERNEL = store_conv_states_exact_kernel<T, Width, ReorderInput>;
+   auto range =
+       KERNEL::get_nd_range(num_spec_decodes, spec_loop_len, conv_states.size(2));
+@@ -3688,7 +4308,8 @@ void store_conv_states_exact_launcher(
+         num_v_heads,
+         head_v_dim,
+         mixed_qkvz.size(1),
+-        conv_states.size(2));
++        conv_states.size(2),
++        prefix_base_state);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -3709,7 +4330,8 @@ void store_conv_states_exact(
+     const int head_k_dim,
+     const int num_v_heads,
+     const int head_v_dim,
+-    const bool reorder_input) {
++    const bool reorder_input,
++    const bool prefix_base_state = false) {
+   const int width = base_conv_states.size(1) + 1;
+ #define STORE_EXACT_WIDTH_CASE(width_value, reorder_value)                 \
+   store_conv_states_exact_launcher<T, width_value, reorder_value>(         \
+@@ -3726,7 +4348,8 @@ void store_conv_states_exact(
+       num_k_heads,                                                         \
+       head_k_dim,                                                          \
+       num_v_heads,                                                         \
+-      head_v_dim)
++      head_v_dim,                                                          \
++      prefix_base_state)
+ 
+ #define STORE_EXACT_WIDTH_DISPATCH(reorder_value) \
+   switch (width) {                                \
+@@ -4897,7 +5520,8 @@ void gated_delta_rule_spec_launcher(
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+     const int num_spec_decodes,
+-    const int num_actual_tokens) {
++    const int num_actual_tokens,
++    const bool prefix_base_state = false) {
+   using KERNEL = gated_delta_rule_spec_kernel<T, StateT, k_bucket_size>;
+   auto range =
+       KERNEL::get_nd_range(num_spec_decodes, v.size(1), v.size(2));
+@@ -4931,7 +5555,8 @@ void gated_delta_rule_spec_launcher(
+         q.size(1),
+         q.size(2),
+         v.size(1),
+-        v.size(2));
++        v.size(2),
++        prefix_base_state);
+     cgh.parallel_for(range, task);
+   });
+ }
+@@ -4953,7 +5578,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+     const int num_spec_decodes,
+-    const int num_actual_tokens) {
++    const int num_actual_tokens,
++    const bool prefix_base_state = false) {
+   const int k_bucket_size = q.size(2) / 32;
+   switch (k_bucket_size) {
+     case 1:
+@@ -4973,7 +5599,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     case 2:
+       gated_delta_rule_spec_launcher<T, StateT, 2>(
+@@ -4992,7 +5619,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     case 4:
+       gated_delta_rule_spec_launcher<T, StateT, 4>(
+@@ -5011,7 +5639,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     case 8:
+       gated_delta_rule_spec_launcher<T, StateT, 8>(
+@@ -5030,7 +5659,8 @@ void gated_delta_rule_spec_bucket_dispatch(
+           state_indices,
+           num_accepted_tokens,
+           num_spec_decodes,
+-          num_actual_tokens);
++          num_actual_tokens,
++          prefix_base_state);
+       break;
+     default:
+       TORCH_CHECK(false, "Unsupported GDN head_k_dim bucket: ", k_bucket_size);
+@@ -5054,7 +5684,8 @@ void gated_delta_rule_spec(
+     const torch::Tensor& state_indices,
+     const std::optional<torch::Tensor>& num_accepted_tokens,
+     const int num_spec_decodes,
+-    const int num_actual_tokens) {
++    const int num_actual_tokens,
++    const bool prefix_base_state = false) {
+   if (ssm_state.scalar_type() == at::kFloat) {
+     gated_delta_rule_spec_bucket_dispatch<T, float>(
+         queue,
+@@ -5072,7 +5703,8 @@ void gated_delta_rule_spec(
+         state_indices,
+         num_accepted_tokens,
+         num_spec_decodes,
+-        num_actual_tokens);
++        num_actual_tokens,
++        prefix_base_state);
+   } else if (ssm_state.scalar_type() == at::kBFloat16) {
+     gated_delta_rule_spec_bucket_dispatch<T, sycl::ext::oneapi::bfloat16>(
+         queue,
+@@ -5090,7 +5722,8 @@ void gated_delta_rule_spec(
+         state_indices,
+         num_accepted_tokens,
+         num_spec_decodes,
+-        num_actual_tokens);
++        num_actual_tokens,
++        prefix_base_state);
+   } else if (ssm_state.scalar_type() == at::kHalf) {
+     gated_delta_rule_spec_bucket_dispatch<T, sycl::half>(
+         queue,
+@@ -5108,7 +5741,8 @@ void gated_delta_rule_spec(
+         state_indices,
+         num_accepted_tokens,
+         num_spec_decodes,
+-        num_actual_tokens);
++        num_actual_tokens,
++        prefix_base_state);
+   } else {
+     TORCH_CHECK(
+         false,
+@@ -5155,6 +5789,9 @@ struct gdn_replayssm_spec_kernel {
+       const int* write_pos,
+       const int* cache_base,
+       const int8_t* is_flush,
++      int8_t* pending,
++      int* pending_len,
++      const bool write_pending_metadata,
+       const int num_spec_decodes,
+       const int num_k_heads,
+       const int head_k_dim,
+@@ -5186,6 +5823,9 @@ struct gdn_replayssm_spec_kernel {
+         write_pos(write_pos),
+         cache_base(cache_base),
+         is_flush(is_flush),
++        pending(pending),
++        pending_len(pending_len),
++        write_pending_metadata(write_pending_metadata),
+         num_spec_decodes(num_spec_decodes),
+         num_k_heads(num_k_heads),
+         head_k_dim(head_k_dim),
+@@ -5281,6 +5921,12 @@ struct gdn_replayssm_spec_kernel {
+       spec_len = MaxSpecLen;
+     }
+ 
++    if (write_pending_metadata && v_head == 0 && v_bucket_id == 0 &&
++        item.get_local_linear_id() == 0) {
++      pending[slot] = 1;
++      pending_len[slot] = spec_len;
++    }
++
+     const int wp = write_pos[slot];
+     const int base = cache_base[slot];
+     const bool flush = is_flush[slot] != 0;
+@@ -5703,6 +6349,9 @@ struct gdn_replayssm_spec_kernel {
+   const int* write_pos;
+   const int* cache_base;
+   const int8_t* is_flush;
++  int8_t* pending;
++  int* pending_len;
++  const bool write_pending_metadata;
+   const int num_spec_decodes;
+   const int num_k_heads;
+   const int head_k_dim;
+@@ -5738,6 +6387,9 @@ void gdn_replayssm_spec_launcher(
+     const torch::Tensor& write_pos,
+     const torch::Tensor& cache_base,
+     const torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const bool write_pending_metadata,
+     const float scale,
+     const bool use_qk_l2norm,
+     const int null_block_id) {
+@@ -5773,6 +6425,9 @@ void gdn_replayssm_spec_launcher(
+         reinterpret_cast<const int*>(write_pos.data_ptr()),
+         reinterpret_cast<const int*>(cache_base.data_ptr()),
+         reinterpret_cast<const int8_t*>(is_flush.data_ptr()),
++        reinterpret_cast<int8_t*>(pending.data_ptr()),
++        reinterpret_cast<int*>(pending_len.data_ptr()),
++        write_pending_metadata,
+         num_spec_decodes,
+         q.size(2),
+         q.size(3),
+@@ -5809,6 +6464,9 @@ void gdn_replayssm_spec_cache_dispatch(
+     const torch::Tensor& write_pos,
+     const torch::Tensor& cache_base,
+     const torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const bool write_pending_metadata,
+     const int max_cache_len,
+     const float scale,
+     const bool use_qk_l2norm,
+@@ -5818,7 +6476,8 @@ void gdn_replayssm_spec_cache_dispatch(
+                               cache_len_value>(                             \
+       queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state, d_cache,  \
+       k_cache, g_cache, query_start_loc, ssm_state_indices, write_pos,       \
+-      cache_base, is_flush, scale, use_qk_l2norm, null_block_id)
++      cache_base, is_flush, pending, pending_len, write_pending_metadata,      \
++      scale, use_qk_l2norm, null_block_id)
+ 
+   switch (max_cache_len) {
+     case 2:
+@@ -5827,6 +6486,9 @@ void gdn_replayssm_spec_cache_dispatch(
+     case 4:
+       REPLAY_CACHE_CASE(4);
+       break;
++    case 8:
++      REPLAY_CACHE_CASE(8);
++      break;
+     default:
+       TORCH_CHECK(false, "Unsupported ReplaySSM cache length: ", max_cache_len);
+   }
+@@ -5853,6 +6515,9 @@ void gdn_replayssm_spec_len_dispatch(
+     const torch::Tensor& write_pos,
+     const torch::Tensor& cache_base,
+     const torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const bool write_pending_metadata,
+     const int max_cache_len,
+     const int max_spec_len,
+     const float scale,
+@@ -5862,12 +6527,15 @@ void gdn_replayssm_spec_len_dispatch(
+   gdn_replayssm_spec_cache_dispatch<T, StateT, k_bucket_size, spec_len_value>( \
+       queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state, d_cache,    \
+       k_cache, g_cache, query_start_loc, ssm_state_indices, write_pos,         \
+-      cache_base, is_flush, max_cache_len, scale, use_qk_l2norm, null_block_id)
++      cache_base, is_flush, pending, pending_len, write_pending_metadata,       \
++      max_cache_len, scale, use_qk_l2norm, null_block_id)
+ 
+   if (max_spec_len <= 1) {
+     REPLAY_SPEC_CASE(1);
+   } else if (max_spec_len <= 2) {
+     REPLAY_SPEC_CASE(2);
++  } else if (max_spec_len <= 4) {
++    REPLAY_SPEC_CASE(4);
+   } else {
+     TORCH_CHECK(false, "Unsupported ReplaySSM max_spec_len: ", max_spec_len);
+   }
+@@ -5894,6 +6562,9 @@ void gdn_replayssm_spec_bucket_dispatch(
+     const torch::Tensor& write_pos,
+     const torch::Tensor& cache_base,
+     const torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const bool write_pending_metadata,
+     const int max_cache_len,
+     const int max_spec_len,
+     const float scale,
+@@ -5905,28 +6576,32 @@ void gdn_replayssm_spec_bucket_dispatch(
+       gdn_replayssm_spec_len_dispatch<T, StateT, 1>(
+           queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state,
+           d_cache, k_cache, g_cache, query_start_loc, ssm_state_indices,
+-          write_pos, cache_base, is_flush, max_cache_len, max_spec_len, scale,
++          write_pos, cache_base, is_flush, pending, pending_len,
++          write_pending_metadata, max_cache_len, max_spec_len, scale,
+           use_qk_l2norm, null_block_id);
+       break;
+     case 2:
+       gdn_replayssm_spec_len_dispatch<T, StateT, 2>(
+           queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state,
+           d_cache, k_cache, g_cache, query_start_loc, ssm_state_indices,
+-          write_pos, cache_base, is_flush, max_cache_len, max_spec_len, scale,
++          write_pos, cache_base, is_flush, pending, pending_len,
++          write_pending_metadata, max_cache_len, max_spec_len, scale,
+           use_qk_l2norm, null_block_id);
+       break;
+     case 4:
+       gdn_replayssm_spec_len_dispatch<T, StateT, 4>(
+           queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state,
+           d_cache, k_cache, g_cache, query_start_loc, ssm_state_indices,
+-          write_pos, cache_base, is_flush, max_cache_len, max_spec_len, scale,
++          write_pos, cache_base, is_flush, pending, pending_len,
++          write_pending_metadata, max_cache_len, max_spec_len, scale,
+           use_qk_l2norm, null_block_id);
+       break;
+     case 8:
+       gdn_replayssm_spec_len_dispatch<T, StateT, 8>(
+           queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state,
+           d_cache, k_cache, g_cache, query_start_loc, ssm_state_indices,
+-          write_pos, cache_base, is_flush, max_cache_len, max_spec_len, scale,
++          write_pos, cache_base, is_flush, pending, pending_len,
++          write_pending_metadata, max_cache_len, max_spec_len, scale,
+           use_qk_l2norm, null_block_id);
+       break;
+     default:
+@@ -5955,6 +6630,9 @@ void gdn_replayssm_spec_decode(
+     const torch::Tensor& write_pos,
+     const torch::Tensor& cache_base,
+     const torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const bool write_pending_metadata,
+     const int max_cache_len,
+     const int max_spec_len,
+     const float scale,
+@@ -5964,20 +6642,20 @@ void gdn_replayssm_spec_decode(
+     gdn_replayssm_spec_bucket_dispatch<T, float>(
+         queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state, d_cache,
+         k_cache, g_cache, query_start_loc, ssm_state_indices, write_pos,
+-        cache_base, is_flush, max_cache_len, max_spec_len, scale,
+-        use_qk_l2norm, null_block_id);
++        cache_base, is_flush, pending, pending_len, write_pending_metadata,
++        max_cache_len, max_spec_len, scale, use_qk_l2norm, null_block_id);
+   } else if (checkpoint_state.scalar_type() == at::kBFloat16) {
+     gdn_replayssm_spec_bucket_dispatch<T, sycl::ext::oneapi::bfloat16>(
+         queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state, d_cache,
+         k_cache, g_cache, query_start_loc, ssm_state_indices, write_pos,
+-        cache_base, is_flush, max_cache_len, max_spec_len, scale,
+-        use_qk_l2norm, null_block_id);
++        cache_base, is_flush, pending, pending_len, write_pending_metadata,
++        max_cache_len, max_spec_len, scale, use_qk_l2norm, null_block_id);
+   } else if (checkpoint_state.scalar_type() == at::kHalf) {
+     gdn_replayssm_spec_bucket_dispatch<T, sycl::half>(
+         queue, out, q, k, v, a, b, A_log, dt_bias, checkpoint_state, d_cache,
+         k_cache, g_cache, query_start_loc, ssm_state_indices, write_pos,
+-        cache_base, is_flush, max_cache_len, max_spec_len, scale,
+-        use_qk_l2norm, null_block_id);
++        cache_base, is_flush, pending, pending_len, write_pending_metadata,
++        max_cache_len, max_spec_len, scale, use_qk_l2norm, null_block_id);
+   } else {
+     TORCH_CHECK(
+         false,
+@@ -5986,6 +6664,287 @@ void gdn_replayssm_spec_decode(
+   }
+ }
+ 
++template <typename T>
++struct gdn_replayssm_copy_slots_kernel {
++  static constexpr int group_size = 256;
++
++  gdn_replayssm_copy_slots_kernel(
++      T* d_cache,
++      T* k_cache,
++      float* g_cache,
++      int* write_pos,
++      int* cache_base,
++      int8_t* is_flush,
++      int8_t* pending,
++      int* pending_len,
++      T* conv_pending,
++      const int64_t* src_indices,
++      const int64_t* dst_indices,
++      const int rows,
++      const int num_slots,
++      const int d_elems,
++      const int k_elems,
++      const int g_elems,
++      const int conv_elems,
++      const int total_elems,
++      const int null_block_id)
++      : d_cache(d_cache),
++        k_cache(k_cache),
++        g_cache(g_cache),
++        write_pos(write_pos),
++        cache_base(cache_base),
++        is_flush(is_flush),
++        pending(pending),
++        pending_len(pending_len),
++        conv_pending(conv_pending),
++        src_indices(src_indices),
++        dst_indices(dst_indices),
++        rows(rows),
++        num_slots(num_slots),
++        d_elems(d_elems),
++        k_elems(k_elems),
++        g_elems(g_elems),
++        conv_elems(conv_elems),
++        total_elems(total_elems),
++        null_block_id(null_block_id) {}
++
++  static inline sycl::nd_range<1> get_nd_range(
++      const int rows,
++      const int total_elems) {
++    const int row_elems = total_elems > 0 ? total_elems : 1;
++    const int total = rows * row_elems;
++    sycl::range<1> local(group_size);
++    sycl::range<1> global((total + group_size - 1) / group_size);
++    return sycl::nd_range<1>(global * local, local);
++  }
++
++  inline bool valid_slot(const int64_t slot) const {
++    return slot > static_cast<int64_t>(null_block_id) &&
++           slot < static_cast<int64_t>(num_slots);
++  }
++
++  void operator()(sycl::nd_item<1> item) const {
++    const int linear = item.get_global_linear_id();
++    const int row_elems = total_elems > 0 ? total_elems : 1;
++    const int total = rows * row_elems;
++    if (linear >= total) {
++      return;
++    }
++
++    const int row = linear / row_elems;
++    const int offset = linear - row * row_elems;
++    const int64_t src64 = src_indices[row];
++    const int64_t dst64 = dst_indices[row];
++    if (!valid_slot(src64) || !valid_slot(dst64)) {
++      return;
++    }
++    const int src = static_cast<int>(src64);
++    const int dst = static_cast<int>(dst64);
++
++    if (offset == 0) {
++      write_pos[dst] = write_pos[src];
++      cache_base[dst] = cache_base[src];
++      is_flush[dst] = is_flush[src];
++      pending[dst] = pending[src];
++      pending_len[dst] = pending_len[src];
++    }
++
++    int local = offset;
++    if (local < d_elems) {
++      d_cache[static_cast<int64_t>(dst) * d_elems + local] =
++          d_cache[static_cast<int64_t>(src) * d_elems + local];
++      return;
++    }
++    local -= d_elems;
++    if (local < k_elems) {
++      k_cache[static_cast<int64_t>(dst) * k_elems + local] =
++          k_cache[static_cast<int64_t>(src) * k_elems + local];
++      return;
++    }
++    local -= k_elems;
++    if (local < g_elems) {
++      g_cache[static_cast<int64_t>(dst) * g_elems + local] =
++          g_cache[static_cast<int64_t>(src) * g_elems + local];
++      return;
++    }
++    local -= g_elems;
++    if (local < conv_elems) {
++      conv_pending[static_cast<int64_t>(dst) * conv_elems + local] =
++          conv_pending[static_cast<int64_t>(src) * conv_elems + local];
++    }
++  }
++
++ private:
++  T* d_cache;
++  T* k_cache;
++  float* g_cache;
++  int* write_pos;
++  int* cache_base;
++  int8_t* is_flush;
++  int8_t* pending;
++  int* pending_len;
++  T* conv_pending;
++  const int64_t* src_indices;
++  const int64_t* dst_indices;
++  const int rows;
++  const int num_slots;
++  const int d_elems;
++  const int k_elems;
++  const int g_elems;
++  const int conv_elems;
++  const int total_elems;
++  const int null_block_id;
++};
++
++struct gdn_replayssm_reset_slots_kernel {
++  static constexpr int group_size = 256;
++
++  gdn_replayssm_reset_slots_kernel(
++      int* write_pos,
++      int* cache_base,
++      int8_t* is_flush,
++      int8_t* pending,
++      int* pending_len,
++      const int64_t* state_indices,
++      const int rows,
++      const int num_slots,
++      const int init_flush,
++      const int null_block_id)
++      : write_pos(write_pos),
++        cache_base(cache_base),
++        is_flush(is_flush),
++        pending(pending),
++        pending_len(pending_len),
++        state_indices(state_indices),
++        rows(rows),
++        num_slots(num_slots),
++        init_flush(init_flush),
++        null_block_id(null_block_id) {}
++
++  static inline sycl::nd_range<1> get_nd_range(const int rows) {
++    sycl::range<1> local(group_size);
++    sycl::range<1> global((rows + group_size - 1) / group_size);
++    return sycl::nd_range<1>(global * local, local);
++  }
++
++  void operator()(sycl::nd_item<1> item) const {
++    const int row = item.get_global_linear_id();
++    if (row >= rows) {
++      return;
++    }
++    const int64_t slot64 = state_indices[row];
++    if (slot64 <= static_cast<int64_t>(null_block_id) ||
++        slot64 >= static_cast<int64_t>(num_slots)) {
++      return;
++    }
++    const int slot = static_cast<int>(slot64);
++    write_pos[slot] = 0;
++    cache_base[slot] = 0;
++    is_flush[slot] = static_cast<int8_t>(init_flush);
++    pending[slot] = static_cast<int8_t>(0);
++    pending_len[slot] = 0;
++  }
++
++ private:
++  int* write_pos;
++  int* cache_base;
++  int8_t* is_flush;
++  int8_t* pending;
++  int* pending_len;
++  const int64_t* state_indices;
++  const int rows;
++  const int num_slots;
++  const int init_flush;
++  const int null_block_id;
++};
++
++template <typename T>
++void gdn_replayssm_copy_slots(
++    sycl::queue& queue,
++    torch::Tensor& d_cache,
++    torch::Tensor& k_cache,
++    torch::Tensor& g_cache,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    torch::Tensor& conv_pending,
++    const torch::Tensor& src_indices,
++    const torch::Tensor& dst_indices,
++    const int null_block_id) {
++  using KERNEL = gdn_replayssm_copy_slots_kernel<T>;
++  const int rows = std::min(src_indices.numel(), dst_indices.numel());
++  if (rows <= 0) {
++    return;
++  }
++  const int d_elems =
++      static_cast<int>(d_cache.numel() / std::max<int64_t>(1, d_cache.size(0)));
++  const int k_elems =
++      static_cast<int>(k_cache.numel() / std::max<int64_t>(1, k_cache.size(0)));
++  const int g_elems =
++      static_cast<int>(g_cache.numel() / std::max<int64_t>(1, g_cache.size(0)));
++  const int conv_elems = static_cast<int>(
++      conv_pending.numel() / std::max<int64_t>(1, conv_pending.size(0)));
++  const int total_elems = d_elems + k_elems + g_elems + conv_elems;
++  auto range = KERNEL::get_nd_range(rows, total_elems);
++  queue.submit([&](sycl::handler& cgh) {
++    KERNEL task(
++        reinterpret_cast<T*>(d_cache.data_ptr()),
++        reinterpret_cast<T*>(k_cache.data_ptr()),
++        reinterpret_cast<float*>(g_cache.data_ptr()),
++        reinterpret_cast<int*>(write_pos.data_ptr()),
++        reinterpret_cast<int*>(cache_base.data_ptr()),
++        reinterpret_cast<int8_t*>(is_flush.data_ptr()),
++        reinterpret_cast<int8_t*>(pending.data_ptr()),
++        reinterpret_cast<int*>(pending_len.data_ptr()),
++        reinterpret_cast<T*>(conv_pending.data_ptr()),
++        reinterpret_cast<const int64_t*>(src_indices.data_ptr()),
++        reinterpret_cast<const int64_t*>(dst_indices.data_ptr()),
++        rows,
++        d_cache.size(0),
++        d_elems,
++        k_elems,
++        g_elems,
++        conv_elems,
++        total_elems,
++        null_block_id);
++    cgh.parallel_for(range, task);
++  });
++}
++
++inline void gdn_replayssm_reset_slots(
++    sycl::queue& queue,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const torch::Tensor& state_indices,
++    const int init_flush,
++    const int null_block_id) {
++  using KERNEL = gdn_replayssm_reset_slots_kernel;
++  const int rows = state_indices.numel();
++  if (rows <= 0) {
++    return;
++  }
++  auto range = KERNEL::get_nd_range(rows);
++  queue.submit([&](sycl::handler& cgh) {
++    KERNEL task(
++        reinterpret_cast<int*>(write_pos.data_ptr()),
++        reinterpret_cast<int*>(cache_base.data_ptr()),
++        reinterpret_cast<int8_t*>(is_flush.data_ptr()),
++        reinterpret_cast<int8_t*>(pending.data_ptr()),
++        reinterpret_cast<int*>(pending_len.data_ptr()),
++        reinterpret_cast<const int64_t*>(state_indices.data_ptr()),
++        rows,
++        write_pos.size(0),
++        init_flush,
++        null_block_id);
++    cgh.parallel_for(range, task);
++  });
++}
++
+ template <typename T>
+ struct gdn_replayssm_commit_pending_kernel {
+   static constexpr int group_size = 256;
+@@ -6049,19 +7008,26 @@ struct gdn_replayssm_commit_pending_kernel {
+ 
+   inline int slot_for_row(const int row) const {
+     const int64_t raw_slot = state_indices[row];
+-    if (raw_slot < 0) {
++    if (raw_slot <= static_cast<int64_t>(null_block_id)) {
+       return 0;
+     }
+     if (raw_slot >= static_cast<int64_t>(num_slots)) {
+-      return num_slots - 1;
++      return 0;
+     }
+     return static_cast<int>(raw_slot);
+   }
+ 
+-  inline int accepted_for_row(const int row, const int slot) const {
+-    const bool active =
+-        state_indices[row] > static_cast<int64_t>(null_block_id) &&
+-        pending[slot] != 0;
++  inline bool active_for_row(const int row, const int slot) const {
++    const int64_t raw_slot = state_indices[row];
++    return raw_slot > static_cast<int64_t>(null_block_id) &&
++           raw_slot < static_cast<int64_t>(num_slots) &&
++           pending[slot] != 0;
++  }
++
++  inline int accepted_for_row(
++      const int row,
++      const int slot,
++      const bool active) const {
+     if (!active) {
+       return 0;
+     }
+@@ -6087,7 +7053,11 @@ struct gdn_replayssm_commit_pending_kernel {
+     const int row = linear / elems_per_row;
+     const int elem = linear - row * elems_per_row;
+     const int slot = slot_for_row(row);
+-    const int accepted = accepted_for_row(row, slot);
++    const bool active = active_for_row(row, slot);
++    const int accepted = accepted_for_row(row, slot, active);
++    if (!active) {
++      return;
++    }
+ 
+     if (conv_base_len > 0 && elem < conv_dim * conv_base_len) {
+       const int state_pos = elem / conv_dim;
+@@ -6100,16 +7070,16 @@ struct gdn_replayssm_commit_pending_kernel {
+                            static_cast<int64_t>(source_pos) * conv_stride_2];
+       } else {
+         const int pending_pos = source_pos - conv_base_len;
+-        value =
+-            conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
+-                         static_cast<int64_t>(pending_pos) * pending_stride_1 +
+-                         static_cast<int64_t>(conv_elem) * pending_stride_2];
++        value = conv_pending[static_cast<int64_t>(slot) * pending_stride_0 +
++                             static_cast<int64_t>(pending_pos) * pending_stride_1 +
++                             static_cast<int64_t>(conv_elem) * pending_stride_2];
+       }
+       conv_state[static_cast<int64_t>(slot) * conv_stride_0 +
+                  static_cast<int64_t>(conv_elem) * conv_stride_1 +
+                  static_cast<int64_t>(state_pos) * conv_stride_2] = value;
+     }
+ 
++    // Cursor update: run once per row on work item d==0.
+     if (elem == 0) {
+       const int old_wp = write_pos[slot];
+       const int old_base = cache_base[slot];
+diff --git a/csrc/xpu/moe_layerlet.cpp b/csrc/xpu/moe_layerlet.cpp
+index 68e9418..9310ae3 100644
+--- a/csrc/xpu/moe_layerlet.cpp
++++ b/csrc/xpu/moe_layerlet.cpp
+@@ -88,10 +88,10 @@ void require_optional_same_device(
+   require_same_device(reference, tensor.value(), name);
+ }
+ 
+-template <typename scalar_t>
++template <typename scalar_t, typename topk_t>
+ void qwen36_single_token_prologue_quant1_out_impl(
+     const scalar_t* hidden_states,
+-    const int64_t* topk_ids,
++    const topk_t* topk_ids,
+     int64_t* expert_first_token_offset,
+     int* unpermuted_row_to_permuted_row,
+     int8_t* gemm1_a,
+@@ -118,7 +118,7 @@ void qwen36_single_token_prologue_quant1_out_impl(
+                    expert += local_range) {
+                 int count = 0;
+                 for (int k = 0; k < topk; ++k) {
+-                  if (topk_ids[k] < expert) {
++                  if (static_cast<int64_t>(topk_ids[k]) < expert) {
+                     count += 1;
+                   }
+                 }
+@@ -127,11 +127,12 @@ void qwen36_single_token_prologue_quant1_out_impl(
+ 
+               for (int row_id = local_id; row_id < topk;
+                    row_id += local_range) {
+-                const int64_t selected_expert = topk_ids[row_id];
++                const int64_t selected_expert =
++                    static_cast<int64_t>(topk_ids[row_id]);
+                 int less = 0;
+                 int prior_equal = 0;
+                 for (int k = 0; k < topk; ++k) {
+-                  const int64_t other = topk_ids[k];
++                  const int64_t other = static_cast<int64_t>(topk_ids[k]);
+                   if (other < selected_expert) {
+                     less += 1;
+                   }
+@@ -395,42 +396,52 @@ void qwen36_single_token_prologue_quant1_out(
+       "qwen36 fused prologue+quant1 only supports bf16, fp16, and fp32 hidden_states");
+   require_dtype(gemm1_a, "gemm1_a", torch::kInt8);
+   require_dtype(gemm1_a_scales, "gemm1_a_scales", torch::kFloat32);
++  TORCH_CHECK(
++      topk_ids.scalar_type() == torch::kInt64 ||
++          topk_ids.scalar_type() == torch::kInt32,
++      "topk_ids dtype mismatch: expected Long or Int got ",
++      topk_ids.scalar_type());
++
++#define QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(HIDDEN_PTR)            \
++  do {                                                                      \
++    if (topk_ids.scalar_type() == torch::kInt64) {                          \
++      qwen36_single_token_prologue_quant1_out_impl(                         \
++          HIDDEN_PTR,                                                       \
++          topk_ids.data_ptr<int64_t>(),                                     \
++          expert_first_token_offset.data_ptr<int64_t>(),                    \
++          unpermuted_row_to_permuted_row.data_ptr<int>(),                   \
++          gemm1_a.data_ptr<int8_t>(),                                       \
++          gemm1_a_scales.data_ptr<float>(),                                 \
++          hidden_size,                                                      \
++          8,                                                                \
++          num_experts);                                                     \
++    } else {                                                                \
++      qwen36_single_token_prologue_quant1_out_impl(                         \
++          HIDDEN_PTR,                                                       \
++          topk_ids.data_ptr<int>(),                                         \
++          expert_first_token_offset.data_ptr<int64_t>(),                    \
++          unpermuted_row_to_permuted_row.data_ptr<int>(),                   \
++          gemm1_a.data_ptr<int8_t>(),                                       \
++          gemm1_a_scales.data_ptr<float>(),                                 \
++          hidden_size,                                                      \
++          8,                                                                \
++          num_experts);                                                     \
++    }                                                                       \
++  } while (false)
+ 
+   if (hidden_states.scalar_type() == torch::kBFloat16) {
+-    qwen36_single_token_prologue_quant1_out_impl(
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
+         reinterpret_cast<const sycl::ext::oneapi::bfloat16*>(
+-            hidden_states.data_ptr()),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++            hidden_states.data_ptr()));
+   } else if (hidden_states.scalar_type() == torch::kFloat16) {
+-    qwen36_single_token_prologue_quant1_out_impl(
+-        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
++        reinterpret_cast<const sycl::half*>(hidden_states.data_ptr()));
+   } else {
+-    qwen36_single_token_prologue_quant1_out_impl(
+-        hidden_states.data_ptr<float>(),
+-        topk_ids.data_ptr<int64_t>(),
+-        expert_first_token_offset.data_ptr<int64_t>(),
+-        unpermuted_row_to_permuted_row.data_ptr<int>(),
+-        gemm1_a.data_ptr<int8_t>(),
+-        gemm1_a_scales.data_ptr<float>(),
+-        hidden_size,
+-        8,
+-        num_experts);
++    QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1(
++        hidden_states.data_ptr<float>());
+   }
++
++#undef QWEN36_DISPATCH_SINGLE_TOKEN_PROLOGUE_QUANT1
+ }
+ 
+ template <typename scalar_t>
+@@ -1112,7 +1123,11 @@ torch::Tensor qwen36_moe_w8a8_full_layerlet(
+                         "expert_first_token_offset");
+     require_same_device(hidden_states, output, "output");
+ 
+-    require_dtype(topk_ids, "topk_ids", torch::kInt64);
++    TORCH_CHECK(
++        topk_ids.scalar_type() == torch::kInt64 ||
++            topk_ids.scalar_type() == torch::kInt32,
++        "topk_ids dtype mismatch: expected Long or Int got ",
++        topk_ids.scalar_type());
+     require_dtype(topk_weights, "topk_weights", torch::kFloat32);
+     require_dtype(workspace, "workspace", torch::kUInt8);
+     require_dtype(
+diff --git a/csrc/xpu/ops.h b/csrc/xpu/ops.h
+index 293bf35..cc67cfd 100644
+--- a/csrc/xpu/ops.h
++++ b/csrc/xpu/ops.h
+@@ -341,6 +341,9 @@ void gdn_replayssm_spec_decode(
+     const torch::Tensor& write_pos,
+     const torch::Tensor& cache_base,
+     const torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const bool write_pending_metadata,
+     const int64_t max_cache_len,
+     const int64_t max_spec_len,
+     const double scale,
+@@ -369,6 +372,59 @@ void gdn_replayssm_stage_conv(
+     const std::string& activation,
+     const int64_t null_block_id);
+ 
++void gdn_replayssm_commit_stage_conv(
++    torch::Tensor& q,
++    torch::Tensor& k,
++    torch::Tensor& v,
++    torch::Tensor& a_out,
++    torch::Tensor& b_out,
++    const torch::Tensor& mixed_qkv,
++    const torch::Tensor& a,
++    const torch::Tensor& b,
++    torch::Tensor& conv_state,
++    const torch::Tensor& conv_weights,
++    const std::optional<torch::Tensor>& conv_bias,
++    torch::Tensor& conv_pending,
++    const torch::Tensor& spec_token_indices,
++    const torch::Tensor& query_start_loc,
++    const torch::Tensor& state_indices,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    const torch::Tensor& pending_len,
++    const torch::Tensor& num_accepted_tokens,
++    const int64_t num_spec_decodes,
++    const int64_t num_actual_tokens,
++    const int64_t max_spec_len,
++    const int64_t max_cache_len,
++    const std::string& activation,
++    const int64_t null_block_id);
++
++void gdn_replayssm_copy_slots(
++    torch::Tensor& d_cache,
++    torch::Tensor& k_cache,
++    torch::Tensor& g_cache,
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    torch::Tensor& conv_pending,
++    const torch::Tensor& src_indices,
++    const torch::Tensor& dst_indices,
++    const int64_t null_block_id);
++
++void gdn_replayssm_reset_slots(
++    torch::Tensor& write_pos,
++    torch::Tensor& cache_base,
++    torch::Tensor& is_flush,
++    torch::Tensor& pending,
++    torch::Tensor& pending_len,
++    const torch::Tensor& state_indices,
++    const int64_t init_flush,
++    const int64_t null_block_id);
++
+ void gdn_replayssm_commit_pending(
+     torch::Tensor& conv_state,
+     torch::Tensor& write_pos,
+diff --git a/csrc/xpu/torch_bindings.cpp b/csrc/xpu/torch_bindings.cpp
+index ae07b01..efd32c2 100644
+--- a/csrc/xpu/torch_bindings.cpp
++++ b/csrc/xpu/torch_bindings.cpp
+@@ -274,7 +274,8 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "Tensor a, Tensor b, Tensor A_log, Tensor dt_bias, Tensor! "
+       "checkpoint_state, Tensor! d_cache, Tensor! k_cache, Tensor! g_cache, "
+       "Tensor query_start_loc, Tensor ssm_state_indices, Tensor write_pos, "
+-      "Tensor cache_base, Tensor is_flush, int max_cache_len, int "
++      "Tensor cache_base, Tensor is_flush, Tensor! pending, Tensor! "
++      "pending_len, bool write_pending_metadata, int max_cache_len, int "
+       "max_spec_len, float scale, bool use_qk_l2norm_in_kernel, int "
+       "null_block_id) -> ()");
+   xpu_ops.impl(
+@@ -292,6 +293,37 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, xpu_ops) {
+       "gdn_replayssm_stage_conv",
+       torch::kXPU,
+       &gdn_replayssm_stage_conv);
++  xpu_ops.def(
++      "gdn_replayssm_commit_stage_conv(Tensor! q, Tensor! k, Tensor! v, "
++      "Tensor! a_out, Tensor! b_out, Tensor mixed_qkv, Tensor a, Tensor b, "
++      "Tensor! conv_state, Tensor conv_weights, Tensor? conv_bias, Tensor! "
++      "conv_pending, Tensor spec_token_indices, Tensor query_start_loc, "
++      "Tensor state_indices, Tensor! write_pos, Tensor! cache_base, Tensor! "
++      "is_flush, Tensor! pending, Tensor pending_len, Tensor "
++      "num_accepted_tokens, int num_spec_decodes, int num_actual_tokens, int "
++      "max_spec_len, int max_cache_len, str activation, int null_block_id) "
++      "-> ()");
++  xpu_ops.impl(
++      "gdn_replayssm_commit_stage_conv",
++      torch::kXPU,
++      &gdn_replayssm_commit_stage_conv);
++  xpu_ops.def(
++      "gdn_replayssm_copy_slots(Tensor! d_cache, Tensor! k_cache, Tensor! "
++      "g_cache, Tensor! write_pos, Tensor! cache_base, Tensor! is_flush, "
++      "Tensor! pending, Tensor! pending_len, Tensor! conv_pending, Tensor "
++      "src_indices, Tensor dst_indices, int null_block_id) -> ()");
++  xpu_ops.impl(
++      "gdn_replayssm_copy_slots",
++      torch::kXPU,
++      &gdn_replayssm_copy_slots);
++  xpu_ops.def(
++      "gdn_replayssm_reset_slots(Tensor! write_pos, Tensor! cache_base, "
++      "Tensor! is_flush, Tensor! pending, Tensor! pending_len, Tensor "
++      "state_indices, int init_flush, int null_block_id) -> ()");
++  xpu_ops.impl(
++      "gdn_replayssm_reset_slots",
++      torch::kXPU,
++      &gdn_replayssm_reset_slots);
+   xpu_ops.def(
+       "gdn_replayssm_commit_pending(Tensor! conv_state, Tensor! write_pos, "
+       "Tensor! cache_base, Tensor! is_flush, Tensor! pending, Tensor "
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 327562f..d49931f 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -2204,6 +2204,7 @@ def xpu_fused_moe(hidden_states,
+             "num_rows": int(num_rows),
+             "hidden_size": int(hidden_size),
+             "n_experts_per_token": int(n_experts_per_token),
++            "topk_ids_dtype": str(topk_ids.dtype).replace("torch.", ""),
+             "expert_map_is_none": expert_map is None,
+             "ep_size": int(ep_size),
+             "has_int8_scratch": int8_scratch is not None,

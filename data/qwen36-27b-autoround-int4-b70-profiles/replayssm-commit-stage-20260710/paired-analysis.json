@@ -1,0 +1,54 @@
+{
+  "classification": "strict_fresh_diagnostic_no_win_no_quality_promotion",
+  "comparisons": {
+    "control_to_all_fusions": {
+      "ci95_mean_pct": [
+        0.4706977840955538,
+        3.2498499721650846
+      ],
+      "mean_pct": 1.7662470809364903,
+      "median_pct": 1.0408738896302894,
+      "n": 12,
+      "positive": 9
+    },
+    "control_to_commit_stage": {
+      "ci95_mean_pct": [
+        -2.301754453355955,
+        1.0954860393572519
+      ],
+      "mean_pct": -0.6535321983885419,
+      "median_pct": -1.0395553966774274,
+      "n": 12,
+      "positive": 3
+    },
+    "control_to_small_fusions": {
+      "ci95_mean_pct": [
+        -0.08913820958225867,
+        3.100616030671885
+      ],
+      "mean_pct": 1.517469474535174,
+      "median_pct": 1.5013958021260043,
+      "n": 12,
+      "positive": 10
+    },
+    "small_fusions_to_all_fusions": {
+      "ci95_mean_pct": [
+        -1.1237616417937653,
+        1.8415712763375336
+      ],
+      "mean_pct": 0.2888001579811635,
+      "median_pct": -0.4810514741430849,
+      "n": 12,
+      "positive": 5
+    }
+  },
+  "external_run_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/replayssm-transaction-screen-20260710T032526Z",
+  "interpretation": [
+    "commit-stage alone regressed mean throughput",
+    "commit-stage on top of small fusions was indistinguishable from noise",
+    "likely occupancy/register-pressure loss from serializing four positions into one dimension workgroup",
+    "preserve patch, remove from active source, and do not run quality or submit"
+  ],
+  "localmaxxing_eligible": false,
+  "reason": "commit-stage adds no statistically supported gain over the already validated small fusions"
+}

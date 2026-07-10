@@ -49,6 +49,7 @@ run_lane() {
   local lane="$3"
   local fuse_pending="$4"
   local direct_out="$5"
+  local fuse_commit_stage="$6"
 
   GPU_INDEX="$gpu" \
   PORT="$port" \
@@ -69,6 +70,7 @@ run_lane() {
   VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1 \
   VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA="$fuse_pending" \
   VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT="$direct_out" \
+  VLLM_XPU_GDN_REPLAYSSM_FUSE_COMMIT_STAGE="$fuse_commit_stage" \
   VLLM_XPU_LM_HEAD_INT8=1 \
   VLLM_XPU_LM_HEAD_INT8_SCALE_DTYPE=bf16 \
   VLLM_XPU_DRAFT_LM_HEAD_INT4=1 \
@@ -81,31 +83,39 @@ run_lane() {
 case "$LAYOUT" in
   screen)
     lane_specs=(
-      "0|19480|control|0|0"
-      "1|19481|pending|1|0"
-      "2|19482|direct|0|1"
-      "3|19483|both|1|1"
+      "0|19480|control|0|0|0"
+      "1|19481|pending|1|0|0"
+      "2|19482|direct|0|1|0"
+      "3|19483|both|1|1|0"
     )
     ;;
   crossover)
     lane_specs=(
-      "0|19480|both-gpu0|1|1"
-      "1|19481|control-gpu1|0|0"
-      "2|19482|both-gpu2|1|1"
-      "3|19483|control-gpu3|0|0"
+      "0|19480|both-gpu0|1|1|0"
+      "1|19481|control-gpu1|0|0|0"
+      "2|19482|both-gpu2|1|1|0"
+      "3|19483|control-gpu3|0|0|0"
     )
     ;;
   crossover-reverse)
     lane_specs=(
-      "0|19480|control-gpu0|0|0"
-      "1|19481|both-gpu1|1|1"
-      "2|19482|control-gpu2|0|0"
-      "3|19483|both-gpu3|1|1"
+      "0|19480|control-gpu0|0|0|0"
+      "1|19481|both-gpu1|1|1|0"
+      "2|19482|control-gpu2|0|0|0"
+      "3|19483|both-gpu3|1|1|0"
+    )
+    ;;
+  commit-stage)
+    lane_specs=(
+      "0|19480|control|0|0|0"
+      "1|19481|small-fusions|1|1|0"
+      "2|19482|commit-stage|0|0|1"
+      "3|19483|all-fusions|1|1|1"
     )
     ;;
   *)
     echo "Unsupported LAYOUT=$LAYOUT" >&2
-    echo "Expected screen, crossover, or crossover-reverse" >&2
+    echo "Expected screen, crossover, crossover-reverse, or commit-stage" >&2
     exit 2
     ;;
 esac
@@ -113,9 +123,11 @@ esac
 declare -a pids=()
 declare -a lanes=()
 for i in "${!lane_specs[@]}"; do
-  IFS='|' read -r gpu port lane fuse_pending direct_out \
+  IFS='|' read -r gpu port lane fuse_pending direct_out fuse_commit_stage \
     <<< "${lane_specs[$i]}"
-  run_lane "$gpu" "$port" "$lane" "$fuse_pending" "$direct_out" &
+  run_lane \
+    "$gpu" "$port" "$lane" "$fuse_pending" "$direct_out" \
+    "$fuse_commit_stage" &
   pids+=("$!")
   lanes+=("$lane")
   if (( i + 1 < ${#lane_specs[@]} )); then

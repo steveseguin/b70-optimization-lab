@@ -117,6 +117,15 @@ The cooled GPU 2 run also measured:
 The start telemetry and complete benchmark/quality payloads are retained under
 `data/qwen36-27b-autoround-int4-b70-profiles/replayssm-transaction-20260710/`.
 
+### Absolute-rate caveat found afterward
+
+An exploratory `xpu-smi dump` command had accidentally been started without
+`-n 1`, leaving a once-per-second telemetry observer alive throughout these
+rounds. It was terminated before the next experiment. Because every control
+and candidate crossover row ran under the same observer, the card-balanced
+relative `+1.3948%` result remains useful. The absolute confirmation rates may
+be slightly depressed and must not replace the existing headline record.
+
 ## Harness correction
 
 The first endpoint attempt failed before serving because

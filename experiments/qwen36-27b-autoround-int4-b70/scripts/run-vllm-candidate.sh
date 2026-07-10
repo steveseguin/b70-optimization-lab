@@ -133,6 +133,7 @@ trap cleanup EXIT
   echo "gdn_replayssm_torch_fallback=${VLLM_XPU_GDN_REPLAYSSM_TORCH_FALLBACK:-}"
   echo "gdn_replayssm_stage_conv_torch_fallback=${VLLM_XPU_GDN_REPLAYSSM_STAGE_CONV_TORCH_FALLBACK:-}"
   echo "gdn_replayssm_commit_in_forward=${VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD:-}"
+  echo "gdn_replayssm_fuse_commit_stage=${VLLM_XPU_GDN_REPLAYSSM_FUSE_COMMIT_STAGE:-}"
   echo "gdn_replayssm_slot_mgmt_torch_fallback=${VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK:-}"
   echo "gdn_replayssm_fuse_pending_metadata=${VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA:-}"
   echo "gdn_replayssm_direct_core_out=${VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT:-}"
