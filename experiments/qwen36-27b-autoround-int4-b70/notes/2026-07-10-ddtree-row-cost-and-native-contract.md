@@ -163,3 +163,56 @@ layer, verify all candidate rows with the unchanged AutoRound INT4 target, and
 commit only the target-selected winner state. Completion of that gate requires
 an integrated step-cost and exact-token probe; only then is a strict fresh
 endpoint run justified.
+
+## XPU full-attention gate: exact boolean SDPA path
+
+The target also has 16 full-attention layers. Flattened causal attention is
+invalid because later siblings can see earlier siblings. New diagnostic
+`scripts/bench-qwen27-xpu-tree-attention.py` exercises the real Qwen27 geometry
+(`24` query heads, `4` KV heads, head size `256`), derives a dynamic mask from
+the parent table, and compares every row with an independent FP32
+context-plus-root-to-node replay.
+
+Two XPU SDPA mask forms are not equivalent:
+
+- additive float `0/-inf` mask: fast but **wrong**, with max error about
+  `0.5200`; never use this path;
+- boolean keep mask: bitwise-close to the independent replay (max BF16 error
+  `0.00390625`), including a flattened-causal negative control that diverges
+  substantially.
+
+At row 16 / context 128, four independent cards used 20 warmups, 100 samples,
+and 16 calls per event sample:
+
+| path | median ms/layer (4-card range) | projected 16-layer cost |
+| --- | ---: | ---: |
+| unified attention with `qq_bias` | `0.31609` to `0.31910` | `5.06-5.11 ms` |
+| boolean SDPA, including paged-KV gather and output copy | **`0.14612` to `0.15399`** | **`2.34-2.46 ms`** |
+
+The exact path saves about `2.6-2.7 ms` per target verifier step. A context
+ladder on separate cards showed the expected boundary: at context 32 it is
+neutral (`0.1493` vs `0.1441 ms/layer`), while at context 512 it is much faster
+(`0.1405` vs `1.0261 ms/layer`). It therefore preserves very-short-context
+performance within noise and removes the unified kernel's context scaling for
+the service range relevant to this lane.
+
+The default-off vLLM patch is
+`patches/qwen27-ddtree-xpu-bool-sdpa-20260710.patch` (SHA-256
+`8566a89b77264b8df10dad1e8f2637d01afaa845f15a63d0468711adf5a0ee2b`),
+based on vLLM source commit
+`e7213ba8e13b74d7bfa3cbc05435a45df90eb76a`. It enables explicit
+`TREE_ATTN` selection on XPU and gates the boolean path behind
+`VLLM_XPU_TREE_ATTN_BOOL_SDPA=1`. Unsupported batch/prefill, ALiBi,
+sliding-window, soft-cap, or cache-dtype cases fall back to unified attention.
+
+Tracked raw reports are the `qwen27-xpu-tree-attention-row16-*` JSON files in
+`data/qwen36-27b-autoround-int4-b70-diagnostics/`. They remain diagnostics,
+not endpoint throughput, quality, or LocalMaxxing evidence.
+
+The updated row-16 component floor is approximately `26.72 ms` W4 projection
+body + `4.23-4.45 ms` GDN tree recurrence + `2.34-2.46 ms` full attention, or
+`33.3-33.6 ms` before norms, routing, draft work, LM heads, tree construction,
+and bookkeeping. DFlash INT4 LM-head timing at 15 rows is about `1.21 ms` and
+full-logit top-15 is about `0.74 ms`. A `100 tok/s` integrated result remains
+tight but mechanically plausible enough to continue; dynamic metadata and
+accepted-path cache/state commit are now the next blocker.

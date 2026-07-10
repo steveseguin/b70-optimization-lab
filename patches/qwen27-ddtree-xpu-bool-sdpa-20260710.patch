@@ -1,0 +1,210 @@
+diff --git a/vllm/platforms/xpu.py b/vllm/platforms/xpu.py
+index f00c96681..39e94ab9e 100644
+--- a/vllm/platforms/xpu.py
++++ b/vllm/platforms/xpu.py
+@@ -77,6 +77,9 @@ class XPUPlatform(Platform):
+         if selected_backend == AttentionBackendEnum.TRITON_ATTN:
+             logger.info_once("Using Triton backend.")
+             return AttentionBackendEnum.TRITON_ATTN.get_path()
++        elif selected_backend == AttentionBackendEnum.TREE_ATTN:
++            logger.info_once("Using tree attention backend on XPU.")
++            return AttentionBackendEnum.TREE_ATTN.get_path()
+         elif dtype == torch.float32:
+             logger.warning_once(
+                 "Flash Attention on XPU does not support float32 dtype. "
+diff --git a/vllm/v1/attention/backends/tree_attn.py b/vllm/v1/attention/backends/tree_attn.py
+index ceee8d549..b5df4d338 100644
+--- a/vllm/v1/attention/backends/tree_attn.py
++++ b/vllm/v1/attention/backends/tree_attn.py
+@@ -3,10 +3,12 @@
+ """Attention layer with TreeAttention."""
+ 
+ import ast
++import os
+ from dataclasses import dataclass
+ from typing import ClassVar
+ 
+ import torch
++import torch.nn.functional as F
+ 
+ from vllm import _custom_ops as ops
+ from vllm.config import VllmConfig
+@@ -91,6 +93,7 @@ class TreeAttentionMetadata:
+     num_decodes: int = 0
+ 
+     tree_attn_bias: torch.Tensor | None = None
++    xpu_sdpa_keep_mask: torch.Tensor | None = None
+ 
+     # Cached Prefill/decode metadata.
+     _cached_prefill_metadata: "TreeAttentionMetadata | None" = None
+@@ -144,6 +147,7 @@ class TreeAttentionMetadata:
+             block_table=self.block_table[: self.num_decodes],
+             slot_mapping=self.slot_mapping[: self.num_decode_tokens],
+             tree_attn_bias=self.tree_attn_bias,
++            xpu_sdpa_keep_mask=self.xpu_sdpa_keep_mask,
+         )
+         return self._cached_decode_metadata
+ 
+@@ -199,6 +203,27 @@ class TreeAttentionMetadataBuilder(AttentionMetadataBuilder[TreeAttentionMetadat
+         block_table = common_attn_metadata.block_table_tensor
+         slot_mapping = common_attn_metadata.slot_mapping
+ 
++        xpu_sdpa_keep_mask = None
++        context_len = max_seq_len - max_query_len
++        if (
++            self.tree_attn_bias.device.type == "xpu"
++            and num_decodes == 1
++            and num_prefills == 0
++            and context_len >= 0
++            and self.tree_attn_bias.numel() > 0
++        ):
++            context_keep = torch.ones(
++                (max_query_len, context_len),
++                dtype=torch.bool,
++                device=self.tree_attn_bias.device,
++            )
++            tree_keep = torch.isfinite(
++                self.tree_attn_bias[:max_query_len, :max_query_len]
++            )
++            xpu_sdpa_keep_mask = torch.cat((context_keep, tree_keep), dim=1).view(
++                1, 1, max_query_len, max_seq_len
++            )
++
+         return TreeAttentionMetadata(
+             num_actual_tokens=num_actual_tokens,
+             num_prefill_tokens=num_prefill_tokens,
+@@ -212,6 +237,7 @@ class TreeAttentionMetadataBuilder(AttentionMetadataBuilder[TreeAttentionMetadat
+             block_table=block_table,
+             slot_mapping=slot_mapping,
+             tree_attn_bias=self.tree_attn_bias,
++            xpu_sdpa_keep_mask=xpu_sdpa_keep_mask,
+         )
+ 
+     def build_for_drafting(
+@@ -332,6 +358,72 @@ class TreeAttentionImpl(AttentionImpl):
+                 "TreeAttentionImpl."
+             )
+ 
++    def _use_xpu_bool_sdpa(self, metadata: TreeAttentionMetadata) -> bool:
++        """Use XPU's fast masked SDPA for the single-request DDTree lane.
++
++        XPU flash SDPA currently misapplies additive float masks but honors
++        boolean keep masks exactly. Keep the path tightly gated until broader
++        batch, ALiBi, sliding-window, and quantized-cache cases are covered.
++        """
++
++        return (
++            os.environ.get("VLLM_XPU_TREE_ATTN_BOOL_SDPA", "0").strip().lower()
++            in ("1", "true", "yes", "on")
++            and metadata.query_start_loc.shape[0] == 2
++            and metadata.num_prefills == 0
++            and metadata.tree_attn_bias is not None
++            and metadata.xpu_sdpa_keep_mask is not None
++            and self.alibi_slopes is None
++            and self.sliding_window == (-1, -1)
++            and self.logits_soft_cap == 0
++            and self.kv_cache_dtype in ("auto", "bfloat16", "float16")
++        )
++
++    def _forward_xpu_bool_sdpa(
++        self,
++        query: torch.Tensor,
++        key_cache: torch.Tensor,
++        value_cache: torch.Tensor,
++        metadata: TreeAttentionMetadata,
++        output: torch.Tensor,
++    ) -> None:
++        query_len = metadata.max_query_len
++        seq_len = metadata.max_seq_len
++        context_len = seq_len - query_len
++        if query_len <= 0 or context_len < 0:
++            raise ValueError(
++                f"Invalid XPU tree attention lengths: {query_len=}, {seq_len=}"
++            )
++
++        block_size = key_cache.shape[1]
++        num_blocks = (seq_len + block_size - 1) // block_size
++        block_ids = metadata.block_table[0, :num_blocks]
++        keys = key_cache.index_select(0, block_ids).reshape(
++            -1, self.num_kv_heads, self.head_size
++        )[:seq_len]
++        values = value_cache.index_select(0, block_ids).reshape(
++            -1, self.num_kv_heads, self.head_size
++        )[:seq_len]
++
++        keep_mask = metadata.xpu_sdpa_keep_mask
++        assert keep_mask is not None
++        q = query[:query_len].permute(1, 0, 2).unsqueeze(0)
++        k = keys.permute(1, 0, 2).unsqueeze(0)
++        v = values.permute(1, 0, 2).unsqueeze(0)
++        result = F.scaled_dot_product_attention(
++            q,
++            k,
++            v,
++            attn_mask=keep_mask,
++            dropout_p=0.0,
++            is_causal=False,
++            scale=self.scale,
++            enable_gqa=self.num_heads != self.num_kv_heads,
++        )
++        output[:query_len].view(query_len, self.num_heads, self.head_size).copy_(
++            result.squeeze(0).permute(1, 0, 2)
++        )
++
+     def do_kv_cache_update(
+         self,
+         layer: torch.nn.Module,
+@@ -419,24 +511,33 @@ class TreeAttentionImpl(AttentionImpl):
+             )
+ 
+         if decode_meta := attn_metadata.decode_metadata:
+-            unified_attention(
+-                q=query[:num_decode_tokens],
+-                k=key_cache,
+-                v=value_cache,
+-                out=output[:num_decode_tokens],
+-                cu_seqlens_q=decode_meta.query_start_loc,
+-                max_seqlen_q=decode_meta.max_query_len,
+-                seqused_k=decode_meta.seq_lens,
+-                max_seqlen_k=decode_meta.max_seq_len,
+-                softmax_scale=self.scale,
+-                causal=True,
+-                alibi_slopes=self.alibi_slopes,
+-                qq_bias=decode_meta.tree_attn_bias,
+-                window_size=self.sliding_window,
+-                block_table=decode_meta.block_table,
+-                softcap=self.logits_soft_cap,
+-                q_descale=None,  # Not supported
+-                k_descale=layer._k_scale.expand(descale_shape),
+-                v_descale=layer._v_scale.expand(descale_shape),
+-            )
++            if query.device.type == "xpu" and self._use_xpu_bool_sdpa(decode_meta):
++                self._forward_xpu_bool_sdpa(
++                    query[:num_decode_tokens],
++                    key_cache,
++                    value_cache,
++                    decode_meta,
++                    output[:num_decode_tokens],
++                )
++            else:
++                unified_attention(
++                    q=query[:num_decode_tokens],
++                    k=key_cache,
++                    v=value_cache,
++                    out=output[:num_decode_tokens],
++                    cu_seqlens_q=decode_meta.query_start_loc,
++                    max_seqlen_q=decode_meta.max_query_len,
++                    seqused_k=decode_meta.seq_lens,
++                    max_seqlen_k=decode_meta.max_seq_len,
++                    softmax_scale=self.scale,
++                    causal=True,
++                    alibi_slopes=self.alibi_slopes,
++                    qq_bias=decode_meta.tree_attn_bias,
++                    window_size=self.sliding_window,
++                    block_table=decode_meta.block_table,
++                    softcap=self.logits_soft_cap,
++                    q_descale=None,  # Not supported
++                    k_descale=layer._k_scale.expand(descale_shape),
++                    v_descale=layer._v_scale.expand(descale_shape),
++                )
+         return output
