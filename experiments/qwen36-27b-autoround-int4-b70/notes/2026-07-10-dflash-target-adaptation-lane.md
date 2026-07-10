@@ -262,6 +262,62 @@ updated both intended tensors. Active four-GPU artifact root:
 adaptation-query-lora-k4-mixed-4gpu-20260710T120525Z
 ```
 
+The full 8,192-step matrix completed cleanly. All four ranks produced a real
+exploratory lift, but none was large or stable enough to justify endpoint
+integration:
+
+| Candidate | Baseline visible | Final visible | Raw delta | Scenario delta | Scenario 95% CI | Stability | Decision |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| rank 32, `3e-4` | 2.7803 | 2.8809 | +0.1006 | +0.1081 | `[0.0566, 0.1563]` | fail | positive, too small |
+| rank 64, `2e-4` | 2.7803 | **2.9102** | **+0.1299** | **+0.1397** | **`[0.0819, 0.1913]`** | fail | best scenario result, too small |
+| rank 128, `1.4e-4` | 2.7783 | 2.8809 | +0.1025 | +0.1135 | `[0.0600, 0.1658]` | fail | positive, too small |
+| rank 256, `1e-4` | 2.7783 | 2.9082 | **+0.1299** | +0.1381 | `[0.0767, 0.1952]` | fail | tied raw best, too small |
+
+All four pass the exploratory zero-effect test after Holm correction, but all
+miss the predeclared `+0.25` useful-effect floor. Candidate repeat disagreement
+was `1.17%` to `1.56%`, above the `1%` technical-stability limit. The larger
+ranks did not materially outperform rank 64, so adding generic query capacity
+has reached diminishing returns. Do not spend an endpoint run on these
+adapters. Compact paired analysis is preserved as
+`diagnostics/qwen27-dflash-query-lora-k4-paired-20260710.json`; full summaries
+and adapters remain under the USB artifact root above.
+
+## Next lane: DFlare-style target-layer fusion
+
+The next mechanism is not another generic residual. The official Tencent
+AngelSlim DFlare implementation identifies DFlash's shared target-conditioning
+representation as a narrow bottleneck. It gives each draft layer its own
+learned mixture over a broad set of target hidden layers and also separates
+context K/V projections from noise-token K/V projections. Relevant upstream
+sources are:
+
+```text
+/home/steve/src/AngelSlim/
+  angelslim/compressor/speculative/train/models/draft/qwen_dflare.py
+  docs/source/features/speculative_decoding/dflare.md
+```
+
+Our corrected corpus already contains five broad, endpoint-correct target
+layers (`2,17,32,47,62`), so the first screen can isolate the layer-wise fusion
+idea without collecting new traces. Preserve the public checkpoint exactly at
+initialization by splitting the existing `fc.weight` into five target-layer
+blocks, computing each block's contribution once, and learning zero-initialized
+per-draft-layer residual mixing coefficients:
+
+```text
+base = sum_t linear(aux[t], fc.weight[:, t])
+context[layer] = hidden_norm(base + sum_t delta[layer,t] * contribution[t])
+```
+
+`delta=0` is algebraically identical to the current checkpoint. The first
+screen adds only `draft_layers x target_layers = 25` parameters; its extra
+serving work is five tiny contribution projections plus a 25-coefficient mix,
+not another full draft layer. If this does not produce a material acceptance
+gain, the second DFlare mechanism is a separate context/noise K/V adapter,
+initialized from the existing shared K/V projections so the initial forward is
+exact. Both remain offline diagnostics until a candidate passes independent
+endpoint acceptance and strict fresh target-verified speed/quality gates.
+
 ## Advancement rule
 
 Do not use a fixed scalar acceptance cutoff as proof. Retain paired per-anchor
