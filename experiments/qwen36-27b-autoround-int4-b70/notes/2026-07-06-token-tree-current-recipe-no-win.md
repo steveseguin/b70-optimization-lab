@@ -1,5 +1,12 @@
 # Qwen27 Token-Tree Retest On Current ReplaySSM/Draft-INT4 Recipe: No Win
 
+> **2026-07-10 correction:** this run did not perform target-side tree
+> verification. The binary shape selected FlashAttention and executed as a
+> flat sequential MTP6 chain; root-3 was ordinary MTP3. Keep the measurements
+> under those actual identities, and use
+> `2026-07-10-token-tree-target-semantics-correction.md` for the source audit
+> and requirements of a valid GDN-aware target tree.
+
 Date: 2026-07-06
 
 Classification: strict fresh diagnostic screen, quality disabled, no promote,
