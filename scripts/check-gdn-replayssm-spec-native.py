@@ -40,6 +40,7 @@ def main() -> int:
     parser.add_argument("--state-dtype", choices=("bf16", "fp16", "fp32"),
                         default="bf16")
     parser.add_argument("--seed", type=int, default=20260706)
+    parser.add_argument("--write-pending-metadata", action="store_true")
     parser.add_argument(
         "--xpu-c-extension",
         default=os.environ.get("VLLM_XPU_C_EXTENSION"),
@@ -142,6 +143,8 @@ def main() -> int:
     cache_base = torch.arange(num_slots, device=device,
                               dtype=torch.int32) % cache_len
     is_flush = torch.zeros((num_slots,), device=device, dtype=torch.int8)
+    pending = torch.zeros((num_slots,), device=device, dtype=torch.int8)
+    pending_len = torch.zeros((num_slots,), device=device, dtype=torch.int32)
     if rows > 1:
         is_flush[2] = 1
 
@@ -158,6 +161,8 @@ def main() -> int:
             "d_cache": d_cache.clone(),
             "k_cache": k_cache.clone(),
             "g_cache": g_cache.clone(),
+            "pending": pending.clone(),
+            "pending_len": pending_len.clone(),
         }
         gdn_replayssm_spec_decode(
             A_log=A_log,
@@ -177,6 +182,9 @@ def main() -> int:
             write_pos=write_pos,
             cache_base=cache_base,
             is_flush=is_flush,
+            pending=local["pending"],
+            pending_len=local["pending_len"],
+            write_pending_metadata=args.write_pending_metadata,
             max_cache_len=cache_len,
             max_spec_len=spec_len,
             null_block_id=null_block_id,
@@ -193,11 +201,22 @@ def main() -> int:
 
     comparisons: dict[str, dict[str, Any]] = {}
     pass_all = True
-    for name in ("out", "checkpoint", "d_cache", "k_cache", "g_cache"):
+    for name in (
+        "out",
+        "checkpoint",
+        "d_cache",
+        "k_cache",
+        "g_cache",
+        "pending",
+        "pending_len",
+    ):
         diff = (native[name].to(torch.float32) -
                 fallback[name].to(torch.float32)).abs()
         max_abs = float(diff.max().item())
-        atol = 0.03 if name != "g_cache" else 1e-5
+        if name in ("pending", "pending_len"):
+            atol = 0.0
+        else:
+            atol = 0.03 if name != "g_cache" else 1e-5
         ok = bool(max_abs <= atol)
         comparisons[name] = {
             "max_abs": max_abs,
@@ -218,6 +237,7 @@ def main() -> int:
             "head_v_dim": head_v_dim,
             "dtype": args.dtype,
             "state_dtype": args.state_dtype,
+            "write_pending_metadata": args.write_pending_metadata,
         },
         "xpu_c_extension": args.xpu_c_extension,
         "native_available": not _truthy(

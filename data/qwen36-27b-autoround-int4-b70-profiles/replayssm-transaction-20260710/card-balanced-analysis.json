@@ -1,0 +1,99 @@
+{
+  "balanced_aggregate_rate_effect": {
+    "ci95_mean_pct": [
+      0.6429127320770963,
+      2.5050888788652137
+    ],
+    "mean_pct": 1.4049679040270602,
+    "median_pct": 0.9429071007464929,
+    "n": 12,
+    "positive": 12
+  },
+  "balanced_raw": {
+    "candidate_mean_tok_s": 68.00899716260432,
+    "candidate_median_tok_s": 67.84810488291858,
+    "control_mean_tok_s": 67.09984932546367,
+    "control_median_tok_s": 67.56579956829361,
+    "mean_gain_tok_s": 0.909147837140651
+  },
+  "card_balanced_prompt_effect": {
+    "ci95_mean_pct": [
+      0.6276134568043104,
+      2.54629706810386
+    ],
+    "mean_pct": 1.3947727392276887,
+    "median_pct": 0.9003835075864983,
+    "n": 12,
+    "positive": 11
+  },
+  "classification": "strict_fresh_card_balanced_diagnostic_quality_validated_not_record",
+  "full_quality_confirmations": [
+    {
+      "gpu": 0,
+      "median_tok_s": 66.31656837502302,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/replayssm-transaction-full-gate-20260710T025542Z/run/summary.json"
+    },
+    {
+      "gpu": 2,
+      "median_tok_s": 68.16353882227102,
+      "path": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/replayssm-transaction-final-confirm-20260710T030103Z/run/summary.json"
+    }
+  ],
+  "localmaxxing_eligible": false,
+  "method": {
+    "bootstrap_replicates": 200000,
+    "bootstrap_seed": 20260710,
+    "candidate": "VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA=1 + VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT=1",
+    "cold_policy": "fixed realistic suite, each prompt once per run, cached_tokens=0, no history/cache acceleration",
+    "design": "three four-GPU rounds; control/candidate assignments reversed; prompt-level effects normalized within card and bootstrapped by prompt"
+  },
+  "per_card_effects": {
+    "0": {
+      "ci95_mean_pct": [
+        -0.5121202628413748,
+        2.9855920981250903
+      ],
+      "mean_pct": 1.0602191498800169,
+      "median_pct": 0.6249832169224145,
+      "n": 12,
+      "positive": 8
+    },
+    "1": {
+      "ci95_mean_pct": [
+        1.0394759163236225,
+        4.94007897284087
+      ],
+      "mean_pct": 2.830361451414673,
+      "median_pct": 1.1964795223129543,
+      "n": 12,
+      "positive": 10
+    },
+    "2": {
+      "ci95_mean_pct": [
+        -0.2837664838728826,
+        1.5758159992108047
+      ],
+      "mean_pct": 0.7285162634108666,
+      "median_pct": 0.9682357458424384,
+      "n": 12,
+      "positive": 10
+    },
+    "3": {
+      "ci95_mean_pct": [
+        -0.209691384643688,
+        2.0094752159470577
+      ],
+      "mean_pct": 0.9599940922051983,
+      "median_pct": 1.007049782555669,
+      "n": 12,
+      "positive": 11
+    }
+  },
+  "quality": {
+    "baseline_match_all": true,
+    "exact_cases": true,
+    "long_context_1k": true,
+    "repeat64": true
+  },
+  "reason_not_submitted": "cooled full-quality confirmation 68.16353882227102 tok/s did not beat current valid record 68.23626314761921 tok/s"
+}

@@ -206,6 +206,9 @@ def main() -> None:
     cache_base = torch.arange(args.num_slots, device=device, dtype=torch.int32)
     cache_base %= args.cache_len
     is_flush = torch.zeros((args.num_slots,), device=device, dtype=torch.int8)
+    pending = torch.zeros((args.num_slots,), device=device, dtype=torch.int8)
+    pending_len = torch.zeros(
+        (args.num_slots,), device=device, dtype=torch.int32)
     if args.num_slots > 2:
         is_flush[2] = 1
 
@@ -252,6 +255,9 @@ def main() -> None:
             write_pos,
             cache_base,
             is_flush,
+            pending,
+            pending_len,
+            False,
             args.cache_len,
             spec_len,
             HEAD_K_DIM**-0.5,

@@ -134,6 +134,8 @@ trap cleanup EXIT
   echo "gdn_replayssm_stage_conv_torch_fallback=${VLLM_XPU_GDN_REPLAYSSM_STAGE_CONV_TORCH_FALLBACK:-}"
   echo "gdn_replayssm_commit_in_forward=${VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD:-}"
   echo "gdn_replayssm_slot_mgmt_torch_fallback=${VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK:-}"
+  echo "gdn_replayssm_fuse_pending_metadata=${VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA:-}"
+  echo "gdn_replayssm_direct_core_out=${VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT:-}"
   echo "gdn_accepted_prefix_counts=${VLLM_XPU_GDN_ACCEPTED_PREFIX_COUNTS:-}"
   echo "enable_fla_packed_recurrent_decode=${VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE:-}"
   echo "gdn_spec_state_offset_plus_one=${VLLM_XPU_GDN_SPEC_STATE_OFFSET_PLUS_ONE:-}"
