@@ -1,14 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+if [[ "${QWEN27_DFLASH_RUNNER_SNAPSHOT:-0}" != "1" ]]; then
+  original_repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+  snapshot="$(mktemp /tmp/qwen27-dflash-runner.XXXXXX.sh)"
+  cp "${BASH_SOURCE[0]}" "$snapshot"
+  exec env \
+    QWEN27_DFLASH_RUNNER_SNAPSHOT=1 \
+    QWEN27_DFLASH_REPO_DIR="$original_repo_dir" \
+    bash "$snapshot" "$@"
+fi
+trap 'rm -f "${BASH_SOURCE[0]}"' EXIT
+
+repo_dir="${QWEN27_DFLASH_REPO_DIR:?missing snapshotted repo path}"
 cd "$repo_dir"
 
 STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 CORPUS_ROOT="${CORPUS_ROOT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-dflash-aux-v8-corrected5-v6b-4gpu-20260710T040000Z}"
 OUT_ROOT="${OUT_ROOT:-/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/adaptation-smoke-4gpu-$STAMP}"
 MATRIX="${MATRIX:-smoke}"
-if [[ "$MATRIX" == "position-cont-k4" ]]; then
+if [[ "$MATRIX" == "query-lora-k4" ]]; then
+  STEPS="${STEPS:-8192}"
+  HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
+  EVAL_EVERY="${EVAL_EVERY:-2048}"
+elif [[ "$MATRIX" == "position-cont-k4" ]]; then
   STEPS="${STEPS:-8192}"
   HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
   EVAL_EVERY="${EVAL_EVERY:-2048}"
@@ -49,6 +64,7 @@ run_variant() {
   local lr="$5"
   local decay="$6"
   local soft_prefix_ce_weight="${7:-0.1}"
+  local position_rank="${8:-64}"
   local out_dir="$OUT_ROOT/$label"
   mkdir -p "$out_dir/tmp" "$out_dir/cache"
   (
@@ -83,6 +99,7 @@ run_variant() {
       --loss-mode "$loss_mode" \
       --position-decay "$decay" \
       --soft-prefix-ce-weight "$soft_prefix_ce_weight" \
+      --position-rank "$position_rank" \
       --train-scope "$scope" \
       --eval-every "$EVAL_EVERY" \
       --log-every 20 \
@@ -94,7 +111,14 @@ run_variant() {
 
 # The public DFlash weights are already trained. These are conservative
 # adaptation rates, not the paper's from-scratch 6e-4 rate.
-if [[ "$MATRIX" == "position-cont-k4" ]]; then
+if [[ "$MATRIX" == "query-lora-k4" ]]; then
+  variants=(
+    "0|layer-poslora-r32-lr3e-4|layer-position-lora|accept-until-fail|3e-4|0.7788007830714049|0.1|32"
+    "1|layer-poslora-r64-lr2e-4|layer-position-lora|accept-until-fail|2e-4|0.7788007830714049|0.1|64"
+    "2|layer-poslora-r128-lr1p4e-4|layer-position-lora|accept-until-fail|1.4e-4|0.7788007830714049|0.1|128"
+    "3|layer-poslora-r256-lr1e-4|layer-position-lora|accept-until-fail|1e-4|0.7788007830714049|0.1|256"
+  )
+elif [[ "$MATRIX" == "position-cont-k4" ]]; then
   variants=(
     "0|layer-posbias-cont-lr5e-5|layer-position-bias|accept-until-fail|5e-5|0.7788007830714049|0.1"
     "1|layer-posbias-cont-lr1e-4|layer-position-bias|accept-until-fail|1e-4|0.7788007830714049|0.1"
@@ -130,16 +154,16 @@ elif [[ "$MATRIX" == "smoke" ]]; then
     "3|all-auf-lr1e-6|all-draft|accept-until-fail|1e-6|0.7788007830714049"
   )
 else
-  echo "unknown MATRIX=$MATRIX (expected smoke, long, k4-highlr, position-k4, or position-cont-k4)" >&2
+  echo "unknown MATRIX=$MATRIX (expected smoke, long, k4-highlr, position-k4, position-cont-k4, or query-lora-k4)" >&2
   exit 1
 fi
 
 pids=()
 for item in "${variants[@]}"; do
-  IFS='|' read -r gpu label scope loss_mode lr decay soft_prefix_ce_weight <<< "$item"
+  IFS='|' read -r gpu label scope loss_mode lr decay soft_prefix_ce_weight position_rank <<< "$item"
   echo "launch gpu=$gpu label=$label scope=$scope loss=$loss_mode lr=$lr"
   run_variant "$gpu" "$label" "$scope" "$loss_mode" "$lr" "$decay" \
-    "$soft_prefix_ce_weight" &
+    "$soft_prefix_ce_weight" "$position_rank" &
   pids+=("$!")
 done
 

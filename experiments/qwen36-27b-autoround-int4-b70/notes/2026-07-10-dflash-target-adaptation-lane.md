@@ -218,14 +218,48 @@ useful effect and has `1.37%` final repeat disagreement, so it is not an
 endpoint or LocalMaxxing candidate yet. Compact analysis is preserved as
 `diagnostics/qwen27-dflash-position-k4-paired-20260710.json`.
 
-The exact `3e-4` adapter is now being continued for 8,192 steps at constant
-rates `5e-5`, `1e-4`, `2e-4`, and `3e-4` on four GPUs. This is justified by the
-monotonic curve and tests convergence/overshoot without changing architecture.
-Active artifact root:
+The exact `3e-4` adapter was continued for 8,192 steps at constant rates
+`5e-5`, `1e-4`, `2e-4`, and `3e-4` on four GPUs. This tested
+convergence/overshoot without changing architecture. Artifact root:
 
 ```text
 /mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
 adaptation-position-cont-k4-mixed-4gpu-20260710T115404Z
+```
+
+Every continuation regressed: final raw deltas were `-0.0254`, `-0.0225`,
+`-0.0508`, and `-0.0469` token/step respectively. Scenario-cluster analysis
+also found no positive row. Preserve the original `3e-4`/4,000-step adapter as
+the additive-bias optimum; do not continue it again. Compact continuation
+analysis is
+`diagnostics/qwen27-dflash-position-continuation-paired-20260710.json`.
+
+Operational caveat: the runner file was edited while the first continuation
+process was still reading it. Bash reads script files incrementally, and the
+changed file offsets caused that process to launch a duplicate matrix after the
+first summaries were written. The duplicate process group was terminated before
+it overwrote adapters/summaries, but it did overwrite the first run's stdout
+logs. The summaries, adapters, and compact paired analysis remain valid; do not
+use those stdout logs as first-run evidence. The runner now re-executes an
+immutable `/tmp` snapshot and removes it on exit, so later source edits cannot
+alter an active matrix.
+
+The next architecture uses zero-output, per-layer and per-position low-rank
+query residuals:
+
+```text
+hidden += up[layer, position](silu(down[layer, position](hidden)))
+```
+
+Ranks `32/64/128/256` add about `8.2M/16.4M/32.8M/65.5M` trainable parameters.
+The up projection starts at exactly zero; a 64-anchor separate-process check
+differed on one known unstable argmax row, while direct algebra and the stored
+zero up tensor prove the residual itself is exactly zero. A one-step XPU smoke
+updated both intended tensors. Active four-GPU artifact root:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
+adaptation-query-lora-k4-mixed-4gpu-20260710T120525Z
 ```
 
 ## Advancement rule

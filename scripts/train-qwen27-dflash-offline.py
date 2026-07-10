@@ -136,8 +136,15 @@ def parse_args() -> argparse.Namespace:
             "all-draft",
             "input-position-bias",
             "layer-position-bias",
+            "layer-position-lora",
         ),
         default="fc",
+    )
+    parser.add_argument(
+        "--position-rank",
+        type=int,
+        default=64,
+        help="Rank for layer-position-lora conditioning.",
     )
     parser.add_argument(
         "--lr-schedule", choices=("constant", "cosine"), default="cosine"
@@ -260,6 +267,30 @@ def load_runtime(
             torch.nn.Parameter(
                 torch.zeros(
                     len(model.layers), position_count, model.config.hidden_size
+                )
+            ),
+        )
+    elif args.train_scope == "layer-position-lora":
+        if args.position_rank <= 0:
+            raise ValueError("--position-rank must be positive")
+        down = torch.empty(
+            len(model.layers),
+            position_count,
+            args.position_rank,
+            model.config.hidden_size,
+        )
+        torch.nn.init.normal_(down, mean=0.0, std=0.02)
+        model.register_parameter(
+            "xpu_layer_position_down", torch.nn.Parameter(down)
+        )
+        model.register_parameter(
+            "xpu_layer_position_up",
+            torch.nn.Parameter(
+                torch.zeros(
+                    len(model.layers),
+                    position_count,
+                    model.config.hidden_size,
+                    args.position_rank,
                 )
             ),
         )
@@ -446,6 +477,17 @@ def endpoint_mixed_dflash_forward(
             hidden_states = hidden_states + layer_position_bias[
                 layer_idx, : hidden_states.shape[1]
             ].to(dtype=hidden_states.dtype)
+        position_down = getattr(model, "xpu_layer_position_down", None)
+        position_up = getattr(model, "xpu_layer_position_up", None)
+        if position_down is not None and position_up is not None:
+            positions = hidden_states.shape[1]
+            down = position_down[layer_idx, :positions].to(
+                dtype=hidden_states.dtype
+            )
+            up = position_up[layer_idx, :positions].to(dtype=hidden_states.dtype)
+            low_rank = torch.einsum("bph,prh->bpr", hidden_states, down)
+            residual = torch.einsum("bpr,phr->bph", F.silu(low_rank), up)
+            hidden_states = hidden_states + residual
         attention_mask = None
         if layer_types[layer_idx] == "sliding_attention":
             sliding_window = int(getattr(layer.self_attn, "sliding_window", 0) or 0)
@@ -757,6 +799,9 @@ def configure_training(model: Any, scope: str) -> list[torch.nn.Parameter]:
         model.xpu_input_position_bias.requires_grad_(True)
     if scope == "layer-position-bias":
         model.xpu_layer_position_bias.requires_grad_(True)
+    if scope == "layer-position-lora":
+        model.xpu_layer_position_down.requires_grad_(True)
+        model.xpu_layer_position_up.requires_grad_(True)
     parameters = [
         parameter for parameter in model.parameters() if parameter.requires_grad
     ]
@@ -977,6 +1022,7 @@ def main() -> int:
             for name, parameter in model.named_parameters()
             if name.startswith("xpu_")
         ),
+        "position_rank": args.position_rank,
         "baseline": baseline,
         "final": final,
         "training": training,
