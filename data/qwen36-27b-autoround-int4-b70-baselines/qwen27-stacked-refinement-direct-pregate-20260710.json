@@ -1,0 +1,537 @@
+{
+  "classification": "diagnostic_stacked_mtp_refinement_pre_gate",
+  "endpoint_trial_visible_tokens_gate": 3.3,
+  "headline_warning": "Offline acceptance only; endpoint runtime integration and strict fresh validation are required before any throughput claim.",
+  "localmaxxing_eligible": false,
+  "rows": [
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1335,
+          505,
+          164,
+          49
+        ],
+        "conditional_exact": [
+          0.541801948051948,
+          0.3782771535580524,
+          0.32475247524752476,
+          0.29878048780487804,
+          0.1836734693877551
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1129,
+          "1": 830,
+          "2": 341,
+          "3": 115,
+          "4": 40,
+          "5": 9
+        },
+        "mean_accepted_draft_tokens": 0.8368506493506493,
+        "mean_visible_tokens_if_k_step_spec": 1.8368506493506493,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-pre-gate-4gpu-20260710T004929Z/full-all-lr2e-6/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744522560
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          795,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4847560975609756,
+          0.44654088050314467,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 845,
+          "2": 440,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2175324675324675,
+        "mean_visible_tokens_if_k_step_spec": 2.2175324675324672,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1278,
+          352,
+          72,
+          16
+        ],
+        "conditional_exact": [
+          0.5186688311688312,
+          0.27543035993740217,
+          0.20454545454545456,
+          0.2222222222222222,
+          0.0625
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1186,
+          "1": 926,
+          "2": 280,
+          "3": 56,
+          "4": 15,
+          "5": 1
+        },
+        "mean_accepted_draft_tokens": 0.6976461038961039,
+        "mean_visible_tokens_if_k_step_spec": 1.697646103896104,
+        "starts": 2464
+      },
+      "label": "full-all-lr2e-6",
+      "loss_mode": "all-steps",
+      "lr": 2e-06,
+      "scope": "full",
+      "status": "complete",
+      "trainable_param_count": 372260352,
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 4.43556022644043,
+        "max_train_steps": 1024,
+        "mean_training_loss": 4.222828032914549,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 151.8967024551239
+      }
+    },
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1365,
+          499,
+          146,
+          43
+        ],
+        "conditional_exact": [
+          0.5539772727272727,
+          0.36556776556776555,
+          0.2925851703406814,
+          0.2945205479452055,
+          0.18604651162790697
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1099,
+          "1": 866,
+          "2": 353,
+          "3": 103,
+          "4": 35,
+          "5": 8
+        },
+        "mean_accepted_draft_tokens": 0.8364448051948052,
+        "mean_visible_tokens_if_k_step_spec": 1.8364448051948052,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-pre-gate-4gpu-20260710T004929Z/full-conditional-lr2e-6/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744522560
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          795,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4847560975609756,
+          0.44654088050314467,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 845,
+          "2": 440,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2175324675324675,
+        "mean_visible_tokens_if_k_step_spec": 2.2175324675324672,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1279,
+          352,
+          72,
+          16
+        ],
+        "conditional_exact": [
+          0.5190746753246753,
+          0.2752150117279124,
+          0.20454545454545456,
+          0.2222222222222222,
+          0.0625
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1185,
+          "1": 927,
+          "2": 280,
+          "3": 56,
+          "4": 15,
+          "5": 1
+        },
+        "mean_accepted_draft_tokens": 0.698051948051948,
+        "mean_visible_tokens_if_k_step_spec": 1.698051948051948,
+        "starts": 2464
+      },
+      "label": "full-conditional-lr2e-6",
+      "loss_mode": "conditional-prefix",
+      "lr": 2e-06,
+      "scope": "full",
+      "status": "complete",
+      "trainable_param_count": 372260352,
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 3.5916807651519775,
+        "max_train_steps": 1024,
+        "mean_training_loss": 2.7296473381575197,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 123.67009728006087
+      }
+    },
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1369,
+          532,
+          171,
+          46
+        ],
+        "conditional_exact": [
+          0.5556006493506493,
+          0.38860482103725347,
+          0.32142857142857145,
+          0.26900584795321636,
+          0.1956521739130435
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1095,
+          "1": 837,
+          "2": 361,
+          "3": 125,
+          "4": 37,
+          "5": 9
+        },
+        "mean_accepted_draft_tokens": 0.8632305194805194,
+        "mean_visible_tokens_if_k_step_spec": 1.8632305194805194,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-pre-gate-4gpu-20260710T004929Z/attn-all-lr5e-6/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744522560
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          796,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4853658536585366,
+          0.44597989949748745,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 844,
+          "2": 441,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2179383116883118,
+        "mean_visible_tokens_if_k_step_spec": 2.217938311688312,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1279,
+          352,
+          72,
+          16
+        ],
+        "conditional_exact": [
+          0.5190746753246753,
+          0.2752150117279124,
+          0.20454545454545456,
+          0.2222222222222222,
+          0.0625
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1185,
+          "1": 927,
+          "2": 280,
+          "3": 56,
+          "4": 15,
+          "5": 1
+        },
+        "mean_accepted_draft_tokens": 0.698051948051948,
+        "mean_visible_tokens_if_k_step_spec": 1.698051948051948,
+        "starts": 2464
+      },
+      "label": "attn-all-lr5e-6",
+      "loss_mode": "all-steps",
+      "lr": 5e-06,
+      "scope": "attn",
+      "status": "complete",
+      "trainable_param_count": 104868352,
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 4.291192531585693,
+        "max_train_steps": 1024,
+        "mean_training_loss": 4.081695998669602,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 112.86720364401117
+      }
+    },
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1345,
+          533,
+          178,
+          61
+        ],
+        "conditional_exact": [
+          0.5458603896103896,
+          0.3962825278810409,
+          0.3339587242026266,
+          0.34269662921348315,
+          0.29508196721311475
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1119,
+          "1": 812,
+          "2": 355,
+          "3": 117,
+          "4": 43,
+          "5": 18
+        },
+        "mean_accepted_draft_tokens": 0.8664772727272727,
+        "mean_visible_tokens_if_k_step_spec": 1.8664772727272727,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-pre-gate-4gpu-20260710T004929Z/mlp-all-lr5e-6/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744522560
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          796,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4853658536585366,
+          0.44597989949748745,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 844,
+          "2": 441,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2179383116883118,
+        "mean_visible_tokens_if_k_step_spec": 2.217938311688312,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1279,
+          352,
+          72,
+          16
+        ],
+        "conditional_exact": [
+          0.5190746753246753,
+          0.2752150117279124,
+          0.20454545454545456,
+          0.2222222222222222,
+          0.0625
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 1185,
+          "1": 927,
+          "2": 280,
+          "3": 56,
+          "4": 15,
+          "5": 1
+        },
+        "mean_accepted_draft_tokens": 0.698051948051948,
+        "mean_visible_tokens_if_k_step_spec": 1.698051948051948,
+        "starts": 2464
+      },
+      "label": "mlp-all-lr5e-6",
+      "loss_mode": "all-steps",
+      "lr": 5e-06,
+      "scope": "mlp",
+      "status": "complete",
+      "trainable_param_count": 267397120,
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 4.367591381072998,
+        "max_train_steps": 1024,
+        "mean_training_loss": 4.115045496495441,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 135.96851259912364
+      }
+    }
+  ],
+  "valid_headline_throughput": false
+}

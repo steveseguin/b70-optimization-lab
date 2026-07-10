@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Four-GPU offline acceptance pre-gate for one additional full MTP refinement
-# layer. These are diagnostic training rows, not endpoint throughput results.
+# Zero-preserving gated refinement pre-gate. Offline acceptance only.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 PYTHON="${PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}"
 MODEL_DIR="${MODEL_DIR:-/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound/snapshots/f5750c90b3776db658594df5fe8051098226dd8e}"
 DATA_ROOT="${DATA_ROOT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/eagle-data/qwen27-eagle3-aux-v6-chat-4gpu-20260707T012928Z}"
 STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
-OUT_ROOT="${OUT_ROOT:-/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-pre-gate-4gpu-$STAMP}"
+OUT_ROOT="${OUT_ROOT:-/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-gated-pre-gate-4gpu-$STAMP}"
 TRAIN_STARTS="${TRAIN_STARTS:-8192}"
 HELDOUT_STARTS="${HELDOUT_STARTS:-4096}"
 HELDOUT_SAMPLES="${HELDOUT_SAMPLES:-16}"
@@ -24,11 +23,8 @@ for shard in 0 1 2 3; do
 done
 
 run_one() {
-  local gpu="$1"
-  local label="$2"
-  local scope="$3"
-  local loss_mode="$4"
-  local lr="$5"
+  local gpu="$1" label="$2" residual_mode="$3" gate_init="$4"
+  local loss_mode="$5" lr="$6"
   local out="$OUT_ROOT/$label"
   mkdir -p "$out"
   (
@@ -50,8 +46,10 @@ run_one() {
       --max-train-steps "$MAX_TRAIN_STEPS"
       --lr "$lr"
       --weight-decay 0
-      --scope "$scope"
+      --scope full
       --loss-mode "$loss_mode"
+      --residual-mode "$residual_mode"
+      --residual-gate-init "$gate_init"
       --draft-lm-head int4-dequant
       --draft-lm-head-group-size 128
       --draft-lm-head-scale-dtype bf16
@@ -70,22 +68,22 @@ run_one() {
 pids=()
 labels=()
 all_labels=(
-  full-all-lr2e-6
-  full-conditional-lr2e-6
-  attn-all-lr5e-6
-  mlp-all-lr5e-6
+  vector-zero-all-lr2e-5
+  vector-p01-all-lr1e-5
+  vector-zero-conditional-lr2e-5
+  scalar-zero-all-lr2e-5
 )
 if [[ ",$GPU_IDS," == *,0,* ]]; then
-  run_one 0 full-all-lr2e-6 full all-steps 2e-6
+  run_one 0 vector-zero-all-lr2e-5 vector 0 all-steps 2e-5
 fi
 if [[ ",$GPU_IDS," == *,1,* ]]; then
-  run_one 1 full-conditional-lr2e-6 full conditional-prefix 2e-6
+  run_one 1 vector-p01-all-lr1e-5 vector 0.01 all-steps 1e-5
 fi
 if [[ ",$GPU_IDS," == *,2,* ]]; then
-  run_one 2 attn-all-lr5e-6 attn all-steps 5e-6
+  run_one 2 vector-zero-conditional-lr2e-5 vector 0 conditional-prefix 2e-5
 fi
 if [[ ",$GPU_IDS," == *,3,* ]]; then
-  run_one 3 mlp-all-lr5e-6 mlp all-steps 5e-6
+  run_one 3 scalar-zero-all-lr2e-5 scalar 0 all-steps 2e-5
 fi
 if ((${#pids[@]} == 0)); then
   echo "GPU_IDS selected no known GPU; use a comma-separated subset of 0,1,2,3" >&2
@@ -116,25 +114,25 @@ for label in sys.argv[2:]:
     rows.append({
         "label": label,
         "status": "complete",
-        "scope": data.get("scope"),
+        "residual_mode": data.get("residual_mode"),
+        "residual_gate_init": data.get("residual_gate_init"),
         "loss_mode": data.get("loss_mode"),
         "lr": data.get("lr"),
         "base_only": data.get("base_only"),
         "before": data.get("before"),
         "after": data.get("after"),
+        "residual_gate_after": data.get("architecture", {}).get(
+            "residual_gate_after"
+        ),
         "training": data.get("training"),
-        "trainable_param_count": data.get("trainable_param_count"),
         "artifact": data.get("artifact"),
     })
 summary = {
-    "classification": "diagnostic_stacked_mtp_refinement_pre_gate",
+    "classification": "diagnostic_gated_stacked_mtp_refinement_pre_gate",
     "valid_headline_throughput": False,
     "localmaxxing_eligible": False,
     "endpoint_trial_visible_tokens_gate": 3.3,
-    "headline_warning": (
-        "Offline acceptance only; endpoint runtime integration and strict fresh "
-        "validation are required before any throughput claim."
-    ),
+    "headline_warning": "Offline acceptance only; not an endpoint result.",
     "rows": rows,
 }
 (root / "matrix-summary.json").write_text(

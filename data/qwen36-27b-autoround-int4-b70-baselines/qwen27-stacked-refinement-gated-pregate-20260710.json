@@ -1,0 +1,577 @@
+{
+  "classification": "diagnostic_gated_stacked_mtp_refinement_pre_gate",
+  "endpoint_trial_visible_tokens_gate": 3.3,
+  "headline_warning": "Offline acceptance only; not an endpoint result.",
+  "localmaxxing_eligible": false,
+  "rows": [
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1642,
+          812,
+          363,
+          161
+        ],
+        "conditional_exact": [
+          0.6663961038961039,
+          0.4945188794153471,
+          0.44704433497536944,
+          0.44352617079889806,
+          0.40372670807453415
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 822,
+          "1": 830,
+          "2": 449,
+          "3": 202,
+          "4": 96,
+          "5": 65
+        },
+        "mean_accepted_draft_tokens": 1.2349837662337662,
+        "mean_visible_tokens_if_k_step_spec": 2.234983766233766,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.residual_gate",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "residual_gate_init": "0.0",
+          "residual_mode": "vector",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-gated-pre-gate-4gpu-20260710T011712Z/vector-zero-all-lr2e-5/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744532960
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          795,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4847560975609756,
+          0.44654088050314467,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 845,
+          "2": 440,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2175324675324675,
+        "mean_visible_tokens_if_k_step_spec": 2.2175324675324672,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          796,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4853658536585366,
+          0.44597989949748745,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 844,
+          "2": 441,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2179383116883118,
+        "mean_visible_tokens_if_k_step_spec": 2.217938311688312,
+        "starts": 2464
+      },
+      "label": "vector-zero-all-lr2e-5",
+      "loss_mode": "all-steps",
+      "lr": 2e-05,
+      "residual_gate_after": {
+        "l2": 0.16542190313339233,
+        "max": 0.008056640625,
+        "mean": 5.905954822083004e-05,
+        "min": -0.0079345703125,
+        "numel": 5120
+      },
+      "residual_gate_init": 0.0,
+      "residual_mode": "vector",
+      "status": "complete",
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 2.8555092811584473,
+        "max_train_steps": 1024,
+        "mean_training_loss": 2.8201609054231085,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 152.08147654682398
+      }
+    },
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1642,
+          812,
+          363,
+          161
+        ],
+        "conditional_exact": [
+          0.6663961038961039,
+          0.4945188794153471,
+          0.44704433497536944,
+          0.44352617079889806,
+          0.38509316770186336
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 822,
+          "1": 830,
+          "2": 449,
+          "3": 202,
+          "4": 99,
+          "5": 62
+        },
+        "mean_accepted_draft_tokens": 1.2337662337662338,
+        "mean_visible_tokens_if_k_step_spec": 2.233766233766234,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.residual_gate",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "residual_gate_init": "0.01",
+          "residual_mode": "vector",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-gated-pre-gate-4gpu-20260710T011712Z/vector-p01-all-lr1e-5/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744532960
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          796,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4853658536585366,
+          0.44597989949748745,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 844,
+          "2": 441,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2179383116883118,
+        "mean_visible_tokens_if_k_step_spec": 2.217938311688312,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1636,
+          803,
+          353,
+          149
+        ],
+        "conditional_exact": [
+          0.663961038961039,
+          0.4908312958435208,
+          0.4396014943960149,
+          0.42209631728045327,
+          0.3691275167785235
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 828,
+          "1": 833,
+          "2": 450,
+          "3": 204,
+          "4": 94,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2159090909090908,
+        "mean_visible_tokens_if_k_step_spec": 2.215909090909091,
+        "starts": 2464
+      },
+      "label": "vector-p01-all-lr1e-5",
+      "loss_mode": "all-steps",
+      "lr": 1e-05,
+      "residual_gate_after": {
+        "l2": 0.7162405252456665,
+        "max": 0.010009765625,
+        "mean": 0.010009765625,
+        "min": 0.010009765625,
+        "numel": 5120
+      },
+      "residual_gate_init": 0.01,
+      "residual_mode": "vector",
+      "status": "complete",
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 2.8574039936065674,
+        "max_train_steps": 1024,
+        "mean_training_loss": 2.8326375987380743,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 151.43250987608917
+      }
+    },
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1643,
+          803,
+          362,
+          161
+        ],
+        "conditional_exact": [
+          0.666801948051948,
+          0.4887401095556908,
+          0.45080946450809467,
+          0.4447513812154696,
+          0.39751552795031053
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 821,
+          "1": 840,
+          "2": 441,
+          "3": 201,
+          "4": 97,
+          "5": 64
+        },
+        "mean_accepted_draft_tokens": 1.2309253246753247,
+        "mean_visible_tokens_if_k_step_spec": 2.230925324675325,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.residual_gate",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "residual_gate_init": "0.0",
+          "residual_mode": "vector",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-gated-pre-gate-4gpu-20260710T011712Z/vector-zero-conditional-lr2e-5/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744532960
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1641,
+          795,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6659902597402597,
+          0.4844606946983547,
+          0.44654088050314467,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 823,
+          "1": 846,
+          "2": 440,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2179383116883118,
+        "mean_visible_tokens_if_k_step_spec": 2.217938311688312,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          795,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4847560975609756,
+          0.44654088050314467,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 845,
+          "2": 440,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2175324675324675,
+        "mean_visible_tokens_if_k_step_spec": 2.2175324675324672,
+        "starts": 2464
+      },
+      "label": "vector-zero-conditional-lr2e-5",
+      "loss_mode": "conditional-prefix",
+      "lr": 2e-05,
+      "residual_gate_after": {
+        "l2": 0.12798379361629486,
+        "max": 0.0078125,
+        "mean": -5.5038668506313115e-05,
+        "min": -0.00787353515625,
+        "numel": 5120
+      },
+      "residual_gate_init": 0.0,
+      "residual_mode": "vector",
+      "status": "complete",
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 2.0489532947540283,
+        "max_train_steps": 1024,
+        "mean_training_loss": 2.009337452123873,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 134.54207771806978
+      }
+    },
+    {
+      "after": {
+        "conditional_denominators": [
+          2464,
+          1645,
+          814,
+          367,
+          166
+        ],
+        "conditional_exact": [
+          0.6676136363636364,
+          0.4948328267477204,
+          0.45085995085995084,
+          0.45231607629427795,
+          0.40963855421686746
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 819,
+          "1": 831,
+          "2": 447,
+          "3": 201,
+          "4": 98,
+          "5": 68
+        },
+        "mean_accepted_draft_tokens": 1.2418831168831168,
+        "mean_visible_tokens_if_k_step_spec": 2.241883116883117,
+        "starts": 2464
+      },
+      "artifact": {
+        "dtype": "bfloat16",
+        "filename": "stacked_mtp_refinement.safetensors",
+        "format_version": 1,
+        "keys": [
+          "mtp.refinement_layers.0.final_norm.weight",
+          "mtp.refinement_layers.0.input_layernorm.weight",
+          "mtp.refinement_layers.0.mlp.down_proj.weight",
+          "mtp.refinement_layers.0.mlp.gate_proj.weight",
+          "mtp.refinement_layers.0.mlp.up_proj.weight",
+          "mtp.refinement_layers.0.post_attention_layernorm.weight",
+          "mtp.refinement_layers.0.residual_gate",
+          "mtp.refinement_layers.0.self_attn.k_norm.weight",
+          "mtp.refinement_layers.0.self_attn.k_proj.weight",
+          "mtp.refinement_layers.0.self_attn.o_proj.weight",
+          "mtp.refinement_layers.0.self_attn.q_norm.weight",
+          "mtp.refinement_layers.0.self_attn.q_proj.weight",
+          "mtp.refinement_layers.0.self_attn.v_proj.weight"
+        ],
+        "metadata": {
+          "classification": "diagnostic_not_headline_endpoint_incompatible",
+          "dtype": "bfloat16",
+          "endpoint_compatible": "false",
+          "format": "qwen27_stacked_mtp_refinement",
+          "format_version": "1",
+          "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+          "linear_weight_orientation": "out_features,in_features",
+          "localmaxxing_eligible": "false",
+          "residual_gate_init": "0.0",
+          "residual_mode": "scalar",
+          "runtime_integration_required": "true",
+          "valid_headline_throughput": "false"
+        },
+        "path": "/mnt/usb-models/llm-optimization-artifacts/qwen27-stacked-refinement/mtp5-gated-pre-gate-4gpu-20260710T011712Z/scalar-zero-all-lr2e-5/stacked_mtp_refinement.safetensors",
+        "size_bytes": 744522722
+      },
+      "base_only": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          796,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4853658536585366,
+          0.44597989949748745,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 844,
+          "2": 441,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2179383116883118,
+        "mean_visible_tokens_if_k_step_spec": 2.217938311688312,
+        "starts": 2464
+      },
+      "before": {
+        "conditional_denominators": [
+          2464,
+          1640,
+          795,
+          355,
+          155
+        ],
+        "conditional_exact": [
+          0.6655844155844156,
+          0.4847560975609756,
+          0.44654088050314467,
+          0.43661971830985913,
+          0.3548387096774194
+        ],
+        "histogram_accepted_draft_tokens": {
+          "0": 824,
+          "1": 845,
+          "2": 440,
+          "3": 200,
+          "4": 100,
+          "5": 55
+        },
+        "mean_accepted_draft_tokens": 1.2175324675324675,
+        "mean_visible_tokens_if_k_step_spec": 2.2175324675324672,
+        "starts": 2464
+      },
+      "label": "scalar-zero-all-lr2e-5",
+      "loss_mode": "all-steps",
+      "lr": 2e-05,
+      "residual_gate_after": {
+        "l2": 0.0078125,
+        "max": -0.0078125,
+        "mean": -0.0078125,
+        "min": -0.0078125,
+        "numel": 1
+      },
+      "residual_gate_init": 0.0,
+      "residual_mode": "scalar",
+      "status": "complete",
+      "training": {
+        "batches_seen": 1024,
+        "epochs_started": 1,
+        "last_training_loss": 2.8449723720550537,
+        "max_train_steps": 1024,
+        "mean_training_loss": 2.7941329505410977,
+        "optimizer_steps": 1024,
+        "stopped_by_max_train_steps": true,
+        "training_elapsed_s": 151.9649935059715
+      }
+    }
+  ],
+  "valid_headline_throughput": false
+}

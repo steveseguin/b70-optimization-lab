@@ -139,13 +139,18 @@ rates regressed. Both are below the fixed `3.3` endpoint-trial gate and far
 below the `5.1-5.2` acceptance-only requirement. See
 `2026-07-10-position-adapter-converged-no-endpoint.md`.
 
-The next learned-predictor pre-gate is an architectural change: one additional
-full target-conditioned MTP refinement layer, rather than more parameters at
-the same final-output seam. Train and measure it offline first. Runtime work is
-warranted only if it clears `3.3` visible tokens/step and then transfers to a
-separate corpus. In parallel, use Level Zero `unitrace` on the current
-graph-replayed endpoint to find a genuine multi-millisecond target-body kernel
-lane that can combine with deeper acceptance.
+The full target-conditioned MTP refinement lane is also closed. Direct cloned
+replacement fell from a `2.218` base to at most `1.866`; a zero-preserving
+scalar/vector gate recovered base behavior but peaked at only `2.241883`, far
+below `3.3`. See `2026-07-10-direct-stacked-refinement-no-win.md` and
+`2026-07-10-gated-stacked-refinement-no-win.md`.
+
+Acceptance-only adaptation is exhausted for this checkpoint. The active lane
+is target-body cost: use aggregate graph-none synchronized regions to rank
+linear attention, full attention, and MoE/MLP. Level Zero `unitrace` was tried
+in both online and offline modes, but per-kernel event tracing expanded graph
+replay so severely that eight tokens did not finish in 15 minutes; do not spend
+more runs on that profiler integration.
 
 Training requirements remain:
 

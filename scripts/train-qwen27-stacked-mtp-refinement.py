@@ -149,11 +149,26 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--scope",
         default="full",
-        choices=("full", "attn", "mlp"),
+        choices=("full", "attn", "mlp", "gate"),
         help=(
             "Train all refinement weights, attention plus associated norms, "
-            "or MLP plus associated norms."
+            "MLP plus associated norms, or only the residual gate."
         ),
+    )
+    parser.add_argument(
+        "--residual-mode",
+        default="replace",
+        choices=("replace", "scalar", "vector"),
+        help=(
+            "replace applies the refinement directly; scalar/vector interpolate "
+            "refined-base through a learned residual gate."
+        ),
+    )
+    parser.add_argument(
+        "--residual-gate-init",
+        type=float,
+        default=0.0,
+        help="Initial scalar or per-hidden-channel residual gate value.",
     )
     parser.add_argument(
         "--loss-mode",
@@ -370,9 +385,16 @@ class RefinementMLP(torch.nn.Module):
 
 
 class RefinementDecoderLayer(torch.nn.Module):
-    def __init__(self, base_mtp: Any) -> None:
+    def __init__(
+        self,
+        base_mtp: Any,
+        residual_mode: str = "replace",
+        residual_gate_init: float = 0.0,
+    ) -> None:
         super().__init__()
         validate_clone_source(base_mtp)
+        if residual_mode not in {"replace", "scalar", "vector"}:
+            raise ValueError(f"Unknown residual mode {residual_mode!r}")
         eps = base_mtp.shape.rms_norm_eps
         self.input_layernorm = ClonedQwenRMSNorm(base_mtp.input_layernorm, eps)
         self.self_attn = RefinementSelfAttention(base_mtp)
@@ -382,6 +404,20 @@ class RefinementDecoderLayer(torch.nn.Module):
         self.mlp = RefinementMLP(base_mtp)
         self.final_norm = ClonedQwenRMSNorm(base_mtp.final_norm, eps)
         self.rms_norm_eps = float(eps)
+        self.residual_mode = residual_mode
+        self.residual_gate_init = float(residual_gate_init)
+        if residual_mode == "replace":
+            self.register_parameter("residual_gate", None)
+        else:
+            shape = () if residual_mode == "scalar" else (base_mtp.shape.hidden_size,)
+            self.residual_gate = torch.nn.Parameter(
+                torch.full(
+                    shape,
+                    self.residual_gate_init,
+                    device=base_mtp.fc.device,
+                    dtype=base_mtp.fc.dtype,
+                )
+            )
 
     def forward(
         self,
@@ -389,36 +425,46 @@ class RefinementDecoderLayer(torch.nn.Module):
         positions: torch.Tensor,
         rope: Any | None,
     ) -> torch.Tensor:
-        residual = hidden
-        hidden = self.input_layernorm(hidden)
-        hidden = self.self_attn(hidden, positions, rope)
-        hidden, residual = EVAL.qwen_rms_norm_residual(
-            hidden,
+        layer_input = hidden
+        residual = layer_input
+        refined = self.input_layernorm(layer_input)
+        refined = self.self_attn(refined, positions, rope)
+        refined, residual = EVAL.qwen_rms_norm_residual(
+            refined,
             residual,
             self.post_attention_layernorm.weight,
             self.rms_norm_eps,
         )
-        hidden = self.mlp(hidden)
-        hidden, _ = EVAL.qwen_rms_norm_residual(
-            hidden,
+        refined = self.mlp(refined)
+        refined, _ = EVAL.qwen_rms_norm_residual(
+            refined,
             residual,
             self.final_norm.weight,
             self.rms_norm_eps,
         )
-        return hidden
+        if self.residual_gate is None:
+            return refined
+        return layer_input + self.residual_gate * (refined - layer_input)
 
 
 class StackedIntrinsicMTP(torch.nn.Module):
     """Frozen IntrinsicMTP followed by one trainable refinement decoder."""
 
-    def __init__(self, base_mtp: Any) -> None:
+    def __init__(
+        self,
+        base_mtp: Any,
+        residual_mode: str = "replace",
+        residual_gate_init: float = 0.0,
+    ) -> None:
         super().__init__()
         self.base_mtp = base_mtp
         for parameter in self.base_mtp.parameters():
             parameter.requires_grad_(False)
         self.base_mtp.eval()
         self.shape = base_mtp.shape
-        self.refinement_layers = torch.nn.ModuleList([RefinementDecoderLayer(base_mtp)])
+        self.refinement_layers = torch.nn.ModuleList(
+            [RefinementDecoderLayer(base_mtp, residual_mode, residual_gate_init)]
+        )
         self.draft_lm_head = getattr(base_mtp, "draft_lm_head", "unknown")
 
     @property
@@ -459,6 +505,7 @@ def scope_parameter_names(layer: RefinementDecoderLayer, scope: str) -> list[str
             in {
                 "input_layernorm.weight",
                 "post_attention_layernorm.weight",
+                "residual_gate",
             }
         ]
     if scope == "mlp":
@@ -470,8 +517,13 @@ def scope_parameter_names(layer: RefinementDecoderLayer, scope: str) -> list[str
             in {
                 "post_attention_layernorm.weight",
                 "final_norm.weight",
+                "residual_gate",
             }
         ]
+    if scope == "gate":
+        if "residual_gate" not in all_names:
+            raise ValueError("gate scope requires scalar or vector residual mode")
+        return ["residual_gate"]
     raise ValueError(f"Unknown trainable scope {scope!r}")
 
 
@@ -508,6 +560,8 @@ def refinement_export_tensors(
         for name, parameter in model.refinement_layers[0].named_parameters()
     }
     expected = {stable_key(name) for name in SOURCE_KEYS}
+    if model.refinement_layers[0].residual_gate is not None:
+        expected.add(stable_key("residual_gate"))
     actual = set(tensors)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -596,6 +650,14 @@ def validate_args(args: argparse.Namespace) -> None:
         )
     if not math.isfinite(args.grad_clip) or args.grad_clip < 0:
         raise ValueError(f"--grad-clip must be finite and >= 0, got {args.grad_clip}")
+    if not math.isfinite(args.residual_gate_init):
+        raise ValueError("--residual-gate-init must be finite")
+    if args.residual_mode == "replace" and args.residual_gate_init != 0:
+        raise ValueError(
+            "--residual-gate-init is only meaningful with scalar/vector --residual-mode"
+        )
+    if args.scope == "gate" and args.residual_mode == "replace":
+        raise ValueError("--scope gate requires scalar/vector --residual-mode")
 
     model_dir = Path(args.model_dir).expanduser()
     if not model_dir.is_dir():
@@ -849,6 +911,17 @@ def save_outputs(
     artifact_path = out_dir / ARTIFACT_FILENAME
     summary_path = out_dir / SUMMARY_FILENAME
     tensors = refinement_export_tensors(model)
+    residual_gate = model.refinement_layers[0].residual_gate
+    residual_gate_stats = None
+    if residual_gate is not None:
+        gate_float = residual_gate.detach().float().cpu()
+        residual_gate_stats = {
+            "numel": gate_float.numel(),
+            "mean": float(gate_float.mean().item()),
+            "min": float(gate_float.min().item()),
+            "max": float(gate_float.max().item()),
+            "l2": float(torch.linalg.vector_norm(gate_float).item()),
+        }
     metadata = {
         "format": "qwen27_stacked_mtp_refinement",
         "format_version": str(FORMAT_VERSION),
@@ -856,6 +929,8 @@ def save_outputs(
         "dtype": "bfloat16",
         "linear_weight_orientation": "out_features,in_features",
         "initialization": "cloned_dequantized_intrinsic_mtp_layer_0",
+        "residual_mode": args.residual_mode,
+        "residual_gate_init": str(args.residual_gate_init),
         "endpoint_compatible": "false",
         "runtime_integration_required": "true",
         "valid_headline_throughput": "false",
@@ -890,6 +965,14 @@ def save_outputs(
             "initialization_sources": {
                 stable_key(name): source for name, source in SOURCE_KEYS.items()
             },
+            "residual_mode": args.residual_mode,
+            "residual_gate_init": args.residual_gate_init,
+            "residual_gate_shape": (
+                list(model.refinement_layers[0].residual_gate.shape)
+                if model.refinement_layers[0].residual_gate is not None
+                else None
+            ),
+            "residual_gate_after": residual_gate_stats,
             "linear_weight_orientation": "out_features,in_features",
             "hidden_size": model.shape.hidden_size,
             "intermediate_size": model.shape.intermediate_size,
@@ -922,6 +1005,8 @@ def save_outputs(
         "grad_clip": args.grad_clip,
         "seed": args.seed,
         "scope": args.scope,
+        "residual_mode": args.residual_mode,
+        "residual_gate_init": args.residual_gate_init,
         "loss_mode": args.loss_mode,
         "device": str(device),
         "dtype": str(dtype).removeprefix("torch."),
@@ -1107,6 +1192,22 @@ def self_test() -> int:
     if output.shape != hidden.shape or not bool(torch.isfinite(output).all()):
         raise AssertionError("Synthetic stacked forward produced invalid output")
 
+    gated_model = StackedIntrinsicMTP(
+        base,
+        residual_mode="vector",
+        residual_gate_init=0.0,
+    )
+    gated_output = gated_model(hidden, input_ids, positions)
+    base_output = base(hidden, input_ids, positions)
+    if not torch.equal(gated_output, base_output):
+        raise AssertionError("Zero residual gate did not preserve exact base output")
+    gate_params, gate_names = make_refinement_trainable(gated_model, "gate")
+    if len(gate_params) != 1 or gate_names != [stable_key("residual_gate")]:
+        raise AssertionError("Residual gate scope selected unexpected parameters")
+    gated_tensors = refinement_export_tensors(gated_model)
+    if stable_key("residual_gate") not in gated_tensors:
+        raise AssertionError("Residual gate was omitted from the export")
+
     changed_hidden = hidden.clone()
     changed_hidden[:, -1, :] += torch.tensor(3.0, dtype=dtype)
     changed_ids = input_ids.clone()
@@ -1157,6 +1258,8 @@ def self_test() -> int:
         heldout_starts=2,
         seed=27,
         scope="full",
+        residual_mode="replace",
+        residual_gate_init=0.0,
         draft_lm_head="int4-dequant",
         draft_lm_head_group_size=16,
         draft_lm_head_scale_dtype="bf16",
@@ -1218,6 +1321,8 @@ def self_test() -> int:
                 "clone_attention_parity": True,
                 "clone_mlp_parity": True,
                 "causal_prefix_invariance": True,
+                "zero_gate_exact_base_parity": True,
+                "vector_gate_exported": True,
                 "all_steps_loss": train_stats["last_training_loss"],
                 "conditional_prefix_loss": conditional_loss_value,
                 "accepted_depth_starts": after["starts"],
@@ -1296,7 +1401,11 @@ def main(argv: list[str] | None = None) -> int:
     del base_tensors, embed, lm_head
     gc.collect()
     validate_base_depth(base_mtp, args.max_steps)
-    model = StackedIntrinsicMTP(base_mtp)
+    model = StackedIntrinsicMTP(
+        base_mtp,
+        residual_mode=args.residual_mode,
+        residual_gate_init=args.residual_gate_init,
+    )
     params, trainable_keys = make_refinement_trainable(model, args.scope)
 
     base_only, before, after, train_stats = train_refinement(
