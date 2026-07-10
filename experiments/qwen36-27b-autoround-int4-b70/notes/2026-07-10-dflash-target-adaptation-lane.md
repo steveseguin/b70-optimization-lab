@@ -195,12 +195,37 @@ control, input bias, and layer bias (`2.84375` visible tokens/step in all three
 cases). A one-step layer-bias smoke changed only
 `xpu_layer_position_bias`, proving the intended parameter boundary.
 
-The active four-GPU matrix compares input bias at `1e-3` and layer bias at
+The first four-GPU matrix compared input bias at `1e-3` and layer bias at
 `3e-4`, `1e-3`, and `3e-3` for 4,000 steps. Artifact root:
 
 ```text
 /mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
 adaptation-position-k4-mixed-4gpu-20260710T114740Z
+```
+
+| Candidate | Baseline visible | Final visible | Scenario delta | Scenario 95% CI | Decision |
+| --- | ---: | ---: | ---: | --- | --- |
+| input bias `1e-3` | 2.7842 | 2.7783 | -0.0023 | `[-0.0442, 0.0398]` | no win |
+| layer bias `1e-3` | 2.7803 | 2.8037 | +0.0264 | `[-0.0141, 0.0639]` | inconclusive |
+| layer bias `3e-3` | 2.7822 | 2.5479 | -0.2296 | `[-0.2737, -0.1849]` | loss |
+| layer bias `3e-4` | 2.7764 | **2.8418** | **+0.0664** | **`[0.0281, 0.1049]`** | real exploratory gain, continue |
+
+The `3e-4` layer-bias curve rose monotonically at each checkpoint
+(`2.7891`, `2.7979`, `2.8242`, `2.8418`) and passed the exploratory
+scenario/Holm zero-effect test (`p=0.0060`). It is the first clear
+target-matched DFlash adaptation gain. It still misses the `+0.25` minimum
+useful effect and has `1.37%` final repeat disagreement, so it is not an
+endpoint or LocalMaxxing candidate yet. Compact analysis is preserved as
+`diagnostics/qwen27-dflash-position-k4-paired-20260710.json`.
+
+The exact `3e-4` adapter is now being continued for 8,192 steps at constant
+rates `5e-5`, `1e-4`, `2e-4`, and `3e-4` on four GPUs. This is justified by the
+monotonic curve and tests convergence/overshoot without changing architecture.
+Active artifact root:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-dflash/
+adaptation-position-cont-k4-mixed-4gpu-20260710T115404Z
 ```
 
 ## Advancement rule
