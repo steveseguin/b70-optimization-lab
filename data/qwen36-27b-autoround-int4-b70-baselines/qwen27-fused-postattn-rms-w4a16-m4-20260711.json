@@ -1,0 +1,26 @@
+{
+  "date": "2026-07-11",
+  "classification": "synthetic-microbenchmark-no-win",
+  "shape": {"m": 4, "k": 5120, "n": 17408, "group_size": 128},
+  "gpu": "Intel Arc Pro B70",
+  "correctness": {
+    "residual_max_abs": 0.0,
+    "normed_max_abs": 0.0,
+    "output_max_abs": 0.015625,
+    "output_mean_abs": 0.0007212552591226995,
+    "output_rmse": 0.0014940064866095781,
+    "torch_compile_fullgraph": true,
+    "xpu_graph_replays": 1000
+  },
+  "timing_ms": {
+    "custom_fused_median": 0.2063765,
+    "custom_fused_min": 0.199824,
+    "eager_allocating_reference_median": 0.2889565,
+    "native_fused_rms_plus_onednn_median": 0.119454,
+    "onednn_projection_only_median": 0.107511
+  },
+  "decision": "reject",
+  "reason": "The custom projection is 72.8% slower than the production-like native fused-add RMSNorm plus oneDNN path; its apparent win existed only against an allocation-heavy eager reference.",
+  "full_result": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-fused-postattn-rms-w4a16-m4-fairbaseline-20260711.json",
+  "submitted_to_localmaxxing": false
+}

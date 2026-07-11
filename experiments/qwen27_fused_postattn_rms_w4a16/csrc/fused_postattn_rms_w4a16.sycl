@@ -1,0 +1,188 @@
+#include <ATen/ATen.h>
+#include <c10/xpu/XPUStream.h>
+#include <sycl/ext/intel/esimd.hpp>
+#include <sycl/sycl.hpp>
+#include <torch/library.h>
+
+#include <cstdint>
+
+namespace esimd = sycl::ext::intel::esimd;
+using sycl::ext::intel::esimd::block_load;
+using sycl::ext::intel::esimd::block_store;
+using sycl::ext::intel::esimd::convert;
+using sycl::ext::intel::esimd::simd;
+
+namespace {
+
+using fp16 = sycl::half;
+
+constexpr int kM = 4;
+constexpr int kK = 5120;
+constexpr int kN = 17408;
+constexpr int kGroup = 128;
+constexpr int kPack = 8;
+constexpr int kVL = 128;
+
+template <int VL>
+ESIMD_INLINE float reduce_sum(simd<float, VL> value) {
+  static_assert((VL & (VL - 1)) == 0);
+  if constexpr (VL >= 512) value.template select<256, 1>(0) += value.template select<256, 1>(256);
+  if constexpr (VL >= 256) value.template select<128, 1>(0) += value.template select<128, 1>(128);
+  if constexpr (VL >= 128) value.template select<64, 1>(0) += value.template select<64, 1>(64);
+  if constexpr (VL >= 64) value.template select<32, 1>(0) += value.template select<32, 1>(32);
+  if constexpr (VL >= 32) value.template select<16, 1>(0) += value.template select<16, 1>(16);
+  if constexpr (VL >= 16) value.template select<8, 1>(0) += value.template select<8, 1>(8);
+  if constexpr (VL >= 8) value.template select<4, 1>(0) += value.template select<4, 1>(4);
+  if constexpr (VL >= 4) value.template select<2, 1>(0) += value.template select<2, 1>(2);
+  return static_cast<float>(value[0]) + static_cast<float>(value[1]);
+}
+
+struct ResidualRmsPrepassKernel {
+  const fp16* hidden;
+  const fp16* residual;
+  const fp16* gamma;
+  fp16* residual_out;
+  fp16* normed_out;
+  float eps;
+
+  void operator()(sycl::nd_item<1> item) const SYCL_ESIMD_KERNEL {
+    const int m = item.get_group(0);
+    const int row = m * kK;
+    float sum_sq = 0.0f;
+
+#pragma unroll
+    for (int chunk = 0; chunk < kK / kVL; ++chunk) {
+      const int offset = row + chunk * kVL;
+      simd<float, kVL> added = block_load<fp16, kVL>(hidden + offset) +
+                               block_load<fp16, kVL>(residual + offset);
+      block_store<fp16, kVL>(residual_out + offset, simd<fp16, kVL>(added));
+      sum_sq += reduce_sum<kVL>(added * added);
+    }
+
+    const float inv_rms = esimd::rsqrt(simd<float, 8>(sum_sq / kK + eps))[0];
+#pragma unroll
+    for (int chunk = 0; chunk < kK / kVL; ++chunk) {
+      const int k_offset = chunk * kVL;
+      const int offset = row + k_offset;
+      simd<float, kVL> value = block_load<fp16, kVL>(residual_out + offset);
+      simd<float, kVL> weight = block_load<fp16, kVL>(gamma + k_offset);
+      block_store<fp16, kVL>(normed_out + offset,
+                             simd<fp16, kVL>(value * inv_rms * weight));
+    }
+  }
+};
+
+struct W4A16M4ProjectionKernel {
+  const fp16* normed;
+  const int32_t* qweight;
+  const fp16* scales;
+  fp16* output;
+
+  void operator()(sycl::nd_item<1> item) const SYCL_ESIMD_KERNEL {
+    const int n = item.get_group(0);
+    constexpr int kPackedK = kK / kPack;
+    constexpr int kGroups = kK / kGroup;
+    constexpr int kPackedPerGroup = kGroup / kPack;
+    simd<float, 64> acc0 = 0.0f;
+    simd<float, 64> acc1 = 0.0f;
+    simd<float, 64> acc2 = 0.0f;
+    simd<float, 64> acc3 = 0.0f;
+
+    // AutoRound/GPTQ NT view has logical shape [K/8,N], strides [1,K/8].
+    // Its physical row n is therefore kPackedK contiguous int32 values.
+#pragma unroll 2
+    for (int group = 0; group < kGroups; ++group) {
+      simd<int32_t, kPackedPerGroup> packed = block_load<int32_t, kPackedPerGroup>(
+          qweight + static_cast<int64_t>(n) * kPackedK + group * kPackedPerGroup);
+      simd<uint32_t, 64> bytes = convert<uint32_t>(
+          packed.template bit_cast_view<uint8_t>().read());
+      const float scale = static_cast<float>(scales[group * kN + n]);
+      simd<float, 64> low = convert<float>(bytes & 0x0fu) * scale - 8.0f * scale;
+      simd<float, 64> high = convert<float>((bytes >> 4) & 0x0fu) * scale - 8.0f * scale;
+      const int k_offset = group * kGroup;
+
+      simd<float, kGroup> x0 = block_load<fp16, kGroup>(normed + k_offset);
+      simd<float, kGroup> x1 = block_load<fp16, kGroup>(normed + kK + k_offset);
+      simd<float, kGroup> x2 = block_load<fp16, kGroup>(normed + 2 * kK + k_offset);
+      simd<float, kGroup> x3 = block_load<fp16, kGroup>(normed + 3 * kK + k_offset);
+      acc0 += x0.template select<64, 2>(0) * low + x0.template select<64, 2>(1) * high;
+      acc1 += x1.template select<64, 2>(0) * low + x1.template select<64, 2>(1) * high;
+      acc2 += x2.template select<64, 2>(0) * low + x2.template select<64, 2>(1) * high;
+      acc3 += x3.template select<64, 2>(0) * low + x3.template select<64, 2>(1) * high;
+    }
+
+    output[n] = fp16(reduce_sum<64>(acc0));
+    output[kN + n] = fp16(reduce_sum<64>(acc1));
+    output[2 * kN + n] = fp16(reduce_sum<64>(acc2));
+    output[3 * kN + n] = fp16(reduce_sum<64>(acc3));
+  }
+};
+
+void check_tensor(const at::Tensor& tensor, at::ScalarType dtype, const char* name) {
+  TORCH_CHECK(tensor.device().is_xpu(), name, " must be an XPU tensor");
+  TORCH_CHECK(tensor.scalar_type() == dtype, name, " has an unexpected dtype");
+}
+
+void run_out(const at::Tensor& hidden, const at::Tensor& residual,
+             const at::Tensor& gamma, const at::Tensor& qweight,
+             const at::Tensor& scales, at::Tensor& residual_out,
+             at::Tensor& normed_out, at::Tensor& output, double eps) {
+  check_tensor(hidden, at::kHalf, "hidden");
+  check_tensor(residual, at::kHalf, "residual");
+  check_tensor(gamma, at::kHalf, "gamma");
+  check_tensor(qweight, at::kInt, "qweight");
+  check_tensor(scales, at::kHalf, "scales");
+  check_tensor(residual_out, at::kHalf, "residual_out");
+  check_tensor(normed_out, at::kHalf, "normed_out");
+  check_tensor(output, at::kHalf, "output");
+  TORCH_CHECK(hidden.sizes() == at::IntArrayRef({kM, kK}), "hidden must be [4,5120]");
+  TORCH_CHECK(residual.sizes() == hidden.sizes(), "residual must match hidden");
+  TORCH_CHECK(gamma.numel() == kK && gamma.is_contiguous(), "gamma must be contiguous [5120]");
+  TORCH_CHECK(qweight.sizes() == at::IntArrayRef({kK / kPack, kN}),
+              "qweight must have logical shape [640,17408]");
+  TORCH_CHECK(qweight.stride(0) == 1 && qweight.stride(1) == kK / kPack,
+              "qweight must use AutoRound/oneDNN NT strides [1,640]");
+  TORCH_CHECK(scales.sizes() == at::IntArrayRef({kK / kGroup, kN}) && scales.is_contiguous(),
+              "scales must be contiguous [40,17408]");
+  TORCH_CHECK(hidden.is_contiguous() && residual.is_contiguous(), "activations must be contiguous");
+  TORCH_CHECK(residual_out.sizes() == hidden.sizes() && residual_out.is_contiguous(),
+              "residual_out must be contiguous [4,5120]");
+  TORCH_CHECK(normed_out.sizes() == hidden.sizes() && normed_out.is_contiguous(),
+              "normed_out must be contiguous [4,5120]");
+  TORCH_CHECK(output.sizes() == at::IntArrayRef({kM, kN}) && output.is_contiguous(),
+              "output must be contiguous [4,17408]");
+  TORCH_CHECK(hidden.device() == residual.device() && hidden.device() == gamma.device() &&
+                  hidden.device() == qweight.device() && hidden.device() == scales.device() &&
+                  hidden.device() == residual_out.device() && hidden.device() == normed_out.device() &&
+                  hidden.device() == output.device(),
+              "all tensors must be on the same XPU device");
+
+  sycl::queue& queue = c10::xpu::getCurrentXPUStream(hidden.device().index()).queue();
+  sycl::event prepass = queue.submit([&](sycl::handler& cgh) {
+    cgh.parallel_for(sycl::nd_range<1>(kM, 1), ResidualRmsPrepassKernel{
+        reinterpret_cast<const fp16*>(hidden.data_ptr()),
+        reinterpret_cast<const fp16*>(residual.data_ptr()),
+        reinterpret_cast<const fp16*>(gamma.data_ptr()),
+        reinterpret_cast<fp16*>(residual_out.data_ptr()),
+        reinterpret_cast<fp16*>(normed_out.data_ptr()), static_cast<float>(eps)});
+  });
+  queue.submit([&](sycl::handler& cgh) {
+    cgh.depends_on(prepass);
+    cgh.parallel_for(sycl::nd_range<1>(kN, 1), W4A16M4ProjectionKernel{
+        reinterpret_cast<const fp16*>(normed_out.data_ptr()),
+        qweight.data_ptr<int32_t>(), reinterpret_cast<const fp16*>(scales.data_ptr()),
+        reinterpret_cast<fp16*>(output.data_ptr())});
+  });
+}
+
+}  // namespace
+
+TORCH_LIBRARY(qwen27_postattn_w4a16, m) {
+  m.def("run_out(Tensor hidden, Tensor residual, Tensor gamma, Tensor qweight, "
+        "Tensor scales, Tensor(a!) residual_out, Tensor(b!) normed_out, "
+        "Tensor(c!) output, float eps) -> ()");
+}
+
+TORCH_LIBRARY_IMPL(qwen27_postattn_w4a16, XPU, m) { m.impl("run_out", &run_out); }
+
+extern "C" void init_qwen27_fused_postattn_rms_w4a16() {}
