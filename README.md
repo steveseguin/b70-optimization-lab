@@ -15,7 +15,7 @@ at your own risk.
 - Local AI users who want reproducible Intel Arc/B-series commands, patches and
   benchmark recipes.
 - Anyone deciding whether Intel Arc/B-series hardware is worth it for local
-  inference, and wanting real numbers to compare against.
+  inference, and wanting to see the state of support.
 - Optimization agents and contributors who need a map of current work,
   archived lessons, and validity rules.
 - Upstream vLLM, llama.cpp, oneAPI, SYCL, and Intel/XPU developers looking for
