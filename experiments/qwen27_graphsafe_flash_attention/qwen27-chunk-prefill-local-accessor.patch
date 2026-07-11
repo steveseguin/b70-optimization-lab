@@ -1,0 +1,58 @@
+diff --git a/csrc/xpu/attn/xe_2/chunk_prefill.hpp b/csrc/xpu/attn/xe_2/chunk_prefill.hpp
+index 5e50e1a..0182bd9 100644
+--- a/csrc/xpu/attn/xe_2/chunk_prefill.hpp
++++ b/csrc/xpu/attn/xe_2/chunk_prefill.hpp
+@@ -212,23 +212,40 @@ struct KernelLauncher {
+     dim3 const block = FMHAKernel::get_block_shape();
+     dim3 const grid = FMHAKernel::get_grid_shape(params);
+ 
+-    // configure smem size and carveout
+-    int smem_size = FMHAKernel::SharedStorageSize;
++    static_assert(cute::intel::sg_size == 16);
++    using SharedStorage = typename FMHAKernel::SharedStorage;
++    static_assert(sizeof(SharedStorage) == FMHAKernel::SharedStorageSize);
+ 
+     const auto sycl_block = compat::dim3(block.x, block.y, block.z);
+     const auto sycl_grid = compat::dim3(grid.x, grid.y, grid.z);
++    const sycl::range<3> local_range = sycl_block;
++    const sycl::range<3> global_range = sycl_grid * sycl_block;
+ 
+-    // Launch parameters depend on whether SYCL compiler supports work-group
+-    // scratch memory extension
+-    compat::experimental::launch_properties launch_props{
+-        syclex::work_group_scratch_size(smem_size),
+-    };
+-    compat::experimental::kernel_properties kernel_props{
+-        syclex::sub_group_size<cute::intel::sg_size>, intelex::grf_size<256>};
+-    compat::experimental::launch_policy policy{
+-        sycl_grid, sycl_block, launch_props, kernel_props};
+-    compat::experimental::launch<cutlass::device_kernel<FMHAKernel>>(
+-        policy, queue, params);
++    syclex::properties kernel_props{
++        syclex::sub_group_size<16>, intelex::grf_size<256>};
++    queue.submit([&](sycl::handler& cgh) {
++      // Handler-owned local memory is represented explicitly in a command
++      // graph. The dynamic work_group_scratch_size property is not.
++      sycl::local_accessor<SharedStorage, 1> scratch{sycl::range<1>(1), cgh};
++      struct KernelFunctor {
++        decltype(kernel_props) properties;
++        sycl::local_accessor<SharedStorage, 1> scratch;
++        typename FMHAKernel::Params params;
++
++        auto get(syclex::properties_tag) const { return properties; }
++
++        void operator()(sycl::nd_item<3>) const {
++          auto* scratch_ptr = reinterpret_cast<char*>(
++              scratch
++                  .template get_multi_ptr<sycl::access::decorated::no>()
++                  .get());
++          FMHAKernel{}(params, scratch_ptr);
++        }
++      };
++      cgh.parallel_for<FMHAKernel>(
++          sycl::nd_range<3>{global_range, local_range},
++          KernelFunctor{kernel_props, scratch, params});
++    });
+   }
+ };
+ 
