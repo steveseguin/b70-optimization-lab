@@ -86,15 +86,18 @@ the production LAN endpoint:
   the current TP2 record
 - engine: local vLLM/XPU from `/home/steve/src/vllm`
 - current strict fresh-response practical best: TP2 conservative median
-  `78.226 tok/s` for generated tokens 1-100 after TTFT; a separate full-quality
-  run reached `81.341 tok/s`. Pinned public oneCCL/libccl fixes the installed
-  runtime's deterministic packed-verifier graph replay corruption. Exact
-  cases, repeat128, baseline parity, the 1K needle, and `cached_tokens=0` on
-  every strict prompt passed. The two valid rows differ by `3.98%`, inside the
-  established `4.4%` endpoint variance band.
+  `82.894 tok/s` for generated tokens 1-100 after TTFT; the integrated
+  full-quality lock reached `85.394 tok/s`. Pinned public oneCCL/libccl fixes
+  the installed runtime's deterministic packed-verifier all-reduce graph
+  corruption, and the compiled all-gather custom-op patch enables exact draft
+  graph capture. Exact cases, repeat128, baseline parity, the 1K needle, and
+  `cached_tokens=0` on every strict prompt passed. The isolated rows differ by
+  `3.02%`, inside the established `4.4%` endpoint variance band; a swapped
+  four-GPU crossover measured +`5.39%` average over eager draft.
 - current result packet:
-  `../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
-- current TP2 LocalMaxxing approval: `cmrghhs27004cmj01dijk9r9f`
+  `../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
+- current TP2 LocalMaxxing: new submission pending; prior eager-draft approval
+  `cmrghhs27004cmj01dijk9r9f`
 - oneCCL build/oracle/repro:
   `../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`
 - prior TP1 LocalMaxxing: ReplaySSM draft-INT4 row approved as

@@ -1,0 +1,55 @@
+{
+  "backend": "xccl",
+  "mode": "graph",
+  "passed": true,
+  "queue_test": "torch.xpu.XPUGraph",
+  "ranks": [
+    {
+      "avg_replay_ms_including_sync_and_validation": 1.624471695322427,
+      "batched_graph_timing": {
+        "final_output_passed": true,
+        "iterations": 10000,
+        "ms_per_copy_and_replay": 0.021943901595659555,
+        "total_ms": 219.43901595659554
+      },
+      "device": "xpu:0",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 5120,
+      "iterations": 128,
+      "loaded_ccl_paths": [
+        "/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70/lib/libccl.so.1.0"
+      ],
+      "local_rank": 0,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "mode": "graph",
+      "rank": 0,
+      "rows": 4
+    },
+    {
+      "avg_replay_ms_including_sync_and_validation": 1.6243043519352796,
+      "batched_graph_timing": {
+        "final_output_passed": true,
+        "iterations": 10000,
+        "ms_per_copy_and_replay": 0.021943702199496328,
+        "total_ms": 219.4370219949633
+      },
+      "device": "xpu:1",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 5120,
+      "iterations": 128,
+      "loaded_ccl_paths": [
+        "/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70/lib/libccl.so.1.0"
+      ],
+      "local_rank": 1,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "mode": "graph",
+      "rank": 1,
+      "rows": 4
+    }
+  ],
+  "world_size": 2
+}

@@ -8,23 +8,24 @@ fresh-response record.
 
 The current record uses the `webhie` revision listed below plus target INT8
 LM-head BF16 scales, draft INT4 LM-head BF16 scales, ReplaySSM exact state,
-MTP3, and pinned public oneCCL/libccl. The newer communication runtime is
-required: installed oneCCL `Gold-2021.17.2` fails the packed-verifier graph
-oracle on nearly every replay.
+MTP3, captured target and draft PIECEWISE graphs, and pinned public
+oneCCL/libccl. The newer communication runtime is required: installed oneCCL
+`Gold-2021.17.2` fails the packed-verifier graph oracle on nearly every replay.
 
 ```bash
 cd /home/steve/llm-optimizations
 ONECCL_INSTALL_DIR=/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70 \
   experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/build-public-oneccl.sh
-GPU_INDEX=2,3 PORT=19443 QUALITY_REPEAT_RUNS=128 \
-  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
+GPU_INDEX=2,3 PORT=19445 QUALITY_REPEAT_RUNS=128 \
+  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh
 ```
 
-Promoted result: conservative isolated median `78.226352 tok/s`, p10
-`69.963389`, mean `78.598141`; full-quality high `81.341145 tok/s`. Exact
+Promoted result: conservative isolated median `82.893718 tok/s`, p10
+`72.751868`, mean `83.100685`; full-quality high `85.393815 tok/s`. Exact
 cases, repeat128, baseline parity, the 1K needle, and strict cold/cached-zero
-rules passed. See
-`../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
+rules passed. A swapped four-GPU crossover measured +`5.39%` average over the
+eager draft. See
+`../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
 and
 `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
 

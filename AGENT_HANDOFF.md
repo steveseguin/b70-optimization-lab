@@ -53,19 +53,24 @@ Active target as of the latest switch request:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 - LocalMaxxing approved this strict/fresh result as `cmr4gokx90061nv01lhoe3ft8`.
   Do not submit synthetic MTP5/cg16 or invalid postprocess-skip rows.
-- Current fastest quality-gated practical row is now TP2 with pinned public
-  oneCCL/libccl: conservative isolated median `78.22635247759823 tok/s`, p10
-  `69.9633890122676`, mean `78.59814141426254`; a separate full-quality high
-  reached `81.34114517681084 tok/s`. Exact cases, repeat128, baseline parity,
-  the 1K needle, and the strict cold/cached-zero gate passed. The two valid
-  rows differ by `3.98%`, within the established `4.4%` endpoint variance
-  band, so use `78.226` as the headline. The installed oneCCL runtime fails
-  the packed-verifier BF16 `[4,5120]` graph oracle, while pinned public oneCCL
-  parent `b52f40c` / libccl `4ceafd1` passes direct and graph controls.
-  LocalMaxxing approved it as `cmrghhs27004cmj01dijk9r9f`. Start from
-  `results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
-  and
-  `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
+- Current fastest quality-gated practical row is TP2 with pinned public
+  oneCCL/libccl plus captured intrinsic-MTP draft: conservative isolated median
+  `82.89371762720036 tok/s`, p10 `72.7518683863622`, mean
+  `83.10068493770281`; the integrated full-quality lock reached
+  `85.39381462095321 tok/s`, p10 `79.73148138975637`. Exact cases, repeat128,
+  baseline parity, the 1K needle, and the strict cold/cached-zero gate passed.
+  The isolated rows differ by `3.02%`, within the established `4.4%` endpoint
+  variance band, so use `82.894` as the headline. A swapped four-GPU crossover
+  measured a same-direction +`5.39%` average graph-draft gain over eager draft.
+  Installed oneCCL fails the packed-verifier BF16 `[4,5120]` all-reduce graph
+  oracle; pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` passes it.
+  Direct BF16 `[4,2560]` all-gather graph capture also passes `512/512`; the
+  draft blocker was Inductor's functional `wait_tensor`, fixed by the
+  default-off compiled all-gather custom-op patch. The prior eager-draft result
+  is approved at LocalMaxxing as `cmrghhs27004cmj01dijk9r9f`; submit the new
+  record after the documentation commit. Start from
+  `results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
+  and `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
 - The prior TP1 quality-gated practical row is the separate
   `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target LM-head
   (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)` ReplaySSM lane:

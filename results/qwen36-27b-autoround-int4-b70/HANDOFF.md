@@ -7,30 +7,36 @@ B70.
 
 ## July 11 Active Frontier
 
-The promoted strict-valid record is now the two-GPU webhie/AutoRound lane with
-pinned public oneCCL/libccl: conservative isolated median
-`78.22635247759823 tok/s`, p10 `69.9633890122676`, mean
-`78.59814141426254`. A separate full-quality run reached
-`81.34114517681084 tok/s`, passed exact cases, repeat128, baseline parity, and
-the 1K needle, and used `cached_tokens=0` for every strict prompt. The `3.98%`
-difference between the valid rows is inside the established `4.4%` endpoint
-variance band, so promote `78.226`, not the high row.
-LocalMaxxing approved the conservative row as `cmrghhs27004cmj01dijk9r9f`.
+The promoted strict-valid record is the two-GPU webhie/AutoRound lane with
+pinned public oneCCL/libccl and captured intrinsic-MTP draft: conservative
+isolated median `82.89371762720036 tok/s`, p10 `72.7518683863622`, mean
+`83.10068493770281`. The integrated full-quality lock reached
+`85.39381462095321 tok/s`, p10 `79.73148138975637`, passed exact cases,
+repeat128, baseline parity, and the 1K needle, and used `cached_tokens=0` for
+every strict prompt. The `3.02%` isolated spread is inside the established
+`4.4%` endpoint variance band, so promote `82.894` as the reproducible
+headline. A swapped four-GPU crossover measured graph medians `81.580` and
+`79.637` against eager medians `75.664` and `77.308`, a same-direction
++`5.39%` average gain. The new LocalMaxxing submission is pending; the prior
+eager-draft row is `cmrghhs27004cmj01dijk9r9f`.
 
 The result, bisection, and reproduction paths are:
 
-- `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md`;
-- `tp2-public-oneccl-4ceafd1-20260711.json`;
+- `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-public-oneccl-algorithms-and-draftgraph.md`;
+- `tp2-public-oneccl-draftgraph-20260711.json`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`;
-- `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh`.
+- `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`.
 
 The installed oneCCL `Gold-2021.17.2` runtime failed the deterministic BF16
 `[4,5120]` XPUGraph all-reduce oracle on `510/512` and `511/512` replays. The
 pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` passed direct
-`256/256` and graph `512/512` on both ranks. This supersedes the custom ESIMD
-collective lane. Next, keep the corrected runtime fixed and screen graph-safe
-oneCCL algorithm/temp-buffer choices with the oracle before endpoint tests;
-the target remains `100+ tok/s`.
+`256/256` and graph `512/512` on both ranks. Its direct draft all-gather also
+passed `512/512` blocking and async-wait graph replays; the actual draft blocker
+was Inductor's functional `wait_tensor`. The default-off compiled all-gather
+custom-op patch fixes that lowering and enables draft graph capture. Small
+oneCCL ring/two-shot/generic-path tuning is now closed. Next, profile the exact
+draft-graph recipe and reduce target PIECEWISE boundaries or improve verified
+accepted tokens per step; the target remains `100+ tok/s`.
 
 ## Current State
 

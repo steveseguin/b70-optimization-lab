@@ -35,30 +35,36 @@ Current TP2 record:
 - model/runtime recipe: webhie AutoRound W4A16, runtime INT8 target LM-head
   with BF16 scales, runtime INT4 group128 draft LM-head with BF16 scales,
   ReplaySSM exact GDN state, target-verified MTP3, PIECEWISE target graph, and
-  eager draft;
+  PIECEWISE draft graph;
 - collective runtime: public oneCCL parent
   `b52f40c07f0b140e6aba87548c80720a350a9827`, libccl
   `4ceafd15c03ce46f11eeaf91781a92afebd3cecf`, injected only into the server;
-- conservative strict headline: median **`78.226352 tok/s`**, p10 `69.963389`,
-  mean `78.598141`, full after-TTFT median `80.158149`, wall median
-  `69.879192`, TTFT median `750.0305 ms`;
-- full-quality high support: **`81.341145 tok/s`**, exact cases + repeat128 +
+- conservative strict headline: median **`82.893718 tok/s`**, p10 `72.751868`,
+  mean `83.100685`, full after-TTFT median `82.368038`, wall median
+  `73.290051`, TTFT median `748.9077 ms`;
+- full-quality high support: **`85.393815 tok/s`**, p10 `79.731481`, exact
+  cases + repeat128 +
   baseline parity + 1K needle all passed;
 - strict validity: 12 unique fixed realistic prompts, each once cold,
   `cached_tokens=0` throughout, no prompt/KV/history/response reuse, token-id
   timing for generated tokens 1-100 after TTFT;
-- variance: high vs isolated differs by `3.98%`, inside the established `4.4%`
-  endpoint band, so `78.226` is the promoted number;
-- LocalMaxxing: approved as `cmrghhs27004cmj01dijk9r9f`;
-- packet: `tp2-public-oneccl-4ceafd1-20260711.json`;
+- variance: high vs isolated differs by `3.02%`, inside the established `4.4%`
+  endpoint band, so `82.894` is the promoted number; a swapped four-GPU
+  crossover measured +`5.39%` average over eager draft;
+- LocalMaxxing: new submission pending; prior eager-draft TP2 row approved as
+  `cmrghhs27004cmj01dijk9r9f`;
+- packet: `tp2-public-oneccl-draftgraph-20260711.json`;
 - build/oracle/repro:
   `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
 
-The mechanism matters: installed oneCCL `Gold-2021.17.2` failed the exact
+The mechanisms matter: installed oneCCL `Gold-2021.17.2` failed the exact
 BF16 `[4,5120]` XPUGraph all-reduce oracle on nearly every replay, while the
 pinned public revision passed direct `256/256` and graph `512/512` on both
-ranks. Do not reproduce TP2 records against the known-broken installed
-collective.
+ranks. The draft then required a compiled all-gather custom-op boundary because
+Inductor's functional `wait_tensor` cannot run inside an XPU command graph;
+direct BF16 `[4,2560]` all-gather capture passed `512/512` on both independent
+GPU pairs. Do not reproduce TP2 records against the known-broken installed
+collective or omit the draft-graph patch/env gate.
 
 Validated so far:
 

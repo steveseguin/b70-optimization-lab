@@ -16,24 +16,28 @@ candidate:
 
 ```bash
 cd /home/steve/llm-optimizations
-GPU_INDEX=2,3 PORT=19443 \
+GPU_INDEX=2,3 PORT=19445 \
 QUALITY_REPEAT_RUNS=128 \
-  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
+  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh
 ```
 
-The promoted isolated result is median `78.226352 tok/s`, p10 `69.963389`,
-mean `78.598141` for generated tokens 1-100 after TTFT. A separate full-quality
-run reached `81.341145 tok/s` and passed exact cases, repeat128, baseline
-parity, and the 1K needle. Both strict rows used 12 unique cold prompts with
-`cached_tokens=0`; use `78.226` because the `3.98%` difference is inside the
-known `4.4%` endpoint variance band. Exact checksums, artifacts, and runtime
-identity are in
-`tp2-public-oneccl-4ceafd1-20260711.json` and the collective guide is
+The promoted isolated result is median `82.893718 tok/s`, p10 `72.751868`,
+mean `83.100685` for generated tokens 1-100 after TTFT. The integrated
+full-quality lock reached `85.393815 tok/s`, p10 `79.731481`, and passed exact
+cases, repeat128, baseline parity, and the 1K needle. Both strict rows used 12
+unique cold prompts with `cached_tokens=0`; use `82.894` because the `3.02%`
+difference is inside the known `4.4%` endpoint variance band. A swapped
+four-GPU crossover measured a +`5.39%` average gain over eager draft. Exact
+checksums, artifacts, patch, and runtime identity are in
+`tp2-public-oneccl-draftgraph-20260711.json` and the collective guide is
 `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
 
 Do not run the TP2 base wrapper against installed oneCCL
 `Gold-2021.17.2`: its deterministic packed-verifier graph oracle fails on
 nearly every replay.
+The draft-graph wrapper also requires the recorded default-off vLLM all-gather
+patch; it keeps compiled all-gather opaque because Inductor's functional
+`wait_tensor` cannot be captured by an XPU command graph.
 
 ## Download
 

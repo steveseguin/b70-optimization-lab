@@ -62,6 +62,6 @@ export BENCH_METRIC_TOKENS=100
 export QUALITY_REPEAT_RUNS="${QUALITY_REPEAT_RUNS:-64}"
 export QUALITY_LONG_CONTEXT_TOKENS="${QUALITY_LONG_CONTEXT_TOKENS:-1024}"
 export QUALITY_BASELINE_JSON="${QUALITY_BASELINE_JSON:-$ROOT/data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-replayssm-draftint4-current-confirm-20260706T140317Z-repeat64-ctx1024-20260706T140317Z.json}"
-export CANDIDATE_ENTRYPOINT="$0"
+export CANDIDATE_ENTRYPOINT="${CANDIDATE_ENTRYPOINT:-$0}"
 
 exec "$ROOT/experiments/qwen36-27b-autoround-int4-b70/scripts/run-vllm-candidate.sh"

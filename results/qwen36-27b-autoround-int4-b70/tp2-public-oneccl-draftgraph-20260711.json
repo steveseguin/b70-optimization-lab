@@ -1,0 +1,179 @@
+{
+  "status": "quality_gated_tp2_record",
+  "date_utc": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "base_model": "Qwen/Qwen3.6-27B",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "quantization": "AutoRound INT4 W4A16 target + runtime INT8 target LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)",
+  "headline": {
+    "gpu_count": 2,
+    "median_tok_s_1_100_after_ttft": 82.89371762720036,
+    "p10_tok_s_1_100_after_ttft": 72.7518683863622,
+    "mean_tok_s_1_100_after_ttft": 83.10068493770281,
+    "stdev_tok_s_1_100_after_ttft": 7.881644801194453,
+    "median_full_after_ttft_tok_s": 82.36803750879187,
+    "median_wall_tok_s_full": 73.2900512922854,
+    "median_ttft_ms": 748.9077034406364,
+    "selection_reason": "Conservative lower isolated draft-graph row. The integrated full-quality lock reached 85.394 tok/s; its 3.02% delta is inside the established 4.4% endpoint variance band. A two-window four-GPU crossover kept the graph advantage in both directions and measured +5.39% on the average paired medians."
+  },
+  "validated_high": {
+    "median_tok_s_1_100_after_ttft": 85.39381462095321,
+    "p10_tok_s_1_100_after_ttft": 79.73148138975637,
+    "mean_tok_s_1_100_after_ttft": 85.343944011463,
+    "stdev_tok_s_1_100_after_ttft": 6.208284776603722,
+    "median_full_after_ttft_tok_s": 82.91669352461128,
+    "median_wall_tok_s_full": 73.53815388135143,
+    "median_ttft_ms": 745.0165799818933,
+    "quality_pass_all": true
+  },
+  "comparison_prior_tp2_record": {
+    "median_tok_s_1_100_after_ttft": 78.22635247759823,
+    "conservative_improvement_percent": 5.966487,
+    "validated_high_improvement_percent": 9.162465,
+    "localmaxxing_id": "cmrghhs27004cmj01dijk9r9f",
+    "result_packet": "results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json"
+  },
+  "localmaxxing": {
+    "status": "pending_submission_after_commit",
+    "queue": "experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-tp2-draftgraph-20260711.queue.json",
+    "id": null,
+    "response_log": null
+  },
+  "hardware": {
+    "gpu_count": 2,
+    "gpu_name": "Intel Arc Pro B70",
+    "vram_gb_each": 32,
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+    "ram_gb": 128,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "runtime": {
+    "engine": "vllm",
+    "engine_version": "0.20.2rc1.dev13 local XPU patch stack",
+    "vllm_source_branch": "codex/qwen36-quark-int8-tracking",
+    "vllm_source_head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "xpu_kernels_source_head": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "xpu_c_sha256": "93fbff8734a706260ad368274ac2f73b99e9dff4df9a828220c5ddb749c72aee",
+    "oneccl_parent_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+    "oneccl_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "oneccl_lib_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "oneccl_kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "oneccl_binary_policy": "The 230 MiB binary is outside Git under /mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70; rebuild from pinned public source with the recorded script and compatibility patch.",
+    "vllm_patch": "patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-compiled-allgather-custom-op-draftgraph-20260711.patch"
+  },
+  "serving_config": {
+    "tp": 2,
+    "concurrency": 1,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": 0.95,
+    "spec_method": "qwen3_next_mtp",
+    "num_speculative_tokens": 3,
+    "xpu_graph": true,
+    "target_graph": true,
+    "draft_graph": true,
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE",
+      "max_cudagraph_capture_size": 8
+    },
+    "required_env": {
+      "VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS": "0",
+      "VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP": "1"
+    },
+    "collective_env": {
+      "CCL_ATL_TRANSPORT": "ofi",
+      "CCL_TOPO_P2P_ACCESS": "1",
+      "CCL_ZE_IPC_EXCHANGE": "pidfd"
+    },
+    "record_wrapper": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh"
+  },
+  "strict_fresh_result": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-customag-screen-realistic128-chat-tokenids-qwensuite-20260711T151155Z.json",
+    "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-customag-screen-candidate-summary-20260711T151155Z.json",
+    "passed": true,
+    "cached_tokens_all_zero": true,
+    "each_prompt_run_once": true,
+    "prompt_count": 12,
+    "prompts_unique": true,
+    "metric": "median generated-token throughput for tokens 1-100 after TTFT",
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp",
+    "history_acceleration": false,
+    "prefix_or_kv_cache_reuse": false,
+    "response_reuse": false,
+    "target_verified_speculation": true,
+    "prompt_and_output_hashes": "Stored in the strict artifact as prompt_sha256s and output_sha256s."
+  },
+  "quality": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-tp2-oneccl-draftgraph-customag-lock-repeat128-ctx1024-20260711T153045Z.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "exact_cases_passed": 4,
+    "repeat_pass": true,
+    "repeat_runs": 128,
+    "long_context_pass": true,
+    "long_context_actual_prompt_tokens": 987,
+    "cached_tokens_zero": true
+  },
+  "supporting_runs": [
+    {
+      "label": "integrated full-quality high",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-customag-lock-candidate-summary-20260711T153045Z.json",
+      "strict_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-customag-lock-realistic128-chat-tokenids-qwensuite-20260711T153045Z.json",
+      "median_tok_s_1_100_after_ttft": 85.39381462095321,
+      "p10": 79.73148138975637,
+      "mean": 85.343944011463,
+      "quality_pass_all": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "label": "crossover window 1",
+      "graph_summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-crossover-w1-graph-gpu23-candidate-summary-20260711T152136Z.json",
+      "eager_summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-crossover-w1-eager-gpu01-candidate-summary-20260711T152123Z.json",
+      "graph_median": 81.58046783752658,
+      "eager_median": 75.66392386621155,
+      "paired_improvement_percent": 7.8195
+    },
+    {
+      "label": "crossover window 2, GPU pairs swapped",
+      "graph_summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-crossover-w2-graph-gpu01-candidate-summary-20260711T152710Z.json",
+      "eager_summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-draftgraph-crossover-w2-eager-gpu23-candidate-summary-20260711T152718Z.json",
+      "graph_median": 79.63665038148494,
+      "eager_median": 77.3077116571552,
+      "paired_improvement_percent": 3.0126
+    }
+  ],
+  "variance_analysis": {
+    "established_single_run_band_percent": 4.4,
+    "isolated_graph_rows": [82.89371762720036, 85.39381462095321],
+    "isolated_spread_percent": 3.016,
+    "crossover_graph_average": 80.60855910950576,
+    "crossover_eager_average": 76.48581776168338,
+    "crossover_average_improvement_percent": 5.390204,
+    "conclusion": "The graph path wins in both pair assignments. Window 2 alone is inside the single-run variance band, but the same-direction crossover average exceeds it and the isolated strict rows are consistent."
+  },
+  "collective_correctness": {
+    "allreduce": {
+      "installed_runtime": "failed the BF16 [4,5120] graph oracle",
+      "pinned_public_runtime": "passed 512/512 graph replays on both ranks"
+    },
+    "allgather": {
+      "shape": "BF16 [4,2560] per rank, TP2",
+      "blocking_graph_capture": "passed 512/512 on both ranks",
+      "async_wait_graph_capture": "passed 512/512 on both ranks",
+      "blocking_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-allgather-blocking-graph-gpu01-20260711.json",
+      "async_wait_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-allgather-asyncwait-graph-gpu23-20260711.json",
+      "root_cause": "Inductor's functional all_gather_into_tensor + wait_tensor lowering rejects an event associated with an XPU command graph; direct preallocated oneCCL capture is exact.",
+      "fix": "Keep compiled XPU all-gather opaque behind VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP=1 so the direct implementation is captured."
+    }
+  },
+  "reproduction": {
+    "guide": "experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md",
+    "record_wrapper": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh",
+    "build_script": "experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/build-public-oneccl.sh",
+    "allreduce_oracle": "experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/graph_allreduce_probe.py",
+    "allgather_oracle": "experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/graph_allgather_probe.py",
+    "patch": "patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-compiled-allgather-custom-op-draftgraph-20260711.patch",
+    "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-public-oneccl-algorithms-and-draftgraph.md"
+  }
+}

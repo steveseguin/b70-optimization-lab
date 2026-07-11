@@ -28,6 +28,22 @@ Evidence:
 - `../../../data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-unpatched-ll256-direct-control-20260711.json`;
 - `../../../data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-unpatched-ll256-graph-control-20260711.json`.
 
+## Draft All-Gather Oracle
+
+`graph_allgather_probe.py` isolates the Qwen3 Next draft's TP2 BF16
+`[rows,2560]` all-gather. It changes every input before every replay and checks
+the complete gathered output. With the pinned public runtime, both blocking
+capture and async capture plus `Work.wait()` passed `512/512` replays on both
+ranks. This proved that direct oneCCL graph capture is valid; the draft startup
+failure came from Inductor's functional `all_gather_into_tensor + wait_tensor`
+lowering.
+
+The default-off vLLM patch
+`../../../patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-compiled-allgather-custom-op-draftgraph-20260711.patch`
+keeps compiled XPU all-gather opaque under
+`VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP=1`, allowing the intrinsic MTP draft to
+be graph-captured exactly.
+
 ## Build
 
 The 230 MiB library is intentionally not committed. Build it from pinned
@@ -63,31 +79,42 @@ ZE_AFFINITY_MASK=0,1 \
   --mode graph --iterations 512
 ```
 
+Using the same environment, validate the draft all-gather contract:
+
+```bash
+/home/steve/.venvs/vllm-xpu/bin/torchrun --standalone --nproc-per-node=2 \
+  experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/graph_allgather_probe.py \
+  --capture-mode blocking --rows 4 --iterations 512
+```
+
 This oracle is a correctness diagnostic, not a throughput claim. Promotion
 still requires the fixed fresh realistic suite, `cached_tokens=0`, target
 verification, and the full quality gate.
 
 ## Promoted TP2 Endpoint
 
-The checksum-gated endpoint wrapper is:
+The promoted checksum-gated endpoint wrapper is:
 
 ```bash
 cd /home/steve/llm-optimizations
-GPU_INDEX=2,3 PORT=19443 \
+GPU_INDEX=2,3 PORT=19445 \
 QUALITY_REPEAT_RUNS=128 \
-  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
+  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh
 ```
 
-The 2026-07-11 promotion uses the conservative isolated strict result:
+The draft-graph promotion uses the conservative lower isolated strict result:
 
-- median `78.22635247759823 tok/s` for generated tokens 1-100 after TTFT;
-- p10 `69.9633890122676`, mean `78.59814141426254`;
+- median `82.89371762720036 tok/s` for generated tokens 1-100 after TTFT;
+- p10 `72.7518683863622`, mean `83.10068493770281`;
 - all 12 fixed realistic prompts run once, `cached_tokens=0` throughout;
 - no prompt/KV/history/response reuse and target-verified MTP3;
-- a separate full-quality run reached `81.34114517681084 tok/s` and passed
+- an integrated full-quality run reached `85.39381462095321 tok/s` and passed
   exact canaries, repeat128, baseline parity, and the 1K needle.
 
-Use `78.226` as the reproducible headline because the two valid rows differ by
-`3.98%`, inside the established `4.4%` endpoint variance band. See
-`../../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
-for exact runtime hashes and artifacts.
+Use `82.894` as the reproducible headline because the two isolated rows differ
+by `3.02%`, inside the established `4.4%` endpoint variance band. A two-window
+four-GPU crossover measured a same-direction +5.39% average gain over the eager
+draft. See
+`../../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
+for exact runtime hashes, crossover evidence, and artifacts. The older eager
+draft wrapper remains available as a control.

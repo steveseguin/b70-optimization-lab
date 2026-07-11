@@ -49,6 +49,15 @@ def main() -> int:
     parser.add_argument("--hidden-size", type=int, default=5120)
     parser.add_argument("--warmup", type=int, default=8)
     parser.add_argument("--iterations", type=int, default=512)
+    parser.add_argument(
+        "--timing-iterations",
+        type=int,
+        default=0,
+        help=(
+            "After exact validation, batch this many graph replays behind one "
+            "host synchronization and report comparative replay latency."
+        ),
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
@@ -154,6 +163,37 @@ def main() -> int:
         * 1000.0
         / args.iterations,
     }
+
+    if args.timing_iterations:
+        if graph is None:
+            raise ValueError("--timing-iterations requires --mode graph")
+        timing_input = _input_for_iteration(base, rank=rank, iteration=3)
+        # Include the fixed-address input publication that precedes collective
+        # replay, but amortize host/device synchronization and validation. This
+        # is a comparative screen, not an endpoint throughput claim.
+        torch.xpu.synchronize()
+        dist.barrier()
+        timing_start = time.perf_counter()
+        for _ in range(args.timing_iterations):
+            static_input.copy_(timing_input)
+            graph.replay()
+        torch.xpu.synchronize()
+        timing_elapsed_s = time.perf_counter() - timing_start
+        timing_expected = _expected_for_iteration(
+            base, world_size=world_size, iteration=3
+        )
+        timing_passed = torch.equal(static_input, timing_expected)
+        local_result["batched_graph_timing"] = {
+            "iterations": args.timing_iterations,
+            "total_ms": timing_elapsed_s * 1000.0,
+            "ms_per_copy_and_replay": timing_elapsed_s
+            * 1000.0
+            / args.timing_iterations,
+            "final_output_passed": timing_passed,
+        }
+        if not timing_passed:
+            mismatch_iterations += 1
+            local_result["mismatch_iterations"] = mismatch_iterations
     all_results: list[dict[str, Any] | None] = [None] * world_size
     dist.all_gather_object(all_results, local_result)
 

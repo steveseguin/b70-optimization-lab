@@ -177,6 +177,7 @@ trap cleanup EXIT
   echo "disable_spec_decode_cudagraph_replay=${VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-}"
   echo "skip_compiled_spec_decode=${VLLM_XPU_SKIP_COMPILED_SPEC_DECODE:-}"
   echo "xpu_compile_allreduce_custom_op=${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-}"
+  echo "xpu_compile_allgather_custom_op=${VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP:-}"
   echo "xpu_compile_allreduce_static_inplace=${VLLM_XPU_COMPILE_ALLREDUCE_STATIC_INPLACE:-}"
   echo "xpu_custom_allreduce_clone_input=${VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT:-}"
   echo "xpu_custom_allreduce_graph_clone_input=${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-}"

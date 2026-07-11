@@ -22,21 +22,24 @@ after TP1 smoke works. Start from:
 - `experiments/qwen36-27b-autoround-int4-b70/README.md`;
 - `repro/qwen36-27b-autoround-int4-b70/README.md`.
 
-Current engineering frontier: a pinned public oneCCL/libccl build fixed the
-packed-verifier TP2 command-graph all-reduce corruption and produced a new
-strict-valid record. Use the conservative isolated headline of
-`78.226352 tok/s` on two B70s (p10 `69.963`, mean `78.598`); a separate
-full-quality run reached `81.341145 tok/s`. The high row passed exact cases,
-repeat128, baseline parity, and the 1K needle, while both strict rows used the
-fixed realistic suite with every prompt once and `cached_tokens=0`. Their
-`3.98%` difference is inside the established `4.4%` endpoint variance band,
-so `78.226` is the promoted number. Start from
-`results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`,
+Current engineering frontier: the pinned public oneCCL/libccl build fixes the
+packed-verifier TP2 command-graph all-reduce corruption, and a default-off
+compiled all-gather custom-op boundary now lets the intrinsic MTP draft graph
+capture exactly. Use the conservative isolated headline of
+`82.893718 tok/s` on two B70s (p10 `72.752`, mean `83.101`); the integrated
+full-quality lock reached `85.393815 tok/s` (p10 `79.731`, mean `85.344`). It
+passed exact cases, repeat128, baseline parity, and the 1K needle, while both
+strict rows used the fixed realistic suite with every prompt once and
+`cached_tokens=0`. Their `3.02%` difference is inside the established `4.4%`
+endpoint variance band. A swapped four-GPU crossover measured graph medians
+`81.580` and `79.637` against eager medians `75.664` and `77.308`, a
+same-direction +`5.39%` average gain. Start from
+`results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`,
 `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`, and the
 checksum-gated wrapper
-`experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh`.
-LocalMaxxing approved the conservative TP2 row as
-`cmrghhs27004cmj01dijk9r9f`.
+`experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`.
+The prior eager-draft TP2 row remains approved at LocalMaxxing as
+`cmrghhs27004cmj01dijk9r9f`; the draft-graph update is pending submission.
 
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU

@@ -1,0 +1,45 @@
+{
+  "backend": "xccl",
+  "capture_mode": "async-wait",
+  "passed": true,
+  "queue_test": "torch.xpu.XPUGraph",
+  "ranks": [
+    {
+      "capture_error": null,
+      "capture_mode": "async-wait",
+      "completed_iterations": 512,
+      "device": "xpu:0",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 2560,
+      "loaded_ccl_paths": [
+        "/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70/lib/libccl.so.1.0"
+      ],
+      "local_rank": 0,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "rank": 0,
+      "requested_iterations": 512,
+      "rows": 4
+    },
+    {
+      "capture_error": null,
+      "capture_mode": "async-wait",
+      "completed_iterations": 512,
+      "device": "xpu:1",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 2560,
+      "loaded_ccl_paths": [
+        "/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70/lib/libccl.so.1.0"
+      ],
+      "local_rank": 1,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "rank": 1,
+      "requested_iterations": 512,
+      "rows": 4
+    }
+  ],
+  "world_size": 2
+}
