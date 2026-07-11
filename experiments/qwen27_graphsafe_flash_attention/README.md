@@ -132,3 +132,4 @@ PORT=19512 QUALITY_REPEAT_RUNS=128 \
 
 Authoritative packet:
 `results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`.
+LocalMaxxing approved the record as `cmrgue7kl007pmj01yrkcyqmv`.

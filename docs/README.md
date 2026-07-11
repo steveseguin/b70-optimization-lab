@@ -157,8 +157,9 @@ graph failures in the installed runtime; an opaque compiled all-gather boundary
 then enables exact draft graph capture. A swapped four-GPU crossover measured a
 `+2.93%` mean gain for the full-graph candidate over PIECEWISE controls. See
 [the TP2 record packet](../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json).
-The prior `91.714405 tok/s` row is LocalMaxxing
-`cmrgojixq005rmj0141e9fjj2`; the new submission is pending.
+LocalMaxxing approved the `93.036242 tok/s` row as
+`cmrgue7kl007pmj01yrkcyqmv`; the prior `91.714405 tok/s` row is
+`cmrgojixq005rmj0141e9fjj2`.
 The previous one-B70 record was `68.236 tok/s` (LocalMaxxing
 `cmr9atqb800msqr01u760xh0t`), and the previous BF16-scale INT8-LM-head-only
 record was `65.276 tok/s`. The

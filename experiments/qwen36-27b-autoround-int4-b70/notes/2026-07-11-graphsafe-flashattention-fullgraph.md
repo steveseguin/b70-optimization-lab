@@ -87,9 +87,9 @@ parity, and the 1K needle.
 
 ## Next action
 
-1. Publish the compact record packet and submit the validated row to
-   LocalMaxxing.
-2. For long context, split or otherwise make the paged-decode launch
+LocalMaxxing approved the promoted row as `cmrgue7kl007pmj01yrkcyqmv`.
+
+1. For long context, split or otherwise make the paged-decode launch
    graph-safe; do not retain forced chunk decode beyond the short record lane.
-3. Combine the full graph with the next independent acceptance or GDN fusion
+2. Combine the full graph with the next independent acceptance or GDN fusion
    lane only after preserving this result and its exact staged checksums.

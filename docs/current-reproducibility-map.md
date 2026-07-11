@@ -101,7 +101,7 @@ the production LAN endpoint:
   against endpoint variance.
 - current result packet:
   `../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`
-- current TP2 LocalMaxxing: new submission pending; prior FP16 approval
+- current TP2 LocalMaxxing: `cmrgue7kl007pmj01yrkcyqmv`; prior FP16 approval
   `cmrgojixq005rmj0141e9fjj2`
 - graph-safe FA build/oracle/repro:
   `../experiments/qwen27_graphsafe_flash_attention/README.md`

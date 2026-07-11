@@ -29,6 +29,7 @@ See
 `../../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`
 and
 `../../experiments/qwen27_graphsafe_flash_attention/README.md`.
+LocalMaxxing approved the record as `cmrgue7kl007pmj01yrkcyqmv`.
 
 ## Model
 

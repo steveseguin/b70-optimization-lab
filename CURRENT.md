@@ -38,7 +38,8 @@ The current promoted graph-safe FlashAttention FP16-compute result is
 **93.036242 tok/s median** on the fixed 12-prompt cold realistic gate. Two-way
 crossover showed a `+2.93%` candidate/control mean improvement, and exact
 cases, repeat128, baseline parity, and the 1K needle passed. The linked packet
-owns the full identity; LocalMaxxing submission is pending.
+owns the full identity; LocalMaxxing approved it as
+`cmrgue7kl007pmj01yrkcyqmv`.
 
 ### Protected In-Flight Work
 

@@ -15,8 +15,9 @@ repeat128, baseline parity, and the 1K needle passed, and every strict prompt
 reported `cached_tokens=0`. The new path replaces the captured-GDN record's
 `33` target PIECEWISE segments with one four-row FULL graph. Two four-GPU
 crossover assignments measured gains of `+3.42%` and `+2.45%` over simultaneous
-PIECEWISE controls. The prior FP16 LocalMaxxing row is
-`cmrgojixq005rmj0141e9fjj2`; the new submission is pending.
+PIECEWISE controls. LocalMaxxing approved the new row as
+`cmrgue7kl007pmj01yrkcyqmv`; the prior FP16 row is
+`cmrgojixq005rmj0141e9fjj2`.
 
 The current result, bisection, and reproduction paths are:
 

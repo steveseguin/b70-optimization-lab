@@ -49,7 +49,7 @@ Current TP2 record:
   timing for generated tokens 1-100 after TTFT;
 - variance: two simultaneous four-GPU pair assignments measured full-graph
   gains of `+3.42%` and `+2.45%` over PIECEWISE controls;
-- LocalMaxxing: new row pending; prior FP16 row
+- LocalMaxxing: `cmrgue7kl007pmj01yrkcyqmv`; prior FP16 row
   `cmrgojixq005rmj0141e9fjj2`;
 - packet: `tp2-fp16-graphsafe-flash-fullgraph-20260711.json`;
 - build/oracle/repro:
