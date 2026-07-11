@@ -213,3 +213,33 @@ GPU_INDEX=0,1 PORT=19446 QUALITY_REPEAT_RUNS=128 \
 Authoritative packet:
 `results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json`.
 LocalMaxxing approved the conservative row as `cmrgojixq005rmj0141e9fjj2`.
+
+## Exact fixed-chain full-target graph follow-up: no-win
+
+An experimental wrapper represented ordinary MTP3 as the nominal linear tree
+`[(0,), (0, 0), (0, 0, 0)]`, selected exact `TREE_ATTN`/native tree GDN state,
+and used `FULL_DECODE_ONLY` for a single four-row target graph under the same
+FP16/public-oneCCL identity. The intended gain was to replace the record's 33
+target segments without adding verifier rows.
+
+The first attempt compiled both target and draft but failed on its first live
+request: AOT tree proposal specialized an optional Qwen MTP hidden-state input
+as a tensor, while the live first call passed `None` (`AttributeError:
+'NoneType' object has no attribute 'size'`). Keeping only the draft eager, as
+the corrected fixed-tree screen does, allowed the endpoint to complete.
+
+The completed result is a decisive no-win: median `31.544321 tok/s`, p10
+`31.062978`, mean `31.728938`, fresh/cached-zero mechanics passed, and quality
+was intentionally skipped. Mean acceptance length collapsed to about
+`1.00-1.04`; average draft acceptance was roughly `0-1.5%`. Therefore this
+fixed-tree proposer topology is not semantically/economically equivalent to
+ordinary sequential MTP3 even though its tree is linear. Do not use it as a
+full-target graph shortcut without first repairing and proving proposer token
+alignment against the ordinary MTP3 draft IDs.
+
+Artifacts:
+
+- wrapper:
+  `experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fp16-fixedchain-fullgraph-candidate.sh`;
+- compact result:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-fp16-fixedchain-fullgraph-eagerdraft-summary-20260711.json`.
