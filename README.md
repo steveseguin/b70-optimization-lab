@@ -12,12 +12,12 @@ at your own risk.
 
 ## Who This Is For
 
-- Local AI users who want reproducible Intel Arc/B-series commands and
-  benchmark recipes, not just screenshots of results.
+- Local AI users who want reproducible Intel Arc/B-series commands, patches and
+  benchmark recipes; not just screenshots of results.
 - Anyone deciding whether Intel Arc/B-series hardware is worth it for local
   inference, and wanting real numbers to compare against.
 - Optimization agents and contributors who need a map of current work,
-  archived lessons, and validity rules before touching code.
+  archived lessons, and validity rules.
 - Upstream vLLM, llama.cpp, oneAPI, SYCL, and Intel/XPU developers looking for
   concrete repros and failure signatures.
 
