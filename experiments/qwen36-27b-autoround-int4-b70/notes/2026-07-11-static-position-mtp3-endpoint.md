@@ -90,3 +90,13 @@ throughput results. Do not run another endpoint unless a candidate exceeds the
 predeclared `+0.205609` drafts/start gate with broad per-family support; a
 candidate that passes still needs strict cold throughput, full quality, and a
 pair-swapped variance gate before promotion.
+
+The first matrix launch used an accidental `65,536`-start default and was
+stopped around 1,600 of 16,384 optimizer steps, before any checkpoint export.
+The launcher default was corrected to the prior transferred experiment's
+`16,384`-start budget (4,096 optimizer steps); the interrupted directory is
+diagnostic-only and must not be treated as a completed candidate:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-position-fc/mtp3-4gpu-20260711T222200Z
+```
