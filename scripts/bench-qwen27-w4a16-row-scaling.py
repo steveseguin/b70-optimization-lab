@@ -2,15 +2,17 @@
 """Diagnose Qwen27 target-body W4A16 row scaling on XPU.
 
 This synthetic microbenchmark measures the current INC/AutoRound target-body
-projection shapes with ``torch.ops._xpu_C.int4_gemm_w4a16``. It projects the
-per-call timings over all 64 target layers, but it is not an endpoint
-benchmark and is not eligible for LocalMaxxing submission.
+projection shapes with ``torch.ops._xpu_C.int4_gemm_w4a16``. The default
+profile matches the promoted TP2/FP16 endpoint recipe. It projects per-rank
+per-call timings over all 64 target layers, but it is not an endpoint benchmark
+and is not eligible for LocalMaxxing submission.
 
 Weights use the exact layout produced by ``INCXPULinearMethod`` after loading:
 contiguous int32 backing storage shaped [N, K/8], exposed to the operator as a
-transposed [K/8, N] view with stride (1, K/8). Scales are contiguous BF16
-[K/128, N], the symmetric zero point is scalar int8 value 8, and bias/g_idx
-are absent.
+transposed [K/8, N] view with stride (1, K/8). Scales are contiguous floating
+point [K/128, N], the symmetric zero point is scalar int8 value 8, and
+bias/g_idx are absent. The scale and activation dtype follows the selected
+profile.
 """
 
 from __future__ import annotations
@@ -53,6 +55,7 @@ ENV_KEYS = (
     "DNNL_VERBOSE",
     "ONEDNN_VERBOSE",
     "VLLM_XPU_INT4_GEMM_SCRATCHPAD_RING_SIZE",
+    "VLLM_XPU_INT4_W4A16_ACCUMULATION_MODE",
     "COMPILATION_CONFIG",
     "GPU_MEMORY_UTILIZATION",
     "XPU_GRAPH",
@@ -73,7 +76,7 @@ class Projection:
     layer_family: str
 
 
-PROJECTIONS = (
+TP1_PROJECTIONS = (
     Projection("gdn_qkvz", 5120, 16384, 48, "gdn"),
     Projection("gdn_out", 6144, 5120, 48, "gdn"),
     Projection("mlp_gateup", 5120, 34816, 64, "all_layers"),
@@ -81,6 +84,20 @@ PROJECTIONS = (
     Projection("full_attention_qkvgate", 5120, 14336, 16, "full_attention"),
     Projection("full_attention_out", 6144, 5120, 16, "full_attention"),
 )
+
+TP2_PROJECTIONS = (
+    Projection("gdn_qkvz", 5120, 8192, 48, "gdn"),
+    Projection("gdn_out", 3072, 5120, 48, "gdn"),
+    Projection("mlp_gateup", 5120, 17408, 64, "all_layers"),
+    Projection("mlp_down", 8704, 5120, 64, "all_layers"),
+    Projection("full_attention_qkvgate", 5120, 7168, 16, "full_attention"),
+    Projection("full_attention_out", 3072, 5120, 16, "full_attention"),
+)
+
+PROFILES = {
+    "tp2-fp16": (TP2_PROJECTIONS, "float16", 2),
+    "tp1-bf16": (TP1_PROJECTIONS, "bfloat16", 1),
+}
 
 
 def parse_rows(value: str) -> list[int]:
@@ -237,7 +254,8 @@ def make_document_base(
     requested_rows: list[int],
     rows: list[int],
 ) -> dict[str, Any]:
-    plans = [projection_plan(projection) for projection in PROJECTIONS]
+    projections, dtype_name, tensor_parallel_size = PROFILES[args.profile]
+    plans = [projection_plan(projection) for projection in projections]
     return {
         "schema_version": 1,
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -249,15 +267,19 @@ def make_document_base(
         },
         "purpose": (
             "Measure row-scaling of current Qwen3.6-27B target-body INC W4A16 "
-            "projections; projected totals are a kernel cost model only."
+            f"{args.profile} projections; projected totals are a kernel cost "
+            "model only."
         ),
         "benchmark_scope": {
             "model_family": "Qwen3.6-27B INT4 AutoRound",
+            "profile": args.profile,
+            "tensor_parallel_size": tensor_parallel_size,
+            "activation_and_scale_dtype": dtype_name,
             "target_body_layers": 64,
             "gdn_layers": 48,
             "full_attention_layers": 16,
             "projection_calls_per_target_step": sum(
-                projection.calls_per_target_step for projection in PROJECTIONS
+                projection.calls_per_target_step for projection in projections
             ),
             "requested_rows": requested_rows,
             "benchmarked_rows": rows,
@@ -265,7 +287,7 @@ def make_document_base(
             "projections": plans,
         },
         "inc_layout": {
-            "quantization": "symmetric_int4_weight_bfloat16_activation",
+            "quantization": f"symmetric_int4_weight_{dtype_name}_activation",
             "group_size": GROUP_SIZE,
             "pack_factor": PACK_FACTOR,
             "checkpoint_weight_layout": "int32 [K/8, N]",
@@ -273,7 +295,7 @@ def make_document_base(
             "operator_weight_layout": (
                 "transposed int32 [K/8, N] view with stride (1, K/8)"
             ),
-            "scales_layout": "contiguous bfloat16 [K/128, N]",
+            "scales_layout": f"contiguous {dtype_name} [K/128, N]",
             "symmetric_zero_point": {
                 "shape": [1],
                 "dtype": "int8",
@@ -315,8 +337,10 @@ def make_document_base(
             "iterations": args.iterations,
             "calls_per_sample": args.calls_per_sample,
             "seed": args.seed,
+            "profile": args.profile,
             "dry_run": bool(args.dry_run),
             "output_json": args.output_json,
+            "output_tensors": args.output_tensors,
         },
     }
 
@@ -370,6 +394,7 @@ def validate_inc_tensors(
     qzeros: Any,
     projection: Projection,
     torch_mod: Any,
+    floating_dtype: Any,
 ) -> None:
     k = projection.input_features
     n = projection.output_features
@@ -386,7 +411,7 @@ def validate_inc_tensors(
         (qweight.dtype == torch_mod.int32, "operator weight dtype"),
         (tuple(scales.shape) == expected_scale_shape, "scale shape"),
         (scales.is_contiguous(), "scale contiguity"),
-        (scales.dtype == torch_mod.bfloat16, "scale dtype"),
+        (scales.dtype == floating_dtype, "scale dtype"),
         (tuple(qzeros.shape) == (1,), "zero-point shape"),
         (qzeros.dtype == torch_mod.int8, "zero-point dtype"),
         (int(qzeros.item()) == 8, "zero-point value"),
@@ -408,6 +433,8 @@ def benchmark_projection(
     iterations: int,
     calls_per_sample: int,
     seed: int,
+    floating_dtype: Any,
+    captured_outputs: dict[str, Any] | None,
 ) -> dict[str, Any]:
     k = projection.input_features
     n = projection.output_features
@@ -428,7 +455,7 @@ def benchmark_projection(
     scales = (
         torch_mod.rand(
             (k // GROUP_SIZE, n),
-            dtype=torch_mod.bfloat16,
+            dtype=floating_dtype,
             device=device,
             generator=generator,
         )
@@ -438,14 +465,20 @@ def benchmark_projection(
     qzeros = torch_mod.tensor([8], dtype=torch_mod.int8, device=device)
     torch_mod.xpu.synchronize()
     validate_inc_tensors(
-        qweight_backing, qweight, scales, qzeros, projection, torch_mod
+        qweight_backing,
+        qweight,
+        scales,
+        qzeros,
+        projection,
+        torch_mod,
+        floating_dtype,
     )
 
     row_results: list[dict[str, Any]] = []
     for row_count in rows:
         hidden = torch_mod.randn(
             (row_count, k),
-            dtype=torch_mod.bfloat16,
+            dtype=floating_dtype,
             device=device,
             generator=generator,
         ).contiguous()
@@ -471,6 +504,10 @@ def benchmark_projection(
                 f"{tuple(last_output.shape)} != {expected_output_shape}"
             )
         output_all_finite = bool(torch_mod.isfinite(last_output).all().item())
+        if captured_outputs is not None:
+            captured_outputs[f"{projection.name}/rows{row_count}"] = (
+                last_output.detach().cpu()
+            )
         row_results.append(
             {
                 "rows": row_count,
@@ -589,11 +626,16 @@ def run_benchmark(args: argparse.Namespace, rows: list[int]) -> dict[str, Any]:
     torch.xpu.set_device(device_index)
     device = f"xpu:{device_index}"
     operator = torch.ops._xpu_C.int4_gemm_w4a16
+    projections, dtype_name, _ = PROFILES[args.profile]
+    floating_dtype = getattr(torch, dtype_name)
+    captured_outputs: dict[str, Any] | None = (
+        {} if args.output_tensors is not None else None
+    )
 
     projection_results: list[dict[str, Any]] = []
-    for index, projection in enumerate(PROJECTIONS):
+    for index, projection in enumerate(projections):
         print(
-            f"[{index + 1}/{len(PROJECTIONS)}] {projection.name}: "
+            f"[{index + 1}/{len(projections)}] {projection.name}: "
             f"rows={','.join(str(row) for row in rows)}",
             file=sys.stderr,
             flush=True,
@@ -609,8 +651,17 @@ def run_benchmark(args: argparse.Namespace, rows: list[int]) -> dict[str, Any]:
                 args.iterations,
                 args.calls_per_sample,
                 args.seed + index * 1009,
+                floating_dtype,
+                captured_outputs,
             )
         )
+
+    output_tensor_identity = None
+    if captured_outputs is not None:
+        output_tensor_path = Path(args.output_tensors).expanduser()
+        output_tensor_path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(captured_outputs, output_tensor_path)
+        output_tensor_identity = file_identity(output_tensor_path)
 
     return {
         "runtime_identity": collect_xpu_runtime_identity(
@@ -620,6 +671,7 @@ def run_benchmark(args: argparse.Namespace, rows: list[int]) -> dict[str, Any]:
         "projected_target_step_costs": projected_target_step_costs(
             projection_results, rows
         ),
+        "captured_output_tensors": output_tensor_identity,
     }
 
 
@@ -635,6 +687,12 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--device", default="xpu:0")
+    parser.add_argument(
+        "--profile",
+        choices=tuple(PROFILES),
+        default="tp2-fp16",
+        help="endpoint shape/dtype profile (default: tp2-fp16)",
+    )
     parser.add_argument("--warmup", type=int, default=20)
     parser.add_argument("--iterations", type=int, default=100)
     parser.add_argument(
@@ -652,6 +710,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-json",
         help="optional path receiving the same JSON document printed to stdout",
+    )
+    parser.add_argument(
+        "--output-tensors",
+        help=(
+            "optional torch.save path for final output tensors from every case; "
+            "use identical seeds to compare accumulation modes"
+        ),
     )
     parser.add_argument(
         "--dry-run",

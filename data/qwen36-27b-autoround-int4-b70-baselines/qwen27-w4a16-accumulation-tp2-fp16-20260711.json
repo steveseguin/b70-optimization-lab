@@ -1,0 +1,44 @@
+{
+  "classification": "diagnostic_microbenchmark_not_endpoint_not_localmaxxing",
+  "date": "2026-07-11",
+  "model": "Qwen3.6-27B-int4-AutoRound",
+  "record_recipe_match": {
+    "tensor_parallel_size": 2,
+    "activation_and_scale_dtype": "float16",
+    "verifier_rows": 4
+  },
+  "raw_artifact_directory": "/mnt/usb-models/llm-optimization-artifacts/qwen27-w4a16/accumulation-tp2-fp16-20260711T225146Z",
+  "extension_sha256": "1d207c4c67af12967d376edc8f5fa17e02d4c190cdd91435cee75ca09d53099c",
+  "protocol": {
+    "gpus": 4,
+    "rotations": 4,
+    "fresh_process_per_mode_and_gpu": true,
+    "warmup_calls_per_shape": 20,
+    "samples_per_shape": 100,
+    "calls_per_sample": 16,
+    "seed": 20260710
+  },
+  "paired_delta_percent_vs_strict_by_gpu": {
+    "f16": [1.5296897196, -4.2973145140, -1.2951396669, 2.5912349319],
+    "relaxed": [4.5593831192, -0.1454648407, -6.3431268205, -3.1966746841],
+    "any": [3.6349451299, 1.2425528591, -2.7940380163, -5.0441510743]
+  },
+  "median_paired_delta_percent_vs_strict": {
+    "f16": 0.1172750263,
+    "relaxed": -1.6710697624,
+    "any": -0.7757425786
+  },
+  "numeric_comparison_vs_strict": {
+    "elements_per_mode": 770048,
+    "f16_differing_elements": 0,
+    "relaxed_differing_elements": 0,
+    "any_differing_elements": 0,
+    "max_absolute_difference_all_modes": 0.0
+  },
+  "dispatch": {
+    "strict": "gpu,gemm,jit:gemm with f16 source, u4 weights, f16 destination",
+    "relaxed": "same jit:gemm implementation with attr-acc-mode:relaxed"
+  },
+  "decision": "no_win",
+  "reason": "All modes were bit-identical and timing deltas changed sign across cards; observed differences are temporal/card noise, not a credible kernel gain. Source audit also shows the optimized weight-decompression path retains FP32 accumulation for f16/any, while relaxed had no observable output effect for the record shapes."
+}

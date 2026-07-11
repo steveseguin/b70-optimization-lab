@@ -34,6 +34,25 @@ The current result, bisection, and reproduction paths are:
 - `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`.
 
+Two July 11 follow-ups are now closed. Three statically bound compiled
+position-FC wrappers loaded and captured correctly but reached only `89.286
+tok/s` on the strict fixed suite, `-4.03%` versus the promoted record. A fresh
+four-GPU MTP3-specific position-FC training matrix improved offline accepted
+drafts/start by at most `+0.1343`, below its `+0.2056` endpoint gate. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-static-position-mtp3-endpoint.md`
+and
+`../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-position-fc-mtp3-4gpu-fixed-suite-20260711.json`.
+
+The oneDNN W4A16 accumulation-mode lane is also closed. Its first diagnostic
+model incorrectly used TP1/BF16 global shapes; the corrected harness now
+defaults to record-matched per-rank TP2/FP16 shapes. Four-card rotation found
+bit-identical outputs and unstable sign-changing timing for `f16`, `relaxed`,
+and `any`, so no endpoint was justified. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-w4a16-accumulation-modes-no-win.md`.
+The next source lane is ReplaySSM Q/K normalization and token-matrix reuse
+across value buckets while retaining `v_dim_per_sg=4`; require a material
+stage-plus-recurrent microbenchmark win before endpoint integration.
+
 The installed oneCCL `Gold-2021.17.2` runtime failed the deterministic BF16
 `[4,5120]` XPUGraph all-reduce oracle on `510/512` and `511/512` replays. The
 pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` passed direct
