@@ -15,7 +15,7 @@ The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
 has a strict fresh-response TP2 record after replacing the broken installed
 oneCCL graph collective with pinned public oneCCL/libccl and capturing the
 intrinsic-MTP draft through an opaque compiled all-gather boundary. Current
-optimization work must beat the conservative `82.89371762720036 tok/s` TP2
+optimization work must beat the conservative `87.02911429766677 tok/s` TP2
 row toward the `100+ tok/s` target, or improve service/max-context behavior
 without using warmed/cache/history effects. TP1 remains a separate active
 record class; it has not been declared exhausted.
@@ -49,6 +49,20 @@ Current evidence:
   `data/qwen36-27b-autoround-openai-smoke-20260703T013020Z.json`.
 
 Current overall strict best:
+
+- TP2 on two B70s with the prior public-oneCCL/draft-graph recipe plus
+  `VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=1`, reducing target graph pieces from 129
+  to 33;
+- conservative full-quality median `87.029114 tok/s`, p10 `79.941979`, mean
+  `87.913957`; independent isolated high `87.815738`;
+- exact cases, repeat128, baseline parity, 1K needle, unique cold prompts, and
+  `cached_tokens=0` all passed;
+- packet:
+  `../../results/qwen36-27b-autoround-int4-b70/tp2-capture-gdn-core-20260711.json`;
+- reproduction:
+  `scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh`.
+
+Prior TP2 draft-graph milestone:
 
 - TP2 on two B70s with target and draft PIECEWISE graphs, MTP3, ReplaySSM,
   runtime INT8 target LM-head BF16 scales, runtime INT4 draft LM-head BF16

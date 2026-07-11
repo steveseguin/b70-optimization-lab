@@ -1,0 +1,29 @@
+--- a/vllm/config/compilation.py
++++ b/vllm/config/compilation.py
+@@ -4,0 +5 @@
++import os
+@@ -1151,0 +1153,15 @@
++            if (
++                os.environ.get("VLLM_XPU_DDTREE_CAPTURE_GDN_CORE", "0") == "1"
++                and self.splitting_ops is not None
++            ):
++                # The XPU GDN custom op dispatches from live attention metadata.
++                # Keeping it in each compiled segment lets graph capture record
++                # the branch-aware kernels instead of paying one eager boundary
++                # per GDN layer. This remains opt-in because the op also mutates
++                # layer-owned recurrent state outside its schema.
++                self.splitting_ops = [
++                    op
++                    for op in self.splitting_ops
++                    if op != "vllm::gdn_attention_core_xpu"
++                ]
++
+@@ -1209,0 +1226,5 @@
++        attention_ops = self._attention_ops
++        if os.environ.get("VLLM_XPU_DDTREE_CAPTURE_GDN_CORE", "0") == "1":
++            attention_ops = [
++                op for op in attention_ops if op != "vllm::gdn_attention_core_xpu"
++            ]
+@@ -1211 +1232 @@
+-            op in self.splitting_ops for op in self._attention_ops
++            op in self.splitting_ops for op in attention_ops

@@ -1,0 +1,62 @@
+{
+  "classification": "diagnostic_tp2_capturegdn_swapped_four_gpu_crossover",
+  "candidate_gain_percent": 1.552672911364672,
+  "groups": {
+    "candidate": {
+      "count": 2,
+      "mean_of_medians": 84.91758211720293,
+      "min": 84.3386048863268,
+      "max": 85.49655934807906
+    },
+    "control": {
+      "count": 2,
+      "mean_of_medians": 83.61924869404385,
+      "min": 83.12480875514422,
+      "max": 84.11368863294348
+    }
+  },
+  "rows": [
+    {
+      "window": "window1",
+      "treatment": "candidate",
+      "gpu_pair": "0,1",
+      "median_tok_s": 85.49655934807906,
+      "p10_tok_s": 76.86730925000742,
+      "mean_tok_s": 85.01321099230442,
+      "strict_gate": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "window": "window1",
+      "treatment": "control",
+      "gpu_pair": "2,3",
+      "median_tok_s": 84.11368863294348,
+      "p10_tok_s": 74.26439656672673,
+      "mean_tok_s": 83.05322648437546,
+      "strict_gate": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "window": "window2",
+      "treatment": "candidate",
+      "gpu_pair": "2,3",
+      "median_tok_s": 84.3386048863268,
+      "p10_tok_s": 76.90917313422935,
+      "mean_tok_s": 83.32187380947579,
+      "strict_gate": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "window": "window2",
+      "treatment": "control",
+      "gpu_pair": "0,1",
+      "median_tok_s": 83.12480875514422,
+      "p10_tok_s": 75.99337503844347,
+      "mean_tok_s": 83.1393212720243,
+      "strict_gate": true,
+      "cached_tokens_all_zero": true
+    }
+  ],
+  "raw_summary": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/tp2-capturegdn-crossover-20260711T1718Z/summary.json",
+  "promotion_policy": "Diagnostic variance evidence only; isolated strict fresh-response and complete quality gates are recorded separately."
+}

@@ -22,25 +22,21 @@ after TP1 smoke works. Start from:
 - `experiments/qwen36-27b-autoround-int4-b70/README.md`;
 - `repro/qwen36-27b-autoround-int4-b70/README.md`.
 
-Current engineering frontier: the pinned public oneCCL/libccl build fixes the
-packed-verifier TP2 command-graph all-reduce corruption, and a default-off
-compiled all-gather custom-op boundary now lets the intrinsic MTP draft graph
-capture exactly. Use the conservative isolated headline of
-`82.893718 tok/s` on two B70s (p10 `72.752`, mean `83.101`); the integrated
-full-quality lock reached `85.393815 tok/s` (p10 `79.731`, mean `85.344`). It
-passed exact cases, repeat128, baseline parity, and the 1K needle, while both
-strict rows used the fixed realistic suite with every prompt once and
-`cached_tokens=0`. Their `3.02%` difference is inside the established `4.4%`
-endpoint variance band. A swapped four-GPU crossover measured graph medians
-`81.580` and `79.637` against eager medians `75.664` and `77.308`, a
-same-direction +`5.39%` average gain. Start from
-`results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`,
-`experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`, and the
-checksum-gated wrapper
-`experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`.
-LocalMaxxing approved the draft-graph record as
-`cmrgjjw8n004qmj01cp91qxl0`; the prior eager-draft row is
-`cmrghhs27004cmj01dijk9r9f`.
+Current engineering frontier: pinned public oneCCL fixes TP2 target graph
+all-reduce, the opaque compiled all-gather enables the MTP draft graph, and
+capturing each GDN core inside its surrounding target segment reduces the
+target graph from `129` pieces to `33`. The new conservative full-quality row
+is **`87.029114 tok/s`** on two B70s (p10 `79.942`, mean `87.914`), with an
+independent isolated high of `87.815738`. Exact cases, repeat128, baseline
+parity, and the 1K needle passed; all 12 strict prompts were unique, run once,
+and reported `cached_tokens=0`. A swapped four-GPU crossover favored captured
+GDN in both assignments (`85.497 vs 84.114`, `84.339 vs 83.125`). Start from
+`results/qwen36-27b-autoround-int4-b70/tp2-capture-gdn-core-20260711.json`, the
+note at
+`experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md`,
+and the checksum-gated wrapper
+`experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh`.
+The prior `82.894` record is LocalMaxxing `cmrgjjw8n004qmj01cp91qxl0`.
 
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU

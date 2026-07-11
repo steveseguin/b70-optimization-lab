@@ -35,27 +35,27 @@ Current TP2 record:
 - model/runtime recipe: webhie AutoRound W4A16, runtime INT8 target LM-head
   with BF16 scales, runtime INT4 group128 draft LM-head with BF16 scales,
   ReplaySSM exact GDN state, target-verified MTP3, PIECEWISE target graph, and
-  PIECEWISE draft graph;
+  PIECEWISE draft graph; `VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=1` keeps all 48
+  GDN cores inside surrounding target segments and reduces target graph pieces
+  from 129 to 33;
 - collective runtime: public oneCCL parent
   `b52f40c07f0b140e6aba87548c80720a350a9827`, libccl
   `4ceafd15c03ce46f11eeaf91781a92afebd3cecf`, injected only into the server;
-- conservative strict headline: median **`82.893718 tok/s`**, p10 `72.751868`,
-  mean `83.100685`, full after-TTFT median `82.368038`, wall median
-  `73.290051`, TTFT median `748.9077 ms`;
-- full-quality high support: **`85.393815 tok/s`**, p10 `79.731481`, exact
-  cases + repeat128 +
-  baseline parity + 1K needle all passed;
+- conservative strict headline: median **`87.029114 tok/s`**, p10 `79.941979`,
+  mean `87.913957`, full after-TTFT median `85.262032`, wall median
+  `75.779717`, TTFT median `732.142 ms`;
+- isolated support high: **`87.815738 tok/s`**;
+- exact cases + repeat128 + baseline parity + 1K needle all passed;
 - strict validity: 12 unique fixed realistic prompts, each once cold,
   `cached_tokens=0` throughout, no prompt/KV/history/response reuse, token-id
   timing for generated tokens 1-100 after TTFT;
-- variance: high vs isolated differs by `3.02%`, inside the established `4.4%`
-  endpoint band, so `82.894` is the promoted number; a swapped four-GPU
-  crossover measured +`5.39%` average over eager draft;
-- LocalMaxxing: draft-graph row approved as `cmrgjjw8n004qmj01cp91qxl0`;
-  prior eager-draft TP2 row `cmrghhs27004cmj01dijk9r9f`;
-- packet: `tp2-public-oneccl-draftgraph-20260711.json`;
+- variance: a swapped four-GPU crossover favored captured GDN in both pair
+  assignments and averaged `+1.55%` under shared load;
+- LocalMaxxing: captured-GDN submission pending; prior draft-graph row
+  `cmrgjjw8n004qmj01cp91qxl0`;
+- packet: `tp2-capture-gdn-core-20260711.json`;
 - build/oracle/repro:
-  `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
+  `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh`.
 
 The mechanisms matter: installed oneCCL `Gold-2021.17.2` failed the exact
 BF16 `[4,5120]` XPUGraph all-reduce oracle on nearly every replay, while the

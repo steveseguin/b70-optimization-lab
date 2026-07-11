@@ -1,0 +1,85 @@
+{
+  "status": "quality_gated_tp2_record",
+  "date_utc": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "quantization": "AutoRound INT4 W4A16 target + runtime INT8 target LM-head BF16 scales + runtime INT4 draft LM-head BF16 scales",
+  "headline": {
+    "gpu_count": 2,
+    "median_tok_s_1_100_after_ttft": 87.02911429766677,
+    "p10_tok_s_1_100_after_ttft": 79.94197906520034,
+    "mean_tok_s_1_100_after_ttft": 87.91395663676606,
+    "median_full_after_ttft_tok_s": 85.26203234452075,
+    "median_wall_tok_s_full": 75.77971662786474,
+    "median_ttft_ms": 732.141523505561,
+    "selection_reason": "Lower of two isolated candidate rows and the row carrying the complete exact/repeat128/baseline/1K quality gate."
+  },
+  "isolated_support_high": {
+    "median_tok_s_1_100_after_ttft": 87.81573759082826,
+    "p10_tok_s_1_100_after_ttft": 80.75218729846823,
+    "mean_tok_s_1_100_after_ttft": 87.85719307078496,
+    "quality_skipped": true
+  },
+  "prior_record": {
+    "median_tok_s_1_100_after_ttft": 82.89371762720036,
+    "improvement_percent": 4.988796,
+    "localmaxxing_id": "cmrgjjw8n004qmj01cp91qxl0",
+    "packet": "results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json"
+  },
+  "mechanism": {
+    "flag": "VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=1",
+    "target_piece_count_before": 129,
+    "target_piece_count_after": 33,
+    "description": "Keep all 48 gdn_attention_core_xpu calls inside surrounding compiled PIECEWISE graph segments instead of splitting at every GDN layer."
+  },
+  "serving_config": {
+    "tp": 2,
+    "concurrency": 1,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": 0.95,
+    "spec_method": "qwen3_next_mtp",
+    "num_speculative_tokens": 3,
+    "compilation_config": {"cudagraph_mode": "PIECEWISE", "max_cudagraph_capture_size": 8},
+    "required_env": {
+      "VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS": "0",
+      "VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP": "1",
+      "VLLM_XPU_DDTREE_CAPTURE_GDN_CORE": "1"
+    }
+  },
+  "strict_fresh_result": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-draftgraph-capturegdn-quality-20260711T1712Z-realistic128-chat-tokenids-qwensuite-20260711T170815Z.json",
+    "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-draftgraph-capturegdn-quality-20260711T1712Z-candidate-summary-20260711T170815Z.json",
+    "prompt_count": 12,
+    "each_prompt_run_once": true,
+    "cached_tokens_all_zero": true,
+    "history_acceleration": false,
+    "prefix_or_kv_cache_reuse": false,
+    "response_reuse": false,
+    "target_verified_speculation": true
+  },
+  "quality": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-tp2-draftgraph-capturegdn-quality-20260711T1712Z-repeat128-ctx1024-20260711T170815Z.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "repeat_runs": 128,
+    "long_context_pass": true
+  },
+  "variance": {
+    "tracked_crossover_artifact": "experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-tp2-capturegdn-crossover-20260711.json",
+    "crossover_artifact": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/tp2-capturegdn-crossover-20260711T1718Z/summary.json",
+    "candidate_medians": [85.49655934807906, 84.3386048863268],
+    "control_medians": [84.11368863294348, 83.12480875514422],
+    "candidate_average": 84.91758211720293,
+    "control_average": 83.61924869404385,
+    "average_gain_percent": 1.552672911364672
+  },
+  "reproduction": {
+    "wrapper": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh",
+    "crossover_harness": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-capturegdn-crossover-4gpu.sh",
+    "patch": "patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-capture-gdn-core-piecewise-20260711.patch",
+    "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md"
+  },
+  "localmaxxing": {"status": "pending"}
+}

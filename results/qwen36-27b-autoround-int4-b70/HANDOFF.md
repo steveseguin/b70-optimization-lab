@@ -8,21 +8,22 @@ B70.
 ## July 11 Active Frontier
 
 The promoted strict-valid record is the two-GPU webhie/AutoRound lane with
-pinned public oneCCL/libccl and captured intrinsic-MTP draft: conservative
-isolated median `82.89371762720036 tok/s`, p10 `72.7518683863622`, mean
-`83.10068493770281`. The integrated full-quality lock reached
-`85.39381462095321 tok/s`, p10 `79.73148138975637`, passed exact cases,
-repeat128, baseline parity, and the 1K needle, and used `cached_tokens=0` for
-every strict prompt. The `3.02%` isolated spread is inside the established
-`4.4%` endpoint variance band, so promote `82.894` as the reproducible
-headline. A swapped four-GPU crossover measured graph medians `81.580` and
-`79.637` against eager medians `75.664` and `77.308`, a same-direction
-+`5.39%` average gain. LocalMaxxing approved the draft-graph row as
-`cmrgjjw8n004qmj01cp91qxl0`; the prior eager-draft row is
-`cmrghhs27004cmj01dijk9r9f`.
+pinned public oneCCL, captured intrinsic-MTP draft, and captured GDN target
+segments: conservative full-quality median **`87.02911429766677 tok/s`**, p10
+`79.94197906520034`, mean `87.91395663676606`; independent isolated high
+`87.81573759082826`. Exact cases, repeat128, baseline parity, and the 1K needle
+passed, and every strict prompt reported `cached_tokens=0`. Capturing the 48
+GDN cores inside surrounding compiled segments reduced target graph pieces
+from `129` to `33`. A swapped four-GPU crossover favored the candidate in both
+assignments and averaged `+1.55%` under shared load. The prior `82.894` row is
+LocalMaxxing `cmrgjjw8n004qmj01cp91qxl0`; submit the new row only from its
+quality-cleared packet.
 
-The result, bisection, and reproduction paths are:
+The current result, bisection, and reproduction paths are:
 
+- `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md`;
+- `tp2-capture-gdn-core-20260711.json`;
+- `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-public-oneccl-algorithms-and-draftgraph.md`;
 - `tp2-public-oneccl-draftgraph-20260711.json`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`;
