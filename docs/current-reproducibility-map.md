@@ -96,8 +96,8 @@ the production LAN endpoint:
   four-GPU crossover measured +`5.39%` average over eager draft.
 - current result packet:
   `../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
-- current TP2 LocalMaxxing: new submission pending; prior eager-draft approval
-  `cmrghhs27004cmj01dijk9r9f`
+- current TP2 LocalMaxxing: draft-graph approval `cmrgjjw8n004qmj01cp91qxl0`;
+  prior eager-draft approval `cmrghhs27004cmj01dijk9r9f`
 - oneCCL build/oracle/repro:
   `../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`
 - prior TP1 LocalMaxxing: ReplaySSM draft-INT4 row approved as

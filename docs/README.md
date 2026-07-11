@@ -148,8 +148,8 @@ graph failures in the installed runtime; an opaque compiled all-gather boundary
 then enables exact draft graph capture. A swapped four-GPU crossover measured a
 same-direction +`5.39%` average gain over eager draft. See
 [the TP2 record packet](../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json).
-The new LocalMaxxing submission is pending; the prior eager-draft two-B70 row
-is `cmrghhs27004cmj01dijk9r9f`.
+LocalMaxxing approved the draft-graph row as `cmrgjjw8n004qmj01cp91qxl0`; the
+prior eager-draft two-B70 row is `cmrghhs27004cmj01dijk9r9f`.
 The previous one-B70 record was `68.236 tok/s` (LocalMaxxing
 `cmr9atqb800msqr01u760xh0t`), and the previous BF16-scale INT8-LM-head-only
 record was `65.276 tok/s`. The

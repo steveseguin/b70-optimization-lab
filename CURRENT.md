@@ -38,8 +38,9 @@ same-direction +`5.39%` average gain. Start from
 `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`, and the
 checksum-gated wrapper
 `experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`.
-The prior eager-draft TP2 row remains approved at LocalMaxxing as
-`cmrghhs27004cmj01dijk9r9f`; the draft-graph update is pending submission.
+LocalMaxxing approved the draft-graph record as
+`cmrgjjw8n004qmj01cp91qxl0`; the prior eager-draft row is
+`cmrghhs27004cmj01dijk9r9f`.
 
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU

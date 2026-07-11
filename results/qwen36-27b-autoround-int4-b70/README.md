@@ -51,8 +51,8 @@ Current TP2 record:
 - variance: high vs isolated differs by `3.02%`, inside the established `4.4%`
   endpoint band, so `82.894` is the promoted number; a swapped four-GPU
   crossover measured +`5.39%` average over eager draft;
-- LocalMaxxing: new submission pending; prior eager-draft TP2 row approved as
-  `cmrghhs27004cmj01dijk9r9f`;
+- LocalMaxxing: draft-graph row approved as `cmrgjjw8n004qmj01cp91qxl0`;
+  prior eager-draft TP2 row `cmrghhs27004cmj01dijk9r9f`;
 - packet: `tp2-public-oneccl-draftgraph-20260711.json`;
 - build/oracle/repro:
   `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.

@@ -4,7 +4,8 @@ Date: 2026-07-11
 
 Status: **promoted**. Conservative strict fresh-response record
 `82.89371762720036 tok/s`; integrated full-quality high
-`85.39381462095321 tok/s`.
+`85.39381462095321 tok/s`. LocalMaxxing approved the conservative row as
+`cmrgjjw8n004qmj01cp91qxl0`.
 
 ## Starting point
 

@@ -17,8 +17,9 @@ every strict prompt. The `3.02%` isolated spread is inside the established
 `4.4%` endpoint variance band, so promote `82.894` as the reproducible
 headline. A swapped four-GPU crossover measured graph medians `81.580` and
 `79.637` against eager medians `75.664` and `77.308`, a same-direction
-+`5.39%` average gain. The new LocalMaxxing submission is pending; the prior
-eager-draft row is `cmrghhs27004cmj01dijk9r9f`.
++`5.39%` average gain. LocalMaxxing approved the draft-graph row as
+`cmrgjjw8n004qmj01cp91qxl0`; the prior eager-draft row is
+`cmrghhs27004cmj01dijk9r9f`.
 
 The result, bisection, and reproduction paths are:
 

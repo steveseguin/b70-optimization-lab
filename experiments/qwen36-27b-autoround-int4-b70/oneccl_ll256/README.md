@@ -117,4 +117,5 @@ four-GPU crossover measured a same-direction +5.39% average gain over the eager
 draft. See
 `../../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
 for exact runtime hashes, crossover evidence, and artifacts. The older eager
-draft wrapper remains available as a control.
+draft wrapper remains available as a control. LocalMaxxing approved the
+conservative draft-graph row as `cmrgjjw8n004qmj01cp91qxl0`.

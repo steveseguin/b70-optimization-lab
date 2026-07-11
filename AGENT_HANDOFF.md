@@ -66,9 +66,9 @@ Active target as of the latest switch request:
   oracle; pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` passes it.
   Direct BF16 `[4,2560]` all-gather graph capture also passes `512/512`; the
   draft blocker was Inductor's functional `wait_tensor`, fixed by the
-  default-off compiled all-gather custom-op patch. The prior eager-draft result
-  is approved at LocalMaxxing as `cmrghhs27004cmj01dijk9r9f`; submit the new
-  record after the documentation commit. Start from
+  default-off compiled all-gather custom-op patch. LocalMaxxing approved the
+  draft-graph record as `cmrgjjw8n004qmj01cp91qxl0`; the prior eager-draft
+  result is `cmrghhs27004cmj01dijk9r9f`. Start from
   `results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
   and `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
 - The prior TP1 quality-gated practical row is the separate
