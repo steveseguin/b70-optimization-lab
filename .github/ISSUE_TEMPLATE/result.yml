@@ -1,0 +1,94 @@
+name: Result or optimization report
+description: Share a reproducible performance, quality, or negative result
+title: "[result] "
+labels: ["result"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing evidence. Community-reported results are welcome even when the reference B70 lab cannot reproduce the original hardware score. Never include secrets or private data.
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and system
+      description: GPU model, count, VRAM, interconnect, CPU/RAM, and relevant power or cooling changes.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and accelerator stack
+      description: OS, kernel, driver, compiler, oneAPI/Level Zero/PyTorch XPU or equivalent versions.
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model and revision
+      description: Exact model repository/path and revision or checksum.
+    validations:
+      required: true
+  - type: input
+    id: quantization
+    attributes:
+      label: Quantization
+      description: Weight/KV/activation quantization and draft model/quantization if used.
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Engine and runtime identity
+      description: Engine, exact commits, local patches, and important library versions.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command and environment
+      description: Include all relevant environment variables and flags, with credentials removed.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Benchmark shape and policy
+      description: Prompt/output/context lengths, batch, concurrency, requests/repeats, cold/warm/cache policy, speculation, and metric definition.
+    validations:
+      required: true
+  - type: textarea
+    id: quality
+    attributes:
+      label: Quality gate
+      description: Gate inputs, acceptance threshold, outcome, and known tradeoffs.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Score, TTFT, variance/repeats, failures, and whether this is a positive or negative result.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Result JSON and log paths
+      description: Repository paths or durable public links to results, logs, patch, and recipe.
+    validations:
+      required: true
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Closest known-good run and delta
+      description: Link the baseline and state exactly what changed between it and this result.
+    validations:
+      required: true
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Submission confirmation
+      options:
+        - label: I have the right to share this material, identified third-party sources, removed secrets/private data, and understand that review and validation are manual and not guaranteed.
+          required: true

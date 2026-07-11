@@ -1,0 +1,83 @@
+name: Bug or correctness report
+description: Report a runtime, reproduction, stability, or output-quality problem
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please provide a compact reproduction. Never paste credentials, model access tokens, passwords, or private prompts.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, what you expected, and whether the issue affects correctness, stability, or performance.
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and system
+      description: GPU model/count/VRAM/interconnect and relevant CPU/RAM details.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and accelerator stack
+      description: OS, kernel, driver, compiler, and accelerator runtime versions.
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model, revision, and quantization
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Engine and runtime identity
+      description: Engine/runtime commits, library versions, and local patches.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command and environment
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Benchmark or reproduction shape
+      description: Prompt/output/context lengths, batch, concurrency, cache/warm policy, and speculation.
+    validations:
+      required: true
+  - type: textarea
+    id: quality
+    attributes:
+      label: Quality gate and outcome
+      description: State the validation method even if the gate was not run.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Result JSON and log paths
+      description: Repository paths or durable public links. Redact secrets and private data.
+    validations:
+      required: true
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Closest known-good run and delta
+      description: What is the nearest working configuration, and exactly what changed?
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Minimal stack trace, frequency, suspected cause, and attempted diagnostics.

@@ -15,6 +15,9 @@ Use this guide with:
 - `docs/localmaxxing.md`
 - the nearest existing model packet under `results/`
 
+For a concise, evidence-linked catalog of transferable wins and important
+boundaries, see [Cross-Model Patterns Worth Reusing](research-workflow-playbook.md#cross-model-patterns-worth-reusing).
+
 ## 0. Operating Principles
 
 Do not start by changing flags or code. Start by making the lane measurable.

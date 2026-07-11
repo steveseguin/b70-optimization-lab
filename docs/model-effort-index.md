@@ -173,6 +173,9 @@ Status: candidate future lane. Needs fresh validity gates before promotion.
 
 ## Cross-Model Lessons
 
+For evidence-linked strategies and their transfer boundaries, start with
+[Cross-Model Patterns Worth Reusing](research-workflow-playbook.md#cross-model-patterns-worth-reusing).
+
 - Lock benchmark identity before interpreting speed. Missing graph mode or a
   changed launcher can create false regressions or false wins.
 - Treat fast speculative paths as invalid until canaries pass at scale. The

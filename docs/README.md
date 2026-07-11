@@ -30,6 +30,15 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Community And Operations
 
+- [Contribution Guide](../CONTRIBUTING.md): submission expectations and the
+  required benchmark/result identity.
+- [Contribution Verification](contribution-verification.md): manual evidence
+  and hardware-verification policy.
+- [Performance Index](../results/scoreboard.md): expected performance with
+  explicit comparison and verification boundaries.
+- [Manager Playbook](../MANAGER.md): manual human/AI review procedure.
+- [Experimental Disclaimer](../DISCLAIMER.md): use and benchmark risks; the
+  repository `LICENSE` remains controlling.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.

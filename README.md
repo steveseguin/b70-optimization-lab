@@ -5,6 +5,11 @@ for local AI work on Intel XPUs. This is not a single-model repo. It is a
 working lab notebook and reproducibility collection for multiple model lanes
 that we revisit as new runtime, compiler, and kernel ideas appear.
 
+This is experimental research, not a supported product. Commands, patches,
+and benchmark observations are provided under the repository [LICENSE](LICENSE)
+and the risks described in [DISCLAIMER.md](DISCLAIMER.md); review and use them
+at your own risk.
+
 ## Who This Is For
 
 - Local AI users who want reproducible Intel Arc/B-series commands rather than
@@ -24,6 +29,9 @@ that we revisit as new runtime, compiler, and kernel ideas appear.
 | See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
 | Reproduce promoted results | [Results index](results/README.md) and [model recipes](docs/model-recipes.md) |
 | Start optimizing a new model | [Model optimization guide](docs/model-optimization-guide.md) |
+| Compare expected model performance | [Performance scoreboard](results/scoreboard.md) |
+| Contribute a result, patch, or correction | [Contribution guide](CONTRIBUTING.md) and [verification policy](docs/contribution-verification.md) |
+| Review or validate incoming work | [Manager playbook](MANAGER.md) |
 | Reuse the best research prompts/workflows | [Research workflow playbook](docs/research-workflow-playbook.md) |
 | Find the current host/service map | [Current reproducibility map](docs/current-reproducibility-map.md) |
 | Submit or audit LocalMaxxing records | [LocalMaxxing submissions](docs/localmaxxing.md) |
@@ -63,7 +71,7 @@ These are entry points, not the whole repo:
 | Gemma 4 26B long-context/prompt-processing service lane | Separate from short-decode record; approved LocalMaxxing service entry `cmr47ivql0045nv011pfdjlaa`; service gates must not regress short decode | [Gemma result packet](results/gemma4-26b-a4b-q8-b70/README.md), [service gate script](repro/gemma4-26b-a4b-q8-b70/run-vdr2-long-context-service-gate.sh) |
 | Rapid one-B70 model snapshots | Quick strict/fresh decode baselines across practical GGUF/vLLM candidates; current promoted rows include Qwen3 30B-A3B `107.484 tok/s`, Qwen3-Coder 30B-A3B `108.117 tok/s`, Phi-4 mini Q4 `96.548 tok/s`, GLM-4.7-Flash `40.769 tok/s`, and Mistral Small 3.2 24B `27.297 tok/s` | [rapid result ledger](results/rapid-model-snapshots-b70/README.md), [rapid experiment notes](experiments/rapid-model-snapshots-b70/README.md) |
 | Qwen3.6 35B A3B Quark W8A8 INT8 on B70 | Closed reference packet for now; preserve lessons for future return | [Qwen result packet](results/qwen36-35b-quark-int8-b70/README.md), [research map](docs/qwen36-research-map.md) |
-| MiniMax M2.7 INT4 AutoRound on 4x B70 | Deployable baseline plus older strict-speed and source-fusion research leads | [Ubuntu 24 deploy repro](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md), [production service notes](docs/minimax-production-c1-service.md) |
+| MiniMax M2.7 INT4 AutoRound on 4x B70 | Deployable baseline plus older strict-speed and source-fusion research leads | [result packet](results/minimax-m27-int4-autoround-b70/README.md), [Ubuntu 24 deploy repro](repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md), [production service notes](docs/minimax-production-c1-service.md) |
 | Gemma 4 12B IT INT4 AutoRound | Current model-slot production profile and multimodal service lane | [experiment packet](experiments/gemma4-12b-int4-autoround-vllm/README.md), [slot switching](docs/model-slot-switching.md) |
 
 For the full queue and archive, use [docs/model-effort-index.md](docs/model-effort-index.md).
@@ -92,18 +100,22 @@ fresh-response claims.
 
 ## Hardware Scope
 
-The active local lab has four Intel Arc Pro B70 32 GB cards (`128 GB`
-aggregate VRAM). That is enough for useful vLLM/XPU, llama.cpp/SYCL, driver,
-and model-port feedback, and it lets us run four independent one-GPU screens
-when a model fits. It also limits larger model families and simultaneous
-service/optimization lanes.
+The reference lab has four Intel Arc Pro B70 32 GB cards (`128 GB`
+aggregate VRAM). B70 is the platform on which maintainers can independently
+reproduce and verify submitted patches, but this is an Intel Arc/XPU project,
+not a B70-only repository.
 
-Higher-VRAM Intel eval hardware, especially Crescent Island-class `160-480 GB`
-devices or comparable future XPUs, would directly expand the work into larger
-GLM, DeepSeek Flash-class, long-context, and multi-service targets that cannot
-be kept resident on 32 GB cards. The host side has spare EPYC 9015 capacity
-with up to ten PCIe 5.0 x16 slots, so the practical limit is increasingly XPU
-memory and hardware availability rather than chassis or workflow.
+Results, fixes, and portability reports from Intel Arc Pro B50, B60, B65, and
+B70 owners are welcome, as are useful observations from other Intel Arc and
+XPU systems. A B70 rerun verifies what a patch does on B70; it does not certify
+a contributor's score on hardware the maintainers do not possess. Hardware and
+verification status therefore stay explicit in every promoted result.
+
+The four-card B70 host is enough for useful vLLM/XPU, llama.cpp/SYCL, driver,
+and model-port work, and it can run four independent one-GPU screens when a
+model fits. Higher-memory Intel devices would broaden model coverage, but that
+is not a prerequisite for contributing useful patches, results, failures, or
+optimization lessons.
 
 Steve Seguin maintains this repo and posts ongoing build notes at
 <https://x.com/xyster>.
@@ -113,6 +125,11 @@ Steve Seguin maintains this repo and posts ongoing build notes at
 <img width="1666" height="478" alt="Gemma 4 26B B70 result context" src="https://github.com/user-attachments/assets/14602c6b-5c72-483d-aec7-415fbc4a8114" />
 
 ## How To Contribute
+
+This remains primarily a working optimization lab, but careful outside
+contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and
+the [manual verification policy](docs/contribution-verification.md). No result
+needs to be a record to be useful.
 
 Useful contributions include:
 
@@ -130,324 +147,36 @@ When opening an issue or discussion, include GPU, OS, model, quantization,
 runtime, exact command, benchmark shape, quality gate, result JSON/log paths,
 and what changed from the closest known-good run.
 
+## Reusable Optimization Lessons
+
+The durable value of this lab is not only its fastest rows. Start with the
+[cross-model pattern catalog](docs/research-workflow-playbook.md#cross-model-patterns-worth-reusing)
+for evidence-linked strategies that transfer across model lanes, and the
+[model optimization guide](docs/model-optimization-guide.md) for the
+identity, quality, A/B, variance, and negative-result process used to test them.
+Model-specific packets retain the commands and caveats behind each lesson.
+
 ## Deep Historical Notes Below
 
-The rest of this README is dense historical lab context from earlier model
-lanes. New readers should start with the links above; future model work should
-be summarized into `results/`, `repro/`, `experiments/`, `notes/`, `patches/`,
-and `data/` rather than expanding this top-level historical section further.
+The former top-level chronology was preserved verbatim in
+[notes/2026-07-11-readme-historical-b70-archive.md](notes/2026-07-11-readme-historical-b70-archive.md).
+It remains useful for chronology and link recovery, but maintained navigation
+now lives in the result packets, model-effort index, reproduction recipes, and
+optimization guides.
 
 ## Historical B70 Findings And Open Leads
 
-- Host: Ubuntu 24.04.4 LTS, kernel 6.17.0-23-generic.
-- GPUs: 4x Intel Arc Pro B70 / BMG-G31, 32 GB VRAM each.
-- PCIe check after installing `xpu-smi` v1.3.6: all four B70s have slot-facing host/root and card-upstream links at `32GT/s x16` (PCIe 5.0 x16). The `2.5GT/s x1` values shown by `/sys/class/drm/*/device/current_link_*` are the internal downstream bridge/GPU endpoint view described by Intel's Arc PCIe hierarchy note, not the external slot link. `xpu-smi` reports PCIe downgrade disabled on all four cards; no power or frequency limits were changed.
-- MiniMax M2.7 AutoRound now has a stricter >60 tok/s quality-promoted path: vLLM/XPU TP4, FP16 activations, AutoRound INT4 W4A16, llm-scaler INT4 MoE, XPU piecewise graph, and greedy local-argmax decode reached a two-run mean of `60.497227` output tok/s and `80.662970` total tok/s at p512/n1536. Finite tracing showed the prior fast full-logits path can produce NaNs at the TP full-vocab logits gather; the promoted path preserves `temperature=0` argmax semantics by gathering only per-rank top `(value,index)` pairs. Quality gates passed 32x arithmetic repeat, six-prompt semantic repeat, and raw145 exact token hashes at n64/n256. LocalMaxxing accepted this result as `cmp940h1703tpo401scj5tftf`. Older 67-73 tok/s graph submissions remain historical speed clues until the full-logits gather corruption is fixed.
-- Original quality-preserving target remains Qwen3.6 27B `Q4_0` GGUF on llama.cpp. Current quality-cleared no-root GGUF result is 50.130 tok/s on three B70s at 512 prompt / 512 output using the experimental flat Qwen35 fused beta/alpha GGUF, SYCL tensor split, `-ub 128`, `--poll 25`, Q8 activation cache, fused MMVQ2, fused MMVQ2+SwiGLU, fused RMS_NORM+scale-MUL, fused allreduce+ADD, fused final allreduce+GET_ROWS, single-kernel allreduce, and `GGML_SYCL_COMM_SYNC_AFTER=2`, with `GGML_SYCL_COMM_FUSEADD_ROOT_RESIDUAL=0`. LocalMaxxing accepted this experimental result as `cmov6p4r7007tqr01yi8ug4un`.
-- The earlier 50.922 tok/s three-B70 root-residual record remains an important performance ceiling, but it is now marked suspect rather than quality-cleared. A later token/logit probe found the minimal bad interaction `GGML_SYCL_COMM_FUSEADD_ROOT_RESIDUAL=1` plus `GGML_META_FUSE_ALLREDUCE_ADD=1`. The accepted LocalMaxxing IDs are historical pending a root-residual ordering fix.
-- A final-rebuild root-residual rerun with the flat fused beta/alpha GGUF reached 50.687 tok/s and passed default-prompt root-on/root-off probes, but a two-token prompt follow-up timed out. It is documented as promising, not submitted/promoted.
-- Current four-card Q4_0 result is 44.088 tok/s with an assist split (`-ts 1/1/1/0.05`) after the guard-fix refresh. This improves the older assist result by 12.46% and equal 4x by 26.22%, but still trails 3x. Equal four-card split remains a negative scaling diagnostic at 34.929 tok/s.
-- Best static FP8 result so far: vLLM/XPU, `vrfai/Qwen3.6-27B-FP8`, local XPU patches, 4x B70 TP4, CPU n-gram speculative decode, 49.582 output tok/s at 512 prompt / 512 output. This preserves target-model quality through verified speculative decoding, but now trails the current Q4_0 TP3 decode result by about 2.6%.
-- Static FP8 TP4 is also the preferred 32k-context Qwen3.6 27B layout: TP4/PP1 at `max_model_len=32768` reaches 42.996 tok/s for 2048 prompt / 256 output and reports 1,133,163 GPU KV-cache tokens. The 2026-05-07 512/512 refresh kept TP4 ahead (`45.865 tok/s` no-spec, `48.082 tok/s` n-gram). TP2/PP2 fits but is much slower for batch-1 decode (`27.722 tok/s` at 512/512) and should be treated as a capacity layout, not the speed path.
-- oneCCL `CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0` was a tiny FP8 TP4 no-spec win (`46.386 tok/s` vs `45.865 tok/s`) but regressed n-gram speculation (`44.439 tok/s`) because draft acceptance collapsed. Keep default topology recognition for speculative TP4.
-- A focused llama.cpp active-device row-split patch now zeros unselected SYCL devices when row-split buffers are created from a selected device subset. The known Q4 tensor-split path still sanity-checks at 45.065 tok/s on a short 3-B70 run, but row split itself remains unsafe: a 4B `SYCL2/SYCL3` smoke hit `UR_RESULT_ERROR_DEVICE_LOST` in the existing SYCL split matmul path.
-- FP8 MTP with a hybrid static target plus dynamic block-FP8 `mtp.safetensors` now loads cleanly with an opt-in local vLLM patch, but the corrected MTP path is too slow (`2.36 tok/s` eager smoke, `1.84 tok/s` compiled smoke) and is not a LocalMaxxing result.
-- Earlier strongest raw speed result was an INT4 AutoRound model variant, not the Q4_0 GGUF. It improves speed substantially but has quantization quality tradeoffs relative to FP8/BF16.
-- 2026-05-05 follow-ups were negative: Q4 small-F32 allreduce regressed, FP8 TP2/PP2 was not competitive for batch-1 speed, the oneCCL topology override regressed, and MiniMax `MUL_MAT_ID` masking only moved the failure to coarse buffer allocation.
-- MiniMax M2.7 UD-IQ4_XS now has a valid four-B70 RPC+SYCL layer-mode path. The original process-per-GPU baseline reached 13.754 tok/s for `p0/n64`; the current GGUF best is 17.697772 tok/s with corrected RPC device mapping, `-nkvo 0`, fast IQ4_XS `MUL_MAT_ID`, runtime MMV row packing (`GGML_SYCL_MMV_Y_RUNTIME=2`), `-ub 64`, fused RMSNorm enabled, DNN disabled, and merged gate/up expert tensors (`-muge 1`). LocalMaxxing accepted this as `cmox103ol0040ml019yzs6gvs`; the same stack at p512/n128 reached 54.506 prompt tok/s and 17.693 decode tok/s as `cmox1gcxl0049ml01kiijqbpo`.
-- MiniMax GGUF Vulkan is not the shortcut: llama.cpp Vulkan sees all four B70s, but `UD-IQ4_XS` p0/n16 reached only `11.746` tok/s with layer split and `12.559` tok/s with row split; tensor split failed at model load. Keep GGUF work on the current SYCL/RPC recipe unless doing a deeper graph/tensor-parallel rewrite.
-- MiniMax direct single-process SYCL is still blocked: even an uneven split fails in `llm_load_tensors` on a 19.028 GB regular SYCL model-buffer allocation on GPU0. The current RPC-worker layout remains useful because it avoids that large single-process buffer path. A layer-placement sweep topped out at 16.358 tok/s, so placement is not the route to the >30 tok/s target.
-- MiniMax quality-correct graph/tensor mode now executes with default-off `GGML_MINIMAX_NO_DEFER_REDUCE=1` and `GGML_RPC_REDUCE_MIRROR=1`, but it is diagnostic only: the one-token smoke reached 2.034 tok/s after forcing real reductions at nonlinear boundaries. The faster branch-fused graph path is not promoted because deferred partial reductions can cross RMSNorm/router/MoE boundaries and change the math.
-- MiniMax layer-mode knob screens did not find a new speed path: client `-t` is not limiting, `-fa 1` currently aborts in the SYCL RPC worker due unsupported `FLASH_ATTN_EXT`, disabling fused MMAD/MoE is slower, oneDNN enabled is slower, same-type contiguous copy memcpy is neutral, and an 8-expert `MUL_MULTI_ADD` unroll regressed and was removed.
-- MiniMax CPY tracing found three repeated per-layer copy shapes. A default-off shape-specific copy fast path for those shapes regressed to 12.732 tok/s, so future CPY work should fuse producer kernels into KV/cache writes rather than replacing the copy op with standalone kernels.
-- MiniMax SYCL RPC worker now implements `FUSED_RMS_NORM`, converting a previous unsupported-op abort into a valid path. It reached 16.308 tok/s at p0/n64/r1, so it is functional but not a speed record.
-- The next MiniMax performance blocker is true speed parallelism rather than capacity. Valid layer mode has only five scheduler splits and largely marches through the four GPUs sequentially. The >30 tok/s path likely requires quality-correct graph/tensor/expert parallelism, lower-overhead cross-device reductions, or a layout-aware active-expert kernel.
-- MiniMax AutoRound INT4 safetensors now load and generate through vLLM/XPU TP4 after the local INC `FusedMoE` to `MoeWNA16Config` patch and targeted vLLM package-skew repairs. Switching `CCL_ZE_IPC_EXCHANGE` from sockets to `pidfd` raised the p512/n128 result to 19.85 output tok/s and 99.231 total tok/s, accepted on LocalMaxxing as `cmox6tys30085ml0125gihg18`. The log still shows the next bottleneck: no B70-specific tuned MoE config for `E=256,N=384,dtype=int4_w4a16`. An AMD-derived config seed was accepted only after stripping an unsupported key, but it regressed to 1.73 output tok/s on p64/n16.
-- MiniMax AutoRound vLLM runtime toggles did not yet produce a speed path: `VLLM_XPU_ENABLE_XPU_GRAPH=1` is disabled by vLLM because TP4 communication ops cannot be captured, and MiniMax QK-norm fusion is blocked because this XPU build lacks `torch.ops._C.minimax_allreduce_rms_qk`.
-- MiniMax AutoRound's current best path is an experimental unsigned llm-scaler ESIMD INT4 MoE decode path in vLLM/XPU. It keeps prompt/prefill on vLLM fused experts and only routes tiny decode batches (`x.shape[0] <= 4`) through the custom raw-u4 kernel. The p512/n128 result improved from the FP16 baseline `20.17` output tok/s to `29.74843` output tok/s (`148.742151` total), and p512/n256 reached `33.033788` output tok/s once prefill was better amortized. No speculative decode, no expert dropping, and no power-limit change. LocalMaxxing accepted these as `cmoxptkfd00hsml01hf2ajhhp` and `cmoxq7cww00i8ml019ihbeqc9`. MiniMax `ngram_gpu` with the same decode path failed/stalled during generation, so speculation remains negative for this harness.
-- A BF16-capable version of the same MiniMax AutoRound u4 decode path now keeps hidden states in BF16 while still using the custom llm-scaler MoE decode kernels. It fixes the earlier BF16 fallback from `16.860287` to `33.681326` output tok/s at p512/n256, and reaches `36.607699` output tok/s at p512/n512, only about 1.4% behind the FP16 p512/n512 speed reference. LocalMaxxing accepted this BF16 result as `cmoyr84ol000rtl01o4z9fwdm`.
-- On the fast NVMe setup, BF16 with `--gpu-memory-utilization 0.95` is the quality-conservative MiniMax capacity recipe: default-memory BF16 has no usable KV cache headroom, while BF16 0.95 completed p512/n1024 at `37.303654` then `35.953772` output tok/s with 18,880 KV tokens. Treat this as capacity-mode validation, not a clear speed breakthrough over FP16 default-memory mode. LocalMaxxing accepted the first run as `cmoz632kr0068tl017a1z6r0u`.
-- The earlier MiniMax AutoRound FP16 p512/n1536 high of `41.130667` output tok/s (`cmoz8cow60001pd010klrb8g8`) is reclassified as likely quality-valid after the generated-cache analyzer was fixed: the archived `c15860...` AOT graph contains `8` visible `f32[s72,2]` Q/K RMS variance allreduces plus hidden-state collectives. It is still not reproducibly recovered in the current runtime, so keep it as the accepted speed target. The lower quality-conservative reference remains `37.552538` output tok/s / `50.070051` total tok/s at p512/n1536, accepted on LocalMaxxing as `cmozow03v005wlo01q81bnspx`. No speculative decode, no expert dropping, and no power-limit change.
-- Larger configured context is slower at default memory: `max_model_len=4096` with the same FP16 p512/n1536 request reached `33.258227` output tok/s and was accepted as LocalMaxxing capacity datapoint `cmoz8k9z40008pd01rhu50c0n`. GPU KV cache dropped from 17,216 to 9,408 tokens, so the next capacity test should use `gpu_memory_utilization=0.95`.
-- For 4096-context capacity, `gpu_memory_utilization=0.95` is the better FP16 recipe: GPU KV cache rises to 33,408 tokens and the same p512/n1536 request improves to `36.616486` output tok/s, accepted as `cmoz8ryb9000bpd014xhl3pxu`. It is close to the 2048-window quality-conservative reference, but still capacity-oriented rather than a raw-speed path.
-- For 8192-context capacity, the first FP16 0.95 p512/n1536 run completed at `33.308012` output tok/s with 25,600 GPU KV-cache tokens and was accepted as `cmoz90lg0000wpd018x3zuukw`; a warmed rerun reported 33,408 KV tokens and improved to `36.805228` output tok/s, accepted as `cmoz9ayax001cpd01xkr0w54l`. A real larger-prompt p4096/n512 run reached `31.287419` output tok/s and `281.586772` total tok/s, accepted as `cmoz97d350015pd01smqui7lk`. These validate usable 8192-context capacity, but not a raw-speed path.
-- A synchronized compiled timing summary shows the custom u4 MoE bridge is no longer the full MiniMax ceiling. In the BF16 p512/n64 diagnostic, steady rank-0 samples were roughly `45 ms/token` for `runner.forward`, while `moe.router_select + moe.quant_apply` was about `0.24 ms/layer`, or about `15 ms/token` across 62 layers. This points the next speed work toward attention/KV, Q/K RMS plus TP collectives, projections, and compiled graph boundaries rather than raw u4 matvec alone. The run is not a LocalMaxxing result because synchronized timing distorts throughput.
-- The 2026-05-10 MiniMax timing/oneCCL sweep reinforced that conclusion: eager synchronized samples put Q/K RMS around `0.465 ms/layer`, decode MoE expert work around `0.580 ms/layer`, and each direct TP allreduce around `0.084-0.088 ms` in steady samples. oneCCL `CCL_SYCL_ALLREDUCE_TMP_BUF=1`, `CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0`, and `CCL_ALLREDUCE_SMALL_THRESHOLD=0` all regressed the fast-NVMe p512/n512 baseline slightly, so keep default oneCCL settings for now and move to source-level fusion.
-- Additional communication screens did not open a shortcut: `CCL_WORKER_COUNT=2` hung during XCCL initialization before model loading, and vLLM's built-in `fuse_allreduce_rms` pass is explicitly disabled on XPU and currently backed by FlashInfer/ROCm fusion machinery rather than Level Zero/XCCL. Keep default oneCCL worker count and build any allreduce+RMS fusion as an XPU-specific path.
-- A later default-off import gate confirmed that stock vLLM `fuse_allreduce_rms` is not a B70 shortcut. With `VLLM_XPU_EXPERIMENTAL_FUSE_ALLREDUCE_RMS=1`, vLLM enables `allreduce_rms`, then worker startup imports `flashinfer.comm`; FlashInfer imports CUDA GDN kernels and calls `torch.cuda.get_device_properties(0)`, failing in the XPU-only PyTorch build. Keep that env unset outside the diagnostic screen.
-- The AOT allreduce-boundary analyzer now supports the newer generated Inductor cache layout where `computation_graph.py` is absent. On the current MiniMax generated cache it reports representative categories, not the old full graph count: `20` hidden `f16[s72,3072]` collectives and `8` Q/K variance `f32[s72,2]` collectives. A MiniMax env-constant helper cleanup was tested and reverted because p512/n1536 regressed to `36.450` output tok/s.
-- The 2026-05-11 C158 recheck corrected the old fast-result status: archived `c15860...` reports `40` generated allreduce sites, including `8` Q/K variance sites, so the accepted `41.130667` p512/n1536 result is likely valid. Current recovery attempts did not reproduce it: graph-shaped warm reload reached `37.69`, FP8 KV E4M3 reached only `37.15` and carries a quality warning, FP8 E5M2 fails in XPU FlashAttention, and FP16 router reached `38.13` but changes expert-routing precision.
-- The follow-up MiniMax FP16-router audit disqualifies direct FP16 routing for quality-conservative runs: with FP32 routing active and FP16 as a shadow candidate, the exact biased MiniMax decision `sigmoid(router_logits) + e_score_correction_bias` still had `128` unordered top-8 set mismatches across the TP4 p64/n16 smoke. The useful lead is candidate coverage: FP16 top-16 and top-32 both contained the exact biased FP32 top-8 for every audited token/layer, so a future quality-preserving candidate-repair router should compute exact FP32 scores for the FP16 top-16 and feed exact top-k ids/weights into MoE apply. No LocalMaxxing submission was made for the direct FP16-router screen.
-- A default-off candidate-repair router was prototyped for MiniMax: FP16 proposes top-M, exact FP32 scoring repairs to the biased FP32 top-8, then precomputed top-k ids/weights are injected at the existing vLLM router boundary without changing MoE custom-op schemas. It is functional and keeps the expected Q/K variance allreduce signature, but p512/n512 only improved from `35.54` to `36.27` output tok/s in the same active runtime. Top-12 and top-16 were effectively tied, and both remain below prior accepted references. Keep this as a source lead for a fused XPU candidate-selection kernel, not a promoted speed path.
-- oneCCL worker affinity is also not a shortcut: `CCL_WORKER_AFFINITY=auto` completed p512/n512 at `36.496` output tok/s, and `CCL_WORKER_AFFINITY=0,1,2,3` completed at `35.568`, both below the accepted 39.611 p512/n512 reference with the same AOT hash and 17,216-token KV cache. Keep default worker affinity.
-- A default-off MiniMax XPU helper that fuses post-allreduce Q/K RMS application with RoPE is numerically valid, but it regresses compiled throughput: p512/n512 fell from `39.610585` to `35.681825` output tok/s. Eager timing looked better, so the likely issue is compiled graph scheduling rather than raw math correctness. Keep `VLLM_MINIMAX_QK_APPLY_ROPE_XPU_HELPER` unset.
-- The simpler default-off MiniMax Q/K RMS helper that only replaces local variance/apply kernels was retested and is also negative: warmed p512/n512 reached `35.722` output tok/s and warmed p512/n1536 reached `36.572`, below the current quality-conservative p512/n1536 reference. It reproduces the cold isolated AOT artifact (`9,408` KV tokens, `28.664` output tok/s) but does not recover a faster valid schedule. Keep `VLLM_MINIMAX_QK_RMS_XPU_HELPER` unset.
-- A narrower direct MiniMax Q/K RMS helper that computes variance directly from contiguous `qkv` and then applies Q/K RMS after the normal TP allreduce is also negative: warm p512/n512 reached `34.718` output tok/s versus the same-shape baseline `35.820`, and AOT reload failed until recompilation because the custom op namespace was not registered early enough. Keep `VLLM_MINIMAX_QK_RMS_XPU_DIRECT` unset.
-- A quality-preserving delayed output-projection allreduce experiment is mixed/negative: moving `o_proj` allreduce from `RowParallelLinear` into the decoder layer before residual-add RMSNorm gave a small p512/n512 lift (`36.540` vs `35.820` output tok/s) but p512/n1536 reached only `36.449`, below the current `37.552538` quality-conservative reference. Archive the scheduling clue, but keep `VLLM_MINIMAX_O_PROJ_DELAY_ALLREDUCE` unset.
-- A quality-preserving delayed MoE late-allreduce experiment is also unpromoted: p512/n512 improved to `36.621` output tok/s and one p512/n1536 run reached `37.716`, but the repeat fell to `37.021`, below the `37.552538` quality-conservative reference. This suggests the MoE allreduce boundary matters, but just moving the allreduce is not reliable; keep `VLLM_MINIMAX_MOE_DELAY_ALLREDUCE` unset.
-- Removing that default-off Q/K apply+RoPE branch from the active vLLM MiniMax source restored the `c15860...` AOT graph cache and recovered the runtime after the htile/rebuild work: p512/n512 returned to `38.998` output tok/s, and p512/n1536 repeated at `39.450` then `39.961` output tok/s. The updated generated-cache analyzer later found the expected Q/K RMS variance allreduce signature in the archived `c15860...` graph, so those runs are now scheduling clues for a likely valid but currently unreproduced faster graph.
-- A later timing-helper no-op experiment overwrote the favorable `c15860...` MiniMax AOT artifact. The current reproducible valid floor is `36-38` output tok/s after restoring the graph-shaped MiniMax source, while the accepted `41.131` LocalMaxxing result is now the speed target again rather than a suspect-only clue. Early clean-source/no-autotune/combo-kernel-off screens were negative (`26.69-28.64` tok/s). Keep future compile experiments in isolated `VLLM_CACHE_ROOT` directories and require generated-cache Q/K variance allreduce census before promoting a result.
-- Follow-up AOT recovery screens stayed negative: extra layer-level graph boundaries fell to `28.03` output tok/s, the archived larger `c15860...slow-after-timing-noop` payload only reached `35.22`, the current live p512/n1536 repeat is `37.05`, oneCCL topology-bypass retest is `36.13`, and aggressive Inductor autotune either leaves no KV cache at default memory or falls to `23.15` with `gpu_memory_utilization=0.95`. The next quality-preserving MiniMax speed path is still a real graph-safe XPU Q/K allreduce+RMS fusion, not more generic graph-boundary or autotune knobs.
-- The active MiniMax vLLM source is now cleaned back to the minimal K-norm TP replication fix after removing dormant helper/router/timing branches from `minimax_m2.py`. In an isolated NVMe cache, the cleaned source cold p512/n512 run showed the usual 9,408-KV artifact and `27.47` output tok/s, while warm p512/n512 and p512/n1536 direct-load runs recovered 17,216 KV tokens and reached `36.14` and `36.63` output tok/s. This confirms those dormant branches were not the main lost-speed cause; keep the active runtime clean and keep future helpers as archived patches unless they beat the floor.
-- Removing local `timed_region(...)` wrappers from active allreduce, attention, MoE, and runner paths is neutral-to-slightly-positive hygiene, not a recovery path. The isolated no-timing AOT cache hit the same cold artifact (`28.05` output tok/s, 9,408 KV tokens), then warm p512/n512 and p512/n1536 reached `35.85` and `37.37` output tok/s with 17,216 KV tokens. Keep timing wrappers out of the active runtime unless running a dedicated diagnostic.
-- An opt-in XPU fallback for vLLM's MiniMax Q/K norm fusion pass now compiles and runs by using the existing `minimax_qk_rms_xpu` helper extension and avoiding the CUDA Lamport workspace. It is mechanically useful but not a speed path: warm p512/n512 reached `36.44` output tok/s and warm p512/n1536 reached `37.24`, both within the current floor. Keep `VLLM_MINIMAX_QK_NORM_XPU_HELPER_FUSION` unset for real runs.
-- Forcing oneCCL `CCL_ALLREDUCE=direct` is very negative on MiniMax TP4 p512/n512 (`16.145345` output tok/s). Intel documents that non-`topo` GPU-buffer allreduce algorithms copy GPU data through host; keep default `topo`.
-- Live `xpu-smi stats` polling is too intrusive for MiniMax TP4 benchmarking: per-device JSON polling caused a 60-second vLLM shared-memory broadcast warning and the run had to be killed. The partial trace still showed all four B70s at 2800 MHz with roughly 95-116 W per card and about 95-96% memory utilization, so there was no obvious frequency-throttling signal; future profiling should use lower-overhead Level Zero or kernel-side timers.
-- Built-in vLLM MiniMax expert parallelism is now documented as a diagnostic path rather than the recommended B70 recipe. With the required E64/N1536 B70 MoE config, TP4+EP4 improved from `25.076` to `29.892` output tok/s at p512/n512 and reached `30.911` at p512/n1536, accepted on LocalMaxxing as `cmozofyv5005hlo01puv9rjs6`. This is valid and quality-preserving, but still below the current Q/K-allreduce quality-conservative TP4 reference of `37.552538`; round-robin placement falls back to linear, and `--enable-dbo` is blocked because XPU only has the AgRs/allgather-reducescatter all2all manager.
-- A guarded experiment that skipped vLLM's defensive compiled-XPU allreduce clone was neutral to negative and was reverted: warmed p512/n512 reached `35.72` output tok/s and warmed p512/n1536 reached `36.69`, both below the quality-conservative MiniMax reference. Fresh isolated AOT compiles also reproducibly show a cold-run artifact: KV cache drops from `17,216` to `9,408` tokens and p512/n512 falls to about `27` output tok/s until the same cache is reloaded.
-- A standalone Level Zero B70 peer probe passed all prerequisites for an XPU peer-memory MiniMax fusion prototype: all four cards report cross-card `ACCESS`, all self-pairs report `ACCESS|ATOMICS`, cross-card atomics are not advertised, same-process P2P remote fills pass for all 16 pairs, and forked-process Level Zero IPC open/fill/verify passes for all 16 pairs. This makes a Lamport/mailbox-style XPU Q/K RMS fusion feasible without remote atomics.
-- The PyTorch/SYCL Level Zero IPC Q/K variance prototype now passes both the two-phase four-process mailbox test and sequence-counter stress tests. Each rank exports PyTorch XPU mailbox tensors, opens all peer handles, writes local `[tokens,2]` Q/K variance values, publishes a sequence counter, polls peer counters, and reads peer payloads from XPU kernels. The device-counter path passed 4 ranks, 50 iterations, 32 token rows, and only 3 reused mailbox slots with exact `[51.5,515.0]` final averages; the 512-row prefill-sized test also passed. A no-host-barrier one-token correctness smoke passed when slots were not reused too early, but the same protocol can hang when a rank misses a slot sequence after wraparound. The naive float-sentinel single-kernel variant remains a negative result because some ranks read stale sentinels.
-- The vLLM MiniMax Q/K IPC hook is archived as a patch only, not kept in the active runtime. Eager TP4 p1/n4 smoke logs confirmed IPC initialization and completed, but it is only a liveness result. Pre-initializing mailboxes during model load avoids the first Dynamo setup crash, and compiled runs fall back to oneCCL unless `VLLM_MINIMAX_QK_RMS_XPU_IPC_COMPILED=1` is explicitly set. When the IPC op actually runs in vLLM it is far too slow: the scalar path measured about `0.03` output tok/s eager and `0.02` output tok/s compiled on p1/n4, while the compiled counter path timed out after a long generation. A standalone device-counter microbench measured `416-418 ms` per one-token `[1,2]` reduction versus about `0.016 ms` for XCCL. Keep all IPC env flags unset for real benchmarks; future work should avoid standalone mailbox allreduce and only revisit peer-memory reads inside larger fused kernels.
-- Current MiniMax AutoRound best is `48.092807` output tok/s and `64.123742` total tok/s at p512/n1536 with vLLM/XPU TP4, `--async-engine`, the static decode graph `compile_sizes=[1]`, AOT `3e2cefa134c3aecc743c56d36960e4cb0a8ac7d2adc73c3f2a078cc8b6164846`, and preserved Q/K RMS variance allreduce. LocalMaxxing accepted it as `cmp3cgooj0019s401d7p1ks3e`.
-- A 2026-05-13 MiniMax follow-up closed two nearby leads. `gpu_memory_utilization=0.95` with the current async/static graph produced one p512/n1536 run at `48.42` output tok/s but repeated at `46.21`, so it is not submitted as a new record. vLLM compilation `mode=3` produced the same AOT hash as the current best but hit the `9,408` KV-token cold-cache artifact and reached only `33.24` output tok/s at p512/n512.
-- Disabling prefix caching alone was also screened with chunked prefill left enabled. It produced a small p512/n512 lift (`46.19` output tok/s), but the p512/n1536 repeat reached only `47.05`, below the accepted async/static graph best. Keep prefix caching enabled for promoted MiniMax runs.
-- Additional runtime/speculation screens did not produce a new path to `60 tok/s`. `UR_L0_USE_IMMEDIATE_COMMANDLISTS=1` completed but regressed slightly to `45.49` output tok/s at p512/n512; `UR_L0_USE_IMMEDIATE_COMMANDLISTS=2`, `UR_L0_DEVICE_SCOPE_EVENTS=2`, and `CCL_ATL_TRANSPORT=mpi` stalled or hung. The new `MirecX/MiniMax-M2.7-L3H5-DFlash` drafter was downloaded and tested, but both the original 196608-position config and a local max-512 smoke copy stalled before generation. Keep current UR defaults and `CCL_ATL_TRANSPORT=ofi`; DFlash remains an infrastructure/debug track, not a current speed route.
-- The llm-scaler core `esimd_resadd_norm_gemv_int4_pert` helper is not safe as a MiniMax projection fusion. A synthetic TP4 probe found a cross-workgroup residual mutation race on the actual `o_proj` shape (`N=3072,K=1536`), with about `10.3%` fused relative error. A temporary no-store diagnostic confirmed the race, but the corrected standalone shape was slower than oneDNN INT4-only. Repro script: `benchmarks/b70_resadd_norm_gemv_int4_race_probe.py`.
-- MiniMax AutoRound targets remain raised: use `50 tok/s` at p512/n1536 as the next repeatable conservative milestone, `60 tok/s` as the main four-B70 goal, and `75+ tok/s` only for verified speculative decoding or deeper source-level fusion that preserves target logits. The detailed roadmap is in `plans/2026-05-10-minimax-60tok-roadmap.md`.
-- The MiniMax AOT graph inspection confirms the next source-level target: the current async/static graph has `1,496` visible `_c10d_functional.all_reduce_` call lines and `1,496` immediate `wait_tensor` call lines across generated Inductor Python, split evenly as `187` collectives in each generated rank/shape file. The stock vLLM allreduce+RMS pass remains XPU-disabled and FlashInfer/AITER oriented, so the next patch should be XPU-specific allreduce/residual/RMSNorm fusion.
-- vLLM scheduler/compile screens were also negative: `--no-async-scheduling` fell to `27.309053` output tok/s, and `--compilation-config={"compile_sizes":[1]}` fell to `30.721984` despite successfully creating a token-count-1 compile range.
-- A focused XCCL microbenchmark at MiniMax decode allreduce sizes shows default XCCL itself is fast: about `0.016 ms` for the 8-byte Q/K variance allreduce and `0.014 ms` for the 6144-byte hidden allreduce on 4x B70. A follow-up out-of-place clone/copy mode that mimics vLLM's `output = input_.clone()` path was only about `0.005 ms` slower for tiny allreduces (`0.021 ms` at 8 B, `0.020 ms` at 6144 B). This points next work toward vLLM graph/fence/collective placement, not more oneCCL algorithm toggles.
-- MiniMax p512/n2048 is valid but slower than the p512/n1536 speed path: default memory reached `33.925` output tok/s, while `--gpu-memory-utilization 0.95` improved to `36.772` output tok/s and raised KV cache from 9,408 to 33,408 tokens. Treat 0.95 as a capacity setting, not a new speed record.
-- A llm-scaler down-projection htile experiment improved a standalone MiniMax-shape synthetic kernel from `140.425 us` to `44.430 us`, with exact synthetic output match, but full vLLM p512/n512 regressed to `35.067` output tok/s. The patch is retained as a negative artifact and should not be promoted.
-- MiniMax AutoRound llm-scaler INT4 extension builds must currently use oneAPI 2025.3 for the active PyTorch XPU `libsycl.so.8` runtime. Rebuilding with oneAPI 2026.0 produced a SYCL image-registration segfault on import. Rebuilding the FP16 u4 extension with oneAPI 2025.3 restored the p512/n512 baseline to `36.025` output tok/s. Follow-up toggles were negative: XPU graph requested was disabled for TP communication and fell to `29.562` output tok/s, `CCL_ZE_IPC_EXCHANGE=pidfd` was slightly slower at `35.534`, and `max_model_len=1024` fell to `28.909`.
-- A default-off MiniMax router-logits fusion now imports and passes standalone FP16/BF16 exact-match tests when built with oneAPI 2025.3, and a tiny p1/n8 vLLM smoke ran. The full p512/n512 TP4 run hung after prompt rendering with repeated shared-memory wait messages, so keep `VLLM_XPU_USE_LLM_SCALER_MOE_LOGITS` unset for real benchmarks.
-- MiniMax DFlash speculative decoding is negative on the current TP4 XPU stack. `MirecX/MiniMax-M2.7-L3H5-DFlash` loads, compiles, shares target embeddings/lm head, and selects the expected target taps `(2, 16, 30, 43, 57)`, but retries with `num_speculative_tokens=3` were blocked by KV memory pressure, one Level Zero `UR_RESULT_ERROR_DEVICE_LOST`, and a generation hang after KV allocation. The drafter card reports `m_accept ~= 1.38`, already below expected break-even, so keep MiniMax optimization focused on non-speculative Q/K collective fusion and MoE decode work for now.
-- A fast-NVMe DFlash retest with `num_speculative_tokens=4`, p64/n32, and `draft_tensor_parallel_size=1` also stalled after successful target/drafter load and AOT compile. It stayed at `Processed prompts: 0/1`, emitted repeated shared-memory broadcast warnings, and produced no benchmark JSON, so it was not submitted to LocalMaxxing.
-- MiniMax AutoRound EP with a non-local expert skip is functional but not useful yet. Keeping non-local expert ids as `-1` and skipping them inside the llm-scaler u4 kernels only moved a BF16 p1/n8 EP smoke from `16.795602` to `16.883004` total tok/s, far below the stable non-EP BF16 u4 p512/n512 result of `36.607699` output tok/s. Treat EP loss as communication/scheduler/all-to-all dominated until proven otherwise.
-- The guarded `VLLM_XPU_ALLREDUCE_ASYNC_WAIT=1` hook completed a full BF16 0.95 MiniMax p512/n512 run at `35.949` output tok/s, but the hook is disabled inside compiled collectives. It stays as an eager-only diagnostic, not a speed setting or LocalMaxxing result.
-- Casting the MiniMax Q/K RMS variance allreduce payload from FP32 to FP16 is also negative: the graph changed to `f16[s72,2]` variance collectives, but warm p512/n512 reached only `35.316` output tok/s and carries a normalization-precision tradeoff. The active runtime was reverted to FP32 variance allreduce; keep `VLLM_MINIMAX_QK_VAR_ALLREDUCE_DTYPE` unset.
-- Inlining `MiniMaxText01LinearAttention` is not applicable to the active MiniMax M2 AutoRound model: it uses `minimax_m2.py` normal attention, produced the same `4799a3c8...` AOT hash, and the temporary gate was removed.
-- Source-tree vLLM IR `fused_add_rms_norm` is a useful diagnostic but not a speed path yet. After adding the B70 MiniMax MoE config to `/home/steve/src/vllm`, source default warmed to `34.602` output tok/s, source with `--enable-flashinfer-autotune` warmed to `35.781`, and source with `fused_add_rms_norm=["xpu_kernels","native"]` warmed to `35.649`, all below the installed-runtime p512/n512 reference. The installed `custom_ops=["none","+rms_norm"]` path also warmed to only `36.159`. Do not submit these to LocalMaxxing.
-- A follow-up installed-runtime post-attention fused-add RMS screen was also negative. `VLLM_MINIMAX_POST_ATTN_FUSED_ADD_RMS_XPU=1` warmed to `35.077` output tok/s at p512/n512, and pairing it with delayed output-projection allreduce warmed to `35.804`, still below the accepted `39.611` reference. Keep both env flags unset and move to true collective-plus-epilogue fusion.
-- Wrapping output-projection allreduce plus fused-add RMSNorm in a Python-level custom op is worse: after fixing an initial Dynamo registration failure, the warm p512/n512 run reached only `32.611` output tok/s. This confirms that the next MiniMax fusion must be C++/SYCL or compiler-level, not a Python custom-op wrapper around existing allreduce and RMS kernels.
-- A current clean MiniMax p512/n1536 refresh reached `37.17` output tok/s / `49.558` total tok/s with 17,216 GPU KV-cache tokens. The loaded AOT graph contains 187 TP allreduces per generated-token graph on rank 0: 62 Q/K variance reductions, 62 output-projection hidden reductions, 62 MoE hidden reductions, and one vocab-embedding reduction. The next target is reducing the effective cost of the hidden-state allreduce plus residual/RMSNorm boundaries, not more standalone MoE microkernels.
-- Intel llm-scaler branch `origin/fix_27b_kernel` (`db05b45`) fixes a large-`N` dense INT4 ResAddNormGEMV race reported on Qwen3.6-27B `gate_up` (`N=8704,K=5120,TP=4`). It is relevant if we return to dense Qwen3.6 INT4 AutoRound/sym-int4, but not to the current MiniMax u4 MoE bridge, Qwen Q4_0 GGUF, or Qwen static FP8 paths.
-- Latest MiniMax negative screens keep the optimization target pointed at source-level fusion rather than launch flags. Direct XPU Q/K RMS helper (`28.036` tok/s), llm-scaler MoE logits path (`35.899`), TP2/PP2 (`24.976`), and generic FP8 KV (`28.104`) all underperformed the quality-cleared TP4 p512/n512 reference (`39.611`). Explicit `fp8_e5m2` KV fails in the XPU FlashAttention metadata path. These were not submitted to LocalMaxxing; they are recorded as pruning data.
+Use the [historical archive](notes/2026-07-11-readme-historical-b70-archive.md)
+for the original long-form findings. Current model-specific starting points are
+the [results index](results/README.md), including the
+[MiniMax M2.7 packet](results/minimax-m27-int4-autoround-b70/README.md), and the
+[cross-model effort index](docs/model-effort-index.md). Underlying notes, data,
+patches, experiments, and reproduction paths were intentionally left in place.
 
 ## Layout
 
-- `plans/q4_0-gguf-b70-optimization-plan.md`: active quality-preserving GGUF optimization plan.
-- `plans/2026-05-05-negative-followups-addendum.md`: latest plan addendum after the PP2, CCL topology, small-F32, and MiniMax guard screens.
-- `notes/b70-llm-lab-notes.md`: running investigation log, benchmarks, TODOs, and lessons learned.
-- `notes/2026-05-04-qwen36-fp8-b70-fa2.md`: focused writeup for the Qwen3.6 27B static FP8 / vLLM XPU FA2 result on 4x B70.
-- `notes/2026-05-04-vllm-xpu-ngram4-fp8-validation.md`: current best static FP8 n-gram speculative validation.
-- `notes/2026-05-04-qwen36-q4-eventbarrier.md`: current best Q4_0 three-B70 event-barrier allreduce validation.
-- `notes/2026-05-04-minimax-row-split-ncmoe-staircase.md`: MiniMax row-split expert allocation staircase.
-- `notes/2026-05-05-negative-followups.md`: negative follow-up screens and backend bugs found after the current best results.
-- `notes/2026-05-06-fp8-mtp-block-fp8-clean.md`: clean-load but slow Qwen3.6 FP8 MTP hybrid follow-up.
-- `notes/2026-05-06-llm-scaler-source-mining.md`: llm-scaler ESIMD source-mining notes for the next Q4 kernel/fusion work.
-- `notes/2026-05-06-q4-esimd-blockscales.md`: ESIMD harness block-loaded scale metadata win; positive standalone kernel direction.
-- `notes/2026-05-06-q4-graph-pattern-probe.md`: Q4_0 decode graph probe showing same-activation multi-GEMV fusion opportunities.
-- `notes/2026-05-06-q4-active-device-row-split.md`: focused active-device row-split patch and row-split safety failure.
-- `notes/2026-05-06-q4-fused-mmvq2-swiglu.md`: opt-in Q4_0 gate/up matvec plus SwiGLU fusion and validation.
-- `notes/2026-05-06-q4-rmsnormmul.md`: opt-in RMS_NORM+scale-MUL fusion and current best Q4_0 GGUF validation.
-- `notes/2026-05-06-q4-getrows-fusion-neutral.md`: opt-in allreduce+GET_ROWS fusion; initially neutral, later a small current-stack win.
-- `notes/2026-05-06-q4-projection-epilogue-diagnostic.md`: diagnostic `MUL_MAT+allreduce+ADD` scheduler hook; path works with Q8 disabled but regresses short decode, so it stays off.
-- `notes/2026-05-06-q4-single-subgroup-current-negative.md`: current-stack single-B70 subgroup runtime sweep; default remains best.
-- `notes/2026-05-06-q4-vdr4-negative.md`: runtime-gated one-lane-per-Q4_0-block reordered MMVQ screen; regressed short decode, so keep it off.
-- `notes/2026-05-06-q4-allreduce-max-bytes.md`: opt-in larger fused allreduce ceiling probe; useful diagnostic but not a speed win.
-- `notes/2026-05-06-fp8-pp2-postreboot-validation.md`: post-reboot FP8 PP2xTP2 XCCL/load/speculative plumbing validation.
-- `notes/2026-05-07-q4-q8-allreduce-add-guardfix.md`: regression fix for the misplaced Q8-cache guard that disabled the validated allreduce+ADD path.
-- `notes/2026-05-07-fp8-tp4-pp2-refresh.md`: FP8 TP4 vs PP2xTP2 post-reboot refresh, including the oneCCL topology-toggle screen.
-- `notes/2026-05-07-q4-quad-assist-refresh.md`: current best four-card Q4_0 assist split refresh after the guard fix.
-- `notes/2026-05-07-q4-root-residual-tp3.md`: three-card Q4_0 TP3 root-residual performance ceiling, now annotated as not currently quality-cleared after the later token/logit failure.
-- `notes/2026-05-07-q4-fused-beta-alpha-experimental.md`: flat-layout Qwen35 fused `ssm_beta`/`ssm_alpha` GGUF experiment, quality-cleared with root-residual disabled.
-- `notes/2026-05-07-model-retention-cleanup.md`: model-tree cleanup record and current keep set.
-- `notes/2026-05-07-minimax-ikrpc-sycl-13tok-baseline.md`: ik_llama.cpp RPC+SYCL process-per-GPU baseline that reached 13.754 tok/s on MiniMax M2.7 UD-IQ4_XS.
-- `notes/2026-05-08-minimax-direct-sycl-and-placement.md`: direct-SYCL allocation blocker and MiniMax RPC layer-placement sweep.
-- `notes/2026-05-08-minimax-correct-graph-reduce.md`: quality-correct MiniMax graph reduce diagnostic and why host-mediated reduce/broadcast is too slow.
-- `notes/2026-05-08-minimax-layer-knob-and-kernel-screens.md`: MiniMax layer-mode runtime knob, unsupported-op, and small-kernel screens.
-- `notes/2026-05-08-minimax-cpy-shape-trace.md`: MiniMax SYCL `CPY` shape trace and negative shape-specific copy fast path.
-- `notes/2026-05-08-minimax-fused-rmsnorm-sycl.md`: MiniMax SYCL RPC worker `FUSED_RMS_NORM` implementation and speed screen.
-- `notes/2026-05-08-minimax-autoround-vllm-xpu.md`: MiniMax AutoRound INT4 vLLM/XPU bring-up, including the quantized-MoE fit patch and remaining blockers.
-- `notes/2026-05-09-minimax-u4-decode-path.md`: unsigned llm-scaler u4 MiniMax decode path, p512/n128 `29.74843` output tok/s result, and negative `ngram_gpu` follow-up.
-- `notes/2026-05-09-minimax-comm-and-ws-moe-followups.md`: oneCCL small-payload, MoERunner timing, direct-dispatch, and ESIMD work-sharing u4 follow-ups; all kept as diagnostics/negatives.
-- `notes/2026-05-09-minimax-dflash-speculative-blocker.md`: DFlash speculative drafter smoke; model loads and compiles, then stalls before producing a 16-token result.
-- `notes/2026-05-09-minimax-bf16-u4-decode.md`: BF16-capable MiniMax AutoRound u4 decode path; restores BF16 speed to near the FP16 reference without forcing FP16 hidden states.
-- `notes/2026-05-09-minimax-oneapi-compiler-compat.md`: oneAPI 2025.3 compiler compatibility finding, FP16 u4 restore, and negative XPU graph / CCL IPC / context-size screens.
-- `notes/2026-05-09-minimax-router-logits-fusion-negative.md`: default-off fused top-2/router logits experiment; standalone math passes, full TP4 vLLM run hangs.
-- `notes/2026-05-09-minimax-ep-skip-and-dflash-update.md`: EP non-local expert skip smoke and updated DFlash speculative retry matrix; both negative for speed.
-- `notes/2026-05-10-llm-scaler-fix-27b-kernel.md`: upstream llm-scaler Qwen3.6 27B dense INT4 correctness fix discovered after fetching `origin/fix_27b_kernel`.
-- `notes/2026-05-10-minimax-qk-allreduce-diagnostic-and-39tok.md`: correctness-breaking Q/K allreduce skip diagnostic plus the valid repeated 39 tok/s MiniMax AutoRound result.
-- `notes/2026-05-10-minimax-timing-and-ccl-sweep.md`: MiniMax synchronized timing and oneCCL environment sweep showing default CCL behavior remains best so far.
-- `notes/2026-05-10-minimax-qk-apply-rope-helper-negative.md`: default-off Q/K apply+RoPE helper, oneAPI 2025.3 build note, and negative compiled-throughput result.
-- `notes/2026-05-10-minimax-qk-rms-helper-retest.md`: standalone Q/K RMS var/apply helper retest after the AOT-cache regression; functional but still slower than the stock path.
-- `notes/2026-05-10-minimax-scheduler-and-xccl-microbench.md`: vLLM scheduler/compile screens and XCCL allreduce microbench at MiniMax decode tensor sizes.
-- `notes/2026-05-10-minimax-restore-and-htile-negative.md`: active-runtime restore after removing the default-off Q/K apply+RoPE branch, p512/n2048 screens, out-of-place XCCL microbench, and negative llm-scaler htile experiment.
-- `notes/2026-05-10-minimax-aot-cache-regression.md`: MiniMax AOT-cache regression record after the timing-helper no-op experiment, isolated Inductor knob negatives, and current reproducible 35-36 tok/s floor.
-- `notes/2026-05-10-minimax-aot-followups.md`: follow-up AOT recovery screens: extra graph boundaries, archived AOT check, topology retest, current live repeat, and aggressive Inductor autotune negatives.
-- `notes/2026-05-10-minimax-inplace-allreduce-and-xpu-fusion.md`: guarded compiled-XPU allreduce clone-skip negative and the next Level Zero IPC/P2P-backed Q/K RMS fusion direction.
-- `notes/2026-05-10-xpu-level-zero-peer-probe.md`: Level Zero B70 P2P/IPC peer-memory feasibility probe for the next MiniMax Q/K RMS fusion prototype.
-- `notes/2026-05-10-minimax-xpu-ipc-qk-var-prototype.md`: PyTorch/SYCL Level Zero IPC Q/K variance prototype; correctness passes under controlled slots, but standalone decode-sized IPC is hundreds of ms per call.
-- `notes/2026-05-10-minimax-vllm-ipc-qk-var-integration.md`: default-off vLLM MiniMax Q/K variance IPC allreduce integration; eager liveness passes, preinit avoids the first compile crash, but actual IPC execution is currently much too slow.
-- `notes/2026-06-11-qwen36-aot-localmaxxing-and-runtime-screens.md`: Qwen3.6 35B Quark W8A8 INT8 accepted baseline, Localmaxxing submission, n-gram/speculation diagnostics, route-capture/heatmap/component scans, and the current bigger-bet idea backlog for reaching higher single-request decode without quality loss.
-- `notes/2026-06-12-qwen36-next-bigger-bets.md`: focused Qwen3.6 35B Quark W8A8 INT8 next-experiment backlog after the restored `~100 tok/s` baseline, including real-path MoE scratch reuse, persistent-MoE layerlets, strict 8-bit bakeoff, resident-state verifier speculation, static c1 latency lane, tile-native W8A8 repack, and upstreamable XPU perf packet ideas.
-- `data/qwen36-fp8-32k-tp4-vs-pp2-20260506.json`: post-reboot Q4 sanity plus FP8 32k-context TP4 vs TP2/PP2 validation.
-- `data/q4-esimd-blockscales-20260506.json`: structured ESIMD block-loaded scale metadata screen.
-- `data/q4-active-device-row-split-20260506.json`: structured active-device row-split patch validation and negative row-split smoke.
-- `data/qwen36-q4-fused-mmvq2-swiglu-20260506.json`: structured fused MMVQ2+SwiGLU correctness, performance, and LocalMaxxing record.
-- `data/qwen36-q4-rmsnormmul-20260506.json`: structured RMS_NORM+scale-MUL correctness, performance, failed 4x diagnostic, and LocalMaxxing record.
-- `data/qwen36-q4-getrows-fusion-20260506.json`: structured allreduce+GET_ROWS A/B data, correctness check, and LocalMaxxing record.
-- `data/qwen36-q4-projection-epilogue-diagnostic-20260506.json`: structured Q8 guard, path smoke, and negative A/B for the projection epilogue scheduler hook.
-- `data/qwen36-q4-single-subgroup-current-20260506.json`: structured current-stack single-B70 subgroup runtime sweep.
-- `data/qwen36-q4-vdr4-negative-20260506.json`: structured Q4_0 reordered MMVQ VDR4 negative screen.
-- `data/qwen36-q4-allreduce-max-bytes-20260506.json`: structured Q4_0 larger allreduce-fusion ceiling probe.
-- `data/qwen36-fp8-pp2-postreboot-validation-20260506.json`: structured FP8 PP2xTP2 post-reboot validation data.
-- `data/qwen36-q4-q8-allreduce-add-guardfix-20260507.json`: structured Q4_0 guard-fix trace, restored throughput, and LocalMaxxing record.
-- `data/qwen36-fp8-tp4-pp2-refresh-20260507.json`: structured FP8 TP4, PP2xTP2, n-gram, and oneCCL topology-toggle refresh data.
-- `data/qwen36-q4-quad-assist-refresh-20260507.json`: structured four-card Q4_0 assist split refresh data and LocalMaxxing record.
-- `data/qwen36-q4-root-residual-tp3-20260507.json`: structured root-residual TP3 performance ceiling, negative follow-up screens, LocalMaxxing IDs, and later correctness correction.
-- `data/qwen36-q4-fused-beta-alpha-20260507.json`: structured flat-layout fused beta-alpha GGUF experiment data and final no-root correctness/performance validation.
-- `data/minimax-m27-ikrpc-sycl-13tok-baseline-20260507.json`: structured MiniMax RPC+SYCL result table, command, source patches, LocalMaxxing ID, and next blockers.
-- `data/minimax-m27-direct-sycl-placement-20260508.json`: structured direct-SYCL allocation failures and layer-placement sweep.
-- `data/minimax-m27-correct-graph-reduce-20260508.json`: structured corrected MiniMax graph reduce diagnostic.
-- `data/minimax-m27-layer-knob-and-kernel-screens-20260508.json`: structured MiniMax layer-mode knob and kernel screens.
-- `data/minimax-m27-cpy-shape-trace-20260508.json`: structured MiniMax `CPY` shape trace and negative fast-path test.
-- `data/minimax-m27-fused-rmsnorm-sycl-20260508.json`: structured MiniMax fused RMSNorm implementation result.
-- `data/minimax-m27-autoround-vllm-xpu-20260508.json`: structured MiniMax AutoRound INT4 vLLM/XPU bring-up result and remaining MoE tuning blocker.
-- `data/minimax-m27-autoround-u4-decode-20260509.json`: structured unsigned llm-scaler u4 decode path result, patch references, LocalMaxxing payload, and negative speculative follow-up.
-- `data/minimax-m27-compiled-timing-summary-20260509.json`: synchronized rank-0 compiled timing summary showing the post-u4 remaining ceiling is outside the raw MoE bridge.
-- `data/minimax-m27-comm-direct-ws-followups-20260509.json`: structured oneCCL env, MoE timing, direct-dispatch, and work-sharing u4 follow-up outcomes.
-- `data/minimax-m27-dflash-speculative-blocker-20260509.json`: structured DFlash load/compile/smoke-stall result.
-- `data/minimax-m27-bf16-u4-decode-20260509.json`: structured BF16 u4 decode results and patch references.
-- `data/minimax-m27-autoround-oneapi2025-recovery-20260509.json`: structured compiler compatibility restore data and follow-up toggle results.
-- `data/minimax-m27-ep-skip-and-dflash-20260509.json`: structured EP skip and DFlash retry matrix.
-- `data/minimax-m27-fast-nvme-scheduler-xpu-graph-20260510.json`: fast-NVMe MiniMax scheduler, XPU graph, GPU-memory-utilization, B70 MoE config, and BF16 capacity-mode follow-up data.
-- `data/llm-scaler-fix-27b-kernel-20260510.json`: structured record of upstream llm-scaler `fix_27b_kernel` and its relevance boundaries.
-- `data/minimax-m27-qk-allreduce-diagnostic-39tok-20260510.json`: structured MiniMax Q/K allreduce diagnostic, p512/n512 repeat, and LocalMaxxing ID.
-- `data/minimax-m27-timing-and-ccl-sweep-20260510.json`: structured MiniMax timing diagnostics and oneCCL sweep results.
-- `data/minimax-m27-qk-apply-rope-helper-negative-20260510.json`: structured Q/K apply+RoPE helper validation, negative benchmark, and `CCL_ALLREDUCE=direct` screen.
-- `data/minimax-m27-qk-rms-helper-retest-20260510.json`: structured standalone Q/K RMS var/apply helper retest and negative decision.
-- `data/minimax-m27-scheduler-and-xccl-microbench-20260510.json`: structured scheduler/compile negatives and XCCL microbench data.
-- `data/minimax-m27-restore-longoutput-htile-20260510.json`: structured restore, long-output, XCCL out-of-place, XPU graph follow-up, and htile negative results.
-- `data/minimax-m27-aot-cache-regression-20260510.json`: structured AOT-cache regression, graph-shape, no-autotune, combo-kernel-off, and current floor measurements.
-- `data/minimax-m27-aot-followups-20260510.json`: structured follow-up AOT recovery attempts and current repeat results after the `c15860...` regression.
-- `data/minimax-m27-inplace-allreduce-and-xpu-fusion-20260510.json`: structured compiled-XPU allreduce clone-skip negative and XPU fusion next-direction record.
-- `data/xpu-level-zero-peer-probe-b70-20260510.json`: structured Level Zero B70 P2P/IPC peer-memory feasibility result.
-- `data/minimax-xpu-ipc-qk-var-prototype-20260510.json`: structured first XPU IPC Q/K variance prototype results.
-- `data/minimax-m27-vllm-xpu-ipc-qk-var-integration-20260510.json`: structured vLLM MiniMax IPC Q/K variance integration smoke results and compiled-mode blocker.
-- `notes/2026-05-10-minimax-ccl-worker-affinity-negative.md`: oneCCL worker-affinity screen showing affinity pinning underperformed the accepted MiniMax references.
-- `data/minimax-m27-ccl-worker-affinity-negative-20260510.json`: structured oneCCL worker-affinity screen data.
-- `notes/2026-05-10-minimax-aot-collective-inspection.md`: MiniMax AOT graph inspection identifying allreduce/wait boundaries as the source-level fusion target.
-- `data/minimax-m27-aot-collective-inspection-20260510.json`: structured AOT collective/RMS inspection data.
-- `notes/2026-05-13-minimax-aot-collective-classifier.md`: updated current-AOT classifier result showing 1,496 actual allreduce/wait pairs.
-- `data/minimax-m27-aot-collective-classification-20260513.json`: structured current-AOT allreduce/wait classification data.
-- `notes/2026-05-10-minimax-negative-screens.md`: direct Q/K helper, MoE logits, TP2/PP2, and FP8 KV negative screens after raising the MiniMax target to 60 tok/s.
-- `data/minimax-m27-negative-screens-20260510.json`: structured data for those negative screens and external reference notes.
-- `benchmarks/b70_minimax_qk_boundary_bench.py`: XCCL/QK variance/helper microbench for MiniMax TP4 layer shapes.
-- `data/minimax-m27-qk-boundary-microbench-20260510.json`: structured microbench data explaining why the direct helper looked promising in isolation but regressed in the full compiled model.
-- `data/localmaxxing-submission-minimax-m27-autoround-bf16-u4-decode-20260509.json`: LocalMaxxing response for the BF16 u4 decode p512/n512 result.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-bf16-gpumem095-p512n1024-20260510.payload.json`: LocalMaxxing payload for the fast-NVMe BF16 0.95 MiniMax capacity-mode result.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-bf16-gpumem095-p512n1024-20260510.response.json`: LocalMaxxing response for the fast-NVMe BF16 0.95 MiniMax capacity-mode result.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-p512n512-20260510.payload.json`: LocalMaxxing payload for the valid fast-NVMe FP16 p512/n512 MiniMax AutoRound high.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-p512n512-20260510.response.json`: LocalMaxxing response for the valid fast-NVMe FP16 p512/n512 MiniMax AutoRound high.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-p512n1024-20260510-refresh.payload.json`: LocalMaxxing payload for the valid refreshed fast-NVMe FP16 p512/n1024 MiniMax AutoRound high.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-p512n1024-20260510-refresh.response.json`: LocalMaxxing response for the valid refreshed fast-NVMe FP16 p512/n1024 MiniMax AutoRound high.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-p512n1536-20260510.payload.json`: LocalMaxxing payload for the valid fast-NVMe FP16 p512/n1536 MiniMax AutoRound high.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-p512n1536-20260510.response.json`: LocalMaxxing response for the valid fast-NVMe FP16 p512/n1536 MiniMax AutoRound high.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen4096-p512n1536-20260510.payload.json`: LocalMaxxing payload for the valid `max_model_len=4096` MiniMax AutoRound capacity datapoint.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen4096-p512n1536-20260510.response.json`: LocalMaxxing response for the valid `max_model_len=4096` MiniMax AutoRound capacity datapoint.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen4096-gpumem095-p512n1536-20260510.payload.json`: LocalMaxxing payload for the valid `max_model_len=4096`, `gpu_memory_utilization=0.95` MiniMax AutoRound capacity datapoint.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen4096-gpumem095-p512n1536-20260510.response.json`: LocalMaxxing response for the valid `max_model_len=4096`, `gpu_memory_utilization=0.95` MiniMax AutoRound capacity datapoint.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen8192-gpumem095-p512n1536-20260510.payload.json`: LocalMaxxing payload for the valid `max_model_len=8192`, `gpu_memory_utilization=0.95` MiniMax AutoRound capacity datapoint.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen8192-gpumem095-p512n1536-20260510.response.json`: LocalMaxxing response for the valid `max_model_len=8192`, `gpu_memory_utilization=0.95` MiniMax AutoRound capacity datapoint.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen8192-gpumem095-p4096n512-20260510.payload.json`: LocalMaxxing payload for the valid `max_model_len=8192`, `gpu_memory_utilization=0.95`, p4096/n512 MiniMax AutoRound larger-prompt capacity datapoint.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen8192-gpumem095-p4096n512-20260510.response.json`: LocalMaxxing response for the valid `max_model_len=8192`, `gpu_memory_utilization=0.95`, p4096/n512 MiniMax AutoRound larger-prompt capacity datapoint.
-- `data/localmaxxing-minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen8192-gpumem095-p512n1536-refresh-20260510.payload.json`: LocalMaxxing payload for the refreshed `max_model_len=8192`, `gpu_memory_utilization=0.95`, p512/n1536 MiniMax AutoRound capacity datapoint.
-- `data/localmaxxing-responses/minimax-m27-autoround-u4-decode-fp16-fast-nvme-maxlen8192-gpumem095-p512n1536-refresh-20260510.response.json`: LocalMaxxing response for the refreshed `max_model_len=8192`, `gpu_memory_utilization=0.95`, p512/n1536 MiniMax AutoRound capacity datapoint.
-- `data/minimax-m27-autoround-dflash-fast-nvme-negative-20260510.json`: structured negative DFlash speculative-decode retest from fast NVMe.
-- `data/minimax-m27-source-ir-fusedadd-screen-20260510.json`: structured source-tree and installed-runtime RMS/fused-add implementation screen.
-- `data/minimax-m27-postattn-fusedadd-delay-negative-20260510.json`: structured installed-runtime post-attention fused-add RMS and delayed-output-allreduce negative screen.
-- `data/minimax-m27-python-ar-fused-customop-negative-20260510.json`: structured Python custom-op allreduce plus fused-add RMS negative screen.
-- `notes/2026-05-10-b70-pcie-and-xpu-smi.md`: B70 PCIe hierarchy and `xpu-smi` setup note; all four slot-facing links are PCIe 5.0 x16, PCIe downgrade is disabled, and a local no-file `libze1` shim keeps the existing Intel Level Zero loader intact.
-- `data/b70-pcie-and-xpu-smi-20260510.json`: structured PCIe bridge table and `xpu-smi` package state.
-- `configs/vllm/minimax-m27-b70-int4-w4a16-moe-hybrid-20260508.json`: hybrid B70 MoE config for MiniMax AutoRound vLLM/XPU, tuned key `1` plus default prompt-size keys.
-- `configs/vllm/minimax-m27-b70-int4-w4a16-moe-ep-negative-20260508.json`: expert-parallel MiniMax MoE config retained as a negative/blocked result after EP underperformed and the tuned-config run OOMed.
-- `scripts/bench-qwen36-q4_0-gguf-vulkan-matrix.sh`: Q4_0 GGUF Vulkan benchmark sweep harness.
-- `scripts/bench-qwen36-q4_0-gguf-sycl-matrix.sh`: Q4_0 GGUF SYCL benchmark sweep harness.
-- `scripts/bench-qwen36-b70-single-mtp.sh`: single-B70 vLLM INT4 MTP benchmark wrapper.
-- `scripts/bench-qwen36-b70-tp2.sh`: dual-B70 vLLM TP2 benchmark wrapper.
-- `scripts/bench-vllm-qwen36-fp8.sh`: reusable Qwen3.6 FP8 vLLM latency wrapper with TP/PP/speculative knobs.
-- `scripts/bench-vllm-minimax-autoround-xpu.sh`: reusable MiniMax M2.7 AutoRound INT4 vLLM/XPU throughput wrapper for TP4 B70 bring-up.
-- `scripts/build-llm-scaler-moe-int4-xpu.sh`: reproducible llm-scaler INT4 extension rebuild wrapper that sources oneAPI 2025.3 for PyTorch XPU `libsycl.so.8` compatibility.
-- `scripts/qwen36-hotset-split-floor-model.py`: CPU-only Qwen3.6 hotset split break-even analyzer for dry-run route replay JSON; estimates cold fallback size, extra launches, and the body-speedup needed before a real XPU benchmark.
-- `scripts/summarize-vllm-aot-collectives.sh`: helper for inspecting vLLM AOT cache allreduce/wait/RMS patterns.
-- `scripts/add-qwen35-fused-ba-gguf.py`: experimental augmented-GGUF generator that adds fused Qwen35 `ssm_ba` tensors from separate alpha/beta tensors.
-- `scripts/submit_localmaxxing_results.py`: LocalMaxxing submission helper. Reads `LMX_API_KEY` first, then falls back to `~/.config/localmaxxing/api_key`; no API key is stored in this repo. See [docs/localmaxxing.md](docs/localmaxxing.md).
-- `benchmarks/b70_xccl_allreduce_bench.py`: XPU all-reduce/P2P microbenchmark.
-- `data/localmaxxing_payloads.json`: sanitized benchmark payloads submitted or queued for LocalMaxxing.
-- `notes/2026-05-10-fast-nvme-model-placement.md`: model placement update after moving the MiniMax GGUF shards to `/mnt/fast-ai` and preserving the original path as a symlink.
-- `data/qwen36-q4-eventbarrier-20260504.json`: structured Q4_0 event-barrier validation data.
-- `data/minimax-m27-row-split-ncmoe-staircase-20260504.json`: structured MiniMax staircase failure data.
-- `data/2026-05-05-negative-followups.json`: structured negative follow-up screens.
-- `patches/llama-b70-openvino-vulkan.patch`: local llama.cpp OpenVINO/Vulkan exploratory patch set.
-- `patches/llama-cpp-sycl-allreduce-event-barrier.patch`: incremental event-barrier allreduce marker patch.
-- `patches/llama-cpp-sycl-minimax-mulmatid-guard.patch`: diagnostic MiniMax `MUL_MAT_ID` split-buffer guard patch.
-- `patches/ik-llama-minimax-rpc-sycl-20260507.patch`: ik_llama.cpp patch set for the MiniMax RPC+SYCL baseline, including `llama-bench -no-mmad`, SYCL `SIGMOID`, SYCL `MULTI_ADD`, experimental `MUL_MULTI_ADD`, and fused-op fallback env flags.
-- `patches/llama-cpp-active-device-row-split-current-20260506.patch`: focused row-split selected-device to physical-backend split mapping patch.
-- `patches/llama-cpp-sycl-fused-mmvq2-swiglu-current-20260506.patch.gz.b64`: current SYCL source diff containing the fused MMVQ2+SwiGLU path.
-- `patches/llama-cpp-sycl-rmsnormmul-current-20260506.patch.gz.b64`: current SYCL source diff containing the RMS_NORM+scale-MUL path and allocator diagnostics.
-- `patches/llama-cpp-sycl-meta-mulmat-add-diagnostic-current-20260506.patch.gz.b64`: current llama.cpp diff containing the diagnostic `MUL_MAT+allreduce+ADD` scheduler hook.
-- `patches/llama-cpp-sycl-q4-current-guardfix-20260507.patch.gz.b64`: current llama.cpp diff after restoring Q8-cache compatibility for the validated allreduce+ADD path.
-- `patches/llama-cpp-qwen35-fused-beta-alpha-experimental-20260507.patch.gz.b64`: experimental Qwen35 fused `ssm_beta`/`ssm_alpha` GGUF source branch; quality-cleared only with root-residual disabled.
-- `patches/llama-cpp-sycl-q4_1-mmvq-experiment-20260507.patch`: focused default-off Q4_1 MMVQ dispatch experiment, retained as a negative result.
-- `patches/llama-cpp-sycl-q4-vdr4-experiment-current-20260506.patch.gz.b64`: current llama.cpp diff containing the runtime-gated Q4_0 reordered MMVQ VDR4 experiment.
-- `patches/llama-cpp-meta-allreduce-max-bytes-20260506.patch`: focused opt-in max-byte knob for fused meta allreduce diagnostics.
-- `patches/vllm-xpu-mtp-fallback.patch`: vLLM 0.20.1 XPU speculative/MTP fallback patch.
-- `patches/vllm-xpu-force-graph-with-comm-experiment.patch`: failed TP2 graph-capture experiment knob retained as a negative result.
-- `patches/vllm-xpu-fa2-compressed-tensors-scalar-scales.patch`: vLLM compressed-tensors singleton attention scale fix for Intel XPU FlashAttention2.
-- `patches/vllm-xpu-qwen35-gdn-spec-fallback-contiguous-state.patch`: XPU Gated DeltaNet speculative metadata/fallback patch used by the n-gram runs.
-- `patches/vllm-inc-xpu-autoround-fusedmoe-wna16-20260508.patch`: experimental vLLM patch that lets INC/AutoRound XPU quantization apply WNA16 MoE quantization to MiniMax `FusedMoE` layers instead of falling back to unquantized MoE.
-- `patches/vllm-minimax-qknorm-passmanager-xpu-guard-20260508.patch`: guard patch so enabling MiniMax QK-norm fusion on XPU does not crash when the fused Lamport op is absent.
-- `patches/vllm-benchmark-moe-xpu-tune-harness-20260508.patch`: local vLLM MoE benchmark harness patch for XPU/Ray device exposure, XPU eager timing, and pruned small-M decode tuning.
-- `patches/llm-scaler-moe-int4-u4-decode-20260509.patch`: llm-scaler MoE-only unsigned uint4 tiny decode kernel and Python binding.
-- `patches/vllm-minimax-llm-scaler-u4-decode-20260509.patch`: vLLM WNA16 MiniMax gate that enables the llm-scaler u4 path only for tiny FP16 decode batches.
-- `patches/llm-scaler-moe-int4-u4-bf16-decode-20260509.patch`: BF16-capable llm-scaler u4 decode kernel diff.
-- `patches/vllm-minimax-llm-scaler-u4-bf16-decode-20260509.patch`: vLLM WNA16 MiniMax gate update for BF16 decode activations and BF16 checkpoint scales.
-- `patches/vllm-xpu-decode-timing-summary-helper-20260509.patch`: standalone timing helper file with atexit summaries and corrected `PRINT_EVERY=0` summary-only behavior.
-- `patches/vllm-minimax-ep-u4-expert-map-skip-20260509.patch`: vLLM MiniMax WNA16/runner diff including the decode u4 bridge, router/logits gate, and EP non-local expert-map skip.
-- `patches/llm-scaler-minimax-ep-u4-skip-20260509.patch`: llm-scaler MiniMax u4 kernel diff including BF16/logits helpers and `expert < 0` skip handling.
-- `patches/vllm-xpu-allreduce-async-wait-guard-20260510.patch`: default-off XPU allreduce async-wait diagnostic hook; compiled MiniMax is blocked because TorchDynamo rejects `async_op=True` collectives.
-- `patches/vllm-minimax-qk-skip-tp-allreduce-diagnostic-20260510.patch`: correctness-breaking MiniMax Q/K TP allreduce skip diagnostic; retained only to prove naive Q/K collective removal is slower and invalid.
-- `patches/vllm-minimax-xpu-ipc-qk-var-20260510.patch`: default-off MiniMax Q/K variance Level Zero IPC allreduce hook; eager liveness passes, compiled integration remains blocked by Python-side initialization.
-- `patches/vllm-minimax-remove-qk-apply-rope-branch-restore-c158-20260510.patch`: active-runtime cleanup that removes the default-off Q/K apply+RoPE helper branch and restores the fast `c15860...` AOT graph cache.
-- `patches/vllm-minimax-graph-shaped-c158-floor-20260510.patch`: current MiniMax graph-shaped source state after the AOT regression: keeps timing boundaries/default-off Q/K RMS helper and uses the simple K-norm constructor that recovers the reproducible `c15860...` floor for this MiniMax M2.7 TP4 config.
-- `patches/llm-scaler-minimax-u4-down-htile-negative-20260510.patch`: negative llm-scaler htile experiment artifact; includes the prior u4 MiniMax work plus the failed htile addition, so do not reverse-apply it over the active runtime.
-- `patches/vllm-minimax-qk-var-allreduce-dtype-negative-20260510.patch`: negative MiniMax Q/K variance dtype experiment; FP16 variance collectives compiled but underperformed and were reverted from the active runtime.
-- `patches/vllm-source-b70-minimax-moe-config-20260510.patch`: source-tree B70 MiniMax MoE config needed for fair `/home/steve/src/vllm` import tests.
-- `patches/vllm-minimax-postattn-fusedadd-delay-negative-20260510.patch`: default-off installed-runtime post-attention fused-add RMS and delayed-output-allreduce experiment; archived as negative.
-- `patches/vllm-minimax-postattn-ar-fused-customop-negative-20260510.patch`: Python-level allreduce plus fused-add RMS custom-op wrapper; compiled but warmed to only `32.611` output tok/s.
-- `plans/2026-05-10-minimax-60tok-roadmap.md`: raised MiniMax AutoRound target ladder and next workstreams for quality-preserving 4x B70 optimization.
-- `data/minimax-m27-60tok-roadmap-update-20260510.json`: structured raised-target roadmap, quality guardrails, and external reference points.
-- `notes/2026-05-10-minimax-current-baseline-and-collective-census.md`: clean p512/n1536 MiniMax baseline refresh plus AOT allreduce-shape census.
-- `data/minimax-m27-current-baseline-collectives-20260510.json`: structured current baseline and collective census.
-- `notes/2026-05-10-minimax-dflash-fast-nvme-retest.md`: fast-NVMe DFlash retest; load/compile works, generation still stalls before any throughput result.
-- `notes/2026-05-10-minimax-source-ir-fusedadd-screen.md`: source-tree IR fused-add RMS screen; mechanically works but remains below the installed-runtime reference.
-- `notes/2026-05-10-minimax-postattn-fusedadd-delay-negative.md`: installed-runtime post-attention fused-add RMS and delayed-output-allreduce screen; both variants remained below the accepted MiniMax AutoRound reference.
-- `notes/2026-05-10-minimax-python-ar-fused-customop-negative.md`: Python custom-op allreduce plus fused-add RMS wrapper; liveness passes after registration fix, but p512/n512 throughput is clearly negative.
-- `notes/2026-05-10-minimax-60tok-collective-plan-update.md`: raised MiniMax AutoRound 4x B70 targets, latest upstream/speculation references, short negative screens, and the next hidden-state collective-boundary implementation plan.
-- `data/minimax-m27-collective-plan-update-20260510.json`: structured current anchors, short screens, timing diagnostics, external references, and next implementation order for the 60+ tok/s MiniMax target.
-- `patches/vllm-xpu-allreduce-moe-timing-20260510.patch`: opt-in allreduce/MoE timing hook artifact for reproducing the p64/n32 collective census.
-- `notes/2026-05-10-minimax-callsite-timing-diagnostic.md`: call-site timing label experiment; confirms per-token collective counts but is archived as a negative active-runtime patch because it slows compiled MiniMax.
-- `data/minimax-m27-callsite-timing-diagnostic-20260510.json`: structured call-site timing counts, negative compiled runs, and recovery validation after reverting the active runtime.
-- `notes/2026-05-13-minimax-async-runtime-screens.md`: vLLM async-engine, stream-interval, max-seqs, and no-prefix/no-chunk screens after the static decode compile win; records the current `48.092807` output tok/s best.
-- `notes/2026-05-13-minimax-fused-gemv-and-runtime-screens.md`: gmem 0.95 and mode3 runtime screens plus the llm-scaler fused ResAdd/RMS/INT4 GEMV race diagnosis.
-- `benchmarks/b70_resadd_norm_gemv_int4_race_probe.py`: synthetic B70/XPU probe comparing vLLM oneDNN W4A16 against llm-scaler fused ResAdd/RMS/INT4 GEMV on MiniMax TP4 projection shapes.
-- `data/minimax-m27-20260513-fused-gemv-and-runtime-screens.json`: structured data for the 2026-05-13 gmem, mode3, and fused-GEMV race screens.
-- `data/localmaxxing-minimax-m27-autoround-static-compile1-asyncengine-p512n1536-20260513.payload.json`: LocalMaxxing payload for the current quality-preserving MiniMax AutoRound async-engine best.
-- `data/localmaxxing-responses/minimax-m27-autoround-static-compile1-asyncengine-p512n1536-20260513.response.json`: LocalMaxxing response for the current quality-preserving MiniMax AutoRound async-engine best.
-- `patches/vllm-xpu-allreduce-callsite-timing-20260510.patch`: archived diagnostic-only call-site label patch; do not apply to production MiniMax runs.
-- `notes/2026-05-11-minimax-stock-allreduce-rms-xpu-screen.md`: stock vLLM `fuse_allreduce_rms` XPU screen; enabling the pass reaches FlashInfer CUDA imports and fails before any benchmark.
-- `data/minimax-m27-stock-allreduce-rms-xpu-screen-20260511.json`: structured control run and failure-mode record for the stock allreduce/RMS pass screen.
-- `patches/vllm-xpu-enable-stock-allreduce-rms-screen-20260511.patch`: minimal default-off XPU gate used only to reproduce the stock pass failure.
-- `notes/2026-05-11-minimax-generated-aot-analyzer-and-envconst.md`: generated-cache analyzer update plus reverted MiniMax env-constant helper screen.
-- `data/minimax-m27-generated-aot-analyzer-envconst-20260511.json`: structured data for the generated-cache analyzer and env-constant screen.
-- `notes/2026-05-11-minimax-c158-recheck-router-kv-screens.md`: corrected `c15860...` fast-result recheck plus graph-shaped recovery, FP8 KV, and FP16-router screens.
-- `data/minimax-m27-c158-recheck-router-kv-screens-20260511.json`: structured data for the C158 recheck and follow-up screens.
-- `notes/2026-05-11-minimax-fp16-router-audit.md`: MiniMax FP16-router route-agreement audit; direct FP16 changes expert sets, while FP16 top-16 fully covered exact biased FP32 top-8 in the smoke.
-- `data/minimax-m27-fp16-router-audit-20260511.json`: structured data for the FP16-router audit and candidate-repair lead.
-- `notes/2026-05-11-minimax-candidate-router-screen.md`: default-off MiniMax candidate-repair router prototype and negative p512/n512 screen.
-- `data/minimax-m27-candidate-router-screen-20260511.json`: structured data for the candidate-repair router screen.
-- `patches/vllm-minimax-candidate-router-screen-20260511.patch`: source diff for the candidate-router prototype.
-- `patches/vllm-minimax-graph-shaped-router-kv-screens-20260511.patch`: current vLLM MiniMax graph-shaped runtime diff used for the recovery, FP8 KV, and FP16-router screens.
-- `patches/llm-scaler-minimax-u4-logits-topk-negative-20260511.patch`: llm-scaler logits-topk experiment diff retained as a negative artifact.
+Use the [docs index](docs/README.md) for maintained navigation and the
+[repository organization](#how-the-repo-is-organized) above for placement
+rules. The former file-by-file inventory is retained in the
+[historical archive](notes/2026-07-11-readme-historical-b70-archive.md); it is
+not duplicated here because detailed inventories become stale quickly.

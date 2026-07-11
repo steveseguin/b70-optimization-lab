@@ -101,6 +101,22 @@ that the patch cannot affect, reducing variance and preventing a `+1-4%` MTP
 movement from being mistaken for a source win. For the Gemma 26B Q8 lane, see
 `results/gemma4-26b-a4b-q8-b70/reliability-protocol.md`.
 
+## Cross-Model Patterns Worth Reusing
+
+These are high-value investigation patterns, not universal flags. Recheck the
+model shape, runtime, quality lane, and complete endpoint before transferring
+one. The linked negative results are as important as the wins.
+
+| Pattern | Reusable rule | Evidence and boundary |
+| --- | --- | --- |
+| Specialize only the hot shape or phase | Keep the established path for shapes it handles well, and gate a specialized kernel narrowly to the decode, prefill, or verifier shape it actually improves. | MiniMax's tiny-batch u4 MoE path won only after prefill stayed on the normal fused-experts path; using the tiny path for prefill was a loss. See [MiniMax u4 decode](../notes/2026-05-09-minimax-u4-decode-path.md). |
+| Remove whole graph edges, not just arithmetic | Prefer fusion that eliminates a launch, intermediate write, host read, or synchronization boundary. Use conservative graph matching and exact-output checks. | Qwen Q4 gained from [MMVQ2 plus SwiGLU](../notes/2026-05-06-q4-fused-mmvq2-swiglu.md) and [RMSNorm plus scale-MUL](../notes/2026-05-06-q4-rmsnormmul.md). Gemma's promoted chain removed verifier and MoE materialization through several guarded fusions; see its [result packet](../results/gemma4-26b-a4b-q8-b70/README.md). |
+| Optimize the embedded collective boundary | Raw collective latency can be small while graph fencing, cloning, placement, or an adjacent epilogue dominates decode. Profile the producer, collective, and consumer together before changing oneCCL knobs. | MiniMax's [XCCL microbench](../notes/2026-05-10-minimax-scheduler-and-xccl-microbench.md) pointed to graph placement; generic flags and [Python wrapper fusion](../notes/2026-05-10-minimax-python-ar-fused-customop-negative.md) regressed. Qwen's [allreduce plus GET_ROWS](../notes/2026-05-06-q4-getrows-fusion-neutral.md) became useful only inside a later fused stack. |
+| Treat compiler artifacts as run identity | Record graph mode and generated-artifact identity, isolate compile caches between experiments, and do not infer a regression until the intended graph actually loaded. | Missing PIECEWISE configuration produced an accidental `~15 tok/s` Qwen graph-none comparison against a `~93 tok/s` lane; see the [graph investigation](../notes/2026-06-13-qwen36-decode-graph-replay-corruption.md). A no-op timing change overwrote a favorable MiniMax artifact; see the [AOT regression](../notes/2026-05-10-minimax-aot-cache-regression.md). |
+| Let the endpoint overrule the microbenchmark | Use isolated kernels to rank hypotheses and diagnose limits, never to promote a patch. Recheck the compiled model with the real shape and quality gate. | A MiniMax htile kernel improved from `140.425 us` to `44.430 us` in isolation but regressed full vLLM throughput; see the [htile negative](../notes/2026-05-10-minimax-restore-and-htile-negative.md). An isolated Q/K helper also won its microbench while losing in the compiled graph; see the [boundary data](../data/minimax-m27-qk-boundary-microbench-20260510.json). |
+| Separate speed, capacity, prefill, and service objectives | Maintain different validated recipes when a setting improves fit or prompt processing but hurts short decode. Do not collapse them into one "best" configuration. | Gemma keeps separate short-decode and long-context service lanes in its [result packet](../results/gemma4-26b-a4b-q8-b70/README.md). Qwen FP8 TP4 was the capacity layout while TP2/PP2 was slower for batch-1 decode; see the [TP4/PP2 refresh](../notes/2026-05-07-fp8-tp4-pp2-refresh.md). |
+| Choose GPU count empirically | More aggregate compute or memory does not imply faster batch-1 decode. Compare complete 1/2/3/4-GPU identities and treat uneven or assist splits as separate configurations. | Qwen Q4's validated four-card assist layout still trailed TP3, while equal four-card split was worse; see the [four-card refresh](../notes/2026-05-07-q4-quad-assist-refresh.md). Gemma's one-GPU strategy avoids collectives when the model fits. |
+
 ## Negative Result Discipline
 
 For every meaningful failed attempt, record:
