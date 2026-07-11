@@ -301,13 +301,26 @@ def make_official_rope(shape: QwenMTPShape, device: torch.device,
     if os.path.isdir(vllm_src) and vllm_src not in sys.path:
         sys.path.insert(0, vllm_src)
     try:
+        from vllm.config import VllmConfig, set_current_vllm_config
         from vllm.model_executor.layers.rotary_embedding import get_rope
-        rope = get_rope(
-            head_size=shape.head_dim,
-            max_position=262144,
-            rope_parameters=shape.rope_parameters,
-            is_neox_style=True,
-        )
+
+        def build_rope() -> Any:
+            return get_rope(
+                head_size=shape.head_dim,
+                max_position=262144,
+                rope_parameters=shape.rope_parameters,
+                is_neox_style=True,
+            )
+
+        try:
+            rope = build_rope()
+        except AssertionError as exc:
+            if "Current vLLM config is not set" not in str(exc):
+                raise
+            # Offline tools do not enter vLLM's engine config context. Supply
+            # the default context only while constructing the standard op.
+            with set_current_vllm_config(VllmConfig()):
+                rope = build_rope()
         return rope.to(device) if hasattr(rope, "to") else rope
     except Exception as exc:
         print(

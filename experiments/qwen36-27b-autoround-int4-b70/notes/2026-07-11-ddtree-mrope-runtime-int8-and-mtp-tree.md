@@ -276,9 +276,11 @@ pass `16/16`.
 
 1. Regular intrinsic-MTP trees are closed from the corrected four-GPU run; do
    not use the invalid `20260711T091158Z` table as supporting evidence.
-2. Build the 15+4 DFlash/MTP composite only if its offline oracle predicts at
-   least `+0.35` visible token/step; challenging the record likely needs much
-   more.
+2. The 15+4 DFlash/MTP composite is now closed by the offline oracle. Leaf-4
+   added only `+0.1283` visible token/step; even the all-parent proxy reached
+   only `+0.2958` with a prompt-cluster 95% upper bound of `0.3358`, below the
+   `+0.35` implementation gate. See
+   `2026-07-11-dflash-mtp-leaf-oracle-no-win.md`.
 3. Promotion still requires exact canaries, repeat64, 1K needle, baseline
    comparison, strict fresh/cached-zero suite, and same-window/crossover when
    movement is within variance.
