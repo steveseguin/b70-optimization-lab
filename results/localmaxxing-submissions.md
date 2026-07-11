@@ -30,6 +30,16 @@ only**, even if their original labels used `fresh` or the first measured row had
 `cached_tokens=0`. A single synthetic/filled-long row0 is not enough for a
 current headline claim or a new LocalMaxxing submission.
 
+Date: 2026-07-11
+
+Model: `webhie/Qwen3.6-27B-int4-AutoRound`, AutoRound INT4 W4A16 plus runtime
+INT8 target LM-head BF16 scales and runtime INT4 draft LM-head BF16 scales,
+vLLM/XPU TP2 on two Intel Arc Pro B70 GPUs.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `qwen36-27b-webhie-int4-autoround-b70-vllm-tp2-public-oneccl-mtp3-cg8-78tok-20260711` | `cmrghhs27004cmj01dijk9r9f` | 2 | suite median 69 | 512 | **78.226 median 1-100 after TTFT** | 69.879 median wall full output | **policy-compliant realistic suite and new mechanism**: fixed `qwen36-27b-autoround-int4-b70-realistic-v1`, 12 unique prompts each once cold, `cached_tokens=0` every row, no prompt/KV/context/response/history reuse, target-verified MTP3. Pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` fixes the installed runtime's packed-verifier XPUGraph collective corruption; direct `256/256` and graph `512/512` oracles passed on both ranks. Conservative isolated p10 `69.963`, mean `78.598`, TTFT `750.031 ms`; separate full-quality high `81.341` passed exact cases, repeat128, baseline parity, and the 1K needle. The `3.98%` run delta is inside the established `4.4%` variance band, so `78.226` is the submitted headline. Result packet `results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`, queue `experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-tp2-public-oneccl-20260711.queue.json`, approved response `data/localmaxxing-responses/qwen36-27b-webhie-int4-tp2-public-oneccl-20260711.submit.log`. |
+
 Date: 2026-07-03
 
 Model: `Intel/Qwen3.6-27B-int4-AutoRound`, AutoRound INT4 W4A16, vLLM/XPU on

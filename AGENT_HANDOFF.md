@@ -61,8 +61,8 @@ Active target as of the latest switch request:
   rows differ by `3.98%`, within the established `4.4%` endpoint variance
   band, so use `78.226` as the headline. The installed oneCCL runtime fails
   the packed-verifier BF16 `[4,5120]` graph oracle, while pinned public oneCCL
-  parent `b52f40c` / libccl `4ceafd1` passes direct and graph controls. Start
-  from
+  parent `b52f40c` / libccl `4ceafd1` passes direct and graph controls.
+  LocalMaxxing approved it as `cmrghhs27004cmj01dijk9r9f`. Start from
   `results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
   and
   `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.

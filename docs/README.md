@@ -145,6 +145,8 @@ target-verified MTP3, unique cold prompts, and `cached_tokens=0`. The newer
 public oneCCL/libccl revision fixes deterministic packed-verifier graph replay
 failures in the installed runtime. See
 [the TP2 record packet](../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json).
+LocalMaxxing approved the conservative two-B70 row as
+`cmrghhs27004cmj01dijk9r9f`.
 The previous one-B70 record was `68.236 tok/s` (LocalMaxxing
 `cmr9atqb800msqr01u760xh0t`), and the previous BF16-scale INT8-LM-head-only
 record was `65.276 tok/s`. The

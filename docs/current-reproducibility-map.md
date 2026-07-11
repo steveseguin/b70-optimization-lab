@@ -94,6 +94,7 @@ the production LAN endpoint:
   established `4.4%` endpoint variance band.
 - current result packet:
   `../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
+- current TP2 LocalMaxxing approval: `cmrghhs27004cmj01dijk9r9f`
 - oneCCL build/oracle/repro:
   `../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`
 - prior TP1 LocalMaxxing: ReplaySSM draft-INT4 row approved as

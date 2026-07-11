@@ -15,6 +15,7 @@ pinned public oneCCL/libccl: conservative isolated median
 the 1K needle, and used `cached_tokens=0` for every strict prompt. The `3.98%`
 difference between the valid rows is inside the established `4.4%` endpoint
 variance band, so promote `78.226`, not the high row.
+LocalMaxxing approved the conservative row as `cmrghhs27004cmj01dijk9r9f`.
 
 The result, bisection, and reproduction paths are:
 

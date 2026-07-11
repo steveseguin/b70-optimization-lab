@@ -35,6 +35,8 @@ so `78.226` is the promoted number. Start from
 `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`, and the
 checksum-gated wrapper
 `experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh`.
+LocalMaxxing approved the conservative TP2 row as
+`cmrghhs27004cmj01dijk9r9f`.
 
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU
