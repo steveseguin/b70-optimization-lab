@@ -4,7 +4,8 @@ set -euo pipefail
 # Strict fresh-response candidate wrapper for Qwen3.6 27B vLLM/XPU lanes.
 #
 # This is intended for source/config/checkpoint screens that might become
-# headline candidates. It starts one isolated TP1 server, runs the fixed Qwen
+# headline candidates. It starts one isolated server at the requested tensor
+# parallel size, runs the fixed Qwen
 # realistic suite once per prompt with cached_tokens=0 required, optionally runs
 # the deterministic Qwen text quality suite, then writes a compact summary.
 #
@@ -17,11 +18,15 @@ cd "$ROOT"
 STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 LABEL="${LABEL:-qwen27-candidate}"
 GPU_INDEX="${GPU_INDEX:-0}"
+TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
 PORT="${PORT:-19420}"
 HOST="${HOST:-127.0.0.1}"
 SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-qwen36-27b-candidate}"
 QUALITY_REPEAT_RUNS="${QUALITY_REPEAT_RUNS:-32}"
 QUALITY_LONG_CONTEXT_TOKENS="${QUALITY_LONG_CONTEXT_TOKENS:-1024}"
+BENCH_MAX_TOKENS="${BENCH_MAX_TOKENS:-512}"
+BENCH_METRIC_TOKENS="${BENCH_METRIC_TOKENS:-100}"
+SMOKE_MAX_TOKENS="${SMOKE_MAX_TOKENS:-64}"
 
 RUN_ROOT="${RUN_ROOT:-/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates}"
 RUN_DIR="${RUN_DIR:-$RUN_ROOT/${LABEL}-${STAMP}}"
@@ -39,7 +44,7 @@ if [[ ! -e "$MODEL_DIR" ]]; then
   exit 2
 fi
 
-export MODEL_DIR GPU_INDEX PORT HOST SERVED_MODEL_NAME
+export MODEL_DIR GPU_INDEX TENSOR_PARALLEL_SIZE PORT HOST SERVED_MODEL_NAME
 export QWEN36_27B_AR_VENV="${QWEN36_27B_AR_VENV:-/home/steve/.venvs/vllm-xpu}"
 export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME/transformers}"
@@ -86,6 +91,7 @@ trap cleanup EXIT
   echo "model_dir=$MODEL_DIR"
   echo "served_model_name=$SERVED_MODEL_NAME"
   echo "gpu_index=$GPU_INDEX"
+  echo "tensor_parallel_size=$TENSOR_PARALLEL_SIZE"
   echo "port=$PORT"
   echo "hf_home=$HF_HOME"
   echo "max_model_len=$MAX_MODEL_LEN"
@@ -164,8 +170,23 @@ trap cleanup EXIT
   echo "disable_compile_cache=${VLLM_DISABLE_COMPILE_CACHE:-}"
   echo "request_extra_json=$REQUEST_EXTRA_JSON"
   echo "qwen36_27b_speculative_config=${QWEN36_27B_SPECULATIVE_CONFIG:-}"
+  echo "dflash_ddtree_budget=${VLLM_XPU_DFLASH_DDTREE_BUDGET:-}"
+  echo "ddtree_native_kv_copy=${VLLM_XPU_DDTREE_NATIVE_KV_COPY:-}"
+  echo "ddtree_native_tree_attn=${VLLM_XPU_DDTREE_NATIVE_TREE_ATTN:-}"
+  echo "tree_attn_bool_sdpa=${VLLM_XPU_TREE_ATTN_BOOL_SDPA:-}"
+  echo "ddtree_capture_gdn_core=${VLLM_XPU_DDTREE_CAPTURE_GDN_CORE:-}"
+  echo "ddtree_full_graph=${VLLM_XPU_DDTREE_FULL_GRAPH:-}"
+  echo "qwen3_dflash_layer_types=${VLLM_XPU_QWEN3_DFLASH_LAYER_TYPES:-}"
+  echo "dflash_runtime_int8=${VLLM_XPU_DFLASH_RUNTIME_INT8:-}"
+  echo "decode_timing=${VLLM_XPU_DECODE_TIMING:-}"
+  echo "decode_timing_sync=${VLLM_XPU_DECODE_TIMING_SYNC:-}"
+  echo "decode_timing_label_regex=${VLLM_XPU_DECODE_TIMING_LABEL_REGEX:-}"
+  echo "decode_timing_sync_label_regex=${VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX:-}"
   echo "quality_repeat_runs=$QUALITY_REPEAT_RUNS"
   echo "quality_long_context_tokens=$QUALITY_LONG_CONTEXT_TOKENS"
+  echo "bench_max_tokens=$BENCH_MAX_TOKENS"
+  echo "bench_metric_tokens=$BENCH_METRIC_TOKENS"
+  echo "smoke_max_tokens=$SMOKE_MAX_TOKENS"
   echo "quality_baseline_json=$QUALITY_BASELINE_JSON"
   echo "vllm_extra_args=${VLLM_EXTRA_ARGS:-}"
 } > "$RUN_DIR/identity.env"
@@ -198,6 +219,7 @@ if kill -0 "$server_pid" 2>/dev/null && [[ -s "$RUN_DIR/models.json" ]]; then
   BASE_URL="http://127.0.0.1:${PORT}/v1" \
     MODEL="$SERVED_MODEL_NAME" \
     ENABLE_THINKING=0 \
+    MAX_TOKENS="$SMOKE_MAX_TOKENS" \
     OUT="$SMOKE_OUT" \
     experiments/qwen36-27b-autoround-int4-b70/scripts/smoke-openai.sh \
     > "$RUN_DIR/smoke.stdout.log" 2>&1
@@ -208,8 +230,8 @@ if kill -0 "$server_pid" 2>/dev/null && [[ -s "$RUN_DIR/models.json" ]]; then
     --model "$SERVED_MODEL_NAME" \
     --api-mode chat \
     --suite "$SUITE" \
-    --max-tokens 512 \
-    --metric-tokens 100 \
+    --max-tokens "$BENCH_MAX_TOKENS" \
+    --metric-tokens "$BENCH_METRIC_TOKENS" \
     --seed 1 \
     --request-extra-json "$REQUEST_EXTRA_JSON" \
     --return-token-ids \

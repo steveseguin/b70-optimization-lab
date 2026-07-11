@@ -1,0 +1,82 @@
+{
+  "cases": [
+    {
+      "candidate_checksum": 319.55517578125,
+      "expected_checksum": 319.5506591796875,
+      "max_abs": 0.00390625,
+      "mean_abs": 4.608106607406626e-08,
+      "multi_page": false,
+      "p99_abs": 0.0,
+      "passed": true,
+      "seq_len": 16
+    },
+    {
+      "candidate_checksum": -204.9110107421875,
+      "expected_checksum": -204.90931701660156,
+      "max_abs": 0.0009765625,
+      "mean_abs": 2.8743670554831624e-08,
+      "multi_page": false,
+      "p99_abs": 0.0,
+      "passed": true,
+      "seq_len": 29
+    },
+    {
+      "candidate_checksum": -142.58502197265625,
+      "expected_checksum": -142.58721923828125,
+      "max_abs": 0.001953125,
+      "mean_abs": 2.812098998106194e-08,
+      "multi_page": true,
+      "p99_abs": 0.0,
+      "passed": true,
+      "seq_len": 127
+    },
+    {
+      "candidate_checksum": 12.66054916381836,
+      "expected_checksum": 12.661615371704102,
+      "max_abs": 0.0009765625,
+      "mean_abs": 1.3959986056022444e-08,
+      "multi_page": true,
+      "p99_abs": 0.0,
+      "passed": true,
+      "seq_len": 257
+    },
+    {
+      "candidate_checksum": -174.50616455078125,
+      "expected_checksum": -174.507080078125,
+      "max_abs": 0.00048828125,
+      "mean_abs": 3.632504785855417e-08,
+      "multi_page": true,
+      "p99_abs": 0.0,
+      "passed": true,
+      "seq_len": 895
+    }
+  ],
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "dtype": "torch.bfloat16",
+  "graph_replay": {
+    "candidate_checksum": -206.24984741210938,
+    "dynamic_seq_len": 511,
+    "dynamic_tree": true,
+    "expected_checksum": -206.2493896484375,
+    "max_abs": 0.000244140625,
+    "mean_abs": 7.338485374930315e-09,
+    "p99_abs": 0.0,
+    "passed": true,
+    "status": "executed"
+  },
+  "latency_ms_seq511": 0.11570418020710349,
+  "library": "/home/steve/src/vllm-xpu-kernels/build/qwen27-replayssm-transaction-20260710/_xpu_C.abi3.so",
+  "passed": true,
+  "shape": {
+    "block_size": 64,
+    "head_size": 256,
+    "kv_heads": 4,
+    "query_heads": 24,
+    "query_len": 16
+  },
+  "tolerance": {
+    "atol": 0.015625,
+    "rtol": 0.02
+  },
+  "torch": "2.11.0+xpu"
+}

@@ -7,9 +7,10 @@ mkdir -p "$repo_dir/data"
 BASE_URL="${BASE_URL:-http://127.0.0.1:19410/v1}"
 MODEL="${MODEL:-qwen36-27b-int4-autoround}"
 ENABLE_THINKING="${ENABLE_THINKING:-0}"
+MAX_TOKENS="${MAX_TOKENS:-64}"
 OUT="${OUT:-$repo_dir/data/qwen36-27b-autoround-openai-smoke-$(date -u +%Y%m%dT%H%M%SZ).json}"
 
-BASE_URL="$BASE_URL" MODEL="$MODEL" ENABLE_THINKING="$ENABLE_THINKING" OUT="$OUT" python3 - <<'PY'
+BASE_URL="$BASE_URL" MODEL="$MODEL" ENABLE_THINKING="$ENABLE_THINKING" MAX_TOKENS="$MAX_TOKENS" OUT="$OUT" python3 - <<'PY'
 import hashlib
 import json
 import os
@@ -25,6 +26,7 @@ enable_thinking = os.environ["ENABLE_THINKING"].strip().lower() in (
     "yes",
     "on",
 )
+max_tokens = int(os.environ["MAX_TOKENS"])
 out = Path(os.environ["OUT"])
 
 def request_json(method, path, payload=None, timeout=120):
@@ -48,7 +50,7 @@ payload = {
     ],
     "chat_template_kwargs": {"enable_thinking": enable_thinking},
     "temperature": 0,
-    "max_tokens": 64,
+    "max_tokens": max_tokens,
 }
 t0 = time.perf_counter()
 completion = request_json("POST", "/chat/completions", payload, timeout=180)
@@ -74,6 +76,7 @@ summary = {
     "model": model,
     "models_response": models,
     "enable_thinking": enable_thinking,
+    "max_tokens": max_tokens,
     "prompt": prompt,
     "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
     "content": text,

@@ -24,6 +24,7 @@ HELDOUT_STARTS="${HELDOUT_STARTS:-1024}"
 SEED="${SEED:-27}"
 MODE="${MODE:-sweep}"
 EVAL_REPEATS="${EVAL_REPEATS:-3}"
+MAX_CONTEXT="${MAX_CONTEXT:-160}"
 
 mkdir -p "$OUT_ROOT"
 
@@ -50,6 +51,7 @@ run_lane() {
       --corpus-dir "$CORPUS_ROOT/shard-3/dataset" \
       --draft-tokens "$draft_tokens" \
       --heldout-starts "$HELDOUT_STARTS" \
+      --max-context "$MAX_CONTEXT" \
       "${repeat_args[@]}" \
       --node-budgets "$budgets" \
       --seed "$SEED" \
@@ -63,9 +65,9 @@ run_lane() {
 
 if [[ "$MODE" == "confirm" ]]; then
   lanes=(
-    "0|k4|4|16,32"
-    "1|k8|8|16,32"
-    "2|k12|12|24,48"
+    "0|k4|4|4,16,32"
+    "1|k8|8|8,16,32"
+    "2|k12|12|12,24,48"
     "3|k15|15|15,30"
   )
 elif [[ "$MODE" == "sweep" ]]; then

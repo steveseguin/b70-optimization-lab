@@ -21,11 +21,20 @@ if [[ -f /home/steve/.config/huggingface/token && -z "${HF_TOKEN:-}" ]]; then
 fi
 
 export HF_HOME TRANSFORMERS_CACHE HF_HUB_DISABLE_XET HF_HUB_ENABLE_HF_TRANSFER
+export TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
 export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-$GPU_INDEX}"
-# ZE_AFFINITY_MASK narrows visibility to one physical GPU. Inside that masked
-# view, the visible XPU is logical index 0; using level_zero:$GPU_INDEX makes
-# torch see zero devices for GPU_INDEX > 0.
-export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0}"
+# ZE_AFFINITY_MASK narrows visibility to the requested physical GPU set.
+# ONEAPI_DEVICE_SELECTOR addresses the resulting logical devices, not their
+# physical indices. Keep the established TP1 behavior and derive 0..TP-1 for
+# controlled multi-GPU diagnostics unless the caller supplies an override.
+if [[ -z "${ONEAPI_DEVICE_SELECTOR:-}" ]]; then
+  if [[ "$TENSOR_PARALLEL_SIZE" == "1" ]]; then
+    export ONEAPI_DEVICE_SELECTOR="level_zero:0"
+  else
+    logical_devices="$(seq -s, 0 $((TENSOR_PARALLEL_SIZE - 1)))"
+    export ONEAPI_DEVICE_SELECTOR="level_zero:$logical_devices"
+  fi
+fi
 export VLLM_TARGET_DEVICE="${VLLM_TARGET_DEVICE:-xpu}"
 export VLLM_NO_USAGE_STATS="${VLLM_NO_USAGE_STATS:-1}"
 export VLLM_XPU_KERNELS_SRC="${VLLM_XPU_KERNELS_SRC:-/home/steve/src/vllm-xpu-kernels}"
@@ -42,6 +51,7 @@ echo "Qwen3.6 27B AutoRound vLLM/XPU"
 echo "  model: $MODEL_DIR"
 echo "  endpoint: http://$HOST:$PORT/v1"
 echo "  gpu: $GPU_INDEX"
+echo "  tensor_parallel_size: $TENSOR_PARALLEL_SIZE"
 echo "  max_model_len: $MAX_MODEL_LEN"
 echo "  mtp: $QWEN36_27B_ENABLE_MTP tokens=$NUM_SPECULATIVE_TOKENS"
 echo "  default_enable_thinking: $QWEN36_27B_DEFAULT_ENABLE_THINKING"
@@ -53,6 +63,7 @@ echo "  compilation_config: ${COMPILATION_CONFIG:-<default>}"
 echo "  promote_accepted_spec_state: ${VLLM_XPU_GDN_PROMOTE_ACCEPTED_SPEC_STATE:-0}"
 echo "  nonspec_postprocess_accepted_state: ${VLLM_XPU_GDN_NONSPEC_POSTPROCESS_ACCEPTED_STATE:-1}"
 echo "  speculative_config: ${QWEN36_27B_SPECULATIVE_CONFIG:-<builtin/default>}"
+echo "  dflash_runtime_int8: ${VLLM_XPU_DFLASH_RUNTIME_INT8:-0}"
 echo "  extra_args: ${VLLM_EXTRA_ARGS:-<none>}"
 "$QWEN36_27B_AR_VENV/bin/python" - <<'PY'
 import sys
@@ -69,7 +80,7 @@ args=(
   --port "$PORT"
   --trust-remote-code
   --served-model-name "$SERVED_MODEL_NAME"
-  --tensor-parallel-size 1
+  --tensor-parallel-size "$TENSOR_PARALLEL_SIZE"
   --max-model-len "$MAX_MODEL_LEN"
   --max-num-seqs "$MAX_NUM_SEQS"
   --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS"

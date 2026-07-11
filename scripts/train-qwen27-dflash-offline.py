@@ -208,7 +208,13 @@ def collect_anchors(
         task = str(prompt_metadata.get("task") or prompt_id)
         variant = str(prompt_metadata.get("variant") or "unknown")
         scenario = f"{family}::{task}"
-        first = max(0, min_context - 1)
+        prompt_tokens = sample.get("num_prompt_tokens")
+        generation_start = (
+            max(0, int(prompt_tokens) - 1)
+            if prompt_tokens is not None
+            else 0
+        )
+        first = max(generation_start, min_context - 1)
         last_exclusive = length - draft_tokens
         for start in range(first, max(first, last_exclusive)):
             anchors.append(

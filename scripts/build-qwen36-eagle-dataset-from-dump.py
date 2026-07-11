@@ -50,6 +50,7 @@ class SequenceBuffer:
     sampled_next_ids: list[int] = field(default_factory=list)
     source_files: list[str] = field(default_factory=list)
     segments: int = 0
+    num_prompt_tokens: int | None = None
 
     def append(
         self,
@@ -76,6 +77,7 @@ class SequenceBuffer:
         self.positions.clear()
         self.sampled_next_ids.clear()
         self.source_files.clear()
+        self.num_prompt_tokens = None
         self.segments += 1
 
 
@@ -116,6 +118,11 @@ def parse_args() -> argparse.Namespace:
             "the sampled token, so -2 recovers the current hidden row position."
         ),
     )
+    parser.add_argument(
+        "--require-metadata",
+        action="store_true",
+        help="Skip request buffers that do not match a supplied metadata record.",
+    )
     return parser.parse_args()
 
 
@@ -124,7 +131,8 @@ def load_request_metadata(paths: list[str]) -> dict[str, dict[str, Any]]:
     for path in paths:
         with open(path, "r", encoding="utf-8") as f:
             payload = json.load(f)
-        for record in payload.get("records", []):
+        records = payload.get("records") or payload.get("rows") or []
+        for record in records:
             if not isinstance(record, dict):
                 continue
             compact = {
@@ -136,13 +144,19 @@ def load_request_metadata(paths: list[str]) -> dict[str, dict[str, Any]]:
                 "family": record.get("family"),
                 "prompt_sha256": record.get("prompt_sha256"),
                 "text_sha256": record.get("text_sha256"),
-                "output_tokens_actual": record.get("output_tokens_actual"),
+                "output_tokens_actual": (
+                    record.get("output_tokens_actual")
+                    if record.get("output_tokens_actual") is not None
+                    else record.get("completion_tokens")
+                ),
                 "metadata": record.get("metadata"),
             }
             for key in (
                 "request_id",
                 "response_x_request_id",
                 "response_id",
+                "response_id_first",
+                "response_id_last",
             ):
                 value = record.get(key)
                 if isinstance(value, str) and value:
@@ -189,8 +203,12 @@ def save_buffer(
     max_len: int,
     hidden_dtype: str,
     request_metadata: dict[str, dict[str, Any]],
+    require_metadata: bool,
 ) -> bool:
     if len(buffer.hidden) < min_len:
+        return False
+    metadata = lookup_request_metadata(req_id, request_metadata)
+    if require_metadata and not metadata:
         return False
     hidden = torch.stack(buffer.hidden[:max_len], dim=0)
     hidden = cast_hidden(hidden, hidden_dtype)
@@ -206,7 +224,6 @@ def save_buffer(
     )
     safe_req = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in req_id)
     path = os.path.join(out_dir, f"sample-{sample_index:06d}-{safe_req}.pt")
-    metadata = lookup_request_metadata(req_id, request_metadata)
     payload = {
         "format": (
             "qwen36_eagle_sequence_v2"
@@ -223,6 +240,7 @@ def save_buffer(
         "positions": positions,
         "loss_mask": loss_mask,
         "sampled_next_token_ids": sampled_next_ids,
+        "num_prompt_tokens": buffer.num_prompt_tokens,
         "source_files": list(buffer.source_files[:max_len]),
     }
     if aux_hidden is not None:
@@ -269,10 +287,52 @@ def main() -> int:
             max_len=args.max_len,
             hidden_dtype=args.hidden_dtype,
             request_metadata=request_metadata,
+            require_metadata=args.require_metadata,
         ):
             if lookup_request_metadata(req_id, request_metadata):
                 samples_with_metadata += 1
             sample_count += 1
+
+    def append_row(
+        *,
+        req_id: str,
+        hidden_row: torch.Tensor,
+        aux_hidden_row: torch.Tensor | None,
+        current_token_id: int,
+        position: int,
+        sampled_token_id: int,
+        source_file: str,
+    ) -> None:
+        nonlocal continuity_matches, continuity_breaks
+        nonlocal position_matches, position_breaks
+        nonlocal usable_rows, aux_rows_saved
+
+        buffer = buffers[req_id]
+        if buffer.sampled_next_ids:
+            expected = buffer.sampled_next_ids[-1]
+            if current_token_id == expected:
+                continuity_matches += 1
+            else:
+                continuity_breaks += 1
+                maybe_save(req_id)
+                buffer.clear()
+            if position >= 0 and buffer.positions:
+                if position == buffer.positions[-1] + 1:
+                    position_matches += 1
+                else:
+                    position_breaks += 1
+
+        buffer.append(
+            hidden_row=hidden_row,
+            aux_hidden_row=aux_hidden_row,
+            current_token_id=current_token_id,
+            position=position,
+            sampled_token_id=sampled_token_id,
+            source_file=source_file,
+        )
+        usable_rows += 1
+        if aux_hidden_row is not None:
+            aux_rows_saved += 1
 
     for path in paths:
         if args.max_samples and sample_count >= args.max_samples:
@@ -281,6 +341,60 @@ def main() -> int:
             shard = torch_load(path)
             if shard.get("format") != "qwen36_eagle_hidden_step_v1":
                 skipped_bad_files.append(path)
+                continue
+            scheduled_input_ids = shard.get("scheduled_input_ids")
+            scheduled_positions = shard.get("scheduled_positions")
+            scheduled_hidden = shard.get("scheduled_hidden_states")
+            scheduled_aux_raw = shard.get("scheduled_aux_hidden_states")
+            if (
+                torch.is_tensor(scheduled_input_ids)
+                and torch.is_tensor(scheduled_positions)
+                and torch.is_tensor(scheduled_hidden)
+                and isinstance(scheduled_aux_raw, list)
+                and scheduled_aux_raw
+                and all(torch.is_tensor(t) for t in scheduled_aux_raw)
+            ):
+                scheduled_aux = torch.stack(scheduled_aux_raw, dim=1)
+                scheduled_req_id = str(shard["scheduled_req_id"])
+                sampled_ids = shard["sampled_token_ids"]
+                prompt_token_counts = shard.get("num_prompt_tokens")
+                if prompt_token_counts:
+                    prompt_token_count = int(prompt_token_counts[0])
+                    buffer = buffers[scheduled_req_id]
+                    if buffer.num_prompt_tokens is None:
+                        buffer.num_prompt_tokens = prompt_token_count
+                    elif buffer.num_prompt_tokens != prompt_token_count:
+                        raise ValueError(
+                            "inconsistent prompt token count for "
+                            f"{scheduled_req_id}: {buffer.num_prompt_tokens} vs "
+                            f"{prompt_token_count}"
+                        )
+                scheduled_rows = min(
+                    int(shard.get("scheduled_num_tokens", 0)),
+                    int(scheduled_input_ids.shape[0]),
+                    int(scheduled_positions.shape[0]),
+                    int(scheduled_hidden.shape[0]),
+                    int(scheduled_aux.shape[0]),
+                )
+                if scheduled_rows <= 0 or not sampled_ids:
+                    raise ValueError("invalid full-context scheduled dump")
+                total_rows += scheduled_rows
+                aux_rows_available += scheduled_rows
+                for row in range(scheduled_rows):
+                    sampled_token_id = (
+                        int(scheduled_input_ids[row + 1])
+                        if row + 1 < scheduled_rows
+                        else int(sampled_ids[0])
+                    )
+                    append_row(
+                        req_id=scheduled_req_id,
+                        hidden_row=scheduled_hidden[row],
+                        aux_hidden_row=scheduled_aux[row],
+                        current_token_id=int(scheduled_input_ids[row]),
+                        position=int(scheduled_positions[row]),
+                        sampled_token_id=sampled_token_id,
+                        source_file=os.path.basename(path),
+                    )
                 continue
             hidden = shard["hidden_states"]
             aux_hidden_rows = None
@@ -346,22 +460,8 @@ def main() -> int:
                     current_token_id = sampled_token_id
                 reconstructed_current_token_rows += 1
 
-            buffer = buffers[req_id]
-            if buffer.sampled_next_ids:
-                expected = buffer.sampled_next_ids[-1]
-                if current_token_id == expected:
-                    continuity_matches += 1
-                else:
-                    continuity_breaks += 1
-                    maybe_save(req_id)
-                    buffer.clear()
-                if position >= 0 and buffer.positions:
-                    if position == buffer.positions[-1] + 1:
-                        position_matches += 1
-                    else:
-                        position_breaks += 1
-
-            buffer.append(
+            append_row(
+                req_id=req_id,
                 hidden_row=hidden[row],
                 aux_hidden_row=(
                     aux_hidden_rows[row] if aux_hidden_rows is not None else None
@@ -371,9 +471,6 @@ def main() -> int:
                 sampled_token_id=sampled_token_id,
                 source_file=os.path.basename(path),
             )
-            usable_rows += 1
-            if aux_hidden_rows is not None:
-                aux_rows_saved += 1
 
     if not (args.max_samples and sample_count >= args.max_samples):
         for req_id in list(buffers):
@@ -405,6 +502,7 @@ def main() -> int:
         "reconstruct_positions_from_num_tokens": (
             args.reconstruct_positions_from_num_tokens
         ),
+        "require_metadata": args.require_metadata,
         "metadata_files": args.metadata,
         "metadata_request_keys": len(request_metadata),
         "samples_with_metadata": samples_with_metadata,

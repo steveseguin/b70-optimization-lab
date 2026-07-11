@@ -1,0 +1,60 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+index df1aeed..753ff7e 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2_policy.hpp
+@@ -118,6 +118,18 @@ class w4a16_policy_m_16 : public xe_gemm_policy_base {
+   using SGLayout = Layout<Shape<_1, _4, _1>, Stride<_4, _1, _0>>;
+ };
+ 
++class w4a16_policy_m_16_n_128 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_16, _128, _32>;
++  using SGLayout = Layout<Shape<_1, _8, _1>, Stride<_8, _1, _0>>;
++};
++
++class w4a16_policy_m_16_n_256 : public xe_gemm_policy_base {
++ public:
++  using WGTile = Shape<_16, _256, _32>;
++  using SGLayout = Layout<Shape<_1, _16, _1>, Stride<_16, _1, _0>>;
++};
++
+ class w4a16_policy_m_32 : public xe_gemm_policy_base {
+  public:
+   using WGTile = Shape<_32, _64, _32>;
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index ed7456b..9860945 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -36,6 +36,7 @@
+ #include <torch/all.h>
+ #include "csrc/utils.h"
+ 
++#include <cstdlib>
+ #include <cute/tensor.hpp>
+ #include <random>
+ 
+@@ -579,10 +580,20 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+     if (A_avg_M <= 4) {
+       using policy = w4a16_policy_m_8;
+       W4A16LauncherCallER(policy);
+-    } else if (A_avg_M <= 8) {
+-      using policy = w4a16_policy_m_16;
+-      W4A16LauncherCallER(policy);
+-    } else if (A_avg_M <= 128) {
++    } else if (A_avg_M <= 16) {
++      const char* n_tile_env = std::getenv("VLLM_XPU_W4A16_M16_N_TILE");
++      const int n_tile = n_tile_env == nullptr ? 64 : std::atoi(n_tile_env);
++      if (n_tile == 128) {
++        using policy = w4a16_policy_m_16_n_128;
++        W4A16LauncherCallER(policy);
++      } else if (n_tile == 256) {
++        using policy = w4a16_policy_m_16_n_256;
++        W4A16LauncherCallER(policy);
++      } else {
++        using policy = w4a16_policy_m_16;
++        W4A16LauncherCallER(policy);
++      }
++    } else if (A_avg_M <= 32) {
+       using policy = w4a16_policy_m_32;
+       W4A16LauncherCallER(policy);
+     } else {

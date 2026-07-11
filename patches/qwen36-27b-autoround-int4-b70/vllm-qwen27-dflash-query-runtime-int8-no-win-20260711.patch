@@ -1,0 +1,510 @@
+diff --git a/vllm/model_executor/models/qwen3_dflash.py b/vllm/model_executor/models/qwen3_dflash.py
+index cffe6267a..a62a63c8d 100644
+--- a/vllm/model_executor/models/qwen3_dflash.py
++++ b/vllm/model_executor/models/qwen3_dflash.py
+@@ -1,7 +1,8 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+-from collections.abc import Iterable
++import os
++from collections.abc import Iterable, Mapping
+ 
+ import torch
+ import torch.nn.functional as F
+@@ -16,6 +17,8 @@ from vllm.logger import init_logger
+ from vllm.model_executor.layers.attention import Attention
+ from vllm.model_executor.layers.layernorm import RMSNorm
+ from vllm.model_executor.layers.linear import (
++    LinearBase,
++    LinearMethodBase,
+     QKVParallelLinear,
+     ReplicatedLinear,
+     RowParallelLinear,
+@@ -31,9 +34,16 @@ from vllm.model_executor.model_loader.weight_utils import (
+     default_weight_loader,
+     maybe_remap_kv_scale_name,
+ )
++from vllm.model_executor.utils import replace_parameter
+ from vllm.multimodal.inputs import NestedTensors
+ from vllm.transformers_utils.config import set_default_rope_theta
++from vllm.utils.xpu_decode_timing import timed_region
+ from vllm.v1.attention.backend import AttentionType
++from vllm.v1.kv_cache_interface import (
++    FullAttentionSpec,
++    KVCacheSpec,
++    SlidingWindowSpec,
++)
+ 
+ from .qwen2 import Qwen2MLP as Qwen3MLP
+ from .qwen3 import Qwen3ForCausalLM
+@@ -47,6 +57,92 @@ from .utils import (
+ logger = init_logger(__name__)
+ 
+ 
++_DFLASH_VALID_LAYER_TYPES = frozenset({"full_attention", "sliding_attention"})
++
++
++class _XpuDFlashRuntimeInt8LinearMethod(LinearMethodBase):
++    """Use a transient per-channel INT8 copy of a loaded DFlash linear."""
++
++    def create_weights(
++        self,
++        layer: torch.nn.Module,
++        input_size_per_partition: int,
++        output_partition_sizes: list[int],
++        input_size: int,
++        output_size: int,
++        params_dtype: torch.dtype,
++        **extra_weight_attrs,
++    ) -> None:
++        raise RuntimeError(
++            "DFlash runtime INT8 must replace an already-loaded linear method"
++        )
++
++    def apply(
++        self,
++        layer: torch.nn.Module,
++        x: torch.Tensor,
++        bias: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        x_2d = x.reshape(-1, x.shape[-1]).contiguous()
++        with timed_region("spec_decode.dflash_runtime_int8.quant"):
++            x_q, x_scale = torch.ops._xpu_C.per_token_quant_int8_xpu(x_2d)
++        with timed_region("spec_decode.dflash_runtime_int8.gemm"):
++            output = torch.ops._xpu_C.int8_gemm_w8a8(
++                x_q,
++                x_scale,
++                layer.weight,
++                layer.weight_scale,
++                x.dtype,
++                bias,
++            )
++        return output.view(*x.shape[:-1], output.shape[-1])
++
++
++def _get_dflash_layer_types(config: Qwen3Config) -> tuple[str, ...]:
++    layer_types = getattr(config, "layer_types", None)
++    if layer_types is None:
++        return ("full_attention",) * config.num_hidden_layers
++    if len(layer_types) != config.num_hidden_layers:
++        raise ValueError(
++            f"DFlash layer_types length {len(layer_types)} does not match "
++            f"num_hidden_layers {config.num_hidden_layers}."
++        )
++    invalid = set(layer_types) - _DFLASH_VALID_LAYER_TYPES
++    if invalid:
++        raise ValueError(f"Invalid DFlash layer_type(s): {sorted(invalid)}.")
++    if "sliding_attention" in layer_types and not getattr(
++        config, "sliding_window", None
++    ):
++        raise ValueError(
++            "DFlash sliding_attention layers require `sliding_window` in config."
++        )
++    return tuple(layer_types)
++
++
++class DFlashAttention(Attention):
++    """DFlash attention keeps SWA compute but allocates full context KV.
++
++    DFlash prewrites all target-context K/V before drafting. Sliding-window
++    draft layers still need their causal window mask during query attention,
++    but their cache allocation must not evict older context blocks. This mirrors
++    upstream vLLM PR 40898's DFlash/SWA shape.
++    """
++
++    def get_kv_cache_spec(self, vllm_config: VllmConfig) -> KVCacheSpec | None:
++        spec = super().get_kv_cache_spec(vllm_config)
++        if isinstance(spec, SlidingWindowSpec):
++            return FullAttentionSpec(
++                block_size=spec.block_size,
++                num_kv_heads=spec.num_kv_heads,
++                head_size=spec.head_size,
++                head_size_v=getattr(spec, "head_size_v", spec.head_size),
++                dtype=spec.dtype,
++                kv_quant_mode=spec.kv_quant_mode,
++                page_size_padded=spec.page_size_padded,
++            )
++        return spec
++
++
+ class DFlashQwen3Attention(nn.Module):
+     """Attention for DFlash speculative decoding.
+ 
+@@ -68,6 +164,7 @@ class DFlashQwen3Attention(nn.Module):
+         quant_config: QuantizationConfig | None = None,
+         prefix: str = "",
+         attn_type: str = AttentionType.DECODER,
++        per_layer_sliding_window: int | None = None,
+     ) -> None:
+         super().__init__()
+         self.layer_name = prefix
+@@ -109,13 +206,14 @@ class DFlashQwen3Attention(nn.Module):
+             max_position=max_position,
+             rope_parameters=rope_parameters,
+         )
+-        self.attn = Attention(
++        self.attn = DFlashAttention(
+             self.num_heads,
+             self.head_dim,
+             self.scaling,
+             num_kv_heads=self.num_kv_heads,
+             cache_config=cache_config,
+             quant_config=quant_config,
++            per_layer_sliding_window=per_layer_sliding_window,
+             prefix=f"{prefix}.attn",
+             attn_type=attn_type,
+         )
+@@ -131,7 +229,10 @@ class DFlashQwen3Attention(nn.Module):
+         with the context K/V from the target model's hidden states. This forward op
+         computes attention for the query tokens only.
+         See also: precompute_and_store_context_kv"""
+-        qkv = F.linear(hidden_states, self.qkv_proj.weight, self.qkv_proj.bias)
++        # Route through the layer method so draft-only runtime quantization can
++        # accelerate Q while the separately fused BF16 K/V context projection
++        # remains unchanged. This is identical to F.linear in the default path.
++        qkv, _ = self.qkv_proj(hidden_states)
+         q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
+ 
+         # Per-head RMSNorm
+@@ -158,12 +259,36 @@ class DFlashQwen3DecoderLayer(nn.Module):
+         config: Qwen3Config,
+         cache_config: CacheConfig | None = None,
+         quant_config: QuantizationConfig | None = None,
++        layer_idx: int = 0,
+         prefix: str = "",
+     ) -> None:
+         super().__init__()
+         self.hidden_size = config.hidden_size
+         set_default_rope_theta(config, default_theta=1000000)
+         attn_type = AttentionType.DECODER
++        layer_types = _get_dflash_layer_types(config)
++        dflash_layer_type_mode = os.environ.get(
++            "VLLM_XPU_QWEN3_DFLASH_LAYER_TYPES", "auto").strip().lower()
++        if dflash_layer_type_mode == "off":
++            layer_type = "full_attention"
++        elif dflash_layer_type_mode == "all-sliding":
++            layer_type = "sliding_attention"
++        elif dflash_layer_type_mode in ("auto", "1", "true", "on", "mixed"):
++            if layer_idx >= len(layer_types):
++                raise ValueError(
++                    f"DFlash layer_idx {layer_idx} is out of bounds for "
++                    f"layer_types length {len(layer_types)}")
++            layer_type = layer_types[layer_idx]
++        else:
++            raise ValueError(
++                "VLLM_XPU_QWEN3_DFLASH_LAYER_TYPES must be one of "
++                "off, auto, mixed/on/true/1, or all-sliding; got "
++                f"{dflash_layer_type_mode!r}")
++
++        self.layer_type = layer_type
++        sliding_window = None
++        if layer_type == "sliding_attention":
++            sliding_window = getattr(config, "sliding_window", None)
+ 
+         self.self_attn = DFlashQwen3Attention(
+             hidden_size=self.hidden_size,
+@@ -178,6 +303,7 @@ class DFlashQwen3DecoderLayer(nn.Module):
+             rope_parameters=config.rope_parameters,
+             prefix=f"{prefix}.self_attn",
+             attn_type=attn_type,
++            per_layer_sliding_window=sliding_window,
+         )
+         self.mlp = Qwen3MLP(
+             hidden_size=self.hidden_size,
+@@ -229,6 +355,7 @@ class DFlashQwen3Model(nn.Module):
+ 
+         drafter_config = getattr(self.config, "eagle_config", {})
+         drafter_config.update(getattr(self.config, "dflash_config", {}))
++        self.layer_types = _get_dflash_layer_types(self.config)
+ 
+         if drafter_config is not None and "use_aux_hidden_state" in drafter_config:
+             self.use_aux_hidden_state = drafter_config["use_aux_hidden_state"]
+@@ -249,6 +376,7 @@ class DFlashQwen3Model(nn.Module):
+                     current_vllm_config,
+                     prefix=maybe_prefix(prefix, f"layers.{layer_idx + start_layer_id}"),
+                     config=self.config,
++                    layer_idx=layer_idx,
+                 )
+                 for layer_idx in range(self.config.num_hidden_layers)
+             ]
+@@ -280,10 +408,106 @@ class DFlashQwen3Model(nn.Module):
+             self.config.hidden_size,
+             eps=self.config.rms_norm_eps,
+         )
++        self._dflash_layer_to_kv_cache_gid: dict[str, int] = {}
++        self.sliding_attention_layer_names = {
++            layer.self_attn.attn.layer_name
++            for layer in self.layers
++            if layer.layer_type == "sliding_attention"
++        }
+ 
+     def embed_input_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+         return self.embed_tokens(input_ids)
+ 
++    def _maybe_prepare_xpu_runtime_int8(self) -> None:
++        """Prepare default-off W8A8 copies for the DFlash draft body.
++
++        The target model still verifies every proposed token. FP32 weight
++        scales are intentional: the current XPU GEMM produced invalid values
++        with BF16 scales for these non-vocabulary matrix shapes.
++        """
++
++        enabled = os.environ.get(
++            "VLLM_XPU_DFLASH_RUNTIME_INT8", "0"
++        ).strip().lower() in ("1", "true", "yes", "on")
++        if not enabled:
++            return
++        try:
++            from vllm.model_executor.kernels.linear.scaled_mm.xpu import (
++                XPUInt8ScaledMMLinearKernel,
++            )
++        except Exception as exc:
++            logger.warning(
++                "DFlash runtime INT8 requested but XPU kernels are unavailable: %r",
++                exc,
++            )
++            return
++        # These probes also install the FakeTensor registrations required when
++        # the quantized draft body is captured by torch.compile.
++        if not (
++            XPUInt8ScaledMMLinearKernel._has_int8_gemm_w8a8()
++            and XPUInt8ScaledMMLinearKernel._has_per_token_quant_int8_xpu()
++        ):
++            logger.warning(
++                "DFlash runtime INT8 requested but required XPU ops are unavailable"
++            )
++            return
++
++        prepared = 0
++        quantized_bytes = 0
++        for name, layer in self.named_modules():
++            if not isinstance(layer, LinearBase):
++                continue
++            weight = getattr(layer, "weight", None)
++            if weight is None or weight.device.type != "xpu":
++                logger.warning(
++                    "Skipping DFlash runtime INT8 for %s: weight device=%s",
++                    name,
++                    getattr(weight, "device", None),
++                )
++                continue
++            if weight.dtype not in (torch.float16, torch.bfloat16):
++                logger.warning(
++                    "Skipping DFlash runtime INT8 for %s: weight dtype=%s",
++                    name,
++                    weight.dtype,
++                )
++                continue
++            with torch.no_grad():
++                weight_f = weight.detach().float()
++                scales = (
++                    weight_f.abs().amax(dim=1).clamp_min(1.0e-10) / 127.0
++                ).contiguous()
++                weight_q_t = (
++                    torch.round(weight_f / scales.view(-1, 1))
++                    .clamp(-127, 127)
++                    .to(torch.int8)
++                    .t()
++                    .contiguous()
++                )
++                del weight_f
++            # Match vLLM's native XPU INT8 parameter layout. Parameters are
++            # treated as immutable model state by AOT/cudagraph wrappers;
++            # ordinary buffers are copied as mutable graph inputs and made the
++            # draft path catastrophically slow.
++            replace_parameter(layer, "weight", weight_q_t)
++            replace_parameter(layer, "weight_scale", scales)
++            layer.quant_method = _XpuDFlashRuntimeInt8LinearMethod()
++            prepared += 1
++            quantized_bytes += (
++                weight_q_t.numel() + scales.numel() * scales.element_size()
++            )
++            logger.info(
++                "Prepared DFlash runtime INT8 linear %s weight_t=%s scale=%s",
++                name,
++                tuple(weight_q_t.shape),
++                tuple(scales.shape),
++            )
++        logger.info(
++            "Prepared %d DFlash runtime INT8 linears (%.3f GiB transient weights)",
++            prepared,
++            quantized_bytes / (1024**3),
++        )
++
+     def _build_fused_kv_buffers(self) -> None:
+         """Build fused weight buffers for precompute_and_store_context_kv.
+ 
+@@ -343,7 +567,9 @@ class DFlashQwen3Model(nn.Module):
+         self,
+         context_states: torch.Tensor,
+         context_positions: torch.Tensor,
+-        context_slot_mapping: torch.Tensor | None = None,
++        context_slot_mapping: (
++            torch.Tensor | Mapping[int | str, torch.Tensor] | None
++        ) = None,
+     ) -> None:
+         """Precompute K/V for context states write them into each layer's KV cache.
+ 
+@@ -371,67 +597,87 @@ class DFlashQwen3Model(nn.Module):
+         nkv = self._num_kv_heads
+ 
+         # --- Fused KV projection (one GEMM for all layers) ---
+-        normed_context_states = torch.empty_like(context_states)
+-        ops.rms_norm(
+-            normed_context_states,
+-            context_states,
+-            self._hidden_norm_weight,
+-            self._rms_norm_eps,
+-        )
+-        all_kv_flat = F.linear(
+-            normed_context_states, self._fused_kv_weight, self._fused_kv_bias
+-        )
++        with timed_region("spec_decode.dflash_context.rms_norm"):
++            normed_context_states = torch.empty_like(context_states)
++            ops.rms_norm(
++                normed_context_states,
++                context_states,
++                self._hidden_norm_weight,
++                self._rms_norm_eps,
++            )
++        with timed_region("spec_decode.dflash_context.kv_projection"):
++            all_kv_flat = F.linear(
++                normed_context_states, self._fused_kv_weight, self._fused_kv_bias
++            )
+         # Single contiguous copy that separates K/V and transposes to
+         # layer-major layout.  Result: [2, L, num_ctx, nkv, hd] contiguous.
+         # Indexing dim-0 gives contiguous [L, num_ctx, nkv, hd] for K and V.
+-        all_kv = (
+-            all_kv_flat.view(num_ctx, L, 2, nkv, hd).permute(2, 1, 0, 3, 4).contiguous()
+-        )
++        with timed_region("spec_decode.dflash_context.kv_layout"):
++            all_kv = (
++                all_kv_flat.view(num_ctx, L, 2, nkv, hd)
++                .permute(2, 1, 0, 3, 4)
++                .contiguous()
++            )
+         all_k = all_kv[0]  # [L, num_ctx, nkv, hd], contiguous
+         all_v = all_kv[1]  # [L, num_ctx, nkv, hd], contiguous
+ 
+         # --- Per-layer RMSNorm K (3D: [num_ctx, nkv, hd] per layer) ---
+-        all_k_normed = torch.empty_like(all_k)
+-        for i in range(L):
+-            ops.rms_norm(
+-                all_k_normed[i],
+-                all_k[i],
+-                self._k_norm_weights[i],
+-                self._rms_norm_eps,
+-            )
++        with timed_region("spec_decode.dflash_context.k_norm"):
++            all_k_normed = torch.empty_like(all_k)
++            for i in range(L):
++                ops.rms_norm(
++                    all_k_normed[i],
++                    all_k[i],
++                    self._k_norm_weights[i],
++                    self._rms_norm_eps,
++                )
+ 
+         # --- Fused RoPE across all layers ---
+         # View as [L * num_ctx, kv] so RoPE sees one big batch (no copy).
+         # In-place RoPE: pass K as the "query" arg with key=None.
+-        all_k_flat = all_k_normed.view(L * num_ctx, kv)
+-        positions_repeated = context_positions.repeat(L)
+-        cos_sin_cache = self._rope_cos_sin_cache
+-        if cos_sin_cache.dtype != all_k_flat.dtype:
+-            cos_sin_cache = cos_sin_cache.to(dtype=all_k_flat.dtype)
+-        ops.rotary_embedding(
+-            positions_repeated,
+-            all_k_flat,
+-            None,
+-            self._rope_head_size,
+-            cos_sin_cache,
+-            self._rope_is_neox,
+-        )
++        with timed_region("spec_decode.dflash_context.rope"):
++            all_k_flat = all_k_normed.view(L * num_ctx, kv)
++            positions_repeated = context_positions.repeat(L)
++            cos_sin_cache = self._rope_cos_sin_cache
++            if cos_sin_cache.dtype != all_k_flat.dtype:
++                cos_sin_cache = cos_sin_cache.to(dtype=all_k_flat.dtype)
++            ops.rotary_embedding(
++                positions_repeated,
++                all_k_flat,
++                None,
++                self._rope_head_size,
++                cos_sin_cache,
++                self._rope_is_neox,
++            )
+ 
+         if context_slot_mapping is None:
+             return
+ 
+         # --- Per-layer cache insert ---
+-        all_k_final = all_k_flat.view(L, num_ctx, nkv, hd)
+-        for i in range(L):
+-            attn = self._attn_layers[i]
+-            kv_cache = attn.kv_cache
+-            attn.impl.do_kv_cache_update(
+-                attn,
+-                all_k_final[i],
+-                all_v[i],
+-                kv_cache,
+-                context_slot_mapping,
+-            )
++        with timed_region("spec_decode.dflash_context.cache_update"):
++            all_k_final = all_k_flat.view(L, num_ctx, nkv, hd)
++            for i in range(L):
++                attn = self._attn_layers[i]
++                kv_cache = attn.kv_cache
++                layer_slot_mapping = context_slot_mapping
++                if isinstance(context_slot_mapping, Mapping):
++                    gid = self._dflash_layer_to_kv_cache_gid.get(attn.layer_name)
++                    if attn.layer_name in context_slot_mapping:
++                        layer_slot_mapping = context_slot_mapping[attn.layer_name]
++                    elif gid is not None and gid in context_slot_mapping:
++                        layer_slot_mapping = context_slot_mapping[gid]
++                    else:
++                        raise ValueError(
++                            "Missing DFlash KV-cache group mapping for layer "
++                            f"{attn.layer_name}"
++                        )
++                attn.impl.do_kv_cache_update(
++                    attn,
++                    all_k_final[i],
++                    all_v[i],
++                    kv_cache,
++                    layer_slot_mapping,
++                )
+ 
+     def forward(
+         self,
+@@ -569,13 +815,22 @@ class DFlashQwen3ForCausalLM(Qwen3ForCausalLM):
+         self,
+         context_states: torch.Tensor,
+         context_positions: torch.Tensor,
+-        context_slot_mapping: torch.Tensor | None = None,
++        context_slot_mapping: (
++            torch.Tensor | Mapping[int | str, torch.Tensor] | None
++        ) = None,
+     ) -> None:
+         """Precompute projected + RoPE'd K/V and write to cache."""
+         self.model.precompute_and_store_context_kv(
+             context_states, context_positions, context_slot_mapping
+         )
+ 
++    def set_dflash_layer_to_kv_cache_gid(self, mapping: dict[str, int]) -> None:
++        self.model._dflash_layer_to_kv_cache_gid = dict(mapping)
++
++    @property
++    def sliding_attention_layer_names(self) -> set[str]:
++        return self.model.sliding_attention_layer_names
++
+     def combine_hidden_states(
+         self,
+         hidden_states: torch.Tensor,
+@@ -624,3 +879,4 @@ class DFlashQwen3ForCausalLM(Qwen3ForCausalLM):
+         )
+         loader.load_weights(model_weights.items())
+         self.model._build_fused_kv_buffers()
++        self.model._maybe_prepare_xpu_runtime_int8()
