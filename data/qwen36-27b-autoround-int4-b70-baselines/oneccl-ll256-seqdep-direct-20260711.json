@@ -1,0 +1,43 @@
+{
+  "backend": "xccl",
+  "mode": "direct",
+  "passed": true,
+  "queue_test": "direct",
+  "ranks": [
+    {
+      "avg_replay_ms_including_sync_and_validation": 0.9523885782982688,
+      "device": "xpu:0",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 5120,
+      "iterations": 256,
+      "loaded_ccl_paths": [
+        "/tmp/oneccl-src-20260711/build-libccl-qwen27-seqdep/_install/lib/libccl.so.1.0"
+      ],
+      "local_rank": 0,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "mode": "direct",
+      "rank": 0,
+      "rows": 4
+    },
+    {
+      "avg_replay_ms_including_sync_and_validation": 0.9523993048787815,
+      "device": "xpu:1",
+      "dtype": "bfloat16",
+      "first_mismatch": null,
+      "hidden_size": 5120,
+      "iterations": 256,
+      "loaded_ccl_paths": [
+        "/tmp/oneccl-src-20260711/build-libccl-qwen27-seqdep/_install/lib/libccl.so.1.0"
+      ],
+      "local_rank": 1,
+      "max_abs_diff": 0.0,
+      "mismatch_iterations": 0,
+      "mode": "direct",
+      "rank": 1,
+      "rows": 4
+    }
+  ],
+  "world_size": 2
+}

@@ -53,7 +53,20 @@ Active target as of the latest switch request:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 - LocalMaxxing approved this strict/fresh result as `cmr4gokx90061nv01lhoe3ft8`.
   Do not submit synthetic MTP5/cg16 or invalid postprocess-skip rows.
-- Current fastest quality-gated practical row is the separate
+- Current fastest quality-gated practical row is now TP2 with pinned public
+  oneCCL/libccl: conservative isolated median `78.22635247759823 tok/s`, p10
+  `69.9633890122676`, mean `78.59814141426254`; a separate full-quality high
+  reached `81.34114517681084 tok/s`. Exact cases, repeat128, baseline parity,
+  the 1K needle, and the strict cold/cached-zero gate passed. The two valid
+  rows differ by `3.98%`, within the established `4.4%` endpoint variance
+  band, so use `78.226` as the headline. The installed oneCCL runtime fails
+  the packed-verifier BF16 `[4,5120]` graph oracle, while pinned public oneCCL
+  parent `b52f40c` / libccl `4ceafd1` passes direct and graph controls. Start
+  from
+  `results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
+  and
+  `experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
+- The prior TP1 quality-gated practical row is the separate
   `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target LM-head
   (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)` ReplaySSM lane:
   MTP3/cg8, one B70, exact GDN state handling, commit-in-forward, and

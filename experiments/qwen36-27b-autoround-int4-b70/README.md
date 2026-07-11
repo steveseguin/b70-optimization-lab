@@ -12,10 +12,11 @@ This experiment lane tracks bring-up and optimization for:
 ## Immediate Goal
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
-has a strict fresh-response BF16-LM-head baseline plus faster quality-gated
-runtime INT8/INT4 LM-head variants. Current optimization work must beat the
-`68.23626314761921` tok/s ReplaySSM target-INT8/draft-INT4 row or improve
-service/max-context behavior without using warmed/cache/history effects.
+has a strict fresh-response TP2 record after replacing the broken installed
+oneCCL graph collective with pinned public oneCCL/libccl. Current optimization
+work must beat the conservative `78.22635247759823 tok/s` TP2 row toward the
+`100+ tok/s` target, or improve service/max-context behavior without using
+warmed/cache/history effects.
 
 Completed first milestone:
 
@@ -32,7 +33,23 @@ Current evidence:
 - smoke JSON:
   `data/qwen36-27b-autoround-openai-smoke-20260703T013020Z.json`.
 
-Current strict best:
+Current overall strict best:
+
+- TP2 on two B70s with target PIECEWISE graph, eager draft, MTP3, ReplaySSM,
+  runtime INT8 target LM-head BF16 scales, runtime INT4 draft LM-head BF16
+  scales, and public oneCCL parent `b52f40c` / libccl `4ceafd1`;
+- conservative isolated median `78.226352 tok/s`, p10 `69.963389`, mean
+  `78.598141`, all 12 strict prompts `cached_tokens=0`;
+- full-quality high `81.341145 tok/s`, exact cases + repeat128 + baseline
+  parity + 1K needle passed;
+- use `78.226` as headline because the rows differ by `3.98%`, inside the
+  established `4.4%` variance band;
+- result packet:
+  `../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`;
+- build/oracle/repro: `oneccl_ll256/README.md` and
+  `scripts/run-tp2-oneccl-public4ce-candidate.sh`.
+
+Prior Intel-checkpoint TP1 strict best:
 
 - config: Intel checkpoint, TP1, one B70, XPU graph on, `qwen3_next_mtp`,
   `num_speculative_tokens=3`, `max_cudagraph_capture_size=8`,
@@ -48,7 +65,7 @@ Current strict best:
 - compact packet:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 
-Current fastest quality-gated variant:
+Prior fastest TP1 quality-gated variant:
 
 - label: `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target
   LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)`;

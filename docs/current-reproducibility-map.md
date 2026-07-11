@@ -82,21 +82,27 @@ the production LAN endpoint:
 - webhie revision: `f5750c90b3776db658594df5fe8051098226dd8e`
 - prior Intel reference: `Intel/Qwen3.6-27B-int4-AutoRound`
 - Intel revision: `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
-- hardware: one Intel Arc Pro B70 32 GB per replica first
+- hardware: one Intel Arc Pro B70 32 GB for the TP1 reference and two B70s for
+  the current TP2 record
 - engine: local vLLM/XPU from `/home/steve/src/vllm`
-- current strict fresh-response practical best: `68.236 tok/s` median
-  generated-token throughput for tokens 1-100 after TTFT with webhie AutoRound
-  + runtime INT8 target LM-head BF16 scales + runtime INT4 draft LM-head BF16
-  scales + ReplaySSM exact GDN state handling, `cached_tokens=0` on every
-  prompt, and repeat64 quality baseline parity. This is a small same-recipe
-  confirm over the prior `67.519 tok/s` row, not a new mechanism.
-- LocalMaxxing: ReplaySSM draft-INT4 row approved as
+- current strict fresh-response practical best: TP2 conservative median
+  `78.226 tok/s` for generated tokens 1-100 after TTFT; a separate full-quality
+  run reached `81.341 tok/s`. Pinned public oneCCL/libccl fixes the installed
+  runtime's deterministic packed-verifier graph replay corruption. Exact
+  cases, repeat128, baseline parity, the 1K needle, and `cached_tokens=0` on
+  every strict prompt passed. The two valid rows differ by `3.98%`, inside the
+  established `4.4%` endpoint variance band.
+- current result packet:
+  `../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
+- oneCCL build/oracle/repro:
+  `../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`
+- prior TP1 LocalMaxxing: ReplaySSM draft-INT4 row approved as
   `cmr9atqb800msqr01u760xh0t`, with queue/response at
   `../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.queue.json` and
   `../data/localmaxxing-responses/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.submit.log`;
   previous BF16-scale row `cmr5iu3gk00bfq901nidgcana`; prior webhie INT8 row
   `cmr576apv0079q901i6dvsh0l`; prior Intel INT8 row `cmr4zkcxb003yq9018408i1pn`
-- result packet:
+- prior TP1 result packet:
   `../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`
 - previous BF16-scale packet:
   `../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`

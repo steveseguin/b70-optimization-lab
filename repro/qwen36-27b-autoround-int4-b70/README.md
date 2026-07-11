@@ -1,13 +1,39 @@
 # Qwen3.6 27B AutoRound Repro
 
-This repro folder is the current Qwen3.6 27B AutoRound INT4 one-B70 entry
-point. It covers the initial smoke and the current strict fresh-response
-benchmark recipe.
+This repro folder is the Qwen3.6 27B AutoRound INT4 entry point. It covers the
+initial one-B70 smoke, the prior TP1 recipes, and the current two-B70 strict
+fresh-response record.
+
+## Current TP2 Record
+
+The current record uses the `webhie` revision listed below plus target INT8
+LM-head BF16 scales, draft INT4 LM-head BF16 scales, ReplaySSM exact state,
+MTP3, and pinned public oneCCL/libccl. The newer communication runtime is
+required: installed oneCCL `Gold-2021.17.2` fails the packed-verifier graph
+oracle on nearly every replay.
+
+```bash
+cd /home/steve/llm-optimizations
+ONECCL_INSTALL_DIR=/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70 \
+  experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/build-public-oneccl.sh
+GPU_INDEX=2,3 PORT=19443 QUALITY_REPEAT_RUNS=128 \
+  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
+```
+
+Promoted result: conservative isolated median `78.226352 tok/s`, p10
+`69.963389`, mean `78.598141`; full-quality high `81.341145 tok/s`. Exact
+cases, repeat128, baseline parity, the 1K needle, and strict cold/cached-zero
+rules passed. See
+`../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`
+and
+`../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
 
 ## Model
 
-- `Intel/Qwen3.6-27B-int4-AutoRound`
-- revision `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`
+- current record: `webhie/Qwen3.6-27B-int4-AutoRound`, revision
+  `f5750c90b3776db658594df5fe8051098226dd8e`;
+- initial reference: `Intel/Qwen3.6-27B-int4-AutoRound`, revision
+  `abc86de19eb1ebbf6a7df4582341325c22ddcb7d`;
 - AutoRound INT4, `bits=4`, `group_size=128`, symmetric,
   `packing_format=auto_round:auto_gptq`
 
@@ -60,9 +86,9 @@ Evidence:
 ../../results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json
 ```
 
-## Fastest Quality-Gated Variant
+## Prior TP1 Quality-Gated Variant
 
-The fastest current practical variant is separate from the original
+The prior fastest TP1 practical variant is separate from the original
 BF16-LM-head AutoRound quantization:
 
 - label: `webhie AutoRound W4A16 + runtime INT8 target LM-head (BF16 scales)
@@ -72,15 +98,15 @@ BF16-LM-head AutoRound quantization:
 - kernel experiment patch snapshot:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-xpu-kernels-active-diff-replayssm-slotcopy-20260706.patch`
   (parity-tested but not the endpoint speed source);
-- strict fresh median: `67.519 tok/s`, p10 `62.663`, mean `68.154`,
-  TTFT median `477.851 ms`, `cached_tokens=0` on every prompt;
+- strict fresh median: `68.236 tok/s`, p10 `62.317`, mean `67.830`,
+  TTFT median `479.146 ms`, `cached_tokens=0` on every prompt;
 - support rows: `68.481` one-off native-slot-copy smoke, `66.871` native
   slot-copy confirm, and `67.300` PyTorch slot-management fallback control;
 - full quality: repeat64 `pass_all=true`, `baseline_match_all=true`,
   `repeat_pass=true`;
-- LocalMaxxing: `cmr8rg5d900glqr01g4fesy6i`;
+- LocalMaxxing: `cmr9atqb800msqr01u760xh0t`;
 - packet:
-  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-20260706.json`;
+  `../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`;
 - experiment note:
   `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-06-replayssm-draftint4-valid-record-and-slotcopy-no-win.md`.
 

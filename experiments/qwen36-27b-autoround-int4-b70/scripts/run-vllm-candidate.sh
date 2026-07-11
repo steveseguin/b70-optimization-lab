@@ -183,6 +183,24 @@ trap cleanup EXIT
   echo "xpu_custom_allreduce_inplace_max_numel=${VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL:-}"
   echo "xpu_custom_allreduce_tiny_fp32_inplace_max_numel=${VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL:-}"
   echo "xpu_compile_allreduce_no_clone=${VLLM_XPU_COMPILE_ALLREDUCE_NO_CLONE:-}"
+  echo "ccl_enable_sycl_kernels=${CCL_ENABLE_SYCL_KERNELS:-}"
+  echo "ccl_sycl_esimd=${CCL_SYCL_ESIMD:-}"
+  echo "ccl_sycl_allreduce_tmp_buf=${CCL_SYCL_ALLREDUCE_TMP_BUF:-}"
+  echo "ccl_sycl_allreduce_small_threshold=${CCL_SYCL_ALLREDUCE_SMALL_THRESHOLD:-}"
+  echo "ccl_atl_transport=${CCL_ATL_TRANSPORT:-}"
+  echo "ccl_topo_p2p_access=${CCL_TOPO_P2P_ACCESS:-}"
+  echo "ccl_ze_ipc_exchange=${CCL_ZE_IPC_EXCHANGE:-}"
+  echo "ccl_kernel_path=${CCL_KERNEL_PATH:-}"
+  echo "oneccl_candidate_path=${ONECCL_CANDIDATE_PATH:-}"
+  echo "oneccl_candidate_sha256=${ONECCL_CANDIDATE_SHA256:-}"
+  echo "oneccl_kernels_sha256=${ONECCL_KERNELS_SHA256:-}"
+  echo "oneccl_source_top_commit=${ONECCL_SOURCE_TOP_COMMIT:-}"
+  echo "oneccl_libccl_commit=${ONECCL_LIBCCL_COMMIT:-}"
+  echo "server_ld_preload=${SERVER_LD_PRELOAD:-}"
+  echo "server_ld_library_path=${SERVER_LD_LIBRARY_PATH:-}"
+  echo "server_ccl_kernel_path=${SERVER_CCL_KERNEL_PATH:-}"
+  echo "ld_preload=${LD_PRELOAD:-}"
+  echo "ld_library_path=${LD_LIBRARY_PATH:-}"
   echo "gdn_replayssm_fuse_pending_metadata=${VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA:-}"
   echo "gdn_replayssm_direct_core_out=${VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT:-}"
   echo "gdn_accepted_prefix_counts=${VLLM_XPU_GDN_ACCEPTED_PREFIX_COUNTS:-}"
@@ -237,8 +255,18 @@ trap cleanup EXIT
   echo "vllm_extra_args=${VLLM_EXTRA_ARGS:-}"
 } > "$RUN_DIR/identity.env"
 
-experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh \
-  > "$RUN_DIR/server.stdout.log" 2>&1 &
+(
+  if [[ -n "${SERVER_LD_PRELOAD:-}" ]]; then
+    export LD_PRELOAD="$SERVER_LD_PRELOAD"
+  fi
+  if [[ -n "${SERVER_LD_LIBRARY_PATH:-}" ]]; then
+    export LD_LIBRARY_PATH="$SERVER_LD_LIBRARY_PATH"
+  fi
+  if [[ -n "${SERVER_CCL_KERNEL_PATH:-}" ]]; then
+    export CCL_KERNEL_PATH="$SERVER_CCL_KERNEL_PATH"
+  fi
+  exec experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh
+) > "$RUN_DIR/server.stdout.log" 2>&1 &
 server_pid=$!
 echo "$server_pid" > "$RUN_DIR/server.pid"
 

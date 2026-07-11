@@ -1,0 +1,12 @@
+diff --git a/src/coll/algorithms/allreduce/sycl/allreduce_pcie.hpp b/src/coll/algorithms/allreduce/sycl/allreduce_pcie.hpp
+index 538cf82..5415eda 100644
+--- a/src/coll/algorithms/allreduce/sycl/allreduce_pcie.hpp
++++ b/src/coll/algorithms/allreduce/sycl/allreduce_pcie.hpp
+@@ -194,4 +194,7 @@ struct AllReduce {
+             e2 = queue.submit([&](sycl::handler& cgh) {
++                // Command-graph replay must not let the LL reduction read the
++                // shared runtime sequence before this invocation's update.
++                cgh.depends_on(e1);
+                 cgh.parallel_for<class oneccl_allreduce_pcie<T,
+                                                              Proto,
+                                                              LoadSeqNoInRuntime,

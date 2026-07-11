@@ -22,13 +22,19 @@ after TP1 smoke works. Start from:
 - `experiments/qwen36-27b-autoround-int4-b70/README.md`;
 - `repro/qwen36-27b-autoround-int4-b70/README.md`.
 
-Current engineering frontier: the one-GPU strict-valid record remains
-`68.236263 tok/s`. A TP2 target-graph lane reaches `79.534823 tok/s` but is
-invalid because captured XCCL all-reduce intermittently diverges across ranks.
-An eager static-buffer collective proved the diagnosis but runs only
-`~44 tok/s`. Continue with the captured ESIMD all-reduce lane documented in
-`experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md`
-and `results/qwen36-27b-autoround-int4-b70/tp2-commandgraph-collective-bisection-20260711.json`.
+Current engineering frontier: a pinned public oneCCL/libccl build fixed the
+packed-verifier TP2 command-graph all-reduce corruption and produced a new
+strict-valid record. Use the conservative isolated headline of
+`78.226352 tok/s` on two B70s (p10 `69.963`, mean `78.598`); a separate
+full-quality run reached `81.341145 tok/s`. The high row passed exact cases,
+repeat128, baseline parity, and the 1K needle, while both strict rows used the
+fixed realistic suite with every prompt once and `cached_tokens=0`. Their
+`3.98%` difference is inside the established `4.4%` endpoint variance band,
+so `78.226` is the promoted number. Start from
+`results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`,
+`experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`, and the
+checksum-gated wrapper
+`experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh`.
 
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU

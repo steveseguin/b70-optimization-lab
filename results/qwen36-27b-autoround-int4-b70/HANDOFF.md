@@ -7,25 +7,29 @@ B70.
 
 ## July 11 Active Frontier
 
-The promoted strict-valid record remains the one-GPU webhie/AutoRound lane at
-`68.236263 tok/s` (LocalMaxxing `cmr9atqb800msqr01u760xh0t`). Do not promote
-the TP2 `79.534823 tok/s` result: rank-by-rank replay traces proved that
-captured XCCL all-reduce intermittently leaves different post-reduction hidden
-states on the two ranks.
+The promoted strict-valid record is now the two-GPU webhie/AutoRound lane with
+pinned public oneCCL/libccl: conservative isolated median
+`78.22635247759823 tok/s`, p10 `69.9633890122676`, mean
+`78.59814141426254`. A separate full-quality run reached
+`81.34114517681084 tok/s`, passed exact cases, repeat128, baseline parity, and
+the 1K needle, and used `cached_tokens=0` for every strict prompt. The `3.98%`
+difference between the valid rows is inside the established `4.4%` endpoint
+variance band, so promote `78.226`, not the high row.
 
-The current TP2 bisection and next action are recorded in:
+The result, bisection, and reproduction paths are:
 
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md`;
-- `tp2-commandgraph-collective-bisection-20260711.json`.
+- `tp2-public-oneccl-4ceafd1-20260711.json`;
+- `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`;
+- `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh`.
 
-A graph-owned clone plus eager in-place all-reduce boundary passed 384 repeat
-checks and the 1K needle, confirming the collective diagnosis, but fell to
-`~44 tok/s` and one strict run emitted two empty responses. Keep that path as
-a diagnostic only. The next implementation lane is a captured native TP2
-all-reduce using uncached ESIMD remote loads and system-acquire fencing. Reuse
-the Level Zero IPC ownership code under
-`../../experiments/minimax_qk_rms_xpu_ipc/`, but do not repeat its rejected
-cached peer-polling synchronization.
+The installed oneCCL `Gold-2021.17.2` runtime failed the deterministic BF16
+`[4,5120]` XPUGraph all-reduce oracle on `510/512` and `511/512` replays. The
+pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` passed direct
+`256/256` and graph `512/512` on both ranks. This supersedes the custom ESIMD
+collective lane. Next, keep the corrected runtime fixed and screen graph-safe
+oneCCL algorithm/temp-buffer choices with the oracle before endpoint tests;
+the target remains `100+ tok/s`.
 
 ## Current State
 
@@ -79,7 +83,7 @@ Current Intel-checkpoint baseline valid fresh-response result:
   `promote-source-noacceptedpost-20260703.json`;
 - LocalMaxxing: approved as `cmr4gokx90061nv01lhoe3ft8`.
 
-Current fastest quality-gated variant:
+Prior TP1 fastest quality-gated variant:
 
 - runtime quantization label: **webhie AutoRound W4A16 + runtime INT8 target
   LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)**.

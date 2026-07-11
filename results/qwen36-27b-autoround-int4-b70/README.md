@@ -30,6 +30,35 @@ INT8-LM-head variants as `cmr4zkcxb003yq9018408i1pn`,
 `cmr576apv0079q901i6dvsh0l`, `cmr5iu3gk00bfq901nidgcana`,
 `cmr8rg5d900glqr01g4fesy6i`, and `cmr9atqb800msqr01u760xh0t`.
 
+Current TP2 record:
+
+- model/runtime recipe: webhie AutoRound W4A16, runtime INT8 target LM-head
+  with BF16 scales, runtime INT4 group128 draft LM-head with BF16 scales,
+  ReplaySSM exact GDN state, target-verified MTP3, PIECEWISE target graph, and
+  eager draft;
+- collective runtime: public oneCCL parent
+  `b52f40c07f0b140e6aba87548c80720a350a9827`, libccl
+  `4ceafd15c03ce46f11eeaf91781a92afebd3cecf`, injected only into the server;
+- conservative strict headline: median **`78.226352 tok/s`**, p10 `69.963389`,
+  mean `78.598141`, full after-TTFT median `80.158149`, wall median
+  `69.879192`, TTFT median `750.0305 ms`;
+- full-quality high support: **`81.341145 tok/s`**, exact cases + repeat128 +
+  baseline parity + 1K needle all passed;
+- strict validity: 12 unique fixed realistic prompts, each once cold,
+  `cached_tokens=0` throughout, no prompt/KV/history/response reuse, token-id
+  timing for generated tokens 1-100 after TTFT;
+- variance: high vs isolated differs by `3.98%`, inside the established `4.4%`
+  endpoint band, so `78.226` is the promoted number;
+- packet: `tp2-public-oneccl-4ceafd1-20260711.json`;
+- build/oracle/repro:
+  `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
+
+The mechanism matters: installed oneCCL `Gold-2021.17.2` failed the exact
+BF16 `[4,5120]` XPUGraph all-reduce oracle on nearly every replay, while the
+pinned public revision passed direct `256/256` and graph `512/512` on both
+ranks. Do not reproduce TP2 records against the known-broken installed
+collective.
+
 Validated so far:
 
 - pinned snapshot downloaded under `/mnt/fast-ai/llm-cache/hf`;
@@ -81,7 +110,7 @@ Current Intel-checkpoint baseline valid fresh-response result:
 - vLLM patch-stack snapshot:
   `../../patches/qwen36-27b-autoround-int4-b70/vllm-current-xpu-qwen27-promote-source-stack-20260703.patch`.
 
-Current fastest quality-gated variant:
+Prior TP1 fastest quality-gated variant:
 
 - label this separately as **webhie AutoRound W4A16 + runtime INT8 target
   LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)**. Do not

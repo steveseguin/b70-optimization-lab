@@ -1,12 +1,15 @@
 # 2026-07-11 - TP2 command-graph replay and W4A16 scratchpad bisection
 
-Status: **in progress; no promotable result yet**.
+Status: **resolved and promoted with pinned public oneCCL**.
 
-The current strict-valid Qwen27 record remains the TP1 ReplaySSM result at
+The previous strict-valid Qwen27 record was the TP1 ReplaySSM result at
 `68.23626314761921 tok/s` (LocalMaxxing `cmr9atqb800msqr01u760xh0t`). The
-TP2 target-graph lane reaches `79.53482335166211 tok/s`, but it is invalid
-until the intermittent replay corruption is eliminated and the full fresh
-quality/throughput gates pass.
+installed oneCCL runtime made the fast TP2 target-graph lane invalid, but a
+pinned public oneCCL/libccl build fixes the deterministic collective oracle and
+passes the endpoint gates. The conservative promoted TP2 headline is now
+`78.22635247759823 tok/s`; a separate full-quality run reached
+`81.34114517681084 tok/s` and is retained as high support within the known
+variance band.
 
 ## Fixed TP2 identity
 
@@ -216,7 +219,7 @@ This establishes the direction but not a shipping implementation: a correct
 collective must remain inside the captured layer instead of creating 72 eager
 boundaries.
 
-## Next kernel lane
+## Superseded native-kernel lane
 
 The older MiniMax Level Zero IPC prototype proved peer-buffer import/export but
 its cached volatile polling timed out because B70 peer atomics are unavailable:
@@ -227,10 +230,103 @@ writes, uncached ESIMD remote reads, and explicit `system_acquire` fences,
 avoiding unreliable PCIe peer atomics while remaining graph-capturable:
 https://www.reddit.com/r/LocalLLM/comments/1u8yai1/
 
-The next implementation should first reproduce that synchronization primitive
-in a standalone TP2 BF16 `[4,5120]` all-reduce microbenchmark, require exact
-rank agreement over a long sequence, then integrate it as a captured native
-collective. Do not repeat the old cached peer-polling variants.
+This was the planned next implementation before the newer public oneCCL source
+was tested. The local ESIMD prototype remains useful negative evidence, but a
+new native collective is no longer required to restore correctness. Do not
+resume peer-polling work unless the public oneCCL lane later proves insufficient
+for a measured bottleneck.
 
-No result from this note is eligible for LocalMaxxing until the complete strict
-fresh gate passes.
+## Resolution: public oneCCL fixes graph replay
+
+The decisive step was reducing the issue to a deterministic collective oracle
+instead of continuing endpoint flag sweeps. The oracle captures the exact
+packed-verifier BF16 `[4,5120]` all-reduce, changes every input before every
+replay, and checks every output element against an exactly representable BF16
+sum.
+
+Results:
+
+- installed oneCCL `Gold-2021.17.2`, `HEAD/b9deca8`: rank 0 was wrong on
+  `510/512` graph replays and rank 1 on `511/512`;
+- public oneCCL parent `b52f40c07f0b140e6aba87548c80720a350a9827`,
+  legacy libccl `4ceafd15c03ce46f11eeaf91781a92afebd3cecf`: direct control
+  passed `256/256` on both ranks and XPUGraph passed `512/512` on both ranks;
+- an experimental LL256 counter-kernel sequence dependency also passed, but a
+  source-matched public build without that line passed identically. Preserve
+  the patch as inconclusive; attribute the fix to the public revision as a
+  whole.
+
+Oracle artifacts:
+
+- `data/qwen36-27b-autoround-int4-b70-baselines/oneccl-installed-ll256-graph-baseline-20260711.json`;
+- `data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-unpatched-ll256-direct-control-20260711.json`;
+- `data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-unpatched-ll256-graph-control-20260711.json`;
+- `data/qwen36-27b-autoround-int4-b70-baselines/oneccl-ll256-seqdep-direct-20260711.json`;
+- `data/qwen36-27b-autoround-int4-b70-baselines/oneccl-ll256-seqdep-graph-20260711.json`.
+
+The 2025.3 Intel compiler needed only two ESIMD `barrier()` namespace
+disambiguations to build this pinned source. That compatibility-only delta is
+preserved separately from the inconclusive dependency patch. The tested binary
+is outside Git at `/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70`; its library
+SHA-256 is `43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700`
+and its `kernels.spv` SHA-256 is
+`0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9`.
+Rebuild and validate it through
+`experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/`.
+
+## Endpoint validation and variance
+
+The public build was injected only into the vLLM server subprocess with
+`LD_PRELOAD`; helper Python processes retained the normal environment. This
+avoids contaminating artifact generation or benchmark clients with an
+experimental communication runtime.
+
+Full-quality support run on GPUs 2,3:
+
+- strict fresh median `81.34114517681084 tok/s`, p10 `75.44721241444648`,
+  mean `81.42812719182129`;
+- all 12 prompts unique and run once, `cached_tokens=0` throughout, no
+  prefix/KV/history/response reuse;
+- exact canaries passed, repeat128 passed, baseline matched, and the 987-token
+  prompt / 1K needle passed;
+- summary:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-lock-candidate-summary-20260711T142306Z.json`.
+
+Isolated confirmation on GPUs 2,3:
+
+- strict fresh median `78.22635247759823 tok/s`, p10
+  `69.9633890122676`, mean `78.59814141426254`;
+- full-output after-TTFT median `80.15814896781353 tok/s`, wall median
+  `69.87919249825262 tok/s`, TTFT median `750.0304995337501 ms`;
+- strict gate passed with all 12 `cached_tokens=0`;
+- summary:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-solo-confirm-gpu23-candidate-summary-20260711T143410Z.json`.
+
+The high and isolated rows differ by `3.98%`, inside the established `4.4%`
+endpoint variance band. Use `78.22635247759823 tok/s` as the conservative
+headline and `81.34114517681084 tok/s` as valid high support. Concurrent TP2
+pairs measured `71.81599530053151` on GPUs 0,1 and `76.27441961099224` on
+GPUs 2,3, confirming that simultaneous pair testing is useful for screening
+but adds measurable contention and is not the promotion condition.
+
+One harness lesson is also worth retaining: two confirmation shells failed
+before server launch when `run-vllm-candidate.sh` was edited while they were
+reading it. Those attempts produced no benchmark result and cleaned up
+normally. Freeze or copy the launcher before parallel runs; do not edit a live
+entrypoint.
+
+## Promoted artifacts and next work
+
+- result packet:
+  `results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`;
+- checksum-gated record wrapper:
+  `experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh`;
+- LocalMaxxing queue:
+  `experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-tp2-public-oneccl-20260711.queue.json`.
+
+This is a real mechanism win over the prior `68.236263` TP1 record, not a
+sub-percent endpoint fluctuation. The next optimization lane should keep this
+public runtime fixed and screen its graph-safe all-reduce algorithms and
+temporary-buffer modes with the deterministic oracle first, then endpoint
+throughput and full quality. The goal remains `100+ tok/s`; do not fall back to
+config sweeps against the known-broken installed collective.

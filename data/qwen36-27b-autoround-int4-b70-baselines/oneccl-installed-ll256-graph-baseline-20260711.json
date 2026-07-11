@@ -1,0 +1,59 @@
+{
+  "backend": "xccl",
+  "mode": "graph",
+  "passed": false,
+  "queue_test": "torch.xpu.XPUGraph",
+  "ranks": [
+    {
+      "avg_replay_ms_including_sync_and_validation": 0.8557007031413377,
+      "device": "xpu:0",
+      "dtype": "bfloat16",
+      "first_mismatch": {
+        "actual": 3.0,
+        "expected": 5.0,
+        "flat_index": 0,
+        "iteration": 1,
+        "max_abs_diff": 2.0,
+        "mismatch_elements": 20480
+      },
+      "hidden_size": 5120,
+      "iterations": 512,
+      "loaded_ccl_paths": [
+        "/home/steve/.venvs/vllm-xpu/lib/libccl.so.1",
+        "/home/steve/.venvs/vllm-xpu/lib/libccl.so.2"
+      ],
+      "local_rank": 0,
+      "max_abs_diff": 32.0,
+      "mismatch_iterations": 510,
+      "mode": "graph",
+      "rank": 0,
+      "rows": 4
+    },
+    {
+      "avg_replay_ms_including_sync_and_validation": 0.8471153323625913,
+      "device": "xpu:1",
+      "dtype": "bfloat16",
+      "first_mismatch": {
+        "actual": 24.0,
+        "expected": 25.0,
+        "flat_index": 10240,
+        "iteration": 1,
+        "max_abs_diff": 1.0,
+        "mismatch_elements": 10240
+      },
+      "hidden_size": 5120,
+      "iterations": 512,
+      "loaded_ccl_paths": [
+        "/home/steve/.venvs/vllm-xpu/lib/libccl.so.1",
+        "/home/steve/.venvs/vllm-xpu/lib/libccl.so.2"
+      ],
+      "local_rank": 1,
+      "max_abs_diff": 27.0,
+      "mismatch_iterations": 511,
+      "mode": "graph",
+      "rank": 1,
+      "rows": 4
+    }
+  ],
+  "world_size": 2
+}

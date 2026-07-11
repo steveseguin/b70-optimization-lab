@@ -1,0 +1,30 @@
+diff --git a/src/coll/algorithms/allgatherv/sycl/allgatherv_small_sycl.hpp b/src/coll/algorithms/allgatherv/sycl/allgatherv_small_sycl.hpp
+index a798ca2..447bff2 100644
+--- a/src/coll/algorithms/allgatherv/sycl/allgatherv_small_sycl.hpp
++++ b/src/coll/algorithms/allgatherv/sycl/allgatherv_small_sycl.hpp
+@@ -259,5 +259,9 @@ public:
+                                                             cache_hint::none>(local_sync_ptr, ramp, pred);
+                             }
+                         }
+-                        barrier();
++#if defined(__SYCL_DEVICE_ONLY__) && defined(__SPIR__)
++                        ::barrier();
++#else
++                        __ESIMD_NS::barrier();
++#endif
+                     }
+diff --git a/src/coll/algorithms/reduce_scatter/sycl/reduce_scatter_small_sycl.hpp b/src/coll/algorithms/reduce_scatter/sycl/reduce_scatter_small_sycl.hpp
+index 7136e63..7406f2d 100644
+--- a/src/coll/algorithms/reduce_scatter/sycl/reduce_scatter_small_sycl.hpp
++++ b/src/coll/algorithms/reduce_scatter/sycl/reduce_scatter_small_sycl.hpp
+@@ -319,5 +319,9 @@ public:
+                                                             cache_hint::none>(local_sync_ptr, ramp, pred);
+                             }
+                         }
+-                        barrier();
++#if defined(__SYCL_DEVICE_ONLY__) && defined(__SPIR__)
++                        ::barrier();
++#else
++                        __ESIMD_NS::barrier();
++#endif
+                     }

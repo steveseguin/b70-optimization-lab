@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Reproduce and bisect the fast but currently INVALID Qwen27 TP2 lane.
-# This wrapper deliberately runs the complete strict fresh suite and repeat64
-# quality gate; a speed result from it is not promotable unless quality passes.
+# Base Qwen27 TP2 target-graph / eager-draft candidate. The installed oneCCL
+# runtime corrupts this packed-verifier graph shape, so do not invoke this base
+# wrapper directly for a promoted run. Use run-tp2-oneccl-public4ce-candidate.sh,
+# which checksum-gates and injects the graph-correct public oneCCL build. This
+# wrapper still runs the complete strict fresh suite and quality gate.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 

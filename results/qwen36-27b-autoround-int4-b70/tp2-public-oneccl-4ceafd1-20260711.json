@@ -1,0 +1,149 @@
+{
+  "status": "quality_gated_tp2_record",
+  "date_utc": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "base_model": "Qwen/Qwen3.6-27B",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "quantization": "AutoRound INT4 W4A16 target + runtime INT8 target LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)",
+  "headline": {
+    "gpu_count": 2,
+    "median_tok_s_1_100_after_ttft": 78.22635247759823,
+    "p10_tok_s_1_100_after_ttft": 69.9633890122676,
+    "mean_tok_s_1_100_after_ttft": 78.59814141426254,
+    "stdev_tok_s_1_100_after_ttft": 7.302568998150812,
+    "median_full_after_ttft_tok_s": 80.15814896781353,
+    "median_wall_tok_s_full": 69.87919249825262,
+    "median_ttft_ms": 750.0304995337501,
+    "selection_reason": "Conservative isolated confirmation on GPUs 2,3. The separate 81.341 tok/s full-quality run is retained as a valid high support row; its 3.98% delta is inside the established 4.4% endpoint variance band."
+  },
+  "comparison_prior_record": {
+    "gpu_count": 1,
+    "median_tok_s_1_100_after_ttft": 68.23626314761921,
+    "improvement_percent": 14.64,
+    "localmaxxing_id": "cmr9atqb800msqr01u760xh0t",
+    "result_packet": "results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json"
+  },
+  "localmaxxing": {
+    "status": "pending_submission_after_github_push",
+    "queue": "experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-tp2-public-oneccl-20260711.queue.json",
+    "id": null,
+    "response_log": null
+  },
+  "hardware": {
+    "gpu_count": 2,
+    "gpu_name": "Intel Arc Pro B70",
+    "vram_gb_each": 32,
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+    "ram_gb": 128,
+    "os": "Ubuntu 24.04.4 LTS"
+  },
+  "runtime": {
+    "engine": "vllm",
+    "engine_version": "0.20.2rc1.dev13 local XPU patch stack",
+    "vllm_source_branch": "codex/qwen36-quark-int8-tracking",
+    "vllm_source_head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "xpu_kernels_source_head": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "xpu_c_sha256": "93fbff8734a706260ad368274ac2f73b99e9dff4df9a828220c5ddb749c72aee",
+    "oneccl_parent_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+    "oneccl_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "oneccl_lib_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "oneccl_kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "oneccl_binary_policy": "The 230 MiB binary is outside Git under /mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70; rebuild from pinned public source with the recorded script and compatibility patch."
+  },
+  "serving_config": {
+    "tp": 2,
+    "concurrency": 1,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": 0.95,
+    "spec_method": "qwen3_next_mtp",
+    "num_speculative_tokens": 3,
+    "xpu_graph": true,
+    "target_graph": true,
+    "draft_graph": false,
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE",
+      "max_cudagraph_capture_size": 8
+    },
+    "collective_env": {
+      "CCL_ATL_TRANSPORT": "ofi",
+      "CCL_TOPO_P2P_ACCESS": "1",
+      "CCL_ZE_IPC_EXCHANGE": "pidfd"
+    },
+    "record_wrapper": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh"
+  },
+  "strict_fresh_result": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-solo-confirm-gpu23-realistic128-chat-tokenids-qwensuite-20260711T143410Z.json",
+    "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-solo-confirm-gpu23-candidate-summary-20260711T143410Z.json",
+    "passed": true,
+    "cached_tokens_all_zero": true,
+    "each_prompt_run_once": true,
+    "prompt_count": 12,
+    "prompts_unique": true,
+    "metric": "median generated-token throughput for tokens 1-100 after TTFT",
+    "token_timing_source": "openai_stream_token_ids_chunk_timestamp",
+    "history_acceleration": false,
+    "prefix_or_kv_cache_reuse": false,
+    "response_reuse": false,
+    "target_verified_speculation": true,
+    "prompt_and_output_hashes": "Stored in the strict artifact as prompt_sha256s and output_sha256s."
+  },
+  "quality": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-tp2-oneccl-public4ce-lock-repeat128-ctx1024-20260711T142306Z.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "exact_cases_passed": 4,
+    "repeat_pass": true,
+    "repeat_runs": 128,
+    "long_context_pass": true,
+    "long_context_actual_prompt_tokens": 987,
+    "cached_tokens_zero": true
+  },
+  "supporting_runs": [
+    {
+      "label": "full-quality high support",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-lock-candidate-summary-20260711T142306Z.json",
+      "strict_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-lock-realistic128-chat-tokenids-qwensuite-20260711T142306Z.json",
+      "median_tok_s_1_100_after_ttft": 81.34114517681084,
+      "p10": 75.44721241444648,
+      "mean": 81.42812719182129,
+      "quality_pass_all": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "label": "simultaneous TP2 pair GPUs 0,1",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-confirm2-gpu01-candidate-summary-20260711T143041Z.json",
+      "median_tok_s_1_100_after_ttft": 71.81599530053151,
+      "note": "Concurrent with the GPUs 2,3 pair; retained as contention/variance evidence."
+    },
+    {
+      "label": "simultaneous TP2 pair GPUs 2,3",
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-oneccl-public4ce-confirm2-gpu23-candidate-summary-20260711T143041Z.json",
+      "median_tok_s_1_100_after_ttft": 76.27441961099224,
+      "note": "Concurrent with the GPUs 0,1 pair; retained as contention/variance evidence."
+    }
+  ],
+  "collective_correctness": {
+    "installed_runtime": {
+      "identity": "Gold-2021.17.2 HEAD/b9deca8",
+      "graph_oracle": "failed",
+      "wrong_replays_rank0": "510/512",
+      "wrong_replays_rank1": "511/512",
+      "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/oneccl-installed-ll256-graph-baseline-20260711.json"
+    },
+    "public_runtime": {
+      "direct_oracle": "passed 256/256 on both ranks",
+      "graph_oracle": "passed 512/512 on both ranks",
+      "direct_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-unpatched-ll256-direct-control-20260711.json",
+      "graph_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/oneccl-public-unpatched-ll256-graph-control-20260711.json"
+    },
+    "attribution": "The source-matched public build passes without the experimental LL256 sequence-dependency line. Preserve that patch as inconclusive; attribute the fix to the newer public oneCCL/libccl revision as a whole."
+  },
+  "reproduction": {
+    "guide": "experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md",
+    "build_script": "experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/build-public-oneccl.sh",
+    "oracle": "experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/graph_allreduce_probe.py",
+    "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md"
+  }
+}

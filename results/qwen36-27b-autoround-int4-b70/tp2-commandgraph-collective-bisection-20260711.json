@@ -6,7 +6,7 @@
     "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
     "quantization": "AutoRound INT4"
   },
-  "promoted_record_unchanged": {
+  "promoted_record_at_time_of_bisection": {
     "gpu_count": 1,
     "median_tok_s_1_100_after_ttft": 68.23626314761921,
     "localmaxxing_id": "cmr9atqb800msqr01u760xh0t"
@@ -34,6 +34,8 @@
     "gpu01_failure": "two of twelve prompts emitted only EOS",
     "decision": "retain as diagnostic proof; too slow and not robustly correct"
   },
-  "next_lane": "captured ESIMD all-reduce using uncached remote reads and system-acquire fencing",
+  "resolution": "A pinned newer public oneCCL/libccl build passed the deterministic direct and graph all-reduce oracles and the full endpoint gates; a custom ESIMD collective was not required.",
+  "superseded_by": "results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json",
+  "next_lane_at_time": "captured ESIMD all-reduce using uncached remote reads and system-acquire fencing",
   "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md"
 }

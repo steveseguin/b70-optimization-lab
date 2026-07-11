@@ -134,15 +134,20 @@ The Qwen3.6 35B lane is indexed in
 
 ### Qwen3.6 27B INT4 AutoRound
 
-The active Qwen27 one-B70 optimization lane is indexed in
+The active Qwen27 one- and two-B70 optimization lane is indexed in
 [../results/qwen36-27b-autoround-int4-b70/](../results/qwen36-27b-autoround-int4-b70/).
-The current strict fresh-response decode record is `68.236 tok/s` with the
-`webhie` AutoRound checkpoint plus runtime INT8 target LM-head BF16 scales,
+The current strict fresh-response record is the TP2 public-oneCCL lane at a
+conservative `78.226 tok/s`; a separate full-quality row reached `81.341 tok/s`
+and passed exact cases, repeat128, baseline parity, and the 1K needle. Both use
+the `webhie` AutoRound checkpoint, runtime INT8 target LM-head BF16 scales,
 runtime INT4 draft LM-head BF16 scales, ReplaySSM exact GDN state handling,
-and conservative PyTorch slot management fallback. LocalMaxxing approved it as
-`cmr9atqb800msqr01u760xh0t`; this is a small same-recipe confirm over the
-prior `67.519 tok/s` row, so keep variance caution for sub-percent changes.
-The previous BF16-scale INT8-LM-head-only record was `65.276 tok/s`. The
+target-verified MTP3, unique cold prompts, and `cached_tokens=0`. The newer
+public oneCCL/libccl revision fixes deterministic packed-verifier graph replay
+failures in the installed runtime. See
+[the TP2 record packet](../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json).
+The previous one-B70 record was `68.236 tok/s` (LocalMaxxing
+`cmr9atqb800msqr01u760xh0t`), and the previous BF16-scale INT8-LM-head-only
+record was `65.276 tok/s`. The
 service/prompt-processing lane is separate: see
 [../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md](../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md)
 for the cold long-context ladder, including the 32K-capability anchor through

@@ -1,5 +1,40 @@
 # Reproduce Qwen3.6 27B AutoRound Bring-Up
 
+## Current TP2 Record
+
+The current strict/fresh record requires the graph-correct pinned public
+oneCCL build. Build and validate it first:
+
+```bash
+cd /home/steve/llm-optimizations
+experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/build-public-oneccl.sh
+```
+
+Copy or install the resulting library and `kernels.spv` under
+`/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70`, then run the checksum-gated
+candidate:
+
+```bash
+cd /home/steve/llm-optimizations
+GPU_INDEX=2,3 PORT=19443 \
+QUALITY_REPEAT_RUNS=128 \
+  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-candidate.sh
+```
+
+The promoted isolated result is median `78.226352 tok/s`, p10 `69.963389`,
+mean `78.598141` for generated tokens 1-100 after TTFT. A separate full-quality
+run reached `81.341145 tok/s` and passed exact cases, repeat128, baseline
+parity, and the 1K needle. Both strict rows used 12 unique cold prompts with
+`cached_tokens=0`; use `78.226` because the `3.98%` difference is inside the
+known `4.4%` endpoint variance band. Exact checksums, artifacts, and runtime
+identity are in
+`tp2-public-oneccl-4ceafd1-20260711.json` and the collective guide is
+`../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
+
+Do not run the TP2 base wrapper against installed oneCCL
+`Gold-2021.17.2`: its deterministic packed-verifier graph oracle fails on
+nearly every replay.
+
 ## Download
 
 ```bash
@@ -12,7 +47,7 @@ The script reads the Hugging Face token from
 shared cache under `/mnt/fast-ai/llm-cache/hf`. The token is never stored in the
 repo.
 
-## Serve Current Best One-Replica Result
+## Serve Prior TP1 One-Replica Result
 
 Current strict/fresh best profile is the `webhie/Qwen3.6-27B-int4-AutoRound`
 variant with runtime INT8 target LM-head, runtime INT4 draft LM-head, and
