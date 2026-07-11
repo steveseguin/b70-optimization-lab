@@ -1,0 +1,60 @@
+{
+  "classification": "diagnostic_microbenchmark_not_endpoint_not_localmaxxing",
+  "date": "2026-07-11",
+  "model": "Qwen3.6-27B-int4-AutoRound",
+  "shape": {
+    "tensor_parallel_size": 2,
+    "dtype": "float16",
+    "state_dtype": "float16",
+    "rows": 1,
+    "spec_len": 4,
+    "cache_len": 8,
+    "num_k_heads_per_rank": 8,
+    "num_v_heads_per_rank": 24,
+    "head_k_dim": 128,
+    "head_v_dim": 128
+  },
+  "protocol": {
+    "gpus": 4,
+    "warmup_iterations": 100,
+    "measured_iterations": 2000,
+    "candidate_and_control_same_process": true
+  },
+  "raw_control_directory": "/mnt/usb-models/llm-optimization-artifacts/qwen27-replayssm/qk-precompute-baseline-20260711T225706Z",
+  "raw_candidate_directory": "/mnt/usb-models/llm-optimization-artifacts/qwen27-replayssm/qk-precompute-candidate-20260711T231223Z",
+  "stage_plus_decode_control_us_by_gpu": [
+    36.6553380154,
+    36.6895420011,
+    36.7099705618,
+    36.7854374927
+  ],
+  "stage_plus_precompute_plus_decode_us_by_gpu": [
+    44.9107355671,
+    45.1047499664,
+    45.1308784541,
+    45.4165550182
+  ],
+  "candidate_delta_percent_by_gpu": [
+    22.5216789659,
+    22.9362578716,
+    22.9390210981,
+    23.4634086579
+  ],
+  "median": {
+    "control_us": 36.6997562815,
+    "candidate_us": 45.1178142102,
+    "candidate_delta_percent": 22.9376394849,
+    "precompute_qk_us": 6.6534464713,
+    "control_decode_us": 29.8661590205,
+    "precomputed_decode_us": 33.8677385007
+  },
+  "parity": {
+    "out_exact": false,
+    "out_max_abs_max_across_gpus": 0.00048828125,
+    "d_cache_exact": false,
+    "d_cache_max_abs_across_gpus": 0.00390625,
+    "checkpoint_k_cache_g_cache_pending_pending_len_exact": true
+  },
+  "decision": "no_win",
+  "reason": "The candidate was 22.5-23.5% slower on every card. The separate precompute costs about 6.65 us and the consumer itself regresses by about 4.00 us, so fusing precompute into stage-conv cannot recover the lane. It also changes FP16 rounding slightly. No endpoint run is justified."
+}

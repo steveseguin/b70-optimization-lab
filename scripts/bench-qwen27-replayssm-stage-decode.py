@@ -24,12 +24,11 @@ from typing import Any, Callable
 
 
 HIDDEN = 5120
-NUM_K_HEADS = 16
-NUM_V_HEADS = 48
+GLOBAL_NUM_K_HEADS = 16
+GLOBAL_NUM_V_HEADS = 48
 HEAD_K_DIM = 128
 HEAD_V_DIM = 128
 CONV_WIDTH = 4
-CONV_DIM = 2 * (NUM_K_HEADS * HEAD_K_DIM) + (NUM_V_HEADS * HEAD_V_DIM)
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,11 +41,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--spec-len", type=int, default=4)
     parser.add_argument("--cache-len", type=int, default=8)
     parser.add_argument("--num-slots", type=int, default=2)
-    parser.add_argument("--dtype", choices=("bf16", "fp16", "fp32"), default="bf16")
-    parser.add_argument("--state-dtype", choices=("bf16", "fp16", "fp32"), default="bf16")
+    parser.add_argument("--tp-size", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--dtype", choices=("bf16", "fp16", "fp32"), default="fp16")
+    parser.add_argument("--state-dtype", choices=("bf16", "fp16", "fp32"), default="fp16")
     parser.add_argument("--warmup", type=int, default=50)
     parser.add_argument("--iterations", type=int, default=500)
     parser.add_argument("--seed", type=int, default=20260707)
+    parser.add_argument(
+        "--precomputed-qk",
+        action="store_true",
+        help="benchmark the experimental Q/K precompute ops in addition to control",
+    )
     return parser.parse_args()
 
 
@@ -106,6 +111,10 @@ def main() -> None:
     if not hasattr(torch.ops, "_xpu_C"):
         raise SystemExit("torch.ops._xpu_C is unavailable")
     required = ["gdn_replayssm_stage_conv", "gdn_replayssm_spec_decode"]
+    if args.precomputed_qk:
+        required.extend(
+            ["gdn_replayssm_precompute_qk", "gdn_replayssm_spec_decode_precomputed"]
+        )
     missing = [name for name in required if not hasattr(torch.ops._xpu_C, name)]
     if missing:
         raise SystemExit(f"missing XPU ops: {missing}")
@@ -114,6 +123,9 @@ def main() -> None:
     torch.xpu.set_device(device)
     dtype = dtype_from_name(torch, args.dtype)
     state_dtype = dtype_from_name(torch, args.state_dtype)
+    num_k_heads = GLOBAL_NUM_K_HEADS // args.tp_size
+    num_v_heads = GLOBAL_NUM_V_HEADS // args.tp_size
+    conv_dim = 2 * (num_k_heads * HEAD_K_DIM) + (num_v_heads * HEAD_V_DIM)
     gen = torch.Generator(device=args.device)
     gen.manual_seed(args.seed)
 
@@ -137,82 +149,91 @@ def main() -> None:
     ).contiguous()
 
     mixed_qkv = torch.randn(
-        (total_tokens, CONV_DIM),
+        (total_tokens, conv_dim),
         device=device,
         dtype=dtype,
         generator=gen,
     ).contiguous()
     a_src = torch.randn(
-        (total_tokens, NUM_V_HEADS),
+        (total_tokens, num_v_heads),
         device=device,
         dtype=dtype,
         generator=gen,
     ).contiguous()
     b_src = torch.randn_like(a_src)
     conv_state = torch.randn(
-        (args.num_slots, CONV_DIM, CONV_WIDTH),
+        (args.num_slots, conv_dim, CONV_WIDTH),
         device=device,
         dtype=dtype,
         generator=gen,
     ).contiguous()
     conv_weights = torch.randn(
-        (CONV_DIM, CONV_WIDTH),
+        (conv_dim, CONV_WIDTH),
         device=device,
         dtype=dtype,
         generator=gen,
     ).contiguous()
     conv_pending = torch.empty(
-        (args.num_slots, spec_len, CONV_DIM),
+        (args.num_slots, spec_len, conv_dim),
         device=device,
         dtype=dtype,
     ).contiguous()
     q = torch.empty(
-        (1, total_tokens, NUM_K_HEADS, HEAD_K_DIM),
+        (1, total_tokens, num_k_heads, HEAD_K_DIM),
         device=device,
         dtype=dtype,
     )
     k = torch.empty_like(q)
     v = torch.empty(
-        (1, total_tokens, NUM_V_HEADS, HEAD_V_DIM),
+        (1, total_tokens, num_v_heads, HEAD_V_DIM),
         device=device,
         dtype=dtype,
     )
-    a_out = torch.empty((total_tokens, NUM_V_HEADS), device=device, dtype=dtype)
+    a_out = torch.empty((total_tokens, num_v_heads), device=device, dtype=dtype)
     b_out = torch.empty_like(a_out)
 
     checkpoint = torch.randn(
-        (args.num_slots, NUM_V_HEADS, HEAD_V_DIM, HEAD_K_DIM),
+        (args.num_slots, num_v_heads, HEAD_V_DIM, HEAD_K_DIM),
         device=device,
         dtype=state_dtype,
         generator=gen,
     )
     d_cache = torch.randn(
-        (args.num_slots, NUM_V_HEADS, args.cache_len, HEAD_V_DIM),
+        (args.num_slots, num_v_heads, args.cache_len, HEAD_V_DIM),
         device=device,
         dtype=state_dtype,
         generator=gen,
     )
     k_cache = torch.randn(
-        (args.num_slots, NUM_K_HEADS, args.cache_len, HEAD_K_DIM),
+        (args.num_slots, num_k_heads, args.cache_len, HEAD_K_DIM),
         device=device,
         dtype=state_dtype,
         generator=gen,
     )
     g_cache = torch.randn(
-        (args.num_slots, NUM_V_HEADS, args.cache_len),
+        (args.num_slots, num_v_heads, args.cache_len),
         device=device,
         dtype=torch.float32,
         generator=gen,
     ) * 0.03
-    A_log = torch.randn((NUM_V_HEADS,), device=device, dtype=torch.float32,
+    A_log = torch.randn((num_v_heads,), device=device, dtype=torch.float32,
                         generator=gen)
-    dt_bias = torch.randn((NUM_V_HEADS,), device=device, dtype=dtype,
+    dt_bias = torch.randn((num_v_heads,), device=device, dtype=dtype,
                           generator=gen)
     out = torch.empty(
-        (1, total_tokens, NUM_V_HEADS, HEAD_V_DIM),
+        (1, total_tokens, num_v_heads, HEAD_V_DIM),
         device=device,
         dtype=dtype,
     )
+    out_precomputed = torch.empty_like(out)
+    q_norm = torch.empty_like(q)
+    k_norm = torch.empty_like(k)
+    kk_mat = torch.empty(
+        (rows, num_k_heads, spec_len, spec_len),
+        device=device,
+        dtype=torch.float32,
+    )
+    kq_mat = torch.empty_like(kk_mat)
     write_pos = torch.full(
         (args.num_slots,),
         max(0, args.cache_len - spec_len),
@@ -282,13 +303,97 @@ def main() -> None:
             0,
         )
 
+    def precompute_qk() -> None:
+        torch.ops._xpu_C.gdn_replayssm_precompute_qk(
+            q_norm,
+            k_norm,
+            kk_mat,
+            kq_mat,
+            q,
+            k,
+            query_start_loc,
+            spec_len,
+            HEAD_K_DIM**-0.5,
+            True,
+        )
+
+    def spec_decode_precomputed() -> None:
+        torch.ops._xpu_C.gdn_replayssm_spec_decode_precomputed(
+            out_precomputed,
+            q_norm,
+            k_norm,
+            kk_mat,
+            kq_mat,
+            v,
+            a_out,
+            b_out,
+            A_log,
+            dt_bias,
+            checkpoint,
+            d_cache,
+            k_cache,
+            g_cache,
+            query_start_loc,
+            slots,
+            write_pos,
+            cache_base,
+            is_flush,
+            pending,
+            pending_len,
+            False,
+            args.cache_len,
+            spec_len,
+            0,
+        )
+
     def stage_then_decode() -> None:
         stage_conv()
         spec_decode()
 
+    def stage_then_precomputed_decode() -> None:
+        stage_conv()
+        precompute_qk()
+        spec_decode_precomputed()
+
     stage_conv()
+    mutable_tensors = {
+        "checkpoint": checkpoint,
+        "d_cache": d_cache,
+        "k_cache": k_cache,
+        "g_cache": g_cache,
+        "pending": pending,
+        "pending_len": pending_len,
+    }
+    initial_state = {name: tensor.clone() for name, tensor in mutable_tensors.items()}
     spec_decode()
     sync(torch)
+    parity = None
+    if args.precomputed_qk:
+        reference_out = out.clone()
+        reference_state = {
+            name: tensor.clone() for name, tensor in mutable_tensors.items()
+        }
+        for name, tensor in mutable_tensors.items():
+            tensor.copy_(initial_state[name])
+        precompute_qk()
+        spec_decode_precomputed()
+        sync(torch)
+        parity = {
+            "out_exact": bool(torch.equal(out_precomputed, reference_out)),
+            "out_max_abs": float(
+                (out_precomputed.float() - reference_out.float()).abs().max().item()
+            ),
+            "mutable_state_exact": {
+                name: bool(torch.equal(tensor, reference_state[name]))
+                for name, tensor in mutable_tensors.items()
+            },
+            "mutable_state_max_abs": {
+                name: float(
+                    (tensor.float() - reference_state[name].float()).abs().max().item()
+                )
+                for name, tensor in mutable_tensors.items()
+            },
+        }
 
     records = [
         bench(
@@ -313,6 +418,32 @@ def main() -> None:
             iterations=args.iterations,
         ),
     ]
+    if args.precomputed_qk:
+        records.extend(
+            [
+                bench(
+                    torch_mod=torch,
+                    name="precompute_qk",
+                    fn=precompute_qk,
+                    warmup=args.warmup,
+                    iterations=args.iterations,
+                ),
+                bench(
+                    torch_mod=torch,
+                    name="spec_decode_precomputed",
+                    fn=spec_decode_precomputed,
+                    warmup=args.warmup,
+                    iterations=args.iterations,
+                ),
+                bench(
+                    torch_mod=torch,
+                    name="stage_then_precomputed_decode",
+                    fn=stage_then_precomputed_decode,
+                    warmup=args.warmup,
+                    iterations=args.iterations,
+                ),
+            ]
+        )
     by_name = {row["name"]: row for row in records}
     separate_sum = (
         by_name["stage_conv"]["mean_ms"] + by_name["spec_decode"]["mean_ms"]
@@ -337,16 +468,19 @@ def main() -> None:
             "total_tokens": total_tokens,
             "cache_len": args.cache_len,
             "num_slots": args.num_slots,
-            "num_k_heads": NUM_K_HEADS,
-            "num_v_heads": NUM_V_HEADS,
+            "tp_size": args.tp_size,
+            "num_k_heads": num_k_heads,
+            "num_v_heads": num_v_heads,
             "head_k_dim": HEAD_K_DIM,
             "head_v_dim": HEAD_V_DIM,
-            "conv_dim": CONV_DIM,
+            "conv_dim": conv_dim,
             "conv_width": CONV_WIDTH,
             "dtype": args.dtype,
             "state_dtype": args.state_dtype,
+            "precomputed_qk": args.precomputed_qk,
         },
         "records": records,
+        "parity": parity,
     }
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

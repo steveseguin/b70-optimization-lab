@@ -53,6 +53,14 @@ The next source lane is ReplaySSM Q/K normalization and token-matrix reuse
 across value buckets while retaining `v_dim_per_sg=4`; require a material
 stage-plus-recurrent microbenchmark win before endpoint integration.
 
+That Q/K reuse lane was subsequently implemented and is now closed no-win.
+On the corrected TP2/FP16 local shape, four cards measured the control at
+`36.66-36.79 us/layer` and the precompute candidate at `44.91-45.42 us/layer`
+(`+22.52%` to `+23.46%`). The precomputed consumer alone was slower and parity
+had small FP16-order differences, so even fusing away the separate prep launch
+cannot recover it. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-replayssm-qk-precompute-no-win.md`.
+
 The installed oneCCL `Gold-2021.17.2` runtime failed the deterministic BF16
 `[4,5120]` XPUGraph all-reduce oracle on `510/512` and `511/512` replays. The
 pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` passed direct
