@@ -38,7 +38,7 @@ The current promoted captured-GDN FP16-compute result is **91.714405 tok/s
 median** on the fixed 12-prompt cold realistic gate, with a pair-swapped high
 of `92.637225`. The linked packet owns the complete identity, crossover, and
 quality evidence; exact cases, repeat128, baseline parity, and the 1K needle
-passed.
+passed. LocalMaxxing approved it as `cmrgojixq005rmj0141e9fjj2`.
 
 ### Protected In-Flight Work
 

@@ -30,6 +30,8 @@ See
 `../../results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json`
 and
 `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
+LocalMaxxing approved the conservative FP16 row as
+`cmrgojixq005rmj0141e9fjj2`.
 
 ## Model
 

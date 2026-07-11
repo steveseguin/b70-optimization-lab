@@ -18,6 +18,7 @@ GDN cores inside surrounding compiled segments reduced target graph pieces
 from `129` to `33`. Two four-GPU pair assignments measured FP16 gains of
 `+5.70%` and `+7.09%` over simultaneous BF16 controls. The prior captured-GDN
 BF16 LocalMaxxing row is `cmrgn3szj005dmj01u8tel6yd`.
+LocalMaxxing approved the FP16 record as `cmrgojixq005rmj0141e9fjj2`.
 
 The current result, bisection, and reproduction paths are:
 

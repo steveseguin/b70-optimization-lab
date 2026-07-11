@@ -212,3 +212,4 @@ GPU_INDEX=0,1 PORT=19446 QUALITY_REPEAT_RUNS=128 \
 
 Authoritative packet:
 `results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json`.
+LocalMaxxing approved the conservative row as `cmrgojixq005rmj0141e9fjj2`.

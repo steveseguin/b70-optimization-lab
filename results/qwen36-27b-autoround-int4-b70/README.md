@@ -52,7 +52,8 @@ Current TP2 record:
   timing for generated tokens 1-100 after TTFT;
 - variance: two simultaneous four-GPU pair assignments measured FP16 gains of
   `+5.70%` and `+7.09%` over BF16 controls;
-- prior LocalMaxxing: captured-GDN BF16 row `cmrgn3szj005dmj01u8tel6yd`;
+- LocalMaxxing: FP16 row `cmrgojixq005rmj0141e9fjj2`; prior captured-GDN
+  BF16 row `cmrgn3szj005dmj01u8tel6yd`;
 - packet: `tp2-fp16-capture-gdn-20260711.json`;
 - build/oracle/repro:
   `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh`.
