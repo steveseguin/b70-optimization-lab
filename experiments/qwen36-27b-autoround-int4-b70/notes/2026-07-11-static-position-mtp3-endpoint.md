@@ -100,3 +100,41 @@ diagnostic-only and must not be treated as a completed candidate:
 ```text
 /mnt/usb-models/llm-optimization-artifacts/qwen27-position-fc/mtp3-4gpu-20260711T222200Z
 ```
+
+## MTP3-specific four-GPU result
+
+The corrected matrix completed on all four B70s. Each row trained on the
+disjoint v6 chat trajectories and was evaluated on all 2,338 available starts
+from the fixed realistic-suite continuation corpus:
+
+| learning rate | accepted drafts/start | delta vs shared `1.012831` | gate |
+|---:|---:|---:|---:|
+| `1e-5` | `1.130881` | `+0.118050` | fail |
+| `2e-5` | **`1.147134`** | **`+0.134303`** | fail |
+| `3e-5` | `1.140719` | `+0.127887` | fail |
+| `5e-5` | `1.026091` | `+0.013259` | fail |
+
+The endpoint-trial gate was `+0.205609`. The best MTP3-specific row improves
+only `+0.011121` over the transferred MTP5 checkpoint (`1.136014`) and leaves
+no credible margin for the static-dispatch cost. Close FC-only position
+specialization; do not spend another endpoint run or train a continuation.
+
+Compact tracked result:
+
+```text
+data/qwen36-27b-autoround-int4-b70-baselines/qwen27-position-fc-mtp3-4gpu-fixed-suite-20260711.json
+```
+
+Large checkpoints, commands, and logs:
+
+```text
+/mnt/usb-models/llm-optimization-artifacts/qwen27-position-fc/mtp3-4gpu-20260711T222700Z
+```
+
+The next lane returns to the dominant target body. Current synchronized
+attribution assigns about `25.3 ms` of a roughly `31.8 ms` MTP step to the
+target verifier. Reaching 100 at unchanged acceptance requires about `2.1 ms`
+of step savings. Start with a current-record device-kernel trace and evaluate
+only producer-backed projection/communication changes; the standalone fused
+RMSNorm+W4A16 replacement and standalone compact LM-head scans were already
+slower than production oneDNN.
