@@ -109,3 +109,18 @@ contains a repaired row-1 reference kernel, but the Qwen27 TP2 verifier needs a
 capturable M=4 implementation at local shape `K=5120, N=17408`. It must first
 prove real-weight correctness, 512 graph replays, and at least `0.04 ms/layer`
 savings before any vLLM integration.
+
+## Record Recipe Reconfirmation
+
+After the scale screen, the unchanged promoted FP16/BF16-scale recipe was run
+alone on GPUs 0,1 with no competing GPU workload. It produced a valid cold
+suite median of `89.249640 tok/s`, mean `90.738486`, and p10 `81.846920`; all
+12 prompts were unique, run once, and reported `cached_tokens=0`. Quality was
+not repeated because this was a runtime-health/variance confirmation of the
+already quality-promoted recipe. The median is `2.69%` below the conservative
+`91.714405` record and remains inside the established 4.4% endpoint envelope,
+so the promoted result is still reproducible as the same performance tier.
+
+Artifact:
+
+`/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/reconfirm/qwen27-tp2-fp16-record-solo-20260711T185344Z`.
