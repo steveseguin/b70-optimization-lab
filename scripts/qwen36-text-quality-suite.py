@@ -25,11 +25,20 @@ from pathlib import Path
 from typing import Any
 
 
-def post_json(url: str, payload: dict[str, Any], timeout: int) -> dict[str, Any]:
+def post_json(
+    url: str,
+    payload: dict[str, Any],
+    timeout: int,
+    *,
+    request_id: str | None = None,
+) -> dict[str, Any]:
+    headers = {"Content-Type": "application/json"}
+    if request_id:
+        headers["X-Request-Id"] = request_id
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -74,6 +83,7 @@ def chat_completion(
     *,
     seed: int,
     chat_template_kwargs: dict[str, Any] | None,
+    request_id: str | None = None,
 ) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -86,10 +96,16 @@ def chat_completion(
     if chat_template_kwargs is not None:
         payload["chat_template_kwargs"] = chat_template_kwargs
     started = time.perf_counter()
-    data = post_json(f"{base_url.rstrip('/')}/v1/chat/completions", payload, timeout)
+    data = post_json(
+        f"{base_url.rstrip('/')}/v1/chat/completions",
+        payload,
+        timeout,
+        request_id=request_id,
+    )
     elapsed = time.perf_counter() - started
     content = data["choices"][0]["message"].get("content") or ""
     return {
+        "request_id": request_id,
         "content": content,
         "normalized": normalize(content),
         "sha256": sha256_text(normalize(content)),
@@ -158,6 +174,7 @@ def run_exact_cases(
     seed: int,
     chat_template_kwargs: dict[str, Any] | None,
     request_delay_s: float,
+    request_id_prefix: str,
 ) -> list[dict[str, Any]]:
     results = []
     for index, case in enumerate(make_exact_cases()):
@@ -169,6 +186,7 @@ def run_exact_cases(
             timeout,
             seed=seed + index,
             chat_template_kwargs=chat_template_kwargs,
+            request_id=f"{request_id_prefix}-exact-{index:02d}-{case['name']}",
         )
         if request_delay_s > 0:
             time.sleep(request_delay_s)
@@ -201,6 +219,7 @@ def run_repeat_case(
     repeats: int,
     chat_template_kwargs: dict[str, Any] | None,
     request_delay_s: float,
+    request_id_prefix: str,
 ) -> dict[str, Any]:
     messages = [
         {
@@ -212,7 +231,7 @@ def run_repeat_case(
         }
     ]
     runs = []
-    for _ in range(repeats):
+    for index in range(repeats):
         runs.append(chat_completion(
             base_url,
             model,
@@ -221,6 +240,7 @@ def run_repeat_case(
             timeout,
             seed=seed,
             chat_template_kwargs=chat_template_kwargs,
+            request_id=f"{request_id_prefix}-repeat-{index:04d}",
         ))
         if request_delay_s > 0:
             time.sleep(request_delay_s)
@@ -253,6 +273,7 @@ def run_long_context_case(
     seed: int,
     target_tokens: int,
     chat_template_kwargs: dict[str, Any] | None,
+    request_id_prefix: str,
 ) -> dict[str, Any]:
     from transformers import AutoTokenizer
 
@@ -281,6 +302,7 @@ def run_long_context_case(
         timeout,
         seed=seed,
         chat_template_kwargs=chat_template_kwargs,
+        request_id=f"{request_id_prefix}-long-context",
     )
     return {
         "name": "long_context_needle",
@@ -340,6 +362,11 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=20260609)
     parser.add_argument("--repeat-runs", type=int, default=8)
     parser.add_argument(
+        "--request-id-prefix",
+        default="qwen36-quality",
+        help="Prefix for deterministic X-Request-Id headers used by trace filters.",
+    )
+    parser.add_argument(
         "--request-delay-s",
         type=float,
         default=0.0,
@@ -374,6 +401,7 @@ def main() -> int:
         "tokenizer": args.tokenizer,
         "chat_template_kwargs": chat_template_kwargs,
         "request_delay_s": args.request_delay_s,
+        "request_id_prefix": args.request_id_prefix,
         "seed": args.seed,
         "exact_cases": run_exact_cases(
             base_url,
@@ -382,6 +410,7 @@ def main() -> int:
             args.seed,
             chat_template_kwargs,
             args.request_delay_s,
+            args.request_id_prefix,
         ),
         "repeat_case": run_repeat_case(
             base_url,
@@ -391,6 +420,7 @@ def main() -> int:
             args.repeat_runs,
             chat_template_kwargs,
             args.request_delay_s,
+            args.request_id_prefix,
         ),
         "long_context_case": None,
     }
@@ -403,6 +433,7 @@ def main() -> int:
             args.seed + 2000,
             args.long_context_tokens,
             chat_template_kwargs,
+            args.request_id_prefix,
         )
 
     checks = [item["pass"] for item in output["exact_cases"]]

@@ -1,9 +1,31 @@
 # Qwen3.6 27B AutoRound Handoff
 
-Last updated: 2026-07-06
+Last updated: 2026-07-11
 
 This is the bookmark for `Intel/Qwen3.6-27B-int4-AutoRound` on Intel Arc Pro
 B70.
+
+## July 11 Active Frontier
+
+The promoted strict-valid record remains the one-GPU webhie/AutoRound lane at
+`68.236263 tok/s` (LocalMaxxing `cmr9atqb800msqr01u760xh0t`). Do not promote
+the TP2 `79.534823 tok/s` result: rank-by-rank replay traces proved that
+captured XCCL all-reduce intermittently leaves different post-reduction hidden
+states on the two ranks.
+
+The current TP2 bisection and next action are recorded in:
+
+- `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md`;
+- `tp2-commandgraph-collective-bisection-20260711.json`.
+
+A graph-owned clone plus eager in-place all-reduce boundary passed 384 repeat
+checks and the 1K needle, confirming the collective diagnosis, but fell to
+`~44 tok/s` and one strict run emitted two empty responses. Keep that path as
+a diagnostic only. The next implementation lane is a captured native TP2
+all-reduce using uncached ESIMD remote loads and system-acquire fencing. Reuse
+the Level Zero IPC ownership code under
+`../../experiments/minimax_qk_rms_xpu_ipc/`, but do not repeat its rejected
+cached peer-polling synchronization.
 
 ## Current State
 

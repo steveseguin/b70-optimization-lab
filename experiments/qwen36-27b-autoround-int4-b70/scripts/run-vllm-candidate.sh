@@ -69,9 +69,12 @@ export QWEN36_27B_ENABLE_PROMPT_TOKEN_DETAILS="${QWEN36_27B_ENABLE_PROMPT_TOKEN_
 
 PYTHON="${PYTHON:-$QWEN36_27B_AR_VENV/bin/python}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
+RUN_SMOKE="${RUN_SMOKE:-1}"
+RUN_BENCH="${RUN_BENCH:-1}"
 RUN_QUALITY="${RUN_QUALITY:-1}"
 QUALITY_SKIP_LONG_CONTEXT="${QUALITY_SKIP_LONG_CONTEXT:-0}"
 QUALITY_BASELINE_JSON="${QUALITY_BASELINE_JSON:-}"
+QUALITY_REQUEST_ID_PREFIX="${QUALITY_REQUEST_ID_PREFIX:-${LABEL}-${STAMP}}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"
 
@@ -121,6 +124,8 @@ trap cleanup EXIT
   echo "tensor_parallel_size=$TENSOR_PARALLEL_SIZE"
   echo "port=$PORT"
   echo "hf_home=$HF_HOME"
+  echo "vllm_cache_root=${VLLM_CACHE_ROOT:-}"
+  echo "torchinductor_cache_dir=${TORCHINDUCTOR_CACHE_DIR:-}"
   echo "max_model_len=$MAX_MODEL_LEN"
   echo "max_num_batched_tokens=$MAX_NUM_BATCHED_TOKENS"
   echo "max_num_seqs=$MAX_NUM_SEQS"
@@ -172,7 +177,11 @@ trap cleanup EXIT
   echo "disable_spec_decode_cudagraph_replay=${VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-}"
   echo "skip_compiled_spec_decode=${VLLM_XPU_SKIP_COMPILED_SPEC_DECODE:-}"
   echo "xpu_compile_allreduce_custom_op=${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-}"
+  echo "xpu_compile_allreduce_static_inplace=${VLLM_XPU_COMPILE_ALLREDUCE_STATIC_INPLACE:-}"
+  echo "xpu_custom_allreduce_clone_input=${VLLM_XPU_CUSTOM_ALLREDUCE_CLONE_INPUT:-}"
   echo "xpu_custom_allreduce_graph_clone_input=${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-}"
+  echo "xpu_custom_allreduce_inplace_max_numel=${VLLM_XPU_CUSTOM_ALLREDUCE_INPLACE_MAX_NUMEL:-}"
+  echo "xpu_custom_allreduce_tiny_fp32_inplace_max_numel=${VLLM_XPU_CUSTOM_ALLREDUCE_TINY_FP32_INPLACE_MAX_NUMEL:-}"
   echo "xpu_compile_allreduce_no_clone=${VLLM_XPU_COMPILE_ALLREDUCE_NO_CLONE:-}"
   echo "gdn_replayssm_fuse_pending_metadata=${VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA:-}"
   echo "gdn_replayssm_direct_core_out=${VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT:-}"
@@ -216,6 +225,10 @@ trap cleanup EXIT
   echo "decode_timing_label_regex=${VLLM_XPU_DECODE_TIMING_LABEL_REGEX:-}"
   echo "decode_timing_sync_label_regex=${VLLM_XPU_DECODE_TIMING_SYNC_LABEL_REGEX:-}"
   echo "quality_repeat_runs=$QUALITY_REPEAT_RUNS"
+  echo "run_smoke=$RUN_SMOKE"
+  echo "run_bench=$RUN_BENCH"
+  echo "run_quality=$RUN_QUALITY"
+  echo "quality_request_id_prefix=$QUALITY_REQUEST_ID_PREFIX"
   echo "quality_long_context_tokens=$QUALITY_LONG_CONTEXT_TOKENS"
   echo "bench_max_tokens=$BENCH_MAX_TOKENS"
   echo "bench_metric_tokens=$BENCH_METRIC_TOKENS"
@@ -243,34 +256,38 @@ until curl -fsS "http://127.0.0.1:${PORT}/v1/models" \
   sleep 2
 done
 
-smoke_rc=99
-bench_rc=99
+smoke_rc=0
+bench_rc=0
 quality_rc=0
 
 if kill -0 "$server_pid" 2>/dev/null && [[ -s "$RUN_DIR/models.json" ]]; then
   set +e
-  BASE_URL="http://127.0.0.1:${PORT}/v1" \
-    MODEL="$SERVED_MODEL_NAME" \
-    ENABLE_THINKING=0 \
-    MAX_TOKENS="$SMOKE_MAX_TOKENS" \
-    OUT="$SMOKE_OUT" \
-    experiments/qwen36-27b-autoround-int4-b70/scripts/smoke-openai.sh \
-    > "$RUN_DIR/smoke.stdout.log" 2>&1
-  smoke_rc=$?
+  if [[ "$RUN_SMOKE" != "0" ]]; then
+    BASE_URL="http://127.0.0.1:${PORT}/v1" \
+      MODEL="$SERVED_MODEL_NAME" \
+      ENABLE_THINKING=0 \
+      MAX_TOKENS="$SMOKE_MAX_TOKENS" \
+      OUT="$SMOKE_OUT" \
+      experiments/qwen36-27b-autoround-int4-b70/scripts/smoke-openai.sh \
+      > "$RUN_DIR/smoke.stdout.log" 2>&1
+    smoke_rc=$?
+  fi
 
-  "$PYTHON" scripts/bench-openai-realistic-suite.py \
-    --base-url "http://127.0.0.1:${PORT}" \
-    --model "$SERVED_MODEL_NAME" \
-    --api-mode chat \
-    --suite "$SUITE" \
-    --max-tokens "$BENCH_MAX_TOKENS" \
-    --metric-tokens "$BENCH_METRIC_TOKENS" \
-    --seed 1 \
-    --request-extra-json "$REQUEST_EXTRA_JSON" \
-    --return-token-ids \
-    --out "$BENCH_OUT" \
-    > "$RUN_DIR/bench.stdout.log" 2>&1
-  bench_rc=$?
+  if [[ "$RUN_BENCH" != "0" ]]; then
+    "$PYTHON" scripts/bench-openai-realistic-suite.py \
+      --base-url "http://127.0.0.1:${PORT}" \
+      --model "$SERVED_MODEL_NAME" \
+      --api-mode chat \
+      --suite "$SUITE" \
+      --max-tokens "$BENCH_MAX_TOKENS" \
+      --metric-tokens "$BENCH_METRIC_TOKENS" \
+      --seed 1 \
+      --request-extra-json "$REQUEST_EXTRA_JSON" \
+      --return-token-ids \
+      --out "$BENCH_OUT" \
+      > "$RUN_DIR/bench.stdout.log" 2>&1
+    bench_rc=$?
+  fi
 
   if [[ "$RUN_QUALITY" != "0" ]]; then
     quality_args=(
@@ -281,6 +298,7 @@ if kill -0 "$server_pid" 2>/dev/null && [[ -s "$RUN_DIR/models.json" ]]; then
       --repeat-runs "$QUALITY_REPEAT_RUNS"
       --long-context-tokens "$QUALITY_LONG_CONTEXT_TOKENS"
       --chat-template-kwargs-json '{"enable_thinking": false}'
+      --request-id-prefix "$QUALITY_REQUEST_ID_PREFIX"
       --output-json "$QUALITY_OUT"
     )
     if [[ "$QUALITY_SKIP_LONG_CONTEXT" != "0" ]]; then
@@ -296,7 +314,8 @@ if kill -0 "$server_pid" 2>/dev/null && [[ -s "$RUN_DIR/models.json" ]]; then
 fi
 
 "$PYTHON" - "$SUMMARY_OUT" "$LABEL" "$RUN_DIR" "$MODEL_DIR" "$SMOKE_OUT" \
-  "$BENCH_OUT" "$QUALITY_OUT" "$smoke_rc" "$bench_rc" "$quality_rc" <<'PY'
+  "$BENCH_OUT" "$QUALITY_OUT" "$smoke_rc" "$bench_rc" "$quality_rc" \
+  "$RUN_SMOKE" "$RUN_BENCH" "$RUN_QUALITY" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -311,6 +330,9 @@ quality_path = Path(sys.argv[7])
 smoke_rc = int(sys.argv[8])
 bench_rc = int(sys.argv[9])
 quality_rc = int(sys.argv[10])
+run_smoke = sys.argv[11] != "0"
+run_bench = sys.argv[12] != "0"
+run_quality = sys.argv[13] != "0"
 
 def read_json(path: Path):
     if not path.exists():
@@ -334,6 +356,9 @@ if quality is not None:
     quality_baseline_match = quality.get("baseline_match_all")
 
 status = {
+    "smoke_skipped": not run_smoke,
+    "bench_skipped": not run_bench,
+    "quality_skipped": not run_quality,
     "smoke_rc": smoke_rc,
     "bench_rc": bench_rc,
     "quality_rc": quality_rc,
@@ -345,7 +370,11 @@ status = {
     "quality_baseline_match_all": quality_baseline_match,
 }
 out = {
-    "classification": "strict_fresh_qwen27_candidate_summary",
+    "classification": (
+        "strict_fresh_qwen27_candidate_summary"
+        if run_bench
+        else "diagnostic_qwen27_quality_only_summary"
+    ),
     "label": label,
     "model_dir": model_dir,
     "run_dir": str(run_dir),
@@ -353,8 +382,8 @@ out = {
         "identity": str(run_dir / "identity.env"),
         "server_log": str(run_dir / "server.stdout.log"),
         "models_json": str(run_dir / "models.json"),
-        "smoke": str(smoke_path),
-        "bench": str(bench_path),
+        "smoke": str(smoke_path) if smoke_path.exists() else None,
+        "bench": str(bench_path) if bench_path.exists() else None,
         "quality": str(quality_path) if quality_path.exists() else None,
     },
     "status": status,

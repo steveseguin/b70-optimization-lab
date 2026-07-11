@@ -1,6 +1,6 @@
 # Current Promoted Results
 
-Date: 2026-07-08
+Date: 2026-07-11
 
 ## Temporary Live Service
 
@@ -21,6 +21,14 @@ after TP1 smoke works. Start from:
 - `results/qwen36-27b-autoround-int4-b70/README.md`;
 - `experiments/qwen36-27b-autoround-int4-b70/README.md`;
 - `repro/qwen36-27b-autoround-int4-b70/README.md`.
+
+Current engineering frontier: the one-GPU strict-valid record remains
+`68.236263 tok/s`. A TP2 target-graph lane reaches `79.534823 tok/s` but is
+invalid because captured XCCL all-reduce intermittently diverges across ranks.
+An eager static-buffer collective proved the diagnosis but runs only
+`~44 tok/s`. Continue with the captured ESIMD all-reduce lane documented in
+`experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md`
+and `results/qwen36-27b-autoround-int4-b70/tp2-commandgraph-collective-bisection-20260711.json`.
 
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU

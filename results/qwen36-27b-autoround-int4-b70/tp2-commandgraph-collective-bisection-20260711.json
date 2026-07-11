@@ -1,0 +1,39 @@
+{
+  "classification": "diagnostic_rejected_not_localmaxxing_eligible",
+  "date": "2026-07-11",
+  "model": {
+    "id": "webhie/Qwen3.6-27B-int4-AutoRound",
+    "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+    "quantization": "AutoRound INT4"
+  },
+  "promoted_record_unchanged": {
+    "gpu_count": 1,
+    "median_tok_s_1_100_after_ttft": 68.23626314761921,
+    "localmaxxing_id": "cmr9atqb800msqr01u760xh0t"
+  },
+  "fast_invalid_tp2": {
+    "median_tok_s_1_100_after_ttft": 79.53482335166211,
+    "reason_invalid": "intermittent TP all-reduce command-graph replay corruption"
+  },
+  "root_cause_evidence": {
+    "location": "piecewise:1/65 post-allreduce residual",
+    "direct_rank_outputs_equal": true,
+    "bad_replay_rank_outputs_equal": false,
+    "meaningful_piece1_mismatches": 3,
+    "w4a16_scratchpad_ring_rejected": true
+  },
+  "static_inplace_handoff": {
+    "repeat128_gpu01_pass": true,
+    "repeat256_gpu23_pass": true,
+    "needle_1k_pass": true,
+    "gpu23_fresh_median_tok_s": 44.70009937226001,
+    "gpu23_fresh_p10_tok_s": 38.67778755902374,
+    "gpu23_cached_tokens_all_zero": true,
+    "gpu01_measurable_median_tok_s": 43.65552041365132,
+    "gpu01_final_gate_pass": false,
+    "gpu01_failure": "two of twelve prompts emitted only EOS",
+    "decision": "retain as diagnostic proof; too slow and not robustly correct"
+  },
+  "next_lane": "captured ESIMD all-reduce using uncached remote reads and system-acquire fencing",
+  "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-commandgraph-w4a16-scratchpad-bisection.md"
+}

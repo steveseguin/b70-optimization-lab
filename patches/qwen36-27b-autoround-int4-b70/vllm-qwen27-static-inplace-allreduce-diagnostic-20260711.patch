@@ -1,0 +1,40 @@
+diff --git a/vllm/config/compilation.py b/vllm/config/compilation.py
+--- a/vllm/config/compilation.py
++++ b/vllm/config/compilation.py
+@@
++import os
+@@
++            if (
++                os.environ.get(
++                    "VLLM_XPU_COMPILE_ALLREDUCE_STATIC_INPLACE", "0"
++                )
++                == "1"
++                and self.splitting_ops is not None
++                and "vllm::all_reduce_inplace" not in self.splitting_ops
++            ):
++                self.splitting_ops.append("vllm::all_reduce_inplace")
++                logger.warning_once(
++                    "Using graph-owned clone buffers with eager in-place XPU "
++                    "all-reduce boundaries under "
++                    "VLLM_XPU_COMPILE_ALLREDUCE_STATIC_INPLACE=1."
++                )
++
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
++        if (
++            torch.compiler.is_compiling()
++            and os.environ.get(
++                "VLLM_XPU_COMPILE_ALLREDUCE_STATIC_INPLACE", "0"
++            )
++            == "1"
++        ):
++            output = input_.clone()
++            torch.ops.vllm.all_reduce_inplace(
++                output, group_name=self.unique_name
++            )
++            return output
++
+         if (
