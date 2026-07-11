@@ -451,7 +451,3 @@ and `data/` rather than expanding this top-level historical section further.
 - `patches/vllm-minimax-candidate-router-screen-20260511.patch`: source diff for the candidate-router prototype.
 - `patches/vllm-minimax-graph-shaped-router-kv-screens-20260511.patch`: current vLLM MiniMax graph-shaped runtime diff used for the recovery, FP8 KV, and FP16-router screens.
 - `patches/llm-scaler-minimax-u4-logits-topk-negative-20260511.patch`: llm-scaler logits-topk experiment diff retained as a negative artifact.
-
-## Notes
-
-The strongest quality-preserving paths are now Q4_0 GGUF TP3 with root-residual disabled and static FP8 TP4 with verified n-gram speculative decoding. The INT4 AutoRound path remains interesting for maximum speed, but it should be treated separately because it changes quantization quality more aggressively.
