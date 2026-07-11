@@ -80,6 +80,14 @@ Fastest quality-gated practical variant:
   (`VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK=1`);
 - strict fresh headline: median `68.236 tok/s`, p10 `62.317`, mean
   `67.830`, TTFT median `479.146 ms`, `cached_tokens=0` on every request;
+- July 11 current-source reconfirmation: isolated medians `65.359`, `66.716`,
+  and `65.420 tok/s`, all strict/cached-zero; the first passed exact,
+  repeat64, baseline parity, and 1K quality. The `65.4-66.7` reproduced band is
+  `3.52%` below the valid historical high on average and remains inside the
+  established `4.4%` endpoint envelope. A swapped four-GPU graph/eager draft
+  crossover was flat (`-0.05%`), so the TP2 distributed all-gather graph fix
+  does not provide a TP1 win. Packet:
+  `results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json`;
 - support rows: `67.519` prior approved confirm, `68.397` same-recipe
   quality-skipped control, `68.481` native-slot-copy smoke, `66.871`
   native-slot-copy confirm, and `67.300` PyTorch-slot-management same-window

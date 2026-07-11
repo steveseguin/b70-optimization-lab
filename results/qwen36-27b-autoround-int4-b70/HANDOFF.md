@@ -39,6 +39,20 @@ oneCCL ring/two-shot/generic-path tuning is now closed. Next, profile the exact
 draft-graph recipe and reduce target PIECEWISE boundaries or improve verified
 accepted tokens per step; the target remains `100+ tok/s`.
 
+TP1 remains a separate active record class; it was not proven exhausted. A
+July 11 audit confirmed that the valid historical `68.236 tok/s` TP1 high
+already captured the intrinsic MTP draft, while the TP2 custom all-gather fix
+has no world-size-one operation to improve. A swapped four-GPU TP1 crossover
+measured graph `65.164` versus eager `65.196 tok/s` (`-0.05%`, no effect).
+Three subsequent isolated full-suite rows reached `65.359`, `66.716`, and
+`65.420 tok/s`; all were strict fresh/cached-zero, and the first passed exact,
+repeat64, baseline parity, and the 1K check. Keep `68.236` as the valid
+historical high, but use `65.4-66.7` as the current reproduced band. Start TP1
+from
+`../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp1-current-candidate.sh`
+and read
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp1-draftgraph-attribution-and-reconfirmation.md`.
+
 ## Current State
 
 The lane has passed initial TP1 bring-up. The repository scaffolding exists,

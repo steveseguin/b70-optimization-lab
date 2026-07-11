@@ -1,0 +1,116 @@
+{
+  "status": "quality_gated_tp1_support_not_record",
+  "date_utc": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "quantization": "AutoRound INT4 W4A16 target + runtime INT8 target LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)",
+  "historical_record": {
+    "gpu_count": 1,
+    "median_tok_s_1_100_after_ttft": 68.23626314761921,
+    "p10": 62.316569643325344,
+    "mean": 67.82964696710413,
+    "quality_pass_all": true,
+    "localmaxxing_id": "cmr9atqb800msqr01u760xh0t",
+    "packet": "results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json"
+  },
+  "current_isolated_reconfirmation": {
+    "medians_tok_s": [
+      65.35866669031512,
+      66.71558804214723,
+      65.42008634854352
+    ],
+    "mean_of_medians_tok_s": 65.83144702700196,
+    "median_of_medians_tok_s": 65.42008634854352,
+    "min_tok_s": 65.35866669031512,
+    "max_tok_s": 66.71558804214723,
+    "range_percent_of_mean": 2.0612054164259033,
+    "mean_below_historical_record_percent": 3.5242494381833134,
+    "interpretation": "The exact 68.236 peak did not repeat, but all three current isolated strict rows are inside the established 4.4% endpoint variance envelope. Keep 68.236 as the valid historical high and use 65.4-66.7 tok/s as the current reproduced band."
+  },
+  "quality_lock": {
+    "gpu": 0,
+    "median_tok_s_1_100_after_ttft": 65.35866669031512,
+    "p10": 60.503168434271664,
+    "mean": 65.99698280845361,
+    "strict_gate_passed": true,
+    "cached_tokens_all_zero": true,
+    "quality_pass_all": true,
+    "baseline_match_all": true,
+    "exact_cases_passed": 4,
+    "repeat_runs": 64,
+    "repeat_pass": true,
+    "long_context_pass": true,
+    "strict_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp1-current-isolated-reconfirm-20260711-realistic128-chat-tokenids-qwensuite-20260711T161033Z.json",
+    "quality_artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-tp1-current-isolated-reconfirm-20260711-repeat64-ctx1024-20260711T161033Z.json",
+    "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp1-current-isolated-reconfirm-20260711-candidate-summary-20260711T161033Z.json"
+  },
+  "additional_isolated_rows": [
+    {
+      "gpu": 1,
+      "median_tok_s_1_100_after_ttft": 66.71558804214723,
+      "p10": 60.29654204936864,
+      "mean": 66.44690177515436,
+      "strict_gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "quality_skipped": true,
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp1-current-isolated-gpu1-reconfirm-20260711-candidate-summary-20260711T161446Z.json"
+    },
+    {
+      "gpu": 2,
+      "median_tok_s_1_100_after_ttft": 65.42008634854352,
+      "p10": 60.57790106488327,
+      "mean": 65.77264456094986,
+      "strict_gate_passed": true,
+      "cached_tokens_all_zero": true,
+      "quality_skipped": true,
+      "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp1-current-isolated-gpu2-reconfirm-20260711-candidate-summary-20260711T161753Z.json"
+    }
+  ],
+  "draft_graph_crossover": {
+    "classification": "diagnostic two-window four-GPU swapped crossover",
+    "bench_max_tokens": 256,
+    "strict_gate_passed_all_eight_rows": true,
+    "cached_tokens_all_zero_all_eight_rows": true,
+    "graph_count": 4,
+    "graph_mean_of_medians_tok_s": 65.16405215222724,
+    "eager_count": 4,
+    "eager_mean_of_medians_tok_s": 65.1957891390929,
+    "graph_gain_percent": -0.04867950412862365,
+    "conclusion": "No TP1 endpoint benefit. The historical record already compiled and captured the intrinsic MTP draft; the TP2 draft-graph win came from removing a distributed all-gather/Inductor wait blocker that does not exist at TP1.",
+    "tracked_summary": "experiments/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-tp1-draftgraph-crossover-summary-20260711.json",
+    "raw_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-crossover-20260711T160307Z"
+  },
+  "serving_config": {
+    "tp": 1,
+    "concurrency": 1,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": 0.95,
+    "spec_method": "qwen3_next_mtp normalized to mtp",
+    "num_speculative_tokens": 3,
+    "xpu_graph": true,
+    "draft_graph": true,
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE",
+      "max_cudagraph_capture_size": 8
+    },
+    "record_wrapper": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp1-current-candidate.sh"
+  },
+  "runtime": {
+    "vllm_source_head": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "xpu_kernels_source_head": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "xpu_c_sha256": "93fbff8734a706260ad368274ac2f73b99e9dff4df9a828220c5ddb749c72aee",
+    "source_policy": "Each current run directory snapshots the dirty vLLM and vLLM-XPU patch stacks."
+  },
+  "decision": {
+    "localmaxxing_submission": false,
+    "reason": "No new TP1 record and no supported graph-on improvement.",
+    "next_tp1_work": "Reduce target verifier/body cost or improve target-verified accepted tokens per step; do not repeat the draft graph toggle or small pointwise wrapper fusions."
+  },
+  "reproduction": {
+    "wrapper": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp1-current-candidate.sh",
+    "crossover": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp1-draftgraph-crossover-4gpu.sh",
+    "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp1-draftgraph-attribution-and-reconfirmation.md"
+  }
+}

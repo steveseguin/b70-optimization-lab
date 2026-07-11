@@ -138,6 +138,15 @@ Prior TP1 fastest quality-gated variant:
 - interpretation: this is the current best measured valid same-recipe row, not
   a new mechanism; the improvement over the approved `67.519` row is small and
   should be treated with the lane's variance caution;
+- July 11 current-source reconfirmation produced three isolated strict medians
+  at `65.359`, `66.716`, and `65.420 tok/s`; the first also passed exact,
+  repeat64, baseline parity, and the 1K check. Their mean is `3.52%` below the
+  historical high and remains inside the established `4.4%` endpoint band.
+  A swapped four-GPU draft graph/eager crossover measured `-0.05%`, proving
+  that the TP2 distributed all-gather graph fix is not a missing TP1 win. Keep
+  `68.236` as the valid historical high and use `65.4-66.7` as the current
+  reproduced band. Packet:
+  `tp1-draftgraph-attribution-reconfirm-20260711.json`;
 - support rows:
   `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-replayssm-draftint4-slotmgmt-torchfallback-solo-confirm-20260706T050135Z-realistic128-chat-tokenids-qwensuite-20260706T050135Z.json`
   at median `67.519 tok/s`,
