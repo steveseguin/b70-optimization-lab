@@ -1,0 +1,45 @@
+{
+  "date": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "gpu": "Intel Arc Pro B70",
+  "gpu_count": 2,
+  "target_dtype": "float16",
+  "candidate": {
+    "target_lm_head_int8_scale_dtype": "fp16",
+    "draft_lm_head_int4_scale_dtype": "fp16"
+  },
+  "control": {
+    "target_lm_head_int8_scale_dtype": "bf16",
+    "draft_lm_head_int4_scale_dtype": "bf16"
+  },
+  "first_pairing": {
+    "candidate_gpus": [0, 1],
+    "control_gpus": [2, 3],
+    "candidate_median_tok_s": 90.19991778625416,
+    "candidate_mean_tok_s": 90.00807567645847,
+    "candidate_p10_tok_s": 83.57258493506248,
+    "control_median_tok_s": 85.794076708437,
+    "control_mean_tok_s": 86.91159931415872,
+    "control_p10_tok_s": 79.0328853462097,
+    "quality_run": false,
+    "artifact_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-tp2-fp16-scales-20260711T183722Z"
+  },
+  "swapped_pairing": {
+    "candidate_gpus": [2, 3],
+    "control_gpus": [0, 1],
+    "candidate_median_tok_s": 86.46470479491583,
+    "candidate_mean_tok_s": 88.93661021603805,
+    "candidate_p10_tok_s": 81.59154240202326,
+    "control_median_tok_s": 88.25002640293559,
+    "control_mean_tok_s": 88.95644819795007,
+    "control_p10_tok_s": 81.36763589176623,
+    "candidate_quality_pass_all": true,
+    "candidate_quality_baseline_match_all": true,
+    "candidate_cached_tokens_all_zero": true,
+    "artifact_root": "/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-tp2-fp16-scales-swap-20260711T184708Z"
+  },
+  "classification": "quality-safe-no-reproducible-speed-win",
+  "promoted": false,
+  "submitted_to_localmaxxing": false,
+  "reason": "The first apparent gain reversed under GPU-pair swap; swapped means were effectively identical and the combined movement remained inside endpoint variance."
+}

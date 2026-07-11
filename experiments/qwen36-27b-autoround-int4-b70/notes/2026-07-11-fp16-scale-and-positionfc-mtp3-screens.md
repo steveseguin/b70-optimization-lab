@@ -32,16 +32,31 @@ First simultaneous TP2 diagnostic (`GPU 0,1` candidate; `GPU 2,3` control,
 | FP16 scales | **`90.199918`** | `90.008076` | `83.572585` | pass |
 | BF16-scale control | `85.794077` | `86.911599` | `79.032885` | pass |
 
-The candidate moved `+5.14%` on median in this pairing, but neither row is a
+The candidate moved `+5.14%` on median in this pairing, but neither row was a
 promotable record: quality was skipped and the control was below the promoted
-FP16 run. The required next gate is a GPU-pair swap with a 512-token budget,
-repeat128, exact cases, baseline parity, and the 1K needle.
+FP16 run. A GPU-pair swap then ran with a 512-token budget, repeat128, exact
+cases, baseline parity, and the 1K needle.
+
+Pair-swapped result (`GPU 2,3` candidate; `GPU 0,1` control):
+
+| lane | median tok/s | mean | p10 | quality |
+|---|---:|---:|---:|---|
+| FP16 scales | `86.464705` | `88.936610` | **`81.591542`** | pass |
+| BF16-scale control | **`88.250026`** | **`88.956448`** | `81.367636` | skipped |
+
+The candidate passed exact cases, repeat128, baseline parity, and the 1K
+needle, but lost by `2.02%` on swapped median and was effectively identical on
+mean (`-0.02%`). Averaging the two GPU assignments still leaves only a small
+movement inside the established endpoint variance band. Decision:
+**quality-safe, no reproducible speed win; do not promote or submit**. Keep the
+override plumbing for future dtype/kernel diagnostics while retaining BF16 as
+the default scale dtype.
 
 Artifacts:
 
 - `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/diagnostics/qwen27-tp2-fp16-scales-20260711T183722Z`;
-- pair-swapped full gate (in progress when this note was created): latest path
-  is recorded by `/tmp/qwen27-tp2-fp16-scales-swap-latest` after completion.
+- pair-swapped full gate:
+  `/mnt/fast-ai/bench-results/qwen36-27b-autoround-int4-b70/candidates/qwen27-tp2-fp16-scales-swap-20260711T184708Z`.
 
 The first pair-swap launch at `20260711T184417Z` stopped before a benchmark
 because the root filesystem had no free blocks. This is an infrastructure
