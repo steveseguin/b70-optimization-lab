@@ -89,7 +89,9 @@ def run_case(kv_len: int, replays: int) -> dict[str, Any]:
             causal=True,
             block_table=block_table,
             out=out,
-            is_mix_batch=True,
+            # Isolate chunk-prefill. The mixed path also submits paged decode,
+            # whose separate graph-safe conversion is not part of this patch.
+            is_mix_batch=False,
         )
 
     for _ in range(3):
@@ -172,6 +174,7 @@ def main() -> int:
             "head_dim": HEAD_DIM,
             "kv_lengths": list(KV_LENGTHS),
             "causal": True,
+            "is_mix_batch": False,
             "packed_mtp_depth": ROWS - 1,
         },
         "command_graph_replays_per_shape": args.replays,

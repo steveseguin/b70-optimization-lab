@@ -20,18 +20,15 @@ GPU_INDEX=2,3 PORT=19445 QUALITY_REPEAT_RUNS=128 \
   experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh
 ```
 
-Promoted result: conservative full-quality FP16-compute median `91.714405
-tok/s`, p10 `81.735821`, mean `90.916872`; pair-swapped high `92.637225 tok/s`.
-Exact cases, repeat128, baseline parity, the 1K needle, and strict
-cold/cached-zero rules passed. Capturing GDN target segments reduces target
-graph pieces from 129 to 33; two four-GPU pair assignments measured FP16 gains
-of `5.70%` and `7.09%` over simultaneous BF16 controls.
+Promoted result: graph-safe FlashAttention full-target capture, median
+`93.036242 tok/s`, p10 `82.845516`, mean `92.773145`. Exact cases, repeat128,
+baseline parity, the 1K needle, and strict cold/cached-zero rules passed. The
+candidate replaces 33 target PIECEWISE segments with one full four-row graph;
+two-way crossover measured a `+2.93%` candidate/control mean gain.
 See
-`../../results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json`
+`../../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`
 and
-`../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
-LocalMaxxing approved the conservative FP16 row as
-`cmrgojixq005rmj0141e9fjj2`.
+`../../experiments/qwen27_graphsafe_flash_attention/README.md`.
 
 ## Model
 

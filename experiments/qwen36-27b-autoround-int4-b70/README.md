@@ -794,16 +794,15 @@ Next milestone:
 ## Current Research Frontier
 
 The active headline family is now
-`webhie/Qwen3.6-27B-int4-AutoRound` with the current promote-source MTP3/cg8
-recipe plus runtime INT8 target LM-head BF16 scales, runtime INT4 draft LM-head
-BF16 scales, and ReplaySSM exact GDN state handling:
-`68.23626314761921 tok/s` median generated-token throughput for tokens 1-100
-after TTFT on the strict fresh Qwen realistic suite, with `cached_tokens=0` on
-every request and repeat64 quality passing. This is a small same-recipe confirm
-over the prior approved `67.51904968102535 tok/s` row, not a new mechanism.
-The prior `65.27648650325429 tok/s` row remains the older BF16-scale comparison
-baseline; the current promoted packet is
-`../../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`.
+`webhie/Qwen3.6-27B-int4-AutoRound` TP2 with FP16 target compute, runtime INT8
+target LM-head BF16 scales, runtime INT4 draft LM-head BF16 scales, ReplaySSM,
+public oneCCL, graph-safe FlashAttention, and one FULL four-row target graph.
+The strict cold record is `93.036242 tok/s` median for tokens 1-100 after TTFT;
+every request reported `cached_tokens=0`, and exact cases, repeat128, baseline
+parity, and the 1K needle passed. The current packet is
+`../../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`;
+the implementation/replay record is in
+`../qwen27_graphsafe_flash_attention/README.md`.
 
 Older reference points remain useful for attribution: plain MTP3/cg8 was about
 `47.6-48.5 tok/s`, and promote-source/no-accepted-postprocess lifted the lane

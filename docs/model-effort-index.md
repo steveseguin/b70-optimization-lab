@@ -43,11 +43,12 @@ Main entries:
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
 Status: active optimization target as of 2026-07-11. Current overall strict
-fresh-response best is TP2 on two B70s at a conservative `82.894 tok/s`, with
-an `85.394 tok/s` full-quality support row, exact + repeat128 + baseline + 1K
-quality pass, `cached_tokens=0` throughout, and LocalMaxxing approval
-`cmrgjjw8n004qmj01cp91qxl0`. Start from
-`../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`.
+fresh-response best is TP2 on two B70s at `93.036242 tok/s`, with exact +
+repeat128 + baseline + 1K quality pass and `cached_tokens=0` throughout.
+Graph-safe FlashAttention enables one full four-row target graph; pair-swapped
+controls support the small headline gain. LocalMaxxing submission is pending.
+Start from
+`../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`.
 TP1 remains a separate active record class: `68.236 tok/s` is the valid
 historical high (`cmr9atqb800msqr01u760xh0t`), while July 11 isolated
 reconfirmation produced a current `65.4-66.7 tok/s` band with full quality on

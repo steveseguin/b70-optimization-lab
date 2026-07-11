@@ -8,20 +8,21 @@ B70.
 ## July 11 Active Frontier
 
 The promoted strict-valid record is the two-GPU webhie/AutoRound lane with
-FP16 target compute, pinned public oneCCL, captured intrinsic-MTP draft, and
-captured GDN target segments: conservative full-quality median
-**`91.71440522072265 tok/s`**, p10 `81.73582071120643`, mean
-`90.9168721254448`; pair-swapped high `92.63722537714678`. Exact cases,
+FP16 target compute, pinned public oneCCL, captured intrinsic-MTP draft, and a
+graph-safe FlashAttention full target graph: median **`93.03624230561563
+tok/s`**, p10 `82.84551593521294`, mean `92.77314522741203`. Exact cases,
 repeat128, baseline parity, and the 1K needle passed, and every strict prompt
-reported `cached_tokens=0`. Capturing the 48
-GDN cores inside surrounding compiled segments reduced target graph pieces
-from `129` to `33`. Two four-GPU pair assignments measured FP16 gains of
-`+5.70%` and `+7.09%` over simultaneous BF16 controls. The prior captured-GDN
-BF16 LocalMaxxing row is `cmrgn3szj005dmj01u8tel6yd`.
-LocalMaxxing approved the FP16 record as `cmrgojixq005rmj0141e9fjj2`.
+reported `cached_tokens=0`. The new path replaces the captured-GDN record's
+`33` target PIECEWISE segments with one four-row FULL graph. Two four-GPU
+crossover assignments measured gains of `+3.42%` and `+2.45%` over simultaneous
+PIECEWISE controls. The prior FP16 LocalMaxxing row is
+`cmrgojixq005rmj0141e9fjj2`; the new submission is pending.
 
 The current result, bisection, and reproduction paths are:
 
+- `tp2-fp16-graphsafe-flash-fullgraph-20260711.json`;
+- `../../experiments/qwen27_graphsafe_flash_attention/README.md`;
+- `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-graphsafe-flashattention-fullgraph.md`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md`;
 - `tp2-fp16-capture-gdn-20260711.json`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh`;
@@ -39,9 +40,11 @@ pinned public oneCCL parent `b52f40c` / libccl `4ceafd1` passed direct
 passed `512/512` blocking and async-wait graph replays; the actual draft blocker
 was Inductor's functional `wait_tensor`. The default-off compiled all-gather
 custom-op patch fixes that lowering and enables draft graph capture. Small
-oneCCL ring/two-shot/generic-path tuning is now closed. Next, profile the exact
-draft-graph recipe and reduce target PIECEWISE boundaries or improve verified
-accepted tokens per step; the target remains `100+ tok/s`.
+oneCCL ring/two-shot/generic-path tuning is now closed. Next, use the full-graph
+base to improve verified accepted tokens per step or fuse a measured GDN
+producer boundary; the target remains `100+ tok/s`. For longer context, replace
+the short-context forced chunk-decode fallback with a graph-safe paged-decode
+launch first.
 
 TP1 remains a separate active record class; it was not proven exhausted. A
 July 11 audit confirmed that the valid historical `68.236 tok/s` TP1 high

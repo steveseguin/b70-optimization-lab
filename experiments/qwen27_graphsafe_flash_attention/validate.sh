@@ -10,7 +10,9 @@ test -f "$source_tree/$target"
 git -C "$source_tree" apply --check "$patch_file"
 
 python3 -m py_compile "$here/test_graph_replay.py"
+python3 -m py_compile "$here/test_chunk_decode_graph_replay.py"
 bash -n "$here/build.sh"
+git -C "$source_tree" apply --check "$here/qwen27-force-chunk-decode.patch"
 
 python3 - "$patch_file" "$here/test_graph_replay.py" <<'PY'
 from pathlib import Path
@@ -41,9 +43,15 @@ required_probe = (
     "block_table=block_table",
     "seqused_k=seqused_k",
     "graph_out.fill_(float(\"nan\"))",
+    "is_mix_batch=False",
 )
 for marker in required_probe:
     assert marker in probe, f"missing test invariant: {marker}"
 PY
+
+grep -q 'compiler/2025.3' "$here/build.sh"
+grep -q 'head256_ttfff.cpp.o' "$here/build.sh"
+grep -q 'head256_tffff.cpp.o' "$here/build.sh"
+grep -q 'flash_api.cpp.o' "$here/build.sh"
 
 printf 'PASS: patch applies and graph-safe launch/test invariants are encoded.\n'

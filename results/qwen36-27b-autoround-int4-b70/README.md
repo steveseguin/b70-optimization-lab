@@ -33,30 +33,27 @@ INT8-LM-head variants as `cmr4zkcxb003yq9018408i1pn`,
 Current TP2 record:
 
 - model/runtime recipe: webhie AutoRound W4A16 with FP16 target compute,
-  runtime INT8 target LM-head
-  with BF16 scales, runtime INT4 group128 draft LM-head with BF16 scales,
-  ReplaySSM exact GDN state, target-verified MTP3, PIECEWISE target graph, and
-  PIECEWISE draft graph; `VLLM_XPU_DDTREE_CAPTURE_GDN_CORE=1` keeps all 48
-  GDN cores inside surrounding target segments and reduces target graph pieces
-  from 129 to 33;
+  runtime INT8 target LM-head with BF16 scales, runtime INT4 group128 draft
+  LM-head with BF16 scales, ReplaySSM exact GDN state, target-verified MTP3,
+  graph-safe FlashAttention, one FULL four-row target graph, and a PIECEWISE
+  draft graph;
 - collective runtime: public oneCCL parent
   `b52f40c07f0b140e6aba87548c80720a350a9827`, libccl
   `4ceafd15c03ce46f11eeaf91781a92afebd3cecf`, injected only into the server;
-- conservative strict headline: median **`91.714405 tok/s`**, p10 `81.735821`,
-  mean `90.916872`, full after-TTFT median `87.667759`, wall median
-  `76.670155`, TTFT median `743.355 ms`;
-- pair-swapped support high: **`92.637225 tok/s`**;
+- strict headline: median **`93.036242 tok/s`**, p10 `82.845516`, mean
+  `92.773145`, full after-TTFT median `91.219731`, wall median `79.837069`,
+  TTFT median `742.232 ms`;
 - exact cases + repeat128 + baseline parity + 1K needle all passed;
 - strict validity: 12 unique fixed realistic prompts, each once cold,
   `cached_tokens=0` throughout, no prompt/KV/history/response reuse, token-id
   timing for generated tokens 1-100 after TTFT;
-- variance: two simultaneous four-GPU pair assignments measured FP16 gains of
-  `+5.70%` and `+7.09%` over BF16 controls;
-- LocalMaxxing: FP16 row `cmrgojixq005rmj0141e9fjj2`; prior captured-GDN
-  BF16 row `cmrgn3szj005dmj01u8tel6yd`;
-- packet: `tp2-fp16-capture-gdn-20260711.json`;
+- variance: two simultaneous four-GPU pair assignments measured full-graph
+  gains of `+3.42%` and `+2.45%` over PIECEWISE controls;
+- LocalMaxxing: new row pending; prior FP16 row
+  `cmrgojixq005rmj0141e9fjj2`;
+- packet: `tp2-fp16-graphsafe-flash-fullgraph-20260711.json`;
 - build/oracle/repro:
-  `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh`.
+  `../../experiments/qwen27_graphsafe_flash_attention/README.md`.
 
 The mechanisms matter: installed oneCCL `Gold-2021.17.2` failed the exact
 BF16 `[4,5120]` XPUGraph all-reduce oracle on nearly every replay, while the

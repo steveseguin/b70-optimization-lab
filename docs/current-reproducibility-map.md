@@ -90,21 +90,21 @@ the production LAN endpoint:
 - hardware: one Intel Arc Pro B70 32 GB for the TP1 reference and two B70s for
   the current TP2 record
 - engine: local vLLM/XPU from `/home/steve/src/vllm`
-- current strict fresh-response practical best: TP2 conservative median
-  `82.894 tok/s` for generated tokens 1-100 after TTFT; the integrated
-  full-quality lock reached `85.394 tok/s`. Pinned public oneCCL/libccl fixes
-  the installed runtime's deterministic packed-verifier all-reduce graph
-  corruption, and the compiled all-gather custom-op patch enables exact draft
-  graph capture. Exact cases, repeat128, baseline parity, the 1K needle, and
-  `cached_tokens=0` on every strict prompt passed. The isolated rows differ by
-  `3.02%`, inside the established `4.4%` endpoint variance band; a swapped
-  four-GPU crossover measured +`5.39%` average over eager draft.
+- current strict fresh-response practical best: TP2 median `93.036242 tok/s`
+  for generated tokens 1-100 after TTFT. Pinned public oneCCL/libccl fixes the
+  installed runtime's deterministic packed-verifier all-reduce corruption,
+  the compiled all-gather custom op enables exact draft graph capture, and
+  graph-safe FlashAttention permits one full four-row target graph. Exact
+  cases, repeat128, baseline parity, the 1K needle, and `cached_tokens=0` on
+  every strict prompt passed. A swapped four-GPU crossover measured `+3.42%`
+  and `+2.45%` over PIECEWISE controls, resolving the small headline delta
+  against endpoint variance.
 - current result packet:
-  `../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
-- current TP2 LocalMaxxing: draft-graph approval `cmrgjjw8n004qmj01cp91qxl0`;
-  prior eager-draft approval `cmrghhs27004cmj01dijk9r9f`
-- oneCCL build/oracle/repro:
-  `../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`
+  `../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`
+- current TP2 LocalMaxxing: new submission pending; prior FP16 approval
+  `cmrgojixq005rmj0141e9fjj2`
+- graph-safe FA build/oracle/repro:
+  `../experiments/qwen27_graphsafe_flash_attention/README.md`
 - prior TP1 LocalMaxxing: ReplaySSM draft-INT4 row approved as
   `cmr9atqb800msqr01u760xh0t`, with queue/response at
   `../experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.queue.json` and

@@ -1,0 +1,46 @@
+diff --git a/csrc/flash_attn/flash_api.cpp b/csrc/flash_attn/flash_api.cpp
+--- a/csrc/flash_attn/flash_api.cpp
++++ b/csrc/flash_attn/flash_api.cpp
+@@ -5,8 +5,28 @@
+ #include "utils.h"
+ #include <torch/all.h>
+-
++
++#include <cstdlib>
++#include <string_view>
++
+ namespace FLASH_NAMESPACE {
+-
++
++namespace {
++
++bool force_chunk_decode() {
++  static const bool enabled = [] {
++    const char* value = std::getenv("VLLM_XPU_FA2_FORCE_CHUNK_DECODE");
++    if (value == nullptr) {
++      return false;
++    }
++    const std::string_view setting(value);
++    return setting == "1" || setting == "true" || setting == "yes" ||
++           setting == "on";
++  }();
++  return enabled;
++}
++
++}  // namespace
++
+ inline int get_num_splits(
+     const sycl::queue& queue,
+     const int& batch_size,
+@@ -201,7 +221,8 @@ std::vector<at::Tensor> mha_varlen_fwd(
+   }
+-
++
+   at::Tensor seqlens_k = is_paged ? *seqused_k : cu_seqlens_k;
+-  bool is_prefill_only = (!mix_batch && max_seqlen_q > 1) | !is_paged;
++  bool is_prefill_only = force_chunk_decode() ||
++                         (!mix_batch && max_seqlen_q > 1) || !is_paged;
+-
++
+   if (is_prefill_only) {
+     if (!out_.has_value()) {

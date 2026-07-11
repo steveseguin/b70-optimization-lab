@@ -1,0 +1,84 @@
+{
+  "status": "quality_gated_tp2_record",
+  "date_utc": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "quantization": "AutoRound INT4 weights; FP16 target compute; runtime INT8 target LM-head BF16 scales; runtime INT4 draft LM-head BF16 scales",
+  "headline": {
+    "gpu_count": 2,
+    "median_tok_s_1_100_after_ttft": 93.03624230561563,
+    "p10_tok_s_1_100_after_ttft": 82.84551593521294,
+    "mean_tok_s_1_100_after_ttft": 92.77314522741203,
+    "median_full_after_ttft_tok_s": 91.21973080475979,
+    "median_wall_tok_s_full": 79.8370686927274,
+    "median_ttft_ms": 742.2317644814029
+  },
+  "variance_evidence": {
+    "candidate_gpu01": 90.43326435296693,
+    "control_gpu23": 87.43869878125311,
+    "candidate_gpu23": 91.60572382874597,
+    "control_gpu01": 89.4130930111755,
+    "candidate_crossover_mean": 91.01949409085645,
+    "control_crossover_mean": 88.42589589621431,
+    "crossover_relative_gain_percent": 2.9330753942105936,
+    "solo_confirmation_gpu23": 93.03624230561563
+  },
+  "mechanism": {
+    "description": "Graph-safe XE2 chunk FlashAttention removes the SYCL scratch-memory capture blocker. A default-off short-context fallback routes paged decode through chunk attention, allowing one FULL four-row target graph instead of 33 PIECEWISE target segments.",
+    "compilation_config": {
+      "cudagraph_mode": "FULL_AND_PIECEWISE",
+      "cudagraph_capture_sizes": [4],
+      "max_cudagraph_capture_size": 4
+    },
+    "required_env": {
+      "VLLM_XPU_FA2_FORCE_CHUNK_DECODE": "1",
+      "VLLM_XPU_DDTREE_FULL_GRAPH": "1",
+      "VLLM_XPU_DDTREE_CAPTURE_GDN_CORE": "1",
+      "VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS": "0",
+      "VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP": "1"
+    },
+    "short_context_only": true,
+    "long_context_warning": "Forced chunk decode scales much worse than paged decode by 1K-2K KV tokens; do not use this as a general long-context production recipe."
+  },
+  "strict_fresh_result": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-fp16-graphsafe-fa-full-solo-confirm-realistic128-chat-tokenids-qwensuite-20260711T204201Z.json",
+    "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-fp16-graphsafe-fa-full-solo-confirm-candidate-summary-20260711T204201Z.json",
+    "prompt_count": 12,
+    "each_prompt_run_once": true,
+    "cached_tokens_all_zero": true,
+    "history_acceleration": false,
+    "prefix_or_kv_cache_reuse": false,
+    "response_reuse": false,
+    "target_verified_speculation": true
+  },
+  "quality": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-tp2-fp16-graphsafe-fa-full-quality128-repeat128-ctx1024-20260711T203355Z.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "repeat_runs": 128,
+    "long_context_pass": true
+  },
+  "runtime_identity": {
+    "llm_optimizations_commit_before_promotion": "235f72ac8c42d39c357ae6fecf158538b5076a68",
+    "vllm_commit": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "vllm_xpu_kernels_commit": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "patched_attention_sha256": "604f1b328870f2c41ef1d05c4d6016c34d222033d905877b0f9a2ff0c66b2a0c",
+    "stock_dependency_sha256": "3cbd3ed2ff51a477e6746b3e5860c070d093fd2d29b0b7a58e6dd081e9ad1289",
+    "fa2_extension_sha256": "33938cdd2436684dcb76108a4db43e4ab0314406ad537fcd3732a005f7d23739"
+  },
+  "prior_record": {
+    "median_tok_s_1_100_after_ttft": 91.71440522072265,
+    "improvement_percent": 1.4412535105164714,
+    "localmaxxing_id": "cmrgojixq005rmj0141e9fjj2",
+    "packet": "results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json"
+  },
+  "reproduction": {
+    "experiment": "experiments/qwen27_graphsafe_flash_attention/README.md",
+    "chunk_patch": "experiments/qwen27_graphsafe_flash_attention/qwen27-chunk-prefill-local-accessor.patch",
+    "dispatch_patch": "experiments/qwen27_graphsafe_flash_attention/qwen27-force-chunk-decode.patch",
+    "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-graphsafe-flashattention-fullgraph.md"
+  },
+  "localmaxxing": {
+    "status": "pending_submission"
+  }
+}

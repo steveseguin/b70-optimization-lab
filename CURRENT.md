@@ -30,15 +30,15 @@ Pro B70 GPUs**.
 
 - [Lane handoff](results/qwen36-27b-autoround-int4-b70/HANDOFF.md)
 - [Result packet](results/qwen36-27b-autoround-int4-b70/README.md)
-- [Current promoted TP2 evidence](results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json)
+- [Current promoted TP2 evidence](results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json)
 - [Reproduction entry point](repro/qwen36-27b-autoround-int4-b70/README.md)
 - [Experiment workspace](experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-The current promoted captured-GDN FP16-compute result is **91.714405 tok/s
-median** on the fixed 12-prompt cold realistic gate, with a pair-swapped high
-of `92.637225`. The linked packet owns the complete identity, crossover, and
-quality evidence; exact cases, repeat128, baseline parity, and the 1K needle
-passed. LocalMaxxing approved it as `cmrgojixq005rmj0141e9fjj2`.
+The current promoted graph-safe FlashAttention FP16-compute result is
+**93.036242 tok/s median** on the fixed 12-prompt cold realistic gate. Two-way
+crossover showed a `+2.93%` candidate/control mean improvement, and exact
+cases, repeat128, baseline parity, and the 1K needle passed. The linked packet
+owns the full identity; LocalMaxxing submission is pending.
 
 ### Protected In-Flight Work
 

@@ -7,6 +7,9 @@ stage=${STAGE_DIR:-$here/work/source}
 build=${BUILD_DIR:-$here/work/build}
 python=${PYTHON:-/home/steve/.venvs/vllm-xpu/bin/python}
 jobs=${MAX_JOBS:-8}
+compiler_root=${INTEL_COMPILER_ROOT:-/opt/intel/oneapi/compiler/2025.3}
+cc=${CC:-$compiler_root/bin/icx}
+cxx=${CXX:-$compiler_root/bin/icpx}
 full=0
 
 if [[ ${1:-} == --full ]]; then
@@ -27,6 +30,8 @@ esac
 
 test -f "$source_tree/csrc/xpu/attn/xe_2/chunk_prefill.hpp"
 test -x "$python"
+test -x "$cc"
+test -x "$cxx"
 command -v rsync >/dev/null
 
 rm -rf -- "$stage" "$build"
@@ -42,19 +47,22 @@ rsync -a \
 git -C "$source_tree" apply --check \
   "$here/qwen27-chunk-prefill-local-accessor.patch"
 patch -d "$stage" -p1 < "$here/qwen27-chunk-prefill-local-accessor.patch"
+git -C "$source_tree" apply --check "$here/qwen27-force-chunk-decode.patch"
+patch -d "$stage" -p1 < "$here/qwen27-force-chunk-decode.patch"
 
-if [[ -f /opt/intel/oneapi/setvars.sh ]]; then
-  # oneAPI's setup script is not nounset-clean.
+if [[ -f "$compiler_root/env/vars.sh" ]]; then
+  # oneAPI's versioned setup script is not nounset-clean. Pinning this avoids
+  # mixing 2026 device IR with the deployed 2025.3 attention objects.
   set +u
-  source /opt/intel/oneapi/setvars.sh >/dev/null
+  source "$compiler_root/env/vars.sh" >/dev/null
   set -u
 fi
 
 cmake -S "$stage" -B "$build" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE="$stage/cmake/toolchain.cmake" \
-  -DCMAKE_C_COMPILER="$(command -v icx)" \
-  -DCMAKE_CXX_COMPILER="$(command -v icpx)" \
+  -DCMAKE_C_COMPILER="$cc" \
+  -DCMAKE_CXX_COMPILER="$cxx" \
   -DVLLM_PYTHON_EXECUTABLE="$python" \
   -DVLLM_TARGET_DEVICE=xpu \
   -DFETCHCONTENT_BASE_DIR="$stage/.deps" \
@@ -69,8 +77,12 @@ cmake -S "$stage" -B "$build" -G Ninja \
   -DXPU_SPECIFIC_KERNELS_ENABLED=OFF \
   -DXPUMEM_ALLOCATOR_ENABLED=OFF
 
-object_target=csrc/xpu/attn/xe_2/CMakeFiles/attn_kernels_xe_2.dir/chunk_prefill_kernel_template_chunk_policy_head256_ttfff.cpp.o
-cmake --build "$build" --target "$object_target" --parallel "$jobs"
+object_targets=(
+  csrc/xpu/attn/xe_2/CMakeFiles/attn_kernels_xe_2.dir/chunk_prefill_kernel_template_chunk_policy_head256_ttfff.cpp.o
+  csrc/xpu/attn/xe_2/CMakeFiles/attn_kernels_xe_2.dir/chunk_prefill_kernel_template_chunk_policy_head256_tffff.cpp.o
+  CMakeFiles/_vllm_fa2_C.dir/csrc/flash_attn/flash_api.cpp.o
+)
+cmake --build "$build" --target "${object_targets[@]}" --parallel "$jobs"
 
 if (( full )); then
   cmake --build "$build" --target attn_kernels_xe_2 _vllm_fa2_C \
