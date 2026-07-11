@@ -17,16 +17,17 @@ cd /home/steve/llm-optimizations
 ONECCL_INSTALL_DIR=/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70 \
   experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/build-public-oneccl.sh
 GPU_INDEX=2,3 PORT=19445 QUALITY_REPEAT_RUNS=128 \
-  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh
+  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh
 ```
 
-Promoted result: conservative full-quality median `87.029114 tok/s`, p10
-`79.941979`, mean `87.913957`; isolated high `87.815738 tok/s`. Exact cases,
-repeat128, baseline parity, the 1K needle, and strict cold/cached-zero rules
-passed. Capturing GDN target segments reduces target graph pieces from 129 to
-33; a swapped four-GPU crossover favored the candidate in both assignments.
+Promoted result: conservative full-quality FP16-compute median `91.714405
+tok/s`, p10 `81.735821`, mean `90.916872`; pair-swapped high `92.637225 tok/s`.
+Exact cases, repeat128, baseline parity, the 1K needle, and strict
+cold/cached-zero rules passed. Capturing GDN target segments reduces target
+graph pieces from 129 to 33; two four-GPU pair assignments measured FP16 gains
+of `5.70%` and `7.09%` over simultaneous BF16 controls.
 See
-`../../results/qwen36-27b-autoround-int4-b70/tp2-capture-gdn-core-20260711.json`
+`../../results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json`
 and
 `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`.
 

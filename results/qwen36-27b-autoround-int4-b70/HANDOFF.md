@@ -8,20 +8,22 @@ B70.
 ## July 11 Active Frontier
 
 The promoted strict-valid record is the two-GPU webhie/AutoRound lane with
-pinned public oneCCL, captured intrinsic-MTP draft, and captured GDN target
-segments: conservative full-quality median **`87.02911429766677 tok/s`**, p10
-`79.94197906520034`, mean `87.91395663676606`; independent isolated high
-`87.81573759082826`. Exact cases, repeat128, baseline parity, and the 1K needle
-passed, and every strict prompt reported `cached_tokens=0`. Capturing the 48
+FP16 target compute, pinned public oneCCL, captured intrinsic-MTP draft, and
+captured GDN target segments: conservative full-quality median
+**`91.71440522072265 tok/s`**, p10 `81.73582071120643`, mean
+`90.9168721254448`; pair-swapped high `92.63722537714678`. Exact cases,
+repeat128, baseline parity, and the 1K needle passed, and every strict prompt
+reported `cached_tokens=0`. Capturing the 48
 GDN cores inside surrounding compiled segments reduced target graph pieces
-from `129` to `33`. A swapped four-GPU crossover favored the candidate in both
-assignments and averaged `+1.55%` under shared load. LocalMaxxing approved the
-new row as `cmrgn3szj005dmj01u8tel6yd`; the prior `82.894` row is
-`cmrgjjw8n004qmj01cp91qxl0`.
+from `129` to `33`. Two four-GPU pair assignments measured FP16 gains of
+`+5.70%` and `+7.09%` over simultaneous BF16 controls. The prior captured-GDN
+BF16 LocalMaxxing row is `cmrgn3szj005dmj01u8tel6yd`.
 
 The current result, bisection, and reproduction paths are:
 
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md`;
+- `tp2-fp16-capture-gdn-20260711.json`;
+- `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh`;
 - `tp2-capture-gdn-core-20260711.json`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-public-oneccl-algorithms-and-draftgraph.md`;

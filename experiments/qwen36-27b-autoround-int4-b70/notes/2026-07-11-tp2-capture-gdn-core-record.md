@@ -66,6 +66,18 @@ or oneCCL failure. A separate discarded attempt was invalid because it used
 must set `GPU_INDEX`/`ZE_AFFINITY_MASK` and logical
 `ONEAPI_DEVICE_SELECTOR=level_zero:0,1`.
 
+A follow-up replaced FlashAttention with `TRITON_ATTN`. That backend allowed
+`FULL_AND_PIECEWISE` to compile, capture, serve, and pass the strict
+cold/cached-zero mechanics, but throughput fell to `77.852324 tok/s` (p10
+`69.365550`, mean `77.770986`) with quality intentionally skipped. The slower
+attention kernel costs more than the outer full graph saves. Preserve this as
+a backend no-win; do not trade the current FlashAttention pieces for Triton
+only to obtain a single outer graph.
+
+Artifact:
+
+- `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-triton-fullandpiecewise-20260711T1732Z-candidate-summary-20260711T173126Z.json`.
+
 ## Strict result and quality
 
 Promoted full-gate run:
@@ -128,13 +140,75 @@ compiled draft all-gather fix from the prior promoted recipe.
 
 ## Next frontier
 
-The `100 tok/s` objective is not complete. Next work should:
+The `100 tok/s` objective is not complete. Follow-up work on the exact record
+identity produced these additional boundaries:
 
-1. profile this 33-piece winner to quantify the new target step cost;
-2. test a graph-capturable full-attention backend only if it preserves exact
-   output and can enable fewer than 33 boundaries without losing kernel speed;
-3. otherwise pursue verified accepted-depth/branch regeneration, because the
-   remaining proposer and sampler costs cannot independently provide the
-   required gain;
-4. keep target model, quantization, fresh-response policy, and quality gates
-   unchanged.
+- an isolated synchronized stage profile measured broad rank-0 regions at
+  `30.31 ms` target forward (excluding its single maximum), `4.19 ms` draft,
+  `2.62 ms` preprocessing, `1.35 ms` postprocessing, and `0.50 ms` sampling.
+  These regions are not additive endpoint attribution: once GDN is captured,
+  a synchronization around target forward also drains work submitted by an
+  earlier asynchronous region. Use the endpoint plus accepted-token count for
+  step economics, not those broad synchronized totals. Compact artifact:
+  `data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-capturegdn-stageprofile-isolated-timing-20260711T173558Z.json`.
+- the strict top-k64 trace still averages `2.746954` accepted visible tokens
+  per verifier step. At the `87.029` endpoint this implies about `31.56 ms` per
+  step and requires about `3.156` visible tokens per step to reach `100 tok/s`
+  without reducing step time. The optimistic legal-tree envelope is retained
+  in `qwen27-capturegdn-strict-topk64-branch-envelope-20260711.{json,md}`.
+- corrected intrinsic-MTP fixed trees are mechanically valid but currently
+  lose economically. TP1 binary depth-2 used seven target rows, accepted only
+  about `2.62-2.72` visible tokens per step (no better than the MTP3 chain),
+  and measured `58.89 tok/s`; binary depth-3 reached roughly `3.2-3.3` tokens
+  per step but only `54.42 tok/s`. Do not confuse these with the older invalid
+  sibling-as-chain screens.
+- a fresh TP2 MTP3 control reproduced `87.287 tok/s`. A paired MTP4 attempt
+  first exposed an MTP3-specific hardcoded ReplaySSM ring length; the wrapper
+  now derives the minimum `2 * (k + 1)` and the kernel rounds it to a power of
+  two. MTP4 then served but corrupted/terminated most responses; only two
+  prompts reached 100 generated tokens and their partial median was about
+  `55.55 tok/s`. This is invalid correctness evidence and closes MTP4 on the
+  current ReplaySSM path, not a throughput claim.
+- target W4A8 was screened using the existing oneDNN
+  `int4_gemm_w4a8` primitive, including per-token activation quantization and
+  BF16 output conversion. Across the six real projection shapes, projected
+  target projection time regressed from about `22.39` to `28.87 ms/step` and
+  introduced material activation error. Do not integrate W4A8 here.
+
+The remaining useful work is a material target-body reduction or a stronger
+target-verified drafter that transfers to the strict prompt distribution.
+Small oneCCL algorithm changes, naive compact LM-head kernels, fixed trees,
+FC-only MTP adaptation, and W4A8 are now closed. Keep the target model,
+quantization identity, fresh-response policy, and quality gates unchanged.
+
+## FP16 target compute promotion
+
+The same captured-GDN TP2 recipe was then run with `--dtype float16`. This
+keeps the AutoRound INT4 weights unchanged and changes target activation/
+compute dtype from BF16 to FP16. A six-shape projection microbenchmark
+projected only a `22.31 -> 21.67 ms` target projection reduction, but the full
+endpoint improved materially, showing that non-projection target kernels also
+benefit.
+
+Two four-GPU pair-swapped windows measured:
+
+| Window | FP16 | BF16 | FP16 gain |
+| --- | ---: | ---: | ---: |
+| FP16 GPUs 2-3, BF16 GPUs 0-1 | `92.637225` | `86.504722` | `+7.09%` |
+| FP16 GPUs 0-1, BF16 GPUs 2-3 | `91.714405` | `86.766262` | `+5.70%` |
+
+The lower FP16 row is promoted. It passed all 12 unique prompts once cold,
+`cached_tokens=0` throughout, exact cases, repeat128, complete baseline output
+parity, and the 1K needle. Headline metrics are median `91.714405`, p10
+`81.735821`, mean `90.916872`, full after-TTFT median `87.667759`, wall median
+`76.670155`, and TTFT median `743.355 ms`.
+
+Reproduce with:
+
+```bash
+GPU_INDEX=0,1 PORT=19446 QUALITY_REPEAT_RUNS=128 \
+  experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh
+```
+
+Authoritative packet:
+`results/qwen36-27b-autoround-int4-b70/tp2-fp16-capture-gdn-20260711.json`.

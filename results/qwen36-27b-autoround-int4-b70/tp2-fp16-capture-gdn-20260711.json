@@ -1,0 +1,97 @@
+{
+  "status": "quality_gated_tp2_record",
+  "date_utc": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "quantization": "AutoRound INT4 weights; FP16 target compute; runtime INT8 target LM-head BF16 scales; runtime INT4 draft LM-head BF16 scales",
+  "headline": {
+    "gpu_count": 2,
+    "median_tok_s_1_100_after_ttft": 91.71440522072265,
+    "p10_tok_s_1_100_after_ttft": 81.73582071120643,
+    "mean_tok_s_1_100_after_ttft": 90.9168721254448,
+    "median_full_after_ttft_tok_s": 87.66775889884619,
+    "median_wall_tok_s_full": 76.67015496374742,
+    "median_ttft_ms": 743.3552120346576,
+    "selection_reason": "Lower of two pair-swapped FP16 rows and the row carrying the complete quality gate."
+  },
+  "support_high": {
+    "median_tok_s_1_100_after_ttft": 92.63722537714678,
+    "p10_tok_s_1_100_after_ttft": 82.86088188593115,
+    "mean_tok_s_1_100_after_ttft": 91.42754162912773
+  },
+  "paired_variance": {
+    "window_1": {
+      "fp16_gpu_pair": "2,3",
+      "fp16_median": 92.63722537714678,
+      "bf16_gpu_pair": "0,1",
+      "bf16_median": 86.50472201425767,
+      "gain_percent": 7.089218
+    },
+    "window_2": {
+      "fp16_gpu_pair": "0,1",
+      "fp16_median": 91.71440522072265,
+      "bf16_gpu_pair": "2,3",
+      "bf16_median": 86.7662616817777,
+      "gain_percent": 5.702843
+    },
+    "mean_fp16": 92.17581529893471,
+    "mean_bf16": 86.63549184801769,
+    "mean_gain_percent": 6.394984
+  },
+  "mechanism": {
+    "server_flag": "--dtype float16",
+    "description": "Use FP16 rather than checkpoint-default BF16 target compute while retaining the same AutoRound INT4 weights and exact target-verified MTP3 path."
+  },
+  "serving_config": {
+    "tp": 2,
+    "concurrency": 1,
+    "max_model_len": 2048,
+    "max_num_batched_tokens": 1024,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": 0.95,
+    "spec_method": "qwen3_next_mtp",
+    "num_speculative_tokens": 3,
+    "compilation_config": {
+      "cudagraph_mode": "PIECEWISE",
+      "max_cudagraph_capture_size": 8
+    },
+    "required_env": {
+      "VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS": "0",
+      "VLLM_XPU_COMPILE_ALLGATHER_CUSTOM_OP": "1",
+      "VLLM_XPU_DDTREE_CAPTURE_GDN_CORE": "1"
+    }
+  },
+  "strict_fresh_result": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-capturegdn-fp16-swap-realistic128-chat-tokenids-qwensuite-20260711T175850Z.json",
+    "summary": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-capturegdn-fp16-swap-candidate-summary-20260711T175850Z.json",
+    "prompt_count": 12,
+    "each_prompt_run_once": true,
+    "cached_tokens_all_zero": true,
+    "history_acceleration": false,
+    "prefix_or_kv_cache_reuse": false,
+    "response_reuse": false,
+    "target_verified_speculation": true
+  },
+  "quality": {
+    "artifact": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-tp2-capturegdn-fp16-swap-repeat128-ctx1024-20260711T175850Z.json",
+    "pass_all": true,
+    "baseline_match_all": true,
+    "repeat_runs": 128,
+    "long_context_pass": true
+  },
+  "prior_record": {
+    "median_tok_s_1_100_after_ttft": 87.02911429766677,
+    "improvement_percent": 5.383590,
+    "localmaxxing_id": "cmrgn3szj005dmj01u8tel6yd",
+    "packet": "results/qwen36-27b-autoround-int4-b70/tp2-capture-gdn-core-20260711.json"
+  },
+  "reproduction": {
+    "wrapper": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-fp16-candidate.sh",
+    "source_patch": "patches/qwen36-27b-autoround-int4-b70/vllm-qwen27-capture-gdn-core-piecewise-20260711.patch",
+    "note": "experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md"
+  },
+  "localmaxxing": {
+    "status": "pending_submission",
+    "queue": "experiments/qwen36-27b-autoround-int4-b70/localmaxxing/qwen36-27b-webhie-int4-tp2-fp16-capturegdn-20260711.queue.json"
+  }
+}
