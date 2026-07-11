@@ -350,3 +350,19 @@ All submitted results returned `APPROVED`.
 | `vllm-int4-tp2-b70-nonmtp-500-512` | `cmoq4krfb000cl40456wobg7e` | 2 | 500 | 512 | 48.3 | 95.56 |
 | `vllm-int4-single-b70-nonmtp-500-256` | `cmoq4r8rc0001l804tocgibus` | 1 | 500 | 256 | 31.8 | 93.80 |
 | `vllm-int4-tp2-b70-mtp-500-256` | `cmoq4xppt0003ky04xidngli9` | 2 | 500 | 256 | 35.6 | 105.03 |
+Date: 2026-07-11
+
+Model: `webhie/Qwen3.6-27B-int4-AutoRound`, AutoRound INT4 W4A16 target,
+runtime INT8 target LM-head, runtime INT4 intrinsic-MTP draft LM-head,
+vLLM/XPU TP2 on two Intel Arc Pro B70 GPUs.
+
+| Label | LocalMaxxing ID | GPUs | Output | tok/s out | tok/s wall |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `qwen36-27b-webhie-int4-autoround-b70-vllm-tp2-capturegdn-87tok-20260711` | `cmrgn3szj005dmj01u8tel6yd` | 2 | 512 | 87.029 | 75.780 |
+
+Strict fresh-response record: 12 unique realistic prompts once, every request
+`cached_tokens=0`, no cache/history/response reuse, target-verified MTP3,
+exact cases + repeat128 + baseline parity + 1K needle passed. Capturing GDN
+cores inside surrounding target segments reduced graph pieces from 129 to 33.
+Packet:
+`results/qwen36-27b-autoround-int4-b70/tp2-capture-gdn-core-20260711.json`.

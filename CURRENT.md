@@ -36,7 +36,8 @@ note at
 `experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md`,
 and the checksum-gated wrapper
 `experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh`.
-The prior `82.894` record is LocalMaxxing `cmrgjjw8n004qmj01cp91qxl0`.
+LocalMaxxing approved the new record as `cmrgn3szj005dmj01u8tel6yd`; the prior
+`82.894` record is `cmrgjjw8n004qmj01cp91qxl0`.
 
 First milestone complete: revision
 `abc86de19eb1ebbf6a7df4582341325c22ddcb7d` is downloaded, TP1 vLLM/XPU

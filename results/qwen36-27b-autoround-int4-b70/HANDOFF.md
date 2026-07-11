@@ -15,9 +15,9 @@ segments: conservative full-quality median **`87.02911429766677 tok/s`**, p10
 passed, and every strict prompt reported `cached_tokens=0`. Capturing the 48
 GDN cores inside surrounding compiled segments reduced target graph pieces
 from `129` to `33`. A swapped four-GPU crossover favored the candidate in both
-assignments and averaged `+1.55%` under shared load. The prior `82.894` row is
-LocalMaxxing `cmrgjjw8n004qmj01cp91qxl0`; submit the new row only from its
-quality-cleared packet.
+assignments and averaged `+1.55%` under shared load. LocalMaxxing approved the
+new row as `cmrgn3szj005dmj01u8tel6yd`; the prior `82.894` row is
+`cmrgjjw8n004qmj01cp91qxl0`.
 
 The current result, bisection, and reproduction paths are:
 

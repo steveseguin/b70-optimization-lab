@@ -51,8 +51,8 @@ Current TP2 record:
   timing for generated tokens 1-100 after TTFT;
 - variance: a swapped four-GPU crossover favored captured GDN in both pair
   assignments and averaged `+1.55%` under shared load;
-- LocalMaxxing: captured-GDN submission pending; prior draft-graph row
-  `cmrgjjw8n004qmj01cp91qxl0`;
+- LocalMaxxing: captured-GDN row `cmrgn3szj005dmj01u8tel6yd`; prior
+  draft-graph row `cmrgjjw8n004qmj01cp91qxl0`;
 - packet: `tp2-capture-gdn-core-20260711.json`;
 - build/oracle/repro:
   `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-capturegdn-candidate.sh`.
