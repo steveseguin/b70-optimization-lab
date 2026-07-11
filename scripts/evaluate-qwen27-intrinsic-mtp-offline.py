@@ -22,7 +22,6 @@ import os
 import re
 import sys
 import time
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -97,6 +96,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-samples", type=int, default=0)
     parser.add_argument("--max-starts", type=int, default=256)
     parser.add_argument("--start-stride", type=int, default=1)
+    parser.add_argument(
+        "--decode-only-starts",
+        action="store_true",
+        help=(
+            "Evaluate starts at or after the final prompt token. Samples must "
+            "provide num_prompt_tokens; the first start is num_prompt_tokens - 1 "
+            "so its first target is the first generated token."
+        ),
+    )
     parser.add_argument("--device", default="auto")
     parser.add_argument("--dtype", default="bfloat16",
                         choices=("float32", "bfloat16", "float16"))
@@ -465,6 +473,7 @@ class IntrinsicMTP(torch.nn.Module):
         draft_lm_head: str = "bf16",
         draft_lm_head_group_size: int = 128,
         draft_lm_head_scale_dtype: str = "bf16",
+        load_target_lm_head: bool = False,
     ) -> None:
         super().__init__()
         self.shape = shape
@@ -478,6 +487,10 @@ class IntrinsicMTP(torch.nn.Module):
 
         self.embed = embed_weight.to(device=device, dtype=dtype)
         self.draft_lm_head = draft_lm_head
+        self.target_lm_head = (
+            lm_head_weight.to(device=device, dtype=dtype)
+            if load_target_lm_head else None
+        )
         if draft_lm_head == "int4-dequant":
             self.lm_head = quantize_lm_head_int4_dequant(
                 lm_head_weight,
@@ -670,6 +683,14 @@ class IntrinsicMTP(torch.nn.Module):
     def logits(self, hidden: torch.Tensor) -> torch.Tensor:
         return F.linear(hidden, self.lm_head)
 
+    def target_logits(self, hidden: torch.Tensor) -> torch.Tensor:
+        if self.target_lm_head is None:
+            raise RuntimeError(
+                "Target LM head was not loaded; enable a teacher objective when "
+                "constructing IntrinsicMTP"
+            )
+        return F.linear(hidden, self.target_lm_head)
+
 
 def apply_diagnostic_dense_updates(
     model: IntrinsicMTP,
@@ -788,6 +809,70 @@ def make_positions(sample: dict[str, Any], length: int) -> torch.Tensor:
     return torch.arange(length, dtype=torch.long)
 
 
+def sample_metadata_value(
+    sample: dict[str, Any], keys: tuple[str, ...]
+) -> Any | None:
+    request_metadata = sample.get("request_metadata")
+    request_metadata = request_metadata if isinstance(request_metadata, dict) else {}
+    sample_metadata = sample.get("metadata")
+    sample_metadata = sample_metadata if isinstance(sample_metadata, dict) else {}
+    nested_metadata = request_metadata.get("metadata")
+    nested_metadata = nested_metadata if isinstance(nested_metadata, dict) else {}
+    for container in (sample, sample_metadata, request_metadata, nested_metadata):
+        for key in keys:
+            value = container.get(key)
+            if value is not None and value != "":
+                return value
+    return None
+
+
+def add_group_stats(
+    stats: dict[str, dict[str, Any]],
+    key: str | None,
+    *,
+    sample_starts: int,
+    sample_accepted: int,
+    sample_histogram: list[int],
+) -> None:
+    if key is None:
+        return
+    values = stats.setdefault(
+        key,
+        {
+            "samples": 0,
+            "starts": 0,
+            "accepted": 0,
+            "histogram": [0 for _ in sample_histogram],
+        },
+    )
+    values["samples"] += 1
+    values["starts"] += sample_starts
+    values["accepted"] += sample_accepted
+    for index, count in enumerate(sample_histogram):
+        values["histogram"][index] += count
+
+
+def summarize_group_stats(
+    stats: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    result: dict[str, dict[str, Any]] = {}
+    for key, values in sorted(stats.items()):
+        group_starts = int(values["starts"])
+        result[key] = {
+            "samples": int(values["samples"]),
+            "starts": group_starts,
+            "mean_accepted": (
+                float(values["accepted"]) / group_starts if group_starts else 0.0
+            ),
+            "histogram_accepted_prefix": {
+                str(index): int(count)
+                for index, count in enumerate(values["histogram"])
+                if count
+            },
+        }
+    return result
+
+
 def evaluate_start(
     *,
     model: IntrinsicMTP,
@@ -864,9 +949,11 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
     topk_hits = [0 for _ in range(args.max_steps)]
     sample_rows: list[dict[str, Any]] = []
     examples: list[dict[str, Any]] = []
-    family_stats: dict[str, dict[str, float | int]] = defaultdict(
-        lambda: {"samples": 0, "starts": 0, "accepted": 0}
-    )
+    accepted_prefixes_by_start: list[dict[str, Any]] = []
+    family_stats: dict[str, dict[str, Any]] = {}
+    cluster_stats: dict[str, dict[str, Any]] = {}
+    prompt_starts_excluded = 0
+    samples_missing_prompt_length = 0
 
     with torch.no_grad():
         for sample_index, path in enumerate(paths):
@@ -874,13 +961,13 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
             if not str(sample.get("format", "")).startswith(
                 "qwen36_eagle_sequence_v"):
                 continue
-            request_metadata = sample.get("request_metadata") or {}
-            family = str(
-                sample.get("family")
-                or request_metadata.get("family")
-                or "unknown"
+            family_value = sample_metadata_value(sample, ("family", "prompt_family"))
+            cluster_value = sample_metadata_value(
+                sample, ("cluster", "prompt_cluster", "task_cluster")
             )
-            prompt_id = sample.get("prompt_id") or request_metadata.get("prompt_id")
+            prompt_id = sample_metadata_value(sample, ("prompt_id", "id"))
+            family = str(family_value) if family_value is not None else "unknown"
+            cluster = str(cluster_value) if cluster_value is not None else None
             hidden = sample["hidden_state"].to(torch.float32)
             if "sampled_next_token_ids" not in sample:
                 continue
@@ -890,9 +977,17 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
                 continue
             positions = make_positions(sample, length)
             available_starts = max(0, length - args.max_steps - 1)
+            first_start = 0
+            if args.decode_only_starts:
+                if sample.get("num_prompt_tokens") is None:
+                    samples_missing_prompt_length += 1
+                    continue
+                first_start = max(0, int(sample["num_prompt_tokens"]) - 1)
+                prompt_starts_excluded += min(first_start, available_starts)
             sample_starts = 0
             sample_accepted = 0
-            for start in range(0, available_starts, args.start_stride):
+            sample_hist = [0 for _ in range(args.max_steps + 1)]
+            for start in range(first_start, available_starts, args.start_stride):
                 if args.max_starts > 0 and starts >= args.max_starts:
                     break
                 result = evaluate_start(
@@ -912,6 +1007,19 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
                 accepted_total += accepted
                 sample_accepted += accepted
                 hist[accepted] += 1
+                sample_hist[accepted] += 1
+                start_row: dict[str, Any] = {
+                    "sample": os.path.basename(path),
+                    "start": start,
+                    "accepted_prefix": accepted,
+                }
+                if prompt_id is not None:
+                    start_row["prompt_id"] = prompt_id
+                if family_value is not None:
+                    start_row["family"] = family
+                if cluster is not None:
+                    start_row["cluster"] = cluster
+                accepted_prefixes_by_start.append(start_row)
                 rows = result["rows"]
                 for row in rows:
                     step_idx = int(row["step"]) - 1
@@ -923,6 +1031,7 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
                         "sample": os.path.basename(path),
                         "prompt_id": prompt_id,
                         "family": family,
+                        **({"cluster": cluster} if cluster is not None else {}),
                         "start": start,
                         "accepted": accepted,
                         "first_mismatch": rows[-1],
@@ -930,18 +1039,35 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
                 if args.max_starts > 0 and starts >= args.max_starts:
                     break
             if sample_starts:
-                family_stats[family]["samples"] = int(family_stats[family]["samples"]) + 1
-                family_stats[family]["starts"] = int(family_stats[family]["starts"]) + sample_starts
-                family_stats[family]["accepted"] = (
-                    float(family_stats[family]["accepted"]) + sample_accepted
+                add_group_stats(
+                    family_stats,
+                    family,
+                    sample_starts=sample_starts,
+                    sample_accepted=sample_accepted,
+                    sample_histogram=sample_hist,
                 )
-                sample_rows.append({
+                add_group_stats(
+                    cluster_stats,
+                    cluster,
+                    sample_starts=sample_starts,
+                    sample_accepted=sample_accepted,
+                    sample_histogram=sample_hist,
+                )
+                sample_row = {
                     "sample": os.path.basename(path),
                     "prompt_id": prompt_id,
                     "family": family,
                     "starts": sample_starts,
                     "mean_accepted": sample_accepted / sample_starts,
-                })
+                    "histogram_accepted_prefix": {
+                        str(index): count
+                        for index, count in enumerate(sample_hist)
+                        if count
+                    },
+                }
+                if cluster is not None:
+                    sample_row["cluster"] = cluster
+                sample_rows.append(sample_row)
             if args.print_every > 0 and (sample_index + 1) % args.print_every == 0:
                 mean = accepted_total / starts if starts else 0.0
                 print(
@@ -952,15 +1078,8 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
             if args.max_starts > 0 and starts >= args.max_starts:
                 break
 
-    family_summary: dict[str, dict[str, float | int]] = {}
-    for family, vals in sorted(family_stats.items()):
-        starts_f = int(vals["starts"])
-        accepted_f = float(vals["accepted"])
-        family_summary[family] = {
-            "samples": int(vals["samples"]),
-            "starts": starts_f,
-            "mean_accepted": accepted_f / starts_f if starts_f else 0.0,
-        }
+    family_summary = summarize_group_stats(family_stats)
+    cluster_summary = summarize_group_stats(cluster_stats)
 
     return {
         "purpose": "diagnostic_intrinsic_mtp_offline_acceptance_probe",
@@ -979,6 +1098,13 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
         "max_samples": args.max_samples,
         "max_starts": args.max_starts,
         "start_stride": args.start_stride,
+        "decode_only_starts": args.decode_only_starts,
+        "decode_start_convention": (
+            "num_prompt_tokens_minus_one_predicts_first_generated_token"
+            if args.decode_only_starts else "all_sequence_starts"
+        ),
+        "prompt_starts_excluded": prompt_starts_excluded,
+        "samples_missing_prompt_length": samples_missing_prompt_length,
         "device": str(device),
         "dtype": str(dtype).replace("torch.", ""),
         "draft_lm_head": getattr(model, "draft_lm_head", "bf16"),
@@ -1016,6 +1142,8 @@ def summarize(args: argparse.Namespace, paths: list[str], model: IntrinsicMTP,
         ],
         "conditional_denominators": conditional_den,
         "families": family_summary,
+        "clusters": cluster_summary,
+        "accepted_prefixes_by_start": accepted_prefixes_by_start,
         "samples": sample_rows[:200],
         "first_mismatch_examples": examples,
         "elapsed_s": time.perf_counter() - started,

@@ -201,8 +201,58 @@ def parse_args() -> argparse.Namespace:
             "step only while its prior greedy proposal prefix matched."
         ),
     )
+    parser.add_argument(
+        "--expected-prefix-survival-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Weight for a soft stochastic prefix-survival surrogate using the "
+            "draft probability of each stored sampled target token. This is "
+            "the expected prefix under softmax sampling, not the measured "
+            "temperature-zero greedy acceptance. Disabled by default."
+        ),
+    )
+    parser.add_argument(
+        "--target-top1-margin-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Weight for a hinge loss requiring the stored target top-1 token "
+            "to beat every other draft logit. Disabled by default."
+        ),
+    )
+    parser.add_argument(
+        "--target-top1-margin",
+        type=float,
+        default=1.0,
+        help="Required draft-logit margin for --target-top1-margin-weight.",
+    )
+    parser.add_argument(
+        "--teacher-kl-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Weight for full-vocabulary KL from target logits reconstructed "
+            "from stored target hidden states and the checkpoint LM head. "
+            "Disabled by default."
+        ),
+    )
+    parser.add_argument(
+        "--teacher-kl-temperature",
+        type=float,
+        default=1.0,
+        help="Temperature for --teacher-kl-weight (KL is scaled by T squared).",
+    )
     parser.add_argument("--eval-every", type=int, default=0)
     parser.add_argument("--print-every", type=int, default=50)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Validate dataset splits and objective data contracts, print JSON, "
+            "and exit before loading model weights or selecting a device."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -500,12 +550,14 @@ def build_batch(
     device: torch.device,
     dtype: torch.dtype,
     max_steps: int,
+    include_target_hidden: bool = False,
 ) -> dict[str, torch.Tensor]:
     hidden_rows = []
     ids_rows = []
     position_rows = []
     target_rows = []
     target_position_rows = []
+    target_hidden_rows = []
     for ref in refs:
         sample = samples[ref.sample_index]
         start = ref.start
@@ -517,7 +569,13 @@ def build_batch(
         position_rows.append(positions[start])
         target_rows.append(next_ids[start + 1:start + 1 + max_steps])
         target_position_rows.append(positions[start + 1:start + 1 + max_steps])
-    return {
+        if include_target_hidden:
+            target_hidden_rows.append(
+                sample["hidden_state"][start + 1:start + 1 + max_steps].to(
+                    torch.float32
+                )
+            )
+    batch = {
         "hidden": torch.stack(hidden_rows, dim=0).to(device=device, dtype=dtype).view(
             len(refs), 1, -1),
         "ids": torch.stack(ids_rows, dim=0).to(device=device).view(len(refs), 1),
@@ -527,6 +585,11 @@ def build_batch(
         "target_positions": torch.stack(target_position_rows, dim=0).to(
             device=device),
     }
+    if include_target_hidden:
+        batch["target_hidden"] = torch.stack(target_hidden_rows, dim=0).to(
+            device=device, dtype=dtype
+        )
+    return batch
 
 
 def rollout_loss(
@@ -534,6 +597,11 @@ def rollout_loss(
     batch: dict[str, torch.Tensor],
     max_steps: int,
     loss_mode: str = "all-steps",
+    expected_prefix_survival_weight: float = 0.0,
+    target_top1_margin_weight: float = 0.0,
+    target_top1_margin: float = 1.0,
+    teacher_kl_weight: float = 0.0,
+    teacher_kl_temperature: float = 1.0,
 ) -> tuple[torch.Tensor, list[float]]:
     if loss_mode not in {"all-steps", "conditional-prefix"}:
         raise ValueError(f"Unknown loss mode {loss_mode!r}")
@@ -543,6 +611,9 @@ def rollout_loss(
     targets = batch["targets"]
     target_positions = batch["target_positions"]
     losses: list[torch.Tensor] = []
+    margin_losses: list[torch.Tensor] = []
+    kl_losses: list[torch.Tensor] = []
+    target_probabilities: list[torch.Tensor] = []
     conditional_loss_sum: torch.Tensor | None = None
     conditional_loss_rows = 0
     alive = torch.ones(
@@ -573,6 +644,48 @@ def rollout_loss(
                     else conditional_loss_sum + step_loss_sum
                 )
                 conditional_loss_rows += active_loss.numel()
+        if expected_prefix_survival_weight > 0:
+            target_probabilities.append(
+                F.softmax(logits.float(), dim=-1).gather(
+                    1, target[:, None]
+                ).squeeze(1)
+            )
+        active_rows = alive if loss_mode == "conditional-prefix" else None
+        if target_top1_margin_weight > 0:
+            target_student_logits = logits.float().gather(
+                1, target[:, None]
+            ).squeeze(1)
+            competing_logits = logits.float().clone()
+            competing_logits.scatter_(1, target[:, None], float("-inf"))
+            per_row_margin = F.relu(
+                target_top1_margin
+                - target_student_logits
+                + competing_logits.max(dim=-1).values
+            )
+            if active_rows is not None:
+                per_row_margin = per_row_margin[active_rows]
+            if per_row_margin.numel():
+                margin_losses.append(per_row_margin.mean())
+        if teacher_kl_weight > 0:
+            target_hidden = batch.get("target_hidden")
+            if target_hidden is None:
+                raise ValueError(
+                    "Teacher objectives require target_hidden in the training batch"
+                )
+            with torch.no_grad():
+                teacher_logits = model.target_logits(
+                    target_hidden[:, step, :]
+                ).float()
+            temperature = teacher_kl_temperature
+            per_token_kl = F.kl_div(
+                F.log_softmax(logits.float() / temperature, dim=-1),
+                F.softmax(teacher_logits / temperature, dim=-1),
+                reduction="none",
+            ).sum(dim=-1) * (temperature * temperature)
+            if active_rows is not None:
+                per_token_kl = per_token_kl[active_rows]
+            if per_token_kl.numel():
+                kl_losses.append(per_token_kl.mean())
         proposed = torch.argmax(logits, dim=-1)
         accs.append(float((proposed == target).float().mean().item()))
         if loss_mode == "conditional-prefix":
@@ -584,10 +697,42 @@ def rollout_loss(
             dim=1,
         )
     if loss_mode == "all-steps":
-        return torch.stack(losses).mean(), accs
-    if conditional_loss_sum is None or conditional_loss_rows == 0:
-        raise RuntimeError("conditional-prefix loss selected no rows")
-    return conditional_loss_sum / conditional_loss_rows, accs
+        ce_loss = torch.stack(losses).mean()
+    else:
+        if conditional_loss_sum is None or conditional_loss_rows == 0:
+            raise RuntimeError("conditional-prefix loss selected no rows")
+        ce_loss = conditional_loss_sum / conditional_loss_rows
+
+    total_loss = ce_loss
+    components: dict[str, float] = {"ce": float(ce_loss.detach().item())}
+    if expected_prefix_survival_weight > 0:
+        survival = torch.cumprod(
+            torch.stack(target_probabilities, dim=1), dim=1
+        ).sum(dim=1)
+        prefix_loss = 1.0 - survival.mean() / max_steps
+        total_loss = total_loss + expected_prefix_survival_weight * prefix_loss
+        components["expected_prefix_survival"] = float(
+            survival.mean().detach().item()
+        )
+        components["expected_prefix_survival_loss"] = float(
+            prefix_loss.detach().item()
+        )
+    if target_top1_margin_weight > 0:
+        if not margin_losses:
+            raise RuntimeError("target-top1 margin selected no rows")
+        margin_loss = torch.stack(margin_losses).mean()
+        total_loss = total_loss + target_top1_margin_weight * margin_loss
+        components["target_top1_margin_loss"] = float(
+            margin_loss.detach().item()
+        )
+    if teacher_kl_weight > 0:
+        if not kl_losses:
+            raise RuntimeError("teacher KL selected no rows")
+        kl_loss = torch.stack(kl_losses).mean()
+        total_loss = total_loss + teacher_kl_weight * kl_loss
+        components["teacher_kl"] = float(kl_loss.detach().item())
+    model._last_loss_components = components
+    return total_loss, accs
 
 
 def evaluate_batched(
@@ -799,6 +944,25 @@ def save_candidate(out_dir: Path, model: Any, base_tensors: dict[str, torch.Tens
         "draft_lm_head_group_size": args.draft_lm_head_group_size,
         "draft_lm_head_scale_dtype": args.draft_lm_head_scale_dtype,
         "loss_mode": getattr(args, "loss_mode", "all-steps"),
+        "expected_prefix_survival_weight": getattr(
+            args, "expected_prefix_survival_weight", 0.0
+        ),
+        "expected_prefix_survival_assumption": (
+            "softmax_sampling_surrogate_not_greedy_endpoint_expectation"
+        ),
+        "target_top1_margin_weight": getattr(
+            args, "target_top1_margin_weight", 0.0
+        ),
+        "target_top1_margin": getattr(args, "target_top1_margin", 1.0),
+        "target_top1_source": "stored_sampled_next_token_ids",
+        "teacher_kl_weight": getattr(args, "teacher_kl_weight", 0.0),
+        "teacher_kl_temperature": getattr(
+            args, "teacher_kl_temperature", 1.0
+        ),
+        "teacher_source": (
+            "stored_target_hidden_state_plus_checkpoint_lm_head"
+            if getattr(args, "teacher_kl_weight", 0.0) > 0 else "disabled"
+        ),
         "max_steps": args.max_steps,
         "trainable_names": trainable_names,
         "trainable_param_count": trainable_param_count,
@@ -868,6 +1032,20 @@ def main() -> int:
         args.dataset_dir = [EVAL.DEFAULT_DATASET_DIR]
     if args.max_steps < 1:
         raise ValueError("--max-steps must be >= 1")
+    objective_weights = {
+        "--expected-prefix-survival-weight": args.expected_prefix_survival_weight,
+        "--target-top1-margin-weight": args.target_top1_margin_weight,
+        "--teacher-kl-weight": args.teacher_kl_weight,
+    }
+    negative_weights = {
+        name: value for name, value in objective_weights.items() if value < 0
+    }
+    if negative_weights:
+        raise ValueError(f"Objective weights must be non-negative: {negative_weights}")
+    if args.target_top1_margin < 0:
+        raise ValueError("--target-top1-margin must be non-negative")
+    if args.teacher_kl_temperature <= 0:
+        raise ValueError("--teacher-kl-temperature must be > 0")
     if (args.scope == POSITION_ADAPTER_SCOPE
             and args.position_adapter_rank < 1):
         raise ValueError("--position-adapter-rank must be >= 1")
@@ -891,8 +1069,6 @@ def main() -> int:
         raise ValueError("position-fc scope must leave at least one FC trainable")
     random.seed(args.seed)
     torch.manual_seed(args.seed)
-    device = EVAL.choose_device(args.device)
-    dtype = EVAL.dtype_from_name(args.dtype)
     paths = EVAL.iter_sample_paths(args.dataset_dir, 0)
     samples = load_samples(paths)
     if args.heldout_samples <= 0 or args.heldout_samples >= len(samples):
@@ -903,6 +1079,54 @@ def main() -> int:
     heldout_refs = collect_starts(heldout_samples, args.max_steps,
                                   args.heldout_starts)
     random.shuffle(train_refs)
+
+    if args.dry_run:
+        formats: dict[str, int] = {}
+        data_fields: set[str] = set()
+        family_samples = 0
+        cluster_samples = 0
+        for sample in samples:
+            sample_format = str(sample.get("format", ""))
+            formats[sample_format] = formats.get(sample_format, 0) + 1
+            data_fields.update(
+                key for key in sample
+                if "hidden" in key.lower() or "logit" in key.lower()
+            )
+            family_samples += int(
+                EVAL.sample_metadata_value(
+                    sample, ("family", "prompt_family")
+                ) is not None
+            )
+            cluster_samples += int(
+                EVAL.sample_metadata_value(
+                    sample, ("cluster", "prompt_cluster", "task_cluster")
+                ) is not None
+            )
+        print(json.dumps({
+            "dry_run": True,
+            "dataset_dirs": args.dataset_dir,
+            "sample_formats": dict(sorted(formats.items())),
+            "samples": len(samples),
+            "train_samples": len(train_samples),
+            "heldout_samples": len(heldout_samples),
+            "train_starts": len(train_refs),
+            "heldout_starts": len(heldout_refs),
+            "hidden_or_logit_fields": sorted(data_fields),
+            "family_metadata_samples": family_samples,
+            "cluster_metadata_samples": cluster_samples,
+            "objectives": objective_weights,
+            "target_top1_source": "sampled_next_token_ids",
+            "teacher_kl_source": (
+                "hidden_state_plus_checkpoint_lm_head"
+                if args.teacher_kl_weight > 0 else "disabled"
+            ),
+            "model_weights_loaded": False,
+            "device_selected": False,
+        }, indent=2, sort_keys=True))
+        return 0
+
+    device = EVAL.choose_device(args.device)
+    dtype = EVAL.dtype_from_name(args.dtype)
 
     config = EVAL.load_config(args.model_dir)
     shape = EVAL.shape_from_config(config)
@@ -923,6 +1147,9 @@ def main() -> int:
         draft_lm_head=args.draft_lm_head,
         draft_lm_head_group_size=args.draft_lm_head_group_size,
         draft_lm_head_scale_dtype=args.draft_lm_head_scale_dtype,
+        load_target_lm_head=(
+            args.teacher_kl_weight > 0
+        ),
     ).eval()
     params = make_trainable(
         model,
@@ -953,10 +1180,22 @@ def main() -> int:
             if len(batch_refs) < 1:
                 continue
             batch = build_batch(train_samples, batch_refs, device, dtype,
-                                args.max_steps)
+                                args.max_steps, include_target_hidden=(
+                                    args.teacher_kl_weight > 0
+                                ))
             optimizer.zero_grad(set_to_none=True)
             loss, accs = rollout_loss(
-                model, batch, args.max_steps, args.loss_mode
+                model,
+                batch,
+                args.max_steps,
+                args.loss_mode,
+                expected_prefix_survival_weight=(
+                    args.expected_prefix_survival_weight
+                ),
+                target_top1_margin_weight=args.target_top1_margin_weight,
+                target_top1_margin=args.target_top1_margin,
+                teacher_kl_weight=args.teacher_kl_weight,
+                teacher_kl_temperature=args.teacher_kl_temperature,
             )
             if not loss.requires_grad:
                 skipped_no_trainable_prefix_batches += 1
@@ -970,7 +1209,8 @@ def main() -> int:
                 print(
                     f"[intrinsic-mtp-train] epoch={epoch + 1}/{args.epochs} "
                     f"step={step} loss={float(loss.item()):.4f} "
-                    f"teacher_acc={[round(a, 4) for a in accs]}",
+                    f"teacher_acc={[round(a, 4) for a in accs]} "
+                    f"components={getattr(model, '_last_loss_components', {})}",
                     flush=True,
                 )
             if args.eval_every > 0 and step % args.eval_every == 0:
