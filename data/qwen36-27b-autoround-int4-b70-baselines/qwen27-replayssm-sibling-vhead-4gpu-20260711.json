@@ -1,0 +1,92 @@
+{
+  "classification": "diagnostic_microbench_not_endpoint_not_localmaxxing",
+  "date": "2026-07-11",
+  "shape": {
+    "cache_len": 8,
+    "conv_dim": 5120,
+    "conv_width": 4,
+    "dtype": "fp16",
+    "head_k_dim": 128,
+    "head_v_dim": 128,
+    "num_k_heads": 8,
+    "num_slots": 2,
+    "num_v_heads": 24,
+    "precomputed_qk": false,
+    "rows": 1,
+    "sibling_vhead": true,
+    "spec_len": 4,
+    "state_dtype": "fp16",
+    "total_tokens": 4,
+    "tp_size": 2
+  },
+  "warmup": 100,
+  "iterations": 2000,
+  "rows": [
+    {
+      "gpu": 0,
+      "control_decode_us": 30.51106759812683,
+      "candidate_sibling_vhead_us": 62.6225444721058,
+      "delta_percent": 105.24534013995104,
+      "out_exact": true,
+      "mutable_state_exact": {
+        "checkpoint": true,
+        "d_cache": true,
+        "g_cache": true,
+        "k_cache": true,
+        "pending": true,
+        "pending_len": true
+      },
+      "source": "/tmp/qwen27-sibling-vhead-gpu0.json"
+    },
+    {
+      "gpu": 1,
+      "control_decode_us": 30.51531547680497,
+      "candidate_sibling_vhead_us": 62.14217806700617,
+      "delta_percent": 103.64258765157163,
+      "out_exact": true,
+      "mutable_state_exact": {
+        "checkpoint": true,
+        "d_cache": true,
+        "g_cache": true,
+        "k_cache": true,
+        "pending": true,
+        "pending_len": true
+      },
+      "source": "/tmp/qwen27-sibling-vhead-gpu1.json"
+    },
+    {
+      "gpu": 2,
+      "control_decode_us": 30.523840920068324,
+      "candidate_sibling_vhead_us": 62.3449485283345,
+      "delta_percent": 104.25001129967542,
+      "out_exact": true,
+      "mutable_state_exact": {
+        "checkpoint": true,
+        "d_cache": true,
+        "g_cache": true,
+        "k_cache": true,
+        "pending": true,
+        "pending_len": true
+      },
+      "source": "/tmp/qwen27-sibling-vhead-gpu2.json"
+    },
+    {
+      "gpu": 3,
+      "control_decode_us": 30.516211525537074,
+      "candidate_sibling_vhead_us": 62.60883342474699,
+      "delta_percent": 105.16581284132744,
+      "out_exact": true,
+      "mutable_state_exact": {
+        "checkpoint": true,
+        "d_cache": true,
+        "g_cache": true,
+        "k_cache": true,
+        "pending": true,
+        "pending_len": true
+      },
+      "source": "/tmp/qwen27-sibling-vhead-gpu3.json"
+    }
+  ],
+  "decision": "no_win_close_without_endpoint",
+  "reason": "bit-exact but 103.6-105.3% slower on all four B70s"
+}

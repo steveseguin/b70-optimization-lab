@@ -52,6 +52,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="benchmark the experimental Q/K precompute ops in addition to control",
     )
+    parser.add_argument(
+        "--sibling-vhead",
+        action="store_true",
+        help="benchmark the experimental TP2 FP16 sibling-V-head decode op",
+    )
     return parser.parse_args()
 
 
@@ -111,10 +116,14 @@ def main() -> None:
     if not hasattr(torch.ops, "_xpu_C"):
         raise SystemExit("torch.ops._xpu_C is unavailable")
     required = ["gdn_replayssm_stage_conv", "gdn_replayssm_spec_decode"]
+    if args.precomputed_qk and args.sibling_vhead:
+        raise SystemExit("select at most one experimental decode mode")
     if args.precomputed_qk:
         required.extend(
             ["gdn_replayssm_precompute_qk", "gdn_replayssm_spec_decode_precomputed"]
         )
+    if args.sibling_vhead:
+        required.append("gdn_replayssm_tp2_fp16_sibling_vhead_decode")
     missing = [name for name in required if not hasattr(torch.ops._xpu_C, name)]
     if missing:
         raise SystemExit(f"missing XPU ops: {missing}")
@@ -226,6 +235,7 @@ def main() -> None:
         dtype=dtype,
     )
     out_precomputed = torch.empty_like(out)
+    out_sibling = torch.empty_like(out)
     q_norm = torch.empty_like(q)
     k_norm = torch.empty_like(k)
     kk_mat = torch.empty(
@@ -346,6 +356,35 @@ def main() -> None:
             0,
         )
 
+    def spec_decode_sibling_vhead() -> None:
+        torch.ops._xpu_C.gdn_replayssm_tp2_fp16_sibling_vhead_decode(
+            out_sibling,
+            q,
+            k,
+            v,
+            a_out,
+            b_out,
+            A_log,
+            dt_bias,
+            checkpoint,
+            d_cache,
+            k_cache,
+            g_cache,
+            query_start_loc,
+            slots,
+            write_pos,
+            cache_base,
+            is_flush,
+            pending,
+            pending_len,
+            False,
+            args.cache_len,
+            spec_len,
+            HEAD_K_DIM**-0.5,
+            True,
+            0,
+        )
+
     def stage_then_decode() -> None:
         stage_conv()
         spec_decode()
@@ -354,6 +393,10 @@ def main() -> None:
         stage_conv()
         precompute_qk()
         spec_decode_precomputed()
+
+    def stage_then_sibling_vhead_decode() -> None:
+        stage_conv()
+        spec_decode_sibling_vhead()
 
     stage_conv()
     mutable_tensors = {
@@ -368,20 +411,25 @@ def main() -> None:
     spec_decode()
     sync(torch)
     parity = None
-    if args.precomputed_qk:
+    if args.precomputed_qk or args.sibling_vhead:
         reference_out = out.clone()
         reference_state = {
             name: tensor.clone() for name, tensor in mutable_tensors.items()
         }
         for name, tensor in mutable_tensors.items():
             tensor.copy_(initial_state[name])
-        precompute_qk()
-        spec_decode_precomputed()
+        if args.precomputed_qk:
+            precompute_qk()
+            spec_decode_precomputed()
+            candidate_out = out_precomputed
+        else:
+            spec_decode_sibling_vhead()
+            candidate_out = out_sibling
         sync(torch)
         parity = {
-            "out_exact": bool(torch.equal(out_precomputed, reference_out)),
+            "out_exact": bool(torch.equal(candidate_out, reference_out)),
             "out_max_abs": float(
-                (out_precomputed.float() - reference_out.float()).abs().max().item()
+                (candidate_out.float() - reference_out.float()).abs().max().item()
             ),
             "mutable_state_exact": {
                 name: bool(torch.equal(tensor, reference_state[name]))
@@ -444,6 +492,25 @@ def main() -> None:
                 ),
             ]
         )
+    if args.sibling_vhead:
+        records.extend(
+            [
+                bench(
+                    torch_mod=torch,
+                    name="spec_decode_sibling_vhead",
+                    fn=spec_decode_sibling_vhead,
+                    warmup=args.warmup,
+                    iterations=args.iterations,
+                ),
+                bench(
+                    torch_mod=torch,
+                    name="stage_then_sibling_vhead_decode",
+                    fn=stage_then_sibling_vhead_decode,
+                    warmup=args.warmup,
+                    iterations=args.iterations,
+                ),
+            ]
+        )
     by_name = {row["name"]: row for row in records}
     separate_sum = (
         by_name["stage_conv"]["mean_ms"] + by_name["spec_decode"]["mean_ms"]
@@ -478,6 +545,7 @@ def main() -> None:
             "dtype": args.dtype,
             "state_dtype": args.state_dtype,
             "precomputed_qk": args.precomputed_qk,
+            "sibling_vhead": args.sibling_vhead,
         },
         "records": records,
         "parity": parity,

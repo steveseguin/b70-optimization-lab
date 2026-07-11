@@ -1375,6 +1375,18 @@ Continue INT4 optimization without promoting synthetic scores:
   reduction, graph-safe exact GDN/spec-state transactions, or a genuinely new
   AutoRound/INC W4A16 top-ID/candidate primitive that avoids materializing full
   vocab logits;
+- ReplaySSM sibling-V-head workgroup sharing is closed no-win. The exact TP2
+  FP16 prototype reduced 96 `(K,V)` workgroups to 32 K-head workgroups and was
+  bit-exact, but all four B70s measured `62.14-62.62 us` versus
+  `30.51-30.52 us` for legacy decode (`+103.6%` to `+105.3%`). Serializing
+  three V heads costs much more than shared Q/K work saves. See
+  `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-replayssm-sibling-vhead-no-win.md`;
+- B70/Xe2 oneDNN W4A16 uses a systolic `sys` GEMM strategy, but its source
+  explicitly disables the older fused-EU `dpasw` path outside Gen12LP/XeHP/
+  XeHPG. Do not build a B70 DPASW port from that assumption. Runtime
+  `GEMM_KERNEL` strategy overrides were also ignored because the bundled
+  oneDNN lacks `DNNL_DEV_MODE`; testing alternate M unrolls requires a
+  controlled oneDNN developer build rather than environment-variable sweeps;
 - for accepted-token / drafter-calibration work, use the compact verifier
   sampler trace, not the scheduler spec trace. Scheduler
   `scheduled_spec_token_ids` are async placeholders (`[-1, -1, -1]`) on this
