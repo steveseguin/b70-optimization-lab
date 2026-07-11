@@ -108,6 +108,12 @@ the production LAN endpoint:
   `cmr576apv0079q901i6dvsh0l`; prior Intel INT8 row `cmr4zkcxb003yq9018408i1pn`
 - prior TP1 result packet:
   `../results/qwen36-27b-autoround-int4-b70/webhie-int8lmhead-bf16scale-draftint4-replayssm-current-confirm-20260706.json`
+- TP1 current-source attribution/reconfirmation packet:
+  `../results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json`.
+  The valid historical high remains `68.236 tok/s`; July 11 isolated rows
+  reproduced `65.359`, `66.716`, and `65.420 tok/s`, with complete quality on
+  the first. A swapped four-GPU graph/eager draft crossover was flat at
+  `-0.05%`, closing the TP2 draft-graph transfer as a TP1 speed idea.
 - previous BF16-scale packet:
   `../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`
 - prior webhie INT8 packet:

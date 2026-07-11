@@ -13,10 +13,25 @@ This experiment lane tracks bring-up and optimization for:
 
 The initial TP1 single-B70 OpenAI-compatible endpoint works, and the lane now
 has a strict fresh-response TP2 record after replacing the broken installed
-oneCCL graph collective with pinned public oneCCL/libccl. Current optimization
-work must beat the conservative `78.22635247759823 tok/s` TP2 row toward the
-`100+ tok/s` target, or improve service/max-context behavior without using
-warmed/cache/history effects.
+oneCCL graph collective with pinned public oneCCL/libccl and capturing the
+intrinsic-MTP draft through an opaque compiled all-gather boundary. Current
+optimization work must beat the conservative `82.89371762720036 tok/s` TP2
+row toward the `100+ tok/s` target, or improve service/max-context behavior
+without using warmed/cache/history effects. TP1 remains a separate active
+record class; it has not been declared exhausted.
+
+Resume from these current entry points:
+
+- overall handoff:
+  `../../results/qwen36-27b-autoround-int4-b70/HANDOFF.md`;
+- TP2 record packet:
+  `../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`;
+- TP2 reproduction:
+  `oneccl_ll256/README.md` and
+  `scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`;
+- TP1 current wrapper: `scripts/run-tp1-current-candidate.sh`;
+- TP1 attribution/reconfirmation:
+  `notes/2026-07-11-tp1-draftgraph-attribution-and-reconfirmation.md`.
 
 Completed first milestone:
 
@@ -35,19 +50,21 @@ Current evidence:
 
 Current overall strict best:
 
-- TP2 on two B70s with target PIECEWISE graph, eager draft, MTP3, ReplaySSM,
+- TP2 on two B70s with target and draft PIECEWISE graphs, MTP3, ReplaySSM,
   runtime INT8 target LM-head BF16 scales, runtime INT4 draft LM-head BF16
   scales, and public oneCCL parent `b52f40c` / libccl `4ceafd1`;
-- conservative isolated median `78.226352 tok/s`, p10 `69.963389`, mean
-  `78.598141`, all 12 strict prompts `cached_tokens=0`;
-- full-quality high `81.341145 tok/s`, exact cases + repeat128 + baseline
+- conservative isolated median `82.893718 tok/s`, p10 `72.751868`, mean
+  `83.100685`, all 12 strict prompts `cached_tokens=0`;
+- full-quality high `85.393815 tok/s`, exact cases + repeat128 + baseline
   parity + 1K needle passed;
-- use `78.226` as headline because the rows differ by `3.98%`, inside the
-  established `4.4%` variance band;
+- use `82.894` as headline because the rows differ by `3.02%`, inside the
+  established `4.4%` variance band; a swapped four-GPU crossover measured a
+  same-direction `+5.39%` average over eager draft;
 - result packet:
-  `../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-4ceafd1-20260711.json`;
+  `../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`;
 - build/oracle/repro: `oneccl_ll256/README.md` and
-  `scripts/run-tp2-oneccl-public4ce-candidate.sh`.
+  `scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`;
+- LocalMaxxing: `cmrgjjw8n004qmj01cp91qxl0`.
 
 Prior Intel-checkpoint TP1 strict best:
 
@@ -65,7 +82,7 @@ Prior Intel-checkpoint TP1 strict best:
 - compact packet:
   `results/qwen36-27b-autoround-int4-b70/promote-source-noacceptedpost-20260703.json`.
 
-Prior fastest TP1 quality-gated variant:
+TP1 historical high and current reproduced band:
 
 - label: `webhie/Qwen3.6-27B-int4-AutoRound + runtime INT8 target
   LM-head (BF16 scales) + runtime INT4 draft LM-head (BF16 scales)`;
@@ -74,6 +91,13 @@ Prior fastest TP1 quality-gated variant:
   LM-head BF16 scales, and conservative PyTorch slot-management fallback;
 - strict fresh median: `68.236 tok/s`, p10 `62.317`, mean `67.830`,
   `cached_tokens=0`;
+- current-source isolated reconfirmations reached `65.359`, `66.716`, and
+  `65.420 tok/s`; all passed the strict cached-zero gate and the first passed
+  exact, repeat64, baseline parity, and the 1K check. Keep `68.236` as the
+  valid historical high and use `65.4-66.7` as the current reproduced band;
+- a swapped four-GPU TP1 graph/eager draft crossover was flat (`-0.05%`), so
+  the TP2 distributed all-gather graph fix is not a missing TP1 win. See
+  `../../results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json`;
 - support rows: `67.519` prior approved confirm, `68.397` same-recipe
   quality-skipped control, `68.481` native-slot-copy smoke, `66.871`
   native-slot-copy confirm, and `67.300` PyTorch-slot-management same-window

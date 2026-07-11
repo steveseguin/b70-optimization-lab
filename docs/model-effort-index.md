@@ -42,15 +42,17 @@ Main entries:
 - [bring-up repro](../repro/qwen36-27b-autoround-int4-b70/README.md)
 - [experiment lane](../experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-Status: active optimization target as of 2026-07-04. TP1 single-B70 vLLM/XPU
-serving works for the Intel reference checkpoint and the current fastest
-`webhie/Qwen3.6-27B-int4-AutoRound` checkpoint. Current best valid strict
-fresh-response row is the webhie AutoRound W4A16 recipe with runtime INT8
-LM-head and BF16 scales at `65.276 tok/s` median generated-token throughput
-for tokens 1-100 after TTFT, with quality suite pass, `cached_tokens=0` on
-every prompt, and LocalMaxxing approval `cmr5iu3gk00bfq901nidgcana`. Compact
-packet:
-`../results/qwen36-27b-autoround-int4-b70/webhie-int8-lmhead-bf16scale-20260703.json`.
+Status: active optimization target as of 2026-07-11. Current overall strict
+fresh-response best is TP2 on two B70s at a conservative `82.894 tok/s`, with
+an `85.394 tok/s` full-quality support row, exact + repeat128 + baseline + 1K
+quality pass, `cached_tokens=0` throughout, and LocalMaxxing approval
+`cmrgjjw8n004qmj01cp91qxl0`. Start from
+`../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`.
+TP1 remains a separate active record class: `68.236 tok/s` is the valid
+historical high (`cmr9atqb800msqr01u760xh0t`), while July 11 isolated
+reconfirmation produced a current `65.4-66.7 tok/s` band with full quality on
+one row. Start TP1 from
+`../results/qwen36-27b-autoround-int4-b70/tp1-draftgraph-attribution-reconfirm-20260711.json`.
 The older Intel-checkpoint promote-source row (`53.522 tok/s`,
 `cmr4gokx90061nv01lhoe3ft8`) remains a baseline/reference. Separate
 service/prompt-processing work is captured in

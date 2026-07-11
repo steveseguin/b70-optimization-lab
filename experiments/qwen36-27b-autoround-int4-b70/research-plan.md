@@ -1,16 +1,28 @@
 # Qwen3.6 27B AutoRound Optimization Research Plan
 
-Date: 2026-07-03
+Created: 2026-07-03
+Current pointer updated: 2026-07-11
 
 This plan captures web and local-source research done while the Intel
 AutoRound checkpoint was downloading.
 
-Current execution plan: use
-`notes/2026-07-04-next-optimization-execution-plan.md` for the next Qwen27
-optimization lane. It incorporates the current `65.27648650325429 tok/s`
-webhie BF16-scale INT8-LM-head record, LocalMaxxing status, variance policy,
-prior no-win source attempts, and the completion gates for the fused
-LM-head/top-1 candidate-max route.
+This file is the historical research plan and source survey, not the current
+resume point. Start current work from:
+
+1. `../../results/qwen36-27b-autoround-int4-b70/HANDOFF.md` for the live
+   TP1/TP2 frontier and exact next actions;
+2. `../../results/qwen36-27b-autoround-int4-b70/tp2-public-oneccl-draftgraph-20260711.json`
+   for the conservative `82.894 tok/s` TP2 record;
+3. `notes/2026-07-11-public-oneccl-algorithms-and-draftgraph.md` for the TP2
+   collective and draft-graph bisection;
+4. `notes/2026-07-11-tp1-draftgraph-attribution-and-reconfirmation.md` for the
+   separate TP1 historical high, current reproduced band, and closed graph
+   transfer question.
+
+The active objective is `100+ tok/s` strict fresh-response throughput. TP2 is
+the immediate absolute-speed lane from `82.894 tok/s`; TP1 remains active as a
+separate one-B70 record class but needs a material verifier/body-cost or
+accepted-token mechanism rather than another small configuration sweep.
 
 Closed stronger-drafter lead:
 `notes/2026-07-05-hipfire-dflash-intel-port-audit.md` audits Hipfire's
