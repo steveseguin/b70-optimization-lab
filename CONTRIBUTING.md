@@ -40,11 +40,11 @@ do not silently replace an old result. Put chronological investigations in
 `data/`, promoted summaries in `results/`, active research in `experiments/`,
 and runnable promoted recipes in `repro/`.
 
-The Qwen 27B INT4 TP=2 lane is active. Do not move, rename, clean, rebuild, or
-otherwise disturb its files, processes, result directories, or external vLLM
-and XPU-kernel source trees unless the maintainer explicitly puts them in
-scope. Treat any locally modified runtime tree as active until confirmed
-otherwise.
+`CURRENT.md` is the sole authority for active and protected work. Do not move,
+rename, clean, rebuild, or otherwise disturb the listed files, processes,
+result directories, or external source trees unless the maintainer explicitly
+puts them in scope. Treat any locally modified runtime tree as active until
+confirmed otherwise.
 
 By submitting a contribution, you represent that you have the right to submit
 it and that it may be distributed under this repository's [LICENSE](LICENSE).

@@ -8,10 +8,11 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Start Here
 
+- [Current Workspace State](../CURRENT.md): sole authority for the live service, active lane, protected work, and immediate next actions.
 - [Model Effort Index](model-effort-index.md): cross-model status, closed lanes, and where to put the next model packet.
 - [Model Optimization Guide](model-optimization-guide.md): start-to-finish guide for an AI agent optimizing a new model lane.
 - [Research Workflow Playbook](research-workflow-playbook.md): reusable prompts, validation ladders, and experiment discipline that produced the best outcomes.
-- [Current Reproducibility Map](current-reproducibility-map.md): current service map and promoted reproduction pointers.
+- [Reproducibility Map](current-reproducibility-map.md): stable promoted reproduction catalog; `CURRENT.md` owns live state.
 - [Results Index](../results/README.md): promoted model-specific result packets and how to promote a lane.
 - [Model Recipes](model-recipes.md): which recipe folder to use for each model/build target.
 - [Single Model Slot Switching](model-slot-switching.md): keep one LAN OpenAI endpoint while switching which large model is loaded.
@@ -21,7 +22,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.
 - [Gemma 4 26B Q8 Service Runbook](gemma4-26b-q8-service-runbook.md): restore or stop the temporary llama.cpp OpenAI endpoint on one or four B70 GPUs.
 - [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.
-- [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): active one-B70 vLLM/XPU optimization lane, strict fresh decode record, long-context service ladder, and closed no-win paths.
+- [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): TP1/TP2 vLLM/XPU results, strict fresh decode records, long-context service ladder, and closed no-win paths.
 - [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.

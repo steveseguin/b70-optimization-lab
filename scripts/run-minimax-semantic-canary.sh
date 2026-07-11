@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+REPO_ROOT="${LLM_OPTIMIZATIONS_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround}"
 OUTDIR="${OUTDIR:-/home/steve/bench-results/minimax-m2.7-quality-gated}"
 VENV="${VENV:-/home/steve/.venvs/vllm-xpu}"
-PROMPT_FILE="${PROMPT_FILE:-/home/steve/llm-optimizations-publish/prompts/minimax-pass-canary-raw.txt}"
+PROMPT_FILE="${PROMPT_FILE:-$REPO_ROOT/prompts/minimax-pass-canary-raw.txt}"
 REQUIRE_SUBSTRING="${REQUIRE_SUBSTRING:-PASS}"
 MODE="${MODE:-eager}"
 RUNS="${RUNS:-3}"
@@ -40,7 +41,7 @@ else
 fi
 
 timeout --foreground --signal=TERM --kill-after=30s "$RUN_TIMEOUT" \
-  python /home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py \
+  python "$REPO_ROOT/scripts/run-vllm-minimax-quality-check.py" \
     --mode "$MODE" \
     --raw-prompt \
     --model "$MODEL" \

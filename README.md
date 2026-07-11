@@ -60,7 +60,11 @@ lanes should all share validation discipline, result-packet shape, and reusable
 kernel/runtime lessons without dragging stale worktrees or huge artifacts
 forward.
 
-## Current Lane Highlights
+## Representative Promoted Results
+
+[`CURRENT.md`](CURRENT.md) alone owns the live service and active research
+state. These are evidence-backed examples; the broader expected-performance
+view is the [performance index](results/scoreboard.md).
 
 These are entry points, not the whole repo:
 

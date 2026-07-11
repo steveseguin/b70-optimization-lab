@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+REPO_ROOT="${LLM_OPTIMIZATIONS_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround}"
 VENV="${VENV:-/home/steve/.venvs/vllm-xpu}"
@@ -109,7 +110,7 @@ fi
   echo "shm_stall_max_warnings=$SHM_STALL_MAX_WARNINGS"
   echo "start=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   runtime_status=0
-  python /home/steve/llm-optimizations-publish/scripts/inspect-vllm-runtime.py \
+  python "$REPO_ROOT/scripts/inspect-vllm-runtime.py" \
     --output "$runtime_json" || runtime_status="$?"
   if [ -s "$runtime_json" ]; then
     jq -c . "$runtime_json"

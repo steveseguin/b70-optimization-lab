@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+REPO_ROOT="${LLM_OPTIMIZATIONS_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 # Run a MiniMax M2.7 AutoRound candidate only after the matching runtime passes
 # the deterministic chat-template quality smoke. This keeps throughput wins from
@@ -18,7 +19,7 @@ BLOCK_SIZE="${BLOCK_SIZE:-256}"
 GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-}"
 QUALITY_TOKENS="${QUALITY_TOKENS:-160}"
 QUALITY_RUNS="${QUALITY_RUNS:-1}"
-QUALITY_PROMPT_FILE="${QUALITY_PROMPT_FILE:-/home/steve/llm-optimizations-publish/prompts/minimax-long-context-quality-smoke.txt}"
+QUALITY_PROMPT_FILE="${QUALITY_PROMPT_FILE:-$REPO_ROOT/prompts/minimax-long-context-quality-smoke.txt}"
 QUALITY_RAW_PROMPT="${QUALITY_RAW_PROMPT:-0}"
 QUALITY_EXPECTED_TOKEN_SHA256="${QUALITY_EXPECTED_TOKEN_SHA256:-}"
 QUALITY_REQUIRE_DETERMINISTIC="${QUALITY_REQUIRE_DETERMINISTIC:-0}"
@@ -61,7 +62,7 @@ summary_json="$OUTDIR/${stem}-summary.json"
 source "$VENV/bin/activate"
 
 quality_cmd=(
-  python /home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py
+  python "$REPO_ROOT/scripts/run-vllm-minimax-quality-check.py"
   --mode graph
   --model "$MODEL"
   --out "$quality_json"
@@ -132,7 +133,7 @@ for i in $(seq 1 "$BENCH_REPEATS"); do
     RUN_TIMEOUT="$RUN_TIMEOUT" \
     SHM_STALL_MAX_WARNINGS="$SHM_STALL_MAX_WARNINGS" \
     EXTRA_ARGS="--async-engine --block-size $BLOCK_SIZE --no-enable-prefix-caching --attention-backend TRITON_ATTN --compilation-config {\"mode\":0,\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_num_of_warmups\":0,\"compile_sizes\":[1]}" \
-    /home/steve/llm-optimizations-publish/scripts/run-minimax-full-decode-graph-triton.sh
+    "$REPO_ROOT/scripts/run-minimax-full-decode-graph-triton.sh"
   )"
   printf '%s\n' "$run_out"
   bench_jsons+=("$(printf '%s\n' "$run_out" | awk -F= '/^json=/{print $2; exit}')")

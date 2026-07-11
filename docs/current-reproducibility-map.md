@@ -1,4 +1,9 @@
-# Current Reproducibility Map
+# Reproducibility Map
+
+This is a durable catalog of runnable recipes and promoted evidence. It is not
+the authority for the currently loaded service or active research lane; use
+[`CURRENT.md`](../CURRENT.md) for that live state. Historical service claims
+below describe recorded lane context and may not describe what is running now.
 
 This page connects the active Gemma 4 service, the deployable MiniMax baseline,
 the session-cache experiments, the TurboQuant patch, and the long-context

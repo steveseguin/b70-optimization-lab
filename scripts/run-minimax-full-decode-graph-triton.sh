@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+REPO_ROOT="${LLM_OPTIMIZATIONS_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 # Quality-cleared four-B70 MiniMax M2.7 AutoRound W4A16 recipe from 2026-05-14.
 # Keeps Inductor disabled because compiled decode produced invalid token-0 output.
@@ -25,4 +26,4 @@ else
   export EXTRA_ARGS
 fi
 
-exec /home/steve/llm-optimizations-publish/scripts/bench-vllm-minimax-autoround-xpu.sh
+exec "$REPO_ROOT/scripts/bench-vllm-minimax-autoround-xpu.sh"

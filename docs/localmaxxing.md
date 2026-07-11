@@ -5,6 +5,9 @@ and result-submission hygiene.
 
 Submitted-result ledgers and public IDs are tracked in
 [../results/localmaxxing-submissions.md](../results/localmaxxing-submissions.md).
+Its opening table is the current public-by-model index; the remainder is the
+append-only submission chronology. Model result packets are authoritative for
+verified measured work that has not yet been submitted.
 The current Gemma 4 26B Q8 B70 result packet and host details are also linked from the
 Gemma result packet at
 [../results/gemma4-26b-a4b-q8-b70/](../results/gemma4-26b-a4b-q8-b70/README.md).

@@ -1,5 +1,23 @@
 # LocalMaxxing Submissions
 
+## Current Public Reference By Model Or Lane
+
+This hand-maintained index is navigation for actual public submissions. The
+chronology below is the immutable audit history; model packets remain the source
+for verified results that have not been submitted.
+
+| Model / lane | Hardware | Representative submitted result | LocalMaxxing ID | Evidence |
+| --- | --- | ---: | --- | --- |
+| Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 87.029 median tok/s, fixed cold realistic gate | `cmrgn3szj005dmj01u8tel6yd` | [packet](qwen36-27b-autoround-int4-b70/tp2-capture-gdn-core-20260711.json) |
+| Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
+| Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
+| Qwen3.6 27B GGUF Q4, MTP3 | 1x Arc Pro B70 | 30.679 median tok/s, fixed cold realistic gate | `cmr6mn5ct0076mn01on3dnpyn` | [packet](qwen36-27b-mtp-gguf-q4-b70/README.md) |
+| MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
+| Rapid model snapshots | 1x Arc Pro B70 | Multiple fixed cold realistic references | see [packet](rapid-model-snapshots-b70/README.md) | [performance index](scoreboard.md) |
+
+Current measured-but-unsubmitted work belongs in its model packet, not this
+public-submission index.
+
 Date: 2026-06-27
 
 Model: `unsloth/gemma-4-26B-A4B-it-GGUF`, Gemma 4 26B A4B Q8 lane.

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKSPACE_ROOT="${LLM_OPTIMIZATIONS_ROOT:-$(cd -- "$ROOT/../.." && pwd)}"
 source "$ROOT/configs/deepseek-v4-flash-autoround.env"
 
 MODEL="${MODEL:-$DEEPSEEK_V4_AR_MODEL_DIR}"
@@ -75,8 +76,8 @@ fi
   echo "extra_args=$EXTRA_ARGS"
   echo "start=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-  if [ -x /home/steve/llm-optimizations-publish/scripts/inspect-vllm-runtime.py ]; then
-    python /home/steve/llm-optimizations-publish/scripts/inspect-vllm-runtime.py \
+  if [ -x "$WORKSPACE_ROOT/scripts/inspect-vllm-runtime.py" ]; then
+    python "$WORKSPACE_ROOT/scripts/inspect-vllm-runtime.py" \
       --output "$runtime_json" || true
     if [ -s "$runtime_json" ]; then
       jq -c . "$runtime_json" || true

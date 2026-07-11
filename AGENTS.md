@@ -8,14 +8,16 @@ future lanes.
 
 Read these in order before changing runtime behavior:
 
-1. `README.md`
-2. `docs/current-reproducibility-map.md`
-3. `docs/model-optimization-guide.md`
-4. `AGENT_HANDOFF.md`
-5. `docs/model-effort-index.md`
-6. `docs/local-ops.md`
-7. `docs/localmaxxing.md`
-8. Current lane packet, for example
+1. `CURRENT.md`
+2. Current lane `HANDOFF.md` and result packet linked from `CURRENT.md`
+3. `README.md`
+4. `docs/current-reproducibility-map.md`
+5. `docs/model-optimization-guide.md`
+6. `AGENT_HANDOFF.md`
+7. `docs/model-effort-index.md`
+8. `docs/local-ops.md`
+9. `docs/localmaxxing.md`
+10. A model packet, for example
    `results/gemma4-26b-a4b-q8-b70/HANDOFF.md`,
    `results/gemma4-26b-a4b-q8-b70/README.md` and
    `results/gemma4-26b-a4b-q8-b70/reproduce.md`.
@@ -56,71 +58,17 @@ operations guidance is in `docs/local-ops.md`. Use it only for local driver,
 runtime, service, or recovery tasks that truly require sudo. Never print or
 commit the password or a copy of the file.
 
-## Current Stable Mode
+## Live State Authority
 
-Production/default service mode is still:
+`CURRENT.md` is the sole cross-repository authority for the loaded service,
+active optimization lane, protected work, and immediate next actions. Detailed
+evidence remains in the lane handoff and result packet linked from that file.
 
-```bash
-cd /home/steve/llm-optimizations
-systemctl status minimax-vllm.service --no-pager
-scripts/minimax-prod-health.py
-```
-
-Expected endpoint:
-
-```text
-http://0.0.0.0:8000/v1
-frontdoor auth=none
-backend=http://127.0.0.1:18080
-max_model_len=32768
-max_num_seqs=1
-KV dtype=auto / FP16-family
-```
-
-The newer generic service shape is a single active model slot:
-
-```bash
-scripts/switch-vllm-model-slot.sh list
-scripts/switch-vllm-model-slot.sh status
-scripts/switch-vllm-model-slot.sh switch minimax-m27-c1
-```
-
-It keeps the same public LAN endpoint, but changes which backend model is
-loaded. Do not run two large model services at once. See
-`docs/model-slot-switching.md`.
-
-Tracked service/install files:
-
-- `deploy/systemd/minimax-vllm.service`
-- `deploy/systemd/minimax-openai-frontdoor.service`
-- `deploy/systemd/b70-vllm-slot.service`
-- `deploy/systemd/b70-openai-frontdoor.service`
-- `scripts/install-minimax-vllm-service.sh`
-- `scripts/install-vllm-model-slot-service.sh`
-- `scripts/switch-vllm-model-slot.sh`
-- `scripts/serve-vllm-profile.sh`
-- `scripts/run-openai-frontdoor-profile.sh`
-- `scripts/openai-lan-frontdoor.py`
-- `scripts/minimax-prod-health.py`
-- `scripts/minimax-prod-benchmark.py`
-
-Do not leave c2/c4/c8/TurboQuant running unless the user explicitly wants an
-experiment instead of the stable endpoint.
-
-## Current Experimental State
-
-- c2 session-cache profile is the current known-good RAM-backed juggling mode.
-  Treat it as two parked `32768`-token window sessions. The `22.5K` fact-word
-  run is only an operations smoke; the near-full strict ladder passed two
-  `32474`-prompt-token sessions.
-- c4/c8 are research profiles. They produced useful ladder results, but live
-  c4 service switching later hit a waiting/deferred stall and a Level Zero
-  `UR_RESULT_ERROR_DEVICE_LOST`.
-- TurboQuant is mechanically past the first XPU workspace crash with the local
-  patch, but it is much slower and not production-quality-equivalent yet.
-- None of these modes provide one true `196608` active context. Full active
-  context requires the CPU-paged attention path documented in the experiment
-  notes.
+Do not infer what is live from a deployable recipe, old handoff, service unit,
+historical note, or result packet. Verify Git status, relevant processes, and
+the actual endpoint before operational changes. Preserve any paths marked
+active or protected in `CURRENT.md`; do not disturb shared runtime trees or GPU
+work merely because another lane has a runnable recipe.
 
 ## Quality Rules
 

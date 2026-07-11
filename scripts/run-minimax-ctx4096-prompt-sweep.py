@@ -13,6 +13,10 @@ from pathlib import Path
 
 from transformers import AutoTokenizer
 
+REPO_ROOT = Path(
+    os.environ.get("LLM_OPTIMIZATIONS_ROOT", Path(__file__).resolve().parents[1])
+)
+
 
 BASE_CONTEXT = (
     "PCIe tensor parallel inference often spends time moving partial "
@@ -94,7 +98,7 @@ def run_target(
         "--kill-after=30s",
         args.timeout,
         sys.executable,
-        "/home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py",
+        str(REPO_ROOT / "scripts/run-vllm-minimax-quality-check.py"),
         "--mode",
         "graph",
         "--model",

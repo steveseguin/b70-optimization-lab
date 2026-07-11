@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+REPO_ROOT="${LLM_OPTIMIZATIONS_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 MODEL="${MODEL:-/mnt/fast-ai/llm-models/minimax-m2.7-int4-autoround}"
 OUTDIR="${OUTDIR:-/home/steve/bench-results/minimax-m2.7-quality-gated}"
@@ -38,16 +39,16 @@ else
 fi
 
 timeout --foreground --signal=TERM --kill-after=30s "$RUN_TIMEOUT" \
-  python /home/steve/llm-optimizations-publish/scripts/run-vllm-minimax-quality-check.py \
+  python "$REPO_ROOT/scripts/run-vllm-minimax-quality-check.py" \
     --mode "$MODE" \
     --raw-prompt \
     --model "$MODEL" \
     --out "$out" \
     --max-tokens "$MAX_TOKENS" \
     --runs "$RUNS" \
-    --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-pass-canary-raw.txt \
-    --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-arithmetic-canary-raw.txt \
-    --prompt-file /home/steve/llm-optimizations-publish/prompts/minimax-code-canary-raw.txt \
+    --prompt-file "$REPO_ROOT/prompts/minimax-pass-canary-raw.txt" \
+    --prompt-file "$REPO_ROOT/prompts/minimax-arithmetic-canary-raw.txt" \
+    --prompt-file "$REPO_ROOT/prompts/minimax-code-canary-raw.txt" \
     --tensor-parallel-size "$TP" \
     --dtype "$DTYPE" \
     --max-model-len "$MAX_MODEL_LEN" \

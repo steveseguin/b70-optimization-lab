@@ -25,7 +25,8 @@ Before reviewing or organizing anything, read `AGENTS.md`, `AGENT_HANDOFF.md`,
 packet. Check running processes and Git status in this repository and in any
 external runtime/kernel trees.
 
-The Qwen 27B INT4 TP=2 effort is active. Unless explicitly authorized, do not:
+`CURRENT.md` names the active and protected work. Unless explicitly authorized,
+do not:
 
 - move, rename, reformat, clean, or overwrite its experiment, result, repro,
   patch, data, or script paths;
@@ -89,6 +90,13 @@ Promote verified work into `results/` and `repro/` while retaining its original
 experiment history and negative evidence. Distill transferable lessons into
 the optimization guides with links to both supporting and contradicting runs.
 Do not silently rewrite old results.
+
+Do not require clean or pinned external runtime trees during rapid experiments.
+At promotion time, record each external source tree's path, remote/base and
+HEAD commits, and dirty state. Save or link one aggregate relevant patch
+snapshot (binary-capable when needed) and identify any relevant untracked source
+files. This is promotion provenance, not an experiment-time gate or a reason to
+reset a productive mutable stack.
 
 LocalMaxxing submission is a final downstream action, not validation. Submit
 only a genuine matching-category record after benchmark identity, quality,
