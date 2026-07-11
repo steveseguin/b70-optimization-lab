@@ -75,6 +75,32 @@ QUALITY_BASELINE_JSON="${QUALITY_BASELINE_JSON:-}"
 
 mkdir -p "$RUN_DIR" "$OUT_DIR"
 
+# Preserve the exact dirty runtime source state for every endpoint candidate.
+# The active vLLM/XPU trees intentionally carry a composite experiment stack,
+# so a base commit alone is not enough to reproduce a result.
+snapshot_git_tree() {
+  local tree="$1"
+  local name="$2"
+  git -C "$tree" rev-parse HEAD > "$RUN_DIR/${name}.git-head"
+  git -C "$tree" status --short --branch > "$RUN_DIR/${name}.git-status"
+  git -C "$tree" diff --binary > "$RUN_DIR/${name}.working.patch"
+}
+
+snapshot_git_tree "$ROOT" "llm-optimizations"
+snapshot_git_tree /home/steve/src/vllm "vllm"
+snapshot_git_tree /home/steve/src/vllm-xpu-kernels "vllm-xpu-kernels"
+find /home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels \
+  -maxdepth 1 -type f -name '*.so' -print0 \
+  | sort -z \
+  | xargs -0 -r sha256sum > "$RUN_DIR/xpu-runtime-binaries.sha256"
+cp "$0" "$RUN_DIR/$(basename "$0").snapshot"
+if [[ -n "${CANDIDATE_ENTRYPOINT:-}" && -f "$CANDIDATE_ENTRYPOINT" ]]; then
+  cp "$CANDIDATE_ENTRYPOINT" \
+    "$RUN_DIR/$(basename "$CANDIDATE_ENTRYPOINT").snapshot"
+fi
+cp experiments/qwen36-27b-autoround-int4-b70/scripts/serve-vllm.sh \
+  "$RUN_DIR/serve-vllm.sh.snapshot"
+
 server_pid=""
 cleanup() {
   if [[ -n "${server_pid:-}" ]] && kill -0 "$server_pid" 2>/dev/null; then
@@ -87,6 +113,7 @@ trap cleanup EXIT
 {
   echo "date_utc=$STAMP"
   echo "label=$LABEL"
+  echo "candidate_entrypoint=${CANDIDATE_ENTRYPOINT:-$0}"
   echo "run_dir=$RUN_DIR"
   echo "model_dir=$MODEL_DIR"
   echo "served_model_name=$SERVED_MODEL_NAME"
@@ -141,6 +168,12 @@ trap cleanup EXIT
   echo "gdn_replayssm_commit_in_forward=${VLLM_XPU_GDN_REPLAYSSM_COMMIT_IN_FORWARD:-}"
   echo "gdn_replayssm_fuse_commit_stage=${VLLM_XPU_GDN_REPLAYSSM_FUSE_COMMIT_STAGE:-}"
   echo "gdn_replayssm_slot_mgmt_torch_fallback=${VLLM_XPU_GDN_REPLAYSSM_SLOT_MGMT_TORCH_FALLBACK:-}"
+  echo "draft_disable_cudagraphs=${VLLM_XPU_DRAFT_DISABLE_CUDAGRAPHS:-}"
+  echo "disable_spec_decode_cudagraph_replay=${VLLM_XPU_DISABLE_SPEC_DECODE_CUDAGRAPH_REPLAY:-}"
+  echo "skip_compiled_spec_decode=${VLLM_XPU_SKIP_COMPILED_SPEC_DECODE:-}"
+  echo "xpu_compile_allreduce_custom_op=${VLLM_XPU_COMPILE_ALLREDUCE_CUSTOM_OP:-}"
+  echo "xpu_custom_allreduce_graph_clone_input=${VLLM_XPU_CUSTOM_ALLREDUCE_GRAPH_CLONE_INPUT:-}"
+  echo "xpu_compile_allreduce_no_clone=${VLLM_XPU_COMPILE_ALLREDUCE_NO_CLONE:-}"
   echo "gdn_replayssm_fuse_pending_metadata=${VLLM_XPU_GDN_REPLAYSSM_FUSE_PENDING_METADATA:-}"
   echo "gdn_replayssm_direct_core_out=${VLLM_XPU_GDN_REPLAYSSM_DIRECT_CORE_OUT:-}"
   echo "gdn_accepted_prefix_counts=${VLLM_XPU_GDN_ACCEPTED_PREFIX_COUNTS:-}"
