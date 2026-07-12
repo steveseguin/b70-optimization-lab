@@ -97,6 +97,18 @@ production kernel. Crossing 68 now requires materially higher accepted tokens
 per cycle (roughly `>=3.1`) as well as device-resident MTP staging; generic
 launch fusion and another multi-column loop rewrite are closed.
 
+Focused policy validation (`p_min 0.025-0.80` plus MTP2) produced no rescue:
+best strict throughput was `50.895 tok/s`, and even a hindsight per-prompt
+oracle across policies was only `52.245 tok/s` median. Existing intrinsic-MTP
+adapter experiments are tied to a different HF/vLLM checkpoint, lack a safe
+GGUF merge path, and their best offline acceptance gain is far below what is
+required. Under the fixed single-B70 Q4_0 model and mixed strict suite, the
+`>68 tok/s` objective is now blocked by the combination of Q4 weight bandwidth,
+M=4 verifier time, and MTP3's four-token ceiling. Meaningful continuation
+requires at least one scope change: a compatible substantially better draft,
+lower-bit/reduced-weight target, or a context-owned device-unrolled MTP engine
+plus verifier below `29.8 ms`; current safe optimizations cannot meet 68.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was
