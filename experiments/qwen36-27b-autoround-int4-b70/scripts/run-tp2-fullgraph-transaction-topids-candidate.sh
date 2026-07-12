@@ -7,6 +7,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 export VLLM_XPU_SPEC_GREEDY_TOP_IDS=1
+# get_top_tokens() all-gathers the local (value, token) pairs and performs the
+# same deterministic reduction on both ranks. A second broadcast of those
+# already-global IDs is redundant on this path.
+export VLLM_XPU_SPEC_GREEDY_TOP_IDS_SYNC_TOKENS=0
 export LABEL="${LABEL:-qwen27-tp2-fullgraph-transaction-topids}"
 export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/usb-models/llm-runtime/vllm-cache/qwen27-fullgraph-transaction-topids-20260711}"
 export CANDIDATE_ENTRYPOINT="$0"
