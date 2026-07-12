@@ -67,6 +67,16 @@ moving sigmoid/softplus raw-gate work into GDN regressed strict MTP3 by `6.67%`
 that launch-count reduction alone is insufficient when fusion enlarges the GDN
 kernel or adds transcendental work to its critical path.
 
+Direct GDN epilogue-to-Q8 output projection, direct SSM convolution cache
+commit, and fused SSM convolution/QK normalization are also implemented behind
+default-off flags and confirmed to match the real graph. The output-Q8 path was
+only `+1.00%` in the AOT eight-run crossover (`49.978` versus `49.486 tok/s`),
+below promotion threshold. Combining it with convolution cache regressed AOT
+MTP3 by `1.10%` (`49.418` versus `49.969 tok/s`), and QK normalization was
+neutral. Preserve these implementations and results, but do not enable them in
+the production stack. JIT had overstated these gains, so AOT crossover remains
+mandatory before interpreting future fusion wins.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was
