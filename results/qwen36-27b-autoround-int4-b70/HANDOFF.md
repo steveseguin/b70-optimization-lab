@@ -34,7 +34,7 @@ The current result, bisection, and reproduction paths are:
 - `../../experiments/qwen36-27b-autoround-int4-b70/oneccl_ll256/README.md`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-oneccl-public4ce-draftgraph-candidate.sh`.
 
-Two July 11 follow-ups are now closed. Three statically bound compiled
+Three July 11 follow-ups are now closed. Three statically bound compiled
 position-FC wrappers loaded and captured correctly but reached only `89.286
 tok/s` on the strict fixed suite, `-4.03%` versus the promoted record. A fresh
 four-GPU MTP3-specific position-FC training matrix improved offline accepted
@@ -43,15 +43,25 @@ drafts/start by at most `+0.1343`, below its `+0.2056` endpoint gate. See
 and
 `../../data/qwen36-27b-autoround-int4-b70-baselines/qwen27-position-fc-mtp3-4gpu-fixed-suite-20260711.json`.
 
+The old offline acceptance gate was subsequently found to include prompt
+positions: `850/2,338` starts were prefill rather than decode. The evaluator
+now starts at `num_prompt_tokens - 1`, recomputes a matched shared control, and
+labels the repeatedly used 12-prompt corpus as a selection set rather than an
+untouched promotion gate. On the corrected 1,488 decode starts, shared was
+`1.338710`, prior all-step CE was `1.512097`, and the best new margin objective
+was `1.516801`. The seven-token margin over CE is noise and all candidates miss
+the estimated `+0.205609` endpoint threshold. Conditional-prefix variants also
+failed to improve. Close loss-only position-FC adaptation; see
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-acceptance-objectives-and-decode-boundary.md`.
+
 The oneDNN W4A16 accumulation-mode lane is also closed. Its first diagnostic
 model incorrectly used TP1/BF16 global shapes; the corrected harness now
 defaults to record-matched per-rank TP2/FP16 shapes. Four-card rotation found
 bit-identical outputs and unstable sign-changing timing for `f16`, `relaxed`,
 and `any`, so no endpoint was justified. See
 `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-w4a16-accumulation-modes-no-win.md`.
-The next source lane is ReplaySSM Q/K normalization and token-matrix reuse
-across value buckets while retaining `v_dim_per_sg=4`; require a material
-stage-plus-recurrent microbenchmark win before endpoint integration.
+The next source work must reduce the dominant target verifier body, not tune
+more drafter losses against the reused selection corpus.
 
 That Q/K reuse lane was subsequently implemented and is now closed no-win.
 On the corrected TP2/FP16 local shape, four cards measured the control at

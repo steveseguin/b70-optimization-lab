@@ -3,7 +3,7 @@
 Date: 2026-07-11
 
 Status: **graph-safe runtime implemented; transferred MTP5 checkpoint is a
-strict fresh throughput no-win; MTP3-specific training in progress**. Nothing
+strict fresh throughput no-win; MTP3-specific training closed**. Nothing
 in this note is a promoted record or LocalMaxxing submission.
 
 ## Why this was reopened
@@ -102,6 +102,12 @@ diagnostic-only and must not be treated as a completed candidate:
 ```
 
 ## MTP3-specific four-GPU result
+
+> **2026-07-11 validity correction:** these original `2,338`-start acceptance
+> values mixed `850` prompt/prefill starts with `1,488` decode starts. They are
+> retained as chronology, not as a clean endpoint gate. The corrected
+> decode-only control and candidates are documented in
+> `2026-07-11-acceptance-objectives-and-decode-boundary.md`.
 
 The corrected matrix completed on all four B70s. Each row trained on the
 disjoint v6 chat trajectories and was evaluated on all 2,338 available starts
