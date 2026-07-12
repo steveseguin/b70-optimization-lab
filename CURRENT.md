@@ -40,7 +40,7 @@ realistic gate. A swapped four-GPU crossover favored the transaction candidate
 in both assignments, and exact
 cases, repeat128, baseline parity, and the 1K needle passed. The linked packet
 owns the full identity; LocalMaxxing approved it as
-pending at the time of this update.
+`cmrh35ct50092mj01h7jgydqj`.
 
 ### Protected In-Flight Work
 

@@ -49,7 +49,7 @@ Current TP2 record:
   timing for generated tokens 1-100 after TTFT;
 - variance: both swapped four-GPU assignments favored the transaction
   candidate (`95.332 vs 87.901`, then `94.523 vs 93.685 tok/s`);
-- LocalMaxxing: submission pending; prior full-graph row
+- LocalMaxxing: `cmrh35ct50092mj01h7jgydqj`; prior full-graph row
   `cmrgue7kl007pmj01yrkcyqmv`;
 - packet: `tp2-fp16-fullgraph-transaction-20260711.json`;
 - build/oracle/repro:

@@ -8,7 +8,7 @@ for verified results that have not been submitted.
 
 | Model / lane | Hardware | Representative submitted result | LocalMaxxing ID | Evidence |
 | --- | --- | ---: | --- | --- |
-| Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 93.036 median tok/s, fixed cold realistic gate | `cmrgue7kl007pmj01yrkcyqmv` | [packet](qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json) |
+| Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 median tok/s, fixed cold realistic gate | `cmrh35ct50092mj01h7jgydqj` | [packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
 | Qwen3.6 27B GGUF Q4, MTP3 | 1x Arc Pro B70 | 30.679 median tok/s, fixed cold realistic gate | `cmr6mn5ct0076mn01on3dnpyn` | [packet](qwen36-27b-mtp-gguf-q4-b70/README.md) |
@@ -376,6 +376,7 @@ vLLM/XPU TP2 on two Intel Arc Pro B70 GPUs.
 
 | Label | LocalMaxxing ID | GPUs | Output | tok/s out | tok/s wall |
 | --- | --- | ---: | ---: | ---: | ---: |
+| `qwen36-27b-webhie-int4-autoround-b70-vllm-tp2-fp16-fullgraph-transaction-95tok-20260711` | `cmrh35ct50092mj01h7jgydqj` | 2 | 512 | 95.385 | 80.405 |
 | `qwen36-27b-webhie-int4-autoround-b70-vllm-tp2-fp16-graphsafe-fa-fullgraph-93tok-20260711` | `cmrgue7kl007pmj01yrkcyqmv` | 2 | 512 | 93.036 | 79.837 |
 | `qwen36-27b-webhie-int4-autoround-b70-vllm-tp2-fp16-capturegdn-91tok-20260711` | `cmrgojixq005rmj0141e9fjj2` | 2 | 512 | 91.714 | 76.670 |
 | `qwen36-27b-webhie-int4-autoround-b70-vllm-tp2-capturegdn-87tok-20260711` | `cmrgn3szj005dmj01u8tel6yd` | 2 | 512 | 87.029 | 75.780 |
@@ -384,6 +385,8 @@ Strict fresh-response record: 12 unique realistic prompts once, every request
 `cached_tokens=0`, no cache/history/response reuse, target-verified MTP3,
 exact cases + repeat128 + baseline parity + 1K needle passed. Graph-safe
 FlashAttention reduces target graph calls from 33 PIECEWISE segments to one
-full graph; the route is short-context-only pending graph-safe paged decode.
+full graph; exact ReplaySSM pending/direct-output transaction fusions raise the
+current record to 95.385 tok/s. The route is short-context-only pending
+graph-safe paged decode.
 Current packet:
-`results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json`.
+`results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json`.

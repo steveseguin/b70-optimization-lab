@@ -158,8 +158,9 @@ graph failures in the installed runtime; an opaque compiled all-gather boundary
 then enables exact draft graph capture. Both swapped four-GPU crossover
 assignments favored the transaction candidate. See
 [the TP2 record packet](../results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json).
-The `95.384868 tok/s` LocalMaxxing submission is pending; the prior
-`93.036242 tok/s` row is `cmrgue7kl007pmj01yrkcyqmv`.
+LocalMaxxing approved the `95.384868 tok/s` row as
+`cmrh35ct50092mj01h7jgydqj`; the prior `93.036242 tok/s` row is
+`cmrgue7kl007pmj01yrkcyqmv`.
 The previous one-B70 record was `68.236 tok/s` (LocalMaxxing
 `cmr9atqb800msqr01u760xh0t`), and the previous BF16-scale INT8-LM-head-only
 record was `65.276 tok/s`. The

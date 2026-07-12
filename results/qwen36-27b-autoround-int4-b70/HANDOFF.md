@@ -15,8 +15,9 @@ fusions: median **`95.384867741895 tok/s`**, p10 `86.97541500323224`, mean
 repeat128, baseline parity, and the 1K needle passed, and every strict prompt
 reported `cached_tokens=0`. The transaction path writes pending metadata in
 the recurrent kernel and writes pure-spec output directly to the final core
-view. Both swapped crossover assignments favored it. LocalMaxxing submission
-is pending; the prior 93.036 full-graph row is `cmrgue7kl007pmj01yrkcyqmv`.
+view. Both swapped crossover assignments favored it. LocalMaxxing approved it
+as `cmrh35ct50092mj01h7jgydqj`; the prior 93.036 full-graph row is
+`cmrgue7kl007pmj01yrkcyqmv`.
 
 The current result, bisection, and reproduction paths are:
 
