@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "corpus": "qwen27-b70-kernel-golden-v1",
-  "status": "capture-not-started",
+  "status": "synthetic-mmvq-m1-m4-m8-m16-ready; real-model-state-capture-not-started",
   "evidence_class": "diagnostic-only",
   "promotion_eligible": false,
   "promotion_exclusion_reason": "Saved activations and post-prefill state accelerate kernel iteration but are warm reused state, not cold fresh-response evidence.",
-  "storage_root": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/golden-v1",
+  "storage_root": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/iteration-v1/golden",
   "source_identity": {
     "target_model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
     "draft_model_sha256": "71362369a3428a9e93436a869b1131f63e04b88efbc92dacacb18c419d8de95c",
@@ -14,6 +14,16 @@
     "model_pack_sha256": null
   },
   "required_widths": [1, 4, 8, 16],
+  "implemented_artifacts": [
+    {
+      "name": "mmvq-q4_0-q8_1-v1",
+      "status": "ready",
+      "class": "deterministic-synthetic-kernel-contract",
+      "dimensions": {"k": 5120, "n": 256, "m": [1, 4, 8, 16]},
+      "contents": ["q4_0_weights", "q8_1_inputs", "f32_reference_outputs"],
+      "manifest": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/iteration-v1/golden/mmvq-q4_0-q8_1-v1/manifest.json"
+    }
+  ],
   "required_cases": [
     "full_attention_qkv",
     "recurrent_gdn_qkv",

@@ -85,3 +85,48 @@ GGUF, so a disk-native pack was not created unsafely.
 `golden-corpus-manifest.json`
 defines the required capture cases and marks every snapshot as ineligible for
 headline or LocalMaxxing evidence.
+
+## Reusable Kernel Iteration Artifacts
+
+`scripts/qwen27-iteration-artifacts.py` turns the iteration manifests into
+checked artifacts while preserving the evidence boundary:
+
+```bash
+source /opt/intel/oneapi/setvars.sh >/dev/null 2>&1
+python3 scripts/qwen27-iteration-artifacts.py fingerprint
+python3 scripts/qwen27-iteration-artifacts.py golden-prepare
+python3 scripts/qwen27-iteration-artifacts.py golden-verify
+python3 scripts/qwen27-iteration-artifacts.py focused --gpu 0
+python3 scripts/qwen27-iteration-artifacts.py focused --gpu 0 --reuse-pass
+```
+
+The golden set contains deterministic packed Q4_0 weights, packed Q8_1 inputs,
+and FP32 reference outputs at `M=1/4/8/16`, with representative `K=5120`.
+Each tensor has an independent SHA-256. These are synthetic kernel-contract
+fixtures, not claimed model activations. Real QKV/GDN/KV and commit/rollback
+captures remain outstanding and are still listed in the corpus manifest.
+
+The focused runner first verifies every golden tensor, then runs the current
+Q4_0 reorder and fused-boundary backend tests. Its result key includes the
+runtime commit/dirty-patch hash, CMake cache, binary checksums, Intel userspace,
+GPU assignment, selected tests, and explicit environment overrides. A prior
+pass is only reused when `--reuse-pass` is requested and that exact key exists.
+Ordinary invocations always execute the tests.
+
+An offline pack emitted by any current or future packer can be admitted without
+copying the large payload:
+
+```bash
+python3 scripts/qwen27-iteration-artifacts.py pack-register \
+  --pack-artifact /outside/git/path/to/pack \
+  --packer-revision PACKER_COMMIT \
+  --layout LAYOUT_NAME \
+  --kernel-abi ABI_NAME
+python3 scripts/qwen27-iteration-artifacts.py pack-verify --pack-key KEY
+```
+
+The registry hashes every file and keys the admission by source-model hash,
+packer revision, layout, and aggregate artifact hash. It does not pretend the
+current llama.cpp loader can bind serialized SYCL-reordered device weights:
+that loader ABI is still required. The existing byte-identical GGUF RAM cache
+remains the safe way to accelerate model initialization today.

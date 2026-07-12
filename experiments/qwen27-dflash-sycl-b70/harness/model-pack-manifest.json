@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "format": "qwen27-b70-native-pack",
-  "format_status": "byte-identical-ram-cache-implemented",
+  "format_status": "byte-identical-ram-cache-and-offline-artifact-registry-implemented",
   "target_architecture": "bmg-g31",
   "source": {
     "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
@@ -14,9 +14,9 @@
     "sha256_status": "recorded"
   },
   "packing_tool": {
-    "path": "scripts/qwen27-model-cache.py",
-    "revision": 2,
-    "status": "byte-identical-cache-only"
+    "path": "scripts/qwen27-iteration-artifacts.py",
+    "revision": 1,
+    "status": "external-offline-pack-register-and-deep-verify; native-model-extractor-not-yet-implemented"
   },
   "kernel_abi": {
     "name": "qwen27-b70-pack-v1",
@@ -24,10 +24,22 @@
   },
   "pack": {
     "path": "/mnt/fast-ai/model-packs/qwen27-b70/q4_0-pack-v1",
-    "status": "absent-insufficient-internal-nvme-space-and-no-load-path",
+    "registry_root": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/iteration-v1/packs",
+    "status": "versioned-external-artifact-registry-implemented; full-native-model-pack-absent-no-loader-binding",
     "sha256": null,
     "tensor_table": null,
     "alignment_bytes": 4096
+  },
+  "iteration_artifact_registry": {
+    "status": "implemented",
+    "key_fields": [
+      "source_model_sha256",
+      "packer_revision",
+      "layout",
+      "artifact_sha256"
+    ],
+    "admission": "recursive-per-file-sha256-and-aggregate-sha256",
+    "binding_boundary": "registry can reuse packs emitted by current or future offline reorder tools; llama.cpp cannot bind a serialized device reorder yet"
   },
   "ram_cache": {
     "root": "/dev/shm/qwen27-b70-model-cache",
