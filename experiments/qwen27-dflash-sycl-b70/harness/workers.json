@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "lane": "qwen27-tp1-b70",
+  "runtime_root": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness",
+  "launcher": "/home/steve/llm-optimizations/scripts/serve-qwen36-27b-mtp-gguf-llamacpp.sh",
+  "binary": "/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/llama-server",
+  "target_model": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
+  "target_model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+  "draft_model": "/mnt/usb-models/models/qwen36-27b-dflash-gguf/Qwen3.6-27B-DFlash-Q4_K_M.gguf",
+  "draft_model_sha256": "71362369a3428a9e93436a869b1131f63e04b88efbc92dacacb18c419d8de95c",
+  "model_alias": "qwen36-27b-q4_0-tp1",
+  "common": {
+    "host": "127.0.0.1",
+    "ctx_size": 4096,
+    "batch_size": 1024,
+    "ubatch_size": 256,
+    "n_parallel": 1,
+    "flash_attn": "on",
+    "cache_type_k": "q8_0",
+    "cache_type_v": "q8_0",
+    "prefer_ram_model_cache": true,
+    "ram_model_cache_root": "/dev/shm/qwen27-b70-model-cache",
+    "extra_llama_args": "--cache-ram 0",
+    "environment": {
+      "GGML_SYCL_ENABLE_GRAPH": "0",
+      "GGML_SYCL_ENABLE_VMM": "1"
+    }
+  },
+  "profiles": {
+    "mtp3-control": {
+      "spec_type": "draft-mtp",
+      "enable_mtp": true,
+      "mtp_n_max": 3,
+      "mtp_n_min": 0,
+      "mtp_p_min": 0.0,
+      "extra_llama_args": ""
+    },
+    "dflash5-screen": {
+      "spec_type": "draft-simple",
+      "enable_mtp": false,
+      "spec_n_max": 5,
+      "spec_n_min": 0,
+      "spec_p_min": 0.0,
+      "draft_model": "{draft_model}",
+      "extra_llama_args": ""
+    },
+    "dflash15-screen": {
+      "spec_type": "draft-simple",
+      "enable_mtp": false,
+      "spec_n_max": 15,
+      "spec_n_min": 0,
+      "spec_p_min": 0.0,
+      "draft_model": "{draft_model}",
+      "extra_llama_args": ""
+    }
+  },
+  "workers": [
+    {
+      "name": "gpu0-baseline",
+      "gpu": 0,
+      "port": 19720,
+      "role": "immutable-baseline",
+      "profile": "mtp3-control"
+    },
+    {
+      "name": "gpu1-promoted",
+      "gpu": 1,
+      "port": 19721,
+      "role": "promoted-best",
+      "profile": "mtp3-control"
+    },
+    {
+      "name": "gpu2-candidate",
+      "gpu": 2,
+      "port": 19722,
+      "role": "primary-candidate",
+      "profile": "mtp3-control"
+    },
+    {
+      "name": "gpu3-validation",
+      "gpu": 3,
+      "port": 19723,
+      "role": "independent-validation",
+      "profile": "mtp3-control"
+    }
+  ]
+}

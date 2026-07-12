@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "result_timeline": {
+    "path": "/home/steve/llm-optimizations/data/qwen27-cycle-timeline/no-spec-normal-20260712T160033Z/qwen27-q4_0-kv8-no-spec-graph0-strict128-20260712T160033Z.json",
+    "requests": 12,
+    "cached_tokens_all_zero": true,
+    "elapsed_ms": {
+      "n": 12,
+      "min": 6067.17574596405,
+      "median": 6091.9541525654495,
+      "mean": 6094.772599482288,
+      "p90": 6133.609589887783,
+      "max": 6157.7464560978115
+    },
+    "ttft_ms": {
+      "n": 12,
+      "min": 1142.178038135171,
+      "median": 1146.5011414838955,
+      "mean": 1154.045290236051,
+      "p90": 1150.8452338166535,
+      "max": 1239.8935940582305
+    },
+    "post_ttft_ms": {
+      "n": 12,
+      "min": 4917.852862039581,
+      "median": 4943.604876520112,
+      "mean": 4940.727309246237,
+      "p90": 4957.40214898251,
+      "max": 4986.547561828047
+    },
+    "stream_cycle_gap_ms": {
+      "n": 1521,
+      "min": 38.25597604736686,
+      "median": 38.8804308604449,
+      "mean": 38.978995513605696,
+      "p90": 39.1327110119164,
+      "max": 116.27495498396456
+    },
+    "stream_burst_size_tokens": {
+      "n": 1533,
+      "min": 1.0,
+      "median": 1.0,
+      "mean": 1.0,
+      "p90": 1.0,
+      "max": 1.0
+    }
+  },
+  "server_timeline": {
+    "path": "/mnt/fast-ai/bench-results/qwen27-dflash-sycl-b70/cycle-timeline/no-spec-normal-gpu0-20260712T160033Z/qwen27-q4_0-kv8-no-spec-graph0-strict128-20260712T160033Z/server.stdout.log",
+    "request_count_from_eval_lines": 12,
+    "decode_ms": {
+      "n": 12,
+      "min": 4917.91,
+      "median": 4943.625,
+      "mean": 4940.7108333333335,
+      "p90": 4957.33,
+      "max": 4986.53
+    },
+    "decode_ms_per_emitted_token": {
+      "n": 12,
+      "min": 38.421171875,
+      "median": 38.6220703125,
+      "mean": 38.59930338541667,
+      "p90": 38.729140625,
+      "max": 38.957265625
+    },
+    "prompt_ms": {
+      "n": 12,
+      "min": 1124.98,
+      "median": 1129.35,
+      "mean": 1135.865,
+      "p90": 1135.26,
+      "max": 1206.7
+    },
+    "speculation": {
+      "request_count": 0,
+      "accepted": 0,
+      "generated": 0,
+      "aggregate_acceptance": null,
+      "mean_accepted_length": {
+        "n": 0,
+        "min": null,
+        "median": null,
+        "mean": null,
+        "p90": null,
+        "max": null
+      }
+    },
+    "graph_counters": {}
+  },
+  "sycl_trace": {},
+  "reconciliation": {
+    "median_request_minus_server_decode_ms": 1148.3291525654495,
+    "warning": "This residual includes TTFT/prompt work, HTTP streaming, scheduling, and clock-boundary differences; it is not pure host overhead.",
+    "median_request_minus_ttft_ms": 4945.453011081554,
+    "median_request_minus_prompt_and_decode_ms": 18.979152565449112,
+    "prompt_plus_decode_note": "A near-zero value validates the request/server clocks in aggregate; it does not split device kernels from host work inside eval time."
+  },
+  "limitations": [
+    "Stream burst boundaries use a 1 ms heuristic and are cycle estimates, not device timestamps.",
+    "llama.cpp eval time includes target, draft, sampling, synchronization, and host coordination.",
+    "sycl-trace perturbs execution and must never supply headline throughput.",
+    "No Level Zero hardware-counter profiler is installed; kernel occupancy and bandwidth remain unmeasured."
+  ]
+}

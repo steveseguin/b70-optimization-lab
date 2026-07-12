@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "format": "qwen27-b70-native-pack",
+  "format_status": "byte-identical-ram-cache-implemented",
+  "target_architecture": "bmg-g31",
+  "source": {
+    "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
+    "sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+    "sha256_status": "recorded"
+  },
+  "draft_source": {
+    "path": "/mnt/usb-models/models/qwen36-27b-dflash-gguf/Qwen3.6-27B-DFlash-Q4_K_M.gguf",
+    "sha256": "71362369a3428a9e93436a869b1131f63e04b88efbc92dacacb18c419d8de95c",
+    "sha256_status": "recorded"
+  },
+  "packing_tool": {
+    "path": "scripts/qwen27-model-cache.py",
+    "revision": 2,
+    "status": "byte-identical-cache-only"
+  },
+  "kernel_abi": {
+    "name": "qwen27-b70-pack-v1",
+    "layout_version": 1
+  },
+  "pack": {
+    "path": "/mnt/fast-ai/model-packs/qwen27-b70/q4_0-pack-v1",
+    "status": "absent-insufficient-internal-nvme-space-and-no-load-path",
+    "sha256": null,
+    "tensor_table": null,
+    "alignment_bytes": 4096
+  },
+  "ram_cache": {
+    "root": "/dev/shm/qwen27-b70-model-cache",
+    "status": "implemented",
+    "format": "byte-identical-gguf-ram-cache",
+    "semantics": "atomic-stage-checksum-admit-mmap-warm-shared-host-copy",
+    "worker_policy": "prefer-admitted-cache-otherwise-source-fallback",
+    "decode_layout": "original-gguf-no-offline-reorder"
+  },
+  "planned_sections": [
+    "vector_q4_0_weights",
+    "dpas_verifier_tiles_m4_m8_m16",
+    "qkv_combined_projections",
+    "gate_up_combined_projections",
+    "scales_in_access_order",
+    "tensor_offsets_shapes_checksums"
+  ],
+  "admission_requirements": [
+    "source_sha256_matches",
+    "packing_tool_revision_matches",
+    "target_architecture_is_bmg-g31",
+    "kernel_abi_layout_matches",
+    "all_tensor_checksums_pass"
+  ]
+}

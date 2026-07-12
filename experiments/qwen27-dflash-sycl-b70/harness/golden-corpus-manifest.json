@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "corpus": "qwen27-b70-kernel-golden-v1",
+  "status": "capture-not-started",
+  "evidence_class": "diagnostic-only",
+  "promotion_eligible": false,
+  "promotion_exclusion_reason": "Saved activations and post-prefill state accelerate kernel iteration but are warm reused state, not cold fresh-response evidence.",
+  "storage_root": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/golden-v1",
+  "source_identity": {
+    "target_model_sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+    "draft_model_sha256": "71362369a3428a9e93436a869b1131f63e04b88efbc92dacacb18c419d8de95c",
+    "runtime_commit": null,
+    "runtime_dirty_patch_sha256": null,
+    "model_pack_sha256": null
+  },
+  "required_widths": [1, 4, 8, 16],
+  "required_cases": [
+    "full_attention_qkv",
+    "recurrent_gdn_qkv",
+    "gate_up_projection",
+    "down_projection",
+    "output_projection",
+    "lm_head",
+    "gdn_state_before_after",
+    "kv_slice_before_after",
+    "acceptance_commit_and_rollback"
+  ],
+  "artifacts": [],
+  "capture_requirements": [
+    "record_exact_tensor_name_shape_dtype_stride",
+    "record_layer_and_token_positions",
+    "record_input_and_output_sha256",
+    "record_target_logits_tokens_and_acceptance_mask",
+    "record_gdn_and_kv_state_before_and_after",
+    "record_runtime_and_kernel_identity"
+  ],
+  "reset_policy": {
+    "method": "device-to-device-copy-from-pristine-post-prefill-state",
+    "status": "not-yet-implemented",
+    "allowed_for": [
+      "kernel-parity",
+      "one-layer-replay",
+      "decode-cycle-diagnostics"
+    ],
+    "forbidden_for": [
+      "strict-realistic-promotion",
+      "localmaxxing-submission",
+      "headline-throughput"
+    ]
+  }
+}

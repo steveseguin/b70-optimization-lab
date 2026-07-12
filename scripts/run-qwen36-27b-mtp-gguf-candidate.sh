@@ -5,7 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 GPU_INDEX="${GPU_INDEX:-1}"
 PORT="${PORT:-19431}"
-LABEL="${LABEL:-llamacpp-mtp3-aot-np1-realistic128}"
+SPEC_PROFILE="${SPEC_PROFILE:-mtp3}"
+LABEL="${LABEL:-llamacpp-${SPEC_PROFILE}-aot-np1-realistic128}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 RUN_DIR="${RUN_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/runs/${LABEL}-${STAMP}}"
 OUT_DIR="${OUT_DIR:-$ROOT/data/qwen36-27b-mtp-gguf-q4-b70-baselines}"
@@ -33,6 +34,12 @@ cd "$ROOT"
   echo "run_dir=$RUN_DIR"
   echo "out=$OUT"
   echo "enable_mtp=${ENABLE_MTP:-1}"
+  echo "spec_profile=$SPEC_PROFILE"
+  echo "spec_type=${SPEC_TYPE:-<resolved-by-profile>}"
+  echo "spec_n_max=${SPEC_N_MAX:-<resolved-by-profile>}"
+  echo "spec_n_min=${SPEC_N_MIN:-${MTP_N_MIN:-0}}"
+  echo "spec_p_min=${SPEC_P_MIN:-${MTP_P_MIN:-0.00}}"
+  echo "draft_model=${DRAFT_MODEL:-<resolved-by-profile>}"
   echo "mtp_n_max=${MTP_N_MAX:-3}"
   echo "mtp_n_min=${MTP_N_MIN:-0}"
   echo "mtp_p_min=${MTP_P_MIN:-0.00}"
@@ -41,12 +48,22 @@ cd "$ROOT"
   echo "ubatch_size=${UBATCH_SIZE:-256}"
   echo "n_parallel=${N_PARALLEL:-1}"
   echo "flash_attn=${FLASH_ATTN:-on}"
-  echo "cache_type_k=${CACHE_TYPE_K:-f16}"
-  echo "cache_type_v=${CACHE_TYPE_V:-f16}"
+  echo "cache_type_k=${CACHE_TYPE_K:-q8_0}"
+  echo "cache_type_v=${CACHE_TYPE_V:-q8_0}"
+  echo "GGML_SYCL_ENABLE_GRAPH=${GGML_SYCL_ENABLE_GRAPH:-1}"
+  echo "GGML_SYCL_GRAPH_CACHE_SIZE=${GGML_SYCL_GRAPH_CACHE_SIZE:-0}"
+  echo "GGML_SYCL_FUSE_MMVQ_ADD=${GGML_SYCL_FUSE_MMVQ_ADD:-0}"
+  echo "GGML_SYCL_FUSE_MMVQ_ADD_RMS_Q8=${GGML_SYCL_FUSE_MMVQ_ADD_RMS_Q8:-0}"
+  echo "GGML_SYCL_CYCLE_TIMING=${GGML_SYCL_CYCLE_TIMING:-0}"
+  echo "GGML_SYCL_ENABLE_DNN=${GGML_SYCL_ENABLE_DNN:-1}"
+  echo "GGML_SYCL_ENABLE_OPT=${GGML_SYCL_ENABLE_OPT:-1}"
+  echo "GGML_SYCL_ENABLE_VMM=${GGML_SYCL_ENABLE_VMM:-1}"
   echo "extra_llama_args=${EXTRA_LLAMA_ARGS:-}"
 } > "$RUN_DIR/identity.env"
 
-GPU_INDEX="$GPU_INDEX" PORT="$PORT" \
+GPU_INDEX="$GPU_INDEX" PORT="$PORT" SPEC_PROFILE="$SPEC_PROFILE" \
+  LOG="$RUN_DIR/server.identity.log" \
+  CACHE_TYPE_K="${CACHE_TYPE_K:-q8_0}" CACHE_TYPE_V="${CACHE_TYPE_V:-q8_0}" \
   scripts/serve-qwen36-27b-mtp-gguf-llamacpp.sh \
   > "$RUN_DIR/server.stdout.log" 2>&1 &
 server_pid=$!

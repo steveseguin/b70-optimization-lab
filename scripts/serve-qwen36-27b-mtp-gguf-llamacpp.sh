@@ -4,8 +4,8 @@ set -euo pipefail
 GPU_INDEX="${GPU_INDEX:-0}"
 PORT="${PORT:-19430}"
 HOST="${HOST:-127.0.0.1}"
-MODEL="${MODEL:-/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-UD-Q4_K_XL.gguf}"
-MODEL_ALIAS="${MODEL_ALIAS:-qwen36-27b-mtp-gguf-q4}"
+MODEL="${MODEL:-/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf}"
+MODEL_ALIAS="${MODEL_ALIAS:-qwen36-27b-mtp-gguf-q4_0}"
 LLAMA_SERVER="${LLAMA_SERVER:-/home/steve/src/llama.cpp/build-sycl-b70-qwen36-mtp/bin/llama-server}"
 CTX_SIZE="${CTX_SIZE:-4096}"
 BATCH_SIZE="${BATCH_SIZE:-1024}"
@@ -23,6 +23,41 @@ ENABLE_MTP="${ENABLE_MTP:-1}"
 MTP_N_MAX="${MTP_N_MAX:-3}"
 MTP_N_MIN="${MTP_N_MIN:-0}"
 MTP_P_MIN="${MTP_P_MIN:-0.00}"
+SPEC_PROFILE="${SPEC_PROFILE:-custom}"
+case "$SPEC_PROFILE" in
+  custom)
+    if [[ -z "${SPEC_TYPE:-}" ]]; then
+      if [[ "$ENABLE_MTP" == "1" ]]; then
+        SPEC_TYPE="draft-mtp"
+      else
+        SPEC_TYPE="none"
+      fi
+    fi
+    ;;
+  no-spec)
+    SPEC_TYPE="none"
+    ;;
+  mtp3)
+    SPEC_TYPE="draft-mtp"
+    SPEC_N_MAX=3
+    ;;
+  dflash5|dflash8|dflash15)
+    SPEC_TYPE="draft-simple"
+    SPEC_N_MAX="${SPEC_PROFILE#dflash}"
+    ;;
+  *)
+    echo "Invalid SPEC_PROFILE=$SPEC_PROFILE; expected custom, no-spec, mtp3, dflash5, dflash8, or dflash15" >&2
+    exit 2
+    ;;
+esac
+SPEC_N_MAX="${SPEC_N_MAX:-$MTP_N_MAX}"
+SPEC_N_MIN="${SPEC_N_MIN:-$MTP_N_MIN}"
+SPEC_P_MIN="${SPEC_P_MIN:-$MTP_P_MIN}"
+DRAFT_MODEL="${DRAFT_MODEL:-}"
+DRAFT_DEVICE="${DRAFT_DEVICE:-SYCL0}"
+DRAFT_NGL="${DRAFT_NGL:-all}"
+DRAFT_CACHE_TYPE_K="${DRAFT_CACHE_TYPE_K:-q8_0}"
+DRAFT_CACHE_TYPE_V="${DRAFT_CACHE_TYPE_V:-q8_0}"
 EXTRA_LLAMA_ARGS="${EXTRA_LLAMA_ARGS:---cache-ram 0}"
 OUT_DIR="${OUT_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/servers}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -39,9 +74,13 @@ export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:*}"
 export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-$GPU_INDEX}"
 export ZES_ENABLE_SYSMAN="${ZES_ENABLE_SYSMAN:-1}"
 export UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS="${UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS:-1}"
-export GGML_SYCL_DISABLE_GRAPH="${GGML_SYCL_DISABLE_GRAPH:-0}"
-export GGML_SYCL_DISABLE_DNN="${GGML_SYCL_DISABLE_DNN:-0}"
-export GGML_SYCL_DISABLE_OPT="${GGML_SYCL_DISABLE_OPT:-0}"
+export GGML_SYCL_ENABLE_GRAPH="${GGML_SYCL_ENABLE_GRAPH:-0}"
+export GGML_SYCL_GRAPH_CACHE_SIZE="${GGML_SYCL_GRAPH_CACHE_SIZE:-0}"
+export GGML_SYCL_FUSE_MMVQ_ADD="${GGML_SYCL_FUSE_MMVQ_ADD:-0}"
+export GGML_SYCL_FUSE_MMVQ_ADD_RMS_Q8="${GGML_SYCL_FUSE_MMVQ_ADD_RMS_Q8:-0}"
+export GGML_SYCL_CYCLE_TIMING="${GGML_SYCL_CYCLE_TIMING:-0}"
+export GGML_SYCL_ENABLE_DNN="${GGML_SYCL_ENABLE_DNN:-1}"
+export GGML_SYCL_ENABLE_OPT="${GGML_SYCL_ENABLE_OPT:-1}"
 export GGML_SYCL_ENABLE_VMM="${GGML_SYCL_ENABLE_VMM:-1}"
 
 extra_args=()
@@ -50,14 +89,45 @@ if [[ -n "$EXTRA_LLAMA_ARGS" ]]; then
 fi
 
 spec_args=()
-if [[ "$ENABLE_MTP" == "1" ]]; then
-  spec_args=(
-    --spec-type draft-mtp
-    --spec-draft-n-max "$MTP_N_MAX"
-    --spec-draft-n-min "$MTP_N_MIN"
-    --spec-draft-p-min "$MTP_P_MIN"
-  )
-fi
+case "$SPEC_TYPE" in
+  none)
+    ;;
+  draft-mtp)
+    spec_args=(
+      --spec-type draft-mtp
+      --spec-draft-n-max "$SPEC_N_MAX"
+      --spec-draft-n-min "$SPEC_N_MIN"
+      --spec-draft-p-min "$SPEC_P_MIN"
+    )
+    if [[ -n "$DRAFT_MODEL" ]]; then
+      spec_args+=(
+        --spec-draft-model "$DRAFT_MODEL"
+        --spec-draft-device "$DRAFT_DEVICE"
+        --spec-draft-ngl "$DRAFT_NGL"
+        --spec-draft-type-k "$DRAFT_CACHE_TYPE_K"
+        --spec-draft-type-v "$DRAFT_CACHE_TYPE_V"
+      )
+    fi
+    ;;
+  draft-simple|draft-dflash)
+    DRAFT_MODEL="${DRAFT_MODEL:-/mnt/usb-models/models/qwen36-27b-dflash-gguf/Qwen3.6-27B-DFlash-Q4_K_M.gguf}"
+    spec_args=(
+      --spec-type "$SPEC_TYPE"
+      --spec-draft-model "$DRAFT_MODEL"
+      --spec-draft-device "$DRAFT_DEVICE"
+      --spec-draft-ngl "$DRAFT_NGL"
+      --spec-draft-type-k "$DRAFT_CACHE_TYPE_K"
+      --spec-draft-type-v "$DRAFT_CACHE_TYPE_V"
+      --spec-draft-n-max "$SPEC_N_MAX"
+      --spec-draft-n-min "$SPEC_N_MIN"
+      --spec-draft-p-min "$SPEC_P_MIN"
+    )
+    ;;
+  *)
+    echo "Invalid SPEC_TYPE=$SPEC_TYPE; expected none, draft-mtp, draft-simple, or draft-dflash" >&2
+    exit 2
+    ;;
+esac
 
 mkdir -p "$OUT_DIR"
 
@@ -86,13 +156,28 @@ mkdir -p "$OUT_DIR"
   echo "mtp_n_max=$MTP_N_MAX"
   echo "mtp_n_min=$MTP_N_MIN"
   echo "mtp_p_min=$MTP_P_MIN"
+  echo "spec_profile=$SPEC_PROFILE"
+  echo "spec_type=$SPEC_TYPE"
+  echo "spec_n_max=$SPEC_N_MAX"
+  echo "spec_n_min=$SPEC_N_MIN"
+  echo "spec_p_min=$SPEC_P_MIN"
+  echo "draft_model=${DRAFT_MODEL:-<embedded-or-none>}"
+  echo "draft_device=$DRAFT_DEVICE"
+  echo "draft_ngl=$DRAFT_NGL"
+  echo "draft_cache_type_k=$DRAFT_CACHE_TYPE_K"
+  echo "draft_cache_type_v=$DRAFT_CACHE_TYPE_V"
   echo "extra_llama_args=$EXTRA_LLAMA_ARGS"
   echo "ONEAPI_DEVICE_SELECTOR=$ONEAPI_DEVICE_SELECTOR"
   echo "ZE_AFFINITY_MASK=$ZE_AFFINITY_MASK"
-  echo "GGML_SYCL_DISABLE_GRAPH=$GGML_SYCL_DISABLE_GRAPH"
-  echo "GGML_SYCL_DISABLE_DNN=$GGML_SYCL_DISABLE_DNN"
-  echo "GGML_SYCL_DISABLE_OPT=$GGML_SYCL_DISABLE_OPT"
+  echo "GGML_SYCL_ENABLE_GRAPH=$GGML_SYCL_ENABLE_GRAPH"
+  echo "GGML_SYCL_GRAPH_CACHE_SIZE=$GGML_SYCL_GRAPH_CACHE_SIZE"
+  echo "GGML_SYCL_FUSE_MMVQ_ADD=$GGML_SYCL_FUSE_MMVQ_ADD"
+  echo "GGML_SYCL_FUSE_MMVQ_ADD_RMS_Q8=$GGML_SYCL_FUSE_MMVQ_ADD_RMS_Q8"
+  echo "GGML_SYCL_CYCLE_TIMING=$GGML_SYCL_CYCLE_TIMING"
+  echo "GGML_SYCL_ENABLE_DNN=$GGML_SYCL_ENABLE_DNN"
+  echo "GGML_SYCL_ENABLE_OPT=$GGML_SYCL_ENABLE_OPT"
   echo "GGML_SYCL_ENABLE_VMM=$GGML_SYCL_ENABLE_VMM"
+  echo "sycl_graph_evidence=[SYCL-GRAPH] requested|compatibility_rejected|recording_entered|replayed|summary"
   "$LLAMA_SERVER" --version 2>&1 || true
   sycl-ls 2>&1 || true
   echo "--- server ---"
