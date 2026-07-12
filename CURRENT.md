@@ -85,6 +85,18 @@ and `1.374x` on two critical M=4 shapes; a `1.662x` down-projection case missed
 correctness. M=8 square passed at `1.925x`, but is not the MTP3 floor. Runtime
 integration is therefore closed; no verifier-v2 dispatch flag was added.
 
+Fresh strict MTP3 cycle accounting measures `2.788` emitted tokens per cycle
+at `59.64%` proposal acceptance. The M=4 target verifier is `45.646 ms`
+(`80.3%`), aggregate draft preparation `9.700 ms` (`17.1%`), and everything
+else only `1.566 ms`, for `56.848 ms` accounted. At current acceptance, 68
+tok/s requires a `41.00 ms` cycle and 100 tok/s a `27.88 ms` cycle; even
+deleting all draft cost reaches only about `59.1 tok/s`. Per-op device timing
+attributes `5.43 ms` of the M=4 penalty to projections, but an explicit Xe2
+SIMD4 DP4A variant was only `1.004-1.012x` versus the exact compiler-optimized
+production kernel. Crossing 68 now requires materially higher accepted tokens
+per cycle (roughly `>=3.1`) as well as device-resident MTP staging; generic
+launch fusion and another multi-column loop rewrite are closed.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was

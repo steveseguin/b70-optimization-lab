@@ -1,3 +1,122 @@
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+index 580728a20..f95dc59ef 100644
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -17,6 +17,7 @@
+ #include <iomanip>
+ #include <map>
+ #include <cinttypes>
++#include <cstdlib>
+ 
+ #define SPC_DBG(fmt, ...) LOG_DBG("spec %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+ #define SPC_TRC(fmt, ...) LOG_TRC("spec %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+@@ -28,6 +29,11 @@
+ #define SPEC_VOCAB_MAX_SIZE_DIFFERENCE  128
+ #define SPEC_VOCAB_CHECK_START_TOKEN_ID 5
+ 
++static bool mtp_cycle_timing_enabled() {
++    const char * value = std::getenv("LLAMA_MTP_CYCLE_TIMING");
++    return value != nullptr && std::atoi(value) != 0;
++}
++
+ const std::map<std::string, common_speculative_type> common_speculative_type_from_name_map = {
+     {"none",          COMMON_SPECULATIVE_TYPE_NONE},
+     {"draft-simple",  COMMON_SPECULATIVE_TYPE_DRAFT_SIMPLE},
+@@ -1217,11 +1223,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+     int32_t n_mtp_layers  = 1;
+     bool    is_mem_shared = false;   // gemma4
+     bool    chain_heads   = false;   // derived in the ctor: n_mtp_layers > 1 && !is_mem_shared
++    bool    fused_top1_host_boundary = false;
+ 
+     // Per-sequence cross-batch carryover: pair (h_p, x_{p+1}) at MTP pos p+1.
+     // The last h-row of one process() call needs the first token of the NEXT
+     // call to pair with, so it's stashed here until that next call fires.
+     std::vector<std::vector<float>> pending_h;   // [n_seq][n_embd]
++    std::vector<std::vector<float>> fused_h;     // top-1 extraction scratch [n_seq][n_embd]
+ 
+     std::vector<int32_t> i_batch_beg;
+     std::vector<int32_t> i_batch_end;
+@@ -1293,6 +1301,11 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         is_mem_shared = llama_get_ctx_other(ctx_dft) == ctx_tgt;
+         chain_heads   = n_mtp_layers > 1 && !is_mem_shared;
++        fused_top1_host_boundary = this->params.backend_sampling &&
++                std::getenv("LLAMA_MTP_FUSED_TOP1_HOST_BOUNDARY") != nullptr &&
++                std::strcmp(std::getenv("LLAMA_MTP_FUSED_TOP1_HOST_BOUNDARY"), "0") != 0;
++
++        SPC_TRC("- fused_top1_host_boundary=%d\n", (int) fused_top1_host_boundary);
+ 
+         if (chain_heads) {
+             this->params.n_max = std::min(this->params.n_max, n_mtp_layers);
+@@ -1304,6 +1317,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         }
+ 
+         pending_h.assign(n_seq, std::vector<float>(n_embd, 0.0f));
++        fused_h.assign(n_seq, std::vector<float>(n_embd));
+ 
+         i_last.assign(n_seq, -1);
+         i_batch_beg.assign(n_seq, -1);
+@@ -1520,7 +1534,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 llama_set_nextn_layer_offset(ctx_dft, i);
+             }
+ 
++            const int n_tokens_step = batch.n_tokens;
++            const int64_t t_decode_start = mtp_cycle_timing_enabled() ? ggml_time_us() : 0;
+             int ret = llama_decode(ctx_dft, batch);
++            if (mtp_cycle_timing_enabled()) {
++                SPC_INF("[MTP-CYCLE] phase=draft_pass step=%d width=%d decode_us=%" PRId64 "\n",
++                        i, n_tokens_step, ggml_time_us() - t_decode_start);
++            }
+             if (ret != 0) {
+                 SPC_ERR("llama_decode[%d] returned %d\n", i, ret);
+                 break;
+@@ -1537,23 +1557,38 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 }
+ 
+                 auto * smpl = smpls[seq_id].get();
++                llama_token fused_id = LLAMA_TOKEN_NULL;
++                float fused_p = 0.0f;
++                const float * h_row = nullptr;
++                const llama_token_data_array * cur_p = nullptr;
++
++                if (fused_top1_host_boundary) {
++                    if (!llama_mtp_get_top1_hidden(ctx_dft, i_last[seq_id],
++                                &fused_id, &fused_p, fused_h[seq_id].data(), n_embd)) {
++                        SPC_ERR("fused MTP top-1 extraction unavailable at draft step %d\n", i);
++                        drafting[seq_id] = false;
++                        n_drafting--;
++                        continue;
++                    }
++                    h_row = fused_h[seq_id].data();
++                } else {
++                    common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
++                    h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
++                    cur_p = common_sampler_get_candidates(smpl, true);
++                }
+ 
+-                common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
+-                const float * h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
+-
+-                const auto * cur_p = common_sampler_get_candidates(smpl, true);
+-
+-                for (int k = 0; k < std::min(3, (int) cur_p->size); ++k) {
++                for (int k = 0; cur_p && k < std::min(3, (int) cur_p->size); ++k) {
+                     SPC_DBG(" - seq_id %d, draft candidate %3d, pos %3d: %6d (%8.3f) '%s'\n",
+                             seq_id, k, i, cur_p->data[k].id, cur_p->data[k].p,
+                             common_token_to_piece(ctx_dft, cur_p->data[k].id).c_str());
+                 }
+ 
+                 // add drafted token for each sequence
+-                const llama_token id = cur_p->data[0].id;
++                const llama_token id = fused_top1_host_boundary ? fused_id : cur_p->data[0].id;
++                const float p_top1 = fused_top1_host_boundary ? fused_p : cur_p->data[0].p;
+ 
+                 // only collect very high-confidence draft tokens
+-                if (cur_p->data[0].p < params.p_min) {
++                if (p_top1 < params.p_min) {
+                     drafting[seq_id] = false;
+                     n_drafting--;
+ 
 diff --git a/ggml/src/ggml-sycl/common.hpp b/ggml/src/ggml-sycl/common.hpp
 index fcc97611e..c8ef8fa11 100644
 --- a/ggml/src/ggml-sycl/common.hpp
@@ -37,10 +156,10 @@ index fcc97611e..c8ef8fa11 100644
  
      ggml_sycl_pool & host_pool(int device) {
 diff --git a/ggml/src/ggml-sycl/dpct/helper.hpp b/ggml/src/ggml-sycl/dpct/helper.hpp
-index 664b8e969..8f3492459 100644
+index 664b8e969..8c5e30f1b 100644
 --- a/ggml/src/ggml-sycl/dpct/helper.hpp
 +++ b/ggml/src/ggml-sycl/dpct/helper.hpp
-@@ -100,6 +100,15 @@ template <typename Ts> struct matrix_info_t {
+@@ -100,6 +100,17 @@ template <typename Ts> struct matrix_info_t {
  
  namespace dpct
  {
@@ -48,15 +167,17 @@ index 664b8e969..8f3492459 100644
 +#ifdef DPCT_PROFILING_ENABLED
 +        return true;
 +#else
-+        const char * value = std::getenv("GGML_SYCL_CYCLE_TIMING");
-+        return value != nullptr && std::atoi(value) != 0;
++        const char * cycle = std::getenv("GGML_SYCL_CYCLE_TIMING");
++        const char * op = std::getenv("GGML_SYCL_OP_TIMING");
++        return (cycle != nullptr && std::atoi(cycle) != 0) ||
++               (op != nullptr && std::atoi(op) != 0);
 +#endif
 +    }
 +
      typedef sycl::queue *queue_ptr;
      typedef sycl::event *event_ptr;
      typedef char *device_ptr;
-@@ -806,13 +815,13 @@ namespace dpct
+@@ -806,13 +817,13 @@ namespace dpct
          if (enable_exception_handler) {
            eh = exception_handler;
          }
@@ -77,7 +198,7 @@ index 664b8e969..8f3492459 100644
  
          return _queues.back();
        }
-@@ -825,13 +834,13 @@ namespace dpct
+@@ -825,13 +836,13 @@ namespace dpct
          if (enable_exception_handler) {
            eh = exception_handler;
          }
@@ -386,7 +507,7 @@ index 350b4ce2f..e08658e4c 100644
 +    const ggml_sycl_gated_delta_net_fused_cache * cache);
  void ggml_sycl_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
-index 5226fb184..a54414e16 100644
+index 5226fb184..78f078880 100644
 --- a/ggml/src/ggml-sycl/ggml-sycl.cpp
 +++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
 @@ -13,6 +13,7 @@
@@ -406,7 +527,7 @@ index 5226fb184..a54414e16 100644
  #include "ggml-sycl/pool.hpp"
  #include "ggml-sycl/cross_entropy_loss.hpp"
  
-@@ -83,6 +86,17 @@ static bool g_sycl_loaded = false;
+@@ -83,6 +86,18 @@ static bool g_sycl_loaded = false;
  int g_ggml_sycl_debug = 0;
  int g_ggml_sycl_enable_optimize = 1;
  int g_ggml_sycl_enable_graph = 0;
@@ -421,10 +542,11 @@ index 5226fb184..a54414e16 100644
 +int g_ggml_sycl_fuse_gdn_epilogue = 0;
 +int g_ggml_sycl_fuse_gdn_raw_gates = 0;
 +int g_ggml_sycl_cycle_timing = 0;
++int g_ggml_sycl_op_timing = 0;
  int g_ggml_sycl_enable_dnn = 1;
  int g_ggml_sycl_enable_vmm = 1;
  int g_ggml_sycl_prioritize_dmmv = 0;
-@@ -283,6 +297,18 @@ static void ggml_check_sycl() try {
+@@ -283,6 +298,19 @@ static void ggml_check_sycl() try {
          g_ggml_sycl_debug = ggml_sycl_get_env("GGML_SYCL_DEBUG", 0);
          g_ggml_sycl_enable_optimize = ggml_sycl_get_env("GGML_SYCL_ENABLE_OPT", 1);
          g_ggml_sycl_enable_graph = ggml_sycl_get_env("GGML_SYCL_ENABLE_GRAPH", 0);
@@ -440,10 +562,11 @@ index 5226fb184..a54414e16 100644
 +        g_ggml_sycl_fuse_gdn_epilogue = ggml_sycl_get_env("GGML_SYCL_FUSE_GDN_EPILOGUE", 0);
 +        g_ggml_sycl_fuse_gdn_raw_gates = ggml_sycl_get_env("GGML_SYCL_FUSE_GDN_RAW_GATES", 0);
 +        g_ggml_sycl_cycle_timing = ggml_sycl_get_env("GGML_SYCL_CYCLE_TIMING", 0);
++        g_ggml_sycl_op_timing = ggml_sycl_get_env("GGML_SYCL_OP_TIMING", 0);
          g_ggml_sycl_enable_dnn = ggml_sycl_get_env("GGML_SYCL_ENABLE_DNN", 1);
          g_ggml_sycl_enable_vmm = ggml_sycl_get_env("GGML_SYCL_ENABLE_VMM", 1);
          g_ggml_sycl_prioritize_dmmv = ggml_sycl_get_env("GGML_SYCL_PRIORITIZE_DMMV", 0);
-@@ -363,11 +389,24 @@ static void ggml_check_sycl() try {
+@@ -363,11 +391,26 @@ static void ggml_check_sycl() try {
  
  #ifdef GGML_SYCL_GRAPH
          GGML_LOG_INFO("  GGML_SYCL_ENABLE_GRAPH: %d\n", g_ggml_sycl_enable_graph);
@@ -466,10 +589,12 @@ index 5226fb184..a54414e16 100644
 +        GGML_LOG_INFO("  GGML_SYCL_FUSE_GDN_RAW_GATES: %d\n", g_ggml_sycl_fuse_gdn_raw_gates);
 +        GGML_LOG_INFO("  GGML_SYCL_CYCLE_TIMING: %d%s\n", g_ggml_sycl_cycle_timing,
 +                      g_ggml_sycl_cycle_timing ? " (diagnostic forced synchronization)" : "");
++        GGML_LOG_INFO("  GGML_SYCL_OP_TIMING: %d%s\n", g_ggml_sycl_op_timing,
++                      g_ggml_sycl_op_timing ? " (diagnostic per-op synchronization)" : "");
  
  #if defined(GGML_SYCL_SUPPORT_VMM)
          GGML_LOG_INFO("  GGML_SYCL_ENABLE_VMM: %d\n", g_ggml_sycl_enable_vmm);
-@@ -2968,10 +3007,81 @@ static void ggml_sycl_set_peer_access(const int n_tokens, int main_device) {
+@@ -2968,10 +3011,81 @@ static void ggml_sycl_set_peer_access(const int n_tokens, int main_device) {
      peer_access_enabled = enable_peer_access;
  }
  
@@ -552,7 +677,7 @@ index 5226fb184..a54414e16 100644
  
      GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne);
  
-@@ -3094,13 +3204,55 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
+@@ -3094,13 +3208,55 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
          }
  
          if constexpr(quantize_enabled) {
@@ -610,7 +735,7 @@ index 5226fb184..a54414e16 100644
                  } catch (sycl::exception const &exc) {
                      std::cerr << "Quantize_row_q8_1_sycl error" << exc.what() << "Exception caught at file:" << __FILE__
                                << ", line:" << __LINE__ << std::endl;
-@@ -4330,8 +4482,27 @@ static bool can_use_dequantize_mul_mat_vec(const ggml_tensor * src0, const ggml_
+@@ -4330,8 +4486,27 @@ static bool can_use_dequantize_mul_mat_vec(const ggml_tensor * src0, const ggml_
  }
  
  static bool can_use_mul_mat_vec_q(const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
@@ -640,7 +765,7 @@ index 5226fb184..a54414e16 100644
  }
  
  static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-@@ -4422,6 +4593,24 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
+@@ -4422,6 +4597,24 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
      }
  }
  
@@ -665,7 +790,7 @@ index 5226fb184..a54414e16 100644
  
  __dpct_inline__ static void k_copy_src1_to_contiguous(
      const char *__restrict__ src1_original, char *__restrict__ src1_contiguous,
-@@ -5221,6 +5410,28 @@ static const char * ggml_backend_sycl_get_name(ggml_backend_t backend) {
+@@ -5221,6 +5414,28 @@ static const char * ggml_backend_sycl_get_name(ggml_backend_t backend) {
  static void ggml_backend_sycl_free(ggml_backend_t backend) {
      ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
  
@@ -694,7 +819,7 @@ index 5226fb184..a54414e16 100644
      delete sycl_ctx;
      delete backend;
  }
-@@ -5311,8 +5522,1077 @@ catch (sycl::exception const &exc) {
+@@ -5311,8 +5526,1119 @@ catch (sycl::exception const &exc) {
    std::exit(1);
  }
  
@@ -1639,6 +1764,48 @@ index 5226fb184..a54414e16 100644
 +    return plan->cache.count > 0;
 +}
 +
++// Diagnostic-only logical-op timer. A barrier is placed immediately before
++// dispatch and immediately after all commands submitted by that graph-loop
++// iteration. Waiting here intentionally serializes logical ops, so these rows
++// are for critical-path attribution only and never for throughput comparison.
++class sycl_op_timer {
++public:
++    sycl_op_timer(ggml_backend_sycl_context * ctx, const ggml_tensor * node, int index) :
++        enabled(g_ggml_sycl_op_timing != 0), queue(ctx->stream()), node(node), index(index) {
++        if (!enabled || !queue->has_property<sycl::property::queue::enable_profiling>()) {
++            enabled = false;
++            return;
++        }
++        begin = queue->ext_oneapi_submit_barrier();
++    }
++
++    ~sycl_op_timer() noexcept {
++        if (!enabled) {
++            return;
++        }
++        try {
++            sycl::event end = queue->ext_oneapi_submit_barrier();
++            end.wait_and_throw();
++            const uint64_t begin_end = begin.get_profiling_info<sycl::info::event_profiling::command_end>();
++            const uint64_t end_start = end.get_profiling_info<sycl::info::event_profiling::command_start>();
++            const double device_us = end_start >= begin_end ? (end_start - begin_end) / 1000.0 : -1.0;
++            GGML_LOG_INFO("[SYCL-OP] index=%d op=%s name=%s ne=%" PRId64 "x%" PRId64 "x%" PRId64
++                          "x%" PRId64 " device_us=%.3f\n",
++                          index, ggml_op_name(node->op), node->name, node->ne[0], node->ne[1],
++                          node->ne[2], node->ne[3], device_us);
++        } catch (const sycl::exception & e) {
++            GGML_LOG_ERROR("[SYCL-OP] index=%d op=%s error=%s\n", index, ggml_op_name(node->op), e.what());
++        }
++    }
++
++private:
++    bool enabled;
++    queue_ptr queue;
++    const ggml_tensor * node;
++    int index;
++    sycl::event begin;
++};
++
  static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
      ggml_sycl_set_main_device(sycl_ctx->device);
 +    g_rms_q8_fusion = {};
@@ -1772,10 +1939,11 @@ index 5226fb184..a54414e16 100644
  
      for (int i = 0; i < cgraph->n_nodes; i++) {
          ggml_tensor * node = cgraph->nodes[i];
-@@ -5322,6 +6602,252 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+@@ -5322,6 +6648,253 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
          if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
              continue;
          }
++        sycl_op_timer op_timer(sycl_ctx, node, i);
 +        const gdn_raw_gate_plan * raw_gate_plan = gdn_raw_plan_by_node[i];
 +        const gdn_epilogue_match * epilogue_plan = gdn_epilogue_plan_by_node[i];
 +        const ssm_conv_cache_plan * conv_cache_plan = ssm_conv_cache_plan_by_node[i];
@@ -2025,7 +2193,7 @@ index 5226fb184..a54414e16 100644
  #ifndef NDEBUG
          assert(node->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
          for (int j = 0; j < GGML_MAX_SRC; j++) {
-@@ -5330,7 +6856,41 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+@@ -5330,7 +6903,41 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
              }
          }
  #endif
@@ -2067,7 +2235,7 @@ index 5226fb184..a54414e16 100644
          if (!ok) {
              GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
          }
-@@ -5339,6 +6899,61 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+@@ -5339,6 +6946,61 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
  }
  
  #ifdef GGML_SYCL_GRAPH
@@ -2129,7 +2297,7 @@ index 5226fb184..a54414e16 100644
  static bool check_graph_compatibility(ggml_cgraph * cgraph) {
      if (ggml_sycl_info().device_count > 1) {
          // A sycl_ex::command_graph object can only be created for a single device
-@@ -5351,11 +6966,20 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+@@ -5351,11 +7013,20 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
          switch (node_op) {
              default:
                  break;
@@ -2155,7 +2323,7 @@ index 5226fb184..a54414e16 100644
              case GGML_OP_MUL_MAT_ID:
                  // ggml_sycl_mul_mat_id() does a blocking host wait on the sycl queue after
                  // submitting a memcpy operation, but wait() can't be called on a queue that
-@@ -5381,47 +7005,250 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+@@ -5381,47 +7052,250 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
  }
  #endif
  
@@ -2421,7 +2589,7 @@ index 5226fb184..a54414e16 100644
  #endif
      {
 diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
-index 7b1b3d467..1782e7b07 100644
+index 7b1b3d467..5a59b4fc8 100644
 --- a/ggml/src/ggml-sycl/mmvq.cpp
 +++ b/ggml/src/ggml-sycl/mmvq.cpp
 @@ -5,9 +5,10 @@
@@ -2461,7 +2629,7 @@ index 7b1b3d467..1782e7b07 100644
      using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
      using block_traits = typename block_type::traits;
  
-@@ -110,14 +116,19 @@ static void mul_mat_vec_q_reorder_ncols(const void * __restrict__ vx, const void
+@@ -110,14 +116,95 @@ static void mul_mat_vec_q_reorder_ncols(const void * __restrict__ vx, const void
          float sum = sycl::reduce_over_group(nd_item.get_sub_group(), partial_sum[j], std::plus<>());
  
          if (sg.leader()) {
@@ -2476,6 +2644,82 @@ index 7b1b3d467..1782e7b07 100644
  }
  
 -template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
++template <bool AddResidual>
++static void mul_mat_vec_q4_0_reorder_ncols4_simd(
++        const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
++        const int ncols, const int nrows, const int stride_col_y_bytes, const int stride_col_dst,
++        const sycl::nd_item<3> & nd_item, const float * residual = nullptr,
++        const int stride_col_residual = 0) {
++    using block_type   = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q4_0>;
++    using block_traits = typename block_type::traits;
++
++    const auto sg           = nd_item.get_sub_group();
++    const int  workgroup_id = nd_item.get_group_linear_id();
++    const int  row          = workgroup_id * sg.get_group_linear_range() + sg.get_group_linear_id();
++
++    if (row >= nrows) {
++        return;
++    }
++
++    const int     blocks_per_row              = ncols / block_traits::qk;
++    constexpr int blocks_per_subgroup         = ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
++    constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
++    const int     nblocks                     = nrows * blocks_per_row;
++    sycl::float4  partial_sum(0.0f);
++
++    for (int i = sg.get_local_linear_id() / block_elements_per_subgroup; i < blocks_per_row; i += blocks_per_subgroup) {
++        const int ibx       = row * blocks_per_row + i;
++        const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
++        const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
++        const int  iby       = i * block_type::block_to_q8_1_ratio();
++        const uint8_t * bq4  = static_cast<const uint8_t *>(vx) + bx_offset.first;
++        const float d4       = *(reinterpret_cast<const ggml_half *>(
++                                   static_cast<const uint8_t *>(vx) + d_offset.first));
++
++#pragma unroll
++        for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
++            const int iqs = elem + block_traits::vdr_mmvq *
++                (sg.get_local_linear_id() % block_elements_per_subgroup);
++            int v[block_traits::vdr_mmvq];
++#pragma unroll
++            for (uint32_t k = 0; k < block_traits::vdr_mmvq; ++k) {
++                v[k] = get_int_from_uint8(bq4, iqs + k);
++            }
++
++#pragma unroll
++            for (int j = 0; j < 4; ++j) {
++                const char * vy_j = static_cast<const char *>(vy) + j * stride_col_y_bytes;
++                const int8_t * q8 = reinterpret_cast<const int8_t *>(vy_j) + iby * QK8_1;
++                int sumi = 0;
++#pragma unroll
++                for (uint32_t k = 0; k < block_traits::vdr_mmvq; ++k) {
++                    const int vi0 = (v[k] >> 0) & 0x0F0F0F0F;
++                    const int vi1 = (v[k] >> 4) & 0x0F0F0F0F;
++                    sumi = dpct::dp4a(vi0, get_int_from_int8_aligned(q8, iqs + k), sumi);
++                    sumi = dpct::dp4a(vi1, get_int_from_int8_aligned(q8, iqs + k + block_traits::qi), sumi);
++                }
++                const auto ds8 = (*reinterpret_cast<const sycl::half2 *>(
++                    vy_j + ncols + iby * sizeof(sycl::half2))).convert<float,
++                    sycl::rounding_mode::automatic>();
++                partial_sum[j] += d4 * (sumi * ds8.x() -
++                    (8 * block_traits::vdr_mmvq / block_traits::qi) * ds8.y());
++            }
++        }
++    }
++
++#pragma unroll
++    for (int j = 0; j < 4; ++j) {
++        const float sum = sycl::reduce_over_group(sg, partial_sum[j], std::plus<>());
++        if (sg.leader()) {
++            if constexpr (AddResidual) {
++                dst[j * stride_col_dst + row] = sum + residual[j * stride_col_residual + row];
++            } else {
++                dst[j * stride_col_dst + row] = sum;
++            }
++        }
++    }
++}
++
 +template <bool AddResidual, int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
  static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
 -                          const int ncols, const int nrows, const sycl::nd_item<3> & item_ct1) {
@@ -2484,7 +2728,7 @@ index 7b1b3d467..1782e7b07 100644
      const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
  
      if (row >= nrows) {
-@@ -155,11 +166,15 @@ static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict_
+@@ -155,11 +242,15 @@ static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict_
      }
  
      if (item_ct1.get_local_id(2) == 0) {
@@ -2502,7 +2746,7 @@ index 7b1b3d467..1782e7b07 100644
            vec_dot_q_sycl_t vec_dot_q_sycl, int ncols_dst>
  static void mul_mat_vec_q_ncols(
          const void * __restrict__ vx,
-@@ -169,7 +184,9 @@ static void mul_mat_vec_q_ncols(
+@@ -169,7 +260,9 @@ static void mul_mat_vec_q_ncols(
          const int nrows,
          const int stride_col_y,
          const int stride_col_dst,
@@ -2513,7 +2757,7 @@ index 7b1b3d467..1782e7b07 100644
  
      const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1)
                    + item_ct1.get_local_id(1);
-@@ -218,7 +235,11 @@ static void mul_mat_vec_q_ncols(
+@@ -218,7 +311,11 @@ static void mul_mat_vec_q_ncols(
      if (item_ct1.get_local_id(2) == 0) {
  #pragma unroll
          for (int j = 0; j < ncols_dst; ++j) {
@@ -2526,7 +2770,7 @@ index 7b1b3d467..1782e7b07 100644
          }
      }
  }
-@@ -657,128 +678,209 @@ static void mul_mat_vec_q_iq4_xs_q8_1(const void *__restrict__ vx,
+@@ -657,128 +754,238 @@ static void mul_mat_vec_q_iq4_xs_q8_1(const void *__restrict__ vx,
      }
  }
  
@@ -2576,19 +2820,42 @@ index 7b1b3d467..1782e7b07 100644
 +    GGML_ASSERT(!AddResidual || (epilogue && epilogue->residual));
 +    const float * residual = AddResidual ? epilogue->residual : nullptr;
 +    const int residual_col_stride = AddResidual ? epilogue->residual_col_stride : 0;
++
++    static const bool use_simd4 = [] {
++        const char * value = std::getenv("GGML_SYCL_Q4_0_MMVQ_SIMD4");
++        return value && std::atoi(value) != 0;
++    }();
++    const bool launch_simd4 = use_simd4;
  
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
 -                             mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
 -                                 vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
-+                             if constexpr (AddResidual) {
-+                                 mul_mat_vec_q_reorder_ncols<true, reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
-+                                     vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item,
-+                                     residual, residual_col_stride);
++                             if constexpr (ncols_dst == 4) {
++                                 if (launch_simd4) {
++                                     mul_mat_vec_q4_0_reorder_ncols4_simd<AddResidual>(
++                                         vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item,
++                                         residual, residual_col_stride);
++                                 } else if constexpr (AddResidual) {
++                                     mul_mat_vec_q_reorder_ncols<true,
++                                         reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
++                                         vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item,
++                                         residual, residual_col_stride);
++                                 } else {
++                                     mul_mat_vec_q_reorder_ncols<false,
++                                         reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
++                                         vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
++                                 }
++                             } else if constexpr (AddResidual) {
++                                 mul_mat_vec_q_reorder_ncols<true,
++                                     reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
++                                         vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item,
++                                         residual, residual_col_stride);
 +                             } else {
-+                                 mul_mat_vec_q_reorder_ncols<false, reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
-+                                     vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
++                                 mul_mat_vec_q_reorder_ncols<false,
++                                     reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
++                                         vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
 +                             }
                           });
      });
@@ -2634,7 +2901,7 @@ index 7b1b3d467..1782e7b07 100644
 +sycl::event ggml_sycl_bench_reorder_q4_0_ncols(const void * vx, const void * vy, float * dst,
 +                                        int ncols, int nrows, int width,
 +                                        int stride_col_y_bytes, int stride_col_dst,
-+                                        dpct::queue_ptr stream) {
++                                        dpct::queue_ptr stream, bool simd4) {
 +    GGML_ASSERT(width == 4 || width == 8);
 +    constexpr size_t num_subgroups = WARP_SIZE;
 +    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
@@ -2643,9 +2910,15 @@ index 7b1b3d467..1782e7b07 100644
 +    if (width == 4) {
 +        return stream->submit([&](sycl::handler & cgh) { cgh.parallel_for(
 +            sycl::nd_range<3>(block_nums * block_dims, block_dims), [=](sycl::nd_item<3> it)
-+            [[sycl::reqd_sub_group_size(WARP_SIZE)]] { mul_mat_vec_q_reorder_ncols<false,
-+            reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, 4>(vx, vy, dst, ncols, nrows,
-+            stride_col_y_bytes, stride_col_dst, it); }); });
++            [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                if (simd4) {
++                    mul_mat_vec_q4_0_reorder_ncols4_simd<false>(
++                        vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, it);
++                } else {
++                    mul_mat_vec_q_reorder_ncols<false, reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, 4>(
++                        vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, it);
++                }
++            }); });
 +    }
 +    return stream->submit([&](sycl::handler & cgh) { cgh.parallel_for(
 +        sycl::nd_range<3>(block_nums * block_dims, block_dims), [=](sycl::nd_item<3> it)
@@ -2771,7 +3044,7 @@ index 7b1b3d467..1782e7b07 100644
      {
  
          stream->submit([&](sycl::handler &cgh) {
-@@ -787,49 +889,66 @@ static void mul_mat_vec_q4_1_q8_1_sycl(const void *vx, const void *vy,
+@@ -787,49 +994,66 @@ static void mul_mat_vec_q4_1_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2855,7 +3128,7 @@ index 7b1b3d467..1782e7b07 100644
          default: GGML_ABORT("unsupported ncols_dst=%d for Q4_1 multi-col MMVQ", ncols_dst);
      }
  }
-@@ -845,7 +964,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl(const void * vx, const void * vy, float
+@@ -845,7 +1069,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl(const void * vx, const void * vy, float
          stream->submit([&](sycl::handler & cgh) {
              cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                               [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2864,7 +3137,7 @@ index 7b1b3d467..1782e7b07 100644
                                       vx, vy, dst, ncols, nrows, item_ct1);
                               });
          });
-@@ -866,7 +985,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl_ncols(
+@@ -866,7 +1090,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2873,7 +3146,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -902,7 +1021,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl(const void * vx, const void * vy, float
+@@ -902,7 +1126,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl(const void * vx, const void * vy, float
          stream->submit([&](sycl::handler & cgh) {
              cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                               [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2882,7 +3155,7 @@ index 7b1b3d467..1782e7b07 100644
                                       vx, vy, dst, ncols, nrows, item_ct1);
                               });
          });
-@@ -923,7 +1042,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl_ncols(
+@@ -923,7 +1147,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2891,7 +3164,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -964,7 +1083,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl(const void *vx, const void *vy,
+@@ -964,7 +1188,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2900,7 +3173,7 @@ index 7b1b3d467..1782e7b07 100644
                                        VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -986,7 +1105,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl_ncols(
+@@ -986,7 +1210,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2909,7 +3182,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1027,7 +1146,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl(const void *vx, const void *vy,
+@@ -1027,7 +1251,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2918,7 +3191,7 @@ index 7b1b3d467..1782e7b07 100644
                                        VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1049,7 +1168,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl_ncols(
+@@ -1049,7 +1273,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2927,7 +3200,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1086,7 +1205,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy,
+@@ -1086,7 +1310,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2936,7 +3209,7 @@ index 7b1b3d467..1782e7b07 100644
                                                                                             nd_item);
                           });
      });
-@@ -1107,7 +1226,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols(
+@@ -1107,7 +1331,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2945,7 +3218,7 @@ index 7b1b3d467..1782e7b07 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1147,7 +1266,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl(const void *vx, const void *vy,
+@@ -1147,7 +1371,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2954,7 +3227,7 @@ index 7b1b3d467..1782e7b07 100644
                                        VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1169,7 +1288,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl_ncols(
+@@ -1169,7 +1393,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2963,7 +3236,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1207,7 +1326,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl(const void * vx, const void * vy,
+@@ -1207,7 +1431,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl(const void * vx, const void * vy,
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2972,7 +3245,7 @@ index 7b1b3d467..1782e7b07 100644
                                VDR_Q1_0_Q8_1_MMVQ, vec_dot_q1_0_q8_1>(
                      vx, vy, dst, ncols, nrows, item_ct1);
              });
-@@ -1229,7 +1348,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl_ncols(
+@@ -1229,7 +1453,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2981,7 +3254,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_Q1_0_Q8_1_MMVQ, vec_dot_q1_0_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1270,7 +1389,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1270,7 +1494,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2990,7 +3263,7 @@ index 7b1b3d467..1782e7b07 100644
                                        VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1292,7 +1411,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl_ncols(
+@@ -1292,7 +1516,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2999,7 +3272,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1333,7 +1452,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1333,7 +1557,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3008,7 +3281,7 @@ index 7b1b3d467..1782e7b07 100644
                                        VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1354,7 +1473,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl(const void * vx, const void * vy,
+@@ -1354,7 +1578,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3017,7 +3290,7 @@ index 7b1b3d467..1782e7b07 100644
                                                                                             nd_item);
                           });
      });
-@@ -1375,7 +1494,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols(
+@@ -1375,7 +1599,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3026,7 +3299,7 @@ index 7b1b3d467..1782e7b07 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1413,7 +1532,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl_ncols(
+@@ -1413,7 +1637,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3035,7 +3308,7 @@ index 7b1b3d467..1782e7b07 100644
                                      VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1455,7 +1574,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1455,7 +1679,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3044,7 +3317,7 @@ index 7b1b3d467..1782e7b07 100644
                                        VDR_Q4_K_Q8_1_MMVQ, vec_dot_q4_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1479,7 +1598,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl_ncols(
+@@ -1479,7 +1703,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl_ncols(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1)
                  [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3053,7 +3326,7 @@ index 7b1b3d467..1782e7b07 100644
                                          VDR_Q4_K_Q8_1_MMVQ,
                                          vec_dot_q4_K_q8_1,
                                          ncols_dst>(
-@@ -1521,7 +1640,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl(const void * vx, const void * vy,
+@@ -1521,7 +1745,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                              [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3062,7 +3335,7 @@ index 7b1b3d467..1782e7b07 100644
                                                                                              nrows, nd_item);
                              });
      });
-@@ -1543,7 +1662,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
+@@ -1543,7 +1767,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3071,7 +3344,7 @@ index 7b1b3d467..1782e7b07 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1567,14 +1686,17 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
+@@ -1567,14 +1791,17 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
      }
  }
  
@@ -3090,7 +3363,7 @@ index 7b1b3d467..1782e7b07 100644
      {
  
          stream->submit([&](sycl::handler &cgh) {
-@@ -1583,113 +1705,146 @@ static void mul_mat_vec_q5_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1583,113 +1810,146 @@ static void mul_mat_vec_q5_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3273,7 +3546,7 @@ index 7b1b3d467..1782e7b07 100644
          default: GGML_ABORT("unsupported ncols_dst=%d for Q5_K reorder multi-col MMVQ", ncols_dst);
      }
  }
-@@ -1707,7 +1862,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl(const void * vx, const void * vy,
+@@ -1707,7 +1967,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3282,7 +3555,7 @@ index 7b1b3d467..1782e7b07 100644
                                                                                             nd_item);
                           });
      });
-@@ -1728,7 +1883,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols(
+@@ -1728,7 +1988,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3291,7 +3564,7 @@ index 7b1b3d467..1782e7b07 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1768,7 +1923,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1768,7 +2028,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3300,7 +3573,7 @@ index 7b1b3d467..1782e7b07 100644
                                        VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1792,7 +1947,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl_ncols(
+@@ -1792,7 +2052,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl_ncols(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1)
                  [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3309,7 +3582,7 @@ index 7b1b3d467..1782e7b07 100644
                                          VDR_Q6_K_Q8_1_MMVQ,
                                          vec_dot_q6_K_q8_1,
                                          ncols_dst>(
-@@ -2033,7 +2188,7 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_ncols(
+@@ -2033,7 +2293,7 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_ncols(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1)
                  [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3318,7 +3591,7 @@ index 7b1b3d467..1782e7b07 100644
                                          1,
                                          vec_dot_iq4_xs_q8_1,
                                          ncols_dst>(
-@@ -2062,11 +2217,17 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
+@@ -2062,11 +2322,17 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
      }
  }
  
@@ -3341,7 +3614,7 @@ index 7b1b3d467..1782e7b07 100644
      const int64_t ne10 = src1->ne[0];
      GGML_ASSERT(ne10 % QK8_1 == 0);
  
-@@ -2084,33 +2245,41 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2084,33 +2350,41 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
          const size_t src1_ddq_i_offset = i * src1_padded_col_size * q8_1_ts / q8_1_bs;
          const char * src1_ddq_i_bs     = src1_ddq_i + src1_ddq_i_offset;
          float *      dst_dd_i_bs       = dst_dd_i + i * dst->ne[0];
@@ -3393,7 +3666,7 @@ index 7b1b3d467..1782e7b07 100644
                  }
                  break;
              case GGML_TYPE_Q4_1:
-@@ -2118,12 +2287,13 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2118,12 +2392,13 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                      const int stride_col_y   = src1_padded_col_size / QK8_1;
                      const int stride_col_dst = dst->ne[0];
                      GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_1_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
@@ -3410,7 +3683,7 @@ index 7b1b3d467..1782e7b07 100644
                  }
                  break;
              case GGML_TYPE_Q5_0:
-@@ -2153,8 +2323,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2153,8 +2428,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q8_0:
@@ -3421,7 +3694,7 @@ index 7b1b3d467..1782e7b07 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2208,8 +2378,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2208,8 +2483,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q3_K:
@@ -3432,7 +3705,7 @@ index 7b1b3d467..1782e7b07 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2236,8 +2406,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2236,8 +2511,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q4_K:
@@ -3443,7 +3716,7 @@ index 7b1b3d467..1782e7b07 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2264,36 +2434,38 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2264,36 +2539,38 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q5_K:
@@ -3492,7 +3765,7 @@ index 7b1b3d467..1782e7b07 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2392,6 +2564,24 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2392,6 +2669,24 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
      GGML_UNUSED(ctx);
  }
  
@@ -3518,7 +3791,7 @@ index 7b1b3d467..1782e7b07 100644
  template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
  static void mul_mat_vec_q_moe(
 diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
-index c5d70bd0e..3cef414b5 100644
+index c5d70bd0e..98b71eaf8 100644
 --- a/ggml/src/ggml-sycl/mmvq.hpp
 +++ b/ggml/src/ggml-sycl/mmvq.hpp
 @@ -15,6 +15,10 @@
@@ -3556,7 +3829,7 @@ index c5d70bd0e..3cef414b5 100644
 +sycl::event ggml_sycl_bench_reorder_q4_0_ncols(const void * vx, const void * vy, float * dst,
 +                                        int ncols, int nrows, int width,
 +                                        int stride_col_y_bytes, int stride_col_dst,
-+                                        dpct::queue_ptr stream);
++                                        dpct::queue_ptr stream, bool simd4 = false);
 +
  #endif // GGML_SYCL_MMVQ_HPP
 diff --git a/ggml/src/ggml-sycl/quantize.hpp b/ggml/src/ggml-sycl/quantize.hpp
@@ -3958,6 +4231,69 @@ index 1a8ad05f0..8ecf8f32e 100644
 +    ggml_backend_sycl_context & ctx, ggml_tensor * conv, ggml_tensor * silu,
 +    ggml_tensor * q_norm, ggml_tensor * k_norm, int head_dim, int q_heads,
 +    int k_heads, float q_eps, float k_eps, const ggml_sycl_ssm_conv_cache & cache);
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 3a469bc90..ea7ea9324 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -3713,6 +3713,35 @@ float * llama_get_embeddings_nextn_ith(llama_context * ctx, int32_t i) {
+     return ctx->get_embeddings_nextn_ith(i);
+ }
+ 
++bool llama_mtp_get_top1_hidden(
++        llama_context * ctx,
++        int32_t         i,
++        llama_token *   token,
++        float *         probability,
++        float *         hidden,
++        size_t          n_hidden) {
++    if (!ctx || !token || !probability || !hidden || n_hidden == 0) {
++        return false;
++    }
++
++    ctx->synchronize();
++
++    const llama_token * candidates = ctx->get_sampled_candidates_ith(i);
++    const float * probs = ctx->get_sampled_probs_ith(i);
++    const size_t n_candidates = ctx->get_sampled_candidates_count(i);
++    const size_t n_probs = ctx->get_sampled_probs_count(i);
++    float * h = ctx->get_embeddings_nextn_ith(i);
++
++    if (!candidates || !probs || !h || n_candidates == 0 || n_probs == 0) {
++        return false;
++    }
++
++    *token = candidates[0];
++    *probability = probs[0];
++    std::memcpy(hidden, h, n_hidden * sizeof(float));
++    return true;
++}
++
+ float * llama_get_embeddings_layer_inp(llama_context * ctx, uint32_t lid) {
+     ctx->synchronize();
+ 
+diff --git a/src/llama-ext.h b/src/llama-ext.h
+index 348bbae95..36c838ee2 100644
+--- a/src/llama-ext.h
++++ b/src/llama-ext.h
+@@ -107,6 +107,18 @@ LLAMA_API float * llama_get_embeddings_nextn(struct llama_context * ctx);
+ // LLAMA_API float * llama_get_embeddings_ith(struct llama_context * ctx, int32_t i);
+ LLAMA_API float * llama_get_embeddings_nextn_ith(struct llama_context * ctx, int32_t i);
+ 
++// MTP staging helper: synchronize once, then return candidate 0, its backend
++// probability, and the corresponding nextn hidden row.  This avoids crossing
++// the same host/device completion boundary repeatedly in an autoregressive
++// draft step. Returns false when backend candidates/probabilities are absent.
++LLAMA_API bool llama_mtp_get_top1_hidden(
++        struct llama_context * ctx,
++        int32_t                i,
++        llama_token *          token,
++        float *                probability,
++        float *                hidden,
++        size_t                 n_hidden);
++
+ // Set whether the context outputs the input embeddings of a specific layer
+ LLAMA_API void llama_set_embeddings_layer_inp(struct llama_context * ctx, uint32_t lid, bool value);
+ 
 diff --git a/tests/test-backend-ops.cpp b/tests/test-backend-ops.cpp
 index 084344fb2..7d2d7cfcb 100644
 --- a/tests/test-backend-ops.cpp
@@ -4128,3 +4464,102 @@ index 084344fb2..7d2d7cfcb 100644
      test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q4_0, GGML_TYPE_F32, 2880, 32, 2880, {1, 1}, {1, 1}));
      test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, 2880, 32, 2880, {1, 1}, {1, 1}));
      test_cases.emplace_back(new test_mul_mat(GGML_TYPE_MXFP4, GGML_TYPE_F32, 2880, 32, 2880, {1, 1}, {1, 1}));
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 4826ca5d0..3043d2c5a 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -919,6 +919,7 @@ private:
+     std::vector<server_slot> slots;
+ 
+     int trace = 0;
++    bool mtp_cycle_timing = false;
+     int slots_debug = 0;
+     int n_empty_consecutive = 0;
+ 
+@@ -1327,6 +1328,15 @@ private:
+             }
+         }
+ 
++        {
++            const char * LLAMA_MTP_CYCLE_TIMING = getenv("LLAMA_MTP_CYCLE_TIMING");
++            mtp_cycle_timing = LLAMA_MTP_CYCLE_TIMING && atoi(LLAMA_MTP_CYCLE_TIMING) != 0;
++
++            if (mtp_cycle_timing) {
++                SRV_WRN("%s", "LLAMA_MTP_CYCLE_TIMING = 1 (diagnostic-only host phase timing)\n");
++            }
++        }
++
+         {
+             const char * LLAMA_SERVER_SLOTS_DEBUG = getenv("LLAMA_SERVER_SLOTS_DEBUG");
+             slots_debug = LLAMA_SERVER_SLOTS_DEBUG ? atoi(LLAMA_SERVER_SLOTS_DEBUG) : 0;
+@@ -2939,7 +2949,12 @@ private:
+ 
+         // generate the actual drafts (if any)
+         {
++            const int64_t t_draft_start = mtp_cycle_timing ? ggml_time_us() : 0;
+             common_speculative_draft(spec.get());
++            if (mtp_cycle_timing && !drafting.empty()) {
++                SRV_INF("[MTP-CYCLE] phase=draft_prepare slots=%zu host_us=%" PRId64 "\n",
++                        drafting.size(), ggml_time_us() - t_draft_start);
++            }
+         }
+ 
+         // make checkpoints if needed
+@@ -3564,7 +3579,9 @@ private:
+             n_empty_consecutive = 0;
+         }
+ 
++        const int64_t t_target_start = mtp_cycle_timing ? ggml_time_us() : 0;
+         const int ret = llama_decode(ctx_tgt, batch_view);
++        const int64_t t_target_end = mtp_cycle_timing ? ggml_time_us() : 0;
+ 
+         metrics.on_decoded(slots);
+ 
+@@ -3621,12 +3638,17 @@ private:
+         // TODO: avoid restoring the draft context and re-evaluating the drafted tokens when not needed [TAG_SPEC_AVOID_DRAFT_REEVAL]
+         //       for now, always re-evaluate for simplicity
+         //       ref: https://github.com/ggml-org/llama.cpp/pull/22728#issuecomment-4400925384
++        const int64_t t_spec_process_start = mtp_cycle_timing ? ggml_time_us() : 0;
+         if (!common_speculative_process(spec.get(), batch_view)) {
+             SRV_ERR("%s", "failed to process speculative batch\n");
+ 
+             // TODO: handle error
+             throw std::runtime_error("failed to process speculative batch");
+         }
++        if (mtp_cycle_timing) {
++            SRV_INF("[MTP-CYCLE] phase=target_decode width=%d target_us=%" PRId64 " spec_process_us=%" PRId64 "\n",
++                    batch_view.n_tokens, t_target_end - t_target_start, ggml_time_us() - t_spec_process_start);
++        }
+ 
+         // handle `n_cmpl > 1` tasks - when the main prompt is processed, activate all child tasks too
+         for (auto & slot : slots) {
+@@ -3778,6 +3800,7 @@ private:
+ 
+             // save the original draft size
+             const size_t n_draft = slot.spec_draft.size();
++            const int64_t t_accept_start = mtp_cycle_timing ? ggml_time_us() : 0;
+ 
+             GGML_ASSERT(n_draft > 0);
+ 
+@@ -3840,6 +3863,8 @@ private:
+                 slot.spec_draft = std::move(accepted);
+             }
+ 
++            const int64_t t_accept_end = mtp_cycle_timing ? ggml_time_us() : 0;
++
+             const int64_t t_now = ggml_time_us();
+ 
+             const auto ids = std::move(slot.spec_draft);
+@@ -3890,6 +3915,12 @@ private:
+                 }
+             }
+ 
++            if (mtp_cycle_timing) {
++                SRV_INF("[MTP-CYCLE] phase=accept_commit slot=%d verifier_width=%zu drafted=%zu accepted=%zu emitted=%zu accept_us=%" PRId64 " commit_us=%" PRId64 "\n",
++                        slot.id, n_draft + 1, n_draft, ids.size() - 1, ids.size(),
++                        t_accept_end - t_accept_start, ggml_time_us() - t_accept_end);
++            }
++
+             slot.print_timings_tg();
+ 
+             SLT_DBG(slot, "accepted %d/%d draft tokens, new n_tokens = %d\n", (int) ids.size() - 1, (int) n_draft, slot.prompt.n_tokens());
