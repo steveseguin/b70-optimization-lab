@@ -29,8 +29,9 @@ DEFAULT_GOLDEN_SPEC = ROOT / "experiments/qwen27-dflash-sycl-b70/harness/golden-
 DEFAULT_RUNTIME = Path("/home/steve/src/llama.cpp")
 DEFAULT_BUILD = DEFAULT_RUNTIME / "build-sycl-b70-qwen36-mtp"
 DEFAULT_ARTIFACT_ROOT = Path("/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/iteration-v1")
-TOOL_REVISION = 1
+TOOL_REVISION = 2
 CHUNK = 16 * 1024 * 1024
+Q4_0_BLOCK_BYTES = 18
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -281,6 +282,154 @@ def pack_key(model_sha: str, packer: str, layout: str, artifact_sha: str) -> str
     return hashlib.sha256(value).hexdigest()
 
 
+def canonical_sha(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def q4_joint_n_pack(source: bytes, rows: int, k: int, n_tile: int) -> bytes:
+    """Pack GGML Q4_0 blocks jointly across N rows.
+
+    Input is ordinary row-major GGML Q4_0: fp16 scale then 16 nibble bytes for
+    every 32 K values.  Output walks K blocks first, then N tiles.  Within a
+    tile it stores all N scales followed by byte-position-major quant bytes.
+    The last N tile is zero padded.  This is deliberately reversible and does
+    not silently depend on a compiler structure layout.
+    """
+    if rows <= 0 or k <= 0 or k % 32 or n_tile <= 0:
+        raise ValueError("rows and k must be positive, k divisible by 32, and n-tile positive")
+    blocks_k = k // 32
+    expected = rows * blocks_k * Q4_0_BLOCK_BYTES
+    if len(source) != expected:
+        raise ValueError(f"Q4_0 payload is {len(source)} bytes; expected {expected}")
+    out = bytearray()
+    for kb in range(blocks_k):
+        for row0 in range(0, rows, n_tile):
+            blocks = []
+            for lane in range(n_tile):
+                row = row0 + lane
+                if row < rows:
+                    offset = (row * blocks_k + kb) * Q4_0_BLOCK_BYTES
+                    blocks.append(source[offset:offset + Q4_0_BLOCK_BYTES])
+                else:
+                    blocks.append(bytes(Q4_0_BLOCK_BYTES))
+            for block in blocks:
+                out.extend(block[:2])
+            for byte_index in range(16):
+                for block in blocks:
+                    out.append(block[2 + byte_index])
+    return bytes(out)
+
+
+def q4_joint_n_unpack(packed: bytes, rows: int, k: int, n_tile: int) -> bytes:
+    blocks_k = k // 32
+    tiles_n = math.ceil(rows / n_tile)
+    tile_bytes = n_tile * Q4_0_BLOCK_BYTES
+    expected = blocks_k * tiles_n * tile_bytes
+    if len(packed) != expected:
+        raise ValueError(f"joint-N payload is {len(packed)} bytes; expected {expected}")
+    out = bytearray(rows * blocks_k * Q4_0_BLOCK_BYTES)
+    cursor = 0
+    for kb in range(blocks_k):
+        for row0 in range(0, rows, n_tile):
+            scales = packed[cursor:cursor + 2 * n_tile]
+            cursor += 2 * n_tile
+            quants = packed[cursor:cursor + 16 * n_tile]
+            cursor += 16 * n_tile
+            for lane in range(n_tile):
+                row = row0 + lane
+                if row >= rows:
+                    continue
+                offset = (row * blocks_k + kb) * Q4_0_BLOCK_BYTES
+                out[offset:offset + 2] = scales[2 * lane:2 * lane + 2]
+                out[offset + 2:offset + 18] = bytes(
+                    quants[byte_index * n_tile + lane] for byte_index in range(16)
+                )
+    return bytes(out)
+
+
+def pack_q4_payload(args: argparse.Namespace) -> int:
+    source = args.tensor_payload.resolve()
+    source_bytes = source.read_bytes()
+    source_sha = hashlib.sha256(source_bytes).hexdigest()
+    spec = load_json(args.model_spec)
+    fingerprint = build_fingerprint(args.runtime, args.build)
+    layout = {
+        "name": "q4_0-joint-n-v1", "n_tile": args.n_tile,
+        "source_block": "ggml-q4_0-fp16-scale-plus-16-nibble-bytes",
+        "order": "kblock,n_tile,scales[n],quant_byte[16][n]",
+        "padding": "zero lanes to n_tile",
+    }
+    identity = {
+        "source_model_sha256": spec["source"]["sha256"],
+        "tensor_name": args.tensor_name, "source_tensor_sha256": source_sha,
+        "shape": [args.rows, args.k], "layout": layout,
+        "packer_revision": TOOL_REVISION,
+        "compiler_fingerprint": fingerprint["fingerprint_sha256"],
+        "device": args.device,
+    }
+    key = canonical_sha(identity)
+    final = args.artifact_root / "xe2-verifier-packs" / key
+    if final.exists():
+        manifest = load_json(final / "manifest.json")
+        if manifest.get("key") != key or manifest.get("identity") != identity:
+            raise RuntimeError(f"existing pack identity does not match requested pack: {final}")
+        payload = final / manifest["payload"]["path"]
+        sha, size = hash_file(payload)
+        if sha != manifest["payload"]["sha256"] or size != manifest["payload"]["size_bytes"]:
+            raise RuntimeError(f"existing pack failed checksum validation: {final}")
+        print(json.dumps({"status": "reused", "key": key, "manifest": str(final / "manifest.json")}, indent=2))
+        return 0
+    packed = q4_joint_n_pack(source_bytes, args.rows, args.k, args.n_tile)
+    if q4_joint_n_unpack(packed, args.rows, args.k, args.n_tile) != source_bytes:
+        raise RuntimeError("internal joint-N round-trip validation failed")
+    staging = final.with_name(f".{key}.tmp-{os.getpid()}")
+    staging.mkdir(parents=True, exist_ok=False)
+    try:
+        payload_path = staging / "weights.q4_0.joint-n.bin"
+        payload_path.write_bytes(packed)
+        payload_sha, payload_size = hash_file(payload_path)
+        manifest = {
+            "schema_version": 1, "format": "qwen27-xe2-verifier-tensor-pack-v1",
+            "status": "ready", "evidence_class": "development-iteration-only",
+            "promotion_eligible": False, "key": key, "identity": identity,
+            "source": {"payload_path": str(source), "sha256": source_sha,
+                       "size_bytes": len(source_bytes), "container": "extracted-gguf-tensor-payload"},
+            "payload": {"path": payload_path.name, "sha256": payload_sha,
+                        "size_bytes": payload_size},
+            "loader_contract": {"lookup_key": key, "manifest": "manifest.json",
+                                "required_validation": ["identity-key", "payload-sha256", "payload-size"],
+                                "mmap_safe": True, "endianness": "little"},
+            "validation": {"round_trip_exact": True}, "created_unix": time.time(),
+        }
+        atomic_json(staging / "manifest.json", manifest)
+        final.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(staging, final)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
+    print(json.dumps({"status": "ready", "key": key, "manifest": str(final / "manifest.json")}, indent=2))
+    return 0
+
+
+def verify_q4_payload(args: argparse.Namespace) -> int:
+    root = args.artifact_root / "xe2-verifier-packs" / args.pack_key
+    manifest = load_json(root / "manifest.json")
+    failures = []
+    if canonical_sha(manifest["identity"]) != manifest["key"] or manifest["key"] != args.pack_key:
+        failures.append("identity-key")
+    payload = root / manifest["payload"]["path"]
+    if not payload.is_file():
+        failures.append("payload-missing")
+    else:
+        sha, size = hash_file(payload)
+        if sha != manifest["payload"]["sha256"] or size != manifest["payload"]["size_bytes"]:
+            failures.append("payload-identity")
+    print(json.dumps({"status": "failed" if failures else "ready", "key": args.pack_key,
+                      "manifest": str(root / "manifest.json"), "failures": failures}, indent=2))
+    return 1 if failures else 0
+
+
 def register_pack(args: argparse.Namespace) -> int:
     artifact = args.pack_artifact.resolve()
     if not artifact.exists():
@@ -376,7 +525,7 @@ def run_focused(args: argparse.Namespace) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("fingerprint", "golden-prepare", "golden-verify", "pack-register", "pack-verify", "focused"))
+    parser.add_argument("command", choices=("fingerprint", "golden-prepare", "golden-verify", "pack-register", "pack-verify", "q4-pack", "q4-verify", "focused"))
     parser.add_argument("--model-spec", type=Path, default=DEFAULT_MODEL_SPEC)
     parser.add_argument("--golden-spec", type=Path, default=DEFAULT_GOLDEN_SPEC)
     parser.add_argument("--runtime", type=Path, default=DEFAULT_RUNTIME)
@@ -387,6 +536,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n", type=int, default=256)
     parser.add_argument("--pack-artifact", type=Path)
     parser.add_argument("--pack-key")
+    parser.add_argument("--tensor-payload", type=Path)
+    parser.add_argument("--tensor-name")
+    parser.add_argument("--rows", type=int)
+    parser.add_argument("--n-tile", type=int, default=8)
+    parser.add_argument("--device", default="intel-bmg-g31")
     parser.add_argument("--packer-revision", default="unspecified")
     parser.add_argument("--layout", default="q4_0-runtime-reorder-compatible")
     parser.add_argument("--kernel-abi", default="qwen27-b70-pack-v1")
@@ -399,6 +553,10 @@ def parse_args() -> argparse.Namespace:
         parser.error("pack-register requires --pack-artifact")
     if args.command == "pack-verify" and not args.pack_key:
         parser.error("pack-verify requires --pack-key")
+    if args.command == "q4-pack" and (args.tensor_payload is None or not args.tensor_name or args.rows is None):
+        parser.error("q4-pack requires --tensor-payload, --tensor-name, and --rows")
+    if args.command == "q4-verify" and not args.pack_key:
+        parser.error("q4-verify requires --pack-key")
     if args.k % 32:
         parser.error("--k must be divisible by 32")
     return args
@@ -417,6 +575,10 @@ def main() -> int:
         return register_pack(args)
     if args.command == "pack-verify":
         return verify_pack(args)
+    if args.command == "q4-pack":
+        return pack_q4_payload(args)
+    if args.command == "q4-verify":
+        return verify_q4_payload(args)
     if args.command == "focused":
         return run_focused(args)
     raise AssertionError(args.command)

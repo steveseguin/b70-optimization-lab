@@ -2421,7 +2421,7 @@ index 5226fb184..a54414e16 100644
  #endif
      {
 diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
-index 7b1b3d467..90f1b7955 100644
+index 7b1b3d467..1782e7b07 100644
 --- a/ggml/src/ggml-sycl/mmvq.cpp
 +++ b/ggml/src/ggml-sycl/mmvq.cpp
 @@ -5,9 +5,10 @@
@@ -2526,7 +2526,7 @@ index 7b1b3d467..90f1b7955 100644
          }
      }
  }
-@@ -657,128 +678,186 @@ static void mul_mat_vec_q_iq4_xs_q8_1(const void *__restrict__ vx,
+@@ -657,128 +678,209 @@ static void mul_mat_vec_q_iq4_xs_q8_1(const void *__restrict__ vx,
      }
  }
  
@@ -2631,6 +2631,29 @@ index 7b1b3d467..90f1b7955 100644
      }
  }
  
++sycl::event ggml_sycl_bench_reorder_q4_0_ncols(const void * vx, const void * vy, float * dst,
++                                        int ncols, int nrows, int width,
++                                        int stride_col_y_bytes, int stride_col_dst,
++                                        dpct::queue_ptr stream) {
++    GGML_ASSERT(width == 4 || width == 8);
++    constexpr size_t num_subgroups = WARP_SIZE;
++    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
++    const sycl::range<3> block_nums(1, 1, block_num_y);
++    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
++    if (width == 4) {
++        return stream->submit([&](sycl::handler & cgh) { cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims), [=](sycl::nd_item<3> it)
++            [[sycl::reqd_sub_group_size(WARP_SIZE)]] { mul_mat_vec_q_reorder_ncols<false,
++            reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, 4>(vx, vy, dst, ncols, nrows,
++            stride_col_y_bytes, stride_col_dst, it); }); });
++    }
++    return stream->submit([&](sycl::handler & cgh) { cgh.parallel_for(
++        sycl::nd_range<3>(block_nums * block_dims, block_dims), [=](sycl::nd_item<3> it)
++        [[sycl::reqd_sub_group_size(WARP_SIZE)]] { mul_mat_vec_q_reorder_ncols<false,
++        reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, 8>(vx, vy, dst, ncols, nrows,
++        stride_col_y_bytes, stride_col_dst, it); }); });
++}
++
 +template <bool AddResidual>
  static void mul_mat_vec_q4_0_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols, const int nrows,
 -                                       dpct::queue_ptr stream) {
@@ -2748,7 +2771,7 @@ index 7b1b3d467..90f1b7955 100644
      {
  
          stream->submit([&](sycl::handler &cgh) {
-@@ -787,49 +866,66 @@ static void mul_mat_vec_q4_1_q8_1_sycl(const void *vx, const void *vy,
+@@ -787,49 +889,66 @@ static void mul_mat_vec_q4_1_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2832,7 +2855,7 @@ index 7b1b3d467..90f1b7955 100644
          default: GGML_ABORT("unsupported ncols_dst=%d for Q4_1 multi-col MMVQ", ncols_dst);
      }
  }
-@@ -845,7 +941,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl(const void * vx, const void * vy, float
+@@ -845,7 +964,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl(const void * vx, const void * vy, float
          stream->submit([&](sycl::handler & cgh) {
              cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                               [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2841,7 +2864,7 @@ index 7b1b3d467..90f1b7955 100644
                                       vx, vy, dst, ncols, nrows, item_ct1);
                               });
          });
-@@ -866,7 +962,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl_ncols(
+@@ -866,7 +985,7 @@ static void mul_mat_vec_mxfp4_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2850,7 +2873,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -902,7 +998,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl(const void * vx, const void * vy, float
+@@ -902,7 +1021,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl(const void * vx, const void * vy, float
          stream->submit([&](sycl::handler & cgh) {
              cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                               [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2859,7 +2882,7 @@ index 7b1b3d467..90f1b7955 100644
                                       vx, vy, dst, ncols, nrows, item_ct1);
                               });
          });
-@@ -923,7 +1019,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl_ncols(
+@@ -923,7 +1042,7 @@ static void mul_mat_vec_nvfp4_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2868,7 +2891,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -964,7 +1060,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl(const void *vx, const void *vy,
+@@ -964,7 +1083,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2877,7 +2900,7 @@ index 7b1b3d467..90f1b7955 100644
                                        VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -986,7 +1082,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl_ncols(
+@@ -986,7 +1105,7 @@ static void mul_mat_vec_q5_0_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2886,7 +2909,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1027,7 +1123,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl(const void *vx, const void *vy,
+@@ -1027,7 +1146,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2895,7 +2918,7 @@ index 7b1b3d467..90f1b7955 100644
                                        VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1049,7 +1145,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl_ncols(
+@@ -1049,7 +1168,7 @@ static void mul_mat_vec_q5_1_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2904,7 +2927,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1086,7 +1182,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy,
+@@ -1086,7 +1205,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2913,7 +2936,7 @@ index 7b1b3d467..90f1b7955 100644
                                                                                             nd_item);
                           });
      });
-@@ -1107,7 +1203,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols(
+@@ -1107,7 +1226,7 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2922,7 +2945,7 @@ index 7b1b3d467..90f1b7955 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1147,7 +1243,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl(const void *vx, const void *vy,
+@@ -1147,7 +1266,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2931,7 +2954,7 @@ index 7b1b3d467..90f1b7955 100644
                                        VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1169,7 +1265,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl_ncols(
+@@ -1169,7 +1288,7 @@ static void mul_mat_vec_q8_0_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2940,7 +2963,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1207,7 +1303,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl(const void * vx, const void * vy,
+@@ -1207,7 +1326,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl(const void * vx, const void * vy,
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2949,7 +2972,7 @@ index 7b1b3d467..90f1b7955 100644
                                VDR_Q1_0_Q8_1_MMVQ, vec_dot_q1_0_q8_1>(
                      vx, vy, dst, ncols, nrows, item_ct1);
              });
-@@ -1229,7 +1325,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl_ncols(
+@@ -1229,7 +1348,7 @@ static void mul_mat_vec_q1_0_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2958,7 +2981,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_Q1_0_Q8_1_MMVQ, vec_dot_q1_0_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1270,7 +1366,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1270,7 +1389,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2967,7 +2990,7 @@ index 7b1b3d467..90f1b7955 100644
                                        VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1292,7 +1388,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl_ncols(
+@@ -1292,7 +1411,7 @@ static void mul_mat_vec_q2_K_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2976,7 +2999,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1333,7 +1429,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1333,7 +1452,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2985,7 +3008,7 @@ index 7b1b3d467..90f1b7955 100644
                                        VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1354,7 +1450,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl(const void * vx, const void * vy,
+@@ -1354,7 +1473,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2994,7 +3017,7 @@ index 7b1b3d467..90f1b7955 100644
                                                                                             nd_item);
                           });
      });
-@@ -1375,7 +1471,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols(
+@@ -1375,7 +1494,7 @@ static void reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3003,7 +3026,7 @@ index 7b1b3d467..90f1b7955 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1413,7 +1509,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl_ncols(
+@@ -1413,7 +1532,7 @@ static void mul_mat_vec_q3_K_q8_1_sycl_ncols(
          cgh.parallel_for(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3012,7 +3035,7 @@ index 7b1b3d467..90f1b7955 100644
                                      VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1, ncols_dst>(
                      vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
              });
-@@ -1455,7 +1551,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1455,7 +1574,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3021,7 +3044,7 @@ index 7b1b3d467..90f1b7955 100644
                                        VDR_Q4_K_Q8_1_MMVQ, vec_dot_q4_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1479,7 +1575,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl_ncols(
+@@ -1479,7 +1598,7 @@ static void mul_mat_vec_q4_K_q8_1_sycl_ncols(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1)
                  [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3030,7 +3053,7 @@ index 7b1b3d467..90f1b7955 100644
                                          VDR_Q4_K_Q8_1_MMVQ,
                                          vec_dot_q4_K_q8_1,
                                          ncols_dst>(
-@@ -1521,7 +1617,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl(const void * vx, const void * vy,
+@@ -1521,7 +1640,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                              [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3039,7 +3062,7 @@ index 7b1b3d467..90f1b7955 100644
                                                                                              nrows, nd_item);
                              });
      });
-@@ -1543,7 +1639,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
+@@ -1543,7 +1662,7 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3048,7 +3071,7 @@ index 7b1b3d467..90f1b7955 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1567,14 +1663,17 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
+@@ -1567,14 +1686,17 @@ static void reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
      }
  }
  
@@ -3067,7 +3090,7 @@ index 7b1b3d467..90f1b7955 100644
      {
  
          stream->submit([&](sycl::handler &cgh) {
-@@ -1583,113 +1682,146 @@ static void mul_mat_vec_q5_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1583,113 +1705,146 @@ static void mul_mat_vec_q5_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3250,7 +3273,7 @@ index 7b1b3d467..90f1b7955 100644
          default: GGML_ABORT("unsupported ncols_dst=%d for Q5_K reorder multi-col MMVQ", ncols_dst);
      }
  }
-@@ -1707,7 +1839,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl(const void * vx, const void * vy,
+@@ -1707,7 +1862,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl(const void * vx, const void * vy,
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3259,7 +3282,7 @@ index 7b1b3d467..90f1b7955 100644
                                                                                             nd_item);
                           });
      });
-@@ -1728,7 +1860,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols(
+@@ -1728,7 +1883,7 @@ static void reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols(
      stream->submit([&](sycl::handler & cgh) {
          cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                           [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3268,7 +3291,7 @@ index 7b1b3d467..90f1b7955 100644
                                   vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, nd_item);
                           });
      });
-@@ -1768,7 +1900,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl(const void *vx, const void *vy,
+@@ -1768,7 +1923,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl(const void *vx, const void *vy,
                  sycl::nd_range<3>(block_nums * block_dims, block_dims),
                  [=](sycl::nd_item<3> item_ct1)
                      [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3277,7 +3300,7 @@ index 7b1b3d467..90f1b7955 100644
                                        VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
                              vx, vy, dst, ncols, nrows, item_ct1);
                      });
-@@ -1792,7 +1924,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl_ncols(
+@@ -1792,7 +1947,7 @@ static void mul_mat_vec_q6_K_q8_1_sycl_ncols(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1)
                  [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3286,7 +3309,7 @@ index 7b1b3d467..90f1b7955 100644
                                          VDR_Q6_K_Q8_1_MMVQ,
                                          vec_dot_q6_K_q8_1,
                                          ncols_dst>(
-@@ -2033,7 +2165,7 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_ncols(
+@@ -2033,7 +2188,7 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_ncols(
              sycl::nd_range<3>(block_nums * block_dims, block_dims),
              [=](sycl::nd_item<3> item_ct1)
                  [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -3295,7 +3318,7 @@ index 7b1b3d467..90f1b7955 100644
                                          1,
                                          vec_dot_iq4_xs_q8_1,
                                          ncols_dst>(
-@@ -2062,11 +2194,17 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
+@@ -2062,11 +2217,17 @@ static void mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
      }
  }
  
@@ -3318,7 +3341,7 @@ index 7b1b3d467..90f1b7955 100644
      const int64_t ne10 = src1->ne[0];
      GGML_ASSERT(ne10 % QK8_1 == 0);
  
-@@ -2084,33 +2222,41 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2084,33 +2245,41 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
          const size_t src1_ddq_i_offset = i * src1_padded_col_size * q8_1_ts / q8_1_bs;
          const char * src1_ddq_i_bs     = src1_ddq_i + src1_ddq_i_offset;
          float *      dst_dd_i_bs       = dst_dd_i + i * dst->ne[0];
@@ -3370,7 +3393,7 @@ index 7b1b3d467..90f1b7955 100644
                  }
                  break;
              case GGML_TYPE_Q4_1:
-@@ -2118,12 +2264,13 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2118,12 +2287,13 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                      const int stride_col_y   = src1_padded_col_size / QK8_1;
                      const int stride_col_dst = dst->ne[0];
                      GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_1_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
@@ -3387,7 +3410,7 @@ index 7b1b3d467..90f1b7955 100644
                  }
                  break;
              case GGML_TYPE_Q5_0:
-@@ -2153,8 +2300,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2153,8 +2323,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q8_0:
@@ -3398,7 +3421,7 @@ index 7b1b3d467..90f1b7955 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2208,8 +2355,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2208,8 +2378,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q3_K:
@@ -3409,7 +3432,7 @@ index 7b1b3d467..90f1b7955 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2236,8 +2383,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2236,8 +2406,8 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q4_K:
@@ -3420,7 +3443,7 @@ index 7b1b3d467..90f1b7955 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2264,36 +2411,38 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2264,36 +2434,38 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
                  }
                  break;
              case GGML_TYPE_Q5_K:
@@ -3469,7 +3492,7 @@ index 7b1b3d467..90f1b7955 100644
                      if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
                          const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
                          const int stride_col_dst     = dst->ne[0];
-@@ -2392,6 +2541,24 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
+@@ -2392,6 +2564,24 @@ void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tens
      GGML_UNUSED(ctx);
  }
  
@@ -3495,7 +3518,7 @@ index 7b1b3d467..90f1b7955 100644
  template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
  static void mul_mat_vec_q_moe(
 diff --git a/ggml/src/ggml-sycl/mmvq.hpp b/ggml/src/ggml-sycl/mmvq.hpp
-index c5d70bd0e..e9bbc791f 100644
+index c5d70bd0e..3cef414b5 100644
 --- a/ggml/src/ggml-sycl/mmvq.hpp
 +++ b/ggml/src/ggml-sycl/mmvq.hpp
 @@ -15,6 +15,10 @@
@@ -3524,6 +3547,18 @@ index c5d70bd0e..e9bbc791f 100644
  // Requires standard (non-reorder) block layout for src0.
  // Returns false if src0_type isn't handled; caller should fall back.
  bool ggml_sycl_mul_mat_vec_q_id(
+@@ -57,4 +69,11 @@ bool ggml_sycl_mul_mat_vec_q_id_reorder(
+     size_t             src1_row_stride,
+     dpct::queue_ptr    stream);
+ 
++// Experiment-only hook: launch the exact active Q4_0 reordered width-4/8
++// kernel so verifier candidates are not compared with a weaker surrogate.
++sycl::event ggml_sycl_bench_reorder_q4_0_ncols(const void * vx, const void * vy, float * dst,
++                                        int ncols, int nrows, int width,
++                                        int stride_col_y_bytes, int stride_col_dst,
++                                        dpct::queue_ptr stream);
++
+ #endif // GGML_SYCL_MMVQ_HPP
 diff --git a/ggml/src/ggml-sycl/quantize.hpp b/ggml/src/ggml-sycl/quantize.hpp
 index b5c7a54b7..918ecc83e 100644
 --- a/ggml/src/ggml-sycl/quantize.hpp

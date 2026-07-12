@@ -78,11 +78,16 @@ or a second weight artifact. This crossed the gate decisively:
 | 17408x5120 | M=4 | 97.173 us | 557.437 us | 5.737x |
 | 17408x5120 | M=8 | 101.039 us | 929.305 us | 9.197x |
 
-Every joint-2 and joint-4 full-device comparison and sampled independent CPU
-comparison had maximum absolute difference `0.000`. Joint-2 beat joint-4 on
-all tested real shapes, consistent with joint-4 paying excessive register
-pressure. This result is promotable to a guarded llama.cpp integration lane;
-it is not yet an end-to-end throughput result.
+Every joint-2 and joint-4 comparison against that synthetic repeated-vector
+control had maximum absolute difference `0.000`. Joint-2 beat joint-4 on those
+tests, but the control is weaker than production: llama.cpp's reordered
+`ncols<4/8>` MMVQ shares weight loads across verifier rows.
+
+The corrected production-kernel comparator closes integration: total M=4
+speedups were `1.407x` (5120x5120) and `1.374x` (5120x17408), below the `1.5x`
+gate; the one `1.662x` M=4 down-projection result also missed the correctness
+criterion. M=8 square passed at `1.925x`, but M=8 is not the MTP3 production
+floor. This experiment must not be integrated on the synthetic speedups.
 
 The 30-iteration run log is outside Git at
 `/mnt/fast-ai/bench-results/qwen27-xe2-verifier/run-20260712T200914Z.log`.

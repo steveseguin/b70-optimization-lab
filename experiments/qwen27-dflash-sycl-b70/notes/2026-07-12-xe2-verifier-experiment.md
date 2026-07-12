@@ -197,6 +197,18 @@ ZE_AFFINITY_MASK=<reserved-card> \
   experiments/qwen27-dflash-sycl-b70/xe2-verifier/build-and-run.sh
 ```
 
-Disposition: the joint-2 verifier clears the `>=1.5x` projection gate and is
-ready for a guarded runtime integration lane. No AOT build or llama.cpp runtime
-change was made in this experiment.
+## Comparator correction and final disposition
+
+The repeated-vector comparator above rereads weights for every M row. The
+active reordered llama.cpp `ncols<4/8>` MMVQ instead loads each weight block
+once and accumulates all verifier rows, so the apparent `4.8-13.1x` result did
+**not** clear the production integration gate.
+
+An apples-to-apples harness now calls the exact production reordered kernel and
+includes activation quantization, joint-2 compute, reduction, submissions, and
+wall completion. Its M=4 totals were only `1.407x` at 5120x5120 and `1.374x`
+at 5120x17408. The 17408x5120 case reached `1.662x` but missed the correctness
+criterion, while M=8 square reached `1.925x`. Current production MTP3 depends
+on M=4, so the verifier v2 integration is rejected. No runtime dispatch flag
+was added. See `2026-07-12-xe2-verifier-v2-comparator-audit.md` for the corrected
+evidence.

@@ -77,6 +77,14 @@ neutral. Preserve these implementations and results, but do not enable them in
 the production stack. JIT had overstated these gains, so AOT crossover remains
 mandatory before interpreting future fusion wins.
 
+A second Xe2 joint-N verifier briefly appeared to clear the verifier gate, but
+independent review found its repeated-vector control reread weights per row,
+unlike production reordered MMVQ. The corrected exact-production comparator,
+including activation quantization and joint reduction, measured only `1.407x`
+and `1.374x` on two critical M=4 shapes; a `1.662x` down-projection case missed
+correctness. M=8 square passed at `1.925x`, but is not the MTP3 floor. Runtime
+integration is therefore closed; no verifier-v2 dispatch flag was added.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was

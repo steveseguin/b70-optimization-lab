@@ -15,8 +15,8 @@
   },
   "packing_tool": {
     "path": "scripts/qwen27-iteration-artifacts.py",
-    "revision": 1,
-    "status": "external-offline-pack-register-and-deep-verify; native-model-extractor-not-yet-implemented"
+    "revision": 2,
+    "status": "reversible-q4_0-joint-n-tensor-packer-and-loader-manifest implemented; native GGUF tensor extractor and llama.cpp binding not yet implemented"
   },
   "kernel_abi": {
     "name": "qwen27-b70-pack-v1",
@@ -25,7 +25,7 @@
   "pack": {
     "path": "/mnt/fast-ai/model-packs/qwen27-b70/q4_0-pack-v1",
     "registry_root": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/iteration-v1/packs",
-    "status": "versioned-external-artifact-registry-implemented; full-native-model-pack-absent-no-loader-binding",
+    "status": "versioned external registry plus per-tensor q4_0-joint-n-v1 artifacts implemented; full-model extraction and loader binding absent",
     "sha256": null,
     "tensor_table": null,
     "alignment_bytes": 4096
@@ -36,10 +36,14 @@
       "source_model_sha256",
       "packer_revision",
       "layout",
-      "artifact_sha256"
+      "source_tensor_sha256",
+      "tensor_name",
+      "layout",
+      "compiler_fingerprint",
+      "device_identity"
     ],
-    "admission": "recursive-per-file-sha256-and-aggregate-sha256",
-    "binding_boundary": "registry can reuse packs emitted by current or future offline reorder tools; llama.cpp cannot bind a serialized device reorder yet"
+    "admission": "canonical identity key, exact reversible source transform, atomic publication, and payload sha256/size validation",
+    "binding_boundary": "q4-pack consumes an extracted GGUF Q4_0 tensor payload; native GGUF extraction and llama.cpp mmap binding remain separate work"
   },
   "ram_cache": {
     "root": "/dev/shm/qwen27-b70-model-cache",
