@@ -1,0 +1,200 @@
+{
+  "classification": "diagnostic_fp16_fp32state_four_gpu",
+  "rows": [
+    {
+      "candidate_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "classification": "diagnostic_microbench_not_endpoint_not_localmaxxing",
+      "env": {
+        "LD_LIBRARY_PATH": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:/opt/intel/oneapi/compiler/2025.3/lib:/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib:/opt/intel/oneapi/compiler/2025.3/lib",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "ZE_AFFINITY_MASK": "0"
+      },
+      "hypothesis": "ReplaySSM stage_conv + spec_decode fusion pre-gate",
+      "parity": null,
+      "records": [
+        {
+          "mean_ms": 0.01761046750470996,
+          "mean_us": 17.61046750470996,
+          "name": "stage_conv"
+        },
+        {
+          "mean_ms": 0.030903131468221545,
+          "mean_us": 30.903131468221545,
+          "name": "spec_decode"
+        },
+        {
+          "mean_ms": 0.03758456953801215,
+          "mean_us": 37.58456953801215,
+          "name": "stage_then_decode",
+          "python_pair_overhead_ms": -0.010929029434919357,
+          "separate_sum_ms": 0.048513598972931504
+        }
+      ],
+      "shape": {
+        "cache_len": 8,
+        "conv_dim": 5120,
+        "conv_width": 4,
+        "dtype": "fp16",
+        "head_k_dim": 128,
+        "head_v_dim": 128,
+        "num_k_heads": 8,
+        "num_slots": 2,
+        "num_v_heads": 24,
+        "precomputed_qk": false,
+        "rows": 1,
+        "sibling_vhead": false,
+        "spec_len": 4,
+        "state_dtype": "fp32",
+        "total_tokens": 4,
+        "tp_size": 2
+      }
+    },
+    {
+      "candidate_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "classification": "diagnostic_microbench_not_endpoint_not_localmaxxing",
+      "env": {
+        "LD_LIBRARY_PATH": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:/opt/intel/oneapi/compiler/2025.3/lib:/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib:/opt/intel/oneapi/compiler/2025.3/lib",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "ZE_AFFINITY_MASK": "1"
+      },
+      "hypothesis": "ReplaySSM stage_conv + spec_decode fusion pre-gate",
+      "parity": null,
+      "records": [
+        {
+          "mean_ms": 0.01678019855171442,
+          "mean_us": 16.78019855171442,
+          "name": "stage_conv"
+        },
+        {
+          "mean_ms": 0.03089869348332286,
+          "mean_us": 30.89869348332286,
+          "name": "spec_decode"
+        },
+        {
+          "mean_ms": 0.03768193197902292,
+          "mean_us": 37.68193197902292,
+          "name": "stage_then_decode",
+          "python_pair_overhead_ms": -0.009996960056014359,
+          "separate_sum_ms": 0.04767889203503728
+        }
+      ],
+      "shape": {
+        "cache_len": 8,
+        "conv_dim": 5120,
+        "conv_width": 4,
+        "dtype": "fp16",
+        "head_k_dim": 128,
+        "head_v_dim": 128,
+        "num_k_heads": 8,
+        "num_slots": 2,
+        "num_v_heads": 24,
+        "precomputed_qk": false,
+        "rows": 1,
+        "sibling_vhead": false,
+        "spec_len": 4,
+        "state_dtype": "fp32",
+        "total_tokens": 4,
+        "tp_size": 2
+      }
+    },
+    {
+      "candidate_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "classification": "diagnostic_microbench_not_endpoint_not_localmaxxing",
+      "env": {
+        "LD_LIBRARY_PATH": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:/opt/intel/oneapi/compiler/2025.3/lib:/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib:/opt/intel/oneapi/compiler/2025.3/lib",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "ZE_AFFINITY_MASK": "2"
+      },
+      "hypothesis": "ReplaySSM stage_conv + spec_decode fusion pre-gate",
+      "parity": null,
+      "records": [
+        {
+          "mean_ms": 0.017494985950179398,
+          "mean_us": 17.494985950179398,
+          "name": "stage_conv"
+        },
+        {
+          "mean_ms": 0.030964666977524757,
+          "mean_us": 30.964666977524757,
+          "name": "spec_decode"
+        },
+        {
+          "mean_ms": 0.037712429533712566,
+          "mean_us": 37.712429533712566,
+          "name": "stage_then_decode",
+          "python_pair_overhead_ms": -0.01074722339399159,
+          "separate_sum_ms": 0.048459652927704155
+        }
+      ],
+      "shape": {
+        "cache_len": 8,
+        "conv_dim": 5120,
+        "conv_width": 4,
+        "dtype": "fp16",
+        "head_k_dim": 128,
+        "head_v_dim": 128,
+        "num_k_heads": 8,
+        "num_slots": 2,
+        "num_v_heads": 24,
+        "precomputed_qk": false,
+        "rows": 1,
+        "sibling_vhead": false,
+        "spec_len": 4,
+        "state_dtype": "fp32",
+        "total_tokens": 4,
+        "tp_size": 2
+      }
+    },
+    {
+      "candidate_module": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "classification": "diagnostic_microbench_not_endpoint_not_localmaxxing",
+      "env": {
+        "LD_LIBRARY_PATH": "/home/steve/src/vllm-xpu-kernels/vllm_xpu_kernels:/home/steve/.venvs/vllm-xpu/lib:/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages/torch/lib:/opt/intel/oneapi/compiler/2025.3/lib:/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib:/opt/intel/oneapi/compiler/2025.3/lib",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "ZE_AFFINITY_MASK": "3"
+      },
+      "hypothesis": "ReplaySSM stage_conv + spec_decode fusion pre-gate",
+      "parity": null,
+      "records": [
+        {
+          "mean_ms": 0.01729041151702404,
+          "mean_us": 17.29041151702404,
+          "name": "stage_conv"
+        },
+        {
+          "mean_ms": 0.0308703399496153,
+          "mean_us": 30.8703399496153,
+          "name": "spec_decode"
+        },
+        {
+          "mean_ms": 0.03767868608701974,
+          "mean_us": 37.67868608701974,
+          "name": "stage_then_decode",
+          "python_pair_overhead_ms": -0.010482065379619598,
+          "separate_sum_ms": 0.04816075146663934
+        }
+      ],
+      "shape": {
+        "cache_len": 8,
+        "conv_dim": 5120,
+        "conv_width": 4,
+        "dtype": "fp16",
+        "head_k_dim": 128,
+        "head_v_dim": 128,
+        "num_k_heads": 8,
+        "num_slots": 2,
+        "num_v_heads": 24,
+        "precomputed_qk": false,
+        "rows": 1,
+        "sibling_vhead": false,
+        "spec_len": 4,
+        "state_dtype": "fp32",
+        "total_tokens": 4,
+        "tp_size": 2
+      }
+    }
+  ],
+  "stage_mean_ms": 0.017294015880906954,
+  "recurrent_mean_ms": 0.030909207969671115,
+  "pair_mean_ms": 0.037664404284441844
+}
