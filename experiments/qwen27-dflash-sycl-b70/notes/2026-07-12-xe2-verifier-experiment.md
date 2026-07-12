@@ -111,3 +111,92 @@ Authoritative 30-iteration log:
 `/mnt/fast-ai/bench-results/qwen27-xe2-verifier/run-20260712T160845Z.log`.
 SHA-256:
 `8710501eebfe0415d8ca166b94fb5e10141af5d6e5de028c6008cb9cbd71db54`.
+
+## Joint-N ownership result
+
+The closed result above applied to one work-item owning one N16 tile. A
+materially different mapping now makes one split-8 ESIMD work-item own two
+adjacent N16 tiles. For each K block it loads the Mx32 Q8 vector and M
+activation scales once, reuses them across two DPAS operations, and applies the
+16 per-output Q4 scales with native ESIMD vector arithmetic. The packed weight
+bytes are unchanged. Joint-4 was also tested to bound the idea; it was slower
+on every shape because its larger accumulator footprint raises register
+pressure.
+
+Thirty-iteration 5120x5120 result on a reserved B70:
+
+- M=4: joint-2 `14.062 us` device / `22.733 us` wall versus vector
+  `140.313 us` / `148.109 us`, or `6.515x` by the promotion metric;
+- M=8: joint-2 `13.230 us` device / `21.290 us` wall versus vector
+  `271.354 us` / `278.353 us`, or `13.074x`;
+- all joint-2, joint-4, split, original-DPAS, repeated-vector, and sampled CPU
+  comparisons reported maximum absolute difference `0.000`.
+
+The two real FFN shapes were then run concurrently on four otherwise idle
+B70s for 20 iterations each:
+
+- 5120x17408: `4.838x` at M=4 and `6.926x` at M=8;
+- 17408x5120: `5.737x` at M=4 and `9.197x` at M=8;
+- all correctness comparisons again reported maximum absolute difference
+  `0.000`.
+
+The authoritative square-shape log is
+`/mnt/fast-ai/bench-results/qwen27-xe2-verifier/run-20260712T200914Z.log`,
+SHA-256
+`a9e776f15469afef67f2b812dd7fbc43d9d8db43603c8d4f604f0abdd3a6145e`.
+
+## Runtime integration interface
+
+Integration should remain narrowly guarded to Q4_0 x Q8_1, Xe2/Battlemage,
+and verifier widths 4 or 8:
+
+1. Add `ggml_sycl_op_mul_mat_q4_0_xe2_verifier(...)` beside
+   `ggml_sycl_op_mul_mat_q(...)` in `mmq.hpp/mmq.cpp`. Its contract is the
+   already-quantized Q8_1 device pointer, packed Q4 nibbles, FP16 Q4 scales,
+   output pointer, K/N, source-row stride, and fixed M specialization.
+2. In `ggml_sycl_mul_mat()` select it before the generic MMVQ branch only when
+   `src0->type == GGML_TYPE_Q4_0`, `src1->ne[1]` is 4 or 8, the tensor is
+   contiguous 2D, and the device architecture is Xe2/BMG. Keep M=1 and every
+   unsupported shape on the current reordered MMVQ path.
+3. Allocate one fixed split-8 FP32 partial buffer from graph-stable context
+   storage, not the transient pool. The reduction submission and addresses
+   must be stable for direct graph replay. A later fusion can fold the
+   reduction into the projection epilogue, but it is not required to clear the
+   kernel gate.
+4. Add exact width-4/8 backend tests against current MMVQ before any end-to-end
+   MTP run. The standalone benchmark's synthetic equality is necessary but
+   does not cover tensor strides, graph capture, or real GGUF scale decoding.
+
+## Offline pack artifact
+
+The production pack should be keyed by source GGUF SHA-256, tensor name and
+shape, Q4_0 block size, pack-layout version, target `bmg-g31`, and compiler
+ABI. Per tensor it stores:
+
+```text
+header: magic/version, K, N, QK=32, Ntile=16, nibble convention, checksums
+qs:     [K/32][N/16][K/8][N lane][8 signed nibbles]
+d:      [K/32][N] FP16
+```
+
+The nibble pack XORs bit 3 once to convert GGUF Q4_0 bias to DPAS signed-s4.
+Keeping scales as FP16 makes the packed payload exactly the same logical
+`18 bytes / 32 weights` as ordinary Q4_0; the benchmark used FP32 scales only
+for experimental clarity. The current SYCL reorder already separates Q4
+nibbles and FP16 scales in-place in `reorder_qw_q4_0()`, but remains
+output-row-major. The native packer should transpose that operation into the
+K-block-major layout above and cache it on disk. Initial integration can keep
+this as a second device allocation in `ggml_tensor_extra_gpu`; the memory-final
+version should teach M=1 reordered MMVQ to consume the same VNNI artifact and
+replace, rather than duplicate, the ordinary Q4 tensor allocation.
+
+Build and square-shape validation command:
+
+```bash
+ZE_AFFINITY_MASK=<reserved-card> \
+  experiments/qwen27-dflash-sycl-b70/xe2-verifier/build-and-run.sh
+```
+
+Disposition: the joint-2 verifier clears the `>=1.5x` projection gate and is
+ready for a guarded runtime integration lane. No AOT build or llama.cpp runtime
+change was made in this experiment.

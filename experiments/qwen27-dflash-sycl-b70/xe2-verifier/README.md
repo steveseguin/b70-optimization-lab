@@ -60,12 +60,29 @@ kernel. That recovered most of the loss, but still missed the required gate:
 | M=8 | 8 | 246.249 us | 254.097 us | 277.911 us | 1.094x |
 
 All original, split-4, split-8, vector, and CPU-reference correctness checks
-reported zero maximum absolute difference. This particular block-scaled DPAS
-layout is **closed**: it cannot amortize the per-Q4_0-block FP32 scale epilogue
-and partial reduction enough to reach `1.5x`. Do not integrate it into
-llama.cpp. A materially different verifier would need to change the
-quantization/scale granularity or fuse enough downstream work to alter the
-economics; further split-count tuning is outside this experiment.
+reported zero maximum absolute difference. That one-N-tile mapping is closed.
+
+A second mapping changed ownership rather than merely tuning split count. One
+ESIMD work-item now owns two adjacent N16 tiles, loads each Q8 activation vector
+and activation scale once, executes two DPAS operations, and applies the 16
+weight scales as an ESIMD vector epilogue. It retains the exact same offline
+VNNI pack and split-8 partial layout, so it does not introduce runtime repacking
+or a second weight artifact. This crossed the gate decisively:
+
+| Shape KxN | Width | Joint-2 wall | Vector wall | Speedup |
+|---|---:|---:|---:|---:|
+| 5120x5120 | M=4 | 22.733 us | 148.109 us | 6.515x |
+| 5120x5120 | M=8 | 21.290 us | 278.353 us | 13.074x |
+| 5120x17408 | M=4 | 117.771 us | 569.770 us | 4.838x |
+| 5120x17408 | M=8 | 126.257 us | 874.503 us | 6.926x |
+| 17408x5120 | M=4 | 97.173 us | 557.437 us | 5.737x |
+| 17408x5120 | M=8 | 101.039 us | 929.305 us | 9.197x |
+
+Every joint-2 and joint-4 full-device comparison and sampled independent CPU
+comparison had maximum absolute difference `0.000`. Joint-2 beat joint-4 on
+all tested real shapes, consistent with joint-4 paying excessive register
+pressure. This result is promotable to a guarded llama.cpp integration lane;
+it is not yet an end-to-end throughput result.
 
 The 30-iteration run log is outside Git at
-`/mnt/fast-ai/bench-results/qwen27-xe2-verifier/run-20260712T160845Z.log`.
+`/mnt/fast-ai/bench-results/qwen27-xe2-verifier/run-20260712T200914Z.log`.

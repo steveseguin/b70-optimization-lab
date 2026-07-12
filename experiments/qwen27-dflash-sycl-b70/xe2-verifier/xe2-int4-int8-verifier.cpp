@@ -46,6 +46,12 @@ class dpas_verifier_split_kernel;
 template <int M, int SPLITS>
 class dpas_verifier_reduce_kernel;
 
+template <int M, int SPLITS, int JOINT_N>
+class dpas_verifier_joint_kernel;
+
+template <int M, int SPLITS, int JOINT_N>
+class dpas_verifier_joint_reduce_kernel;
+
 template <int M>
 sycl::event launch_dpas(sycl::queue & q, const uint8_t * weights, const int8_t * activations,
                         const float * weight_scales, const float * activation_scales,
@@ -146,6 +152,83 @@ std::pair<sycl::event, sycl::event> launch_dpas_split(
     return {compute, reduce};
 }
 
+// A materially different mapping from launch_dpas_split: one work-item owns
+// several adjacent 16-column tiles.  The Q8 activation vector and its scale
+// are loaded once per K block and reused by JOINT_N DPAS operations.  Weight
+// tiles remain in the production-friendly offline VNNI pack; no runtime
+// repacking or duplicate packed artifact is required.
+template <int M, int SPLITS, int JOINT_N>
+std::pair<sycl::event, sycl::event> launch_dpas_joint(
+        sycl::queue & q, const uint8_t * weights, const int8_t * activations,
+        const float * weight_scales, const float * activation_scales,
+        float * partial, float * output, int k_blocks, int n_tiles) {
+    const int joint_tiles = (n_tiles + JOINT_N - 1) / JOINT_N;
+    const sycl::event compute = q.submit([&](sycl::handler & h) {
+        h.parallel_for<dpas_verifier_joint_kernel<M, SPLITS, JOINT_N>>(
+            sycl::range<2>(SPLITS, joint_tiles), [=](sycl::id<2> id)
+                                                    [[intel::sycl_explicit_simd]] {
+                const int split = id[0];
+                const int tile0 = int(id[1]) * JOINT_N;
+                const int kb_begin = (k_blocks * split) / SPLITS;
+                const int kb_end = (k_blocks * (split + 1)) / SPLITS;
+                esimd::simd<float, M * 16 * JOINT_N> accum(0.0f);
+
+                for (int kb = kb_begin; kb < kb_end; ++kb) {
+                    esimd::simd<uint32_t, M * 8> a;
+                    a.copy_from(reinterpret_cast<const uint32_t *>(activations) + size_t(kb) * M * 8);
+                    esimd::simd<float, M> as;
+                    as.copy_from(activation_scales + kb * M);
+#pragma unroll
+                    for (int jt = 0; jt < JOINT_N; ++jt) {
+                        const int tile = tile0 + jt;
+                        if (tile >= n_tiles) continue;
+                        esimd::simd<uint32_t, 64> b;
+                        b.copy_from(reinterpret_cast<const uint32_t *>(weights) +
+                                    (size_t(kb) * n_tiles + tile) * 64);
+                        auto dots = xmx::dpas<8, M, int32_t, uint32_t, uint32_t,
+                                              xmx::dpas_argument_type::s4,
+                                              xmx::dpas_argument_type::s8>(b, a);
+                        esimd::simd<float, 16> ws;
+                        ws.copy_from(weight_scales + (size_t(kb) * n_tiles + tile) * 16);
+#pragma unroll
+                        for (int row = 0; row < M; ++row) {
+                            esimd::simd<int32_t, 16> di = dots.template select<16, 1>(row * 16);
+                            const auto d = esimd::convert<float>(di);
+                            const float activation_scale = as[row];
+                            accum.template select<16, 1>((jt * M + row) * 16) +=
+                                d * ws * activation_scale;
+                        }
+                    }
+                }
+#pragma unroll
+                for (int jt = 0; jt < JOINT_N; ++jt) {
+                    const int tile = tile0 + jt;
+                    if (tile >= n_tiles) continue;
+#pragma unroll
+                    for (int row = 0; row < M; ++row) {
+                        esimd::simd<float, 16> out =
+                            accum.template select<16, 1>((jt * M + row) * 16);
+                        out.copy_to(partial + (size_t(split) * M + row) * n_tiles * 16 + tile * 16);
+                    }
+                }
+            });
+    });
+    const sycl::event reduce = q.submit([&](sycl::handler & h) {
+        h.depends_on(compute);
+        h.parallel_for<dpas_verifier_joint_reduce_kernel<M, SPLITS, JOINT_N>>(
+            sycl::range<2>(M, n_tiles * 16), [=](sycl::id<2> id) {
+                const int row = id[0], col = id[1];
+                float sum = 0.0f;
+#pragma unroll
+                for (int split = 0; split < SPLITS; ++split) {
+                    sum += partial[(size_t(split) * M + row) * n_tiles * 16 + col];
+                }
+                output[size_t(row) * n_tiles * 16 + col] = sum;
+            });
+    });
+    return {compute, reduce};
+}
+
 class repeated_vector_kernel;
 
 sycl::event launch_repeated_vector(sycl::queue & q, const uint8_t * weights,
@@ -206,7 +289,8 @@ int run(const problem & p) {
     constexpr int reference_cols = 64;
     const int checked_cols = std::min(p.n, reference_cols);
     std::vector<float> reference(size_t(M) * checked_cols, 0.0f);
-    std::vector<float> dpas_out(output_count), split4_out(output_count), split8_out(output_count), vector_out(output_count);
+    std::vector<float> dpas_out(output_count), split4_out(output_count), split8_out(output_count);
+    std::vector<float> joint2_out(output_count), joint4_out(output_count), vector_out(output_count);
 
     for (int kb = 0; kb < k_blocks; ++kb) {
         for (int tile = 0; tile < n_tiles; ++tile) {
@@ -262,15 +346,22 @@ int run(const problem & p) {
     q.memcpy(split4_out.data(), dout, output_count * sizeof(float)).wait();
     launch_dpas_split<M, 8>(q, dw, da, dws, das, dpartial, dout, k_blocks, n_tiles).second.wait();
     q.memcpy(split8_out.data(), dout, output_count * sizeof(float)).wait();
+    launch_dpas_joint<M, 8, 2>(q, dw, da, dws, das, dpartial, dout, k_blocks, n_tiles).second.wait();
+    q.memcpy(joint2_out.data(), dout, output_count * sizeof(float)).wait();
+    launch_dpas_joint<M, 8, 4>(q, dw, da, dws, das, dpartial, dout, k_blocks, n_tiles).second.wait();
+    q.memcpy(joint4_out.data(), dout, output_count * sizeof(float)).wait();
     launch_repeated_vector(q, dw, da, dws, das, dout, M, k_blocks, n_tiles).wait();
     q.memcpy(vector_out.data(), dout, output_count * sizeof(float)).wait();
 
     float dpas_max_abs = 0.0f, split4_max_abs = 0.0f, split8_max_abs = 0.0f;
+    float joint2_max_abs = 0.0f, joint4_max_abs = 0.0f;
     float vector_max_abs = 0.0f, kernel_max_abs = 0.0f;
     for (size_t i = 0; i < output_count; ++i) {
         kernel_max_abs = std::max(kernel_max_abs, std::abs(dpas_out[i] - vector_out[i]));
         split4_max_abs = std::max(split4_max_abs, std::abs(split4_out[i] - vector_out[i]));
         split8_max_abs = std::max(split8_max_abs, std::abs(split8_out[i] - vector_out[i]));
+        joint2_max_abs = std::max(joint2_max_abs, std::abs(joint2_out[i] - vector_out[i]));
+        joint4_max_abs = std::max(joint4_max_abs, std::abs(joint4_out[i] - vector_out[i]));
     }
     for (int row = 0; row < M; ++row) {
         for (int col = 0; col < checked_cols; ++col) {
@@ -282,18 +373,22 @@ int run(const problem & p) {
     }
     const float tolerance = 2e-3f;
     if (dpas_max_abs > tolerance || vector_max_abs > tolerance || kernel_max_abs > tolerance ||
-        split4_max_abs > tolerance || split8_max_abs > tolerance) {
+        split4_max_abs > tolerance || split8_max_abs > tolerance ||
+        joint2_max_abs > tolerance || joint4_max_abs > tolerance) {
         std::cerr << "FAIL correctness dpas_max_abs=" << dpas_max_abs
                   << " vector_max_abs=" << vector_max_abs
                   << " kernel_max_abs=" << kernel_max_abs
                   << " split4_max_abs=" << split4_max_abs
                   << " split8_max_abs=" << split8_max_abs
+                  << " joint2_max_abs=" << joint2_max_abs
+                  << " joint4_max_abs=" << joint4_max_abs
                   << " tolerance=" << tolerance << '\n';
         return 2;
     }
 
     std::vector<double> dpas_us, dpas_wall_us, split4_us, split4_wall_us;
-    std::vector<double> split8_us, split8_wall_us, vector_us, vector_wall_us;
+    std::vector<double> split8_us, split8_wall_us, joint2_us, joint2_wall_us;
+    std::vector<double> joint4_us, joint4_wall_us, vector_us, vector_wall_us;
     dpas_us.reserve(p.iterations);
     vector_us.reserve(p.iterations);
     for (int i = 0; i < p.iterations; ++i) {
@@ -319,6 +414,20 @@ int run(const problem & p) {
         split8_wall_us.push_back(std::chrono::duration<double, std::micro>(wall_end - wall_begin).count());
 
         wall_begin = std::chrono::steady_clock::now();
+        auto j2 = launch_dpas_joint<M, 8, 2>(q, dw, da, dws, das, dpartial, dout, k_blocks, n_tiles);
+        j2.second.wait();
+        wall_end = std::chrono::steady_clock::now();
+        joint2_us.push_back(event_us(j2.first) + event_us(j2.second));
+        joint2_wall_us.push_back(std::chrono::duration<double, std::micro>(wall_end - wall_begin).count());
+
+        wall_begin = std::chrono::steady_clock::now();
+        auto j4 = launch_dpas_joint<M, 8, 4>(q, dw, da, dws, das, dpartial, dout, k_blocks, n_tiles);
+        j4.second.wait();
+        wall_end = std::chrono::steady_clock::now();
+        joint4_us.push_back(event_us(j4.first) + event_us(j4.second));
+        joint4_wall_us.push_back(std::chrono::duration<double, std::micro>(wall_end - wall_begin).count());
+
+        wall_begin = std::chrono::steady_clock::now();
         auto ve = launch_repeated_vector(q, dw, da, dws, das, dout, M, k_blocks, n_tiles);
         ve.wait();
         wall_end = std::chrono::steady_clock::now();
@@ -332,24 +441,33 @@ int run(const problem & p) {
     const double du = median(dpas_us), dwall = median(dpas_wall_us);
     const double s4u = median(split4_us), s4wall = median(split4_wall_us);
     const double s8u = median(split8_us), s8wall = median(split8_wall_us);
+    const double j2u = median(joint2_us), j2wall = median(joint2_wall_us);
+    const double j4u = median(joint4_us), j4wall = median(joint4_wall_us);
     const double vu = median(vector_us), vwall = median(vector_wall_us);
     const double original_speedup = vwall / dwall;
     const double split4_speedup = vwall / s4wall;
     const double split8_speedup = vwall / s8wall;
-    const double rescue_speedup = std::max(split4_speedup, split8_speedup);
+    const double joint2_speedup = vwall / j2wall;
+    const double joint4_speedup = vwall / j4wall;
+    const double rescue_speedup = std::max({split4_speedup, split8_speedup, joint2_speedup, joint4_speedup});
     std::cout << std::fixed << std::setprecision(3)
               << "device=\"" << q.get_device().get_info<sycl::info::device::name>() << "\""
               << " M=" << M << " K=" << p.k << " N=" << p.n
               << " original_event_us=" << du << " original_wall_us=" << dwall
               << " split4_event_us=" << s4u << " split4_wall_us=" << s4wall
               << " split8_event_us=" << s8u << " split8_wall_us=" << s8wall
+              << " joint2_event_us=" << j2u << " joint2_wall_us=" << j2wall
+              << " joint4_event_us=" << j4u << " joint4_wall_us=" << j4wall
               << " vector_event_us=" << vu << " vector_wall_us=" << vwall
               << " original_speedup=" << original_speedup
               << " split4_speedup=" << split4_speedup
               << " split8_speedup=" << split8_speedup
+              << " joint2_speedup=" << joint2_speedup
+              << " joint4_speedup=" << joint4_speedup
               << " dpas_max_abs=" << dpas_max_abs
               << " vector_max_abs=" << vector_max_abs << " kernel_max_abs=" << kernel_max_abs
               << " split4_max_abs=" << split4_max_abs << " split8_max_abs=" << split8_max_abs
+              << " joint2_max_abs=" << joint2_max_abs << " joint4_max_abs=" << joint4_max_abs
               << " gate=" << (rescue_speedup >= 1.5 ? "PASS" : "FAIL") << '\n';
 
     sycl::free(dw, q); sycl::free(da, q); sycl::free(dws, q);
