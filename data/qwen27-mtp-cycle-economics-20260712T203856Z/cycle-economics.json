@@ -1,0 +1,437 @@
+{
+  "schema_version": 1,
+  "server_log": "/mnt/fast-ai/bench-results/qwen27-dflash-sycl-b70/mtp-cycle-economics-20260712T203856Z/qwen27-q4_0-kv8-mtp3-graph0-strict128-20260712T203856Z/server.stdout.log",
+  "result": "/mnt/fast-ai/bench-results/qwen27-dflash-sycl-b70/mtp-cycle-economics-20260712T203856Z/qwen27-q4_0-kv8-mtp3-graph0-strict128-20260712T203856Z/result.json",
+  "cycles": 538,
+  "verifier_width_histogram": {
+    "3": 1,
+    "4": 537
+  },
+  "accepted_histogram": {
+    "0": 100,
+    "1": 121,
+    "2": 110,
+    "3": 207
+  },
+  "totals": {
+    "drafted": 1613,
+    "accepted": 962,
+    "emitted": 1500,
+    "acceptance": 0.5964042157470552,
+    "emitted_per_cycle": 2.7881040892193307
+  },
+  "phase_us": {
+    "draft_prepare_us": {
+      "n": 538,
+      "min": 9491,
+      "median": 9700.0,
+      "mean": 9704.302973977696,
+      "p90": 9786,
+      "max": 10205
+    },
+    "target_decode_us": {
+      "n": 538,
+      "min": 43458,
+      "median": 45645.5,
+      "mean": 45602.17472118959,
+      "p90": 45798,
+      "max": 59269
+    },
+    "spec_process_us": {
+      "n": 538,
+      "min": 911,
+      "median": 936.0,
+      "mean": 938.6914498141264,
+      "p90": 954,
+      "max": 1279
+    },
+    "accept_us": {
+      "n": 538,
+      "min": 287,
+      "median": 621.0,
+      "mean": 594.4776951672862,
+      "p90": 793,
+      "max": 1069
+    },
+    "commit_us": {
+      "n": 538,
+      "min": 8,
+      "median": 9.0,
+      "mean": 9.343866171003718,
+      "p90": 10,
+      "max": 27
+    },
+    "accounted_us": {
+      "n": 538,
+      "min": 54597,
+      "median": 56847.5,
+      "mean": 56848.9907063197,
+      "p90": 57203,
+      "max": 70721
+    },
+    "observed_cycle_us": {
+      "n": 526,
+      "min": 54613,
+      "median": 56861.0,
+      "mean": 56835.16920152091,
+      "p90": 57218,
+      "max": 57884
+    },
+    "unaccounted_us": {
+      "n": 526,
+      "min": 13,
+      "median": 16.0,
+      "mean": 16.273764258555133,
+      "p90": 18,
+      "max": 27
+    }
+  },
+  "by_prompt": [
+    {
+      "request_index": 0,
+      "task": 0,
+      "prompt_id": "incident-retrospective",
+      "cycles": 40,
+      "drafted": 120,
+      "accepted": 85,
+      "emitted": 125,
+      "acceptance": 0.7083333333333334,
+      "emitted_per_cycle": 3.125,
+      "accepted_histogram": {
+        "0": 3,
+        "1": 8,
+        "2": 10,
+        "3": 19
+      },
+      "verifier_width_histogram": {
+        "4": 40
+      },
+      "observed_cycle_us": {
+        "n": 39,
+        "min": 55976,
+        "median": 56702,
+        "mean": 56628.179487179485,
+        "p90": 56885,
+        "max": 56926
+      }
+    },
+    {
+      "request_index": 1,
+      "task": 43,
+      "prompt_id": "code-review",
+      "cycles": 48,
+      "drafted": 144,
+      "accepted": 78,
+      "emitted": 126,
+      "acceptance": 0.5416666666666666,
+      "emitted_per_cycle": 2.625,
+      "accepted_histogram": {
+        "0": 12,
+        "1": 10,
+        "2": 10,
+        "3": 16
+      },
+      "verifier_width_histogram": {
+        "4": 48
+      },
+      "observed_cycle_us": {
+        "n": 47,
+        "min": 55804,
+        "median": 56704,
+        "mean": 56639.65957446808,
+        "p90": 56968,
+        "max": 57018
+      }
+    },
+    {
+      "request_index": 2,
+      "task": 94,
+      "prompt_id": "customer-email",
+      "cycles": 44,
+      "drafted": 132,
+      "accepted": 82,
+      "emitted": 126,
+      "acceptance": 0.6212121212121212,
+      "emitted_per_cycle": 2.8636363636363638,
+      "accepted_histogram": {
+        "0": 6,
+        "1": 13,
+        "2": 6,
+        "3": 19
+      },
+      "verifier_width_histogram": {
+        "4": 44
+      },
+      "observed_cycle_us": {
+        "n": 43,
+        "min": 55473,
+        "median": 56646,
+        "mean": 56645.62790697674,
+        "p90": 56917,
+        "max": 57009
+      }
+    },
+    {
+      "request_index": 3,
+      "task": 141,
+      "prompt_id": "sql-debugging",
+      "cycles": 43,
+      "drafted": 129,
+      "accepted": 82,
+      "emitted": 125,
+      "acceptance": 0.6356589147286822,
+      "emitted_per_cycle": 2.9069767441860463,
+      "accepted_histogram": {
+        "0": 4,
+        "1": 12,
+        "2": 11,
+        "3": 16
+      },
+      "verifier_width_histogram": {
+        "4": 43
+      },
+      "observed_cycle_us": {
+        "n": 42,
+        "min": 55867,
+        "median": 56800.5,
+        "mean": 56769.09523809524,
+        "p90": 57058,
+        "max": 57286
+      }
+    },
+    {
+      "request_index": 4,
+      "task": 187,
+      "prompt_id": "release-plan",
+      "cycles": 44,
+      "drafted": 132,
+      "accepted": 80,
+      "emitted": 124,
+      "acceptance": 0.6060606060606061,
+      "emitted_per_cycle": 2.8181818181818183,
+      "accepted_histogram": {
+        "0": 10,
+        "1": 4,
+        "2": 14,
+        "3": 16
+      },
+      "verifier_width_histogram": {
+        "4": 44
+      },
+      "observed_cycle_us": {
+        "n": 43,
+        "min": 56044,
+        "median": 56867,
+        "mean": 56834.53488372093,
+        "p90": 57075,
+        "max": 57884
+      }
+    },
+    {
+      "request_index": 5,
+      "task": 234,
+      "prompt_id": "benchmark-analysis",
+      "cycles": 49,
+      "drafted": 147,
+      "accepted": 76,
+      "emitted": 125,
+      "acceptance": 0.5170068027210885,
+      "emitted_per_cycle": 2.5510204081632653,
+      "accepted_histogram": {
+        "0": 14,
+        "1": 9,
+        "2": 11,
+        "3": 15
+      },
+      "verifier_width_histogram": {
+        "4": 49
+      },
+      "observed_cycle_us": {
+        "n": 48,
+        "min": 55996,
+        "median": 56941.0,
+        "mean": 56933.979166666664,
+        "p90": 57424,
+        "max": 57571
+      }
+    },
+    {
+      "request_index": 6,
+      "task": 286,
+      "prompt_id": "architecture-tradeoff",
+      "cycles": 43,
+      "drafted": 129,
+      "accepted": 81,
+      "emitted": 124,
+      "acceptance": 0.627906976744186,
+      "emitted_per_cycle": 2.883720930232558,
+      "accepted_histogram": {
+        "0": 7,
+        "1": 10,
+        "2": 7,
+        "3": 19
+      },
+      "verifier_width_histogram": {
+        "4": 43
+      },
+      "observed_cycle_us": {
+        "n": 42,
+        "min": 55689,
+        "median": 56946.0,
+        "mean": 56873.78571428572,
+        "p90": 57160,
+        "max": 57288
+      }
+    },
+    {
+      "request_index": 7,
+      "task": 332,
+      "prompt_id": "bug-report-synthesis",
+      "cycles": 47,
+      "drafted": 141,
+      "accepted": 78,
+      "emitted": 125,
+      "acceptance": 0.5531914893617021,
+      "emitted_per_cycle": 2.6595744680851063,
+      "accepted_histogram": {
+        "0": 9,
+        "1": 13,
+        "2": 10,
+        "3": 15
+      },
+      "verifier_width_histogram": {
+        "4": 47
+      },
+      "observed_cycle_us": {
+        "n": 46,
+        "min": 55676,
+        "median": 56933.0,
+        "mean": 56862.15217391304,
+        "p90": 57165,
+        "max": 57247
+      }
+    },
+    {
+      "request_index": 8,
+      "task": 382,
+      "prompt_id": "technical-guide",
+      "cycles": 43,
+      "drafted": 129,
+      "accepted": 82,
+      "emitted": 125,
+      "acceptance": 0.6356589147286822,
+      "emitted_per_cycle": 2.9069767441860463,
+      "accepted_histogram": {
+        "0": 9,
+        "1": 6,
+        "2": 8,
+        "3": 20
+      },
+      "verifier_width_histogram": {
+        "4": 43
+      },
+      "observed_cycle_us": {
+        "n": 42,
+        "min": 56445,
+        "median": 57036.0,
+        "mean": 56980.40476190476,
+        "p90": 57293,
+        "max": 57492
+      }
+    },
+    {
+      "request_index": 9,
+      "task": 428,
+      "prompt_id": "risk-register",
+      "cycles": 47,
+      "drafted": 140,
+      "accepted": 79,
+      "emitted": 126,
+      "acceptance": 0.5642857142857143,
+      "emitted_per_cycle": 2.6808510638297873,
+      "accepted_histogram": {
+        "0": 8,
+        "1": 13,
+        "2": 12,
+        "3": 14
+      },
+      "verifier_width_histogram": {
+        "3": 1,
+        "4": 46
+      },
+      "observed_cycle_us": {
+        "n": 46,
+        "min": 54613,
+        "median": 57001.0,
+        "mean": 56888.84782608696,
+        "p90": 57218,
+        "max": 57273
+      }
+    },
+    {
+      "request_index": 10,
+      "task": 478,
+      "prompt_id": "performance-hypotheses",
+      "cycles": 49,
+      "drafted": 147,
+      "accepted": 74,
+      "emitted": 123,
+      "acceptance": 0.5034013605442177,
+      "emitted_per_cycle": 2.510204081632653,
+      "accepted_histogram": {
+        "0": 11,
+        "1": 16,
+        "2": 8,
+        "3": 14
+      },
+      "verifier_width_histogram": {
+        "4": 49
+      },
+      "observed_cycle_us": {
+        "n": 48,
+        "min": 55794,
+        "median": 56931.5,
+        "mean": 56925.229166666664,
+        "p90": 57262,
+        "max": 57322
+      }
+    },
+    {
+      "request_index": 11,
+      "task": 530,
+      "prompt_id": "decision-memo",
+      "cycles": 41,
+      "drafted": 123,
+      "accepted": 85,
+      "emitted": 126,
+      "acceptance": 0.6910569105691057,
+      "emitted_per_cycle": 3.073170731707317,
+      "accepted_histogram": {
+        "0": 7,
+        "1": 7,
+        "2": 3,
+        "3": 24
+      },
+      "verifier_width_histogram": {
+        "4": 41
+      },
+      "observed_cycle_us": {
+        "n": 40,
+        "min": 56052,
+        "median": 57056.5,
+        "mean": 57028.075,
+        "p90": 57342,
+        "max": 57621
+      }
+    }
+  ],
+  "budget": {
+    "cycle_ms_for_68_tok_s_at_measured_emitted_per_cycle": 41.00153072381369,
+    "cycle_ms_for_100_tok_s_at_measured_emitted_per_cycle": 27.881040892193308
+  },
+  "limitations": [
+    "Diagnostic rows add logging but no kernel instrumentation; target_decode and draft_prepare are blocking host wall intervals that include their device work.",
+    "The final width-1 decode after each request is not a speculative verifier cycle and is excluded.",
+    "Observed cycle time is accept-log to accept-log and therefore includes the next cycle's draft preparation plus logging/scheduling gaps."
+  ]
+}
