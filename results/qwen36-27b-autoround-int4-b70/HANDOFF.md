@@ -63,6 +63,15 @@ and `any`, so no endpoint was justified. See
 The next source work must reduce the dominant target verifier body, not tune
 more drafter losses against the reused selection corpus.
 
+Dense-MLP W4A16 gate/up + SwiGLU fusion was then implemented and closed at the
+real-weight graph microbenchmark gate. The control local MLP boundary measured
+`199.56-202.97 us/layer`; the paired scalar-U4 candidate measured
+`454.25-457.53 us/layer` and was not bit-exact. Standalone cached SwiGLU was
+only `11.1-12.2 us/layer`, capping activation-only savings near `0.7 ms/step`.
+Do not repeat a scalar paired-column W4 kernel; a future fusion must live in an
+equally fast systolic/JIT producer. See
+`../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-w4a16-swiglu-fusion-no-win.md`.
+
 That Q/K reuse lane was subsequently implemented and is now closed no-win.
 On the corrected TP2/FP16 local shape, four cards measured the control at
 `36.66-36.79 us/layer` and the precompute candidate at `44.91-45.42 us/layer`

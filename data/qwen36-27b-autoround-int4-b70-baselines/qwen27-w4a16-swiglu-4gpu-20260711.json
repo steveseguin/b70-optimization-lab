@@ -1,0 +1,117 @@
+{
+  "classification": "diagnostic_real_weight_kernel_microbench_not_endpoint_not_localmaxxing",
+  "date": "2026-07-11",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "shape": {
+    "dtype": "float16",
+    "gate_up_output": 17408,
+    "group_size": 128,
+    "hidden": 5120,
+    "intermediate_local": 8704,
+    "rows": 4
+  },
+  "benchmark": {
+    "warmup": 20,
+    "iterations": 100,
+    "calls_per_sample": 4,
+    "real_weight_layer": 0,
+    "tp_rank": 0,
+    "xpu_graph": true
+  },
+  "rows": [
+    {
+      "gpu": 0,
+      "control_gate_up_us": 89.2905,
+      "control_silu_cached_us": 26.2535,
+      "control_act_path_us": 93.50249999999998,
+      "candidate_act_path_us": 334.21049999999997,
+      "control_pipeline_eager_us": 141.089,
+      "candidate_pipeline_eager_us": 391.06600000000003,
+      "control_pipeline_graph_us": 202.64399999999998,
+      "candidate_pipeline_graph_us": 454.25249999999994,
+      "graph_delta_us": 251.60849999999996,
+      "activation_parity": {
+        "exact": false,
+        "max_abs": 0.00390625,
+        "mean_abs": 5.855244307895191e-05
+      },
+      "partial_down_parity": {
+        "exact": false,
+        "max_abs": 0.0009765625,
+        "mean_abs": 0.00011544772860361263
+      },
+      "artifact": "/tmp/qwen27-w4a16-swiglu-candidate-gpu0.json"
+    },
+    {
+      "gpu": 1,
+      "control_gate_up_us": 90.55799999999999,
+      "control_silu_cached_us": 24.147499999999997,
+      "control_act_path_us": 91.67599999999999,
+      "candidate_act_path_us": 334.685,
+      "control_pipeline_eager_us": 142.506,
+      "candidate_pipeline_eager_us": 395.36249999999995,
+      "control_pipeline_graph_us": 199.55649999999997,
+      "candidate_pipeline_graph_us": 457.53499999999997,
+      "graph_delta_us": 257.9785,
+      "activation_parity": {
+        "exact": false,
+        "max_abs": 0.00390625,
+        "mean_abs": 5.855244307895191e-05
+      },
+      "partial_down_parity": {
+        "exact": false,
+        "max_abs": 0.0009765625,
+        "mean_abs": 0.00011544772860361263
+      },
+      "artifact": "/tmp/qwen27-w4a16-swiglu-candidate-gpu1.json"
+    },
+    {
+      "gpu": 2,
+      "control_gate_up_us": 91.0,
+      "control_silu_cached_us": 29.802499999999995,
+      "control_act_path_us": 93.1255,
+      "candidate_act_path_us": 332.56600000000003,
+      "control_pipeline_eager_us": 142.2915,
+      "candidate_pipeline_eager_us": 390.9685,
+      "control_pipeline_graph_us": 202.969,
+      "candidate_pipeline_graph_us": 454.701,
+      "graph_delta_us": 251.73200000000006,
+      "activation_parity": {
+        "exact": false,
+        "max_abs": 0.00390625,
+        "mean_abs": 5.855244307895191e-05
+      },
+      "partial_down_parity": {
+        "exact": false,
+        "max_abs": 0.0009765625,
+        "mean_abs": 0.00011544772860361263
+      },
+      "artifact": "/tmp/qwen27-w4a16-swiglu-candidate-gpu2.json"
+    },
+    {
+      "gpu": 3,
+      "control_gate_up_us": 89.97949999999999,
+      "control_silu_cached_us": 29.373499999999996,
+      "control_act_path_us": 93.2165,
+      "candidate_act_path_us": 336.40749999999997,
+      "control_pipeline_eager_us": 142.6035,
+      "candidate_pipeline_eager_us": 392.275,
+      "control_pipeline_graph_us": 201.94199999999998,
+      "candidate_pipeline_graph_us": 457.4375,
+      "graph_delta_us": 255.4955,
+      "activation_parity": {
+        "exact": false,
+        "max_abs": 0.00390625,
+        "mean_abs": 5.855244307895191e-05
+      },
+      "partial_down_parity": {
+        "exact": false,
+        "max_abs": 0.0009765625,
+        "mean_abs": 0.00011544772860361263
+      },
+      "artifact": "/tmp/qwen27-w4a16-swiglu-candidate-gpu3.json"
+    }
+  ],
+  "decision": "no_win_no_endpoint",
+  "reason": "candidate graph pipeline 251-258 us/layer slower and non-exact"
+}
