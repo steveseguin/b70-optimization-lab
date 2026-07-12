@@ -9,19 +9,20 @@ B70.
 
 The promoted strict-valid record is the two-GPU webhie/AutoRound lane with
 FP16 target compute, pinned public oneCCL, captured intrinsic-MTP draft, and a
-graph-safe FlashAttention full target graph: median **`93.03624230561563
-tok/s`**, p10 `82.84551593521294`, mean `92.77314522741203`. Exact cases,
+graph-safe FlashAttention full target graph plus exact ReplaySSM transaction
+fusions: median **`95.384867741895 tok/s`**, p10 `86.97541500323224`, mean
+`95.62305049791388`. Exact cases,
 repeat128, baseline parity, and the 1K needle passed, and every strict prompt
-reported `cached_tokens=0`. The new path replaces the captured-GDN record's
-`33` target PIECEWISE segments with one four-row FULL graph. Two four-GPU
-crossover assignments measured gains of `+3.42%` and `+2.45%` over simultaneous
-PIECEWISE controls. LocalMaxxing approved the new row as
-`cmrgue7kl007pmj01yrkcyqmv`; the prior FP16 row is
-`cmrgojixq005rmj0141e9fjj2`.
+reported `cached_tokens=0`. The transaction path writes pending metadata in
+the recurrent kernel and writes pure-spec output directly to the final core
+view. Both swapped crossover assignments favored it. LocalMaxxing submission
+is pending; the prior 93.036 full-graph row is `cmrgue7kl007pmj01yrkcyqmv`.
 
 The current result, bisection, and reproduction paths are:
 
 - `tp2-fp16-graphsafe-flash-fullgraph-20260711.json`;
+- `tp2-fp16-fullgraph-transaction-20260711.json`;
+- `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-fullgraph-transaction-record.md`;
 - `../../experiments/qwen27_graphsafe_flash_attention/README.md`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-graphsafe-flashattention-fullgraph.md`;
 - `../../experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-tp2-capture-gdn-core-record.md`;

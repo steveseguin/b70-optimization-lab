@@ -1,0 +1,61 @@
+{
+  "date_utc": "2026-07-11",
+  "status": "promoted_strict_fresh_record",
+  "model": "webhie/Qwen3.6-27B-int4-AutoRound",
+  "model_revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+  "quantization": "AutoRound INT4 W4A16 target, FP16 target compute, runtime INT8 target LM-head BF16 scales, runtime INT4 group-128 draft LM-head BF16 scales",
+  "hardware": "2x Intel Arc Pro B70 32 GB, TP2, concurrency 1",
+  "headline": {
+    "metric": "median_tok_s_1_100_after_ttft",
+    "tok_s": 95.384867741895,
+    "p10": 86.97541500323224,
+    "mean": 95.62305049791388,
+    "full_after_ttft_median": 91.69809656297546,
+    "wall_full_median": 80.40533067412697,
+    "ttft_ms_median": 742.3079368891194
+  },
+  "strict_fresh_validity": {
+    "suite": "qwen36-27b-autoround-int4-b70-realistic-v1",
+    "unique_prompts_once": 12,
+    "cached_tokens_all_zero": true,
+    "history_or_response_reuse": false,
+    "target_verified_mtp3": true
+  },
+  "quality": {
+    "exact_cases": true,
+    "repeat128": true,
+    "baseline_match_all": true,
+    "needle_1k": true
+  },
+  "mechanism": {
+    "graph_safe_flashattention_full_target_graph": true,
+    "replayssm_fuse_pending_metadata": true,
+    "replayssm_direct_core_out": true,
+    "target_weights_or_quantization_changed": false
+  },
+  "variance_evidence": {
+    "candidate_pair_01": 95.33162503541821,
+    "control_pair_23": 87.90091562325287,
+    "candidate_pair_23": 94.52335597241532,
+    "control_pair_01": 93.68541153961348,
+    "candidate_mean_of_medians": 94.92749050391677,
+    "control_mean_of_medians": 90.79316358143318
+  },
+  "runtime_identity": {
+    "vllm_commit": "e7213ba8e13b74d7bfa3cbc05435a45df90eb76a",
+    "vllm_xpu_kernels_commit": "3b4effeeffd83f6ef4696bbe7e76d924a0e9d171",
+    "oneccl_parent_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+    "oneccl_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf"
+  },
+  "evidence": {
+    "strict_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-fp16-fullgraph-transaction-realistic512-20260711.json",
+    "summary_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-fp16-fullgraph-transaction-summary-20260711.json",
+    "quality_json": "data/qwen36-27b-autoround-int4-b70-baselines/quality-qwen27-tp2-fp16-fullgraph-transaction-repeat128-ctx1024-20260711.json",
+    "crossover_json": "data/qwen36-27b-autoround-int4-b70-baselines/qwen27-tp2-fp16-fullgraph-transaction-crossover-20260711.json"
+  },
+  "reproduction": "experiments/qwen36-27b-autoround-int4-b70/scripts/run-tp2-fullgraph-transaction-candidate.sh",
+  "prior_record_tok_s": 93.03624230561563,
+  "localmaxxing": {
+    "status": "pending_submission"
+  }
+}

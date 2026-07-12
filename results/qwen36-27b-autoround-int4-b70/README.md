@@ -35,23 +35,23 @@ Current TP2 record:
 - model/runtime recipe: webhie AutoRound W4A16 with FP16 target compute,
   runtime INT8 target LM-head with BF16 scales, runtime INT4 group128 draft
   LM-head with BF16 scales, ReplaySSM exact GDN state, target-verified MTP3,
-  graph-safe FlashAttention, one FULL four-row target graph, and a PIECEWISE
-  draft graph;
+  graph-safe FlashAttention, one FULL four-row target graph, exact ReplaySSM
+  pending/direct-output transaction fusions, and a PIECEWISE draft graph;
 - collective runtime: public oneCCL parent
   `b52f40c07f0b140e6aba87548c80720a350a9827`, libccl
   `4ceafd15c03ce46f11eeaf91781a92afebd3cecf`, injected only into the server;
-- strict headline: median **`93.036242 tok/s`**, p10 `82.845516`, mean
-  `92.773145`, full after-TTFT median `91.219731`, wall median `79.837069`,
-  TTFT median `742.232 ms`;
+- strict headline: median **`95.384868 tok/s`**, p10 `86.975415`, mean
+  `95.623050`, full after-TTFT median `91.698097`, wall median `80.405331`,
+  TTFT median `742.308 ms`;
 - exact cases + repeat128 + baseline parity + 1K needle all passed;
 - strict validity: 12 unique fixed realistic prompts, each once cold,
   `cached_tokens=0` throughout, no prompt/KV/history/response reuse, token-id
   timing for generated tokens 1-100 after TTFT;
-- variance: two simultaneous four-GPU pair assignments measured full-graph
-  gains of `+3.42%` and `+2.45%` over PIECEWISE controls;
-- LocalMaxxing: `cmrgue7kl007pmj01yrkcyqmv`; prior FP16 row
-  `cmrgojixq005rmj0141e9fjj2`;
-- packet: `tp2-fp16-graphsafe-flash-fullgraph-20260711.json`;
+- variance: both swapped four-GPU assignments favored the transaction
+  candidate (`95.332 vs 87.901`, then `94.523 vs 93.685 tok/s`);
+- LocalMaxxing: submission pending; prior full-graph row
+  `cmrgue7kl007pmj01yrkcyqmv`;
+- packet: `tp2-fp16-fullgraph-transaction-20260711.json`;
 - build/oracle/repro:
   `../../experiments/qwen27_graphsafe_flash_attention/README.md`.
 

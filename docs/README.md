@@ -146,20 +146,20 @@ The Qwen3.6 35B lane is indexed in
 
 The active Qwen27 one- and two-B70 optimization lane is indexed in
 [../results/qwen36-27b-autoround-int4-b70/](../results/qwen36-27b-autoround-int4-b70/).
-The current strict fresh-response record is **`93.036242 tok/s`** on TP2. It
-uses graph-safe Intel FlashAttention to capture one full four-row target graph,
-and passed exact cases, repeat128, baseline parity, and the 1K needle. It uses
+The current strict fresh-response record is **`95.384868 tok/s`** on TP2. It
+uses graph-safe Intel FlashAttention to capture one full four-row target graph
+plus exact ReplaySSM pending/direct-output transaction fusions, and passed
+exact cases, repeat128, baseline parity, and the 1K needle. It uses
 the `webhie` AutoRound checkpoint, runtime INT8 target LM-head BF16 scales,
 runtime INT4 draft LM-head BF16 scales, ReplaySSM exact GDN state handling,
 target-verified MTP3, unique cold prompts, and `cached_tokens=0`. The pinned
 public oneCCL/libccl revision fixes deterministic packed-verifier all-reduce
 graph failures in the installed runtime; an opaque compiled all-gather boundary
-then enables exact draft graph capture. A swapped four-GPU crossover measured a
-`+2.93%` mean gain for the full-graph candidate over PIECEWISE controls. See
-[the TP2 record packet](../results/qwen36-27b-autoround-int4-b70/tp2-fp16-graphsafe-flash-fullgraph-20260711.json).
-LocalMaxxing approved the `93.036242 tok/s` row as
-`cmrgue7kl007pmj01yrkcyqmv`; the prior `91.714405 tok/s` row is
-`cmrgojixq005rmj0141e9fjj2`.
+then enables exact draft graph capture. Both swapped four-GPU crossover
+assignments favored the transaction candidate. See
+[the TP2 record packet](../results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json).
+The `95.384868 tok/s` LocalMaxxing submission is pending; the prior
+`93.036242 tok/s` row is `cmrgue7kl007pmj01yrkcyqmv`.
 The previous one-B70 record was `68.236 tok/s` (LocalMaxxing
 `cmr9atqb800msqr01u760xh0t`), and the previous BF16-scale INT8-LM-head-only
 record was `65.276 tok/s`. The

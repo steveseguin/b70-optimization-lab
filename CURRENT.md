@@ -34,12 +34,13 @@ Pro B70 GPUs**.
 - [Reproduction entry point](repro/qwen36-27b-autoround-int4-b70/README.md)
 - [Experiment workspace](experiments/qwen36-27b-autoround-int4-b70/README.md)
 
-The current promoted graph-safe FlashAttention FP16-compute result is
-**93.036242 tok/s median** on the fixed 12-prompt cold realistic gate. Two-way
-crossover showed a `+2.93%` candidate/control mean improvement, and exact
+The current promoted graph-safe FlashAttention plus ReplaySSM-transaction
+FP16-compute result is **95.384868 tok/s median** on the fixed 12-prompt cold
+realistic gate. A swapped four-GPU crossover favored the transaction candidate
+in both assignments, and exact
 cases, repeat128, baseline parity, and the 1K needle passed. The linked packet
 owns the full identity; LocalMaxxing approved it as
-`cmrgue7kl007pmj01yrkcyqmv`.
+pending at the time of this update.
 
 ### Protected In-Flight Work
 
