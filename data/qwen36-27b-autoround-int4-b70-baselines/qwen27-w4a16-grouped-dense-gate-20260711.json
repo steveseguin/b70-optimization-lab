@@ -1,0 +1,103 @@
+{
+  "date_utc": "2026-07-11",
+  "classification": "diagnostic_real_weight_kernel_gate",
+  "decision": "no_integration_gate",
+  "results": [
+    {
+      "classification": "diagnostic_real_weight_kernel_gate",
+      "eager": {
+        "onednn": {
+          "max_ms": 0.147498,
+          "mean_ms": 0.09125544999999999,
+          "median_ms": 0.0897,
+          "min_ms": 0.083382,
+          "stdev_ms": 0.008308270683331159
+        },
+        "xe2_grouped": {
+          "max_ms": 0.126308,
+          "mean_ms": 0.12043785,
+          "median_ms": 0.119782,
+          "min_ms": 0.11843,
+          "stdev_ms": 0.0014935980274156772
+        }
+      },
+      "graph": {
+        "onednn": {
+          "max_ms": 0.165828,
+          "mean_ms": 0.15098343,
+          "median_ms": 0.1507415,
+          "min_ms": 0.147862,
+          "stdev_ms": 0.002090699023078167
+        },
+        "xe2_grouped": {
+          "max_ms": 0.192816,
+          "mean_ms": 0.15243267,
+          "median_ms": 0.1478295,
+          "min_ms": 0.142948,
+          "stdev_ms": 0.012950535938759444
+        }
+      },
+      "parity": {
+        "exact": false,
+        "max_abs": 0.0009765625,
+        "mean_abs": 1.7917088257490832E-7,
+        "rmse": 0.000009306104402639903
+      },
+      "projection": "gate_up",
+      "shape": {
+        "k": 5120,
+        "m": 4,
+        "n": 17408,
+        "tp_rank": 0
+      }
+    },
+    {
+      "classification": "diagnostic_real_weight_kernel_gate",
+      "eager": {
+        "onednn": {
+          "max_ms": 0.087685,
+          "mean_ms": 0.045543810000000004,
+          "median_ms": 0.041729999999999996,
+          "min_ms": 0.041027999999999995,
+          "stdev_ms": 0.007202775418816
+        },
+        "xe2_grouped": {
+          "max_ms": 0.083161,
+          "mean_ms": 0.07890519,
+          "median_ms": 0.07874099999999999,
+          "min_ms": 0.078364,
+          "stdev_ms": 0.0006221546703995722
+        }
+      },
+      "graph": {
+        "onednn": {
+          "max_ms": 0.24987299999999998,
+          "mean_ms": 0.06860334,
+          "median_ms": 0.06444749999999999,
+          "min_ms": 0.063635,
+          "stdev_ms": 0.020021185529443552
+        },
+        "xe2_grouped": {
+          "max_ms": 0.16589299999999998,
+          "mean_ms": 0.11710958999999999,
+          "median_ms": 0.1160185,
+          "min_ms": 0.11515399999999999,
+          "stdev_ms": 0.0063485353934509955
+        }
+      },
+      "parity": {
+        "exact": false,
+        "max_abs": 0.0009765625,
+        "mean_abs": 2.861954442323622E-7,
+        "rmse": 0.000012289859114389401
+      },
+      "projection": "down",
+      "shape": {
+        "k": 8704,
+        "m": 4,
+        "n": 5120,
+        "tp_rank": 0
+      }
+    }
+  ]
+}
