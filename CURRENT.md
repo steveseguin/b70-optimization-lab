@@ -109,6 +109,16 @@ requires at least one scope change: a compatible substantially better draft,
 lower-bit/reduced-weight target, or a context-owned device-unrolled MTP engine
 plus verifier below `29.8 ms`; current safe optimizations cannot meet 68.
 
+The context-owned device-resident MTP3 phase-one path is now implemented and
+correct: persistent candidate/`h_nextn` staging, ordered same-device input
+copies, a fixed three-step submission loop, and a poisoned-host parity/lifetime
+test all pass. A SYCL top-k leading scratch entry initially collapsed
+acceptance; selecting the exact production-equivalent candidate restored normal
+acceptance. The strict cold suite nevertheless measured only `50.164 tok/s`
+median with all gates passing, so host-boundary removal alone is closed as a
+speed lane. The serialized draft graphs still execute and the `45.646 ms` M=4
+target verifier remains the dominant blocker.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was
