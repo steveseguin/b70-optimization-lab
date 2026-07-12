@@ -57,6 +57,16 @@ fusion hits 128 pairs/pass and saves about `0.3 ms`, but failed the 3% MTP gate.
 The first block-scaled Xe2 DPAS verifier layout is closed at only `1.11x` M=4
 and `1.09x` M=8 versus vector, below its `1.5x` integration gate.
 
+The larger guarded fusion stack now reaches `50.390 tok/s` strict MTP3 versus
+`48.796 tok/s` without direct GDN cache commit (`+3.27%`) across an eight-run
+four-card crossover.  RMS/Q8 sharing and repaired SwiGLU/Q8 are retained behind
+flags.  Two further 48-layer boundaries are closed as losses: the matched GDN
+output epilogue was neutral (`25.89` versus `25.93-25.94 tok/s` M=1), while
+moving sigmoid/softplus raw-gate work into GDN regressed strict MTP3 by `6.67%`
+(`46.321` versus `49.632 tok/s`).  Both remain default off.  These results show
+that launch-count reduction alone is insufficient when fusion enlarges the GDN
+kernel or adds transcendental work to its critical path.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was
