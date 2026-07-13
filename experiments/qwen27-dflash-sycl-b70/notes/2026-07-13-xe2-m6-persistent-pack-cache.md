@@ -51,6 +51,11 @@ Measurements used the 15 GB target GGUF and the external USB artifact root:
 | Cached prepare, trusted recorded source hash | `0.17 s` wall; `0` tensors repacked |
 | Cached shallow set/key/size admission | `0.04 s` wall (`0.0028 s` internal) |
 | Cached deep SHA-256 of all 6.07 GiB | `5.10 s` wall (`5.058 s` internal) |
+| First atomic RAM stage, including new disk deep trust | `7.549 s` |
+| RAM payload copy portion | `2.264 s` |
+| Hot repeated `stage-ram` lookup | `0.06 s` wall (`0.00867-0.00890 s` internal) |
+| Hot `stage-validate` lookup | `0.05 s` wall (`0.00478-0.00483 s` internal) |
+| Explicit deep RAM validation | `5.35 s` wall (`5.308 s` internal) |
 
 The first-pack timing excludes the per-tensor SHA-256 time from its reported
 `37.792 s` pack counter; checksums were still completed before publication.
@@ -70,10 +75,30 @@ python3 scripts/qwen27-xe2-m6-pack-cache.py verify \
 
 python3 scripts/qwen27-xe2-m6-pack-cache.py verify --deep \
   --set-key 942dc71558357d09724a74525383255c0cd1387216e45c147632876e962d17ac
+
+python3 scripts/qwen27-xe2-m6-pack-cache.py stage-ram \
+  --set-key 942dc71558357d09724a74525383255c0cd1387216e45c147632876e962d17ac
+
+python3 scripts/qwen27-xe2-m6-pack-cache.py stage-validate \
+  --set-key 942dc71558357d09724a74525383255c0cd1387216e45c147632876e962d17ac
 ```
 
 `prepare --skip-source-hash` deliberately trusts the SHA-256 already recorded
 in the tracked model manifest. It is for repeated local development only.
+
+The first `stage-ram` created a durable `deep-validation.json` receipt tied to
+the exact disk manifest SHA-256 and canonical payload table. It then copied to
+a same-tmpfs staging directory and atomically renamed the completed set into
+place. Later startup lookups compare that receipt, manifest identity, all 130
+canonical keys, file sizes, and a device/inode/mtime stat-identity table without
+rehashing 6.07 GiB. Changing the disk manifest or replacing/modifying a payload
+invalidates the receipt and forces a fresh deep validation.
+
+`/dev/shm` had `50,371,276,800` bytes available before staging and
+`43,853,557,760` bytes (`40.84 GiB`) afterward. The staged directory occupies
+`6,517,706,815` bytes including metadata. The tool keeps at least 8 GiB free by
+default and recorded both cold-stage and hot-lookup results beside the disk
+manifest.
 
 ## Remaining runtime boundary
 

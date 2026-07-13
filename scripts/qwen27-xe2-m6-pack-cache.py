@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import random
+import shutil
 import struct
 import sys
 import tempfile
@@ -25,6 +26,7 @@ from typing import Any, BinaryIO
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SPEC = ROOT / "experiments/qwen27-dflash-sycl-b70/harness/model-pack-manifest.json"
 DEFAULT_CACHE = Path("/mnt/usb-models/model-packs/qwen27-xe2-m6-v2")
+DEFAULT_RAM_ROOT = Path("/dev/shm/qwen27-xe2-m6-v2")
 ARCHITECTURE = "bmg-g31"
 LAYOUT_NAME = "q4_0-xe2-dpas-v2"
 LAYOUT_VERSION = 2
@@ -34,7 +36,7 @@ EXPECTED_N = 17408
 Q4_0_TYPE = 2
 Q4_0_BLOCK_BYTES = 18
 HASH_CHUNK = 16 * 1024 * 1024
-TOOL_REVISION = 1
+TOOL_REVISION = 2
 
 
 GGUF_VALUE_SIZES = {
@@ -445,11 +447,12 @@ def find_manifest(args: argparse.Namespace) -> Path:
     return candidates[0]
 
 
-def verify(args: argparse.Namespace) -> int:
+def validate_pack_manifest(
+    manifest_path: Path, model_spec: Path, deep: bool,
+) -> tuple[dict[str, Any], list[str]]:
     started = time.monotonic()
-    manifest_path = find_manifest(args)
     manifest = load_json(manifest_path)
-    spec = load_json(args.model_spec)
+    spec = load_json(model_spec)
     failures = []
     if manifest.get("format") != "qwen27-xe2-m6-pack-set-v2":
         failures.append("set-format")
@@ -480,7 +483,7 @@ def verify(args: argparse.Namespace) -> int:
             failures.append(f"payload-size:{entry['identity']['tensor_name']}")
             continue
         checked_bytes += expected_size
-        if args.deep:
+        if deep:
             sha, _ = hash_file(payload)
             if sha != entry["payload"]["sha256"]:
                 failures.append(f"payload-sha256:{entry['identity']['tensor_name']}")
@@ -489,7 +492,7 @@ def verify(args: argparse.Namespace) -> int:
     elapsed = time.monotonic() - started
     result = {
         "status": "failed" if failures else "ready",
-        "validation": "deep" if args.deep else "shallow",
+        "validation": "deep" if deep else "shallow",
         "manifest": str(manifest_path),
         "set_key": manifest.get("key"),
         "tensor_count": len(manifest.get("tensors", [])),
@@ -497,6 +500,252 @@ def verify(args: argparse.Namespace) -> int:
         "seconds": elapsed,
         "failures": failures,
     }
+    return result, failures
+
+
+def payload_table_sha(manifest: dict[str, Any]) -> str:
+    return canonical_sha([
+        {
+            "key": entry["key"],
+            "path": entry["payload"]["path"],
+            "size_bytes": entry["payload"]["size_bytes"],
+            "sha256": entry["payload"]["sha256"],
+        }
+        for entry in manifest["tensors"]
+    ])
+
+
+def payload_stat_table_sha(manifest_path: Path, manifest: dict[str, Any]) -> str:
+    root = manifest_path.parent
+    table = []
+    for entry in manifest["tensors"]:
+        payload = root / entry["payload"]["path"]
+        if not payload.is_file():
+            return "missing"
+        stat = payload.stat()
+        table.append({
+            "key": entry["key"], "size_bytes": stat.st_size,
+            "mtime_ns": stat.st_mtime_ns, "device": stat.st_dev, "inode": stat.st_ino,
+        })
+    return canonical_sha(table)
+
+
+def trust_receipt_path(manifest_path: Path) -> Path:
+    return manifest_path.parent / "deep-validation.json"
+
+
+def trust_receipt_matches(manifest_path: Path, manifest: dict[str, Any]) -> tuple[bool, dict[str, Any] | None]:
+    receipt_path = trust_receipt_path(manifest_path)
+    if not receipt_path.is_file():
+        return False, None
+    receipt = load_json(receipt_path)
+    manifest_sha, manifest_size = hash_file(manifest_path)
+    okay = (
+        receipt.get("format") == "qwen27-xe2-m6-deep-validation-v1"
+        and receipt.get("set_key") == manifest.get("key")
+        and receipt.get("manifest_sha256") == manifest_sha
+        and receipt.get("manifest_size_bytes") == manifest_size
+        and receipt.get("payload_table_sha256") == payload_table_sha(manifest)
+        and receipt.get("payload_stat_table_sha256") == payload_stat_table_sha(manifest_path, manifest)
+        and receipt.get("validated_bytes") == manifest.get("payload_size_bytes")
+    )
+    return okay, receipt
+
+
+def establish_trust(manifest_path: Path, model_spec: Path) -> tuple[dict[str, Any], bool]:
+    manifest = load_json(manifest_path)
+    trusted, receipt = trust_receipt_matches(manifest_path, manifest)
+    if trusted and receipt is not None:
+        return receipt, True
+    result, failures = validate_pack_manifest(manifest_path, model_spec, deep=True)
+    if failures:
+        raise RuntimeError(f"cannot trust invalid disk pack: {', '.join(failures)}")
+    manifest_sha, manifest_size = hash_file(manifest_path)
+    receipt = {
+        "schema_version": 1,
+        "format": "qwen27-xe2-m6-deep-validation-v1",
+        "status": "trusted",
+        "set_key": manifest["key"],
+        "manifest_sha256": manifest_sha,
+        "manifest_size_bytes": manifest_size,
+        "payload_table_sha256": payload_table_sha(manifest),
+        "payload_stat_table_sha256": payload_stat_table_sha(manifest_path, manifest),
+        "validated_bytes": result["checked_bytes"],
+        "deep_validation_seconds": result["seconds"],
+        "created_unix": time.time(),
+        "trust_boundary": "local immutable artifact; invalidate when manifest identity changes",
+    }
+    atomic_json(trust_receipt_path(manifest_path), receipt)
+    return receipt, False
+
+
+def verify(args: argparse.Namespace) -> int:
+    manifest_path = find_manifest(args)
+    result, failures = validate_pack_manifest(manifest_path, args.model_spec, args.deep)
+    print(json.dumps(result, indent=2))
+    return 1 if failures else 0
+
+
+def filesystem_available(path: Path) -> int:
+    stats = os.statvfs(path)
+    return stats.f_bavail * stats.f_frsize
+
+
+def validate_ram_stage(
+    stage: Path, source_manifest_path: Path, model_spec: Path, deep: bool,
+) -> tuple[dict[str, Any], list[str]]:
+    started = time.monotonic()
+    failures: list[str] = []
+    source_manifest = load_json(source_manifest_path)
+    trusted, trust = trust_receipt_matches(source_manifest_path, source_manifest)
+    if not trusted or trust is None:
+        failures.append("source-deep-trust")
+    stage_manifest_path = stage / "manifest.json"
+    stage_receipt_path = stage / "ram-stage.json"
+    stage_trust_path = stage / "deep-validation.json"
+    if not stage_manifest_path.is_file() or not stage_receipt_path.is_file() or not stage_trust_path.is_file():
+        failures.append("ram-metadata")
+        return {
+            "status": "failed", "stage": str(stage), "validation": "deep" if deep else "trusted-shallow",
+            "seconds": time.monotonic() - started, "failures": failures,
+        }, failures
+    stage_manifest = load_json(stage_manifest_path)
+    stage_receipt = load_json(stage_receipt_path)
+    stage_trust = load_json(stage_trust_path)
+    source_manifest_sha, _ = hash_file(source_manifest_path)
+    if stage_manifest != source_manifest:
+        failures.append("ram-manifest")
+    if trust is not None and stage_trust != trust:
+        failures.append("ram-deep-trust")
+    if (
+        stage_receipt.get("format") != "qwen27-xe2-m6-ram-stage-v1"
+        or stage_receipt.get("set_key") != source_manifest.get("key")
+        or stage_receipt.get("source_manifest_sha256") != source_manifest_sha
+        or stage_receipt.get("payload_table_sha256") != payload_table_sha(source_manifest)
+    ):
+        failures.append("ram-stage-receipt")
+    checked_bytes = 0
+    for entry in source_manifest.get("tensors", []):
+        payload = stage / entry["payload"]["path"]
+        expected_size = entry["payload"]["size_bytes"]
+        if not payload.is_file() or payload.stat().st_size != expected_size:
+            failures.append(f"ram-payload-size:{entry['identity']['tensor_name']}")
+            continue
+        checked_bytes += expected_size
+        if deep:
+            sha, _ = hash_file(payload)
+            if sha != entry["payload"]["sha256"]:
+                failures.append(f"ram-payload-sha256:{entry['identity']['tensor_name']}")
+    result = {
+        "status": "failed" if failures else "ready",
+        "stage": str(stage),
+        "set_key": source_manifest.get("key"),
+        "validation": "deep" if deep else "trusted-shallow",
+        "tensor_count": len(source_manifest.get("tensors", [])),
+        "checked_bytes": checked_bytes,
+        "seconds": time.monotonic() - started,
+        "available_bytes": filesystem_available(stage.parent),
+        "failures": failures,
+    }
+    return result, failures
+
+
+def stage_ram(args: argparse.Namespace) -> int:
+    overall_started = time.monotonic()
+    manifest_path = find_manifest(args)
+    manifest = load_json(manifest_path)
+    args.ram_root.mkdir(parents=True, exist_ok=True)
+    trust_started = time.monotonic()
+    trust, trust_reused = establish_trust(manifest_path, args.model_spec)
+    trust_seconds = time.monotonic() - trust_started
+    final = args.ram_root / manifest["key"]
+    if final.exists():
+        source_trust_path = trust_receipt_path(manifest_path)
+        ram_trust_path = final / "deep-validation.json"
+        if not ram_trust_path.is_file() or ram_trust_path.read_bytes() != source_trust_path.read_bytes():
+            temporary_trust = final / f".deep-validation.json.tmp-{os.getpid()}"
+            shutil.copyfile(source_trust_path, temporary_trust)
+            os.replace(temporary_trust, ram_trust_path)
+        result, failures = validate_ram_stage(final, manifest_path, args.model_spec, deep=False)
+        result["status"] = "reused" if not failures else "failed"
+        result["lookup_seconds"] = time.monotonic() - overall_started
+        result["source_trust_reused"] = trust_reused
+        result["trust_lookup_seconds"] = trust_seconds
+        if not failures:
+            atomic_json(manifest_path.parent / "last-ram-lookup.json", result)
+        print(json.dumps(result, indent=2))
+        return 1 if failures else 0
+
+    payload_bytes = manifest["payload_size_bytes"]
+    available_before = filesystem_available(args.ram_root)
+    if available_before - payload_bytes < args.min_free_bytes:
+        raise RuntimeError(
+            f"insufficient RAM-stage headroom: available={available_before} payload={payload_bytes} "
+            f"required_free={args.min_free_bytes}"
+        )
+    staging = args.ram_root / f".{manifest['key']}.tmp-{os.getpid()}"
+    if staging.exists():
+        raise RuntimeError(f"staging path already exists: {staging}")
+    copy_started = time.monotonic()
+    staging.mkdir()
+    try:
+        (staging / "tensors").mkdir()
+        for entry in manifest["tensors"]:
+            source = manifest_path.parent / entry["payload"]["path"]
+            destination = staging / entry["payload"]["path"]
+            shutil.copyfile(source, destination)
+        shutil.copyfile(manifest_path, staging / "manifest.json")
+        shutil.copyfile(trust_receipt_path(manifest_path), staging / "deep-validation.json")
+        copy_seconds = time.monotonic() - copy_started
+        available_after_copy = filesystem_available(args.ram_root)
+        source_manifest_sha, _ = hash_file(manifest_path)
+        stage_receipt = {
+            "schema_version": 1,
+            "format": "qwen27-xe2-m6-ram-stage-v1",
+            "status": "ready",
+            "set_key": manifest["key"],
+            "source_manifest": str(manifest_path),
+            "source_manifest_sha256": source_manifest_sha,
+            "payload_table_sha256": payload_table_sha(manifest),
+            "payload_size_bytes": payload_bytes,
+            "tensor_count": len(manifest["tensors"]),
+            "source_deep_trust_reused": trust_reused,
+            "source_deep_validation_seconds": trust["deep_validation_seconds"],
+            "trust_lookup_seconds_this_run": trust_seconds,
+            "copy_seconds": copy_seconds,
+            "available_bytes_before": available_before,
+            "available_bytes_after_copy": available_after_copy,
+            "created_unix": time.time(),
+        }
+        atomic_json(staging / "ram-stage.json", stage_receipt)
+        os.replace(staging, final)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
+    result, failures = validate_ram_stage(final, manifest_path, args.model_spec, deep=False)
+    result.update({
+        "status": "staged" if not failures else "failed",
+        "cold_stage_seconds": time.monotonic() - overall_started,
+        "copy_seconds": copy_seconds,
+        "source_trust_reused": trust_reused,
+        "available_bytes_before": available_before,
+        "available_bytes_after": filesystem_available(args.ram_root),
+    })
+    if not failures:
+        atomic_json(manifest_path.parent / "last-ram-stage.json", result)
+    print(json.dumps(result, indent=2))
+    return 1 if failures else 0
+
+
+def stage_validate(args: argparse.Namespace) -> int:
+    manifest_path = find_manifest(args)
+    manifest = load_json(manifest_path)
+    stage = args.ram_root / manifest["key"]
+    if not stage.is_dir():
+        raise FileNotFoundError(stage)
+    result, failures = validate_ram_stage(stage, manifest_path, args.model_spec, args.deep)
+    if not failures and not args.deep:
+        atomic_json(manifest_path.parent / "last-ram-lookup.json", result)
     print(json.dumps(result, indent=2))
     return 1 if failures else 0
 
@@ -555,14 +804,19 @@ def self_test() -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("inspect", "self-test", "prepare", "verify"))
+    parser.add_argument(
+        "command", choices=("inspect", "self-test", "prepare", "verify", "stage-ram", "stage-validate")
+    )
     parser.add_argument("--model-spec", type=Path, default=DEFAULT_SPEC)
     parser.add_argument("--model", type=Path)
     parser.add_argument("--cache-root", type=Path, default=DEFAULT_CACHE)
+    parser.add_argument("--ram-root", type=Path, default=DEFAULT_RAM_ROOT)
     parser.add_argument("--set-key")
     parser.add_argument("--skip-source-hash", action="store_true",
                         help="trust the SHA256 recorded in model-pack-manifest.json")
     parser.add_argument("--deep", action="store_true", help="rehash every cached payload")
+    parser.add_argument("--min-free-bytes", type=int, default=8 * 1024**3,
+                        help="minimum /dev/shm headroom retained after staging")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
     if args.model is None:
@@ -582,6 +836,10 @@ def main() -> int:
         return prepare(args)
     if args.command == "verify":
         return verify(args)
+    if args.command == "stage-ram":
+        return stage_ram(args)
+    if args.command == "stage-validate":
+        return stage_validate(args)
     raise AssertionError(args.command)
 
 

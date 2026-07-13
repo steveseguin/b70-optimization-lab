@@ -142,6 +142,8 @@ python3 scripts/qwen27-xe2-m6-pack-cache.py inspect
 /home/steve/.venvs/vllm-xpu/bin/python \
   scripts/qwen27-xe2-m6-pack-cache.py prepare
 python3 scripts/qwen27-xe2-m6-pack-cache.py verify --deep
+python3 scripts/qwen27-xe2-m6-pack-cache.py stage-ram
+python3 scripts/qwen27-xe2-m6-pack-cache.py stage-validate
 ```
 
 The set and every tensor are content-addressed by the target model SHA-256,
@@ -157,3 +159,12 @@ llama.cpp loader can mmap the admitted payloads, but protected llama.cpp source
 was not changed by this tooling work. Measurements and the exact artifact key
 are in
 [`../notes/2026-07-13-xe2-m6-persistent-pack-cache.md`](../notes/2026-07-13-xe2-m6-persistent-pack-cache.md).
+
+`stage-ram` establishes one durable deep-validation receipt when needed, then
+atomically publishes the 130 payloads below `/dev/shm/qwen27-xe2-m6-v2/`.
+Subsequent `stage-ram` or `stage-validate` calls trust the unchanged manifest,
+receipt, canonical keys, exact file sizes, and the disk files' stat-identity
+table, avoiding another 6.07 GiB hash pass while still invalidating trust when
+an artifact is replaced or modified. `stage-validate --deep` remains available
+for an explicit RAM checksum. The stage refuses to consume the last 8 GiB of
+`/dev/shm` by default.

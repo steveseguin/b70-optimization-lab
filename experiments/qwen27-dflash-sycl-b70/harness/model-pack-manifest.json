@@ -16,8 +16,8 @@
   },
   "packing_tool": {
     "path": "scripts/qwen27-xe2-m6-pack-cache.py",
-    "revision": 1,
-    "status": "native GGUF directory parser plus exact q4_0-xe2-dpas-v2 gate/up packer implemented; protected llama.cpp binding not implemented"
+    "revision": 2,
+    "status": "native GGUF parser, exact q4_0-xe2-dpas-v2 packer, persistent trust receipt, and atomic RAM staging implemented; protected llama.cpp binding not implemented"
   },
   "kernel_abi": {
     "name": "qwen27-xe2-m6-pack-v2",
@@ -49,6 +49,15 @@
     ],
     "validation": "canonical set/tensor keys, exact sizes, per-source-tensor SHA256, and per-payload SHA256",
     "binding_status": "external mmap-safe artifacts ready; llama.cpp integration not performed"
+  },
+  "native_m6_ram_stage": {
+    "root": "/dev/shm/qwen27-xe2-m6-v2/942dc71558357d09724a74525383255c0cd1387216e45c147632876e962d17ac",
+    "status": "staged-and-deep-verified",
+    "semantics": "durable disk deep-validation receipt plus atomic tmpfs directory publication and trusted key/size startup lookup",
+    "payload_size_bytes": 6517555200,
+    "minimum_free_bytes_policy": 8589934592,
+    "available_bytes_after_stage": 43853557760,
+    "loader_binding": "pending"
   },
   "iteration_artifact_registry": {
     "status": "implemented",
