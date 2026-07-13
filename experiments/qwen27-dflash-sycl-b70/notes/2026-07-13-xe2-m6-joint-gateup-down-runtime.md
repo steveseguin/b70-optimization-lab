@@ -83,3 +83,30 @@ This is `+8.64%` over the matching promoted gate/up-only AOT record. LocalMaxxin
 approved it as `cmrj8fygq029ymj01e2404psy` (HTTP 201). The queue and response
 are preserved under the lane's `localmaxxing/` folder and
 `data/localmaxxing-responses/` respectively.
+
+## GDN cache fusion composes: 44.255 tok/s
+
+The previously verified `GGML_SYCL_FUSE_GDN_CACHE=1` boundary was then enabled
+on top of the exact same 187-pack BMG-AOT DFlash5 identity. It writes each GDN
+rollback snapshot directly into its persistent cache and skips the 48 tail
+copies and their views. The fixed cold suite passed again with every cache
+count zero:
+
+- median tokens 1-100 after TTFT: `44.25538817570995 tok/s`;
+- p10: `38.147152482432936 tok/s`;
+- mean: `44.348085291972346 tok/s`;
+- median full-output after TTFT: `44.52145461698231 tok/s`;
+- median wall full128: `31.76169603511224 tok/s`;
+- median TTFT: `1155.4772414965555 ms`.
+
+This is `+3.79%` over the matching `42.641` AOT record. It matters because it
+shows that recurrent-state traffic removal and packed projection acceleration
+are additive at the real native-DFlash M=6 boundary. LocalMaxxing approved the
+new single-session one-B70 record as `cmrj8s2sy02a4mj01f18hanvc`.
+
+Evidence:
+
+- `data/qwen36-27b-mtp-gguf-q4-b70-baselines/xe2-m6-full187-joint-gdncache-aot-realistic128-20260713T130908Z.json`;
+- `/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/runs/xe2-m6-full187-joint-gdncache-aot-realistic128-20260713T130908Z/`;
+- `experiments/qwen27-dflash-sycl-b70/localmaxxing/qwen36-27b-q4_0-xe2-m6-gateup-down-gdncache-dflash5-20260713.queue.json`;
+- `data/localmaxxing-responses/qwen36-27b-q4_0-xe2-m6-gateup-down-gdncache-aot-20260713.submit.log`.

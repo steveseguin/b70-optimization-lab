@@ -158,9 +158,10 @@ scales and reduced the real one-tensor shadow error to `0.00036323` maximum.
 The first corrected BMG-AOT strict suite passed at `39.249 tok/s`, versus the
 matching FA-on, target-KV8, draft-KV-F16 baseline of `37.967 tok/s` (`+3.38%`), and was
 approved by LocalMaxxing as `cmriq995z0210mj01fl13xmuc`. The joint gate/up plus
-down BMG-AOT successor now passes at `42.641 tok/s` (`+8.64%` over that row),
-with JIT support at `45.484 tok/s`, and is approved as
-`cmrj8fygq029ymj01e2404psy`. Do not compare these
+down BMG-AOT successor passed at `42.641 tok/s` (`+8.64%` over that row),
+with JIT support at `45.484 tok/s`. Stacking the exact GDN snapshot-cache
+commit fusion then raised the strict BMG-AOT record to `44.255 tok/s`, another
+`3.79%`, approved as `cmrj8s2sy02a4mj01f18hanvc`. Do not compare these
 identities with the older `40.203 tok/s` row, which used FA off and F16 target
 and draft KV. An experimental 65-tensor QKV/Q expansion was rejected after its
 paired strict result failed to improve throughput and introduced larger
