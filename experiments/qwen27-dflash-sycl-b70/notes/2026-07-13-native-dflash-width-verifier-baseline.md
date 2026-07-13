@@ -123,3 +123,82 @@ This is pack-lifecycle validation, not a speed result: runtime dispatch still
 uses production MMVQ. The next source step is to move the SLM M6 quantizer and
 kernel behind a gate/up-only dispatch consuming this pointer, then run
 per-layer and end-to-end parity before enabling more than one tensor.
+
+## Runtime M6 integration and zero-scale pack failure
+
+The protected llama.cpp source now has a default-off, exact-shape runtime M6
+path for Q4_0 gate/up projections. It includes joint six-row Q8_1 production,
+the single-launch SLM DPAS kernel, guarded dispatch, automatic production
+fallback, and a one-shot shadow oracle which returns production output while
+comparing the candidate.
+
+The first integrated tests were misleadingly catastrophic. One packed tensor
+appeared token-exact, but 8/32/64/130-tensor coverage progressively destroyed
+DFlash acceptance. A row-level shadow comparison then showed all 104,448
+candidate values were exactly zero. This was initially attributed to the JIT
+server lacking `spir64_gen -device bmg-g31`; a full BMG AOT rebuild disproved
+that diagnosis because its candidate rows were also zero.
+
+Input and sentinel probes found the actual failure:
+
+- the Q8 activation blocks and signed-INT4 packed bytes were nonzero;
+- the ESIMD kernel executed and overwrote every destination value;
+- every packed FP16 weight scale was zero;
+- the source GGUF's first real scale was nonzero (`0x9a26`).
+
+The packer assigned `block_q4_0::d` (a half object in this SYCL build) into a
+`ggml_fp16_t` raw-bit array. That performed a numeric half-to-integer
+conversion, turning small scales such as `-0.003` into integer zero. Copying
+the two FP16 bytes instead preserves the representation. The pack lifecycle
+also now rejects truly all-zero memory-fitting placeholders, and can recover
+from the immutable production-reordered Q4_0 layout if the ordinary reorder
+already occurred.
+
+After the raw-bit fix, the real one-tensor shadow oracle measured:
+
+- maximum absolute difference: `0.000363230705`;
+- mean absolute difference: `0.0000438399847`;
+- RMS difference: `0.0000557716927`;
+- candidate zero count: zero in every row.
+
+This is substantially tighter than the earlier synthetic comparator bound and
+clears the real integration correctness gate.
+
+## Full gate/up M6 result
+
+All 130 Q4_0 gate/up tensors were packed (6.069946 GiB). On an identical
+128-token merge-sort diagnostic with native DFlash5, F16 draft KV, graph off,
+and cold prompt cache, the full path preserved both output hash and draft
+acceptance exactly:
+
+| Lane | Decode | Accepted/generated | Output SHA-256 |
+|---|---:|---:|---|
+| production control | 70.917 tok/s | 102/124 | `e17f8660d5fb42d03c464b3497edd60e4046d1252a9e707382495b150e71db3f` |
+| Xe2 M6 gate/up | 73.256 tok/s | 102/124 | same |
+| warm production repeat | 73.098 tok/s | 102/124 | same |
+| warm Xe2 repeat | 75.808 tok/s | 102/124 | same |
+
+The paired improvements were 3.30% and 3.71%. Cycle evidence reduced the
+large target-verifier submission from roughly 57.1 ms to 54.2 ms, removing
+about 2.9 ms without changing DFlash economics. These are favorable diagnostic
+rows, not LocalMaxxing submissions. A BMG AOT rebuild and the fixed strict cold
+realistic suite remain required for promotion.
+
+Partial 2/8/32-tensor JIT lanes were anomalously slow when mixing the new and
+ordinary projection paths and are not performance evidence. Full coverage did
+not exhibit that cliff. Investigate mixed-path allocator/JIT behavior only if
+partial enablement remains operationally useful; it is not on the maximum-
+fusion critical path.
+
+## Revised next action
+
+1. Rebuild and validate the BMG AOT server with all 130 gate/up packs.
+2. Run the strict realistic cold suite. Submit automatically only if it passes
+   correctness and establishes a matching single-session LocalMaxxing record.
+3. Extend the packed kernel to square Q/K/V/Z/A projections and the five-layer
+   DFlash draft, then solve Q4_1/down semantics. Gate/up alone saves about
+   2.9 ms; the current width-6 verifier still needs roughly another 10 ms to
+   approach the 100 tok/s cycle target.
+4. Persist the native packs to disk keyed by model checksum, tensor identity,
+   layout version, and BMG target so repeated AOT experiments avoid the CPU
+   repack and loader ambiguity entirely.
