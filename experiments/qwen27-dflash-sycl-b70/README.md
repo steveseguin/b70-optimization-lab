@@ -111,9 +111,10 @@ the roughly 1 ms feature-injection path ahead of the verifier. Full evidence:
 The first Phase 1 implementation is in [`harness/`](harness/README.md). It
 provides a validated four-worker assignment, dry-run-safe persistent server
 control, explicit model-pack and golden-corpus manifests, and a populated
-checksum-addressed disk cache plus atomic shared-RAM stage for all 130 Xe2 M6
-gate/up packs. The protected llama.cpp loader binding and device-state restore
-are not implemented.
+checksum-addressed disk cache plus atomic shared-RAM stage for all 187 promoted
+Xe2 M6 gate/up and down packs. A guarded protected llama.cpp loader binding now
+consumes a helper-deep-validated stage with CPU-pack fallback; device-state
+restore is not implemented.
 
 Implementation and validation are recorded in
 [`notes/2026-07-12-phase1-persistent-harness-foundation.md`](notes/2026-07-12-phase1-persistent-harness-foundation.md).

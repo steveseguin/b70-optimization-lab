@@ -134,8 +134,9 @@ remains the safe way to accelerate model initialization today.
 
 ## Native Xe2 M6 Pack Cache
 
-The 130 Q4_0 gate/up tensors used by the guarded width-6 Xe2 experiment now
-have a real persistent disk artifact in the exact `q4_0-xe2-dpas-v2` layout:
+The 187 Q4_0 tensors used by the promoted width-6 Xe2 experiment—130 gate/up
+and 57 down—now have a real persistent disk artifact in the exact
+`q4_0-xe2-dpas-v2` layout:
 
 ```bash
 python3 scripts/qwen27-xe2-m6-pack-cache.py inspect
@@ -149,22 +150,23 @@ python3 scripts/qwen27-xe2-m6-pack-cache.py stage-validate
 The set and every tensor are content-addressed by the target model SHA-256,
 tensor name/shape/type, layout version, and `bmg-g31`. Each tensor manifest
 records both source-tensor and packed-payload SHA-256 values. `verify` performs
-a fast key/size admission; `verify --deep` rehashes all 6.07 GiB before loader
+a fast key/size admission; `verify --deep` rehashes all 8.73 GiB before loader
 use. `prepare --skip-source-hash` is a fast development-only lookup when the
 already-recorded model checksum is trusted; it is not a replacement for first
 admission or deep verification.
 
-The cache is stored outside Git under `/mnt/usb-models/model-packs/`. A future
-llama.cpp loader can mmap the admitted payloads, but protected llama.cpp source
-was not changed by this tooling work. Measurements and the exact artifact key
-are in
+The cache is stored outside Git under `/mnt/usb-models/model-packs/`. Set
+`GGML_SYCL_XE2_Q4_M6_PACK_CACHE` to the exact helper-deep-validated RAM stage
+to use the guarded protected-source loader; any index, tensor-contract, or
+payload-size mismatch falls back to CPU packing. Measurements and the exact
+artifact key are in
 [`../notes/2026-07-13-xe2-m6-persistent-pack-cache.md`](../notes/2026-07-13-xe2-m6-persistent-pack-cache.md).
 
 `stage-ram` establishes one durable deep-validation receipt when needed, then
-atomically publishes the 130 payloads below `/dev/shm/qwen27-xe2-m6-v2/`.
+atomically publishes the 187 payloads below `/dev/shm/qwen27-xe2-m6-v2/`.
 Subsequent `stage-ram` or `stage-validate` calls trust the unchanged manifest,
 receipt, canonical keys, exact file sizes, and the disk files' stat-identity
-table, avoiding another 6.07 GiB hash pass while still invalidating trust when
+table, avoiding another 8.73 GiB hash pass while still invalidating trust when
 an artifact is replaced or modified. `stage-validate --deep` remains available
 for an explicit RAM checksum. The stage refuses to consume the last 8 GiB of
 `/dev/shm` by default.

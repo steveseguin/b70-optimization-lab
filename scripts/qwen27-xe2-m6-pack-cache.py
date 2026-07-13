@@ -3,7 +3,8 @@
 
 The cache is development infrastructure.  It does not alter llama.cpp and is
 not benchmark or LocalMaxxing evidence.  Payloads use the exact ``dpas-v2``
-layout consumed by the guarded M=6 gate/up experiment in the protected source.
+layout consumed by the guarded M=6 gate/up and down experiment in the protected
+source.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import shutil
 import struct
 import sys
@@ -30,13 +32,17 @@ DEFAULT_RAM_ROOT = Path("/dev/shm/qwen27-xe2-m6-v2")
 ARCHITECTURE = "bmg-g31"
 LAYOUT_NAME = "q4_0-xe2-dpas-v2"
 LAYOUT_VERSION = 2
-EXPECTED_TENSORS = 130
-EXPECTED_K = 5120
-EXPECTED_N = 17408
+EXPECTED_TENSORS = 187
+EXPECTED_GATE_UP_K = 5120
+EXPECTED_GATE_UP_N = 17408
+EXPECTED_DOWN_K = 17408
+EXPECTED_DOWN_N = 5120
 Q4_0_TYPE = 2
 Q4_0_BLOCK_BYTES = 18
 HASH_CHUNK = 16 * 1024 * 1024
-TOOL_REVISION = 2
+TOOL_REVISION = 3
+RUNTIME_INDEX_NAME = "runtime-index.tsv"
+RUNTIME_INDEX_FORMAT = "qwen27-xe2-m6-runtime-index-v1"
 
 
 GGUF_VALUE_SIZES = {
@@ -212,13 +218,33 @@ def read_gguf(path: Path) -> tuple[dict[str, Any], list[TensorInfo]]:
     }, tensors
 
 
+def tensor_pack_slot(tensor: TensorInfo) -> int:
+    match = re.fullmatch(r"blk\.(\d+)\.(ffn_gate|ffn_up|ffn_down)\.weight", tensor.name)
+    if match is None:
+        return -1
+    layer = int(match.group(1))
+    projection = match.group(2)
+    if projection == "ffn_gate" and 0 <= layer <= 64:
+        return layer * 2
+    if projection == "ffn_up" and 0 <= layer <= 64:
+        return layer * 2 + 1
+    if projection == "ffn_down" and 8 <= layer <= 64:
+        return 130 + layer - 8
+    return -1
+
+
 def select_m6_tensors(tensors: list[TensorInfo]) -> list[TensorInfo]:
     selected = []
     for tensor in tensors:
-        suffix = tensor.name.endswith(".ffn_gate.weight") or tensor.name.endswith(".ffn_up.weight")
-        if suffix and tensor.shape == (EXPECTED_K, EXPECTED_N) and tensor.ggml_type == Q4_0_TYPE:
+        slot = tensor_pack_slot(tensor)
+        gate_up = slot < 130 and tensor.shape == (EXPECTED_GATE_UP_K, EXPECTED_GATE_UP_N)
+        down = slot >= 130 and tensor.shape == (EXPECTED_DOWN_K, EXPECTED_DOWN_N)
+        if slot >= 0 and (gate_up or down) and tensor.ggml_type == Q4_0_TYPE:
             selected.append(tensor)
-    selected.sort(key=lambda item: item.name)
+    selected.sort(key=tensor_pack_slot)
+    slots = [tensor_pack_slot(tensor) for tensor in selected]
+    if slots != list(range(EXPECTED_TENSORS)):
+        raise RuntimeError(f"promoted M6 tensor slots are incomplete or duplicated: {slots}")
     return selected
 
 
@@ -315,6 +341,69 @@ def expected_pack_size(tensor: TensorInfo) -> int:
     return k * n // 2 + (k // 32) * n * 2
 
 
+def import_existing_pack(
+    cache_root: Path, key: str, identity: dict[str, Any],
+    payload: Path, payload_size: int, manifest_path: Path,
+) -> dict[str, Any] | None:
+    """Hard-link an exact, hash-verified tensor pack from an older set."""
+    for candidate_manifest in cache_root.glob(f"*/tensors/{key}.json"):
+        if candidate_manifest == manifest_path:
+            continue
+        try:
+            candidate = load_json(candidate_manifest)
+            candidate_payload = candidate_manifest.parent.parent / candidate["payload"]["path"]
+            reusable = (
+                candidate.get("key") == key and candidate.get("identity") == identity
+                and candidate.get("status") == "ready"
+                and candidate.get("payload", {}).get("size_bytes") == payload_size
+                and candidate_payload.is_file() and candidate_payload.stat().st_size == payload_size
+            )
+            if not reusable:
+                continue
+            actual_sha, actual_size = hash_file(candidate_payload)
+            if actual_size != payload_size or actual_sha != candidate["payload"].get("sha256"):
+                continue
+            temporary = payload.with_name(f".{payload.name}.tmp-{os.getpid()}")
+            try:
+                os.link(candidate_payload, temporary)
+            except OSError:
+                shutil.copyfile(candidate_payload, temporary)
+            os.replace(temporary, payload)
+            imported = dict(candidate)
+            imported["payload"] = dict(candidate["payload"])
+            imported["payload"]["path"] = f"tensors/{payload.name}"
+            imported["imported_from"] = str(candidate_manifest.parent.parent)
+            atomic_json(manifest_path, imported)
+            return imported
+        except (FileNotFoundError, KeyError, OSError, ValueError, json.JSONDecodeError):
+            continue
+    return None
+
+
+def runtime_index_bytes(set_key: str, model_sha: str, entries: list[dict[str, Any]]) -> bytes:
+    lines = [
+        RUNTIME_INDEX_FORMAT,
+        f"set_key\t{set_key}",
+        f"model_sha256\t{model_sha}",
+        f"architecture\t{ARCHITECTURE}",
+        f"layout\t{LAYOUT_NAME}\t{LAYOUT_VERSION}",
+        f"tensor_count\t{len(entries)}",
+        f"payload_table_sha256\t{payload_table_sha({'tensors': entries})}",
+    ]
+    for entry in entries:
+        identity = entry["identity"]
+        shape = identity["tensor_shape"]
+        lines.append("\t".join([
+            "tensor", str(tensor_pack_slot(TensorInfo(
+                identity["tensor_name"], tuple(shape), Q4_0_TYPE, 0, 0, 0,
+            ))),
+            identity["tensor_name"], str(shape[0]), str(shape[1]), identity["tensor_type"],
+            str(identity["pack_layout_version"]), str(entry["payload"]["size_bytes"]),
+            entry["payload"]["sha256"], entry["payload"]["path"],
+        ]))
+    return ("\n".join(lines) + "\n").encode()
+
+
 def prepare(args: argparse.Namespace) -> int:
     spec = load_json(args.model_spec)
     expected_model_sha = spec["source"]["sha256"]
@@ -324,7 +413,7 @@ def prepare(args: argparse.Namespace) -> int:
     gguf, tensors = read_gguf(args.model)
     selected = select_m6_tensors(tensors)
     if len(selected) != EXPECTED_TENSORS:
-        raise RuntimeError(f"expected {EXPECTED_TENSORS} M6 gate/up tensors, found {len(selected)}")
+        raise RuntimeError(f"expected {EXPECTED_TENSORS} promoted M6 tensors, found {len(selected)}")
     set_identity = {
         "target_model_sha256": model_sha,
         "target_architecture": ARCHITECTURE,
@@ -334,7 +423,7 @@ def prepare(args: argparse.Namespace) -> int:
     set_key = canonical_sha(set_identity)
     root = args.cache_root / set_key
     entries = []
-    packed_count = reused_count = 0
+    packed_count = reused_count = imported_count = 0
     pack_seconds = 0.0
     root.mkdir(parents=True, exist_ok=True)
     (root / "tensors").mkdir(exist_ok=True)
@@ -356,41 +445,53 @@ def prepare(args: argparse.Namespace) -> int:
             reused_count += 1
             entry = old
         else:
-            temporary = payload.with_name(f".{payload.name}.tmp-{os.getpid()}")
-            started = time.monotonic()
-            pack_tensor(args.model, tensor, temporary)
-            elapsed = time.monotonic() - started
-            payload_sha, actual_size = hash_file(temporary)
-            source_sha, source_size = hash_file(args.model, tensor.absolute_offset, tensor.size_bytes)
-            if actual_size != payload_size:
-                temporary.unlink(missing_ok=True)
-                raise RuntimeError(f"packed size mismatch for {tensor.name}")
-            os.replace(temporary, payload)
-            entry = {
-                "schema_version": 1,
-                "format": "qwen27-xe2-m6-tensor-pack-v2",
-                "status": "ready",
-                "key": key,
-                "identity": identity,
-                "source_tensor": {
-                    "gguf_offset": tensor.absolute_offset,
-                    "size_bytes": source_size,
-                    "sha256": source_sha,
-                },
-                "payload": {
-                    "path": f"tensors/{payload.name}",
-                    "size_bytes": actual_size,
-                    "sha256": payload_sha,
-                },
-                "pack_seconds": elapsed,
-                "created_unix": time.time(),
-            }
-            atomic_json(old_manifest, entry)
-            packed_count += 1
-            pack_seconds += elapsed
+            entry = import_existing_pack(
+                args.cache_root, key, identity, payload, payload_size, old_manifest,
+            )
+            if entry is not None:
+                imported_count += 1
+            else:
+                temporary = payload.with_name(f".{payload.name}.tmp-{os.getpid()}")
+                started = time.monotonic()
+                pack_tensor(args.model, tensor, temporary)
+                elapsed = time.monotonic() - started
+                payload_sha, actual_size = hash_file(temporary)
+                source_sha, source_size = hash_file(args.model, tensor.absolute_offset, tensor.size_bytes)
+                if actual_size != payload_size:
+                    temporary.unlink(missing_ok=True)
+                    raise RuntimeError(f"packed size mismatch for {tensor.name}")
+                os.replace(temporary, payload)
+                entry = {
+                    "schema_version": 1,
+                    "format": "qwen27-xe2-m6-tensor-pack-v2",
+                    "status": "ready",
+                    "key": key,
+                    "identity": identity,
+                    "source_tensor": {
+                        "gguf_offset": tensor.absolute_offset,
+                        "size_bytes": source_size,
+                        "sha256": source_sha,
+                    },
+                    "payload": {
+                        "path": f"tensors/{payload.name}",
+                        "size_bytes": actual_size,
+                        "sha256": payload_sha,
+                    },
+                    "pack_seconds": elapsed,
+                    "created_unix": time.time(),
+                }
+                atomic_json(old_manifest, entry)
+                packed_count += 1
+                pack_seconds += elapsed
         entries.append(entry)
         if not args.quiet:
-            print(f"[{index:03d}/{len(selected)}] {'reused' if reusable else 'packed'} {tensor.name}", file=sys.stderr)
+            action = "reused" if reusable else "imported" if entry.get("imported_from") else "packed"
+            print(f"[{index:03d}/{len(selected)}] {action} {tensor.name}", file=sys.stderr)
+    runtime_index = runtime_index_bytes(set_key, model_sha, entries)
+    runtime_index_path = root / RUNTIME_INDEX_NAME
+    temporary_index = runtime_index_path.with_name(f".{RUNTIME_INDEX_NAME}.tmp-{os.getpid()}")
+    temporary_index.write_bytes(runtime_index)
+    os.replace(temporary_index, runtime_index_path)
     manifest = {
         "schema_version": 1,
         "format": "qwen27-xe2-m6-pack-set-v2",
@@ -411,10 +512,17 @@ def prepare(args: argparse.Namespace) -> int:
         "tensor_count": len(entries),
         "packed_count_this_run": packed_count,
         "reused_count_this_run": reused_count,
+        "imported_count_this_run": imported_count,
         "payload_size_bytes": sum(item["payload"]["size_bytes"] for item in entries),
         "model_hash_seconds_this_run": model_hash_seconds,
         "pack_seconds_this_run": pack_seconds,
         "tensors": entries,
+        "runtime_index": {
+            "format": RUNTIME_INDEX_FORMAT,
+            "path": RUNTIME_INDEX_NAME,
+            "size_bytes": len(runtime_index),
+            "sha256": hashlib.sha256(runtime_index).hexdigest(),
+        },
         "loader_contract": {
             "lookup_fields": [
                 "target_model_sha256", "tensor_name", "tensor_shape", "tensor_type",
@@ -429,6 +537,7 @@ def prepare(args: argparse.Namespace) -> int:
     print(json.dumps({
         "status": "ready", "set_key": set_key, "manifest": str(root / "manifest.json"),
         "tensor_count": len(entries), "packed": packed_count, "reused": reused_count,
+        "imported": imported_count,
         "payload_size_bytes": manifest["payload_size_bytes"],
         "model_hash_seconds": model_hash_seconds, "pack_seconds": pack_seconds,
     }, indent=2))
@@ -469,14 +578,34 @@ def validate_pack_manifest(
         failures.append("layout-contract")
     if manifest.get("tensor_count") != EXPECTED_TENSORS or len(manifest.get("tensors", [])) != EXPECTED_TENSORS:
         failures.append("tensor-count")
+    runtime_index = manifest.get("runtime_index", {})
+    if runtime_index.get("format") != RUNTIME_INDEX_FORMAT or runtime_index.get("path") != RUNTIME_INDEX_NAME:
+        failures.append("runtime-index-contract")
     root = manifest_path.parent
     checked_bytes = 0
     actual_tensor_keys = []
+    actual_slots = []
     for entry in manifest.get("tensors", []):
         actual_tensor_keys.append(entry.get("key"))
         if canonical_sha(entry.get("identity")) != entry.get("key"):
             failures.append(f"tensor-key:{entry.get('identity', {}).get('tensor_name')}")
             continue
+        entry_identity = entry["identity"]
+        entry_tensor = TensorInfo(
+            entry_identity["tensor_name"], tuple(entry_identity["tensor_shape"]),
+            Q4_0_TYPE, 0, 0, 0,
+        )
+        slot = tensor_pack_slot(entry_tensor)
+        actual_slots.append(slot)
+        if (
+            entry_identity.get("target_model_sha256") != identity.get("target_model_sha256")
+            or entry_identity.get("target_architecture") != ARCHITECTURE
+            or entry_identity.get("pack_layout_version") != LAYOUT_VERSION
+            or entry_identity.get("tensor_type") != "GGML_TYPE_Q4_0"
+            or slot < 0
+            or entry["payload"]["size_bytes"] != expected_pack_size(entry_tensor)
+        ):
+            failures.append(f"tensor-contract:{entry_identity.get('tensor_name')}")
         payload = root / entry["payload"]["path"]
         expected_size = entry["payload"]["size_bytes"]
         if not payload.is_file() or payload.stat().st_size != expected_size:
@@ -489,6 +618,23 @@ def validate_pack_manifest(
                 failures.append(f"payload-sha256:{entry['identity']['tensor_name']}")
     if identity.get("tensor_keys") != actual_tensor_keys:
         failures.append("tensor-key-table")
+    if actual_slots != list(range(EXPECTED_TENSORS)):
+        failures.append("tensor-slot-table")
+    runtime_index_path = root / RUNTIME_INDEX_NAME
+    expected_runtime_index = runtime_index_bytes(manifest.get("key", ""), identity.get("target_model_sha256", ""), manifest.get("tensors", []))
+    if (
+        not runtime_index_path.is_file()
+        or runtime_index_path.stat().st_size != runtime_index.get("size_bytes")
+        or runtime_index.get("size_bytes") != len(expected_runtime_index)
+    ):
+        failures.append("runtime-index-size")
+    else:
+        actual_runtime_index = runtime_index_path.read_bytes()
+        if (
+            actual_runtime_index != expected_runtime_index
+            or hashlib.sha256(actual_runtime_index).hexdigest() != runtime_index.get("sha256")
+        ):
+            failures.append("runtime-index-identity")
     elapsed = time.monotonic() - started
     result = {
         "status": "failed" if failures else "ready",
@@ -625,6 +771,16 @@ def validate_ram_stage(
     ):
         failures.append("ram-stage-receipt")
     checked_bytes = 0
+    runtime_index = source_manifest.get("runtime_index", {})
+    stage_runtime_index = stage / runtime_index.get("path", RUNTIME_INDEX_NAME)
+    if (
+        runtime_index.get("format") != RUNTIME_INDEX_FORMAT
+        or not stage_runtime_index.is_file()
+        or stage_runtime_index.stat().st_size != runtime_index.get("size_bytes")
+    ):
+        failures.append("ram-runtime-index")
+    elif hashlib.sha256(stage_runtime_index.read_bytes()).hexdigest() != runtime_index.get("sha256"):
+        failures.append("ram-runtime-index-sha256")
     for entry in source_manifest.get("tensors", []):
         payload = stage / entry["payload"]["path"]
         expected_size = entry["payload"]["size_bytes"]
@@ -694,6 +850,7 @@ def stage_ram(args: argparse.Namespace) -> int:
             source = manifest_path.parent / entry["payload"]["path"]
             destination = staging / entry["payload"]["path"]
             shutil.copyfile(source, destination)
+        shutil.copyfile(manifest_path.parent / RUNTIME_INDEX_NAME, staging / RUNTIME_INDEX_NAME)
         shutil.copyfile(manifest_path, staging / "manifest.json")
         shutil.copyfile(trust_receipt_path(manifest_path), staging / "deep-validation.json")
         copy_seconds = time.monotonic() - copy_started
