@@ -163,22 +163,22 @@ The live implementation retains both representations:
 | Item | Bytes | GiB/MiB |
 |---|---:|---:|
 | Ordinary Q6_K output weight | 1,042,944,000 | 0.971 GiB |
-| Expanded fused pack | 1,355,847,680 | 1.263 GiB |
-| Both resident | 2,398,791,680 | 2.234 GiB |
+| Expanded fused pack | 1,360,793,600 | 1.267 GiB |
+| Both resident | 2,403,737,600 | 2.239 GiB |
 | Per-dispatch scratch | 337,600 | 0.322 MiB |
 | Allocated M=6 full-logit intermediate | 5,959,680 | 5.684 MiB |
 
-The expanded representation is 298.4 MiB larger than the raw representation,
+The expanded representation is 303.1 MiB larger than the raw representation,
 but that delta is **not** the implementation's incremental runtime cost. Since
 the raw weight remains for fallback, enabling the pack consumes the full
-additional 1.263 GiB. A transient host vector of the same size also exists
+additional 1.267 GiB. A transient host vector of the same size also exists
 during packing. The graph still allocates the 5.684 MiB logit intermediate,
 although successful fused dispatch does not write it.
 
 Pack creation is gated by `GGML_SYCL_XE2_Q6_M6_TOP1` at model load, not by
 successful semantic activation of the higher-level compact path. Graph mode
 also rejects fused dispatch in the matcher. Consequently, a mismatched flag or
-graph-on run can pay 1.263 GiB for a pack that never dispatches. Run identity
+graph-on run can pay 1.267 GiB for a pack that never dispatches. Run identity
 and memory telemetry should record pack creation and fused dispatch counts.
 
 ## Promotion tests implied by this review

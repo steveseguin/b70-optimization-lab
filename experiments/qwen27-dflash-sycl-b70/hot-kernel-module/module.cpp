@@ -1,4 +1,5 @@
 #include "q27_xe2_module.h"
+#include "q6_m6_top1_module.h"
 
 #include <sycl/sycl.hpp>
 
@@ -23,18 +24,27 @@ class smoke_axpy_kernel;
 
 int32_t query_workspace(
         uint32_t op,
-        uint32_t,
-        uint32_t,
+        uint32_t rows,
+        uint32_t cols,
         q27_xe2_workspace_v1 *workspace) {
     if (workspace == nullptr) {
         return Q27_XE2_BAD_ARGUMENT;
     }
-    if (op != Q27_XE2_OP_SMOKE_AXPY) {
-        return Q27_XE2_DECLINED;
+    if (op == Q27_XE2_OP_SMOKE_AXPY) {
+        workspace->bytes = 0;
+        workspace->alignment = 1;
+        return Q27_XE2_OK;
     }
-    workspace->bytes = 0;
-    workspace->alignment = 1;
-    return Q27_XE2_OK;
+    if (op == Q27_XE2_OP_Q6K_M6_TOP1) {
+        if (rows != q27_q6_m6_top1_workspace::rows ||
+                cols != q27_q6_m6_top1_workspace::n) {
+            return Q27_XE2_BAD_SHAPE;
+        }
+        workspace->bytes = q27_q6_m6_top1_workspace::bytes;
+        workspace->alignment = q27_q6_m6_top1_workspace::alignment;
+        return Q27_XE2_OK;
+    }
+    return Q27_XE2_DECLINED;
 }
 
 int32_t launch(const q27_xe2_launch_v1 *args) {
@@ -42,43 +52,73 @@ int32_t launch(const q27_xe2_launch_v1 *args) {
     if (args == nullptr || args->struct_size < sizeof(q27_xe2_launch_v1)) {
         return Q27_XE2_BAD_ABI;
     }
-    if (args->op != Q27_XE2_OP_SMOKE_AXPY) {
-        return Q27_XE2_DECLINED;
-    }
-    if ((args->flags & Q27_XE2_QUEUE_IS_IN_ORDER) == 0 ||
-        args->queue == nullptr || args->input0 == nullptr ||
-        args->output0 == nullptr || args->cols == 0) {
+    if ((args->flags & Q27_XE2_QUEUE_IS_IN_ORDER) == 0 || args->queue == nullptr) {
         return Q27_XE2_BAD_ARGUMENT;
     }
 
     auto *queue = static_cast<sycl::queue *>(args->queue);
-    const auto *input = static_cast<const float *>(args->input0);
-    auto *output = static_cast<float *>(args->output0);
-    const size_t count = args->cols;
-    const float alpha = args->scalar0;
 
     try {
-        queue->submit([&](sycl::handler &handler) {
-            handler.parallel_for<smoke_axpy_kernel>(sycl::range<1>(count), [=](sycl::id<1> index) {
-                output[index] += alpha * input[index];
+        if (args->op == Q27_XE2_OP_SMOKE_AXPY) {
+            if (args->input0 == nullptr || args->output0 == nullptr || args->cols == 0) {
+                return Q27_XE2_BAD_ARGUMENT;
+            }
+            const auto *input = static_cast<const float *>(args->input0);
+            auto *output = static_cast<float *>(args->output0);
+            const size_t count = args->cols;
+            const float alpha = args->scalar0;
+            queue->submit([&](sycl::handler &handler) {
+                handler.parallel_for<smoke_axpy_kernel>(sycl::range<1>(count), [=](sycl::id<1> index) {
+                    output[index] += alpha * input[index];
+                });
             });
-        });
+            return Q27_XE2_OK;
+        }
+        if (args->op == Q27_XE2_OP_Q6K_M6_TOP1) {
+            if (args->input0 == nullptr || args->output0 == nullptr || args->scratch == nullptr ||
+                    args->rows != q27_q6_m6_top1_workspace::rows ||
+                    args->cols != q27_q6_m6_top1_workspace::n ||
+                    args->stride != q27_q6_m6_top1_workspace::k ||
+                    args->scratch_bytes < q27_q6_m6_top1_workspace::bytes) {
+                return Q27_XE2_BAD_SHAPE;
+            }
+            if (args->packs == nullptr || args->pack_count != 1) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            const q27_xe2_pack_v1 &pack = args->packs[0];
+            constexpr uint64_t expected_bytes =
+                uint64_t(q27_q6_m6_top1_workspace::k) * q27_q6_m6_top1_workspace::n +
+                uint64_t(q27_q6_m6_top1_workspace::k / 16) * q27_q6_m6_top1_workspace::n +
+                uint64_t(q27_q6_m6_top1_workspace::k / 256) *
+                    q27_q6_m6_top1_workspace::n * sizeof(uint16_t);
+            if (pack.device_ptr == nullptr || pack.bytes != expected_bytes ||
+                    pack.layout_id != Q27_XE2_LAYOUT_Q6K_M6_TOP1_V1 ||
+                    pack.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    pack.role != Q27_XE2_PACK_TARGET_LM_HEAD) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            q27_q6_m6_top1_submit(
+                *queue, pack.device_ptr, static_cast<const float *>(args->input0),
+                static_cast<int32_t *>(args->output0), args->scratch);
+            return Q27_XE2_OK;
+        }
+        return Q27_XE2_DECLINED;
     } catch (...) {
         /* SYCL does not give the C boundary a proof that no work reached the queue. */
         return Q27_XE2_SUBMIT_STATE_UNKNOWN;
     }
-    return Q27_XE2_OK;
 }
 
 const q27_xe2_module_v1 module = {
     Q27_XE2_ABI_MAGIC,
     Q27_XE2_ABI_VERSION,
     sizeof(q27_xe2_module_v1),
-    "qwen27-xe2-smoke",
+    "qwen27-xe2-experimental",
     Q27_XE2_BUILD_ID,
     Q27_XE2_TARGET_ARCH,
     Q27_XE2_TOOLCHAIN_ABI,
-    UINT64_C(1) << Q27_XE2_OP_SMOKE_AXPY,
+    (UINT64_C(1) << Q27_XE2_OP_SMOKE_AXPY) |
+        (UINT64_C(1) << Q27_XE2_OP_Q6K_M6_TOP1),
     query_workspace,
     launch,
 };
