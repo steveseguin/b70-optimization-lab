@@ -11,7 +11,7 @@ for verified results that have not been submitted.
 | Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 median tok/s, fixed cold realistic gate | `cmrh35ct50092mj01h7jgydqj` | [packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
-| Qwen3.6 27B GGUF Q4, MTP3 | 1x Arc Pro B70 | 30.679 median tok/s, fixed cold realistic gate | `cmr6mn5ct0076mn01on3dnpyn` | [packet](qwen36-27b-mtp-gguf-q4-b70/README.md) |
+| Qwen3.6 27B GGUF Q4_0, native DFlash5 + Xe2 M6 | 1x Arc Pro B70 | 39.249 median tok/s, fixed cold realistic gate | `cmriq995z0210mj01fl13xmuc` | [evidence](../data/qwen36-27b-mtp-gguf-q4-b70-baselines/xe2-m6-full130-aot-native-dflash5-realistic128-20260713T043137Z.json) |
 | MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
 | Rapid model snapshots | 1x Arc Pro B70 | Multiple fixed cold realistic references | see [packet](rapid-model-snapshots-b70/README.md) | [performance index](scoreboard.md) |
 
@@ -47,6 +47,15 @@ a passing fixed-suite realistic-gate artifact are **diagnostic / pre-final-gate
 only**, even if their original labels used `fresh` or the first measured row had
 `cached_tokens=0`. A single synthetic/filled-long row0 is not enough for a
 current headline claim or a new LocalMaxxing submission.
+
+Date: 2026-07-13
+
+Model: `Qwen/Qwen3.6-27B`, GGUF `Q4_0` target with native Q8_0 DFlash draft,
+llama.cpp/SYCL on one Intel Arc Pro B70.
+
+| Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `qwen36-27b-q4_0-b70-llamacpp-xe2m6-dflash5-realistic-39tok-20260713` | `cmriq995z0210mj01fl13xmuc` | 1 | suite median 69 | 128 | **39.249 median 1-100 after TTFT** | 28.697 median wall full128 | **policy-compliant realistic suite and first integrated Xe2 DPAS verifier win**: fixed `qwen36-27b-autoround-int4-b70-realistic-v1`, 12 unique prompts each once cold, `cached_tokens=0` every row, no prompt/KV/context/response/history reuse, native DFlash5 accepted tokens verified by the unchanged Q4_0 target. BMG-AOT llama.cpp `9976 (e3546c794)`, graph off, Q8_0 target KV, F16 draft KV, all 130 Q4_0 gate/up weights offline-packed into the signed-s4 N16/K32 layout, M=6 INT4xINT8 DPAS with one-workgroup SLM reduction. Real AOT shadow oracle max error `0.000363`; strict p10 `33.790`, mean `39.726`, TTFT `1168.469 ms`. A separate JIT support row measured `40.338`; the conservative AOT result is submitted. Evidence `data/qwen36-27b-mtp-gguf-q4-b70-baselines/xe2-m6-full130-aot-native-dflash5-realistic128-20260713T043137Z.json`, queue `experiments/qwen27-dflash-sycl-b70/localmaxxing/qwen36-27b-q4_0-xe2-m6-dflash5-20260713.queue.json`, approved response `data/localmaxxing-responses/qwen36-27b-q4_0-xe2-m6-dflash5-aot-20260713.submit.log`. |
 
 Date: 2026-07-11
 

@@ -202,3 +202,25 @@ fusion critical path.
 4. Persist the native packs to disk keyed by model checksum, tensor identity,
    layout version, and BMG target so repeated AOT experiments avoid the CPU
    repack and loader ambiguity entirely.
+
+## Strict promotion
+
+The corrected BMG-AOT binary reproduced the one-tensor shadow oracle exactly:
+maximum absolute difference `0.000363230705`, mean `0.0000438399847`, and no
+zero outputs. The fixed 12-prompt realistic cold suite then passed with every
+`cached_tokens` count zero:
+
+- AOT median tokens 1-100 after TTFT: `39.249407465376365 tok/s`;
+- p10: `33.79043373802919 tok/s`;
+- mean: `39.72641447564524 tok/s`;
+- median full-output after TTFT: `39.7456899875183 tok/s`;
+- median wall full128: `28.697359787051674 tok/s`;
+- median TTFT: `1168.4687254019082 ms`.
+
+The supporting JIT strict row measured `40.33759360913713 tok/s`, but the
+lower AOT row was conservatively promoted. It improves on the matching native
+DFlash baseline of approximately `37.97 tok/s` by 3.38%.
+
+LocalMaxxing approved the AOT record as `cmriq995z0210mj01fl13xmuc`. The first
+POST attempt was retained as a rate-limit failure; the retry after the API
+reset returned HTTP 201 and `APPROVED`.
