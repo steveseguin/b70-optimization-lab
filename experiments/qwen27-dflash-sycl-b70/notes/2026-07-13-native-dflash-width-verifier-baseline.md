@@ -97,3 +97,29 @@ about 103.63 us to 95.72 us and produced a 2.051x exact-production total
 speedup. This establishes gate/up-only M=6 as the first guarded integration
 target. Down remains disabled until its numerical gate is resolved; width 16
 needs a different ownership/register design.
+
+## Guarded runtime pack phase started
+
+The protected llama.cpp source now contains the first disabled-by-default
+runtime integration boundary:
+
+- `ggml_tensor_extra_gpu` owns an optional per-device Xe2 M6 packed pointer,
+  byte count, and layout identifier;
+- cleanup releases the mirror on its owning device;
+- `GGML_SYCL_XE2_Q4_M6_FFN=1` enables pack creation;
+- `GGML_SYCL_XE2_Q4_M6_PACK_LIMIT=N` deterministically selects the first N
+  gate/up tensors (`blk.0.gate`, `blk.0.up`, then layer order), avoiding the
+  model-fit context consuming a process-global counter;
+- the CPU reference packer creates the winning signed-s4, N16/K32 VNNI layout
+  and uploads it before ordinary lazy reorder mutates the source;
+- missing packs and all compute still fall through to unchanged production.
+
+A one-tensor smoke test successfully created and retained the exact 50,135,040
+byte mirror for `blk.0.ffn_gate.weight`:
+
+`/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/servers/llamacpp-gpu0-port19440-20260713T031502Z.log`
+
+This is pack-lifecycle validation, not a speed result: runtime dispatch still
+uses production MMVQ. The next source step is to move the SLM M6 quantizer and
+kernel behind a gate/up-only dispatch consuming this pointer, then run
+per-layer and end-to-end parity before enabling more than one tensor.
