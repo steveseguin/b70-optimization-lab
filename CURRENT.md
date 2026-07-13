@@ -128,7 +128,10 @@ cache, not by DFlash weights, Q4 quantization, or flash attention itself. The
 missing controlled run—FA enabled with F16 draft KV—restored `100/106`
 acceptance (`94.3%`) and `73.47 tok/s`. The earlier Q8_0 draft-KV run managed
 only `7/470`, so quantized draft KV is prohibited until its numerical/backend
-failure is fixed. The existing Q4_K_M draft likewise recovered to
+failure is fixed. A focused 12-case D=128/GQA4/iSWA/sparse-mask backend test
+found Q8-K SYCL/CPU parity (NMSE below `6.6e-6`, no argmax mismatches over 960
+rows), so current evidence favors DFlash model sensitivity to Q8 K-cache
+quantization rather than a generic FA kernel error. The existing Q4_K_M draft likewise recovered to
 `104/115` acceptance and `74.01 tok/s`, proving that the original Q4 result was
 not ordinary quantization damage. This is the first valid local lane above the
 68 tok/s milestone, but it is workload-specific rather than a production

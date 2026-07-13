@@ -21,9 +21,13 @@ evidence; the catastrophic failure follows Q8_0 draft KV.
 
 The resolution is to keep native DFlash draft K/V in F16 while retaining flash
 attention for both the draft and target. The temporary DFlash-specific FA
-bypass was removed. Whether Q8_0 draft KV fails through a SYCL cache kernel bug
-or unacceptable quantization sensitivity still needs lower-level parity work,
-so it remains prohibited rather than diagnosed more narrowly than the evidence.
+bypass was removed. A focused backend regression covering D=128, GQA4,
+Q8-K/F16-V, full and wrapped iSWA cache layouts, and DFlash-style sparse masks
+passed 12/12 against CPU. Q8-K NMSE was `3.72e-6` to `6.52e-6`, maximum
+absolute error below `9e-4`, with zero argmax mismatches over 960 tested rows.
+Current evidence therefore favors model-level DFlash sensitivity to Q8 K-cache
+quantization rather than a generic SYCL FA kernel defect. F16 draft K remains a
+model-specific correctness requirement.
 
 This matters to the main objective because DFlash's long accepted blocks are
 still the clearest way to amortize a 27B target pass enough to approach 100
@@ -113,6 +117,16 @@ fusions off:
 This is a valid negative production result but a major correctness milestone:
 native DFlash is now usable on SYCL with FA and F16 draft KV, and the favorable-code lane
 exceeds 68 tok/s. The mixed suite is still below the MTP production floor.
+
+A corrected current-configuration rerun used FA on, target KV8, draft F16 KV,
+and the native DFlash5 profile. It passed all cold/cached-zero gates at
+`37.967 tok/s` median (`32.001` p10, `38.204` mean):
+
+`data/qwen36-27b-mtp-gguf-q4-b70-baselines/native-dflash5-q8-f16kv-faon-20260713T024247Z.json`
+
+This supersedes the FA-off run as the configuration identity, but does not
+change the production conclusion: mixed acceptance is still too low, while
+the favorable-code lane remains useful and must be routed.
 
 ## Measured complete-cycle decomposition
 

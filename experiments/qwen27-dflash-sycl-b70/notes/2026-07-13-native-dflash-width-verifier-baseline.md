@@ -68,8 +68,9 @@ microbenchmark.
 1. Build one ESIMD workgroup per N tile with K-split workers, SLM partials, one
    barrier, and in-kernel reduction.
 2. Resolve the 17408x5120 numerical delta against exact Q4_0/Q8_1 semantics.
-3. Pack only FFN tensors initially; a full duplicate target pack does not fit,
-   while the 195 FFN tensors require about 9.146 GiB.
+3. Pack gate/up only initially: 130 tensors require 6.069946 GiB. The model's
+   195 FFN tensors total 9.146423 GiB, but eight down tensors are Q4_1 rather
+   than Q4_0 and cannot use this ABI. Eligibility must inspect tensor type.
 4. Integrate behind BMG + Q4_0/Q8_1 + M=6 guarded dispatch only after full
    projection correctness and `>=1.5x` total speed hold.
 
