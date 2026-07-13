@@ -224,3 +224,41 @@ DFlash baseline of approximately `37.97 tok/s` by 3.38%.
 LocalMaxxing approved the AOT record as `cmriq995z0210mj01fl13xmuc`. The first
 POST attempt was retained as a rate-limit failure; the retry after the API
 reset returned HTTP 201 and `APPROVED`.
+
+## QKV/Q expansion rejected
+
+The real target inventory contains no 5120x5120 projection. The next Q4_0 M=6
+families are 48 recurrent `5120x10240` QKV tensors and 17 `5120x12288`
+full-attention Q tensors. Exact-production synthetic comparators were strong:
+1.751x total for QKV and 2.516x for Q. Runtime pack slots 130-194 and generic
+shape dispatch were added experimentally, consuming about 2.2 GiB beyond the
+130 gate/up packs.
+
+Real first-layer shadows remained dense but had larger summation differences:
+
+- `blk.0.attn_qkv`: max `0.00626564`, mean `0.000608525`;
+- `blk.3.attn_q`: max `0.0100751`, mean `0.00108002`.
+
+A favorable merge-sort diagnostic reached `76.123 tok/s`, but changed the
+output/acceptance boundary. The paired fixed realistic cold suites did not
+confirm a throughput win:
+
+| JIT lane | Median tok/s | p10 | Mean | Gate |
+|---|---:|---:|---:|---|
+| gate/up 130 | 39.984 | 34.269 | 40.314 | pass |
+| gate/up + QKV/Q 195 | 39.621 | 34.241 | 40.344 | pass |
+
+Therefore the 195-pack expansion is rejected for promotion. Keep the
+conservative 130-pack BMG-AOT record as the production lane.
+
+This experiment also exposed and fixed the earlier partial-pack cliff. The
+on-demand reordered-weight recovery copied an eligible but pack-limit-excluded
+tensor from device to host on every invocation. Checking the deterministic
+pack slot before the copy removes that accidental PCIe synchronization. This
+fix matters for future family isolation, but does not make QKV/Q a strict win.
+
+The next high-value lanes are now narrower: resolve Q4_0 down-projection
+semantics (57 tensors and the existing 0.065 comparator delta), optimize the
+sequential Q8_0 DFlash draft cycle, and persist the proven 130 packs to disk for
+faster AOT iteration. Do not promote the QKV/Q expansion without new paired
+strict evidence.
