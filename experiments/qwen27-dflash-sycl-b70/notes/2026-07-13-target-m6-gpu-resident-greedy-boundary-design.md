@@ -5,8 +5,9 @@ Date: 2026-07-13
 ## Decision
 
 For the fixed greedy realistic suite, the target-side DFlash verifier should
-return six exact token IDs, not six full vocabulary rows. Those six IDs are a
-complete sufficient statistic for the existing greedy acceptance rule:
+return six exact **post-mask** token IDs, not six full vocabulary rows. Those
+six IDs are a complete sufficient statistic for the existing greedy acceptance
+rule:
 
 ```text
 target input rows:  [seed, draft0, draft1, draft2, draft3, draft4]
@@ -17,9 +18,10 @@ first mismatch i: emit draft[0:i], then pick[i]
 all five match:    emit draft[0:5], then bonus5
 ```
 
-The first safe implementation should append an all-six-row device argmax to
-the existing target LM head, copy only `I32[6]` to the host, and run the same
-prefix/bonus and sampler-state updates there. This removes the current
+The first safe implementation should apply the strict identity's immutable
+banned-token mask, append an all-six-row device argmax to the existing target
+LM head, copy only `I32[6]` to the host, and run the same prefix/bonus and
+sampler-state updates there. This removes the current
 `6 * 248320 * sizeof(float) = 5,959,680` byte full-logit D2H and the creation of
 1,489,920 host candidate records per cycle. It deliberately leaves the full
 GPU logit tensor in place for the first parity step.
@@ -29,6 +31,38 @@ fused top-1 path from DFlash draft rows 1..5 to target rows 0..5. That second
 step removes the full `[248320, 6]` GPU logit materialization as well. Do not
 merge acceptance/state mutation into the first kernel change; six IDs are a
 small, auditable interface and make rollback parity easy to prove.
+
+### Correction: the strict identity is masked greedy, not raw greedy
+
+The strict Qwen server logs identify five EOG tokens and report an infinite
+negative bias for each:
+
+| Token | ID |
+|---|---:|
+| `<|endoftext|>` | 248044 |
+| `<|im_end|>` | 248046 |
+| `<|fim_pad|>` | 248063 |
+| `<|repo_name|>` | 248064 |
+| `<|file_sep|>` | 248065 |
+
+For example,
+`/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/servers/q6top1-jit-gpu2-port19446-20260713.log:146-150`
+records the token IDs and lines 460-464 record the `-inf` biases. The source
+constructs this model-specific EOG list in `common/common.cpp:1274-1286`;
+request evaluation can add it to the active bias set in
+`tools/server/server-schema.cpp:451-460`. Arbitrary request `logit_bias` values
+are parsed separately at `tools/server/server-schema.cpp:410-449`, and the CPU
+sampler applies them before the remaining chain in
+`src/llama-sampler.cpp:3442-3473`.
+
+Therefore unmasked output-projection argmax is not an eligible semantic
+replacement for this strict identity. The compact boundary must select the
+maximum after excluding exactly those five IDs. Eligibility must be based on
+the effective active sampler biases, not merely on the existence of the
+startup EOG list: canonicalize and compare the active `(token, bias)` set to
+the immutable mask. If the mask is absent, different, duplicated
+ambiguously, contains a finite bias, or includes any request-specific entry,
+fall back to ordinary logits and CPU sampling.
 
 This is a necessary cycle reduction, not by itself the 100 tok/s solution. The
 serialized target trace attributes about 3.303 ms to the target vocabulary
@@ -128,6 +162,11 @@ rule: requests with temperature sampling, repeat penalties, or n-gram blocking
 continue to use the distribution path unless those transforms themselves move
 to the GPU.
 
+hipfire's plain greedy argmax cannot be copied literally for this server
+identity. Our five immutable EOG bans are part of target selection and must be
+applied before the compact IDs are produced. The transferable boundary is
+“exact target picks on device,” not “unconditionally take raw logits argmax.”
+
 ## Exact compact contract
 
 ### Stage-one device result
@@ -136,7 +175,7 @@ Use a distinct target result, not the existing draft result:
 
 ```cpp
 struct dflash_verify_top1_result {
-    int32_t ids[6]; // row 0..5, in target output-row order
+    int32_t ids[6]; // post-mask picks, row 0..5 in target output-row order
 };
 ```
 
@@ -164,8 +203,8 @@ is `target_ids[6]` plus `draft[5]`. It should:
 3. if all drafts match, append and accept `target_ids[5]`;
 4. return the same vector shape as the existing function.
 
-Calling `common_sampler_accept()` remains mandatory even under the stateless
-raw-argmax guard. It advances the sampler chain and `prev` ring
+Calling `common_sampler_accept()` remains mandatory even under the fixed-mask
+greedy guard. It advances the sampler chain and `prev` ring
 (`common/sampling.cpp:444-465`), preserving future behavior and leaving the
 existing clone/checkpoint rollback path valid.
 
@@ -189,26 +228,29 @@ first integration target.
 
 ## Numerical semantics that must remain exact
 
-“Greedy” alone is not a sufficient guard. The compact path is valid only when
-the selected target ID is exactly the raw output-projection argmax for every
-row.
+“Greedy” alone is not a sufficient guard. For the strict server identity, the
+compact path is valid only when the selected target ID is exactly the maximum
+over the output projection after the immutable five-ID `-inf` mask is applied.
 
 The fixed suite requests `temperature=0` and `top_p=1` in
 `scripts/bench-openai-realistic-suite.py:31-49`. With the current default
 parameters, repetition/frequency/presence and DRY penalties are identities,
 XTC is disabled, typical-p is disabled, top-n-sigma is disabled, and top-k and
-min-p retain the maximum. The temperature implementation
+min-p retain the maximum allowed token. The temperature implementation
 (`src/llama-sampler.cpp:265-281`) scans in token-ID order with strict `>`;
 therefore equal maxima select the lowest token ID.
 
 Implement one explicit predicate, for example
-`common_sampler_is_raw_argmax_exact()`, and require all of the following:
+`common_sampler_is_fixed_masked_argmax_exact()`, and require all of the
+following:
 
 - native DFlash, one active sequence, five drafts, six target output rows;
 - `temp <= 0`, dynamic temperature disabled, mirostat disabled, and no adaptive
   or infill sampler;
-- no grammar/tool schema, reasoning-budget transform, logit bias, ignored-EOS
-  bias, or request-specific token masking;
+- no grammar/tool schema or reasoning-budget transform;
+- the effective active logit-bias set is exactly the canonical immutable
+  `-inf` mask `{248044, 248046, 248063, 248064, 248065}`, with no finite,
+  duplicate, dynamic, or request-specific bias;
 - identity repetition/frequency/presence and DRY penalties;
 - XTC disabled, typical-p disabled, top-n-sigma disabled, `top_p == 1`;
 - only maximum-preserving top-k/min-p stages before temperature;
@@ -216,22 +258,25 @@ Implement one explicit predicate, for example
 - no LoRA adapter or unhandled `output_s` transform on the output projection.
 
 The last condition may be relaxed only by placing the exact `output_s` and
-LoRA operations before the device argmax. The matcher must inspect the actual
-graph, not assume `build_lora_mm()` is a bare Q6_K multiply.
+LoRA operations before the device mask and argmax. The matcher must inspect
+the actual graph, not assume `build_lora_mm()` is a bare Q6_K multiply.
 
 On any failed condition, missing compact tensor, wrong shape/type, graph mode
 incompatibility, unsupported weight layout, or backend dispatch failure, use
-the existing full-logit path. The fast path must never silently change a
-sampled, penalized, grammar-constrained, biased, or logprob-returning request
-into raw greedy decoding.
+the existing full-logit path. A mask mismatch is also a hard fallback, even if
+none of the five fixed IDs happened to win in a sample run. The fast path must
+never silently change a sampled, penalized, grammar-constrained, dynamically
+biased, or logprob-returning request into the fixed-mask greedy policy.
 
 For the fused Xe2 kernel, exactness means:
 
 - the same final-normalized FP32 activation rows consumed by production;
 - the same Q8 activation quantization and Q6_K decode/scale semantics;
 - the same effective output scaling and adapter behavior;
+- exclusion of all five immutable banned IDs before local or final top-1
+  reduction;
 - deterministic reduction; and
-- lowest-token-ID selection for exactly equal top logits.
+- lowest-token-ID selection among allowed tokens for exactly equal top logits.
 
 Full logits need not be bit-identical if the six selected IDs are identical,
 but promotion requires zero ID mismatches. Record top-1/top-2 margins and
@@ -244,17 +289,21 @@ pass is visible rather than hidden.
 
 1. Add a target-only cparam and graph-result pointer, distinct from
    `dflash_top1_ids`, in `src/llama-cparams.h`, `src/llama-graph.h`, and the
-   graph-key comparison.
+   graph-key comparison. Store the canonical banned-ID count/list (or a
+   collision-safe digest plus equality check) in the graph identity so a graph
+   captured for one mask cannot replay for another.
 2. In `src/models/qwen35.cpp`, only for an eligible six-row DFlash verifier,
-   append `ggml_argmax` over all six final output rows and expose `I32[6]`.
-   Leave the ordinary output projection unchanged.
+   apply the five sparse `-inf` bans and append `ggml_argmax` over all six final
+   output rows, or append a dedicated masked-argmax operation with equivalent
+   semantics. Expose `I32[6]` and leave the ordinary output projection
+   unchanged.
 3. Add six-ID async-copy/read storage in `src/llama-context.{h,cpp}`. When the
    compact target result exists, skip the raw-logit copy at
    `src/llama-context.cpp:2183-2195`.
 4. Add the compact host helper beside
    `common_sampler_sample_and_accept_n()` and select it in
    `tools/server/server-context.cpp:3807-3814` only after the request-level
-   raw-argmax predicate passes.
+   fixed-mask predicate passes.
 5. Preserve the current sampler clone, rollback calculation,
    `common_speculative_accept(accepted.size()-1)`, prompt insertion, memory
    trimming, and `slot.sampled` handling unchanged.
@@ -265,15 +314,18 @@ does not yet remove `[248320,6]` GPU logit writes.
 ### Stage 1: fuse the target Q6_K head to six top-1 IDs
 
 1. Capture real **target** M=6 `result_norm` activations and the six production
-   argmax IDs. The existing fixture is from the DFlash draft decoder and only
-   validates useful rows 1..5; it is not sufficient for target row 0 or the
-   row-5 full-accept bonus contract.
+   post-mask IDs. Retain raw and masked reference top-1 IDs so the fixture can
+   prove the mask is actually exercised. The existing fixture is from the
+   DFlash draft decoder and only validates useful rows 1..5; it is not
+   sufficient for target row 0 or the row-5 full-accept bonus contract.
 2. Generalize the cached expanded Q6_K pack and fused kernel to six input rows.
    The current five-row candidate already uses the correct lowest-ID tie
    comparator and passed a real draft activation fixture at 2.469-2.479 ms,
-   but its matcher skips input row 0.
-3. Match the exact target graph ending in all-six-row argmax. Reject other
-   consumers, output transforms, adapters, shapes, devices, and layouts.
+   but its matcher skips input row 0. Exclude the five banned output IDs before
+   each local maximum is admitted to the reduction.
+3. Match the exact target graph ending in the keyed five-ID mask and all-six-row
+   argmax. Reject other masks, consumers, output transforms, adapters, shapes,
+   devices, and layouts.
 4. Write only `I32[6]`; do not allocate or write the full logit tensor on the
    matched execution path. Preserve ordinary graph fallback.
 5. Reuse the checksum-addressed disk/RAM Q6 pack. Do not repack 1.36 GB for
@@ -305,7 +357,11 @@ Correctness is unconditional:
   emitted token arrays across the full strict suite;
 - identical output token hashes and stop behavior;
 - explicit forced tests for mismatch positions 0, 1, 4, and full acceptance;
-- fallback-path tests for temperature sampling, penalties, logit bias,
+- synthetic rows where each banned ID is raw top-1 and the masked reference
+  must select the next allowed ID, including lowest-ID tie cases;
+- a test that reordered fixed entries canonicalize to the same graph identity;
+- fallback-path tests for a missing/wrong/ambiguous-duplicate fixed mask, any
+  request-originated or additional finite/`-inf` bias, temperature sampling, penalties,
   grammar/tools, logprobs, wrong width, and non-Q6_K output weights.
 
 The decisive fused-boundary microbenchmark gate is:
@@ -314,8 +370,9 @@ The decisive fused-boundary microbenchmark gate is:
 - median of at least 100 iterations after 20 warmups;
 - include activation quantization, output-head work, top-1 reduction, and the
   24-byte result read in both measured boundaries;
+- apply the same canonical five-ID mask in candidate and reference;
 - fused six-row boundary `<= 2.75 ms` **and** at least `1.20x` faster than the
-  exact production full-logit-plus-argmax comparator.
+  exact production full-logit-plus-mask-plus-argmax comparator.
 
 At the measured 3.303 ms target vocabulary head, this requires at least about
 0.55 ms of isolated saving rather than a launch-count-only result. If it misses
