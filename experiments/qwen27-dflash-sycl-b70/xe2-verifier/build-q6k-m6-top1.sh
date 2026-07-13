@@ -21,5 +21,9 @@ icpx -fsycl -fsycl-targets=spir64_gen -Xs "-device ${XE2_DEVICE_TARGET:-bmg-g31}
 echo "compiled=$binary"
 if [[ "${COMPILE_ONLY:-0}" != 1 ]]; then
   : "${ZE_AFFINITY_MASK:?Set ZE_AFFINITY_MASK=2 for this experiment}"
-  "$binary" "$model" "${ITERS:-10}" "${SEED:-0xb70d6}"
+  args=("$model" "${ITERS:-10}" "${SEED:-0xb70d6}")
+  if [[ -n "${FIXTURE:-}" ]]; then
+    args+=("$FIXTURE")
+  fi
+  "$binary" "${args[@]}"
 fi

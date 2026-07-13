@@ -10,6 +10,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <string>
 #include <sys/mman.h>
@@ -29,6 +30,19 @@ struct top1_pair {
     float value;
     int32_t id;
 };
+
+struct dflash_lmhead_fixture_header {
+    char     magic[8];
+    uint32_t version;
+    uint32_t k;
+    uint32_t n;
+    uint32_t m;
+    top1_pair reference[5];
+    int32_t sampled[5];
+};
+
+static_assert(sizeof(dflash_lmhead_fixture_header) == 84,
+        "DFlash LM-head fixture header layout changed");
 
 class quant_kernel;
 class logits_kernel;
@@ -238,6 +252,7 @@ int main(int argc, char ** argv) {
     const char * path = argc > 1 ? argv[1] : nullptr;
     const int iters = argc > 2 ? std::atoi(argv[2]) : 10;
     const uint32_t seed = argc > 3 ? uint32_t(std::strtoul(argv[3], nullptr, 0)) : 0xb70d6u;
+    const char * fixture_path = argc > 4 ? argv[4] : nullptr;
     if (!path) return 64;
     constexpr size_t data_offset = 10994816;
     constexpr size_t weight_bytes = size_t(N)*(K/QK)*sizeof(block_q6_K);
@@ -251,9 +266,25 @@ int main(int argc, char ** argv) {
     std::vector<uint16_t> hd(size_t(N)*(K/QK));
     expand_q6k(source, hq.data(), hs.data(), hd.data());
     std::vector<float> hx(size_t(M)*K);
-    std::mt19937 rng(seed);
-    std::normal_distribution<float> dist(0.0f, 0.7f);
-    for (float & v : hx) v = dist(rng);
+    std::unique_ptr<mapped_file> fixture_file;
+    dflash_lmhead_fixture_header fixture = {};
+    if (fixture_path) {
+        fixture_file = std::make_unique<mapped_file>(fixture_path);
+        const size_t expected = sizeof(fixture) + hx.size()*sizeof(float);
+        if (fixture_file->size != expected) throw std::runtime_error("fixture size mismatch");
+        std::memcpy(&fixture, fixture_file->data, sizeof(fixture));
+        if (std::memcmp(fixture.magic, "DFLM6V1", 8) != 0 || fixture.version != 1 ||
+                fixture.k != K || fixture.n != N || fixture.m != M) {
+            throw std::runtime_error("fixture identity mismatch");
+        }
+        std::memcpy(hx.data(), fixture_file->data + sizeof(fixture), hx.size()*sizeof(float));
+        std::cout << "fixture=" << fixture_path << " rows=" << fixture.m << " stride=" << fixture.k
+                  << " dtype=f32 sampled_rows=1..5" << std::endl;
+    } else {
+        std::mt19937 rng(seed);
+        std::normal_distribution<float> dist(0.0f, 0.7f);
+        for (float & v : hx) v = dist(rng);
+    }
 
     sycl::queue queue{sycl::gpu_selector_v, sycl::property_list{sycl::property::queue::in_order{},
                                                                sycl::property::queue::enable_profiling{}}};
@@ -282,10 +313,20 @@ int main(int argc, char ** argv) {
     std::vector<top1_pair> hp(5), hf(5); queue.memcpy(hp.data(), rp, sizeof(top1_pair)*5);
     queue.memcpy(hf.data(), rf, sizeof(top1_pair)*5).wait();
     bool exact = true;
+    bool production_exact = true;
     for (int r = 0; r < 5; ++r) {
         exact &= hp[r].id == hf[r].id;
         std::cout << "row=" << r + 1 << " reference_id=" << hp[r].id << " fused_id=" << hf[r].id
                   << " reference_logit=" << hp[r].value << " fused_logit=" << hf[r].value << std::endl;
+        if (fixture_path) {
+            const bool row_exact = fixture.reference[r].id == hf[r].id && fixture.sampled[r] == hf[r].id;
+            production_exact &= row_exact;
+            std::cout << "row=" << r + 1 << " production_id=" << fixture.reference[r].id
+                      << " sampled_id=" << fixture.sampled[r]
+                      << " production_logit=" << fixture.reference[r].value
+                      << " fused_logit_delta=" << std::fabs(fixture.reference[r].value - hf[r].value)
+                      << " production_exact=" << row_exact << std::endl;
+        }
     }
 
     std::vector<double> prod, fused, prod_dot, fused_dot;
@@ -305,8 +346,9 @@ int main(int argc, char ** argv) {
               << " reference_dot_us=" << median(prod_dot) << " fused_dot_us=" << median(fused_dot)
               << " reference_boundary_us=" << pt << " fused_boundary_us=" << ft
               << " speedup=" << pt/ft << " exact_ids=" << exact
-              << " gate=" << (exact && (ft < 2500.0 || pt/ft >= 1.25) ? "PASS" : "FAIL") << std::endl;
+              << " production_exact_ids=" << production_exact
+              << " gate=" << (exact && production_exact && (ft < 2500.0 || pt/ft >= 1.25) ? "PASS" : "FAIL") << std::endl;
 
     for (void * p : {(void*)wq,(void*)ws,(void*)wd,(void*)x,(void*)xq,(void*)xd,(void*)logits,(void*)pf,(void*)pp,(void*)rf,(void*)rp}) sycl::free(p, queue);
-    return exact && (ft < 2500.0 || pt/ft >= 1.25) ? 0 : 3;
+    return exact && production_exact && (ft < 2500.0 || pt/ft >= 1.25) ? 0 : 3;
 }

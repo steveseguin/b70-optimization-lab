@@ -1,0 +1,50 @@
+{
+  "date": "2026-07-13",
+  "fixture": {
+    "path": "/mnt/fast-ai/bench-results/qwen27-q6k-m6-top1/dflash-real-m6-v1.bin",
+    "sha256": "e2bcd65300f9fa4d7b733dd0491d3c01cf566aadbbf4e22f7587079867484e3f",
+    "bytes": 122964,
+    "format_version": 1,
+    "header_bytes": 84,
+    "activation_dtype": "f32",
+    "activation_shape": [6, 5120],
+    "activation_stride_elements": 5120,
+    "sampled_rows": [1, 2, 3, 4, 5]
+  },
+  "identity": {
+    "target_model": "/dev/shm/qwen27-b70-model-cache/20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a/Qwen3.6-27B-Q4_0.gguf",
+    "target_quantization": "Q4_0",
+    "target_kv": "q8_0",
+    "draft_model": "/mnt/usb-models/models/qwen36-27b-dflash-native/Qwen3.6-27B-DFlash-Q8_0.gguf",
+    "draft_quantization": "Q8_0",
+    "draft_kv": "f16",
+    "flash_attention": true,
+    "dflash_n_max": 5,
+    "dflash_p_min": 0.0,
+    "gpu": 2,
+    "llama_cpp_commit": "e3546c7948e3af463d0b401e6421d5a4c2faf565"
+  },
+  "production_reference": [
+    {"row": 1, "argmax_id": 12305, "sampled_id": 12305, "logit": 29.5124},
+    {"row": 2, "argmax_id": 198, "sampled_id": 198, "logit": 29.5510},
+    {"row": 3, "argmax_id": 727, "sampled_id": 727, "logit": 29.6702},
+    {"row": 4, "argmax_id": 369, "sampled_id": 369, "logit": 26.5892},
+    {"row": 5, "argmax_id": 36951, "sampled_id": 36951, "logit": 24.6936}
+  ],
+  "repeats": [
+    {"reference_boundary_us": 2605.83, "fused_boundary_us": 2474.48, "speedup": 1.05308},
+    {"reference_boundary_us": 2619.79, "fused_boundary_us": 2469.48, "speedup": 1.06087},
+    {"reference_boundary_us": 2630.84, "fused_boundary_us": 2478.64, "speedup": 1.06140}
+  ],
+  "correctness": {
+    "independent_reference_ids_exact": true,
+    "production_argmax_ids_exact": true,
+    "production_sampled_ids_exact": true,
+    "max_production_logit_abs_delta": 0.00000190735
+  },
+  "gate": {
+    "absolute_boundary_limit_us": 2500.0,
+    "all_repeats_passed": true,
+    "status": "PASS"
+  }
+}
