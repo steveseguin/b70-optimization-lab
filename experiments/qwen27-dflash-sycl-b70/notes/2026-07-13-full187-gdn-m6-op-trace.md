@@ -67,15 +67,19 @@ projections (1,189-1,198 us), and five FFN up projections (1,167-1,174 us).
 
 The trace changes the priority order:
 
-1. Integrate and validate the guarded Q6_K M=6 logits-to-top-1 kernel. Both the
-   target verifier and the DFlash draft pay roughly 3.3-3.5 ms of serialized
-   diagnostic device time to materialize full-vocabulary logits. Eliminating
-   that intermediate attacks a repeated, dominant boundary.
-2. Use a production, non-serializing cycle A/B to measure the actual wall-time
+1. Integrate and validate the guarded Q6_K M=6 draft logits-to-top-1 kernel.
+   The DFlash draft pays roughly 3.5 ms of serialized diagnostic device time
+   to materialize full-vocabulary logits, and its fixed raw-argmax consumer can
+   be replaced by five exact IDs.
+2. Treat the target verifier's roughly 3.3 ms LM head as a separate fusion.
+   It consumes per-row target values for speculative acceptance and final
+   sampling, so the draft's five-ID contract cannot be reused safely. Design a
+   GPU-resident target LM-head/acceptance boundary that preserves those
+   semantics while returning only the compact decisions the host needs.
+3. Use a production, non-serializing cycle A/B to measure the actual wall-time
    reduction. Do not infer the speedup directly from the operation-timer sums.
-3. After Q6 top-1, prioritize the recurrent target projections and FFN down
+4. After Q6 top-1, prioritize the recurrent target projections and FFN down
    path. The already prototyped exact SwiGLU-to-Q8 tail remains low priority
    because its realistic isolated gain was only about 0.16-0.44 ms per cycle.
-4. Continue to reject generic launch/configuration sweeps. The remaining work
+5. Continue to reject generic launch/configuration sweeps. The remaining work
    is a fused persistent decoder and a cheaper speculative cycle.
-
