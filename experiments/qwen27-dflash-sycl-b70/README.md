@@ -49,7 +49,29 @@ context. It is superseded where the controlling plan differs.
   B70-specific packing, and DFlash executor work.
 - `notes/2026-07-12-b70-qwen27-prior-art-research.md`: full prior-art audit.
 
-## Current July 12 State
+## Current July 13 State
+
+Native DFlash has crossed the first local high-ceiling milestone. The earlier
+near-zero acceptance was not evidence that DFlash or Q4 was unusable: SYCL
+flash attention produced incorrect results for the DFlash decoder's
+multi-token non-causal/interleaved-SWA mask. A narrow source fallback now
+bypasses FA only for that DFlash graph and retains it for the target verifier.
+
+- Q8 native DFlash4, favorable code: 97.6% acceptance and 73.91 tok/s.
+- Existing Q4_K_M native DFlash5, favorable code: 90.4% acceptance and
+  74.01 tok/s.
+- Strict mixed Q8 native DFlash5: 40.203 tok/s median; useful correctness
+  recovery, but not a global production win.
+- Measured `n_max=5` cycle: about 58.7 ms target verification, 10.0 ms draft,
+  1.0 ms feature injection, and at most 1.2 ms acceptance/commit.
+
+The importance is architectural: DFlash remains a credible route to the
+100/200 tok/s objectives, and the next bottleneck is now measured as the
+generic small-M target verifier. Do not spend the next iteration optimizing
+the roughly 1 ms feature-injection path ahead of the verifier. Full evidence:
+[`../../notes/2026-07-13-qwen36-native-dflash-sycl-fa-isolation.md`](../../notes/2026-07-13-qwen36-native-dflash-sycl-fa-isolation.md).
+
+### Prior July 12 foundation
 
 - Target: Q4_0, current llama.cpp `e3546c794`, AOT `bmg-g31`, NDEBUG.
 - Warm diagnostics: no-spec about 26.58 tok/s; MTP3 about 53-58 tok/s.

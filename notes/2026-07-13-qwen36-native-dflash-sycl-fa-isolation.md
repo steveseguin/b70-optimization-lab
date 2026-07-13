@@ -2,6 +2,35 @@
 
 Date: 2026-07-13 UTC
 
+## Success and why it matters
+
+This is the first valid local Qwen3.6 27B lane to break the 68 tok/s milestone
+on one B70: `73.91 tok/s` with native Q8 DFlash and `74.01 tok/s` with the
+existing Q4_K_M draft on favorable code. The result does not satisfy the strict
+100 tok/s TP1 objective and must not be represented as mixed-workload speed;
+its importance is that it reverses a false technical conclusion.
+
+We had treated native DFlash as nearly unusable because only 0.35-1.49% of its
+drafted tokens were accepted. The actual problem was backend semantics, not
+the DFlash algorithm, model quality, or Q4 quantization. SYCL flash attention
+was incorrectly evaluating DFlash's multi-token non-causal attention with
+interleaved sliding-window layers, making otherwise valid candidates appear
+random. Moving from Q4 to the independently validated Q8 artifact did not fix
+the failure, which was the key discriminator.
+
+The resolution is deliberately narrow: when building the SYCL DFlash
+non-causal decoder graph, route attention through the correct reference path;
+leave flash attention enabled for the causal target/verifier. This restored
+normal acceptance without surrendering target FA performance. It is a safe
+correctness fallback, not yet a repair of the faulty SYCL FA tile-mask kernel.
+
+This matters to the main objective because DFlash's long accepted blocks are
+still the clearest way to amortize a 27B target pass enough to approach 100
+tok/s on TP1 or 200 tok/s across multiple B70s. It also prevents future agents
+from discarding DFlash, blaming Q4, or attempting to solve the wrong 1 ms host
+boundary. With correct drafting, measured timing identifies the width-6 target
+verifier at about 58.7 ms as the dominant engineering target.
+
 ## Why this was tested
 
 The earlier native DFlash Q4_K_M run accepted only 6 of 1695 drafted tokens.

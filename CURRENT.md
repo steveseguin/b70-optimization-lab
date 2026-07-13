@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-12**
+Last reviewed: **2026-07-13**
 
 ## Authority And Update Rule
 
@@ -25,14 +25,17 @@ not silently add authentication or change its exposure policy.
 
 ## Active Optimization Lane
 
-The active research lane is **maximum Qwen3.6 27B TP1 decode speed on one Intel
-Arc Pro B70**. All four B70s are independent TP1 experiment workers; do not
-move this lane to TP2 or TP4 unless the user explicitly changes the mandate.
+The active research lane is **maximum single-session Qwen3.6 27B decode
+speed**, with a `>=100 tok/s` TP1 objective on one Intel Arc Pro B70 and a
+`>=200 tok/s` multi-B70 objective. Aggregate throughput does not count. Use all
+four B70s as independent TP1 experiment workers until TP1 is maximized; then
+evaluate speculative TP3+draft and TP4 topologies against the 200 tok/s gate.
 
 - [Controlling requirements and execution plan](plans/2026-07-12-qwen27-tp1-max-speed-requirements-and-execution.md)
 - [Active experiment workspace](experiments/qwen27-dflash-sycl-b70/README.md)
 - [Initial Q4_0 and speculation diagnostic](experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-initial-dflash-mtp-benchmark.md)
 - [Current MMVQ dispatch-fix result](experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-mmvq-dispatch-fix.md)
+- [Native DFlash SYCL FA correctness isolation and first >68 result](notes/2026-07-13-qwen36-native-dflash-sycl-fa-isolation.md)
 - [Prior promoted vLLM result packet](results/qwen36-27b-autoround-int4-b70/README.md)
 
 The target product is one B70. The intended route combines persistent cached
@@ -119,6 +122,27 @@ median with all gates passing, so host-boundary removal alone is closed as a
 speed lane. The serialized draft graphs still execute and the `45.646 ms` M=4
 target verifier remains the dominant blocker.
 
+Native DFlash is no longer rejected based on the earlier near-zero-acceptance
+result. That failure was a SYCL flash-attention correctness bug: the FA path
+miscomputed the multi-token non-causal/interleaved-SWA mask used by the native
+DFlash decoder. Q8 did not repair it (`7/470` accepted with FA on). Bypassing FA
+only for the SYCL DFlash non-causal graph, while retaining FA for the causal
+target/verifier, restored `82/84` acceptance (`97.6%`) and `73.91 tok/s` on a
+favorable short code prompt. The existing Q4_K_M draft likewise recovered to
+`104/115` acceptance and `74.01 tok/s`, proving that the original Q4 result was
+not ordinary quantization damage. This is the first valid local lane above the
+68 tok/s milestone, but it is workload-specific rather than a production
+promotion: native Q8 DFlash5 reached only `40.203 tok/s` median on the strict
+12-prompt mixed suite.
+
+Complete native DFlash timing now accounts for the mixed-workload cycle. At
+`n_max=5`, steady state is about `58.7 ms` target width-6 verification,
+`10.0 ms` DFlash block decode/sampling, `1.0 ms` feature injection, and
+`0.3-1.2 ms` acceptance/commit: roughly `70-71 ms` total. The measured primary
+blocker is therefore the generic small-M target verifier. The next decisive
+work is an offline-packed Xe2 DPAS/XMX verifier plus projection fusion; generic
+configuration sweeps and another global DFlash rejection are closed.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was
@@ -157,12 +181,13 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Follow the ordered checklist in the controlling TP1 requirements plan.
-2. Use the completed MMVQ/strict baseline evidence as the Phase 0 control;
-   do not repeat the graph-recreate or mixed DFlash losses.
-3. Continue the combined residual/RMSNorm/Q8_1 fusion boundary and a stronger
-   multi-token verifier layout; do not repeat neutral graph replay or the
-   closed block-scaled DPAS mapping.
+1. Preserve the narrow SYCL DFlash FA correctness fallback and require
+   acceptance parity before re-enabling FA inside the non-causal draft graph.
+2. Use native DFlash as a routed high-ceiling lane; distinguish favorable code
+   results from the strict mixed-suite production gate.
+3. Build the offline-packed Xe2 DPAS/XMX small-M verifier and fused QKVZA plus
+   gate/up projections. The current width-6 verifier is the measured 58.7 ms
+   bottleneck.
 4. At promotion time—not during rapid iteration—record each external source
    tree's path, commit, dirty state, and relevant aggregate patch snapshot.
 5. Update the [performance index](results/scoreboard.md) for representative
