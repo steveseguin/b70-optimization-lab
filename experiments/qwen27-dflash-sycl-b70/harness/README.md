@@ -53,9 +53,9 @@ Runtime PID files, logs, and resolved worker identities live outside Git under
 - Promotion must use the fixed cold realistic suite, unique first responses,
   disabled prompt/KV/history reuse, and `cached_tokens=0` for every request.
 
-`model-pack-manifest.json` defines admission identity for the future offline
-B70 pack without claiming that the native pack exists. The implemented first
-artifact is a byte-identical shared-RAM GGUF cache:
+`model-pack-manifest.json` defines admission identity for the offline B70
+packs. The first implemented artifact was a byte-identical shared-RAM GGUF
+cache:
 
 ```bash
 python3 scripts/qwen27-model-cache.py status
@@ -75,12 +75,13 @@ The files are mmap-compatible, and `warm` explicitly touches every host page.
 Because `/dev/shm` is volatile, `prepare` is required after reboot; it currently
 uses about 16 GiB of the 63 GiB mount. Never stage a second copy blindly.
 
-This cache only shortens development initialization. It does not contain the
+That RAM cache only shortens development initialization. It does not contain the
 backend's reordered device weights and cannot improve decode throughput. The
 current llama.cpp loader maps GGUF tensor offsets and performs the reorder into
 GPU-only allocations; consuming a serialized reordered pack needs a new loader
 ABI. The internal NVMe also had only 14 GiB free, less than the 16.06 GB target
-GGUF, so a disk-native pack was not created unsafely.
+GGUF, so the later 6.07 GiB native M6 pack set was placed on the external model
+disk rather than consuming the remaining system NVMe space.
 
 `golden-corpus-manifest.json`
 defines the required capture cases and marks every snapshot as ineligible for
@@ -130,3 +131,29 @@ packer revision, layout, and aggregate artifact hash. It does not pretend the
 current llama.cpp loader can bind serialized SYCL-reordered device weights:
 that loader ABI is still required. The existing byte-identical GGUF RAM cache
 remains the safe way to accelerate model initialization today.
+
+## Native Xe2 M6 Pack Cache
+
+The 130 Q4_0 gate/up tensors used by the guarded width-6 Xe2 experiment now
+have a real persistent disk artifact in the exact `q4_0-xe2-dpas-v2` layout:
+
+```bash
+python3 scripts/qwen27-xe2-m6-pack-cache.py inspect
+/home/steve/.venvs/vllm-xpu/bin/python \
+  scripts/qwen27-xe2-m6-pack-cache.py prepare
+python3 scripts/qwen27-xe2-m6-pack-cache.py verify --deep
+```
+
+The set and every tensor are content-addressed by the target model SHA-256,
+tensor name/shape/type, layout version, and `bmg-g31`. Each tensor manifest
+records both source-tensor and packed-payload SHA-256 values. `verify` performs
+a fast key/size admission; `verify --deep` rehashes all 6.07 GiB before loader
+use. `prepare --skip-source-hash` is a fast development-only lookup when the
+already-recorded model checksum is trusted; it is not a replacement for first
+admission or deep verification.
+
+The cache is stored outside Git under `/mnt/usb-models/model-packs/`. A future
+llama.cpp loader can mmap the admitted payloads, but protected llama.cpp source
+was not changed by this tooling work. Measurements and the exact artifact key
+are in
+[`../notes/2026-07-13-xe2-m6-persistent-pack-cache.md`](../notes/2026-07-13-xe2-m6-persistent-pack-cache.md).

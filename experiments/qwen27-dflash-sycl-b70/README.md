@@ -110,9 +110,9 @@ the roughly 1 ms feature-injection path ahead of the verifier. Full evidence:
 
 The first Phase 1 implementation is in [`harness/`](harness/README.md). It
 provides a validated four-worker assignment, dry-run-safe persistent server
-control, and explicit model-pack and golden-corpus manifests. It is a
-foundation, not a claim that native packed weights or device-state restore are
-already implemented.
+control, explicit model-pack and golden-corpus manifests, and a populated
+checksum-addressed disk cache for all 130 Xe2 M6 gate/up packs. The protected
+llama.cpp loader binding and device-state restore are not implemented.
 
 Implementation and validation are recorded in
 [`notes/2026-07-12-phase1-persistent-harness-foundation.md`](notes/2026-07-12-phase1-persistent-harness-foundation.md).

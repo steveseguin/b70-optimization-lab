@@ -250,7 +250,10 @@ def validate(config: dict[str, Any], config_path: Path) -> list[str]:
         if model_pack.get("target_architecture") != "bmg-g31":
             errors.append("model-pack target_architecture must be bmg-g31")
         if model_pack.get("format_status") not in (
-            "manifest-only", "byte-identical-ram-cache-implemented"
+            "manifest-only",
+            "byte-identical-ram-cache-implemented",
+            "byte-identical-ram-cache-and-offline-artifact-registry-implemented",
+            "native-xe2-m6-pack-cache-implemented-loader-binding-pending",
         ):
             errors.append("unsupported model-pack format_status")
     except (FileNotFoundError, json.JSONDecodeError) as exc:

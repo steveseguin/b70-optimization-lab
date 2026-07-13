@@ -1,11 +1,12 @@
 {
   "schema_version": 1,
   "format": "qwen27-b70-native-pack",
-  "format_status": "byte-identical-ram-cache-and-offline-artifact-registry-implemented",
+  "format_status": "native-xe2-m6-pack-cache-implemented-loader-binding-pending",
   "target_architecture": "bmg-g31",
   "source": {
     "path": "/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf",
     "sha256": "20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a",
+    "size_bytes": 16056476800,
     "sha256_status": "recorded"
   },
   "draft_source": {
@@ -14,21 +15,40 @@
     "sha256_status": "recorded"
   },
   "packing_tool": {
-    "path": "scripts/qwen27-iteration-artifacts.py",
-    "revision": 2,
-    "status": "reversible-q4_0-joint-n-tensor-packer-and-loader-manifest implemented; native GGUF tensor extractor and llama.cpp binding not yet implemented"
+    "path": "scripts/qwen27-xe2-m6-pack-cache.py",
+    "revision": 1,
+    "status": "native GGUF directory parser plus exact q4_0-xe2-dpas-v2 gate/up packer implemented; protected llama.cpp binding not implemented"
   },
   "kernel_abi": {
-    "name": "qwen27-b70-pack-v1",
-    "layout_version": 1
+    "name": "qwen27-xe2-m6-pack-v2",
+    "layout_version": 2
   },
   "pack": {
-    "path": "/mnt/fast-ai/model-packs/qwen27-b70/q4_0-pack-v1",
+    "path": "/mnt/usb-models/model-packs/qwen27-xe2-m6-v2/942dc71558357d09724a74525383255c0cd1387216e45c147632876e962d17ac",
     "registry_root": "/mnt/fast-ai/bench-results/qwen27-tp1-worker-harness/iteration-v1/packs",
-    "status": "versioned external registry plus per-tensor q4_0-joint-n-v1 artifacts implemented; full-model extraction and loader binding absent",
+    "status": "130 gate/up q4_0-xe2-dpas-v2 payloads packed, checksum-verified, and persisted; protected llama.cpp loader binding absent",
     "sha256": null,
-    "tensor_table": null,
+    "identity_key": "942dc71558357d09724a74525383255c0cd1387216e45c147632876e962d17ac",
+    "tensor_table": "manifest.json",
+    "tensor_count": 130,
+    "payload_size_bytes": 6517555200,
     "alignment_bytes": 4096
+  },
+  "native_m6_cache": {
+    "format": "qwen27-xe2-m6-pack-set-v2",
+    "layout": "q4_0-xe2-dpas-v2",
+    "layout_version": 2,
+    "architecture": "bmg-g31",
+    "key_fields": [
+      "target_model_sha256",
+      "tensor_name",
+      "tensor_shape",
+      "tensor_type",
+      "pack_layout_version",
+      "target_architecture"
+    ],
+    "validation": "canonical set/tensor keys, exact sizes, per-source-tensor SHA256, and per-payload SHA256",
+    "binding_status": "external mmap-safe artifacts ready; llama.cpp integration not performed"
   },
   "iteration_artifact_registry": {
     "status": "implemented",
