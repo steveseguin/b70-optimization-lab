@@ -1,0 +1,67 @@
+{
+  "date": "2026-07-13",
+  "classification": "confirmed_strict_single_b70_record",
+  "model": "Qwen3.6-27B-Q4_0.gguf",
+  "draft_model": "Qwen3.6-27B-DFlash-Q8_0.gguf",
+  "quantization": "Q4_0 target, Q8_0 native DFlash draft, Q8_0 target KV, F16 draft KV",
+  "gpu": "Intel Arc Pro B70",
+  "gpu_count": 1,
+  "speculation": {
+    "method": "native DFlash5",
+    "n_max": 5,
+    "n_min": 0,
+    "p_min": 0.0
+  },
+  "candidate_r2": {
+    "result": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json",
+    "result_sha256": "fd0b1419b649a25c35cc7335f8217cbd675cf8802085cc47a26106d0876af44e",
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/runs/q6top1-aot-realistic128-r2-20260713",
+    "median_tok_s_1_100_after_ttft": 47.81881802978528,
+    "p10_tok_s_1_100_after_ttft": 39.86953379449598,
+    "mean_tok_s_1_100_after_ttft": 46.63864668871475,
+    "median_tok_s_after_ttft_full": 47.87859819774357,
+    "median_tok_s_wall_full": 32.923315078324215,
+    "median_ttft_ms": 1156.511059962213,
+    "realistic_gate_passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "candidate_r1": {
+    "result": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r1-20260713.json",
+    "result_sha256": "cb3784b076b7fd295d3124dd252adeccd74b678d76d6f942606c47678ccb9abb",
+    "median_tok_s_1_100_after_ttft": 47.11428929754737,
+    "realistic_gate_passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "exact_control": {
+    "result": "data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-control-realistic128-r1-20260713.json",
+    "result_sha256": "ca39d32ebaf70bcce117dcdec93c1741324dededf4ddd7e443707c24ab6323f0",
+    "median_tok_s_1_100_after_ttft": 44.22050445291076,
+    "p10_tok_s_1_100_after_ttft": 38.09321149961443,
+    "mean_tok_s_1_100_after_ttft": 44.05579649619674,
+    "realistic_gate_passed": true,
+    "cached_tokens_all_zero": true
+  },
+  "improvement_percent_vs_exact_control": 8.135,
+  "previous_matching_record_tok_s": 44.25538817570995,
+  "improvement_percent_vs_previous_record": 8.052,
+  "q6_pack": {
+    "bytes": 1360793600,
+    "free_before_bytes": 18853158912,
+    "free_after_bytes": 17492287488
+  },
+  "fixture": {
+    "path": "/mnt/fast-ai/bench-results/qwen27-q6k-m6-top1/dflash-real-m6-v1.bin",
+    "sha256": "e2bcd65300f9fa4d7b733dd0491d3c01cf566aadbbf4e22f7587079867484e3f",
+    "production_top1_ids": [12305, 198, 727, 369, 36951],
+    "exact": true,
+    "full_vocab_zero_tie_lowest_id_exact": true,
+    "finite_stride_tie_lowest_id_exact": true
+  },
+  "forced_compact_read_failure": {
+    "fail_closed_retry_passed": true,
+    "output_sha256": "2a931ff83e89f577315a59bef7cdf6938145f3eceb3c9996d78b065bcc17bd71",
+    "accepted": 49,
+    "generated": 63,
+    "mean_draft_length": 4.5
+  }
+}

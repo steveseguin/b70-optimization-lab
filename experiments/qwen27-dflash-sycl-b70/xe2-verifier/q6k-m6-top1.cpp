@@ -329,6 +329,47 @@ int main(int argc, char ** argv) {
         }
     }
 
+    // Explicit finite-tie oracle for the production contract: greedy top-1
+    // selects the lowest token id. All-zero activations force an exact finite
+    // tie across the complete vocabulary and exercise both the workgroup-local
+    // and global fused reductions.
+    std::vector<float> zero_x(size_t(5)*K, 0.0f);
+    queue.memcpy(x + K, zero_x.data(), zero_x.size()*sizeof(float)).wait();
+    quantize(queue, x + K, xq + K, xd + K/32, 5).wait();
+    dot_kernel<true>(queue, wq, ws, wd, xq, xd, nullptr, pf).wait();
+    reduce_top1(queue, pf, rf, fused_groups).wait();
+    queue.memcpy(hf.data(), rf, sizeof(top1_pair)*5).wait();
+    bool full_tie_exact = true;
+    for (int r = 0; r < 5; ++r) {
+        full_tie_exact &= hf[r].value == 0.0f && hf[r].id == 0;
+    }
+
+    // Independently exercise the global reducer with finite equal maxima that
+    // cross both lane and 256-stride boundaries.
+    std::vector<top1_pair> tie_partial(size_t(5)*fused_groups, {-1000.0f, INT32_MAX});
+    const int32_t tie_ids[5][2] = {
+        {1, 256}, {255, 256}, {0, N - 1}, {1, 256}, {255, 256},
+    };
+    for (int r = 0; r < 5; ++r) {
+        for (int j = 0; j < 2; ++j) {
+            const int id = tie_ids[r][j];
+            tie_partial[size_t(r)*fused_groups + id/SG_PER_WG] = {7.0f, id};
+        }
+    }
+    queue.memcpy(pf, tie_partial.data(), tie_partial.size()*sizeof(top1_pair)).wait();
+    reduce_top1(queue, pf, rf, fused_groups).wait();
+    queue.memcpy(hf.data(), rf, sizeof(top1_pair)*5).wait();
+    bool stride_tie_exact = true;
+    for (int r = 0; r < 5; ++r) {
+        stride_tie_exact &= hf[r].value == 7.0f && hf[r].id == std::min(tie_ids[r][0], tie_ids[r][1]);
+    }
+    std::cout << "tie_oracle_full_vocab_zero=" << full_tie_exact
+              << " tie_oracle_finite_stride=" << stride_tie_exact << std::endl;
+
+    // Restore the captured/random activations before timing.
+    queue.memcpy(x, hx.data(), hx.size()*sizeof(float)).wait();
+    quantize(queue, x, xq, xd, M).wait();
+
     std::vector<double> prod, fused, prod_dot, fused_dot;
     for (int i = 0; i < iters; ++i) {
         auto q0 = quantize(queue, x, xq, xd, M);
@@ -347,8 +388,12 @@ int main(int argc, char ** argv) {
               << " reference_boundary_us=" << pt << " fused_boundary_us=" << ft
               << " speedup=" << pt/ft << " exact_ids=" << exact
               << " production_exact_ids=" << production_exact
-              << " gate=" << (exact && production_exact && (ft < 2500.0 || pt/ft >= 1.25) ? "PASS" : "FAIL") << std::endl;
+              << " full_tie_exact=" << full_tie_exact
+              << " stride_tie_exact=" << stride_tie_exact
+              << " gate=" << (exact && production_exact && full_tie_exact && stride_tie_exact &&
+                        (ft < 2500.0 || pt/ft >= 1.25) ? "PASS" : "FAIL") << std::endl;
 
     for (void * p : {(void*)wq,(void*)ws,(void*)wd,(void*)x,(void*)xq,(void*)xd,(void*)logits,(void*)pf,(void*)pp,(void*)rf,(void*)rp}) sycl::free(p, queue);
-    return exact && production_exact && (ft < 2500.0 || pt/ft >= 1.25) ? 0 : 3;
+    return exact && production_exact && full_tie_exact && stride_tie_exact &&
+            (ft < 2500.0 || pt/ft >= 1.25) ? 0 : 3;
 }
