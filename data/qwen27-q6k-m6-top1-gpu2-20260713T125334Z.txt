@@ -1,0 +1,63 @@
+experiment=q6k-m6-fused-top1
+date_utc=2026-07-13T12:53:34Z
+device=Intel Arc Pro B70 GPU2
+ze_affinity_mask=2
+model=/dev/shm/qwen27-b70-model-cache/20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a/Qwen3.6-27B-Q4_0.gguf
+model_size=16056476800
+tensor=output.weight
+tensor_type=Q6_K
+shape=K5120_N248320_M6
+tensor_data_offset=10994816
+raw_tensor_bytes=1042944000
+compiler=Intel_oneAPI_DPC++_2026.0.0
+llama_source_head=e3546c7948e3af463d0b401e6421d5a4c2faf565
+candidate_pack=offline_expanded_int8_q_plus_int8_subscales_plus_fp16_superblock_scales
+candidate_weight_bytes=1355847680
+candidate_semantics=rows1_through_5_only_fused_Q6KxQ8_dot_and_top1
+gate=exact_ids_and_fused_boundary_lt_2500us_or_speedup_ge_1.25
+
+build:
+COMPILE_ONLY=1 experiments/qwen27-dflash-sycl-b70/xe2-verifier/build-q6k-m6-top1.sh
+
+run:
+source /opt/intel/oneapi/setvars.sh --force
+for seed in 0xb70d6 0x27b70 0xd5f1a5; do ZE_AFFINITY_MASK=2 /mnt/fast-ai/bench-results/qwen27-q6k-m6-top1/q6k-m6-top1 MODEL 7 "$seed"; done
+
+seed=749782
+row=1 reference_id=99078 fused_id=99078 reference_logit=2.94857 fused_logit=2.94857
+row=2 reference_id=39601 fused_id=39601 reference_logit=2.92496 fused_logit=2.92496
+row=3 reference_id=96560 fused_id=96560 reference_logit=3.18108 fused_logit=3.18108
+row=4 reference_id=13905 fused_id=13905 reference_logit=3.23434 fused_logit=3.23434
+row=5 reference_id=108818 fused_id=108818 reference_logit=3.39874 fused_logit=3.39874
+reference_dot_us=2619.90 fused_dot_us=2463.23 reference_boundary_us=2655.63 fused_boundary_us=2478.64 speedup=1.07140 exact_ids=1 gate=PASS
+
+seed=162672
+row=1 reference_id=149614 fused_id=149614 reference_logit=3.29232 fused_logit=3.29232
+row=2 reference_id=162530 fused_id=162530 reference_logit=3.49964 fused_logit=3.49964
+row=3 reference_id=54223 fused_id=54223 reference_logit=2.95052 fused_logit=2.95052
+row=4 reference_id=229618 fused_id=229618 reference_logit=3.44209 fused_logit=3.44209
+row=5 reference_id=95747 fused_id=95747 reference_logit=3.55752 fused_logit=3.55752
+reference_dot_us=2596.67 fused_dot_us=2466.67 reference_boundary_us=2631.67 fused_boundary_us=2482.61 speedup=1.06004 exact_ids=1 gate=PASS
+
+seed=14021029
+row=1 reference_id=87108 fused_id=87108 reference_logit=3.29630 fused_logit=3.29630
+row=2 reference_id=4867 fused_id=4867 reference_logit=3.52987 fused_logit=3.52987
+row=3 reference_id=22834 fused_id=22834 reference_logit=3.17800 fused_logit=3.17800
+row=4 reference_id=48348 fused_id=48348 reference_logit=3.74675 fused_logit=3.74675
+row=5 reference_id=244597 fused_id=244597 reference_logit=3.15095 fused_logit=3.15095
+reference_dot_us=2519.27 fused_dot_us=2438.86 reference_boundary_us=2553.64 fused_boundary_us=2454.17 speedup=1.04053 exact_ids=1 gate=PASS
+
+negative_variant=expanded_Q6K_SG_PER_WG8_scalar_dot
+negative_result=reference_boundary_us_3269.38_fused_boundary_us_2926.98_speedup_1.11698_exact_ids_1_gate_FAIL
+
+negative_variant=production_reordered_Q6K_SG_PER_WG8_scalar_unpack
+negative_result=reference_boundary_us_5503.33_fused_boundary_us_4938.65_speedup_1.11434_exact_ids_1_gate_FAIL
+
+negative_variant=production_reordered_Q6K_SG_PER_WG8_hoisted_unpack_dot4
+negative_result=reference_boundary_us_4244.79_fused_boundary_us_3828.12_speedup_1.10884_exact_ids_1_gate_FAIL
+
+negative_variant=production_reordered_Q6K_SG_PER_WG32_hoisted_unpack_dot4
+negative_result=reference_boundary_us_4291.35_fused_boundary_us_3865.42_speedup_1.11019_exact_ids_1_gate_FAIL
+
+caveat=reference_is_an_independent_exact_Q6K_arithmetic_reproduction_using_real_weights_not_a_call_into_the_protected_production_kernel
+caveat=no_llama_cpp_source_was_edited_and_no_end_to_end_server_integration_was_performed
