@@ -196,6 +196,12 @@ loaded service.
 5. Update the [performance index](results/scoreboard.md) for representative
    verified expectations and the [LocalMaxxing ledger](results/localmaxxing-submissions.md)
    only for actual public submissions.
+6. Treat LocalMaxxing publication as part of record promotion, not a separate
+   optional follow-up. For each matching 1/2/3/4-GPU configuration, immediately
+   queue and submit every new single-session decode record after the fixed cold
+   realistic suite, correctness/state gates, `cached_tokens=0`, and complete run
+   identity pass. Never submit favorable-prompt, warmed, synthetic, aggregate,
+   or otherwise diagnostic rows as records.
 
 The detailed state formerly accumulated in this file remains available in Git
 at commit `95b4ca413` (`git show 95b4ca413:CURRENT.md`).
