@@ -73,3 +73,26 @@ microbenchmark.
 4. Integrate behind BMG + Q4_0/Q8_1 + M=6 guarded dispatch only after full
    projection correctness and `>=1.5x` total speed hold.
 
+## Single-launch SLM successor
+
+The next prototype eliminates the global partial buffer and second reduction
+kernel. One workgroup owns two adjacent N16 tiles; eight ESIMD work-items split
+K, stage their partials in SLM, synchronize once, and work-item zero performs
+the final reduction and store.
+
+Measured on B70 GPU3:
+
+- M=6 5120x5120: 1.78-2.05x total across stability repeats; pass.
+- M=6 5120x17408: 1.834x total; pass.
+- M=6 17408x5120: 1.934x speed, but the existing 0.0651 summation-order
+  difference remains; the SLM and global-partial candidates have identical
+  differences, so SLM did not introduce the discrepancy.
+- M=9 5120x5120: 2.153x total; pass.
+- M=16 5120x5120: 1.404x; below gate because the two-repeat/register footprint
+  still hits a width-16 cliff.
+
+On the first M=6 square run, single-launch SLM reduced the candidate path from
+about 103.63 us to 95.72 us and produced a 2.051x exact-production total
+speedup. This establishes gate/up-only M=6 as the first guarded integration
+target. Down remains disabled until its numerical gate is resolved; width 16
+needs a different ownership/register design.
