@@ -1,0 +1,24 @@
+{
+  "suite_id": "qwen27-target-m6-compact-oracle-v1",
+  "version": 1,
+  "description": "Cheap same-decode target M=6 compact/full-logit parity oracle on prompts whose independent A/B hashes differed.",
+  "metric": "strict single-session generation throughput; diagnostic only",
+  "prompts": [
+    {
+      "id": "incident-retrospective",
+      "prompt": "You are advising an infrastructure team after a service incident. Write a concise but complete incident retrospective for a production API outage caused by a bad cache invalidation rule. Include impact, timeline, contributing factors, detection gaps, remediation, prevention work, and owner handoff. Use practical language for engineers and managers. Aim for about 450-550 words."
+    },
+    {
+      "id": "code-review",
+      "prompt": "Review this Python change as a senior engineer. A worker now batches database writes every 250 ms, retries failures twice, and drops failed rows into a local JSONL file. Discuss correctness risks, observability, data-loss risks, concurrency issues, test cases, and whether the design should be accepted. Make the answer concrete and actionable, with enough detail for a pull request review."
+    },
+    {
+      "id": "sql-debugging",
+      "prompt": "A reporting query became slow after a schema migration. The query joins orders, customers, invoices, and refunds, filters by tenant_id and created_at, and groups by customer segment. Explain a debugging plan for PostgreSQL. Cover EXPLAIN ANALYZE, indexes, statistics, join order, row estimates, partial indexes, materialized views, and rollout safety."
+    },
+    {
+      "id": "technical-guide",
+      "prompt": "Write a short technical guide for adding a new benchmark to an existing optimization repo. Include where to put scripts, data, notes, patches, result summaries, how to name run directories, what to record for reproducibility, and how to decide whether a result is valid enough to promote."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "experiment": "target-m6-compact-stage1",
+  "date": "2026-07-13",
+  "status": "parity_validated_not_speed_promoted",
+  "identity": {
+    "model": "Qwen3.6-27B-Q4_0.gguf",
+    "target_kv": "Q8_0",
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 1,
+    "speculation": "native DFlash5 Q8_0 draft with F16 draft KV",
+    "graph": false
+  },
+  "invalidated_earlier_ab": {
+    "control": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/targetm6-jit-A-control-20260713.json",
+    "candidate": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/targetm6-jit-B-raw-20260713.json",
+    "reason": "candidate compact mode never activated"
+  },
+  "oracle": {
+    "result": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/targetm6-oracle-valid-jit-gpu0-20260713.json",
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/runs/targetm6-oracle-valid-jit-gpu0-20260713",
+    "mode": 1,
+    "compact_reads": 181,
+    "fallbacks": 0,
+    "compare_mismatches": 0,
+    "short_non_m6_batches": 6
+  },
+  "forced_fallback": {
+    "result": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/targetm6-fallback-jit-gpu0-20260713.json",
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/runs/targetm6-fallback-jit-gpu0-20260713",
+    "expected_fallbacks": 1
+  }
+}

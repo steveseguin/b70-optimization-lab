@@ -1,0 +1,33 @@
+{
+  "experiment": "target-q6-k-m6-fused-top1",
+  "date": "2026-07-13",
+  "status": "correct_but_below_promotion_gate",
+  "same_decode_shadow": {
+    "cycles": 41,
+    "ids_compared": 246,
+    "mismatches": 0,
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/runs/targetm6-q6shadow-jit-gpu0-20260713"
+  },
+  "short_crossover": {
+    "control": {
+      "result": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/targetm6-q6crossover-A-control-jit-gpu0-20260713.json",
+      "median_tok_s": 47.03387868055714,
+      "p10_tok_s": 38.793836837464895,
+      "mean_tok_s": 44.61885664286411,
+      "m6_target_decode_median_us": 50920
+    },
+    "fused": {
+      "result": "/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/targetm6-q6crossover-B-fused-jit-gpu0-20260713.json",
+      "median_tok_s": 47.786152361808604,
+      "p10_tok_s": 39.78901216924506,
+      "mean_tok_s": 45.28586789389598,
+      "m6_target_decode_median_us": 50374,
+      "dispatches": 179,
+      "fallbacks": 0
+    },
+    "delta_percent": {"median": 1.599, "p10": 2.565, "mean": 1.495}
+  },
+  "promotion_gate_percent": 3.0,
+  "full_suite_run": false,
+  "localmax_submitted": false
+}
