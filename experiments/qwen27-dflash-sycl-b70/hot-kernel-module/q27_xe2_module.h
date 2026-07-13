@@ -14,6 +14,8 @@ extern "C" {
 
 #define Q27_XE2_LAYOUT_Q6K_M6_TOP1_V1 UINT64_C(0x51364d3600000001)
 #define Q27_XE2_LAYOUT_Q4_0_Q8_1_V1 UINT64_C(0x5134513800000001)
+#define Q27_XE2_LAYOUT_F32_GDN_BA_V1 UINT64_C(0x4633324241000001)
+#define Q27_XE2_LAYOUT_F32_GDN_VECTOR_V1 UINT64_C(0x4633325645430001)
 #define Q27_XE2_QWEN36_27B_Q4_MODEL_TAG UINT64_C(0x20c9c45d4d25b492)
 
 enum q27_xe2_status {
@@ -33,7 +35,9 @@ enum q27_xe2_status {
 enum q27_xe2_op {
     Q27_XE2_OP_SMOKE_AXPY = 1,
     Q27_XE2_OP_Q6K_M6_TOP1 = 2,
-    Q27_XE2_OP_GDN_QKVZ_M6 = 3
+    Q27_XE2_OP_GDN_QKVZ_M6 = 3,
+    Q27_XE2_OP_GDN_QKVZAB_M6 = 4,
+    Q27_XE2_OP_GDN_QKVZAB_GATE_M6 = 5
 };
 
 enum q27_xe2_launch_flags {
@@ -46,7 +50,9 @@ enum q27_xe2_pack_role {
     Q27_XE2_PACK_GDN_QKV = 3,
     Q27_XE2_PACK_GDN_ALPHA_BETA = 4,
     Q27_XE2_PACK_GDN_OUTPUT = 5,
-    Q27_XE2_PACK_GDN_Z = 6
+    Q27_XE2_PACK_GDN_Z = 6,
+    Q27_XE2_PACK_GDN_DT = 7,
+    Q27_XE2_PACK_GDN_A = 8
 };
 
 struct q27_xe2_pack_v1 {
@@ -83,7 +89,14 @@ struct q27_xe2_launch_v1 {
     float scalar0;
     float scalar1;
     uint64_t user_tag;
+
+    /* Optional ABI-v1 extension. Older callers end at user_tag. */
+    void *output1;
+    void *output2;
+    void *output3;
 };
+
+#define Q27_XE2_LAUNCH_V1_BASE_SIZE offsetof(struct q27_xe2_launch_v1, output1)
 
 struct q27_xe2_workspace_v1 {
     uint64_t bytes;

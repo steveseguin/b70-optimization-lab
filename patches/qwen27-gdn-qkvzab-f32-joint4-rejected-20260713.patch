@@ -1,0 +1,43 @@
+Rejected experiment: four F32 outputs per ESIMD workgroup
+Date: 2026-07-13
+Base: QKVZAB one-output-per-workgroup implementation in hot-kernel-module/gdn_qkvz_m6_module.cpp
+
+The tested delta replaced 96 one-output F32 groups with 24 four-output groups.
+Each group loaded four weight vectors, loaded each activation vector once, kept
+`m*4` accumulators, staged `[split][joint][row]` partials in SLM, and emitted
+four outputs. The exact defining constants and addressing were:
+
+```diff
+-    const int total_groups = total_pairs + (weights_alpha_beta == nullptr ? 0 : f32_outputs);
++    constexpr int f32_joint = 4;
++    constexpr int f32_groups = (f32_outputs + f32_joint - 1) / f32_joint;
++    const int total_groups = total_pairs + (weights_alpha_beta == nullptr ? 0 : f32_groups);
+@@
+-    const int output = global_pair - total_pairs;
+-    esimd::simd<float, m> accum(0.0f);
++    const int output0 = (global_pair - total_pairs) * f32_joint;
++    esimd::simd<float, m * f32_joint> accum(0.0f);
+@@
+-    esimd::simd<float, 16> w;
+-    w.copy_from(weights_alpha_beta + size_t(output) * k + base);
++    esimd::simd<float, f32_joint * 16> weights;
++    for (int j = 0; j < f32_joint; ++j) {
++        esimd::simd<float, 16> weight;
++        weight.copy_from(weights_alpha_beta + size_t(output0 + j) * k + base);
++        weights.template select<16, 1>(j * 16) = weight;
++    }
+@@
+-    accum[row] += esimd::reduce<float>(w * x, std::plus<>());
++    for (int j = 0; j < f32_joint; ++j) {
++        esimd::simd<float, 16> w = weights.template select<16, 1>(j * 16);
++        accum[j * m + row] += esimd::reduce<float>(w * x, std::plus<>());
++    }
+@@
+-    slm[(split * m + row)] = accum[row];
++    slm[((split * f32_joint + j) * m + row)] = accum[j * m + row];
+```
+
+Measured result: active `145.153 us`, candidate `122.791 us`, projected
+48-layer saving `1.073376 ms`. It failed the 2 ms gate. The likely causes were
+reduced occupancy (24 groups) and higher register pressure. The replacement
+one-output implementation with 32-wide ESIMD vectors measured about `99.4 us`.

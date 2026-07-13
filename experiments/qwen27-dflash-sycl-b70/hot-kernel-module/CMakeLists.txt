@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(Q27_XE2_DEVICE "bmg-g31" CACHE STRING "Intel GPU AOT device")
-set(Q27_XE2_BUILD_ID "gdn-qkvz-m6-stage-a-v1" CACHE STRING "Module build identifier")
+set(Q27_XE2_BUILD_ID "gdn-qkvzab-folded-gate-v1" CACHE STRING "Module build identifier")
 set(Q27_XE2_TOOLCHAIN_ABI "oneapi-2026.0-sycl-cxx17" CACHE STRING "Strict host/module ABI tag")
 set(LLAMA_ROOT "/home/steve/src/llama.cpp" CACHE PATH "Protected llama.cpp source used read-only by comparator")
 set(LLAMA_BUILD "${LLAMA_ROOT}/build-sycl-b70-qwen36-mtp" CACHE PATH "AOT llama.cpp build used by comparator")
@@ -88,6 +88,9 @@ target_include_directories(q27_gdn_qkvz_module_compare PRIVATE
     "${LLAMA_ROOT}/ggml/include"
     "/opt/intel/oneapi/dnnl/2026.0/include"
     "/opt/intel/oneapi/mkl/2026.0/include")
-target_link_libraries(q27_gdn_qkvz_module_compare PRIVATE q27_ggml_sycl_runtime dl)
+target_link_libraries(q27_gdn_qkvz_module_compare PRIVATE
+    q27_ggml_sycl_runtime
+    /opt/intel/oneapi/mkl/2026.0/lib/libmkl_sycl_blas.so
+    dl)
 set_target_properties(q27_gdn_qkvz_module_compare PROPERTIES
     BUILD_RPATH "${LLAMA_BUILD}/bin;/opt/intel/oneapi/dnnl/2026.0/lib;/opt/intel/oneapi/mkl/2026.0/lib")

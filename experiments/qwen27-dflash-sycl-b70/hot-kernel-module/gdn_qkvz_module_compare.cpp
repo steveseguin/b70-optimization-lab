@@ -5,6 +5,7 @@
 #include "ggml-sycl/mmvq.hpp"
 
 #include <sycl/sycl.hpp>
+#include <oneapi/mkl.hpp>
 
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -36,9 +37,15 @@ constexpr int m = q27_gdn_qkvz_m6_workspace::rows;
 constexpr int k = q27_gdn_qkvz_m6_workspace::k;
 constexpr int n_qkv = q27_gdn_qkvz_m6_workspace::n_qkv;
 constexpr int n_z = q27_gdn_qkvz_m6_workspace::n_z;
+constexpr int n_alpha = q27_gdn_qkvz_m6_workspace::n_alpha;
+constexpr int n_beta = q27_gdn_qkvz_m6_workspace::n_beta;
 constexpr int kb = k / 32;
 constexpr size_t z_source_offset = 1769120896;
 constexpr size_t qkv_source_offset = 1786836096;
+constexpr size_t alpha_source_offset = 1972323648;
+constexpr size_t beta_source_offset = 1973306688;
+constexpr size_t ssm_a_source_offset = 1972323456;
+constexpr size_t ssm_dt_source_offset = 1974453568;
 constexpr size_t qkv_source_bytes = size_t(n_qkv) * kb * 18;
 constexpr size_t z_source_bytes = size_t(n_z) * kb * 18;
 constexpr size_t qkv_dpas_bytes = q27_gdn_qkvz_m6_workspace::qkv_pack_bytes;
@@ -46,6 +53,14 @@ constexpr size_t z_dpas_bytes = q27_gdn_qkvz_m6_workspace::z_pack_bytes;
 constexpr size_t qkv_prod_bytes = qkv_dpas_bytes;
 constexpr size_t z_prod_bytes = z_dpas_bytes;
 constexpr size_t payload_bytes = qkv_dpas_bytes + z_dpas_bytes + qkv_prod_bytes + z_prod_bytes;
+constexpr size_t alpha_bytes = size_t(k) * n_alpha * sizeof(float);
+constexpr size_t beta_bytes = size_t(k) * n_beta * sizeof(float);
+constexpr size_t alpha_beta_bytes = alpha_bytes + beta_bytes;
+constexpr size_t production_pack_per_layer_bytes = qkv_dpas_bytes + z_dpas_bytes + alpha_beta_bytes;
+constexpr size_t production_pack_48_layers_bytes = production_pack_per_layer_bytes * 48;
+constexpr size_t gate_vector_bytes = size_t(n_alpha) * sizeof(float);
+constexpr size_t folded_pack_per_layer_bytes = production_pack_per_layer_bytes + 2 * gate_vector_bytes;
+constexpr size_t folded_pack_48_layers_bytes = folded_pack_per_layer_bytes * 48;
 
 struct q4_block_file {
     uint16_t d;
@@ -261,6 +276,43 @@ delta_result compare(const std::vector<float> &a, const std::vector<float> &b) {
     return result;
 }
 
+class alpha_add_kernel;
+class alpha_softplus_kernel;
+class alpha_mul_kernel;
+
+void alpha_separate_epilogue(
+        sycl::queue &queue, const float *alpha, const float *dt, const float *a,
+        float *temporary, float *output) {
+    constexpr size_t count = size_t(m) * n_alpha;
+    constexpr size_t local = 256;
+    constexpr size_t global = ((count + local - 1) / local) * local;
+    queue.submit([&](sycl::handler &handler) {
+        handler.parallel_for<alpha_add_kernel>(
+            sycl::nd_range<1>(global, local), [=](sycl::nd_item<1> item) {
+                const size_t index = item.get_global_id(0);
+                if (index < count) temporary[index] = alpha[index] + dt[index % n_alpha];
+            });
+    });
+    queue.submit([&](sycl::handler &handler) {
+        handler.parallel_for<alpha_softplus_kernel>(
+            sycl::nd_range<1>(global, local), [=](sycl::nd_item<1> item) {
+                const size_t index = item.get_global_id(0);
+                if (index < count) {
+                    const float x = temporary[index];
+                    temporary[index] = sycl::fmax(x, 0.0f) +
+                        sycl::log1p(sycl::exp(-sycl::fabs(x)));
+                }
+            });
+    });
+    queue.submit([&](sycl::handler &handler) {
+        handler.parallel_for<alpha_mul_kernel>(
+            sycl::nd_range<1>(global, local), [=](sycl::nd_item<1> item) {
+                const size_t index = item.get_global_id(0);
+                if (index < count) output[index] = temporary[index] * a[index % n_alpha];
+            });
+    });
+}
+
 } // namespace
 
 int main(int argc, char **argv) try {
@@ -295,9 +347,21 @@ int main(int argc, char **argv) try {
     const uint8_t *host_z_dpas = host_qkv_dpas + qkv_dpas_bytes;
     const uint8_t *host_qkv_prod = host_z_dpas + z_dpas_bytes;
     const uint8_t *host_z_prod = host_qkv_prod + qkv_prod_bytes;
+    mapped_file model(argv[2]);
+    if (model.size() < ssm_dt_source_offset + gate_vector_bytes) {
+        throw std::runtime_error("model file is too small for layer-0 GDN gate tensors");
+    }
+    const void *host_alpha = model.data() + alpha_source_offset;
+    const void *host_beta = model.data() + beta_source_offset;
+    const void *host_ssm_a = model.data() + ssm_a_source_offset;
+    const void *host_ssm_dt = model.data() + ssm_dt_source_offset;
 
     ggml_backend_sycl_context context(0);
     sycl::queue &queue = *context.stream();
+    const auto device = queue.get_device();
+    const uint64_t global_mem_bytes = device.get_info<sycl::info::device::global_mem_size>();
+    const uint64_t free_mem_before = device.has(sycl::aspect::ext_intel_free_memory) ?
+        device.get_info<sycl::ext::intel::info::device::free_memory>() : 0;
     auto alloc = [&](size_t bytes) {
         void *pointer = sycl::malloc_device(bytes, queue);
         if (!pointer) throw std::bad_alloc();
@@ -307,17 +371,27 @@ int main(int argc, char **argv) try {
     void *d_z_dpas = alloc(z_dpas_bytes);
     void *d_qkv_prod = alloc(qkv_prod_bytes);
     void *d_z_prod = alloc(z_prod_bytes);
+    auto *d_alpha_beta = static_cast<float *>(alloc(alpha_beta_bytes));
+    auto *d_ssm_a = static_cast<float *>(alloc(gate_vector_bytes));
+    auto *d_ssm_dt = static_cast<float *>(alloc(gate_vector_bytes));
     auto *d_input = static_cast<float *>(alloc(size_t(m) * k * sizeof(float)));
     auto *d_prod_q8 = static_cast<int8_t *>(alloc(size_t(m) * (k + kb * 4)));
     auto *d_int_qkv = static_cast<float *>(alloc(size_t(m) * n_qkv * sizeof(float)));
     auto *d_int_z = static_cast<float *>(alloc(size_t(m) * n_z * sizeof(float)));
+    auto *d_int_alpha = static_cast<float *>(alloc(size_t(m) * n_alpha * sizeof(float)));
+    auto *d_int_beta = static_cast<float *>(alloc(size_t(m) * n_beta * sizeof(float)));
+    auto *d_int_gate = static_cast<float *>(alloc(size_t(m) * n_alpha * sizeof(float)));
+    auto *d_gate_temporary = static_cast<float *>(alloc(size_t(m) * n_alpha * sizeof(float)));
     auto *d_mod_qkv = static_cast<float *>(alloc(size_t(m) * n_qkv * sizeof(float)));
     auto *d_mod_z = static_cast<float *>(alloc(size_t(m) * n_z * sizeof(float)));
+    auto *d_mod_alpha = static_cast<float *>(alloc(size_t(m) * n_alpha * sizeof(float)));
+    auto *d_mod_beta = static_cast<float *>(alloc(size_t(m) * n_beta * sizeof(float)));
+    auto *d_mod_gate = static_cast<float *>(alloc(size_t(m) * n_alpha * sizeof(float)));
     auto *d_prod_qkv_out = static_cast<float *>(alloc(size_t(m) * n_qkv * sizeof(float)));
     auto *d_prod_z_out = static_cast<float *>(alloc(size_t(m) * n_z * sizeof(float)));
 
     q27_xe2_workspace_v1 workspace_info{};
-    if (module->query_workspace(Q27_XE2_OP_GDN_QKVZ_M6, m, n_qkv, &workspace_info) != Q27_XE2_OK ||
+    if (module->query_workspace(Q27_XE2_OP_GDN_QKVZAB_M6, m, n_qkv, &workspace_info) != Q27_XE2_OK ||
             workspace_info.bytes != q27_gdn_qkvz_m6_workspace::bytes) {
         throw std::runtime_error("GDN workspace contract mismatch");
     }
@@ -326,30 +400,61 @@ int main(int argc, char **argv) try {
     queue.memcpy(d_z_dpas, host_z_dpas, z_dpas_bytes);
     queue.memcpy(d_qkv_prod, host_qkv_prod, qkv_prod_bytes);
     queue.memcpy(d_z_prod, host_z_prod, z_prod_bytes);
+    queue.memcpy(d_alpha_beta, host_alpha, alpha_bytes);
+    queue.memcpy(reinterpret_cast<uint8_t *>(d_alpha_beta) + alpha_bytes, host_beta, beta_bytes);
+    queue.memcpy(d_ssm_a, host_ssm_a, gate_vector_bytes);
+    queue.memcpy(d_ssm_dt, host_ssm_dt, gate_vector_bytes);
     queue.memcpy(d_input, host_input, size_t(m) * k * sizeof(float)).wait();
+    const uint64_t free_mem_after_one_layer = device.has(sycl::aspect::ext_intel_free_memory) ?
+        device.get_info<sycl::ext::intel::info::device::free_memory>() : 0;
 
-    q27_xe2_pack_v1 packs[2]{};
+    q27_xe2_pack_v1 packs[3]{};
     packs[0] = {d_qkv_dpas, qkv_dpas_bytes, Q27_XE2_LAYOUT_Q4_0_Q8_1_V1,
                 Q27_XE2_QWEN36_27B_Q4_MODEL_TAG, Q27_XE2_PACK_GDN_QKV, 0};
     packs[1] = {d_z_dpas, z_dpas_bytes, Q27_XE2_LAYOUT_Q4_0_Q8_1_V1,
                 Q27_XE2_QWEN36_27B_Q4_MODEL_TAG, Q27_XE2_PACK_GDN_Z, 0};
+    packs[2] = {d_alpha_beta, alpha_beta_bytes, Q27_XE2_LAYOUT_F32_GDN_BA_V1,
+                Q27_XE2_QWEN36_27B_Q4_MODEL_TAG, Q27_XE2_PACK_GDN_ALPHA_BETA, 0};
     q27_xe2_launch_v1 launch{};
     launch.struct_size = sizeof(launch);
-    launch.op = Q27_XE2_OP_GDN_QKVZ_M6;
+    launch.op = Q27_XE2_OP_GDN_QKVZAB_M6;
     launch.flags = Q27_XE2_QUEUE_IS_IN_ORDER;
     launch.queue = &queue;
     launch.input0 = d_input;
     launch.output0 = d_mod_qkv;
-    /* state0 is the operation-specific secondary output in ABI v1. */
-    launch.state0 = d_mod_z;
+    launch.output1 = d_mod_z;
+    launch.output2 = d_mod_alpha;
+    launch.output3 = d_mod_beta;
     launch.scratch = workspace;
     launch.scratch_bytes = workspace_info.bytes;
     launch.packs = packs;
-    launch.pack_count = 2;
+    launch.pack_count = 3;
     launch.rows = m;
     launch.cols = n_qkv;
     launch.stride = k;
 
+    q27_xe2_pack_v1 gate_packs[5] = {packs[0], packs[1], packs[2], {}, {}};
+    gate_packs[3] = {d_ssm_dt, gate_vector_bytes, Q27_XE2_LAYOUT_F32_GDN_VECTOR_V1,
+                     Q27_XE2_QWEN36_27B_Q4_MODEL_TAG, Q27_XE2_PACK_GDN_DT, 0};
+    gate_packs[4] = {d_ssm_a, gate_vector_bytes, Q27_XE2_LAYOUT_F32_GDN_VECTOR_V1,
+                     Q27_XE2_QWEN36_27B_Q4_MODEL_TAG, Q27_XE2_PACK_GDN_A, 0};
+    q27_xe2_launch_v1 gate_launch = launch;
+    gate_launch.op = Q27_XE2_OP_GDN_QKVZAB_GATE_M6;
+    gate_launch.output2 = d_mod_gate;
+    gate_launch.packs = gate_packs;
+    gate_launch.pack_count = 5;
+
+    auto f32_projection = [&](const float *weights, float *output) {
+        constexpr float alpha = 1.0f;
+        constexpr float beta = 0.0f;
+        oneapi::mkl::blas::column_major::gemm(
+            queue, oneapi::mkl::transpose::trans, oneapi::mkl::transpose::nontrans,
+            int64_t(n_alpha), int64_t(m), int64_t(k), alpha, weights, int64_t(k),
+            d_input, int64_t(k), beta, output, int64_t(n_alpha));
+    };
+    const float *d_alpha = d_alpha_beta;
+    const float *d_beta = reinterpret_cast<const float *>(
+        reinterpret_cast<const uint8_t *>(d_alpha_beta) + alpha_bytes);
     auto integrated = [&] {
         if (!ggml_sycl_mul_mat_q4_0_xe2_m6(context, d_qkv_dpas, qkv_dpas_bytes,
                 d_input, d_int_qkv, k, n_qkv, &queue) ||
@@ -357,8 +462,11 @@ int main(int argc, char **argv) try {
                 d_input, d_int_z, k, n_z, &queue)) {
             throw std::runtime_error("active integrated Q4_0 M6 pair declined");
         }
+        // Match the graph's beta-then-alpha F32 oneMKL operation order.
+        f32_projection(d_beta, d_int_beta);
+        f32_projection(d_alpha, d_int_alpha);
     };
-    auto production = [&] {
+    auto generic_q4_oracle = [&] {
         quantize_production<m>(queue, d_input, d_prod_q8);
         ggml_sycl_bench_reorder_q4_0_ncols(
             d_qkv_prod, d_prod_q8, d_prod_qkv_out, k, n_qkv, m, k + kb * 4, n_qkv, &queue);
@@ -370,8 +478,20 @@ int main(int argc, char **argv) try {
         const int32_t status = module->launch(&launch);
         if (status != Q27_XE2_OK) throw std::runtime_error("module launch status " + std::to_string(status));
     };
+    auto active_full_gate = [&] {
+        integrated();
+        alpha_separate_epilogue(
+            queue, d_int_alpha, d_ssm_dt, d_ssm_a, d_gate_temporary, d_int_gate);
+    };
+    auto candidate_full_gate = [&] {
+        const int32_t status = module->launch(&gate_launch);
+        if (status != Q27_XE2_OK) {
+            throw std::runtime_error("module gate launch status " + std::to_string(status));
+        }
+    };
 
-    integrated(); production(); candidate(); queue.wait_and_throw();
+    integrated(); generic_q4_oracle(); candidate(); active_full_gate(); candidate_full_gate();
+    queue.wait_and_throw();
     auto copy_output = [&](float *device, size_t count) {
         std::vector<float> host(count);
         queue.memcpy(host.data(), device, count * sizeof(float)).wait();
@@ -379,18 +499,28 @@ int main(int argc, char **argv) try {
     };
     const auto int_qkv = copy_output(d_int_qkv, size_t(m) * n_qkv);
     const auto int_z = copy_output(d_int_z, size_t(m) * n_z);
+    const auto int_alpha = copy_output(d_int_alpha, size_t(m) * n_alpha);
+    const auto int_beta = copy_output(d_int_beta, size_t(m) * n_beta);
+    const auto int_gate = copy_output(d_int_gate, size_t(m) * n_alpha);
     const auto mod_qkv = copy_output(d_mod_qkv, size_t(m) * n_qkv);
     const auto mod_z = copy_output(d_mod_z, size_t(m) * n_z);
+    const auto mod_alpha = copy_output(d_mod_alpha, size_t(m) * n_alpha);
+    const auto mod_beta = copy_output(d_mod_beta, size_t(m) * n_beta);
+    const auto mod_gate = copy_output(d_mod_gate, size_t(m) * n_alpha);
     const auto prod_qkv = copy_output(d_prod_qkv_out, size_t(m) * n_qkv);
     const auto prod_z = copy_output(d_prod_z_out, size_t(m) * n_z);
     const auto qkv_integrated_delta = compare(int_qkv, mod_qkv);
     const auto z_integrated_delta = compare(int_z, mod_z);
     const auto qkv_production_delta = compare(prod_qkv, mod_qkv);
     const auto z_production_delta = compare(prod_z, mod_z);
+    const auto alpha_integrated_delta = compare(int_alpha, mod_alpha);
+    const auto beta_integrated_delta = compare(int_beta, mod_beta);
+    const auto gate_integrated_delta = compare(int_gate, mod_gate);
 
-    q27_xe2_pack_v1 bad_packs[2] = {packs[0], packs[1]};
-    bad_packs[1].layout_id ^= 1;
-    q27_xe2_launch_v1 bad_launch = launch;
+    q27_xe2_pack_v1 bad_packs[5] = {
+        gate_packs[0], gate_packs[1], gate_packs[2], gate_packs[3], gate_packs[4]};
+    bad_packs[3].layout_id ^= 1;
+    q27_xe2_launch_v1 bad_launch = gate_launch;
     bad_launch.packs = bad_packs;
     const bool fallback_safe = module->launch(&bad_launch) == Q27_XE2_BAD_LAYOUT;
 
@@ -399,35 +529,45 @@ int main(int argc, char **argv) try {
     constexpr int warmup_rounds = 20;
     for (int i = 0; i < warmup_rounds; ++i) {
         integrated();
-        production();
         candidate();
+        active_full_gate();
+        candidate_full_gate();
     }
     queue.wait_and_throw();
 
-    std::vector<double> integrated_us, production_us, candidate_us;
+    std::vector<double> integrated_us, candidate_us, active_gate_us, candidate_gate_us;
     for (int i = 0; i < iterations; ++i) {
-        if (i % 3 == 0) {
+        if ((i & 1) == 0) {
             integrated_us.push_back(time_us(queue, integrated));
-            production_us.push_back(time_us(queue, production));
             candidate_us.push_back(time_us(queue, candidate));
-        } else if (i % 3 == 1) {
-            candidate_us.push_back(time_us(queue, candidate));
-            integrated_us.push_back(time_us(queue, integrated));
-            production_us.push_back(time_us(queue, production));
+            active_gate_us.push_back(time_us(queue, active_full_gate));
+            candidate_gate_us.push_back(time_us(queue, candidate_full_gate));
         } else {
-            production_us.push_back(time_us(queue, production));
+            candidate_gate_us.push_back(time_us(queue, candidate_full_gate));
+            active_gate_us.push_back(time_us(queue, active_full_gate));
             candidate_us.push_back(time_us(queue, candidate));
             integrated_us.push_back(time_us(queue, integrated));
         }
     }
     const double integrated_median = median(integrated_us);
-    const double production_median = median(production_us);
     const double candidate_median = median(candidate_us);
+    const double active_gate_median = median(active_gate_us);
+    const double candidate_gate_median = median(candidate_gate_us);
     const double active_speedup = integrated_median / candidate_median;
-    const double generic_speedup = production_median / candidate_median;
-    const bool numerical_exact = qkv_integrated_delta.max_abs == 0.0f && z_integrated_delta.max_abs == 0.0f;
-    const bool speed_gate = active_speedup >= 1.30;
-    const bool gate = numerical_exact && fallback_safe && speed_gate;
+    const double saving_per_layer_us = integrated_median - candidate_median;
+    const double projected_cycle_saving_ms = saving_per_layer_us * 48.0 / 1000.0;
+    const double gate_saving_per_layer_us = active_gate_median - candidate_gate_median;
+    const double gate_projected_cycle_saving_ms = gate_saving_per_layer_us * 48.0 / 1000.0;
+    const bool q4_exact = qkv_integrated_delta.max_abs == 0.0f && z_integrated_delta.max_abs == 0.0f;
+    const bool f32_tight = alpha_integrated_delta.max_abs <= 0.002f &&
+        beta_integrated_delta.max_abs <= 0.002f && alpha_integrated_delta.max_rel <= 0.0001f &&
+        beta_integrated_delta.max_rel <= 0.0001f;
+    const bool speed_gate = projected_cycle_saving_ms >= 2.0;
+    const bool gate_semantics_tight = gate_integrated_delta.max_abs <= 0.0001f &&
+        gate_integrated_delta.max_rel <= 0.0001f;
+    const bool folded_speed_gate = gate_projected_cycle_saving_ms >= 2.0;
+    const bool gate = q4_exact && f32_tight && gate_semantics_tight && fallback_safe &&
+        speed_gate && folded_speed_gate;
 
     std::cout << std::fixed << std::setprecision(6)
         << "{\n"
@@ -435,38 +575,67 @@ int main(int argc, char **argv) try {
         << "  \"build_id\": \"" << module->module_build_id << "\",\n"
         << "  \"device\": \"" << queue.get_device().get_info<sycl::info::device::name>() << "\",\n"
         << "  \"fixture_scope\": \"real model-generated final-norm M=6 activations; not a GDN-layer input capture\",\n"
-        << "  \"weights\": \"real blk.0.attn_qkv + blk.0.attn_gate(Qwen z) Q4_0\",\n"
+        << "  \"weights\": \"real blk.0 Q4_0 QKV/z plus exact F32 alpha/beta\",\n"
         << "  \"pack_cache_hit\": " << (cache_hit ? "true" : "false") << ",\n"
         << "  \"pack_prepare_s\": " << pack_prepare_s << ",\n"
         << "  \"pack_payload_bytes\": " << payload_bytes << ",\n"
+        << "  \"candidate_pack_per_layer_bytes\": " << production_pack_per_layer_bytes << ",\n"
+        << "  \"candidate_pack_48_layers_bytes\": " << production_pack_48_layers_bytes << ",\n"
+        << "  \"folded_gate_pack_per_layer_bytes\": " << folded_pack_per_layer_bytes << ",\n"
+        << "  \"folded_gate_pack_48_layers_bytes\": " << folded_pack_48_layers_bytes << ",\n"
+        << "  \"device_global_mem_bytes\": " << global_mem_bytes << ",\n"
+        << "  \"device_free_mem_before_bytes\": " << free_mem_before << ",\n"
+        << "  \"device_free_mem_after_one_layer_bytes\": " << free_mem_after_one_layer << ",\n"
         << "  \"workspace_bytes\": " << workspace_info.bytes << ",\n"
         << "  \"qkv_module_vs_integrated_max_abs\": " << qkv_integrated_delta.max_abs << ",\n"
         << "  \"z_module_vs_integrated_max_abs\": " << z_integrated_delta.max_abs << ",\n"
         << "  \"qkv_module_vs_generic_max_abs\": " << qkv_production_delta.max_abs << ",\n"
         << "  \"z_module_vs_generic_max_abs\": " << z_production_delta.max_abs << ",\n"
+        << "  \"alpha_module_vs_integrated_max_abs\": " << alpha_integrated_delta.max_abs << ",\n"
+        << "  \"alpha_module_vs_integrated_max_rel\": " << alpha_integrated_delta.max_rel << ",\n"
+        << "  \"alpha_module_vs_integrated_rms\": " << alpha_integrated_delta.rms << ",\n"
+        << "  \"beta_module_vs_integrated_max_abs\": " << beta_integrated_delta.max_abs << ",\n"
+        << "  \"beta_module_vs_integrated_max_rel\": " << beta_integrated_delta.max_rel << ",\n"
+        << "  \"beta_module_vs_integrated_rms\": " << beta_integrated_delta.rms << ",\n"
+        << "  \"folded_gate_module_vs_active_max_abs\": " << gate_integrated_delta.max_abs << ",\n"
+        << "  \"folded_gate_module_vs_active_max_rel\": " << gate_integrated_delta.max_rel << ",\n"
+        << "  \"folded_gate_module_vs_active_rms\": " << gate_integrated_delta.rms << ",\n"
         << "  \"invalid_layout_fallback_safe\": " << (fallback_safe ? "true" : "false") << ",\n"
         << "  \"warmup_rounds\": " << warmup_rounds << ",\n"
         << "  \"iterations\": " << iterations << ",\n"
-        << "  \"active_integrated_pair_median_us\": " << integrated_median << ",\n"
-        << "  \"generic_reordered_pair_median_us\": " << production_median << ",\n"
-        << "  \"joint_candidate_median_us\": " << candidate_median << ",\n"
-        << "  \"speedup_vs_active_pair\": " << active_speedup << ",\n"
-        << "  \"speedup_vs_generic_pair\": " << generic_speedup << ",\n"
-        << "  \"numerical_exact_vs_active\": " << (numerical_exact ? "true" : "false") << ",\n"
-        << "  \"speed_gate_ge_1_30\": " << (speed_gate ? "true" : "false") << ",\n"
-        << "  \"stage_a_gate\": \"" << (gate ? "PASS" : "FAIL") << "\"\n"
+        << "  \"active_integrated_four_op_median_us\": " << integrated_median << ",\n"
+        << "  \"joint_qkvzab_candidate_median_us\": " << candidate_median << ",\n"
+        << "  \"speedup_vs_active_four_op\": " << active_speedup << ",\n"
+        << "  \"saving_per_layer_us\": " << saving_per_layer_us << ",\n"
+        << "  \"projected_cycle_saving_ms\": " << projected_cycle_saving_ms << ",\n"
+        << "  \"active_full_gate_sequence_median_us\": " << active_gate_median << ",\n"
+        << "  \"folded_gate_candidate_median_us\": " << candidate_gate_median << ",\n"
+        << "  \"folded_gate_saving_per_layer_us\": " << gate_saving_per_layer_us << ",\n"
+        << "  \"folded_gate_projected_cycle_saving_ms\": " << gate_projected_cycle_saving_ms << ",\n"
+        << "  \"q4_numerical_exact_vs_active\": " << (q4_exact ? "true" : "false") << ",\n"
+        << "  \"f32_semantics_tight\": " << (f32_tight ? "true" : "false") << ",\n"
+        << "  \"folded_gate_semantics_tight\": " << (gate_semantics_tight ? "true" : "false") << ",\n"
+        << "  \"projected_cycle_gate_ge_2ms\": " << (speed_gate ? "true" : "false") << ",\n"
+        << "  \"folded_gate_projected_cycle_gate_ge_2ms\": " << (folded_speed_gate ? "true" : "false") << ",\n"
+        << "  \"qkvzab_folded_gate\": \"" << (gate ? "PASS" : "FAIL") << "\"\n"
         << "}\n";
 
     for (void *pointer : {d_qkv_dpas, d_z_dpas, d_qkv_prod, d_z_prod,
+            static_cast<void *>(d_alpha_beta),
+            static_cast<void *>(d_ssm_a), static_cast<void *>(d_ssm_dt),
             static_cast<void *>(d_input), static_cast<void *>(d_prod_q8),
             static_cast<void *>(d_int_qkv), static_cast<void *>(d_int_z),
+            static_cast<void *>(d_int_alpha), static_cast<void *>(d_int_beta),
+            static_cast<void *>(d_int_gate), static_cast<void *>(d_gate_temporary),
             static_cast<void *>(d_mod_qkv), static_cast<void *>(d_mod_z),
+            static_cast<void *>(d_mod_alpha), static_cast<void *>(d_mod_beta),
+            static_cast<void *>(d_mod_gate),
             static_cast<void *>(d_prod_qkv_out), static_cast<void *>(d_prod_z_out), workspace}) {
         sycl::free(pointer, queue);
     }
     dlclose(module_handle);
     return gate ? 0 : 3;
 } catch (const std::exception &error) {
-    std::cerr << "gdn-qkvz-module-compare error: " << error.what() << '\n';
+    std::cerr << "gdn-qkvzab-module-compare error: " << error.what() << '\n';
     return 1;
 }

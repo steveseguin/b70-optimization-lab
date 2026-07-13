@@ -54,12 +54,30 @@ int32_t query_workspace(
         workspace->alignment = q27_gdn_qkvz_m6_workspace::alignment;
         return Q27_XE2_OK;
     }
+    if (op == Q27_XE2_OP_GDN_QKVZAB_M6) {
+        if (rows != q27_gdn_qkvz_m6_workspace::rows ||
+                cols != q27_gdn_qkvz_m6_workspace::n_qkv) {
+            return Q27_XE2_BAD_SHAPE;
+        }
+        workspace->bytes = q27_gdn_qkvz_m6_workspace::bytes;
+        workspace->alignment = q27_gdn_qkvz_m6_workspace::alignment;
+        return Q27_XE2_OK;
+    }
+    if (op == Q27_XE2_OP_GDN_QKVZAB_GATE_M6) {
+        if (rows != q27_gdn_qkvz_m6_workspace::rows ||
+                cols != q27_gdn_qkvz_m6_workspace::n_qkv) {
+            return Q27_XE2_BAD_SHAPE;
+        }
+        workspace->bytes = q27_gdn_qkvz_m6_workspace::bytes;
+        workspace->alignment = q27_gdn_qkvz_m6_workspace::alignment;
+        return Q27_XE2_OK;
+    }
     return Q27_XE2_DECLINED;
 }
 
 int32_t launch(const q27_xe2_launch_v1 *args) {
     /* Complete validation before q.submit: all failures below are fallback-safe. */
-    if (args == nullptr || args->struct_size < sizeof(q27_xe2_launch_v1)) {
+    if (args == nullptr || args->struct_size < Q27_XE2_LAUNCH_V1_BASE_SIZE) {
         return Q27_XE2_BAD_ABI;
     }
     if ((args->flags & Q27_XE2_QUEUE_IS_IN_ORDER) == 0 || args->queue == nullptr) {
@@ -145,6 +163,112 @@ int32_t launch(const q27_xe2_launch_v1 *args) {
                 static_cast<float *>(args->state0), args->scratch);
             return Q27_XE2_OK;
         }
+        if (args->op == Q27_XE2_OP_GDN_QKVZAB_M6) {
+            if (args->struct_size < sizeof(q27_xe2_launch_v1)) {
+                return Q27_XE2_BAD_ABI;
+            }
+            if (args->input0 == nullptr || args->output0 == nullptr ||
+                    args->output1 == nullptr || args->output2 == nullptr ||
+                    args->output3 == nullptr || args->scratch == nullptr ||
+                    args->rows != q27_gdn_qkvz_m6_workspace::rows ||
+                    args->cols != q27_gdn_qkvz_m6_workspace::n_qkv ||
+                    args->stride != q27_gdn_qkvz_m6_workspace::k ||
+                    args->scratch_bytes < q27_gdn_qkvz_m6_workspace::bytes) {
+                return Q27_XE2_BAD_SHAPE;
+            }
+            if (args->packs == nullptr || args->pack_count != 3) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            const q27_xe2_pack_v1 &qkv = args->packs[0];
+            const q27_xe2_pack_v1 &z = args->packs[1];
+            const q27_xe2_pack_v1 &alpha_beta = args->packs[2];
+            if (qkv.device_ptr == nullptr ||
+                    qkv.bytes != q27_gdn_qkvz_m6_workspace::qkv_pack_bytes ||
+                    qkv.layout_id != Q27_XE2_LAYOUT_Q4_0_Q8_1_V1 ||
+                    qkv.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    qkv.role != Q27_XE2_PACK_GDN_QKV ||
+                    z.device_ptr == nullptr ||
+                    z.bytes != q27_gdn_qkvz_m6_workspace::z_pack_bytes ||
+                    z.layout_id != Q27_XE2_LAYOUT_Q4_0_Q8_1_V1 ||
+                    z.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    z.role != Q27_XE2_PACK_GDN_Z ||
+                    alpha_beta.device_ptr == nullptr ||
+                    alpha_beta.bytes != q27_gdn_qkvz_m6_workspace::alpha_beta_pack_bytes ||
+                    alpha_beta.layout_id != Q27_XE2_LAYOUT_F32_GDN_BA_V1 ||
+                    alpha_beta.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    alpha_beta.role != Q27_XE2_PACK_GDN_ALPHA_BETA) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            q27_gdn_qkvzab_m6_submit(
+                *queue, qkv.device_ptr, z.device_ptr,
+                static_cast<const float *>(alpha_beta.device_ptr),
+                static_cast<const float *>(args->input0),
+                static_cast<float *>(args->output0),
+                static_cast<float *>(args->output1),
+                static_cast<float *>(args->output2),
+                static_cast<float *>(args->output3), args->scratch);
+            return Q27_XE2_OK;
+        }
+        if (args->op == Q27_XE2_OP_GDN_QKVZAB_GATE_M6) {
+            if (args->struct_size < sizeof(q27_xe2_launch_v1)) {
+                return Q27_XE2_BAD_ABI;
+            }
+            if (args->input0 == nullptr || args->output0 == nullptr ||
+                    args->output1 == nullptr || args->output2 == nullptr ||
+                    args->output3 == nullptr || args->scratch == nullptr ||
+                    args->rows != q27_gdn_qkvz_m6_workspace::rows ||
+                    args->cols != q27_gdn_qkvz_m6_workspace::n_qkv ||
+                    args->stride != q27_gdn_qkvz_m6_workspace::k ||
+                    args->scratch_bytes < q27_gdn_qkvz_m6_workspace::bytes) {
+                return Q27_XE2_BAD_SHAPE;
+            }
+            if (args->packs == nullptr || args->pack_count != 5) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            const q27_xe2_pack_v1 &qkv = args->packs[0];
+            const q27_xe2_pack_v1 &z = args->packs[1];
+            const q27_xe2_pack_v1 &alpha_beta = args->packs[2];
+            const q27_xe2_pack_v1 &dt = args->packs[3];
+            const q27_xe2_pack_v1 &a = args->packs[4];
+            if (qkv.device_ptr == nullptr ||
+                    qkv.bytes != q27_gdn_qkvz_m6_workspace::qkv_pack_bytes ||
+                    qkv.layout_id != Q27_XE2_LAYOUT_Q4_0_Q8_1_V1 ||
+                    qkv.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    qkv.role != Q27_XE2_PACK_GDN_QKV ||
+                    z.device_ptr == nullptr ||
+                    z.bytes != q27_gdn_qkvz_m6_workspace::z_pack_bytes ||
+                    z.layout_id != Q27_XE2_LAYOUT_Q4_0_Q8_1_V1 ||
+                    z.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    z.role != Q27_XE2_PACK_GDN_Z ||
+                    alpha_beta.device_ptr == nullptr ||
+                    alpha_beta.bytes != q27_gdn_qkvz_m6_workspace::alpha_beta_pack_bytes ||
+                    alpha_beta.layout_id != Q27_XE2_LAYOUT_F32_GDN_BA_V1 ||
+                    alpha_beta.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    alpha_beta.role != Q27_XE2_PACK_GDN_ALPHA_BETA ||
+                    dt.device_ptr == nullptr ||
+                    dt.bytes != q27_gdn_qkvz_m6_workspace::gate_vector_bytes ||
+                    dt.layout_id != Q27_XE2_LAYOUT_F32_GDN_VECTOR_V1 ||
+                    dt.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    dt.role != Q27_XE2_PACK_GDN_DT ||
+                    a.device_ptr == nullptr ||
+                    a.bytes != q27_gdn_qkvz_m6_workspace::gate_vector_bytes ||
+                    a.layout_id != Q27_XE2_LAYOUT_F32_GDN_VECTOR_V1 ||
+                    a.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    a.role != Q27_XE2_PACK_GDN_A) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            q27_gdn_qkvzab_gate_m6_submit(
+                *queue, qkv.device_ptr, z.device_ptr,
+                static_cast<const float *>(alpha_beta.device_ptr),
+                static_cast<const float *>(dt.device_ptr),
+                static_cast<const float *>(a.device_ptr),
+                static_cast<const float *>(args->input0),
+                static_cast<float *>(args->output0),
+                static_cast<float *>(args->output1),
+                static_cast<float *>(args->output2),
+                static_cast<float *>(args->output3), args->scratch);
+            return Q27_XE2_OK;
+        }
         return Q27_XE2_DECLINED;
     } catch (...) {
         /* SYCL does not give the C boundary a proof that no work reached the queue. */
@@ -162,7 +286,9 @@ const q27_xe2_module_v1 module = {
     Q27_XE2_TOOLCHAIN_ABI,
     (UINT64_C(1) << Q27_XE2_OP_SMOKE_AXPY) |
         (UINT64_C(1) << Q27_XE2_OP_Q6K_M6_TOP1) |
-        (UINT64_C(1) << Q27_XE2_OP_GDN_QKVZ_M6),
+        (UINT64_C(1) << Q27_XE2_OP_GDN_QKVZ_M6) |
+        (UINT64_C(1) << Q27_XE2_OP_GDN_QKVZAB_M6) |
+        (UINT64_C(1) << Q27_XE2_OP_GDN_QKVZAB_GATE_M6),
     query_workspace,
     launch,
 };

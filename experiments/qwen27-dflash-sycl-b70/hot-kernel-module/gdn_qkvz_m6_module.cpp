@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 namespace esimd = sycl::ext::intel::esimd;
 namespace xmx = sycl::ext::intel::esimd::xmx;
@@ -11,7 +12,7 @@ namespace xmx = sycl::ext::intel::esimd::xmx;
 namespace {
 
 class q27_gdn_qkvz_m6_quant_kernel;
-class q27_gdn_qkvz_m6_joint_kernel;
+template <bool FoldGate> class q27_gdn_qkvz_m6_joint_kernel;
 
 struct q8_meta {
     float d;
@@ -22,6 +23,7 @@ static_assert(sizeof(q8_meta) == 8);
 static_assert(q27_gdn_qkvz_m6_workspace::bytes == 38400);
 static_assert(q27_gdn_qkvz_m6_workspace::qkv_pack_bytes == 29491200);
 static_assert(q27_gdn_qkvz_m6_workspace::z_pack_bytes == 17694720);
+static_assert(q27_gdn_qkvz_m6_workspace::alpha_beta_pack_bytes == 1966080);
 
 void quantize(sycl::queue &queue, const float *src, int8_t *dst) {
     constexpr int m = q27_gdn_qkvz_m6_workspace::rows;
@@ -70,13 +72,20 @@ void quantize(sycl::queue &queue, const float *src, int8_t *dst) {
     });
 }
 
-void project_both(
+template <bool FoldGate>
+void project_all(
         sycl::queue &queue,
         const uint8_t *weights_qkv,
         const uint8_t *weights_z,
+        const float *weights_alpha_beta,
+        const float *dt,
+        const float *a,
+        const float *src,
         const int8_t *activations,
         float *dst_qkv,
-        float *dst_z) {
+        float *dst_z,
+        float *dst_alpha,
+        float *dst_beta) {
     constexpr int m = q27_gdn_qkvz_m6_workspace::rows;
     constexpr int k = q27_gdn_qkvz_m6_workspace::k;
     constexpr int n_qkv = q27_gdn_qkvz_m6_workspace::n_qkv;
@@ -90,18 +99,84 @@ void project_both(
     constexpr int qkv_pairs = (qkv_tiles + joint - 1) / joint;
     constexpr int z_pairs = (z_tiles + joint - 1) / joint;
     constexpr int total_pairs = qkv_pairs + z_pairs;
+    constexpr int f32_outputs =
+        q27_gdn_qkvz_m6_workspace::n_alpha + q27_gdn_qkvz_m6_workspace::n_beta;
+    const int total_groups = total_pairs + (weights_alpha_beta == nullptr ? 0 : f32_outputs);
     const auto *activation_meta = reinterpret_cast<const q8_meta *>(
         activations + size_t(k) * m);
 
     queue.submit([&](sycl::handler &handler) {
-        handler.parallel_for<q27_gdn_qkvz_m6_joint_kernel>(
-            sycl::nd_range<2>(sycl::range<2>(total_pairs, splits), sycl::range<2>(1, splits)),
+        handler.parallel_for<q27_gdn_qkvz_m6_joint_kernel<FoldGate>>(
+            sycl::nd_range<2>(sycl::range<2>(total_groups, splits), sycl::range<2>(1, splits)),
             [=](sycl::nd_item<2> item) [[intel::sycl_explicit_simd]] {
                 esimd::slm_init<slm_floats * sizeof(float)>();
                 const int global_pair = int(item.get_group(0));
+                const int split = int(item.get_local_id(1));
+                if (global_pair >= total_pairs) {
+                    constexpr int f32_vector = 32;
+                    const int output = global_pair - total_pairs;
+                    const bool is_beta = output >= q27_gdn_qkvz_m6_workspace::n_alpha;
+                    const int local_output = is_beta ?
+                        output - q27_gdn_qkvz_m6_workspace::n_alpha : output;
+                    const float *weight = weights_alpha_beta + size_t(output) * k;
+                    esimd::simd<float, m> accum(0.0f);
+                    for (int base = split * f32_vector; base < k;
+                            base += splits * f32_vector) {
+                        esimd::simd<float, f32_vector> w;
+                        w.copy_from(weight + base);
+#pragma unroll
+                        for (int row = 0; row < m; ++row) {
+                            esimd::simd<float, f32_vector> x;
+                            x.copy_from(src + size_t(row) * k + base);
+                            accum[row] += esimd::reduce<float>(w * x, std::plus<>());
+                        }
+                    }
+#pragma unroll
+                    for (int row = 0; row < m; ++row) {
+                        esimd::slm_scalar_store<float>(
+                            uint32_t((split * m + row) * sizeof(float)), accum[row]);
+                    }
+                    esimd::barrier();
+                    if constexpr (FoldGate) {
+                        if (!is_beta) {
+                            if (split < m) {
+                                const int row = split;
+                                float sum = 0.0f;
+#pragma unroll
+                                for (int partial = 0; partial < splits; ++partial) {
+                                    sum += esimd::slm_scalar_load<float>(
+                                        uint32_t((partial * m + row) * sizeof(float)));
+                                }
+                                const float x = sum + dt[local_output];
+                                const float ax = x < 0.0f ? -x : x;
+                                // ESIMD has no log1p intrinsic. This is the same stable
+                                // softplus identity with one final-rounding difference.
+                                const float softplus = (x > 0.0f ? x : 0.0f) +
+                                    esimd::log(1.0f + esimd::exp(-ax));
+                                dst_alpha[size_t(row) *
+                                    q27_gdn_qkvz_m6_workspace::n_alpha + local_output] =
+                                    softplus * a[local_output];
+                            }
+                            return;
+                        }
+                    }
+                    if (split == 0) {
+                        float *dst = is_beta ? dst_beta : dst_alpha;
+#pragma unroll
+                        for (int row = 0; row < m; ++row) {
+                            float sum = 0.0f;
+#pragma unroll
+                            for (int partial = 0; partial < splits; ++partial) {
+                                sum += esimd::slm_scalar_load<float>(
+                                    uint32_t((partial * m + row) * sizeof(float)));
+                            }
+                            dst[size_t(row) * q27_gdn_qkvz_m6_workspace::n_alpha + local_output] = sum;
+                        }
+                    }
+                    return;
+                }
                 const bool is_z = global_pair >= qkv_pairs;
                 const int pair = is_z ? global_pair - qkv_pairs : global_pair;
-                const int split = int(item.get_local_id(1));
                 const int tile0 = pair * joint;
                 const int n = is_z ? n_z : n_qkv;
                 const int nt = is_z ? z_tiles : qkv_tiles;
@@ -184,6 +259,45 @@ void q27_gdn_qkvz_m6_submit(
         void *workspace) {
     auto *activations = static_cast<int8_t *>(workspace);
     quantize(queue, src, activations);
-    project_both(queue, static_cast<const uint8_t *>(packed_qkv),
-                 static_cast<const uint8_t *>(packed_z), activations, dst_qkv, dst_z);
+    project_all<false>(queue, static_cast<const uint8_t *>(packed_qkv),
+                static_cast<const uint8_t *>(packed_z), nullptr, nullptr, nullptr, nullptr,
+                activations, dst_qkv, dst_z, nullptr, nullptr);
+}
+
+void q27_gdn_qkvzab_m6_submit(
+        sycl::queue &queue,
+        const void *packed_qkv,
+        const void *packed_z,
+        const float *alpha_beta_weights,
+        const float *src,
+        float *dst_qkv,
+        float *dst_z,
+        float *dst_alpha,
+        float *dst_beta,
+        void *workspace) {
+    auto *activations = static_cast<int8_t *>(workspace);
+    quantize(queue, src, activations);
+    project_all<false>(queue, static_cast<const uint8_t *>(packed_qkv),
+                static_cast<const uint8_t *>(packed_z), alpha_beta_weights, nullptr, nullptr, src,
+                activations, dst_qkv, dst_z, dst_alpha, dst_beta);
+}
+
+void q27_gdn_qkvzab_gate_m6_submit(
+        sycl::queue &queue,
+        const void *packed_qkv,
+        const void *packed_z,
+        const float *alpha_beta_weights,
+        const float *dt,
+        const float *a,
+        const float *src,
+        float *dst_qkv,
+        float *dst_z,
+        float *dst_gate,
+        float *dst_beta,
+        void *workspace) {
+    auto *activations = static_cast<int8_t *>(workspace);
+    quantize(queue, src, activations);
+    project_all<true>(queue, static_cast<const uint8_t *>(packed_qkv),
+                static_cast<const uint8_t *>(packed_z), alpha_beta_weights, dt, a, src,
+                activations, dst_qkv, dst_z, dst_gate, dst_beta);
 }

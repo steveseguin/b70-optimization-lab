@@ -1,0 +1,74 @@
+{
+  "date": "2026-07-13",
+  "status": "hot-module-gate-passed-runtime-not-integrated",
+  "commitIntent": "Prepare guarded graph matcher integration after protected source ownership clears.",
+  "moduleBuildId": "gdn-qkvzab-m6-stage-a-v1",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "deviceAffinity": "ZE_AFFINITY_MASK=0",
+  "warmupRounds": 20,
+  "iterationsPerRun": 100,
+  "fixture": {
+    "path": "/mnt/fast-ai/bench-results/qwen27-q6k-m6-top1/dflash-real-m6-v1.bin",
+    "scope": "real model-generated M=6 final-norm input; not internal GDN input"
+  },
+  "weights": {
+    "qkv": {"offset": 1786836096, "shape": [5120, 10240], "type": "Q4_0"},
+    "z": {"offset": 1769120896, "shape": [5120, 6144], "type": "Q4_0"},
+    "alpha": {"offset": 1972323648, "shape": [5120, 48], "type": "F32"},
+    "beta": {"offset": 1973306688, "shape": [5120, 48], "type": "F32"},
+    "ssmA": {"offset": 1972323456, "shape": [48], "type": "F32"},
+    "ssmDt": {"offset": 1974453568, "shape": [48], "type": "F32"}
+  },
+  "correctness": {
+    "qkvModuleVsActiveMaxAbs": 0.0,
+    "zModuleVsActiveMaxAbs": 0.0,
+    "alphaModuleVsOneMklMaxAbs": 0.000010,
+    "alphaModuleVsOneMklMaxRel": 0.000006,
+    "betaModuleVsOneMklMaxAbs": 0.000004,
+    "betaModuleVsOneMklMaxRel": 0.000004,
+    "foldedGateVsActiveMaxAbs": 0.000002,
+    "foldedGateVsActiveMaxRel": 0.000001,
+    "invalidLayoutFallbackSafe": true
+  },
+  "performanceRuns": [
+    {
+      "activeFourProjectionUs": 143.440,
+      "jointQkvzabUs": 99.407,
+      "projected48LayerSavingMs": 2.113584,
+      "activeFullGateSequenceUs": 147.737,
+      "foldedGateCandidateUs": 99.247,
+      "foldedProjected48LayerSavingMs": 2.327520
+    },
+    {
+      "activeFourProjectionUs": 143.309,
+      "jointQkvzabUs": 99.457,
+      "projected48LayerSavingMs": 2.104896,
+      "activeFullGateSequenceUs": 147.768,
+      "foldedGateCandidateUs": 99.237,
+      "foldedProjected48LayerSavingMs": 2.329488
+    }
+  ],
+  "memory": {
+    "perLayerPackBytes": 49152384,
+    "all48PackBytes": 2359314432,
+    "workspaceBytes": 38400,
+    "deviceGlobalMemoryBytes": 34242297856,
+    "bareCardFreeMemoryBeforeBytes": 34147639296
+  },
+  "negativeVariant": {
+    "name": "f32-joint4",
+    "candidateUs": 122.791,
+    "activeUs": 145.153,
+    "projected48LayerSavingMs": 1.073376,
+    "decision": "rejected"
+  },
+  "gates": {
+    "q4Exact": true,
+    "f32Tight": true,
+    "foldedGateTight": true,
+    "projectedAtLeast2ms": true,
+    "runtimeIntegrated": false,
+    "endToEndAtLeast3Percent": null,
+    "protectedLlamaCppChanged": false
+  }
+}

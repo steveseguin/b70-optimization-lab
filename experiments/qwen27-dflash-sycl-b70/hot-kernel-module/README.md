@@ -19,14 +19,11 @@ implementation and the captured real DFlash fixture using:
 ZE_AFFINITY_MASK=3 ./run-q6-comparator.sh
 ```
 
-The module also retains the rejected Stage-A GDN QKV+z experiment. It shares
+The module also retains the rejected Stage-A GDN QKV+z operation. It shares
 one Q8_1 activation production and submits the heterogeneous 10240- and
-6144-wide Q4_0 DPAS projections in one command group. Reproduce its real
-layer-0-weight comparison with:
-
-```bash
-ZE_AFFINITY_MASK=2 ./run-gdn-qkvz-comparator.sh
-```
+6144-wide Q4_0 DPAS projections in one command group. Its original comparator
+result is preserved in the Stage-A structured result and note; the current GDN
+comparator exercises the larger superset below.
 
 It is deliberately not a runtime candidate: after 20 warmup rounds, two
 repeatable 100-iteration uncontended B70 runs measured about 94.2 us versus
@@ -35,6 +32,22 @@ the required 1.30x microbenchmark gate and projects to about 0.42 ms saved
 across all 48 GDN layers, below the 2 ms cycle gate. The code and pack cache
 remain as negative-result evidence and as a comparator for
 future larger fusion boundaries.
+
+That larger boundary is now implemented as QKVZAB plus the folded alpha gate
+epilogue. It combines the unequal Q4_0 QKV/z projections, exact F32 alpha/beta
+projections, and alpha `+dt -> softplus -> *a` in the same projection command
+group after one shared Q8_1 production. Run its real-weight comparator with:
+
+```bash
+ZE_AFFINITY_MASK=0 ./run-gdn-qkvzab-comparator.sh
+```
+
+Two warmed 100-iteration runs measured 99.24-99.25 us for the folded boundary
+versus 147.74-147.77 us for the active four projections plus three alpha
+epilogue kernels. The 48-layer projection is 2.328-2.329 ms saved, clearing the
+2 ms integration-design gate. Q4 outputs are bit-exact against active symbols;
+the folded gate differs by at most 0.000002 on the real fixture. This is a
+hot-module result, not runtime or end-to-end promotion evidence.
 
 The first comparator run builds a fingerprinted expanded-weight cache under
 `/mnt/fast-ai/bench-results/qwen27-q6k-m6-top1/`. It is an external 1.26 GiB
