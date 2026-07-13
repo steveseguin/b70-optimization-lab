@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import time
 import urllib.request
 from pathlib import Path
@@ -97,6 +98,16 @@ def validate_session(
     )
     require_equal("reasoning", session.get("reasoning"), "off")
     require_equal("capture mode", session.get("capture_mode"), "linear_target_no_speculation")
+    require_equal("spec type", session.get("spec_type"), contract["spec_type"])
+    require_equal("parallel slots", session.get("parallel"), contract["parallel"])
+    require_equal(
+        "context checkpoints",
+        session.get("ctx_checkpoints"),
+        contract["ctx_checkpoints"],
+    )
+    require_equal(
+        "prompt cache", session.get("prompt_cache"), contract["prompt_cache"]
+    )
     require_equal("spec draft n_max", session.get("spec_draft_n_max"), 0)
     require_equal("spec draft n_min", session.get("spec_draft_n_min"), 0)
     require_equal("spec draft p_min", session.get("spec_draft_p_min"), 0.0)
@@ -107,6 +118,7 @@ def validate_session(
         session.get("target_layer_input_ids"),
         contract["target_layer_input_ids"],
     )
+    require_equal("temperature", session.get("temperature"), contract["temperature"])
     if not session.get("capture_hook_active"):
         raise ValueError("native session says capture_hook_active is false")
     capture_dir = Path(str(session.get("capture_dir") or "")).expanduser()
@@ -187,6 +199,52 @@ def request_generation(
     }
 
 
+def publish_request_control(
+    *,
+    capture_dir: Path,
+    plan: dict[str, Any],
+    split: str,
+    ordinal: int,
+    prompt_hash: str,
+    request_id: str,
+    max_tokens: int,
+) -> Path:
+    """Atomically bind the next native begin() call to collector metadata."""
+
+    control_path = capture_dir / "next-request.json"
+    if control_path.exists():
+        raise FileExistsError(
+            f"stale native request control exists; refusing overwrite: {control_path}"
+        )
+    active = plan["active_product"]
+    payload = {
+        "schema": "qwen27_dflash_native_request_control_v1",
+        "ordinal": ordinal,
+        "split": split,
+        "prompt_sha256": prompt_hash,
+        "request_id": request_id,
+        "max_generated_tokens": max_tokens,
+        "target_model_sha256": active["target_model_sha256"],
+        "draft_model_sha256": active["draft_model_sha256"],
+        "runtime_commit": active["runtime"]["commit"],
+        "runtime_dirty_patch_sha256": active["runtime"][
+            "dirty_patch_sha256"
+        ],
+    }
+    temporary = capture_dir / f".next-request.{os.getpid()}.tmp"
+    with temporary.open("w", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, control_path)
+    directory_fd = os.open(capture_dir, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    return control_path
+
+
 def wait_for_trace(
     capture_dir: Path, ordinal: int, timeout_s: float
 ) -> tuple[Path, dict[str, Any]]:
@@ -211,14 +269,34 @@ def validate_trace(
     trace_path: Path,
     plan: dict[str, Any],
     prompt_hash: str,
+    ordinal: int,
+    request_id: str,
 ) -> dict[str, Any]:
     active = plan["active_product"]
     require_equal("trace schema", trace.get("schema"), TRACE_SCHEMA)
+    require_equal("trace complete", trace.get("complete"), True)
+    require_equal("trace request ordinal", trace.get("request_ordinal"), ordinal)
+    require_equal("trace request ID", trace.get("request_id"), request_id)
     require_equal("trace prompt sha256", trace.get("prompt_sha256"), prompt_hash)
     require_equal(
         "trace target sha256",
         trace.get("target_model_sha256"),
         active["target_model_sha256"],
+    )
+    require_equal(
+        "trace draft sha256",
+        trace.get("draft_model_sha256"),
+        active["draft_model_sha256"],
+    )
+    require_equal(
+        "trace runtime commit",
+        trace.get("runtime_commit"),
+        active["runtime"]["commit"],
+    )
+    require_equal(
+        "trace runtime dirty patch sha256",
+        trace.get("runtime_dirty_patch_sha256"),
+        active["runtime"]["dirty_patch_sha256"],
     )
     require_equal(
         "trace target layers",
@@ -240,6 +318,20 @@ def validate_trace(
         values = trace.get(key)
         if not isinstance(values, list) or len(values) != row_count:
             raise ValueError(f"trace {key} does not align to {row_count} rows")
+    input_ids = trace["input_token_ids"]
+    next_ids = trace["sampled_next_token_ids"]
+    positions = trace["positions"]
+    if positions[0] != 0 or any(
+        right != left + 1 for left, right in zip(positions, positions[1:])
+    ):
+        raise ValueError("trace positions must start at zero and be contiguous")
+    if input_ids[1:] != next_ids[:-1]:
+        raise ValueError("trace next-token labels do not align to following inputs")
+    num_prompt_tokens = trace.get("num_prompt_tokens")
+    if not isinstance(num_prompt_tokens, int) or not (
+        1 <= num_prompt_tokens <= row_count
+    ):
+        raise ValueError(f"invalid num_prompt_tokens: {num_prompt_tokens!r}")
     payload_path = Path(str(trace.get("payload_path") or ""))
     if not payload_path.is_absolute():
         payload_path = (trace_path.parent / payload_path).resolve()
@@ -281,6 +373,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         prompt_hash = prompt_sha256(row)
         prompt_id = str(row.get("id") or f"prompt-{offset:04d}")
         request_id = f"qwen27-dflash-q4-{args.split}-{ordinal:06d}-{prompt_id}"
+        control_path = publish_request_control(
+            capture_dir=capture_dir,
+            plan=plan,
+            split=args.split,
+            ordinal=ordinal,
+            prompt_hash=prompt_hash,
+            request_id=request_id,
+            max_tokens=args.max_tokens,
+        )
         response = request_generation(
             base_url=args.base_url,
             model=args.model,
@@ -292,11 +393,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         trace_path, trace = wait_for_trace(
             capture_dir, ordinal, args.trace_timeout_s
         )
+        if control_path.exists():
+            raise RuntimeError(
+                "native trace appeared without consuming next-request control: "
+                f"{control_path}"
+            )
         trace_record = validate_trace(
             trace=trace,
             trace_path=trace_path,
             plan=plan,
             prompt_hash=prompt_hash,
+            ordinal=ordinal,
+            request_id=request_id,
         )
         record = {
             "ordinal": ordinal,

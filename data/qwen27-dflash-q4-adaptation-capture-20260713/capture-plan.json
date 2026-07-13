@@ -151,6 +151,7 @@
     },
     "required_server_contract": {
       "ctx_checkpoints": 0,
+      "parallel": 1,
       "prompt_cache": "disabled",
       "reasoning": "off",
       "spec_draft_n_max": 0,
@@ -170,8 +171,12 @@
     },
     "required_trace_schema": {
       "per_request_fields": [
+        "complete",
+        "request_ordinal",
+        "request_id",
         "prompt_sha256",
         "target_model_sha256",
+        "draft_model_sha256",
         "runtime_commit",
         "runtime_dirty_patch_sha256",
         "target_layer_input_ids",
@@ -179,7 +184,7 @@
         "sampled_next_token_ids",
         "positions",
         "num_prompt_tokens",
-        "aux_hidden_states_f32_or_bf16",
+        "aux_hidden_states_bf16",
         "payload_sha256"
       ],
       "request": "qwen27_dflash_native_target_trace_v1",

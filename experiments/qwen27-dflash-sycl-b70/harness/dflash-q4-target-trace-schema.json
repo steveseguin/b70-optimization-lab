@@ -1,0 +1,143 @@
+{
+  "schema": "qwen27_dflash_target_trace_contract_v1",
+  "status": "implementation_blueprint_no_native_runtime_patch_applied",
+  "purpose": "Exact active-Q4 target-layer input traces for the B=6 DFlash layer-position-bias screen",
+  "capture_mode": "linear_target_no_speculation",
+  "server_session": {
+    "schema": "qwen27_dflash_native_capture_session_v1",
+    "required_fields": {
+      "capture_hook_active": true,
+      "capture_mode": "linear_target_no_speculation",
+      "ctx_checkpoints": 0,
+      "parallel": 1,
+      "prompt_cache": "disabled",
+      "reasoning": "off",
+      "spec_draft_n_max": 0,
+      "spec_draft_n_min": 0,
+      "spec_draft_p_min": 0.0,
+      "spec_draft_type_k": "f16",
+      "spec_draft_type_v": "f16",
+      "spec_type": "draft-dflash",
+      "target_layer_input_ids": [2, 17, 32, 47, 62]
+    },
+    "identity_fields": [
+      "target_model_sha256",
+      "draft_model_sha256",
+      "runtime_commit",
+      "runtime_dirty_patch_sha256"
+    ],
+    "operational_fields": ["capture_dir", "next_request_ordinal"]
+  },
+  "next_request_control": {
+    "filename": "next-request.json",
+    "schema": "qwen27_dflash_native_request_control_v1",
+    "required_fields": [
+      "ordinal",
+      "split",
+      "prompt_sha256",
+      "request_id",
+      "max_generated_tokens",
+      "target_model_sha256",
+      "draft_model_sha256",
+      "runtime_commit",
+      "runtime_dirty_patch_sha256"
+    ],
+    "publication": "write temporary file, flush, fsync, atomic rename, fsync directory",
+    "claim": "native hook atomically renames next-request.json before accepting the first prefill rows",
+    "concurrency": "parallel=1 only; a stale, missing, duplicate, or mismatched control aborts capture"
+  },
+  "binary_payload": {
+    "extension": ".qdft",
+    "endianness": "little",
+    "header_bytes": 256,
+    "magic_ascii_with_nul": "QDFTRC1\\0",
+    "version": 1,
+    "complete_flag_bit": 0,
+    "feature_dtype": "bfloat16_raw_bits",
+    "target_layer_input_ids": [2, 17, 32, 47, 62],
+    "hidden_size": 5120,
+    "feature_values_per_row": 25600,
+    "feature_bytes_per_row": 51200,
+    "row_prefix_bytes": 16,
+    "row_bytes": 51216,
+    "header_layout": [
+      {"offset": 0, "bytes": 8, "field": "magic", "type": "char[8]"},
+      {"offset": 8, "bytes": 4, "field": "version", "type": "uint32"},
+      {"offset": 12, "bytes": 4, "field": "header_bytes", "type": "uint32"},
+      {"offset": 16, "bytes": 4, "field": "flags", "type": "uint32"},
+      {"offset": 20, "bytes": 4, "field": "feature_dtype", "type": "uint32", "value": 1},
+      {"offset": 24, "bytes": 8, "field": "request_ordinal", "type": "uint64"},
+      {"offset": 32, "bytes": 4, "field": "num_prompt_tokens", "type": "uint32"},
+      {"offset": 36, "bytes": 4, "field": "row_count", "type": "uint32"},
+      {"offset": 40, "bytes": 4, "field": "n_layers", "type": "uint32", "value": 5},
+      {"offset": 44, "bytes": 4, "field": "hidden_size", "type": "uint32", "value": 5120},
+      {"offset": 48, "bytes": 32, "field": "target_model_sha256", "type": "uint8[32]"},
+      {"offset": 80, "bytes": 32, "field": "draft_model_sha256", "type": "uint8[32]"},
+      {"offset": 112, "bytes": 20, "field": "runtime_commit", "type": "uint8[20]"},
+      {"offset": 132, "bytes": 32, "field": "runtime_dirty_patch_sha256", "type": "uint8[32]"},
+      {"offset": 164, "bytes": 32, "field": "prompt_sha256", "type": "uint8[32]"},
+      {"offset": 196, "bytes": 20, "field": "target_layer_input_ids", "type": "int32[5]"},
+      {"offset": 216, "bytes": 8, "field": "payload_bytes", "type": "uint64"},
+      {"offset": 224, "bytes": 32, "field": "reserved_zero", "type": "uint8[32]"}
+    ],
+    "row_layout": [
+      {"offset": 0, "bytes": 4, "field": "input_token_id", "type": "int32"},
+      {"offset": 4, "bytes": 4, "field": "sampled_next_token_id", "type": "int32"},
+      {"offset": 8, "bytes": 4, "field": "position", "type": "int32"},
+      {"offset": 12, "bytes": 4, "field": "row_flags", "type": "uint32"},
+      {"offset": 16, "bytes": 51200, "field": "aux_hidden_states", "type": "bfloat16[5][5120]"}
+    ],
+    "row_flag_bits": {"prompt": 0, "generated": 1},
+    "label_alignment": "row[t].sampled_next_token_id equals row[t+1].input_token_id; the final unlabeled pending row is omitted",
+    "required_invariants": [
+      "positions start at zero and are contiguous",
+      "prompt rows form one prefix of num_prompt_tokens rows",
+      "generated rows form the remaining suffix",
+      "input and next-token IDs are non-negative",
+      "file size equals 256 + payload_bytes",
+      "payload_bytes equals row_count * 51216",
+      "complete flag is set only during successful finalization"
+    ]
+  },
+  "trace_sidecar": {
+    "filename": "request-%06d.json",
+    "schema": "qwen27_dflash_native_target_trace_v1",
+    "published_last": true,
+    "required_fields": [
+      "complete",
+      "request_ordinal",
+      "request_id",
+      "prompt_sha256",
+      "target_model_sha256",
+      "draft_model_sha256",
+      "runtime_commit",
+      "runtime_dirty_patch_sha256",
+      "target_layer_input_ids",
+      "num_prompt_tokens",
+      "input_token_ids",
+      "sampled_next_token_ids",
+      "positions",
+      "aux_hidden_states_shape",
+      "payload_path",
+      "payload_sha256"
+    ]
+  },
+  "writer": {
+    "host_copy": "copy existing host F32 target-layer inputs into owned BF16 chunks synchronously before features_buf reuse",
+    "device_copy": "none; llama_get_embeddings_layer_inp already returns host-readable data after target decode",
+    "background_io": "one bounded writer queue; disk writes and hashing may run off the decode thread",
+    "backpressure": "queue-full, conversion, write, flush, or fsync errors abort the capture; rows are never dropped",
+    "finalization": "rewrite complete header, flush, fsync, close, hash, atomically rename payload, then atomically publish sidecar last",
+    "abort": "close and preserve only an explicitly incomplete .failed artifact; never publish a complete sidecar"
+  },
+  "training_compatibility": {
+    "output_format": "qwen36_eagle_sequence_v2",
+    "draft_tokens": 5,
+    "verification_width": 6,
+    "train_scope": "layer-position-bias",
+    "parameter_count": 153600,
+    "parser": "scripts/parse-qwen27-dflash-q4-target-trace.py",
+    "trainer": "scripts/train-qwen27-dflash-offline.py",
+    "screen_gate": "at least 4 accepted and at least 5 emitted tokens per favorable heldout cycle"
+  }
+}
