@@ -70,3 +70,16 @@ AOT strict reproduction are mandatory before LocalMaxxing submission.
 The protected source remains dirty and must not be reset. At promotion time,
 capture the relevant `mmvq.cpp`, `mmvq.hpp`, `ggml-sycl.cpp`, and tensor-extra
 lifecycle delta together with the exact source HEAD and build identities.
+
+## AOT promotion and LocalMaxxing
+
+The fresh BMG-AOT build reproduced the strict win at `42.64100140442767 tok/s`
+median, `37.01181540273963` p10, and `42.956598510610235` mean. Median
+full-output throughput was `42.38079625519468 tok/s`, wall full128 was
+`30.166061475797108 tok/s`, and TTFT was `1162.638435489498 ms`. The fixed
+realistic gate passed with all cache counts zero.
+
+This is `+8.64%` over the matching promoted gate/up-only AOT record. LocalMaxxing
+approved it as `cmrj8fygq029ymj01e2404psy` (HTTP 201). The queue and response
+are preserved under the lane's `localmaxxing/` folder and
+`data/localmaxxing-responses/` respectively.
