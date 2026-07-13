@@ -45,8 +45,18 @@ case "$SPEC_PROFILE" in
     SPEC_TYPE="draft-simple"
     SPEC_N_MAX="${SPEC_PROFILE#dflash}"
     ;;
+  native-dflash2|native-dflash3|native-dflash4|native-dflash5|native-dflash8|native-dflash15)
+    SPEC_TYPE="draft-dflash"
+    SPEC_N_MAX="${SPEC_PROFILE#native-dflash}"
+    DRAFT_MODEL="${DRAFT_MODEL:-/mnt/usb-models/models/qwen36-27b-dflash-native/Qwen3.6-27B-DFlash-Q8_0.gguf}"
+    # The paired source patch bypasses SYCL FA only for DFlash's non-causal
+    # decoder graph. Keep FA enabled for the causal target/verifier.
+    FLASH_ATTN=on
+    DRAFT_CACHE_TYPE_K="${DRAFT_CACHE_TYPE_K:-f16}"
+    DRAFT_CACHE_TYPE_V="${DRAFT_CACHE_TYPE_V:-f16}"
+    ;;
   *)
-    echo "Invalid SPEC_PROFILE=$SPEC_PROFILE; expected custom, no-spec, mtp3, dflash5, dflash8, or dflash15" >&2
+    echo "Invalid SPEC_PROFILE=$SPEC_PROFILE; expected custom, no-spec, mtp3, dflash5, dflash8, dflash15, or native-dflash{2,3,4,5,8,15}" >&2
     exit 2
     ;;
 esac

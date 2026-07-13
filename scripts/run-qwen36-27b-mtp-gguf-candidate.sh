@@ -13,6 +13,24 @@ OUT_DIR="${OUT_DIR:-$ROOT/data/qwen36-27b-mtp-gguf-q4-b70-baselines}"
 OUT="${OUT:-$OUT_DIR/${LABEL}-${STAMP}.json}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-240}"
 
+# Resolve profile-owned defaults here as well as in the server launcher so the
+# pre-run identity describes what will actually execute. The paired source
+# patch bypasses FA only for DFlash's non-causal decoder, leaving target FA on.
+# Draft KV remains F16 until quantized-cache correctness is established.
+case "$SPEC_PROFILE" in
+  native-dflash2|native-dflash3|native-dflash4|native-dflash5|native-dflash8|native-dflash15)
+    SPEC_TYPE="draft-dflash"
+    SPEC_N_MAX="${SPEC_PROFILE#native-dflash}"
+    DRAFT_MODEL="${DRAFT_MODEL:-/mnt/usb-models/models/qwen36-27b-dflash-native/Qwen3.6-27B-DFlash-Q8_0.gguf}"
+    FLASH_ATTN=on
+    DRAFT_CACHE_TYPE_K="${DRAFT_CACHE_TYPE_K:-f16}"
+    DRAFT_CACHE_TYPE_V="${DRAFT_CACHE_TYPE_V:-f16}"
+    ;;
+esac
+
+TARGET_MODEL="${MODEL:-/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_0.gguf}"
+API_MODEL="${API_MODEL:-${MODEL_ALIAS:-qwen36-27b-mtp-gguf-q4_0}}"
+
 mkdir -p "$RUN_DIR" "$OUT_DIR"
 
 server_pid=""
@@ -40,6 +58,14 @@ cd "$ROOT"
   echo "spec_n_min=${SPEC_N_MIN:-${MTP_N_MIN:-0}}"
   echo "spec_p_min=${SPEC_P_MIN:-${MTP_P_MIN:-0.00}}"
   echo "draft_model=${DRAFT_MODEL:-<resolved-by-profile>}"
+  if [[ -n "${DRAFT_MODEL:-}" && -f "$DRAFT_MODEL" ]]; then
+    echo "draft_model_bytes=$(stat -c %s "$DRAFT_MODEL")"
+    echo "draft_model_mtime=$(stat -c %Y "$DRAFT_MODEL")"
+  fi
+  echo "draft_device=${DRAFT_DEVICE:-SYCL0}"
+  echo "draft_n_gpu_layers=${DRAFT_NGL:-all}"
+  echo "draft_cache_type_k=${DRAFT_CACHE_TYPE_K:-q8_0}"
+  echo "draft_cache_type_v=${DRAFT_CACHE_TYPE_V:-q8_0}"
   echo "mtp_n_max=${MTP_N_MAX:-3}"
   echo "mtp_n_min=${MTP_N_MIN:-0}"
   echo "mtp_p_min=${MTP_P_MIN:-0.00}"
@@ -67,9 +93,12 @@ cd "$ROOT"
   echo "GGML_SYCL_ENABLE_OPT=${GGML_SYCL_ENABLE_OPT:-1}"
   echo "GGML_SYCL_ENABLE_VMM=${GGML_SYCL_ENABLE_VMM:-1}"
   echo "extra_llama_args=${EXTRA_LLAMA_ARGS:-}"
+  echo "target_model=$TARGET_MODEL"
+  echo "api_model=$API_MODEL"
 } > "$RUN_DIR/identity.env"
 
 GPU_INDEX="$GPU_INDEX" PORT="$PORT" SPEC_PROFILE="$SPEC_PROFILE" \
+  MODEL="$TARGET_MODEL" \
   LOG="$RUN_DIR/server.identity.log" \
   CACHE_TYPE_K="${CACHE_TYPE_K:-q8_0}" CACHE_TYPE_V="${CACHE_TYPE_V:-q8_0}" \
   scripts/serve-qwen36-27b-mtp-gguf-llamacpp.sh \
@@ -90,11 +119,12 @@ until curl -fsS "http://127.0.0.1:${PORT}/v1/models" > "$RUN_DIR/models.json" 2>
   sleep 2
 done
 
-BASE_URL="http://127.0.0.1:${PORT}" \
-MODEL="${MODEL:-qwen36-27b-mtp-gguf-q4}" \
-LABEL="$LABEL" \
-OUT="$OUT" \
-REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-}" \
+env \
+  BASE_URL="http://127.0.0.1:${PORT}" \
+  MODEL="$API_MODEL" \
+  LABEL="$LABEL" \
+  OUT="$OUT" \
+  REQUEST_EXTRA_JSON="${REQUEST_EXTRA_JSON:-}" \
   scripts/bench-qwen36-27b-mtp-gguf-realistic.sh \
   > "$RUN_DIR/bench.stdout.log" 2>&1
 
