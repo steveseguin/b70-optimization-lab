@@ -35,7 +35,7 @@ evaluate speculative TP3+draft and TP4 topologies against the 200 tok/s gate.
 - [Active experiment workspace](experiments/qwen27-dflash-sycl-b70/README.md)
 - [Initial Q4_0 and speculation diagnostic](experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-initial-dflash-mtp-benchmark.md)
 - [Current MMVQ dispatch-fix result](experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-mmvq-dispatch-fix.md)
-- [Native DFlash SYCL FA correctness isolation and first >68 result](notes/2026-07-13-qwen36-native-dflash-sycl-fa-isolation.md)
+- [Native DFlash draft-KV correctness isolation and first >68 result](notes/2026-07-13-qwen36-native-dflash-sycl-fa-isolation.md)
 - [Prior promoted vLLM result packet](results/qwen36-27b-autoround-int4-b70/README.md)
 
 The target product is one B70. The intended route combines persistent cached
@@ -123,12 +123,12 @@ speed lane. The serialized draft graphs still execute and the `45.646 ms` M=4
 target verifier remains the dominant blocker.
 
 Native DFlash is no longer rejected based on the earlier near-zero-acceptance
-result. That failure was a SYCL flash-attention correctness bug: the FA path
-miscomputed the multi-token non-causal/interleaved-SWA mask used by the native
-DFlash decoder. Q8 did not repair it (`7/470` accepted with FA on). Bypassing FA
-only for the SYCL DFlash non-causal graph, while retaining FA for the causal
-target/verifier, restored `82/84` acceptance (`97.6%`) and `73.91 tok/s` on a
-favorable short code prompt. The existing Q4_K_M draft likewise recovered to
+result. The failure was caused by using Q8_0 for the native DFlash draft KV
+cache, not by DFlash weights, Q4 quantization, or flash attention itself. The
+missing controlled run—FA enabled with F16 draft KV—restored `100/106`
+acceptance (`94.3%`) and `73.47 tok/s`. The earlier Q8_0 draft-KV run managed
+only `7/470`, so quantized draft KV is prohibited until its numerical/backend
+failure is fixed. The existing Q4_K_M draft likewise recovered to
 `104/115` acceptance and `74.01 tok/s`, proving that the original Q4 result was
 not ordinary quantization damage. This is the first valid local lane above the
 68 tok/s milestone, but it is workload-specific rather than a production
@@ -181,8 +181,8 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Preserve the narrow SYCL DFlash FA correctness fallback and require
-   acceptance parity before re-enabling FA inside the non-causal draft graph.
+1. Keep native DFlash draft KV in F16. Preserve FA for both target and draft;
+   require acceptance parity before permitting Q8_0 draft KV again.
 2. Use native DFlash as a routed high-ceiling lane; distinguish favorable code
    results from the strict mixed-suite production gate.
 3. Build the offline-packed Xe2 DPAS/XMX small-M verifier and fused QKVZA plus

@@ -52,10 +52,10 @@ context. It is superseded where the controlling plan differs.
 ## Current July 13 State
 
 Native DFlash has crossed the first local high-ceiling milestone. The earlier
-near-zero acceptance was not evidence that DFlash or Q4 was unusable: SYCL
-flash attention produced incorrect results for the DFlash decoder's
-multi-token non-causal/interleaved-SWA mask. A narrow source fallback now
-bypasses FA only for that DFlash graph and retains it for the target verifier.
+near-zero acceptance was not evidence that DFlash or Q4 was unusable. It came
+from Q8_0 native-draft KV: the missing FA-on/F16-KV control restored 94.3%
+acceptance and 73.47 tok/s. Flash attention is valid for the DFlash graph when
+draft KV is F16; no DFlash-specific FA bypass is required.
 
 - Q8 native DFlash4, favorable code: 97.6% acceptance and 73.91 tok/s.
 - Existing Q4_K_M native DFlash5, favorable code: 90.4% acceptance and

@@ -1,4 +1,4 @@
-# Qwen3.6 native DFlash: SYCL flash-attention correctness isolation
+# Qwen3.6 native DFlash: draft-KV correctness isolation
 
 Date: 2026-07-13 UTC
 
@@ -11,18 +11,19 @@ existing Q4_K_M draft on favorable code. The result does not satisfy the strict
 its importance is that it reverses a false technical conclusion.
 
 We had treated native DFlash as nearly unusable because only 0.35-1.49% of its
-drafted tokens were accepted. The actual problem was backend semantics, not
-the DFlash algorithm, model quality, or Q4 quantization. SYCL flash attention
-was incorrectly evaluating DFlash's multi-token non-causal attention with
-interleaved sliding-window layers, making otherwise valid candidates appear
-random. Moving from Q4 to the independently validated Q8 artifact did not fix
-the failure, which was the key discriminator.
+drafted tokens were accepted. The actual problem was the Q8_0 native-draft KV
+cache, not the DFlash algorithm, draft weights, or Q4 weight quantization. The
+first A/B changed both flash attention and draft KV type, so its initial
+flash-mask conclusion was confounded. The missing control—FA on, F16 draft
+KV, identical Q8 draft weights—restored 100/106 acceptance (94.3%) and
+73.47 tok/s. Flash attention itself is therefore exonerated by current
+evidence; the catastrophic failure follows Q8_0 draft KV.
 
-The resolution is deliberately narrow: when building the SYCL DFlash
-non-causal decoder graph, route attention through the correct reference path;
-leave flash attention enabled for the causal target/verifier. This restored
-normal acceptance without surrendering target FA performance. It is a safe
-correctness fallback, not yet a repair of the faulty SYCL FA tile-mask kernel.
+The resolution is to keep native DFlash draft K/V in F16 while retaining flash
+attention for both the draft and target. The temporary DFlash-specific FA
+bypass was removed. Whether Q8_0 draft KV fails through a SYCL cache kernel bug
+or unacceptable quantization sensitivity still needs lower-level parity work,
+so it remains prohibited rather than diagnosed more narrowly than the evidence.
 
 This matters to the main objective because DFlash's long accepted blocks are
 still the clearest way to amortize a 27B target pass enough to approach 100
@@ -53,7 +54,7 @@ executor correctness failure rather than ordinary quantization loss.
 
 ## Correctness discriminator
 
-With SYCL flash attention enabled, Q8 native DFlash at `n_max=4` remained
+With SYCL flash attention and Q8_0 draft KV, native DFlash at `n_max=4` was
 broken:
 
 - 7 accepted / 470 drafted (1.489%)
@@ -67,19 +68,15 @@ prompt produced:
 - mean emitted length 4.70
 - 73.38 tok/s for 128 completion tokens
 
-This isolates the near-random DFlash behavior to the SYCL flash-attention path
-used by the non-causal/interleaved-SWA DFlash graph. It is not repaired by Q8
-weights alone.
+That comparison was initially insufficient because it changed two variables.
+The decisive control used FA on with F16 draft KV and produced 100/106 accepted
+(94.3%), mean length 4.70, and 73.47 tok/s. Q8_0 draft KV—not FA—is the isolated
+failure condition. Q8 draft *weights* do not repair or cause the cache problem.
 
-A narrow source fallback now disables FA only for the SYCL DFlash non-causal
-decoder graph while preserving FA for the causal target/verifier. With global
-FA enabled, it validated at 97.6% acceptance and 73.91 tok/s on a short code
-prompt. The underlying SYCL FA tile-mask implementation still needs a real fix.
-
-The existing Q4_K_M draft also recovered with DFlash FA bypassed: 104/115
+The existing Q4_K_M draft also recovered with F16 draft KV: 104/115
 drafted tokens accepted (90.4%), mean length 5.52, and 74.01 tok/s. Therefore
-Q8 is not required for favorable code correctness; the original Q4 failure was
-also the FA backend bug.
+Q8 weights are not required for favorable code correctness; the original Q4
+failure was also caused by its Q8_0 draft KV configuration.
 
 ## Four-card block-depth screen
 
@@ -114,7 +111,7 @@ fusions off:
   `/mnt/fast-ai/bench-results/qwen36-27b-mtp-gguf-q4-b70/runs/native-dflash5-q8-faoff-20260713T021705Z/server.stdout.log`
 
 This is a valid negative production result but a major correctness milestone:
-native DFlash is now usable on SYCL without FA, and the favorable-code lane
+native DFlash is now usable on SYCL with FA and F16 draft KV, and the favorable-code lane
 exceeds 68 tok/s. The mixed suite is still below the MTP production floor.
 
 ## Measured complete-cycle decomposition
@@ -137,8 +134,8 @@ next decisive TP1 kernel is the offline-packed Xe2 small-M verifier.
 
 ## Decision
 
-1. Fix SYCL FA masking/SWA correctness; do not globally enable FA for DFlash
-   until acceptance parity is demonstrated.
+1. Keep native draft KV in F16 and isolate the Q8_0 draft-cache failure with
+   tensor/cache parity tests before attempting to recover KV8 memory savings.
 2. Profile the complete `n_max=5/8/15` cycle. High acceptance is being erased by
    the generic small-M verifier and host-mediated DFlash feature/KV injection.
 3. Build the offline-packed Xe2 DPAS verifier and GPU-resident DFlash boundary.

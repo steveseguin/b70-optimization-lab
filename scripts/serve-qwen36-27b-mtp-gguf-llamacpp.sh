@@ -49,8 +49,8 @@ case "$SPEC_PROFILE" in
     SPEC_TYPE="draft-dflash"
     SPEC_N_MAX="${SPEC_PROFILE#native-dflash}"
     DRAFT_MODEL="${DRAFT_MODEL:-/mnt/usb-models/models/qwen36-27b-dflash-native/Qwen3.6-27B-DFlash-Q8_0.gguf}"
-    # The paired source patch bypasses SYCL FA only for DFlash's non-causal
-    # decoder graph. Keep FA enabled for the causal target/verifier.
+    # Native DFlash requires F16 draft KV for acceptance correctness on SYCL.
+    # Flash attention itself is valid when the draft KV remains F16.
     FLASH_ATTN=on
     DRAFT_CACHE_TYPE_K="${DRAFT_CACHE_TYPE_K:-f16}"
     DRAFT_CACHE_TYPE_V="${DRAFT_CACHE_TYPE_V:-f16}"

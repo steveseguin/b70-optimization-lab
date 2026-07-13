@@ -15,8 +15,8 @@ READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-240}"
 
 # Resolve profile-owned defaults here as well as in the server launcher so the
 # pre-run identity describes what will actually execute. The paired source
-# patch bypasses FA only for DFlash's non-causal decoder, leaving target FA on.
-# Draft KV remains F16 until quantized-cache correctness is established.
+# Native DFlash keeps flash attention enabled, but requires F16 draft KV until
+# the catastrophic Q8_0 draft-cache acceptance failure is understood and fixed.
 case "$SPEC_PROFILE" in
   native-dflash2|native-dflash3|native-dflash4|native-dflash5|native-dflash8|native-dflash15)
     SPEC_TYPE="draft-dflash"
