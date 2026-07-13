@@ -146,6 +146,23 @@ blocker is therefore the generic small-M target verifier. The next decisive
 work is an offline-packed Xe2 DPAS/XMX verifier plus projection fusion; generic
 configuration sweeps and another global DFlash rejection are closed.
 
+The first production Xe2 width-6 verifier slice is now promoted. A guarded
+single-launch SLM/DPAS kernel offline-packs all 130 Q4_0 gate/up tensors into a
+6.069946 GiB BMG-native mirror and preserves favorable-prompt output and
+acceptance exactly while reducing target verification by about `2.9 ms`. The
+initial integrated kernel returned all zeros because the host packer
+numerically converted a half-precision scale object into the raw
+`ggml_fp16_t` storage type; copying the two representation bytes fixed the
+scales and reduced the real one-tensor shadow error to `0.00036323` maximum.
+The corrected BMG-AOT strict suite passed at `39.249 tok/s`, versus the matching
+FA-on, target-KV8, draft-KV-F16 baseline of `37.967 tok/s` (`+3.38%`), and was
+approved by LocalMaxxing as `cmriq995z0210mj01fl13xmuc`. Do not compare this
+identity with the older `40.203 tok/s` row, which used FA off and F16 target and
+draft KV. An experimental 65-tensor QKV/Q expansion was rejected after its
+paired strict result failed to improve throughput and introduced larger
+summation drift. The remaining decisive verifier family is Q4_0 down
+projection, followed by high-value fusion around the proven gate/up kernel.
+
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
 tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was
@@ -188,9 +205,11 @@ loaded service.
    require acceptance parity before permitting Q8_0 draft KV again.
 2. Use native DFlash as a routed high-ceiling lane; distinguish favorable code
    results from the strict mixed-suite production gate.
-3. Build the offline-packed Xe2 DPAS/XMX small-M verifier and fused QKVZA plus
-   gate/up projections. The current width-6 verifier is the measured 58.7 ms
-   bottleneck.
+3. Extend the promoted offline-packed Xe2 M=6 gate/up verifier to the Q4_0 down
+   projection only after its exact-semantics gate passes, then fuse the
+   gate/up-SwiGLU-down boundary. QKV/Q expansion is closed unless a new layout
+   removes its strict-suite regression. The width-6 target verifier remains the
+   dominant cycle bottleneck.
 4. At promotion time—not during rapid iteration—record each external source
    tree's path, commit, dirty state, and relevant aggregate patch snapshot.
 5. Update the [performance index](results/scoreboard.md) for representative
