@@ -38,7 +38,8 @@ for width in ${XE2_WIDTHS:-6 9 16}; do
   for shape in ${XE2_SHAPES:-5120x5120 5120x17408 17408x5120}; do
     k="${shape%x*}"
     n="${shape#*x}"
-    "$binary" "$width" "$k" "$n" "${XE2_ITERS:-30}" || true
+    for joint in ${XE2_JOINTS:-2}; do
+      "$binary" "$width" "$k" "$n" "${XE2_ITERS:-30}" "$joint" || true
+    done
   done
 done
-

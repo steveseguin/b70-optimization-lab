@@ -11,7 +11,7 @@
 namespace esimd = sycl::ext::intel::esimd;
 namespace xmx = sycl::ext::intel::esimd::xmx;
 
-template<int M> class slm_joint2_kernel;
+template<int M, int J> class slm_joint_kernel;
 template<int M> class prod_quant_kernel_v3;
 template<int M> class joint_quant_kernel_v3;
 
@@ -70,18 +70,17 @@ sycl::event quant_joint(sycl::queue & q, const int8_t * canonical, int8_t * out,
 // stage only their 2*M*16 FP32 accumulators in SLM, then work-item zero reduces
 // and writes final output. This retains the production comparator's exact pack
 // while removing both the global partial buffer and the reduction kernel.
-template<int M>
-sycl::event slm_joint2(sycl::queue & q, const uint8_t * w, const int8_t * a,
-                       float * o, int k, int n) {
+template<int M, int J>
+sycl::event slm_joint(sycl::queue & q, const uint8_t * w, const int8_t * a,
+                      float * o, int k, int n) {
     constexpr int S=8;
-    constexpr int J=2;
     constexpr int SLM_FLOATS=S*J*M*16;
     const int kb=k/32, nt=n/16, jt=(nt+J-1)/J;
     const size_t qb=size_t(k)*n/2;
     auto * ws=reinterpret_cast<const sycl::half *>(w+qb);
     auto * as=reinterpret_cast<const q8_meta_v3 *>(a+size_t(k)*M);
     return q.submit([&](sycl::handler & h) {
-        h.parallel_for<slm_joint2_kernel<M>>(
+        h.parallel_for<slm_joint_kernel<M,J>>(
             sycl::nd_range<2>(sycl::range<2>(jt,S),sycl::range<2>(1,S)),
             [=](sycl::nd_item<2> it) [[intel::sycl_explicit_simd]] {
                 esimd::slm_init<SLM_FLOATS*sizeof(float)>();
@@ -144,7 +143,7 @@ sycl::event slm_joint2(sycl::queue & q, const uint8_t * w, const int8_t * a,
     });
 }
 
-template<int M>
+template<int M, int J>
 int run(int k,int n,int iters) {
     sycl::queue q{sycl::gpu_selector_v,sycl::property_list{
         sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}}};
@@ -181,7 +180,7 @@ int run(int k,int n,int iters) {
 
     quant_prod<M>(q,dx,dqp,k).wait();
     ggml_sycl_bench_reorder_q4_0_ncols(daw,dqp,op,k,n,M,k+kb*4,n,&q).wait();
-    quant_joint<M>(q,dqp,dqj,k).wait(); slm_joint2<M>(q,dw,dqj,oj,k,n).wait();
+    quant_joint<M>(q,dqp,dqj,k).wait(); slm_joint<M,J>(q,dw,dqj,oj,k,n).wait();
     std::vector<float> hp(size_t(M)*n),hj(hp.size());
     q.memcpy(hp.data(),op,hp.size()*4).wait(); q.memcpy(hj.data(),oj,hj.size()*4).wait();
     float md=0,mrel=0; size_t mdi=0; double mse=0;
@@ -234,12 +233,12 @@ int run(int k,int n,int iters) {
         pt.push_back(std::chrono::duration<double,std::micro>(e-b).count());
         b=std::chrono::steady_clock::now(); auto qc=quant_prod<M>(q,dx,dqp,k);
         auto qj=quant_joint<M>(q,dqp,dqj,k);
-        auto je=slm_joint2<M>(q,dw,dqj,oj,k,n); je.wait(); e=std::chrono::steady_clock::now();
+        auto je=slm_joint<M,J>(q,dw,dqj,oj,k,n); je.wait(); e=std::chrono::steady_clock::now();
         jq.push_back(event_us(qc)+event_us(qj)); jk.push_back(event_us(je));
         jt.push_back(std::chrono::duration<double,std::micro>(e-b).count());
     }
     double pkm=median(pk),jkm=median(jk),ptm=median(pt),jtm=median(jt);
-    std::cout<<"M="<<M<<" K="<<k<<" N="<<n<<" max_abs="<<md
+    std::cout<<"M="<<M<<" J="<<J<<" K="<<k<<" N="<<n<<" max_abs="<<md
              <<" max_rel="<<mrel<<" rms_delta="<<std::sqrt(mse/hp.size())
              <<" max_at="<<mdi<<" prod_at_max="<<hp[mdi]<<" slm_at_max="<<hj[mdi]
              <<" prod_cpu_abs="<<ep<<" slm_cpu_abs="<<ej
@@ -258,9 +257,19 @@ int run(int k,int n,int iters) {
 
 int main(int c,char ** v) {
     int m=c>1?atoi(v[1]):6,k=c>2?atoi(v[2]):5120,n=c>3?atoi(v[3]):5120,it=c>4?atoi(v[4]):30;
-    switch(m) {
-        case 4:return run<4>(k,n,it); case 6:return run<6>(k,n,it); case 8:return run<8>(k,n,it);
-        case 9:return run<9>(k,n,it); case 16:return run<16>(k,n,it);
-        default:std::cerr<<"M must be one of 4, 6, 8, 9, 16\n";return 64;
+    int joint=c>5?atoi(v[5]):2;
+    if(joint==1) {
+        switch(m) {
+            case 4:return run<4,1>(k,n,it); case 6:return run<6,1>(k,n,it);
+            case 8:return run<8,1>(k,n,it); case 9:return run<9,1>(k,n,it);
+            case 16:return run<16,1>(k,n,it);
+        }
+    } else if(joint==2) {
+        switch(m) {
+            case 4:return run<4,2>(k,n,it); case 6:return run<6,2>(k,n,it);
+            case 8:return run<8,2>(k,n,it); case 9:return run<9,2>(k,n,it);
+            case 16:return run<16,2>(k,n,it);
+        }
     }
+    std::cerr<<"M must be one of 4, 6, 8, 9, 16 and J must be 1 or 2\n";return 64;
 }
