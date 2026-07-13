@@ -161,14 +161,20 @@ approved by LocalMaxxing as `cmriq995z0210mj01fl13xmuc`. The joint gate/up plus
 down BMG-AOT successor passed at `42.641 tok/s` (`+8.64%` over that row),
 with JIT support at `45.484 tok/s`. Stacking the exact GDN snapshot-cache
 commit fusion then raised the strict BMG-AOT record to `44.255 tok/s`, another
-`3.79%`, approved as `cmrj8s2sy02a4mj01f18hanvc`. Do not compare these
+`3.79%`, approved as `cmrj8s2sy02a4mj01f18hanvc`. The next independent
+boundary fused the Q6_K draft vocabulary head and exact top-1 into one M=6
+device operation. Its strict confirmation reached **`47.819 tok/s`**, versus
+an exact AOT control of `44.221 tok/s` (`+8.14%`), and LocalMaxxing approved it
+as `cmrjbx8bc02g8mj01yzz2v701`. The compact path has guarded graph identity,
+lowest-ID tie semantics, and an ordinary-logit rollback/redecode path after a
+read failure. Do not compare these
 identities with the older `40.203 tok/s` row, which used FA off and F16 target
 and draft KV. An experimental 65-tensor QKV/Q expansion was rejected after its
 paired strict result failed to improve throughput and introduced larger
-summation drift. The next measured independent boundary is the DFlash Q6_K
-M=6 vocabulary head plus top-1; its experiment-only exact candidate reached
-`2.454-2.483 ms`, but still needs captured production activations and runtime
-integration before promotion.
+summation drift. The next high-value measured boundary is target-side M=6
+vocabulary verification: return six exact masked greedy IDs without copying
+the full `6 x 248320` logits tensor to the host, then replace its vector head
+with the offline-packed Xe2 verifier if the compact boundary clears its gate.
 
 The separate promoted two-B70 vLLM result remains durable reference evidence:
 graph-safe FlashAttention plus ReplaySSM transactions reached **95.384868
