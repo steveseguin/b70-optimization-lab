@@ -19,10 +19,31 @@ implementation and the captured real DFlash fixture using:
 ZE_AFFINITY_MASK=3 ./run-q6-comparator.sh
 ```
 
+The module also retains the rejected Stage-A GDN QKV+z experiment. It shares
+one Q8_1 activation production and submits the heterogeneous 10240- and
+6144-wide Q4_0 DPAS projections in one command group. Reproduce its real
+layer-0-weight comparison with:
+
+```bash
+ZE_AFFINITY_MASK=2 ./run-gdn-qkvz-comparator.sh
+```
+
+It is deliberately not a runtime candidate: after 20 warmup rounds, two
+repeatable 100-iteration uncontended B70 runs measured about 94.2 us versus
+103.0 us for the two active integrated symbols, only 1.09-1.10x. This misses
+the required 1.30x microbenchmark gate and projects to about 0.42 ms saved
+across all 48 GDN layers, below the 2 ms cycle gate. The code and pack cache
+remain as negative-result evidence and as a comparator for
+future larger fusion boundaries.
+
 The first comparator run builds a fingerprinted expanded-weight cache under
 `/mnt/fast-ai/bench-results/qwen27-q6k-m6-top1/`. It is an external 1.26 GiB
 initialization artifact and is never tracked by Git. Later runs mmap the
 validated pack and avoid repacking the GGUF.
+
+The GDN comparator similarly stores its one-layer DPAS and production-oracle
+packs in a validated 90 MiB external cache under
+`/mnt/fast-ai/bench-results/qwen27-gdn-qkvz-m6/`.
 
 The C ABI is in `q27_xe2_module.h`, including its no-work/fallback status
 contract. Q6 and GDN operations use the same launch record and receive

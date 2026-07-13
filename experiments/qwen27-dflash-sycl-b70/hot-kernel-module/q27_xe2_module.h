@@ -33,7 +33,7 @@ enum q27_xe2_status {
 enum q27_xe2_op {
     Q27_XE2_OP_SMOKE_AXPY = 1,
     Q27_XE2_OP_Q6K_M6_TOP1 = 2,
-    Q27_XE2_OP_GDN_FUSED = 3
+    Q27_XE2_OP_GDN_QKVZ_M6 = 3
 };
 
 enum q27_xe2_launch_flags {
@@ -45,7 +45,8 @@ enum q27_xe2_pack_role {
     Q27_XE2_PACK_DRAFT_LM_HEAD = 2,
     Q27_XE2_PACK_GDN_QKV = 3,
     Q27_XE2_PACK_GDN_ALPHA_BETA = 4,
-    Q27_XE2_PACK_GDN_OUTPUT = 5
+    Q27_XE2_PACK_GDN_OUTPUT = 5,
+    Q27_XE2_PACK_GDN_Z = 6
 };
 
 struct q27_xe2_pack_v1 {

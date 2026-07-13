@@ -2,8 +2,46 @@
 
 Date: 2026-07-13
 
-Status: measured design target; implementation should begin after the guarded
-Q6_K draft top-1 A/B completes
+Status: Stage A implemented and rejected at its measured gate; Stages B/C not
+started because the shared-quantization boundary is too small
+
+## Stage-A result
+
+The hot-module implementation uses the actual production M=6 quantization and
+DPAS arithmetic, but shares the activation quantization and covers both unequal
+projections in one ESIMD submission. The comparator uses real layer-0
+`attn_qkv.weight` and `attn_gate.weight` Q4_0 tensors. On an uncontended B70,
+after 20 warmup rounds, two repeatable 100-iteration interleaved runs measured:
+
+| Boundary | Median |
+|---|---:|
+| Two active integrated Q4_0 M=6 symbols | 102.993-103.344 us |
+| Joint QKV+z module | 94.137-94.237 us |
+| Speedup | 1.093-1.098x |
+
+Module output was bit-exact against both active integrated symbols for both
+matrices. Relative to the generic reordered production oracle, max absolute
+deltas were 0.014693 for QKV and 0.010492 for z, consistent with the already
+validated Xe2 quantization contract. Invalid pack layout was rejected before
+submission.
+
+This fails gate 2's 1.30x requirement. The repeated-run saving is only
+8.756-9.207 us per GDN layer, or about 0.420-0.442 ms across all 48 GDN layers
+before any graph-level effects. That also fails gate 3's 2 ms per-cycle
+threshold. Therefore the boundary remains a reproducible negative result and
+must not be integrated.
+
+The input fixture is a real model-generated M=6 final-norm activation capture,
+not an internal GDN-layer capture; no protected runtime source was changed to
+add a hook. Because the candidate already fails both performance gates, adding
+that capture hook cannot change the rejection decision and was not pursued.
+
+Artifacts:
+
+- implementation and comparator: `hot-kernel-module/`;
+- structured result: `data/qwen27-gdn-qkvz-m6-stage-a-20260713/summary.json`;
+- external validated 90 MiB pack cache:
+  `/mnt/fast-ai/bench-results/qwen27-gdn-qkvz-m6/blk0-real-q4-pairs-v1.pack`.
 
 ## Why this boundary is next
 
@@ -97,4 +135,3 @@ the actual GGUF types instead of copied as an AMD/MQ4 assumption. On this model
 the correct Intel boundary is heterogeneous: Q4_0 QKV/z, exact F32 alpha/beta,
 and Q5_K output. The useful fusion is shared activation production, grouped
 submission, and exact epilogues; a single monolithic kernel is not required.
-

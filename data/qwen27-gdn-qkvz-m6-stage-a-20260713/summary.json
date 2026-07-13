@@ -1,0 +1,74 @@
+{
+  "date": "2026-07-13",
+  "status": "rejected",
+  "reason": "Missed both the 1.30x microbenchmark gate and the projected 2 ms per-cycle gate.",
+  "module": "qwen27-xe2-experimental",
+  "buildId": "gdn-qkvz-m6-stage-a-v1",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "deviceAffinity": "ZE_AFFINITY_MASK=0",
+  "warmupRounds": 20,
+  "iterations": 100,
+  "model": "/dev/shm/qwen27-b70-model-cache/20c9c45d4d25b492b82117960b5f715ef9daff75e4e14c4fb878fa3793fb379a/Qwen3.6-27B-Q4_0.gguf",
+  "modelTag": "20c9c45d4d25b492",
+  "weights": [
+    {
+      "tensor": "blk.0.attn_qkv.weight",
+      "shape": [5120, 10240],
+      "type": "Q4_0",
+      "sourceOffset": 1786836096,
+      "sourceBytes": 29491200
+    },
+    {
+      "tensor": "blk.0.attn_gate.weight",
+      "semanticRole": "z",
+      "shape": [5120, 6144],
+      "type": "Q4_0",
+      "sourceOffset": 1769120896,
+      "sourceBytes": 17694720
+    }
+  ],
+  "fixture": {
+    "path": "/mnt/fast-ai/bench-results/qwen27-q6k-m6-top1/dflash-real-m6-v1.bin",
+    "scope": "real model-generated final-norm M=6 activations; not a GDN-layer input capture",
+    "rows": 6,
+    "k": 5120
+  },
+  "packCache": {
+    "path": "/mnt/fast-ai/bench-results/qwen27-gdn-qkvz-m6/blk0-real-q4-pairs-v1.pack",
+    "payloadBytes": 94371840,
+    "cacheHit": true,
+    "validationSeconds": 0.000031
+  },
+  "workspaceBytes": 38400,
+  "correctness": {
+    "qkvModuleVsIntegratedMaxAbs": 0.0,
+    "zModuleVsIntegratedMaxAbs": 0.0,
+    "qkvModuleVsGenericMaxAbs": 0.014693,
+    "zModuleVsGenericMaxAbs": 0.010492,
+    "invalidLayoutFallbackSafe": true
+  },
+  "performance": {
+    "activeIntegratedPairMedianUs": 102.993,
+    "genericReorderedPairMedianUs": 119.895,
+    "jointCandidateMedianUs": 94.237,
+    "speedupVsActivePair": 1.092915,
+    "speedupVsGenericPair": 1.272271,
+    "measuredSavingPerLayerUs": 8.756,
+    "projectedSavingAcross48LayersMs": 0.420,
+    "repeatRun": {
+      "activeIntegratedPairMedianUs": 103.344,
+      "genericReorderedPairMedianUs": 120.296,
+      "jointCandidateMedianUs": 94.137,
+      "speedupVsActivePair": 1.097804,
+      "speedupVsGenericPair": 1.277882,
+      "projectedSavingAcross48LayersMs": 0.442
+    }
+  },
+  "gates": {
+    "numericalExactVsActive": true,
+    "speedupAtLeast1_30": false,
+    "projectedCycleSavingAtLeast2ms": false,
+    "stageA": "FAIL"
+  },
+  "protectedLlamaCppChanged": false
+}

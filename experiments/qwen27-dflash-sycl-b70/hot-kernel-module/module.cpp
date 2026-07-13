@@ -1,4 +1,5 @@
 #include "q27_xe2_module.h"
+#include "gdn_qkvz_m6_module.h"
 #include "q6_m6_top1_module.h"
 
 #include <sycl/sycl.hpp>
@@ -42,6 +43,15 @@ int32_t query_workspace(
         }
         workspace->bytes = q27_q6_m6_top1_workspace::bytes;
         workspace->alignment = q27_q6_m6_top1_workspace::alignment;
+        return Q27_XE2_OK;
+    }
+    if (op == Q27_XE2_OP_GDN_QKVZ_M6) {
+        if (rows != q27_gdn_qkvz_m6_workspace::rows ||
+                cols != q27_gdn_qkvz_m6_workspace::n_qkv) {
+            return Q27_XE2_BAD_SHAPE;
+        }
+        workspace->bytes = q27_gdn_qkvz_m6_workspace::bytes;
+        workspace->alignment = q27_gdn_qkvz_m6_workspace::alignment;
         return Q27_XE2_OK;
     }
     return Q27_XE2_DECLINED;
@@ -102,6 +112,39 @@ int32_t launch(const q27_xe2_launch_v1 *args) {
                 static_cast<int32_t *>(args->output0), args->scratch);
             return Q27_XE2_OK;
         }
+        if (args->op == Q27_XE2_OP_GDN_QKVZ_M6) {
+            if (args->input0 == nullptr || args->output0 == nullptr ||
+                    args->state0 == nullptr || args->scratch == nullptr ||
+                    args->rows != q27_gdn_qkvz_m6_workspace::rows ||
+                    args->cols != q27_gdn_qkvz_m6_workspace::n_qkv ||
+                    args->stride != q27_gdn_qkvz_m6_workspace::k ||
+                    args->scratch_bytes < q27_gdn_qkvz_m6_workspace::bytes) {
+                return Q27_XE2_BAD_SHAPE;
+            }
+            if (args->packs == nullptr || args->pack_count != 2) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            const q27_xe2_pack_v1 &qkv = args->packs[0];
+            const q27_xe2_pack_v1 &z = args->packs[1];
+            if (qkv.device_ptr == nullptr ||
+                    qkv.bytes != q27_gdn_qkvz_m6_workspace::qkv_pack_bytes ||
+                    qkv.layout_id != Q27_XE2_LAYOUT_Q4_0_Q8_1_V1 ||
+                    qkv.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    qkv.role != Q27_XE2_PACK_GDN_QKV ||
+                    z.device_ptr == nullptr ||
+                    z.bytes != q27_gdn_qkvz_m6_workspace::z_pack_bytes ||
+                    z.layout_id != Q27_XE2_LAYOUT_Q4_0_Q8_1_V1 ||
+                    z.content_tag != Q27_XE2_QWEN36_27B_Q4_MODEL_TAG ||
+                    z.role != Q27_XE2_PACK_GDN_Z) {
+                return Q27_XE2_BAD_LAYOUT;
+            }
+            q27_gdn_qkvz_m6_submit(
+                *queue, qkv.device_ptr, z.device_ptr,
+                static_cast<const float *>(args->input0),
+                static_cast<float *>(args->output0),
+                static_cast<float *>(args->state0), args->scratch);
+            return Q27_XE2_OK;
+        }
         return Q27_XE2_DECLINED;
     } catch (...) {
         /* SYCL does not give the C boundary a proof that no work reached the queue. */
@@ -118,7 +161,8 @@ const q27_xe2_module_v1 module = {
     Q27_XE2_TARGET_ARCH,
     Q27_XE2_TOOLCHAIN_ABI,
     (UINT64_C(1) << Q27_XE2_OP_SMOKE_AXPY) |
-        (UINT64_C(1) << Q27_XE2_OP_Q6K_M6_TOP1),
+        (UINT64_C(1) << Q27_XE2_OP_Q6K_M6_TOP1) |
+        (UINT64_C(1) << Q27_XE2_OP_GDN_QKVZ_M6),
     query_workspace,
     launch,
 };
