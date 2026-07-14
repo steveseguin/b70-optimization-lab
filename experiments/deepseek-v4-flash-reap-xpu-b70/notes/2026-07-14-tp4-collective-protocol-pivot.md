@@ -86,3 +86,38 @@ inputs, the ring selector, and the exact 8 KiB unchunked route. The principal
 risk is register pressure and ring backpressure from performing four output
 accumulators per hidden element. Exact/ULP parity and end-to-end graph timing,
 not launch-count reduction, decide whether it survives.
+
+## Full-model ring writeback result
+
+The specialized oneCCL implementation now covers all three final writeback
+forms, forwards the raw BF16 reduction before local transformation, and exposes
+the graph-safe path through
+`torch.ops._xpu_C.tp4_oneccl_allreduce_mhc_post_out`. The final component
+commits are vLLM `d7883b27a`, XPU kernels `8e301dc`, and oneCCL `edf0e17`.
+
+The first server attempt proved that library-directory precedence alone is not
+enough: the private oneCCL C hook must be globally visible before the XPU helper
+library resolves it. Guarded `LD_PRELOAD` fixed that failure. The preload also
+increased rank 0's startup footprint enough that the 0.95 memory gate missed by
+about 0.18 GiB, so the full-model screen used 0.94. This affects reserved KV
+capacity, not the single-sequence decode shape, but any claimed future win must
+still use a matching-memory control.
+
+The actual decoder passed mixed PIECEWISE capture and FULL decode capture.
+Sequential replay returned `1073 -> 437 -> 1073`; exact copy, Paris, and strict
+JSON passed; the strict suite passed all 12 cold rows with cached tokens zero.
+This establishes that the fused oneCCL final writeback is numerically correct,
+uses changing graph inputs, and survives all 62 real model layers.
+
+It is not a performance win. The strict cold median was `29.5955243 tok/s`, p10
+`29.1722911`, versus the trustworthy `30.2390162` frontier, a `-2.13%` loss.
+The reason is architectural: the current production path already uses one
+kernel for MHC-post plus the following MHC-pre. This experiment performs
+MHC-post inside the ring but then launches standalone MHC-pre. It removes one
+boundary while reintroducing another and adds MHC arithmetic to the ring's
+critical progression.
+
+Do not tune or promote this partial boundary. The next viable version must
+produce the following MHC-pre outputs during ring completion and replace the
+existing fused post/pre kernel completely. Structured evidence is in
+[`../data/tp4-ring-mhc-post-fullmodel-20260714.json`](../data/tp4-ring-mhc-post-fullmodel-20260714.json).

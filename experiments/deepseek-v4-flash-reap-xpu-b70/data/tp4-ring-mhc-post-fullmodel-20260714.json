@@ -1,0 +1,49 @@
+{
+  "date": "2026-07-14",
+  "label": "tp4-ring-final-writeback-mhc-post",
+  "status": "correctness-pass-performance-loss",
+  "model": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+  "component_commits": {
+    "vllm": "d7883b27a5c2cad7d091c181520dfb8d36416ac5",
+    "xpu_kernels": "8e301dcda151f430b088947bdd1687d6fe0a0373",
+    "oneccl": "edf0e173e49ef206323e4523dbd3c210c43cf84e"
+  },
+  "candidate": {
+    "result_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-ring-mhc-fusion-gmem94-20260714T221859Z",
+    "gpu_memory_utilization": 0.94,
+    "strict_suite_median_tok_s_1_100_after_ttft": 29.595524324986748,
+    "strict_suite_p10_tok_s_1_100_after_ttft": 29.17229111382444,
+    "strict_suite_mean_tok_s_1_100_after_ttft": 29.54017230186624,
+    "cached_tokens_all_zero": true,
+    "strict_gate_passed": true
+  },
+  "frontier_reference": {
+    "result_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-w8a8-woa-corrected-n64-20260714T1940Z",
+    "gpu_memory_utilization": 0.95,
+    "strict_suite_median_tok_s_1_100_after_ttft": 30.23901620772082,
+    "strict_suite_p10_tok_s_1_100_after_ttft": 29.7545702
+  },
+  "median_delta_percent": -2.128012844239927,
+  "correctness": {
+    "changed_input_replay": [
+      "37 * 29 = 1073",
+      "19 * 23 = 437",
+      "37 * 29 = 1073"
+    ],
+    "exact_copy": "cobalt-forest-7291",
+    "fact": "Paris",
+    "strict_json": "{\"status\":\"ok\",\"value\":17}",
+    "all_cached_tokens_zero": true
+  },
+  "graph": {
+    "mixed_piecewise_capture_sizes": 2,
+    "full_decode_capture_sizes": 1,
+    "full_model_graph_capture_completed": true
+  },
+  "startup_findings": [
+    "The XPU extension needs the custom oneCCL library in LD_PRELOAD so its private C hook is globally visible.",
+    "Global preload raises the rank-0 startup footprint enough that gpu_memory_utilization=0.95 misses the free-memory gate by about 0.18 GiB; 0.94 starts successfully.",
+    "The failed missing-symbol and 0.95-memory attempts are retained beside the passing result directory."
+  ],
+  "decision": "Do not promote or submit. Ring writeback plus MHC-post is exact and graph-safe, but it forces a standalone following MHC-pre while the baseline already fuses MHC-post and MHC-pre. The next viable boundary must fold the following MHC-pre into the ring completion and replace the existing fused post/pre kernel entirely."
+}
