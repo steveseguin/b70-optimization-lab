@@ -1,0 +1,772 @@
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -15,6 +15,7 @@
+ class ggml_sycl_q4_0_xe2_m6_fast_quant_kernel;
+ class ggml_sycl_q4_0_xe2_m6_slm_kernel;
+ class ggml_sycl_q4_0_xe2_m6_slm_dual_kernel;
++class ggml_sycl_q4_0_xe2_m6_gdn_joint_kernel;
+ class ggml_sycl_q6_k_xe2_m6_top1_quant_kernel;
+ class ggml_sycl_q6_k_xe2_m6_top1_dot_kernel;
+ class ggml_sycl_q6_k_xe2_m6_top1_reduce_kernel;
+@@ -526,6 +527,160 @@
+     });
+ }
+
++static sycl::event ggml_sycl_q4_0_xe2_m6_gdn_joint(
++        sycl::queue & queue,
++        const uint8_t * weights_qkv,
++        const uint8_t * weights_z,
++        const float * weights_alpha,
++        const float * weights_beta,
++        const float * dt,
++        const float * a,
++        const float * src,
++        const int8_t * activations,
++        float * dst_qkv,
++        float * dst_z,
++        float * dst_gate,
++        float * dst_beta) {
++    constexpr int m = 6;
++    constexpr int k = 5120;
++    constexpr int n_qkv = 10240;
++    constexpr int n_z = 6144;
++    constexpr int n_gate = 48;
++    constexpr int splits = 8;
++    constexpr int joint = 2;
++    constexpr int slm_floats = splits*joint*m*16;
++    constexpr int kb = k/32;
++    constexpr int qkv_tiles = n_qkv/16;
++    constexpr int z_tiles = n_z/16;
++    constexpr int qkv_pairs = qkv_tiles/joint;
++    constexpr int z_pairs = z_tiles/joint;
++    constexpr int q4_pairs = qkv_pairs + z_pairs;
++    constexpr int total_groups = q4_pairs + 2*n_gate;
++    const auto * activation_meta = reinterpret_cast<const ggml_sycl_q8_m6_meta *>(
++            activations + size_t(k)*m);
++
++    return queue.submit([&](sycl::handler & cgh) {
++        cgh.parallel_for<ggml_sycl_q4_0_xe2_m6_gdn_joint_kernel>(
++                sycl::nd_range<2>(sycl::range<2>(total_groups, splits), sycl::range<2>(1, splits)),
++                [=](sycl::nd_item<2> item) [[intel::sycl_explicit_simd]] {
++            ggml_sycl_esimd::slm_init<slm_floats*sizeof(float)>();
++            const int group = int(item.get_group(0));
++            const int split = int(item.get_local_id(1));
++            if (group >= q4_pairs) {
++                constexpr int vector = 32;
++                const int output = group - q4_pairs;
++                const bool is_beta = output >= n_gate;
++                const int gate = is_beta ? output - n_gate : output;
++                const float * weight = (is_beta ? weights_beta : weights_alpha) + size_t(gate)*k;
++                ggml_sycl_esimd::simd<float, m> accum(0.0f);
++                for (int base = split*vector; base < k; base += splits*vector) {
++                    ggml_sycl_esimd::simd<float, vector> w;
++                    w.copy_from(weight + base);
++#pragma unroll
++                    for (int row = 0; row < m; ++row) {
++                        ggml_sycl_esimd::simd<float, vector> x;
++                        x.copy_from(src + size_t(row)*k + base);
++                        accum[row] += ggml_sycl_esimd::reduce<float>(w*x, std::plus<>());
++                    }
++                }
++#pragma unroll
++                for (int row = 0; row < m; ++row) {
++                    ggml_sycl_esimd::slm_scalar_store<float>(
++                            uint32_t((split*m + row)*sizeof(float)), accum[row]);
++                }
++                ggml_sycl_esimd::barrier();
++                if (!is_beta) {
++                    if (split < m) {
++                        const int row = split;
++                        float sum = 0.0f;
++#pragma unroll
++                        for (int partial = 0; partial < splits; ++partial) {
++                            sum += ggml_sycl_esimd::slm_scalar_load<float>(
++                                    uint32_t((partial*m + row)*sizeof(float)));
++                        }
++                        const float x = sum + dt[gate];
++                        const float ax = x < 0.0f ? -x : x;
++                        const float softplus = (x > 0.0f ? x : 0.0f) +
++                                ggml_sycl_esimd::log(1.0f + ggml_sycl_esimd::exp(-ax));
++                        dst_gate[size_t(row)*n_gate + gate] = softplus*a[gate];
++                    }
++                    return;
++                }
++                if (split == 0) {
++#pragma unroll
++                    for (int row = 0; row < m; ++row) {
++                        float sum = 0.0f;
++#pragma unroll
++                        for (int partial = 0; partial < splits; ++partial) {
++                            sum += ggml_sycl_esimd::slm_scalar_load<float>(
++                                    uint32_t((partial*m + row)*sizeof(float)));
++                        }
++                        dst_beta[size_t(row)*n_gate + gate] = sum;
++                    }
++                }
++                return;
++            }
++
++            const bool is_z = group >= qkv_pairs;
++            const int pair = is_z ? group - qkv_pairs : group;
++            const int tile0 = pair*joint;
++            const int n = is_z ? n_z : n_qkv;
++            const int nt = is_z ? z_tiles : qkv_tiles;
++            const uint8_t * weights = is_z ? weights_z : weights_qkv;
++            float * dst = is_z ? dst_z : dst_qkv;
++            const size_t quant_bytes = size_t(k)*n/2;
++            const auto * weight_scales = reinterpret_cast<const sycl::half *>(weights + quant_bytes);
++            ggml_sycl_esimd::simd<float, m*joint*16> accum(0.0f);
++            for (int block = split; block < kb; block += splits) {
++                ggml_sycl_esimd::simd<uint32_t, m*8> av;
++                av.copy_from(reinterpret_cast<const uint32_t *>(activations) + size_t(block)*m*8);
++                for (int j = 0; j < joint; ++j) {
++                    const int tile = tile0 + j;
++                    ggml_sycl_esimd::simd<uint32_t, 64> bv;
++                    bv.copy_from(reinterpret_cast<const uint32_t *>(weights) +
++                            (size_t(block)*nt + tile)*64);
++                    ggml_sycl_esimd::simd<int32_t, m*16> dot =
++                        ggml_sycl_xmx::dpas<8, m, int32_t, uint32_t, uint32_t,
++                            ggml_sycl_xmx::dpas_argument_type::s4,
++                            ggml_sycl_xmx::dpas_argument_type::s8>(bv, av);
++                    ggml_sycl_esimd::simd<sycl::half, 16> wh;
++                    wh.copy_from(weight_scales + size_t(block)*n + tile*16);
++                    const auto wf = ggml_sycl_esimd::convert<float>(wh);
++                    for (int row = 0; row < m; ++row) {
++                        ggml_sycl_esimd::simd<int32_t, 16> di = dot.template select<16, 1>(row*16);
++                        const auto & meta = activation_meta[block*m + row];
++                        accum.template select<16, 1>((j*m + row)*16) +=
++                                (ggml_sycl_esimd::convert<float>(di)*meta.d + meta.correction)*wf;
++                    }
++                }
++            }
++            for (int j = 0; j < joint; ++j) {
++                for (int row = 0; row < m; ++row) {
++                    const uint32_t offset = uint32_t((((split*joint + j)*m + row)*16)*sizeof(float));
++                    ggml_sycl_esimd::slm_block_store<float, 16>(
++                            offset, accum.template select<16, 1>((j*m + row)*16));
++                }
++            }
++            ggml_sycl_esimd::barrier();
++            if (split == 0) {
++                for (int j = 0; j < joint; ++j) {
++                    const int tile = tile0 + j;
++                    for (int row = 0; row < m; ++row) {
++                        ggml_sycl_esimd::simd<float, 16> sum(0.0f);
++#pragma unroll
++                        for (int partial = 0; partial < splits; ++partial) {
++                            const uint32_t offset = uint32_t(
++                                    (((partial*joint + j)*m + row)*16)*sizeof(float));
++                            sum += ggml_sycl_esimd::slm_block_load<float, 16>(offset);
++                        }
++                        sum.copy_to(dst + size_t(row)*n + tile*16);
++                    }
++                }
++            }
++        });
++    });
++}
++
+ bool ggml_sycl_mul_mat_q4_0_xe2_m6(
+         ggml_backend_sycl_context & ctx,
+         const void * packed_weights,
+@@ -622,6 +777,38 @@
+     return true;
+ }
+
++bool ggml_sycl_mul_mat_q4_0_xe2_m6_gdn_qkvzab_gate(
++        ggml_backend_sycl_context & ctx,
++        const void * packed_qkv, size_t packed_qkv_bytes,
++        const void * packed_z, size_t packed_z_bytes,
++        const float * alpha_weights, const float * beta_weights,
++        const float * dt, const float * a, const float * src,
++        float * dst_qkv, float * dst_z, float * dst_gate, float * dst_beta,
++        dpct::queue_ptr stream) {
++    constexpr int m = 6;
++    constexpr int k = 5120;
++    constexpr size_t qkv_bytes = size_t(k)*10240/2 + size_t(k/32)*10240*sizeof(sycl::half);
++    constexpr size_t z_bytes = size_t(k)*6144/2 + size_t(k/32)*6144*sizeof(sycl::half);
++    if (!packed_qkv || packed_qkv_bytes != qkv_bytes ||
++            !packed_z || packed_z_bytes != z_bytes ||
++            !alpha_weights || !beta_weights || !dt || !a || !src ||
++            !dst_qkv || !dst_z || !dst_gate || !dst_beta || !stream) {
++        return false;
++    }
++    const size_t scratch_bytes = size_t(m)*k +
++            size_t(m)*(k/32)*sizeof(ggml_sycl_q8_m6_meta);
++    ggml_sycl_pool_alloc<int8_t> scratch(ctx.pool(ctx.device), scratch_bytes);
++    if (!scratch.get()) {
++        return false;
++    }
++    ggml_sycl_quantize_q8_xe2_m6_fast(*stream, src, scratch.get(), k);
++    ggml_sycl_q4_0_xe2_m6_gdn_joint(
++            *stream, static_cast<const uint8_t *>(packed_qkv),
++            static_cast<const uint8_t *>(packed_z), alpha_weights, beta_weights,
++            dt, a, src, scratch.get(), dst_qkv, dst_z, dst_gate, dst_beta);
++    return true;
++}
++
+ template <bool AddResidual, typename reorder_vec_dot_q_sycl>
+ static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
+                                   const int ncols, const int nrows, const sycl::nd_item<3> & nd_item,
+--- a/ggml/src/ggml-sycl/mmvq.hpp
++++ b/ggml/src/ggml-sycl/mmvq.hpp
+@@ -104,6 +104,18 @@
+         int n,
+         dpct::queue_ptr stream);
+
++// Guarded Qwen GDN boundary: shared Q8 production, Q4 QKV/z, exact F32
++// alpha/beta, and folded alpha + dt -> softplus -> * a. Outputs are QKV, z,
++// downstream gate, and raw beta respectively.
++bool ggml_sycl_mul_mat_q4_0_xe2_m6_gdn_qkvzab_gate(
++        ggml_backend_sycl_context & ctx,
++        const void * packed_qkv, size_t packed_qkv_bytes,
++        const void * packed_z, size_t packed_z_bytes,
++        const float * alpha_weights, const float * beta_weights,
++        const float * dt, const float * a, const float * src,
++        float * dst_qkv, float * dst_z, float * dst_gate, float * dst_beta,
++        dpct::queue_ptr stream);
++
+ // Guarded native-DFlash LM-head boundary. The expanded Q6_K pack is
+ // [signed-i8 quants][i8 scales][fp16 block scales]. src contains five draft
+ // rows or all six target rows; dst receives one greedy id per row. mode 2
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -590,9 +590,11 @@
+     }
+
+     const char * xe2_q4_m6_env = std::getenv("GGML_SYCL_XE2_Q4_M6_FFN");
++    const char * xe2_gdn_qkvzab_env = std::getenv("GGML_SYCL_XE2_GDN_QKVZAB");
+     const char * xe2_q6_top1_env = std::getenv("GGML_SYCL_XE2_Q6_M6_TOP1");
+     if (g_ggml_sycl_enable_optimize ||
+             (xe2_q4_m6_env && std::strcmp(xe2_q4_m6_env, "0") != 0) ||
++            (xe2_gdn_qkvzab_env && std::strcmp(xe2_gdn_qkvzab_env, "0") != 0) ||
+             (xe2_q6_top1_env && std::strcmp(xe2_q6_top1_env, "0") != 0)) {
+         // set reorder extra buffer based on supported type
+         switch (tensor->type) {
+@@ -641,6 +643,40 @@
+     return env ? std::max(0, std::atoi(env)) : 130;
+ }
+
++static bool ggml_sycl_xe2_gdn_qkvzab_enabled() {
++    const char * env = std::getenv("GGML_SYCL_XE2_GDN_QKVZAB");
++    return env && std::strcmp(env, "0") != 0;
++}
++
++static int ggml_sycl_xe2_gdn_qkvzab_layer_limit() {
++    const char * env = std::getenv("GGML_SYCL_XE2_GDN_QKVZAB_LAYER_LIMIT");
++    return env ? std::max(0, std::atoi(env)) : 0;
++}
++
++static size_t ggml_sycl_xe2_gdn_qkvzab_min_free_bytes() {
++    const char * env = std::getenv("GGML_SYCL_XE2_GDN_QKVZAB_MIN_FREE_MB");
++    const int mb = env ? std::max(0, std::atoi(env)) : 2048;
++    return size_t(mb)*1024*1024;
++}
++
++static int ggml_sycl_xe2_gdn_qkvzab_layer(const ggml_tensor * tensor) {
++    int layer = -1;
++    if (std::sscanf(tensor->name, "blk.%d.", &layer) != 1 || layer < 0) {
++        return -1;
++    }
++    return layer;
++}
++
++static bool ggml_sycl_xe2_gdn_qkvzab_projection(const ggml_tensor * tensor) {
++    if (tensor->type != GGML_TYPE_Q4_0 || tensor->ne[0] != 5120 ||
++            tensor->ne[2] != 1 || tensor->ne[3] != 1) {
++        return false;
++    }
++    const std::string name = tensor->name;
++    return (tensor->ne[1] == 10240 && name.find(".attn_qkv.weight") != std::string::npos) ||
++            (tensor->ne[1] == 6144 && name.find(".attn_gate.weight") != std::string::npos);
++}
++
+ static bool ggml_sycl_xe2_q4_m6_target_projection(const ggml_tensor * tensor) {
+     if (tensor->type != GGML_TYPE_Q4_0 || tensor->ne[2] != 1 || tensor->ne[3] != 1) {
+         return false;
+@@ -841,7 +877,13 @@
+         int device, ggml_tensor * tensor,
+         const void * data, size_t offset, size_t size, sycl::queue & stream,
+         bool input_reordered = false) {
+-    if (!ggml_sycl_xe2_q4_m6_pack_enabled() || !ggml_sycl_xe2_q4_m6_target_projection(tensor) ||
++    const bool ffn_projection = ggml_sycl_xe2_q4_m6_pack_enabled() &&
++            ggml_sycl_xe2_q4_m6_target_projection(tensor);
++    const int gdn_layer = ggml_sycl_xe2_gdn_qkvzab_layer(tensor);
++    const bool gdn_projection = ggml_sycl_xe2_gdn_qkvzab_enabled() &&
++            ggml_sycl_xe2_gdn_qkvzab_projection(tensor) && gdn_layer >= 0 &&
++            gdn_layer < ggml_sycl_xe2_gdn_qkvzab_layer_limit();
++    if ((!ffn_projection && !gdn_projection) ||
+             ggml_sycl_info().devices[device].hw_info.arch != gpu_arch::intel_gpu_bmg_g31 ||
+             offset != 0 || size != ggml_nbytes(tensor)) {
+         return;
+@@ -850,8 +892,9 @@
+     if (!extra || extra->xe2_q4_m6_pack[device]) {
+         return;
+     }
+-    const int slot = ggml_sycl_xe2_q4_m6_pack_slot(tensor);
+-    if (slot < 0 || slot >= ggml_sycl_xe2_q4_m6_pack_limit()) {
++    const int slot = ffn_projection ? ggml_sycl_xe2_q4_m6_pack_slot(tensor) :
++            187 + 2*gdn_layer + (tensor->ne[1] == 6144 ? 1 : 0);
++    if (slot < 0 || (ffn_projection && slot >= ggml_sycl_xe2_q4_m6_pack_limit())) {
+         return;
+     }
+
+@@ -864,12 +907,24 @@
+         GGML_LOG_INFO("SYCL Xe2 M6 skipped placeholder pack for %s\n", tensor->name);
+         return;
+     }
+-    if (ggml_sycl_try_load_q4_m6_pack_cache(device, tensor, stream, slot)) {
++    if (ffn_projection && ggml_sycl_try_load_q4_m6_pack_cache(device, tensor, stream, slot)) {
+         return;
+     }
+
+     auto packed = ggml_sycl_pack_q4_0_xe2_dpas_v2(
+             data, tensor->ne[0], tensor->ne[1], input_reordered);
++    if (gdn_projection) {
++        size_t free = 0;
++        size_t total = 0;
++        dpct::dev_mgr::instance().get_device(device).get_memory_info(free, total);
++        const size_t min_free = ggml_sycl_xe2_gdn_qkvzab_min_free_bytes();
++        if (free < packed.size() || free - packed.size() < min_free) {
++            GGML_LOG_WARN(
++                    "SYCL Xe2 GDN pack skipped for %s bytes=%zu free=%zu min_free=%zu\n",
++                    tensor->name, packed.size(), free, min_free);
++            return;
++        }
++    }
+     const size_t quant_bytes = size_t(tensor->ne[0])*tensor->ne[1]/2;
+     const auto * packed_scales = reinterpret_cast<const ggml_fp16_t *>(packed.data() + quant_bytes);
+     GGML_LOG_INFO(
+@@ -888,6 +943,13 @@
+     extra->xe2_q4_m6_pack_layout[device] = 2;
+     GGML_LOG_INFO("SYCL Xe2 M6 packed %s bytes=%zu slot=%d source=%s\n",
+             tensor->name, packed.size(), slot, input_reordered ? "production-reordered" : "raw");
++    if (gdn_projection) {
++        size_t free = 0;
++        size_t total = 0;
++        dpct::dev_mgr::instance().get_device(device).get_memory_info(free, total);
++        GGML_LOG_INFO("SYCL Xe2 GDN pack headroom layer=%d tensor=%s free=%zu total=%zu\n",
++                      gdn_layer, tensor->name, free, total);
++    }
+ }
+
+ static bool ggml_sycl_xe2_q6_m6_top1_enabled() {
+@@ -6815,6 +6877,27 @@
+     std::array<const ggml_tensor *, 4> skip;
+ };
+
++struct gdn_qkvzab_plan {
++    ggml_tensor * qkv = nullptr;
++    ggml_tensor * z = nullptr;
++    ggml_tensor * alpha = nullptr;
++    ggml_tensor * beta = nullptr;
++    ggml_tensor * gdn = nullptr;
++    const ggml_tensor * dt = nullptr;
++    const ggml_tensor * a = nullptr;
++    const ggml_tensor * gate = nullptr;
++    std::array<const ggml_tensor *, 6> skip = {};
++};
++
++struct gdn_out_m6_capture_plan {
++    ggml_tensor * projection = nullptr;
++    ggml_tensor * add = nullptr;
++    const ggml_tensor * input = nullptr;
++    const ggml_tensor * residual = nullptr;
++    const ggml_tensor * weight = nullptr;
++    int layer = -1;
++};
++
+ static int gdn_node_index(const ggml_cgraph * cgraph, const ggml_tensor * tensor) {
+     for (int i = 0; i < cgraph->n_nodes; ++i) {
+         if (cgraph->nodes[i] == tensor) {
+@@ -7206,6 +7289,293 @@
+     return true;
+ }
+
++static bool gdn_qkvzab_match(
++        const ggml_backend_sycl_context & ctx, const ggml_cgraph * cgraph,
++        ggml_tensor * gdn, gdn_qkvzab_plan * plan) {
++    if (!ggml_sycl_xe2_gdn_qkvzab_enabled() || g_ggml_sycl_enable_graph ||
++            ggml_sycl_info().devices[ctx.device].hw_info.arch != gpu_arch::intel_gpu_bmg_g31) {
++        return false;
++    }
++
++    gdn_raw_gate_plan raw_plan = {};
++    if (!gdn_raw_gate_match(ctx, cgraph, gdn, &raw_plan)) {
++        return false;
++    }
++    const ggml_tensor * beta_sigmoid = gdn_unwrap_metadata(gdn->src[4]);
++    const ggml_tensor * raw_beta = beta_sigmoid->src[0];
++    const ggml_tensor * gate_mul = gdn_unwrap_metadata(gdn->src[3]);
++    const ggml_tensor * softplus = gate_mul->src[0];
++    const ggml_tensor * a = gate_mul->src[1];
++    if (softplus->op != GGML_OP_UNARY || ggml_get_unary_op(softplus) != GGML_UNARY_OP_SOFTPLUS) {
++        std::swap(softplus, a);
++    }
++    const ggml_tensor * biased = softplus->src[0];
++    const ggml_tensor * raw_alpha = biased->src[0];
++    const ggml_tensor * dt = biased->src[1];
++    if (dt->op != GGML_OP_NONE) {
++        std::swap(raw_alpha, dt);
++    }
++    auto * alpha = const_cast<ggml_tensor *>(gdn_unwrap_metadata(raw_alpha));
++    auto * beta = const_cast<ggml_tensor *>(gdn_unwrap_metadata(raw_beta));
++    if (!alpha || !beta || alpha->op != GGML_OP_MUL_MAT || beta->op != GGML_OP_MUL_MAT ||
++            !alpha->src[0] || !alpha->src[1] || !beta->src[0] || !beta->src[1] ||
++            alpha->src[1] != beta->src[1]) {
++        return false;
++    }
++    ggml_tensor * input = alpha->src[1];
++    ggml_tensor * alpha_weight = alpha->src[0];
++    ggml_tensor * beta_weight = beta->src[0];
++    if (input->type != GGML_TYPE_F32 || input->ne[0] != 5120 || input->ne[1] != 6 ||
++            input->ne[2] != 1 || input->ne[3] != 1 || !ggml_is_contiguous(input) ||
++            alpha_weight->type != GGML_TYPE_F32 || beta_weight->type != GGML_TYPE_F32 ||
++            alpha_weight->ne[0] != 5120 || alpha_weight->ne[1] != 48 ||
++            beta_weight->ne[0] != 5120 || beta_weight->ne[1] != 48 ||
++            !ggml_is_contiguous(alpha_weight) || !ggml_is_contiguous(beta_weight) ||
++            alpha->type != GGML_TYPE_F32 || beta->type != GGML_TYPE_F32 ||
++            alpha->ne[0] != 48 || alpha->ne[1] != 6 ||
++            beta->ne[0] != 48 || beta->ne[1] != 6 ||
++            !ggml_is_contiguous(alpha) || !ggml_is_contiguous(beta) ||
++            ggml_nelements(dt) != 48 || ggml_nelements(a) != 48) {
++        return false;
++    }
++
++    ggml_tensor * qkv = nullptr;
++    ggml_tensor * z = nullptr;
++    for (int i = 0; i < cgraph->n_nodes; ++i) {
++        ggml_tensor * node = cgraph->nodes[i];
++        if (node->op != GGML_OP_MUL_MAT || !node->src[0] || node->src[1] != input) {
++            continue;
++        }
++        const std::string name = node->src[0]->name;
++        if (name.find(".attn_qkv.weight") != std::string::npos) {
++            if (qkv) {
++                return false;
++            }
++            qkv = node;
++        } else if (name.find(".attn_gate.weight") != std::string::npos) {
++            if (z) {
++                return false;
++            }
++            z = node;
++        }
++    }
++    if (!qkv || !z || !ggml_sycl_xe2_gdn_qkvzab_projection(qkv->src[0]) ||
++            !ggml_sycl_xe2_gdn_qkvzab_projection(z->src[0]) ||
++            qkv->type != GGML_TYPE_F32 || z->type != GGML_TYPE_F32 ||
++            qkv->ne[0] != 10240 || qkv->ne[1] != 6 ||
++            z->ne[0] != 6144 || z->ne[1] != 6 ||
++            !ggml_is_contiguous(qkv) || !ggml_is_contiguous(z)) {
++        return false;
++    }
++    const int layer = ggml_sycl_xe2_gdn_qkvzab_layer(qkv->src[0]);
++    if (layer < 0 || layer >= ggml_sycl_xe2_gdn_qkvzab_layer_limit() ||
++            ggml_sycl_xe2_gdn_qkvzab_layer(z->src[0]) != layer) {
++        return false;
++    }
++
++    constexpr int observable_flags = GGML_TENSOR_FLAG_INPUT | GGML_TENSOR_FLAG_OUTPUT |
++                                     GGML_TENSOR_FLAG_PARAM | GGML_TENSOR_FLAG_LOSS;
++    const std::array<const ggml_tensor *, 13> tensors = {
++        input, qkv, z, alpha, beta, alpha_weight, beta_weight, dt, a,
++        gate_mul, softplus, biased, beta_sigmoid
++    };
++    for (const ggml_tensor * tensor : tensors) {
++        if (!tensor->data || !tensor->buffer ||
++                tensor->buffer->buft != ggml_backend_sycl_buffer_type(ctx.device) ||
++                ggml_backend_buffer_is_sycl_split(tensor->buffer)) {
++            return false;
++        }
++    }
++    if ((qkv->flags & observable_flags) || (z->flags & observable_flags) ||
++            (alpha->flags & observable_flags) || (beta->flags & observable_flags) ||
++            (biased->flags & observable_flags) || (softplus->flags & observable_flags) ||
++            (gate_mul->flags & observable_flags)) {
++        return false;
++    }
++    const int qkv_index = gdn_node_index(cgraph, qkv);
++    const std::array<const ggml_tensor *, 6> skipped = { z, alpha, beta, biased, softplus, gate_mul };
++    if (qkv_index < 0) {
++        return false;
++    }
++    for (const ggml_tensor * tensor : skipped) {
++        if (gdn_node_index(cgraph, tensor) <= qkv_index) {
++            return false;
++        }
++    }
++
++    auto * qkv_extra = static_cast<ggml_tensor_extra_gpu *>(qkv->src[0]->extra);
++    auto * z_extra = static_cast<ggml_tensor_extra_gpu *>(z->src[0]->extra);
++    constexpr size_t qkv_pack_bytes = size_t(5120)*10240/2 +
++            size_t(5120/32)*10240*sizeof(ggml_fp16_t);
++    constexpr size_t z_pack_bytes = size_t(5120)*6144/2 +
++            size_t(5120/32)*6144*sizeof(ggml_fp16_t);
++    if (!qkv_extra || !z_extra || !qkv_extra->xe2_q4_m6_pack[ctx.device] ||
++            !z_extra->xe2_q4_m6_pack[ctx.device] ||
++            qkv_extra->xe2_q4_m6_pack_layout[ctx.device] != 2 ||
++            z_extra->xe2_q4_m6_pack_layout[ctx.device] != 2 ||
++            qkv_extra->xe2_q4_m6_pack_bytes[ctx.device] != qkv_pack_bytes ||
++            z_extra->xe2_q4_m6_pack_bytes[ctx.device] != z_pack_bytes) {
++        return false;
++    }
++
++    plan->qkv = qkv;
++    plan->z = z;
++    plan->alpha = alpha;
++    plan->beta = beta;
++    plan->gdn = gdn;
++    plan->dt = dt;
++    plan->a = a;
++    plan->gate = gate_mul;
++    plan->skip = skipped;
++    return true;
++}
++
++static bool gdn_qkvzab_dispatch(
++        ggml_backend_sycl_context & ctx, const gdn_qkvzab_plan & plan) {
++    auto * qkv_extra = static_cast<ggml_tensor_extra_gpu *>(plan.qkv->src[0]->extra);
++    auto * z_extra = static_cast<ggml_tensor_extra_gpu *>(plan.z->src[0]->extra);
++    if (!qkv_extra || !z_extra ||
++            !ggml_sycl_mul_mat_q4_0_xe2_m6_gdn_qkvzab_gate(
++                ctx, qkv_extra->xe2_q4_m6_pack[ctx.device],
++                qkv_extra->xe2_q4_m6_pack_bytes[ctx.device],
++                z_extra->xe2_q4_m6_pack[ctx.device],
++                z_extra->xe2_q4_m6_pack_bytes[ctx.device],
++                static_cast<const float *>(plan.alpha->src[0]->data),
++                static_cast<const float *>(plan.beta->src[0]->data),
++                static_cast<const float *>(plan.dt->data),
++                static_cast<const float *>(plan.a->data),
++                static_cast<const float *>(plan.qkv->src[1]->data),
++                static_cast<float *>(plan.qkv->data), static_cast<float *>(plan.z->data),
++                static_cast<float *>(const_cast<ggml_tensor *>(plan.gate)->data),
++                static_cast<float *>(plan.beta->data), ctx.stream())) {
++        return false;
++    }
++    static std::atomic<uint64_t> count{0};
++    const uint64_t value = count.fetch_add(1, std::memory_order_relaxed) + 1;
++    if (value == 1 || (value & (value - 1)) == 0) {
++        GGML_LOG_INFO("SYCL Xe2 GDN QKVZAB gate fused dispatch count=%" PRIu64 "\n", value);
++    }
++    return true;
++}
++
++static bool gdn_out_m6_capture_enabled() {
++    const char * dir = std::getenv("GGML_SYCL_CAPTURE_GDN_OUT_M6_DIR");
++    return dir && dir[0] != '\0';
++}
++
++static bool gdn_out_m6_capture_match(
++        const ggml_backend_sycl_context & ctx, const ggml_cgraph * cgraph,
++        ggml_tensor * projection, gdn_out_m6_capture_plan * plan) {
++    if (!gdn_out_m6_capture_enabled() || g_ggml_sycl_fuse_mmvq_add ||
++            !projection || projection->op != GGML_OP_MUL_MAT ||
++            !projection->src[0] || !projection->src[1]) {
++        return false;
++    }
++    const char * layer_env = std::getenv("GGML_SYCL_CAPTURE_GDN_OUT_M6_LAYER");
++    const int requested_layer = layer_env ? std::max(0, std::atoi(layer_env)) : 0;
++    ggml_tensor * weight = projection->src[0];
++    ggml_tensor * input = projection->src[1];
++    const int layer = ggml_sycl_xe2_gdn_qkvzab_layer(weight);
++    if (layer != requested_layer || weight->type != GGML_TYPE_Q5_K ||
++            std::string(weight->name).find(".ssm_out.weight") == std::string::npos ||
++            weight->ne[0] != 6144 || weight->ne[1] != 5120 ||
++            input->type != GGML_TYPE_F32 || input->ne[0] != 6144 || input->ne[1] != 6 ||
++            projection->type != GGML_TYPE_F32 || projection->ne[0] != 5120 ||
++            projection->ne[1] != 6 || !ggml_is_contiguous(input) ||
++            !ggml_is_contiguous(projection)) {
++        return false;
++    }
++
++    ggml_tensor * matched_add = nullptr;
++    const ggml_tensor * residual = nullptr;
++    for (int i = 0; i < cgraph->n_nodes; ++i) {
++        ggml_tensor * node = cgraph->nodes[i];
++        if (node->op != GGML_OP_ADD || node->type != GGML_TYPE_F32 ||
++                node->ne[0] != 5120 || node->ne[1] != 6 || !node->src[0] || !node->src[1]) {
++            continue;
++        }
++        const ggml_tensor * src0 = gdn_unwrap_metadata(node->src[0]);
++        const ggml_tensor * src1 = gdn_unwrap_metadata(node->src[1]);
++        const ggml_tensor * candidate_residual = nullptr;
++        if (src0 == projection) {
++            candidate_residual = node->src[1];
++        } else if (src1 == projection) {
++            candidate_residual = node->src[0];
++        } else {
++            continue;
++        }
++        if (matched_add || candidate_residual->type != GGML_TYPE_F32 ||
++                candidate_residual->ne[0] != 5120 || candidate_residual->ne[1] != 6 ||
++                !ggml_is_contiguous(candidate_residual) || !ggml_is_contiguous(node)) {
++            return false;
++        }
++        matched_add = node;
++        residual = candidate_residual;
++    }
++    if (!matched_add || !residual) {
++        return false;
++    }
++    const std::array<const ggml_tensor *, 5> tensors = {
++        weight, input, projection, residual, matched_add
++    };
++    for (const ggml_tensor * tensor : tensors) {
++        if (!tensor->data || !tensor->buffer ||
++                tensor->buffer->buft != ggml_backend_sycl_buffer_type(ctx.device) ||
++                ggml_backend_buffer_is_sycl_split(tensor->buffer)) {
++            return false;
++        }
++    }
++    *plan = { projection, matched_add, input, residual, weight, layer };
++    return true;
++}
++
++static void gdn_out_m6_capture(
++        ggml_backend_sycl_context & ctx, const gdn_out_m6_capture_plan & plan) {
++    static std::atomic<bool> captured{false};
++    if (captured.exchange(true, std::memory_order_relaxed)) {
++        return;
++    }
++    const char * dir = std::getenv("GGML_SYCL_CAPTURE_GDN_OUT_M6_DIR");
++    if (!dir || dir[0] == '\0') {
++        return;
++    }
++    constexpr size_t input_count = size_t(6)*6144;
++    constexpr size_t output_count = size_t(6)*5120;
++    std::vector<float> input(input_count);
++    std::vector<float> projection(output_count);
++    std::vector<float> residual(output_count);
++    std::vector<float> add(output_count);
++    ctx.stream()->memcpy(input.data(), plan.input->data, input.size()*sizeof(float));
++    ctx.stream()->memcpy(projection.data(), plan.projection->data, projection.size()*sizeof(float));
++    ctx.stream()->memcpy(residual.data(), plan.residual->data, residual.size()*sizeof(float));
++    ctx.stream()->memcpy(add.data(), plan.add->data, add.size()*sizeof(float)).wait();
++
++    auto write = [&](const char * name, const std::vector<float> & values) {
++        std::ofstream file(std::string(dir) + "/" + name, std::ios::binary | std::ios::trunc);
++        file.write(reinterpret_cast<const char *>(values.data()),
++                   std::streamsize(values.size()*sizeof(float)));
++        return bool(file);
++    };
++    const bool ok = write("input.f32", input) && write("projection.f32", projection) &&
++            write("residual.f32", residual) && write("add.f32", add);
++    std::ofstream meta(std::string(dir) + "/runtime.txt", std::ios::trunc);
++    meta << "magic=Q27Q5GDNM6FIXTURE\nversion=1\nlayer=" << plan.layer
++         << "\nweight_name=" << plan.weight->name
++         << "\nweight_type=" << ggml_type_name(plan.weight->type)
++         << "\nweight_ne=" << plan.weight->ne[0] << ',' << plan.weight->ne[1] << ','
++         << plan.weight->ne[2] << ',' << plan.weight->ne[3]
++         << "\ninput_name=" << plan.input->name
++         << "\nprojection_name=" << plan.projection->name
++         << "\nresidual_name=" << plan.residual->name
++         << "\nadd_name=" << plan.add->name
++         << "\ninput_nb=" << plan.input->nb[0] << ',' << plan.input->nb[1]
++         << "\nprojection_nb=" << plan.projection->nb[0] << ',' << plan.projection->nb[1]
++         << "\nresidual_nb=" << plan.residual->nb[0] << ',' << plan.residual->nb[1]
++         << "\nadd_nb=" << plan.add->nb[0] << ',' << plan.add->nb[1] << '\n';
++    GGML_LOG_INFO("SYCL captured GDN output M6 fixture dir=%s layer=%d status=%s\n",
++                  dir, plan.layer, ok && meta ? "ok" : "write-failed");
++}
++
+ struct ssm_conv_cache_plan {
+     ggml_tensor * conv = nullptr;
+     ggml_sycl_ssm_conv_cache cache = {};
+@@ -7449,6 +7819,22 @@
+     static uint64_t ssm_conv_qk_norm_fused_count = 0;
+     static uint64_t rms_q8_rejected_count[static_cast<int>(mmvq_add_rms_q8_reject::dispatch) + 1] = {};
+     const ggml_tensor * last_fused_add = nullptr;
++    std::vector<gdn_out_m6_capture_plan> gdn_out_capture_plans;
++    std::vector<const gdn_out_m6_capture_plan *> gdn_out_capture_by_node(cgraph->n_nodes, nullptr);
++    if (gdn_out_m6_capture_enabled()) {
++        for (int i = 0; i < cgraph->n_nodes; ++i) {
++            gdn_out_m6_capture_plan plan = {};
++            if (gdn_out_m6_capture_match(*sycl_ctx, cgraph, cgraph->nodes[i], &plan)) {
++                gdn_out_capture_plans.push_back(plan);
++            }
++        }
++        for (const gdn_out_m6_capture_plan & plan : gdn_out_capture_plans) {
++            const int add_index = gdn_node_index(cgraph, plan.add);
++            if (add_index >= 0) {
++                gdn_out_capture_by_node[add_index] = &plan;
++            }
++        }
++    }
+     std::vector<gdn_epilogue_match> gdn_epilogue_plans;
+     std::vector<const gdn_epilogue_match *> gdn_epilogue_plan_by_node(cgraph->n_nodes, nullptr);
+     std::vector<uint8_t> gdn_epilogue_skip_node(cgraph->n_nodes, 0);
+@@ -7485,11 +7871,38 @@
+     std::vector<gdn_raw_gate_plan> gdn_raw_plans;
+     std::vector<const gdn_raw_gate_plan *> gdn_raw_plan_by_node(cgraph->n_nodes, nullptr);
+     std::vector<uint8_t> gdn_raw_skip_node(cgraph->n_nodes, 0);
++    std::vector<gdn_qkvzab_plan> gdn_qkvzab_plans;
++    std::vector<const gdn_qkvzab_plan *> gdn_qkvzab_plan_by_node(cgraph->n_nodes, nullptr);
++    std::vector<uint8_t> gdn_qkvzab_skip_node(cgraph->n_nodes, 0);
++    if (ggml_sycl_xe2_gdn_qkvzab_enabled()) {
++        for (int i = 0; i < cgraph->n_nodes; ++i) {
++            if (cgraph->nodes[i]->op != GGML_OP_GATED_DELTA_NET) {
++                continue;
++            }
++            gdn_qkvzab_plan plan = {};
++            if (gdn_qkvzab_match(*sycl_ctx, cgraph, cgraph->nodes[i], &plan)) {
++                gdn_qkvzab_plans.push_back(plan);
++            }
++        }
++        for (const gdn_qkvzab_plan & plan : gdn_qkvzab_plans) {
++            const int qkv_index = gdn_node_index(cgraph, plan.qkv);
++            if (qkv_index >= 0) {
++                gdn_qkvzab_plan_by_node[qkv_index] = &plan;
++            }
++        }
++    }
+     if (g_ggml_sycl_fuse_gdn_raw_gates) {
+         for (int i = 0; i < cgraph->n_nodes; ++i) {
+             if (cgraph->nodes[i]->op != GGML_OP_GATED_DELTA_NET) {
+                 continue;
+             }
++            bool claimed = false;
++            for (const gdn_qkvzab_plan & qkvzab : gdn_qkvzab_plans) {
++                claimed = claimed || qkvzab.gdn == cgraph->nodes[i];
++            }
++            if (claimed) {
++                continue;
++            }
+             gdn_raw_gate_plan plan = {};
+             if (gdn_raw_gate_match(*sycl_ctx, cgraph, cgraph->nodes[i], &plan)) {
+                 gdn_raw_plans.push_back(plan);
+@@ -7604,7 +8017,7 @@
+
+     for (int i = 0; i < cgraph->n_nodes; i++) {
+         ggml_tensor * node = cgraph->nodes[i];
+-        if (q6_top1_skip_node[i] || q6_target_top1_skip_node[i]) {
++        if (q6_top1_skip_node[i] || q6_target_top1_skip_node[i] || gdn_qkvzab_skip_node[i]) {
+             continue;
+         }
+         if (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE || node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_NONE) {
+@@ -7613,6 +8026,15 @@
+         if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+             continue;
+         }
++        const gdn_qkvzab_plan * qkvzab_plan = gdn_qkvzab_plan_by_node[i];
++        if (qkvzab_plan && gdn_qkvzab_dispatch(*sycl_ctx, *qkvzab_plan)) {
++            for (const ggml_tensor * skip : qkvzab_plan->skip) {
++                const int skip_index = gdn_node_index(cgraph, skip);
++                GGML_ASSERT(skip_index > i);
++                gdn_qkvzab_skip_node[skip_index] = 1;
++            }
++            continue;
++        }
+         const q6_m6_top1_plan * q6_top1_plan = q6_top1_plan_by_node[i];
+         q6_target_m6_top1_plan * q6_target_top1_plan = q6_target_top1_plan_by_node[i];
+         if (q6_target_top1_plan && ggml_sycl_xe2_q6_target_m6_top1_shadow()) {
+@@ -7895,6 +8317,9 @@
+ #endif
+         const bool fused_rms_q8 = rms_q8_is_current_consumer(node);
+         bool ok = ggml_sycl_compute_forward(*sycl_ctx, node);
++        if (ok && gdn_out_capture_by_node[i]) {
++            gdn_out_m6_capture(*sycl_ctx, *gdn_out_capture_by_node[i]);
++        }
+         q6_target_m6_top1_plan * shadow_plan = q6_target_top1_plan_by_argmax[i];
+         if (shadow_plan && ggml_sycl_xe2_q6_target_m6_top1_shadow() && shadow_plan->shadow_ready) {
+             std::array<int32_t, 6> ordinary = {};
