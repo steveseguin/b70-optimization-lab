@@ -1,0 +1,61 @@
+{
+  "date": "2026-07-13",
+  "status": "compile_validated_only",
+  "gpu_benchmark_run": false,
+  "runtime_integrated": false,
+  "protected_runtime_source_changed": false,
+  "shape": {
+    "rows": 6,
+    "k": 6144,
+    "n": 5120,
+    "layers": 48,
+    "weight_type": "Q5_K"
+  },
+  "real_weight": {
+    "tensor": "blk.0.ssm_out.weight",
+    "absolute_gguf_offset": 1963459456,
+    "source_bytes": 21626880
+  },
+  "pack": {
+    "layout": "Q27_XE2_LAYOUT_Q5K_GDN_OUT_M6_V1",
+    "quant_bytes_per_layer": 31457280,
+    "scale_min_bytes_per_layer": 1966080,
+    "dm_bytes_per_layer": 491520,
+    "total_bytes_per_layer": 33914880,
+    "all_48_gib": 1.51611328125,
+    "workspace_bytes": 46080,
+    "supports_per_layer_limits": true
+  },
+  "roofline": {
+    "serialized_control_us_per_layer": 152.02083333333334,
+    "floor_us_at_608_gb_s": 55.781052631578945,
+    "floor_us_at_545_gb_s": 62.22913761467889,
+    "optimistic_speedup_at_608_gb_s": 2.725313097574477,
+    "optimistic_speedup_at_545_gb_s": 2.4429204575297536,
+    "optimistic_saving_ms_48_at_608_gb_s": 4.619509473684211,
+    "optimistic_saving_ms_48_at_545_gb_s": 4.310001394495414,
+    "optimistic_ms_per_gib_at_608_gb_s": 3.0469421584880076,
+    "optimistic_ms_per_gib_at_545_gb_s": 2.842796410926444
+  },
+  "memory_policy": {
+    "current_headroom_gib": 3.84,
+    "required_reserve_gib": 2.0,
+    "qkvzab_all_layer_pack_gib": 2.2,
+    "all_pack_families_can_coexist": false
+  },
+  "reopen_requires": {
+    "fixture": "real integrated 6x6144 input plus 6x5120 projection/residual/add",
+    "minimum_kernel_speedup": 1.5,
+    "minimum_projected_cycle_saving_ms": 2.0,
+    "invalid_layout_status": "Q27_XE2_BAD_LAYOUT",
+    "residual_epilogue_before_projection_gate": false
+  },
+  "unvalidated": [
+    "Q5 unpack and VNNI bytes",
+    "DPAS operand ordering",
+    "numerical agreement",
+    "invalid-layout device behavior",
+    "performance and memory allocation"
+  ],
+  "note": "experiments/qwen27-dflash-sycl-b70/notes/2026-07-13-xe2-m6-q5k-gdn-output-compile-handoff.md"
+}
