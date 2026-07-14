@@ -194,6 +194,7 @@ def main() -> int:
         "vllm_xpu_v4_inplace_allreduce",
         "vllm_xpu_v4_mhc_norm_fusion",
         "vllm_xpu_v4_block_fp8_w8a16",
+        "vllm_xpu_mxfp4_small_m_n",
         "vllm_xpu_log_fp8_linear_shapes",
         "vllm_xpu_native_mhc",
         "pipeline_parallel_size",

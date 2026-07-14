@@ -290,7 +290,7 @@ host/device synchronization into every sample and does not represent the graph
 critical path. Keep `ring` as the production default and require end-to-end
 evidence for future collective changes.
 
-## Static block-scale prepack record
+## Static block-scale prepack record (superseded invalid)
 
 Default XPU block-FP8 dispatch transposed and materialized the immutable weight
 scale grid on every dense projection. The model executes five such projections
@@ -305,7 +305,7 @@ median and `29.7269413` p10, with all 12 prompts cached-zero. This is `+1.28%`
 over the `29.9132845` record and was approved by LocalMaxxing as
 `cmrl0rf5u06b6mj01y1s9ew2u`.
 
-## Small-M block-FP8 W8A16 record
+## Small-M block-FP8 W8A16 record (superseded invalid)
 
 The exact rank-0 shape trace established five repeated M=1 dense families per
 layer:
@@ -346,3 +346,37 @@ start-of-turn `29.9133` record. LocalMaxxing approved it as
 The base remains below the 40-50 tok/s speculation gate. The next measured
 targets are MXFP4 small-M dispatch, native mHC, and the ordered 87-collective
 critical path; do not re-enable speculation yet.
+
+## WO_A scale-layout correction and corrected frontier
+
+Independent review found that both records above transposed every block-FP8
+scale grid, including DeepSeek V4's special `wo_a` BMM. Its default BF16 cache
+expects canonical `[N/128,K/128]` scales and silently expanded the transposed
+nonsquare grid. Exact canaries happened to pass, but a 96-position top-20
+logprob corpus matched the corrected path on only 22.9% of greedy tokens. The
+old 30.295 and 33.887 submissions are therefore invalid, not records.
+
+vLLM `61c87db645c256651b5a366f538898485077ad32` keys the exception on
+`layer.is_bmm`, uses the reload-aware processing marker, leaves BMM scales
+canonical, fails closed if ordinary oneDNN dispatch lacks prepacked scales,
+and restricts W8A16 to exact single-session M=1. Three unit tests cover
+idempotence, BMM preservation, and reload; six real UE8M0 M=1/2 projection
+shapes pass direct dequantized-reference parity.
+
+Corrected W8A8 reached `30.2303750` and **`30.2390162 tok/s`** median with all
+cold gates passing. LocalMaxxing approved the corrected record as
+`cmrl2619q06hwmj011j5rtnbt`; evidence is
+`tp4-w8a8-woa-corrected-n64-20260714T1940Z`.
+
+Corrected W8A16 reached `34.0145074` and `33.9235904 tok/s`, but it is rejected
+as a quality side lane. Only 83.3% of the first 96 rolling greedy tokens match
+W8A8; although exact JSON/schema/sort/safety and short canaries pass, the
+frozen 768-token math-invariant case corrupts and terminates while W8A8 proves
+the invariant and returns `101! - 1`. Do not submit or enable W8A16.
+
+XPU kernels `d553fd2ac0cfc86edbb4fe9c65d567318931fe91` add guarded MXFP4
+M8/N32 and M8/N128 policies. Both pass low-level dequantized-reference tests.
+N32 fails exact `1073 -> 437 -> 1073` replay. N128 reaches 30.5181 and 30.4817
+tok/s, only about 0.9% over N64, while changing early greedy outputs; it is not
+promoted. Keep N64 and pursue exact-W8A8 quantization fusion plus the ordered
+collective/MHC boundary.

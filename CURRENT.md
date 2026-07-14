@@ -58,24 +58,28 @@ evidence. Speculation remains prohibited until correct nonspeculative decode
 approaches 40-50 tok/s. The archived Qwen detail below remains resume evidence,
 not an instruction to continue experimenting.
 
-The clean pinned runtime is now vLLM `9fe91a6d6` plus XPU kernels `473a55e2a`.
+The clean pinned runtime is now vLLM `61c87db64` plus XPU kernels `d553fd2ac`.
 Persistent graph replay, native mHC, context-bounded sparse work, and direct
 paged FP8 attention all pass. The current strict TP4+EP single-session record
 uses split QK/LSE plus 8-by-64 tiled PV and a mutation-declared TP-only
 in-place all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions.
-Its M<=2 dense block-FP8 projections use BF16 activations directly with the
-same FP8 weights and load-time-prepacked weight-scale grids, while prefill and
-larger M retain W8A8. This removes 215 activation quantizers and scale copies
-per token. It reaches **33.8866379 tok/s** median and `33.3446529` p10; all 12
-prompts emitted 128 token IDs cold/cached-zero and changed-input replay plus
-exact canaries pass. LocalMaxxing approved it as `cmrl12pke06ehmj01i9a1f0gu`;
-evidence is
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-block-fp8-w8a16-20260714T1930Z`.
-The earlier trace measured about 23.3 ms non-collective kernels, 8 ms TP
-communication, and 2 ms queue/host gaps; the new dense path removes roughly
-4 ms from that period. The active tasks are exact MXFP4 small-M dispatch and
-the ordered 87-collective critical path. The standalone MHC/RMS fusion and
-oneCCL twoshots lanes are preserved end-to-end losses.
+The trustworthy W8A8 record is now **30.2390162 tok/s** median and
+`29.7545702` p10 across the strict cold suite, confirmed by a second
+`30.2303750` run. All 12 prompts emitted 128 token IDs cached-zero; sequential
+changed-input replay and arithmetic/copy/Paris/JSON canaries pass. LocalMaxxing
+approved it as `cmrl2619q06hwmj011j5rtnbt`; evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-w8a8-woa-corrected-n64-20260714T1940Z`.
+The previous 30.295 and 33.887 rows are invalid: generic scale prepacking also
+transposed DeepSeek's special `wo_a` BMM scales, while its BF16 cache interpreted
+them as canonical. Correcting that layout changed 77% of the first 96 greedy
+tokens versus the invalid path. Corrected W8A16 is fast (`34.015` and `33.924`
+tok/s) but rejected as a quality side lane: it matches only 83.3% of early W8A8
+greedy tokens and corrupts the frozen long math-invariant case that W8A8 solves
+correctly. MXFP4 N32 failed exact changed-input replay; N128 reached 30.518 and
+30.482 tok/s but altered outputs for a sub-1% gain and is not promoted. The
+active work is exact-W8A8 producer/quantization fusion and the ordered
+87-collective producer/consumer boundary. The standalone MHC/RMS fusion and
+oneCCL twoshots lanes remain preserved losses.
 Speculation remains disabled until nonspeculative decode approaches 40-50
 tok/s. Detailed history is in the lane handoff and
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md).
