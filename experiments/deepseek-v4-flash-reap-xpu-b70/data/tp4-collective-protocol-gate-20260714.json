@@ -1,0 +1,45 @@
+{
+  "date": "2026-07-14",
+  "hardware": "4x Intel Arc Pro B70 32 GB, single-node PCIe, one rank per GPU",
+  "shape": {
+    "dtype": "bfloat16",
+    "elements": 4096,
+    "bytes": 8192,
+    "world_size": 4,
+    "reduction": "sum"
+  },
+  "source": {
+    "xpu_kernel_base": "d553fd2ac0cfc86edbb4fe9c65d567318931fe91",
+    "failed_peer_atomic_commit": "b84ac23",
+    "oneccl_base": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "oneccl_replay_hook_commit": "0277eab",
+    "oneccl_install": "/mnt/usb-models/llm-runtime/oneccl-deepseek-b70"
+  },
+  "identity": {
+    "CCL_ATL_TRANSPORT": "ofi",
+    "CCL_TOPO_P2P_ACCESS": "1",
+    "CCL_SYCL_ALLREDUCE_LL": "ring",
+    "CCL_SYCL_ALLREDUCE_LL_THRESHOLD": "4096",
+    "CCL_ZE_IPC_EXCHANGE": "pidfd",
+    "FI_TCP_IFACE": "eno1",
+    "CCL_KVS_IFACE": "eno1"
+  },
+  "failed_custom_protocol": {
+    "status": "rejected",
+    "result": "Cross-card local-mailbox polling hung. Remote atomic notification variants either timed out, returned invalid payloads, or failed IPC import with UR_RESULT_ERROR_OUT_OF_RESOURCES.",
+    "decision": "Do not build another independent B70 IPC collective. Reuse oneCCL's initialized LL256 ring and in-band sequence protocol."
+  },
+  "oneccl_direct_replay": {
+    "status": "correct-control-plane-pass/performance-loss",
+    "changing_input_epochs": 40,
+    "all_ranks_bitwise_exact": true,
+    "max_abs_error": 0.0,
+    "return_codes": [0],
+    "aligned_iterations": 20,
+    "candidate_max_rank_median_us": 27.874392,
+    "candidate_best_rank_min_us": 27.845896,
+    "reference_max_rank_median_us": 21.666346,
+    "reference_best_rank_min_us": 21.64448,
+    "decision": "The direct hook is not a standalone speed win. Retain it only as the narrow entry point for a ring-final-writeback plus MHC-post fusion."
+  }
+}
