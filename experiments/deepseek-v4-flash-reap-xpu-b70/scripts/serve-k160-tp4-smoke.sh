@@ -76,7 +76,8 @@ export VLLM_XPU_V4_FP8_WO_A="${VLLM_XPU_V4_FP8_WO_A:-0}"
 export VLLM_XPU_V4_INPLACE_ALLREDUCE="${VLLM_XPU_V4_INPLACE_ALLREDUCE:-0}"
 export VLLM_XPU_V4_MHC_NORM_FUSION="${VLLM_XPU_V4_MHC_NORM_FUSION:-0}"
 export VLLM_XPU_V4_TP4_RING_MHC_POST="${VLLM_XPU_V4_TP4_RING_MHC_POST:-0}"
-if [[ "${VLLM_XPU_V4_TP4_RING_MHC_POST}" == "1" ]]; then
+export VLLM_XPU_V4_TP4_RING_MHC_POST_PRE="${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE:-0}"
+if [[ "${VLLM_XPU_V4_TP4_RING_MHC_POST}" == "1" || "${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE}" == "1" ]]; then
   export LD_PRELOAD="${oneccl}/lib/libccl.so.1.0${LD_PRELOAD:+:${LD_PRELOAD}}"
 fi
 export VLLM_XPU_LOG_FP8_LINEAR_SHAPES="${VLLM_XPU_LOG_FP8_LINEAR_SHAPES:-0}"
@@ -157,6 +158,7 @@ argv=(
   printf 'vllm_xpu_v4_inplace_allreduce=%s\n' "${VLLM_XPU_V4_INPLACE_ALLREDUCE}"
   printf 'vllm_xpu_v4_mhc_norm_fusion=%s\n' "${VLLM_XPU_V4_MHC_NORM_FUSION}"
   printf 'vllm_xpu_v4_tp4_ring_mhc_post=%s\n' "${VLLM_XPU_V4_TP4_RING_MHC_POST}"
+  printf 'vllm_xpu_v4_tp4_ring_mhc_post_pre=%s\n' "${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE}"
   printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'vllm_xpu_log_fp8_linear_shapes=%s\n' "${VLLM_XPU_LOG_FP8_LINEAR_SHAPES}"
   printf 'vllm_xpu_v4_block_fp8_w8a16=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16}"
