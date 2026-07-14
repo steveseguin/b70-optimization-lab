@@ -1,0 +1,40 @@
+{
+  "baseline": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/current-stack-w8a8-control-20260714T2330Z",
+    "screen_median_tok_s": 29.89915399586462,
+    "w8a16_shapes": []
+  },
+  "individual_shape_screens": {
+    "1536x4096_fused_wqa_wkv": 30.676969627166635,
+    "8192x1024_q_b": 30.116473657794025,
+    "4096x2048_o_b": 30.418124955086814,
+    "1024x4096_shared_gate_up": 30.77614927064039,
+    "4096x512_shared_down": 30.079231222501463
+  },
+  "combination_screens": {
+    "attention_trio": 31.688183889429045,
+    "shared_pair": 30.94404544173258,
+    "qkv_plus_shared_gate_up": 31.68435309153246,
+    "high4_without_shared_down": 32.83379933728976
+  },
+  "promoted": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/w8a16-high4-no-shared-down-20260714T2346Z",
+    "vllm_commit": "726c1acfb137548023bd3d225072efef054af3e2",
+    "xpu_kernel_commit": "fa530f5fe9a95cf06251f3af7c1c8cb9a0d76846",
+    "w8a16_shapes": [
+      "1536x4096",
+      "8192x1024",
+      "4096x2048",
+      "1024x4096"
+    ],
+    "w8a8_shapes": ["4096x512"],
+    "strict_medians_tok_s": [33.433875317172195, 33.363230651230495],
+    "strict_screen_p10_tok_s": 32.861960543236236,
+    "chosen_token_match_rate_vs_same_stack_w8a8_first80": 0.8375,
+    "mean_top20_overlap_vs_same_stack_w8a8_first80": 0.8081250000000001,
+    "frozen_math_invariant": "pass: 101! - 1",
+    "executable_quality_gates": "pass",
+    "known_k160_intermittent_cjk_corruption_floor": true,
+    "localmaxxing_id": "cmrlb675r0705mj01k9psoub0"
+  }
+}
