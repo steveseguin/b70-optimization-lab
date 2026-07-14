@@ -2,9 +2,10 @@
 
 Date: 2026-07-13
 
-Status: parser, collector control plane, binary ABI, and synthetic tests are
-implemented in the experiment repo. No files under `/home/steve/src/llama.cpp`
-were changed because the protected Q6 verifier work is still in flight.
+Status: the parser, collector control plane, binary ABI, native runtime hook,
+and synthetic/native ABI tests are implemented. A real-model capture is still
+pending a frozen full dirty-tree fingerprint and a matching rebuild; no corpus
+or adaptation result is claimed yet.
 
 ## Outcome
 
@@ -16,11 +17,11 @@ existing `qwen36_eagle_sequence_v2` subset required by the offline trainer and
 supports the intended five-draft-token, width-six (`B=6`)
 `layer-position-bias` screen.
 
-This does not claim that a corpus has been captured or trained. The native hook
-is the remaining implementation step. Capture must also wait until the active
-llama.cpp Q6 work settles: applying the hook changes the dirty-tree checksum,
-so the capture plan and compile-time runtime identity must be regenerated from
-the exact final source snapshot before any request is accepted.
+This does not claim that a corpus has been captured or trained. Capture must
+wait until the active llama.cpp kernel work settles: applying the hook changes
+the dirty-tree checksum, so the capture plan and compile-time runtime identity
+must be regenerated from the exact final source snapshot before any request is
+accepted.
 
 ## Exact Native Hook Points
 
@@ -209,3 +210,34 @@ After protected Q6 work is committed or snapshotted:
    `--train-scope layer-position-bias --draft-tokens 5`.
 7. Continue only if the heldout screen reaches at least four accepted and five
    emitted tokens per favorable cycle without target-quality failures.
+
+## Native Implementation Result
+
+The runtime implementation is isolated in
+`common/dflash-target-trace.{h,cpp}` with narrow lifecycle calls from
+`common/speculative.{h,cpp}` and `tools/server/server-context.cpp`. It adds:
+
+- compile-time runtime commit and dirty-patch identities;
+- launcher-provided deep model hashes;
+- fixed server, DFlash shape, F16 draft-K/V, and greedy-request gates;
+- atomic request-control claim and duplicate/stale rejection;
+- synchronous owned F32-to-BF16 conversion before feature-buffer reuse;
+- bounded prefill buffering, exact prompt-token/position comparison, and
+  one-row delayed target labels;
+- header/payload fsync, atomic payload rename, payload SHA-256, and sidecar-last
+  publication;
+- idempotent abort/finalize behavior and sequential multi-request reuse.
+
+The isolated CPU `llama-server` build passed with the trace compile definitions,
+including both `speculative.cpp` and `server-context.cpp`. The native smoke in
+`tests/dflash-q4-target-trace-native-smoke.cpp` captured two sequential requests
+through one trace object. Each payload had three complete rows and parsed via
+the production parser into `qwen36_eagle_sequence_v2`. Native payload identity,
+payload byte, position, and label corruptions were all rejected. The original
+synthetic contract/corruption suite also remained green.
+
+No real model capture has run. The source tree contains concurrent kernel work,
+so embedding a fingerprint now would immediately make the corpus identity
+stale. The next action is to freeze that tree, recompute the full dirty patch
+SHA-256, rebuild with both compile-time identity definitions, update the plan,
+then run one real prompt before any train/heldout collection.

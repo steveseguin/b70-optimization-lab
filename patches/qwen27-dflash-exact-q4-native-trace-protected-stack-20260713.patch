@@ -1,0 +1,1376 @@
+diff --git a/common/CMakeLists.txt b/common/CMakeLists.txt
+index 4cf580a05..4d4d79dff 100644
+--- a/common/CMakeLists.txt
++++ b/common/CMakeLists.txt
+@@ -71,6 +71,8 @@ add_library(${TARGET}
+     console.h
+     debug.cpp
+     debug.h
++    dflash-target-trace.cpp
++    dflash-target-trace.h
+     download.cpp
+     download.h
+     fit.cpp
+@@ -116,6 +118,12 @@ add_library(${TARGET}
+     jinja/caps.h
+     )
+ 
++set(LLAMA_DFLASH_TRACE_RUNTIME_COMMIT "" CACHE STRING "Exact runtime commit embedded in diagnostic DFlash traces")
++set(LLAMA_DFLASH_TRACE_DIRTY_PATCH_SHA256 "" CACHE STRING "Exact dirty-patch SHA-256 embedded in diagnostic DFlash traces")
++target_compile_definitions(${TARGET} PRIVATE
++    LLAMA_DFLASH_TRACE_RUNTIME_COMMIT="${LLAMA_DFLASH_TRACE_RUNTIME_COMMIT}"
++    LLAMA_DFLASH_TRACE_DIRTY_PATCH_SHA256="${LLAMA_DFLASH_TRACE_DIRTY_PATCH_SHA256}")
++
+ set_target_properties(${TARGET} PROPERTIES
+     VERSION ${LLAMA_INSTALL_VERSION}
+     SOVERSION 0
+diff --git a/common/speculative.cpp b/common/speculative.cpp
+index 580728a20..f7e525f14 100644
+--- a/common/speculative.cpp
++++ b/common/speculative.cpp
+@@ -1,6 +1,7 @@
+ #include "speculative.h"
+ 
+ #include "common.h"
++#include "dflash-target-trace.h"
+ #include "ggml.h"
+ #include "llama.h"
+ #include "log.h"
+@@ -12,11 +13,18 @@
+ #include "../src/llama-ext.h" // staging API: llama_set_embeddings_nextn / llama_get_embeddings_nextn_ith (used by MTP)
+ 
+ #include <algorithm>
++#include <cerrno>
+ #include <cassert>
+ #include <cstring>
++#include <cstdio>
+ #include <iomanip>
++#include <limits>
+ #include <map>
+ #include <cinttypes>
++#include <cstdlib>
++#include <array>
++#include <string>
++#include <unistd.h>
+ 
+ #define SPC_DBG(fmt, ...) LOG_DBG("spec %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+ #define SPC_TRC(fmt, ...) LOG_TRC("spec %12.*s: " fmt, 12, __func__, __VA_ARGS__)
+@@ -28,6 +36,74 @@
+ #define SPEC_VOCAB_MAX_SIZE_DIFFERENCE  128
+ #define SPEC_VOCAB_CHECK_START_TOKEN_ID 5
+ 
++static bool mtp_cycle_timing_enabled() {
++    const char * value = std::getenv("LLAMA_MTP_CYCLE_TIMING");
++    return value != nullptr && std::atoi(value) != 0;
++}
++
++static bool dflash_cycle_timing_enabled() {
++    const char * value = std::getenv("LLAMA_DFLASH_CYCLE_TIMING");
++    return value != nullptr && std::atoi(value) != 0;
++}
++
++static int32_t dflash_trace_parallel = 0;
++static int32_t dflash_trace_ctx_checkpoints = -1;
++static int32_t dflash_trace_reasoning = -1;
++
++void common_speculative_set_dflash_trace_server_contract(
++        int32_t parallel, int32_t ctx_checkpoints, int32_t reasoning) {
++    dflash_trace_parallel = parallel;
++    dflash_trace_ctx_checkpoints = ctx_checkpoints;
++    dflash_trace_reasoning = reasoning;
++}
++
++struct dflash_lmhead_fixture_top1 {
++    float   value;
++    int32_t id;
++};
++
++struct dflash_lmhead_fixture_header {
++    char     magic[8];
++    uint32_t version;
++    uint32_t k;
++    uint32_t n;
++    uint32_t m;
++    dflash_lmhead_fixture_top1 reference[5];
++    int32_t sampled[5];
++};
++
++static_assert(sizeof(dflash_lmhead_fixture_header) == 84,
++        "DFlash LM-head fixture header layout changed");
++
++static bool dflash_write_lmhead_fixture(
++        const std::string & path,
++        const dflash_lmhead_fixture_header & header,
++        const std::vector<float> & activations) {
++    const std::string tmp = path + ".tmp." + std::to_string((long long) getpid());
++    FILE * file = std::fopen(tmp.c_str(), "wb");
++    if (file == nullptr) {
++        SPC_ERR("cannot open DFlash LM-head fixture %s: %s\n", tmp.c_str(), std::strerror(errno));
++        return false;
++    }
++
++    const bool wrote_header = std::fwrite(&header, sizeof(header), 1, file) == 1;
++    const bool wrote_data = wrote_header &&
++            std::fwrite(activations.data(), sizeof(float), activations.size(), file) == activations.size();
++    const bool flushed = wrote_data && std::fflush(file) == 0;
++    const bool closed = std::fclose(file) == 0;
++    if (!wrote_data || !flushed || !closed) {
++        SPC_ERR("failed writing DFlash LM-head fixture %s\n", tmp.c_str());
++        std::remove(tmp.c_str());
++        return false;
++    }
++    if (std::rename(tmp.c_str(), path.c_str()) != 0) {
++        SPC_ERR("cannot publish DFlash LM-head fixture %s: %s\n", path.c_str(), std::strerror(errno));
++        std::remove(tmp.c_str());
++        return false;
++    }
++    return true;
++}
++
+ const std::map<std::string, common_speculative_type> common_speculative_type_from_name_map = {
+     {"none",          COMMON_SPECULATIVE_TYPE_NONE},
+     {"draft-simple",  COMMON_SPECULATIVE_TYPE_DRAFT_SIMPLE},
+@@ -167,6 +243,9 @@ struct common_speculative_impl {
+ 
+     virtual void accept(llama_seq_id seq_id, uint16_t n_accepted, bool is_other) = 0;
+ 
++    virtual void end(llama_seq_id /*seq_id*/, bool /*complete*/) {}
++    virtual bool trace_enabled() const { return false; }
++
+     // (optional) serialize/restore per-seq internal state (e.g. eagle3's deferred boundary).
+     virtual bool get_state(llama_seq_id /*seq_id*/, std::vector<uint8_t> & /*data*/) const { return false; }
+     virtual void set_state(llama_seq_id /*seq_id*/, const std::vector<uint8_t> & /*data*/) {}
+@@ -921,6 +1000,14 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+     // scratch buffer for concatenated target features [n_tokens, n_embd_enc]
+     std::vector<float> features_buf;
+ 
++    // Experiment-only, one-shot capture of the normalized decoder rows consumed
++    // by the shared target LM head plus production top-1 references.
++    std::string lmhead_capture_path;
++    bool        lmhead_capture_done = false;
++    bool        top1_ids_enabled = false;
++    bool        top1_force_read_fail = false;
++    std::unique_ptr<dflash_target_trace> target_trace;
++
+     common_speculative_impl_draft_dflash(const common_params_speculative & params, uint32_t n_seq)
+         : common_speculative_impl(COMMON_SPECULATIVE_TYPE_DRAFT_DFLASH, n_seq)
+         , params(params.draft)
+@@ -940,6 +1027,57 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+         n_embd_dec    = llama_model_n_embd(model_dft);
+         n_embd_enc    = (int32_t) target_layer_ids_n * n_embd_tgt;
+ 
++        if (const char * capture_dir = std::getenv("LLAMA_DFLASH_TARGET_TRACE_CAPTURE_DIR")) {
++            if (*capture_dir) {
++                const char * target_sha = std::getenv("LLAMA_DFLASH_TRACE_TARGET_MODEL_SHA256");
++                const char * draft_sha = std::getenv("LLAMA_DFLASH_TRACE_DRAFT_MODEL_SHA256");
++                dflash_target_trace_config trace_cfg;
++                trace_cfg.capture_dir = capture_dir;
++                trace_cfg.target_model_sha256 = target_sha ? target_sha : "";
++                trace_cfg.draft_model_sha256 = draft_sha ? draft_sha : "";
++                trace_cfg.runtime_commit = LLAMA_DFLASH_TRACE_RUNTIME_COMMIT;
++                trace_cfg.runtime_dirty_patch_sha256 = LLAMA_DFLASH_TRACE_DIRTY_PATCH_SHA256;
++                trace_cfg.target_layer_ids.assign(target_layer_ids, target_layer_ids + target_layer_ids_n);
++                trace_cfg.n_seq = n_seq;
++                trace_cfg.n_max = this->params.n_max;
++                trace_cfg.n_min = this->params.n_min;
++                trace_cfg.p_min = this->params.p_min;
++                trace_cfg.hidden_size = n_embd_tgt;
++                trace_cfg.draft_cache_f16 = this->params.cache_type_k == GGML_TYPE_F16 &&
++                        this->params.cache_type_v == GGML_TYPE_F16;
++                trace_cfg.parallel = dflash_trace_parallel;
++                trace_cfg.ctx_checkpoints = dflash_trace_ctx_checkpoints;
++                trace_cfg.reasoning = dflash_trace_reasoning;
++                target_trace = dflash_target_trace::create(trace_cfg);
++            }
++        }
++
++        if (const char * path = std::getenv("LLAMA_DFLASH_LMHEAD_CAPTURE")) {
++            lmhead_capture_path = path;
++            if (!lmhead_capture_path.empty()) {
++                LOG_INF("%s: one-shot LM-head capture enabled at %s; diagnostic timing is not representative\n",
++                        __func__, lmhead_capture_path.c_str());
++            }
++        }
++
++        const char * top1_env = std::getenv("LLAMA_DFLASH_FUSED_TOP1");
++        const bool top1_requested = top1_env != nullptr && std::strcmp(top1_env, "0") != 0;
++        const char * force_fail_env = std::getenv("LLAMA_DFLASH_TOP1_FORCE_READ_FAIL");
++        top1_force_read_fail = force_fail_env != nullptr && std::strcmp(force_fail_env, "0") != 0;
++        // The DFlash draft sampler is constructed below as TOP_K only and the
++        // driver always consumes candidate zero. It has no grammar, logit bias,
++        // repetition/frequency/presence penalty, or temperature transform, so
++        // this fixed chain cannot change the raw argmax identity.
++        top1_ids_enabled = top1_requested && lmhead_capture_path.empty() && n_seq == 1 &&
++                this->params.n_max == 5 && this->params.n_min == 0 && this->params.p_min == 0.0f;
++        if (top1_requested && !top1_ids_enabled) {
++            LOG_WRN("%s: fused top-1 rejected; requires native DFlash n_seq=1 n_max=5 n_min=0 p_min=0 and capture disabled\n",
++                    __func__);
++        }
++        if (top1_force_read_fail) {
++            LOG_WRN("%s: diagnostic one-shot compact top-1 read failure enabled\n", __func__);
++        }
++
+         // read the trained block size from the dflash.block_size metadata key
+         block_size = 16;
+         {
+@@ -981,9 +1119,19 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+ 
+         llama_set_embeddings_nextn(ctx_dft, true, /*masked*/ true);
+         llama_set_causal_attn(ctx_dft, false); // DFlash needs non-causal attention
++        llama_set_dflash_top1_ids(ctx_dft, top1_ids_enabled);
++        if (top1_ids_enabled) {
++            LOG_INF("%s: guarded DFlash M=6 top-1 boundary enabled (rows 1..5, exact graph fallback)\n", __func__);
++        }
+     }
+ 
+     ~common_speculative_impl_draft_dflash() override {
++        if (target_trace && target_trace->active()) {
++            target_trace->end(0, false);
++        }
++        if (params.ctx_dft && top1_ids_enabled) {
++            llama_set_dflash_top1_ids(params.ctx_dft, false);
++        }
+         llama_batch_free(batch);
+         llama_batch_free(batch_inject);
+     }
+@@ -998,6 +1146,10 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+             return;
+         }
+ 
++        if (target_trace && !target_trace->begin(seq_id, prompt)) {
++            throw std::runtime_error("DFlash target trace begin failed: " + target_trace->error());
++        }
++
+         const llama_pos pos_max = llama_memory_seq_pos_max(llama_get_memory(params.ctx_dft), seq_id);
+         if (pos_max < N - 1) {
+             LOG_WRN("%s: ctx_dft pos_max=%d < N-1=%d - process() did not run on every prefill ubatch. "
+@@ -1045,6 +1197,8 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+ 
+             for (int32_t offset = 0; offset < n_rows; offset += n_ubatch) {
+                 const int32_t n_chunk = std::min(n_ubatch, n_rows - offset);
++                const bool cycle_timing = dflash_cycle_timing_enabled();
++                const int64_t t_gather_start = cycle_timing ? ggml_time_us() : 0;
+ 
+                 // gather this chunk's target features, interleaved by extract layer
+                 features_buf.resize((size_t) n_chunk * n_embd_enc);
+@@ -1059,6 +1213,16 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+                         std::memcpy(dst, src, (size_t) n_embd_tgt * sizeof(float));
+                     }
+                 }
++                const int64_t t_gather_end = cycle_timing ? ggml_time_us() : 0;
++
++                if (target_trace && !target_trace->process(
++                            seq_id,
++                            batch_in.token + i_batch_beg[seq_id] + offset,
++                            batch_in.pos + i_batch_beg[seq_id] + offset,
++                            features_buf.data(), n_chunk)) {
++                    LOG_ERR("%s: exact-Q4 target trace failed: %s\n", __func__, target_trace->error().c_str());
++                    return false;
++                }
+ 
+                 // fuse extracted features through DFlash encoder
+                 llama_batch enc_batch = {
+@@ -1077,6 +1241,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+                             __func__, rc, (int) n_chunk, (int) offset);
+                     return false;
+                 }
++                const int64_t t_encode_end = cycle_timing ? ggml_time_us() : 0;
+ 
+                 const float * inp_g = llama_get_embeddings_nextn(ctx_dft);
+                 GGML_ASSERT(inp_g && "DFlash encoder produced no output.");
+@@ -1084,6 +1249,7 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+                 // inject the DFlash decoder K/V cache at the tokens' target positions
+                 batch_inject.n_tokens = n_chunk;
+                 std::memcpy(batch_inject.embd, inp_g, (size_t) n_chunk * n_embd_dec * sizeof(float));
++                const int64_t t_copy_end = cycle_timing ? ggml_time_us() : 0;
+ 
+                 for (int32_t i = 0; i < n_chunk; ++i) {
+                     batch_inject.pos[i]       = batch_in.pos[i_batch_beg[seq_id] + offset + i];
+@@ -1097,14 +1263,35 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+                             __func__, rc, (int) n_chunk, (int) offset);
+                     return false;
+                 }
++                if (cycle_timing) {
++                    SPC_INF("[DFLASH-CYCLE] phase=feature_inject seq=%d width=%d gather_us=%" PRId64
++                            " encode_us=%" PRId64 " copy_us=%" PRId64 " inject_decode_us=%" PRId64 "\n",
++                            (int) seq_id, n_chunk,
++                            t_gather_end - t_gather_start,
++                            t_encode_end - t_gather_end,
++                            t_copy_end - t_encode_end,
++                            ggml_time_us() - t_copy_end);
++                }
+             }
+         }
+ 
+         return true;
+     }
+ 
++    void end(llama_seq_id seq_id, bool complete) override {
++        if (target_trace) {
++            target_trace->end(seq_id, complete);
++        }
++    }
++
++    bool trace_enabled() const override {
++        return target_trace != nullptr;
++    }
++
+     void draft(common_speculative_draft_params_vec & dparams) override {
+         auto & ctx_dft = params.ctx_dft;
++        const bool cycle_timing = dflash_cycle_timing_enabled();
++        const int64_t t_build_start = cycle_timing ? ggml_time_us() : 0;
+ 
+         common_batch_clear(batch);
+ 
+@@ -1139,13 +1326,92 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+         if (batch.n_tokens == 0) {
+             return;
+         }
++        const int64_t t_build_end = cycle_timing ? ggml_time_us() : 0;
+ 
+-        // decode all sequence's noise block in a single batch
++        // Decode all sequences' noise blocks in a single batch. Enable ordinary
++        // embeddings only around this decoder call: enabling them during the
++        // DFlash encoder path would request a result_norm tensor that graph does
++        // not produce.
++        const bool capture_this_decode = !lmhead_capture_path.empty() && !lmhead_capture_done;
++        if (capture_this_decode) {
++            llama_set_embeddings(ctx_dft, true);
++        }
+         int ret = llama_decode(ctx_dft, batch);
+         if (ret != 0) {
++            if (capture_this_decode) {
++                llama_set_embeddings(ctx_dft, false);
++            }
+             LOG_WRN("%s: llama_decode returned %d\n", __func__, ret);
+             return;
+         }
++        int64_t t_decode_end = cycle_timing ? ggml_time_us() : 0;
++
++        std::array<llama_token, 5> top1_ids = {};
++        bool have_top1_ids = top1_ids_enabled && batch.n_tokens == 6 && !top1_force_read_fail &&
++                llama_dflash_top1_read(ctx_dft, top1_ids.data());
++        if (top1_ids_enabled && batch.n_tokens == 6 && !have_top1_ids) {
++            top1_force_read_fail = false;
++            // The compact M=6 graph has t_dflash_top1 instead of t_logits, so
++            // falling through to the ordinary sampler would read logits that
++            // do not exist. Roll back only this just-decoded noise block,
++            // permanently disable compact mode, and explicitly rerun it with
++            // the ordinary logits graph. If rollback or retry fails, abort the
++            // request rather than touching an absent logits tensor.
++            SPC_ERR("%s", "DFlash compact top-1 read failed; retrying with ordinary logits graph\n");
++            auto * mem_dft = llama_get_memory(ctx_dft);
++            if (!mem_dft || !llama_memory_seq_rm(mem_dft, 0, dparams[0].n_past, -1)) {
++                throw std::runtime_error("DFlash compact top-1 read failed and decoder rollback was unavailable");
++            }
++            llama_set_dflash_top1_ids(ctx_dft, false);
++            top1_ids_enabled = false;
++            ret = llama_decode(ctx_dft, batch);
++            if (ret != 0) {
++                throw std::runtime_error("DFlash ordinary-logits retry failed after compact top-1 read failure");
++            }
++            t_decode_end = cycle_timing ? ggml_time_us() : 0;
++        }
++
++        dflash_lmhead_fixture_header fixture = {};
++        std::vector<float> fixture_activations;
++        bool fixture_ready = false;
++        if (!lmhead_capture_path.empty() && !lmhead_capture_done) {
++            constexpr int32_t fixture_k = 5120;
++            constexpr int32_t fixture_n = 248320;
++            constexpr int32_t fixture_m = 6;
++            const int32_t n_vocab = llama_vocab_n_tokens(llama_model_get_vocab(llama_get_model(ctx_dft)));
++            if (n_seq == 1 && batch.n_tokens == fixture_m && n_embd_dec == fixture_k && n_vocab == fixture_n) {
++                std::memcpy(fixture.magic, "DFLM6V1", 8);
++                fixture.version = 1;
++                fixture.k = fixture_k;
++                fixture.n = fixture_n;
++                fixture.m = fixture_m;
++                fixture_activations.resize((size_t) fixture_m * fixture_k);
++                fixture_ready = true;
++                for (int32_t row = 0; row < fixture_m; ++row) {
++                    const float * activation = llama_get_embeddings_ith(ctx_dft, row);
++                    const float * logits = llama_get_logits_ith(ctx_dft, row);
++                    if (activation == nullptr || logits == nullptr) {
++                        fixture_ready = false;
++                        break;
++                    }
++                    std::memcpy(fixture_activations.data() + (size_t) row * fixture_k,
++                            activation, (size_t) fixture_k * sizeof(float));
++                    if (row > 0) {
++                        dflash_lmhead_fixture_top1 best{-std::numeric_limits<float>::infinity(), 0};
++                        for (int32_t id = 0; id < fixture_n; ++id) {
++                            if (logits[id] > best.value || (logits[id] == best.value && id < best.id)) {
++                                best = {logits[id], id};
++                            }
++                        }
++                        fixture.reference[row - 1] = best;
++                    }
++                }
++            } else {
++                SPC_WRN("LM-head fixture skipped: need n_seq=1 M=6 K=5120 N=248320, got n_seq=%u M=%d K=%d N=%d\n",
++                        n_seq, batch.n_tokens, n_embd_dec, n_vocab);
++                lmhead_capture_done = true;
++            }
++        }
+ 
+         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) n_seq; ++seq_id) {
+             if (i_block_beg[seq_id] < 0) {
+@@ -1160,6 +1426,17 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+ 
+             auto & result = *dp.result;
+ 
++            if (have_top1_ids && seq_id == 0 && beg == 0 && n_block_tokens == 6) {
++                for (int32_t i = 1; i < n_block_tokens; ++i) {
++                    const llama_token id = top1_ids[i - 1];
++                    LOG_DBG(" - seq_id %d, fused top-1, pos %3d: %6d '%s'\n",
++                            seq_id, i - 1, id, common_token_to_piece(ctx_dft, id).c_str());
++                    common_sampler_accept(smpl, id, true);
++                    result.push_back(id);
++                }
++                continue;
++            }
++
+             // greedily read the predicted block at this sequence's noise positions 1..n_block_tokens-1
+             for (int32_t i = 1; i < n_block_tokens; ++i) {
+                 common_sampler_sample(smpl, ctx_dft, beg + i, true);
+@@ -1174,6 +1451,10 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+ 
+                 const llama_token id = cur_p->data[0].id;
+ 
++                if (fixture_ready && seq_id == 0 && i <= 5) {
++                    fixture.sampled[i - 1] = id;
++                }
++
+                 if (cur_p->data[0].p < params.p_min) {
+                     break;
+                 }
+@@ -1187,6 +1468,24 @@ struct common_speculative_impl_draft_dflash : public common_speculative_impl {
+                 result.clear();
+             }
+         }
++        if (fixture_ready) {
++            lmhead_capture_done = true;
++            if (dflash_write_lmhead_fixture(lmhead_capture_path, fixture, fixture_activations)) {
++                SPC_INF("captured DFlash LM-head fixture path=%s rows=6 stride=5120 dtype=f32 sampled_rows=1..5\n",
++                        lmhead_capture_path.c_str());
++            }
++        }
++        if (capture_this_decode) {
++            llama_set_embeddings(ctx_dft, false);
++        }
++        if (cycle_timing) {
++            SPC_INF("[DFLASH-CYCLE] phase=draft_block width=%d build_us=%" PRId64
++                    " decode_us=%" PRId64 " sample_us=%" PRId64 "\n",
++                    batch.n_tokens,
++                    t_build_end - t_build_start,
++                    t_decode_end - t_build_end,
++                    ggml_time_us() - t_decode_end);
++        }
+     }
+ 
+     void accept(llama_seq_id /*seq_id*/, uint16_t /*n_accepted*/, bool /*is_other*/) override {
+@@ -1217,11 +1516,14 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+     int32_t n_mtp_layers  = 1;
+     bool    is_mem_shared = false;   // gemma4
+     bool    chain_heads   = false;   // derived in the ctor: n_mtp_layers > 1 && !is_mem_shared
++    bool    fused_top1_host_boundary = false;
++    bool    device_unroll = false;
+ 
+     // Per-sequence cross-batch carryover: pair (h_p, x_{p+1}) at MTP pos p+1.
+     // The last h-row of one process() call needs the first token of the NEXT
+     // call to pair with, so it's stashed here until that next call fires.
+     std::vector<std::vector<float>> pending_h;   // [n_seq][n_embd]
++    std::vector<std::vector<float>> fused_h;     // top-1 extraction scratch [n_seq][n_embd]
+ 
+     std::vector<int32_t> i_batch_beg;
+     std::vector<int32_t> i_batch_end;
+@@ -1293,6 +1595,22 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         is_mem_shared = llama_get_ctx_other(ctx_dft) == ctx_tgt;
+         chain_heads   = n_mtp_layers > 1 && !is_mem_shared;
++        fused_top1_host_boundary = this->params.backend_sampling &&
++                std::getenv("LLAMA_MTP_FUSED_TOP1_HOST_BOUNDARY") != nullptr &&
++                std::strcmp(std::getenv("LLAMA_MTP_FUSED_TOP1_HOST_BOUNDARY"), "0") != 0;
++
++        device_unroll = this->params.backend_sampling && this->params.p_min == 0.0f &&
++                n_seq == 1 && !chain_heads && !is_mem_shared && this->params.n_max == 3 &&
++                std::getenv("LLAMA_MTP_DEVICE_UNROLL") != nullptr &&
++                std::strcmp(std::getenv("LLAMA_MTP_DEVICE_UNROLL"), "0") != 0;
++
++        if (device_unroll && !llama_mtp_staging_enable(ctx_dft, this->params.n_max)) {
++            SPC_WRN("%s", "device-resident MTP staging unavailable; keeping host draft loop\n");
++            device_unroll = false;
++        }
++
++        SPC_TRC("- fused_top1_host_boundary=%d device_unroll=%d\n",
++                (int) fused_top1_host_boundary, (int) device_unroll);
+ 
+         if (chain_heads) {
+             this->params.n_max = std::min(this->params.n_max, n_mtp_layers);
+@@ -1304,6 +1622,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+         }
+ 
+         pending_h.assign(n_seq, std::vector<float>(n_embd, 0.0f));
++        fused_h.assign(n_seq, std::vector<float>(n_embd));
+ 
+         i_last.assign(n_seq, -1);
+         i_batch_beg.assign(n_seq, -1);
+@@ -1315,6 +1634,9 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+     ~common_speculative_impl_draft_mtp() override {
+         auto * ctx_dft = this->params.ctx_dft;
++        if (device_unroll && ctx_dft) {
++            llama_mtp_staging_disable(ctx_dft);
++        }
+         for (llama_seq_id seq_id = 0; seq_id < (llama_seq_id) backend_chains.size(); ++seq_id) {
+             if (backend_chains[seq_id] == nullptr) {
+                 continue;
+@@ -1503,6 +1825,73 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+         int i = 0;
+ 
++        // Qwen's single-head MTP is autoregressive, but at p_min=0 the fixed
++        // three steps do not require a host decision between submissions.
++        // Persist candidate-0 and h_nextn on the backend, feed them directly
++        // into the next M=1 graph, then materialize all candidates after one
++        // final synchronization. The host token/embedding rows below are
++        // deliberately poisoned placeholders: the graph input must consume
++        // the armed backend stage or fail explicitly.
++        if (device_unroll && n_drafting == 1) {
++            constexpr llama_seq_id seq_id = 0;
++            auto & dp = dparams[seq_id];
++            auto & result = *dp.result;
++            std::array<llama_token, 3> staged_tokens = { LLAMA_TOKEN_NULL, LLAMA_TOKEN_NULL, LLAMA_TOKEN_NULL };
++            std::array<std::vector<float>, 3> staged_h = {
++                std::vector<float>(n_embd), std::vector<float>(n_embd), std::vector<float>(n_embd)
++            };
++
++            bool ok = true;
++            for (int step = 0; step < 3; ++step) {
++                if (!llama_mtp_staging_set_step(ctx_dft, step) ||
++                        (step > 0 && !llama_mtp_staging_use_as_input(ctx_dft, seq_id, step - 1))) {
++                    SPC_ERR("failed to arm device MTP staging at step %d\n", step);
++                    ok = false;
++                    break;
++                }
++
++                const int ret = llama_decode(ctx_dft, batch);
++                if (ret != 0) {
++                    SPC_ERR("device-unrolled llama_decode[%d] returned %d\n", step, ret);
++                    ok = false;
++                    break;
++                }
++
++                if (step + 1 < 3) {
++                    common_batch_clear(batch);
++                    common_batch_add(batch, dp.id_last, dp.n_past + step + 1, { seq_id }, true);
++                    std::memset(batch.embd, 0xA5, row_bytes);
++                    i_last[seq_id] = 0;
++                }
++            }
++
++            if (ok) {
++                for (int step = 0; step < 3; ++step) {
++                    ok = llama_mtp_staging_read_async(ctx_dft, seq_id, step,
++                            &staged_tokens[step], nullptr, staged_h[step].data(), n_embd) && ok;
++                }
++                ok = ok && llama_mtp_staging_synchronize(ctx_dft);
++            }
++
++            if (ok) {
++                auto * smpl = smpls[seq_id].get();
++                for (const llama_token id : staged_tokens) {
++                    if (id == LLAMA_TOKEN_NULL) {
++                        ok = false;
++                        break;
++                    }
++                    common_sampler_accept(smpl, id, true);
++                    result.push_back(id);
++                }
++            }
++
++            if (!ok) {
++                SPC_ERR("%s", "device-unrolled MTP3 failed; no host fallback is allowed after KV mutation\n");
++                result.clear();
++            }
++            return;
++        }
++
+         while (n_drafting > 0) {
+             // each step decodes under a different head, i.e. a different decoder layer, and
+             // KV is per layer. process() filled this layer's KV only for positions < n_past
+@@ -1520,7 +1909,13 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 llama_set_nextn_layer_offset(ctx_dft, i);
+             }
+ 
++            const int n_tokens_step = batch.n_tokens;
++            const int64_t t_decode_start = mtp_cycle_timing_enabled() ? ggml_time_us() : 0;
+             int ret = llama_decode(ctx_dft, batch);
++            if (mtp_cycle_timing_enabled()) {
++                SPC_INF("[MTP-CYCLE] phase=draft_pass step=%d width=%d decode_us=%" PRId64 "\n",
++                        i, n_tokens_step, ggml_time_us() - t_decode_start);
++            }
+             if (ret != 0) {
+                 SPC_ERR("llama_decode[%d] returned %d\n", i, ret);
+                 break;
+@@ -1537,23 +1932,38 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+                 }
+ 
+                 auto * smpl = smpls[seq_id].get();
++                llama_token fused_id = LLAMA_TOKEN_NULL;
++                float fused_p = 0.0f;
++                const float * h_row = nullptr;
++                const llama_token_data_array * cur_p = nullptr;
++
++                if (fused_top1_host_boundary) {
++                    if (!llama_mtp_get_top1_hidden(ctx_dft, i_last[seq_id],
++                                &fused_id, &fused_p, fused_h[seq_id].data(), n_embd)) {
++                        SPC_ERR("fused MTP top-1 extraction unavailable at draft step %d\n", i);
++                        drafting[seq_id] = false;
++                        n_drafting--;
++                        continue;
++                    }
++                    h_row = fused_h[seq_id].data();
++                } else {
++                    common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
++                    h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
++                    cur_p = common_sampler_get_candidates(smpl, true);
++                }
+ 
+-                common_sampler_sample(smpl, ctx_dft, i_last[seq_id], true);
+-                const float * h_row = llama_get_embeddings_nextn_ith(ctx_dft, i_last[seq_id]);
+-
+-                const auto * cur_p = common_sampler_get_candidates(smpl, true);
+-
+-                for (int k = 0; k < std::min(3, (int) cur_p->size); ++k) {
++                for (int k = 0; cur_p && k < std::min(3, (int) cur_p->size); ++k) {
+                     SPC_DBG(" - seq_id %d, draft candidate %3d, pos %3d: %6d (%8.3f) '%s'\n",
+                             seq_id, k, i, cur_p->data[k].id, cur_p->data[k].p,
+                             common_token_to_piece(ctx_dft, cur_p->data[k].id).c_str());
+                 }
+ 
+                 // add drafted token for each sequence
+-                const llama_token id = cur_p->data[0].id;
++                const llama_token id = fused_top1_host_boundary ? fused_id : cur_p->data[0].id;
++                const float p_top1 = fused_top1_host_boundary ? fused_p : cur_p->data[0].p;
+ 
+                 // only collect very high-confidence draft tokens
+-                if (cur_p->data[0].p < params.p_min) {
++                if (p_top1 < params.p_min) {
+                     drafting[seq_id] = false;
+                     n_drafting--;
+ 
+@@ -1567,6 +1977,7 @@ struct common_speculative_impl_draft_mtp : public common_speculative_impl {
+ 
+                 result.push_back(id);
+ 
++
+                 if (params.n_max <= (int) result.size()) {
+                     drafting[seq_id] = false;
+                     n_drafting--;
+@@ -2485,18 +2896,32 @@ common_speculative_draft_params & common_speculative_get_draft_params(
+     return spec->dparams[seq_id];
+ }
+ 
+-void common_speculative_begin(common_speculative * spec, llama_seq_id seq_id, const llama_tokens & prompt) {
++void common_speculative_begin(common_speculative * spec, llama_seq_id seq_id, const llama_tokens & prompt,
++        bool trace_request_eligible) {
+     if (spec == nullptr) {
+         return;
+     }
+ 
+     for (auto & impl : spec->impls) {
++        if (!trace_request_eligible && impl->trace_enabled()) {
++            impl->end(seq_id, false);
++            throw std::runtime_error("DFlash target trace request rejected: cache_prompt must be false and sampling must be greedy");
++        }
+         common_time_meas tm(impl->t_begin_us, !impl->gen_perf);
+         impl->begin(seq_id, prompt);
+         impl->n_call_begin++;
+     }
+ }
+ 
++void common_speculative_end(common_speculative * spec, llama_seq_id seq_id, bool complete) {
++    if (spec == nullptr) {
++        return;
++    }
++    for (auto & impl : spec->impls) {
++        impl->end(seq_id, complete);
++    }
++}
++
+ bool common_speculative_process(common_speculative * spec, const llama_batch & batch) {
+     bool result = true;
+ 
+diff --git a/common/speculative.h b/common/speculative.h
+index 062bf2093..904bac77c 100644
+--- a/common/speculative.h
++++ b/common/speculative.h
+@@ -53,7 +53,16 @@ struct common_speculative_draft_params {
+ common_speculative_draft_params & common_speculative_get_draft_params(common_speculative * spec, llama_seq_id seq_id);
+ 
+ // optionally call once at the beginning of a new generation
+-void common_speculative_begin(common_speculative * spec, llama_seq_id seq_id, const llama_tokens & prompt);
++void common_speculative_begin(common_speculative * spec, llama_seq_id seq_id, const llama_tokens & prompt,
++        bool trace_request_eligible = true);
++
++// Must be set by the server before speculative initialization. It is ignored
++// unless LLAMA_DFLASH_TARGET_TRACE_CAPTURE_DIR is nonempty.
++void common_speculative_set_dflash_trace_server_contract(
++        int32_t parallel, int32_t ctx_checkpoints, int32_t reasoning);
++
++// Idempotent request lifecycle boundary for diagnostic trace publication.
++void common_speculative_end(common_speculative * spec, llama_seq_id seq_id, bool complete);
+ 
+ // process the batch and update the internal state of the speculative context
+ bool common_speculative_process(common_speculative * spec, const llama_batch & batch);
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index 4826ca5d0..89678b287 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -11,6 +11,7 @@
+ #include "common.h"
+ #include "fit.h"
+ #include "llama.h"
++#include "src/llama-ext.h"
+ #include "log.h"
+ #include "sampling.h"
+ #include "speculative.h"
+@@ -18,10 +19,12 @@
+ #include "mtmd-helper.h"
+ 
+ #include <algorithm>
++#include <array>
+ #include <cstddef>
+ #include <cinttypes>
+ #include <exception>
+ #include <memory>
++#include <sstream>
+ #include <filesystem>
+ #include <utility>
+ #include <fstream>
+@@ -919,6 +922,15 @@ private:
+     std::vector<server_slot> slots;
+ 
+     int trace = 0;
++    bool mtp_cycle_timing = false;
++    bool dflash_target_verify_top1 = false;
++    uint8_t dflash_target_verify_top1_mode = 0;
++    bool dflash_target_verify_force_read_fail = false;
++    bool dflash_target_verify_compare = false;
++    bool dflash_target_verify_fused_no_logits = false;
++    uint64_t dflash_target_verify_reads = 0;
++    uint64_t dflash_target_verify_fallbacks = 0;
++    uint64_t dflash_target_verify_compare_mismatches = 0;
+     int slots_debug = 0;
+     int n_empty_consecutive = 0;
+ 
+@@ -1279,6 +1291,8 @@ private:
+         // try speculative decoding
+         if (ctx_tgt_seq_rm_type != COMMON_CONTEXT_SEQ_RM_TYPE_NO) {
+             try {
++                common_speculative_set_dflash_trace_server_contract(
++                        params_base.n_parallel, params_base.n_ctx_checkpoints, params_base.enable_reasoning);
+                 spec.reset(common_speculative_init(params_base.speculative, params_base.n_parallel));
+             } catch (const std::exception & e) {
+                 SRV_ERR("failed to initialize speculative decoding context: %s\n", e.what());
+@@ -1312,6 +1326,7 @@ private:
+             SLT_TRC(slot, "new slot, n_ctx = %d\n", slot.n_ctx);
+ 
+             slot.callback_on_release = [this](int id_slot) {
++                common_speculative_end(spec.get(), id_slot, false);
+                 queue_tasks.pop_deferred_task(id_slot);
+             };
+ 
+@@ -1327,6 +1342,36 @@ private:
+             }
+         }
+ 
++        {
++            const char * LLAMA_MTP_CYCLE_TIMING = getenv("LLAMA_MTP_CYCLE_TIMING");
++            mtp_cycle_timing = LLAMA_MTP_CYCLE_TIMING && atoi(LLAMA_MTP_CYCLE_TIMING) != 0;
++
++            if (mtp_cycle_timing) {
++                SRV_WRN("%s", "LLAMA_MTP_CYCLE_TIMING = 1 (diagnostic-only host phase timing)\n");
++            }
++        }
++
++        {
++            const char * enabled = getenv("LLAMA_DFLASH_TARGET_VERIFY_TOP1");
++            dflash_target_verify_top1 = enabled && atoi(enabled) != 0;
++            const char * force_fail = getenv("LLAMA_DFLASH_TARGET_VERIFY_TOP1_FORCE_READ_FAIL");
++            dflash_target_verify_force_read_fail = force_fail && atoi(force_fail) != 0;
++            const char * compare = getenv("LLAMA_DFLASH_TARGET_VERIFY_TOP1_COMPARE");
++            dflash_target_verify_compare = compare && atoi(compare) != 0;
++            const char * fused = getenv("GGML_SYCL_XE2_Q6_TARGET_M6_TOP1");
++            dflash_target_verify_fused_no_logits = fused && atoi(fused) != 0 &&
++                    !dflash_target_verify_compare && !dflash_target_verify_force_read_fail;
++            if (dflash_target_verify_top1) {
++                SRV_WRN("%s", "LLAMA_DFLASH_TARGET_VERIFY_TOP1 = 1 (guarded raw/fixed-EOG-mask M=6 target ids)\n");
++            }
++            if (dflash_target_verify_force_read_fail) {
++                SRV_WRN("%s", "diagnostic one-shot target compact read failure enabled\n");
++            }
++            if (dflash_target_verify_compare) {
++                SRV_WRN("%s", "diagnostic target compact/full-logit same-decode comparison enabled\n");
++            }
++        }
++
+         {
+             const char * LLAMA_SERVER_SLOTS_DEBUG = getenv("LLAMA_SERVER_SLOTS_DEBUG");
+             slots_debug = LLAMA_SERVER_SLOTS_DEBUG ? atoi(LLAMA_SERVER_SLOTS_DEBUG) : 0;
+@@ -1683,6 +1728,56 @@ private:
+         return output;
+     }
+ 
++    uint8_t get_dflash_target_verify_top1_mode(
++            const server_slot * slot,
++            const llama_batch & batch_view,
++            int32_t off) const {
++        const bool has_dflash = std::find(params_base.speculative.types.begin(),
++                params_base.speculative.types.end(), COMMON_SPECULATIVE_TYPE_DRAFT_DFLASH) !=
++                params_base.speculative.types.end();
++        const bool only_none_or_dflash = std::all_of(params_base.speculative.types.begin(),
++                params_base.speculative.types.end(), [](common_speculative_type type) {
++                    return type == COMMON_SPECULATIVE_TYPE_NONE ||
++                            type == COMMON_SPECULATIVE_TYPE_DRAFT_DFLASH;
++                });
++        if (dflash_target_verify_compare && slot && slot->task && !slot->spec_draft.empty()) {
++            const int sampler_mode = (int) common_sampler_dflash_target_argmax_mode(slot->task->params.sampling);
++            SRV_INF("[DFLASH-TARGET-TOP1] guard batch=%d off=%d np=%d type=%d post_probs=%d lora=%zu"
++                    " draft=%zu spec_i=%zu logits=%p spec_types=%zu spec_type0=%d nmax=%d nmin=%d"
++                    " pmin=%.9g sampler_mode=%d\n",
++                    batch_view.n_tokens, off, params_base.n_parallel, (int) slot->task->type,
++                    (int) slot->task->params.post_sampling_probs, slot->lora.size(),
++                    slot->spec_draft.size(), slot->spec_i_batch.size(), (void *) batch_view.logits,
++                    params_base.speculative.types.size(),
++                    params_base.speculative.types.empty() ? -1 : (int) params_base.speculative.types[0],
++                    params_base.speculative.draft.n_max, params_base.speculative.draft.n_min,
++                    params_base.speculative.draft.p_min, sampler_mode);
++        }
++        if (!dflash_target_verify_top1 || !slot || !slot->task || params_base.n_parallel != 1 ||
++                slot->task->type != SERVER_TASK_TYPE_COMPLETION || slot->task->params.post_sampling_probs ||
++                !slot->lora.empty() || slot->spec_draft.size() != 5 || slot->spec_i_batch.size() != 6 ||
++                batch_view.n_tokens != 6 || !batch_view.logits ||
++                !has_dflash || !only_none_or_dflash ||
++                params_base.speculative.draft.n_max != 5 || params_base.speculative.draft.n_min != 0 ||
++                params_base.speculative.draft.p_min != 0.0f) {
++            return COMMON_DFLASH_TARGET_ARGMAX_DISABLED;
++        }
++
++        const auto mode = common_sampler_dflash_target_argmax_mode(slot->task->params.sampling);
++        if (mode == COMMON_DFLASH_TARGET_ARGMAX_DISABLED) {
++            return mode;
++        }
++
++        for (int32_t i = 0; i < batch_view.n_tokens; ++i) {
++            if (!batch_view.logits[i] || batch_view.n_seq_id[i] != 1 ||
++                    batch_view.seq_id[i][0] != slot->id || slot->spec_i_batch[(size_t) i] != off + i) {
++                return COMMON_DFLASH_TARGET_ARGMAX_DISABLED;
++            }
++        }
++
++        return (uint8_t) mode;
++    }
++
+     bool launch_slot_with_task(server_slot & slot, server_task && task) {
+         // process per-request lora adapters
+         if (!task.params.lora.empty()) {
+@@ -2070,6 +2165,7 @@ private:
+     }
+ 
+     void send_final_response(server_slot & slot) {
++        common_speculative_end(spec.get(), slot.id, true);
+         auto res = std::make_unique<server_task_result_cmpl_final>();
+ 
+         res->id      = slot.task->id;
+@@ -2939,7 +3035,12 @@ private:
+ 
+         // generate the actual drafts (if any)
+         {
++            const int64_t t_draft_start = mtp_cycle_timing ? ggml_time_us() : 0;
+             common_speculative_draft(spec.get());
++            if (mtp_cycle_timing && !drafting.empty()) {
++                SRV_INF("[MTP-CYCLE] phase=draft_prepare slots=%zu host_us=%" PRId64 "\n",
++                        drafting.size(), ggml_time_us() - t_draft_start);
++            }
+         }
+ 
+         // make checkpoints if needed
+@@ -3564,7 +3665,12 @@ private:
+             n_empty_consecutive = 0;
+         }
+ 
++        dflash_target_verify_top1_mode = get_dflash_target_verify_top1_mode(slot_batched, batch_view, off);
++        llama_set_dflash_verify_top1_mode(ctx_tgt, dflash_target_verify_top1_mode);
++
++        const int64_t t_target_start = mtp_cycle_timing ? ggml_time_us() : 0;
+         const int ret = llama_decode(ctx_tgt, batch_view);
++        const int64_t t_target_end = mtp_cycle_timing ? ggml_time_us() : 0;
+ 
+         metrics.on_decoded(slots);
+ 
+@@ -3621,12 +3727,17 @@ private:
+         // TODO: avoid restoring the draft context and re-evaluating the drafted tokens when not needed [TAG_SPEC_AVOID_DRAFT_REEVAL]
+         //       for now, always re-evaluate for simplicity
+         //       ref: https://github.com/ggml-org/llama.cpp/pull/22728#issuecomment-4400925384
++        const int64_t t_spec_process_start = mtp_cycle_timing ? ggml_time_us() : 0;
+         if (!common_speculative_process(spec.get(), batch_view)) {
+             SRV_ERR("%s", "failed to process speculative batch\n");
+ 
+             // TODO: handle error
+             throw std::runtime_error("failed to process speculative batch");
+         }
++        if (mtp_cycle_timing) {
++            SRV_INF("[MTP-CYCLE] phase=target_decode width=%d target_us=%" PRId64 " spec_process_us=%" PRId64 "\n",
++                    batch_view.n_tokens, t_target_end - t_target_start, ggml_time_us() - t_spec_process_start);
++        }
+ 
+         // handle `n_cmpl > 1` tasks - when the main prompt is processed, activate all child tasks too
+         for (auto & slot : slots) {
+@@ -3710,7 +3821,11 @@ private:
+                 slot.state = SLOT_STATE_GENERATING;
+ 
+                 if (slot.can_speculate()) {
+-                    common_speculative_begin(spec.get(), slot.id, slot.prompt.tokens.get_text_tokens());
++                    const auto & sampling = slot.task->params.sampling;
++                    const bool trace_request_eligible = !slot.task->params.cache_prompt &&
++                            sampling.temp == 0.0f && sampling.dynatemp_range == 0.0f;
++                    common_speculative_begin(spec.get(), slot.id, slot.prompt.tokens.get_text_tokens(),
++                            trace_request_eligible);
+                 }
+             } else if (slot.state != SLOT_STATE_GENERATING) {
+                 return;
+@@ -3778,6 +3893,7 @@ private:
+ 
+             // save the original draft size
+             const size_t n_draft = slot.spec_draft.size();
++            const int64_t t_accept_start = mtp_cycle_timing ? ggml_time_us() : 0;
+ 
+             GGML_ASSERT(n_draft > 0);
+ 
+@@ -3787,7 +3903,96 @@ private:
+                 common_sampler_ptr smpl_save(common_sampler_clone(slot.smpl.get()));
+ 
+                 GGML_ASSERT(slot.spec_i_batch.size() == n_draft + 1);
+-                auto accepted = common_sampler_sample_and_accept_n(slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                std::vector<llama_token> accepted;
++                if (dflash_target_verify_top1_mode != COMMON_DFLASH_TARGET_ARGMAX_DISABLED) {
++                    std::array<llama_token, 6> target_ids = {};
++                    const bool force_fail = dflash_target_verify_force_read_fail;
++                    dflash_target_verify_force_read_fail = false;
++                    const bool have_ids = !force_fail && llama_dflash_verify_top1_read(slot.ctx_tgt, target_ids.data());
++
++                    if (have_ids) {
++                        ++dflash_target_verify_reads;
++                        if (dflash_target_verify_reads == 1) {
++                            SRV_INF("[DFLASH-TARGET-TOP1] first compact read mode=%u ids=%d,%d,%d,%d,%d,%d\n",
++                                    (unsigned) dflash_target_verify_top1_mode,
++                                    target_ids[0], target_ids[1], target_ids[2],
++                                    target_ids[3], target_ids[4], target_ids[5]);
++                        }
++
++                        common_sampler_ptr smpl_compare;
++                        if (dflash_target_verify_compare) {
++                            smpl_compare.reset(common_sampler_clone(slot.smpl.get()));
++                            if (!llama_dflash_verify_logits_fallback(slot.ctx_tgt)) {
++                                throw std::runtime_error("DFlash target compact comparison could not copy full logits");
++                            }
++                        }
++
++                        accepted = common_sampler_accept_dflash_target_ids(
++                                slot.smpl.get(), target_ids.data(), slot.spec_draft);
++
++                        if (smpl_compare) {
++                            const auto ordinary = common_sampler_sample_and_accept_n(
++                                    smpl_compare.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                            if (ordinary != accepted) {
++                                ++dflash_target_verify_compare_mismatches;
++                                size_t j = 0;
++                                while (j < ordinary.size() && j < accepted.size() && ordinary[j] == accepted[j]) {
++                                    ++j;
++                                }
++                                float compact_logit = NAN;
++                                float ordinary_logit = NAN;
++                                if (j < slot.spec_i_batch.size() && j < ordinary.size() && j < 6) {
++                                    const float * logits = llama_get_logits_ith(slot.ctx_tgt, slot.spec_i_batch[j]);
++                                    if (logits) {
++                                        compact_logit = logits[target_ids[j]];
++                                        ordinary_logit = logits[ordinary[j]];
++                                    }
++                                }
++                                auto ids_string = [](const std::vector<llama_token> & ids) {
++                                    std::ostringstream out;
++                                    for (size_t i = 0; i < ids.size(); ++i) {
++                                        if (i) out << ',';
++                                        out << ids[i];
++                                    }
++                                    return out.str();
++                                };
++                                SRV_ERR("[DFLASH-TARGET-TOP1] compare mismatch count=%" PRIu64
++                                        " row=%zu compact=[%s] ordinary=[%s] compact_logit=%.9g ordinary_logit=%.9g\n",
++                                        dflash_target_verify_compare_mismatches, j,
++                                        ids_string(accepted).c_str(), ids_string(ordinary).c_str(),
++                                        compact_logit, ordinary_logit);
++                            }
++                        }
++
++                        if (dflash_target_verify_compare || (dflash_target_verify_reads % 64) == 0) {
++                            SRV_INF("[DFLASH-TARGET-TOP1] reads=%" PRIu64 " fallbacks=%" PRIu64
++                                    " compare_mismatches=%" PRIu64 "\n",
++                                    dflash_target_verify_reads, dflash_target_verify_fallbacks,
++                                    dflash_target_verify_compare_mismatches);
++                        }
++                    } else {
++                        if (dflash_target_verify_fused_no_logits && !force_fail) {
++                            throw std::runtime_error(
++                                    "fused DFlash target compact read failed; full logits were not materialized");
++                        }
++                        // Stage one retains full logits on device. Copy them
++                        // only after a compact read failure, disable the compact
++                        // path, and execute the unchanged CPU sampler contract.
++                        if (!llama_dflash_verify_logits_fallback(slot.ctx_tgt)) {
++                            throw std::runtime_error("DFlash target compact read failed and full-logit fallback was unavailable");
++                        }
++                        ++dflash_target_verify_fallbacks;
++                        SRV_ERR("%s", "DFlash target compact read failed; using ordinary full-logit sampler and disabling compact mode\n");
++                        dflash_target_verify_top1 = false;
++                        dflash_target_verify_top1_mode = COMMON_DFLASH_TARGET_ARGMAX_DISABLED;
++                        llama_set_dflash_verify_top1_mode(slot.ctx_tgt, dflash_target_verify_top1_mode);
++                        accepted = common_sampler_sample_and_accept_n(
++                                slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                    }
++                } else {
++                    accepted = common_sampler_sample_and_accept_n(
++                            slot.smpl.get(), slot.ctx_tgt, slot.spec_i_batch, slot.spec_draft);
++                }
+                 slot.spec_i_batch.clear();
+ 
+                 GGML_ASSERT(accepted.size() >= 1);
+@@ -3840,6 +4045,8 @@ private:
+                 slot.spec_draft = std::move(accepted);
+             }
+ 
++            const int64_t t_accept_end = mtp_cycle_timing ? ggml_time_us() : 0;
++
+             const int64_t t_now = ggml_time_us();
+ 
+             const auto ids = std::move(slot.spec_draft);
+@@ -3890,6 +4097,12 @@ private:
+                 }
+             }
+ 
++            if (mtp_cycle_timing) {
++                SRV_INF("[MTP-CYCLE] phase=accept_commit slot=%d verifier_width=%zu drafted=%zu accepted=%zu emitted=%zu accept_us=%" PRId64 " commit_us=%" PRId64 "\n",
++                        slot.id, n_draft + 1, n_draft, ids.size() - 1, ids.size(),
++                        t_accept_end - t_accept_start, ggml_time_us() - t_accept_end);
++            }
++
+             slot.print_timings_tg();
+ 
+             SLT_DBG(slot, "accepted %d/%d draft tokens, new n_tokens = %d\n", (int) ids.size() - 1, (int) n_draft, slot.prompt.n_tokens());
+diff --git a/common/dflash-target-trace.h b/common/dflash-target-trace.h
+new file mode 100644
+index 000000000..2a9adeaa7
+--- /dev/null
++++ b/common/dflash-target-trace.h
+@@ -0,0 +1,49 @@
++#pragma once
++
++#include "llama.h"
++
++#include <cstdint>
++#include <memory>
++#include <string>
++#include <vector>
++
++struct dflash_target_trace_config {
++    std::string capture_dir;
++    std::string target_model_sha256;
++    std::string draft_model_sha256;
++    std::string runtime_commit;
++    std::string runtime_dirty_patch_sha256;
++    std::vector<int32_t> target_layer_ids;
++    uint32_t n_seq = 0;
++    int32_t n_max = -1;
++    int32_t n_min = -1;
++    float p_min = -1.0f;
++    int32_t hidden_size = 0;
++    bool draft_cache_f16 = false;
++    int32_t parallel = 0;
++    int32_t ctx_checkpoints = -1;
++    int32_t reasoning = -1;
++};
++
++class dflash_target_trace {
++public:
++    static std::unique_ptr<dflash_target_trace> create(const dflash_target_trace_config & config);
++    ~dflash_target_trace();
++
++    dflash_target_trace(const dflash_target_trace &) = delete;
++    dflash_target_trace & operator=(const dflash_target_trace &) = delete;
++
++    // Features are row-major [n_rows, 5, 5120] F32. Conversion is synchronous.
++    bool process(llama_seq_id seq_id, const llama_token * tokens, const llama_pos * positions,
++            const float * features, int32_t n_rows);
++    bool begin(llama_seq_id seq_id, const std::vector<llama_token> & prompt);
++    void end(llama_seq_id seq_id, bool complete);
++
++    bool active() const;
++    const std::string & error() const;
++
++private:
++    struct impl;
++    explicit dflash_target_trace(std::unique_ptr<impl> pimpl);
++    std::unique_ptr<impl> pimpl;
++};
+diff --git a/common/dflash-target-trace.cpp b/common/dflash-target-trace.cpp
+new file mode 100644
+index 000000000..b7a91eca1
+--- /dev/null
++++ b/common/dflash-target-trace.cpp
+@@ -0,0 +1,243 @@
++#include "dflash-target-trace.h"
++
++#include <nlohmann/json.hpp>
++
++#include <array>
++#include <algorithm>
++#include <cerrno>
++#include <cstdio>
++#include <cstring>
++#include <filesystem>
++#include <fstream>
++#include <iomanip>
++#include <sstream>
++#include <stdexcept>
++#include <system_error>
++#include <unistd.h>
++#include <fcntl.h>
++
++namespace fs = std::filesystem;
++using json = nlohmann::ordered_json;
++
++namespace {
++
++constexpr uint32_t TRACE_VERSION = 1;
++constexpr uint32_t TRACE_HEADER_BYTES = 256;
++constexpr uint32_t TRACE_COMPLETE = 1;
++constexpr uint32_t TRACE_DTYPE_BF16 = 1;
++constexpr uint32_t TRACE_PROMPT = 1;
++constexpr uint32_t TRACE_GENERATED = 2;
++constexpr size_t TRACE_N_LAYERS = 5;
++constexpr size_t TRACE_HIDDEN = 5120;
++constexpr size_t TRACE_VALUES = TRACE_N_LAYERS * TRACE_HIDDEN;
++constexpr size_t TRACE_ROW_BYTES = 16 + TRACE_VALUES * sizeof(uint16_t);
++constexpr size_t TRACE_MAX_BUFFER = 256ull * 1024 * 1024;
++constexpr std::array<int32_t, TRACE_N_LAYERS> TRACE_LAYERS = { 2, 17, 32, 47, 62 };
++
++static bool is_hex(const std::string & s, size_t n) {
++    if (s.size() != n) return false;
++    for (char c : s) {
++        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
++    }
++    return true;
++}
++
++static std::vector<uint8_t> unhex(const std::string & s) {
++    std::vector<uint8_t> out(s.size()/2);
++    for (size_t i = 0; i < out.size(); ++i) {
++        out[i] = (uint8_t) std::stoul(s.substr(2*i, 2), nullptr, 16);
++    }
++    return out;
++}
++
++static void put_u32(std::array<uint8_t, TRACE_HEADER_BYTES> & h, size_t off, uint32_t v) {
++    for (int i = 0; i < 4; ++i) h[off+i] = (uint8_t) (v >> (8*i));
++}
++static void put_u64(std::array<uint8_t, TRACE_HEADER_BYTES> & h, size_t off, uint64_t v) {
++    for (int i = 0; i < 8; ++i) h[off+i] = (uint8_t) (v >> (8*i));
++}
++static void write_u32(FILE * f, uint32_t v) {
++    uint8_t b[4]; for (int i = 0; i < 4; ++i) b[i] = (uint8_t) (v >> (8*i));
++    if (std::fwrite(b, 1, 4, f) != 4) throw std::runtime_error("trace row prefix write failed");
++}
++
++// Small self-contained SHA-256 used only for finalized diagnostic payloads.
++struct sha256 {
++    uint32_t h[8] = { 0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19 };
++    uint8_t block[64] = {};
++    uint64_t bytes = 0;
++    size_t used = 0;
++    static uint32_t rotr(uint32_t x, int n) { return (x >> n) | (x << (32-n)); }
++    void transform(const uint8_t * p) {
++        static const uint32_t k[64] = {
++            0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
++            0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
++            0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
++            0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
++            0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
++            0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
++            0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
++            0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2 };
++        uint32_t w[64];
++        for (int i=0;i<16;++i) w[i]=(uint32_t(p[4*i])<<24)|(uint32_t(p[4*i+1])<<16)|(uint32_t(p[4*i+2])<<8)|p[4*i+3];
++        for (int i=16;i<64;++i) { uint32_t a=w[i-15],b=w[i-2]; w[i]=w[i-16]+(rotr(a,7)^rotr(a,18)^(a>>3))+w[i-7]+(rotr(b,17)^rotr(b,19)^(b>>10)); }
++        uint32_t a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],z=h[7];
++        for(int i=0;i<64;++i){uint32_t s1=rotr(e,6)^rotr(e,11)^rotr(e,25),ch=(e&f)^((~e)&g),t1=z+s1+ch+k[i]+w[i],s0=rotr(a,2)^rotr(a,13)^rotr(a,22),maj=(a&b)^(a&c)^(b&c),t2=s0+maj;z=g;g=f;f=e;e=d+t1;d=c;c=b;b=a;a=t1+t2;}
++        h[0]+=a;h[1]+=b;h[2]+=c;h[3]+=d;h[4]+=e;h[5]+=f;h[6]+=g;h[7]+=z;
++    }
++    void update(const uint8_t * p, size_t n) { bytes += n; while(n){size_t m=std::min(n,64-used);std::memcpy(block+used,p,m);used+=m;p+=m;n-=m;if(used==64){transform(block);used=0;}} }
++    std::string finish() { uint64_t bits=bytes*8; block[used++]=0x80; if(used>56){while(used<64)block[used++]=0;transform(block);used=0;}while(used<56)block[used++]=0;for(int i=7;i>=0;--i)block[used++]=(uint8_t)(bits>>(8*i));transform(block);std::ostringstream s;s<<std::hex<<std::setfill('0');for(uint32_t v:h)s<<std::setw(8)<<v;return s.str(); }
++};
++
++static std::string sha256_file(const fs::path & path) {
++    std::ifstream in(path, std::ios::binary); if (!in) throw std::runtime_error("cannot hash trace payload");
++    sha256 hash; std::array<char,1<<20> buf; while(in){in.read(buf.data(),buf.size()); auto n=in.gcount(); if(n>0)hash.update((uint8_t*)buf.data(),(size_t)n);} return hash.finish();
++}
++
++static void fsync_dir(const fs::path & dir) {
++    int fd = ::open(dir.c_str(), O_RDONLY | O_DIRECTORY);
++    if (fd < 0) throw std::runtime_error("cannot open capture directory for fsync");
++    if (::fsync(fd) != 0) { int e=errno; ::close(fd); throw std::runtime_error(std::string("directory fsync failed: ")+std::strerror(e)); }
++    ::close(fd);
++}
++
++static void atomic_json(const fs::path & path, const json & value) {
++    fs::path tmp = path; tmp += ".tmp." + std::to_string((long long)::getpid());
++    std::string text = value.dump(2) + "\n";
++    FILE * f=std::fopen(tmp.c_str(),"wb"); if(!f)throw std::runtime_error("cannot create JSON temporary");
++    bool ok=std::fwrite(text.data(),1,text.size(),f)==text.size() && std::fflush(f)==0 && ::fsync(fileno(f))==0;
++    int e=errno; std::fclose(f); if(!ok){std::remove(tmp.c_str());throw std::runtime_error(std::string("cannot publish JSON: ")+std::strerror(e));}
++    if(::rename(tmp.c_str(),path.c_str())!=0){e=errno;std::remove(tmp.c_str());throw std::runtime_error(std::string("JSON rename failed: ")+std::strerror(e));}
++    fsync_dir(path.parent_path());
++}
++
++struct row {
++    int32_t token=-1, pos=-1;
++    std::vector<uint16_t> features;
++};
++
++} // namespace
++
++struct dflash_target_trace::impl {
++    dflash_target_trace_config cfg;
++    bool enabled=false, begun=false, failed=false;
++    std::string failure;
++    json control;
++    fs::path dir, claimed, tmp_payload, payload, sidecar;
++    FILE * file=nullptr;
++    std::vector<row> provisional;
++    row pending;
++    bool have_pending=false;
++    uint32_t prompt_tokens=0, rows=0;
++    std::vector<int32_t> input_ids,next_ids,positions;
++
++    explicit impl(const dflash_target_trace_config & c):cfg(c),dir(c.capture_dir) {}
++    ~impl(){ if(file)std::fclose(file); }
++
++    void fail(const std::string & why) { failed=true; failure=why; std::fprintf(stderr,"DFlash target trace aborted: %s\n",why.c_str()); }
++    void claim() {
++        fs::path next=dir/"next-request.json";
++        claimed=dir/(".claimed-"+std::to_string((long long)::getpid())+".json");
++        if (fs::exists(claimed)) throw std::runtime_error("stale claimed request control exists");
++        if(::rename(next.c_str(),claimed.c_str())!=0)throw std::runtime_error(std::string("cannot atomically claim next-request.json: ")+std::strerror(errno));
++        std::ifstream in(claimed); if(!in)throw std::runtime_error("cannot read claimed request control"); in>>control;
++        auto eq=[&](const char * k,const std::string & v){if(!control.contains(k)||control[k].get<std::string>()!=v)throw std::runtime_error(std::string("request control identity mismatch: ")+k);};
++        if(control.value("schema","")!="qwen27_dflash_native_request_control_v1")throw std::runtime_error("request control schema mismatch");
++        eq("target_model_sha256",cfg.target_model_sha256);eq("draft_model_sha256",cfg.draft_model_sha256);eq("runtime_commit",cfg.runtime_commit);eq("runtime_dirty_patch_sha256",cfg.runtime_dirty_patch_sha256);
++        uint64_t ord=control.at("ordinal").get<uint64_t>();
++        char name[64];std::snprintf(name,sizeof(name),"request-%06llu",(unsigned long long)ord);
++        payload=dir/(std::string(name)+".qdft");sidecar=dir/(std::string(name)+".json");tmp_payload=dir/("."+std::string(name)+".tmp."+std::to_string((long long)::getpid()));
++        if(fs::exists(payload)||fs::exists(sidecar))throw std::runtime_error("duplicate request ordinal already published");
++        file=std::fopen(tmp_payload.c_str(),"w+b");if(!file)throw std::runtime_error("cannot create provisional trace payload");
++        std::array<uint8_t,TRACE_HEADER_BYTES> zero{};if(std::fwrite(zero.data(),1,zero.size(),file)!=zero.size())throw std::runtime_error("cannot write provisional header");
++    }
++    void reset_success() {
++        begun=false; control=json(); claimed.clear(); tmp_payload.clear(); payload.clear(); sidecar.clear();
++        provisional.clear(); pending=row{}; have_pending=false; prompt_tokens=0; rows=0;
++        input_ids.clear(); next_ids.clear(); positions.clear();
++    }
++    std::array<uint8_t,TRACE_HEADER_BYTES> header(bool complete) {
++        std::array<uint8_t,TRACE_HEADER_BYTES> h{};std::memcpy(h.data(),"QDFTRC1\0",8);put_u32(h,8,TRACE_VERSION);put_u32(h,12,TRACE_HEADER_BYTES);put_u32(h,16,complete?TRACE_COMPLETE:0);put_u32(h,20,TRACE_DTYPE_BF16);
++        put_u64(h,24,control.at("ordinal").get<uint64_t>());put_u32(h,32,prompt_tokens);put_u32(h,36,rows);put_u32(h,40,TRACE_N_LAYERS);put_u32(h,44,TRACE_HIDDEN);
++        auto copyhex=[&](size_t off,const std::string&s){auto b=unhex(s);std::memcpy(h.data()+off,b.data(),b.size());};copyhex(48,cfg.target_model_sha256);copyhex(80,cfg.draft_model_sha256);copyhex(112,cfg.runtime_commit);copyhex(132,cfg.runtime_dirty_patch_sha256);copyhex(164,control.at("prompt_sha256").get<std::string>());
++        for(size_t i=0;i<TRACE_N_LAYERS;++i) {
++            put_u32(h,196+4*i,(uint32_t)TRACE_LAYERS[i]);
++        }
++        put_u64(h,216,(uint64_t)rows*TRACE_ROW_BYTES);
++        return h;
++    }
++    void append(const row & r,int32_t next) {
++        uint32_t flags=(uint32_t)r.pos<prompt_tokens?TRACE_PROMPT:TRACE_GENERATED;
++        write_u32(file,(uint32_t)r.token);write_u32(file,(uint32_t)next);write_u32(file,(uint32_t)r.pos);write_u32(file,flags);
++        if(std::fwrite(r.features.data(),sizeof(uint16_t),r.features.size(),file)!=r.features.size())throw std::runtime_error("trace feature write failed");
++        input_ids.push_back(r.token);next_ids.push_back(next);positions.push_back(r.pos);++rows;
++    }
++    void ingest(row && r) {
++        if(have_pending){if(r.pos!=pending.pos+1||r.token<0)throw std::runtime_error("trace input positions/tokens are not linear");append(pending,r.token);} pending=std::move(r);have_pending=true;
++    }
++};
++
++dflash_target_trace::dflash_target_trace(std::unique_ptr<impl> p):pimpl(std::move(p)){}
++dflash_target_trace::~dflash_target_trace()=default;
++
++std::unique_ptr<dflash_target_trace> dflash_target_trace::create(const dflash_target_trace_config & c) {
++    if(c.capture_dir.empty())return nullptr;
++    auto p=std::make_unique<impl>(c);
++    auto reject=[&](const std::string&w){throw std::runtime_error("DFlash trace contract rejected: "+w);};
++    if(!is_hex(c.target_model_sha256,64)||!is_hex(c.draft_model_sha256,64))reject("model SHA-256 identity absent/invalid");
++    if(!is_hex(c.runtime_commit,40)||!is_hex(c.runtime_dirty_patch_sha256,64))reject("compile-time runtime identity absent/invalid");
++    if(c.n_seq!=1||c.n_max!=0||c.n_min!=0||c.p_min!=0.0f)reject("requires n_seq=1 n_max=0 n_min=0 p_min=0");
++    if(c.hidden_size!=TRACE_HIDDEN||c.target_layer_ids.size()!=TRACE_N_LAYERS||!std::equal(c.target_layer_ids.begin(),c.target_layer_ids.end(),TRACE_LAYERS.begin()))reject("target feature shape/layers mismatch");
++    if(!c.draft_cache_f16)reject("draft K/V must both be F16");
++    if(c.parallel!=1||c.ctx_checkpoints!=0||c.reasoning!=0)reject("server requires parallel=1 checkpoints=0 reasoning=off");
++    fs::create_directories(p->dir);if(!fs::is_directory(p->dir))reject("capture directory unavailable");
++    json session={{"schema","qwen27_dflash_native_capture_session_v1"},{"capture_hook_active",true},{"capture_mode","linear_target_no_speculation"},{"capture_dir",fs::absolute(p->dir).string()},{"next_request_ordinal",0},{"target_model_sha256",c.target_model_sha256},{"draft_model_sha256",c.draft_model_sha256},{"runtime_commit",c.runtime_commit},{"runtime_dirty_patch_sha256",c.runtime_dirty_patch_sha256},{"reasoning","off"},{"spec_type","draft-dflash"},{"parallel",1},{"ctx_checkpoints",0},{"prompt_cache","disabled"},{"spec_draft_n_max",0},{"spec_draft_n_min",0},{"spec_draft_p_min",0.0},{"spec_draft_type_k","f16"},{"spec_draft_type_v","f16"},{"target_layer_input_ids",TRACE_LAYERS},{"temperature",0}};
++    uint64_t next_ordinal=0;
++    for (const auto & entry : fs::directory_iterator(p->dir)) {
++        const std::string name=entry.path().filename().string();
++        if (name.size()==19 && name.rfind("request-",0)==0 && name.substr(14)==".json") {
++            try { next_ordinal=std::max(next_ordinal,(uint64_t)std::stoull(name.substr(8,6))+1); } catch (...) {}
++        }
++    }
++    session["next_request_ordinal"]=next_ordinal;
++    atomic_json(p->dir/"session-manifest.json",session);p->enabled=true;
++    std::fprintf(stderr,"DFlash exact-Q4 target trace enabled at %s; diagnostic timing is not representative\n",p->dir.c_str());
++    return std::unique_ptr<dflash_target_trace>(new dflash_target_trace(std::move(p)));
++}
++
++bool dflash_target_trace::process(llama_seq_id seq,const llama_token*tokens,const llama_pos*pos,const float*features,int32_t n) {
++    if(!pimpl||pimpl->failed)return false;
++    try{
++        if(seq!=0||!tokens||!pos||!features||n<=0)throw std::runtime_error("invalid trace process batch");
++        if(!pimpl->file)pimpl->claim();
++        for(int32_t i=0;i<n;++i){row r;r.token=tokens[i];r.pos=pos[i];r.features.resize(TRACE_VALUES);const float * src=features+(size_t)i*TRACE_VALUES;for(size_t j=0;j<TRACE_VALUES;++j){uint32_t bits;std::memcpy(&bits,src+j,sizeof(bits));uint32_t lsb=(bits>>16)&1;bits += 0x7fff + lsb;r.features[j]=(uint16_t)(bits>>16);}
++            if(!pimpl->begun){pimpl->provisional.push_back(std::move(r));if(pimpl->provisional.size()*TRACE_ROW_BYTES>TRACE_MAX_BUFFER)throw std::runtime_error("prefill trace exceeded 256 MiB bound");}else pimpl->ingest(std::move(r));}
++        return true;
++    }catch(const std::exception&e){pimpl->fail(e.what());return false;}
++}
++
++bool dflash_target_trace::begin(llama_seq_id seq,const std::vector<llama_token>&prompt){
++    if(!pimpl||pimpl->failed)return false;
++    try{if(seq!=0||prompt.empty()||pimpl->begun||pimpl->provisional.size()!=prompt.size())throw std::runtime_error("prefill/prompt length mismatch");
++        for(size_t i=0;i<prompt.size();++i)if(pimpl->provisional[i].token!=prompt[i]||pimpl->provisional[i].pos!=(llama_pos)i)throw std::runtime_error("prefill tokens/positions do not exactly match prompt");
++        pimpl->prompt_tokens=(uint32_t)prompt.size();pimpl->begun=true;for(auto&r:pimpl->provisional)pimpl->ingest(std::move(r));pimpl->provisional.clear();return true;
++    }catch(const std::exception&e){pimpl->fail(e.what());return false;}
++}
++
++void dflash_target_trace::end(llama_seq_id seq,bool complete){
++    if(!pimpl||pimpl->failed)return;
++    if(!pimpl->file && pimpl->provisional.empty() && !pimpl->begun)return;
++    try{
++        if(seq!=0||!complete||pimpl->failed||!pimpl->begun||pimpl->rows<pimpl->prompt_tokens)throw std::runtime_error(complete?pimpl->failure.empty()?"capture incomplete":pimpl->failure:"request aborted");
++        auto h=pimpl->header(true);if(std::fseek(pimpl->file,0,SEEK_SET)!=0||std::fwrite(h.data(),1,h.size(),pimpl->file)!=h.size()||std::fflush(pimpl->file)!=0||::fsync(fileno(pimpl->file))!=0)throw std::runtime_error("trace final header flush failed");std::fclose(pimpl->file);pimpl->file=nullptr;
++        if(::rename(pimpl->tmp_payload.c_str(),pimpl->payload.c_str())!=0) {
++            throw std::runtime_error("trace payload atomic rename failed");
++        }
++        fsync_dir(pimpl->dir);
++        std::string digest=sha256_file(pimpl->payload);json side={{"schema","qwen27_dflash_native_target_trace_v1"},{"complete",true},{"request_ordinal",pimpl->control.at("ordinal")},{"request_id",pimpl->control.at("request_id")},{"prompt_sha256",pimpl->control.at("prompt_sha256")},{"target_model_sha256",pimpl->cfg.target_model_sha256},{"draft_model_sha256",pimpl->cfg.draft_model_sha256},{"runtime_commit",pimpl->cfg.runtime_commit},{"runtime_dirty_patch_sha256",pimpl->cfg.runtime_dirty_patch_sha256},{"target_layer_input_ids",TRACE_LAYERS},{"num_prompt_tokens",pimpl->prompt_tokens},{"input_token_ids",pimpl->input_ids},{"sampled_next_token_ids",pimpl->next_ids},{"positions",pimpl->positions},{"aux_hidden_states_shape",{pimpl->rows,TRACE_N_LAYERS,TRACE_HIDDEN}},{"payload_path",pimpl->payload.filename().string()},{"payload_sha256",digest}};
++        atomic_json(pimpl->sidecar,side);std::remove(pimpl->claimed.c_str());std::fprintf(stderr,"DFlash target trace published %s (%u rows)\n",pimpl->sidecar.c_str(),pimpl->rows);pimpl->reset_success();
++    }catch(const std::exception&e){pimpl->fail(e.what());if(pimpl->file){std::fflush(pimpl->file);std::fclose(pimpl->file);pimpl->file=nullptr;}if(!pimpl->tmp_payload.empty()&&fs::exists(pimpl->tmp_payload)){fs::path failed=pimpl->tmp_payload;failed += ".failed";std::error_code ec;fs::rename(pimpl->tmp_payload,failed,ec);}}
++}
++
++bool dflash_target_trace::active()const{return pimpl&&pimpl->enabled&&!pimpl->failed;}
++const std::string&dflash_target_trace::error()const{static const std::string empty;return pimpl?pimpl->failure:empty;}
