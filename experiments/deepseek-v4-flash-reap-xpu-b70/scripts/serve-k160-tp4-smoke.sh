@@ -84,6 +84,7 @@ if [[ "${VLLM_XPU_V4_TP4_RING_MHC_POST}" == "1" || "${VLLM_XPU_V4_TP4_RING_MHC_P
 fi
 export VLLM_XPU_LOG_FP8_LINEAR_SHAPES="${VLLM_XPU_LOG_FP8_LINEAR_SHAPES:-0}"
 export VLLM_XPU_V4_BLOCK_FP8_W8A16="${VLLM_XPU_V4_BLOCK_FP8_W8A16:-0}"
+export VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES="${VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES:-}"
 export VLLM_XPU_MXFP4_SMALL_M_N="${VLLM_XPU_MXFP4_SMALL_M_N:-64}"
 export VLLM_XPU_V4_DIRECT_FP8_BLOCK_H="${VLLM_XPU_V4_DIRECT_FP8_BLOCK_H:-16}"
 export VLLM_XPU_V4_DIRECT_FP8_NUM_WARPS="${VLLM_XPU_V4_DIRECT_FP8_NUM_WARPS:-8}"
@@ -166,6 +167,7 @@ argv=(
   printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'vllm_xpu_log_fp8_linear_shapes=%s\n' "${VLLM_XPU_LOG_FP8_LINEAR_SHAPES}"
   printf 'vllm_xpu_v4_block_fp8_w8a16=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16}"
+  printf 'vllm_xpu_v4_block_fp8_w8a16_shapes=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES}"
   printf 'vllm_xpu_mxfp4_small_m_n=%s\n' "${VLLM_XPU_MXFP4_SMALL_M_N}"
   printf 'vllm_xpu_v4_direct_fp8_block_h=%s\n' "${VLLM_XPU_V4_DIRECT_FP8_BLOCK_H}"
   printf 'vllm_xpu_v4_direct_fp8_num_warps=%s\n' "${VLLM_XPU_V4_DIRECT_FP8_NUM_WARPS}"
