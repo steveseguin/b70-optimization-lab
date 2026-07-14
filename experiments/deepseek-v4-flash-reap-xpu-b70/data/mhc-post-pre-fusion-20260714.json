@@ -1,0 +1,63 @@
+{
+  "date": "2026-07-14",
+  "model": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+  "frontier_before_tok_s": 30.23901620772082,
+  "experiments": [
+    {
+      "label": "ring-mhc-post-pre-epilogue",
+      "status": "correctness-pass-performance-loss",
+      "commits": {
+        "vllm": "73e39f50e18016fcd38d166bf9ad949d74615067",
+        "xpu_kernels": "80bc48d7ba1d8a2c0f15cffc915e53b7ce77e8cd",
+        "oneccl": "8567899d37af9e16b1d71f5b56824bd113251d62"
+      },
+      "result_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-ring-mhc-post-pre-gmem94-20260714T1852Z",
+      "median_tok_s": 27.018671798229395,
+      "p10_tok_s": 26.628194971984882,
+      "conclusion": "Adding the complete pre epilogue to the 1024-thread ring kernel backpressured the collective critical path. The eager microbenchmark hid that graph replay already amortized the removed host launches."
+    },
+    {
+      "label": "ring-mhc-post-plus-dedicated-single-kernel-pre",
+      "status": "correctness-pass-neutral",
+      "commits": {
+        "vllm": "5501170596615739caece18bab6eb44971fe1219",
+        "xpu_kernels": "45bd9ff4596ec5dc2897acacb794947c6f3f6046",
+        "oneccl": "8567899d37af9e16b1d71f5b56824bd113251d62"
+      },
+      "result_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-ring-post-single-pre-gmem94-20260714T1906Z",
+      "median_tok_s": 29.619262509225614,
+      "p10_tok_s": 29.1840976095136,
+      "conclusion": "Moving pre back out of the ring recovered the regression, but the custom ring still cost more than its MHC-post fusion saved."
+    },
+    {
+      "label": "standard-collective-single-kernel-mhc-post-pre",
+      "status": "promoted",
+      "commits": {
+        "vllm": "f589f0f72f975e859e1015b05b4d450e3d15c046",
+        "xpu_kernels": "fa530f5fe9a95cf06251f3af7c1c8cb9a0d76846"
+      },
+      "result_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mhc-post-pre-m1-single-gmem95-20260714T1921Z",
+      "strict_run_medians_tok_s": [
+        30.340369444973625,
+        30.213779403413778,
+        30.24048891431866
+      ],
+      "combined_36_prompt_median_tok_s": 30.27067448422111,
+      "combined_36_prompt_mean_tok_s": 30.222111706372132,
+      "micro_reference_us_median": 119.262,
+      "micro_candidate_us_median": 80.574,
+      "micro_exact_changing_cases": 40,
+      "graph_changed_outputs": [true, true, true, true],
+      "graph_exact_outputs": [true, true, true, true],
+      "localmaxxing_id": "cmrl9xiwe06zzmj01cof0k38p",
+      "conclusion": "Keep the production oneCCL collective. Fuse M=1 MHC-post, the required BF16 materialization boundary, and MHC-pre within one 256-thread workgroup."
+    }
+  ],
+  "correctness": {
+    "sequential_arithmetic": ["37 * 29 = 1073", "19 * 23 = 437", "37 * 29 = 1073"],
+    "exact_copy": "cobalt-forest-7291",
+    "fact": "Paris",
+    "strict_json": "{\"status\":\"ok\",\"value\":17}",
+    "all_strict_rows_cached_tokens_zero": true
+  }
+}
