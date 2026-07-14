@@ -1,0 +1,24 @@
+{
+  "repository": "0xSero/DeepSeek-V4-Flash-180B",
+  "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "destination": "/mnt/usb-models/models/deepseek-v4-flash-k160-7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "hf_home": "/mnt/usb-models/llm-cache/hf",
+  "transport": "hf-xet high performance",
+  "expected_shards": 46,
+  "expected_shard_bytes": 103107582016,
+  "expected_repository_bytes": 103123316384,
+  "first_attempt": {
+    "status": "killed_during_host_memory_pressure",
+    "completed_shards_preserved": 5,
+    "concurrent_sycl_build_jobs": 16,
+    "diagnosis": "The downloader and grouped-GEMM compiler disappeared during the same 16-way build-memory event; no artifact verification was attempted."
+  },
+  "resumed_attempt": {
+    "started_at": "2026-07-14T00:27:00-04:00",
+    "status_at_2026-07-14T00:45:00-04:00": "active",
+    "completed_shards_at_status": 5,
+    "concurrent_sycl_build_jobs": 8,
+    "resume_command": "experiments/deepseek-v4-flash-reap-xpu-b70/scripts/download-k160.sh"
+  },
+  "completion_gate": "Run verify-k160-artifact.sh with Hugging Face verification and create a complete SHA-256 manifest before promotion."
+}

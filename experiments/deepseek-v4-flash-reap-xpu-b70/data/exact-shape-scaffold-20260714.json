@@ -1,0 +1,38 @@
+{
+  "captured_at": "2026-07-14T00:42:01-04:00",
+  "status": "scaffold_pass_not_stage1_pass",
+  "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/stage1-20260714T044200Z",
+  "kernel_commit": "840482d03ee12f6398967757efee9a493225644d",
+  "runtime": {
+    "torch": "2.12.0+xpu",
+    "triton_xpu": "3.7.1",
+    "vllm_xpu_kernels": "0.1.11.dev19+g840482d",
+    "oneapi_device_selector": "level_zero:*",
+    "devices": 4
+  },
+  "shape_contract": {
+    "m": [1, 4, 8],
+    "hidden": 4096,
+    "intermediate": 2048,
+    "top_k": 6,
+    "dtype": "bfloat16",
+    "bias": false,
+    "local_experts": [40, 64]
+  },
+  "cases": [
+    {"backend": "mxfp4", "local_experts": 40, "device": 0, "passed": 3, "deselected": 3, "pytest_seconds": 3.38},
+    {"backend": "mxfp4", "local_experts": 64, "device": 1, "passed": 3, "deselected": 3, "pytest_seconds": 8.97},
+    {"backend": "int4_control", "local_experts": 40, "device": 2, "passed": 3, "deselected": 3, "pytest_seconds": 3.46},
+    {"backend": "int4_control", "local_experts": 64, "device": 3, "passed": 3, "deselected": 3, "pytest_seconds": 3.77}
+  ],
+  "collected_nodes": 12,
+  "all_return_codes_zero": true,
+  "does_not_prove": [
+    "per-iteration performance or the 1.5x Stage-1 threshold",
+    "explicit RMSE, cosine, determinism, routing, or allocation gates",
+    "vLLM loader and native selector identity",
+    "TP4 expert-parallel construction or collectives",
+    "graph replay",
+    "absence of BF16 materialization"
+  ]
+}

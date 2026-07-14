@@ -13,6 +13,25 @@ AutoRound checkpoint could be taken directly into a TP4 smoke test.
 Proceed with the vLLM/XPU program, but do not commit the large-model investment
 to a predetermined `K180 W4A16` artifact.
 
+## 2026-07-13 Execution Refinement
+
+The user explicitly authorized downloading a runnable candidate while the
+low-cost gates continue. Research found a lower-risk first executable artifact:
+`0xSero/DeepSeek-V4-Flash-180B` revision
+`7c360e1cd4a5168099dbc54d16d929bf6df04990` is a uniform-K160, standard
+safetensors checkpoint with native packed MXFP4 experts and 40 experts per TP4
+rank. It avoids heterogeneous loader work and is therefore the first smoke and
+performance candidate.
+
+This does not replace the quality plan. The public K160 prunes hash layers 0-2,
+its referenced raw observations are unavailable, and its rank-discounted top-k
+frequency is not the REAP paper metric. It must not be called the smartest
+fitting variant until it passes the frozen quality suite. The official source,
+teacher evidence, and a true-REAP hash-preserved nested pack remain required for
+the final quality decision. The official-source transfer was paused before any
+weight shard completed so bandwidth could prioritize K160; it remains
+resumable.
+
 The program will:
 
 - use `deepseek-ai/DeepSeek-V4-Flash` revision

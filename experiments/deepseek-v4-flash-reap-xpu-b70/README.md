@@ -16,7 +16,10 @@ Read in order:
 
 - official source: `deepseek-ai/DeepSeek-V4-Flash`
 - source revision: `60d8d70770c6776ff598c94bb586a859a38244f1`
-- first full candidate after low-cost gates: heterogeneous REAP K160
+- first runnable smoke candidate: uniform-K160
+  `0xSero/DeepSeek-V4-Flash-180B` revision
+  `7c360e1cd4a5168099dbc54d16d929bf6df04990`
+- quality-controlled candidate: later official-source, hash-preserved K160
 - later capacity candidates: K168, K176, K180
 - hash layers 0-2: preserve all 256 experts
 - later layers 3-42: use the frozen candidate-specific expert map
@@ -35,12 +38,20 @@ templates into this lane.
 
 ## Current Status
 
-Only Stages 0-3.5 are authorized. No full source, K candidate, or IQ3 control
-download is authorized yet.
+The user explicitly authorized the frozen public K160 download while the small
+gates continue. The snapshot is 46 standard safetensors shards totaling
+`103107582016` bytes and includes MTP entirely in shard 46. Preserve the full
+archive, even though initial nonspeculative loading skips `mtp.*` tensors.
+
+This K160 is for fast Intel bring-up, not automatic promotion. It uses one
+global 160-expert layout, including layers 0-2, and its unavailable calibration
+snapshot means its rank-discounted top-k frequency cannot be represented as
+true REAP. The original hash-preserving nested-pack plan remains the quality
+path after the official-source teacher is available.
 
 The immediate work is deliberately small:
 
-- create clean DeepSeek-specific runtime worktrees;
+- use the clean pinned DeepSeek-specific runtime worktrees;
 - prove exact-shape native MXFP4 and INT4 MoE kernels on B70;
 - add and test heterogeneous per-layer expert counts with dummy weights;
 - pass DeepSeek V4 sparse-attention/cache/mHC fixtures;

@@ -5,9 +5,23 @@ results captured after the Stage 4 source download. Full unpruned IQ3_XXS is a
 secondary all-expert behavior control; it is quantized and runtime-confounded,
 so it is not source truth.
 
-Before Stage 4, commit `suite-v1.json` containing prompt text/hashes,
-categories, scoring rules, generation settings, tokenizer revision, and
-critical-case labels. Do not change it after candidate results are visible.
+`suite-v1.json` is frozen as a **prompt contract**, with prompt text/hashes,
+categories, scoring-label placeholders, generation settings, tokenizer
+revision, and critical-case labels. It is not yet an executable scoring suite:
+the named rubrics, hidden tests, answer keys, scorer revision, request/chat
+template, stop conditions, and aggregate pass policy still need a separate
+versioned artifact. No intelligence or promotion decision may use v1 alone. Its
+file SHA-256 is
+`d0d825c3a4ea4a748864741d767afe1d2a2b375d5407aaec3ee76a8e8246d6e0`.
+Do not change it after candidate results are visible; create a new version.
+
+`calibration-v1-plan.json` freezes a materializable 8,000-prompt domain mix,
+including dataset revisions, configs/splits, row IDs, text recipes, a
+fail-closed deterministic sampler, the true-REAP metric, and nested-candidate
+rules. The prior invalid request for 1,600 rows from the 164-row HumanEval set
+was replaced by the 5,000-row APPS training split. The prompt JSONL and
+observations remain to be materialized. Public 0xSero and sleepyeldrazi
+mappings are comparison seeds, not final provenance.
 
 The frozen suite must cover:
 

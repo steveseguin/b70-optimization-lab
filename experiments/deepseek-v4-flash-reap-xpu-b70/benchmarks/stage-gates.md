@@ -14,14 +14,15 @@ Record:
 - cold build/import result;
 - free space on `/mnt/usb-models`, `/mnt/fast-ai`, and the root filesystem.
 
-Current storage observation on 2026-07-13: about 2.5 TiB is free on the external
-archive drive, but only about 11 GiB is free on the internal NVMe. Do not delete
-or relocate existing artifacts without a separate reviewed storage action.
+The reviewed 2026-07-13 archive action moved about 170 GiB of inactive models
+and cache data to external storage with compatibility symlinks. Internal free
+space increased from about 11 GiB to about 180 GiB; the external archive still
+has more than 2 TiB free.
 
 Pass: clean runtime imports, all four cards enumerate, protected Qwen trees are
 untouched, and storage blockers are explicitly recorded.
 
-## Stage 1: Exact-Shape Low-Bit MoE
+## Stage 1A: Exact-Shape Low-Level Correctness
 
 Test:
 
@@ -42,7 +43,16 @@ Correctness requires:
 - identical routed expert IDs and finite routing weights;
 - deterministic repeat output within the selected accumulation tolerance.
 
-Performance evidence requires:
+`scripts/run-exact-shape-gates.sh` is an initial scaffold: it checks the
+existing low-level reference tolerance on one `XpuFusedMoe` process per
+physical B70. It does not yet emit explicit RMSE/cosine, repeat determinism,
+routing, or allocation evidence, so even a pass does not clear Stage 1A. It is
+also not a TP4/EP model test and does not prove loader selection or end-to-end
+native dispatch.
+
+## Stage 1B: Native Dispatch And Performance
+
+Performance evidence requires a separate benchmark/trace artifact with:
 
 - median and p10 latency after at least 32 warmups and 200 measured iterations;
 - allocation/scratch bytes;
@@ -50,14 +60,24 @@ Performance evidence requires:
 - 128 direct graph replays without update or rerecord;
 - a hard failure if full BF16 expert tensors are materialized.
 
-Pass: at least one low-bit candidate is correct, native, replayable, and at
+Stage 1 passes only when at least one low-bit candidate is correct, native, replayable, and at
 least 1.5x faster than the explicit BF16 expert path at M=1 and M=4. Record M=8
 but do not let it hide a weak single-session path.
 
 Stop: neither low-bit candidate enters the native kernel/replay path or clears
 the M=1/M=4 threshold.
 
-## Stage 2: Heterogeneous Expert Construction
+## Stage 2: Expert Construction
+
+For the frozen public K160 smoke checkpoint, first assert the uniform layout:
+all 43 layers have 160 global experts. The 40-local-experts shape applies only
+to explicit TP4 expert parallelism (`--enable-expert-parallel`), including its
+all-to-all collective. Plain MoE tensor parallelism is a different topology and
+must not be described as 40 experts per rank. Do not apply the heterogeneous
+patch to this artifact.
+
+The later quality-controlled nested pack retains the original heterogeneous
+contract:
 
 Dummy model contract:
 
@@ -74,7 +94,15 @@ metadata, rank ownership, native quantization selector, and no
 Marlin/CUDA/BF16 fallback. Construct the 43-layer dummy TP4 model at context
 256 and route synthetic tokens across every rank.
 
-Pass: construction, mappings, selectors, and synthetic forward all pass.
+Smoke pass: the unchanged public K160 constructs with 160 global/40 EP-local
+experts on every layer, all expert tensor sets are complete, each hash-layer
+`tid2eid` tensor has the expected shape and range, selectors are native, the
+EP collective succeeds, and synthetic forward passes. Exact semantic
+equivalence of the uploader's remap to the unpruned source remains a later
+official-source check.
+
+Quality-pack pass: heterogeneous construction, mappings, selectors, and
+synthetic forward all pass.
 
 ## Stage 3: Architecture Fixtures And Frozen Test Identity
 
@@ -114,6 +142,13 @@ ranking so calibration is performed once. Hash layers 0-2 remain unpruned.
 Stop: no complete mapping provenance and no reproducible calibration plan.
 
 ## Stage 4: Download And Packing Authorization
+
+Explicit execution exception: on 2026-07-13 the user authorized the frozen
+public uniform-K160 snapshot while Stages 0-3.5 continue. This exception applies
+only to `0xSero/DeepSeek-V4-Flash-180B` revision
+`7c360e1cd4a5168099dbc54d16d929bf6df04990` as a smoke/performance candidate.
+It does not authorize promotion, IQ3, or speculation. The official-source
+download remains the teacher and final-pack gate.
 
 Authorize the source download only after Stages 0-3.5 pass. Record:
 

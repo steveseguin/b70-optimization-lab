@@ -1,0 +1,99 @@
+{
+  "calibration_id": "deepseek-v4-flash-reap-calibration-v1",
+  "status": "frozen_plan_before_candidate_outputs",
+  "frozen_at": "2026-07-13T23:48:00-04:00",
+  "source_model": "deepseek-ai/DeepSeek-V4-Flash",
+  "source_revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+  "tokenizer_revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+  "seed": 1776,
+  "target_prompts": 8000,
+  "sampler": "Read only the declared revision/config/split/files. Build the declared text recipe, canonicalize as UTF-8 NFC with LF line endings, discard empty text, deduplicate by canonical text SHA-256, then hash dataset + revision + config + split + row-id + text SHA-256 + seed. Sort ascending by selection hash and take the declared count. Fail if unique eligible rows are insufficient. Persist source identity, row ID, canonical prompt, text hash, and selection hash before collecting routes.",
+  "metric": "For each routed expert in layers 3-42, accumulate normalized router gate probability multiplied by the L2 norm of that expert's post-activation hidden vector, average across routed tokens, then rank descending with old expert ID as the deterministic tie break.",
+  "hash_layers": "Preserve all 256 experts in layers 0-2 for the quality-controlled pack. Public uniform-K160 is a smoke/performance candidate only.",
+  "nested_candidates": [160, 168, 176, 180],
+  "domains": [
+    {
+      "name": "code",
+      "weight": 0.2,
+      "count": 1600,
+      "dataset": "codeparrot/apps",
+      "revision": "21e74ddf8de1a21436da12e3e653065c5213e9d1",
+      "config": "raw_jsonl",
+      "split": "train",
+      "files": ["train.jsonl"],
+      "row_id": "id",
+      "text_recipe": "question followed by starter_code when nonempty"
+    },
+    {
+      "name": "math_science",
+      "weight": 0.2,
+      "count": 1600,
+      "dataset": "openai/gsm8k",
+      "revision": "740312add88f781978c0658806c59bc2815b9866",
+      "config": "main",
+      "split": "train",
+      "row_id": "zero-based row index",
+      "text_recipe": "question"
+    },
+    {
+      "name": "tools",
+      "weight": 0.15,
+      "count": 1200,
+      "dataset": "gorilla-llm/Berkeley-Function-Calling-Leaderboard",
+      "revision": "61fc0608cfd831fcfbbaa676ebdfef0ed963eeda",
+      "config": "raw_json",
+      "split": "repository files",
+      "files": ["BFCL_v3_*.json"],
+      "row_id": "filename plus zero-based row index",
+      "text_recipe": "canonical JSON containing the user turns and declared function/tool schema; exclude result/answer files"
+    },
+    {
+      "name": "knowledge",
+      "weight": 0.15,
+      "count": 1200,
+      "dataset": "cais/mmlu",
+      "revision": "c30699e8356da336a370243923dbaf21066bb9fe",
+      "config": "all",
+      "split": "test",
+      "row_id": "subject plus zero-based row index",
+      "text_recipe": "question followed by choices labeled A through D; omit answer"
+    },
+    {
+      "name": "planning_research",
+      "weight": 0.15,
+      "count": 1200,
+      "dataset": "allenai/tulu-3-sft-mixture",
+      "revision": "b14afda60f1bbebe55d5d2fa1e4df5042f97f8be",
+      "config": "default",
+      "split": "train",
+      "row_id": "id",
+      "text_recipe": "first user-role message content; retain source in provenance"
+    },
+    {
+      "name": "general_qa",
+      "weight": 0.15,
+      "count": 1200,
+      "dataset": "HuggingFaceH4/no_robots",
+      "revision": "e6f9a4ac5c37faeb744ba9ecf0473184d7f8105b",
+      "config": "default",
+      "split": "train",
+      "row_id": "prompt_id",
+      "text_recipe": "prompt"
+    }
+  ],
+  "quality_suite": {
+    "path": "quality/suite-v1.json",
+    "sha256": "d0d825c3a4ea4a748864741d767afe1d2a2b375d5407aaec3ee76a8e8246d6e0"
+  },
+  "public_seed_policy": {
+    "0xSero_K160": "Use its map unchanged for its frozen smoke checkpoint only. Do not call rank-discounted top-k frequency true REAP.",
+    "sleepyeldrazi_K128": "May be compared as a hash-preserving seed, but its quantized donor and missing prompt hashes prevent promotion as final provenance."
+  },
+  "required_outputs": [
+    "materialized prompt JSONL with per-prompt SHA-256",
+    "dataset and runner revisions",
+    "per-layer raw scores for all 256 experts",
+    "nested ranked_by_layer and old-to-new maps",
+    "manifest SHA-256 and deterministic rerun comparison"
+  ]
+}

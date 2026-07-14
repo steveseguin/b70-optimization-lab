@@ -1,0 +1,48 @@
+From 840482d03ee12f6398967757efee9a493225644d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Tue, 14 Jul 2026 00:36:52 -0400
+Subject: [PATCH] make DeepSeek exact-shape selectors unambiguous
+
+---
+ tests/fused_moe/test_fused_moe.py | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/tests/fused_moe/test_fused_moe.py b/tests/fused_moe/test_fused_moe.py
+index 4c5690c..dbc2de8 100755
+--- a/tests/fused_moe/test_fused_moe.py
++++ b/tests/fused_moe/test_fused_moe.py
+@@ -507,8 +507,13 @@ def test_fused_moe_mxfp4(m, n, k, e, topk, dtype, has_bias):
+ 
+ 
+ @pytest.mark.deepseek_v4
+-@pytest.mark.parametrize("m,n,k", DEEPSEEK_V4_MNK_FACTORS)
+-@pytest.mark.parametrize("e", DEEPSEEK_V4_LOCAL_EXPERTS)
++@pytest.mark.parametrize(
++    "m,n,k",
++    DEEPSEEK_V4_MNK_FACTORS,
++    ids=[f"m{m}-h{n}-i{k}" for m, n, k in DEEPSEEK_V4_MNK_FACTORS],
++)
++@pytest.mark.parametrize("e", DEEPSEEK_V4_LOCAL_EXPERTS,
++                         ids=lambda e: f"experts{e}")
+ def test_deepseek_v4_fused_moe_mxfp4(m, n, k, e):
+     """Exercise the native K160/source MXFP4 decode shapes on one rank."""
+     test_fused_moe_mxfp4(
+@@ -523,8 +528,13 @@ def test_deepseek_v4_fused_moe_mxfp4(m, n, k, e):
+ 
+ 
+ @pytest.mark.deepseek_v4
+-@pytest.mark.parametrize("m,n,k", DEEPSEEK_V4_MNK_FACTORS)
+-@pytest.mark.parametrize("e", DEEPSEEK_V4_LOCAL_EXPERTS)
++@pytest.mark.parametrize(
++    "m,n,k",
++    DEEPSEEK_V4_MNK_FACTORS,
++    ids=[f"m{m}-h{n}-i{k}" for m, n, k in DEEPSEEK_V4_MNK_FACTORS],
++)
++@pytest.mark.parametrize("e", DEEPSEEK_V4_LOCAL_EXPERTS,
++                         ids=lambda e: f"experts{e}")
+ def test_deepseek_v4_fused_moe_int4_control(m, n, k, e):
+     """Retain symmetric group-128 INT4 as an explicit secondary control."""
+     test_fused_moe_int4(
+-- 
+2.43.0
+

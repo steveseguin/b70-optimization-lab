@@ -1,0 +1,84 @@
+From 552c9ceaf49622fefe170a527c84b1afc3b6b4bf Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 13 Jul 2026 23:41:24 -0400
+Subject: [PATCH] test DeepSeek V4 exact XPU MoE shapes
+
+Base: vllm-project/vllm-xpu-kernels v0.1.11
+Base commit: dda91d171fbc3f51d1d65a7f8839714b1efffd42
+
+diff --git a/pyproject.toml b/pyproject.toml
+index c5070dc..b3860bb 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -127,6 +127,7 @@ skip_gitignore = true
+ 
+ [tool.pytest.ini_options]
+ markers = [
++    "deepseek_v4: exact DeepSeek V4 kernel shapes used by the B70 bring-up lane",
+     "skip_global_cleanup",
+     "core_model: enable this model test in each PR instead of only nightly",
+     "cpu_model: enable this model test in CPU tests",
+diff --git a/tests/fused_moe/test_fused_moe.py b/tests/fused_moe/test_fused_moe.py
+index 07f5911..4c5690c 100755
+--- a/tests/fused_moe/test_fused_moe.py
++++ b/tests/fused_moe/test_fused_moe.py
+@@ -22,6 +22,18 @@ TOP_KS = [1]
+ EP_RANK = [0, 1, 2, 3]
+ EP_SIZE = [4]
+ 
++# DeepSeek V4 Flash decode shapes.  K160 uses 40 local experts per TP4 rank;
++# 64 keeps coverage for the unpruned 256-expert source/hash-layer layout used
++# by the later quality-controlled pack lane.  Keep this separate from the
++# Llama-4 defaults so the mini scope cannot silently substitute tiny shapes.
++DEEPSEEK_V4_MNK_FACTORS = [
++    (1, 4096, 2048),
++    (4, 4096, 2048),
++    (8, 4096, 2048),
++]
++DEEPSEEK_V4_LOCAL_EXPERTS = [40, 64]
++DEEPSEEK_V4_TOP_K = 6
++
+ # override pytest parameters when enable mini pytest
+ MINI_PYTEST_PARAMS = {
+     "default": {
+@@ -494,6 +506,38 @@ def test_fused_moe_mxfp4(m, n, k, e, topk, dtype, has_bias):
+     torch.testing.assert_close(output, ref_out, rtol=rtol, atol=atol)
+ 
+ 
++@pytest.mark.deepseek_v4
++@pytest.mark.parametrize("m,n,k", DEEPSEEK_V4_MNK_FACTORS)
++@pytest.mark.parametrize("e", DEEPSEEK_V4_LOCAL_EXPERTS)
++def test_deepseek_v4_fused_moe_mxfp4(m, n, k, e):
++    """Exercise the native K160/source MXFP4 decode shapes on one rank."""
++    test_fused_moe_mxfp4(
++        m=m,
++        n=n,
++        k=k,
++        e=e,
++        topk=DEEPSEEK_V4_TOP_K,
++        dtype=torch.bfloat16,
++        has_bias=False,
++    )
++
++
++@pytest.mark.deepseek_v4
++@pytest.mark.parametrize("m,n,k", DEEPSEEK_V4_MNK_FACTORS)
++@pytest.mark.parametrize("e", DEEPSEEK_V4_LOCAL_EXPERTS)
++def test_deepseek_v4_fused_moe_int4_control(m, n, k, e):
++    """Retain symmetric group-128 INT4 as an explicit secondary control."""
++    test_fused_moe_int4(
++        m=m,
++        n=n,
++        k=k,
++        e=e,
++        topk=DEEPSEEK_V4_TOP_K,
++        dtype=torch.bfloat16,
++        has_bias=False,
++    )
++
++
+ FUSED_MOE_MNK_FACTORS = [
+     (1, 1024, 1024),
+     (4, 1024, 1024),
+-- 
+2.43.0

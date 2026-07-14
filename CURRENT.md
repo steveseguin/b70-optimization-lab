@@ -35,20 +35,34 @@ LocalMaxxing as `cmrjbx8bc02g8mj01yzz2v701`. The authoritative closeout is
 The next active research lane is the investment-gated DeepSeek V4 Flash
 vLLM/XPU bring-up for one active generation on four B70s. The frozen source is
 `deepseek-ai/DeepSeek-V4-Flash` revision
-`60d8d70770c6776ff598c94bb586a859a38244f1`. The first full candidate is K160,
-with K168/K176/K180 selected later only if quality and at least 3 GiB warmed
-free memory per rank permit. Native MXFP4 and symmetric W4A16 must first pass
-exact-shape kernel gates. A frozen official-source teacher subset is primary
-quality truth; full IQ3_XXS is a secondary all-expert behavior control.
+`60d8d70770c6776ff598c94bb586a859a38244f1`. The first runnable candidate is
+the uniform-K160 `0xSero/DeepSeek-V4-Flash-180B` smoke checkpoint at revision
+`7c360e1cd4a5168099dbc54d16d929bf6df04990`. It is a 96.026 GiB standard
+safetensors artifact with 160 experts in every layer, so explicit TP4 expert
+parallelism assigns 40 experts per rank without heterogeneous loader surgery.
+It is not yet the quality-certified final model: its hash layers are pruned,
+its calibration is not reproducible, and its published ranking is not true
+REAP. A later
+official-source teacher and hash-preserved nested pack remain the quality path.
 
 The controlling plan is
 [`plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md),
 with the current handoff at
 [`experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md`](experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md).
-Only Stages 0-3.5 are authorized now. Do not start the full source download,
-checkpoint construction, or speculation until those low-cost gates pass. The
-archived Qwen detail below remains resume evidence, not an instruction to
-continue experimenting.
+The user explicitly authorized the frozen K160 download on 2026-07-13 while
+Stages 0-3.5 continue. The official-source transfer was started, then paused
+without a completed weight shard so the runnable K160 could take priority; it
+is resumable later for teacher evidence. Speculation remains prohibited until
+correct nonspeculative decode approaches 40-50 tok/s. The archived Qwen detail
+below remains resume evidence, not an instruction to continue experimenting.
+
+Stage 0 now passes on the clean pinned runtime: vLLM `382bbd5`, XPU-kernel
+commit `840482d`, Torch `2.12.0+xpu`, Triton-XPU `3.7.1`, and exact oneAPI
+2025.3 enumerate all four B70s. The four-rank XCCL barrier/allreduce preflight
+passes. All 12 M=1/4/8, H4096/I2048/top-k6 MXFP4/INT4 low-level reference
+scaffold cases pass, but this is not the native selector/performance/replay or
+TP4+EP model gate. The frozen K160 download is active and resumable on external
+storage; completion still requires HF verification and a full SHA-256 manifest.
 
 ### Archived Qwen3.6 27B lane detail
 
@@ -239,13 +253,13 @@ loaded service.
 1. Keep the Qwen lane closed. Do not resume unfinished QKVZAB, Q5_K GDN-output,
    or exact-Q4 adaptation work without satisfying the reopening gate in the
    closure note.
-2. Execute DeepSeek Stages 0-3.5 only: clean worktrees, exact-shape MXFP4/INT4
-   fused-MoE gates, heterogeneous per-layer expert construction, and
-   architecture fixtures, followed by frozen mapping/calibration and quality
-   identities. Record every result in the lane ledger.
-3. Authorize the frozen source download and K160 construction only after those
-   gates pass. Establish a clean nonspeculative baseline and cycle
-   decomposition before porting any Qwen kernel.
+2. Finish and cryptographically verify the active K160 download, promote the
+   verified copy to internal NVMe, and run the unchanged TP4+EP/8K graph-off
+   construction smoke with no speculation.
+3. Add native-selector/fallback trace and a real 32-warmup/200-iteration
+   M=1/4/8 kernel benchmark before treating the low-level scaffold as a Stage-1
+   result. Then establish the correct nonspeculative decode baseline and cycle
+   profile before optimization.
 4. Preserve `/home/steve/src/llama.cpp` as dirty Qwen research state until its
    patch snapshots are independently reviewed. Do not reset or clean it for a
    DeepSeek bring-up.
