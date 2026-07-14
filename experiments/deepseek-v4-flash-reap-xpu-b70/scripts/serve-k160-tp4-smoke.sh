@@ -22,7 +22,11 @@ test "$(git -C "${vllm_tree}" rev-parse HEAD)" = "${vllm_commit}"
 test "$(git -C "${kernel_tree}" rev-parse HEAD)" = "${kernel_commit}"
 test -z "$(git -C "${vllm_tree}" status --porcelain)"
 test -z "$(git -C "${kernel_tree}" status --porcelain)"
-DEEPSEEK_HF_VERIFY=0 "${verify}" "${model}"
+# Promotion already performs two full SHA-256 passes (archive and hot copy).
+# Repeated smoke launches keep structural and byte-count verification but skip
+# rereading 96 GiB unless VERIFY_MANIFEST=1 is requested.
+DEEPSEEK_HF_VERIFY=0 DEEPSEEK_CHECK_MANIFEST="${VERIFY_MANIFEST:-0}" \
+  "${verify}" "${model}"
 mkdir -p "${run_dir}"
 
 set +u
@@ -45,11 +49,15 @@ unset CCL_WORKER_COUNT
 export ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:*}"
 export ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1,2,3}"
 export VLLM_TARGET_DEVICE=xpu
-export VLLM_USE_V1=1
 export XPU_GRAPH="${XPU_GRAPH:-0}"
 export VLLM_XPU_ENABLE_XPU_GRAPH="${VLLM_XPU_ENABLE_XPU_GRAPH:-0}"
 export VLLM_XPU_FORCE_GRAPH_WITH_COMM=0
 export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0
+# Pin the native BF16-activation MXFP4 path.  Do not allow an inherited
+# diagnostic environment to silently select the reference MoE kernel or the
+# alternate MXFP4-FP8 activation recipe.
+export VLLM_XPU_FUSED_MOE_USE_REF=0
+export VLLM_XPU_FUSED_MOE_USE_MXFP4_FP8=0
 export HF_HOME="${HF_HOME:-/mnt/usb-models/llm-cache/hf}"
 export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/deepseek-v4-k160-${revision}/vllm}"
 export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/deepseek-v4-k160-${revision}/torchinductor}"
@@ -81,10 +89,11 @@ argv=(
   --pipeline-parallel-size 1
   --distributed-executor-backend mp
   --enable-expert-parallel
-  --max-model-len "${MAX_MODEL_LEN:-8192}"
-  --max-num-batched-tokens "${MAX_NUM_BATCHED_TOKENS:-8192}"
+  --all2all-backend allgather_reducescatter
+  --max-model-len "${MAX_MODEL_LEN:-2048}"
+  --max-num-batched-tokens "${MAX_NUM_BATCHED_TOKENS:-2048}"
   --max-num-seqs 1
-  --gpu-memory-utilization "${GPU_MEMORY_UTILIZATION:-0.90}"
+  --gpu-memory-utilization "${GPU_MEMORY_UTILIZATION:-0.95}"
   --kv-cache-dtype fp8
   --block-size 256
   --tokenizer-mode deepseek_v4
@@ -101,6 +110,7 @@ argv=(
   printf 'model=%s\n' "$(readlink -f "${model}")"
   printf 'model_revision=%s\n' "${revision}"
   printf 'artifact_manifest_sha256=%s\n' "$(sha256sum "${model}/sha256sums.txt" | awk '{print $1}')"
+  printf 'verify_manifest=%s\n' "${VERIFY_MANIFEST:-0}"
   printf 'vllm_tree=%s\n' "${vllm_tree}"
   printf 'vllm_commit=%s\n' "${vllm_commit}"
   printf 'kernel_tree=%s\n' "${kernel_tree}"
@@ -111,11 +121,13 @@ argv=(
   printf 'vllm_xpu_enable_xpu_graph=%s\n' "${VLLM_XPU_ENABLE_XPU_GRAPH}"
   printf 'vllm_xpu_force_graph_with_comm=%s\n' "${VLLM_XPU_FORCE_GRAPH_WITH_COMM}"
   printf 'vllm_xpu_graph_noop_comm_capture=%s\n' "${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE}"
+  printf 'vllm_xpu_fused_moe_use_ref=%s\n' "${VLLM_XPU_FUSED_MOE_USE_REF}"
+  printf 'vllm_xpu_fused_moe_use_mxfp4_fp8=%s\n' "${VLLM_XPU_FUSED_MOE_USE_MXFP4_FP8}"
   printf 'enforce_eager=%s\n' "${ENFORCE_EAGER:-1}"
   printf 'expert_parallel=1\n'
-  printf 'gpu_memory_utilization=%s\n' "${GPU_MEMORY_UTILIZATION:-0.90}"
-  printf 'max_model_len=%s\n' "${MAX_MODEL_LEN:-8192}"
-  printf 'max_num_batched_tokens=%s\n' "${MAX_NUM_BATCHED_TOKENS:-8192}"
+  printf 'gpu_memory_utilization=%s\n' "${GPU_MEMORY_UTILIZATION:-0.95}"
+  printf 'max_model_len=%s\n' "${MAX_MODEL_LEN:-2048}"
+  printf 'max_num_batched_tokens=%s\n' "${MAX_NUM_BATCHED_TOKENS:-2048}"
   printf 'kv_cache_dtype=fp8\nblock_size=256\nprefix_caching=0\n'
   printf 'oneccl=%s\n' "${oneccl}"
   printf 'ccl_atl_transport=%s\n' "${CCL_ATL_TRANSPORT}"

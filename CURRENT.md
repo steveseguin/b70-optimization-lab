@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-13**
+Last reviewed: **2026-07-14**
 
 ## Authority And Update Rule
 
@@ -49,20 +49,29 @@ The controlling plan is
 [`plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md),
 with the current handoff at
 [`experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md`](experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md).
-The user explicitly authorized the frozen K160 download on 2026-07-13 while
-Stages 0-3.5 continue. The official-source transfer was started, then paused
-without a completed weight shard so the runnable K160 could take priority; it
-is resumable later for teacher evidence. Speculation remains prohibited until
-correct nonspeculative decode approaches 40-50 tok/s. The archived Qwen detail
-below remains resume evidence, not an instruction to continue experimenting.
+The user explicitly authorized the frozen K160 download on 2026-07-13. It is
+now complete, cryptographically verified, and promoted to
+`/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160`. The official-source
+transfer was started, then paused without a completed weight shard so the
+runnable K160 could take priority; it remains resumable later for teacher
+evidence. Speculation remains prohibited until correct nonspeculative decode
+approaches 40-50 tok/s. The archived Qwen detail below remains resume evidence,
+not an instruction to continue experimenting.
 
-Stage 0 now passes on the clean pinned runtime: vLLM `382bbd5`, XPU-kernel
+Stage 0 passes on the clean pinned runtime: vLLM `382bbd5`, XPU-kernel
 commit `840482d`, Torch `2.12.0+xpu`, Triton-XPU `3.7.1`, and exact oneAPI
 2025.3 enumerate all four B70s. The four-rank XCCL barrier/allreduce preflight
 passes. All 12 M=1/4/8, H4096/I2048/top-k6 MXFP4/INT4 low-level reference
-scaffold cases pass, but this is not the native selector/performance/replay or
-TP4+EP model gate. The frozen K160 download is active and resumable on external
-storage; completion still requires HF verification and a full SHA-256 manifest.
+scaffold cases pass. K160 now constructs and decodes on TP4+EP through
+`XPUExpertsMxFp4` at 2K/95%, using 24.95 GiB model memory and 2.11 GiB KV per
+rank. The arithmetic canary passes, but the warm graph-off diagnostic is only
+`2.616225 tok/s`, far below the 50 tok/s investment gate. Breakable XPU graph
+capture fails in `xpu_sparse_decode_fp8.py` because
+`combined_lens.max().item()` forces a prohibited host wait on a command-graph
+event. Fixing that capture boundary is the immediate high-value task; do not
+begin speculation or quality-pack work at the present base speed. Evidence and
+exact run paths are in
+[`data/deepseek-v4-k160-tp4-bringup-20260714.json`](data/deepseek-v4-k160-tp4-bringup-20260714.json).
 
 ### Archived Qwen3.6 27B lane detail
 

@@ -3,6 +3,11 @@ set -euo pipefail
 
 revision="7c360e1cd4a5168099dbc54d16d929bf6df04990"
 model_dir="${1:-/mnt/usb-models/models/deepseek-v4-flash-k160-${revision}}"
+test -d "${model_dir}"
+# GNU find does not descend through a symlink supplied as its starting point
+# unless explicitly told to dereference it.  Canonicalize once so the same
+# verifier works for both the immutable directory and the current-k160 link.
+model_dir="$(readlink -f "${model_dir}")"
 expected_shards=46
 expected_shard_bytes=103107582016
 expected_repo_bytes=103123316384
@@ -58,7 +63,10 @@ for layer in range(43):
 
 weight_map = index["weight_map"]
 assert len(weight_map) == 43843
-assert index["metadata"]["total_size"] == 103102758088
+# Hugging Face safetensors indexes encode metadata.total_size as a JSON
+# decimal string.  Normalize it before comparing so the integrity gate checks
+# the value instead of failing on the representation.
+assert int(index["metadata"]["total_size"]) == 103102758088
 assert len(set(weight_map.values())) == 46
 pattern = re.compile(
     r"^layers\.(\d+)\.ffn\.experts\.(\d+)\.(w[123])\.(weight|scale)$"
@@ -89,10 +97,14 @@ test "${repo_bytes}" -eq "${expected_repo_bytes}"
 test "${tensor_bytes}" -eq "${expected_tensor_bytes}"
 
 if [[ -f "${manifest}" ]]; then
-  (
-    cd "${model_dir}"
-    sha256sum --check --strict --quiet sha256sums.txt
-  )
+  if [[ "${DEEPSEEK_CHECK_MANIFEST:-1}" == "1" ]]; then
+    (
+      cd "${model_dir}"
+      sha256sum --check --strict --quiet sha256sums.txt
+    )
+  else
+    printf 'sha256_manifest_check=skipped_hot_restart\n'
+  fi
 elif [[ "${DEEPSEEK_HF_VERIFY:-1}" != "1" ]]; then
   printf 'refusing non-cryptographic verification without %s\n' "${manifest}" >&2
   exit 1

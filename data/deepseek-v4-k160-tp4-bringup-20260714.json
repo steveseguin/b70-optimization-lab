@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-14T13:40:00Z",
+  "status": "construction_and_correctness_pass_performance_gate_failed",
+  "artifact": {
+    "repository": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "archive_path": "/mnt/usb-models/models/deepseek-v4-flash-k160-7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "hot_path": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/k160-7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "shards": 46,
+    "shard_bytes": 103107582016,
+    "repo_bytes_excluding_manifest": 103123316384,
+    "verification": "Hugging Face cache verification plus full SHA-256 manifest on archive and hot copy"
+  },
+  "runtime": {
+    "vllm_commit": "382bbd51448b2f58c73b3e51d051bc352166ba91",
+    "xpu_kernel_commit": "840482d03ee12f6398967757efee9a493225644d",
+    "torch": "2.12.0+xpu",
+    "triton_xpu": "3.7.1",
+    "tensor_parallel_size": 4,
+    "expert_parallel": true,
+    "all2all_backend": "allgather_reducescatter",
+    "speculation": false,
+    "kv_cache_dtype": "fp8",
+    "native_moe_backend": "XPUExpertsMxFp4"
+  },
+  "attempts": [
+    {
+      "run_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-smoke-20260714T132058Z",
+      "mode": "eager_graph_off",
+      "max_model_len": 8192,
+      "gpu_memory_utilization": 0.9,
+      "result": "failed_after_weight_load",
+      "detail": "model used 25.15 GiB per rank; available KV cache was -1.28 GiB"
+    },
+    {
+      "run_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-smoke-20260714T132503Z",
+      "mode": "eager_graph_off",
+      "max_model_len": 2048,
+      "gpu_memory_utilization": 0.98,
+      "result": "failed_startup_guard",
+      "detail": "29.09 GiB free was below the requested 29.69 GiB"
+    },
+    {
+      "run_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-smoke-20260714T132607Z",
+      "mode": "eager_graph_off",
+      "max_model_len": 2048,
+      "max_num_batched_tokens": 2048,
+      "gpu_memory_utilization": 0.95,
+      "result": "passed_server_and_decode",
+      "model_memory_gib_per_rank": 24.95,
+      "kv_cache_memory_gib_per_rank": 2.11,
+      "kv_cache_tokens": 5925,
+      "arithmetic_canary": "37 * 29 = 1073"
+    },
+    {
+      "run_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-smoke-20260714T133502Z",
+      "mode": "breakable_xpu_graph",
+      "max_model_len": 1024,
+      "gpu_memory_utilization": 0.95,
+      "result": "failed_graph_capture",
+      "detail": "xpu_sparse_decode_fp8.py converted combined_lens.max() to a host scalar with .item(); Level Zero rejected waiting on a command-graph event"
+    }
+  ],
+  "performance": {
+    "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-smoke-20260714T132607Z/steady-long-128.json",
+    "row0_completion_tokens": 128,
+    "row0_tok_s_after_ttft": 1.3233036785241807,
+    "row0_ttft_s": 3.132143535884097,
+    "row1_completion_tokens": 128,
+    "row1_tok_s_after_ttft": 2.6162252129042844,
+    "row1_ttft_s": 0.3760176401119679,
+    "classification": "diagnostic_only_repeated_prompt_graph_off",
+    "investment_gate_tok_s": 50,
+    "investment_gate_passed": false
+  },
+  "iteration_cache": {
+    "torchinductor_cache_path": "/mnt/fast-ai/vllm-cache-exp/deepseek-v4-k160-7c360e1cd4a5168099dbc54d16d929bf6df04990/torchinductor",
+    "observed_size_after_first_decode": "44 MiB",
+    "hot_restart_verification": "structural and exact byte-count checks by default; VERIFY_MANIFEST=1 reenables the full 96 GiB SHA-256 read"
+  },
+  "decision": "Do not begin speculation or quality promotion. Eager TP4 is approximately 19x below the 50 tok/s gate and graph replay is blocked by a concrete host-scalar synchronization bug in sparse decode."
+}
