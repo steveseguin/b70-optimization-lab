@@ -1,0 +1,35 @@
+{
+  "date": "2026-07-13",
+  "status": "rejected_before_runtime_integration",
+  "protected_runtime_source_changed": false,
+  "shape": {
+    "rows": 6,
+    "down_k": 17408,
+    "hidden_n": 5120
+  },
+  "coverage": {
+    "full187_q4_0_down_layers": 57,
+    "next_decoder_norm_boundaries": 56,
+    "final_norm_boundary": 1,
+    "q4_1_fallback_down_layers": 8
+  },
+  "gate": {
+    "required_cycle_saving_ms": 2.0,
+    "required_end_to_end_percent": 3.0,
+    "required_saving_us_per_q4_0_layer": 35.08771929824561
+  },
+  "evidence": {
+    "down_tail_submit_wait_saving_us_per_layer": 7.765,
+    "down_tail_event_saving_us_per_layer": 2.814,
+    "down_tail_projected_wall_saving_ms": 0.442605,
+    "down_tail_projected_event_saving_ms": 0.160398,
+    "broad_rms_q8_control_tok_s": 47.999,
+    "broad_rms_q8_candidate_tok_s": 48.806,
+    "broad_rms_q8_gain_percent": 1.68,
+    "broad_rms_q8_approx_cycle_saving_ms": 0.96,
+    "optimistic_combined_upper_bound_ms": 1.402605,
+    "optimistic_gate_fraction": 0.7013025
+  },
+  "decision": "No module or runtime integration. Move to a boundary that changes projection economics or covers a larger recurrent/attention pipeline.",
+  "note": "experiments/qwen27-dflash-sycl-b70/notes/2026-07-13-xe2-m6-down-residual-next-rms-q8-gate.md"
+}
