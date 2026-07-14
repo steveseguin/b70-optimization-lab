@@ -15,24 +15,35 @@ that its model is currently loaded.
 
 ## Live Service
 
-The public LAN `:8000` endpoint was last recorded on 2026-07-08 as the temporary
-Gemma 4 26B A4B Q8 coding-agent service. Its restore, validation, and stop
-procedure is in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
+No process was listening on the public LAN `:8000` endpoint when the Qwen lane
+was closed on 2026-07-13. The last configured role was the temporary Gemma 4
+26B A4B Q8 coding-agent service. Its restore, validation, and stop procedure is
+in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
 The unauthenticated LAN front door is intentional for this private network. Do
 not silently add authentication or change its exposure policy.
 
-## Active Optimization Lane
+## Optimization Transition
 
-The active research lane is **maximum single-session Qwen3.6 27B decode
-speed**, with a `>=100 tok/s` TP1 objective on one Intel Arc Pro B70 and a
-`>=200 tok/s` multi-B70 objective. Aggregate throughput does not count. Use all
-four B70s as independent TP1 experiment workers until TP1 is maximized; then
-evaluate speculative TP3+draft and TP4 topologies against the 200 tok/s gate.
+The Qwen3.6 27B Q4_0/DFlash optimization lane was closed on 2026-07-13. Its
+`>=100 tok/s` TP1 and `>=200 tok/s` multi-B70 single-session objectives were
+not reached. The final strict one-B70 record is `47.818818 tok/s`, approved by
+LocalMaxxing as `cmrjbx8bc02g8mj01yzz2v701`. The authoritative closeout is
+[`notes/2026-07-13-qwen27-dflash-sycl-closure.md`](notes/2026-07-13-qwen27-dflash-sycl-closure.md).
+
+The next requested family is DeepSeek, but no exact model/runtime objective is
+active yet. Begin with the existing
+[`experiments/deepseek-v4-flash-autoround-vllm/`](experiments/deepseek-v4-flash-autoround-vllm/README.md)
+fit/support evidence and choose an exact checkpoint, quality class, runtime,
+single-session hardware target, and validity gate before downloading, patching,
+or benchmarking. The archived Qwen detail below remains resume evidence, not
+an instruction to continue experimenting.
+
+### Archived Qwen3.6 27B lane detail
 
 - [Controlling requirements and execution plan](plans/2026-07-12-qwen27-tp1-max-speed-requirements-and-execution.md)
-- [Active experiment workspace](experiments/qwen27-dflash-sycl-b70/README.md)
+- [Archived experiment workspace](experiments/qwen27-dflash-sycl-b70/README.md)
 - [Initial Q4_0 and speculation diagnostic](experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-initial-dflash-mtp-benchmark.md)
 - [Current MMVQ dispatch-fix result](experiments/qwen27-dflash-sycl-b70/notes/2026-07-12-mmvq-dispatch-fix.md)
 - [Native DFlash draft-KV correctness isolation and first >68 result](notes/2026-07-13-qwen36-native-dflash-sycl-fa-isolation.md)
@@ -182,10 +193,10 @@ tok/s median**, passed exact/repeat128/baseline-parity/1K gates, and was
 approved by LocalMaxxing as `cmrh35ct50092mj01h7jgydqj`. It is not the active
 target configuration.
 
-### Protected In-Flight Work
+### Protected Qwen research state
 
-The following July 12 main-repository work is protected and may be untracked
-until it is reviewed and committed:
+The following main-repository paths contain the committed Qwen experiment
+packet and must remain discoverable even though the lane is closed:
 
 - `experiments/qwen27-dflash-sycl-b70/`;
 - `notes/2026-07-12-b70-qwen27-prior-art-research.md`;
@@ -193,13 +204,14 @@ until it is reviewed and committed:
 - `plans/2026-07-12-qwen27-dflash-sycl-single-b70-plan.md`;
 - `plans/2026-07-12-qwen27-tp1-max-speed-requirements-and-execution.md`.
 
-`/home/steve/src/llama.cpp` is also protected. Its Q4_0 MMVQ ncols 9-17,
-MMVQ regression coverage, SYCL graph evidence, and capture-safe concat work is
-dirty in `common.hpp`, `ggml-sycl.cpp`, `mmvq.cpp`, and
-`tests/test-backend-ops.cpp`. Preserve it, inspect it before building, and do
-not reset or clean the tree. Treat the external
-vLLM, XPU-kernel, oneCCL, build, cache, and result trees as mutable research
-state as well.
+`/home/steve/src/llama.cpp` is also protected at base `e3546c794`. It contains
+the broader Qwen verifier/fusion/speculation stack plus uncommitted trace and
+QKVZAB integration work across multiple files. Its closure-time tracked binary
+diff SHA-256 and scoped snapshots are recorded in the
+[closure note](notes/2026-07-13-qwen27-dflash-sycl-closure.md). Preserve it,
+inspect Git status before building, and do not reset or clean the tree for a
+new model lane. Treat the external vLLM, XPU-kernel, oneCCL, build, cache, and
+result trees as mutable research state as well.
 
 ## Paused And Bookmarked Lanes
 
@@ -214,26 +226,20 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Keep native DFlash draft KV in F16. Preserve FA for both target and draft;
-   require acceptance parity before permitting Q8_0 draft KV again.
-2. Use native DFlash as a routed high-ceiling lane; distinguish favorable code
-   results from the strict mixed-suite production gate.
-3. Capture real DFlash M=6 LM-head activations and compare the experiment-only
-   fused Q6_K top-1 path against the production kernel. Integrate it only if
-   exact row-1..5 IDs and the `<2.5 ms` or `>=1.25x` gate survive. In parallel,
-   connect the trusted RAM pack stage to runtime loading so repeated AOT tests
-   no longer repack 6-9 GiB on the CPU.
-4. At promotion time—not during rapid iteration—record each external source
-   tree's path, commit, dirty state, and relevant aggregate patch snapshot.
-5. Update the [performance index](results/scoreboard.md) for representative
-   verified expectations and the [LocalMaxxing ledger](results/localmaxxing-submissions.md)
-   only for actual public submissions.
-6. Treat LocalMaxxing publication as part of record promotion, not a separate
-   optional follow-up. For each matching 1/2/3/4-GPU configuration, immediately
-   queue and submit every new single-session decode record after the fixed cold
-   realistic suite, correctness/state gates, `cached_tokens=0`, and complete run
-   identity pass. Never submit favorable-prompt, warmed, synthetic, aggregate,
-   or otherwise diagnostic rows as records.
+1. Keep the Qwen lane closed. Do not resume unfinished QKVZAB, Q5_K GDN-output,
+   or exact-Q4 adaptation work without satisfying the reopening gate in the
+   closure note.
+2. Select the exact DeepSeek target before implementation. Record checkpoint
+   revision, resident-size/fit budget, quantization, runtime, GPU layout,
+   single-session objective, and fixed correctness/performance suite.
+3. Establish a clean DeepSeek baseline and cycle decomposition before porting
+   Qwen kernels. MoE routing, attention/cache layout, expert residency, and
+   collectives must determine the optimization order.
+4. Preserve `/home/steve/src/llama.cpp` as dirty Qwen research state until its
+   patch snapshots are independently reviewed. Do not reset or clean it for a
+   DeepSeek bring-up.
+5. Continue to publish only verified new matching LocalMaxxing records after
+   the cold realistic gate, complete identity capture, and correctness pass.
 
 The detailed state formerly accumulated in this file remains available in Git
 at commit `95b4ca413` (`git show 95b4ca413:CURRENT.md`).

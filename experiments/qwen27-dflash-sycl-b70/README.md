@@ -2,6 +2,14 @@
 
 Created: 2026-07-12
 
+Closed as active lane: 2026-07-13. The one-B70 `100 tok/s` and multi-B70
+single-session `200 tok/s` objectives were not reached. The final strict
+Q4_0/DFlash record is `47.818818 tok/s`, approved by LocalMaxxing as
+`cmrjbx8bc02g8mj01yzz2v701`. Read the consolidated
+[closure and transfer note](../../notes/2026-07-13-qwen27-dflash-sycl-closure.md)
+before reopening this lane. Unfinished QKVZAB, Q5_K GDN-output, and exact-Q4
+trace artifacts are preserved as unvalidated research, not promoted wins.
+
 Goal: maximum decode tok/s for Qwen3.6-27B on a single Intel Arc Pro B70
 (608 GB/s, 32 GB GDDR6, Xe2/Battlemage), using GGUF + llama.cpp/SYCL + DFlash
 speculative decoding. Apples-to-apples comparison with hipfire's 213 tok/s

@@ -162,8 +162,12 @@ Main entries:
 - [FP8 vLLM/XPU result note](../results/fp8-vllm-xpu-qwen36-2026-05-04.md)
 - older notes under `../notes/`
 
-Status: useful reference for SYCL/llama.cpp and FP8 vLLM patterns. Reopen only
-with a clear record target and current validity gates.
+Status: the intensive Q4_0/DFlash SYCL lane closed on 2026-07-13 at a strict
+one-B70 record of `47.818818 tok/s`; the `100/200 tok/s` single-session goals
+were not reached. Read the
+[closure and transfer note](../notes/2026-07-13-qwen27-dflash-sycl-closure.md)
+before using its kernel, speculation, graph, or packing artifacts. Reopen only
+with one of the concrete scope changes listed there, not another flag sweep.
 
 ### DeepSeek V4 Flash AutoRound
 
@@ -171,7 +175,11 @@ Main entry:
 
 - [experiment packet](../experiments/deepseek-v4-flash-autoround-vllm/README.md)
 
-Status: candidate future lane. Needs fresh validity gates before promotion.
+Status: next requested model family after the Qwen closeout, but not yet an
+active implementation target. The current W4A16 artifact was previously
+estimated at about `142.44 GiB`, so it does not cleanly fit four 32 GiB B70s.
+Choose a viable exact checkpoint/format and define fresh validity gates before
+download, runtime patching, or promotion.
 
 ## Cross-Model Lessons
 
