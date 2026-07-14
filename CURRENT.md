@@ -58,20 +58,27 @@ evidence. Speculation remains prohibited until correct nonspeculative decode
 approaches 40-50 tok/s. The archived Qwen detail below remains resume evidence,
 not an instruction to continue experimenting.
 
-Stage 0 passes on the clean pinned runtime: vLLM `382bbd5`, XPU-kernel
-commit `840482d`, Torch `2.12.0+xpu`, Triton-XPU `3.7.1`, and exact oneAPI
-2025.3 enumerate all four B70s. The four-rank XCCL barrier/allreduce preflight
-passes. All 12 M=1/4/8, H4096/I2048/top-k6 MXFP4/INT4 low-level reference
-scaffold cases pass. K160 now constructs and decodes on TP4+EP through
-`XPUExpertsMxFp4` at 2K/95%, using 24.95 GiB model memory and 2.11 GiB KV per
-rank. The arithmetic canary passes, but the warm graph-off diagnostic is only
-`2.616225 tok/s`, far below the 50 tok/s investment gate. Breakable XPU graph
-capture fails in `xpu_sparse_decode_fp8.py` because
-`combined_lens.max().item()` forces a prohibited host wait on a command-graph
-event. Fixing that capture boundary is the immediate high-value task; do not
-begin speculation or quality-pack work at the present base speed. Evidence and
-exact run paths are in
-[`data/deepseek-v4-k160-tp4-bringup-20260714.json`](data/deepseek-v4-k160-tp4-bringup-20260714.json).
+The clean pinned runtime is now vLLM `9fe91a6d6` plus XPU kernels `473a55e2a`.
+Persistent graph replay, native mHC, context-bounded sparse work, and direct
+paged FP8 attention all pass. The current strict TP4+EP single-session record
+uses split QK/LSE plus 8-by-64 tiled PV and a mutation-declared TP-only
+in-place all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions.
+Its M<=2 dense block-FP8 projections use BF16 activations directly with the
+same FP8 weights and load-time-prepacked weight-scale grids, while prefill and
+larger M retain W8A8. This removes 215 activation quantizers and scale copies
+per token. It reaches **33.8866379 tok/s** median and `33.3446529` p10; all 12
+prompts emitted 128 token IDs cold/cached-zero and changed-input replay plus
+exact canaries pass. LocalMaxxing approved it as `cmrl12pke06ehmj01i9a1f0gu`;
+evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-block-fp8-w8a16-20260714T1930Z`.
+The earlier trace measured about 23.3 ms non-collective kernels, 8 ms TP
+communication, and 2 ms queue/host gaps; the new dense path removes roughly
+4 ms from that period. The active tasks are exact MXFP4 small-M dispatch and
+the ordered 87-collective critical path. The standalone MHC/RMS fusion and
+oneCCL twoshots lanes are preserved end-to-end losses.
+Speculation remains disabled until nonspeculative decode approaches 40-50
+tok/s. Detailed history is in the lane handoff and
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md).
 
 ### Archived Qwen3.6 27B lane detail
 

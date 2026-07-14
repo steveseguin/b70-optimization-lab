@@ -71,6 +71,7 @@ def main() -> int:
     ttft = summary["ttft_ms"]
     gate = bench["realistic_final_gate"]
     fresh = bench["fresh_response_validity"]
+    run_identity = bench.get("run_identity") or {}
 
     prompt_tokens = [float(row.get("prompt_tokens", 0)) for row in rows]
     completion_tokens = [float(row.get("completion_tokens", 0)) for row in rows]
@@ -79,7 +80,7 @@ def main() -> int:
     cached_tokens = [row.get("cached_tokens") for row in rows]
 
     engine_flags = {
-        "apiMode": bench.get("api_mode"),
+        "apiMode": bench.get("api_mode") or run_identity.get("api_mode"),
         "attentionBackend": identity.get("llama_server") and "llama.cpp SYCL/Level Zero"
         or "vLLM XPU",
         "benchmarkJson": str(args.bench_json),
@@ -110,7 +111,11 @@ def main() -> int:
         "realisticSuiteCachedTokensAllZero": True,
         "realisticSuiteGatePassed": True,
         "realisticSuiteId": fresh.get("suite_id"),
-        "realisticSuitePath": fresh.get("suite_path") or identity.get("suite"),
+        "realisticSuitePath": (
+            fresh.get("suite_path")
+            or run_identity.get("suite_path")
+            or identity.get("suite")
+        ),
         "realisticSuiteVersion": fresh.get("suite_version"),
         "temperature": 0,
         "tokenTimingSource": fresh.get("token_timing_source"),
@@ -153,6 +158,8 @@ def main() -> int:
             "temperature": 0.0,
             "topP": 1.0,
         })
+    elif identity.get("argv"):
+        engine_flags["commandSnippet"] = identity["argv"]
 
     for key in (
         "gpu_index",
@@ -175,6 +182,27 @@ def main() -> int:
         "compilation_config",
         "speculative_config",
         "vllm_extra_args",
+        "vllm_commit",
+        "kernel_commit",
+        "xpu_graph",
+        "vllm_xpu_enable_xpu_graph",
+        "vllm_xpu_force_graph_with_comm",
+        "vllm_xpu_graph_noop_comm_capture",
+        "vllm_xpu_v4_direct_fp8_attn",
+        "vllm_xpu_v4_split_fp8_attn",
+        "vllm_xpu_v4_fp8_wo_a",
+        "vllm_xpu_v4_inplace_allreduce",
+        "vllm_xpu_v4_mhc_norm_fusion",
+        "vllm_xpu_v4_block_fp8_w8a16",
+        "vllm_xpu_log_fp8_linear_shapes",
+        "vllm_xpu_native_mhc",
+        "pipeline_parallel_size",
+        "data_parallel_size",
+        "data_parallel_size_local",
+        "kv_cache_dtype",
+        "ccl_sycl_allreduce_ll",
+        "ccl_sycl_allreduce_ll_threshold",
+        "ccl_sycl_allreduce_arc",
     ):
         if key in identity:
             engine_flags[key] = identity[key]

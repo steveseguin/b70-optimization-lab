@@ -121,10 +121,13 @@ def api_engine_flags(engine_flags: dict) -> dict:
         or engine_flags.get("concurrency")
         or 1
     )
+    gpu_layers = engine_flags.get("gpuLayers")
+    if gpu_layers is None:
+        gpu_layers = 99
 
     api_flags = {
         "commandSnippet": str(command),
-        "gpuLayers": 99,
+        "gpuLayers": int(gpu_layers),
         "kvCacheDtype": kv_cache or str(engine_flags.get("kvCacheDtype") or "f16"),
         "flashAttn": bool(flash_attn_value),
         "attentionBackend": str(attention_backend),

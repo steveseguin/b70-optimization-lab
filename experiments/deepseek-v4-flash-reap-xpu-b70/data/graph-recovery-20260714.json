@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-14T15:00:00Z",
+  "model": {
+    "path": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990"
+  },
+  "runtime": {
+    "vllm_commit": "436298dcd7c71bc9b567a873098e46d8f7cd7780",
+    "xpu_kernel_commit": "840482d03ee12f6398967757efee9a493225644d",
+    "torch": "2.12.0+xpu",
+    "triton_xpu": "3.7.1",
+    "oneapi_components": "2025.3",
+    "speculation": false
+  },
+  "fixes": [
+    {
+      "commit": "0ed5ecc5d20c06f5bad71a9d8504bfe5e243df65",
+      "result": "static-width device-only sparse FP8 index packing and finite masked-chunk sentinel"
+    },
+    {
+      "commit": "436298dcd7c71bc9b567a873098e46d8f7cd7780",
+      "result": "narrow FULL graph break around native paged-indexer scratch-memory operation"
+    }
+  ],
+  "tp4_results": {
+    "eager_warm_tok_s_after_ttft": 2.6162252129042844,
+    "piecewise_headline_tok_s_after_ttft": 8.512061966367492,
+    "full_narrow_break_headline_tok_s_after_ttft": 8.616231654657215,
+    "full_narrow_break_support_tok_s_after_ttft": 8.622068017652008,
+    "eager_to_full_speedup": 3.293385,
+    "correctness_canary": "37 * 29 = 1073",
+    "headline_policy": "row0 fresh response; repeated row1 support only",
+    "best_evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-full-narrow-indexer-20260714T1020Z/steady-long-128.json"
+  },
+  "profile": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-full-profile-20260714T1024Z",
+    "allreduce_calls_per_profiled_decoder_step": 87,
+    "interpretation": "call count is useful; profiler collective durations are serialized/distorted and are not wall time"
+  },
+  "tp2_dp2_ep4": {
+    "construction": "pass",
+    "model_memory_gib_per_card": 26.66,
+    "manual_kv_cache_bytes": 67108864,
+    "kv_cache_tokens": 160,
+    "graph_result": "blocked at first mixed-token dummy run in FULL+PIECEWISE and PIECEWISE-only",
+    "eager_result": "blocked on first MoE DPEP all_gather on all four ranks",
+    "performance_result": null
+  },
+  "decision": "Keep speculation disabled. Prioritize a correct graph-safe XPU TP collective path; close DP2 topology work until eager DPEP all-gather is fixed."
+}
