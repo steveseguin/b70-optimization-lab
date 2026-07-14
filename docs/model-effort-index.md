@@ -169,17 +169,27 @@ were not reached. Read the
 before using its kernel, speculation, graph, or packing artifacts. Reopen only
 with one of the concrete scope changes listed there, not another flag sweep.
 
-### DeepSeek V4 Flash AutoRound
+### DeepSeek V4 Flash REAP/XPU On B70
 
 Main entry:
 
-- [experiment packet](../experiments/deepseek-v4-flash-autoround-vllm/README.md)
+- [experiment packet](../experiments/deepseek-v4-flash-reap-xpu-b70/README.md)
+- [controlling investment-gated plan](../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md)
+- [current lane handoff](../experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md)
 
-Status: next requested model family after the Qwen closeout, but not yet an
-active implementation target. The current W4A16 artifact was previously
-estimated at about `142.44 GiB`, so it does not cleanly fit four 32 GiB B70s.
-Choose a viable exact checkpoint/format and define fresh validity gates before
-download, runtime patching, or promotion.
+Status: active for low-cost Stages 0-3.5 after the Qwen closeout. The full Intel
+W4A16 artifact is now 144.905 GiB and remains rejected. The frozen source is
+official DeepSeek V4 Flash; the first full artifact will be heterogeneous REAP
+K160 only after native MXFP4/INT4 exact-shape kernels, per-layer expert counts,
+and XPU architecture fixtures pass. K168/K176/K180 are later capacity
+candidates, not promises. Official-source teacher evidence is primary quality
+truth; full IQ3_XXS is a secondary all-expert behavior control.
+Do not download or construct the 100+ GiB source before the plan authorizes
+Stage 4.
+
+Historical rejected fit/support evidence for the oversized Intel AutoRound
+artifact remains at
+[the original AutoRound experiment packet](../experiments/deepseek-v4-flash-autoround-vllm/README.md).
 
 ## Cross-Model Lessons
 

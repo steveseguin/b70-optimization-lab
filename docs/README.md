@@ -25,6 +25,7 @@ Docs should point to those artifacts instead of duplicating every script.
 - [Qwen3.6 27B INT4 AutoRound Result Packet](../results/qwen36-27b-autoround-int4-b70/README.md): TP1/TP2 vLLM/XPU results, strict fresh decode records, long-context service ladder, and closed no-win paths.
 - [Qwen3.6 Research Map](qwen36-research-map.md): Qwen3.6-35B/B70 lane status, current decisions, and artifact pointers.
 - [Qwen3.6 35B Quark INT8 Result Packet](../results/qwen36-35b-quark-int8-b70/README.md): best valid 2x/4x results, invalid fast lanes, reproduction commands, and carryover lessons.
+- [DeepSeek V4 Flash Investment Plan](../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md): gated four-B70 vLLM/XPU bring-up, exact-shape kernel tests, K160-first capacity selection, and quality controls.
 - [MiniMax M2.7 INT4 on 4x B70, Ubuntu 24](b70-minimax-ubuntu24-deployment.md): deploy an OpenAI-compatible vLLM endpoint.
 - [MiniMax Production C1 Service](minimax-production-c1-service.md): run the 32K MiniMax endpoint under systemd with health and benchmark checks.
 - [Gemma 4 12B INT4 AutoRound profile](../experiments/gemma4-12b-int4-autoround-vllm/README.md): current model-slot production profile and related research profiles.

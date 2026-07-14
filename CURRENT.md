@@ -32,13 +32,23 @@ not reached. The final strict one-B70 record is `47.818818 tok/s`, approved by
 LocalMaxxing as `cmrjbx8bc02g8mj01yzz2v701`. The authoritative closeout is
 [`notes/2026-07-13-qwen27-dflash-sycl-closure.md`](notes/2026-07-13-qwen27-dflash-sycl-closure.md).
 
-The next requested family is DeepSeek, but no exact model/runtime objective is
-active yet. Begin with the existing
-[`experiments/deepseek-v4-flash-autoround-vllm/`](experiments/deepseek-v4-flash-autoround-vllm/README.md)
-fit/support evidence and choose an exact checkpoint, quality class, runtime,
-single-session hardware target, and validity gate before downloading, patching,
-or benchmarking. The archived Qwen detail below remains resume evidence, not
-an instruction to continue experimenting.
+The next active research lane is the investment-gated DeepSeek V4 Flash
+vLLM/XPU bring-up for one active generation on four B70s. The frozen source is
+`deepseek-ai/DeepSeek-V4-Flash` revision
+`60d8d70770c6776ff598c94bb586a859a38244f1`. The first full candidate is K160,
+with K168/K176/K180 selected later only if quality and at least 3 GiB warmed
+free memory per rank permit. Native MXFP4 and symmetric W4A16 must first pass
+exact-shape kernel gates. A frozen official-source teacher subset is primary
+quality truth; full IQ3_XXS is a secondary all-expert behavior control.
+
+The controlling plan is
+[`plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md),
+with the current handoff at
+[`experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md`](experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md).
+Only Stages 0-3.5 are authorized now. Do not start the full source download,
+checkpoint construction, or speculation until those low-cost gates pass. The
+archived Qwen detail below remains resume evidence, not an instruction to
+continue experimenting.
 
 ### Archived Qwen3.6 27B lane detail
 
@@ -229,12 +239,13 @@ loaded service.
 1. Keep the Qwen lane closed. Do not resume unfinished QKVZAB, Q5_K GDN-output,
    or exact-Q4 adaptation work without satisfying the reopening gate in the
    closure note.
-2. Select the exact DeepSeek target before implementation. Record checkpoint
-   revision, resident-size/fit budget, quantization, runtime, GPU layout,
-   single-session objective, and fixed correctness/performance suite.
-3. Establish a clean DeepSeek baseline and cycle decomposition before porting
-   Qwen kernels. MoE routing, attention/cache layout, expert residency, and
-   collectives must determine the optimization order.
+2. Execute DeepSeek Stages 0-3.5 only: clean worktrees, exact-shape MXFP4/INT4
+   fused-MoE gates, heterogeneous per-layer expert construction, and
+   architecture fixtures, followed by frozen mapping/calibration and quality
+   identities. Record every result in the lane ledger.
+3. Authorize the frozen source download and K160 construction only after those
+   gates pass. Establish a clean nonspeculative baseline and cycle
+   decomposition before porting any Qwen kernel.
 4. Preserve `/home/steve/src/llama.cpp` as dirty Qwen research state until its
    patch snapshots are independently reviewed. Do not reset or clean it for a
    DeepSeek bring-up.

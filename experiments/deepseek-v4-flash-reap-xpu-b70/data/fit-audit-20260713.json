@@ -1,0 +1,64 @@
+{
+  "audit_date": "2026-07-13",
+  "source": {
+    "hf_id": "deepseek-ai/DeepSeek-V4-Flash",
+    "revision": "60d8d70770c6776ff598c94bb586a859a38244f1",
+    "shards": 46,
+    "tensor_payload_bytes": 159609485896,
+    "tensor_payload_gib": 148.647917
+  },
+  "tensor_payload_breakdown_gib": {
+    "hash_layers_0_2_routed_experts": 9.5625,
+    "layers_3_42_routed_experts": 127.5,
+    "mtp_routed_experts": 3.1875,
+    "shared_experts": 1.031313,
+    "other": 7.366604
+  },
+  "projection_method": "Keep all hash-layer routed experts, shared experts, and other tensors; scale only layers 3-42 routed-expert bytes by K/256. The base lane omits MTP.",
+  "projected_native_source_payload_gib_without_mtp": {
+    "128": 81.710417,
+    "144": 89.679167,
+    "150": 92.667449,
+    "160": 97.647917,
+    "168": 101.632292,
+    "176": 105.616667,
+    "180": 107.608855,
+    "192": 113.585417,
+    "200": 117.569792
+  },
+  "projected_native_source_payload_gib_with_same_k_mtp": {
+    "128": 83.304167,
+    "144": 91.472136,
+    "150": 94.535124,
+    "160": 99.640105,
+    "168": 103.724089,
+    "176": 107.808074,
+    "180": 109.850066,
+    "192": 115.976042,
+    "200": 120.060027
+  },
+  "full_256_expert_mtp_addition_gib": 3.1875,
+  "controls": {
+    "full_iq3_xxs": {
+      "role": "secondary all-expert behavior control, not source truth",
+      "hf_id": "bullerwins/DeepSeek-V4-Flash-GGUF",
+      "revision": "2be25f699d3efe806def93b0ae5dc632a824abb1",
+      "bytes": 113974275424,
+      "gib": 106.146816,
+      "held_out_logit_kld_reported": 0.0775
+    },
+    "intel_w4a16_autoround": {
+      "role": "rejected historical fit evidence",
+      "hf_id": "Intel/DeepSeek-V4-Flash-W4A16-AutoRound",
+      "revision": "a4819250708609291a142b3fd244201367ccbc1c",
+      "safetensor_bytes": 155590474496,
+      "safetensor_gib": 144.904921,
+      "fit_decision": "reject for full-resident four-B70 deployment"
+    }
+  },
+  "storage_observation": {
+    "internal_nvme_free_gib_approx": 11,
+    "external_archive_free_tib_approx": 2.5
+  },
+  "warning": "Projected file payload is not resident-memory proof. Packing, loader copies, collectives, activations, KV cache, scratch, and graph pools must be measured per rank."
+}
