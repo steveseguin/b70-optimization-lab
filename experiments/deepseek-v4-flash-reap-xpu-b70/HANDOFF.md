@@ -9,8 +9,8 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; the native-router nonspeculative base is
-41.5137/41.7333 tok/s; row-exact attached MTP1 plus a strided-batch compressor
+replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
+43.7667/43.6986 tok/s; row-exact attached MTP1 plus a strided-batch compressor
 and selective M=2 W8A16 is the target-verified speed record at
 55.5245/54.7089 tok/s**.
 
@@ -52,15 +52,17 @@ hash-preserved quality candidates; K180 is not predetermined.
 
 ## Current record and residual
 
-1. The current trustworthy strict base is **`41.513661/41.733256 tok/s`**
-   median, with `41.188482/41.259748` p10, at
-   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-m1-router-candidate-20260715T2021Z`.
-   A same-commit flag-off control is 40.067691 tok/s. The SIMD16 router
-   replaces generic M=1 bias-add/radix-top-k/gather in 40 normal MoE layers,
-   saving 0.87-1.00 ms/token. Twenty exact captures pass 20/20, including ten
-   after both strict suites, and LocalMaxxing approved
-   `cmrmjd3io1nn1mj013stqoe4b`. See
-   `notes/2026-07-15-m1-biased-topk-record.md`.
+1. The current trustworthy strict base is **`43.766673/43.698550 tok/s`**
+   median, with `43.226357/43.186344` p10, at
+   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`.
+   Two further rollover suites reach 43.694210/43.667908. A same-build direct-
+   off control is 41.991191/42.155092 tok/s, so direct M=1 routed-MoE fusion
+   removes 0.84-0.97 ms/token. The repaired oneCCL ring widens its readiness
+   identity from an 11-bit reused counter to a 24-bit collective epoch plus a
+   7-bit communicator tag. Seventy exact captures pass 70/70, crossing the old
+   deterministic failure positions 28 and 58. LocalMaxxing approved
+   `cmrmnp7h81nntmj01lfenydgj`. See
+   `notes/2026-07-15-direct-routed-moe-wideepoch-record.md`.
    The preceding repeatability-correct base remains at
    `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-graph-oneccl1712-bf16-allreduce128k-preload094-cache-fix-20260715T1530Z`.
    It retains selective W8A16, exact shared-expert activation/quant fusion,
@@ -163,8 +165,10 @@ launcher loads oneCCL from the DeepSeek virtual environment first.
 
 Keep the exact selective-W8A16 shape list, MXFP4 N64, tuned split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
-fusion and `VLLM_XPU_V4_M1_BIASED_TOPK=1` in the record lane. The trustworthy
-nonspeculative base is 41.733256
+fusion, `VLLM_XPU_V4_M1_BIASED_TOPK=1`,
+`VLLM_XPU_V4_M1_ROUTER_NORM=1`, and
+`VLLM_XPU_V4_M1_DIRECT_ROUTED_MOE=1` in the record lane. The trustworthy
+nonspeculative base is 43.766673
 tok/s and row-exact MTP1 with the batched compressor is the 55.524496 tok/s
 target-verified speed record.
 MTP2 and larger repeated-single-layer widths are closed by negligible

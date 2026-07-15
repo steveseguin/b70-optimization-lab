@@ -23,19 +23,19 @@ Confirm the endpoint and process state before relying on this observation.
 
 The current DeepSeek record endpoint is listening on
 `127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint. It is the row-exact MTP1 plus strided-batch compressor and M=2
-W8A16 record recipe at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z`:
-vLLM `3bd0eb321`, XPU kernels `de979b9`, and exact-version oneCCL `6da44bc`.
-`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`,
-`VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT=1`, `--spec-method mtp`, and
-`--spec-tokens 1` are active; `VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=2` extends
-the selective projection path to the target verifier. The sustained 20/20
-exact gate passes.
+LAN endpoint. It is the nonspeculative direct M=1 routed-MoE record recipe at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
+vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
+`48fda4f0e`. `VLLM_XPU_V4_M1_ROUTER_NORM=1` and
+`VLLM_XPU_V4_M1_DIRECT_ROUTED_MOE=1` are active; speculation is disabled.
+The sustained exact gate passes 70/70, including the old rollover failure
+positions 28 and 58.
 The runtime is force-preloaded from
-`/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-sizegate` and routes only SYCL
-all-reduces larger than 131,072 bytes to the safe path. All four worker maps
-were verified. The rejected native dual RMSNorm remains off.
+`/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-wideepoch-48fda4f` and routes only
+SYCL all-reduces larger than 131,072 bytes to the safe path. Its Arc ring uses
+a 24-bit collective readiness epoch plus a 7-bit communicator tag instead of
+the rollover-prone 11-bit sequence. All four worker maps were verified. The
+rejected native dual RMSNorm remains off.
 The host reboot auto-started the two Gemma service units and occupied the B70s;
 both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
@@ -83,23 +83,25 @@ permitted as a separate measured lane. It must retain exact target verification
 and must not be mixed with the base record. The archived Qwen detail below
 remains resume evidence, not an instruction to continue experimenting.
 
-The promoted nonspeculative runtime is now vLLM `a66f3486c` plus XPU kernels
-`2a07cf2e8` and
-the exact-version oneCCL 2021.17.2 size-routed runtime at `6da44bc`.
+The promoted nonspeculative runtime is now vLLM `a681dbb2b` plus XPU kernels
+`6522849b0` and the exact-version oneCCL 2021.17.2 size-routed, wide-epoch
+runtime at `48fda4f0e`.
 Persistent graph replay, native mHC, context-bounded sparse work, and direct
 paged FP8 attention all pass. The current strict TP4+EP single-session record
 uses split QK/LSE plus 8-by-64 tiled PV, a mutation-declared TP-only in-place
 all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions, selective
 W8A16 for four high-value projection families, and an exact clamp-at-10
-SwiGLU plus per-128 E4M3FN quant producer for the W8A8 shared-down path. The
-trustworthy nonspeculative record is now **41.513661/41.733256 tok/s** median
-and `41.188482/41.259748` p10 across two strict cold suites. A same-commit
-flag-off control reached 40.067691 tok/s, so the native SIMD16 M=1 router
-removes 0.87-1.00 ms/token end to end. All 24 strict rows were cached-zero and
-twenty independent exact captures pass 20/20, including ten after both
-suites. Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-m1-biased-topk-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-m1-biased-topk-record.md),
-and LocalMaxxing approved `cmrmjd3io1nn1mj013stqoe4b`. The preceding
+SwiGLU plus per-128 E4M3FN quant producer for the W8A8 shared-down path. Exact
+router normalization and direct M=1 routed-MoE gather raise the trustworthy
+nonspeculative record to **43.766673/43.698550 tok/s** median with
+`43.226357/43.186344` p10. Two further rollover suites reach
+43.694210/43.667908. The same-build direct-off control is
+41.991191/42.155092, so direct fusion removes 0.84-0.97 ms/token. All 48 strict
+rows are cached-zero and 70 independent exact captures pass. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-direct-routed-moe-wideepoch-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-direct-routed-moe-wideepoch-record.md),
+and LocalMaxxing approved `cmrmnp7h81nntmj01lfenydgj`. The preceding
+41.733256 native-router row `cmrmjd3io1nn1mj013stqoe4b` remains superseded
+speed evidence. The older
 `40.1357239` LocalMaxxing row `cmrm601ig1hsmmj017npoivfd` remains historical
 speed evidence, but consecutive changed-prompt testing later proved its
 unmodified large-SYCL-allreduce identity was not repeatability-safe. Evidence

@@ -1,0 +1,65 @@
+{
+  "date": "2026-07-15",
+  "status": "promoted",
+  "model": "0xSero/DeepSeek-V4-Flash-180B",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "mode": "TP4+EP4 single-session nonspeculative decode",
+  "vllm_commit": "a681dbb2b4b19c2c5a964817095b5f8c1f27ff48",
+  "xpu_kernels_commit": "6522849b02894273b1e779b3c115527b5cdf3756",
+  "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+  "oneccl_runtime": "/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-wideepoch-48fda4f/lib/libccl.so.1.0",
+  "oneccl_libccl_sha256": "53de2b6d65265803d64773546c1166ceed4ae43737f0fded776f5847b4b461c9",
+  "candidate_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z",
+  "same_build_direct_off_control": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-router-norm-direct-off-control-20260715T2155Z",
+  "strict_suites": [
+    {
+      "file": "realistic-suite-v1.json",
+      "median_tok_s": 43.766673266271965,
+      "p10_tok_s": 43.22635658282417,
+      "mean_tok_s": 43.69811433160126,
+      "wall_median_tok_s": 39.28124709626695,
+      "ttft_median_ms": 308.684051502496,
+      "gate_passed": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "file": "realistic-suite-v1-confirm.json",
+      "median_tok_s": 43.69855047858043,
+      "p10_tok_s": 43.18634373517055,
+      "mean_tok_s": 43.64525818126511,
+      "wall_median_tok_s": 38.98299402541498,
+      "ttft_median_ms": 330.7663530067657,
+      "gate_passed": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "file": "rollover-suite-3.json",
+      "median_tok_s": 43.69421019994415,
+      "p10_tok_s": 43.169959470667486,
+      "gate_passed": true,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "file": "rollover-suite-4.json",
+      "median_tok_s": 43.66790844592444,
+      "p10_tok_s": 43.243800767857394,
+      "gate_passed": true,
+      "cached_tokens_all_zero": true
+    }
+  ],
+  "direct_off_control_medians_tok_s": [41.9911910215392, 42.155092068355],
+  "direct_fusion_gain_percent_range": [3.6613807122581665, 4.228225495728477],
+  "direct_fusion_saved_ms_per_token_range": [0.8378723486612838, 0.9660833643910689],
+  "previous_nonspec_record_tok_s": 41.73325598932311,
+  "record_gain_percent": 4.872414645694256,
+  "exact_canary_captures": 70,
+  "exact_canary_passes": 70,
+  "old_rollover_failure_captures_crossed": [28, 58],
+  "flags_added": [
+    "VLLM_XPU_V4_M1_ROUTER_NORM=1",
+    "VLLM_XPU_V4_M1_DIRECT_ROUTED_MOE=1"
+  ],
+  "localmaxxing_id": "cmrmnp7h81nntmj01lfenydgj",
+  "localmaxxing_status": "APPROVED",
+  "decision": "Promote the exact direct M=1 routed-MoE path and the widened oneCCL collective readiness epoch as the trustworthy nonspeculative record identity."
+}
