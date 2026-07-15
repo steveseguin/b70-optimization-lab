@@ -21,8 +21,9 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-The temporary DeepSeek benchmark endpoint on `127.0.0.1:18080` was stopped
-cleanly after the latest correctness gate. No model server is running.
+The current DeepSeek record-identity endpoint is listening on
+`127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
+LAN endpoint.
 The host reboot auto-started the two Gemma service units and occupied the B70s;
 both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
@@ -65,24 +66,27 @@ now complete, cryptographically verified, and promoted to
 `/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160`. The official-source
 transfer was started, then paused without a completed weight shard so the
 runnable K160 could take priority; it remains resumable later for teacher
-evidence. Speculation remains prohibited until correct nonspeculative decode
-approaches 40-50 tok/s. The archived Qwen detail below remains resume evidence,
-not an instruction to continue experimenting.
+evidence. The nonspeculative lane has crossed 40 tok/s, so speculation is now
+permitted as a separate measured lane. It must retain exact target verification
+and must not be mixed with the base record. The archived Qwen detail below
+remains resume evidence, not an instruction to continue experimenting.
 
-The promoted runtime is now vLLM `38260cda8` plus XPU kernels `ae8151234`.
+The promoted runtime is now vLLM `fa3e27b461` plus XPU kernels `83ef7b667`.
 Persistent graph replay, native mHC, context-bounded sparse work, and direct
 paged FP8 attention all pass. The current strict TP4+EP single-session record
 uses split QK/LSE plus 8-by-64 tiled PV, a mutation-declared TP-only in-place
 all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions, selective
 W8A16 for four high-value projection families, and an exact clamp-at-10
 SwiGLU plus per-128 E4M3FN quant producer for the W8A8 shared-down path. The
-trustworthy record is now **34.0671207 tok/s** median and `33.5299427` p10
-across the strict cold suite, confirmed by a second `34.0497345 tok/s` run.
-All 24 suite rows were cached-zero; sequential changed-input replay,
-arithmetic/copy/Paris/JSON canaries, executable quality gates, and the frozen
-long-math invariant pass. LocalMaxxing approved it as
-`cmrlf1hn609glmj019rsjdl4r`; evidence is
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/shared-expert-fused-act-quant-20260715T0140Z`.
+trustworthy record is now **40.0209718 tok/s** median and `39.6080391` p10
+across the strict cold suite. All 12 rows were cached-zero; focused split output
+is bitwise identical and sequential changed-input replay is exact.
+LocalMaxxing approved it as `cmrlnp01l12q4mj01p58ynsyd`; evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/split-fp8-geometry-b4-qk16-recordidentity-20260715T0144Z`.
+The gain comes from changing split FP8 QK from four 16-head/8-warp programs to
+sixteen 4-head/16-warp programs; complete attention microbenchmarks improve
+22-42% across short and 128-token C4/C128 shapes. The preceding 34.0671207
+tok/s shared-expert-fusion result remains the matching control.
 The previous 30.295 and 33.887 rows are invalid: generic scale prepacking also
 transposed DeepSeek's special `wo_a` BMM scales, while its BF16 cache interpreted
 them as canonical. Correcting that layout changed 77% of the first 96 greedy
@@ -150,8 +154,8 @@ All safe fallbacks are performance-closed: the best fresh screen is only
 `2.495917 tok/s`, so this topology must not displace the TP4 lane without a
 communicator-scoped fast-SYCL or dedicated fused DPEP transport. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-tp2-dp2-dpep-recovery.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-tp2-dp2-dpep-recovery.md).
-Speculation remains disabled until nonspeculative decode approaches 40-50
-tok/s. Detailed history is in the lane handoff and
+The 40 tok/s base gate is now cleared. Speculation may proceed only as a
+separate exact target-verified lane. Detailed history is in the lane handoff and
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md).
 
 ### Archived Qwen3.6 27B lane detail

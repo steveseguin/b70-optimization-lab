@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Benchmark DeepSeek V4 split-FP8 sparse decode launch geometry on one XPU."""
+
+from __future__ import annotations
+
+import argparse
+import itertools
+import json
+
+import torch
+
+from vllm.models.deepseek_v4.xpu.xpu_sparse_decode_fp8 import (
+    split_fp8_sparse_attention,
+)
+from vllm.triton_utils import triton
+
+
+def make_cache(num_rows: int, block_size: int, device: torch.device) -> torch.Tensor:
+    num_blocks = (num_rows + block_size - 1) // block_size
+    cache = torch.zeros(
+        (num_blocks, block_size, 584), dtype=torch.uint8, device=device
+    )
+    # Each block stores block_size * 576 token bytes followed by eight UE8M0
+    # scales per token.  Exponent 127 is unit scale.
+    cache.view(num_blocks, -1)[:, block_size * 576 :].fill_(127)
+    return cache
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--heads", type=int, default=64)
+    parser.add_argument("--compressed-width", type=int, default=256)
+    parser.add_argument("--compressed-len", type=int, default=32)
+    parser.add_argument("--swa-width", type=int, default=128)
+    parser.add_argument("--swa-len", type=int, default=32)
+    parser.add_argument("--warmup-ms", type=int, default=100)
+    parser.add_argument("--rep-ms", type=int, default=300)
+    args = parser.parse_args()
+
+    device = torch.device("xpu")
+    torch.manual_seed(7)
+    num_rows = max(args.compressed_width, args.swa_width, 256)
+    block_size = 256
+    compressed_cache = make_cache(num_rows, block_size, device)
+    swa_cache = make_cache(num_rows, block_size, device)
+    compressed_indices = torch.arange(
+        args.compressed_width, dtype=torch.int32, device=device
+    ).unsqueeze(0)
+    swa_indices = torch.arange(
+        args.swa_width, dtype=torch.int32, device=device
+    ).unsqueeze(0)
+    compressed_lens = torch.tensor(
+        [args.compressed_len], dtype=torch.int32, device=device
+    )
+    swa_lens = torch.tensor([args.swa_len], dtype=torch.int32, device=device)
+    q = torch.randn((1, args.heads, 512), dtype=torch.bfloat16, device=device)
+    sink = torch.linspace(-1.0, 1.0, args.heads, dtype=torch.float32, device=device)
+    reference = torch.empty_like(q)
+    output = torch.empty_like(q)
+
+    def run(block_h: int, qk_warps: int, pv_warps: int) -> None:
+        split_fp8_sparse_attention(
+            q,
+            compressed_cache,
+            compressed_indices,
+            compressed_lens,
+            swa_cache,
+            swa_indices,
+            swa_lens,
+            sink,
+            512**-0.5,
+            output,
+            block_h=block_h,
+            qk_num_warps=qk_warps,
+            pv_num_warps=pv_warps,
+        )
+
+    run(16, 8, 4)
+    torch.xpu.synchronize()
+    reference.copy_(output)
+    rows: list[dict[str, float | int]] = []
+    for block_h, qk_warps, pv_warps in itertools.product(
+        (4, 8, 16), (4, 8, 16), (4, 8)
+    ):
+        run(block_h, qk_warps, pv_warps)
+        torch.xpu.synchronize()
+        torch.testing.assert_close(output, reference, atol=0, rtol=0)
+        median_ms, min_ms, max_ms = triton.testing.do_bench(
+            lambda: run(block_h, qk_warps, pv_warps),
+            warmup=args.warmup_ms,
+            rep=args.rep_ms,
+            quantiles=[0.5, 0.2, 0.8],
+        )
+        rows.append(
+            {
+                "block_h": block_h,
+                "qk_warps": qk_warps,
+                "pv_warps": pv_warps,
+                "median_us": median_ms * 1000,
+                "min_us": min_ms * 1000,
+                "max_us": max_ms * 1000,
+            }
+        )
+
+    rows.sort(key=lambda row: row["median_us"])
+    print(
+        json.dumps(
+            {
+                "shape": {
+                    "heads": args.heads,
+                    "compressed_width": args.compressed_width,
+                    "compressed_len": args.compressed_len,
+                    "swa_width": args.swa_width,
+                    "swa_len": args.swa_len,
+                },
+                "rows": rows,
+            },
+            indent=2,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,68 @@
+{
+  "date": "2026-07-15",
+  "status": "promoted",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "vllm_commit": "fa3e27b461ce7846ba71aefb161c40a017319fd2",
+  "xpu_kernel_commit": "83ef7b667a4ccb1ced0f3a48c31cb3341e269dc6",
+  "candidate": {
+    "VLLM_XPU_V4_SPLIT_FP8_BLOCK_H": 4,
+    "VLLM_XPU_V4_SPLIT_FP8_QK_NUM_WARPS": 16,
+    "VLLM_XPU_V4_SPLIT_FP8_PV_NUM_WARPS": 4
+  },
+  "prior": {
+    "VLLM_XPU_V4_SPLIT_FP8_BLOCK_H": 16,
+    "VLLM_XPU_V4_SPLIT_FP8_QK_NUM_WARPS": 8,
+    "VLLM_XPU_V4_SPLIT_FP8_PV_NUM_WARPS": 4,
+    "strict_median_tok_s": 34.06712071262497,
+    "localmaxxing_id": "cmrlf1hn609glmj019rsjdl4r"
+  },
+  "one_b70_microbench_us": [
+    {
+      "shape": "C4 short: compressed 8/256, SWA 32/128",
+      "prior": 88.556,
+      "candidate": 68.588,
+      "reduction_percent": 22.56
+    },
+    {
+      "shape": "C128 short: compressed 1/8, SWA 32/128",
+      "prior": 87.568,
+      "candidate": 63.466,
+      "reduction_percent": 27.52
+    },
+    {
+      "shape": "C4 128-token: compressed 32/256, SWA 128/128",
+      "prior": 220.428,
+      "candidate": 128.7,
+      "reduction_percent": 41.61
+    },
+    {
+      "shape": "C128 128-token: compressed 1/8, SWA 128/128",
+      "prior": 201.864,
+      "candidate": 118.456,
+      "reduction_percent": 41.32
+    }
+  ],
+  "correctness": {
+    "focused_split_output_bitwise_equal": true,
+    "changed_input_graph_replay": [1073, 437, 1073],
+    "cached_tokens_all_zero": true,
+    "strict_prompt_count": 12,
+    "strict_gate_passed": true
+  },
+  "strict_result": {
+    "median_tok_s_1_100_after_ttft": 40.02097178508589,
+    "p10_tok_s_1_100_after_ttft": 39.60803913216968,
+    "mean_tok_s_1_100_after_ttft": 39.972760699952985,
+    "median_wall_tok_s": 37.842852205782975,
+    "median_ttft_ms": 156.44539200002328,
+    "improvement_percent": 17.48,
+    "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/split-fp8-geometry-b4-qk16-recordidentity-20260715T0144Z",
+    "localmaxxing_id": "cmrlnp01l12q4mj01p58ynsyd"
+  },
+  "profiling_correction": {
+    "prefill_trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/record-lane-profile-20260715T0111Z",
+    "graph_decode_trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/record-lane-decode-profile2-20260715T0122Z",
+    "eager_decode_trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/record-lane-eager-decode-profile-20260715T0125Z",
+    "decision": "The 43-call BF16 MLA kernel was prefill tail, not steady decode. Delay two worker steps to expose graph replay or eager decode."
+  }
+}

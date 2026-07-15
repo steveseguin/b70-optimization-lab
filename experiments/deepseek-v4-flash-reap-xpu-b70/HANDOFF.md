@@ -9,9 +9,8 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; selective W8A16 for four high-value projection families plus an
-exact clamped-SwiGLU/FP8-quant shared-down producer is the current trustworthy
-34.0671 tok/s strict record**.
+replay pass; tuned four-head/16-warp split-FP8 QK geometry is the current
+trustworthy 40.0210 tok/s strict record and clears the 40 tok/s base gate**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -25,15 +24,16 @@ hash-preserved quality candidates; K180 is not predetermined.
 - public K160 revision: `7c360e1cd4a5168099dbc54d16d929bf6df04990`
 - clean vLLM base: `61c87db645c256651b5a366f538898485077ad32`
 - clean XPU kernels base: `dda91d171fbc3f51d1d65a7f8839714b1efffd42`
-- promoted vLLM: `38260cda833367a8dbf4896679d93f9d5da74f95`
-- promoted XPU kernels: `ae815123408603bb45b5df4d745be8375cf1985c`
+- promoted vLLM: `fa3e27b461ce7846ba71aefb161c40a017319fd2`
+- promoted XPU kernels: `83ef7b667a4ccb1ced0f3a48c31cb3341e269dc6`
 - primary truth: fixed official-source teacher logits/tasks captured after the
   Stage 4 source download
 - secondary all-expert behavior control: bullerwins IQ3_XXS revision
   `2be25f699d3efe806def93b0ae5dc632a824abb1`
 - hardware/product: one active generation on four B70 32 GB GPUs
 - validated record context: 1K at 95% memory utilization
-- speculation: disabled until nonspeculative decode approaches 40-50 tok/s
+- speculation: now permitted as a separate measured lane; keep base and
+  speculative results distinct and require exact target verification
 
 ## First Native Result
 
@@ -50,14 +50,14 @@ hash-preserved quality candidates; K180 is not predetermined.
 
 ## Current record and residual
 
-1. The current trustworthy strict record is `34.067121 tok/s`, confirmed at
-   `34.049735 tok/s`, at
-   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/shared-expert-fused-act-quant-20260715T0140Z`;
-   LocalMaxxing `cmrlf1hn609glmj019rsjdl4r`. It enables selective W8A16 for
-   fused WQA/WKV, Q-B, O-B, and shared gate/up, while the shared-down path uses
-   an exact clamp-at-10 SwiGLU + E4M3FN quant producer feeding canonical W8A8.
-   All cached-zero, replay, canary, executable-quality, and frozen-invariant
-   gates pass.
+1. The current trustworthy strict record is **`40.020972 tok/s`** median with
+   `39.608039` p10, at
+   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/split-fp8-geometry-b4-qk16-recordidentity-20260715T0144Z`;
+   LocalMaxxing `cmrlnp01l12q4mj01p58ynsyd`. It retains selective W8A16 and
+   exact shared-expert activation/quant fusion, then changes split FP8 QK from
+   16-head/8-warp to 4-head/16-warp programs. All cached-zero, replay, canary,
+   and focused bitwise gates pass. The preceding 34.067121 tok/s record remains
+   the matching control.
 2. Reusable graphs are working. Direct paged FP8 attention first raised the
    record to 21.5448 tok/s; split QK/LSE plus tiled PV raised it another 38.41%.
 3. The first scale-prepack and W8A16 records were invalid because they also
@@ -76,6 +76,11 @@ hash-preserved quality candidates; K180 is not predetermined.
    `20.326 -> 22.427 us`, projecting a `0.179 ms/token` loss. The promoted
    selective W8A16 mix also bypasses activation quantization for both K4096
    projection consumers, so dual FP8 output is not useful in this lane.
+   Fresh phase-correct profiling then showed that the apparent 43-call BF16
+   MLA hotspot was prefill, not decode. A seven-token eager decode trace put
+   dense GEMMs near 6.55 ms/token, mHC near 4.05 ms, MXFP4 MoE near 3.35 ms,
+   and split QK near 2.74 ms. Tuning the last bucket produced the current
+   record; see `notes/2026-07-15-split-fp8-geometry-record.md`.
 5. The public K160 avoids heterogeneous construction, but the final
    hash-preserved candidate still needs 256 experts in layers 0-2 and K later.
 6. `quality/calibration-v1-plan.json` is materializable but its 8,000 prompts
@@ -105,16 +110,20 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-No model server is running. The reboot auto-started the Gemma backend/frontdoor
-services; both were stopped for DeepSeek work and remain stopped. The external `/mnt/usb-models` volume did not
+The current record-identity DeepSeek server is listening only on
+`127.0.0.1:18080` for follow-up experiments. The reboot auto-started the Gemma
+backend/frontdoor services; both were stopped for DeepSeek work and remain
+stopped. The external `/mnt/usb-models` volume did not
 automount, but the active K160 model is on `/mnt/fast-ai` and the promoted
 launcher loads oneCCL from the DeepSeek virtual environment first.
 
 ## Next Permitted Work
 
-Keep the exact selective-W8A16 shape list, MXFP4 N64, split FP8 attention,
+Keep the exact selective-W8A16 shape list, MXFP4 N64, tuned split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
-fusion in the record lane. Preserve N32 as an
+fusion in the record lane. The base has crossed 40 tok/s, so a separate
+speculative screen is now permitted, but must be compared against the 40.021
+tok/s identity and retain exact target verification. Preserve N32 as an
 exact-replay failure and N128 as an unpromoted sub-1% speed/changed-output
 side lane. The next work is the producer/consumer boundary around the 87
 ordered reductions; the MHC post/pre + RMSNorm candidate is a preserved loss.
