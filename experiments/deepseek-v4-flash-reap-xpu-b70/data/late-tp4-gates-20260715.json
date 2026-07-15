@@ -50,5 +50,23 @@
     "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/current-graph-rank-skew-profile-20260715T031852Z",
     "collective_events_per_rank": 87,
     "decision": "inconclusive: profiler startup and serialization distort cross-device timestamps and collective duration, so raw multi-GPU timestamp deltas are not normal decode rank-arrival evidence"
+  },
+  "ring_readiness_markers": {
+    "source_commit": "1edec4576f6424f645fcee8b18df6844c636423c",
+    "library_sha256": "eb77b800754754c9f9ede04bff6ab0850a8e82a398c0c23baa2d38a10bbaef3f",
+    "selector": "CCL_SYCL_ALLREDUCE_LL=ring_markers",
+    "collectives": 87,
+    "dtype": "bfloat16",
+    "elements": 4096,
+    "changed_epochs": 24,
+    "all_correct": true,
+    "max_rank_device_ms": {
+      "ring_control_a": 5.165472,
+      "ring_markers": 5.204264,
+      "ring_control_b": 5.395494
+    },
+    "worst_marker_tax_ms_per_87": 0.038792,
+    "worst_marker_tax_us_per_boundary": 0.445885,
+    "decision": "passed: release-ordered per-wire epoch publication costs at most 0.446 us per boundary against the faster paired control, below the 1 us gate; proceed to the resident consumer microgate"
   }
 }

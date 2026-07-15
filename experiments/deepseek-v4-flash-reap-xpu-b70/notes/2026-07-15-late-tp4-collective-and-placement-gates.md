@@ -72,3 +72,6 @@ Structured evidence is in
 [`../data/late-tp4-gates-20260715.json`](../data/late-tp4-gates-20260715.json).
 The only remaining collective direction with a measured positive upper bound
 is the resident per-wire MHC consumer described in the earlier overlap note.
+Its readiness-marker prerequisite subsequently passed at a conservative
+`0.446 us` tax per boundary; see
+[`2026-07-15-ring-readiness-marker-gate.md`](2026-07-15-ring-readiness-marker-gate.md).
