@@ -197,6 +197,7 @@ def main() -> int:
         "vllm_xpu_v4_tp4_ring_mhc_post_pre",
         "vllm_xpu_v4_mhc_pre_m1_single_kernel",
         "vllm_xpu_v4_mhc_post_pre_m1_single_kernel",
+        "vllm_xpu_v4_shared_expert_fused_act_quant",
         "vllm_xpu_v4_block_fp8_w8a16",
         "vllm_xpu_v4_block_fp8_w8a16_shapes",
         "vllm_xpu_mxfp4_small_m_n",

@@ -1,6 +1,6 @@
 # DeepSeek V4 Flash REAP/XPU B70 Handoff
 
-Last reviewed: **2026-07-14**
+Last reviewed: **2026-07-15**
 
 ## Current Decision
 
@@ -9,8 +9,9 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; selective W8A16 for four high-value projection families plus
-W8A8 shared-down is the current trustworthy 33.4339 tok/s strict record**.
+replay pass; selective W8A16 for four high-value projection families plus an
+exact clamped-SwiGLU/FP8-quant shared-down producer is the current trustworthy
+34.0671 tok/s strict record**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -22,9 +23,10 @@ hash-preserved quality candidates; K180 is not predetermined.
 - source: `deepseek-ai/DeepSeek-V4-Flash`
 - source revision: `60d8d70770c6776ff598c94bb586a859a38244f1`
 - public K160 revision: `7c360e1cd4a5168099dbc54d16d929bf6df04990`
-- clean vLLM: `61c87db645c256651b5a366f538898485077ad32`
+- clean vLLM base: `61c87db645c256651b5a366f538898485077ad32`
 - clean XPU kernels base: `dda91d171fbc3f51d1d65a7f8839714b1efffd42`
-- XPU kernels: `d553fd2ac0cfc86edbb4fe9c65d567318931fe91`
+- promoted vLLM: `38260cda833367a8dbf4896679d93f9d5da74f95`
+- promoted XPU kernels: `ae815123408603bb45b5df4d745be8375cf1985c`
 - primary truth: fixed official-source teacher logits/tasks captured after the
   Stage 4 source download
 - secondary all-expert behavior control: bullerwins IQ3_XXS revision
@@ -48,13 +50,14 @@ hash-preserved quality candidates; K180 is not predetermined.
 
 ## Current record and residual
 
-1. The current trustworthy strict record is `33.433875 tok/s`, confirmed at
-   `33.3632 tok/s`, at
-   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/w8a16-high4-no-shared-down-20260714T2346Z`;
-   LocalMaxxing `cmrlb675r0705mj01k9psoub0`. It enables W8A16 only for fused
-   WQA/WKV, Q-B, O-B, and shared gate/up while retaining exact W8A8 for
-   logit-sensitive shared-down. All cached-zero, replay, canary, and frozen
-   invariant gates pass.
+1. The current trustworthy strict record is `34.067121 tok/s`, confirmed at
+   `34.049735 tok/s`, at
+   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/shared-expert-fused-act-quant-20260715T0140Z`;
+   LocalMaxxing `cmrlf1hn609glmj019rsjdl4r`. It enables selective W8A16 for
+   fused WQA/WKV, Q-B, O-B, and shared gate/up, while the shared-down path uses
+   an exact clamp-at-10 SwiGLU + E4M3FN quant producer feeding canonical W8A8.
+   All cached-zero, replay, canary, executable-quality, and frozen-invariant
+   gates pass.
 2. Reusable graphs are working. Direct paged FP8 attention first raised the
    record to 21.5448 tok/s; split QK/LSE plus tiled PV raised it another 38.41%.
 3. The first scale-prepack and W8A16 records were invalid because they also
@@ -64,9 +67,13 @@ hash-preserved quality candidates; K180 is not predetermined.
    gate. Preserve the exact-shape microbench as speed evidence, not promotion.
 4. The earlier exact residual was about 23.3 ms non-collective, 8-9 ms TP
    communication, and 2 ms queue/host gaps. W8A16 removes roughly 4 ms of the
-   dense path. Removing all 87 redundant all-reduce clones gained only 0.30%,
-   proving collective wait—not the clone—is the communication boundary. The
-   next work is MXFP4 small-M dispatch and collective producer/consumer fusion.
+   dense path. Shared-expert activation/quant fusion adds another repeatable
+   1.89%. Removing all 87 redundant all-reduce clones gained only 0.30%, proving
+   collective wait—not the clone—is the communication boundary. The next work
+   is register-resident M=1 MHC post/pre + exact RMSNorm across 85 useful
+   boundaries per token. The promoted selective W8A16 mix bypasses activation
+   quantization for both K4096 projection consumers, so dual FP8 output must
+   not be added unless an isolated W8A8 crossover proves that output useful.
 5. The public K160 avoids heterogeneous construction, but the final
    hash-preserved candidate still needs 256 experts in layers 0-2 and K later.
 6. `quality/calibration-v1-plan.json` is materializable but its 8,000 prompts
@@ -93,10 +100,11 @@ packet as rejected evidence.
 
 ## Next Permitted Work
 
-Keep `VLLM_XPU_V4_BLOCK_FP8_W8A16=0`, MXFP4 N64, split FP8 attention, native
-mHC, and TP-only in-place all-reduce in the record lane. Preserve N32 as an
+Keep the exact selective-W8A16 shape list, MXFP4 N64, split FP8 attention,
+native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
+fusion in the record lane. Preserve N32 as an
 exact-replay failure and N128 as an unpromoted sub-1% speed/changed-output
-side lane. The next work is exact-W8A8 producer/quantization fusion and the
-producer/consumer boundary around the 87 ordered reductions. Require
+side lane. The next work is register-resident M=1 MHC post/pre + exact RMSNorm,
+then the producer/consumer boundary around the 87 ordered reductions. Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.

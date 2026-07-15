@@ -1,0 +1,42 @@
+{
+  "classification": "promoted-record",
+  "topology": "single-session TP4+EP4",
+  "model": "0xSero/DeepSeek-V4-Flash-180B",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "vllm_commit": "38260cda833367a8dbf4896679d93f9d5da74f95",
+  "xpu_kernel_commit": "ae815123408603bb45b5df4d745be8375cf1985c",
+  "evidence_root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/shared-expert-fused-act-quant-20260715T0140Z",
+  "microbenchmark": {
+    "shape": [1, 1024],
+    "dtype": "bfloat16",
+    "quant_dtype": "float8_e4m3fn",
+    "separate_median_us": 77.32585361227393,
+    "fused_median_us": 15.461655985563993,
+    "speedup": 5.001136597817878,
+    "projected_saved_ms_43_layers": 2.660160497948527
+  },
+  "correctness": {
+    "kernel_exact_cases_passed": 8,
+    "sequential_arithmetic": ["1073", "437", "1073"],
+    "exact_copy": "satin cobalt orbit",
+    "fact": "Paris",
+    "strict_json": {"status": "ok", "count": 3},
+    "frozen_math_invariant": "101! - 1",
+    "executable_quality_gates_passed": true,
+    "known_k160_multilingual_corruption_floor_present": true
+  },
+  "performance": {
+    "previous_record_tok_s": 33.433875317172195,
+    "strict_screen_tok_s": 34.06712071262497,
+    "strict_confirm_tok_s": 34.04973454873985,
+    "screen_p10_tok_s": 33.5299426864004,
+    "screen_wall_median_tok_s": 30.65281647370141,
+    "screen_cached_tokens_all_zero": true,
+    "confirm_cached_tokens_all_zero": true
+  },
+  "localmaxxing": {
+    "id": "cmrlf1hn609glmj019rsjdl4r",
+    "status": "APPROVED",
+    "payload": "../localmaxxing/deepseek-v4-flash-k160-tp4-shared-expert-fused-act-quant-realistic-20260715.queue.json"
+  }
+}

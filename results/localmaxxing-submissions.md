@@ -13,19 +13,20 @@ for verified results that have not been submitted.
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
 | Qwen3.6 27B GGUF Q4_0, native DFlash5 + Xe2 M6 | 1x Arc Pro B70 | 47.819 median tok/s, fixed cold realistic gate | `cmrjbx8bc02g8mj01yzz2v701` | [evidence](../data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json) |
 | MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
-| DeepSeek V4 Flash uniform-K160, TP4+EP | 4x Arc Pro B70 | 33.434 median tok/s, selective W8A16 fixed cold gate | `cmrlb675r0705mj01k9psoub0` | [ledger](../experiments/deepseek-v4-flash-reap-xpu-b70/results/experiment-ledger.md) |
+| DeepSeek V4 Flash uniform-K160, TP4+EP | 4x Arc Pro B70 | 34.067 median tok/s, exact shared-expert activation/quant fusion | `cmrlf1hn609glmj019rsjdl4r` | [ledger](../experiments/deepseek-v4-flash-reap-xpu-b70/results/experiment-ledger.md) |
 | Rapid model snapshots | 1x Arc Pro B70 | Multiple fixed cold realistic references | see [packet](rapid-model-snapshots-b70/README.md) | [performance index](scoreboard.md) |
 
 Current measured-but-unsubmitted work belongs in its model packet, not this
 public-submission index.
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 Model: `0xSero/DeepSeek-V4-Flash-180B`, experimental uniform-K160 checkpoint,
 vLLM/XPU TP4+EP on four Intel Arc Pro B70 GPUs.
 
 | Label | LocalMaxxing ID | GPUs | Input | Output | tok/s out | tok/s total | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `deepseek-v4-flash-k160-b70-tp4-shared-expert-fused-act-quant-realistic-34.067tok-20260715` | `cmrlf1hn609glmj019rsjdl4r` | 4 | suite median 62 | 128 | **34.067 median 1-100 after TTFT** | 30.653 median wall full128 | **current trustworthy record**: exact clamp-at-10 SwiGLU + dynamic E4M3FN quant feeds canonical W8A8 shared-down while retaining selective W8A16 elsewhere. Paired strict runs reached 34.067/34.050, all cold/cached-zero; sequential replay, exact canaries, executable gates, and frozen `101! - 1` pass. Evidence `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/shared-expert-fused-act-quant-20260715T0140Z`. |
 | `deepseek-v4-flash-k160-b70-tp4-w8a16-high4-realistic-33.434tok-20260714` | `cmrlb675r0705mj01k9psoub0` | 4 | suite median 62 | 128 | **33.434 median 1-100 after TTFT** | 30.218 median wall full128 | **current trustworthy record**: W8A16 only for fused WQA/WKV, Q-B, O-B, and shared gate/up; shared-down stays W8A8. Two strict runs reached 33.434/33.363, all cold/cached-zero. Sequential replay, exact canaries, frozen `101! - 1`, and executable quality gates pass; the known intermittent K160 CJK-corruption floor remains documented. Evidence `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/w8a16-high4-no-shared-down-20260714T2346Z`. |
 | `deepseek-v4-flash-k160-b70-tp4-mhc-post-pre-m1-single-realistic-30.340tok-20260714` | `cmrl9xiwe06zzmj01cof0k38p` | 4 | suite median 62 | 128 | **30.340 median 1-100 after TTFT** | 27.663 median wall full128 | **current trustworthy record**: one 256-thread Xe2 kernel preserves the BF16 producer boundary while fusing M=1 MHC post/pre; standard oneCCL remains unchanged. Three strict runs reached 30.340/30.214/30.240, combined 36-prompt median 30.271. Forty changing microcases, graph replay, sequential exact canaries, and every cold/cached-zero row pass. Evidence `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mhc-post-pre-m1-single-gmem95-20260714T1921Z`. |
 | `deepseek-v4-flash-k160-b70-tp4-w8a8-woa-corrected-realistic-30.239tok-20260714` | `cmrl2619q06hwmj011j5rtnbt` | 4 | suite median 62 | 128 | **30.239 median 1-100 after TTFT** | 28.880 median wall full128 | **superseded trustworthy record**: standard dense scale grids are prepacked once while special `wo_a` BMM scales remain canonical. Two strict serial suites reached 30.230/30.239; sequential exact canaries and all 12 cold/cached-zero rows pass. Evidence `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-w8a8-woa-corrected-n64-20260714T1940Z`. |

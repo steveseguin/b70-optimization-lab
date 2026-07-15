@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-14**
+Last reviewed: **2026-07-15**
 
 ## Authority And Update Rule
 
@@ -58,28 +58,36 @@ evidence. Speculation remains prohibited until correct nonspeculative decode
 approaches 40-50 tok/s. The archived Qwen detail below remains resume evidence,
 not an instruction to continue experimenting.
 
-The clean pinned runtime is now vLLM `61c87db64` plus XPU kernels `d553fd2ac`.
+The promoted runtime is now vLLM `38260cda8` plus XPU kernels `ae8151234`.
 Persistent graph replay, native mHC, context-bounded sparse work, and direct
 paged FP8 attention all pass. The current strict TP4+EP single-session record
-uses split QK/LSE plus 8-by-64 tiled PV and a mutation-declared TP-only
-in-place all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions.
-The trustworthy W8A8 record is now **30.2390162 tok/s** median and
-`29.7545702` p10 across the strict cold suite, confirmed by a second
-`30.2303750` run. All 12 prompts emitted 128 token IDs cached-zero; sequential
-changed-input replay and arithmetic/copy/Paris/JSON canaries pass. LocalMaxxing
-approved it as `cmrl2619q06hwmj011j5rtnbt`; evidence is
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-w8a8-woa-corrected-n64-20260714T1940Z`.
+uses split QK/LSE plus 8-by-64 tiled PV, a mutation-declared TP-only in-place
+all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions, selective
+W8A16 for four high-value projection families, and an exact clamp-at-10
+SwiGLU plus per-128 E4M3FN quant producer for the W8A8 shared-down path. The
+trustworthy record is now **34.0671207 tok/s** median and `33.5299427` p10
+across the strict cold suite, confirmed by a second `34.0497345 tok/s` run.
+All 24 suite rows were cached-zero; sequential changed-input replay,
+arithmetic/copy/Paris/JSON canaries, executable quality gates, and the frozen
+long-math invariant pass. LocalMaxxing approved it as
+`cmrlf1hn609glmj019rsjdl4r`; evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/shared-expert-fused-act-quant-20260715T0140Z`.
 The previous 30.295 and 33.887 rows are invalid: generic scale prepacking also
 transposed DeepSeek's special `wo_a` BMM scales, while its BF16 cache interpreted
 them as canonical. Correcting that layout changed 77% of the first 96 greedy
 tokens versus the invalid path. Corrected W8A16 is fast (`34.015` and `33.924`
-tok/s) but rejected as a quality side lane: it matches only 83.3% of early W8A8
-greedy tokens and corrupts the frozen long math-invariant case that W8A8 solves
-correctly. MXFP4 N32 failed exact changed-input replay; N128 reached 30.518 and
-30.482 tok/s but altered outputs for a sub-1% gain and is not promoted. The
-active work is exact-W8A8 producer/quantization fusion and the ordered
-87-collective producer/consumer boundary. The standalone MHC/RMS fusion and
-oneCCL twoshots lanes remain preserved losses.
+tok/s) but the all-W8A16 path is rejected as a quality side lane: it matches
+only 83.3% of early W8A8 greedy tokens and corrupts the frozen long
+math-invariant case that W8A8 solves correctly. The promoted selective path
+keeps shared-down W8A8 and passes that invariant. MXFP4 N32 failed exact
+changed-input replay; N128 reached 30.518 and 30.482 tok/s but altered outputs
+for a sub-1% gain and is not promoted. The active work is a register-resident
+M=1 MHC post/pre plus exact RMSNorm boundary, followed by the ordered
+87-collective producer/consumer boundary. Under the promoted selective W8A16
+mix, fused FP8 output for the K4096 projections would currently be unused, so
+MHC+RMSNorm must clear its own measured gate before adding dual-output
+quantization. The prior general MHC/RMS fusion and oneCCL twoshots lanes remain
+preserved losses.
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only
