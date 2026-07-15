@@ -10,9 +10,9 @@ The controlling plan is
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
 replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
-43.7667/43.6986 tok/s; row-exact attached MTP1 plus a strided-batch compressor
-and selective M=2 W8A16 is the target-verified speed record at
-55.5245/54.7089 tok/s**.
+43.7667/43.6986 tok/s; the combined row-exact MTP1, strided-batch compressor,
+selective M=2 W8A16, direct-M1 draft MoE, and wide-epoch runtime is the target-
+verified speed record at 55.7037/55.6681 tok/s**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -74,7 +74,13 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is retained as superseded LocalMaxxing evidence
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. The current target-verified speed record is attached **MTP1 with a
+2. The current target-verified speed record is the combined **MTP1/direct-M1/
+   wide-epoch lane at `55.703731/55.668081 tok/s`**, LocalMaxxing
+   `cmrmoyenp1no3mj01fz2gjzo6`. Seventy exact captures pass, including 50 after
+   both strict suites and former rollover positions 28 and 58. All requests
+   are cached-zero and all worker maps contain the selected wide-epoch libccl.
+   See `notes/2026-07-15-mtp1-direct-moe-wideepoch-record.md`.
+   The preceding record is attached **MTP1 with a
    strided-batch FP32 compressor and selective M=2 W8A16 at
    `55.524496/54.708889 tok/s`**, LocalMaxxing
    `cmrmgacdq1nmimj01i4sfqytp`. Both real compressor shapes pass 40/40 changing
@@ -147,13 +153,15 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-The DeepSeek endpoint is intentionally stopped between bounded GPU gates. The
+The DeepSeek endpoint is live on `127.0.0.1:18080` with the combined MTP1
+record under `mtp1-direct-moe-wideepoch-candidate-20260715T2315Z`. The
 restorable nonspeculative record recipe is
 `nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
 `a681dbb2b`, XPU kernels `6522849b0`, exact-version oneCCL `48fda4f0e`, and the
 wide collective epoch. Its sustained 70/70 exact gate passes. The separate
 target-verified MTP1 record remains
-`mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z` at 55.524496 tok/s.
+`mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z` at 55.524496 tok/s; the
+new combined target-verified record is 55.703731 tok/s.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not

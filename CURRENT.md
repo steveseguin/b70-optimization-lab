@@ -21,9 +21,11 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-The DeepSeek record endpoint is intentionally stopped between bounded GPU
-gates; no process is currently expected on `127.0.0.1:18080` or the public LAN
-endpoint. The restorable nonspeculative direct M=1 routed-MoE record recipe is at
+The DeepSeek record endpoint is listening on `127.0.0.1:18080` and is not
+exposed on the public LAN endpoint. It is the combined target-verified MTP1,
+direct M=1 routed-MoE, and wide-epoch record recipe at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-direct-moe-wideepoch-candidate-20260715T2315Z`.
+The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
 `48fda4f0e`. `VLLM_XPU_V4_M1_ROUTER_NORM=1` and
@@ -109,7 +111,15 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row `cmrmebmzg1nm0mj01k30nv6vw` remains the
 superseded repeatability-repair authority.
-The current target-verified speed record is row-exact attached MTP1 with a
+The current target-verified speed record combines row-exact attached MTP1 with
+a strided-batch compressor, selective M=2 W8A16, exact direct M=1 routed MoE
+for the draft layer, and wide-epoch oneCCL: **55.703731 tok/s** median with
+`52.205941` p10; independent support is 55.668081 tok/s. Seventy ordered exact
+captures pass, including 50 after both strict suites and former rollover
+positions 28 and 58. LocalMaxxing approved `cmrmoyenp1no3mj01fz2gjzo6`.
+Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-direct-moe-wideepoch-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-direct-moe-wideepoch-record.md).
+The preceding target-verified record is row-exact attached MTP1 with a
 strided-batch FP32 compressor and selective M=2 W8A16 verification:
 **55.524496 tok/s** median with `52.029542` p10; independent support is
 54.708889 tok/s. Twenty ordered exact captures pass, including ten after both
