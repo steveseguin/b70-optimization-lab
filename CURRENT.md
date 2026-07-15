@@ -21,9 +21,9 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-The current DeepSeek record endpoint is listening on
-`127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint. It is the nonspeculative direct M=1 routed-MoE record recipe at
+The DeepSeek record endpoint is intentionally stopped between bounded GPU
+gates; no process is currently expected on `127.0.0.1:18080` or the public LAN
+endpoint. The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
 `48fda4f0e`. `VLLM_XPU_V4_M1_ROUTER_NORM=1` and

@@ -147,14 +147,13 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-The current DeepSeek record server is listening only on `127.0.0.1:18080` for
-follow-up experiments. It is the row-exact MTP1 plus strided-batch compressor
-and M=2 W8A16 recipe under
-`mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z`, using vLLM `3bd0eb321`,
-XPU kernels `de979b9`, exact-version oneCCL `6da44bc`, one speculative token,
-and `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`,
-`VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT=1`, and
-`VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=2`. The sustained exact gate passes.
+The DeepSeek endpoint is intentionally stopped between bounded GPU gates. The
+restorable nonspeculative record recipe is
+`nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
+`a681dbb2b`, XPU kernels `6522849b0`, exact-version oneCCL `48fda4f0e`, and the
+wide collective epoch. Its sustained 70/70 exact gate passes. The separate
+target-verified MTP1 record remains
+`mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z` at 55.524496 tok/s.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
@@ -172,11 +171,15 @@ nonspeculative base is 43.766673
 tok/s and row-exact MTP1 with the batched compressor is the 55.524496 tok/s
 target-verified speed record.
 MTP2 and larger repeated-single-layer widths are closed by negligible
-second-position acceptance and a service deadlock. The next bounded candidate
-is extending the exact shared-expert clamp/SwiGLU plus FP8-quant producer from
-M=1 to M=2; the current source explicitly excludes the verifier width, and the
-prior M=1 full-model A/B saved about 0.55 ms. Require a changed-input exact
-hardware gate and at least 0.50 ms/cycle projection before loading TP4. The
+second-position acceptance and a service deadlock. Carry the 43.766673 tok/s
+direct-routed-MoE base and wide-epoch oneCCL repair into the proven row-exact
+MTP1, batched-compressor, selective-M=2-W8A16 recipe. Keep exact target
+verification and require sustained rollover-crossing replay before promotion.
+The next bounded source candidate after that is extending the exact
+shared-expert clamp/SwiGLU plus FP8-quant producer from M=1 to M=2; the current
+source explicitly excludes the verifier width, and the prior M=1 full-model A/B
+saved about 0.55 ms. Require a changed-input exact hardware gate and at least
+0.50 ms/cycle projection before loading TP4. The
 grouped-MXFP4 small-N
 scheduler race is now understood: resetting its global counter inside
 workgroup 0 raced increments from other workgroups. Moving the reset to an
@@ -253,6 +256,15 @@ fence or workgroup. See
 `notes/2026-07-15-real-mhc-capture-and-graph-fence-closure.md`. The next
 nonspeculative source candidate must attack a different large boundary and
 clear the exact 0.50 ms/token projected gate before TP4 integration.
+That final screen is now complete. A deletion-only direct GEMM2/gather upper
+bound projects only 0.151-0.168 ms/token for typical three-local routing and
+0.230 ms/token even for six local slots. A real 4/6/8 MiB next-weight L2
+prefetch costs 71-85 us and changes the immediate consumer by only 0.884 us;
+its projected effect ranges from a 0.239 ms loss to a 0.027 ms gain. Both lanes
+are closed below the gate. See
+`notes/2026-07-15-late-nospec-upper-bound-closures.md`. No remaining measured
+nonspeculative source candidate clears 0.50 ms/token; move to MTP1 integration
+or require a new architectural boundary with a fresh upper-bound proof.
 The follow-up rank-arrival diagnostic is also closed before a model run. A
 default-off oneCCL probe used same-device elapsed clocks and preserved exact
 all-reduce output, but all marker variants timed out on every sample, including

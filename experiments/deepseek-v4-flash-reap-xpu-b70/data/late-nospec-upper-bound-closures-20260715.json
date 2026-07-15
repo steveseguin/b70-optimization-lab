@@ -1,0 +1,33 @@
+{
+  "date": "2026-07-15",
+  "status": "closed",
+  "base_tok_s": 43.766673266271965,
+  "required_projected_saving_ms_per_token": 0.5,
+  "gemm2_direct_gather": {
+    "classification": "performance_gate_fail",
+    "raw_path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m1-direct-gather-upper-bound-20260715T2245Z",
+    "three_local_projected_ms_per_token_by_gpu": [
+      0.15113683000000017,
+      0.1562852199999999,
+      0.16769441000000002,
+      0.15691129999999986
+    ],
+    "six_local_max_projected_ms_per_token": 0.2298608000000002,
+    "decision": "Reject exact GEMM2 epilogue plus slot-reduction fusion. The deletion-only graph ceiling is below 46% of the integration gate."
+  },
+  "next_weight_l2_prefetch": {
+    "classification": "performance_gate_fail",
+    "raw_64_byte_hint_path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/next-weight-l2-prefetch-isolated-20260715T2250Z",
+    "raw_1k_hint_path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/next-weight-l2-prefetch-isolated-1k-valid-20260715T2300Z",
+    "shapes_bytes": [4194304, 6291456, 8388608],
+    "prefetch_median_us_range": [71.188, 84.604],
+    "consumer_projected_ms_per_token_range": [-0.2392519999999997, 0.026832000000000404],
+    "cold_minus_immediate_warm_consumer_us": 0.8840000000000003,
+    "outputs_exact": true,
+    "kernel_experiment_commit": "5a7f39e9b390f2b290b62c536d265a8f364c22a0",
+    "kernel_revert_commit": "46bdf34462cdb9e32f2c36a8a5b332f7de6c6bb8",
+    "restored_xpu_binary_sha256": "3d07d85ce15a418d4355b0eaf5686c9cf6c7af92c9d5bf15b3884e9758161bf2",
+    "decision": "Reject next-weight L2 prefetch. The unchanged oneDNN W8A16 consumer has less than one microsecond of measurable warm-cache sensitivity and explicit hints do not reduce it."
+  },
+  "frontier_decision": "No remaining nonspeculative exact candidate in the measured backlog clears the 0.50 ms/token source-integration gate. Return to the separate target-verified MTP1 lane or require a genuinely new decoder architecture."
+}
