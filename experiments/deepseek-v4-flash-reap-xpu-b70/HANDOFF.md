@@ -12,7 +12,8 @@ Current stage: **artifact verified; TP4+EP correctness and persistent graph
 replay pass; the fused QNorm/RoPE/direct FP8 KV-insert lane is now
 repeatability-correct at 40.0962/40.1704 tok/s after repairing overlapping KV
 stores and routing only large prefill all-reduces around the corrupt oneCCL
-SYCL path**.
+SYCL path; row-exact attached MTP1 is the separate target-verified speed record
+at 50.0169/49.4205 tok/s**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -64,14 +65,22 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is approved as LocalMaxxing
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. Reusable graphs are working. Direct paged FP8 attention first raised the
+2. The current target-verified speed record is attached **MTP1 at
+   `50.016860/49.420459 tok/s`**, LocalMaxxing
+   `cmrmetch81nm3mj01w1pidsyt`. The first 50.74/50.10 screen is invalid: after
+   sustained request history it leaked prompt text after the correct `437`.
+   `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1` repairs the verifier by preserving
+   two M=1 FP32 compressor projections. Twenty ordered captures pass, ten
+   after both strict suites; measured acceptance is 77.42%. See
+   `notes/2026-07-15-mtp1-rowexact-record.md`.
+3. Reusable graphs are working. Direct paged FP8 attention first raised the
    record to 21.5448 tok/s; split QK/LSE plus tiled PV raised it another 38.41%.
-3. The first scale-prepack and W8A16 records were invalid because they also
+4. The first scale-prepack and W8A16 records were invalid because they also
    transposed `wo_a` scales consumed by the special BF16 BMM cache. Corrected
    W8A16 reaches 34.015/33.924 tok/s but is a rejected quality side lane: only
    83.3% early greedy-token parity with W8A8 and a failed long math-invariant
    gate. Preserve the exact-shape microbench as speed evidence, not promotion.
-4. The earlier exact residual was about 23.3 ms non-collective, 8-9 ms TP
+5. The earlier exact residual was about 23.3 ms non-collective, 8-9 ms TP
    communication, and 2 ms queue/host gaps. W8A16 removes roughly 4 ms of the
    dense path. Shared-expert activation/quant fusion adds another repeatable
    1.89%. Removing all 87 redundant all-reduce clones gained only 0.30%, proving
@@ -89,14 +98,14 @@ hash-preserved quality candidates; K180 is not predetermined.
    ms. The enclosing `mhc_post_pre_m1_out` operator row is correlated scope,
    not extra device work; adding it caused the earlier roughly 4 ms MHC double
    count. See `notes/2026-07-15-record-lane-noncollective-gates.md`.
-5. The public K160 avoids heterogeneous construction, but the final
+6. The public K160 avoids heterogeneous construction, but the final
    hash-preserved candidate still needs 256 experts in layers 0-2 and K later.
-6. `quality/calibration-v1-plan.json` is materializable but its 8,000 prompts
+7. `quality/calibration-v1-plan.json` is materializable but its 8,000 prompts
    and true REAP observations have not been captured. `suite-v1.json` is only a
    frozen prompt contract; executable rubrics/scorers are still required.
-7. K160 remains an experimental, hash-pruned smoke checkpoint; its quality and
+8. K160 remains an experimental, hash-pruned smoke checkpoint; its quality and
    provenance caveats prevent a "smartest" promotion.
-8. TP2+DP2+EP4 is now correctness-functional but performance-closed. The
+9. TP2+DP2+EP4 is now correctness-functional but performance-closed. The
    original stall is a oneCCL fast-SYCL communicator-switch cycle between
    disjoint TP pairs and crossed DP pairs. Safe native/generic paths return
    exact output but top out at `2.495917 tok/s`; see

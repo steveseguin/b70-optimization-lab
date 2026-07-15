@@ -95,6 +95,14 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row is approved on LocalMaxxing as
 `cmrmebmzg1nm0mj01k30nv6vw`.
+The separate current target-verified speed record is row-exact attached MTP1:
+**50.016860 tok/s** median with `48.283807` p10; independent support is
+49.420459 tok/s. Twenty ordered exact captures pass, including ten after both
+strict suites, and measured acceptance is 77.42%. LocalMaxxing approved
+`cmrmetch81nm3mj01w1pidsyt`. The uncorrected 50.74/50.10 MTP1 screen is
+invalid because a later replay leaked prompt text after `437`; the repair is
+`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`. Evidence and failure detail are in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-rowexact-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-rowexact-record.md).
 The gain comes from changing split FP8 QK from four 16-head/8-warp programs to
 sixteen 4-head/16-warp programs; complete attention microbenchmarks improve
 22-42% across short and 128-token C4/C128 shapes. The preceding 34.0671207

@@ -1,0 +1,63 @@
+{
+  "status": "promoted",
+  "model": "0xSero/DeepSeek-V4-Flash-180B",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "hardware": "4x Intel Arc Pro B70 32 GB; TP4+EP; one active generation",
+  "source": {
+    "vllm_commit": "93fde4186b34d61e2d31ee258be282a8f768f3ed",
+    "xpu_kernel_commit": "de979b9328408302129c10ba04ed2fe090d414df",
+    "oneccl_commit": "6da44bcb540f1005de88276dd86465cf5de4dc2f"
+  },
+  "speculation": {
+    "method": "mtp",
+    "num_speculative_tokens": 1,
+    "target_verified": true,
+    "draft_tokens_measured": 2006,
+    "accepted_tokens_measured": 1553,
+    "acceptance_rate": 0.7741774675972084
+  },
+  "repair": {
+    "flag": "VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1",
+    "mechanism": "Run each two-token verifier compressor FP32 projection as two exact M=1 torch.mm operations.",
+    "unrepaired_failure": "After two strict suites and seven passing exact captures, arithmetic-b emitted '437' followed by leaked prompt text.",
+    "unrepaired_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-graph-oneccl1712-allreduce128k-20260715T1830Z"
+  },
+  "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-compressor-rowexact-graph-oneccl1712-20260715T1840Z",
+  "strict_runs": [
+    {
+      "file": "realistic-suite-v1-confirm.json",
+      "median_tok_s": 50.016859951648804,
+      "p10_tok_s": 48.28380709540854,
+      "mean_tok_s": 49.888093212243604,
+      "wall_median_tok_s": 43.62311461888176,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    },
+    {
+      "file": "realistic-suite-v1.json",
+      "median_tok_s": 49.42045919586941,
+      "p10_tok_s": 46.067979417940535,
+      "mean_tok_s": 48.91543150368526,
+      "wall_median_tok_s": 42.25073661438806,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    }
+  ],
+  "exact_canaries": {
+    "passed": 20,
+    "attempted": 20,
+    "post_strict_suite_passed": 10,
+    "cached_tokens_all_zero": true
+  },
+  "runtime": {
+    "libccl_sha256": "bf9f2e447ebb8373d7b0a41b15a32f2518a670a107d6f8fd84474798d8f2301b",
+    "all_worker_maps_verified": true,
+    "sycl_allreduce_max_bytes": 131072,
+    "gpu_memory_utilization": 0.94,
+    "model_memory_gib_per_rank": 25.49,
+    "kv_capacity_tokens": 4658
+  },
+  "baseline_median_tok_s": 40.17035011552869,
+  "speedup_over_baseline": 1.245123821332991,
+  "localmaxxing_id": "cmrmetch81nm3mj01w1pidsyt"
+}
