@@ -134,6 +134,16 @@ a model server run. See
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-ring-readiness-marker-gate.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-ring-readiness-marker-gate.md).
 Failure detail is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-resident-mhc-consumer-forward-progress-failure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-resident-mhc-consumer-forward-progress-failure.md).
+The following compact in-ring post/pre screen is also closed. Although its
+256-thread isolated boundary was bitwise exact and more than 2x faster than the
+honest promoted reference, 256- and 512-thread full-model graph runs produced
+nondeterministic arithmetic. Exact 87-position, alias, multi-replay, rank-skew,
+and dependent-producer probes all passed; stable double buffers and an explicit
+producer barrier did not repair the model. No speed suite was run. A future
+retry requires captured real-model intermediate tensors. The next active work
+is a fresh record-lane non-collective timeline and a fusion that leaves the
+proven oneCCL collective intact. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

@@ -43,10 +43,11 @@ venv_root="$(dirname "$(dirname "${python}")")"
 oneccl="${ONECCL_INSTALL_DIR:-${venv_root}}"
 oneccl_source_tree="${ONECCL_SOURCE_TREE:-/home/steve/src/oneccl-4ceafd1}"
 venv_lib="${venv_root}/lib"
+oneccl_lib="${ONECCL_LIB_DIR:-${oneccl}/lib}"
 # Torch 2.11 XPU and the installed kernel package are a SYCL 8 lane.  Keep
 # their matching Unified Runtime loader ahead of any side-by-side oneAPI 2026
 # installation when Triton JIT-compiles a new launcher.
-export LD_LIBRARY_PATH="${venv_lib}:${oneccl}/lib:${LD_LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="${venv_lib}:${oneccl_lib}:${LD_LIBRARY_PATH:-}"
 export CCL_ROOT="${oneccl}"
 export CCL_ATL_TRANSPORT="${CCL_ATL_TRANSPORT:-ofi}"
 export CCL_TOPO_P2P_ACCESS="${CCL_TOPO_P2P_ACCESS:-1}"
@@ -86,7 +87,7 @@ export VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL="${VLLM_XPU_V4_MHC_POST_PRE_M1_
 export VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT="${VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT:-0}"
 export VLLM_XPU_EXPERT_MAP_ROUND_ROBIN="${VLLM_XPU_EXPERT_MAP_ROUND_ROBIN:-0}"
 if [[ "${VLLM_XPU_V4_TP4_RING_MHC_POST}" == "1" || "${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE}" == "1" ]]; then
-  export LD_PRELOAD="${oneccl}/lib/libccl.so.1.0${LD_PRELOAD:+:${LD_PRELOAD}}"
+  export LD_PRELOAD="${oneccl_lib}/libccl.so.1.0${LD_PRELOAD:+:${LD_PRELOAD}}"
 fi
 export VLLM_XPU_LOG_FP8_LINEAR_SHAPES="${VLLM_XPU_LOG_FP8_LINEAR_SHAPES:-0}"
 export VLLM_XPU_V4_BLOCK_FP8_W8A16="${VLLM_XPU_V4_BLOCK_FP8_W8A16:-0}"
@@ -194,6 +195,7 @@ argv=(
   printf 'max_num_batched_tokens=%s\n' "${MAX_NUM_BATCHED_TOKENS:-2048}"
   printf 'kv_cache_dtype=fp8\nblock_size=256\nprefix_caching=0\n'
   printf 'oneccl=%s\n' "${oneccl}"
+  printf 'oneccl_lib=%s\n' "${oneccl_lib}"
   printf 'oneccl_source_tree=%s\n' "${oneccl_source_tree}"
   if [[ -d "${oneccl_source_tree}/.git" || -f "${oneccl_source_tree}/.git" ]]; then
     printf 'oneccl_source_worktree_head=%s\n' "$(git -C "${oneccl_source_tree}" rev-parse HEAD)"
@@ -211,6 +213,8 @@ argv=(
   printf 'ccl_sycl_allreduce_ll=%s\n' "${CCL_SYCL_ALLREDUCE_LL}"
   printf 'ccl_sycl_allreduce_ll_threshold=%s\n' "${CCL_SYCL_ALLREDUCE_LL_THRESHOLD}"
   printf 'ccl_sycl_allreduce_arc=%s\n' "${CCL_SYCL_ALLREDUCE_ARC}"
+  printf 'b70_oneccl_mhc_threads=%s\n' "${B70_ONECCL_MHC_THREADS:-default}"
+  printf 'b70_oneccl_mhc_explicit_barrier=%s\n' "${B70_ONECCL_MHC_EXPLICIT_BARRIER:-0}"
   printf 'ccl_kernel_path=%s\n' "${CCL_KERNEL_PATH}"
   printf 'ccl_topo_fabric_vertex_connection_check=%s\n' "${CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK:-default}"
   printf 'fi_tcp_iface=%s\n' "${FI_TCP_IFACE}"

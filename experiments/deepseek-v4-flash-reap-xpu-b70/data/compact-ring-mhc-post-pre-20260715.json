@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-15T01:10:00Z",
+  "record_tok_s": 34.06712071262497,
+  "candidate": {
+    "oneccl_commits": ["88d90e0", "8f415a1adcf75728ad7498bd8d5a1a7139d32790"],
+    "vllm_commit": "af8b8d776f5445ee7da4a6ff0a49c76cfa138508",
+    "xpu_kernel_commit": "83ef7b667a4ccb1ced0f3a48c31cb3341e269dc6",
+    "oneccl_library_sha256": "d7160c2419bdffcb1ad14da86382f0d5962b92abc0ae7b38a61c94e58bc92e16",
+    "workgroup_variants": [256, 512],
+    "default_workgroup": 1024,
+    "default_off": true
+  },
+  "microgates": {
+    "result": "pass",
+    "bitwise_exact": true,
+    "threads16_candidate_us_range_by_rank": [101.868, 105.352],
+    "promoted_fused_reference_us_range_by_rank": [222.716, 248.352],
+    "covered": [
+      "40 changing eager inputs",
+      "four changed graph replays",
+      "one ordinary embedding all-reduce",
+      "85 recurrent post-pre boundaries",
+      "42 real input/output alias pairs",
+      "one final post-only boundary",
+      "rank-skew delay kernels",
+      "dependent synthetic producer kernels"
+    ]
+  },
+  "full_model": {
+    "result": "correctness-fail",
+    "speed_suite_run": false,
+    "threads16_original_buffers": {
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/compact-ring-mhc-post-pre-20260715T0042Z",
+      "expected": [1073, 437, 1073],
+      "observed": [1073, 57, 1483]
+    },
+    "threads16_double_buffers": {
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/compact-ring-mhc-post-pre-doublebuffer-20260715T0052Z",
+      "expected": [1073, 437, 1073],
+      "observed": [1073, 437, 1183]
+    },
+    "threads32_double_buffers": {
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/compact-ring-mhc-post-pre-doublebuffer-t32-20260715T0057Z",
+      "expected": [1073, 437, 1073, 437, 1073, 437],
+      "observed": [1183, 437, 1073, 114, 1073, "114 * 23 = 437"]
+    },
+    "threads16_double_buffers_explicit_barrier": {
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/compact-ring-mhc-post-pre-doublebuffer-barrier-20260715T0108Z",
+      "expected": [1073, 437, 1073, 437, 1073, 437],
+      "observed": [1853, 437, 1483, 437, 1053, "19 * 23 = 437"]
+    }
+  },
+  "decision": "Reject the 256- and 512-thread in-ring post/pre variants. The cheap graph probes do not reproduce the real full-model nondeterminism, and stable double buffers plus an explicit producer barrier do not repair it. Preserve the exact 1024-thread result as a known 27.0187 tok/s performance loss; do not spend another model load on this boundary without a real-model intermediate-tensor oracle."
+}

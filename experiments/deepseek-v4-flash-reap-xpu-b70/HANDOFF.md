@@ -155,6 +155,12 @@ faster paired control. The dependent resident consumer is now rejected: the
 normal-priority polling workgroup prevents the ring marker from advancing, and
 a low-priority queue makes no progress. See
 `notes/2026-07-15-resident-mhc-consumer-forward-progress-failure.md`. The next
-permitted microgate is the prior in-ring post/pre boundary with a compact
-256-thread workgroup instead of 1024 threads. Require bitwise exactness and
-`>=6 us/boundary` before server integration.
+compact in-ring post/pre screen is also closed. Its 256-thread microgate was
+bitwise exact and exceptionally fast, but 256- and 512-thread full-model runs
+were nondeterministic. Matching all 87 collective positions, 42 real alias
+pairs, four replays, rank skew, and dependent producers did not reproduce the
+failure; stable double buffers and an explicit producer barrier did not fix it.
+See `notes/2026-07-15-compact-ring-mhc-post-pre-closure.md`. Do not spend another
+server load on this boundary without captured real-model intermediate tensors.
+Return to a fresh record-lane non-collective timeline and choose a fusion that
+leaves the proven oneCCL collective intact.
