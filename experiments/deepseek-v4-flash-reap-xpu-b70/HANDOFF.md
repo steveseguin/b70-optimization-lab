@@ -133,9 +133,10 @@ The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
 The current DeepSeek record server is listening only on `127.0.0.1:18080` for
-follow-up experiments. It is the fused QNorm/RoPE/KV-insert record under
-`fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`, using vLLM `3a74a38a3`,
-XPU kernels `ef307a8`, the fused-insert flag on, and native dual RMSNorm off.
+follow-up experiments. It is the restored row-exact MTP1 recipe under
+`mtp1-rowexact-live-restore-20260715T1930Z`, using vLLM `93fde4186`, XPU
+kernels `de979b9`, exact-version oneCCL `6da44bc`, one speculative token, and
+`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`. The post-restore exact suite passes.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
@@ -146,9 +147,12 @@ launcher loads oneCCL from the DeepSeek virtual environment first.
 
 Keep the exact selective-W8A16 shape list, MXFP4 N64, tuned split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
-fusion in the record lane. The base has crossed 40 tok/s, so a separate
-speculative screen is now permitted, but must be compared against the 40.136
-tok/s identity and retain exact target verification. The grouped-MXFP4 small-N
+fusion in the record lane. The trustworthy nonspeculative base is 40.170350
+tok/s and row-exact MTP1 is the 50.016860 tok/s target-verified speed record.
+MTP2 and larger repeated-single-layer widths are closed by negligible
+second-position acceptance and a service deadlock. The next speculative work
+must reduce the MTP1 row-exact compressor or verifier/sampler cost while
+retaining its 20-capture sustained replay gate. The grouped-MXFP4 small-N
 scheduler race is now understood: resetting its global counter inside
 workgroup 0 raced increments from other workgroups. Moving the reset to an
 ordered queue fill makes N32 and N128 exact over 40 changed graph epochs, but

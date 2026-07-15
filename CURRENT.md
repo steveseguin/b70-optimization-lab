@@ -23,9 +23,11 @@ Confirm the endpoint and process state before relying on this observation.
 
 The current DeepSeek record endpoint is listening on
 `127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint. It is the repeatability-correct fused QNorm/RoPE/KV-insert lane
-at `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-graph-oneccl1712-bf16-allreduce128k-preload094-cache-fix-20260715T1530Z`:
+LAN endpoint. It is the restored row-exact MTP1 record recipe at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-live-restore-20260715T1930Z`:
 vLLM `93fde4186`, XPU kernels `de979b9`, and exact-version oneCCL `6da44bc`.
+`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`, `--spec-method mtp`, and
+`--spec-tokens 1` are active. The post-restore exact suite passes.
 The runtime is force-preloaded from
 `/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-sizegate` and routes only SYCL
 all-reduces larger than 131,072 bytes to the safe path. All four worker maps
