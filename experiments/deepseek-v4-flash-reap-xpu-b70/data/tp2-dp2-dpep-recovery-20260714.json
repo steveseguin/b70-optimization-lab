@@ -1,0 +1,59 @@
+{
+  "date": "2026-07-14",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "topology": {
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "expert_parallel_size": 4,
+    "tp_groups": [[0, 1], [2, 3]],
+    "dp_groups": [[0, 2], [1, 3]],
+    "single_active_generation": true
+  },
+  "runtime": {
+    "vllm_commit": "5e02991f3f1855ad2ea4cf3a0fba8462a83a4111",
+    "xpu_kernel_commit": "fa530f5fe9a95cf06251f3af7c1c8cb9a0d76846",
+    "oneccl_commit": "8567899d37af9e16b1d71f5b56824bd113251d62",
+    "enforce_eager": true,
+    "async_scheduling": false,
+    "kv_cache_bytes_per_rank": 67108864,
+    "kv_cache_tokens": 160
+  },
+  "results": [
+    {
+      "lane": "cpu_gloo_bootstrap",
+      "correctness": "exact integer 42",
+      "tok_s_after_ttft": 2.484515,
+      "metric_provenance": "console 64-token screen",
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp2-dp2-ep4-cpu-dpep-eager-20260714T2034Z"
+    },
+    {
+      "lane": "native_global_rendezvous",
+      "correctness": "exact integer 42",
+      "tok_s_after_ttft": 2.22138,
+      "metric_provenance": "console 64-token screen",
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp2-dp2-ep4-switch-rendezvous-eager-20260714T2049Z"
+    },
+    {
+      "lane": "native_global_generic_ccl",
+      "correctness": "exact integer 42; cached_tokens=0",
+      "fresh_row_tok_s_after_ttft": 2.466375551893919,
+      "support_median_tok_s_after_ttft": 2.494585551249612,
+      "ccl_enable_sycl_kernels": 0,
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp2-dp2-ep4-generic-ccl-native-eager-20260714T2130Z/screen-64x2.json"
+    },
+    {
+      "lane": "fast_tp_allreduce_generic_dpep",
+      "correctness": "exact integer 42; cached_tokens=0",
+      "fresh_row_tok_s_after_ttft": 2.4959170804721964,
+      "ccl_allgather": "naive",
+      "ccl_allgatherv": "naive",
+      "ccl_reduce_scatter": "naive",
+      "ccl_allreduce": "default fast-SYCL eligible",
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp2-dp2-ep4-fasttp-genericdpep-eager-20260714T2103Z/screen-64x1.json"
+    }
+  ],
+  "diagnosis": "oneCCL fast-SYCL communicator switching deadlocks when disjoint TP pairs alternate with crossed DP pairs; generic schedules avoid the deadlock but make per-layer DPEP prohibitively slow",
+  "decision": "close TP2+DP2+EP4 as a performance lane until a communicator-scoped fast-SYCL or dedicated fused DPEP transport exists",
+  "localmaxxing_eligible": false
+}

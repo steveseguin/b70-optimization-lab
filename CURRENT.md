@@ -80,6 +80,12 @@ correctly. MXFP4 N32 failed exact changed-input replay; N128 reached 30.518 and
 active work is exact-W8A8 producer/quantization fusion and the ordered
 87-collective producer/consumer boundary. The standalone MHC/RMS fusion and
 oneCCL twoshots lanes remain preserved losses.
+TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
+oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
+All safe fallbacks are performance-closed: the best fresh screen is only
+`2.495917 tok/s`, so this topology must not displace the TP4 lane without a
+communicator-scoped fast-SYCL or dedicated fused DPEP transport. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-tp2-dp2-dpep-recovery.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-tp2-dp2-dpep-recovery.md).
 Speculation remains disabled until nonspeculative decode approaches 40-50
 tok/s. Detailed history is in the lane handoff and
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-14-xpu-graph-recovery-and-tp4-profile.md).

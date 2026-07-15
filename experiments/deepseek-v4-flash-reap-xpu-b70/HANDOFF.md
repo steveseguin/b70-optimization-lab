@@ -9,8 +9,8 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; corrected W8A8 scale prepack is the current trustworthy
-30.239 tok/s strict record**.
+replay pass; selective W8A16 for four high-value projection families plus
+W8A8 shared-down is the current trustworthy 33.4339 tok/s strict record**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -48,11 +48,13 @@ hash-preserved quality candidates; K180 is not predetermined.
 
 ## Current record and residual
 
-1. The current trustworthy strict record is `30.2390162 tok/s`, p10
-   `29.7545702`, at
-   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-w8a8-woa-corrected-n64-20260714T1940Z`;
-   LocalMaxxing `cmrl2619q06hwmj011j5rtnbt`. Its confirmation and support run
-   reached 30.239 and 30.230 tok/s; all rows emitted 128 token IDs cached-zero.
+1. The current trustworthy strict record is `33.433875 tok/s`, confirmed at
+   `33.3632 tok/s`, at
+   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/w8a16-high4-no-shared-down-20260714T2346Z`;
+   LocalMaxxing `cmrlb675r0705mj01k9psoub0`. It enables W8A16 only for fused
+   WQA/WKV, Q-B, O-B, and shared gate/up while retaining exact W8A8 for
+   logit-sensitive shared-down. All cached-zero, replay, canary, and frozen
+   invariant gates pass.
 2. Reusable graphs are working. Direct paged FP8 attention first raised the
    record to 21.5448 tok/s; split QK/LSE plus tiled PV raised it another 38.41%.
 3. The first scale-prepack and W8A16 records were invalid because they also
@@ -72,6 +74,11 @@ hash-preserved quality candidates; K180 is not predetermined.
    frozen prompt contract; executable rubrics/scorers are still required.
 7. K160 remains an experimental, hash-pruned smoke checkpoint; its quality and
    provenance caveats prevent a "smartest" promotion.
+8. TP2+DP2+EP4 is now correctness-functional but performance-closed. The
+   original stall is a oneCCL fast-SYCL communicator-switch cycle between
+   disjoint TP pairs and crossed DP pairs. Safe native/generic paths return
+   exact output but top out at `2.495917 tok/s`; see
+   `notes/2026-07-14-tp2-dp2-dpep-recovery.md`.
 
 ## Protected State
 
