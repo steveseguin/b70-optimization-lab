@@ -1,0 +1,57 @@
+{
+  "classification": "rejected_below_integration_gate",
+  "scope": "one active TP4 generation; 87 ordered BF16[4096] all-reduces",
+  "artifact_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/recording-path-gate-20260715T025331Z",
+  "runtime": {
+    "python": "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+    "loaded_ccl": [
+      "/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so.1",
+      "/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so.2"
+    ],
+    "libccl_so_1_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+    "ccl_sycl_allreduce_ll": "ring",
+    "ccl_sycl_allreduce_ll_threshold": 4096,
+    "ccl_topo_p2p_access": 1
+  },
+  "harness": {
+    "warmup_chains": 8,
+    "measured_chains": 24,
+    "collectives_per_chain": 87,
+    "elements_per_collective": 4096,
+    "dtype": "bfloat16",
+    "world_size": 4,
+    "validation": "exact BF16 sum after every measured chain on every rank"
+  },
+  "runs": [
+    {
+      "label": "force0-a",
+      "force_recording_path": 0,
+      "max_rank_device_ms_median_87": 5.301166,
+      "max_rank_wall_ms_median_87": 5.66193299994211,
+      "all_rank_mismatch_epochs": 0
+    },
+    {
+      "label": "force1-b",
+      "force_recording_path": 1,
+      "max_rank_device_ms_median_87": 5.383118,
+      "max_rank_wall_ms_median_87": 5.795442500016179,
+      "all_rank_mismatch_epochs": 0
+    },
+    {
+      "label": "force0-b",
+      "force_recording_path": 0,
+      "max_rank_device_ms_median_87": 5.362057999999999,
+      "max_rank_wall_ms_median_87": 5.709612499913419,
+      "all_rank_mismatch_epochs": 0
+    }
+  ],
+  "analysis": {
+    "forced_minus_first_control_device_ms": 0.081952,
+    "forced_minus_reverse_control_device_ms": 0.02106,
+    "forced_minus_control_mean_device_ms": 0.051506,
+    "forced_minus_control_mean_device_us_per_collective": 0.592023,
+    "integration_gate_ms_per_87": 0.5,
+    "gate_fraction": 0.103012
+  },
+  "decision": "Do not fuse the recording-path sequence/update kernel into the LL256 ring. The measured upper bound is about one tenth of the required gate."
+}

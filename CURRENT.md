@@ -23,13 +23,12 @@ Confirm the endpoint and process state before relying on this observation.
 
 The temporary DeepSeek benchmark endpoint on `127.0.0.1:18080` was stopped
 cleanly after promoting the 34.0671 tok/s record. No model server is running.
-As of 2026-07-15, only GPU `0000:23:00.0` is runtime-healthy; GPUs
-`0000:27:00.0`, `0000:43:00.0`, and `0000:47:00.0` remain PCI-enumerated but
-stuck in inaccessible D3cold/runtime-error state after an ASPM policy probe.
-ASPM is restored to `default`, no GPU worker is running, and FLR, xe
-unbind/rebind, and upstream bus reset did not recover the cards. A full host
-reboot is required before the next TP4 experiment. Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-aspm-device-recovery-blocker.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-aspm-device-recovery-blocker.md).
+The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
+per-device allocation/compute, runtime status, and a four-rank exact XCCL gate
+pass, all four external links report Gen4 x16, and ASPM is `default`. The
+external `/mnt/usb-models` volume did not automount, but the active K160 model
+is on `/mnt/fast-ai` and the record launcher maps oneCCL from the DeepSeek
+virtual environment first.
 
 The unauthenticated LAN front door is intentional for this private network. Do
 not silently add authentication or change its exposure policy.
@@ -99,10 +98,12 @@ mix, fused FP8 output for the K4096 projections would also be unused. The
 active work is therefore the ordered 87-collective producer/consumer boundary.
 The prior general MHC/RMS fusion and oneCCL twoshots lanes remain preserved
 losses.
-The first post-reboot gate is a zero-code 87-call comparison of oneCCL's forced
-graph-recording path. It prices the separate sequence/update command submitted
-before every ring kernel; reject sequence-update/ring fusion unless that path
-costs at least `0.50 ms` per 87 calls.
+The post-reboot 87-call oneCCL recording-path gate is closed. Forced recording
+added only `0.051506 ms` against the mean of two exact controls, about one tenth
+of the `0.50 ms` integration gate. Sequence/update-to-ring fusion is therefore
+rejected; communication work must overlap or shorten the ring/consumer
+critical path. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-oneccl-recording-sequence-upper-bound.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-oneccl-recording-sequence-upper-bound.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only
