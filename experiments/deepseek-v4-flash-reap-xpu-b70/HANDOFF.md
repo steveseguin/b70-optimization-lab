@@ -100,6 +100,15 @@ Do not reset, clean, or repurpose:
 Create clean DeepSeek-specific worktrees. Preserve the old AutoRound experiment
 packet as rejected evidence.
 
+## Current operational blocker
+
+Only BDF `0000:23:00.0` is runtime-healthy. The other three B70s are stuck in
+inaccessible D3cold/runtime-error state after an ASPM policy probe; policy is
+back at `default`, no GPU process remains, and FLR, xe unbind/rebind, and bus
+reset all failed. Reboot the host before any TP4 work, then require four-device
+discovery and a minimal per-device tensor allocation before resuming. See
+`notes/2026-07-15-aspm-device-recovery-blocker.md`.
+
 ## Next Permitted Work
 
 Keep the exact selective-W8A16 shape list, MXFP4 N64, split FP8 attention,
@@ -111,3 +120,7 @@ ordered reductions; the MHC post/pre + RMSNorm candidate is a preserved loss.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.
+The first post-reboot experiment is the zero-code 87-call
+`CCL_SYCL_FORCE_RECORDING_PATH=0/1` upper-bound gate. Only patch oneCCL to fold
+its separate sequence/update kernel into the LL256 ring when that A/B exposes
+at least `0.50 ms` per-token-command-stack headroom.

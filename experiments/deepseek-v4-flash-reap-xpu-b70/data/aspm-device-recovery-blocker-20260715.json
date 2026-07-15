@@ -1,0 +1,23 @@
+{
+  "date": "2026-07-15",
+  "classification": "system-probe-failed-reboot-required",
+  "aspm_policy_before": "default",
+  "aspm_policy_probe": "performance",
+  "aspm_policy_after": "default",
+  "external_link_geometry": "PCIe Gen4 x16 per B70",
+  "probe": "four-rank exact BF16[4096] oneCCL replay control",
+  "probe_result": "stalled during communicator initialization; no timing",
+  "healthy_devices": ["0000:23:00.0"],
+  "error_devices": ["0000:27:00.0", "0000:43:00.0", "0000:47:00.0"],
+  "active_gpu_processes": 0,
+  "recovery_attempts": [
+    "restore default ASPM policy",
+    "force PCI power/control on",
+    "GPU function FLR",
+    "xe unbind/rebind",
+    "upstream bus reset"
+  ],
+  "recovery_result": "three devices remain in runtime_status=error and inaccessible D3cold",
+  "required_next_action": "full host reboot",
+  "next_performance_gate": "87-call forced-recording-path zero-code A/B; require >=0.50 ms delta"
+}
