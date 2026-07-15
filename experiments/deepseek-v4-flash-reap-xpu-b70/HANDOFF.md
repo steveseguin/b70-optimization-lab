@@ -9,8 +9,8 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; tuned four-head/16-warp split-FP8 QK geometry is the current
-trustworthy 40.0210 tok/s strict record and clears the 40 tok/s base gate**.
+replay pass; fused QNorm/RoPE/direct FP8 KV insert is the current trustworthy
+40.1357 tok/s strict record and clears the 40 tok/s base gate**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -24,8 +24,8 @@ hash-preserved quality candidates; K180 is not predetermined.
 - public K160 revision: `7c360e1cd4a5168099dbc54d16d929bf6df04990`
 - clean vLLM base: `61c87db645c256651b5a366f538898485077ad32`
 - clean XPU kernels base: `dda91d171fbc3f51d1d65a7f8839714b1efffd42`
-- promoted vLLM: `fa3e27b461ce7846ba71aefb161c40a017319fd2`
-- promoted XPU kernels: `83ef7b667a4ccb1ced0f3a48c31cb3341e269dc6`
+- promoted vLLM: `3a74a38a3c2e98bd6c409e57e72011933a8148c8`
+- promoted XPU kernels: `ef307a8f45a0dc3794a8775e2e5d6c7484b63a1b`
 - primary truth: fixed official-source teacher logits/tasks captured after the
   Stage 4 source download
 - secondary all-expert behavior control: bullerwins IQ3_XXS revision
@@ -50,14 +50,13 @@ hash-preserved quality candidates; K180 is not predetermined.
 
 ## Current record and residual
 
-1. The current trustworthy strict record is **`40.020972 tok/s`** median with
-   `39.608039` p10, at
-   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/split-fp8-geometry-b4-qk16-recordidentity-20260715T0144Z`;
-   LocalMaxxing `cmrlnp01l12q4mj01p58ynsyd`. It retains selective W8A16 and
-   exact shared-expert activation/quant fusion, then changes split FP8 QK from
-   16-head/8-warp to 4-head/16-warp programs. All cached-zero, replay, canary,
-   and focused bitwise gates pass. The preceding 34.067121 tok/s record remains
-   the matching control.
+1. The current trustworthy strict record is **`40.135724 tok/s`** median with
+   `39.827848` p10, at
+   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`;
+   LocalMaxxing `cmrm601ig1hsmmj017npoivfd`. It retains selective W8A16 and
+   exact shared-expert activation/quant fusion and tuned split FP8 geometry,
+   then fuses Q RMSNorm/RoPE with direct UE8M0 FP8 KV insertion. All cached-zero,
+   replay, canary, and focused bitwise gates pass; confirmation is 40.103728.
 2. Reusable graphs are working. Direct paged FP8 attention first raised the
    record to 21.5448 tok/s; split QK/LSE plus tiled PV raised it another 38.41%.
 3. The first scale-prepack and W8A16 records were invalid because they also
@@ -112,11 +111,10 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-The current record-identity DeepSeek server is listening only on
-`127.0.0.1:18080` for follow-up experiments. It is the paired flag-off control
-under `native-dual-rmsnorm-paired-control-20260715T1010Z`, using vLLM
-`d8d7cf198`, XPU kernels `ef307a8`, and
-`VLLM_XPU_V4_NATIVE_DUAL_RMSNORM=0`; the added experiment remains default-off.
+The current DeepSeek record server is listening only on `127.0.0.1:18080` for
+follow-up experiments. It is the fused QNorm/RoPE/KV-insert record under
+`fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`, using vLLM `3a74a38a3`,
+XPU kernels `ef307a8`, the fused-insert flag on, and native dual RMSNorm off.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
@@ -128,7 +126,7 @@ launcher loads oneCCL from the DeepSeek virtual environment first.
 Keep the exact selective-W8A16 shape list, MXFP4 N64, tuned split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
 fusion in the record lane. The base has crossed 40 tok/s, so a separate
-speculative screen is now permitted, but must be compared against the 40.021
+speculative screen is now permitted, but must be compared against the 40.136
 tok/s identity and retain exact target verification. The grouped-MXFP4 small-N
 scheduler race is now understood: resetting its global counter inside
 workgroup 0 raced increments from other workgroups. Moving the reset to an
@@ -222,3 +220,11 @@ at 40.0950. vLLM `d8d7cf198` and the operator remain default-off. Do not spend
 another server load on a standalone RMSNorm replacement; fuse the preceding
 WQ_B producer with Q normalization/RoPE/KV insertion instead. See
 `notes/2026-07-15-native-dual-rmsnorm-graph-loss.md`.
+The next fusion succeeds: one M=1 Triton program keeps Q RMSNorm/RoPE arithmetic
+and the old KV BF16 rounding point while writing the UE8M0 FP8 cache directly.
+It removes a graph node and temporary KV row, passes all 160 changed eager and
+32 graph epochs across four cards, and improves the isolated boundary 2.02-2.08x.
+Strict suites reach 40.1357/40.1037 tok/s; LocalMaxxing
+`cmrm601ig1hsmmj017npoivfd`. Keep it enabled. The next source target is the
+preceding WQ_B producer epilogue. See
+`notes/2026-07-15-fused-qnorm-rope-kv-insert-record.md`.

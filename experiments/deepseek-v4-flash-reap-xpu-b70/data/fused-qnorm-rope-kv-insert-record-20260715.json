@@ -1,0 +1,20 @@
+{
+  "date": "2026-07-15",
+  "status": "promoted",
+  "vllm_commit": "3a74a38a3c2e98bd6c409e57e72011933a8148c8",
+  "xpu_kernels_commit": "ef307a8f45a0dc3794a8775e2e5d6c7484b63a1b",
+  "flag": "VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT=1",
+  "microgate": [
+    {"card": 0, "reference_us": 77.2018, "candidate_us": 37.03258, "speedup": 2.084699472734549, "projected_saved_ms_per_token": 1.72727646, "changed_exact": "40/40", "graph_exact": "8/8"},
+    {"card": 1, "reference_us": 81.10284, "candidate_us": 39.75816, "speedup": 2.039904261162991, "projected_saved_ms_per_token": 1.77782124, "changed_exact": "40/40", "graph_exact": "8/8"},
+    {"card": 2, "reference_us": 71.59204, "candidate_us": 35.49988, "speedup": 2.016684000058592, "projected_saved_ms_per_token": 1.55196288, "changed_exact": "40/40", "graph_exact": "8/8"},
+    {"card": 3, "reference_us": 73.95518, "candidate_us": 36.23412, "speedup": 2.0410370115239447, "projected_saved_ms_per_token": 1.62200558, "changed_exact": "40/40", "graph_exact": "8/8"}
+  ],
+  "strict_suites": [
+    {"path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z/realistic-suite-v1.json", "median_tok_s": 40.13572390518797, "p10_tok_s": 39.82784843515402, "mean_tok_s": 40.15237943380706, "cached_tokens_all_zero": true},
+    {"path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z/realistic-suite-v1-confirm.json", "median_tok_s": 40.10372842227123, "p10_tok_s": 39.80737771987941, "cached_tokens_all_zero": true}
+  ],
+  "paired_flag_off_control_tok_s": 40.094966280773264,
+  "previous_record_tok_s": 40.02097178508589,
+  "localmaxxing_id": "cmrm601ig1hsmmj017npoivfd"
+}

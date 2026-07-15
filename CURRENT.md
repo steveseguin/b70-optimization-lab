@@ -21,13 +21,13 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-The current DeepSeek record-identity endpoint is listening on
+The current DeepSeek record endpoint is listening on
 `127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint. It is the native-dual-RMSNorm paired control at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-dual-rmsnorm-paired-control-20260715T1010Z`:
-vLLM `d8d7cf198`, XPU kernels `ef307a8`, and
-`VLLM_XPU_V4_NATIVE_DUAL_RMSNORM=0`. Those commits add only a default-off
-rejected experiment; the running decode path retains the record recipe.
+LAN endpoint. It is the fused QNorm/RoPE/KV-insert record at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`:
+vLLM `3a74a38a3`, XPU kernels `ef307a8`,
+`VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT=1`, and the rejected native dual
+RMSNorm remains off.
 The host reboot auto-started the two Gemma service units and occupied the B70s;
 both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
@@ -75,18 +75,19 @@ permitted as a separate measured lane. It must retain exact target verification
 and must not be mixed with the base record. The archived Qwen detail below
 remains resume evidence, not an instruction to continue experimenting.
 
-The promoted runtime is now vLLM `fa3e27b461` plus XPU kernels `83ef7b667`.
+The promoted runtime is now vLLM `3a74a38a3` plus XPU kernels `ef307a8f4`.
 Persistent graph replay, native mHC, context-bounded sparse work, and direct
 paged FP8 attention all pass. The current strict TP4+EP single-session record
 uses split QK/LSE plus 8-by-64 tiled PV, a mutation-declared TP-only in-place
 all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions, selective
 W8A16 for four high-value projection families, and an exact clamp-at-10
 SwiGLU plus per-128 E4M3FN quant producer for the W8A8 shared-down path. The
-trustworthy record is now **40.0209718 tok/s** median and `39.6080391` p10
+trustworthy record is now **40.1357239 tok/s** median and `39.8278484` p10
 across the strict cold suite. All 12 rows were cached-zero; focused split output
-is bitwise identical and sequential changed-input replay is exact.
-LocalMaxxing approved it as `cmrlnp01l12q4mj01p58ynsyd`; evidence is
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/split-fp8-geometry-b4-qk16-recordidentity-20260715T0144Z`.
+and the fused Q/cache boundary are bitwise identical, and sequential
+changed-input replay is exact. LocalMaxxing approved it as
+`cmrm601ig1hsmmj017npoivfd`; evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`.
 The gain comes from changing split FP8 QK from four 16-head/8-warp programs to
 sixteen 4-head/16-warp programs; complete attention microbenchmarks improve
 22-42% across short and 128-token C4/C128 shapes. The preceding 34.0671207
@@ -199,6 +200,15 @@ graph node again. The next candidate must remove the WQ_B producer boundary
 with Q normalization/RoPE/KV insertion and clear an exact real-model gate.
 See
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-native-dual-rmsnorm-graph-loss.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-native-dual-rmsnorm-graph-loss.md).
+The following producer/consumer fusion succeeds. One M=1 Triton program now
+performs Q RMSNorm/RoPE and direct UE8M0 FP8 KV-cache insertion while retaining
+the old BF16 KV rounding point internally. It removes one graph node and the
+temporary KV row. Four-card gates pass 160/160 changed eager cases and 32/32
+graph replays bit-for-bit; the isolated boundary is 2.02-2.08x faster. Two
+strict suites reach 40.1357/40.1037 tok/s, both above the old public record,
+and LocalMaxxing approved `cmrm601ig1hsmmj017npoivfd`. Keep this fusion on and
+continue into the preceding WQ_B projection epilogue. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-fused-qnorm-rope-kv-insert-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-fused-qnorm-rope-kv-insert-record.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only
