@@ -83,7 +83,8 @@ permitted as a separate measured lane. It must retain exact target verification
 and must not be mixed with the base record. The archived Qwen detail below
 remains resume evidence, not an instruction to continue experimenting.
 
-The promoted runtime is now vLLM `93fde4186` plus XPU kernels `de979b9` and
+The promoted nonspeculative runtime is now vLLM `a66f3486c` plus XPU kernels
+`2a07cf2e8` and
 the exact-version oneCCL 2021.17.2 size-routed runtime at `6da44bc`.
 Persistent graph replay, native mHC, context-bounded sparse work, and direct
 paged FP8 attention all pass. The current strict TP4+EP single-session record
@@ -91,16 +92,21 @@ uses split QK/LSE plus 8-by-64 tiled PV, a mutation-declared TP-only in-place
 all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions, selective
 W8A16 for four high-value projection families, and an exact clamp-at-10
 SwiGLU plus per-128 E4M3FN quant producer for the W8A8 shared-down path. The
-trustworthy record is now **40.096205/40.170350 tok/s** median and
-`39.541513/39.767015` p10 across two strict cold suites. All 24 rows were
-cached-zero and ten independent exact captures pass 10/10. The preceding
+trustworthy nonspeculative record is now **41.513661/41.733256 tok/s** median
+and `41.188482/41.259748` p10 across two strict cold suites. A same-commit
+flag-off control reached 40.067691 tok/s, so the native SIMD16 M=1 router
+removes 0.87-1.00 ms/token end to end. All 24 strict rows were cached-zero and
+twenty independent exact captures pass 20/20, including ten after both
+suites. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-m1-biased-topk-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-m1-biased-topk-record.md),
+and LocalMaxxing approved `cmrmjd3io1nn1mj013stqoe4b`. The preceding
 `40.1357239` LocalMaxxing row `cmrm601ig1hsmmj017npoivfd` remains historical
 speed evidence, but consecutive changed-prompt testing later proved its
 unmodified large-SYCL-allreduce identity was not repeatability-safe. Evidence
 for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
-The corrected `40.170350` row is approved on LocalMaxxing as
-`cmrmebmzg1nm0mj01k30nv6vw`.
+The corrected `40.170350` row `cmrmebmzg1nm0mj01k30nv6vw` remains the
+superseded repeatability-repair authority.
 The current target-verified speed record is row-exact attached MTP1 with a
 strided-batch FP32 compressor and selective M=2 W8A16 verification:
 **55.524496 tok/s** median with `52.029542` p10; independent support is

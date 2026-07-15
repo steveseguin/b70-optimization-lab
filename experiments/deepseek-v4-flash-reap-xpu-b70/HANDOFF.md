@@ -9,8 +9,8 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; the repeatability-correct nonspeculative base is
-40.0962/40.1704 tok/s; row-exact attached MTP1 plus a strided-batch compressor
+replay pass; the native-router nonspeculative base is
+41.5137/41.7333 tok/s; row-exact attached MTP1 plus a strided-batch compressor
 and selective M=2 W8A16 is the target-verified speed record at
 55.5245/54.7089 tok/s**.
 
@@ -52,8 +52,16 @@ hash-preserved quality candidates; K180 is not predetermined.
 
 ## Current record and residual
 
-1. The current trustworthy strict base is **`40.096205/40.170350 tok/s`**
-   median, with `39.541513/39.767015` p10, at
+1. The current trustworthy strict base is **`41.513661/41.733256 tok/s`**
+   median, with `41.188482/41.259748` p10, at
+   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-m1-router-candidate-20260715T2021Z`.
+   A same-commit flag-off control is 40.067691 tok/s. The SIMD16 router
+   replaces generic M=1 bias-add/radix-top-k/gather in 40 normal MoE layers,
+   saving 0.87-1.00 ms/token. Twenty exact captures pass 20/20, including ten
+   after both strict suites, and LocalMaxxing approved
+   `cmrmjd3io1nn1mj013stqoe4b`. See
+   `notes/2026-07-15-m1-biased-topk-record.md`.
+   The preceding repeatability-correct base remains at
    `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-graph-oneccl1712-bf16-allreduce128k-preload094-cache-fix-20260715T1530Z`.
    It retains selective W8A16, exact shared-expert activation/quant fusion,
    tuned split FP8 geometry, and fused Q RMSNorm/RoPE/direct UE8M0 FP8 KV
@@ -62,7 +70,7 @@ hash-preserved quality candidates; K180 is not predetermined.
    Both cold suites pass and ten exact captures pass 10/10. The older
    `40.135724` LocalMaxxing row `cmrm601ig1hsmmj017npoivfd` remains historical
    speed evidence but is not the consecutive-repeatability authority. The
-   corrected `40.170350` row is approved as LocalMaxxing
+   corrected `40.170350` row is retained as superseded LocalMaxxing evidence
    `cmrmebmzg1nm0mj01k30nv6vw`.
 2. The current target-verified speed record is attached **MTP1 with a
    strided-batch FP32 compressor and selective M=2 W8A16 at
@@ -155,7 +163,8 @@ launcher loads oneCCL from the DeepSeek virtual environment first.
 
 Keep the exact selective-W8A16 shape list, MXFP4 N64, tuned split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
-fusion in the record lane. The trustworthy nonspeculative base is 40.170350
+fusion and `VLLM_XPU_V4_M1_BIASED_TOPK=1` in the record lane. The trustworthy
+nonspeculative base is 41.733256
 tok/s and row-exact MTP1 with the batched compressor is the 55.524496 tok/s
 target-verified speed record.
 MTP2 and larger repeated-single-layer widths are closed by negligible

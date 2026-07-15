@@ -1,0 +1,48 @@
+{
+  "date": "2026-07-15",
+  "status": "promoted",
+  "model": "0xSero/DeepSeek-V4-Flash-180B",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "vllm_commit": "a66f3486cc6ebc530c74ee29934986eb75ed6b63",
+  "xpu_kernels_commit": "2a07cf2e8af3da69a767f4e9131123e50d2ac5c8",
+  "oneccl_commit": "6da44bcb540f1005de88276dd86465cf5de4dc2f",
+  "flag": "VLLM_XPU_V4_M1_BIASED_TOPK=1",
+  "microgate": {
+    "reference_us": 77.12848,
+    "candidate_us": 7.17795,
+    "speedup": 10.74519605179752,
+    "projected_saved_ms_per_token": 2.7980212,
+    "changed_input_exact": "40/40",
+    "four_card_candidate_us_range": [7.223, 7.280]
+  },
+  "same_commit_flag_off_control": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-m1-router-control-20260715T2027Z/realistic-suite-v1.json",
+    "median_tok_s": 40.06769081150205,
+    "p10_tok_s": 39.653491759442716,
+    "cached_tokens_all_zero": true
+  },
+  "strict_suites": [
+    {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-m1-router-candidate-20260715T2021Z/realistic-suite-v1.json",
+      "median_tok_s": 41.51366066375581,
+      "p10_tok_s": 41.188481911198416,
+      "mean_tok_s": 41.519284725030936,
+      "cached_tokens_all_zero": true
+    },
+    {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-m1-router-candidate-20260715T2021Z/realistic-suite-v1-confirm.json",
+      "median_tok_s": 41.73325598932311,
+      "p10_tok_s": 41.25974808727877,
+      "mean_tok_s": 41.64717686786535,
+      "cached_tokens_all_zero": true
+    }
+  ],
+  "paired_gain_percent_range": [3.60881753594513, 4.156878382776519],
+  "paired_saved_ms_per_token_range": [0.8693084344392368, 0.9960589664607049],
+  "previous_record_tok_s": 40.17035011552869,
+  "exact_canary_captures": 20,
+  "exact_canary_passes": 20,
+  "candidate_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-m1-router-candidate-20260715T2021Z",
+  "control_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-m1-router-control-20260715T2027Z",
+  "localmaxxing_id": "cmrmjd3io1nn1mj013stqoe4b"
+}
