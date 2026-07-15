@@ -70,10 +70,12 @@ hash-preserved quality candidates; K180 is not predetermined.
    dense path. Shared-expert activation/quant fusion adds another repeatable
    1.89%. Removing all 87 redundant all-reduce clones gained only 0.30%, proving
    collective wait—not the clone—is the communication boundary. The next work
-   is register-resident M=1 MHC post/pre + exact RMSNorm across 85 useful
-   boundaries per token. The promoted selective W8A16 mix bypasses activation
-   quantization for both K4096 projection consumers, so dual FP8 output must
-   not be added unless an isolated W8A8 crossover proves that output useful.
+   was register-resident M=1 MHC post/pre + exact-geometry RMSNorm across 85
+   useful boundaries per token. That candidate is now closed: 40 changed
+   states exposed small post/comb/norm bit drift and it regressed
+   `20.326 -> 22.427 us`, projecting a `0.179 ms/token` loss. The promoted
+   selective W8A16 mix also bypasses activation quantization for both K4096
+   projection consumers, so dual FP8 output is not useful in this lane.
 5. The public K160 avoids heterogeneous construction, but the final
    hash-preserved candidate still needs 256 experts in layers 0-2 and K later.
 6. `quality/calibration-v1-plan.json` is materializable but its 8,000 prompts
@@ -104,7 +106,8 @@ Keep the exact selective-W8A16 shape list, MXFP4 N64, split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
 fusion in the record lane. Preserve N32 as an
 exact-replay failure and N128 as an unpromoted sub-1% speed/changed-output
-side lane. The next work is register-resident M=1 MHC post/pre + exact RMSNorm,
-then the producer/consumer boundary around the 87 ordered reductions. Require
+side lane. The next work is the producer/consumer boundary around the 87
+ordered reductions; the MHC post/pre + RMSNorm candidate is a preserved loss.
+Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.

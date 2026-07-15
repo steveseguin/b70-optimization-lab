@@ -81,13 +81,14 @@ only 83.3% of early W8A8 greedy tokens and corrupts the frozen long
 math-invariant case that W8A8 solves correctly. The promoted selective path
 keeps shared-down W8A8 and passes that invariant. MXFP4 N32 failed exact
 changed-input replay; N128 reached 30.518 and 30.482 tok/s but altered outputs
-for a sub-1% gain and is not promoted. The active work is a register-resident
-M=1 MHC post/pre plus exact RMSNorm boundary, followed by the ordered
-87-collective producer/consumer boundary. Under the promoted selective W8A16
-mix, fused FP8 output for the K4096 projections would currently be unused, so
-MHC+RMSNorm must clear its own measured gate before adding dual-output
-quantization. The prior general MHC/RMS fusion and oneCCL twoshots lanes remain
-preserved losses.
+for a sub-1% gain and is not promoted. The register-resident M=1 MHC post/pre
+plus RMSNorm candidate is now closed before a server run: it introduced small
+changed-state reduction drift and regressed `20.326 -> 22.427 us`, a projected
+`0.179 ms/token` loss across 85 boundaries. Under the promoted selective W8A16
+mix, fused FP8 output for the K4096 projections would also be unused. The
+active work is therefore the ordered 87-collective producer/consumer boundary.
+The prior general MHC/RMS fusion and oneCCL twoshots lanes remain preserved
+losses.
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

@@ -1,0 +1,36 @@
+{
+  "classification": "performance-and-exactness-loss",
+  "date": "2026-07-15",
+  "hardware": "1x Intel Arc Pro B70 32GB",
+  "vllm_experiment_commit": "8bebe092f",
+  "xpu_kernel_experiment_commit": "efebdae",
+  "probe": "/home/steve/src/deepseek-v4-xpu-kernels-clean/tests/mhc/mhc_post_pre_m1_rms_probe.py",
+  "epochs": 40,
+  "warmup": 100,
+  "alternating_batches": 12,
+  "calls_per_batch": 200,
+  "bit_mismatches": {
+    "residual": 0,
+    "post": 14,
+    "comb": 309,
+    "normalized_bf16": 3
+  },
+  "max_abs": {
+    "residual": 0.0,
+    "post": 2.384185791015625e-7,
+    "comb": 8.940696716308594e-8,
+    "normalized_bf16": 7.62939453125e-6
+  },
+  "performance": {
+    "reference_us_median": 20.325499999999998,
+    "candidate_us_median": 22.427079999999997,
+    "saved_us_per_boundary": -2.1015799999999984,
+    "projected_saved_ms_85_boundaries": -0.17863429999999988,
+    "speedup": 0.9062927496580028
+  },
+  "graph": {
+    "changed_outputs": [true, true, true, true],
+    "exact_outputs": [true, true, true, true]
+  },
+  "decision": "closed-before-server-run"
+}
