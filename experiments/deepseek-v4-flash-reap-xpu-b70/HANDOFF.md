@@ -73,6 +73,11 @@ hash-preserved quality candidates; K180 is not predetermined.
    two M=1 FP32 compressor projections. Twenty ordered captures pass, ten
    after both strict suites; measured acceptance is 77.42%. See
    `notes/2026-07-15-mtp1-rowexact-record.md`.
+   Reusing the single layer for MTP2 is closed: M=3 graph capture and 10/10
+   initial exact captures pass with vLLM `4e47b18c9`, but second-position
+   acceptance is only about 0.5-2.2% and a realistic request deadlocks the
+   engine for at least 180 seconds. See
+   `notes/2026-07-15-mtp2-reuse-deadlock-closure.md`.
 3. Reusable graphs are working. Direct paged FP8 attention first raised the
    record to 21.5448 tok/s; split QK/LSE plus tiled PV raised it another 38.41%.
 4. The first scale-prepack and W8A16 records were invalid because they also

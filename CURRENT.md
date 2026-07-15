@@ -103,6 +103,10 @@ strict suites, and measured acceptance is 77.42%. LocalMaxxing approved
 invalid because a later replay leaked prompt text after `437`; the repair is
 `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`. Evidence and failure detail are in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-rowexact-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-rowexact-record.md).
+MTP2 reuse is closed without a speed result: its initial M=3 exact gate passes,
+but second-position acceptance is only about 0.5-2.2% and a realistic request
+deadlocks the engine. Do not test larger repeated-single-layer widths. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp2-reuse-deadlock-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp2-reuse-deadlock-closure.md).
 The gain comes from changing split FP8 QK from four 16-head/8-warp programs to
 sixteen 4-head/16-warp programs; complete attention microbenchmarks improve
 22-42% across short and 128-token C4/C128 shapes. The preceding 34.0671207
