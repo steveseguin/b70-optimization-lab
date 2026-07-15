@@ -1,0 +1,55 @@
+{
+  "classification": "qualified_component_not_standalone_promotion",
+  "date": "2026-07-15",
+  "gate": {
+    "bitwise_exact": true,
+    "minimum_standalone_saved_ms_per_token": 0.5,
+    "standalone_promotion": false
+  },
+  "identity": {
+    "experts": 160,
+    "layers": 40,
+    "m": 1,
+    "routed_scaling_factor": 1.5,
+    "topk": 6,
+    "torch_version": "2.12.0+xpu"
+  },
+  "ranks": [
+    {
+      "candidate_graph_median_us": 18.63524,
+      "eager_exact_epochs": 40,
+      "graph_exact_epochs": 32,
+      "projected_saved_ms_per_token": 0.1612208,
+      "rank": 0,
+      "reference_graph_median_us": 22.66576
+    },
+    {
+      "candidate_graph_median_us": 18.58779,
+      "eager_exact_epochs": 40,
+      "graph_exact_epochs": 32,
+      "projected_saved_ms_per_token": 0.164944,
+      "rank": 1,
+      "reference_graph_median_us": 22.71139
+    },
+    {
+      "candidate_graph_median_us": 18.67047,
+      "eager_exact_epochs": 40,
+      "graph_exact_epochs": 32,
+      "projected_saved_ms_per_token": 0.164814,
+      "rank": 2,
+      "reference_graph_median_us": 22.79082
+    },
+    {
+      "candidate_graph_median_us": 18.6641,
+      "eager_exact_epochs": 40,
+      "graph_exact_epochs": 32,
+      "projected_saved_ms_per_token": 0.1735448,
+      "rank": 3,
+      "reference_graph_median_us": 23.00272
+    }
+  ],
+  "source_commits": {
+    "kernel_parent": "f6a7cdd",
+    "vllm_parent": "a66f3486cc6ebc530c74ee29934986eb75ed6b63"
+  }
+}
