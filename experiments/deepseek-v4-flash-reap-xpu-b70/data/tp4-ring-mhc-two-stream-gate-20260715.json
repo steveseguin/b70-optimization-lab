@@ -1,0 +1,41 @@
+{
+  "classification": "feasibility_pass_not_integrated",
+  "scope": "one active TP4 generation; independent 87-ring and 85-MHC chains",
+  "artifact_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/ring-mhc-two-stream-gate-20260715T030148Z",
+  "runtime": {
+    "python": "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+    "loaded_ccl": "/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so.1",
+    "libccl_so_1_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+    "ccl_sycl_allreduce_ll": "ring",
+    "ccl_sycl_allreduce_ll_threshold": 4096,
+    "ccl_sycl_allreduce_arc": 0
+  },
+  "runs": [
+    {
+      "label": "a",
+      "passed_correctness": true,
+      "max_rank_wall_ms": {
+        "collective_only": 4.311185999881673,
+        "mhc_only": 1.3747369998782233,
+        "serial": 5.705787000010787,
+        "parallel_comm_first": 5.708131000005778,
+        "parallel_mhc_first": 5.063460499968642
+      },
+      "hidden_vs_serial_ms": 0.6423265000421452
+    },
+    {
+      "label": "b",
+      "passed_correctness": true,
+      "max_rank_wall_ms": {
+        "collective_only": 4.261463500029095,
+        "mhc_only": 1.3738070000499647,
+        "serial": 5.654572500020549,
+        "parallel_comm_first": 5.654352000078688,
+        "parallel_mhc_first": 5.042568500016387
+      },
+      "hidden_vs_serial_ms": 0.6120040000041627
+    }
+  ],
+  "integration_gate_hidden_ms": 0.51,
+  "decision": "The hardware can hide at least 0.61 ms across 85 boundaries only when MHC is submitted first. Proceed to a test-only persistent consumer that waits on ring per-wire readiness; require marker tax <=1 us and >=6 us saved per boundary before model integration."
+}

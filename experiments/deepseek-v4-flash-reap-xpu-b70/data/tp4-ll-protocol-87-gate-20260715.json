@@ -1,0 +1,21 @@
+{
+  "classification": "zero_code_protocol_lanes_closed",
+  "artifact_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/ll-protocol-87-gate-20260715T030323Z",
+  "shape": "87 ordered BF16[4096] TP4 all-reduces",
+  "runtime_libccl_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+  "long_runs": {
+    "ring_threshold_4096_max_rank_device_median_ms": 5.397964,
+    "ring_threshold_8192_max_rank_device_median_ms": 5.228651999999999,
+    "threshold_8192_savings_ms": 0.169312000000001,
+    "integration_gate_ms": 0.5
+  },
+  "arc1": {
+    "status": "correctness_failure",
+    "max_rank_device_median_ms": 5.501314,
+    "mismatch_epochs_per_rank": 64,
+    "first_bad_flat_index": 4096,
+    "mismatch_elements_first_epoch": 19264,
+    "max_abs_first_epoch": 342.0
+  },
+  "decision": "Keep threshold 4096 and ARC=0. The 8192 threshold saves only 0.169 ms per 87 in long-chain timing; ARC=1 corrupts sequential replay."
+}

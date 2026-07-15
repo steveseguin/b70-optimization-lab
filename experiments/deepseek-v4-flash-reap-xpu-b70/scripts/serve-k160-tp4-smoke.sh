@@ -39,9 +39,10 @@ source /opt/intel/oneapi/mkl/2025.3/env/vars.sh --force >/dev/null 2>&1
 source /opt/intel/oneapi/dnnl/2025.3/env/vars.sh --force >/dev/null 2>&1
 set -u
 
-oneccl="${ONECCL_INSTALL_DIR:-/mnt/usb-models/llm-runtime/oneccl-4ceafd1-b70}"
+venv_root="$(dirname "$(dirname "${python}")")"
+oneccl="${ONECCL_INSTALL_DIR:-${venv_root}}"
 oneccl_source_tree="${ONECCL_SOURCE_TREE:-/home/steve/src/oneccl-4ceafd1}"
-venv_lib="$(dirname "$(dirname "${python}")")/lib"
+venv_lib="${venv_root}/lib"
 # Torch 2.11 XPU and the installed kernel package are a SYCL 8 lane.  Keep
 # their matching Unified Runtime loader ahead of any side-by-side oneAPI 2026
 # installation when Triton JIT-compiles a new launcher.
@@ -92,7 +93,7 @@ export VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES="${VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES:
 export VLLM_XPU_MXFP4_SMALL_M_N="${VLLM_XPU_MXFP4_SMALL_M_N:-64}"
 export VLLM_XPU_V4_DIRECT_FP8_BLOCK_H="${VLLM_XPU_V4_DIRECT_FP8_BLOCK_H:-16}"
 export VLLM_XPU_V4_DIRECT_FP8_NUM_WARPS="${VLLM_XPU_V4_DIRECT_FP8_NUM_WARPS:-8}"
-export HF_HOME="${HF_HOME:-/mnt/usb-models/llm-cache/hf}"
+export HF_HOME="${HF_HOME:-/mnt/fast-ai/llm-cache/hf}"
 export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-/mnt/fast-ai/vllm-cache-exp/deepseek-v4-k160-${revision}/vllm}"
 export TORCHINDUCTOR_CACHE_DIR="${TORCHINDUCTOR_CACHE_DIR:-/mnt/fast-ai/vllm-cache-exp/deepseek-v4-k160-${revision}/torchinductor}"
 mkdir -p "${VLLM_CACHE_ROOT}" "${TORCHINDUCTOR_CACHE_DIR}"
@@ -193,8 +194,12 @@ argv=(
   printf 'oneccl=%s\n' "${oneccl}"
   printf 'oneccl_source_tree=%s\n' "${oneccl_source_tree}"
   if [[ -d "${oneccl_source_tree}/.git" || -f "${oneccl_source_tree}/.git" ]]; then
-    printf 'oneccl_commit=%s\n' "$(git -C "${oneccl_source_tree}" rev-parse HEAD)"
+    printf 'oneccl_source_worktree_head=%s\n' "$(git -C "${oneccl_source_tree}" rev-parse HEAD)"
   fi
+  printf 'oneccl_runtime_default_lib=%s\n' "${venv_lib}/libccl.so.1"
+  printf 'oneccl_runtime_default_sha256=%s\n' \
+    "$(sha256sum "${venv_lib}/libccl.so.1" | awk '{print $1}')"
+  printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'ccl_atl_transport=%s\n' "${CCL_ATL_TRANSPORT}"
   printf 'ccl_topo_p2p_access=%s\n' "${CCL_TOPO_P2P_ACCESS}"
   printf 'ccl_enable_sycl_kernels=%s\n' "${CCL_ENABLE_SYCL_KERNELS:-default}"
@@ -216,7 +221,7 @@ argv=(
   printf '\n'
   "${python}" - <<'PY'
 import importlib.metadata as metadata
-for package in ("torch", "triton-xpu", "vllm", "vllm-xpu-kernels"):
+for package in ("torch", "triton-xpu", "vllm", "vllm-xpu-kernels", "oneccl"):
     print(f"package_{package}={metadata.version(package)}")
 PY
 } >"${run_dir}/identity.txt"

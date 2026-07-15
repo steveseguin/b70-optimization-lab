@@ -104,6 +104,14 @@ of the `0.50 ms` integration gate. Sequence/update-to-ring fusion is therefore
 rejected; communication work must overlap or shorten the ring/consumer
 critical path. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-oneccl-recording-sequence-upper-bound.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-oneccl-recording-sequence-upper-bound.md).
+The first two-stream hardware upper bound passes twice, hiding `0.642` and
+`0.612 ms` only when the independent MHC stream is submitted before the ring.
+The next source experiment is a test-only persistent consumer waiting on
+epoch-tagged per-wire readiness, with a `<=1 us` marker-tax gate and
+`>=6 us/boundary` slowest-rank savings gate. The cheaper LL-threshold-8192 path
+saved only `0.169 ms/87`, and ARC LL256 corrupted every sequential-replay
+epoch, so neither proceeds. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-consumer-overlap-feasibility.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-consumer-overlap-feasibility.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

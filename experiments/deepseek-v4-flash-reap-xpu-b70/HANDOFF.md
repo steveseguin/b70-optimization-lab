@@ -127,3 +127,13 @@ rank. Do not patch oneCCL to fold its sequence/update kernel into LL256. See
 `notes/2026-07-15-oneccl-recording-sequence-upper-bound.md`. The next permitted
 communication screen must overlap or shorten the ring/consumer critical path
 and retain a hard projected savings gate before server integration.
+
+That overlap feasibility gate now passes twice: submitting 85 independent MHC
+kernels before 87 rings on a second stream hides `0.642` and `0.612 ms`, while
+communication-first submission hides nothing. Proceed only with a test-only
+persistent consumer that is resident before the ring and waits on nine
+epoch-tagged per-wire readiness markers. Require marker tax `<=1 us`, exact
+changed-state output, and `>=6 us` saved per boundary before full-model work.
+Raising the LL threshold to 8192 saved only `0.169 ms/87`; ARC LL256 corrupted
+all 64 sequential-replay epochs. See
+`notes/2026-07-15-tp4-consumer-overlap-feasibility.md`.
