@@ -1,0 +1,65 @@
+{
+  "status": "promoted",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "hardware": "4x Intel Arc Pro B70 32 GB; TP4+EP; one active generation",
+  "identity": {
+    "vllm_commit": "3bd0eb32188357a4e1d631a8fe5bb529e065a048",
+    "xpu_kernel_commit": "de979b9328408302129c10ba04ed2fe090d414df",
+    "oneccl_commit": "6da44bcb540f1005de88276dd86465cf5de4dc2f",
+    "spec_method": "mtp",
+    "spec_tokens": 1,
+    "compressor_m2_row_exact": true,
+    "compressor_m2_batched_exact": true,
+    "w8a16_max_m": 2,
+    "oneccl_sycl_allreduce_max_bytes": 131072
+  },
+  "microgate": {
+    "cards_passed": 4,
+    "shapes_per_card": 2,
+    "changing_epochs_per_shape": 40,
+    "eager_bitwise_exact": true,
+    "graph_replay_bitwise_exact": true,
+    "bmm_speedup_min": 1.8437862578682431,
+    "bmm_speedup_max": 1.9116630139056832,
+    "projected_41_layer_savings_ms_min": 1.9640712,
+    "projected_41_layer_savings_ms_max": 2.0458802,
+    "evidence_glob": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/compressor-m2-bmm-exact-card{0,1,2,3}-20260715.json"
+  },
+  "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z",
+  "strict_runs": [
+    {
+      "file": "realistic-suite-v1-confirm.json",
+      "median_tok_s": 55.52449613121952,
+      "p10_tok_s": 52.029541893815825,
+      "mean_tok_s": 55.320037043510986,
+      "wall_median_tok_s": 47.475063167199906,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    },
+    {
+      "file": "realistic-suite-v1.json",
+      "median_tok_s": 54.7088887840192,
+      "p10_tok_s": 52.297798349510764,
+      "mean_tok_s": 55.022312334108,
+      "wall_median_tok_s": 46.91402385570997,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    }
+  ],
+  "exact_canaries": {
+    "passed": 20,
+    "attempted": 20,
+    "post_strict_suite_passed": 10,
+    "cached_tokens_all_zero": true
+  },
+  "acceptance": {
+    "drafted": 2001,
+    "accepted": 1560,
+    "rate": 0.7796101949025487
+  },
+  "prior_mtp1_record_tok_s": 54.464908644156125,
+  "nonspeculative_median_tok_s": 40.17035011552869,
+  "speedup_over_prior_record": 1.019454535485322,
+  "speedup_over_nonspeculative": 1.382223348027774,
+  "localmaxxing_id": "cmrmgacdq1nmimj01i4sfqytp"
+}

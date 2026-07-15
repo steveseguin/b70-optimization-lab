@@ -23,13 +23,15 @@ Confirm the endpoint and process state before relying on this observation.
 
 The current DeepSeek record endpoint is listening on
 `127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint. It is the row-exact MTP1 plus M=2 W8A16 record recipe at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-w8a16-m2-candidate-20260715T1945Z`:
-vLLM `93fde4186`, XPU kernels `de979b9`, and exact-version oneCCL `6da44bc`.
-`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`, `--spec-method mtp`, and
+LAN endpoint. It is the row-exact MTP1 plus strided-batch compressor and M=2
+W8A16 record recipe at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z`:
+vLLM `3bd0eb321`, XPU kernels `de979b9`, and exact-version oneCCL `6da44bc`.
+`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`,
+`VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT=1`, `--spec-method mtp`, and
 `--spec-tokens 1` are active; `VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=2` extends
-the selective projection path to the target verifier. The sustained exact
-gate passes.
+the selective projection path to the target verifier. The sustained 20/20
+exact gate passes.
 The runtime is force-preloaded from
 `/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-sizegate` and routes only SYCL
 all-reduces larger than 131,072 bytes to the safe path. All four worker maps
@@ -99,11 +101,15 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row is approved on LocalMaxxing as
 `cmrmebmzg1nm0mj01k30nv6vw`.
-The current target-verified speed record is row-exact attached MTP1 with
-selective M=2 W8A16 verification: **54.464909 tok/s** median with `51.586812`
-p10; independent support is 54.445287 tok/s. Twenty ordered exact captures
-pass, including ten after both strict suites, and measured acceptance is
-77.68%. LocalMaxxing approved `cmrmfivhg1nmamj012e3138my`. The uncorrected
+The current target-verified speed record is row-exact attached MTP1 with a
+strided-batch FP32 compressor and selective M=2 W8A16 verification:
+**55.524496 tok/s** median with `52.029542` p10; independent support is
+54.708889 tok/s. Twenty ordered exact captures pass, including ten after both
+strict suites, and measured acceptance is 77.96%. LocalMaxxing approved
+`cmrmgacdq1nmimj01i4sfqytp`. Both real compressor shapes pass 40/40 changing
+eager and graph-replay comparisons on every B70. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-batched-compressor-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-batched-compressor-record.md).
+The uncorrected
 50.74/50.10 MTP1 screen is
 invalid because a later replay leaked prompt text after `437`; the repair is
 `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`. Evidence and failure detail are in

@@ -9,11 +9,10 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; the fused QNorm/RoPE/direct FP8 KV-insert lane is now
-repeatability-correct at 40.0962/40.1704 tok/s after repairing overlapping KV
-stores and routing only large prefill all-reduces around the corrupt oneCCL
-SYCL path; row-exact attached MTP1 is the separate target-verified speed record
-at 50.0169/49.4205 tok/s**.
+replay pass; the repeatability-correct nonspeculative base is
+40.0962/40.1704 tok/s; row-exact attached MTP1 plus a strided-batch compressor
+and selective M=2 W8A16 is the target-verified speed record at
+55.5245/54.7089 tok/s**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -65,10 +64,12 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is approved as LocalMaxxing
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. The current target-verified speed record is attached **MTP1 with selective
-   M=2 W8A16 at `54.464909/54.445287 tok/s`**, LocalMaxxing
-   `cmrmfivhg1nmamj012e3138my`. Four production shapes pass 40/40 changing
-   row-exact cases on every B70; one M=2 call is 2.42-2.50x faster than two
+2. The current target-verified speed record is attached **MTP1 with a
+   strided-batch FP32 compressor and selective M=2 W8A16 at
+   `55.524496/54.708889 tok/s`**, LocalMaxxing
+   `cmrmgacdq1nmimj01i4sfqytp`. Both real compressor shapes pass 40/40 changing
+   eager and graph replays on every B70; the BMM is 1.84-1.91x faster than two
+   M=1 calls plus concatenation. Four W8A16 shapes pass 40/40 changing
    M=1 calls. The earlier row-exact MTP1 record is 50.016860 tok/s. The first
    uncorrected 50.74/50.10 screen is invalid: after
    sustained request history it leaked prompt text after the correct `437`.
@@ -137,10 +138,12 @@ The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
 The current DeepSeek record server is listening only on `127.0.0.1:18080` for
-follow-up experiments. It is the row-exact MTP1 plus M=2 W8A16 recipe under
-`mtp1-rowexact-w8a16-m2-candidate-20260715T1945Z`, using vLLM `93fde4186`, XPU
-kernels `de979b9`, exact-version oneCCL `6da44bc`, one speculative token, and
-`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1` and
+follow-up experiments. It is the row-exact MTP1 plus strided-batch compressor
+and M=2 W8A16 recipe under
+`mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z`, using vLLM `3bd0eb321`,
+XPU kernels `de979b9`, exact-version oneCCL `6da44bc`, one speculative token,
+and `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`,
+`VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT=1`, and
 `VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=2`. The sustained exact gate passes.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
@@ -153,11 +156,15 @@ launcher loads oneCCL from the DeepSeek virtual environment first.
 Keep the exact selective-W8A16 shape list, MXFP4 N64, tuned split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
 fusion in the record lane. The trustworthy nonspeculative base is 40.170350
-tok/s and row-exact MTP1 is the 50.016860 tok/s target-verified speed record.
+tok/s and row-exact MTP1 with the batched compressor is the 55.524496 tok/s
+target-verified speed record.
 MTP2 and larger repeated-single-layer widths are closed by negligible
-second-position acceptance and a service deadlock. The next speculative work
-must reduce the MTP1 row-exact compressor or verifier/sampler cost while
-retaining its 20-capture sustained replay gate. The grouped-MXFP4 small-N
+second-position acceptance and a service deadlock. The next bounded candidate
+is extending the exact shared-expert clamp/SwiGLU plus FP8-quant producer from
+M=1 to M=2; the current source explicitly excludes the verifier width, and the
+prior M=1 full-model A/B saved about 0.55 ms. Require a changed-input exact
+hardware gate and at least 0.50 ms/cycle projection before loading TP4. The
+grouped-MXFP4 small-N
 scheduler race is now understood: resetting its global counter inside
 workgroup 0 raced increments from other workgroups. Moving the reset to an
 ordered queue fill makes N32 and N128 exact over 40 changed graph epochs, but
