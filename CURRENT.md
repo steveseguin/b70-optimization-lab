@@ -23,11 +23,13 @@ Confirm the endpoint and process state before relying on this observation.
 
 The current DeepSeek record endpoint is listening on
 `127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint. It is the restored row-exact MTP1 record recipe at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-live-restore-20260715T1930Z`:
+LAN endpoint. It is the row-exact MTP1 plus M=2 W8A16 record recipe at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-w8a16-m2-candidate-20260715T1945Z`:
 vLLM `93fde4186`, XPU kernels `de979b9`, and exact-version oneCCL `6da44bc`.
 `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`, `--spec-method mtp`, and
-`--spec-tokens 1` are active. The post-restore exact suite passes.
+`--spec-tokens 1` are active; `VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=2` extends
+the selective projection path to the target verifier. The sustained exact
+gate passes.
 The runtime is force-preloaded from
 `/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-sizegate` and routes only SYCL
 all-reduces larger than 131,072 bytes to the safe path. All four worker maps
@@ -97,14 +99,17 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row is approved on LocalMaxxing as
 `cmrmebmzg1nm0mj01k30nv6vw`.
-The separate current target-verified speed record is row-exact attached MTP1:
-**50.016860 tok/s** median with `48.283807` p10; independent support is
-49.420459 tok/s. Twenty ordered exact captures pass, including ten after both
-strict suites, and measured acceptance is 77.42%. LocalMaxxing approved
-`cmrmetch81nm3mj01w1pidsyt`. The uncorrected 50.74/50.10 MTP1 screen is
+The current target-verified speed record is row-exact attached MTP1 with
+selective M=2 W8A16 verification: **54.464909 tok/s** median with `51.586812`
+p10; independent support is 54.445287 tok/s. Twenty ordered exact captures
+pass, including ten after both strict suites, and measured acceptance is
+77.68%. LocalMaxxing approved `cmrmfivhg1nmamj012e3138my`. The uncorrected
+50.74/50.10 MTP1 screen is
 invalid because a later replay leaked prompt text after `437`; the repair is
 `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`. Evidence and failure detail are in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-rowexact-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-rowexact-record.md).
+The M=2 W8A16 record mechanism and four-card gates are in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-w8a16-m2-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-w8a16-m2-record.md).
 MTP2 reuse is closed without a speed result: its initial M=3 exact gate passes,
 but second-position acceptance is only about 0.5-2.2% and a realistic request
 deadlocks the engine. Do not test larger repeated-single-layer widths. See

@@ -65,14 +65,18 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is approved as LocalMaxxing
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. The current target-verified speed record is attached **MTP1 at
-   `50.016860/49.420459 tok/s`**, LocalMaxxing
-   `cmrmetch81nm3mj01w1pidsyt`. The first 50.74/50.10 screen is invalid: after
+2. The current target-verified speed record is attached **MTP1 with selective
+   M=2 W8A16 at `54.464909/54.445287 tok/s`**, LocalMaxxing
+   `cmrmfivhg1nmamj012e3138my`. Four production shapes pass 40/40 changing
+   row-exact cases on every B70; one M=2 call is 2.42-2.50x faster than two
+   M=1 calls. The earlier row-exact MTP1 record is 50.016860 tok/s. The first
+   uncorrected 50.74/50.10 screen is invalid: after
    sustained request history it leaked prompt text after the correct `437`.
    `VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1` repairs the verifier by preserving
    two M=1 FP32 compressor projections. Twenty ordered captures pass, ten
-   after both strict suites; measured acceptance is 77.42%. See
-   `notes/2026-07-15-mtp1-rowexact-record.md`.
+   after both strict suites; measured record acceptance is 77.68%. See
+   `notes/2026-07-15-mtp1-rowexact-record.md` and
+   `notes/2026-07-15-mtp1-w8a16-m2-record.md`.
    Reusing the single layer for MTP2 is closed: M=3 graph capture and 10/10
    initial exact captures pass with vLLM `4e47b18c9`, but second-position
    acceptance is only about 0.5-2.2% and a realistic request deadlocks the
@@ -133,10 +137,11 @@ The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
 The current DeepSeek record server is listening only on `127.0.0.1:18080` for
-follow-up experiments. It is the restored row-exact MTP1 recipe under
-`mtp1-rowexact-live-restore-20260715T1930Z`, using vLLM `93fde4186`, XPU
+follow-up experiments. It is the row-exact MTP1 plus M=2 W8A16 recipe under
+`mtp1-rowexact-w8a16-m2-candidate-20260715T1945Z`, using vLLM `93fde4186`, XPU
 kernels `de979b9`, exact-version oneCCL `6da44bc`, one speculative token, and
-`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1`. The post-restore exact suite passes.
+`VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT=1` and
+`VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=2`. The sustained exact gate passes.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not

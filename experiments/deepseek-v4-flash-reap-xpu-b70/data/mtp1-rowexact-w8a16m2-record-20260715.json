@@ -1,0 +1,61 @@
+{
+  "status": "promoted",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "hardware": "4x Intel Arc Pro B70 32 GB; TP4+EP; one active generation",
+  "identity": {
+    "vllm_commit": "93fde4186b34d61e2d31ee258be282a8f768f3ed",
+    "xpu_kernel_commit": "de979b9328408302129c10ba04ed2fe090d414df",
+    "oneccl_commit": "6da44bcb540f1005de88276dd86465cf5de4dc2f",
+    "spec_method": "mtp",
+    "spec_tokens": 1,
+    "compressor_m2_row_exact": true,
+    "w8a16_max_m": 2,
+    "oneccl_sycl_allreduce_max_bytes": 131072
+  },
+  "microgate": {
+    "cards_passed": 4,
+    "shapes_per_card": 4,
+    "changing_epochs_per_shape": 40,
+    "all_bitwise_exact": true,
+    "m2_speedup_over_two_m1_min": 2.4184903974988834,
+    "m2_speedup_over_two_m1_max": 2.5046111559836532,
+    "evidence_glob": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/w8a16-m2-row-invariance-card{0,1,2,3}-20260715.json"
+  },
+  "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-rowexact-w8a16-m2-candidate-20260715T1945Z",
+  "strict_runs": [
+    {
+      "file": "realistic-suite-v1.json",
+      "median_tok_s": 54.464908644156125,
+      "p10_tok_s": 51.58681241739165,
+      "mean_tok_s": 54.35230799078669,
+      "wall_median_tok_s": 46.484592844006656,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    },
+    {
+      "file": "realistic-suite-v1-confirm.json",
+      "median_tok_s": 54.445287237436034,
+      "p10_tok_s": 51.68473961072876,
+      "mean_tok_s": 54.513298860098075,
+      "wall_median_tok_s": 46.46752431930702,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    }
+  ],
+  "exact_canaries": {
+    "passed": 20,
+    "attempted": 20,
+    "post_strict_suite_passed": 10,
+    "cached_tokens_all_zero": true
+  },
+  "acceptance": {
+    "drafted": 2003,
+    "accepted": 1556,
+    "rate": 0.7768347478781827
+  },
+  "prior_mtp1_median_tok_s": 50.016859951648804,
+  "nonspeculative_median_tok_s": 40.17035011552869,
+  "speedup_over_prior_mtp1": 1.088928961268137,
+  "speedup_over_nonspeculative": 1.3558509730476126,
+  "localmaxxing_id": "cmrmfivhg1nmamj012e3138my"
+}
