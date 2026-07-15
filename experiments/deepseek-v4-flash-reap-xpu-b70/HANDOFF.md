@@ -148,9 +148,13 @@ the first arithmetic replay, so the complete packed MXFP4 path is not yet
 expert-map-clean and was rejected before speed testing. Cross-GPU profiler
 timestamps are too distorted for arrival-skew conclusions. The resident
 per-wire MHC consumer remains the only communication lane with a measured
-positive upper bound. Its prerequisite now passes: oneCCL `1edec457` publishes
+positive upper bound. Its prerequisite passed: oneCCL `1edec457` publishes
 release-ordered epochs after each final local wire writeback, remains bitwise
 exact over 24 changed epochs, and costs at most `0.446 us/boundary` against the
-faster paired control. Build the second-queue resident consumer next and retain
-the hard `>=6 us/boundary` slowest-rank savings gate before server integration;
-see `notes/2026-07-15-ring-readiness-marker-gate.md`.
+faster paired control. The dependent resident consumer is now rejected: the
+normal-priority polling workgroup prevents the ring marker from advancing, and
+a low-priority queue makes no progress. See
+`notes/2026-07-15-resident-mhc-consumer-forward-progress-failure.md`. The next
+permitted microgate is the prior in-ring post/pre boundary with a compact
+256-thread workgroup instead of 1024 threads. Require bitwise exactness and
+`>=6 us/boundary` before server integration.

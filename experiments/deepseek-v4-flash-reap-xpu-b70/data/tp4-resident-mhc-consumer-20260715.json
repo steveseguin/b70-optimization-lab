@@ -1,0 +1,30 @@
+{
+  "date": "2026-07-15",
+  "status": "correctness_after_timeout_performance_rejected",
+  "oneccl_source_commit": "1e00a13",
+  "normal_priority_library_sha256": "e341f098527532d091cd67652a62c68840f0815d6415ab205636b366facdd99c",
+  "xpu_probe_commit": "eac8ed6",
+  "selector": "CCL_SYCL_ALLREDUCE_LL=ring_markers",
+  "shape": {
+    "world_size": 4,
+    "dtype": "bfloat16",
+    "hidden_size": 4096,
+    "mhc_channels": 4,
+    "active_wires_per_stage": 9,
+    "writeback_stages": 4
+  },
+  "normal_priority_diagnostic": {
+    "iterations": 7,
+    "all_outputs_exact_after_timeout": true,
+    "expected_minus_initial_epoch": 2,
+    "marker_advanced_during_poll": false,
+    "candidate_us_median_by_rank": [294084.18, 314228.928, 303713.124, 303089.54],
+    "reference_us_median_by_rank": [225.472, 233.948, 229.58, 306.644],
+    "interpretation": "the resident polling workgroup prevents the ring queue from making forward progress; after the bounded poll releases, the ring runs and the final values happen to become exact"
+  },
+  "low_priority_diagnostic": {
+    "result": "no forward progress for more than 30 seconds after communicator initialization; probe terminated",
+    "interpretation": "a low-priority resident queue does not permit safe ring preemption and instead starves the joined dependency"
+  },
+  "decision": "closed before the 6 us per-boundary performance gate and before full-model integration; finite two-stream overlap does not imply forward progress for a persistent polling kernel on the current Xe/Level Zero runtime"
+}

@@ -123,12 +123,17 @@ contiguous-expert assumption in packed MXFP4 state. A profiler trace confirms
 87 collectives but cannot measure cross-device arrival skew because profiling
 distorts and serializes the events. See
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-late-tp4-collective-and-placement-gates.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-late-tp4-collective-and-placement-gates.md).
-The ring-readiness prerequisite now passes. The default-off marker route is
+The ring-readiness prerequisite passes. The default-off marker route is
 bitwise exact over 24 changing epochs and adds at most `0.446 us` per boundary
-against the faster paired control, below its `1 us` gate. The immediate work is
-the second-queue resident MHC post/pre consumer; require exact state and
-`>=6 us/boundary` slowest-rank savings before a model server run. See
+against the faster paired control, below its `1 us` gate. The dependent
+second-queue resident MHC consumer is rejected: its polling workgroup prevents
+the ring queue from advancing, while a low-priority queue makes no progress.
+The next microgate is a compact 256-thread version of the preserved in-ring
+MHC post/pre boundary; require exact state and `>=6 us/boundary` savings before
+a model server run. See
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-ring-readiness-marker-gate.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-ring-readiness-marker-gate.md).
+Failure detail is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-resident-mhc-consumer-forward-progress-failure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-resident-mhc-consumer-forward-progress-failure.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

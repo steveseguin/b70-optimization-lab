@@ -24,7 +24,8 @@ the dependency on the reduced output.
 The test-only implementation must:
 
 - leave ring reduction and forwarding arithmetic unchanged;
-- release-publish epoch-tagged readiness after each of the nine active wires;
+- release-publish epoch-tagged readiness after each of nine active wires at
+  all four final-writeback stages;
 - enqueue a bounded-timeout persistent consumer on a second in-order queue
   before the ring;
 - preserve canonical MHC accumulation order;
@@ -37,6 +38,11 @@ The test-only implementation must:
 Anything below that closes the lane before model integration. A component pass
 still requires at least `0.50 ms/token` in the complete decode graph, then the
 strict quality suite.
+
+The dependent implementation subsequently failed the forward-progress gate:
+a polling workgroup prevented the ring queue from advancing, and low queue
+priority did not permit safe preemption. See
+[`2026-07-15-resident-mhc-consumer-forward-progress-failure.md`](2026-07-15-resident-mhc-consumer-forward-progress-failure.md).
 
 ## Zero-code protocol checks
 
