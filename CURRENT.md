@@ -159,11 +159,23 @@ Triton compressor GEMV, MHC geometry, and fixed MXFP4 N32/N128 have all failed
 their hardware or full-model gates. The same-hour paired control remains
 40.023086 tok/s. The next server-scale candidate must first demonstrate at
 least 0.50 ms/token on an exact real-model producer/consumer gate, most likely
-the ordered collective-to-MHC boundary or an exact heterogeneous attention
-prologue. See
+an exact heterogeneous attention prologue or a different large boundary. The
+former compact-ring prerequisite is now complete: one real M=1 token captured
+692 tensors (571,072,236 bytes; aggregate SHA-256
+`6f8b7b9e7a1c78cc7a2005e2d92d292a80811405725dc43e190526e1be5a59eb`),
+including all 87 reductions, all 85 MHC post/pre calls, the final post, and 42
+real alias boundaries. The compact candidate is bitwise exact against that
+corpus in eager mode and over eight graph replays. Full-model observers then
+isolated the former corruption to a missing post-kernel graph-visible
+completion edge in the direct oneCCL hook: one BF16 post-kernel read makes six
+alternating requests exact. The repaired path is nevertheless closed because
+it reaches only 34.708355 tok/s, 13.28% below the record, and changes all 12
+strict-suite hashes. Do not retune or reintegrate this boundary. See
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md)
 and
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md).
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md)
+and
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-real-mhc-capture-and-graph-fence-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-real-mhc-capture-and-graph-fence-closure.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

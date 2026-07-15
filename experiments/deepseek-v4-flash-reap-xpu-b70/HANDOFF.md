@@ -185,6 +185,19 @@ output hashes and reached only 39.724930 tok/s; alternate MHC geometry and
 corrected MXFP4 small-N did not clear their projected gates. See
 `notes/2026-07-15-record-lane-noncollective-gates.md`. Do not load another TP4
 candidate until an exact real-model hardware gate projects at least 0.50
-ms/token. The immediate prerequisite is capture of the real collective-output
-and MHC-input tensors and metadata that the compact-ring failure could not
-reproduce synthetically.
+ms/token. The former compact-ring prerequisite is complete. A fail-closed
+capture contains all 87 reductions, 85 post/pre boundaries, the final post,
+and 42 real alias calls for one real M=1 token on every rank: 692 tensor files,
+571,072,236 bytes, aggregate SHA-256
+`6f8b7b9e7a1c78cc7a2005e2d92d292a80811405725dc43e190526e1be5a59eb`.
+The compact candidate is bitwise exact on those values in eager mode and over
+eight graph replays. Full-model pre/post observers and then a one-BF16
+post-kernel fence prove that the old nondeterminism was a missing graph-visible
+completion edge after the direct oneCCL hook, not bad fused arithmetic. The
+minimal repaired path makes six alternating requests exact, but reaches only
+34.708355 tok/s versus 40.020972 and changes all 12 strict output hashes. Close
+the collective/MHC fusion lane and do not spend more server loads retuning its
+fence or workgroup. See
+`notes/2026-07-15-real-mhc-capture-and-graph-fence-closure.md`. The next
+nonspeculative source candidate must attack a different large boundary and
+clear the exact 0.50 ms/token projected gate before TP4 integration.

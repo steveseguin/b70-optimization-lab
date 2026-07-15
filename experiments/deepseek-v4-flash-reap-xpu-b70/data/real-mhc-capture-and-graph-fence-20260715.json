@@ -1,0 +1,42 @@
+{
+  "classification": "correctness-root-cause-pass-performance-rejected",
+  "date": "2026-07-15",
+  "record_tok_s": 40.02097178508589,
+  "real_capture": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/real-mhc-boundary-capture-20260715T1200Z",
+    "world_size": 4,
+    "allreduces_per_rank": 87,
+    "post_pre_boundaries_per_rank": 85,
+    "final_posts_per_rank": 1,
+    "alias_boundaries": 42,
+    "file_count": 692,
+    "total_bytes": 571072236,
+    "aggregate_sha256": "6f8b7b9e7a1c78cc7a2005e2d92d292a80811405725dc43e190526e1be5a59eb",
+    "validation_passed": true
+  },
+  "real_value_replay": {
+    "eager_exact_all_ranks": true,
+    "graph_replays": 8,
+    "graph_exact_all_ranks": true,
+    "requires_patched_oneccl_ld_preload": true,
+    "oneccl_sha256": "d7160c2419bdffcb1ad14da86382f0d5962b92abc0ae7b38a61c94e58bc92e16"
+  },
+  "graph_observer": {
+    "changed_sequence_exact": true,
+    "request0_all_boundaries_exact_vs_promoted": true,
+    "median_tok_s": 33.8494861670862,
+    "p10_tok_s": 33.68416020618818
+  },
+  "scalar_post_fence": {
+    "six_changed_requests_exact": true,
+    "median_tok_s": 34.70835452734967,
+    "p10_tok_s": 34.469926017554045,
+    "relative_to_record_percent": -13.275,
+    "cached_tokens_all_zero": true,
+    "strict_gate_passed": true,
+    "strict_output_hashes_changed": 12
+  },
+  "root_cause": "missing post-kernel graph-visible completion/dependency edge in the direct oneCCL fused hook",
+  "promoted_runtime_unchanged": true,
+  "localmax_submitted": false
+}
