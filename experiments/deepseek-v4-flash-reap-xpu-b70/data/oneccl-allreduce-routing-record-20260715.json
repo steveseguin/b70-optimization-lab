@@ -1,0 +1,51 @@
+{
+  "status": "promoted_correctness_baseline",
+  "model": {
+    "hf_id": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "quantization": "MXFP4 experts with FP8 KV"
+  },
+  "hardware": "4x Intel Arc Pro B70 32 GB; TP4+EP; one active generation",
+  "source": {
+    "vllm_commit": "93fde4186b34d61e2d31ee258be282a8f768f3ed",
+    "xpu_kernel_commit": "de979b9328408302129c10ba04ed2fe090d414df",
+    "oneccl_commit": "6da44bcb540f1005de88276dd86465cf5de4dc2f",
+    "oneccl_base": "66499938b7a8b615e26361c52900e7aec306ce50"
+  },
+  "runtime": {
+    "libccl": "/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-sizegate/lib/libccl.so.1.0",
+    "libccl_sha256": "bf9f2e447ebb8373d7b0a41b15a32f2518a670a107d6f8fd84474798d8f2301b",
+    "force_preload": true,
+    "sycl_allreduce_max_bytes": 131072,
+    "gpu_memory_utilization": 0.94,
+    "compilation_config": {"cudagraph_mode": "PIECEWISE"}
+  },
+  "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-graph-oneccl1712-bf16-allreduce128k-preload094-cache-fix-20260715T1530Z",
+  "strict_runs": [
+    {
+      "file": "realistic-suite-v1.json",
+      "median_tok_s": 40.09620520317157,
+      "p10_tok_s": 39.54151323942971,
+      "mean_tok_s": 40.00798709888418,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    },
+    {
+      "file": "realistic-suite-v1-confirm.json",
+      "median_tok_s": 40.17035011552869,
+      "p10_tok_s": 39.76701512757488,
+      "mean_tok_s": 40.13471535717995,
+      "cached_tokens_all_zero": true,
+      "gate_passed": true
+    }
+  ],
+  "exact_canaries": {"passed": 10, "attempted": 10},
+  "worker_loaded_library_proof": {
+    "worker_count": 4,
+    "all_loaded_selected_libccl": true,
+    "all_loaded_venv_libsycl8": true,
+    "all_loaded_venv_ur_loader": true
+  },
+  "localmaxxing_id": "cmrmebmzg1nm0mj01k30nv6vw",
+  "decision": "Use as the trustworthy nonspeculative TP4 baseline. Preserve the older 40.135724 LocalMax row as historical speed evidence but not as the repeatability authority."
+}

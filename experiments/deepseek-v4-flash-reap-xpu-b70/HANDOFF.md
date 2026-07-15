@@ -9,8 +9,10 @@ The controlling plan is
 [`../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md`](../../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md).
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
-replay pass; fused QNorm/RoPE/direct FP8 KV insert is the current trustworthy
-40.1357 tok/s strict record and clears the 40 tok/s base gate**.
+replay pass; the fused QNorm/RoPE/direct FP8 KV-insert lane is now
+repeatability-correct at 40.0962/40.1704 tok/s after repairing overlapping KV
+stores and routing only large prefill all-reduces around the corrupt oneCCL
+SYCL path**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -50,13 +52,18 @@ hash-preserved quality candidates; K180 is not predetermined.
 
 ## Current record and residual
 
-1. The current trustworthy strict record is **`40.135724 tok/s`** median with
-   `39.827848` p10, at
-   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`;
-   LocalMaxxing `cmrm601ig1hsmmj017npoivfd`. It retains selective W8A16 and
-   exact shared-expert activation/quant fusion and tuned split FP8 geometry,
-   then fuses Q RMSNorm/RoPE with direct UE8M0 FP8 KV insertion. All cached-zero,
-   replay, canary, and focused bitwise gates pass; confirmation is 40.103728.
+1. The current trustworthy strict base is **`40.096205/40.170350 tok/s`**
+   median, with `39.541513/39.767015` p10, at
+   `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-graph-oneccl1712-bf16-allreduce128k-preload094-cache-fix-20260715T1530Z`.
+   It retains selective W8A16, exact shared-expert activation/quant fusion,
+   tuned split FP8 geometry, and fused Q RMSNorm/RoPE/direct UE8M0 FP8 KV
+   insertion. vLLM `93fde4186` removes overlapping KV writes; exact-version
+   oneCCL `6da44bc` routes only all-reduces above 128 KiB to the safe path.
+   Both cold suites pass and ten exact captures pass 10/10. The older
+   `40.135724` LocalMaxxing row `cmrm601ig1hsmmj017npoivfd` remains historical
+   speed evidence but is not the consecutive-repeatability authority. The
+   corrected `40.170350` row is approved as LocalMaxxing
+   `cmrmebmzg1nm0mj01k30nv6vw`.
 2. Reusable graphs are working. Direct paged FP8 attention first raised the
    record to 21.5448 tok/s; split QK/LSE plus tiled PV raised it another 38.41%.
 3. The first scale-prepack and W8A16 records were invalid because they also

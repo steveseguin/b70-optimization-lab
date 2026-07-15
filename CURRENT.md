@@ -23,11 +23,13 @@ Confirm the endpoint and process state before relying on this observation.
 
 The current DeepSeek record endpoint is listening on
 `127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint. It is the fused QNorm/RoPE/KV-insert record at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`:
-vLLM `3a74a38a3`, XPU kernels `ef307a8`,
-`VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT=1`, and the rejected native dual
-RMSNorm remains off.
+LAN endpoint. It is the repeatability-correct fused QNorm/RoPE/KV-insert lane
+at `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-graph-oneccl1712-bf16-allreduce128k-preload094-cache-fix-20260715T1530Z`:
+vLLM `93fde4186`, XPU kernels `de979b9`, and exact-version oneCCL `6da44bc`.
+The runtime is force-preloaded from
+`/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-sizegate` and routes only SYCL
+all-reduces larger than 131,072 bytes to the safe path. All four worker maps
+were verified. The rejected native dual RMSNorm remains off.
 The host reboot auto-started the two Gemma service units and occupied the B70s;
 both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
@@ -75,19 +77,24 @@ permitted as a separate measured lane. It must retain exact target verification
 and must not be mixed with the base record. The archived Qwen detail below
 remains resume evidence, not an instruction to continue experimenting.
 
-The promoted runtime is now vLLM `3a74a38a3` plus XPU kernels `ef307a8f4`.
+The promoted runtime is now vLLM `93fde4186` plus XPU kernels `de979b9` and
+the exact-version oneCCL 2021.17.2 size-routed runtime at `6da44bc`.
 Persistent graph replay, native mHC, context-bounded sparse work, and direct
 paged FP8 attention all pass. The current strict TP4+EP single-session record
 uses split QK/LSE plus 8-by-64 tiled PV, a mutation-declared TP-only in-place
 all-reduce for the 87 contiguous BF16 `[1,4096]` decode reductions, selective
 W8A16 for four high-value projection families, and an exact clamp-at-10
 SwiGLU plus per-128 E4M3FN quant producer for the W8A8 shared-down path. The
-trustworthy record is now **40.1357239 tok/s** median and `39.8278484` p10
-across the strict cold suite. All 12 rows were cached-zero; focused split output
-and the fused Q/cache boundary are bitwise identical, and sequential
-changed-input replay is exact. LocalMaxxing approved it as
-`cmrm601ig1hsmmj017npoivfd`; evidence is
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fused-qnorm-rope-kv-insert-candidate-20260715T1040Z`.
+trustworthy record is now **40.096205/40.170350 tok/s** median and
+`39.541513/39.767015` p10 across two strict cold suites. All 24 rows were
+cached-zero and ten independent exact captures pass 10/10. The preceding
+`40.1357239` LocalMaxxing row `cmrm601ig1hsmmj017npoivfd` remains historical
+speed evidence, but consecutive changed-prompt testing later proved its
+unmodified large-SYCL-allreduce identity was not repeatability-safe. Evidence
+for the repair and promoted identity is
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
+The corrected `40.170350` row is approved on LocalMaxxing as
+`cmrmebmzg1nm0mj01k30nv6vw`.
 The gain comes from changing split FP8 QK from four 16-head/8-warp programs to
 sixteen 4-head/16-warp programs; complete attention microbenchmarks improve
 22-42% across short and 128-token C4/C128 shapes. The preceding 34.0671207
