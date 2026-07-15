@@ -209,6 +209,16 @@ strict suites reach 40.1357/40.1037 tok/s, both above the old public record,
 and LocalMaxxing approved `cmrm601ig1hsmmj017npoivfd`. Keep this fusion on and
 continue into the preceding WQ_B projection epilogue. See
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-fused-qnorm-rope-kv-insert-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-fused-qnorm-rope-kv-insert-record.md).
+The attempted WQ_B extension is now closed before model integration. A padded
+M16 DPAS proof was 8.13x slower than oneDNN. A true-M1 subgroup proof reaches
+23.559-23.700 us across the four B70s, but it is not bitwise exact and its fast
+geometry spreads each 512-wide head across workgroups. The topology capable of
+head-wide in-kernel normalization already costs 53.330-53.644 us for projection
+alone, so it cannot clear the 11.63 us/layer complete-boundary gate. Preserve
+XPU-kernel commit `de979b9` as a benchmark proof and do not connect it to the
+model. The next bounded lane is the attached one-layer MTP, kept separate from
+the 40.135724 tok/s nonspeculative record. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-wqb-m1-producer-fusion-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-wqb-m1-producer-fusion-closure.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

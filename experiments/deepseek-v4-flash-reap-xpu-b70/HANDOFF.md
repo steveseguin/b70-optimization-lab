@@ -228,3 +228,12 @@ Strict suites reach 40.1357/40.1037 tok/s; LocalMaxxing
 `cmrm601ig1hsmmj017npoivfd`. Keep it enabled. The next source target is the
 preceding WQ_B producer epilogue. See
 `notes/2026-07-15-fused-qnorm-rope-kv-insert-record.md`.
+The subsequent WQ_B producer-fusion screen is closed before integration. The
+benchmark-only true-M1 SYCL proof is near oneDNN at 23.559-23.700 us across all
+four cards, but is not bitwise exact and cannot keep a 512-wide head in one
+workgroup at that geometry. The head-contained form costs 53.330-53.644 us
+before RMSNorm/RoPE/KV insertion, missing the 11.63 us/layer gate. Preserve
+XPU-kernel `de979b9` and the scripts/results linked from
+`notes/2026-07-15-wqb-m1-producer-fusion-closure.md`; do not integrate it. The
+next bounded lane is the checkpoint's attached one-layer MTP with exact target
+verification and base/speculative records kept distinct.

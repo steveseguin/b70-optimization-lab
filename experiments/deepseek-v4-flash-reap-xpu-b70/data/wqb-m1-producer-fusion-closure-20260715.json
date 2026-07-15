@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-15",
+  "shape": {"m": 1, "k": 1024, "n": 8192},
+  "integration_gate": {"minimum_saved_us_per_layer": 11.63, "minimum_saved_ms_per_token": 0.5, "layers": 43},
+  "triton_padded_m16": {
+    "status": "exactness_and_performance_rejected",
+    "script": "experiments/deepseek-v4-flash-reap-xpu-b70/scripts/bench-wqb-fp8-bf16-gemv.py",
+    "script_sha256": "9be7365429887051f553c830c33533080033dd3d319b87db65cb15567ef62884",
+    "raw_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/wqb-fp8-bf16-gemv-card0-smoke3-20260715.json",
+    "raw_sha256": "7445c0b5ea8e1cf727d9673b970a365ad0807b39d5e114448d971f0ee5a3de49",
+    "exact_epochs": 0,
+    "epochs": 40,
+    "total_mismatch_elements": 199171,
+    "maximum_abs_difference": 0.0078125,
+    "maximum_mean_abs_difference": 0.0011700799223035574,
+    "reference_median_us": 28.587,
+    "candidate_median_us": 232.4491,
+    "speedup": 0.1229817625,
+    "projected_saved_ms_per_token": -8.7660703,
+    "caveats": ["synthetic random tensors and continuous random scales", "card 0 only", "projection only", "raw result lacks complete invocation and runtime identity"]
+  },
+  "sycl_true_m1": {
+    "status": "projection_geometry_pass_complete_fusion_rejected",
+    "xpu_kernel_commit": "de979b9328408302129c10ba04ed2fe090d414df",
+    "script": "experiments/deepseek-v4-flash-reap-xpu-b70/scripts/bench-wqb-sycl-fp8-bf16-gemv.py",
+    "script_sha256": "15d3e06d913eac024e8a5cf03560a5b84d2a7b1977a5080894e6813e85abdb11",
+    "cards": [
+      {"card": 0, "raw_sha256": "7c57af7e16b28a5ee233354f28d35461f68d843ca8bda4191cd38f81689dea42", "best_candidate_us": 23.69952, "one_head_candidate_us": 53.64424},
+      {"card": 1, "raw_sha256": "f08c9313a5c8cad410c45b11a72670646cfe2ade684b96181ffd66e77feb9750", "best_candidate_us": 23.65298, "one_head_candidate_us": 53.5158},
+      {"card": 2, "raw_sha256": "e4a12ae1f522a918b4ecc7a673b0141fe494c523cc229640bad2c9475859991b", "best_candidate_us": 23.55912, "one_head_candidate_us": 53.33042},
+      {"card": 3, "raw_sha256": "18f5cafe4e8611935baf120c369a55db226a0e2c608abd5ba9077f2471b0da2d", "best_candidate_us": 23.608, "one_head_candidate_us": 53.44898}
+    ],
+    "changed_input_gate": {"epochs_per_card": 40, "exact_epochs_per_card": 0, "maximum_abs_difference": 0.0078125, "maximum_mean_abs_difference": 0.0011700799223035574},
+    "decision": "Do not integrate. Fast one-output geometry cannot perform a head-wide RMS reduction in one workgroup; the head-contained geometry is too slow before adding the epilogue."
+  },
+  "localmax_submission": false
+}
