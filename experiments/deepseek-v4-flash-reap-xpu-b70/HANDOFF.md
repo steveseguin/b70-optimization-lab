@@ -77,10 +77,12 @@ hash-preserved quality candidates; K180 is not predetermined.
    selective W8A16 mix also bypasses activation quantization for both K4096
    projection consumers, so dual FP8 output is not useful in this lane.
    Fresh phase-correct profiling then showed that the apparent 43-call BF16
-   MLA hotspot was prefill, not decode. A seven-token eager decode trace put
-   dense GEMMs near 6.55 ms/token, mHC near 4.05 ms, MXFP4 MoE near 3.35 ms,
-   and split QK near 2.74 ms. Tuning the last bucket produced the current
-   record; see `notes/2026-07-15-split-fp8-geometry-record.md`.
+   MLA hotspot was prefill, not decode. After the attention record, a corrected
+   seven-token eager decode trace put dense GEMMs at 6.582 ms/token, MXFP4 MoE
+   at 3.479 ms, the MHC kernel at 2.890 ms, and tuned split attention at 1.452
+   ms. The enclosing `mhc_post_pre_m1_out` operator row is correlated scope,
+   not extra device work; adding it caused the earlier roughly 4 ms MHC double
+   count. See `notes/2026-07-15-record-lane-noncollective-gates.md`.
 5. The public K160 avoids heterogeneous construction, but the final
    hash-preserved candidate still needs 256 experts in layers 0-2 and K later.
 6. `quality/calibration-v1-plan.json` is materializable but its 8,000 prompts
@@ -123,9 +125,13 @@ Keep the exact selective-W8A16 shape list, MXFP4 N64, tuned split FP8 attention,
 native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
 fusion in the record lane. The base has crossed 40 tok/s, so a separate
 speculative screen is now permitted, but must be compared against the 40.021
-tok/s identity and retain exact target verification. Preserve N32 as an
-exact-replay failure and N128 as an unpromoted sub-1% speed/changed-output
-side lane. The next work is the producer/consumer boundary around the 87
+tok/s identity and retain exact target verification. The grouped-MXFP4 small-N
+scheduler race is now understood: resetting its global counter inside
+workgroup 0 raced increments from other workgroups. Moving the reset to an
+ordered queue fill makes N32 and N128 exact over 40 changed graph epochs, but
+fixed N32 saves only 1.05 us per complete MoE layer and fixed N128 is 0.3%
+slower than N64. The fix and revert are preserved; keep N64. The next work is
+the producer/consumer boundary around the 87
 ordered reductions; the MHC post/pre + RMSNorm candidate is a preserved loss.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
@@ -171,5 +177,14 @@ pairs, four replays, rank skew, and dependent producers did not reproduce the
 failure; stable double buffers and an explicit producer barrier did not fix it.
 See `notes/2026-07-15-compact-ring-mhc-post-pre-closure.md`. Do not spend another
 server load on this boundary without captured real-model intermediate tensors.
-Return to a fresh record-lane non-collective timeline and choose a fusion that
-leaves the proven oneCCL collective intact.
+The subsequent noncollective screen is also closed. The same-hour paired
+control reproduced 40.023086 tok/s. Shared/routed and attention-input streams
+regressed; generic C4 fusion reintroduced indexer work that the 1K
+full-selection route skips; a dedicated Triton compressor GEMV changed all 12
+output hashes and reached only 39.724930 tok/s; alternate MHC geometry and
+corrected MXFP4 small-N did not clear their projected gates. See
+`notes/2026-07-15-record-lane-noncollective-gates.md`. Do not load another TP4
+candidate until an exact real-model hardware gate projects at least 0.50
+ms/token. The immediate prerequisite is capture of the real collective-output
+and MHC-input tensors and metadata that the compact-ring failure could not
+reproduce synthetically.

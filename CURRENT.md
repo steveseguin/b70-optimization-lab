@@ -94,9 +94,13 @@ tokens versus the invalid path. Corrected W8A16 is fast (`34.015` and `33.924`
 tok/s) but the all-W8A16 path is rejected as a quality side lane: it matches
 only 83.3% of early W8A8 greedy tokens and corrupts the frozen long
 math-invariant case that W8A8 solves correctly. The promoted selective path
-keeps shared-down W8A8 and passes that invariant. MXFP4 N32 failed exact
-changed-input replay; N128 reached 30.518 and 30.482 tok/s but altered outputs
-for a sub-1% gain and is not promoted. The register-resident M=1 MHC post/pre
+keeps shared-down W8A8 and passes that invariant. A later scheduler audit found
+that the earlier MXFP4 N32 replay failure and N128 output changes came from an
+in-kernel global-counter reset racing other workgroups. An ordered queue reset
+makes both geometries bitwise exact over 40 changed graph epochs, but fixed N32
+saves only 1.05 us per complete MoE layer and fixed N128 is 0.3% slower than
+N64. The fix was diagnosed and explicitly reverted; keep N64. The
+register-resident M=1 MHC post/pre
 plus RMSNorm candidate is now closed before a server run: it introduced small
 changed-state reduction drift and regressed `20.326 -> 22.427 us`, a projected
 `0.179 ms/token` loss across 85 boundaries. Under the promoted selective W8A16
@@ -144,10 +148,22 @@ honest promoted reference, 256- and 512-thread full-model graph runs produced
 nondeterministic arithmetic. Exact 87-position, alias, multi-replay, rank-skew,
 and dependent-producer probes all passed; stable double buffers and an explicit
 producer barrier did not repair the model. No speed suite was run. A future
-retry requires captured real-model intermediate tensors. The next active work
-is a fresh record-lane non-collective timeline and a fusion that leaves the
-proven oneCCL collective intact. See
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md).
+retry requires captured real-model intermediate tensors. The fresh record-lane
+noncollective timeline is now complete. A corrected seven-token eager trace
+attributes about 6.582 ms/token to dense GEMMs, 3.479 ms/token to MXFP4 MoE,
+2.890 ms/token to the MHC kernel, and 1.452 ms/token to tuned split attention.
+Do not add the enclosing `mhc_post_pre_m1_out` operator duration; that
+double-counted the same device work in the earlier roughly 4 ms estimate.
+Exact auxiliary-stream overlap, generic C4 projection fusion, approximate
+Triton compressor GEMV, MHC geometry, and fixed MXFP4 N32/N128 have all failed
+their hardware or full-model gates. The same-hour paired control remains
+40.023086 tok/s. The next server-scale candidate must first demonstrate at
+least 0.50 ms/token on an exact real-model producer/consumer gate, most likely
+the ordered collective-to-MHC boundary or an exact heterogeneous attention
+prologue. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-compact-ring-mhc-post-pre-closure.md)
+and
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

@@ -1,0 +1,33 @@
+{
+  "classification": "closed-without-promotion",
+  "date": "2026-07-15",
+  "record_tok_s": 40.02097178508589,
+  "paired_control": {
+    "median_tok_s": 40.02308554815481,
+    "p10_tok_s": 39.626888063611204,
+    "cached_tokens_all_zero": true,
+    "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/paired-control-20260715T0940Z"
+  },
+  "full_model_candidates": {
+    "generic_c4_fusion_duplicate_storage_tok_s": [39.59964090122996, 39.60529479310983],
+    "generic_c4_fusion_shared_storage_tok_s": 39.67588718695933,
+    "triton_live_compressor_gemv_tok_s": 39.72492968195158
+  },
+  "microgates": {
+    "shared_routed_overlap_projected_ms": -2.135,
+    "attention_input_overlap_projected_ms": -2.57523188,
+    "mhc_block_n24_projected_saved_ms": 0.081181,
+    "mxfp4_n32_saved_us_per_layer": 1.0452,
+    "mxfp4_n128_paired_n64_us": 134.44392,
+    "mxfp4_n128_fixed_us": 134.84016
+  },
+  "correctness": {
+    "mxfp4_n32_fixed_changed_input_epochs": 40,
+    "mxfp4_n32_exact_vs_n64": true,
+    "mxfp4_n128_fixed_changed_input_epochs": 40,
+    "mxfp4_n128_exact_vs_n64": true,
+    "triton_compressor_bitwise_vs_onednn": false,
+    "triton_compressor_strict_output_hashes_changed": 12
+  },
+  "promoted_runtime_unchanged": true
+}
