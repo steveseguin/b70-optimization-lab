@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
 import os
 from pathlib import Path
@@ -102,6 +103,18 @@ def main() -> int:
             if "libccl.so" in line and line.rsplit(maxsplit=1)[-1].startswith("/")
         }
     )
+    trace_snapshot_status = None
+    trace_directory = os.environ.get("B70_ONECCL_ARRIVAL_TRACE_DIR")
+    if trace_directory:
+        torch.xpu.synchronize()
+        snapshot = ctypes.CDLL(None).ccl_b70_arrival_trace_snapshot
+        snapshot.argtypes = [ctypes.c_char_p]
+        snapshot.restype = ctypes.c_int
+        trace_snapshot_status = snapshot(trace_directory.encode())
+        if trace_snapshot_status != 0:
+            raise RuntimeError(
+                f"B70 arrival-trace snapshot failed with {trace_snapshot_status}"
+            )
     local_result = {
         "rank": rank,
         "device": str(device),
@@ -109,6 +122,8 @@ def main() -> int:
             "CCL_SYCL_FORCE_RECORDING_PATH", "unset"
         ),
         "loaded_ccl_paths": loaded_ccl_paths,
+        "arrival_trace_directory": trace_directory,
+        "arrival_trace_snapshot_status": trace_snapshot_status,
         "mismatch_epochs": mismatch_epochs,
         "first_mismatch": first_mismatch,
         "device_ms_median_87": statistics.median(device_ms),
@@ -132,8 +147,9 @@ def main() -> int:
     if rank == 0:
         rows = [
             json.loads(
-                args.output.with_suffix(args.output.suffix + f".rank{index}.json")
-                .read_text()
+                args.output.with_suffix(
+                    args.output.suffix + f".rank{index}.json"
+                ).read_text()
             )
             for index in range(world_size)
         ]
@@ -152,9 +168,7 @@ def main() -> int:
             "max_rank_device_ms_median_87": max(
                 row["device_ms_median_87"] for row in rows
             ),
-            "max_rank_wall_ms_median_87": max(
-                row["wall_ms_median_87"] for row in rows
-            ),
+            "max_rank_wall_ms_median_87": max(row["wall_ms_median_87"] for row in rows),
             "ranks": rows,
         }
         rendered = json.dumps(result, indent=2, sort_keys=True)

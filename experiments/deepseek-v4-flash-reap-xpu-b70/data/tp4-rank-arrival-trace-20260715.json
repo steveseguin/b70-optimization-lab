@@ -1,0 +1,39 @@
+{
+  "date": "2026-07-15",
+  "experiment": "tp4-rank-arrival-trace",
+  "status": "measurement-invalid-closed",
+  "question": "Does cumulative local-entry-to-all-peer arrival skew across 87 TP4 BF16[4096] reductions clear 0.50 ms/token?",
+  "answer": "unmeasured; every marker sample timed out, including self",
+  "gate_ms_per_token": 0.5,
+  "model_server_run_performed": false,
+  "allreduce_correctness": "exact in completed microgates",
+  "final_attempt": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke8-20260715T0935Z",
+    "collectives": 87,
+    "epochs": 1,
+    "world_size": 4,
+    "max_rank_device_ms_87": 4492.371104,
+    "timeout_mask": 15,
+    "timeouts_per_rank": [87, 87, 87, 87],
+    "clock_tick_ns": [0.4062751069, 0.3916476951, 0.4184380501, 0.4076428663],
+    "calibration_error_pct": [0.6861360923, 0.01868810078, 3.149138735, 0.01795873721]
+  },
+  "raw_paths": [
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke-20260715T0900Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke2-20260715T0900Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke3-20260715T0900Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke4-20260715T0900Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke5-20260715T0912Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke6-20260715T0917Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke7-20260715T0921Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/arrival-skew-microgate-smoke8-20260715T0935Z"
+  ],
+  "source_history": {
+    "oneccl_experiment": "b6b6481",
+    "oneccl_revert": "14db31d",
+    "vllm_experiment": "fc03ca89f",
+    "vllm_revert": "8721e07b4"
+  },
+  "production_oneccl_sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+  "localmax_submission": null
+}

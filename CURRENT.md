@@ -176,6 +176,14 @@ and
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-record-lane-noncollective-gates.md)
 and
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-real-mhc-capture-and-graph-fence-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-real-mhc-capture-and-graph-fence-closure.md).
+The subsequent TP4 rank-arrival probe is measurement-closed. Its same-device
+elapsed-clock design avoided invalid raw cross-GPU timestamp comparisons and
+completed exact all-reduce gates, but every LL256 marker sample timed out,
+including self, and some clock calibrations exceeded the 2% validity gate. No
+full-model run, skew claim, speed claim, or LocalMax submission followed. Both
+runtime patches are preserved in experiment/revert history and production
+source is restored. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-rank-arrival-trace-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-rank-arrival-trace-closure.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

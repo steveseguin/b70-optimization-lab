@@ -201,3 +201,11 @@ fence or workgroup. See
 `notes/2026-07-15-real-mhc-capture-and-graph-fence-closure.md`. The next
 nonspeculative source candidate must attack a different large boundary and
 clear the exact 0.50 ms/token projected gate before TP4 integration.
+The follow-up rank-arrival diagnostic is also closed before a model run. A
+default-off oneCCL probe used same-device elapsed clocks and preserved exact
+all-reduce output, but all marker variants timed out on every sample, including
+the rank-local marker; several clock calibrations also exceeded the 2% gate.
+Experiment/revert history is oneCCL `b6b6481`/`14db31d` and vLLM
+`fc03ca89f`/`8721e07b4`. Do not infer skew from its timeout duration or return to
+cross-device profiler timestamps. See
+`notes/2026-07-15-tp4-rank-arrival-trace-closure.md`.
