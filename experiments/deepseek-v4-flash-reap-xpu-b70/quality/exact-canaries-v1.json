@@ -1,0 +1,37 @@
+{
+  "suite_id": "deepseek-v4-flash-b70-exact-canaries-v1",
+  "version": 1,
+  "policy": "Run in listed order with temperature 0. Require exact content and cached_tokens=0 for every row. The repeated first arithmetic prompt is a changed-input replay guard.",
+  "prompts": [
+    {
+      "id": "arithmetic-a",
+      "prompt": "Compute 37 * 29. Reply with only the integer answer.",
+      "expected": "1073"
+    },
+    {
+      "id": "arithmetic-b",
+      "prompt": "Compute 19 * 23. Reply with only the integer answer.",
+      "expected": "437"
+    },
+    {
+      "id": "arithmetic-a-replay",
+      "prompt": "Compute 37 * 29. Reply with only the integer answer.",
+      "expected": "1073"
+    },
+    {
+      "id": "exact-copy",
+      "prompt": "Copy this exact phrase and nothing else: cobalt-forest-7291",
+      "expected": "cobalt-forest-7291"
+    },
+    {
+      "id": "fact",
+      "prompt": "What is the capital of France? Reply with only the city name.",
+      "expected": "Paris"
+    },
+    {
+      "id": "strict-json",
+      "prompt": "Return exactly this JSON object and nothing else: {\"status\":\"ok\",\"value\":17}",
+      "expected": "{\"status\":\"ok\",\"value\":17}"
+    }
+  ]
+}

@@ -56,6 +56,7 @@ def main() -> int:
     parser.add_argument("--top-logprobs", type=int, default=20)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=900)
+    parser.add_argument("--inter-request-delay", type=float, default=0.0)
     parser.add_argument("--label", required=True)
     parser.add_argument(
         "--ids",
@@ -71,7 +72,9 @@ def main() -> int:
         if missing:
             raise SystemExit(f"unknown prompt IDs: {sorted(missing)}")
     rows = []
-    for item in prompts:
+    for index, item in enumerate(prompts):
+        if index and args.inter_request_delay > 0:
+            time.sleep(args.inter_request_delay)
         started = time.perf_counter()
         request_payload = {
             "model": args.model,
@@ -117,6 +120,7 @@ def main() -> int:
         "seed": args.seed,
         "max_tokens": args.max_tokens,
         "top_logprobs": args.top_logprobs,
+        "inter_request_delay": args.inter_request_delay,
         "cached_tokens_all_zero": all(row["cached_tokens"] == 0 for row in rows),
         "rows": rows,
     }

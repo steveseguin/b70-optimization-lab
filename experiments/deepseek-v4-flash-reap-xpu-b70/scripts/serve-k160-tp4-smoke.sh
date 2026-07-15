@@ -46,14 +46,20 @@ venv_lib="${venv_root}/lib"
 oneccl_lib="${ONECCL_LIB_DIR:-${oneccl}/lib}"
 # Torch 2.11 XPU and the installed kernel package are a SYCL 8 lane.  Keep
 # their matching Unified Runtime loader ahead of any side-by-side oneAPI 2026
-# installation when Triton JIT-compiles a new launcher.
-export LD_LIBRARY_PATH="${venv_lib}:${oneccl_lib}:${LD_LIBRARY_PATH:-}"
+# installation when Triton JIT-compiles a new launcher. Put an explicitly
+# selected oneCCL directory first so ONECCL_LIB_DIR changes the loaded runtime.
+export LD_LIBRARY_PATH="${oneccl_lib}:${venv_lib}:${LD_LIBRARY_PATH:-}"
 export CCL_ROOT="${oneccl}"
 export CCL_ATL_TRANSPORT="${CCL_ATL_TRANSPORT:-ofi}"
 export CCL_TOPO_P2P_ACCESS="${CCL_TOPO_P2P_ACCESS:-1}"
 export CCL_SYCL_ALLREDUCE_LL="${CCL_SYCL_ALLREDUCE_LL:-ring}"
 export CCL_SYCL_ALLREDUCE_LL_THRESHOLD="${CCL_SYCL_ALLREDUCE_LL_THRESHOLD:-4096}"
 export CCL_SYCL_ALLREDUCE_ARC="${CCL_SYCL_ALLREDUCE_ARC:-0}"
+export B70_ONECCL_SYCL_MAX_BYTES="${B70_ONECCL_SYCL_MAX_BYTES:-}"
+export B70_ONECCL_SYCL_ALLREDUCE_MAX_BYTES="${B70_ONECCL_SYCL_ALLREDUCE_MAX_BYTES:-}"
+export B70_ONECCL_SYCL_ALLGATHER_MAX_BYTES="${B70_ONECCL_SYCL_ALLGATHER_MAX_BYTES:-}"
+export B70_ONECCL_SYCL_REDUCE_SCATTER_MAX_BYTES="${B70_ONECCL_SYCL_REDUCE_SCATTER_MAX_BYTES:-}"
+export ONECCL_FORCE_PRELOAD="${ONECCL_FORCE_PRELOAD:-0}"
 export CCL_KERNEL_PATH="${CCL_KERNEL_PATH:-${oneccl}/lib/ccl/kernels}"
 export FI_TCP_IFACE="${FI_TCP_IFACE:-eno1}"
 export CCL_KVS_IFACE="${CCL_KVS_IFACE:-eno1}"
@@ -70,7 +76,7 @@ export VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE="${VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE:-0}"
 # Pin the native BF16-activation MXFP4 path.  Do not allow an inherited
 # diagnostic environment to silently select the reference MoE kernel or the
 # alternate MXFP4-FP8 activation recipe.
-export VLLM_XPU_FUSED_MOE_USE_REF=0
+export VLLM_XPU_FUSED_MOE_USE_REF="${VLLM_XPU_FUSED_MOE_USE_REF:-0}"
 export VLLM_XPU_FUSED_MOE_USE_MXFP4_FP8=0
 export VLLM_XPU_V4_DIRECT_FP8_ATTN="${VLLM_XPU_V4_DIRECT_FP8_ATTN:-0}"
 export VLLM_XPU_V4_SPLIT_FP8_ATTN="${VLLM_XPU_V4_SPLIT_FP8_ATTN:-0}"
@@ -87,12 +93,23 @@ export VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL="${VLLM_XPU_V4_MHC_POST_PRE_M1_
 export VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT="${VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT:-0}"
 export VLLM_XPU_V4_NATIVE_DUAL_RMSNORM="${VLLM_XPU_V4_NATIVE_DUAL_RMSNORM:-0}"
 export VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT="${VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT:-0}"
+export VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT="${VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT:-0}"
+export VLLM_XPU_V4_FORWARD_DEVICE_SYNC="${VLLM_XPU_V4_FORWARD_DEVICE_SYNC:-0}"
+export VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR="${VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR:-}"
+export VLLM_XPU_V4_DIVERGENCE_ARM_FILE="${VLLM_XPU_V4_DIVERGENCE_ARM_FILE:-/tmp/deepseek-v4-divergence-capture.arm}"
+export VLLM_XPU_V4_DIVERGENCE_STAGES="${VLLM_XPU_V4_DIVERGENCE_STAGES:-layer_out}"
+export VLLM_XPU_V4_DIVERGENCE_LAYERS="${VLLM_XPU_V4_DIVERGENCE_LAYERS:-all}"
+export VLLM_XPU_V4_DIVERGENCE_MODE="${VLLM_XPU_V4_DIVERGENCE_MODE:-hash}"
+export VLLM_XPU_V4_DIVERGENCE_MAX_RECORDS="${VLLM_XPU_V4_DIVERGENCE_MAX_RECORDS:-2048}"
 export VLLM_XPU_EXPERT_MAP_ROUND_ROBIN="${VLLM_XPU_EXPERT_MAP_ROUND_ROBIN:-0}"
-if [[ "${VLLM_XPU_V4_TP4_RING_MHC_POST}" == "1" || "${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE}" == "1" ]]; then
+if [[ "${ONECCL_FORCE_PRELOAD}" == "1" || \
+      "${VLLM_XPU_V4_TP4_RING_MHC_POST}" == "1" || \
+      "${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE}" == "1" ]]; then
   export LD_PRELOAD="${oneccl_lib}/libccl.so.1.0${LD_PRELOAD:+:${LD_PRELOAD}}"
 fi
 export VLLM_XPU_LOG_FP8_LINEAR_SHAPES="${VLLM_XPU_LOG_FP8_LINEAR_SHAPES:-0}"
 export VLLM_XPU_V4_BLOCK_FP8_W8A16="${VLLM_XPU_V4_BLOCK_FP8_W8A16:-0}"
+export VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M="${VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M:-1}"
 export VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES="${VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES:-}"
 export VLLM_XPU_MXFP4_SMALL_M_N="${VLLM_XPU_MXFP4_SMALL_M_N:-64}"
 export VLLM_XPU_V4_DIRECT_FP8_BLOCK_H="${VLLM_XPU_V4_DIRECT_FP8_BLOCK_H:-16}"
@@ -183,10 +200,19 @@ argv=(
   printf 'vllm_xpu_v4_shared_expert_fused_act_quant=%s\n' "${VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT}"
   printf 'vllm_xpu_v4_native_dual_rmsnorm=%s\n' "${VLLM_XPU_V4_NATIVE_DUAL_RMSNORM}"
   printf 'vllm_xpu_v4_fused_qnorm_rope_kv_insert=%s\n' "${VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT}"
+  printf 'vllm_xpu_v4_compressor_m2_row_exact=%s\n' "${VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT}"
+  printf 'vllm_xpu_v4_forward_device_sync=%s\n' "${VLLM_XPU_V4_FORWARD_DEVICE_SYNC}"
+  printf 'vllm_xpu_v4_divergence_capture_dir=%s\n' "${VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR}"
+  printf 'vllm_xpu_v4_divergence_arm_file=%s\n' "${VLLM_XPU_V4_DIVERGENCE_ARM_FILE}"
+  printf 'vllm_xpu_v4_divergence_stages=%s\n' "${VLLM_XPU_V4_DIVERGENCE_STAGES}"
+  printf 'vllm_xpu_v4_divergence_layers=%s\n' "${VLLM_XPU_V4_DIVERGENCE_LAYERS}"
+  printf 'vllm_xpu_v4_divergence_mode=%s\n' "${VLLM_XPU_V4_DIVERGENCE_MODE}"
+  printf 'vllm_xpu_v4_divergence_max_records=%s\n' "${VLLM_XPU_V4_DIVERGENCE_MAX_RECORDS}"
   printf 'vllm_xpu_expert_map_round_robin=%s\n' "${VLLM_XPU_EXPERT_MAP_ROUND_ROBIN}"
   printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'vllm_xpu_log_fp8_linear_shapes=%s\n' "${VLLM_XPU_LOG_FP8_LINEAR_SHAPES}"
   printf 'vllm_xpu_v4_block_fp8_w8a16=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16}"
+  printf 'vllm_xpu_v4_block_fp8_w8a16_max_m=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M}"
   printf 'vllm_xpu_v4_block_fp8_w8a16_shapes=%s\n' "${VLLM_XPU_V4_BLOCK_FP8_W8A16_SHAPES}"
   printf 'vllm_xpu_mxfp4_small_m_n=%s\n' "${VLLM_XPU_MXFP4_SMALL_M_N}"
   printf 'vllm_xpu_v4_direct_fp8_block_h=%s\n' "${VLLM_XPU_V4_DIRECT_FP8_BLOCK_H}"
@@ -214,16 +240,30 @@ argv=(
   printf 'oneccl_runtime_default_lib=%s\n' "${venv_lib}/libccl.so.1"
   printf 'oneccl_runtime_default_sha256=%s\n' \
     "$(sha256sum "${venv_lib}/libccl.so.1" | awk '{print $1}')"
+  printf 'oneccl_runtime_selected_lib=%s\n' "${oneccl_lib}/libccl.so.1"
+  printf 'oneccl_runtime_selected_resolved_lib=%s\n' \
+    "$(readlink -f "${oneccl_lib}/libccl.so.1")"
+  printf 'oneccl_runtime_selected_sha256=%s\n' \
+    "$(sha256sum "${oneccl_lib}/libccl.so.1" | awk '{print $1}')"
+  printf 'oneccl_force_preload=%s\n' "${ONECCL_FORCE_PRELOAD}"
   printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'ccl_atl_transport=%s\n' "${CCL_ATL_TRANSPORT}"
   printf 'ccl_topo_p2p_access=%s\n' "${CCL_TOPO_P2P_ACCESS}"
   printf 'ccl_enable_sycl_kernels=%s\n' "${CCL_ENABLE_SYCL_KERNELS:-default}"
+  printf 'ccl_allreduce=%s\n' "${CCL_ALLREDUCE:-default}"
   printf 'ccl_allgather=%s\n' "${CCL_ALLGATHER:-default}"
   printf 'ccl_allgatherv=%s\n' "${CCL_ALLGATHERV:-default}"
   printf 'ccl_reduce_scatter=%s\n' "${CCL_REDUCE_SCATTER:-default}"
   printf 'ccl_sycl_allreduce_ll=%s\n' "${CCL_SYCL_ALLREDUCE_LL}"
   printf 'ccl_sycl_allreduce_ll_threshold=%s\n' "${CCL_SYCL_ALLREDUCE_LL_THRESHOLD}"
   printf 'ccl_sycl_allreduce_arc=%s\n' "${CCL_SYCL_ALLREDUCE_ARC}"
+  printf 'b70_oneccl_sycl_max_bytes=%s\n' "${B70_ONECCL_SYCL_MAX_BYTES:-disabled}"
+  printf 'b70_oneccl_sycl_allreduce_max_bytes=%s\n' \
+    "${B70_ONECCL_SYCL_ALLREDUCE_MAX_BYTES:-disabled}"
+  printf 'b70_oneccl_sycl_allgather_max_bytes=%s\n' \
+    "${B70_ONECCL_SYCL_ALLGATHER_MAX_BYTES:-disabled}"
+  printf 'b70_oneccl_sycl_reduce_scatter_max_bytes=%s\n' \
+    "${B70_ONECCL_SYCL_REDUCE_SCATTER_MAX_BYTES:-disabled}"
   printf 'b70_oneccl_mhc_threads=%s\n' "${B70_ONECCL_MHC_THREADS:-default}"
   printf 'b70_oneccl_mhc_explicit_barrier=%s\n' "${B70_ONECCL_MHC_EXPLICIT_BARRIER:-0}"
   printf 'ccl_kernel_path=%s\n' "${CCL_KERNEL_PATH}"
@@ -232,6 +272,7 @@ argv=(
   printf 'ccl_kvs_iface=%s\n' "${CCL_KVS_IFACE}"
   printf 'vllm_cache_root=%s\n' "${VLLM_CACHE_ROOT}"
   printf 'torchinductor_cache_dir=%s\n' "${TORCHINDUCTOR_CACHE_DIR}"
+  printf 'vllm_multi_stream_gemm_token_threshold=%s\n' "${VLLM_MULTI_STREAM_GEMM_TOKEN_THRESHOLD:-default}"
   printf 'vllm_extra_args=%s\n' "${VLLM_EXTRA_ARGS:-}"
   printf 'argv='
   printf '%q ' "${argv[@]}"
