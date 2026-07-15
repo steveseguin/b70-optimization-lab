@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-15",
+  "classification": "deepseek_v4_mtp1_remaining_m2_arithmetic_gates",
+  "record_service_unchanged": true,
+  "record_median_tok_s": 54.464908644156125,
+  "m2_row_invariance": {
+    "w8a8": {
+      "passed": true,
+      "families": {
+        "target_shared_expert_down_m2_n4096_k512": "40/40 exact",
+        "mtp_e_proj_h_proj_m2_n4096_k4096": "40/40 exact"
+      },
+      "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/w8a8-m2-row-invariance-card2-20260715.json"
+    },
+    "mxfp4": {
+      "passed": true,
+      "m2_vs_two_m1": "60/60 exact",
+      "m1_repeat": "60/60 exact",
+      "patterns": ["same_local", "disjoint_local", "mixed_ep"],
+      "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mxfp4-m2-row-invariance-card3-20260715.json"
+    }
+  },
+  "draft_e_h_w8a16": {
+    "classification": "positive_microkernel_rejected_end_to_end",
+    "shape": {"m": 1, "n": 4096, "k": 4096},
+    "w8a8_quant_plus_gemm_median_us": 63.56818,
+    "w8a16_gemm_median_us": 20.03612,
+    "local_speed_ratio": 3.172707,
+    "calls_per_mtp_cycle": 2,
+    "projected_savings_ms_per_cycle": 0.08706412,
+    "integration_gate_ms_per_cycle": 0.5,
+    "max_abs_vs_w8a8": 0.0625,
+    "mean_abs_vs_w8a8": 0.013142562471330166,
+    "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp-eh-fp8-dense-card1-20260715.json"
+  },
+  "decision": "Do not load the draft-only W8A16 candidate; pursue M=2 target-verifier work only after a >=0.50 ms/cycle exact hardware projection."
+}
