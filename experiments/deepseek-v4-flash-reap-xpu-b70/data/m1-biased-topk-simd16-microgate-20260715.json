@@ -1,0 +1,64 @@
+{
+  "changed_input_gate": {
+    "epochs": 40,
+    "exact_id_epochs": 40,
+    "exact_weight_epochs": 40,
+    "maximum_abs_weight_difference": 0.0,
+    "total_id_mismatches": 0,
+    "total_weight_mismatches": 0
+  },
+  "classification": "deepseek_v4_m1_biased_topk_microgate",
+  "device": "xpu:0",
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "gate": {
+    "minimum_projected_saved_ms_per_token": 0.5,
+    "passes": false,
+    "requires_bitwise_ids": true,
+    "requires_bitwise_raw_weights": true,
+    "scope": "Bias + sorted top-k + unbiased-score gather only; existing sqrt-softplus and normalization remain unchanged."
+  },
+  "schema_version": 1,
+  "shape": {
+    "experts": 160,
+    "m": 1,
+    "topk": 6
+  },
+  "timing": {
+    "batch_iterations": 200,
+    "batches": 10,
+    "candidate_us": {
+      "median": 91.77181,
+      "samples": [
+        91.77246000000001,
+        91.77401999999998,
+        91.75218,
+        91.7553,
+        91.73242,
+        91.77116,
+        91.78493999999999,
+        91.77506,
+        91.78623999999999,
+        91.75452
+      ]
+    },
+    "projected_saved_ms_per_token": -0.6220084000000002,
+    "reference_us": {
+      "median": 76.2216,
+      "samples": [
+        76.14125999999999,
+        80.62574,
+        76.219,
+        76.43688,
+        76.2242,
+        76.31493999999999,
+        75.71148,
+        76.14672,
+        76.03362,
+        76.25435999999999
+      ]
+    },
+    "speedup": 0.8305557011461362,
+    "warmup": 100
+  },
+  "torch_version": "2.12.0+xpu"
+}
