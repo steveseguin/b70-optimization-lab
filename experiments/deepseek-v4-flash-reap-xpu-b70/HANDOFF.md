@@ -113,7 +113,11 @@ The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
 The current record-identity DeepSeek server is listening only on
-`127.0.0.1:18080` for follow-up experiments. The reboot auto-started the Gemma
+`127.0.0.1:18080` for follow-up experiments. It is the paired flag-off control
+under `native-dual-rmsnorm-paired-control-20260715T1010Z`, using vLLM
+`d8d7cf198`, XPU kernels `ef307a8`, and
+`VLLM_XPU_V4_NATIVE_DUAL_RMSNORM=0`; the added experiment remains default-off.
+The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
 automount, but the active K160 model is on `/mnt/fast-ai` and the promoted
@@ -209,3 +213,12 @@ Experiment/revert history is oneCCL `b6b6481`/`14db31d` and vLLM
 `fc03ca89f`/`8721e07b4`. Do not infer skew from its timeout duration or return to
 cross-device profiler timestamps. See
 `notes/2026-07-15-tp4-rank-arrival-trace-closure.md`.
+The following native dual Q/KV RMSNorm gate is exact but performance-closed.
+XPU kernels `ef307a8` mirrors Triton's 128-thread/SG32 reduction and passes all
+160 changing eager cases and 32 graph replays across four cards. Its
+0.893-1.290 ms/token isolated projection does not survive the reusable graph:
+two flag-on suites reach 39.9928/39.9174 tok/s versus a paired flag-off control
+at 40.0950. vLLM `d8d7cf198` and the operator remain default-off. Do not spend
+another server load on a standalone RMSNorm replacement; fuse the preceding
+WQ_B producer with Q normalization/RoPE/KV insertion instead. See
+`notes/2026-07-15-native-dual-rmsnorm-graph-loss.md`.

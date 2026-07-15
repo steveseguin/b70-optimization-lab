@@ -23,7 +23,11 @@ Confirm the endpoint and process state before relying on this observation.
 
 The current DeepSeek record-identity endpoint is listening on
 `127.0.0.1:18080` for follow-up experiments. It is not exposed on the public
-LAN endpoint.
+LAN endpoint. It is the native-dual-RMSNorm paired control at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-dual-rmsnorm-paired-control-20260715T1010Z`:
+vLLM `d8d7cf198`, XPU kernels `ef307a8`, and
+`VLLM_XPU_V4_NATIVE_DUAL_RMSNORM=0`. Those commits add only a default-off
+rejected experiment; the running decode path retains the record recipe.
 The host reboot auto-started the two Gemma service units and occupied the B70s;
 both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
@@ -184,6 +188,17 @@ full-model run, skew claim, speed claim, or LocalMax submission followed. Both
 runtime patches are preserved in experiment/revert history and production
 source is restored. See
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-rank-arrival-trace-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-rank-arrival-trace-closure.md).
+The next exact noncollective candidate is also closed. A native M=1 dual
+Q1024/KV512 RMSNorm operator matches Triton's reduction order and passes
+160/160 changing eager cases plus 32/32 changing graph replays across four
+B70s. Although isolated timing projected 0.893-1.290 ms/token saved, paired
+full-model testing regressed: 39.9928 and 39.9174 tok/s with the flag on versus
+40.0950 for the same-commit flag-off control. Keep vLLM `d8d7cf198` and XPU
+kernels `ef307a8` as default-off evidence; do not substitute a standalone
+graph node again. The next candidate must remove the WQ_B producer boundary
+with Q normalization/RoPE/KV insertion and clear an exact real-model gate.
+See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-native-dual-rmsnorm-graph-loss.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-native-dual-rmsnorm-graph-loss.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only

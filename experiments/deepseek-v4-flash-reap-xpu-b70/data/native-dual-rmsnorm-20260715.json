@@ -1,0 +1,38 @@
+{
+  "date": "2026-07-15",
+  "status": "exact-microgate-win-full-model-performance-rejected",
+  "record_unchanged_tok_s": 40.02097178508589,
+  "localmax_submission": null,
+  "source": {
+    "vllm_commit": "d8d7cf1988549e81337ff4df4cd8f70de5d9255a",
+    "xpu_kernels_commit": "ef307a8f45a0dc3794a8775e2e5d6c7484b63a1b",
+    "flag": "VLLM_XPU_V4_NATIVE_DUAL_RMSNORM"
+  },
+  "shape": {
+    "tokens": 1,
+    "q": 1024,
+    "kv": 512,
+    "dtype": "bfloat16",
+    "layers_per_token": 43
+  },
+  "four_card_microgate": [
+    {"card": 0, "current_us": 137.306, "native_us": 110.864, "projected_saved_ms_per_token": 1.137006, "changed_exact": "40/40", "graph_exact": "8/8"},
+    {"card": 1, "current_us": 142.922, "native_us": 112.918, "projected_saved_ms_per_token": 1.290172, "changed_exact": "40/40", "graph_exact": "8/8"},
+    {"card": 2, "current_us": 140.868, "native_us": 111.982, "projected_saved_ms_per_token": 1.242098, "changed_exact": "40/40", "graph_exact": "8/8"},
+    {"card": 3, "current_us": 145.938, "native_us": 125.164, "projected_saved_ms_per_token": 0.893282, "changed_exact": "40/40", "graph_exact": "8/8"}
+  ],
+  "strict_suites": {
+    "candidate": [
+      {"path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-dual-rmsnorm-canary-20260715T1045Z/realistic-suite-v1.json", "median_tok_s": 39.9928463812587, "p10_tok_s": 39.53116967935868, "cached_tokens_all_zero": true},
+      {"path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-dual-rmsnorm-canary-20260715T1045Z/realistic-suite-v1-confirm.json", "median_tok_s": 39.917367644934586, "p10_tok_s": 39.55908037112868, "cached_tokens_all_zero": true}
+    ],
+    "paired_flag_off_control": {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-dual-rmsnorm-paired-control-20260715T1010Z/realistic-suite-v1.json",
+      "median_tok_s": 40.094966280773264,
+      "p10_tok_s": 39.69496334792758,
+      "cached_tokens_all_zero": true
+    }
+  },
+  "candidate_delta_vs_control_percent": [-0.25469506271547093, -0.4429449686900955],
+  "decision": "Keep the exact native operator default-off; reject standalone integration. Require producer/consumer fusion and an exact >=0.50 ms/token real-model gate before the next TP4 load."
+}

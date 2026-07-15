@@ -85,6 +85,7 @@ export VLLM_XPU_V4_TP4_RING_MHC_POST_PRE="${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE:-0
 export VLLM_XPU_V4_MHC_PRE_M1_SINGLE_KERNEL="${VLLM_XPU_V4_MHC_PRE_M1_SINGLE_KERNEL:-0}"
 export VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL="${VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL:-0}"
 export VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT="${VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT:-0}"
+export VLLM_XPU_V4_NATIVE_DUAL_RMSNORM="${VLLM_XPU_V4_NATIVE_DUAL_RMSNORM:-0}"
 export VLLM_XPU_EXPERT_MAP_ROUND_ROBIN="${VLLM_XPU_EXPERT_MAP_ROUND_ROBIN:-0}"
 if [[ "${VLLM_XPU_V4_TP4_RING_MHC_POST}" == "1" || "${VLLM_XPU_V4_TP4_RING_MHC_POST_PRE}" == "1" ]]; then
   export LD_PRELOAD="${oneccl_lib}/libccl.so.1.0${LD_PRELOAD:+:${LD_PRELOAD}}"
@@ -179,6 +180,7 @@ argv=(
   printf 'vllm_xpu_v4_mhc_pre_m1_single_kernel=%s\n' "${VLLM_XPU_V4_MHC_PRE_M1_SINGLE_KERNEL}"
   printf 'vllm_xpu_v4_mhc_post_pre_m1_single_kernel=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_M1_SINGLE_KERNEL}"
   printf 'vllm_xpu_v4_shared_expert_fused_act_quant=%s\n' "${VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT}"
+  printf 'vllm_xpu_v4_native_dual_rmsnorm=%s\n' "${VLLM_XPU_V4_NATIVE_DUAL_RMSNORM}"
   printf 'vllm_xpu_expert_map_round_robin=%s\n' "${VLLM_XPU_EXPERT_MAP_ROUND_ROBIN}"
   printf 'ld_preload=%s\n' "${LD_PRELOAD:-}"
   printf 'vllm_xpu_log_fp8_linear_shapes=%s\n' "${VLLM_XPU_LOG_FP8_LINEAR_SHAPES}"
