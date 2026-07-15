@@ -1,0 +1,70 @@
+{
+  "classification": "rejected_preproduction_feasibility_screen",
+  "date": "2026-07-15",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "device_affinity": "0",
+  "gate": {
+    "minimum_projected_saved_ms_per_token": 0.5,
+    "passes": false,
+    "requires_bitwise_output": true
+  },
+  "identity": {
+    "activation_scale_dtype": "float32",
+    "activation_shape": [1, 512],
+    "activation_weight_dtype": "float8_e4m3fn",
+    "candidate": "_xpu_C.deepseek_shared_down_m1_fp8_dpas_out",
+    "output_dtype": "bfloat16",
+    "reference": "_xpu_C.fp8_gemm",
+    "torch_version": "2.12.0+xpu",
+    "weight_shape_nk": [4096, 512],
+    "weight_scale_dtype": "float32"
+  },
+  "screen": {
+    "batch_iterations": 10,
+    "batches": 2,
+    "changed_epochs": 2,
+    "warmup": 5
+  },
+  "variants": [
+    {
+      "candidate_median_us": 113.9944,
+      "exact_epochs": 0,
+      "maximum_abs_difference": 0.0000152587890625,
+      "projected_saved_ms_per_token": -2.8129998,
+      "reference_median_us": 48.5758,
+      "speedup": 0.4261244412,
+      "tiles_per_item": 1,
+      "total_mismatch_elements": 1440
+    },
+    {
+      "candidate_median_us": 180.9938,
+      "exact_epochs": 0,
+      "maximum_abs_difference": 0.0000152587890625,
+      "projected_saved_ms_per_token": -5.906953,
+      "reference_median_us": 43.6228,
+      "speedup": 0.2410182006,
+      "tiles_per_item": 2,
+      "total_mismatch_elements": 1440
+    },
+    {
+      "candidate_median_us": 276.8532,
+      "exact_epochs": 0,
+      "maximum_abs_difference": 0.0000152587890625,
+      "projected_saved_ms_per_token": -10.217961,
+      "reference_median_us": 39.2262,
+      "speedup": 0.1416859187,
+      "tiles_per_item": 4,
+      "total_mismatch_elements": 1440
+    },
+    {
+      "candidate_median_us": 134.5604,
+      "exact_epochs": 0,
+      "maximum_abs_difference": 0.0000152587890625,
+      "projected_saved_ms_per_token": -4.1442024,
+      "reference_median_us": 38.1836,
+      "speedup": 0.283765506,
+      "tiles_per_item": 8,
+      "total_mismatch_elements": 1440
+    }
+  ]
+}
