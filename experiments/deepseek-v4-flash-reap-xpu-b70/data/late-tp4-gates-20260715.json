@@ -1,0 +1,54 @@
+{
+  "date": "2026-07-15",
+  "record_tok_s": 34.06712071262497,
+  "oneccl_runtime_record_identity": {
+    "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so.1",
+    "package": "oneccl==2021.17.2",
+    "sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3"
+  },
+  "ll_workgroup_geometry": {
+    "source_commit": "c6aec66",
+    "library_sha256": "77e3914ed9b22a88501f91172096a38fdfe5b15770f8525cb21b7966ee4578fb",
+    "collectives": 87,
+    "dtype": "bfloat16",
+    "elements": 4096,
+    "all_correct": true,
+    "device_ms": {
+      "threads_64_control_a": 6.106464,
+      "threads_4": 5.684614,
+      "threads_8": 5.526326,
+      "threads_16": 5.562752,
+      "threads_32": 5.529992,
+      "threads_64_control_b": 5.665504
+    },
+    "decision": "closed: best 8-thread result saves 0.360 ms versus mean controls and only 0.139 ms versus reverse control, below the 0.50 ms integration gate"
+  },
+  "recursive_doubling": {
+    "source_commit": "bef2321aa2d11b188ad2341ec837167a353e6f52",
+    "library_sha256": "5f739536d2ce615a550b1c31575d68e84e12e4d198497482557243e4e3c96e4b",
+    "collectives": 87,
+    "dtype": "bfloat16",
+    "elements": 4096,
+    "all_correct": true,
+    "max_rank_device_ms": {
+      "ring_control_a": 5.57973,
+      "recursive_doubling": 5.64486,
+      "ring_control_b": 5.578872
+    },
+    "decision": "rejected: two XOR rounds are 0.0656 ms slower than the mean paired ring controls"
+  },
+  "expert_round_robin": {
+    "vllm_commit": "62b8bed9ae3bea5aae9baf543491d029ab2adb9e",
+    "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/expert-map-round-robin-20260715T0336Z",
+    "placement": "rank 0 owns global experts 0,4,8,...,156; analogous interleaving on ranks 1-3",
+    "cached_tokens": [0, 0, 0],
+    "changed_input_expected": [1073, 437, 1073],
+    "changed_input_actual": [1369, 361, 1369],
+    "decision": "correctness-rejected before speed testing; packed MXFP4 post-load state retains a contiguous-expert ownership assumption"
+  },
+  "rank_skew_profile": {
+    "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/current-graph-rank-skew-profile-20260715T031852Z",
+    "collective_events_per_rank": 87,
+    "decision": "inconclusive: profiler startup and serialization distort cross-device timestamps and collective duration, so raw multi-GPU timestamp deltas are not normal decode rank-arrival evidence"
+  }
+}

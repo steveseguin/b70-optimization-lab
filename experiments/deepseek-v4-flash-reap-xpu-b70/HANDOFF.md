@@ -105,7 +105,8 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-No model server is running. The external `/mnt/usb-models` volume did not
+No model server is running. The reboot auto-started the Gemma backend/frontdoor
+services; both were stopped for DeepSeek work and remain stopped. The external `/mnt/usb-models` volume did not
 automount, but the active K160 model is on `/mnt/fast-ai` and the promoted
 launcher loads oneCCL from the DeepSeek virtual environment first.
 
@@ -137,3 +138,14 @@ changed-state output, and `>=6 us` saved per boundary before full-model work.
 Raising the LL threshold to 8192 saved only `0.169 ms/87`; ARC LL256 corrupted
 all 64 sequential-replay epochs. See
 `notes/2026-07-15-tp4-consumer-overlap-feasibility.md`.
+
+Later cheap gates are also closed; see
+`notes/2026-07-15-late-tp4-collective-and-placement-gates.md`. Eight-thread
+LL256 geometry did not clear the `0.50 ms/87` gate. A correct two-round XOR
+recursive-doubling protocol was slightly slower than paired ring controls.
+Round-robin expert placement reached the intended physical map but corrupted
+the first arithmetic replay, so the complete packed MXFP4 path is not yet
+expert-map-clean and was rejected before speed testing. Cross-GPU profiler
+timestamps are too distorted for arrival-skew conclusions. The resident
+per-wire MHC consumer remains the only communication lane with a measured
+positive upper bound.

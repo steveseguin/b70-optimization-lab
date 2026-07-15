@@ -22,7 +22,9 @@ in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.
 Confirm the endpoint and process state before relying on this observation.
 
 The temporary DeepSeek benchmark endpoint on `127.0.0.1:18080` was stopped
-cleanly after promoting the 34.0671 tok/s record. No model server is running.
+cleanly after the latest correctness gate. No model server is running.
+The host reboot auto-started the two Gemma service units and occupied the B70s;
+both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
 per-device allocation/compute, runtime status, and a four-rank exact XCCL gate
 pass, all four external links report Gen4 x16, and ASPM is `default`. The
@@ -112,6 +114,15 @@ epoch-tagged per-wire readiness, with a `<=1 us` marker-tax gate and
 saved only `0.169 ms/87`, and ARC LL256 corrupted every sequential-replay
 epoch, so neither proceeds. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-consumer-overlap-feasibility.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-tp4-consumer-overlap-feasibility.md).
+Subsequent cheap gates are closed. LL workgroup geometry saved at most
+`0.360 ms/87` against mean controls; exact two-round recursive doubling was
+`0.0656 ms/87` slower than paired ring controls. Round-robin expert ownership
+reached the intended interleaved map but failed the first changed-input replay
+(`1369 -> 361 -> 1369` versus `1073 -> 437 -> 1073`), exposing a remaining
+contiguous-expert assumption in packed MXFP4 state. A profiler trace confirms
+87 collectives but cannot measure cross-device arrival skew because profiling
+distorts and serializes the events. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-late-tp4-collective-and-placement-gates.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-late-tp4-collective-and-placement-gates.md).
 TP2+DP2+EP4 has been recovered for correctness, localizing its stall to a
 oneCCL fast-SYCL switch cycle between disjoint TP and crossed DP communicators.
 All safe fallbacks are performance-closed: the best fresh screen is only
