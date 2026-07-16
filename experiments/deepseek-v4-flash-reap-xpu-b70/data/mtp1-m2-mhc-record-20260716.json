@@ -1,0 +1,42 @@
+{
+  "classification": "promoted_target_verified_record",
+  "date": "2026-07-16",
+  "model": "0xSero/DeepSeek-V4-Flash-180B",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "mode": "one active generation, TP4+EP4, target-verified MTP1",
+  "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-mhc-single-kernel-candidate-20260716T0210Z",
+  "microgate": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m2-mhc-single-kernel-microgate-20260716T0205Z",
+  "source": {
+    "vllm": "9cf403e516566b44bbfcc7ad00eef976867c861b",
+    "xpu_kernels": "46b95e64a315e04002e071640e8855b2398ab1ec",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "strict": {
+    "screen_median_tok_s": 59.291530809418546,
+    "screen_p10_tok_s": 56.500723916247345,
+    "confirm_median_tok_s": 60.264241514730145,
+    "confirm_p10_tok_s": 56.24310529601078,
+    "confirm_wall_median_tok_s": 50.32929137525668,
+    "confirm_ttft_median_ms": 337.2547070030123,
+    "cached_tokens_all_zero": true
+  },
+  "correctness": {
+    "microgate_all_four_cards_bitwise": true,
+    "ordered_exact_captures": 70,
+    "ordered_exact_captures_passed": 70,
+    "historical_positions_crossed": [28, 58],
+    "target_verified_accepted_tokens": true
+  },
+  "microgate_saved_us_per_85_boundaries": [
+    969.0954,
+    970.7191,
+    962.9945,
+    961.6386
+  ],
+  "localmaxxing": {
+    "id": "cmrmvjbok1np3mj01p9il8486",
+    "status": "APPROVED",
+    "payload": "../localmaxxing/deepseek-v4-flash-k160-tp4-mtp1-m2-mhc-realistic-60.264tok-20260716.queue.json"
+  }
+}

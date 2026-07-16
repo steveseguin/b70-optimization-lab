@@ -11,9 +11,9 @@ The controlling plan is
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
 replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
 43.7667/43.6986 tok/s; the combined row-exact MTP1, strided-batch compressor,
-selective M=2 W8A16, direct-M1 draft MoE, M=2 shared/routed fusion, and
-wide-epoch runtime is the target-verified speed record at
-57.4121/56.9521 tok/s**.
+selective M=2 W8A16, direct-M1 draft MoE, M=2 shared/routed fusion, native M=2
+MHC post/pre, and wide-epoch runtime is the target-verified speed record at
+60.2642/59.2915 tok/s**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -27,8 +27,8 @@ hash-preserved quality candidates; K180 is not predetermined.
 - public K160 revision: `7c360e1cd4a5168099dbc54d16d929bf6df04990`
 - clean vLLM base: `61c87db645c256651b5a366f538898485077ad32`
 - clean XPU kernels base: `dda91d171fbc3f51d1d65a7f8839714b1efffd42`
-- promoted vLLM: `068d6beb25dcd571579f8efb06a3ca08aa29e164`
-- promoted XPU kernels: `84c10f4f1b987c3ace43683299ce9c8d1bf9b94a`
+- promoted vLLM: `9cf403e516566b44bbfcc7ad00eef976867c861b`
+- promoted XPU kernels: `46b95e64a315e04002e071640e8855b2398ab1ec`
 - primary truth: fixed official-source teacher logits/tasks captured after the
   Stage 4 source download
 - secondary all-expert behavior control: bullerwins IQ3_XXS revision
@@ -75,14 +75,15 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is retained as superseded LocalMaxxing evidence
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. The current target-verified speed record is the combined **MTP1 M=2
-   shared/routed fusion lane at `57.412142/56.952065 tok/s`**, LocalMaxxing
-   `cmrmrgce51nojmj01bbxoruuu`. Seventy exact capture suites pass after both
-   strict suites, including former rollover positions 28 and 58; all 444
-   requests are cached-zero. The repair extends shared clamped-SwiGLU/FP8
-   quantization through M=2 and uses exact fused clamp/SiLU in generic M=2
-   routed MoE without losing grouped expert weight reuse. See
-   `notes/2026-07-16-mtp1-m2-fusion-record.md`.
+2. The current target-verified speed record is the combined **MTP1 native M=2
+   MHC lane at `60.264242/59.291531 tok/s`**, LocalMaxxing
+   `cmrmvjbok1np3mj01p9il8486`. Seventy exact capture suites pass after both
+   strict suites, including former rollover positions 28 and 58; every request
+   is cached-zero. One command launches two independent Xe2 workgroups across
+   each M=2 verifier boundary while preserving the exact M=1 reduction order
+   and BF16 arithmetic. All four cards are bitwise exact and save 0.962-0.971
+   ms over 85 boundaries. See `notes/2026-07-16-mtp1-m2-mhc-record.md`.
+   The preceding M=2 shared/routed fusion record was 57.412142/56.952065 tok/s.
    The preceding record is attached **MTP1 with a
    strided-batch FP32 compressor and selective M=2 W8A16 at
    `55.524496/54.708889 tok/s`**, LocalMaxxing
@@ -156,15 +157,15 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-The DeepSeek endpoint is live on `127.0.0.1:18080` with the combined MTP1
-record under `mtp1-direct-moe-wideepoch-candidate-20260715T2315Z`. The
+The DeepSeek endpoint is live on `127.0.0.1:18080` with the combined native
+M=2 MHC MTP1 record under
+`mtp1-m2-mhc-single-kernel-candidate-20260716T0210Z`. The
 restorable nonspeculative record recipe is
 `nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
 `a681dbb2b`, XPU kernels `6522849b0`, exact-version oneCCL `48fda4f0e`, and the
 wide collective epoch. Its sustained 70/70 exact gate passes. The separate
-target-verified MTP1 record remains
-`mtp1-rowexact-bmm-w8a16-m2-candidate-20260715T2000Z` at 55.524496 tok/s; the
-new combined target-verified record is 55.703731 tok/s.
+row-exact MTP1 record remains historical at 55.524496 tok/s; the current
+combined target-verified record is 60.264242 tok/s.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
@@ -178,19 +179,18 @@ native mHC, TP-only in-place all-reduce, and shared-expert activation/quant
 fusion, `VLLM_XPU_V4_M1_BIASED_TOPK=1`,
 `VLLM_XPU_V4_M1_ROUTER_NORM=1`, and
 `VLLM_XPU_V4_M1_DIRECT_ROUTED_MOE=1` in the record lane. The trustworthy
-nonspeculative base is 43.766673
-tok/s and row-exact MTP1 with the batched compressor is the 55.524496 tok/s
-target-verified speed record.
+nonspeculative base is 43.766673 tok/s and native M=2 MHC MTP1 is the
+60.264242 tok/s target-verified speed record.
 MTP2 and larger repeated-single-layer widths are closed by negligible
 second-position acceptance and a service deadlock. Carry the 43.766673 tok/s
 direct-routed-MoE base and wide-epoch oneCCL repair into the proven row-exact
 MTP1, batched-compressor, selective-M=2-W8A16 recipe. Keep exact target
 verification and require sustained rollover-crossing replay before promotion.
-The next bounded source candidate after that is extending the exact
-shared-expert clamp/SwiGLU plus FP8-quant producer from M=1 to M=2; the current
-source explicitly excludes the verifier width, and the prior M=1 full-model A/B
-saved about 0.55 ms. Require a changed-input exact hardware gate and at least
-0.50 ms/cycle projection before loading TP4. The
+The next bounded source candidates are extending fused QNorm/RoPE/direct FP8 KV
+insertion to M=2 and exact M=2 in-place all-reduce. Preserve
+`VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` in every control. Require a
+changed-input exact hardware gate and package sub-threshold wins only when the
+combined measured saving can survive reusable-graph execution. The
 grouped-MXFP4 small-N
 scheduler race is now understood: resetting its global counter inside
 workgroup 0 raced increments from other workgroups. Moving the reset to an
