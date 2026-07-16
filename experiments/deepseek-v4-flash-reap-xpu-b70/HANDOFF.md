@@ -38,9 +38,20 @@ SwiGLU/GEMM2-input kernel passes 84/84 changed-input cases bitwise, but it
 recomputes the activation in every GEMM2 output-N tile and regresses all routes
 with local work (worst projection `-9.133 ms` per 43 layers). Preserve signed
 XPU commit `cfb0155`; do not integrate it. Deleting remap alone is not robust:
-two exact upper-bound runs project `0.5002` and `0.4774 ms`. The next source
-audit is a paired gate/up GEMM1 epilogue that produces each activated value
-once. See `notes/2026-07-16-mtp1-m2-fused-swiglu-gemm2-closure.md`.
+two exact upper-bound runs project `0.5002` and `0.4774 ms`. See
+`notes/2026-07-16-mtp1-m2-fused-swiglu-gemm2-closure.md`.
+
+The paired gate/up GEMM1 epilogue is now closed as implemented. It passes all
+84 changed-input cases bitwise, but dual B fragments and dual FP32 accumulators
+regress local routes by as much as `2.655 ms/43 layers` with 256 GRFs.
+Restricting only this launcher to 128 GRFs recovers sparse cases but worsens
+the six-local route to `-4.502 ms`; there is no paired-kernel spill warning.
+Single-WG and SLM-premapped direct-remap variants remain below the gate at
+`0.403-0.430 ms`. Preserve signed XPU commits `33e3ce4`, `5ea7608`, and
+`c069ed8`; do not integrate or service-test them. The next bounded producer
+attempt must split gate/up work across subgroups and exchange rounded BF16
+fragments through SLM so one subgroup never owns both accumulator payloads.
+See `notes/2026-07-16-mtp1-m2-remap-and-paired-gemm1-closure.md`.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -258,8 +269,14 @@ are invalid and preserved only as negative evidence. The next bounded boundary
 is source-direct GEMM1: read the two verifier token rows directly and emit the
 route map from the first N tile, eliminating the standalone remap launch while
 keeping expert-grouped output for activation, compact GEMM2, and generic
-gather. It must retain duplicate/overlap exactness and pass the same 0.50 ms
-card-0 gate before cards 1-3 or service work.
+gather. Deletion-only and real remap variants have since closed below the
+gate, and the first dual-accumulator paired producer is exact but much slower.
+The active card-0 screen is therefore a lower-register paired producer: gate
+and up subgroups must exchange BF16-rounded fragments through SLM, retain
+duplicate/overlap exactness, and pass the same 0.50 ms every-route gate before
+cards 1-3 or service work. If its coordination cost erases the ceiling, stop
+producer fusion and combine route-direct scheduling with gather/shared-output
+addition instead.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.

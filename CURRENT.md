@@ -167,6 +167,17 @@ is also marginal and unstable (`0.5002/0.4774 ms`). The next bounded audit is
 paired gate/up production in the GEMM1 epilogue so each activated value is
 formed once. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-fused-swiglu-gemm2-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-fused-swiglu-gemm2-closure.md).
+That paired producer is now closed too. It passes `84/84` cases bitwise, but
+the dual B payload and dual FP32 accumulator working set loses up to
+`2.655 ms/43 layers` at GRF256 and `4.502 ms/43 layers` at GRF128. The
+compiler reports no spill for the paired kernel, so lower occupancy and live
+payload are the architectural limit. Single-workgroup and SLM-premapped remap
+variants are also exact but top out at only `0.403-0.430 ms` fail-closed.
+Preserve signed XPU commits `33e3ce4`, `5ea7608`, and `c069ed8`; do not service
+test them. The next bounded producer design must split gate/up ownership across
+subgroups and exchange rounded BF16 fragments through SLM, retaining the same
+`0.50 ms` every-route gate. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-remap-and-paired-gemm1-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-remap-and-paired-gemm1-closure.md).
 The preceding native M=2 MHC record remains approved LocalMaxxing evidence at
 60.264242 tok/s, ID `cmrmvjbok1np3mj01p9il8486`.
 The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft

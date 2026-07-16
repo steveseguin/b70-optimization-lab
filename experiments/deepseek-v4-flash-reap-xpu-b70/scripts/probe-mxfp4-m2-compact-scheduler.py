@@ -42,7 +42,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--activation",
-        choices=("generic", "routed", "fused-gemm2"),
+        choices=("generic", "routed", "fused-gemm1", "fused-gemm2"),
         default="generic",
     )
     parser.add_argument(
@@ -63,8 +63,11 @@ def main() -> int:
         parser.error(
             "non-generic --activation is only valid with --gate route-direct"
         )
-    if args.activation == "fused-gemm2" and args.compact_route_lanes != 12:
-        parser.error("fused-gemm2 currently requires 12 compact route lanes")
+    if (
+        args.activation in ("fused-gemm1", "fused-gemm2")
+        and args.compact_route_lanes != 12
+    ):
+        parser.error("fused GEMM prototypes require 12 compact route lanes")
 
     torch.manual_seed(20260716 + args.ep_rank)
     torch.xpu.manual_seed_all(20260716 + args.ep_rank)
@@ -268,18 +271,33 @@ def main() -> int:
         )
 
     def compact_call() -> None:
-        torch.ops._xpu_C.cutlass_grouped_gemm_m2_compact_interface(
-            activation1,
-            weight1,
-            scale1,
-            None,
-            candidate1,
-            topk_ids,
-            expert_map,
-            n,
-            k1,
-            local_experts,
-        )
+        if args.activation == "fused-gemm1":
+            torch.ops._xpu_C.cutlass_grouped_gemm_m2_compact_swiglu_output_interface(
+                activation1,
+                weight1,
+                scale1,
+                None,
+                candidate_activation2,
+                topk_ids,
+                expert_map,
+                10.0,
+                n,
+                k1,
+                local_experts,
+            )
+        else:
+            torch.ops._xpu_C.cutlass_grouped_gemm_m2_compact_interface(
+                activation1,
+                weight1,
+                scale1,
+                None,
+                candidate1,
+                topk_ids,
+                expert_map,
+                n,
+                k1,
+                local_experts,
+            )
         if args.activation == "fused-gemm2":
             torch.ops._xpu_C.cutlass_grouped_gemm_m2_compact_swiglu_interface(
                 candidate1,
@@ -295,7 +313,9 @@ def main() -> int:
                 local_experts,
             )
             return
-        if args.activation == "routed":
+        if args.activation == "fused-gemm1":
+            pass
+        elif args.activation == "routed":
             torch.ops._moe_C.silu_and_mul_clamp_m2_direct(
                 candidate_activation2,
                 candidate1,
@@ -516,6 +536,9 @@ def main() -> int:
                     flat_slot = row * topk + slot
                     if candidate_mapped >= 0:
                         candidate_oracle1 &= torch.equal(
+                            candidate_activation2[candidate_mapped],
+                            direct_activation2[flat_slot],
+                        ) if args.activation == "fused-gemm1" else torch.equal(
                             candidate1[candidate_mapped], direct1[flat_slot]
                         )
                         candidate_oracle2 &= torch.equal(
@@ -612,12 +635,16 @@ def main() -> int:
                         "compact_two_gemm_generic_gather_without_remap"
                         if args.gate == "remap-upper-bound"
                         else (
-                            "fixed_remap_compact_fused_swiglu_gemm2_"
-                            if args.activation == "fused-gemm2"
+                            "fixed_remap_compact_fused_swiglu_gemm1_"
+                            if args.activation == "fused-gemm1"
                             else (
-                                "fixed_remap_compact_routed_activation_two_gemm_"
-                                if args.activation == "routed"
-                                else "fixed_remap_compact_two_gemm_"
+                                "fixed_remap_compact_fused_swiglu_gemm2_"
+                                if args.activation == "fused-gemm2"
+                                else (
+                                    "fixed_remap_compact_routed_activation_two_gemm_"
+                                    if args.activation == "routed"
+                                    else "fixed_remap_compact_two_gemm_"
+                                )
                             )
                         )
                         + (
@@ -661,7 +688,9 @@ def main() -> int:
         "ep_rank": args.ep_rank,
         "generic_policy": "N64",
         "compact_route_lanes": args.compact_route_lanes,
-        "gemm1_compact_route_lanes": args.compact_route_lanes,
+        "gemm1_compact_route_lanes": (
+            12 if args.activation == "fused-gemm1" else args.compact_route_lanes
+        ),
         "gemm2_compact_route_lanes": (
             12 if args.activation == "fused-gemm2" else args.compact_route_lanes
         ),
