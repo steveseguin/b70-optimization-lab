@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "contract_id": "deepseek-v4-flash-b70-spec-eval-v1",
+  "purpose": "Prevent benchmark overfitting, cache reuse, target leakage, and favorable-workload routing from being reported as real-world speculative speed.",
+  "freeze_before_reveal": {
+    "required": true,
+    "candidate_manifest_fields": [
+      "model_and_tokenizer_revisions",
+      "vllm_xpu_kernel_oneccl_commits",
+      "complete_flags_and_environment",
+      "draft_router_policy_hashes",
+      "source_patch_hash",
+      "allowed_policy_inputs",
+      "target_only_and_current_mtp1_controls"
+    ],
+    "packs": 2,
+    "rule": "Materialize Pack A only after the candidate manifest is frozen. Any candidate change spends Pack A. Materialize Pack B after A and run the unchanged candidate in reversed launch order."
+  },
+  "workloads": {
+    "short_normal_requests_per_pack": 48,
+    "short_normal_mix": {
+      "code": 12,
+      "math_reasoning": 10,
+      "mixed": 20,
+      "tools_json_exact": 6
+    },
+    "prompt_token_buckets": [[32, 128], [129, 512], [513, 900]],
+    "output_token_buckets": [[8, 48], [96, 192], [256, 512]],
+    "long_context_requests_per_pack": 16,
+    "long_context_prompt_tokens": [2048, 4096],
+    "long_context_must_be_nonrepetitive": true,
+    "labels_must_not_be_sent_to_server": true,
+    "request_order_randomized_after_freeze": true
+  },
+  "paired_controls": [
+    "target_only_no_speculation",
+    "current_target_verified_mtp1",
+    "candidate"
+  ],
+  "hard_correctness": {
+    "greedy_output_token_id_parity_percent": 100,
+    "accepted_tokens_require_target_verification_provenance": true,
+    "cached_tokens_required": 0,
+    "prefix_history_ngram_response_reuse_disabled": true,
+    "unique_random_request_ids": true,
+    "no_stale_sentinel": true,
+    "no_hang_deadlock_timeout_worker_restart": true,
+    "ordered_changing_input_capture_minimum": 128,
+    "must_cross_capture_positions": [28, 58],
+    "must_test_early_eos_cancellation_reset_alternating_context": true,
+    "target_logprob_positions_minimum": 64
+  },
+  "request_scoped_trace_fields": [
+    "request_id",
+    "cycle",
+    "context_length",
+    "generated_position",
+    "proposed_depth",
+    "accepted_prefix_length",
+    "emitted_tokens",
+    "rejection_or_bonus",
+    "policy_mode_and_pre_target_inputs",
+    "draft_policy_verify_commit_time_ms",
+    "target_cycles",
+    "verifier_width"
+  ],
+  "router_allowed_inputs": [
+    "prompt_or_current_prefix_tokens",
+    "context_length",
+    "frozen_prompt_classifier",
+    "draft_confidence",
+    "prior_acceptance_in_same_request"
+  ],
+  "router_forbidden_inputs": [
+    "prompt_id_or_hash",
+    "suite_category_label",
+    "saved_output_or_target_trace",
+    "future_target_token_or_logit",
+    "benchmark_phrase_list",
+    "manual_per_request_route"
+  ],
+  "development_gate": {
+    "emitted_tokens_per_target_cycle_overall_minimum": 2.2,
+    "emitted_tokens_per_target_cycle_mixed_minimum": 2.0,
+    "draft_plus_policy_ms_per_cycle_maximum": 3.0
+  },
+  "promotion_gate": {
+    "correctness_and_cache_gates_required": true,
+    "improvement_over_same_build_mtp1_pack_wall_percent_minimum": 5,
+    "improvement_over_same_build_mtp1_median_decode_percent_minimum": 5,
+    "mixed_workload_improvement_percent_minimum": 3,
+    "paired_bootstrap_95pct_lower_bound_must_exceed_zero": true,
+    "category_or_long_context_p10_regression_percent_maximum": 5,
+    "independent_packs_required": 2,
+    "complete_repetitions_without_state_leak_required": 2
+  },
+  "non_headline_rules": [
+    "The public 12-prompt suite is a continuity screen, not a sole promotion headline.",
+    "Code-only, target-informed, oracle top-k, repetitive long-context, warmed, cached, aggregate, and favorable-route results are diagnostics only."
+  ]
+}

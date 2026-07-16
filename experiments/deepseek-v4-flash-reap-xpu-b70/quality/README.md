@@ -5,6 +5,20 @@ results captured after the Stage 4 source download. Full unpruned IQ3_XXS is a
 secondary all-expert behavior control; it is quantized and runtime-confounded,
 so it is not source truth.
 
+`spec-eval-contract-v1.json` is the separate anti-cheating contract for any
+new speculative decoder or routing policy. It requires freeze-before-reveal
+temporal holdouts, paired target/MTP1 controls, actual output-token-ID parity,
+request-scoped acceptance economics, nonrepetitive short and long contexts,
+and two independently generated packs. The repeatedly used public 12-prompt
+suite remains useful for continuity, but cannot by itself promote deeper
+speculation.
+
+Use `../scripts/freeze-deepseek-spec-candidate.py` before materializing either
+held-out pack. The helper hashes the candidate and both control identities,
+all supplied patch/policy/draft artifacts, records the only allowed online
+policy inputs, refuses overwrite, and creates a read-only manifest without a
+holdout seed. Candidate changes after pack generation spend that pack.
+
 `suite-v1.json` is frozen as a **prompt contract**, with prompt text/hashes,
 categories, scoring-label placeholders, generation settings, tokenizer
 revision, and critical-case labels. It is not yet an executable scoring suite:
