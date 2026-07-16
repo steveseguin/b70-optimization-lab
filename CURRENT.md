@@ -22,15 +22,16 @@ in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.
 Confirm the endpoint and process state before relying on this observation.
 
 No DeepSeek process is currently listening on `127.0.0.1:18080`; the final
-post-record candidates were stopped cleanly after testing. The restorable
-qualified endpoint is the combined target-verified MTP1, native M=2 MHC
-post/pre, M=2 shared/routed fusion, direct M=1 draft routed-MoE, and wide-epoch
-record recipe at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-mhc-single-kernel-candidate-20260716T0210Z`.
-The source identity is vLLM `9cf403e51`, XPU kernels `46b95e64a`, and oneCCL
-`48fda4f0e`. `VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` is the newest record
-flag; the exact M=2 shared/routed flags remain enabled and the noise-floor
-`VLLM_XPU_MOE_OUTPUT_ALIAS` candidate remains off.
+record candidate and paired control were stopped cleanly after testing. The
+restorable qualified endpoint is the combined target-verified MTP1, native
+M=2 router selection/normalization, native M=2 MHC post/pre, M=2
+shared/routed fusion, direct M=1 draft routed-MoE, and wide-epoch recipe at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-router-norm-candidate-20260716T0605Z`.
+The source identity is vLLM `4a6fd8747`, XPU kernels `d15ce87d0`, and oneCCL
+`48fda4f0e`. `VLLM_XPU_V4_M2_ROUTER_NORM=1` is the newest record flag;
+`VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` and the exact M=2 shared/routed
+flags remain enabled, while the noise-floor `VLLM_XPU_MOE_OUTPUT_ALIAS`
+candidate remains off.
 The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
@@ -117,15 +118,18 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row `cmrmebmzg1nm0mj01k30nv6vw` remains the
 superseded repeatability-repair authority.
-The current target-verified speed record adds native single-dispatch M=2 MHC
-post/pre to the exact M=2 shared/routed fusion identity: **60.264242 tok/s**
-median with `56.243105` p10; independent support is 59.291531 tok/s. All four
-B70 microgates are bitwise exact and save 0.962-0.971 ms across the 85-boundary
-verifier chain. Seventy ordered exact capture suites pass after both strict
-suites, including former rollover positions 28 and 58, and every request is
-cached-zero. LocalMaxxing approved `cmrmvjbok1np3mj01p9il8486`.
-Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mhc-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mhc-record.md).
+The current target-verified speed record adds native single-dispatch M=2
+router selection, normalization, and scaling to the exact MTP1 identity:
+**63.349928 tok/s** median with `59.079885` p10; independent support is
+62.882999 tok/s. The same-build flag-off control is 59.108299 tok/s. All four
+B70 microgates are bitwise exact and save 1.123-1.128 ms across the 40 normal
+routed layers per verifier cycle. Seventy ordered exact capture suites pass
+after both strict suites, including former rollover positions 28 and 58, and
+every request is cached-zero. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-router-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-router-record.md).
+LocalMaxxing approved `cmrncv39w003ylg01hogleazo`.
+The preceding native M=2 MHC record remains approved LocalMaxxing evidence at
+60.264242 tok/s, ID `cmrmvjbok1np3mj01p9il8486`.
 The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft
 local-argmax reduction are preserved exact candidates but did not independently
 confirm above the record. They remain disabled; do not stack them without a new

@@ -1,0 +1,102 @@
+{
+  "changed_input_gate": {
+    "epochs": 40,
+    "exact_epochs": 40,
+    "maximum_abs_weight_difference": 0.0,
+    "mismatch_diagnostics": [],
+    "total_id_mismatches": 0,
+    "total_weight_mismatches": 0
+  },
+  "classification": "deepseek_v4_m1_biased_topk_norm_microgate",
+  "device": "xpu:0",
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "gate": {
+    "minimum_projected_saved_ms_per_token": 0.5,
+    "passes": true,
+    "production_note": "Normalization is a component of the direct M=1 routed-MoE lane and is not promoted alone.",
+    "requires_bitwise_ids_and_weights": true
+  },
+  "graph_replay_gate": {
+    "candidate_us": {
+      "median": 18.700499999999998,
+      "samples": [
+        18.777459999999998,
+        19.319039999999998,
+        18.64668,
+        18.63758,
+        18.6784,
+        18.6238,
+        18.81932,
+        18.719479999999997,
+        18.81204,
+        18.68152
+      ]
+    },
+    "epochs": 32,
+    "exact_epochs": 32,
+    "passes_standalone_0_5ms_gate": false,
+    "projected_saved_ms_per_token": 0.1638311999999999,
+    "reference_us": {
+      "median": 22.796279999999996,
+      "samples": [
+        22.794719999999998,
+        22.750779999999995,
+        22.804340000000003,
+        22.80252,
+        22.7916,
+        22.797839999999997,
+        22.8254,
+        22.68656,
+        23.195899999999998,
+        22.698
+      ]
+    },
+    "total_id_mismatches": 0,
+    "total_weight_mismatches": 0
+  },
+  "routed_scaling_factor": 1.5,
+  "schema_version": 1,
+  "shape": {
+    "experts": 160,
+    "m": 1,
+    "topk": 6
+  },
+  "timing": {
+    "batch_iterations": 200,
+    "batches": 10,
+    "candidate_us": {
+      "median": 8.266179999999999,
+      "samples": [
+        10.097879999999998,
+        8.355619999999998,
+        8.29166,
+        8.267479999999999,
+        8.2641,
+        8.24564,
+        8.2472,
+        8.24356,
+        8.292440000000001,
+        8.26488
+      ]
+    },
+    "projected_saved_ms_per_token": 3.1911360000000006,
+    "reference_us": {
+      "median": 88.04458,
+      "samples": [
+        89.00164000000001,
+        88.52115999999998,
+        99.06415999999999,
+        86.78253999999998,
+        87.45438,
+        87.63897999999999,
+        86.55998,
+        87.64365999999998,
+        88.4832,
+        88.4455
+      ]
+    },
+    "speedup": 10.651181077595698,
+    "warmup": 100
+  },
+  "torch_version": "2.12.0+xpu"
+}

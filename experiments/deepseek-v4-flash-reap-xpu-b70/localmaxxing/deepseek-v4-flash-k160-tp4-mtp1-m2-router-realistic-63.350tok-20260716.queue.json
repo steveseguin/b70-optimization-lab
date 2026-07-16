@@ -1,0 +1,63 @@
+[
+  {
+    "label": "deepseek-v4-flash-k160-b70-tp4-mtp1-m2-router-realistic-63.350tok-20260716",
+    "payload": {
+      "hfId": "0xSero/DeepSeek-V4-Flash-180B",
+      "modelRevision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+      "engineName": "vllm",
+      "engineVersion": "0.1.dev1082+g382bbd514.xpu; local vLLM 4a6fd8747; XPU kernels d15ce87d0; oneCCL 48fda4f0e",
+      "backend": "xpu",
+      "quantization": "fp8",
+      "hardware": {
+        "hwClass": "DISCRETE_GPU",
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 32,
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "ramGb": 128,
+        "os": "Ubuntu 24.04.4 LTS"
+      },
+      "contextLength": 1024,
+      "batchSize": 1,
+      "promptTokens": 62,
+      "outputTokens": 128,
+      "tokSOut": 63.349927998683015,
+      "tokSTotal": 52.97162569192547,
+      "ttftMs": 332.7347774975351,
+      "engineFlags": {
+        "attentionBackend": "vLLM XPU",
+        "benchmarkJson": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-router-norm-candidate-20260716T0605Z/strict-confirm.json",
+        "commandIdentityEnv": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-router-norm-candidate-20260716T0605Z/identity.txt",
+        "githubResultPacket": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-router-record.md",
+        "freshResponseHeadlineValid": true,
+        "headlineUse": "fresh-realistic-suite",
+        "historyAccelerated": false,
+        "responseReuse": false,
+        "prefixCaching": false,
+        "realisticSuiteGatePassed": true,
+        "realisticSuiteCachedTokensAllZero": true,
+        "realisticSuiteId": "rapid-model-snapshots-b70-realistic-v1",
+        "realisticSuitePath": "repro/rapid-model-snapshots-b70/realistic-suite-v1.json",
+        "primaryMetricName": "median_tok_s_1_100_after_ttft",
+        "tokenTimingSource": "openai_stream_token_ids_chunk_timestamp",
+        "metricWindowGeneratedTokens": 100,
+        "temperature": 0,
+        "specDecoding": true,
+        "specMethod": "mtp",
+        "specNumTokens": 1,
+        "targetModelVerifiedAcceptedTokens": true,
+        "tokSOutMedian": 63.349927998683015,
+        "tokSOutP10": 59.07988533970503,
+        "tokSOutMean": 62.86469926267508,
+        "tokSFullAfterTtftMedian": 62.7032330063402,
+        "tokSTotalWallMedian": 52.97162569192547,
+        "ttftMsMedian": 332.7347774975351,
+        "modelPath": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/k160-7c360e1cd4a5168099dbc54d16d929bf6df04990",
+        "kvCacheDtype": "fp8",
+        "concurrency": 1,
+        "commandSnippet": "/home/steve/.venvs/deepseek-v4-xpu/bin/vllm serve /mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160 --host 127.0.0.1 --port 18080 --served-model-name deepseek-v4-flash-k160 --dtype auto --tensor-parallel-size 4 --data-parallel-size 1 --data-parallel-size-local 1 --pipeline-parallel-size 1 --distributed-executor-backend mp --enable-expert-parallel --all2all-backend allgather_reducescatter --max-model-len 1024 --max-num-batched-tokens 1024 --max-num-seqs 1 --gpu-memory-utilization 0.94 --kv-cache-dtype fp8 --block-size 256 --tokenizer-mode deepseek_v4 --reasoning-parser deepseek_v4 --tool-call-parser deepseek_v4 --enable-auto-tool-choice --no-enable-prefix-caching --generation-config vllm --enable-prompt-tokens-details --spec-method mtp --spec-tokens 1"
+      },
+      "notes": "Policy-compliant four-B70 single-session DeepSeek V4 Flash K160 MTP1 record. Exact trace attribution identified 40 target-router calls per verifier cycle at shape [2,160], top-k 6. A native two-workgroup SIMD16 kernel now performs bias selection plus normalized/scaled routed-weight production in one graph submission. Four physical B70s pass 160/160 changed eager and 128/128 graph-replay M=2 cases bitwise; the generalized M=1 path independently passes the same counts. A same-build flag-off control reaches 59.108299 tok/s versus 62.882999 and 63.349928 candidate suites. Seventy ordered exact capture suites pass, including positions 28 and 58; every realistic and canary request is cached-zero. The unchanged target verifies every accepted draft token. No prefix cache, history, response reuse, aggregate throughput, model substitution, topology change, speculative-depth change, or benchmark-specific routing."
+    }
+  }
+]

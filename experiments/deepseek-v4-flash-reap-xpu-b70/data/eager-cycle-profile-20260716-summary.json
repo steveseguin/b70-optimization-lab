@@ -1,0 +1,1238 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_eager_mtp1_cycle_trace_summary",
+  "context_name": "execute_context_0(0)_generation_1(2)",
+  "dropped_initial_contexts_per_rank": 1,
+  "trace_count": 4,
+  "timestamp_method": "associate GPU kernels with host execute_context by args.submitted (falling back to appended/sycl_enqk_begin); use GPU event dur",
+  "oneccl_warning": "oneCCL GPU event durations are timeline-distorted in this trace; exclude them from noncollective totals and use normal-run evidence",
+  "cross_rank_bucket_means": {
+    "attention_pv": {
+      "mean_ms_per_cycle": 0.5049648888888889,
+      "min_rank_mean_ms": 0.5043571111111111,
+      "max_rank_mean_ms": 0.505792
+    },
+    "attention_qk_lse": {
+      "mean_ms_per_cycle": 1.3174318333333332,
+      "min_rank_mean_ms": 1.3158488888888888,
+      "max_rank_mean_ms": 1.3210114444444443
+    },
+    "dense_gemm": {
+      "mean_ms_per_cycle": 6.5802741666666735,
+      "min_rank_mean_ms": 6.569098111111119,
+      "max_rank_mean_ms": 6.591856777777784
+    },
+    "mhc_post_pre": {
+      "mean_ms_per_cycle": 2.843003111111111,
+      "min_rank_mean_ms": 2.838806555555555,
+      "max_rank_mean_ms": 2.8497679999999996
+    },
+    "mxfp4_routed_moe": {
+      "mean_ms_per_cycle": 4.1511075,
+      "min_rank_mean_ms": 3.995578888888888,
+      "max_rank_mean_ms": 4.261814666666667
+    },
+    "oneccl_distorted_timeline": {
+      "mean_ms_per_cycle": 206.09714291666666,
+      "min_rank_mean_ms": 181.79307722222222,
+      "max_rank_mean_ms": 241.42422244444438
+    },
+    "other_noncollective": {
+      "mean_ms_per_cycle": 3.0620349999999927,
+      "min_rank_mean_ms": 3.052084888888882,
+      "max_rank_mean_ms": 3.067062888888881
+    },
+    "router_radix_select": {
+      "mean_ms_per_cycle": 0.5362114722222222,
+      "min_rank_mean_ms": 0.5332832222222222,
+      "max_rank_mean_ms": 0.5374495555555556
+    },
+    "router_radix_sort": {
+      "mean_ms_per_cycle": 0.48292150000000006,
+      "min_rank_mean_ms": 0.48221088888888886,
+      "max_rank_mean_ms": 0.48352811111111116
+    }
+  },
+  "ranks": [
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-record-eager-cycle-profile-20260716T0550Z/trace/dp0_pp0_tp0_dcp0_ep0_rank0.1784194948326010647.pt.trace.json",
+      "retained_contexts": 9,
+      "context_host_duration_ms": [
+        381.37739697265624,
+        326.5620070800781,
+        304.59599291992185,
+        311.30436010742187,
+        320.9970219726562,
+        304.22427709960937,
+        330.4079270019531,
+        307.2656579589844,
+        309.43806103515624
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.5043571111111111,
+          "median": 0.46445900000000007,
+          "samples": [
+            0.46300200000000014,
+            0.46373000000000003,
+            0.46445800000000004,
+            0.46445900000000007,
+            0.4632120000000001,
+            0.552377,
+            0.556548,
+            0.5558209999999999,
+            0.555607
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.315872,
+          "median": 1.178001,
+          "samples": [
+            1.1595629999999997,
+            1.170606,
+            1.172587,
+            1.178001,
+            1.174148,
+            1.429354,
+            1.5123749999999998,
+            1.5174809999999999,
+            1.528733
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.569098111111119,
+          "median": 6.550587000000008,
+          "samples": [
+            6.539438000000012,
+            6.540285000000008,
+            6.596533000000004,
+            6.54203800000001,
+            6.549867000000008,
+            6.604351000000001,
+            6.550587000000008,
+            6.597573000000011,
+            6.601211000000005
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.841330444444444,
+          "median": 2.833298999999999,
+          "samples": [
+            2.826631999999999,
+            2.8182929999999993,
+            2.8628809999999993,
+            2.827153,
+            2.8279849999999995,
+            2.850381,
+            2.833298999999999,
+            2.8624660000000004,
+            2.8628840000000007
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 4.261814666666667,
+          "median": 4.299445,
+          "samples": [
+            4.383401,
+            4.404127,
+            4.0824679999999995,
+            4.353399,
+            4.360899000000001,
+            4.299445,
+            4.205171,
+            4.125587999999999,
+            4.141834000000001
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 193.57754722222222,
+          "median": 275.90850900000004,
+          "samples": [
+            275.90850900000004,
+            278.62725500000005,
+            1.1976790000000008,
+            292.9312160000001,
+            276.8041289999999,
+            1.1889370000000004,
+            308.75318799999997,
+            259.23496,
+            47.552051999999996
+          ]
+        },
+        "other_noncollective": {
+          "mean": 3.052084888888882,
+          "median": 3.1182799999999924,
+          "samples": [
+            3.1182799999999924,
+            2.8758919999999946,
+            3.217837999999994,
+            2.8950469999999955,
+            3.1226439999999913,
+            3.22847999999999,
+            2.890788999999992,
+            3.141841999999991,
+            2.9779519999999935
+          ]
+        },
+        "router_radix_select": {
+          "mean": 0.5332832222222222,
+          "median": 0.529152,
+          "samples": [
+            0.526443,
+            0.527173,
+            0.529152,
+            0.5360260000000002,
+            0.5226900000000001,
+            0.5414439999999998,
+            0.5265469999999999,
+            0.535816,
+            0.5542580000000001
+          ]
+        },
+        "router_radix_sort": {
+          "mean": 0.48288088888888897,
+          "median": 0.481864,
+          "samples": [
+            0.48134399999999994,
+            0.48196799999999984,
+            0.4856080000000004,
+            0.481864,
+            0.481656,
+            0.48550400000000044,
+            0.48186399999999996,
+            0.48124,
+            0.48488000000000026
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 19.560721333333333,
+        "median": 19.503100999999997,
+        "samples": [
+          19.498103000000004,
+          19.282074,
+          19.411524999999997,
+          19.277987000000003,
+          19.503100999999997,
+          19.991335999999993,
+          19.55718,
+          19.817827,
+          19.707359
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 192.8928368888889
+        },
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.569098111111118
+        },
+        {
+          "name": "MoE::GemmCuteName<cutlass::bfloat16_t, unsigned char, unsigned char, cutlass::bfloat16_t, (char)82, (char)67, MoE::w4a16_policy_m_8>",
+          "mean_ms_per_cycle": 4.261814666666666
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.8413304444444445
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.3158720000000002
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.6847103333333333
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSelectPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.5332832222222222
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.5043571111111111
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSortPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.48288088888888897
+        },
+        {
+          "name": "quantize_and_insert_k_kernel",
+          "mean_ms_per_cycle": 0.22143500000000008
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.19208544444444448
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.1901436666666667
+        },
+        {
+          "name": "at::native::xpu::ReduceKernel<1, at::native::xpu::ReduceOp<float, at::native::xpu::func_wrapper_t<float, at::native::xpu::SumFunctor<float> >, unsigned int, float, 4> >",
+          "mean_ms_per_cycle": 0.16706266666666675
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.1601006666666667
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStates<sycl::_V1::ext::oneapi::bfloat16, float, 6>",
+          "mean_ms_per_cycle": 0.1563658888888889
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.1511277777777778
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.14226744444444445
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.14151388888888888
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.11314977777777772
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<long>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.09925877777777775
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.0842052222222222
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.08225677777777776
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.07966399999999997
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.0772888888888889
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.07520533333333333
+        },
+        {
+          "name": "_xpu_qnorm_rope_kernel",
+          "mean_ms_per_cycle": 0.07421811111111111
+        },
+        {
+          "name": "vllm::moe::RowsPerExpertCount",
+          "mean_ms_per_cycle": 0.07056399999999995
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.06957399999999997
+        },
+        {
+          "name": "at::native::xpu::ElementwiseGlobalRangeKernel<at::native::xpu::LegacyKernelScalarFunctor<float, 3, OffsetCalculator<3, unsigned int, false>, at::native::xpu::BinaryFunctor<float, float, float, at::native::xpu::DivFunctor<float> > > >",
+          "mean_ms_per_cycle": 0.06945599999999998
+        },
+        {
+          "name": "at::native::xpu::ScatterGatherElementwiseKernelFunctor<at::native::xpu::ScatterGatherInternalKernelLoopFunctor<false, at::native::xpu::OpaqueType<4>, OffsetCalculator<3, unsigned int, false>, at::native::xpu::TensorAssign, long> >",
+          "mean_ms_per_cycle": 0.06789422222222218
+        }
+      ],
+      "cpu_topk_shapes": {
+        "[2, 160]": 360
+      },
+      "cpu_topk_contracts": {
+        "{\"dim\": \"-1\", \"k\": \"6\", \"largest\": \"True\", \"shape\": [2, 160], \"sorted\": \"True\"}": 360
+      }
+    },
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-record-eager-cycle-profile-20260716T0550Z/trace/dp0_pp0_tp1_dcp0_ep1_rank1.1784194948305154845.pt.trace.json",
+      "retained_contexts": 9,
+      "context_host_duration_ms": [
+        302.4278779296875,
+        297.9922119140625,
+        304.2752219238281,
+        318.4506989746094,
+        302.7941950683594,
+        315.7387041015625,
+        331.52647412109377,
+        304.867962890625,
+        327.0225891113281
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.505792,
+          "median": 0.46601699999999996,
+          "samples": [
+            0.464248,
+            0.465602,
+            0.46529000000000004,
+            0.46601699999999996,
+            0.4648710000000001,
+            0.554258,
+            0.557698,
+            0.5566580000000001,
+            0.557486
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.316995,
+          "median": 1.1840449999999998,
+          "samples": [
+            1.15998,
+            1.1721710000000003,
+            1.174356,
+            1.1840449999999998,
+            1.176126,
+            1.427794,
+            1.5176889999999996,
+            1.5140419999999999,
+            1.5267519999999997
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.585880555555563,
+          "median": 6.603612000000011,
+          "samples": [
+            6.602471000000005,
+            6.607147000000008,
+            6.60641900000001,
+            6.605696000000008,
+            6.552567000000005,
+            6.538094000000009,
+            6.611116000000002,
+            6.5458030000000065,
+            6.603612000000011
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.8421074444444443,
+          "median": 2.844026,
+          "samples": [
+            2.8421559999999992,
+            2.8343419999999986,
+            2.844026,
+            2.8513189999999993,
+            2.826424,
+            2.8214280000000005,
+            2.8661099999999995,
+            2.8452770000000003,
+            2.8478850000000007
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 4.088297444444445,
+          "median": 4.214759,
+          "samples": [
+            3.947359,
+            3.9989229999999982,
+            4.2487140000000005,
+            4.241007999999998,
+            3.70788,
+            4.278090000000001,
+            4.380898,
+            3.777046000000001,
+            4.214759
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 207.59372477777782,
+          "median": 272.61496,
+          "samples": [
+            266.10017,
+            150.3812110000001,
+            272.61496,
+            33.414965999999936,
+            280.21100600000005,
+            281.70319100000006,
+            1.189549,
+            284.97152500000016,
+            297.7569450000001
+          ]
+        },
+        "other_noncollective": {
+          "mean": 3.067062888888881,
+          "median": 3.1294209999999927,
+          "samples": [
+            3.1488849999999924,
+            2.9663109999999886,
+            3.1527669999999897,
+            3.0146149999999934,
+            3.135874999999992,
+            3.1294209999999927,
+            3.016878999999995,
+            3.1306549999999924,
+            2.908157999999993
+          ]
+        },
+        "router_radix_select": {
+          "mean": 0.5371144444444444,
+          "median": 0.535299,
+          "samples": [
+            0.5316510000000001,
+            0.5326930000000001,
+            0.5283179999999998,
+            0.5440459999999999,
+            0.5267550000000001,
+            0.5406100000000001,
+            0.535299,
+            0.54061,
+            0.5540480000000001
+          ]
+        },
+        "router_radix_sort": {
+          "mean": 0.4830661111111112,
+          "median": 0.482072,
+          "samples": [
+            0.481864,
+            0.4840490000000002,
+            0.48207199999999994,
+            0.4862330000000003,
+            0.48165600000000014,
+            0.482072,
+            0.4862330000000004,
+            0.48113599999999995,
+            0.48228
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 19.426315888888887,
+        "median": 19.392979,
+        "samples": [
+          19.178613999999996,
+          19.061237999999992,
+          19.501962,
+          19.392979,
+          18.872154,
+          19.771767000000004,
+          19.971921999999996,
+          19.391227,
+          19.694980000000005
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 206.91667644444445
+        },
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.585880555555563
+        },
+        {
+          "name": "MoE::GemmCuteName<cutlass::bfloat16_t, unsigned char, unsigned char, cutlass::bfloat16_t, (char)82, (char)67, MoE::w4a16_policy_m_8>",
+          "mean_ms_per_cycle": 4.088297444444445
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.8421074444444443
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.316995
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.6770483333333334
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSelectPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.5371144444444444
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.505792
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSortPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.48306611111111125
+        },
+        {
+          "name": "quantize_and_insert_k_kernel",
+          "mean_ms_per_cycle": 0.224544888888889
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.1930258888888889
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.19098744444444443
+        },
+        {
+          "name": "at::native::xpu::ReduceKernel<1, at::native::xpu::ReduceOp<float, at::native::xpu::func_wrapper_t<float, at::native::xpu::SumFunctor<float> >, unsigned int, float, 4> >",
+          "mean_ms_per_cycle": 0.16547977777777784
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.16011000000000003
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStates<sycl::_V1::ext::oneapi::bfloat16, float, 6>",
+          "mean_ms_per_cycle": 0.15881900000000002
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.14786322222222223
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.1469705555555555
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.13414422222222214
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.11193466666666661
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<long>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.10011877777777775
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.08234988888888888
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.08166411111111108
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.08081455555555554
+        },
+        {
+          "name": "_xpu_qnorm_rope_kernel",
+          "mean_ms_per_cycle": 0.07896811111111111
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.07538322222222221
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.07361033333333332
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.07301911111111108
+        },
+        {
+          "name": "vllm::moe::RowsPerExpertCount",
+          "mean_ms_per_cycle": 0.07103866666666661
+        },
+        {
+          "name": "at::native::xpu::ElementwiseGlobalRangeKernel<at::native::xpu::LegacyKernelScalarFunctor<float, 3, OffsetCalculator<3, unsigned int, false>, at::native::xpu::BinaryFunctor<float, float, float, at::native::xpu::DivFunctor<float> > > >",
+          "mean_ms_per_cycle": 0.06939877777777775
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::ClampScalarFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.06857966666666664
+        }
+      ],
+      "cpu_topk_shapes": {
+        "[2, 160]": 360
+      },
+      "cpu_topk_contracts": {
+        "{\"dim\": \"-1\", \"k\": \"6\", \"largest\": \"True\", \"shape\": [2, 160], \"sorted\": \"True\"}": 360
+      }
+    },
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-record-eager-cycle-profile-20260716T0550Z/trace/dp0_pp0_tp2_dcp0_ep2_rank2.1784194948303071859.pt.trace.json",
+      "retained_contexts": 9,
+      "context_host_duration_ms": [
+        306.0305830078125,
+        301.20902294921876,
+        305.0288449707031,
+        315.1382380371094,
+        304.72176904296873,
+        303.3532939453125,
+        330.5166398925781,
+        307.157876953125,
+        307.22435107421876
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.5051786666666667,
+          "median": 0.46529,
+          "samples": [
+            0.46289300000000005,
+            0.46529,
+            0.46476700000000004,
+            0.465079,
+            0.4632050000000001,
+            0.553839,
+            0.557493,
+            0.557176,
+            0.5568659999999999
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.3158488888888888,
+          "median": 1.1777939999999998,
+          "samples": [
+            1.159148,
+            1.1717530000000005,
+            1.171125,
+            1.1777939999999998,
+            1.176856,
+            1.4295660000000001,
+            1.5143539999999998,
+            1.5173750000000001,
+            1.524669
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.574261222222229,
+          "median": 6.595488000000006,
+          "samples": [
+            6.537572000000005,
+            6.600909000000003,
+            6.5444560000000065,
+            6.598303000000005,
+            6.6036130000000055,
+            6.54641900000001,
+            6.595488000000006,
+            6.59683700000001,
+            6.544754000000009
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.838806555555555,
+          "median": 2.8316349999999995,
+          "samples": [
+            2.8191289999999993,
+            2.8316349999999995,
+            2.821214,
+            2.855588999999999,
+            2.8591319999999993,
+            2.82132,
+            2.8639189999999974,
+            2.8540259999999993,
+            2.8232949999999986
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 3.995578888888888,
+          "median": 4.0536129999999995,
+          "samples": [
+            3.8453769999999987,
+            3.870378999999999,
+            4.112150999999999,
+            3.9793420000000004,
+            4.094237,
+            4.060071999999999,
+            4.078195999999999,
+            3.8668429999999985,
+            4.0536129999999995
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 181.79307722222222,
+          "median": 276.54735800000003,
+          "samples": [
+            276.54735800000003,
+            1.1741340000000002,
+            282.625897,
+            196.48309499999996,
+            1.182047,
+            281.9807950000001,
+            290.60423099999997,
+            1.182153,
+            304.3579850000001
+          ]
+        },
+        "other_noncollective": {
+          "mean": 3.064301222222216,
+          "median": 3.124822999999992,
+          "samples": [
+            3.124822999999992,
+            2.994986999999994,
+            3.125863999999994,
+            2.942207999999995,
+            3.231887999999995,
+            3.1256579999999916,
+            2.9190929999999904,
+            3.226040999999996,
+            2.8881489999999954
+          ]
+        },
+        "router_radix_select": {
+          "mean": 0.5374495555555556,
+          "median": 0.5357120000000001,
+          "samples": [
+            0.5312360000000002,
+            0.5357120000000001,
+            0.5276919999999998,
+            0.5417530000000002,
+            0.5306059999999999,
+            0.5405080000000001,
+            0.53165,
+            0.5439430000000002,
+            0.553946
+          ]
+        },
+        "router_radix_sort": {
+          "mean": 0.48352811111111116,
+          "median": 0.4822800000000001,
+          "samples": [
+            0.48155199999999987,
+            0.4872730000000003,
+            0.48175999999999986,
+            0.48290399999999994,
+            0.4869600000000004,
+            0.4822800000000001,
+            0.48144799999999993,
+            0.48581600000000036,
+            0.4817599999999999
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 19.31495311111111,
+        "median": 19.427052000000003,
+        "samples": [
+          18.961729999999996,
+          18.957937999999995,
+          19.249029,
+          19.042972000000002,
+          19.446497,
+          19.559662,
+          19.54164099999999,
+          19.648057000000005,
+          19.427052000000003
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 181.20204733333338
+        },
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.574261222222228
+        },
+        {
+          "name": "MoE::GemmCuteName<cutlass::bfloat16_t, unsigned char, unsigned char, cutlass::bfloat16_t, (char)82, (char)67, MoE::w4a16_policy_m_8>",
+          "mean_ms_per_cycle": 3.995578888888888
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.838806555555555
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.3158488888888886
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.5910298888888887
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSelectPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.5374495555555555
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.5051786666666666
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSortPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.48352811111111116
+        },
+        {
+          "name": "quantize_and_insert_k_kernel",
+          "mean_ms_per_cycle": 0.22494911111111116
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.19286400000000006
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.19228122222222221
+        },
+        {
+          "name": "at::native::xpu::ReduceKernel<1, at::native::xpu::ReduceOp<float, at::native::xpu::func_wrapper_t<float, at::native::xpu::SumFunctor<float> >, unsigned int, float, 4> >",
+          "mean_ms_per_cycle": 0.16505188888888891
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.16007711111111111
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStates<sycl::_V1::ext::oneapi::bfloat16, float, 6>",
+          "mean_ms_per_cycle": 0.157741
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.1471222222222222
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.14683188888888887
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.13525744444444435
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.11252233333333331
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<long>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.09994388888888886
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.08283688888888886
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.08127022222222222
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.08065144444444446
+        },
+        {
+          "name": "_xpu_qnorm_rope_kernel",
+          "mean_ms_per_cycle": 0.07759322222222223
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.07538466666666666
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.07320611111111108
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.07292666666666664
+        },
+        {
+          "name": "vllm::moe::RowsPerExpertCount",
+          "mean_ms_per_cycle": 0.07044822222222218
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::ClampScalarFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.06899566666666664
+        },
+        {
+          "name": "at::native::xpu::ElementwiseGlobalRangeKernel<at::native::xpu::LegacyKernelScalarFunctor<float, 3, OffsetCalculator<3, unsigned int, false>, at::native::xpu::BinaryFunctor<float, float, float, at::native::xpu::DivFunctor<float> > > >",
+          "mean_ms_per_cycle": 0.06872722222222219
+        }
+      ],
+      "cpu_topk_shapes": {
+        "[2, 160]": 360
+      },
+      "cpu_topk_contracts": {
+        "{\"dim\": \"-1\", \"k\": \"6\", \"largest\": \"True\", \"shape\": [2, 160], \"sorted\": \"True\"}": 360
+      }
+    },
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-record-eager-cycle-profile-20260716T0550Z/trace/dp0_pp0_tp3_dcp0_ep3_rank3.1784194948333346712.pt.trace.json",
+      "retained_contexts": 9,
+      "context_host_duration_ms": [
+        298.1996708984375,
+        294.5578129882812,
+        302.5538649902344,
+        309.9491298828125,
+        312.6964599609375,
+        302.17393188476564,
+        320.9858020019531,
+        310.9678100585937,
+        330.6415439453125
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.5045317777777777,
+          "median": 0.465915,
+          "samples": [
+            0.4592499999999999,
+            0.45925299999999986,
+            0.465915,
+            0.4644559999999999,
+            0.4645610000000001,
+            0.552904,
+            0.5581149999999998,
+            0.5568639999999999,
+            0.5594679999999999
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.3210114444444443,
+          "median": 1.1825850000000002,
+          "samples": [
+            1.161958,
+            1.1732120000000001,
+            1.176649,
+            1.1825850000000002,
+            1.1805010000000002,
+            1.4314379999999993,
+            1.5250859999999997,
+            1.5207119999999998,
+            1.5369619999999997
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.591856777777784,
+          "median": 6.599452000000013,
+          "samples": [
+            6.612681000000007,
+            6.551949000000005,
+            6.596429000000005,
+            6.604547000000005,
+            6.544555000000008,
+            6.599452000000013,
+            6.640181000000011,
+            6.567053000000001,
+            6.609864000000007
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.8497679999999996,
+          "median": 2.8485050000000003,
+          "samples": [
+            2.847568999999999,
+            2.832046999999999,
+            2.8622579999999993,
+            2.865484,
+            2.8282950000000007,
+            2.8485050000000003,
+            2.8602809999999996,
+            2.8410059999999993,
+            2.862466999999999
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 4.258739,
+          "median": 4.268197,
+          "samples": [
+            4.252150000000001,
+            4.476113000000001,
+            4.026213,
+            4.337161,
+            4.041733999999998,
+            4.4151750000000005,
+            4.475796,
+            4.268197,
+            4.036111999999999
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 241.42422244444438,
+          "median": 275.822987,
+          "samples": [
+            1.1850640000000003,
+            278.51226,
+            282.54777699999994,
+            275.822987,
+            282.744439,
+            249.1266249999999,
+            270.1026749999999,
+            284.4305879999999,
+            248.345587
+          ]
+        },
+        "other_noncollective": {
+          "mean": 3.0646909999999927,
+          "median": 3.1376409999999915,
+          "samples": [
+            3.234377999999995,
+            2.912731999999994,
+            3.156389999999993,
+            2.9271119999999926,
+            3.1376409999999915,
+            3.16949499999999,
+            2.943052999999993,
+            3.148781999999993,
+            2.952635999999992
+          ]
+        },
+        "router_radix_select": {
+          "mean": 0.5369986666666667,
+          "median": 0.536753,
+          "samples": [
+            0.536753,
+            0.531547,
+            0.5280049999999998,
+            0.540296,
+            0.5274829999999999,
+            0.5400920000000001,
+            0.532488,
+            0.540296,
+            0.5560280000000002
+          ]
+        },
+        "router_radix_sort": {
+          "mean": 0.48221088888888886,
+          "median": 0.48196800000000006,
+          "samples": [
+            0.4851920000000004,
+            0.48134399999999994,
+            0.48175999999999986,
+            0.48196800000000006,
+            0.4813439999999999,
+            0.48207199999999994,
+            0.48207199999999994,
+            0.4813439999999999,
+            0.48280199999999995
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 19.609807555555555,
+        "median": 19.589931000000004,
+        "samples": [
+          19.589931000000004,
+          19.418196999999996,
+          19.293619,
+          19.403608999999996,
+          19.206114,
+          20.039133000000003,
+          20.017072000000002,
+          19.924253999999994,
+          19.596338999999997
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 240.74203533333332
+        },
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.591856777777784
+        },
+        {
+          "name": "MoE::GemmCuteName<cutlass::bfloat16_t, unsigned char, unsigned char, cutlass::bfloat16_t, (char)82, (char)67, MoE::w4a16_policy_m_8>",
+          "mean_ms_per_cycle": 4.258738999999999
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.849768
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.3210114444444443
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.6821871111111111
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSelectPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.5369986666666667
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.5045317777777777
+        },
+        {
+          "name": "at::native::xpu::SegmentedGroupRadixSortPairsFunctor<at::native::xpu::GroupRadixSort<float, 64, 32, 4, true, long, unsigned short, unsigned int, 4>, float, long>",
+          "mean_ms_per_cycle": 0.4822108888888889
+        },
+        {
+          "name": "quantize_and_insert_k_kernel",
+          "mean_ms_per_cycle": 0.22399011111111125
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.1929914444444445
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.1918078888888889
+        },
+        {
+          "name": "at::native::xpu::ReduceKernel<1, at::native::xpu::ReduceOp<float, at::native::xpu::func_wrapper_t<float, at::native::xpu::SumFunctor<float> >, unsigned int, float, 4> >",
+          "mean_ms_per_cycle": 0.16569933333333342
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.16102655555555562
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStates<sycl::_V1::ext::oneapi::bfloat16, float, 6>",
+          "mean_ms_per_cycle": 0.16017266666666666
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.14971488888888884
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.14688988888888882
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.1311302222222221
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.11098622222222221
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<long>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.09995555555555555
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.080647
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.08037711111111111
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.08030233333333334
+        },
+        {
+          "name": "_xpu_qnorm_rope_kernel",
+          "mean_ms_per_cycle": 0.07921111111111111
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.07524344444444445
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.0737723333333333
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.07276455555555553
+        },
+        {
+          "name": "vllm::moe::RowsPerExpertCount",
+          "mean_ms_per_cycle": 0.07108499999999995
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::ClampScalarFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.06947022222222218
+        },
+        {
+          "name": "at::native::xpu::ElementwiseGlobalRangeKernel<at::native::xpu::LegacyKernelScalarFunctor<float, 3, OffsetCalculator<3, unsigned int, false>, at::native::xpu::BinaryFunctor<float, float, float, at::native::xpu::DivFunctor<float> > > >",
+          "mean_ms_per_cycle": 0.06932877777777774
+        }
+      ],
+      "cpu_topk_shapes": {
+        "[2, 160]": 360
+      },
+      "cpu_topk_contracts": {
+        "{\"dim\": \"-1\", \"k\": \"6\", \"largest\": \"True\", \"shape\": [2, 160], \"sorted\": \"True\"}": 360
+      }
+    }
+  ]
+}

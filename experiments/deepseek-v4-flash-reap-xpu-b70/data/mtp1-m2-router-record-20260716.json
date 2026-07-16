@@ -1,0 +1,63 @@
+{
+  "classification": "promoted_target_verified_record",
+  "date": "2026-07-16",
+  "model": "0xSero/DeepSeek-V4-Flash-180B",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "mode": "one active generation, TP4+EP4, target-verified MTP1",
+  "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-router-norm-candidate-20260716T0605Z",
+  "control": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-router-norm-control-20260716T0610Z",
+  "profile": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-record-eager-cycle-profile-20260716T0550Z",
+  "microgate": "../../../data/deepseek-v4-reap-m2-router-norm-20260716",
+  "source": {
+    "vllm": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+    "xpu_kernels": "d15ce87d07376be53ea2d6f7ae0262ab79f7cb7b",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "strict": {
+    "screen_median_tok_s": 62.882999067818844,
+    "screen_p10_tok_s": 59.017913102562076,
+    "confirm_median_tok_s": 63.349927998683015,
+    "confirm_p10_tok_s": 59.07988533970503,
+    "confirm_mean_tok_s": 62.86469926267508,
+    "confirm_full_after_ttft_median_tok_s": 62.7032330063402,
+    "confirm_wall_median_tok_s": 52.97162569192547,
+    "confirm_ttft_median_ms": 332.7347774975351,
+    "cached_tokens_all_zero": true
+  },
+  "paired_control": {
+    "median_tok_s": 59.108299211434016,
+    "p10_tok_s": 56.38019229866344,
+    "mean_tok_s": 59.39910970965284,
+    "candidate_confirm_gain_percent": 7.176029159757125,
+    "candidate_screen_gain_percent": 6.386074217568827
+  },
+  "prior_record": {
+    "median_tok_s": 60.264241514730145,
+    "gain_percent": 5.1202610476706045,
+    "localmaxxing_id": "cmrmvjbok1np3mj01p9il8486"
+  },
+  "correctness": {
+    "m2_microgate_changed_eager_exact": "160/160",
+    "m2_microgate_changed_graph_exact": "128/128",
+    "m1_regression_changed_eager_exact": "160/160",
+    "m1_regression_changed_graph_exact": "128/128",
+    "ordered_exact_captures": 70,
+    "ordered_exact_captures_passed": 70,
+    "historical_positions_crossed": [28, 58],
+    "target_verified_accepted_tokens": true
+  },
+  "microgate_graph_reference_us": [46.9729, 46.78817, 47.08704, 47.0639],
+  "microgate_graph_candidate_us": [18.80112, 18.70973, 18.89849, 18.87587],
+  "microgate_saved_ms_per_40_layers": [
+    1.1268712,
+    1.1231376,
+    1.127542,
+    1.1275212
+  ],
+  "localmaxxing": {
+    "id": "cmrncv39w003ylg01hogleazo",
+    "status": "APPROVED",
+    "payload": "../localmaxxing/deepseek-v4-flash-k160-tp4-mtp1-m2-router-realistic-63.350tok-20260716.queue.json"
+  }
+}

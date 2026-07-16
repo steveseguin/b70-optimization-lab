@@ -1,0 +1,100 @@
+{
+  "changed_input_gate": {
+    "epochs": 40,
+    "exact_epochs": 40,
+    "maximum_abs_weight_difference": 0.0,
+    "total_id_mismatches": 0,
+    "total_weight_mismatches": 0
+  },
+  "classification": "deepseek_v4_m2_router_norm_microgate",
+  "device": "xpu:0",
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "gate": {
+    "minimum_projected_saved_ms_per_cycle": 0.5,
+    "passes": true,
+    "requires_bitwise_ids_and_weights": true
+  },
+  "graph_replay_gate": {
+    "candidate_us": {
+      "median": 18.87587,
+      "samples": [
+        18.71402,
+        18.7811,
+        18.74262,
+        18.8747,
+        18.928520000000002,
+        19.15446,
+        19.00184,
+        18.877039999999997,
+        19.434739999999998,
+        18.724159999999998
+      ]
+    },
+    "epochs": 32,
+    "exact_epochs": 32,
+    "passes_0_5ms_gate": true,
+    "projected_saved_ms_per_cycle": 1.1275212,
+    "reference_us": {
+      "median": 47.0639,
+      "samples": [
+        47.57766000000001,
+        46.923759999999994,
+        46.857200000000006,
+        46.995,
+        46.93,
+        47.516299999999994,
+        47.16114,
+        47.44896,
+        46.8728,
+        47.132799999999996
+      ]
+    },
+    "total_id_mismatches": 0,
+    "total_weight_mismatches": 0
+  },
+  "routed_scaling_factor": 1.5,
+  "schema_version": 1,
+  "shape": {
+    "experts": 160,
+    "m": 2,
+    "topk": 6
+  },
+  "timing": {
+    "batch_iterations": 200,
+    "batches": 10,
+    "candidate_us": {
+      "median": 8.3109,
+      "samples": [
+        35.68785999999999,
+        9.49676,
+        8.30596,
+        8.307780000000001,
+        8.32052,
+        8.28464,
+        8.31402,
+        8.28802,
+        8.335859999999998,
+        8.28646
+      ]
+    },
+    "projected_saved_ms_per_cycle": 5.581061199999999,
+    "reference_us": {
+      "median": 147.83742999999998,
+      "samples": [
+        143.20618000000002,
+        163.72173999999998,
+        152.95462,
+        142.82891999999998,
+        152.55136,
+        144.49344,
+        152.7916,
+        149.73659999999998,
+        145.93825999999999,
+        142.31152
+      ]
+    },
+    "speedup": 17.788377913342718,
+    "warmup": 100
+  },
+  "torch_version": "2.12.0+xpu"
+}
