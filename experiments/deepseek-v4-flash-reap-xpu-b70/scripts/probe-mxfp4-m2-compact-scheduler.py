@@ -26,7 +26,12 @@ def main() -> int:
     parser.add_argument("--required-ms", type=float, default=0.50)
     parser.add_argument(
         "--gate",
-        choices=("scheduler", "combined-upper-bound", "route-direct"),
+        choices=(
+            "scheduler",
+            "combined-upper-bound",
+            "remap-upper-bound",
+            "route-direct",
+        ),
         default="scheduler",
     )
     parser.add_argument(
@@ -36,7 +41,9 @@ def main() -> int:
         "--gather", choices=("generic", "direct"), default="generic"
     )
     parser.add_argument(
-        "--activation", choices=("generic", "routed"), default="generic"
+        "--activation",
+        choices=("generic", "routed", "fused-gemm2"),
+        default="generic",
     )
     parser.add_argument(
         "--activation-route-lanes", type=int, choices=(2, 4, 12), default=4
@@ -54,8 +61,10 @@ def main() -> int:
         parser.error("--gather direct is only valid with --gate route-direct")
     if args.gate != "route-direct" and args.activation != "generic":
         parser.error(
-            "--activation routed is only valid with --gate route-direct"
+            "non-generic --activation is only valid with --gate route-direct"
         )
+    if args.activation == "fused-gemm2" and args.compact_route_lanes != 12:
+        parser.error("fused-gemm2 currently requires 12 compact route lanes")
 
     torch.manual_seed(20260716 + args.ep_rank)
     torch.xpu.manual_seed_all(20260716 + args.ep_rank)
@@ -271,6 +280,21 @@ def main() -> int:
             k1,
             local_experts,
         )
+        if args.activation == "fused-gemm2":
+            torch.ops._xpu_C.cutlass_grouped_gemm_m2_compact_swiglu_interface(
+                candidate1,
+                weight2,
+                scale2,
+                None,
+                candidate2,
+                topk_ids,
+                expert_map,
+                10.0,
+                n,
+                k2,
+                local_experts,
+            )
+            return
         if args.activation == "routed":
             torch.ops._moe_C.silu_and_mul_clamp_m2_direct(
                 candidate_activation2,
@@ -323,6 +347,20 @@ def main() -> int:
                 candidate_unpermuted,
                 local_experts,
             )
+
+    def remap_upper_bound_call() -> None:
+        # Deletion-only ceiling for folding remap into GEMM1. The reference
+        # graph refreshes activation1 and unpermuted immediately before this
+        # graph in correctness and timing warmup; the candidate retains both
+        # GEMMs, the real activation dependency, and generic gather.
+        compact_call()
+        torch.ops._moe_C.moe_gather(
+            candidate_gather,
+            candidate2,
+            topk_weights,
+            unpermuted,
+            local_experts,
+        )
 
     def direct_oracle_call() -> tuple[list[list[int]], list[list[int]]]:
         # This is deliberately outside timing. The already-qualified fixed-M1
@@ -426,7 +464,13 @@ def main() -> int:
         else None
     )
     candidate_graph = capture(
-        route_direct_call if args.gate == "route-direct" else compact_call
+        route_direct_call
+        if args.gate == "route-direct"
+        else (
+            remap_upper_bound_call
+            if args.gate == "remap-upper-bound"
+            else compact_call
+        )
     )
 
     correctness = []
@@ -565,14 +609,22 @@ def main() -> int:
                     "compact_two_gemm_arithmetic_only"
                     if args.gate == "combined-upper-bound"
                     else (
-                        "fixed_remap_compact_routed_activation_two_gemm_"
-                        if args.activation == "routed"
-                        else "fixed_remap_compact_two_gemm_"
-                    )
-                    + (
-                        "direct_gather"
-                        if args.gather == "direct"
-                        else "generic_gather"
+                        "compact_two_gemm_generic_gather_without_remap"
+                        if args.gate == "remap-upper-bound"
+                        else (
+                            "fixed_remap_compact_fused_swiglu_gemm2_"
+                            if args.activation == "fused-gemm2"
+                            else (
+                                "fixed_remap_compact_routed_activation_two_gemm_"
+                                if args.activation == "routed"
+                                else "fixed_remap_compact_two_gemm_"
+                            )
+                        )
+                        + (
+                            "direct_gather"
+                            if args.gather == "direct"
+                            else "generic_gather"
+                        )
                     )
                 )
             ),
@@ -597,7 +649,11 @@ def main() -> int:
             else (
                 "deepseek_v4_mxfp4_m2_route_direct_upper_bound_gate"
                 if args.gate == "combined-upper-bound"
-                else "deepseek_v4_mxfp4_m2_route_direct_implementation_gate"
+                else (
+                    "deepseek_v4_mxfp4_m2_remap_fusion_upper_bound_gate"
+                    if args.gate == "remap-upper-bound"
+                    else "deepseek_v4_mxfp4_m2_route_direct_implementation_gate"
+                )
             )
         ),
         "device": torch.xpu.get_device_name(device),
@@ -605,6 +661,10 @@ def main() -> int:
         "ep_rank": args.ep_rank,
         "generic_policy": "N64",
         "compact_route_lanes": args.compact_route_lanes,
+        "gemm1_compact_route_lanes": args.compact_route_lanes,
+        "gemm2_compact_route_lanes": (
+            12 if args.activation == "fused-gemm2" else args.compact_route_lanes
+        ),
         "route_direct_gather": (
             args.gather if args.gate == "route-direct" else None
         ),

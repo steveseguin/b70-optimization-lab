@@ -157,6 +157,16 @@ losses. No service load or LocalMaxxing submission occurred. The next bounded
 screen must remove a launch, led by source-direct GEMM1 folding the route map
 into its first N tile. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md).
+The first launch-removing follow-up is also closed before service. Fusing the
+exact clamped SwiGLU calculation into GEMM2's A loader passes all 84
+changed-input cases bitwise, but the GEMM2 output-N grid recomputes the same
+activation for every N tile. It regresses every route with local work, with a
+worst projection of `-9.133 ms` over 43 layers. Signed XPU experiment commit
+`cfb0155` is preserved; do not integrate it. A deletion-only remap upper bound
+is also marginal and unstable (`0.5002/0.4774 ms`). The next bounded audit is
+paired gate/up production in the GEMM1 epilogue so each activated value is
+formed once. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-fused-swiglu-gemm2-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-fused-swiglu-gemm2-closure.md).
 The preceding native M=2 MHC record remains approved LocalMaxxing evidence at
 60.264242 tok/s, ID `cmrmvjbok1np3mj01p9il8486`.
 The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft

@@ -33,6 +33,15 @@ below the 0.50 ms gate. Direct gather, four-lane GEMMs, and routed activations
 are slower. Preserve XPU experiment commit `3aa2181`; do not integrate it.
 See `notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md`.
 
+The first launch-removing follow-up is closed before service too. The fused
+SwiGLU/GEMM2-input kernel passes 84/84 changed-input cases bitwise, but it
+recomputes the activation in every GEMM2 output-N tile and regresses all routes
+with local work (worst projection `-9.133 ms` per 43 layers). Preserve signed
+XPU commit `cfb0155`; do not integrate it. Deleting remap alone is not robust:
+two exact upper-bound runs project `0.5002` and `0.4774 ms`. The next source
+audit is a paired gate/up GEMM1 epilogue that produces each activated value
+once. See `notes/2026-07-16-mtp1-m2-fused-swiglu-gemm2-closure.md`.
+
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
 and is a smoke/performance candidate only. K168/K176/K180 remain later

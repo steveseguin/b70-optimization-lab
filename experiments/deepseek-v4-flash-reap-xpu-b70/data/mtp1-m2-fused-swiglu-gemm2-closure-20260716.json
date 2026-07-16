@@ -1,0 +1,29 @@
+{
+  "classification": "deepseek_v4_mtp1_m2_fused_swiglu_gemm2_closure",
+  "date": "2026-07-16",
+  "decode_record_tok_s": 63.349927998683015,
+  "model_changed": false,
+  "production_integrated": false,
+  "localmaxxing_submitted": false,
+  "required_minimum_saved_ms_per_43_layers": 0.5,
+  "artifact": "data/deepseek-v4-reap-mxfp4-m2-fused-swiglu-gemm2-20260716/card0.json",
+  "correctness": {
+    "cases": 84,
+    "exact_cases": 84,
+    "passed": true
+  },
+  "minimum_saved_ms_per_43_layers": -9.133232680000003,
+  "route_savings_ms_per_43_layers": {
+    "same_typical": -2.5380388799999998,
+    "disjoint_typical": -6.143096960000003,
+    "cross_row_overlap": -2.62273856,
+    "within_row_duplicate": -2.384358600000001,
+    "all_duplicate": -2.7911988,
+    "six_local": -9.133232680000003,
+    "all_remote": 0.48704552000000007
+  },
+  "failure_mechanism": "SwiGLU is recomputed independently by every GEMM2 output-N tile",
+  "xpu_branch": "codex/deepseek-v4-m2-fused-swiglu-gemm2",
+  "xpu_commit": "cfb0155",
+  "grouped_gemm_sha256": "4b67d34a778e7e61ddcd2fead7957c015507269234796c0bd72fc96541f2b8f8"
+}
