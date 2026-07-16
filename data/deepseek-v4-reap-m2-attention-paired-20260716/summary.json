@@ -1,0 +1,46 @@
+{
+  "date": "2026-07-16",
+  "status": "closed_negative",
+  "lane": "DeepSeek V4 Flash REAP K160 Q4, TP4+EP, MTP1",
+  "source": {
+    "vllm_path": "/home/steve/src/deepseek-v4-vllm-clean",
+    "vllm_commit": "cfa2a67b4b",
+    "benchmark": "experiments/deepseek-v4-flash-reap-xpu-b70/scripts/bench-split-fp8-attention-geometry.py"
+  },
+  "shape": {
+    "heads": 64,
+    "compressed_width": 256,
+    "compressed_len": 128,
+    "swa_width": 128,
+    "swa_len": 128,
+    "geometry": {
+      "block_h": 4,
+      "qk_warps": 16,
+      "pv_warps": 8
+    }
+  },
+  "per_gpu_median_us": {
+    "gpu0": {"m1": 177.840, "m2_identical": 178.672, "m2_shifted": 178.308},
+    "gpu1": {"m1": 177.476, "m2_identical": 179.036, "m2_shifted": 178.360},
+    "gpu2": {"m1": 177.476, "m2_identical": 178.724, "m2_shifted": 178.308},
+    "gpu3": {"m1": 177.372, "m2_identical": 178.984, "m2_shifted": 178.256}
+  },
+  "mean_median_us": {
+    "m1": 177.541,
+    "m2_identical": 178.854,
+    "m2_shifted": 178.308
+  },
+  "m2_minus_m1_us": {
+    "identical_mean": 1.313,
+    "shifted_mean": 0.767,
+    "identical_projected_43_layers_ms": 0.0565,
+    "shifted_projected_43_layers_ms": 0.0330
+  },
+  "decision": "Do not implement a special M=2 attention kernel. The existing token dimension already exposes enough parallelism that the second verifier row is effectively free at this gate, leaving far less than 0.1 ms per 43-layer cycle to recover from M=2-specific attention overhead.",
+  "raw_files": [
+    "gpu0-m1-identical.json", "gpu0-m2-identical.json", "gpu0-m2-shifted.json",
+    "gpu1-m1-identical.json", "gpu1-m2-identical.json", "gpu1-m2-shifted.json",
+    "gpu2-m1-identical.json", "gpu2-m2-identical.json", "gpu2-m2-shifted.json",
+    "gpu3-m1-identical.json", "gpu3-m2-identical.json", "gpu3-m2-shifted.json"
+  ]
+}
