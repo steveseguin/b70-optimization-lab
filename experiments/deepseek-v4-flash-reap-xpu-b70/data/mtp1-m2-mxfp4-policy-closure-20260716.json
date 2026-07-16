@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "classification": "exact_isolated_positive_not_promoted",
+  "date": "2026-07-16",
+  "model": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "mode": "TP4+EP, one active generation, FP8 KV, target-verified MTP1",
+  "record_tok_s": 63.349927998683015,
+  "source": {
+    "vllm": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+    "promoted_xpu": "d15ce87d07376be53ea2d6f7ae0262ab79f7cb7b",
+    "experiment_xpu": "351a06a4426b77eed12f555d01da8ea186d0dc7b",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "microgate": {
+    "artifact_dir": "../../../data/deepseek-v4-reap-mxfp4-m2-policy-20260716",
+    "n32": {
+      "cards_tested": 2,
+      "exact_cases_per_card": 48,
+      "projected_saved_ms_per_43_layers_range": [-0.29998176, -0.28705768],
+      "decision": "rejected_regression"
+    },
+    "n128": {
+      "cards_tested": 4,
+      "exact_cases_per_card": 48,
+      "n64_median_us_mean": 219.88161,
+      "n128_median_us_mean": 213.72377,
+      "speedup_mean": 1.0288144330974742,
+      "projected_saved_ms_per_43_layers_mean": 0.26478712,
+      "required_integration_gate_ms": 0.5,
+      "clears_gate": false
+    }
+  },
+  "service": {
+    "candidate_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-mxfp4-n128-candidate-20260716T0630Z",
+    "control_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-mxfp4-n64-control-20260716T0645Z",
+    "n128": [
+      {"run": "strict-screen", "median_tok_s": 62.64970586050894, "p10_tok_s": 59.57777859473178, "mean_tok_s": 62.72708176521959},
+      {"run": "strict-confirm", "median_tok_s": 63.628476536645636, "p10_tok_s": 59.4815068934993, "mean_tok_s": 62.986085802046034}
+    ],
+    "n64": [
+      {"run": "strict-control", "median_tok_s": 61.20569242259211, "p10_tok_s": 58.89343578298416, "mean_tok_s": 62.06717899627526},
+      {"run": "strict-control2", "median_tok_s": 63.10186502108168, "p10_tok_s": 58.74933046222071, "mean_tok_s": 62.64141414587203}
+    ],
+    "n128_median_mean_tok_s": 63.13909119857729,
+    "n64_median_mean_tok_s": 62.15377872183689,
+    "all_requests_cached_zero": true,
+    "all_realistic_gates_passed": true
+  },
+  "decision": {
+    "promote": false,
+    "localmaxxing_submit": false,
+    "runtime_policy": 64,
+    "reason": "N128 is an exact 0.265 ms projected isolated win, but two strict suites do not robustly exceed the 63.349928 tok/s record and control variance is large. More suites would be benchmark shopping."
+  }
+}

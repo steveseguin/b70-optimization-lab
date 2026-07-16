@@ -128,6 +128,16 @@ after both strict suites, including former rollover positions 28 and 58, and
 every request is cached-zero. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-router-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-router-record.md).
 LocalMaxxing approved `cmrncv39w003ylg01hogleazo`.
+The exact M=2 MXFP4 N32/N128 follow-up is closed without promotion. N32
+regresses. N128 saves 0.247-0.283 ms per 43 routed layers in the four-card
+microgate, but two strict suites reach 62.649706/63.628477 tok/s while
+same-binary N64 controls span 61.205692-63.101865. The isolated improvement is
+inside observed service variance and does not robustly beat the record; keep
+N64 and do not submit the single above-record row. The profile's 6.580 ms dense
+bucket is also decomposed into already optimized or closed families. The next
+noncollective candidate must be an architectural M=2 grouped-MXFP4 change with
+a measured four-card ceiling of at least 0.50 ms/cycle. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md).
 The preceding native M=2 MHC record remains approved LocalMaxxing evidence at
 60.264242 tok/s, ID `cmrmvjbok1np3mj01p9il8486`.
 The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft

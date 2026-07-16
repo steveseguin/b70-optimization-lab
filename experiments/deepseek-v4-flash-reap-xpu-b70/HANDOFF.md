@@ -15,6 +15,13 @@ selective M=2 W8A16, direct-M1 draft MoE, M=2 shared/routed fusion, native M=2
 MHC post/pre, native M=2 router selection/normalization, and wide-epoch runtime
 is the target-verified speed record at 63.3499/62.8830 tok/s**.
 
+The follow-up exact M=2 MXFP4 tile-policy lane is closed without promotion.
+N32 regresses. N128 saves 0.247-0.283 ms per 43 routed layers across four
+cards, but independent strict suites reach 62.649706/63.628477 tok/s while
+same-binary N64 controls span 61.205692-63.101865. Keep N64; do not submit the
+single above-record row. See
+`notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md`.
+
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
 and is a smoke/performance candidate only. K168/K176/K180 remain later
@@ -199,14 +206,18 @@ identities are in
 `notes/2026-07-16-mtp1-post-record-fusion-sweep.md`. Preserve
 `VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` in every future control. A new
 TP4 service candidate now needs a measured complete-cycle ceiling large enough
-to survive reusable-graph execution. The
-grouped-MXFP4 small-N
-scheduler race is now understood: resetting its global counter inside
-workgroup 0 raced increments from other workgroups. Moving the reset to an
-ordered queue fill makes N32 and N128 exact over 40 changed graph epochs, but
-fixed N32 saves only 1.05 us per complete MoE layer and fixed N128 is 0.3%
-slower than N64. The fix and revert are preserved; keep N64. The next work is
-the producer/consumer boundary around the 87
+to survive reusable-graph execution. The grouped-MXFP4 small-N scheduler race
+is now understood: resetting its global counter inside workgroup 0 raced
+increments from other workgroups. Moving the reset to an ordered queue fill
+makes N32 and N128 exact. The new real M=2 gate closes both tile policies: N32
+regresses by 0.287-0.300 ms per 43 layers; N128 saves only 0.247-0.283 ms and
+does not robustly beat the record in two strict suites. Preserve experiment
+commit `351a06a442`, keep N64, and do not spend another service load on small-N
+tile selection. Exact dense-shape attribution also shows that the 6.580 ms
+dense bucket is composed mostly of already optimized or closed projections.
+The next noncollective lane must be an architectural M=2 grouped-MXFP4 change
+that first projects at least 0.50 ms/cycle on all four cards. The communication
+alternative remains the producer/consumer boundary around the 87
 ordered reductions; the MHC post/pre + RMSNorm candidate is a preserved loss.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict

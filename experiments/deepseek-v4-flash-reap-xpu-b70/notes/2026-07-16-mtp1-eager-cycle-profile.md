@@ -61,10 +61,33 @@ before the generic bias, gather, reduction, normalization, scaling, and
 intermediate operations. This directly motivated the native M=2 router fusion
 promoted in `2026-07-16-mtp1-m2-router-record.md`.
 
+## Exact dense-GEMM decomposition
+
+Schema v2 of the tracked summary attributes every `gemm_kernel` event to its
+enclosing operator and exact shape. The largest cross-rank mean families are:
+
+| Projection family | Exact M=2 shape | ms/cycle | Status |
+| --- | --- | ---: | --- |
+| `wo_a` BF16 BMM | `[2,2,4096] x [2,4096,1024]` | 1.4094 | FP8 replacement already closed end to end |
+| WQ_B W8A16 | `1024 -> 8192` | 0.9129 | already optimized |
+| WO_B W8A16 | `2048 -> 4096` | 0.8183 | already optimized |
+| C4 compressor BMM | `4096 -> 2048`, 21 calls | 0.6960 | row-exact batched path promoted |
+| fused WQA/WKV W8A16 | `4096 -> 1536` | 0.6305 | already optimized |
+| shared-down W8A8 | `512 -> 4096` | 0.5919 | activation/quant producer already fused |
+| shared gate/up W8A16 | `4096 -> 1024` | 0.4940 | already optimized |
+| LM head | `4096 -> 32320` | 0.4473 | single cycle boundary |
+| C128 compressor BMM | `4096 -> 1024`, 20 calls | 0.3505 | row-exact batched path promoted |
+| router projection | `4096 -> 160`, 43 calls | 0.2150 | consumer selection/normalization now fused |
+
+The 6.5803 ms total is therefore not one untouched dense boundary. Its largest
+pieces are already selected, fused, or closed by a measured negative result.
+
 ## Next use
 
-The remaining largest unclosed bucket is the 6.5803 ms dense projection path.
-The next profile pass should attribute `gemm_kernel` calls by input/output
-shape and source projection, then retain only candidates with at least a
-0.50 ms measured complete-cycle ceiling. Generic configuration sweeps and
-sub-0.50 ms isolated ideas remain closed.
+The largest genuinely open verifier family is the 4.1511 ms routed MXFP4 path.
+The exact N32/N128 small-N policy gate is documented in
+`2026-07-16-mtp1-m2-mxfp4-policy-closure.md`: N32 regresses, while N128 saves
+only 0.2648 ms/cycle in isolation and does not establish an end-to-end record.
+The next candidate must be an architectural M=2 grouped-MXFP4 change with a
+measured four-card ceiling of at least 0.50 ms/cycle. Generic configuration
+sweeps and sub-0.50 ms isolated ideas remain closed.

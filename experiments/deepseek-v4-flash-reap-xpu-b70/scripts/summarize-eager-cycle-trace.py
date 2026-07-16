@@ -72,6 +72,27 @@ def summarize_trace(path: Path, context_name: str, drop_first: int):
     per_cycle_names = [Counter() for _ in intervals]
     topk_shapes = Counter()
     topk_contracts = Counter()
+    cpu_op_by_external_id = {}
+
+    for event in iter_events(path):
+        if event.get("cat") != "cpu_op":
+            continue
+        timestamp = float(event.get("ts", -1))
+        if interval_index(starts, intervals, timestamp) is None:
+            continue
+        args = event.get("args") or {}
+        external_id = args.get("External id")
+        if external_id is None:
+            continue
+        cpu_op_by_external_id[int(external_id)] = {
+            "name": event.get("name"),
+            "input_dims": args.get("Input Dims") or [],
+            "input_strides": args.get("Input Strides") or [],
+            "input_types": args.get("Input type") or [],
+        }
+
+    dense_shape_duration_us = Counter()
+    dense_shape_calls = Counter()
 
     for event in iter_events(path):
         category = event.get("cat")
@@ -95,6 +116,14 @@ def summarize_trace(path: Path, context_name: str, drop_first: int):
             duration_us = float(event.get("dur", 0.0))
             per_cycle_buckets[index][classify(name)] += duration_us
             per_cycle_names[index][name] += duration_us
+            if name == "gemm_kernel":
+                external_id = (event.get("args") or {}).get("External id")
+                operator = cpu_op_by_external_id.get(int(external_id or -1))
+                shape_key = json.dumps(
+                    operator or {"unmapped_external_id": external_id}
+                )
+                dense_shape_duration_us[shape_key] += duration_us
+                dense_shape_calls[shape_key] += 1
         elif category == "cpu_op" and event.get("name") == "aten::topk":
             timestamp = float(event.get("ts", -1))
             if interval_index(starts, intervals, timestamp) is None:
@@ -154,6 +183,14 @@ def summarize_trace(path: Path, context_name: str, drop_first: int):
             }
             for name, duration in aggregate_names.most_common(30)
         ],
+        "dense_gemm_shapes": [
+            {
+                "operator": json.loads(key),
+                "calls_per_cycle": dense_shape_calls[key] / len(intervals),
+                "mean_ms_per_cycle": duration / len(intervals) / 1000.0,
+            }
+            for key, duration in dense_shape_duration_us.most_common()
+        ],
         "cpu_topk_shapes": dict(topk_shapes),
         "cpu_topk_contracts": {
             key: count for key, count in topk_contracts.items()
@@ -191,7 +228,7 @@ def main() -> int:
             "max_rank_mean_ms": max(values),
         }
     result = {
-        "schema_version": 1,
+        "schema_version": 2,
         "classification": "deepseek_v4_eager_mtp1_cycle_trace_summary",
         "context_name": args.context_name,
         "dropped_initial_contexts_per_rank": args.drop_first,
