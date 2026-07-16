@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "classification": "exact_below_integration_gate",
+  "date": "2026-07-16",
+  "model": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+  "mode": "TP4+EP, one active generation, FP8 KV, target-verified MTP1",
+  "record_tok_s": 63.349927998683015,
+  "source": {
+    "vllm": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+    "promoted_xpu": "d15ce87d07376be53ea2d6f7ae0262ab79f7cb7b",
+    "experiment_xpu": "ae1cbd472dced30741b5bdcd297fd5fd62a68f3d",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "binary_sha256": {
+    "_xpu_C.abi3.so": "dbf2ee908a15673acf9ac8dbb4dcf1743e8bce088fe2bc20a8b599055541dff8",
+    "libgrouped_gemm_xe_2.so": "def2e2116fb2449bab822a64b1b74a37a16d84f92bbc338c7e330504a610f51a"
+  },
+  "gate": {
+    "cards_run": 1,
+    "cards_not_run_after_fail_closed_gate": [1, 2, 3],
+    "correctness_cases": 84,
+    "exact_cases": 84,
+    "required_ms_per_43_layers": 0.5,
+    "minimum_projected_saved_ms_per_43_layers": 0.26176851999999995,
+    "minimum_route": "all_remote",
+    "clears_gate": false,
+    "raw_artifact": "../../../data/deepseek-v4-reap-mxfp4-m2-compact-scheduler-20260716/card0.json"
+  },
+  "decision": {
+    "promote": false,
+    "service_integrate": false,
+    "localmaxxing_submit": false,
+    "reason": "Exact on every declared card-0 case, but the worst valid EP route projects only 0.262 ms/cycle and fails the frozen 0.50 ms integration gate."
+  },
+  "next": "Screen a grouped M=2 route-direct chain that jointly removes remap, persistent scheduling, and permuted gather without losing expert weight reuse."
+}

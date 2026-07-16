@@ -138,6 +138,14 @@ bucket is also decomposed into already optimized or closed families. The next
 noncollective candidate must be an architectural M=2 grouped-MXFP4 change with
 a measured four-card ceiling of at least 0.50 ms/cycle. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md).
+The first architectural scheduler screen is also closed before service. A
+route-compact M=2 Xe2 scheduler is exact on 84/84 changed-input card-0 cases,
+but its worst valid all-remote EP route projects only 0.262 ms saved per 43
+layers against the 0.50 ms gate. Favorable routes project 0.459-0.830 ms, so
+the result is route-dependent and must not be promoted from an average. The
+next screen must jointly remove M=2 remap, scheduling, and permuted-gather
+traffic while preserving grouped expert reuse. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-compact-scheduler-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-compact-scheduler-closure.md).
 The preceding native M=2 MHC record remains approved LocalMaxxing evidence at
 60.264242 tok/s, ID `cmrmvjbok1np3mj01p9il8486`.
 The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft

@@ -219,6 +219,18 @@ The next noncollective lane must be an architectural M=2 grouped-MXFP4 change
 that first projects at least 0.50 ms/cycle on all four cards. The communication
 alternative remains the producer/consumer boundary around the 87
 ordered reductions; the MHC post/pre + RMSNorm candidate is a preserved loss.
+The first such architectural screen is now closed before service. XPU kernels
+`ae1cbd472` replace the 40-expert persistent/atomic scheduler with a direct
+twelve-route M=2 scheduler while preserving expert grouping. Card 0 passes
+84/84 changed-input cases against generic, fixed-M1, and direct-gather oracles,
+but the fail-closed minimum is only 0.262 ms/cycle for a valid all-remote EP
+rank; typical and overlap cases reach 0.459-0.740 ms. Cards 1-3 were not run
+after the frozen 0.50 ms gate failed, and no service integration was made. See
+`notes/2026-07-16-mtp1-m2-compact-scheduler-closure.md`. The next plausible
+noncollective boundary is a grouped M=2 route-direct chain that combines the
+scheduler saving with removal of remap and final permuted gather. Do not
+integrate it unless the combined exact hardware gate clears 0.50 ms on all
+cards.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.
