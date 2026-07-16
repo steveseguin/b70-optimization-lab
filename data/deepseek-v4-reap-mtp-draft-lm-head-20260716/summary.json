@@ -1,0 +1,22 @@
+{
+  "date": "2026-07-16",
+  "status": "closed_negative",
+  "lane": "DeepSeek V4 Flash REAP K160 Q4, TP4+EP, MTP1",
+  "candidate": "fused streaming BF16 local LM-head projection plus argmax",
+  "shape": {
+    "hidden_size": 4096,
+    "local_vocab_size": 32320,
+    "dtype": "bfloat16",
+    "weight_bytes_per_rank": 264765440,
+    "weight_mib_per_rank": 252.5
+  },
+  "results": [
+    {"gpu": 0, "projection_ms": 0.501800, "argmax_ms": 0.013676, "combined_ms": 0.513136, "effective_gbps": 527.6314, "perfect_fused_ceiling_ms": 0.077667},
+    {"gpu": 1, "projection_ms": 0.501696, "argmax_ms": 0.013676, "combined_ms": 0.512980, "effective_gbps": 527.7408, "perfect_fused_ceiling_ms": 0.077511},
+    {"gpu": 2, "projection_ms": 0.501592, "argmax_ms": 0.013676, "combined_ms": 0.513032, "effective_gbps": 527.8502, "perfect_fused_ceiling_ms": 0.077563},
+    {"gpu": 3, "projection_ms": 0.501566, "argmax_ms": 0.013728, "combined_ms": 0.513032, "effective_gbps": 527.8776, "perfect_fused_ceiling_ms": 0.077563}
+  ],
+  "assumed_peak_bandwidth_gbps": 608.0,
+  "weight_read_roofline_ms": 0.435469,
+  "decision": "Do not build a custom fused BF16 draft-head/argmax kernel. The existing projection sustains about 528 GB/s, argmax is negligible, and even a perfect 608 GB/s implementation has less than 0.08 ms/cycle of ceiling, far below the 0.5 ms integration gate."
+}
