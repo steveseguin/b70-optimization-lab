@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_m2_router_unique_routes_gate",
+  "device": "xpu:0",
+  "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "shape": {
+    "m": 2,
+    "experts": 160,
+    "topk": 6
+  },
+  "correctness": {
+    "eager_epochs": 1,
+    "eager_exact": false,
+    "graph_epochs": 1,
+    "graph_exact": false,
+    "eager_rows": [
+      {
+        "epoch": 0,
+        "weights_exact": true,
+        "ids_exact": true,
+        "count": 0,
+        "count_exact": false,
+        "experts_exact": false,
+        "masks_exact": false,
+        "tail_initialized": false,
+        "slots_exact": false
+      }
+    ],
+    "graph_rows": [
+      {
+        "epoch": 0,
+        "weights_exact": true,
+        "ids_exact": true,
+        "count": 0,
+        "count_exact": false,
+        "experts_exact": false,
+        "masks_exact": false,
+        "tail_initialized": false,
+        "slots_exact": false
+      }
+    ]
+  },
+  "timing": {
+    "control_median_us": 17.89996,
+    "candidate_median_us": 17.976295999999998,
+    "route_table_overhead_us_per_layer": 0.07633599999999774,
+    "projected_overhead_ms_per_cycle": 0.0030534399999999095,
+    "control_samples_us": [
+      25.615824,
+      17.716711999999998,
+      17.884672,
+      17.702151999999998,
+      18.040048,
+      17.828616,
+      17.883112,
+      17.915248,
+      18.011864,
+      17.974111999999998
+    ],
+    "candidate_samples_us": [
+      18.112744,
+      17.897152,
+      17.92232,
+      17.95716,
+      18.281223999999998,
+      18.653336,
+      17.995431999999997,
+      18.003439999999998,
+      17.861895999999998,
+      17.847544
+    ]
+  },
+  "passed": false
+}

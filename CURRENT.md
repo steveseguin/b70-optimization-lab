@@ -181,13 +181,18 @@ subgroups and exchange rounded BF16 fragments through SLM, retaining the same
 The exact gather/shared-output-add widening is also below the real gate. Its
 real route-direct chain saves `0.535 ms/43 layers` for six-local work but only
 `0.448 ms` on all-remote; an empty-routed fast path raises all-remote to
-`0.470 ms` while leaving six-local at a noise-fragile `0.501 ms`. Literal
-remap deletion plus fused gather/add passes twice at `0.504/0.524 ms`, but the
-lower run leaves only `0.097 us/layer` for an implementation. Xe block2D cannot
-express the exact non-affine duplicate A rows within that budget. Preserve
-signed XPU commits `820ecc5` and `4e2ce07`; no service test occurred. The next
-architectural screen is an upstream-produced unique `(token, expert)` route
-table consumed by both compact GEMMs and fused gather/add, with no new launch.
+`0.470 ms` while leaving six-local at a noise-fragile `0.501 ms`. With that
+fast path, literal remap deletion plus fused gather/add passes twice at
+`0.538/0.527 ms`, leaving only `0.638-0.894 us/layer` for an implementation.
+The upstream unique-route router is exact over 40 changing eager and 32 graph
+epochs, but its best local-memory/subgroup-ballot emitter costs
+`3.132 us/layer` (`0.125 ms/cycle`). The WG32/local-barrier shell costs only
+`0.076 us/layer`, proving stable table construction is the blocker. Netting the
+best exact emitter against the two deletion ceilings leaves only
+`0.413/0.402 ms/cycle`, below the `0.50 ms` gate before downstream consumption.
+Preserve signed XPU commits `820ecc5`, `4e2ce07`, `e7685b1`, `9360422`,
+`579db66`, `c71bd3e`, `fdc4765`, and `70e3824`; no service test occurred. No
+measured noncollective M=2 source boundary now clears the integration gate.
 Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-gather-shared-add-gate.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-gather-shared-add-gate.md).
 The preceding native M=2 MHC record remains approved LocalMaxxing evidence at

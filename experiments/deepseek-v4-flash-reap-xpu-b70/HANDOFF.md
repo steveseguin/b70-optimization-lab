@@ -286,11 +286,17 @@ gather. Deletion-only and real remap variants have since closed below the
 gate, and the first dual-accumulator paired producer is exact but much slower.
 The lower-register paired producer was not funded because its unchanged
 all-remote ceiling lacks margin. Gather/shared-output addition is exact but
-still below the real gate. The active card-0 screen is now an end-to-end unique
-`(token, expert)` route representation emitted by the already-running M=2
-router/top-k boundary. It must delete standalone remap, retain separate route
-weights for duplicate slots, feed affine token rows to both compact GEMMs, and
-pass the same 0.50 ms every-route gate twice before cards 1-3 or service work.
+still below the real gate. The end-to-end unique `(token, expert)` router
+screen is now closed before compact GEMM or service integration. The best exact
+local-memory/subgroup-ballot emitter passes 40 changing eager and 32 graph
+epochs but costs `3.132 us/layer` (`0.125 ms/cycle`); its
+WG32/local-barrier-only shell costs just `0.076 us/layer`. Against the corrected
+fast-path deletion ceilings of `0.538/0.527 ms`, the exact emitter leaves only
+`0.413/0.402 ms/cycle`, below the frozen `0.50 ms` gate before downstream
+consumption. Preserve XPU branch `codex/deepseek-v4-m2-unique-routes` through
+signed restore commit `70e3824`. No measured noncollective M=2 source boundary
+now clears the gate; further work requires a new architectural boundary with a
+fresh exact upper-bound proof.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.
