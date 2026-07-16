@@ -146,6 +146,17 @@ the result is route-dependent and must not be promoted from an average. The
 next screen must jointly remove M=2 remap, scheduling, and permuted-gather
 traffic while preserving grouped expert reuse. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-compact-scheduler-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-compact-scheduler-closure.md).
+The combined fixed-M2 route-direct boundary is now closed as well. An audit
+invalidated the first misordered upper-bound graphs before integration; the
+corrected remap -> GEMM1 -> clamped SwiGLU -> GEMM2 -> gather gate passes all
+84 changed-input cases bitwise exactly. Its best 12-lane/generic-gather variant
+saves 0.546-0.942 ms across 43 layers when local work exists, but only 0.414 ms
+for the valid all-remote EP case, below the frozen 0.50 ms minimum. Four-lane
+GEMM scheduling, direct gather, and 2/4/12-lane routed activations are preserved
+losses. No service load or LocalMaxxing submission occurred. The next bounded
+screen must remove a launch, led by source-direct GEMM1 folding the route map
+into its first N tile. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md).
 The preceding native M=2 MHC record remains approved LocalMaxxing evidence at
 60.264242 tok/s, ID `cmrmvjbok1np3mj01p9il8486`.
 The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft

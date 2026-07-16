@@ -22,6 +22,17 @@ same-binary N64 controls span 61.205692-63.101865. Keep N64; do not submit the
 single above-record row. See
 `notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md`.
 
+The subsequent route-direct boundary is also closed before service. The first
+upper-bound graphs were invalid because GEMM2 was ordered after gather; those
+artifacts are retained but withdrawn. The corrected full chain uses real
+GEMM1 -> clamped-SwiGLU -> GEMM2 dependence and passes 84/84 cases against
+route-mapped fixed-M1 and gather oracles. The best 12-lane compact scheduler,
+direct remap, generic activation, and generic gather saves 0.546-0.942 ms over
+43 layers for patterns with local work but only 0.414 ms for all-remote EP,
+below the 0.50 ms gate. Direct gather, four-lane GEMMs, and routed activations
+are slower. Preserve XPU experiment commit `3aa2181`; do not integrate it.
+See `notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md`.
+
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
 and is a smoke/performance candidate only. K168/K176/K180 remain later
@@ -231,6 +242,15 @@ noncollective boundary is a grouped M=2 route-direct chain that combines the
 scheduler saving with removal of remap and final permuted gather. Do not
 integrate it unless the combined exact hardware gate clears 0.50 ms on all
 cards.
+That combined screen has now been run with corrected operation ordering and is
+closed below the gate: XPU `3aa2181` passes 84/84 exact cases, but the best
+fail-closed minimum is 0.414 ms/43 layers. The first misordered graph artifacts
+are invalid and preserved only as negative evidence. The next bounded boundary
+is source-direct GEMM1: read the two verifier token rows directly and emit the
+route map from the first N tile, eliminating the standalone remap launch while
+keeping expert-grouped output for activation, compact GEMM2, and generic
+gather. It must retain duplicate/overlap exactness and pass the same 0.50 ms
+card-0 gate before cards 1-3 or service work.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.
