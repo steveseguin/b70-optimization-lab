@@ -157,8 +157,9 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-The DeepSeek endpoint is live on `127.0.0.1:18080` with the combined native
-M=2 MHC MTP1 record under
+No DeepSeek endpoint is currently listening on `127.0.0.1:18080`; the last
+post-record candidate was stopped cleanly. The restorable combined native M=2
+MHC MTP1 record is under
 `mtp1-m2-mhc-single-kernel-candidate-20260716T0210Z`. The
 restorable nonspeculative record recipe is
 `nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
@@ -186,11 +187,16 @@ second-position acceptance and a service deadlock. Carry the 43.766673 tok/s
 direct-routed-MoE base and wide-epoch oneCCL repair into the proven row-exact
 MTP1, batched-compressor, selective-M=2-W8A16 recipe. Keep exact target
 verification and require sustained rollover-crossing replay before promotion.
-The next bounded source candidates are extending fused QNorm/RoPE/direct FP8 KV
-insertion to M=2 and exact M=2 in-place all-reduce. Preserve
-`VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` in every control. Require a
-changed-input exact hardware gate and package sub-threshold wins only when the
-combined measured saving can survive reusable-graph execution. The
+The M=2 QNorm/RoPE/direct FP8 KV insertion, exact M=2 in-place all-reduce, and
+MTP draft local-argmax candidates are complete. All remained exact, but their
+independent confirmations reached 60.043135, 58.999027, and 59.094659 tok/s
+respectively, below the 60.264242 record. Keep their selectors default-off and
+do not stack them merely from isolated projections. Evidence and exact source
+identities are in
+`notes/2026-07-16-mtp1-post-record-fusion-sweep.md`. Preserve
+`VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` in every future control. A new
+TP4 service candidate now needs a measured complete-cycle ceiling large enough
+to survive reusable-graph execution. The
 grouped-MXFP4 small-N
 scheduler race is now understood: resetting its global counter inside
 workgroup 0 raced increments from other workgroups. Moving the reset to an

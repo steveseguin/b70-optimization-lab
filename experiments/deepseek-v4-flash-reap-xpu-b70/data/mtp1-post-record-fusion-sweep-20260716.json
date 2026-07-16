@@ -1,0 +1,87 @@
+{
+  "classification": "exact_post_record_sweep_no_promotion",
+  "date_utc": "2026-07-16",
+  "model": {
+    "path": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "quantization": "MXFP4 experts, BF16 dense activations, FP8 KV",
+    "parallelism": "TP4+EP4, one active generation, target-verified MTP1"
+  },
+  "qualified_record": {
+    "median_tok_s_1_100_after_ttft": 60.264242,
+    "p10": 56.243105,
+    "vllm_commit": "9cf403e516566b44bbfcc7ad00eef976867c861b",
+    "kernel_commit": "46b95e64a315e04002e071640e8855b2398ab1ec",
+    "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+    "localmaxxing_id": "cmrmvjbok1np3mj01p9il8486"
+  },
+  "candidates": [
+    {
+      "name": "M2 fused QNorm, RoPE, and direct FP8 KV insertion",
+      "vllm_commit": "375470ae9309d06c2112e3ec3482a37c92a992df",
+      "flag": "VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT_MAX_M=2",
+      "microgate": {
+        "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m2-qnorm-rope-kv-insert-microgate-20260716T0230Z",
+        "changed_eager_exact_per_card": "40/40",
+        "changed_graph_exact_per_card": "8/8",
+        "reference_median_us_by_card": [76.70156, 77.1615, 76.57, 85.98382],
+        "candidate_median_us_by_card": [37.58274, 37.81492, 37.30168, 41.81086],
+        "projected_43_layer_saving_ms_by_card": [1.68210926, 1.69190294, 1.68853776, 1.89943728]
+      },
+      "service": {
+        "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-mhc-qnorm-kv-candidate-20260716T0240Z",
+        "screen_median": 61.194851,
+        "screen_p10": 56.758131,
+        "confirm_median": 60.043135,
+        "confirm_p10": 56.751210,
+        "ordered_exact_suites": "20/20",
+        "cached_tokens_all_zero": true
+      },
+      "decision": "exact microgate win, full-model inconclusive; default maximum remains M1"
+    },
+    {
+      "name": "M2 in-place TP all-reduce packaged with M2 QNorm/KV",
+      "vllm_commit": "ea2dd31eb956961ee6182ba1782db887c022ea6e",
+      "flag": "VLLM_XPU_V4_INPLACE_ALLREDUCE_M2=1",
+      "guard": "TP4 XPU contiguous BF16 exact shape [2,4096], non-compiled custom-op call",
+      "service": {
+        "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-qnorm-kv-inplace-ar-candidate-20260716T0315Z",
+        "screen_median": 59.89514523003376,
+        "screen_p10": 56.24994176060853,
+        "confirm_median": 58.99902681909709,
+        "confirm_p10": 56.32926906337763,
+        "ordered_exact_suites": "20/20",
+        "cached_tokens_all_zero": true
+      },
+      "decision": "not promotable; keep default off"
+    },
+    {
+      "name": "MTP1 vocab-parallel local argmax reduction",
+      "vllm_commit": "cfa2a67b4bb15fa151f67e7629053b7f7b633ad8",
+      "config": "use_local_argmax_reduction=true with greedy MTP1 draft",
+      "communication": {
+        "full_gather_bytes_per_rank": 258560,
+        "pair_gather_bytes_per_rank": 32,
+        "aggregate_ring_bytes_before": 775680,
+        "aggregate_ring_bytes_after": 96,
+        "reduction_factor": 8080
+      },
+      "service": {
+        "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-local-argmax-candidate-20260716T0345Z",
+        "selector_logged_on_ranks": 4,
+        "screen_median": 59.06414211096854,
+        "screen_p10": 55.28798503624289,
+        "confirm_median": 59.09465886555738,
+        "confirm_p10": 55.13805198385636,
+        "ordered_exact_suites": "20/20",
+        "cached_tokens_all_zero": true
+      },
+      "decision": "exact but no end-to-end gain; leave available and disabled"
+    }
+  ],
+  "promotion": {
+    "performed": false,
+    "localmaxxing_submission": false,
+    "reason": "No independently confirmed candidate exceeded the qualified 60.264242 tok/s record."
+  }
+}

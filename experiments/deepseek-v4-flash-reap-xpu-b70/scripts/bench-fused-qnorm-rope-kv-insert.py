@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact and timing gate for the M=1 fused QNorm/RoPE/KV-insert boundary."""
+"""Exact and timing gate for fused QNorm/RoPE/KV-insert decode widths."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ from vllm.models.deepseek_v4.xpu.xpu_qnorm_rope_kv_fp8_insert import (
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="xpu:0")
+    parser.add_argument("--tokens", type=int, default=1)
     parser.add_argument("--heads", type=int, default=16)
     parser.add_argument("--block-size", type=int, default=256)
     parser.add_argument("--warmup", type=int, default=50)
@@ -41,11 +42,17 @@ def main() -> int:
     eps = 1e-6
 
     q_seed = torch.randn(
-        (1, args.heads, head_dim), dtype=torch.bfloat16, device=device
+        (args.tokens, args.heads, head_dim),
+        dtype=torch.bfloat16,
+        device=device,
     )
-    kv_seed = torch.randn((1, head_dim), dtype=torch.bfloat16, device=device)
-    positions = torch.tensor([137], dtype=torch.int64, device=device)
-    slots = torch.tensor([137], dtype=torch.int64, device=device)
+    kv_seed = torch.randn(
+        (args.tokens, head_dim), dtype=torch.bfloat16, device=device
+    )
+    positions = torch.arange(
+        137, 137 + args.tokens, dtype=torch.int64, device=device
+    )
+    slots = torch.arange(137, 137 + args.tokens, dtype=torch.int64, device=device)
     cos_sin = torch.randn((1024, rope_dim), dtype=torch.float32, device=device)
 
     def make_cache() -> torch.Tensor:
@@ -189,7 +196,11 @@ def main() -> int:
     result = {
         "schema_version": 1,
         "device": args.device,
-        "shape": {"tokens": 1, "heads": args.heads, "head_dim": head_dim},
+        "shape": {
+            "tokens": args.tokens,
+            "heads": args.heads,
+            "head_dim": head_dim,
+        },
         "cache": {
             "dtype": "fp8_ds_mla",
             "block_size": args.block_size,

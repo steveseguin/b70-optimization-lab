@@ -21,10 +21,11 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-The DeepSeek record endpoint is listening on `127.0.0.1:18080` and is not
-exposed on the public LAN endpoint. It is the combined target-verified MTP1,
-native M=2 MHC post/pre, M=2 shared/routed fusion, direct M=1 draft routed-MoE,
-and wide-epoch record recipe at
+No DeepSeek process is currently listening on `127.0.0.1:18080`; the final
+post-record candidates were stopped cleanly after testing. The restorable
+qualified endpoint is the combined target-verified MTP1, native M=2 MHC
+post/pre, M=2 shared/routed fusion, direct M=1 draft routed-MoE, and wide-epoch
+record recipe at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-mhc-single-kernel-candidate-20260716T0210Z`.
 The source identity is vLLM `9cf403e51`, XPU kernels `46b95e64a`, and oneCCL
 `48fda4f0e`. `VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` is the newest record
@@ -125,6 +126,11 @@ suites, including former rollover positions 28 and 58, and every request is
 cached-zero. LocalMaxxing approved `cmrmvjbok1np3mj01p9il8486`.
 Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mhc-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mhc-record.md).
+The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft
+local-argmax reduction are preserved exact candidates but did not independently
+confirm above the record. They remain disabled; do not stack them without a new
+complete-cycle performance reason. See
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-post-record-fusion-sweep.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-post-record-fusion-sweep.md).
 Future deeper speculation must follow the freeze-before-reveal held-out policy
 in [`experiments/deepseek-v4-flash-reap-xpu-b70/quality/spec-eval-contract-v1.json`](experiments/deepseek-v4-flash-reap-xpu-b70/quality/spec-eval-contract-v1.json);
 the repeatedly used public 12-prompt suite is now a continuity screen, not
