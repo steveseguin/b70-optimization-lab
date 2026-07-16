@@ -1,0 +1,37 @@
+{
+  "date": "2026-07-16",
+  "status": "closed_negative",
+  "lane": "DeepSeek V4 Flash REAP K160 Q4, TP4+EP, MTP1",
+  "candidate": "KV-only FP8 cache producer plus Q RMSNorm/RoPE in split-QK prologue",
+  "source": {
+    "vllm_path": "/home/steve/src/deepseek-v4-vllm-clean",
+    "base_commit": "cfa2a67b4b",
+    "candidate_commit": "a8897ad76",
+    "restored_by_commit": "e53285daf",
+    "benchmark": "experiments/deepseek-v4-flash-reap-xpu-b70/scripts/bench-qnorm-in-split-qk.py"
+  },
+  "invariants": {
+    "model_unchanged": true,
+    "quantization_unchanged": true,
+    "topology_unchanged": true,
+    "speculative_depth_unchanged": true,
+    "graph_node_count_unchanged": true
+  },
+  "shape": {
+    "tokens": 2,
+    "heads": 64,
+    "compressed_width": 256,
+    "swa_width": 128,
+    "swa_len": 128,
+    "geometry": {"block_h": 4, "qk_warps": 16, "pv_warps": 8}
+  },
+  "results": [
+    {"gpu": 0, "compressed_len": 4, "exact_cases": 8, "baseline_ms": 0.121732, "candidate_ms": 0.116948, "projected_43_layer_delta_ms": 0.205712},
+    {"gpu": 1, "compressed_len": 32, "exact_cases": 8, "baseline_ms": 0.131664, "candidate_ms": 0.126568, "projected_43_layer_delta_ms": 0.219128},
+    {"gpu": 2, "compressed_len": 128, "exact_cases": 8, "baseline_ms": 0.189228, "candidate_ms": 0.187668, "projected_43_layer_delta_ms": 0.067080},
+    {"gpu": 3, "compressed_len": 256, "exact_cases": 8, "baseline_ms": 0.265928, "candidate_ms": 0.269048, "projected_43_layer_delta_ms": -0.134160}
+  ],
+  "exactness": "All 32 changing cases were bitwise exact for paged KV-cache bytes, materialized FP32 QK scores, FP32 LSE, and final BF16 attention output.",
+  "promotion_gate_ms_43_layers": 0.5,
+  "decision": "Reject and restore active source. The best measured projection was 0.219 ms per 43-layer verifier cycle, below the 0.5 ms microgate, and the longest sparse length regressed by 0.134 ms."
+}
