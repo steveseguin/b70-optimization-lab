@@ -38,7 +38,9 @@ def main() -> int:
         "--compact-route-lanes", type=int, choices=(12, 4), default=12
     )
     parser.add_argument(
-        "--gather", choices=("generic", "direct"), default="generic"
+        "--gather",
+        choices=("generic", "direct", "shared-add"),
+        default="generic",
     )
     parser.add_argument(
         "--activation",
@@ -57,8 +59,15 @@ def main() -> int:
     os.environ["VLLM_XPU_M2_COMPACT_ROUTE_LANES"] = str(
         args.compact_route_lanes
     )
-    if args.gate != "route-direct" and args.gather != "generic":
+    if args.gather == "direct" and args.gate != "route-direct":
         parser.error("--gather direct is only valid with --gate route-direct")
+    if args.gather == "shared-add" and args.gate not in (
+        "route-direct",
+        "remap-upper-bound",
+    ):
+        parser.error(
+            "--gather shared-add requires route-direct or remap-upper-bound"
+        )
     if args.gate != "route-direct" and args.activation != "generic":
         parser.error(
             "non-generic --activation is only valid with --gate route-direct"
@@ -196,6 +205,7 @@ def main() -> int:
     reference_gather = torch.zeros((2, n), device=device, dtype=torch.bfloat16)
     candidate_gather = torch.zeros_like(reference_gather)
     direct_gather = torch.zeros_like(reference_gather)
+    shared_output = torch.randn_like(reference_gather) / 16
     rows_per_expert = torch.zeros(
         (local_experts,), device=device, dtype=torch.int32
     )
@@ -269,6 +279,8 @@ def main() -> int:
             unpermuted,
             local_experts,
         )
+        if args.gather == "shared-add":
+            reference_gather.add_(shared_output)
 
     def compact_call() -> None:
         if args.activation == "fused-gemm1":
@@ -359,6 +371,15 @@ def main() -> int:
                 expert_map,
                 local_experts,
             )
+        elif args.gather == "shared-add":
+            torch.ops._moe_C.moe_gather_shared_add_m2(
+                candidate_gather,
+                candidate2,
+                shared_output,
+                topk_weights,
+                candidate_unpermuted,
+                local_experts,
+            )
         else:
             torch.ops._moe_C.moe_gather(
                 candidate_gather,
@@ -374,13 +395,23 @@ def main() -> int:
         # graph in correctness and timing warmup; the candidate retains both
         # GEMMs, the real activation dependency, and generic gather.
         compact_call()
-        torch.ops._moe_C.moe_gather(
-            candidate_gather,
-            candidate2,
-            topk_weights,
-            unpermuted,
-            local_experts,
-        )
+        if args.gather == "shared-add":
+            torch.ops._moe_C.moe_gather_shared_add_m2(
+                candidate_gather,
+                candidate2,
+                shared_output,
+                topk_weights,
+                unpermuted,
+                local_experts,
+            )
+        else:
+            torch.ops._moe_C.moe_gather(
+                candidate_gather,
+                candidate2,
+                topk_weights,
+                unpermuted,
+                local_experts,
+            )
 
     def direct_oracle_call() -> tuple[list[list[int]], list[list[int]]]:
         # This is deliberately outside timing. The already-qualified fixed-M1
@@ -438,6 +469,8 @@ def main() -> int:
             unpermuted,
             local_experts,
         )
+        if args.gather == "shared-add":
+            reference_gather.add_(shared_output)
         # The route-direct graph already executed its selected gather. Preserve
         # that output so --gather direct validates the new kernel rather than
         # silently replacing it with the generic implementation.
@@ -449,6 +482,8 @@ def main() -> int:
                 unpermuted,
                 local_experts,
             )
+            if args.gather == "shared-add":
+                candidate_gather.add_(shared_output)
         for row in range(2):
             slot_slice = slice(row * topk, (row + 1) * topk)
             torch.ops._moe_C.moe_gather_direct_m1(
@@ -459,6 +494,8 @@ def main() -> int:
                 expert_map,
                 local_experts,
             )
+        if args.gather == "shared-add":
+            direct_gather.add_(shared_output)
         torch.xpu.synchronize()
         return mapping, candidate_mapping
 
@@ -510,6 +547,15 @@ def main() -> int:
                     source1.shape,
                     device=device,
                     dtype=source1.dtype,
+                    generator=generator,
+                )
+                / 16
+            )
+            shared_output.copy_(
+                torch.randn(
+                    shared_output.shape,
+                    device=device,
+                    dtype=shared_output.dtype,
                     generator=generator,
                 )
                 / 16
@@ -623,7 +669,11 @@ def main() -> int:
             "baseline": (
                 "generic_two_gemm"
                 if args.gate == "scheduler"
-                else "generic_route_staging_two_gemm_and_gather"
+                else (
+                    "generic_route_staging_two_gemm_gather_and_shared_add"
+                    if args.gather == "shared-add"
+                    else "generic_route_staging_two_gemm_and_gather"
+                )
             ),
             "candidate": (
                 "compact_two_gemm"
@@ -632,7 +682,11 @@ def main() -> int:
                     "compact_two_gemm_arithmetic_only"
                     if args.gate == "combined-upper-bound"
                     else (
-                        "compact_two_gemm_generic_gather_without_remap"
+                        (
+                            "compact_two_gemm_fused_gather_shared_add_without_remap"
+                            if args.gather == "shared-add"
+                            else "compact_two_gemm_generic_gather_without_remap"
+                        )
                         if args.gate == "remap-upper-bound"
                         else (
                             "fixed_remap_compact_fused_swiglu_gemm1_"
@@ -650,7 +704,11 @@ def main() -> int:
                         + (
                             "direct_gather"
                             if args.gather == "direct"
-                            else "generic_gather"
+                            else (
+                                "fused_generic_gather_shared_add"
+                                if args.gather == "shared-add"
+                                else "generic_gather"
+                            )
                         )
                     )
                 )

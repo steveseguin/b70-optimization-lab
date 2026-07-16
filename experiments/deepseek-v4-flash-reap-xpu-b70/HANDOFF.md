@@ -53,6 +53,19 @@ attempt must split gate/up work across subgroups and exchange rounded BF16
 fragments through SLM so one subgroup never owns both accumulator payloads.
 See `notes/2026-07-16-mtp1-m2-remap-and-paired-gemm1-closure.md`.
 
+Fusing generic gather with the following shared BF16 addition is exact on all
+84 cases but also misses the standalone real gate: all-remote reaches
+`0.4479 ms/43 layers`; an empty-routed fast path raises it to `0.4701 ms`,
+while six-local is only `0.5011 ms`. A subgroup-broadcast metadata cache is a
+preserved loss. Literal remap deletion plus fused gather/add passes twice at
+`0.5042/0.5239 ms`, but that leaves only `0.097-0.555 us/layer` for a real
+implementation. Non-affine duplicate source rows cannot use the qualified Xe
+block2D A load within that budget. Preserve XPU `820ecc5`, `576251b` /
+`ba5ed8d`, and `4e2ce07`; do not service-test this standalone patch. The next
+screen must create a unique `(token, expert)` route table inside the existing
+M=2 router/top-k submission and consume it through both compact GEMMs and the
+fused gather/add. See `notes/2026-07-16-mtp1-m2-gather-shared-add-gate.md`.
+
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
 and is a smoke/performance candidate only. K168/K176/K180 remain later
@@ -271,12 +284,13 @@ route map from the first N tile, eliminating the standalone remap launch while
 keeping expert-grouped output for activation, compact GEMM2, and generic
 gather. Deletion-only and real remap variants have since closed below the
 gate, and the first dual-accumulator paired producer is exact but much slower.
-The active card-0 screen is therefore a lower-register paired producer: gate
-and up subgroups must exchange BF16-rounded fragments through SLM, retain
-duplicate/overlap exactness, and pass the same 0.50 ms every-route gate before
-cards 1-3 or service work. If its coordination cost erases the ceiling, stop
-producer fusion and combine route-direct scheduling with gather/shared-output
-addition instead.
+The lower-register paired producer was not funded because its unchanged
+all-remote ceiling lacks margin. Gather/shared-output addition is exact but
+still below the real gate. The active card-0 screen is now an end-to-end unique
+`(token, expert)` route representation emitted by the already-running M=2
+router/top-k boundary. It must delete standalone remap, retain separate route
+weights for duplicate slots, feed affine token rows to both compact GEMMs, and
+pass the same 0.50 ms every-route gate twice before cards 1-3 or service work.
 Require
 changed-input replay, exact canaries, long-math quality checks, and the strict
 cold suite for every promotion. Do not add speculation before 40-50 tok/s.

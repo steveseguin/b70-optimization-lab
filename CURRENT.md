@@ -178,6 +178,18 @@ test them. The next bounded producer design must split gate/up ownership across
 subgroups and exchange rounded BF16 fragments through SLM, retaining the same
 `0.50 ms` every-route gate. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-remap-and-paired-gemm1-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-remap-and-paired-gemm1-closure.md).
+The exact gather/shared-output-add widening is also below the real gate. Its
+real route-direct chain saves `0.535 ms/43 layers` for six-local work but only
+`0.448 ms` on all-remote; an empty-routed fast path raises all-remote to
+`0.470 ms` while leaving six-local at a noise-fragile `0.501 ms`. Literal
+remap deletion plus fused gather/add passes twice at `0.504/0.524 ms`, but the
+lower run leaves only `0.097 us/layer` for an implementation. Xe block2D cannot
+express the exact non-affine duplicate A rows within that budget. Preserve
+signed XPU commits `820ecc5` and `4e2ce07`; no service test occurred. The next
+architectural screen is an upstream-produced unique `(token, expert)` route
+table consumed by both compact GEMMs and fused gather/add, with no new launch.
+Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-gather-shared-add-gate.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-gather-shared-add-gate.md).
 The preceding native M=2 MHC record remains approved LocalMaxxing evidence at
 60.264242 tok/s, ID `cmrmvjbok1np3mj01p9il8486`.
 The follow-up M=2 QNorm/KV fusion, exact M=2 in-place all-reduce, and MTP draft
