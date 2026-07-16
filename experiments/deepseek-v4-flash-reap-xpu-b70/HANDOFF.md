@@ -22,6 +22,16 @@ same-binary N64 controls span 61.205692-63.101865. Keep N64; do not submit the
 single above-record row. See
 `notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md`.
 
+Sub-gate fusion work now uses a portfolio gate. Compatible exact components
+may be bundled when their conservative, non-overlapping measured lower bounds
+sum to at least `0.50 ms/cycle`, followed by a frozen same-binary B-A-B service
+crossover. The first portfolio combined M=2 QNorm/RoPE/direct-KV with N128
+MXFP4. It passed the four-card exact gates and 10/10 post-service exact suites.
+Bundle medians were 62.446116 and 62.767570 tok/s versus a 61.895036 control,
+but neither beat the 63.349928 record. Preserve XPU portfolio commit `3e600bf`,
+keep M=1/N64 promoted, and do not rerun this pair without a new compatible
+component. See `notes/2026-07-16-mtp1-subgate-portfolio-policy.md`.
+
 The subsequent route-direct boundary is also closed before service. The first
 upper-bound graphs were invalid because GEMM2 was ordered after gather; those
 artifacts are retained but withdrawn. The corrected full chain uses real
@@ -247,8 +257,15 @@ independent confirmations reached 60.043135, 58.999027, and 59.094659 tok/s
 respectively, below the preceding 60.264242 record. Keep their selectors default-off and
 do not stack them merely from isolated projections. Evidence and exact source
 identities are in
-`notes/2026-07-16-mtp1-post-record-fusion-sweep.md`. Preserve
-`VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` in every future control. A new
+`notes/2026-07-16-mtp1-post-record-fusion-sweep.md`. The exception is a
+predeclared compatible portfolio whose conservative,
+non-overlapping lower bounds clear `0.50 ms/cycle`; require a same-binary B-A-B
+crossover and normal exact/promotion gates. The first QNorm-M2 plus N128
+portfolio was positive by 0.711806 tok/s over control but remained below the
+record and is closed. See
+`notes/2026-07-16-mtp1-subgate-portfolio-policy.md`.
+Preserve `VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` in every future
+control. A new
 TP4 service candidate now needs a measured complete-cycle ceiling large enough
 to survive reusable-graph execution. The grouped-MXFP4 small-N scheduler race
 is now understood: resetting its global counter inside workgroup 0 raced

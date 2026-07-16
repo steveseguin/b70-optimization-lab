@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_mtp1_subgate_portfolio_crossover",
+  "date": "2026-07-16",
+  "model": "0xSero/DeepSeek-V4-Flash-180B K160",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "topology": "TP4+EP4, one active generation",
+  "identity": {
+    "vllm_commit": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+    "xpu_kernels_commit": "3e600bf5dc8c96ca5a1bc4156c78cf7c10c08b36",
+    "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "bundle": {
+    "qnorm_rope_kv_max_m": 2,
+    "mxfp4_small_m_n": 128,
+    "projected_saved_ms_per_cycle_min": 1.9497,
+    "projected_saved_ms_per_cycle_max": 2.2100
+  },
+  "control": {
+    "qnorm_rope_kv_max_m": 1,
+    "mxfp4_small_m_n": 64
+  },
+  "n128_four_card_gate": {
+    "exact_cases_per_card": 48,
+    "passed_cards": 4,
+    "projected_saved_ms_per_43_layers": [
+      0.3111394,
+      0.27820312,
+      0.29613584,
+      0.26769392
+    ]
+  },
+  "service": {
+    "order": ["bundle_screen", "control", "bundle_confirm"],
+    "bundle_screen_median_tok_s": 62.446115892089765,
+    "bundle_screen_p10_tok_s": 59.70721872540457,
+    "control_median_tok_s": 61.895036297104944,
+    "control_p10_tok_s": 58.898587096045,
+    "bundle_confirm_median_tok_s": 62.76756967409168,
+    "bundle_confirm_p10_tok_s": 59.935732026271,
+    "bundle_average_median_tok_s": 62.60684278309072,
+    "bundle_minus_control_median_tok_s": 0.711806485985776,
+    "record_median_tok_s": 63.349927998683015,
+    "strict_suites_valid": 3,
+    "all_cached_tokens_zero": true
+  },
+  "exact_canaries_after_confirmation": {
+    "capture_suites_passed": 10,
+    "capture_suites_total": 10,
+    "answers_passed": 60,
+    "answers_total": 60,
+    "all_cached_tokens_zero": true
+  },
+  "decision": "positive same-binary crossover, below record, not promoted",
+  "localmaxxing_submitted": false
+}

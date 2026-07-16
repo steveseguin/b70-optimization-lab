@@ -138,6 +138,18 @@ bucket is also decomposed into already optimized or closed families. The next
 noncollective candidate must be an architectural M=2 grouped-MXFP4 change with
 a measured four-card ceiling of at least 0.50 ms/cycle. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-mxfp4-policy-closure.md).
+The integration gate now permits a predeclared portfolio of compatible exact
+micro-wins whose conservative, non-overlapping lower bounds sum to at least
+`0.50 ms/cycle`; it no longer requires every component to clear that threshold
+alone. The first same-binary B-A-B portfolio combined M=2 QNorm/RoPE/direct-KV
+with N128 MXFP4. It was exact and directionally positive: its two strict
+medians averaged 62.606843 tok/s versus 61.895036 for the control, a
+`+0.711806 tok/s` crossover. Both bundle rows remained below the 63.349928
+record, so M=1/N64 stays promoted and no LocalMaxxing submission was made.
+Ten post-confirmation exact suites passed 10/10, all cached-zero. Do not rerun
+this two-item bundle without another compatible component that materially
+raises its conservative ceiling. Evidence and the admission policy are in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-subgate-portfolio-policy.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-subgate-portfolio-policy.md).
 The first architectural scheduler screen is also closed before service. A
 route-compact M=2 Xe2 scheduler is exact on 84/84 changed-input card-0 cases,
 but its worst valid all-remote EP route projects only 0.262 ms saved per 43
