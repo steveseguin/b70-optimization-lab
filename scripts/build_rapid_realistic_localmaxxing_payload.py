@@ -69,7 +69,6 @@ def main() -> int:
     full = summary["tok_s_after_ttft_full"]
     wall = summary["tok_s_wall_full"]
     ttft = summary["ttft_ms"]
-    gate = bench["realistic_final_gate"]
     fresh = bench["fresh_response_validity"]
     run_identity = bench.get("run_identity") or {}
 
@@ -201,7 +200,15 @@ def main() -> int:
         "vllm_xpu_v4_mhc_pre_m1_single_kernel",
         "vllm_xpu_v4_mhc_post_pre_m1_single_kernel",
         "vllm_xpu_v4_shared_expert_fused_act_quant",
+        "vllm_xpu_v4_shared_expert_fused_act_quant_max_m",
+        "vllm_xpu_v4_m2_routed_clamp_silu",
+        "vllm_xpu_v4_m1_biased_topk",
+        "vllm_xpu_v4_m1_router_norm",
+        "vllm_xpu_v4_m1_direct_routed_moe",
+        "vllm_xpu_v4_compressor_m2_row_exact",
+        "vllm_xpu_v4_compressor_m2_batched_exact",
         "vllm_xpu_v4_block_fp8_w8a16",
+        "vllm_xpu_v4_block_fp8_w8a16_max_m",
         "vllm_xpu_v4_block_fp8_w8a16_shapes",
         "vllm_xpu_mxfp4_small_m_n",
         "vllm_xpu_log_fp8_linear_shapes",

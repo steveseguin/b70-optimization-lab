@@ -1,0 +1,39 @@
+{
+  "classification": "promoted_record",
+  "date": "2026-07-16",
+  "topology": "single-session TP4+EP4 target-verified MTP1",
+  "model": "0xSero/DeepSeek-V4-Flash-180B",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "vllm_commit": "068d6beb25dcd571579f8efb06a3ca08aa29e164",
+  "xpu_kernel_commit": "84c10f4f1b987c3ace43683299ce9c8d1bf9b94a",
+  "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+  "evidence_root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-fusion-candidate-20260716T000928Z",
+  "flags": {
+    "VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT": 1,
+    "VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT_MAX_M": 2,
+    "VLLM_XPU_V4_M2_ROUTED_CLAMP_SILU": 1
+  },
+  "performance": {
+    "headline_tok_s": 57.41214206881435,
+    "headline_p10_tok_s": 53.79079787648382,
+    "support_tok_s": 56.95206458230082,
+    "support_p10_tok_s": 53.64048633075438,
+    "previous_record_tok_s": 55.703731,
+    "headline_improvement_percent": 3.066957
+  },
+  "correctness": {
+    "ordered_capture_suites": 70,
+    "ordered_capture_suites_passed": 70,
+    "historical_rollover_positions_crossed": [28, 58],
+    "strict_requests": 24,
+    "strict_requests_cached_zero": 24,
+    "exact_requests": 420,
+    "exact_requests_cached_zero": 420,
+    "target_verified": true
+  },
+  "localmaxxing": {
+    "id": "cmrmrgce51nojmj01bbxoruuu",
+    "status": "APPROVED",
+    "payload": "../localmaxxing/deepseek-v4-flash-k160-tp4-mtp1-m2-fusion-realistic-57.412tok-20260716.queue.json"
+  }
+}

@@ -1,6 +1,6 @@
 # DeepSeek V4 Flash REAP/XPU B70 Handoff
 
-Last reviewed: **2026-07-15**
+Last reviewed: **2026-07-16**
 
 ## Current Decision
 
@@ -11,8 +11,9 @@ The controlling plan is
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
 replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
 43.7667/43.6986 tok/s; the combined row-exact MTP1, strided-batch compressor,
-selective M=2 W8A16, direct-M1 draft MoE, and wide-epoch runtime is the target-
-verified speed record at 55.7037/55.6681 tok/s**.
+selective M=2 W8A16, direct-M1 draft MoE, M=2 shared/routed fusion, and
+wide-epoch runtime is the target-verified speed record at
+57.4121/56.9521 tok/s**.
 
 The first runnable checkpoint is `0xSero/DeepSeek-V4-Flash-180B` K160 revision
 `7c360e1cd4a5168099dbc54d16d929bf6df04990`. It has 160 experts in every layer
@@ -26,8 +27,8 @@ hash-preserved quality candidates; K180 is not predetermined.
 - public K160 revision: `7c360e1cd4a5168099dbc54d16d929bf6df04990`
 - clean vLLM base: `61c87db645c256651b5a366f538898485077ad32`
 - clean XPU kernels base: `dda91d171fbc3f51d1d65a7f8839714b1efffd42`
-- promoted vLLM: `3a74a38a3c2e98bd6c409e57e72011933a8148c8`
-- promoted XPU kernels: `ef307a8f45a0dc3794a8775e2e5d6c7484b63a1b`
+- promoted vLLM: `068d6beb25dcd571579f8efb06a3ca08aa29e164`
+- promoted XPU kernels: `84c10f4f1b987c3ace43683299ce9c8d1bf9b94a`
 - primary truth: fixed official-source teacher logits/tasks captured after the
   Stage 4 source download
 - secondary all-expert behavior control: bullerwins IQ3_XXS revision
@@ -74,12 +75,14 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is retained as superseded LocalMaxxing evidence
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. The current target-verified speed record is the combined **MTP1/direct-M1/
-   wide-epoch lane at `55.703731/55.668081 tok/s`**, LocalMaxxing
-   `cmrmoyenp1no3mj01fz2gjzo6`. Seventy exact captures pass, including 50 after
-   both strict suites and former rollover positions 28 and 58. All requests
-   are cached-zero and all worker maps contain the selected wide-epoch libccl.
-   See `notes/2026-07-15-mtp1-direct-moe-wideepoch-record.md`.
+2. The current target-verified speed record is the combined **MTP1 M=2
+   shared/routed fusion lane at `57.412142/56.952065 tok/s`**, LocalMaxxing
+   `cmrmrgce51nojmj01bbxoruuu`. Seventy exact capture suites pass after both
+   strict suites, including former rollover positions 28 and 58; all 444
+   requests are cached-zero. The repair extends shared clamped-SwiGLU/FP8
+   quantization through M=2 and uses exact fused clamp/SiLU in generic M=2
+   routed MoE without losing grouped expert weight reuse. See
+   `notes/2026-07-16-mtp1-m2-fusion-record.md`.
    The preceding record is attached **MTP1 with a
    strided-batch FP32 compressor and selective M=2 W8A16 at
    `55.524496/54.708889 tok/s`**, LocalMaxxing

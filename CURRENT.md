@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-15**
+Last reviewed: **2026-07-16**
 
 ## Authority And Update Rule
 
@@ -23,8 +23,12 @@ Confirm the endpoint and process state before relying on this observation.
 
 The DeepSeek record endpoint is listening on `127.0.0.1:18080` and is not
 exposed on the public LAN endpoint. It is the combined target-verified MTP1,
-direct M=1 routed-MoE, and wide-epoch record recipe at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-direct-moe-wideepoch-candidate-20260715T2315Z`.
+M=2 shared/routed fusion, direct M=1 draft routed-MoE, and wide-epoch record
+recipe at
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-fusion-candidate-20260716T000928Z`.
+The source identity is vLLM `068d6beb2`, XPU kernels `84c10f4f1`, and oneCCL
+`48fda4f0e`. `VLLM_XPU_V4_SHARED_EXPERT_FUSED_ACT_QUANT_MAX_M=2` and
+`VLLM_XPU_V4_M2_ROUTED_CLAMP_SILU=1` are the new record flags.
 The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
@@ -111,14 +115,19 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row `cmrmebmzg1nm0mj01k30nv6vw` remains the
 superseded repeatability-repair authority.
-The current target-verified speed record combines row-exact attached MTP1 with
-a strided-batch compressor, selective M=2 W8A16, exact direct M=1 routed MoE
-for the draft layer, and wide-epoch oneCCL: **55.703731 tok/s** median with
-`52.205941` p10; independent support is 55.668081 tok/s. Seventy ordered exact
-captures pass, including 50 after both strict suites and former rollover
-positions 28 and 58. LocalMaxxing approved `cmrmoyenp1no3mj01fz2gjzo6`.
+The current target-verified speed record extends exact shared-expert
+activation/quantization through verifier M=2 and fuses generic M=2 routed-MoE
+clamp plus SiLU/multiply while preserving expert grouping and weight reuse:
+**57.412142 tok/s** median with `53.790798` p10; independent support is
+56.952065 tok/s. Seventy ordered exact capture suites pass after both strict
+suites, including former rollover positions 28 and 58. All 444 requests are
+cached-zero. LocalMaxxing approved `cmrmrgce51nojmj01bbxoruuu`.
 Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-direct-moe-wideepoch-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-mtp1-direct-moe-wideepoch-record.md).
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-fusion-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-fusion-record.md).
+Future deeper speculation must follow the freeze-before-reveal held-out policy
+in [`experiments/deepseek-v4-flash-reap-xpu-b70/quality/spec-eval-contract-v1.json`](experiments/deepseek-v4-flash-reap-xpu-b70/quality/spec-eval-contract-v1.json);
+the repeatedly used public 12-prompt suite is now a continuity screen, not
+sufficient promotion evidence by itself.
 The preceding target-verified record is row-exact attached MTP1 with a
 strided-batch FP32 compressor and selective M=2 W8A16 verification:
 **55.524496 tok/s** median with `52.029542` p10; independent support is
