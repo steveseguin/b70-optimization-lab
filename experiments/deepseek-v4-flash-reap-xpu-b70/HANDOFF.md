@@ -1,6 +1,6 @@
 # DeepSeek V4 Flash REAP/XPU B70 Handoff
 
-Last reviewed: **2026-07-16**
+Last reviewed: **2026-07-17**
 
 ## Current Decision
 
@@ -90,10 +90,10 @@ The controlling 100/200 tok/s continuation roadmap is now
 four ordered options explicit: remaining high-value target fusion, TP4
 communication/cycle restructuring, useful deeper target-verified speculation,
 and a fixed-geometry SYCL/Level Zero decoder as the Intel equivalent of
-HIPfire. The immediate work is a fresh post-portfolio cycle attribution plus
-the subgroup-split/SLM-exchange M=2 MXFP4 hardware gate. Do not load a model
-candidate unless its worst-card and worst-valid-route projection clears
-`0.50 ms/cycle`.
+HIPfire. The current work is the default-off fixed-M2 finite event chain
+authorized by the passing producer/allreduce/consumer upper bound. Do not load
+a model candidate until its dependent-producer and fixed-address replay gates
+are exact and its slowest-rank projection retains `0.50 ms/cycle`.
 
 The post-portfolio eager diagnostic is complete. It uses the exact promoted
 source/selectors with graph replay disabled for attribution and measures
@@ -110,6 +110,18 @@ new record baseline. The old fused producer's best all-remote result was
 source, build, service, or GPU work was spent. Move to an exact fixed-M2
 producer/allreduce/consumer upper bound around the 87 TP4 reductions. See
 `notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md`.
+
+That fixed-M2 upper bound now passes twice. With a dependency-aware Arc LL
+ring and a one-BF16 graph-visible MHC completion witness, two independent
+40-epoch runs are bitwise exact on all four B70s and save
+`0.953386/0.928339 ms/cycle` at the slowest rank. The experimental oneCCL
+commit is `6fd2356`; it is isolated from production. An earlier apparent
+3.6-3.9 ms result was timing-invalid because the sum-only Arc ring implemented
+the requested `ReduceOp.MAX` as a sum; the fixed harness gathers rank times and
+computes max on the host. Proceed to a default-off finite same-queue event
+chain, then require dependent-producer, rank-skew, 40-epoch eager, and 70-replay
+fixed-address exactness before a service load. See
+`notes/2026-07-17-tp4-m2-producer-allreduce-consumer-upper-bound.md`.
 
 Fusing generic gather with the following shared BF16 addition is exact on all
 84 cases but also misses the standalone real gate: all-remote reaches

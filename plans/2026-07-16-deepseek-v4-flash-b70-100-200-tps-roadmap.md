@@ -229,8 +229,14 @@ engineering program, not a parameter sweep.
 The fresh post-portfolio attribution is complete at 17.8497 ms/cycle of
 noncollective device work. The subgroup-split producer is closed before build:
 against the now-promoted route-direct baseline its generous all-remote
-incremental ceiling is only about 0.123 ms/cycle. The current first action is
-an exact fixed-M2 upper-bound harness for the producer/allreduce/consumer chain
-around 87 TP4 reductions, followed by real current-record tensor capture. Do
-not spend a TP4 model-load cycle on a candidate until that boundary proves at
-least 0.50 ms/cycle.
+incremental ceiling is only about 0.123 ms/cycle.
+
+The fixed-M2 producer/allreduce/consumer upper bound has now cleared Phase C's
+gate twice. Correct slowest-rank measurements save 0.953386 and 0.928339 ms
+over 87 reductions and 85 native MHC consumers, with every changed epoch
+bitwise exact on four B70s. The active implementation is a default-off finite
+same-queue event chain: producer event -> dependency-aware unchanged Arc ring
+-> native M=2 MHC -> one-BF16 completion witness -> next consumer. It must pass
+dependent producers, rank skew, 40 changing eager epochs, and at least 70
+changing fixed-address replays before any service load. Do not revive resident
+polling or in-ring MHC arithmetic.

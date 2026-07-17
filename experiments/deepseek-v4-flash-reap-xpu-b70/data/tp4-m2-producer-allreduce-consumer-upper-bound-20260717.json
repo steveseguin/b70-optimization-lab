@@ -1,0 +1,63 @@
+{
+  "classification": "deepseek_v4_mtp1_m2_tp4_producer_allreduce_consumer_upper_bound",
+  "date": "2026-07-17",
+  "status": "component_upper_bound_pass_not_integrated",
+  "record_identity": {
+    "vllm": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+    "xpu_kernels": "18a44f440ca3ac2006d5ba19cd12ccca0a0c9982",
+    "xpu_extension_sha256": "afe32514bd508c5382495713c894d1b7173f6a170e3c21030c2baa171c201956",
+    "production_oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "experimental_oneccl": {
+    "worktree": "/home/steve/src/oneccl-2021.17.2-b70-deps",
+    "commit": "6fd2356",
+    "change": "thread incoming SYCL dependency events through the Arc LL ring and submit the ring kernel with depends_on",
+    "runtime": "/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-deps-llring-20260717",
+    "libccl_sha256": "7b239bd6b70fcb8ed6dc708e4e068cca603ddc5d4fb878ade566943bd56d1f47"
+  },
+  "shape": {
+    "world_size": 4,
+    "rows": 2,
+    "hidden": 4096,
+    "reductions_per_cycle": 87,
+    "mhc_consumers_per_cycle": 85
+  },
+  "gate": {
+    "required_slowest_rank_saving_ms_per_cycle": 0.5,
+    "correctness": "bitwise reduced tensor plus all four MHC outputs on every rank for every changing epoch",
+    "completion_witness": "one BF16 device copy from the final layer_input"
+  },
+  "confirmations": [
+    {
+      "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-producer-allreduce-consumer-deps-witness-confirm-a-20260717T0530Z",
+      "epochs": 40,
+      "passed_correctness": true,
+      "serial_ms": 8.623023997643031,
+      "overlap_ms": 7.669637998333201,
+      "saving_ms": 0.9533859993098304
+    },
+    {
+      "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-producer-allreduce-consumer-deps-witness-confirm-b-20260717T0531Z",
+      "epochs": 40,
+      "passed_correctness": true,
+      "serial_ms": 8.601899011409841,
+      "overlap_ms": 7.6735604961868376,
+      "saving_ms": 0.9283385152230039
+    }
+  ],
+  "invalid_diagnostics": [
+    {
+      "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-producer-allreduce-consumer-upper-20260717T0400Z",
+      "reason": "production Arc LL ring dropped the producer dependency and MHC completion was not graph-visible"
+    },
+    {
+      "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-producer-allreduce-consumer-deps-20260717T0510Z",
+      "reason": "oneCCL dependency was repaired, but the custom MHC operation still lacked a completion witness"
+    },
+    {
+      "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-producer-allreduce-consumer-deps-witness-20260717T0520Z",
+      "reason": "correctness passed, but ReduceOp.MAX used the sum-only Arc ring and reported the sum of rank times; saved per-rank samples provisionally recompute to 0.929721 ms"
+    }
+  ],
+  "decision": "Pass the component ceiling and proceed to a default-off finite same-queue event-chain implementation. This is not a model speed result and does not qualify for LocalMaxxing."
+}

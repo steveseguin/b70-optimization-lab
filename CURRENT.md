@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-16**
+Last reviewed: **2026-07-17**
 
 ## Authority And Update Rule
 
@@ -21,8 +21,8 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-The DeepSeek QNorm/route-portfolio record service is temporarily listening on
-`127.0.0.1:18080` while its result packet is finalized. Its restorable evidence
+No DeepSeek service is currently running. The QNorm/route-portfolio record
+service was stopped cleanly before eager profiling and component gates. Its restorable evidence
 is `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-candidate-b2-20260716T2255Z`.
 The source identity is vLLM `4a6fd8747`, XPU kernels `18a44f440`, and oneCCL
 `48fda4f0e`. The record adds
@@ -134,9 +134,9 @@ The ordered continuation plan is
 It preserves the current record while pursuing four explicit options:
 high-value target fusion, TP4 communication/cycle restructuring, deeper
 target-verified speculation, and a fixed-geometry Intel SYCL/Level Zero
-decoder. The immediate bounded work is a fresh post-portfolio cycle profile
-and a subgroup-split/SLM-exchange M=2 MXFP4 gate; no model load is permitted
-unless the exact four-card worst-route projection clears `0.50 ms/cycle`.
+decoder. The current bounded work is the fixed-M2 finite event chain authorized
+by the passing producer/allreduce/consumer upper bound; no model load is
+permitted until dependent-producer and fixed-address replay exactness pass.
 The fresh post-portfolio eager diagnostic now attributes **17.8497 ms/cycle**
 to noncollective device work versus 19.4779 ms before the promoted portfolio,
 a measured 1.6283 ms reduction. Dense GEMMs remain 6.5639 ms and compact
@@ -148,8 +148,15 @@ before implementation. Its best possible all-remote comparison is only about
 0.123 ms/cycle above the already-promoted route-direct path, and all-remote has
 no local gate/up arithmetic for subgroup splitting to accelerate. No source,
 build, service, or GPU experiment was made. The active next boundary is the
-fixed-M2 producer/allreduce/consumer chain around 87 TP4 reductions; require a
-fresh exact `>=0.50 ms/cycle` upper bound. Evidence is in
+fixed-M2 producer/allreduce/consumer chain around 87 TP4 reductions. That
+component upper bound now passes twice: two 40-epoch four-B70 confirmations are
+bitwise exact and save 0.953386/0.928339 ms/cycle at the slowest rank. The
+measurement also exposed and repaired two missing device edges: the Arc LL
+ring discarded incoming producer dependencies, and native MHC needed a
+one-BF16 graph-visible completion witness. The active action is the guarded,
+finite same-queue event-chain implementation; this is not yet a service speed
+result. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-tp4-m2-producer-allreduce-consumer-upper-bound.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-tp4-m2-producer-allreduce-consumer-upper-bound.md) and
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md).
 The exact M=2 MXFP4 N32/N128 follow-up is closed without promotion. N32
 regresses. N128 saves 0.247-0.283 ms per 43 routed layers in the four-card
