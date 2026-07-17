@@ -239,10 +239,11 @@ submission overhead that reusable graphs already remove: captured ordinary
 XCCL plus MHC takes 4.265725 ms versus 4.156179 ms for the direct chain, only a
 0.109546 ms/cycle gain. Do not service-test or portfolio this candidate.
 
-The easy bounded inventory is exhausted. The active path moves to Option 4's
-fixed-geometry decoder shell, beginning with a real-model layer/cycle parity
-corpus and a cached fixed-buffer replay worker. New kernels enter that shell
-only when they delete device work or collective traffic. In parallel, Option
-3's held-out evaluator and exact M=4/M=8 verifier economics are the next
-multiplier gate; attached MTP2 remains closed. Do not revive resident polling,
-the rejected in-ring MHC implementations, or generic oneCCL flag sweeps.
+The easy bounded inventory is exhausted. Option 4's first fixed-geometry shell
+artifact is now operational: a 150 MiB content-addressed real M=2 corpus and a
+no-model four-B70 worker replay the 87-reduction/85-MHC cycle exactly 70/70
+times at a 4.209382 ms slowest-rank median. New kernels enter that shell only
+when they delete device work or collective traffic. Option 3's held-out
+evaluator and exact M=4/M=8 verifier economics are now the next multiplier
+gate; attached MTP2 remains closed. Do not revive resident polling, the
+rejected in-ring MHC implementations, or generic oneCCL flag sweeps.

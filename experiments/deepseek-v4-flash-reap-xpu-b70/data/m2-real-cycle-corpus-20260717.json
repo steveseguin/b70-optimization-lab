@@ -1,0 +1,32 @@
+{
+  "classification": "deepseek_v4_mtp1_m2_real_cycle_corpus_and_replay",
+  "date": "2026-07-17",
+  "passed": true,
+  "capture": {
+    "vllm_commit": "9fc754a005856e63b82fb0574454c6a40defdb8b",
+    "record_parent_vllm_commit": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+    "xpu_kernel_commit": "18a44f440ca3ac2006d5ba19cd12ccca0a0c9982",
+    "capture_dir": "/mnt/fast-ai/deepseek-v4-corpora/mtp1-m2-cycle-20260717T0710Z",
+    "raw_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-cycle-capture-20260717T0710Z",
+    "manifest_aggregate_sha256": "1015e86b1cf46476dbbd10d1cf0cec92246b8af406149f17b0f2dd62b6dd37cd",
+    "record_files": 688,
+    "unique_blobs": 1030,
+    "logical_tensor_bytes": 147823004,
+    "disk_usage_mib": 150,
+    "allreduces_per_rank": 87,
+    "mhc_boundaries_per_rank": 85,
+    "mhc_inputs_linked_to_reductions_per_rank": 85,
+    "successive_residual_storage_aliases_per_rank": 84,
+    "cached_prompt_tokens": 0
+  },
+  "replay": {
+    "raw_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m2-real-cycle-replay-20260717T0720Z",
+    "exact_fixed_address_replays": 70,
+    "passed_exactness": true,
+    "timed_replays": 20,
+    "max_rank_wall_ms_median": 4.209381993860006,
+    "xpu_extension_sha256": "afe32514bd508c5382495713c894d1b7173f6a170e3c21030c2baa171c201956",
+    "oneccl_libccl_sha256": "53de2b6d65265803d64773546c1166ceed4ae43737f0fded776f5847b4b461c9"
+  },
+  "decision": "Promote the corpus and replay worker as the first fixed-geometry decoder-shell artifact. It is infrastructure and a component baseline, not a model throughput or LocalMax result."
+}

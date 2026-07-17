@@ -95,6 +95,14 @@ performance gate. The active path is the fixed-geometry decoder shell and
 cached real-model parity/replay corpus, followed by exact M=4/M=8 verifier
 economics and held-out deeper-speculation evaluation.
 
+The first decoder-shell artifact now exists. Diagnostic vLLM `9fc754a` captured
+the exact record's real M=2 cycle into 688 manifests and 1,030 deduplicated
+blobs (150 MiB): 87 reductions and 85 MHC boundaries/rank, all linked and
+cross-rank exact. The standalone four-B70 worker passes 70/70 full graph
+replays without loading the model and measures 4.209382 ms at the slowest
+rank. Use this as the default gate for future communication/MHC candidates.
+See `notes/2026-07-17-m2-real-cycle-corpus-and-replay.md`.
+
 The post-portfolio eager diagnostic is complete. It uses the exact promoted
 source/selectors with graph replay disabled for attribution and measures
 17.8497 ms/cycle of noncollective device work, down 1.6283 ms from the prior

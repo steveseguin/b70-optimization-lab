@@ -141,7 +141,11 @@ the ordinary comparator is also captured. The production graph had already
 removed the Python/c10d submission cost. The active path is now the Option-4
 fixed-geometry decoder shell and cached real-model parity/replay corpus,
 followed by exact M=4/M=8 verifier economics and held-out deeper-speculation
-evaluation.
+evaluation. The first shell artifact is complete: a 150 MiB content-addressed
+real M=2 corpus captures 87 TP4 reductions and 85 MHC boundaries per rank, and
+the no-model four-B70 worker passes 70/70 full fixed-address replays at a
+4.209382 ms slowest-rank median. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-m2-real-cycle-corpus-and-replay.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-m2-real-cycle-corpus-and-replay.md).
 The fresh post-portfolio eager diagnostic now attributes **17.8497 ms/cycle**
 to noncollective device work versus 19.4779 ms before the promoted portfolio,
 a measured 1.6283 ms reduction. Dense GEMMs remain 6.5639 ms and compact
