@@ -150,6 +150,16 @@ Ten post-confirmation exact suites passed 10/10, all cached-zero. Do not rerun
 this two-item bundle without another compatible component that materially
 raises its conservative ceiling. Evidence and the admission policy are in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-subgate-portfolio-policy.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-subgate-portfolio-policy.md).
+The first attempted third portfolio component is closed before service. The
+old `0.470 ms` M=2 gather/shared-add estimate overlapped the unpromoted compact
+scheduler and could not be added to N128. A new isolated four-card gate passes
+140/140 changed graph cases per B70, including shared-buffer aliasing, but the
+actual conservative incremental projections are only `+0.0038`, `+0.00007`,
+`-0.0049`, and `-0.0007 ms/cycle`. Preserve XPU `5d1a72e` and vLLM
+`eb4e39b4d` as default-off exact infrastructure; do not service-test it. The
+frozen inventory now has no further exact, non-overlapping component with a
+defensible `>=0.25 ms/cycle` incremental ceiling. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-isolated-gather-shared-add-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-isolated-gather-shared-add-closure.md).
 The first architectural scheduler screen is also closed before service. A
 route-compact M=2 Xe2 scheduler is exact on 84/84 changed-input card-0 cases,
 but its worst valid all-remote EP route projects only 0.262 ms saved per 43

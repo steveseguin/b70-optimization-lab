@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_m2_gather_shared_add_isolated_closure",
+  "date": "2026-07-16",
+  "topology": "one isolated B70 per rank-shaped probe; projected over 43 layers",
+  "candidate": "fixed-M2 routed gather plus shared BF16 add",
+  "identity": {
+    "xpu_kernel_commits": ["7b800ca", "4acfd34"],
+    "xpu_plumbing_commit": "5d1a72e",
+    "vllm_plumbing_commit": "eb4e39b4d",
+    "flag": "VLLM_XPU_V4_M2_GATHER_SHARED_ADD"
+  },
+  "correctness": {
+    "cases_per_card": 140,
+    "exact_cases_per_card": 140,
+    "cards_passed": 4,
+    "separate_output_exact": true,
+    "shared_output_alias_exact": true
+  },
+  "conservative_projected_saved_ms_per_43_layers": [
+    0.00377884,
+    0.00006708,
+    -0.00488566,
+    -0.00068198
+  ],
+  "best_route_projected_saved_ms_per_43_layers": [
+    0.05280314,
+    0.02981706,
+    0.03422198,
+    0.03708406
+  ],
+  "required_incremental_ms_for_service": 0.25,
+  "service_loaded": false,
+  "localmaxxing_submitted": false,
+  "decision": "exact but incremental saving is noise-floor; preserve default-off and close"
+}

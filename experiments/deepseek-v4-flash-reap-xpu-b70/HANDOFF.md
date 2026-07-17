@@ -32,6 +32,14 @@ but neither beat the 63.349928 record. Preserve XPU portfolio commit `3e600bf`,
 keep M=1/N64 promoted, and do not rerun this pair without a new compatible
 component. See `notes/2026-07-16-mtp1-subgate-portfolio-policy.md`.
 
+The first attempted third component, fixed-M2 gather plus shared addition, is
+closed before service. Its old `0.470 ms` headline overlapped the compact
+route-direct scheduler. The isolated transplant passes 140/140 graph cases on
+every B70, including output aliasing, but projects only `-0.0049` to
+`+0.0038 ms/cycle` conservatively. Preserve default-off XPU `5d1a72e` and vLLM
+`eb4e39b4d`; do not load the service. See
+`notes/2026-07-16-mtp1-isolated-gather-shared-add-closure.md`.
+
 The subsequent route-direct boundary is also closed before service. The first
 upper-bound graphs were invalid because GEMM2 was ordered after gather; those
 artifacts are retained but withdrawn. The corrected full chain uses real
