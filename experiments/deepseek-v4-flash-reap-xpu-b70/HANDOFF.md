@@ -103,6 +103,19 @@ replays without loading the model and measures 4.209382 ms at the slowest
 rank. Use this as the default gate for future communication/MHC candidates.
 See `notes/2026-07-17-m2-real-cycle-corpus-and-replay.md`.
 
+The first M-width extension clears that shell's component gate. XPU kernels
+`50646a2` add fixed M=4/M=8 MHC post/pre commands. With the proven M=2
+collectives retained as segmented operations, M=4 improves from 6.944914 to
+5.521133 ms/cycle (`1.423781 ms` saved) and M=8 from 12.350354 to 8.039061
+ms/cycle (`4.311293 ms` saved). Both widths pass 16 changed eager schedules,
+eager collective exactness, and 70/70 graph replays on all four cards. A single
+wide `[4,4096]` BF16 collective is blocked: every rank sees 427,072 mismatches
+over the 87 reductions in eager and graph paths, including positions 28/58.
+Do not use its timing. Proceed to guarded integration with true sequential
+verifier tensors and held-out complete-cycle acceptance; this component result
+is not endpoint throughput or LocalMax evidence. See
+`notes/2026-07-17-m4-m8-fixed-mhc-component-gate.md`.
+
 The post-portfolio eager diagnostic is complete. It uses the exact promoted
 source/selectors with graph replay disabled for attribution and measures
 17.8497 ms/cycle of noncollective device work, down 1.6283 ms from the prior

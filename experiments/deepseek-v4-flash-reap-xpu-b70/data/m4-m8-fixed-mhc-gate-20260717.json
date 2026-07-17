@@ -1,0 +1,57 @@
+{
+  "classification": "deepseek_v4_row_tiled_m4_m8_fixed_mhc_component_gate",
+  "date": "2026-07-17",
+  "passed": true,
+  "scope": "TP4 all-reduce plus MHC component geometry from row-tiled real M=2 tensors; not endpoint throughput, sequential verifier correctness, or speculation acceptance",
+  "identity": {
+    "corpus": "/mnt/fast-ai/deepseek-v4-corpora/mtp1-m2-cycle-20260717T0710Z",
+    "corpus_manifest_aggregate_sha256": "1015e86b1cf46476dbbd10d1cf0cec92246b8af406149f17b0f2dd62b6dd37cd",
+    "xpu_kernel_commit": "50646a2bfd3e451d77e150a9f950cc097b40bce9",
+    "xpu_extension_sha256": "af1760de1b18a8b107ba553352df45abcc396c4556558da07ed71c217ffb8561",
+    "oneccl_runtime": "/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-wideepoch-48fda4f",
+    "oneccl_libccl_sha256": "53de2b6d65265803d64773546c1166ceed4ae43737f0fded776f5847b4b461c9",
+    "world_size": 4,
+    "allreduces_per_cycle": 87,
+    "mhc_boundaries_per_cycle": 85,
+    "ccl_sycl_allreduce_ll": "ring",
+    "ccl_sycl_allreduce_ll_threshold": 4096,
+    "b70_oneccl_sycl_allreduce_max_bytes": 131072
+  },
+  "m4": {
+    "raw_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m4-real-cycle-gate-20260717T123502Z",
+    "independent_candidate_repeat": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m4-real-cycle-gate-20260717T123317Z",
+    "segmented_m2_control_ms": 6.944914013729431,
+    "segmented_fixed_m4_ms": 5.521133003639989,
+    "saving_ms_per_cycle": 1.4237810100894421,
+    "speedup": 1.2578784117591022,
+    "changed_eager_schedules": 16,
+    "exact_fixed_address_replays": 70,
+    "passed_on_all_four_ranks": true,
+    "rollover_positions_28_and_58_exact": true
+  },
+  "m8": {
+    "raw_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-real-cycle-gate-20260717T123355Z",
+    "segmented_m2_control_ms": 12.350354489171878,
+    "segmented_fixed_m8_ms": 8.039061489398591,
+    "saving_ms_per_cycle": 4.311292999773286,
+    "speedup": 1.5362930741926466,
+    "changed_eager_schedules": 16,
+    "exact_fixed_address_replays": 70,
+    "passed_on_all_four_ranks": true,
+    "rollover_positions_28_and_58_exact": true
+  },
+  "wide_collective_failure": {
+    "raw_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m4-real-cycle-gate-20260717T123159Z",
+    "shape": [4, 4096],
+    "dtype": "bfloat16",
+    "failed_eager_and_graph_on_all_four_ranks": true,
+    "mismatched_elements_across_87_reductions_per_rank": 427072,
+    "maximum_absolute_difference": 0.5,
+    "duplicate_row_0_2_mismatches": 146404,
+    "duplicate_row_1_3_mismatches": 146984,
+    "rollover_position_28_mismatches_per_rank": 427072,
+    "rollover_position_58_mismatches_per_rank": 427072,
+    "decision": "Do not use a single wide all-reduce or its timing. Retain proven segmented [2,4096] collectives until the oneCCL count/geometry defect is repaired and independently requalified."
+  },
+  "decision": "Admit fixed M4/M8 MHC integration behind a guard while retaining segmented exact M2 collectives. Next require true sequential verifier tensors, complete-cycle economics, frozen held-out acceptance, and endpoint validation before any throughput or LocalMax claim."
+}

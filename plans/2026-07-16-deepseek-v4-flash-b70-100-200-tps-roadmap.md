@@ -240,10 +240,23 @@ XCCL plus MHC takes 4.265725 ms versus 4.156179 ms for the direct chain, only a
 0.109546 ms/cycle gain. Do not service-test or portfolio this candidate.
 
 The easy bounded inventory is exhausted. Option 4's first fixed-geometry shell
-artifact is now operational: a 150 MiB content-addressed real M=2 corpus and a
+artifact is operational: a 150 MiB content-addressed real M=2 corpus and a
 no-model four-B70 worker replay the 87-reduction/85-MHC cycle exactly 70/70
-times at a 4.209382 ms slowest-rank median. New kernels enter that shell only
-when they delete device work or collective traffic. Option 3's held-out
-evaluator and exact M=4/M=8 verifier economics are now the next multiplier
-gate; attached MTP2 remains closed. Do not revive resident polling, the
-rejected in-ring MHC implementations, or generic oneCCL flag sweeps.
+times at a 4.209382 ms slowest-rank median.
+
+The first exact M-width extension now clears its component gate. Keeping the
+proven segmented M=2 collectives and replacing repeated M=2 MHC calls with one
+fixed command saves `1.423781 ms/cycle` at M=4 and `4.311293 ms/cycle` at M=8.
+Both widths pass 16 changed eager schedules and 70/70 graph replays on all four
+cards, including positions 28 and 58. A single wide `[4,4096]` BF16 collective
+is not admissible: it corrupts 427,072 elements across 87 reductions on every
+rank in eager and graph modes. Retain segmented collectives until that oneCCL
+count/geometry defect is repaired.
+
+The immediate gate is guarded fixed-M4/M8 integration with true sequential
+verifier tensors and complete-cycle economics, followed by the frozen held-out
+predictor evaluation. Attached MTP2 remains closed. Do not infer endpoint
+throughput or acceptance from row-tiled component tensors, and do not revive
+resident polling, rejected in-ring MHC implementations, or generic oneCCL flag
+sweeps. Evidence is in
+`../experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-m4-m8-fixed-mhc-component-gate.md`.

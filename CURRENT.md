@@ -146,6 +146,15 @@ real M=2 corpus captures 87 TP4 reductions and 85 MHC boundaries per rank, and
 the no-model four-B70 worker passes 70/70 full fixed-address replays at a
 4.209382 ms slowest-rank median. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-m2-real-cycle-corpus-and-replay.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-m2-real-cycle-corpus-and-replay.md).
+The first M-width decoder-shell extension now passes its component gate while
+retaining proven segmented M=2 collectives: fixed M=4 MHC saves 1.423781
+ms/cycle and fixed M=8 saves 4.311293 ms/cycle, with 16 changed eager schedules
+and 70/70 graph replays exact on all four cards. A single wide `[4,4096]` BF16
+collective is blocked by repeatable oneCCL corruption, so its faster timing is
+excluded. This is not an endpoint record or an acceptance result. Next is
+guarded integration against true sequential verifier tensors, complete-cycle
+economics, and the frozen held-out predictor gate. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-m4-m8-fixed-mhc-component-gate.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-m4-m8-fixed-mhc-component-gate.md).
 The fresh post-portfolio eager diagnostic now attributes **17.8497 ms/cycle**
 to noncollective device work versus 19.4779 ms before the promoted portfolio,
 a measured 1.6283 ms reduction. Dense GEMMs remain 6.5639 ms and compact
