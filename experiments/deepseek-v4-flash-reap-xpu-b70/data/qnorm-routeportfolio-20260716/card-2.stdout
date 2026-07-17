@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_mxfp4_m2_route_direct_implementation_gate",
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "logical_device": "xpu:0",
+  "ep_rank": 2,
+  "generic_policy": "N64",
+  "compact_route_lanes": 12,
+  "gemm1_compact_route_lanes": 12,
+  "gemm2_compact_route_lanes": 12,
+  "route_direct_gather": "generic",
+  "route_direct_activation": "generic",
+  "activation_route_lanes": null,
+  "shape": {
+    "m": 2,
+    "gemm1": {
+      "n": 4096,
+      "k": 4096
+    },
+    "gemm2": {
+      "n": 4096,
+      "k": 2048
+    },
+    "local_experts": 40,
+    "global_experts": 160,
+    "topk": 6
+  },
+  "timing": {
+    "selection_rule": "minimum savings across every declared route pattern",
+    "rows": [
+      {
+        "route": "same_typical",
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "baseline_median_us": 129.94852,
+        "candidate_median_us": 115.60588,
+        "speedup": 1.1240649697056933,
+        "saved_us_per_layer": 14.342640000000003,
+        "projected_saved_ms_per_43_layers": 0.6167335200000001,
+        "baseline_samples_us": [
+          129.94852,
+          129.68644,
+          129.66719999999998,
+          130.39311999999998,
+          129.58192,
+          130.0156,
+          129.9584,
+          130.49971999999997,
+          129.66928
+        ],
+        "candidate_samples_us": [
+          115.50551999999999,
+          115.39996000000001,
+          115.87472,
+          116.31567999999999,
+          115.34379999999999,
+          115.38852000000001,
+          116.31828,
+          116.77691999999999,
+          115.60588
+        ]
+      },
+      {
+        "route": "disjoint_typical",
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "baseline_median_us": 215.69755999999998,
+        "candidate_median_us": 198.63428,
+        "speedup": 1.0859029972067258,
+        "saved_us_per_layer": 17.063279999999992,
+        "projected_saved_ms_per_43_layers": 0.7337210399999997,
+        "baseline_samples_us": [
+          215.43703999999997,
+          215.19212,
+          216.12551999999997,
+          215.56287999999998,
+          215.69755999999998,
+          217.80303999999995,
+          215.64088,
+          215.91179999999997,
+          215.73291999999998
+        ],
+        "candidate_samples_us": [
+          198.75544,
+          198.48296,
+          198.82096,
+          198.43875999999997,
+          198.40703999999997,
+          198.63428,
+          198.87452000000002,
+          199.49176,
+          198.50791999999998
+        ]
+      },
+      {
+        "route": "cross_row_overlap",
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "baseline_median_us": 153.67404,
+        "candidate_median_us": 135.75692,
+        "speedup": 1.1319794232220353,
+        "saved_us_per_layer": 17.917119999999983,
+        "projected_saved_ms_per_43_layers": 0.7704361599999993,
+        "baseline_samples_us": [
+          153.4858,
+          153.42808,
+          154.4816,
+          153.67404,
+          153.65012000000002,
+          154.31936,
+          153.85604,
+          153.40883999999997,
+          153.894
+        ],
+        "candidate_samples_us": [
+          135.47924,
+          135.00603999999998,
+          135.79384,
+          136.422,
+          136.5442,
+          136.33776,
+          135.34611999999998,
+          135.343,
+          135.75692
+        ]
+      },
+      {
+        "route": "within_row_duplicate",
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "baseline_median_us": 153.54247999999998,
+        "candidate_median_us": 133.12676,
+        "speedup": 1.1533554936663373,
+        "saved_us_per_layer": 20.415719999999993,
+        "projected_saved_ms_per_43_layers": 0.8778759599999998,
+        "baseline_samples_us": [
+          154.32612,
+          154.16752,
+          153.48631999999998,
+          153.54247999999998,
+          153.76608,
+          153.29444,
+          153.19668,
+          153.64804,
+          152.92732
+        ],
+        "candidate_samples_us": [
+          133.40496,
+          133.59892,
+          133.07528,
+          133.12676,
+          132.88392,
+          132.76952,
+          133.28796,
+          132.99728,
+          133.68368
+        ]
+      },
+      {
+        "route": "all_duplicate",
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "baseline_median_us": 103.50859999999999,
+        "candidate_median_us": 89.1332,
+        "speedup": 1.1612799719969662,
+        "saved_us_per_layer": 14.375399999999985,
+        "projected_saved_ms_per_43_layers": 0.6181421999999993,
+        "baseline_samples_us": [
+          103.896,
+          103.84608,
+          103.50859999999999,
+          103.22728,
+          103.2148,
+          104.59643999999999,
+          103.40512000000001,
+          103.48832,
+          103.51224
+        ],
+        "candidate_samples_us": [
+          89.03023999999999,
+          88.92363999999999,
+          89.1332,
+          91.33175999999999,
+          88.74372,
+          90.19347999999998,
+          89.29492,
+          89.71871999999999,
+          88.8134
+        ]
+      },
+      {
+        "route": "six_local",
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "baseline_median_us": 368.82664,
+        "candidate_median_us": 357.27536,
+        "speedup": 1.0323315887219315,
+        "saved_us_per_layer": 11.55128000000002,
+        "projected_saved_ms_per_43_layers": 0.4967050400000009,
+        "baseline_samples_us": [
+          367.53808,
+          369.3976,
+          369.26863999999995,
+          368.08668,
+          369.87912000000006,
+          368.82664,
+          368.81155999999993,
+          368.69195999999994,
+          369.59364
+        ],
+        "candidate_samples_us": [
+          356.42983999999996,
+          356.3518399999999,
+          356.74548000000004,
+          357.83332,
+          357.34556,
+          356.10848,
+          357.75947999999994,
+          357.27536,
+          357.40015999999997
+        ]
+      },
+      {
+        "route": "all_remote",
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "baseline_median_us": 30.126719999999995,
+        "candidate_median_us": 20.53636,
+        "speedup": 1.466994150862178,
+        "saved_us_per_layer": 9.590359999999997,
+        "projected_saved_ms_per_43_layers": 0.41238547999999986,
+        "baseline_samples_us": [
+          31.01904,
+          31.513039999999997,
+          30.944159999999997,
+          30.88124,
+          29.890119999999996,
+          29.960839999999997,
+          29.712799999999998,
+          29.81836,
+          30.126719999999995
+        ],
+        "candidate_samples_us": [
+          22.60388,
+          22.04696,
+          21.167119999999997,
+          20.979400000000002,
+          20.35748,
+          20.49944,
+          20.4776,
+          20.4906,
+          20.53636
+        ]
+      }
+    ],
+    "selected_gate": "route-direct",
+    "selected_minimum_saved_ms_per_43_layers": 0.41238547999999986,
+    "required_ms": 0.5,
+    "clears_integration_gate": false
+  },
+  "passed": false
+}

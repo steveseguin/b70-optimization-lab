@@ -1,0 +1,339 @@
+{
+  "activation_route_lanes": null,
+  "classification": "deepseek_v4_mxfp4_m2_route_direct_implementation_gate",
+  "compact_route_lanes": 12,
+  "correctness": {
+    "cases": 14,
+    "exact_cases": 14,
+    "passed": true,
+    "rows": [
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 0,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "same_typical",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 1,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "same_typical",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 0,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "disjoint_typical",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 1,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "disjoint_typical",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 0,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "cross_row_overlap",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 1,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "cross_row_overlap",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 0,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "within_row_duplicate",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 6,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 1,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "within_row_duplicate",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 12,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 0,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "all_duplicate",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 12,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 1,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "all_duplicate",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 12,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 0,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "six_local",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 12,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 1,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "six_local",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 0,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 0,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "all_remote",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      },
+      {
+        "active_rows": 0,
+        "candidate_oracle_gemm1_exact": true,
+        "candidate_oracle_gemm2_exact": true,
+        "epoch": 1,
+        "exact": true,
+        "gather_exact": true,
+        "pattern": "all_remote",
+        "reference_oracle_gemm1_exact": true,
+        "reference_oracle_gemm2_exact": true
+      }
+    ]
+  },
+  "device": "Intel(R) Arc(TM) Pro B70 Graphics",
+  "ep_rank": 0,
+  "gemm1_compact_route_lanes": 12,
+  "gemm2_compact_route_lanes": 12,
+  "generic_policy": "N64",
+  "logical_device": "xpu:0",
+  "passed": false,
+  "route_direct_activation": "generic",
+  "route_direct_gather": "generic",
+  "schema_version": 1,
+  "shape": {
+    "gemm1": {
+      "k": 4096,
+      "n": 4096
+    },
+    "gemm2": {
+      "k": 2048,
+      "n": 4096
+    },
+    "global_experts": 160,
+    "local_experts": 40,
+    "m": 2,
+    "topk": 6
+  },
+  "timing": {
+    "clears_integration_gate": false,
+    "required_ms": 0.5,
+    "rows": [
+      {
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "baseline_median_us": 140.5976,
+        "baseline_samples_us": [
+          156.0208,
+          139.243,
+          140.5976
+        ],
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "candidate_median_us": 128.00060000000002,
+        "candidate_samples_us": [
+          139.85660000000001,
+          128.00060000000002,
+          124.91959999999999
+        ],
+        "projected_saved_ms_per_43_layers": 0.5416709999999991,
+        "route": "same_typical",
+        "saved_us_per_layer": 12.59699999999998,
+        "speedup": 1.0984136011862442
+      },
+      {
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "baseline_median_us": 225.4382,
+        "baseline_samples_us": [
+          225.4382,
+          225.8464,
+          224.7518
+        ],
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "candidate_median_us": 209.00879999999998,
+        "candidate_samples_us": [
+          209.2506,
+          207.94279999999998,
+          209.00879999999998
+        ],
+        "projected_saved_ms_per_43_layers": 0.7064642000000007,
+        "route": "disjoint_typical",
+        "saved_us_per_layer": 16.429400000000015,
+        "speedup": 1.0786062596407424
+      },
+      {
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "baseline_median_us": 163.7896,
+        "baseline_samples_us": [
+          162.2686,
+          164.12499999999997,
+          163.7896
+        ],
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "candidate_median_us": 145.2594,
+        "candidate_samples_us": [
+          145.9978,
+          145.2594,
+          145.2516
+        ],
+        "projected_saved_ms_per_43_layers": 0.7967986000000004,
+        "route": "cross_row_overlap",
+        "saved_us_per_layer": 18.530200000000008,
+        "speedup": 1.1275662710984626
+      },
+      {
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "baseline_median_us": 163.71939999999998,
+        "baseline_samples_us": [
+          165.0168,
+          163.71939999999998,
+          163.6232
+        ],
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "candidate_median_us": 143.3354,
+        "candidate_samples_us": [
+          143.065,
+          143.3354,
+          147.19119999999998
+        ],
+        "projected_saved_ms_per_43_layers": 0.8765119999999994,
+        "route": "within_row_duplicate",
+        "saved_us_per_layer": 20.383999999999986,
+        "speedup": 1.1422119029911662
+      },
+      {
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "baseline_median_us": 112.6762,
+        "baseline_samples_us": [
+          112.931,
+          112.6528,
+          112.6762
+        ],
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "candidate_median_us": 100.0116,
+        "candidate_samples_us": [
+          99.957,
+          103.76859999999999,
+          100.0116
+        ],
+        "projected_saved_ms_per_43_layers": 0.5445777999999997,
+        "route": "all_duplicate",
+        "saved_us_per_layer": 12.664599999999993,
+        "speedup": 1.1266313107679509
+      },
+      {
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "baseline_median_us": 374.348,
+        "baseline_samples_us": [
+          375.427,
+          374.348,
+          373.8592
+        ],
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "candidate_median_us": 363.5918,
+        "candidate_samples_us": [
+          362.6792,
+          363.5918,
+          363.7634
+        ],
+        "projected_saved_ms_per_43_layers": 0.4625166000000015,
+        "route": "six_local",
+        "saved_us_per_layer": 10.756200000000035,
+        "speedup": 1.0295831754181477
+      },
+      {
+        "baseline": "generic_route_staging_two_gemm_and_gather",
+        "baseline_median_us": 40.9396,
+        "baseline_samples_us": [
+          40.9396,
+          41.1086,
+          40.8356
+        ],
+        "candidate": "fixed_remap_compact_two_gemm_generic_gather",
+        "candidate_median_us": 31.72,
+        "candidate_samples_us": [
+          31.72,
+          32.6196,
+          31.457399999999996
+        ],
+        "projected_saved_ms_per_43_layers": 0.3964428,
+        "route": "all_remote",
+        "saved_us_per_layer": 9.2196,
+        "speedup": 1.290655737704918
+      }
+    ],
+    "selected_gate": "route-direct",
+    "selected_minimum_saved_ms_per_43_layers": 0.3964428,
+    "selection_rule": "minimum savings across every declared route pattern"
+  }
+}
