@@ -143,6 +143,14 @@ a measured 1.6283 ms reduction. Dense GEMMs remain 6.5639 ms and compact
 routed MXFP4 remains the largest open kernel family at 3.9424 ms. oneCCL and
 host durations remain profiler-distorted and excluded. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-postportfolio-eager-cycle-profile.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-postportfolio-eager-cycle-profile.md).
+The subgroup-split/SLM producer is now closed by an incremental upper bound
+before implementation. Its best possible all-remote comparison is only about
+0.123 ms/cycle above the already-promoted route-direct path, and all-remote has
+no local gate/up arithmetic for subgroup splitting to accelerate. No source,
+build, service, or GPU experiment was made. The active next boundary is the
+fixed-M2 producer/allreduce/consumer chain around 87 TP4 reductions; require a
+fresh exact `>=0.50 ms/cycle` upper bound. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md).
 The exact M=2 MXFP4 N32/N128 follow-up is closed without promotion. N32
 regresses. N128 saves 0.247-0.283 ms per 43 routed layers in the four-card
 microgate, but two strict suites reach 62.649706/63.628477 tok/s while

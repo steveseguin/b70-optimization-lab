@@ -226,8 +226,11 @@ engineering program, not a parameter sweep.
 
 ## Current First Action
 
-Create the fresh post-portfolio cycle attribution and the isolated
-subgroup-split M=2 MXFP4 gate. Do not stop or mutate the qualified record
-service until the diagnostic commands, worktree identity, and restore path are
-captured. Do not spend a TP4 model-load cycle unless the isolated four-card
-gate passes.
+The fresh post-portfolio attribution is complete at 17.8497 ms/cycle of
+noncollective device work. The subgroup-split producer is closed before build:
+against the now-promoted route-direct baseline its generous all-remote
+incremental ceiling is only about 0.123 ms/cycle. The current first action is
+an exact fixed-M2 upper-bound harness for the producer/allreduce/consumer chain
+around 87 TP4 reductions, followed by real current-record tensor capture. Do
+not spend a TP4 model-load cycle on a candidate until that boundary proves at
+least 0.50 ms/cycle.

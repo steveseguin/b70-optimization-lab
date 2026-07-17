@@ -102,6 +102,15 @@ source/selectors with graph replay disabled for attribution and measures
 remains the largest open kernel family at 3.9424 ms. See
 `notes/2026-07-17-mtp1-postportfolio-eager-cycle-profile.md`.
 
+The subgroup-split/SLM producer is closed before implementation against the
+new record baseline. The old fused producer's best all-remote result was
+0.520384 ms/cycle versus generic, while promoted route-direct already owns
+0.397-0.414 ms of that scope. The generous incremental ceiling is only
+0.123114 ms/cycle, and all-remote contains no local gate/up arithmetic. No
+source, build, service, or GPU work was spent. Move to an exact fixed-M2
+producer/allreduce/consumer upper bound around the 87 TP4 reductions. See
+`notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md`.
+
 Fusing generic gather with the following shared BF16 addition is exact on all
 84 cases but also misses the standalone real gate: all-remote reaches
 `0.4479 ms/43 layers`; an empty-routed fast path raises it to `0.4701 ms`,
