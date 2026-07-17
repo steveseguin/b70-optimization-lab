@@ -26,7 +26,7 @@ def classify(name: str) -> str:
         return "oneccl_distorted_timeline"
     if name == "gemm_kernel":
         return "dense_gemm"
-    if "MoE::GemmCuteName" in name:
+    if "MoE::GemmCuteName" in name or "MoE::GemmM2CompactCuteName" in name:
         return "mxfp4_routed_moe"
     if "MhcPreM1Fused" in name:
         return "mhc_post_pre"
@@ -38,6 +38,16 @@ def classify(name: str) -> str:
         return "router_radix_select"
     if "SegmentedGroupRadixSortPairsFunctor" in name:
         return "router_radix_sort"
+    if "deepseek_m1_biased_topk_kernel" in name:
+        return "router_native_topk_norm"
+    if name == "_xpu_qnorm_rope_fp8_insert_kernel":
+        return "qnorm_rope_fp8_kv"
+    if "RemapHiddenStatesM2Direct" in name:
+        return "m2_route_direct_remap"
+    if "moe::MoeGather" in name:
+        return "routed_moe_gather"
+    if "silu_and_mul_clamp_vec_kernel" in name:
+        return "routed_moe_activation"
     return "other_noncollective"
 
 

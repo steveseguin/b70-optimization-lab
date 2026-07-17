@@ -137,6 +137,12 @@ target-verified speculation, and a fixed-geometry Intel SYCL/Level Zero
 decoder. The immediate bounded work is a fresh post-portfolio cycle profile
 and a subgroup-split/SLM-exchange M=2 MXFP4 gate; no model load is permitted
 unless the exact four-card worst-route projection clears `0.50 ms/cycle`.
+The fresh post-portfolio eager diagnostic now attributes **17.8497 ms/cycle**
+to noncollective device work versus 19.4779 ms before the promoted portfolio,
+a measured 1.6283 ms reduction. Dense GEMMs remain 6.5639 ms and compact
+routed MXFP4 remains the largest open kernel family at 3.9424 ms. oneCCL and
+host durations remain profiler-distorted and excluded. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-postportfolio-eager-cycle-profile.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-postportfolio-eager-cycle-profile.md).
 The exact M=2 MXFP4 N32/N128 follow-up is closed without promotion. N32
 regresses. N128 saves 0.247-0.283 ms per 43 routed layers in the four-card
 microgate, but two strict suites reach 62.649706/63.628477 tok/s while

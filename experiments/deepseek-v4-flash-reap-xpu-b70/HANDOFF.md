@@ -95,6 +95,13 @@ the subgroup-split/SLM-exchange M=2 MXFP4 hardware gate. Do not load a model
 candidate unless its worst-card and worst-valid-route projection clears
 `0.50 ms/cycle`.
 
+The post-portfolio eager diagnostic is complete. It uses the exact promoted
+source/selectors with graph replay disabled for attribution and measures
+17.8497 ms/cycle of noncollective device work, down 1.6283 ms from the prior
+19.4779 ms profile. Dense GEMM remains 6.5639 ms and compact routed MXFP4
+remains the largest open kernel family at 3.9424 ms. See
+`notes/2026-07-17-mtp1-postportfolio-eager-cycle-profile.md`.
+
 Fusing generic gather with the following shared BF16 addition is exact on all
 84 cases but also misses the standalone real gate: all-remote reaches
 `0.4479 ms/43 layers`; an empty-routed fast path raises it to `0.4701 ms`,

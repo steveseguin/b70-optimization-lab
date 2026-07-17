@@ -1,0 +1,3111 @@
+{
+  "schema_version": 2,
+  "classification": "deepseek_v4_eager_mtp1_cycle_trace_summary",
+  "context_name": "execute_context_0(0)_generation_1(2)",
+  "dropped_initial_contexts_per_rank": 1,
+  "trace_count": 4,
+  "timestamp_method": "associate GPU kernels with host execute_context by args.submitted (falling back to appended/sycl_enqk_begin); use GPU event dur",
+  "oneccl_warning": "oneCCL GPU event durations are timeline-distorted in this trace; exclude them from noncollective totals and use normal-run evidence",
+  "cross_rank_bucket_means": {
+    "attention_pv": {
+      "mean_ms_per_cycle": 0.47979070000000007,
+      "min_rank_mean_ms": 0.4748279,
+      "max_rank_mean_ms": 0.486095
+    },
+    "attention_qk_lse": {
+      "mean_ms_per_cycle": 1.27164615,
+      "min_rank_mean_ms": 1.2618777,
+      "max_rank_mean_ms": 1.2963993
+    },
+    "dense_gemm": {
+      "mean_ms_per_cycle": 6.563877850000008,
+      "min_rank_mean_ms": 6.530540800000009,
+      "max_rank_mean_ms": 6.643065800000008
+    },
+    "m2_route_direct_remap": {
+      "mean_ms_per_cycle": 0.20078952500000002,
+      "min_rank_mean_ms": 0.19530150000000002,
+      "max_rank_mean_ms": 0.2067660000000001
+    },
+    "mhc_post_pre": {
+      "mean_ms_per_cycle": 2.8353612249999993,
+      "min_rank_mean_ms": 2.8151638999999995,
+      "max_rank_mean_ms": 2.884737199999999
+    },
+    "mxfp4_routed_moe": {
+      "mean_ms_per_cycle": 3.942372399999999,
+      "min_rank_mean_ms": 3.832358899999999,
+      "max_rank_mean_ms": 4.0407039
+    },
+    "oneccl_distorted_timeline": {
+      "mean_ms_per_cycle": 181.64773002500002,
+      "min_rank_mean_ms": 1.1870095,
+      "max_rank_mean_ms": 242.0685467
+    },
+    "other_noncollective": {
+      "mean_ms_per_cycle": 1.6828646999999992,
+      "min_rank_mean_ms": 1.6418705999999996,
+      "max_rank_mean_ms": 1.8000217999999992
+    },
+    "qnorm_rope_fp8_kv": {
+      "mean_ms_per_cycle": 0.2531097500000001,
+      "min_rank_mean_ms": 0.25061100000000003,
+      "max_rank_mean_ms": 0.25734970000000007
+    },
+    "routed_moe_activation": {
+      "mean_ms_per_cycle": 0.07997982499999999,
+      "min_rank_mean_ms": 0.07726239999999998,
+      "max_rank_mean_ms": 0.0824503
+    },
+    "routed_moe_gather": {
+      "mean_ms_per_cycle": 0.149686975,
+      "min_rank_mean_ms": 0.14706439999999998,
+      "max_rank_mean_ms": 0.15515879999999999
+    },
+    "router_native_topk_norm": {
+      "mean_ms_per_cycle": 0.39019942500000004,
+      "min_rank_mean_ms": 0.3873050000000001,
+      "max_rank_mean_ms": 0.3964367999999999
+    }
+  },
+  "ranks": [
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-postportfolio-eager-profile-20260717T032135Z/trace/dp0_pp0_tp0_dcp0_ep0_rank0.1784258811847909626.pt.trace.json",
+      "retained_contexts": 10,
+      "context_host_duration_ms": [
+        250.40789990234376,
+        312.9386140136719,
+        322.89302099609375,
+        388.97585009765623,
+        439.3163159179687,
+        498.6397119140625,
+        589.2775668945312,
+        620.5293979492187,
+        625.2487780761719,
+        641.144669921875
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.4811139000000001,
+          "median": 0.4529945000000001,
+          "samples": [
+            0.4528910000000001,
+            0.4519540000000001,
+            0.45257900000000006,
+            0.45039100000000004,
+            0.453098,
+            0.453619,
+            0.45205800000000007,
+            0.546968,
+            0.5484270000000002,
+            0.549154
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.2619818,
+          "median": 1.1737830000000002,
+          "samples": [
+            1.1557100000000002,
+            1.1617540000000002,
+            1.158939,
+            1.1688370000000001,
+            1.1705040000000004,
+            1.177062,
+            1.1782150000000002,
+            1.4262289999999997,
+            1.509251,
+            1.513317
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.530540800000009,
+          "median": 6.521310000000007,
+          "samples": [
+            6.578401000000012,
+            6.526003000000008,
+            6.520267000000003,
+            6.56819200000001,
+            6.5223530000000105,
+            6.5132840000000085,
+            6.51203800000001,
+            6.514437000000009,
+            6.535267000000009,
+            6.515166000000007
+          ]
+        },
+        "m2_route_direct_remap": {
+          "mean": 0.20068580000000003,
+          "median": 0.20023650000000004,
+          "samples": [
+            0.19925000000000007,
+            0.20028800000000008,
+            0.202582,
+            0.19987100000000005,
+            0.20373200000000005,
+            0.203937,
+            0.197061,
+            0.20226899999999998,
+            0.19768300000000003,
+            0.20018500000000003
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.8219020999999995,
+          "median": 2.8173094999999995,
+          "samples": [
+            2.838923999999999,
+            2.8179849999999997,
+            2.815592,
+            2.8330899999999994,
+            2.814963999999999,
+            2.8186089999999986,
+            2.813710999999999,
+            2.814649,
+            2.834862999999999,
+            2.816633999999999
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 4.0407039,
+          "median": 4.069182,
+          "samples": [
+            3.7738249999999987,
+            3.8523590000000008,
+            4.0955889999999995,
+            4.305381999999999,
+            4.308401000000001,
+            4.042775,
+            3.68361,
+            4.394961,
+            3.726843999999999,
+            4.223292999999998
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 241.79102550000002,
+          "median": 239.90470050000005,
+          "samples": [
+            238.97860600000004,
+            240.83079500000005,
+            242.592879,
+            247.69673499999996,
+            234.63642300000018,
+            234.83361200000004,
+            236.81569200000015,
+            259.33172699999983,
+            244.98079800000005,
+            237.21298799999997
+          ]
+        },
+        "other_noncollective": {
+          "mean": 1.6454182999999982,
+          "median": 1.6460394999999979,
+          "samples": [
+            1.7747029999999988,
+            1.526045999999998,
+            1.7592749999999984,
+            1.5398899999999986,
+            1.7599979999999977,
+            1.5258249999999978,
+            1.5269879999999991,
+            1.7605219999999966,
+            1.5287470000000005,
+            1.7521889999999969
+          ]
+        },
+        "qnorm_rope_fp8_kv": {
+          "mean": 0.2521600000000001,
+          "median": 0.2519100000000002,
+          "samples": [
+            0.25196300000000016,
+            0.2532100000000001,
+            0.2520660000000001,
+            0.2518580000000002,
+            0.2535240000000002,
+            0.25196200000000013,
+            0.25165100000000007,
+            0.2517540000000001,
+            0.25175400000000003,
+            0.2518580000000001
+          ]
+        },
+        "routed_moe_activation": {
+          "mean": 0.07726239999999998,
+          "median": 0.07727449999999998,
+          "samples": [
+            0.07800299999999998,
+            0.077166,
+            0.078004,
+            0.07779599999999998,
+            0.07737899999999999,
+            0.07716999999999997,
+            0.07612299999999998,
+            0.07695899999999999,
+            0.075707,
+            0.078317
+          ]
+        },
+        "routed_moe_gather": {
+          "mean": 0.1482107,
+          "median": 0.1476365,
+          "samples": [
+            0.14727200000000001,
+            0.14800099999999997,
+            0.14685499999999999,
+            0.14977600000000002,
+            0.148627,
+            0.147064,
+            0.145922,
+            0.151544,
+            0.147272,
+            0.149774
+          ]
+        },
+        "router_native_topk_norm": {
+          "mean": 0.3873050000000001,
+          "median": 0.38722050000000013,
+          "samples": [
+            0.3869600000000001,
+            0.3867540000000001,
+            0.3881060000000001,
+            0.38727500000000015,
+            0.3867560000000002,
+            0.38727300000000014,
+            0.38696200000000003,
+            0.387794,
+            0.3871680000000001,
+            0.3880020000000001
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 17.847284700000007,
+        "median": 17.806418500000007,
+        "samples": [
+          17.637902000000008,
+          17.40152000000001,
+          17.869854000000004,
+          17.932358000000008,
+          18.09933600000001,
+          17.598580000000005,
+          17.224339000000008,
+          18.528086000000005,
+          17.742983000000006,
+          18.437889
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 240.95510920000007
+        },
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.530540800000008
+        },
+        {
+          "name": "MoE::GemmM2CompactCuteName<int, MoE::w4a16_policy_m_8, 12>",
+          "mean_ms_per_cycle": 4.0407039
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.8219020999999995
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.2619818
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.8359163000000001
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.4811139000000001
+        },
+        {
+          "name": "vllm::deepseek_m1_biased_topk_kernel<int, true>",
+          "mean_ms_per_cycle": 0.38730500000000007
+        },
+        {
+          "name": "_xpu_qnorm_rope_fp8_insert_kernel",
+          "mean_ms_per_cycle": 0.25216000000000016
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStatesM2Direct<sycl::_V1::ext::oneapi::bfloat16, int>",
+          "mean_ms_per_cycle": 0.20068580000000003
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.19126990000000008
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.17883620000000003
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.15732149999999998
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.1482107
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.14477500000000001
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.12456479999999985
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.10921909999999999
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.0820981
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.08073609999999998
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.07726239999999998
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.07494499999999997
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.07462189999999998
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.0740724
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SqrtFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.05801389999999998
+        },
+        {
+          "name": "_inverse_rope_gptj_kernel",
+          "mean_ms_per_cycle": 0.051911200000000025
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreStage1VectorFunctor",
+          "mean_ms_per_cycle": 0.043999699999999996
+        },
+        {
+          "name": "_build_full_compressed_indices_kernel",
+          "mean_ms_per_cycle": 0.024330999999999995
+        },
+        {
+          "name": "_compute_slot_mapping_kernel",
+          "mean_ms_per_cycle": 0.0240493
+        },
+        {
+          "name": "at::native::xpu::IndexKernelFunctor<at::native::xpu::IndexFunctor<at::native::xpu::OpaqueType<4> >, char*, OffsetCalculator<3, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.019976899999999995
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<int>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.015300099999999997
+        }
+      ],
+      "dense_gemm_shapes": [
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                2,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                8192,
+                1
+              ],
+              [
+                4194304,
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 1.4045034000000005
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                1024
+              ],
+              [
+                1024,
+                8192
+              ],
+              [
+                8,
+                64
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                1024,
+                1
+              ],
+              [
+                1,
+                1024
+              ],
+              [
+                64,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.9002528000000014
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                2048
+              ],
+              [
+                2048,
+                4096
+              ],
+              [
+                16,
+                32
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                2048,
+                1
+              ],
+              [
+                1,
+                2048
+              ],
+              [
+                32,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.8197415000000007
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                2048
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 21.0,
+          "mean_ms_per_cycle": 0.6912411000000009
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1536
+              ],
+              [
+                32,
+                12
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                12,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.6279813000000014
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm",
+            "input_dims": [
+              [
+                2,
+                512
+              ],
+              [
+                512,
+                4096
+              ],
+              [],
+              [
+                2,
+                4
+              ],
+              [
+                4,
+                32
+              ],
+              [
+                0
+              ]
+            ],
+            "input_strides": [
+              [
+                512,
+                1
+              ],
+              [
+                1,
+                512
+              ],
+              [],
+              [
+                4,
+                1
+              ],
+              [
+                32,
+                1
+              ],
+              [
+                1
+              ]
+            ],
+            "input_types": [
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e4m3fn",
+              "Scalar",
+              "float",
+              "c10::Float8_e8m0fnu",
+              "float"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.5874301000000007
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1024
+              ],
+              [
+                32,
+                8
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                8,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.4945663000000003
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                32320
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 1.0,
+          "mean_ms_per_cycle": 0.44560389999999994
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 20.0,
+          "mean_ms_per_cycle": 0.34761639999999966
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                160
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.21160399999999982
+        }
+      ],
+      "cpu_topk_shapes": {},
+      "cpu_topk_contracts": {}
+    },
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-postportfolio-eager-profile-20260717T032135Z/trace/dp0_pp0_tp1_dcp0_ep1_rank1.1784258811833287338.pt.trace.json",
+      "retained_contexts": 10,
+      "context_host_duration_ms": [
+        259.5636560058594,
+        260.73202294921873,
+        263.3708020019531,
+        268.15980200195315,
+        255.22341088867188,
+        254.9342570800781,
+        256.5572770996094,
+        280.3855681152344,
+        265.23975390625,
+        258.1331589355469
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.486095,
+          "median": 0.4559710000000001,
+          "samples": [
+            0.4467519999999999,
+            0.491025,
+            0.456648,
+            0.454358,
+            0.4552940000000002,
+            0.447585,
+            0.447482,
+            0.548626,
+            0.5569529999999999,
+            0.5562270000000001
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.2963993,
+          "median": 1.1990465000000001,
+          "samples": [
+            1.1631049999999998,
+            1.288108,
+            1.190089,
+            1.200714,
+            1.1973790000000002,
+            1.181337,
+            1.185606,
+            1.4622760000000001,
+            1.545087,
+            1.5502919999999996
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.643065800000008,
+          "median": 6.6307905000000105,
+          "samples": [
+            6.591841000000008,
+            6.84079100000001,
+            6.64590100000001,
+            6.643716000000005,
+            6.6324530000000115,
+            6.58683200000001,
+            6.590800000000012,
+            6.6414200000000045,
+            6.627776000000003,
+            6.62912800000001
+          ]
+        },
+        "m2_route_direct_remap": {
+          "mean": 0.2067660000000001,
+          "median": 0.20592050000000006,
+          "samples": [
+            0.20508600000000005,
+            0.2192560000000001,
+            0.20477900000000007,
+            0.20852200000000004,
+            0.2042570000000001,
+            0.19456600000000007,
+            0.2072790000000001,
+            0.20675500000000008,
+            0.2008210000000001,
+            0.21633900000000006
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.884737199999999,
+          "median": 2.876007,
+          "samples": [
+            2.844342999999999,
+            3.049754999999999,
+            2.8765289999999997,
+            2.8754850000000003,
+            2.8794420000000005,
+            2.836113999999998,
+            2.8427779999999983,
+            2.889137999999998,
+            2.8712139999999993,
+            2.8825740000000004
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 3.8790673999999994,
+          "median": 3.8656929999999994,
+          "samples": [
+            3.5455899999999994,
+            3.9619449999999987,
+            3.6508999999999983,
+            4.018504999999998,
+            4.037878,
+            3.431834000000001,
+            3.8395489999999994,
+            3.891836999999999,
+            3.605066,
+            4.80757
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 1.1870095,
+          "median": 1.1852310000000004,
+          "samples": [
+            1.199974,
+            1.2406980000000007,
+            1.1930930000000004,
+            1.1924619999999997,
+            1.180698,
+            1.159544,
+            1.16153,
+            1.185901,
+            1.1716339999999998,
+            1.1845610000000009
+          ]
+        },
+        "other_noncollective": {
+          "mean": 1.8000217999999992,
+          "median": 1.8494789999999983,
+          "samples": [
+            1.8300939999999983,
+            1.8688639999999985,
+            1.926352999999999,
+            1.6912389999999993,
+            1.954287,
+            1.593849999999999,
+            1.6046869999999989,
+            1.9306250000000005,
+            1.679173,
+            1.9210459999999985
+          ]
+        },
+        "qnorm_rope_fp8_kv": {
+          "mean": 0.25734970000000007,
+          "median": 0.2559230000000001,
+          "samples": [
+            0.25040200000000007,
+            0.2806100000000001,
+            0.257172,
+            0.2555070000000001,
+            0.2579020000000001,
+            0.251234,
+            0.2519630000000001,
+            0.2575900000000001,
+            0.2563390000000001,
+            0.2547780000000001
+          ]
+        },
+        "routed_moe_activation": {
+          "mean": 0.0824503,
+          "median": 0.0825465,
+          "samples": [
+            0.08030299999999999,
+            0.086862,
+            0.08249399999999998,
+            0.08353399999999998,
+            0.08217999999999999,
+            0.08020000000000001,
+            0.080513,
+            0.082909,
+            0.08259899999999999,
+            0.082909
+          ]
+        },
+        "routed_moe_gather": {
+          "mean": 0.15515879999999999,
+          "median": 0.15456599999999998,
+          "samples": [
+            0.14977399999999996,
+            0.16404299999999997,
+            0.15404499999999996,
+            0.15498299999999998,
+            0.155504,
+            0.14966900000000002,
+            0.15456399999999998,
+            0.154568,
+            0.15268700000000002,
+            0.161751
+          ]
+        },
+        "router_native_topk_norm": {
+          "mean": 0.3964367999999999,
+          "median": 0.39461399999999985,
+          "samples": [
+            0.3949779999999999,
+            0.41018899999999997,
+            0.394458,
+            0.39685400000000004,
+            0.39529299999999995,
+            0.394456,
+            0.39445499999999994,
+            0.39456099999999983,
+            0.3944569999999999,
+            0.3946669999999999
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 18.087548100000006,
+        "median": 17.9777945,
+        "samples": [
+          17.502268000000004,
+          18.661448000000007,
+          17.839368000000007,
+          17.983417000000003,
+          18.251869000000013,
+          17.147677000000012,
+          17.59967600000001,
+          18.460305000000005,
+          17.972172000000004,
+          19.45728100000001
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.6430658000000085
+        },
+        {
+          "name": "MoE::GemmM2CompactCuteName<int, MoE::w4a16_policy_m_8, 12>",
+          "mean_ms_per_cycle": 3.8790674
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.8847371999999996
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.2963992999999998
+        },
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 1.1620205000000001
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.48609499999999994
+        },
+        {
+          "name": "vllm::deepseek_m1_biased_topk_kernel<int, true>",
+          "mean_ms_per_cycle": 0.3964367999999999
+        },
+        {
+          "name": "_xpu_qnorm_rope_fp8_insert_kernel",
+          "mean_ms_per_cycle": 0.2573497000000001
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStatesM2Direct<sycl::_V1::ext::oneapi::bfloat16, int>",
+          "mean_ms_per_cycle": 0.2067660000000001
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.20558939999999998
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.18152430000000003
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.16582610000000006
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.15515879999999999
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.14960689999999996
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.14768199999999995
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.11869399999999997
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.08735339999999997
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.0843501
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.08245029999999999
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.07849579999999999
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.0747171
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.07397659999999998
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SqrtFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.06804229999999996
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreStage1VectorFunctor",
+          "mean_ms_per_cycle": 0.0566767
+        },
+        {
+          "name": "_inverse_rope_gptj_kernel",
+          "mean_ms_per_cycle": 0.05166170000000003
+        },
+        {
+          "name": "_compute_slot_mapping_kernel",
+          "mean_ms_per_cycle": 0.0326125
+        },
+        {
+          "name": "at::native::xpu::IndexKernelFunctor<at::native::xpu::IndexFunctor<at::native::xpu::OpaqueType<4> >, char*, OffsetCalculator<3, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.026006900000000003
+        },
+        {
+          "name": "_build_full_compressed_indices_kernel",
+          "mean_ms_per_cycle": 0.02568749999999999
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.024989
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<int>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.0191732
+        }
+      ],
+      "dense_gemm_shapes": [
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                2,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                8192,
+                1
+              ],
+              [
+                4194304,
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 1.4225022000000003
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                1024
+              ],
+              [
+                1024,
+                8192
+              ],
+              [
+                8,
+                64
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                1024,
+                1
+              ],
+              [
+                1,
+                1024
+              ],
+              [
+                64,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.9196590000000012
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                2048
+              ],
+              [
+                2048,
+                4096
+              ],
+              [
+                16,
+                32
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                2048,
+                1
+              ],
+              [
+                1,
+                2048
+              ],
+              [
+                32,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.8288771000000009
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                2048
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 21.0,
+          "mean_ms_per_cycle": 0.6957001000000004
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1536
+              ],
+              [
+                32,
+                12
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                12,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.6440037000000007
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm",
+            "input_dims": [
+              [
+                2,
+                512
+              ],
+              [
+                512,
+                4096
+              ],
+              [],
+              [
+                2,
+                4
+              ],
+              [
+                4,
+                32
+              ],
+              [
+                0
+              ]
+            ],
+            "input_strides": [
+              [
+                512,
+                1
+              ],
+              [
+                1,
+                512
+              ],
+              [],
+              [
+                4,
+                1
+              ],
+              [
+                32,
+                1
+              ],
+              [
+                1
+              ]
+            ],
+            "input_types": [
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e4m3fn",
+              "Scalar",
+              "float",
+              "c10::Float8_e8m0fnu",
+              "float"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.6119098
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1024
+              ],
+              [
+                32,
+                8
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                8,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 42.9,
+          "mean_ms_per_cycle": 0.5037025999999998
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                32320
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 1.0,
+          "mean_ms_per_cycle": 0.44661419999999985
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 20.0,
+          "mean_ms_per_cycle": 0.35042889999999977
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                160
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 42.9,
+          "mean_ms_per_cycle": 0.21802239999999998
+        },
+        {
+          "operator": {
+            "unmapped_external_id": null
+          },
+          "calls_per_cycle": 0.2,
+          "mean_ms_per_cycle": 0.0016458
+        }
+      ],
+      "cpu_topk_shapes": {},
+      "cpu_topk_contracts": {}
+    },
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-postportfolio-eager-profile-20260717T032135Z/trace/dp0_pp0_tp2_dcp0_ep2_rank2.1784258811879846303.pt.trace.json",
+      "retained_contexts": 10,
+      "context_host_duration_ms": [
+        254.10531909179687,
+        259.19823999023436,
+        335.8759609375,
+        335.99668701171873,
+        402.1247109375,
+        456.84799291992186,
+        551.5815949707031,
+        584.9912919921875,
+        591.0320339355469,
+        603.9343811035156
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.4748279,
+          "median": 0.4462330000000001,
+          "samples": [
+            0.44935800000000004,
+            0.44529699999999994,
+            0.44529500000000005,
+            0.44602500000000017,
+            0.4461290000000001,
+            0.4462340000000001,
+            0.44623200000000013,
+            0.5387339999999999,
+            0.5429029999999999,
+            0.5420719999999999
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.2618777,
+          "median": 1.1732114999999999,
+          "samples": [
+            1.1703999999999999,
+            1.160713,
+            1.1563330000000003,
+            1.1669620000000003,
+            1.1682089999999998,
+            1.1760229999999998,
+            1.1776900000000001,
+            1.42467,
+            1.5075859999999999,
+            1.5101910000000003
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.5401357000000075,
+          "median": 6.528602000000011,
+          "samples": [
+            6.611525000000007,
+            6.539957000000006,
+            6.524948000000008,
+            6.527979000000009,
+            6.536310000000009,
+            6.520798000000006,
+            6.521940000000006,
+            6.529225000000013,
+            6.562258000000008,
+            6.526417000000008
+          ]
+        },
+        "m2_route_direct_remap": {
+          "mean": 0.2004048,
+          "median": 0.20138499999999998,
+          "samples": [
+            0.20372800000000002,
+            0.200604,
+            0.19976900000000003,
+            0.19654100000000002,
+            0.20331,
+            0.20216599999999998,
+            0.20466399999999998,
+            0.20580999999999997,
+            0.18945799999999996,
+            0.19799799999999998
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.819641699999999,
+          "median": 2.8160024999999997,
+          "samples": [
+            2.873612999999999,
+            2.806637999999999,
+            2.8173609999999987,
+            2.805379999999999,
+            2.8100689999999995,
+            2.816108,
+            2.810171,
+            2.8210059999999997,
+            2.8201739999999997,
+            2.8158969999999997
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 4.017359399999999,
+          "median": 4.137259500000001,
+          "samples": [
+            3.876836,
+            3.779340999999999,
+            3.958401999999998,
+            4.145904,
+            4.247255999999999,
+            4.1955860000000005,
+            4.191527000000001,
+            4.309856000000001,
+            3.340270999999998,
+            4.128615000000001
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 241.54433840000002,
+          "median": 239.16881650000005,
+          "samples": [
+            235.748711,
+            240.96027600000005,
+            242.79736000000003,
+            248.00694599999997,
+            234.72693999999996,
+            234.68683900000005,
+            236.31996400000006,
+            259.424442,
+            245.39454900000004,
+            237.37735700000005
+          ]
+        },
+        "other_noncollective": {
+          "mean": 1.6441480999999993,
+          "median": 1.6305124999999994,
+          "samples": [
+            1.848541999999999,
+            1.5169699999999997,
+            1.7553139999999983,
+            1.5181170000000002,
+            1.749267999999999,
+            1.5180059999999993,
+            1.5204070000000005,
+            1.7562329999999993,
+            1.5180060000000002,
+            1.7406179999999982
+          ]
+        },
+        "qnorm_rope_fp8_kv": {
+          "mean": 0.25231830000000005,
+          "median": 0.2519640000000001,
+          "samples": [
+            0.2556090000000001,
+            0.25331900000000007,
+            0.253734,
+            0.25206800000000007,
+            0.25134000000000006,
+            0.2511300000000001,
+            0.25154800000000005,
+            0.25186000000000003,
+            0.25217400000000006,
+            0.25040100000000004
+          ]
+        },
+        "routed_moe_activation": {
+          "mean": 0.08008689999999999,
+          "median": 0.079878,
+          "samples": [
+            0.08050399999999999,
+            0.079149,
+            0.07977499999999998,
+            0.07956400000000001,
+            0.07998100000000001,
+            0.08196699999999998,
+            0.08050199999999999,
+            0.07967199999999999,
+            0.07924900000000001,
+            0.08050599999999998
+          ]
+        },
+        "routed_moe_gather": {
+          "mean": 0.148314,
+          "median": 0.14946100000000004,
+          "samples": [
+            0.149567,
+            0.145603,
+            0.14946000000000004,
+            0.14946200000000004,
+            0.14799899999999996,
+            0.151126,
+            0.14987800000000004,
+            0.14873100000000003,
+            0.14112399999999997,
+            0.15019
+          ]
+        },
+        "router_native_topk_norm": {
+          "mean": 0.38849120000000015,
+          "median": 0.3883660000000001,
+          "samples": [
+            0.38966700000000015,
+            0.38789700000000016,
+            0.389356,
+            0.38841700000000007,
+            0.3883150000000002,
+            0.3893560000000001,
+            0.3873780000000001,
+            0.38810700000000015,
+            0.38800100000000004,
+            0.3884180000000002
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 17.827605700000007,
+        "median": 17.745218500000007,
+        "samples": [
+          17.909349000000006,
+          17.315488000000006,
+          17.729747000000003,
+          17.67641900000001,
+          18.02818600000001,
+          17.748500000000007,
+          17.74193700000001,
+          18.453904000000012,
+          17.341204000000005,
+          18.33132300000001
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 240.7039535
+        },
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.540135700000008
+        },
+        {
+          "name": "MoE::GemmM2CompactCuteName<int, MoE::w4a16_policy_m_8, 12>",
+          "mean_ms_per_cycle": 4.017359399999999
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.819641699999999
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.2618777000000003
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.8403849
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.4748279000000001
+        },
+        {
+          "name": "vllm::deepseek_m1_biased_topk_kernel<int, true>",
+          "mean_ms_per_cycle": 0.3884912000000001
+        },
+        {
+          "name": "_xpu_qnorm_rope_fp8_insert_kernel",
+          "mean_ms_per_cycle": 0.25231830000000005
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStatesM2Direct<sycl::_V1::ext::oneapi::bfloat16, int>",
+          "mean_ms_per_cycle": 0.20040479999999997
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.18930260000000004
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.1778372
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.16239830000000008
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.14831400000000003
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.14329849999999997
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.12737079999999984
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.10351679999999996
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.08180819999999998
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.0800869
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.07947270000000001
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.07650499999999999
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.07348779999999996
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.07228869999999997
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SqrtFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.06013559999999997
+        },
+        {
+          "name": "_inverse_rope_gptj_kernel",
+          "mean_ms_per_cycle": 0.050881700000000016
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreStage1VectorFunctor",
+          "mean_ms_per_cycle": 0.045062
+        },
+        {
+          "name": "_compute_slot_mapping_kernel",
+          "mean_ms_per_cycle": 0.0249666
+        },
+        {
+          "name": "_build_full_compressed_indices_kernel",
+          "mean_ms_per_cycle": 0.0230174
+        },
+        {
+          "name": "at::native::xpu::IndexKernelFunctor<at::native::xpu::IndexFunctor<at::native::xpu::OpaqueType<4> >, char*, OffsetCalculator<3, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.0206533
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<int>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.015445200000000003
+        }
+      ],
+      "dense_gemm_shapes": [
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                2,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                8192,
+                1
+              ],
+              [
+                4194304,
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 38.7,
+          "mean_ms_per_cycle": 1.2629523999999999
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                1024
+              ],
+              [
+                1024,
+                8192
+              ],
+              [
+                8,
+                64
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                1024,
+                1
+              ],
+              [
+                1,
+                1024
+              ],
+              [
+                64,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 38.7,
+          "mean_ms_per_cycle": 0.8097333000000014
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                2048
+              ],
+              [
+                2048,
+                4096
+              ],
+              [
+                16,
+                32
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                2048,
+                1
+              ],
+              [
+                1,
+                2048
+              ],
+              [
+                32,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 38.7,
+          "mean_ms_per_cycle": 0.7359831000000006
+        },
+        {
+          "operator": {
+            "unmapped_external_id": null
+          },
+          "calls_per_cycle": 34.3,
+          "mean_ms_per_cycle": 0.6539957000000006
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                2048
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 18.9,
+          "mean_ms_per_cycle": 0.6196281000000002
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1536
+              ],
+              [
+                32,
+                12
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                12,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 38.7,
+          "mean_ms_per_cycle": 0.5704110000000004
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm",
+            "input_dims": [
+              [
+                2,
+                512
+              ],
+              [
+                512,
+                4096
+              ],
+              [],
+              [
+                2,
+                4
+              ],
+              [
+                4,
+                32
+              ],
+              [
+                0
+              ]
+            ],
+            "input_strides": [
+              [
+                512,
+                1
+              ],
+              [
+                1,
+                512
+              ],
+              [],
+              [
+                4,
+                1
+              ],
+              [
+                32,
+                1
+              ],
+              [
+                1
+              ]
+            ],
+            "input_types": [
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e4m3fn",
+              "Scalar",
+              "float",
+              "c10::Float8_e8m0fnu",
+              "float"
+            ]
+          },
+          "calls_per_cycle": 38.7,
+          "mean_ms_per_cycle": 0.5372882999999999
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1024
+              ],
+              [
+                32,
+                8
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                8,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 38.7,
+          "mean_ms_per_cycle": 0.44510920000000004
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                32320
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 0.9,
+          "mean_ms_per_cycle": 0.4017184
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 18.0,
+          "mean_ms_per_cycle": 0.31233519999999987
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                160
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 38.7,
+          "mean_ms_per_cycle": 0.1909809999999997
+        }
+      ],
+      "cpu_topk_shapes": {},
+      "cpu_topk_contracts": {}
+    },
+    {
+      "trace": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-postportfolio-eager-profile-20260717T032135Z/trace/dp0_pp0_tp3_dcp0_ep3_rank3.1784258812061078412.pt.trace.json",
+      "retained_contexts": 10,
+      "context_host_duration_ms": [
+        257.2052749023438,
+        328.3085791015625,
+        331.82865405273435,
+        403.9452229003906,
+        457.02063696289065,
+        532.8881450195313,
+        580.923787109375,
+        587.3352370605469,
+        594.5340458984375,
+        610.368373046875
+      ],
+      "bucket_ms_per_cycle": {
+        "attention_pv": {
+          "mean": 0.47712600000000016,
+          "median": 0.44841750000000025,
+          "samples": [
+            0.44873100000000016,
+            0.4477950000000001,
+            0.4463350000000002,
+            0.4488350000000002,
+            0.4481040000000003,
+            0.44706399999999996,
+            0.4480000000000001,
+            0.5419590000000002,
+            0.548313,
+            0.546124
+          ]
+        },
+        "attention_qk_lse": {
+          "mean": 1.2663258,
+          "median": 1.177949,
+          "samples": [
+            1.1602960000000002,
+            1.1661309999999998,
+            1.163002,
+            1.1735220000000004,
+            1.1752939999999998,
+            1.180604,
+            1.183839,
+            1.4273780000000003,
+            1.5151879999999993,
+            1.5180039999999997
+          ]
+        },
+        "dense_gemm": {
+          "mean": 6.541769100000008,
+          "median": 6.540582000000009,
+          "samples": [
+            6.54401600000001,
+            6.540896000000009,
+            6.540794000000006,
+            6.544955000000006,
+            6.538193000000007,
+            6.540370000000012,
+            6.53307100000001,
+            6.532870000000009,
+            6.563919000000005,
+            6.53860700000001
+          ]
+        },
+        "m2_route_direct_remap": {
+          "mean": 0.19530150000000002,
+          "median": 0.19565600000000002,
+          "samples": [
+            0.195501,
+            0.186747,
+            0.19310400000000005,
+            0.20497900000000008,
+            0.195604,
+            0.19904200000000002,
+            0.19570800000000005,
+            0.18789400000000003,
+            0.19716499999999995,
+            0.19727100000000009
+          ]
+        },
+        "mhc_post_pre": {
+          "mean": 2.8151638999999995,
+          "median": 2.812518499999999,
+          "samples": [
+            2.812883999999999,
+            2.8067339999999987,
+            2.816528,
+            2.810489999999999,
+            2.812152999999999,
+            2.8103809999999996,
+            2.8119440000000004,
+            2.816945,
+            2.835385,
+            2.818195
+          ]
+        },
+        "mxfp4_routed_moe": {
+          "mean": 3.832358899999999,
+          "median": 3.8596524999999993,
+          "samples": [
+            3.568295999999999,
+            3.3708980000000004,
+            3.7963169999999997,
+            4.302357,
+            3.829862,
+            3.9149649999999974,
+            3.678083999999999,
+            3.889442999999999,
+            3.9599659999999997,
+            4.013400999999998
+          ]
+        },
+        "oneccl_distorted_timeline": {
+          "mean": 242.0685467,
+          "median": 240.42517250000003,
+          "samples": [
+            239.479026,
+            241.37131900000008,
+            243.0728819999999,
+            247.79423500000001,
+            235.13840099999996,
+            234.95860500000003,
+            236.81371400000012,
+            259.85068899999993,
+            244.72860699999993,
+            237.47798900000004
+          ]
+        },
+        "other_noncollective": {
+          "mean": 1.6418705999999996,
+          "median": 1.6383629999999991,
+          "samples": [
+            1.7691579999999985,
+            1.5236320000000012,
+            1.7632279999999994,
+            1.5250940000000002,
+            1.7528919999999983,
+            1.5235309999999995,
+            1.5232100000000022,
+            1.7612349999999994,
+            1.5252859999999993,
+            1.751439999999999
+          ]
+        },
+        "qnorm_rope_fp8_kv": {
+          "mean": 0.25061100000000003,
+          "median": 0.25029900000000005,
+          "samples": [
+            0.24998600000000007,
+            0.25248300000000007,
+            0.251548,
+            0.25019600000000003,
+            0.2507160000000001,
+            0.2515490000000001,
+            0.24998600000000007,
+            0.25040200000000007,
+            0.24936100000000005,
+            0.24988300000000008
+          ]
+        },
+        "routed_moe_activation": {
+          "mean": 0.08011969999999999,
+          "median": 0.0801925,
+          "samples": [
+            0.07935500000000001,
+            0.080299,
+            0.08061,
+            0.08050500000000001,
+            0.079461,
+            0.08081999999999998,
+            0.07998499999999999,
+            0.080404,
+            0.07967199999999998,
+            0.08008600000000002
+          ]
+        },
+        "routed_moe_gather": {
+          "mean": 0.14706439999999998,
+          "median": 0.14732449999999997,
+          "samples": [
+            0.14623,
+            0.14477199999999998,
+            0.14811,
+            0.15008099999999996,
+            0.14789999999999998,
+            0.147481,
+            0.14446099999999998,
+            0.14716799999999997,
+            0.147689,
+            0.146752
+          ]
+        },
+        "router_native_topk_norm": {
+          "mean": 0.3885647000000001,
+          "median": 0.38831500000000013,
+          "samples": [
+            0.3884180000000001,
+            0.3882110000000001,
+            0.38925400000000004,
+            0.388002,
+            0.38998200000000016,
+            0.38956200000000013,
+            0.3874840000000001,
+            0.38821200000000017,
+            0.3880010000000002,
+            0.3885210000000001
+          ]
+        }
+      },
+      "noncollective_kernel_ms_per_cycle": {
+        "mean": 17.63627560000001,
+        "median": 17.604495500000006,
+        "samples": [
+          17.362871000000005,
+          16.90859800000001,
+          17.588830000000005,
+          17.879016000000007,
+          17.620161000000003,
+          17.48536900000001,
+          17.23577200000001,
+          18.023910000000008,
+          18.009945000000002,
+          18.248284000000005
+        ]
+      },
+      "top_kernel_names_by_duration": [
+        {
+          "name": "oneccl_allreduce_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 241.22822429999997
+        },
+        {
+          "name": "gemm_kernel",
+          "mean_ms_per_cycle": 6.541769100000008
+        },
+        {
+          "name": "MoE::GemmM2CompactCuteName<int, MoE::w4a16_policy_m_8, 12>",
+          "mean_ms_per_cycle": 3.832358899999999
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreM1Fused<true, false, 2>",
+          "mean_ms_per_cycle": 2.8151638999999986
+        },
+        {
+          "name": "_fp8_sparse_qk_lse_kernel",
+          "mean_ms_per_cycle": 1.2663258000000002
+        },
+        {
+          "name": "oneccl_allgatherv_pcie<sycl::_V1::ext::oneapi::bfloat16, Rt64_128_PCIE, 16>",
+          "mean_ms_per_cycle": 0.8403224
+        },
+        {
+          "name": "_fp8_sparse_pv_kernel",
+          "mean_ms_per_cycle": 0.4771260000000001
+        },
+        {
+          "name": "vllm::deepseek_m1_biased_topk_kernel<int, true>",
+          "mean_ms_per_cycle": 0.3885647000000001
+        },
+        {
+          "name": "_xpu_qnorm_rope_fp8_insert_kernel",
+          "mean_ms_per_cycle": 0.25061100000000003
+        },
+        {
+          "name": "vllm::moe::RemapHiddenStatesM2Direct<sycl::_V1::ext::oneapi::bfloat16, int>",
+          "mean_ms_per_cycle": 0.19530150000000004
+        },
+        {
+          "name": "vllm::rms_norm_kernel<sycl::_V1::ext::oneapi::bfloat16, 2, 8>",
+          "mean_ms_per_cycle": 0.18967700000000004
+        },
+        {
+          "name": "_fused_kv_compress_norm_rope_insert_sparse_attn",
+          "mean_ms_per_cycle": 0.17730680000000001
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.1621999
+        },
+        {
+          "name": "vllm::moe::MoeGather<sycl::_V1::ext::oneapi::bfloat16, 6, 8>",
+          "mean_ms_per_cycle": 0.14706439999999998
+        },
+        {
+          "name": "vllm::silu_and_mul_per_block_quant_kernel<sycl::_V1::ext::oneapi::bfloat16, c10::Float8_e4m3fn>",
+          "mean_ms_per_cycle": 0.14496219999999999
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.12883149999999988
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SoftplusFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.10415199999999995
+        },
+        {
+          "name": "_fused_q_kv_rmsnorm_kernel",
+          "mean_ms_per_cycle": 0.08263019999999997
+        },
+        {
+          "name": "vllm::silu_and_mul_clamp_vec_kernel<sycl::_V1::ext::oneapi::bfloat16, 2>",
+          "mean_ms_per_cycle": 0.08011969999999999
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::xpu::AddFunctor<float> >, at::detail::Array<char*, 3>, TrivialOffsetCalculator<2, unsigned int> >",
+          "mean_ms_per_cycle": 0.07907669999999999
+        },
+        {
+          "name": "_save_partial_states_kernel",
+          "mean_ms_per_cycle": 0.07622400000000001
+        },
+        {
+          "name": "_compute_global_topk_indices_and_lens_kernel",
+          "mean_ms_per_cycle": 0.07387259999999997
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::CopyScalarFunc<c10::BFloat16>, at::detail::Array<char*, 2>, OffsetCalculator<1, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.07246559999999996
+        },
+        {
+          "name": "at::native::xpu::VectorizedElementwiseKernel<4, at::native::xpu::SqrtFunctor<float>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int> >",
+          "mean_ms_per_cycle": 0.05988599999999998
+        },
+        {
+          "name": "_inverse_rope_gptj_kernel",
+          "mean_ms_per_cycle": 0.05037950000000003
+        },
+        {
+          "name": "(anonymous namespace)::MhcPreStage1VectorFunctor",
+          "mean_ms_per_cycle": 0.044197600000000004
+        },
+        {
+          "name": "_compute_slot_mapping_kernel",
+          "mean_ms_per_cycle": 0.024038900000000002
+        },
+        {
+          "name": "_build_full_compressed_indices_kernel",
+          "mean_ms_per_cycle": 0.0228615
+        },
+        {
+          "name": "at::native::xpu::IndexKernelFunctor<at::native::xpu::IndexFunctor<at::native::xpu::OpaqueType<4> >, char*, OffsetCalculator<3, unsigned int, false> >",
+          "mean_ms_per_cycle": 0.020007499999999998
+        },
+        {
+          "name": "at::native::xpu::UnrolledElementwiseKernel<at::native::xpu::CopyScalarFunc<int>, at::detail::Array<char*, 2>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >",
+          "mean_ms_per_cycle": 0.014996800000000003
+        }
+      ],
+      "dense_gemm_shapes": [
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                2,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                8192,
+                1
+              ],
+              [
+                4194304,
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 1.4013262999999978
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                1024
+              ],
+              [
+                1024,
+                8192
+              ],
+              [
+                8,
+                64
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                1024,
+                1
+              ],
+              [
+                1,
+                1024
+              ],
+              [
+                64,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.9000032000000003
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                2048
+              ],
+              [
+                2048,
+                4096
+              ],
+              [
+                16,
+                32
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                2048,
+                1
+              ],
+              [
+                1,
+                2048
+              ],
+              [
+                32,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.8184302000000001
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                2048
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 21.0,
+          "mean_ms_per_cycle": 0.6893560000000004
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1536
+              ],
+              [
+                32,
+                12
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                12,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.6326070000000005
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm",
+            "input_dims": [
+              [
+                2,
+                512
+              ],
+              [
+                512,
+                4096
+              ],
+              [],
+              [
+                2,
+                4
+              ],
+              [
+                4,
+                32
+              ],
+              [
+                0
+              ]
+            ],
+            "input_strides": [
+              [
+                512,
+                1
+              ],
+              [
+                1,
+                512
+              ],
+              [],
+              [
+                4,
+                1
+              ],
+              [
+                32,
+                1
+              ],
+              [
+                1
+              ]
+            ],
+            "input_types": [
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e4m3fn",
+              "Scalar",
+              "float",
+              "c10::Float8_e8m0fnu",
+              "float"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.5987019999999995
+        },
+        {
+          "operator": {
+            "name": "_xpu_C::fp8_gemm_w8a16",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                1024
+              ],
+              [
+                32,
+                8
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ],
+              [
+                8,
+                1
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::Float8_e4m3fn",
+              "c10::Float8_e8m0fnu",
+              ""
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.4954087000000007
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                32320
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 1.0,
+          "mean_ms_per_cycle": 0.4469370000000001
+        },
+        {
+          "operator": {
+            "name": "aten::bmm",
+            "input_dims": [
+              [
+                2,
+                1,
+                4096
+              ],
+              [
+                2,
+                4096,
+                1024
+              ],
+              []
+            ],
+            "input_strides": [
+              [
+                4096,
+                4096,
+                1
+              ],
+              [
+                0,
+                1,
+                4096
+              ],
+              []
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16",
+              "Scalar"
+            ]
+          },
+          "calls_per_cycle": 20.0,
+          "mean_ms_per_cycle": 0.3479909
+        },
+        {
+          "operator": {
+            "name": "aten::mm",
+            "input_dims": [
+              [
+                2,
+                4096
+              ],
+              [
+                4096,
+                160
+              ]
+            ],
+            "input_strides": [
+              [
+                4096,
+                1
+              ],
+              [
+                1,
+                4096
+              ]
+            ],
+            "input_types": [
+              "c10::BFloat16",
+              "c10::BFloat16"
+            ]
+          },
+          "calls_per_cycle": 43.0,
+          "mean_ms_per_cycle": 0.2110077999999997
+        }
+      ],
+      "cpu_topk_shapes": {},
+      "cpu_topk_contracts": {}
+    }
+  ]
+}
