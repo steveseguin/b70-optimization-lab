@@ -134,9 +134,14 @@ The ordered continuation plan is
 It preserves the current record while pursuing four explicit options:
 high-value target fusion, TP4 communication/cycle restructuring, deeper
 target-verified speculation, and a fixed-geometry Intel SYCL/Level Zero
-decoder. The current bounded work is the fixed-M2 finite event chain authorized
-by the passing producer/allreduce/consumer upper bound; no model load is
-permitted until dependent-producer and fixed-address replay exactness pass.
+decoder. The fixed-M2 finite event chain is now closed before model load. It is
+exact in two 40-epoch eager runs, with rank skew, and in fixed-address graph
+replay, but its 5.60-5.70 ms eager saving falls to only 0.109546 ms/cycle once
+the ordinary comparator is also captured. The production graph had already
+removed the Python/c10d submission cost. The active path is now the Option-4
+fixed-geometry decoder shell and cached real-model parity/replay corpus,
+followed by exact M=4/M=8 verifier economics and held-out deeper-speculation
+evaluation.
 The fresh post-portfolio eager diagnostic now attributes **17.8497 ms/cycle**
 to noncollective device work versus 19.4779 ms before the promoted portfolio,
 a measured 1.6283 ms reduction. Dense GEMMs remain 6.5639 ms and compact
@@ -147,15 +152,14 @@ The subgroup-split/SLM producer is now closed by an incremental upper bound
 before implementation. Its best possible all-remote comparison is only about
 0.123 ms/cycle above the already-promoted route-direct path, and all-remote has
 no local gate/up arithmetic for subgroup splitting to accelerate. No source,
-build, service, or GPU experiment was made. The active next boundary is the
-fixed-M2 producer/allreduce/consumer chain around 87 TP4 reductions. That
-component upper bound now passes twice: two 40-epoch four-B70 confirmations are
-bitwise exact and save 0.953386/0.928339 ms/cycle at the slowest rank. The
-measurement also exposed and repaired two missing device edges: the Arc LL
-ring discarded incoming producer dependencies, and native MHC needed a
-one-BF16 graph-visible completion witness. The active action is the guarded,
-finite same-queue event-chain implementation; this is not yet a service speed
-result. Evidence is in
+build, service, or GPU experiment was made. The fixed-M2 producer/allreduce/
+consumer upper bound then passed twice and exposed two missing device edges:
+the Arc LL ring discarded incoming producer dependencies, and native MHC
+needed a one-BF16 graph-visible completion witness. The guarded finite chain
+passed exact eager and graph correctness, but failed its graph performance
+gate at only 0.109546 ms/cycle saved. It is closed before service and is not a
+speed result. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-tp4-m2-event-chain-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-tp4-m2-event-chain-closure.md),
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-tp4-m2-producer-allreduce-consumer-upper-bound.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-tp4-m2-producer-allreduce-consumer-upper-bound.md) and
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-17-mtp1-sg-split-incremental-upper-bound-closure.md).
 The exact M=2 MXFP4 N32/N128 follow-up is closed without promotion. N32

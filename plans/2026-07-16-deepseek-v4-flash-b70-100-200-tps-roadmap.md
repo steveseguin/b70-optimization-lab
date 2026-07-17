@@ -231,12 +231,18 @@ noncollective device work. The subgroup-split producer is closed before build:
 against the now-promoted route-direct baseline its generous all-remote
 incremental ceiling is only about 0.123 ms/cycle.
 
-The fixed-M2 producer/allreduce/consumer upper bound has now cleared Phase C's
-gate twice. Correct slowest-rank measurements save 0.953386 and 0.928339 ms
-over 87 reductions and 85 native MHC consumers, with every changed epoch
-bitwise exact on four B70s. The active implementation is a default-off finite
-same-queue event chain: producer event -> dependency-aware unchanged Arc ring
--> native M=2 MHC -> one-BF16 completion witness -> next consumer. It must pass
-dependent producers, rank skew, 40 changing eager epochs, and at least 70
-changing fixed-address replays before any service load. Do not revive resident
-polling or in-ring MHC arithmetic.
+The fixed-M2 producer/allreduce/consumer upper bound cleared Phase C twice, but
+the implemented finite event chain is now closed at the production-relevant
+graph gate. It is bitwise exact in two 40-epoch eager runs, under rank skew,
+and under fixed-address graph replay. Its apparent 5.60-5.70 ms eager saving is
+submission overhead that reusable graphs already remove: captured ordinary
+XCCL plus MHC takes 4.265725 ms versus 4.156179 ms for the direct chain, only a
+0.109546 ms/cycle gain. Do not service-test or portfolio this candidate.
+
+The easy bounded inventory is exhausted. The active path moves to Option 4's
+fixed-geometry decoder shell, beginning with a real-model layer/cycle parity
+corpus and a cached fixed-buffer replay worker. New kernels enter that shell
+only when they delete device work or collective traffic. In parallel, Option
+3's held-out evaluator and exact M=4/M=8 verifier economics are the next
+multiplier gate; attached MTP2 remains closed. Do not revive resident polling,
+the rejected in-ring MHC implementations, or generic oneCCL flag sweeps.

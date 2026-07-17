@@ -1,0 +1,48 @@
+{
+  "classification": "deepseek_v4_mtp1_m2_tp4_event_chain_closure",
+  "date": "2026-07-17",
+  "decision": "performance-gate-fail-before-service",
+  "scope": "87 BF16 [2,4096] TP4 reductions and 85 native M=2 MHC consumers",
+  "source": {
+    "oneccl_commit": "9636514e6f9b885cfeecca141811433e2cb8affb",
+    "oneccl_libccl_sha256": "5783f343dfffa441ff5bf10c083739b0c014934991324c7567efdf9408861e93",
+    "xpu_kernel_commit": "a609e1f1ee5357a686513506991ba3437a05c38e",
+    "xpu_extension_sha256": "5df3e93f08896f9cf7bb7024174f1cc3e1174786cd0cc2dcf4fcd5c271449309"
+  },
+  "eager_confirmation": {
+    "raw": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-event-chain-eager-gate-20260717T0625Z",
+    "epochs": 40,
+    "passed_correctness": true,
+    "baseline_max_rank_median_ms": 11.305995984002948,
+    "candidate_max_rank_median_ms": 5.704508002963848,
+    "saved_ms": 5.601487981039099
+  },
+  "eager_rank_skew_confirmation": {
+    "raw": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-event-chain-eager-skew100us-20260717T0641Z",
+    "epochs": 40,
+    "rank_skew_us_per_rank": 100,
+    "passed_correctness": true,
+    "baseline_max_rank_median_ms": 11.683674514642917,
+    "candidate_max_rank_median_ms": 5.986110001686029,
+    "saved_ms": 5.6975645129568875
+  },
+  "fixed_address_graph_probe": {
+    "raw": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-m2-event-chain-graph-probe-20260717T0647Z",
+    "replays": 4,
+    "passed_correctness": true,
+    "passed_performance_gate": false,
+    "baseline_max_rank_median_ms": 4.265725496225059,
+    "candidate_max_rank_median_ms": 4.156178998528048,
+    "saved_ms": 0.10954649769701064,
+    "required_saved_ms": 0.5
+  },
+  "correctness": {
+    "changing_inputs": true,
+    "dependent_producer_copy": true,
+    "separate_reduced_storage": true,
+    "completion_witness_after_every_consumer": true,
+    "all_reduced_tensors_bitwise_exact": true,
+    "all_four_mhc_outputs_bitwise_exact": true
+  },
+  "conclusion": "The direct hook removes Python/c10d submission cost in eager execution, but reusable graph capture already removes almost all of that overhead. The remaining graph-replay saving is only 0.109546 ms/cycle, so the candidate is closed before a 70-replay gate or model service load."
+}

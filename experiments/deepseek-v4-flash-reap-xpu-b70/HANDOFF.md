@@ -90,10 +90,10 @@ The controlling 100/200 tok/s continuation roadmap is now
 four ordered options explicit: remaining high-value target fusion, TP4
 communication/cycle restructuring, useful deeper target-verified speculation,
 and a fixed-geometry SYCL/Level Zero decoder as the Intel equivalent of
-HIPfire. The current work is the default-off fixed-M2 finite event chain
-authorized by the passing producer/allreduce/consumer upper bound. Do not load
-a model candidate until its dependent-producer and fixed-address replay gates
-are exact and its slowest-rank projection retains `0.50 ms/cycle`.
+HIPfire. The default-off fixed-M2 finite event chain is now closed at its graph
+performance gate. The active path is the fixed-geometry decoder shell and
+cached real-model parity/replay corpus, followed by exact M=4/M=8 verifier
+economics and held-out deeper-speculation evaluation.
 
 The post-portfolio eager diagnostic is complete. It uses the exact promoted
 source/selectors with graph replay disabled for attribution and measures
@@ -122,6 +122,15 @@ computes max on the host. Proceed to a default-off finite same-queue event
 chain, then require dependent-producer, rank-skew, 40-epoch eager, and 70-replay
 fixed-address exactness before a service load. See
 `notes/2026-07-17-tp4-m2-producer-allreduce-consumer-upper-bound.md`.
+
+The implemented finite chain uses isolated oneCCL `9636514` and XPU kernels
+`a609e1f`. Two 40-epoch eager gates are bitwise exact, including rank skew, and
+save 5.601/5.698 ms by bypassing Python/c10d submissions. The fixed-address
+graph probe is also exact, but captured ordinary XCCL already removes that
+cost: baseline is 4.265725 ms and candidate is 4.156179 ms, only **0.109546
+ms/cycle** saved. Close before 70 replays, model load, portfolio admission, or
+LocalMax. Future communication work must delete device/collective work. See
+`notes/2026-07-17-tp4-m2-event-chain-closure.md`.
 
 Fusing generic gather with the following shared BF16 addition is exact on all
 84 cases but also misses the standalone real gate: all-remote reaches
