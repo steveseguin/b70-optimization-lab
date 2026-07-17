@@ -25,6 +25,11 @@ def main() -> int:
     parser.add_argument("--iterations", type=int, default=100)
     parser.add_argument("--required-ms", type=float, default=0.50)
     parser.add_argument(
+        "--production-wrapper",
+        action="store_true",
+        help="also graph-replay the guarded XpuFusedMoe production selector",
+    )
+    parser.add_argument(
         "--gate",
         choices=(
             "scheduler",
@@ -205,6 +210,7 @@ def main() -> int:
     reference_gather = torch.zeros((2, n), device=device, dtype=torch.bfloat16)
     candidate_gather = torch.zeros_like(reference_gather)
     direct_gather = torch.zeros_like(reference_gather)
+    production_gather = torch.zeros_like(reference_gather)
     shared_output = torch.randn_like(reference_gather) / 16
     rows_per_expert = torch.zeros(
         (local_experts,), device=device, dtype=torch.int32
@@ -389,6 +395,48 @@ def main() -> int:
                 local_experts,
             )
 
+    production_moe = None
+    if args.production_wrapper:
+        if (
+            args.gate != "route-direct"
+            or args.compact_route_lanes != 12
+            or args.gather != "generic"
+            or args.activation != "generic"
+        ):
+            parser.error(
+                "--production-wrapper requires the exact route-direct, "
+                "12-lane, generic-activation, generic-gather candidate"
+            )
+        os.environ["VLLM_XPU_V4_M2_ROUTE_DIRECT_COMPACT"] = "1"
+        os.environ["VLLM_XPU_V4_M2_ROUTED_CLAMP_SILU"] = "1"
+        from vllm_xpu_kernels.fused_moe_interface import XpuFusedMoe
+
+        production_moe = XpuFusedMoe(
+            weight1,
+            scale1,
+            None,
+            weight2,
+            scale2,
+            None,
+            topk,
+            "silu",
+            local_experts,
+            ep_rank=args.ep_rank,
+            ep_size=4,
+            expert_map=expert_map,
+            gemm1_clamp_limit=10.0,
+        )
+
+    def production_call() -> None:
+        assert production_moe is not None
+        production_moe.apply(
+            production_gather,
+            source1,
+            topk_weights,
+            topk_ids,
+            expert_map,
+        )
+
     def remap_upper_bound_call() -> None:
         # Deletion-only ceiling for folding remap into GEMM1. The reference
         # graph refreshes activation1 and unpermuted immediately before this
@@ -529,6 +577,9 @@ def main() -> int:
             else compact_call
         )
     )
+    production_graph = (
+        capture(production_call) if args.production_wrapper else None
+    )
 
     correctness = []
     for pattern_index, (pattern_name, pattern) in enumerate(
@@ -567,6 +618,8 @@ def main() -> int:
                 assert full_reference_graph is not None
                 full_reference_graph.replay()
             candidate_graph.replay()
+            if production_graph is not None:
+                production_graph.replay()
             torch.xpu.synchronize()
             mapping, candidate_mapping = direct_oracle_call()
             candidate_oracle1 = True
@@ -607,12 +660,20 @@ def main() -> int:
                 torch.equal(reference_gather, candidate_gather)
                 and torch.equal(candidate_gather, direct_gather)
             )
+            production_wrapper_exact = (
+                production_graph is None
+                or (
+                    torch.equal(production_gather, candidate_gather)
+                    and torch.equal(production_gather, direct_gather)
+                )
+            )
             oracle_exact = (
                 candidate_oracle1
                 and candidate_oracle2
                 and reference_oracle1
                 and reference_oracle2
                 and gather_exact
+                and production_wrapper_exact
             )
             correctness.append(
                 {
@@ -624,6 +685,7 @@ def main() -> int:
                     "reference_oracle_gemm1_exact": reference_oracle1,
                     "reference_oracle_gemm2_exact": reference_oracle2,
                     "gather_exact": gather_exact,
+                    "production_wrapper_exact": production_wrapper_exact,
                     "exact": oracle_exact,
                 }
             )
@@ -758,6 +820,7 @@ def main() -> int:
         "route_direct_activation": (
             args.activation if args.gate == "route-direct" else None
         ),
+        "production_wrapper_checked": args.production_wrapper,
         "activation_route_lanes": (
             args.activation_route_lanes
             if args.gate == "route-direct" and args.activation == "routed"
@@ -802,6 +865,8 @@ def main() -> int:
     if reference_graph is not None:
         reference_graph.reset()
     candidate_graph.reset()
+    if production_graph is not None:
+        production_graph.reset()
     if full_reference_graph is not None:
         full_reference_graph.reset()
     torch.xpu.synchronize()
