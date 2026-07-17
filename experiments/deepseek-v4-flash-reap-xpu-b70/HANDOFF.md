@@ -85,6 +85,16 @@ attempt must split gate/up work across subgroups and exchange rounded BF16
 fragments through SLM so one subgroup never owns both accumulator payloads.
 See `notes/2026-07-16-mtp1-m2-remap-and-paired-gemm1-closure.md`.
 
+The controlling 100/200 tok/s continuation roadmap is now
+`../../plans/2026-07-16-deepseek-v4-flash-b70-100-200-tps-roadmap.md`. It keeps
+four ordered options explicit: remaining high-value target fusion, TP4
+communication/cycle restructuring, useful deeper target-verified speculation,
+and a fixed-geometry SYCL/Level Zero decoder as the Intel equivalent of
+HIPfire. The immediate work is a fresh post-portfolio cycle attribution plus
+the subgroup-split/SLM-exchange M=2 MXFP4 hardware gate. Do not load a model
+candidate unless its worst-card and worst-valid-route projection clears
+`0.50 ms/cycle`.
+
 Fusing generic gather with the following shared BF16 addition is exact on all
 84 cases but also misses the standalone real gate: all-remote reaches
 `0.4479 ms/43 layers`; an empty-routed fast path raises it to `0.4701 ms`,

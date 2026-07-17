@@ -129,6 +129,14 @@ Every qualifying request is cached-zero. Evidence is in
 LocalMaxxing approved `cmrocpuhq029hlg01g3yzglko`. The preceding native-M=2
 router record remains superseded evidence at 63.349928 tok/s,
 `cmrncv39w003ylg01hogleazo`.
+The ordered continuation plan is
+[`plans/2026-07-16-deepseek-v4-flash-b70-100-200-tps-roadmap.md`](plans/2026-07-16-deepseek-v4-flash-b70-100-200-tps-roadmap.md).
+It preserves the current record while pursuing four explicit options:
+high-value target fusion, TP4 communication/cycle restructuring, deeper
+target-verified speculation, and a fixed-geometry Intel SYCL/Level Zero
+decoder. The immediate bounded work is a fresh post-portfolio cycle profile
+and a subgroup-split/SLM-exchange M=2 MXFP4 gate; no model load is permitted
+unless the exact four-card worst-route projection clears `0.50 ms/cycle`.
 The exact M=2 MXFP4 N32/N128 follow-up is closed without promotion. N32
 regresses. N128 saves 0.247-0.283 ms per 43 routed layers in the four-card
 microgate, but two strict suites reach 62.649706/63.628477 tok/s while
