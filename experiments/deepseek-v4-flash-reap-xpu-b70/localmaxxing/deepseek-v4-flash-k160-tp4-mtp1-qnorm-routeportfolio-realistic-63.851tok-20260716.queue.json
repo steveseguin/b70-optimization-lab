@@ -1,0 +1,63 @@
+[
+  {
+    "label": "deepseek-v4-flash-k160-b70-tp4-mtp1-qnorm-routeportfolio-realistic-63.851tok-20260716",
+    "payload": {
+      "hfId": "0xSero/DeepSeek-V4-Flash-180B",
+      "modelRevision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+      "engineName": "vllm",
+      "engineVersion": "0.1.dev1172+g4a6fd8747.xpu; local vLLM 4a6fd8747; XPU kernels 18a44f440; oneCCL 48fda4f0e",
+      "backend": "xpu",
+      "quantization": "fp8",
+      "hardware": {
+        "hwClass": "DISCRETE_GPU",
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 4,
+        "vramGb": 32,
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "ramGb": 128,
+        "os": "Ubuntu 24.04.4 LTS"
+      },
+      "contextLength": 1024,
+      "batchSize": 1,
+      "promptTokens": 62,
+      "outputTokens": 128,
+      "tokSOut": 63.85130111953857,
+      "tokSTotal": 53.22380403046468,
+      "ttftMs": 334.09914300136734,
+      "engineFlags": {
+        "attentionBackend": "vLLM XPU",
+        "benchmarkJson": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-candidate-b2-20260716T2255Z/strict-confirm.json",
+        "commandIdentityEnv": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-candidate-b2-20260716T2255Z/identity.txt",
+        "githubResultPacket": "experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-qnorm-routeportfolio-record.md",
+        "freshResponseHeadlineValid": true,
+        "headlineUse": "fresh-realistic-suite",
+        "historyAccelerated": false,
+        "responseReuse": false,
+        "prefixCaching": false,
+        "realisticSuiteGatePassed": true,
+        "realisticSuiteCachedTokensAllZero": true,
+        "realisticSuiteId": "rapid-model-snapshots-b70-realistic-v1",
+        "realisticSuitePath": "repro/rapid-model-snapshots-b70/realistic-suite-v1.json",
+        "primaryMetricName": "median_tok_s_1_100_after_ttft",
+        "tokenTimingSource": "openai_stream_token_ids_chunk_timestamp",
+        "metricWindowGeneratedTokens": 100,
+        "temperature": 0,
+        "specDecoding": true,
+        "specMethod": "mtp",
+        "specNumTokens": 1,
+        "targetModelVerifiedAcceptedTokens": true,
+        "tokSOutMedian": 63.85130111953857,
+        "tokSOutP10": 59.71821240782147,
+        "tokSOutMean": 63.28557609785355,
+        "tokSFullAfterTtftMedian": 63.43325482043775,
+        "tokSTotalWallMedian": 53.22380403046468,
+        "ttftMsMedian": 334.09914300136734,
+        "modelPath": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/k160-7c360e1cd4a5168099dbc54d16d929bf6df04990",
+        "kvCacheDtype": "fp8",
+        "concurrency": 1,
+        "commandSnippet": "/home/steve/.venvs/deepseek-v4-xpu/bin/vllm serve /mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160 --host 127.0.0.1 --port 18080 --served-model-name deepseek-v4-flash-k160 --dtype auto --tensor-parallel-size 4 --data-parallel-size 1 --data-parallel-size-local 1 --pipeline-parallel-size 1 --distributed-executor-backend mp --enable-expert-parallel --all2all-backend allgather_reducescatter --max-model-len 1024 --max-num-batched-tokens 1024 --max-num-seqs 1 --gpu-memory-utilization 0.94 --kv-cache-dtype fp8 --block-size 256 --tokenizer-mode deepseek_v4 --reasoning-parser deepseek_v4 --tool-call-parser deepseek_v4 --enable-auto-tool-choice --no-enable-prefix-caching --generation-config vllm --enable-prompt-tokens-details --spec-method mtp --spec-tokens 1"
+      },
+      "notes": "Policy-compliant four-B70 single-session DeepSeek V4 Flash K160 MTP1 record. This bounded portfolio extends the promoted fused QNorm/RoPE/FP8-KV insertion boundary from M=1 to M=2 and selects an exact guarded routed-MoE chain for the two-row verifier: direct remap, fixed 12-slot N64 compact MXFP4 GEMM1, canonical clamp-at-10 SwiGLU, compact GEMM2, and generic gather. The standalone route component intentionally remains below the frozen 0.50 ms admission gate; admission was predeclared only as a non-overlapping portfolio with the independently proven QNorm-M2 floor. Four physical B70s pass 336/336 changed-input graph-replay route cases bitwise, and the production wrapper passes another 84/84 cases. A same-binary flag-off control reaches 61.717893 tok/s versus 62.515661 and 63.851301 candidate suites. Seventy ordered exact capture suites pass, including positions 28 and 58; every realistic and qualifying canary request is cached-zero. One preserved diagnostic capture at max_tokens=8 truncated strict JSON and is explicitly invalid; the frozen canary contract uses max_tokens=32. The unchanged target verifies every accepted MTP token. No prefix cache, history, response reuse, aggregate throughput, model substitution, topology change, speculative-depth change, or benchmark-specific routing."
+    }
+  }
+]

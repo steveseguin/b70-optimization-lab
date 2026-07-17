@@ -12,8 +12,9 @@ Current stage: **artifact verified; TP4+EP correctness and persistent graph
 replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
 43.7667/43.6986 tok/s; the combined row-exact MTP1, strided-batch compressor,
 selective M=2 W8A16, direct-M1 draft MoE, M=2 shared/routed fusion, native M=2
-MHC post/pre, native M=2 router selection/normalization, and wide-epoch runtime
-is the target-verified speed record at 63.3499/62.8830 tok/s**.
+MHC post/pre, native M=2 router selection/normalization, QNorm/RoPE/FP8-KV M=2,
+guarded route-direct compact MXFP4, and wide-epoch runtime is the target-verified
+speed record at 63.8513 tok/s**.
 
 The follow-up exact M=2 MXFP4 tile-policy lane is closed without promotion.
 N32 regresses. N128 saves 0.247-0.283 ms per 43 routed layers across four
@@ -32,6 +33,17 @@ but neither beat the 63.349928 record. Preserve XPU portfolio commit `3e600bf`,
 keep M=1/N64 promoted, and do not rerun this pair without a new compatible
 component. See `notes/2026-07-16-mtp1-subgate-portfolio-policy.md`.
 
+The following N64 QNorm-M2 + route-direct portfolio is promoted. The route
+component still fails its standalone 0.50 ms gate at a worst-card
+0.397 ms/cycle; it was admitted only with the independently proven,
+non-overlapping QNorm-M2 floor. Four cards pass 336/336 changed graph cases and
+the production wrapper passes 84/84. Same-binary B-A-B medians are
+62.515661 / 61.717893 / 63.851301 tok/s, and 70/70 ordered exact suites pass.
+LocalMaxxing approved `cmrocpuhq029hlg01g3yzglko`. The measured identity is
+vLLM `4a6fd8747`, XPU kernels `18a44f440`, and oneCCL `48fda4f0e`; do not
+rewrite its prototype ancestry after measurement. See
+`notes/2026-07-16-qnorm-routeportfolio-record.md`.
+
 The first attempted third component, fixed-M2 gather plus shared addition, is
 closed before service. Its old `0.470 ms` headline overlapped the compact
 route-direct scheduler. The isolated transplant passes 140/140 graph cases on
@@ -40,7 +52,7 @@ every B70, including output aliasing, but projects only `-0.0049` to
 `eb4e39b4d`; do not load the service. See
 `notes/2026-07-16-mtp1-isolated-gather-shared-add-closure.md`.
 
-The subsequent route-direct boundary is also closed before service. The first
+The route-direct boundary remains closed as a standalone candidate. The first
 upper-bound graphs were invalid because GEMM2 was ordered after gather; those
 artifacts are retained but withdrawn. The corrected full chain uses real
 GEMM1 -> clamped-SwiGLU -> GEMM2 dependence and passes 84/84 cases against
@@ -48,8 +60,10 @@ route-mapped fixed-M1 and gather oracles. The best 12-lane compact scheduler,
 direct remap, generic activation, and generic gather saves 0.546-0.942 ms over
 43 layers for patterns with local work but only 0.414 ms for all-remote EP,
 below the 0.50 ms gate. Direct gather, four-lane GEMMs, and routed activations
-are slower. Preserve XPU experiment commit `3aa2181`; do not integrate it.
-See `notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md`.
+are slower. Preserve XPU experiment commit `3aa2181`; do not integrate it by
+itself. Its exact 12-lane/generic subset was later admitted only inside the
+promoted QNorm-M2 portfolio described above. See
+`notes/2026-07-16-mtp1-m2-route-direct-boundary-closure.md`.
 
 The first launch-removing follow-up is closed before service too. The fused
 SwiGLU/GEMM2-input kernel passes 84/84 changed-input cases bitwise, but it
@@ -144,15 +158,16 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is retained as superseded LocalMaxxing evidence
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. The current target-verified speed record is the combined **MTP1 native M=2
-   router lane at `63.349928/62.882999 tok/s`**. The same-build flag-off
-   control is 59.108299 tok/s. Seventy exact capture suites pass after both
-   strict suites, including former rollover positions 28 and 58; every request
-   is cached-zero. One submission selects, normalizes, and scales both
-   `[2,160]`, K6 verifier rows. All four cards are bitwise exact and save
-   1.123-1.128 ms across 40 routed layers. See
-   `notes/2026-07-16-mtp1-m2-router-record.md`. LocalMaxxing approved
-   `cmrncv39w003ylg01hogleazo`. The preceding native M=2 MHC
+2. The current target-verified speed record is the combined **MTP1 QNorm-M2 +
+   route-direct portfolio at `63.851301 tok/s`**. Same-binary B-A-B medians are
+   62.515661 / 61.717893 / 63.851301 tok/s. Seventy exact capture suites pass,
+   including former rollover positions 28 and 58; every qualifying request is
+   cached-zero. All four cards pass 336/336 changed graph cases and the guarded
+   production wrapper passes 84/84. See
+   `notes/2026-07-16-qnorm-routeportfolio-record.md`. LocalMaxxing approved
+   `cmrocpuhq029hlg01g3yzglko`. The preceding native M=2 router record remains
+   superseded evidence at 63.349928 tok/s, `cmrncv39w003ylg01hogleazo`. The
+   preceding native M=2 MHC
    record is 60.264242 tok/s, LocalMaxxing `cmrmvjbok1np3mj01p9il8486`.
    The preceding M=2 shared/routed fusion record was 57.412142/56.952065 tok/s.
    The preceding record is attached **MTP1 with a
@@ -228,16 +243,15 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-No DeepSeek endpoint is currently listening on `127.0.0.1:18080`; the last
-record candidate and control were stopped cleanly. The restorable combined
-native M=2 router MTP1 record is under
-`mtp1-m2-router-norm-candidate-20260716T0605Z`. The
+The QNorm/route-portfolio record service is temporarily listening on
+`127.0.0.1:18080` while its result packet is finalized. The restorable current
+record is under `qnorm-routeportfolio-candidate-b2-20260716T2255Z`. The
 restorable nonspeculative record recipe is
 `nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
 `a681dbb2b`, XPU kernels `6522849b0`, exact-version oneCCL `48fda4f0e`, and the
 wide collective epoch. Its sustained 70/70 exact gate passes. The separate
 row-exact MTP1 record remains historical at 55.524496 tok/s; the current
-combined target-verified record is 63.349928 tok/s.
+combined target-verified record is 63.851301 tok/s.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
@@ -252,8 +266,11 @@ fusion, `VLLM_XPU_V4_M1_BIASED_TOPK=1`,
 `VLLM_XPU_V4_M1_ROUTER_NORM=1`, and
 `VLLM_XPU_V4_M1_DIRECT_ROUTED_MOE=1` in the record lane. The trustworthy
 nonspeculative base is 43.766673 tok/s and native M=2 router-normalized MTP1 is
-the 63.349928 tok/s target-verified speed record. Preserve
-`VLLM_XPU_V4_M2_ROUTER_NORM=1` in every future record-lane control.
+part of the 63.851301 tok/s target-verified QNorm/route-portfolio record.
+Preserve `VLLM_XPU_V4_M2_ROUTER_NORM=1`,
+`VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT_MAX_M=2`, and
+`VLLM_XPU_V4_M2_ROUTE_DIRECT_COMPACT=1` in future record-lane candidates;
+disable only the two new portfolio selectors for exact same-binary controls.
 MTP2 and larger repeated-single-layer widths are closed by negligible
 second-position acceptance and a service deadlock. Carry the 43.766673 tok/s
 direct-routed-MoE base and wide-epoch oneCCL repair into the proven row-exact

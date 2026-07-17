@@ -21,17 +21,16 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-No DeepSeek process is currently listening on `127.0.0.1:18080`; the final
-record candidate and paired control were stopped cleanly after testing. The
-restorable qualified endpoint is the combined target-verified MTP1, native
-M=2 router selection/normalization, native M=2 MHC post/pre, M=2
-shared/routed fusion, direct M=1 draft routed-MoE, and wide-epoch recipe at
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mtp1-m2-router-norm-candidate-20260716T0605Z`.
-The source identity is vLLM `4a6fd8747`, XPU kernels `d15ce87d0`, and oneCCL
-`48fda4f0e`. `VLLM_XPU_V4_M2_ROUTER_NORM=1` is the newest record flag;
-`VLLM_XPU_V4_MHC_POST_PRE_M2_SINGLE_KERNEL=1` and the exact M=2 shared/routed
-flags remain enabled, while the noise-floor `VLLM_XPU_MOE_OUTPUT_ALIAS`
-candidate remains off.
+The DeepSeek QNorm/route-portfolio record service is temporarily listening on
+`127.0.0.1:18080` while its result packet is finalized. Its restorable evidence
+is `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-candidate-b2-20260716T2255Z`.
+The source identity is vLLM `4a6fd8747`, XPU kernels `18a44f440`, and oneCCL
+`48fda4f0e`. The record adds
+`VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT_MAX_M=2` and
+`VLLM_XPU_V4_M2_ROUTE_DIRECT_COMPACT=1` to the preceding native-M=2-router
+identity. The exact M=2 MHC/shared/routed flags remain enabled, N64 remains
+selected, and the noise-floor `VLLM_XPU_MOE_OUTPUT_ALIAS` candidate remains
+off.
 The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
@@ -118,16 +117,18 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row `cmrmebmzg1nm0mj01k30nv6vw` remains the
 superseded repeatability-repair authority.
-The current target-verified speed record adds native single-dispatch M=2
-router selection, normalization, and scaling to the exact MTP1 identity:
-**63.349928 tok/s** median with `59.079885` p10; independent support is
-62.882999 tok/s. The same-build flag-off control is 59.108299 tok/s. All four
-B70 microgates are bitwise exact and save 1.123-1.128 ms across the 40 normal
-routed layers per verifier cycle. Seventy ordered exact capture suites pass
-after both strict suites, including former rollover positions 28 and 58, and
-every request is cached-zero. Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-router-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-mtp1-m2-router-record.md).
-LocalMaxxing approved `cmrncv39w003ylg01hogleazo`.
+The current target-verified speed record is the exact QNorm-M2 + route-direct
+portfolio at **63.851301 tok/s** median with `59.718212` p10. Same-binary B-A-B
+medians are 62.515661 / 61.717893 / 63.851301 tok/s. The route component keeps
+the unchanged standalone 0.50 ms gate false and is admitted only with the
+independently proven, non-overlapping QNorm-M2 floor. Four B70s pass 336/336
+changed graph cases bitwise, the guarded production wrapper passes 84/84, and
+70/70 ordered exact capture suites pass across rollover positions 28 and 58.
+Every qualifying request is cached-zero. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-qnorm-routeportfolio-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-qnorm-routeportfolio-record.md).
+LocalMaxxing approved `cmrocpuhq029hlg01g3yzglko`. The preceding native-M=2
+router record remains superseded evidence at 63.349928 tok/s,
+`cmrncv39w003ylg01hogleazo`.
 The exact M=2 MXFP4 N32/N128 follow-up is closed without promotion. N32
 regresses. N128 saves 0.247-0.283 ms per 43 routed layers in the four-card
 microgate, but two strict suites reach 62.649706/63.628477 tok/s while

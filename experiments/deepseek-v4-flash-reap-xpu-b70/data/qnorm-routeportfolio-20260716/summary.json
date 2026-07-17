@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_k160_mtp1_qnorm_m2_route_direct_portfolio_record",
+  "date": "2026-07-16",
+  "model": {
+    "hf_id": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "artifact": "uniform-K160",
+    "kv_cache_dtype": "fp8"
+  },
+  "topology": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "tensor_parallel": 4,
+    "expert_parallel": true,
+    "active_generations": 1,
+    "speculation": "MTP1"
+  },
+  "source": {
+    "vllm_commit": "4a6fd874725312c53883b1d53970af1d0eccfc3f",
+    "xpu_kernel_commit": "18a44f440ca3ac2006d5ba19cd12ccca0a0c9982",
+    "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+    "xpu_C_sha256": "afe32514bd508c5382495713c894d1b7173f6a170e3c21030c2baa171c201956",
+    "moe_C_sha256": "e9f3522bf74f3f3a068e9e83e4bc70272c6d9c3668bc725ead86b5bf364bcfe3"
+  },
+  "candidate": {
+    "qnorm_rope_kv_insert_max_m": 2,
+    "m2_route_direct_compact": true,
+    "mxfp4_policy": "N64",
+    "route_chain": [
+      "remap_hidden_states_m2_direct",
+      "cutlass_grouped_gemm_m2_compact_interface",
+      "silu_and_mul_clamp",
+      "cutlass_grouped_gemm_m2_compact_interface",
+      "moe_gather"
+    ]
+  },
+  "hardware_gate": {
+    "direct_operation_cases": 336,
+    "direct_operation_exact_cases": 336,
+    "production_wrapper_cases": 84,
+    "production_wrapper_exact_cases": 84,
+    "worst_card_route_saved_ms_per_43_layers": 0.3972701200000001,
+    "standalone_required_ms": 0.5,
+    "standalone_gate_passed": false,
+    "admission": "predeclared non-overlapping portfolio with independently proven QNorm-M2 floor"
+  },
+  "service_runs": {
+    "candidate_b1": {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-candidate-b1-20260716T2235Z",
+      "median_tok_s": 62.51566129683944,
+      "p10_tok_s": 59.939429011367,
+      "gate_passed": true
+    },
+    "control_a": {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-control-a-20260716T2250Z",
+      "median_tok_s": 61.717893069069824,
+      "p10_tok_s": 58.533143369544575,
+      "gate_passed": true
+    },
+    "candidate_b2": {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-candidate-b2-20260716T2255Z",
+      "median_tok_s": 63.85130111953857,
+      "p10_tok_s": 59.71821240782147,
+      "mean_tok_s": 63.28557609785355,
+      "wall_median_tok_s": 53.22380403046468,
+      "ttft_median_ms": 334.09914300136734,
+      "gate_passed": true,
+      "cached_tokens_all_zero": true
+    }
+  },
+  "comparison": {
+    "prior_record_tok_s": 63.349927998683015,
+    "absolute_record_gain_tok_s": 0.5013731208555547,
+    "relative_record_gain_percent": 0.791434400016469,
+    "absolute_same_binary_control_gain_tok_s": 2.133408050468746,
+    "relative_same_binary_control_gain_percent": 3.456702751548061
+  },
+  "correctness": {
+    "ordered_exact_suites_passed": 70,
+    "ordered_exact_suites_total": 70,
+    "rollover_positions_covered": [28, 58],
+    "qualifying_cached_tokens_all_zero": true,
+    "invalid_diagnostic": {
+      "reason": "operator launched max_tokens=8 instead of frozen max_tokens=32",
+      "effect": "strict JSON was truncated by one closing brace; other five rows were exact",
+      "preserved_prefix": "exact-invalid-max8-01"
+    }
+  },
+  "status": "qualified_new_4gpu_record"
+}
