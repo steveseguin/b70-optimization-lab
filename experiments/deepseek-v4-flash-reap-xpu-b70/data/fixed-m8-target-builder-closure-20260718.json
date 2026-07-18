@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_fixed_m8_target_builder_closure",
+  "date": "2026-07-18",
+  "decision": "graph_performance_reject_before_endpoint_default_off",
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "vllm_commit": "ec7d27e0c61141494f1f57e90bb9ff7b64930ed2",
+  "flag": "VLLM_XPU_DSPARK_FIXED_M8_TARGET_BUILDER=1",
+  "world_size": 4,
+  "width": 8,
+  "draft_tokens": 7,
+  "changed_eager_schedules": 16,
+  "exact_graph_replays": 70,
+  "exact_all_ranks": true,
+  "slowest_rank": {
+    "control_eager_us": 194.3145,
+    "candidate_eager_us": 85.4355,
+    "eager_saved_us": 108.879,
+    "control_graph_us": 33.974,
+    "candidate_graph_us": 33.718,
+    "graph_saved_us": 0.256
+  },
+  "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/fixed-m8-target-builder-gate-20260718TpoststopZ/summary.json",
+  "cause": "captured production input preparation already amortizes the four generic device submissions; the fixed builder removes eager submission work but only 0.256 us survives graph replay",
+  "next": "gate ordinary Level Zero IPC events for a native sharded M7 Markov transaction that can delete collective and device work"
+}
