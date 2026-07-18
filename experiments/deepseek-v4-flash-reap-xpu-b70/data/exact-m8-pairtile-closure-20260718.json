@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_exact_m8_pairtile_closure",
+  "date": "2026-07-18",
+  "decision": "performance_reject_before_endpoint_default_off",
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "xpu_kernel_commit": "92b194a9c152812c4e280c92a7263dbd5473898b",
+  "mhc_library_sha256": "ddff6923fa836361d431ead23960fbe26feb45bb8d9b3c79ed526b6a60208d7a",
+  "flag": "VLLM_XPU_V4_MHC_POST_PRE_M8_PAIRTILE=1",
+  "width": 8,
+  "source_width": 2,
+  "allreduces": 87,
+  "mhc_boundaries": 85,
+  "changed_eager_schedules": 16,
+  "exact_graph_replays": 70,
+  "exact_all_four_outputs_all_ranks": true,
+  "same_binary_control_ms": 8.043784997425973,
+  "pairtile_block6_ms": 9.143246483290568,
+  "pairtile_block12_ms": 8.554636006010696,
+  "pairtile_block12_saved_ms": -0.5108510085847225,
+  "staged_pair_vector_ms": 8.999082492664456,
+  "evidence": {
+    "pairtile_block6": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-pairtile-mhc-gate-20260718T2320Z",
+    "same_binary_control": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-pairtile-mhc-control-20260718T2325Z",
+    "pairtile_block12": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-pairtile12-mhc-gate-20260718T2330Z",
+    "staged_pair_vector": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-pair-vector-staged-gate-20260718T2335Z"
+  },
+  "cause": "halving the fixed M8 grid from eight to four workgroups loses more Xe2 occupancy than shared FN reads save",
+  "next": "return to the approximately 10.50 ms DSpark sampler plus acceptance/commit boundary"
+}

@@ -280,6 +280,7 @@ argv=(
   printf 'vllm_xpu_dspark_persistent_markov=%s\n' "${VLLM_XPU_DSPARK_PERSISTENT_MARKOV:-unset}"
   printf 'vllm_xpu_dspark_replicated_markov_w1=%s\n' "${VLLM_XPU_DSPARK_REPLICATED_MARKOV_W1:-unset}"
   printf 'vllm_xpu_v4_mhc_post_pre_m8_dpas=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_M8_DPAS:-unset}"
+  printf 'vllm_xpu_v4_mhc_post_pre_m8_pairtile=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_M8_PAIRTILE:-unset}"
   printf 'vllm_xpu_dspark_sharded_markov_argmax=%s\n' "${VLLM_XPU_DSPARK_SHARDED_MARKOV_ARGMAX:-unset}"
   printf 'vllm_xpu_dspark_host_markov_argmax=%s\n' "${VLLM_XPU_DSPARK_HOST_MARKOV_ARGMAX:-unset}"
   printf 'vllm_xpu_dspark_host_markov_shm=%s\n' "${VLLM_XPU_DSPARK_HOST_MARKOV_SHM:-unset}"

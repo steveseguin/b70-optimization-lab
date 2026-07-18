@@ -52,11 +52,13 @@ unset CCL_ZE_IPC_EXCHANGE CCL_WORKER_COUNT
   printf 'kernel_commit=%s\n' "$(git -C "${kernel_tree}" rev-parse HEAD)"
   printf 'kernel_diff_sha256=%s\n' "$(git -C "${kernel_tree}" diff --binary | sha256sum | cut -d' ' -f1)"
   printf 'xpu_extension_sha256=%s\n' "$(sha256sum "${kernel_tree}/vllm_xpu_kernels/_xpu_C.abi3.so" | cut -d' ' -f1)"
+  printf 'mhc_library_sha256=%s\n' "$(sha256sum "${kernel_tree}/build/temp/libmhc_kernels_xe_2.so" | cut -d' ' -f1)"
   printf 'oneccl_libccl_sha256=%s\n' "$(sha256sum "${oneccl}/lib/libccl.so.1.0" | cut -d' ' -f1)"
   printf 'b70_oneccl_sycl_allreduce_max_bytes=%s\n' "${B70_ONECCL_SYCL_ALLREDUCE_MAX_BYTES}"
   printf 'ccl_sycl_allreduce_ll=%s\n' "${CCL_SYCL_ALLREDUCE_LL}"
   printf 'corpus=%s\n' "${corpus}"
   printf 'source_width=%s\n' "${source_width}"
+  printf 'vllm_xpu_v4_mhc_post_pre_m8_pairtile=%s\n' "${VLLM_XPU_V4_MHC_POST_PRE_M8_PAIRTILE:-unset}"
 } >"${run_dir}/identity.txt"
 
 default_paths="segmented_m2 segmented_fixed_width m2_chunks fixed_width generic_fused"
