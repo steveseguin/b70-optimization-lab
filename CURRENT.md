@@ -127,14 +127,16 @@ superseded repeatability-repair authority.
 The current target-verified speed record is DSpark7 with target PIECEWISE,
 private breakable draft PIECEWISE at exact M=7, a persistent sharded W2
 transaction, W1-only replication, exact M=8 strided-batch compressors,
-selective M=8 W8A16, MXFP4 N128, and exact native M=8 router normalization:
-**80.163578 tok/s** median with `68.282387` p10. Independent strict suite
-medians are 75.845916 / 77.572536 / 80.163578 tok/s;
+selective M=8 W8A16, MXFP4 N128, exact native M=8 router normalization, and a
+guarded sharded target-argmax/native target-token rejection transaction:
+**80.820052 tok/s** median with `71.669556` p10. Independent strict suite
+medians are 80.820052 / 76.900178 / 78.287226 tok/s;
 36/36 realistic requests are fresh and cache-zero, and four six-case exact
 suites pass before, between, and after the performance suites. The unchanged
 K160 target verifies all accepted tokens at M=8. Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-m8-router-fusion-record-and-postrecord-closures.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-m8-router-fusion-record-and-postrecord-closures.md).
-LocalMaxxing approved `cmrqp2uoa05ublg01lh6yluj8`. The preceding W8A16/N128
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-sharded-target-argmax-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-sharded-target-argmax-record.md).
+LocalMaxxing submission is pending. The preceding M=8 router record remains
+approved as `cmrqp2uoa05ublg01lh6yluj8`. The preceding W8A16/N128
 record remains superseded evidence at 78.288267 tok/s,
 `cmrqlp9je05thlg01q4igkk0x`; the compressor record remains at 71.506808 tok/s,
 `cmrql07qs05t4lg01p86jjybx`. The preceding W1-only
