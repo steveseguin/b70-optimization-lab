@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_tp4_level_zero_ipc_event_transport",
+  "date": "2026-07-18",
+  "decision": "primitive_pass_proceed_to_sampler_transaction",
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "world_size": 4,
+  "steps_per_cycle": 7,
+  "event_reuse": false,
+  "xpu_kernel_commit": "88db339",
+  "exact_pair_gate": {
+    "warmups": 12,
+    "iterations": 80,
+    "event_slots_per_rank": 644,
+    "exact_all_ranks": true,
+    "mismatches": 0,
+    "xccl_pair_control_slowest_rank_median_us": 1484.5065,
+    "ipc_event_candidate_slowest_rank_median_us": 184.7965,
+    "microgate_saved_us": 1299.71,
+    "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-ipc-event-max-token-20260718Tresume/summary.json"
+  },
+  "native_event_proof": {
+    "iterations": 80,
+    "no_delay_total_ms_range": [5.35, 5.36],
+    "delayed_rank": 3,
+    "delayed_rank_ms": 200,
+    "peer_total_ms_range": [205.89, 205.91],
+    "all_320_events_per_rank_signaled": true,
+    "no_delay_log": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-level-zero-ipc-event-probe-20260718T2020Z/no-delay.log",
+    "delayed_rank_log": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-level-zero-ipc-event-probe-20260718T2020Z/delayed-rank.log"
+  },
+  "reuse_gate": {
+    "two_slot_reset_reuse": "forward_progress_failure",
+    "decision": "do_not_reuse_binary_events_with_the_current_protocol"
+  },
+  "production_comparison": {
+    "current_full_bias_gather_slowest_rank_median_us": 371.347,
+    "ipc_event_pair_slowest_rank_median_us": 184.7965,
+    "transport_only_upper_bound_saved_us": 186.5505,
+    "warning": "The 1299.71 us pair-control delta is not an endpoint saving; production uses the faster full-bias collective route."
+  },
+  "next": "Integrate one-shot event allocation and FD brokering into a default-off fixed M7 sampler transaction, then require exact canaries and an end-to-end strict speed win."
+}
