@@ -29,6 +29,8 @@ Relative to the preceding 66.479103 tok/s headline, the new high is +1.022014
 tok/s (+1.54%). The stability median rises from 65.674202 to 67.182469 tok/s,
 +1.508267 (+2.30%).
 
+LocalMaxxing approved the result as `cmrqjhpmz05snlg01ujiehc0u`.
+
 ## Why this differs from failed full replication
 
 The full-replication experiment copied both 129280x256 Markov matrices to every
