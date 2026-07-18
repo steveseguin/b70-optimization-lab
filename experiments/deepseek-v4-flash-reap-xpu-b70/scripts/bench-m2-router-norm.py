@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate fused M=2 biased top-k, normalization, and routed scaling."""
+"""Gate fused M=2/4/8 biased top-k, normalization, and routed scaling."""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from vllm.platforms import current_platform
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="xpu:0")
+    parser.add_argument("--width", type=int, choices=(2, 4, 8), default=2)
     parser.add_argument("--experts", type=int, default=160)
     parser.add_argument("--topk", type=int, default=6)
     parser.add_argument("--layers", type=int, default=40)
@@ -33,14 +34,16 @@ def main() -> int:
     device = torch.device(args.device)
     current_platform.import_kernels()
 
-    scores = torch.empty((2, args.experts), dtype=torch.float32, device=device)
+    scores = torch.empty(
+        (args.width, args.experts), dtype=torch.float32, device=device
+    )
     bias = torch.randn((args.experts,), dtype=torch.float32, device=device)
     bias.mul_(0.02).add_(8.08)
     reference_weights = torch.empty(
-        (2, args.topk), dtype=torch.float32, device=device
+        (args.width, args.topk), dtype=torch.float32, device=device
     )
     reference_ids = torch.empty(
-        (2, args.topk), dtype=torch.int32, device=device
+        (args.width, args.topk), dtype=torch.int32, device=device
     )
     candidate_weights = torch.empty_like(reference_weights)
     candidate_ids = torch.empty_like(reference_ids)
@@ -207,11 +210,15 @@ def main() -> int:
     )
     result = {
         "schema_version": 1,
-        "classification": "deepseek_v4_m2_router_norm_microgate",
+        "classification": "deepseek_v4_mwidth_router_norm_microgate",
         "device": args.device,
         "device_name": torch.xpu.get_device_name(device),
         "torch_version": torch.__version__,
-        "shape": {"m": 2, "experts": args.experts, "topk": args.topk},
+        "shape": {
+            "m": args.width,
+            "experts": args.experts,
+            "topk": args.topk,
+        },
         "routed_scaling_factor": args.scaling,
         "changed_input_gate": {
             "epochs": args.epochs,

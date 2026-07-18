@@ -30,7 +30,9 @@ def make_cache(num_rows: int, block_size: int, device: torch.device) -> torch.Te
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--heads", type=int, default=64)
-    parser.add_argument("--tokens", type=int, default=1, choices=(1, 2))
+    parser.add_argument(
+        "--tokens", type=int, default=1, choices=(1, 2, 4, 7, 8)
+    )
     parser.add_argument(
         "--index-family",
         choices=("identical", "shifted", "disjoint"),
