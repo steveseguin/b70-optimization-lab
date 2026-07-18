@@ -66,6 +66,7 @@ def main() -> int:
         choices=(
             "segmented_m2",
             "segmented_fixed_width",
+            "segmented_generic_fused",
             "m2_chunks",
             "fixed_width",
             "generic_fused",
@@ -227,7 +228,7 @@ def main() -> int:
                         mhc_rows[boundary]["hc_post_alpha"],
                         mhc_rows[boundary]["sinkhorn_iters"],
                 )
-            elif kind == "generic_fused":
+            elif kind in ("generic_fused", "segmented_generic_fused"):
                 actual = torch.ops._xpu_C.mhc_fused_post_pre(
                         x,
                         residual[boundary],
@@ -256,7 +257,11 @@ def main() -> int:
 
         def cycle() -> None:
             for collective in range(ALLREDUCES):
-                if kind in ("segmented_m2", "segmented_fixed_width"):
+                if kind in (
+                    "segmented_m2",
+                    "segmented_fixed_width",
+                    "segmented_generic_fused",
+                ):
                     for start in range(0, args.width, 2):
                         stop = start + 2
                         reduced[collective][start:stop].copy_(
@@ -309,7 +314,11 @@ def main() -> int:
 
         apply_changed_input_schedule(0)
         for collective in range(ALLREDUCES):
-            if kind in ("segmented_m2", "segmented_fixed_width"):
+            if kind in (
+                "segmented_m2",
+                "segmented_fixed_width",
+                "segmented_generic_fused",
+            ):
                 for start in range(0, args.width, 2):
                     stop = start + 2
                     state["reduced"][collective][start:stop].copy_(

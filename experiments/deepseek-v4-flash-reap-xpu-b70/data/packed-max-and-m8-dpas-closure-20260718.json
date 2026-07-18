@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_packed_max_and_m8_dpas_closure",
+  "date": "2026-07-18",
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "public_record_tok_s": 80.82005189243556,
+  "packed_int64_max_allreduce": {
+    "decision": "reject_before_endpoint",
+    "exact_all_ranks": false,
+    "world_size": 4,
+    "sequential_steps": 7,
+    "control_slowest_rank_median_us": 1557.571,
+    "candidate_slowest_rank_median_us": 2351.866,
+    "saved_us": -794.295,
+    "first_reference_token": 32320,
+    "first_candidate_token": 775692,
+    "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-packed-max-allreduce-20260718/gate.json"
+  },
+  "m8_generic_dpas_mhc": {
+    "decision": "quality_reject_before_performance_suite_default_off",
+    "component_control_ms": 8.036462997552007,
+    "component_candidate_ms": 7.182941510109231,
+    "component_saved_ms": 0.853521487442776,
+    "component_control": "segmented_fixed_width",
+    "component_candidate": "segmented_generic_fused",
+    "residual_out_bitwise_exact": true,
+    "next_mixes_and_layer_input_bitwise_exact": false,
+    "service_canaries_passed": 4,
+    "service_canaries_total": 6,
+    "arithmetic_expected": "1073",
+    "arithmetic_observed": "1053",
+    "arithmetic_replay_observed": "1053",
+    "cached_tokens_all_zero": true,
+    "vllm_commit": "217df8fc3a9db36fe66e8263a2e281bb37ffce05",
+    "xpu_prototype_commit": "e6a5f6c",
+    "xpu_fail_close_commit": "827b7799296b6dafb1c9a95a5eba341e55663733",
+    "flag": "VLLM_XPU_V4_MHC_POST_PRE_M8_DPAS=1",
+    "component_evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-dpas-mhc-gate-20260718T2230Z",
+    "service_evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-m8-mhc-dpas-candidate-20260718T2240Z"
+  },
+  "next": "implement an exact two-token-per-workgroup M8 vector MHC candidate that shares FN reads without changing per-token arithmetic order"
+}
