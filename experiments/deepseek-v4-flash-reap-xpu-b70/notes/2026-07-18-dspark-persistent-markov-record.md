@@ -34,6 +34,8 @@ Relative to 64.661411 tok/s, the headline is +1.817692 tok/s (+2.81%) and the
 median-of-three stability figure is +1.012791 tok/s (+1.57%). This is a real
 record, but it remains far short of the 100/200 tok/s objectives.
 
+LocalMaxxing approved the result as `cmrqiovsv05s6lg012d8v5nz8`.
+
 ## Why the remaining sampler overhead was real
 
 The earlier cycle profile measured about 10.50 ms/cycle inside the eager

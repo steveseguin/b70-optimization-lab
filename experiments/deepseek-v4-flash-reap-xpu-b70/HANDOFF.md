@@ -12,16 +12,16 @@ Current stage: **artifact verified; TP4+EP correctness and persistent graph
 replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
 43.7667/43.6986 tok/s; the official three-stage DSpark7 draft now has a correct
 private breakable PIECEWISE replay captured at exact query width M=7 while the
-unchanged K160 target verifies at M=8. It is the target-verified speed record at
-64.661411 tok/s**.
+unchanged K160 target verifies at M=8. A fixed-address persistent sharded
+Markov transaction is the target-verified speed record at 66.479103 tok/s**.
 
-Three independent strict suite medians are 64.661411 / 61.724506 / 64.275173
-tok/s. All 36 realistic requests are unique and cache-zero, and exact canaries
-pass before, between, and after the suites. LocalMaxxing approved
-`cmrpymqh505mxlg01tzg3e0yl`. The source identity is vLLM `48401ed6a`, XPU
+Three independent strict suite medians are 65.674202 / 66.479103 / 63.558530
+tok/s. All 36 realistic requests are unique and cache-zero, and four exact
+canary suites pass before, between, and after the suites. LocalMaxxing approved
+`cmrqiovsv05s6lg012d8v5nz8`. The source identity is vLLM `0873ffa67`, XPU
 kernels `0b99fc536`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
 correctness-rejected; fixed DSpark5 is performance-rejected. See
-`notes/2026-07-18-dspark-piecewise-exact-m7-record.md`.
+`notes/2026-07-18-dspark-persistent-markov-record.md`.
 
 The exact-M7 cycle attribution and first two follow-up boundaries are now
 closed. Named rank-local scopes put the eager Markov sampler at approximately
@@ -32,11 +32,11 @@ model and sampler into one graph corrupts changed outputs and is rejected.
 
 The guarded fused three-stage context-WKV projection is exact and reduces its
 intended context-KV scope from 1.914 to 1.303 ms, but its two strict endpoint
-medians are 64.269762/64.244449 tok/s. Keep both new selectors default-off;
-the 64.661411 record is unchanged. The next permitted high-ceiling boundary is
-device-resident fixed-address sampling, rejection, and accepted-prefix commit
-inside the Intel decoder shell, connected to the exact M=4/M=8 verifier. See
-`notes/2026-07-18-dspark-cycle-profile-and-fusion-closure.md`.
+medians are 64.269762/64.244449 tok/s. Keep it default-off. The successful
+persistent Markov transaction saves 0.786613 ms/cycle at the slowest rank
+without replicating W2. The immediate next gate is W1-only replication while
+W2 remains sharded and persistent; see
+`notes/2026-07-18-dspark-persistent-markov-record.md`.
 
 The follow-up exact M=2 MXFP4 tile-policy lane is closed without promotion.
 N32 regresses. N128 saves 0.247-0.283 ms per 43 routed layers across four
@@ -333,15 +333,15 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-No DeepSeek service is currently running. The promoted DSpark7 exact-M7
-service was stopped after its final exact gate. Its restorable current record
-is under `dspark7-xpu-targetpw-draftpw-exactm7-20260718T0556Z`. The
+No DeepSeek service is currently running. The promoted DSpark7 persistent
+Markov service was stopped after its final exact gate. Its restorable current
+record is under `dspark7-xpu-persistent-markov-bundle-20260718T1640Z`. The
 restorable nonspeculative record recipe is
 `nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
 `a681dbb2b`, XPU kernels `6522849b0`, exact-version oneCCL `48fda4f0e`, and the
 wide collective epoch. Its sustained 70/70 exact gate passes. The separate
 row-exact MTP1 record remains historical at 55.524496 tok/s; the current
-target-verified DSpark7 exact-M7 record is 64.661411 tok/s.
+target-verified DSpark7 persistent-Markov record is 66.479103 tok/s.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
