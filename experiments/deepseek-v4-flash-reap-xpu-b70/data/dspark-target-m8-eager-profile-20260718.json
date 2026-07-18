@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_dspark_target_m8_eager_shape_profile",
+  "diagnostic_only": true,
+  "retained_target_calls_per_rank": 23,
+  "oneccl_trace_durations_excluded": true,
+  "cross_rank_mean_ms_per_cycle": {
+    "dense_gemm": 11.818189869565217,
+    "mxfp4_routed_moe": 7.988468152173915,
+    "other_noncollective": 4.368699945652168,
+    "mhc_post_pre": 2.809672663043478,
+    "attention_qk_lse": 2.023192304347826,
+    "attention_pv": 0.9950410217391306,
+    "router_radix_select": 0.5753445434782609,
+    "router_radix_sort": 0.4848487608695654,
+    "routed_moe_gather": 0.16518026086956522
+  },
+  "dense_shapes_cross_rank_mean": [
+    {"operator": "aten::mm", "dims": [[1,4096],[4096,2048],[]], "calls_per_cycle": 165.42391304347825, "ms_per_cycle": 2.255027423912949},
+    {"operator": "_xpu_C::fp8_gemm", "dims": [[8,4096],[4096,1536]], "calls_per_cycle": 42.30434782608695, "ms_per_cycle": 1.5708626086956504},
+    {"operator": "_xpu_C::fp8_gemm", "dims": [[8,2048],[2048,4096]], "calls_per_cycle": 42.358695652173914, "ms_per_cycle": 1.5312458695652166},
+    {"operator": "_xpu_C::fp8_gemm", "dims": [[8,4096],[4096,1024]], "calls_per_cycle": 42.336956521739125, "ms_per_cycle": 1.4998339565217397},
+    {"operator": "aten::bmm", "dims": [[2,8,4096],[2,4096,1024]], "calls_per_cycle": 42.34782608695652, "ms_per_cycle": 1.4660409673913059},
+    {"operator": "_xpu_C::fp8_gemm", "dims": [[8,1024],[1024,8192]], "calls_per_cycle": 42.336956521739125, "ms_per_cycle": 1.1887459021739159},
+    {"operator": "aten::mm", "dims": [[1,4096],[4096,1024],[]], "calls_per_cycle": 157.6413043478261, "ms_per_cycle": 1.0804160326086943},
+    {"operator": "aten::mm", "dims": [[8,4096],[4096,160]], "calls_per_cycle": 42.336956521739125, "ms_per_cycle": 0.524741217391304},
+    {"operator": "_xpu_C::fp8_gemm", "dims": [[8,512],[512,4096]], "calls_per_cycle": 42.336956521739125, "ms_per_cycle": 0.5214611630434779}
+  ],
+  "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-replicated-w1-target-eager-profile-20260718T1930Z"
+}

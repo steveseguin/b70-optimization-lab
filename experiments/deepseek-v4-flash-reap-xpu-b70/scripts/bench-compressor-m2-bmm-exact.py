@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate a strided-batch M=2 compressor GEMM against two exact M=1 GEMMs."""
+"""Gate a strided-batch compressor GEMM against exact independent M=1 GEMMs."""
 
 from __future__ import annotations
 
@@ -44,11 +44,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--width", type=int, default=2)
     parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--iterations", type=int, default=100)
     parser.add_argument("--repeats", type=int, default=9)
     parser.add_argument("--seed", type=int, default=419)
     args = parser.parse_args()
+    if args.width not in (2, 4, 8):
+        parser.error("--width must be 2, 4, or 8")
 
     torch.manual_seed(args.seed)
     torch.xpu.manual_seed_all(args.seed)
@@ -58,7 +61,9 @@ def main() -> int:
     for layer in (2, 3):
         weight = load_fused_weight(args.model, layer).to(device)
         output_features, input_features = weight.shape
-        hidden = torch.empty((2, input_features), device=device, dtype=torch.bfloat16)
+        hidden = torch.empty(
+            (args.width, input_features), device=device, dtype=torch.bfloat16
+        )
 
         def row_exact() -> torch.Tensor:
             return torch.cat(
@@ -68,7 +73,7 @@ def main() -> int:
                         weight.T,
                         out_dtype=torch.float32,
                     )
-                    for row in range(2)
+                    for row in range(args.width)
                 ],
                 dim=0,
             )
@@ -76,7 +81,7 @@ def main() -> int:
         def batched_exact() -> torch.Tensor:
             return torch.bmm(
                 hidden[:, None, :],
-                weight.T[None, :, :].expand(2, -1, -1),
+                weight.T[None, :, :].expand(args.width, -1, -1),
                 out_dtype=torch.float32,
             )[:, 0, :]
 
@@ -147,7 +152,11 @@ def main() -> int:
             {
                 "layer": layer,
                 "compress_ratio": 4 if layer % 2 == 0 else 128,
-                "shape": {"m": 2, "n": output_features, "k": input_features},
+                "shape": {
+                    "m": args.width,
+                    "n": output_features,
+                    "k": input_features,
+                },
                 "epochs": args.epochs,
                 "bmm_eager_exact_epochs": sum(
                     row["bmm_eager_exact"] for row in epoch_rows
@@ -159,12 +168,12 @@ def main() -> int:
                     row["plain_m2_exact"] for row in epoch_rows
                 ),
                 "timing": {
-                    "two_m1_plus_cat_median_us": row_median,
+                    "independent_m1_plus_cat_median_us": row_median,
                     "bmm_median_us": bmm_median,
                     "plain_m2_median_us": statistics.median(plain_samples),
                     "bmm_saved_us": row_median - bmm_median,
                     "bmm_speedup": row_median / bmm_median,
-                    "two_m1_plus_cat_samples_us": row_samples,
+                    "independent_m1_plus_cat_samples_us": row_samples,
                     "bmm_samples_us": bmm_samples,
                     "plain_m2_samples_us": plain_samples,
                 },
@@ -182,7 +191,7 @@ def main() -> int:
     )
     result = {
         "schema_version": 1,
-        "classification": "deepseek_v4_compressor_m2_bmm_exact_gate",
+        "classification": f"deepseek_v4_compressor_m{args.width}_bmm_exact_gate",
         "device": torch.xpu.get_device_name(),
         "torch": torch.__version__,
         "model": str(args.model),

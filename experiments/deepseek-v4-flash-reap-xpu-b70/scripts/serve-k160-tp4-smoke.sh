@@ -112,6 +112,11 @@ export VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT="${VLLM_XPU_V4_FUSED_QNORM_ROPE_KV
 export VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT_MAX_M="${VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT_MAX_M:-1}"
 export VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT="${VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT:-0}"
 export VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT="${VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT:-0}"
+default_compressor_batched_exact_max_m=0
+if [[ "${VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT}" == "1" ]]; then
+  default_compressor_batched_exact_max_m=2
+fi
+export VLLM_XPU_V4_COMPRESSOR_BATCHED_EXACT_MAX_M="${VLLM_XPU_V4_COMPRESSOR_BATCHED_EXACT_MAX_M:-${default_compressor_batched_exact_max_m}}"
 default_compressor_row_exact_max_m=0
 if [[ "${VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT}" == "1" ]]; then
   default_compressor_row_exact_max_m=2
@@ -239,6 +244,7 @@ argv=(
   printf 'vllm_xpu_v4_fused_qnorm_rope_kv_insert_max_m=%s\n' "${VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT_MAX_M}"
   printf 'vllm_xpu_v4_compressor_m2_row_exact=%s\n' "${VLLM_XPU_V4_COMPRESSOR_M2_ROW_EXACT}"
   printf 'vllm_xpu_v4_compressor_m2_batched_exact=%s\n' "${VLLM_XPU_V4_COMPRESSOR_M2_BATCHED_EXACT}"
+  printf 'vllm_xpu_v4_compressor_batched_exact_max_m=%s\n' "${VLLM_XPU_V4_COMPRESSOR_BATCHED_EXACT_MAX_M}"
   printf 'vllm_xpu_v4_compressor_row_exact_max_m=%s\n' "${VLLM_XPU_V4_COMPRESSOR_ROW_EXACT_MAX_M}"
   printf 'vllm_xpu_v4_capture_cycle_width=%s\n' "${VLLM_XPU_V4_CAPTURE_CYCLE_WIDTH}"
   printf 'vllm_xpu_v4_forward_device_sync=%s\n' "${VLLM_XPU_V4_FORWARD_DEVICE_SYNC}"

@@ -13,16 +13,24 @@ replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
 43.7667/43.6986 tok/s; the official three-stage DSpark7 draft now has a correct
 private breakable PIECEWISE replay captured at exact query width M=7 while the
 unchanged K160 target verifies at M=8. A fixed-address persistent sharded
-Markov transaction with W1-only replication is the target-verified speed
-record at 67.501117 tok/s**.
+Markov transaction with W1-only replication plus exact M=8 strided-batch
+compressor projections is the target-verified speed record at 71.506808
+tok/s**.
 
-Three independent strict suite medians are 65.656734 / 67.501117 / 67.182469
+Three independent strict suite medians are 69.343725 / 71.506808 / 70.249021
 tok/s. All 36 realistic requests are unique and cache-zero, and four exact
 canary suites pass before, between, and after the suites. LocalMaxxing approved
-`cmrqjhpmz05snlg01ujiehc0u`. The source identity is vLLM `019e6f0e2`, XPU
+`cmrql07qs05t4lg01p86jjybx`. The source identity is vLLM `1f6d6be49`, XPU
 kernels `0b99fc536`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
 correctness-rejected; fixed DSpark5 is performance-rejected. See
-`notes/2026-07-18-dspark-replicated-w1-record.md`.
+`notes/2026-07-18-dspark-m8-batched-compressor-record.md`.
+
+The M=8 compressor component uses one strided-batch FP32-output GEMM while
+keeping each verifier row as an independent batch item. Real C4/C128 weights
+pass 40/40 changed eager and 40/40 graph cases per shape on every B70. It is
+5.93-7.03x faster than eight M=1 submissions in isolation and raises the
+endpoint record by 5.93%. Keep
+`VLLM_XPU_V4_COMPRESSOR_BATCHED_EXACT_MAX_M=8` in the record identity.
 
 The exact-M7 cycle attribution and first two follow-up boundaries are now
 closed. Named rank-local scopes put the eager Markov sampler at approximately
@@ -335,15 +343,15 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-No DeepSeek service is currently running. The promoted DSpark7 W1-only
-replication service was stopped after its final exact gate. Its restorable
-current record is under `dspark7-xpu-replicated-w1-candidate-20260718T1800Z`. The
+No DeepSeek service is currently running. The promoted DSpark7 M=8 batched-
+compressor service was stopped after its final exact gate. Its restorable
+current record is under `dspark7-xpu-compressor-m8-candidate-20260718T2030Z`. The
 restorable nonspeculative record recipe is
 `nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
 `a681dbb2b`, XPU kernels `6522849b0`, exact-version oneCCL `48fda4f0e`, and the
 wide collective epoch. Its sustained 70/70 exact gate passes. The separate
 row-exact MTP1 record remains historical at 55.524496 tok/s; the current
-target-verified DSpark7 W1-only replication record is 67.501117 tok/s.
+target-verified DSpark7 record is 71.506808 tok/s.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not
