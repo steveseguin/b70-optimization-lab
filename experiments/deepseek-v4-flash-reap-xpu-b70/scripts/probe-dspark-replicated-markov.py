@@ -151,6 +151,9 @@ def main() -> int:
     )
     persistent_logits = torch.empty((1, vocab_size), dtype=full_w2.dtype, device=device)
     persistent_prev = torch.empty((1,), dtype=torch.int64, device=device)
+    persistent_tokens = torch.empty(
+        (1, args.steps), dtype=torch.int64, device=device
+    )
 
     def sharded(anchor: torch.Tensor) -> torch.Tensor:
         prev = anchor
@@ -252,6 +255,56 @@ def main() -> int:
             prev = persistent_prev
         return torch.stack(sampled, dim=1)
 
+    def replicated_w1_production_copy(anchor: torch.Tensor) -> torch.Tensor:
+        """Model the production argmax temporary plus draft-buffer copy."""
+        prev = anchor[:1]
+        for position in range(args.steps):
+            _dspark_local_markov_embed_out_kernel[(1,)](
+                prev,
+                full_w1,
+                persistent_embed,
+                0,
+                vocab_size,
+                markov_rank=markov_rank,
+                BLOCK_SIZE=256,
+            )
+            torch.mm(persistent_embed, local_w2.t(), out=persistent_local_bias)
+            dist.all_gather_into_tensor(persistent_gathered_bias, persistent_local_bias)
+            torch.add(
+                base_logits[position].unsqueeze(0),
+                persistent_gathered_bias.view(1, vocab_size),
+                out=persistent_logits,
+            )
+            torch.argmax(persistent_logits, dim=-1, out=persistent_prev)
+            persistent_tokens[:, position].copy_(persistent_prev)
+            prev = persistent_prev
+        return persistent_tokens
+
+    def replicated_w1_direct_draft_output(anchor: torch.Tensor) -> torch.Tensor:
+        """Write argmax directly into the final draft-token column."""
+        prev = anchor[:1]
+        for position in range(args.steps):
+            _dspark_local_markov_embed_out_kernel[(1,)](
+                prev,
+                full_w1,
+                persistent_embed,
+                0,
+                vocab_size,
+                markov_rank=markov_rank,
+                BLOCK_SIZE=256,
+            )
+            torch.mm(persistent_embed, local_w2.t(), out=persistent_local_bias)
+            dist.all_gather_into_tensor(persistent_gathered_bias, persistent_local_bias)
+            torch.add(
+                base_logits[position].unsqueeze(0),
+                persistent_gathered_bias.view(1, vocab_size),
+                out=persistent_logits,
+            )
+            output = persistent_tokens[:, position]
+            torch.argmax(persistent_logits, dim=-1, out=output)
+            prev = output
+        return persistent_tokens
+
     def replicated(anchor: torch.Tensor) -> torch.Tensor:
         prev = anchor
         sampled = []
@@ -304,6 +357,8 @@ def main() -> int:
     persistent_ids = persistent_sharded(anchors)
     replicated_w1_persistent_ids = replicated_w1_persistent(anchors)
     replicated_w1_local_add_persistent_ids = replicated_w1_local_add_persistent(anchors)
+    replicated_w1_production_copy_ids = replicated_w1_production_copy(anchors).clone()
+    replicated_w1_direct_output_ids = replicated_w1_direct_draft_output(anchors).clone()
     torch.xpu.synchronize()
     local_exact = (
         torch.equal(sharded_ids, replicated_ids)
@@ -311,6 +366,8 @@ def main() -> int:
         and torch.equal(sharded_ids[:1], persistent_ids)
         and torch.equal(sharded_ids[:1], replicated_w1_persistent_ids)
         and torch.equal(sharded_ids[:1], replicated_w1_local_add_persistent_ids)
+        and torch.equal(sharded_ids[:1], replicated_w1_production_copy_ids)
+        and torch.equal(sharded_ids[:1], replicated_w1_direct_output_ids)
     )
     exact_flags = [None for _ in range(world_size)]
     dist.all_gather_object(exact_flags, local_exact)
@@ -356,6 +413,9 @@ def main() -> int:
     replicated_w1_persistent_i = timed(replicated_w1_persistent)
     persistent_j = timed(persistent_sharded)
     sharded_single_k = timed(lambda anchor: sharded(anchor[:1]))
+    replicated_w1_production_copy_l = timed(replicated_w1_production_copy)
+    replicated_w1_direct_output_m = timed(replicated_w1_direct_draft_output)
+    replicated_w1_production_copy_n = timed(replicated_w1_production_copy)
 
     lm_head_timings = None
     if full_lm_head is not None:
@@ -396,6 +456,15 @@ def main() -> int:
         "replicated_w1_persistent_i": summarize(replicated_w1_persistent_i),
         "persistent_j": summarize(persistent_j),
         "sharded_single_k": summarize(sharded_single_k),
+        "replicated_w1_production_copy_l": summarize(
+            replicated_w1_production_copy_l
+        ),
+        "replicated_w1_direct_output_m": summarize(
+            replicated_w1_direct_output_m
+        ),
+        "replicated_w1_production_copy_n": summarize(
+            replicated_w1_production_copy_n
+        ),
         "lm_head": lm_head_timings,
     }
     local_result["saving_vs_faster_control_ms"] = (
@@ -439,6 +508,13 @@ def main() -> int:
         )
         - local_result["replicated_w1_local_add_persistent_h"]["median_ms"]
     )
+    local_result["direct_draft_output_saving_ms"] = (
+        min(
+            local_result["replicated_w1_production_copy_l"]["median_ms"],
+            local_result["replicated_w1_production_copy_n"]["median_ms"],
+        )
+        - local_result["replicated_w1_direct_output_m"]["median_ms"]
+    )
 
     gathered_results = [None for _ in range(world_size)]
     dist.all_gather_object(gathered_results, local_result)
@@ -475,6 +551,9 @@ def main() -> int:
             "slowest_rank_replicated_w1_local_add_bundle_saving_ms": min(
                 row["replicated_w1_local_add_bundle_saving_ms"]
                 for row in gathered_results
+            ),
+            "slowest_rank_direct_draft_output_saving_ms": min(
+                row["direct_draft_output_saving_ms"] for row in gathered_results
             ),
             "pass_threshold_ms": 0.5,
         }

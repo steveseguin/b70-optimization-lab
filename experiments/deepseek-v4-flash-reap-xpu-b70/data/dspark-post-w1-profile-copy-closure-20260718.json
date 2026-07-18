@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-18",
+  "classification": "profile_and_exact_endpoint_negative",
+  "promoted_record_vllm": "019e6f0e2e0b0b96f86a7e4d9cf2c8e47dd4183e",
+  "profile": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-replicated-w1-stage-profile-20260718T1830Z/summary.json",
+    "cycles_per_rank": 48,
+    "target_forward_host_median_ms_range": [20.680177978515623, 21.228046508789063],
+    "dspark_propose_host_median_ms_range": [15.695429931640625, 16.43790905761719],
+    "generate_draft_host_median_ms_range": [10.281536010742187, 10.456199462890625],
+    "markov_sample_host_median_ms_range": [5.98006591796875, 6.0433349609375],
+    "target_graph_device_kernels_attributed": false
+  },
+  "copy_elision": {
+    "vllm": "f7734caed96f2bb9672b3c9840972cce523e7f5f",
+    "component_path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark-direct-draft-output-gate-20260718T1850Z/summary.json",
+    "exact_all_ranks": true,
+    "direct_draft_output_saving_ms": 0.07626297883689404,
+    "endpoint_path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-copy-elision-candidate-20260718T1900Z",
+    "median_tok_s_1_100_after_ttft": 64.76497573752847,
+    "p10_tok_s_1_100_after_ttft": 60.03457511155162,
+    "mean_tok_s_1_100_after_ttft": 62.476864975187404,
+    "cached_tokens_all_zero": true,
+    "exact_canary_suites": 2,
+    "exact_canary_requests": 12,
+    "all_exact": true,
+    "decision": "rejected_keep_default_off"
+  }
+}
