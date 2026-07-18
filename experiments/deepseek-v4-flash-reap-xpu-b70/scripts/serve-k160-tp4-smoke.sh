@@ -271,6 +271,7 @@ argv=(
   printf 'vllm_xpu_greedy_fused_rejection=%s\n' "${VLLM_XPU_GREEDY_FUSED_REJECTION:-unset}"
   printf 'vllm_xpu_dspark_fixed_m7_target_inputs=%s\n' "${VLLM_XPU_DSPARK_FIXED_M7_TARGET_INPUTS:-unset}"
   printf 'vllm_xpu_dspark_persistent_markov=%s\n' "${VLLM_XPU_DSPARK_PERSISTENT_MARKOV:-unset}"
+  printf 'vllm_xpu_dspark_replicated_markov_w1=%s\n' "${VLLM_XPU_DSPARK_REPLICATED_MARKOV_W1:-unset}"
   printf 'dspark_spec_tokens=%s\n' "${DSPARK_SPEC_TOKENS:-unset}"
   printf 'dspark_kv_cache_memory_bytes=%s\n' "${DSPARK_KV_CACHE_MEMORY_BYTES:-unset}"
   printf 'enforce_eager=%s\n' "${ENFORCE_EAGER:-1}"

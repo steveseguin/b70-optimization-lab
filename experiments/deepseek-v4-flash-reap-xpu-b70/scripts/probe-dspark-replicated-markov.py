@@ -11,6 +11,11 @@ path preserves the production W2 partition geometry by running four
 The optional target-head lane applies the same exact partition geometry to the
 real 129280x4096 shared LM head. It measures whether removing the remaining
 base-logits all-gather can repay the fourfold per-rank weight read.
+
+The W1-only lane is deliberately different from full replication: every rank
+holds the small token-to-256 table, while W2 remains vocabulary-sharded. It
+removes the seven embedding all-reduces without repeating the expensive W2
+matrix-vector work.
 """
 
 from __future__ import annotations
@@ -191,6 +196,62 @@ def main() -> int:
             prev = persistent_prev
         return torch.stack(sampled, dim=1)
 
+    def replicated_w1_persistent(anchor: torch.Tensor) -> torch.Tensor:
+        """Replicated W1, persistent sharded W2, ordinary full logits gather."""
+        prev = anchor[:1]
+        sampled = []
+        for position in range(args.steps):
+            _dspark_local_markov_embed_out_kernel[(1,)](
+                prev,
+                full_w1,
+                persistent_embed,
+                0,
+                vocab_size,
+                markov_rank=markov_rank,
+                BLOCK_SIZE=256,
+            )
+            torch.mm(persistent_embed, local_w2.t(), out=persistent_local_bias)
+            dist.all_gather_into_tensor(persistent_gathered_bias, persistent_local_bias)
+            torch.add(
+                base_logits[position].unsqueeze(0),
+                persistent_gathered_bias.view(1, vocab_size),
+                out=persistent_logits,
+            )
+            torch.argmax(persistent_logits, dim=-1, out=persistent_prev)
+            sampled.append(persistent_prev.clone())
+            prev = persistent_prev
+        return torch.stack(sampled, dim=1)
+
+    def replicated_w1_local_add_persistent(anchor: torch.Tensor) -> torch.Tensor:
+        """Replicated W1 with BF16 base addition before the logits gather."""
+        prev = anchor[:1]
+        sampled = []
+        for position in range(args.steps):
+            _dspark_local_markov_embed_out_kernel[(1,)](
+                prev,
+                full_w1,
+                persistent_embed,
+                0,
+                vocab_size,
+                markov_rank=markov_rank,
+                BLOCK_SIZE=256,
+            )
+            torch.mm(persistent_embed, local_w2.t(), out=persistent_local_bias)
+            torch.add(
+                base_logits[position, start:end].unsqueeze(0),
+                persistent_local_bias,
+                out=persistent_local_bias,
+            )
+            dist.all_gather_into_tensor(persistent_gathered_bias, persistent_local_bias)
+            torch.argmax(
+                persistent_gathered_bias.view(1, vocab_size),
+                dim=-1,
+                out=persistent_prev,
+            )
+            sampled.append(persistent_prev.clone())
+            prev = persistent_prev
+        return torch.stack(sampled, dim=1)
+
     def replicated(anchor: torch.Tensor) -> torch.Tensor:
         prev = anchor
         sampled = []
@@ -241,11 +302,15 @@ def main() -> int:
     replicated_ids = replicated(anchors)
     sharded_pair_ids = sharded_pair(anchors)
     persistent_ids = persistent_sharded(anchors)
+    replicated_w1_persistent_ids = replicated_w1_persistent(anchors)
+    replicated_w1_local_add_persistent_ids = replicated_w1_local_add_persistent(anchors)
     torch.xpu.synchronize()
     local_exact = (
         torch.equal(sharded_ids, replicated_ids)
         and torch.equal(sharded_ids, sharded_pair_ids)
         and torch.equal(sharded_ids[:1], persistent_ids)
+        and torch.equal(sharded_ids[:1], replicated_w1_persistent_ids)
+        and torch.equal(sharded_ids[:1], replicated_w1_local_add_persistent_ids)
     )
     exact_flags = [None for _ in range(world_size)]
     dist.all_gather_object(exact_flags, local_exact)
@@ -286,7 +351,11 @@ def main() -> int:
     replicated_d = timed(replicated)
     sharded_single_e = timed(lambda anchor: sharded(anchor[:1]))
     persistent_f = timed(persistent_sharded)
-    sharded_single_g = timed(lambda anchor: sharded(anchor[:1]))
+    replicated_w1_persistent_g = timed(replicated_w1_persistent)
+    replicated_w1_local_add_persistent_h = timed(replicated_w1_local_add_persistent)
+    replicated_w1_persistent_i = timed(replicated_w1_persistent)
+    persistent_j = timed(persistent_sharded)
+    sharded_single_k = timed(lambda anchor: sharded(anchor[:1]))
 
     lm_head_timings = None
     if full_lm_head is not None:
@@ -320,7 +389,13 @@ def main() -> int:
         "replicated_d": summarize(replicated_d),
         "sharded_single_e": summarize(sharded_single_e),
         "persistent_f": summarize(persistent_f),
-        "sharded_single_g": summarize(sharded_single_g),
+        "replicated_w1_persistent_g": summarize(replicated_w1_persistent_g),
+        "replicated_w1_local_add_persistent_h": summarize(
+            replicated_w1_local_add_persistent_h
+        ),
+        "replicated_w1_persistent_i": summarize(replicated_w1_persistent_i),
+        "persistent_j": summarize(persistent_j),
+        "sharded_single_k": summarize(sharded_single_k),
         "lm_head": lm_head_timings,
     }
     local_result["saving_vs_faster_control_ms"] = (
@@ -333,9 +408,36 @@ def main() -> int:
     local_result["persistent_saving_vs_faster_control_ms"] = (
         min(
             local_result["sharded_single_e"]["median_ms"],
-            local_result["sharded_single_g"]["median_ms"],
+            local_result["sharded_single_k"]["median_ms"],
         )
-        - local_result["persistent_f"]["median_ms"]
+        - min(
+            local_result["persistent_f"]["median_ms"],
+            local_result["persistent_j"]["median_ms"],
+        )
+    )
+    local_result["replicated_w1_persistent_saving_vs_persistent_control_ms"] = (
+        min(
+            local_result["persistent_f"]["median_ms"],
+            local_result["persistent_j"]["median_ms"],
+        )
+        - min(
+            local_result["replicated_w1_persistent_g"]["median_ms"],
+            local_result["replicated_w1_persistent_i"]["median_ms"],
+        )
+    )
+    local_result["local_add_saving_vs_replicated_w1_control_ms"] = (
+        min(
+            local_result["replicated_w1_persistent_g"]["median_ms"],
+            local_result["replicated_w1_persistent_i"]["median_ms"],
+        )
+        - local_result["replicated_w1_local_add_persistent_h"]["median_ms"]
+    )
+    local_result["replicated_w1_local_add_bundle_saving_ms"] = (
+        min(
+            local_result["persistent_f"]["median_ms"],
+            local_result["persistent_j"]["median_ms"],
+        )
+        - local_result["replicated_w1_local_add_persistent_h"]["median_ms"]
     )
 
     gathered_results = [None for _ in range(world_size)]
@@ -360,6 +462,20 @@ def main() -> int:
                 row["persistent_saving_vs_faster_control_ms"]
                 for row in gathered_results
             ),
+            "slowest_rank_replicated_w1_persistent_saving_ms": min(
+                row[
+                    "replicated_w1_persistent_saving_vs_persistent_control_ms"
+                ]
+                for row in gathered_results
+            ),
+            "slowest_rank_local_add_saving_ms": min(
+                row["local_add_saving_vs_replicated_w1_control_ms"]
+                for row in gathered_results
+            ),
+            "slowest_rank_replicated_w1_local_add_bundle_saving_ms": min(
+                row["replicated_w1_local_add_bundle_saving_ms"]
+                for row in gathered_results
+            ),
             "pass_threshold_ms": 0.5,
         }
         if args.lm_head_weights is not None:
@@ -375,7 +491,8 @@ def main() -> int:
             )
         result["passed"] = (
             result["exact_all_ranks"]
-            and result["slowest_rank_saving_ms"] >= result["pass_threshold_ms"]
+            and result["slowest_rank_replicated_w1_local_add_bundle_saving_ms"]
+            >= result["pass_threshold_ms"]
         )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n")
