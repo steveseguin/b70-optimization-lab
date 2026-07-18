@@ -17,6 +17,7 @@ suites.
 This is one active generation, not aggregate throughput. The K160 target is
 unchanged and verifies DSpark7 accepted tokens at fixed M=8. The primary
 metric is generated tokens 1-100 after TTFT on 12 unique cold prompts.
+LocalMaxxing approved the result as `cmrquta9905w3lg013m5vxoqx`.
 
 | Strict suite | Median tok/s | p10 tok/s | Mean tok/s | Full after TTFT | Wall full | TTFT ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |

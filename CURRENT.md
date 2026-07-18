@@ -135,8 +135,8 @@ medians are 80.820052 / 76.900178 / 78.287226 tok/s;
 suites pass before, between, and after the performance suites. The unchanged
 K160 target verifies all accepted tokens at M=8. Evidence is in
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-sharded-target-argmax-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-sharded-target-argmax-record.md).
-LocalMaxxing submission is pending. The preceding M=8 router record remains
-approved as `cmrqp2uoa05ublg01lh6yluj8`. The preceding W8A16/N128
+LocalMaxxing approved `cmrquta9905w3lg013m5vxoqx`. The preceding M=8 router
+record remains approved as `cmrqp2uoa05ublg01lh6yluj8`. The preceding W8A16/N128
 record remains superseded evidence at 78.288267 tok/s,
 `cmrqlp9je05thlg01q4igkk0x`; the compressor record remains at 71.506808 tok/s,
 `cmrql07qs05t4lg01p86jjybx`. The preceding W1-only

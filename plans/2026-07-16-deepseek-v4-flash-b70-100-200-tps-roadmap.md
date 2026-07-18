@@ -4,6 +4,25 @@ Date: **2026-07-16**
 
 Status: **active; easy bounded gates first, specialized Intel decoder strategic**
 
+## 2026-07-18 Progress Update
+
+The current target-verified record is now **80.820052 tok/s**, with three
+strict medians of 80.820052 / 76.900178 / 78.287226 tok/s and LocalMaxxing ID
+`cmrquta9905w3lg013m5vxoqx`. The record stacks exact M=8 compressors, selective
+M=8 W8A16, N128 routed MXFP4, native M=8 router normalization, and a guarded
+sharded target-argmax/native rejection transaction. The latter removes the
+full-vocabulary logits all-gather and FP32 sampler materialization for the
+qualified greedy endpoint.
+
+The original 63.851301 tok/s analysis below is retained as chronological plan
+context. At the current three-suite median of 78.287226 tok/s, reaching 100
+tok/s still requires about 21.7% less time per emitted token or more useful
+accepted tokens per cycle. The immediate material boundary is no longer a
+generic sampler tweak: fold local top-1 into the sharded LM-head projection,
+then own the fixed verifier/accept/commit transaction in a reusable
+fixed-address SYCL/Level Zero command list. The fixed-geometry Intel decoder
+remains the strategic path if those bounded integrations do not close the gap.
+
 ## Objective And Invariants
 
 The product objective is one active generation, never aggregate throughput:

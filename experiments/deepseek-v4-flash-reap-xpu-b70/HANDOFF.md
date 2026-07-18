@@ -15,15 +15,27 @@ private breakable PIECEWISE replay captured at exact query width M=7 while the
 unchanged K160 target verifies at M=8. A fixed-address persistent sharded
 Markov transaction with W1-only replication, exact M=8 strided-batch
 compressors, selective M=8 W8A16, MXFP4 N128, and exact native M=8 router
-normalization is the target-verified speed record at 80.163578 tok/s**.
+normalization now feeds a guarded sharded target-argmax/native target-token
+rejection transaction. This is the target-verified speed record at 80.820052
+tok/s**.
 
-Three independent strict suite medians are 75.845916 / 77.572536 / 80.163578
+Three independent strict suite medians are 80.820052 / 76.900178 / 78.287226
 tok/s. All 36 realistic requests are unique and cache-zero, and four exact
 canary suites pass before, between, and after the suites. LocalMaxxing approved
-`cmrqp2uoa05ublg01lh6yluj8`. The source identity is vLLM `db1863c799`, XPU
-kernels `6cad2518d`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
+`cmrquta9905w3lg013m5vxoqx`. The source identity is vLLM `264c7f2f7`, XPU
+kernels `313156737`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
 correctness-rejected; fixed DSpark5 is performance-rejected. See
-`notes/2026-07-18-m8-router-fusion-record-and-postrecord-closures.md`.
+`notes/2026-07-18-sharded-target-argmax-record.md`.
+
+The new verifier path is enabled only by
+`VLLM_XPU_GREEDY_SHARDED_TARGET_ARGMAX=1` and fails closed unless sampling is
+plain greedy without grammar, logprobs, penalties, bias, bad words, synthetic
+rejection, or draft logits. Each rank projects its local 32,320-token LM-head
+shard, gathers only top-1 value/index candidates, and a native SYCL op commits
+the winning target IDs. It removes full 129,280-token logits all-gather and
+FP32 sampler materialization. The native op must continue accepting both
+`int32` and `int64` draft-token tensors; the first endpoint exposed that real
+vLLM drafts are `int32`.
 
 The native router fuses bias/top-k/gather/normalize/scale for the fixed M=8
 target verifier. Every B70 passes 40/40 changing eager and 32/32 changing graph
