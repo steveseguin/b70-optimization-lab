@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-18",
+  "classification": "promoted_single_session_target_verified_record",
+  "model": {
+    "hf_id": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "path": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+    "quantization": "deepseek_v4_fp8_uniform_k160"
+  },
+  "draft": {
+    "hf_id": "deepseek-ai/DeepSeek-V4-Flash",
+    "revision": "aa22cb07426656189b2573b8e77a9b7333b8ae0f",
+    "path": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/dspark-draft-pack-aa22cb0",
+    "method": "dspark",
+    "spec_tokens": 7
+  },
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "mode": "TP4+EP",
+    "concurrency": 1,
+    "aggregate_throughput": false
+  },
+  "source": {
+    "vllm": "48401ed6a6b8cd4a277bf7b8d64cf53b006bafb1",
+    "xpu_kernels": "0b99fc5360141d4dd6174fb15f30ec80c74c4d47",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "graphs": {
+    "target": "piecewise",
+    "draft": "breakable_piecewise_exact_m7",
+    "target_verifier_width": 8,
+    "full_draft_graph": "rejected_wrong_output"
+  },
+  "strict_suites": [
+    {
+      "file": "strict-screen.json",
+      "median_tok_s_1_100_after_ttft": 64.66141064988764,
+      "p10_tok_s_1_100_after_ttft": 56.91802871914025,
+      "mean_tok_s_1_100_after_ttft": 62.977116502666895,
+      "median_tok_s_full_after_ttft": 60.11827819937569,
+      "median_tok_s_wall_full": 51.58062457247202,
+      "median_ttft_ms": 366.82910547824576
+    },
+    {
+      "file": "strict-confirm.json",
+      "median_tok_s_1_100_after_ttft": 61.72450633212186,
+      "p10_tok_s_1_100_after_ttft": 53.671112530622885,
+      "mean_tok_s_1_100_after_ttft": 61.80591843092751
+    },
+    {
+      "file": "strict-third.json",
+      "median_tok_s_1_100_after_ttft": 64.27517252432688,
+      "p10_tok_s_1_100_after_ttft": 51.16221079245113,
+      "mean_tok_s_1_100_after_ttft": 62.93127339998386
+    }
+  ],
+  "suite_median_of_medians": 64.27517252432688,
+  "correctness": {
+    "exact_canary_suites": 3,
+    "exact_canary_cases_per_suite": 6,
+    "all_passed": true,
+    "realistic_requests": 36,
+    "cached_tokens_all_zero": true,
+    "target_verifies_accepted_tokens": true
+  },
+  "acceptance": {
+    "drafted": 10871,
+    "accepted": 3164,
+    "acceptance_percent": 29.10496,
+    "cycles": 1553,
+    "emitted_tokens_per_cycle": 3.037347,
+    "accepted_by_position": [1165, 790, 515, 315, 214, 109, 56],
+    "position_acceptance_percent_of_cycles": [75.016, 50.869, 33.162, 20.283, 13.780, 7.019, 3.606]
+  },
+  "comparisons": {
+    "draft_eager_median_tok_s": 55.109521,
+    "draft_piecewise_padded_m8_median_tok_s": 60.518331,
+    "fixed_dspark5_median_tok_s": 53.870809,
+    "preceding_record_median_tok_s": 63.851301
+  },
+  "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-targetpw-draftpw-exactm7-20260718T0556Z",
+  "localmaxxing": {
+    "id": "cmrpymqh505mxlg01tzg3e0yl",
+    "status": "APPROVED"
+  }
+}

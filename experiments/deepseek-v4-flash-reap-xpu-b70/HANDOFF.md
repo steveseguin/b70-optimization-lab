@@ -1,6 +1,6 @@
 # DeepSeek V4 Flash REAP/XPU B70 Handoff
 
-Last reviewed: **2026-07-17**
+Last reviewed: **2026-07-18**
 
 ## Current Decision
 
@@ -10,11 +10,25 @@ The controlling plan is
 
 Current stage: **artifact verified; TP4+EP correctness and persistent graph
 replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
-43.7667/43.6986 tok/s; the combined row-exact MTP1, strided-batch compressor,
-selective M=2 W8A16, direct-M1 draft MoE, M=2 shared/routed fusion, native M=2
-MHC post/pre, native M=2 router selection/normalization, QNorm/RoPE/FP8-KV M=2,
-guarded route-direct compact MXFP4, and wide-epoch runtime is the target-verified
-speed record at 63.8513 tok/s**.
+43.7667/43.6986 tok/s; the official three-stage DSpark7 draft now has a correct
+private breakable PIECEWISE replay captured at exact query width M=7 while the
+unchanged K160 target verifies at M=8. It is the target-verified speed record at
+64.661411 tok/s**.
+
+Three independent strict suite medians are 64.661411 / 61.724506 / 64.275173
+tok/s. All 36 realistic requests are unique and cache-zero, and exact canaries
+pass before, between, and after the suites. LocalMaxxing approved
+`cmrpymqh505mxlg01tzg3e0yl`. The source identity is vLLM `48401ed6a`, XPU
+kernels `0b99fc536`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
+correctness-rejected; fixed DSpark5 is performance-rejected. See
+`notes/2026-07-18-dspark-piecewise-exact-m7-record.md`.
+
+The immediate next action is an exact cycle timeline across target
+verification, context-KV and draft-input preparation, the three-layer
+256-expert draft, sampling, queue gaps, and host work. Prioritize moving the
+still-eager context-KV/input boundary into a safe reusable or fused path. Only
+then test confidence-driven variable depth against frozen held-out prompts;
+naively shortening every cycle to five tokens already lost.
 
 The follow-up exact M=2 MXFP4 tile-policy lane is closed without promotion.
 N32 regresses. N128 saves 0.247-0.283 ms per 43 routed layers across four
@@ -226,7 +240,7 @@ hash-preserved quality candidates; K180 is not predetermined.
    speed evidence but is not the consecutive-repeatability authority. The
    corrected `40.170350` row is retained as superseded LocalMaxxing evidence
    `cmrmebmzg1nm0mj01k30nv6vw`.
-2. The current target-verified speed record is the combined **MTP1 QNorm-M2 +
+2. The preceding target-verified speed record is the combined **MTP1 QNorm-M2 +
    route-direct portfolio at `63.851301 tok/s`**. Same-binary B-A-B medians are
    62.515661 / 61.717893 / 63.851301 tok/s. Seventy exact capture suites pass,
    including former rollover positions 28 and 58; every qualifying request is
@@ -311,15 +325,15 @@ packet as rejected evidence.
 The authorized host reboot recovered all four B70s. XPU discovery, per-device
 allocation/compute, runtime status, and a four-rank exact XCCL reduction gate
 pass; all four external links report Gen4 x16 and ASPM is back at `default`.
-The QNorm/route-portfolio record service is temporarily listening on
-`127.0.0.1:18080` while its result packet is finalized. The restorable current
-record is under `qnorm-routeportfolio-candidate-b2-20260716T2255Z`. The
+No DeepSeek service is currently running. The promoted DSpark7 exact-M7
+service was stopped after its final exact gate. Its restorable current record
+is under `dspark7-xpu-targetpw-draftpw-exactm7-20260718T0556Z`. The
 restorable nonspeculative record recipe is
 `nospec-direct-moe-wideepoch-candidate-20260715T2220Z`, using vLLM
 `a681dbb2b`, XPU kernels `6522849b0`, exact-version oneCCL `48fda4f0e`, and the
 wide collective epoch. Its sustained 70/70 exact gate passes. The separate
 row-exact MTP1 record remains historical at 55.524496 tok/s; the current
-combined target-verified record is 63.851301 tok/s.
+target-verified DSpark7 exact-M7 record is 64.661411 tok/s.
 The reboot auto-started the Gemma
 backend/frontdoor services; both were stopped for DeepSeek work and remain
 stopped. The external `/mnt/usb-models` volume did not

@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-17**
+Last reviewed: **2026-07-18**
 
 ## Authority And Update Rule
 
@@ -21,16 +21,16 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-No DeepSeek service is currently running. The QNorm/route-portfolio record
-service was stopped cleanly before eager profiling and component gates. Its restorable evidence
-is `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/qnorm-routeportfolio-candidate-b2-20260716T2255Z`.
-The source identity is vLLM `4a6fd8747`, XPU kernels `18a44f440`, and oneCCL
-`48fda4f0e`. The record adds
-`VLLM_XPU_V4_FUSED_QNORM_ROPE_KV_INSERT_MAX_M=2` and
-`VLLM_XPU_V4_M2_ROUTE_DIRECT_COMPACT=1` to the preceding native-M=2-router
-identity. The exact M=2 MHC/shared/routed flags remain enabled, N64 remains
-selected, and the noise-floor `VLLM_XPU_MOE_OUTPUT_ALIAS` candidate remains
-off.
+No DeepSeek service is currently running. The promoted DSpark7 exact-M7
+service was stopped cleanly after three strict suites and the final exact
+canary. Its restorable evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-targetpw-draftpw-exactm7-20260718T0556Z`.
+The source identity is vLLM `48401ed6a`, XPU kernels `0b99fc536`, and oneCCL
+`48fda4f0e`. Restore it with target PIECEWISE, draft breakable PIECEWISE,
+`DSPARK_SPEC_TOKENS=7`, and
+`VLLM_XPU_DSPARK_EXACT_QUERY_CAPTURE=1`; the draft queries M=7 while target
+verification remains M=8. The preceding QNorm/route-portfolio source remains
+historical evidence at vLLM `4a6fd8747` and XPU kernels `18a44f440`.
 The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
@@ -117,18 +117,17 @@ for the repair and promoted identity is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-15-kv-repeatability-and-oneccl-allreduce-routing.md).
 The corrected `40.170350` row `cmrmebmzg1nm0mj01k30nv6vw` remains the
 superseded repeatability-repair authority.
-The current target-verified speed record is the exact QNorm-M2 + route-direct
-portfolio at **63.851301 tok/s** median with `59.718212` p10. Same-binary B-A-B
-medians are 62.515661 / 61.717893 / 63.851301 tok/s. The route component keeps
-the unchanged standalone 0.50 ms gate false and is admitted only with the
-independently proven, non-overlapping QNorm-M2 floor. Four B70s pass 336/336
-changed graph cases bitwise, the guarded production wrapper passes 84/84, and
-70/70 ordered exact capture suites pass across rollover positions 28 and 58.
-Every qualifying request is cached-zero. Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-qnorm-routeportfolio-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-16-qnorm-routeportfolio-record.md).
-LocalMaxxing approved `cmrocpuhq029hlg01g3yzglko`. The preceding native-M=2
-router record remains superseded evidence at 63.349928 tok/s,
-`cmrncv39w003ylg01hogleazo`.
+The current target-verified speed record is DSpark7 with target PIECEWISE and
+a private breakable draft PIECEWISE graph captured at exact M=7:
+**64.661411 tok/s** median with `56.918029` p10. Independent strict suite
+medians are 64.661411 / 61.724506 / 64.275173 tok/s; 36/36 realistic requests
+are fresh and cache-zero, and three six-case exact suites pass before, between,
+and after the performance suites. The unchanged K160 target verifies all
+accepted tokens at M=8. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-dspark-piecewise-exact-m7-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-dspark-piecewise-exact-m7-record.md).
+LocalMaxxing approved `cmrpymqh505mxlg01tzg3e0yl`. The preceding exact
+QNorm-M2 + route-direct MTP1 record remains superseded evidence at 63.851301
+tok/s, `cmrocpuhq029hlg01g3yzglko`.
 The ordered continuation plan is
 [`plans/2026-07-16-deepseek-v4-flash-b70-100-200-tps-roadmap.md`](plans/2026-07-16-deepseek-v4-flash-b70-100-200-tps-roadmap.md).
 It preserves the current record while pursuing four explicit options:
