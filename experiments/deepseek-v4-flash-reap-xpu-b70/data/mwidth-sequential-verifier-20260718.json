@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_sequential_mwidth_verifier_gate",
+  "date": "2026-07-18",
+  "passed": true,
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "source_identity": {
+    "vllm_commit": "57cfb6771fef60253c98426a690948adfc049f8e",
+    "xpu_kernel_commit": "50646a2bfd3e451d77e150a9f950cc097b40bce9",
+    "xpu_extension_sha256": "af1760de1b18a8b107ba553352df45abcc396c4556558da07ed71c217ffb8561",
+    "oneccl_runtime": "/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-wideepoch-48fda4f"
+  },
+  "compiled_wrapper_gate": {
+    "result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/mwidth-vllm-wrapper-capturehooks-20260718T041523Z",
+    "passed_all_ranks": true,
+    "compiled_graph_contains_segmented_op": true,
+    "compiled_graph_contains_wide_collective": false,
+    "m4_physical_collective_shapes": [
+      [2, 4096],
+      [2, 4096]
+    ],
+    "m8_physical_collective_shapes": [
+      [2, 4096],
+      [2, 4096],
+      [2, 4096],
+      [2, 4096]
+    ]
+  },
+  "m4": {
+    "capture": "/mnt/fast-ai/deepseek-v4-corpora/mtp-reuse-m4-sequential-20260718T041836Z",
+    "capture_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m4-sequential-cycle-capture-20260718T041836Z",
+    "manifest_aggregate_sha256": "8c683206da125533737680501647c689a7f8027a708596f4acc8da7deefb96d6",
+    "allreduces_per_rank": 87,
+    "mhc_boundaries_per_rank": 85,
+    "non_tiled_boundaries_per_rank": 85,
+    "linked_boundaries_per_rank": 85,
+    "positions": [24, 25, 26, 27],
+    "replay_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m4-sequential-cycle-replay-20260718T0430Z",
+    "segmented_m2_median_ms": 6.948199006728828,
+    "segmented_fixed_width_median_ms": 5.506829009391367,
+    "saved_ms": 1.4413699973374605,
+    "saved_percent": 20.74450814639946,
+    "exact_graph_replays": 70,
+    "all_ranks_exact": true
+  },
+  "m8": {
+    "capture": "/mnt/fast-ai/deepseek-v4-corpora/mtp-reuse-m8-sequential-20260718T0440Z",
+    "capture_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-sequential-cycle-capture-20260718T0440Z",
+    "manifest_aggregate_sha256": "1354edce1a16cb73143a597a36ab11ab7e10fa61a7afa9763a6273f80b165ebe",
+    "allreduces_per_rank": 87,
+    "mhc_boundaries_per_rank": 85,
+    "non_tiled_boundaries_per_rank": 85,
+    "linked_boundaries_per_rank": 85,
+    "positions": [24, 25, 26, 27, 28, 29, 30, 31],
+    "replay_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-sequential-cycle-replay-20260718T0448Z",
+    "segmented_m2_median_ms": 12.357660481939092,
+    "segmented_fixed_width_median_ms": 8.043339505093172,
+    "saved_ms": 4.31432097684592,
+    "saved_percent": 34.91196101815301,
+    "exact_graph_replays": 70,
+    "all_ranks_exact": true
+  },
+  "repeated_mtp_endpoint_screen": {
+    "result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m4-fixed-mhc-endpoint-screen-20260718T0455Z/strict-screen.json",
+    "proposal_source": "attached K160 one-layer MTP repeated three times",
+    "eligible_rows": 8,
+    "median_tok_s_1_100_after_ttft": 46.247280655609316,
+    "current_mtp1_record_tok_s": 63.85130111953857,
+    "mean_acceptance_length_observed_range": [1.81, 2.17],
+    "position_2_acceptance_observed_range": [0.05, 0.226],
+    "position_3_acceptance_observed_range": [0.0, 0.032],
+    "decision": "rejected; do not spend an M8 endpoint run on repeated one-layer MTP"
+  },
+  "next": "Port and gate the official three-stage DeepSeek V4 Flash DSpark predictor against K160 using frozen held-out requests."
+}

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Benchmark exact M=4/M=8 TP4+MHC geometry from the real M=2 corpus.
+"""Benchmark exact M=4/M=8 TP4+MHC geometry from a captured corpus.
 
 This is a component economics gate, not a model-throughput or acceptance test.
-Rows are tiled from the captured real M=2 verifier pair.  The wide collective
-is real, while MHC is tested as row-exact M=2 chunks, one fixed-width command,
-and through the existing arbitrary-M fused operator.
+The historical default tiles rows from the captured real M=2 verifier pair.
+``--source-width`` also permits direct replay of genuine sequential M=4/M=8
+captures.  MHC is tested as row-exact M=2 chunks, one fixed-width command, and
+through the existing arbitrary-M fused operator.
 """
 
 from __future__ import annotations
@@ -59,6 +60,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("corpus", type=Path)
     parser.add_argument("--width", type=int, choices=(4, 8), required=True)
+    parser.add_argument("--source-width", type=int, choices=(2, 4, 8), default=2)
     parser.add_argument(
         "--path",
         choices=(
@@ -88,8 +90,16 @@ def main() -> int:
     dist.init_process_group(backend="xccl", device_id=device)
 
     root = args.corpus.resolve()
-    allreduce_rows = load_rows(root, rank, "allreduce_m2", ALLREDUCES)
-    mhc_rows = load_rows(root, rank, "mhc_post_pre_m2", MHC_BOUNDARIES)
+    if args.source_width > args.width or args.width % args.source_width:
+        raise ValueError(
+            f"source width {args.source_width} cannot produce width {args.width}"
+        )
+    allreduce_rows = load_rows(
+        root, rank, f"allreduce_m{args.source_width}", ALLREDUCES
+    )
+    mhc_rows = load_rows(
+        root, rank, f"mhc_post_pre_m{args.source_width}", MHC_BOUNDARIES
+    )
     cpu_cache: dict[str, torch.Tensor] = {}
     device_cache: dict[str, torch.Tensor] = {}
 
@@ -104,7 +114,16 @@ def main() -> int:
         return device_cache[relative]
 
     def wide_tensor(ref: dict[str, Any]) -> torch.Tensor:
-        return tile_rows(get_tensor(ref), args.width)
+        tensor = get_tensor(ref)
+        if args.source_width == args.width:
+            if tensor.ndim == 0 or tensor.shape[0] != args.width:
+                raise ValueError(
+                    f"expected direct M={args.width} tensor, got {tuple(tensor.shape)}"
+                )
+            return tensor
+        if args.source_width != 2:
+            raise ValueError("only the historical M=2 corpus may be row-tiled")
+        return tile_rows(tensor, args.width)
 
     local_partial = [
         wide_tensor(row["tensors"]["local_partial"]) for row in allreduce_rows
@@ -115,7 +134,7 @@ def main() -> int:
 
     def mhc_input(name: str, *, tiled: bool = True) -> list[torch.Tensor]:
         values = [get_tensor(row["tensors"][name]) for row in mhc_rows]
-        return [tile_rows(value, args.width) for value in values] if tiled else values
+        return [wide_tensor(row["tensors"][name]) for row in mhc_rows] if tiled else values
 
     residual = mhc_input("residual")
     post_mix = mhc_input("post_mix")
@@ -447,7 +466,11 @@ def main() -> int:
             for item in range(world_size)
         ]
         result = {
-            "classification": "deepseek_v4_row_tiled_real_m2_corpus_width_path",
+            "classification": (
+                "deepseek_v4_sequential_mwidth_corpus_path"
+                if args.source_width == args.width
+                else "deepseek_v4_row_tiled_real_m2_corpus_width_path"
+            ),
             "passed": passed
             and all(
                 row["paths"][0]["passed"]
@@ -457,6 +480,7 @@ def main() -> int:
             "corpus": str(root),
             "world_size": world_size,
             "width": args.width,
+            "source_width": args.source_width,
             "path": args.path,
             "diagnostic": args.diagnostic,
             "allreduces": ALLREDUCES,

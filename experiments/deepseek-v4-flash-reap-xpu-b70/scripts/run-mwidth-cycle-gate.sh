@@ -7,6 +7,7 @@ kernel_tree="${KERNEL_TREE:-/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc}"
 oneccl="${ONECCL_INSTALL_DIR:-/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-wideepoch-48fda4f}"
 corpus="${CORPUS:-/mnt/fast-ai/deepseek-v4-corpora/mtp1-m2-cycle-20260717T0710Z}"
 width="${1:?usage: run-mwidth-cycle-gate.sh 4|8 [run-dir]}"
+source_width="${SOURCE_WIDTH:-2}"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 run_dir="${2:-/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m${width}-real-cycle-gate-${stamp}}"
 
@@ -55,6 +56,7 @@ unset CCL_ZE_IPC_EXCHANGE CCL_WORKER_COUNT
   printf 'b70_oneccl_sycl_allreduce_max_bytes=%s\n' "${B70_ONECCL_SYCL_ALLREDUCE_MAX_BYTES}"
   printf 'ccl_sycl_allreduce_ll=%s\n' "${CCL_SYCL_ALLREDUCE_LL}"
   printf 'corpus=%s\n' "${corpus}"
+  printf 'source_width=%s\n' "${source_width}"
 } >"${run_dir}/identity.txt"
 
 default_paths="segmented_m2 segmented_fixed_width m2_chunks fixed_width generic_fused"
@@ -64,6 +66,7 @@ for path in "${paths[@]}"; do
     "${root}/experiments/deepseek-v4-flash-reap-xpu-b70/scripts/benchmark-mwidth-cycle-corpus.py" \
     "${corpus}" \
     --width "${width}" \
+    --source-width "${source_width}" \
     --path "${path}" \
     --output "${run_dir}/${path}.json" \
     --diagnostic \
