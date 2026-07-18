@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_gathered_winner_and_markov_pair_closure",
+  "date": "2026-07-18",
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "public_record_tok_s": 80.82005189243556,
+  "gathered_target_winner_commit": {
+    "decision": "retain",
+    "vllm_commit": "35ce4e8a62e6d553e1aadbe4f48eaf3e64c60e01",
+    "xpu_kernel_commit": "7936e0c4e9cb017cadbead3aac4122a784cc89a3",
+    "component_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-gathered-pair-rejection-20260718",
+    "endpoint_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-gathered-pair-fusion-candidate-20260718T2130Z",
+    "strict_medians_tok_s": [79.12222643264519, 76.93857599582682, 79.75014350186679],
+    "median_of_three_tok_s": 79.12222643264519,
+    "realistic_requests": 36,
+    "cache_zero_requests": 36,
+    "exact_canaries_passed": 24,
+    "exact_canaries_total": 24,
+    "captured_control_us_range": [16.998, 17.415],
+    "captured_candidate_us_range": [13.728, 13.924]
+  },
+  "native_target_local_argmax": {
+    "decision": "reject_before_endpoint",
+    "exact_eager": "40/40 card0",
+    "exact_graph": "40/40 card0",
+    "captured_control_us": 25.53,
+    "captured_candidate_us": 28.935,
+    "vllm_prototype_commit": "639599cfd",
+    "vllm_revert_commit": "c27f9a5f9",
+    "xpu_prototype_commit": "5eaf645",
+    "xpu_revert_commit": "1e68774"
+  },
+  "sharded_markov_pair_transaction": {
+    "decision": "reject_default_off",
+    "vllm_commit": "06c5ef7100614543c754928dc33bd016ba77c148",
+    "xpu_kernel_commit": "917a9398d192aa99a777d89db4793c45b6e10eed",
+    "component_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark-sharded-markov-argmax-20260718",
+    "endpoint_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-sharded-markov-argmax-candidate-20260718T2140Z",
+    "strict_median_tok_s": 73.45813427742206,
+    "p10_tok_s": 61.531936115400846,
+    "mean_tok_s": 73.79457953507351,
+    "local_gate_exact": "160/160 eager and 160/160 graph per boundary across four cards",
+    "global_gate_exact": "160/160 eager and 160/160 graph per boundary across four cards",
+    "cause": "tiny generic oneCCL synchronization cost exceeds avoided full-width gather cost"
+  },
+  "fixed_markov_transport_followup": {
+    "decision": "reject_all_default_off",
+    "vllm_commit": "6a77e594050c14b32c53c1e4c7578b4ed95c8f11",
+    "xpu_kernel_commit": "d10262ea76706fa4d8f4d4ac488569ca43d9ec41",
+    "component_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-ipc-max-token-20260718",
+    "endpoint_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-host-markov-argmax-candidate-20260718T2215Z",
+    "raw_level_zero_ipc": {
+      "decision": "reject_incorrect_timeout",
+      "remote_atomic_readiness": "timed out",
+      "existing_ipc_allreduce_control": "also timed out under the same runtime"
+    },
+    "brokered_ipc_host_barrier": {
+      "decision": "component_pass_not_integrated",
+      "exact": "80 changing epochs on all four cards",
+      "control_ms_seven_steps": 1.749059,
+      "candidate_ms_seven_steps": 1.249131,
+      "slowest_rank_savings_ms_per_cycle": 0.499929,
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-ipc-max-token-20260718/host-barrier-valid.json"
+    },
+    "process_shared_host_barrier": {
+      "decision": "endpoint_reject_default_off",
+      "exact": "80 changing epochs on all four cards",
+      "control_us_seven_steps": 1533.7395,
+      "candidate_us_seven_steps": 137.513,
+      "slowest_rank_savings_us_per_cycle": 1396.2265,
+      "strict_medians_tok_s": [
+        74.84099624070785,
+        75.76445747896003
+      ],
+      "realistic_requests": 24,
+      "cache_zero_requests": 24,
+      "exact_canaries_passed": 12,
+      "exact_canaries_total": 12,
+      "cause": "synchronous host barrier serializes TP ranks and destroys pipeline overlap despite isolated component savings",
+      "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-ipc-max-token-20260718/host-shm-valid.json"
+    }
+  },
+  "next": "do not retry raw IPC remote atomics, ordinary tiny oneCCL, or host barriers; require a proven device-resident protocol or a larger fused transaction that removes the exchange"
+}
