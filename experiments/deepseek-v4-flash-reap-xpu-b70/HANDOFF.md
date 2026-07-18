@@ -23,12 +23,20 @@ kernels `0b99fc536`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
 correctness-rejected; fixed DSpark5 is performance-rejected. See
 `notes/2026-07-18-dspark-piecewise-exact-m7-record.md`.
 
-The immediate next action is an exact cycle timeline across target
-verification, context-KV and draft-input preparation, the three-layer
-256-expert draft, sampling, queue gaps, and host work. Prioritize moving the
-still-eager context-KV/input boundary into a safe reusable or fused path. Only
-then test confidence-driven variable depth against frozen held-out prompts;
-naively shortening every cycle to five tokens already lost.
+The exact-M7 cycle attribution and first two follow-up boundaries are now
+closed. Named rank-local scopes put the eager Markov sampler at approximately
+10.50 ms/cycle, the largest draft-side host scope. A separate reusable sampler
+graph remains exact but retains 83 kernels and 14/15 collective breaks, rises
+to approximately 10.82 ms, and reaches only 62.460903 tok/s. Combining the
+model and sampler into one graph corrupts changed outputs and is rejected.
+
+The guarded fused three-stage context-WKV projection is exact and reduces its
+intended context-KV scope from 1.914 to 1.303 ms, but its two strict endpoint
+medians are 64.269762/64.244449 tok/s. Keep both new selectors default-off;
+the 64.661411 record is unchanged. The next permitted high-ceiling boundary is
+device-resident fixed-address sampling, rejection, and accepted-prefix commit
+inside the Intel decoder shell, connected to the exact M=4/M=8 verifier. See
+`notes/2026-07-18-dspark-cycle-profile-and-fusion-closure.md`.
 
 The follow-up exact M=2 MXFP4 tile-policy lane is closed without promotion.
 N32 regresses. N128 saves 0.247-0.283 ms per 43 routed layers across four

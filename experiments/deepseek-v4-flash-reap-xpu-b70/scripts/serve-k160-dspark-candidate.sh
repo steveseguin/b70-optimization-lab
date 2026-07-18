@@ -30,10 +30,10 @@ case "${graph_mode}" in
 esac
 
 export RUN_DIR="${run_dir}"
-export VLLM_TREE=/home/steve/src/deepseek-v4-vllm-xpu-dspark
-export VLLM_COMMIT=48401ed6a6b8cd4a277bf7b8d64cf53b006bafb1
-export KERNEL_TREE=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
-export KERNEL_COMMIT=0b99fc5360141d4dd6174fb15f30ec80c74c4d47
+export VLLM_TREE="${VLLM_TREE:-/home/steve/src/deepseek-v4-vllm-xpu-dspark}"
+export VLLM_COMMIT="${VLLM_COMMIT:-48401ed6a6b8cd4a277bf7b8d64cf53b006bafb1}"
+export KERNEL_TREE="${KERNEL_TREE:-/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc}"
+export KERNEL_COMMIT="${KERNEL_COMMIT:-0b99fc5360141d4dd6174fb15f30ec80c74c4d47}"
 export PYTHONPATH="${VLLM_TREE}:${KERNEL_TREE}:${PYTHONPATH:-}"
 
 export ONECCL_INSTALL_DIR=/home/steve/.venvs/deepseek-v4-xpu
@@ -73,6 +73,8 @@ export VLLM_XPU_V4_SPLIT_FP8_QK_NUM_WARPS=16
 export VLLM_XPU_V4_SPLIT_FP8_PV_NUM_WARPS=4
 export VLLM_XPU_NATIVE_MHC=1
 export VLLM_XPU_DSPARK_EXACT_QUERY_CAPTURE="${VLLM_XPU_DSPARK_EXACT_QUERY_CAPTURE:-0}"
+export VLLM_XPU_DSPARK_PIECEWISE_SAMPLE_GRAPH="${VLLM_XPU_DSPARK_PIECEWISE_SAMPLE_GRAPH:-0}"
+export VLLM_XPU_DSPARK_FUSED_CONTEXT_WKV="${VLLM_XPU_DSPARK_FUSED_CONTEXT_WKV:-0}"
 case "${draft_graph_mode}" in
   eager)
     export VLLM_XPU_DSPARK_DISABLE_DRAFT_GRAPH=1
@@ -101,6 +103,7 @@ if [[ "${DSPARK_DISABLE_SPECULATION:-0}" == "1" ]]; then
 else
   export VLLM_EXTRA_ARGS="--enable-prompt-tokens-details --kv-cache-memory ${DSPARK_KV_CACHE_MEMORY_BYTES} --spec-method dspark --spec-model ${draft_pack} --spec-tokens ${DSPARK_SPEC_TOKENS}"
 fi
+export VLLM_EXTRA_ARGS="${VLLM_EXTRA_ARGS} ${DSPARK_ADDITIONAL_VLLM_ARGS:-}"
 
 printf 'run_dir=%s\n' "${run_dir}"
 printf 'draft_pack=%s\n' "${draft_pack}"

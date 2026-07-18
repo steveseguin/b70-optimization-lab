@@ -239,6 +239,18 @@ submission overhead that reusable graphs already remove: captured ordinary
 XCCL plus MHC takes 4.265725 ms versus 4.156179 ms for the direct chain, only a
 0.109546 ms/cycle gain. Do not service-test or portfolio this candidate.
 
+The later exact-M7 DSpark record moved the frontier to 64.661411 tok/s and its
+named cycle attribution is now complete. The eager sequential Markov sampler
+is approximately 10.50 ms/cycle. A separate replay graph is exact but retains
+83 kernels and 14/15 collective breaks and regresses the endpoint to 62.460903
+tok/s. Fusing all three context-WKV projections saves 0.611 ms in that local
+scope but produces only 64.269762/64.244449 tok/s in two strict suites. Both
+are closed default-off. Continue Phase C/D with a device-resident sampler,
+acceptance, and commit pipeline inside the fixed-geometry decoder shell; do
+not spend another load on generic sampler graph wrapping or context-only
+fusion. See
+`../experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-dspark-cycle-profile-and-fusion-closure.md`.
+
 The easy bounded inventory is exhausted. Option 4's first fixed-geometry shell
 artifact is operational: a 150 MiB content-addressed real M=2 corpus and a
 no-model four-B70 worker replay the 87-reduction/85-MHC cycle exactly 70/70

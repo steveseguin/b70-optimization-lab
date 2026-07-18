@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-18",
+  "classification": "exact_profile_complete_endpoint_candidates_rejected",
+  "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+  "draft_revision": "aa22cb07426656189b2573b8e77a9b7333b8ae0f",
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "mode": "TP4+EP",
+    "concurrency": 1,
+    "aggregate_throughput": false
+  },
+  "record": {
+    "median_tok_s_1_100_after_ttft": 64.66141064988764,
+    "localmaxxing_id": "cmrpymqh505mxlg01tzg3e0yl",
+    "vllm": "48401ed6a6b8cd4a277bf7b8d64cf53b006bafb1"
+  },
+  "source": {
+    "diagnostic_vllm": "ce70e1921d0d5fc2c456533edc55582e51768be8",
+    "xpu_kernels": "0b99fc5360141d4dd6174fb15f30ec80c74c4d47",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "baseline_stage_host_ms_median_across_rank_medians": {
+    "combine_and_copy_hidden": 0.854,
+    "prepare_inputs": 0.477,
+    "context_kv": 1.914,
+    "dispatch_and_metadata": 2.501,
+    "backbone": 4.221,
+    "markov_sample": 10.496
+  },
+  "isolated_sampler_graph": {
+    "classification": "correct_performance_rejected",
+    "median_tok_s_1_100_after_ttft": 62.46090317636309,
+    "p10_tok_s_1_100_after_ttft": 58.876639533252295,
+    "mean_tok_s_1_100_after_ttft": 63.70755480880735,
+    "markov_sample_graph_host_ms_median_across_rank_medians": 10.816,
+    "kernel_count": 83,
+    "collective_breaks": "14/15",
+    "exact_canaries_pre": "6/6",
+    "exact_canaries_post": "6/6",
+    "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-exactm7-isolated-samplegraph-20260718T1340Z",
+    "profile_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-exactm7-isolated-samplegraph-stage-profile-20260718T1343Z"
+  },
+  "combined_sampler_graph": {
+    "classification": "correctness_rejected",
+    "copy_observed": "cobalt-forestforest-7291",
+    "strict_json": "duplicated punctuation",
+    "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-targetpw-draftpw-exactm7-samplegraph-20260718T1335Z"
+  },
+  "fused_context_wkv": {
+    "classification": "exact_substage_win_endpoint_rejected",
+    "host_context_kv_ms_median_across_rank_medians": 1.303,
+    "host_context_kv_ms_saved": 0.611,
+    "strict_suites": [
+      {
+        "median_tok_s_1_100_after_ttft": 64.2697622608025,
+        "p10_tok_s_1_100_after_ttft": 57.10889274412987,
+        "mean_tok_s_1_100_after_ttft": 64.81270837768692,
+        "median_wall_tok_s_full": 50.23699368856812,
+        "median_ttft_ms": 349.879018496722
+      },
+      {
+        "median_tok_s_1_100_after_ttft": 64.24444923808556,
+        "p10_tok_s_1_100_after_ttft": 56.53846806737234,
+        "mean_tok_s_1_100_after_ttft": 62.77496624599234,
+        "median_wall_tok_s_full": 53.07137649257612,
+        "median_ttft_ms": 355.12361949076876
+      }
+    ],
+    "exact_canary_suites": 3,
+    "exact_canary_cases_per_suite": 6,
+    "all_exact": true,
+    "all_cached_tokens_zero": true,
+    "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-exactm7-fused-context-wkv-r2-20260718T1355Z",
+    "profile_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-exactm7-fused-context-wkv-stage-profile-20260718T1357Z"
+  },
+  "decision": {
+    "promote": false,
+    "localmaxxing_submit": false,
+    "piecewise_sample_graph_default": false,
+    "fused_context_wkv_default": false,
+    "next_boundary": "device_resident_fixed_address_sampler_acceptance_commit_pipeline"
+  }
+}

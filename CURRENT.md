@@ -128,6 +128,16 @@ accepted tokens at M=8. Evidence is in
 LocalMaxxing approved `cmrpymqh505mxlg01tzg3e0yl`. The preceding exact
 QNorm-M2 + route-direct MTP1 record remains superseded evidence at 63.851301
 tok/s, `cmrocpuhq029hlg01g3yzglko`.
+The record's exact follow-up cycle attribution is complete. The eager Markov
+sampler is the largest draft-side scope at about 10.50 ms/cycle. Isolating it
+in a separate reusable graph preserves exact output but not its 83 kernels or
+14/15 collective breaks and falls to 62.460903 tok/s; combining sampler and
+model replay corrupts output. A fused three-stage context-WKV projection cuts
+its local scope from 1.914 to 1.303 ms and passes 18/18 ordered exact canaries,
+but two strict medians are only 64.269762/64.244449 tok/s. Both candidates are
+default-off and no LocalMax submission was made. Evidence and the next
+device-resident sampler/acceptance/commit boundary are in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-dspark-cycle-profile-and-fusion-closure.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-dspark-cycle-profile-and-fusion-closure.md).
 The ordered continuation plan is
 [`plans/2026-07-16-deepseek-v4-flash-b70-100-200-tps-roadmap.md`](plans/2026-07-16-deepseek-v4-flash-b70-100-200-tps-roadmap.md).
 It preserves the current record while pursuing four explicit options:
