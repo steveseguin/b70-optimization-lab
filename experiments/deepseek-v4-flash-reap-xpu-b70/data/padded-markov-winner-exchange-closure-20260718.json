@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_padded_markov_winner_exchange_closure",
+  "date": "2026-07-18",
+  "decision": "performance_reject_before_integration",
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "world_size": 4,
+  "steps_per_cycle": 7,
+  "warmups": 12,
+  "iterations": 80,
+  "control": {
+    "dtype": "bfloat16",
+    "elements_per_rank": 32320,
+    "input_bytes_per_rank": 64640,
+    "slowest_rank_median_us": 371.347
+  },
+  "unpadded_pair": {
+    "dtype": "float32",
+    "elements_per_rank": 2,
+    "input_bytes_per_rank": 8,
+    "slowest_rank_median_us": 1192.6645,
+    "conservative_saved_us": -835.604
+  },
+  "best_conservative_padding": {
+    "elements_per_rank": 256,
+    "input_bytes_per_rank": 1024,
+    "slowest_rank_median_us": 352.652,
+    "conservative_saved_us": 6.4315,
+    "exact_all_ranks": true
+  },
+  "tested_input_bytes_per_rank": [8, 64, 256, 1024, 4096, 8192, 16384, 32768, 65536],
+  "exact_all_tested_payloads_all_ranks": true,
+  "evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/tp4-padded-pair-allgather-20260718T2350Z/sweep.json",
+  "cause": "padding repairs the pathological tiny-message route, but the incumbent full-bias gather is already latency-bound and leaves only a 6.4315 us/cycle communication ceiling",
+  "next": "require a larger sampler transaction that deletes local projection/materialization and sampler launches rather than changing transport alone"
+}
