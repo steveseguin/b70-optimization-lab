@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-18",
+  "classification": "promoted_single_session_target_verified_record",
+  "model": {
+    "hf_id": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "path": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/current-k160",
+    "quantization": "deepseek_v4_fp8_uniform_k160"
+  },
+  "draft": {
+    "hf_id": "deepseek-ai/DeepSeek-V4-Flash",
+    "revision": "aa22cb07426656189b2573b8e77a9b7333b8ae0f",
+    "path": "/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/dspark-draft-pack-aa22cb0",
+    "method": "dspark",
+    "spec_tokens": 7
+  },
+  "hardware": {
+    "gpu": "Intel Arc Pro B70",
+    "gpu_count": 4,
+    "mode": "TP4+EP",
+    "concurrency": 1,
+    "aggregate_throughput": false
+  },
+  "source": {
+    "vllm": "0873ffa6730a46c31c89764159363b07f469df6f",
+    "xpu_kernels": "0b99fc5360141d4dd6174fb15f30ec80c74c4d47",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "graphs": {
+    "target": "piecewise",
+    "draft": "breakable_piecewise_exact_m7",
+    "target_verifier_width": 8
+  },
+  "candidate": {
+    "persistent_markov": true,
+    "replicated_markov": false,
+    "greedy_fused_rejection": true,
+    "fixed_m7_target_inputs": true,
+    "piecewise_sample_graph": false,
+    "fused_context_wkv": false
+  },
+  "component_gate": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark-persistent-markov-gate-20260718T1630Z/summary.json",
+    "exact_all_ranks": true,
+    "ordinary_slowest_rank_median_ms": 2.9665215115528554,
+    "persistent_slowest_rank_median_ms": 2.1799085079692304,
+    "slowest_rank_saving_ms": 0.786613003583625,
+    "historical_admission_threshold_ms": 0.5,
+    "architectural_bundle_threshold_ms": 4.0
+  },
+  "strict_suites": [
+    {
+      "file": "strict-screen.json",
+      "median_tok_s_1_100_after_ttft": 65.67420196199265,
+      "p10_tok_s_1_100_after_ttft": 57.218180273423386,
+      "mean_tok_s_1_100_after_ttft": 65.28142047255037,
+      "median_tok_s_full_after_ttft": 62.70310674406879,
+      "median_tok_s_wall_full": 53.14116175800112,
+      "median_ttft_ms": 350.4509664780926
+    },
+    {
+      "file": "strict-confirmation.json",
+      "median_tok_s_1_100_after_ttft": 66.47910307979623,
+      "p10_tok_s_1_100_after_ttft": 59.38037783802413,
+      "mean_tok_s_1_100_after_ttft": 66.44117330892317,
+      "median_tok_s_full_after_ttft": 65.64126355381305,
+      "median_tok_s_wall_full": 54.805656738701984,
+      "median_ttft_ms": 340.31511697685346
+    },
+    {
+      "file": "strict-third.json",
+      "median_tok_s_1_100_after_ttft": 63.55852985862475,
+      "p10_tok_s_1_100_after_ttft": 55.75143149729758,
+      "mean_tok_s_1_100_after_ttft": 64.60621504582906,
+      "median_tok_s_full_after_ttft": 63.26373910692349,
+      "median_tok_s_wall_full": 53.469004005981276,
+      "median_ttft_ms": 344.586112012621
+    }
+  ],
+  "headline_median_tok_s": 66.47910307979623,
+  "suite_median_of_medians": 65.67420196199265,
+  "preceding_record_median_tok_s": 64.66141064988764,
+  "headline_improvement_tok_s": 1.8176924299085904,
+  "headline_improvement_percent": 2.811098,
+  "correctness": {
+    "exact_canary_suites": 4,
+    "exact_canary_cases_per_suite": 6,
+    "exact_canary_requests": 24,
+    "all_passed": true,
+    "realistic_requests": 36,
+    "cached_tokens_all_zero": true,
+    "target_verifies_accepted_tokens": true
+  },
+  "negative_results": [
+    {
+      "label": "full_lm_head_replication",
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark-replicated-lmhead-gate-20260718T1550Z",
+      "result": "about_1.257_ms_slower"
+    },
+    {
+      "label": "full_markov_w2_replication_endpoint",
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-exactm7-replicated-markov-r2-20260718T1500Z",
+      "median_tok_s": 64.358,
+      "result": "exact_but_not_record"
+    },
+    {
+      "label": "fused_greedy_and_fixed_target_inputs_without_persistent_markov",
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-fused-greedy-fixedinputs-20260718T1605Z",
+      "median_tok_s": 64.45744,
+      "result": "exact_but_not_record"
+    }
+  ],
+  "evidence_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-xpu-persistent-markov-bundle-20260718T1640Z",
+  "localmaxxing": {
+    "id": null,
+    "status": "PENDING_SUBMISSION"
+  }
+}
