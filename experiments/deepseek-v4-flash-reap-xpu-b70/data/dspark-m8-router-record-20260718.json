@@ -1,0 +1,45 @@
+{
+  "classification": "deepseek_v4_k160_tp4_dspark7_m8_router_record",
+  "date": "2026-07-18",
+  "single_active_generation": true,
+  "aggregate_throughput": false,
+  "headline_tok_s": 80.1635783863126,
+  "strict_suite_medians_tok_s": [
+    75.8459160381613,
+    77.5725355803942,
+    80.1635783863126
+  ],
+  "median_of_three_tok_s": 77.5725355803942,
+  "headline_p10_tok_s": 68.28238737995264,
+  "preceding_headline_tok_s": 78.28826696325503,
+  "headline_improvement_tok_s": 1.87531142305757,
+  "headline_improvement_percent": 2.39537209313761,
+  "realistic_requests": 36,
+  "realistic_requests_cached_zero": 36,
+  "exact_canary_suites": 4,
+  "exact_canary_requests": 24,
+  "exact_canary_requests_passed": 24,
+  "router_gate": {
+    "m8_cards": 4,
+    "m8_eager_epochs_per_card": 40,
+    "m8_graph_epochs_per_card": 32,
+    "m8_total_id_mismatches": 0,
+    "m8_total_weight_mismatches": 0,
+    "m8_projected_saved_ms_per_cycle_range": [1.2052917, 1.2221667],
+    "m2_final_regression_exact": true,
+    "m4_enabled": false,
+    "m4_reason": "width-specific quotient remains one-ULP different"
+  },
+  "rejected": {
+    "m8_route_direct_compact": "exact but realistic routes regress 1.03-1.11 ms per 43 layers",
+    "m8_attention_geometry_4_8_4": "component exact and faster, endpoint 72.460375 tok/s"
+  },
+  "source": {
+    "vllm": "db1863c7994fd79dc6dd860b64f9748af0eb7f96",
+    "xpu_kernels": "6cad2518d700cbe02906b4e46fef0bbaec053cc1",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-m8-router-fused-candidate-20260718T1815Z",
+  "localmaxxing_id": "cmrqp2uoa05ublg01lh6yluj8",
+  "localmaxxing_status": "APPROVED"
+}

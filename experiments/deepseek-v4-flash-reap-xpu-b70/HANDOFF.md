@@ -14,16 +14,24 @@ replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
 private breakable PIECEWISE replay captured at exact query width M=7 while the
 unchanged K160 target verifies at M=8. A fixed-address persistent sharded
 Markov transaction with W1-only replication, exact M=8 strided-batch
-compressors, selective M=8 W8A16, and MXFP4 N128 is the target-verified speed record at 78.288267
-tok/s**.
+compressors, selective M=8 W8A16, MXFP4 N128, and exact native M=8 router
+normalization is the target-verified speed record at 80.163578 tok/s**.
 
-Three independent strict suite medians are 78.288267 / 74.410268 / 76.937587
+Three independent strict suite medians are 75.845916 / 77.572536 / 80.163578
 tok/s. All 36 realistic requests are unique and cache-zero, and four exact
 canary suites pass before, between, and after the suites. LocalMaxxing approved
-`cmrqlp9je05thlg01q4igkk0x`. The source identity is vLLM `1f6d6be49`, XPU
-kernels `0b99fc536`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
+`cmrqp2uoa05ublg01lh6yluj8`. The source identity is vLLM `db1863c799`, XPU
+kernels `6cad2518d`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
 correctness-rejected; fixed DSpark5 is performance-rejected. See
-`notes/2026-07-18-dspark-m8-w8a16-n128-record.md`.
+`notes/2026-07-18-m8-router-fusion-record-and-postrecord-closures.md`.
+
+The native router fuses bias/top-k/gather/normalize/scale for the fixed M=8
+target verifier. Every B70 passes 40/40 changing eager and 32/32 changing graph
+cases bit-for-bit, projecting 1.205-1.222 ms/cycle saved. Matching PyTorch XPU
+required its wide K=6 reduction tree `((w0+w4)+(w1+w5))+(w2+w3)` plus the
+existing reciprocal/FMA correction. M=2 remains exact; M=4 remains one-ULP
+different and is excluded from both the wrapper and selector. Keep
+`VLLM_XPU_V4_ROUTER_NORM_MAX_M=8` in the record identity.
 
 The new bundle bypasses activation quantization for four dense M=8 projection
 families and selects the N128 Xe2 routed-MXFP4 tile. Four-card component gates
@@ -32,6 +40,16 @@ W8A16 is not bitwise row-invariant (maximum observed BF16 difference
 0.0078125), so its authority is the full quality gate rather than a bitwise
 micro-oracle. Keep `VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=8` and
 `VLLM_XPU_MXFP4_SMALL_M_N=128` in the record identity; N32 remains rejected.
+
+The post-record eager profile puts noncollective target work at 27.03-27.55
+ms/cycle by rank: routed MXFP4 7.193 ms, dense GEMM 6.509 ms, sparse QK/LSE
+3.538 ms, MHC 2.801 ms, PV 1.778 ms, and router radix/sort about 1.060 ms on
+rank 0. Two isolated component wins do not survive the complete path. M=8
+route-direct compact is exact but regresses realistic routes by 1.03-1.11 ms
+per 43 layers. Split-FP8 `4/8/4` geometry passes 768/768 changing graph cases
+and looks 2.54-2.59 ms faster in isolation, yet the clean endpoint falls to
+72.460375 tok/s. Both are reverted/default-off. Do not reintroduce them
+without a changed full-graph overlap model.
 
 The M=8 compressor component uses one strided-batch FP32-output GEMM while
 keeping each verifier row as an independent batch item. Real C4/C128 weights

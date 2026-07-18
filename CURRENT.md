@@ -21,11 +21,11 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-No DeepSeek service is currently running. The promoted DSpark7 M=8 W8A16 +
-N128 service was stopped cleanly after three strict suites and the final
-exact canary. Its restorable evidence is
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-m8-w8a16-n128-candidate-20260718T2130Z`.
-The source identity is vLLM `1f6d6be49`, XPU kernels `0b99fc536`, and oneCCL
+No DeepSeek service is currently running. The promoted DSpark7 exact-M8-router
+service was stopped cleanly after three strict suites and the final exact
+canary. Its restorable evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-m8-router-fused-candidate-20260718T1815Z`.
+The source identity is vLLM `db1863c799`, XPU kernels `6cad2518d`, and oneCCL
 `48fda4f0e`. Restore it with target PIECEWISE, draft breakable PIECEWISE,
 `DSPARK_SPEC_TOKENS=7`, `VLLM_XPU_DSPARK_EXACT_QUERY_CAPTURE=1`,
 `VLLM_XPU_GREEDY_FUSED_REJECTION=1`,
@@ -34,7 +34,8 @@ The source identity is vLLM `1f6d6be49`, XPU kernels `0b99fc536`, and oneCCL
 `VLLM_XPU_DSPARK_REPLICATED_MARKOV_W1=1`, plus
 `VLLM_XPU_V4_COMPRESSOR_BATCHED_EXACT_MAX_M=8`,
 `VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=8`, and
-`VLLM_XPU_MXFP4_SMALL_M_N=128`; the draft queries M=7 while
+`VLLM_XPU_MXFP4_SMALL_M_N=128`, and
+`VLLM_XPU_V4_ROUTER_NORM_MAX_M=8`; the draft queries M=7 while
 target verification remains M=8. The preceding QNorm/route-portfolio source remains
 historical evidence at vLLM `4a6fd8747` and XPU kernels `18a44f440`.
 The restorable nonspeculative direct M=1 routed-MoE record recipe is at
@@ -126,15 +127,16 @@ superseded repeatability-repair authority.
 The current target-verified speed record is DSpark7 with target PIECEWISE,
 private breakable draft PIECEWISE at exact M=7, a persistent sharded W2
 transaction, W1-only replication, exact M=8 strided-batch compressors,
-selective M=8 W8A16, and MXFP4 N128: **78.288267 tok/s** median with
-`65.520512` p10. Independent strict suite medians are 78.288267 / 74.410268 /
-76.937587 tok/s;
+selective M=8 W8A16, MXFP4 N128, and exact native M=8 router normalization:
+**80.163578 tok/s** median with `68.282387` p10. Independent strict suite
+medians are 75.845916 / 77.572536 / 80.163578 tok/s;
 36/36 realistic requests are fresh and cache-zero, and four six-case exact
 suites pass before, between, and after the performance suites. The unchanged
 K160 target verifies all accepted tokens at M=8. Evidence is in
-[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-dspark-m8-w8a16-n128-record.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-dspark-m8-w8a16-n128-record.md).
-LocalMaxxing approved `cmrqlp9je05thlg01q4igkk0x`. The preceding compressor
-record remains superseded evidence at 71.506808 tok/s,
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-m8-router-fusion-record-and-postrecord-closures.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-m8-router-fusion-record-and-postrecord-closures.md).
+LocalMaxxing approved `cmrqp2uoa05ublg01lh6yluj8`. The preceding W8A16/N128
+record remains superseded evidence at 78.288267 tok/s,
+`cmrqlp9je05thlg01q4igkk0x`; the compressor record remains at 71.506808 tok/s,
 `cmrql07qs05t4lg01p86jjybx`. The preceding W1-only
 replication record remains superseded evidence at 67.501117 tok/s,
 `cmrqjhpmz05snlg01ujiehc0u`; the persistent Markov record remains at 66.479103,
