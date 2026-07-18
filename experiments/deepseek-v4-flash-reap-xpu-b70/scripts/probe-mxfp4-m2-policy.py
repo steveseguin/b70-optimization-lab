@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate Xe2 MXFP4 N-tile policies on the production M=2 verifier shape."""
+"""Gate Xe2 MXFP4 N-tile policies on production verifier widths."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--candidate-policy", choices=("32", "128"), required=True)
     parser.add_argument("--ep-rank", type=int, choices=range(4), required=True)
+    parser.add_argument("--width", type=int, choices=(2, 4, 8), default=2)
     parser.add_argument("--epochs", type=int, default=12)
     parser.add_argument("--warmup", type=int, default=30)
     parser.add_argument("--samples", type=int, default=9)
@@ -40,7 +41,10 @@ def main() -> int:
     ep_size = 4
     local_base = args.ep_rank * local_experts
 
-    hidden = torch.randn((2, hidden_size), device=device, dtype=torch.bfloat16) / 16
+    hidden = (
+        torch.randn((args.width, hidden_size), device=device, dtype=torch.bfloat16)
+        / 16
+    )
     w13 = torch.randint(
         0,
         256,
@@ -69,12 +73,13 @@ def main() -> int:
         device=device,
         dtype=torch.uint8,
     )
-    topk_ids = torch.empty((2, topk), device=device, dtype=torch.int32)
+    topk_ids = torch.empty((args.width, topk), device=device, dtype=torch.int32)
+    weight_rows = [
+        [0.405, 0.325, 0.275, 0.205, 0.145, 0.115],
+        [0.465, 0.345, 0.255, 0.195, 0.135, 0.105],
+    ]
     topk_weights = torch.tensor(
-        [
-            [0.405, 0.325, 0.275, 0.205, 0.145, 0.115],
-            [0.465, 0.345, 0.255, 0.195, 0.135, 0.105],
-        ],
+        [weight_rows[row % len(weight_rows)] for row in range(args.width)],
         device=device,
         dtype=torch.float32,
     )
@@ -97,22 +102,26 @@ def main() -> int:
 
     remote = [rank * local_experts for rank in range(ep_size) if rank != args.ep_rank]
     lb = local_base
+    def local_expert(offset: int) -> int:
+        return lb + offset % local_experts
+
     route_patterns = {
         "same_typical": [
-            [lb, lb + 1, lb + 2, remote[0], remote[1], remote[2]],
-            [lb, lb + 1, lb + 2, remote[0], remote[1], remote[2]],
+            [local_expert(i) for i in range(3)] + remote for _ in range(args.width)
         ],
         "disjoint_typical": [
-            [lb, lb + 1, lb + 2, remote[0], remote[1], remote[2]],
-            [lb + 3, lb + 4, lb + 5, remote[0] + 1, remote[1] + 1, remote[2] + 1],
+            [local_expert(3 * row + i) for i in range(3)]
+            + [base + row % local_experts for base in remote]
+            for row in range(args.width)
         ],
         "cross_row_overlap": [
-            [lb, lb + 1, lb + 2, remote[0], remote[1], remote[2]],
-            [lb + 1, lb + 2, lb + 3, remote[0] + 1, remote[1] + 1, remote[2] + 1],
+            [local_expert(row + i) for i in range(3)]
+            + [base + row % local_experts for base in remote]
+            for row in range(args.width)
         ],
         "six_local": [
-            [lb + i for i in range(6)],
-            [lb + i for i in range(6, 12)],
+            [local_expert(6 * row + i) for i in range(6)]
+            for row in range(args.width)
         ],
     }
 
@@ -198,13 +207,13 @@ def main() -> int:
     exact = all(row["exact"] for row in correctness)
     result = {
         "schema_version": 1,
-        "classification": "deepseek_v4_mxfp4_m2_n_policy_gate",
+        "classification": "deepseek_v4_mxfp4_verifier_n_policy_gate",
         "device": torch.xpu.get_device_name(device),
         "logical_device": str(device),
         "ep_rank": args.ep_rank,
         "candidate_policy": args.candidate_policy,
         "shape": {
-            "m": 2,
+            "m": args.width,
             "hidden_size": hidden_size,
             "intermediate_size": intermediate_size,
             "local_experts": local_experts,

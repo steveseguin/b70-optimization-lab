@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify oneDNN W8A16 row invariance for the MTP M=2 target verifier."""
+"""Verify oneDNN W8A16 row invariance at production verifier widths."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ SHAPES = ((1536, 4096), (8192, 1024), (4096, 2048), (1024, 4096))
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="xpu:0")
+    parser.add_argument("--width", type=int, choices=(2, 4, 8), default=2)
     parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--warmup", type=int, default=40)
     parser.add_argument("--batches", type=int, default=8)
@@ -43,7 +44,7 @@ def main() -> int:
 
     for shape_index, (n, k) in enumerate(SHAPES):
         torch.manual_seed(20260715 + shape_index)
-        x = torch.randn((2, k), device=device, dtype=torch.bfloat16)
+        x = torch.randn((args.width, k), device=device, dtype=torch.bfloat16)
         weight = torch.randn((n, k), device=device, dtype=torch.float32).to(
             torch.float8_e4m3fn
         )
@@ -66,7 +67,7 @@ def main() -> int:
                     torch.ops._xpu_C.fp8_gemm_w8a16(
                         x[row : row + 1], weight.t(), scales, None
                     )
-                    for row in range(2)
+                    for row in range(args.width)
                 ],
                 dim=0,
             )
@@ -82,45 +83,47 @@ def main() -> int:
             )
             exact_epochs += mismatches == 0
 
-        def m1_pair() -> None:
-            torch.ops._xpu_C.fp8_gemm_w8a16(x[:1], weight.t(), scales, None)
-            torch.ops._xpu_C.fp8_gemm_w8a16(x[1:], weight.t(), scales, None)
+        def sequential_m1() -> None:
+            for row in range(args.width):
+                torch.ops._xpu_C.fp8_gemm_w8a16(
+                    x[row : row + 1], weight.t(), scales, None
+                )
 
-        def m2() -> None:
+        def batched() -> None:
             torch.ops._xpu_C.fp8_gemm_w8a16(x, weight.t(), scales, None)
 
         for _ in range(args.warmup):
-            m1_pair()
-            m2()
+            sequential_m1()
+            batched()
         torch.xpu.synchronize()
-        m1_pair_us = []
-        m2_us = []
+        sequential_m1_us = []
+        batched_us = []
         for batch in range(args.batches):
             if batch % 2 == 0:
-                m1_pair_us.append(timed_us(m1_pair))
-                m2_us.append(timed_us(m2))
+                sequential_m1_us.append(timed_us(sequential_m1))
+                batched_us.append(timed_us(batched))
             else:
-                m2_us.append(timed_us(m2))
-                m1_pair_us.append(timed_us(m1_pair))
+                batched_us.append(timed_us(batched))
+                sequential_m1_us.append(timed_us(sequential_m1))
 
         rows.append(
             {
-                "shape": {"m": 2, "n": n, "k": k},
+                "shape": {"m": args.width, "n": n, "k": k},
                 "exact_epochs": exact_epochs,
                 "epochs": args.epochs,
                 "mismatch_elements": mismatch_elements,
                 "maximum_abs_difference": max_abs_difference,
-                "two_m1_calls_us": {
-                    "median": statistics.median(m1_pair_us),
-                    "samples": m1_pair_us,
+                "sequential_m1_calls_us": {
+                    "median": statistics.median(sequential_m1_us),
+                    "samples": sequential_m1_us,
                 },
-                "one_m2_call_us": {
-                    "median": statistics.median(m2_us),
-                    "samples": m2_us,
+                "one_batched_call_us": {
+                    "median": statistics.median(batched_us),
+                    "samples": batched_us,
                 },
-                "m2_speedup_over_two_m1": (
-                    statistics.median(m1_pair_us)
-                    / statistics.median(m2_us)
+                "batched_speedup_over_sequential_m1": (
+                    statistics.median(sequential_m1_us)
+                    / statistics.median(batched_us)
                 ),
             }
         )
@@ -136,7 +139,8 @@ def main() -> int:
                 row["exact_epochs"] == row["epochs"] for row in rows
             ),
             "purpose": (
-                "Allow the selective target W8A16 path at M=2 so MTP target "
+                f"Allow the selective target W8A16 path at M={args.width} so "
+                "target "
                 "verification uses the same projection arithmetic as M=1."
             ),
         },

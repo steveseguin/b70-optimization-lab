@@ -13,17 +13,25 @@ replay pass; the direct routed-MoE plus wide-epoch nonspeculative base is
 43.7667/43.6986 tok/s; the official three-stage DSpark7 draft now has a correct
 private breakable PIECEWISE replay captured at exact query width M=7 while the
 unchanged K160 target verifies at M=8. A fixed-address persistent sharded
-Markov transaction with W1-only replication plus exact M=8 strided-batch
-compressor projections is the target-verified speed record at 71.506808
+Markov transaction with W1-only replication, exact M=8 strided-batch
+compressors, selective M=8 W8A16, and MXFP4 N128 is the target-verified speed record at 78.288267
 tok/s**.
 
-Three independent strict suite medians are 69.343725 / 71.506808 / 70.249021
+Three independent strict suite medians are 78.288267 / 74.410268 / 76.937587
 tok/s. All 36 realistic requests are unique and cache-zero, and four exact
 canary suites pass before, between, and after the suites. LocalMaxxing approved
-`cmrql07qs05t4lg01p86jjybx`. The source identity is vLLM `1f6d6be49`, XPU
+`cmrqlp9je05thlg01q4igkk0x`. The source identity is vLLM `1f6d6be49`, XPU
 kernels `0b99fc536`, and oneCCL `48fda4f0e`. Monolithic FULL draft replay is
 correctness-rejected; fixed DSpark5 is performance-rejected. See
-`notes/2026-07-18-dspark-m8-batched-compressor-record.md`.
+`notes/2026-07-18-dspark-m8-w8a16-n128-record.md`.
+
+The new bundle bypasses activation quantization for four dense M=8 projection
+families and selects the N128 Xe2 routed-MXFP4 tile. Four-card component gates
+project 3.168-3.549 ms/cycle and 0.464-0.562 ms/cycle respectively. Batched
+W8A16 is not bitwise row-invariant (maximum observed BF16 difference
+0.0078125), so its authority is the full quality gate rather than a bitwise
+micro-oracle. Keep `VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M=8` and
+`VLLM_XPU_MXFP4_SMALL_M_N=128` in the record identity; N32 remains rejected.
 
 The M=8 compressor component uses one strided-batch FP32-output GEMM while
 keeping each verifier row as an independent batch item. Real C4/C128 weights

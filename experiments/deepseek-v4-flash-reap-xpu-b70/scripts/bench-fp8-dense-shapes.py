@@ -163,6 +163,13 @@ def bench_shape(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--width",
+        type=int,
+        choices=(1, 2, 4, 8),
+        default=1,
+        help="Override the token width of every selected production shape.",
+    )
     parser.add_argument("--warmups", type=int, default=20)
     parser.add_argument("--iterations", type=int, default=100)
     parser.add_argument("--repeats", type=int, default=5)
@@ -174,7 +181,7 @@ def main() -> int:
     rows = [
         bench_shape(
             name,
-            SHAPES[name],
+            (args.width, SHAPES[name][1], SHAPES[name][2]),
             args.warmups,
             args.iterations,
             args.repeats,
@@ -188,6 +195,7 @@ def main() -> int:
         "warmups": args.warmups,
         "iterations": args.iterations,
         "repeats": args.repeats,
+        "width": args.width,
         "rows": rows,
         "weighted_per_token_us": {
             "quant": sum(row["quant"]["median_us"] * 43 for row in rows),

@@ -1,0 +1,42 @@
+{
+  "classification": "deepseek_v4_k160_tp4_dspark7_m8_w8a16_n128_record",
+  "date": "2026-07-18",
+  "single_active_generation": true,
+  "aggregate_throughput": false,
+  "headline_tok_s": 78.28826696325503,
+  "strict_suite_medians_tok_s": [
+    78.28826696325503,
+    74.41026759201354,
+    76.93758726358648
+  ],
+  "median_of_three_tok_s": 76.93758726358648,
+  "headline_p10_tok_s": 65.5205117510933,
+  "preceding_headline_tok_s": 71.50680809648247,
+  "headline_improvement_tok_s": 6.78145886677256,
+  "headline_improvement_percent": 9.483682832322913,
+  "realistic_requests": 36,
+  "realistic_requests_cached_zero": 36,
+  "exact_canary_suites": 4,
+  "exact_canary_requests": 24,
+  "exact_canary_requests_passed": 24,
+  "selectors": {
+    "VLLM_XPU_V4_COMPRESSOR_BATCHED_EXACT_MAX_M": 8,
+    "VLLM_XPU_V4_BLOCK_FP8_W8A16_MAX_M": 8,
+    "VLLM_XPU_MXFP4_SMALL_M_N": 128
+  },
+  "component_gates": {
+    "m8_w8a16_projected_saved_ms_per_43_layers": [3.16803188, 3.54913572],
+    "m8_n128_projected_saved_ms_per_43_layers": [0.46403708, 0.56215276],
+    "m8_n32_decision": "rejected_noise_or_regression",
+    "w8a16_row_invariance_bitwise": false,
+    "w8a16_max_observed_bf16_difference": 0.0078125
+  },
+  "source": {
+    "vllm": "1f6d6be49c57a2d5b71c6ea4926d4b01ca612254",
+    "xpu_kernels": "0b99fc5360141d4dd6174fb15f30ec80c74c4d47",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-m8-w8a16-n128-candidate-20260718T2130Z",
+  "localmaxxing_id": "cmrqlp9je05thlg01q4igkk0x",
+  "localmaxxing_status": "APPROVED"
+}
