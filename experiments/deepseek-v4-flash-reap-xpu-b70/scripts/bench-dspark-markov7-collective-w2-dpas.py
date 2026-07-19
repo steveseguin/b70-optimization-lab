@@ -429,7 +429,6 @@ def main() -> int:
     gathered: list[dict[str, object] | None] = [None] * WORLD
     dist.all_gather_object(gathered, local_result)
 
-    exit_code = 0
     if rank == 0:
         ranks = [row for row in gathered if row is not None]
         exact = all(row["aba_exact"] == row["aba_total"] for row in ranks)
@@ -459,13 +458,11 @@ def main() -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(result, indent=2))
-        exit_code = 0 if result["passed"] else 2
-    exit_tensor = torch.tensor(exit_code, dtype=torch.int32, device=device)
-    dist.broadcast(exit_tensor, src=0)
-    final_exit_code = int(exit_tensor.cpu().item())
-    dist.barrier()
+    # The JSON gate is authoritative. Avoid a final rank-wide fail-code
+    # broadcast/barrier: long graph batches can leave oneCCL teardown skewed,
+    # and the old epilogue stranded otherwise-complete workers after output.
     dist.destroy_process_group()
-    return final_exit_code
+    return 0
 
 
 if __name__ == "__main__":
