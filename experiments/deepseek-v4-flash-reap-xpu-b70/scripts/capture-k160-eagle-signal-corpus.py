@@ -142,6 +142,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--arm-file", type=Path)
+    parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
 
     prompts = load_jsonl(args.prompts)
@@ -161,14 +162,37 @@ def main() -> int:
         quotas["prose"] = args.target_tokens
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    if args.output.exists():
+    if args.output.exists() and not args.resume:
         raise FileExistsError(args.output)
+    prior_rows = load_jsonl(args.output) if args.output.exists() else []
+    if any(row["split"] != args.split for row in prior_rows):
+        raise RuntimeError("resume manifest split does not match requested split")
     prompt_queues = {
         category: [item for item in prompts if item["category"] == category]
         for category in CATEGORY_SHARES
     }
-    counts = {category: 0 for category in CATEGORY_SHARES}
-    indices = {category: 0 for category in CATEGORY_SHARES}
+    counts = {
+        category: sum(
+            int(row["response"]["usage"].get("completion_tokens") or 0)
+            for row in prior_rows
+            if row["category"] == category
+        )
+        for category in CATEGORY_SHARES
+    }
+    indices = {
+        category: sum(row["category"] == category for row in prior_rows)
+        for category in CATEGORY_SHARES
+    }
+    seen = {category: 0 for category in CATEGORY_SHARES}
+    for expected_index, row in enumerate(prior_rows):
+        category = row["category"]
+        expected_prompt = prompt_queues[category][seen[category]]
+        if (
+            int(row["request_index"]) != expected_index
+            or row["prompt_id"] != expected_prompt["prompt_id"]
+        ):
+            raise RuntimeError("resume manifest is not a valid deterministic prefix")
+        seen[category] += 1
     namespace = {"train": "eagletrain", "dev": "eagledev", "smoke": "eaglesmoke"}[
         args.split
     ]
@@ -176,8 +200,8 @@ def main() -> int:
     if args.arm_file is not None:
         args.arm_file.parent.mkdir(parents=True, exist_ok=True)
         args.arm_file.touch(exist_ok=False)
-    with args.output.open("x") as stream:
-        request_index = 0
+    with args.output.open("a" if args.output.exists() else "x") as stream:
+        request_index = len(prior_rows)
         while any(counts[name] < quotas[name] for name in quotas):
             category = max(quotas, key=lambda name: quotas[name] - counts[name])
             if counts[category] >= quotas[category]:
