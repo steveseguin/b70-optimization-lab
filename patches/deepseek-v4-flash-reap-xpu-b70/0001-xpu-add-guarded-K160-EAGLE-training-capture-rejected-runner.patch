@@ -1,22 +1,15 @@
-From 157eb4bc58e385eaaf4000cd71ce2c363decabf6 Mon Sep 17 00:00:00 2001
+From e3def8e08f32727c7be3089c7e9aba9c25fc89d9 Mon Sep 17 00:00:00 2001
 From: Codex Agent <codex-agent@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 16:54:24 -0400
 Subject: [PATCH] xpu: add guarded K160 EAGLE training capture
 
----
- ...test_deepseek_v4_eagle_training_capture.py |  56 ++++
- .../deepseek_v4/xpu/eagle_training_capture.py | 280 ++++++++++++++++++
- vllm/v1/worker/gpu_model_runner.py            |   7 +
- 3 files changed, 343 insertions(+)
- create mode 100644 tests/models/test_deepseek_v4_eagle_training_capture.py
- create mode 100644 vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 
 diff --git a/tests/models/test_deepseek_v4_eagle_training_capture.py b/tests/models/test_deepseek_v4_eagle_training_capture.py
 new file mode 100644
-index 000000000..8918f59c3
+index 000000000..bbd026f1d
 --- /dev/null
 +++ b/tests/models/test_deepseek_v4_eagle_training_capture.py
-@@ -0,0 +1,56 @@
+@@ -0,0 +1,60 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -31,6 +24,7 @@ index 000000000..8918f59c3
 +    EagleTrainingCaptureWriter,
 +    capture_dir,
 +    enabled,
++    request_key,
 +)
 +
 +
@@ -51,7 +45,7 @@ index 000000000..8918f59c3
 +        input_token_ids=torch.tensor([10, 11]),
 +        next_target_token_ids=torch.tensor([11, 12]),
 +        position_ids=torch.tensor([100, 101]),
-+        request_keys=torch.tensor([7, 7]),
++        request_ids=["eagletrain-a", "eagletrain-a"],
 +    )
 +
 +    shard = tmp_path / "features-000000.safetensors"
@@ -67,7 +61,10 @@ index 000000000..8918f59c3
 +        )
 +        assert tensors.get_tensor("next_target_token_id").tolist() == [11, 12]
 +        assert tensors.get_tensor("position_id").tolist() == [100, 101]
-+        assert tensors.get_tensor("request_key").tolist() == [7, 7]
++        assert tensors.get_tensor("request_key").tolist() == [
++            request_key("eagletrain-a"),
++            request_key("eagletrain-a"),
++        ]
 +
 +    manifest = json.loads(shard.with_suffix(".json").read_text())
 +    assert manifest["rows"] == 2
@@ -75,10 +72,10 @@ index 000000000..8918f59c3
 +    assert len(manifest["sha256"]) == 64
 diff --git a/vllm/models/deepseek_v4/xpu/eagle_training_capture.py b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 new file mode 100644
-index 000000000..b627ceeb5
+index 000000000..e41cff2a2
 --- /dev/null
 +++ b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
-@@ -0,0 +1,280 @@
+@@ -0,0 +1,205 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -86,20 +83,17 @@ index 000000000..b627ceeb5
 +import hashlib
 +import json
 +import os
-+import re
 +import threading
 +from pathlib import Path
-+from types import MethodType
-+from typing import Any
 +
 +import torch
 +from safetensors.torch import save_file
 +
 +FEATURE_BOUNDARIES = (4, 22, 43)
 +_CAPTURE_DIR_ENV = "VLLM_XPU_EAGLE_TRAINING_CAPTURE_DIR"
++_REQUEST_PREFIX_ENV = "VLLM_XPU_EAGLE_TRAINING_CAPTURE_REQUEST_PREFIX"
 +_SHARD_ROWS_ENV = "VLLM_XPU_EAGLE_TRAINING_CAPTURE_SHARD_ROWS"
 +_ALL_RANKS_ENV = "VLLM_XPU_EAGLE_TRAINING_CAPTURE_ALL_RANKS"
-+_NAMESPACE_ENV = "VLLM_XPU_EAGLE_TRAINING_CAPTURE_NAMESPACE"
 +
 +
 +def capture_dir() -> Path | None:
@@ -111,17 +105,12 @@ index 000000000..b627ceeb5
 +    return capture_dir() is not None
 +
 +
++def request_prefix() -> str:
++    return os.getenv(_REQUEST_PREFIX_ENV, "eagletrain-")
++
++
 +def capture_all_ranks() -> bool:
 +    return os.getenv(_ALL_RANKS_ENV, "0") == "1"
-+
-+
-+def capture_namespace() -> str:
-+    namespace = os.getenv(_NAMESPACE_ENV, "").strip()
-+    if namespace not in {"eagletrain", "eagledev", "eaglesmoke"}:
-+        raise ValueError(
-+            f"{_NAMESPACE_ENV} must be eagletrain, eagledev, or eaglesmoke"
-+        )
-+    return namespace
 +
 +
 +def request_key(request_id: str) -> int:
@@ -166,7 +155,7 @@ index 000000000..b627ceeb5
 +        input_token_ids: torch.Tensor,
 +        next_target_token_ids: torch.Tensor,
 +        position_ids: torch.Tensor,
-+        request_keys: torch.Tensor,
++        request_ids: list[str],
 +    ) -> None:
 +        if len(aux_hidden_states) != len(FEATURE_BOUNDARIES):
 +            raise ValueError(
@@ -181,8 +170,8 @@ index 000000000..b627ceeb5
 +        )
 +        if [tuple(t.shape) for t in aux_hidden_states] != expected_shapes:
 +            raise ValueError("feature tap shapes do not match final hidden states")
-+        if request_keys.numel() != rows:
-+            raise ValueError("request keys do not match captured rows")
++        if len(request_ids) != rows:
++            raise ValueError("request IDs do not match captured rows")
 +
 +        features = torch.stack(aux_hidden_states, dim=1)
 +        tensors = {
@@ -201,9 +190,9 @@ index 000000000..b627ceeb5
 +            "position_id": position_ids.detach()
 +            .to(device="cpu", dtype=torch.int32)
 +            .reshape(-1),
-+            "request_key": request_keys.detach()
-+            .to(device="cpu", dtype=torch.int64)
-+            .reshape(-1),
++            "request_key": torch.tensor(
++                [request_key(req_id) for req_id in request_ids], dtype=torch.int64
++            ),
 +        }
 +        if any(tensor.shape[0] != rows for tensor in tensors.values()):
 +            raise ValueError("capture fields do not have a common row count")
@@ -267,100 +256,33 @@ index 000000000..b627ceeb5
 +_WRITER_LOCK = threading.Lock()
 +
 +
-+def get_writer(rank: int) -> EagleTrainingCaptureWriter:
++def _request_split(request_id: str) -> str:
++    split = request_id.split("-", 1)[0]
++    if split not in {"eagletrain", "eagledev", "eaglesmoke"}:
++        raise ValueError(f"unsupported EAGLE capture request namespace: {request_id}")
++    return split
++
++
++def get_writer(rank: int, request_ids: list[str]) -> EagleTrainingCaptureWriter:
 +    output_dir = capture_dir()
 +    if output_dir is None:
 +        raise RuntimeError(f"{_CAPTURE_DIR_ENV} is not set")
-+    namespace = capture_namespace()
-+    key = (rank, namespace)
++    splits = {_request_split(request_id) for request_id in request_ids}
++    if len(splits) != 1:
++        raise ValueError("a capture batch cannot mix train, DEV, and smoke rows")
++    split = splits.pop()
++    key = (rank, split)
 +    with _WRITER_LOCK:
 +        if key not in _WRITERS:
 +            shard_rows = int(os.getenv(_SHARD_ROWS_ENV, "4096"))
 +            writer = EagleTrainingCaptureWriter(
-+                output_dir / namespace / f"rank-{rank:03d}", shard_rows
++                output_dir / split / f"rank-{rank:03d}", shard_rows
 +            )
 +            _WRITERS[key] = writer
 +            atexit.register(writer.flush)
 +        return _WRITERS[key]
-+
-+
-+def install_model_runner_capture(runner: Any) -> None:
-+    if runner.speculative_config is not None:
-+        raise ValueError("EAGLE training capture requires target-only generation")
-+    if runner.scheduler_config.max_num_seqs != 1:
-+        raise ValueError("EAGLE training capture requires max_num_seqs=1")
-+    runner.use_aux_hidden_state_outputs = True
-+    original_setup = runner._setup_eagle3_aux_hidden_state_outputs
-+    original_sample_tokens = runner.sample_tokens
-+
-+    def setup_aux_hidden_states(self: Any) -> None:
-+        model = self.get_model()
-+        if not hasattr(model, "set_aux_hidden_state_layers"):
-+            raise RuntimeError("target does not expose EAGLE auxiliary states")
-+        model.set_aux_hidden_state_layers(FEATURE_BOUNDARIES)
-+
-+    def sample_tokens_with_capture(self: Any, grammar_output: Any) -> Any:
-+        state = self.execute_model_state
-+        pending = None
-+        arm_file = os.getenv("VLLM_XPU_EAGLE_TRAINING_CAPTURE_ARM_FILE", "")
-+        if arm_file and os.path.exists(arm_file):
-+            if state is None or state.aux_hidden_states is None:
-+                raise RuntimeError("armed EAGLE capture has no auxiliary states")
-+            if grammar_output is not None:
-+                raise ValueError("EAGLE training capture does not allow grammar")
-+            metadata = self.input_batch.sampling_metadata
-+            if not metadata.all_greedy or not metadata.no_penalties:
-+                raise ValueError("EAGLE training capture requires plain greedy sampling")
-+            if len(self.input_batch.req_ids) != 1:
-+                raise RuntimeError("EAGLE training capture requires one request")
-+            request_id = self.input_batch.req_ids[0]
-+            replay = re.search(r"eaglereplay-(\d+)-(\d+)-", request_id)
-+            if replay is None:
-+                raise RuntimeError(
-+                    "armed EAGLE capture accepts only teacher-forced replay requests"
-+                )
-+            prompt_len, continuation_len = map(int, replay.groups())
-+            scheduled = int(self.query_start_loc.gpu[1])
-+            expected = prompt_len + continuation_len
-+            if scheduled != expected:
-+                raise RuntimeError(
-+                    "teacher-forced replay must fit in one uncached prefill: "
-+                    f"scheduled={scheduled}, expected={expected}"
-+                )
-+            start = prompt_len - 1
-+            stop = start + continuation_len
-+            if start < 0 or stop >= scheduled:
-+                raise RuntimeError("invalid teacher-forced replay span")
-+            pending = {
-+                "aux_hidden_states": [
-+                    hidden[start:stop].detach() for hidden in state.aux_hidden_states
-+                ],
-+                "target_final_hidden": state.hidden_states[start:stop],
-+                "input_token_ids": self.input_ids.gpu[start:stop],
-+                "next_target_token_ids": self.input_ids.gpu[start + 1 : stop + 1],
-+                "position_ids": self.positions[start:stop],
-+                "request_keys": torch.tensor(
-+                    [request_key(request_id)] * continuation_len,
-+                    dtype=torch.int64,
-+                    device=self.device,
-+                ),
-+            }
-+        result = original_sample_tokens(grammar_output)
-+        if pending is not None:
-+            from vllm.distributed import get_tensor_model_parallel_rank
-+
-+            rank = get_tensor_model_parallel_rank()
-+            if rank == 0 or capture_all_ranks():
-+                get_writer(rank).append(**pending)
-+        return result
-+
-+    runner._setup_eagle3_aux_hidden_state_outputs = MethodType(  # noqa: SLF001
-+        setup_aux_hidden_states, runner
-+    )
-+    runner.sample_tokens = MethodType(sample_tokens_with_capture, runner)
-+    runner._eagle_training_capture_original_setup = original_setup
 diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
-index ecf8d8ec0..41e3b9734 100644
+index ecf8d8ec0..e875011d4 100644
 --- a/vllm/v1/worker/gpu_model_runner.py
 +++ b/vllm/v1/worker/gpu_model_runner.py
 @@ -4,6 +4,7 @@
@@ -371,16 +293,127 @@ index ecf8d8ec0..41e3b9734 100644
  import threading
  import time
  from collections import defaultdict
-@@ -568,6 +569,12 @@ class GPUModelRunner(
+@@ -44,6 +45,7 @@ from vllm.distributed.kv_transfer.kv_connector.utils import copy_kv_blocks
+ from vllm.distributed.parallel_state import (
+     get_dcp_group,
+     get_pp_group,
++    get_tensor_model_parallel_rank,
+     get_tp_group,
+     graph_capture,
+     is_global_first_rank,
+@@ -568,6 +570,20 @@ class GPUModelRunner(
          self.encoder_cudagraph_manager: EncoderCudaGraphManager | None = None
 
          self.use_aux_hidden_state_outputs = False
-+        if os.getenv("VLLM_XPU_EAGLE_TRAINING_CAPTURE_DIR", "").strip():
-+            from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
-+                install_model_runner_capture,
-+            )
-+
-+            install_model_runner_capture(self)
++        self.eagle_training_capture_enabled = bool(
++            os.getenv("VLLM_XPU_EAGLE_TRAINING_CAPTURE_DIR", "").strip()
++        )
++        self._eagle_training_capture_pending = None
++        if self.eagle_training_capture_enabled:
++            if self.speculative_config is not None:
++                raise ValueError(
++                    "EAGLE training capture requires target-only generation"
++                )
++            if self.scheduler_config.max_num_seqs != 1:
++                raise ValueError(
++                    "EAGLE training capture requires max_num_seqs=1"
++                )
++            self.use_aux_hidden_state_outputs = True
          # Set up speculative decoding.
          # NOTE(Jiayi): currently we put the entire draft model on
          # the last PP rank. This is not ideal if there are many
+@@ -4443,6 +4459,29 @@ class GPUModelRunner(
+                 assert broadcasted is not None
+                 logits = broadcasted["logits"]
+
++            if self.eagle_training_capture_enabled:
++                from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
++                    request_prefix,
++                )
++
++                capture_request_ids = self.input_batch.req_ids.copy()
++                if all(
++                    req_id.startswith(request_prefix())
++                    for req_id in capture_request_ids
++                ):
++                    assert aux_hidden_states is not None
++                    self._eagle_training_capture_pending = {
++                        "aux_hidden_states": [
++                            state[logits_indices] for state in aux_hidden_states
++                        ],
++                        "target_final_hidden": sample_hidden_states,
++                        "input_token_ids": input_ids[logits_indices],
++                        "position_ids": positions[logits_indices],
++                        "request_ids": capture_request_ids,
++                    }
++                else:
++                    self._eagle_training_capture_pending = None
++
+         self.execute_model_state = ExecuteModelState(
+             scheduler_output,
+             logits,
+@@ -4516,8 +4555,38 @@ class GPUModelRunner(
+             )
+
+         with record_function_or_nullcontext("gpu_model_runner: sample"):
++            if self._eagle_training_capture_pending is not None:
++                sampling_metadata = self.input_batch.sampling_metadata
++                if (
++                    grammar_output is not None
++                    or not sampling_metadata.all_greedy
++                    or not sampling_metadata.no_penalties
++                ):
++                    raise ValueError(
++                        "EAGLE training capture requires plain greedy sampling"
++                    )
+             sampler_output = self._sample(logits, spec_decode_metadata)
+
++        if self._eagle_training_capture_pending is not None:
++            from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
++                capture_all_ranks,
++            )
++
++            rank = get_tensor_model_parallel_rank()
++            if is_global_first_rank() or capture_all_ranks():
++                from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
++                    get_writer,
++                )
++
++                get_writer(
++                    rank,
++                    self._eagle_training_capture_pending["request_ids"],
++                ).append(
++                    **self._eagle_training_capture_pending,
++                    next_target_token_ids=sampler_output.sampled_token_ids[:, 0],
++                )
++            self._eagle_training_capture_pending = None
++
+         self._update_states_after_model_execute(
+             sampler_output.sampled_token_ids, scheduler_output
+         )
+@@ -5416,10 +5485,18 @@ class GPUModelRunner(
+                 "Model does not support EAGLE3 interface but "
+                 "aux_hidden_state_outputs was requested"
+             )
+-        # Try to get auxiliary layers from speculative config,
+-        # otherwise use model's default layers
+-        aux_layers = self._get_eagle3_aux_layers_from_config()
+-        if aux_layers:
++        if self.eagle_training_capture_enabled:
++            from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
++                FEATURE_BOUNDARIES,
++            )
++
++            aux_layers = FEATURE_BOUNDARIES
++            logger.info("Using EAGLE training capture layers: %s", aux_layers)
++        else:
++            # Try to get auxiliary layers from speculative config,
++            # otherwise use model's default layers
++            aux_layers = self._get_eagle3_aux_layers_from_config()
++        if aux_layers and not self.eagle_training_capture_enabled:
+             logger.info(
+                 "Using auxiliary layers from speculative config: %s", aux_layers
+             )
+--
+2.43.0
+

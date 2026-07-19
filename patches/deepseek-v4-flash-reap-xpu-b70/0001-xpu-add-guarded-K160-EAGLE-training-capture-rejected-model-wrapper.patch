@@ -1,15 +1,8 @@
-From 157eb4bc58e385eaaf4000cd71ce2c363decabf6 Mon Sep 17 00:00:00 2001
+From e059b939f2c6bc0ee1a9d82214a04519fdf481a1 Mon Sep 17 00:00:00 2001
 From: Codex Agent <codex-agent@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 16:54:24 -0400
 Subject: [PATCH] xpu: add guarded K160 EAGLE training capture
 
----
- ...test_deepseek_v4_eagle_training_capture.py |  56 ++++
- .../deepseek_v4/xpu/eagle_training_capture.py | 280 ++++++++++++++++++
- vllm/v1/worker/gpu_model_runner.py            |   7 +
- 3 files changed, 343 insertions(+)
- create mode 100644 tests/models/test_deepseek_v4_eagle_training_capture.py
- create mode 100644 vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 
 diff --git a/tests/models/test_deepseek_v4_eagle_training_capture.py b/tests/models/test_deepseek_v4_eagle_training_capture.py
 new file mode 100644
@@ -75,10 +68,10 @@ index 000000000..8918f59c3
 +    assert len(manifest["sha256"]) == 64
 diff --git a/vllm/models/deepseek_v4/xpu/eagle_training_capture.py b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 new file mode 100644
-index 000000000..b627ceeb5
+index 000000000..fb59b5149
 --- /dev/null
 +++ b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
-@@ -0,0 +1,280 @@
+@@ -0,0 +1,200 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -86,11 +79,8 @@ index 000000000..b627ceeb5
 +import hashlib
 +import json
 +import os
-+import re
 +import threading
 +from pathlib import Path
-+from types import MethodType
-+from typing import Any
 +
 +import torch
 +from safetensors.torch import save_file
@@ -282,105 +272,110 @@ index 000000000..b627ceeb5
 +            _WRITERS[key] = writer
 +            atexit.register(writer.flush)
 +        return _WRITERS[key]
-+
-+
-+def install_model_runner_capture(runner: Any) -> None:
-+    if runner.speculative_config is not None:
-+        raise ValueError("EAGLE training capture requires target-only generation")
-+    if runner.scheduler_config.max_num_seqs != 1:
-+        raise ValueError("EAGLE training capture requires max_num_seqs=1")
-+    runner.use_aux_hidden_state_outputs = True
-+    original_setup = runner._setup_eagle3_aux_hidden_state_outputs
-+    original_sample_tokens = runner.sample_tokens
-+
-+    def setup_aux_hidden_states(self: Any) -> None:
-+        model = self.get_model()
-+        if not hasattr(model, "set_aux_hidden_state_layers"):
-+            raise RuntimeError("target does not expose EAGLE auxiliary states")
-+        model.set_aux_hidden_state_layers(FEATURE_BOUNDARIES)
-+
-+    def sample_tokens_with_capture(self: Any, grammar_output: Any) -> Any:
-+        state = self.execute_model_state
-+        pending = None
-+        arm_file = os.getenv("VLLM_XPU_EAGLE_TRAINING_CAPTURE_ARM_FILE", "")
-+        if arm_file and os.path.exists(arm_file):
-+            if state is None or state.aux_hidden_states is None:
-+                raise RuntimeError("armed EAGLE capture has no auxiliary states")
-+            if grammar_output is not None:
-+                raise ValueError("EAGLE training capture does not allow grammar")
-+            metadata = self.input_batch.sampling_metadata
-+            if not metadata.all_greedy or not metadata.no_penalties:
-+                raise ValueError("EAGLE training capture requires plain greedy sampling")
-+            if len(self.input_batch.req_ids) != 1:
-+                raise RuntimeError("EAGLE training capture requires one request")
-+            request_id = self.input_batch.req_ids[0]
-+            replay = re.search(r"eaglereplay-(\d+)-(\d+)-", request_id)
-+            if replay is None:
-+                raise RuntimeError(
-+                    "armed EAGLE capture accepts only teacher-forced replay requests"
+diff --git a/vllm/models/deepseek_v4/xpu/model.py b/vllm/models/deepseek_v4/xpu/model.py
+index 2ca43dbbd..779838bd6 100644
+--- a/vllm/models/deepseek_v4/xpu/model.py
++++ b/vllm/models/deepseek_v4/xpu/model.py
+@@ -2068,6 +2068,29 @@ class DeepseekV4ForCausalLM(nn.Module, SupportsPP, SupportsEagle3):
+         self.make_empty_intermediate_tensors = (  # type: ignore[method-assign]
+             self.model.make_empty_intermediate_tensors
+         )
++        capture_dir = os.environ.get(
++            "VLLM_XPU_EAGLE_TRAINING_CAPTURE_DIR", ""
++        ).strip()
++        if capture_dir:
++            if vllm_config.speculative_config is not None:
++                raise ValueError(
++                    "EAGLE training capture requires target-only generation"
 +                )
-+            prompt_len, continuation_len = map(int, replay.groups())
-+            scheduled = int(self.query_start_loc.gpu[1])
-+            expected = prompt_len + continuation_len
-+            if scheduled != expected:
-+                raise RuntimeError(
-+                    "teacher-forced replay must fit in one uncached prefill: "
-+                    f"scheduled={scheduled}, expected={expected}"
++            if vllm_config.scheduler_config.max_num_seqs != 1:
++                raise ValueError(
++                    "EAGLE training capture requires max_num_seqs=1"
 +                )
-+            start = prompt_len - 1
-+            stop = start + continuation_len
-+            if start < 0 or stop >= scheduled:
-+                raise RuntimeError("invalid teacher-forced replay span")
-+            pending = {
-+                "aux_hidden_states": [
-+                    hidden[start:stop].detach() for hidden in state.aux_hidden_states
-+                ],
-+                "target_final_hidden": state.hidden_states[start:stop],
-+                "input_token_ids": self.input_ids.gpu[start:stop],
-+                "next_target_token_ids": self.input_ids.gpu[start + 1 : stop + 1],
-+                "position_ids": self.positions[start:stop],
-+                "request_keys": torch.tensor(
-+                    [request_key(request_id)] * continuation_len,
-+                    dtype=torch.int64,
-+                    device=self.device,
-+                ),
-+            }
-+        result = original_sample_tokens(grammar_output)
-+        if pending is not None:
-+            from vllm.distributed import get_tensor_model_parallel_rank
-+
-+            rank = get_tensor_model_parallel_rank()
-+            if rank == 0 or capture_all_ranks():
-+                get_writer(rank).append(**pending)
-+        return result
-+
-+    runner._setup_eagle3_aux_hidden_state_outputs = MethodType(  # noqa: SLF001
-+        setup_aux_hidden_states, runner
-+    )
-+    runner.sample_tokens = MethodType(sample_tokens_with_capture, runner)
-+    runner._eagle_training_capture_original_setup = original_setup
-diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
-index ecf8d8ec0..41e3b9734 100644
---- a/vllm/v1/worker/gpu_model_runner.py
-+++ b/vllm/v1/worker/gpu_model_runner.py
-@@ -4,6 +4,7 @@
- import functools
- import gc
- import itertools
-+import os
- import threading
- import time
- from collections import defaultdict
-@@ -568,6 +569,12 @@ class GPUModelRunner(
-         self.encoder_cudagraph_manager: EncoderCudaGraphManager | None = None
-
-         self.use_aux_hidden_state_outputs = False
-+        if os.getenv("VLLM_XPU_EAGLE_TRAINING_CAPTURE_DIR", "").strip():
 +            from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
-+                install_model_runner_capture,
++                FEATURE_BOUNDARIES,
 +            )
 +
-+            install_model_runner_capture(self)
-         # Set up speculative decoding.
-         # NOTE(Jiayi): currently we put the entire draft model on
-         # the last PP rank. This is not ideal if there are many
++            self.model.aux_hidden_state_layers = FEATURE_BOUNDARIES
++            self._eagle_training_capture_pending = None
++            self._eagle_training_capture_request_index = -1
++            self.forward = self._eagle_training_capture_forward  # type: ignore[method-assign]
++            self.compute_logits = (  # type: ignore[method-assign]
++                self._eagle_training_capture_compute_logits
++            )
+
+     def embed_input_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+         return self.model.embed_input_ids(input_ids)
+@@ -2125,6 +2148,69 @@ class DeepseekV4ForCausalLM(nn.Module, SupportsPP, SupportsEagle3):
+         """Return exact greedy top-1 IDs without gathering full-vocab logits."""
+         return self.logits_processor.get_top_tokens(self.lm_head, hidden_states)
+
++    def _eagle_training_capture_forward(
++        self,
++        input_ids: torch.Tensor,
++        positions: torch.Tensor,
++        intermediate_tensors: IntermediateTensors | None = None,
++        inputs_embeds: torch.Tensor | None = None,
++    ) -> torch.Tensor | IntermediateTensors:
++        output = self.model(
++            input_ids, positions, intermediate_tensors, inputs_embeds
++        )
++        if not get_pp_group().is_last_rank:
++            return output
++        if not isinstance(output, tuple):
++            raise RuntimeError("EAGLE training capture did not receive aux states")
++        hidden_states, aux_hidden_states = output
++        arm_file = os.environ.get(
++            "VLLM_XPU_EAGLE_TRAINING_CAPTURE_ARM_FILE", ""
++        )
++        if arm_file and os.path.exists(arm_file):
++            if input_ids.shape[0] > 1:
++                self._eagle_training_capture_request_index += 1
++            anchor = positions.argmax()
++            self._eagle_training_capture_pending = {
++                "aux_hidden_states": [
++                    state[anchor].unsqueeze(0) for state in aux_hidden_states
++                ],
++                "target_final_hidden": hidden_states[anchor].unsqueeze(0),
++                "input_token_ids": input_ids[anchor].reshape(1),
++                "position_ids": positions[anchor].reshape(1),
++                "request_keys": torch.full(
++                    (1,),
++                    self._eagle_training_capture_request_index,
++                    dtype=torch.int64,
++                    device=input_ids.device,
++                ),
++            }
++        else:
++            self._eagle_training_capture_pending = None
++        return hidden_states
++
++    def _eagle_training_capture_compute_logits(
++        self, hidden_states: torch.Tensor
++    ) -> torch.Tensor | None:
++        logits = DeepseekV4ForCausalLM.compute_logits(self, hidden_states)
++        pending = self._eagle_training_capture_pending
++        if pending is None:
++            return logits
++        if logits is None or logits.shape[0] != 1:
++            raise RuntimeError("EAGLE training capture requires one sampled row")
++        from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
++            capture_all_ranks,
++            get_writer,
++        )
++
++        rank = get_tensor_model_parallel_rank()
++        if rank == 0 or capture_all_ranks():
++            get_writer(rank).append(
++                **pending,
++                next_target_token_ids=logits.argmax(dim=-1),
++            )
++        self._eagle_training_capture_pending = None
++        return logits
++
+     def forward(
+         self,
+         input_ids: torch.Tensor,
+--
+2.43.0
+

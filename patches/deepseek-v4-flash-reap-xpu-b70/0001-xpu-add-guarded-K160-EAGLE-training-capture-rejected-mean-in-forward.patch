@@ -1,13 +1,14 @@
-From 157eb4bc58e385eaaf4000cd71ce2c363decabf6 Mon Sep 17 00:00:00 2001
+From 054e61f4ce412f14fba253da0280766d0159703c Mon Sep 17 00:00:00 2001
 From: Codex Agent <codex-agent@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 16:54:24 -0400
 Subject: [PATCH] xpu: add guarded K160 EAGLE training capture
 
 ---
  ...test_deepseek_v4_eagle_training_capture.py |  56 ++++
- .../deepseek_v4/xpu/eagle_training_capture.py | 280 ++++++++++++++++++
+ .../deepseek_v4/xpu/eagle_training_capture.py | 268 ++++++++++++++++++
+ vllm/models/deepseek_v4/xpu/model.py          |  30 +-
  vllm/v1/worker/gpu_model_runner.py            |   7 +
- 3 files changed, 343 insertions(+)
+ 4 files changed, 345 insertions(+), 16 deletions(-)
  create mode 100644 tests/models/test_deepseek_v4_eagle_training_capture.py
  create mode 100644 vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 
@@ -75,10 +76,10 @@ index 000000000..8918f59c3
 +    assert len(manifest["sha256"]) == 64
 diff --git a/vllm/models/deepseek_v4/xpu/eagle_training_capture.py b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 new file mode 100644
-index 000000000..b627ceeb5
+index 000000000..1668e7537
 --- /dev/null
 +++ b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
-@@ -0,0 +1,280 @@
+@@ -0,0 +1,268 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -86,7 +87,6 @@ index 000000000..b627ceeb5
 +import hashlib
 +import json
 +import os
-+import re
 +import threading
 +from pathlib import Path
 +from types import MethodType
@@ -313,34 +313,23 @@ index 000000000..b627ceeb5
 +                raise ValueError("EAGLE training capture requires plain greedy sampling")
 +            if len(self.input_batch.req_ids) != 1:
 +                raise RuntimeError("EAGLE training capture requires one request")
++            index = self.query_start_loc.gpu[1].to(torch.int64) - 1
 +            request_id = self.input_batch.req_ids[0]
-+            replay = re.search(r"eaglereplay-(\d+)-(\d+)-", request_id)
-+            if replay is None:
-+                raise RuntimeError(
-+                    "armed EAGLE capture accepts only teacher-forced replay requests"
-+                )
-+            prompt_len, continuation_len = map(int, replay.groups())
-+            scheduled = int(self.query_start_loc.gpu[1])
-+            expected = prompt_len + continuation_len
-+            if scheduled != expected:
-+                raise RuntimeError(
-+                    "teacher-forced replay must fit in one uncached prefill: "
-+                    f"scheduled={scheduled}, expected={expected}"
-+                )
-+            start = prompt_len - 1
-+            stop = start + continuation_len
-+            if start < 0 or stop >= scheduled:
-+                raise RuntimeError("invalid teacher-forced replay span")
 +            pending = {
 +                "aux_hidden_states": [
-+                    hidden[start:stop].detach() for hidden in state.aux_hidden_states
++                    hidden[index].reshape(1, -1)
++                    for hidden in state.aux_hidden_states
 +                ],
-+                "target_final_hidden": state.hidden_states[start:stop],
-+                "input_token_ids": self.input_ids.gpu[start:stop],
-+                "next_target_token_ids": self.input_ids.gpu[start + 1 : stop + 1],
-+                "position_ids": self.positions[start:stop],
++                "target_final_hidden": state.sample_hidden_states.reshape(1, -1),
++                # Plain greedy with no penalties is asserted above, so this
++                # is exactly the sampler's next-token decision.  Capturing it
++                # here also supports the asynchronous runner output variant.
++                "next_target_token_ids": state.logits.argmax(
++                    dim=-1).to(torch.int32).detach(),
++                "input_token_ids": self.input_ids.gpu[index].reshape(1),
++                "position_ids": self.positions[index].reshape(1),
 +                "request_keys": torch.tensor(
-+                    [request_key(request_id)] * continuation_len,
++                    [request_key(request_id)],
 +                    dtype=torch.int64,
 +                    device=self.device,
 +                ),
@@ -359,6 +348,57 @@ index 000000000..b627ceeb5
 +    )
 +    runner.sample_tokens = MethodType(sample_tokens_with_capture, runner)
 +    runner._eagle_training_capture_original_setup = original_setup
+diff --git a/vllm/models/deepseek_v4/xpu/model.py b/vllm/models/deepseek_v4/xpu/model.py
+index 2ca43dbbd..c0b49ef0e 100644
+--- a/vllm/models/deepseek_v4/xpu/model.py
++++ b/vllm/models/deepseek_v4/xpu/model.py
+@@ -1780,7 +1780,6 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+
+         residual, post_mix, res_mix = None, None, None
+         aux_hidden_states: list[torch.Tensor] = []
+-        final_aux_recon: torch.Tensor | None = None
+         layer = None
+         for layer_idx, layer in enumerate(
+             islice(self.layers, self.start_layer, self.end_layer),
+@@ -1802,24 +1801,23 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+                 post_mix=post_mix,
+                 res_mix=res_mix,
+             )
+-            if (layer_idx + 1) in self.aux_hidden_state_layers:
+-                aux_recon = layer.hc_post(
+-                    hidden_states, residual, post_mix, res_mix
+-                )
+-                aux_hidden_states.append(aux_recon.mean(dim=1))
+-                final_aux_recon = aux_recon
++            # The fused post/pre at the start of this layer has already
++            # materialized the preceding layer's post-MHC residual.  Reuse it
++            # for auxiliary states instead of inserting a second hc_post,
++            # which can perturb graph execution and near-tie greedy logits.
++            # A one-based boundary N is therefore available after layer N+1
++            # starts, whose zero-based layer_idx is N.
++            if layer_idx in self.aux_hidden_state_layers:
++                assert residual is not None
++                aux_hidden_states.append(residual.mean(dim=1))
+         # The fused path defers the final hc_post to the next layer's
+         # fused_post_pre. After the last layer we must apply it explicitly.
+         if layer is not None:
+-            if (
+-                final_aux_recon is not None
+-                and self.end_layer in self.aux_hidden_state_layers
+-            ):
+-                hidden_states = final_aux_recon
+-            else:
+-                hidden_states = layer.hc_post(
+-                    hidden_states, residual, post_mix, res_mix
+-                )
++            hidden_states = layer.hc_post(
++                hidden_states, residual, post_mix, res_mix
++            )
++            if self.end_layer in self.aux_hidden_state_layers:
++                aux_hidden_states.append(hidden_states.mean(dim=1))
+             DIVERGENCE_RECORDER.record(None, "hc_post", hidden_states=hidden_states)
+
+         if not get_pp_group().is_last_rank:
 diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
 index ecf8d8ec0..41e3b9734 100644
 --- a/vllm/v1/worker/gpu_model_runner.py

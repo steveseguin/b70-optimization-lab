@@ -37,6 +37,7 @@ def validate_rank(rank_dir: Path) -> dict[str, Any]:
     alignment_failures = 0
     previous: dict[str, int] | None = None
     request_counts: Counter[int] = Counter()
+    target_ids_by_request: dict[int, list[int]] = {}
     for shard in shards:
         manifest_path = shard.with_suffix(".json")
         manifest = json.loads(manifest_path.read_text())
@@ -67,6 +68,9 @@ def validate_rank(rank_dir: Path) -> dict[str, Any]:
                 "target": int(target_ids[index]),
             }
             request_counts[current["request_key"]] += 1
+            target_ids_by_request.setdefault(current["request_key"], []).append(
+                current["target"]
+            )
             if previous and current["request_key"] == previous["request_key"]:
                 alignment_checks += 1
                 if (
@@ -94,6 +98,7 @@ def validate_rank(rank_dir: Path) -> dict[str, Any]:
         "request_counts": dict(request_counts),
         "alignment_checks": alignment_checks,
         "alignment_failures": alignment_failures,
+        "_target_ids_by_request": target_ids_by_request,
         "shards": checksums,
     }
 
@@ -133,14 +138,40 @@ def main() -> int:
     rank_results = [validate_rank(path) for path in rank_dirs]
     if args.compare_ranks:
         compare_ranks(rank_results)
+    target_ids_by_request = rank_results[0].pop("_target_ids_by_request")
+    for result in rank_results[1:]:
+        result.pop("_target_ids_by_request")
     requests = load_requests(args.requests)
-    request_by_key = {int(row["request_key"]): row for row in requests}
-    if len(request_by_key) != len(requests):
+    external_request_by_key = {int(row["request_key"]): row for row in requests}
+    if len(external_request_by_key) != len(requests):
         raise RuntimeError("request-key collision")
-    captured_keys = set(map(int, rank_results[0]["request_counts"]))
-    missing_metadata = captured_keys - set(request_by_key)
-    if missing_metadata:
-        raise RuntimeError(f"captured request keys lack metadata: {missing_metadata}")
+    captured_counts = rank_results[0]["request_counts"]
+    captured_keys = list(map(int, captured_counts))
+    request_by_key = external_request_by_key
+    key_mapping_mode = "external-request-id-hash"
+    if set(captured_keys) - set(request_by_key):
+        # vLLM randomizes the internal engine request ID after accepting the
+        # external OpenAI request ID.  Under the required one-active-generation
+        # capture contract, first-seen internal keys and request-manifest rows
+        # have an exact one-to-one order.  Require token counts to agree before
+        # accepting that mapping.
+        if len(captured_keys) != len(requests):
+            raise RuntimeError("internal request-key count differs from metadata")
+        request_by_key = dict(zip(captured_keys, requests, strict=True))
+        for key, row in request_by_key.items():
+            expected = int(row["response"]["usage"].get("completion_tokens") or 0)
+            if int(captured_counts[key]) != expected:
+                raise RuntimeError(
+                    f"internal request-key row count mismatch for {key}: "
+                    f"{captured_counts[key]} != {expected}"
+                )
+        key_mapping_mode = "one-active-first-seen-order"
+    for key, row in request_by_key.items():
+        expected_ids = [int(token_id) for token_id in row["response"]["output_token_ids"]]
+        if target_ids_by_request[key] != expected_ids:
+            raise RuntimeError(
+                f"captured target IDs differ from greedy trajectory for key {key}"
+            )
     prompt_hashes = {row["prompt_sha256"] for row in requests}
     disjoint = True
     if args.other_requests:
@@ -178,6 +209,17 @@ def main() -> int:
         ).hexdigest(),
         "other_prompt_set_disjoint": disjoint,
         "output_token_ids_available": output_token_ids_available,
+        "target_token_alignment_passed": True,
+        "request_key_mapping_mode": key_mapping_mode,
+        "request_key_mapping": [
+            {
+                "internal_request_key": key,
+                "response_id": request_by_key[key]["response"]["response_id"],
+                "prompt_id": request_by_key[key]["prompt_id"],
+                "rows": int(captured_counts[key]),
+            }
+            for key in captured_keys
+        ],
         "tp_rank_comparison": "passed" if args.compare_ranks else "not-requested",
         "alignment_passed": True,
     }

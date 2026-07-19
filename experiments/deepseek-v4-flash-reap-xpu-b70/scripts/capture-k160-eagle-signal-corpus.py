@@ -64,6 +64,7 @@ def post(
         "stream": False,
         "return_token_ids": True,
         "cache_salt": cache_salt,
+        "request_id": request_id,
     }
     request = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/chat/completions",
@@ -86,6 +87,7 @@ def post(
         or []
     )
     return {
+        "response_id": raw["id"],
         "elapsed_s": elapsed,
         "finish_reason": choice.get("finish_reason"),
         "usage": usage,
@@ -97,6 +99,31 @@ def post(
         "output_token_ids": token_ids,
         "cache_salt_sha256": sha(cache_salt),
     }
+
+
+def render_prompt(
+    base_url: str,
+    model: str,
+    prompt: str,
+    request_id: str,
+    timeout: int,
+) -> list[int]:
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 1,
+        "temperature": 0,
+        "request_id": request_id,
+    }
+    request = urllib.request.Request(
+        f"{base_url.rstrip('/')}/v1/chat/completions/render",
+        data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        raw = json.load(response)
+    return [int(token_id) for token_id in raw["token_ids"]]
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -114,6 +141,7 @@ def main() -> int:
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--arm-file", type=Path)
     args = parser.parse_args()
 
     prompts = load_jsonl(args.prompts)
@@ -145,6 +173,9 @@ def main() -> int:
         args.split
     ]
     started = time.time()
+    if args.arm_file is not None:
+        args.arm_file.parent.mkdir(parents=True, exist_ok=True)
+        args.arm_file.touch(exist_ok=False)
     with args.output.open("x") as stream:
         request_index = 0
         while any(counts[name] < quotas[name] for name in quotas):
@@ -161,6 +192,13 @@ def main() -> int:
             max_tokens = min(args.max_tokens, remaining)
             request_id = (
                 f"{namespace}-{request_index:06d}-{item['prompt_sha256'][:12]}"
+            )
+            prompt_token_ids = render_prompt(
+                args.base_url,
+                args.model,
+                item["prompt"],
+                request_id,
+                args.timeout,
             )
             before = metrics(args.base_url, args.timeout)
             if before["running"] != 0 or before["waiting"] != 0:
@@ -189,11 +227,12 @@ def main() -> int:
                 "category": category,
                 "request_index": request_index,
                 "request_id": request_id,
-                "request_key": request_key(request_id),
+                "request_key": request_key(response["response_id"]),
                 "prompt_id": item["prompt_id"],
                 "prompt_sha256": item["prompt_sha256"],
                 "source_id": item["source_id"],
                 "source_revision": item["source_revision"],
+                "prompt_token_ids": prompt_token_ids,
                 "max_tokens": max_tokens,
                 "response": response,
                 "cumulative_category_tokens": counts[category],
@@ -225,6 +264,8 @@ def main() -> int:
             indent=2,
         )
     )
+    if args.arm_file is not None:
+        args.arm_file.unlink()
     return 0
 
 
