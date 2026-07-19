@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_spec_eval_dry_run_fixture_only",
+  "model_and_tokenizer_revisions": {
+    "model": "mock-deepseek-v4-flash",
+    "model_revision": "dry-run-no-weights",
+    "tokenizer_revision": "dry-run-tokenish-v1"
+  },
+  "vllm_xpu_kernel_oneccl_commits": {
+    "vllm": "mock",
+    "xpu_kernels": "mock",
+    "oneccl": "mock"
+  },
+  "complete_flags_and_environment": {
+    "SPEC_EVAL_DRY_RUN": "1",
+    "prefix_caching": false,
+    "history_acceleration": false,
+    "response_reuse": false
+  },
+  "draft_router_policy_hashes": {
+    "draft": "sha256:mock-draft-fixed",
+    "router": "sha256:mock-router-fixed",
+    "thresholds": "sha256:mock-thresholds-fixed"
+  },
+  "source_patch_hash": "sha256:mock-no-source-patch",
+  "allowed_policy_inputs": [
+    "context_length",
+    "draft_confidence",
+    "prior_acceptance_in_same_request",
+    "prompt_or_current_prefix_tokens"
+  ],
+  "target_only_and_current_mtp1_controls": {
+    "target_only_no_speculation": "mock-target-control",
+    "current_target_verified_mtp1": "mock-mtp1-control"
+  },
+  "operator_attestations": {
+    "candidate_frozen_before_pack_reveal": true,
+    "same_target_build_across_modes": true,
+    "target_verifies_every_accepted_token": true,
+    "server_caches_and_history_reuse_disabled": true,
+    "router_has_no_forbidden_hidden_inputs": true
+  }
+}
