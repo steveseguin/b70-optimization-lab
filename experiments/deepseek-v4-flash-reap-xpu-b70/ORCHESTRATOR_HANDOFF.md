@@ -107,6 +107,11 @@ runtime     /mnt/fast-ai/runtime/oneccl-2021.17.2-b70-wideepoch-48fda4f/lib
 venv        /home/steve/.venvs/deepseek-v4-xpu
 ```
 
+The vLLM and XPU worktrees are clean. The oneCCL tree intentionally contains
+untracked local build output (`_build-b70/` and generated
+`include/oneapi/ccl/config.h`); do not stage, delete, or mistake it for a
+source patch.
+
 No DeepSeek service is currently running. The final candidate was stopped
 cleanly and all four GPUs are free. Verify rather than assume:
 
@@ -534,7 +539,8 @@ password.
   `cmrquta9905w3lg013m5vxoqx`.
 - Latest attempted M8 MHC+RMS rejected on card 0 as inexact and slower; no
   model load/submission.
-- Active development source experiments committed.
+- vLLM/XPU development experiments committed and clean; oneCCL retains only
+  the expected untracked local build artifacts described above.
 - Immediate next: M7/M8 shared+routed MoE activation portfolio.
 - Then: exact DPAS W2 in the incumbent captured collective path.
 - Strategic program: fixed-address Intel decoder plus frozen target-verified
