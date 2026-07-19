@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import json
 import math
 import os
@@ -23,6 +24,7 @@ from safetensors import safe_open
 HIDDEN_SIZE = 4096
 VOCAB_SIZE = 129280
 FEATURE_BOUNDARIES = (4, 22, 43)
+CONTEXT_TOKENS = 128
 
 
 @dataclass(frozen=True)
@@ -35,6 +37,7 @@ class HeadConfig:
     intermediate_size: int = 5504
     vocab_size: int = VOCAB_SIZE
     max_depth: int = 7
+    context_tokens: int = CONTEXT_TOKENS
     feature_boundaries: tuple[int, ...] = FEATURE_BOUNDARIES
 
 
@@ -58,6 +61,19 @@ class GQACausalBlock(nn.Module):
         self.num_heads = config.num_heads
         self.num_kv_heads = config.num_kv_heads
         self.head_dim = config.head_dim
+        self.context_tokens = config.context_tokens
+        self.register_buffer(
+            "rope_inv_freq",
+            1.0
+            / (
+                10000
+                ** (
+                    torch.arange(0, config.head_dim, 2, dtype=torch.float32)
+                    / config.head_dim
+                )
+            ),
+            persistent=False,
+        )
         self.attn_norm = RMSNorm(width)
         self.q_proj = nn.Linear(width, width, bias=False)
         self.k_proj = nn.Linear(width, kv_width, bias=False)
@@ -67,12 +83,32 @@ class GQACausalBlock(nn.Module):
         self.gate_up = nn.Linear(width, 2 * config.intermediate_size, bias=False)
         self.down = nn.Linear(config.intermediate_size, width, bias=False)
 
+    def apply_rope(
+        self, tensor: torch.Tensor, *, position_start: int = 0
+    ) -> torch.Tensor:
+        sequence = tensor.shape[-2]
+        positions = torch.arange(
+            position_start,
+            position_start + sequence,
+            device=tensor.device,
+            dtype=torch.float32,
+        )
+        angles = torch.outer(positions, self.rope_inv_freq.to(tensor.device))
+        cos = angles.cos().to(tensor.dtype)[None, None]
+        sin = angles.sin().to(tensor.dtype)[None, None]
+        even = tensor[..., 0::2]
+        odd = tensor[..., 1::2]
+        rotated = torch.stack(
+            (even * cos - odd * sin, even * sin + odd * cos), dim=-1
+        )
+        return rotated.flatten(-2)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        residual = x
+        residual = x[:, -1:]
         normed = self.attn_norm(x)
         batch, sequence, _ = normed.shape
-        q = self.q_proj(normed).view(
-            batch, sequence, self.num_heads, self.head_dim
+        q = self.q_proj(normed[:, -1:]).view(
+            batch, 1, self.num_heads, self.head_dim
         ).transpose(1, 2)
         k = self.k_proj(normed).view(
             batch, sequence, self.num_kv_heads, self.head_dim
@@ -80,11 +116,13 @@ class GQACausalBlock(nn.Module):
         v = self.v_proj(normed).view(
             batch, sequence, self.num_kv_heads, self.head_dim
         ).transpose(1, 2)
+        q = self.apply_rope(q, position_start=sequence - 1)
+        k = self.apply_rope(k)
         repeat = self.num_heads // self.num_kv_heads
         k = k.repeat_interleave(repeat, dim=1)
         v = v.repeat_interleave(repeat, dim=1)
-        attended = F.scaled_dot_product_attention(q, k, v, is_causal=True)
-        attended = attended.transpose(1, 2).reshape(batch, sequence, -1)
+        attended = F.scaled_dot_product_attention(q, k, v, is_causal=False)
+        attended = attended.transpose(1, 2).reshape(batch, 1, -1)
         x = residual + self.o_proj(attended)
         gate, up = self.gate_up(self.mlp_norm(x)).chunk(2, dim=-1)
         return x + self.down(F.silu(gate) * up)
@@ -123,23 +161,37 @@ class K160EagleSignalHead(nn.Module):
 
     def fused_feature(self, features: torch.Tensor) -> torch.Tensor:
         normalized = [
-            norm(features[:, index]) for index, norm in enumerate(self.feature_norms)
+            norm(value)
+            for value, norm in zip(
+                features.unbind(dim=-2), self.feature_norms, strict=True
+            )
         ]
         return self.feature_fusion(torch.cat(normalized, dim=-1))
+
+    def context_sequence(
+        self, features: torch.Tensor, token_ids: torch.Tensor
+    ) -> torch.Tensor:
+        feature_state = self.fused_feature(features)
+        token = self.token_projection(F.embedding(token_ids, self.target_embedding))
+        return self.input_fusion(torch.cat((token, feature_state), dim=-1))
+
+    def decode(self, sequence: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        decoded = self.decoder(sequence)[:, -1]
+        projected = self.feature_output_adapter(decoded)
+        logits = F.linear(self.output_norm(projected), self.target_lm_head)
+        return decoded, logits
 
     def step(
         self,
         feature_state: torch.Tensor,
         previous_token_ids: torch.Tensor,
-        sequence: list[torch.Tensor],
-    ) -> tuple[torch.Tensor, torch.Tensor, list[torch.Tensor]]:
+        sequence: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         token = F.embedding(previous_token_ids, self.target_embedding)
         token = self.token_projection(token)
         current = self.input_fusion(torch.cat((token, feature_state), dim=-1))
-        sequence = [*sequence, current]
-        decoded = self.decoder(torch.stack(sequence, dim=1))[:, -1]
-        projected = self.feature_output_adapter(decoded)
-        logits = F.linear(self.output_norm(projected), self.target_lm_head)
+        sequence = torch.cat((sequence[:, 1:], current.unsqueeze(1)), dim=1)
+        decoded, logits = self.decode(sequence)
         return decoded, logits, sequence
 
     def forward(
@@ -148,7 +200,18 @@ class K160EagleSignalHead(nn.Module):
         return teacher_forced_loss(self, batch)
 
 
-def load_frozen_target_tensors(model_root: Path) -> tuple[torch.Tensor, torch.Tensor]:
+def tensor_sha256(tensor: torch.Tensor) -> str:
+    flat = tensor.detach().contiguous().view(torch.uint8).flatten()
+    digest = hashlib.sha256()
+    chunk_bytes = 64 * 1024 * 1024
+    for start in range(0, flat.numel(), chunk_bytes):
+        digest.update(memoryview(flat[start : start + chunk_bytes].numpy()))
+    return digest.hexdigest()
+
+
+def load_frozen_target_tensors(
+    model_root: Path,
+) -> tuple[torch.Tensor, torch.Tensor, dict[str, object]]:
     with safe_open(
         model_root / "model-00001-of-00046.safetensors",
         framework="pt",
@@ -165,14 +228,53 @@ def load_frozen_target_tensors(model_root: Path) -> tuple[torch.Tensor, torch.Te
         raise RuntimeError(f"unexpected embedding shape: {embedding.shape}")
     if lm_head.shape != (VOCAB_SIZE, HIDDEN_SIZE):
         raise RuntimeError(f"unexpected LM-head shape: {lm_head.shape}")
-    return embedding, lm_head
+    identity = {
+        "model_root": str(model_root.resolve()),
+        "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+        "embedding_tensor": "model-00001-of-00046.safetensors:embed.weight",
+        "embedding_sha256": tensor_sha256(embedding),
+        "lm_head_tensor": "model-00045-of-00046.safetensors:head.weight",
+        "lm_head_sha256": tensor_sha256(lm_head),
+    }
+    return embedding, lm_head, identity
+
+
+def dataset_fingerprint(data_dir: Path) -> dict[str, object]:
+    rows: list[dict[str, object]] = []
+    for manifest_path in sorted(data_dir.glob("features-*.json")):
+        manifest = json.loads(manifest_path.read_text())
+        rows.append(
+            {
+                "shard": manifest["shard"],
+                "sha256": manifest["sha256"],
+                "rows": int(manifest["rows"]),
+                "request_key": int(manifest["request_key"]),
+            }
+        )
+    if not rows:
+        raise RuntimeError(f"no capture manifests in {data_dir}")
+    canonical = json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()
+    return {
+        "data_dir": str(data_dir.resolve()),
+        "shard_count": len(rows),
+        "captured_rows": sum(int(row["rows"]) for row in rows),
+        "ordered_manifest_sha256": hashlib.sha256(canonical).hexdigest(),
+    }
 
 
 def eligible_anchors(keys: torch.Tensor, positions: torch.Tensor) -> torch.Tensor:
-    if keys.numel() < 7:
+    span = CONTEXT_TOKENS + 6
+    if keys.numel() < span:
         return torch.empty(0, dtype=torch.int64)
-    eligible = (keys[:-6] == keys[6:]) & (positions[6:] == positions[:-6] + 6)
-    return torch.nonzero(eligible, as_tuple=False).flatten()
+    adjacent = (keys[1:] == keys[:-1]) & (positions[1:] == positions[:-1] + 1)
+    bad_prefix = torch.cat(
+        (torch.zeros(1, dtype=torch.int64), (~adjacent).to(torch.int64).cumsum(0))
+    )
+    anchors = torch.arange(CONTEXT_TOKENS - 1, keys.numel() - 6)
+    start = anchors - (CONTEXT_TOKENS - 1)
+    end = anchors + 6
+    valid = (bad_prefix[end] - bad_prefix[start]) == 0
+    return anchors[valid]
 
 
 class ShardStream:
@@ -195,7 +297,7 @@ class ShardStream:
         self.anchor_offset = 0
 
     def _next_shard(self) -> None:
-        while True:
+        for _ in range(len(self.shards)):
             if not self.shard_order:
                 self.shard_order = self.shards.copy()
                 self.rng.shuffle(self.shard_order)
@@ -209,6 +311,9 @@ class ShardStream:
                 self.current = current
                 self.anchor_offset = 0
                 return
+        raise RuntimeError(
+            f"no assigned shard has {self.batch_size} eligible 128-token anchors"
+        )
 
     def next_batch(self) -> dict[str, torch.Tensor]:
         if (
@@ -221,19 +326,14 @@ class ShardStream:
             self.anchor_offset : self.anchor_offset + self.batch_size
         ]
         self.anchor_offset += self.batch_size
-        offsets = torch.arange(7).unsqueeze(0)
-        shifted = anchors.unsqueeze(1) + offsets
+        label_offsets = torch.arange(7).unsqueeze(0)
+        shifted = anchors.unsqueeze(1) + label_offsets
+        context_offsets = torch.arange(-(CONTEXT_TOKENS - 1), 1).unsqueeze(0)
+        context_rows = anchors.unsqueeze(1) + context_offsets
         labels = self.current["next_target_token_id"][shifted]
-        previous = torch.cat(
-            (
-                self.current["input_token_id"][anchors].unsqueeze(1),
-                labels[:, :-1],
-            ),
-            dim=1,
-        )
         return {
-            "features": self.current["features_bf16"][anchors],
-            "previous": previous,
+            "context_features": self.current["features_bf16"][context_rows],
+            "context_tokens": self.current["input_token_id"][context_rows],
             "labels": labels,
             "target_final": self.current["target_final_hidden_bf16"][shifted],
         }
@@ -279,16 +379,19 @@ def teacher_forced_loss(
     model: K160EagleSignalHead,
     batch: dict[str, torch.Tensor],
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-    state = model.fused_feature(batch["features"])
-    sequence: list[torch.Tensor] = []
+    sequence = model.context_sequence(
+        batch["context_features"], batch["context_tokens"]
+    )
+    state, logits = model.decode(sequence)
     total = torch.zeros((), device=state.device)
     ce_value = torch.zeros((), device=state.device)
     feature_value = torch.zeros((), device=state.device)
     weights = POSITION_WEIGHTS.to(state.device)
     for position in range(7):
-        state, logits, sequence = model.step(
-            state, batch["previous"][:, position], sequence
-        )
+        if position:
+            state, logits, sequence = model.step(
+                state, batch["labels"][:, position - 1], sequence
+            )
         ce = F.cross_entropy(logits.float(), batch["labels"][:, position].long())
         projected = model.feature_output_adapter(state)
         feature = normalized_feature_loss(
@@ -312,7 +415,10 @@ def train(args: argparse.Namespace) -> int:
     torch.manual_seed(args.seed + rank)
     shards = sorted(args.data_dir.glob("features-*.safetensors"))
     stream = ShardStream(shards, rank, world_size, args.microbatch, args.seed)
-    embedding, lm_head = load_frozen_target_tensors(args.model_root)
+    embedding, lm_head, target_tensor_identity = load_frozen_target_tensors(
+        args.model_root
+    )
+    data_identity = dataset_fingerprint(args.data_dir)
     model = K160EagleSignalHead(HeadConfig(), embedding, lm_head).to(device)
     if args.resume_checkpoint:
         resume = torch.load(
@@ -376,12 +482,16 @@ def train(args: argparse.Namespace) -> int:
             group["lr"] = lr
         optimizer.step()
         optimizer.zero_grad(set_to_none=True)
+        metric_values = torch.stack((total_value, ce_value, feature_value))
+        if world_size > 1:
+            dist.all_reduce(metric_values, op=dist.ReduceOp.SUM)
+            metric_values /= world_size
         if rank == 0:
             row = {
                 "step": step + 1,
-                "loss": float(total_value),
-                "ce": float(ce_value),
-                "feature_regularization": float(feature_value),
+                "loss": float(metric_values[0]),
+                "ce": float(metric_values[1]),
+                "feature_regularization": float(metric_values[2]),
                 "learning_rate": lr,
                 "gradient_norm": float(grad_norm),
                 "elapsed_s": time.time() - started,
@@ -390,6 +500,18 @@ def train(args: argparse.Namespace) -> int:
                 stream_file.write(json.dumps(row) + "\n")
             if step == 0 or (step + 1) % args.log_every == 0:
                 print(json.dumps(row), flush=True)
+            if (step + 1) % args.checkpoint_every == 0 and step + 1 < args.steps:
+                torch.save(
+                    {
+                        "schema_version": "k160-eagle-signal-head-v1",
+                        "head_config": asdict(HeadConfig()),
+                        "state_dict": model.state_dict(),
+                        "target_tensor_identity": target_tensor_identity,
+                        "training_data_identity": data_identity,
+                        "training_steps": step + 1,
+                    },
+                    args.output_dir / f"head-step-{step + 1:06d}.pt",
+                )
     if rank == 0:
         checkpoint = {
             "schema_version": "k160-eagle-signal-head-v1",
@@ -405,6 +527,8 @@ def train(args: argparse.Namespace) -> int:
             "effective_anchors_per_update": (
                 args.microbatch * args.gradient_accumulation * world_size
             ),
+            "target_tensor_identity": target_tensor_identity,
+            "training_data_identity": data_identity,
         }
         torch.save(checkpoint, args.output_dir / "head-final.pt")
         (args.output_dir / "training-config.json").write_text(
@@ -416,6 +540,8 @@ def train(args: argparse.Namespace) -> int:
                 | {
                     "head_config": asdict(HeadConfig()),
                     "trainable_parameters": trainable_parameters,
+                    "target_tensor_identity": target_tensor_identity,
+                    "training_data_identity": data_identity,
                 },
                 indent=2,
             )
@@ -432,9 +558,13 @@ def evaluate(args: argparse.Namespace) -> int:
     device = torch.device(args.device)
     if device.type == "xpu":
         torch.xpu.set_device(0)
-    embedding, lm_head = load_frozen_target_tensors(args.model_root)
+    embedding, lm_head, target_tensor_identity = load_frozen_target_tensors(
+        args.model_root
+    )
     model = K160EagleSignalHead(HeadConfig(), embedding, lm_head)
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=True)
+    if checkpoint.get("target_tensor_identity") != target_tensor_identity:
+        raise RuntimeError("checkpoint frozen target tensor identity mismatch")
     model.load_state_dict(checkpoint["state_dict"], strict=True)
     model = model.to(device).eval()
     shards = sorted(args.data_dir.glob("features-*.safetensors"))
@@ -443,26 +573,23 @@ def evaluate(args: argparse.Namespace) -> int:
     category_counts: dict[str, dict[str, object]] = {}
     with args.request_manifest.open() as stream:
         request_rows = [json.loads(line) for line in stream if line.strip()]
-    category_by_key = {int(row["request_key"]): row["category"] for row in request_rows}
-    captured_key_order: list[int] = []
-    seen_keys: set[int] = set()
-    for shard in shards:
-        with safe_open(shard, framework="pt", device="cpu") as tensors:
-            shard_keys = tensors.get_tensor("request_key")
-        for key in shard_keys.tolist():
-            key = int(key)
-            if key not in seen_keys:
-                seen_keys.add(key)
-                captured_key_order.append(key)
-    if set(captured_key_order) - set(category_by_key):
-        if len(captured_key_order) != len(request_rows):
-            raise RuntimeError(
-                "captured internal request count differs from DEV manifest"
-            )
-        category_by_key = {
-            key: row["category"]
-            for key, row in zip(captured_key_order, request_rows, strict=True)
-        }
+    with args.replay_manifest.open() as stream:
+        replay_rows = [json.loads(line) for line in stream if line.strip()]
+    if len(replay_rows) != len(request_rows):
+        raise RuntimeError("DEV replay and trajectory manifest lengths differ")
+    category_by_key: dict[int, str] = {}
+    for index, (replay_row, trajectory) in enumerate(
+        zip(replay_rows, request_rows, strict=True)
+    ):
+        if (
+            int(replay_row["trajectory_index"]) != index
+            or replay_row["trajectory_request_id"] != trajectory["request_id"]
+        ):
+            raise RuntimeError("DEV replay lineage does not match trajectories")
+        key = int(replay_row["request_key"])
+        if key in category_by_key:
+            raise RuntimeError("DEV replay request-key collision")
+        category_by_key[key] = trajectory["category"]
     for shard in shards:
         with safe_open(shard, framework="pt", device="cpu") as tensors:
             data = {name: tensors.get_tensor(name) for name in tensors.keys()}
@@ -474,20 +601,28 @@ def evaluate(args: argparse.Namespace) -> int:
         for offset in range(0, anchors.numel(), args.eval_batch):
             chosen = anchors[offset : offset + args.eval_batch]
             shifted = chosen.unsqueeze(1) + torch.arange(7).unsqueeze(0)
-            features = data["features_bf16"][chosen].to(device)
+            context_rows = chosen.unsqueeze(1) + torch.arange(
+                -(CONTEXT_TOKENS - 1), 1
+            ).unsqueeze(0)
+            context_features = data["features_bf16"][context_rows].to(device)
+            context_tokens = data["input_token_id"][context_rows].to(device)
             labels = data["next_target_token_id"][shifted]
-            previous = data["input_token_id"][chosen].to(device)
             keys = data["request_key"][chosen]
-            state = model.fused_feature(features)
-            sequence: list[torch.Tensor] = []
             survived = torch.ones(chosen.numel(), dtype=torch.bool)
             predictions = []
             with autocast_context(device):
+                sequence = model.context_sequence(context_features, context_tokens)
+                state, logits = model.decode(sequence)
+                previous_prediction = None
                 for position in range(7):
-                    state, logits, sequence = model.step(state, previous, sequence)
+                    if position:
+                        assert previous_prediction is not None
+                        state, logits, sequence = model.step(
+                            state, previous_prediction, sequence
+                        )
                     predicted = logits.argmax(dim=-1)
                     predictions.append(predicted.cpu())
-                    previous = predicted
+                    previous_prediction = predicted
             for position, predicted in enumerate(predictions):
                 survived &= predicted == labels[:, position]
                 accepted[position] += survived.sum()
@@ -506,6 +641,8 @@ def evaluate(args: argparse.Namespace) -> int:
                     )
                     accepted_list[position] += int(row_survived)
             cycles += chosen.numel()
+    if cycles == 0:
+        raise RuntimeError("DEV evaluation found zero eligible 128-token anchors")
     conditional = []
     marginal = []
     for position, count in enumerate(accepted.tolist()):
@@ -548,22 +685,24 @@ def main() -> int:
     train_parser.add_argument("--resume-checkpoint", type=Path)
     train_parser.add_argument("--device", choices=("xpu", "cpu"), default="xpu")
     train_parser.add_argument("--steps", type=int, default=500)
-    train_parser.add_argument("--microbatch", type=int, default=8)
-    train_parser.add_argument("--gradient-accumulation", type=int, default=8)
+    train_parser.add_argument("--microbatch", type=int, default=64)
+    train_parser.add_argument("--gradient-accumulation", type=int, default=32)
     train_parser.add_argument("--learning-rate", type=float, default=2e-4)
     train_parser.add_argument("--weight-decay", type=float, default=0.05)
     train_parser.add_argument("--seed", type=int, default=160719)
     train_parser.add_argument("--log-every", type=int, default=10)
+    train_parser.add_argument("--checkpoint-every", type=int, default=250)
     train_parser.set_defaults(function=train)
 
     eval_parser = subparsers.add_parser("evaluate")
     eval_parser.add_argument("--data-dir", type=Path, required=True)
     eval_parser.add_argument("--request-manifest", type=Path, required=True)
+    eval_parser.add_argument("--replay-manifest", type=Path, required=True)
     eval_parser.add_argument("--model-root", type=Path, required=True)
     eval_parser.add_argument("--checkpoint", type=Path, required=True)
     eval_parser.add_argument("--output", type=Path, required=True)
     eval_parser.add_argument("--device", choices=("xpu", "cpu"), default="xpu")
-    eval_parser.add_argument("--eval-batch", type=int, default=8)
+    eval_parser.add_argument("--eval-batch", type=int, default=64)
     eval_parser.add_argument("--max-anchors", type=int, default=0)
     eval_parser.set_defaults(function=evaluate)
     args = parser.parse_args()
