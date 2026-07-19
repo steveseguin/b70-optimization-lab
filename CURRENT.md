@@ -21,14 +21,16 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
-No DeepSeek service is currently running. The promoted DSpark7 exact-M8-router
-service was stopped cleanly after three strict suites and the final exact
-canary. Its restorable evidence is
-`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-m8-router-fused-candidate-20260718T1815Z`.
-The source identity is vLLM `db1863c799`, XPU kernels `6cad2518d`, and oneCCL
-`48fda4f0e`. Restore it with target PIECEWISE, draft breakable PIECEWISE,
+No DeepSeek service is currently running. The promoted DSpark7 sharded target-
+argmax record service was stopped cleanly after three strict suites and the
+final exact canary. Its evidence is
+`/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-sharded-target-argmax-candidate-20260718T2100Z`.
+The exact public-record source identity is vLLM `264c7f2f7`, XPU kernels
+`313156737`, and oneCCL `48fda4f0e`. Restore it with target PIECEWISE, draft
+breakable PIECEWISE,
 `DSPARK_SPEC_TOKENS=7`, `VLLM_XPU_DSPARK_EXACT_QUERY_CAPTURE=1`,
 `VLLM_XPU_GREEDY_FUSED_REJECTION=1`,
+`VLLM_XPU_GREEDY_SHARDED_TARGET_ARGMAX=1`,
 `VLLM_XPU_DSPARK_FIXED_M7_TARGET_INPUTS=1`, and
 `VLLM_XPU_DSPARK_PERSISTENT_MARKOV=1`, and
 `VLLM_XPU_DSPARK_REPLICATED_MARKOV_W1=1`, plus
@@ -38,6 +40,15 @@ The source identity is vLLM `db1863c799`, XPU kernels `6cad2518d`, and oneCCL
 `VLLM_XPU_V4_ROUTER_NORM_MAX_M=8`; the draft queries M=7 while
 target verification remains M=8. The preceding QNorm/route-portfolio source remains
 historical evidence at vLLM `4a6fd8747` and XPU kernels `18a44f440`.
+The complete manager-facing resume is
+[`experiments/deepseek-v4-flash-reap-xpu-b70/ORCHESTRATOR_HANDOFF.md`](experiments/deepseek-v4-flash-reap-xpu-b70/ORCHESTRATOR_HANDOFF.md).
+Current development HEADs are vLLM `80f1ad820`, XPU kernels `2cc25d0`, and
+oneCCL `48fda4f0e`; later experiments are default-off and do not replace the
+public-record identity. The latest fixed-M8 MHC+RMS fusion was rejected on card
+0 as inexact and slower before model load. The immediate bounded lane is the
+M7/M8 shared+routed activation portfolio, followed by exact DPAS W2 inside the
+incumbent captured collective Markov path. The strategic lane remains the
+fixed-address Intel decoder transaction.
 The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL

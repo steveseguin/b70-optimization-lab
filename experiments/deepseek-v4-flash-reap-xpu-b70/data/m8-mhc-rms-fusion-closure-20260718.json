@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-18",
+  "classification": "deepseek_v4_fixed_m8_mhc_rms_fusion_gate",
+  "status": "rejected",
+  "endpoint_record": false,
+  "localmax_eligible": false,
+  "xpu_kernel_commit": "2cc25d0ca08d3a76de27ee50c6dda258350e93e8",
+  "script": "experiments/deepseek-v4-flash-reap-xpu-b70/scripts/bench-m8-mhc-rms-fusion.py",
+  "raw_result": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-mhc-rms-fusion-gate-20260718T2105Z/card0.json",
+  "device": "Intel Arc Pro B70 card 0",
+  "changed_epochs": 40,
+  "bit_mismatches": {
+    "residual": 0,
+    "post": 113,
+    "comb": 2378,
+    "norm": 10
+  },
+  "reference_us_median": 21.4559875,
+  "candidate_us_median": 22.6201825,
+  "saved_us_per_boundary": -1.1641949999999994,
+  "projected_saved_ms_85_boundaries": -0.09895657499999996,
+  "decision": "reject before four-card gate, graph gate, model load, strict suite, or LocalMaxxing submission"
+}

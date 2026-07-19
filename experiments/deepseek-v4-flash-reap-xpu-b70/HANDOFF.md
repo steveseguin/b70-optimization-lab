@@ -1,5 +1,11 @@
 # DeepSeek V4 Flash REAP/XPU B70 Handoff
 
+Manager/orchestrator resume document:
+[`ORCHESTRATOR_HANDOFF.md`](ORCHESTRATOR_HANDOFF.md). Read it before assigning
+new implementation work; it contains current source trees, build/run/test
+workflow, LocalMaxxing rules, rejected-boundary inventory, and the exact next
+decision tree.
+
 Last reviewed: **2026-07-18**
 
 ## Current Decision
