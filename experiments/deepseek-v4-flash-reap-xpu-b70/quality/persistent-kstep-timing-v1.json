@@ -1,0 +1,27 @@
+{
+  "suite_id": "deepseek-v4-flash-b70-persistent-kstep-timing-v1",
+  "version": 1,
+  "policy": "Five unique cold greedy prompts, each forced to the 128-token response limit. Use endpoint post-TTFT wall time for steady-state timing and compare every token ID with K=0.",
+  "prompts": [
+    {
+      "id": "count-up-zero",
+      "prompt": "Output decimal integers from 0 upward, separated by one space, with no punctuation or other text. Continue until the response limit stops you."
+    },
+    {
+      "id": "count-up-thousand",
+      "prompt": "Output decimal integers from 1000 upward, separated by one space, with no punctuation or other text. Continue until the response limit stops you."
+    },
+    {
+      "id": "count-down-five-hundred",
+      "prompt": "Output decimal integers from 500 downward, separated by one space, with no punctuation or other text. Continue until the response limit stops you."
+    },
+    {
+      "id": "cycle-words",
+      "prompt": "Repeat the words red green blue amber in that order, separated by one space, with no punctuation or other text. Continue until the response limit stops you."
+    },
+    {
+      "id": "hex-up-zero",
+      "prompt": "Output lowercase hexadecimal integers from 0 upward without a 0x prefix, separated by one space, with no punctuation or other text. Continue until the response limit stops you."
+    }
+  ]
+}

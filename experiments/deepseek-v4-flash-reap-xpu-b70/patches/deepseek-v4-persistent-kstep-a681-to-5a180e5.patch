@@ -1,0 +1,624 @@
+diff --git a/vllm/models/deepseek_v4/xpu/model.py b/vllm/models/deepseek_v4/xpu/model.py
+index d54e82c85..cd5696a4b 100644
+--- a/vllm/models/deepseek_v4/xpu/model.py
++++ b/vllm/models/deepseek_v4/xpu/model.py
+@@ -1819,6 +1819,10 @@ class DeepseekV4ForCausalLM(nn.Module, SupportsPP):
+         logits = self.logits_processor(self.lm_head, hidden_states)
+         return logits
+ 
++    def get_top_tokens(self, hidden_states: torch.Tensor) -> torch.Tensor:
++        """Return exact greedy token IDs via the compact TP-sharded argmax."""
++        return self.logits_processor.get_top_tokens(self.lm_head, hidden_states)
++
+     def forward(
+         self,
+         input_ids: torch.Tensor,
+diff --git a/vllm/v1/core/sched/async_scheduler.py b/vllm/v1/core/sched/async_scheduler.py
+index d1c652c46..3ec70e95e 100644
+--- a/vllm/v1/core/sched/async_scheduler.py
++++ b/vllm/v1/core/sched/async_scheduler.py
+@@ -36,9 +36,10 @@ class AsyncScheduler(Scheduler):
+             # bonus token (num_sampled_tokens_per_step == 0) — only the canvas
+             # (spec) tokens.
+             cur_num_spec_tokens = len(spec_decode_tokens.get(req_id, ()))
+-            request.num_output_placeholders += (
+-                self.num_sampled_tokens_per_step + cur_num_spec_tokens
+-            )
++            persistent_tokens = (
++                scheduler_output.persistent_decode_steps or {}
++            ).get(req_id, self.num_sampled_tokens_per_step)
++            request.num_output_placeholders += persistent_tokens + cur_num_spec_tokens
+             # Add placeholders for the new draft/spec tokens.
+             # We will update the actual spec token ids in the worker process.
+             request.spec_token_ids = self._spec_token_placeholders
+@@ -59,12 +60,16 @@ class AsyncScheduler(Scheduler):
+             return [], False
+ 
+         status_before_update = request.status
++        num_submitted_tokens = len(new_token_ids)
+         new_token_ids, stopped = super()._update_request_with_output(
+             request, new_token_ids
+         )
+ 
+         # Update the number of output placeholders.
+-        request.num_output_placeholders -= len(new_token_ids)
++        # The device may have boundedly overcomputed after an EOS within a
++        # static K transaction. Consume every submitted placeholder even when
++        # the canonical stop checker trims the visible list at the first EOS.
++        request.num_output_placeholders -= num_submitted_tokens
+         assert request.num_output_placeholders >= 0
+ 
+         # Cache the new tokens. Preempted requests should be skipped.
+diff --git a/vllm/v1/core/sched/output.py b/vllm/v1/core/sched/output.py
+index 4401fb050..0c2d623b3 100644
+--- a/vllm/v1/core/sched/output.py
++++ b/vllm/v1/core/sched/output.py
+@@ -249,6 +249,11 @@ class SchedulerOutput:
+     # Number of spec tokens to schedule for the next step.
+     num_spec_tokens_to_schedule: int = 0
+ 
++    # Experimental, XPU-only fixed-address decode transaction. The physical
++    # scheduler input remains one token; the value is the number of exact
++    # greedy autoregressive steps the worker commits before returning.
++    persistent_decode_steps: dict[str, int] | None = None
++
+     @classmethod
+     def make_empty(cls) -> "SchedulerOutput":
+         return cls(
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 371139fa7..5bb3e0c09 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import itertools
++import os
+ import time
+ from collections import defaultdict, deque
+ from collections.abc import Iterable
+@@ -233,6 +234,29 @@ class Scheduler(SchedulerInterface):
+         self.use_eagle = False
+         self.num_spec_tokens = vllm_config.num_speculative_tokens
+         self.num_lookahead_tokens = 0
++        persistent_k_raw = os.environ.get("VLLM_XPU_PERSISTENT_KSTEP_DECODE", "0")
++        try:
++            self.persistent_decode_k = int(persistent_k_raw)
++        except ValueError as exc:
++            raise ValueError(
++                "VLLM_XPU_PERSISTENT_KSTEP_DECODE must be one of 0,1,2,4,8,16"
++            ) from exc
++        if self.persistent_decode_k not in (0, 1, 2, 4, 8, 16):
++            raise ValueError(
++                "VLLM_XPU_PERSISTENT_KSTEP_DECODE must be one of 0,1,2,4,8,16"
++            )
++        if self.persistent_decode_k and speculative_config is not None:
++            raise ValueError("persistent K-step decode is nonspec-only")
++        if self.persistent_decode_k and self.scheduler_config.max_num_seqs != 1:
++            raise ValueError(
++                "persistent K-step decode requires --max-num-seqs 1"
++            )
++        if self.persistent_decode_k and self.cache_config.enable_prefix_caching:
++            raise ValueError(
++                "persistent K-step decode requires prefix caching disabled"
++            )
++        if self.persistent_decode_k and self.parallel_config.pipeline_parallel_size != 1:
++            raise ValueError("persistent K-step decode requires pipeline parallel size 1")
+         self.dynamic_sd_lookup: list[int] | None = None
+         if speculative_config is not None:
+             if speculative_config.num_speculative_tokens_per_batch_size:
+@@ -556,7 +580,13 @@ class Scheduler(SchedulerInterface):
+                     new_blocks = self.kv_cache_manager.allocate_slots(
+                         request,
+                         num_new_tokens,
+-                        num_lookahead_tokens=self.num_lookahead_tokens,
++                        num_lookahead_tokens=max(
++                            self.num_lookahead_tokens,
++                            self._persistent_steps_for_request(
++                                request, num_new_tokens
++                            )
++                            - 1,
++                        ),
+                     )
+ 
+                     if new_blocks is not None:
+@@ -900,6 +930,10 @@ class Scheduler(SchedulerInterface):
+                 effective_lookahead_tokens = (
+                     0 if limit_lookahead_tokens else self.num_lookahead_tokens
+                 )
++                effective_lookahead_tokens = max(
++                    effective_lookahead_tokens,
++                    self._persistent_steps_for_request(request, num_new_tokens) - 1,
++                )
+ 
+                 # Determine if we need to allocate cross-attention blocks.
+                 num_encoder_tokens = 0
+@@ -1121,6 +1155,17 @@ class Scheduler(SchedulerInterface):
+                 len(num_scheduled_tokens)
+             ]
+ 
++        persistent_decode_steps = {
++            req_id: steps
++            for req_id, num_tokens in num_scheduled_tokens.items()
++            if (
++                steps := self._persistent_steps_for_request(
++                    self.requests[req_id], num_tokens
++                )
++            )
++            > 0
++        }
++
+         scheduler_output = SchedulerOutput(
+             scheduled_new_reqs=new_reqs_data,
+             scheduled_cached_reqs=cached_reqs_data,
+@@ -1139,6 +1184,7 @@ class Scheduler(SchedulerInterface):
+             new_block_ids_to_zero=new_block_ids_to_zero,
+             kv_cache_block_copies=pending_kv_cache_block_copies,
+             num_spec_tokens_to_schedule=num_spec_tokens_to_schedule,
++            persistent_decode_steps=persistent_decode_steps or None,
+         )
+ 
+         # NOTE(Kuntai): this function is designed for multiple purposes:
+@@ -1170,6 +1216,47 @@ class Scheduler(SchedulerInterface):
+     ) -> KVConnectorMetadata:
+         return connector.build_connector_meta(scheduler_output)
+ 
++    def _persistent_steps_for_request(
++        self, request: Request, num_scheduled_tokens: int
++    ) -> int:
++        """Return the bounded logical K for an eligible physical M=1 decode."""
++        if self.persistent_decode_k == 0 or num_scheduled_tokens != 1:
++            return 0
++        if request.num_computed_tokens < request.num_prompt_tokens:
++            return 0
++        # Let the normal prefill/sampling turn materialize the first output.
++        # Under async scheduling, prompt completion alone already creates one
++        # placeholder, but the worker can still classify that frame as discard.
++        if request.num_output_tokens == 0:
++            return 0
++        if request.spec_token_ids or request.use_structured_output:
++            return 0
++        if request.lora_request is not None or request.has_encoder_inputs:
++            return 0
++        params = request.sampling_params
++        if params is None:
++            return 0
++        if (
++            params.temperature != 0.0
++            or params.presence_penalty != 0.0
++            or params.frequency_penalty != 0.0
++            or params.repetition_penalty != 1.0
++            or params.logprobs is not None
++            or params.prompt_logprobs is not None
++            or params.logit_bias
++            or params.allowed_token_ids
++            or params.bad_words
++            or params.stop
++        ):
++            return 0
++        remaining_output = params.max_tokens - (
++            request.num_output_tokens + request.num_output_placeholders
++        )
++        remaining_context = self.max_model_len - request.num_computed_tokens
++        if min(remaining_output, remaining_context) < self.persistent_decode_k:
++            return 0
++        return self.persistent_decode_k
++
+     def _preempt_request(self, request: Request, timestamp: float) -> None:
+         """Preempt a request and put it back to the waiting queue.
+ 
+@@ -1207,8 +1294,11 @@ class Scheduler(SchedulerInterface):
+         num_scheduled_tokens = scheduler_output.num_scheduled_tokens
+         for req_id, num_scheduled_token in num_scheduled_tokens.items():
+             request = self.requests[req_id]
+-            request.num_computed_tokens += num_scheduled_token
+-            request.num_in_flight_tokens += num_scheduled_token
++            logical_tokens = (
++                scheduler_output.persistent_decode_steps or {}
++            ).get(req_id, num_scheduled_token)
++            request.num_computed_tokens += logical_tokens
++            request.num_in_flight_tokens += logical_tokens
+             if self.defer_block_free:
+                 # Record the in-flight step, to fence deferred block freeing.
+                 request.last_sched_seq = self.sched_step_seq
+@@ -1597,7 +1687,10 @@ class Scheduler(SchedulerInterface):
+             assert num_tokens_scheduled > 0
+             request = self.requests.get(req_id)
+             if request is not None:
+-                request.num_in_flight_tokens -= num_tokens_scheduled
++                logical_tokens = (
++                    scheduler_output.persistent_decode_steps or {}
++                ).get(req_id, num_tokens_scheduled)
++                request.num_in_flight_tokens -= logical_tokens
+             if failed_kv_load_req_ids and req_id in failed_kv_load_req_ids:
+                 # skip failed or rescheduled requests from KV load failure
+                 continue
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index ecf8d8ec0..bcab76af1 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4,6 +4,7 @@
+ import functools
+ import gc
+ import itertools
++import os
+ import threading
+ import time
+ from collections import defaultdict
+@@ -51,6 +52,7 @@ from vllm.distributed.parallel_state import (
+ )
+ from vllm.forward_context import (
+     BatchDescriptor,
++    get_forward_context,
+     set_forward_context,
+ )
+ from vllm.logger import init_logger
+@@ -431,7 +433,7 @@ class ExecuteModelState(NamedTuple):
+     sample_tokens(), after execute_model() returns None."""
+ 
+     scheduler_output: "SchedulerOutput"
+-    logits: torch.Tensor
++    logits: torch.Tensor | None
+     spec_decode_metadata: SpecDecodeMetadata | None
+     spec_decode_common_attn_metadata: CommonAttentionMetadata | None
+     hidden_states: torch.Tensor
+@@ -440,6 +442,77 @@ class ExecuteModelState(NamedTuple):
+     ec_connector_output: ECConnectorOutput | None
+     cudagraph_stats: CUDAGraphStat | None
+     slot_mappings: dict[str, torch.Tensor] | list[dict[str, torch.Tensor]] | None
++    persistent_sampled_token_ids: torch.Tensor | None = None
++
++
++class _PersistentKStepDecode:
++    """K-unrolled fixed-address greedy decoder within one worker turn.
++
++    The canonical breakable decode graph must remain the owner of attention
++    metadata and KV writes.  Wrapping the raw model in a second graph captures
++    the dummy slot mapping and silently drops later KV writes.  Replaying the
++    already-captured canonical graph here preserves its fixed addresses while
++    still keeping all K steps inside one EngineCore/worker transaction.
++    """
++
++    def __init__(self, runner: "GPUModelRunner") -> None:
++        self.runner = runner
++        self.raw_model = runner.get_model()
++        self.model_forward = runner._model_forward
++
++    def __call__(
++        self,
++        input_ids: torch.Tensor,
++        positions: torch.Tensor,
++        intermediate_tensors: IntermediateTensors | None = None,
++        inputs_embeds: torch.Tensor | None = None,
++        **model_kwargs: Any,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        runner = self.runner
++        token_ids = runner.persistent_token_ids
++        assert token_ids is not None
++        token_ids.fill_(-1)
++        initial_context = get_forward_context()
++        hidden_states: torch.Tensor | IntermediateTensors
++
++        for step in range(runner.persistent_decode_k):
++            if step == 0:
++                hidden_states = self.model_forward(
++                    input_ids=input_ids,
++                    positions=positions,
++                    intermediate_tensors=intermediate_tensors,
++                    inputs_embeds=inputs_embeds,
++                    **model_kwargs,
++                )
++            else:
++                attn_metadata, slot_mappings = (
++                    runner._persistent_advance_and_build_metadata()
++                )
++                with set_forward_context(
++                    attn_metadata,
++                    runner.vllm_config,
++                    num_tokens=1,
++                    num_tokens_across_dp=None,
++                    cudagraph_runtime_mode=initial_context.cudagraph_runtime_mode,
++                    batch_descriptor=initial_context.batch_descriptor,
++                    ubatch_slices=None,
++                    slot_mapping=slot_mappings,
++                ):
++                    hidden_states = self.model_forward(
++                        input_ids=input_ids,
++                        positions=positions,
++                        intermediate_tensors=intermediate_tensors,
++                        inputs_embeds=inputs_embeds,
++                        **model_kwargs,
++                    )
++
++            assert isinstance(hidden_states, torch.Tensor)
++            next_token = self.raw_model.get_top_tokens(hidden_states[:1])
++            token_ids[:, step : step + 1].copy_(next_token.view(1, 1))
++            if step + 1 < runner.persistent_decode_k:
++                input_ids[:1].copy_(next_token)
++
++        return hidden_states, token_ids
+ 
+ 
+ class GPUModelRunner(
+@@ -533,6 +606,34 @@ class GPUModelRunner(
+         # Async scheduling
+         self.use_async_scheduling = self.scheduler_config.async_scheduling
+ 
++        persistent_k_raw = os.environ.get("VLLM_XPU_PERSISTENT_KSTEP_DECODE", "0")
++        try:
++            self.persistent_decode_k = int(persistent_k_raw)
++        except ValueError as exc:
++            raise ValueError(
++                "VLLM_XPU_PERSISTENT_KSTEP_DECODE must be one of 0,1,2,4,8,16"
++            ) from exc
++        if self.persistent_decode_k not in (0, 1, 2, 4, 8, 16):
++            raise ValueError(
++                "VLLM_XPU_PERSISTENT_KSTEP_DECODE must be one of 0,1,2,4,8,16"
++            )
++        if self.persistent_decode_k:
++            if not current_platform.is_xpu():
++                raise ValueError("persistent K-step decode is XPU-only")
++            if self.speculative_config is not None:
++                raise ValueError("persistent K-step decode is nonspec-only")
++            if self.max_num_reqs != 1:
++                raise ValueError("persistent K-step decode requires max_num_seqs=1")
++            if os.environ.get("VLLM_XPU_GREEDY_SHARDED_TARGET_ARGMAX", "0") != "1":
++                raise ValueError(
++                    "persistent K-step decode requires "
++                    "VLLM_XPU_GREEDY_SHARDED_TARGET_ARGMAX=1"
++                )
++            if not is_breakable_cudagraph_enabled():
++                raise ValueError(
++                    "persistent K-step decode requires breakable CUDA graphs"
++                )
++
+         # Sampler
+         self.sampler = Sampler(
+             logprobs_mode=self.model_config.logprobs_mode,
+@@ -756,6 +857,14 @@ class GPUModelRunner(
+         self.positions = torch.zeros(
+             self.max_num_tokens, dtype=torch.int64, device=self.device
+         )
++        self.persistent_token_ids = (
++            torch.empty(
++                (1, self.persistent_decode_k), dtype=torch.int32, device=self.device
++            )
++            if self.persistent_decode_k
++            else None
++        )
++        self.persistent_decode_graph: _PersistentKStepDecode | None = None
+         self.query_start_loc = self._make_buffer(
+             self.max_num_reqs + 1, dtype=torch.int32
+         )
+@@ -3735,8 +3844,9 @@ class GPUModelRunner(
+             # when preparing inputs.
+             # With spec decoding, this is done in propose_draft_token_ids().
+             if self.input_batch.prev_sampled_token_ids is None:
+-                assert sampled_token_ids.shape[-1] == 1
+-                self.input_batch.prev_sampled_token_ids = sampled_token_ids
++                # A persistent transaction returns K exact tokens at once;
++                # only its last token seeds the next physical M=1 input.
++                self.input_batch.prev_sampled_token_ids = sampled_token_ids[:, -1:]
+             self.input_batch.prev_req_id_to_index = {
+                 req_id: i
+                 for i, req_id in enumerate(self.input_batch.req_ids)
+@@ -3751,7 +3861,11 @@ class GPUModelRunner(
+         req_ids = self.input_batch.req_ids
+         for req_idx in range(num_sampled_tokens):
+             if self.use_async_scheduling:
+-                sampled_ids = [-1] if req_idx not in invalid_req_indices_set else None
++                sampled_ids = (
++                    [-1] * sampled_token_ids.shape[-1]
++                    if req_idx not in invalid_req_indices_set
++                    else None
++                )
+             else:
+                 sampled_ids = valid_sampled_token_ids[req_idx]
+ 
+@@ -4084,6 +4198,39 @@ class GPUModelRunner(
+ 
+         return slot_mappings_by_gid, slot_mappings_by_layer
+ 
++    def _persistent_advance_and_build_metadata(
++        self,
++    ) -> tuple[
++        PerLayerAttnMetadata,
++        dict[str, torch.Tensor] | list[dict[str, torch.Tensor]] | None,
++    ]:
++        """Advance one fixed M=1 row and rebuild every device metadata producer."""
++        self.positions[:1].add_(1)
++        self.seq_lens[:1].add_(1)
++        self.num_computed_tokens[:1].add_(1)
++        self.input_batch.block_table.compute_slot_mapping(
++            1, self.query_start_loc.gpu[:2], self.positions[:1]
++        )
++        slot_mappings_by_group, slot_mappings = self._get_slot_mappings(
++            num_tokens_padded=1,
++            num_reqs_padded=1,
++            num_tokens_unpadded=1,
++            ubatch_slices=None,
++        )
++        assert slot_mappings_by_group is not None
++        attn_metadata, _ = self._build_attention_metadata(
++            num_tokens=1,
++            num_tokens_padded=1,
++            num_reqs=1,
++            num_reqs_padded=1,
++            max_query_len=1,
++            ubatch_slices=None,
++            use_spec_decode=False,
++            for_cudagraph_capture=True,
++            slot_mappings=slot_mappings_by_group,
++        )
++        return attn_metadata, slot_mappings
++
+     def _is_all_reqs_chunked_prefill(self) -> bool:
+         """Check if all scheduled requests are marked to discard sampled tokens.
+ 
+@@ -4093,6 +4240,43 @@ class GPUModelRunner(
+         num_reqs = self.input_batch.num_reqs
+         return bool(self.discard_request_mask.np[:num_reqs].all())
+ 
++    def _persistent_steps_for_batch(self, scheduler_output: "SchedulerOutput") -> int:
++        steps_by_req = scheduler_output.persistent_decode_steps or {}
++        if not steps_by_req:
++            return 0
++        if self.persistent_decode_graph is None:
++            raise RuntimeError("scheduler requested persistent decode while disabled")
++        if len(steps_by_req) != 1 or self.input_batch.num_reqs != 1:
++            raise RuntimeError("persistent decode requires exactly one active request")
++        req_id = self.input_batch.req_ids[0]
++        steps = steps_by_req.get(req_id, 0)
++        if steps != self.persistent_decode_k:
++            raise RuntimeError(
++                f"persistent decode expected fixed K={self.persistent_decode_k}, "
++                f"got {steps}"
++            )
++        metadata = self.input_batch.sampling_metadata
++        thinking = metadata.thinking_budget_state_holder
++        ineligible = {
++            "not_greedy": not metadata.all_greedy,
++            "logprobs": metadata.max_num_logprobs is not None,
++            "logprob_token_ids": bool(metadata.logprob_token_ids),
++            "penalties": not metadata.no_penalties,
++            "allowed_ids": metadata.allowed_token_ids_mask is not None,
++            "bad_words": bool(metadata.bad_words_token_ids),
++            "thinking_budget": thinking is not None
++            and thinking.has_tracked_requests(),
++            "spec_tokens": bool(scheduler_output.scheduled_spec_decode_tokens),
++            "structured": scheduler_output.has_structured_output_requests,
++            "discard": self._is_all_reqs_chunked_prefill(),
++        }
++        if any(ineligible.values()):
++            raise RuntimeError(
++                "persistent decode received an ineligible non-exact sampling batch: "
++                f"{ineligible}"
++            )
++        return steps
++
+     @torch.inference_mode()
+     def execute_model(
+         self,
+@@ -4332,6 +4516,8 @@ class GPUModelRunner(
+                 scheduler_output, num_tokens_padded, intermediate_tensors
+             )
+ 
++            persistent_steps = self._persistent_steps_for_batch(scheduler_output)
++
+         # Set cudagraph mode to none if calc_kv_scales is true.
+         # KV scales calculation involves dynamic operations that are incompatible
+         # with CUDA graph capture.
+@@ -4377,13 +4563,26 @@ class GPUModelRunner(
+                 defer_finalize=defer_kv_connector_finalize,
+             ) as kv_connector_output,
+         ):
+-            model_output = self._model_forward(
+-                input_ids=input_ids,
+-                positions=positions,
+-                intermediate_tensors=intermediate_tensors,
+-                inputs_embeds=inputs_embeds,
+-                **model_kwargs,
+-            )
++            persistent_sampled_token_ids = None
++            if persistent_steps:
++                assert self.persistent_decode_graph is not None
++                model_output, persistent_sampled_token_ids = (
++                    self.persistent_decode_graph(
++                        input_ids=input_ids,
++                        positions=positions,
++                        intermediate_tensors=intermediate_tensors,
++                        inputs_embeds=inputs_embeds,
++                        **model_kwargs,
++                    )
++                )
++            else:
++                model_output = self._model_forward(
++                    input_ids=input_ids,
++                    positions=positions,
++                    intermediate_tensors=intermediate_tensors,
++                    inputs_embeds=inputs_embeds,
++                    **model_kwargs,
++                )
+ 
+         with record_function_or_nullcontext("gpu_model_runner: postprocess"):
+             if self.use_aux_hidden_state_outputs:
+@@ -4412,7 +4611,11 @@ class GPUModelRunner(
+                     )
+ 
+                 sample_hidden_states = hidden_states[logits_indices]
+-                logits = self.model.compute_logits(sample_hidden_states)
++                logits = (
++                    None
++                    if persistent_sampled_token_ids is not None
++                    else self.model.compute_logits(sample_hidden_states)
++                )
+             else:
+                 # Rare case.
+                 assert not self.is_pooling_model
+@@ -4454,6 +4657,7 @@ class GPUModelRunner(
+             ec_connector_output,
+             cudagraph_stats,
+             slot_mappings,
++            persistent_sampled_token_ids,
+         )
+         self.kv_connector_output = kv_connector_output
+ 
+@@ -4505,18 +4709,27 @@ class GPUModelRunner(
+             ec_connector_output,
+             cudagraph_stats,
+             slot_mappings,
++            persistent_sampled_token_ids,
+         ) = self.execute_model_state
+         # Clear ephemeral state.
+         self.execute_model_state = None
+ 
+         # Apply structured output bitmasks if present.
+         if grammar_output is not None:
++            if persistent_sampled_token_ids is not None:
++                raise RuntimeError("persistent decode does not support grammar output")
+             apply_grammar_bitmask(
+                 scheduler_output, grammar_output, self.input_batch, logits
+             )
+ 
+         with record_function_or_nullcontext("gpu_model_runner: sample"):
+-            sampler_output = self._sample(logits, spec_decode_metadata)
++            if persistent_sampled_token_ids is not None:
++                sampler_output = SamplerOutput(
++                    sampled_token_ids=persistent_sampled_token_ids,
++                    logprobs_tensors=None,
++                )
++            else:
++                sampler_output = self._sample(logits, spec_decode_metadata)
+ 
+         self._update_states_after_model_execute(
+             sampler_output.sampled_token_ids, scheduler_output
+@@ -5405,6 +5618,21 @@ class GPUModelRunner(
+                     self.model, self.vllm_config, CUDAGraphMode.NONE, self.device
+                 )
+ 
++        if self.persistent_decode_k:
++            if cudagraph_mode == CUDAGraphMode.NONE:
++                raise ValueError("persistent K-step decode requires CUDA graphs")
++            raw_model = self.get_model()
++            if not hasattr(raw_model, "get_top_tokens"):
++                raise ValueError(
++                    "persistent K-step decode requires the sharded greedy model op"
++                )
++            self.persistent_decode_graph = _PersistentKStepDecode(self)
++            logger.warning_once(
++                "EXPERIMENTAL persistent K-step decode enabled: K=%d; "
++                "default remains off",
++                self.persistent_decode_k,
++            )
++
+         get_offloader().post_init()
+ 
+     def _setup_eagle3_aux_hidden_state_outputs(self) -> None:
+@@ -6069,7 +6297,6 @@ class GPUModelRunner(
+                     inputs_embeds=inputs_embeds,
+                     **model_kwargs,
+                 )
+-
+             if self.use_aux_hidden_state_outputs:
+                 hidden_states, _ = outputs
+             else:

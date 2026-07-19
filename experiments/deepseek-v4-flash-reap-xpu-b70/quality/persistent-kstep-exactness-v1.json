@@ -1,0 +1,27 @@
+{
+  "suite_id": "deepseek-v4-flash-b70-persistent-kstep-exactness-v1",
+  "version": 1,
+  "policy": "Unique cold greedy requests. Compare every returned token ID with the canonical per-step oracle; rollover-list must run through at least transactions 28 and 58.",
+  "prompts": [
+    {
+      "id": "arithmetic-fresh",
+      "prompt": "Compute 43 * 67. Reply with only the integer answer."
+    },
+    {
+      "id": "exact-copy-fresh",
+      "prompt": "Copy this exact phrase and nothing else: amber-river-31415-silver-maple-2718"
+    },
+    {
+      "id": "strict-json-fresh",
+      "prompt": "Return exactly this JSON object and nothing else: {\"phase\":\"rollover\",\"exact\":true,\"value\":58}"
+    },
+    {
+      "id": "single-word-fresh",
+      "prompt": "Reply with exactly this single word and no punctuation: topaz"
+    },
+    {
+      "id": "rollover-list",
+      "prompt": "Output the decimal integers from 0 upward, separated by one space, with no punctuation or other text. Continue until the response limit stops you."
+    }
+  ]
+}

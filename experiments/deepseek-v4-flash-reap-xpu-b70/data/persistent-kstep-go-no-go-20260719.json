@@ -1,0 +1,68 @@
+{
+  "date": "2026-07-19",
+  "verdict": "NO-GO",
+  "reason": "The exact K=8 and K=16 paths recovered less than 0.5 ms/token versus the established 22.881408 ms/token baseline.",
+  "baseline": {
+    "established_ms_per_token": 22.881408,
+    "established_tokens_per_second": 43.7036,
+    "same_suite_k0_ms_per_token": 22.676825063215112,
+    "same_suite_k0_tokens_per_second": 44.09788395034787
+  },
+  "timing_metric": "median across five unique cache-zero 128-token requests of 1000 * post_ttft_s / (completion_tokens - 1)",
+  "rows": [
+    {
+      "k": 1,
+      "exact_token_ids": "804/804",
+      "ms_per_token": 23.761811299069866,
+      "tokens_per_second": 42.08433386722266,
+      "recovered_ms_per_token_vs_established": -0.8804032990698651
+    },
+    {
+      "k": 2,
+      "exact_token_ids": "804/804",
+      "ms_per_token": 23.12338899997041,
+      "tokens_per_second": 43.24625598787789,
+      "recovered_ms_per_token_vs_established": -0.24198099997040856
+    },
+    {
+      "k": 4,
+      "exact_token_ids": "804/804",
+      "ms_per_token": 23.002078118239066,
+      "tokens_per_second": 43.47433283460892,
+      "recovered_ms_per_token_vs_established": -0.12067011823906526
+    },
+    {
+      "k": 8,
+      "exact_token_ids": "804/804",
+      "ms_per_token": 22.722052905697552,
+      "tokens_per_second": 44.01010789607175,
+      "recovered_ms_per_token_vs_established": 0.1593550943024482
+    },
+    {
+      "k": 16,
+      "exact_token_ids": "804/804",
+      "ms_per_token": 22.68552676385899,
+      "tokens_per_second": 44.080968910677036,
+      "recovered_ms_per_token_vs_established": 0.19588123614100894
+    }
+  ],
+  "exactness": {
+    "prompt_matches_per_k": "10/10",
+    "token_matches_per_k": "804/804",
+    "designated_rollover_prompt_matches_per_k": "128/128",
+    "timing_suite_matches_per_k": "640/640",
+    "cached_tokens": 0,
+    "eos_cases_included": true,
+    "positions_28_and_58_included": true
+  },
+  "identity": {
+    "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "oracle_vllm_commit": "a681dbb2b4b19c2c5a964817095b5f8c1f27ff48",
+    "candidate_runtime_commit": "e9fbf7b2fca4d913f9ff6fbd20c2b6160d2d03ff",
+    "candidate_final_commit": "5a180e5be8306c09dc92890b4e7907a081c26ebc",
+    "xpu_kernel_commit": "6522849b02894273b1e779b3c115527b5cdf3756",
+    "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "literal_submission_limit": "The exact implementation removes the EngineCore/scheduler return but BreakableCUDAGraphCapture still replays graph and eager segments from Python, and compact TP argmax still uses a host-scheduled oneCCL pair all-gather. It is not one literal Level Zero submission.",
+  "localmaxxing_submitted": false
+}

@@ -66,6 +66,7 @@ def post_stream(
     text_parts: list[str] = []
     chunk_offsets: list[float] = []
     token_id_offsets: list[float] = []
+    token_ids: list[int] = []
     response_ids: list[str] = []
     content_delta_count = 0
     reasoning_delta_count = 0
@@ -91,6 +92,7 @@ def post_stream(
                 choice_token_ids = choice.get("token_ids")
                 if isinstance(choice_token_ids, list):
                     now = time.perf_counter()
+                    token_ids.extend(int(token_id) for token_id in choice_token_ids)
                     if first_text_at is None and choice_token_ids:
                         first_text_at = now
                         first_text_epoch_s = time.time()
@@ -149,6 +151,7 @@ def post_stream(
         "reasoning_delta_count": reasoning_delta_count,
         "chunk_offsets_s": chunk_offsets,
         "token_id_offsets_s": token_id_offsets,
+        "token_ids": token_ids,
         "usage": usage,
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
