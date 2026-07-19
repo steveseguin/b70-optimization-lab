@@ -88,6 +88,7 @@ def post(
     )
     return {
         "response_id": raw["id"],
+        "response_prompt_token_ids": raw.get("prompt_token_ids"),
         "elapsed_s": elapsed,
         "finish_reason": choice.get("finish_reason"),
         "usage": usage,
@@ -148,6 +149,11 @@ def main() -> int:
     prompts = load_jsonl(args.prompts)
     if not prompts:
         raise RuntimeError("prompt manifest is empty")
+    if args.arm_file is not None:
+        raise ValueError("teacher generation cannot arm feature capture")
+    for item in prompts:
+        if sha(item["prompt"]) != item["prompt_sha256"]:
+            raise RuntimeError(f"prompt hash mismatch: {item['prompt_id']}")
     if args.split in {"train", "dev"} and any(
         item["split"] != args.split for item in prompts
     ):
@@ -197,9 +203,6 @@ def main() -> int:
         args.split
     ]
     started = time.time()
-    if args.arm_file is not None:
-        args.arm_file.parent.mkdir(parents=True, exist_ok=True)
-        args.arm_file.touch(exist_ok=False)
     with args.output.open("a" if args.output.exists() else "x") as stream:
         request_index = len(prior_rows)
         while any(counts[name] < quotas[name] for name in quotas):
@@ -244,6 +247,18 @@ def main() -> int:
             completion_tokens = int(response["usage"].get("completion_tokens") or 0)
             if completion_tokens <= 0:
                 raise RuntimeError(f"no completion tokens for {request_id}")
+            if len(response["output_token_ids"]) != completion_tokens:
+                raise RuntimeError(f"output token count mismatch for {request_id}")
+            prompt_usage = int(response["usage"].get("prompt_tokens") or 0)
+            if len(prompt_token_ids) != prompt_usage:
+                raise RuntimeError(f"prompt token count mismatch for {request_id}")
+            response_prompt_ids = response["response_prompt_token_ids"]
+            if response_prompt_ids is not None and [
+                int(token_id) for token_id in response_prompt_ids
+            ] != prompt_token_ids:
+                raise RuntimeError(f"render/response prompt IDs differ for {request_id}")
+            if len(prompt_token_ids) + completion_tokens + 1 > 2048:
+                raise RuntimeError(f"trajectory exceeds replay context for {request_id}")
             counts[category] += completion_tokens
             row = {
                 "schema_version": "k160-eagle-capture-request-v1",
@@ -288,8 +303,6 @@ def main() -> int:
             indent=2,
         )
     )
-    if args.arm_file is not None:
-        args.arm_file.unlink()
     return 0
 
 

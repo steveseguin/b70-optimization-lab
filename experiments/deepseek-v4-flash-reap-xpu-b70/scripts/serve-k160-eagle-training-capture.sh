@@ -4,17 +4,26 @@ set -euo pipefail
 root=/home/steve/llm-optimizations
 serve="${root}/experiments/deepseek-v4-flash-reap-xpu-b70/scripts/serve-k160-tp4-smoke.sh"
 base_vllm_commit=264c7f2f7df21ddeeab32ecca0353133344f1ac9
-capture_vllm_commit=157eb4bc58e385eaaf4000cd71ce2c363decabf6
+capture_vllm_commit=0e85361b220887f98639e9836fb0ffdfe8cf9a53
 kernel_commit=31315673737d95da0f79179c8f755260ef02c1d6
 oneccl_commit=48fda4f0e074db005596d6899d5227d3f0316c12
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 
 export RUN_DIR="${RUN_DIR:-/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/k160-eagle-capture-${stamp}}"
-export VLLM_TREE="${VLLM_TREE:-/home/steve/src/deepseek-v4-vllm-record-264c7f2f7}"
-export VLLM_COMMIT="${VLLM_COMMIT:-${capture_vllm_commit}}"
-export KERNEL_TREE="${KERNEL_TREE:-/home/steve/src/deepseek-v4-xpu-kernels-record-313156737}"
-export KERNEL_COMMIT="${KERNEL_COMMIT:-${kernel_commit}}"
+export VLLM_TREE=/home/steve/src/deepseek-v4-vllm-record-264c7f2f7
+export VLLM_COMMIT="${capture_vllm_commit}"
+export KERNEL_TREE=/home/steve/src/deepseek-v4-xpu-kernels-record-313156737
+export KERNEL_COMMIT="${kernel_commit}"
+export MODEL_PATH=/mnt/fast-ai/llm-models/deepseek-v4-flash-xpu/k160-7c360e1cd4a5168099dbc54d16d929bf6df04990
 export PYTHONPATH="${VLLM_TREE}:${KERNEL_TREE}:${PYTHONPATH:-}"
+
+test "$(git -C "${VLLM_TREE}" rev-parse HEAD)" = "${capture_vllm_commit}"
+test "$(git -C "${KERNEL_TREE}" rev-parse HEAD)" = "${kernel_commit}"
+test "$(git -C /home/steve/src/oneccl-2021.17.2-b70-sizegate rev-parse HEAD)" = "${oneccl_commit}"
+if [[ -n "${VLLM_ADDITIONAL_ARGS:-}" ]]; then
+  printf 'VLLM_ADDITIONAL_ARGS is forbidden for exact EAGLE capture\n' >&2
+  exit 2
+fi
 
 export ONECCL_INSTALL_DIR=/home/steve/.venvs/deepseek-v4-xpu
 export ONECCL_LIB_DIR=/mnt/fast-ai/runtime/oneccl-2021.17.2-b70-wideepoch-48fda4f/lib
@@ -77,6 +86,7 @@ export VLLM_XPU_MXFP4_SMALL_M_N=128
 
 export VLLM_XPU_EAGLE_TRAINING_CAPTURE_SHARD_ROWS="${VLLM_XPU_EAGLE_TRAINING_CAPTURE_SHARD_ROWS:-4096}"
 if [[ -n "${VLLM_XPU_EAGLE_TRAINING_CAPTURE_DIR:-}" ]]; then
+  export VLLM_DISABLE_REQUEST_ID_RANDOMIZATION=1
   export VLLM_XPU_EAGLE_TRAINING_CAPTURE_NAMESPACE="${VLLM_XPU_EAGLE_TRAINING_CAPTURE_NAMESPACE:-eaglesmoke}"
   export VLLM_XPU_EAGLE_TRAINING_CAPTURE_ARM_FILE="${VLLM_XPU_EAGLE_TRAINING_CAPTURE_ARM_FILE:-${RUN_DIR}/capture.arm}"
 fi

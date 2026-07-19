@@ -54,6 +54,16 @@ def validate_rank(rank_dir: Path) -> dict[str, Any]:
             positions = tensors.get_tensor("position_id")
             request_keys = tensors.get_tensor("request_key")
         shard_rows = features.shape[0]
+        unique_request_keys = request_keys.unique()
+        if unique_request_keys.numel() != 1:
+            raise RuntimeError(f"capture shard spans multiple trajectories: {shard}")
+        if (
+            int(manifest["rows"]) != shard_rows
+            or int(manifest["request_key"]) != int(unique_request_keys[0])
+            or manifest.get("assistant_loss_mask") != "all_rows"
+            or manifest.get("reset_after_shard") is not True
+        ):
+            raise RuntimeError(f"capture transaction metadata mismatch: {shard}")
         if features.shape != (shard_rows, 3, 4096):
             raise RuntimeError(f"wrong feature shape: {shard}")
         if final_hidden.shape != (shard_rows, 4096):
@@ -128,13 +138,25 @@ def main() -> int:
     parser.add_argument("--capture-root", type=Path, required=True)
     parser.add_argument("--namespace", required=True)
     parser.add_argument("--requests", type=Path, required=True)
+    parser.add_argument("--replay-manifest", type=Path)
     parser.add_argument("--other-requests", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--compare-ranks", action="store_true")
+    parser.add_argument("--expected-ranks", type=int, default=0)
     args = parser.parse_args()
 
     namespace_dir = args.capture_root / args.namespace
     rank_dirs = sorted(namespace_dir.glob("rank-*"))
+    if not rank_dirs:
+        raise RuntimeError(f"no rank directories in {namespace_dir}")
+    if args.expected_ranks and len(rank_dirs) != args.expected_ranks:
+        raise RuntimeError(
+            f"expected {args.expected_ranks} rank directories, got {len(rank_dirs)}"
+        )
+    if args.expected_ranks:
+        expected_names = {f"rank-{rank:03d}" for rank in range(args.expected_ranks)}
+        if {path.name for path in rank_dirs} != expected_names:
+            raise RuntimeError("rank directory names are not the expected contiguous set")
     rank_results = [validate_rank(path) for path in rank_dirs]
     if args.compare_ranks:
         compare_ranks(rank_results)
@@ -143,13 +165,38 @@ def main() -> int:
         result.pop("_target_ids_by_request")
     requests = load_requests(args.requests)
     external_request_by_key = {int(row["request_key"]): row for row in requests}
-    if len(external_request_by_key) != len(requests):
+    if not args.replay_manifest and len(external_request_by_key) != len(requests):
         raise RuntimeError("request-key collision")
     captured_counts = rank_results[0]["request_counts"]
     captured_keys = list(map(int, captured_counts))
     request_by_key = external_request_by_key
     key_mapping_mode = "external-request-id-hash"
-    if set(captured_keys) - set(request_by_key):
+    if args.replay_manifest:
+        replay_rows = load_requests(args.replay_manifest)
+        if len(replay_rows) != len(requests):
+            raise RuntimeError("replay and trajectory manifest lengths differ")
+        request_by_key = {}
+        for index, (replay_row, trajectory) in enumerate(
+            zip(replay_rows, requests, strict=True)
+        ):
+            if (
+                int(replay_row["trajectory_index"]) != index
+                or replay_row["trajectory_request_id"] != trajectory["request_id"]
+            ):
+                raise RuntimeError("replay lineage does not match trajectories")
+            key = int(replay_row["request_key"])
+            if key in request_by_key:
+                raise RuntimeError("replay request-key collision")
+            request_by_key[key] = trajectory
+        missing_metadata = set(captured_keys) - set(request_by_key)
+        if missing_metadata:
+            raise RuntimeError(
+                f"captured request keys lack replay lineage: {missing_metadata}"
+            )
+        if set(request_by_key) != set(captured_keys):
+            raise RuntimeError("replay lineage and captured request keys differ")
+        key_mapping_mode = "exact-replay-response-id-hash"
+    elif set(captured_keys) - set(request_by_key):
         # vLLM randomizes the internal engine request ID after accepting the
         # external OpenAI request ID.  Under the required one-active-generation
         # capture contract, first-seen internal keys and request-manifest rows
@@ -189,6 +236,14 @@ def main() -> int:
         int(row["response"]["usage"].get("completion_tokens") or 0)
         for row in requests
     )
+    output_token_count = sum(
+        len(row["response"].get("output_token_ids") or []) for row in requests
+    )
+    if total_rows != response_tokens or total_rows != output_token_count:
+        raise RuntimeError(
+            "captured rows, completion-token usage, and output IDs differ: "
+            f"{total_rows}, {response_tokens}, {output_token_count}"
+        )
     output_token_ids_available = all(
         bool(row["response"].get("output_token_ids")) for row in requests
     )
@@ -199,6 +254,7 @@ def main() -> int:
         "rank_results": rank_results,
         "captured_rows": total_rows,
         "response_completion_tokens": response_tokens,
+        "response_output_token_ids": output_token_count,
         "category_rows": dict(category_rows),
         "category_fractions": {
             name: count / total_rows for name, count in category_rows.items()

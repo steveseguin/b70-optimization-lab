@@ -1,22 +1,22 @@
-From 0e85361b220887f98639e9836fb0ffdfe8cf9a53 Mon Sep 17 00:00:00 2001
+From 157eb4bc58e385eaaf4000cd71ce2c363decabf6 Mon Sep 17 00:00:00 2001
 From: Codex Agent <codex-agent@users.noreply.github.com>
 Date: Sun, 19 Jul 2026 16:54:24 -0400
 Subject: [PATCH] xpu: add guarded K160 EAGLE training capture
 
 ---
- ...test_deepseek_v4_eagle_training_capture.py |  72 +++++
- .../deepseek_v4/xpu/eagle_training_capture.py | 305 ++++++++++++++++++
+ ...test_deepseek_v4_eagle_training_capture.py |  56 ++++
+ .../deepseek_v4/xpu/eagle_training_capture.py | 280 ++++++++++++++++++
  vllm/v1/worker/gpu_model_runner.py            |   7 +
- 3 files changed, 384 insertions(+)
+ 3 files changed, 343 insertions(+)
  create mode 100644 tests/models/test_deepseek_v4_eagle_training_capture.py
  create mode 100644 vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 
 diff --git a/tests/models/test_deepseek_v4_eagle_training_capture.py b/tests/models/test_deepseek_v4_eagle_training_capture.py
 new file mode 100644
-index 000000000..df0e01932
+index 000000000..8918f59c3
 --- /dev/null
 +++ b/tests/models/test_deepseek_v4_eagle_training_capture.py
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,56 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -60,8 +60,6 @@ index 000000000..df0e01932
 +            "schema_version": "k160-eagle-training-capture-v1",
 +            "feature_boundary_ids": "4,22,43",
 +            "feature_reduction": "post_mhc_mean_stream",
-+            "assistant_loss_mask": "all_rows",
-+            "reset_after_shard": "true",
 +        }
 +        assert torch.equal(tensors.get_tensor("features_bf16")[:, 0], aux[0])
 +        assert torch.equal(
@@ -74,27 +72,13 @@ index 000000000..df0e01932
 +    manifest = json.loads(shard.with_suffix(".json").read_text())
 +    assert manifest["rows"] == 2
 +    assert manifest["feature_boundary_ids"] == [4, 22, 43]
-+    assert manifest["assistant_loss_mask"] == "all_rows"
-+    assert manifest["reset_after_shard"] is True
-+    assert manifest["request_key"] == 7
 +    assert len(manifest["sha256"]) == 64
-+
-+    resumed = EagleTrainingCaptureWriter(tmp_path, shard_rows=2)
-+    resumed.append(
-+        aux_hidden_states=aux,
-+        target_final_hidden=final_hidden,
-+        input_token_ids=torch.tensor([12, 13]),
-+        next_target_token_ids=torch.tensor([13, 14]),
-+        position_ids=torch.tensor([102, 103]),
-+        request_keys=torch.tensor([8, 8]),
-+    )
-+    assert (tmp_path / "features-000001.safetensors").is_file()
 diff --git a/vllm/models/deepseek_v4/xpu/eagle_training_capture.py b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
 new file mode 100644
-index 000000000..e363b9ca9
+index 000000000..b627ceeb5
 --- /dev/null
 +++ b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
-@@ -0,0 +1,305 @@
+@@ -0,0 +1,280 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +
@@ -158,20 +142,8 @@ index 000000000..e363b9ca9
 +        if shard_rows <= 0:
 +            raise ValueError("capture shard rows must be positive")
 +        output_dir.mkdir(parents=True, exist_ok=True)
-+        incomplete = list(output_dir.glob("*.incomplete"))
-+        if incomplete:
-+            raise RuntimeError(f"incomplete capture shards require audit: {incomplete}")
-+        existing = sorted(output_dir.glob("features-*.safetensors"))
-+        for expected_index, shard in enumerate(existing):
-+            expected_name = f"features-{expected_index:06d}.safetensors"
-+            if shard.name != expected_name:
-+                raise RuntimeError(f"non-contiguous capture shard sequence: {shard}")
-+            manifest_path = shard.with_suffix(".json")
-+            if not manifest_path.is_file():
-+                raise RuntimeError(f"capture shard lacks manifest: {shard}")
-+            manifest = json.loads(manifest_path.read_text())
-+            if manifest.get("sha256") != _sha256(shard):
-+                raise RuntimeError(f"existing capture shard checksum mismatch: {shard}")
++        if next(output_dir.glob("features-*.safetensors"), None) is not None:
++            raise FileExistsError(f"capture directory is not empty: {output_dir}")
 +        self.output_dir = output_dir
 +        self.shard_rows = shard_rows
 +        self._lock = threading.Lock()
@@ -184,7 +156,7 @@ index 000000000..e363b9ca9
 +            "request_key": [],
 +        }
 +        self._rows = 0
-+        self._next_shard = len(existing)
++        self._next_shard = 0
 +
 +    def append(
 +        self,
@@ -254,9 +226,6 @@ index 000000000..e363b9ca9
 +            name: torch.cat(parts, dim=0)
 +            for name, parts in self._buffers.items()
 +        }
-+        request_keys = tensors["request_key"].unique()
-+        if request_keys.numel() != 1:
-+            raise RuntimeError("each durable capture shard must contain one trajectory")
 +        shard_name = f"features-{self._next_shard:06d}.safetensors"
 +        final_path = self.output_dir / shard_name
 +        temporary_path = final_path.with_suffix(".safetensors.incomplete")
@@ -267,8 +236,6 @@ index 000000000..e363b9ca9
 +                "schema_version": "k160-eagle-training-capture-v1",
 +                "feature_boundary_ids": ",".join(map(str, FEATURE_BOUNDARIES)),
 +                "feature_reduction": "post_mhc_mean_stream",
-+                "assistant_loss_mask": "all_rows",
-+                "reset_after_shard": "true",
 +            },
 +        )
 +        temporary_path.replace(final_path)
@@ -280,9 +247,6 @@ index 000000000..e363b9ca9
 +            "rows": self._rows,
 +            "feature_boundary_ids": list(FEATURE_BOUNDARIES),
 +            "feature_reduction": "post_mhc_mean_stream",
-+            "assistant_loss_mask": "all_rows",
-+            "reset_after_shard": True,
-+            "request_key": int(request_keys[0]),
 +            "tensors": {
 +                name: {
 +                    "dtype": str(tensor.dtype),
@@ -387,12 +351,7 @@ index 000000000..e363b9ca9
 +
 +            rank = get_tensor_model_parallel_rank()
 +            if rank == 0 or capture_all_ranks():
-+                writer = get_writer(rank)
-+                writer.append(**pending)
-+                # Each replay request is a complete trajectory transaction.
-+                # Commit it durably before returning the HTTP response so the
-+                # replay cursor and shard boundary can be reconciled exactly.
-+                writer.flush()
++                get_writer(rank).append(**pending)
 +        return result
 +
 +    runner._setup_eagle3_aux_hidden_state_outputs = MethodType(  # noqa: SLF001
@@ -425,5 +384,3 @@ index ecf8d8ec0..41e3b9734 100644
          # Set up speculative decoding.
          # NOTE(Jiayi): currently we put the entire draft model on
          # the last PP rank. This is not ideal if there are many
---
-2.43.0
