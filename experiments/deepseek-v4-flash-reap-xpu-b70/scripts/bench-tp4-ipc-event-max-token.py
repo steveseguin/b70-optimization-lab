@@ -15,7 +15,6 @@ import errno
 import json
 import multiprocessing as mp
 import os
-from multiprocessing.reduction import recv_handle, send_handle
 from pathlib import Path
 import statistics
 import time
@@ -29,8 +28,7 @@ SLOTS = 3
 HIDDEN = 4096
 WORKSPACE_BYTES = CHANNELS * SLOTS * HIDDEN * 2 + CHANNELS * SLOTS * WORLD * 4
 EXTENSION = Path(
-    "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/build/temp/"
-    "_xpu_C.abi3.so"
+    "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/vllm_xpu_kernels/_xpu_C.abi3.so"
 )
 
 
@@ -66,6 +64,7 @@ def close_if_owned(fd: int) -> None:
 def worker(
     rank: int,
     conn,
+    broker_socket: str,
     init_method: str,
     warmups: int,
     iterations: int,
@@ -75,8 +74,8 @@ def worker(
 
     import torch
     import torch.distributed as dist
+    import vllm_xpu_kernels._xpu_C  # noqa: F401
 
-    torch.ops.load_library(str(EXTENSION))
     torch.xpu.set_device(rank)
     device = f"xpu:{rank}"
     anchor = torch.empty(1, dtype=torch.uint8, device=device)
@@ -84,46 +83,45 @@ def worker(
     if workspace.numel() != WORKSPACE_BYTES:
         raise RuntimeError(f"unexpected workspace size {workspace.numel()}")
 
-    memory_fd, allocation_offset, memory_words = (
-        torch.ops._xpu_C.tp4_ipc_export_fd(workspace)
+    memory_fd, allocation_offset, memory_words = torch.ops._xpu_C.tp4_ipc_export_fd(
+        workspace
     )
     event_count = (warmups + iterations) * STEPS
     event_fd, event_words = torch.ops._xpu_C.tp4_ipc_event_pool_create(
         anchor, event_count
     )
-    conn.send(
-        (
-            rank,
-            os.getpid(),
-            allocation_offset,
-            memory_words,
-            event_words,
-        )
+    from vllm.distributed.device_communicators.xpu_ipc_broker import (
+        broker_tp4_ipc_handles,
     )
-    send_handle(conn, memory_fd, os.getppid())
-    send_handle(conn, event_fd, os.getppid())
 
-    peer_metadata = conn.recv()
+    peers = broker_tp4_ipc_handles(
+        socket_path=broker_socket,
+        rank=rank,
+        world_size=WORLD,
+        memory_fd=memory_fd,
+        allocation_offset=allocation_offset,
+        memory_words=memory_words,
+        event_fd=event_fd,
+        event_words=event_words,
+    )
     peer_memory_fds: list[int] = []
     peer_event_fds: list[int] = []
-    for peer_rank, peer_offset, peer_memory_words, peer_event_words in peer_metadata:
-        peer_memory_fd = recv_handle(conn)
-        peer_event_fd = recv_handle(conn)
+    for peer in peers:
         torch.ops._xpu_C.tp4_ipc_register_fd(
             workspace,
-            peer_rank,
-            peer_memory_fd,
-            peer_offset,
-            peer_memory_words,
+            peer["rank"],
+            peer["memory_fd"],
+            peer["allocation_offset"],
+            peer["memory_words"],
         )
         torch.ops._xpu_C.tp4_ipc_event_pool_register(
             anchor,
-            peer_rank,
-            peer_event_fd,
-            peer_event_words,
+            peer["rank"],
+            peer["event_fd"],
+            peer["event_words"],
         )
-        peer_memory_fds.append(peer_memory_fd)
-        peer_event_fds.append(peer_event_fd)
+        peer_memory_fds.append(peer["memory_fd"])
+        peer_event_fds.append(peer["event_fd"])
 
     dist.init_process_group(
         "xccl",
@@ -136,8 +134,7 @@ def worker(
         torch.empty(2, dtype=torch.float32, device=device) for _ in range(STEPS)
     ]
     gathered = [
-        torch.empty(WORLD, 2, dtype=torch.float32, device=device)
-        for _ in range(STEPS)
+        torch.empty(WORLD, 2, dtype=torch.float32, device=device) for _ in range(STEPS)
     ]
     reference_tokens = [
         torch.empty(1, dtype=torch.int64, device=device) for _ in range(STEPS)
@@ -259,51 +256,26 @@ def main() -> int:
     context = mp.get_context("spawn")
     parent_connections = []
     children = []
+    broker_socket = f"/tmp/deepseek-v4-ipc-event-gate-{os.getpid()}.sock"
     port = 30570 + (os.getpid() % 1000)
     init_method = f"tcp://127.0.0.1:{port}"
     for rank in range(WORLD):
         parent, child = context.Pipe(duplex=True)
         process = context.Process(
             target=worker,
-            args=(rank, child, init_method, args.warmups, args.iterations),
+            args=(
+                rank,
+                child,
+                broker_socket,
+                init_method,
+                args.warmups,
+                args.iterations,
+            ),
         )
         process.start()
         child.close()
         parent_connections.append(parent)
         children.append(process)
-
-    exports = []
-    for connection in parent_connections:
-        rank, child_pid, offset, memory_words, event_words = connection.recv()
-        memory_fd = recv_handle(connection)
-        event_fd = recv_handle(connection)
-        exports.append(
-            (
-                rank,
-                child_pid,
-                offset,
-                memory_fd,
-                memory_words,
-                event_fd,
-                event_words,
-            )
-        )
-
-    for destination, connection in enumerate(parent_connections):
-        peers = [
-            (rank, offset, memory_words, event_words)
-            for rank, _, offset, _, memory_words, _, event_words in exports
-            if rank != destination
-        ]
-        connection.send(peers)
-        destination_pid = exports[destination][1]
-        for rank, _, _, memory_fd, _, event_fd, _ in exports:
-            if rank != destination:
-                send_handle(connection, memory_fd, destination_pid)
-                send_handle(connection, event_fd, destination_pid)
-    for _, _, _, memory_fd, _, event_fd, _ in exports:
-        os.close(memory_fd)
-        os.close(event_fd)
 
     for connection in parent_connections:
         message, _ = connection.recv()
@@ -321,9 +293,7 @@ def main() -> int:
             raise RuntimeError(f"worker {process.pid} exited {process.exitcode}")
 
     slowest_control = max(row["control_seven_steps"]["median_us"] for row in ranks)
-    slowest_candidate = max(
-        row["candidate_seven_steps"]["median_us"] for row in ranks
-    )
+    slowest_candidate = max(row["candidate_seven_steps"]["median_us"] for row in ranks)
     result = {
         "schema_version": 1,
         "classification": "deepseek_v4_tp4_ipc_event_max_token_gate",

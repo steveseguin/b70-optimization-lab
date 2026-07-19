@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-18",
+  "classification": "exact_component_endpoint_rejected",
+  "source": {
+    "vllm": "80f1ad820706103d11f095c8a97e42c624c8bad3",
+    "xpu_kernels": "585a4bc105f73407414c40461adcc60ac6311eb0",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12"
+  },
+  "w2_dpas": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark-markov-w2-dpas-20260718Tresume/summary.json",
+    "exact_bf16_outputs": true,
+    "exact_argmax_tokens": true,
+    "best_tiles_per_item": 2,
+    "reference_median_us": 64.8715,
+    "candidate_median_us": 38.642,
+    "median_speedup": 1.678782154132809
+  },
+  "combined_component": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark-markov7-direct-anchor-20260718Tresume/summary.json",
+    "exact_all_ranks": true,
+    "control_median_us_slowest_rank": 1520.238,
+    "candidate_median_us_slowest_rank": 526.0975,
+    "saved_us": 994.1405,
+    "predeclared_gate_us": 1000.0,
+    "gate_passed": false
+  },
+  "int32_anchor": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark-markov7-int32-anchor-20260718Tresume/summary.json",
+    "exact_all_ranks": true
+  },
+  "endpoint": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-ipc-bundle-dpas-candidate-20260718T2040Z",
+    "median_tok_s_1_100_after_ttft": 67.22772277247869,
+    "p10_tok_s_1_100_after_ttft": 56.6421333263243,
+    "mean_tok_s_1_100_after_ttft": 65.77739611502624,
+    "median_ttft_ms": 393.39423802448437,
+    "cached_tokens_all_zero": true,
+    "realistic_requests": 12,
+    "exact_canaries_passed": 12,
+    "exact_canaries_total": 12,
+    "record_tok_s": 80.820052,
+    "record_delta_tok_s": -13.59232922752131,
+    "promoted": false
+  },
+  "failed_integration": {
+    "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-ipc-bundle-dpas-candidate-20260718T2030Z",
+    "cause": "vLLM anchor is int32 while initial native contract required int64",
+    "resolution": "native DPAS loader accepts int32 anchors and int64 generated tokens"
+  },
+  "localmaxxing_submitted": false,
+  "next": "delete collective/device work without a new cross-GPU synchronization boundary"
+}

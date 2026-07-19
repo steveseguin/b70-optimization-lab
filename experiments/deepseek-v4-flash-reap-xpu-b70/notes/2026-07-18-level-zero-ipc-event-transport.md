@@ -2,7 +2,7 @@
 
 Date: **2026-07-18**
 
-Status: **exact primitive passed; sampler integration required**
+Status: **exact primitive passed; sampler integration endpoint rejected**
 
 ## Outcome
 
@@ -81,3 +81,13 @@ startup and replace the seven full-bias gathers with local winner reduction
 plus exact event-pair exchange. Then capture the entire fixed M7 transaction
 and compare it against the current sampler with ordered exact canaries. Only a
 strict endpoint record is eligible for LocalMaxxing.
+
+## Integration closure
+
+The requested bundle was subsequently implemented, including local base
+logits, exact BF16 Xe2 DPAS W2, direct W1 lookup, one native M7 call, and final
+draft-buffer writes. The exact component saved 0.994 ms, but the strict
+endpoint reached only 67.227723 tok/s versus the 80.820052 record. See
+`2026-07-18-dspark-m7-ipc-dpas-bundle-closure.md`. This supersedes the “next
+gate” above: ordinary one-shot event integration is rejected unless a reusable
+fixed-address submission architecture removes the eager synchronization cost.
