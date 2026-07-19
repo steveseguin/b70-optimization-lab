@@ -208,6 +208,7 @@ def build_split(split: str, count: int, seed: int) -> list[dict[str, object]]:
     for category, category_count in counts.items():
         for index in range(category_count):
             prompt = BUILDERS[category](rng, index)
+            prompt += f"\nImmutable task nonce: {split}-{category}-{index:05d}-{seed}."
             prompt_hash = sha(prompt)
             rows.append(
                 {
