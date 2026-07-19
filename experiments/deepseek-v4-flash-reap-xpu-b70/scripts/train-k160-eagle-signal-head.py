@@ -144,7 +144,7 @@ class K160EagleSignalHead(nn.Module):
 
     def forward(
         self, batch: dict[str, torch.Tensor]
-    ) -> tuple[torch.Tensor, dict[str, float]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         return teacher_forced_loss(self, batch)
 
 
@@ -278,12 +278,12 @@ POSITION_WEIGHTS = POSITION_WEIGHTS / POSITION_WEIGHTS.mean()
 def teacher_forced_loss(
     model: K160EagleSignalHead,
     batch: dict[str, torch.Tensor],
-) -> tuple[torch.Tensor, dict[str, float]]:
+) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     state = model.fused_feature(batch["features"])
     sequence: list[torch.Tensor] = []
     total = torch.zeros((), device=state.device)
-    ce_value = 0.0
-    feature_value = 0.0
+    ce_value = torch.zeros((), device=state.device)
+    feature_value = torch.zeros((), device=state.device)
     weights = POSITION_WEIGHTS.to(state.device)
     for position in range(7):
         state, logits, sequence = model.step(
@@ -295,8 +295,8 @@ def teacher_forced_loss(
             projected, batch["target_final"][:, position]
         )
         total = total + weights[position] * (ce + feature)
-        ce_value += float(ce.detach())
-        feature_value += float(feature.detach())
+        ce_value = ce_value + ce.detach()
+        feature_value = feature_value + feature.detach()
     return total / 7, {"ce": ce_value / 7, "feature": feature_value / 7}
 
 
@@ -355,9 +355,9 @@ def train(args: argparse.Namespace) -> int:
     started = time.time()
     optimizer.zero_grad(set_to_none=True)
     for step in range(args.steps):
-        total_value = 0.0
-        ce_value = 0.0
-        feature_value = 0.0
+        total_value = torch.zeros((), device=device)
+        ce_value = torch.zeros((), device=device)
+        feature_value = torch.zeros((), device=device)
         for accumulation in range(args.gradient_accumulation):
             batch = move_batch(stream.next_batch(), device)
             sync_context = contextlib.nullcontext()
@@ -367,7 +367,7 @@ def train(args: argparse.Namespace) -> int:
                 loss, components = model_for_train(batch)
                 loss = loss / args.gradient_accumulation
             loss.backward()
-            total_value += float(loss.detach())
+            total_value = total_value + loss.detach()
             ce_value += components["ce"] / args.gradient_accumulation
             feature_value += components["feature"] / args.gradient_accumulation
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -379,9 +379,9 @@ def train(args: argparse.Namespace) -> int:
         if rank == 0:
             row = {
                 "step": step + 1,
-                "loss": total_value,
-                "ce": ce_value,
-                "feature_regularization": feature_value,
+                "loss": float(total_value),
+                "ce": float(ce_value),
+                "feature_regularization": float(feature_value),
                 "learning_rate": lr,
                 "gradient_norm": float(grad_norm),
                 "elapsed_s": time.time() - started,
