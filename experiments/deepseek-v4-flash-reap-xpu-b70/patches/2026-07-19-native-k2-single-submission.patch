@@ -1,0 +1,200 @@
+From 50e6a21116a24853ccae065caeefc843435ded05 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 19 Jul 2026 13:39:06 -0400
+Subject: [PATCH] xpu: add guarded native K2 submission proof
+
+---
+ .../model_executor/layers/logits_processor.py | 25 +++++-
+ vllm/v1/worker/gpu_model_runner.py            | 84 +++++++++++++++++--
+ 2 files changed, 100 insertions(+), 9 deletions(-)
+
+diff --git a/vllm/model_executor/layers/logits_processor.py b/vllm/model_executor/layers/logits_processor.py
+index eb5b1082c..bea2386e3 100644
+--- a/vllm/model_executor/layers/logits_processor.py
++++ b/vllm/model_executor/layers/logits_processor.py
+@@ -2,13 +2,17 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """A layer that compute logits from hidden_stats."""
+
++import os
++
+ import torch
+ import torch.nn.functional as F
+
+ from vllm.config import get_current_vllm_config
+ from vllm.distributed import (
++    get_tensor_model_parallel_rank,
+     get_tensor_model_parallel_world_size,
+     tensor_model_parallel_all_gather,
++    tensor_model_parallel_all_reduce,
+     tensor_model_parallel_gather,
+ )
+ from vllm.model_executor.custom_op import PluggableLayer
+@@ -190,11 +194,28 @@ class LogitsProcessor(PluggableLayer):
+         if tp_size == 1:
+             return global_indices
+
+-        # All-gather (value, index) pairs, then reduce to global argmax.
+-        # Use float32 to avoid bf16 precision loss on large vocab indices.
++        # The bounded native-submit proof must keep winner selection inside
++        # the captured device transaction.  Build a fixed TP pair bank and
++        # SUM it: because every rank owns one disjoint row, this is exactly an
++        # all-gather while staying on the graph-recordable reduction path.
++        # Default behavior remains the canonical compact all-gather below.
+         local_pair = torch.stack(
+             [local_max_vals.float(), global_indices.float()], dim=-1
+         )
++        if os.environ.get("VLLM_XPU_NATIVE_K2_SINGLE_SUBMISSION", "0") == "1":
++            pair_bank = torch.zeros(
++                (*local_pair.shape[:-1], tp_size, 2),
++                dtype=torch.float32,
++                device=local_pair.device,
++            )
++            pair_bank[..., get_tensor_model_parallel_rank(), :].copy_(local_pair)
++            gathered_bank = tensor_model_parallel_all_reduce(pair_bank)
++            max_rank_idx = gathered_bank[..., 0].argmax(dim=-1, keepdim=True)
++            top_tokens = gathered_bank[..., 1].gather(dim=-1, index=max_rank_idx)
++            return top_tokens.squeeze(-1).to(torch.int64)
++
++        # All-gather (value, index) pairs, then reduce to global argmax.
++        # Use float32 to avoid bf16 precision loss on large vocab indices.
+         # [batch, 2] -> [batch, 2 * tp_size]
+         gathered = tensor_model_parallel_all_gather(local_pair, dim=-1)
+         # [batch, tp_size, 2] where [:, :, 0]=values, [:, :, 1]=indices
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index bcab76af1..be25c1285 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -455,10 +455,14 @@ class _PersistentKStepDecode:
+     still keeping all K steps inside one EngineCore/worker transaction.
+     """
+
+-    def __init__(self, runner: "GPUModelRunner") -> None:
++    def __init__(
++        self, runner: "GPUModelRunner", *, use_raw_model_forward: bool = False
++    ) -> None:
+         self.runner = runner
+         self.raw_model = runner.get_model()
+-        self.model_forward = runner._model_forward
++        self.model_forward = (
++            self.raw_model if use_raw_model_forward else runner._model_forward
++        )
+
+     def __call__(
+         self,
+@@ -515,6 +519,59 @@ class _PersistentKStepDecode:
+         return hidden_states, token_ids
+
+
++class _NativeK2SingleSubmission:
++    """Guarded live-state capture of one fixed-geometry K=2 transaction.
++
++    This is deliberately a bounded proof, not a production decoder.  The
++    first eligible live decode captures the raw two-token transaction using
++    the real request's fixed-address attention/KV metadata.  Later calls
++    replay one device graph.  K=2 bounds both the correctness surface and the
++    amount of decoder work captured while exposing one full inter-token host
++    scheduling interval to the measurement.
++    """
++
++    def __init__(self, runner: "GPUModelRunner") -> None:
++        self.runner = runner
++        self.transaction = _PersistentKStepDecode(runner, use_raw_model_forward=True)
++        self.graph = CUDAGraphWrapper(
++            self.transaction,
++            runner.vllm_config,
++            runtime_mode=CUDAGraphMode.FULL,
++        )
++        self.capture_complete = False
++
++    def __call__(self, *args: Any, **kwargs: Any) -> Any:
++        initial_context = get_forward_context()
++        with set_forward_context(
++            initial_context.attn_metadata,
++            self.runner.vllm_config,
++            num_tokens=1,
++            num_tokens_across_dp=None,
++            cudagraph_runtime_mode=CUDAGraphMode.FULL,
++            batch_descriptor=initial_context.batch_descriptor,
++            ubatch_slices=None,
++            slot_mapping=initial_context.slot_mapping,
++        ):
++            if self.capture_complete:
++                return self.graph(*args, **kwargs)
++
++            # Normal model warmup has intentionally disabled lazy capture.
++            # Re-enable it only for this guarded live-state transaction, and
++            # establish the TP graph-capture stream around every rank.
++            set_cudagraph_capturing_enabled(True)
++            try:
++                with graph_capture(device=self.runner.device):
++                    output = self.graph(*args, **kwargs)
++            finally:
++                set_cudagraph_capturing_enabled(False)
++            self.capture_complete = True
++            logger.warning_once(
++                "EXPERIMENTAL native K=2 transaction captured from live "
++                "attention/KV state; subsequent turns use one graph replay"
++            )
++            return output
++
++
+ class GPUModelRunner(
+     LoRAModelRunnerMixin, KVConnectorModelRunnerMixin, ECConnectorModelRunnerMixin
+ ):
+@@ -633,6 +690,14 @@ class GPUModelRunner(
+                 raise ValueError(
+                     "persistent K-step decode requires breakable CUDA graphs"
+                 )
++        self.native_k2_single_submission = (
++            os.environ.get("VLLM_XPU_NATIVE_K2_SINGLE_SUBMISSION", "0") == "1"
++        )
++        if self.native_k2_single_submission and self.persistent_decode_k != 2:
++            raise ValueError(
++                "VLLM_XPU_NATIVE_K2_SINGLE_SUBMISSION requires fixed "
++                "VLLM_XPU_PERSISTENT_KSTEP_DECODE=2"
++            )
+
+         # Sampler
+         self.sampler = Sampler(
+@@ -864,7 +929,9 @@ class GPUModelRunner(
+             if self.persistent_decode_k
+             else None
+         )
+-        self.persistent_decode_graph: _PersistentKStepDecode | None = None
++        self.persistent_decode_graph: (
++            _PersistentKStepDecode | _NativeK2SingleSubmission | None
++        ) = None
+         self.query_start_loc = self._make_buffer(
+             self.max_num_reqs + 1, dtype=torch.int32
+         )
+@@ -4264,8 +4331,7 @@ class GPUModelRunner(
+             "penalties": not metadata.no_penalties,
+             "allowed_ids": metadata.allowed_token_ids_mask is not None,
+             "bad_words": bool(metadata.bad_words_token_ids),
+-            "thinking_budget": thinking is not None
+-            and thinking.has_tracked_requests(),
++            "thinking_budget": thinking is not None and thinking.has_tracked_requests(),
+             "spec_tokens": bool(scheduler_output.scheduled_spec_decode_tokens),
+             "structured": scheduler_output.has_structured_output_requests,
+             "discard": self._is_all_reqs_chunked_prefill(),
+@@ -5626,11 +5692,15 @@ class GPUModelRunner(
+                 raise ValueError(
+                     "persistent K-step decode requires the sharded greedy model op"
+                 )
+-            self.persistent_decode_graph = _PersistentKStepDecode(self)
++            if self.native_k2_single_submission:
++                self.persistent_decode_graph = _NativeK2SingleSubmission(self)
++            else:
++                self.persistent_decode_graph = _PersistentKStepDecode(self)
+             logger.warning_once(
+                 "EXPERIMENTAL persistent K-step decode enabled: K=%d; "
+-                "default remains off",
++                "native_single_submission=%s; default remains off",
+                 self.persistent_decode_k,
++                self.native_k2_single_submission,
+             )
+
+         get_offloader().post_init()
+--
+2.43.0

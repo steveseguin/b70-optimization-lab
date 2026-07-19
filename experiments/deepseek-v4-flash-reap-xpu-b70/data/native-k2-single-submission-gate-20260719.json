@@ -1,0 +1,126 @@
+{
+  "date": "2026-07-19",
+  "verdict": "CONTINUE",
+  "scope": "Bounded native K=2 fixed-geometry nonspeculative proof; no full decoder build, no LocalMaxxing submission, no record claim.",
+  "kill_gate": {
+    "required_recovery_ms_per_token": 0.5,
+    "required_candidate_ms_per_token_approx": 22.38,
+    "passed": true
+  },
+  "timing_metric": "Median across five unique cache-zero 128-token requests of 1000 * post_ttft_s / (completion_tokens - 1).",
+  "timing": {
+    "same_suite_k0_control": {
+      "ms_per_token": 22.676825063215112,
+      "tokens_per_second": 44.09788395034787,
+      "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/persistent-kstep-k0-timing-20260719/timing.json"
+    },
+    "bounded_native_k2_primary": {
+      "ms_per_token": 21.751224905285458,
+      "tokens_per_second": 45.974422330440994,
+      "tokens_1_100_after_ttft_median_tokens_per_second": 47.101561824503705,
+      "recovered_ms_per_token_vs_same_suite_k0": 0.9256001579296544,
+      "recovered_ms_per_token_vs_established_22_881408": 1.1301830947145426,
+      "exact_timing_tokens": "640/640",
+      "cached_tokens": [0, 0, 0, 0, 0],
+      "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-k2-submit-proof-20260719T173926Z/timing.json",
+      "sha256": "9f9a2d69a63d47c6891e1ef0c41bc83d5ca0b71ec392bc4763cbde737708ea44"
+    },
+    "post_profiler_repeated_prompt_support_only": {
+      "ms_per_token": 20.880459700564405,
+      "tokens_per_second": 47.89166590872373,
+      "reason_not_primary": "The timing prompts had already been used before and the profiler run intervened. This row is support only, not a gate or record result.",
+      "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-k2-submit-proof-final-20260719T175000Z/timing-final.json"
+    }
+  },
+  "submission_instrumentation": {
+    "definition": {
+      "literal_submit": "zeCommandListImmediateAppendCommandListsExp plus zeCommandQueueExecuteCommandLists",
+      "effective_boundary": "literal submit plus direct immediate launch, memory-copy, signal-event, and wait-event appends",
+      "host_sync": "command-list, event, and fence host synchronizations"
+    },
+    "current_nonspec_per_rank_per_token": {
+      "literal_command_list_submit_calls": 1.0,
+      "direct_immediate_append_calls": 69.0,
+      "effective_submission_boundaries": 70.0,
+      "host_sync_calls": 10.0,
+      "event_query_polls": 5.0
+    },
+    "bounded_native_k2_per_rank_per_token": {
+      "literal_command_list_submit_calls": 0.5,
+      "direct_immediate_append_calls": 32.5,
+      "effective_submission_boundaries": 33.0,
+      "host_sync_calls": 4.0,
+      "event_query_polls_rank0": 2.5,
+      "event_query_polls_other_ranks": 2.0
+    },
+    "tp4_aggregate_per_token": {
+      "current_literal_submits": 4.0,
+      "current_effective_boundaries": 280.0,
+      "current_host_syncs": 40.0,
+      "candidate_literal_submits": 2.0,
+      "candidate_effective_boundaries": 132.0,
+      "candidate_host_syncs": 16.0
+    },
+    "candidate_reduction_percent": {
+      "effective_submission_boundaries": 52.857142857142854,
+      "host_sync_calls": 60.0
+    },
+    "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-k2-submit-proof-final-20260719T175000Z/submit-trace-summary.json",
+    "sha256": "7989a1bcbd839bc7b582edd993654eabc6d289f3fa1fd5549a1df89dadee045a"
+  },
+  "residual_3_435_ms_split": {
+    "worker_segment_iteration_and_unresolved_host_metadata_upper_bound_ms": 2.549344,
+    "level_zero_submit_and_sync_active_time_excluding_argmax_ms": 0.516502,
+    "attention_kv_metadata_and_device_bookkeeping_event_lower_bound_ms": 0.111741,
+    "host_scheduled_argmax_gather_inclusive_ms": 0.257413,
+    "total_ms": 3.435,
+    "qualification": "Only the Level Zero active time, argmax host scope, and device metadata events are directly separable in the valid graph-on PTI trace. The remainder is a conservative upper bound containing Python segment iteration, profiler-invisible host metadata production, and scheduler/queue gap; it is not claimed as pure Python time. Long event-host waits are device completion waits and are excluded from removable host API active time."
+  },
+  "exactness": {
+    "final_gate": {
+      "prompts": "5/5",
+      "token_ids": "165/165",
+      "rollover_prompt": "128/128",
+      "rollover_transactions_crossed": [28, 58],
+      "cached_tokens": [0, 0, 0, 0, 0],
+      "candidate_artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-k2-submit-proof-final-20260719T175000Z/exactness-candidate.json",
+      "candidate_sha256": "f1ee0a30fc39abb119397a6bce6fdb87c9941cae2bbffb68acb4be10aaa91b80",
+      "oracle_artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-k2-oracle-20260719T174500Z/exactness-oracle.json",
+      "oracle_sha256": "50791b2658c94c0686c4ae4831f1bdf255f09b3b9d9589d53c23343b07d92503"
+    },
+    "cold_capture_negative_result": {
+      "passed": false,
+      "detail": "The first live capture request compiled four Triton kernels inside capture and diverged at token index 2: 2/3 oracle-prefix token IDs matched, then the candidate emitted token 0 instead of EOS and continued. The next four requests, including rollover, were exact. An explicit out-of-suite capture warmup is therefore mandatory.",
+      "artifact": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/native-k2-submit-proof-20260719T173926Z/exactness.json"
+    }
+  },
+  "bounded_design": {
+    "k": 2,
+    "guard": "VLLM_XPU_NATIVE_K2_SINGLE_SUBMISSION=1",
+    "default_off": true,
+    "fixed_address_metadata": "The first real eligible request captures the raw K=2 transaction using live fixed-address attention/KV buffers; the second step advances device-resident positions, slot mappings, and attention metadata inside capture.",
+    "argmax": "Each TP rank writes one row in a compact float32 pair bank; graph-recordable SUM all-reduce reconstructs the bank and device argmax selects the canonical rank-order winner. No host all-gather is used in the captured transaction.",
+    "literal_limit": "One graph replay is submitted per K=2 worker turn, not per token. Host input/output bookkeeping outside the graph remains, so the proof reaches 33 effective boundaries/token rather than one."
+  },
+  "projected_full_decoder_ceiling": {
+    "empirical_k2_amortization_extrapolation": {
+      "ms_per_token": 20.825624747355803,
+      "tokens_per_second": 48.017767156155465,
+      "method": "Double the same-suite K=2 recovery as the K->infinity fixed per-turn amortization limit."
+    },
+    "theoretical_remove_entire_3_435_bucket_from_established_baseline": {
+      "ms_per_token": 19.446408,
+      "tokens_per_second": 51.42337854888162
+    },
+    "qualification": "Ceilings only; neither was built or measured."
+  },
+  "identity": {
+    "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "vllm_guarded_patch_commit": "50e6a21116a24853ccae065caeefc843435ded05",
+    "xpu_kernel_commit": "6522849b02894273b1e779b3c115527b5cdf3756",
+    "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+    "speculation": "off",
+    "k160_fixed": true,
+    "localmaxxing_submitted": false
+  }
+}
