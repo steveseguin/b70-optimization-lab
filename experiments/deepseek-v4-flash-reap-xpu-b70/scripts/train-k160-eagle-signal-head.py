@@ -444,6 +444,25 @@ def evaluate(args: argparse.Namespace) -> int:
     with args.request_manifest.open() as stream:
         request_rows = [json.loads(line) for line in stream if line.strip()]
     category_by_key = {int(row["request_key"]): row["category"] for row in request_rows}
+    captured_key_order: list[int] = []
+    seen_keys: set[int] = set()
+    for shard in shards:
+        with safe_open(shard, framework="pt", device="cpu") as tensors:
+            shard_keys = tensors.get_tensor("request_key")
+        for key in shard_keys.tolist():
+            key = int(key)
+            if key not in seen_keys:
+                seen_keys.add(key)
+                captured_key_order.append(key)
+    if set(captured_key_order) - set(category_by_key):
+        if len(captured_key_order) != len(request_rows):
+            raise RuntimeError(
+                "captured internal request count differs from DEV manifest"
+            )
+        category_by_key = {
+            key: row["category"]
+            for key, row in zip(captured_key_order, request_rows, strict=True)
+        }
     for shard in shards:
         with safe_open(shard, framework="pt", device="cpu") as tensors:
             data = {name: tensors.get_tensor(name) for name in tensors.keys()}
