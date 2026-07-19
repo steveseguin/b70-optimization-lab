@@ -1,0 +1,71 @@
+{
+  "suite_id": "deepseek-v4-flash-dspark7-draft-acceptance-dev-v1",
+  "version": 1,
+  "description": "DEV-only category mapping for the public continuity suite plus additional non-frozen prompts. This is not a promotion or held-out evaluation pack.",
+  "public_category_by_id": {
+    "incident-retrospective": "prose",
+    "code-review": "code",
+    "customer-email": "prose",
+    "sql-debugging": "code",
+    "release-plan": "prose",
+    "benchmark-analysis": "prose",
+    "architecture-tradeoff": "prose",
+    "bug-report-synthesis": "extraction",
+    "technical-guide": "prose",
+    "risk-register": "extraction",
+    "performance-hypotheses": "code",
+    "decision-memo": "prose"
+  },
+  "additional_prompts": [
+    {
+      "id": "dev-code-python-window",
+      "category": "code",
+      "prompt": "Implement a Python function rolling_unique_counts(events, window_seconds). Each event is a (timestamp, user_id) pair sorted by timestamp. Return the number of distinct users seen in the inclusive trailing window at every event. Explain the data structure, handle repeated users and equal timestamps correctly, and include three focused tests."
+    },
+    {
+      "id": "dev-code-cpp-ring",
+      "category": "code",
+      "prompt": "Review and repair this C++ ring-buffer idea: head and tail are atomic uint32_t counters, producers reserve with fetch_add, and consumers read a slot as soon as tail is less than head. Identify the publication race and wraparound hazards, then show a compact corrected design for one producer and one consumer with explicit memory orders."
+    },
+    {
+      "id": "dev-prose-policy",
+      "category": "prose",
+      "prompt": "Write a clear internal policy for deprecating a production API. Cover the announcement window, telemetry, customer exceptions, compatibility testing, staged enforcement, rollback ownership, and the evidence required before final removal. Use direct prose and explain why each safeguard exists."
+    },
+    {
+      "id": "dev-prose-explanation",
+      "category": "prose",
+      "prompt": "Explain to a technically curious manager why a faster model benchmark can still make an application feel slower. Connect time to first token, generation rate, queueing, batching, prompt length, tool calls, and tail latency in one coherent explanation with a short concrete example."
+    },
+    {
+      "id": "dev-math-mixture",
+      "category": "math",
+      "prompt": "A service handles 600 requests per minute. Sixty percent take 40 ms of GPU time, thirty percent take 90 ms, and ten percent take 250 ms. Compute the mean GPU time, total GPU-seconds demanded per minute, utilization of one GPU under this simplified model, and the minimum integer GPU count needed to keep utilization at or below 70%. Show each step."
+    },
+    {
+      "id": "dev-math-recurrence",
+      "category": "math",
+      "prompt": "Let a_1=3 and a_(n+1)=2a_n+n. Derive a closed form for a_n, verify it for n=1 and n=4, and compute the smallest n for which a_n exceeds 1000. Keep the derivation explicit rather than guessing from a table."
+    },
+    {
+      "id": "dev-extraction-incidents",
+      "category": "extraction",
+      "prompt": "Extract the following incident lines into a JSON array with fields id, service, severity, duration_minutes, and owner. Preserve null for unknown values and sort by id. Lines: INC-19 | search | SEV2 | 37m | Mira; INC-07 | billing | SEV1 | 1h12m | Chen; INC-23 | auth | SEV3 | duration unknown | owner unassigned; INC-11 | search | SEV2 | 44m | Osei. Return only JSON."
+    },
+    {
+      "id": "dev-extraction-releases",
+      "category": "extraction",
+      "prompt": "Convert these release notes into a Markdown table with columns component, version, date, breaking, and ticket: api 4.8.1 shipped 2026-05-02, nonbreaking, OPS-81; cli 2.0.0 shipped 2026-05-04, breaking, DEV-117; ui 9.3.2 shipped 2026-05-03, nonbreaking, WEB-42; agent 1.7.0 shipped 2026-05-06, breaking, AI-209. Sort by date and add no commentary."
+    },
+    {
+      "id": "dev-low-locality-ledger",
+      "category": "low-locality",
+      "prompt": "Copy this arbitrary low-locality sequence exactly once, preserving order, capitalization, hyphens, and spaces. Return only the sequence: zQ7-19 mav-804 K2p-661 rUx-035 Bn4-928 tE9-147 wLs-503 H6c-772 pJ1-286 Vf8-410 dA3-695 yN5-021 Cq0-839 gR7-154 Xb2-967 sM4-308 Lk9-746 eT6-582"
+    },
+    {
+      "id": "dev-low-locality-transform",
+      "category": "low-locality",
+      "prompt": "Reverse the order of these unrelated codes while preserving every character inside each code. Join the reversed codes with one space and return nothing else: Aq7-381 Zm2-904 pL8-117 Cx4-660 vN1-253 Hg9-742 rB5-086 Tj3-519 kW6-970 Ds0-348 Yf2-625 mQ8-193 Eo4-857 uK7-402 Gc1-769 nV5-024 Rz9-531 bH3-688"
+    }
+  ]
+}
