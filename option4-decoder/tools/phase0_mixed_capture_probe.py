@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import statistics
 import subprocess
 import sys
 import time
@@ -126,7 +127,9 @@ def changed_values(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=("eager", "graph"), required=True)
+    parser.add_argument(
+        "--mode", choices=("eager", "graph", "raw-lz"), required=True
+    )
     parser.add_argument("--parity-cases", type=int, default=40)
     parser.add_argument("--warmups", type=int, default=4)
     parser.add_argument("--seed", type=int, default=20260720)
@@ -135,6 +138,7 @@ def main() -> int:
     parser.add_argument("--session")
     parser.add_argument("--protected-pid", type=int)
     parser.add_argument("--native-build-dir", type=Path)
+    parser.add_argument("--overhead-replays", type=int, default=100)
     parser.add_argument(
         "--nested",
         action="store_true",
@@ -153,6 +157,14 @@ def main() -> int:
         raise RuntimeError("the promoted fused Triton selector must be explicitly 1")
     if os.environ.get("ZE_AFFINITY_MASK") is None:
         raise RuntimeError("ZE_AFFINITY_MASK must explicitly select the verified free card")
+    if args.mode == "raw-lz" and args.native_build_dir is None:
+        raise RuntimeError("--mode raw-lz requires --native-build-dir")
+    if args.mode == "raw-lz" and os.environ.get("ZE_ENABLE_TRACING_LAYER") != "1":
+        raise RuntimeError("--mode raw-lz requires ZE_ENABLE_TRACING_LAYER=1")
+    if args.mode == "raw-lz" and args.nested:
+        raise RuntimeError("--nested is not part of the raw Level Zero Phase 0b gate")
+    if args.overhead_replays < 0:
+        raise ValueError("--overhead-replays must be non-negative")
 
     protected_before = protected_process(args.protected_pid)
     if protected_before is not None and not protected_before["alive"]:
@@ -236,7 +248,17 @@ def main() -> int:
     graph: FixedAddressCommandGraph | None = None
     inner_graph: FixedAddressCommandGraph | None = None
     graph_outputs: dict[str, torch.Tensor] = {}
-    if args.mode == "graph":
+    raw_lz_handles: tuple[int, int] | None = None
+    raw_lz_harvest_appends: int | None = None
+    raw_lz_handle_state: dict[str, tuple[int, int]] = {}
+
+    def replay_raw_lz(executable_address: int) -> None:
+        handles = raw_lz_handle_state.get("handles")
+        if handles is None:
+            raise AssertionError("raw Level Zero handles were not harvested")
+        native_module.replay_raw_level_zero(*handles)
+
+    if args.mode in {"graph", "raw-lz"}:
         graph = FixedAddressCommandGraph(
             static_launch,
             {
@@ -251,13 +273,31 @@ def main() -> int:
                 "kv_cache_storage": cache_storage,
             },
             native_replay=(
-                None
-                if native_module is None
-                else native_module.replay_current_queue
+                replay_raw_lz
+                if args.mode == "raw-lz"
+                else (
+                    None
+                    if native_module is None
+                    else native_module.replay_current_queue
+                )
             ),
         )
         graph.warm(args.warmups)
         graph_outputs = dict(graph.build())
+        if args.mode == "raw-lz":
+            harvested = tuple(
+                int(value)
+                for value in native_module.harvest_raw_level_zero_handles(
+                    graph.graph_exec
+                )
+            )
+            raw_lz_handles = harvested[:2]
+            raw_lz_harvest_appends = harvested[2]
+            raw_lz_handle_state["handles"] = raw_lz_handles
+            # The sacrificial ordinary SYCL replay and its host synchronization
+            # are build-time only and remain outside parity, overhead, and PTI
+            # verdict windows.
+            torch.xpu.synchronize()
         if args.nested:
             if native_module is None:
                 raise RuntimeError("--nested requires --native-build-dir")
@@ -334,6 +374,25 @@ def main() -> int:
             exact=all(row["exact"] for row in parity_rows)
         )
 
+    overhead_durations_us: list[float] = []
+    if graph is not None and args.overhead_replays:
+        torch.xpu.synchronize()
+        for replay_index in range(args.overhead_replays):
+            # Model the real decoder boundary: device-side input preparation is
+            # pending when replay is submitted. Raw append must preserve this
+            # dependency on the same in-order immediate list without waiting on
+            # the host.
+            positions.fill_(11 + replay_index % (MAX_POSITION - 11))
+            slots.fill_(replay_index % (NUM_CACHE_BLOCKS * BLOCK_SIZE))
+            started_ns = time.monotonic_ns()
+            graph.replay()
+            ended_ns = time.monotonic_ns()
+            overhead_durations_us.append((ended_ns - started_ns) / 1000.0)
+            # A regular command list is never re-appended while its preceding
+            # execution may still be in flight. This wait is excluded from the
+            # recorded enqueue duration.
+            torch.xpu.synchronize()
+
     trace_seed = args.seed + 10000
     trace_x, trace_kv, trace_pos, trace_slot = changed_values(trace_seed, device)
     ref_storage, ref_cache = make_cache(device)
@@ -402,7 +461,11 @@ def main() -> int:
     )
     result = {
         "schema_version": 1,
-        "classification": "option4_phase0_mixed_onednn_triton_command_graph",
+        "classification": (
+            "option4_phase0b_raw_level_zero_mixed_cluster"
+            if args.mode == "raw-lz"
+            else "option4_phase0_mixed_onednn_triton_command_graph"
+        ),
         "mode": args.mode,
         "nested_surrounding_capture": args.nested,
         "verdict_inputs": {
@@ -467,6 +530,28 @@ def main() -> int:
                 else int(native_module.current_queue_object_address())
             ),
             "native_replay": native_module is not None,
+            "replay_backend": (
+                "raw_level_zero_regular_list_on_owned_immediate_list"
+                if args.mode == "raw-lz"
+                else (
+                    "native_sycl_ext_oneapi_graph"
+                    if native_module is not None
+                    else "torch_xpugraph_replay"
+                )
+            ),
+            "raw_level_zero": None
+            if raw_lz_handles is None
+            else {
+                "owned_immediate_command_list": raw_lz_handles[0],
+                "regular_graph_command_list": raw_lz_handles[1],
+                "ownership": "borrowed; retained by PyTorch queue and XPUGraph",
+                "append_api": "zeCommandListImmediateAppendCommandListsExp",
+                "harvest": {
+                    "mechanism": "one sacrificial traced SYCL graph replay",
+                    "matching_appends": raw_lz_harvest_appends,
+                    "outside_verdict_window": True,
+                },
+            },
             "inner_graph_exec": (
                 None if inner_graph is None else inner_graph.graph_exec
             ),
@@ -490,6 +575,18 @@ def main() -> int:
             "ended_monotonic_ns": trace_ended_ns,
             "wall_us": (trace_ended_ns - trace_started_ns) / 1000.0,
             "controls": controls,
+        },
+        "replay_enqueue_overhead": None
+        if not overhead_durations_us
+        else {
+            "replays": len(overhead_durations_us),
+            "median_us": statistics.median(overhead_durations_us),
+            "mean_us": statistics.fmean(overhead_durations_us),
+            "min_us": min(overhead_durations_us),
+            "max_us": max(overhead_durations_us),
+            "samples_us": overhead_durations_us,
+            "completion_wait_excluded": True,
+            "pending_input_enqueues_before_each_replay": 2,
         },
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

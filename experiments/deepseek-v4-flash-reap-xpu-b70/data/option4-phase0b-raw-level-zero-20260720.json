@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "classification": "option4_phase0b_raw_level_zero_submission_gate",
+  "verdict": "GO",
+  "phase1_go": true,
+  "gpu": {
+    "logical_device": 2,
+    "pci_bdf": "0000:43:00.0",
+    "render_node": "/dev/dri/renderD128"
+  },
+  "protected_eagle": {
+    "pid": 1710496,
+    "logical_device": 1,
+    "pci_bdf": "0000:27:00.0",
+    "render_node": "/dev/dri/renderD131",
+    "alive_and_same_render_fd_before_after_all_qualifying_runs": true
+  },
+  "mechanism": {
+    "command_list_kind": "regular finalized SYCL/UR graph list",
+    "owned_submission_list": "PyTorch current stream's in-order Level Zero immediate command list",
+    "queue_extraction": "sycl::get_native<ext_oneapi_level_zero>(c10::xpu::getCurrentXPUStream().queue())",
+    "regular_list_extraction": "one sacrificial build-time SYCL replay observed with a Level Zero epilogue callback",
+    "replay_api": "zeCommandListImmediateAppendCommandListsExp",
+    "mutable": false,
+    "xpugraph_retained_for_lifetime": true,
+    "public_graph_get_native_available": false
+  },
+  "parity": {
+    "qualification_exact_cases": 40,
+    "qualification_total_cases": 40,
+    "traced_support_exact_cases": 40,
+    "traced_support_total_cases": 40,
+    "comparison": "raw bytes including NaN payloads",
+    "fixed_binding_count": 10,
+    "graph_state": "PARITY_QUALIFIED",
+    "graph_break": false
+  },
+  "pti_replay_window": {
+    "effective_submission_boundaries": 1,
+    "zeCommandListImmediateAppendCommandListsExp": 1,
+    "zeCommandQueueExecuteCommandLists": 0,
+    "direct_kernel_appends": 0,
+    "host_sync_total": 0,
+    "zeEventHostSynchronize": 0,
+    "raw_append_duration_us_under_pti": 412.945,
+    "trace_window_wall_us_under_pti": 599.276,
+    "all_level_zero_calls": {
+      "zeCommandListImmediateAppendCommandListsExp": 1
+    }
+  },
+  "phase0_comparison": {
+    "effective_submission_boundaries": 1,
+    "host_sync_total": 1,
+    "zeEventHostSynchronize": 1,
+    "zeEventHostSynchronize_duration_us_under_pti": 400.641
+  },
+  "untraced_replay_enqueue_overhead": {
+    "pending_input_enqueues_before_each_replay": 2,
+    "serialized_replays": 100,
+    "raw_level_zero_median_us": 39.129,
+    "raw_level_zero_mean_us": 39.94386,
+    "raw_level_zero_min_us": 37.851,
+    "raw_level_zero_max_us": 53.48,
+    "sycl_wrapper_control_median_us": 42.2795,
+    "paired_median_reduction_us": 3.1505,
+    "paired_median_reduction_percent": 7.451602,
+    "completion_wait_excluded": true,
+    "note": "PTI attributed 412.945 us to the raw append itself. Do not claim the removed 400.641 us traced host-sync call as real wall-time saved; use these paired untraced host-call timings for overhead and PTI only for API/count structure."
+  },
+  "runtime": {
+    "torch": "2.12.0+xpu",
+    "triton": "3.7.1",
+    "sycl_compiler": "2025.3.3",
+    "sycl_runtime": "libsycl.so.8",
+    "xpu_extension_sha256": "d62ea1cf4728250809052c68fdd74983b4f2c0dcaf924624e7a507c8d4c8392f",
+    "triton_spirv_sha256": "98c95c15d5411a79532c2379f7f4e0771e88934d0c6ce09d104e9e4587f7a91e",
+    "native_bridge_source_sha256": "f4e98c09d9ee1c8885bb28221a169bfd763e08725852315b6efc2998d9c6e592",
+    "native_bridge_binary_sha256": "431ae9ff183a8070689411cca9a037c20df7bc241ab54562d847d3e4184bd304",
+    "unitrace_sha256": "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a"
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0b-raw-lz-20260720T195000Z",
+  "artifacts": {
+    "qualification_probe": "raw-lz-probe-pending-input.json",
+    "traced_probe": "raw-lz-probe-traced.json",
+    "trace_summary": "raw-lz-trace-summary.json",
+    "sycl_control": "sycl-replay-control-pending-input.json",
+    "topology_postflight": "topology-and-protected-process-postflight.json",
+    "topology_postflight_sha256": "a41ca58a66e6f171cb3e8f72550b5bca35ba6c9a2e3a3cce852c934d94f906ca",
+    "trace_summary_sha256": "31f818fe9a11aaaa8b3e0212f1587c7b83c602646c82996b9b40d72e4a6e1748"
+  },
+  "scope": {
+    "held_out_packs_opened": false,
+    "localmaxxing_submitted": false,
+    "phase1_built": false,
+    "shared_runtime_rebuilt": false
+  }
+}

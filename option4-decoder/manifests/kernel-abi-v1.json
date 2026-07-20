@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "phase0-partial-no-host-sync-failed",
+  "status": "phase0b-passed-phase1-unblocked",
   "model": {
     "repository": "0xSero/DeepSeek-V4-Flash-180B",
     "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
@@ -16,7 +16,7 @@
     "torch": "2.12.0+xpu",
     "sycl_compiler_line": "2025.3.3",
     "sycl_runtime_soname": "libsycl.so.8",
-    "queue_ownership": "torch.xpu.current_stream().sycl_queue; capture_begin and replay must retain the same identity"
+    "queue_ownership": "torch.xpu.current_stream().sycl_queue; raw replay borrows its in-order Level Zero immediate-list handle and must retain the same identity"
   },
   "kernels": [
     {
@@ -84,6 +84,9 @@
     "capture and replay on the same PyTorch XPU stream and host thread",
     "all declared tensor addresses, layouts, strides, and storage offsets are immutable while armed",
     "retain the XPUGraph pool so oneDNN user scratchpad captured allocations remain live",
+    "harvest the finalized regular-list handle once with the Level Zero tracing layer, outside every measured replay window",
+    "raw replay is legal only on the same in-order PyTorch-owned immediate command list",
+    "do not reappend the regular list while its preceding execution may still be in flight",
     "changed-input bitwise parity is required before PARITY_QUALIFIED",
     "PTI must show one zeCommandListImmediateAppendCommandListsExp, zero direct appends, and zero host synchronization during one replay"
   ],
@@ -98,11 +101,15 @@
     },
     "native_replay_source": {
       "path": "option4-decoder/src/xpu_current_queue_interop.cpp",
-      "sha256": "7ee5bf9f0845873893569189138fcf9bc79295558319b2ce9c9ea61b126748ff"
+      "sha256": "f4e98c09d9ee1c8885bb28221a169bfd763e08725852315b6efc2998d9c6e592"
     },
     "unitrace": {
       "path": "/home/steve/src/pti-gpu/build-unitrace/unitrace",
       "sha256": "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a"
+    },
+    "phase0b_raw_result": {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0b-raw-lz-20260720T195000Z",
+      "trace_summary_sha256": "31f818fe9a11aaaa8b3e0212f1587c7b83c602646c82996b9b40d72e4a6e1748"
     }
   }
 }

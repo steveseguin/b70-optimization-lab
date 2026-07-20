@@ -1,4 +1,4 @@
-"""Build/load the isolated current-queue command-graph replay shim."""
+"""Build/load the isolated SYCL and raw Level Zero current-queue replay shim."""
 
 from __future__ import annotations
 
@@ -22,6 +22,11 @@ def load_native_replay(build_directory: Path) -> ModuleType:
         sources=[str(source)],
         build_directory=str(build_directory),
         extra_cflags=["-O2", "-fsycl"],
-        extra_ldflags=["-fsycl", "-ltorch_xpu", "-lc10_xpu"],
+        extra_ldflags=[
+            "-fsycl",
+            "-ltorch_xpu",
+            "-lc10_xpu",
+            "-lze_loader",
+        ],
         verbose=False,
     )
