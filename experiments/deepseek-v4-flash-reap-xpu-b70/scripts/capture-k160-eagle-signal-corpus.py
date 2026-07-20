@@ -144,7 +144,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--arm-file", type=Path)
     parser.add_argument("--resume", action="store_true")
-    parser.add_argument("--max-prompt-tokens", type=int, default=800)
+    parser.add_argument("--max-prompt-tokens", type=int, default=500)
     parser.add_argument("--skip-manifest", type=Path)
     args = parser.parse_args()
 

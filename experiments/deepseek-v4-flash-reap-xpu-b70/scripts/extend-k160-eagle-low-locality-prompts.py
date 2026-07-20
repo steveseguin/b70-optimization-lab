@@ -28,20 +28,34 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in stream if line.strip()]
 
 
-def short_prompt(rng: random.Random, index: int, seed: int, split: str) -> str:
+def short_prompt(
+    rng: random.Random, index: int, seed: int, split: str, profile: str
+) -> str:
     stems = (
         "amber birch cobalt delta ember flint grove harbor iris juniper kepler "
         "linen morrow north opal prairie quartz river sable tundra umber violet "
         "willow xenon yellow zephyr"
     ).split()
-    count = rng.randrange(48, 73)
+    if profile == "v2":
+        count = rng.randrange(48, 73)
+    else:
+        count = rng.randrange(24, 35)
     entries = [
         f"{rng.choice(stems)}-{rng.randrange(10000, 99999)}-{position:02d}"
         for position in range(count)
     ]
     order = list(range(count))
     rng.shuffle(order)
-    selected = order[: rng.randrange(34, min(55, count) + 1)]
+    if profile == "v2":
+        selected_count = rng.randrange(34, min(55, count) + 1)
+    else:
+        selected_count = rng.randrange(16, min(24, count) + 1)
+    selected = order[:selected_count]
+    nonce = (
+        f"{split}-low-locality-short-{index:05d}-{seed}"
+        if profile == "v2"
+        else f"{split}-low-locality-short-v3-{index:05d}-{seed}"
+    )
     return (
         "Copy exactly the referenced entries from SOURCE in INDEX_SEQUENCE order. "
         "Emit one entry per line with no numbering, punctuation changes, or extra "
@@ -49,7 +63,7 @@ def short_prompt(rng: random.Random, index: int, seed: int, split: str) -> str:
         + "\n".join(f"{position}: {entry}" for position, entry in enumerate(entries))
         + "\nINDEX_SEQUENCE:\n"
         + ",".join(map(str, selected))
-        + f"\nImmutable task nonce: {split}-low-locality-short-{index:05d}-{seed}."
+        + f"\nImmutable task nonce: {nonce}."
     )
 
 
@@ -66,6 +80,7 @@ def main() -> int:
     parser.add_argument("--count", type=int, default=500)
     parser.add_argument("--seed", type=int, default=160721)
     parser.add_argument("--split", choices=("train", "dev"), default="train")
+    parser.add_argument("--profile", choices=("v2", "v3"), default="v2")
     args = parser.parse_args()
     if args.output.exists() or args.manifest.exists():
         raise FileExistsError("extension output and manifest must not exist")
@@ -82,15 +97,19 @@ def main() -> int:
     rng = random.Random(args.seed)
     additions = []
     for index in range(args.count):
-        prompt = short_prompt(rng, index, args.seed, args.split)
+        prompt = short_prompt(rng, index, args.seed, args.split, args.profile)
         additions.append(
             {
                 "schema_version": "k160-eagle-procedural-prompt-v1",
                 "split": args.split,
                 "category": "low-locality",
-                "source_id": "k160-eagle-procedural-low-locality-short-v2",
+                "source_id": f"k160-eagle-procedural-low-locality-short-{args.profile}",
                 "source_revision": "2026-07-20",
-                "prompt_id": f"{args.split}-low-locality-short-{index:05d}",
+                "prompt_id": (
+                    f"{args.split}-low-locality-short-{index:05d}"
+                    if args.profile == "v2"
+                    else f"{args.split}-low-locality-short-v3-{index:05d}"
+                ),
                 "prompt_sha256": sha(prompt),
                 "prompt": prompt,
             }
@@ -112,7 +131,8 @@ def main() -> int:
             stream.write(json.dumps(row, ensure_ascii=False) + "\n")
     summary = {
         "schema_version": "k160-eagle-prompt-source-extension-v1",
-        "policy": "append_only_short_low_locality_v2",
+        "policy": f"append_only_short_low_locality_{args.profile}",
+        "profile": args.profile,
         "extended_split": args.split,
         "base_train_path": str(args.base_train.resolve()),
         "base_train_sha256": file_sha256(args.base_train),
