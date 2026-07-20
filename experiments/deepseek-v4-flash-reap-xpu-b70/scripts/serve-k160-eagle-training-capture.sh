@@ -7,6 +7,8 @@ base_vllm_commit=264c7f2f7df21ddeeab32ecca0353133344f1ac9
 capture_vllm_commit=0e85361b220887f98639e9836fb0ffdfe8cf9a53
 kernel_commit=31315673737d95da0f79179c8f755260ef02c1d6
 oneccl_commit=48fda4f0e074db005596d6899d5227d3f0316c12
+model_revision=7c360e1cd4a5168099dbc54d16d929bf6df04990
+artifact_manifest_sha256=08535b4ad7fd94419c7eadb1f6cf7f1de583d64f92a1760c86aa238972904e78
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 
 export RUN_DIR="${RUN_DIR:-/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/k160-eagle-capture-${stamp}}"
@@ -98,6 +100,8 @@ mkdir -p "${RUN_DIR}"
   printf 'capture_patch_vllm_commit=%s\n' "${capture_vllm_commit}"
   printf 'xpu_kernel_commit=%s\n' "${kernel_commit}"
   printf 'oneccl_commit=%s\n' "${oneccl_commit}"
+  printf 'model_revision=%s\n' "${model_revision}"
+  printf 'artifact_manifest_sha256=%s\n' "${artifact_manifest_sha256}"
   printf 'feature_boundaries=4,22,43\n'
   printf 'feature_reduction=post_mhc_mean_stream\n'
   printf 'capture_dir=%s\n' "${VLLM_XPU_EAGLE_TRAINING_CAPTURE_DIR:-disabled}"

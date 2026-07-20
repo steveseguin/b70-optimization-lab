@@ -27,6 +27,18 @@ def load_requests(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in stream if line.strip()]
 
 
+def load_identity(path: Path) -> dict[str, str]:
+    result = {}
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        key, separator, value = line.partition("=")
+        if not separator or key in result:
+            raise RuntimeError(f"invalid capture identity line: {line!r}")
+        result[key] = value
+    return result
+
+
 def validate_rank(rank_dir: Path) -> dict[str, Any]:
     shards = sorted(rank_dir.glob("features-*.safetensors"))
     if not shards:
@@ -123,9 +135,10 @@ def compare_ranks(rank_results: list[dict[str, Any]]) -> None:
         if len(other) != len(reference):
             raise RuntimeError("TP rank shard counts differ")
         for left, right in zip(reference, other, strict=True):
-            with safe_open(left, framework="pt", device="cpu") as a, safe_open(
-                right, framework="pt", device="cpu"
-            ) as b:
+            with (
+                safe_open(left, framework="pt", device="cpu") as a,
+                safe_open(right, framework="pt", device="cpu") as b,
+            ):
                 for name in a.keys():
                     if not torch.equal(a.get_tensor(name), b.get_tensor(name)):
                         raise RuntimeError(
@@ -138,12 +151,40 @@ def main() -> int:
     parser.add_argument("--capture-root", type=Path, required=True)
     parser.add_argument("--namespace", required=True)
     parser.add_argument("--requests", type=Path, required=True)
+    parser.add_argument("--capture-identity", type=Path, required=True)
     parser.add_argument("--replay-manifest", type=Path)
     parser.add_argument("--other-requests", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--compare-ranks", action="store_true")
     parser.add_argument("--expected-ranks", type=int, default=0)
     args = parser.parse_args()
+    if args.namespace in {"eagletrain", "eagledev"} and not args.other_requests:
+        raise ValueError("train and DEV validation require the counterpart manifest")
+
+    capture_identity = load_identity(args.capture_identity)
+    expected_identity = {
+        "capture_base_vllm_commit": ("264c7f2f7df21ddeeab32ecca0353133344f1ac9"),
+        "capture_patch_vllm_commit": ("0e85361b220887f98639e9836fb0ffdfe8cf9a53"),
+        "xpu_kernel_commit": "31315673737d95da0f79179c8f755260ef02c1d6",
+        "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+        "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+        "artifact_manifest_sha256": (
+            "08535b4ad7fd94419c7eadb1f6cf7f1de583d64f92a1760c86aa238972904e78"
+        ),
+        "feature_boundaries": "4,22,43",
+        "feature_reduction": "post_mhc_mean_stream",
+        "capture_dir": str(args.capture_root),
+        "capture_namespace": args.namespace,
+        "one_active_generation": "true",
+        "speculation": "false",
+    }
+    mismatches = {
+        key: {"expected": value, "actual": capture_identity.get(key)}
+        for key, value in expected_identity.items()
+        if capture_identity.get(key) != value
+    }
+    if mismatches:
+        raise RuntimeError(f"capture identity mismatch: {mismatches}")
 
     namespace_dir = args.capture_root / args.namespace
     rank_dirs = sorted(namespace_dir.glob("rank-*"))
@@ -156,7 +197,9 @@ def main() -> int:
     if args.expected_ranks:
         expected_names = {f"rank-{rank:03d}" for rank in range(args.expected_ranks)}
         if {path.name for path in rank_dirs} != expected_names:
-            raise RuntimeError("rank directory names are not the expected contiguous set")
+            raise RuntimeError(
+                "rank directory names are not the expected contiguous set"
+            )
     rank_results = [validate_rank(path) for path in rank_dirs]
     if args.compare_ranks:
         compare_ranks(rank_results)
@@ -214,27 +257,39 @@ def main() -> int:
                 )
         key_mapping_mode = "one-active-first-seen-order"
     for key, row in request_by_key.items():
-        expected_ids = [int(token_id) for token_id in row["response"]["output_token_ids"]]
+        expected_ids = [
+            int(token_id) for token_id in row["response"]["output_token_ids"]
+        ]
         if target_ids_by_request[key] != expected_ids:
             raise RuntimeError(
                 f"captured target IDs differ from greedy trajectory for key {key}"
             )
     prompt_hashes = {row["prompt_sha256"] for row in requests}
     disjoint = True
+    other_prompt_set_sha256 = None
+    other_request_manifest = None
     if args.other_requests:
         other = load_requests(args.other_requests)
         other_hashes = {row["prompt_sha256"] for row in other}
         disjoint = not bool(prompt_hashes & other_hashes)
         if not disjoint:
             raise RuntimeError("train and DEV prompt hashes overlap")
+        other_prompt_set_sha256 = hashlib.sha256(
+            "\n".join(sorted(other_hashes)).encode()
+        ).hexdigest()
+        other_request_manifest = {
+            "path": str(args.other_requests.resolve()),
+            "sha256": sha256(args.other_requests),
+            "prompt_set_sha256": other_prompt_set_sha256,
+            "prompt_count": len(other),
+        }
 
     category_rows: Counter[str] = Counter()
     for key, count in rank_results[0]["request_counts"].items():
         category_rows[request_by_key[int(key)]["category"]] += count
     total_rows = rank_results[0]["rows"]
     response_tokens = sum(
-        int(row["response"]["usage"].get("completion_tokens") or 0)
-        for row in requests
+        int(row["response"]["usage"].get("completion_tokens") or 0) for row in requests
     )
     output_token_count = sum(
         len(row["response"].get("output_token_ids") or []) for row in requests
@@ -251,6 +306,11 @@ def main() -> int:
         "schema_version": "k160-eagle-capture-validation-v1",
         "namespace": args.namespace,
         "capture_root": str(args.capture_root),
+        "capture_identity": {
+            "path": str(args.capture_identity.resolve()),
+            "sha256": sha256(args.capture_identity),
+            "fields": capture_identity,
+        },
         "rank_results": rank_results,
         "captured_rows": total_rows,
         "response_completion_tokens": response_tokens,
@@ -260,9 +320,15 @@ def main() -> int:
             name: count / total_rows for name, count in category_rows.items()
         },
         "prompt_count": len(requests),
+        "request_manifest": {
+            "path": str(args.requests.resolve()),
+            "sha256": sha256(args.requests),
+        },
         "prompt_set_sha256": hashlib.sha256(
             "\n".join(sorted(prompt_hashes)).encode()
         ).hexdigest(),
+        "other_request_manifest": other_request_manifest,
+        "other_prompt_set_sha256": other_prompt_set_sha256,
         "other_prompt_set_disjoint": disjoint,
         "output_token_ids_available": output_token_ids_available,
         "target_token_alignment_passed": True,
