@@ -17,6 +17,7 @@ rank_dir="${EAGLE_CAPTURE_ROOT}/${EAGLE_CAPTURE_NAMESPACE}/rank-000"
 first_cycle="${EAGLE_RESTART_START:-0}"
 max_cycles="${EAGLE_MAX_RESTARTS:-40}"
 request_timeout="${EAGLE_REQUEST_TIMEOUT:-90}"
+readiness_attempts="${EAGLE_READINESS_ATTEMPTS:-180}"
 server_pid=
 
 stop_server() {
@@ -84,7 +85,7 @@ for ((cycle = first_cycle; cycle < first_cycle + max_cycles; cycle++)); do
   server_pid=$!
 
   ready=0
-  for _ in $(seq 1 90); do
+  for _ in $(seq 1 "${readiness_attempts}"); do
     if curl -fsS --max-time 2 http://127.0.0.1:18080/health >/dev/null 2>&1; then
       ready=1
       break
