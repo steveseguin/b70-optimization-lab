@@ -144,6 +144,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--arm-file", type=Path)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--max-prompt-tokens", type=int, default=1536)
+    parser.add_argument("--skip-manifest", type=Path)
     args = parser.parse_args()
 
     prompts = load_jsonl(args.prompts)
@@ -171,6 +173,10 @@ def main() -> int:
     if args.output.exists() and not args.resume:
         raise FileExistsError(args.output)
     prior_rows = load_jsonl(args.output) if args.output.exists() else []
+    skip_manifest = args.skip_manifest or args.output.with_suffix(".skips.jsonl")
+    if skip_manifest.exists() and not args.resume:
+        raise FileExistsError(skip_manifest)
+    skipped_rows = load_jsonl(skip_manifest) if skip_manifest.exists() else []
     if any(row["split"] != args.split for row in prior_rows):
         raise RuntimeError("resume manifest split does not match requested split")
     prompt_queues = {
@@ -185,14 +191,32 @@ def main() -> int:
         )
         for category in CATEGORY_SHARES
     }
+    skipped_ids = {row["prompt_id"] for row in skipped_rows}
+    if len(skipped_ids) != len(skipped_rows):
+        raise RuntimeError("skip manifest contains duplicate prompt IDs")
+    if skipped_ids & {row["prompt_id"] for row in prior_rows}:
+        raise RuntimeError("a prompt appears in both corpus and skip manifests")
+    prompt_by_id = {item["prompt_id"]: item for item in prompts}
+    for row in skipped_rows:
+        item = prompt_by_id.get(row["prompt_id"])
+        if (
+            item is None
+            or row["category"] != item["category"]
+            or row["prompt_sha256"] != item["prompt_sha256"]
+        ):
+            raise RuntimeError("skip manifest does not match prompt source")
     indices = {
         category: sum(row["category"] == category for row in prior_rows)
+        + sum(row["category"] == category for row in skipped_rows)
         for category in CATEGORY_SHARES
     }
     seen = {category: 0 for category in CATEGORY_SHARES}
     for expected_index, row in enumerate(prior_rows):
         category = row["category"]
-        expected_prompt = prompt_queues[category][seen[category]]
+        queue = prompt_queues[category]
+        while queue[seen[category]]["prompt_id"] in skipped_ids:
+            seen[category] += 1
+        expected_prompt = queue[seen[category]]
         if (
             int(row["request_index"]) != expected_index
             or row["prompt_id"] != expected_prompt["prompt_id"]
@@ -203,7 +227,10 @@ def main() -> int:
         args.split
     ]
     started = time.time()
-    with args.output.open("a" if args.output.exists() else "x") as stream:
+    with (
+        args.output.open("a" if args.output.exists() else "x") as stream,
+        skip_manifest.open("a" if skip_manifest.exists() else "x") as skip_stream,
+    ):
         request_index = len(prior_rows)
         while any(counts[name] < quotas[name] for name in quotas):
             category = max(quotas, key=lambda name: quotas[name] - counts[name])
@@ -227,6 +254,23 @@ def main() -> int:
                 request_id,
                 args.timeout,
             )
+            if len(prompt_token_ids) > args.max_prompt_tokens:
+                skip_stream.write(
+                    json.dumps(
+                        {
+                            "schema_version": "k160-eagle-prompt-skip-v1",
+                            "prompt_id": item["prompt_id"],
+                            "prompt_sha256": item["prompt_sha256"],
+                            "category": category,
+                            "prompt_tokens": len(prompt_token_ids),
+                            "reason": "prefill_runtime_stability_guard",
+                            "max_prompt_tokens": args.max_prompt_tokens,
+                        }
+                    )
+                    + "\n"
+                )
+                skip_stream.flush()
+                continue
             max_tokens = min(max_tokens, 2048 - len(prompt_token_ids) - 1)
             if max_tokens <= 0:
                 raise RuntimeError(
