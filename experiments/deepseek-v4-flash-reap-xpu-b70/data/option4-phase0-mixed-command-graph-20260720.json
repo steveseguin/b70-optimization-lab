@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "classification": "option4_phase0_mixed_command_graph_gate",
+  "date": "2026-07-20",
+  "verdict": "PARTIAL",
+  "phase1_go": false,
+  "deciding_result": {
+    "mixed_kernel_capture": "FEASIBLE",
+    "phase0_strict_gate": "FAILED_NO_HOST_SYNC",
+    "eager_submission_boundaries": 2,
+    "recorded_submission_boundaries": 1,
+    "submission_reduction": 1,
+    "submission_reduction_percent": 50.0,
+    "changed_input_bitwise_cases": 40,
+    "changed_input_bitwise_exact": 40,
+    "nested_changed_input_bitwise_cases": 40,
+    "nested_changed_input_bitwise_exact": 40,
+    "recorded_replay_host_sync_calls": 1,
+    "nested_replay_host_sync_calls": 1
+  },
+  "safety": {
+    "used_logical_xpu": 3,
+    "used_bdf": "0000:47:00.0",
+    "used_render_node": "/dev/dri/renderD129",
+    "protected_eagle_pid": 1710496,
+    "protected_eagle_logical_xpu": 1,
+    "protected_eagle_bdf": "0000:27:00.0",
+    "protected_eagle_render_node": "/dev/dri/renderD131",
+    "protected_pid_alive_before_and_after_each_probe": true,
+    "protected_render_node_unchanged": true,
+    "no_signal_or_restart_command_issued_by_this_task": true,
+    "shared_xpu_extension_rebuilt_or_replaced": false,
+    "held_out_pack_accessed": false,
+    "localmaxxing_accessed": false
+  },
+  "identity": {
+    "model": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "target": "uniform-K160",
+    "vllm_tree": "/home/steve/src/deepseek-v4-vllm-native-submit-proof-20260719",
+    "vllm_commit": "50e6a21116a24853ccae065caeefc843435ded05",
+    "xpu_kernel_tree": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc",
+    "xpu_kernel_worktree_head_at_probe": "2cc25d0ca08d3a76de27ee50c6dda258350e93e8",
+    "loaded_xpu_binary_build_commit": "5a1e9fa4602f69302dc50ecf85b06b6f86762117",
+    "xpu_extension_sha256": "d62ea1cf4728250809052c68fdd74983b4f2c0dcaf924624e7a507c8d4c8392f",
+    "torch": "2.12.0+xpu",
+    "triton": "3.7.1",
+    "pti_unitrace": "2.4.0"
+  },
+  "cluster": {
+    "onednn": {
+      "op": "torch.ops._xpu_C.fp8_gemm_w8a16",
+      "kernel_seen_by_pti": "gemm_kernel[SIMD16 {64; 1; 1} {16; 8; 8}]",
+      "logical_projection": "M1 wq_b",
+      "shape_mnk": [1, 8192, 1024],
+      "src_dtype": "bfloat16",
+      "weight_dtype": "float8_e4m3fn",
+      "weight_scale_shape": [8, 64],
+      "weight_scale_groups": [128, 128]
+    },
+    "triton": {
+      "callable": "xpu_qnorm_rope_kv_fp8_insert_fused",
+      "kernel_seen_by_pti": "_xpu_qnorm_rope_fp8_insert_kernel[SIMD32 {1; 17; 1} {128; 1; 1}]",
+      "q_shape": [1, 16, 512],
+      "cos_sin_dtype": "float32",
+      "cache_shape": [2, 64, 584],
+      "cache_stride": [1039680, 584, 1],
+      "cache_block_size": 64,
+      "spirv_sha256": "98c95c15d5411a79532c2379f7f4e0771e88934d0c6ce09d104e9e4587f7a91e"
+    },
+    "dependency": "oneDNN wq_b BF16 output is reshaped and consumed in-place by the Triton qnorm/RoPE/KV-insert kernel"
+  },
+  "pti": {
+    "eager": {
+      "zeCommandListAppendLaunchKernel": 2,
+      "effective_submission_boundaries": 2,
+      "host_sync_calls": 0
+    },
+    "recorded": {
+      "zeCommandListImmediateAppendCommandListsExp": 1,
+      "direct_appends": 0,
+      "effective_submission_boundaries": 1,
+      "zeEventHostSynchronize_calls": 1,
+      "zeEventHostSynchronize_us": 400.641
+    },
+    "nested_recorded": {
+      "zeCommandListImmediateAppendCommandListsExp": 1,
+      "direct_appends": 0,
+      "effective_submission_boundaries": 1,
+      "zeEventHostSynchronize_calls": 1,
+      "zeEventHostSynchronize_us": 408.306
+    }
+  },
+  "blocker": {
+    "triton_graph_break": false,
+    "onednn_graph_break": false,
+    "op_that_breaks_recording": null,
+    "failure": "The installed SYCL command_graph replay path executes zeEventHostSynchronize immediately before zeCommandListImmediateAppendCommandListsExp, including from a captured surrounding graph.",
+    "required_alternative": "Bypass SYCL graph replay bookkeeping with a raw Level Zero regular/mutable command-list append on the owned PyTorch immediate queue/list, or enlarge capture to a whole-decoder transaction that contains no nested replay. Custom Triton or GEMM arithmetic is not required by this finding."
+  },
+  "raw_root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0-mixed-command-graph-exactmodule-20260720T192738Z",
+  "artifact_sha256": {
+    "graph_probe": "8ef83d275d0fc90c487274cbdf6d53d96967f92cae2191548407661a75162b08",
+    "nested_probe": "361c792748bee3763384a2612f4060188617667832450632d116304e7e3011f7",
+    "summary": "dc5606acbfa282463ee502fdaace999e5782f42db6fa6b61a42cca33b9dc2a83",
+    "eager_enqueue_trace": "d2a704884ac24fb4b56017c61eefc7444f26e8b5d8ead806a68b0a017b08140b",
+    "graph_enqueue_trace": "806bbf0e6e362da2b74719a31b1e4c1e2bee8c1c0264206069a0888f4886d13f",
+    "nested_enqueue_trace": "6de8c90ba1570c0167cf545db9b2edf05f985506f62c840077f12346da2a23ee",
+    "eager_device_trace": "1e9f3b02c5ecfa362d3417327572412c618b263d8047f9b5f9032e2ce2b63956",
+    "topology_and_protected_process_postflight": "8b996e7dc89dc5749768dd4b08cca6f86a7a51af88a440deeced185fa9c65fb3",
+    "native_replay_so": "e9bb95e2c96d097de0096739afd90b103c688b9c3540356183dd138824ac703b",
+    "unitrace": "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a"
+  },
+  "nonqualifying_preserved_roots": [
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0-mixed-command-graph-20260720T185720Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0-mixed-command-graph-exactabi-20260720T191723Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0-mixed-command-graph-exactm1-20260720T192127Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0-mixed-command-graph-exactm1stride-20260720T192406Z",
+    "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0-mixed-command-graph-productionabi-20260720T192621Z"
+  ]
+}

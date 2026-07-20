@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "status": "phase0-partial-no-host-sync-failed",
+  "model": {
+    "repository": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "target": "uniform-K160",
+    "quantization": "K160 checkpoint FP8 dense weights with MXFP4 experts"
+  },
+  "runtime": {
+    "vllm_tree": "/home/steve/src/deepseek-v4-vllm-native-submit-proof-20260719",
+    "vllm_commit": "50e6a21116a24853ccae065caeefc843435ded05",
+    "xpu_kernel_tree": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc",
+    "xpu_kernel_worktree_head_at_probe": "2cc25d0ca08d3a76de27ee50c6dda258350e93e8",
+    "loaded_xpu_binary_build_commit": "5a1e9fa4602f69302dc50ecf85b06b6f86762117",
+    "torch": "2.12.0+xpu",
+    "sycl_compiler_line": "2025.3.3",
+    "sycl_runtime_soname": "libsycl.so.8",
+    "queue_ownership": "torch.xpu.current_stream().sycl_queue; capture_begin and replay must retain the same identity"
+  },
+  "kernels": [
+    {
+      "kind": "onednn_primitive",
+      "logical_name": "m1_wq_b_w8a16",
+      "callable": "torch.ops._xpu_C.fp8_gemm_w8a16",
+      "source_symbol": "oneDNN::dnnl_matmul_w8a16_fp8",
+      "source_sha256": "958ac3e8b5c9710fd5c82b89bebeb1643b77fa7942a0fc5083d7467f3585ceaa",
+      "arguments": [
+        {"name": "src", "dtype": "bfloat16", "shape": [1, 1024], "layout": "contiguous"},
+        {"name": "weight", "dtype": "float8_e4m3fn", "shape": [1024, 8192], "stride": [1, 1024]},
+        {"name": "weight_scale", "dtype": "float32", "shape": [8, 64], "layout": "contiguous"},
+        {"name": "bias", "value": null}
+      ],
+      "output": {"dtype": "bfloat16", "shape": [1, 8192]},
+      "primitive_descriptor": {
+        "m": 1,
+        "n": 8192,
+        "k": 1024,
+        "joint_dtype": "bf16_f8_e4m3",
+        "transpose": "nt",
+        "lda": 1024,
+        "ldb": 1024,
+        "ldc": 8192,
+        "bias": "none",
+        "scratchpad": "user",
+        "weight_scale_mask": 3,
+        "weight_scale_groups": [128, 128]
+      }
+    },
+    {
+      "kind": "triton_kernel",
+      "logical_name": "m1_fused_qnorm_rope_fp8_kv_insert",
+      "callable": "xpu_qnorm_rope_kv_fp8_insert_fused",
+      "kernel_symbol": "_xpu_qnorm_rope_fp8_insert_kernel",
+      "source_sha256": "3ed8b380eb5f92b77b011d735fbd08a16723391565a041c8b7f09a9b9e7a99ef",
+      "launch": {"grid": [1, 17], "num_warps": 4},
+      "arguments": {
+        "q": {"dtype": "bfloat16", "shape": [1, 16, 512], "mutation": "in_place"},
+        "kv": {"dtype": "bfloat16", "shape": [1, 512]},
+        "slot_mapping": {"dtype": "int64", "shape": [1]},
+        "positions": {"dtype": "int64", "shape": [1]},
+        "cos_sin_cache": {"dtype": "float32", "shape": [1024, 64]},
+        "kv_cache": {
+          "dtype": "uint8",
+          "shape": [2, 64, 584],
+          "stride": [1039680, 584, 1],
+          "block_size": 64,
+          "mutation": "in_place"
+        }
+      },
+      "constants": {
+        "head_dim": 512,
+        "rope_dim": 64,
+        "nope_dim": 448,
+        "quant_block": 64,
+        "token_data_size": 576,
+        "scale_dim": 8,
+        "fp8_max": 448.0
+      }
+    }
+  ],
+  "lifetime_rules": [
+    "warm every Triton module and oneDNN primitive before capture",
+    "capture and replay on the same PyTorch XPU stream and host thread",
+    "all declared tensor addresses, layouts, strides, and storage offsets are immutable while armed",
+    "retain the XPUGraph pool so oneDNN user scratchpad captured allocations remain live",
+    "changed-input bitwise parity is required before PARITY_QUALIFIED",
+    "PTI must show one zeCommandListImmediateAppendCommandListsExp, zero direct appends, and zero host synchronization during one replay"
+  ],
+  "qualified_artifacts": {
+    "xpu_extension": {
+      "path": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "sha256": "d62ea1cf4728250809052c68fdd74983b4f2c0dcaf924624e7a507c8d4c8392f"
+    },
+    "triton_spirv": {
+      "path": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-phase0-mixed-command-graph-exactmodule-20260720T192738Z/triton-cache/QUTGCJGXL6G4MHOVRR3DFMSLGPQ3LLDZNYKZ7BZSUYVZXVUIWFHQ/_xpu_qnorm_rope_fp8_insert_kernel.spv",
+      "sha256": "98c95c15d5411a79532c2379f7f4e0771e88934d0c6ce09d104e9e4587f7a91e"
+    },
+    "native_replay_source": {
+      "path": "option4-decoder/src/xpu_current_queue_interop.cpp",
+      "sha256": "7ee5bf9f0845873893569189138fcf9bc79295558319b2ce9c9ea61b126748ff"
+    },
+    "unitrace": {
+      "path": "/home/steve/src/pti-gpu/build-unitrace/unitrace",
+      "sha256": "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a"
+    }
+  }
+}
