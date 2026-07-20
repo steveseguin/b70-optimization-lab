@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import time
+import urllib.error
 import urllib.request
 import uuid
 from pathlib import Path
@@ -249,7 +250,11 @@ def main() -> int:
         for row in skipped_rows
         if int(row["prompt_tokens"]) > args.max_prompt_tokens
         or row.get("reason")
-        in {"operator_audited_runtime_hang", "runtime_request_timeout"}
+        in {
+            "operator_audited_runtime_hang",
+            "runtime_request_timeout",
+            "runtime_request_http_5xx",
+        }
     } - used_prompt_ids
     indices = {}
     for category, queue in prompt_queues.items():
@@ -346,7 +351,14 @@ def main() -> int:
                     request_id,
                     args.timeout,
                 )
-            except TimeoutError:
+            except (TimeoutError, urllib.error.HTTPError) as error:
+                if isinstance(error, urllib.error.HTTPError) and error.code < 500:
+                    raise
+                reason = (
+                    "runtime_request_http_5xx"
+                    if isinstance(error, urllib.error.HTTPError)
+                    else "runtime_request_timeout"
+                )
                 skip_stream.write(
                     json.dumps(
                         {
@@ -355,10 +367,11 @@ def main() -> int:
                             "prompt_sha256": item["prompt_sha256"],
                             "category": category,
                             "prompt_tokens": len(prompt_token_ids),
-                            "reason": "runtime_request_timeout",
+                            "reason": reason,
                             "max_prompt_tokens": args.max_prompt_tokens,
                             "request_id": request_id,
                             "timeout_s": args.timeout,
+                            "http_status": getattr(error, "code", None),
                         }
                     )
                     + "\n"
