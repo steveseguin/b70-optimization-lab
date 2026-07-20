@@ -1,0 +1,615 @@
+From 265f53ddd848e4f1379031c56d3acf797f795994 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 19:20:52 -0400
+Subject: [PATCH] xpu: guard Option 4 oracle capture bookkeeping
+
+Fix non-contiguous compressor-state row capture and keep capture-only gathers and local WO_B exposure inactive outside armed forwards.
+
+Co-authored-by: OpenAI Codex <codex@openai.com>
+---
+ .../deepseek_v4/test_divergence_capture.py    |  34 ++++
+ vllm/models/deepseek_v4/compressor.py         |  58 ++++---
+ .../deepseek_v4/xpu/divergence_capture.py     |  80 +++++-----
+ vllm/models/deepseek_v4/xpu/model.py          |  39 +++--
+ vllm/models/deepseek_v4/xpu/xpu_sparse.py     | 151 ++++++++++--------
+ 5 files changed, 206 insertions(+), 156 deletions(-)
+ create mode 100644 tests/models/deepseek_v4/test_divergence_capture.py
+
+diff --git a/tests/models/deepseek_v4/test_divergence_capture.py b/tests/models/deepseek_v4/test_divergence_capture.py
+new file mode 100644
+index 000000000..4b81aa454
+--- /dev/null
++++ b/tests/models/deepseek_v4/test_divergence_capture.py
+@@ -0,0 +1,34 @@
++# SPDX-License-Identifier: Apache-2.0
++
++import torch
++
++from vllm.models.deepseek_v4.xpu import divergence_capture
++
++
++def test_gather_logical_cache_rows_handles_noncontiguous_cache() -> None:
++    storage = torch.arange(2 * 5 * 3 * 2).reshape(2, 5, 3, 2)
++    cache = storage[:, :, :, 1]
++    slots = torch.tensor([[0, 1, 4], [5, 8, 9]])
++
++    assert not cache.is_contiguous()
++    expected = torch.stack(
++        [cache[slot // 5, slot % 5].reshape(-1) for slot in slots.reshape(-1)]
++    ).reshape(*slots.shape, -1)
++
++    actual = divergence_capture.gather_logical_cache_rows(cache, slots)
++
++    assert torch.equal(actual, expected)
++
++
++def test_recorder_is_inactive_without_armed_forward(monkeypatch) -> None:
++    monkeypatch.setattr(divergence_capture, "CAPTURE_STAGES", {"state"})
++    monkeypatch.setattr(divergence_capture, "CAPTURE_LAYERS", {3})
++    recorder = divergence_capture.DivergenceRecorder()
++    recorder.enabled = True
++
++    assert not recorder.is_active(3, "state")
++
++    recorder._active_forward = 0
++    assert recorder.is_active(3, "state")
++    assert not recorder.is_active(2, "state")
++    assert not recorder.is_active(3, "other")
+diff --git a/vllm/models/deepseek_v4/compressor.py b/vllm/models/deepseek_v4/compressor.py
+index 5d3982d82..d6d7e0185 100644
+--- a/vllm/models/deepseek_v4/compressor.py
++++ b/vllm/models/deepseek_v4/compressor.py
+@@ -311,33 +311,43 @@ class DeepseekCompressor(nn.Module):
+             from vllm.models.deepseek_v4.xpu.divergence_capture import (
+                 RECORDER as recorder,
+             )
+-
+-            flat_state_slots = slot_mapping.to(torch.int64).reshape(-1)
+-            total_state_slots = state_cache.shape[0] * state_cache.shape[1]
+-            guarded_state_slots = torch.stack(
+-                [
+-                    (flat_state_slots - 1).clamp(0, total_state_slots - 1),
+-                    flat_state_slots.clamp(0, total_state_slots - 1),
+-                    (flat_state_slots + 1).clamp(0, total_state_slots - 1),
+-                ],
+-                dim=1,
++            from vllm.models.deepseek_v4.xpu.divergence_capture import (
++                gather_logical_cache_rows,
+             )
+-            state_rows = state_cache.view(total_state_slots, -1)[
+-                guarded_state_slots
+-            ]
++
+             layer = int(self.prefix.split(".layers.")[1].split(".")[0])
+-            recorder.record_static(
+-                layer,
++            capture_stages = (
+                 "kv_storage_binding",
+-                compressor_state_storage=state_cache.reshape(-1)[:0],
+-            )
+-            recorder.record(
+-                layer,
+                 "compressor_state_before",
+-                slots=slot_mapping,
+-                guarded_slots=guarded_state_slots,
+-                rows=state_rows,
++                "compressor_state_after",
++                "compressed_kv_before",
++                "compressed_kv_after",
+             )
++            if any(recorder.is_active(layer, stage) for stage in capture_stages):
++                flat_state_slots = slot_mapping.to(torch.int64).reshape(-1)
++                total_state_slots = state_cache.shape[0] * state_cache.shape[1]
++                guarded_state_slots = torch.stack(
++                    [
++                        (flat_state_slots - 1).clamp(0, total_state_slots - 1),
++                        flat_state_slots.clamp(0, total_state_slots - 1),
++                        (flat_state_slots + 1).clamp(0, total_state_slots - 1),
++                    ],
++                    dim=1,
++                )
++                recorder.record_static(
++                    layer,
++                    "kv_storage_binding",
++                    compressor_state_storage=state_cache[:0],
++                )
++                recorder.record(
++                    layer,
++                    "compressor_state_before",
++                    slots=slot_mapping,
++                    guarded_slots=guarded_state_slots,
++                    rows=gather_logical_cache_rows(state_cache, guarded_state_slots),
++                )
++            else:
++                recorder = None
+ 
+         # Store the KV and score (with fused APE addition) in the state.
+         # NOTE: PDL is disabled — both this kernel and the compress kernels
+@@ -363,7 +373,7 @@ class DeepseekCompressor(nn.Module):
+                 "compressor_state_after",
+                 slots=slot_mapping,
+                 guarded_slots=guarded_state_slots,
+-                rows=state_cache.view(total_state_slots, -1)[guarded_state_slots],
++                rows=gather_logical_cache_rows(state_cache, guarded_state_slots),
+             )
+ 
+         # Fused: compress → RMSNorm → RoPE → FP8 quant → KV cache write.
+@@ -425,7 +435,7 @@ class DeepseekCompressor(nn.Module):
+             recorder.record_static(
+                 layer,
+                 "kv_storage_binding",
+-                compressed_kv_storage=kv_cache.reshape(-1)[:0],
++                compressed_kv_storage=kv_cache[:0],
+             )
+             recorder.record(
+                 layer,
+diff --git a/vllm/models/deepseek_v4/xpu/divergence_capture.py b/vllm/models/deepseek_v4/xpu/divergence_capture.py
+index d7d84a658..e259064c2 100644
+--- a/vllm/models/deepseek_v4/xpu/divergence_capture.py
++++ b/vllm/models/deepseek_v4/xpu/divergence_capture.py
+@@ -18,16 +18,13 @@ from pathlib import Path
+ 
+ import torch
+ 
+-
+ CAPTURE_DIR = os.environ.get("VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR", "")
+ ARM_FILE = os.environ.get(
+     "VLLM_XPU_V4_DIVERGENCE_ARM_FILE", "/tmp/deepseek-v4-divergence-capture.arm"
+ )
+ CAPTURE_STAGES = {
+     value.strip()
+-    for value in os.environ.get(
+-        "VLLM_XPU_V4_DIVERGENCE_STAGES", "layer_out"
+-    ).split(",")
++    for value in os.environ.get("VLLM_XPU_V4_DIVERGENCE_STAGES", "layer_out").split(",")
+     if value.strip()
+ }
+ CAPTURE_MODE = os.environ.get("VLLM_XPU_V4_DIVERGENCE_MODE", "hash")
+@@ -51,9 +48,7 @@ def _parse_layers(value: str) -> set[int] | None:
+     return layers
+ 
+ 
+-CAPTURE_LAYERS = _parse_layers(
+-    os.environ.get("VLLM_XPU_V4_DIVERGENCE_LAYERS", "all")
+-)
++CAPTURE_LAYERS = _parse_layers(os.environ.get("VLLM_XPU_V4_DIVERGENCE_LAYERS", "all"))
+ 
+ 
+ @dataclass
+@@ -80,6 +75,20 @@ def _tensor_metadata(tensor: torch.Tensor) -> dict[str, object]:
+     }
+ 
+ 
++def gather_logical_cache_rows(cache: torch.Tensor, slots: torch.Tensor) -> torch.Tensor:
++    """Gather flattened logical rows without requiring contiguous storage."""
++    if cache.ndim < 3:
++        raise ValueError(
++            f"expected cache with at least 3 dimensions, got {cache.shape}"
++        )
++    block_size = cache.shape[1]
++    flat_slots = slots.to(torch.int64).reshape(-1)
++    blocks = flat_slots // block_size
++    offsets = flat_slots % block_size
++    rows = cache[blocks, offsets]
++    return rows.reshape(*slots.shape, -1)
++
++
+ class DivergenceRecorder:
+     def __init__(self) -> None:
+         self.enabled = bool(CAPTURE_DIR)
+@@ -90,15 +99,13 @@ class DivergenceRecorder:
+         self._static_keys: set[tuple[int | None, str, str]] = set()
+         self._capture_positions = {
+             int(value.strip())
+-            for value in os.environ.get(
+-                "VLLM_XPU_V4_DIVERGENCE_POSITIONS", ""
+-            ).split(",")
++            for value in os.environ.get("VLLM_XPU_V4_DIVERGENCE_POSITIONS", "").split(
++                ","
++            )
+             if value.strip()
+         }
+ 
+-    def begin_forward(
+-        self, input_ids: torch.Tensor, positions: torch.Tensor
+-    ) -> None:
++    def begin_forward(self, input_ids: torch.Tensor, positions: torch.Tensor) -> None:
+         if not self.enabled:
+             return
+         armed = Path(ARM_FILE).exists()
+@@ -109,15 +116,13 @@ class DivergenceRecorder:
+             self._active_forward = None
+             return
+ 
+-        if self._capture_positions:
+-            # This filter is diagnostic-only and default-off. Singleton decode
+-            # forwards are the only eligible geometry; prefills are rejected
+-            # by shape without a device-to-host position read. The packet
+-            # validator checks that the two saved values are exactly the
+-            # configured anchors.
+-            if positions.numel() != 1:
+-                self._active_forward = None
+-                return
++        # This filter is diagnostic-only and default-off. Singleton decode
++        # forwards are the only eligible geometry; prefills are rejected by
++        # shape without a device-to-host position read. The packet validator
++        # checks that the saved values are exactly the configured anchors.
++        if self._capture_positions and positions.numel() != 1:
++            self._active_forward = None
++            return
+ 
+         self._was_armed = True
+         self._active_forward = self._next_forward
+@@ -128,18 +133,22 @@ class DivergenceRecorder:
+     def wants_layer(self, layer: int) -> bool:
+         return CAPTURE_LAYERS is None or layer in CAPTURE_LAYERS
+ 
++    def is_active(self, layer: int | None, stage: str) -> bool:
++        """Return whether capture bookkeeping is needed for this call."""
++        return (
++            self.enabled
++            and self._active_forward is not None
++            and stage in CAPTURE_STAGES
++            and (layer is None or self.wants_layer(layer))
++        )
++
+     def record(
+         self,
+         layer: int | None,
+         stage: str,
+         **tensors: torch.Tensor | None,
+     ) -> None:
+-        if (
+-            not self.enabled
+-            or self._active_forward is None
+-            or stage not in CAPTURE_STAGES
+-            or (layer is not None and not self.wants_layer(layer))
+-        ):
++        if not self.is_active(layer, stage):
+             return
+         for name, tensor in tensors.items():
+             if tensor is not None:
+@@ -156,12 +165,7 @@ class DivergenceRecorder:
+         References remain owned by the live oracle model until flush.  Full
+         mode copies them to CPU one at a time while the service is still up.
+         """
+-        if (
+-            not self.enabled
+-            or self._active_forward is None
+-            or stage not in CAPTURE_STAGES
+-            or (layer is not None and not self.wants_layer(layer))
+-        ):
++        if not self.is_active(layer, stage):
+             return
+         for name, tensor in tensors.items():
+             key = (layer, stage, name)
+@@ -182,9 +186,7 @@ class DivergenceRecorder:
+         if self._active_forward is None or len(self._records) >= MAX_RECORDS:
+             return
+         # No host read, reduction, synchronization, or file I/O while armed.
+-        snapshot = (
+-            tensor.detach().contiguous().clone() if clone else tensor.detach()
+-        )
++        snapshot = tensor.detach().contiguous().clone() if clone else tensor.detach()
+         self._records.append(
+             _Record(
+                 self._active_forward,
+@@ -223,9 +225,7 @@ class DivergenceRecorder:
+                     "raw_sha256": hashlib.sha256(raw).hexdigest(),
+                     "binding": record.metadata,
+                     "reference_binding": not record.clone_at_enqueue,
+-                    "immutable_binding": (
+-                        record.stage == "attn_static_binding"
+-                    ),
++                    "immutable_binding": (record.stage == "attn_static_binding"),
+                 }
+                 if CAPTURE_MODE == "full":
+                     tensor_name = (
+diff --git a/vllm/models/deepseek_v4/xpu/model.py b/vllm/models/deepseek_v4/xpu/model.py
+index bc8b7169c..67c0e3a08 100644
+--- a/vllm/models/deepseek_v4/xpu/model.py
++++ b/vllm/models/deepseek_v4/xpu/model.py
+@@ -1353,22 +1353,23 @@ class DeepseekV4DecoderLayer(nn.Module):
+             res_mix=res_mix,
+             positions=positions,
+         )
+-        static_bindings = {
+-            "hc_attn_fn": self.hc_attn_fn,
+-            "hc_attn_scale": self.hc_attn_scale,
+-            "hc_attn_base": self.hc_attn_base,
+-            "attn_norm_weight": self.attn_norm.weight,
+-        }
+-        static_bindings.update(
+-            {
+-                f"attn_param::{name}": tensor
+-                for name, tensor in self.attn.named_parameters()
+-                if not name.startswith("indexer.")
++        if DIVERGENCE_RECORDER.is_active(self.layer_idx, "attn_static_binding"):
++            static_bindings = {
++                "hc_attn_fn": self.hc_attn_fn,
++                "hc_attn_scale": self.hc_attn_scale,
++                "hc_attn_base": self.hc_attn_base,
++                "attn_norm_weight": self.attn_norm.weight,
+             }
+-        )
+-        DIVERGENCE_RECORDER.record_static(
+-            self.layer_idx, "attn_static_binding", **static_bindings
+-        )
++            static_bindings.update(
++                {
++                    f"attn_param::{name}": tensor
++                    for name, tensor in self.attn.named_parameters()
++                    if not name.startswith("indexer.")
++                }
++            )
++            DIVERGENCE_RECORDER.record_static(
++                self.layer_idx, "attn_static_binding", **static_bindings
++            )
+         if residual is None:
+             # First layer: run standalone hc_pre
+             residual = x
+@@ -1592,9 +1593,7 @@ class DeepseekV4Model(nn.Module):
+             else:
+                 hidden_states = self.embed_input_ids(input_ids)
+             hidden_states = hidden_states.unsqueeze(-2).repeat(1, self.hc_mult, 1)
+-            DIVERGENCE_RECORDER.record(
+-                None, "embedding", hidden_states=hidden_states
+-            )
++            DIVERGENCE_RECORDER.record(None, "embedding", hidden_states=hidden_states)
+         else:
+             assert intermediate_tensors is not None
+             hidden_states = intermediate_tensors["hidden_states"]
+@@ -1628,9 +1627,7 @@ class DeepseekV4Model(nn.Module):
+         # fused_post_pre. After the last layer we must apply it explicitly.
+         if layer is not None:
+             hidden_states = layer.hc_post(hidden_states, residual, post_mix, res_mix)
+-            DIVERGENCE_RECORDER.record(
+-                None, "hc_post", hidden_states=hidden_states
+-            )
++            DIVERGENCE_RECORDER.record(None, "hc_post", hidden_states=hidden_states)
+ 
+         if not get_pp_group().is_last_rank:
+             return IntermediateTensors({"hidden_states": hidden_states})
+diff --git a/vllm/models/deepseek_v4/xpu/xpu_sparse.py b/vllm/models/deepseek_v4/xpu/xpu_sparse.py
+index 39949ed52..ce02de107 100644
+--- a/vllm/models/deepseek_v4/xpu/xpu_sparse.py
++++ b/vllm/models/deepseek_v4/xpu/xpu_sparse.py
+@@ -25,7 +25,6 @@ from vllm.models.deepseek_v4.sparse_mla import (
+     DeepseekV4FlashMLAMetadata,
+ )
+ from vllm.models.deepseek_v4.xpu.divergence_capture import (
+-    CAPTURE_STAGES,
+     RECORDER as DIVERGENCE_RECORDER,
+ )
+ from vllm.models.deepseek_v4.xpu.xpu_sparse_decode_fp8 import (
+@@ -53,11 +52,9 @@ def _paged_fp8_raw_rows(
+     blocks = safe_slots // block_size
+     offsets = safe_slots % block_size
+     cache_2d = cache.view(cache.shape[0], -1)
+-    data_indices = offsets[:, None] * 576 + torch.arange(
+-        576, device=slots.device
+-    )
+-    scale_indices = block_size * 576 + offsets[:, None] * 8 + torch.arange(
+-        8, device=slots.device
++    data_indices = offsets[:, None] * 576 + torch.arange(576, device=slots.device)
++    scale_indices = (
++        block_size * 576 + offsets[:, None] * 8 + torch.arange(8, device=slots.device)
+     )
+     rows = torch.cat(
+         [
+@@ -121,13 +118,11 @@ def _xpu_fp8_wo_a(
+         )
+         # fp8_bmm consumes [G,K,N] weights and [G,K/128,N/128] scales.
+         # Weight remains an NT view; only the tiny scale table is materialized.
+-        weight_bmm = weight.view(
+-            n_local_groups, o_lora_rank, hidden_dim
+-        ).transpose(1, 2)
++        weight_bmm = weight.view(n_local_groups, o_lora_rank, hidden_dim).transpose(
++            1, 2
++        )
+         weight_scale_bmm = (
+-            weight_scale.view(
+-                n_local_groups, o_lora_rank // 128, hidden_dim // 128
+-            )
++            weight_scale.view(n_local_groups, o_lora_rank // 128, hidden_dim // 128)
+             .transpose(1, 2)
+             .contiguous()
+         )
+@@ -238,24 +233,34 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             xpu_qnorm_rope_kv_fp8_insert,
+         )
+ 
+-        cache = self.swa_cache_layer.kv_cache
+-        slots = swa_metadata.slot_mapping
+-        total_slots = cache.shape[0] * swa_metadata.block_size
+-        guarded_slots = _slot_with_guards(slots, total_slots)
+-        DIVERGENCE_RECORDER.record_static(
+-            self.layer_id,
+-            "kv_storage_binding",
+-            swa_cache_storage=cache.reshape(-1)[:0],
+-        )
+-        DIVERGENCE_RECORDER.record(
+-            self.layer_id,
+-            "swa_kv_before",
+-            slots=slots,
+-            guarded_slots=guarded_slots,
+-            raw=_paged_fp8_raw_rows(
+-                cache, guarded_slots, swa_metadata.block_size
+-            ),
++        capture_swa = any(
++            DIVERGENCE_RECORDER.is_active(self.layer_id, stage)
++            for stage in (
++                "kv_storage_binding",
++                "swa_kv_before",
++                "swa_kv_after",
++            )
+         )
++        cache = None
++        slots = None
++        guarded_slots = None
++        if capture_swa:
++            cache = self.swa_cache_layer.kv_cache
++            slots = swa_metadata.slot_mapping
++            total_slots = cache.shape[0] * swa_metadata.block_size
++            guarded_slots = _slot_with_guards(slots, total_slots)
++            DIVERGENCE_RECORDER.record_static(
++                self.layer_id,
++                "kv_storage_binding",
++                swa_cache_storage=cache[:0],
++            )
++            DIVERGENCE_RECORDER.record(
++                self.layer_id,
++                "swa_kv_before",
++                slots=slots,
++                guarded_slots=guarded_slots,
++                raw=_paged_fp8_raw_rows(cache, guarded_slots, swa_metadata.block_size),
++            )
+ 
+         xpu_qnorm_rope_kv_fp8_insert(
+             q,
+@@ -267,17 +272,18 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             self.eps,
+             swa_metadata.block_size,
+         )
+-        DIVERGENCE_RECORDER.record(
+-            self.layer_id,
+-            "swa_kv_after",
+-            slots=slots,
+-            guarded_slots=guarded_slots,
+-            raw=_paged_fp8_raw_rows(
+-                cache, guarded_slots, swa_metadata.block_size
+-            ),
+-            q_after=q,
+-        )
+-        if "attn_cache_raw" in CAPTURE_STAGES:
++        if capture_swa:
++            assert cache is not None and slots is not None
++            assert guarded_slots is not None
++            DIVERGENCE_RECORDER.record(
++                self.layer_id,
++                "swa_kv_after",
++                slots=slots,
++                guarded_slots=guarded_slots,
++                raw=_paged_fp8_raw_rows(cache, guarded_slots, swa_metadata.block_size),
++                q_after=q,
++            )
++        if DIVERGENCE_RECORDER.is_active(self.layer_id, "attn_cache_raw"):
+             slots = swa_metadata.slot_mapping
+             block_size = swa_metadata.block_size
+             cache_2d = self.swa_cache_layer.kv_cache.view(
+@@ -289,8 +295,10 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             data_indices = offsets[:, None] * 576 + torch.arange(
+                 576, device=slots.device
+             )
+-            scale_indices = block_size * 576 + offsets[:, None] * 8 + torch.arange(
+-                8, device=slots.device
++            scale_indices = (
++                block_size * 576
++                + offsets[:, None] * 8
++                + torch.arange(8, device=slots.device)
+             )
+             raw = torch.cat(
+                 [
+@@ -325,9 +333,7 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             )
+             DIVERGENCE_RECORDER.record(self.layer_id, "attn_wo_a", z=z)
+             output = self._wo_b(z)
+-            DIVERGENCE_RECORDER.record(
+-                self.layer_id, "attn_wo_b", output=output
+-            )
++            DIVERGENCE_RECORDER.record(self.layer_id, "attn_wo_b", output=output)
+             return output
+ 
+         # XPU uses BF16 reference wo_a path (same as ROCm).
+@@ -353,22 +359,18 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+         return output
+ 
+     def _wo_b(self, z: torch.Tensor) -> torch.Tensor:
+-        if "attn_wo_b_local" not in CAPTURE_STAGES:
++        if not DIVERGENCE_RECORDER.is_active(self.layer_id, "attn_wo_b_local"):
+             return self.wo_b(z)
+ 
+         # Diagnostic equivalent of RowParallelLinear.forward that exposes the
+         # producer result immediately before its TP allreduce.
+         local = self.wo_b.quant_method.apply(self.wo_b, z, None)
+-        DIVERGENCE_RECORDER.record(
+-            self.layer_id, "attn_wo_b_local", output=local
+-        )
++        DIVERGENCE_RECORDER.record(self.layer_id, "attn_wo_b_local", output=local)
+         if self.wo_b.reduce_results and self.wo_b.tp_size > 1:
+             output = tensor_model_parallel_all_reduce(local)
+         else:
+             output = local
+-        DIVERGENCE_RECORDER.record(
+-            self.layer_id, "attn_wo_b_reduced", output=output
+-        )
++        DIVERGENCE_RECORDER.record(self.layer_id, "attn_wo_b_reduced", output=output)
+         return output
+ 
+     def forward_mqa(
+@@ -518,19 +520,23 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             rope_head_dim=self.rope_head_dim,
+             out=output,
+         )
+-        DIVERGENCE_RECORDER.record(
+-            self.layer_id,
+-            "attn_sparse_bindings",
+-            topk_indices=topk_indices,
+-            topk_lens=topk_lens,
+-            swa_indices=swa_indices,
+-            swa_lens=swa_lens,
++        if DIVERGENCE_RECORDER.is_active(self.layer_id, "attn_sparse_bindings"):
++            DIVERGENCE_RECORDER.record(
++                self.layer_id,
++                "attn_sparse_bindings",
++                topk_indices=topk_indices,
++                topk_lens=topk_lens,
++                swa_indices=swa_indices,
++                swa_lens=swa_lens,
++            )
++        capture_compressed = DIVERGENCE_RECORDER.is_active(
++            self.layer_id, "compressed_kv_selected"
+         )
+-        if kv_cache is not None and topk_indices is not None:
++        if capture_compressed and kv_cache is not None and topk_indices is not None:
+             DIVERGENCE_RECORDER.record_static(
+                 self.layer_id,
+                 "kv_storage_binding",
+-                compressed_cache_storage=kv_cache.reshape(-1)[:0],
++                compressed_cache_storage=kv_cache[:0],
+             )
+             DIVERGENCE_RECORDER.record(
+                 self.layer_id,
+@@ -541,16 +547,19 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+                     attn_metadata.block_size // self.compress_ratio,
+                 ),
+             )
+-        DIVERGENCE_RECORDER.record(
+-            self.layer_id,
+-            "swa_kv_selected",
+-            raw=_paged_fp8_raw_rows(
+-                self.swa_cache_layer.kv_cache,
+-                swa_indices,
+-                swa_metadata.block_size,
+-            ),
+-        )
+-        if split_intermediates is not None:
++        if DIVERGENCE_RECORDER.is_active(self.layer_id, "swa_kv_selected"):
++            DIVERGENCE_RECORDER.record(
++                self.layer_id,
++                "swa_kv_selected",
++                raw=_paged_fp8_raw_rows(
++                    self.swa_cache_layer.kv_cache,
++                    swa_indices,
++                    swa_metadata.block_size,
++                ),
++            )
++        if split_intermediates is not None and DIVERGENCE_RECORDER.is_active(
++            self.layer_id, "attn_qk_lse_pv"
++        ):
+             scores, lse = split_intermediates
+             DIVERGENCE_RECORDER.record(
+                 self.layer_id,
+-- 
+2.43.0
+

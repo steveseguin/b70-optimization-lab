@@ -1,0 +1,69 @@
+{
+  "schema": "option4-m1-attention-phase1-result-v1",
+  "created_at_utc": "2026-07-20T23:23:39Z",
+  "verdict": "fail_stop_step1",
+  "failed_gate": "tp4_oracle_capture",
+  "failure": {
+    "anchor_attempted": 64,
+    "bucket_attempted": "SWA-resident",
+    "http_status": 500,
+    "message": "XPU advanced indexing asserted index out of bounds during the first armed singleton decode",
+    "lazy_compilation_observed": true,
+    "packet_files": 0,
+    "required_rank_layer_bucket_instances": 344,
+    "captured_rank_layer_bucket_instances": 0
+  },
+  "capture": {
+    "packet_root": "/mnt/fast-ai/deepseek-v4-corpora/m1-attention-boundary-v1-20260720T232130Z",
+    "run_root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-m1-attention-oracle-20260720T232130Z",
+    "layers_covered": 0,
+    "layers_required": 43,
+    "buckets_covered": 0,
+    "buckets_required": 2,
+    "packet_checksum": null
+  },
+  "component_gate": {
+    "changed_input_passed": 0,
+    "changed_input_required": 40,
+    "fixed_address_replays_passed": 0,
+    "fixed_address_replays_required": 70,
+    "positions_28_58_run": false,
+    "per_layer_bitwise_passed": 0,
+    "per_layer_bitwise_required": 43,
+    "eager_boundaries_per_token": null,
+    "v1_boundaries_per_token": null
+  },
+  "endpoint_gate": {
+    "run": false,
+    "piecewise_nested": null,
+    "eager_break": null,
+    "host_syncs": null,
+    "control_median_ms_per_token": null,
+    "candidate_median_ms_per_token": null,
+    "threshold_ms_per_token": 22.381408,
+    "output_tokens_bitwise_exact": null,
+    "spec_cycle_transfer": "not tested"
+  },
+  "identity": {
+    "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "model_manifest_sha256": "08535b4ad7fd94419c7eadb1f6cf7f1de583d64f92a1760c86aa238972904e78",
+    "vllm_commit": "265f53ddd848e4f1379031c56d3acf797f795994",
+    "xpu_kernel_commit": "5a1e9fa4602f69302dc50ecf85b06b6f86762117",
+    "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+    "oneccl_binary_sha256": "53de2b6d65265803d64773546c1166ceed4ae43737f0fded776f5847b4b461c9"
+  },
+  "evidence_sha256": {
+    "identity_txt": "dfe2996294ed7923143ac6dcb8b445cb33e4d5a6adba5dd97a2c5fcd86d5ac56",
+    "preflight_log": "8579b52098e76ad3bbaa2150253fc7ccd464d3eda550a068f4412b653005fed0",
+    "server_log": "7f0e3049fb4e94b673f83931875439b1a9d95592004069340985d10026283b68",
+    "preserved_patch": "6d30f0ff7d8da9fa8449eb1a3df6ac1dcb69835688b7b1556d717c2fc6f422f9"
+  },
+  "postflight": {
+    "oracle_stopped": true,
+    "port_18080_listening": false,
+    "all_four_b70s_free_for_ai": true
+  },
+  "localmaxxing_action": false,
+  "held_out_pack_accessed": false,
+  "phase2_go": false
+}

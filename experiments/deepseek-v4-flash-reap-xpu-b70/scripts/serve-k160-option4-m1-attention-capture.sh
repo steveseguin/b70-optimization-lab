@@ -4,7 +4,7 @@ set -euo pipefail
 # Bounded eager TP4 oracle capture. Every new selector is default-off and this
 # wrapper fails closed unless a fresh append-only capture directory is supplied.
 root=/home/steve/llm-optimizations
-vllm_tree=/home/steve/src/deepseek-v4-vllm-option4-m1-attention-phase1
+vllm_tree=/home/steve/src/deepseek-v4-vllm-xpu-dspark
 kernel_tree=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
 
 export RUN_DIR="${RUN_DIR:?set RUN_DIR to a fresh artifact directory}"
@@ -17,7 +17,7 @@ mkdir -p "${RUN_DIR}" "${CAPTURE_DIR}"
 
 export PYTHONPATH="${vllm_tree}:${kernel_tree}${PYTHONPATH:+:${PYTHONPATH}}"
 export VLLM_TREE="${vllm_tree}"
-export VLLM_COMMIT=fbbf066d8a58cf069ad657ff888a08fa78a08fbe
+export VLLM_COMMIT=265f53ddd848e4f1379031c56d3acf797f795994
 export KERNEL_TREE="${kernel_tree}"
 export KERNEL_COMMIT=5a1e9fa4602f69302dc50ecf85b06b6f86762117
 export PORT="${PORT:-18080}"
