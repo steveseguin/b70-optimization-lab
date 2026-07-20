@@ -1,0 +1,63 @@
+{
+  "classification": "diagnostic_profiler_crosscheck",
+  "date": "2026-07-20",
+  "one_active_generation": true,
+  "tracer": {
+    "name": "Intel PTI GPU unitrace",
+    "version": "2.4.0",
+    "commit": "a5bab309f4ffdd78bd127035c46f5f75371160f8",
+    "mode": "host-only temporal Level Zero capture"
+  },
+  "identity": {
+    "vllm": "a681dbb2b4b19c2c5a964817095b5f8c1f27ff48",
+    "xpu_kernels": "6522849b02894273b1e779b3c115527b5cdf3756",
+    "oneccl": "48fda4f0e074db005596d6899d5227d3f0316c12",
+    "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "speculation": false,
+    "enforce_eager": false,
+    "graph_mode": "PIECEWISE",
+    "all2all_backend": "allgather_reducescatter"
+  },
+  "capture": {
+    "token_intervals": 24,
+    "mean_stream_interarrival_ms": 21.862516541666665,
+    "cached_tokens": 0,
+    "effective_submission_boundaries_per_rank_token_median": 70.45833333333333,
+    "literal_immediate_graph_submits_per_rank_token_median": 1.0,
+    "command_list_host_syncs_per_rank_token_median": 10.791666666666666,
+    "event_host_syncs_per_rank_token_median": 1.0,
+    "cpu_no_level_zero_gap_ms_per_token_median": 2.5095729166666665,
+    "nonblocking_level_zero_api_ms_per_token_median": 0.4295266666666667,
+    "collective_wait_inclusive_upper_ms_per_observed_wait_median": 18.924939001811595,
+    "reconciled_cpu_scheduler_gap_ms_per_token": 3.005473333333333,
+    "profiler_invisible_scheduler_edge_ms_per_token": 0.49590041666666673
+  },
+  "removable_overhead_buckets_ms_per_token": {
+    "cpu_host_submission_and_scheduler_gap": 3.005473333333333,
+    "level_zero_submit_sync_active": 0.4295266666666667,
+    "oneccl_live_critical_path": 2.746,
+    "noncollective_device_kernel_overhead_above_weight_floor": 9.431,
+    "rounded_total": 15.612
+  },
+  "bounds": {
+    "established_removable_overhead_ms_per_token": 15.611,
+    "collective_wait": "The 18.925 ms PTI value is inclusive, non-additive, and an upper bound; it overlaps downstream device progress. The production-cycle additive allocation remains 2.746 ms/token.",
+    "kernel_timing": "Full PTI device timestamp mode destabilized oneCCL and yielded no valid kernel trace. The 9.431 ms removable device bucket uses the same-identity device-event decomposition: 2.819 weight-kernel slack, 3.310 norm/MHC/RoPE/KV/misc, 1.842 non-GEMM MoE, and 1.460 sparse attention.",
+    "rounding": "The bucket total differs from 15.611 by 0.001 ms/token due to displayed precision."
+  },
+  "comparison": {
+    "prior_effective_submissions_per_rank_token": 70,
+    "prior_host_syncs_per_rank_token": 10,
+    "prior_native_k2_recovery_ms_per_token_same_suite": 0.9256,
+    "verdict": "CONFIRMS",
+    "new_removable_bucket_ge_0_5_ms_per_token": false
+  },
+  "raw_artifacts": {
+    "valid_host_trace_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-unitrace-host-crosscheck-20260720T141855Z",
+    "valid_host_trace_summary": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-unitrace-host-crosscheck-20260720T141855Z/host-trace-summary.json",
+    "failed_full_device_trace_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-unitrace-crosscheck-20260720T141436Z",
+    "failed_outer_wrapper_startup_run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-unitrace-crosscheck-20260720T140738Z"
+  },
+  "localmaxxing_submission": null,
+  "held_out_pack_accessed": false
+}
