@@ -1,0 +1,127 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 9793249..75d42df 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -70,7 +70,7 @@ using namespace cute;
+ template <typename, typename, typename, typename, char, char, class>
+ class GemmCuteName;
+
+-template <typename, class>
++template <typename, class, int>
+ class GemmM1TopkCuteName;
+
+ template <typename, class, int>
+@@ -168,7 +168,7 @@ void MoEGEMMLauncher(
+   });
+ }
+
+-template <class policy, typename TopkId>
++template <class policy, typename TopkId, int GrfSize = 256>
+ void M1TopkGEMMLauncher(
+     sycl::queue& stream,
+     const bfloat16_t* activations,
+@@ -215,14 +215,14 @@ void M1TopkGEMMLauncher(
+   namespace syclex = sycl::ext::oneapi::experimental;
+   namespace intelex = sycl::ext::intel::experimental;
+   syclex::properties kernel_props{
+-      syclex::sub_group_size<16>, intelex::grf_size<256>};
++      syclex::sub_group_size<16>, intelex::grf_size<GrfSize>};
+
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+   using GmemTiledCopyD = typename policy::GmemTiledCopyD;
+
+   stream.submit([&](sycl::handler& cgh) {
+-    cgh.parallel_for<GemmM1TopkCuteName<TopkId, policy>>(
++    cgh.parallel_for<GemmM1TopkCuteName<TopkId, policy, GrfSize>>(
+         sycl::nd_range<3>{group_range * local, local}, kernel_props, [=](auto) {
+           MoE::M1TopkGEMM<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD>(
+               activations,
+@@ -360,8 +360,32 @@ void M1TopkGEMMLaunchByN(
+     const int32_t gemm_k,
+     const bool broadcast_a) {
+   const char* small_m_n = std::getenv("VLLM_XPU_MXFP4_SMALL_M_N");
++  const char* grf128_env =
++      std::getenv("VLLM_XPU_MXFP4_M1_GRF128");
++  const bool grf128 = grf128_env != nullptr &&
++      (std::strcmp(grf128_env, "1") == 0 ||
++       std::strcmp(grf128_env, "true") == 0 ||
++       std::strcmp(grf128_env, "TRUE") == 0);
+   if (small_m_n != nullptr && std::strcmp(small_m_n, "32") == 0) {
+-    M1TopkGEMMLauncher<w4a16_policy_m_8_n_32>(
++    if (grf128) {
++      M1TopkGEMMLauncher<w4a16_policy_m_8_n_32, TopkId, 128>(
++          stream,
++          activations,
++          weights,
++          scales,
++          bias,
++          outputs,
++          topk_ids,
++          expert_map,
++          expert_map_size,
++          topk,
++          num_local_experts,
++          gemm_n,
++          gemm_k,
++          broadcast_a);
++      return;
++    }
++    M1TopkGEMMLauncher<w4a16_policy_m_8_n_32, TopkId, 256>(
+         stream,
+         activations,
+         weights,
+@@ -377,7 +401,25 @@ void M1TopkGEMMLaunchByN(
+         gemm_k,
+         broadcast_a);
+   } else if (small_m_n != nullptr && std::strcmp(small_m_n, "128") == 0) {
+-    M1TopkGEMMLauncher<w4a16_policy_m_8_n_128>(
++    if (grf128) {
++      M1TopkGEMMLauncher<w4a16_policy_m_8_n_128, TopkId, 128>(
++          stream,
++          activations,
++          weights,
++          scales,
++          bias,
++          outputs,
++          topk_ids,
++          expert_map,
++          expert_map_size,
++          topk,
++          num_local_experts,
++          gemm_n,
++          gemm_k,
++          broadcast_a);
++      return;
++    }
++    M1TopkGEMMLauncher<w4a16_policy_m_8_n_128, TopkId, 256>(
+         stream,
+         activations,
+         weights,
+@@ -393,7 +435,25 @@ void M1TopkGEMMLaunchByN(
+         gemm_k,
+         broadcast_a);
+   } else {
+-    M1TopkGEMMLauncher<w4a16_policy_m_8>(
++    if (grf128) {
++      M1TopkGEMMLauncher<w4a16_policy_m_8, TopkId, 128>(
++          stream,
++          activations,
++          weights,
++          scales,
++          bias,
++          outputs,
++          topk_ids,
++          expert_map,
++          expert_map_size,
++          topk,
++          num_local_experts,
++          gemm_n,
++          gemm_k,
++          broadcast_a);
++      return;
++    }
++    M1TopkGEMMLauncher<w4a16_policy_m_8, TopkId, 256>(
+         stream,
+         activations,
+         weights,

@@ -1,0 +1,46 @@
+{
+  "classification": "deepseek_v4_nonspec_m1_kernel_efficiency_iteration1",
+  "date": "2026-07-20",
+  "peak_gb_s_per_card": 527.0,
+  "endpoint_ms_per_token": 22.881408,
+  "weight_streaming_floor_ms_per_token": 7.27,
+  "profile_rows": [
+    {"rank": 1, "kernel": "MHC fused post/pre x85", "logical_bytes": 149035000, "measured_ms": 2.912528, "achieved_gb_s": 51.2, "peak_percent": 9.7, "ideal_ms": 0.282799, "time_above_ideal_ms": 2.629729, "measurement": "in_model_eager_timing_plus_source_logical_bytes"},
+    {"rank": 2, "kernel": "MoE route activation direct gather/scatter", "logical_bytes": 4800000, "measured_ms": 1.842, "achieved_gb_s": 2.6, "peak_percent": 0.5, "ideal_ms": 0.009108, "time_above_ideal_ms": 1.832892, "measurement": "mixed_current_isolated_components_plus_source_logical_bytes"},
+    {"rank": 3, "kernel": "routed MXFP4 expert GEMM x86", "logical_bytes": 1006087000, "measured_ms": 3.485, "achieved_gb_s": 288.7, "peak_percent": 54.8, "ideal_ms": 1.909084, "time_above_ideal_ms": 1.575916, "measurement": "in_model_eager_timing_plus_weight_floor_residual_bytes"},
+    {"rank": 4, "kernel": "attention QK/LSE x43", "logical_bytes": 12813000, "measured_ms": 1.158989, "achieved_gb_s": 11.1, "peak_percent": 2.1, "ideal_ms": 0.024314, "time_above_ideal_ms": 1.134675, "measurement": "in_model_eager_short_context_plus_source_logical_bytes"},
+    {"rank": 5, "kernel": "dense shared-down FP8 512x4096 x43", "logical_bytes": 90183000, "measured_ms": 0.600219, "achieved_gb_s": 150.3, "peak_percent": 28.5, "ideal_ms": 0.171125, "time_above_ideal_ms": 0.429094, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 6, "kernel": "attention PV x43", "logical_bytes": 15197000, "measured_ms": 0.300611, "achieved_gb_s": 50.6, "peak_percent": 9.6, "ideal_ms": 0.028836, "time_above_ideal_ms": 0.271775, "measurement": "in_model_eager_short_context_plus_source_logical_bytes"},
+    {"rank": 7, "kernel": "dense WQ_B W8A16 1024x8192 x43", "logical_bytes": 360732000, "measured_ms": 0.926973, "achieved_gb_s": 389.2, "peak_percent": 73.8, "ideal_ms": 0.684501, "time_above_ideal_ms": 0.242472, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 8, "kernel": "dense shared gate/up W8A16 4096x1024 x43", "logical_bytes": 180366000, "measured_ms": 0.499576, "achieved_gb_s": 361.0, "peak_percent": 68.5, "ideal_ms": 0.342251, "time_above_ideal_ms": 0.157325, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 9, "kernel": "dense WO_B W8A16 2048x4096 x43", "logical_bytes": 360732000, "measured_ms": 0.831336, "achieved_gb_s": 433.9, "peak_percent": 82.3, "ideal_ms": 0.684501, "time_above_ideal_ms": 0.146835, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 10, "kernel": "dense fused WQA/WKV W8A16 4096x1536 x43", "logical_bytes": 270550000, "measured_ms": 0.640782, "achieved_gb_s": 422.2, "peak_percent": 80.1, "ideal_ms": 0.513377, "time_above_ideal_ms": 0.127405, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 11, "kernel": "dense BF16 router 4096x160 x43", "logical_bytes": 56361000, "measured_ms": 0.213129, "achieved_gb_s": 264.4, "peak_percent": 50.2, "ideal_ms": 0.106947, "time_above_ideal_ms": 0.106183, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 12, "kernel": "dense BF16 wo_a BMM x43", "logical_bytes": 721420000, "measured_ms": 1.406823, "achieved_gb_s": 512.8, "peak_percent": 97.3, "ideal_ms": 1.368919, "time_above_ideal_ms": 0.037904, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 13, "kernel": "dense BF16 4096x1024 x20", "logical_bytes": 167772000, "measured_ms": 0.348016, "achieved_gb_s": 482.1, "peak_percent": 91.5, "ideal_ms": 0.318353, "time_above_ideal_ms": 0.029663, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 14, "kernel": "dense BF16 4096x2048 x21", "logical_bytes": 352322000, "measured_ms": 0.690203, "achieved_gb_s": 510.5, "peak_percent": 96.9, "ideal_ms": 0.668542, "time_above_ideal_ms": 0.021661, "measurement": "in_model_eager_shape_attribution"},
+    {"rank": 15, "kernel": "LM head BF16 4096x32320 x1", "logical_bytes": 264765000, "measured_ms": 0.446506, "achieved_gb_s": 593.0, "peak_percent": 112.5, "ideal_ms": 0.502401, "time_above_ideal_ms": 0.0, "measurement": "in_model_eager_cache_or_timestamp_limited"}
+  ],
+  "dense_total": {"logical_bytes": 2825203000, "measured_ms": 6.603564, "achieved_gb_s": 427.83, "ideal_ms": 5.360916, "time_above_ideal_ms": 1.242648},
+  "selected_target": {"kernel": "M1 N64 routed MXFP4 mainloop", "current_achieved_gb_s": 288.7, "peak_percent": 54.8, "theoretical_slack_ms_per_token": 1.575916, "realistic_recoverable_ms_per_token_at_65_to_70_percent_peak": [0.55, 0.76]},
+  "candidate": {"change": "GRF256_to_GRF128_only", "tile": "M8xN64xK32", "subgroup": 16, "arithmetic_changed": false, "xpu_source_commit": "790479dc6538c927ccc75e4f1087c107b42c87bb", "grouped_library_sha256": "205a1ab058f61ac6994f4f3a4dfe45b70d12cb5a379f8977c65b44de319ded5c", "xpu_extension_sha256_unchanged": "c0597c1db9d1e684462adce681101957e7a969baab3c0c71fb748ca7fd8c24e9"},
+  "four_card_gate": {
+    "raw_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m1-mxfp4-grf128-efficiency-gate-20260720T154042Z-b",
+    "eager_exact": "160/160",
+    "fixed_address_graph_exact": "160/160",
+    "route": "3_local",
+    "cards": [
+      {"card": 0, "baseline_us_per_layer": 105.301825, "candidate_us_per_layer": 202.760935, "saved_ms_per_token": -4.19074173},
+      {"card": 1, "baseline_us_per_layer": 106.80495, "candidate_us_per_layer": 205.077345, "saved_ms_per_token": -4.225712985},
+      {"card": 2, "baseline_us_per_layer": 106.67578, "candidate_us_per_layer": 205.029945, "saved_ms_per_token": -4.229229095},
+      {"card": 3, "baseline_us_per_layer": 107.315365, "candidate_us_per_layer": 205.146615, "saved_ms_per_token": -4.20674375}
+    ],
+    "slowest_candidate_card": 3,
+    "slowest_candidate_card_saved_ms_per_token": -4.20674375,
+    "threshold_ms_per_token": 0.3,
+    "passed": false
+  },
+  "spec_cycle_transfer": false,
+  "bab_ran": false,
+  "bab_skip_reason": "isolated exact gate was below 0.30 ms/token"
+}
