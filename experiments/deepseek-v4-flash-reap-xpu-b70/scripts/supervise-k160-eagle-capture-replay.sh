@@ -20,16 +20,37 @@ request_timeout="${EAGLE_REQUEST_TIMEOUT:-90}"
 server_pid=
 
 stop_server() {
-  if [[ -n "${server_pid}" ]] && kill -0 -- "-${server_pid}" 2>/dev/null; then
-    kill -INT -- "-${server_pid}" 2>/dev/null || true
+  if [[ -n "${server_pid}" ]] && kill -0 "${server_pid}" 2>/dev/null; then
+    if kill -0 -- "-${server_pid}" 2>/dev/null; then
+      kill -INT -- "-${server_pid}" 2>/dev/null || true
+    else
+      kill -INT "${server_pid}" 2>/dev/null || true
+    fi
     for _ in $(seq 1 30); do
-      if ! kill -0 -- "-${server_pid}" 2>/dev/null; then
+      if ! kill -0 "${server_pid}" 2>/dev/null; then
         break
       fi
       sleep 1
     done
-    if kill -0 -- "-${server_pid}" 2>/dev/null; then
-      kill -TERM -- "-${server_pid}" 2>/dev/null || true
+    if kill -0 "${server_pid}" 2>/dev/null; then
+      if kill -0 -- "-${server_pid}" 2>/dev/null; then
+        kill -TERM -- "-${server_pid}" 2>/dev/null || true
+      else
+        kill -TERM "${server_pid}" 2>/dev/null || true
+      fi
+      for _ in $(seq 1 10); do
+        if ! kill -0 "${server_pid}" 2>/dev/null; then
+          break
+        fi
+        sleep 1
+      done
+    fi
+    if kill -0 "${server_pid}" 2>/dev/null; then
+      if kill -0 -- "-${server_pid}" 2>/dev/null; then
+        kill -KILL -- "-${server_pid}" 2>/dev/null || true
+      else
+        kill -KILL "${server_pid}" 2>/dev/null || true
+      fi
     fi
   fi
   if [[ -n "${server_pid}" ]]; then
@@ -68,7 +89,7 @@ for ((cycle = first_cycle; cycle < first_cycle + max_cycles; cycle++)); do
       ready=1
       break
     fi
-    if ! kill -0 -- "-${server_pid}" 2>/dev/null; then
+    if ! kill -0 "${server_pid}" 2>/dev/null; then
       break
     fi
     sleep 2
