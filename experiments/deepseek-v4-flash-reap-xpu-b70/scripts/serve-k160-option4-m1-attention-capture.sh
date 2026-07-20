@@ -17,7 +17,7 @@ mkdir -p "${RUN_DIR}" "${CAPTURE_DIR}"
 
 export PYTHONPATH="${vllm_tree}:${kernel_tree}${PYTHONPATH:+:${PYTHONPATH}}"
 export VLLM_TREE="${vllm_tree}"
-export VLLM_COMMIT=265f53ddd848e4f1379031c56d3acf797f795994
+export VLLM_COMMIT="${VLLM_COMMIT:-$(git -C "${vllm_tree}" rev-parse HEAD)}"
 export KERNEL_TREE="${kernel_tree}"
 export KERNEL_COMMIT=5a1e9fa4602f69302dc50ecf85b06b6f86762117
 export PORT="${PORT:-18080}"
@@ -59,6 +59,7 @@ export VLLM_XPU_GREEDY_SHARDED_TARGET_ARGMAX=0
 
 export VLLM_XPU_V4_DIVERGENCE_CAPTURE_DIR="${CAPTURE_DIR}/raw"
 export VLLM_XPU_V4_DIVERGENCE_ARM_FILE="${CAPTURE_DIR}/capture.arm"
+export VLLM_XPU_V4_DIVERGENCE_WARMUP_FILE="${CAPTURE_DIR}/warmup.arm"
 export VLLM_XPU_V4_DIVERGENCE_POSITIONS=64,512
 export VLLM_XPU_V4_DIVERGENCE_MODE=full
 export VLLM_XPU_V4_DIVERGENCE_LAYERS=all
