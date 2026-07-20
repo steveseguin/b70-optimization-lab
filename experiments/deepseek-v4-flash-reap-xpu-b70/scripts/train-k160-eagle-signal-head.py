@@ -10,6 +10,8 @@ import json
 import math
 import os
 import random
+import sys
+import threading
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -18,6 +20,7 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint
 from safetensors import safe_open
 
 HIDDEN_SIZE = 4096
@@ -29,6 +32,75 @@ BASE_VLLM_COMMIT = "264c7f2f7df21ddeeab32ecca0353133344f1ac9"
 CAPTURE_VLLM_COMMIT = "ca0648d600c6c47cf163e96eb66b3a365d104987"
 XPU_KERNEL_COMMIT = "31315673737d95da0f79179c8f755260ef02c1d6"
 ONECCL_COMMIT = "48fda4f0e074db005596d6899d5227d3f0316c12"
+EVENT_LOG: Path | None = None
+EVENT_LOG_LOCK = threading.Lock()
+
+
+def configure_event_log(path: Path | None) -> None:
+    global EVENT_LOG
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        raise FileExistsError(path)
+    EVENT_LOG = path
+
+
+def emit_event(payload: dict[str, object]) -> None:
+    line = json.dumps(payload)
+    print(line, flush=True)
+    if EVENT_LOG is not None:
+        with EVENT_LOG_LOCK, EVENT_LOG.open("a") as stream:
+            stream.write(line + "\n")
+
+
+def synchronize_device(device: torch.device) -> None:
+    if device.type == "xpu":
+        torch.xpu.synchronize(device)
+
+
+def trace_marker(module: nn.Module, region: str, phase: str) -> None:
+    if not getattr(module, "trace_forward", False):
+        return
+    device = next(module.parameters()).device
+    if phase == "end":
+        synchronize_device(device)
+    emit_event(
+        {
+            "trace": region,
+            "phase": phase,
+            "monotonic_s": time.monotonic(),
+            "device": str(device),
+        }
+    )
+
+
+class StepTimeout:
+    def __init__(self, seconds: int, step: int):
+        self.seconds = seconds
+        self.step = step
+        self.timer: threading.Timer | None = None
+
+    def __enter__(self):
+        if self.seconds > 0:
+            self.timer = threading.Timer(self.seconds, self._expire)
+            self.timer.daemon = True
+            self.timer.start()
+        return self
+
+    def _expire(self) -> None:
+        emit_event(
+            {
+                "event": "step_timeout",
+                "step": self.step,
+                "timeout_s": self.seconds,
+            }
+        )
+        os._exit(124)
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        if self.timer is not None:
+            self.timer.cancel()
 
 
 @dataclass(frozen=True)
@@ -86,6 +158,7 @@ class GQACausalBlock(nn.Module):
         self.mlp_norm = RMSNorm(width)
         self.gate_up = nn.Linear(width, 2 * config.intermediate_size, bias=False)
         self.down = nn.Linear(config.intermediate_size, width, bias=False)
+        self.trace_forward = False
 
     def apply_rope(
         self, tensor: torch.Tensor, *, position_start: int = 0
@@ -109,40 +182,66 @@ class GQACausalBlock(nn.Module):
         self, x: torch.Tensor, attention_mask: torch.Tensor | None = None
     ) -> torch.Tensor:
         residual = x[:, -1:]
+        trace_marker(self, "decoder.attn_norm", "begin")
         normed = self.attn_norm(x)
+        trace_marker(self, "decoder.attn_norm", "end")
         batch, sequence, _ = normed.shape
+        trace_marker(self, "decoder.q_proj", "begin")
         q = (
             self.q_proj(normed[:, -1:])
             .view(batch, 1, self.num_heads, self.head_dim)
             .transpose(1, 2)
         )
+        trace_marker(self, "decoder.q_proj", "end")
+        trace_marker(self, "decoder.k_proj", "begin")
         k = (
             self.k_proj(normed)
             .view(batch, sequence, self.num_kv_heads, self.head_dim)
             .transpose(1, 2)
         )
+        trace_marker(self, "decoder.k_proj", "end")
+        trace_marker(self, "decoder.v_proj", "begin")
         v = (
             self.v_proj(normed)
             .view(batch, sequence, self.num_kv_heads, self.head_dim)
             .transpose(1, 2)
         )
+        trace_marker(self, "decoder.v_proj", "end")
+        trace_marker(self, "decoder.q_rope", "begin")
         q = self.apply_rope(q, position_start=sequence - 1)
+        trace_marker(self, "decoder.q_rope", "end")
+        trace_marker(self, "decoder.k_rope", "begin")
         k = self.apply_rope(k)
+        trace_marker(self, "decoder.k_rope", "end")
         repeat = self.num_heads // self.num_kv_heads
+        trace_marker(self, "decoder.kv_repeat", "begin")
         k = k.repeat_interleave(repeat, dim=1)
         v = v.repeat_interleave(repeat, dim=1)
+        trace_marker(self, "decoder.kv_repeat", "end")
         sdpa_mask = None
         if attention_mask is not None:
             if attention_mask.shape != (batch, sequence):
                 raise ValueError("attention mask does not match decoder sequence")
             sdpa_mask = attention_mask[:, None, None, :]
+        trace_marker(self, "decoder.sdpa", "begin")
         attended = F.scaled_dot_product_attention(
             q, k, v, attn_mask=sdpa_mask, is_causal=False
         )
+        trace_marker(self, "decoder.sdpa", "end")
         attended = attended.transpose(1, 2).reshape(batch, 1, -1)
+        trace_marker(self, "decoder.o_proj", "begin")
         x = residual + self.o_proj(attended)
-        gate, up = self.gate_up(self.mlp_norm(x)).chunk(2, dim=-1)
-        return x + self.down(F.silu(gate) * up)
+        trace_marker(self, "decoder.o_proj", "end")
+        trace_marker(self, "decoder.mlp_norm", "begin")
+        normalized = self.mlp_norm(x)
+        trace_marker(self, "decoder.mlp_norm", "end")
+        trace_marker(self, "decoder.gate_up", "begin")
+        gate, up = self.gate_up(normalized).chunk(2, dim=-1)
+        trace_marker(self, "decoder.gate_up", "end")
+        trace_marker(self, "decoder.down", "begin")
+        result = x + self.down(F.silu(gate) * up)
+        trace_marker(self, "decoder.down", "end")
+        return result
 
 
 class K160EagleSignalHead(nn.Module):
@@ -175,33 +274,54 @@ class K160EagleSignalHead(nn.Module):
         self.output_norm = RMSNorm(config.hidden_size)
         self.register_buffer("target_embedding", embedding, persistent=False)
         self.register_buffer("target_lm_head", lm_head, persistent=False)
+        self.trace_forward = False
+        self.gradient_checkpointing = False
 
     def fused_feature(self, features: torch.Tensor) -> torch.Tensor:
-        normalized = [
-            norm(value)
-            for value, norm in zip(
-                features.unbind(dim=-2), self.feature_norms, strict=True
-            )
-        ]
-        return self.feature_fusion(torch.cat(normalized, dim=-1))
+        normalized = []
+        for index, (value, norm) in enumerate(
+            zip(features.unbind(dim=-2), self.feature_norms, strict=True)
+        ):
+            trace_marker(self, f"context.feature_norm_{index}", "begin")
+            normalized.append(norm(value))
+            trace_marker(self, f"context.feature_norm_{index}", "end")
+        trace_marker(self, "context.feature_fusion", "begin")
+        result = self.feature_fusion(torch.cat(normalized, dim=-1))
+        trace_marker(self, "context.feature_fusion", "end")
+        return result
 
     def context_sequence(
         self, features: torch.Tensor, token_ids: torch.Tensor
     ) -> torch.Tensor:
         feature_state = self.fused_feature(features)
+        trace_marker(self, "context.token_embedding", "begin")
         token = F.embedding(token_ids, self.target_embedding).to(
             self.token_projection.weight.dtype
         )
+        trace_marker(self, "context.token_embedding", "end")
+        trace_marker(self, "context.token_projection", "begin")
         token = self.token_projection(token)
-        return self.input_fusion(torch.cat((token, feature_state), dim=-1))
+        trace_marker(self, "context.token_projection", "end")
+        trace_marker(self, "context.input_fusion", "begin")
+        result = self.input_fusion(torch.cat((token, feature_state), dim=-1))
+        trace_marker(self, "context.input_fusion", "end")
+        return result
 
     def decode(
         self, sequence: torch.Tensor, attention_mask: torch.Tensor | None = None
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        trace_marker(self, "decode.decoder", "begin")
         decoded = self.decoder(sequence, attention_mask)[:, -1]
+        trace_marker(self, "decode.decoder", "end")
+        trace_marker(self, "decode.feature_output_adapter", "begin")
         projected = self.feature_output_adapter(decoded)
+        trace_marker(self, "decode.feature_output_adapter", "end")
+        trace_marker(self, "decode.output_norm", "begin")
         head_input = self.output_norm(projected).to(self.target_lm_head.dtype)
+        trace_marker(self, "decode.output_norm", "end")
+        trace_marker(self, "decode.lm_head", "begin")
         logits = F.linear(head_input, self.target_lm_head)
+        trace_marker(self, "decode.lm_head", "end")
         return decoded, logits
 
     def step(
@@ -211,11 +331,18 @@ class K160EagleSignalHead(nn.Module):
         sequence: torch.Tensor,
         attention_mask: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        trace_marker(self, "step.token_embedding", "begin")
         token = F.embedding(previous_token_ids, self.target_embedding).to(
             self.token_projection.weight.dtype
         )
+        trace_marker(self, "step.token_embedding", "end")
+        trace_marker(self, "step.token_projection", "begin")
         token = self.token_projection(token)
+        trace_marker(self, "step.token_projection", "end")
+        trace_marker(self, "step.input_fusion", "begin")
         current = self.input_fusion(torch.cat((token, feature_state), dim=-1))
+        trace_marker(self, "step.input_fusion", "end")
+        trace_marker(self, "step.sequence_shift", "begin")
         sequence = torch.cat((sequence[:, 1:], current.unsqueeze(1)), dim=1)
         attention_mask = torch.cat(
             (
@@ -228,6 +355,7 @@ class K160EagleSignalHead(nn.Module):
             ),
             dim=1,
         )
+        trace_marker(self, "step.sequence_shift", "end")
         decoded, logits = self.decode(sequence, attention_mask)
         return decoded, logits, sequence, attention_mask
 
@@ -552,8 +680,8 @@ def initialize_distributed(device_kind: str) -> tuple[torch.device, int, int, in
     return device, rank, local_rank, world_size
 
 
-def autocast_context(device: torch.device):
-    if device.type in {"xpu", "cpu"}:
+def autocast_context(device: torch.device, enabled: bool = True):
+    if enabled and device.type in {"xpu", "cpu"}:
         return torch.autocast(device_type=device.type, dtype=torch.bfloat16)
     return contextlib.nullcontext()
 
@@ -576,26 +704,47 @@ def teacher_forced_loss(
     model: K160EagleSignalHead,
     batch: dict[str, torch.Tensor],
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    trace_marker(model, "position_1.context_sequence", "begin")
     sequence = model.context_sequence(
         batch["context_features"], batch["context_tokens"]
     )
+    trace_marker(model, "position_1.context_sequence", "end")
     attention_mask = batch["context_mask"]
-    state, logits = model.decode(sequence, attention_mask)
+    trace_marker(model, "position_1.decode", "begin")
+    if model.gradient_checkpointing:
+        state, logits = checkpoint(
+            model.decode, sequence, attention_mask, use_reentrant=False
+        )
+    else:
+        state, logits = model.decode(sequence, attention_mask)
+    trace_marker(model, "position_1.decode", "end")
     total = torch.zeros((), device=state.device)
     ce_value = torch.zeros((), device=state.device)
     feature_value = torch.zeros((), device=state.device)
     weights = POSITION_WEIGHTS.to(state.device)
     for position in range(7):
         if position:
-            state, logits, sequence, attention_mask = model.step(
+            trace_marker(model, f"position_{position + 1}.recursive_step", "begin")
+            step_inputs = (
                 state,
                 batch["labels"][:, position - 1],
                 sequence,
                 attention_mask,
             )
+            if model.gradient_checkpointing:
+                state, logits, sequence, attention_mask = checkpoint(
+                    model.step, *step_inputs, use_reentrant=False
+                )
+            else:
+                state, logits, sequence, attention_mask = model.step(*step_inputs)
+            trace_marker(model, f"position_{position + 1}.recursive_step", "end")
+        trace_marker(model, f"position_{position + 1}.cross_entropy", "begin")
         ce = F.cross_entropy(logits.float(), batch["labels"][:, position].long())
+        trace_marker(model, f"position_{position + 1}.cross_entropy", "end")
+        trace_marker(model, f"position_{position + 1}.feature_loss", "begin")
         projected = model.feature_output_adapter(state)
         feature = normalized_feature_loss(projected, batch["target_final"][:, position])
+        trace_marker(model, f"position_{position + 1}.feature_loss", "end")
         total = total + weights[position] * (ce + feature)
         ce_value = ce_value + ce.detach()
         feature_value = feature_value + feature.detach()
@@ -612,7 +761,22 @@ def move_batch(
 
 
 def train(args: argparse.Namespace) -> int:
+    configure_event_log(args.event_log)
+    if args.single_card_only:
+        inherited_topology = {
+            "LOCAL_RANK": int(os.getenv("LOCAL_RANK", "0")),
+            "RANK": int(os.getenv("RANK", "0")),
+            "WORLD_SIZE": int(os.getenv("WORLD_SIZE", "1")),
+        }
+        if inherited_topology != {"LOCAL_RANK": 0, "RANK": 0, "WORLD_SIZE": 1}:
+            raise RuntimeError(
+                "single-card-only run inherited distributed rank environment"
+            )
+        if dist.is_initialized():
+            raise RuntimeError("single-card-only run inherited a process group")
     device, rank, local_rank, world_size = initialize_distributed(args.device)
+    if args.single_card_only and (world_size != 1 or dist.is_initialized()):
+        raise RuntimeError("single-card-only run initialized a process group")
     torch.manual_seed(args.seed + rank)
     shards = sorted(args.data_dir.glob("features-*.safetensors"))
     stream = ShardStream(shards, rank, world_size, args.microbatch, args.seed)
@@ -627,7 +791,13 @@ def train(args: argparse.Namespace) -> int:
         dist.broadcast_object_list(objects, src=0)
         data_identity = objects[0]
     assert data_identity is not None
-    model = K160EagleSignalHead(HeadConfig(), embedding, lm_head).to(device)
+    model = K160EagleSignalHead(HeadConfig(), embedding, lm_head)
+    if args.precision == "fp32":
+        model = model.float()
+    model = model.to(device)
+    model.gradient_checkpointing = args.gradient_checkpointing
+    model.trace_forward = args.trace_forward
+    model.decoder.trace_forward = args.trace_forward
     if args.resume_checkpoint:
         resume = torch.load(
             args.resume_checkpoint, map_location="cpu", weights_only=True
@@ -642,6 +812,39 @@ def train(args: argparse.Namespace) -> int:
         )
     else:
         model_for_train = model
+    if args.single_card_only and isinstance(
+        model_for_train, nn.parallel.DistributedDataParallel
+    ):
+        raise RuntimeError("single-card-only run constructed DDP")
+    if rank == 0:
+        emit_event(
+            {
+                "event": "invocation",
+                "argv": sys.argv,
+                "torch_version": torch.__version__,
+                "ze_affinity_mask": os.getenv("ZE_AFFINITY_MASK"),
+                "oneapi_device_selector": os.getenv("ONEAPI_DEVICE_SELECTOR"),
+                "ld_preload": os.getenv("LD_PRELOAD"),
+                "ccl_environment_keys": sorted(
+                    key for key in os.environ if key.startswith("CCL_")
+                ),
+            }
+        )
+        emit_event(
+            {
+                "event": "runtime_topology",
+                "device": str(device),
+                "world_size": world_size,
+                "process_group_initialized": dist.is_initialized(),
+                "ddp_wrapper": isinstance(
+                    model_for_train, nn.parallel.DistributedDataParallel
+                ),
+                "execution_mode": "eager",
+                "precision": args.precision,
+                "gradient_checkpointing": args.gradient_checkpointing,
+                "step_timeout_s": args.step_timeout,
+            }
+        )
     decay, no_decay = [], []
     for name, parameter in model.named_parameters():
         (no_decay if "norm" in name or parameter.ndim == 1 else decay).append(parameter)
@@ -669,29 +872,58 @@ def train(args: argparse.Namespace) -> int:
     if rank == 0 and metrics_path.exists():
         raise FileExistsError(metrics_path)
     started = time.time()
+    synchronize_steps = args.trace_forward or args.step_timeout > 0
     optimizer.zero_grad(set_to_none=True)
     for step in range(args.steps):
-        total_value = torch.zeros((), device=device)
-        ce_value = torch.zeros((), device=device)
-        feature_value = torch.zeros((), device=device)
-        for accumulation in range(args.gradient_accumulation):
-            batch = move_batch(stream.next_batch(), device)
-            sync_context = contextlib.nullcontext()
-            if world_size > 1 and accumulation + 1 < args.gradient_accumulation:
-                sync_context = model_for_train.no_sync()  # type: ignore[union-attr]
-            with sync_context, autocast_context(device):
-                loss, components = model_for_train(batch)
-                loss = loss / args.gradient_accumulation
-            loss.backward()
-            total_value = total_value + loss.detach()
-            ce_value += components["ce"] / args.gradient_accumulation
-            feature_value += components["feature"] / args.gradient_accumulation
-        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        lr = learning_rate(step)
-        for group in optimizer.param_groups:
-            group["lr"] = lr
-        optimizer.step()
-        optimizer.zero_grad(set_to_none=True)
+        step_started = time.time()
+        with StepTimeout(args.step_timeout, step + 1):
+            total_value = torch.zeros((), device=device)
+            ce_value = torch.zeros((), device=device)
+            feature_value = torch.zeros((), device=device)
+            for accumulation in range(args.gradient_accumulation):
+                batch = move_batch(stream.next_batch(), device)
+                sync_context = contextlib.nullcontext()
+                if world_size > 1 and accumulation + 1 < args.gradient_accumulation:
+                    sync_context = model_for_train.no_sync()  # type: ignore[union-attr]
+                trace_marker(model, "training.forward", "begin")
+                with (
+                    sync_context,
+                    autocast_context(device, enabled=args.precision == "bf16"),
+                ):
+                    loss, components = model_for_train(batch)
+                    loss = loss / args.gradient_accumulation
+                trace_marker(model, "training.forward", "end")
+                if args.trace_forward:
+                    emit_event({"trace": "training.backward", "phase": "begin"})
+                model.trace_forward = False
+                model.decoder.trace_forward = False
+                loss.backward()
+                if synchronize_steps:
+                    synchronize_device(device)
+                if args.trace_forward:
+                    emit_event({"trace": "training.backward", "phase": "end"})
+                total_value = total_value + loss.detach()
+                ce_value += components["ce"] / args.gradient_accumulation
+                feature_value += components["feature"] / args.gradient_accumulation
+            if args.trace_forward:
+                emit_event({"trace": "training.grad_clip", "phase": "begin"})
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            if synchronize_steps:
+                synchronize_device(device)
+            if args.trace_forward:
+                emit_event({"trace": "training.grad_clip", "phase": "end"})
+            lr = learning_rate(step)
+            for group in optimizer.param_groups:
+                group["lr"] = lr
+            if args.trace_forward:
+                emit_event({"trace": "training.optimizer_step", "phase": "begin"})
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+            if synchronize_steps:
+                synchronize_device(device)
+            if args.trace_forward:
+                emit_event({"trace": "training.optimizer_step", "phase": "end"})
+        step_elapsed = time.time() - step_started
         metric_values = torch.stack((total_value, ce_value, feature_value))
         if world_size > 1:
             dist.all_reduce(metric_values, op=dist.ReduceOp.SUM)
@@ -704,12 +936,15 @@ def train(args: argparse.Namespace) -> int:
                 "feature_regularization": float(metric_values[2]),
                 "learning_rate": lr,
                 "gradient_norm": float(grad_norm),
+                "step_elapsed_s": step_elapsed,
+                "steps_per_second": 1 / step_elapsed,
+                "step_timing_synchronized": synchronize_steps,
                 "elapsed_s": time.time() - started,
             }
             with metrics_path.open("a") as stream_file:
                 stream_file.write(json.dumps(row) + "\n")
             if step == 0 or (step + 1) % args.log_every == 0:
-                print(json.dumps(row), flush=True)
+                emit_event({"event": "training_metric"} | row)
             if (step + 1) % args.checkpoint_every == 0 and step + 1 < args.steps:
                 torch.save(
                     {
@@ -719,6 +954,11 @@ def train(args: argparse.Namespace) -> int:
                         "target_tensor_identity": target_tensor_identity,
                         "training_data_identity": data_identity,
                         "training_steps": step + 1,
+                        "feature_boundaries": FEATURE_BOUNDARIES,
+                        "training_runtime": {
+                            "precision": args.precision,
+                            "gradient_checkpointing": args.gradient_checkpointing,
+                        },
                     },
                     args.output_dir / f"head-step-{step + 1:06d}.pt",
                 )
@@ -739,6 +979,10 @@ def train(args: argparse.Namespace) -> int:
             ),
             "target_tensor_identity": target_tensor_identity,
             "training_data_identity": data_identity,
+            "training_runtime": {
+                "precision": args.precision,
+                "gradient_checkpointing": args.gradient_checkpointing,
+            },
         }
         torch.save(checkpoint, args.output_dir / "head-final.pt")
         (args.output_dir / "training-config.json").write_text(
@@ -965,8 +1209,22 @@ def main() -> int:
     train_parser.add_argument("--capture-validation", type=Path, required=True)
     train_parser.add_argument("--model-root", type=Path, required=True)
     train_parser.add_argument("--output-dir", type=Path, required=True)
-    train_parser.add_argument("--resume-checkpoint", type=Path)
+    train_parser.add_argument(
+        "--resume-checkpoint",
+        type=Path,
+        help="weights-only warm start; optimizer, RNG, and data cursor are not restored",
+    )
+    train_parser.add_argument("--event-log", type=Path)
     train_parser.add_argument("--device", choices=("xpu", "cpu"), default="xpu")
+    train_parser.add_argument("--precision", choices=("bf16", "fp32"), default="bf16")
+    train_parser.add_argument("--single-card-only", action="store_true")
+    train_parser.add_argument("--gradient-checkpointing", action="store_true")
+    train_parser.add_argument(
+        "--trace-forward",
+        action="store_true",
+        help="synchronously trace the first forward plus its backward/update",
+    )
+    train_parser.add_argument("--step-timeout", type=int, default=0)
     train_parser.add_argument("--steps", type=int, default=500)
     train_parser.add_argument("--microbatch", type=int, default=64)
     train_parser.add_argument("--gradient-accumulation", type=int, default=32)
