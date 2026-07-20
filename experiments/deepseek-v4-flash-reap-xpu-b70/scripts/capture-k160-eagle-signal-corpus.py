@@ -31,7 +31,9 @@ def request_key(request_id: str) -> int:
 
 
 def metrics(base_url: str, timeout: int) -> dict[str, float]:
-    with urllib.request.urlopen(f"{base_url.rstrip('/')}/metrics", timeout=timeout) as r:
+    with urllib.request.urlopen(
+        f"{base_url.rstrip('/')}/metrics", timeout=timeout
+    ) as r:
         text = r.read().decode()
     result = {"running": 0.0, "waiting": 0.0}
     names = {
@@ -146,6 +148,7 @@ def main() -> int:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--max-prompt-tokens", type=int, default=500)
     parser.add_argument("--skip-manifest", type=Path)
+    parser.add_argument("--runtime-skip-prompt-id", action="append", default=[])
     args = parser.parse_args()
 
     prompts = load_jsonl(args.prompts)
@@ -177,6 +180,35 @@ def main() -> int:
     if skip_manifest.exists() and not args.resume:
         raise FileExistsError(skip_manifest)
     skipped_rows = load_jsonl(skip_manifest) if skip_manifest.exists() else []
+    prompt_by_id = {item["prompt_id"]: item for item in prompts}
+    existing_skipped_ids = {row["prompt_id"] for row in skipped_rows}
+    for prompt_id in args.runtime_skip_prompt_id:
+        if prompt_id in existing_skipped_ids:
+            raise RuntimeError(f"runtime skip prompt already recorded: {prompt_id}")
+        item = prompt_by_id.get(prompt_id)
+        if item is None:
+            raise RuntimeError(f"runtime skip prompt is not in source: {prompt_id}")
+        prompt_token_ids = render_prompt(
+            args.base_url,
+            args.model,
+            item["prompt"],
+            f"runtime-skip-audit-{item['prompt_sha256'][:12]}",
+            args.timeout,
+        )
+        skip_manifest.parent.mkdir(parents=True, exist_ok=True)
+        skip_row = {
+            "schema_version": "k160-eagle-prompt-skip-v1",
+            "prompt_id": prompt_id,
+            "prompt_sha256": item["prompt_sha256"],
+            "category": item["category"],
+            "prompt_tokens": len(prompt_token_ids),
+            "reason": "operator_audited_runtime_hang",
+            "max_prompt_tokens": args.max_prompt_tokens,
+        }
+        with skip_manifest.open("a" if skip_manifest.exists() else "x") as stream:
+            stream.write(json.dumps(skip_row) + "\n")
+        skipped_rows.append(skip_row)
+        existing_skipped_ids.add(prompt_id)
     if any(row["split"] != args.split for row in prior_rows):
         raise RuntimeError("resume manifest split does not match requested split")
     prompt_queues = {
@@ -204,7 +236,6 @@ def main() -> int:
     for prompt_id in historical_skipped_ids & used_prompt_ids:
         if not prior_by_prompt_id[prompt_id].get("historical_skip_reactivated"):
             raise RuntimeError("unmarked prompt appears in corpus and skip manifests")
-    prompt_by_id = {item["prompt_id"]: item for item in prompts}
     for row in skipped_rows:
         item = prompt_by_id.get(row["prompt_id"])
         if (
@@ -217,6 +248,8 @@ def main() -> int:
         row["prompt_id"]
         for row in skipped_rows
         if int(row["prompt_tokens"]) > args.max_prompt_tokens
+        or row.get("reason")
+        in {"operator_audited_runtime_hang", "runtime_request_timeout"}
     } - used_prompt_ids
     indices = {}
     for category, queue in prompt_queues.items():
@@ -254,7 +287,9 @@ def main() -> int:
                 continue
             queue = prompt_queues[category]
             index = indices[category]
-            while index < len(queue) and queue[index]["prompt_id"] in active_skipped_ids:
+            while (
+                index < len(queue) and queue[index]["prompt_id"] in active_skipped_ids
+            ):
                 index += 1
             if index >= len(queue):
                 raise RuntimeError(f"exhausted unique {category} prompts")
@@ -266,9 +301,7 @@ def main() -> int:
             indices[category] = index + 1
             remaining = quotas[category] - counts[category]
             max_tokens = min(args.max_tokens, remaining)
-            request_id = (
-                f"{namespace}-{request_index:06d}-{item['prompt_sha256'][:12]}"
-            )
+            request_id = f"{namespace}-{request_index:06d}-{item['prompt_sha256'][:12]}"
             if request_id in used_request_ids:
                 raise RuntimeError(f"request ID collision on resume: {request_id}")
             prompt_token_ids = render_prompt(
@@ -304,14 +337,34 @@ def main() -> int:
             before = metrics(args.base_url, args.timeout)
             if before["running"] != 0 or before["waiting"] != 0:
                 raise RuntimeError(f"endpoint busy before {request_id}: {before}")
-            response = post(
-                args.base_url,
-                args.model,
-                item["prompt"],
-                max_tokens,
-                request_id,
-                args.timeout,
-            )
+            try:
+                response = post(
+                    args.base_url,
+                    args.model,
+                    item["prompt"],
+                    max_tokens,
+                    request_id,
+                    args.timeout,
+                )
+            except TimeoutError:
+                skip_stream.write(
+                    json.dumps(
+                        {
+                            "schema_version": "k160-eagle-prompt-skip-v1",
+                            "prompt_id": item["prompt_id"],
+                            "prompt_sha256": item["prompt_sha256"],
+                            "category": category,
+                            "prompt_tokens": len(prompt_token_ids),
+                            "reason": "runtime_request_timeout",
+                            "max_prompt_tokens": args.max_prompt_tokens,
+                            "request_id": request_id,
+                            "timeout_s": args.timeout,
+                        }
+                    )
+                    + "\n"
+                )
+                skip_stream.flush()
+                raise
             after = metrics(args.base_url, args.timeout)
             if after["running"] != 0 or after["waiting"] != 0:
                 raise RuntimeError(f"endpoint not idle after {request_id}: {after}")
@@ -327,12 +380,18 @@ def main() -> int:
             if len(prompt_token_ids) != prompt_usage:
                 raise RuntimeError(f"prompt token count mismatch for {request_id}")
             response_prompt_ids = response["response_prompt_token_ids"]
-            if response_prompt_ids is not None and [
-                int(token_id) for token_id in response_prompt_ids
-            ] != prompt_token_ids:
-                raise RuntimeError(f"render/response prompt IDs differ for {request_id}")
+            if (
+                response_prompt_ids is not None
+                and [int(token_id) for token_id in response_prompt_ids]
+                != prompt_token_ids
+            ):
+                raise RuntimeError(
+                    f"render/response prompt IDs differ for {request_id}"
+                )
             if len(prompt_token_ids) + completion_tokens + 1 > 2048:
-                raise RuntimeError(f"trajectory exceeds replay context for {request_id}")
+                raise RuntimeError(
+                    f"trajectory exceeds replay context for {request_id}"
+                )
             counts[category] += completion_tokens
             row = {
                 "schema_version": "k160-eagle-capture-request-v1",
