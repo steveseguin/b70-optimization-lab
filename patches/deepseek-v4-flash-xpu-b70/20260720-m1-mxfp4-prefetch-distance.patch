@@ -1,0 +1,189 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index ac2d7d6..041b68c 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -238,6 +238,8 @@ template <
+     class GmemTiledCopyB,
+     class GmemTiledCopyC,
+     int GroupSize,
++    int PrefetchDist = 6,
++    bool PrefetchA = true,
+     class ATensor,
+     class BTensor,
+     class DTensor,
+@@ -307,7 +309,7 @@ CUTE_DEVICE void xe_gemm_4bits(
+   auto pAgA = thr_prefetch_A.partition_S(gA);
+   auto pBgB = thr_prefetch_B.partition_S(gB);
+ 
+-  const int prefetch_dist = 6;
++  constexpr int prefetch_dist = PrefetchDist;
+ 
+   constexpr int barrier_scope = 2;
+ 
+@@ -351,7 +353,9 @@ CUTE_DEVICE void xe_gemm_4bits(
+ 
+   CUTE_UNROLL
+   for (; k_tile_prefetch < prefetch_dist; k_tile_prefetch++) {
+-    prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++    if constexpr (PrefetchA) {
++      prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++    }
+     prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
+ 
+     if (k_tile_prefetch * group_size < shape<1>(A)) {
+@@ -425,7 +429,9 @@ CUTE_DEVICE void xe_gemm_4bits(
+     }
+ 
+     if (k_tile_prefetch < k_tile_count) {
+-      prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++      if constexpr (PrefetchA) {
++        prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
++      }
+       prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
+     }
+ 
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index fca2b2e..aa30e0d 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -225,6 +225,8 @@ template <
+     class GmemTiledCopyA,
+     class GmemTiledCopyB,
+     class GmemTiledCopyD,
++    int PrefetchDist = 6,
++    bool PrefetchA = true,
+     class TiledMMA,
+     typename TopkId>
+ CUTE_DEVICE void M1TopkGEMM(
+@@ -293,7 +295,13 @@ CUTE_DEVICE void M1TopkGEMM(
+                       : Bias + static_cast<int64_t>(local_expert) * gemm_n;
+   auto tile_coord = make_coord(0, n_coord, _, 0);
+ 
+-  xe_gemm_4bits<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD, group_size>(
++  xe_gemm_4bits<
++      GmemTiledCopyA,
++      GmemTiledCopyB,
++      GmemTiledCopyD,
++      group_size,
++      PrefetchDist,
++      PrefetchA>(
+       A_tensor,
+       B_tensor,
+       expert_scales,
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 75d42df..90c670b 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -70,7 +70,7 @@ using namespace cute;
+ template <typename, typename, typename, typename, char, char, class>
+ class GemmCuteName;
+ 
+-template <typename, class, int>
++template <typename, class, int, int, bool>
+ class GemmM1TopkCuteName;
+ 
+ template <typename, class, int>
+@@ -168,7 +168,12 @@ void MoEGEMMLauncher(
+   });
+ }
+ 
+-template <class policy, typename TopkId, int GrfSize = 256>
++template <
++    class policy,
++    typename TopkId,
++    int GrfSize = 256,
++    int PrefetchDist = 6,
++    bool PrefetchA = true>
+ void M1TopkGEMMLauncher(
+     sycl::queue& stream,
+     const bfloat16_t* activations,
+@@ -222,9 +227,19 @@ void M1TopkGEMMLauncher(
+   using GmemTiledCopyD = typename policy::GmemTiledCopyD;
+ 
+   stream.submit([&](sycl::handler& cgh) {
+-    cgh.parallel_for<GemmM1TopkCuteName<TopkId, policy, GrfSize>>(
++    cgh.parallel_for<GemmM1TopkCuteName<
++        TopkId,
++        policy,
++        GrfSize,
++        PrefetchDist,
++        PrefetchA>>(
+         sycl::nd_range<3>{group_range * local, local}, kernel_props, [=](auto) {
+-          MoE::M1TopkGEMM<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD>(
++          MoE::M1TopkGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              PrefetchDist,
++              PrefetchA>(
+               activations,
+               weights,
+               scales,
+@@ -362,6 +377,8 @@ void M1TopkGEMMLaunchByN(
+   const char* small_m_n = std::getenv("VLLM_XPU_MXFP4_SMALL_M_N");
+   const char* grf128_env =
+       std::getenv("VLLM_XPU_MXFP4_M1_GRF128");
++  const char* prefetch_mode =
++      std::getenv("VLLM_XPU_MXFP4_M1_PREFETCH_MODE");
+   const bool grf128 = grf128_env != nullptr &&
+       (std::strcmp(grf128_env, "1") == 0 ||
+        std::strcmp(grf128_env, "true") == 0 ||
+@@ -435,6 +452,58 @@ void M1TopkGEMMLaunchByN(
+         gemm_k,
+         broadcast_a);
+   } else {
++    if (prefetch_mode != nullptr && prefetch_mode[0] != '\0') {
++      TORCH_CHECK(
++          !grf128,
++          "M1 MXFP4 prefetch tuning requires the incumbent GRF256 path");
++#define M1_PREFETCH_LAUNCH(DIST, PREFETCH_A)                               \
++  M1TopkGEMMLauncher<                                                     \
++      w4a16_policy_m_8, TopkId, 256, DIST, PREFETCH_A>(                   \
++      stream,                                                             \
++      activations,                                                        \
++      weights,                                                            \
++      scales,                                                             \
++      bias,                                                               \
++      outputs,                                                            \
++      topk_ids,                                                           \
++      expert_map,                                                         \
++      expert_map_size,                                                    \
++      topk,                                                               \
++      num_local_experts,                                                  \
++      gemm_n,                                                             \
++      gemm_k,                                                             \
++      broadcast_a)
++      if (std::strcmp(prefetch_mode, "d2") == 0) {
++        M1_PREFETCH_LAUNCH(2, true);
++        return;
++      }
++      if (std::strcmp(prefetch_mode, "d3") == 0) {
++        M1_PREFETCH_LAUNCH(3, true);
++        return;
++      }
++      if (std::strcmp(prefetch_mode, "d4") == 0) {
++        M1_PREFETCH_LAUNCH(4, true);
++        return;
++      }
++      if (std::strcmp(prefetch_mode, "d2-noa") == 0) {
++        M1_PREFETCH_LAUNCH(2, false);
++        return;
++      }
++      if (std::strcmp(prefetch_mode, "d3-noa") == 0) {
++        M1_PREFETCH_LAUNCH(3, false);
++        return;
++      }
++      if (std::strcmp(prefetch_mode, "d4-noa") == 0) {
++        M1_PREFETCH_LAUNCH(4, false);
++        return;
++      }
++#undef M1_PREFETCH_LAUNCH
++      TORCH_CHECK(
++          false,
++          "unsupported VLLM_XPU_MXFP4_M1_PREFETCH_MODE=",
++          prefetch_mode,
++          "; expected d2, d3, d4, d2-noa, d3-noa, or d4-noa");
++    }
+     if (grf128) {
+       M1TopkGEMMLauncher<w4a16_policy_m_8, TopkId, 128>(
+           stream,

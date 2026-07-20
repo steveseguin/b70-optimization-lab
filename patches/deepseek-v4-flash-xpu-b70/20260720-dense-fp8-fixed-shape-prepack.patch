@@ -1,0 +1,84 @@
+diff --git a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+index 3bf00cb93..55ba00beb 100644
+--- a/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
++++ b/vllm/model_executor/kernels/linear/scaled_mm/xpu.py
+@@ -60,6 +60,42 @@ _BLOCK_FP8_W8A16_SHAPES = _parse_w8a16_shapes(
+ )
+ 
+ 
++def _parse_dense_prepack_mode(name: str) -> str:
++    mode = os.getenv(name, "").strip().lower()
++    if mode not in {"", "contiguous", "padded64"}:
++        raise ValueError(f"{name} must be empty, contiguous, or padded64")
++    return mode
++
++
++_DENSE_PREPACK_MODES = {
++    (4096, 512): _parse_dense_prepack_mode(
++        "VLLM_XPU_V4_SHARED_DOWN_FP8_PREPACK"
++    ),
++    (8192, 1024): _parse_dense_prepack_mode(
++        "VLLM_XPU_V4_WQB_W8A16_PREPACK"
++    ),
++    (1024, 4096): _parse_dense_prepack_mode(
++        "VLLM_XPU_V4_SHARED_GATE_UP_W8A16_PREPACK"
++    ),
++}
++
++
++def _prepack_block_fp8_weight(weight_nk: torch.Tensor, mode: str) -> torch.Tensor:
++    """Materialize a stable oneDNN [K,N] weight layout without changing bytes."""
++    weight_kn = weight_nk.t()
++    if mode == "contiguous":
++        return weight_kn.contiguous()
++    if mode == "padded64":
++        k, n = weight_kn.shape
++        storage = torch.empty(
++            (k, n + 64), dtype=weight_kn.dtype, device=weight_kn.device
++        )
++        packed = storage[:, :n]
++        packed.copy_(weight_kn)
++        return packed
++    raise AssertionError(f"unexpected block-FP8 prepack mode: {mode}")
++
++
+ class XPUW8A8FP8LinearKernel(FP8ScaledMMLinearKernel):
+     _SUPPORTED_ACT_QUANT_KEYS = {
+         kFp8DynamicTensorSym,
+@@ -264,6 +300,14 @@ class XPUFp8BlockScaledMMKernel(Fp8BlockScaledMMLinearKernel):
+         )
+         weight_scale = getattr(layer, scale_name)
+         replace_parameter(layer, scale_name, weight_scale.t().contiguous().data)
++        shape_nk = tuple(layer.weight.shape)
++        prepack_mode = _DENSE_PREPACK_MODES.get(shape_nk, "")
++        self._xpu_fp8_prepacked_weight = (
++            _prepack_block_fp8_weight(layer.weight, prepack_mode)
++            if prepack_mode
++            else None
++        )
++        self._xpu_fp8_prepack_mode = prepack_mode
+         layer._already_called_process_weights_after_loading = True
+         layer._xpu_fp8_block_scale_prepacked = True
+ 
+@@ -296,7 +340,9 @@ class XPUFp8BlockScaledMMKernel(Fp8BlockScaledMMLinearKernel):
+             )
+             output = torch.ops._xpu_C.fp8_gemm_w8a16(
+                 input_2d,
+-                params.weight.t(),
++                self._xpu_fp8_prepacked_weight
++                if self._xpu_fp8_prepacked_weight is not None
++                else params.weight.t(),
+                 weight_scale,
+                 bias,
+             )
+@@ -316,7 +362,9 @@ class XPUFp8BlockScaledMMKernel(Fp8BlockScaledMMLinearKernel):
+         # Bs was prepacked to [K/128, N/128] during model loading.
+         return torch.ops._xpu_C.fp8_gemm(
+             A,
+-            B.t(),
++            self._xpu_fp8_prepacked_weight
++            if self._xpu_fp8_prepacked_weight is not None
++            else B.t(),
+             self.config.out_dtype,
+             As,
+             Bs,

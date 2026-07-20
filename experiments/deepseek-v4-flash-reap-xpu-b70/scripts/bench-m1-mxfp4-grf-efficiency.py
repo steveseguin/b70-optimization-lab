@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Four-card-ready exact/timing gate for the M=1 N64 MXFP4 GRF screen."""
+"""Four-card-ready exact/timing gate for M=1 N64 MXFP4 tuning."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ import torch
 
 import vllm_xpu_kernels._C  # noqa: F401
 import vllm_xpu_kernels._moe_C  # noqa: F401
+import vllm_xpu_kernels._xpu_C  # noqa: F401
 
 
 HIDDEN = 4096
@@ -21,11 +22,11 @@ LOCAL_EXPERTS = 40
 GLOBAL_EXPERTS = 160
 TOPK = 6
 MOE_LAYERS = 43
-SELECTOR = "VLLM_XPU_MXFP4_M1_GRF128"
+SELECTOR = "VLLM_XPU_MXFP4_M1_PREFETCH_MODE"
 
 
-def set_candidate(enabled: bool) -> None:
-    os.environ[SELECTOR] = "1" if enabled else "0"
+def set_candidate(enabled: bool, mode: str) -> None:
+    os.environ[SELECTOR] = mode if enabled else ""
 
 
 def timed_us(call, iterations: int) -> float:
@@ -49,6 +50,11 @@ def main() -> int:
     parser.add_argument("--iterations", type=int, default=200)
     parser.add_argument("--samples", type=int, default=9)
     parser.add_argument("--seed", type=int, default=20260720)
+    parser.add_argument(
+        "--candidate-mode",
+        choices=("d2", "d3", "d4", "d2-noa", "d3-noa", "d4-noa"),
+        required=True,
+    )
     args = parser.parse_args()
 
     if os.environ.get("VLLM_XPU_MXFP4_SMALL_M_N", "64") not in ("", "64"):
@@ -174,12 +180,17 @@ def main() -> int:
         mismatches: dict[str, int] = {}
         for name, left, right in zip(names, expected[:3], actual[:3], strict=True):
             if local_slots:
-                mismatches[name] = int(
-                    (left[local_slots] != right[local_slots]).sum().item()
-                )
+                left_bits = left[local_slots].contiguous().view(torch.uint16)
+                right_bits = right[local_slots].contiguous().view(torch.uint16)
+                mismatches[name] = int((left_bits != right_bits).sum().item())
             else:
                 mismatches[name] = 0
-        mismatches["final"] = int((expected[3] != actual[3]).sum().item())
+        mismatches["final"] = int(
+            (
+                expected[3].view(torch.uint16)
+                != actual[3].view(torch.uint16)
+            ).sum().item()
+        )
         max_abs = float(
             (expected[3].float() - actual[3].float()).abs().max().item()
         )
@@ -240,15 +251,15 @@ def main() -> int:
             (1, TOPK), dtype=torch.float32, device=device, generator=generator
         )
         topk_weights.copy_(weights / weights.sum(dim=-1, keepdim=True))
-        set_candidate(False)
+        set_candidate(False, args.candidate_mode)
         run(baseline)
         torch.xpu.synchronize()
         expected = tuple(value.clone() for value in baseline)
-        set_candidate(True)
+        set_candidate(True, args.candidate_mode)
         run(candidate)
         torch.xpu.synchronize()
         row = compare(expected, candidate, route)
-        set_candidate(False)
+        set_candidate(False, args.candidate_mode)
         run(baseline)
         torch.xpu.synchronize()
         repeat = compare(expected, baseline, route)
@@ -260,14 +271,67 @@ def main() -> int:
         )
         eager_rows.append(row)
 
-    set_candidate(False)
+    set_candidate(False, args.candidate_mode)
     baseline_graph = torch.xpu.XPUGraph()
     with torch.xpu.graph(baseline_graph):
         run(baseline)
-    set_candidate(True)
+    set_candidate(True, args.candidate_mode)
     candidate_graph = torch.xpu.XPUGraph()
     with torch.xpu.graph(candidate_graph):
         run(candidate)
+
+    def run_gemm1(buffers: tuple[torch.Tensor, ...]) -> None:
+        torch.ops._xpu_C.cutlass_grouped_gemm_m1_topk_interface(
+            hidden,
+            w13,
+            w13_scales,
+            None,
+            buffers[0],
+            topk_ids,
+            expert_map,
+            2 * INTERMEDIATE,
+            HIDDEN,
+            LOCAL_EXPERTS,
+            True,
+        )
+
+    def run_gemm2(buffers: tuple[torch.Tensor, ...]) -> None:
+        torch.ops._xpu_C.cutlass_grouped_gemm_m1_topk_interface(
+            buffers[1],
+            w2,
+            w2_scales,
+            None,
+            buffers[2],
+            topk_ids,
+            expert_map,
+            HIDDEN,
+            INTERMEDIATE,
+            LOCAL_EXPERTS,
+            False,
+        )
+
+    set_candidate(False, args.candidate_mode)
+    baseline_gemm1_graph = torch.xpu.XPUGraph()
+    with torch.xpu.graph(baseline_gemm1_graph):
+        run_gemm1(baseline)
+    baseline_gemm2_graph = torch.xpu.XPUGraph()
+    with torch.xpu.graph(baseline_gemm2_graph):
+        run_gemm2(baseline)
+    set_candidate(True, args.candidate_mode)
+    candidate_gemm1_graph = torch.xpu.XPUGraph()
+    with torch.xpu.graph(candidate_gemm1_graph):
+        run_gemm1(candidate)
+    candidate_gemm2_graph = torch.xpu.XPUGraph()
+    with torch.xpu.graph(candidate_gemm2_graph):
+        run_gemm2(candidate)
+
+    def replay_baseline_gemms() -> None:
+        baseline_gemm1_graph.replay()
+        baseline_gemm2_graph.replay()
+
+    def replay_candidate_gemms() -> None:
+        candidate_gemm1_graph.replay()
+        candidate_gemm2_graph.replay()
 
     graph_rows = []
     for epoch in range(args.epochs):
@@ -337,25 +401,25 @@ def main() -> int:
         topk_ids.copy_(torch.tensor([route], dtype=torch.int32, device=device))
         topk_weights.fill_(1.0 / TOPK)
         for _ in range(args.warmups):
-            baseline_graph.replay()
-            candidate_graph.replay()
+            replay_baseline_gemms()
+            replay_candidate_gemms()
         torch.xpu.synchronize()
         baseline_samples = []
         candidate_samples = []
         for sample in range(args.samples):
             if sample % 2:
                 candidate_samples.append(
-                    timed_us(candidate_graph.replay, args.iterations)
+                    timed_us(replay_candidate_gemms, args.iterations)
                 )
                 baseline_samples.append(
-                    timed_us(baseline_graph.replay, args.iterations)
+                    timed_us(replay_baseline_gemms, args.iterations)
                 )
             else:
                 baseline_samples.append(
-                    timed_us(baseline_graph.replay, args.iterations)
+                    timed_us(replay_baseline_gemms, args.iterations)
                 )
                 candidate_samples.append(
-                    timed_us(candidate_graph.replay, args.iterations)
+                    timed_us(replay_candidate_gemms, args.iterations)
                 )
         baseline_us = statistics.median(baseline_samples)
         candidate_us = statistics.median(candidate_samples)
@@ -388,11 +452,11 @@ def main() -> int:
     graph_passed = all(bool(row["exact"]) for row in graph_rows)
     typical = timing["3_local"]
     result = {
-        "classification": "deepseek_v4_m1_mxfp4_grf_efficiency_gate",
+        "classification": "deepseek_v4_m1_mxfp4_prefetch_efficiency_gate",
         "device": torch.xpu.get_device_name(),
         "torch": torch.__version__,
         "ep_rank": args.ep_rank,
-        "selector": {SELECTOR: "0=GRF256 control, 1=GRF128 candidate"},
+        "selector": {SELECTOR: f"unset=distance6+A control, {args.candidate_mode}=candidate"},
         "shape": {
             "hidden": HIDDEN,
             "intermediate": INTERMEDIATE,
@@ -451,6 +515,10 @@ def main() -> int:
     )
     baseline_graph.reset()
     candidate_graph.reset()
+    baseline_gemm1_graph.reset()
+    baseline_gemm2_graph.reset()
+    candidate_gemm1_graph.reset()
+    candidate_gemm2_graph.reset()
     torch.xpu.synchronize()
     return 0 if eager_passed and graph_passed else 1
 

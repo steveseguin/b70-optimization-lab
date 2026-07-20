@@ -1,0 +1,116 @@
+{
+  "classification": "deepseek_v4_nonspec_m1_kernel_efficiency_iteration2",
+  "date": "2026-07-20",
+  "peak_gb_s_per_card": 527.0,
+  "endpoint_control_ms_per_token": 22.881408,
+  "endpoint_control_tok_s": 43.703604435687666,
+  "source": {
+    "xpu_commit": "c9f20d2238cdd98b510d809e7e70f1be1319e459",
+    "vllm_commit": "bbb633a90cef5167ea7f11846db5c185c5243931",
+    "grouped_library_sha256": "c225f5d2a98a1a7af435cb8c3782b5601e33fd361ac74a0967d4be3c59350bbe",
+    "xpu_extension_sha256_unchanged": "c0597c1db9d1e684462adce681101957e7a969baab3c0c71fb748ca7fd8c24e9"
+  },
+  "components": [
+    {
+      "name": "routed_mxfp4_n64",
+      "flag": "VLLM_XPU_MXFP4_M1_PREFETCH_MODE=d3",
+      "selected_mode": "prefetch_distance_3_keep_A_prefetch",
+      "profile_before_gb_s": 288.7,
+      "profile_normalized_after_gb_s": 290.5,
+      "microgate_before_gb_s_slowest_card": 410.7533351279284,
+      "microgate_after_gb_s_slowest_card": 413.31397982308454,
+      "slowest_candidate_card": 3,
+      "slowest_card_before_us_per_layer": 97.64505500000001,
+      "slowest_card_after_us_per_layer": 97.04010499999998,
+      "slowest_card_saved_ms_per_token": 0.026012850000001322,
+      "minimum_all_card_saved_ms_per_token": 0.0013104249999998103,
+      "eager_exact": "160/160",
+      "fixed_address_graph_exact": "160/160",
+      "retained": true,
+      "spec_cycle_transfer": false,
+      "reason": "selector is restricted to the M1 N64 direct launcher; M8 verification uses the generic N128 path"
+    },
+    {
+      "name": "shared_down_fp8_512_to_4096",
+      "flag": "VLLM_XPU_V4_SHARED_DOWN_FP8_PREPACK=contiguous",
+      "selected_screen_mode": "contiguous",
+      "profile_before_gb_s": 150.3,
+      "profile_normalized_after_gb_s": 137.894,
+      "microgate_before_gb_s_slowest_card": 103.79933978109678,
+      "microgate_after_gb_s_slowest_card": 95.23152593485992,
+      "slowest_candidate_card": 0,
+      "slowest_card_saved_ms_per_token": -0.07816152999999991,
+      "eager_exact": "160/160",
+      "fixed_address_graph_exact": "160/160",
+      "retained": false,
+      "drop_reason": "exact but regressing; padded64 also regressed on every card",
+      "spec_cycle_transfer": true,
+      "spec_transfer_status": "layout is M-invariant and reusable by M8, but component was rejected"
+    },
+    {
+      "name": "wq_b_w8a16_1024_to_8192",
+      "flag": "VLLM_XPU_V4_WQB_W8A16_PREPACK=contiguous",
+      "selected_screen_mode": "contiguous",
+      "profile_before_gb_s": 389.2,
+      "profile_normalized_after_gb_s": 284.905,
+      "microgate_before_gb_s_slowest_card": 425.5476474318326,
+      "microgate_after_gb_s_slowest_card": 311.5124433479665,
+      "slowest_candidate_card": 0,
+      "slowest_card_saved_ms_per_token": -0.3102942349999999,
+      "eager_exact": "53/160",
+      "fixed_address_graph_exact": "68/160",
+      "retained": false,
+      "drop_reason": "changed layout selected a different oneDNN JIT accumulation strategy; inexact and regressing; padded64 also failed",
+      "spec_cycle_transfer": true,
+      "spec_transfer_status": "layout is M-invariant and reusable by M8, but component was rejected"
+    },
+    {
+      "name": "shared_gate_up_w8a16_4096_to_1024",
+      "flag": "VLLM_XPU_V4_SHARED_GATE_UP_W8A16_PREPACK=padded64",
+      "selected_screen_mode": "padded64",
+      "profile_before_gb_s": 361.0,
+      "profile_normalized_after_gb_s": 294.183,
+      "microgate_before_gb_s_slowest_card": 220.82245929111338,
+      "microgate_after_gb_s_slowest_card": 179.95068232790567,
+      "slowest_candidate_card": 3,
+      "slowest_card_saved_ms_per_token": -0.18550479499999997,
+      "eager_exact": "135/160",
+      "fixed_address_graph_exact": "136/160",
+      "retained": false,
+      "drop_reason": "changed layout selected a different oneDNN JIT accumulation strategy; inexact and regressing; contiguous also failed",
+      "spec_cycle_transfer": true,
+      "spec_transfer_status": "layout is M-invariant and reusable by M8, but component was rejected"
+    }
+  ],
+  "mxfp4_screen": {
+    "modes_attempted": ["d2", "d3", "d4", "d2-noa", "d3-noa", "d4-noa"],
+    "card0_saved_ms_per_token": {
+      "d2": -0.05379471999999953,
+      "d3": 0.008443479999999937,
+      "d4": -0.14286276999999933,
+      "d2-noa": -0.6104430500000004,
+      "d3-noa": -0.7731043099999998,
+      "d4-noa": -0.8095872300000003
+    }
+  },
+  "bundle": {
+    "retained_components": ["routed_mxfp4_n64_prefetch_d3"],
+    "eager_exact": "160/160",
+    "fixed_address_graph_exact": "160/160",
+    "slowest_candidate_card": 3,
+    "saved_ms_per_token": 0.026012850000001322,
+    "conservative_minimum_all_card_saved_ms_per_token": 0.0013104249999998103,
+    "required_ms_per_token": 0.5,
+    "passed": false
+  },
+  "bab": {
+    "ran": false,
+    "reason": "combined exact retained bundle saved less than 0.50 ms/token"
+  },
+  "raw": {
+    "dense_contiguous": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m1-dense-prepack-contiguous-20260720T1700Z",
+    "dense_padded64": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m1-dense-prepack-padded64-20260720T1705Z",
+    "mxfp4_card0_sweep": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m1-mxfp4-prefetch-card0-screen-20260720T1730Z",
+    "mxfp4_four_card": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m1-mxfp4-prefetch-d3-four-card-20260720T1740Z"
+  }
+}
