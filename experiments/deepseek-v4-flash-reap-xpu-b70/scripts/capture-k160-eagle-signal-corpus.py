@@ -195,6 +195,11 @@ def main() -> int:
     if len(historical_skipped_ids) != len(skipped_rows):
         raise RuntimeError("skip manifest contains duplicate prompt IDs")
     used_prompt_ids = {row["prompt_id"] for row in prior_rows}
+    if len(used_prompt_ids) != len(prior_rows):
+        raise RuntimeError("resume manifest contains duplicate prompt IDs")
+    used_request_ids = {row["request_id"] for row in prior_rows}
+    if len(used_request_ids) != len(prior_rows):
+        raise RuntimeError("resume manifest contains duplicate request IDs")
     prior_by_prompt_id = {row["prompt_id"]: row for row in prior_rows}
     for prompt_id in historical_skipped_ids & used_prompt_ids:
         if not prior_by_prompt_id[prompt_id].get("historical_skip_reactivated"):
@@ -254,12 +259,18 @@ def main() -> int:
             if index >= len(queue):
                 raise RuntimeError(f"exhausted unique {category} prompts")
             item = queue[index]
-            indices[category] += 1
+            # ``index`` can be ahead of the saved cursor after walking prompts
+            # excluded by the stability guard.  Advance from the selected
+            # position, not merely from the old cursor, or a resumed run can
+            # select the same reactivated prompt more than once.
+            indices[category] = index + 1
             remaining = quotas[category] - counts[category]
             max_tokens = min(args.max_tokens, remaining)
             request_id = (
                 f"{namespace}-{request_index:06d}-{item['prompt_sha256'][:12]}"
             )
+            if request_id in used_request_ids:
+                raise RuntimeError(f"request ID collision on resume: {request_id}")
             prompt_token_ids = render_prompt(
                 args.base_url,
                 args.model,
@@ -345,6 +356,8 @@ def main() -> int:
             }
             stream.write(json.dumps(row, ensure_ascii=False) + "\n")
             stream.flush()
+            used_prompt_ids.add(item["prompt_id"])
+            used_request_ids.add(request_id)
             request_index += 1
             if request_index % 20 == 0:
                 print(
