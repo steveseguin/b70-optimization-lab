@@ -746,6 +746,7 @@ def train(args: argparse.Namespace) -> int:
                 {
                     key: str(value) if isinstance(value, Path) else value
                     for key, value in vars(args).items()
+                    if key != "function"
                 }
                 | {
                     "head_config": asdict(HeadConfig()),
