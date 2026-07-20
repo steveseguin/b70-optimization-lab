@@ -1,0 +1,134 @@
+{
+  "schema_version": "k160-eagle-single-card-signal-v1",
+  "date": "2026-07-20",
+  "verdict": "marginal",
+  "decision": {
+    "go_for_full_off_host_training": false,
+    "reason": "Mean conditional P2-P7 rose strongly late in the bounded run but finished at 0.669617178231316, below both the approximately 0.70 Markov ceiling and the strict 0.75 gate; P1 and overall acceptance also remained below gate.",
+    "markov_ceiling": 0.70,
+    "mean_p2_p7_gate": 0.75,
+    "best_mean_p2_p7": 0.669617178231316,
+    "delta_vs_markov_ceiling": -0.030382821768683954,
+    "delta_vs_gate": -0.080382821768684,
+    "trend": "late rising but slowing: 0.5375733122073687, 0.62227366810023, 0.6661469554773545, 0.669617178231316 at steps 54000, 63000, 72000, and 73977"
+  },
+  "artifact_root": "/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-signal-20260720T181607Z",
+  "trainer": {
+    "path": "experiments/deepseek-v4-flash-reap-xpu-b70/scripts/train-k160-eagle-signal-head.py",
+    "sha256": "cd5629aef89940a3c85ef57160e4840249db4bbe11da334254bb1f5f02b7cc6a"
+  },
+  "runtime": {
+    "physical_device": 1,
+    "logical_device": "xpu:0",
+    "world_size": 1,
+    "process_group_initialized": false,
+    "ddp_wrapper": false,
+    "oneccl_preloaded": false,
+    "execution_mode": "eager",
+    "precision": "BF16 autocast with FP32 trainable parameters and AdamW state",
+    "gradient_checkpointing": true,
+    "step_timeout_seconds": 60,
+    "operator_outer_process_timeout_seconds": 12600,
+    "microbatch": 8,
+    "gradient_accumulation": 1,
+    "effective_anchors_per_update": 8,
+    "learning_rate": 0.0002,
+    "schedule": "3% warmup then cosine decay to 10% of peak",
+    "weight_decay": 0.05,
+    "seed": 160719,
+    "checkpoint_every_steps": 9000,
+    "checkpoint_interval_minutes_observed": 24.18,
+    "operator_eval_batch": 64
+  },
+  "head": {
+    "trainable_parameters": 94654464,
+    "draft_width": 2048,
+    "query_heads": 16,
+    "kv_heads": 4,
+    "head_dimension": 128,
+    "swiglu_intermediate": 5504,
+    "context_tokens": 128,
+    "recursive_depth": 7,
+    "feature_boundaries": [4, 22, 43]
+  },
+  "training": {
+    "eligible_train_anchors": 986368,
+    "steps_completed": 73977,
+    "anchors_completed": 591816,
+    "epoch_fraction": 0.5999951336620815,
+    "training_loop_wall_seconds": 11910.64847779274,
+    "training_loop_wall_hours": 3.308513466053539,
+    "mean_steps_per_second": 6.2109968351369975,
+    "mean_anchors_per_second": 49.68797468109598,
+    "initial_step_loss": 69.9329605102539,
+    "final_step_loss": 3.840008497238159,
+    "global_loss_mean": 3.0595453455814066,
+    "global_loss_median": 2.49005126953125,
+    "first_1000_loss_mean": 8.307844258844852,
+    "last_1000_loss_mean": 2.4562763206139206,
+    "metrics": "/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-signal-20260720T181607Z/train-bf16-b8-ga1/training-metrics.jsonl",
+    "metrics_sha256": "952288ebe4486b4f30c04b8fe67efeb7989242b6e99c427dc133c2a613443f63",
+    "events": "/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-signal-20260720T181607Z/train-bf16-b8-ga1/events.jsonl",
+    "events_sha256": "9ed202044f02e193a870d9f6bf522f6b2a1b1ff28d77b8c3309ef5d3b26bb7d6",
+    "loss_windows": [
+      {"steps": "1-9000", "loss_mean": 4.5228411930600805, "loss_median": 3.332772970199585},
+      {"steps": "9001-18000", "loss_mean": 3.2439689506226115, "loss_median": 2.5631895065307617},
+      {"steps": "18001-27000", "loss_mean": 2.9779764426449935, "loss_median": 2.2867356538772583},
+      {"steps": "27001-36000", "loss_mean": 2.844394356633226, "loss_median": 2.230829954147339},
+      {"steps": "36001-45000", "loss_mean": 2.8435208540931343, "loss_median": 2.2961585521698},
+      {"steps": "45001-54000", "loss_mean": 2.72656753029012, "loss_median": 2.2864835262298584},
+      {"steps": "54001-63000", "loss_mean": 2.5621577735526695, "loss_median": 2.292987108230591},
+      {"steps": "63001-72000", "loss_mean": 2.857926295298255, "loss_median": 2.7953193187713623},
+      {"steps": "72001-73977", "loss_mean": 2.5906957330904827, "loss_median": 2.541975975036621}
+    ]
+  },
+  "evaluation": {
+    "dataset": "complete disjoint non-frozen DEV capture",
+    "cycles_per_checkpoint": 49142,
+    "max_anchors": 0,
+    "rows": [
+      {"step": 0, "anchors_seen": 0, "p1": 0.0, "conditional_p2_p7_mean": 0.0, "overall": 0.0},
+      {"step": 9000, "anchors_seen": 72000, "p1": 0.23358837654145131, "conditional_p2_p7_mean": 0.30955038901587906, "overall": 0.04612580451984628},
+      {"step": 18000, "anchors_seen": 144000, "p1": 0.23894021407350127, "conditional_p2_p7_mean": 0.5502686732889331, "overall": 0.06875119914882237},
+      {"step": 27000, "anchors_seen": 216000, "p1": 0.3173456513776403, "conditional_p2_p7_mean": 0.3406991069593887, "overall": 0.067358733001157},
+      {"step": 36000, "anchors_seen": 288000, "p1": 0.3802043058890562, "conditional_p2_p7_mean": 0.49349313404234657, "overall": 0.09473130345296721},
+      {"step": 45000, "anchors_seen": 360000, "p1": 0.4316063652273005, "conditional_p2_p7_mean": 0.5156295267542308, "overall": 0.10715884579382198},
+      {"step": 54000, "anchors_seen": 432000, "p1": 0.46436856456798664, "conditional_p2_p7_mean": 0.5375733122073687, "overall": 0.12276376913550818},
+      {"step": 63000, "anchors_seen": 504000, "p1": 0.517500305237882, "conditional_p2_p7_mean": 0.62227366810023, "overall": 0.16312493822566673},
+      {"step": 72000, "anchors_seen": 576000, "p1": 0.5647511293801636, "conditional_p2_p7_mean": 0.6661469554773545, "overall": 0.1958987656761455},
+      {"step": 73977, "anchors_seen": 591816, "p1": 0.5689634121525375, "conditional_p2_p7_mean": 0.669617178231316, "overall": 0.19632900573847217}
+    ],
+    "best": {
+      "step": 73977,
+      "anchors_seen": 591816,
+      "p1": 0.5689634121525375,
+      "conditional_acceptance": [
+        0.5689634121525375,
+        0.5273962804005723,
+        0.5933134409331344,
+        0.6885358326665905,
+        0.7292496679946879,
+        0.7423173230138858,
+        0.7368905243790248
+      ],
+      "conditional_p2_p7_mean": 0.669617178231316,
+      "overall": 0.19632900573847217,
+      "emitted_tokens_per_cycle_estimate": 2.3743030401693055,
+      "gate_passed": false
+    }
+  },
+  "best_checkpoint": {
+    "path": "/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-signal-20260720T181607Z/train-bf16-b8-ga1/head-best-mean-p2-p7.pt",
+    "sha256": "ef74bdbf55aa5bdc49f801a0b88be865f15860c8d7a6927c99be70c8f61f2dec",
+    "selection_metric": "maximum complete-DEV mean conditional P2-P7"
+  },
+  "safety": {
+    "k160_transformer_or_service_loaded": false,
+    "frozen_target_tensors_loaded_by_trainer": ["embed.weight", "head.weight"],
+    "capture_repeated": false,
+    "heldout_packs_accessed_observed": false,
+    "localmaxxing_used": false,
+    "serving_integration_attempted": false,
+    "single_active_gpu_process_observed": true
+  }
+}
