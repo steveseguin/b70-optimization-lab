@@ -62,6 +62,7 @@ def main() -> int:
 
     by_rank_forward: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     shared_static: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
+    global_static: dict[int, list[dict[str, Any]]] = defaultdict(list)
     position_by_rank_forward: dict[tuple[int, int], int] = {}
     payload_count = 0
     payload_bytes = 0
@@ -80,6 +81,8 @@ def main() -> int:
             by_rank_forward[rank, forward].append(row)
             if row["stage"] == "attn_static_binding" and row["layer"] is not None:
                 shared_static[rank, int(row["layer"])].append(row)
+            if row["stage"] == "attn_global_static_binding":
+                global_static[rank].append(row)
             tensor_path = row.get("tensor_path")
             if not tensor_path:
                 payload_failures.append(f"missing tensor_path: {source.name}:{row}")
@@ -151,6 +154,15 @@ def main() -> int:
         }
         if set(forwards) != set(BUCKETS):
             raise SystemExit(f"rank {rank} positions are {sorted(forwards)}, expected 64,512")
+        rotary = [
+            row
+            for row in global_static[rank]
+            if row["tensor_name"] == "attn_rotary_cos_sin_cache"
+        ]
+        if len(rotary) != 1:
+            raise SystemExit(
+                f"rank {rank} expected one shared RoPE table binding, found {len(rotary)}"
+            )
         for position, bucket in BUCKETS.items():
             forward = forwards[position]
             forward_rows = by_rank_forward[rank, forward]
@@ -192,6 +204,16 @@ def main() -> int:
                     "forward": forward,
                     "records": record_refs,
                     "shared_static_records": static_refs,
+                    "global_static_records": [
+                        {
+                            "stage": row["stage"],
+                            "tensor_name": row["tensor_name"],
+                            "raw_sha256": row["raw_sha256"],
+                            "tensor_path": row["tensor_path"],
+                            "binding": row["binding"],
+                        }
+                        for row in rotary
+                    ],
                 }
                 manifest["manifest_sha256"] = canonical_sha(manifest)
                 path = instance_dir / f"rank{rank}-layer{layer:02d}-{bucket}.json"
