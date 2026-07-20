@@ -144,7 +144,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--arm-file", type=Path)
     parser.add_argument("--resume", action="store_true")
-    parser.add_argument("--max-prompt-tokens", type=int, default=512)
+    parser.add_argument("--max-prompt-tokens", type=int, default=900)
     parser.add_argument("--skip-manifest", type=Path)
     args = parser.parse_args()
 
@@ -191,11 +191,14 @@ def main() -> int:
         )
         for category in CATEGORY_SHARES
     }
-    skipped_ids = {row["prompt_id"] for row in skipped_rows}
-    if len(skipped_ids) != len(skipped_rows):
+    historical_skipped_ids = {row["prompt_id"] for row in skipped_rows}
+    if len(historical_skipped_ids) != len(skipped_rows):
         raise RuntimeError("skip manifest contains duplicate prompt IDs")
-    if skipped_ids & {row["prompt_id"] for row in prior_rows}:
-        raise RuntimeError("a prompt appears in both corpus and skip manifests")
+    used_prompt_ids = {row["prompt_id"] for row in prior_rows}
+    prior_by_prompt_id = {row["prompt_id"]: row for row in prior_rows}
+    for prompt_id in historical_skipped_ids & used_prompt_ids:
+        if not prior_by_prompt_id[prompt_id].get("historical_skip_reactivated"):
+            raise RuntimeError("unmarked prompt appears in corpus and skip manifests")
     prompt_by_id = {item["prompt_id"]: item for item in prompts}
     for row in skipped_rows:
         item = prompt_by_id.get(row["prompt_id"])
@@ -205,16 +208,26 @@ def main() -> int:
             or row["prompt_sha256"] != item["prompt_sha256"]
         ):
             raise RuntimeError("skip manifest does not match prompt source")
-    indices = {
-        category: sum(row["category"] == category for row in prior_rows)
-        + sum(row["category"] == category for row in skipped_rows)
-        for category in CATEGORY_SHARES
+    active_skipped_ids = {
+        row["prompt_id"]
+        for row in skipped_rows
+        if int(row["prompt_tokens"]) > args.max_prompt_tokens
     }
+    if active_skipped_ids & used_prompt_ids:
+        raise RuntimeError("current skip policy rejects an already generated prompt")
+    indices = {}
+    for category, queue in prompt_queues.items():
+        index = 0
+        while index < len(queue) and queue[index]["prompt_id"] in (
+            used_prompt_ids | active_skipped_ids
+        ):
+            index += 1
+        indices[category] = index
     seen = {category: 0 for category in CATEGORY_SHARES}
     for expected_index, row in enumerate(prior_rows):
         category = row["category"]
         queue = prompt_queues[category]
-        while queue[seen[category]]["prompt_id"] in skipped_ids:
+        while queue[seen[category]]["prompt_id"] in active_skipped_ids:
             seen[category] += 1
         expected_prompt = queue[seen[category]]
         if (
@@ -238,6 +251,8 @@ def main() -> int:
                 continue
             queue = prompt_queues[category]
             index = indices[category]
+            while index < len(queue) and queue[index]["prompt_id"] in active_skipped_ids:
+                index += 1
             if index >= len(queue):
                 raise RuntimeError(f"exhausted unique {category} prompts")
             item = queue[index]
@@ -270,6 +285,7 @@ def main() -> int:
                     + "\n"
                 )
                 skip_stream.flush()
+                active_skipped_ids.add(item["prompt_id"])
                 continue
             max_tokens = min(max_tokens, 2048 - len(prompt_token_ids) - 1)
             if max_tokens <= 0:
@@ -318,6 +334,9 @@ def main() -> int:
                 "request_key": request_key(response["response_id"]),
                 "prompt_id": item["prompt_id"],
                 "prompt_sha256": item["prompt_sha256"],
+                "historical_skip_reactivated": (
+                    item["prompt_id"] in historical_skipped_ids
+                ),
                 "source_id": item["source_id"],
                 "source_revision": item["source_revision"],
                 "prompt_token_ids": prompt_token_ids,
