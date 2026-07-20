@@ -1,0 +1,67 @@
+{
+  "schema": "option4-m1-attention-phase1-gate-v1",
+  "created_at_utc": "2026-07-20T23:01:06Z",
+  "verdict": "FAIL_STOPPED_AT_ORACLE_INITIALIZATION",
+  "failed_step": 1,
+  "failed_gate": "TP4 oracle service initialization before capture",
+  "failure": {
+    "exception": "RuntimeError: view size is not compatible with input tensor's size and stride",
+    "source": "vllm/models/deepseek_v4/compressor.py:325",
+    "operation": "state_cache.view(total_state_slots, -1)",
+    "phase": "vLLM dummy sparse-MLA warmup",
+    "capture_requests_sent": 0
+  },
+  "capture": {
+    "path": "/mnt/fast-ai/deepseek-v4-corpora/m1-attention-boundary-v1-20260720T225919Z",
+    "files": 0,
+    "rank_layer_bucket_manifests": 0,
+    "required_rank_layer_bucket_manifests": 344,
+    "layers_covered": 0,
+    "required_layers": 43,
+    "buckets_covered": [],
+    "required_buckets": [
+      {"name": "SWA-resident", "anchor_position": 64},
+      {"name": "compressed+SWA-window-full", "anchor_position": 512}
+    ],
+    "checksum": null
+  },
+  "component_gate": {
+    "changed_input_cases": "0/40",
+    "fixed_address_replays": "0/70",
+    "replay_28": "not run",
+    "replay_58": "not run",
+    "per_layer_bitwise_parity": "0/43",
+    "submission_boundaries": {"eager": null, "v1": null},
+    "host_syncs": null
+  },
+  "endpoint_gate": {
+    "piecewise_nested": "not run",
+    "eager_break": null,
+    "host_syncs": null,
+    "control_median_ms_per_token": null,
+    "candidate_median_ms_per_token": null,
+    "threshold_ms_per_token": 22.381408,
+    "baseline_ms_per_token": 22.881408,
+    "output_token_exactness": "not run"
+  },
+  "identity": {
+    "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "model_manifest_sha256": "08535b4ad7fd94419c7eadb1f6cf7f1de583d64f92a1760c86aa238972904e78",
+    "vllm_commit": "fbbf066d8a58cf069ad657ff888a08fa78a08fbe",
+    "vllm_base_commit": "50e6a21116a24853ccae065caeefc843435ded05",
+    "xpu_kernel_commit": "5a1e9fa4602f69302dc50ecf85b06b6f86762117",
+    "xpu_binary_sha256": "d62ea1cf4728250809052c68fdd74983b4f2c0dcaf924624e7a507c8d4c8392f",
+    "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
+    "oneccl_binary_sha256": "53de2b6d65265803d64773546c1166ceed4ae43737f0fded776f5847b4b461c9"
+  },
+  "artifacts": {
+    "run_dir": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-m1-attention-oracle-20260720T225919Z",
+    "server_log_sha256": "5453db2bdf38860e7eb88798839f2f6fab9b7891f5df29a3d6041b883d163fd4",
+    "identity_sha256": "e50067ada98c9e8037ab09bd5d938881e94b84d45997cc14ce687c5499377397",
+    "patch": "patches/deepseek-v4-flash-xpu-b70/2026-07-20-option4-m1-attention-oracle-capture-failed-init.patch"
+  },
+  "cards_free_postflight": true,
+  "phase2_go": false,
+  "localmaxxing_action": false,
+  "heldout_evaluation_used": false
+}

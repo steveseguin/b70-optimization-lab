@@ -1,0 +1,549 @@
+From fbbf066d8a58cf069ad657ff888a08fa78a08fbe Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 18:58:03 -0400
+Subject: [PATCH] xpu: add default-off Option 4 M1 attention oracle capture
+
+---
+ vllm/models/deepseek_v4/compressor.py              | 110 +++++++++++++++++++
+ vllm/models/deepseek_v4/xpu/divergence_capture.py  |  85 ++++++++++++++-
+ vllm/models/deepseek_v4/xpu/model.py               |  33 ++++++
+ vllm/models/deepseek_v4/xpu/xpu_sparse.py          | 117 ++++++++++++++++++++-
+ .../deepseek_v4/xpu/xpu_sparse_decode_fp8.py       |  10 +-
+ 5 files changed, 347 insertions(+), 8 deletions(-)
+
+diff --git a/vllm/models/deepseek_v4/compressor.py b/vllm/models/deepseek_v4/compressor.py
+index 24838c237..5d3982d82 100644
+--- a/vllm/models/deepseek_v4/compressor.py
++++ b/vllm/models/deepseek_v4/compressor.py
+@@ -305,6 +305,39 @@ class DeepseekCompressor(nn.Module):
+             if current_platform.is_rocm() or current_platform.is_xpu()
+             else {"launch_pdl": False}
+         )
++        recorder = None
++        guarded_state_slots = None
++        if current_platform.is_xpu():
++            from vllm.models.deepseek_v4.xpu.divergence_capture import (
++                RECORDER as recorder,
++            )
++
++            flat_state_slots = slot_mapping.to(torch.int64).reshape(-1)
++            total_state_slots = state_cache.shape[0] * state_cache.shape[1]
++            guarded_state_slots = torch.stack(
++                [
++                    (flat_state_slots - 1).clamp(0, total_state_slots - 1),
++                    flat_state_slots.clamp(0, total_state_slots - 1),
++                    (flat_state_slots + 1).clamp(0, total_state_slots - 1),
++                ],
++                dim=1,
++            )
++            state_rows = state_cache.view(total_state_slots, -1)[
++                guarded_state_slots
++            ]
++            layer = int(self.prefix.split(".layers.")[1].split(".")[0])
++            recorder.record_static(
++                layer,
++                "kv_storage_binding",
++                compressor_state_storage=state_cache.reshape(-1)[:0],
++            )
++            recorder.record(
++                layer,
++                "compressor_state_before",
++                slots=slot_mapping,
++                guarded_slots=guarded_state_slots,
++                rows=state_rows,
++            )
+ 
+         # Store the KV and score (with fused APE addition) in the state.
+         # NOTE: PDL is disabled — both this kernel and the compress kernels
+@@ -324,6 +357,14 @@ class DeepseekCompressor(nn.Module):
+             compress_ratio=self.compress_ratio,
+             pdl_kwargs=pdl_kwargs,
+         )
++        if recorder is not None and guarded_state_slots is not None:
++            recorder.record(
++                layer,
++                "compressor_state_after",
++                slots=slot_mapping,
++                guarded_slots=guarded_state_slots,
++                rows=state_cache.view(total_state_slots, -1)[guarded_state_slots],
++            )
+ 
+         # Fused: compress → RMSNorm → RoPE → FP8 quant → KV cache write.
+         # RoPE requirements (kernel applies forward GPT-J style rotation):
+@@ -337,6 +378,63 @@ class DeepseekCompressor(nn.Module):
+         k_cache_layer = self._static_forward_context[self.k_cache_prefix]
+         kv_cache = k_cache_layer.kv_cache
+ 
++        compressed_slots = None
++        compressed_guard_slots = None
++        compressed_raw_before = None
++        if recorder is not None and kv_cache.dtype == torch.uint8:
++            req_indices = token_to_req_indices.to(torch.int64)
++            compressed_positions = positions.to(torch.int64) // self.compress_ratio
++            logical_blocks = compressed_positions // k_cache_metadata.block_size
++            offsets = compressed_positions % k_cache_metadata.block_size
++            physical_blocks = k_cache_metadata.block_table[
++                req_indices, logical_blocks
++            ].to(torch.int64)
++            compressed_slots = physical_blocks * k_cache_metadata.block_size + offsets
++            total_compressed_slots = kv_cache.shape[0] * k_cache_metadata.block_size
++            compressed_guard_slots = torch.stack(
++                [
++                    (compressed_slots - 1).clamp(0, total_compressed_slots - 1),
++                    compressed_slots.clamp(0, total_compressed_slots - 1),
++                    (compressed_slots + 1).clamp(0, total_compressed_slots - 1),
++                ],
++                dim=1,
++            )
++
++            def capture_raw(slots: torch.Tensor) -> torch.Tensor:
++                flat = slots.reshape(-1)
++                blocks = flat // k_cache_metadata.block_size
++                row_offsets = flat % k_cache_metadata.block_size
++                cache_2d = kv_cache.view(kv_cache.shape[0], -1)
++                data_indices = row_offsets[:, None] * 576 + torch.arange(
++                    576, device=kv_cache.device
++                )
++                scale_indices = (
++                    k_cache_metadata.block_size * 576
++                    + row_offsets[:, None] * 8
++                    + torch.arange(8, device=kv_cache.device)
++                )
++                return torch.cat(
++                    [
++                        cache_2d[blocks[:, None], data_indices],
++                        cache_2d[blocks[:, None], scale_indices],
++                    ],
++                    dim=1,
++                )
++
++            compressed_raw_before = capture_raw(compressed_guard_slots)
++            recorder.record_static(
++                layer,
++                "kv_storage_binding",
++                compressed_kv_storage=kv_cache.reshape(-1)[:0],
++            )
++            recorder.record(
++                layer,
++                "compressed_kv_before",
++                slots=compressed_slots,
++                guarded_slots=compressed_guard_slots,
++                raw=compressed_raw_before,
++            )
++
+         # Plain-row V4 reads a contiguous bf16 / per-tensor fp8 cache row; the
+         # fp8_ds_mla path uses the UE8M0 paged uint8 layout.
+         store_full_kv = self.head_dim == 512 and kv_cache.dtype != torch.uint8
+@@ -394,3 +492,15 @@ class DeepseekCompressor(nn.Module):
+             scale_dim=self._scale_dim,
+             **extra_kwargs,
+         )
++        if (
++            recorder is not None
++            and compressed_slots is not None
++            and compressed_guard_slots is not None
++        ):
++            recorder.record(
++                layer,
++                "compressed_kv_after",
++                slots=compressed_slots,
++                guarded_slots=compressed_guard_slots,
++                raw=capture_raw(compressed_guard_slots),
++            )
+diff --git a/vllm/models/deepseek_v4/xpu/divergence_capture.py b/vllm/models/deepseek_v4/xpu/divergence_capture.py
+index b0ceb140e..d7d84a658 100644
+--- a/vllm/models/deepseek_v4/xpu/divergence_capture.py
++++ b/vllm/models/deepseek_v4/xpu/divergence_capture.py
+@@ -63,6 +63,21 @@ class _Record:
+     stage: str
+     name: str
+     tensor: torch.Tensor
++    metadata: dict[str, object]
++    clone_at_enqueue: bool = True
++
++
++def _tensor_metadata(tensor: torch.Tensor) -> dict[str, object]:
++    storage = tensor.untyped_storage()
++    return {
++        "data_ptr": tensor.data_ptr(),
++        "storage_data_ptr": storage.data_ptr(),
++        "storage_nbytes": storage.nbytes(),
++        "storage_offset": tensor.storage_offset(),
++        "stride": list(tensor.stride()),
++        "device": str(tensor.device),
++        "requires_grad": tensor.requires_grad,
++    }
+ 
+ 
+ class DivergenceRecorder:
+@@ -72,6 +87,14 @@ class DivergenceRecorder:
+         self._active_forward: int | None = None
+         self._next_forward = 0
+         self._records: list[_Record] = []
++        self._static_keys: set[tuple[int | None, str, str]] = set()
++        self._capture_positions = {
++            int(value.strip())
++            for value in os.environ.get(
++                "VLLM_XPU_V4_DIVERGENCE_POSITIONS", ""
++            ).split(",")
++            if value.strip()
++        }
+ 
+     def begin_forward(
+         self, input_ids: torch.Tensor, positions: torch.Tensor
+@@ -86,6 +109,16 @@ class DivergenceRecorder:
+             self._active_forward = None
+             return
+ 
++        if self._capture_positions:
++            # This filter is diagnostic-only and default-off. Singleton decode
++            # forwards are the only eligible geometry; prefills are rejected
++            # by shape without a device-to-host position read. The packet
++            # validator checks that the two saved values are exactly the
++            # configured anchors.
++            if positions.numel() != 1:
++                self._active_forward = None
++                return
++
+         self._was_armed = True
+         self._active_forward = self._next_forward
+         self._next_forward += 1
+@@ -112,15 +145,56 @@ class DivergenceRecorder:
+             if tensor is not None:
+                 self._enqueue(layer, stage, name, tensor)
+ 
++    def record_static(
++        self,
++        layer: int | None,
++        stage: str,
++        **tensors: torch.Tensor | None,
++    ) -> None:
++        """Record immutable bindings once without cloning multi-GB weights.
++
++        References remain owned by the live oracle model until flush.  Full
++        mode copies them to CPU one at a time while the service is still up.
++        """
++        if (
++            not self.enabled
++            or self._active_forward is None
++            or stage not in CAPTURE_STAGES
++            or (layer is not None and not self.wants_layer(layer))
++        ):
++            return
++        for name, tensor in tensors.items():
++            key = (layer, stage, name)
++            if tensor is None or key in self._static_keys:
++                continue
++            self._static_keys.add(key)
++            self._enqueue(layer, stage, name, tensor, clone=False)
++
+     def _enqueue(
+-        self, layer: int | None, stage: str, name: str, tensor: torch.Tensor
++        self,
++        layer: int | None,
++        stage: str,
++        name: str,
++        tensor: torch.Tensor,
++        *,
++        clone: bool = True,
+     ) -> None:
+         if self._active_forward is None or len(self._records) >= MAX_RECORDS:
+             return
+         # No host read, reduction, synchronization, or file I/O while armed.
+-        snapshot = tensor.detach().contiguous().clone()
++        snapshot = (
++            tensor.detach().contiguous().clone() if clone else tensor.detach()
++        )
+         self._records.append(
+-            _Record(self._active_forward, layer, stage, name, snapshot)
++            _Record(
++                self._active_forward,
++                layer,
++                stage,
++                name,
++                snapshot,
++                _tensor_metadata(tensor),
++                clone,
++            )
+         )
+ 
+     def flush(self) -> None:
+@@ -147,6 +221,11 @@ class DivergenceRecorder:
+                     "shape": list(cpu.shape),
+                     "dtype": str(cpu.dtype),
+                     "raw_sha256": hashlib.sha256(raw).hexdigest(),
++                    "binding": record.metadata,
++                    "reference_binding": not record.clone_at_enqueue,
++                    "immutable_binding": (
++                        record.stage == "attn_static_binding"
++                    ),
+                 }
+                 if CAPTURE_MODE == "full":
+                     tensor_name = (
+diff --git a/vllm/models/deepseek_v4/xpu/model.py b/vllm/models/deepseek_v4/xpu/model.py
+index cd5696a4b..bc8b7169c 100644
+--- a/vllm/models/deepseek_v4/xpu/model.py
++++ b/vllm/models/deepseek_v4/xpu/model.py
+@@ -1344,6 +1344,31 @@ class DeepseekV4DecoderLayer(nn.Module):
+     ]:
+         use_mhc_norm_fusion = self.use_mhc_norm_fusion
+         attn_norm_fused = use_mhc_norm_fusion and residual is not None
++        DIVERGENCE_RECORDER.record(
++            self.layer_idx,
++            "m1_boundary_ingress",
++            x=x,
++            residual=residual,
++            post_mix=post_mix,
++            res_mix=res_mix,
++            positions=positions,
++        )
++        static_bindings = {
++            "hc_attn_fn": self.hc_attn_fn,
++            "hc_attn_scale": self.hc_attn_scale,
++            "hc_attn_base": self.hc_attn_base,
++            "attn_norm_weight": self.attn_norm.weight,
++        }
++        static_bindings.update(
++            {
++                f"attn_param::{name}": tensor
++                for name, tensor in self.attn.named_parameters()
++                if not name.startswith("indexer.")
++            }
++        )
++        DIVERGENCE_RECORDER.record_static(
++            self.layer_idx, "attn_static_binding", **static_bindings
++        )
+         if residual is None:
+             # First layer: run standalone hc_pre
+             residual = x
+@@ -1377,6 +1402,14 @@ class DeepseekV4DecoderLayer(nn.Module):
+                     norm_eps=self.attn_norm.variance_epsilon,
+                 )
+ 
++        DIVERGENCE_RECORDER.record(
++            self.layer_idx,
++            "mhc_attn_out",
++            residual_out=residual,
++            next_post_mix=post_mix,
++            next_res_mix=res_mix,
++            layer_input=x,
++        )
+         if not attn_norm_fused:
+             x = self.attn_norm(x)
+         DIVERGENCE_RECORDER.record(
+diff --git a/vllm/models/deepseek_v4/xpu/xpu_sparse.py b/vllm/models/deepseek_v4/xpu/xpu_sparse.py
+index d334582d3..39949ed52 100644
+--- a/vllm/models/deepseek_v4/xpu/xpu_sparse.py
++++ b/vllm/models/deepseek_v4/xpu/xpu_sparse.py
+@@ -42,6 +42,46 @@ if TYPE_CHECKING:
+ USE_FP8_WO_A = os.getenv("VLLM_XPU_V4_FP8_WO_A", "0") == "1"
+ 
+ 
++def _paged_fp8_raw_rows(
++    cache: torch.Tensor, slots: torch.Tensor, block_size: int
++) -> torch.Tensor:
++    """Gather DS-MLA FP8 payload+scale bytes for declared physical slots."""
++    assert cache.dtype == torch.uint8
++    flat_slots = slots.to(torch.int64).reshape(-1)
++    total_slots = cache.shape[0] * block_size
++    safe_slots = flat_slots.clamp(0, max(total_slots - 1, 0))
++    blocks = safe_slots // block_size
++    offsets = safe_slots % block_size
++    cache_2d = cache.view(cache.shape[0], -1)
++    data_indices = offsets[:, None] * 576 + torch.arange(
++        576, device=slots.device
++    )
++    scale_indices = block_size * 576 + offsets[:, None] * 8 + torch.arange(
++        8, device=slots.device
++    )
++    rows = torch.cat(
++        [
++            cache_2d[blocks[:, None], data_indices],
++            cache_2d[blocks[:, None], scale_indices],
++        ],
++        dim=1,
++    )
++    valid = (flat_slots >= 0) & (flat_slots < total_slots)
++    return torch.where(valid[:, None], rows, torch.zeros_like(rows))
++
++
++def _slot_with_guards(slots: torch.Tensor, total_slots: int) -> torch.Tensor:
++    flat = slots.to(torch.int64).reshape(-1)
++    return torch.stack(
++        [
++            (flat - 1).clamp(0, total_slots - 1),
++            flat.clamp(0, total_slots - 1),
++            (flat + 1).clamp(0, total_slots - 1),
++        ],
++        dim=1,
++    )
++
++
+ def _xpu_fp8_wo_a(
+     o: torch.Tensor,
+     positions: torch.Tensor,
+@@ -198,6 +238,25 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             xpu_qnorm_rope_kv_fp8_insert,
+         )
+ 
++        cache = self.swa_cache_layer.kv_cache
++        slots = swa_metadata.slot_mapping
++        total_slots = cache.shape[0] * swa_metadata.block_size
++        guarded_slots = _slot_with_guards(slots, total_slots)
++        DIVERGENCE_RECORDER.record_static(
++            self.layer_id,
++            "kv_storage_binding",
++            swa_cache_storage=cache.reshape(-1)[:0],
++        )
++        DIVERGENCE_RECORDER.record(
++            self.layer_id,
++            "swa_kv_before",
++            slots=slots,
++            guarded_slots=guarded_slots,
++            raw=_paged_fp8_raw_rows(
++                cache, guarded_slots, swa_metadata.block_size
++            ),
++        )
++
+         xpu_qnorm_rope_kv_fp8_insert(
+             q,
+             kv,
+@@ -208,6 +267,16 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             self.eps,
+             swa_metadata.block_size,
+         )
++        DIVERGENCE_RECORDER.record(
++            self.layer_id,
++            "swa_kv_after",
++            slots=slots,
++            guarded_slots=guarded_slots,
++            raw=_paged_fp8_raw_rows(
++                cache, guarded_slots, swa_metadata.block_size
++            ),
++            q_after=q,
++        )
+         if "attn_cache_raw" in CAPTURE_STAGES:
+             slots = swa_metadata.slot_mapping
+             block_size = swa_metadata.block_size
+@@ -273,6 +342,11 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             self.o_lora_rank,
+             self.wo_a,
+         )
++        DIVERGENCE_RECORDER.record_static(
++            self.layer_id,
++            "attn_static_binding",
++            wo_a_hot_bf16=getattr(self.wo_a, "_dsv4_wo_a_bf16", None),
++        )
+         DIVERGENCE_RECORDER.record(self.layer_id, "attn_wo_a", z=z)
+         output = self._wo_b(z.flatten(1))
+         DIVERGENCE_RECORDER.record(self.layer_id, "attn_wo_b", output=output)
+@@ -428,7 +502,7 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+         swa_lens = swa_metadata.decode_swa_lens
+ 
+         assert swa_indices is not None and swa_lens is not None
+-        xpu_sparse_decode_fp8(
++        split_intermediates = xpu_sparse_decode_fp8(
+             q=q,
+             kv_cache=kv_cache,
+             swa_kv_cache=self.swa_cache_layer.kv_cache,
+@@ -444,6 +518,47 @@ class DeepseekV4XPUAttention(DeepseekV4Attention):
+             rope_head_dim=self.rope_head_dim,
+             out=output,
+         )
++        DIVERGENCE_RECORDER.record(
++            self.layer_id,
++            "attn_sparse_bindings",
++            topk_indices=topk_indices,
++            topk_lens=topk_lens,
++            swa_indices=swa_indices,
++            swa_lens=swa_lens,
++        )
++        if kv_cache is not None and topk_indices is not None:
++            DIVERGENCE_RECORDER.record_static(
++                self.layer_id,
++                "kv_storage_binding",
++                compressed_cache_storage=kv_cache.reshape(-1)[:0],
++            )
++            DIVERGENCE_RECORDER.record(
++                self.layer_id,
++                "compressed_kv_selected",
++                raw=_paged_fp8_raw_rows(
++                    kv_cache,
++                    topk_indices,
++                    attn_metadata.block_size // self.compress_ratio,
++                ),
++            )
++        DIVERGENCE_RECORDER.record(
++            self.layer_id,
++            "swa_kv_selected",
++            raw=_paged_fp8_raw_rows(
++                self.swa_cache_layer.kv_cache,
++                swa_indices,
++                swa_metadata.block_size,
++            ),
++        )
++        if split_intermediates is not None:
++            scores, lse = split_intermediates
++            DIVERGENCE_RECORDER.record(
++                self.layer_id,
++                "attn_qk_lse_pv",
++                scores=scores,
++                lse=lse,
++                pv=output,
++            )
+ 
+     def _forward_prefill(
+         self,
+diff --git a/vllm/models/deepseek_v4/xpu/xpu_sparse_decode_fp8.py b/vllm/models/deepseek_v4/xpu/xpu_sparse_decode_fp8.py
+index c476ddb7d..a6013488b 100644
+--- a/vllm/models/deepseek_v4/xpu/xpu_sparse_decode_fp8.py
++++ b/vllm/models/deepseek_v4/xpu/xpu_sparse_decode_fp8.py
+@@ -628,7 +628,7 @@ def split_fp8_sparse_attention(
+     block_h: int | None = None,
+     qk_num_warps: int | None = None,
+     pv_num_warps: int | None = None,
+-) -> None:
++) -> tuple[torch.Tensor, torch.Tensor]:
+     """Run direct FP8 QK followed by a 64-wide tiled PV stage."""
+     assert q.ndim == 3 and q.shape[-1] == OUTPUT_DIM
+     assert q.stride(-1) == 1
+@@ -730,6 +730,7 @@ def split_fp8_sparse_attention(
+         BLOCK_D=64,
+         num_warps=pv_num_warps,
+     )
++    return scores, lse
+ 
+ 
+ def direct_fp8_sparse_attention(
+@@ -1054,7 +1055,7 @@ def xpu_sparse_decode_fp8(
+     nope_head_dim: int,
+     rope_head_dim: int,
+     out: torch.Tensor,  # [num_tokens, num_heads, head_dim]
+-) -> None:
++) -> tuple[torch.Tensor, torch.Tensor] | None:
+     """XPU decode: dequant FP8 pages to BF16, then BF16 sparse MLA attention.
+ 
+     Keeps external FP8 KV cache layout identical to CUDA/ROCm.
+@@ -1085,7 +1086,7 @@ def xpu_sparse_decode_fp8(
+             if USE_SPLIT_FP8_ATTENTION
+             else direct_fp8_sparse_attention
+         )
+-        attention_fn(
++        split_intermediates = attention_fn(
+             q=q,
+             compressed_cache=kv_cache if not swa_only else None,
+             compressed_indices=topk_indices_i32,
+@@ -1097,7 +1098,7 @@ def xpu_sparse_decode_fp8(
+             sm_scale=softmax_scale,
+             out=out,
+         )
+-        return
++        return split_intermediates
+ 
+     K_total = max_topk + max_swa
+ 
+@@ -1154,3 +1155,4 @@ def xpu_sparse_decode_fp8(
+         block_dpe=0,
+     )
+     out.copy_(out_attn)
++    return None
