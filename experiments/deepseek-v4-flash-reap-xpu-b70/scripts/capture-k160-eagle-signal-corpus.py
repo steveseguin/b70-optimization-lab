@@ -144,7 +144,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--arm-file", type=Path)
     parser.add_argument("--resume", action="store_true")
-    parser.add_argument("--max-prompt-tokens", type=int, default=900)
+    parser.add_argument("--max-prompt-tokens", type=int, default=800)
     parser.add_argument("--skip-manifest", type=Path)
     args = parser.parse_args()
 
@@ -212,9 +212,7 @@ def main() -> int:
         row["prompt_id"]
         for row in skipped_rows
         if int(row["prompt_tokens"]) > args.max_prompt_tokens
-    }
-    if active_skipped_ids & used_prompt_ids:
-        raise RuntimeError("current skip policy rejects an already generated prompt")
+    } - used_prompt_ids
     indices = {}
     for category, queue in prompt_queues.items():
         index = 0
@@ -337,6 +335,7 @@ def main() -> int:
                 "historical_skip_reactivated": (
                     item["prompt_id"] in historical_skipped_ids
                 ),
+                "generation_max_prompt_tokens": args.max_prompt_tokens,
                 "source_id": item["source_id"],
                 "source_revision": item["source_revision"],
                 "prompt_token_ids": prompt_token_ids,
