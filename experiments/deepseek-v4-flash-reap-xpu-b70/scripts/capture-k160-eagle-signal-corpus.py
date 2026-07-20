@@ -227,6 +227,11 @@ def main() -> int:
                 request_id,
                 args.timeout,
             )
+            max_tokens = min(max_tokens, 2048 - len(prompt_token_ids) - 1)
+            if max_tokens <= 0:
+                raise RuntimeError(
+                    f"rendered prompt leaves no replay-safe context: {request_id}"
+                )
             before = metrics(args.base_url, args.timeout)
             if before["running"] != 0 or before["waiting"] != 0:
                 raise RuntimeError(f"endpoint busy before {request_id}: {before}")
