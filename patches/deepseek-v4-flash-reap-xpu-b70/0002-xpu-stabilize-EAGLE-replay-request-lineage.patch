@@ -1,0 +1,95 @@
+From ca0648d600c6c47cf163e96eb66b3a365d104987 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 20 Jul 2026 05:39:16 -0400
+Subject: [PATCH] xpu: stabilize EAGLE replay request lineage
+
+---
+ ...test_deepseek_v4_eagle_training_capture.py | 17 ++++++++++++++
+ .../deepseek_v4/xpu/eagle_training_capture.py | 22 +++++++++++++------
+ 2 files changed, 32 insertions(+), 7 deletions(-)
+
+diff --git a/tests/models/test_deepseek_v4_eagle_training_capture.py b/tests/models/test_deepseek_v4_eagle_training_capture.py
+index df0e01932..5a8890a1d 100644
+--- a/tests/models/test_deepseek_v4_eagle_training_capture.py
++++ b/tests/models/test_deepseek_v4_eagle_training_capture.py
+@@ -12,6 +12,8 @@ from vllm.models.deepseek_v4.xpu.eagle_training_capture import (
+     EagleTrainingCaptureWriter,
+     capture_dir,
+     enabled,
++    parse_replay_request_id,
++    request_key,
+ )
+ 
+ 
+@@ -21,6 +23,21 @@ def test_capture_is_default_off(monkeypatch: pytest.MonkeyPatch) -> None:
+     assert capture_dir() is None
+ 
+ 
++def test_replay_request_id_ignores_internal_suffix() -> None:
++    external = "eaglereplay-86-16-000000"
++    internal = f"{external}-engine-randomized-suffix"
++    stable, prompt_len, continuation_len = parse_replay_request_id(internal)
++    assert stable == external
++    assert prompt_len == 86
++    assert continuation_len == 16
++    assert request_key(stable) == request_key(external)
++
++
++def test_replay_request_id_rejects_untrusted_request() -> None:
++    with pytest.raises(RuntimeError, match="teacher-forced replay"):
++        parse_replay_request_id("ordinary-completion-request")
++
++
+ def test_writer_preserves_aligned_rows(tmp_path) -> None:
+     writer = EagleTrainingCaptureWriter(tmp_path, shard_rows=2)
+     aux = [torch.randn(2, 4096, dtype=torch.bfloat16) for _ in FEATURE_BOUNDARIES]
+diff --git a/vllm/models/deepseek_v4/xpu/eagle_training_capture.py b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
+index e363b9ca9..2b0b03028 100644
+--- a/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
++++ b/vllm/models/deepseek_v4/xpu/eagle_training_capture.py
+@@ -48,6 +48,17 @@ def request_key(request_id: str) -> int:
+     return int.from_bytes(digest[:8], "little") & ((1 << 63) - 1)
+ 
+ 
++def parse_replay_request_id(request_id: str) -> tuple[str, int, int]:
++    """Recover the stable external replay transaction from vLLM's ID."""
++    replay = re.search(r"(eaglereplay-(\d+)-(\d+)-(\d{6}))(?:\D|$)", request_id)
++    if replay is None:
++        raise RuntimeError(
++            "armed EAGLE capture accepts only teacher-forced replay requests"
++        )
++    stable_request_id, prompt_len, continuation_len, _ = replay.groups()
++    return stable_request_id, int(prompt_len), int(continuation_len)
++
++
+ def _sha256(path: Path) -> str:
+     digest = hashlib.sha256()
+     with path.open("rb") as stream:
+@@ -253,12 +264,9 @@ def install_model_runner_capture(runner: Any) -> None:
+             if len(self.input_batch.req_ids) != 1:
+                 raise RuntimeError("EAGLE training capture requires one request")
+             request_id = self.input_batch.req_ids[0]
+-            replay = re.search(r"eaglereplay-(\d+)-(\d+)-", request_id)
+-            if replay is None:
+-                raise RuntimeError(
+-                    "armed EAGLE capture accepts only teacher-forced replay requests"
+-                )
+-            prompt_len, continuation_len = map(int, replay.groups())
++            stable_request_id, prompt_len, continuation_len = (
++                parse_replay_request_id(request_id)
++            )
+             scheduled = int(self.query_start_loc.gpu[1])
+             expected = prompt_len + continuation_len
+             if scheduled != expected:
+@@ -279,7 +287,7 @@ def install_model_runner_capture(runner: Any) -> None:
+                 "next_target_token_ids": self.input_ids.gpu[start + 1 : stop + 1],
+                 "position_ids": self.positions[start:stop],
+                 "request_keys": torch.tensor(
+-                    [request_key(request_id)] * continuation_len,
++                    [request_key(stable_request_id)] * continuation_len,
+                     dtype=torch.int64,
+                     device=self.device,
+                 ),
+-- 
+2.43.0
+
