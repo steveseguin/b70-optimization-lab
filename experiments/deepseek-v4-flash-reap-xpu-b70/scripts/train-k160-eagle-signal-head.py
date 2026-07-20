@@ -26,7 +26,7 @@ FEATURE_BOUNDARIES = (4, 22, 43)
 CONTEXT_TOKENS = 128
 TARGET_REVISION = "7c360e1cd4a5168099dbc54d16d929bf6df04990"
 BASE_VLLM_COMMIT = "264c7f2f7df21ddeeab32ecca0353133344f1ac9"
-CAPTURE_VLLM_COMMIT = "0e85361b220887f98639e9836fb0ffdfe8cf9a53"
+CAPTURE_VLLM_COMMIT = "ca0648d600c6c47cf163e96eb66b3a365d104987"
 XPU_KERNEL_COMMIT = "31315673737d95da0f79179c8f755260ef02c1d6"
 ONECCL_COMMIT = "48fda4f0e074db005596d6899d5227d3f0316c12"
 
@@ -383,7 +383,7 @@ def dataset_fingerprint(data_dir: Path, capture_validation: Path) -> dict[str, o
         validation.get("schema_version") != "k160-eagle-capture-validation-v1"
         or validation.get("alignment_passed") is not True
         or validation.get("target_token_alignment_passed") is not True
-        or validation.get("request_key_mapping_mode") != "exact-replay-response-id-hash"
+        or validation.get("request_key_mapping_mode") != "exact-replay-request-id-hash"
         or int(validation.get("captured_rows", -1))
         != sum(int(row["rows"]) for row in rows)
         or validation.get("other_prompt_set_disjoint") is not True

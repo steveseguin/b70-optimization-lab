@@ -164,7 +164,7 @@ def main() -> int:
     capture_identity = load_identity(args.capture_identity)
     expected_identity = {
         "capture_base_vllm_commit": ("264c7f2f7df21ddeeab32ecca0353133344f1ac9"),
-        "capture_patch_vllm_commit": ("0e85361b220887f98639e9836fb0ffdfe8cf9a53"),
+        "capture_patch_vllm_commit": ("ca0648d600c6c47cf163e96eb66b3a365d104987"),
         "xpu_kernel_commit": "31315673737d95da0f79179c8f755260ef02c1d6",
         "oneccl_commit": "48fda4f0e074db005596d6899d5227d3f0316c12",
         "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
@@ -238,7 +238,7 @@ def main() -> int:
             )
         if set(request_by_key) != set(captured_keys):
             raise RuntimeError("replay lineage and captured request keys differ")
-        key_mapping_mode = "exact-replay-response-id-hash"
+        key_mapping_mode = "exact-replay-request-id-hash"
     elif set(captured_keys) - set(request_by_key):
         # vLLM randomizes the internal engine request ID after accepting the
         # external OpenAI request ID.  Under the required one-active-generation

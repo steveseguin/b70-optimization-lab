@@ -4,7 +4,7 @@ set -euo pipefail
 root=/home/steve/llm-optimizations
 serve="${root}/experiments/deepseek-v4-flash-reap-xpu-b70/scripts/serve-k160-tp4-smoke.sh"
 base_vllm_commit=264c7f2f7df21ddeeab32ecca0353133344f1ac9
-capture_vllm_commit=0e85361b220887f98639e9836fb0ffdfe8cf9a53
+capture_vllm_commit=ca0648d600c6c47cf163e96eb66b3a365d104987
 kernel_commit=31315673737d95da0f79179c8f755260ef02c1d6
 oneccl_commit=48fda4f0e074db005596d6899d5227d3f0316c12
 model_revision=7c360e1cd4a5168099dbc54d16d929bf6df04990

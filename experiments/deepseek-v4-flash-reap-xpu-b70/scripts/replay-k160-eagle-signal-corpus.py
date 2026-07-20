@@ -173,7 +173,7 @@ def main() -> int:
                 if after["running"] != 0 or after["waiting"] != 0:
                     raise RuntimeError(f"endpoint not idle after replay {index}: {after}")
                 transaction = captured_transaction(args.capture_rank_dir, index)
-                expected_key = request_key(result["response_id"])
+                expected_key = request_key(result["request_id"])
                 if (
                     int(transaction["request_key"]) != expected_key
                     or int(transaction["rows"]) != len(output_ids)
@@ -192,6 +192,7 @@ def main() -> int:
                             "continuation_tokens": len(output_ids),
                             **result,
                             "request_key": expected_key,
+                            "request_key_source": "exact-replay-request-id-hash",
                         }
                     )
                     + "\n"
