@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Append deterministic short low-locality train prompts without reordering input."""
+"""Append deterministic short low-locality prompts without reordering input."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in stream if line.strip()]
 
 
-def short_prompt(rng: random.Random, index: int, seed: int) -> str:
+def short_prompt(rng: random.Random, index: int, seed: int, split: str) -> str:
     stems = (
         "amber birch cobalt delta ember flint grove harbor iris juniper kepler "
         "linen morrow north opal prairie quartz river sable tundra umber violet "
@@ -49,18 +49,23 @@ def short_prompt(rng: random.Random, index: int, seed: int) -> str:
         + "\n".join(f"{position}: {entry}" for position, entry in enumerate(entries))
         + "\nINDEX_SEQUENCE:\n"
         + ",".join(map(str, selected))
-        + f"\nImmutable task nonce: train-low-locality-short-{index:05d}-{seed}."
+        + f"\nImmutable task nonce: {split}-low-locality-short-{index:05d}-{seed}."
     )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base-train", type=Path, required=True)
-    parser.add_argument("--dev", type=Path, required=True)
+    parser.add_argument(
+        "--base-prompts", "--base-train", dest="base_train", type=Path, required=True
+    )
+    parser.add_argument(
+        "--other-prompts", "--dev", dest="dev", type=Path, required=True
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--count", type=int, default=500)
     parser.add_argument("--seed", type=int, default=160721)
+    parser.add_argument("--split", choices=("train", "dev"), default="train")
     args = parser.parse_args()
     if args.output.exists() or args.manifest.exists():
         raise FileExistsError("extension output and manifest must not exist")
@@ -68,19 +73,24 @@ def main() -> int:
     train = load_jsonl(args.base_train)
     dev = load_jsonl(args.dev)
     if not train or not dev:
-        raise RuntimeError("base train and DEV manifests must be nonempty")
+        raise RuntimeError("base and counterpart prompt manifests must be nonempty")
+    if any(row["split"] != args.split for row in train):
+        raise RuntimeError("base prompt split does not match --split")
+    counterpart_split = "dev" if args.split == "train" else "train"
+    if any(row["split"] != counterpart_split for row in dev):
+        raise RuntimeError("counterpart prompt split is wrong")
     rng = random.Random(args.seed)
     additions = []
     for index in range(args.count):
-        prompt = short_prompt(rng, index, args.seed)
+        prompt = short_prompt(rng, index, args.seed, args.split)
         additions.append(
             {
                 "schema_version": "k160-eagle-procedural-prompt-v1",
-                "split": "train",
+                "split": args.split,
                 "category": "low-locality",
                 "source_id": "k160-eagle-procedural-low-locality-short-v2",
                 "source_revision": "2026-07-20",
-                "prompt_id": f"train-low-locality-short-{index:05d}",
+                "prompt_id": f"{args.split}-low-locality-short-{index:05d}",
                 "prompt_sha256": sha(prompt),
                 "prompt": prompt,
             }
@@ -103,6 +113,7 @@ def main() -> int:
     summary = {
         "schema_version": "k160-eagle-prompt-source-extension-v1",
         "policy": "append_only_short_low_locality_v2",
+        "extended_split": args.split,
         "base_train_path": str(args.base_train.resolve()),
         "base_train_sha256": file_sha256(args.base_train),
         "dev_path": str(args.dev.resolve()),
