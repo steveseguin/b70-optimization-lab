@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "classification": "deepseek_v4_mhc_kernel_efficiency_iteration3",
+  "date": "2026-07-20",
+  "model": {
+    "repo": "0xSero/DeepSeek-V4-Flash-180B",
+    "revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "construction": "uniform K160",
+    "target_changed": false
+  },
+  "exact_lane": {
+    "angle_a": {
+      "decision": "skip_already_promoted",
+      "reason": "M=1 post to BF16 to pre is already one kernel; 85 is the count of semantic boundaries separated by attention or FFN work, not 170 adjacent post/pre launches"
+    },
+    "angle_b": {
+      "candidate": "reuse the first canonical squared-sum and inverse-RMS reduction in the second BLOCK_N=12 projection pass",
+      "flag": "VLLM_XPU_V4_MHC_REUSE_RMS_REDUCTION=1",
+      "default_off": true,
+      "subgroup_size": 16,
+      "workgroup_size": 256,
+      "block_n": 12,
+      "launch_count_before": 85,
+      "launch_count_after": 85,
+      "xpu_commit": "5a1e9fa4602f69302dc50ecf85b06b6f86762117",
+      "binary_sha256": "d62ea1cf4728250809052c68fdd74983b4f2c0dcaf924624e7a507c8d4c8392f",
+      "aggregate_eager_exact": "160/160",
+      "aggregate_fixed_address_graph_exact": "160/160",
+      "aggregate_output_bit_mismatches": 0,
+      "final_token_gate": "not_run_after_component_performance_fail",
+      "cards": [
+        {
+          "card": 0,
+          "reference_us_per_boundary": 26.58672,
+          "candidate_us_per_boundary": 25.321875,
+          "saved_ms_per_token_85_boundaries": 0.107511825,
+          "eager_exact": "40/40",
+          "graph_exact": "40/40"
+        },
+        {
+          "card": 1,
+          "reference_us_per_boundary": 26.751565,
+          "candidate_us_per_boundary": 25.929165,
+          "saved_ms_per_token_85_boundaries": 0.069904,
+          "eager_exact": "40/40",
+          "graph_exact": "40/40",
+          "slowest_candidate_card": true
+        },
+        {
+          "card": 2,
+          "reference_us_per_boundary": 26.874475,
+          "candidate_us_per_boundary": 25.490365,
+          "saved_ms_per_token_85_boundaries": 0.11764935,
+          "eager_exact": "40/40",
+          "graph_exact": "40/40"
+        },
+        {
+          "card": 3,
+          "reference_us_per_boundary": 27.03333,
+          "candidate_us_per_boundary": 25.36693,
+          "saved_ms_per_token_85_boundaries": 0.141644,
+          "eager_exact": "40/40",
+          "graph_exact": "40/40"
+        }
+      ],
+      "slowest_candidate_card_saved_ms_per_token": 0.069904,
+      "required_saved_ms_per_token": 0.3,
+      "passed": false,
+      "raw_gate": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/iter3-mhc-rms-reuse-four-card"
+    }
+  },
+  "inexact_measurement_only": {
+    "candidate": "generic TF32-DPAS M=8 MHC",
+    "flag": "VLLM_XPU_V4_MHC_POST_PRE_M8_DPAS=1",
+    "default_off": true,
+    "record_or_promotion_eligible": false,
+    "historical_component_exact_ms_per_m8_cycle": 8.036462997552007,
+    "historical_component_inexact_ms_per_m8_cycle": 7.182941510109231,
+    "historical_component_saved_ms_per_m8_cycle": 0.853521487442776,
+    "component_projected_ms_per_emitted_token_at_exact_dev_rate": 0.24912587673,
+    "same_binary_vllm_commit": "eb8a89a18ed040137e4e57bc01888feaa443a95e",
+    "same_binary_xpu_commit": "5a1e9fa4602f69302dc50ecf85b06b6f86762117",
+    "exact_public_dev_median_tok_s": 76.4617316835955,
+    "inexact_public_dev_median_tok_s": 78.34438194877055,
+    "endpoint_saved_ms_per_emitted_token": 0.3142806635638582,
+    "endpoint_tok_s_delta": 1.88265026517505,
+    "endpoint_relative_percent": 2.462212435,
+    "quality": {
+      "combined_public_plus_dev": {
+        "prompts": 22,
+        "prompts_changed": 17,
+        "tokens_compared": 2725,
+        "tokens_changed": 1453,
+        "token_match_percent": 46.678899082568805,
+        "any_greedy_token_changed": true
+      },
+      "additional_dev_only": {
+        "prompts": 10,
+        "prompts_changed": 5,
+        "tokens_compared": 1189,
+        "tokens_changed": 447,
+        "token_match_percent": 62.4053826745164,
+        "any_greedy_token_changed": true
+      },
+      "public_continuity_only": {
+        "prompts": 12,
+        "prompts_changed": 12,
+        "tokens_compared": 1536,
+        "tokens_changed": 1006,
+        "token_match_percent": 34.505208333333336,
+        "any_greedy_token_changed": true
+      }
+    },
+    "exact_screen": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/iter3-mhc-quality-exact-20260720T1650Z/public-dev-screen.json",
+    "inexact_screen": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/iter3-mhc-quality-inexact-dpas-20260720T1700Z/public-dev-screen.json",
+    "component_evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m8-dpas-mhc-gate-20260718T2230Z"
+  },
+  "nonspec_bab": {
+    "ran": false,
+    "reason": "exact component saved 0.069904 ms/token on the slowest candidate card, below the 0.30 ms/token gate"
+  },
+  "localmaxxing": {
+    "submitted": false,
+    "submission_allowed": false
+  },
+  "gpu_time_cap_hours": 2,
+  "gpu_time_cap_exceeded": false
+}

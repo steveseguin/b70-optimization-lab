@@ -1,0 +1,184 @@
+diff --git a/csrc/xpu/mhc/xe_2/mhc_pre.cpp b/csrc/xpu/mhc/xe_2/mhc_pre.cpp
+index 44d7934..b0feac6 100644
+--- a/csrc/xpu/mhc/xe_2/mhc_pre.cpp
++++ b/csrc/xpu/mhc/xe_2/mhc_pre.cpp
+@@ -281,7 +281,11 @@ static inline float sigmoid(float x) {
+ }
+ 
+ class MhcPreStage2;
+-template <bool EnablePost, bool EnableNorm = false, int Tokens = 1>
++template <
++    bool EnablePost,
++    bool EnableNorm = false,
++    int Tokens = 1,
++    bool ReuseRmsReduction = false>
+ class MhcPreM1Fused;
+ template <int Tokens>
+ class MhcPreM2PairTiled;
+@@ -886,7 +890,11 @@ void launch_mhc_pre_stage2(
+   });
+ }
+ 
+-template <bool EnablePost, bool EnableNorm = false, int Tokens = 1>
++template <
++    bool EnablePost,
++    bool EnableNorm = false,
++    int Tokens = 1,
++    bool ReuseRmsReduction = false>
+ void launch_mhc_pre_m1_fused(
+     sycl::queue& q,
+     const bf16* residual,
+@@ -932,7 +940,8 @@ void launch_mhc_pre_m1_fused(
+   q.submit([&](sycl::handler& h) {
+     sycl::local_accessor<float, 1> slm(NORM_INV_RMS + 1, h);
+     sycl::local_accessor<vec_bf16_8, 1> raw_slm(EnableNorm ? H / VEC2 : 1, h);
+-    h.parallel_for<MhcPreM1Fused<EnablePost, EnableNorm, Tokens>>(
++    h.parallel_for<
++        MhcPreM1Fused<EnablePost, EnableNorm, Tokens, ReuseRmsReduction>>(
+         sycl::nd_range<1>(
+             sycl::range<1>(WG_SIZE * Tokens), sycl::range<1>(WG_SIZE)),
+         [=](sycl::nd_item<1> item) [[sycl::reqd_sub_group_size(SG_SIZE)]] {
+@@ -1005,7 +1014,16 @@ void launch_mhc_pre_m1_fused(
+ #pragma unroll
+                 for (int v = 0; v < VEC1; ++v) {
+                   xf[v] = static_cast<float>(x.val[v]);
+-                  local_sq += xf[v] * xf[v];
++                  if constexpr (!ReuseRmsReduction) {
++                    local_sq += xf[v] * xf[v];
++                  } else if (block == 0) {
++                    // Both BLOCK_N=12 projection passes traverse the same
++                    // residual values with the same lane mapping.  The
++                    // incumbent recomputes an identical squared sum in the
++                    // second pass.  Preserve the first pass's accumulation
++                    // and reduction tree exactly, then reuse its inverse RMS.
++                    local_sq += xf[v] * xf[v];
++                  }
+                 }
+ #pragma unroll
+                 for (int j = 0; j < BLOCK_N; ++j) {
+@@ -1019,18 +1037,35 @@ void launch_mhc_pre_m1_fused(
+                 }
+               }
+ 
+-            float sg_sq;
+-            if constexpr (EnableNorm) {
+-              sg_sq = local_sq;
++            if constexpr (!ReuseRmsReduction) {
++              float sg_sq;
++              if constexpr (EnableNorm) {
++                sg_sq = local_sq;
+ #pragma unroll
+-              for (int off = 1; off < MHC_SG_SIZE; off <<= 1)
+-                sg_sq += sycl::permute_group_by_xor(sg, sg_sq, off);
++                for (int off = 1; off < MHC_SG_SIZE; off <<= 1)
++                  sg_sq += sycl::permute_group_by_xor(sg, sg_sq, off);
++              } else {
++                sg_sq =
++                    sycl::reduce_over_group(sg, local_sq, sycl::plus<float>());
++              }
++              if (tid < MHC_WG_SIZE && lane % MHC_SG_SIZE == 0)
++                slm[(tid / MHC_SG_SIZE) * REDUCE_VALUES] = sg_sq;
+             } else {
+-              sg_sq =
+-                  sycl::reduce_over_group(sg, local_sq, sycl::plus<float>());
++              if (block == 0) {
++                float sg_sq;
++                if constexpr (EnableNorm) {
++                  sg_sq = local_sq;
++#pragma unroll
++                  for (int off = 1; off < MHC_SG_SIZE; off <<= 1)
++                    sg_sq += sycl::permute_group_by_xor(sg, sg_sq, off);
++                } else {
++                  sg_sq = sycl::reduce_over_group(
++                      sg, local_sq, sycl::plus<float>());
++                }
++                if (tid < MHC_WG_SIZE && lane % MHC_SG_SIZE == 0)
++                  slm[(tid / MHC_SG_SIZE) * REDUCE_VALUES] = sg_sq;
++              }
+             }
+-            if (tid < MHC_WG_SIZE && lane % MHC_SG_SIZE == 0)
+-              slm[(tid / MHC_SG_SIZE) * REDUCE_VALUES] = sg_sq;
+ #pragma unroll
+             for (int j = 0; j < BLOCK_N; ++j) {
+               float sg_mix;
+@@ -1057,8 +1092,13 @@ void launch_mhc_pre_m1_fused(
+                   sum += slm[s * REDUCE_VALUES + j];
+                 slm[j] = sum;
+               }
+-              slm[MHC_INV_RMS] =
+-                  sycl::native::rsqrt(slm[0] / static_cast<float>(K) + rms_eps);
++              if constexpr (!ReuseRmsReduction) {
++                slm[MHC_INV_RMS] = sycl::native::rsqrt(
++                    slm[0] / static_cast<float>(K) + rms_eps);
++              } else if (block == 0) {
++                slm[MHC_INV_RMS] = sycl::native::rsqrt(
++                    slm[0] / static_cast<float>(K) + rms_eps);
++              }
+             }
+             sycl::group_barrier(item.get_group());
+             if (tid < BLOCK_N) {
+@@ -1820,6 +1860,32 @@ void mhc_post_pre_m1_out(
+   TORCH_CHECK(sinkhorn_repeat > 0, op, ": sinkhorn_repeat must be positive");
+ 
+   auto& queue = vllm::xpu::vllmGetQueue();
++  const char* rms_once_env =
++      std::getenv("VLLM_XPU_V4_MHC_REUSE_RMS_REDUCTION");
++  const bool reuse_rms_reduction = rms_once_env != nullptr &&
++      rms_once_env[0] == '1' && rms_once_env[1] == '\0';
++  if (reuse_rms_reduction) {
++    launch_mhc_pre_m1_fused<true, false, 1, true>(
++        queue,
++        nullptr,
++        fn.data_ptr<float>(),
++        hc_scale.data_ptr<float>(),
++        hc_base.data_ptr<float>(),
++        next_post_mix.data_ptr<float>(),
++        next_comb_mix.data_ptr<float>(),
++        reinterpret_cast<bf16*>(layer_input.data_ptr()),
++        static_cast<float>(rms_eps),
++        static_cast<float>(hc_pre_eps),
++        static_cast<float>(hc_sinkhorn_eps),
++        static_cast<float>(hc_post_mult_value),
++        static_cast<int>(sinkhorn_repeat),
++        reinterpret_cast<const bf16*>(x.data_ptr()),
++        reinterpret_cast<const bf16*>(residual.data_ptr()),
++        post_layer_mix.data_ptr<float>(),
++        comb_res_mix.data_ptr<float>(),
++        reinterpret_cast<bf16*>(residual_out.data_ptr()));
++    return;
++  }
+   launch_mhc_pre_m1_fused<true>(
+       queue,
+       nullptr,
+@@ -1935,6 +2001,31 @@ void mhc_post_pre_mx_out_impl(
+       return;
+     }
+   }
++  const char* rms_once_env =
++      std::getenv("VLLM_XPU_V4_MHC_REUSE_RMS_REDUCTION");
++  if (rms_once_env != nullptr && rms_once_env[0] == '1' &&
++      rms_once_env[1] == '\0') {
++    launch_mhc_pre_m1_fused<true, false, Tokens, true>(
++        queue,
++        nullptr,
++        fn.data_ptr<float>(),
++        hc_scale.data_ptr<float>(),
++        hc_base.data_ptr<float>(),
++        next_post_mix.data_ptr<float>(),
++        next_comb_mix.data_ptr<float>(),
++        reinterpret_cast<bf16*>(layer_input.data_ptr()),
++        static_cast<float>(rms_eps),
++        static_cast<float>(hc_pre_eps),
++        static_cast<float>(hc_sinkhorn_eps),
++        static_cast<float>(hc_post_mult_value),
++        static_cast<int>(sinkhorn_repeat),
++        reinterpret_cast<const bf16*>(x.data_ptr()),
++        reinterpret_cast<const bf16*>(residual.data_ptr()),
++        post_layer_mix.data_ptr<float>(),
++        comb_res_mix.data_ptr<float>(),
++        reinterpret_cast<bf16*>(residual_out.data_ptr()));
++    return;
++  }
+   launch_mhc_pre_m1_fused<true, false, Tokens>(
+       queue,
+       nullptr,
