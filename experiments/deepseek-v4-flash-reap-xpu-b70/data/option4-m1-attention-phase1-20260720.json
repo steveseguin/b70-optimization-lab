@@ -1,0 +1,157 @@
+{
+  "schema": "option4-m1-attention-phase1-v1",
+  "date_local": "2026-07-20",
+  "verdict": "phase2-no-go",
+  "capture": {
+    "retry_cycles": 4,
+    "passed": true,
+    "packet": "/mnt/fast-ai/deepseek-v4-corpora/m1-attention-boundary-v1-20260721T001727Z",
+    "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-m1-attention-oracle-20260721T001727Z",
+    "coverage": {
+      "instances": 344,
+      "required_instances": 344,
+      "ranks": 4,
+      "layers": 43,
+      "buckets": [
+        "swa-resident-anchor64",
+        "compressed-swa-full-anchor512"
+      ]
+    },
+    "checksums": {
+      "payloads_verified": 22232,
+      "payload_file_bytes": 14134046712,
+      "aggregate_instance_sha256": "52943218bd882870b2873713749924ad21fec7fe9c2dfe31f08160bd45c9cfc7",
+      "packet_manifest_sha256": "8528f03231700b062163fafb840a7ff9af87720dad361833838397a44ca06fd1"
+    },
+    "jit_compilations": {
+      "prearm": 6,
+      "armed_window": 0,
+      "postarm_flush": 3
+    },
+    "cycles": [
+      {
+        "cycle": 1,
+        "result": "negative",
+        "packet": "/mnt/fast-ai/deepseek-v4-corpora/m1-attention-boundary-v1-20260720T234300Z",
+        "bug": "immutable rotary table absent from otherwise complete packet",
+        "preservation": "JSONL, manifests, summary, log, and checksums retained; 11 GiB payload files deleted after supersession to recover disk"
+      },
+      {
+        "cycle": 2,
+        "result": "negative",
+        "run": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-m1-attention-oracle-20260720T235500Z",
+        "bug": "one 256 MiB rotary table serialized for every rank/layer instance and exhausted disk during flush",
+        "preservation": "server log and run identity retained; incomplete 21 GiB corpus deleted"
+      },
+      {
+        "cycle": 3,
+        "result": "negative",
+        "packet": "/mnt/fast-ai/deepseek-v4-corpora/m1-attention-boundary-v1-20260720T235900Z",
+        "bug": "global rotary dedup incorrectly reused the C1 table for C4 and C128 layers",
+        "structural_coverage": "344/344",
+        "packet_manifest_sha256": "6e1c0f6244f9f0ccfa8208f2297d2881fd6b3959c4a5f87da42f31b7accc03fa"
+      },
+      {
+        "cycle": 4,
+        "result": "pass",
+        "fix": "rotary bindings keyed by compression ratio C1/C4/C128",
+        "coverage": "344/344",
+        "armed_window_jit_compilations": 0
+      }
+    ]
+  },
+  "component": {
+    "passed": true,
+    "root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-m1-attention-component-20260721T0029Z",
+    "layers_exact": "43/43 in both buckets",
+    "raw_command_list_instances": "86/86",
+    "changed_exact": "40/40",
+    "replays_exact": "70/70",
+    "required_positions_present": [28, 58],
+    "intermediate_parity": "bitwise",
+    "submission_boundaries": {
+      "eager": 14,
+      "m1_attention_boundary_v1": 1
+    },
+    "host_syncs": 0,
+    "nested_piecewise": {
+      "passed": true,
+      "backend": "sycl-current-queue",
+      "eager_break": false,
+      "host_syncs_inside_candidate_op": 0,
+      "local_output_exact_bytes": "8192/8192"
+    },
+    "preserved_negative": {
+      "backend": "direct-raw-level-zero-append",
+      "passed": false,
+      "reason": "direct raw append bypasses surrounding SYCL graph recording"
+    }
+  },
+  "endpoint": {
+    "passed": false,
+    "gate_required_saved_ms_per_token": 0.5,
+    "same_binary_vllm_commit": "67044c25d0886f11037671f74da47225ad7297ce",
+    "selector": "VLLM_XPU_V4_OPTION4_M1_ATTENTION_BOUNDARY",
+    "selector_default": "off",
+    "mode": "nonspeculative PIECEWISE, one active generation, TP4",
+    "suite": "repro/rapid-model-snapshots-b70/realistic-suite-v1.json",
+    "control": {
+      "root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-m1-attention-endpoint-control-20260721T010000Z",
+      "median_tok_s_1_100_after_ttft": 43.64129722913438,
+      "median_ms_per_token": 22.914075966843914,
+      "cached_tokens_all_zero": true,
+      "bench_sha256": "c73d4ffd5fd3edbdfb2b1b05fc3308512116183a396cfca3abc9cfcfd01c6e2b",
+      "server_log_sha256": "d290144034ceeb07508e4972a0e42ad3419dc223d7eee74b8eb21f76ede5cda5"
+    },
+    "candidate": {
+      "root": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/option4-m1-attention-endpoint-candidate-20260721T011200Z",
+      "median_tok_s_1_100_after_ttft": 43.29804680739105,
+      "median_ms_per_token": 23.095730032544985,
+      "saved_ms_per_token": -0.18165406570107123,
+      "cached_tokens_all_zero": true,
+      "bench_sha256": "79281fbcecc977b7a15d9beea0c7ae08087803f0d82661b92d77ef1176066d28",
+      "server_log_sha256": "048ceea98715c9790271ba8c0adba0cee9a298f8a41d7d38903dcd768acc63a8"
+    },
+    "output_token_exactness": {
+      "passed": false,
+      "exact_prompts": 9,
+      "required_prompts": 12,
+      "first_mismatch_token_indices": {
+        "incident-retrospective": 58,
+        "code-review": 45,
+        "sql-debugging": 4
+      },
+      "incumbent_reproducibility_diagnostic": {
+        "control_fresh_reload_exact_prompts": "7/12",
+        "candidate_same_service_repeat_exact_prompts": "9/12",
+        "classification": "temperature-zero endpoint is independently nondeterministic; this explains why mismatch is not uniquely attributable, but does not waive the exact-token gate"
+      }
+    },
+    "piecewise_nesting": {
+      "server_capture_completed": true,
+      "reported_eager_break": false,
+      "isolated_nested_probe_host_syncs": 0
+    }
+  },
+  "speculative_transfer": {
+    "m": 8,
+    "qualified": false,
+    "note": "Phase 1 is M=1 and nonspeculative. M=8 changes fixed geometry, addresses, KV/compressor state transitions, and verifier-cycle ownership; it requires a separate capture, parity, replay, and endpoint qualification."
+  },
+  "runtime": {
+    "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "quantization": "K160 fixed",
+    "tensor_parallel": 4,
+    "kernel_source_commit": "5a1e9fa4602f69302dc50ecf85b06b6f86762117",
+    "xpu_extension_sha256": "d62ea1cf4728250809052c68fdd74983b4f2c0dcaf924624e7a507c8d4c8392f",
+    "xpu_extension_rebuilt": false,
+    "native_replay_shim_sha256": "431ae9ff183a8070689411cca9a037c20df7bc241ab54562d847d3e4184bd304"
+  },
+  "postflight": {
+    "service_stopped": true,
+    "port_18080_listening": false,
+    "vllm_workers_remaining": 0,
+    "cards_free_of_inference_work": true,
+    "localmaxxing_submission": false
+  }
+}
