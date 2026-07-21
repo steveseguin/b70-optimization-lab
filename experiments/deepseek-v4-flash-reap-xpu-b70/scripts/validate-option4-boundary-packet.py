@@ -47,6 +47,33 @@ def tensor_raw_sha(path: Path) -> tuple[str, list[int]]:
     return hashlib.sha256(raw).hexdigest(), tensor.tolist()
 
 
+def compression_ratio(
+    dynamic: list[dict[str, Any]], static: list[dict[str, Any]]
+) -> int:
+    """Recover the fixed K160 layer class from captured packet structure."""
+    has_compressor = any(
+        "attn_param::compressor." in str(row["tensor_name"]) for row in static
+    )
+    if not has_compressor:
+        return 1
+    topk = [
+        row
+        for row in dynamic
+        if row["stage"] == "attn_sparse_bindings"
+        and row["tensor_name"] == "topk_indices"
+    ]
+    if len(topk) != 1:
+        raise SystemExit(
+            f"compressed layer expected one topk_indices record, found {len(topk)}"
+        )
+    width = int(topk[0]["shape"][-1])
+    if width == 512:
+        return 4
+    if width == 16:
+        return 128
+    raise SystemExit(f"unrecognized compressed topk width {width}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("packet", type=Path)
@@ -154,14 +181,15 @@ def main() -> int:
         }
         if set(forwards) != set(BUCKETS):
             raise SystemExit(f"rank {rank} positions are {sorted(forwards)}, expected 64,512")
-        rotary = [
-            row
+        rotary = {
+            int(str(row["tensor_name"]).rsplit("_c", 1)[1]): row
             for row in global_static[rank]
-            if row["tensor_name"] == "attn_rotary_cos_sin_cache"
-        ]
-        if len(rotary) != 1:
+            if str(row["tensor_name"]).startswith("attn_rotary_cos_sin_cache_c")
+        }
+        if set(rotary) != {1, 4, 128}:
             raise SystemExit(
-                f"rank {rank} expected one shared RoPE table binding, found {len(rotary)}"
+                f"rank {rank} expected C1/C4/C128 RoPE bindings, found "
+                f"{sorted(rotary)}"
             )
         for position, bucket in BUCKETS.items():
             forward = forwards[position]
@@ -176,6 +204,7 @@ def main() -> int:
                         f"rank={rank} layer={layer} position={position} "
                         f"missing_stages={missing} static_records={len(static)}"
                     )
+                ratio = compression_ratio(dynamic, static)
                 record_refs = [
                     {
                         "stage": row["stage"],
@@ -201,6 +230,7 @@ def main() -> int:
                     "layer": layer,
                     "position": position,
                     "bucket": bucket,
+                    "compression_ratio": ratio,
                     "forward": forward,
                     "records": record_refs,
                     "shared_static_records": static_refs,
@@ -212,7 +242,7 @@ def main() -> int:
                             "tensor_path": row["tensor_path"],
                             "binding": row["binding"],
                         }
-                        for row in rotary
+                        for row in [rotary[ratio]]
                     ],
                 }
                 manifest["manifest_sha256"] = canonical_sha(manifest)
