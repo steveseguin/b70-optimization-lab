@@ -29,6 +29,9 @@ def main() -> int:
     parser.add_argument("--rank", type=int, default=0)
     parser.add_argument("--layer", type=int, default=42)
     parser.add_argument(
+        "--capture-append-backend", choices=("raw-lz", "sycl"), default="raw-lz"
+    )
+    parser.add_argument(
         "--bucket", default="compressed-swa-full-anchor512"
     )
     args = parser.parse_args()
@@ -72,7 +75,10 @@ def main() -> int:
     # append bypasses queue recording, the outer executable is empty/stale.
     def nested_launch() -> dict[str, torch.Tensor]:
         assert handles is not None
-        native.replay_raw_level_zero(*handles)
+        if args.capture_append_backend == "raw-lz":
+            native.replay_raw_level_zero(*handles)
+        else:
+            native.replay_current_queue(inner.graph_exec)
         return {"local": inner_outputs["local"]}
 
     outer_error = None
@@ -106,6 +112,7 @@ def main() -> int:
         "passed": exact and outer_error is None,
         "pieced_surrounding_capture": True,
         "raw_append_recorded_by_outer_graph": exact,
+        "capture_append_backend": args.capture_append_backend,
         "eager_break": not exact,
         "host_syncs_inside_candidate_op": 0,
         "outer_state": outer_state,
