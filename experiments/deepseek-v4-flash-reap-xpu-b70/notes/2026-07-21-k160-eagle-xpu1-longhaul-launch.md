@@ -2,8 +2,34 @@
 
 Date: 2026-07-21
 
-Status: launcher/config committed; detached launch and first checkpoint gate
-pending.
+Status: **RUNNING DETACHED; first checkpoint and full DEV gate verified**.
+
+## Numbers first
+
+- Run directory:
+  `/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-longhaul-20260721T133541Z`.
+- Detached supervisor PID: **1963836**. Current single Python worker PID:
+  **1963843**.
+- XPU verification: XPU-smi DeviceID **1**, worker `xpu:0` inside the mask,
+  only `/dev/dri/renderD131` open, PCI `0000:27:00.0`, no DDP/process group,
+  no rank/CCL/preload environment. Cards 2 and 3 remained occupied by their
+  separate telemetry kernels.
+- First checkpoint: global step **76,977**, continuation step 3,000,
+  **615,816** cumulative anchors, epoch **0.6243268233**, atomic checkpoint
+  size 1.1 GiB.
+- First complete disjoint-DEV gate over **49,142** anchors:
+  P1-P7 conditional acceptance = **55.9481%, 51.6040%, 58.2957%, 65.4697%,
+  67.2761%, 67.0876%, 66.9804%**; mean conditional P2-P7 = **62.7856%**;
+  overall = **18.3410%**; checkpoint-interval mean loss = **2.914232**.
+  `go_signal=false`.
+- Full DEV took **383.887 seconds**. Training then resumed on the same worker;
+  the post-eval check observed global step 77,051 and only renderD131.
+- Durable DEV metrics:
+  `/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-longhaul-20260721T133541Z/metrics.jsonl`.
+- Clean STOP sentinel:
+  `/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-longhaul-20260721T133541Z/STOP`.
+- Launcher implementation commit: `2cabed9a7c11b89643adb1da82693be076ed0b1a`;
+  proven-environment correction: `3e5ecb1993d62d84aead14f95ab00af11f9edfc1`.
 
 ## Plan and immutable scope
 
@@ -45,8 +71,7 @@ pending.
 
 ## Monitoring contract
 
-The final run directory, detached PID, first checkpoint, and first DEV row will
-be recorded here after launch. Its stable interfaces are:
+The stable interfaces are:
 
 - `metrics.jsonl`: one durable JSON row per checkpoint with `step`, `anchors`,
   `epoch`, `P1`, `mean_cond_P2_P7`, `overall`, `loss`, P1-P7 conditionals,
@@ -57,11 +82,33 @@ be recorded here after launch. Its stable interfaces are:
 - `supervisor.pid` and `trainer.pid`: detached supervisor and current worker;
 - `supervisor.log`, `worker.log`, and `events.jsonl`: restart/runtime evidence.
 
-Expected cadence is roughly 8.1 minutes of training per 3,000 updates at the
-prior measured rate, plus about 4.7 minutes for full DEV and checkpoint I/O.
-The previous raw training-only estimate for the remaining continuation is
-about 24.6 hours; checkpoint-time DEV makes the total wall estimate roughly
-39-44 hours.
+The first shared-host interval took about 14.4 minutes of training per 3,000
+updates, plus 6.4 minutes for full DEV and checkpoint I/O: approximately 21
+minutes per published `metrics.jsonl` row. At that observed cadence, the full
+remaining plan is roughly 2.5-3 days. Claude should use the live row cadence,
+not the earlier solo-card throughput projection.
+
+Read the latest compact gate with:
+
+```bash
+tail -n 1 /media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-longhaul-20260721T133541Z/metrics.jsonl \
+  | jq '{step, anchors, epoch, P1, mean_cond_P2_P7, overall, loss, go_signal}'
+```
+
+Request a clean stop with:
+
+```bash
+touch /media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-longhaul-20260721T133541Z/STOP
+```
+
+After the supervisor has exited, resume from the newest intact checkpoint with:
+
+```bash
+rm -f /media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-longhaul-20260721T133541Z/STOP
+cd /home/steve/llm-optimizations
+RUN_DIR=/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-longhaul-20260721T133541Z \
+  experiments/deepseek-v4-flash-reap-xpu-b70/scripts/launch-k160-eagle-longhaul-xpu1.sh
+```
 
 Claude should apply these later decisions only to the DEV `metrics.jsonl`:
 
