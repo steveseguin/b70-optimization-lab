@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-20",
+  "classification": "deepseek_v4_b70_bandwidth_recovery_investigation",
+  "part1": {
+    "intel_rated_bandwidth_GBps": 608.0,
+    "rated_effective_pin_rate_Gbps": 19.0,
+    "rated_base_clock_equivalent_MHz": 2375.0,
+    "prior_microbench_GBps": 527.0,
+    "ecc": {
+      "current_state": "inferred disabled; direct query unsupported",
+      "evidence": "34242297856 allocatable-state bytes per card and 32656 MiB reported by xpu-smi; Intel documents 28 GB when ECC is enabled and 32 GB when disabled",
+      "implementation": "inferred controller/inline ECC, not GDDR6 on-die ECC; Intel does not publish the exact code",
+      "toggleable": true,
+      "supported_toggle_path": "Intel Graphics Software on Windows; persistent and reboot-affecting",
+      "current_linux_query_or_toggle": "unsupported",
+      "capacity_cost_percent": 12.5,
+      "bandwidth_cost": "not B70-measured; approximately 12.5% useful-payload tax is an inference if parity traffic shares the DRAM interface",
+      "reliability_tradeoff": "disabling loses controller-level memory error detection/correction and increases silent-corruption risk"
+    },
+    "memory_clock": {
+      "instantaneous_clock_exposed": false,
+      "reason": "Level Zero exposes GPU and media domains only, not a memory-frequency domain; IGCL is not installed",
+      "minimum_effective_pin_rate_from_603_826_GBps_Gbps": 18.8695625,
+      "sustained_effective_pin_rate_from_579_045_GBps_Gbps": 18.09515625,
+      "conclusion": "best events prove no material reduction from rated 19.0 Gbps; direct instantaneous clock unavailable"
+    },
+    "best_kernel": {
+      "working_set_bytes": 4294967296,
+      "work_group": 128,
+      "waves_per_compute_unit": 4,
+      "compute_units": 256,
+      "initialization": "per-address splitmix64 incompressible data",
+      "rejected_artifact": "uniform-fill source can exceed 1.4 TB/s due to transparent compression",
+      "one_card_5s_median_GBps": 584.863,
+      "one_card_5s_best_GBps": 603.703,
+      "all_card_65s_median_GBps": [582.829, 576.473, 577.806, 579.072],
+      "all_card_65s_best_GBps": [603.826, 603.738, 603.782, 603.756],
+      "all_card_65s_wall_GBps": [577.377, 573.017, 574.215, 575.638],
+      "true_sustained_mean_event_median_GBps_per_card": 579.045,
+      "true_sustained_mean_wall_GBps_per_card": 575.06175,
+      "maximum_event_GBps": 603.826,
+      "sustained_percent_of_rating": 95.2376644736842,
+      "sustained_recoverable_from_527_GBps": 52.045,
+      "sustained_percent_of_527_to_608_gap_recovered": 64.25308641975303,
+      "burst_percent_of_527_to_608_gap_recovered": 94.84691358024693
+    },
+    "load_telemetry": {
+      "duration_seconds": 65,
+      "power_cap_W": 230.0,
+      "energy_derived_average_power_W": [174.89, 183.38, 177.67, 182.48],
+      "xpu_smi_max_power_W": [191.28, 195.76, 192.74, 194.80],
+      "max_core_temperature_C": [68, 77, 74, 74],
+      "max_vram_temperature_C": [82, 100, 90, 94],
+      "gpu_frequency_MHz": 2800,
+      "warmed_not_throttled_samples_per_card": [15, 15, 15, 15],
+      "stream_eu_active_percent": 3,
+      "stream_eu_state": "approximately 90% stalled; idle remainder varies by sample"
+    },
+    "roofline": {
+      "old_floor_ms_per_token": 7.27,
+      "old_aggregate_bandwidth_GBps": 2110.0,
+      "old_tok_per_s": 137.5515818431912,
+      "new_all_card_event_median_aggregate_GBps": 2316.18,
+      "corrected_floor_ms_per_token": 6.6228445112210625,
+      "corrected_tok_per_s": 150.99252266993486,
+      "rated_aggregate_2432_GBps_tok_per_s": 158.54286589698626
+    }
+  },
+  "part2": {
+    "routed_mxfp4_n64_m1": {
+      "useful_arithmetic_intensity_FLOP_per_byte": 3.765,
+      "scale_inclusive_numeric_op_per_byte": 5.647,
+      "dequant_inclusive_element_op_per_byte": 7.588,
+      "in_model_logical_bandwidth_GBps": 288.7,
+      "in_model_fraction_of_579_045_percent": 49.857955772003905,
+      "useful_TFLOP_per_s": 1.087,
+      "scale_inclusive_TOP_per_s": 1.630,
+      "synthetic_sustained_chain_eu_active_stall_idle_percent": [45, 15, 40],
+      "hardware_dram_counter": "invalid for this block-2D path: xpu-smi reported 0-2% while the timed loop streamed hundreds of logical GB/s",
+      "binding_constraint": "occupancy/latency-bound; strided memory layout is a secondary hypothesis",
+      "highest_upside_untried_hypothesis": "load-time K32xN64 tile-major MXFP4 prepack with colocated group-major E8M0 scale sidecars",
+      "exactness_status": "unproven exactness-preserving design; requires changing-input eager and fixed-address graph bitwise gates",
+      "conditional_target_ms_per_token_if_370_to_410_GBps": [2.454, 2.719],
+      "conditional_saving_ms_per_token_if_370_to_410_GBps": [0.766, 1.031]
+    },
+    "dense_shared_down_fp8_m1": {
+      "arithmetic_intensity_FLOP_per_byte": 2.014,
+      "in_model_logical_bandwidth_GBps": 150.3,
+      "in_model_fraction_of_579_045_percent": 25.95653187576096,
+      "scale_inclusive_TFLOP_per_s": 0.304,
+      "synthetic_rotating_weight_eu_active_stall_idle_percent": [12, 5, 83],
+      "synthetic_rotating_weight_timed_logical_GBps": 85.17797991482202,
+      "telemetry_scale_dtype": "torch.float8_e8m0fnu",
+      "telemetry_counter_caveat": "qualitative 1 Hz proxy with rotating weights and counter overhead, not an in-model per-kernel bandwidth measurement",
+      "binding_constraint": "occupancy/latency-bound",
+      "exactness_preserving_candidate": "fixed-shape native-FP8 oneDNN JIT N-tile/workgroup specialization with more independent N workgroups and unchanged per-output K/scale/rounding order",
+      "exactness_status": "unproven; requires changing-input eager and fixed-address graph bitwise gates",
+      "conditional_target_ms_per_token_if_300_to_400_GBps": [0.225, 0.301],
+      "conditional_saving_ms_per_token_if_300_to_400_GBps": [0.299, 0.375]
+    }
+  },
+  "highest_upside_next_hypothesis": "MXFP4 K32xN64 tile-major weight prepack with colocated E8M0 scale sidecars",
+  "raw_evidence": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/b70-bandwidth-investigation-20260720T2300Z"
+}
