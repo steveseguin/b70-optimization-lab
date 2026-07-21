@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-18**
+Last reviewed: **2026-07-20**
 
 ## Authority And Update Rule
 
@@ -42,13 +42,20 @@ target verification remains M=8. The preceding QNorm/route-portfolio source rema
 historical evidence at vLLM `4a6fd8747` and XPU kernels `18a44f440`.
 The complete manager-facing resume is
 [`experiments/deepseek-v4-flash-reap-xpu-b70/ORCHESTRATOR_HANDOFF.md`](experiments/deepseek-v4-flash-reap-xpu-b70/ORCHESTRATOR_HANDOFF.md).
-Current development HEADs are vLLM `80f1ad820`, XPU kernels `2cc25d0`, and
+Current Option-4 development HEADs are vLLM `67044c25d`, XPU kernels
+`5a1e9fa46`, and
 oneCCL `48fda4f0e`; later experiments are default-off and do not replace the
 public-record identity. The latest fixed-M8 MHC+RMS fusion was rejected on card
 0 as inexact and slower before model load. The immediate bounded lane is the
 M7/M8 shared+routed activation portfolio, followed by exact DPAS W2 inside the
 incumbent captured collective Markov path. The strategic lane remains the
 fixed-address Intel decoder transaction.
+Option-4 M1 attention Phase 1 now has a clean 344/344 two-bucket oracle packet
+and a passing 43-layer raw command-list component gate, but its guarded TP4
+endpoint is a Phase-2 no-go: the candidate regresses by 0.181654 ms/token and
+fails cross-run exact-token identity. The selector remains default-off and no
+LocalMaxxing submission was made. Evidence is in
+[`experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-20-option4-phase1-m1-attention-debug-to-done.md`](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-20-option4-phase1-m1-attention-debug-to-done.md).
 The restorable nonspeculative direct M=1 routed-MoE record recipe is at
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/nospec-direct-moe-wideepoch-candidate-20260715T2220Z`:
 vLLM `a681dbb2b`, XPU kernels `6522849b0`, and exact-version oneCCL
