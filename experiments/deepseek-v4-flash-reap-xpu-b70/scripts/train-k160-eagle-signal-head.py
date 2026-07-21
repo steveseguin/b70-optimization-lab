@@ -605,6 +605,7 @@ class ShardStream:
         self.rng = random.Random(seed + rank)
         self.shard_order: list[Path] = []
         self.current: dict[str, torch.Tensor] | None = None
+        self.current_path: Path | None = None
         self.anchor_order = torch.empty(0, dtype=torch.int64)
         self.anchor_offset = 0
 
@@ -623,9 +624,66 @@ class ShardStream:
                     torch.randperm(anchors.numel(), generator=generator)
                 ]
                 self.current = current
+                self.current_path = path
                 self.anchor_offset = 0
                 return
         raise RuntimeError("no assigned shard has an eligible seven-position anchor")
+
+    def state_dict(self) -> dict[str, object]:
+        """Return the exact shuffled stream cursor for crash-safe continuation."""
+        return {
+            "schema_version": "k160-eagle-shard-stream-v1",
+            "assigned_shards": [str(path.resolve()) for path in self.shards],
+            "batch_size": self.batch_size,
+            "rng_state": self.rng.getstate(),
+            "shard_order": [str(path.resolve()) for path in self.shard_order],
+            "current_path": (
+                str(self.current_path.resolve()) if self.current_path else None
+            ),
+            "anchor_order": self.anchor_order,
+            "anchor_offset": self.anchor_offset,
+        }
+
+    def load_state_dict(self, state: dict[str, object]) -> None:
+        """Restore a stream cursor and fail closed if its corpus changed."""
+        expected_shards = [str(path.resolve()) for path in self.shards]
+        if (
+            state.get("schema_version") != "k160-eagle-shard-stream-v1"
+            or state.get("assigned_shards") != expected_shards
+            or int(state.get("batch_size", -1)) != self.batch_size
+        ):
+            raise RuntimeError("training stream checkpoint contract mismatch")
+        known = {str(path.resolve()): path for path in self.shards}
+        serialized_order = state.get("shard_order")
+        if not isinstance(serialized_order, list) or any(
+            not isinstance(path, str) or path not in known
+            for path in serialized_order
+        ):
+            raise RuntimeError("training stream checkpoint has unknown shards")
+        self.shard_order = [known[path] for path in serialized_order]
+        self.rng.setstate(state["rng_state"])  # type: ignore[arg-type]
+        anchor_order = state.get("anchor_order")
+        if (
+            not isinstance(anchor_order, torch.Tensor)
+            or anchor_order.dtype != torch.int64
+        ):
+            raise RuntimeError("training stream checkpoint anchor order is invalid")
+        self.anchor_order = anchor_order
+        self.anchor_offset = int(state.get("anchor_offset", -1))
+        current_path = state.get("current_path")
+        if current_path is None:
+            self.current = None
+            self.current_path = None
+            if self.anchor_offset != 0 or self.anchor_order.numel() != 0:
+                raise RuntimeError("empty training stream checkpoint has a cursor")
+            return
+        if not isinstance(current_path, str) or current_path not in known:
+            raise RuntimeError("training stream checkpoint current shard is invalid")
+        if not 0 <= self.anchor_offset <= self.anchor_order.numel():
+            raise RuntimeError("training stream checkpoint anchor offset is invalid")
+        self.current_path = known[current_path]
+        with safe_open(self.current_path, framework="pt", device="cpu") as tensors:
+            self.current = {name: tensors.get_tensor(name) for name in tensors.keys()}
 
     def next_batch(self) -> dict[str, torch.Tensor]:
         parts: dict[str, list[torch.Tensor]] = {
@@ -660,6 +718,18 @@ class ShardStream:
                 self.current["target_final_hidden_bf16"][shifted]
             )
         return {name: torch.cat(values, dim=0) for name, values in parts.items()}
+
+    def advance(self, anchor_count: int) -> None:
+        """Advance the deterministic cursor without materializing model inputs."""
+        if anchor_count < 0:
+            raise ValueError("anchor advance must be non-negative")
+        remaining = anchor_count
+        while remaining:
+            if self.current is None or self.anchor_offset >= self.anchor_order.numel():
+                self._next_shard()
+            take = min(remaining, self.anchor_order.numel() - self.anchor_offset)
+            self.anchor_offset += take
+            remaining -= take
 
 
 def initialize_distributed(device_kind: str) -> tuple[torch.device, int, int, int]:
