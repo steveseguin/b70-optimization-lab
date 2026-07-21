@@ -83,13 +83,7 @@ if [[ -e ${RUN_DIR}/STOP ]]; then
   exit 0
 fi
 
-# shellcheck disable=SC1090
 source "${config}"
-set +u
-source /opt/intel/oneapi/compiler/2025.3/env/vars.sh --force >/dev/null 2>&1
-source /opt/intel/oneapi/mkl/2025.3/env/vars.sh --force >/dev/null 2>&1
-source /opt/intel/oneapi/dnnl/2025.3/env/vars.sh --force >/dev/null 2>&1
-set -u
 
 for name in $(compgen -v); do
   if [[ ${name} == CCL_* ]]; then

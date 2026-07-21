@@ -70,3 +70,15 @@ Claude should apply these later decisions only to the DEV `metrics.jsonl`:
   least two consecutive epochs while remaining below 0.72.
 
 No LocalMaxxing action is part of this run.
+
+## Initial launch correction
+
+The first detached attempt at `2026-07-21T13:35:41Z` failed closed before XPU
+allocation: sourcing standalone oneAPI compiler/MKL/DNNL environment fragments
+made PyTorch report zero visible XPUs. The supervisor was stopped after two
+failed discovery attempts; no optimizer step or checkpoint occurred. The
+known-good signal-run environment did not source those fragments. A direct
+probe with its exact scrubbed environment, `ZE_AFFINITY_MASK=1`, and
+`ONEAPI_DEVICE_SELECTOR=level_zero:*` reported `torch.xpu.is_available=true`,
+`device_count=1`, and Intel Arc Pro B70. The launcher now uses that exact
+direct-venv environment.
