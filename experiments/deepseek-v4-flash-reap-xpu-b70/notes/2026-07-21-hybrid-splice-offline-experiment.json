@@ -1,0 +1,251 @@
+{
+  "schema_version": "hybrid-splice-offline-v1",
+  "experiment": "markov-eagle-hybrid smallest-first (offline, CPU)",
+  "checkpoint": "/media/steve/CorsairExternal/llm-optimization-artifacts/deepseek-v4-eagle-signal-20260719T210100Z/training/single-card-signal-20260720T181607Z/train-bf16-b8-ga1/head-best-mean-p2-p7.pt",
+  "checkpoint_sha256": "ef74bdbf55aa5bdc49f801a0b88be865f15860c8d7a6927c99be70c8f61f2dec",
+  "checkpoint_training_fraction_epoch": 0.599995,
+  "dev_anchors_cycles": 49142,
+  "markov_source": "dspark7 diagnostic combined-DEV conditionals (authoritative)",
+  "markov_conditional": [
+    0.7823,
+    0.7692,
+    0.7149,
+    0.6637,
+    0.6682,
+    0.6913,
+    0.6408
+  ],
+  "markov_only": {
+    "conditional": [
+      0.7823,
+      0.7692,
+      0.7149,
+      0.6637,
+      0.6682,
+      0.6913,
+      0.6408
+    ],
+    "marginal": [
+      0.7823,
+      0.60174516,
+      0.430187614884,
+      0.28551551999851077,
+      0.1907814704630049,
+      0.1318872305310753,
+      0.08451333732431306
+    ],
+    "emitted_per_cycle": 3.506930333200904,
+    "emitted_per_cycle_diagnostic_reference": 3.507
+  },
+  "eagle_only": {
+    "conditional": [
+      0.5692279516503195,
+      0.527151181496443,
+      0.593584700935847,
+      0.6883354278533075,
+      0.7299585062240664,
+      0.7432924056389267,
+      0.7369226063016213
+    ],
+    "marginal": [
+      0.5692279516503195,
+      0.30006918725326603,
+      0.1781164787757926,
+      0.12260388262585975,
+      0.08949574701884336,
+      0.06652150909608888,
+      0.049021203858206824
+    ],
+    "emitted_per_cycle": 2.375055960278377,
+    "accepted_through": [
+      27973,
+      14746,
+      8753,
+      6025,
+      4398,
+      3269,
+      2409
+    ]
+  },
+  "eagle_reported_conditional_signal_run": [
+    0.568963,
+    0.527396,
+    0.593313,
+    0.688536,
+    0.72925,
+    0.742317,
+    0.736891
+  ],
+  "free_running_vs_teacher_forced_identical": true,
+  "free_running_accepted_through_subset": [
+    1558,
+    364,
+    90,
+    36,
+    20,
+    12,
+    7
+  ],
+  "teacher_forced_accepted_through_subset": [
+    1558,
+    364,
+    90,
+    36,
+    20,
+    12,
+    7
+  ],
+  "hybrid_sweep": {
+    "2": {
+      "crossover_k": 2,
+      "source_per_position": [
+        "markov",
+        "eagle",
+        "eagle",
+        "eagle",
+        "eagle",
+        "eagle",
+        "eagle"
+      ],
+      "conditional": [
+        0.7823,
+        0.527151181496443,
+        0.593584700935847,
+        0.6883354278533075,
+        0.7299585062240664,
+        0.7432924056389267,
+        0.7369226063016213
+      ],
+      "marginal": [
+        0.7823,
+        0.4123903692846674,
+        0.2447886140206628,
+        0.16849667536553106,
+        0.12299558145354451,
+        0.09142168162156367,
+        0.06737070389303973
+      ],
+      "emitted_per_cycle": 2.8897636256390093
+    },
+    "3": {
+      "crossover_k": 3,
+      "source_per_position": [
+        "markov",
+        "markov",
+        "eagle",
+        "eagle",
+        "eagle",
+        "eagle",
+        "eagle"
+      ],
+      "conditional": [
+        0.7823,
+        0.7692,
+        0.593584700935847,
+        0.6883354278533075,
+        0.7299585062240664,
+        0.7432924056389267,
+        0.7369226063016213
+      ],
+      "marginal": [
+        0.7823,
+        0.60174516,
+        0.3571867208381934,
+        0.24586427431167776,
+        0.1794707184104164,
+        0.13339922202902482,
+        0.09830490237623762
+      ],
+      "emitted_per_cycle": 3.39827099796555
+    },
+    "4": {
+      "crossover_k": 4,
+      "source_per_position": [
+        "markov",
+        "markov",
+        "markov",
+        "eagle",
+        "eagle",
+        "eagle",
+        "eagle"
+      ],
+      "conditional": [
+        0.7823,
+        0.7692,
+        0.7149,
+        0.6883354278533075,
+        0.7299585062240664,
+        0.7432924056389267,
+        0.7369226063016213
+      ],
+      "marginal": [
+        0.7823,
+        0.60174516,
+        0.430187614884,
+        0.296113375948372,
+        0.21615047758023903,
+        0.16066300846061876,
+        0.11839620293105861
+      ],
+      "emitted_per_cycle": 3.605555839804288
+    },
+    "5": {
+      "crossover_k": 5,
+      "source_per_position": [
+        "markov",
+        "markov",
+        "markov",
+        "markov",
+        "eagle",
+        "eagle",
+        "eagle"
+      ],
+      "conditional": [
+        0.7823,
+        0.7692,
+        0.7149,
+        0.6637,
+        0.7299585062240664,
+        0.7432924056389267,
+        0.7369226063016213
+      ],
+      "marginal": [
+        0.7823,
+        0.60174516,
+        0.430187614884,
+        0.28551551999851077,
+        0.20841448248190048,
+        0.15491290205396377,
+        0.11415881953135476
+      ],
+      "emitted_per_cycle": 3.57723449894973
+    }
+  },
+  "best_k": 4,
+  "best_k_emitted_per_cycle": 3.605555839804288,
+  "gate_emitted_per_cycle": 3.6,
+  "gate_clears": true,
+  "gate_margin": 0.0055558398042880874,
+  "handoff_bit_identical_p1_to_k_minus_1": true,
+  "handoff_eagle_owns_k_to_7": true,
+  "handoff_crossover_k": 4,
+  "markov_head_only_offline_reconstruction": {
+    "note": "isolated DSpark sequential markov head (W1->W2), NO backbone; demonstrates faithful per-cycle reconstruction is blocked",
+    "conditional": [
+      0.06702208682406702,
+      0.03409090909090909,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "cycles": 3939
+  },
+  "method_notes": [
+    "emitted/cycle = 1 + sum_i prod_{j<=i} conditional_j (design SS3).",
+    "EAGLE conditionals measured per-cycle on DEV anchors, teacher-forced on the true (accepted) prefix; equals the committed free-running recursive-rollout protocol for prefix acceptance.",
+    "Markov conditionals taken from the dspark7 diagnostic because the DSpark markov proposal needs the parallel target-feature backbone (layers 40-42) absent from the DEV capture; the isolated markov head yields P1~=6.7% and is not a faithful stand-in.",
+    "Hybrid combines the two DEV populations at the position level (position-independence assumption, same as design SS3)."
+  ]
+}
