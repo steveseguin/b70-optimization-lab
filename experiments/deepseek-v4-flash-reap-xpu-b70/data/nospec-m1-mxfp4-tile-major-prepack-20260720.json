@@ -1,0 +1,86 @@
+{
+  "classification": "deepseek_v4_m1_mxfp4_tile_major_prepack_rejection",
+  "date": "2026-07-20",
+  "verdict": "FAIL",
+  "selector": {
+    "name": "VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK",
+    "default": "0",
+    "candidate": "1"
+  },
+  "layout": {
+    "tile": "K32xN64",
+    "record_bytes": 1088,
+    "weight_bytes_per_record": 1024,
+    "e8m0_sidecar_bytes_per_record": 64,
+    "record_order": "[expert,n_tile,k_group,{weight[n_inner][k_byte],scale[n_inner]}]",
+    "single_allocation_weight_scale_alias": true,
+    "duplicate_persistent_weight_copy": false
+  },
+  "identity": {
+    "model": "0xSero/DeepSeek-V4-Flash-180B",
+    "model_revision": "7c360e1cd4a5168099dbc54d16d929bf6df04990",
+    "quantization": "MXFP4 K160 target unchanged",
+    "vllm_commit": "e4af6e380dc1be771a8695720e688ff12af5169d",
+    "xpu_kernel_commit": "f370fca23f1d43d5b184f21ea90b893fde46517d",
+    "grouped_gemm_library_sha256": "3d0823b5a4b35ad8396f4d80edfb02db6cf79f28208ccbf26c2842f0d07dcb1e",
+    "unchanged_xpu_extension_sha256": "d62ea1cf4728250809052c68fdd74983b4f2c0dcaf924624e7a507c8d4c8392f"
+  },
+  "correctness": {
+    "required_per_card": {
+      "changed_input_eager": 40,
+      "fixed_address_graph": 70,
+      "required_graph_positions": [28, 58]
+    },
+    "cards_1_2_3": {
+      "changed_input_eager": "120/120",
+      "fixed_address_graph": "210/210",
+      "positions_28_58": "pass on every completed card",
+      "bitwise_surfaces": ["gemm1", "clamped_activation", "gemm2", "final_bf16_output"]
+    },
+    "card_0": {
+      "prescreen_changed_input_eager": "3/3",
+      "prescreen_fixed_address_graph": "2/2 in the initial smoke",
+      "full_gate": "failed before completion",
+      "failure": "UR_RESULT_ERROR_DEVICE_LOST at the fourth changed-input schedule; reproduced isolated and with logical EP rank 3",
+      "qualified": false
+    },
+    "four_card_gate_passed": false
+  },
+  "timing": {
+    "method": "40 warmups, nine alternating samples, 200 fixed-address graph replays per sample",
+    "completed_cards": [1, 2, 3],
+    "card_3_candidate_slowest_bandwidth_route": {
+      "route": "2_local",
+      "baseline_gb_s": 369.3793018084726,
+      "candidate_gb_s": 260.7129923929303,
+      "saved_ms_per_token": -1.2973831000000007
+    },
+    "card_3_representative_route": {
+      "route": "3_local",
+      "baseline_gb_s": 414.9172286927842,
+      "candidate_gb_s": 277.0354713978441,
+      "saved_ms_per_token": -2.0687583800000002,
+      "profile_normalized_gb_s_before": 288.7,
+      "profile_normalized_gb_s_after": 192.775
+    },
+    "conservative_worst_valid_route": {
+      "card": 1,
+      "route": "6_local",
+      "baseline_gb_s": 444.8516788845133,
+      "candidate_gb_s": 291.02871399268105,
+      "saved_ms_per_token": -4.09826378
+    },
+    "required_saved_ms_per_token": 0.5,
+    "passed": false
+  },
+  "bab": {
+    "ran": false,
+    "reason": "candidate regressed far below the 0.50 ms/token gate and was unstable on card 0"
+  },
+  "spec_transfer": {
+    "m7_dspark_draft": "no: current draft routed GEMMs are FP8block, not MXFP4",
+    "m8_k160_target_verify": "structurally wired through the generic packed reader at N64 but unqualified; the 80.82 record uses N128 and this rejected selector remains off"
+  },
+  "raw": "/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/m1-mxfp4-tile-prepack-four-card-20260720Tfinal",
+  "localmaxxing_submitted": false
+}

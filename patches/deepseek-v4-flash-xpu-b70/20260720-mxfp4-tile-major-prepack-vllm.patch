@@ -1,0 +1,106 @@
+commit e4af6e380dc1be771a8695720e688ff12af5169d
+Author:     Codex Agent <codex-agent@users.noreply.github.com>
+AuthorDate: Tue Jul 21 00:00:06 2026 -0400
+Commit:     Codex Agent <codex-agent@users.noreply.github.com>
+CommitDate: Tue Jul 21 00:00:06 2026 -0400
+
+    xpu: add load-time MXFP4 tile-major prepack
+
+diff --git a/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py b/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py
+index 55a767f06..70b960257 100644
+--- a/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py
++++ b/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
+ from enum import Enum
+ from typing import TYPE_CHECKING, Literal, Union
+ 
+@@ -46,6 +47,55 @@ if TYPE_CHECKING:
+ 
+ logger = init_logger(__name__)
+ 
++
++_XPU_MXFP4_TILE_MAJOR_PREPACK_ENV = "VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK"
++
++
++def _xpu_mxfp4_tile_major_prepack(
++    weight: torch.Tensor,
++    scales: torch.Tensor,
++) -> tuple[torch.Tensor, torch.Tensor]:
++    """Pack K32xN64 weight tiles with one 64-byte E8M0 sidecar.
++
++    Each immutable 1088-byte record is laid out as 1024 untouched MXFP4
++    bytes followed by the corresponding 64 untouched E8M0 scale bytes.  The
++    two returned tensors alias that one allocation; the enlarged final
++    dimension is an explicit, fail-closed marker for the native reader.
++    """
++    if weight.dtype != torch.float4_e2m1fn_x2:
++        raise ValueError("XPU tile-major prepack requires packed MXFP4 weights")
++    if scales.dtype not in (torch.uint8, torch.float8_e8m0fnu):
++        raise ValueError("XPU tile-major prepack requires raw E8M0 scale bytes")
++    if weight.ndim != 3 or scales.ndim != 3:
++        raise ValueError("XPU tile-major prepack requires 3D weight/scale tensors")
++
++    experts, n, packed_k = weight.shape
++    k = packed_k * 2
++    groups = k // 32
++    if n % 64 != 0 or k % 32 != 0:
++        raise ValueError("XPU tile-major prepack requires N%64==0 and K%32==0")
++    if tuple(scales.shape) != (experts, n, groups):
++        raise ValueError(
++            "XPU tile-major scale shape must be [experts, N, K/32], got "
++            f"{tuple(scales.shape)}"
++        )
++
++    weight_tiles = (
++        weight.view(torch.uint8)
++        .reshape(experts, n // 64, 64, groups, 16)
++        .permute(0, 1, 3, 2, 4)
++        .reshape(experts, n // 64, groups, 1024)
++    )
++    scale_tiles = (
++        scales.view(torch.uint8)
++        .reshape(experts, n // 64, 64, groups)
++        .permute(0, 1, 3, 2)
++        .reshape(experts, n // 64, groups, 64)
++    )
++    records = torch.cat((weight_tiles, scale_tiles), dim=-1).contiguous()
++    combined = records.reshape(experts, n, groups * 17)
++    return combined.view(torch.float4_e2m1fn_x2), combined
++
+ if has_triton_kernels():
+     try:
+         from triton_kernels.matmul_ogs import PrecisionConfig
+@@ -1164,7 +1214,13 @@ def convert_gpt_oss_weight_to_mxfp4_moe_kernel_format(
+             w2_bias,
+         )
+     elif mxfp4_backend == Mxfp4MoeBackend.XPU:
+-        # No additional transformation needed for XPU backend
++        if os.environ.get(_XPU_MXFP4_TILE_MAJOR_PREPACK_ENV, "0") == "1":
++            w13_weight, w13_weight_scale = _xpu_mxfp4_tile_major_prepack(
++                w13_weight, w13_weight_scale
++            )
++            w2_weight, w2_weight_scale = _xpu_mxfp4_tile_major_prepack(
++                w2_weight, w2_weight_scale
++            )
+         return (
+             w13_weight,
+             w2_weight,
+@@ -1546,7 +1602,13 @@ def convert_weight_to_mxfp4_moe_kernel_format(
+             w2_bias,
+         )
+     elif mxfp4_backend == Mxfp4MoeBackend.XPU:
+-        # No additional transformation needed for XPU backend
++        if os.environ.get(_XPU_MXFP4_TILE_MAJOR_PREPACK_ENV, "0") == "1":
++            w13_weight, w13_weight_scale = _xpu_mxfp4_tile_major_prepack(
++                w13_weight, w13_weight_scale
++            )
++            w2_weight, w2_weight_scale = _xpu_mxfp4_tile_major_prepack(
++                w2_weight, w2_weight_scale
++            )
+         return (
+             w13_weight,
+             w2_weight,
+

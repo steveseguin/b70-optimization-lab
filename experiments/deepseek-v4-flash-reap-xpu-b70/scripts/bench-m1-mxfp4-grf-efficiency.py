@@ -23,10 +23,36 @@ GLOBAL_EXPERTS = 160
 TOPK = 6
 MOE_LAYERS = 43
 SELECTOR = "VLLM_XPU_MXFP4_M1_PREFETCH_MODE"
+TILE_SELECTOR = "VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK"
 
 
 def set_candidate(enabled: bool, mode: str) -> None:
-    os.environ[SELECTOR] = mode if enabled else ""
+    os.environ[SELECTOR] = mode if enabled and mode != "tile-major" else ""
+    os.environ[TILE_SELECTOR] = (
+        "1" if enabled and mode == "tile-major" else ""
+    )
+
+
+def tile_major_prepack(
+    weight: torch.Tensor, scales: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    experts, n, packed_k = weight.shape
+    groups = packed_k // 16
+    weight_tiles = (
+        weight.view(torch.uint8)
+        .reshape(experts, n // 64, 64, groups, 16)
+        .permute(0, 1, 3, 2, 4)
+        .reshape(experts, n // 64, groups, 1024)
+    )
+    scale_tiles = (
+        scales.view(torch.uint8)
+        .reshape(experts, n // 64, 64, groups)
+        .permute(0, 1, 3, 2)
+        .reshape(experts, n // 64, groups, 64)
+    )
+    records = torch.cat((weight_tiles, scale_tiles), dim=-1).contiguous()
+    combined = records.reshape(experts, n, groups * 17)
+    return combined.view(torch.float4_e2m1fn_x2), combined
 
 
 def timed_us(call, iterations: int) -> float:
@@ -46,16 +72,23 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--ep-rank", type=int, choices=range(4), required=True)
     parser.add_argument("--epochs", type=int, default=40)
+    parser.add_argument("--eager-epochs", type=int)
+    parser.add_argument("--graph-epochs", type=int)
     parser.add_argument("--warmups", type=int, default=40)
     parser.add_argument("--iterations", type=int, default=200)
     parser.add_argument("--samples", type=int, default=9)
     parser.add_argument("--seed", type=int, default=20260720)
     parser.add_argument(
         "--candidate-mode",
-        choices=("d2", "d3", "d4", "d2-noa", "d3-noa", "d4-noa"),
+        choices=(
+            "d2", "d3", "d4", "d2-noa", "d3-noa", "d4-noa",
+            "tile-major",
+        ),
         required=True,
     )
     args = parser.parse_args()
+    eager_epochs = args.eager_epochs or args.epochs
+    graph_epochs = args.graph_epochs or args.epochs
 
     if os.environ.get("VLLM_XPU_MXFP4_SMALL_M_N", "64") not in ("", "64"):
         raise RuntimeError("this gate qualifies only the incumbent N64 policy")
@@ -104,6 +137,8 @@ def main() -> int:
         dtype=torch.uint8,
         device=device,
     )
+    w13_tile, w13_scales_tile = tile_major_prepack(w13, w13_scales)
+    w2_tile, w2_scales_tile = tile_major_prepack(w2, w2_scales)
 
     def make_buffers() -> tuple[torch.Tensor, ...]:
         return (
@@ -128,12 +163,16 @@ def main() -> int:
     baseline = make_buffers()
     candidate = make_buffers()
 
-    def run(buffers: tuple[torch.Tensor, ...]) -> None:
+    def run(buffers: tuple[torch.Tensor, ...], packed: bool = False) -> None:
         gemm1, act, gemm2, output = buffers
+        w13_arg = w13_tile if packed else w13
+        w13_scales_arg = w13_scales_tile if packed else w13_scales
+        w2_arg = w2_tile if packed else w2
+        w2_scales_arg = w2_scales_tile if packed else w2_scales
         torch.ops._xpu_C.cutlass_grouped_gemm_m1_topk_interface(
             hidden,
-            w13,
-            w13_scales,
+            w13_arg,
+            w13_scales_arg,
             None,
             gemm1,
             topk_ids,
@@ -146,8 +185,8 @@ def main() -> int:
         torch.ops._C.silu_and_mul_clamp(act, gemm1, 10.0)
         torch.ops._xpu_C.cutlass_grouped_gemm_m1_topk_interface(
             act,
-            w2,
-            w2_scales,
+            w2_arg,
+            w2_scales_arg,
             None,
             gemm2,
             topk_ids,
@@ -233,7 +272,8 @@ def main() -> int:
     )
 
     eager_rows = []
-    for epoch in range(args.epochs):
+    tile_candidate = args.candidate_mode == "tile-major"
+    for epoch in range(eager_epochs):
         generator = torch.Generator(device=device).manual_seed(
             args.seed + args.ep_rank * 1009 + epoch * 37
         )
@@ -256,7 +296,7 @@ def main() -> int:
         torch.xpu.synchronize()
         expected = tuple(value.clone() for value in baseline)
         set_candidate(True, args.candidate_mode)
-        run(candidate)
+        run(candidate, tile_candidate)
         torch.xpu.synchronize()
         row = compare(expected, candidate, route)
         set_candidate(False, args.candidate_mode)
@@ -278,13 +318,13 @@ def main() -> int:
     set_candidate(True, args.candidate_mode)
     candidate_graph = torch.xpu.XPUGraph()
     with torch.xpu.graph(candidate_graph):
-        run(candidate)
+        run(candidate, tile_candidate)
 
-    def run_gemm1(buffers: tuple[torch.Tensor, ...]) -> None:
+    def run_gemm1(buffers: tuple[torch.Tensor, ...], packed: bool = False) -> None:
         torch.ops._xpu_C.cutlass_grouped_gemm_m1_topk_interface(
             hidden,
-            w13,
-            w13_scales,
+            w13_tile if packed else w13,
+            w13_scales_tile if packed else w13_scales,
             None,
             buffers[0],
             topk_ids,
@@ -295,11 +335,11 @@ def main() -> int:
             True,
         )
 
-    def run_gemm2(buffers: tuple[torch.Tensor, ...]) -> None:
+    def run_gemm2(buffers: tuple[torch.Tensor, ...], packed: bool = False) -> None:
         torch.ops._xpu_C.cutlass_grouped_gemm_m1_topk_interface(
             buffers[1],
-            w2,
-            w2_scales,
+            w2_tile if packed else w2,
+            w2_scales_tile if packed else w2_scales,
             None,
             buffers[2],
             topk_ids,
@@ -320,10 +360,10 @@ def main() -> int:
     set_candidate(True, args.candidate_mode)
     candidate_gemm1_graph = torch.xpu.XPUGraph()
     with torch.xpu.graph(candidate_gemm1_graph):
-        run_gemm1(candidate)
+        run_gemm1(candidate, tile_candidate)
     candidate_gemm2_graph = torch.xpu.XPUGraph()
     with torch.xpu.graph(candidate_gemm2_graph):
-        run_gemm2(candidate)
+        run_gemm2(candidate, tile_candidate)
 
     def replay_baseline_gemms() -> None:
         baseline_gemm1_graph.replay()
@@ -334,7 +374,7 @@ def main() -> int:
         candidate_gemm2_graph.replay()
 
     graph_rows = []
-    for epoch in range(args.epochs):
+    for epoch in range(graph_epochs):
         generator = torch.Generator(device=device).manual_seed(
             args.seed + 100000 + args.ep_rank * 1009 + epoch * 41
         )
@@ -451,12 +491,23 @@ def main() -> int:
     eager_passed = all(bool(row["exact"]) for row in eager_rows)
     graph_passed = all(bool(row["exact"]) for row in graph_rows)
     typical = timing["3_local"]
+    worst_route_name, worst_route = min(
+        timing.items(),
+        key=lambda item: item[1]["projected_saved_ms_per_token"],
+    )
     result = {
-        "classification": "deepseek_v4_m1_mxfp4_prefetch_efficiency_gate",
+        "classification": (
+            "deepseek_v4_m1_mxfp4_tile_prepack_efficiency_gate"
+            if tile_candidate
+            else "deepseek_v4_m1_mxfp4_prefetch_efficiency_gate"
+        ),
         "device": torch.xpu.get_device_name(),
         "torch": torch.__version__,
         "ep_rank": args.ep_rank,
-        "selector": {SELECTOR: f"unset=distance6+A control, {args.candidate_mode}=candidate"},
+        "selector": {
+            (TILE_SELECTOR if tile_candidate else SELECTOR):
+            f"unset=incumbent layout, {args.candidate_mode}=candidate"
+        },
         "shape": {
             "hidden": HIDDEN,
             "intermediate": INTERMEDIATE,
@@ -478,6 +529,10 @@ def main() -> int:
                 "exact_epochs": sum(bool(row["exact"]) for row in graph_rows),
                 "passed": graph_passed,
                 "rows": graph_rows,
+                "required_positions": {
+                    "28": bool(len(graph_rows) >= 28 and graph_rows[27]["exact"]),
+                    "58": bool(len(graph_rows) >= 58 and graph_rows[57]["exact"]),
+                },
             },
         },
         "timing": {
@@ -487,12 +542,22 @@ def main() -> int:
             "routes": timing,
         },
         "gate": {
-            "basis": "3_local route projected across 43 routed layers",
-            "required_ms_per_token": 0.30,
-            "measured_ms_per_token": typical["projected_saved_ms_per_token"],
+            "basis": (
+                "minimum exact saving across valid 2/3/4/6-local routes, "
+                "projected across 43 routed layers"
+            ),
+            "worst_route": worst_route_name,
+            "required_ms_per_token": 0.50 if tile_candidate else 0.30,
+            "measured_ms_per_token": worst_route[
+                "projected_saved_ms_per_token"
+            ],
+            "representative_3_local_ms_per_token": typical[
+                "projected_saved_ms_per_token"
+            ],
             "passed": eager_passed
             and graph_passed
-            and typical["projected_saved_ms_per_token"] >= 0.30,
+            and worst_route["projected_saved_ms_per_token"]
+            >= (0.50 if tile_candidate else 0.30),
         },
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)

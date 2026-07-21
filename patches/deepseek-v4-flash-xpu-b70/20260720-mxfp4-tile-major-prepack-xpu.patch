@@ -1,0 +1,731 @@
+commit f370fca23f1d43d5b184f21ea90b893fde46517d
+Author:     Codex Agent <codex-agent@users.noreply.github.com>
+AuthorDate: Tue Jul 21 00:00:06 2026 -0400
+Commit:     Codex Agent <codex-agent@users.noreply.github.com>
+CommitDate: Tue Jul 21 00:00:06 2026 -0400
+
+    xpu: prototype exact MXFP4 tile-major prepack reader
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index ac2d7d6..9d532bf 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -238,6 +238,7 @@ template <
+     class GmemTiledCopyB,
+     class GmemTiledCopyC,
+     int GroupSize,
++    bool TileMajor = false,
+     class ATensor,
+     class BTensor,
+     class DTensor,
+@@ -251,7 +252,8 @@ CUTE_DEVICE void xe_gemm_4bits(
+     const ElementBI* Bias,
+     DTensor& C,  // (M,N)
+     Coord<int, int, cute::Underscore, int> blk_coord,
+-    TiledMMA const& mma) {
++    TiledMMA const& mma,
++    const uint8_t* tile_records = nullptr) {
+   using TA = typename ATensor::element_type;
+   using TB = typename BTensor::element_type;
+   static constexpr int group_size = GroupSize;
+@@ -325,6 +327,10 @@ CUTE_DEVICE void xe_gemm_4bits(
+   static constexpr auto tile_n = get<1>(wg_tile);
+   static constexpr auto tile_k = get<2>(wg_tile);
+ 
++  static_assert(
++      !TileMajor || (tile_n == 64 && tile_k == 32 && group_size == 32),
++      "tile-major MXFP4 staging requires an N64/K32/group32 policy");
++
+   static constexpr auto SG_M = tile_m / ATOM_M;  // BLK_M / ATOM_M;
+   static constexpr auto SG_N = tile_n / ATOM_N;  // BLK_N / ATOM_N;
+   static constexpr auto SG_K = tile_k / ATOM_K;  // BLK_K / ATOM_K;
+@@ -352,17 +358,53 @@ CUTE_DEVICE void xe_gemm_4bits(
+   CUTE_UNROLL
+   for (; k_tile_prefetch < prefetch_dist; k_tile_prefetch++) {
+     prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+-    prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++    if constexpr (TileMajor) {
++      constexpr int32_t weight_bytes = 64 * 32 / 2;
++      constexpr int32_t record_bytes = weight_bytes + 64;
++      const uint8_t* record =
++          tile_records + (wg_n * group_num + k_tile_prefetch) * record_bytes;
++      auto packed_B = make_tensor(
++          make_gmem_ptr(reinterpret_cast<float_e2m1_t*>(
++              const_cast<uint8_t*>(record))),
++          make_layout(
++              make_shape(Int<64>{}, Int<32>{}),
++              make_stride(Int<32>{}, Int<1>{})));
++      auto packed_cB = make_identity_tensor(packed_B.shape());
++      auto packed_gB = local_tile(
++          packed_cB,
++          select<1, 2>(wg_tile),
++          make_coord(0, _));
++      auto packed_copy_b =
++          get_block_2d_copy_B<GmemTiledCopyB>(mma, packed_B);
++      auto packed_prefetch_b = make_block_2d_prefetch(packed_copy_b);
++      auto packed_thr_prefetch_b = packed_prefetch_b.get_slice(local_id);
++      auto packed_pBgB = packed_thr_prefetch_b.partition_S(packed_gB);
++      prefetch(packed_prefetch_b, packed_pBgB(_, _, _, 0));
++    } else {
++      prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++    }
+ 
+     if (k_tile_prefetch * group_size < shape<1>(A)) {
++      const ElementS* scale_base;
++      int scale_stride;
++      if constexpr (TileMajor) {
++        constexpr int32_t weight_bytes = 64 * 32 / 2;
++        constexpr int32_t record_bytes = weight_bytes + 64;
++        scale_base = reinterpret_cast<const ElementS*>(
++            tile_records +
++            (wg_n * group_num + k_tile_prefetch) * record_bytes +
++            weight_bytes + n_sg_start);
++        scale_stride = 1;
++      } else {
++        scale_base = Scales +
++            (n_tile_start + n_sg_start) * group_num + k_tile_prefetch;
++        scale_stride = group_num;
++      }
+       auto next_scales_tensor = make_tensor(
+-          make_gmem_ptr(
+-              reinterpret_cast<const ElementS*>(
+-                  Scales + (n_tile_start + n_sg_start) * group_num +
+-                  k_tile_prefetch)),
++          make_gmem_ptr(scale_base),
+           make_layout(
+               make_shape(Int<SG_N>{}, Int<1>{}),
+-              make_stride(group_num, Int<1>{})));
++              make_stride(scale_stride, Int<1>{})));
+       auto prefetch_scales = make_block_2d_prefetch<1>(
+           make_shape(Int<SG_N>{}, Int<1>{}), next_scales_tensor);
+       auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
+@@ -376,7 +418,30 @@ CUTE_DEVICE void xe_gemm_4bits(
+     barrier_arrive(barrier_scope);
+ 
+     copy(copy_a, tAgA(_, _, _, k_tile), tArA);
+-    copy(copy_b, tBgB(_, _, _, k_tile), tBrB);
++    if constexpr (TileMajor) {
++      constexpr int32_t weight_bytes = 64 * 32 / 2;
++      constexpr int32_t record_bytes = weight_bytes + 64;
++      const uint8_t* record =
++          tile_records + (wg_n * group_num + k_tile) * record_bytes;
++      auto packed_B = make_tensor(
++          make_gmem_ptr(reinterpret_cast<float_e2m1_t*>(
++              const_cast<uint8_t*>(record))),
++          make_layout(
++              make_shape(Int<64>{}, Int<32>{}),
++              make_stride(Int<32>{}, Int<1>{})));
++      auto packed_cB = make_identity_tensor(packed_B.shape());
++      auto packed_gB = local_tile(
++          packed_cB,
++          select<1, 2>(wg_tile),
++          make_coord(0, _));
++      auto packed_copy_b =
++          get_block_2d_copy_B<GmemTiledCopyB>(mma, packed_B);
++      auto packed_thr_copy_b = packed_copy_b.get_slice(local_id);
++      auto packed_tBgB = packed_thr_copy_b.partition_S(packed_gB);
++      copy(packed_copy_b, packed_tBgB(_, _, _, 0), tBrB);
++    } else {
++      copy(copy_b, tBgB(_, _, _, k_tile), tBrB);
++    }
+ 
+     if (k_tile * tile_k % group_size == 0) {
+       int group_idx = (k_tile * tile_k) / group_size;
+@@ -393,11 +458,19 @@ CUTE_DEVICE void xe_gemm_4bits(
+                 [(n_tile_start + n_sg_start + sg_local_n) * group_num +
+                  group_idx];
+           } else if constexpr (std::is_same_v<TB, float_e2m1_t>) {
+-            uint32_t scale_u32 =
+-                Scales
+-                    [(n_tile_start + n_sg_start + sg_local_n) * group_num +
+-                     group_idx]
+-                << 23;
++            uint8_t scale_byte;
++            if constexpr (TileMajor) {
++              constexpr int32_t weight_bytes = 64 * 32 / 2;
++              constexpr int32_t record_bytes = weight_bytes + 64;
++              scale_byte = tile_records
++                  [(wg_n * group_num + group_idx) * record_bytes +
++                   weight_bytes + n_sg_start + sg_local_n];
++            } else {
++              scale_byte = Scales
++                  [(n_tile_start + n_sg_start + sg_local_n) * group_num +
++                   group_idx];
++            }
++            uint32_t scale_u32 = scale_byte << 23;
+             scale = static_cast<scaleStoreType>(
+                 reinterpret_cast<float&>(scale_u32));
+           }
+@@ -407,14 +480,27 @@ CUTE_DEVICE void xe_gemm_4bits(
+       }
+ 
+       if ((group_idx + prefetch_dist) * group_size < shape<1>(A)) {
++        const ElementS* scale_base;
++        int scale_stride;
++        if constexpr (TileMajor) {
++          constexpr int32_t weight_bytes = 64 * 32 / 2;
++          constexpr int32_t record_bytes = weight_bytes + 64;
++          scale_base = reinterpret_cast<const ElementS*>(
++              tile_records +
++              (wg_n * group_num + group_idx + prefetch_dist) * record_bytes +
++              weight_bytes + n_sg_start);
++          scale_stride = 1;
++        } else {
++          scale_base = Scales +
++              (n_tile_start + n_sg_start) * group_num + group_idx +
++              prefetch_dist;
++          scale_stride = group_num;
++        }
+         auto next_scales_tensor = make_tensor(
+-            make_gmem_ptr(
+-                reinterpret_cast<const ElementS*>(
+-                    Scales + (n_tile_start + n_sg_start) * group_num +
+-                    group_idx + prefetch_dist)),
++            make_gmem_ptr(scale_base),
+             make_layout(
+                 make_shape(Int<SG_N>{}, Int<1>{}),
+-                make_stride(group_num, Int<1>{})));
++                make_stride(scale_stride, Int<1>{})));
+         auto prefetch_scales = make_block_2d_prefetch<1>(
+             make_shape(Int<SG_N>{}, Int<1>{}), next_scales_tensor);
+         auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
+@@ -426,7 +512,32 @@ CUTE_DEVICE void xe_gemm_4bits(
+ 
+     if (k_tile_prefetch < k_tile_count) {
+       prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+-      prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++      if constexpr (TileMajor) {
++        constexpr int32_t weight_bytes = 64 * 32 / 2;
++        constexpr int32_t record_bytes = weight_bytes + 64;
++        const uint8_t* record =
++            tile_records +
++            (wg_n * group_num + k_tile_prefetch) * record_bytes;
++        auto packed_B = make_tensor(
++            make_gmem_ptr(reinterpret_cast<float_e2m1_t*>(
++                const_cast<uint8_t*>(record))),
++            make_layout(
++                make_shape(Int<64>{}, Int<32>{}),
++                make_stride(Int<32>{}, Int<1>{})));
++        auto packed_cB = make_identity_tensor(packed_B.shape());
++        auto packed_gB = local_tile(
++            packed_cB,
++            select<1, 2>(wg_tile),
++            make_coord(0, _));
++        auto packed_copy_b =
++            get_block_2d_copy_B<GmemTiledCopyB>(mma, packed_B);
++        auto packed_prefetch_b = make_block_2d_prefetch(packed_copy_b);
++        auto packed_thr_prefetch_b = packed_prefetch_b.get_slice(local_id);
++        auto packed_pBgB = packed_thr_prefetch_b.partition_S(packed_gB);
++        prefetch(packed_prefetch_b, packed_pBgB(_, _, _, 0));
++      } else {
++        prefetch(prefetch_b, pBgB(_, _, _, k_tile_prefetch));
++      }
+     }
+ 
+     reorder(tArA, tCrA);
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index fca2b2e..9a28693 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -65,6 +65,7 @@ template <
+     char LayoutKindA,
+     char LayoutKindB,
+     char LayoutKindD,
++    bool TileMajor = false,
+     class TiledMMA,
+     typename ElementA,
+     typename ElementB,
+@@ -138,6 +139,11 @@ CUTE_DEVICE void MoEGEMM(
+     if constexpr (is_B_4bits) {
+       B_offset /= 2;
+     }
++    if constexpr (TileMajor) {
++      static_assert(is_B_mxfp4, "tile-major layout is MXFP4-only");
++      B_offset = static_cast<int64_t>(expert_id) * gemm_n *
++                 (gemm_k / 32) * 17;
++    }
+     ElementA* ptr_A_curr_batch =
+         const_cast<ElementA*>(Activations) + pre_rows * gemm_k;
+     ElementB* ptr_B_curr_batch = const_cast<ElementB*>(Weights) + B_offset;
+@@ -146,6 +152,10 @@ CUTE_DEVICE void MoEGEMM(
+     if constexpr (is_B_4bits) {
+       ptr_Scales_curr_batch =
+           const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
++      if constexpr (TileMajor) {
++        ptr_Scales_curr_batch =
++            const_cast<ElementS*>(Scales) + B_offset;
++      }
+     }
+     ElementBI* ptr_Bias_curr_batch = nullptr;
+     if (Bias != static_cast<ElementBI*>(nullptr)) {
+@@ -175,6 +185,22 @@ CUTE_DEVICE void MoEGEMM(
+       auto tile_coord = make_coord(m_coord, n_coord, _, 0);
+ 
+       if constexpr (is_B_4bits) {
++        if constexpr (TileMajor) {
++          xe_gemm_4bits<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              32,
++              true>(
++              A_tensor,
++              B_tensor,
++              ptr_Scales_curr_batch,
++              ptr_Bias_curr_batch,
++              D_tensor,
++              tile_coord,
++              mma,
++              reinterpret_cast<const uint8_t*>(ptr_B_curr_batch));
++        } else {
+ #define XE_GEMM_4BITS_CALLER(GroupSize)                                     \
+   xe_gemm_4bits<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD, GroupSize>( \
+       A_tensor,                                                             \
+@@ -194,6 +220,7 @@ CUTE_DEVICE void MoEGEMM(
+           XE_GEMM_4BITS_CALLER(256)
+         }
+ #undef XE_GEMM_4BITS_CALLER
++        }
+       } else {
+         xe_gemm<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD>(
+             A_tensor,
+@@ -225,6 +252,7 @@ template <
+     class GmemTiledCopyA,
+     class GmemTiledCopyB,
+     class GmemTiledCopyD,
++    bool TileMajor = false,
+     class TiledMMA,
+     typename TopkId>
+ CUTE_DEVICE void M1TopkGEMM(
+@@ -268,9 +296,12 @@ CUTE_DEVICE void M1TopkGEMM(
+ 
+   constexpr int32_t group_size = 32;
+   const int64_t packed_weight_stride =
+-      static_cast<int64_t>(gemm_n) * gemm_k / 2;
++      TileMajor
++      ? static_cast<int64_t>(gemm_n) * (gemm_k / group_size) * 17
++      : static_cast<int64_t>(gemm_n) * gemm_k / 2;
+   const int64_t scale_stride =
+-      static_cast<int64_t>(gemm_n) * (gemm_k / group_size);
++      TileMajor ? packed_weight_stride
++                : static_cast<int64_t>(gemm_n) * (gemm_k / group_size);
+   const int64_t activation_row = broadcast_a ? 0 : slot;
+ 
+   auto A_tensor = make_moe_tensor<bfloat16_t, 'R'>(
+@@ -293,14 +324,24 @@ CUTE_DEVICE void M1TopkGEMM(
+                       : Bias + static_cast<int64_t>(local_expert) * gemm_n;
+   auto tile_coord = make_coord(0, n_coord, _, 0);
+ 
+-  xe_gemm_4bits<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD, group_size>(
++  xe_gemm_4bits<
++      GmemTiledCopyA,
++      GmemTiledCopyB,
++      GmemTiledCopyD,
++      group_size,
++      TileMajor>(
+       A_tensor,
+       B_tensor,
+       expert_scales,
+       expert_bias,
+       D_tensor,
+       tile_coord,
+-      mma);
++      mma,
++      TileMajor ? reinterpret_cast<const uint8_t*>(
++                      const_cast<uint8_t*>(Weights) +
++                      static_cast<int64_t>(local_expert) *
++                          packed_weight_stride)
++                : nullptr);
+ }
+ 
+ // Fixed-M=2 grouped GEMM scheduler for speculative verification. The generic
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 9793249..d2f3495 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -67,10 +67,10 @@ namespace MoE {
+ using namespace cute;
+ 
+ // type tag to define a unique sycl kernel name
+-template <typename, typename, typename, typename, char, char, class>
++template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteName;
+ 
+-template <typename, class>
++template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+ template <typename, class, int>
+@@ -80,6 +80,7 @@ template <
+     char layoutA,
+     char layoutB,
+     class policy,
++    bool TileMajor = false,
+     typename ElementA,
+     typename ElementB,
+     typename ElementS,
+@@ -142,7 +143,8 @@ void MoEGEMMLauncher(
+         ElementD,
+         layoutA,
+         layoutB,
+-        policy>>(
++        policy,
++        TileMajor>>(
+         sycl::nd_range<3>{global * local, local}, kernel_props, [=](auto) {
+           MoE::MoEGEMM<
+               GmemTiledCopyA,
+@@ -150,7 +152,8 @@ void MoEGEMMLauncher(
+               GmemTiledCopyD,
+               layoutA,
+               layoutB,
+-              'R'>(
++              'R',
++              TileMajor>(
+               activations,
+               weights,
+               scales,
+@@ -168,7 +171,7 @@ void MoEGEMMLauncher(
+   });
+ }
+ 
+-template <class policy, typename TopkId>
++template <class policy, bool TileMajor = false, typename TopkId>
+ void M1TopkGEMMLauncher(
+     sycl::queue& stream,
+     const bfloat16_t* activations,
+@@ -222,9 +225,13 @@ void M1TopkGEMMLauncher(
+   using GmemTiledCopyD = typename policy::GmemTiledCopyD;
+ 
+   stream.submit([&](sycl::handler& cgh) {
+-    cgh.parallel_for<GemmM1TopkCuteName<TopkId, policy>>(
++    cgh.parallel_for<GemmM1TopkCuteName<TopkId, policy, TileMajor>>(
+         sycl::nd_range<3>{group_range * local, local}, kernel_props, [=](auto) {
+-          MoE::M1TopkGEMM<GmemTiledCopyA, GmemTiledCopyB, GmemTiledCopyD>(
++          MoE::M1TopkGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              TileMajor>(
+               activations,
+               weights,
+               scales,
+@@ -359,6 +366,28 @@ void M1TopkGEMMLaunchByN(
+     const int32_t gemm_n,
+     const int32_t gemm_k,
+     const bool broadcast_a) {
++  const char* tile_major_env =
++      std::getenv("VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK");
++  const bool tile_major =
++      tile_major_env != nullptr && std::strcmp(tile_major_env, "1") == 0;
++  if (tile_major) {
++    M1TopkGEMMLauncher<w4a16_policy_m_8, true>(
++        stream,
++        activations,
++        weights,
++        scales,
++        bias,
++        outputs,
++        topk_ids,
++        expert_map,
++        expert_map_size,
++        topk,
++        num_local_experts,
++        gemm_n,
++        gemm_k,
++        broadcast_a);
++    return;
++  }
+   const char* small_m_n = std::getenv("VLLM_XPU_MXFP4_SMALL_M_N");
+   if (small_m_n != nullptr && std::strcmp(small_m_n, "32") == 0) {
+     M1TopkGEMMLauncher<w4a16_policy_m_8_n_32>(
+@@ -430,6 +459,13 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+   bool is_B_int4 = (B_dtype == at::kChar) && ptr_scales.has_value();
+   bool is_B_mxfp4 =
+       (B_dtype == at::kFloat4_e2m1fn_x2) && ptr_scales.has_value();
++  const char* tile_major_env =
++      std::getenv("VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK");
++  const bool tile_major =
++      tile_major_env != nullptr && std::strcmp(tile_major_env, "1") == 0;
++  TORCH_CHECK(
++      !tile_major || is_B_mxfp4,
++      "VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK=1 is valid only for MXFP4 weights");
+ 
+   TORCH_CHECK(N % 8 == 0, "N must be divisible by 8");
+ 
+@@ -453,9 +489,12 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+   int B_E = ptr_B.size(0);
+   int B_K = ptr_B.size(1);
+   int B_N = ptr_B.size(2);
+-  if (is_B_int4 || is_B_mxfp4) {
++  if ((is_B_int4 || is_B_mxfp4) && !tile_major) {
+     B_K = ptr_B.size(2) * 2;
+     B_N = ptr_B.size(1);
++  } else if (tile_major) {
++    B_K = static_cast<int>(K);
++    B_N = ptr_B.size(1);
+   }
+ 
+   int D_total_M = ptr_D.size(0);
+@@ -478,8 +517,8 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+       at::empty({static_cast<long>(1)}, ptr_A.options().dtype(at::kInt));
+ 
+ #define MoEGEMMLauncherCallER(                                                 \
+-    LayoutA, LayoutB, Policy, ElementA, ElementB, ElementS)                    \
+-  MoEGEMMLauncher<LayoutA, LayoutB, Policy>(                                   \
++    LayoutA, LayoutB, Policy, TileMajor, ElementA, ElementB, ElementS)         \
++  MoEGEMMLauncher<LayoutA, LayoutB, Policy, TileMajor>(                        \
+       dpcpp_queue,                                                             \
+       reinterpret_cast<ElementA*>(ptr_A.data_ptr()),                           \
+       reinterpret_cast<ElementB*>(ptr_B.data_ptr()),                           \
+@@ -505,59 +544,79 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+     TORCH_CHECK(
+         ptr_scales->size(0) == num_experts,
+         "ptr_scales.size(0) of int4 must match num_experts");
+-    TORCH_CHECK(
+-        K % ptr_scales->size(2) == 0,
+-        "ptr_scales.size(2) of int4 must be divisible by K");
+-    TORCH_CHECK(
+-        ptr_scales->size(1) == N, "ptr_scales.size(1) of int4 must match N");
+-    int group_num = ptr_scales->size(2);
+-    group_size = K / group_num;
++    if (tile_major) {
++      const int64_t packed_last = (K / 32) * 17;
++      TORCH_CHECK(
++          ptr_B.size(1) == N && ptr_B.size(2) == packed_last,
++          "tile-major ptr_B must have shape [num_experts, N, 17*K/32]");
++      TORCH_CHECK(
++          ptr_scales->sizes() == ptr_B.sizes() &&
++              ptr_scales->data_ptr() == ptr_B.data_ptr(),
++          "tile-major scales must alias combined weight record storage");
++      group_size = 32;
++    } else {
++      TORCH_CHECK(
++          K % ptr_scales->size(2) == 0,
++          "ptr_scales.size(2) of int4 must be divisible by K");
++      TORCH_CHECK(
++          ptr_scales->size(1) == N,
++          "ptr_scales.size(1) of int4 must match N");
++      int group_num = ptr_scales->size(2);
++      group_size = K / group_num;
++    }
+ 
+     TORCH_CHECK(
+         group_size == 32 || group_size == 64 || group_size == 128 ||
+             group_size == 256,
+         "group_size must be 32, 64, 128 or 256");
+ 
+-#define W4A16LauncherCallER(policy)                                         \
++#define W4A16LauncherCallER(policy, TileMajor)                              \
+   if (is_B_int4) {                                                          \
+     if (A_dtype == at::kBFloat16) {                                         \
+       using scalar_t = bfloat16_t;                                          \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, scalar_t); \
++      MoEGEMMLauncherCallER(                                               \
++          'R', 'C', policy, false, scalar_t, uint8_t, scalar_t);           \
+     } else if (A_dtype == at::kHalf) {                                      \
+       using scalar_t = half_t;                                              \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, scalar_t); \
++      MoEGEMMLauncherCallER(                                               \
++          'R', 'C', policy, false, scalar_t, uint8_t, scalar_t);           \
+     }                                                                       \
+   } else if (is_B_mxfp4) {                                                  \
+     if (A_dtype == at::kBFloat16) {                                         \
+       using scalar_t = bfloat16_t;                                          \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, uint8_t);  \
++      MoEGEMMLauncherCallER(                                                \
++          'R', 'C', policy, TileMajor, scalar_t, uint8_t, uint8_t);        \
+     } else if (A_dtype == at::kHalf) {                                      \
+       using scalar_t = half_t;                                              \
+-      MoEGEMMLauncherCallER('R', 'C', policy, scalar_t, uint8_t, uint8_t);  \
++      MoEGEMMLauncherCallER(                                                \
++          'R', 'C', policy, TileMajor, scalar_t, uint8_t, uint8_t);        \
+     }                                                                       \
+   }
+ 
+-    if (A_avg_M <= 4) {
++    if (tile_major) {
++      using policy = w4a16_policy_m_8;
++      W4A16LauncherCallER(policy, true);
++    } else if (A_avg_M <= 4) {
+       const char* small_m_n = std::getenv("VLLM_XPU_MXFP4_SMALL_M_N");
+       if (small_m_n != nullptr && std::strcmp(small_m_n, "32") == 0) {
+         using policy = w4a16_policy_m_8_n_32;
+-        W4A16LauncherCallER(policy);
++        W4A16LauncherCallER(policy, false);
+       } else if (small_m_n != nullptr && std::strcmp(small_m_n, "128") == 0) {
+         using policy = w4a16_policy_m_8_n_128;
+-        W4A16LauncherCallER(policy);
++        W4A16LauncherCallER(policy, false);
+       } else {
+         using policy = w4a16_policy_m_8;
+-        W4A16LauncherCallER(policy);
++        W4A16LauncherCallER(policy, false);
+       }
+     } else if (A_avg_M <= 8) {
+       using policy = w4a16_policy_m_16;
+-      W4A16LauncherCallER(policy);
++      W4A16LauncherCallER(policy, false);
+     } else if (A_avg_M <= 128) {
+       using policy = w4a16_policy_m_32;
+-      W4A16LauncherCallER(policy);
++      W4A16LauncherCallER(policy, false);
+     } else {
+       using policy = w4a16_policy;
+-      W4A16LauncherCallER(policy);
++      W4A16LauncherCallER(policy, false);
+     }
+ #undef W4A16LauncherCallER
+   } else if (is_weight_fp8) {
+@@ -573,16 +632,20 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+ #define W8A16LauncherCallER(policy)                                         \
+   if (B_dtype == at::kFloat8_e4m3fn && A_dtype == at::kHalf) {              \
+     using scalar_t = half_t;                                                \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e4m3_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, false, scalar_t, float_e4m3_t, float);           \
+   } else if (B_dtype == at::kFloat8_e5m2 && A_dtype == at::kHalf) {         \
+     using scalar_t = half_t;                                                \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e5m2_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, false, scalar_t, float_e5m2_t, float);           \
+   } else if (B_dtype == at::kFloat8_e4m3fn && A_dtype == at::kBFloat16) {   \
+     using scalar_t = bfloat16_t;                                            \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e4m3_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, false, scalar_t, float_e4m3_t, float);           \
+   } else if (B_dtype == at::kFloat8_e5m2 && A_dtype == at::kBFloat16) {     \
+     using scalar_t = bfloat16_t;                                            \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, float_e5m2_t, float); \
++    MoEGEMMLauncherCallER(                                                  \
++        'R', 'R', policy, false, scalar_t, float_e5m2_t, float);           \
+   }
+ 
+     if (A_avg_M <= 8) {
+@@ -603,10 +666,12 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+ #define W16A16LauncherCallER(policy)                                       \
+   if (A_dtype == at::kBFloat16) {                                          \
+     using scalar_t = bfloat16_t;                                           \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, scalar_t, scalar_t); \
++    MoEGEMMLauncherCallER(                                                 \
++        'R', 'R', policy, false, scalar_t, scalar_t, scalar_t);           \
+   } else if (A_dtype == at::kHalf) {                                       \
+     using scalar_t = half_t;                                               \
+-    MoEGEMMLauncherCallER('R', 'R', policy, scalar_t, scalar_t, scalar_t); \
++    MoEGEMMLauncherCallER(                                                 \
++        'R', 'R', policy, false, scalar_t, scalar_t, scalar_t);           \
+   }
+ 
+     if (A_avg_M <= 8) {
+@@ -645,6 +710,10 @@ at::Tensor cutlass_grouped_gemm_m1_topk_xe2_impl(
+     int64_t K,
+     int64_t num_local_experts,
+     bool broadcast_a) {
++  const char* tile_major_env =
++      std::getenv("VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK");
++  const bool tile_major =
++      tile_major_env != nullptr && std::strcmp(tile_major_env, "1") == 0;
+   TORCH_CHECK(ptr_A.is_xpu(), "ptr_A must be an XPU tensor");
+   TORCH_CHECK(ptr_B.is_xpu(), "ptr_B must be an XPU tensor");
+   TORCH_CHECK(ptr_scales.is_xpu(), "ptr_scales must be an XPU tensor");
+@@ -710,14 +779,26 @@ at::Tensor cutlass_grouped_gemm_m1_topk_xe2_impl(
+   TORCH_CHECK(
+       ptr_A.size(0) == (broadcast_a ? 1 : topk),
+       "ptr_A rows must be 1 when broadcast_a is true, otherwise topk");
+-  TORCH_CHECK(
+-      ptr_B.size(0) == num_local_experts && ptr_B.size(1) == N &&
+-          ptr_B.size(2) * 2 == K,
+-      "ptr_B must have shape [num_local_experts, N, K/2]");
+-  TORCH_CHECK(
+-      ptr_scales.size(0) == num_local_experts && ptr_scales.size(1) == N &&
+-          ptr_scales.size(2) == K / 32,
+-      "ptr_scales must have shape [num_local_experts, N, K/32]");
++  if (tile_major) {
++    const int64_t packed_last = (K / 32) * 17;
++    TORCH_CHECK(
++        ptr_B.size(0) == num_local_experts && ptr_B.size(1) == N &&
++            ptr_B.size(2) == packed_last,
++        "tile-major ptr_B must have shape [num_local_experts, N, 17*K/32]");
++    TORCH_CHECK(
++        ptr_scales.sizes() == ptr_B.sizes() &&
++            ptr_scales.data_ptr() == ptr_B.data_ptr(),
++        "tile-major ptr_scales must alias the combined ptr_B record storage");
++  } else {
++    TORCH_CHECK(
++        ptr_B.size(0) == num_local_experts && ptr_B.size(1) == N &&
++            ptr_B.size(2) * 2 == K,
++        "ptr_B must have shape [num_local_experts, N, K/2]");
++    TORCH_CHECK(
++        ptr_scales.size(0) == num_local_experts && ptr_scales.size(1) == N &&
++            ptr_scales.size(2) == K / 32,
++        "ptr_scales must have shape [num_local_experts, N, K/32]");
++  }
+   TORCH_CHECK(
+       ptr_D.size(0) == topk && ptr_D.size(1) == N,
+       "ptr_D must have shape [topk, N]");
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 666b633..a1c0a76 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -18,6 +18,7 @@ from .moe_utils import quant_act_xpu, ref_fused_moe
+ REF_FUSED_MOE_ENV = "VLLM_XPU_FUSED_MOE_USE_REF"
+ USE_MXFP4_FP8_ENV = "VLLM_XPU_FUSED_MOE_USE_MXFP4_FP8"
+ M1_DIRECT_ROUTED_MOE_ENV = "VLLM_XPU_V4_M1_DIRECT_ROUTED_MOE"
++MXFP4_TILE_MAJOR_PREPACK_ENV = "VLLM_XPU_MXFP4_TILE_MAJOR_PREPACK"
+ M2_ROUTE_DIRECT_COMPACT_ENV = "VLLM_XPU_V4_M2_ROUTE_DIRECT_COMPACT"
+ M2_ROUTED_CLAMP_SILU_ENV = "VLLM_XPU_V4_M2_ROUTED_CLAMP_SILU"
+ DRAFT_M7_ROUTED_CLAMP_SILU_ENV = (
+@@ -244,6 +245,8 @@ class XpuFusedMoe:
+         self._use_ref = _should_use_ref_fused_moe(is_mxfp8, is_block_fp8)
+         self._m1_direct_routed_moe = _is_env_enabled(
+             M1_DIRECT_ROUTED_MOE_ENV)
++        self._mxfp4_tile_major_prepack = _is_env_enabled(
++            MXFP4_TILE_MAJOR_PREPACK_ENV)
+         self._m2_route_direct_compact = _is_env_enabled(
+             M2_ROUTE_DIRECT_COMPACT_ENV)
+         self._m2_routed_clamp_silu = _is_env_enabled(
+@@ -409,11 +412,23 @@ class XpuFusedMoe:
+                 f"{env_name}=1 contract mismatch: "
+                 + ", ".join(mismatches))
+ 
++        w13_last = 2176 if self._mxfp4_tile_major_prepack else 2048
++        w2_last = 1088 if self._mxfp4_tile_major_prepack else 1024
++        w13_scale_shape = (
++            (40, 4096, 2176)
++            if self._mxfp4_tile_major_prepack
++            else (40, 4096, 128)
++        )
++        w2_scale_shape = (
++            (40, 4096, 1088)
++            if self._mxfp4_tile_major_prepack
++            else (40, 4096, 64)
++        )
+         tensor_contracts = (
+-            ("w13", self.w13, (40, 4096, 2048), torch.float4_e2m1fn_x2),
+-            ("w13_scales", self.gemm1_wei_scales, (40, 4096, 128), None),
+-            ("w2", self.w2, (40, 4096, 1024), torch.float4_e2m1fn_x2),
+-            ("w2_scales", self.gemm2_wei_scales, (40, 4096, 64), None),
++            ("w13", self.w13, (40, 4096, w13_last), torch.float4_e2m1fn_x2),
++            ("w13_scales", self.gemm1_wei_scales, w13_scale_shape, None),
++            ("w2", self.w2, (40, 4096, w2_last), torch.float4_e2m1fn_x2),
++            ("w2_scales", self.gemm2_wei_scales, w2_scale_shape, None),
+             ("expert_map", self.expert_map, (160,), torch.int32),
+         )
+         for name, tensor, shape, dtype in tensor_contracts:
+@@ -440,6 +455,16 @@ class XpuFusedMoe:
+                 raise RuntimeError(
+                     f"{env_name}=1 requires raw E8M0 "
+                     f"{name}, got {scales.dtype}")
++        if self._mxfp4_tile_major_prepack:
++            for name, weight, scales in (
++                ("w13", self.w13, self.gemm1_wei_scales),
++                ("w2", self.w2, self.gemm2_wei_scales),
++            ):
++                if weight.data_ptr() != scales.data_ptr():
++                    raise RuntimeError(
++                        f"{MXFP4_TILE_MAJOR_PREPACK_ENV}=1 requires {name} "
++                        "weight/scales to alias one combined record allocation"
++                    )
+         for name, bias, width in (
+             ("w13_bias", self.w13_bias, 4096),
+             ("w2_bias", self.w2_bias, 4096),
+
