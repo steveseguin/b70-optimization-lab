@@ -1,0 +1,33 @@
+diff --git a/csrc/xpu/onednn/fp8_gemm_w8a8.h b/csrc/xpu/onednn/fp8_gemm_w8a8.h
+index ce196d9..8f810ba 100644
+--- a/csrc/xpu/onednn/fp8_gemm_w8a8.h
++++ b/csrc/xpu/onednn/fp8_gemm_w8a8.h
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <cstdlib>
+ #include <c10/xpu/XPUStream.h>
+ #include <dnnl.hpp>
+ #include <torch/torch.h>
+@@ -147,6 +148,21 @@ static inline void dnnl_matmul_w8a8_fp8(
+   if (m1_sc.scalar_type() == at::ScalarType::Float8_e8m0fnu) {
+     sc_group_size |= (1 << 30);
+   }
++  // Keep the fixed-shape occupancy experiment in a distinct primitive-cache
++  // entry. This lets component gates capture incumbent and candidate graphs
++  // from one binary while the normal, unset path remains byte-for-byte
++  // unchanged. The matching oneDNN JIT guard is restricted to M<=8,
++  // N=4096, K=512 and native FP8 inputs/weights.
++  if (const char* split_n =
++          std::getenv("VLLM_XPU_V4_SHARED_DOWN_FP8_SPLIT_N")) {
++    const int split_n_value = std::atoi(split_n);
++    TORCH_CHECK(
++        split_n_value == 1 || split_n_value == 2 || split_n_value == 4,
++        "VLLM_XPU_V4_SHARED_DOWN_FP8_SPLIT_N must be 1, 2, or 4");
++    if (m >= 1 && m <= 8 && n == 4096 && k == 512) {
++      sc_group_size |= (split_n_value << 26);
++    }
++  }
+   auto& matmul_ext = matmul_primitive_create_and_cache(
+       jd, tt, b_type, m, n, k, lda, ldb, ldc, dev_id, f_attr, sc_group_size);
+ 

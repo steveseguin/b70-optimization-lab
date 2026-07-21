@@ -1,0 +1,35 @@
+diff --git a/src/gpu/intel/gemm/jit/gen_kernel.cpp b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+index 12a536e949..78fc904039 100644
+--- a/src/gpu/intel/gemm/jit/gen_kernel.cpp
++++ b/src/gpu/intel/gemm/jit/gen_kernel.cpp
+@@ -16,6 +16,8 @@
+ 
+ #include "gpu/intel/gemm/jit/gen_kernel.hpp"
+ 
++#include <cstdlib>
++
+ #include "common/c_types_map.hpp"
+ #include "common/impl_registration.hpp"
+ #include "common/type_helpers.hpp"
+@@ -192,6 +194,21 @@ status_t gen_desc_t::finalize(const char *tags) {
+ #ifdef DNNL_DEV_MODE
+     }
+ #endif
++    // DeepSeek V4 fixed-shape shared-down occupancy experiment. Preserve the
++    // selected subgroup micro-tile, FP8 arithmetic, K traversal, layouts and
++    // stores; only replace the oversized MxN workgroup with more independent
++    // N workgroups. Unset is the incumbent catalog strategy.
++    const char *split_n_value
++            = std::getenv("VLLM_XPU_V4_SHARED_DOWN_FP8_SPLIT_N");
++    // The generator uses column-major GEMM naming here: external output N is
++    // m_, while the external token width M is n_.
++    if (m_ == 4096 && n_ >= 1 && n_ <= 8 && k_ == 512) {
++        int split_n = split_n_value ? std::atoi(split_n_value) : 0;
++        if (split_n == 1 || split_n == 2 || split_n == 4) {
++            strategy_.wg[LoopM] = split_n;
++            strategy_.wg[LoopN] = 1;
++        }
++    }
+     strategy_.panelCheck
+             |= (isPacked(problem_.A.layout) || isPacked(problem_.B.layout));
+ 
