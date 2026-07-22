@@ -463,3 +463,5 @@ Current packet:
 - 2026-07-22: `cmrw7cn1k006jnz01gq2z981v` APPROVED — DFlash batched-exact, **33.086 tok/s** (median_tok_s_1_100_after_ttft, full-512 contract), 13/13 exact vs deterministic q=1 teacher on 2 fresh starts, cached_tokens=0, TP4+EP4 INT4 W4A16, one active generation. Payload: data/localmaxxing-laguna-s-2.1-int4-b70-dflash-bulletproof-33.086tok-20260722.queue.json
 
 - 2026-07-22: `cmrwlyxez00f4nz01zefturuv` APPROVED — Laguna S 2.1 INT4 (4x B70), **33.268 tok/s** (fused W1+SiLU + route-parallel W2), lower of 2 fresh starts (33.303/33.268, spread 0.108%), +0.55% over prior record cmrw7cn1k. 13/13 exact vs q1 teacher x2 starts, cross-req+rollover exact, cached_tokens=0. Payload: data/localmaxxing-laguna-s-2.1-int4-b70-dflash-fused-w1-route-w2-33.268tok-20260722.queue.json
+
+- 2026-07-22: `cmrwot89400gqnz014oodtlbp` APPROVED — Laguna S 2.1 INT4 (4x B70), **33.439 tok/s** (M8 route-interleave expert GEMM occupancy: W1 EU 43.8->47.7%, W2 46.5->49.1%), lower of 2 starts (33.439/33.546), +0.51% over cmrwlyxez. 13/13 exact x2, rollover exact, cached_tokens=0.
