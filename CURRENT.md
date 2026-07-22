@@ -125,17 +125,23 @@ request boundary while retaining batched q=8 verification. Two independent
 fresh DFlash starts now match the canonical q=1 teacher **13/13 + 13/13** and
 each other **13/13**, with all 26 requests cache-zero; long-then-next is 2/2
 on both starts and the 863-token rollover prompt is 1/1 on both. Exact medians
-are 33.103677 and **33.085825 tok/s**; the lower second-start value is staged.
+are 33.103677 and **33.085825 tok/s**; the lower second-start value was
+submitted and approved.
 Acceptance is 4,642/12,040 = 38.5548%. This is a valid first Laguna record
-candidate under the max-512 contract, but it has not been submitted.
+under the max-512 contract and is APPROVED as LocalMaxxing
+`cmrw7cn1k006jnz01gq2z981v`.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-bulletproof-full512-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-bulletproof-full512-record.md).
-The next lever is the remaining 47 layer-level deterministic EP all-gather +
-rank-sum pairs, followed by a persistent/fused direct M8 MoE transaction.
-Preserve the Laguna vLLM branch at `cb616c670`,
-the kernel branch at `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`, the
-DeepSeek option-4 branch, and all `preserve/*` tags. All Laguna model, cache,
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-remote-zero-and-deterministic-graph.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-remote-zero-and-deterministic-graph.md).
+Remote-route zeroing remained exact and removed 95 fill launches/cycle, but
+regressed to 32.590900 tok/s. The fixed-rank graph attempt matched only 1/13
+teacher outputs and was reverted. The next lever is a persistent/fused direct
+M8 remap/gather/W1/activation/W2/reduce transaction; do not revisit route
+buffer fills. Preserve the exact base at vLLM `cb616c670` plus kernels
+`6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current default-safe experiment
+heads are vLLM `3b13cebbe` and kernels
+`1b2bbcb0fd4c86baa9d27b58814c920122a6ac6c`. Also preserve the DeepSeek
+option-4 branch and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
 them to `/mnt/fast-ai`. Postflight on 2026-07-22 left no Laguna endpoint or
 worker running; all four B70s are free.

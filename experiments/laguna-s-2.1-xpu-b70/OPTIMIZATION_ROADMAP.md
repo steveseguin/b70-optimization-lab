@@ -31,23 +31,28 @@ Also serve it as the working coding model.
 | 2026-07-22 | DFlash m7 (matched INT4 draft) | 48.98 | **NO** | 48.8% accept; INEXACT (M=8 GEMM/chunk-prefill/nondeterministic-reduce vs q=1) — diagnostic only |
 | 2026-07-22 | exact target-only q=1 (deterministic) | 12.56 | YES | valid exact nonspec baseline |
 | 2026-07-22 | exact DFlash (serialized M=1 verify) | 7.45 | YES | 7/7 token-match; serialization slow |
-| 2026-07-22 | **exact batched DFlash — RECORD cmrw7cn1k** | **33.09** | YES | full-512, 13/13 x2 fresh starts, cross-req+rollover exact; async-sched race fixed |
-| 2026-07-22 | batched-exact DFlash | **37.59** | **YES** | 7/7 cold token-match incl rollover; 30.981% acceptance; 3.1566 emitted/cycle; 98 collectives/cycle; candidate record, not submitted |
+| 2026-07-22 | **exact batched DFlash — RECORD cmrw7cn1k** | **33.09** | YES | approved; full-512, 13/13 x2 fresh starts, cross-req+rollover exact; async-sched race fixed |
+| 2026-07-22 | batched-exact DFlash partial gate | 37.59 | partial only | obsolete 7-prompt/128-era diagnostic; not valid under the full-512 contract |
+| 2026-07-22 | direct-M8 remote-route zeroing | 32.59 | YES | 13/13 full-512; 95 fill launches/cycle removed, but 1.496% slower |
+| 2026-07-22 | deterministic PIECEWISE graph | 17.52 | **NO** | 1/13 vs teacher; AOT cache selected non-fixed artifact on restart; reverted |
 
 ## Lever ladder (grind order; each exact + quality-gated)
 1. **[DONE] DFlash verifier exactness and batching** — q=8 verifier == q=1
    target greedy, with one paged-decode pass, batched M=1 numerical lanes,
    fixed-rank sums, and deterministic direct MoE.
-2. **[CANDIDATE; CLAUDE GATE] First verified record** — identity and realistic
-   cold suite captured at 37.586 tok/s; do not submit without Claude review.
-3. **[READY] MoE/EP overhead** — remove the remaining 47 layer-level EP
-   all-gather + rank-sum pairs and persist/fuse the direct M8 expert sequence.
-   The exact direct-route contract is now component- and model-gated.
+2. **[DONE; APPROVED] First verified record** — full-512 exact DFlash at
+   33.085825 tok/s, LocalMaxxing `cmrw7cn1k006jnz01gq2z981v`.
+3. **[ACTIVE] MoE/EP overhead** — remote-route zeroing removed 95 fill launches
+   per cycle but did not improve speed. Persist/fuse the direct M8
+   remap/gather/W1/activation/W2/reduce sequence next. The remaining 47
+   layer-level EP transactions are causally separated by layer dependencies.
 4. **Attention** — BF16 Q/K/V/O bandwidth; sliding-window(512) decode efficiency;
    full-attn layers.
 5. **INT4 expert GEMM efficiency / occupancy** — DFlash M=7/8 batches work (helps
    the M=1 occupancy starvation we hit on DeepSeek); tune the group-32 W4A16 GEMMs.
-6. **Graph coverage** — widen PIECEWISE/full graph capture; cut host/launch overhead.
+6. **Graph coverage** — first fix AOT cache identity/artifact selection and
+   locate the first eager-vs-compiled tensor divergence. Fixed-rank reductions
+   alone produced only 1/13 teacher matches and were reverted.
 7. **Deeper/better speculation** — DFlash depth tuning, acceptance improvement,
    tree/multi-branch drafting (exact-verified).
 8. **FP8 KV for long context** — capacity (2x tokens/card) for real coding sessions;
