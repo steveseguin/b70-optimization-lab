@@ -1,0 +1,30 @@
+{
+  "suite_id": "laguna-s-2.1-realistic-cold-v1",
+  "version": 1,
+  "prompts": [
+    {
+      "id": "python-lru-cache",
+      "prompt": "Implement a production-quality Python LRUCache class with get and put in O(1), capacity validation, type hints, and a short unittest example. Explain the invariants briefly."
+    },
+    {
+      "id": "python-debug-window",
+      "prompt": "Debug this function so it returns the maximum sum of exactly k consecutive values and handles invalid k cleanly:\n\ndef max_window(xs, k):\n    best = 0\n    for i in range(len(xs) - k):\n        best = max(best, sum(xs[i:i+k]))\n    return best\n\nProvide corrected Python, tests for negative values and boundary cases, and a concise explanation."
+    },
+    {
+      "id": "sql-sessionization",
+      "prompt": "Given PostgreSQL table events(user_id bigint, occurred_at timestamptz, event_type text), write a query that assigns sessions separated by more than 30 minutes and returns one row per session with start, end, and event count. Explain the window functions and tie handling."
+    },
+    {
+      "id": "concurrency-review",
+      "prompt": "Review a service design where multiple workers read a job row, call an external API, then mark the row complete. Describe a concrete PostgreSQL transaction pattern that prevents duplicate work, how retries and idempotency keys interact, and what failures still need monitoring."
+    },
+    {
+      "id": "arithmetic-reasoning",
+      "prompt": "A warehouse has 137 cartons with 29 components each. It ships 845 components, then divides the remainder equally among 23 repair teams. Calculate the original total, the remainder, the quotient and any leftover, showing each check clearly."
+    },
+    {
+      "id": "factual-protocol",
+      "prompt": "Explain why DNS generally uses UDP for ordinary queries but can use TCP, including truncation, EDNS, zone transfers, and modern encrypted transports. Distinguish protocol facts from operational recommendations and give a compact troubleshooting checklist."
+    }
+  ]
+}
