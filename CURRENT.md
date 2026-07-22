@@ -88,6 +88,25 @@ virtual environment first.
 The unauthenticated LAN front door is intentional for this private network. Do
 not silently add authentication or change its exposure policy.
 
+## Laguna S 2.1 Bring-Up
+
+The active bring-up lane is Poolside Laguna S 2.1 INT4 on four B70s. The first
+TP4+EP4 eager target load reached the ready HTTP state on 2026-07-21 with 64
+experts/rank and the intended XPU compressed-tensors WNA16 MoE backend, but the
+first generation failed before returning a token because `_vllm_fa2_C` lacks
+paged-decode configuration `16,128,64,false,true,false`. The reference fallback
+also creates its mask on CPU and fails against XPU attention tensors. No
+correctness or speed baseline exists yet, and DFlash was not attempted. The
+service is stopped and all four cards are free.
+
+Resume from
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-21-first-int4-load-blocked-paged-decode.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-21-first-int4-load-blocked-paged-decode.md).
+Preserve the Laguna vLLM branch at `024672b34237cfd0f3f5566bb59871b20fa989b6`,
+the unchanged kernel branch at `70ab033bfb794244f751387ecc71f657d21ca556`,
+the DeepSeek option-4 branch and all `preserve/*` tags. All Laguna model,
+cache, temp, log, and run artifacts remain on the external Corsair drive; do
+not write them to `/mnt/fast-ai`.
+
 ## Optimization Transition
 
 The Qwen3.6 27B Q4_0/DFlash optimization lane was closed on 2026-07-13. Its
