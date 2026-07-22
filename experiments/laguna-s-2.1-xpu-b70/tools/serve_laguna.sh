@@ -62,6 +62,10 @@ common_args=(
   --kv-cache-dtype "$kv_cache_dtype"
   --gpu-memory-utilization 0.90
   --no-enable-prefix-caching
+  # Async scheduling races the completed DFlash request with the following
+  # target prefill on XPU. Exact Laguna service mode therefore serializes
+  # scheduler/model-runner handoff between requests.
+  --no-async-scheduling
   --generation-config vllm
   --enable-prompt-tokens-details
 )
