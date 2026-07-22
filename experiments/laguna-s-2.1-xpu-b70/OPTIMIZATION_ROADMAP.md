@@ -30,7 +30,8 @@ Also serve it as the working coding model.
 | 2026-07-22 | target-only PIECEWISE | 19.4 | yes | +41% graph |
 | 2026-07-22 | DFlash m7 (matched INT4 draft) | 48.98 | **NO** | 48.8% accept; INEXACT (M=8 GEMM/chunk-prefill/nondeterministic-reduce vs q=1) — diagnostic only |
 | 2026-07-22 | exact target-only q=1 (deterministic) | 12.56 | YES | valid exact nonspec baseline |
-| 2026-07-22 | exact DFlash (serialized M=1 verify) | 7.45 | YES | 7/7 token-match incl rollover; but serialization kills speed (host 50%+collectives 35%) |
+| 2026-07-22 | exact DFlash (serialized M=1 verify) | 7.45 | YES | 7/7 token-match; serialization slow |
+| 2026-07-22 | **exact batched DFlash — RECORD cmrw7cn1k** | **33.09** | YES | full-512, 13/13 x2 fresh starts, cross-req+rollover exact; async-sched race fixed |
 | 2026-07-22 | batched-exact DFlash | **37.59** | **YES** | 7/7 cold token-match incl rollover; 30.981% acceptance; 3.1566 emitted/cycle; 98 collectives/cycle; candidate record, not submitted |
 
 ## Lever ladder (grind order; each exact + quality-gated)

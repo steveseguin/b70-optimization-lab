@@ -458,3 +458,6 @@ current record to 95.385 tok/s. The route is short-context-only pending
 graph-safe paged decode.
 Current packet:
 `results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json`.
+
+## Laguna S 2.1 INT4 (4x B70) — first record
+- 2026-07-22: `cmrw7cn1k006jnz01gq2z981v` APPROVED — DFlash batched-exact, **33.086 tok/s** (median_tok_s_1_100_after_ttft, full-512 contract), 13/13 exact vs deterministic q=1 teacher on 2 fresh starts, cached_tokens=0, TP4+EP4 INT4 W4A16, one active generation. Payload: data/localmaxxing-laguna-s-2.1-int4-b70-dflash-bulletproof-33.086tok-20260722.queue.json
