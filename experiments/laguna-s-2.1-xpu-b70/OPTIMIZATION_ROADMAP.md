@@ -31,13 +31,17 @@ Also serve it as the working coding model.
 | 2026-07-22 | DFlash m7 (matched INT4 draft) | 48.98 | **NO** | 48.8% accept; INEXACT (M=8 GEMM/chunk-prefill/nondeterministic-reduce vs q=1) — diagnostic only |
 | 2026-07-22 | exact target-only q=1 (deterministic) | 12.56 | YES | valid exact nonspec baseline |
 | 2026-07-22 | exact DFlash (serialized M=1 verify) | 7.45 | YES | 7/7 token-match incl rollover; but serialization kills speed (host 50%+collectives 35%) |
+| 2026-07-22 | batched-exact DFlash | **37.59** | **YES** | 7/7 cold token-match incl rollover; 30.981% acceptance; 3.1566 emitted/cycle; 98 collectives/cycle; candidate record, not submitted |
 
 ## Lever ladder (grind order; each exact + quality-gated)
-1. **[DONE — exact, but slow] DFlash verifier exactness** — fix q=8 batched verify == q=1
-   target greedy (SWA-512 metadata / full-attn override). Prereq for ANY record.
-2. **First verified record** — identity capture + realistic cold suite → localmaxxing.
-3. **MoE/EP overhead** — 256-expert/top-10/EP4 routing, gather/scatter, all2all
-   collectives, launch overhead. The flagged biggest lever at ~10% of roofline.
+1. **[DONE] DFlash verifier exactness and batching** — q=8 verifier == q=1
+   target greedy, with one paged-decode pass, batched M=1 numerical lanes,
+   fixed-rank sums, and deterministic direct MoE.
+2. **[CANDIDATE; CLAUDE GATE] First verified record** — identity and realistic
+   cold suite captured at 37.586 tok/s; do not submit without Claude review.
+3. **[READY] MoE/EP overhead** — remove the remaining 47 layer-level EP
+   all-gather + rank-sum pairs and persist/fuse the direct M8 expert sequence.
+   The exact direct-route contract is now component- and model-gated.
 4. **Attention** — BF16 Q/K/V/O bandwidth; sliding-window(512) decode efficiency;
    full-attn layers.
 5. **INT4 expert GEMM efficiency / occupancy** — DFlash M=7/8 batches work (helps

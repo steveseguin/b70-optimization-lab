@@ -102,10 +102,11 @@ writes were repaired at vLLM commit
 
 The earlier target-only TP4+EP4 path was not bitwise repeatable: identical cold
 q=1 requests could change token 0 because M-dependent INT4 projections, atomic
-MoE remap, and XCCL reduction order moved BF16 values by one ULP. The exact
-target path at vLLM commit `d26fe57b3` uses M=1 target rows, paged-decode
-attention, and rank-ordered TP/EP sums. Its fixed cache-zero q=1 suite measured
-**12.560153 tok/s eager** and is the current deterministic teacher.
+MoE remap, and XCCL reduction order moved BF16 values by one ULP. The first
+exact repair at vLLM `d26fe57b3` serialized target work as M=1 rows. The current
+batched-exact path at vLLM `4a25d9afb` plus XPU kernels `6fc06b08c` retains M=1
+numerical lanes inside batched BF16 projections, uses one paged-decode verifier
+pass, fixed-rank fused sums, and deterministic direct M8 MoE.
 
 DFlash now works with the quantization-matched
 `poolside/Laguna-S-2.1-DFlash-INT4` draft. The originally supplied plain BF16
@@ -116,21 +117,23 @@ accepted draft length 3.4158, and per-position survival
 `[83.871,67.025,50.896,43.369,37.276,30.824,28.315]%`.
 
 The prior strict six-prompt BF16-KV DFlash run reached **48.980858 tok/s** but
-remains diagnostic and inexact. Exact q=8 target verification now passes:
-**7/7 prompts matched token-for-token**, including all six 128-token cold suite
-rows and a 511-token rollover prompt across the 512-token SWA boundary. The
-conservative exact DFlash path measured **7.448972 tok/s** median and accepted
-`542/1,736` proposals (31.221%). Its approximately 426 ms cycle contains 777
-collectives: about 151 ms in collective API spans and 215 ms in host/launch
-residual, versus only 60 ms of noncollective XPU kernels. The next action is a
-batched deterministic q=8 target path with fused rank-order collectives, then a
-fixed-M8/top-10/EP4 direct MoE kernel. The service is stopped and all four cards
-are free.
+remains diagnostic and inexact. Batched-exact q=8 verification now passes
+**7/7 cold prompts token-for-token**, including six 128-token realistic rows
+and the 511-token rollover, all `cached_tokens=0`. The valid median is
+**37.586366 tok/s** for tokens 1–100 after TTFT, with 540/1,743 = 30.981%
+acceptance and 3.1566 emitted/cycle. This is 5.046x the serialized-exact
+7.448972 tok/s path. Its approximately 83.98 ms cycle has 98 collectives, down
+from 777; collective API time is 13.65 ms, noncollective XPU work 16.50 ms,
+and host/launch residual 53.83 ms. Host residual fell 75% in absolute terms,
+although its share rose to 64.1% because other stages fell faster. This is a
+candidate first Laguna LocalMaxxing record; it has not been submitted.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-target-verification-exactness.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-target-verification-exactness.md).
-Preserve the Laguna vLLM branch at `d26fe57b3`,
-the kernel branch at `c615c38fb79d4035118c05675565dbf7e2443a90`, the
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-batched-exact-verification.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-batched-exact-verification.md).
+The next lever is the remaining 47 layer-level deterministic EP all-gather +
+rank-sum pairs, followed by a persistent/fused direct M8 MoE transaction.
+Preserve the Laguna vLLM branch at `4a25d9afb`,
+the kernel branch at `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`, the
 DeepSeek option-4 branch, and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
 them to `/mnt/fast-ai`.
