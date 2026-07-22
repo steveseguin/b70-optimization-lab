@@ -141,13 +141,20 @@ RMSNorm, gate softplus, local attention output BMM, and fused residual-add +
 post-attention RMSNorm; rank 2 also retains a one-ULP qkv INT4 GEMM difference.
 The correct full contract passed only 0/13 at 30.992062 tok/s, so no second
 start, DFlash measurement, payload, or submission was allowed. The graph path
-remains experimental and unpromoted. The next lever is the persistent/fused
-direct M8 remap/gather/W1/activation/W2/local-reduce transaction; do not revisit
+remains experimental and unpromoted. The guarded persistent/fused direct-M8
+expert transaction at vLLM `9164595cd` plus kernels `d0b5b1539` is bitwise
+exact across its four-card component gate and both full fresh-start suites, but
+it is also unpromoted: fresh-start medians were 33.008027 and 33.908219 tok/s,
+so the lower reproducible result did not beat 33.085825. Its 282 -> 94 routed
+launch reduction serialized W2 expert slots and raised routed-MoE device time
+9.077583 -> 10.388394 ms/cycle. Preserve it default-off. The next bounded
+lever is exact M=8 INT4 expert-GEMM occupancy/tiling, especially route-parallel
+W2, followed by attention QK/LSE/PV or deeper DFlash acceptance; do not revisit
 route buffer fills or progressively serialize the whole model into opaque graph
 islands. Preserve the exact base at vLLM `cb616c670` plus kernels
 `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current diagnostic experiment
-heads are vLLM `6a5bcba27` and kernels
-`1b2bbcb0fd4c86baa9d27b58814c920122a6ac6c`. Also preserve the DeepSeek
+heads are vLLM `9164595cd` and kernels
+`d0b5b1539dacc4a1c1edf3b0f4ee1578e34d9d16`. Also preserve the DeepSeek
 option-4 branch and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
 them to `/mnt/fast-ai`. Postflight on 2026-07-22 left no Laguna endpoint or
