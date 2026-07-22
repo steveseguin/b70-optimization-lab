@@ -38,6 +38,7 @@ Also serve it as the working coding model.
 | 2026-07-22 | deterministic exact graph (root-caused) | 30.99 | (chain incomplete) | **RULED OUT** -6.33% vs record. Inductor reassociates a CHAIN of BF16 boundaries (QKnorm/softplus/o_proj/post-attn-rms); each pin fragments graph. Kept: qkv shape-guard fix + AOT cache-identity hardening (laguna-exact-aot-v2 refuses stale artifacts). Eager stays record path. |
 
 | 2026-07-22 | fused M8 expert transaction (W1+SiLU+W2) | 33.01 | YES (13/13 x2) | exact but NOT a record: lower start 33.008 < 33.086, 2.7% start variance. W2 expert-slot serialization lost route-parallel occupancy despite 6→2 launches. Default-off. Next: route-parallel W2 + occupancy. |
+| 2026-07-22 | **fused W1+SiLU + route-parallel W2 — RECORD cmrwlyxez** | **33.27** | YES (13/13 x2) | +0.55% over prior; lower start 33.268 > 33.086; spread 0.108%; route-parallel W2 restored occupancy the full-fusion lost. APPROVED. |
 | 2026-07-22 | **fused W1+SiLU + route-parallel W2** | **33.267564** | **YES (13/13 x2)** | lower of 33.303424/33.267564; cache-zero, cross-request, rollover, and cross-start exact. 6→4 launches/layer and 10x W2 work availability vs serialized fusion. Payload staged, not submitted. |
 
 ## Lever ladder (grind order; each exact + quality-gated)
