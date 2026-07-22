@@ -132,14 +132,21 @@ under the max-512 contract and is APPROVED as LocalMaxxing
 `cmrw7cn1k006jnz01gq2z981v`.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-remote-zero-and-deterministic-graph.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-remote-zero-and-deterministic-graph.md).
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-deterministic-exact-graph-parity.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-deterministic-exact-graph-parity.md).
 Remote-route zeroing remained exact and removed 95 fill launches/cycle, but
-regressed to 32.590900 tok/s. The fixed-rank graph attempt matched only 1/13
-teacher outputs and was reverted. The next lever is a persistent/fused direct
-M8 remap/gather/W1/activation/W2/reduce transaction; do not revisit route
-buffer fills. Preserve the exact base at vLLM `cb616c670` plus kernels
-`6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current default-safe experiment
-heads are vLLM `3b13cebbe` and kernels
+regressed to 32.590900 tok/s. The deterministic graph pass fixed the M=8 qkv
+shape guard and added an exactness-complete AOT cache identity. A default-off
+per-layer probe then localized successive compiled/eager differences in Q/K
+RMSNorm, gate softplus, local attention output BMM, and fused residual-add +
+post-attention RMSNorm; rank 2 also retains a one-ULP qkv INT4 GEMM difference.
+The correct full contract passed only 0/13 at 30.992062 tok/s, so no second
+start, DFlash measurement, payload, or submission was allowed. The graph path
+remains experimental and unpromoted. The next lever is the persistent/fused
+direct M8 remap/gather/W1/activation/W2/local-reduce transaction; do not revisit
+route buffer fills or progressively serialize the whole model into opaque graph
+islands. Preserve the exact base at vLLM `cb616c670` plus kernels
+`6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current diagnostic experiment
+heads are vLLM `6a5bcba27` and kernels
 `1b2bbcb0fd4c86baa9d27b58814c920122a6ac6c`. Also preserve the DeepSeek
 option-4 branch and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
