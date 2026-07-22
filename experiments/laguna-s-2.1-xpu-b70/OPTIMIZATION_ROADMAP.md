@@ -28,10 +28,12 @@ Also serve it as the working coding model.
 | 2026-07-21 | first TP4+EP4 INT4 load | — | — | loads, fits ~27.5 GiB/card |
 | 2026-07-22 | target-only eager | 13.8 | yes | |
 | 2026-07-22 | target-only PIECEWISE | 19.4 | yes | +41% graph |
-| 2026-07-22 | DFlash m7 (matched INT4 draft) | 48.98 | **NO** | 48.8% accept, 4.42/cycle; q=8 verifier diverges from q=1 greedy — DIAGNOSTIC ONLY |
+| 2026-07-22 | DFlash m7 (matched INT4 draft) | 48.98 | **NO** | 48.8% accept; INEXACT (M=8 GEMM/chunk-prefill/nondeterministic-reduce vs q=1) — diagnostic only |
+| 2026-07-22 | exact target-only q=1 (deterministic) | 12.56 | YES | valid exact nonspec baseline |
+| 2026-07-22 | exact DFlash (serialized M=1 verify) | 7.45 | YES | 7/7 token-match incl rollover; but serialization kills speed (host 50%+collectives 35%) |
 
 ## Lever ladder (grind order; each exact + quality-gated)
-1. **[IN PROGRESS] DFlash verifier exactness** — fix q=8 batched verify == q=1
+1. **[DONE — exact, but slow] DFlash verifier exactness** — fix q=8 batched verify == q=1
    target greedy (SWA-512 metadata / full-attn override). Prereq for ANY record.
 2. **First verified record** — identity capture + realistic cold suite → localmaxxing.
 3. **MoE/EP overhead** — 256-expert/top-10/EP4 routing, gather/scatter, all2all
