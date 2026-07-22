@@ -35,6 +35,7 @@ Also serve it as the working coding model.
 | 2026-07-22 | batched-exact DFlash partial gate | 37.59 | partial only | obsolete 7-prompt/128-era diagnostic; not valid under the full-512 contract |
 | 2026-07-22 | direct-M8 remote-route zeroing | 32.59 | YES | 13/13 full-512; 95 fill launches/cycle removed, but 1.496% slower |
 | 2026-07-22 | deterministic PIECEWISE graph | 17.52 | **NO** | 1/13 vs teacher; AOT cache selected non-fixed artifact on restart; reverted |
+| 2026-07-22 | deterministic exact graph (root-caused) | 30.99 | (chain incomplete) | **RULED OUT** -6.33% vs record. Inductor reassociates a CHAIN of BF16 boundaries (QKnorm/softplus/o_proj/post-attn-rms); each pin fragments graph. Kept: qkv shape-guard fix + AOT cache-identity hardening (laguna-exact-aot-v2 refuses stale artifacts). Eager stays record path. |
 
 ## Lever ladder (grind order; each exact + quality-gated)
 1. **[DONE] DFlash verifier exactness and batching** — q=8 verifier == q=1
