@@ -21,15 +21,16 @@ class Case:
     query_len: int
     kv_len: int
     seed_offset: int
+    dflash: bool = False
 
     @property
     def query_heads(self) -> int:
-        return 18 if self.sliding else 12
+        return 18 if self.sliding or self.dflash else 12
 
     @property
     def tuple_string(self) -> str:
         if self.phase == "decode":
-            qgroup = 16 if self.sliding else 8
+            qgroup = 16 if self.sliding or self.dflash else 8
             return (
                 f"{qgroup},128,64,false,"
                 f"{'true' if self.sliding else 'false'},false"
@@ -47,6 +48,7 @@ CASES = (
     Case("chunk_prefill", True, 13, 577, 3),
     Case("decode", False, 1, 129, 4),
     Case("decode", True, 1, 577, 5),
+    Case("decode", False, 1, 321, 6, dflash=True),
 )
 
 
@@ -132,7 +134,11 @@ def run_case(case: Case, seed: int) -> tuple[torch.Tensor, dict[str, object]]:
     digest = hashlib.sha256(actual_cpu.view(torch.uint8).numpy().tobytes()).hexdigest()
     return actual_cpu, {
         "phase": case.phase,
-        "attention": "sliding" if case.sliding else "full",
+        "attention": (
+            "dflash_full_decode"
+            if case.dflash
+            else "sliding" if case.sliding else "full"
+        ),
         "tuple": case.tuple_string,
         "seed": seed,
         "query_len": case.query_len,

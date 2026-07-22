@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-mode="${1:?usage: serve_laguna.sh MODE RUN_DIR (MODE: eager, piecewise, dflash)}"
-run_dir="${2:?usage: serve_laguna.sh MODE RUN_DIR}"
+mode="${1:?usage: serve_laguna.sh MODE RUN_DIR [KV_CACHE_DTYPE]}"
+run_dir="${2:?usage: serve_laguna.sh MODE RUN_DIR [KV_CACHE_DTYPE]}"
+kv_cache_dtype="${3:-auto}"
 
 case "$mode" in
-  eager|piecewise|dflash) ;;
+  eager|piecewise|dflash|dflash-piecewise) ;;
   *) echo "unsupported mode: $mode" >&2; exit 2 ;;
+esac
+
+case "$kv_cache_dtype" in
+  auto|bfloat16|fp8) ;;
+  *) echo "unsupported KV cache dtype: $kv_cache_dtype" >&2; exit 2 ;;
 esac
 
 artifact_root=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1
 cache_root="$artifact_root/cache"
 model_root="$artifact_root/int4"
-draft_root="$artifact_root/dflash"
+draft_root="${LAGUNA_DFLASH_ROOT:-$artifact_root/dflash}"
 venv_root=/home/steve/.venvs/deepseek-v4-xpu
 vllm_root=/home/steve/src/deepseek-v4-vllm-xpu-dspark
 kernel_root=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
@@ -53,13 +59,14 @@ common_args=(
   --max-num-batched-tokens 8192
   --max-num-seqs 1
   --block-size 64
+  --kv-cache-dtype "$kv_cache_dtype"
   --gpu-memory-utilization 0.90
   --no-enable-prefix-caching
   --generation-config vllm
   --enable-prompt-tokens-details
 )
 
-if [[ "$mode" != piecewise ]]; then
+if [[ "$mode" != piecewise && "$mode" != dflash-piecewise ]]; then
   export XPU_GRAPH=0
   export VLLM_XPU_ENABLE_XPU_GRAPH=0
   common_args+=(--enforce-eager)
@@ -70,8 +77,8 @@ else
   common_args+=(--compilation-config '{"custom_ops":["all"],"use_inductor_graph_partition":true,"compile_sizes":[1],"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":1}')
 fi
 
-if [[ "$mode" == dflash ]]; then
-  common_args+=(--speculative-config "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"num_speculative_tokens\":7,\"draft_sample_method\":\"greedy\"}")
+if [[ "$mode" == dflash || "$mode" == dflash-piecewise ]]; then
+  common_args+=(--speculative-config "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"num_speculative_tokens\":7,\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\"}")
 fi
 
 exec vllm serve "${common_args[@]}"

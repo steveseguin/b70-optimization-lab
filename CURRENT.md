@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-21**
+Last reviewed: **2026-07-22**
 
 ## Authority And Update Rule
 
@@ -91,13 +91,14 @@ not silently add authentication or change its exposure policy.
 ## Laguna S 2.1 Bring-Up
 
 The active bring-up lane is Poolside Laguna S 2.1 INT4 on four B70s. The
-target-only attention set is now enumerated and the missing sliding-prefill
-tuple `128,true,false,true,false,false` was rebuilt at kernel commit
-`bcfde2d06362d7ca64d56fc89415f0acbacf9035` with oneAPI 2025.3. Its six-case
+target and DFlash attention set is now enumerated. The DFlash paged-decode
+tuple `16,128,64,false,false,false` was rebuilt with oneAPI 2025.3 at kernel
+commit `c615c38fb79d4035118c05675565dbf7e2443a90`; the expanded seven-case
 changed-input oracle passed independently on all four B70s. The tokenizer's
-secondary processor probe was repaired at vLLM commit
-`e0e56c7e81780ae413c5e22549dcb208d65440aa`; independent, live, and chat
-token-ID checks agree.
+secondary processor probe remains repaired at vLLM commit
+`e0e56c7e81780ae413c5e22549dcb208d65440aa`. Explicit native BF16 KV cache
+writes were repaired at vLLM commit
+`6bf7d6b83cb20c335b5e9a8ffda95d646338bbf5`.
 
 Target-only TP4+EP4 is coherent and deterministic within mode. The fixed
 cache-zero suite measured **13.802098 tok/s eager** and
@@ -105,17 +106,29 @@ cache-zero suite measured **13.802098 tok/s eager** and
 PIECEWISE is 41.004% faster, but remains below 5% of the 420-515 tok/s
 roofline and diverges from eager at output token 29 on the exact canary.
 
-DFlash loaded its six layers and taps, but exposed an unenumerated missing
-decode tuple `16,128,64,false,false,false`. The fallback diagnostic measured
-11.414684 tok/s and accepted `0/5,334` draft tokens; it is not a usable spec
-baseline. The immediate next actions are to compile/gate that exact tuple,
-diagnose zero acceptance, and then attack sparse-MoE/EP launch and collective
-overhead. The service is stopped and all four cards are free.
+DFlash now works with the quantization-matched
+`poolside/Laguna-S-2.1-DFlash-INT4` draft. The originally supplied plain BF16
+draft remains incompatible with the INT4 target's Hadamard-rotated auxiliary
+states and accepted zero tokens even after the kernel fix. With the matched
+draft, the cold BF16-KV gate accepted `953/1,953` proposals (48.797%), mean
+accepted draft length 3.4158, and per-position survival
+`[83.871,67.025,50.896,43.369,37.276,30.824,28.315]%`.
+
+The strict six-prompt BF16-KV DFlash run reached **48.980858 tok/s** median
+generated tokens 1-100 after TTFT, 151.68% above the same-window
+19.401885 target-only graph control. It is diagnostic, not promotion-safe:
+batched q=8 target verification diverges from target-only q=1 greedy at output
+index 1 (395 versus 604). Explicit FP8 KV reached **46.956936 tok/s**, 4.132%
+slower than BF16 KV. It doubled cache capacity from 110,995 to 221,990 tokens
+under the same memory budget but was not exact-token-safe. The next actions are
+q=8/q=1 target exactness, then DFlash SWA metadata repair plus sparse-MoE/EP
+launch and collective reduction. The service is stopped and all four cards are
+free.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-attention-enumerated-baselines-dflash-blocked.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-attention-enumerated-baselines-dflash-blocked.md).
-Preserve the Laguna vLLM branch at `e0e56c7e81780ae413c5e22549dcb208d65440aa`,
-the kernel branch at `bcfde2d06362d7ca64d56fc89415f0acbacf9035`, the
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-accepting-fp8-kv-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-accepting-fp8-kv-result.md).
+Preserve the Laguna vLLM branch at `6bf7d6b83cb20c335b5e9a8ffda95d646338bbf5`,
+the kernel branch at `c615c38fb79d4035118c05675565dbf7e2443a90`, the
 DeepSeek option-4 branch, and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
 them to `/mnt/fast-ai`.
