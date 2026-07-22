@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "classification": "exact_two_fresh_start_record_candidate_staged_not_submitted",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "candidate": "fused W1+BF16 SiLU; zero-filled route-parallel W2; fixed-order gather",
+  "flag": "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1",
+  "source": {
+    "vllm_branch": "experiment/laguna-s-2.1-xpu-bringup-20260721",
+    "vllm_commit": "6a570e70b2c1ccce3a42f3396e1bd22b0a4a8191",
+    "xpu_kernel_branch": "experiment/laguna-s-2.1-fwht-20260721",
+    "xpu_kernel_commit": "20cfa3aef35d1daa2c57f3dccaf7ce7d552f6751",
+    "libgrouped_gemm_xe_2_sha256": "445e2fd26b94b9d6192551239f65e4a54074ee7ae329ee6067b60ebee6232a3d",
+    "xpu_extension_sha256": "f776587b0e2ea9f5b1f12f85d441c6373d1e29e9d23fdd979fa3a060291f63c1"
+  },
+  "component_gate": {
+    "exact_outputs": "64/64",
+    "local_w1_equal": true,
+    "local_activation_equal": true,
+    "local_w2_equal": true,
+    "baseline_m8_ms_per_layer_mean": 0.5453523001051508,
+    "candidate_m8_ms_per_layer_mean": 0.5510632647201419,
+    "baseline_projected_47_layer_ms_per_cycle": 25.631558104942087,
+    "candidate_projected_47_layer_ms_per_cycle": 25.89997344184667,
+    "projected_delta_ms_per_cycle": 0.26841533690458164,
+    "baseline_launches_per_layer": 6,
+    "candidate_launches_per_layer": 4,
+    "baseline_launches_per_47_layer_cycle": 282,
+    "candidate_launches_per_47_layer_cycle": 188,
+    "serialized_predecessor_w2_workgroups_per_card_m8": 384,
+    "candidate_w2_workgroups_per_card_m8": 3840
+  },
+  "cycle_profile": {
+    "retained_q8_contexts_per_rank": 9,
+    "whole_noncollective_xpu_ms_per_cycle": 18.232228861111075,
+    "fused_w1_silu_ms_per_cycle": 6.584560944444446,
+    "route_parallel_w2_ms_per_cycle": 3.358475583333333,
+    "fixed_order_gather_ms_per_cycle": 0.4432236944444445,
+    "named_routed_moe_ms_per_cycle_excluding_zero_fill": 10.386260222222223,
+    "incumbent_routed_moe_ms_per_cycle_including_fills": 9.077583,
+    "note": "Candidate named routed-MoE value excludes the generic BF16 zero-fill kernel, which could not be isolated from other same-name copy kernels; it is therefore a lower bound. oneCCL device timestamps are excluded."
+  },
+  "quality_gate": {
+    "suite_id": "laguna-s-2.1-realistic-cold-v1",
+    "suite_sha256": "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638",
+    "max_tokens": 512,
+    "teacher_exact_counts": ["13/13", "13/13"],
+    "cached_zero_counts": ["13/13", "13/13"],
+    "long_then_next_counts": ["2/2", "2/2"],
+    "rollover_863_counts": ["1/1", "1/1"],
+    "cross_start_exact": "13/13",
+    "single_active_generation": true,
+    "held_out_deepseek_packs_used": false
+  },
+  "fresh_starts": [
+    {
+      "label": "A",
+      "median_tok_s_1_100_after_ttft": 33.30342426046781,
+      "p10_tok_s": 26.508394633800382,
+      "mean_tok_s": 38.64405652894009,
+      "median_ttft_ms": 5451.56534598209,
+      "median_full_after_ttft_tok_s": 42.59971092244555,
+      "median_wall_full_tok_s": 27.75730072519982,
+      "accepted_draft_tokens": 4644,
+      "draft_tokens": 12026,
+      "acceptance_percent": 38.61633128222186,
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/fused-w1-route-w2-dflash-A-6a570e70b-20cfa3a-20260722T205343Z"
+    },
+    {
+      "label": "B",
+      "median_tok_s_1_100_after_ttft": 33.26756407958298,
+      "p10_tok_s": 26.433748700843555,
+      "mean_tok_s": 38.778972376063805,
+      "median_ttft_ms": 5522.226970992051,
+      "median_full_after_ttft_tok_s": 43.70475351788351,
+      "median_wall_full_tok_s": 27.6577539655563,
+      "accepted_draft_tokens": 4640,
+      "draft_tokens": 12054,
+      "acceptance_percent": 38.493446158951386,
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/fused-w1-route-w2-dflash-B-6a570e70b-20cfa3a-20260722T210400Z"
+    }
+  ],
+  "record_test": {
+    "approved_record_tok_s": 33.08582521189141,
+    "lower_fresh_start_tok_s": 33.26756407958298,
+    "absolute_delta_tok_s": 0.18173886769157122,
+    "relative_delta_percent": 0.5492952541690022,
+    "passed": true
+  },
+  "evidence": {
+    "teacher": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/bulletproof-q1-canonical-cb616c6-6fc06b0-20260722T142908Z/bench.json",
+    "two_start_exactness": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/fused-w1-route-w2-two-start-exactness-6a570e70b-20cfa3a-20260722.json",
+    "cross_start_repro": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/fused-w1-route-w2-cross-start-repro-6a570e70b-20cfa3a-20260722.json",
+    "profile": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/fused-w1-route-w2-dflash-cycle-profile-6a570e70b-20cfa3a-20260722/summary.json",
+    "identity": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/fused-w1-route-w2-dflash-A-6a570e70b-20cfa3a-20260722T205343Z/identity.txt"
+  }
+}

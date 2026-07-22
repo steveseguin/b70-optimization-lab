@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bitwise/timing gate for Laguna's guarded fused direct-M<=8 expert path."""
+"""Bitwise/timing gate for Laguna fused-W1 + route-parallel-W2 path."""
 
 from __future__ import annotations
 
@@ -127,6 +127,28 @@ def candidate(
         topk_ids,
         expert_map,
         LOCAL_EXPERTS,
+        True,
+    )
+    gemm2.zero_()
+    torch.ops._xpu_C.cutlass_grouped_gemm_m8_topk_int4_interface(
+        act,
+        w2,
+        s2,
+        None,
+        gemm2,
+        topk_ids,
+        expert_map,
+        HIDDEN,
+        INTERMEDIATE,
+        LOCAL_EXPERTS,
+        False,
+        False,
+    )
+    route_map = torch.arange(
+        routes, dtype=torch.int32, device="xpu"
+    ).view(rows, TOPK)
+    torch.ops._moe_C.moe_gather(
+        output, gemm2, topk_weights, route_map, LOCAL_EXPERTS
     )
     return output
 
@@ -279,7 +301,7 @@ def main() -> None:
         "candidate_m8_ms_per_layer": candidate_ms,
         "delta_m8_ms_per_layer": candidate_ms - baseline_ms,
         "baseline_routed_device_ops_per_layer": 6,
-        "candidate_routed_device_ops_per_layer": 2,
+        "candidate_routed_device_ops_per_layer": 4,
         "cases": cases,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
