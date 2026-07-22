@@ -15,6 +15,13 @@ case "$kv_cache_dtype" in
   *) echo "unsupported KV cache dtype: $kv_cache_dtype" >&2; exit 2 ;;
 esac
 
+dflash_num_speculative_tokens="${LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS:-7}"
+if [[ ! "$dflash_num_speculative_tokens" =~ ^[0-9]+$ ]] \
+  || (( dflash_num_speculative_tokens < 1 || dflash_num_speculative_tokens > 15 )); then
+  echo "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS must be an integer from 1 to 15" >&2
+  exit 2
+fi
+
 artifact_root=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1
 cache_root="$artifact_root/cache"
 model_root="$artifact_root/int4"
@@ -99,7 +106,7 @@ if [[ "$mode" == dflash || "$mode" == dflash-piecewise ]]; then
   # Keep the q=1 teacher's original scheduling contract: its target arithmetic
   # changes when async scheduling is disabled even without speculation.
   common_args+=(--no-async-scheduling)
-  common_args+=(--speculative-config "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"num_speculative_tokens\":7,\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\"}")
+  common_args+=(--speculative-config "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"num_speculative_tokens\":$dflash_num_speculative_tokens,\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\"}")
 fi
 
 if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
