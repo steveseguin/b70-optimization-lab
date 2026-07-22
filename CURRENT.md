@@ -104,7 +104,7 @@ The earlier target-only TP4+EP4 path was not bitwise repeatable: identical cold
 q=1 requests could change token 0 because M-dependent INT4 projections, atomic
 MoE remap, and XCCL reduction order moved BF16 values by one ULP. The first
 exact repair at vLLM `d26fe57b3` serialized target work as M=1 rows. The current
-batched-exact path at vLLM `4a25d9afb` plus XPU kernels `6fc06b08c` retains M=1
+batched-exact path at vLLM `cb616c670` plus XPU kernels `6fc06b08c` retains M=1
 numerical lanes inside batched BF16 projections, uses one paged-decode verifier
 pass, fixed-rank fused sums, and deterministic direct M8 MoE.
 
@@ -116,27 +116,29 @@ draft, the cold BF16-KV gate accepted `953/1,953` proposals (48.797%), mean
 accepted draft length 3.4158, and per-position survival
 `[83.871,67.025,50.896,43.369,37.276,30.824,28.315]%`.
 
-The prior strict six-prompt BF16-KV DFlash run reached **48.980858 tok/s** but
-remains diagnostic and inexact. Batched-exact q=8 verification now passes
-**7/7 cold prompts token-for-token**, including six 128-token realistic rows
-and the 511-token rollover, all `cached_tokens=0`. The valid median is
-**37.586366 tok/s** for tokens 1–100 after TTFT, with 540/1,743 = 30.981%
-acceptance and 3.1566 emitted/cycle. This is 5.046x the serialized-exact
-7.448972 tok/s path. Its approximately 83.98 ms cycle has 98 collectives, down
-from 777; collective API time is 13.65 ms, noncollective XPU work 16.50 ms,
-and host/launch residual 53.83 ms. Host residual fell 75% in absolute terms,
-although its share rose to 64.1% because other stages fell faster. This is a
-candidate first Laguna LocalMaxxing record; it has not been submitted.
+The prior 31.774278 tok/s 128-token staged row was blocked after its full-512
+extension passed only 12/13: a 512-token response contaminated the following
+request at output token 0. Input tracing located the first bad tensor at the
+next request's layer-0 embedding/residual boundary, before KV, attention, MoE,
+or decoder reductions. DFlash-only `--no-async-scheduling` serializes that
+request boundary while retaining batched q=8 verification. Two independent
+fresh DFlash starts now match the canonical q=1 teacher **13/13 + 13/13** and
+each other **13/13**, with all 26 requests cache-zero; long-then-next is 2/2
+on both starts and the 863-token rollover prompt is 1/1 on both. Exact medians
+are 33.103677 and **33.085825 tok/s**; the lower second-start value is staged.
+Acceptance is 4,642/12,040 = 38.5548%. This is a valid first Laguna record
+candidate under the max-512 contract, but it has not been submitted.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-batched-exact-verification.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-batched-exact-verification.md).
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-bulletproof-full512-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-bulletproof-full512-record.md).
 The next lever is the remaining 47 layer-level deterministic EP all-gather +
 rank-sum pairs, followed by a persistent/fused direct M8 MoE transaction.
-Preserve the Laguna vLLM branch at `4a25d9afb`,
+Preserve the Laguna vLLM branch at `cb616c670`,
 the kernel branch at `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`, the
 DeepSeek option-4 branch, and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
-them to `/mnt/fast-ai`.
+them to `/mnt/fast-ai`. Postflight on 2026-07-22 left no Laguna endpoint or
+worker running; all four B70s are free.
 
 ## Optimization Transition
 
