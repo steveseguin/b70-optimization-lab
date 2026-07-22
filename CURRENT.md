@@ -90,22 +90,29 @@ not silently add authentication or change its exposure policy.
 
 ## Laguna S 2.1 Bring-Up
 
-The active bring-up lane is Poolside Laguna S 2.1 INT4 on four B70s. The first
-TP4+EP4 eager target load reached the ready HTTP state on 2026-07-21 with 64
-experts/rank and the intended XPU compressed-tensors WNA16 MoE backend, but the
-first generation failed before returning a token because `_vllm_fa2_C` lacks
-paged-decode configuration `16,128,64,false,true,false`. The reference fallback
-also creates its mask on CPU and fails against XPU attention tensors. No
-correctness or speed baseline exists yet, and DFlash was not attempted. The
-service is stopped and all four cards are free.
+The active bring-up lane is Poolside Laguna S 2.1 INT4 on four B70s. The exact
+paged-decode specialization `16,128,64,false,true,false` was added and rebuilt
+with oneAPI 2025.3, and its changed-input oracle passed independently on all
+four B70s. The reference fallback's mask now follows the XPU attention device
+and its CPU-default/XPU-tensor regression passes. The eager TP4+EP4 target then
+reloaded to HTTP ready at 16.92 GiB weights and 8.35-8.37 GiB KV per card, and
+the old paged-decode crash is cleared.
+
+The first fresh greedy coding response nevertheless failed coherence with
+token-like garbage. Every rank also reported the next exact missing
+chunk-prefill tuple `128,true,false,true,false,false` and used the repaired
+reference fallback. Per the hard stop rule, no remaining correctness suite,
+nonspec eager/PIECEWISE baseline, or DFlash run was attempted. The service is
+stopped and all four cards are free.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-21-first-int4-load-blocked-paged-decode.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-21-first-int4-load-blocked-paged-decode.md).
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-21-paged-decode-fixed-correctness-blocked.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-21-paged-decode-fixed-correctness-blocked.md).
 Preserve the Laguna vLLM branch at `024672b34237cfd0f3f5566bb59871b20fa989b6`,
-the unchanged kernel branch at `70ab033bfb794244f751387ecc71f657d21ca556`,
-the DeepSeek option-4 branch and all `preserve/*` tags. All Laguna model,
-cache, temp, log, and run artifacts remain on the external Corsair drive; do
-not write them to `/mnt/fast-ai`.
+the kernel rebuild source commit `09960db2dc944d38697d06a69d08b24a63820960`,
+the final kernel branch at `376a269fadb153a1182798d422c3893270b4a04f`, the
+DeepSeek option-4 branch, and all `preserve/*` tags. All Laguna model, cache,
+temp, log, and run artifacts remain on the external Corsair drive; do not write
+them to `/mnt/fast-ai`.
 
 ## Optimization Transition
 
