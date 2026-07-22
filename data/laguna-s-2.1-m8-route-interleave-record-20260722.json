@@ -1,0 +1,108 @@
+{
+  "status": "exact_two_fresh_start_record_candidate_payload_staged_not_submitted",
+  "date": "2026-07-22",
+  "approved_record": {
+    "id": "cmrwlyxez00f4nz01zefturuv",
+    "tok_s": 33.26756407958298
+  },
+  "source": {
+    "vllm_commit": "6a570e70b2c1ccce3a42f3396e1bd22b0a4a8191",
+    "xpu_kernel_commit": "210a6eb604500c80bc5989d4b9fc59e75f1bb316",
+    "xpu_c_sha256": "625af4bbe792effde9f2f54c319f807a5c49b9756be313f9307d90da9ff5149e",
+    "moe_c_sha256": "f222d3e2d2a8a331e3c85f12e0d02a17aa7a89147bbbcc8ac2c2a816629a405f",
+    "grouped_gemm_sha256": "78a7218de45ee46b3734dc977c0d6115607ff7536706c0be2d4728b4ca2c40be"
+  },
+  "candidate": {
+    "flag": "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1",
+    "requires": [
+      "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1",
+      "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1"
+    ],
+    "mapping": "n_tile_major_route_interleave",
+    "arithmetic_changed": false
+  },
+  "record_reprofile": {
+    "whole_noncollective_ms_per_cycle": 18.37750028,
+    "other_noncollective_ms_per_cycle": 13.40934356,
+    "largest_named_bucket": "fused_w1_silu",
+    "w1_ms_per_cycle": 6.4883832,
+    "w1_ms_per_layer": 0.1380507,
+    "w2_ms_per_cycle": 3.3303735,
+    "w2_ms_per_layer": 0.070858,
+    "gather_ms_per_cycle": 0.44185597
+  },
+  "component_gate": {
+    "passed": true,
+    "output_exact": "64/64",
+    "all_local_boundaries_bitwise_equal": true,
+    "mean_ms_per_layer": {
+      "w1_record": 0.35922484123148024,
+      "w1_candidate": 0.34604482498252764,
+      "w2_record": 0.17158270493382588,
+      "w2_candidate": 0.16654859893606044,
+      "routed_path_record": 0.5619516702427063,
+      "routed_path_candidate": 0.5381425362429582
+    },
+    "synchronized_compute_basic": {
+      "w1_record": {
+        "eu_active_pct": 43.769045,
+        "thread_occupancy_pct": 88.0896760909091,
+        "dram_read_gbps": 534.1241011818182,
+        "dram_write_gbps": 0.9412054545454546
+      },
+      "w1_candidate": {
+        "eu_active_pct": 47.723130363636365,
+        "thread_occupancy_pct": 86.66606681818182,
+        "dram_read_gbps": 502.27818445454545,
+        "dram_write_gbps": 1.125736909090909
+      },
+      "w2_record": {
+        "eu_active_pct": 46.526537000000005,
+        "thread_occupancy_pct": 93.9667709,
+        "dram_read_gbps": 528.5792543,
+        "dram_write_gbps": 1.9732669999999999
+      },
+      "w2_candidate": {
+        "eu_active_pct": 49.1256443,
+        "thread_occupancy_pct": 93.5422142,
+        "dram_read_gbps": 517.429004,
+        "dram_write_gbps": 2.0919535
+      }
+    }
+  },
+  "two_start_gate": {
+    "start_a": {
+      "teacher_exact": "13/13",
+      "cached_zero": "13/13",
+      "long_then_next": "2/2",
+      "rollover": "1/1",
+      "median_tok_s_1_100_after_ttft": 33.438926675602126,
+      "p10": 26.271576349347498,
+      "mean": 38.36399453339259,
+      "accepted_draft_tokens": 4643,
+      "draft_tokens": 12033
+    },
+    "start_b": {
+      "teacher_exact": "13/13",
+      "cached_zero": "13/13",
+      "long_then_next": "2/2",
+      "rollover": "1/1",
+      "median_tok_s_1_100_after_ttft": 33.546438841532144,
+      "p10": 26.54580206077066,
+      "mean": 38.76194474600315,
+      "accepted_draft_tokens": 4642,
+      "draft_tokens": 12040
+    },
+    "cross_start_exact": "13/13",
+    "lower_start_tok_s": 33.438926675602126,
+    "delta_vs_approved_tok_s": 0.1713625960191436,
+    "delta_vs_approved_pct": 0.5151041284814494,
+    "record_test_passed": true
+  },
+  "artifacts": {
+    "start_a": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/m8-route-interleave-dflash-A-6a570e70b-210a6eb-20260722T223950Z",
+    "start_b": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/m8-route-interleave-dflash-B-6a570e70b-210a6eb-20260722T224721Z",
+    "two_start_exactness": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/m8-route-interleave-two-start-exactness-6a570e70b-210a6eb-20260722.json",
+    "cross_start_repro": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/m8-route-interleave-cross-start-repro-6a570e70b-210a6eb-20260722.json"
+  }
+}

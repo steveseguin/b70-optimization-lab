@@ -70,6 +70,7 @@ def baseline(
         LOCAL_EXPERTS,
         True,
         False,
+        False,
     )
     act = torch.empty((routes, INTERMEDIATE), dtype=torch.bfloat16, device="xpu")
     torch.ops._C.silu_and_mul(act, gemm1)
@@ -87,6 +88,7 @@ def baseline(
         LOCAL_EXPERTS,
         False,
         False,
+        False,
     )
     output = torch.empty((rows, HIDDEN), dtype=torch.bfloat16, device="xpu")
     route_map = torch.arange(routes, dtype=torch.int32, device="xpu").view(rows, TOPK)
@@ -96,7 +98,7 @@ def baseline(
     return output, gemm1, act, gemm2
 
 
-def candidate(
+def record_path(
     hidden: torch.Tensor,
     w13: torch.Tensor,
     s13: torch.Tensor,
@@ -106,7 +108,8 @@ def candidate(
     topk_ids: torch.Tensor,
     expert_map: torch.Tensor,
     scratch: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
-) -> torch.Tensor:
+    route_interleave: bool,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     rows = hidden.shape[0]
     routes = rows * TOPK
     gemm1, act, gemm2 = (buffer[:routes] for buffer in scratch)
@@ -128,6 +131,7 @@ def candidate(
         expert_map,
         LOCAL_EXPERTS,
         True,
+        route_interleave,
     )
     gemm2.zero_()
     torch.ops._xpu_C.cutlass_grouped_gemm_m8_topk_int4_interface(
@@ -143,6 +147,7 @@ def candidate(
         LOCAL_EXPERTS,
         False,
         False,
+        route_interleave,
     )
     route_map = torch.arange(
         routes, dtype=torch.int32, device="xpu"
@@ -150,7 +155,69 @@ def candidate(
     torch.ops._moe_C.moe_gather(
         output, gemm2, topk_weights, route_map, LOCAL_EXPERTS
     )
-    return output
+    return output, gemm1, act, gemm2
+
+
+def run_w1(
+    hidden: torch.Tensor,
+    w13: torch.Tensor,
+    s13: torch.Tensor,
+    w2: torch.Tensor,
+    s2: torch.Tensor,
+    topk_weights: torch.Tensor,
+    topk_ids: torch.Tensor,
+    expert_map: torch.Tensor,
+    scratch: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+    output: torch.Tensor,
+    route_interleave: bool,
+) -> None:
+    routes = hidden.shape[0] * TOPK
+    gemm1, act, gemm2 = (buffer[:routes] for buffer in scratch)
+    torch.ops._xpu_C.laguna_m8_fused_expert_interface(
+        hidden,
+        w13,
+        s13,
+        None,
+        w2,
+        s2,
+        None,
+        gemm1,
+        act,
+        gemm2,
+        output,
+        topk_weights,
+        topk_ids,
+        expert_map,
+        LOCAL_EXPERTS,
+        True,
+        route_interleave,
+    )
+
+
+def run_w2(
+    act: torch.Tensor,
+    w2: torch.Tensor,
+    s2: torch.Tensor,
+    gemm2: torch.Tensor,
+    topk_ids: torch.Tensor,
+    expert_map: torch.Tensor,
+    route_interleave: bool,
+) -> None:
+    torch.ops._xpu_C.cutlass_grouped_gemm_m8_topk_int4_interface(
+        act,
+        w2,
+        s2,
+        None,
+        gemm2,
+        topk_ids,
+        expert_map,
+        HIDDEN,
+        INTERMEDIATE,
+        LOCAL_EXPERTS,
+        False,
+        False,
+        route_interleave,
+    )
 
 
 def timed_ms(call, iterations: int) -> float:
@@ -169,6 +236,11 @@ def main() -> None:
     parser.add_argument("--rank", type=int, required=True, choices=range(4))
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--timing-iterations", type=int, default=20)
+    parser.add_argument(
+        "--counter-only",
+        choices=("w1-record", "w1-candidate", "w2-record", "w2-candidate"),
+        help="Run one kernel repeatedly for stable hardware-counter collection",
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -208,24 +280,43 @@ def main() -> None:
     expert_map[
         args.rank * LOCAL_EXPERTS : (args.rank + 1) * LOCAL_EXPERTS
     ] = torch.arange(LOCAL_EXPERTS, dtype=torch.int32, device="xpu")
-    scratch = (
+    record_scratch = (
+        torch.empty((8 * TOPK, 2 * INTERMEDIATE), dtype=torch.bfloat16, device="xpu"),
+        torch.empty((8 * TOPK, INTERMEDIATE), dtype=torch.bfloat16, device="xpu"),
+        torch.empty((8 * TOPK, HIDDEN), dtype=torch.bfloat16, device="xpu"),
+    )
+    candidate_scratch = (
         torch.empty((8 * TOPK, 2 * INTERMEDIATE), dtype=torch.bfloat16, device="xpu"),
         torch.empty((8 * TOPK, INTERMEDIATE), dtype=torch.bfloat16, device="xpu"),
         torch.empty((8 * TOPK, HIDDEN), dtype=torch.bfloat16, device="xpu"),
     )
 
-    cases = []
-    total_equal = 0
-    for rows in (1, 8):
-        for epoch in range(args.epochs):
-            hidden = torch.randn((rows, HIDDEN), dtype=torch.bfloat16, device="xpu")
-            topk_ids = make_routes(args.rank, rows, epoch)
-            weights = torch.rand((rows, TOPK), dtype=torch.float32, device="xpu")
-            weights /= weights.sum(dim=1, keepdim=True)
-            ref, ref_w1, ref_act, ref_w2 = baseline(
-                hidden, w13, s13, w2, s2, weights, topk_ids, expert_map
-            )
-            got = candidate(
+    if args.counter_only:
+        rows = 8
+        hidden = torch.randn((rows, HIDDEN), dtype=torch.bfloat16, device="xpu")
+        topk_ids = make_routes(args.rank, rows, 1)
+        weights = torch.rand((rows, TOPK), dtype=torch.float32, device="xpu")
+        weights /= weights.sum(dim=1, keepdim=True)
+        timing_output = torch.empty(
+            (rows, HIDDEN), dtype=torch.bfloat16, device="xpu"
+        )
+        candidate = args.counter_only.endswith("candidate")
+        scratch = candidate_scratch if candidate else record_scratch
+        run_w1(
+            hidden,
+            w13,
+            s13,
+            w2,
+            s2,
+            weights,
+            topk_ids,
+            expert_map,
+            scratch,
+            timing_output,
+            candidate,
+        )
+        if args.counter_only.startswith("w1"):
+            call = lambda: run_w1(
                 hidden,
                 w13,
                 s13,
@@ -235,15 +326,77 @@ def main() -> None:
                 topk_ids,
                 expert_map,
                 scratch,
+                timing_output,
+                candidate,
+            )
+        else:
+            call = lambda: run_w2(
+                scratch[1],
+                w2,
+                s2,
+                scratch[2],
+                topk_ids,
+                expert_map,
+                candidate,
+            )
+        torch.xpu.synchronize()
+        for _ in range(12):
+            call()
+            # Hardware metric queries need an isolated completion boundary;
+            # queued back-to-back calls can otherwise attribute neighboring
+            # memory traffic to the selected kernel.
+            torch.xpu.synchronize()
+        result = {
+            "rank": args.rank,
+            "device": torch.xpu.get_device_name(0),
+            "counter_only": args.counter_only,
+            "calls": 12,
+        }
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(result, indent=2) + "\n")
+        print(json.dumps(result))
+        return
+
+    cases = []
+    total_equal = 0
+    for rows in (1, 8):
+        for epoch in range(args.epochs):
+            hidden = torch.randn((rows, HIDDEN), dtype=torch.bfloat16, device="xpu")
+            topk_ids = make_routes(args.rank, rows, epoch)
+            weights = torch.rand((rows, TOPK), dtype=torch.float32, device="xpu")
+            weights /= weights.sum(dim=1, keepdim=True)
+            ref, ref_w1, ref_act, ref_w2 = record_path(
+                hidden,
+                w13,
+                s13,
+                w2,
+                s2,
+                weights,
+                topk_ids,
+                expert_map,
+                record_scratch,
+                False,
+            )
+            got, got_w1, got_act, got_w2 = record_path(
+                hidden,
+                w13,
+                s13,
+                w2,
+                s2,
+                weights,
+                topk_ids,
+                expert_map,
+                candidate_scratch,
+                True,
             )
             torch.xpu.synchronize()
             mapped = expert_map[topk_ids].reshape(-1)
             local = mapped >= 0
             route_count = rows * TOPK
             equal = torch.equal(ref, got)
-            local_w1_equal = torch.equal(ref_w1[local], scratch[0][:route_count][local])
-            local_act_equal = torch.equal(ref_act[local], scratch[1][:route_count][local])
-            local_w2_equal = torch.equal(ref_w2[local], scratch[2][:route_count][local])
+            local_w1_equal = torch.equal(ref_w1[local], got_w1[local])
+            local_act_equal = torch.equal(ref_act[local], got_act[local])
+            local_w2_equal = torch.equal(ref_w2[local], got_w2[local])
             if equal:
                 total_equal += 1
             cases.append(
@@ -266,12 +419,23 @@ def main() -> None:
     topk_ids = make_routes(args.rank, rows, args.epochs + 1)
     weights = torch.rand((rows, TOPK), dtype=torch.float32, device="xpu")
     weights /= weights.sum(dim=1, keepdim=True)
-    baseline_ms = timed_ms(
-        lambda: baseline(hidden, w13, s13, w2, s2, weights, topk_ids, expert_map),
-        args.timing_iterations,
+    timing_output = torch.empty((rows, HIDDEN), dtype=torch.bfloat16, device="xpu")
+    run_w1(
+        hidden,
+        w13,
+        s13,
+        w2,
+        s2,
+        weights,
+        topk_ids,
+        expert_map,
+        record_scratch,
+        timing_output,
+        False,
     )
-    candidate_ms = timed_ms(
-        lambda: candidate(
+    torch.xpu.synchronize()
+    record_w1_ms = timed_ms(
+        lambda: run_w1(
             hidden,
             w13,
             s13,
@@ -280,7 +444,79 @@ def main() -> None:
             weights,
             topk_ids,
             expert_map,
-            scratch,
+            record_scratch,
+            timing_output,
+            False,
+        ),
+        args.timing_iterations,
+    )
+    candidate_w1_ms = timed_ms(
+        lambda: run_w1(
+            hidden,
+            w13,
+            s13,
+            w2,
+            s2,
+            weights,
+            topk_ids,
+            expert_map,
+            candidate_scratch,
+            timing_output,
+            True,
+        ),
+        args.timing_iterations,
+    )
+    record_w2_ms = timed_ms(
+        lambda: run_w2(
+            record_scratch[1],
+            w2,
+            s2,
+            record_scratch[2],
+            topk_ids,
+            expert_map,
+            False,
+        ),
+        args.timing_iterations,
+    )
+    candidate_w2_ms = timed_ms(
+        lambda: run_w2(
+            record_scratch[1],
+            w2,
+            s2,
+            candidate_scratch[2],
+            topk_ids,
+            expert_map,
+            True,
+        ),
+        args.timing_iterations,
+    )
+    record_ms = timed_ms(
+        lambda: record_path(
+            hidden,
+            w13,
+            s13,
+            w2,
+            s2,
+            weights,
+            topk_ids,
+            expert_map,
+            record_scratch,
+            False,
+        ),
+        args.timing_iterations,
+    )
+    candidate_ms = timed_ms(
+        lambda: record_path(
+            hidden,
+            w13,
+            s13,
+            w2,
+            s2,
+            weights,
+            topk_ids,
+            expert_map,
+            candidate_scratch,
+            True,
         ),
         args.timing_iterations,
     )
@@ -297,10 +533,16 @@ def main() -> None:
             for row in cases
         ),
         "output_equal": f"{total_equal}/{len(cases)}",
-        "baseline_m8_ms_per_layer": baseline_ms,
+        "record_w1_ms_per_layer": record_w1_ms,
+        "candidate_w1_ms_per_layer": candidate_w1_ms,
+        "delta_w1_ms_per_layer": candidate_w1_ms - record_w1_ms,
+        "record_w2_ms_per_layer": record_w2_ms,
+        "candidate_w2_ms_per_layer": candidate_w2_ms,
+        "delta_w2_ms_per_layer": candidate_w2_ms - record_w2_ms,
+        "record_m8_ms_per_layer": record_ms,
         "candidate_m8_ms_per_layer": candidate_ms,
-        "delta_m8_ms_per_layer": candidate_ms - baseline_ms,
-        "baseline_routed_device_ops_per_layer": 6,
+        "delta_m8_ms_per_layer": candidate_ms - record_ms,
+        "record_routed_device_ops_per_layer": 4,
         "candidate_routed_device_ops_per_layer": 4,
         "cases": cases,
     }
