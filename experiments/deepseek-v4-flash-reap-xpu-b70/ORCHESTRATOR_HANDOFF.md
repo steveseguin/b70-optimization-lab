@@ -2,6 +2,15 @@
 
 Last updated: **2026-07-18**
 
+**Closeout override (2026-07-21):** the lane is paused at the verified
+80.820052 tok/s record. This document remains the detailed build and evidence
+reference, but its immediate-work sections are historical. Resume only under
+the conditions in
+[`notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md`](notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md).
+The promoted entry points are the
+[result packet](../../results/deepseek-v4-flash-k160-b70/README.md) and
+[standalone repro](../../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md).
+
 This is the manager-facing resume document for handing orchestration to another
 AI. It describes the objective, immutable rules, live state, source trees,
 record identity, build and run workflow, quality gates, LocalMaxxing policy,

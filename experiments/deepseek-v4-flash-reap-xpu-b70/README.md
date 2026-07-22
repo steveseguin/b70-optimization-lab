@@ -1,8 +1,12 @@
 # DeepSeek V4 Flash REAP/XPU On Four B70s
 
-This is the active experiment packet for constructing and optimizing an
-Intel-native, full-resident DeepSeek V4 Flash derivative for one active
-generation on four Arc Pro B70 32 GB GPUs.
+This is the preserved experiment packet for the paused DeepSeek V4 Flash
+uniform-K160 lane on four Arc Pro B70 32 GB GPUs. The frontier closed on
+2026-07-21 at a verified 80.820052 tok/s high. Start from the
+[closed result packet](../../results/deepseek-v4-flash-k160-b70/README.md),
+[standalone repro](../../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md),
+and [closeout](notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md). The
+older staged plan and handoffs below remain historical research context.
 
 Read in order:
 
@@ -37,6 +41,10 @@ artifact. Do not mix its configs, model identity, results, or LocalMaxxing
 templates into this lane.
 
 ## Current Status
+
+**Closed-lane override (2026-07-21):** the best verified target-verified
+DSpark7 endpoint is 80.820052 tok/s; no later verified endpoint exceeded it.
+The lane is paused. Reopen only under the closeout's explicit conditions.
 
 The user explicitly authorized the frozen public K160 download while the small
 gates continue. The snapshot is 46 standard safetensors shards totaling
@@ -73,8 +81,11 @@ Promotion requires:
 - the fixed realistic cold suite with `cached_tokens=0`;
 - complete profile, repeatability, and artifact capture.
 
-Do not create a `repro/` packet or LocalMaxxing submission until a complete
-full-model candidate passes those gates.
+The historical rule was not to create a `repro/` packet or LocalMaxxing
+submission until a complete full-model candidate passed those gates. The
+target-verified K160/DSpark7 record passed the declared cold-suite and exact
+gates and is now preserved in the standalone repro linked above, with the
+experimental-K160 provenance caveat retained.
 
 ## Folder Map
 

@@ -6,6 +6,13 @@ new implementation work; it contains current source trees, build/run/test
 workflow, LocalMaxxing rules, rejected-boundary inventory, and the exact next
 decision tree.
 
+**Closeout override (2026-07-21):** this lane is paused at the verified
+80.820052 tok/s frontier. Do not treat older "current" or "next work" sections
+below as authorization to resume it. Use the
+[closed result packet](../../results/deepseek-v4-flash-k160-b70/README.md),
+[standalone record repro](../../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md),
+and [frontier closeout](notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md).
+
 Last reviewed: **2026-07-18**
 
 ## Current Decision

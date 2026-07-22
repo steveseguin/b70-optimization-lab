@@ -13,7 +13,7 @@ for verified results that have not been submitted.
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
 | Qwen3.6 27B GGUF Q4_0, native DFlash5 + Xe2 M6 | 1x Arc Pro B70 | 47.819 median tok/s, fixed cold realistic gate | `cmrjbx8bc02g8mj01yzz2v701` | [evidence](../data/qwen36-27b-mtp-gguf-q4-b70-baselines/q6top1-aot-realistic128-r2-20260713.json) |
 | MiniMax M2.7 AutoRound INT4 | 4x Arc Pro B70 | 65.752 output tok/s, quality-gated public row | `cmp6a5c1o00mpo3011hg8ncyp` | [packet](minimax-m27-int4-autoround-b70/README.md) |
-| DeepSeek V4 Flash uniform-K160, TP4+EP | 4x Arc Pro B70 | 80.820 median tok/s, target-verified DSpark7 sharded target argmax | `cmrquta9905w3lg013m5vxoqx` | [record](../experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-18-sharded-target-argmax-record.md) |
+| DeepSeek V4 Flash uniform-K160, TP4+EP | 4x Arc Pro B70 | 80.820 median tok/s, target-verified DSpark7 sharded target argmax | `cmrquta9905w3lg013m5vxoqx` | [packet](deepseek-v4-flash-k160-b70/README.md); [repro](../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md) |
 | DeepSeek V4 Flash uniform-K160, TP4+EP nonspec | 4x Arc Pro B70 | 43.767 median tok/s, direct routed-MoE + wide-epoch oneCCL | `cmrmnp7h81nntmj01lfenydgj` | [ledger](../experiments/deepseek-v4-flash-reap-xpu-b70/results/experiment-ledger.md) |
 | Rapid model snapshots | 1x Arc Pro B70 | Multiple fixed cold realistic references | see [packet](rapid-model-snapshots-b70/README.md) | [performance index](scoreboard.md) |
 

@@ -6,6 +6,10 @@ This consolidates a multi-day push to move DeepSeek V4 Flash REAP K160 past its
 80.82 tok/s target-verified record on four Intel Arc Pro B70s. Every lever is
 now characterized with evidence. The record is unchanged and LocalMaxxing-approved.
 
+Promoted publication: [closed result packet](../../../results/deepseek-v4-flash-k160-b70/README.md),
+[standalone fail-closed repro](../../../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md),
+and [exact source archive](../../../patches/deepseek-v4-flash-reap-xpu-b70/README.md).
+
 ## Records (unchanged)
 - **Target-verified speculative record: 80.820052 tok/s** (M=7 DSpark draft / M=8 exact verify), LocalMaxxing `cmrquta9905w3lg013m5vxoqx`.
 - Nonspeculative direct-MoE record: ~43.77 tok/s.
@@ -34,6 +38,9 @@ At M=1, decode fires ~200 tiny kernels/token, most **launch/latency-bound** — 
 **80.82 is at or very near the true frontier for this exact model on these four B70s.** The only remaining real gain is the ~90 tok/s hybrid, gated on a 10-20M-token capture + multi-day training. **160/230 is not reachable on this hardware/model** — it would need the hybrid (~90) *and* a leaner target cycle (which the decoder proved submission-collapse can't deliver) *and* deeper speculation, a combination this silicon doesn't support.
 
 ## Reusable assets (preserved, checksummed)
+- **80.820 record source and launcher** — exact-history Git bundles, reviewable
+  combined patches, pinned launcher, validity packet, and evidence links in the
+  promoted publication above.
 - **Fixed-geometry decoder substrate** `option4-decoder/` — raw Level-Zero command-list builder + parity harness (proven, bitwise-exact). Reusable for any future device-resident decode work.
 - **M2/M4/M8 real-cycle corpora** + no-model 4-card replay worker (70/70).
 - **EAGLE pipeline**: exact feature-capture path, 1M-token corpus + 50K DEV set (checksummed), the trainer (`train-k160-eagle-longhaul.py`), best head checkpoint (~68% P2-7), and the offline hybrid-splice analyzer.

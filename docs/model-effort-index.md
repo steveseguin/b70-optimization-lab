@@ -173,19 +173,22 @@ with one of the concrete scope changes listed there, not another flag sweep.
 
 Main entry:
 
+- [closed result packet](../results/deepseek-v4-flash-k160-b70/README.md)
+- [standalone 80.820 tok/s repro](../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md)
 - [experiment packet](../experiments/deepseek-v4-flash-reap-xpu-b70/README.md)
 - [controlling investment-gated plan](../plans/2026-07-13-deepseek-v4-flash-b70-investment-gated-plan.md)
-- [current lane handoff](../experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md)
+- [historical lane handoff](../experiments/deepseek-v4-flash-reap-xpu-b70/HANDOFF.md)
+- [frontier closeout](../experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md)
 
-Status: active for low-cost Stages 0-3.5 after the Qwen closeout. The full Intel
-W4A16 artifact is now 144.905 GiB and remains rejected. The frozen source is
-official DeepSeek V4 Flash; the first full artifact will be heterogeneous REAP
-K160 only after native MXFP4/INT4 exact-shape kernels, per-layer expert counts,
-and XPU architecture fixtures pass. K168/K176/K180 are later capacity
-candidates, not promises. Official-source teacher evidence is primary quality
-truth; full IQ3_XXS is a secondary all-expert behavior control.
-Do not download or construct the 100+ GiB source before the plan authorizes
-Stage 4.
+Status: paused/closed on 2026-07-21 at a fully characterized frontier. The best
+verified one-session result is the experimental uniform-K160 target with
+target-verified DSpark7: `80.820052 tok/s` strict high and `78.287226 tok/s`
+three-suite median-of-medians on four B70s, with 36/36 cache-zero realistic
+rows and 24/24 exact canaries. LocalMaxxing approved
+`cmrquta9905w3lg013m5vxoqx`; no later verified endpoint exceeded it. Reopen
+only for the closeout's 10-20M-token EAGLE/hybrid training condition or a new
+device-execution mechanism. The public checkpoint remains hash-pruned with
+unavailable calibration and must not be described as official true REAP.
 
 Historical rejected fit/support evidence for the oversized Intel AutoRound
 artifact remains at

@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-20**
+Last reviewed: **2026-07-21**
 
 ## Authority And Update Rule
 
@@ -25,6 +25,13 @@ No DeepSeek service is currently running. The promoted DSpark7 sharded target-
 argmax record service was stopped cleanly after three strict suites and the
 final exact canary. Its evidence is
 `/mnt/fast-ai/bench-results/deepseek-v4-flash-xpu/dspark7-sharded-target-argmax-candidate-20260718T2100Z`.
+The DeepSeek lane is paused/closed at this record. Its durable publication is
+the [result packet](results/deepseek-v4-flash-k160-b70/README.md),
+[standalone repro](repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md),
+and [frontier closeout](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md).
+Do not interpret the older bounded-next-work detail retained below as an active
+instruction; another configuration is being started separately and is outside
+this closeout.
 The exact public-record source identity is vLLM `264c7f2f7`, XPU kernels
 `313156737`, and oneCCL `48fda4f0e`. Restore it with target PIECEWISE, draft
 breakable PIECEWISE,
@@ -89,8 +96,9 @@ not reached. The final strict one-B70 record is `47.818818 tok/s`, approved by
 LocalMaxxing as `cmrjbx8bc02g8mj01yzz2v701`. The authoritative closeout is
 [`notes/2026-07-13-qwen27-dflash-sycl-closure.md`](notes/2026-07-13-qwen27-dflash-sycl-closure.md).
 
-The next active research lane is the investment-gated DeepSeek V4 Flash
-vLLM/XPU bring-up for one active generation on four B70s. The frozen source is
+The investment-gated DeepSeek V4 Flash vLLM/XPU lane ran from 2026-07-13
+through its 2026-07-21 closeout for one active generation on four B70s. It is
+now paused. The frozen source was
 `deepseek-ai/DeepSeek-V4-Flash` revision
 `60d8d70770c6776ff598c94bb586a859a38244f1`. The first runnable candidate is
 the uniform-K160 `0xSero/DeepSeek-V4-Flash-180B` smoke checkpoint at revision
@@ -654,6 +662,7 @@ result trees as mutable research state as well.
 
 ## Paused And Bookmarked Lanes
 
+- [DeepSeek V4 Flash uniform-K160 closed frontier](results/deepseek-v4-flash-k160-b70/README.md)
 - [Gemma 4 26B A4B Q8](results/gemma4-26b-a4b-q8-b70/HANDOFF.md)
 - [MiniMax M2.7 INT4](results/minimax-m27-int4-autoround-b70/README.md)
 - [Qwen3.6 35B Quark INT8](results/qwen36-35b-quark-int8-b70/README.md)
@@ -665,19 +674,15 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Keep the Qwen lane closed. Do not resume unfinished QKVZAB, Q5_K GDN-output,
-   or exact-Q4 adaptation work without satisfying the reopening gate in the
-   closure note.
-2. Finish and cryptographically verify the active K160 download, promote the
-   verified copy to internal NVMe, and run the unchanged TP4+EP/8K graph-off
-   construction smoke with no speculation.
-3. Add native-selector/fallback trace and a real 32-warmup/200-iteration
-   M=1/4/8 kernel benchmark before treating the low-level scaffold as a Stage-1
-   result. Then establish the correct nonspeculative decode baseline and cycle
-   profile before optimization.
+1. Keep the DeepSeek lane paused. Restore the record only from the standalone
+   repro and reopen research only under the explicit frontier-closeout gates.
+2. Preserve the exact DeepSeek vLLM, XPU-kernel, oneCCL, patch, and result
+   identities. Do not relabel later default-off experiments as the record.
+3. Leave the newly started configuration and its active setup work untouched;
+   it is outside this DeepSeek publication closeout.
 4. Preserve `/home/steve/src/llama.cpp` as dirty Qwen research state until its
    patch snapshots are independently reviewed. Do not reset or clean it for a
-   DeepSeek bring-up.
+   different model bring-up.
 5. Continue to publish only verified new matching LocalMaxxing records after
    the cold realistic gate, complete identity capture, and correctness pass.
 

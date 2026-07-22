@@ -141,6 +141,22 @@ the production LAN endpoint:
   `QWEN36_27B_REASONING_PARSER=`; the no-parser 32K content check passed the
   same exact retrieval gate with all rows streaming visible content deltas.
 
+## DeepSeek V4 Flash K160 Closed Frontier
+
+The four-B70 DeepSeek V4 Flash experimental uniform-K160 lane is paused. Its
+best verified one-active-generation result is `80.820052 tok/s` with
+target-verified DSpark7; three independent strict medians were `80.820052`,
+`76.900178`, and `78.287226 tok/s`. All 36 realistic rows were cache-zero and
+24/24 ordered exact canaries passed. LocalMaxxing approved
+`cmrquta9905w3lg013m5vxoqx`.
+
+Use the [closed result packet](../results/deepseek-v4-flash-k160-b70/README.md)
+and [standalone pinned repro](../repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md).
+The recipe includes exact source bundles because the measured vLLM, XPU
+kernel, and oneCCL commits are local experimental history rather than upstream
+commits. The K160 artifact is hash-pruned and its calibration/ranking is not
+reproducible, so this record applies only to that explicitly labeled artifact.
+
 ## MiniMax Deployable Baseline
 
 The MiniMax 32K FP16-family KV c1 endpoint remains the deployable baseline

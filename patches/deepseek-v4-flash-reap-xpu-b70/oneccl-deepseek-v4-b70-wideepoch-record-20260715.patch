@@ -1,0 +1,160 @@
+diff --git a/src/coll/algorithms/allgatherv/sycl/allgatherv_sycl.cpp b/src/coll/algorithms/allgatherv/sycl/allgatherv_sycl.cpp
+index 823edebcf50a32c34e8460c67128d3d4cac50cbd..c83c2d45ba1d9e526e6df2be35fecd030d44ef5f 100644
+--- a/src/coll/algorithms/allgatherv/sycl/allgatherv_sycl.cpp
++++ b/src/coll/algorithms/allgatherv/sycl/allgatherv_sycl.cpp
+@@ -185,7 +185,16 @@ ccl::event allgather_sycl_single_node(sycl::queue& q,
+             new_recv_counts.push_back(recv_counts[i] * ccl_dtype.size() / 2);
+         }
+         e = allgatherv_large(
+-            send_buf, new_send_count, recv_buf, new_recv_counts, offsets, new_dtype, comm, global_stream, deps);
++            q,
++            send_buf,
++            new_send_count,
++            recv_buf,
++            new_recv_counts,
++            offsets,
++            new_dtype,
++            comm,
++            global_stream,
++            deps);
+ #endif // defined(CCL_SYCL_VEC_SUPPORT_FP16) && defined(CCL_SYCL_VEC_SUPPORT_BF16)
+         done = true;
+         LOG_DEBUG(
+diff --git a/src/coll/algorithms/utils/sycl_coll_base.hpp b/src/coll/algorithms/utils/sycl_coll_base.hpp
+index 84454c5e67d95ad15d9e2310bdb025688d37af70..a486cadbe96bcb22471aabf79acf266f7491164e 100644
+--- a/src/coll/algorithms/utils/sycl_coll_base.hpp
++++ b/src/coll/algorithms/utils/sycl_coll_base.hpp
+@@ -25,6 +25,14 @@
+ #include <sycl/ext/intel/esimd.hpp>
+ #include "common/log/log.hpp"
+ 
++// oneCCL 2021.17.2's CMake probe checks CMAKE_C_COMPILER_ID even though these
++// kernels are compiled by DPC++. Recover the intended capability detection
++// from Intel LLVM's compiler macro when a modern compiler is actually in use.
++#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20240200 && \
++    !defined(CCL_SYCL_VEC_SUPPORT_BF16)
++#define CCL_SYCL_VEC_SUPPORT_BF16
++#endif
++
+ #if defined(CCL_ENABLE_ZE) || defined(CCL_ENABLE_SYCL)
+ #include "comm/comm_interface.hpp"
+ #endif //#if defined(CCL_ENABLE_ZE) || defined(CCL_ENABLE_SYCL)
+diff --git a/src/coll/algorithms/utils/sycl_selection.cpp b/src/coll/algorithms/utils/sycl_selection.cpp
+index c1a7c91c7a153e015f74322fdec692c1ef4b10e7..dfcd38f5405d3b150372f062561998f2b90e7c14 100644
+--- a/src/coll/algorithms/utils/sycl_selection.cpp
++++ b/src/coll/algorithms/utils/sycl_selection.cpp
+@@ -19,6 +19,36 @@
+ #include "coll/group/group.hpp"
+ #include "common/log/log.hpp"
+ 
++#include <cerrno>
++#include <cstdlib>
++#include <limits>
++
++namespace {
++
++size_t get_b70_sycl_allreduce_max_bytes() {
++    static const size_t limit = []() {
++        const char* name = "B70_ONECCL_SYCL_ALLREDUCE_MAX_BYTES";
++        const char* value = std::getenv(name);
++        if (!value || !*value) {
++            return size_t{ 0 };
++        }
++        if (*value == '-') {
++            CCL_THROW(name, " must be a non-negative integer: ", value);
++        }
++        errno = 0;
++        char* end = nullptr;
++        const unsigned long long parsed = std::strtoull(value, &end, 10);
++        if (errno == ERANGE || end == value || *end != '\0' ||
++            parsed > std::numeric_limits<size_t>::max()) {
++            CCL_THROW("invalid ", name, " value: ", value);
++        }
++        return static_cast<size_t>(parsed);
++    }();
++    return limit;
++}
++
++} // namespace
++
+ bool can_use_sycl_kernels(const ccl_selector_param& param) {
+ // TODO: mitigate overhead added by can_use_sycl_kernels
+ #ifdef CCL_ENABLE_SYCL
+@@ -105,6 +135,16 @@ bool can_use_sycl_kernels(const ccl_selector_param& param) {
+ 
+     // Common conditions for all collective operations
+     RETURN_FALSE_IF(!ccl::global_data::env().enable_sycl_kernels, "SYCL kernels are not enabled");
++    const size_t allreduce_max_bytes = get_b70_sycl_allreduce_max_bytes();
++    const size_t dtype_size = param.dtype.size();
++    RETURN_FALSE_IF(param.ctype == ccl_coll_allreduce && allreduce_max_bytes && dtype_size &&
++                        param.count > allreduce_max_bytes / dtype_size,
++                    "allreduce message exceeds B70_ONECCL_SYCL_ALLREDUCE_MAX_BYTES: ",
++                    param.count,
++                    " elements * ",
++                    dtype_size,
++                    " bytes > ",
++                    allreduce_max_bytes);
+     RETURN_FALSE_IF(!param.stream->get_native_stream().is_in_order(), "Stream is not in order");
+     RETURN_FALSE_IF(!is_dtype_supported, "Data type is not supported");
+     RETURN_FALSE_IF(is_oversubscription, "Oversubscription is not allowed");
+diff --git a/src/comm/comm.hpp b/src/comm/comm.hpp
+index 7948baa2c0529e8344f0b9cc885042f0b6436dda..943465d31f5fa00dcb730b2774097c3c30f2868e 100644
+--- a/src/comm/comm.hpp
++++ b/src/comm/comm.hpp
+@@ -895,32 +895,40 @@ public:
+     // X: 1 is collective, 0 is pt2pt
+     // YYY: is the source rank of the pt2pt
+     uint32_t get_rt_pattern(pattern_type type, int peer_rank) {
+-        uint16_t counter;
+         const int pof2 = sizeof(unsigned int) * 8 - __builtin_clz((unsigned int)ARC_MAX_NUM) - 1;
+         const int mask = (1 << (16 - 1 - pof2)) - 1;
+         if (type == pattern_type::collective) {
+-            counter = pattern_counter[ARC_MAX_NUM];
+-            counter = counter & mask | 0x8000;
++            // Readiness flags remain in the Arc LL ring's reusable IPC
++            // buffers.  The legacy 11-bit collective counter could therefore
++            // match stale data after only 2048 advances.  Point-to-point
++            // encoding remains unchanged; collectives get a 24-bit epoch and
++            // a seven-bit communicator tag, with bit 31 as the type tag.
++            constexpr uint32_t collective_counter_mask = 0x00ffffffu;
++            constexpr uint32_t collective_comm_mask = 0x7fu;
++            return 0x80000000u |
++                   ((static_cast<uint32_t>(global_current_id) & collective_comm_mask) << 24) |
++                   (collective_pattern_counter & collective_counter_mask);
+         }
+         else if (type == pattern_type::send || type == pattern_type::recv) {
+             CCL_THROW_IF_NOT(peer_rank < ARC_MAX_NUM, "invalid rank: ", peer_rank);
+-            counter = pattern_counter[peer_rank];
++            uint16_t counter = pattern_counter[peer_rank];
+             int src_rank = type == pattern_type::send ? comm_rank : peer_rank;
+             counter = counter & mask | src_rank << (16 - 1 - pof2);
++            return global_current_id << 16 | counter;
+         }
+-
+-        return global_current_id << 16 | counter;
++        CCL_THROW("invalid runtime pattern type");
+     }
+ 
+     void update_rt_pattern(pattern_type type, int peer_rank, uint32_t pattern) {
+         const int pof2 = sizeof(unsigned int) * 8 - __builtin_clz((unsigned int)ARC_MAX_NUM) - 1;
+         const int mask = (1 << (16 - 1 - pof2)) - 1;
+-        uint16_t counter = pattern & mask;
+         if (type == pattern_type::collective) {
+-            pattern_counter[ARC_MAX_NUM] = counter;
++            constexpr uint32_t collective_counter_mask = 0x00ffffffu;
++            collective_pattern_counter = pattern & collective_counter_mask;
+         }
+         else if (type == pattern_type::send || type == pattern_type::recv) {
+             CCL_THROW_IF_NOT(peer_rank < ARC_MAX_NUM, "invalid rank: ", peer_rank);
++            uint16_t counter = pattern & mask;
+             pattern_counter[peer_rank] = counter;
+         }
+     }
+@@ -980,6 +988,7 @@ private:
+     std::shared_ptr<ccl::ze::fd_manager> fd_manager;
+     void init_ipc_exchange_mode(std::shared_ptr<ccl_comm> comm);
+     uint16_t pattern_counter[ARC_MAX_NUM + 1];
++    uint32_t collective_pattern_counter = 0xa770u;
+ #endif // CCL_ENABLE_SYCL && CCL_ENABLE_ZE
+ 
+     ccl_sched_id_t next_sched_id_internal{};
