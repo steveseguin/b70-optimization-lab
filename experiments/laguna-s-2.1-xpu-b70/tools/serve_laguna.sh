@@ -81,4 +81,9 @@ if [[ "$mode" == dflash || "$mode" == dflash-piecewise ]]; then
   common_args+=(--speculative-config "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"num_speculative_tokens\":7,\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\"}")
 fi
 
+if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+  read -r -a extra_args <<< "$VLLM_EXTRA_ARGS"
+  common_args+=("${extra_args[@]}")
+fi
+
 exec vllm serve "${common_args[@]}"

@@ -100,11 +100,12 @@ secondary processor probe remains repaired at vLLM commit
 writes were repaired at vLLM commit
 `6bf7d6b83cb20c335b5e9a8ffda95d646338bbf5`.
 
-Target-only TP4+EP4 is coherent and deterministic within mode. The fixed
-cache-zero suite measured **13.802098 tok/s eager** and
-**19.461517 tok/s PIECEWISE** median generated tokens 1-100 after TTFT.
-PIECEWISE is 41.004% faster, but remains below 5% of the 420-515 tok/s
-roofline and diverges from eager at output token 29 on the exact canary.
+The earlier target-only TP4+EP4 path was not bitwise repeatable: identical cold
+q=1 requests could change token 0 because M-dependent INT4 projections, atomic
+MoE remap, and XCCL reduction order moved BF16 values by one ULP. The exact
+target path at vLLM commit `d26fe57b3` uses M=1 target rows, paged-decode
+attention, and rank-ordered TP/EP sums. Its fixed cache-zero q=1 suite measured
+**12.560153 tok/s eager** and is the current deterministic teacher.
 
 DFlash now works with the quantization-matched
 `poolside/Laguna-S-2.1-DFlash-INT4` draft. The originally supplied plain BF16
@@ -114,20 +115,21 @@ draft, the cold BF16-KV gate accepted `953/1,953` proposals (48.797%), mean
 accepted draft length 3.4158, and per-position survival
 `[83.871,67.025,50.896,43.369,37.276,30.824,28.315]%`.
 
-The strict six-prompt BF16-KV DFlash run reached **48.980858 tok/s** median
-generated tokens 1-100 after TTFT, 151.68% above the same-window
-19.401885 target-only graph control. It is diagnostic, not promotion-safe:
-batched q=8 target verification diverges from target-only q=1 greedy at output
-index 1 (395 versus 604). Explicit FP8 KV reached **46.956936 tok/s**, 4.132%
-slower than BF16 KV. It doubled cache capacity from 110,995 to 221,990 tokens
-under the same memory budget but was not exact-token-safe. The next actions are
-q=8/q=1 target exactness, then DFlash SWA metadata repair plus sparse-MoE/EP
-launch and collective reduction. The service is stopped and all four cards are
-free.
+The prior strict six-prompt BF16-KV DFlash run reached **48.980858 tok/s** but
+remains diagnostic and inexact. Exact q=8 target verification now passes:
+**7/7 prompts matched token-for-token**, including all six 128-token cold suite
+rows and a 511-token rollover prompt across the 512-token SWA boundary. The
+conservative exact DFlash path measured **7.448972 tok/s** median and accepted
+`542/1,736` proposals (31.221%). Its approximately 426 ms cycle contains 777
+collectives: about 151 ms in collective API spans and 215 ms in host/launch
+residual, versus only 60 ms of noncollective XPU kernels. The next action is a
+batched deterministic q=8 target path with fused rank-order collectives, then a
+fixed-M8/top-10/EP4 direct MoE kernel. The service is stopped and all four cards
+are free.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-accepting-fp8-kv-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-accepting-fp8-kv-result.md).
-Preserve the Laguna vLLM branch at `6bf7d6b83cb20c335b5e9a8ffda95d646338bbf5`,
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-target-verification-exactness.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-target-verification-exactness.md).
+Preserve the Laguna vLLM branch at `d26fe57b3`,
 the kernel branch at `c615c38fb79d4035118c05675565dbf7e2443a90`, the
 DeepSeek option-4 branch, and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
