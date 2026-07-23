@@ -227,13 +227,8 @@ capture_idle_xpu() {
   fi
   if ! awk '
     NR == 1 {
-      header_ok = (
-        $1 == "PID" &&
-        $2 == "Command" &&
-        $3 == "DeviceID" &&
-        $4 == "SHR" &&
-        $5 == "MEM"
-      )
+      header_ok = $1 == "PID" && $2 == "Command" && $3 == "DeviceID" \
+        && $4 == "SHR" && $5 == "MEM"
       next
     }
     {

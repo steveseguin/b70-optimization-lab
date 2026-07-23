@@ -29,7 +29,7 @@ REPO_ROOT = Path("/home/steve/llm-optimizations")
 RUNNER_PATH = REPO_ROOT / (
     "experiments/laguna-s-2.1-xpu-b70/tools/run_router_topk_crossover_leg.sh"
 )
-RUNNER_SHA256 = "c1a58a0bec4869190183a32061b1f2c24f96e79a6ee69900bf2310a19b6087d2"
+RUNNER_SHA256 = "b92c5a41de86f1112d2782c6a4fbe79afe518e0d7592c6c7a04a699c8e6e4a9b"
 XPU_SMI_VERSION_SHA256 = (
     "d14b356677a57006a19e1e5b4aa45cada8fc0c553cd214ac76ad420ef5bdb4ab"
 )

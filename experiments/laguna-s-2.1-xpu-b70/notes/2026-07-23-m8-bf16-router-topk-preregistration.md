@@ -229,11 +229,11 @@ Endpoint tooling was frozen before A1:
 - per-leg runner:
   `experiments/laguna-s-2.1-xpu-b70/tools/run_router_topk_crossover_leg.sh`;
 - runner SHA256:
-  `c1a58a0bec4869190183a32061b1f2c24f96e79a6ee69900bf2310a19b6087d2`;
+  `b92c5a41de86f1112d2782c6a4fbe79afe518e0d7592c6c7a04a699c8e6e4a9b`;
 - phase-1/full analyzer:
   `experiments/laguna-s-2.1-xpu-b70/tools/analyze_router_topk_crossover.py`;
 - analyzer SHA256:
-  `f893a6d6cffb89b6a32112bb68bb1cee6a7346d65ae87ff3a2bc0670ba8e7488`;
+  `ae9e7b420f2eb95237ba21ec9dd366846aed7e268e7ad7d444e26c3b384ae923`;
 - shell syntax, Python compilation, Ruff lint/format, and whitespace checks
   passed; and
 - the analyzer parsed historical real endpoint artifacts, passed synthetic
@@ -253,6 +253,20 @@ zero mismatches in `39.863 s`.
 The runner also refuses path reuse/traversal, validates exactly four idle B70
 devices before startup, and performs bounded process-group shutdown plus
 port/process/four-device idle proof on both successful and failed legs.
+
+The first A1 invocation with runner
+`c1a58a0bec4869190183a32061b1f2c24f96e79a6ee69900bf2310a19b6087d2`
+stopped inside the XPU idle preflight because the local `mawk` rejected a
+multiline parenthesized assignment. It exited before the service, model, or any
+endpoint generation started. The failed preflight is preserved at:
+
+```text
+/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/m8-bf16-router-topk-abba-689ee36-af68118-20260723T051304Z/01-A1-control/
+```
+
+Only that header-expression syntax was made `mawk`-portable. The frozen
+preflight capture then passed the exact validator, the analyzer's runner hash
+was updated, and a new run directory is required for the real A1.
 
 ## Quality, attribution, and record gates
 
