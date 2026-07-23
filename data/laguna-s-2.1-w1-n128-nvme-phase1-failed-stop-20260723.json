@@ -1,0 +1,178 @@
+{
+  "format": "laguna-w1-n128-nvme-phase1-result-v1",
+  "experiment": "laguna-routed-w1-n128-nvme-recovery-endpoint",
+  "date": "2026-07-23",
+  "status": "phase1_failed_stop",
+  "record_submission": false,
+  "decision": "Stop after A1/B1. N128 failed the frozen headline, row-win, and paired-median gates; B2/A2 and any LocalMaxxing payload are forbidden.",
+  "approved_record_anchor": {
+    "id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744,
+    "unchanged": true
+  },
+  "source": {
+    "main_repo_commit_during_both_legs": "b299a842ed393d95367a4b0a77e410f71206bd2c",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "xpu_kernel_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "shared_native_sha256": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2",
+    "xpu_native_sha256": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
+    "moe_native_sha256": "0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0",
+    "grouped_gemm_sha256": "fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96"
+  },
+  "model": {
+    "target": "poolside/Laguna-S-2.1-INT4",
+    "target_path": "/mnt/fast-ai/llm-models/laguna-s-2.1/int4",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+    "draft_path": "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "aggregate_manifest_sha256": "45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac",
+    "active_storage": "internal NVMe/ext4",
+    "external_usb_used_for_live_io": false
+  },
+  "treatment": {
+    "only_difference": "VLLM_XPU_LAGUNA_M8_W1_N_TILE",
+    "A1_control": 64,
+    "B1_candidate": 128,
+    "unchanged_record_stack": {
+      "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": 1,
+      "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": 1,
+      "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": 1,
+      "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": 1,
+      "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": 1,
+      "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": 0,
+      "VLLM_XPU_EXACT_SPEC_ATTN": 1,
+      "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS": 7
+    }
+  },
+  "protocol": {
+    "frozen_order": [
+      "A1-control",
+      "B1-candidate",
+      "B2-candidate",
+      "A2-control"
+    ],
+    "executed_order": [
+      "A1-control",
+      "B1-candidate"
+    ],
+    "fresh_service_per_leg": true,
+    "adjacent_idle_gap_seconds": 172.0,
+    "generation_warmup": "none",
+    "prompt_count_per_leg": 13,
+    "prompts_unique_per_leg": true,
+    "each_prompt_run_once": true,
+    "cached_tokens_all_zero": true,
+    "single_active_generation": true,
+    "prefix_history_ngram_response_reuse": false,
+    "max_tokens": 512,
+    "metric": "median_tok_s_1_100_after_ttft",
+    "performance_conditioned_retry": false,
+    "fifth_run_permitted": false
+  },
+  "runs": {
+    "A1_control_N64": {
+      "headline_median_tok_s": 34.96941882185737,
+      "mean_tok_s": 38.223511424905176,
+      "p10_tok_s": 24.221875960048912,
+      "aggregate_decode_seconds": 161.93544103499835,
+      "target_cycle_ms": 94.09380652818032,
+      "draft_cycles": 1721,
+      "draft_tokens": 12047,
+      "accepted_tokens": 4641,
+      "acceptance_rate": 0.3852411388727484,
+      "teacher_exact": "13/13",
+      "cached_tokens_zero": "13/13",
+      "long_then_next_exact": "2/2",
+      "rollover_exact": "1/1",
+      "quality_and_honesty_pass": true,
+      "bench_sha256": "4cb4576615c038c4f9fdf6bcda3a689c04a0575c16714cf35fb705a396e6cb21",
+      "exactness_sha256": "f24c35bb6d35e650e1838389fd5d798a1d781421715edf0925d32f2c382d7f0f",
+      "identity_sha256": "5420bdabbc14bad01529262da98cebfea3b8a4290d6102bf37caa8d8decbe787",
+      "evidence_manifest_sha256": "fd5c2e33b90ab29875e8fc6d67b4d3bd60e2514e216179ae5dfe2ee41c26dcd1",
+      "campaign_chain_sha256": "4086cdbca59b018280b3a3c07f04359faf7c55655c0d5c19337bbc97f4ceb565"
+    },
+    "B1_candidate_N128": {
+      "headline_median_tok_s": 34.029104703958986,
+      "mean_tok_s": 39.17642511003707,
+      "p10_tok_s": 26.81577074893317,
+      "aggregate_decode_seconds": 155.38672330100053,
+      "target_cycle_ms": 90.34111819825613,
+      "draft_cycles": 1720,
+      "draft_tokens": 12040,
+      "accepted_tokens": 4642,
+      "acceptance_rate": 0.3855481727574751,
+      "teacher_exact": "13/13",
+      "cached_tokens_zero": "13/13",
+      "long_then_next_exact": "2/2",
+      "rollover_exact": "1/1",
+      "quality_and_honesty_pass": true,
+      "bench_sha256": "f30c6a6758d9a6a0f1302481d1dbe7434276de451d7fa9284d37bf70da5df579",
+      "exactness_sha256": "08b139ecc282bb4b7fc07096d4e81de4e8299f74bcab1318675150fa6da2fbff",
+      "identity_sha256": "be81f73ba07694bd2d273495036c635fa86ed23da7c95cab571c8f19f6018dab",
+      "evidence_manifest_sha256": "5a5ae9657095dfe95243850a42a96582e0e862eb3c6fc2760577635d6f565981",
+      "campaign_chain_sha256": "290ed77d762a5e5c52575402d4b583ffebbb2527572b04f0fa8a989b275ec9d6"
+    }
+  },
+  "comparison": {
+    "headline_delta_tok_s": -0.9403141178983816,
+    "headline_delta_percent": -2.6889612397865914,
+    "candidate_row_wins": 3,
+    "candidate_row_losses_or_ties": 10,
+    "median_paired_delta_tok_s": -0.9403141178983816,
+    "median_paired_delta_percent": -3.0577910666417667,
+    "target_cycle_saving_ms": 3.7526883299241973,
+    "target_cycle_saving_percent": 3.9882415946264183,
+    "acceptance_rate_delta": 0.0003070338847266929,
+    "acceptance_rate_delta_percentage_points": 0.03070338847266929
+  },
+  "phase1_gates": {
+    "A1_quality_and_honesty": true,
+    "B1_quality_and_honesty": true,
+    "same_canonical_teacher": true,
+    "same_repository_source_commit": true,
+    "fresh_services_in_order_with_idle_gap": true,
+    "frozen_campaign_prefix_hash_chain": true,
+    "candidate_headline_faster": false,
+    "candidate_wins_at_least_9_of_13_rows": false,
+    "paired_median_positive": false,
+    "target_cycle_saving_at_least_0_15_ms": true,
+    "absolute_acceptance_rate_delta_at_most_0_001": true,
+    "phase1_pass": false
+  },
+  "artifact": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-recovery-abba-8936aac-c59aaad-20260723T131632Z",
+    "runner": "experiments/laguna-s-2.1-xpu-b70/tools/run_w1_n128_crossover_leg.sh",
+    "runner_sha256": "d0dd5931da27748ee64174f725d41552b24928334bcc9aed477fb3d2b17cb41b",
+    "analyzer": "experiments/laguna-s-2.1-xpu-b70/tools/analyze_w1_n128_crossover.py",
+    "analyzer_sha256": "bc80bf544ae7c9c9de05fddc0d6a2aa2e3a8614b8a4384c9c2365923b93be5ec",
+    "campaign_journal_sha256": "b2d795e89ad3471e6703d6e1552b962492ba730be0ddf6ecb1e278e11cd03efc",
+    "campaign_final_chain_sha256": "290ed77d762a5e5c52575402d4b583ffebbb2527572b04f0fa8a989b275ec9d6",
+    "phase1_analysis_json_sha256": "1e21b57c90dd066c58a637739a723b2de951ae5ba99b43352640289eb34ff0de",
+    "phase1_analysis_stdout_sha256": "1e21b57c90dd066c58a637739a723b2de951ae5ba99b43352640289eb34ff0de",
+    "phase1_analysis_markdown_sha256": "5a8e122af2d96fe08afe3a44968adb86d1a0efb243e42433fb94b3dabfe36835",
+    "phase1_seal_sha256": "49f352104d37ad1bf134d9e6330390be39408fa96cdc2ae6c5861eeb98c8bc4e",
+    "seal_valid": true,
+    "all_leg_manifests_verified": true,
+    "analysis_stdout_matches_json": true,
+    "publication_evidence_checks_passed": true
+  },
+  "postflight": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint": 0,
+    "port_8000_listening": false,
+    "model_or_worker_process_running": false,
+    "both_leg_cleanup_status_zero": true
+  },
+  "disposition": {
+    "campaign_closed": true,
+    "B2_permitted": false,
+    "A2_permitted": false,
+    "payload_staged": false,
+    "localmaxxing_submission_made": false,
+    "N128_has_real_component_and_cycle_saving": true,
+    "N128_is_endpoint_promotable": false,
+    "next_research_direction": "shared-expert GEMM occupancy or a separately preregistered narrower routed-W1 occupancy design"
+  }
+}

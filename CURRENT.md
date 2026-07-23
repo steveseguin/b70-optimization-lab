@@ -233,11 +233,22 @@ conservative lower candidate beats `cmrwot89400gqnz014oodtlbp` by
 and compact
 [packet](data/laguna-s-2.1-shared-elementwise-qknorm-stack-record-20260723.json).
 
-Next, isolate shared-expert GEMM occupancy and additional routed-W1 headroom
-against this exact stack. Do not stack the BF16 router candidate into another
-endpoint trial unless a future preregistered design explicitly isolates its
-contribution. Do not revisit route buffer fills or progressively serialize the
-whole model into opaque graph islands. Preserve the current record heads at
+The frozen routed-W1 N128 follow-up completed only A1/B1 after the local-NVMe
+recovery gate. Both starts were canonical-teacher exact 13/13, cache-zero
+13/13, long-next 2/2, rollover 1/1, and operationally clean. N128 reduced
+target-cycle time by 3.752688 ms, but its 34.029105 tok/s headline lost to
+N64 at 34.969419 tok/s (-2.6890%), it won only 3/13 rows, and its paired
+median fell 3.0578%. The frozen analyzer classified
+`phase1_failed_stop`; B2/A2 were not run and no payload or submission was
+made. Preserve the [closed negative](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-phase1-failed-stop.md)
+and [packet](data/laguna-s-2.1-w1-n128-nvme-phase1-failed-stop-20260723.json).
+
+Next, isolate shared-expert GEMM occupancy or a narrower routed-W1 geometry
+against this exact stack. The N128 endpoint treatment is closed. Do not stack
+the BF16 router candidate into another endpoint trial unless a future
+preregistered design explicitly isolates its contribution. Do not revisit
+route buffer fills or progressively serialize the whole model into opaque
+graph islands. Preserve the current record heads at
 vLLM `8936aac144929190c1e53f8b8624ca397ce16f5b` plus kernels
 `b6076ce1249ffee0e30bee528f4cd15c3bffb234`; enable
 `VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1` and
@@ -257,9 +268,10 @@ and
 No Laguna endpoint or worker is running. The host is now on clean boot
 `0b7f98a5-e50a-46a5-81ea-15938b55317a`, kernel `7.0.0-28-generic`, with
 kernel taint `0`; model services and the display manager are inactive under
-`multi-user.target`. The new boot-bound local-only recovery gate remains the
-next action and must pass before any model generation. Its first local root
-passed model hashing, four-card discovery/mapping, and strict idle, then failed
+`multi-user.target`. The boot-bound local-only recovery gate was required
+before the recovered W1 campaign and passed after the four fail-closed
+tooling-only preflights described below. Its first local root passed model
+hashing, four-card discovery/mapping, and strict idle, then failed
 closed before peer/XCCL/N64 because `UR_LOG_LOADER=level_info` is invalid for
 the installed oneAPI 2026 logger syntax. Kernel delta and reject files were
 empty; no N128 or model generation occurred. The immutable abort is documented
@@ -294,9 +306,9 @@ taint remains zero. See the
 [recovery pass note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-recovery-gate-pass.md)
 and
 [structured packet](data/laguna-s-2.1-w1-n128-nvme-recovery-pass-20260723.json).
-The next and first post-recovery model generation must now be A1 N64 control
-in the frozen local-NVMe A-B-B-A campaign. No diagnostic, warmup, candidate,
-or unrelated generation may precede it.
+It authorized A1 as the first post-recovery model generation. The frozen
+campaign then ran A1/B1 and closed at the failed phase-one gate summarized
+above; no further recovery action or reboot is pending.
 
 ## Optimization Transition
 
