@@ -75,8 +75,26 @@ Source frozen before build:
   caused eager-only, modular-router, EPLB, BF16-tail, and literal-FP32-sigmoid
   contracts to be tightened before these commits.
 
-The compiler identity, build log, and installed `_moe_C.abi3.so` hash will be
-appended and committed before the first component GPU process starts.
+Focused build and binary freeze, completed before the first component GPU
+process:
+
+- compiler: IntelLLVM `2025.3.3`,
+  `/opt/intel/oneapi/compiler/2025.3/bin/icpx`;
+- command: `ninja -C build/temp _moe_C.abi3.so`;
+- build log:
+  `/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/binaries/m8-bf16-router-topk-af68118-20260723/build-_moe_C.log`;
+- build-log SHA256:
+  `32945e426019a2ecd6e1aa1e82f7a2655a5268f3f7b65e05c7c6645c0438078b`;
+- archived incumbent `_moe_C` SHA256:
+  `f222d3e2d2a8a331e3c85f12e0d02a17aa7a89147bbbcc8ac2c2a816629a405f`;
+- built, archived, and installed candidate `_moe_C` SHA256:
+  `0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0`;
+  and
+- a fresh-process schema probe proved the incumbent lacked the new symbol and
+  the candidate exported the expected five-tensor mutating op.
+
+Both binaries and the symbol/compiler checks are preserved under the build-log
+directory above.
 
 Static gate freeze:
 
