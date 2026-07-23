@@ -7,25 +7,29 @@ repo_root=/home/steve/llm-optimizations
 vllm_root=/home/steve/src/deepseek-v4-vllm-xpu-dspark
 kernel_root=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
 python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
-oracle="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n64_recovery.py"
-base_gate="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n128.py"
+paths_script="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh"
+oracle="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n64_recovery_nvme.py"
+base_gate="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n128_nvme.py"
 xccl_gate="$repo_root/scripts/check-qwen36-xpu-xccl-health.sh"
-peer_binary=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/sycl-peer-read-test-oneapi2026
-evidence_root=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-postreboot-recovery-20260723T120411Z
+peer_binary=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/sycl-peer-read-test-oneapi2026
+evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T131632Z
 
-expected_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
-failed_boot_id=c3b56b2b-8ae3-4f1a-991a-210a95df55cb
+expected_boot_id=__EXPECTED_POSTREBOOT_BOOT_ID__
+tainted_ntfs_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
+device_lost_boot_id=c3b56b2b-8ae3-4f1a-991a-210a95df55cb
 expected_kernel=7.0.0-28-generic
-failed_kernel=6.17.0-35-generic
+device_lost_kernel=6.17.0-35-generic
 expected_vllm_commit=8936aac144929190c1e53f8b8624ca397ce16f5b
 expected_kernel_commit=c59aaadbbfd350c2b5f4ad663e247c2811ae3181
 expected_peer_sha256=1ab3b96dd1c7cd46a2e5422b0b6bf705ba5b80f306102e968768f634ee4bf92c
 expected_fixture_sha256=478a23508e635c91fa62ff0a4b737016266bc308e8fe60111e81abad3d47c1f6
 expected_xpu_extension_sha256=f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 expected_grouped_gemm_sha256=fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
-expected_oracle_sha256=2abcec3792add95f4e0862554f88fabc762300834d57816b85381eca314c89ac
-expected_base_gate_sha256=17491ad377178c5ef693d737f21b77bac4c80413d1abec17c8cdb3678eaa62b7
+expected_paths_script_sha256=99ea295ad3432c5b66aab91a4319f1d6bec827883548be7d10d5d1f77bf01e55
+expected_oracle_sha256=b65f79c4c21195df5f1baa15431f3b4b49407e599366acd42d7a447c24c8f2db
+expected_base_gate_sha256=c970b12fc46c6c025266a055a30dbc0084db2bcd2d127bac3524449d61de166c
 expected_xccl_gate_sha256=b15dd4c248d8c4d7035c2d180b9ecc5354b1b20bdabb0c47c540b5003a1cfb78
+expected_model_manifest_sha256=45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
 
 reject_pattern='Timedout job:|VM job timed out|Kernel-submitted job timed out|device coredump|GT.*reset|reset (queued|started|done)|TLB.*timeout|GuC.*(fail|error|timeout)|CT.*(fail|error|timeout)|AER:.*(error|fatal|nonfatal)|PCIe Bus Error'
 
@@ -58,6 +62,13 @@ early_finalize() {
   exit "$rc"
 }
 trap early_finalize EXIT
+
+# shellcheck source=laguna_nvme_paths.sh
+source "$paths_script"
+laguna_nvme_prepare_paths
+[[ "$LAGUNA_NVME_MODEL_ROOT" == /mnt/fast-ai/llm-models/laguna-s-2.1 ]]
+[[ "$LAGUNA_NVME_ARTIFACT_ROOT" == /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1 ]]
+laguna_nvme_assert_fresh_run_path "$evidence_root"
 
 if [[ -e "$evidence_root" ]]; then
   echo "recovery evidence root already exists: $evidence_root" >&2
@@ -332,9 +343,10 @@ printf '%s\n' "$boot_id" > "$evidence_root/boot-id.txt"
 printf '%s\n' "$kernel_release" > "$evidence_root/kernel-release.txt"
 uname -a > "$evidence_root/uname.txt"
 [[ "$boot_id" == "$expected_boot_id" ]]
-[[ "$boot_id" != "$failed_boot_id" ]]
+[[ "$boot_id" != "$tainted_ntfs_boot_id" ]]
+[[ "$boot_id" != "$device_lost_boot_id" ]]
 [[ "$kernel_release" == "$expected_kernel" ]]
-[[ "$kernel_release" != "$failed_kernel" ]]
+[[ "$kernel_release" != "$device_lost_kernel" ]]
 
 : > "$evidence_root/service-states.txt"
 require_service_not_active gemma4-26b-q8-quad-frontdoor.service
@@ -357,14 +369,26 @@ git -C "$kernel_root" status --short > "$evidence_root/kernel-status.txt"
 [[ "$(< "$evidence_root/vllm-head.txt")" == "$expected_vllm_commit" ]]
 [[ "$(< "$evidence_root/kernel-head.txt")" == "$expected_kernel_commit" ]]
 
-sha256sum "$0" "$oracle" "$base_gate" "$xccl_gate" \
+sha256sum "$0" "$paths_script" "$oracle" "$base_gate" "$xccl_gate" \
   > "$evidence_root/tool-identities.sha256"
+check_hash "$paths_script" "$expected_paths_script_sha256"
 check_hash "$oracle" "$expected_oracle_sha256"
 check_hash "$base_gate" "$expected_base_gate_sha256"
 check_hash "$xccl_gate" "$expected_xccl_gate_sha256"
 check_hash "$peer_binary" "$expected_peer_sha256"
 printf '%s  %s\n' "$expected_peer_sha256" "$peer_binary" \
   > "$evidence_root/peer-binary.sha256"
+
+check_hash "$LAGUNA_NVME_SOURCE_MANIFEST" "$expected_model_manifest_sha256"
+check_hash "$LAGUNA_NVME_LOCAL_MANIFEST" "$expected_model_manifest_sha256"
+cmp "$LAGUNA_NVME_SOURCE_MANIFEST" "$LAGUNA_NVME_LOCAL_MANIFEST"
+run_capture model-content-manifest \
+  timeout --signal=TERM --kill-after=15s 300s \
+  bash -c '
+    cd -- "$1"
+    exec sha256sum -c -- .verification/nvme-files.sha256
+  ' bash "$LAGUNA_NVME_MODEL_ROOT"
+[[ "$(grep -c ': OK$' "$evidence_root/model-content-manifest.log")" == 118 ]]
 
 run_capture xpu-smi-version timeout --signal=TERM --kill-after=5s 20s xpu-smi -v
 run_capture xpu-smi-discovery \
@@ -515,9 +539,10 @@ capture_kernel_delta
 
 jq -n \
   --arg boot_id "$boot_id" \
-  --arg failed_boot_id "$failed_boot_id" \
+  --arg tainted_ntfs_boot_id "$tainted_ntfs_boot_id" \
+  --arg device_lost_boot_id "$device_lost_boot_id" \
   --arg kernel_release "$kernel_release" \
-  --arg failed_kernel "$failed_kernel" \
+  --arg device_lost_kernel "$device_lost_kernel" \
   --arg started_utc "$started_utc" \
   --arg idle_started_utc "$idle_started_utc" \
   --arg idle_completed_utc "$idle_completed_utc" \
@@ -531,9 +556,10 @@ jq -n \
     passed: true,
     boot: {
       boot_id: $boot_id,
-      differs_from_failed_boot_id: ($boot_id != $failed_boot_id),
+      differs_from_tainted_ntfs_boot_id: ($boot_id != $tainted_ntfs_boot_id),
+      differs_from_device_lost_boot_id: ($boot_id != $device_lost_boot_id),
       kernel_release: $kernel_release,
-      differs_from_failed_kernel: ($kernel_release != $failed_kernel)
+      differs_from_device_lost_kernel: ($kernel_release != $device_lost_kernel)
     },
     source_identity: {
       repo_head: $repo_head,
@@ -543,6 +569,8 @@ jq -n \
     },
     gates: {
       exact_four_device_mapping: true,
+      local_nvme_ext4_evidence_root: true,
+      local_model_manifest_files_verified: 118,
       strict_gpu_idle_before_gates: true,
       oneapi_2026_four_device_enumeration: true,
       four_device_peer_read: true,

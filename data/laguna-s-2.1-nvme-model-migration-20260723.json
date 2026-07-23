@@ -1,0 +1,120 @@
+{
+  "format": "laguna-s-2.1-nvme-model-migration-v1",
+  "recorded_utc": "2026-07-23T13:16:32Z",
+  "policy": {
+    "active_storage": "local_nvme_ext4_only",
+    "usb_storage": "backup_only",
+    "usb_live_model_reads_allowed": false,
+    "usb_live_cache_or_evidence_writes_allowed": false,
+    "usb_backup_deleted": false
+  },
+  "host": {
+    "local_source": "/dev/nvme0n1p2",
+    "local_filesystem": "ext4",
+    "usb_source": "/dev/sda2",
+    "usb_filesystem": "ntfs3",
+    "boot_id": "97dfe56f-f2d8-4e08-a923-2c6007f02381",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint": 640,
+    "gpu_or_model_work_performed_during_migration": false,
+    "reboot_required_before_gpu_work": true
+  },
+  "model_copy": {
+    "source_backup_root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1",
+    "destination_root": "/mnt/fast-ai/llm-models/laguna-s-2.1",
+    "directories": {
+      "target": {
+        "name": "int4",
+        "files": 100,
+        "logical_bytes": 72021173058
+      },
+      "draft": {
+        "name": "dflash-int4",
+        "files": 18,
+        "logical_bytes": 2229975225
+      }
+    },
+    "total_files": 118,
+    "total_logical_bytes": 74251148283,
+    "source_manifest": "/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/source-files.sha256",
+    "destination_manifest": "/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256",
+    "manifests_byte_identical": true,
+    "manifest_sha256": "45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac",
+    "staged_before_promotion": true,
+    "promoted_only_after_full_sha256_match": true
+  },
+  "local_recovery_inputs": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1",
+    "files": 9,
+    "source_hashes_preserved": true,
+    "items": {
+      "teacher": "d41d3d5e2471ee98f783e58407e44217ade67f7472147eeeb82780efa89879d1",
+      "formal_summary": "bb48793e711cdb20889e888092344d35f0f3c7cb0e85bc120f63f51cff39b932",
+      "formal_card0": "753a0f9cddca015f8a7505be4ec3220a422cf230bb293e097fefdf4614594fc6",
+      "formal_card1": "5189be770962212d563afa910d3b8b4cb6e8ec53b0199011f17e4e3da47457c9",
+      "formal_card2": "0d9577cf73269dd8f229cc162fd08d9e38e7b1ce041672f8419cfb44194cc068",
+      "formal_card3": "c5ee9c93cad1ec317bcab4d561a6df48f928aefa56ceee10fe2e747e096fb158",
+      "counter_summary": "677b69fe353056a8a7a9afff7e7e952fe337a6d605c326beb80ae5e0103b6e76",
+      "timing_fixture": "478a23508e635c91fa62ff0a4b737016266bc308e8fe60111e81abad3d47c1f6",
+      "peer_binary": "1ab3b96dd1c7cd46a2e5422b0b6bf705ba5b80f306102e968768f634ee4bf92c"
+    }
+  },
+  "space_reclamation": {
+    "classification": "closed_or_blocked_hugging_face_download_caches",
+    "total_allocated_bytes_reclaimed": 132578820096,
+    "unique_experiment_evidence_deleted": false,
+    "protected_model_directories_deleted": false,
+    "recovery": "redownload the pinned Hugging Face revisions",
+    "removed": [
+      {
+        "path": "/mnt/fast-ai/llm-cache/hf/hub/models--Qwen--Qwen3.6-35B-A3B-FP8",
+        "allocated_bytes": 37493452800,
+        "revision": "95a723d08a9490559dae23d0cff1d9466213d989",
+        "lane": "blocked_native_xpu_fp8"
+      },
+      {
+        "path": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound-Code",
+        "allocated_bytes": 19017072640,
+        "revision": "2264cf0911559d59b08fe8d59d815565124c647d",
+        "lane": "closed_qwen27"
+      },
+      {
+        "path": "/mnt/fast-ai/llm-cache/hf/hub/models--webhie--Qwen3.6-27B-int4-AutoRound",
+        "allocated_bytes": 19017072640,
+        "revision": "f5750c90b3776db658594df5fe8051098226dd8e",
+        "lane": "closed_qwen27"
+      },
+      {
+        "path": "/mnt/fast-ai/llm-cache/hf/hub/models--acyildirimer--Qwen3.6-27B-int4-AutoRound",
+        "allocated_bytes": 19017043968,
+        "revision": "c71c579b605c5bd10d50e94360fec1fb7078b577",
+        "lane": "closed_qwen27"
+      },
+      {
+        "path": "/mnt/fast-ai/llm-cache/hf/hub/models--Lorbus--Qwen3.6-27B-int4-AutoRound",
+        "allocated_bytes": 19017097216,
+        "revision": "c3aea2d531678621989e5e2db034e32b22536e79",
+        "lane": "closed_qwen27"
+      },
+      {
+        "path": "/mnt/fast-ai/llm-cache/hf/hub/models--Intel--Qwen3.6-27B-int4-AutoRound",
+        "allocated_bytes": 19017080832,
+        "revision": "abc86de19eb1ebbf6a7df4582341325c22ddcb7d",
+        "lane": "closed_qwen27"
+      }
+    ]
+  },
+  "post_copy_filesystem": {
+    "size_bytes": 982240026624,
+    "used_bytes": 865718366208,
+    "available_bytes": 66551144448,
+    "reported_use_percent": 93
+  },
+  "next_actions": [
+    "finish additive local-only runner and gate migration",
+    "commit the migration packet and tools",
+    "reboot to clear kernel taint",
+    "run a distinct no-generation local-ext4 recovery gate",
+    "keep recovery A1 as the first subsequent model generation"
+  ]
+}

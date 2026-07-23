@@ -7,8 +7,8 @@ if (( $# != 2 )); then
 fi
 treatment="${1:?usage: run_w1_n128_crossover_leg.sh control|candidate RUN_DIR}"
 run_dir="${2:?usage: run_w1_n128_crossover_leg.sh control|candidate RUN_DIR}"
-campaign_id=w1-n128-endpoint-abba-8936aac-c59aaad-20260723T093923Z
-campaign_root="/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/$campaign_id"
+campaign_id=w1-n128-nvme-recovery-abba-8936aac-c59aaad-20260723T131632Z
+campaign_root="/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/$campaign_id"
 
 case "$run_dir" in
   "$campaign_root/01-A1-control")
@@ -70,6 +70,9 @@ if [[ -n "$ambient_sensitive" ]]; then
   exit 2
 fi
 
+# shellcheck source=laguna_nvme_paths.sh
+source "$(cd -- "$(dirname -- "$0")" && pwd -P)/laguna_nvme_paths.sh"
+
 repo_root=/home/steve/llm-optimizations
 vllm_root=/home/steve/src/deepseek-v4-vllm-xpu-dspark
 kernel_root=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
@@ -77,22 +80,28 @@ venv_python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
 oneccl_library=/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so
 libfabric_library=/home/steve/.venvs/deepseek-v4-xpu/lib/libfabric.so
 suite_rel=experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json
-teacher=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/bulletproof-q1-canonical-cb616c6-6fc06b0-20260722T142908Z/bench.json
-target_root=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/int4
-draft_root=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/dflash-int4
+artifact_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1
+model_root=/mnt/fast-ai/llm-models/laguna-s-2.1
+target_root="$model_root/int4"
+draft_root="$model_root/dflash-int4"
+source_model_manifest="$model_root/.verification/source-files.sha256"
+model_manifest="$model_root/.verification/nvme-files.sha256"
+expected_model_aggregate_manifest=45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
+teacher="$artifact_root/runs/bulletproof-q1-canonical-cb616c6-6fc06b0-20260722T142908Z/bench.json"
 target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 target_tree="$target_root/.cache/huggingface/trees/$target_revision.json"
 draft_tree="$draft_root/.cache/huggingface/trees/$draft_revision.json"
 target_config="$target_root/config.json"
 draft_config="$draft_root/config.json"
-serve_script="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/serve_laguna.sh"
+nvme_paths_script="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh"
+serve_script="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/serve_laguna_nvme.sh"
 compare_script="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/compare_exact_runs.py"
 benchmark_script="$repo_root/scripts/bench-openai-realistic-suite.py"
 analyzer_script="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/analyze_w1_n128_crossover.py"
-preregistration="$repo_root/experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-routed-w1-n128-endpoint-preregistration.md"
-formal_component=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-formal2-aggregate-c59aaad-8f2345e-20260723T053000-0400/summary.json
-counter_component=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-counter-gate-c59aaad-00ceeac-20260723T054500-0400/summary.json
+preregistration="$repo_root/experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-recovery-preregistration.md"
+formal_component="$artifact_root/runs/w1-n128-formal2-aggregate-c59aaad-8f2345e-20260723T053000-0400/summary.json"
+counter_component="$artifact_root/runs/w1-n128-counter-gate-c59aaad-00ceeac-20260723T054500-0400/summary.json"
 script_path="$(readlink -f "$0")"
 base_url=http://127.0.0.1:18080
 campaign_journal="$campaign_root/.campaign-journal.txt"
@@ -107,10 +116,11 @@ expected_vllm=8936aac144929190c1e53f8b8624ca397ce16f5b
 expected_kernels=c59aaadbbfd350c2b5f4ad663e247c2811ae3181
 expected_suite=9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638
 expected_teacher=d41d3d5e2471ee98f783e58407e44217ade67f7472147eeeb82780efa89879d1
-expected_launcher=b27267affd51e242fbf24879e7adff69a1ca3e1829428d43501db67c9b65ccf4
+expected_launcher=280ae28aa68fd627f45986673a8288131e4599b4af7fb43a60e0b5acfe22a33c
+expected_nvme_paths=99ea295ad3432c5b66aab91a4319f1d6bec827883548be7d10d5d1f77bf01e55
 expected_comparator=87ad4d57907a15afba221be42ea00e3a1975308d421e0edc13881dafe38e3db3
 expected_benchmark=40a483d9127a42c6e9f4a3651a429d39d25336d39eee0c782ba2c7712988aa2a
-expected_preregistration=43afaf5ac1005118c3692a35f42ea6b71f47c8dffec1b3e27650dfd4c7047cc6
+expected_preregistration=82849945856ed78c3d7ca3e700ef3796399d03b65e270839857f6510cc467424
 expected_formal_component=bb48793e711cdb20889e888092344d35f0f3c7cb0e85bc120f63f51cff39b932
 expected_counter_component=677b69fe353056a8a7a9afff7e7e952fe337a6d605c326beb80ae5e0103b6e76
 expected_oneccl=ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3
@@ -134,6 +144,35 @@ expected_moe_c=0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0
 expected_grouped_gemm=fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
 expected_xpu_smi_version=d14b356677a57006a19e1e5b4aa45cada8fc0c553cd214ac76ad420ef5bdb4ab
 expected_runtime_versions=$'torch=2.12.0+xpu\nvllm=0.1.dev1172+g4a6fd8747.xpu\ntransformers=5.13.1\nvllm-xpu-kernels=0.1.11.dev53+g744a8b4\ntriton-xpu=3.7.1'
+
+assert_nvme_identity_constants() {
+  local name="$1"
+  local actual="$2"
+  local expected="$3"
+  [[ "$actual" == "$expected" ]] || {
+    echo "NVMe path identity mismatch for $name: $actual" >&2
+    exit 3
+  }
+}
+
+assert_nvme_identity_constants artifact_root "$LAGUNA_NVME_ARTIFACT_ROOT" "$artifact_root"
+assert_nvme_identity_constants model_root "$LAGUNA_NVME_MODEL_ROOT" "$model_root"
+assert_nvme_identity_constants target_root "$LAGUNA_NVME_TARGET_ROOT" "$target_root"
+assert_nvme_identity_constants draft_root "$LAGUNA_NVME_DRAFT_ROOT" "$draft_root"
+assert_nvme_identity_constants nvme_device "$LAGUNA_NVME_DEVICE" /dev/nvme0n1p2
+assert_nvme_identity_constants nvme_fstype "$LAGUNA_NVME_FSTYPE" ext4
+assert_nvme_identity_constants backup_root "$LAGUNA_NVME_BACKUP_ROOT" \
+  /media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1
+assert_nvme_identity_constants cache_root "$LAGUNA_NVME_CACHE_ROOT" "$artifact_root/cache"
+assert_nvme_identity_constants tmp_root "$LAGUNA_NVME_TMP_ROOT" "$artifact_root/tmp"
+assert_nvme_identity_constants run_root "$LAGUNA_NVME_RUN_ROOT" "$artifact_root/runs"
+assert_nvme_identity_constants evidence_root "$LAGUNA_NVME_EVIDENCE_ROOT" "$artifact_root/evidence"
+assert_nvme_identity_constants source_manifest "$LAGUNA_NVME_SOURCE_MANIFEST" \
+  "$source_model_manifest"
+assert_nvme_identity_constants model_manifest "$LAGUNA_NVME_LOCAL_MANIFEST" "$model_manifest"
+assert_nvme_identity_constants manifest_sha256 "$LAGUNA_NVME_MANIFEST_SHA256" "$expected_model_aggregate_manifest"
+assert_nvme_identity_constants campaign_root "$campaign_root" \
+  "$LAGUNA_NVME_RUN_ROOT/$campaign_id"
 
 actual_vllm="$(git -C "$vllm_root" rev-parse HEAD)"
 actual_kernels="$(git -C "$kernel_root" rev-parse HEAD)"
@@ -163,6 +202,10 @@ check_hash() {
 }
 
 check_hash "$teacher" "$expected_teacher"
+check_hash "$source_model_manifest" "$expected_model_aggregate_manifest"
+check_hash "$model_manifest" "$expected_model_aggregate_manifest"
+cmp "$source_model_manifest" "$model_manifest"
+check_hash "$nvme_paths_script" "$expected_nvme_paths"
 check_hash "$serve_script" "$expected_launcher"
 check_hash "$compare_script" "$expected_comparator"
 check_hash "$benchmark_script" "$expected_benchmark"
@@ -296,6 +339,12 @@ fi
   echo "main source tree is dirty" >&2
   exit 3
 }
+
+# This is deliberately the full content check, not just the aggregate-manifest
+# hash or metadata comparison. It completes before any endpoint/service start.
+laguna_nvme_prepare_paths
+laguna_nvme_verify_model_contents
+
 if curl -fsS "$base_url/health" >/dev/null 2>&1; then
   echo "Laguna endpoint is already active" >&2
   exit 4
@@ -791,7 +840,6 @@ export VLLM_XPU_V4_M1_BIASED_TOPK=0
 export VLLM_XPU_V4_M1_ROUTER_NORM=0
 export VLLM_TRACE_FUNCTION=0
 export LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS=7
-export LAGUNA_DFLASH_ROOT="$draft_root"
 export LAGUNA_GPU_MEMORY_UTILIZATION=0.90
 export VLLM_EXTRA_ARGS=
 
@@ -807,6 +855,7 @@ printf '%s_service_start_utc=%s\n' \
   git -C "$kernel_root" rev-parse HEAD
   sha256sum \
     "$script_path" \
+    "$nvme_paths_script" \
     "$serve_script" \
     "$compare_script" \
     "$benchmark_script" \
@@ -818,6 +867,8 @@ printf '%s_service_start_utc=%s\n' \
     "$libfabric_library" \
     "$repo_root/$suite_rel" \
     "$teacher" \
+    "$source_model_manifest" \
+    "$model_manifest" \
     "$run_dir/xpu-smi-version.txt" \
     "$target_tree" \
     "$draft_tree" \
@@ -841,6 +892,11 @@ printf '%s_service_start_utc=%s\n' \
     "model_revision=$target_revision" \
     "draft_model=$draft_root" \
     "draft_revision=$draft_revision" \
+    "retained_source_model_manifest=$source_model_manifest" \
+    "model_aggregate_manifest=$model_manifest" \
+    "model_aggregate_manifest_sha256=$expected_model_aggregate_manifest" \
+    "nvme_artifact_root=$artifact_root" \
+    "nvme_model_root=$model_root" \
     'target_manifest_files=27' \
     'draft_manifest_files=5' \
     'target_manifest_bytes=71922378071' \

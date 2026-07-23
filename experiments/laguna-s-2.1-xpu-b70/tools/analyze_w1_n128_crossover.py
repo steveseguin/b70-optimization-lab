@@ -31,10 +31,9 @@ CANONICAL_MAX_TOKENS = 512
 CANONICAL_SUITE_ID = "laguna-s-2.1-realistic-cold-v1"
 CANONICAL_SUITE_VERSION = 1
 CANONICAL_SUITE_REL = "experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json"
-CAMPAIGN_ID = "w1-n128-endpoint-abba-8936aac-c59aaad-20260723T093923Z"
+CAMPAIGN_ID = "w1-n128-nvme-recovery-abba-8936aac-c59aaad-20260723T131632Z"
 CAMPAIGN_ROOT = Path(
-    "/media/steve/CorsairExternal/llm-optimization-artifacts/"
-    f"laguna-s-2.1/runs/{CAMPAIGN_ID}"
+    f"/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/{CAMPAIGN_ID}"
 )
 CAMPAIGN_JOURNAL = CAMPAIGN_ROOT / ".campaign-journal.txt"
 CAMPAIGN_GENESIS_SHA256 = "0" * 64
@@ -65,26 +64,26 @@ REPO_ROOT = Path("/home/steve/llm-optimizations")
 RUNNER_PATH = REPO_ROOT / (
     "experiments/laguna-s-2.1-xpu-b70/tools/run_w1_n128_crossover_leg.sh"
 )
-RUNNER_SHA256 = "ccf8da1924dfda527bcec40029cdba0b1718e474cbfde635f774603dde50c752"
+RUNNER_SHA256 = "d0dd5931da27748ee64174f725d41552b24928334bcc9aed477fb3d2b17cb41b"
 ANALYZER_PATH = Path(__file__).resolve()
 PREREGISTRATION_PATH = REPO_ROOT / (
     "experiments/laguna-s-2.1-xpu-b70/notes/"
-    "2026-07-23-routed-w1-n128-endpoint-preregistration.md"
+    "2026-07-23-w1-n128-nvme-recovery-preregistration.md"
 )
 FORMAL_COMPONENT_PATH = Path(
-    "/media/steve/CorsairExternal/llm-optimization-artifacts/"
+    "/mnt/fast-ai/llm-optimization-artifacts/"
     "laguna-s-2.1/runs/"
     "w1-n128-formal2-aggregate-c59aaad-8f2345e-20260723T053000-0400/"
     "summary.json"
 )
 COUNTER_COMPONENT_PATH = Path(
-    "/media/steve/CorsairExternal/llm-optimization-artifacts/"
+    "/mnt/fast-ai/llm-optimization-artifacts/"
     "laguna-s-2.1/runs/"
     "w1-n128-counter-gate-c59aaad-00ceeac-20260723T054500-0400/"
     "summary.json"
 )
 PREREGISTRATION_SHA256 = (
-    "43afaf5ac1005118c3692a35f42ea6b71f47c8dffec1b3e27650dfd4c7047cc6"
+    "82849945856ed78c3d7ca3e700ef3796399d03b65e270839857f6510cc467424"
 )
 FORMAL_COMPONENT_SHA256 = (
     "bb48793e711cdb20889e888092344d35f0f3c7cb0e85bc120f63f51cff39b932"
@@ -99,16 +98,25 @@ VLLM_COMMIT = "8936aac144929190c1e53f8b8624ca397ce16f5b"
 KERNEL_COMMIT = "c59aaadbbfd350c2b5f4ad663e247c2811ae3181"
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-TARGET_MODEL_PATH = (
-    "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/int4"
+TARGET_MODEL_PATH = "/mnt/fast-ai/llm-models/laguna-s-2.1/int4"
+DRAFT_MODEL_PATH = "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4"
+NVME_ARTIFACT_ROOT = "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1"
+NVME_MODEL_ROOT = "/mnt/fast-ai/llm-models/laguna-s-2.1"
+SOURCE_MODEL_MANIFEST_PATH = f"{NVME_MODEL_ROOT}/.verification/source-files.sha256"
+MODEL_AGGREGATE_MANIFEST_PATH = f"{NVME_MODEL_ROOT}/.verification/nvme-files.sha256"
+MODEL_AGGREGATE_MANIFEST_SHA256 = (
+    "45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac"
 )
-DRAFT_MODEL_PATH = (
-    "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/dflash-int4"
+NVME_PATHS_PATH = REPO_ROOT / (
+    "experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh"
+)
+SERVE_NVME_PATH = REPO_ROOT / (
+    "experiments/laguna-s-2.1-xpu-b70/tools/serve_laguna_nvme.sh"
 )
 ONECCL_LIBRARY_PATH = "/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so"
 LIBFABRIC_LIBRARY_PATH = "/home/steve/.venvs/deepseek-v4-xpu/lib/libfabric.so"
 TEACHER_PATH = (
-    "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/"
+    "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/"
     "runs/bulletproof-q1-canonical-cb616c6-6fc06b0-20260722T142908Z/"
     "bench.json"
 )
@@ -117,6 +125,11 @@ IDENTITY_FIXED_KEYS = {
     "model_revision": TARGET_REVISION,
     "draft_model": DRAFT_MODEL_PATH,
     "draft_revision": DRAFT_REVISION,
+    "retained_source_model_manifest": SOURCE_MODEL_MANIFEST_PATH,
+    "model_aggregate_manifest": MODEL_AGGREGATE_MANIFEST_PATH,
+    "model_aggregate_manifest_sha256": MODEL_AGGREGATE_MANIFEST_SHA256,
+    "nvme_artifact_root": NVME_ARTIFACT_ROOT,
+    "nvme_model_root": NVME_MODEL_ROOT,
     "target_manifest_files": "27",
     "draft_manifest_files": "5",
     "target_manifest_bytes": "71922378071",
@@ -178,9 +191,12 @@ IDENTITY_FIXED_KEYS = {
 }
 IDENTITY_FIXED_CHECKSUMS = {
     str(RUNNER_PATH): RUNNER_SHA256,
-    str(
-        REPO_ROOT / "experiments/laguna-s-2.1-xpu-b70/tools/serve_laguna.sh"
-    ): "b27267affd51e242fbf24879e7adff69a1ca3e1829428d43501db67c9b65ccf4",
+    str(NVME_PATHS_PATH): (
+        "99ea295ad3432c5b66aab91a4319f1d6bec827883548be7d10d5d1f77bf01e55"
+    ),
+    str(SERVE_NVME_PATH): (
+        "280ae28aa68fd627f45986673a8288131e4599b4af7fb43a60e0b5acfe22a33c"
+    ),
     str(
         REPO_ROOT / "experiments/laguna-s-2.1-xpu-b70/tools/compare_exact_runs.py"
     ): "87ad4d57907a15afba221be42ea00e3a1975308d421e0edc13881dafe38e3db3",
@@ -200,6 +216,8 @@ IDENTITY_FIXED_CHECKSUMS = {
         "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638"
     ),
     TEACHER_PATH: ("d41d3d5e2471ee98f783e58407e44217ade67f7472147eeeb82780efa89879d1"),
+    SOURCE_MODEL_MANIFEST_PATH: MODEL_AGGREGATE_MANIFEST_SHA256,
+    MODEL_AGGREGATE_MANIFEST_PATH: MODEL_AGGREGATE_MANIFEST_SHA256,
     f"{TARGET_MODEL_PATH}/config.json": (
         "9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cce6549f7eba5b14e6"
     ),
@@ -2250,6 +2268,11 @@ def main() -> int:
             "kernel_commit": KERNEL_COMMIT,
             "target_revision": TARGET_REVISION,
             "draft_revision": DRAFT_REVISION,
+            "retained_source_model_manifest": SOURCE_MODEL_MANIFEST_PATH,
+            "model_aggregate_manifest": MODEL_AGGREGATE_MANIFEST_PATH,
+            "model_aggregate_manifest_sha256": MODEL_AGGREGATE_MANIFEST_SHA256,
+            "nvme_artifact_root": NVME_ARTIFACT_ROOT,
+            "nvme_model_root": NVME_MODEL_ROOT,
             "target_manifest_files": 27,
             "draft_manifest_files": 5,
             "target_manifest_bytes": 71922378071,

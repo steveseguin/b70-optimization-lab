@@ -81,3 +81,12 @@ or model count makes that impractical. Use the USB drive for alternate model
 variants, overflow downloads, and archived large artifacts. Do not commit model
 weights, USB paths full of artifacts, or generated cache contents to Git; record
 only the model identity, local path, checksum if useful, and result summaries.
+
+For Laguna S 2.1, the stricter policy established on 2026-07-23 overrides the
+general overflow rule: the external Corsair `ntfs3` volume is backup-only.
+Laguna model reads, caches, temporary files, logs, run roots, and recovery
+evidence must stay on the internal NVMe/ext4 filesystem and fail closed rather
+than falling back to `/media/steve/CorsairExternal`. The active model root is
+`/mnt/fast-ai/llm-models/laguna-s-2.1`; the active artifact root is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1`. Frozen historical
+evidence may retain its original USB path in notes and manifests.

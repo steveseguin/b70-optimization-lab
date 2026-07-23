@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=laguna_nvme_paths.sh
+source "$script_dir/laguna_nvme_paths.sh"
+
+mode="${1:?usage: serve_laguna_nvme.sh MODE RUN_DIR [KV_CACHE_DTYPE]}"
+run_dir="${2:?usage: serve_laguna_nvme.sh MODE RUN_DIR [KV_CACHE_DTYPE]}"
+kv_cache_dtype="${3:-auto}"
+
+case "$mode" in
+  eager|compiled|piecewise|dflash|dflash-piecewise) ;;
+  *) echo "unsupported mode: $mode" >&2; exit 2 ;;
+esac
+
+case "$kv_cache_dtype" in
+  auto|bfloat16|fp8) ;;
+  *) echo "unsupported KV cache dtype: $kv_cache_dtype" >&2; exit 2 ;;
+esac
+
+dflash_num_speculative_tokens="${LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS:-7}"
+if [[ ! "$dflash_num_speculative_tokens" =~ ^[0-9]+$ ]] \
+  || (( dflash_num_speculative_tokens < 1 || dflash_num_speculative_tokens > 15 )); then
+  echo "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS must be an integer from 1 to 15" >&2
+  exit 2
+fi
+
+laguna_nvme_prepare_paths
+laguna_nvme_prepare_run_dir "$run_dir"
+cache_root="$LAGUNA_NVME_CACHE_ROOT"
+model_root="$LAGUNA_NVME_TARGET_ROOT"
+draft_root="$LAGUNA_NVME_DRAFT_ROOT"
+venv_root=/home/steve/.venvs/deepseek-v4-xpu
+vllm_root=/home/steve/src/deepseek-v4-vllm-xpu-dspark
+kernel_root=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
+
+source "$venv_root/bin/activate"
+export PYTHONPATH="$vllm_root:$kernel_root${PYTHONPATH:+:$PYTHONPATH}"
+export ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3
+export ZE_AFFINITY_MASK=0,1,2,3
+export CCL_ATL_TRANSPORT=ofi
+export CCL_TOPO_P2P_ACCESS=1
+export HF_HOME="$cache_root/hf"
+export HF_HUB_CACHE="$cache_root/hf/hub"
+export TRANSFORMERS_CACHE="$cache_root/hf/transformers"
+export VLLM_CACHE_ROOT="$cache_root/vllm"
+export TORCHINDUCTOR_CACHE_DIR="$cache_root/torchinductor"
+export TRITON_CACHE_DIR="$cache_root/triton"
+export XDG_CACHE_HOME="$cache_root"
+# Keep the ZMQ IPC pathname below Linux's sockaddr_un limit while retaining
+# all temporary state on the local NVMe.
+export TMPDIR="$LAGUNA_NVME_TMP_ROOT"
+export VLLM_KV_CACHE_LAYOUT=NHD
+export VLLM_XPU_EXACT_SPEC_ATTN=1
+export VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1
+export VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0
+export VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION="${VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION:-0}"
+export VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2="${VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2:-0}"
+export VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE="${VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE:-0}"
+export VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM="${VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM:-0}"
+export VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM="${VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM:-0}"
+export VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="${VLLM_XPU_LAGUNA_M8_QKNORM_ROPE:-0}"
+export VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0
+export VLLM_USE_AOT_COMPILE=0
+
+common_args=(
+  "$model_root"
+  --host 127.0.0.1 --port 18080
+  --served-model-name laguna-s-2.1-int4
+  --dtype bfloat16
+  --tensor-parallel-size 4
+  --data-parallel-size 1
+  --pipeline-parallel-size 1
+  --distributed-executor-backend mp
+  --enable-expert-parallel
+  --all2all-backend allgather_reducescatter
+  --max-model-len 8192
+  --max-num-batched-tokens 8192
+  --max-num-seqs 1
+  --block-size 64
+  --kv-cache-dtype "$kv_cache_dtype"
+  --gpu-memory-utilization "${LAGUNA_GPU_MEMORY_UTILIZATION:-0.90}"
+  --no-enable-prefix-caching
+  --generation-config vllm
+  --enable-prompt-tokens-details
+)
+
+if [[ "$mode" == compiled ]]; then
+  export XPU_GRAPH=0
+  export VLLM_XPU_ENABLE_XPU_GRAPH=0
+  export VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=1
+  export TRITON_INTEL_DISABLE_IGC_OPT=1
+  common_args+=(--compilation-config '{"custom_ops":["all"],"use_inductor_graph_partition":true,"compile_sizes":[1,8],"cudagraph_mode":"NONE"}')
+elif [[ "$mode" != piecewise && "$mode" != dflash-piecewise ]]; then
+  export XPU_GRAPH=0
+  export VLLM_XPU_ENABLE_XPU_GRAPH=0
+  common_args+=(--enforce-eager)
+else
+  export XPU_GRAPH=1
+  export VLLM_XPU_ENABLE_XPU_GRAPH=1
+  export VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=1
+  export VLLM_USE_AOT_COMPILE=1
+  export TRITON_INTEL_DISABLE_IGC_OPT=1
+  common_args+=(--compilation-config '{"custom_ops":["all"],"use_inductor_graph_partition":true,"compile_sizes":[1,8],"cudagraph_mode":"PIECEWISE","max_cudagraph_capture_size":8}')
+fi
+
+if [[ "$mode" == dflash || "$mode" == dflash-piecewise ]]; then
+  # Async scheduling races the completed DFlash request with the following
+  # target prefill on XPU. Serialize the DFlash scheduler/model-runner handoff.
+  # Keep the q=1 teacher's original scheduling contract: its target arithmetic
+  # changes when async scheduling is disabled even without speculation.
+  common_args+=(--no-async-scheduling)
+  common_args+=(--speculative-config "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"num_speculative_tokens\":$dflash_num_speculative_tokens,\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\"}")
+fi
+
+if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+  read -r -a extra_args <<< "$VLLM_EXTRA_ARGS"
+  common_args+=("${extra_args[@]}")
+fi
+
+exec vllm serve "${common_args[@]}"

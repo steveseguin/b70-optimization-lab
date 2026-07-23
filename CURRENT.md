@@ -243,11 +243,20 @@ vLLM `8936aac144929190c1e53f8b8624ca397ce16f5b` plus kernels
 `VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1` and
 `VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1` only in the pinned Laguna record launch
 command.
-Also preserve the DeepSeek
-option-4 branch and all `preserve/*` tags. All Laguna model, cache,
-temp, log, and run artifacts remain on the external Corsair drive; do not write
-them to `/mnt/fast-ai`. Postflight on 2026-07-23 left no Laguna endpoint or
-worker running; all four B70s are free.
+Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
+The Laguna storage policy changed on 2026-07-23: the active target and DFlash
+draft are now hash-verified under
+`/mnt/fast-ai/llm-models/laguna-s-2.1`, and live cache, temp, log, run, and
+recovery-evidence paths must use the internal NVMe/ext4 filesystem. The
+external Corsair `ntfs3` copy is backup-only; do not use it for live model
+reads or benchmark writes. Frozen historical evidence keeps its original
+paths. See the
+[migration note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-laguna-usb-backup-only-nvme-migration.md)
+and
+[structured packet](data/laguna-s-2.1-nvme-model-migration-20260723.json).
+No Laguna endpoint or worker is running. The current boot remains rejected
+after the documented `ntfs3` kernel Oops; reboot and pass the new local-only
+recovery gate before any further GPU or model work.
 
 ## Optimization Transition
 
