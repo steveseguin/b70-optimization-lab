@@ -1254,13 +1254,18 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def run_text_command(command: list[str]) -> str:
+def run_text_command(
+    command: list[str],
+    *,
+    env: dict[str, str] | None = None,
+) -> str:
     completed = subprocess.run(
         command,
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        env=env,
     )
     return completed.stdout.strip()
 
@@ -1294,6 +1299,33 @@ def _path_is_within(path: Path, root: Path) -> bool:
     return True
 
 
+def parse_xpu_smi_devices(discovery: str) -> dict[str, dict[str, str]]:
+    devices: dict[str, dict[str, str]] = {}
+    current_id: str | None = None
+    for line in discovery.splitlines():
+        device_match = re.match(
+            r"^\|\s*(\d+)\s*\|\s*Device Name:\s*(.*?)\s*\|$",
+            line,
+        )
+        if device_match:
+            current_id = device_match.group(1)
+            devices[current_id] = {"name": device_match.group(2)}
+            continue
+        if current_id is None:
+            continue
+        uuid_match = re.search(r"\|\s*SOC UUID:\s*([0-9a-fA-F-]+)\s*\|$", line)
+        if uuid_match:
+            devices[current_id]["soc_uuid"] = uuid_match.group(1).lower()
+            continue
+        pci_match = re.search(
+            r"\|\s*PCI BDF Address:\s*([0-9a-fA-F:.]+)\s*\|$",
+            line,
+        )
+        if pci_match:
+            devices[current_id]["pci_bdf"] = pci_match.group(1).lower()
+    return devices
+
+
 def collect_identity(args: argparse.Namespace) -> dict[str, Any]:
     from vllm.model_executor.models import laguna
 
@@ -1304,7 +1336,14 @@ def collect_identity(args: argparse.Namespace) -> dict[str, Any]:
     loaded_native = Path(xpu_kernel_extension.__file__).resolve()
     vllm_module = Path(laguna.__file__).resolve()
     xpu_smi_version = run_text_command(["xpu-smi", "-v"])
-    xpu_smi_discovery = run_text_command(["xpu-smi", "discovery"])
+    visible_xpu_smi_discovery = run_text_command(["xpu-smi", "discovery"])
+    unfiltered_env = dict(os.environ)
+    unfiltered_env.pop("ZE_AFFINITY_MASK", None)
+    unfiltered_env.pop("ONEAPI_DEVICE_SELECTOR", None)
+    full_xpu_smi_discovery = run_text_command(
+        ["xpu-smi", "discovery"],
+        env=unfiltered_env,
+    )
     affinity = os.environ.get("ZE_AFFINITY_MASK")
     actual_physical_card = (
         int(affinity)
@@ -1344,10 +1383,18 @@ def collect_identity(args: argparse.Namespace) -> dict[str, Any]:
             "version_sha256": hashlib.sha256(
                 xpu_smi_version.encode()
             ).hexdigest(),
-            "discovery": xpu_smi_discovery,
-            "discovery_sha256": hashlib.sha256(
-                xpu_smi_discovery.encode()
+            "visible_discovery": visible_xpu_smi_discovery,
+            "visible_discovery_sha256": hashlib.sha256(
+                visible_xpu_smi_discovery.encode()
             ).hexdigest(),
+            "visible_devices": parse_xpu_smi_devices(
+                visible_xpu_smi_discovery
+            ),
+            "full_discovery": full_xpu_smi_discovery,
+            "full_discovery_sha256": hashlib.sha256(
+                full_xpu_smi_discovery.encode()
+            ).hexdigest(),
+            "full_devices": parse_xpu_smi_devices(full_xpu_smi_discovery),
         },
         "activation_op": f"_C.{ACT_OP}",
         "scale_add_op": f"_C.{SCALE_ADD_OP}",
@@ -1404,14 +1451,28 @@ def validate_identity(
             f"{identity['physical_card']['actual_affinity_index']!r} != "
             f"{args.expected_physical_card}"
         )
-    discovery_pattern = re.compile(
-        rf"^\|\s*{args.expected_physical_card}\s*\|",
-        flags=re.MULTILINE,
-    )
-    if not discovery_pattern.search(identity["xpu_smi"]["discovery"]):
+    expected_key = str(args.expected_physical_card)
+    full_devices = identity["xpu_smi"]["full_devices"]
+    visible_devices = identity["xpu_smi"]["visible_devices"]
+    if expected_key not in full_devices:
         mismatches.append(
-            "expected physical card is absent from xpu-smi discovery"
+            "expected physical card is absent from unfiltered xpu-smi discovery"
         )
+    if set(visible_devices) != {"0"}:
+        mismatches.append(
+            "affinity-filtered xpu-smi discovery did not expose exactly "
+            "logical device 0"
+        )
+    if expected_key in full_devices and set(visible_devices) == {"0"}:
+        expected_device = full_devices[expected_key]
+        visible_device = visible_devices["0"]
+        for field in ("soc_uuid", "pci_bdf"):
+            if expected_device.get(field) != visible_device.get(field):
+                mismatches.append(
+                    f"visible physical-card {field} "
+                    f"{visible_device.get(field)!r} != expected "
+                    f"{expected_device.get(field)!r}"
+                )
     if not _path_is_within(
         Path(identity["vllm_module_path"]),
         args.vllm_repo.resolve(),
