@@ -1,0 +1,80 @@
+{
+  "format": "laguna-w1-n128-postreboot-ntfs3-preflight-incident-v1",
+  "classification": {
+    "kind": "infrastructure_preflight_abort",
+    "benchmark_observation": false,
+    "model_generation_performed": false,
+    "candidate_observation": false,
+    "n128_executed": false,
+    "n64_component_executed": false,
+    "xccl_executed": false,
+    "peer_test_executed": false
+  },
+  "source_identity": {
+    "repo_commit": "25db14e9f",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_repo_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181"
+  },
+  "host": {
+    "boot_id": "97dfe56f-f2d8-4e08-a923-2c6007f02381",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint_after_incident": 640,
+    "kernel_tainted_by_oops": true,
+    "kernel_tainted_by_warning": true
+  },
+  "failed_gate": {
+    "root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-postreboot-recovery-20260723T120411Z",
+    "started_utc": "2026-07-23T12:57:26Z",
+    "completed_utc": "2026-07-23T12:57:43Z",
+    "exit_status": 124,
+    "failed_operation": "timeout 15 xpu-smi ps > preflight-xpu-ps.txt",
+    "partial_output_rows": 1,
+    "partial_output_device_ids": [
+      0
+    ],
+    "manifest_verified": true,
+    "evidence_manifest_sha256": "4fe2e1bef509c8118d65747e8909217e5532f2d314178b5814d0020fa96b30c8",
+    "final_status_sha256": "1ba5ecf998ef6c010dcf080f7bd955834ea32f8802a8010e4101d89f75d8de71",
+    "kernel_delta_sha256": "4fa49d66407eef5fdccf2cad4e878cb9716ed2435c688e5ef81c7129f8cfc2d9",
+    "kernel_reject_events_empty": true
+  },
+  "root_cause": {
+    "gpu_failure": false,
+    "filesystem_failure": true,
+    "filesystem_mount": "/media/steve/CorsairExternal",
+    "filesystem_source": "/dev/sda2",
+    "filesystem_type": "ntfs3",
+    "kernel_bug": "kernel BUG at fs/iomap/buffered-io.c:1061",
+    "fault_symbol": "iomap_write_end+0x1ea/0x1f0",
+    "write_path": [
+      "iomap_write_iter",
+      "iomap_file_buffered_write",
+      "ntfs_file_write_iter",
+      "vfs_write",
+      "ksys_write"
+    ],
+    "faulting_process": {
+      "pid": 14951,
+      "command": "xpu-smi"
+    },
+    "interpretation": "xpu-smi enumeration succeeded, but its stdout redirection faulted while writing the second and later rows to the external ntfs3 evidence file. The timeout was a consequence of the kernel filesystem Oops, not evidence of an Xe device timeout."
+  },
+  "required_absences": {
+    "sycl_ls_log": true,
+    "peer_read_log": true,
+    "xccl_pass_1_log": true,
+    "xccl_pass_2_log": true,
+    "n64_oracle_card0": true,
+    "n64_production_liveness_card0": true,
+    "summary_json": true
+  },
+  "disposition": {
+    "failed_root_immutable": true,
+    "current_boot_rejected_for_benchmarking": true,
+    "additional_gpu_probe_in_current_boot_forbidden": true,
+    "reboot_required": true,
+    "next_live_evidence_must_use_linux_native_filesystem": true,
+    "next_a1_remains_first_post_recovery_model_generation": true,
+    "performance_conditioned_restart": false
+  }
+}
