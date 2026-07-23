@@ -105,3 +105,20 @@ record gates do not all pass, retain the fusion default-off as a scientifically
 supported stacking candidate; do not promote or submit it. If all gates pass,
 the lower candidate start is the publishable headline, subject to the normal
 payload audit. If the causal gates fail, preserve the result as a negative.
+
+## Pre-launch operational invalidation
+
+The first driver invocation, under block name
+`qknorm-rope-abba-20260723T025538Z`, stopped in the fail-closed preflight
+before creating A1, starting a service, or sending a generation. The harness's
+literal expected SHA256 for `scripts/bench-openai-realistic-suite.py` omitted
+its final `a`; the reported actual hash was the already registered correct
+hash. The failed driver log is preserved at:
+
+```text
+/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/qknorm-rope-abba-20260723T025538Z/01-A1-driver.log
+```
+
+This is an operationally invalid, zero-generation block, not a measured leg.
+The hash literal was corrected before launching a newly named complete ABBA
+block. No order, gate, source, binary, prompt, or performance criterion changed.
