@@ -1,0 +1,240 @@
+{
+  "experiment": "laguna-s-2.1-m8-shared-elementwise-component",
+  "date": "2026-07-23",
+  "status": "pass",
+  "component_gate_passed": true,
+  "endpoint_authorized": true,
+  "endpoint_run_completed": false,
+  "source": {
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_commit": "b6076ce1249ffee0e30bee528f4cd15c3bffb234",
+    "preregistration_commit": "44e2c524aec646dac2fdf7dd663e1f272c986817",
+    "gate_freeze_commit": "54df510da9455beb710c5dcebf33d248b23cc7d9",
+    "gate_script_sha256": "c6ab407fd62bea38f9fda4f8d51c32cd9ed6f0e323f01eef322e0f57a76911fd",
+    "native_library": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/vllm_xpu_kernels/_C.abi3.so",
+    "native_library_sha256": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2",
+    "build_log": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/shared-elementwise-build-b6076ce-20260723T061703Z/build.log",
+    "build_log_sha256": "b6be73134749cbd8e86a231979bca6c4e68e221b2d411314bd7524547a0a5d09",
+    "cmake_compiler_path": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+    "compiler": "Intel(R) oneAPI DPC++/C++ Compiler 2025.3.3 (2025.3.3.20260319)",
+    "ambient_path_icpx_diagnostic": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)",
+    "torch": "2.12.0+xpu",
+    "driver_version": "1.15.38308+1"
+  },
+  "evidence": {
+    "valid_root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/shared-elementwise-component-gate-8936aac-b6076ce-54df510-20260723T062317Z",
+    "card_json_sha256": {
+      "0": "3ed3f48e2b759dcda0cb57fe9c5acfebcaee1ca28f6f1f228587ed89bc22bba6",
+      "1": "681c871590aa3385da79b27a3c9e08b0d6b7081da66d325d9f5951597fd23128",
+      "2": "cb6d2af72429e8632fb0149db09617d7c371970b8d4e4ed351ba20b330f1d9f6",
+      "3": "160746051da99d41cfcab1ec7698fcb449e9b2be89b4fcd77323522020920389"
+    },
+    "card_stdout_sha256": {
+      "0": "ab3d78be4bc8695726739ee8ba1b9168c657c13d5c1d347df9738e7bf5a47ec9",
+      "1": "c21066fbda8ddeba816d66a26a59793d1cc3f5e7202ce01af7e30bfbc0bfacf4",
+      "2": "fd71e153ba4fadb315d9c138b4fd28945d9ce33d5ed1deaa53dc6019eb2f7e2e",
+      "3": "cc170b5897fb7545045caffaf13ad7a541964dcf540b41590dd17762e9b8886f"
+    },
+    "invalid_preflight": {
+      "root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/shared-elementwise-component-gate-8936aac-b6076ce-be84cf6-20260723T062024Z",
+      "gate_commit": "be84cf61189d3b8407eb5754a21957b31b2ac578",
+      "gate_script_sha256": "d909e16352b8f8160126286e7808c4ab82700c9e369aa3c8335d6322debf5450",
+      "card0_json_sha256": "b28c9134c086c5ecaec881f293e1d6d7d5c20d8a7c5a03023d300490d65e41e1",
+      "card1_json_sha256": "8185483266bf62d90bf003810e0e35dc8dbfd36f335da5fb32d9c5eeae285d42",
+      "failed_card": 1,
+      "error": "identity gate failed: expected physical card is absent from xpu-smi discovery",
+      "classification": "invalid_four_card_gate_identity_tool_preflight",
+      "candidate_component_run_on_failed_card": false,
+      "service_started": false,
+      "endpoint_generations": 0
+    }
+  },
+  "frozen_protocol": {
+    "rows": 8,
+    "activation_width": 256,
+    "hidden_width": 3072,
+    "layers_per_cycle": 47,
+    "random_epochs_per_operation": 256,
+    "timing_order": "A-B-B-A",
+    "warmup_cycles_per_arm": 20,
+    "timing_blocks": 31,
+    "timing_cycles_per_arm": 64,
+    "activation_min_candidate_wins": 24,
+    "scale_add_min_candidate_wins": 24,
+    "individual_min_saving_ms_exclusive": 0.0,
+    "combined_min_candidate_wins": 28,
+    "combined_min_saving_ms_inclusive": 0.15,
+    "expected_control_launches_per_cycle": 188,
+    "expected_candidate_launches_per_cycle": 94,
+    "expected_launch_reduction_per_cycle": 94
+  },
+  "exactness": {
+    "all_cards_passed": true,
+    "identity_validated_all_cards": true,
+    "activation_finite_bf16_patterns": 65280,
+    "activation_exhaustive_modes": [
+      "ones",
+      "reversed_finite",
+      "signed_zeros"
+    ],
+    "activation_midpoint_gate_bits": "0x40be",
+    "activation_midpoint_reference_silu_bits": "0x40bd",
+    "scale_add_finite_bf16_patterns": 65280,
+    "scale_add_exhaustive_modes": [
+      "zeros",
+      "ones",
+      "signed_zeros",
+      "reversed_finite"
+    ],
+    "pre_timing_exhaustive_passed_all_cards": true,
+    "pre_timing_random_passed_all_cards": true,
+    "post_timing_exhaustive_passed_all_cards": true,
+    "runtime_fail_closed_contracts_passed_all_cards": true,
+    "matching_m8_dispatch_counts": {
+      "activation": 1,
+      "scale_add": 1
+    },
+    "matching_m8_output_sha256": {
+      "activation": "8a4cd3b5da60ecedaa1ecb0c1df7faf6c7c37c32f7c0ba9ed6759fd28f047403",
+      "scale_add": "4d5f55e2e79aaed27fd8c40cecce19438c693dc80a6b48058246d04ea556039d"
+    },
+    "timing_fixture_bank_sha256": "7041f8432c66552c78a3ff5e8a85511600b3f1727bab2b020156a5da387ec76a"
+  },
+  "launch_proof": {
+    "all_cards_passed": true,
+    "profiled_layers": 47,
+    "control_kernel_events": 188,
+    "candidate_kernel_events": 94,
+    "measured_launch_reduction_per_cycle": 94,
+    "candidate_kernel_events_by_name": {
+      "laguna_m8_silu_mul": 47,
+      "laguna_m8_scale_add": 47
+    }
+  },
+  "cards": [
+    {
+      "physical_card": 0,
+      "pci_bdf": "0000:23:00.0",
+      "soc_uuid": "00000000-0000-0023-0000-0000e2238086",
+      "started_utc": "2026-07-23T06:23:41.648802Z",
+      "completed_utc": "2026-07-23T06:24:01.786653Z",
+      "passed": true,
+      "activation": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.5257114921874999,
+        "candidate_median_ms": 0.2173439921875,
+        "paired_median_saving_ms": 0.3079349687499999,
+        "paired_median_saving_pct": 58.70252199123755
+      },
+      "scale_add": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.516464046875,
+        "candidate_median_ms": 0.2295228046875,
+        "paired_median_saving_ms": 0.28666557812500004,
+        "paired_median_saving_pct": 55.54248963106619
+      },
+      "combined": {
+        "candidate_wins": 31,
+        "control_median_ms": 1.1523869062499998,
+        "candidate_median_ms": 0.45174408593750004,
+        "paired_median_saving_ms": 0.700692296875,
+        "paired_median_saving_pct": 60.7860744841998
+      },
+      "control_launch_trace_sha256": "6ce22800777e74cef068565f7ad0146a2e8391309eda8ed9e14995355613dded",
+      "candidate_launch_trace_sha256": "08dba09e7dd6aa90f7b8ea82ac12b49d9567996973b0d48508942b5b474b8049"
+    },
+    {
+      "physical_card": 1,
+      "pci_bdf": "0000:27:00.0",
+      "soc_uuid": "00000000-0000-0027-0000-0000e2238086",
+      "started_utc": "2026-07-23T06:24:20.715751Z",
+      "completed_utc": "2026-07-23T06:24:40.921314Z",
+      "passed": true,
+      "activation": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.5253005390625001,
+        "candidate_median_ms": 0.214297234375,
+        "paired_median_saving_ms": 0.3110946484375,
+        "paired_median_saving_pct": 59.28831649901952
+      },
+      "scale_add": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.510594390625,
+        "candidate_median_ms": 0.2247316875,
+        "paired_median_saving_ms": 0.2862439765625,
+        "paired_median_saving_pct": 56.02886354172822
+      },
+      "combined": {
+        "candidate_wins": 31,
+        "control_median_ms": 1.15202028125,
+        "candidate_median_ms": 0.44635289843750003,
+        "paired_median_saving_ms": 0.7053731484375,
+        "paired_median_saving_pct": 61.23665856526049
+      },
+      "control_launch_trace_sha256": "36676733f33a1683007a5d84185462c8a82fb818c37054f701bd712016cbd9f9",
+      "candidate_launch_trace_sha256": "7ddb6901b6c89f6770d86a2205ecaa3dd54ae8b0589cccffae67907caa5ebd35"
+    },
+    {
+      "physical_card": 2,
+      "pci_bdf": "0000:43:00.0",
+      "soc_uuid": "00000000-0000-0043-0000-0000e2238086",
+      "started_utc": "2026-07-23T06:24:58.818880Z",
+      "completed_utc": "2026-07-23T06:25:18.911021Z",
+      "passed": true,
+      "activation": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.528979375,
+        "candidate_median_ms": 0.219594515625,
+        "paired_median_saving_ms": 0.30924553906249996,
+        "paired_median_saving_pct": 58.48190607303149
+      },
+      "scale_add": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.5250515234375,
+        "candidate_median_ms": 0.231799796875,
+        "paired_median_saving_ms": 0.2931773671874999,
+        "paired_median_saving_pct": 55.85609956099471
+      },
+      "combined": {
+        "candidate_wins": 31,
+        "control_median_ms": 1.1573775390624998,
+        "candidate_median_ms": 0.458972765625,
+        "paired_median_saving_ms": 0.69913771875,
+        "paired_median_saving_pct": 60.327209530324865
+      },
+      "control_launch_trace_sha256": "1d1e11c14c18f4d130efa6b1f76aa12d964c3bf8222e06175f9b3713201d237d",
+      "candidate_launch_trace_sha256": "e4c471929e59e3e82c5f37d644cfc38eab45daa406188c29b693114f6a5a3429"
+    },
+    {
+      "physical_card": 3,
+      "pci_bdf": "0000:47:00.0",
+      "soc_uuid": "00000000-0000-0047-0000-0000e2238086",
+      "started_utc": "2026-07-23T06:25:37.922444Z",
+      "completed_utc": "2026-07-23T06:25:58.119186Z",
+      "passed": true,
+      "activation": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.5387430703125,
+        "candidate_median_ms": 0.2230118671875,
+        "paired_median_saving_ms": 0.3157007499999999,
+        "paired_median_saving_pct": 58.599459180136776
+      },
+      "scale_add": {
+        "candidate_wins": 31,
+        "control_median_ms": 0.5276333671875,
+        "candidate_median_ms": 0.2337149375,
+        "paired_median_saving_ms": 0.2938042265625001,
+        "paired_median_saving_pct": 55.71507191778773
+      },
+      "combined": {
+        "candidate_wins": 31,
+        "control_median_ms": 1.1872736328125,
+        "candidate_median_ms": 0.463970484375,
+        "paired_median_saving_ms": 0.7228657734374999,
+        "paired_median_saving_pct": 60.87673429426036
+      },
+      "control_launch_trace_sha256": "e0df3f98ee3beb2e0f63b4282ba022743431fce97c9c6182f9fa020eaad33091",
+      "candidate_launch_trace_sha256": "ac6ea88b48c9efa78778b1fe2e128bc5d687f98435b15f493f7bee6b00294cff"
+    }
+  ]
+}
