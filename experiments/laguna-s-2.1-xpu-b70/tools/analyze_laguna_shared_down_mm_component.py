@@ -35,7 +35,7 @@ MAIN_REPO = Path("/home/steve/llm-optimizations").resolve()
 VLLM_REPO = Path("/home/steve/src/deepseek-v4-vllm-xpu-dspark").resolve()
 KERNEL_REPO = Path("/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc").resolve()
 EXPECTED_HARNESS_SHA256 = (
-    "187f3ffe1769bd00310befd56e64b3d8e48713245532a1dff8b6088de5e121b6"
+    "018f1655ca02e2e625985839cded30e1a1d3a3aa324735ea5bad7eaca289a636"
 )
 EXPECTED_HARNESS_PATH = (
     MAIN_REPO / "experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_shared_down_mm.py"

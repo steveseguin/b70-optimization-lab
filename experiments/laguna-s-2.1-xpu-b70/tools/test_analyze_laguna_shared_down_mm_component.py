@@ -6,8 +6,10 @@ import copy
 import hashlib
 
 import pytest
+import torch
 
 import analyze_laguna_shared_down_mm_component as analyzer
+import gate_laguna_shared_down_mm as gate
 
 
 def digest(label: str) -> str:
@@ -37,6 +39,16 @@ def valid_raw_manifest() -> dict[str, dict[str, str]]:
             "candidate": digest("aggregate"),
         },
     }
+
+
+def test_stride_zero_bmm_reference_accepts_m7_tail() -> None:
+    rows = torch.zeros((7, gate.K_DIM), dtype=torch.bfloat16)
+    weight = torch.zeros((gate.N_DIM, gate.K_DIM), dtype=torch.bfloat16)
+
+    output = gate.stride_zero_bmm_reference(rows, weight)
+
+    assert output.shape == (7, gate.N_DIM)
+    assert output.dtype == torch.bfloat16
 
 
 def test_raw_output_manifest_accepts_exact_control_candidate_pairs() -> None:

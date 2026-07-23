@@ -563,14 +563,25 @@ def make_fixture(
     return rows, weight, routed, other_ranks
 
 
-def incumbent_bmm(rows: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
-    require(tuple(rows.shape) == (ROWS, K_DIM), "bad incumbent rows shape")
+def stride_zero_bmm_reference(
+    rows: torch.Tensor,
+    weight: torch.Tensor,
+) -> torch.Tensor:
+    require(
+        rows.ndim == 2 and 1 <= rows.shape[0] <= ROWS and rows.shape[1] == K_DIM,
+        "bad reference rows shape",
+    )
     require(tuple(weight.shape) == (N_DIM, K_DIM), "bad incumbent weight shape")
-    weight_t = weight.t().unsqueeze(0).expand(ROWS, -1, -1)
+    weight_t = weight.t().unsqueeze(0).expand(rows.shape[0], -1, -1)
     require(weight_t.stride(0) == 0, "incumbent lost stride-zero batch")
     output = torch.bmm(rows.unsqueeze(1), weight_t).squeeze(1)
     require(output.dtype == torch.bfloat16, "incumbent output is not BF16")
     return output
+
+
+def incumbent_bmm(rows: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+    require(tuple(rows.shape) == (ROWS, K_DIM), "bad incumbent rows shape")
+    return stride_zero_bmm_reference(rows, weight)
 
 
 def candidate_mm(rows: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
@@ -954,7 +965,7 @@ def verify_vllm_shared_down_path(rank: int) -> dict[str, object]:
     )
     expected_candidate = candidate_mm(rows, weight)
     expected_control = incumbent_bmm(rows, weight)
-    expected_tail = incumbent_bmm(rows[:7], weight)
+    expected_tail = stride_zero_bmm_reference(rows[:7], weight)
 
     old_exact = linear._xpu_is_exact_decode_or_verifier_rows
     old_bmm = torch.bmm
