@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "recorded_date": "2026-07-23",
+  "classification": "infrastructure_abort_after_measurement_start",
+  "performance_evidence_eligible": false,
+  "failed_campaign": {
+    "campaign_id": "w1-n128-endpoint-abba-8936aac-c59aaad-20260723T093923Z",
+    "root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-endpoint-abba-8936aac-c59aaad-20260723T093923Z",
+    "attempted_leg": "A1-control",
+    "treatment": {
+      "VLLM_XPU_LAGUNA_M8_W1_N_TILE": 64
+    },
+    "attempt_started_utc": "2026-07-23T10:26:40Z",
+    "service_started_utc": "2026-07-23T10:26:41Z",
+    "cleanup_completed_utc": "2026-07-23T10:33:43Z",
+    "runner_exit_status": 143,
+    "cleanup": {
+      "stop_status": 0,
+      "poststop_proof_status": 0,
+      "final_status": 143,
+      "devices_idle_after_cleanup": true
+    },
+    "request_evidence": {
+      "request_id": "chatcmpl-bench-laguna-s-2.1-realistic-cold-v1-00-python-lru-cache-96778a83",
+      "prompt_index": 0,
+      "prompt_id": "python-lru-cache",
+      "scheduler_prompt_token_ids_len": 90,
+      "access_log_stream_open": {
+        "line": 210,
+        "status": 200
+      },
+      "access_log_terminal_failure": {
+        "line": 351,
+        "status": 500
+      },
+      "completed_benchmark_rows": 0,
+      "usable_timing_observations": 0,
+      "partial_device_compute_or_streaming_may_have_occurred": true
+    },
+    "failure": {
+      "runtime_error": "UR_RESULT_ERROR_DEVICE_LOST",
+      "worker": "Worker_TP2_EP2",
+      "worker_pid": 2699844,
+      "xpu_index": 2,
+      "pci_bdf": "0000:43:00.0",
+      "drm_device": "/dev/dri/card0",
+      "callsite": "llm_base_proposer.py:prepare_next_token_ids_padded -> backup_next_token_ids.copy_to_gpu",
+      "server_log_error_lines": [
+        238,
+        264
+      ],
+      "kernel_evidence": [
+        {
+          "local_time": "2026-07-23T06:27:52-04:00",
+          "pci_bdf": "0000:43:00.0",
+          "event": "BCS kernel-submitted job timed out, Xe device coredump created, GT reset completed"
+        },
+        {
+          "local_time": "2026-07-23T06:28:07-04:00",
+          "pci_bdf": "0000:43:00.0",
+          "event": "VM jobs timed out and repeated GT resets completed"
+        },
+        {
+          "local_time": "2026-07-23T06:33:42-04:00",
+          "pci_bdf": "0000:47:00.0",
+          "event": "CCS engine reset during teardown"
+        },
+        {
+          "local_time": "2026-07-23T06:33:42-04:00",
+          "pci_bdf": "0000:27:00.0",
+          "event": "CCS engine reset during teardown"
+        }
+      ]
+    },
+    "artifacts": {
+      ".campaign-journal.txt": "ae162cbb0eb0394b04e49c962b56f00e0a51d70b3b207dece5712911d654f828",
+      ".campaign.lock": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "01-A1-control/bench.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "01-A1-control/cleanup-status.txt": "20d5a0ffa27c0ed913132abddecedf1cd38fe984b782949a415a931af77e62ac",
+      "01-A1-control/identity.txt": "737820e7df60ddcc8a31219d0d5b23db3b2ea0ba756bd7119c6d63573270e598",
+      "01-A1-control/metrics-before-suite.prom": "8d795997df756380debd74efa171210a8ca22830a5036b1174ee15f30c111374",
+      "01-A1-control/poststop-residual.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "01-A1-control/poststop-xpu-ps.txt": "5e051c805d5f0ae7d6c58a07c4e648b376a27ea7b999b3fbe96c2b40eb4e61df",
+      "01-A1-control/prestart-residual.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "01-A1-control/prestart-xpu-ps.txt": "62fc598adc2403576a7e021e96b42a58c5dc59912d68abdaabcc704d5a84c3a2",
+      "01-A1-control/server.log": "9b513970d67e96d0b3f8453436c2396a8dd51f23a3c7bfa64b026b45055349c4",
+      "01-A1-control/server.pid": "65d344c9561bcf55fb084b6387c8939b29e41ff8c98aafd2583b3ae9a504135a",
+      "01-A1-control/xpu-smi-version.txt": "d14b356677a57006a19e1e5b4aa45cada8fc0c553cd214ac76ad420ef5bdb4ab"
+    },
+    "required_absent_artifacts": [
+      "01-A1-control/bench.json",
+      "01-A1-control/metrics-after-suite.prom",
+      "01-A1-control/exactness-vs-q1.json",
+      "01-A1-control/exactness-vs-q1.stdout",
+      "01-A1-control/leg-evidence.sha256",
+      "02-B1-candidate",
+      "03-B2-candidate",
+      "04-A2-control",
+      "phase1-analysis.json",
+      "full-analysis.json",
+      "localmaxxing-payload.json",
+      "localmaxxing-response.json"
+    ]
+  },
+  "source_identity": {
+    "main_commit_at_failed_start": "c1dba2daaf0483b7dc7118cca03cd5d626ec532d",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "runner_sha256": "ccf8da1924dfda527bcec40029cdba0b1718e474cbfde635f774603dde50c752",
+    "analyzer_sha256": "a8ec3d624709d64563e09b12ef6a52c563cd51cb97866c9148415f6499facade"
+  },
+  "recovery_precheck": {
+    "root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/pre-reset",
+    "boot_id": "c3b56b2b-8ae3-4f1a-991a-210a95df55cb",
+    "kernel": "6.17.0-35-generic",
+    "boot_started_local": "2026-07-14 22:35:15",
+    "manual_sbr_or_pci_reset_performed": false,
+    "host_reboot_performed": false,
+    "automatic_xe_gt_resets_completed": true,
+    "all_four_devices_enumerated": true,
+    "all_four_fresh_process_copy_smoke_passed": true,
+    "xpu_copy_smoke_sha256": "1b4dae51a41271ee7d7d9f03b63b5673a4475fd070e28c7405c646ace8833592"
+  },
+  "integrity_decision": {
+    "failed_root_permanently_closed": true,
+    "later_legs_in_failed_root_forbidden": true,
+    "payload_or_submission_for_failed_root_forbidden": true,
+    "restart_conditioned_on_performance_or_quality": false,
+    "separately_preregistered_recovery_campaign_allowed": true,
+    "reason": "The control infrastructure abort exposed no completed benchmark row, headline metric, quality result, or candidate observation.",
+    "required_lineage_disclosure": "One invalid aborted control service start precedes the four possible valid recovery-campaign starts.",
+    "new_A1_must_be_first_post_recovery_model_generation": true,
+    "new_A1_must_pass_full_control_gate_before_candidate": true,
+    "third_campaign_forbidden": true
+  }
+}
