@@ -41,6 +41,7 @@ ARTIFACT_ROOT = ARTIFACT_ROOT_LITERAL.resolve()
 NVME_SOURCE = "/dev/nvme0n1p2"
 NVME_FSTYPE = "ext4"
 EXPECTED_BOOT_ID = "0b7f98a5-e50a-46a5-81ea-15938b55317a"
+EXPECTED_DEVICE_NAME = "Intel(R) Arc(TM) Pro B70 Graphics"
 MODEL_CONFIG_LITERAL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/int4/config.json")
 MODEL_CONFIG_PATH = MODEL_CONFIG_LITERAL.resolve()
 EXPECTED_MODEL_CONFIG_SHA256 = (
@@ -463,7 +464,10 @@ def collect_runtime_identity(
     )
     torch.xpu.set_device(0)
     device_name = torch.xpu.get_device_name(0)
-    require("Arc Pro B70" in device_name, f"visible device is not B70: {device_name}")
+    require(
+        device_name == EXPECTED_DEVICE_NAME,
+        f"visible device name {device_name!r} != {EXPECTED_DEVICE_NAME!r}",
+    )
     boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
     kernel_taint = Path("/proc/sys/kernel/tainted").read_text().strip()
     require(boot_id == EXPECTED_BOOT_ID, f"boot identity drift: {boot_id}")

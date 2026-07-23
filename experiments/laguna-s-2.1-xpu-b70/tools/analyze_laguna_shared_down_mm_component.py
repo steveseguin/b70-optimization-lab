@@ -24,6 +24,7 @@ ARTIFACT_ROOT = ARTIFACT_ROOT_LITERAL.resolve()
 NVME_SOURCE = "/dev/nvme0n1p2"
 NVME_FSTYPE = "ext4"
 EXPECTED_BOOT_ID = "0b7f98a5-e50a-46a5-81ea-15938b55317a"
+EXPECTED_DEVICE_NAME = "Intel(R) Arc(TM) Pro B70 Graphics"
 EXPECTED_MODEL_CONFIG_PATH = Path(
     "/mnt/fast-ai/llm-models/laguna-s-2.1/int4/config.json"
 )
@@ -34,7 +35,7 @@ MAIN_REPO = Path("/home/steve/llm-optimizations").resolve()
 VLLM_REPO = Path("/home/steve/src/deepseek-v4-vllm-xpu-dspark").resolve()
 KERNEL_REPO = Path("/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc").resolve()
 EXPECTED_HARNESS_SHA256 = (
-    "dfca167867b863e04db49a5ea7d5560d232e4713e6f915b444f90df6527eaa51"
+    "187f3ffe1769bd00310befd56e64b3d8e48713245532a1dff8b6088de5e121b6"
 )
 EXPECTED_HARNESS_PATH = (
     MAIN_REPO / "experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_shared_down_mm.py"
@@ -781,7 +782,7 @@ def validate_card(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
         ),
         "uuid_bdf_binding": physical.get("uuid_bdf_binding_exact") is True,
         "one_visible_xpu": runtime.get("visible_torch_xpu_count") == 1,
-        "b70": "Arc Pro B70" in str(runtime.get("visible_torch_xpu_name")),
+        "b70": runtime.get("visible_torch_xpu_name") == EXPECTED_DEVICE_NAME,
         "kernel_untainted": runtime.get("kernel_taint") == "0",
         "boot_id": runtime.get("boot_id") == EXPECTED_BOOT_ID,
         "geometry": (
