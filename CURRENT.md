@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-22**
+Last reviewed: **2026-07-23**
 
 ## Authority And Update Rule
 
@@ -265,8 +265,16 @@ the installed oneAPI 2026 logger syntax. Kernel delta and reject files were
 empty; no N128 or model generation occurred. The immutable abort is documented
 in the
 [SYCL preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-sycl-ls-preflight-abort.md).
-Retry only the corrected, newly rooted gate with `UR_LOG_LOADER` explicitly
-unset.
+The corrected second root also failed closed at `sycl-ls`, before peer, XCCL,
+N64, N128, or model work, because the inherited loader path omitted the
+installed oneAPI UMF library and both Level Zero adapters could not resolve
+`libumf.so.1`. Its evidence manifest verifies, kernel delta and reject files
+are empty, and taint remains zero. See the
+[UMF preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-umf-preflight-abort.md).
+Retry only the newly rooted gate with `UR_LOG_LOADER` unset and the exact
+hash-pinned oneAPI 2026 UMF/compiler loader path. This is not a
+performance-conditioned retry; A1 remains the first model generation after a
+complete recovery pass.
 
 ## Optimization Transition
 

@@ -12,7 +12,12 @@ oracle="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n64_rec
 base_gate="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n128_nvme.py"
 xccl_gate="$repo_root/scripts/check-qwen36-xpu-xccl-health.sh"
 peer_binary=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/sycl-peer-read-test-oneapi2026
-evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T134648Z
+sycl_ls=/opt/intel/oneapi/compiler/2026.0/bin/sycl-ls
+umf_library=/opt/intel/oneapi/umf/1.1/lib/libumf.so.1
+level_zero_adapter=/opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero.so.0
+level_zero_adapter_v2=/opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero_v2.so.0
+oneapi_runtime_ld_library_path=/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib
+evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T135330Z
 
 expected_boot_id=0b7f98a5-e50a-46a5-81ea-15938b55317a
 tainted_ntfs_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
@@ -30,6 +35,10 @@ expected_oracle_sha256=17a68130b4552bbcb14db19da4f55beb6d7ddc082c6977ae97ba1982f
 expected_base_gate_sha256=c970b12fc46c6c025266a055a30dbc0084db2bcd2d127bac3524449d61de166c
 expected_xccl_gate_sha256=b15dd4c248d8c4d7035c2d180b9ecc5354b1b20bdabb0c47c540b5003a1cfb78
 expected_model_manifest_sha256=45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
+expected_sycl_ls_sha256=90843629cfe9faaa5b5308524f82399b493b82a64b8db4956284b626d886dfb4
+expected_umf_library_sha256=c74cfea0360d09b5072a8227efbc830db36bd57669ca22d190d0fb31fe8e3425
+expected_level_zero_adapter_sha256=c0b6d1d3f6f282655a034cfc874f48b2f0196970aea41af372d730bbc2124b48
+expected_level_zero_adapter_v2_sha256=bfdf524e1b3ecdd0ee87c3337a768be2b3686e3300765d64dd52d20bd53196b5
 
 reject_pattern='Timedout job:|VM job timed out|Kernel-submitted job timed out|device coredump|GT.*reset|reset (queued|started|done)|TLB.*timeout|GuC.*(fail|error|timeout)|CT.*(fail|error|timeout)|AER:.*(error|fatal|nonfatal)|PCIe Bus Error'
 
@@ -373,12 +382,19 @@ git -C "$kernel_root" status --short > "$evidence_root/kernel-status.txt"
 [[ "$(< "$evidence_root/kernel-head.txt")" == "$expected_kernel_commit" ]]
 
 sha256sum "$0" "$paths_script" "$oracle" "$base_gate" "$xccl_gate" \
+  "$sycl_ls" "$umf_library" "$level_zero_adapter" "$level_zero_adapter_v2" \
   > "$evidence_root/tool-identities.sha256"
 check_hash "$paths_script" "$expected_paths_script_sha256"
 check_hash "$oracle" "$expected_oracle_sha256"
 check_hash "$base_gate" "$expected_base_gate_sha256"
 check_hash "$xccl_gate" "$expected_xccl_gate_sha256"
 check_hash "$peer_binary" "$expected_peer_sha256"
+check_hash "$sycl_ls" "$expected_sycl_ls_sha256"
+check_hash "$umf_library" "$expected_umf_library_sha256"
+check_hash "$level_zero_adapter" "$expected_level_zero_adapter_sha256"
+check_hash "$level_zero_adapter_v2" "$expected_level_zero_adapter_v2_sha256"
+printf '%s\n' "$oneapi_runtime_ld_library_path" \
+  > "$evidence_root/oneapi-runtime-ld-library-path.txt"
 printf '%s  %s\n' "$expected_peer_sha256" "$peer_binary" \
   > "$evidence_root/peer-binary.sha256"
 
@@ -410,7 +426,8 @@ capture_idle_xpu \
 run_capture sycl-ls-verbose \
   timeout --signal=TERM --kill-after=10s 60s \
   env -u UR_LOG_LOADER \
-  /opt/intel/oneapi/compiler/2026.0/bin/sycl-ls \
+  LD_LIBRARY_PATH="$oneapi_runtime_ld_library_path" \
+  "$sycl_ls" \
   --verbose --ignore-device-selectors
 for rank in 0 1 2 3; do
   grep -Fq "[level_zero:gpu][level_zero:$rank]" \
@@ -554,7 +571,8 @@ jq -n \
   --argjson idle_sample_count "$idle_sample_count" \
   --arg repo_head "$(< "$evidence_root/repo-head.txt")" \
   --arg vllm_head "$(< "$evidence_root/vllm-head.txt")" \
-  --arg kernel_head "$(< "$evidence_root/kernel-head.txt")" '
+  --arg kernel_head "$(< "$evidence_root/kernel-head.txt")" \
+  --arg oneapi_runtime_ld_library_path "$oneapi_runtime_ld_library_path" '
   {
     format: "laguna-w1-n128-postreboot-recovery-v1",
     passed: true,
@@ -571,6 +589,10 @@ jq -n \
       vllm_head: $vllm_head,
       kernel_head: $kernel_head,
       trees_clean: true
+    },
+    runtime_identity: {
+      oneapi_runtime_ld_library_path: $oneapi_runtime_ld_library_path,
+      runtime_files_hash_pinned: true
     },
     gates: {
       exact_four_device_mapping: true,

@@ -1,0 +1,72 @@
+{
+  "format": "laguna-w1-n128-nvme-umf-preflight-abort-v1",
+  "classification": {
+    "kind": "infrastructure_preflight_abort",
+    "benchmark_observation": false,
+    "model_generation_performed": false,
+    "candidate_observation": false,
+    "n128_executed": false,
+    "n64_component_executed": false,
+    "xccl_executed": false,
+    "peer_test_executed": false
+  },
+  "source_identity": {
+    "repo_commit": "8307b667adee35786cb9907af14a64785146b3b3",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_repo_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181"
+  },
+  "host": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint_before": 0,
+    "kernel_taint_after": 0
+  },
+  "failed_gate": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T134648Z",
+    "started_utc": "2026-07-23T13:48:31Z",
+    "completed_utc": "2026-07-23T13:49:12Z",
+    "exit_status": 1,
+    "evidence_manifest_verified": true,
+    "evidence_manifest_sha256": "9ad9f78af76f1f68000d562d47595d61f2417bd7fd2d38dcce5ffb710edf05b0",
+    "final_status_sha256": "311dd53a575ee5bf200546c299133c1ca3212f93747234a6e6a56d06ecd9bdbc",
+    "sycl_log_sha256": "43c4721d8bd3dfd6dbc369e098004eda6dedd77acc27a9c87edbe761fc972550",
+    "kernel_delta_sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e",
+    "kernel_reject_events_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kernel_reject_events_empty": true
+  },
+  "passed_before_abort": {
+    "all_118_local_model_files_sha256": true,
+    "xpu_smi_version": true,
+    "four_card_discovery": true,
+    "exact_pci_drm_mapping": true,
+    "strict_four_card_idle": true
+  },
+  "root_cause": {
+    "gpu_failure": false,
+    "tooling_failure": true,
+    "failed_operation": "sycl-ls --verbose --ignore-device-selectors",
+    "missing_dependency": "libumf.so.1",
+    "installed_dependency": "/opt/intel/oneapi/umf/1.1/lib/libumf.so.1",
+    "diagnostic": "Level Zero adapters could not load because the UMF library directory was absent from the inherited loader path",
+    "sycl_ls_exit_status": 0,
+    "reported_platforms": 0,
+    "fail_closed_check": "required four level_zero GPU platform/device rows were absent"
+  },
+  "correction_identity": {
+    "ld_library_path": "/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib",
+    "sycl_ls_sha256": "90843629cfe9faaa5b5308524f82399b493b82a64b8db4956284b626d886dfb4",
+    "libumf_sha256": "c74cfea0360d09b5072a8227efbc830db36bd57669ca22d190d0fb31fe8e3425",
+    "level_zero_adapter_sha256": "c0b6d1d3f6f282655a034cfc874f48b2f0196970aea41af372d730bbc2124b48",
+    "level_zero_adapter_v2_sha256": "bfdf524e1b3ecdd0ee87c3337a768be2b3686e3300765d64dd52d20bd53196b5",
+    "both_adapter_ldd_checks_have_no_missing_dependencies": true
+  },
+  "disposition": {
+    "failed_root_immutable": true,
+    "same_clean_boot_reusable": true,
+    "reboot_required": false,
+    "corrective_change": "pin the exact oneAPI 2026 UMF/compiler loader path and runtime file hashes for sycl-ls",
+    "new_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T135330Z",
+    "next_a1_remains_first_post_recovery_model_generation": true,
+    "performance_conditioned_restart": false
+  }
+}
