@@ -8,6 +8,18 @@ statically validated. No XPU execution test, component run, counter-fixture
 run, hardware-counter capture, endpoint service, model generation, payload, or
 submission has occurred for this treatment.
 
+Execution update at 2026-07-23T15:41:46Z: the focused XPU dispatch and
+fail-closed-layout test passed on physical rank 0. The first full component
+command then stopped during identity validation, before tensor work, because
+the initial harness looked for the noncanonical substring `Arc Pro B70` while
+the frozen runtime reports `Intel(R) Arc(TM) Pro B70 Graphics`. Its failed
+artifact is preserved at
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-component-20260723T154116Z/card0.json`
+and that run root will not be reused. The correction changes only the identity
+predicate: the harness and analyzer now require exact equality with the
+runtime's full device name. No component timing, counter fixture, hardware
+counter, endpoint, model generation, payload, or submission occurred.
+
 ## Question and treatment choice
 
 The approved route-interleaved profile attributes `1.014246 ms` per 47-layer
@@ -81,7 +93,7 @@ later in the existing fixed rank order.
 ## Frozen source and tooling
 
 - main repository tool commit:
-  `0443c32b45979c3bd77f16ab1733d5f784c8337c`;
+  `7e4799f8eb3e3b1533c808b82c886656e10f133b`;
 - vLLM:
   `75d4660463407975c16bd33711499ca560bf2034`;
 - XPU kernels, unchanged:
@@ -89,11 +101,11 @@ later in the existing fixed rank order.
 - component harness:
   `experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_shared_down_mm.py`;
 - harness SHA-256:
-  `dfca167867b863e04db49a5ea7d5560d232e4713e6f915b444f90df6527eaa51`;
+  `187f3ffe1769bd00310befd56e64b3d8e48713245532a1dff8b6088de5e121b6`;
 - four-card analyzer:
   `experiments/laguna-s-2.1-xpu-b70/tools/analyze_laguna_shared_down_mm_component.py`;
 - analyzer SHA-256:
-  `e9482d8c6f1cecfc45f87be77b05e0b5c430a3d9dd412f73369611dd1afa33a0`;
+  `8c72b907e8c426489737e294ea477ac31dc5665cacdcf4788f573f671056ee49`;
 - CPU-only analyzer tests:
   `experiments/laguna-s-2.1-xpu-b70/tools/test_analyze_laguna_shared_down_mm_component.py`;
 - analyzer-test SHA-256:
@@ -129,6 +141,8 @@ environment matches, kernel taint is zero, and boot ID is
 
 Each process must have `ZE_AFFINITY_MASK=<rank>`,
 `ONEAPI_DEVICE_SELECTOR=level_zero:0`, and exactly one torch-visible XPU.
+The torch-visible name must equal
+`Intel(R) Arc(TM) Pro B70 Graphics`.
 Filtered logical-device-0 UUID/BDF/DRM identity must equal the unfiltered
 physical rank, frozen as:
 
@@ -176,9 +190,9 @@ threshold from the recorded arm times. It does not claim to rerun tensor
 execution from JSON.
 
 Every card command must pass harness SHA
-`dfca167867b863e04db49a5ea7d5560d232e4713e6f915b444f90df6527eaa51`;
+`187f3ffe1769bd00310befd56e64b3d8e48713245532a1dff8b6088de5e121b6`;
 the aggregate command must pass analyzer SHA
-`e9482d8c6f1cecfc45f87be77b05e0b5c430a3d9dd412f73369611dd1afa33a0`.
+`8c72b907e8c426489737e294ea477ac31dc5665cacdcf4788f573f671056ee49`.
 One mismatch, nondeterministic replay, source-path failure, failed card, or
 missed timing threshold classifies the treatment
 `component_failed_stop_before_counters`. No current component output
