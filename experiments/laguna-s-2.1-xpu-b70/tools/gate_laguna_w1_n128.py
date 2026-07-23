@@ -939,6 +939,36 @@ def run_counter_mode(
     }
 
 
+def run_full_path_trace_mode(
+    mode: str,
+    rank: int,
+    model: ModelTensors,
+    fixture_path: Path,
+) -> dict[str, Any]:
+    tile = 64 if mode == "trace-n64" else 128
+    fixture_sets, fixture_identity = load_timing_fixture_sets(fixture_path)
+    hidden, weights, ids = fixture_sets[0][0]
+    buffers = allocate_buffers()
+    run_complete_path(hidden, model, weights, ids, buffers, tile)
+    torch.xpu.synchronize()
+    for _ in range(COUNTER_CALLS):
+        run_complete_path(hidden, model, weights, ids, buffers, tile)
+        torch.xpu.synchronize()
+    return {
+        "mode": mode,
+        "rank": rank,
+        "tile": tile,
+        "calls": COUNTER_CALLS,
+        "completion_boundary_per_complete_path": True,
+        "expected_selected_kernels_per_call": {
+            "w1": 1,
+            "w2": 1,
+            "gather": 1,
+        },
+        "real_production_fixture_identity": fixture_identity,
+    }
+
+
 def runtime_identity(rank: int) -> dict[str, Any]:
     extension_path = Path(xpu_extension.__file__).resolve()
     grouped_path = extension_path.parent / "libgrouped_gemm_xe_2.so"
@@ -998,7 +1028,14 @@ def main() -> None:
     parser.add_argument(
         "--mode",
         required=True,
-        choices=("smoke", "formal", "counter-n64", "counter-n128"),
+        choices=(
+            "smoke",
+            "formal",
+            "counter-n64",
+            "counter-n128",
+            "trace-n64",
+            "trace-n128",
+        ),
     )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument(
@@ -1037,6 +1074,19 @@ def main() -> None:
             "device": torch.xpu.get_device_name(0),
             "runtime": identity,
             "counter": run_counter_mode(
+                args.mode,
+                args.rank,
+                model,
+                args.timing_fixtures,
+            ),
+        }
+    elif args.mode.startswith("trace-"):
+        result = {
+            "passed": None,
+            "trace_gate_evaluated": False,
+            "device": torch.xpu.get_device_name(0),
+            "runtime": identity,
+            "trace": run_full_path_trace_mode(
                 args.mode,
                 args.rank,
                 model,
