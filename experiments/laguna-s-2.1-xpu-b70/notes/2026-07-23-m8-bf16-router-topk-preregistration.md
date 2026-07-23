@@ -224,6 +224,36 @@ Stop after B1 unless:
   decode time; and
 - pairwise acceptance-rate difference is at most 0.10 percentage point.
 
+Endpoint tooling was frozen before A1:
+
+- per-leg runner:
+  `experiments/laguna-s-2.1-xpu-b70/tools/run_router_topk_crossover_leg.sh`;
+- runner SHA256:
+  `c1a58a0bec4869190183a32061b1f2c24f96e79a6ee69900bf2310a19b6087d2`;
+- phase-1/full analyzer:
+  `experiments/laguna-s-2.1-xpu-b70/tools/analyze_router_topk_crossover.py`;
+- analyzer SHA256:
+  `f893a6d6cffb89b6a32112bb68bb1cee6a7346d65ae87ff3a2bc0670ba8e7488`;
+- shell syntax, Python compilation, Ruff lint/format, and whitespace checks
+  passed; and
+- the analyzer parsed historical real endpoint artifacts, passed synthetic
+  records for both treatments, and rejected duplicate or missing identity,
+  checksum, LFS-count, ambient-sanitization, and XPU-runtime evidence.
+
+The runner rejects ambient benchmark-sensitive vLLM, Laguna, Level Zero, SYCL,
+Unified Runtime, oneCCL/libfabric, CPU-threading, compiler, and loader
+variables. It then pins the approved route-interleaved stack, model/draft
+revisions, tokenizer, chat template, model index/code, runtime packages,
+driver tooling, source commits, and native binaries. Every leg byte-hashes all
+LFS weights against the frozen Hugging Face revision manifests before starting
+the service. An independent pre-run audit matched all 16 LFS files:
+15 target shards plus the DFlash weight, `74,137,878,672` bytes total, with
+zero mismatches in `39.863 s`.
+
+The runner also refuses path reuse/traversal, validates exactly four idle B70
+devices before startup, and performs bounded process-group shutdown plus
+port/process/four-device idle proof on both successful and failed legs.
+
 ## Quality, attribution, and record gates
 
 Every executed leg must have 13/13 full token arrays bitwise equal to the
