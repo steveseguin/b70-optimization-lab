@@ -254,6 +254,24 @@ vLLM `8936aac144929190c1e53f8b8624ca397ce16f5b` plus kernels
 `VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1` and
 `VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1` only in the pinned Laguna record launch
 command.
+The first next experiment is now frozen as a down-only shared-expert native-M8
+BF16 MM component screen at vLLM
+`75d4660463407975c16bd33711499ca560bf2034`. It changes only shared
+`down_proj` from the stride-zero M1-lane BMM representation to native M8 MM;
+gate/up, transforms, elementwise boundaries, routed work, and reductions stay
+unchanged. No XPU component or model generation had run at registration.
+Proceed only through the local-NVMe four-card exactness/steady-timing gate in
+the
+[preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-down-native-m8-mm-preregistration.md).
+The per-card gate now binds one visible XPU to the declared physical UUID/BDF,
+pins boot/source/binary/config/environment identity, exercises the actual
+checkpoint-selected local `RowParallelLinear` path, and emits separate
+control/candidate boundary digests. The aggregate analyzer regenerates the
+deterministic fixture hashes and recomputes recorded timing arithmetic across
+exactly four distinct cards. A pass authorizes only construction and audit of
+dedicated cold-counter tooling; the current counter modes are fixture
+generators, not a counter gate. Counter execution and an endpoint each require
+later separate source freezes. The external USB remains backup-only.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
