@@ -1,0 +1,203 @@
+{
+  "format": "laguna-shared-down-m8-counter-failure-summary-v1",
+  "created_utc": "2026-07-23T18:06:01.211190+00:00",
+  "treatment": {
+    "scope": "shared-expert down projection only",
+    "control": "stride-zero B=8 M=1 K=256 N=3072 BF16 BMM",
+    "candidate": "native M=8 K=256 N=3072 BF16 MM",
+    "selector": "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=1"
+  },
+  "status": "counter-failed-stop-before-endpoint",
+  "passed": false,
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z-analysis-repair-20260723T175756Z",
+  "analysis_artifact": {
+    "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z-analysis-repair-20260723T175756Z/analysis.json",
+    "sha256": "01f69094a1d1e130564f05b4c22ef59363d4497866953465eaeea291ea5de074"
+  },
+  "immutable_inputs": {
+    "component_aggregate": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-component-20260723T155703Z/aggregate.json",
+      "sha256": "ea71971b368ce9b9e930577b673e983124b0e5686d5d780fc241ac4104f2a1d6"
+    },
+    "execution_authorization": {
+      "path": "data/laguna-s-2.1-shared-down-m8-counter-authorization-20260723.json",
+      "sha256": "3b8aa2cf10f27e50ccae778071b8d0b96480dd7c03a852b7199cb0de40928b1a"
+    },
+    "analysis_repair_authorization": {
+      "path": "data/laguna-s-2.1-shared-down-m8-counter-analysis-repair-authorization-20260723.json",
+      "sha256": "222bf99a41bdbea6dd9ea812e9c13fd418a4174de513f6d3ef79996072bc2ab6"
+    },
+    "campaign_open": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z/campaign.open.json",
+      "sha256": "c2ae3b524d010e118df0be0fed17e5c81718dc5376f38db8ca3d3c9ac3ccbb46"
+    },
+    "campaign_complete": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z/campaign.complete.json",
+      "sha256": "164d124d7d88b9ec4dd3a7f1280feb7ec274538fb9ccc842f62671e951562c12"
+    },
+    "protocol_sha256": "670bc61704fded10a08ca0d42d24d8e39534bb5c07f15e7341ce6029cf6c8576"
+  },
+  "identity": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "main_commit_at_execution": "d5d94bfaaf1a22d3beae5926007b857504cb07dd",
+    "vllm_commit": "75d4660463407975c16bd33711499ca560bf2034",
+    "kernel_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "unitrace_commit": "a5bab309f4ffdd78bd127035c46f5f75371160f8",
+    "torch_version": "2.12.0+xpu",
+    "mount_source": "/dev/nvme0n1p2",
+    "mount_filesystem": "ext4",
+    "live_artifact_storage": "local NVMe only"
+  },
+  "analysis_provenance": {
+    "repair_scope": "device-timing and kernel-property parser only",
+    "metric_parser": "unchanged original analyzer",
+    "campaign_evidence_validator": "unchanged original analyzer",
+    "comparison_and_thresholds": "unchanged original analyzer",
+    "original_campaign_remained_immutable": true,
+    "counter_reexecution_performed": false,
+    "profiles_analyzed": 16
+  },
+  "independent_audit": {
+    "verdict": "valid-fail",
+    "card_manifests_verified": 4,
+    "arm_manifests_verified": 16,
+    "raw_evidence_files_verified": 96,
+    "call_output_hashes_verified": 208,
+    "closure_errors": 0,
+    "decision_recomputed_exactly": true
+  },
+  "exactness_and_integrity": {
+    "all_control_candidate_outputs_raw_exact": true,
+    "fixture_sha256": "0fd04654a034a520f4ef835128195a1e624531c5bbbcf4a1d1bf96fda5ada0cc",
+    "output_sha256": "250551cd2f3ea4ccf98ee8dc8e42d38215695003fff634d26a57d2ebdf2f7322",
+    "all_validity_split_overrun_lost_inconsistent_proxies_zero": true,
+    "spill_slm_partial_write_and_lsc_write_proxies_zero": true
+  },
+  "frozen_acceptance": {
+    "both_matched_pair_candidate_gpu_times_lower_per_card": true,
+    "per_card_aggregate_candidate_gpu_time_lower": true,
+    "global_four_card_aggregate_candidate_gpu_time_lower": true,
+    "maximum_gpu_memory_read_regression_fraction": 0.02,
+    "maximum_lsc_read_regression_fraction": 0.02,
+    "maximum_thread_occupancy_decrease_percentage_points": 0.5,
+    "maximum_xve_active_decrease_percentage_points": 0.5,
+    "maximum_xve_stall_increase_percentage_points": 0.5
+  },
+  "global_four_card_gpu_time": {
+    "control_mean_ns": 12166.227272727272,
+    "candidate_mean_ns": 11772.090909090908,
+    "delta_ns": -394.13636363636397,
+    "ratio": 0.9676040604206129,
+    "relative_change": -0.0323959395793871,
+    "passed_gpu_time_only_check": true,
+    "cannot_override_per_card_or_matched_pair_failures": true
+  },
+  "cards": [
+    {
+      "rank": 0,
+      "physical_bdf": "0000:23:00.0",
+      "passed": false,
+      "matched_pairs": {
+        "B1_vs_A1_gpu_time_ratio": 0.9296980621901757,
+        "B1_vs_A1_passed": true,
+        "B2_vs_A2_gpu_time_ratio": 1.0021220159151194,
+        "B2_vs_A2_passed": false
+      },
+      "aggregate": {
+        "gpu_time_ratio": 0.9629629629629629,
+        "xve_active_delta_percentage_points": -0.044285045454547145,
+        "xve_stall_delta_percentage_points": 0.6906954545454624,
+        "thread_occupancy_delta_percentage_points": 0.6283789999999954,
+        "failed_checks": [
+          "xve_stall_increase_within_0_5pp"
+        ]
+      }
+    },
+    {
+      "rank": 1,
+      "physical_bdf": "0000:27:00.0",
+      "passed": false,
+      "matched_pairs": {
+        "B1_vs_A1_gpu_time_ratio": 1.0013664935774802,
+        "B1_vs_A1_passed": false,
+        "B2_vs_A2_gpu_time_ratio": 1.2252202643171808,
+        "B2_vs_A2_passed": false
+      },
+      "aggregate": {
+        "gpu_time_ratio": 1.1128788917843917,
+        "xve_active_delta_percentage_points": 0.043777272727272276,
+        "xve_stall_delta_percentage_points": -0.5660998636363601,
+        "thread_occupancy_delta_percentage_points": -0.5654085454545452,
+        "failed_checks": [
+          "candidate_gpu_time_lower",
+          "thread_occupancy_decrease_within_0_5pp"
+        ]
+      }
+    },
+    {
+      "rank": 2,
+      "physical_bdf": "0000:43:00.0",
+      "passed": false,
+      "matched_pairs": {
+        "B1_vs_A1_gpu_time_ratio": 1.2303128371089536,
+        "B1_vs_A1_passed": false,
+        "B2_vs_A2_gpu_time_ratio": 0.9313675648195221,
+        "B2_vs_A2_passed": true
+      },
+      "aggregate": {
+        "gpu_time_ratio": 1.0764197853964932,
+        "xve_active_delta_percentage_points": -0.21882127272727292,
+        "xve_stall_delta_percentage_points": -2.0482525454545453,
+        "thread_occupancy_delta_percentage_points": -2.1549762272727264,
+        "failed_checks": [
+          "candidate_gpu_time_lower",
+          "thread_occupancy_decrease_within_0_5pp"
+        ]
+      }
+    },
+    {
+      "rank": 3,
+      "physical_bdf": "0000:47:00.0",
+      "passed": false,
+      "matched_pairs": {
+        "B1_vs_A1_gpu_time_ratio": 0.7733887733887733,
+        "B1_vs_A1_passed": true,
+        "B2_vs_A2_gpu_time_ratio": 0.634433962264151,
+        "B2_vs_A2_passed": true
+      },
+      "aggregate": {
+        "gpu_time_ratio": 0.6966313046715056,
+        "xve_active_delta_percentage_points": -1.0862695909090911,
+        "xve_stall_delta_percentage_points": 9.406113772727274,
+        "thread_occupancy_delta_percentage_points": 8.519334636363638,
+        "failed_checks": [
+          "xve_active_decrease_within_0_5pp",
+          "xve_stall_increase_within_0_5pp"
+        ]
+      }
+    }
+  ],
+  "failure_classification": {
+    "matched_pair_losses": 4,
+    "matched_pairs_total": 8,
+    "per_card_passes": 0,
+    "per_cards_total": 4,
+    "reason": "The global GPU-time improvement does not satisfy the frozen per-card repeatability and metric guardrails.",
+    "terminal_for_this_treatment": true
+  },
+  "authorization": {
+    "analysis_repair_evaluated": true,
+    "counter_gate_evaluated": true,
+    "counter_gate_passed": false,
+    "counter_reexecution_authorized": false,
+    "endpoint_preregistration_construction_authorized": false,
+    "endpoint_execution_authorized": false,
+    "model_generation_authorized": false,
+    "model_generation_performed": false,
+    "payload_created": false,
+    "localmaxxing_submission_authorized": false,
+    "localmaxxing_submission_made": false,
+    "record_claimed": false
+  },
+  "next_action": "Preserve this treatment as a terminal counter-gate failure and preregister a distinct exact occupancy hypothesis. Do not run this candidate at the endpoint."
+}
