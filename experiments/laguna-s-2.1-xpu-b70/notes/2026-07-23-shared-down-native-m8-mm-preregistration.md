@@ -20,6 +20,20 @@ predicate: the harness and analyzer now require exact equality with the
 runtime's full device name. No component timing, counter fixture, hardware
 counter, endpoint, model generation, payload, or submission occurred.
 
+Execution update at 2026-07-23T15:47:40Z: a fresh retry under
+`shared-down-m8-component-20260723T154717Z` passed runtime identity and all
+128 changing exactness epochs on physical rank 0, including 128 unique fixture
+and output hashes and raw equality at every declared boundary. It then stopped
+before real-path dispatch and timing because the harness's M=8-only incumbent
+helper was mistakenly reused to construct the required M=7 tail reference.
+The preserved `card0.json` reports `status=error`, has no timing result, and
+keeps all counter, endpoint, generation, and submission authorizations false.
+That root will not be reused. The correction factors the identical
+stride-zero-BMM expression into a reference helper that permits M=1..8, while
+the measured incumbent wrapper remains strictly M=8; only the M=7 real-path
+reference uses the generalized helper. A CPU regression test now exercises
+the M=7 shape.
+
 ## Question and treatment choice
 
 The approved route-interleaved profile attributes `1.014246 ms` per 47-layer
@@ -93,7 +107,7 @@ later in the existing fixed rank order.
 ## Frozen source and tooling
 
 - main repository tool commit:
-  `7e4799f8eb3e3b1533c808b82c886656e10f133b`;
+  `50509da1fc72675d0d66bff6e337a02092b895a9`;
 - vLLM:
   `75d4660463407975c16bd33711499ca560bf2034`;
 - XPU kernels, unchanged:
@@ -101,15 +115,15 @@ later in the existing fixed rank order.
 - component harness:
   `experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_shared_down_mm.py`;
 - harness SHA-256:
-  `187f3ffe1769bd00310befd56e64b3d8e48713245532a1dff8b6088de5e121b6`;
+  `018f1655ca02e2e625985839cded30e1a1d3a3aa324735ea5bad7eaca289a636`;
 - four-card analyzer:
   `experiments/laguna-s-2.1-xpu-b70/tools/analyze_laguna_shared_down_mm_component.py`;
 - analyzer SHA-256:
-  `8c72b907e8c426489737e294ea477ac31dc5665cacdcf4788f573f671056ee49`;
+  `99f0ad7be3cf676fa760b3c69451970cbdb887caa5b56fe22c5b2634845530b9`;
 - CPU-only analyzer tests:
   `experiments/laguna-s-2.1-xpu-b70/tools/test_analyze_laguna_shared_down_mm_component.py`;
 - analyzer-test SHA-256:
-  `bd3175edd7c9cedad087837a5ae9a600bc60926b48a1c02f42649f97ce521b1b`;
+  `cc30ab3d6a2a90033bbaf49e74a2b3a244eb57bae98078859d456b22a93bd01e`;
 - shared `_C.abi3.so`:
   `126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2`;
 - `_xpu_C.abi3.so`:
@@ -122,7 +136,7 @@ later in the existing fixed rank order.
 
 The vLLM commit adds the selector to the AOT runtime identity even though this
 experiment requires eager execution. Ruff, focused formatting, whitespace,
-30 vLLM non-XPU tests, and 10 CPU analyzer/tamper tests pass. The tamper suite
+30 vLLM non-XPU tests, and 11 CPU analyzer/tamper/regression tests pass. The tamper suite
 changes every candidate boundary digest and aggregate linkage and requires
 rejection. Independent source reviews found the selector down-only,
 default-off, transform-safe, fail-closed, and the final component tooling free
@@ -190,9 +204,9 @@ threshold from the recorded arm times. It does not claim to rerun tensor
 execution from JSON.
 
 Every card command must pass harness SHA
-`187f3ffe1769bd00310befd56e64b3d8e48713245532a1dff8b6088de5e121b6`;
+`018f1655ca02e2e625985839cded30e1a1d3a3aa324735ea5bad7eaca289a636`;
 the aggregate command must pass analyzer SHA
-`8c72b907e8c426489737e294ea477ac31dc5665cacdcf4788f573f671056ee49`.
+`99f0ad7be3cf676fa760b3c69451970cbdb887caa5b56fe22c5b2634845530b9`.
 One mismatch, nondeterministic replay, source-path failure, failed card, or
 missed timing threshold classifies the treatment
 `component_failed_stop_before_counters`. No current component output
