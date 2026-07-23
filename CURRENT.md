@@ -254,9 +254,11 @@ paths. See the
 [migration note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-laguna-usb-backup-only-nvme-migration.md)
 and
 [structured packet](data/laguna-s-2.1-nvme-model-migration-20260723.json).
-No Laguna endpoint or worker is running. The current boot remains rejected
-after the documented `ntfs3` kernel Oops; reboot and pass the new local-only
-recovery gate before any further GPU or model work.
+No Laguna endpoint or worker is running. The host is now on clean boot
+`0b7f98a5-e50a-46a5-81ea-15938b55317a`, kernel `7.0.0-28-generic`, with
+kernel taint `0`; model services and the display manager are inactive under
+`multi-user.target`. The new boot-bound local-only recovery gate remains the
+next action and must pass before any model generation.
 
 ## Optimization Transition
 

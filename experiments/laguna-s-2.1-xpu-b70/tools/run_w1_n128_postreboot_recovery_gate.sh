@@ -14,7 +14,7 @@ xccl_gate="$repo_root/scripts/check-qwen36-xpu-xccl-health.sh"
 peer_binary=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/sycl-peer-read-test-oneapi2026
 evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T131632Z
 
-expected_boot_id=__EXPECTED_POSTREBOOT_BOOT_ID__
+expected_boot_id=0b7f98a5-e50a-46a5-81ea-15938b55317a
 tainted_ntfs_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
 device_lost_boot_id=c3b56b2b-8ae3-4f1a-991a-210a95df55cb
 expected_kernel=7.0.0-28-generic
@@ -26,7 +26,7 @@ expected_fixture_sha256=478a23508e635c91fa62ff0a4b737016266bc308e8fe60111e81abad
 expected_xpu_extension_sha256=f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 expected_grouped_gemm_sha256=fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
 expected_paths_script_sha256=99ea295ad3432c5b66aab91a4319f1d6bec827883548be7d10d5d1f77bf01e55
-expected_oracle_sha256=b65f79c4c21195df5f1baa15431f3b4b49407e599366acd42d7a447c24c8f2db
+expected_oracle_sha256=17a68130b4552bbcb14db19da4f55beb6d7ddc082c6977ae97ba1982f62ba1fe
 expected_base_gate_sha256=c970b12fc46c6c025266a055a30dbc0084db2bcd2d127bac3524449d61de166c
 expected_xccl_gate_sha256=b15dd4c248d8c4d7035c2d180b9ecc5354b1b20bdabb0c47c540b5003a1cfb78
 expected_model_manifest_sha256=45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
@@ -339,14 +339,17 @@ check_hash() {
 
 boot_id="$(< /proc/sys/kernel/random/boot_id)"
 kernel_release="$(uname -r)"
+kernel_taint="$(< /proc/sys/kernel/tainted)"
 printf '%s\n' "$boot_id" > "$evidence_root/boot-id.txt"
 printf '%s\n' "$kernel_release" > "$evidence_root/kernel-release.txt"
+printf '%s\n' "$kernel_taint" > "$evidence_root/kernel-taint.txt"
 uname -a > "$evidence_root/uname.txt"
 [[ "$boot_id" == "$expected_boot_id" ]]
 [[ "$boot_id" != "$tainted_ntfs_boot_id" ]]
 [[ "$boot_id" != "$device_lost_boot_id" ]]
 [[ "$kernel_release" == "$expected_kernel" ]]
 [[ "$kernel_release" != "$device_lost_kernel" ]]
+[[ "$kernel_taint" == 0 ]]
 
 : > "$evidence_root/service-states.txt"
 require_service_not_active gemma4-26b-q8-quad-frontdoor.service
@@ -543,6 +546,7 @@ jq -n \
   --arg device_lost_boot_id "$device_lost_boot_id" \
   --arg kernel_release "$kernel_release" \
   --arg device_lost_kernel "$device_lost_kernel" \
+  --argjson kernel_taint "$kernel_taint" \
   --arg started_utc "$started_utc" \
   --arg idle_started_utc "$idle_started_utc" \
   --arg idle_completed_utc "$idle_completed_utc" \
@@ -559,7 +563,8 @@ jq -n \
       differs_from_tainted_ntfs_boot_id: ($boot_id != $tainted_ntfs_boot_id),
       differs_from_device_lost_boot_id: ($boot_id != $device_lost_boot_id),
       kernel_release: $kernel_release,
-      differs_from_device_lost_kernel: ($kernel_release != $device_lost_kernel)
+      differs_from_device_lost_kernel: ($kernel_release != $device_lost_kernel),
+      kernel_taint: $kernel_taint
     },
     source_identity: {
       repo_head: $repo_head,
