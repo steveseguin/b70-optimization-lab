@@ -182,13 +182,21 @@ default-off native-M8 BF16 attention MM experiment at vLLM `b52d6a592` passed
 the four-card bitwise gate 896/896 and both fresh exact suites, but its
 32.298869/32.171000 tok/s medians regressed from the approved record. Resume
 from the [exact negative note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-bf16-attention-m8-mm-negative.md);
-the next bounded lever is the 1.42 ms/cycle attention non-GEMM QK/RMSNorm/RoPE
-bucket, with shared-expert/router GEMM as the lower-risk fallback. Do not
-revisit route buffer fills or progressively serialize the whole model into
+the follow-up default-off exact M=8 Q/K RMSNorm + RoPE fusion at vLLM
+`d503073ec` plus kernels `9525343e7` passed its four-card component gate
+256/256 and reduced isolated launches 144 -> 48 per target cycle. Both fresh
+full suites were teacher exact 13/13, cross-start exact 13/13, cache-zero
+13/13 + 13/13, long-then-next 2/2 + 2/2, and rollover 1/1 + 1/1. Its medians
+were 34.233360 and 33.190702 tok/s, so the lower start missed the approved
+record by 0.248228 tok/s (-0.7423%); no payload was staged. Resume from the
+[fusion negative note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-exact-m8-qknorm-rope-fusion-negative.md).
+The next bounded lever is the 1.014246 ms/cycle shared-expert/router GEMM
+family, with TopKGating at 0.560374 ms/cycle as the single-kernel fallback. Do
+not revisit route buffer fills or progressively serialize the whole model into
 opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
 plus kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
-vLLM `b52d6a5925ebf3dd8e32763491863797e0d0e1b1` and kernels
-`210a6eb604500c80bc5989d4b9fc59e75f1bb316`. Also preserve the DeepSeek
+vLLM `d503073ec3573c6208cc2a06339815ec040ee984` and kernels
+`9525343e74b1a434b6af7d05583e1385a891c919`. Also preserve the DeepSeek
 option-4 branch and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
 them to `/mnt/fast-ai`. Postflight on 2026-07-22 left no Laguna endpoint or

@@ -1,0 +1,94 @@
+{
+  "candidate": "laguna-m8-exact-qknorm-rope",
+  "date_local": "2026-07-22",
+  "disposition": "exact_negative_lower_start_below_record",
+  "record": {
+    "id": "cmrwot89400gqnz014oodtlbp",
+    "median_tok_s_1_100_after_ttft": 33.43893
+  },
+  "fusion": {
+    "flag": "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1",
+    "default_off": true,
+    "scope": "target exact verifier M=8 only",
+    "operation": "Q RMSNorm + K RMSNorm + NeoX RoPE",
+    "arithmetic_contract": [
+      "incumbent vec8/16-lane RMSNorm reduction tree",
+      "BF16 round after x*rrms",
+      "BF16 weight multiply and result round",
+      "BF16 cosine/sine cache",
+      "incumbent NeoX multiply/subtract/add order"
+    ]
+  },
+  "source": {
+    "repo_commit": "f325c6289191d46fff45231a8dfc23c53f16439c",
+    "vllm_commit": "d503073ec3573c6208cc2a06339815ec040ee984",
+    "xpu_kernels_commit": "9525343e74b1a434b6af7d05583e1385a891c919"
+  },
+  "binaries": {
+    "_C.abi3.so": "bd337e35e8c5735f7e7ab2e4ff97835931c86a6daa51241329c3997a6b61f5b4",
+    "_xpu_C.abi3.so": "625af4bbe792effde9f2f54c319f807a5c49b9756be313f9307d90da9ff5149e",
+    "_moe_C.abi3.so": "f222d3e2d2a8a331e3c85f12e0d02a17aa7a89147bbbcc8ac2c2a816629a405f",
+    "libgrouped_gemm_xe_2.so": "78a7218de45ee46b3734dc977c0d6115607ff7536706c0be2d4728b4ca2c40be"
+  },
+  "component_gate": {
+    "cards": 4,
+    "epochs_per_shape_per_card": 16,
+    "exact": "256/256",
+    "full_attention_ms_per_layer_before": 0.03676571992400568,
+    "full_attention_ms_per_layer_after": 0.0126708149764454,
+    "sliding_attention_ms_per_layer_before": 0.035514363771653734,
+    "sliding_attention_ms_per_layer_after": 0.012044916802551597,
+    "weighted_48_layer_ms_per_cycle_before": 1.7197057348676026,
+    "weighted_48_layer_ms_per_cycle_after": 0.5856667846092023,
+    "launches_per_layer_before": 3,
+    "launches_per_layer_after": 1,
+    "launches_per_cycle_before": 144,
+    "launches_per_cycle_after": 48,
+    "evidence": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/logs/qknorm-rope-component-d503073-9525343-20260722"
+  },
+  "fresh_starts": [
+    {
+      "name": "A",
+      "median_tok_s_1_100_after_ttft": 34.233360069506844,
+      "p10_tok_s": 26.207639610706458,
+      "mean_tok_s": 38.83654338287951,
+      "median_ttft_ms": 5715.674116043374,
+      "median_full_after_ttft_tok_s": 43.127039424173375,
+      "median_wall_full_tok_s": 27.86390376950151,
+      "teacher_exact": "13/13",
+      "cached_zero": "13/13",
+      "long_then_next": "2/2",
+      "rollover": "1/1",
+      "accepted_draft_tokens": 4643,
+      "draft_tokens": 12033,
+      "acceptance_percent": 38.58555638660351,
+      "run_dir": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/qknorm-rope-dflash-A-d503073-9525343-20260723T014703Z"
+    },
+    {
+      "name": "B",
+      "median_tok_s_1_100_after_ttft": 33.19070223154202,
+      "p10_tok_s": 27.041461741416647,
+      "mean_tok_s": 39.04829307742479,
+      "median_ttft_ms": 5753.876757924445,
+      "median_full_after_ttft_tok_s": 44.56863988821228,
+      "median_wall_full_tok_s": 27.508534456774353,
+      "teacher_exact": "13/13",
+      "cached_zero": "13/13",
+      "long_then_next": "2/2",
+      "rollover": "1/1",
+      "accepted_draft_tokens": 4643,
+      "draft_tokens": 12033,
+      "acceptance_percent": 38.58555638660351,
+      "run_dir": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/qknorm-rope-dflash-B-d503073-9525343-20260723T015326Z"
+    }
+  ],
+  "cross_start_exact": "13/13",
+  "lower_start_tok_s": 33.19070223154202,
+  "lower_start_delta_tok_s_vs_record": -0.2482277684579799,
+  "lower_start_delta_percent_vs_record": -0.7423316728674578,
+  "cross_start_metric_spread_tok_s": 1.0426578379648248,
+  "cross_start_metric_spread_percent_of_lower": 3.1414154201713673,
+  "payload_staged": false,
+  "localmaxxing_submitted": false,
+  "next_lever": "shared-expert/router GEMM family at 1.014246 ms/cycle"
+}
