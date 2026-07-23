@@ -121,12 +121,41 @@
     "all_four_fresh_process_copy_smoke_passed": true,
     "xpu_copy_smoke_sha256": "1b4dae51a41271ee7d7d9f03b63b5673a4475fd070e28c7405c646ace8833592"
   },
+  "no_reboot_validation": {
+    "root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation",
+    "passed": false,
+    "host_reboot_now_required": true,
+    "new_model_service_started": false,
+    "new_endpoint_generation_started": false,
+    "candidate_treatment_executed": false,
+    "new_formal_campaign_root_created": false,
+    "checks": {
+      "verbose_sycl_four_device_enumeration": true,
+      "four_device_peer_read": true,
+      "per_device_allocation_arithmetic_sync": true,
+      "n64_only_production_fixture_calls_all_four_cards": true,
+      "new_kernel_reject_events_after_cleanup": 0,
+      "four_rank_exact_xccl_reproducible": false
+    },
+    "xccl": {
+      "first_corrected_check": "pass; all four ranks returned exact 4.0",
+      "formal_captured_repeat": "fail; local rank 1 SIGSEGV in oneCCL Arc all-reduce",
+      "formal_failure_log_sha256": "aacfd1f17849f4460a7e7e6e88161669c55a0a7df8144ba8dbe33f9d89ec3ce0",
+      "invalid_status_file_retained": true,
+      "invalid_status_file_reason": "The capture wrapper wrote xccl_status=0 without checking the failed command.",
+      "additional_xccl_retry_forbidden": true
+    },
+    "disposition_sha256": "4e6b9eed5414a51aebeef681d0e4715835366dbb14d98b56d104906722e210f4",
+    "pre_disposition_manifest_sha256": "e8af7b7eda8afaedab73b4f509d7823a655b234a89ca154d661bdda7c0dee7ed",
+    "final_evidence_manifest_sha256": "ba5a5cc5197306aefc410f45120365d8feb26c183a9c02bc7ce8de74c8666255"
+  },
   "integrity_decision": {
     "failed_root_permanently_closed": true,
     "later_legs_in_failed_root_forbidden": true,
     "payload_or_submission_for_failed_root_forbidden": true,
     "restart_conditioned_on_performance_or_quality": false,
-    "separately_preregistered_recovery_campaign_allowed": true,
+    "separately_preregistered_recovery_campaign_allowed_after_reboot": true,
+    "separately_preregistered_recovery_campaign_allowed_before_reboot": false,
     "reason": "The control infrastructure abort exposed no completed benchmark row, headline metric, quality result, or candidate observation.",
     "required_lineage_disclosure": "One invalid aborted control service start precedes the four possible valid recovery-campaign starts.",
     "new_A1_must_be_first_post_recovery_model_generation": true,

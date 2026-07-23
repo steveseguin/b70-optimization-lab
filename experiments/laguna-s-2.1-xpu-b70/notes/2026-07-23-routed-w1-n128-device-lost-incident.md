@@ -96,3 +96,38 @@ later legs to remain absent, pin the recovery evidence, and surface the aborted
 start in final eligibility/publication evidence. All original treatment,
 A-B-B-A, exactness, freshness, causal, variance, and record-floor gates remain
 unchanged.
+
+## No-reboot recovery result
+
+The automatic-reset recovery path was tested without starting a model service
+or executing the N128 candidate:
+
+- verbose SYCL enumeration returned all four stable Level Zero devices;
+- oneAPI 2026 peer-memory stress passed across four devices;
+- fresh-process allocation, arithmetic, copy, and synchronization passed on
+  every physical card;
+- N64-only production-fixture calls completed on every card;
+- one corrected four-rank XCCL check returned exact `4.0` on every rank; and
+- the kernel log contained no new real timeout, reset, coredump, TLB, GuC, CT,
+  or AER reject event after failed-campaign cleanup.
+
+That was not reproducible. The formal captured XCCL repeat segfaulted local
+rank 1 inside oneCCL's Arc all-reduce path. This is a recovery failure even
+though it did not trigger another kernel reset.
+
+The capture wrapper then exposed a separate evidence bug: it wrote
+`xccl_status=0` after the failed command because fail-fast handling was absent.
+That file and the original manifest are retained unchanged but explicitly
+invalid. The additive disposition and final manifest are:
+
+```text
+/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/DISPOSITION.md
+SHA256 4e6b9eed5414a51aebeef681d0e4715835366dbb14d98b56d104906722e210f4
+
+/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/evidence-v2.sha256
+SHA256 ba5a5cc5197306aefc410f45120365d8feb26c183a9c02bc7ce8de74c8666255
+```
+
+Disposition: stop the no-reboot path. Do not retry XCCL, do not register or
+start a new endpoint campaign in this boot, and do not run A1. A full host
+reboot and fresh post-reboot recovery gate are now mandatory.
