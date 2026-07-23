@@ -12,7 +12,7 @@ oracle="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n64_rec
 base_gate="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n128_nvme.py"
 xccl_gate="$repo_root/scripts/check-qwen36-xpu-xccl-health.sh"
 peer_binary=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/sycl-peer-read-test-oneapi2026
-evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T131632Z
+evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T134648Z
 
 expected_boot_id=0b7f98a5-e50a-46a5-81ea-15938b55317a
 tainted_ntfs_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
@@ -409,7 +409,7 @@ capture_idle_xpu \
 
 run_capture sycl-ls-verbose \
   timeout --signal=TERM --kill-after=10s 60s \
-  env UR_LOG_LOADER=level_info \
+  env -u UR_LOG_LOADER \
   /opt/intel/oneapi/compiler/2026.0/bin/sycl-ls \
   --verbose --ignore-device-selectors
 for rank in 0 1 2 3; do
@@ -599,7 +599,8 @@ jq -n \
     campaign_constraints: {
       recovery_a1_must_be_first_post_recovery_model_generation: true,
       one_prior_invalid_aborted_control_start_disclosed: true,
-      no_third_campaign: true
+      all_recovery_preflight_aborts_disclosed: true,
+      no_performance_conditioned_campaign_retry: true
     },
     started_utc: $started_utc
   }

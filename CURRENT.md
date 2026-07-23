@@ -258,7 +258,15 @@ No Laguna endpoint or worker is running. The host is now on clean boot
 `0b7f98a5-e50a-46a5-81ea-15938b55317a`, kernel `7.0.0-28-generic`, with
 kernel taint `0`; model services and the display manager are inactive under
 `multi-user.target`. The new boot-bound local-only recovery gate remains the
-next action and must pass before any model generation.
+next action and must pass before any model generation. Its first local root
+passed model hashing, four-card discovery/mapping, and strict idle, then failed
+closed before peer/XCCL/N64 because `UR_LOG_LOADER=level_info` is invalid for
+the installed oneAPI 2026 logger syntax. Kernel delta and reject files were
+empty; no N128 or model generation occurred. The immutable abort is documented
+in the
+[SYCL preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-sycl-ls-preflight-abort.md).
+Retry only the corrected, newly rooted gate with `UR_LOG_LOADER` explicitly
+unset.
 
 ## Optimization Transition
 

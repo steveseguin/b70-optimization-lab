@@ -1,0 +1,62 @@
+{
+  "format": "laguna-w1-n128-nvme-sycl-preflight-abort-v1",
+  "classification": {
+    "kind": "infrastructure_preflight_abort",
+    "benchmark_observation": false,
+    "model_generation_performed": false,
+    "candidate_observation": false,
+    "n128_executed": false,
+    "n64_component_executed": false,
+    "xccl_executed": false,
+    "peer_test_executed": false
+  },
+  "source_identity": {
+    "repo_commit": "fafea580f302f65a1bb234af99d2f31af490366c",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_repo_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181"
+  },
+  "host": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint_before": 0,
+    "kernel_taint_after": 0
+  },
+  "failed_gate": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T131632Z",
+    "started_utc": "2026-07-23T13:45:26Z",
+    "completed_utc": "2026-07-23T13:46:13Z",
+    "exit_status": 1,
+    "evidence_manifest_verified": true,
+    "evidence_manifest_sha256": "06b27c3e2ac0e254c8294aa679face6329323dad2ce06579281bc2d10c343ca3",
+    "final_status_sha256": "73f83e71c30324b36f15b2fe2afefc97112fa2e66a0a23eb25019d784a5a42df",
+    "sycl_log_sha256": "26baddc04f0c4f14da045b85b32d38d192e832b4119fc5a15971ea353b47ef0b",
+    "kernel_delta_sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e",
+    "kernel_reject_events_empty": true
+  },
+  "passed_before_abort": {
+    "all_118_local_model_files_sha256": true,
+    "xpu_smi_version": true,
+    "four_card_discovery": true,
+    "exact_pci_drm_mapping": true,
+    "strict_four_card_idle": true
+  },
+  "root_cause": {
+    "gpu_failure": false,
+    "tooling_failure": true,
+    "failed_operation": "sycl-ls --verbose --ignore-device-selectors",
+    "invalid_environment": "UR_LOG_LOADER=level_info",
+    "diagnostic": "Wrong format of the UR_LOG_LOADER environment variable value",
+    "sycl_ls_exit_status": 0,
+    "reported_platforms": 0,
+    "fail_closed_check": "required four level_zero GPU platform/device rows were absent"
+  },
+  "disposition": {
+    "failed_root_immutable": true,
+    "same_clean_boot_reusable": true,
+    "reboot_required": false,
+    "corrective_change": "explicitly unset UR_LOG_LOADER for sycl-ls",
+    "new_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T134648Z",
+    "next_a1_remains_first_post_recovery_model_generation": true,
+    "performance_conditioned_restart": false
+  }
+}
