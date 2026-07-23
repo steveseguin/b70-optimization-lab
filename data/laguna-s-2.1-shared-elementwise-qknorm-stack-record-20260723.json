@@ -1,0 +1,195 @@
+{
+  "experiment": "laguna-m8-shared-elementwise-qknorm-stack-crossover",
+  "date": "2026-07-23",
+  "status": "strict_preregistered_record_candidate_payload_staged",
+  "prior_approved_record": {
+    "id": "cmrwot89400gqnz014oodtlbp",
+    "tok_s": 33.438926675602126,
+    "public_api_rechecked_utc": "2026-07-23T07:08:59Z",
+    "status": "APPROVED"
+  },
+  "source": {
+    "main_repo_commit_during_all_legs": "052193e56454d77154d53e8b2f8987fd0e5a42b6",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "xpu_kernel_commit": "b6076ce1249ffee0e30bee528f4cd15c3bffb234",
+    "shared_native_sha256": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2",
+    "xpu_native_sha256": "625af4bbe792effde9f2f54c319f807a5c49b9756be313f9307d90da9ff5149e",
+    "moe_native_sha256": "0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0",
+    "grouped_gemm_sha256": "78a7218de45ee46b3734dc977c0d6115607ff7536706c0be2d4728b4ca2c40be",
+    "runner_sha256": "2eb8f37b0a7916b2e72d9a51f393034df722b8408ebd9f02dabe54a7fe5280a2",
+    "analyzer_sha256": "408cd6948f8e7708b12302b6061011ae2b32c812481574676dfd8f239f0a0714"
+  },
+  "model": {
+    "target": "poolside/Laguna-S-2.1-INT4",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "quantization": "compressed-tensors INT4 group-32 W4A16"
+  },
+  "treatment": {
+    "control": {
+      "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": 0,
+      "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": 0,
+      "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": 0
+    },
+    "candidate": {
+      "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": 1,
+      "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": 1,
+      "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": 0
+    },
+    "unchanged_record_stack": {
+      "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": 1,
+      "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": 1,
+      "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": 1,
+      "VLLM_XPU_EXACT_SPEC_ATTN": 1,
+      "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS": 7
+    }
+  },
+  "component_evidence": {
+    "shared_elementwise_gate_passed": true,
+    "shared_elementwise_exact_all_cards": true,
+    "shared_elementwise_launches_per_cycle": {
+      "control": 188,
+      "candidate": 94,
+      "removed": 94
+    },
+    "shared_elementwise_saving_ms_per_cycle_range": [
+      0.69913771875,
+      0.7228657734374999
+    ],
+    "qknorm_rope_gate_passed": true,
+    "qknorm_rope_launches_per_cycle": {
+      "control": 144,
+      "candidate": 48,
+      "removed": 96
+    },
+    "qknorm_rope_isolated_saving_ms_per_cycle": 1.134039
+  },
+  "protocol": {
+    "order": [
+      "A1-control",
+      "B1-candidate",
+      "B2-candidate",
+      "A2-control"
+    ],
+    "fresh_service_per_leg": true,
+    "idle_gap_seconds_minimum": 60,
+    "generation_warmup": "none",
+    "prompt_count_per_leg": 13,
+    "prompts_unique_per_leg": true,
+    "each_prompt_run_once": true,
+    "cached_tokens_all_zero": true,
+    "single_active_generation": true,
+    "prefix_history_response_reuse": false,
+    "max_tokens": 512,
+    "top_level_prompt_tokens_suite_median": 112,
+    "top_level_output_tokens_suite_median": 512,
+    "metric": "median_tok_s_1_100_after_ttft",
+    "fifth_run_permitted": false
+  },
+  "runs": {
+    "A1": {
+      "treatment": "control",
+      "headline_tok_s": 32.826917069383214,
+      "p10_tok_s": 25.93940240010149,
+      "mean_tok_s": 38.21067633910967,
+      "aggregate_cycle_ms": 92.43822692389881,
+      "accepted_draft_tokens": 4642,
+      "draft_tokens": 12040,
+      "teacher_exact": "13/13",
+      "bench_sha256": "0723608787a4310e6e1ff7c7ca399f426f712e7fdca8856ffd15b035de6ea812",
+      "identity_sha256": "78ee685369b152685754012270bb95621ae84777a6da56a5e4ab6e7201c66c1a"
+    },
+    "B1": {
+      "treatment": "candidate",
+      "headline_tok_s": 34.55070137147406,
+      "p10_tok_s": 27.030435270379844,
+      "mean_tok_s": 39.69434037088581,
+      "aggregate_cycle_ms": 88.94829874530673,
+      "accepted_draft_tokens": 4642,
+      "draft_tokens": 12040,
+      "teacher_exact": "13/13",
+      "bench_sha256": "967f90df9738e744da92ceaefe3ca105780b6e9ff3d7fb74066b759afa05daa1",
+      "identity_sha256": "af75bfd947a547010ee35a6756c8e19615bec5d9ee227427aee69b37153a8577"
+    },
+    "B2": {
+      "treatment": "candidate",
+      "headline_tok_s": 33.89498511171744,
+      "p10_tok_s": 27.232459641047615,
+      "mean_tok_s": 39.662490342800574,
+      "stdev_tok_s": 13.341482242013047,
+      "full_after_ttft_median_tok_s": 44.61530066702271,
+      "wall_full_median_tok_s": 28.224643340869047,
+      "ttft_median_ms": 5544.37855805736,
+      "aggregate_cycle_ms": 88.88626065691338,
+      "accepted_draft_tokens": 4642,
+      "draft_tokens": 12040,
+      "teacher_exact": "13/13",
+      "bench_sha256": "456d7404fc04615e88409d35e0ca8a18eb646389cea5a836727e8aed3cf76808",
+      "identity_sha256": "32f960c23b9ea7f414f18a7f650d29b29d44254cb29ab77f7c5edc470c27f32b"
+    },
+    "A2": {
+      "treatment": "control",
+      "headline_tok_s": 33.27343466250297,
+      "p10_tok_s": 25.979232836349198,
+      "mean_tok_s": 37.8282101144855,
+      "aggregate_cycle_ms": 92.90175317858962,
+      "accepted_draft_tokens": 4643,
+      "draft_tokens": 12033,
+      "teacher_exact": "13/13",
+      "bench_sha256": "a157f0289e496e3c5e579de239d9c6ace901740edeba6f14e44a2ac8fff1d09e",
+      "identity_sha256": "74eaa31ab7ff439de31f9910e466d8ef305e979820f8d44b5719e62225fbdf0a"
+    }
+  },
+  "pair_results": {
+    "B1_vs_A1": {
+      "headline_delta_pct": 5.251130645157587,
+      "candidate_row_wins": "12/13",
+      "paired_median_delta_pct": 4.210639982841083,
+      "aggregate_cycle_saving_ms": 3.4899281785920806,
+      "acceptance_rate_delta_percentage_points": 0.0,
+      "passed": true
+    },
+    "B2_vs_A2": {
+      "headline_delta_pct": 1.8680080836827928,
+      "candidate_row_wins": "13/13",
+      "paired_median_delta_pct": 4.22462156505636,
+      "aggregate_cycle_saving_ms": 4.0154925216762365,
+      "acceptance_rate_delta_percentage_points": -0.030739110855998453,
+      "passed": true
+    }
+  },
+  "quality": {
+    "all_legs_teacher_exact": "52/52",
+    "all_legs_cross_exact": true,
+    "all_legs_cached_zero": "52/52",
+    "long_then_next_exact": "8/8",
+    "rollover_exact": "4/4",
+    "source_identity_passed_all_legs": true,
+    "metrics_accounting_passed_all_legs": true,
+    "cleanup_passed_all_legs": true,
+    "full_abba_causal_pass": true
+  },
+  "record_gate": {
+    "candidate_lower_start_tok_s": 33.89498511171744,
+    "candidate_higher_start_tok_s": 34.55070137147406,
+    "control_lower_start_tok_s": 32.826917069383214,
+    "prior_record_tok_s": 33.438926675602126,
+    "delta_vs_prior_record_tok_s": 0.45605843611531327,
+    "delta_vs_prior_record_pct": 1.363854888464661,
+    "strict_preregistered_record_pass": true
+  },
+  "artifacts": {
+    "root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/shared-elementwise-qknorm-stack-abba-8936aac-b6076ce-052193e-20260723T063914Z",
+    "full_analysis": "full-analysis.json",
+    "all_vs_canonical_teacher": "all-vs-canonical-teacher.json",
+    "cross_leg_exactness": "cross-leg-exactness.json",
+    "full_analysis_sha256": "59922f66bd27133d653843b9c9cdf7ca8c1b95519997354cae9fe71075a475fe",
+    "all_vs_canonical_teacher_sha256": "94461927f358d4809032b808c0effa2db6d9b4b56704c8a672e378cfd744c8ab",
+    "cross_leg_exactness_sha256": "788291299ec9416711d8867b92f6538265941b1fb92021b0357a12447102d144"
+  },
+  "submission": {
+    "queue": "data/localmaxxing-laguna-s-2.1-int4-b70-dflash-shared-elementwise-qknorm-33.895tok-20260723.queue.json",
+    "status": "staged_not_submitted"
+  }
+}
