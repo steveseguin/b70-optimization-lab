@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import statistics
 import sys
 import time
 import urllib.error
@@ -11,6 +12,8 @@ from pathlib import Path
 
 API_URL = "https://localmaxxing.com/api/benchmarks"
 DEFAULT_KEY_PATH = Path.home() / ".config" / "localmaxxing" / "api_key"
+API_KV_CACHE_DTYPES = {"q8_0", "q4_0", "fp8", "fp16", "auto"}
+API_ATTENTION_BACKENDS = {"flash_attn", "xformers", "sdpa", "triton"}
 
 
 def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[str]:
@@ -67,6 +70,40 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
     if not isinstance(suite_id, str) or not suite_id:
         problems.append("missing realisticSuiteId")
 
+    try:
+        projected_engine = api_engine_flags(engine)
+    except (TypeError, ValueError) as exc:
+        problems.append(f"engineFlags API projection failed: {exc}")
+    else:
+        if projected_engine.get("kvCacheDtype") not in API_KV_CACHE_DTYPES:
+            problems.append(
+                "projected kvCacheDtype is not accepted by the LocalMaxxing API"
+            )
+        if projected_engine.get("attentionBackend") not in API_ATTENTION_BACKENDS:
+            problems.append(
+                "projected attentionBackend is not accepted by the LocalMaxxing API"
+            )
+
+    for top_level_key, counts_key in (
+        ("promptTokens", "realisticPromptTokenCounts"),
+        ("outputTokens", "realisticOutputTokenCounts"),
+    ):
+        counts = engine.get(counts_key)
+        if isinstance(counts, list) and counts:
+            try:
+                expected_median = int(statistics.median(int(value) for value in counts))
+                actual_value = int(payload.get(top_level_key))
+            except (TypeError, ValueError):
+                problems.append(
+                    f"{top_level_key} or {counts_key} contains a non-integer value"
+                )
+            else:
+                if actual_value != expected_median:
+                    problems.append(
+                        f"{top_level_key} must equal the integer suite median "
+                        f"{expected_median}"
+                    )
+
     return [] if allow_non_headline else problems
 
 
@@ -88,6 +125,12 @@ def api_engine_flags(engine_flags: dict) -> dict:
     kv_cache = None
     if cache_k or cache_v:
         kv_cache = f"K={cache_k or '?'} V={cache_v or '?'}"
+    actual_kv_cache_dtype = kv_cache or str(
+        engine_flags.get("kvCacheDtype") or "f16"
+    )
+    api_kv_cache_dtype = str(
+        engine_flags.get("apiKvCacheDtype") or actual_kv_cache_dtype
+    )
 
     extra = {
         "benchmarkJson": engine_flags.get("benchmarkJson"),
@@ -99,6 +142,8 @@ def api_engine_flags(engine_flags: dict) -> dict:
         "specMethod": engine_flags.get("specMethod"),
         "specNumTokens": engine_flags.get("specNumTokens"),
         "targetModelVerifiedAcceptedTokens": engine_flags.get("targetModelVerifiedAcceptedTokens"),
+        "kvCacheDtypeActual": actual_kv_cache_dtype,
+        "attentionBackendActual": engine_flags.get("attentionBackend"),
         "requestPolicy": "cache_prompt=false; no prefix/KV/history/response reuse",
     }
     extra_text = json.dumps(
@@ -108,9 +153,13 @@ def api_engine_flags(engine_flags: dict) -> dict:
     if len(extra_text) > 1000:
         extra_text = extra_text[:997] + "..."
 
-    attention_backend = engine_flags.get("attentionBackend")
+    actual_attention_backend = engine_flags.get("attentionBackend")
+    attention_backend = engine_flags.get("apiAttentionBackend")
     if not attention_backend:
-        attention_backend = "llama.cpp SYCL/Level Zero flash attention"
+        attention_backend = (
+            actual_attention_backend
+            or "llama.cpp SYCL/Level Zero flash attention"
+        )
 
     flash_attn_value = engine_flags.get("flashAttn")
     if flash_attn_value is None:
@@ -128,7 +177,7 @@ def api_engine_flags(engine_flags: dict) -> dict:
     api_flags = {
         "commandSnippet": str(command),
         "gpuLayers": int(gpu_layers),
-        "kvCacheDtype": kv_cache or str(engine_flags.get("kvCacheDtype") or "f16"),
+        "kvCacheDtype": api_kv_cache_dtype,
         "flashAttn": bool(flash_attn_value),
         "attentionBackend": str(attention_backend),
         "concurrency": int(concurrency),

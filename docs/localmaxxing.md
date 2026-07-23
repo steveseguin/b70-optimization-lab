@@ -98,6 +98,14 @@ top-level `promptTokens` / `outputTokens` as integers. Per-prompt token-count
 arrays can stay in `engineFlags` for audit detail. The rapid-suite payload
 builder rounds suite medians to integer top-level token counts for this reason.
 
+The typed API enum currently has no BF16 KV-cache value and accepts only a
+generic `flash_attn` label for FlashAttention. Keep the literal runtime values
+in local `engineFlags.kvCacheDtype` and `engineFlags.attentionBackend`, set
+`apiKvCacheDtype="auto"` and `apiAttentionBackend="flash_attn"` for that
+case, and let the submission helper preserve the literal values in
+`extraFlags`. For fully offloaded engines, set `engineFlags.gpuLayers=-1`
+instead of relying on the llama.cpp-oriented fallback.
+
 `--allow-non-headline` is for local `--dry-run` inspection only. It must not be
 used to post diagnostic synthetic, repeated, warmed, history, or n-gram
 artifacts to LocalMaxxing.
