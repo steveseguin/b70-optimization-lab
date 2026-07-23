@@ -287,3 +287,67 @@ A LocalMaxxing record additionally requires the lower candidate to exceed the
 approved `33.438926675602126 tok/s` record. Only that lower candidate may be
 submitted after a complete payload and evidence audit. Otherwise preserve the
 candidate as an exact win, loss, or inconclusive result with no submission.
+
+## Endpoint phase-1 result
+
+The real A1/B1 phase ran under the frozen runner and analyzer at:
+
+```text
+/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/m8-bf16-router-topk-abba-689ee36-af68118-20260723T051657Z/
+```
+
+Both legs passed every quality, honesty, benchmark-identity, stack-identity,
+freshness, and cleanup check. Each was 13/13 bitwise exact against the
+canonical q=1 teacher with all 13 cached-token counts zero. The 512-token
+long-then-next check passed 2/2 and the rollover check passed 1/1 in each leg.
+Because both legs exactly matched the same teacher, their output token arrays
+also matched one another. There was no generation warm-up, prompt reuse,
+history acceleration, concurrent request, or retained endpoint.
+
+The measured phase-1 comparison was:
+
+| Metric | A1 control | B1 candidate | B1 - A1 |
+| --- | ---: | ---: | ---: |
+| Headline median tok/s | 32.9690119264 | 32.3101222212 | -0.6588897052 (-1.9985%) |
+| Mean tok/s | 38.3387134160 | 38.6575563099 | +0.3188428939 |
+| p10 tok/s | 25.6497789812 | 26.4776872145 | +0.8279082334 |
+| Aggregate decode seconds | 159.2497690071 | 157.7562722090 | -1.4934967981 |
+| Target-cycle-normalized time | 92.7488462476 ms | 91.7187629122 ms | -1.0300833354 ms (-1.1106%) |
+| DFlash cycles | 1,717 | 1,720 | +3 |
+| Draft tokens | 12,019 | 12,040 | +21 |
+| Accepted tokens | 4,645 | 4,642 | -3 |
+| Acceptance rate | 38.6471420251% | 38.5548172757% | -0.0923247494 percentage point |
+
+The candidate won 10/13 paired prompt rows. Its median paired improvement was
+`+0.2127728662 tok/s` (`+0.7138466435%`), and it passed the row-win,
+paired-median, cycle-saving, and acceptance-delta gates. The three losses were
+the median-defining `shell-safety-review` row (`-1.9985%`),
+`structured-extraction` (`-2.3034%`), and `prose-decision-memo` (`-1.7132%`).
+Consequently the preregistered `B1 headline > A1 headline` gate failed.
+
+The frozen analyzer classified the experiment `phase1_failed_stop`. Per the
+preregistered early-stop rule, B2 and A2 were not run. This is evidence that
+the specialization removes real work, but it is not a promotable endpoint win
+under the frozen official metric. No LocalMaxxing payload was staged or
+submitted.
+
+Tracked summary:
+
+```text
+data/laguna-s-2.1-m8-bf16-router-topk-endpoint-phase1-20260723.json
+```
+
+Artifact hashes:
+
+- `phase1-analysis.json`:
+  `30f0627b089fc9251823c57f394be6ce13b5e8ad26babbbf247308191c1de8dc`;
+- `phase1-analysis.md`:
+  `869513c4f45f832b68d8d115b02e2298a9d46b8d1c9bd84077710f9dc942e5ed`;
+- A1 `bench.json`:
+  `75a237a8221236b98b422c4d78290a3666220050d02c31a402937c1f45ec0807`;
+- A1 `exactness-vs-q1.json`:
+  `878a21c14226db6214aa26957d79280fe2544a9c2faba76d10c8a94b38ba5194`;
+- B1 `bench.json`:
+  `a3ea84617082a7d76bc49d16b51695279d6d916990d04b2b7bdd63cc18f4fe05`;
+- B1 `exactness-vs-q1.json`:
+  `d760056da1ec53e9e404707156a3f3474b40ec40fa11260896a0f5fa71037c2c`.

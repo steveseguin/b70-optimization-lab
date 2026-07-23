@@ -1,0 +1,102 @@
+{
+  "experiment": "laguna-m8-bf16-router-topk-endpoint-phase1",
+  "date": "2026-07-23",
+  "status": "phase1_failed_stop",
+  "record_submission": false,
+  "decision": "Stop before B2/A2 because B1 did not beat A1 in headline median throughput.",
+  "approved_record_floor_tok_s": 33.438926675602126,
+  "source": {
+    "vllm_commit": "689ee3643f320e4a10c621ddd829620bc2f5b3b3",
+    "kernel_commit": "af6811818ef797aa86aef51bda15ae9c49040f7b",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "native_moe_library_sha256": "0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0"
+  },
+  "tooling": {
+    "runner": "experiments/laguna-s-2.1-xpu-b70/tools/run_router_topk_crossover_leg.sh",
+    "runner_sha256": "b92c5a41de86f1112d2782c6a4fbe79afe518e0d7592c6c7a04a699c8e6e4a9b",
+    "analyzer": "experiments/laguna-s-2.1-xpu-b70/tools/analyze_router_topk_crossover.py",
+    "analyzer_sha256": "ae9e7b420f2eb95237ba21ec9dd366846aed7e268e7ad7d444e26c3b384ae923"
+  },
+  "artifact_root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/m8-bf16-router-topk-abba-689ee36-af68118-20260723T051657Z",
+  "quality": {
+    "A1": {
+      "teacher_exact": "13/13",
+      "cached_tokens_zero": "13/13",
+      "long_then_next_exact": "2/2",
+      "rollover_exact": "1/1",
+      "freshness_pass": true,
+      "benchmark_identity_pass": true,
+      "stack_identity_pass": true,
+      "cleanup_pass": true
+    },
+    "B1": {
+      "teacher_exact": "13/13",
+      "cached_tokens_zero": "13/13",
+      "long_then_next_exact": "2/2",
+      "rollover_exact": "1/1",
+      "freshness_pass": true,
+      "benchmark_identity_pass": true,
+      "stack_identity_pass": true,
+      "cleanup_pass": true
+    },
+    "cross_leg_token_arrays_equal": true
+  },
+  "performance": {
+    "A1_control": {
+      "headline_median_tok_s": 32.96901192636544,
+      "mean_tok_s": 38.338713415969046,
+      "p10_tok_s": 25.64977898117462,
+      "aggregate_decode_seconds": 159.24976900708862,
+      "target_cycle_ms": 92.74884624757637,
+      "draft_cycles": 1717,
+      "draft_tokens": 12019,
+      "accepted_tokens": 4645,
+      "acceptance_rate": 0.38647142025126885
+    },
+    "B1_candidate": {
+      "headline_median_tok_s": 32.3101222211608,
+      "mean_tok_s": 38.6575563098951,
+      "p10_tok_s": 26.477687214541454,
+      "aggregate_decode_seconds": 157.75627220899332,
+      "target_cycle_ms": 91.71876291220542,
+      "draft_cycles": 1720,
+      "draft_tokens": 12040,
+      "accepted_tokens": 4642,
+      "acceptance_rate": 0.3855481727574751
+    },
+    "B1_vs_A1": {
+      "headline_delta_tok_s": -0.6588897052046363,
+      "headline_delta_percent": -1.9985121382352422,
+      "candidate_row_wins": 10,
+      "candidate_row_losses": 3,
+      "median_paired_delta_tok_s": 0.21277286617483426,
+      "median_paired_delta_percent": 0.7138466434645689,
+      "target_cycle_saving_ms": 1.0300833353709464,
+      "target_cycle_saving_percent": 1.1106157942076478,
+      "acceptance_rate_delta": -0.000923247493793744,
+      "acceptance_rate_delta_percentage_points": -0.0923247493793744
+    }
+  },
+  "phase1_gates": {
+    "A1_quality_and_honesty": true,
+    "B1_quality_and_honesty": true,
+    "same_canonical_teacher": true,
+    "candidate_headline_faster": false,
+    "candidate_wins_at_least_9_of_13_rows": true,
+    "paired_median_positive": true,
+    "target_cycle_saving_at_least_0_15_ms": true,
+    "absolute_acceptance_rate_delta_at_most_0_001": true,
+    "phase1_pass": false
+  },
+  "artifact_sha256": {
+    "phase1_analysis_json": "30f0627b089fc9251823c57f394be6ce13b5e8ad26babbbf247308191c1de8dc",
+    "phase1_analysis_markdown": "869513c4f45f832b68d8d115b02e2298a9d46b8d1c9bd84077710f9dc942e5ed",
+    "A1_bench_json": "75a237a8221236b98b422c4d78290a3666220050d02c31a402937c1f45ec0807",
+    "A1_exactness_json": "878a21c14226db6214aa26957d79280fe2544a9c2faba76d10c8a94b38ba5194",
+    "A1_identity": "8134c03f2f9eb5604763e648bd5343849e75a12ffe050e5edcbb83512b312eb1",
+    "B1_bench_json": "a3ea84617082a7d76bc49d16b51695279d6d916990d04b2b7bdd63cc18f4fe05",
+    "B1_exactness_json": "d760056da1ec53e9e404707156a3f3474b40ec40fa11260896a0f5fa71037c2c",
+    "B1_identity": "ae9c25c46498b093fe3563b3000122833b9e355cfd699dc72a8394783bd098da"
+  }
+}

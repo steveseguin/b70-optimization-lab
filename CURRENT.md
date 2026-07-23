@@ -205,16 +205,26 @@ therefore stopped the lane before any endpoint. The failed candidate is
 preserved at vLLM `3d1222281` and explicitly reverted at `f239a1014`; the
 current source tree again matches `d503073ec`. Resume from the
 [negative result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-shared-expert-xpu-stream-negative.md).
-The next bounded lever is the BF16-load/FP32-sigmoid router specialization,
-followed by a separately gated shared-MLP fusion if the router gain is too
-small. Do not revisit route buffer fills or progressively serialize the whole
-model into opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
-plus kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
-vLLM `d503073ec3573c6208cc2a06339815ec040ee984` and kernels
-`9525343e74b1a434b6af7d05583e1385a891c919`. Also preserve the DeepSeek
+The exact BF16-input/FP32-sigmoid M=8 router specialization at vLLM
+`689ee3643` plus kernels `af6811818` passed its four-card component gate and
+removed about 0.45-0.48 ms per 47-layer isolated cycle. In the frozen cold
+endpoint phase it remained teacher exact 13/13 and cache-zero on both starts,
+won 10/13 paired rows, improved the paired median 0.7138%, and saved 1.0301 ms
+per target cycle. However, the official candidate headline was
+32.310122 versus the adjacent control's 32.969012 tok/s (-1.9985%), so the
+preregistered early-stop rule forbade B2/A2 and no payload was staged. Resume
+from the [phase-1 result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-m8-bf16-router-topk-preregistration.md).
+Select the next lever from the independent occupancy and exact-fusion audits;
+do not stack this router candidate into another endpoint trial unless a future
+preregistered design explicitly isolates its contribution. Do not revisit
+route buffer fills or progressively serialize the whole model into opaque
+graph islands. Preserve the exact approved base at vLLM `cb616c670` plus
+kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
+vLLM `689ee3643f320e4a10c621ddd829620bc2f5b3b3` and kernels
+`af6811818ef797aa86aef51bda15ae9c49040f7b`. Also preserve the DeepSeek
 option-4 branch and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
-them to `/mnt/fast-ai`. Postflight on 2026-07-22 left no Laguna endpoint or
+them to `/mnt/fast-ai`. Postflight on 2026-07-23 left no Laguna endpoint or
 worker running; all four B70s are free.
 
 ## Optimization Transition
