@@ -1147,6 +1147,10 @@ def test_unitrace_template_has_frozen_modern_syntax() -> None:
     )
 
 
+def test_component_evidence_matches_pinned_aggregate_and_cards() -> None:
+    runner.validate_component_evidence()
+
+
 def test_outer_timeout_terminates_full_process_group(tmp_path: Path) -> None:
     stdout, stderr, returncode = runner.run_bounded_process_group(
         [

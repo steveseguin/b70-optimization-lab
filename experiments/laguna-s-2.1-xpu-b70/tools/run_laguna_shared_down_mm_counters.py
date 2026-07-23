@@ -514,26 +514,84 @@ def validate_component_evidence() -> None:
         "component aggregate SHA drift",
     )
     aggregate = json.loads(COMPONENT_AGGREGATE.read_text())
-    authorization = aggregate.get("authorization")
-    exactness = aggregate.get("exactness")
+    expected_aggregate_checks = {
+        "all_cards_recomputed_pass": True,
+        "analyzer_main_matches_cards": True,
+        "exact_declared_ranks": True,
+        "four_distinct_physical_bdfs": True,
+        "four_distinct_physical_uuids": True,
+        "frozen_kernel_commit": True,
+        "frozen_vllm_commit": True,
+        "identical_fixture_aggregate": True,
+        "identical_output_aggregate": True,
+        "one_boot": True,
+        "one_clean_main_commit": True,
+    }
     require(
-        aggregate.get("status") == "component-passed-counter-tooling-freeze-next"
+        aggregate.get("format") == "laguna-shared-down-mm-four-card-component-v2"
+        and aggregate.get("status") == "component-passed-counter-tooling-freeze-next"
+        and aggregate.get("passed") is True
         and aggregate.get("component_passed") is True
-        and isinstance(authorization, dict)
-        and authorization.get("counter_tooling_construction_authorized") is True
-        and authorization.get("counter_execution_authorized") is False
-        and authorization.get("endpoint_authorized") is False
-        and authorization.get("model_generation_performed") is False
-        and authorization.get("payload_created") is False
-        and authorization.get("localmaxxing_submission_made") is False
-        and isinstance(exactness, dict)
-        and exactness.get("all_raw_exact") is True
-        and exactness.get("aggregate_fixture_sha256")
+        and aggregate.get("counter_tooling_construction_authorized") is True
+        and aggregate.get("counter_execution_authorized") is False
+        and aggregate.get("counter_gate_evaluated") is False
+        and aggregate.get("endpoint_authorized") is False
+        and aggregate.get("model_generation_performed") is False
+        and aggregate.get("aggregate_fixture_sha256")
         == EXPECTED_COMPONENT_FIXTURE_SHA256
-        and exactness.get("aggregate_output_sha256")
+        and aggregate.get("aggregate_output_sha256")
         == EXPECTED_COMPONENT_OUTPUT_SHA256,
         "component aggregate authorization/exactness contract drift",
     )
+    require(
+        aggregate.get("aggregate_checks") == expected_aggregate_checks
+        and aggregate.get("declared_ranks") == list(RANKS)
+        and aggregate.get("required_ranks") == list(RANKS)
+        and aggregate.get("frozen_identity")
+        == {
+            "harness_sha256": EXPECTED_GATE_SHA256,
+            "vllm_commit": EXPECTED_VLLM_COMMIT,
+            "kernel_commit": EXPECTED_KERNEL_COMMIT,
+            "binary_sha256": {
+                name: value["sha256"]
+                for name, value in EXPECTED_RUNTIME_BINARIES.items()
+            },
+        }
+        and aggregate.get("analyzer", {}).get("path") == str(COMPONENT_ANALYZER)
+        and aggregate.get("analyzer", {}).get("sha256")
+        == EXPECTED_COMPONENT_ANALYZER_SHA256
+        and aggregate.get("analyzer", {}).get("expected_sha256")
+        == EXPECTED_COMPONENT_ANALYZER_SHA256,
+        "component aggregate recomputation/source contract drift",
+    )
+    cards = aggregate.get("cards")
+    require(
+        isinstance(cards, list) and len(cards) == len(RANKS),
+        "component aggregate card closure drift",
+    )
+    for rank, card in zip(RANKS, cards, strict=True):
+        expected_path = COMPONENT_AGGREGATE.parent / f"card{rank}.json"
+        expected_device = EXPECTED_PHYSICAL_DEVICES[rank]
+        require(
+            isinstance(card, dict)
+            and card.get("rank") == rank
+            and card.get("path") == str(expected_path)
+            and isinstance(card.get("sha256"), str)
+            and re.fullmatch(r"[0-9a-f]{64}", card["sha256"]) is not None
+            and expected_path.is_file()
+            and not expected_path.is_symlink()
+            and sha256_file(expected_path) == card["sha256"]
+            and card.get("passed") is True
+            and card.get("boot_id") == EXPECTED_BOOT_ID
+            and card.get("physical_uuid") == expected_device["uuid"]
+            and card.get("physical_bdf") == expected_device["pci_bdf_address"]
+            and card.get("vllm_commit") == EXPECTED_VLLM_COMMIT
+            and card.get("kernel_commit") == EXPECTED_KERNEL_COMMIT
+            and card.get("aggregate_fixture_sha256")
+            == EXPECTED_COMPONENT_FIXTURE_SHA256
+            and card.get("aggregate_output_sha256") == EXPECTED_COMPONENT_OUTPUT_SHA256,
+            f"component card {rank} closure drift",
+        )
 
 
 def validate_authorization(
