@@ -1,0 +1,105 @@
+{
+  "authorization": {
+    "analysis_repair_authorized": true,
+    "counter_gate_evaluated": false,
+    "counter_gate_passed": false,
+    "counter_reexecution_authorized": false,
+    "endpoint_execution_authorized": false,
+    "endpoint_preregistration_construction_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "localmaxxing_submission_made": false,
+    "model_generation_authorized": false,
+    "model_generation_performed": false,
+    "payload_created": false,
+    "sealed_counter_capture_reuse_authorized": true
+  },
+  "created_utc": "2026-07-23T17:58:18.800648+00:00",
+  "execution_evidence": {
+    "campaign_complete": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z/campaign.complete.json",
+      "sha256": "164d124d7d88b9ec4dd3a7f1280feb7ec274538fb9ccc842f62671e951562c12"
+    },
+    "campaign_open": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z/campaign.open.json",
+      "sha256": "c2ae3b524d010e118df0be0fed17e5c81718dc5376f38db8ca3d3c9ac3ccbb46"
+    },
+    "campaign_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z",
+    "execution_authorization": {
+      "path": "/home/steve/llm-optimizations/data/laguna-s-2.1-shared-down-m8-counter-authorization-20260723.json",
+      "sha256": "3b8aa2cf10f27e50ccae778071b8d0b96480dd7c03a852b7199cb0de40928b1a"
+    },
+    "original_analyzer": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/analyze_laguna_shared_down_mm_counters.py",
+      "sha256": "d3b8472556b558d92a2e73617ed7d968e03920126af71cba67719dae8f73fa24"
+    },
+    "original_runner": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_shared_down_mm_counters.py",
+      "sha256": "2c551194c55886138dab88854782ce9d008532fe358f8cf4bb1f1d502de3f0ab"
+    }
+  },
+  "format": "laguna-shared-down-m8-counter-analysis-repair-authorization-v1",
+  "output": {
+    "analysis": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z-analysis-repair-20260723T175756Z/analysis.json",
+    "exclusive_create": true,
+    "original_campaign_remains_immutable": true,
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-counters-20260723T173812Z-analysis-repair-20260723T175756Z"
+  },
+  "parser_contract": {
+    "campaign_evidence_validator": "unchanged original analyzer",
+    "comparison_and_thresholds": "unchanged original analyzer",
+    "metric_parser": "unchanged original analyzer",
+    "repair_scope": "device-timing and kernel-property parser only",
+    "selected_kernel_property": {
+      "compiled": "AOT",
+      "exact_row_count": 1,
+      "number_of_arguments": 15,
+      "private_memory_per_thread": 0,
+      "register_file_size_per_thread": 256,
+      "simd": 16,
+      "slm_per_work_group": 0,
+      "spill_memory_per_thread": 0
+    },
+    "timing_arithmetic": {
+      "absolute_tolerance": 5e-06,
+      "average": "Time (ns) // Calls",
+      "decimal_integer_fields": [
+        "Calls",
+        "Time (ns)",
+        "Average (ns)",
+        "Min (ns)",
+        "Max (ns)"
+      ],
+      "range": "Calls * Min <= Time <= Calls * Max",
+      "row_time_sum_equals_reported_l0_device_time": true,
+      "time_percent_matches_row_fraction": true,
+      "time_percent_sum": 100.0
+    },
+    "timing_rows": {
+      "auxiliary_name_to_calls": {
+        "zeCommandListAppendMemoryCopy(D2M)[1572864]": 2,
+        "zeCommandListAppendMemoryCopy(D2M)[4096]": 2,
+        "zeCommandListAppendMemoryCopy(D2M)[49152]": 13,
+        "zeCommandListAppendMemoryCopy(M2D)[1572864]": 1,
+        "zeCommandListAppendMemoryCopy(M2D)[4096]": 1
+      },
+      "exact_row_count": 6,
+      "no_other_rows": true,
+      "order": "order-insensitive exact identity set; unitrace orders rows by measured time",
+      "selected_kernel": {
+        "calls": 13,
+        "identity": "exact metric-query verbose SIMD16 kernel name"
+      }
+    }
+  },
+  "reason": "post-capture parser repair: pinned unitrace device timing includes five fixture memory-copy rows alongside the selected GEMM",
+  "tools": {
+    "repair_analyzer": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/analyze_laguna_shared_down_mm_counters_repair.py",
+      "sha256": "14b18b3ba785e3ef2be44b009531aa8b249a07e1d341fa894dbd2f7a06c2a195"
+    },
+    "repair_test": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/test_analyze_laguna_shared_down_mm_counters_repair.py",
+      "sha256": "e70d481bc143be11921a2b0716c6d3bae4ee7a49b2ff0c7796c4ac262fe673fd"
+    }
+  }
+}
