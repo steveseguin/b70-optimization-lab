@@ -1,0 +1,90 @@
+{
+  "format": "laguna-w1-n128-nvme-recovery-pass-v1",
+  "classification": {
+    "kind": "non_generative_recovery_gate",
+    "passed": true,
+    "benchmark_observation": false,
+    "model_generation_performed": false,
+    "candidate_observation": false,
+    "n128_executed": false
+  },
+  "source_identity": {
+    "repo_commit": "22da28101337fd7e13cfaea3d6a9c93a191577cc",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_repo_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "recovery_runner_sha256": "7ddec85c21df4206e0161ee2af6c82a9620541c956a33228c78ca067371697ba"
+  },
+  "host": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint_before": 0,
+    "kernel_taint_after": 0
+  },
+  "gate": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T140536Z",
+    "started_utc": "2026-07-23T14:08:28Z",
+    "completed_utc": "2026-07-23T14:14:15Z",
+    "exit_status": 0,
+    "evidence_manifest_verified": true,
+    "evidence_manifest_sha256": "0c582de8520a8f2a35ada2cd997693f8719df6e90b993b43ab524bd1087d56e0",
+    "summary_sha256": "2f9266dcbf3f4014e09a5c66dc9b68c2651ee113248ad4eb230e845711cce291",
+    "final_status_sha256": "9b148404a6cff040f53b87076e4bc6c8227c6e23f61f05e2bdfba85b9359689c",
+    "kernel_delta_sha256": "df105046b0b04421c97d9b7c3e421b515cfddcff49c377dff7e58010a8df2dfd",
+    "kernel_reject_events_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kernel_reject_events": 0
+  },
+  "passed_gates": {
+    "all_118_local_model_files_sha256": true,
+    "exact_four_device_mapping": true,
+    "strict_gpu_idle_before_gates": true,
+    "oneapi_2026_four_device_enumeration": true,
+    "four_device_peer_read": true,
+    "xccl_exact_allreduce_independent_passes": 2,
+    "n64_historical_exact_oracle_cards": 4,
+    "n64_historical_exact_calls_per_card": 128,
+    "n64_production_fixture_liveness_cards": 4,
+    "n64_production_liveness_calls_per_card": 12,
+    "n128_executed": false,
+    "model_generation_performed": false
+  },
+  "idle_seal": {
+    "started_utc": "2026-07-23T14:13:09Z",
+    "completed_utc": "2026-07-23T14:14:15Z",
+    "seconds": 66,
+    "strict_samples": 41,
+    "no_device_or_model_client_detected": true,
+    "services_and_ports_rechecked": true
+  },
+  "prior_preflight_aborts": [
+    {
+      "kind": "invalid_ur_logger",
+      "root_suffix": "20260723T131632Z",
+      "model_generation_performed": false
+    },
+    {
+      "kind": "missing_umf_loader_path",
+      "root_suffix": "20260723T134648Z",
+      "model_generation_performed": false
+    },
+    {
+      "kind": "missing_peer_sycl_loader_path",
+      "root_suffix": "20260723T135330Z",
+      "model_generation_performed": false
+    },
+    {
+      "kind": "xccl_log_line_framing",
+      "root_suffix": "20260723T140038Z",
+      "model_generation_performed": false
+    }
+  ],
+  "disposition": {
+    "gate_root_immutable": true,
+    "reboot_required": false,
+    "campaign_may_start": true,
+    "campaign_id": "w1-n128-nvme-recovery-abba-8936aac-c59aaad-20260723T131632Z",
+    "next_leg": "A1",
+    "next_treatment": "N64 control",
+    "a1_must_be_first_post_recovery_model_generation": true,
+    "performance_conditioned_restart": false
+  }
+}

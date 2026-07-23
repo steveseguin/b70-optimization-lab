@@ -285,10 +285,18 @@ was present exactly once and the command exited zero; the second XCCL pass,
 N64, N128, service, and model generation did not run. Its manifest verifies,
 kernel delta and rejects are empty, and taint remains zero. See the
 [XCCL framing preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-xccl-log-framing-preflight-abort.md).
-Retry only the newly rooted gate with the unchanged rank/numeric requirements
-counted independently of physical-line framing. This is not a
-performance-conditioned retry; A1 remains the first model generation after a
-complete recovery pass.
+The next freshly rooted gate passed completely: all 118 model hashes, exact
+four-card mapping and idle, oneAPI enumeration, peer read, two independent
+exact XCCL passes, four historical N64 oracles, four production N64 liveness
+checks, a 66-second/41-sample idle seal, and final kernel/reject capture.
+N128 and model generation remained false; the evidence manifest verifies and
+taint remains zero. See the
+[recovery pass note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-recovery-gate-pass.md)
+and
+[structured packet](data/laguna-s-2.1-w1-n128-nvme-recovery-pass-20260723.json).
+The next and first post-recovery model generation must now be A1 N64 control
+in the frozen local-NVMe A-B-B-A campaign. No diagnostic, warmup, candidate,
+or unrelated generation may precede it.
 
 ## Optimization Transition
 
