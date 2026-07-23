@@ -7,7 +7,7 @@ Date: 2026-07-23 America/Toronto
 The preregistered A-B-B-A endpoint crossover passed every quality, causal, and
 record gate. The two candidate starts measured **34.55070137147406** and
 **33.89498511171744 tok/s** for generated tokens 1-100 after TTFT. The lower
-candidate exceeds the current approved **33.438926675602126 tok/s** record
+candidate exceeds the prior approved **33.438926675602126 tok/s** record
 `cmrwot89400gqnz014oodtlbp` by **0.45605843611531327 tok/s
 (1.363854888%)**.
 
@@ -16,8 +16,9 @@ each other **13/13**. All 52 requests reported `cached_tokens=0`.
 Long-then-next passed **2/2** on every leg and the 863-input/512-output
 rollover row passed **1/1** on every leg. Every leg used a new service, a
 60-second-or-longer device-idle gap separated adjacent legs, and the protocol
-allowed no warm-up generation, repeated prompt, retained history, or fifth
-run.
+allowed no warm-up generation, within-leg/service prompt repeat, warmed or
+cache-bearing repeat, retained history, or fifth run. The frozen 13-prompt
+suite was intentionally reused only across the four fresh ABBA services.
 
 The conservative LocalMaxxing value is B2, the lower candidate:
 **33.89498511171744 tok/s**. B1 is retained as supporting reproducibility
@@ -145,17 +146,35 @@ The LocalMaxxing queue is:
 data/localmaxxing-laguna-s-2.1-int4-b70-dflash-shared-elementwise-qknorm-33.895tok-20260723.queue.json
 ```
 
-The public API was rechecked immediately before staging: the matching approved
+The public API was rechecked immediately before submission: the matching approved
 4x B70 Laguna INT4 record remained `cmrwot89400gqnz014oodtlbp` at
 `33.43892667560213 tok/s`.
 
+The preflighted queue was submitted exactly once. LocalMaxxing returned HTTP
+201 and immediately approved the conservative B2 result as
+`cmrx6p5dv001bo4017hb7sixz`. A post-submission public API check found exactly
+one row with that ID and confirmed the intended model revision, four-B70
+hardware identity, 112/512 median token counts, batch/concurrency 1, greedy
+temperature 0, target-verified speculation, and
+`33.89498511171744 tok/s`. The sanitized response is:
+
+```text
+data/localmaxxing-responses/laguna-s-2.1-int4-b70-dflash-shared-elementwise-qknorm-33.895tok-20260723.response.json
+```
+
+The public row reused LocalMaxxing hardware profile
+`cmormmlvb0009ky04i6pvj96b`, whose shared CPU/RAM fields render as `null` and
+15 GB instead of the submitted host metadata. The four-B70 GPU identity and
+all benchmark fields are correct. Repair that shared hardware profile
+separately if the API gains an edit path; never duplicate-submit this result.
+
 ## Disposition
 
-This is a strict record candidate. Submit only the lower B2 value after the
-queue passes the local policy preflight and an independent identity/payload
-audit. Preserve both selectors default-off until the result and reproduction
-recipe are promoted together.
+This is the current approved strict 4x B70 Laguna S 2.1 INT4 record. Only the
+lower B2 value was submitted; B1 remains support evidence. Keep both selectors
+default-off globally and enable them together only in the pinned Laguna record
+launch command.
 
-No held-out DeepSeek pack, cache/history acceleration, repeated prompt, or
-`/mnt/fast-ai` artifact was used. Postflight left no endpoint or worker
-running and all four B70s free.
+No held-out DeepSeek pack, cache/history acceleration, within-service prompt
+repeat, warmed repeat, or `/mnt/fast-ai` artifact was used. Postflight left no
+endpoint or worker running and all four B70s free.

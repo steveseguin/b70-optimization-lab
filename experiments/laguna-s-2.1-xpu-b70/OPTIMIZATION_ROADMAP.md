@@ -42,8 +42,11 @@ Also serve it as the working coding model.
 | 2026-07-22 | **M8 route-interleave GEMM occupancy — RECORD cmrwot894** | **33.44** | YES (13/13 x2) | +0.51%; lower start 33.439>33.268; W1/W2 N-tile interleave raised EU active ~44->48%; 64/64 exact. APPROVED. |
 | 2026-07-22 | DFlash depth sweep {4-10} | 33.44 (d7 best) | d7 exact | NO RECORD: d7 optimal. Exact only d5-7 (d4=12/13, d8-10=0/13: exact M=8 verifier caps draft depth at 7). Deeper barely helps (emitted/cyc 3.70->3.84 as accept collapses). Profile: biggest unopt kernel = BF16 attn QKV+O 2.92ms/cyc. |
 | 2026-07-22 | BF16 attn QKV+O occupancy (N-interleave) | 33.44 | YES (exact both starts) | NEGATIVE: slowed 3/4 projections. Attn projections are SMALL GEMMs (EU ~10-11%, GQA-tiny K/V) — interleave technique doesn't transfer from large experts. Default-off. Next: attn non-GEMM FUSION (1.42ms). |
-| 2026-07-23 | attn QKNorm+RoPE fusion | 33.19 lower | YES (13/13 x2) | NEGATIVE: lower start 33.191 <33.439, WIDE 3.1% spread. PATTERN: fusions add variance & miss; occupancy changes are tight & win. Pivot to occupancy-only. Default-off. |
+| 2026-07-23 | attn QKNorm+RoPE fusion | 33.19 lower | YES (13/13 x2) | STANDALONE ENDPOINT NEGATIVE: lower start 33.191 <33.439 with a wide 3.1% spread, despite an exact 144→48 launch component win. Retained default-off and later retested only inside a preregistered stack crossover. |
 | 2026-07-22 | DFlash depth 4-10 sweep | 32.19 best exact | YES at depth 5/6/7 | depth 7 remains best exact but below record; depth 4 was 12/13; depths 8-10 exceeded exact M<=8 target guards, were 0/13, and fell to 4.94-6.11 tok/s. No two-start gate or payload. |
+| 2026-07-23 | BF16 router/top-k specialization | 32.31 candidate | YES (13/13 phase 1) | COMPONENT WIN / ENDPOINT LOSS: removed 0.45-0.48 ms/cycle in isolation and won 10/13 paired rows, but the frozen candidate headline was -1.9985% versus its adjacent control. Preregistered early stop; no B2/A2 or payload. Do not stack without a new isolating design. |
+| 2026-07-23 | shared-elementwise component bundle | component only | YES, exhaustive 4-card gate | Two native operations preserve literal BF16 rounding, remove 94 launches/cycle, and save 0.699-0.723 ms/cycle on every card. Promoted only as part of the following frozen stack endpoint. |
+| 2026-07-23 | **shared-elementwise + QKNorm/RoPE stack — RECORD cmrx6p5dv** | **33.895** | **YES (52/52 ABBA)** | APPROVED. Conservative candidate 33.895 (support 34.551) beat adjacent controls 32.827/33.273, won 12/13 and 13/13 rows, and saved 3.490/4.015 ms target-cycle time. All requests cache-zero; long-next 8/8 and rollover 4/4. +1.364% over cmrwot894. |
 
 ## Lever ladder (grind order; each exact + quality-gated)
 1. **[DONE] DFlash verifier exactness and batching** — q=8 verifier == q=1
@@ -52,22 +55,28 @@ Also serve it as the working coding model.
 2. **[DONE; APPROVED] First verified record** — full-512 exact DFlash at
    33.085825 tok/s, LocalMaxxing `cmrw7cn1k006jnz01gq2z981v`.
 3. **[DONE; APPROVED] MoE/EP launch/occupancy rebalance** — fused W1+SiLU,
-   route-parallel W2, and M8 N-tile/route interleave produced the current
-   two-start 33.438927 tok/s lower result, LocalMaxxing `cmrwot89400gqnz014oodtlbp`.
-4. **[NEXT] Attention and router residual** — BF16 QKV+O is 2.918838
-   ms/cycle; the largest single named kernel in the corrected residual is
-   TopKGating at 0.560374 ms/cycle. Retain exact arithmetic and the full gate.
-5. **[DONE] INT4 expert GEMM efficiency / occupancy** — N64 route-interleaved
+   route-parallel W2, and M8 N-tile/route interleave produced the approved
+   33.438927 tok/s predecessor, LocalMaxxing `cmrwot89400gqnz014oodtlbp`.
+4. **[DONE; APPROVED] Exact launch-reduction stack** — literal-BF16
+   shared-elementwise operations plus Q/K RMSNorm and RoPE reduce launches
+   while retaining every rounding boundary. The preregistered A-B-B-A endpoint
+   promoted the lower 33.894985 tok/s candidate, LocalMaxxing
+   `cmrx6p5dv001bo4017hb7sixz`.
+5. **[NEXT] Shared-expert and routed-W1 occupancy** — isolate the roughly
+   1 ms/cycle shared-expert GEMMs and remaining routed-W1 headroom against the
+   exact current stack. Require a four-card changed-input component gate before
+   another preregistered endpoint.
+6. **[DONE] INT4 expert GEMM efficiency / occupancy** — N64 route-interleaved
    W1/W2 workgroups raised EU activity and produced the current record.
-6. **Graph coverage** — first fix AOT cache identity/artifact selection and
+7. **Graph coverage** — first fix AOT cache identity/artifact selection and
    locate the first eager-vs-compiled tensor divergence. Fixed-rank reductions
    alone produced only 1/13 teacher matches and were reverted.
-7. **[DEPTH SWEEP DONE] Better speculation** — depth 7 remains best exact.
+8. **[DEPTH SWEEP DONE] Better speculation** — depth 7 remains best exact.
    Depths >7 require widening or serializing all M>8 target verifier boundaries
    before acceptance policy or tree/multi-branch drafting can be promoted.
-8. **FP8 KV for long context** — capacity (2x tokens/card) for real coding sessions;
+9. **FP8 KV for long context** — capacity (2x tokens/card) for real coding sessions;
    measure speed tradeoff (BF16 slightly faster at 8K).
-9. **Quantization headroom (careful, quality-gated)** — if quality holds, reduce
+10. **Quantization headroom (careful, quality-gated)** — if quality holds, reduce
    remaining BF16 bytes/token to raise the roofline itself. Only behind a real
    quality gate; never a silent lossy swap.
 

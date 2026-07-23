@@ -103,10 +103,11 @@ writes were repaired at vLLM commit
 The earlier target-only TP4+EP4 path was not bitwise repeatable: identical cold
 q=1 requests could change token 0 because M-dependent INT4 projections, atomic
 MoE remap, and XCCL reduction order moved BF16 values by one ULP. The first
-exact repair at vLLM `d26fe57b3` serialized target work as M=1 rows. The current
-batched-exact path at vLLM `cb616c670` plus XPU kernels `6fc06b08c` retains M=1
-numerical lanes inside batched BF16 projections, uses one paged-decode verifier
-pass, fixed-rank fused sums, and deterministic direct M8 MoE.
+exact repair at vLLM `d26fe57b3` serialized target work as M=1 rows. The
+batched-exact foundation established at vLLM `cb616c670` plus XPU kernels
+`6fc06b08c` retains M=1 numerical lanes inside batched BF16 projections, uses
+one paged-decode verifier pass, fixed-rank fused sums, and deterministic direct
+M8 MoE. Later exact record work builds on it.
 
 DFlash now works with the quantization-matched
 `poolside/Laguna-S-2.1-DFlash-INT4` draft. The originally supplied plain BF16
@@ -131,8 +132,8 @@ Acceptance is 4,642/12,040 = 38.5548%. This is a valid first Laguna record
 under the max-512 contract and is APPROVED as LocalMaxxing
 `cmrw7cn1k006jnz01gq2z981v`.
 
-The default-off fused-W1 plus route-parallel-W2 follow-up is the current
-approved public record. At vLLM `6a570e70b` plus kernels `20cfa3aef`, it retained
+The default-off fused-W1 plus route-parallel-W2 follow-up is an approved
+predecessor. At vLLM `6a570e70b` plus kernels `20cfa3aef`, it retained
 the exact fused W1+SiLU launch reduction while restoring the incumbent
 route-parallel INT4 W2 and fixed-order gather. Both fresh-start suites passed
 teacher exactness **13/13 + 13/13**, cross-start exactness **13/13**, cache-zero
@@ -153,7 +154,7 @@ exact **13/13 + 13/13**, cross-start exact **13/13**, cache-zero
 **13/13 + 13/13**, long-then-next **2/2 + 2/2**, and rollover **1/1 + 1/1**.
 Fresh-start medians are **33.438927** and **33.546439 tok/s**; the lower start
 beats the approved 33.267564 record by 0.171363 tok/s (+0.5151%). LocalMaxxing
-approved it as `cmrwot89400gqnz014oodtlbp`; the payload is
+approved this predecessor as `cmrwot89400gqnz014oodtlbp`; the payload is
 `data/localmaxxing-laguna-s-2.1-int4-b70-dflash-m8-route-interleave-33.439tok-20260722.queue.json`
 and the prior `cmrwlyxez00f4nz01zefturuv` row is superseded.
 Remote-route zeroing remained exact and removed 95 fill launches/cycle, but
@@ -203,7 +204,7 @@ was bitwise exact on all four cards but a decisive performance negative:
 overlapped pairs were 10.03-10.77% slower on every B70. The preregistered gate
 therefore stopped the lane before any endpoint. The failed candidate is
 preserved at vLLM `3d1222281` and explicitly reverted at `f239a1014`; the
-current source tree again matches `d503073ec`. Resume from the
+experiment restored the source tree to `d503073ec`. Resume from the
 [negative result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-shared-expert-xpu-stream-negative.md).
 The exact BF16-input/FP32-sigmoid M=8 router specialization at vLLM
 `689ee3643` plus kernels `af6811818` passed its four-card component gate and
@@ -214,14 +215,35 @@ per target cycle. However, the official candidate headline was
 32.310122 versus the adjacent control's 32.969012 tok/s (-1.9985%), so the
 preregistered early-stop rule forbade B2/A2 and no payload was staged. Resume
 from the [phase-1 result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-m8-bf16-router-topk-preregistration.md).
-Select the next lever from the independent occupancy and exact-fusion audits;
-do not stack this router candidate into another endpoint trial unless a future
-preregistered design explicitly isolates its contribution. Do not revisit
-route buffer fills or progressively serialize the whole model into opaque
-graph islands. Preserve the exact approved base at vLLM `cb616c670` plus
-kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
-vLLM `689ee3643f320e4a10c621ddd829620bc2f5b3b3` and kernels
-`af6811818ef797aa86aef51bda15ae9c49040f7b`. Also preserve the DeepSeek
+
+The current approved record stacks the exact shared-elementwise bundle with
+the exact Q/K RMSNorm + RoPE bundle on the route-interleaved MoE base. The
+shared bundle preserves the incumbent BF16 rounding boundaries, removes 94
+launches per target cycle, and saves 0.699-0.723 ms/cycle on every card. In a
+preregistered A-B-B-A endpoint, candidate starts measured **34.550701** and
+**33.894985 tok/s** versus adjacent controls at 32.826917 and 33.273435.
+Both comparisons passed every causal gate: candidate row wins were 12/13 and
+13/13, paired medians improved 4.211% and 4.225%, and target-cycle time fell
+3.490 and 4.015 ms. All four legs were teacher exact **52/52**, cross-leg
+exact, cache-zero **52/52**, long-next **8/8**, and rollover **4/4**. The
+conservative lower candidate beats `cmrwot89400gqnz014oodtlbp` by
+0.456058 tok/s (+1.36385%). LocalMaxxing approved it as
+`cmrx6p5dv001bo4017hb7sixz`. Resume from the
+[record note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-elementwise-qknorm-stack-record.md)
+and compact
+[packet](data/laguna-s-2.1-shared-elementwise-qknorm-stack-record-20260723.json).
+
+Next, isolate shared-expert GEMM occupancy and additional routed-W1 headroom
+against this exact stack. Do not stack the BF16 router candidate into another
+endpoint trial unless a future preregistered design explicitly isolates its
+contribution. Do not revisit route buffer fills or progressively serialize the
+whole model into opaque graph islands. Preserve the current record heads at
+vLLM `8936aac144929190c1e53f8b8624ca397ce16f5b` plus kernels
+`b6076ce1249ffee0e30bee528f4cd15c3bffb234`; enable
+`VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1` and
+`VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1` only in the pinned Laguna record launch
+command.
+Also preserve the DeepSeek
 option-4 branch and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write
 them to `/mnt/fast-ai`. Postflight on 2026-07-23 left no Laguna endpoint or

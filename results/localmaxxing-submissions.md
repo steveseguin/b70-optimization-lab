@@ -8,6 +8,7 @@ for verified results that have not been submitted.
 
 | Model / lane | Hardware | Representative submitted result | LocalMaxxing ID | Evidence |
 | --- | --- | ---: | --- | --- |
+| Poolside Laguna S 2.1 INT4, TP4+EP4 DFlash7 | 4x Arc Pro B70 | 33.895 median tok/s, full-512 exact cold gate | `cmrx6p5dv001bo4017hb7sixz` | [packet](../data/laguna-s-2.1-shared-elementwise-qknorm-stack-record-20260723.json); [record note](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-elementwise-qknorm-stack-record.md) |
 | Qwen3.6 27B AutoRound INT4, TP2 | 2x Arc Pro B70 | 95.385 median tok/s, fixed cold realistic gate | `cmrh35ct50092mj01h7jgydqj` | [packet](qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json) |
 | Gemma 4 26B A4B Q8 | 1x Arc Pro B70 | 124.977 median tok/s, fixed cold realistic gate | `cmr1u77na01k2ld01kalwzs1e` | [packet](gemma4-26b-a4b-q8-b70/README.md) |
 | Qwen3.6 35B Quark INT8, TP4 | 4x Arc Pro B70 | 93.551 output tok/s, strict deep gate | `cmqq4mw4c00yfqo01gb2ucgxj` | [packet](qwen36-35b-quark-int8-b70/README.md) |
@@ -459,9 +460,11 @@ graph-safe paged decode.
 Current packet:
 `results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json`.
 
-## Laguna S 2.1 INT4 (4x B70) — first record
+## Laguna S 2.1 INT4 (4x B70)
 - 2026-07-22: `cmrw7cn1k006jnz01gq2z981v` APPROVED — DFlash batched-exact, **33.086 tok/s** (median_tok_s_1_100_after_ttft, full-512 contract), 13/13 exact vs deterministic q=1 teacher on 2 fresh starts, cached_tokens=0, TP4+EP4 INT4 W4A16, one active generation. Payload: data/localmaxxing-laguna-s-2.1-int4-b70-dflash-bulletproof-33.086tok-20260722.queue.json
 
 - 2026-07-22: `cmrwlyxez00f4nz01zefturuv` APPROVED — Laguna S 2.1 INT4 (4x B70), **33.268 tok/s** (fused W1+SiLU + route-parallel W2), lower of 2 fresh starts (33.303/33.268, spread 0.108%), +0.55% over prior record cmrw7cn1k. 13/13 exact vs q1 teacher x2 starts, cross-req+rollover exact, cached_tokens=0. Payload: data/localmaxxing-laguna-s-2.1-int4-b70-dflash-fused-w1-route-w2-33.268tok-20260722.queue.json
 
-- 2026-07-22: `cmrwot89400gqnz014oodtlbp` APPROVED — Laguna S 2.1 INT4 (4x B70), **33.439 tok/s** (M8 route-interleave expert GEMM occupancy: W1 EU 43.8->47.7%, W2 46.5->49.1%), lower of 2 starts (33.439/33.546), +0.51% over cmrwlyxez. 13/13 exact x2, rollover exact, cached_tokens=0.
+- 2026-07-22: `cmrwot89400gqnz014oodtlbp` APPROVED — Laguna S 2.1 INT4 (4x B70), **33.439 tok/s** (M8 route-interleave expert GEMM occupancy: W1 EU 43.8->47.7%, W2 46.5->49.1%), lower of 2 starts (33.439/33.546), +0.51% over cmrwlyxez. 13/13 exact x2, rollover exact, cached_tokens=0. Superseded by `cmrx6p5dv001bo4017hb7sixz`.
+
+- 2026-07-23: `cmrx6p5dv001bo4017hb7sixz` APPROVED — Laguna S 2.1 INT4 (4x B70), **33.895 tok/s** (exact shared-elementwise + QKNorm/RoPE launch-reduction stack on the route-interleaved MoE record base), conservative lower candidate of a preregistered A-B-B-A endpoint (34.551/33.895 candidate versus 32.827/33.273 adjacent controls), +1.364% over `cmrwot894`. Both candidate/control pairs passed; candidate won 12/13 and 13/13 prompt rows and saved 3.490/4.015 ms per target cycle. All 52 requests were exact vs canonical q1 and `cached_tokens=0`; long-next 8/8 and rollover 4/4 passed. Queue: `data/localmaxxing-laguna-s-2.1-int4-b70-dflash-shared-elementwise-qknorm-33.895tok-20260723.queue.json`; response: `data/localmaxxing-responses/laguna-s-2.1-int4-b70-dflash-shared-elementwise-qknorm-33.895tok-20260723.response.json`.
