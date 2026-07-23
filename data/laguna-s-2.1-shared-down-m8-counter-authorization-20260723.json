@@ -1,0 +1,359 @@
+{
+  "acceptance": {
+    "all_fixture_output_hashes_raw_exact": true,
+    "all_validity_split_overrun_lost_inconsistent_proxies_zero": true,
+    "both_matched_pair_candidate_gpu_times_lower_per_card": true,
+    "global_four_card_aggregate_candidate_gpu_time_lower": true,
+    "global_four_card_aggregate_scope": "gpu-time-only",
+    "matched_pair_scope": "gpu-time-only",
+    "maximum_gpu_memory_read_regression_fraction": 0.02,
+    "maximum_lsc_read_regression_fraction": 0.02,
+    "maximum_thread_occupancy_decrease_percentage_points": 0.5,
+    "maximum_xve_active_decrease_percentage_points": 0.5,
+    "maximum_xve_stall_increase_percentage_points": 0.5,
+    "per_card_aggregate_candidate_gpu_time_lower": true,
+    "per_card_aggregate_scope": "gpu-time-plus-full-metric-guardrails",
+    "spill_slm_partial_write_and_lsc_write_proxies_zero": true
+  },
+  "authorization": {
+    "component_passed": true,
+    "counter_execution_authorized": true,
+    "counter_gate_evaluated": false,
+    "counter_tooling_construction_authorized": true,
+    "endpoint_authorized": false,
+    "endpoint_preregistration_construction_authorized": false,
+    "localmaxxing_submission_authorized": false,
+    "localmaxxing_submission_made": false,
+    "model_generation_authorized": false,
+    "model_generation_performed": false,
+    "payload_created": false
+  },
+  "component_evidence": {
+    "aggregate": {
+      "aggregate_fixture_sha256": "3e28840809747843474a15f7858db9b7d1d4d70b4fbe71c47c7a2aa117eeff90",
+      "aggregate_output_sha256": "ae8c34ea1bb5904466a702412a1ccc1f6843d3bed05e948f079e82647b4f33a7",
+      "component_passed": true,
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-component-20260723T155703Z/aggregate.json",
+      "sha256": "ea71971b368ce9b9e930577b673e983124b0e5686d5d780fc241ac4104f2a1d6",
+      "status": "component-passed-counter-tooling-freeze-next"
+    },
+    "tracked_summary": {
+      "path": "data/laguna-s-2.1-shared-down-m8-component-pass-20260723.json",
+      "sha256": "4984b0b16c2e12f7fab95aa137e8d59cf0162a1f2074a6630ce12722c6fd67f7"
+    }
+  },
+  "created_utc": "2026-07-23T17:26:43.783933+00:00",
+  "experiment": {
+    "model": "poolside/Laguna-S-2.1-INT4",
+    "selector": "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=1",
+    "treatment": "shared-expert down projection native M=8 BF16 MM only"
+  },
+  "format": "laguna-shared-down-m8-counter-execution-authorization-v1",
+  "identities": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "host_tools": {
+      "env": {
+        "path": "/usr/bin/env",
+        "sha256": "0aefff8f912fb75716c5d4de3b6acde93edbe8fa280fc8ee895c1226d3e373ef"
+      },
+      "kill": {
+        "path": "/usr/bin/kill",
+        "sha256": "65ce2f8116bbafd0e82875d126d811d051a7aff3d0e732412c1fac9055f766dc"
+      },
+      "sudo": {
+        "path": "/usr/bin/sudo",
+        "sha256": "136f2e48b0295b9fc595b8259cf2411ac43f27ddbfe02b956649ddaa2e92b9fa"
+      },
+      "timeout": {
+        "path": "/usr/bin/timeout",
+        "sha256": "4fccd5b0192653a2446b745d5385ea547b78e466150e07ade9e2caff2b7f4e08"
+      },
+      "xpu_smi": {
+        "path": "/usr/bin/xpu-smi",
+        "sha256": "2b5b128edf28b38da8637413fe8bfe3a4a40e8113210ba9ddaed945bd56d826e"
+      }
+    },
+    "kernels": {
+      "commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+      "path": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc"
+    },
+    "model_config": {
+      "path": "/mnt/fast-ai/llm-models/laguna-s-2.1/int4/config.json",
+      "sha256": "9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cce6549f7eba5b14e6"
+    },
+    "physical_devices": [
+      {
+        "device_id": 0,
+        "drm_device": "/dev/dri/card3",
+        "pci_bdf_address": "0000:23:00.0",
+        "uuid": "00000000-0000-0023-0000-0000e2238086"
+      },
+      {
+        "device_id": 1,
+        "drm_device": "/dev/dri/card4",
+        "pci_bdf_address": "0000:27:00.0",
+        "uuid": "00000000-0000-0027-0000-0000e2238086"
+      },
+      {
+        "device_id": 2,
+        "drm_device": "/dev/dri/card0",
+        "pci_bdf_address": "0000:43:00.0",
+        "uuid": "00000000-0000-0043-0000-0000e2238086"
+      },
+      {
+        "device_id": 3,
+        "drm_device": "/dev/dri/card2",
+        "pci_bdf_address": "0000:47:00.0",
+        "uuid": "00000000-0000-0047-0000-0000e2238086"
+      }
+    ],
+    "python": {
+      "path": "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+      "sha256": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8"
+    },
+    "record_environment": {
+      "PYTHONPATH": "/home/steve/src/deepseek-v4-vllm-xpu-dspark:/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc",
+      "VLLM_USE_AOT_COMPILE": "0",
+      "VLLM_XPU_ENABLE_XPU_GRAPH": "0",
+      "VLLM_XPU_EXACT_SPEC_ATTN": "1",
+      "VLLM_XPU_FORCE_GRAPH_WITH_COMM": "0",
+      "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE": "0",
+      "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": "1",
+      "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH": "0",
+      "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
+      "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
+      "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
+      "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": "1",
+      "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1",
+      "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
+      "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1",
+      "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "1",
+      "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": "1",
+      "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
+      "VLLM_XPU_LAGUNA_M8_W1_N_TILE": "64",
+      "XPU_GRAPH": "0"
+    },
+    "runtime_binaries": {
+      "_C": {
+        "path": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/vllm_xpu_kernels/_C.abi3.so",
+        "sha256": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2"
+      },
+      "_moe_C": {
+        "path": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/vllm_xpu_kernels/_moe_C.abi3.so",
+        "sha256": "0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0"
+      },
+      "_xpu_C": {
+        "path": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/vllm_xpu_kernels/_xpu_C.abi3.so",
+        "sha256": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8"
+      },
+      "libgrouped_gemm_xe_2": {
+        "path": "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/vllm_xpu_kernels/libgrouped_gemm_xe_2.so",
+        "sha256": "fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96"
+      }
+    },
+    "torch": {
+      "files": {
+        "_C": {
+          "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch/_C.cpython-312-x86_64-linux-gnu.so",
+          "sha256": "deff36272fed31705b74c8f1da372baaaf659c0229d3ce57daab8894e6dc7e84"
+        },
+        "__init__": {
+          "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch/__init__.py",
+          "sha256": "d9dfff4b75d46e4c75572200a3466b70231d05b0318e38ac1bd121789165fb49"
+        },
+        "libc10": {
+          "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch/lib/libc10.so",
+          "sha256": "1231da9267e3d80bfb0affc3116fc88fff26fa201d83e0c41f46efb6d300736a"
+        },
+        "libc10_xpu": {
+          "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch/lib/libc10_xpu.so",
+          "sha256": "7ab1b1f2ab4a25ea9364b614fe43f264b3d0eb0786a3af93be74f4769394df12"
+        },
+        "libtorch": {
+          "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch/lib/libtorch.so",
+          "sha256": "b5a183867725fb49b7262172c15f94d51fa1e393d34e43d4cdc5d328cd037ab6"
+        },
+        "libtorch_cpu": {
+          "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch/lib/libtorch_cpu.so",
+          "sha256": "bbf261729e5f190124060318435d9aa39cbb17a12377f2fb999ac6f531125315"
+        },
+        "libtorch_xpu": {
+          "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch/lib/libtorch_xpu.so",
+          "sha256": "63b7a56723482bc35d31842f442f6e903ef0b7fbd741c1a4ae309123bbc90572"
+        }
+      },
+      "version": "2.12.0+xpu"
+    },
+    "unitrace_source": {
+      "commit": "a5bab309f4ffdd78bd127035c46f5f75371160f8",
+      "path": "/home/steve/src/pti-gpu"
+    },
+    "vllm": {
+      "commit": "75d4660463407975c16bd33711499ca560bf2034",
+      "path": "/home/steve/src/deepseek-v4-vllm-xpu-dspark"
+    }
+  },
+  "protocol": {
+    "analyzed_selected_rows": 11,
+    "arm_treatments": {
+      "A1": "control",
+      "A2": "control",
+      "B1": "candidate",
+      "B2": "candidate"
+    },
+    "arms_per_card": [
+      "A1",
+      "B1",
+      "B2",
+      "A2"
+    ],
+    "card_order": "sequential",
+    "cards": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "completion_boundary_after_each_selected_call": true,
+    "completion_boundary_before_each_selected_call": true,
+    "discarded_selected_rows": [
+      0,
+      1
+    ],
+    "eviction_bytes_before_each_selected_call": 134217728,
+    "fixture_epoch": 30000,
+    "fixture_rank_invariant": true,
+    "fresh_process_per_arm": true,
+    "private_output_directory_per_arm": true,
+    "selected_calls_per_arm": 13,
+    "unitrace": {
+      "argv_template": [
+        "/usr/bin/sudo",
+        "-S",
+        "-p",
+        "",
+        "-E",
+        "--",
+        "/usr/bin/env",
+        "-i",
+        "HF_HOME={arm_dir}/runtime/cache/huggingface",
+        "HOME={arm_dir}/runtime/home",
+        "LANG=C.UTF-8",
+        "LC_ALL=C.UTF-8",
+        "MKL_NUM_THREADS=1",
+        "NUMBA_CACHE_DIR={arm_dir}/runtime/cache/numba",
+        "OMP_NUM_THREADS=1",
+        "ONEAPI_DEVICE_SELECTOR=level_zero:0",
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "PYTHONHASHSEED=0",
+        "PYTHONNOUSERSITE=1",
+        "PYTHONPATH=/home/steve/src/deepseek-v4-vllm-xpu-dspark:/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc",
+        "PYTHONPYCACHEPREFIX={arm_dir}/runtime/cache/pycache",
+        "SYCL_CACHE_DIR={arm_dir}/runtime/cache/sycl",
+        "TEMP={arm_dir}/runtime/tmp",
+        "TMP={arm_dir}/runtime/tmp",
+        "TMPDIR={arm_dir}/runtime/tmp",
+        "TORCHINDUCTOR_CACHE_DIR={arm_dir}/runtime/cache/torchinductor",
+        "TRANSFORMERS_CACHE={arm_dir}/runtime/cache/transformers",
+        "TRITON_CACHE_DIR={arm_dir}/runtime/cache/triton",
+        "VLLM_CACHE_ROOT={arm_dir}/runtime/cache/vllm",
+        "VLLM_USE_AOT_COMPILE=0",
+        "VLLM_XPU_ENABLE_XPU_GRAPH=0",
+        "VLLM_XPU_EXACT_SPEC_ATTN=1",
+        "VLLM_XPU_FORCE_GRAPH_WITH_COMM=0",
+        "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE=0",
+        "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1",
+        "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0",
+        "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0",
+        "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=0",
+        "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0",
+        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1",
+        "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1",
+        "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0",
+        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1",
+        "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=1",
+        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1",
+        "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0",
+        "VLLM_XPU_LAGUNA_M8_W1_N_TILE=64",
+        "XDG_CACHE_HOME={arm_dir}/runtime/cache/xdg",
+        "XDG_CONFIG_HOME={arm_dir}/runtime/cache/xdg-config",
+        "XDG_DATA_HOME={arm_dir}/runtime/cache/xdg-data",
+        "XDG_STATE_HOME={arm_dir}/runtime/cache/xdg-state",
+        "XPU_GRAPH=0",
+        "ZE_AFFINITY_MASK={rank}",
+        "/usr/bin/timeout",
+        "--signal=TERM",
+        "--kill-after=5s",
+        "180s",
+        "/home/steve/src/pti-gpu/build-unitrace/unitrace",
+        "--device-timing",
+        "--metric-query",
+        "--group",
+        "ComputeBasic",
+        "--include-kernels",
+        "gemm_kernel",
+        "--verbose",
+        "--pid",
+        "--devices-to-sample",
+        "0",
+        "--output",
+        "unitrace",
+        "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+        "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/profile_laguna_shared_down_mm_counter_fixture.py",
+        "--rank",
+        "{rank}",
+        "--arm",
+        "{treatment}",
+        "--expected-fixture-sha256",
+        "{fixture_sha256}",
+        "--out",
+        "{arm_dir}/fixture.json"
+      ],
+      "device_timing": true,
+      "device_to_sample": 0,
+      "follow_child_process_flag_present": false,
+      "kernel_selector": "gemm_kernel",
+      "metric_group": "ComputeBasic",
+      "metric_mode": "--metric-query",
+      "output_prefix": "unitrace",
+      "pid_suffix": true,
+      "root_timeout_kill_after_seconds": 5,
+      "root_timeout_seconds": 180,
+      "runner_timeout_process_group_kill_seconds": 5,
+      "runner_timeout_process_group_term_seconds": 5,
+      "runner_timeout_seconds": 200,
+      "verbose_kernel_names": true
+    }
+  },
+  "tools": {
+    "analyzer": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/analyze_laguna_shared_down_mm_counters.py",
+      "sha256": "d3b8472556b558d92a2e73617ed7d968e03920126af71cba67719dae8f73fa24"
+    },
+    "component_analyzer": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/analyze_laguna_shared_down_mm_component.py",
+      "sha256": "945810c50eeeea99f532c3e62ee5bf289677e3706d80965f966400bfab35911b"
+    },
+    "counter_test": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/test_analyze_laguna_shared_down_mm_counters.py",
+      "sha256": "a503f180cf9923e790e37ac3d7e2bcbe36631426f20801cd2d4b0d31ffd34e3a"
+    },
+    "fixture": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/profile_laguna_shared_down_mm_counter_fixture.py",
+      "sha256": "526552313e119f8076d79e6816e8d3215f5bbdb006b424527f70eca7a58ff7a3"
+    },
+    "gate": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_shared_down_mm.py",
+      "sha256": "df8496f1f405e8b786dff0b96b7c320944c5d0133cce0bfcc2e36150ab1e0f12"
+    },
+    "runner": {
+      "path": "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_shared_down_mm_counters.py",
+      "sha256": "40c9efc61301527f439f247cc65d8c27122aa5baa0564e6ca8520cc9a10ba282"
+    },
+    "unitrace": {
+      "path": "/home/steve/src/pti-gpu/build-unitrace/unitrace",
+      "sha256": "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a"
+    }
+  }
+}
