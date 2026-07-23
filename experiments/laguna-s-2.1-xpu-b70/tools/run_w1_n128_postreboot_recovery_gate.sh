@@ -17,7 +17,7 @@ umf_library=/opt/intel/oneapi/umf/1.1/lib/libumf.so.1
 level_zero_adapter=/opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero.so.0
 level_zero_adapter_v2=/opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero_v2.so.0
 oneapi_runtime_ld_library_path=/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib
-evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T140038Z
+evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T140536Z
 
 expected_boot_id=0b7f98a5-e50a-46a5-81ea-15938b55317a
 tainted_ntfs_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
@@ -455,9 +455,9 @@ run_xccl_pass() {
   [[ "$(awk '$0 == "device_count 1" {n++} END {print n+0}' "$evidence_root/$label.log")" == 4 ]]
   [[ "$(awk '$0 == "ok 2097152.0" {n++} END {print n+0}' "$evidence_root/$label.log")" == 4 ]]
   for rank in 0 1 2 3; do
-    [[ "$(grep -Fxc "rank $rank init ok" "$evidence_root/$label.log")" == 1 ]]
-    [[ "$(grep -Fxc "rank $rank barrier ok" "$evidence_root/$label.log")" == 1 ]]
-    [[ "$(grep -Fxc "rank $rank allreduce ok 4.0" "$evidence_root/$label.log")" == 1 ]]
+    [[ "$(grep -Fo "rank $rank init ok" "$evidence_root/$label.log" | wc -l)" == 1 ]]
+    [[ "$(grep -Fo "rank $rank barrier ok" "$evidence_root/$label.log" | wc -l)" == 1 ]]
+    [[ "$(grep -Fo "rank $rank allreduce ok 4.0" "$evidence_root/$label.log" | wc -l)" == 1 ]]
   done
 }
 

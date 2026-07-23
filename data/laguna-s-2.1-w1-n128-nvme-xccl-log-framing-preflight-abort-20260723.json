@@ -1,0 +1,78 @@
+{
+  "format": "laguna-w1-n128-nvme-xccl-log-framing-preflight-abort-v1",
+  "classification": {
+    "kind": "infrastructure_preflight_abort",
+    "benchmark_observation": false,
+    "model_generation_performed": false,
+    "candidate_observation": false,
+    "n128_executed": false,
+    "n64_component_executed": false,
+    "xccl_pass_1_executed": true,
+    "xccl_pass_2_executed": false,
+    "peer_kernel_executed": true
+  },
+  "source_identity": {
+    "repo_commit": "6088d196e3b3cd753f23ef3cd9f6211276923436",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_repo_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181"
+  },
+  "host": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint_before": 0,
+    "kernel_taint_after": 0
+  },
+  "failed_gate": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T140038Z",
+    "started_utc": "2026-07-23T14:04:08Z",
+    "completed_utc": "2026-07-23T14:05:05Z",
+    "exit_status": 1,
+    "evidence_manifest_verified": true,
+    "evidence_manifest_sha256": "7907353bc59879be89cfd719cfda537e011accb12a7365b439b042b29520866e",
+    "final_status_sha256": "be629cb74eb5804b8933e0e710f2374a0a20155c2725b56ac36fba089b767b9c",
+    "sycl_log_sha256": "a6c004432418cea7c58b444c44ccfc1d4c9d4ae9acbf39f6bf50ce2ee875c617",
+    "peer_log_sha256": "8e4d7110a7999cc510c69d352aa6a69553d6f22d1f20f116eb0e8cf8a6b35752",
+    "xccl_pass_1_log_sha256": "1fb7f3522b8b85c982563dc07dd35b213ec302203c767dfce02aef4f59f68fcd",
+    "kernel_delta_sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e",
+    "kernel_reject_events_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kernel_reject_events_empty": true
+  },
+  "passed_before_abort": {
+    "all_118_local_model_files_sha256": true,
+    "xpu_smi_version": true,
+    "four_card_discovery": true,
+    "exact_pci_drm_mapping": true,
+    "strict_four_card_idle": true,
+    "oneapi_2026_four_level_zero_devices": true,
+    "four_device_peer_read": true,
+    "xccl_pass_1_process_exit_status": 0,
+    "xccl_pass_1_single_device_checks": 4,
+    "xccl_pass_1_rank_init_markers": 4,
+    "xccl_pass_1_rank_barrier_markers": 4,
+    "xccl_pass_1_exact_allreduce_markers": 4
+  },
+  "root_cause": {
+    "gpu_failure": false,
+    "collective_failure": false,
+    "tooling_failure": true,
+    "failed_operation": "post-XCCL log-content assertion",
+    "diagnostic": "torchrun multiplexed multiple flushed rank markers onto shared physical lines",
+    "old_assertion": "one complete physical line exactly equal to each rank marker",
+    "observed_all_required_markers_exactly_once": true,
+    "fail_closed_check": "line-framed grep returned zero matches despite a zero-exit exact XCCL pass"
+  },
+  "correction_identity": {
+    "corrective_change": "count each fixed rank marker as a substring exactly once, independent of torchrun physical-line framing",
+    "numeric_requirements_unchanged": true,
+    "rank_requirements_unchanged": true,
+    "xccl_commands_unchanged": true
+  },
+  "disposition": {
+    "failed_root_immutable": true,
+    "same_clean_boot_reusable": true,
+    "reboot_required": false,
+    "new_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T140536Z",
+    "next_a1_remains_first_post_recovery_model_generation": true,
+    "performance_conditioned_restart": false
+  }
+}

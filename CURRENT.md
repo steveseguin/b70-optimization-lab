@@ -278,9 +278,15 @@ No peer kernel, XCCL, N64, N128, service, or model generation ran; the
 manifest verifies, kernel delta and rejects are empty, and taint remains zero.
 See the
 [peer-loader preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-peer-loader-preflight-abort.md).
-Retry only the newly rooted gate with the same hash-pinned oneAPI 2026 path
-scoped to both `sycl-ls` and the standalone peer binary, with the invalid
-ambient `UR_LOG_LOADER` value unset for both. This is not a
+The fourth root passed that peer gate and the first exact XCCL command, but
+failed closed on a log-framing assertion because `torchrun` concatenated
+multiple rank markers onto shared physical lines. Every required rank marker
+was present exactly once and the command exited zero; the second XCCL pass,
+N64, N128, service, and model generation did not run. Its manifest verifies,
+kernel delta and rejects are empty, and taint remains zero. See the
+[XCCL framing preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-xccl-log-framing-preflight-abort.md).
+Retry only the newly rooted gate with the unchanged rank/numeric requirements
+counted independently of physical-line framing. This is not a
 performance-conditioned retry; A1 remains the first model generation after a
 complete recovery pass.
 
