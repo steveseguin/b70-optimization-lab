@@ -2,8 +2,26 @@
 
 Date registered: 2026-07-22 America/Toronto
 
-Status at registration: implementation is under static review; no component or
-endpoint GPU run has been launched.
+Status at registration: implementation was under static review; no component
+or endpoint GPU run had been launched.
+
+Implementation frozen before the component gate:
+
+- vLLM source commit:
+  `3d1222281b3bcb44b60dee9899fbd3b498f84e5a`;
+- XPU-kernel source commit, unchanged:
+  `9525343e74b1a434b6af7d05583e1385a891c919`;
+- focused unit coverage: `31 passed`, with Ruff, `py_compile`, and
+  `git diff --check` clean; and
+- independent static review found no synchronization or stream-lifetime
+  blocker after follow-up fixes.
+
+The review tightened the selector before source freeze. It now requires
+enforce-eager, configured PP1, unquantized BF16 shared gate/up/down projections,
+and an exact scheduler marker for one cached DFlash request with seven draft
+tokens and exactly eight target rows. Existing MK-internal or globally disabled
+overlap paths raise instead of silently turning a candidate leg into the
+incumbent treatment.
 
 ## Question and treatment
 
@@ -118,4 +136,3 @@ A LocalMaxxing record additionally requires the lower candidate start to
 exceed `33.438926675602126 tok/s`. Only that lower candidate result may be
 submitted after payload audit. Otherwise preserve the exact result as a win,
 loss, or inconclusive experiment with no submission.
-
