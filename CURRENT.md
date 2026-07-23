@@ -198,11 +198,17 @@ record by 0.4065%. All four starts remained teacher exact 13/13, cross-leg
 exact 13/13, and cache-zero. It is strong directional evidence but failed the
 frozen promotion gates; no fifth run, payload, or submission was allowed.
 Resume from the [crossover result note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-qknorm-rope-crossover-result.md).
-The next bounded lever is a Laguna-only XPU auxiliary stream for the complete
-shared-expert MLP, attempting to overlap roughly 1.013 ms/cycle without
-changing arithmetic. The BF16-load/FP32-sigmoid router path is the smaller
-fallback. Do not revisit route buffer fills or progressively serialize the
-whole model into opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
+The Laguna-only XPU auxiliary-stream gate for the complete shared-expert MLP
+was bitwise exact on all four cards but a decisive performance negative:
+overlapped pairs were 10.03-10.77% slower on every B70. The preregistered gate
+therefore stopped the lane before any endpoint. The failed candidate is
+preserved at vLLM `3d1222281` and explicitly reverted at `f239a1014`; the
+current source tree again matches `d503073ec`. Resume from the
+[negative result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-shared-expert-xpu-stream-negative.md).
+The next bounded lever is the BF16-load/FP32-sigmoid router specialization,
+followed by a separately gated shared-MLP fusion if the router gain is too
+small. Do not revisit route buffer fills or progressively serialize the whole
+model into opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
 plus kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
 vLLM `d503073ec3573c6208cc2a06339815ec040ee984` and kernels
 `9525343e74b1a434b6af7d05583e1385a891c919`. Also preserve the DeepSeek
