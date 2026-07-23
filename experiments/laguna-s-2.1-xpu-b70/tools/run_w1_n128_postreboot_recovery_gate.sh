@@ -17,7 +17,7 @@ umf_library=/opt/intel/oneapi/umf/1.1/lib/libumf.so.1
 level_zero_adapter=/opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero.so.0
 level_zero_adapter_v2=/opt/intel/oneapi/compiler/2026.0/lib/libur_adapter_level_zero_v2.so.0
 oneapi_runtime_ld_library_path=/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib
-evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T135330Z
+evidence_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T140038Z
 
 expected_boot_id=0b7f98a5-e50a-46a5-81ea-15938b55317a
 tainted_ntfs_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
@@ -436,7 +436,9 @@ done
 
 run_capture peer-read \
   timeout --signal=TERM --kill-after=15s 180s \
-  env ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 \
+  env -u UR_LOG_LOADER \
+  LD_LIBRARY_PATH="$oneapi_runtime_ld_library_path" \
+  ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 \
   ZE_AFFINITY_MASK=0,1,2,3 \
   "$peer_binary"
 [[ "$(< "$evidence_root/peer-read.log")" == "peer kernel read ok across 4 devices" ]]

@@ -1,0 +1,73 @@
+{
+  "format": "laguna-w1-n128-nvme-peer-loader-preflight-abort-v1",
+  "classification": {
+    "kind": "infrastructure_preflight_abort",
+    "benchmark_observation": false,
+    "model_generation_performed": false,
+    "candidate_observation": false,
+    "n128_executed": false,
+    "n64_component_executed": false,
+    "xccl_executed": false,
+    "peer_kernel_executed": false
+  },
+  "source_identity": {
+    "repo_commit": "2306cd7430397074c775c7d455d3e79e748934b5",
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "kernel_repo_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181"
+  },
+  "host": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "kernel_release": "7.0.0-28-generic",
+    "kernel_taint_before": 0,
+    "kernel_taint_after": 0
+  },
+  "failed_gate": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T135330Z",
+    "started_utc": "2026-07-23T13:58:28Z",
+    "completed_utc": "2026-07-23T13:59:09Z",
+    "exit_status": 127,
+    "evidence_manifest_verified": true,
+    "evidence_manifest_sha256": "98cd4147482b66f521d7c5c6624fafa7e434f4b2f39a8bb84d4ab24c916fbfff",
+    "final_status_sha256": "78298030805065cd6e15e1a2f55995edc83222f9ed40ae71286716064db9d0f0",
+    "sycl_log_sha256": "9d3d8bafd881f9e1c16f66042efadd17c97d020d9d5d1fc5b08592100a154719",
+    "peer_log_sha256": "3c4baa231fa5b7034dfb2061c9ea4174e08a17eef4d96a7bfd472b46e0b3f60d",
+    "kernel_delta_sha256": "19c4e28b2f54ea8f217db4e622b0a5c758efa7b77ce2dc0394b6d159568c0b2e",
+    "kernel_reject_events_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "kernel_reject_events_empty": true
+  },
+  "passed_before_abort": {
+    "all_118_local_model_files_sha256": true,
+    "xpu_smi_version": true,
+    "four_card_discovery": true,
+    "exact_pci_drm_mapping": true,
+    "strict_four_card_idle": true,
+    "oneapi_2026_sycl_ls_exit_status": 0,
+    "oneapi_2026_four_level_zero_devices": true
+  },
+  "root_cause": {
+    "gpu_failure": false,
+    "tooling_failure": true,
+    "failed_operation": "standalone four-device peer-read binary process load",
+    "missing_dependency": "libsycl.so.9",
+    "installed_dependency": "/opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9",
+    "diagnostic": "the pinned oneAPI loader path was scoped to sycl-ls and was not inherited by the standalone peer binary",
+    "peer_process_exit_status": 127,
+    "peer_kernel_executed": false,
+    "fail_closed_check": "the peer-read command returned nonzero before XCCL or N64"
+  },
+  "correction_identity": {
+    "ld_library_path": "/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib",
+    "peer_binary_sha256": "1ab3b96dd1c7cd46a2e5422b0b6bf705ba5b80f306102e968768f634ee4bf92c",
+    "peer_binary_ldd_has_no_missing_dependencies_with_pinned_path": true,
+    "scope": "unset the invalid ambient UR_LOG_LOADER value and apply the already pinned path to the standalone oneAPI 2026 peer binary only"
+  },
+  "disposition": {
+    "failed_root_immutable": true,
+    "same_clean_boot_reusable": true,
+    "reboot_required": false,
+    "corrective_change": "unset UR_LOG_LOADER and pass the exact pinned oneAPI 2026 loader path to the peer binary",
+    "new_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-nvme-postreboot-recovery-20260723T140038Z",
+    "next_a1_remains_first_post_recovery_model_generation": true,
+    "performance_conditioned_restart": false
+  }
+}

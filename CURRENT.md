@@ -271,8 +271,16 @@ installed oneAPI UMF library and both Level Zero adapters could not resolve
 `libumf.so.1`. Its evidence manifest verifies, kernel delta and reject files
 are empty, and taint remains zero. See the
 [UMF preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-umf-preflight-abort.md).
-Retry only the newly rooted gate with `UR_LOG_LOADER` unset and the exact
-hash-pinned oneAPI 2026 UMF/compiler loader path. This is not a
+The third root confirmed that correction by enumerating all four B70s, then
+failed closed at process load for the standalone peer binary because its
+command did not inherit the same path and could not resolve `libsycl.so.9`.
+No peer kernel, XCCL, N64, N128, service, or model generation ran; the
+manifest verifies, kernel delta and rejects are empty, and taint remains zero.
+See the
+[peer-loader preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-peer-loader-preflight-abort.md).
+Retry only the newly rooted gate with the same hash-pinned oneAPI 2026 path
+scoped to both `sycl-ls` and the standalone peer binary, with the invalid
+ambient `UR_LOG_LOADER` value unset for both. This is not a
 performance-conditioned retry; A1 remains the first model generation after a
 complete recovery pass.
 
