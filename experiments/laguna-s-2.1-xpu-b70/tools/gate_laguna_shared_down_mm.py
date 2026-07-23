@@ -951,6 +951,7 @@ def verify_vllm_shared_down_path(rank: int) -> dict[str, object]:
     )
     layer.xpu_exact_spec_rows = True
     layer.xpu_laguna_m8_shared_down_mm = True
+    candidate_m8_marker_enabled = layer.xpu_laguna_m8_shared_down_mm is True
     require(layer.reduce_results is False, "shared-down local path would reduce")
 
     rows, weight, _routed, _other_ranks = make_fixture(
@@ -1015,6 +1016,7 @@ def verify_vllm_shared_down_path(rank: int) -> dict[str, object]:
 
         layer.weight = torch.nn.Parameter(weight, requires_grad=False)
         layer.xpu_laguna_m8_shared_down_mm = False
+        unmarked_m8_marker_enabled = layer.xpu_laguna_m8_shared_down_mm is True
 
         def forbidden_mm(*_args, **_kwargs):
             raise AssertionError("unmarked/tail shared-down path used native MM")
@@ -1027,6 +1029,8 @@ def verify_vllm_shared_down_path(rank: int) -> dict[str, object]:
         torch.mm = forbidden_mm
         torch.bmm = counted_bmm
         unmarked = layer(rows)
+        layer.xpu_laguna_m8_shared_down_mm = True
+        m7_tail_marker_enabled = layer.xpu_laguna_m8_shared_down_mm is True
         tail = layer(rows[:7])
         unmarked_exact = torch.equal(
             unmarked,
@@ -1049,6 +1053,9 @@ def verify_vllm_shared_down_path(rank: int) -> dict[str, object]:
         and bad_layout_failed_closed
         and unmarked_exact
         and tail_exact
+        and candidate_m8_marker_enabled
+        and not unmarked_m8_marker_enabled
+        and m7_tail_marker_enabled
         and mm_calls == 1
         and bmm_calls == 2
     )
@@ -1061,6 +1068,9 @@ def verify_vllm_shared_down_path(rank: int) -> dict[str, object]:
         "quant_method": type(layer.quant_method).__name__,
         "runtime_transform_modules": runtime_transform_modules,
         "reduce_results": layer.reduce_results,
+        "candidate_m8_marker_enabled": candidate_m8_marker_enabled,
+        "unmarked_m8_marker_enabled": unmarked_m8_marker_enabled,
+        "m7_tail_marker_enabled": m7_tail_marker_enabled,
         "candidate_mm_calls": mm_calls,
         "incumbent_bmm_calls": bmm_calls,
         "candidate_output_raw_exact": candidate_exact,

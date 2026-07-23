@@ -35,7 +35,7 @@ MAIN_REPO = Path("/home/steve/llm-optimizations").resolve()
 VLLM_REPO = Path("/home/steve/src/deepseek-v4-vllm-xpu-dspark").resolve()
 KERNEL_REPO = Path("/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc").resolve()
 EXPECTED_HARNESS_SHA256 = (
-    "018f1655ca02e2e625985839cded30e1a1d3a3aa324735ea5bad7eaca289a636"
+    "df8496f1f405e8b786dff0b96b7c320944c5d0133cce0bfcc2e36150ab1e0f12"
 )
 EXPECTED_HARNESS_PATH = (
     MAIN_REPO / "experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_shared_down_mm.py"
@@ -826,6 +826,9 @@ def validate_card(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
             and shared_down_path.get("quant_method") == "UnquantizedLinearMethod"
             and shared_down_path.get("runtime_transform_modules") == []
             and shared_down_path.get("reduce_results") is False
+            and shared_down_path.get("candidate_m8_marker_enabled") is True
+            and shared_down_path.get("unmarked_m8_marker_enabled") is False
+            and shared_down_path.get("m7_tail_marker_enabled") is True
             and shared_down_path.get("candidate_mm_calls") == 1
             and shared_down_path.get("incumbent_bmm_calls") == 2
             and shared_down_path.get("candidate_output_raw_exact") is True

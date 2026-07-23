@@ -51,6 +51,25 @@ def test_stride_zero_bmm_reference_accepts_m7_tail() -> None:
     assert output.dtype == torch.bfloat16
 
 
+@pytest.mark.parametrize("rows_count", [0, 9])
+def test_stride_zero_bmm_reference_rejects_out_of_scope_rows(
+    rows_count: int,
+) -> None:
+    rows = torch.zeros((rows_count, gate.K_DIM), dtype=torch.bfloat16)
+    weight = torch.zeros((gate.N_DIM, gate.K_DIM), dtype=torch.bfloat16)
+
+    with pytest.raises(RuntimeError, match="bad reference rows shape"):
+        gate.stride_zero_bmm_reference(rows, weight)
+
+
+def test_measured_incumbent_remains_strictly_m8() -> None:
+    rows = torch.zeros((7, gate.K_DIM), dtype=torch.bfloat16)
+    weight = torch.zeros((gate.N_DIM, gate.K_DIM), dtype=torch.bfloat16)
+
+    with pytest.raises(RuntimeError, match="bad incumbent rows shape"):
+        gate.incumbent_bmm(rows, weight)
+
+
 def test_raw_output_manifest_accepts_exact_control_candidate_pairs() -> None:
     manifest = valid_raw_manifest()
     assert analyzer.raw_output_manifest_exact(
