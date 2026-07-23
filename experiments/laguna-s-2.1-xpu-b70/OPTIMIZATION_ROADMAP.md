@@ -40,6 +40,7 @@ Also serve it as the working coding model.
 | 2026-07-22 | fused M8 expert transaction (W1+SiLU+W2) | 33.01 | YES (13/13 x2) | exact but NOT a record: lower start 33.008 < 33.086, 2.7% start variance. W2 expert-slot serialization lost route-parallel occupancy despite 6→2 launches. Default-off. Next: route-parallel W2 + occupancy. |
 | 2026-07-22 | **fused W1+SiLU + route-parallel W2 — RECORD cmrwlyxez** | **33.27** | YES (13/13 x2) | +0.55% over prior; lower start 33.268 > 33.086; spread 0.108%; route-parallel W2 restored occupancy the full-fusion lost. APPROVED. |
 | 2026-07-22 | **M8 route-interleave GEMM occupancy — RECORD cmrwot894** | **33.44** | YES (13/13 x2) | +0.51%; lower start 33.439>33.268; W1/W2 N-tile interleave raised EU active ~44->48%; 64/64 exact. APPROVED. |
+| 2026-07-22 | DFlash depth sweep {4-10} | 33.44 (d7 best) | d7 exact | NO RECORD: d7 optimal. Exact only d5-7 (d4=12/13, d8-10=0/13: exact M=8 verifier caps draft depth at 7). Deeper barely helps (emitted/cyc 3.70->3.84 as accept collapses). Profile: biggest unopt kernel = BF16 attn QKV+O 2.92ms/cyc. |
 | 2026-07-22 | DFlash depth 4-10 sweep | 32.19 best exact | YES at depth 5/6/7 | depth 7 remains best exact but below record; depth 4 was 12/13; depths 8-10 exceeded exact M<=8 target guards, were 0/13, and fell to 4.94-6.11 tok/s. No two-start gate or payload. |
 
 ## Lever ladder (grind order; each exact + quality-gated)
