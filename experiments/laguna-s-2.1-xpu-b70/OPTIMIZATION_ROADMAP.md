@@ -42,6 +42,7 @@ Also serve it as the working coding model.
 | 2026-07-22 | **M8 route-interleave GEMM occupancy — RECORD cmrwot894** | **33.44** | YES (13/13 x2) | +0.51%; lower start 33.439>33.268; W1/W2 N-tile interleave raised EU active ~44->48%; 64/64 exact. APPROVED. |
 | 2026-07-22 | DFlash depth sweep {4-10} | 33.44 (d7 best) | d7 exact | NO RECORD: d7 optimal. Exact only d5-7 (d4=12/13, d8-10=0/13: exact M=8 verifier caps draft depth at 7). Deeper barely helps (emitted/cyc 3.70->3.84 as accept collapses). Profile: biggest unopt kernel = BF16 attn QKV+O 2.92ms/cyc. |
 | 2026-07-22 | BF16 attn QKV+O occupancy (N-interleave) | 33.44 | YES (exact both starts) | NEGATIVE: slowed 3/4 projections. Attn projections are SMALL GEMMs (EU ~10-11%, GQA-tiny K/V) — interleave technique doesn't transfer from large experts. Default-off. Next: attn non-GEMM FUSION (1.42ms). |
+| 2026-07-23 | attn QKNorm+RoPE fusion | 33.19 lower | YES (13/13 x2) | NEGATIVE: lower start 33.191 <33.439, WIDE 3.1% spread. PATTERN: fusions add variance & miss; occupancy changes are tight & win. Pivot to occupancy-only. Default-off. |
 | 2026-07-22 | DFlash depth 4-10 sweep | 32.19 best exact | YES at depth 5/6/7 | depth 7 remains best exact but below record; depth 4 was 12/13; depths 8-10 exceeded exact M<=8 target guards, were 0/13, and fell to 4.94-6.11 tok/s. No two-start gate or payload. |
 
 ## Lever ladder (grind order; each exact + quality-gated)
