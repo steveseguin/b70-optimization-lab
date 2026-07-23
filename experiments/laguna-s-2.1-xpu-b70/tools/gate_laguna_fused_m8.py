@@ -132,6 +132,7 @@ def record_path(
         LOCAL_EXPERTS,
         True,
         route_interleave,
+        64,
     )
     gemm2.zero_()
     torch.ops._xpu_C.cutlass_grouped_gemm_m8_topk_int4_interface(
@@ -191,6 +192,7 @@ def run_w1(
         LOCAL_EXPERTS,
         True,
         route_interleave,
+        64,
     )
 
 
