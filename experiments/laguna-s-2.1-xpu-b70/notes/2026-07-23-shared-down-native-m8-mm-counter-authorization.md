@@ -4,7 +4,7 @@ Date registered: 2026-07-23 America/Toronto
 
 Status at registration: the four-card component gate passed, the dedicated
 cold-counter runner/fixture/analyzer are committed and hash-frozen, their
-CPU-only tamper suite passes 85 tests, and two independent audits report PASS.
+CPU-only tamper suite passes 86 tests, and two independent audits report PASS.
 No cold hardware-counter capture, endpoint service, model generation, payload,
 or LocalMaxxing submission has occurred under this authorization.
 
@@ -16,7 +16,7 @@ generation, payload creation, and submission false.
 ## Frozen lineage
 
 - main tool commit:
-  `d4823283d4cdeade547eceefd48aca3e7d880c64`;
+  `24057927fef7e41e4670dc38c214a64c321c444f`;
 - vLLM:
   `75d4660463407975c16bd33711499ca560bf2034`;
 - XPU kernels:
@@ -35,13 +35,13 @@ The Corsair external USB drive is not a live input or output.
 ## Frozen tools
 
 - runner:
-  `40c9efc61301527f439f247cc65d8c27122aa5baa0564e6ca8520cc9a10ba282`;
+  `2c551194c55886138dab88854782ce9d008532fe358f8cf4bb1f1d502de3f0ab`;
 - fixture:
   `526552313e119f8076d79e6816e8d3215f5bbdb006b424527f70eca7a58ff7a3`;
 - analyzer:
   `d3b8472556b558d92a2e73617ed7d968e03920126af71cba67719dae8f73fa24`;
 - CPU tamper tests:
-  `a503f180cf9923e790e37ac3d7e2bcbe36631426f20801cd2d4b0d31ffd34e3a`;
+  `b4273e05cb5d7376da34e5cb4dfd4a0fd4eff5687a5fc9cb0ce46421438c418e`;
 - component gate:
   `df8496f1f405e8b786dff0b96b7c320944c5d0133cce0bfcc2e36150ab1e0f12`;
 - component analyzer:
@@ -53,6 +53,15 @@ The packet also pins Python, Torch/XPU shared libraries, runtime extension
 binaries, the model config, `sudo`, `env`, `timeout`, `kill`, `xpu-smi`, the
 boot ID, physical UUID/BDF/DRM mapping, exact record environment, and the
 complete profiler command template.
+
+The first tracked-packet dry validation failed closed before XPU access because
+the draft runner expected obsolete nested `authorization`/`exactness` objects,
+while the immutable passing component aggregate uses the v2 top-level schema.
+The failed check produced no campaign root and performed no profiler or tensor
+work. The corrected runner now validates the actual top-level authorization
+and aggregate hashes, exact aggregate checks and frozen identities, and all
+four ordered rank/path/SHA/device/source card closures. A direct CPU regression
+test covers that immutable evidence.
 
 ## Counter protocol and stop boundary
 
