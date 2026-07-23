@@ -50,6 +50,39 @@ EXPECTED_LAUNCH_REDUCTION_PER_CYCLE = (
     EXPECTED_CONTROL_LAUNCHES_PER_CYCLE
     - EXPECTED_CANDIDATE_LAUNCHES_PER_CYCLE
 )
+RECORD_ENVIRONMENT_NAMES = (
+    "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE",
+    "VLLM_XPU_EXACT_SPEC_ATTN",
+    "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE",
+    "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2",
+    "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE",
+    "VLLM_XPU_ENABLE_XPU_GRAPH",
+    "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
+    "VLLM_XPU_FORCE_GRAPH_WITH_COMM",
+    "VLLM_XPU_GRAPH_NOOP_COMM_CAPTURE",
+    "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK",
+    "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE",
+    "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM",
+    "XPU_GRAPH",
+    "VLLM_USE_AOT_COMPILE",
+    "UR_L0_USE_IMMEDIATE_COMMANDLISTS",
+    "SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS",
+    "SYCL_UR_USE_LEVEL_ZERO_V2",
+    "ONEAPI_DEVICE_SELECTOR",
+    "ZE_AFFINITY_MASK",
+    "PYTHONPATH",
+)
+EXPECTED_RECORD_ENVIRONMENT = {
+    "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": "1",
+    "VLLM_XPU_EXACT_SPEC_ATTN": "1",
+    "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": "1",
+    "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": "1",
+    "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1",
+    "VLLM_XPU_ENABLE_XPU_GRAPH": "0",
+    "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH": "0",
+    "XPU_GRAPH": "0",
+    "VLLM_USE_AOT_COMPILE": "0",
+}
 
 FROZEN_PROTOCOL = {
     "rows": ROWS,
@@ -70,6 +103,7 @@ FROZEN_PROTOCOL = {
         EXPECTED_CANDIDATE_LAUNCHES_PER_CYCLE
     ),
     "expected_launch_reduction_per_cycle": EXPECTED_LAUNCH_REDUCTION_PER_CYCLE,
+    "required_record_environment": EXPECTED_RECORD_ENVIRONMENT,
     "timing_order": "A-B-B-A",
 }
 
@@ -1301,6 +1335,9 @@ def collect_identity(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "ze_affinity_mask": affinity,
         },
+        "record_environment": {
+            name: os.environ.get(name) for name in RECORD_ENVIRONMENT_NAMES
+        },
         "torch": torch.__version__,
         "xpu_smi": {
             "version": xpu_smi_version,
@@ -1385,6 +1422,12 @@ def validate_identity(
         args.kernel_repo.resolve(),
     ):
         mismatches.append("loaded native library is outside the kernel repo")
+    for name, expected in EXPECTED_RECORD_ENVIRONMENT.items():
+        actual = identity["record_environment"].get(name)
+        if actual != expected:
+            mismatches.append(
+                f"record environment {name}={actual!r}, expected {expected!r}"
+            )
     if mismatches:
         raise RuntimeError("identity gate failed: " + "; ".join(mismatches))
 
