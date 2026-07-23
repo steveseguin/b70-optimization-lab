@@ -1,0 +1,577 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+umask 077
+
+repo_root=/home/steve/llm-optimizations
+vllm_root=/home/steve/src/deepseek-v4-vllm-xpu-dspark
+kernel_root=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
+python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
+oracle="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n64_recovery.py"
+base_gate="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_w1_n128.py"
+xccl_gate="$repo_root/scripts/check-qwen36-xpu-xccl-health.sh"
+peer_binary=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-device-lost-recovery-20260723T103343Z/no-reboot-validation/sycl-peer-read-test-oneapi2026
+evidence_root=/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n128-postreboot-recovery-20260723T120411Z
+
+expected_boot_id=97dfe56f-f2d8-4e08-a923-2c6007f02381
+failed_boot_id=c3b56b2b-8ae3-4f1a-991a-210a95df55cb
+expected_kernel=7.0.0-28-generic
+failed_kernel=6.17.0-35-generic
+expected_vllm_commit=8936aac144929190c1e53f8b8624ca397ce16f5b
+expected_kernel_commit=c59aaadbbfd350c2b5f4ad663e247c2811ae3181
+expected_peer_sha256=1ab3b96dd1c7cd46a2e5422b0b6bf705ba5b80f306102e968768f634ee4bf92c
+expected_fixture_sha256=478a23508e635c91fa62ff0a4b737016266bc308e8fe60111e81abad3d47c1f6
+expected_xpu_extension_sha256=f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
+expected_grouped_gemm_sha256=fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
+expected_oracle_sha256=2abcec3792add95f4e0862554f88fabc762300834d57816b85381eca314c89ac
+expected_base_gate_sha256=17491ad377178c5ef693d737f21b77bac4c80413d1abec17c8cdb3678eaa62b7
+expected_xccl_gate_sha256=b15dd4c248d8c4d7035c2d180b9ecc5354b1b20bdabb0c47c540b5003a1cfb78
+
+reject_pattern='Timedout job:|VM job timed out|Kernel-submitted job timed out|device coredump|GT.*reset|reset (queued|started|done)|TLB.*timeout|GuC.*(fail|error|timeout)|CT.*(fail|error|timeout)|AER:.*(error|fatal|nonfatal)|PCIe Bus Error'
+
+evidence_created=false
+started_utc=not-started
+
+early_finalize() {
+  local rc=$?
+  trap - EXIT
+  set +e
+  if [[ "$evidence_created" == true ]]; then
+    local completed_utc
+    completed_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    {
+      printf 'exit_status=%s\n' "$rc"
+      printf 'started_utc=%s\n' "$started_utc"
+      printf 'completed_utc=%s\n' "$completed_utc"
+      printf 'early_failure=true\n'
+    } > "$evidence_root/final-status.txt"
+    (
+      cd "$evidence_root" || exit 1
+      find . -maxdepth 1 -type f ! -name 'evidence.sha256*' -printf '%P\n' \
+        | LC_ALL=C sort \
+        | xargs -r sha256sum \
+        > evidence.sha256.tmp \
+        && mv evidence.sha256.tmp evidence.sha256
+    )
+    sync "$evidence_root"
+  fi
+  exit "$rc"
+}
+trap early_finalize EXIT
+
+if [[ -e "$evidence_root" ]]; then
+  echo "recovery evidence root already exists: $evidence_root" >&2
+  exit 2
+fi
+mkdir "$evidence_root"
+evidence_created=true
+
+started_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+printf '%s\n' "$started_utc" > "$evidence_root/started-utc.txt"
+
+journalctl -k -b -n 1 --show-cursor --no-pager -o short-iso \
+  > "$evidence_root/kernel-baseline.txt"
+journal_cursor="$(sed -n 's/^-- cursor: //p' "$evidence_root/kernel-baseline.txt" | tail -1)"
+if [[ -z "$journal_cursor" ]]; then
+  echo "failed to capture kernel journal cursor" >&2
+  exit 3
+fi
+
+capture_kernel_delta() {
+  local journal_rc grep_rc
+  if journalctl -k -b --after-cursor "$journal_cursor" --no-pager \
+    -o short-iso > "$evidence_root/kernel-delta.txt"; then
+    journal_rc=0
+  else
+    journal_rc=$?
+  fi
+  (( journal_rc == 0 )) || return "$journal_rc"
+  if grep -Eai "$reject_pattern" "$evidence_root/kernel-delta.txt" \
+    > "$evidence_root/kernel-reject-events.txt"; then
+    grep_rc=0
+  else
+    grep_rc=$?
+  fi
+  (( grep_rc == 0 || grep_rc == 1 )) || return "$grep_rc"
+}
+
+gate_completed=false
+
+write_final_status() {
+  local rc="$1"
+  local completed_utc="$2"
+  {
+    printf 'exit_status=%s\n' "$rc"
+    printf 'started_utc=%s\n' "$started_utc"
+    printf 'completed_utc=%s\n' "$completed_utc"
+    printf 'early_failure=false\n'
+    printf 'gate_completed=%s\n' "$gate_completed"
+    printf 'kernel_reject_events_empty=%s\n' "$([[ ! -s "$evidence_root/kernel-reject-events.txt" ]] && printf true || printf false)"
+  } > "$evidence_root/final-status.txt"
+}
+
+update_summary_finalization() {
+  local passed="$1"
+  local rc="$2"
+  local completed_utc="$3"
+  local reject_count=0
+  if [[ -f "$evidence_root/kernel-reject-events.txt" ]]; then
+    reject_count="$(wc -l < "$evidence_root/kernel-reject-events.txt")"
+  fi
+  jq --argjson passed "$passed" \
+    --argjson exit_status "$rc" \
+    --argjson kernel_reject_events "$reject_count" \
+    --arg completed_utc "$completed_utc" '
+      .passed = $passed |
+      .gates.kernel_reject_events = $kernel_reject_events |
+      .finalization = {
+        passed: $passed,
+        exit_status: $exit_status,
+        completed_utc: $completed_utc,
+        authoritative_final_kernel_capture: true
+      }
+    ' "$evidence_root/summary.json" > "$evidence_root/summary.json.final.tmp" \
+    && mv "$evidence_root/summary.json.final.tmp" "$evidence_root/summary.json"
+}
+
+write_manifest() {
+  (
+    cd "$evidence_root" || exit 1
+    find . -maxdepth 1 -type f ! -name 'evidence.sha256*' -printf '%P\n' \
+      | LC_ALL=C sort \
+      | xargs -r sha256sum \
+      > evidence.sha256.tmp \
+      && mv evidence.sha256.tmp evidence.sha256
+  )
+}
+
+finalize() {
+  local rc=$?
+  local kernel_capture_rc=0
+  local completed_utc
+  local manifest_rc=0
+  local sync_rc=0
+  trap - EXIT
+  set +e
+
+  capture_kernel_delta
+  kernel_capture_rc=$?
+  if (( kernel_capture_rc != 0 && rc == 0 )); then
+    rc=90
+  fi
+  if [[ -s "$evidence_root/kernel-reject-events.txt" && "$rc" -eq 0 ]]; then
+    rc=91
+  fi
+  if [[ "$gate_completed" != true && "$rc" -eq 0 ]]; then
+    rc=92
+  fi
+
+  completed_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  if [[ -f "$evidence_root/summary.json" ]]; then
+    update_summary_finalization "$([[ "$rc" -eq 0 ]] && printf true || printf false)" \
+      "$rc" "$completed_utc"
+    if (( $? != 0 && rc == 0 )); then
+      rc=93
+      update_summary_finalization false "$rc" "$completed_utc"
+    fi
+  elif [[ "$gate_completed" == true && "$rc" -eq 0 ]]; then
+    rc=93
+  fi
+
+  write_final_status "$rc" "$completed_utc"
+  write_manifest
+  manifest_rc=$?
+  if (( manifest_rc != 0 )); then
+    rc=94
+    if [[ -f "$evidence_root/summary.json" ]]; then
+      update_summary_finalization false "$rc" "$completed_utc"
+    fi
+    write_final_status "$rc" "$completed_utc"
+    write_manifest
+  fi
+
+  sync "$evidence_root"
+  sync_rc=$?
+  if (( sync_rc != 0 )); then
+    rc=95
+    if [[ -f "$evidence_root/summary.json" ]]; then
+      update_summary_finalization false "$rc" "$completed_utc"
+    fi
+    write_final_status "$rc" "$completed_utc"
+    write_manifest
+    sync "$evidence_root"
+  fi
+
+  if (( rc == 0 )); then
+    echo "post-reboot recovery gate passed: $evidence_root"
+  else
+    echo "post-reboot recovery gate failed: status=$rc root=$evidence_root" >&2
+  fi
+  exit "$rc"
+}
+trap finalize EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+run_capture() {
+  local label="$1"
+  shift
+  local rc
+  set +e
+  "$@" > "$evidence_root/$label.log" 2>&1
+  rc=$?
+  set -e
+  printf 'exit_status=%s\n' "$rc" > "$evidence_root/$label.status"
+  if (( rc != 0 )); then
+    echo "$label failed with exit status $rc" >&2
+    return "$rc"
+  fi
+}
+
+capture_idle_xpu() {
+  local output_path="$1"
+  local residual_path="$2"
+  timeout 15 xpu-smi ps > "$output_path"
+  awk '
+    NR == 1 {
+      header_ok = $1 == "PID" && $2 == "Command" && $3 == "DeviceID" \
+        && $4 == "SHR" && $5 == "MEM"
+      next
+    }
+    {
+      rows += 1
+      if ($2 != "xpu-smi" || $3 !~ /^[0-3]$/) {
+        print
+        bad = 1
+        next
+      }
+      seen[$3] += 1
+    }
+    END {
+      if (!header_ok) {
+        print "invalid xpu-smi ps header"
+        bad = 1
+      }
+      if (rows != 4) {
+        print "expected exactly four xpu-smi rows; found " rows
+        bad = 1
+      }
+      for (device = 0; device < 4; device += 1) {
+        if (seen[device] != 1) {
+          print "expected one xpu-smi row for device " device "; found " seen[device]
+          bad = 1
+        }
+      }
+      exit bad
+    }
+  ' "$output_path" > "$residual_path"
+}
+
+require_no_model_process() {
+  local output_path="$1"
+  local rc
+  if pgrep -af \
+    '[g]emma4|[l]lama-server|[v]llm serve|[a]pi_server|[E]ngineCore' \
+    > "$output_path"; then
+    echo "model process remains active" >&2
+    return 1
+  else
+    rc=$?
+  fi
+  (( rc == 1 ))
+}
+
+require_service_not_active() {
+  local unit="$1"
+  local state rc
+  if state="$(systemctl is-active "$unit" 2>/dev/null)"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  printf '%s\t%s\trc=%s\n' "$unit" "$state" "$rc" \
+    >> "$evidence_root/service-states.txt"
+  (( rc == 3 )) && [[ "$state" == inactive || "$state" == failed ]]
+}
+
+require_no_model_ports() {
+  local listeners_path="$1"
+  local residual_path="$2"
+  local rc
+  ss -Hltn > "$listeners_path"
+  if awk '
+    $4 ~ /:(8000|18080|19350|19351|19352|19353)$/ {
+      print
+      found = 1
+    }
+    END { exit found ? 0 : 1 }
+  ' "$listeners_path" > "$residual_path"; then
+    echo "model-serving port is still listening" >&2
+    return 1
+  else
+    rc=$?
+  fi
+  (( rc == 1 ))
+}
+
+check_hash() {
+  local path="$1"
+  local expected="$2"
+  local actual
+  actual="$(sha256sum "$path" | awk '{print $1}')"
+  if [[ "$actual" != "$expected" ]]; then
+    echo "hash mismatch: $path expected=$expected actual=$actual" >&2
+    return 1
+  fi
+}
+
+boot_id="$(< /proc/sys/kernel/random/boot_id)"
+kernel_release="$(uname -r)"
+printf '%s\n' "$boot_id" > "$evidence_root/boot-id.txt"
+printf '%s\n' "$kernel_release" > "$evidence_root/kernel-release.txt"
+uname -a > "$evidence_root/uname.txt"
+[[ "$boot_id" == "$expected_boot_id" ]]
+[[ "$boot_id" != "$failed_boot_id" ]]
+[[ "$kernel_release" == "$expected_kernel" ]]
+[[ "$kernel_release" != "$failed_kernel" ]]
+
+: > "$evidence_root/service-states.txt"
+require_service_not_active gemma4-26b-q8-quad-frontdoor.service
+require_service_not_active gemma4-26b-q8-quad-backends.service
+require_service_not_active display-manager.service
+require_no_model_process "$evidence_root/preflight-model-processes.txt"
+require_no_model_ports \
+  "$evidence_root/preflight-listeners.txt" \
+  "$evidence_root/preflight-listener-residual.txt"
+
+git -C "$repo_root" rev-parse HEAD > "$evidence_root/repo-head.txt"
+git -C "$vllm_root" rev-parse HEAD > "$evidence_root/vllm-head.txt"
+git -C "$kernel_root" rev-parse HEAD > "$evidence_root/kernel-head.txt"
+git -C "$repo_root" status --short > "$evidence_root/repo-status.txt"
+git -C "$vllm_root" status --short > "$evidence_root/vllm-status.txt"
+git -C "$kernel_root" status --short > "$evidence_root/kernel-status.txt"
+[[ ! -s "$evidence_root/repo-status.txt" ]]
+[[ ! -s "$evidence_root/vllm-status.txt" ]]
+[[ ! -s "$evidence_root/kernel-status.txt" ]]
+[[ "$(< "$evidence_root/vllm-head.txt")" == "$expected_vllm_commit" ]]
+[[ "$(< "$evidence_root/kernel-head.txt")" == "$expected_kernel_commit" ]]
+
+sha256sum "$0" "$oracle" "$base_gate" "$xccl_gate" \
+  > "$evidence_root/tool-identities.sha256"
+check_hash "$oracle" "$expected_oracle_sha256"
+check_hash "$base_gate" "$expected_base_gate_sha256"
+check_hash "$xccl_gate" "$expected_xccl_gate_sha256"
+check_hash "$peer_binary" "$expected_peer_sha256"
+printf '%s  %s\n' "$expected_peer_sha256" "$peer_binary" \
+  > "$evidence_root/peer-binary.sha256"
+
+run_capture xpu-smi-version timeout --signal=TERM --kill-after=5s 20s xpu-smi -v
+run_capture xpu-smi-discovery \
+  timeout --signal=TERM --kill-after=5s 20s xpu-smi discovery -j
+jq -e '
+  (.device_list | length == 4) and
+  (.device_list[0] | .device_id == 0 and .pci_bdf_address == "0000:23:00.0" and .drm_device == "/dev/dri/card3" and .device_name == "Intel(R) Arc(TM) Pro B70 Graphics") and
+  (.device_list[1] | .device_id == 1 and .pci_bdf_address == "0000:27:00.0" and .drm_device == "/dev/dri/card4" and .device_name == "Intel(R) Arc(TM) Pro B70 Graphics") and
+  (.device_list[2] | .device_id == 2 and .pci_bdf_address == "0000:43:00.0" and .drm_device == "/dev/dri/card0" and .device_name == "Intel(R) Arc(TM) Pro B70 Graphics") and
+  (.device_list[3] | .device_id == 3 and .pci_bdf_address == "0000:47:00.0" and .drm_device == "/dev/dri/card2" and .device_name == "Intel(R) Arc(TM) Pro B70 Graphics")
+' "$evidence_root/xpu-smi-discovery.log" > "$evidence_root/xpu-mapping-check.txt"
+capture_idle_xpu \
+  "$evidence_root/preflight-xpu-ps.txt" \
+  "$evidence_root/preflight-xpu-residual.txt"
+
+run_capture sycl-ls-verbose \
+  timeout --signal=TERM --kill-after=10s 60s \
+  env UR_LOG_LOADER=level_info \
+  /opt/intel/oneapi/compiler/2026.0/bin/sycl-ls \
+  --verbose --ignore-device-selectors
+for rank in 0 1 2 3; do
+  grep -Fq "[level_zero:gpu][level_zero:$rank]" \
+    "$evidence_root/sycl-ls-verbose.log"
+done
+
+run_capture peer-read \
+  timeout --signal=TERM --kill-after=15s 180s \
+  env ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 \
+  ZE_AFFINITY_MASK=0,1,2,3 \
+  "$peer_binary"
+[[ "$(< "$evidence_root/peer-read.log")" == "peer kernel read ok across 4 devices" ]]
+
+run_xccl_pass() {
+  local label="$1"
+  local rank
+  run_capture "$label" \
+    timeout --signal=TERM --kill-after=15s 180s \
+    env PYTHON="$python" ROOT="$repo_root" \
+    PHYSICAL_DEVICES=0,1,2,3 XCCL_DEVICES=0,1,2,3 XCCL_NPROC=4 \
+    TIMEOUT_S=120 FI_TCP_IFACE=eno1 CCL_KVS_IFACE=eno1 \
+    bash "$xccl_gate"
+  [[ "$(awk '$0 == "device_count 1" {n++} END {print n+0}' "$evidence_root/$label.log")" == 4 ]]
+  [[ "$(awk '$0 == "ok 2097152.0" {n++} END {print n+0}' "$evidence_root/$label.log")" == 4 ]]
+  for rank in 0 1 2 3; do
+    [[ "$(grep -Fxc "rank $rank init ok" "$evidence_root/$label.log")" == 1 ]]
+    [[ "$(grep -Fxc "rank $rank barrier ok" "$evidence_root/$label.log")" == 1 ]]
+    [[ "$(grep -Fxc "rank $rank allreduce ok 4.0" "$evidence_root/$label.log")" == 1 ]]
+  done
+}
+
+run_xccl_pass xccl-pass-1
+run_xccl_pass xccl-pass-2
+
+for rank in 0 1 2 3; do
+  run_capture "n64-oracle-card$rank" \
+    timeout --signal=TERM --kill-after=15s 900s \
+    env PYTHONPATH="$vllm_root:$kernel_root" \
+    ZE_AFFINITY_MASK="$rank" ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+    "$python" "$oracle" --rank "$rank" \
+    --out "$evidence_root/n64-oracle-card$rank.json"
+  jq -e '
+    .passed == true and
+    .oracle_gate_evaluated == true and
+    .mode == "oracle-n64" and
+    .executed_w1_n_tiles == [64] and
+    .observed_w1_call_count == 128 and
+    .n128_executed == false and
+    ([.checks[]] | all)
+  ' "$evidence_root/n64-oracle-card$rank.json" \
+    > "$evidence_root/n64-oracle-card$rank.check"
+
+  run_capture "n64-production-liveness-card$rank" \
+    timeout --signal=TERM --kill-after=15s 300s \
+    env PYTHONPATH="$vllm_root:$kernel_root" \
+    ZE_AFFINITY_MASK="$rank" ONEAPI_DEVICE_SELECTOR=level_zero:0 \
+    "$python" "$base_gate" --rank "$rank" --mode counter-n64 \
+    --out "$evidence_root/n64-production-liveness-card$rank.json"
+  jq -e --argjson rank "$rank" \
+    --arg fixture "$expected_fixture_sha256" \
+    --arg extension "$expected_xpu_extension_sha256" \
+    --arg grouped "$expected_grouped_gemm_sha256" '
+    .passed == null and
+    .counter_gate_evaluated == false and
+    .counter.mode == "counter-n64" and
+    .counter.rank == $rank and
+    .counter.tile == 64 and
+    .counter.calls == 12 and
+    .counter.completion_boundary_per_call == true and
+    .counter.real_production_fixture_identity.sha256 == $fixture and
+    .runtime.extension_sha256 == $extension and
+    .runtime.grouped_gemm_sha256 == $grouped
+  ' "$evidence_root/n64-production-liveness-card$rank.json" \
+    > "$evidence_root/n64-production-liveness-card$rank.check"
+done
+
+capture_kernel_delta
+[[ ! -s "$evidence_root/kernel-reject-events.txt" ]]
+require_no_model_process "$evidence_root/pre-idle-model-processes.txt"
+capture_idle_xpu \
+  "$evidence_root/pre-idle-xpu-ps.txt" \
+  "$evidence_root/pre-idle-xpu-residual.txt"
+idle_started_epoch="$(date +%s)"
+idle_started_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+printf '%s\n' "$idle_started_utc" > "$evidence_root/idle-started-utc.txt"
+: > "$evidence_root/idle-samples-xpu-ps.txt"
+: > "$evidence_root/idle-samples-model-processes.txt"
+idle_sample_count=0
+while true; do
+  idle_sample_count=$(( idle_sample_count + 1 ))
+  sample_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  capture_idle_xpu \
+    "$evidence_root/idle-current-xpu-ps.txt" \
+    "$evidence_root/idle-current-xpu-residual.txt"
+  require_no_model_process "$evidence_root/idle-current-model-processes.txt"
+  {
+    printf 'sample=%s utc=%s\n' "$idle_sample_count" "$sample_utc"
+    cat "$evidence_root/idle-current-xpu-ps.txt"
+  } >> "$evidence_root/idle-samples-xpu-ps.txt"
+  printf 'sample=%s utc=%s no_model_process=true\n' \
+    "$idle_sample_count" "$sample_utc" \
+    >> "$evidence_root/idle-samples-model-processes.txt"
+  sample_epoch="$(date +%s)"
+  if (( sample_epoch - idle_started_epoch >= 65 )); then
+    break
+  fi
+  sleep 1
+done
+idle_completed_epoch="$(date +%s)"
+idle_completed_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+idle_seconds=$(( idle_completed_epoch - idle_started_epoch ))
+printf '%s\n' "$idle_completed_utc" > "$evidence_root/idle-completed-utc.txt"
+printf '%s\n' "$idle_seconds" > "$evidence_root/idle-seconds.txt"
+printf '%s\n' "$idle_sample_count" > "$evidence_root/idle-sample-count.txt"
+(( idle_seconds >= 65 ))
+(( idle_sample_count >= 30 ))
+require_no_model_process "$evidence_root/post-idle-model-processes.txt"
+capture_idle_xpu \
+  "$evidence_root/post-idle-xpu-ps.txt" \
+  "$evidence_root/post-idle-xpu-residual.txt"
+require_service_not_active gemma4-26b-q8-quad-frontdoor.service
+require_service_not_active gemma4-26b-q8-quad-backends.service
+require_service_not_active display-manager.service
+require_no_model_ports \
+  "$evidence_root/post-idle-listeners.txt" \
+  "$evidence_root/post-idle-listener-residual.txt"
+capture_kernel_delta
+[[ ! -s "$evidence_root/kernel-reject-events.txt" ]]
+
+jq -n \
+  --arg boot_id "$boot_id" \
+  --arg failed_boot_id "$failed_boot_id" \
+  --arg kernel_release "$kernel_release" \
+  --arg failed_kernel "$failed_kernel" \
+  --arg started_utc "$started_utc" \
+  --arg idle_started_utc "$idle_started_utc" \
+  --arg idle_completed_utc "$idle_completed_utc" \
+  --argjson idle_seconds "$idle_seconds" \
+  --argjson idle_sample_count "$idle_sample_count" \
+  --arg repo_head "$(< "$evidence_root/repo-head.txt")" \
+  --arg vllm_head "$(< "$evidence_root/vllm-head.txt")" \
+  --arg kernel_head "$(< "$evidence_root/kernel-head.txt")" '
+  {
+    format: "laguna-w1-n128-postreboot-recovery-v1",
+    passed: true,
+    boot: {
+      boot_id: $boot_id,
+      differs_from_failed_boot_id: ($boot_id != $failed_boot_id),
+      kernel_release: $kernel_release,
+      differs_from_failed_kernel: ($kernel_release != $failed_kernel)
+    },
+    source_identity: {
+      repo_head: $repo_head,
+      vllm_head: $vllm_head,
+      kernel_head: $kernel_head,
+      trees_clean: true
+    },
+    gates: {
+      exact_four_device_mapping: true,
+      strict_gpu_idle_before_gates: true,
+      oneapi_2026_four_device_enumeration: true,
+      four_device_peer_read: true,
+      xccl_exact_allreduce_independent_passes: 2,
+      n64_historical_exact_oracle_cards: 4,
+      n64_production_fixture_liveness_cards: 4,
+      n128_executed: false,
+      model_generation_performed: false,
+      kernel_reject_events: 0
+    },
+    idle: {
+      started_utc: $idle_started_utc,
+      completed_utc: $idle_completed_utc,
+      seconds: $idle_seconds,
+      required_seconds: 65,
+      strict_samples: $idle_sample_count,
+      minimum_strict_samples: 30,
+      no_device_or_model_client_detected: true,
+      services_and_ports_rechecked_after_interval: true
+    },
+    campaign_constraints: {
+      recovery_a1_must_be_first_post_recovery_model_generation: true,
+      one_prior_invalid_aborted_control_start_disclosed: true,
+      no_third_campaign: true
+    },
+    started_utc: $started_utc
+  }
+' > "$evidence_root/summary.json.tmp"
+mv "$evidence_root/summary.json.tmp" "$evidence_root/summary.json"
+sync "$evidence_root/summary.json"
+
+gate_completed=true
