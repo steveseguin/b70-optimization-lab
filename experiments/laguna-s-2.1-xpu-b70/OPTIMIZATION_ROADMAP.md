@@ -40,7 +40,7 @@ Also serve it as the working coding model.
 | 2026-07-22 | fused M8 expert transaction (W1+SiLU+W2) | 33.01 | YES (13/13 x2) | exact but NOT a record: lower start 33.008 < 33.086, 2.7% start variance. W2 expert-slot serialization lost route-parallel occupancy despite 6→2 launches. Default-off. Next: route-parallel W2 + occupancy. |
 | 2026-07-22 | **fused W1+SiLU + route-parallel W2 — RECORD cmrwlyxez** | **33.27** | YES (13/13 x2) | +0.55% over prior; lower start 33.268 > 33.086; spread 0.108%; route-parallel W2 restored occupancy the full-fusion lost. APPROVED. |
 | 2026-07-22 | **M8 route-interleave GEMM occupancy — RECORD cmrwot894** | **33.44** | YES (13/13 x2) | +0.51%; lower start 33.439>33.268; W1/W2 N-tile interleave raised EU active ~44->48%; 64/64 exact. APPROVED. |
-| 2026-07-22 | **fused W1+SiLU + route-parallel W2** | **33.267564** | **YES (13/13 x2)** | lower of 33.303424/33.267564; cache-zero, cross-request, rollover, and cross-start exact. 6→4 launches/layer and 10x W2 work availability vs serialized fusion. Payload staged, not submitted. |
+| 2026-07-22 | DFlash depth 4-10 sweep | 32.19 best exact | YES at depth 5/6/7 | depth 7 remains best exact but below record; depth 4 was 12/13; depths 8-10 exceeded exact M<=8 target guards, were 0/13, and fell to 4.94-6.11 tok/s. No two-start gate or payload. |
 
 ## Lever ladder (grind order; each exact + quality-gated)
 1. **[DONE] DFlash verifier exactness and batching** — q=8 verifier == q=1
@@ -48,21 +48,20 @@ Also serve it as the working coding model.
    fixed-rank sums, and deterministic direct MoE.
 2. **[DONE; APPROVED] First verified record** — full-512 exact DFlash at
    33.085825 tok/s, LocalMaxxing `cmrw7cn1k006jnz01gq2z981v`.
-3. **[DONE; STAGED] MoE/EP launch/occupancy rebalance** — retaining fused
-   W1+SiLU while restoring route-parallel W2 produced a two-start exact lower
-   result of 33.267564 tok/s. The payload is staged for Claude; it is not yet an
-   approved LocalMaxxing row. The remaining 47 layer-level EP transactions are
-   causally separated by layer dependencies.
-4. **Attention** — BF16 Q/K/V/O bandwidth; sliding-window(512) decode efficiency;
-   full-attn layers.
-5. **[NEXT] INT4 expert GEMM efficiency / occupancy** — test the audited
-   W2-only N64 route-interleaved workgroup enumeration without changing
-   arithmetic; if neutral, screen N128+interleave before N32 and avoid GRF128.
+3. **[DONE; APPROVED] MoE/EP launch/occupancy rebalance** — fused W1+SiLU,
+   route-parallel W2, and M8 N-tile/route interleave produced the current
+   two-start 33.438927 tok/s lower result, LocalMaxxing `cmrwot89400gqnz014oodtlbp`.
+4. **[NEXT] Attention and router residual** — BF16 QKV+O is 2.918838
+   ms/cycle; the largest single named kernel in the corrected residual is
+   TopKGating at 0.560374 ms/cycle. Retain exact arithmetic and the full gate.
+5. **[DONE] INT4 expert GEMM efficiency / occupancy** — N64 route-interleaved
+   W1/W2 workgroups raised EU activity and produced the current record.
 6. **Graph coverage** — first fix AOT cache identity/artifact selection and
    locate the first eager-vs-compiled tensor divergence. Fixed-rank reductions
    alone produced only 1/13 teacher matches and were reverted.
-7. **Deeper/better speculation** — DFlash depth tuning, acceptance improvement,
-   tree/multi-branch drafting (exact-verified).
+7. **[DEPTH SWEEP DONE] Better speculation** — depth 7 remains best exact.
+   Depths >7 require widening or serializing all M>8 target verifier boundaries
+   before acceptance policy or tree/multi-branch drafting can be promoted.
 8. **FP8 KV for long context** — capacity (2x tokens/card) for real coding sessions;
    measure speed tradeoff (BF16 slightly faster at 8K).
 9. **Quantization headroom (careful, quality-gated)** — if quality holds, reduce

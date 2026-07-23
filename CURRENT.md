@@ -144,7 +144,7 @@ approved the lower result as `cmrwlyxez00f4nz01zefturuv`; its queue is
 and the prior `cmrw7cn1k006jnz01gq2z981v` row is superseded.
 
 Resume from
-[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-m8-route-interleave-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-m8-route-interleave-record.md).
+[`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-depth-sweep-and-profile-decomposition.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-dflash-depth-sweep-and-profile-decomposition.md).
 Candidate B at the same vLLM commit plus XPU kernels `210a6eb60` changes only
 W1/W2 workgroup enumeration to cycle across the 80 routed rows at each N tile.
 The four-card gate is bitwise exact **64/64** and reduces the mean routed
@@ -152,10 +152,10 @@ component **0.561952 -> 0.538143 ms/layer**. Two fresh full suites are teacher
 exact **13/13 + 13/13**, cross-start exact **13/13**, cache-zero
 **13/13 + 13/13**, long-then-next **2/2 + 2/2**, and rollover **1/1 + 1/1**.
 Fresh-start medians are **33.438927** and **33.546439 tok/s**; the lower start
-beats the approved 33.267564 record by 0.171363 tok/s (+0.5151%). The payload
-is staged at
+beats the approved 33.267564 record by 0.171363 tok/s (+0.5151%). LocalMaxxing
+approved it as `cmrwot89400gqnz014oodtlbp`; the payload is
 `data/localmaxxing-laguna-s-2.1-int4-b70-dflash-m8-route-interleave-33.439tok-20260722.queue.json`
-but was not submitted; Claude owns submission.
+and the prior `cmrwlyxez00f4nz01zefturuv` row is superseded.
 Remote-route zeroing remained exact and removed 95 fill launches/cycle, but
 regressed to 32.590900 tok/s. The deterministic graph pass fixed the M=8 qkv
 shape guard and added an exactness-complete AOT cache identity. A default-off
@@ -170,12 +170,17 @@ exact across its four-card component gate and both full fresh-start suites, but
 it is also unpromoted: fresh-start medians were 33.008027 and 33.908219 tok/s,
 so the lower reproducible result did not beat 33.085825. Its 282 -> 94 routed
 launch reduction serialized W2 expert slots and raised routed-MoE device time
-9.077583 -> 10.388394 ms/cycle. Preserve it default-off. The next bounded
-lever after Candidate B review is exact attention BF16 QKVO or sliding-window
-decode, followed by deeper DFlash acceptance policy. Do not revisit
-route buffer fills or progressively serialize the whole model into opaque graph
-islands. Preserve the exact approved base at vLLM `cb616c670` plus kernels
-`6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
+9.077583 -> 10.388394 ms/cycle. Preserve it default-off. The exact depth sweep
+over 4-10 left depth 7 best: depths 5/6/7 were 13/13 exact but slower than the
+record, depth 4 was 12/13, and depths 8-10 left the exact M<=8 target path,
+matched 0/13, and regressed to 4.94-6.11 tok/s. The old 13.409 ms/cycle
+`other_noncollective` bucket was a classifier artifact containing W1 and W2;
+the true residual is 3.591 ms/cycle. Its next single named kernel lever is
+TopKGating at 0.560 ms/cycle. The larger target family is BF16 attention QKV+O
+at 2.919 ms/cycle; the draft-side family is dense MLP at 0.637 ms/cycle. Do not
+revisit route buffer fills or progressively serialize the whole model into
+opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
+plus kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
 vLLM `6a570e70b2c1ccce3a42f3396e1bd22b0a4a8191` and kernels
 `210a6eb604500c80bc5989d4b9fc59e75f1bb316`. Also preserve the DeepSeek
 option-4 branch and all `preserve/*` tags. All Laguna model, cache,

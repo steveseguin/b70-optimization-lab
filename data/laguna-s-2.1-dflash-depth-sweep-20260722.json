@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-07-22",
+  "classification": "depth_sweep_no_new_exact_record",
+  "record_floor_tok_s": 33.43893,
+  "record_id": "cmrwot89400gqnz014oodtlbp",
+  "best_exact_depth": 7,
+  "best_exact_sweep_median_tok_s_1_100_after_ttft": 32.19059366549866,
+  "best_exact_delta_vs_record_floor_tok_s": -1.248336334501337,
+  "two_fresh_start_gate_run": false,
+  "two_fresh_start_gate_reason": "No exact sweep row exceeded 33.43893 tok/s.",
+  "localmaxxing_payload_staged": false,
+  "identity": {
+    "vllm_branch": "experiment/laguna-s-2.1-xpu-bringup-20260721",
+    "vllm_commit": "6a570e70b2c1ccce3a42f3396e1bd22b0a4a8191",
+    "xpu_kernel_branch": "experiment/laguna-s-2.1-fwht-20260721",
+    "xpu_kernel_commit": "210a6eb604500c80bc5989d4b9fc59e75f1bb316",
+    "target": "poolside/Laguna-S-2.1-INT4",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "draft_block_size": 16,
+    "maximum_trained_num_speculative_tokens": 15,
+    "hardware": "4x Intel Arc Pro B70 32GB",
+    "topology": "TP4+EP4, one active sequence",
+    "kv_cache_dtype": "bfloat16",
+    "graph_mode": "eager",
+    "async_scheduling": false,
+    "flags": {
+      "VLLM_XPU_EXACT_SPEC_ATTN": "1",
+      "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": "1",
+      "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": "1",
+      "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1"
+    }
+  },
+  "gate": {
+    "suite": "experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json",
+    "suite_sha256": "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638",
+    "teacher": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/bulletproof-q1-canonical-cb616c6-6fc06b0-20260722T142908Z/bench.json",
+    "prompt_count": 13,
+    "max_tokens": 512,
+    "metric_tokens": 100,
+    "request_seed": 1,
+    "temperature": 0,
+    "top_p": 1,
+    "enable_thinking": false,
+    "cached_tokens_required": 0
+  },
+  "metric_definitions": {
+    "acceptance": "spec_decode_num_accepted_tokens_total / spec_decode_num_draft_tokens_total, after-minus-before suite counters",
+    "emitted_tokens_per_cycle": "sum(response completion_tokens) / spec_decode_num_drafts_total, after-minus-before suite counters",
+    "exact": "all 13 complete output token arrays equal the canonical deterministic q=1 teacher and all cached_tokens are zero"
+  },
+  "rows": [
+    {
+      "depth": 4,
+      "verifier_query_rows": 5,
+      "median_tok_s_1_100_after_ttft": 29.751822586683144,
+      "draft_cycles": 1999,
+      "draft_tokens": 7996,
+      "accepted_tokens": 4349,
+      "acceptance_fraction": 0.5438969484742371,
+      "emitted_tokens": 6354,
+      "emitted_tokens_per_cycle": 3.1785892946473235,
+      "cached_tokens_all_zero": true,
+      "teacher_exact_count": 12,
+      "teacher_total": 13,
+      "exact": false,
+      "first_mismatch": "typescript-cancellation token 0",
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth4-m8-route-interleave-20260722T231335Z"
+    },
+    {
+      "depth": 5,
+      "verifier_query_rows": 6,
+      "median_tok_s_1_100_after_ttft": 31.002235683302487,
+      "draft_cycles": 1856,
+      "draft_tokens": 9280,
+      "accepted_tokens": 4503,
+      "acceptance_fraction": 0.4852370689655172,
+      "emitted_tokens": 6354,
+      "emitted_tokens_per_cycle": 3.4234913793103448,
+      "cached_tokens_all_zero": true,
+      "teacher_exact_count": 13,
+      "teacher_total": 13,
+      "exact": true,
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth5-m8-route-interleave-20260722T232119Z"
+    },
+    {
+      "depth": 6,
+      "verifier_query_rows": 7,
+      "median_tok_s_1_100_after_ttft": 32.0635115995189,
+      "draft_cycles": 1781,
+      "draft_tokens": 10686,
+      "accepted_tokens": 4575,
+      "acceptance_fraction": 0.42813026389668724,
+      "emitted_tokens": 6354,
+      "emitted_tokens_per_cycle": 3.567658618753509,
+      "cached_tokens_all_zero": true,
+      "teacher_exact_count": 13,
+      "teacher_total": 13,
+      "exact": true,
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth6-m8-route-interleave-20260722T232843Z"
+    },
+    {
+      "depth": 7,
+      "verifier_query_rows": 8,
+      "median_tok_s_1_100_after_ttft": 32.19059366549866,
+      "draft_cycles": 1719,
+      "draft_tokens": 12033,
+      "accepted_tokens": 4643,
+      "acceptance_fraction": 0.3858555638660351,
+      "emitted_tokens": 6354,
+      "emitted_tokens_per_cycle": 3.696335078534031,
+      "cached_tokens_all_zero": true,
+      "teacher_exact_count": 13,
+      "teacher_total": 13,
+      "exact": true,
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth7-m8-route-interleave-20260722T233559Z"
+    },
+    {
+      "depth": 8,
+      "verifier_query_rows": 9,
+      "median_tok_s_1_100_after_ttft": 6.1126715668264575,
+      "draft_cycles": 1712,
+      "draft_tokens": 13696,
+      "accepted_tokens": 4697,
+      "acceptance_fraction": 0.3429468457943925,
+      "emitted_tokens": 6389,
+      "emitted_tokens_per_cycle": 3.731892523364486,
+      "cached_tokens_all_zero": true,
+      "teacher_exact_count": 0,
+      "teacher_total": 13,
+      "exact": false,
+      "path_note": "Verifier width 9 exceeds the current exact target fast-path guard and bypasses the record fused route-interleave path.",
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth8-m8-route-interleave-20260722T234307Z"
+    },
+    {
+      "depth": 9,
+      "verifier_query_rows": 10,
+      "median_tok_s_1_100_after_ttft": 5.3401120353877864,
+      "draft_cycles": 1685,
+      "draft_tokens": 15165,
+      "accepted_tokens": 4732,
+      "acceptance_fraction": 0.31203428948236067,
+      "emitted_tokens": 6389,
+      "emitted_tokens_per_cycle": 3.791691394658754,
+      "cached_tokens_all_zero": true,
+      "teacher_exact_count": 0,
+      "teacher_total": 13,
+      "exact": false,
+      "path_note": "Verifier width 10 exceeds the current exact target fast-path guard and bypasses the record fused route-interleave path.",
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth9-m8-route-interleave-retry-20260723T000304Z"
+    },
+    {
+      "depth": 10,
+      "verifier_query_rows": 11,
+      "median_tok_s_1_100_after_ttft": 4.93849421810216,
+      "draft_cycles": 1664,
+      "draft_tokens": 16640,
+      "accepted_tokens": 4757,
+      "acceptance_fraction": 0.28587740384615384,
+      "emitted_tokens": 6389,
+      "emitted_tokens_per_cycle": 3.839543269230769,
+      "cached_tokens_all_zero": true,
+      "teacher_exact_count": 0,
+      "teacher_total": 13,
+      "exact": false,
+      "path_note": "Verifier width 11 exceeds the current exact target fast-path guard and bypasses the record fused route-interleave path.",
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth10-m8-route-interleave-20260723T002308Z"
+    }
+  ],
+  "non_measurement_failures": [
+    {
+      "depth": 4,
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth4-m8-route-interleave-20260722T230947Z",
+      "failure": "Engine workers and controller were killed during checkpoint load under host page-cache pressure; no endpoint became ready and no request ran.",
+      "recovery": "Stopped the orphaned API process, dropped only host filesystem page cache, verified free cards, and ran the measured fresh start above."
+    },
+    {
+      "depth": 9,
+      "run": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/dflash-depth9-m8-route-interleave-20260723T000149Z",
+      "failure": "UR_RESULT_ERROR_DEVICE_LOST during worker initialization before model load; no request ran.",
+      "recovery": "All four independent XPU allocation/compute probes passed before the measured retry above."
+    }
+  ],
+  "profile_decomposition": {
+    "xpu_kernel_commit": "20cfa3aef35d1daa2c57f3dccaf7ce7d552f6751",
+    "aggregate_summary": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/candidate-b-record-reprofile-6a570e70b-20cfa3a-20260722T1753Z/summary.json",
+    "raw_trace_directory": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/candidate-b-record-reprofile-6a570e70b-20cfa3a-20260722T1753Z/trace",
+    "raw_trace_note": "Detailed operator-shape attribution and the DFlash/sampling gap were recovered from four rank traces by measuring kernels between consecutive target annotations.",
+    "target_noncollective_ms_per_cycle": 18.3775,
+    "classifier_other_noncollective_ms_per_cycle": 13.409343555555523,
+    "w1_in_classifier_other_ms_per_cycle": 6.488383,
+    "w2_in_classifier_other_ms_per_cycle": 3.330374,
+    "true_residual_ms_per_cycle": 3.590587,
+    "residual_components_rounding_note": "Rounded family values sum to 3.590589 ms/cycle, 0.000002 above the unrounded residual.",
+    "target_residual_families_ms_per_cycle": {
+      "attention_non_gemm": 1.415801,
+      "router_and_routed_bookkeeping": 1.094606,
+      "integer_and_slot_metadata": 0.393645,
+      "shared_expert_silu_and_multiply": 0.246532,
+      "fused_residual_add_rmsnorm": 0.22245,
+      "fixed_rank_bf16_sums": 0.18152,
+      "unlisted_tail": 0.036035
+    },
+    "largest_named_kernel_in_true_residual": {
+      "name": "TopKGating",
+      "ms_per_cycle": 0.560374
+    },
+    "dense_gemm_ms_per_cycle": 4.52630075,
+    "largest_broader_unoptimized_target_family": {
+      "name": "attention BF16 QKV plus O projections",
+      "ms_per_cycle": 2.918838
+    },
+    "dflash_and_sampling_noncollective_ms_per_cycle": 1.994284,
+    "largest_dflash_kernel_family": {
+      "name": "six-layer draft dense MLP GEMMs",
+      "ms_per_cycle": 0.637397
+    }
+  }
+}
