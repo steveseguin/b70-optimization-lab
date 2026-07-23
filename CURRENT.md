@@ -190,10 +190,19 @@ full suites were teacher exact 13/13, cross-start exact 13/13, cache-zero
 were 34.233360 and 33.190702 tok/s, so the lower start missed the approved
 record by 0.248228 tok/s (-0.7423%); no payload was staged. Resume from the
 [fusion negative note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-exact-m8-qknorm-rope-fusion-negative.md).
-The next bounded lever is the 1.014246 ms/cycle shared-expert/router GEMM
-family, with TopKGating at 0.560374 ms/cycle as the single-kernel fallback. Do
-not revisit route buffer fills or progressively serialize the whole model into
-opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
+The preregistered A-B-B-A follow-up corrected the earlier interpretation:
+fusion beat both adjacent controls in headline throughput, cycle time, and
+11-12/13 prompt rows, but the per-position DFlash acceptance histograms
+differed and the candidate's lower 33.302984 tok/s start still missed the
+record by 0.4065%. All four starts remained teacher exact 13/13, cross-leg
+exact 13/13, and cache-zero. It is strong directional evidence but failed the
+frozen promotion gates; no fifth run, payload, or submission was allowed.
+Resume from the [crossover result note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-qknorm-rope-crossover-result.md).
+The next bounded lever is a Laguna-only XPU auxiliary stream for the complete
+shared-expert MLP, attempting to overlap roughly 1.013 ms/cycle without
+changing arithmetic. The BF16-load/FP32-sigmoid router path is the smaller
+fallback. Do not revisit route buffer fills or progressively serialize the
+whole model into opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
 plus kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
 vLLM `d503073ec3573c6208cc2a06339815ec040ee984` and kernels
 `9525343e74b1a434b6af7d05583e1385a891c919`. Also preserve the DeepSeek

@@ -1,0 +1,104 @@
+{
+  "experiment": "laguna-m8-qknorm-rope-abba",
+  "date_local": "2026-07-22",
+  "status": "exact_directional_evidence_but_preregistered_record_gate_failed",
+  "source": {
+    "vllm_commit": "d503073ec3573c6208cc2a06339815ec040ee984",
+    "xpu_kernel_commit": "9525343e74b1a434b6af7d05583e1385a891c919",
+    "selector": "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE",
+    "suite_sha256": "9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638"
+  },
+  "protocol": {
+    "order": [
+      "A1-control",
+      "B1-candidate",
+      "B2-candidate",
+      "A2-control"
+    ],
+    "fresh_server_per_leg": true,
+    "device_free_interval_seconds": 60,
+    "extra_rescue_runs": 0,
+    "record_floor_tok_s": 33.438926675602126
+  },
+  "quality": {
+    "all_teacher_exact": true,
+    "teacher_exact_per_leg": "13/13",
+    "cross_leg_exact": true,
+    "cached_tokens_zero_per_leg": "13/13",
+    "long_then_next_per_leg": "2/2",
+    "rollover_per_leg": "1/1",
+    "realistic_final_gate_per_leg": true
+  },
+  "runs": {
+    "A1": {
+      "treatment": "control",
+      "median_tok_s": 32.9423234913681,
+      "aggregate_cycle_ms": 92.96030692498559,
+      "draft_cycles": 1719,
+      "draft_tokens": 12033,
+      "accepted_tokens": 4643,
+      "accepted_by_position": [1271, 936, 710, 566, 468, 391, 301]
+    },
+    "B1": {
+      "treatment": "candidate",
+      "median_tok_s": 33.44037329262038,
+      "aggregate_cycle_ms": 91.01929866789811,
+      "draft_cycles": 1719,
+      "draft_tokens": 12033,
+      "accepted_tokens": 4643,
+      "accepted_by_position": [1272, 938, 710, 566, 467, 392, 298]
+    },
+    "B2": {
+      "treatment": "candidate",
+      "median_tok_s": 33.30298362415003,
+      "aggregate_cycle_ms": 89.981713709435,
+      "draft_cycles": 1720,
+      "draft_tokens": 12040,
+      "accepted_tokens": 4642,
+      "accepted_by_position": [1271, 935, 710, 567, 469, 391, 299]
+    },
+    "A2": {
+      "treatment": "control",
+      "median_tok_s": 31.173546439687556,
+      "aggregate_cycle_ms": 93.90967346641213,
+      "draft_cycles": 1720,
+      "draft_tokens": 12040,
+      "accepted_tokens": 4642,
+      "accepted_by_position": [1273, 936, 709, 565, 468, 391, 300]
+    }
+  },
+  "paired_results": {
+    "B1_vs_A1": {
+      "headline_delta_pct": 1.5118842524352694,
+      "aggregate_cycle_delta_pct": -2.0879968249822745,
+      "candidate_row_wins": 12,
+      "median_paired_delta_pct": 2.119626669735708,
+      "speculation_work_identical": false
+    },
+    "B2_vs_A2": {
+      "headline_delta_pct": 6.830910908973298,
+      "aggregate_cycle_delta_pct": -4.182699834838644,
+      "candidate_row_wins": 11,
+      "median_paired_delta_pct": 4.370462450074175,
+      "speculation_work_identical": false
+    }
+  },
+  "promotion": {
+    "all_four_speculation_work_identical": false,
+    "matched_pair_speculation_work_identical": false,
+    "candidate_lower_start_tok_s": 33.30298362415003,
+    "candidate_lower_delta_from_record_tok_s": -0.13594305145209518,
+    "candidate_lower_delta_from_record_pct": -0.4065413126770112,
+    "strict_preregistered_record_pass": false,
+    "localmaxxing_payload_created": false,
+    "localmaxxing_submitted": false,
+    "disposition": "default_off_inconclusive_future_stack_candidate"
+  },
+  "evidence_root": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/qknorm-rope-abba-20260723T030000Z",
+  "analysis": {
+    "json": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/qknorm-rope-abba-20260723T030000Z/analysis.json",
+    "markdown": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/qknorm-rope-abba-20260723T030000Z/analysis.md",
+    "script": "experiments/laguna-s-2.1-xpu-b70/tools/analyze_qknorm_rope_crossover.py"
+  }
+}
+
