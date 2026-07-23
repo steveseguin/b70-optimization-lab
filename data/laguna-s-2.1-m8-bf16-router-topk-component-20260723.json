@@ -1,0 +1,88 @@
+{
+  "experiment": "laguna-s-2.1-m8-bf16-router-topk-component",
+  "date": "2026-07-23",
+  "status": "pass",
+  "endpoint_authorized": true,
+  "source": {
+    "vllm_commit": "689ee3643f320e4a10c621ddd829620bc2f5b3b3",
+    "kernel_commit": "af6811818ef797aa86aef51bda15ae9c49040f7b",
+    "gate_freeze_commit": "39b546bc7",
+    "gate_script_sha256": "87b1bbe450dac954ddb86620912999f3a22e877d79fc65300bdd393de73132de",
+    "candidate_moe_binary_sha256": "0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0",
+    "compiler": "IntelLLVM 2025.3.3"
+  },
+  "evidence_directory": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/logs/m8-bf16-router-topk-component-689ee36-af68118-20260723T043723Z",
+  "corpus": {
+    "pre_timing_epochs_per_card": 333,
+    "production_epochs": 141,
+    "random_epochs": 128,
+    "adversarial_epochs": 64,
+    "post_timing_epochs_per_card": 111,
+    "synthetic_sha256": "13b3c7ff9d1d6c304523ba706e9ad2758f53126770370ea5b717e52f277ee7e3",
+    "production_source_sha256": "454893a5083128a37aeb4918aa6f4641d8a8a49ee1456b17844ada0a53f936b5",
+    "production_fixture_sha256": "bd1d6ef31f8ee359f04c6af1ccc55e39d79b21fc1592ae2377734e64f2512a47",
+    "pre_timing_output_sha256": "97cdabbbabb24dd7065311f71209b324493086f9ba5dcbb340fb7a9d4f996b28",
+    "post_timing_output_sha256": "0703587d5e1d1c2f4ea6c6bb38c71962befc76ef1f1d5bc69f1b4c0a3b840c7d"
+  },
+  "exactness": {
+    "all_cards_passed": true,
+    "torch_equal_checks_per_card": 1998,
+    "raw_byte_checks_per_card": 2664,
+    "candidate_repeat_deterministic_all_cards": true,
+    "inputs_unchanged_all_cards": true,
+    "explicit_lower_id_ties_passed": true,
+    "post_timing_replay_passed_all_cards": true
+  },
+  "timing_contract": {
+    "calls_per_cycle": 47,
+    "warmup_cycles_per_arm": 20,
+    "blocks": 31,
+    "order": "ABBA",
+    "cycles_per_timed_arm": 64,
+    "minimum_candidate_faster_blocks": 24,
+    "minimum_saved_ms_per_cycle": 0.2,
+    "minimum_gain_pct": 20.0
+  },
+  "cards": [
+    {
+      "rank": 0,
+      "passed": true,
+      "candidate_faster_blocks": 31,
+      "reference_median_ms_per_cycle": 0.9380735390625,
+      "candidate_median_ms_per_cycle": 0.4560293203125,
+      "paired_median_saved_ms_per_cycle": 0.4820889140625,
+      "paired_median_gain_pct": 51.39652346689869,
+      "raw_json_sha256": "f1a60b2517fd050d4d1dd030c25c9d63fad145d6d120bd7c41a2325672e1c585"
+    },
+    {
+      "rank": 1,
+      "passed": true,
+      "candidate_faster_blocks": 31,
+      "reference_median_ms_per_cycle": 0.9118045234375,
+      "candidate_median_ms_per_cycle": 0.4551005859375,
+      "paired_median_saved_ms_per_cycle": 0.45665015624999994,
+      "paired_median_gain_pct": 50.092498163501396,
+      "raw_json_sha256": "f11b0e83ce79b68ddc0b9fd8796b43256b6963720faf9b4c031482ae990b4384"
+    },
+    {
+      "rank": 2,
+      "passed": true,
+      "candidate_faster_blocks": 31,
+      "reference_median_ms_per_cycle": 0.9222090859375001,
+      "candidate_median_ms_per_cycle": 0.4549563671875,
+      "paired_median_saved_ms_per_cycle": 0.4672497500000001,
+      "paired_median_gain_pct": 50.666489097605414,
+      "raw_json_sha256": "0a8bedfa26f4b2c493b45c71f5dcef85681d171cddf64f5714ce109556fb7050"
+    },
+    {
+      "rank": 3,
+      "passed": true,
+      "candidate_faster_blocks": 31,
+      "reference_median_ms_per_cycle": 0.9063375,
+      "candidate_median_ms_per_cycle": 0.4548767421875,
+      "paired_median_saved_ms_per_cycle": 0.451434234375,
+      "paired_median_gain_pct": 49.808623650130336,
+      "raw_json_sha256": "1026ce9e7027612a5dcf6d819dd7511d41c5455515e82b2400bbd8d556de7d43"
+    }
+  ]
+}

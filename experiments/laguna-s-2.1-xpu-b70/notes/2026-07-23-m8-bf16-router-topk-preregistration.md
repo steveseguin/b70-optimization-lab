@@ -162,6 +162,37 @@ One mismatch, nondeterministic repeat, failed card, or missed timing threshold
 stops this lane before an endpoint. Results are not averaged across cards to
 mask a failure.
 
+## Component result
+
+The frozen component gate passed on all four physical B70s. Each card passed
+all 333 pre-timing changing epochs, 1,998 `torch.equal` checks, 2,664 raw-byte
+checks, candidate-repeat determinism, unchanged-input checks, explicit
+lower-expert-ID ties, and the 111-epoch post-timing replay. Synthetic,
+production-source, projected production-fixture, and aggregate output hashes
+were identical across cards.
+
+All cards won 31/31 paired A-B-B-A blocks:
+
+| Rank | A cast+top-k ms/cycle | B direct BF16 ms/cycle | Saved ms | Gain |
+|---:|---:|---:|---:|---:|
+| 0 | 0.938074 | 0.456029 | 0.482089 | 51.3965% |
+| 1 | 0.911805 | 0.455101 | 0.456650 | 50.0925% |
+| 2 | 0.922209 | 0.454956 | 0.467250 | 50.6665% |
+| 3 | 0.906338 | 0.454877 | 0.451434 | 49.8086% |
+
+This clears every preregistered component threshold and authorizes the cold
+endpoint A-B-B-A protocol. Raw evidence:
+
+```text
+/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/logs/m8-bf16-router-topk-component-689ee36-af68118-20260723T043723Z/
+```
+
+Compact tracked result:
+
+```text
+data/laguna-s-2.1-m8-bf16-router-topk-component-20260723.json
+```
+
 ## Endpoint protocol and early stop
 
 Only if all four component gates pass, use the approved eager depth-7 record
