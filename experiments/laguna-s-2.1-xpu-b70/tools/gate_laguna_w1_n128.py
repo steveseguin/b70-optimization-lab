@@ -956,10 +956,14 @@ def runtime_identity(rank: int) -> dict[str, Any]:
             "wrong vLLM tree resolved; set PYTHONPATH to the frozen tree, "
             f"got {vllm_path}"
         )
+    discovery_env = os.environ.copy()
+    discovery_env.pop("ZE_AFFINITY_MASK", None)
+    discovery_env.pop("ONEAPI_DEVICE_SELECTOR", None)
     discovery = subprocess.run(
         ["xpu-smi", "discovery", "-d", str(rank), "-j"],
         check=True,
         capture_output=True,
+        env=discovery_env,
         text=True,
     )
     physical = json.loads(discovery.stdout)
