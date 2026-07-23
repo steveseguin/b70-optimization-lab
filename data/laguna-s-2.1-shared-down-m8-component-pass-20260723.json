@@ -1,0 +1,126 @@
+{
+  "format": "laguna-shared-down-m8-component-pass-summary-v1",
+  "created_utc": "2026-07-23T16:00:18.727798+00:00",
+  "treatment": {
+    "scope": "shared-expert down projection only",
+    "control": "stride-zero B=8 M=1 K=256 N=3072 BF16 BMM",
+    "candidate": "native M=8 K=256 N=3072 BF16 MM",
+    "selector": "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=1"
+  },
+  "status": "component-passed-counter-tooling-freeze-next",
+  "component_passed": true,
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-component-20260723T155703Z",
+  "aggregate_artifact": {
+    "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-component-20260723T155703Z/aggregate.json",
+    "sha256": "ea71971b368ce9b9e930577b673e983124b0e5686d5d780fc241ac4104f2a1d6"
+  },
+  "identity": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "main_commit_captured": "480406187af3ae01ca1f4eaedf4810fee6c1ecfd",
+    "vllm_commit": "75d4660463407975c16bd33711499ca560bf2034",
+    "kernel_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "harness_sha256": "df8496f1f405e8b786dff0b96b7c320944c5d0133cce0bfcc2e36150ab1e0f12",
+    "analyzer_sha256": "945810c50eeeea99f532c3e62ee5bf289677e3706d80965f966400bfab35911b",
+    "test_sha256": "b0b918da332adff73496f2c252379bfbce9cd318c4d0e3038bee193c751e4f0c"
+  },
+  "exactness": {
+    "changing_epochs_per_card": 128,
+    "post_timing_replay_epochs_per_card": 32,
+    "all_raw_exact": true,
+    "all_real_path_checks_passed": true,
+    "aggregate_fixture_sha256": "3e28840809747843474a15f7858db9b7d1d4d70b4fbe71c47c7a2aa117eeff90",
+    "aggregate_output_sha256": "ae8c34ea1bb5904466a702412a1ccc1f6843d3bed05e948f079e82647b4f33a7",
+    "cross_card_aggregates_identical": true
+  },
+  "timing_protocol": {
+    "kind": "steady component timing",
+    "target_layers_per_cycle": 47,
+    "abba_blocks_per_card": 31,
+    "cycles_per_arm": 64,
+    "minimum_block_wins": 28,
+    "minimum_median_saving_ms_per_cycle": 0.15
+  },
+  "cards": [
+    {
+      "rank": 0,
+      "physical_uuid": "00000000-0000-0023-0000-0000e2238086",
+      "physical_bdf": "0000:23:00.0",
+      "artifact_sha256": "ecc7f9118d89fc9939654c0b70d97f565dbe3157182d83ad760cc0af4f219a65",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 2.3098674609375003,
+      "candidate_median_ms_per_cycle": 1.6987248046875,
+      "median_saving_ms_per_cycle": 0.6108910937499998,
+      "median_relative_saving": 0.26447019323873194,
+      "passed": true
+    },
+    {
+      "rank": 1,
+      "physical_uuid": "00000000-0000-0027-0000-0000e2238086",
+      "physical_bdf": "0000:27:00.0",
+      "artifact_sha256": "e822e73cdee808741d9ae67fdb06ee51888040d8c45f918c1c08027b9fe2081f",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 2.3913770859375,
+      "candidate_median_ms_per_cycle": 1.7450492890625,
+      "median_saving_ms_per_cycle": 0.6471054140625001,
+      "median_relative_saving": 0.27059948757885377,
+      "passed": true
+    },
+    {
+      "rank": 2,
+      "physical_uuid": "00000000-0000-0043-0000-0000e2238086",
+      "physical_bdf": "0000:43:00.0",
+      "artifact_sha256": "2bb9236f13f4a28ea51eb896f6b86ccf97cab2c633e2304698d52d4caf0a6029",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 2.31365590625,
+      "candidate_median_ms_per_cycle": 1.7155286796875,
+      "median_saving_ms_per_cycle": 0.5975139609374995,
+      "median_relative_saving": 0.2582553262667122,
+      "passed": true
+    },
+    {
+      "rank": 3,
+      "physical_uuid": "00000000-0000-0047-0000-0000e2238086",
+      "physical_bdf": "0000:47:00.0",
+      "artifact_sha256": "2a7cacb601bf09ef663bafaef0463b205566cbe5647b8093815839ba922a8265",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 2.3610520546875,
+      "candidate_median_ms_per_cycle": 1.7713141953125,
+      "median_saving_ms_per_cycle": 0.6123789687499999,
+      "median_relative_saving": 0.25936699173328986,
+      "passed": true
+    }
+  ],
+  "aggregate_checks": {
+    "all_cards_recomputed_pass": true,
+    "analyzer_main_matches_cards": true,
+    "exact_declared_ranks": true,
+    "four_distinct_physical_bdfs": true,
+    "four_distinct_physical_uuids": true,
+    "frozen_kernel_commit": true,
+    "frozen_vllm_commit": true,
+    "identical_fixture_aggregate": true,
+    "identical_output_aggregate": true,
+    "one_boot": true,
+    "one_clean_main_commit": true
+  },
+  "authorization": {
+    "counter_tooling_construction_authorized": true,
+    "counter_execution_authorized": false,
+    "counter_gate_evaluated": false,
+    "endpoint_authorized": false,
+    "model_generation_performed": false,
+    "payload_created": false,
+    "localmaxxing_submission_made": false
+  },
+  "sealed_preflight_failures": [
+    {
+      "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-component-20260723T154116Z",
+      "classification": "identity-harness-device-name-predicate-failed-before-tensor-work"
+    },
+    {
+      "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-down-m8-component-20260723T154717Z",
+      "classification": "harness-m7-reference-construction-failed-before-real-path-and-timing"
+    }
+  ],
+  "next_action": "Construct, freeze, test, and independently audit dedicated cold unitrace counter tooling before any hardware-counter execution."
+}

@@ -46,6 +46,16 @@ the measured incumbent wrapper to reject M=7. This verifier hardening occurred
 before another component command; it changes no candidate, control, or timing
 operation.
 
+Component result at 2026-07-23T16:00:18Z: the fresh root
+`shared-down-m8-component-20260723T155703Z` passed on all four physical cards
+and the frozen aggregate analyzer. Every card passed all exactness and
+real-path checks, won 31/31 timing blocks, and saved 0.598-0.647 ms per
+47-layer cycle. The aggregate permits only construction and audit of dedicated
+cold-counter tooling; counter execution, endpoint work, model generation,
+payload creation, and submission remain unauthorized. See the
+[component result](2026-07-23-shared-down-native-m8-mm-component-pass.md) and
+[structured summary](../../../data/laguna-s-2.1-shared-down-m8-component-pass-20260723.json).
+
 ## Question and treatment choice
 
 The approved route-interleaved profile attributes `1.014246 ms` per 47-layer
