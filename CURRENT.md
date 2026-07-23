@@ -177,11 +177,17 @@ matched 0/13, and regressed to 4.94-6.11 tok/s. The old 13.409 ms/cycle
 `other_noncollective` bucket was a classifier artifact containing W1 and W2;
 the true residual is 3.591 ms/cycle. Its next single named kernel lever is
 TopKGating at 0.560 ms/cycle. The larger target family is BF16 attention QKV+O
-at 2.919 ms/cycle; the draft-side family is dense MLP at 0.637 ms/cycle. Do not
+at 2.919 ms/cycle; the draft-side family is dense MLP at 0.637 ms/cycle. The
+default-off native-M8 BF16 attention MM experiment at vLLM `b52d6a592` passed
+the four-card bitwise gate 896/896 and both fresh exact suites, but its
+32.298869/32.171000 tok/s medians regressed from the approved record. Resume
+from the [exact negative note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-22-bf16-attention-m8-mm-negative.md);
+the next bounded lever is the 1.42 ms/cycle attention non-GEMM QK/RMSNorm/RoPE
+bucket, with shared-expert/router GEMM as the lower-risk fallback. Do not
 revisit route buffer fills or progressively serialize the whole model into
 opaque graph islands. Preserve the exact approved base at vLLM `cb616c670`
 plus kernels `6fc06b08cd10a9e9e7d15e62e1afcf06e7ab6c73`. Current experiment heads are
-vLLM `6a570e70b2c1ccce3a42f3396e1bd22b0a4a8191` and kernels
+vLLM `b52d6a5925ebf3dd8e32763491863797e0d0e1b1` and kernels
 `210a6eb604500c80bc5989d4b9fc59e75f1bb316`. Also preserve the DeepSeek
 option-4 branch and all `preserve/*` tags. All Laguna model, cache,
 temp, log, and run artifacts remain on the external Corsair drive; do not write

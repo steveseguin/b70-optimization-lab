@@ -1,0 +1,83 @@
+{
+  "date": "2026-07-22",
+  "model": "Laguna S 2.1 INT4 with BF16 attention",
+  "gpu_count": 4,
+  "gpu": "Intel Arc Pro B70",
+  "disposition": "exact_reproducible_negative_no_payload",
+  "approved_record": {
+    "id": "cmrwot89400gqnz014oodtlbp",
+    "tok_s": 33.43893
+  },
+  "candidate": {
+    "flag": "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=1",
+    "vllm_commit": "b52d6a5925ebf3dd8e32763491863797e0d0e1b1",
+    "xpu_kernel_commit": "210a6eb604500c80bc5989d4b9fc59e75f1bb316",
+    "xpu_kernel_rebuilt": false,
+    "record_flags": {
+      "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": 1,
+      "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": 1,
+      "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": 1,
+      "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": 1,
+      "dflash_depth": 7,
+      "enforce_eager": true,
+      "async_scheduling": false,
+      "kv_cache_dtype": "bfloat16",
+      "max_num_seqs": 1
+    }
+  },
+  "record_profile": {
+    "physical_projection_ms_per_cycle": 2.9188377,
+    "full_qkv": {"ms_per_layer": 0.0268161, "eu_active_pct": 10.401375, "dram_read_gbps": 173.639935},
+    "sliding_qkv": {"ms_per_layer": 0.0352871, "eu_active_pct": 10.78499, "dram_read_gbps": 168.46872},
+    "full_o": {"ms_per_layer": 0.0227033, "eu_active_pct": 11.300815, "dram_read_gbps": 168.052337},
+    "sliding_o": {"ms_per_layer": 0.0298523, "eu_active_pct": 10.147343, "dram_read_gbps": 199.549518},
+    "largest_headroom": "sliding fused QKV, specifically its Q-width"
+  },
+  "component_gate": {
+    "physical_exact": "640/640",
+    "all_with_logical_diagnostics_exact": "896/896",
+    "all_four_cards_passed": true,
+    "matched_cold_counters": {
+      "full_qkv": {"record_eu_pct": 10.401375, "candidate_eu_pct": 10.444975, "record_ms": 0.073229, "candidate_ms": 0.092781, "record_gbps": 173.639935, "candidate_gbps": 137.073147},
+      "sliding_qkv": {"record_eu_pct": 10.78499, "candidate_eu_pct": 10.747773, "record_ms": 0.103571, "candidate_ms": 0.096473, "record_gbps": 168.46872, "candidate_gbps": 180.849899},
+      "full_o": {"record_eu_pct": 11.300815, "candidate_eu_pct": 11.532165, "record_ms": 0.056758, "candidate_ms": 0.068432, "record_gbps": 168.052337, "candidate_gbps": 139.375214},
+      "sliding_o": {"record_eu_pct": 10.147343, "candidate_eu_pct": 11.310564, "record_ms": 0.071565, "candidate_ms": 0.082472, "record_gbps": 199.549518, "candidate_gbps": 173.219219}
+    }
+  },
+  "fresh_starts": [
+    {
+      "name": "A",
+      "median_tok_s_1_100_after_ttft": 32.29886858244683,
+      "p10_tok_s": 25.77231925613178,
+      "mean_tok_s": 37.919609445643935,
+      "median_ttft_ms": 5719.562227022834,
+      "teacher_exact": "13/13",
+      "cached_zero": "13/13",
+      "cross_request": "2/2",
+      "rollover": "1/1",
+      "accepted_tokens": 4642,
+      "draft_tokens": 12040,
+      "run_dir": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/bf16-attn-mm-dflash-A-b52d6a592-210a6eb-20260723T011109Z"
+    },
+    {
+      "name": "B",
+      "median_tok_s_1_100_after_ttft": 32.17100003502565,
+      "p10_tok_s": 25.676389242008618,
+      "mean_tok_s": 37.563660451523376,
+      "median_ttft_ms": 5792.711708927527,
+      "teacher_exact": "13/13",
+      "cached_zero": "13/13",
+      "cross_request": "2/2",
+      "rollover": "1/1",
+      "accepted_tokens": 4644,
+      "draft_tokens": 12026,
+      "run_dir": "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1/runs/bf16-attn-mm-dflash-B-b52d6a592-210a6eb-20260723T012000Z"
+    }
+  ],
+  "cross_start_exact": "13/13",
+  "lower_start_tok_s": 32.17100003502565,
+  "lower_start_delta_tok_s": -1.26792996497435,
+  "lower_start_delta_pct": -3.791777922,
+  "localmaxxing_payload": null,
+  "next_lever": "attention non-GEMM QK/RMSNorm/RoPE split and exact fusion"
+}
