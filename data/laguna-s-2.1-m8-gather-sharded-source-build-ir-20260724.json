@@ -1,0 +1,158 @@
+{
+  "format": "laguna-s-2.1-m8-gather-sharded-source-build-ir-v1",
+  "status": "source_build_ir_pass_stage0_incomplete",
+  "date": "2026-07-24",
+  "record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tokens_per_second": 33.89498511171744,
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "xpu_kernels_commit": "b6076ce1249ffee0e30bee528f4cd15c3bffb234"
+  },
+  "preregistration": {
+    "path": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-occupancy-preregistration.md",
+    "commit": "89364f5542a661f297b187f96006bd8979b11d0f",
+    "sha256": "21e5298c0ae00b0c3ddd154911e4c280ac8ad76e2a47c90d3b2265cba7959330"
+  },
+  "checkpoint": {
+    "tooling_commit": "7a39688bb78ab9217d0a5afb309ee329f0ede81b",
+    "note": {
+      "path": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-source-build-ir-checkpoint.md",
+      "sha256": "a92ff4a98ea1728ab110bf7648945c1ce749664c56eba24a4ffcab9bc532f7dc"
+    },
+    "inspector": {
+      "path": "experiments/laguna-s-2.1-xpu-b70/tools/inspect_laguna_m8_gather_sharded_spirv.py",
+      "sha256": "28e580dedfafa24e90b60684a510b234c9a3ad73666ddfd476cf4f8d9e6a1a00",
+      "test_path": "experiments/laguna-s-2.1-xpu-b70/tools/test_inspect_laguna_m8_gather_sharded_spirv.py",
+      "test_sha256": "1fe42140647015a204fc4b62cee87c181fc01889b48085f41f209b9c9708f3e6",
+      "tests_passed": 9
+    }
+  },
+  "candidate": {
+    "xpu_kernels_commit": "7e6a74026a2a4370abcb7973d28bbc9d1ddd1be6",
+    "parent": "b6076ce1249ffee0e30bee528f4cd15c3bffb234",
+    "direct_child_of_record": true,
+    "selector": "VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=1",
+    "geometry": {
+      "tokens": 8,
+      "topk": 10,
+      "hidden": 3072,
+      "shards_per_token": 6,
+      "work_items_per_shard": 64,
+      "elements_per_work_item": 8,
+      "columns_per_shard": 512,
+      "workgroups_per_launch": 48,
+      "simd32_subgroups_per_launch": 96
+    },
+    "source_sha256": {
+      "csrc/moe/moe_gather.cpp": "7d1b1ef680ca222567d358331d6ad58c542cdad13eb0128d61c8e4efa84c8353",
+      "csrc/moe/moe_ops.h": "116b1045a01643f6c964592f4a61e7f5ca6165451b31e3f1bde12925185cfbc6",
+      "csrc/moe/torch_bindings.cpp": "d829f0a77f997d4036d4a06239436396decd0f78ab622131ee53f39c03ab7ece",
+      "vllm_xpu_kernels/fused_moe_interface.py": "9162deda6a032a90a786cc0c2e26314182cad6fc99ab59ee1c5e925b4f89fa6a",
+      "custom-kernels-inventory.md": "f9ce82c5c495bf8e47d5440b48d23514beee6316a95feff344ed308fd02cd5ec",
+      "tests/test_laguna_m8_gather_sharded_static.py": "fb90b51d500c42a458089d052e98bfe5a3bfaf2fd83fc1306816cfaf386eae92",
+      "tests/test_laguna_m8_gather_sharded_oracle.py": "6a6fc0e874bf0dce87e01ec2f250c06afba4c63e63018cd1b95c714a8a2d8bb6"
+    }
+  },
+  "identity_correction": {
+    "rejected_label": "DRAFT_FLASH_DEPTH",
+    "required_launcher_variable": "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS",
+    "required_value": "7",
+    "service_cli_identity_still_packet_bound": true
+  },
+  "cpu_validation": {
+    "static_tests": {
+      "passed": 8,
+      "failed": 0
+    },
+    "oracle_tests": {
+      "passed": 3,
+      "failed": 0,
+      "xpu_initialized": false
+    },
+    "ruff": "pass",
+    "python_ast": "pass",
+    "clang_format_2025_3": "pass",
+    "diff_check": "pass",
+    "independent_source_audits": 2
+  },
+  "build": {
+    "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/binaries/gather-sharded-7e6a740-20260724",
+    "build_root": "/mnt/fast-ai/llm-optimization-builds/laguna-m8-gather-sharded-7e6a740-oneapi2025.3",
+    "compiler": "Intel oneAPI DPC++/C++ Compiler 2025.3.3",
+    "build_type": "Release",
+    "jobs": 1,
+    "onednn_commit": "80afa71049cd69a3df32adcccb623b12cd7baa22",
+    "fetchcontent_fully_disconnected": true,
+    "aot_devices": "",
+    "xe2_aot_devices": "",
+    "enabled_targets": [
+      "MOE_KERNELS_ENABLED"
+    ],
+    "binary": {
+      "name": "_moe_C.abi3.so",
+      "size_bytes": 11127920,
+      "sha256": "3a16e85f7b6f324246f89e03d8aa89c37f0d6097c59d0a323ab2822dccd6d99f",
+      "imported": false
+    },
+    "evidence_sha256": {
+      "CMakeCache.txt": "2868922e48f25dd21f0bd40480f588f8f81f64734fbb009f5360fdb318a1033f",
+      "build.ninja": "33402d3eb59eaf077e53a192eaebf2d991147bf950f22e1b86f1ffc0bafc8fd6",
+      "compile_commands.json": "168b4021ea80a6e62e9257047f005f0777f3aba466e31b7cb4be49759e3cc49a",
+      "build.log": "c51f17d0ec3f4a1f7e864a7d73a423c9f0875401df2843e9beafb52495412916",
+      "configure-final.log": "e706b3c53d48d26ff4a6c4339d751d5c3400eda27ed2760dafa145c481a57a81"
+    }
+  },
+  "device_ir": {
+    "built_object_bitcode_sha256": "d7bde207300e7a2a1fb630ad440f08d60f70fdaf8c6c0aea327f02aac7d4d71b",
+    "save_temp_bitcode_sha256": "d7bde207300e7a2a1fb630ad440f08d60f70fdaf8c6c0aea327f02aac7d4d71b",
+    "bitcode_byte_identical": true,
+    "linked_offload_section_sha256": "5c50561dfb003ea26c2c010ec11545a805dc937c4b08987115c9f8744cebab9e",
+    "gather_module_offset_bytes": 4250272,
+    "gather_module_size_bytes": 232424,
+    "gather_module_sha256": "114a2c823ce5ea838bd1ba5857ece2a97962aebadfda1e64a0c5553ab26413cc",
+    "gather_assembly_sha256": "3cdfae4c9a49558f8c22fe01b9f22dc770f9d02d01da4257e35efcefc2d23687",
+    "report_sha256": "e6fefcaacc3253718c8a21ee6eae2544131fee613099ebf91cac9ddbdebd0505",
+    "report_passed": true,
+    "candidate": {
+      "entry_wrapper": "%8686",
+      "implementation": "%23",
+      "fmul": "%136",
+      "fadd": "%140"
+    },
+    "incumbent": {
+      "entry_wrapper": "%8908",
+      "implementation": "%3607",
+      "fmul": "%3725",
+      "fadd": "%3729"
+    },
+    "matching_execution_modes": [
+      "ContractionOff",
+      "SubgroupSize 32"
+    ],
+    "matching_fast_math": "NSZ|AllowRecip|AllowContract|AllowReassoc",
+    "fused_multiply_add_present": false,
+    "limitation": "Matching AllowReassoc and NSZ permissions mean XPU raw-bit equality remains mandatory."
+  },
+  "false_actions": {
+    "candidate_native_import": false,
+    "xpu_tensor_allocation": false,
+    "candidate_primitive": false,
+    "xpu_smi": false,
+    "model_load": false,
+    "endpoint": false,
+    "prompt": false,
+    "generation": false,
+    "network": false,
+    "payload": false,
+    "localmaxxing_submission": false,
+    "reboot": false,
+    "external_usb_used": false
+  },
+  "next_required": [
+    "freeze and independently reanalyze the 256-pre/32-post fixture corpus",
+    "complete CPU one-field corruption tests",
+    "validate the standalone installed-schema operational preflight",
+    "commit immutable Phase-A and conditional Phase-B tools and packets together",
+    "run no candidate primitive before those gates pass"
+  ]
+}
