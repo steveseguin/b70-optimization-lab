@@ -26,7 +26,7 @@ TARGET_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/int4")
 DRAFT_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4")
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-VLLM_COMMIT = "b1cca41292296342fd9f0f7a5621e8d26d7a910d"
+VLLM_COMMIT = "7118fa20d4e0b606abc764bf4984c6f701ac14dc"
 UNITRACE_SHA256 = "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a"
 KERNEL_ROOT = Path("/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc")
 KERNEL_BINARIES = {
@@ -153,7 +153,16 @@ def control(unitrace: Path, action: str, session: str) -> dict[str, Any]:
     finally:
         os.close(descriptor)
     expected = f"[INFO] Session {session} is {action}d\n".encode()
-    if process.returncode != 0 or process.stdout != b"" or process.stderr != expected:
+    if (
+        process.returncode != 0
+        or process.stdout != b""
+        or re.fullmatch(
+            re.escape(expected)
+            + rb"\[INFO\] Log is stored in unitrace\.[1-9][0-9]*\n",
+            process.stderr,
+        )
+        is None
+    ):
         die(
             f"unitrace {action} acknowledgement drifted: "
             f"returncode={process.returncode}"

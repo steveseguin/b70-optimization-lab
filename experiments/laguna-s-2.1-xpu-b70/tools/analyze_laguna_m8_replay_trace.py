@@ -123,10 +123,10 @@ def main() -> int:
             and isinstance(row["submission_l0_ns"], int)
             and row["submission_l0_ns"] > 0
         ]
-        if len(complete) != 4 or len(traces) != 4:
+        if len(complete) != 4:
             die(
-                f"{arm} produced {len(complete)} complete traces and "
-                f"{len(traces)} total traces, expected exactly four"
+                f"{arm} produced {len(complete)} complete worker traces, "
+                "expected exactly four"
             )
         pids = []
         for row in complete:
@@ -193,6 +193,10 @@ def main() -> int:
             "driver_path": str(driver_path),
             "driver_sha256": sha256_file(driver_path),
             "trace_files": complete,
+            "auxiliary_trace_files": [
+                row for row in traces if row not in complete
+            ],
+            "auxiliary_trace_count": len(traces) - len(complete),
             "worker_pids": sorted(pids),
             "device_trace_count": len(complete),
             "device_l0_ns": [
