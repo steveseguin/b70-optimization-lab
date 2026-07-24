@@ -223,7 +223,6 @@ def _expected_labels(arm: str, graph_phase: str | None = None) -> list[str]:
                 for suffix in ("query", "key", "value", "output")
             )
             labels.extend(("boundary", "all_gather", "boundary", "all_gather"))
-        labels.append("full_topology")
     else:
         for layer in range(48):
             labels.extend(
@@ -232,10 +231,11 @@ def _expected_labels(arm: str, graph_phase: str | None = None) -> list[str]:
             )
     if arm == "segmented-graph":
         labels.append(f"breakable_{graph_phase}_topology")
+    labels.extend(("target_hidden_before_logits", "kv_capture_status"))
+    if arm != "incumbent-eager":
+        labels.append("full_topology")
     labels.extend(
         (
-            "target_hidden_before_logits",
-            "kv_capture_status",
             "logits_boundary",
             "sampled_token_ids_after_logits",
             "spec_acceptance_before_bookkeeping",

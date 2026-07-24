@@ -138,6 +138,41 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
         sidecar.write_text(json.dumps(event))
         manifest_path.write_text(json.dumps(manifest))
 
+    @staticmethod
+    def swap_metadata_events(
+        root: Path,
+        rank: int,
+        ordinal: int,
+        left_label: str,
+        right_label: str,
+    ) -> None:
+        run_dir = root / f"rank{rank:02d}-pid123-evidence{ordinal + 1:04d}"
+        manifest_path = run_dir / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        events = manifest["events"]
+        matches = {
+            label: [index for index, event in enumerate(events) if event["label"] == label]
+            for label in (left_label, right_label)
+        }
+        if any(len(indices) != 1 for indices in matches.values()):
+            raise AssertionError("fixture expected one event for each swapped label")
+        left = matches[left_label][0]
+        right = matches[right_label][0]
+        if "raw_file" in events[left] or "raw_file" in events[right]:
+            raise AssertionError("fixture swaps metadata-only events")
+        events_dir = run_dir / "events"
+        for index in (left, right):
+            event = events[index]
+            (events_dir / f"{index:05d}-{event['label']}.json").unlink()
+        events[left], events[right] = events[right], events[left]
+        for index in (left, right):
+            event = events[index]
+            event["event_index"] = index
+            (events_dir / f"{index:05d}-{event['label']}.json").write_text(
+                json.dumps(event)
+            )
+        manifest_path.write_text(json.dumps(manifest))
+
     def write_run(
         self,
         root: Path,
@@ -271,11 +306,6 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                                 {"local_input": signature(b"local")},
                                 {"collective_index": gather},
                             )
-                    metadata(
-                        "full_topology",
-                        {"boundary_count": 145, "collective_count": 97},
-                        phase,
-                    )
                 else:
                     for layer in range(48):
                         slot = {"slot_mapping": slot_signatures[layer]}
@@ -318,6 +348,12 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                     },
                     phase,
                 )
+                if arm != "incumbent-eager":
+                    metadata(
+                        "full_topology",
+                        {"boundary_count": 145, "collective_count": 97},
+                        phase,
+                    )
                 metadata("logits_boundary", {"after_target_model_forward": True}, phase)
                 tensor("sampled_token_ids_after_logits", phase, {})
                 metadata(
@@ -347,6 +383,41 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                         }
                     )
                 )
+
+    def test_segmented_tail_matches_runtime_lifecycle(self) -> None:
+        expected_tail = [
+            "target_hidden_before_logits",
+            "kv_capture_status",
+            "full_topology",
+            "logits_boundary",
+            "sampled_token_ids_after_logits",
+            "spec_acceptance_before_bookkeeping",
+            "emitted_ids_after_bookkeeping",
+        ]
+        self.assertEqual(MODULE._expected_labels("segmented-eager")[-7:], expected_tail)
+        self.assertEqual(
+            MODULE._expected_labels("segmented-graph", "capture")[-7:],
+            expected_tail,
+        )
+        self.assertEqual(
+            MODULE._expected_labels("segmented-graph", "replay")[-7:],
+            expected_tail,
+        )
+
+    def test_full_topology_adjacent_order_drift_fails(self) -> None:
+        for adjacent in ("kv_capture_status", "logits_boundary"):
+            with self.subTest(adjacent=adjacent), tempfile.TemporaryDirectory() as raw:
+                root = Path(raw)
+                self.write_run(root, "segmented-eager")
+                self.swap_metadata_events(
+                    root,
+                    0,
+                    0,
+                    "full_topology",
+                    adjacent,
+                )
+                with self.assertRaisesRegex(ValueError, "low-level label order drift"):
+                    MODULE.aggregate_recorder_root("segmented-eager", root)
 
     def test_path_difference_with_equal_bytes_passes(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
