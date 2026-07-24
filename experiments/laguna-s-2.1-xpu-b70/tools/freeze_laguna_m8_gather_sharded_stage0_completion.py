@@ -88,7 +88,7 @@ BUNDLE_EXPECTED = {
 }
 BUNDLE_FILENAMES = frozenset(BUNDLE_EXPECTED)
 SOURCE_PACKET_PATH = REPOSITORY_ROOT / "data/laguna-s-2.1-m8-gather-sharded-source-build-ir-20260724.json"
-SOURCE_PACKET_SHA256 = "ef17daab068353e4ef8fbbbbda513a67811beda4fa81ae0a3f8b5d028a487c36"
+SOURCE_PACKET_SHA256 = "09b2ee98240058e96860fb04f487509acd2e8253cd862cee108af6de8c3c557c"
 DEVICE_IR_REPORT_SHA256 = "e6fefcaacc3253718c8a21ee6eae2544131fee613099ebf91cac9ddbdebd0505"
 CANDIDATE_BINARY_SHA256 = "3a16e85f7b6f324246f89e03d8aa89c37f0d6097c59d0a323ab2822dccd6d99f"
 FIXTURE_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/evidence/m8-gather-sharded-fixtures-30b043b2b-20260724T1050Z")
