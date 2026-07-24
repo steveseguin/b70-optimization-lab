@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "model": "poolside/Laguna-S-2.1",
+  "quantization": "INT4",
+  "gpu_count": 4,
+  "hardware": "Intel Arc Pro B70",
+  "lane": "exact M8 post-W2 gather-finalize",
+  "status": "terminal_preflight_failed_no_retry",
+  "approved_record_unchanged": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tokens_per_second": 33.89498511171744,
+    "vllm": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "xpu_kernels": "b6076ce1249ffee0e30bee528f4cd15c3bffb234"
+  },
+  "candidate": {
+    "vllm": "5519c08c168838b7e0a418499603b907f127cbf9",
+    "xpu_kernels": "4772f727590c51b72add79350b913d098cf67872",
+    "candidate_moe_c_sha256": "6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b",
+    "imported": false,
+    "measured": false
+  },
+  "authorization": {
+    "tooling_commit": "1bc3db422daefd2c5e7fe915eaff8dfd850ec920",
+    "packet_commit": "180826bea272c73e6cf767df1b02fc0b80ef018a",
+    "packet_path": "data/laguna-s-2.1-gather-finalize-phase-a-authorization-20260724.json",
+    "packet_sha256": "383ca2f804793047be3898a3e12a4772d6e5592385b0483b1edd6d0af529a39a",
+    "fixture_sha256": "0b1ea43d0a724cc64eaf6636b99076afd852846f79c06b4db264f2a511689259",
+    "campaigns_authorized": 1,
+    "retry_authorized": false
+  },
+  "execution": {
+    "observed_local": "2026-07-24T05:04:30-04:00",
+    "discovery_probes_completed": 5,
+    "strict_idle_samples_completed": 1,
+    "campaign_root_created": false,
+    "runner_started": false,
+    "failure_artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/gather-finalize-phase-a-1bc3db422-v1-preflight-failure.json",
+    "failure_artifact_sha256": "bd91f212e4728cd410ea68df043394789ef903dcdf7245907553e6054dbc6d4b",
+    "failure_status": "component_failed_stop_before_runner",
+    "failure_message": "selected XPU is not idle"
+  },
+  "root_cause": {
+    "classification": "frozen_idle_parser_schema_mismatch",
+    "expected_top_level_key": "process_list",
+    "observed_top_level_key": "device_util_by_proc_list",
+    "post_failure_diagnostic_sha256": "f47866b297acef6711ab08e9ee7d15d783d2d9b9492e537731b2ccaf2528ec7d",
+    "post_failure_rows": 4,
+    "post_failure_process_name": "xpu-smi",
+    "post_failure_external_model_or_service_process_observed": false
+  },
+  "actions_not_performed": [
+    "candidate native import",
+    "Torch XPU tensor allocation",
+    "candidate primitive",
+    "control primitive",
+    "timing",
+    "profiler",
+    "counter capture",
+    "model load",
+    "endpoint",
+    "generation",
+    "benchmark",
+    "payload",
+    "network access",
+    "LocalMaxxing submission",
+    "service change",
+    "reboot"
+  ],
+  "decision": {
+    "rerun_allowed": false,
+    "replacement_packet_allowed": false,
+    "component_conclusion": "unmeasured",
+    "next_action": "select and preregister a materially distinct exact optimization lane"
+  }
+}

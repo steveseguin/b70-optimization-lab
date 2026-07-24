@@ -368,9 +368,22 @@ payload, network access, submission, or reboot occurred. Preserve the
 [Stage-0 source freeze](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-routed-gather-finalize-stage0-source-freeze.md)
 and
 [structured summary](data/laguna-s-2.1-gather-finalize-stage0-source-freeze-20260724.json).
-The next authorized work is construction and audit of separate immutable
-exactness/timing and mandatory-counter component packets; no XPU process is
-authorized until the first packet is committed.
+The separate Phase-A tooling was frozen at
+`1bc3db422daefd2c5e7fe915eaff8dfd850ec920` and its sole packet at
+`180826bea272c73e6cf767df1b02fc0b80ef018a`. The first and only authorized
+execution completed the five frozen discovery probes, then failed closed on
+the first strict-idle sample before the campaign root, native import, tensor
+allocation, or timing. The frozen parser expected `{"process_list":[]}`, but
+the installed `xpu-smi ps -j` emits `device_util_by_proc_list` and a
+post-failure diagnostic contained only the querying `xpu-smi` process itself.
+The packet explicitly forbids retry, so this candidate is terminal and
+unmeasured; do not rerun it, replace its packet, or infer a performance or
+correctness result. Preserve the
+[terminal preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-routed-gather-finalize-phase-a-preflight-terminal.md)
+and
+[structured summary](data/laguna-s-2.1-gather-finalize-phase-a-preflight-terminal-20260724.json).
+The active work is selection and preregistration of a materially distinct
+exact kernel lane. The approved record remains unchanged.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
