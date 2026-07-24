@@ -1,0 +1,54 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tokens_per_second": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "driver_json_created": false,
+      "engine_core_started": false,
+      "evidence_created": false,
+      "generation_performed": false,
+      "model_loaded": false,
+      "status": "client_socket_bind_failed",
+      "workers_started": false
+    },
+    "segmented-eager": {
+      "generation_performed": false,
+      "status": "not_run"
+    },
+    "segmented-graph": {
+      "generation_performed": false,
+      "status": "not_run"
+    }
+  },
+  "classification": "operational_abort_before_engine_or_generation",
+  "failure": {
+    "exception": "zmq.error.ZMQError",
+    "limit_characters": 107,
+    "reason": "VLLM_RPC_BASE_PATH inherited the long private TMPDIR and the UUID socket path exceeded sockaddr_un.sun_path",
+    "stage": "incumbent synchronous EngineCore client input-socket bind"
+  },
+  "format": "laguna-m8-actual-offline-preflight-abort-v1",
+  "identity": {
+    "gate_tooling_commit": "3fbf310f129a59c5f28abc8b77597a5e692539d3",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "preregistration_commit": "b6a7800e3",
+    "vllm_commit": "5c6c108bf152f985e126db9d77897ae442b75048"
+  },
+  "idle_checks": {
+    "incumbent_post_arm": "passed",
+    "incumbent_pre_arm": "passed",
+    "pre_gate": "passed"
+  },
+  "no_performance_or_quality_conclusion": true,
+  "remediation_scope": "fresh short private internal-NVMe VLLM_RPC_BASE_PATH plus fail-closed driver/analyzer identity checks",
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-3fbf310f1-20260724T160003Z",
+  "sealed": true,
+  "status": "terminal",
+  "worker_reports_empty": {
+    "incumbent_post_arm": true,
+    "incumbent_pre_arm": true,
+    "pre_gate": true
+  }
+}
