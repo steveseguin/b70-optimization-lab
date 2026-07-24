@@ -1,0 +1,74 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "aggregate_evidence_present": true,
+      "driver_json_present": true,
+      "manifest_count": 60,
+      "manifest_event_count": 201,
+      "num_cached_tokens": 0,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 12060,
+      "started": true,
+      "status": "completed_and_validated",
+      "token_count": 32,
+      "token_ids_sha256": "cca03973c1998dfc3255cad724577213ed01cb606cf12eb867358de16f9b9e3f"
+    },
+    "segmented-eager": {
+      "aggregate_evidence_present": false,
+      "driver_json_present": false,
+      "manifest_count": 60,
+      "manifest_event_count": 444,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 26640,
+      "started": true,
+      "status": "failed_closed_during_low_level_aggregation"
+    },
+    "segmented-graph": {
+      "regular_result_file_count": 0,
+      "started": false
+    }
+  },
+  "classification": "analyzer_label_order_abort_not_a_benchmark",
+  "correctness_result": null,
+  "date_local": "2026-07-24",
+  "failure": {
+    "actual_tail": [
+      "target_hidden_before_logits",
+      "kv_capture_status",
+      "full_topology",
+      "logits_boundary"
+    ],
+    "event_count_actual": 444,
+    "event_count_expected": 444,
+    "first_mismatch_event_index": 437,
+    "location": "segmented-eager low-level recorder validation",
+    "message": "low-level label order drift",
+    "root_cause": "the analyzer expected full_topology before target-hidden and KV-status evidence, while runtime finish_eligible_forward intentionally emits topology after both"
+  },
+  "identity": {
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "main_preregistration_commit": "a62276dfa",
+    "main_tooling_commit": "b601b7c5efd19cde1a003b67fe8b11ec3f9e29f6",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "vllm_commit": "e25867aa698f82cbf2fb835e26807078674acebc"
+  },
+  "network_access": false,
+  "raw_evidence": {
+    "arm_a_aggregate_schema": "laguna-m8-actual-offline-gate-v8",
+    "arm_a_aggregate_sha256": "4fb8a541553d591b4022e068673b01afef05caf2284a87ada04c195ed7baae30",
+    "raw_format": "laguna-m8-raw-evidence-v2"
+  },
+  "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-b601b7c5e-20260724T180806Z",
+  "sealed": true,
+  "submission": false,
+  "throughput_result": null,
+  "timing_and_pti_run": false,
+  "usb_used": false
+}
