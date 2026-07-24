@@ -392,7 +392,21 @@ a four-card component pass may only bank its conservative saving for a later
 preregistered exact portfolio. Resume from the
 [sharded-gather preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-occupancy-preregistration.md).
 No implementation, native build, XPU action, model load, or generation had
-occurred at registration. The approved record remains unchanged.
+occurred at registration. The default-off source is now committed as a direct
+child of the record kernels at
+`7e6a74026a2a4370abcb7973d28bbc9d1ddd1be6`. Its static/CPU checks pass, its
+oneAPI 2025.3 `_moe_C` is sealed on internal NVMe at SHA-256
+`3a16e85f7b6f324246f89e03d8aa89c37f0d6097c59d0a323ab2822dccd6d99f`,
+and final linked SPIR-V inspection confirms matched visible multiply/add and
+conversion structure with the incumbent. Because both paths retain matching
+`AllowReassoc`/`NSZ` permissions, device raw-bit exactness remains mandatory.
+Stage 0 is not complete: freeze the exhaustive fixture/corruption tooling,
+validate the new installed-schema operational preflight, and commit both
+Phase-A and conditional Phase-B packets before any candidate primitive.
+Preserve the
+[source/build/IR checkpoint](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-source-build-ir-checkpoint.md).
+No XPU action, model load, or generation has occurred for this lane. The
+approved record remains unchanged.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
