@@ -1,0 +1,46 @@
+{
+  "schema": "laguna-m8-formal-graph-crossover-harness-stop-v1",
+  "date": "2026-07-24",
+  "status": "INCOMPLETE_INELIGIBLE",
+  "claim": "harness failure only; no performance or record claim",
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-formal-graph-crossover-d0960da7e-0ce373a31-20260724T215010Z",
+  "completed_legs": [
+    "A1-eager"
+  ],
+  "unstarted_legs": [
+    "B1-graph",
+    "B2-graph",
+    "A2-eager"
+  ],
+  "a1": {
+    "status": "PASS",
+    "teacher_exact": "13/13",
+    "cached_zero": "13/13",
+    "long_then_next": true,
+    "rollover": "1/1",
+    "cleanup": true,
+    "performance_eligible": false
+  },
+  "failure": {
+    "stage": "B1 preflight before run-directory creation or service startup",
+    "message": "Laguna formal M8 crossover leg: main worktree is dirty",
+    "dirty_path": "experiments/laguna-s-2.1-xpu-b70/tools/__pycache__/preflight_laguna_m8_gather_sharded_operational.cpython-312.pyc",
+    "cause": "pre-service idle-helper import wrote Python bytecode because the leg shell did not export PYTHONDONTWRITEBYTECODE",
+    "graph_generation_started": false,
+    "phase1_analysis_ran": false
+  },
+  "fix": {
+    "scope": "harness only",
+    "controller": "export PYTHONDONTWRITEBYTECODE=1 before Python subprocesses",
+    "leg_runner": "export PYTHONDONTWRITEBYTECODE=1 before Python subprocesses",
+    "requires_new_preregistered_root": true
+  },
+  "sha256": {
+    "controller_identity": "56492b6ac53fdafc730a3ff9124efa215d05863a3c1d521149385260ab4edb10",
+    "a1_bench": "593bb79c12e1d93e9fc696401e53689132d1599030d159f3f64a448f0806c874",
+    "a1_exactness": "a38e6535582d7e3c2cc19f1b45893fc843bb1e8e505de7d50c4347ed9fb2baee",
+    "b1_controller_stderr": "e3b1bb9a2a4d8cfd0ba5554c6be27d7acb03d98a5375b24f2862d5dbe31964c7",
+    "a1_cleanup_status": "1ba9e60bb1f16ee57a01346eab588020551409680f48e4dd3956934c0e82f834"
+  },
+  "next": "Commit the bytecode-suppression fix, preregister one new root, and rerun the complete fresh campaign."
+}

@@ -6,6 +6,7 @@ umask 077
 
 readonly frozen_path=/home/steve/.venvs/deepseek-v4-xpu/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH="$frozen_path"
+export PYTHONDONTWRITEBYTECODE=1
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=laguna_nvme_paths.sh
