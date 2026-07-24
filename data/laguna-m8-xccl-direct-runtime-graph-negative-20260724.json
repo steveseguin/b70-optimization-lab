@@ -1,0 +1,59 @@
+{
+  "format": "laguna-m8-xccl-direct-runtime-graph-negative-v1",
+  "status": "direct_collective_capture_rejected",
+  "date": "2026-07-24",
+  "approved_record_unchanged": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744,
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "xpu_kernels_commit": "b6076ce1249ffee0e30bee528f4cd15c3bffb234"
+  },
+  "probe": {
+    "tool_commit": "d9e88ff060c9b98dd169547d6aeb9ae31f55c629",
+    "tool_sha256": "1797ae4df5f61f6583fa0ba8942cac7e212f4dfbdc36a28e971734d4f89f264f",
+    "preregistration_commit": "89f8d4b003c954767c36503cb336a143fe93dbcd",
+    "graph_collectives": {
+      "all_gathers": 97,
+      "all_reduces": 1
+    },
+    "shape_per_rank": [
+      1,
+      8,
+      3072
+    ],
+    "dtype": "bfloat16",
+    "planned_epochs": 32,
+    "planned_replays_per_epoch": 4,
+    "terminal_sample": 2
+  },
+  "result": {
+    "failure_boundary": "final_all_reduce",
+    "failure": "raw_byte_mismatch",
+    "failed_ranks": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "device_loss": false,
+    "timeout": false,
+    "model_loaded": false,
+    "generation_performed": false,
+    "endpoint_started": false,
+    "network_used": false,
+    "payload_staged": false,
+    "localmaxxing_submitted": false
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-xccl-direct-graph-d9e88ff06-20260724T141124Z",
+    "rank0_failure_sha256": "8f8035bab5ef95bcc10f98305e53f83a581649e914b0637f2b2f340e1cdbf9a8",
+    "rank1_failure_sha256": "e0a1c93b657b76cc169360b049923e2a39cf685f4f45c2710a6aef99dfc66d68",
+    "rank2_failure_sha256": "49bfeb709d4d2b9760a303467227e33a4eafdde41679ef4ab14fb99da26d9ff9",
+    "rank3_failure_sha256": "8786670a88e1fd054f9d340ae6ce452f85f584af20aabc55f1adacbb9a1e6ae6"
+  },
+  "decision": {
+    "rerun_unchanged_direct_capture": false,
+    "endpoint_authorized": false,
+    "next_lane": "segmented_runtime_graph_with_all_98_collectives_eager_and_persistent_buffers"
+  }
+}
