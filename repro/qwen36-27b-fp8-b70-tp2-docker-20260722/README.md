@@ -121,7 +121,12 @@ curl http://127.0.0.1:8001/health
 docker stop vllm-qwen36-27b-fp8
 docker rm vllm-qwen36-27b-fp8
 ```
-
+~Tokens	Output	Total (s)	Prefill (s)	Tokens/sec
+10	256	7.4	0.37	34.6
+50	256	7.4	0.37	34.7
+200	256	8.7	0.44	29.4
+500	256	9.0	0.45	28.3
+2000	256	7.5	0.37	34.2
 ## Differences from Prior Qwen3.6 FP8 Slot
 
 The older `configs/model-slots/qwen36-27b-fp8-vrfai.env` slot used
