@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA = "laguna-m8-raw-evidence-v1"
-RECORDER_MARKER = "LAGUNA_M8_RAW_EVIDENCE_V1"
+SCHEMA = "laguna-m8-raw-evidence-v2"
+RECORDER_MARKER = "LAGUNA_M8_RAW_EVIDENCE_V2"
 PROMPT = (
     "Offline correctness diagnostic only. Return exactly three short Python "
     "identifiers, one per line, that would be suitable names for an interval "
@@ -35,12 +35,12 @@ TARGET_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/int4")
 DRAFT_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4")
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-VLLM_COMMIT = "00d3c7faa3a73f08246a70c7280eed633ec2441b"
+VLLM_COMMIT = "00ba70bdbf4b5f9bd5714c288b98c54c91637c53"
 RPC_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp")
 RPC_DIRS = {
-    "incumbent-eager": RPC_ROOT / "m8p4-a",
-    "segmented-eager": RPC_ROOT / "m8p4-b",
-    "segmented-graph": RPC_ROOT / "m8p4-c",
+    "incumbent-eager": RPC_ROOT / "m8p5-a",
+    "segmented-eager": RPC_ROOT / "m8p5-b",
+    "segmented-graph": RPC_ROOT / "m8p5-c",
 }
 ZMQ_UUID_FILENAME_BYTES = 36
 ZMQ_CONSERVATIVE_PATH_BYTES = 100
@@ -343,7 +343,7 @@ def main() -> int:
     prompt_token_ids = list(generated[0].prompt_token_ids)
     aggregate_rank_local_evidence(args)
     record = {
-        "schema": "laguna-m8-offline-arm-v4",
+        "schema": "laguna-m8-offline-arm-v5",
         "arm": args.arm,
         "absent_environment": list(ABSENT_ENVIRONMENT),
         "offline_only": True,

@@ -17,11 +17,11 @@ readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly record_vllm=8936aac144929190c1e53f8b8624ca397ce16f5b
 readonly record_kernels=b6076ce1249ffee0e30bee528f4cd15c3bffb234
-readonly frozen_segmented_vllm=00d3c7faa3a73f08246a70c7280eed633ec2441b
+readonly frozen_segmented_vllm=00ba70bdbf4b5f9bd5714c288b98c54c91637c53
 readonly frozen_kernel_head=4772f727590c51b72add79350b913d098cf67872
-readonly rpc_dir_incumbent="$LAGUNA_NVME_TMP_ROOT/m8p4-a"
-readonly rpc_dir_segmented_eager="$LAGUNA_NVME_TMP_ROOT/m8p4-b"
-readonly rpc_dir_segmented_graph="$LAGUNA_NVME_TMP_ROOT/m8p4-c"
+readonly rpc_dir_incumbent="$LAGUNA_NVME_TMP_ROOT/m8p5-a"
+readonly rpc_dir_segmented_eager="$LAGUNA_NVME_TMP_ROOT/m8p5-b"
+readonly rpc_dir_segmented_graph="$LAGUNA_NVME_TMP_ROOT/m8p5-c"
 readonly zmq_uuid_name_length=36
 readonly zmq_conservative_path_max=100
 readonly frozen_kernel_binaries=$'126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2  vllm_xpu_kernels/_C.abi3.so\nf5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8  vllm_xpu_kernels/_xpu_C.abi3.so\n6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b  vllm_xpu_kernels/_moe_C.abi3.so\nfc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96  vllm_xpu_kernels/libgrouped_gemm_xe_2.so'
@@ -121,7 +121,8 @@ while read -r expected_hash absolute; do
   [[ "$(sha256sum "$absolute" | awk '{print $1}')" == "$expected_hash" ]] || die "frozen runtime binary differs: $absolute"
 done <<< "$frozen_runtime_binaries"
 rg -q --fixed-strings 'VLLM_XPU_LAGUNA_M8_EVIDENCE' "$segmented_root/vllm/compilation/laguna_m8_evidence.py" || die "reviewed runtime lacks evidence opt-in"
-rg -q --fixed-strings 'laguna-m8-raw-evidence-v1' "$segmented_root/vllm/compilation/laguna_m8_evidence.py" || die "reviewed runtime lacks raw evidence format"
+rg -q --fixed-strings 'laguna-m8-raw-evidence-v2' "$segmented_root/vllm/compilation/laguna_m8_evidence.py" || die "reviewed runtime lacks raw evidence format"
+rg -q --fixed-strings 'LAGUNA_M8_RAW_EVIDENCE_V2' "$segmented_root/vllm/compilation/laguna_m8_evidence.py" || die "reviewed runtime lacks raw evidence marker"
 
 ambient_sensitive="$(compgen -e | LC_ALL=C sort -u | awk '/^(VLLM|LAGUNA|XPU_GRAPH$|ZE_|ZES_|SYCL|UR_|CCL_|FI_|I_MPI_|PSM|OMP_|MKL_|KMP_|ONEAPI_|INTEL_|IGC_|NEO|IPEX_|TORCH|PYTORCH_|TRITON_|LD_)/ {print}')"
 [[ -z "$ambient_sensitive" ]] || die "refusing inherited benchmark/runtime variables: $ambient_sensitive"
@@ -132,7 +133,7 @@ for rpc_dir in \
   "$rpc_dir_incumbent" "$rpc_dir_segmented_eager" "$rpc_dir_segmented_graph"; do
   [[ "$(realpath -m -- "$rpc_dir")" == "$rpc_dir" ]] \
     || die "RPC base must be canonical: $rpc_dir"
-  [[ "$rpc_dir" == "$LAGUNA_NVME_TMP_ROOT"/m8p4-? ]] \
+  [[ "$rpc_dir" == "$LAGUNA_NVME_TMP_ROOT"/m8p5-? ]] \
     || die "RPC base differs from the frozen short layout: $rpc_dir"
   [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] \
     || die "refusing to reuse RPC base: $rpc_dir"

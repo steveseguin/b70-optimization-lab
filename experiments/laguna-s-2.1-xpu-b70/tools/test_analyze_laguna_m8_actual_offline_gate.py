@@ -37,6 +37,18 @@ def signature(data: bytes) -> dict[str, object]:
     }
 
 
+def slot_signature(label: bytes, device: str = "xpu:0") -> dict[str, object]:
+    data = hashlib.sha256(label).digest() * 2
+    return {
+        "dtype": "torch.int64",
+        "shape": [8],
+        "stride": [1],
+        "device": device,
+        "nbytes": len(data),
+        "sha256": hashlib.sha256(data).hexdigest(),
+    }
+
+
 def expected_boundaries() -> list[str]:
     return MODULE._expected_boundaries()
 
@@ -109,6 +121,7 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
         *,
         content_salt: str = "same",
         event_count: int = 4,
+        routing_salt: str = "same-routing",
     ) -> None:
         for rank in range(4):
             for ordinal in range(event_count):
@@ -116,8 +129,15 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                 events_dir = run_dir / "events"
                 events_dir.mkdir(parents=True)
                 events: list[dict[str, object]] = []
-                slot_signature = signature(b"slot")
+                slot_signatures = [
+                    slot_signature(
+                        f"{routing_salt}:{layer % 3}".encode(),
+                        device=f"xpu:{rank}",
+                    )
+                    for layer in range(48)
+                ]
                 logical = {
+                    "attention_slot_mapping_signatures": slot_signatures,
                     "candidate_ids": list(range(8)),
                     "positions": list(range(8)),
                     "rank": rank,
@@ -128,7 +148,6 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                         "num_tokens_unpadded": 8,
                         "query_len": 8,
                     },
-                    "slot_mapping_sha256": slot_signature["sha256"],
                     "target_ordinal": ordinal * 2,
                 }
 
@@ -195,7 +214,6 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                 if arm == "segmented-graph":
                     phase = "capture" if ordinal == 0 else "replay"
                     metadata("phase", {"phase": phase}, phase)
-                slot = {"slot_mapping": slot_signature}
                 if arm != "incumbent-eager":
                     for boundary in expected_boundaries():
                         metadata(
@@ -218,6 +236,7 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                             continue
                         if boundary.startswith("attention:"):
                             layer = int(boundary.split(":")[1])
+                            slot = {"slot_mapping": slot_signatures[layer]}
                             for suffix in ("query", "key", "value", "output"):
                                 tensor(f"attention_{layer:02d}_{suffix}", phase, slot)
                         else:
@@ -235,6 +254,7 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                     )
                 else:
                     for layer in range(48):
+                        slot = {"slot_mapping": slot_signatures[layer]}
                         for suffix in ("query", "key", "value", "output"):
                             tensor(f"attention_{layer:02d}_{suffix}", phase, slot)
                 if arm == "segmented-graph":
@@ -263,7 +283,6 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
                     {
                         "input_ids": signature(b"ids"),
                         "positions": signature(b"positions"),
-                        "slot_mapping": signature(b"slot"),
                     },
                 )
                 metadata(
@@ -371,13 +390,95 @@ class ActualOfflineAnalyzerTest(unittest.TestCase):
             self.write_run(root, "segmented-eager")
 
             def mutate(event: dict[str, object]) -> None:
-                event["details"]["input_signatures"]["slot_mapping"] = signature(  # type: ignore[index]
+                event["details"]["input_signatures"]["slot_mapping"] = slot_signature(  # type: ignore[index]
                     b"different-slot"
                 )
 
             self.mutate_event(root, 0, 0, "attention_07_key", mutate)
             with self.assertRaisesRegex(ValueError, "slot mapping"):
                 MODULE.aggregate_recorder_root("segmented-eager", root)
+
+    def test_live_layer_slot_must_match_logical_vector(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            self.write_run(root, "segmented-eager")
+
+            def mutate(event: dict[str, object]) -> None:
+                event["details"]["input_signatures"]["slot_mapping"] = slot_signature(  # type: ignore[index]
+                    b"internally-consistent-but-logically-wrong"
+                )
+
+            for suffix in ("query", "key", "value", "output"):
+                self.mutate_event(root, 0, 0, f"attention_07_{suffix}", mutate)
+            with self.assertRaisesRegex(
+                ValueError, "live attention slot differs at layer 7"
+            ):
+                MODULE.aggregate_recorder_root("segmented-eager", root)
+
+    def test_distinct_per_layer_slot_mappings_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            self.write_run(root, "segmented-eager")
+            aggregate = MODULE.aggregate_recorder_root("segmented-eager", root)
+            routing = aggregate["rank_events"]["0"][0]["live_attention_slot_routing"]
+            self.assertEqual(
+                len({json.dumps(item, sort_keys=True) for item in routing}),
+                3,
+            )
+
+    def test_cross_arm_slot_routing_drift_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            left, right = root / "left", root / "right"
+            left.mkdir()
+            right.mkdir()
+            self.write_run(left, "segmented-eager")
+            self.write_run(
+                right,
+                "segmented-eager",
+                routing_salt="different-routing",
+            )
+            with self.assertRaisesRegex(ValueError, "live_attention_slot_routing"):
+                MODULE.compare(
+                    MODULE.aggregate_recorder_root("segmented-eager", left),
+                    MODULE.aggregate_recorder_root("segmented-eager", right),
+                    "routing-mismatch",
+                )
+
+    def test_obsolete_singular_slot_logical_key_fails(self) -> None:
+        logical = {
+            "attention_slot_mapping_signatures": [
+                slot_signature(f"slot:{layer}".encode()) for layer in range(48)
+            ],
+            "candidate_ids": list(range(8)),
+            "positions": list(range(8)),
+            "rank": 0,
+            "request_generation_epoch": 1,
+            "seq_query_metadata": {
+                "num_reqs": 1,
+                "num_tokens_padded": 8,
+                "num_tokens_unpadded": 8,
+                "query_len": 8,
+            },
+            "slot_mapping_sha256": "0" * 64,
+            "target_ordinal": 0,
+        }
+        with self.assertRaisesRegex(ValueError, "fields/rank drift"):
+            MODULE._validate_logical_key(logical, 0, "obsolete")
+
+    def test_hidden_spurious_slot_mapping_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            self.write_run(root, "incumbent-eager")
+
+            def mutate(event: dict[str, object]) -> None:
+                event["details"]["input_signatures"]["slot_mapping"] = slot_signature(  # type: ignore[index]
+                    b"spurious-hidden-slot"
+                )
+
+            self.mutate_event(root, 0, 0, "target_hidden_before_logits", mutate)
+            with self.assertRaisesRegex(ValueError, "hidden input signature fields"):
+                MODULE.aggregate_recorder_root("incumbent-eager", root)
 
     def test_graph_replay_counter_drift_fails(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

@@ -18,10 +18,10 @@ from pathlib import Path
 from typing import Any
 
 
-FORMAT = "laguna-m8-raw-evidence-v1"
-RECORDER_MARKER = "LAGUNA_M8_RAW_EVIDENCE_V1"
-SCHEMA = "laguna-m8-actual-offline-gate-v5"
-DRIVER_SCHEMA = "laguna-m8-offline-arm-v4"
+FORMAT = "laguna-m8-raw-evidence-v2"
+RECORDER_MARKER = "LAGUNA_M8_RAW_EVIDENCE_V2"
+SCHEMA = "laguna-m8-actual-offline-gate-v6"
+DRIVER_SCHEMA = "laguna-m8-offline-arm-v5"
 ARMS = ("incumbent-eager", "segmented-eager", "segmented-graph")
 RANKS = range(4)
 MIN_EVENTS_PER_RANK = 4
@@ -29,11 +29,11 @@ COLLECTIVE_COUNT = 97
 GRAPH_COUNTS = {"graphs": 146, "eager_breaks": 145}
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-VLLM_COMMIT = "00d3c7faa3a73f08246a70c7280eed633ec2441b"
+VLLM_COMMIT = "00ba70bdbf4b5f9bd5714c288b98c54c91637c53"
 RPC_DIRS = {
-    "incumbent-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p4-a",
-    "segmented-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p4-b",
-    "segmented-graph": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p4-c",
+    "incumbent-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p5-a",
+    "segmented-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p5-b",
+    "segmented-graph": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p5-c",
 }
 RPC_UUID_SOCKET_PATH_BYTES = 100
 MAX_TOKENS = 32
@@ -160,16 +160,15 @@ def _hidden_input_signatures(
 ) -> tuple[
     tuple[str, int, str, tuple[int, ...], tuple[int, ...], str],
     tuple[str, int, str, tuple[int, ...], tuple[int, ...], str],
-    tuple[str, int, str, tuple[int, ...], tuple[int, ...], str],
 ]:
     details = event.get("details")
     inputs = details.get("input_signatures") if isinstance(details, dict) else None
-    expected = {"input_ids", "positions", "slot_mapping"}
+    expected = {"input_ids", "positions"}
     if not isinstance(inputs, dict) or set(inputs) != expected:
         die(f"{context}: hidden input signature fields drift")
     return tuple(
         _signature_identity(inputs[name], f"{context}:input:{name}")
-        for name in ("input_ids", "positions", "slot_mapping")
+        for name in ("input_ids", "positions")
     )
 
 
@@ -250,12 +249,12 @@ def _validate_logical_key(
     value: dict[str, Any], rank: int, context: str
 ) -> dict[str, Any]:
     required = {
+        "attention_slot_mapping_signatures",
         "candidate_ids",
         "positions",
         "rank",
         "request_generation_epoch",
         "seq_query_metadata",
-        "slot_mapping_sha256",
         "target_ordinal",
     }
     if set(value) != required or value["rank"] != rank:
@@ -273,11 +272,23 @@ def _validate_logical_key(
         or value["request_generation_epoch"] < 0
         or not isinstance(value["target_ordinal"], int)
         or value["target_ordinal"] < 0
-        or not isinstance(value["slot_mapping_sha256"], str)
-        or len(value["slot_mapping_sha256"]) != 64
-        or any(ch not in "0123456789abcdef" for ch in value["slot_mapping_sha256"])
     ):
         die(f"{context}: logical event key is not canonical M=8")
+    slot_signatures = value["attention_slot_mapping_signatures"]
+    if not isinstance(slot_signatures, list) or len(slot_signatures) != 48:
+        die(f"{context}: logical event key lacks 48 attention slot mappings")
+    for layer, signature in enumerate(slot_signatures):
+        identity = _signature_identity(
+            signature, f"{context}:logical:attention_slot[{layer}]"
+        )
+        if (
+            identity[1] != 64
+            or identity[2] != "torch.int64"
+            or identity[3] != (8,)
+            or identity[4] != (1,)
+            or identity[5] != f"xpu:{rank}"
+        ):
+            die(f"{context}: logical attention slot geometry drift at layer {layer}")
     metadata = value["seq_query_metadata"]
     expected_metadata = {
         "num_reqs",
@@ -477,8 +488,14 @@ def _validate_event(
         collectives = tuple(collectives_list)
 
     attention: list[tuple[tuple[Any, ...], ...]] = []
+    live_attention_slot_routing: list[tuple[Any, ...]] = []
+    logical_slot_routing = [
+        _signature_identity(signature, f"{context}:logical:attention_slot[{layer}]")
+        for layer, signature in enumerate(logical["attention_slot_mapping_signatures"])
+    ]
     for layer in range(48):
         values: list[tuple[Any, ...]] = []
+        layer_slot: tuple[Any, ...] | None = None
         for suffix in ("query", "key", "value", "output"):
             event = _single(events, f"attention_{layer:02d}_{suffix}", context)
             if set(event["details"]) != {"input_signatures", "output"}:
@@ -491,16 +508,19 @@ def _validate_event(
                 "slot_mapping",
                 f"{context}:attention[{layer}]:{suffix}",
             )
-            if slot[0] != logical["slot_mapping_sha256"]:
-                die(f"{context}: attention slot mapping differs from logical key")
-            values.append((raw, slot))
+            if layer_slot is None:
+                layer_slot = slot
+            elif slot != layer_slot:
+                die(f"{context}: attention slot mapping differs within layer {layer}")
+            values.append(raw)
+        if layer_slot != logical_slot_routing[layer]:
+            die(f"{context}: live attention slot differs at layer {layer}")
+        live_attention_slot_routing.append(layer_slot)
         attention.append(tuple(values))
     hidden_event = _single(events, "target_hidden_before_logits", context)
     if set(hidden_event["details"]) != {"input_signatures", "output"}:
         die(f"{context}: target hidden details drift")
     hidden_inputs = _hidden_input_signatures(hidden_event, f"{context}:hidden")
-    if hidden_inputs[2][0] != logical["slot_mapping_sha256"]:
-        die(f"{context}: hidden slot mapping differs from logical key")
     hidden = (
         _raw_identity(run_dir, hidden_event, f"{context}:hidden"),
         hidden_inputs,
@@ -630,6 +650,7 @@ def _validate_event(
         "logical_key": logical,
         "phase": expected_phases[-1],
         "attention": tuple(attention),
+        "live_attention_slot_routing": tuple(live_attention_slot_routing),
         "target_hidden": hidden,
         "sampled_token_ids": sampled,
         "acceptance": normalized_acceptance,
@@ -747,6 +768,7 @@ def compare(left: dict[str, Any], right: dict[str, Any], label: str) -> None:
             die(f"{label}: rank {rank} missing/extra eligible event")
         for ordinal, (a, b) in enumerate(zip(left_events, right_events, strict=True)):
             for field in (
+                "live_attention_slot_routing",
                 "logical_key",
                 "acceptance",
                 "emitted_ids",
@@ -1010,6 +1032,8 @@ def main() -> int:
             "four_ranks_and_four_eligible_events": True,
             "A_B_target_hidden_attention_sampled_raw_bytes": True,
             "B_C_target_hidden_attention_sampled_raw_bytes": True,
+            "A_B_live_attention_slot_routing": True,
+            "B_C_live_attention_slot_routing": True,
             "B_C_97_collective_raw_outputs_per_event_rank": True,
             "single_fresh_offline_generate_per_arm": True,
             "cached_tokens_exactly_zero": True,
