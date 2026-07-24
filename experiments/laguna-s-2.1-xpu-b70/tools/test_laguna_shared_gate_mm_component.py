@@ -17,6 +17,7 @@ from unittest.mock import patch
 import analyze_laguna_shared_gate_mm_component as analyzer
 import gate_laguna_shared_gate_mm_component as c
 import run_laguna_shared_gate_mm_component as runner
+import run_laguna_shared_gate_mm_stage0 as stage0_runner
 
 
 ROOT = pathlib.Path(__file__).parent
@@ -451,6 +452,30 @@ class SchemaOnlyComponentTests(unittest.TestCase):
 
 
 class TimedLoopStaticTests(unittest.TestCase):
+    def test_timing_exactness_helper_is_bound_to_actual_stage0_runner(self):
+        self.assertFalse(hasattr(runner.stage0, "_raw_equal"))
+        self.assertTrue(callable(stage0_runner._raw_equal))
+        tree = ast.parse((ROOT / "run_laguna_shared_gate_mm_component.py").read_text())
+        timing = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "_timing"
+        )
+        imports = {
+            (alias.name, alias.asname)
+            for node in ast.walk(timing)
+            if isinstance(node, ast.Import)
+            for alias in node.names
+        }
+        self.assertIn(("run_laguna_shared_gate_mm_stage0", "actual"), imports)
+        raw_equal_calls = [
+            ast.unparse(node.func)
+            for node in ast.walk(timing)
+            if isinstance(node, ast.Call)
+            and ast.unparse(node.func).endswith("._raw_equal")
+        ]
+        self.assertEqual(raw_equal_calls, ["actual._raw_equal"] * 3)
+
     def test_runtime_xpu_uuid_wrapper_is_exactly_bound(self):
         physical_uuid = uuid.UUID(c.CARDS[0]["uuid"])
         torch_uuid = uuid.UUID(bytes=physical_uuid.bytes[::-1])

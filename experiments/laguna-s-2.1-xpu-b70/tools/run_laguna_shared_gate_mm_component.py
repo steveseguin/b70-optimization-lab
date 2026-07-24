@@ -850,6 +850,7 @@ def _arm(
 
 def _timing(fixture: dict[str, Any], packet_sha256: str, rank: int) -> dict[str, Any]:
     import torch
+    import run_laguna_shared_gate_mm_stage0 as actual
 
     corpus, evict, buffer_proof = _timing_fixture(fixture, torch)
     weight_bytes_each = corpus[0][1].numel() * corpus[0][1].element_size()
@@ -886,11 +887,11 @@ def _timing(fixture: dict[str, Any], packet_sha256: str, rank: int) -> dict[str,
                 and returned_mm.data_ptr() == native.data_ptr(),
                 "out= did not retain its preallocated output",
             )
-            literal_equal = stage0._raw_equal(literal_bmm.squeeze(1), literal_mm, torch)
-            control_equal = stage0._raw_equal(
+            literal_equal = actual._raw_equal(literal_bmm.squeeze(1), literal_mm, torch)
+            control_equal = actual._raw_equal(
                 control.squeeze(1), literal_bmm.squeeze(1), torch
             )
-            candidate_equal = stage0._raw_equal(native, literal_mm, torch)
+            candidate_equal = actual._raw_equal(native, literal_mm, torch)
             require(
                 literal_equal and control_equal and candidate_equal,
                 "outside-timing literal BMM/MM raw equality failed",
