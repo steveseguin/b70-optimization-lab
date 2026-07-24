@@ -1,0 +1,63 @@
+{
+  "format": "laguna-shared-gate-up-m8-stage0-pass-summary-v1",
+  "date_local": "2026-07-23",
+  "outcome": "stage0_exactness_pass",
+  "production_analyzer": "stage0-valid",
+  "scope": "one_card_actual_forward_two_role_bound_native_mms_with_simulated_fixed_rank_downstream",
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-gate-up-m8-stage0-card0-79577851f-v1",
+  "started_utc": "2026-07-24T04:41:46.514405Z",
+  "completed_utc": "2026-07-24T04:42:16.864499Z",
+  "lineage": {
+    "tooling_commit": "79577851f76f078d3150a8300bad670670b4d48c",
+    "authorization_commit": "8bb2af9ef2657aa17687bf323f310a2efaf6c902",
+    "vllm_commit": "503f7784cf9d1704109b1e4650427fb4f417d604",
+    "kernel_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a"
+  },
+  "fixture": {
+    "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/authorizations/shared-gate-up-m8-stage0-fixture-v1-79577851f.json",
+    "file_sha256": "c47d3f7e0fef29dd483fb1397ca4d36a93a923c7d6a9af18859023d98de7618c",
+    "manifest_sha256": "87e40cc2367ebc44df5620f27861a0b2d87d2c5a3a8bbd28e28a51784e7b5300",
+    "ordered_epoch_hashes_sha256": "e907c35d4726a8178abfa40c98bfe369ad4704c9a4540ff43a9e6458c377c851"
+  },
+  "evidence_sha256": {
+    "authorization_packet_raw": "550ca03817f81d74233e3a89a874e9ef36e0f81a64fdd345f78265b9a90ff00e",
+    "authorization_packet_canonical": "670cd0c7212708c8a7974a9f37e60dc09b67ca475af05eee039d029551f2bacd",
+    "stage0-result.json": "726bfa5b19dd6e8722aedda0679603d9cc43214acb1952b07c15dc9562b558b0",
+    "pre-tensor-identity-checkpoint.json": "335ccb1f1663a96ac95ab499986fef53319f77869d9eb5a65b53e3d44aad8b4c",
+    "tensor-work-started-checkpoint.json": "d1db2b1724bcdc7b8db6f3aad49372ea44da3412ee6ac66103e8895ee482ca62",
+    "runtime-card0-binding-checkpoint.json": "8589a4bf0747075b7c51c7127bdf8225ec6ffed3df865f23fc4919cbee819d22",
+    "constructor-scope-proof.json": "27a1398ef501a9e2f5dc643f2732aae62f51c175ef3f5e7b47ebe3eaa78706e4",
+    "dispatch-proof.json": "0f76865d0c38a06ae521671c47acf93dd52c6062b79a238907beaa6ec7537f0a"
+  },
+  "exactness": {
+    "epochs": 128,
+    "boundaries_per_epoch": 9,
+    "raw_and_torch_equal_comparisons": 1152,
+    "unique_hashes_per_output_label": 128,
+    "output_labels": 16
+  },
+  "dispatch": {
+    "native_mm_calls": 2,
+    "incumbent_bmm_calls": 22,
+    "fallback_calls": 0,
+    "rejections_before_primitive": 30,
+    "native_order": [
+      "gate_proj",
+      "up_proj"
+    ]
+  },
+  "next_authorization": {
+    "component_tooling_construction": true,
+    "component_execution": false,
+    "timing": false,
+    "other_card": false,
+    "counter": false,
+    "endpoint": false,
+    "model_generation": false,
+    "network": false,
+    "payload": false,
+    "submission": false,
+    "reboot": false
+  }
+}

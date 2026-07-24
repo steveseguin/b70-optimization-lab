@@ -304,9 +304,19 @@ and the historical
 [post-incident reaffirmation](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-post-incident-reaffirmation.md).
 The future-execution authority is the
 [runtime-guard fix and unchanged-gate reaffirmation](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-runtime-guard-fix-and-reaffirmation.md).
-The immediate next action is pair-specific Stage-0 tool construction and
-independent audit. No further XPU command is authorized until a separate
-tracked packet freezes that toolchain and one local-NVMe root.
+The pair-specific Stage-0 screen is now a production-validated pass at
+tooling commit `79577851f76f078d3150a8300bad670670b4d48c` and packet-only
+commit `8bb2af9ef2657aa17687bf323f310a2efaf6c902`. Its first and only authorized
+run completed all 128 changing epochs with 1,152/1,152 raw-BF16 and Torch
+comparisons equal, exactly two ordered native MMs, 22 incumbent BMMs, zero
+fallbacks, and all 30 corruptions rejected before a primitive. Preserve the
+[Stage-0 pass note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-native-m8-mm-stage0-pass.md)
+and
+[structured summary](data/laguna-s-2.1-shared-gate-up-m8-stage0-pass-20260723.json).
+This authorizes only pair-specific four-card component-tool construction and
+audit. Component execution remains unauthorized until those tools are
+CPU-tested, independently reviewed, committed, and frozen by a separate
+tracked packet-only child commit over one fresh local-NVMe root.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
