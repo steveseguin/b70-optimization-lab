@@ -54,6 +54,30 @@ def expected_boundaries() -> list[str]:
 
 
 class ActualOfflineAnalyzerTest(unittest.TestCase):
+    def test_driver_config_snapshot_survives_runtime_mutation(self) -> None:
+        source = {
+            "method": "dflash",
+            "nested": {"capture_sizes": [8]},
+        }
+        frozen = DRIVER.canonical_json_snapshot(source)
+        runtime = json.loads(frozen)
+        recorded = json.loads(frozen)
+
+        runtime["target_model_config"] = object()
+        runtime["target_parallel_config"] = object()
+        runtime["nested"]["capture_sizes"].append(16)
+
+        self.assertEqual(
+            recorded,
+            {
+                "method": "dflash",
+                "nested": {"capture_sizes": [8]},
+            },
+        )
+        self.assertIsNot(runtime, recorded)
+        self.assertIsNot(runtime["nested"], recorded["nested"])
+        self.assertEqual(json.loads(json.dumps(recorded)), recorded)
+
     def test_eager_arms_match_record_and_graph_arm_is_explicit(self) -> None:
         for arm in ("incumbent-eager", "segmented-eager"):
             with self.subTest(arm=arm):

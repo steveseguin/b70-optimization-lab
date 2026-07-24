@@ -71,6 +71,16 @@ def sha256_json(value: Any) -> str:
     ).hexdigest()
 
 
+def canonical_json_snapshot(value: Any) -> str:
+    """Detach frozen driver evidence from config dictionaries vLLM may mutate."""
+    return json.dumps(
+        value,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+
 def assert_nvme(path: Path) -> None:
     resolved = path.resolve(strict=False)
     if "/media/" in str(resolved) or "CorsairExternal" in str(resolved):
@@ -316,12 +326,20 @@ def main() -> int:
         "tokenizer_revision": args.revision,
         "trust_remote_code": True,
     }
+    frozen_configs_json = canonical_json_snapshot(
+        {
+            "compilation_config": compilation_config,
+            "engine_config": engine_config,
+            "speculative_config": speculative_config,
+        }
+    )
+    runtime_configs = json.loads(frozen_configs_json)
     llm_kwargs: dict[str, Any] = {
-        **engine_config,
-        "speculative_config": speculative_config,
+        **runtime_configs["engine_config"],
+        "speculative_config": runtime_configs["speculative_config"],
     }
-    if compilation_config is not None:
-        llm_kwargs["compilation_config"] = compilation_config
+    if runtime_configs["compilation_config"] is not None:
+        llm_kwargs["compilation_config"] = runtime_configs["compilation_config"]
     llm = LLM(**llm_kwargs)
     params = SamplingParams(
         temperature=0.0,
@@ -342,6 +360,7 @@ def main() -> int:
         die(f"num_cached_tokens must be exactly 0, got {cached_tokens!r}")
     prompt_token_ids = list(generated[0].prompt_token_ids)
     aggregate_rank_local_evidence(args)
+    recorded_configs = json.loads(frozen_configs_json)
     record = {
         "schema": "laguna-m8-offline-arm-v6",
         "arm": args.arm,
@@ -359,9 +378,9 @@ def main() -> int:
         "target_revision": args.revision,
         "draft_revision": args.draft_revision,
         "generation_config": "vllm",
-        "engine_config": engine_config,
-        "compilation_config": compilation_config,
-        "speculative_config": speculative_config,
+        "engine_config": recorded_configs["engine_config"],
+        "compilation_config": recorded_configs["compilation_config"],
+        "speculative_config": recorded_configs["speculative_config"],
         "environment": {
             name: os.environ[name]
             for name in (
