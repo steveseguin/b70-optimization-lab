@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -9,6 +11,49 @@ from pathlib import Path
 import pytest
 
 import analyze_laguna_m8_inprocess_replay as analyzer
+
+
+def test_runner_sets_every_driver_required_environment_key() -> None:
+    tools = Path(__file__).parent
+    driver_tree = ast.parse(
+        (tools / "run_laguna_m8_inprocess_replay_arm.py").read_text()
+    )
+    required: set[str] = set()
+    for node in ast.walk(driver_tree):
+        dictionaries: list[ast.Dict] = []
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "required"
+                for target in node.targets
+            )
+            and isinstance(node.value, ast.Dict)
+        ):
+            dictionaries.append(node.value)
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "required"
+            and node.func.attr == "update"
+            and node.args
+            and isinstance(node.args[0], ast.Dict)
+        ):
+            dictionaries.append(node.args[0])
+        for dictionary in dictionaries:
+            required.update(
+                key.value
+                for key in dictionary.keys
+                if isinstance(key, ast.Constant) and isinstance(key.value, str)
+            )
+
+    runner = (tools / "run_laguna_m8_inprocess_replay.sh").read_text()
+    missing = [
+        name
+        for name in sorted(required)
+        if re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}=", runner) is None
+    ]
+    assert missing == []
 
 
 def _environment(arm: str, profile_root: Path) -> dict[str, str]:
