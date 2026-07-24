@@ -38,9 +38,9 @@ DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
 VLLM_COMMIT = "e25867aa698f82cbf2fb835e26807078674acebc"
 RPC_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp")
 RPC_DIRS = {
-    "incumbent-eager": RPC_ROOT / "m8p6-a",
-    "segmented-eager": RPC_ROOT / "m8p6-b",
-    "segmented-graph": RPC_ROOT / "m8p6-c",
+    "incumbent-eager": RPC_ROOT / "m8p7-a",
+    "segmented-eager": RPC_ROOT / "m8p7-b",
+    "segmented-graph": RPC_ROOT / "m8p7-c",
 }
 ZMQ_UUID_FILENAME_BYTES = 36
 ZMQ_CONSERVATIVE_PATH_BYTES = 100
@@ -362,7 +362,7 @@ def main() -> int:
     aggregate_rank_local_evidence(args)
     recorded_configs = json.loads(frozen_configs_json)
     record = {
-        "schema": "laguna-m8-offline-arm-v6",
+        "schema": "laguna-m8-offline-arm-v7",
         "arm": args.arm,
         "absent_environment": list(ABSENT_ENVIRONMENT),
         "offline_only": True,

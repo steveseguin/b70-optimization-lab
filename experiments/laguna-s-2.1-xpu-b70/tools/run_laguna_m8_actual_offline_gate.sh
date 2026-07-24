@@ -19,9 +19,9 @@ readonly record_vllm=8936aac144929190c1e53f8b8624ca397ce16f5b
 readonly record_kernels=b6076ce1249ffee0e30bee528f4cd15c3bffb234
 readonly frozen_segmented_vllm=e25867aa698f82cbf2fb835e26807078674acebc
 readonly frozen_kernel_head=4772f727590c51b72add79350b913d098cf67872
-readonly rpc_dir_incumbent="$LAGUNA_NVME_TMP_ROOT/m8p6-a"
-readonly rpc_dir_segmented_eager="$LAGUNA_NVME_TMP_ROOT/m8p6-b"
-readonly rpc_dir_segmented_graph="$LAGUNA_NVME_TMP_ROOT/m8p6-c"
+readonly rpc_dir_incumbent="$LAGUNA_NVME_TMP_ROOT/m8p7-a"
+readonly rpc_dir_segmented_eager="$LAGUNA_NVME_TMP_ROOT/m8p7-b"
+readonly rpc_dir_segmented_graph="$LAGUNA_NVME_TMP_ROOT/m8p7-c"
 readonly zmq_uuid_name_length=36
 readonly zmq_conservative_path_max=100
 readonly frozen_kernel_binaries=$'126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2  vllm_xpu_kernels/_C.abi3.so\nf5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8  vllm_xpu_kernels/_xpu_C.abi3.so\n6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b  vllm_xpu_kernels/_moe_C.abi3.so\nfc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96  vllm_xpu_kernels/libgrouped_gemm_xe_2.so'
@@ -133,7 +133,7 @@ for rpc_dir in \
   "$rpc_dir_incumbent" "$rpc_dir_segmented_eager" "$rpc_dir_segmented_graph"; do
   [[ "$(realpath -m -- "$rpc_dir")" == "$rpc_dir" ]] \
     || die "RPC base must be canonical: $rpc_dir"
-  [[ "$rpc_dir" == "$LAGUNA_NVME_TMP_ROOT"/m8p6-? ]] \
+  [[ "$rpc_dir" == "$LAGUNA_NVME_TMP_ROOT"/m8p7-? ]] \
     || die "RPC base differs from the frozen short layout: $rpc_dir"
   [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] \
     || die "refusing to reuse RPC base: $rpc_dir"
