@@ -313,10 +313,22 @@ fallbacks, and all 30 corruptions rejected before a primitive. Preserve the
 [Stage-0 pass note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-native-m8-mm-stage0-pass.md)
 and
 [structured summary](data/laguna-s-2.1-shared-gate-up-m8-stage0-pass-20260723.json).
-This authorizes only pair-specific four-card component-tool construction and
-audit. Component execution remains unauthorized until those tools are
-CPU-tested, independently reviewed, committed, and frozen by a separate
-tracked packet-only child commit over one fresh local-NVMe root.
+The subsequent pair-specific four-card component campaign is also a final
+verified pass. Tooling commit
+`4cef996c94502ad06233caa55d5be019d13a5114` and packet-only authorization
+commit `f04d7431224017859ef892b1251f2a87fc1dee4a` produced 128 pre-timing plus
+32 post-timing exact epochs per card, 5,760/5,760 raw-BF16 and Torch
+comparisons equal, and identical cross-card output digests. Every physical
+card won 31/31 A-B-B-A blocks; median savings per complete 47-layer ordered
+gate+up cycle were 0.285200, 0.308360, 0.321073, and 0.348841 ms against the
+frozen 0.20 ms minimum. Preserve the
+[component pass note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-shared-gate-up-native-m8-mm-component-pass.md)
+and
+[structured summary](data/laguna-s-2.1-shared-gate-up-m8-component-pass-20260724.json).
+Only construction and audit of fresh cold-counter tooling is now authorized.
+Counter execution, endpoint work, model generation, payload creation,
+network access, and LocalMaxxing submission remain unauthorized until their
+separate later gates pass.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under

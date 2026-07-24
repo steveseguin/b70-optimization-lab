@@ -1,0 +1,156 @@
+{
+  "format": "laguna-shared-gate-up-m8-component-pass-summary-v1",
+  "created_utc": "2026-07-24T05:23:33+00:00",
+  "status": "component_final_seal_passed_counter_tooling_construction_authorized",
+  "component_passed": true,
+  "treatment": {
+    "scope": "two separate ordered shared-expert gate and up projections",
+    "control": "gate then up literal stride-zero B=8 M=1 K=3072 N=256 BF16 BMM",
+    "candidate": "gate then up native M=8 K=3072 N=256 BF16 MM",
+    "selector": "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=1",
+    "merge_forbidden": true,
+    "fusion_forbidden": true,
+    "overlap_forbidden": true,
+    "shared_down_forbidden": true
+  },
+  "identity": {
+    "tools_commit": "4cef996c94502ad06233caa55d5be019d13a5114",
+    "authorization_commit": "f04d7431224017859ef892b1251f2a87fc1dee4a",
+    "vllm_commit": "503f7784cf9d1704109b1e4650427fb4f417d604",
+    "kernel_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a"
+  },
+  "authorization_packet": {
+    "path": "data/laguna-s-2.1-shared-gate-up-m8-component-authorization-20260724T051216Z.json",
+    "raw_sha256": "415411d1cce8ce2a9210032e1d54543bd66eff3f26fa08ffc6fa8436002d302b",
+    "canonical_sha256_without_final_newline": "75c13ddee2c1e0c8a1256341fa97b928de3c960c2e18a9420ef4f9be58326780"
+  },
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-gate-up-m8-component-4cef996c9-20260724T051216Z",
+  "campaign": {
+    "root_acquired_utc": "2026-07-24T05:16:31.543275Z",
+    "aggregate_terminal_utc": "2026-07-24T05:21:35.074551Z",
+    "regular_files": 676,
+    "pre_manifest_files": 675,
+    "aggregate": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-gate-up-m8-component-4cef996c9-20260724T051216Z/component-aggregate.json",
+      "sha256": "d9a8e9ce8a55d79bfb9a33f4a3e926c6ce3c1ceb2039445de137e2102d3a414c"
+    },
+    "terminal": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-gate-up-m8-component-4cef996c9-20260724T051216Z/campaign-terminal.json",
+      "sha256": "f3e477d11bc515fea2f387de4c4d30fcf3958eaec979fd77f8b69bc66099afc3"
+    },
+    "final_manifest": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-gate-up-m8-component-4cef996c9-20260724T051216Z/component-final-manifest.json",
+      "sha256": "8aa2a45a8bcc31c5d2e84e5f55568ad43144ebd6c380d6d914cf91f77d10a10d"
+    },
+    "coordinator_exit_zero": true,
+    "final_verifier_passed": true,
+    "independent_final_verifier_rerun_passed": true
+  },
+  "exactness": {
+    "pre_timing_epochs_per_card": 128,
+    "post_timing_epochs_per_card": 32,
+    "comparisons_per_epoch": 9,
+    "comparisons_per_card": 1440,
+    "comparisons_total": 5760,
+    "all_raw_bf16_equal": true,
+    "all_torch_equal": true,
+    "cross_card_digests_identical": true,
+    "pre_fixture_sha256": "e480bfbee66add59da38b786b403872ea7ed7e2dade35a53820f1a4b34eca440",
+    "pre_output_sha256": "7c6ab1b9d4e62355321a4567e248cd42dfd7b87382f9d7980667f8ba36ce42bc",
+    "post_fixture_sha256": "b963e1c58965e0612879d3dc300101a460c5db7778eb82dc527d0c11a6dd8a75",
+    "post_output_sha256": "94e5fd23e806664325c72acedd5571895ca5f47f793a4c5063a830416d92fe0a"
+  },
+  "timing_protocol": {
+    "target_layers_per_cycle": 47,
+    "projections_per_layer": 2,
+    "projection_calls_per_cycle": 94,
+    "distinct_inputs": 47,
+    "distinct_weights": 94,
+    "output_ring_count": 4,
+    "output_ring_slots_per_projection": 47,
+    "warm_cycles_per_arm": 20,
+    "abba_blocks_per_card": 31,
+    "cycles_per_arm_per_block": 64,
+    "projection_calls_per_arm": 6016,
+    "eviction_bytes_per_arm": 134217728,
+    "minimum_block_wins": 28,
+    "minimum_median_saving_ms_per_cycle": 0.2,
+    "synchronization": "arm_boundaries_only"
+  },
+  "cards": [
+    {
+      "rank": 0,
+      "physical_uuid": "00000000-0000-0023-0000-0000e2238086",
+      "physical_bdf": "0000:23:00.0",
+      "result_sha256": "15638454c3d004349cc0946707d74274325df5a8f5bd6700522c12a7e33fb5a2",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 3.0211975390625,
+      "candidate_median_ms_per_cycle": 2.7377555625,
+      "median_saving_ms_per_cycle": 0.28520041406249996,
+      "relative_saving": 0.09439979027356,
+      "passed": true
+    },
+    {
+      "rank": 1,
+      "physical_uuid": "00000000-0000-0027-0000-0000e2238086",
+      "physical_bdf": "0000:27:00.0",
+      "result_sha256": "077a816328db9abff39e9bb0688a26c992cf25deeba795bf08757b71f193ecab",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 2.978052484375,
+      "candidate_median_ms_per_cycle": 2.662922109375,
+      "median_saving_ms_per_cycle": 0.30836014843750004,
+      "relative_saving": 0.10354422900717,
+      "passed": true
+    },
+    {
+      "rank": 2,
+      "physical_uuid": "00000000-0000-0043-0000-0000e2238086",
+      "physical_bdf": "0000:43:00.0",
+      "result_sha256": "08949ddd560c5fd0ec9e900ec89ab1d1eeacdd6b8f1d271be602bf2a03299e68",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 3.34175528125,
+      "candidate_median_ms_per_cycle": 3.0203502578125,
+      "median_saving_ms_per_cycle": 0.32107268750000006,
+      "relative_saving": 0.09607905441236,
+      "passed": true
+    },
+    {
+      "rank": 3,
+      "physical_uuid": "00000000-0000-0047-0000-0000e2238086",
+      "physical_bdf": "0000:47:00.0",
+      "result_sha256": "8360164baf317a0a34bb25aea5f4895e5a35ecbac860931f5a29abc5be03bd3b",
+      "candidate_block_wins": 31,
+      "control_median_ms_per_cycle": 3.1174060546875,
+      "candidate_median_ms_per_cycle": 2.7699542421875,
+      "median_saving_ms_per_cycle": 0.3488412656250004,
+      "relative_saving": 0.11190113174396,
+      "passed": true
+    }
+  ],
+  "aggregate_checks": {
+    "all_cards_independently_passed": true,
+    "all_cards_won_31_of_31": true,
+    "no_cross_card_rescue": true,
+    "four_distinct_physical_bdfs": true,
+    "four_distinct_physical_uuids": true,
+    "torch_uuid_byte_reversal_verified": true,
+    "one_boot": true,
+    "strict_tree_manifest_verified": true,
+    "source_runtime_binary_model_hashes_verified": true,
+    "stage0_certificate_verified": true,
+    "packet_only_git_lineage_verified": true
+  },
+  "authorization": {
+    "counter_tooling_construction_authorized": true,
+    "counter_execution_authorized": false,
+    "endpoint_authorized": false,
+    "service_authorized": false,
+    "model_generation_performed": false,
+    "network_access_performed": false,
+    "payload_created": false,
+    "localmaxxing_submission_made": false,
+    "reboot_performed": false
+  },
+  "next_action": "Construct, CPU-test, freeze, and independently audit a fresh cold-counter toolchain; require a separate packet-only authorization child before counter execution."
+}
