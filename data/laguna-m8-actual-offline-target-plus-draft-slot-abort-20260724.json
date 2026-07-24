@@ -1,0 +1,48 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "driver_json_present": false,
+      "evidence_events_per_rank": [0, 0, 0, 0],
+      "generate_returned": false,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "started": true,
+      "status": "failed_closed"
+    },
+    "segmented-eager": {
+      "started": false
+    },
+    "segmented-graph": {
+      "started": false
+    }
+  },
+  "classification": "evidence_schema_abort_not_a_benchmark",
+  "correctness_result": null,
+  "date_local": "2026-07-24",
+  "failure": {
+    "exception": "Laguna M8 evidence requires exactly 48 target attention slot mappings",
+    "full_runtime_mapping_count": 54,
+    "full_runtime_mapping_layers": "model.layers.0..53.self_attn.attn",
+    "location": "LagunaM8EvidenceRecorder.attention_slot_mapping_signatures",
+    "root_cause": "the global slot mapping includes 48 target and 6 DFlash attention layers, but the V2 helper required a target-only 48-key dictionary",
+    "target_projection_layers": "model.layers.0..47.self_attn.attn"
+  },
+  "identity": {
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "main_preregistration_commit": "aa00e4958",
+    "main_tooling_commit": "598dc430deb8d090a75c9b294a6c584125521013",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "vllm_commit": "00ba70bdbf4b5f9bd5714c288b98c54c91637c53"
+  },
+  "network_access": false,
+  "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-598dc430d-20260724T172414Z",
+  "sealed": true,
+  "submission": false,
+  "throughput_result": null,
+  "usb_used": false
+}
