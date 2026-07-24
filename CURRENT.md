@@ -400,9 +400,19 @@ oneAPI 2025.3 `_moe_C` is sealed on internal NVMe at SHA-256
 and final linked SPIR-V inspection confirms matched visible multiply/add and
 conversion structure with the incumbent. Because both paths retain matching
 `AllowReassoc`/`NSZ` permissions, device raw-bit exactness remains mandatory.
-Stage 0 is not complete: freeze the exhaustive fixture/corruption tooling,
-validate the new installed-schema operational preflight, and commit both
-Phase-A and conditional Phase-B packets before any candidate primitive.
+The host-only Stage-0 gates are now complete. The committed installed-schema
+operational preflight passed with four exact self-observer rows and no foreign
+XPU process; its canonical report is sealed on internal NVMe. The fixed
+288-epoch fixture corpus (256 pre-timing plus 32 post-timing) independently
+passes deterministic-byte, manifest-hash, all-65,536-BF16, FP32-edge,
+all-1,024-mask, all-slot, zero-row, local-formula, canonical-map,
+cancellation, and midpoint proofs. Preserve the
+[host-gate note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-stage0-fixture-and-operational-preflight.md)
+and
+[structured packet](data/laguna-s-2.1-m8-gather-sharded-stage0-host-gates-20260724.json).
+Stage 0 is still not authorized for a candidate primitive: commit both
+mutually bound Phase-A and conditional Phase-B packets before any
+candidate/native import or device action.
 Preserve the
 [source/build/IR checkpoint](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-source-build-ir-checkpoint.md).
 No XPU action, model load, or generation has occurred for this lane. The

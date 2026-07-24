@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "model": "poolside/Laguna-S-2.1",
+  "quantization": "INT4",
+  "gpu_count": 4,
+  "hardware": "Intel Arc Pro B70",
+  "lane": "standalone exact M8 MoeGather sharded occupancy",
+  "status": "stage0_host_gates_passed_no_candidate_execution",
+  "approved_record_unchanged": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tokens_per_second": 33.89498511171744,
+    "vllm": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "xpu_kernels": "b6076ce1249ffee0e30bee528f4cd15c3bffb234"
+  },
+  "candidate": {
+    "xpu_kernels": "7e6a74026a2a4370abcb7973d28bbc9d1ddd1be6",
+    "candidate_moe_c_sha256": "3a16e85f7b6f324246f89e03d8aa89c37f0d6097c59d0a323ab2822dccd6d99f",
+    "imported": false,
+    "device_primitive_executed": false,
+    "measured": false
+  },
+  "tooling": {
+    "operational_preflight_commit": "3f6eda32c406fca71aa406ad7f7f0adc613329de",
+    "fixture_generator_commit": "30b043b2b97223cf3305822512d2277da1f635a4",
+    "operational_preflight_tests_passed": 17,
+    "fixture_tests_passed": 16,
+    "ruff_passed": true,
+    "ast_passed": true,
+    "whitespace_passed": true,
+    "independent_audits_passed": true
+  },
+  "installed_schema_fixture": {
+    "path": "data/laguna-s-2.1-xpu-smi-ps-installed-schema-sanitized-20260724.json",
+    "sha256": "f1ed4c4f41999a2f79ce77f8b7fb251d15d5f2d87ac6a62b83a1ddfddfaa40ef",
+    "observer_path": "/usr/bin/xpu-smi",
+    "observer_sha256": "2b5b128edf28b38da8637413fe8bfe3a4a40e8113210ba9ddaed945bd56d826e",
+    "top_level_key": "device_util_by_proc_list",
+    "process_name_semantics": "basename_non_authoritative"
+  },
+  "operational_preflight": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/m8-gather-sharded-operational-preflight-20260724T104851Z/report.json",
+    "sha256": "1c08e4e22fb24931258124f7dee3b31e5d117d715fae239c024e69ffb28b3649",
+    "status": "passed",
+    "accepted_mode": "self_observer_rows",
+    "row_count": 4,
+    "device_ids": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "foreign_processes": 0,
+    "storage": {
+      "source": "/dev/nvme0n1p2",
+      "filesystem": "ext4",
+      "major_minor": "259:2",
+      "nvme_sysfs_verified": true
+    }
+  },
+  "fixture": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/evidence/m8-gather-sharded-fixtures-30b043b2b-20260724T1050Z",
+    "bytes": 214646121,
+    "epochs": 288,
+    "pre_timing_epochs": 256,
+    "post_timing_epochs": 32,
+    "manifest_sha256": "b1bef1cfeb72502074c0408ab73fa8bdf6f30732862410360658284b74161bd0",
+    "analysis_sha256": "04a897553820581f22f6d7ff62d72b08b6494f233caf6398308c667eeab6c8d4",
+    "analysis_status": "passed",
+    "hashes_match_manifest": true,
+    "deterministic_bytes_match": true,
+    "coverage": {
+      "uint16_patterns_present": 65536,
+      "all_65536": true,
+      "all_fp32_edge_classes": true,
+      "all_1024_local_zero_masks": true,
+      "all_slots_independently_active": true,
+      "all_local": true,
+      "all_remote_zero": true,
+      "zero_rows_literal_uint16_zero": true,
+      "local_rows_match_formula": true,
+      "canonical_route_map": true,
+      "ordered_cancellation_witness": true,
+      "bf16_midpoint_witness": true
+    }
+  },
+  "actions_not_performed": [
+    "candidate native import",
+    "Torch XPU import",
+    "XPU tensor allocation",
+    "candidate primitive",
+    "control primitive",
+    "component timing",
+    "component profiler",
+    "model load",
+    "endpoint",
+    "generation",
+    "benchmark",
+    "payload",
+    "network access",
+    "LocalMaxxing submission",
+    "service change",
+    "reboot"
+  ],
+  "next_action": "freeze mutually bound Phase-A and conditional Phase-B packets before one bounded candidate campaign"
+}
