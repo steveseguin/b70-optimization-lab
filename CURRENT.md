@@ -342,6 +342,17 @@ reinterpret it. Preserve the
 and
 [structured summary](data/laguna-s-2.1-shared-gate-up-m8-counter-terminal-negative-20260724.json).
 No model generation, payload, network access, submission, or reboot occurred.
+The next active lane is a materially different exact post-W2 fusion. It keeps
+the incumbent route-parallel W2 unchanged and proposes one strict M=8 kernel
+for the existing `MoeGather -> laguna_m8_scale_add` tail. The current record
+already fuses scale with shared add, so the honest structural target is
+`94 -> 47` launches per 47-layer target cycle. The
+[preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-routed-gather-finalize-fusion-preregistration.md)
+freezes both BF16 rounding boundaries, explicit combined-output ownership,
+fail-closed scope, and a per-card `0.15 ms/cycle` component minimum before any
+endpoint. Only implementation and CPU/static validation are authorized now;
+no XPU primitive, model load, endpoint, generation, payload, network access,
+submission, or reboot is authorized until a separate later packet.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
