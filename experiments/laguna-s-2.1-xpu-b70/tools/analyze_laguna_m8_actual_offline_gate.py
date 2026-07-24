@@ -20,8 +20,8 @@ from typing import Any
 
 FORMAT = "laguna-m8-raw-evidence-v2"
 RECORDER_MARKER = "LAGUNA_M8_RAW_EVIDENCE_V2"
-SCHEMA = "laguna-m8-actual-offline-gate-v6"
-DRIVER_SCHEMA = "laguna-m8-offline-arm-v5"
+SCHEMA = "laguna-m8-actual-offline-gate-v7"
+DRIVER_SCHEMA = "laguna-m8-offline-arm-v6"
 ARMS = ("incumbent-eager", "segmented-eager", "segmented-graph")
 RANKS = range(4)
 MIN_EVENTS_PER_RANK = 4
@@ -29,11 +29,11 @@ COLLECTIVE_COUNT = 97
 GRAPH_COUNTS = {"graphs": 146, "eager_breaks": 145}
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-VLLM_COMMIT = "00ba70bdbf4b5f9bd5714c288b98c54c91637c53"
+VLLM_COMMIT = "e25867aa698f82cbf2fb835e26807078674acebc"
 RPC_DIRS = {
-    "incumbent-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p5-a",
-    "segmented-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p5-b",
-    "segmented-graph": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p5-c",
+    "incumbent-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p6-a",
+    "segmented-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p6-b",
+    "segmented-graph": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p6-c",
 }
 RPC_UUID_SOCKET_PATH_BYTES = 100
 MAX_TOKENS = 32
