@@ -452,7 +452,8 @@ class SchemaOnlyComponentTests(unittest.TestCase):
 
 class TimedLoopStaticTests(unittest.TestCase):
     def test_runtime_xpu_uuid_wrapper_is_exactly_bound(self):
-        expected_uuid = uuid.UUID(c.CARDS[0]["uuid"])
+        physical_uuid = uuid.UUID(c.CARDS[0]["uuid"])
+        torch_uuid = uuid.UUID(bytes=physical_uuid.bytes[::-1])
 
         class _XPUuuid:
             __module__ = "torch._C"
@@ -466,18 +467,18 @@ class TimedLoopStaticTests(unittest.TestCase):
                     return self.text
                 return str(uuid.UUID(bytes=bytes(self.bytes)))
 
-        parsed, raw = runner._parse_runtime_uuid(_XPUuuid(expected_uuid.bytes))
-        self.assertEqual(parsed, expected_uuid)
-        self.assertEqual(raw, expected_uuid.bytes)
+        parsed, raw = runner._parse_runtime_uuid(_XPUuuid(torch_uuid.bytes))
+        self.assertEqual(parsed, torch_uuid)
+        self.assertEqual(raw, torch_uuid.bytes)
         with self.assertRaisesRegex(RuntimeError, "not 16 bytes"):
-            runner._parse_runtime_uuid(_XPUuuid(expected_uuid.bytes[:-1]))
-        invalid_octets = _XPUuuid(expected_uuid.bytes)
+            runner._parse_runtime_uuid(_XPUuuid(torch_uuid.bytes[:-1]))
+        invalid_octets = _XPUuuid(torch_uuid.bytes)
         invalid_octets.bytes[-1] = True
         with self.assertRaisesRegex(RuntimeError, "invalid octet"):
             runner._parse_runtime_uuid(invalid_octets)
         with self.assertRaisesRegex(RuntimeError, "text/bytes disagree"):
             runner._parse_runtime_uuid(
-                _XPUuuid(expected_uuid.bytes, "00000000-0000-0000-0000-000000000000")
+                _XPUuuid(torch_uuid.bytes, "00000000-0000-0000-0000-000000000000")
             )
 
         def wrong_module_init(instance, raw: bytes):
@@ -485,13 +486,13 @@ class TimedLoopStaticTests(unittest.TestCase):
 
         _XPUuuidWrongModule = type("_XPUuuid", (), {"__init__": wrong_module_init})
         with self.assertRaisesRegex(RuntimeError, "malformed"):
-            runner._parse_runtime_uuid(_XPUuuidWrongModule(expected_uuid.bytes))
+            runner._parse_runtime_uuid(_XPUuuidWrongModule(torch_uuid.bytes))
 
         class Probe:
             device = "xpu:0"
 
         class Properties:
-            uuid = _XPUuuid(expected_uuid.bytes)
+            uuid = _XPUuuid(torch_uuid.bytes)
 
         class XPU:
             @staticmethod
@@ -530,10 +531,18 @@ class TimedLoopStaticTests(unittest.TestCase):
             {"ONEAPI_DEVICE_SELECTOR": "level_zero:0", "ZE_AFFINITY_MASK": "0"},
         ):
             binding = runner._runtime_binding(Torch(), card, observed)
-        self.assertEqual(binding["runtime_uuid"], str(expected_uuid))
-        self.assertEqual(binding["runtime_uuid_bytes_hex"], expected_uuid.hex)
+        self.assertEqual(binding["runtime_uuid"], str(physical_uuid))
+        self.assertEqual(binding["runtime_uuid_bytes_hex"], physical_uuid.hex)
+        self.assertEqual(binding["torch_runtime_uuid"], str(torch_uuid))
+        self.assertEqual(binding["torch_runtime_uuid_bytes_hex"], torch_uuid.hex)
+        self.assertEqual(
+            binding["runtime_uuid_mapping"],
+            "xpu_smi_uuid_is_reverse_of_torch_level_zero_bytes",
+        )
 
-        Properties.uuid = _XPUuuid(expected_uuid.bytes[:-1] + b"\x00")
+        Properties.uuid = _XPUuuid(
+            bytes([torch_uuid.bytes[0] ^ 1]) + torch_uuid.bytes[1:]
+        )
         with (
             patch.dict(
                 runner.os.environ,
@@ -645,7 +654,11 @@ class TimedLoopStaticTests(unittest.TestCase):
         self.assertNotIn("'xpu-smi'", source)
         self.assertIn("coordinator.validate_device_preflight", source)
         self.assertIn("torch.xpu.get_device_properties(0)", source)
+        self.assertIn("runtime_uuid_bytes = torch_raw_uuid[::-1]", source)
         self.assertIn('runtime_uuid_text == card["physical"]["uuid"]', source)
+        self.assertIn(
+            "xpu_smi_uuid_is_reverse_of_torch_level_zero_bytes", analyzer_source
+        )
         self.assertIn("runtime-card-binding-checkpoint.json", source)
         for checkpoint_format in (
             "laguna-shared-gate-m8-component-pre-tensor-v2",

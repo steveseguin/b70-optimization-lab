@@ -602,8 +602,10 @@ def _runtime_binding(
     expected = observed_card["card_binding"]
     properties = torch.xpu.get_device_properties(0)
     require(properties is not None, "device properties unavailable")
-    runtime_uuid, raw_uuid = _parse_runtime_uuid(properties.uuid)
-    runtime_uuid_text = str(runtime_uuid).lower()
+    torch_runtime_uuid, torch_raw_uuid = _parse_runtime_uuid(properties.uuid)
+    torch_runtime_uuid_text = str(torch_runtime_uuid).lower()
+    runtime_uuid_bytes = torch_raw_uuid[::-1]
+    runtime_uuid_text = str(uuid.UUID(bytes=runtime_uuid_bytes)).lower()
     require(
         runtime_uuid_text == card["physical"]["uuid"],
         "Torch runtime UUID does not bind to preflight physical card",
@@ -616,7 +618,10 @@ def _runtime_binding(
         "tensor_device": str(probe.device),
         "torch_version": str(torch.__version__),
         "runtime_uuid": runtime_uuid_text,
-        "runtime_uuid_bytes_hex": raw_uuid.hex(),
+        "runtime_uuid_bytes_hex": runtime_uuid_bytes.hex(),
+        "torch_runtime_uuid": torch_runtime_uuid_text,
+        "torch_runtime_uuid_bytes_hex": torch_raw_uuid.hex(),
+        "runtime_uuid_mapping": "xpu_smi_uuid_is_reverse_of_torch_level_zero_bytes",
     }
 
 

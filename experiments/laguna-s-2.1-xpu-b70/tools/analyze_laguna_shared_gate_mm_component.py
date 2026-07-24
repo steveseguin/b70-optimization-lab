@@ -18,6 +18,7 @@ import os
 import statistics
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -991,6 +992,8 @@ def _observed(
         observed["card_binding"] == expected_pre_tensor_binding,
         "observed pre-tensor per-card mapping drift",
     )
+    physical_uuid_bytes = uuid.UUID(physical["uuid"]).bytes
+    torch_runtime_uuid_bytes = physical_uuid_bytes[::-1]
     expected_runtime_binding = {
         **expected_pre_tensor_binding,
         "visible_device_count": 1,
@@ -999,7 +1002,10 @@ def _observed(
         "tensor_device": "xpu:0",
         "torch_version": packet["runtime"]["torch_version"],
         "runtime_uuid": physical["uuid"],
-        "runtime_uuid_bytes_hex": physical["uuid"].replace("-", ""),
+        "runtime_uuid_bytes_hex": physical_uuid_bytes.hex(),
+        "torch_runtime_uuid": str(uuid.UUID(bytes=torch_runtime_uuid_bytes)),
+        "torch_runtime_uuid_bytes_hex": torch_runtime_uuid_bytes.hex(),
+        "runtime_uuid_mapping": ("xpu_smi_uuid_is_reverse_of_torch_level_zero_bytes"),
     }
     runtime_binding = result.get("runtime_card_binding")
     require(
@@ -1148,6 +1154,12 @@ def validate_card(
         "uuid": card["physical"]["uuid"],
         "bdf": card["physical"]["pci_bdf_address"],
         "runtime_uuid": result["runtime_card_binding"]["binding"]["runtime_uuid"],
+        "torch_runtime_uuid": result["runtime_card_binding"]["binding"][
+            "torch_runtime_uuid"
+        ],
+        "torch_runtime_uuid_bytes_hex": result["runtime_card_binding"]["binding"][
+            "torch_runtime_uuid_bytes_hex"
+        ],
         "boot_id": result["observed"]["boot_id"],
         "fixture": analysis["exact"]["pre_fixture"],
         "output": analysis["exact"]["pre_output"],
@@ -1281,6 +1293,7 @@ def _cross_card_invariants(packet: dict[str, Any], cards: list[dict[str, Any]]) 
     require(
         len({x["uuid"] for x in cards})
         == len({x["runtime_uuid"] for x in cards})
+        == len({x["torch_runtime_uuid"] for x in cards})
         == len({x["bdf"] for x in cards})
         == 4,
         "physical/runtime card duplication",
@@ -1288,6 +1301,14 @@ def _cross_card_invariants(packet: dict[str, Any], cards: list[dict[str, Any]]) 
     require(
         all(x["uuid"] == x["runtime_uuid"] for x in cards),
         "Torch runtime UUID differs from frozen physical UUID",
+    )
+    require(
+        all(
+            bytes.fromhex(x["torch_runtime_uuid_bytes_hex"])[::-1].hex()
+            == x["uuid"].replace("-", "")
+            for x in cards
+        ),
+        "Torch/xpu-smi UUID byte-order mapping drift",
     )
     require(
         len({x["boot_id"] for x in cards})
