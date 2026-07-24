@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-23**
+Last reviewed: **2026-07-24**
 
 ## Authority And Update Rule
 
@@ -342,7 +342,7 @@ reinterpret it. Preserve the
 and
 [structured summary](data/laguna-s-2.1-shared-gate-up-m8-counter-terminal-negative-20260724.json).
 No model generation, payload, network access, submission, or reboot occurred.
-The next active lane is a materially different exact post-W2 fusion. It keeps
+The active lane is a materially different exact post-W2 fusion. It keeps
 the incumbent route-parallel W2 unchanged and proposes one strict M=8 kernel
 for the existing `MoeGather -> laguna_m8_scale_add` tail. The current record
 already fuses scale with shared add, so the honest structural target is
@@ -350,9 +350,21 @@ already fuses scale with shared add, so the honest structural target is
 [preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-routed-gather-finalize-fusion-preregistration.md)
 freezes both BF16 rounding boundaries, explicit combined-output ownership,
 fail-closed scope, and a per-card `0.15 ms/cycle` component minimum before any
-endpoint. Only implementation and CPU/static validation are authorized now;
-no XPU primitive, model load, endpoint, generation, payload, network access,
-submission, or reboot is authorized until a separate later packet.
+endpoint. Stage 0 is now frozen at vLLM
+`5519c08c168838b7e0a418499603b907f127cbf9` and XPU kernels
+`2020d1921de1af35356fce85a8a2f7703215612c`. The native/static host-oracle
+suite passed 13/13, the focused vLLM suite passed 22/22, and the expanded
+relevant vLLM suite passed 52 with one explicitly skipped device test. Ruff,
+AST, C++ formatting, whitespace, generic-path/W1/W2 identity checks, and three
+independent read-only audits all passed. No native build, XPU action, model
+load, endpoint, generation, payload, network access, submission, or reboot
+occurred. Preserve the
+[Stage-0 source freeze](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-routed-gather-finalize-stage0-source-freeze.md)
+and
+[structured summary](data/laguna-s-2.1-gather-finalize-stage0-source-freeze-20260724.json).
+The next authorized work is CPU-only native build identity plus construction
+and audit of a separate component packet; no XPU process is authorized until
+that packet is committed.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
