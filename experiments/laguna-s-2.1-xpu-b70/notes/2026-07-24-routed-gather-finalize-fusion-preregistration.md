@@ -99,8 +99,8 @@ The selector may dispatch only when all of the following are true:
   experts, TP4/EP4/DP1/PP1, and one shared expert;
 - contiguous BF16 route rows `[80,3072]`, shared output `[8,3072]`, and final
   output `[8,3072]`, plus contiguous FP32 top-k weights `[8,10]` and int32
-  flattened route map `[80]` (logical `[8,10]`, indexed
-  `token * 10 + slot`);
+  route map `[8,10]` (80 contiguous elements consumed by the incumbent as a
+  flat pointer indexed `token * 10 + slot`);
 - routed scale is exactly `2.5`, there is no routed-output transform, the
   routed output is not already reduced, sequence parallelism and DBO are off,
   and final all-reduce is not skipped;
