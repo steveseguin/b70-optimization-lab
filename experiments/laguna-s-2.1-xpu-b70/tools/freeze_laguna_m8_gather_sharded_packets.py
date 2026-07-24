@@ -256,7 +256,8 @@ def common_from_stage0(certificate_path: Path) -> dict[str, Any]:
         isinstance(source, dict)
         and source.get("path") == _phase_a().SOURCE_IR_IDENTITY["path"]
         and source.get("sha256") == _phase_a().SOURCE_IR_IDENTITY["sha256"]
-        and source.get("device_ir_report_sha256")
+        and isinstance(source.get("device_ir"), dict)
+        and source["device_ir"].get("report_sha256")
         == _phase_a().SOURCE_IR_IDENTITY["device_ir_report_sha256"]
         and source.get("status") == _phase_a().SOURCE_IR_IDENTITY["status"],
         "Stage-0 source/IR identity drift",

@@ -211,6 +211,7 @@ class PacketFreezeTests(unittest.TestCase):
         self.assertNotIn("CorsairExternal", source)
         self.assertNotIn("FROZEN-UUID", source)
         self.assertNotIn("frozen-before", source)
+        self.assertIn('source["device_ir"].get("report_sha256")', source)
 
     def test_write_requires_three_fresh_internal_roots(self) -> None:
         with tempfile.TemporaryDirectory(
