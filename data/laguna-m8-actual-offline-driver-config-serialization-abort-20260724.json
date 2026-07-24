@@ -1,0 +1,54 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "aggregate_evidence_present": true,
+      "driver_json_present": false,
+      "eligible_events_per_rank": [15, 15, 15, 15],
+      "generate_returned": true,
+      "num_cached_tokens_check_passed": true,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "started": true,
+      "status": "failed_closed_after_aggregation"
+    },
+    "segmented-eager": {
+      "started": false
+    },
+    "segmented-graph": {
+      "started": false
+    }
+  },
+  "classification": "driver_evidence_serialization_abort_not_a_benchmark",
+  "correctness_result": null,
+  "date_local": "2026-07-24",
+  "failure": {
+    "exception": "TypeError: Object of type ModelConfig is not JSON serializable",
+    "location": "final driver record json.dumps",
+    "root_cause": "vLLM mutates the caller-provided speculative_config dictionary in place with target ModelConfig and ParallelConfig objects"
+  },
+  "identity": {
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "main_preregistration_commit": "ca9429a99",
+    "main_tooling_commit": "b0174430bc10add179f210c6990516995d852265",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "vllm_commit": "e25867aa698f82cbf2fb835e26807078674acebc"
+  },
+  "network_access": false,
+  "raw_evidence": {
+    "aggregate_schema": "laguna-m8-actual-offline-gate-v7",
+    "file": "incumbent-eager/evidence/evidence.json",
+    "raw_format": "laguna-m8-raw-evidence-v2",
+    "sha256": "32f7f2e461572dd4037c1ad55470f26d8f3c4a9683197d7df81b30d37fd13cc5"
+  },
+  "returned_token_ids_persisted": false,
+  "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-b0174430b-20260724T174418Z",
+  "sealed": true,
+  "submission": false,
+  "throughput_result": null,
+  "usb_used": false
+}
