@@ -252,11 +252,16 @@ def _runtime_files(packet: dict[str, Any]) -> dict[str, Any]:
     files: dict[str, dict[str, str]] = {}
     for name, record in runtime["files"].items():
         path = Path(record["path"])
-        _regular(path, "runtime " + name)
+        require(path.is_file(), "runtime identity file is absent: " + name)
+        resolved = path.resolve(strict=True)
+        require(
+            resolved.is_file() and not resolved.is_symlink(),
+            "runtime identity target is not a regular file: " + name,
+        )
         actual = {
             "path": str(path),
-            "resolved_path": str(path.resolve(strict=True)),
-            "sha256": sha(path),
+            "resolved_path": str(resolved),
+            "sha256": sha(resolved),
         }
         require(actual == record, "runtime file identity drift: " + name)
         files[name] = actual

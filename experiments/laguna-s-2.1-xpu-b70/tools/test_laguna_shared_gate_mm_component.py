@@ -8,12 +8,14 @@ import copy
 import hashlib
 import json
 import pathlib
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import analyze_laguna_shared_gate_mm_component as analyzer
 import gate_laguna_shared_gate_mm_component as c
+import run_laguna_shared_gate_mm_component as runner
 
 
 ROOT = pathlib.Path(__file__).parent
@@ -448,6 +450,39 @@ class SchemaOnlyComponentTests(unittest.TestCase):
 
 
 class TimedLoopStaticTests(unittest.TestCase):
+    def test_runtime_identity_accepts_only_the_frozen_symlink_target(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            target = root / "runtime-v1.so"
+            target.write_bytes(b"frozen-runtime-v1")
+            link = root / "runtime.so.1"
+            link.symlink_to(target.name)
+            record = {
+                "path": str(link),
+                "resolved_path": str(target.resolve(strict=True)),
+                "sha256": runner.sha(target),
+            }
+            packet = {
+                "runtime": {
+                    "python_executable": sys.executable,
+                    "python_version": sys.version,
+                    "files": {"level_zero_driver": record},
+                }
+            }
+            self.assertEqual(
+                runner._runtime_files(packet)["files"]["level_zero_driver"],
+                record,
+            )
+            with self.assertRaisesRegex(RuntimeError, "required regular file missing"):
+                runner._regular(link, "sealed evidence")
+
+            replacement = root / "runtime-v2.so"
+            replacement.write_bytes(b"changed-runtime-v2")
+            link.unlink()
+            link.symlink_to(replacement.name)
+            with self.assertRaisesRegex(RuntimeError, "runtime file identity drift"):
+                runner._runtime_files(packet)
+
     def test_inner_loop_and_its_callees_are_allocation_and_sync_free(self):
         tree = ast.parse((ROOT / "run_laguna_shared_gate_mm_component.py").read_text())
         functions = {
