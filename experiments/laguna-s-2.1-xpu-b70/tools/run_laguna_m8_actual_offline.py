@@ -35,12 +35,12 @@ TARGET_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/int4")
 DRAFT_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4")
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-VLLM_COMMIT = "5c6c108bf152f985e126db9d77897ae442b75048"
+VLLM_COMMIT = "61e483e80a9bb0c4eaf8c6fb31f3165668cbe71c"
 RPC_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp")
 RPC_DIRS = {
-    "incumbent-eager": RPC_ROOT / "m8p2-a",
-    "segmented-eager": RPC_ROOT / "m8p2-b",
-    "segmented-graph": RPC_ROOT / "m8p2-c",
+    "incumbent-eager": RPC_ROOT / "m8p3-a",
+    "segmented-eager": RPC_ROOT / "m8p3-b",
+    "segmented-graph": RPC_ROOT / "m8p3-c",
 }
 ZMQ_UUID_FILENAME_BYTES = 36
 ZMQ_CONSERVATIVE_PATH_BYTES = 100
@@ -95,6 +95,21 @@ def parse_args() -> argparse.Namespace:
 
 def rpc_socket_path_bytes(path: Path) -> int:
     return len(os.fsencode(str(path))) + 1 + ZMQ_UUID_FILENAME_BYTES
+
+
+def execution_config(arm: str) -> tuple[bool, dict[str, Any] | None]:
+    graph = arm == "segmented-graph"
+    compilation_config = (
+        {
+            "mode": "NONE",
+            "cudagraph_mode": "PIECEWISE",
+            "cudagraph_capture_sizes": [8],
+            "max_cudagraph_capture_size": 8,
+        }
+        if graph
+        else None
+    )
+    return not graph, compilation_config
 
 
 def require_rpc_dir(args: argparse.Namespace) -> None:
@@ -268,12 +283,7 @@ def main() -> int:
 
     from vllm import LLM, SamplingParams
 
-    compilation_config = {
-        "mode": "NONE",
-        "cudagraph_mode": "PIECEWISE" if args.arm == "segmented-graph" else "NONE",
-        "cudagraph_capture_sizes": [8],
-        "max_cudagraph_capture_size": 8,
-    }
+    enforce_eager, compilation_config = execution_config(args.arm)
     speculative_config = {
         "method": "dflash",
         "model": str(args.draft_model),
@@ -291,7 +301,7 @@ def main() -> int:
         "dtype": "bfloat16",
         "enable_expert_parallel": True,
         "enable_prefix_caching": False,
-        "enforce_eager": False,
+        "enforce_eager": enforce_eager,
         "generation_config": "vllm",
         "gpu_memory_utilization": 0.90,
         "kv_cache_dtype": "bfloat16",
@@ -306,11 +316,13 @@ def main() -> int:
         "tokenizer_revision": args.revision,
         "trust_remote_code": True,
     }
-    llm = LLM(
+    llm_kwargs: dict[str, Any] = {
         **engine_config,
-        compilation_config=compilation_config,
-        speculative_config=speculative_config,
-    )
+        "speculative_config": speculative_config,
+    }
+    if compilation_config is not None:
+        llm_kwargs["compilation_config"] = compilation_config
+    llm = LLM(**llm_kwargs)
     params = SamplingParams(
         temperature=0.0,
         top_p=1.0,
@@ -331,7 +343,7 @@ def main() -> int:
     prompt_token_ids = list(generated[0].prompt_token_ids)
     aggregate_rank_local_evidence(args)
     record = {
-        "schema": "laguna-m8-offline-arm-v2",
+        "schema": "laguna-m8-offline-arm-v3",
         "arm": args.arm,
         "absent_environment": list(ABSENT_ENVIRONMENT),
         "offline_only": True,

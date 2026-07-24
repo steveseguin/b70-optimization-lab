@@ -42,6 +42,24 @@ def expected_boundaries() -> list[str]:
 
 
 class ActualOfflineAnalyzerTest(unittest.TestCase):
+    def test_eager_arms_match_record_and_graph_arm_is_explicit(self) -> None:
+        for arm in ("incumbent-eager", "segmented-eager"):
+            with self.subTest(arm=arm):
+                enforce_eager, compilation = DRIVER.execution_config(arm)
+                self.assertTrue(enforce_eager)
+                self.assertIsNone(compilation)
+        enforce_eager, compilation = DRIVER.execution_config("segmented-graph")
+        self.assertFalse(enforce_eager)
+        self.assertEqual(
+            compilation,
+            {
+                "mode": "NONE",
+                "cudagraph_mode": "PIECEWISE",
+                "cudagraph_capture_sizes": [8],
+                "max_cudagraph_capture_size": 8,
+            },
+        )
+
     def test_frozen_rpc_bases_leave_conservative_socket_headroom(self) -> None:
         self.assertEqual(
             set(DRIVER.RPC_DIRS),

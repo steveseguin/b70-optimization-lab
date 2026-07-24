@@ -20,8 +20,8 @@ from typing import Any
 
 FORMAT = "laguna-m8-raw-evidence-v1"
 RECORDER_MARKER = "LAGUNA_M8_RAW_EVIDENCE_V1"
-SCHEMA = "laguna-m8-actual-offline-gate-v3"
-DRIVER_SCHEMA = "laguna-m8-offline-arm-v2"
+SCHEMA = "laguna-m8-actual-offline-gate-v4"
+DRIVER_SCHEMA = "laguna-m8-offline-arm-v3"
 ARMS = ("incumbent-eager", "segmented-eager", "segmented-graph")
 RANKS = range(4)
 MIN_EVENTS_PER_RANK = 4
@@ -29,11 +29,11 @@ COLLECTIVE_COUNT = 97
 GRAPH_COUNTS = {"graphs": 146, "eager_breaks": 145}
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-VLLM_COMMIT = "5c6c108bf152f985e126db9d77897ae442b75048"
+VLLM_COMMIT = "61e483e80a9bb0c4eaf8c6fb31f3165668cbe71c"
 RPC_DIRS = {
-    "incumbent-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p2-a",
-    "segmented-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p2-b",
-    "segmented-graph": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p2-c",
+    "incumbent-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p3-a",
+    "segmented-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p3-b",
+    "segmented-graph": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p3-c",
 }
 RPC_UUID_SOCKET_PATH_BYTES = 100
 MAX_TOKENS = 32
@@ -797,12 +797,16 @@ def _validate_driver(
     if set(driver) != required_fields:
         die(f"{arm}: driver fields drift")
     graph = arm == "segmented-graph"
-    expected_compilation = {
-        "cudagraph_capture_sizes": [8],
-        "cudagraph_mode": "PIECEWISE" if graph else "NONE",
-        "max_cudagraph_capture_size": 8,
-        "mode": "NONE",
-    }
+    expected_compilation = (
+        {
+            "cudagraph_capture_sizes": [8],
+            "cudagraph_mode": "PIECEWISE",
+            "max_cudagraph_capture_size": 8,
+            "mode": "NONE",
+        }
+        if graph
+        else None
+    )
     expected_speculative = {
         "draft_sample_method": "greedy",
         "method": "dflash",
@@ -820,7 +824,7 @@ def _validate_driver(
         "dtype": "bfloat16",
         "enable_expert_parallel": True,
         "enable_prefix_caching": False,
-        "enforce_eager": False,
+        "enforce_eager": not graph,
         "generation_config": "vllm",
         "gpu_memory_utilization": 0.90,
         "kv_cache_dtype": "bfloat16",
