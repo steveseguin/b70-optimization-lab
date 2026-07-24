@@ -285,22 +285,28 @@ gate and up projections. It explicitly forbids the inexact merged gate/up
 forms and requires at least `0.20 ms` median saving on every card before
 counters. Resume from the
 [gate+up preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-native-m8-mm-preregistration.md).
-The fail-closed pair implementation is now sealed at vLLM
-`144f77608b6596677a9f6653b63b315e573b38b6`; XPU kernels remain
-`c59aaadbbfd350c2b5f4ad663e247c2811ae3181`. Corrected CPU-only validation is
-145 passed with three explicitly skipped device tests, and independent
-read-only audits found no remaining implementation blocker. Three small XPU
+The pair implementation's future-execution identity is now vLLM
+`503f7784cf9d1704109b1e4650427fb4f417d604`; XPU kernels remain
+`c59aaadbbfd350c2b5f4ad663e247c2811ae3181`. Stage-0 integration found that
+the prior `144f77608b6596677a9f6653b63b315e573b38b6` seal could bypass its
+runtime validator when exact-attention or the pair selector was disabled
+after construction, and cached selectors could hide raw drift. The corrected
+source forces any still-bound verifier-M8 pair into the fail-closed contract
+and validates every runtime selector as a raw literal. Final CPU-only
+validation is 168 passed with three explicitly skipped device tests; Ruff,
+diff checks, and two independent read-only audits passed. Three small XPU
 primitive tests had run unintentionally before the explicit opt-in guard was
 added. They loaded no model and produced no timing, but violated the frozen
 Stage-0 ordering and are quarantined rather than used as evidence. Preserve
 the
 [implementation/incident note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-implementation-and-pytest-incident.md)
-and use the unchanged
-[post-incident reaffirmation](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-post-incident-reaffirmation.md)
-as the authority chain. The immediate next action is pair-specific Stage-0
-tool construction and independent audit. No further XPU command is authorized
-until a separate tracked packet freezes that toolchain and one local-NVMe
-root.
+and the historical
+[post-incident reaffirmation](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-post-incident-reaffirmation.md).
+The future-execution authority is the
+[runtime-guard fix and unchanged-gate reaffirmation](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-runtime-guard-fix-and-reaffirmation.md).
+The immediate next action is pair-specific Stage-0 tool construction and
+independent audit. No further XPU command is authorized until a separate
+tracked packet freezes that toolchain and one local-NVMe root.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under

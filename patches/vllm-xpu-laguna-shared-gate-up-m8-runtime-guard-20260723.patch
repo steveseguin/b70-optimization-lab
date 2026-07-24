@@ -1,0 +1,367 @@
+From 503f7784cf9d1704109b1e4650427fb4f417d604 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 24 Jul 2026 00:24:55 -0400
+Subject: [PATCH] xpu: fail closed on Laguna pair runtime drift
+
+---
+ tests/models/test_laguna_shared_gate_mm.py | 216 +++++++++++++++++++++
+ vllm/model_executor/layers/linear.py       |  68 ++++---
+ 2 files changed, 262 insertions(+), 22 deletions(-)
+
+diff --git a/tests/models/test_laguna_shared_gate_mm.py b/tests/models/test_laguna_shared_gate_mm.py
+index 02891f13f..1f22ab8ea 100644
+--- a/tests/models/test_laguna_shared_gate_mm.py
++++ b/tests/models/test_laguna_shared_gate_mm.py
+@@ -1441,6 +1441,222 @@ def test_shared_gate_up_mm_prefill_stays_on_incumbent_bmm(
+     assert bmm_calls == 1
+ 
+ 
++@pytest.mark.parametrize(
++    ("environment", "value", "exact_rows", "marker", "expected"),
++    [
++        (
++            "VLLM_XPU_EXACT_SPEC_ATTN",
++            "0",
++            True,
++            True,
++            "exact attention/MoE/W1-route-W2 selectors",
++        ),
++        (
++            "VLLM_XPU_EXACT_SPEC_ATTN",
++            None,
++            True,
++            True,
++            "exact attention/MoE/W1-route-W2 selectors",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE",
++            "0",
++            True,
++            True,
++            "exact attention/MoE/W1-route-W2 selectors",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2",
++            "0",
++            True,
++            True,
++            "exact attention/MoE/W1-route-W2 selectors",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM",
++            "0",
++            True,
++            True,
++            "shared gate/up MM selector is not literal 1",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM",
++            None,
++            True,
++            True,
++            "shared gate/up MM selector is not literal 1",
++        ),
++        (
++            "VLLM_XPU_ENABLE_XPU_GRAPH",
++            "1",
++            True,
++            True,
++            "graph or AOT identity is not explicitly disabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
++            "1",
++            True,
++            True,
++            "graph or AOT identity is not explicitly disabled",
++        ),
++        (
++            "XPU_GRAPH",
++            "1",
++            True,
++            True,
++            "graph or AOT identity is not explicitly disabled",
++        ),
++        (
++            "VLLM_USE_AOT_COMPILE",
++            "1",
++            True,
++            True,
++            "graph or AOT identity is not explicitly disabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE",
++            "0",
++            True,
++            True,
++            "Laguna M8 route interleave is not explicitly enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE",
++            "0",
++            True,
++            True,
++            "shared-elementwise record selector is not enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE",
++            "0",
++            True,
++            True,
++            "QKNorm/RoPE record selector is not enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM",
++            "1",
++            True,
++            True,
++            "known-negative BF16 attention MM selector is enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK",
++            "1",
++            True,
++            True,
++            "failed BF16 router selector is enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION",
++            "1",
++            True,
++            True,
++            "fused M8 transaction selector is enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO",
++            "1",
++            True,
++            True,
++            "remote-route zero selector is enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_W1_N_TILE",
++            "128",
++            True,
++            True,
++            "routed-W1 tile is not explicitly N64",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM",
++            "1",
++            True,
++            True,
++            "rejected shared-expert auxiliary stream is enabled",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM",
++            "1",
++            True,
++            True,
++            "standalone shared-gate MM selector is not literal 0",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM",
++            "1",
++            True,
++            True,
++            "shared-down MM selector is not literal 0",
++        ),
++        (
++            None,
++            None,
++            False,
++            True,
++            "shared gate/up exact-target row marker is not true",
++        ),
++        (
++            "VLLM_XPU_EXACT_SPEC_ATTN",
++            "0",
++            True,
++            False,
++            "shared gate/up marker is not true",
++        ),
++    ],
++)
++def test_bound_shared_gate_up_mm_runtime_drift_reaches_validator(
++    monkeypatch: pytest.MonkeyPatch,
++    environment: str | None,
++    value: str | None,
++    exact_rows: bool,
++    marker: bool,
++    expected: str,
++) -> None:
++    class ForbiddenMethod(linear.UnquantizedLinearMethod):
++        def apply(self, *_args, **_kwargs):
++            raise AssertionError("runtime drift reached generic linear apply")
++
++        def apply_batched_m1(self, *_args, **_kwargs):
++            raise AssertionError("runtime drift reached incumbent BMM")
++
++    assert not envs._is_envs_cache_enabled()
++    _set_gate_up_environment(monkeypatch)
++    envs.enable_envs_cache()
++    try:
++        if environment is not None:
++            if value is None:
++                monkeypatch.delenv(environment)
++            else:
++                monkeypatch.setenv(environment, value)
++        monkeypatch.setattr(linear.current_platform, "is_xpu", lambda: True)
++        monkeypatch.setattr(
++            linear,
++            "_xpu_is_exact_decode_or_verifier_rows",
++            lambda _: True,
++        )
++        gate, _ = _make_gate_up_pair(
++            torch.zeros(256, 3072, dtype=torch.bfloat16),
++            torch.zeros(256, 3072, dtype=torch.bfloat16),
++        )
++        gate.bias = None
++        gate.skip_bias_add = False
++        gate.quant_method = ForbiddenMethod()
++        gate.gather_output = False
++        gate.tp_size = 1
++        gate.return_bias = False
++        gate.xpu_exact_spec_rows = exact_rows
++        gate.xpu_laguna_m8_shared_gate_up_mm = marker
++        rows = torch.zeros(8, 3072, dtype=torch.bfloat16)
++
++        with pytest.raises(RuntimeError, match=expected):
++            linear.ColumnParallelLinear.forward(gate, rows)
++    finally:
++        envs.disable_envs_cache()
++
++
+ @pytest.mark.skipif(
+     not _RUN_XPU_DEVICE_TESTS or not torch.xpu.is_available(),
+     reason="explicitly authorized XPU device tests are required",
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index a79be9015..5d4492e93 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -380,12 +380,10 @@ def _xpu_laguna_m8_shared_gate_up_mm_requested(
+     layer: "LinearBase",
+     rows: torch.Tensor,
+ ) -> bool:
+-    """Whether this call is one guarded shared gate/up M=8 treatment call."""
++    """Whether a bound pair call must enter the fail-closed M=8 contract."""
+     return bool(
+-        envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM
+-        and rows.ndim == 2
++        rows.ndim == 2
+         and rows.shape[0] == 8
+-        and _xpu_is_exact_decode_or_verifier_rows(rows.shape[0])
+         and (
+             getattr(layer, "xpu_laguna_m8_shared_gate_up_mm", False)
+             or getattr(
+@@ -395,6 +393,7 @@ def _xpu_laguna_m8_shared_gate_up_mm_requested(
+             )
+             is not None
+         )
++        and _xpu_is_exact_decode_or_verifier_rows(rows.shape[0])
+     )
+ 
+ 
+@@ -406,14 +405,14 @@ def _xpu_laguna_m8_shared_gate_up_runtime_violations() -> list[str]:
+             "shared gate/up MM selector is not literal 1",
+         ),
+         (
+-            envs.VLLM_XPU_EXACT_SPEC_ATTN
+-            and envs.VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE
+-            and envs.VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2,
++            os.environ.get("VLLM_XPU_EXACT_SPEC_ATTN") == "1"
++            and os.environ.get("VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE") == "1"
++            and os.environ.get("VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2") == "1",
+             "exact attention/MoE/W1-route-W2 selectors are not all enabled",
+         ),
+         (
+-            not envs.VLLM_XPU_ENABLE_XPU_GRAPH
+-            and not envs.VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH
++            os.environ.get("VLLM_XPU_ENABLE_XPU_GRAPH") == "0"
++            and os.environ.get("VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH") == "0"
+             and os.environ.get("XPU_GRAPH") == "0"
+             and os.environ.get("VLLM_USE_AOT_COMPILE") == "0",
+             "graph or AOT identity is not explicitly disabled",
+@@ -423,27 +422,27 @@ def _xpu_laguna_m8_shared_gate_up_runtime_violations() -> list[str]:
+             "Laguna M8 route interleave is not explicitly enabled",
+         ),
+         (
+-            envs.VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE,
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE") == "1",
+             "shared-elementwise record selector is not enabled",
+         ),
+         (
+-            envs.VLLM_XPU_LAGUNA_M8_QKNORM_ROPE,
++            os.environ.get("VLLM_XPU_LAGUNA_M8_QKNORM_ROPE") == "1",
+             "QKNorm/RoPE record selector is not enabled",
+         ),
+         (
+-            not envs.VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM,
++            os.environ.get("VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM") == "0",
+             "known-negative BF16 attention MM selector is enabled",
+         ),
+         (
+-            not envs.VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK,
++            os.environ.get("VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK") == "0",
+             "failed BF16 router selector is enabled",
+         ),
+         (
+-            not envs.VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION,
++            os.environ.get("VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION") == "0",
+             "fused M8 transaction selector is enabled",
+         ),
+         (
+-            not envs.VLLM_XPU_LAGUNA_M8_REMOTE_ZERO,
++            os.environ.get("VLLM_XPU_LAGUNA_M8_REMOTE_ZERO") == "0",
+             "remote-route zero selector is enabled",
+         ),
+         (
+@@ -1321,13 +1320,38 @@ class ColumnParallelLinear(LinearBase):
+     ) -> torch.Tensor | tuple[torch.Tensor, Parameter | None]:
+         bias = self.bias if not self.skip_bias_add else None
+ 
+-        exact_spec_rows = (
+-            current_platform.is_xpu()
+-            and os.environ.get("VLLM_XPU_EXACT_SPEC_ATTN") == "1"
+-            and getattr(self, "xpu_exact_spec_rows", False)
+-            and input_.ndim == 2
+-            and 1 <= input_.shape[0] <= 512
+-        )
++        xpu_platform = current_platform.is_xpu()
++        if xpu_platform:
++            exact_spec_enabled = (
++                os.environ.get("VLLM_XPU_EXACT_SPEC_ATTN") == "1"
++            )
++            exact_target_rows = getattr(self, "xpu_exact_spec_rows", False)
++            bound_gate_up_rescue = bool(
++                not (exact_spec_enabled and exact_target_rows)
++                and input_.ndim == 2
++                and input_.shape[0] == 8
++                and (
++                    getattr(self, "xpu_laguna_m8_shared_gate_up_mm", False)
++                    or getattr(
++                        self,
++                        "_xpu_laguna_m8_shared_gate_up_scope",
++                        None,
++                    )
++                    is not None
++                )
++                and _xpu_is_exact_decode_or_verifier_rows(input_.shape[0])
++            )
++            exact_spec_rows = (
++                (
++                    exact_spec_enabled
++                    and exact_target_rows
++                    and input_.ndim == 2
++                    and 1 <= input_.shape[0] <= 512
++                )
++                or bound_gate_up_rescue
++            )
++        else:
++            exact_spec_rows = False
+         if exact_spec_rows:
+             # QKV and dense-MLP column projections also use M-dependent INT4
+             # kernels. In particular, K/V from accepted speculative rows are
+-- 
+2.43.0
+
