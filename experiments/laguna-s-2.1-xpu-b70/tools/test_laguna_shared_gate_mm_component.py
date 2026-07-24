@@ -11,6 +11,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+import uuid
 from unittest.mock import patch
 
 import analyze_laguna_shared_gate_mm_component as analyzer
@@ -450,6 +451,103 @@ class SchemaOnlyComponentTests(unittest.TestCase):
 
 
 class TimedLoopStaticTests(unittest.TestCase):
+    def test_runtime_xpu_uuid_wrapper_is_exactly_bound(self):
+        expected_uuid = uuid.UUID(c.CARDS[0]["uuid"])
+
+        class _XPUuuid:
+            __module__ = "torch._C"
+
+            def __init__(self, raw: bytes, text: str | None = None):
+                self.bytes = list(raw)
+                self.text = text
+
+            def __str__(self):
+                if self.text is not None:
+                    return self.text
+                return str(uuid.UUID(bytes=bytes(self.bytes)))
+
+        parsed, raw = runner._parse_runtime_uuid(_XPUuuid(expected_uuid.bytes))
+        self.assertEqual(parsed, expected_uuid)
+        self.assertEqual(raw, expected_uuid.bytes)
+        with self.assertRaisesRegex(RuntimeError, "not 16 bytes"):
+            runner._parse_runtime_uuid(_XPUuuid(expected_uuid.bytes[:-1]))
+        invalid_octets = _XPUuuid(expected_uuid.bytes)
+        invalid_octets.bytes[-1] = True
+        with self.assertRaisesRegex(RuntimeError, "invalid octet"):
+            runner._parse_runtime_uuid(invalid_octets)
+        with self.assertRaisesRegex(RuntimeError, "text/bytes disagree"):
+            runner._parse_runtime_uuid(
+                _XPUuuid(expected_uuid.bytes, "00000000-0000-0000-0000-000000000000")
+            )
+
+        def wrong_module_init(instance, raw: bytes):
+            instance.bytes = list(raw)
+
+        _XPUuuidWrongModule = type("_XPUuuid", (), {"__init__": wrong_module_init})
+        with self.assertRaisesRegex(RuntimeError, "malformed"):
+            runner._parse_runtime_uuid(_XPUuuidWrongModule(expected_uuid.bytes))
+
+        class Probe:
+            device = "xpu:0"
+
+        class Properties:
+            uuid = _XPUuuid(expected_uuid.bytes)
+
+        class XPU:
+            @staticmethod
+            def is_available():
+                return True
+
+            @staticmethod
+            def device_count():
+                return 1
+
+            @staticmethod
+            def current_device():
+                return 0
+
+            @staticmethod
+            def get_device_name(_index):
+                return c.stage0.EXPECTED_DEVICE_NAME
+
+            @staticmethod
+            def get_device_properties(_index):
+                return Properties()
+
+        class Torch:
+            xpu = XPU()
+            __version__ = c.stage0.EXPECTED_RUNTIME_OBSERVED_IDENTITY["torch_version"]
+
+            @staticmethod
+            def empty(_shape, *, device):
+                self.assertEqual(device, "xpu")
+                return Probe()
+
+        card = {"rank": 0, "physical": dict(c.CARDS[0])}
+        observed = {"card_binding": {"sealed_preflight": True}}
+        with patch.dict(
+            runner.os.environ,
+            {"ONEAPI_DEVICE_SELECTOR": "level_zero:0", "ZE_AFFINITY_MASK": "0"},
+        ):
+            binding = runner._runtime_binding(Torch(), card, observed)
+        self.assertEqual(binding["runtime_uuid"], str(expected_uuid))
+        self.assertEqual(binding["runtime_uuid_bytes_hex"], expected_uuid.hex)
+
+        Properties.uuid = _XPUuuid(expected_uuid.bytes[:-1] + b"\x00")
+        with (
+            patch.dict(
+                runner.os.environ,
+                {
+                    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+                    "ZE_AFFINITY_MASK": "0",
+                },
+            ),
+            self.assertRaisesRegex(
+                RuntimeError, "does not bind to preflight physical card"
+            ),
+        ):
+            runner._runtime_binding(Torch(), card, observed)
+
     def test_runtime_identity_accepts_only_the_frozen_symlink_target(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)

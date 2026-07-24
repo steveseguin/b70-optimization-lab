@@ -545,6 +545,42 @@ def _mkdir_runtime(root: Path) -> None:
         os.close(root_fd)
 
 
+def _parse_runtime_uuid(raw_uuid_value: Any) -> tuple[uuid.UUID, bytes]:
+    try:
+        if isinstance(raw_uuid_value, str):
+            runtime_uuid = uuid.UUID(raw_uuid_value)
+            raw_uuid = runtime_uuid.bytes
+        elif (
+            type(raw_uuid_value).__module__ == "torch._C"
+            and type(raw_uuid_value).__name__ == "_XPUuuid"
+        ):
+            octets = raw_uuid_value.bytes
+            require(
+                type(octets) is list,
+                "Torch runtime XPU UUID bytes view is not a list",
+            )
+            require(len(octets) == 16, "runtime XPU UUID is not 16 bytes")
+            require(
+                all(type(value) is int and 0 <= value <= 255 for value in octets),
+                "Torch runtime XPU UUID contains an invalid octet",
+            )
+            raw_uuid = bytes(octets)
+            runtime_uuid = uuid.UUID(bytes=raw_uuid)
+            require(
+                str(raw_uuid_value).lower() == str(runtime_uuid).lower(),
+                "Torch runtime XPU UUID text/bytes disagree",
+            )
+        elif isinstance(raw_uuid_value, (bytes, bytearray, memoryview)):
+            raw_uuid = bytes(raw_uuid_value)
+            require(len(raw_uuid) == 16, "runtime XPU UUID is not 16 bytes")
+            runtime_uuid = uuid.UUID(bytes=raw_uuid)
+        else:
+            raise TypeError("unsupported runtime XPU UUID type")
+    except (TypeError, ValueError, AttributeError) as error:
+        raise RuntimeError("runtime XPU UUID is malformed") from error
+    return runtime_uuid, raw_uuid
+
+
 def _runtime_binding(
     torch: Any, card: dict[str, Any], observed_card: dict[str, Any]
 ) -> dict[str, Any]:
@@ -566,17 +602,7 @@ def _runtime_binding(
     expected = observed_card["card_binding"]
     properties = torch.xpu.get_device_properties(0)
     require(properties is not None, "device properties unavailable")
-    raw_uuid_value = properties.uuid
-    try:
-        if isinstance(raw_uuid_value, str):
-            runtime_uuid = uuid.UUID(raw_uuid_value)
-            raw_uuid = runtime_uuid.bytes
-        else:
-            raw_uuid = bytes(raw_uuid_value)
-            require(len(raw_uuid) == 16, "runtime XPU UUID is not 16 bytes")
-            runtime_uuid = uuid.UUID(bytes=raw_uuid)
-    except (TypeError, ValueError, AttributeError) as error:
-        raise RuntimeError("runtime XPU UUID is malformed") from error
+    runtime_uuid, raw_uuid = _parse_runtime_uuid(properties.uuid)
     runtime_uuid_text = str(runtime_uuid).lower()
     require(
         runtime_uuid_text == card["physical"]["uuid"],
