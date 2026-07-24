@@ -415,8 +415,33 @@ mutually bound Phase-A and conditional Phase-B packets before any
 candidate/native import or device action.
 Preserve the
 [source/build/IR checkpoint](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-source-build-ir-checkpoint.md).
-No XPU action, model load, or generation has occurred for this lane. The
-approved record remains unchanged.
+The later mutually bound packet pair passed separate validation, but its sole
+Phase-A execution was terminated by the outer execution wrapper during the
+65-second live-idle preflight. The consumed marker proves no campaign root,
+candidate import, tensor allocation, model load, or generation occurred. Its
+authorization was no-retry, so the sharded-gather lane is terminal and has no
+correctness or speed result. Preserve the
+[terminal preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-preflight-aborted.md)
+and
+[structured result](data/laguna-m8-gather-sharded-preflight-aborted-20260724.json).
+
+The active work is now an exact runtime-command-graph lane rooted directly at
+the approved record vLLM commit. The default-off target-only M=8 selector is
+committed at vLLM `e09f34a008c31cb4c691697215a6eff3aa2eb5be`: it disables
+compiler/AOT lowering, keeps DFlash and all non-M8 target calls eager, pins the
+graph output, and rejects replay-time tensor identity drift. The direct
+collective component probe recorded 97 all-gathers plus one final all-reduce.
+Both first samples passed every gathered and fixed-rank BF16 sum boundary, but
+all four ranks failed raw equality at the final all-reduce on changing-input
+sample 2. Direct collective capture is terminal and will not be rerun.
+Preserve the
+[negative result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-xccl-direct-runtime-graph-negative.md)
+and
+[structured result](data/laguna-m8-xccl-direct-runtime-graph-negative-20260724.json).
+The only open graph form keeps all 98 collectives eager in persistent buffers
+and records the unchanged noncollective kernels between them. It must pass
+four-card changing-input raw-byte parity and trace/timing gates before any
+model endpoint. The approved record remains unchanged.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
