@@ -430,7 +430,8 @@ the approved record vLLM commit. The default-off target-only M=8 selector is
 committed at vLLM `e09f34a008c31cb4c691697215a6eff3aa2eb5be`: it disables
 compiler/AOT lowering, keeps DFlash and all non-M8 target calls eager, pins the
 graph output, and rejects replay-time tensor identity drift. The direct
-collective component probe recorded 97 all-gathers plus one final all-reduce.
+collective component probe recorded its preregistered synthetic pattern of 97
+all-gathers plus one final all-reduce.
 Both first samples passed every gathered and fixed-rank BF16 sum boundary, but
 all four ranks failed raw equality at the final all-reduce on changing-input
 sample 2. Direct collective capture is terminal and will not be rerun.
@@ -438,7 +439,12 @@ Preserve the
 [negative result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-xccl-direct-runtime-graph-negative.md)
 and
 [structured result](data/laguna-m8-xccl-direct-runtime-graph-negative-20260724.json).
-The only open graph form keeps all 98 collectives eager in persistent buffers
+Subsequent exact-source review corrected the real target-model topology: one
+embedding BF16 all-reduce first, followed by 96 deterministic BF16
+all-gathers (48 attention O, one layer-0 dense MLP down, and 47 MoE combines).
+The compact FP32 logits all-gather occurs after the model forward context and
+is outside this graph lane. The segmented source checkpoint is vLLM
+`0964fe3d1`; it keeps all 97 in-model collectives eager in persistent buffers
 and records the unchanged noncollective kernels between them. It must pass
 four-card changing-input raw-byte parity and trace/timing gates before any
 model endpoint. The approved record remains unchanged.
