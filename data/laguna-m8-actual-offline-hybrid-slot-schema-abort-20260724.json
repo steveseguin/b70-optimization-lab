@@ -1,0 +1,77 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tokens_per_second": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "analysis_json_created": false,
+      "driver_json_created": false,
+      "evidence_json_created": false,
+      "generate_calls": 1,
+      "llm_generate_returned": true,
+      "num_cached_tokens_check": "passed_exact_zero",
+      "returned_completion_status": "not_durably_captured_or_validated",
+      "status": "post_generate_low_level_evidence_validation_failed"
+    },
+    "segmented-eager": {
+      "generate_calls": 0,
+      "status": "not_run"
+    },
+    "segmented-graph": {
+      "generate_calls": 0,
+      "status": "not_run"
+    }
+  },
+  "classification": "post_generate_instrumentation_abort_on_invalid_single_slot_schema",
+  "compatibility_diagnostic": {
+    "all_rank_event_counts": 15,
+    "normalized_digest": "b3b1a48290dd45ee3fe7077cc17a18c47e9458279e69bcf5cf54d359a8b2d7fe",
+    "status": "read_only_validation_after_removing_only_false_scalar_slot_assertion; not a gate pass"
+  },
+  "failure": {
+    "exception": "ValueError",
+    "message": "attention slot mapping differs from logical key",
+    "reason": "v1 schema reduced hybrid per-layer KV-cache slot routing to the first mapping and required all attention layers to equal it",
+    "stage": "incumbent-eager post-generate low-level recorder aggregation"
+  },
+  "format": "laguna-m8-actual-offline-component-abort-v4",
+  "identity": {
+    "gate_tooling_commit": "6e478a38aaae548d225ffbce2a9b6d2e693e4efc",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "preregistration_commit": "22b6edcd994028167ceca8c829e87b3c357a2313",
+    "vllm_commit": "00d3c7faa3a73f08246a70c7280eed633ec2441b"
+  },
+  "idle_checks": {
+    "incumbent_post_arm": "passed",
+    "incumbent_pre_arm": "passed",
+    "pre_gate": "passed"
+  },
+  "no_performance_or_quality_conclusion": true,
+  "raw_evidence": {
+    "event_json_files": 12060,
+    "events_per_manifest": 201,
+    "manifests": 60,
+    "rank_count": 4,
+    "recorder_derived_emitted_ids": 33,
+    "recorder_derived_emitted_ids_sha256": "8e172c115a13f41a48de4f81bd6b82ce4d8895276f9f4cd10855e0349cbb5332",
+    "target_events_per_rank": 15,
+    "tensor_binary_files": 11640
+  },
+  "remediation_scope": "raw evidence v2 with exact ordered 48-layer slot signatures, per-layer Q/K/V/O binding, no fake target-hidden slot, and explicit A/B/C routing comparison",
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-6e478a38a-20260724T164716Z",
+  "sealed": true,
+  "status": "terminal",
+  "storage": {
+    "active_filesystem": "/dev/nvme0n1p2",
+    "active_filesystem_type": "ext4",
+    "external_usb_used": false,
+    "root_prefix": "/mnt/fast-ai",
+    "run_size_mib_approx": 278
+  },
+  "worker_cleanup": {
+    "all_four_shutdown_done": true,
+    "post_worker_report_empty": true,
+    "resource_tracker_shared_memory_warning": true
+  }
+}
