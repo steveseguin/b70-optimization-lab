@@ -22,6 +22,11 @@ class BinaryBundleTests(unittest.TestCase):
             "shared-_C.abi3.so": b"shared-c",
             "shared-_xpu_C.abi3.so": b"shared-xpu-c",
             "candidate-_moe_C.abi3.so": b"candidate-moe-c",
+            "libgdn_attn_kernels_xe_2.so": b"gdn",
+            "libgrouped_gemm_xe_2.so": b"grouped-two",
+            "libgrouped_gemm_xe_default.so": b"grouped-default",
+            "libmhc_kernels_xe_2.so": b"mhc",
+            "libmqa_logits_kernels_xe_2.so": b"mqa",
         }
         sources = parent / "sources"
         sources.mkdir()

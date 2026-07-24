@@ -59,7 +59,58 @@ EXPECTED = {
             "3a16e85f7b6f324246f89e03d8aa89c37f0d6097c59d0a323ab2822dccd6d99f"
         ),
     },
+    "libgdn_attn_kernels_xe_2.so": {
+        "role": "required_xpu_module_dependency",
+        "source": (
+            "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/"
+            "vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so"
+        ),
+        "sha256": (
+            "cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb"
+        ),
+    },
+    "libgrouped_gemm_xe_2.so": {
+        "role": "required_xpu_module_dependency",
+        "source": (
+            "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/"
+            "vllm_xpu_kernels/libgrouped_gemm_xe_2.so"
+        ),
+        "sha256": (
+            "fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96"
+        ),
+    },
+    "libgrouped_gemm_xe_default.so": {
+        "role": "required_xpu_module_dependency",
+        "source": (
+            "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/"
+            "vllm_xpu_kernels/libgrouped_gemm_xe_default.so"
+        ),
+        "sha256": (
+            "982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c"
+        ),
+    },
+    "libmhc_kernels_xe_2.so": {
+        "role": "required_xpu_module_dependency",
+        "source": (
+            "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/"
+            "vllm_xpu_kernels/libmhc_kernels_xe_2.so"
+        ),
+        "sha256": (
+            "f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f"
+        ),
+    },
+    "libmqa_logits_kernels_xe_2.so": {
+        "role": "required_xpu_module_dependency",
+        "source": (
+            "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc/"
+            "vllm_xpu_kernels/libmqa_logits_kernels_xe_2.so"
+        ),
+        "sha256": (
+            "58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb"
+        ),
+    },
 }
+BUNDLE_FILENAMES = frozenset(EXPECTED)
 
 
 def require(ok: bool, message: str) -> None:
@@ -180,14 +231,7 @@ def freeze(
         "bundle must be an immediate child of the frozen binary parent",
     )
     require(not destination.exists() and not destination.is_symlink(), "bundle exists")
-    require(
-        set(entries) == {
-            "shared-_C.abi3.so",
-            "shared-_xpu_C.abi3.so",
-            "candidate-_moe_C.abi3.so",
-        },
-        "native bundle filename inventory drift",
-    )
+    require(set(entries) == BUNDLE_FILENAMES, "native bundle filename inventory drift")
     storage = storage_attestor(parent)
     os.mkdir(destination, 0o700)
     root_fd: int | None = None
