@@ -1,0 +1,102 @@
+{
+  "schema": "laguna-s-2.1-m8-breakable-graph-record-v1",
+  "date": "2026-07-24",
+  "status": "VERIFIED_RECORD_CANDIDATE",
+  "source": {
+    "main_tooling_commit": "4b4b5dd9c81d7b85819d3c93d65cb1a1f69e4363",
+    "vllm_commit": "0ce373a3115fb4498c5e7a041d4fc9212fd6b5ca",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba"
+  },
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-formal-graph-crossover-4b4b5dd9c-0ce373a31-20260724T220518Z",
+  "metric": "median_tok_s_1_100_after_ttft",
+  "starts": {
+    "A1_eager": 34.49116381990456,
+    "B1_graph": 92.76071675369911,
+    "B2_graph": 92.16352215694299,
+    "A2_eager": 34.591122672009526
+  },
+  "record": {
+    "submitted_value_policy": "lower of two graph starts",
+    "candidate_lower_start_tok_s": 92.16352215694299,
+    "prior_approved_tok_s": 33.89498511171744,
+    "prior_approved_id": "cmrx6p5dv001bo4017hb7sixz",
+    "delta_tok_s": 58.26853704522555,
+    "delta_pct": 171.90902091614203,
+    "multiple": 2.71909020916142
+  },
+  "pairs": {
+    "B1_vs_A1": {
+      "row_wins": "13/13",
+      "median_paired_delta_pct": 169.42082090615466,
+      "aggregate_cycle_saving_ms": 55.0490377685078,
+      "acceptance_rate_delta": 0.0003070338847266929,
+      "passed": true
+    },
+    "B2_vs_A2": {
+      "row_wins": "12/13",
+      "median_paired_delta_pct": 169.36519273519548,
+      "aggregate_cycle_saving_ms": 54.22048225686592,
+      "acceptance_rate_delta": 0.0003066772832345799,
+      "passed": true
+    }
+  },
+  "quality": {
+    "teacher_exact": "52/52",
+    "cross_leg_exact": "52/52",
+    "cached_tokens_zero": "52/52",
+    "long_then_next": "8/8",
+    "rollover": "4/4",
+    "fresh_unique_prompts": true,
+    "single_active_generation": true,
+    "no_warmup_generation": true,
+    "no_retry": true,
+    "no_cache_history_ngram_or_response_reuse": true
+  },
+  "graph": {
+    "mode": "NONE",
+    "cudagraph_mode": "PIECEWISE",
+    "capture_sizes": [
+      8
+    ],
+    "max_capture_size": 8,
+    "graphs_per_rank": 146,
+    "eager_breaks_per_rank": 145,
+    "B1_distinct_rank_captures": 4,
+    "B1_distinct_rank_replays": 4,
+    "B2_distinct_rank_captures": 4,
+    "B2_distinct_rank_replays": 4,
+    "eager_capture_rows": 0
+  },
+  "b2_submission_summary": {
+    "tok_s_out": 92.16352215694299,
+    "tok_s_out_p10": 64.35566441894504,
+    "tok_s_out_mean": 101.67381084885551,
+    "tok_s_out_stdev": 45.73340616720246,
+    "tok_s_full_after_ttft_median": 119.69511336470201,
+    "tok_s_wall_full_median": 48.79716221738171,
+    "ttft_ms_median": 5753.969544006395,
+    "draft_cycles": 1721,
+    "draft_tokens": 12047,
+    "accepted_draft_tokens": 4641,
+    "draft_acceptance_rate": 0.3852411388727484
+  },
+  "audits": {
+    "formal_raw_performance_and_exactness": "CLEAN",
+    "operational_identity_topology_idle_and_sealing": "CLEAN",
+    "qualification_or_stopped_root_contamination": false
+  },
+  "sha256": {
+    "full_analysis": "f8f2697ce6abcde7a78d9af2a16f89628027ef55a3a60e8d60b025e31c135378",
+    "all_vs_teacher": "9467b3d105a918180fb3e92e6b951f4217a5fc285df0a939d14ecfad1a456852",
+    "cross_leg": "f2ea7649923f47e8e0e3c4230c56fc7a7926157f24f981a91718eeed65a6248f",
+    "b2_bench": "616445a0996ec2795bed130d3dc9c79261ae4b9fd3c36d5583c040df22efdebc",
+    "b2_exactness": "393d2ea3c29328cae249df4b2a101ee30689d9b7d3ca4eddf06eef49a146c3d9",
+    "b2_server_log": "3342886132977e73782046fcc9b1fb78efcfb8b4e12cd2f448e564447074792a"
+  },
+  "localmaxxing": {
+    "submission_status": "PENDING_PAYLOAD_PREFLIGHT",
+    "queue_path": "data/localmaxxing-laguna-s-2.1-int4-b70-dflash-breakable-graph-92.164tok-20260724.queue.json"
+  }
+}
