@@ -1,0 +1,73 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tokens_per_second": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "analysis_json_created": false,
+      "completed_generations": 0,
+      "driver_json_created": false,
+      "generate_calls": 1,
+      "model_output_returned": false,
+      "raw_evidence": {
+        "event_json_files": 780,
+        "events_per_rank": 195,
+        "last_event_per_rank": "attention_47_output",
+        "manifest_files": 4,
+        "rank_count": 4,
+        "tensor_binary_files": 768
+      },
+      "request_dispatches": 1,
+      "status": "target_hidden_evidence_type_rejected"
+    },
+    "segmented-eager": {
+      "generate_calls": 0,
+      "status": "not_run"
+    },
+    "segmented-graph": {
+      "generate_calls": 0,
+      "status": "not_run"
+    }
+  },
+  "classification": "instrumentation_abort_during_first_m8_target_forward_before_logits_or_completed_generation",
+  "failure": {
+    "exception": "RuntimeError",
+    "reason": "evidence hook expected a bare tensor but Laguna+DFlash target forward returns (final_hidden_states, aux_hidden_states)",
+    "stage": "incumbent-eager first M=8 target verification after attention layer 47 and before target-hidden/logits evidence"
+  },
+  "format": "laguna-m8-actual-offline-component-abort-v3",
+  "identity": {
+    "gate_tooling_commit": "7f0f190d48b47224dcc7e692dbd74de5c568e64e",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "preregistration_commit": "d63a99951",
+    "vllm_commit": "61e483e80a9bb0c4eaf8c6fb31f3165668cbe71c"
+  },
+  "idle_checks": {
+    "incumbent_post_arm": "passed",
+    "incumbent_pre_arm": "passed",
+    "pre_gate": "passed"
+  },
+  "internal_partial_scheduler_state": {
+    "num_computed_tokens": 33,
+    "num_output_tokens": 1,
+    "scheduled_draft_tokens": 7,
+    "scheduled_target_tokens": 8
+  },
+  "no_performance_or_quality_conclusion": true,
+  "remediation_scope": "strictly extract the final target-hidden tensor from the frozen DFlash tuple without mutating model output; test and independently review before a fresh preregistered run",
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-7f0f190d4-20260724T163134Z",
+  "sealed": true,
+  "status": "terminal",
+  "storage": {
+    "active_filesystem": "/dev/nvme0n1p2",
+    "active_filesystem_type": "ext4",
+    "external_usb_used": false,
+    "root_prefix": "/mnt/fast-ai"
+  },
+  "worker_cleanup": {
+    "all_four_shutdown_done": true,
+    "post_worker_report_empty": true,
+    "resource_tracker_shared_memory_warning": true
+  }
+}
