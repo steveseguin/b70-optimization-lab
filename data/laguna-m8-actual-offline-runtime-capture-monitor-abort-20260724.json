@@ -1,0 +1,84 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "aggregate_evidence_present": true,
+      "driver_json_present": true,
+      "manifest_count": 60,
+      "manifest_event_count": 201,
+      "num_cached_tokens": 0,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 12060,
+      "started": true,
+      "status": "completed_and_validated",
+      "token_count": 32,
+      "token_ids_sha256": "cca03973c1998dfc3255cad724577213ed01cb606cf12eb867358de16f9b9e3f"
+    },
+    "segmented-eager": {
+      "aggregate_evidence_present": true,
+      "driver_json_present": true,
+      "manifest_count": 60,
+      "manifest_event_count": 444,
+      "num_cached_tokens": 0,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 26640,
+      "started": true,
+      "status": "completed_and_validated",
+      "token_count": 32,
+      "token_ids_sha256": "cca03973c1998dfc3255cad724577213ed01cb606cf12eb867358de16f9b9e3f"
+    },
+    "segmented-graph": {
+      "aggregate_evidence_present": false,
+      "driver_json_present": false,
+      "manifest_count": 4,
+      "manifest_event_count": 3,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 12,
+      "started": true,
+      "status": "failed_closed_before_first_live_target_forward"
+    }
+  },
+  "classification": "guarded_runtime_capture_monitor_abort_not_a_benchmark",
+  "correctness_result": null,
+  "date_local": "2026-07-24",
+  "failure": {
+    "batch_descriptor": {
+      "has_lora": false,
+      "num_active_loras": 0,
+      "num_reqs": null,
+      "num_tokens": 8,
+      "uniform": false
+    },
+    "driver_exception": "vllm.v1.engine.exceptions.EngineDeadError",
+    "location": "BreakableCUDAGraphWrapper._capture -> validate_cudagraph_capturing_enabled",
+    "root_cause": "startup dummy capture is correctly filtered out, then capture_model disables the global monitor before the exact first live Laguna M8 lazy capture",
+    "worker_exception": "RuntimeError: CUDA graph capturing detected at an inappropriate time. This operation is currently disabled."
+  },
+  "identity": {
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "main_preregistration_commit": "e194b8cc1",
+    "main_tooling_commit": "872c304f8d581025f57aef4abee7f408918cffd8",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "vllm_commit": "e25867aa698f82cbf2fb835e26807078674acebc"
+  },
+  "network_access": false,
+  "raw_evidence": {
+    "aggregate_schema": "laguna-m8-actual-offline-gate-v9",
+    "arm_a_aggregate_sha256": "f0f21be1aab96bc530ddbd15b36fde35a4da42a93af79907329a4f0ddc2a2045",
+    "arm_b_aggregate_sha256": "7da989aa198bf2163f6f47b7b6a2269b171531e398f1fef62cdc1f1a33d83cfa",
+    "raw_format": "laguna-m8-raw-evidence-v2"
+  },
+  "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-872c304f8-20260724T184608Z",
+  "sealed": true,
+  "submission": false,
+  "throughput_result": null,
+  "timing_and_pti_run": false,
+  "usb_used": false
+}
