@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import json
 import os
 import pathlib
+import sys
 import time
 
 WORLD_SIZE = 4
@@ -36,13 +38,29 @@ def _digest(torch, tensor) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def _validate_output_root(value: str) -> pathlib.Path:
+def _validate_output_root(value: str, *, require_absent: bool = True) -> pathlib.Path:
     root = pathlib.Path(value).resolve()
     allowed = pathlib.Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs")
     if root == allowed or allowed not in root.parents:
         raise ValueError(f"output root must be a child of {allowed}")
-    if root.exists():
+    if require_absent and root.exists():
         raise FileExistsError(f"output root already exists: {root}")
+    mount_candidates = []
+    for line in pathlib.Path("/proc/self/mountinfo").read_text().splitlines():
+        fields = line.split()
+        separator = fields.index("-")
+        mount_point = pathlib.Path(fields[4].replace("\\040", " ")).resolve()
+        if mount_point == root or mount_point in root.parents:
+            mount_candidates.append(
+                (len(str(mount_point)), fields[separator + 1], fields[separator + 2])
+            )
+    if not mount_candidates:
+        raise RuntimeError(f"no backing mount found for {root}")
+    _, filesystem, source = max(mount_candidates)
+    if filesystem != "ext4" or not source.startswith("/dev/nvme"):
+        raise RuntimeError(
+            f"output root is not backed by internal NVMe/ext4: {filesystem} {source}"
+        )
     return root
 
 
@@ -50,16 +68,69 @@ def _run(args: argparse.Namespace) -> None:
     import torch
     import torch.distributed as dist
 
-    rank = int(os.environ["LOCAL_RANK"])
+    rank = int(os.environ["RANK"])
+    local_rank = int(os.environ["LOCAL_RANK"])
     world_size = int(os.environ["WORLD_SIZE"])
-    if world_size != WORLD_SIZE:
-        raise RuntimeError(f"expected world size {WORLD_SIZE}, got {world_size}")
+    local_world_size = int(os.environ["LOCAL_WORLD_SIZE"])
+    if world_size != WORLD_SIZE or local_world_size != WORLD_SIZE or rank != local_rank:
+        raise RuntimeError(
+            "probe requires one host with RANK==LOCAL_RANK and world size 4"
+        )
 
-    output_root = pathlib.Path(args.output_root)
+    output_root = _validate_output_root(
+        args.output_root,
+        require_absent=rank == 0,
+    )
     if rank == 0:
-        _validate_output_root(args.output_root).mkdir(parents=True, mode=0o755)
-    dist.init_process_group("xccl", rank=rank, world_size=world_size)
-    torch.xpu.set_device(rank)
+        output_root.mkdir(parents=True, mode=0o755)
+    if torch.xpu.device_count() != WORLD_SIZE:
+        raise RuntimeError(
+            f"expected exactly {WORLD_SIZE} visible XPUs, "
+            f"got {torch.xpu.device_count()}"
+        )
+    torch.xpu.set_device(local_rank)
+
+    initialized = False
+    try:
+        dist.init_process_group(
+            "xccl",
+            rank=rank,
+            world_size=world_size,
+            timeout=datetime.timedelta(seconds=120),
+        )
+        initialized = True
+        _run_initialized(args, torch, dist, rank, output_root)
+    except BaseException as error:
+        try:
+            output_root.mkdir(parents=True, exist_ok=True)
+            failure_path = output_root / f"rank{rank}-failure.json"
+            failure_path.write_text(
+                json.dumps(
+                    {
+                        "status": "fail",
+                        "rank": rank,
+                        "error_type": type(error).__name__,
+                        "error": str(error),
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+            failure_path.chmod(0o444)
+        except OSError as marker_error:
+            print(
+                f"could not write rank {rank} failure marker: {marker_error}",
+                file=sys.stderr,
+                flush=True,
+            )
+        raise
+    finally:
+        if initialized:
+            dist.destroy_process_group()
+
+
+def _run_initialized(args, torch, dist, rank: int, output_root: pathlib.Path) -> None:
     dist.barrier()
 
     sources = [
@@ -204,7 +275,7 @@ def _run(args: argparse.Namespace) -> None:
     result = {
         "status": "pass",
         "rank": rank,
-        "world_size": world_size,
+        "world_size": WORLD_SIZE,
         "layers_per_cycle": LAYERS,
         "all_gathers_per_cycle": LAYERS,
         "all_reduces_per_cycle": 1,
@@ -260,7 +331,6 @@ def _run(args: argparse.Namespace) -> None:
         output_root.chmod(0o555)
 
     dist.barrier()
-    dist.destroy_process_group()
 
 
 def main() -> None:
