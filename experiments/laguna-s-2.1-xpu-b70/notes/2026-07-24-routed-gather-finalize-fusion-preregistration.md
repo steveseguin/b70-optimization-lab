@@ -67,6 +67,22 @@ exactly:
 
 No endpoint gain is claimed by this preregistration.
 
+## Pre-build Stage-0 correction
+
+A read-only native audit caught an unsafe first interface design before any
+build or device action. It accepted a device route-map tensor, while the
+binding could validate its shape but not reject values below `-1` or above
+`79` without another kernel or a synchronization. The incumbent dereferences
+such values and therefore cannot make that public input fail closed.
+
+The exact record path always creates
+`torch.arange(80).view(8,10)` and zero-fills remote W2 route rows. The frozen
+candidate contract was consequently narrowed before source freeze: it accepts
+no route map and uses only canonical `token * 10 + slot` rows. Component
+evidence must still compare against the incumbent with its canonical map.
+This correction changes no observed result; no native build, XPU process, or
+model action had occurred.
+
 ## Frozen starting identity
 
 Implementation starts from clean, tracked sources:
@@ -98,9 +114,11 @@ The selector may dispatch only when all of the following are true:
 - exactly M=8, hidden size 3,072, top-k 10, 256 global experts, 64 local
   experts, TP4/EP4/DP1/PP1, and one shared expert;
 - contiguous BF16 route rows `[80,3072]`, shared output `[8,3072]`, and final
-  output `[8,3072]`, plus contiguous FP32 top-k weights `[8,10]` and int32
-  route map `[8,10]` (80 contiguous elements consumed by the incumbent as a
-  flat pointer indexed `token * 10 + slot`);
+  output `[8,3072]`, plus contiguous FP32 top-k weights `[8,10]`;
+- the route-row layout is the exact record path's canonical
+  `row * 10 + slot` order. The candidate accepts no route-map tensor and
+  hardcodes this layout; remote experts remain the incumbent zero-filled W2
+  rows in their original slots;
 - routed scale is exactly `2.5`, there is no routed-output transform, the
   routed output is not already reduced, sequence parallelism and DBO are off,
   and final all-reduce is not skipped;
@@ -137,7 +155,8 @@ The minimal source plan is:
    the incumbent `MoeGather` in `csrc/moe/moe_gather.cpp`, with its own
    `_moe_C` binding and hard input/alias checks.
 2. Preserve the incumbent `MoeGather<BF16,10,8>` workgroup geometry and exact
-   slot loop. Add only the explicit routed BF16 cast, scaled BF16 cast, shared
+   slot loop. Resolve the route row as `token * 10 + slot` with no external
+   map, then add only the explicit routed BF16 cast, scaled BF16 cast, shared
    load, final BF16 add, and final store.
 3. Add a candidate-only explicit API through the modular XPU expert path. It
    passes the already-produced shared tensor to `XpuFusedMoe` and returns both
@@ -194,12 +213,13 @@ against identical preallocated inputs. Require raw `uint16` and
 The correctness corpus must include all finite BF16 values at the routed and
 shared boundaries, signed zero, subnormals, infinities and NaNs classified
 separately, FP32 zero/subnormal/near-one routing weights, exact midpoint cases,
-all-local/all-remote/mixed routes, `-1` route entries, duplicate/permuted
-entries, every one of ten slot positions, at least 256 changing random full
-fixtures, candidate-repeat determinism, unchanged input hashes, and a complete
-post-timing replay. Production integration must additionally prove the W2
-kernel identity, arguments, 13-call test count, and 3,840 workgroups per
-call/card are unchanged.
+all-local/all-remote/mixed zero-filled route-row patterns, every one of ten
+canonical slot positions, at least 256 changing random full fixtures,
+candidate-repeat determinism, unchanged input hashes, and a complete
+post-timing replay. Production integration must additionally prove the
+incumbent control map is exactly `arange(80).view(8,10)`, the W2 kernel
+identity, arguments, 13-call test count, and 3,840 workgroups per call/card
+are unchanged.
 
 Time only the two-op control and one-op candidate. Exclude W2, fixture
 construction, allocation, hashing, reset, reductions, synchronization inside
