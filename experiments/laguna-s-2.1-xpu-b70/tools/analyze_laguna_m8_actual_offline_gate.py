@@ -20,8 +20,8 @@ from typing import Any
 
 FORMAT = "laguna-m8-raw-evidence-v1"
 RECORDER_MARKER = "LAGUNA_M8_RAW_EVIDENCE_V1"
-SCHEMA = "laguna-m8-actual-offline-gate-v2"
-DRIVER_SCHEMA = "laguna-m8-offline-arm-v1"
+SCHEMA = "laguna-m8-actual-offline-gate-v3"
+DRIVER_SCHEMA = "laguna-m8-offline-arm-v2"
 ARMS = ("incumbent-eager", "segmented-eager", "segmented-graph")
 RANKS = range(4)
 MIN_EVENTS_PER_RANK = 4
@@ -30,6 +30,12 @@ GRAPH_COUNTS = {"graphs": 146, "eager_breaks": 145}
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
 VLLM_COMMIT = "5c6c108bf152f985e126db9d77897ae442b75048"
+RPC_DIRS = {
+    "incumbent-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p2-a",
+    "segmented-eager": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p2-b",
+    "segmented-graph": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/m8p2-c",
+}
+RPC_UUID_SOCKET_PATH_BYTES = 100
 MAX_TOKENS = 32
 SEED = 1
 PROMPT_SHA256 = "2ea384ff8e947b67345541471c400e77f82e308ef8a66305c8f49e97ee2b172f"
@@ -775,6 +781,8 @@ def _validate_driver(
         "num_cached_tokens",
         "offline_only",
         "prompt_sha256",
+        "rpc_dir",
+        "rpc_uuid_socket_path_bytes",
         "runtime",
         "schema",
         "seed",
@@ -850,6 +858,8 @@ def _validate_driver(
         or driver["speculative_config"] != expected_speculative
         or driver["engine_config"] != expected_engine
         or driver["evidence_dir"] != str(arm_root / "evidence")
+        or driver["rpc_dir"] != RPC_DIRS[arm]
+        or driver["rpc_uuid_socket_path_bytes"] != RPC_UUID_SOCKET_PATH_BYTES
         or driver["finish_reason"] != "length"
     ):
         die(f"{arm}: invalid driver cold/config/model provenance")
@@ -880,6 +890,7 @@ def _validate_driver(
         "VLLM_DISABLE_SHARED_EXPERTS_STREAM": "0",
         "VLLM_KV_CACHE_LAYOUT": "NHD",
         "VLLM_NO_USAGE_STATS": "1",
+        "VLLM_RPC_BASE_PATH": RPC_DIRS[arm],
         "VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD": "256",
         "VLLM_TRACE_FUNCTION": "0",
         "VLLM_USE_AOT_COMPILE": "0",

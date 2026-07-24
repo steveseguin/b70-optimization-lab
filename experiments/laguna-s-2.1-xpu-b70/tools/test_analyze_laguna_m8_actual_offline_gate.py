@@ -18,6 +18,12 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
+DRIVER_SPEC = importlib.util.spec_from_file_location(
+    "laguna_actual_driver", HERE / "run_laguna_m8_actual_offline.py"
+)
+assert DRIVER_SPEC and DRIVER_SPEC.loader
+DRIVER = importlib.util.module_from_spec(DRIVER_SPEC)
+DRIVER_SPEC.loader.exec_module(DRIVER)
 
 
 def signature(data: bytes) -> dict[str, object]:
@@ -36,6 +42,26 @@ def expected_boundaries() -> list[str]:
 
 
 class ActualOfflineAnalyzerTest(unittest.TestCase):
+    def test_frozen_rpc_bases_leave_conservative_socket_headroom(self) -> None:
+        self.assertEqual(
+            set(DRIVER.RPC_DIRS),
+            {"incumbent-eager", "segmented-eager", "segmented-graph"},
+        )
+        for arm, rpc_dir in DRIVER.RPC_DIRS.items():
+            with self.subTest(arm=arm):
+                self.assertEqual(
+                    DRIVER.rpc_socket_path_bytes(rpc_dir),
+                    DRIVER.ZMQ_CONSERVATIVE_PATH_BYTES,
+                )
+                self.assertEqual(
+                    str(rpc_dir),
+                    MODULE.RPC_DIRS[arm],
+                )
+        self.assertLess(
+            DRIVER.ZMQ_CONSERVATIVE_PATH_BYTES,
+            107,
+        )
+
     @staticmethod
     def mutate_event(
         root: Path,

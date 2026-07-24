@@ -36,6 +36,14 @@ DRAFT_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4")
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
 VLLM_COMMIT = "5c6c108bf152f985e126db9d77897ae442b75048"
+RPC_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp")
+RPC_DIRS = {
+    "incumbent-eager": RPC_ROOT / "m8p2-a",
+    "segmented-eager": RPC_ROOT / "m8p2-b",
+    "segmented-graph": RPC_ROOT / "m8p2-c",
+}
+ZMQ_UUID_FILENAME_BYTES = 36
+ZMQ_CONSERVATIVE_PATH_BYTES = 100
 EXPECTED_ARMS = {
     "incumbent-eager",
     "segmented-eager",
@@ -76,12 +84,45 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--arm", choices=sorted(EXPECTED_ARMS), required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--evidence-dir", type=Path, required=True)
+    parser.add_argument("--rpc-dir", type=Path, required=True)
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--draft-model", type=Path, required=True)
     parser.add_argument("--revision", required=True)
     parser.add_argument("--draft-revision", required=True)
     parser.add_argument("--expected-vllm-commit", required=True)
     return parser.parse_args()
+
+
+def rpc_socket_path_bytes(path: Path) -> int:
+    return len(os.fsencode(str(path))) + 1 + ZMQ_UUID_FILENAME_BYTES
+
+
+def require_rpc_dir(args: argparse.Namespace) -> None:
+    expected = RPC_DIRS[args.arm]
+    try:
+        path_stat = args.rpc_dir.lstat()
+        resolved = args.rpc_dir.resolve(strict=True)
+        resolved_root = args.rpc_dir.parent.resolve(strict=True)
+    except OSError as exc:
+        die(f"cannot inspect RPC base: {exc}")
+    if (
+        args.rpc_dir != expected
+        or resolved != args.rpc_dir
+        or resolved_root != RPC_ROOT
+        or args.rpc_dir.is_symlink()
+        or not stat.S_ISDIR(path_stat.st_mode)
+        or stat.S_IMODE(path_stat.st_mode) != 0o700
+    ):
+        die(f"RPC base differs from the frozen private-NVMe layout: {args.rpc_dir}")
+    assert_nvme(args.rpc_dir)
+    socket_bytes = rpc_socket_path_bytes(args.rpc_dir)
+    if socket_bytes > ZMQ_CONSERVATIVE_PATH_BYTES:
+        die(
+            "RPC base leaves insufficient Unix-socket path headroom: "
+            f"{socket_bytes} bytes"
+        )
+    if os.environ.get("VLLM_RPC_BASE_PATH") != str(args.rpc_dir):
+        die("VLLM_RPC_BASE_PATH differs from the explicit arm RPC argument")
 
 
 def require_environment(args: argparse.Namespace) -> None:
@@ -103,6 +144,7 @@ def require_environment(args: argparse.Namespace) -> None:
         "VLLM_DISABLE_SHARED_EXPERTS_STREAM": "0",
         "VLLM_KV_CACHE_LAYOUT": "NHD",
         "VLLM_NO_USAGE_STATS": "1",
+        "VLLM_RPC_BASE_PATH": "/mnt/fast-ai/",
         "VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD": "256",
         "VLLM_TRACE_FUNCTION": "0",
         "VLLM_XPU_EXPERT_MAP_ROUND_ROBIN": "0",
@@ -192,7 +234,13 @@ def aggregate_rank_local_evidence(args: argparse.Namespace) -> None:
 
 def main() -> int:
     args = parse_args()
-    for path in (args.out, args.evidence_dir, args.model, args.draft_model):
+    for path in (
+        args.out,
+        args.evidence_dir,
+        args.rpc_dir,
+        args.model,
+        args.draft_model,
+    ):
         assert_nvme(path)
     if args.out.exists():
         die(f"refusing to overwrite arm output: {args.out}")
@@ -208,6 +256,7 @@ def main() -> int:
         die("model/revision/runtime/output identity differs from the frozen gate")
     if not args.model.is_dir() or not args.draft_model.is_dir():
         die("both model paths must already exist as local directories")
+    require_rpc_dir(args)
     require_environment(args)
 
     # The recorder itself creates one private directory per eligible target
@@ -282,7 +331,7 @@ def main() -> int:
     prompt_token_ids = list(generated[0].prompt_token_ids)
     aggregate_rank_local_evidence(args)
     record = {
-        "schema": "laguna-m8-offline-arm-v1",
+        "schema": "laguna-m8-offline-arm-v2",
         "arm": args.arm,
         "absent_environment": list(ABSENT_ENVIRONMENT),
         "offline_only": True,
@@ -316,6 +365,7 @@ def main() -> int:
                 "VLLM_DISABLE_SHARED_EXPERTS_STREAM",
                 "VLLM_KV_CACHE_LAYOUT",
                 "VLLM_NO_USAGE_STATS",
+                "VLLM_RPC_BASE_PATH",
                 "VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD",
                 "VLLM_TRACE_FUNCTION",
                 "VLLM_USE_AOT_COMPILE",
@@ -362,6 +412,8 @@ def main() -> int:
         "finish_reason": output.finish_reason,
         "text_sha256": hashlib.sha256(output.text.encode("utf-8")).hexdigest(),
         "evidence_dir": str(args.evidence_dir),
+        "rpc_dir": str(args.rpc_dir),
+        "rpc_uuid_socket_path_bytes": rpc_socket_path_bytes(args.rpc_dir),
         "runtime": identity,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
