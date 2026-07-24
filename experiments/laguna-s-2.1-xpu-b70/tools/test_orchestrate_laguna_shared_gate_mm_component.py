@@ -7,6 +7,7 @@ import ast
 import copy
 import json
 import pathlib
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -212,7 +213,115 @@ class ComponentCoordinatorTests(unittest.TestCase):
         self.assertNotIn("bash -c", launcher)
         self.assertNotIn("eval ", launcher)
         self.assertIn('exec "$ENV" -i', launcher)
+        self.assertIn(
+            "readonly EXPECTED_ARGV=$($JQ -c '.coordinator_argv' "
+            '"$AUTHORIZATION_REAL")',
+            launcher,
+        )
+        self.assertIn(
+            '[[ "$ACTUAL_ARGV" == "$EXPECTED_ARGV" ]] '
+            '|| die "launcher invocation differs from frozen argv"',
+            launcher,
+        )
+        self.assertNotIn("[[ $ACTUAL_ARGV == $(", launcher)
         self.assertIn('card["runner_argv"]', coordinator)
+
+    def test_launcher_executes_literal_canonical_argv_without_pattern_match(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary).resolve()
+            launcher = root / "launcher.sh"
+            stub = root / "python-stub"
+            coordinator = root / "coordinator.py"
+            authorization = root / "authorization.json"
+            fixture = root / "fixture.json"
+            stage0_result = root / "stage0-result.json"
+            marker = root / "stub-argv.bin"
+            coordinator.write_text("# harmless launcher-test placeholder\n")
+            fixture.write_text("{}\n")
+            stage0_result.write_text("{}\n")
+            stub.write_text(
+                "#!/usr/bin/bash\n"
+                "set -euo pipefail\n"
+                f"printf '%s\\0' \"$@\" > {shlex.quote(str(marker))}\n"
+            )
+            stub.chmod(0o755)
+
+            expected_argv = [
+                str(stub),
+                str(coordinator),
+                "--authorization",
+                str(authorization),
+                "--fixture",
+                str(fixture),
+                "--stage0-result",
+                str(stage0_result),
+            ]
+            packet = {
+                "format": contract.FORMAT,
+                "phase": "four_card_component",
+                "coordinator_environment": {"PATH": "/usr/bin:/bin"},
+                "coordinator_argv": expected_argv,
+                "packet_path": str(authorization),
+                "stage0": {
+                    "fixture_path": str(fixture),
+                    "result_path": str(stage0_result),
+                },
+            }
+            authorization.write_text(
+                json.dumps(packet, sort_keys=True, separators=(",", ":")) + "\n"
+            )
+
+            launcher_text = (
+                ROOT / "run_laguna_shared_gate_mm_component.sh"
+            ).read_text()
+            replacements = {
+                "readonly PYTHON=/home/steve/.venvs/deepseek-v4-xpu/bin/python": (
+                    f"readonly PYTHON={shlex.quote(str(stub))}"
+                ),
+                (
+                    "readonly COORDINATOR=/home/steve/llm-optimizations/"
+                    "experiments/laguna-s-2.1-xpu-b70/tools/"
+                    "orchestrate_laguna_shared_gate_mm_component.py"
+                ): f"readonly COORDINATOR={shlex.quote(str(coordinator))}",
+                (
+                    "[[ $AUTHORIZATION_REAL == /home/steve/llm-optimizations/data/* ]]"
+                ): f'[[ $AUTHORIZATION_REAL == "{root}/"* ]]',
+                (
+                    "readonly ARTIFACT_PREFIX=/mnt/fast-ai/"
+                    "llm-optimization-artifacts/laguna-s-2.1/"
+                ): f"readonly ARTIFACT_PREFIX={shlex.quote(str(root) + '/')}",
+            }
+            for old, new in replacements.items():
+                self.assertIn(old, launcher_text)
+                launcher_text = launcher_text.replace(old, new, 1)
+            launcher.write_text(launcher_text)
+            launcher.chmod(0o755)
+
+            completed = subprocess.run(
+                [
+                    str(launcher),
+                    "--authorization",
+                    str(authorization),
+                    "--fixture",
+                    str(fixture),
+                    "--stage0-result",
+                    str(stage0_result),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(
+                completed.returncode,
+                0,
+                msg=f"stdout={completed.stdout!r} stderr={completed.stderr!r}",
+            )
+            observed = [
+                item.decode() for item in marker.read_bytes().split(b"\0") if item
+            ]
+            self.assertEqual(observed, expected_argv[1:])
 
     def test_preflight_binds_all_json_views_and_campaign_start_is_canonical(
         self,

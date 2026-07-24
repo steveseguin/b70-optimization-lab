@@ -48,7 +48,8 @@ mapfile -t COORDINATOR_ARGV < <("$JQ" -er '.coordinator_argv[]' "$AUTHORIZATION_
    ${COORDINATOR_ARGV[4]} == --fixture && ${COORDINATOR_ARGV[5]} == "$FIXTURE_REAL" &&
    ${COORDINATOR_ARGV[6]} == --stage0-result && ${COORDINATOR_ARGV[7]} == "$STAGE0_RESULT_REAL" ]] || die "coordinator argv drift"
 readonly ACTUAL_ARGV=$($JQ -cn --args '$ARGS.positional' -- "$PYTHON" "$COORDINATOR" --authorization "$AUTHORIZATION_REAL" --fixture "$FIXTURE_REAL" --stage0-result "$STAGE0_RESULT_REAL")
-[[ $ACTUAL_ARGV == $($JQ -c '.coordinator_argv' "$AUTHORIZATION_REAL") ]] || die "launcher invocation differs from frozen argv"
+readonly EXPECTED_ARGV=$($JQ -c '.coordinator_argv' "$AUTHORIZATION_REAL")
+[[ "$ACTUAL_ARGV" == "$EXPECTED_ARGV" ]] || die "launcher invocation differs from frozen argv"
 
 mapfile -t ENV_NAMES < <("$JQ" -er '.coordinator_environment | keys[]' "$AUTHORIZATION_REAL")
 ENVIRONMENT=()
