@@ -1,0 +1,57 @@
+{
+  "schema": "laguna-m8-breakable-graph-endpoint-pass-v1",
+  "date": "2026-07-24",
+  "status": "PASS",
+  "claim": "endpoint correctness only; no timing or record claim",
+  "source": {
+    "main_tooling_commit": "6fb4e8d10a00134cff0d8f01bbea94d2c4bf3673",
+    "vllm_commit": "0ce373a3115fb4498c5e7a041d4fc9212fd6b5ca",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872"
+  },
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-graph-endpoint-6fb4e8d10-0ce373a31-20260724T211707Z",
+  "checks": {
+    "start_a_teacher_exact": "13/13",
+    "start_b_teacher_exact": "13/13",
+    "start_a_cached_zero": "13/13",
+    "start_b_cached_zero": "13/13",
+    "cross_start_exact": "13/13",
+    "long_then_next": {
+      "start_a": true,
+      "start_b": true,
+      "cross_start": true
+    },
+    "rollover": {
+      "start_a": "1/1",
+      "start_b": "1/1",
+      "cross_start": "1/1"
+    },
+    "capture_topology": {
+      "start_a_distinct_ranks": 4,
+      "start_b_distinct_ranks": 4,
+      "graphs_per_rank": 146,
+      "eager_breaks_per_rank": 145
+    },
+    "replay_topology": {
+      "start_a_distinct_ranks": 4,
+      "start_b_distinct_ranks": 4,
+      "graphs_per_rank": 146,
+      "eager_breaks_per_rank": 145
+    },
+    "actual_environment": true,
+    "diagnostic_evidence_absent": true,
+    "selector_identity": true,
+    "request_identity": true,
+    "clean_shutdown_and_idle": true,
+    "independent_raw_artifact_audit": true
+  },
+  "sha256": {
+    "analysis_json": "be5421f3083d548c0aea78dbf06345b4cc223843415098796b8a4a601399fadd",
+    "cross_start_json": "3eaa0e50c151aa96f39552ea978377ef4b1ab663248d5eae0cfda9d07538a2c3",
+    "start_a_bench_json": "3dad7e920e25362c6ed43994305fd832b2822ebcf67852d2bbc1417913c2e457",
+    "start_b_bench_json": "f1fcf3dbf7b056646d23b9906236fc4aa7dc2d7a29571a6028493893e46019f2",
+    "start_a_exactness_json": "bc3bae86e2c7d40f1209a5e49591a484f6376b9af665c9197a88073127354ae5",
+    "start_b_exactness_json": "87058114f7d7d020e1f4b4ee316c109e3e03c479c73b554e0484dda19963da66",
+    "final_idle_json": "57145faec36d47347c34396c39d059b69ab24e46966fe4c1a45ae48d786033d4"
+  },
+  "next": "Preregister a formal cold graph-versus-approved-eager performance crossover; do not use qualification timings."
+}
