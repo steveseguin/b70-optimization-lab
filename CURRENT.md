@@ -325,10 +325,23 @@ frozen 0.20 ms minimum. Preserve the
 [component pass note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-shared-gate-up-native-m8-mm-component-pass.md)
 and
 [structured summary](data/laguna-s-2.1-shared-gate-up-m8-component-pass-20260724.json).
-Only construction and audit of fresh cold-counter tooling is now authorized.
-Counter execution, endpoint work, model generation, payload creation,
-network access, and LocalMaxxing submission remain unauthorized until their
-separate later gates pass.
+The subsequent first-and-only cold-counter campaign completed all 16
+packet-authorized arms at tooling commit
+`34db11e8f9cee45e455390da7961e28c959b0441` and packet-only commit
+`a8c8c595978e1803a354869d53cef77cae79781c`. All gate/up outputs were
+raw-BF16 exact across arms and repeats. The frozen analyzer nevertheless
+failed on its preregistered zero-SLM-traffic rule: all 416 rows reported the
+same 245,760 SLM bytes read and written with zero bank conflicts. That rule is
+not weakened after capture. More importantly, a diagnostic summary of the
+immutable retained rows also fails required matched comparisons on cards 1,
+2, and 3, card aggregates on 1 and 3, and per-card XVE/occupancy guardrails.
+The diagnostic global GPU-time ratio of `0.9935168` cannot rescue those
+failures. This lane is terminal before endpoint work; do not rerun or
+reinterpret it. Preserve the
+[terminal negative note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-shared-gate-up-native-m8-mm-counter-terminal-negative.md)
+and
+[structured summary](data/laguna-s-2.1-shared-gate-up-m8-counter-terminal-negative-20260724.json).
+No model generation, payload, network access, submission, or reboot occurred.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under

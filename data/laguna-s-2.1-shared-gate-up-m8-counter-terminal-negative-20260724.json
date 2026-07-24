@@ -1,0 +1,157 @@
+{
+  "format": "laguna-shared-gate-up-m8-counter-terminal-negative-v1",
+  "created_utc": "2026-07-24T06:38:00Z",
+  "status": "counter_failed_stop_before_endpoint_no_rerun",
+  "counter_passed": false,
+  "treatment": {
+    "control": "two separate ordered stride-zero B=8 M=1 K=3072 N=256 BF16 BMMs",
+    "candidate": "two separate ordered native M=8 K=3072 N=256 BF16 MMs",
+    "arm_order": [
+      "A1",
+      "B1",
+      "B2",
+      "A2"
+    ],
+    "pairs_per_arm": 13,
+    "discarded_pair_indices": [
+      0,
+      1
+    ],
+    "retained_pair_indices": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
+  },
+  "identity": {
+    "tooling_commit": "34db11e8f9cee45e455390da7961e28c959b0441",
+    "authorization_commit": "a8c8c595978e1803a354869d53cef77cae79781c",
+    "authorization_packet": "data/laguna-s-2.1-shared-gate-up-m8-counter-authorization-20260724T063300Z.json",
+    "authorization_sha256": "a91749870de477207d21c464660adde164cf1c9b24faca2e62d836a4046b4748",
+    "vllm_commit": "503f7784cf9d1704109b1e4650427fb4f417d604",
+    "kernel_commit": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a"
+  },
+  "campaign": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/shared-gate-up-m8-counters-20260724T063300Z",
+    "first_and_only_capture": true,
+    "all_16_arms_closed": true,
+    "intent_sha256": "591aeb60b3fddf42006f1152a7ee307c6f814145f64c1cb9a10c68de29e8a7c1",
+    "open_sha256": "473ec7f973a0f3ecf86f7cf0c17dcaf38ff4828c1ed4622988f70f4523393516",
+    "complete_sha256": "0c082d4c3ce71987587ba5c8293ad6348d750840a3084121714a581baa943654",
+    "analysis_error_sha256": "7f6738d0b8c75b43e63ced5208a89cadfe7f9c6fff63ec423c38133fc8ed9b84",
+    "analysis_error": "nonzero invalidity/traffic proxy SLM_BYTE_READ[bytes]",
+    "external_usb_used": false
+  },
+  "exactness": {
+    "all_16_input_gate_up_hash_tuples_identical": true,
+    "all_13_repeats_exact_within_each_arm": true,
+    "input_fixture_sha256": "49fd9c1dc22472e942bfae8031b8b8e5aa08ffb85b98158edea6c3134d16bd37",
+    "gate_output_sha256": "bf117165cb35ce114581e127522ba287b9440b7ef88ea8ed068647556edc5e40",
+    "up_output_sha256": "0f005ce34fbf306b9177b2f70043cb0ef4ad8b3472d3a40774f25676f4b0be32",
+    "component_final_manifest_sha256": "8aa2a45a8bcc31c5d2e84e5f55568ad43144ebd6c380d6d914cf91f77d10a10"
+  },
+  "frozen_parser_failure": {
+    "metric_rows_checked_diagnostically": 416,
+    "slm_byte_read_per_row": 245760,
+    "slm_byte_write_per_row": 245760,
+    "slm_bank_conflict_count_per_row": 0,
+    "load_store_cache_partial_write_count_per_row": 0,
+    "load_store_cache_byte_write_per_row": 0,
+    "interpretation": "The preregistered parser classified nonzero SLM traffic as a failure. The rule is not weakened after capture; the campaign remains failed."
+  },
+  "sealed_bytes_diagnostic_only": {
+    "purpose": "Show that relaxing the SLM rule could not rescue this campaign; this is not a replacement analyzer decision.",
+    "global_candidate_vs_control_gpu_time_ratio": 0.9935168008567767,
+    "global_pass_cannot_rescue": true,
+    "cards": [
+      {
+        "rank": 0,
+        "b1_vs_a1_gpu_time_ratio": 0.9947668154532862,
+        "b2_vs_a2_gpu_time_ratio": 0.6338452273411622,
+        "candidate_vs_control_gpu_time_ratio": 0.8123144835984473,
+        "gpu_memory_read_ratio": 0.999884837404811,
+        "lsc_read_ratio": 1.0,
+        "occupancy_delta_percentage_points": 0.798426795454553,
+        "xve_active_delta_percentage_points": -0.3897759999999999,
+        "xve_stall_delta_percentage_points": 1.105145068181816,
+        "matched_pairs_pass": true,
+        "aggregate_gpu_time_pass": true,
+        "complete_guardrails_pass": false
+      },
+      {
+        "rank": 1,
+        "b1_vs_a1_gpu_time_ratio": 0.9371802741968488,
+        "b2_vs_a2_gpu_time_ratio": 1.4013313291818768,
+        "candidate_vs_control_gpu_time_ratio": 1.1636630343671417,
+        "gpu_memory_read_ratio": 1.0001079672643256,
+        "lsc_read_ratio": 1.0,
+        "occupancy_delta_percentage_points": 1.1053522954545514,
+        "xve_active_delta_percentage_points": 0.5884299090909089,
+        "xve_stall_delta_percentage_points": 0.645766363636362,
+        "matched_pairs_pass": false,
+        "aggregate_gpu_time_pass": false,
+        "complete_guardrails_pass": false
+      },
+      {
+        "rank": 2,
+        "b1_vs_a1_gpu_time_ratio": 1.0566528862348799,
+        "b2_vs_a2_gpu_time_ratio": 0.8155153836944811,
+        "candidate_vs_control_gpu_time_ratio": 0.9213249126578879,
+        "gpu_memory_read_ratio": 0.999733719080827,
+        "lsc_read_ratio": 1.0,
+        "occupancy_delta_percentage_points": 1.7410082727272709,
+        "xve_active_delta_percentage_points": 0.11173231818181861,
+        "xve_stall_delta_percentage_points": 1.6509953863636397,
+        "matched_pairs_pass": false,
+        "aggregate_gpu_time_pass": true,
+        "complete_guardrails_pass": false
+      },
+      {
+        "rank": 3,
+        "b1_vs_a1_gpu_time_ratio": 0.9568818514007309,
+        "b2_vs_a2_gpu_time_ratio": 1.320945945945946,
+        "candidate_vs_control_gpu_time_ratio": 1.1179187610379024,
+        "gpu_memory_read_ratio": 1.0002519308701694,
+        "lsc_read_ratio": 1.0,
+        "occupancy_delta_percentage_points": -2.4509552727272705,
+        "xve_active_delta_percentage_points": -0.20403731818181914,
+        "xve_stall_delta_percentage_points": -2.292901727272728,
+        "matched_pairs_pass": false,
+        "aggregate_gpu_time_pass": false,
+        "complete_guardrails_pass": false
+      }
+    ],
+    "failed_required_matched_comparisons": [
+      "rank1 B2 versus A2",
+      "rank2 B1 versus A1",
+      "rank3 B2 versus A2"
+    ],
+    "failed_required_card_aggregates": [
+      1,
+      3
+    ],
+    "conclusion": "The candidate is not robust under cold per-dispatch counters. The diagnostic global 0.6483% GPU-time win cannot rescue failed matched comparisons, card aggregates, or guardrails."
+  },
+  "authorization": {
+    "counter_reexecution_authorized": false,
+    "offline_parser_acceptance_change_authorized": false,
+    "endpoint_preregistration_construction_authorized": false,
+    "endpoint_authorized": false,
+    "service_authorized": false,
+    "model_generation_performed": false,
+    "network_access_performed": false,
+    "payload_created": false,
+    "localmaxxing_submission_made": false,
+    "reboot_performed": false
+  },
+  "next_action": "Close the separate shared gate+up native-M8 promotion lane. Use this negative to design a materially different, preregistered optimization; never rerun or reinterpret this capture as a pass."
+}
