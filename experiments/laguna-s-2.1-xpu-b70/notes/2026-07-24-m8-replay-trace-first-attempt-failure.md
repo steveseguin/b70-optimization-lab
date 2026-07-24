@@ -45,7 +45,8 @@ failed root are likewise expected paused child summaries with no device time.
 
 No `driver.json` exists, no generation began, the graph arm did not run, and
 no performance or correctness conclusion is permitted. Workers shut down
-cleanly and the root was sealed.
+cleanly and the root was sealed. Its private `m8rt-eager` RPC directory and
+the never-used `m8rt-graph` reservation remain sealed and are not reused.
 
 ## Authorized repair
 
@@ -55,6 +56,7 @@ The retry may:
   exactly one PID-shaped PTI provenance line;
 - retain and inventory paused auxiliary child summaries while requiring
   exactly four worker traces with positive host, device, and submission totals;
+- allocate fresh `m8rt2-eager` and `m8rt2-graph` RPC bases;
 - use vLLM descendant `7118fa20d4e0b606abc764bf4984c6f701ac14dc`,
   whose only change after the first trace hook is the same strict two-line
   acknowledgement rule.

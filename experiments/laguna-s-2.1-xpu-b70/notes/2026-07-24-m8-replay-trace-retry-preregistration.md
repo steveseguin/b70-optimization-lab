@@ -15,6 +15,8 @@ exactness check, and decision rule from
   line;
 - auxiliary paused child summaries are preserved and inventoried but do not
   count as worker traces;
+- fresh RPC bases are `m8rt2-eager` and `m8rt2-graph`; the first attempt's
+  sealed RPC state is never removed or reused;
 - a passing arm requires exactly four unique PID-bound traces, each containing
   positive Level Zero API, device, and kernel-submission totals;
 - the first failed root is immutable and cannot be reused.

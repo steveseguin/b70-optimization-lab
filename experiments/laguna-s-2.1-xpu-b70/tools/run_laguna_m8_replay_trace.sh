@@ -60,7 +60,7 @@ created+=("$run_dir")
 chmod 700 "$run_dir"
 for arm in eager graph; do
   arm_dir="$run_dir/$arm"
-  rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8rt-$arm"
+  rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8rt2-$arm"
   [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "reused RPC path: $rpc_dir"
   created+=("$rpc_dir")
   mkdir --mode=700 "$rpc_dir"
@@ -79,7 +79,7 @@ done
 } > "$run_dir/identity.txt"
 
 run_arm() {
-  local arm="$1" graph=0 arm_dir="$run_dir/$1" rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8rt-$1"
+  local arm="$1" graph=0 arm_dir="$run_dir/$1" rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8rt2-$1"
   local session random status
   [[ "$arm" == graph ]] && graph=1
   random="$(tr -d '-' < /proc/sys/kernel/random/uuid)"
