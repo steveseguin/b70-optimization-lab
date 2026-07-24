@@ -1,0 +1,93 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "aggregate_evidence_present": true,
+      "driver_json_present": true,
+      "manifest_count": 60,
+      "manifest_count_per_rank": 15,
+      "manifest_event_count": 201,
+      "num_cached_tokens": 0,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 12060,
+      "status": "completed_and_validated",
+      "text_sha256": "92105d1de6f357cac164f12b76adc090c334135477400010f3e1e810109efd0b",
+      "token_count": 32,
+      "token_ids_sha256": "cca03973c1998dfc3255cad724577213ed01cb606cf12eb867358de16f9b9e3f"
+    },
+    "segmented-eager": {
+      "aggregate_evidence_present": true,
+      "driver_json_present": true,
+      "manifest_count": 60,
+      "manifest_count_per_rank": 15,
+      "manifest_event_count": 444,
+      "num_cached_tokens": 0,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 26640,
+      "status": "completed_and_validated",
+      "text_sha256": "92105d1de6f357cac164f12b76adc090c334135477400010f3e1e810109efd0b",
+      "token_count": 32,
+      "token_ids_sha256": "cca03973c1998dfc3255cad724577213ed01cb606cf12eb867358de16f9b9e3f"
+    },
+    "segmented-graph": {
+      "aggregate_evidence_present": true,
+      "capture_count_per_rank": 1,
+      "driver_json_present": true,
+      "first_emitted_token_at_eligible_event": 0,
+      "graph_segments": 146,
+      "eager_breaks": 145,
+      "manifest_count": 64,
+      "manifest_count_per_rank": 16,
+      "manifest_event_count": 446,
+      "num_cached_tokens": 0,
+      "post_idle_status": "passed",
+      "post_worker_count": 0,
+      "raw_event_count": 28544,
+      "status": "completed_but_bitwise_incorrect",
+      "text_sha256": "3cdcad001051105acaf3e4d6ec11e37e2bf136ed215fdba663d960e1e0505a27",
+      "token_count": 32,
+      "token_ids_sha256": "05ac826fdf4e9251e63d13142e2bbfa1e35c49e0e0a4aa40c33b4ae07e75bdd1"
+    }
+  },
+  "classification": "live_lazy_capture_consumed_unmaterialized_first_graph_segment_not_a_benchmark",
+  "correctness_result": false,
+  "date_local": "2026-07-24",
+  "failure": {
+    "analyzer_exception": "B/C: rank 0 missing/extra eligible event",
+    "canonical_first_eligible_emitted_token": 19,
+    "capture_first_eligible_emitted_token": 0,
+    "earliest_boundary": "embedding_all_reduce local input before collective execution",
+    "rank0_c_local_is_all_zero": true,
+    "rank0_c_local_sha256": "2aae7dc846aaf25f1cadf55f1666862046c6db9d65d84bdc07fa039dac405606",
+    "rank0_eager_local_nonzero_bytes": 49069,
+    "rank0_eager_local_sha256": "1f3f00c08efcc9b35a9987ca87dd6aa4163a03fcc0e3d259638bfee82910fe6b",
+    "root_cause": "Breakable graph kernels are recorded but not executed during capture; guarded live lazy capture returned and consumed the unmaterialized capture-time path before a replay"
+  },
+  "identity": {
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "main_preregistration_commit": "7de834dbd2e03fee6a625de2337eee9448385186",
+    "main_tooling_commit": "4f93bd939cfc52311162200e63119da391184195",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "vllm_commit": "7e674bfbd05100383dc9e949f813fa7483b53cc3"
+  },
+  "network_access": false,
+  "raw_evidence": {
+    "aggregate_schema": "laguna-m8-actual-offline-gate-v10",
+    "arm_a_aggregate_sha256": "bff0a536e3a74c7d1d5b3489c568de62252449f4d7d278a5a90b43dad62cfb12",
+    "arm_b_aggregate_sha256": "a0fd25d39062b917abd126e031a0f8425642ff2959145189034c73de21635d08",
+    "arm_c_aggregate_sha256": "ffe287d26faa37f0de4e36e070d67a7fec4ad70ab07fc03f09a6c36833bd2454",
+    "raw_format": "laguna-m8-raw-evidence-v2"
+  },
+  "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-4f93bd939-20260724T192555Z",
+  "sealed": true,
+  "submission": false,
+  "throughput_result": null,
+  "timing_and_pti_run": false,
+  "usb_used": false
+}
