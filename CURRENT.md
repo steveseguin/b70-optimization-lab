@@ -445,9 +445,17 @@ all-gathers (48 attention O, one layer-0 dense MLP down, and 47 MoE combines).
 The compact FP32 logits all-gather occurs after the model forward context and
 is outside this graph lane. The segmented source checkpoint is vLLM
 `0964fe3d1`; it keeps all 97 in-model collectives eager in persistent buffers
-and records the unchanged noncollective kernels between them. It must pass
-four-card changing-input raw-byte parity and trace/timing gates before any
-model endpoint. The approved record remains unchanged.
+and records the unchanged noncollective kernels between them. Its corrected
+four-card substrate gate passed 99,328/99,328 raw comparisons and every one of
+508 input plus 508 tail freshness transitions, with 97 eager collectives and
+98 graph segments per replay. Preserve the
+[substrate pass](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-segmented-substrate-gate-pass.md)
+and
+[structured result](data/laguna-m8-xccl-segmented-substrate-pass-20260724.json).
+This authorizes construction/review only of the actual target-model and PTI
+trace/timing gate; it is not target exactness or performance evidence. That
+real-model gate must pass before any endpoint. The approved record remains
+unchanged.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under

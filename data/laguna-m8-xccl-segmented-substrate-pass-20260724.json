@@ -1,0 +1,81 @@
+{
+  "format": "laguna-m8-xccl-segmented-substrate-pass-v1",
+  "status": "pass",
+  "date": "2026-07-24",
+  "scope": "substrate_only_not_model_trace_not_candidate",
+  "approved_record_unchanged": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tok_s": 33.89498511171744,
+    "vllm_commit": "8936aac144929190c1e53f8b8624ca397ce16f5b",
+    "xpu_kernels_commit": "b6076ce1249ffee0e30bee528f4cd15c3bffb234"
+  },
+  "source": {
+    "tool_commit": "c21aa5a275f49fd403990f74dc7d268942a65f64",
+    "tool_sha256": "58fb19e162dc8fe5d45c2475a68ad3f6c05c8a74d283bc9d5a29bbdf842cf173",
+    "vllm_commit": "0964fe3d1b3508e39ee2455f70f1dbc7b13b0fd5"
+  },
+  "protocol": {
+    "world_size": 4,
+    "epochs": 32,
+    "replays_per_epoch": 4,
+    "changing_replays_per_rank": 128,
+    "eager_collectives_per_replay": 97,
+    "graph_segments_per_replay": 98,
+    "collective_order": {
+      "embedding_all_reduce": 1,
+      "bf16_all_gathers": 96
+    },
+    "collectives_captured": false,
+    "persistent_tensor_count_per_rank": 486
+  },
+  "verification": {
+    "passed_ranks": [0, 1, 2, 3],
+    "raw_comparisons_per_rank": 24832,
+    "raw_comparisons_fleet": 99328,
+    "changed_input_transitions_per_rank": 127,
+    "changed_input_transitions_fleet": 508,
+    "changed_tail_transitions_per_rank": 127,
+    "changed_tail_transitions_fleet": 508,
+    "final_tail_sha256": "89bb0581665522159320f9355fec375eca368cc7a5818e4dff6d7a9ae6563d6a",
+    "independent_audit": "pass"
+  },
+  "timing_seconds_by_rank": {
+    "0": {"capture": 0.9432214909902541, "validation": 5.449954550000257},
+    "1": {"capture": 0.8332155810057884, "validation": 5.449991390007199},
+    "2": {"capture": 0.8569904299947666, "validation": 5.449949800997274},
+    "3": {"capture": 0.8413731199980248, "validation": 5.4499413760058815}
+  },
+  "host": {
+    "boot_id": "0b7f98a5-e50a-46a5-81ea-15938b55317a",
+    "kernel": "7.0.0-28-generic",
+    "kernel_taint_before": 0,
+    "kernel_taint_after": 0,
+    "artifact_filesystem": "ext4",
+    "artifact_device": "/dev/nvme0n1p2",
+    "torch": "2.12.0+xpu"
+  },
+  "runtime_sha256": {
+    "libccl_so_1": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3",
+    "libsycl_so_8": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f",
+    "level_zero_driver": "26fa68779adb03b200a8c3001cf81e59fc9a3d63e0f38627ec0005ffce574e7a",
+    "level_zero_loader": "0fe232b18985ae078dd546b57bc6d11bacf1030834c0544f7e3feb53ed71c1d0"
+  },
+  "artifacts": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-xccl-segmented-substrate-c21aa5a27-20260724T145032Z",
+    "root_mode": "0555",
+    "aggregate_sha256": "5b6174c7f503e7ce1309e8f11f245a7d7f5db91521cd79156dae1f5d394723b2",
+    "rank0_sha256": "7aefe3e11d64533601ed7b31e30fba1a3f72a87fafa30e7cb6c5c8110af668ab",
+    "rank1_sha256": "1939ca9e43211d20601267a9c6459c5226d20bb0582ddd26b9bea65f8f1bbe9b",
+    "rank2_sha256": "e3ba870a505ba5e7f285c44228a6609163391f1eaabe754e26af7d26bd648acf",
+    "rank3_sha256": "1bcce8c2e56b033b576c5ea2c7511d7051ddfbbda547df5886301150ace3a479"
+  },
+  "downstream": {
+    "actual_target_gate_tooling_construction_authorized": true,
+    "actual_target_gate_execution_authorized": false,
+    "endpoint_authorized": false,
+    "generation_authorized": false,
+    "benchmark_authorized": false,
+    "payload_authorized": false,
+    "submission_authorized": false
+  }
+}
