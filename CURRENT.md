@@ -272,6 +272,19 @@ This pass authorizes only construction and audit of dedicated cold-counter
 tooling. Counter execution, an endpoint, model generation, a payload, and a
 submission remain unauthorized until their later frozen gates pass. The
 external USB remains backup-only.
+The later frozen shared-down counter capture was bitwise exact and globally
+3.240% faster in GEMM time, but failed four of eight matched pairs and every
+card's complete timing/XVE guardrail set. It is terminal before endpoint work.
+The subsequent gate-only native-M8 screen at vLLM `3dae2ce383a009624bc6ff3e8660851fab5c12e0`
+was also exact and won 31/31 card-0 ABBA blocks, but its
+`0.120856 ms` median saving missed the preregistered `0.150 ms` component
+minimum; cards 1-3 and counters did not run. Preserve the
+[threshold miss](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-component-threshold-miss.md).
+The active next lane is a newly preregistered pair of separate native-M8 shared
+gate and up projections. It explicitly forbids the inexact merged gate/up
+forms and requires at least `0.20 ms` median saving on every card before
+counters. Resume from the
+[gate+up preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-shared-gate-up-native-m8-mm-preregistration.md).
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
