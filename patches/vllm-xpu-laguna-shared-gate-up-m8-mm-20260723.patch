@@ -1,0 +1,1580 @@
+From 144f77608b6596677a9f6653b63b315e573b38b6 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 23 Jul 2026 23:39:08 -0400
+Subject: [PATCH] xpu: select separate Laguna M8 shared gate and up MMs
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+
+diff --git a/tests/models/test_laguna_shared_down_mm.py b/tests/models/test_laguna_shared_down_mm.py
+index cd3ebbea9..cfe986d90 100644
+--- a/tests/models/test_laguna_shared_down_mm.py
++++ b/tests/models/test_laguna_shared_down_mm.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -10,6 +11,8 @@ from torch import nn
+ from vllm.model_executor.layers import linear
+ from vllm.model_executor.models import laguna
+ 
++_RUN_XPU_DEVICE_TESTS = os.environ.get("VLLM_XPU_RUN_DEVICE_TESTS") == "1"
++
+ 
+ def _record_contract() -> tuple[SimpleNamespace, SimpleNamespace]:
+     config = SimpleNamespace(
+@@ -209,7 +212,10 @@ def test_laguna_mlp_marks_only_down_projection(
+     assert mlp.down_proj.xpu_laguna_m8_shared_down_mm is True
+ 
+ 
+-@pytest.mark.skipif(not torch.xpu.is_available(), reason="XPU is required")
++@pytest.mark.skipif(
++    not _RUN_XPU_DEVICE_TESTS or not torch.xpu.is_available(),
++    reason="explicitly authorized XPU device tests are required",
++)
+ def test_shared_down_mm_dispatches_and_fails_closed(
+     monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+diff --git a/tests/models/test_laguna_shared_gate_mm.py b/tests/models/test_laguna_shared_gate_mm.py
+index d77ea5742..02891f13f 100644
+--- a/tests/models/test_laguna_shared_gate_mm.py
++++ b/tests/models/test_laguna_shared_gate_mm.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++import os
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -13,6 +14,8 @@ from vllm.model_executor.layers import linear
+ from vllm.model_executor.models import laguna
+ 
+ _GATE_PREFIX = "model.layers.1.mlp.shared_expert.gate_proj"
++_UP_PREFIX = "model.layers.1.mlp.shared_expert.up_proj"
++_RUN_XPU_DEVICE_TESTS = os.environ.get("VLLM_XPU_RUN_DEVICE_TESTS") == "1"
+ 
+ 
+ def _record_contract() -> tuple[SimpleNamespace, SimpleNamespace]:
+@@ -68,6 +71,7 @@ def _set_record_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
+         "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
+         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": "1",
++        "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": "0",
+         "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "0",
+         "VLLM_XPU_LAGUNA_M8_W1_N_TILE": "64",
+         "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
+@@ -133,6 +137,11 @@ def test_shared_gate_and_down_mm_are_mutually_exclusive(
+             "1",
+             "shared-down MM",
+         ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM",
++            "1",
++            "shared gate/up MM",
++        ),
+         (
+             "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM",
+             "1",
+@@ -630,7 +639,10 @@ def test_shared_gate_mm_keeps_noncandidate_calls_on_incumbent_bmm(
+     assert bmm_calls == 1
+ 
+ 
+-@pytest.mark.skipif(not torch.xpu.is_available(), reason="XPU is required")
++@pytest.mark.skipif(
++    not _RUN_XPU_DEVICE_TESTS or not torch.xpu.is_available(),
++    reason="explicitly authorized XPU device tests are required",
++)
+ def test_shared_gate_mm_dispatches_and_fails_closed(
+     monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+@@ -680,3 +692,813 @@ def test_shared_gate_mm_dispatches_and_fails_closed(
+             rows,
+             None,
+         )
++
++
++def _set_gate_up_environment(monkeypatch: pytest.MonkeyPatch) -> None:
++    _set_record_environment(monkeypatch)
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM", "0")
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM", "1")
++
++
++class _GateUpTestLayer:
++    pass
++
++
++def _make_gate_up_pair(
++    gate_weight: torch.Tensor | None = None,
++    up_weight: torch.Tensor | None = None,
++) -> tuple[_GateUpTestLayer, _GateUpTestLayer]:
++    gate = _GateUpTestLayer()
++    gate.prefix = _GATE_PREFIX
++    gate.weight = (
++        torch.empty(256, 3072, dtype=torch.bfloat16)
++        if gate_weight is None
++        else gate_weight
++    )
++    gate.xpu_exact_spec_rows = True
++    up = _GateUpTestLayer()
++    up.prefix = _UP_PREFIX
++    up.weight = (
++        torch.empty(256, 3072, dtype=torch.bfloat16) if up_weight is None else up_weight
++    )
++    up.xpu_exact_spec_rows = True
++    linear._xpu_bind_laguna_m8_shared_gate_up_pair(gate, up)
++    return gate, up
++
++
++def test_laguna_m8_shared_gate_up_mm_record_contract(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    config, vllm_config = _record_contract()
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(laguna.current_platform, "is_xpu", lambda: True)
++
++    assert not laguna._laguna_m8_shared_gate_up_mm_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=False,
++        num_redundant_experts=0,
++    )
++
++
++@pytest.mark.parametrize(
++    ("name", "expected"),
++    [
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM",
++            "standalone shared-gate MM selector is not literal 0",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM",
++            "shared-down MM selector is not literal 0",
++        ),
++    ],
++)
++def test_shared_gate_up_mm_rejects_other_shared_mm_selectors(
++    monkeypatch: pytest.MonkeyPatch,
++    name: str,
++    expected: str,
++) -> None:
++    config, vllm_config = _record_contract()
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setenv(name, "1")
++    monkeypatch.setattr(laguna.current_platform, "is_xpu", lambda: True)
++
++    violations = laguna._laguna_m8_shared_gate_up_mm_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=False,
++        num_redundant_experts=0,
++    )
++
++    assert expected in violations
++
++
++@pytest.mark.parametrize(
++    ("name", "expected"),
++    [
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM",
++            "standalone shared-gate MM selector is not literal 0",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM",
++            "shared-down MM selector is not literal 0",
++        ),
++    ],
++)
++@pytest.mark.parametrize("value", [None, "00"])
++def test_shared_gate_up_mm_requires_literal_zero_for_other_selectors(
++    monkeypatch: pytest.MonkeyPatch,
++    name: str,
++    expected: str,
++    value: str | None,
++) -> None:
++    config, vllm_config = _record_contract()
++    _set_gate_up_environment(monkeypatch)
++    if value is None:
++        monkeypatch.delenv(name)
++    else:
++        monkeypatch.setenv(name, value)
++    monkeypatch.setattr(laguna.current_platform, "is_xpu", lambda: True)
++
++    violations = laguna._laguna_m8_shared_gate_up_mm_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=False,
++        num_redundant_experts=0,
++    )
++
++    assert expected in violations
++
++
++@pytest.mark.parametrize("value", [None, "01", "2"])
++def test_shared_gate_up_mm_requires_literal_one_for_its_selector(
++    monkeypatch: pytest.MonkeyPatch,
++    value: str | None,
++) -> None:
++    _set_gate_up_environment(monkeypatch)
++    if value is None:
++        monkeypatch.delenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM")
++    else:
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM", value)
++
++    violations = laguna._laguna_m8_shared_gate_up_selector_violations()
++
++    assert "shared gate/up MM selector is not literal 1" in violations
++
++
++@pytest.mark.parametrize(
++    ("name", "value", "expected"),
++    [
++        (
++            "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE",
++            "0",
++            "shared-elementwise",
++        ),
++        ("VLLM_XPU_LAGUNA_M8_QKNORM_ROPE", "0", "QKNorm/RoPE"),
++        (
++            "VLLM_XPU_LAGUNA_M8_W1_N_TILE",
++            "128",
++            "not explicitly N64",
++        ),
++        (
++            "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO",
++            "1",
++            "remote-route zero",
++        ),
++        ("VLLM_XPU_ENABLE_XPU_GRAPH", "1", "graph or AOT"),
++    ],
++)
++def test_shared_gate_up_mm_rejects_record_stack_drift(
++    monkeypatch: pytest.MonkeyPatch,
++    name: str,
++    value: str,
++    expected: str,
++) -> None:
++    config, vllm_config = _record_contract()
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setenv(name, value)
++    monkeypatch.setattr(laguna.current_platform, "is_xpu", lambda: True)
++
++    violations = laguna._laguna_m8_shared_gate_up_mm_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=False,
++        num_redundant_experts=0,
++    )
++
++    assert any(expected in violation for violation in violations)
++
++
++def test_shared_gate_up_mm_participates_in_env_and_aot_identity(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.delenv(
++        "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM",
++        raising=False,
++    )
++    model = SimpleNamespace(
++        vllm_config=SimpleNamespace(
++            scheduler_config=SimpleNamespace(async_scheduling=False)
++        )
++    )
++
++    assert envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM is False
++    assert decorators._aot_runtime_contract(model)["m8_shared_gate_up_mm"] is False
++    assert envs.compile_factors()["VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM"] is False
++
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM", "1")
++
++    assert envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM is True
++    assert decorators._aot_runtime_contract(model)["m8_shared_gate_up_mm"] is True
++    assert envs.compile_factors()["VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM"] is True
++
++
++@pytest.mark.parametrize(
++    ("rows", "verifier", "marked", "expected"),
++    [
++        (8, True, True, True),
++        (8, True, False, False),
++        (8, False, True, False),
++        (7, True, True, False),
++        (1, True, True, False),
++    ],
++)
++def test_shared_gate_up_mm_request_is_marked_m8_verifier_only(
++    monkeypatch: pytest.MonkeyPatch,
++    rows: int,
++    verifier: bool,
++    marked: bool,
++    expected: bool,
++) -> None:
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: verifier,
++    )
++    layer = SimpleNamespace(xpu_laguna_m8_shared_gate_up_mm=marked)
++    inputs = torch.empty(rows, 3072, dtype=torch.bfloat16)
++
++    requested = linear._xpu_laguna_m8_shared_gate_up_mm_requested(
++        layer,
++        inputs,
++    )
++    assert requested is expected
++
++
++def test_shared_gate_up_mm_routes_missing_bound_marker_to_validator(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    layer, _ = _make_gate_up_pair()
++    layer.xpu_laguna_m8_shared_gate_up_mm = False
++
++    assert linear._xpu_laguna_m8_shared_gate_up_mm_requested(
++        layer,
++        torch.empty(8, 3072, dtype=torch.bfloat16),
++    )
++
++
++@pytest.mark.parametrize(
++    ("case", "expected"),
++    [
++        ("platform", "platform is not XPU"),
++        ("device", "rows are on cpu"),
++        ("rows_shape", "rows shape"),
++        ("rows_dtype", "rows dtype"),
++        ("rows_layout", "rows are not contiguous"),
++        ("weight_shape", "weight shape"),
++        ("weight_dtype", "weight dtype"),
++        ("weight_layout", "weight is not contiguous"),
++        ("method", "not unquantized"),
++        ("bias", "bias is not None"),
++        ("compiler", "compiled execution is active"),
++        ("exact_rows", "exact-target row marker is not true"),
++        ("prefix", "outside the frozen target scope"),
++        ("rebound_prefix", "paired constructor scope tag is invalid"),
++        ("scope", "paired constructor scope tag is invalid"),
++        ("gate_role", "paired constructor scope tag is invalid"),
++        ("up_role", "paired constructor scope tag is invalid"),
++        ("missing_marker", "marker is not true"),
++        ("missing_peer_marker", "paired constructor scope tag is invalid"),
++        ("missing_peer_scope", "paired constructor scope tag is invalid"),
++        ("peer_exact_rows", "paired up exact-target row marker is not true"),
++        ("peer_weight_layout", "paired up weight is not contiguous"),
++        ("peer_bias", "paired up bias is not None"),
++        ("selector_literal", "selector is not literal 1"),
++        (
++            "stack_exact",
++            "exact attention/MoE/W1-route-W2 selectors",
++        ),
++        (
++            "stack_moe",
++            "exact attention/MoE/W1-route-W2 selectors",
++        ),
++        ("stack_elementwise", "shared-elementwise"),
++        ("stack_qknorm", "QKNorm/RoPE"),
++        ("stack_graph", "graph or AOT"),
++        ("stack_route", "route interleave"),
++        ("stack_w1", "not explicitly N64"),
++        ("standalone_gate", "standalone shared-gate MM selector is not literal 0"),
++        ("shared_down", "shared-down MM selector is not literal 0"),
++        (
++            "unset_standalone_gate",
++            "standalone shared-gate MM selector is not literal 0",
++        ),
++        ("unset_shared_down", "shared-down MM selector is not literal 0"),
++    ],
++)
++def test_shared_gate_up_mm_violations_raise_before_fallback(
++    monkeypatch: pytest.MonkeyPatch,
++    case: str,
++    expected: str,
++) -> None:
++    class FallbackMethod:
++        def apply_batched_m1(self, *_args) -> torch.Tensor:
++            raise AssertionError("invalid method silently used its fallback")
++
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    monkeypatch.setattr(
++        linear.current_platform,
++        "is_xpu",
++        lambda: case != "platform",
++    )
++    monkeypatch.setattr(
++        linear.torch.compiler,
++        "is_compiling",
++        lambda: case == "compiler",
++    )
++    if case == "selector_literal":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM", "2")
++    if case == "stack_exact":
++        monkeypatch.setenv("VLLM_XPU_EXACT_SPEC_ATTN", "0")
++    if case == "stack_moe":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE", "0")
++    if case == "stack_elementwise":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE", "0")
++    if case == "stack_qknorm":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_QKNORM_ROPE", "0")
++    if case == "stack_graph":
++        monkeypatch.setenv("VLLM_XPU_ENABLE_XPU_GRAPH", "1")
++    if case == "stack_route":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE", "0")
++    if case == "stack_w1":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_W1_N_TILE", "128")
++    if case == "standalone_gate":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM", "1")
++    if case == "shared_down":
++        monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM", "1")
++    if case == "unset_standalone_gate":
++        monkeypatch.delenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM")
++    if case == "unset_shared_down":
++        monkeypatch.delenv("VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM")
++
++    rows = torch.empty(8, 3072, dtype=torch.bfloat16)
++    gate, up = _make_gate_up_pair()
++    layer = gate
++    method = linear.UnquantizedLinearMethod()
++    bias = None
++    if case == "rows_shape":
++        rows = torch.empty(8, 3071, dtype=torch.bfloat16)
++    elif case == "rows_dtype":
++        rows = rows.float()
++    elif case == "rows_layout":
++        rows = torch.empty(3072, 8, dtype=torch.bfloat16).t()
++    elif case == "weight_shape":
++        layer.weight = torch.empty(255, 3072, dtype=torch.bfloat16)
++    elif case == "weight_dtype":
++        layer.weight = layer.weight.float()
++    elif case == "weight_layout":
++        layer.weight = torch.empty(3072, 256, dtype=torch.bfloat16).t()
++    elif case == "method":
++        method = FallbackMethod()
++    elif case == "bias":
++        bias = torch.empty(256, dtype=torch.bfloat16)
++    elif case == "prefix":
++        layer.prefix = "model.layers.1.mlp.shared_expert.down_proj"
++    elif case == "rebound_prefix":
++        layer.prefix = "model.layers.2.mlp.shared_expert.gate_proj"
++    elif case == "scope":
++        layer._xpu_laguna_m8_shared_gate_up_scope = None
++    elif case == "gate_role":
++        scope = layer._xpu_laguna_m8_shared_gate_up_scope
++        layer._xpu_laguna_m8_shared_gate_up_scope = (
++            scope[0],
++            scope[1],
++            "up_proj",
++        )
++    elif case == "up_role":
++        layer = up
++        scope = layer._xpu_laguna_m8_shared_gate_up_scope
++        layer._xpu_laguna_m8_shared_gate_up_scope = (
++            scope[0],
++            scope[1],
++            "gate_proj",
++        )
++    elif case == "missing_marker":
++        layer.xpu_laguna_m8_shared_gate_up_mm = False
++    elif case == "missing_peer_marker":
++        up.xpu_laguna_m8_shared_gate_up_mm = False
++    elif case == "missing_peer_scope":
++        up._xpu_laguna_m8_shared_gate_up_scope = None
++    elif case == "peer_exact_rows":
++        up.xpu_exact_spec_rows = False
++    elif case == "peer_weight_layout":
++        up.weight = torch.empty(3072, 256, dtype=torch.bfloat16).t()
++    elif case == "peer_bias":
++        up.bias = torch.empty(256, dtype=torch.bfloat16)
++    layer.xpu_exact_spec_rows = case != "exact_rows"
++
++    def forbidden_primitive(*_args, **_kwargs):
++        raise AssertionError("invalid candidate reached a GEMM primitive")
++
++    monkeypatch.setattr(torch, "mm", forbidden_primitive)
++    monkeypatch.setattr(torch, "bmm", forbidden_primitive)
++    with pytest.raises(RuntimeError, match=expected):
++        linear._xpu_apply_batched_m1_method(
++            layer,
++            method,
++            rows,
++            bias,
++        )
++
++
++def test_laguna_mlp_marks_separate_gate_and_up_in_forward_order(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    calls: list[str] = []
++
++    class FakeLinear(nn.Module):
++        def __init__(self, *_args, **kwargs) -> None:
++            super().__init__()
++            self.prefix = kwargs.get("prefix", "")
++
++        def forward(self, inputs: torch.Tensor):
++            role = self.prefix.rsplit(".", 1)[-1]
++            calls.append(role)
++            width = 3072 if role == "down_proj" else 256
++            return (
++                torch.ones(
++                    inputs.shape[0],
++                    width,
++                    dtype=torch.bfloat16,
++                ),
++                None,
++            )
++
++    monkeypatch.setattr(laguna, "ColumnParallelLinear", FakeLinear)
++    monkeypatch.setattr(laguna, "RowParallelLinear", FakeLinear)
++    mlp = laguna.LagunaMLP(
++        hidden_size=3072,
++        intermediate_size=1024,
++        hidden_act="silu",
++        exact_spec_target=True,
++        use_m8_shared_gate_up_mm=True,
++        _m8_shared_gate_up_scope=(laguna._LAGUNA_M8_SHARED_GATE_UP_CONSTRUCTOR_SCOPE),
++        prefix="model.layers.1.mlp.shared_expert",
++    )
++
++    output = mlp(torch.ones(8, 3072, dtype=torch.bfloat16))
++
++    assert output.shape == (8, 3072)
++    assert calls == ["gate_proj", "up_proj", "down_proj"]
++    pair = None
++    for projection, prefix, role in (
++        (mlp.gate_proj, _GATE_PREFIX, "gate_proj"),
++        (mlp.up_proj, _UP_PREFIX, "up_proj"),
++    ):
++        assert projection.xpu_laguna_m8_shared_gate_up_mm is True
++        scope = projection._xpu_laguna_m8_shared_gate_up_scope
++        assert scope[0] is linear._XPU_LAGUNA_M8_SHARED_GATE_UP_SCOPE
++        assert scope[2] == role
++        if pair is None:
++            pair = scope[1]
++        else:
++            assert scope[1] is pair
++        assert linear._xpu_laguna_m8_shared_gate_up_pair_scope_valid(
++            projection,
++            prefix,
++            role,
++            scope,
++        )
++        assert not hasattr(projection, "xpu_laguna_m8_shared_gate_mm")
++    assert not hasattr(
++        mlp.down_proj,
++        "xpu_laguna_m8_shared_gate_up_mm",
++    )
++
++
++def test_shared_gate_up_mm_cpu_forward_selects_two_ordered_mms(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    calls: list[str] = []
++    active_role = ""
++    real_mm = torch.mm
++
++    class FakeColumn(nn.Module):
++        def __init__(self, *_args, **kwargs) -> None:
++            super().__init__()
++            self.prefix = kwargs.get("prefix", "")
++            self.weight = torch.zeros(256, 3072, dtype=torch.bfloat16)
++
++        def forward(self, inputs: torch.Tensor):
++            nonlocal active_role
++            active_role = self.prefix.rsplit(".", 1)[-1]
++            output = linear._xpu_apply_batched_m1_method(
++                self,
++                linear.UnquantizedLinearMethod(),
++                inputs,
++                None,
++            )
++            return output, None
++
++    class FakeRow(nn.Module):
++        def __init__(self, *_args, **kwargs) -> None:
++            super().__init__()
++            self.prefix = kwargs.get("prefix", "")
++
++        def forward(self, inputs: torch.Tensor):
++            calls.append("down_proj")
++            return (
++                torch.zeros(
++                    inputs.shape[0],
++                    3072,
++                    dtype=torch.bfloat16,
++                ),
++                None,
++            )
++
++    def tracked_mm(left: torch.Tensor, right: torch.Tensor):
++        calls.append(active_role)
++        return real_mm(left, right)
++
++    def forbidden_bmm(*_args, **_kwargs):
++        raise AssertionError("valid pair dispatch used incumbent BMM")
++
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(laguna, "ColumnParallelLinear", FakeColumn)
++    monkeypatch.setattr(laguna, "RowParallelLinear", FakeRow)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    monkeypatch.setattr(
++        linear,
++        "_xpu_laguna_m8_shared_gate_up_mm_contract_violations",
++        lambda *_args: [],
++    )
++    monkeypatch.setattr(torch, "mm", tracked_mm)
++    monkeypatch.setattr(torch, "bmm", forbidden_bmm)
++    mlp = laguna.LagunaMLP(
++        hidden_size=3072,
++        intermediate_size=1024,
++        hidden_act="silu",
++        exact_spec_target=True,
++        use_m8_shared_gate_up_mm=True,
++        _m8_shared_gate_up_scope=(laguna._LAGUNA_M8_SHARED_GATE_UP_CONSTRUCTOR_SCOPE),
++        prefix="model.layers.1.mlp.shared_expert",
++    )
++
++    output = mlp(torch.zeros(8, 3072, dtype=torch.bfloat16))
++
++    assert output.shape == (8, 3072)
++    assert calls == ["gate_proj", "up_proj", "down_proj"]
++
++
++@pytest.mark.parametrize(
++    ("exact_spec_target", "prefix"),
++    [
++        (True, "model.layers.0.mlp"),
++        (False, "draft.layers.1.mlp.shared_expert"),
++        (True, "model.layers.1.mlp.experts.0"),
++        (True, "model.layers.1.mlp.shared_expert_wrapper"),
++    ],
++)
++def test_shared_gate_up_mm_does_not_mark_non_target_construction(
++    monkeypatch: pytest.MonkeyPatch,
++    exact_spec_target: bool,
++    prefix: str,
++) -> None:
++    class FakeLinear(nn.Module):
++        def __init__(self, *_args, **kwargs) -> None:
++            super().__init__()
++            self.prefix = kwargs.get("prefix", "")
++
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(laguna, "ColumnParallelLinear", FakeLinear)
++    monkeypatch.setattr(laguna, "RowParallelLinear", FakeLinear)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    mlp = laguna.LagunaMLP(
++        hidden_size=3072,
++        intermediate_size=1024,
++        hidden_act="silu",
++        exact_spec_target=exact_spec_target,
++        prefix=prefix,
++    )
++    rows = torch.empty(8, 3072, dtype=torch.bfloat16)
++
++    for projection in (mlp.gate_proj, mlp.up_proj, mlp.down_proj):
++        assert not hasattr(
++            projection,
++            "xpu_laguna_m8_shared_gate_up_mm",
++        )
++        assert not linear._xpu_laguna_m8_shared_gate_up_mm_requested(
++            projection,
++            rows,
++        )
++
++
++def test_shared_gate_up_mm_rejects_direct_or_ambiguous_constructor(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    class FakeLinear(nn.Module):
++        def __init__(self, *_args, **kwargs) -> None:
++            super().__init__()
++            self.prefix = kwargs.get("prefix", "")
++
++    monkeypatch.setattr(laguna, "ColumnParallelLinear", FakeLinear)
++    monkeypatch.setattr(laguna, "RowParallelLinear", FakeLinear)
++
++    with pytest.raises(ValueError, match="not issued by LagunaMoE"):
++        laguna.LagunaMLP(
++            hidden_size=3072,
++            intermediate_size=1024,
++            hidden_act="silu",
++            exact_spec_target=True,
++            use_m8_shared_gate_up_mm=True,
++            prefix="model.layers.1.mlp.shared_expert",
++        )
++    with pytest.raises(ValueError, match="mutually exclusive"):
++        laguna.LagunaMLP(
++            hidden_size=3072,
++            intermediate_size=1024,
++            hidden_act="silu",
++            exact_spec_target=True,
++            use_m8_shared_gate_mm=True,
++            use_m8_shared_gate_up_mm=True,
++            prefix="model.layers.1.mlp.shared_expert",
++        )
++
++
++@pytest.mark.parametrize(
++    ("role", "rows", "marked"),
++    [
++        ("gate_proj", 1, True),
++        ("up_proj", 2, True),
++        ("gate_proj", 3, True),
++        ("up_proj", 4, True),
++        ("gate_proj", 5, True),
++        ("up_proj", 6, True),
++        ("gate_proj", 7, True),
++        ("up_proj", 8, False),
++    ],
++)
++def test_shared_gate_up_mm_keeps_noncandidates_on_incumbent_bmm(
++    monkeypatch: pytest.MonkeyPatch,
++    role: str,
++    rows: int,
++    marked: bool,
++) -> None:
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    inputs = torch.zeros(rows, 32, dtype=torch.bfloat16)
++    if marked:
++        gate, up = _make_gate_up_pair(
++            torch.zeros(16, 32, dtype=torch.bfloat16),
++            torch.zeros(16, 32, dtype=torch.bfloat16),
++        )
++        layer = gate if role == "gate_proj" else up
++    else:
++        layer = SimpleNamespace(
++            weight=torch.zeros(16, 32, dtype=torch.bfloat16),
++            xpu_laguna_m8_shared_gate_up_mm=False,
++            prefix=f"model.layers.1.mlp.shared_expert.{role}",
++            xpu_exact_spec_rows=True,
++            _xpu_laguna_m8_shared_gate_up_scope=None,
++        )
++    real_bmm = torch.bmm
++    bmm_calls = 0
++
++    def forbidden_mm(*_args, **_kwargs):
++        raise AssertionError("noncandidate call used native MM")
++
++    def tracked_bmm(*args, **kwargs):
++        nonlocal bmm_calls
++        bmm_calls += 1
++        return real_bmm(*args, **kwargs)
++
++    monkeypatch.setattr(torch, "mm", forbidden_mm)
++    monkeypatch.setattr(torch, "bmm", tracked_bmm)
++    output = linear._xpu_apply_batched_m1_method(
++        layer,
++        linear.UnquantizedLinearMethod(),
++        inputs,
++        None,
++    )
++
++    assert output.shape == (rows, 16)
++    assert bmm_calls == 1
++
++
++def test_shared_gate_up_mm_prefill_stays_on_incumbent_bmm(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(linear.current_platform, "is_xpu", lambda: True)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: False,
++    )
++    inputs = torch.zeros(8, 32, dtype=torch.bfloat16)
++    layer, _ = _make_gate_up_pair(
++        torch.zeros(16, 32, dtype=torch.bfloat16),
++        torch.zeros(16, 32, dtype=torch.bfloat16),
++    )
++    layer.bias = None
++    layer.skip_bias_add = False
++    layer.quant_method = linear.UnquantizedLinearMethod()
++    layer.gather_output = False
++    layer.tp_size = 1
++    layer.return_bias = False
++    real_bmm = torch.bmm
++    bmm_calls = 0
++
++    def forbidden_mm(*_args, **_kwargs):
++        raise AssertionError("prefill call used native MM")
++
++    def tracked_bmm(*args, **kwargs):
++        nonlocal bmm_calls
++        bmm_calls += 1
++        return real_bmm(*args, **kwargs)
++
++    monkeypatch.setattr(torch, "mm", forbidden_mm)
++    monkeypatch.setattr(torch, "bmm", tracked_bmm)
++    output = linear.ColumnParallelLinear.forward(layer, inputs)
++
++    assert output.shape == (8, 16)
++    assert bmm_calls == 1
++
++
++@pytest.mark.skipif(
++    not _RUN_XPU_DEVICE_TESTS or not torch.xpu.is_available(),
++    reason="explicitly authorized XPU device tests are required",
++)
++def test_shared_gate_up_mm_dispatches_two_separate_exact_mms(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    _set_gate_up_environment(monkeypatch)
++    monkeypatch.setattr(
++        linear,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    monkeypatch.setattr(linear.current_platform, "is_xpu", lambda: True)
++
++    rows = torch.randn((8, 3072), dtype=torch.bfloat16, device="xpu")
++    gate_weight = torch.randn(
++        (256, 3072),
++        dtype=torch.bfloat16,
++        device="xpu",
++    )
++    up_weight = torch.randn(
++        (256, 3072),
++        dtype=torch.bfloat16,
++        device="xpu",
++    )
++    gate, up = _make_gate_up_pair(gate_weight, up_weight)
++    expected = {
++        role: torch.bmm(
++            rows.unsqueeze(1),
++            layer.weight.t().unsqueeze(0).expand(8, -1, -1),
++        ).squeeze(1)
++        for role, layer in (("gate_proj", gate), ("up_proj", up))
++    }
++    real_mm = torch.mm
++    calls: list[str] = []
++    active_role = ""
++
++    def tracked_mm(left: torch.Tensor, right: torch.Tensor):
++        calls.append(active_role)
++        return real_mm(left, right)
++
++    def forbidden_bmm(*_args, **_kwargs):
++        raise AssertionError("candidate silently used incumbent BMM")
++
++    monkeypatch.setattr(torch, "mm", tracked_mm)
++    monkeypatch.setattr(torch, "bmm", forbidden_bmm)
++    for role, layer in (("gate_proj", gate), ("up_proj", up)):
++        active_role = role
++        actual = linear._xpu_apply_batched_m1_method(
++            layer,
++            linear.UnquantizedLinearMethod(),
++            rows,
++            None,
++        )
++        assert torch.equal(
++            actual.view(torch.int16),
++            expected[role].view(torch.int16),
++        )
++
++    assert calls == ["gate_proj", "up_proj"]
+diff --git a/vllm/compilation/decorators.py b/vllm/compilation/decorators.py
+index 0d2f0ea9e..4eeda93ca 100644
+--- a/vllm/compilation/decorators.py
++++ b/vllm/compilation/decorators.py
+@@ -292,6 +292,9 @@ def _aot_runtime_contract(model: Any) -> dict[str, Any]:
+         "m8_shared_gate_mm": bool(
+             envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM
+         ),
++        "m8_shared_gate_up_mm": bool(
++            envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM
++        ),
+         "m8_shared_down_mm": bool(
+             envs.VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM
+         ),
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 46b6cd948..9ef26e43c 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -297,6 +297,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2: bool = False
+     VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM: bool = False
+     VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM: bool = False
++    VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM: bool = False
+     VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM: bool = False
+     VLLM_XPU_LAGUNA_M8_QKNORM_ROPE: bool = False
+     VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK: bool = False
+@@ -2028,6 +2029,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM", "0"))
+     ),
++    "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": lambda: bool(
++        int(os.getenv("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM", "0"))
++    ),
+     "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM", "0"))
+     ),
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 7164b3e10..a79be9015 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -3,6 +3,7 @@
+ 
+ import itertools
+ import os
++import weakref
+ from abc import abstractmethod
+ from collections.abc import Iterable
+ from typing import Any
+@@ -48,9 +49,22 @@ from vllm.utils.torch_utils import direct_register_custom_op
+ logger = init_logger(__name__)
+ 
+ _XPU_LAGUNA_M8_SHARED_GATE_SCOPE = object()
++_XPU_LAGUNA_M8_SHARED_GATE_UP_SCOPE = object()
+ _XPU_LAGUNA_RECORD_NUM_HIDDEN_LAYERS = 48
+ 
+ 
++class _XPULagunaM8SharedGateUpPair:
++    """Weakly bind one target shared gate/up projection pair."""
++
++    __slots__ = ("gate_prefix", "gate_ref", "up_prefix", "up_ref")
++
++    def __init__(self, gate: Any, up: Any) -> None:
++        self.gate_prefix = gate.prefix
++        self.up_prefix = up.prefix
++        self.gate_ref = weakref.ref(gate)
++        self.up_ref = weakref.ref(up)
++
++
+ def _xpu_laguna_m8_shared_gate_prefix(prefix: object) -> bool:
+     """Whether prefix is the frozen target shared-gate linear path."""
+     if not isinstance(prefix, str):
+@@ -72,6 +86,176 @@ def _xpu_laguna_m8_shared_gate_prefix(prefix: object) -> bool:
+     )
+ 
+ 
++def _xpu_laguna_m8_shared_gate_up_role(prefix: object) -> str | None:
++    """Return the projection role for a frozen target shared gate/up path."""
++    if not isinstance(prefix, str):
++        return None
++    parts = prefix.split(".")
++    if len(parts) != 6 or parts[:2] != ["model", "layers"]:
++        return None
++    if parts[3:5] != ["mlp", "shared_expert"]:
++        return None
++    role = parts[5]
++    if role not in {"gate_proj", "up_proj"}:
++        return None
++    layer_text = parts[2]
++    if not layer_text.isdecimal():
++        return None
++    layer_idx = int(layer_text)
++    if (
++        layer_text != str(layer_idx)
++        or not 1 <= layer_idx < _XPU_LAGUNA_RECORD_NUM_HIDDEN_LAYERS
++    ):
++        return None
++    return role
++
++
++def _xpu_bind_laguna_m8_shared_gate_up_pair(gate: Any, up: Any) -> None:
++    """Attach a role-bound pair marker without registering peer submodules."""
++    gate_role = _xpu_laguna_m8_shared_gate_up_role(getattr(gate, "prefix", None))
++    up_role = _xpu_laguna_m8_shared_gate_up_role(getattr(up, "prefix", None))
++    gate_parent = getattr(gate, "prefix", "").rsplit(".", 1)[0]
++    up_parent = getattr(up, "prefix", "").rsplit(".", 1)[0]
++    if gate_role != "gate_proj" or up_role != "up_proj" or gate_parent != up_parent:
++        raise ValueError(
++            "Laguna M8 shared gate/up pair binding escaped its target scope"
++        )
++    pair = _XPULagunaM8SharedGateUpPair(gate, up)
++    for projection, role in ((gate, "gate_proj"), (up, "up_proj")):
++        projection.xpu_laguna_m8_shared_gate_up_mm = True
++        projection._xpu_laguna_m8_shared_gate_up_scope = (
++            _XPU_LAGUNA_M8_SHARED_GATE_UP_SCOPE,
++            pair,
++            role,
++        )
++
++
++def _xpu_laguna_m8_shared_gate_up_pair_scope_valid(
++    layer: Any,
++    prefix: object,
++    role: str | None,
++    scope: object,
++) -> bool:
++    """Prove both marked projections still form one canonical pair."""
++    if (
++        not isinstance(scope, tuple)
++        or len(scope) != 3
++        or scope[0] is not _XPU_LAGUNA_M8_SHARED_GATE_UP_SCOPE
++        or not isinstance(scope[1], _XPULagunaM8SharedGateUpPair)
++        or scope[2] != role
++    ):
++        return False
++    pair = scope[1]
++    gate = pair.gate_ref()
++    up = pair.up_ref()
++    if gate is None or up is None:
++        return False
++    projections = {
++        "gate_proj": (gate, pair.gate_prefix),
++        "up_proj": (up, pair.up_prefix),
++    }
++    if role not in projections or projections[role][0] is not layer:
++        return False
++    if projections[role][1] != prefix:
++        return False
++    gate_parent = pair.gate_prefix.rsplit(".", 1)[0]
++    up_parent = pair.up_prefix.rsplit(".", 1)[0]
++    if (
++        gate_parent != up_parent
++        or _xpu_laguna_m8_shared_gate_up_role(pair.gate_prefix) != "gate_proj"
++        or _xpu_laguna_m8_shared_gate_up_role(pair.up_prefix) != "up_proj"
++    ):
++        return False
++    for expected_role, (projection, expected_prefix) in projections.items():
++        projection_scope = getattr(
++            projection,
++            "_xpu_laguna_m8_shared_gate_up_scope",
++            None,
++        )
++        if (
++            getattr(
++                projection,
++                "xpu_laguna_m8_shared_gate_up_mm",
++                None,
++            )
++            is not True
++            or getattr(projection, "prefix", None) != expected_prefix
++            or not isinstance(projection_scope, tuple)
++            or len(projection_scope) != 3
++            or projection_scope[0] is not _XPU_LAGUNA_M8_SHARED_GATE_UP_SCOPE
++            or projection_scope[1] is not pair
++            or projection_scope[2] != expected_role
++        ):
++            return False
++    return True
++
++
++def _xpu_laguna_m8_shared_gate_up_peer_violations(
++    layer: Any,
++    rows: torch.Tensor,
++) -> list[str]:
++    """Validate both projections before either member may launch native MM."""
++    scope = getattr(layer, "_xpu_laguna_m8_shared_gate_up_scope", None)
++    if (
++        not isinstance(scope, tuple)
++        or len(scope) != 3
++        or not isinstance(scope[1], _XPULagunaM8SharedGateUpPair)
++    ):
++        return []
++    pair = scope[1]
++    projections = (
++        ("gate", pair.gate_ref()),
++        ("up", pair.up_ref()),
++    )
++    violations = []
++    for role, projection in projections:
++        if projection is None:
++            violations.append(f"paired {role} projection no longer exists")
++            continue
++        weight = getattr(projection, "weight", None)
++        checks = (
++            (
++                getattr(
++                    projection,
++                    "xpu_laguna_m8_shared_gate_up_mm",
++                    None,
++                )
++                is True,
++                f"paired {role} marker is not true",
++            ),
++            (
++                getattr(projection, "xpu_exact_spec_rows", False) is True,
++                f"paired {role} exact-target row marker is not true",
++            ),
++            (
++                isinstance(weight, torch.Tensor),
++                f"paired {role} weight is not a tensor",
++            ),
++            (
++                isinstance(weight, torch.Tensor) and tuple(weight.shape) == (256, 3072),
++                f"paired {role} weight shape is not (256, 3072)",
++            ),
++            (
++                isinstance(weight, torch.Tensor) and weight.dtype == torch.bfloat16,
++                f"paired {role} weight dtype is not BF16",
++            ),
++            (
++                isinstance(weight, torch.Tensor) and weight.is_contiguous(),
++                f"paired {role} weight is not contiguous",
++            ),
++            (
++                isinstance(weight, torch.Tensor) and weight.device == rows.device,
++                f"paired {role} weight is not on the rows' device",
++            ),
++            (
++                getattr(projection, "bias", None) is None,
++                f"paired {role} bias is not None",
++            ),
++        )
++        violations.extend(message for valid, message in checks if not valid)
++    return violations
++
++
+ def _xpu_exact_batched_m1_bmm_out(
+     rows: torch.Tensor, weight: torch.Tensor, output: torch.Tensor
+ ) -> None:
+@@ -192,6 +376,180 @@ def _xpu_laguna_m8_shared_gate_mm_requested(
+     )
+ 
+ 
++def _xpu_laguna_m8_shared_gate_up_mm_requested(
++    layer: "LinearBase",
++    rows: torch.Tensor,
++) -> bool:
++    """Whether this call is one guarded shared gate/up M=8 treatment call."""
++    return bool(
++        envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM
++        and rows.ndim == 2
++        and rows.shape[0] == 8
++        and _xpu_is_exact_decode_or_verifier_rows(rows.shape[0])
++        and (
++            getattr(layer, "xpu_laguna_m8_shared_gate_up_mm", False)
++            or getattr(
++                layer,
++                "_xpu_laguna_m8_shared_gate_up_scope",
++                None,
++            )
++            is not None
++        )
++    )
++
++
++def _xpu_laguna_m8_shared_gate_up_runtime_violations() -> list[str]:
++    """Revalidate every dynamic selector in the frozen pair record stack."""
++    checks = (
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM") == "1",
++            "shared gate/up MM selector is not literal 1",
++        ),
++        (
++            envs.VLLM_XPU_EXACT_SPEC_ATTN
++            and envs.VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE
++            and envs.VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2,
++            "exact attention/MoE/W1-route-W2 selectors are not all enabled",
++        ),
++        (
++            not envs.VLLM_XPU_ENABLE_XPU_GRAPH
++            and not envs.VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH
++            and os.environ.get("XPU_GRAPH") == "0"
++            and os.environ.get("VLLM_USE_AOT_COMPILE") == "0",
++            "graph or AOT identity is not explicitly disabled",
++        ),
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE") == "1",
++            "Laguna M8 route interleave is not explicitly enabled",
++        ),
++        (
++            envs.VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE,
++            "shared-elementwise record selector is not enabled",
++        ),
++        (
++            envs.VLLM_XPU_LAGUNA_M8_QKNORM_ROPE,
++            "QKNorm/RoPE record selector is not enabled",
++        ),
++        (
++            not envs.VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM,
++            "known-negative BF16 attention MM selector is enabled",
++        ),
++        (
++            not envs.VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK,
++            "failed BF16 router selector is enabled",
++        ),
++        (
++            not envs.VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION,
++            "fused M8 transaction selector is enabled",
++        ),
++        (
++            not envs.VLLM_XPU_LAGUNA_M8_REMOTE_ZERO,
++            "remote-route zero selector is enabled",
++        ),
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_W1_N_TILE") == "64",
++            "routed-W1 tile is not explicitly N64",
++        ),
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM", "0") == "0",
++            "rejected shared-expert auxiliary stream is enabled",
++        ),
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM") == "0",
++            "standalone shared-gate MM selector is not literal 0",
++        ),
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM") == "0",
++            "shared-down MM selector is not literal 0",
++        ),
++    )
++    return [message for valid, message in checks if not valid]
++
++
++def _xpu_laguna_m8_shared_gate_up_mm_contract_violations(
++    layer: "LinearBase",
++    method: "LinearMethodBase",
++    rows: torch.Tensor,
++    bias: torch.Tensor | None,
++) -> list[str]:
++    """Return every reason a separate native shared gate/up MM is unsafe."""
++    weight = getattr(layer, "weight", None)
++    prefix = getattr(layer, "prefix", None)
++    role = _xpu_laguna_m8_shared_gate_up_role(prefix)
++    scope = getattr(layer, "_xpu_laguna_m8_shared_gate_up_scope", None)
++    violations = _xpu_laguna_m8_shared_gate_up_runtime_violations()
++    checks = (
++        (current_platform.is_xpu(), "platform is not XPU"),
++        (not torch.compiler.is_compiling(), "compiled execution is active"),
++        (
++            isinstance(method, UnquantizedLinearMethod),
++            f"linear method is {type(method).__name__}, not unquantized",
++        ),
++        (
++            isinstance(weight, torch.Tensor),
++            "shared gate/up weight is not a tensor",
++        ),
++        (
++            rows.device.type == "xpu",
++            f"rows are on {rows.device.type}, not XPU",
++        ),
++        (
++            isinstance(weight, torch.Tensor)
++            and weight.device.type == "xpu"
++            and weight.device == rows.device,
++            "shared gate/up weight is not on the rows' XPU device",
++        ),
++        (
++            rows.dtype == torch.bfloat16,
++            f"rows dtype is {rows.dtype}, not BF16",
++        ),
++        (
++            isinstance(weight, torch.Tensor) and weight.dtype == torch.bfloat16,
++            "shared gate/up weight dtype is not BF16",
++        ),
++        (
++            tuple(rows.shape) == (8, 3072),
++            f"rows shape is {tuple(rows.shape)}, not (8, 3072)",
++        ),
++        (
++            isinstance(weight, torch.Tensor) and tuple(weight.shape) == (256, 3072),
++            "shared gate/up weight shape is not (256, 3072)",
++        ),
++        (rows.is_contiguous(), "rows are not contiguous"),
++        (
++            isinstance(weight, torch.Tensor) and weight.is_contiguous(),
++            "shared gate/up weight is not contiguous",
++        ),
++        (bias is None, "shared gate/up bias is not None"),
++        (
++            getattr(layer, "xpu_laguna_m8_shared_gate_up_mm", None) is True,
++            "shared gate/up marker is not true",
++        ),
++        (
++            getattr(layer, "xpu_exact_spec_rows", False) is True,
++            "shared gate/up exact-target row marker is not true",
++        ),
++        (
++            role is not None,
++            f"shared gate/up prefix {prefix!r} is outside the frozen target scope",
++        ),
++        (
++            _xpu_laguna_m8_shared_gate_up_pair_scope_valid(
++                layer,
++                prefix,
++                role,
++                scope,
++            ),
++            "shared gate/up paired constructor scope tag is invalid",
++        ),
++    )
++    return (
++        violations
++        + [message for valid, message in checks if not valid]
++        + _xpu_laguna_m8_shared_gate_up_peer_violations(layer, rows)
++    )
++
++
+ def _xpu_laguna_m8_shared_gate_mm_contract_violations(
+     layer: "LinearBase",
+     method: "LinearMethodBase",
+@@ -265,6 +623,10 @@ def _xpu_laguna_m8_shared_gate_mm_contract_violations(
+             not envs.VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM,
+             "shared-down MM selector is enabled",
+         ),
++        (
++            not envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM,
++            "shared gate/up MM selector is enabled",
++        ),
+     )
+     return [message for valid, message in checks if not valid]
+ 
+@@ -324,6 +686,10 @@ def _xpu_laguna_m8_shared_down_mm_contract_violations(
+             not envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM,
+             "shared-gate MM selector is enabled",
+         ),
++        (
++            not envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM,
++            "shared gate/up MM selector is enabled",
++        ),
+     )
+     return [message for valid, message in checks if not valid]
+ 
+@@ -335,6 +701,29 @@ def _xpu_apply_batched_m1_method(
+     bias: torch.Tensor | None,
+ ) -> torch.Tensor:
+     """Apply one linear method without changing each row's M=1 arithmetic."""
++    if _xpu_laguna_m8_shared_gate_up_mm_requested(layer, rows):
++        violations = _xpu_laguna_m8_shared_gate_up_mm_contract_violations(
++            layer,
++            method,
++            rows,
++            bias,
++        )
++        if violations:
++            raise RuntimeError(
++                "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=1 diverged from its "
++                "exact eager Laguna separate shared gate/up contract: "
++                + "; ".join(violations)
++            )
++        output = torch.mm(rows, layer.weight.t())
++        if (
++            tuple(output.shape) != (8, 256)
++            or output.dtype != torch.bfloat16
++            or not output.is_contiguous()
++        ):
++            raise RuntimeError(
++                "Laguna native M8 shared gate/up MM returned an invalid output"
++            )
++        return output
+     if _xpu_laguna_m8_shared_gate_mm_requested(layer, rows):
+         violations = _xpu_laguna_m8_shared_gate_mm_contract_violations(
+             layer,
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 81a2c2a52..60a1f43d6 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -36,6 +36,7 @@ from vllm.model_executor.layers.linear import (
+     QKVParallelLinear,
+     ReplicatedLinear,
+     RowParallelLinear,
++    _xpu_bind_laguna_m8_shared_gate_up_pair,
+     _xpu_is_exact_decode_or_verifier_rows,
+ )
+ from vllm.model_executor.layers.logits_processor import LogitsProcessor
+@@ -75,6 +76,7 @@ _LAGUNA_ARTIFACT_ROOT = Path(
+ )
+ _LAGUNA_PARITY_TRIGGER = _LAGUNA_ARTIFACT_ROOT / "parity-trigger.json"
+ _LAGUNA_M8_SHARED_GATE_CONSTRUCTOR_SCOPE = object()
++_LAGUNA_M8_SHARED_GATE_UP_CONSTRUCTOR_SCOPE = object()
+ _LAGUNA_RECORD_NUM_HIDDEN_LAYERS = 48
+ 
+ 
+@@ -267,9 +269,47 @@ def _laguna_m8_shared_gate_mm_contract_violations(
+     )
+     if envs.VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM:
+         violations.append("shared-down MM selector is enabled")
++    if envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM:
++        violations.append("shared gate/up MM selector is enabled")
+     return violations
+ 
+ 
++def _laguna_m8_shared_gate_up_mm_contract_violations(
++    config,
++    vllm_config: VllmConfig,
++    *,
++    enable_eplb: bool,
++    num_redundant_experts: int,
++) -> list[str]:
++    """Bind separate native shared gate/up MMs to the exact record stack."""
++    violations = _laguna_m8_shared_mm_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=enable_eplb,
++        num_redundant_experts=num_redundant_experts,
++    )
++    return violations + _laguna_m8_shared_gate_up_selector_violations()
++
++
++def _laguna_m8_shared_gate_up_selector_violations() -> list[str]:
++    """Require an unambiguous raw selector identity in every model role."""
++    checks = (
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM") == "1",
++            "shared gate/up MM selector is not literal 1",
++        ),
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM") == "0",
++            "standalone shared-gate MM selector is not literal 0",
++        ),
++        (
++            os.environ.get("VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM") == "0",
++            "shared-down MM selector is not literal 0",
++        ),
++    )
++    return [message for valid, message in checks if not valid]
++
++
+ def _laguna_m8_shared_down_mm_contract_violations(
+     config,
+     vllm_config: VllmConfig,
+@@ -286,6 +326,8 @@ def _laguna_m8_shared_down_mm_contract_violations(
+     )
+     if envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM:
+         violations.append("shared-gate MM selector is enabled")
++    if envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM:
++        violations.append("shared gate/up MM selector is enabled")
+     return violations
+ 
+ 
+@@ -549,10 +591,17 @@ class LagunaMLP(nn.Module):
+         use_m8_shared_elementwise: bool = False,
+         use_m8_shared_down_mm: bool = False,
+         use_m8_shared_gate_mm: bool = False,
++        use_m8_shared_gate_up_mm: bool = False,
+         _m8_shared_gate_scope: object | None = None,
++        _m8_shared_gate_up_scope: object | None = None,
+         prefix: str = "",
+     ) -> None:
+         super().__init__()
++        if use_m8_shared_gate_mm and use_m8_shared_gate_up_mm:
++            raise ValueError(
++                "standalone shared-gate and shared gate/up treatments "
++                "are mutually exclusive"
++            )
+         if use_m8_shared_gate_mm:
+             scope_violations = []
+             if not exact_spec_target:
+@@ -578,6 +627,31 @@ class LagunaMLP(nn.Module):
+                 "Laguna M8 shared-gate constructor scope was supplied "
+                 "without enabling the treatment"
+             )
++        if use_m8_shared_gate_up_mm:
++            scope_violations = []
++            if not exact_spec_target:
++                scope_violations.append("layer is not an exact target")
++            if not _laguna_target_shared_expert_prefix(prefix):
++                scope_violations.append(
++                    f"prefix {prefix!r} is not a target shared expert"
++                )
++            if (
++                _m8_shared_gate_up_scope
++                is not _LAGUNA_M8_SHARED_GATE_UP_CONSTRUCTOR_SCOPE
++            ):
++                scope_violations.append(
++                    "request was not issued by LagunaMoE construction"
++                )
++            if scope_violations:
++                raise ValueError(
++                    "Laguna M8 shared gate/up marker escaped its target scope: "
++                    + "; ".join(scope_violations)
++                )
++        elif _m8_shared_gate_up_scope is not None:
++            raise ValueError(
++                "Laguna M8 shared gate/up constructor scope was supplied "
++                "without enabling the treatment"
++            )
+ 
+         # gate_proj and up_proj are kept as separate ColumnParallelLinear
+         # rather than merged via MergedColumnParallelLinear. The merged form
+@@ -609,6 +683,11 @@ class LagunaMLP(nn.Module):
+                 self.gate_proj.prefix,
+             )
+         self.up_proj.xpu_exact_spec_rows = exact_spec_target
++        if use_m8_shared_gate_up_mm:
++            _xpu_bind_laguna_m8_shared_gate_up_pair(
++                self.gate_proj,
++                self.up_proj,
++            )
+         self.down_proj = RowParallelLinear(
+             intermediate_size,
+             hidden_size,
+@@ -741,6 +820,31 @@ class LagunaMoE(nn.Module):
+                     + "; ".join(violations)
+                 )
+ 
++        shared_gate_up_selector = envs.VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM
++        if shared_gate_up_selector:
++            selector_violations = _laguna_m8_shared_gate_up_selector_violations()
++            if selector_violations:
++                raise ValueError(
++                    "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM is ambiguous: "
++                    + "; ".join(selector_violations)
++                )
++        self._use_m8_shared_gate_up_mm = bool(
++            shared_gate_up_selector and exact_spec_target
++        )
++        if self._use_m8_shared_gate_up_mm:
++            violations = _laguna_m8_shared_gate_up_mm_contract_violations(
++                config,
++                vllm_config,
++                enable_eplb=self.enable_eplb,
++                num_redundant_experts=self.n_redundant_experts,
++            )
++            if violations:
++                raise ValueError(
++                    "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=1 requires the "
++                    "exact eager Laguna separate shared gate/up record contract: "
++                    + "; ".join(violations)
++                )
++
+         self._use_m8_shared_down_mm = bool(
+             envs.VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM and exact_spec_target
+         )
+@@ -780,11 +884,17 @@ class LagunaMoE(nn.Module):
+                 use_m8_shared_elementwise=self._use_m8_shared_elementwise,
+                 use_m8_shared_down_mm=self._use_m8_shared_down_mm,
+                 use_m8_shared_gate_mm=self._use_m8_shared_gate_mm,
++                use_m8_shared_gate_up_mm=self._use_m8_shared_gate_up_mm,
+                 _m8_shared_gate_scope=(
+                     _LAGUNA_M8_SHARED_GATE_CONSTRUCTOR_SCOPE
+                     if self._use_m8_shared_gate_mm
+                     else None
+                 ),
++                _m8_shared_gate_up_scope=(
++                    _LAGUNA_M8_SHARED_GATE_UP_CONSTRUCTOR_SCOPE
++                    if self._use_m8_shared_gate_up_mm
++                    else None
++                ),
+                 prefix=f"{prefix}.shared_expert",
+             )
+         else:
+-- 
+2.43.0
+
