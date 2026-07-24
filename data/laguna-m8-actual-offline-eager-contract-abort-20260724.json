@@ -1,0 +1,56 @@
+{
+  "approved_record": {
+    "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
+    "tokens_per_second": 33.89498511171744
+  },
+  "arms": {
+    "incumbent-eager": {
+      "driver_json_created": false,
+      "engine_core_started": true,
+      "evidence_events_created": false,
+      "generation_performed": false,
+      "model_module_construction_completed": false,
+      "model_weights_loaded": false,
+      "status": "shared_elementwise_eager_contract_rejected",
+      "worker_processes_started": 4
+    },
+    "segmented-eager": {
+      "generation_performed": false,
+      "status": "not_run"
+    },
+    "segmented-graph": {
+      "generation_performed": false,
+      "status": "not_run"
+    }
+  },
+  "classification": "operational_config_abort_during_model_construction_before_weights_or_generation",
+  "failure": {
+    "exception": "ValueError",
+    "reason": "record shared-elementwise selector requires enforce_eager but the driver set enforce_eager false",
+    "stage": "LagunaMoE construction in four workers"
+  },
+  "format": "laguna-m8-actual-offline-preflight-abort-v2",
+  "identity": {
+    "gate_tooling_commit": "820d827a383e580eb0d6a9573d8b9a78bd5861d2",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "preregistration_commit": "d984478b8",
+    "vllm_commit": "5c6c108bf152f985e126db9d77897ae442b75048"
+  },
+  "idle_checks": {
+    "incumbent_post_arm": "passed",
+    "incumbent_pre_arm": "passed",
+    "pre_gate": "passed"
+  },
+  "no_performance_or_quality_conclusion": true,
+  "remediation_scope": "true eager A/B plus a separately reviewed graph-diagnostic-only shared-elementwise contract for C",
+  "rpc_short_path_correction_validated": true,
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-actual-offline-820d827a3-20260724T161333Z",
+  "sealed": true,
+  "status": "terminal",
+  "worker_reports_empty": {
+    "incumbent_post_arm": true,
+    "incumbent_pre_arm": true,
+    "pre_gate": true
+  },
+  "xpu_contexts_created": true
+}
