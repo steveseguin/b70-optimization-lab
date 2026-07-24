@@ -2,7 +2,8 @@
 
 Date: 2026-07-24 America/Toronto
 
-Status: **Stage-0 pass; source frozen; no native build or XPU execution yet.**
+Status: **Stage-0 pass; source and CPU-built binary frozen; no XPU
+execution yet.**
 
 This implements the default-off post-W2 candidate preregistered in
 `2026-07-24-routed-gather-finalize-fusion-preregistration.md`. It keeps the
@@ -26,6 +27,8 @@ or reboot occurred during this stage.
   `c59aaadbbfd350c2b5f4ad663e247c2811ae3181`
 - XPU-kernels implementation:
   `2020d1921de1af35356fce85a8a2f7703215612c`
+- XPU-kernels diagnostic freeze:
+  `4772f727590c51b72add79350b913d098cf67872`
 
 Both source worktrees were clean immediately after their focused commits.
 The approved public record remains unchanged at vLLM
@@ -83,6 +86,20 @@ The generic `XpuFusedMoe.apply`, `_apply_ref`, shared-MoE custom-op ABI,
 existing fused-W1 and route-parallel-W2 call nodes and arguments are also
 AST-identical to the starting XPU-kernels source.
 
+Before device-packet construction, the native source gained a separate
+diagnostic-only companion:
+
+```text
+_moe_C::laguna_m8_moe_gather_finalize_diagnostic
+```
+
+It instantiates the same inline arithmetic helper and returns the routed,
+scaled, and final BF16 boundaries required by the preregistered component
+gate. The production schema and call path are unchanged. Its template
+instantiation enables three debug stores; the production `<false>`
+instantiation compiles those stores out. Strict device, dtype, shape,
+contiguity, alignment, and alias guards apply to both entry points.
+
 ## Corrections made before source freeze
 
 Static review caught and corrected every issue before a native build or device
@@ -113,7 +130,8 @@ Final local commands passed:
 - Ruff over every changed Python source and test;
 - Python AST parsing and `git diff --check` in both worktrees;
 - oneAPI 2025.3 `clang-format --dry-run --Werror` over all changed C++ files;
-- XPU-kernels static/value-oracle suite: **13 passed**;
+- original XPU-kernels static/value-oracle suite: **13 passed**;
+- diagnostic-hardened XPU-kernels static/value-oracle suite: **16 passed**;
 - focused vLLM gather/finalize suite: **22 passed**; and
 - expanded vLLM integration set with the existing shared-elementwise and
   shared-down tests: **52 passed, 1 explicitly skipped device test**.
@@ -133,15 +151,41 @@ Three independent read-only audits passed after correction:
   fallback; and
 - cross-repository test/oracle sufficiency and unchanged W1/W2 calls.
 
+Two additional read-only audits passed after adding the diagnostic companion:
+one checked native safety and the unchanged production specialization, and one
+checked source/test isolation plus unchanged generic, W1, and W2 paths.
+
+## CPU build freeze
+
+The diagnostic source was built with
+`/opt/intel/oneapi/compiler/2025.3/bin/icpx`. Build, installed, and archived
+candidate bytes matched. The immutable internal-NVMe artifacts are:
+
+- root:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/binaries/gather-finalize-4772f72-20260724T075721Z`;
+- candidate `_moe_C.abi3.so` SHA-256:
+  `6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b`;
+- incumbent `_moe_C.abi3.so` SHA-256:
+  `0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0`;
+  and
+- build-log SHA-256:
+  `6428c5afca768d117fca382d890c792ae4c51d111e567307b7ce4473951a2130`.
+
+The ELF contains both production `<false>` and diagnostic `<true>` schemas
+and device symbols. Its 16 compiler warnings are the four pre-existing
+TopKGating spill warnings repeated for the four architecture targets; neither
+gather/finalize instantiation has a compiler-reported spill. An independent
+ELF audit passed. The candidate binary has not been imported and no device was
+enumerated or allocated.
+
 ## Next authority boundary
 
 This note does not authorize a device action. The next step is to prepare and
-audit a separate component packet. It must freeze a CPU-built installed native
-library hash/path, both implementation commits, compiler/runtime/driver and
-boot identities, physical card mapping, scripts, fixtures, expected schema,
-and explicit one-campaign limits before the first XPU process.
+audit a separate component packet. It must freeze the CPU-built installed
+native-library hash/path, both implementation commits, compiler/runtime/driver
+and boot identities, physical card mapping, scripts, fixtures, expected
+schemas, and explicit one-campaign limits before the first XPU process.
 
 Only that later packet may authorize the four-card component campaign. An
 endpoint remains forbidden unless all four cards pass exactness, launch,
 timing, occupancy, traffic, spill, and post-timing replay gates.
-

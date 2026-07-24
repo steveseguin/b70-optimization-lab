@@ -1,18 +1,19 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "model": "poolside/Laguna-S-2.1",
   "quantization": "INT4",
   "gpu_count": 4,
   "hardware": "Intel Arc Pro B70",
   "mode": "DFlash depth 7, single active generation",
   "lane": "exact M8 post-W2 gather-finalize",
-  "status": "stage0_pass_source_frozen",
+  "status": "stage0_pass_source_and_cpu_binary_frozen",
   "selector": "VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE",
   "source": {
     "vllm_start": "503f7784cf9d1704109b1e4650427fb4f417d604",
     "vllm_frozen": "5519c08c168838b7e0a418499603b907f127cbf9",
     "xpu_kernels_start": "c59aaadbbfd350c2b5f4ad663e247c2811ae3181",
-    "xpu_kernels_frozen": "2020d1921de1af35356fce85a8a2f7703215612c"
+    "xpu_kernels_production": "2020d1921de1af35356fce85a8a2f7703215612c",
+    "xpu_kernels_frozen": "4772f727590c51b72add79350b913d098cf67872"
   },
   "approved_record": {
     "localmaxxing_id": "cmrx6p5dv001bo4017hb7sixz",
@@ -44,9 +45,32 @@
     "explicit_combined_output_signal": true,
     "shared_output_consumptions": 1
   },
+  "diagnostic_contract": {
+    "schema": "_moe_C::laguna_m8_moe_gather_finalize_diagnostic",
+    "shared_arithmetic_helper": true,
+    "production_schema_unchanged": true,
+    "production_debug_stores_compiled_out": true,
+    "outputs": [
+      "routed_bf16",
+      "scaled_bf16",
+      "final_bf16"
+    ]
+  },
+  "cpu_build": {
+    "compiler": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+    "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/binaries/gather-finalize-4772f72-20260724T075721Z",
+    "candidate_moe_c_sha256": "6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b",
+    "incumbent_moe_c_sha256": "0057b266d567731a9f9f592cefd9103bbf027ebb83c876d26c17ffb09994a3a0",
+    "build_log_sha256": "6428c5afca768d117fca382d890c792ae4c51d111e567307b7ce4473951a2130",
+    "installed_archive_bytes_identical": true,
+    "candidate_imported": false,
+    "xpu_enumerated_or_allocated": false,
+    "candidate_kernel_spill_warnings": 0,
+    "diagnostic_kernel_spill_warnings": 0
+  },
   "validation": {
     "xpu_kernel_static_and_host_oracle": {
-      "passed": 13,
+      "passed": 16,
       "failed": 0
     },
     "vllm_focused": {
@@ -62,10 +86,10 @@
     "python_ast": "pass",
     "clang_format_oneapi_2025_3": "pass",
     "git_diff_check": "pass",
-    "independent_read_only_audits": 3
+    "independent_read_only_audits": 5
   },
   "actions_not_performed": [
-    "native build",
+    "candidate native import",
     "XPU device discovery or allocation",
     "XPU primitive",
     "model load",

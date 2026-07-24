@@ -352,19 +352,25 @@ freezes both BF16 rounding boundaries, explicit combined-output ownership,
 fail-closed scope, and a per-card `0.15 ms/cycle` component minimum before any
 endpoint. Stage 0 is now frozen at vLLM
 `5519c08c168838b7e0a418499603b907f127cbf9` and XPU kernels
-`2020d1921de1af35356fce85a8a2f7703215612c`. The native/static host-oracle
-suite passed 13/13, the focused vLLM suite passed 22/22, and the expanded
-relevant vLLM suite passed 52 with one explicitly skipped device test. Ruff,
-AST, C++ formatting, whitespace, generic-path/W1/W2 identity checks, and three
-independent read-only audits all passed. No native build, XPU action, model
-load, endpoint, generation, payload, network access, submission, or reboot
-occurred. Preserve the
+`4772f727590c51b72add79350b913d098cf67872` (production implementation
+`2020d1921de1af35356fce85a8a2f7703215612c`). The diagnostic companion
+exposes the routed/scaled/final BF16 evidence boundaries through the same
+arithmetic helper while compiling its stores out of the unchanged production
+specialization. The native/static host-oracle suite passed 16/16, the focused
+vLLM suite passed 22/22, and the expanded relevant vLLM suite passed 52 with
+one explicitly skipped device test. Ruff, AST, C++ formatting, whitespace,
+generic-path/W1/W2 identity checks, and five independent read-only audits all
+passed. The CPU-built candidate `_moe_C` is sealed on internal NVMe with
+SHA-256
+`6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b`;
+it has not been imported. No XPU action, model load, endpoint, generation,
+payload, network access, submission, or reboot occurred. Preserve the
 [Stage-0 source freeze](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-routed-gather-finalize-stage0-source-freeze.md)
 and
 [structured summary](data/laguna-s-2.1-gather-finalize-stage0-source-freeze-20260724.json).
-The next authorized work is CPU-only native build identity plus construction
-and audit of a separate component packet; no XPU process is authorized until
-that packet is committed.
+The next authorized work is construction and audit of separate immutable
+exactness/timing and mandatory-counter component packets; no XPU process is
+authorized until the first packet is committed.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under

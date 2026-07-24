@@ -83,6 +83,35 @@ evidence must still compare against the incumbent with its canonical map.
 This correction changes no observed result; no native build, XPU process, or
 model action had occurred.
 
+## Pre-device evidence clarification
+
+The following evidence mechanics were fixed after the CPU-only implementation
+and native build but before any XPU import, allocation, primitive, profiler, or
+packet. They do not change the treatment, correctness requirement, timing
+thresholds, counter thresholds, card policy, or endpoint boundary.
+
+First, `torch.equal(x, x)` is false when `x` contains a NaN. Requiring it for
+the separately classified NaN corpus would therefore make the registered gate
+impossible even for a tensor compared with itself. Raw BF16 bits remain the
+primary exactness predicate for every case. Finite, signed-zero, subnormal,
+and infinity cases additionally require `torch.equal`. NaN cases instead
+require identical raw bits and identical `isnan`, `isinf`, sign-bit, and
+payload classification; `torch.equal` is recorded as inapplicable rather
+than treated as a quality tolerance. This preserves bitwise exactness.
+
+Second, timing and hardware counters use separate immutable, non-overlapping
+packets so profiler instrumentation cannot contaminate the timing result.
+Phase A contains the complete pre/post exactness corpus and the registered
+20-warmup, 31-block A-B-B-A, 64-cycle timing protocol. Even if every card
+passes, its strongest status is
+`component_timing_pass_pending_mandatory_counters`; it cannot authorize an
+endpoint. Phase B is then a one-shot mandatory counter packet for the same
+source and binary identities, enforcing the registered 94/47 launch counts,
+spill, traffic, occupancy/XVE-active, and XVE-stall thresholds. There is no
+retry, rescue, source change, or performance-conditioned packet replacement
+between phases. A failure in either phase is terminal, and only a pass from
+both packets constitutes the registered four-card component pass.
+
 ## Frozen starting identity
 
 Implementation starts from clean, tracked sources:
