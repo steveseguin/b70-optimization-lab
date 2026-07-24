@@ -216,7 +216,7 @@ per target cycle. However, the official candidate headline was
 preregistered early-stop rule forbade B2/A2 and no payload was staged. Resume
 from the [phase-1 result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-m8-bf16-router-topk-preregistration.md).
 
-The current approved record stacks the exact shared-elementwise bundle with
+The previous approved record stacked the exact shared-elementwise bundle with
 the exact Q/K RMSNorm + RoPE bundle on the route-interleaved MoE base. The
 shared bundle preserves the incumbent BF16 rounding boundaries, removes 94
 launches per target cycle, and saves 0.699-0.723 ms/cycle on every card. In a
@@ -233,6 +233,25 @@ conservative lower candidate beats `cmrwot89400gqnz014oodtlbp` by
 and compact
 [packet](data/laguna-s-2.1-shared-elementwise-qknorm-stack-record-20260723.json).
 
+The current approved record adds the raw-byte- and endpoint-qualified
+Breakable M8 graph runtime without changing the exact model stack. In the
+preregistered fresh-service A1-B1-B2-A2 crossover, graph starts measured
+**92.760717** and **92.163522 tok/s** versus eager controls at 34.491164 and
+34.591123. The conservative lower graph start is a 2.71909x result over the
+prior 33.894985 record. Both adjacent comparisons passed every causal gate:
+graph won 13/13 and 12/13 rows, paired medians rose 169.421% and 169.365%,
+target-cycle time fell 55.049 and 54.220 ms, and acceptance drift stayed below
+0.000308. All four legs were canonical-teacher and cross-leg bitwise exact
+**52/52**, cache-zero **52/52**, long-next **8/8**, and rollover **4/4**.
+Each graph service captured and replayed the audited 146/145 segment topology
+exactly once on ranks 0 through 3; the eager controls had no graph rows. Two
+independent raw-artifact audits found no discrepancy or prior-run
+contamination. LocalMaxxing approved the conservative result as
+`cmrzjb7i906x4o401egrnm05m`. Resume from the
+[record note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-breakable-graph-record.md)
+and compact
+[packet](data/laguna-s-2.1-m8-breakable-graph-record-20260724.json).
+
 The frozen routed-W1 N128 follow-up completed only A1/B1 after the local-NVMe
 recovery gate. Both starts were canonical-teacher exact 13/13, cache-zero
 13/13, long-next 2/2, rollover 1/1, and operationally clean. N128 reduced
@@ -243,17 +262,19 @@ median fell 3.0578%. The frozen analyzer classified
 made. Preserve the [closed negative](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-phase1-failed-stop.md)
 and [packet](data/laguna-s-2.1-w1-n128-nvme-phase1-failed-stop-20260723.json).
 
-Next, isolate shared-expert GEMM occupancy or a narrower routed-W1 geometry
-against this exact stack. The N128 endpoint treatment is closed. Do not stack
+Next, profile the exact graph stack and attack its remaining eager breaks,
+collective boundaries, or graph-external launch overhead without changing
+BF16 arithmetic boundaries. Shared-expert GEMM occupancy remains a secondary
+lane. The N128 endpoint treatment is closed. Do not stack
 the BF16 router candidate into another endpoint trial unless a future
 preregistered design explicitly isolates its contribution. Do not revisit
 route buffer fills or progressively serialize the whole model into opaque
 graph islands. Preserve the current record heads at
-vLLM `8936aac144929190c1e53f8b8624ca397ce16f5b` plus kernels
-`b6076ce1249ffee0e30bee528f4cd15c3bffb234`; enable
+vLLM `0ce373a3115fb4498c5e7a041d4fc9212fd6b5ca` plus kernels
+`4772f727590c51b72add79350b913d098cf67872`; enable
 `VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1` and
-`VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1` only in the pinned Laguna record launch
-command.
+`VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1` with the validated Breakable graph
+contract only in the pinned Laguna record command.
 The first next experiment, a down-only shared-expert native-M8 BF16 MM
 component screen at vLLM
 `75d4660463407975c16bd33711499ca560bf2034`, passed its frozen local-NVMe

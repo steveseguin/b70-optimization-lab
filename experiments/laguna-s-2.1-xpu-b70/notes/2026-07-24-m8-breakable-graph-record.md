@@ -2,8 +2,9 @@
 
 Date: 2026-07-24 America/Toronto
 
-Status: **VERIFIED RECORD CANDIDATE**. The conservative lower graph start is
-`92.16352215694299 tok/s`, compared with the approved
+Status: **VERIFIED, SUBMITTED, APPROVED RECORD**. LocalMaxxing ID
+`cmrzjb7i906x4o401egrnm05m`. The conservative lower graph start is
+`92.16352215694299 tok/s`, compared with the prior approved
 `33.89498511171744 tok/s` record.
 
 ## Result
@@ -103,7 +104,7 @@ discrepancy.
 
 ## Decision
 
-Promote the exact Breakable graph stack. Submit only
-`92.16352215694299 tok/s`, the lower graph start, after the LocalMaxxing
-payload passes its independent preflight. Preserve both graph starts and both
-controls as the reproducibility record.
+Promote the exact Breakable graph stack. The independently audited payload
+submitted only `92.16352215694299 tok/s`, the lower graph start. LocalMaxxing
+returned HTTP 201 and approved it as `cmrzjb7i906x4o401egrnm05m`. Preserve
+both graph starts and both controls as the reproducibility record.
