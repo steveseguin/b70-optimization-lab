@@ -382,8 +382,17 @@ correctness result. Preserve the
 [terminal preflight note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-routed-gather-finalize-phase-a-preflight-terminal.md)
 and
 [structured summary](data/laguna-s-2.1-gather-finalize-phase-a-preflight-terminal-20260724.json).
-The active work is selection and preregistration of a materially distinct
-exact kernel lane. The approved record remains unchanged.
+The active work is a materially distinct standalone `MoeGather` occupancy
+retile rooted directly at the approved record commits. Its fixed M=8 geometry
+uses six 64-work-item hidden shards per token, raising workgroup supply from
+8 to 48 while preserving each literal slot-0-through-9 FP32 accumulation, the
+final BF16 gather store, and the separate `laguna_m8_scale_add` launch. It is
+not a retry or rescue of gather-finalize and receives no standalone endpoint;
+a four-card component pass may only bank its conservative saving for a later
+preregistered exact portfolio. Resume from the
+[sharded-gather preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-gather-sharded-occupancy-preregistration.md).
+No implementation, native build, XPU action, model load, or generation had
+occurred at registration. The approved record remains unchanged.
 Also preserve the DeepSeek option-4 branch and all `preserve/*` tags.
 The Laguna storage policy changed on 2026-07-23: the active target and DFlash
 draft are now hash-verified under
