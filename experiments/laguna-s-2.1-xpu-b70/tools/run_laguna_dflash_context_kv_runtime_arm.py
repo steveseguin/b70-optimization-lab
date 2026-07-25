@@ -108,6 +108,10 @@ def digest_json(value: Any) -> str:
     ).hexdigest()
 
 
+def json_snapshot(value: Any) -> Any:
+    return json.loads(json.dumps(value, sort_keys=True))
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -346,6 +350,9 @@ def main() -> int:
         "generation_config": "vllm",
         "enforce_eager": False,
     }
+    frozen_engine_config = json_snapshot(engine_config)
+    frozen_compilation_config = json_snapshot(compilation_config)
+    frozen_speculative_config = json_snapshot(speculative_config)
     llm = LLM(
         **engine_config,
         compilation_config=compilation_config,
@@ -416,9 +423,9 @@ def main() -> int:
         "target_revision": TARGET_REVISION,
         "draft_revision": DRAFT_REVISION,
         "model_manifest_sha256": MODEL_MANIFEST_SHA256,
-        "engine_config": engine_config,
-        "compilation_config": compilation_config,
-        "speculative_config": speculative_config,
+        "engine_config": frozen_engine_config,
+        "compilation_config": frozen_compilation_config,
+        "speculative_config": frozen_speculative_config,
         "environment": {name: os.environ[name] for name in RECORDED_ENVIRONMENT},
         "runtime": identity,
         "worker_identities": worker_identities,

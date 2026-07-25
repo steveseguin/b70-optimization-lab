@@ -58,6 +58,22 @@ class. The driver calls that named RPC through the ordinary safe control
 message path. Insecure serialization remains disabled. This source and packet
 require new commits and independent review.
 
+The reviewed `93167cf4972400cf0f1316b210bf760566004909` packet then
+completed its sole 32-token control generation and produced 72 lifecycle files
+plus the complete raw recorder stream. It failed while writing `driver.json`:
+the vLLM constructor had mutated one of the caller-owned configuration
+dictionaries in place to contain a non-JSON `ModelConfig`. The driver was
+recording that mutated object instead of the primitive launch contract.
+Candidate did not start. Cleanup again reported zero stop, RPC-archive, worker,
+and idle failures. The root is sealed at:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dflash-context-kv-runtime-93167cf49-7c38a2022-20260725T080004Z`
+
+The driver is revised to create immutable JSON snapshots of engine,
+compilation, and speculative configuration before constructing `LLM`, and to
+record only those launch snapshots. Runtime mutation therefore cannot corrupt
+the result schema. This requires another committed and reviewed packet.
+
 ## Question
 
 Does the default-off DFlash context-KV workspace preserve the approved Laguna

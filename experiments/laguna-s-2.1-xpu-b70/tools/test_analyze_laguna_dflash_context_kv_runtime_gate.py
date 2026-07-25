@@ -275,6 +275,14 @@ def test_recursive_timing_rejection() -> None:
         gate.reject_timing_fields({"nested": [{"tok_s": 99.0}]})
 
 
+def test_json_snapshot_is_immutable_after_runtime_mutation() -> None:
+    source = {"speculative": {"model": "frozen", "depth": 7}}
+    snapshot = arm.json_snapshot(source)
+    source["speculative"]["model"] = object()
+
+    assert snapshot == {"speculative": {"model": "frozen", "depth": 7}}
+
+
 def test_teacher_prefix_is_frozen() -> None:
     tokens, identity = gate.teacher_prefix()
     assert len(tokens) == arm.MAX_TOKENS
