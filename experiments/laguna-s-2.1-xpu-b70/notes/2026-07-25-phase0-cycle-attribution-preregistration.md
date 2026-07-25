@@ -128,6 +128,54 @@ Constraints, all mandatory:
 - full 512-token generations on the unmodified 13-prompt real cold suite, one
   active generation, fresh process per arm, `cached_tokens=0` per request.
 
+## Committed implementation packet — part 1 of 2
+
+The runtime instrumentation is frozen at vLLM `f5ce85f4c` on branch
+`experiment/laguna-runtime-graph-20260724` in
+`/home/steve/src/laguna-vllm-runtime-graph-20260724`, parent `fcc2506f7`.
+
+- new `vllm/v1/spec_decode/laguna_cycle_attribution.py`;
+- call-site marks only in `vllm/v1/spec_decode/llm_base_proposer.py`
+  (cycle begin/end and each of the seven proposal forwards) and
+  `vllm/v1/spec_decode/dflash.py` (context-KV precompute);
+- `vllm/compilation/breakable_cudagraph.py` is **untouched**, so the frozen
+  `146/97/48` contract and its kind-order digest cannot drift.
+
+Selectors, both default-off:
+`VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_ROOT` (absolute path) and
+`VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_DEVICE_CYCLES` (default 256, bounded to
+`[1, 4096]`). With the root unset the recorder is never constructed and every
+call site is a single `is None` test.
+
+Eleven marks and ten intervals per cycle: `pre_ctxkv`, `ctxkv`, `proposal_0`
+through `proposal_6`, `post_proposals`. Host wall time is recorded for every
+cycle; device events only for the bounded prefix, which is what keeps a
+~1800-cycle suite run from allocating unbounded events.
+
+Fails closed on mark-order drift, unclosed or double-opened cycles, mid-cycle
+finalize, stream-identity drift, event-count drift, incomplete or negative
+event timing, a relative root, or an out-of-range device budget. A depth other
+than the frozen 7 records nothing rather than guessing. The payload is written
+once with `O_EXCL|O_NOFOLLOW` at mode `0400` and fsynced.
+
+Verification at commit: `tests/v1/spec_decode/test_laguna_cycle_attribution.py`
+14 passed; `tests/v1/cudagraph/test_breakable_cudagraph.py` 36 passed and 11
+skipped, identical to the pre-change baseline; `ruff check` and `ruff format`
+clean on all four files, with the untouched baseline confirmed clean first.
+
+### Still outstanding — part 2 of 2
+
+No XPU or model execution is authorized yet. Still required:
+
+1. a lab-side analyzer that joins the four per-rank attribution payloads with
+   the existing raw proposal/target/rejection evidence to produce
+   accepted-tokens-per-cycle alongside per-cycle time, and validates the
+   acceptance conditions below;
+2. a one-shot runner and preflight, modelled on
+   `run_laguna_m8_current_stream_event_diagnostic.sh`, with hash pinning, idle
+   and worker assertions, private NVMe roots, and sealed output;
+3. independent adversarial review of the complete packet.
+
 ## Frozen identity
 
 - record functionality: vLLM `ef334233deabeaeedb607056a2db1c90edb3887c`;
