@@ -165,9 +165,10 @@ assert_no_workers "$run_dir/pre-workers.txt" || die "existing vLLM/torchrun work
 capture_idle "$run_dir/pre-idle.json" || die "strict pre-campaign device idle proof failed"
 laguna_nvme_verify_model_contents
 {
-  printf 'schema=laguna-m8-inprocess-replay-v1\n'
+  printf 'schema=laguna-m8-inprocess-replay-v2\n'
   printf 'purpose=diagnostic-only in-process replay telemetry; never benchmark or submission evidence\n'
   printf 'arms=q1,eager,graph; one_generation_per_fresh_process=true\n'
+  printf 'completion_tokens_per_arm=272\n'
   printf 'vllm=%s\nkernels=%s\n' "$expected_vllm" "$expected_kernels"
   printf 'run_tag=%s\n' "$run_tag"
   printf 'graph_telemetry_only=true\ngraph_profile_samples=31\n'

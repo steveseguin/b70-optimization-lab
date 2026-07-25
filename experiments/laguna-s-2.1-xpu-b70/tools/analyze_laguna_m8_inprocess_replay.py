@@ -22,6 +22,7 @@ from typing import Any
 ARM_NAMES = ("q1", "eager", "graph")
 RANKS = tuple(range(4))
 SAMPLES = 31
+COMPLETION_TOKENS = 272
 EXPECTED_MODEL = "/mnt/fast-ai/llm-models/laguna-s-2.1/int4"
 EXPECTED_DRAFT = "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4"
 EXPECTED_VLLM_ROOT = "/home/steve/src/laguna-vllm-runtime-graph-20260724"
@@ -136,7 +137,7 @@ def arm_record_path(root: Path, arm: str) -> Path:
 def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) -> None:
     optimized_dflash = arm != "q1"
     required = {
-        "schema": "laguna-m8-inprocess-replay-arm-v1",
+        "schema": "laguna-m8-inprocess-replay-arm-v2",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,
@@ -148,7 +149,7 @@ def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) ->
         "kernel_root": EXPECTED_KERNEL_ROOT,
         "kernel_commit": EXPECTED_KERNEL_COMMIT,
         "async_scheduling": arm == "q1",
-        "completion_tokens": 128,
+        "completion_tokens": COMPLETION_TOKENS,
         "cached_tokens": 0,
     }
     for key, expected in required.items():
@@ -160,10 +161,15 @@ def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) ->
     positive_int(record.get("prompt_tokens"), f"{arm} prompt_tokens")
     positive_int(record.get("generation_wall_ns"), f"{arm} generation_wall_ns")
     token_ids = record.get("token_ids")
-    if not isinstance(token_ids, list) or len(token_ids) != 128 or not all(
-        isinstance(token, int) and not isinstance(token, bool) for token in token_ids
+    if (
+        not isinstance(token_ids, list)
+        or len(token_ids) != COMPLETION_TOKENS
+        or not all(
+            isinstance(token, int) and not isinstance(token, bool)
+            for token in token_ids
+        )
     ):
-        die(f"{arm} arm token IDs are not exactly 128 integers")
+        die(f"{arm} arm token IDs are not exactly {COMPLETION_TOKENS} integers")
     expected_token_hash = hashlib.sha256(
         json.dumps(token_ids, separators=(",", ":")).encode()
     ).hexdigest()
@@ -207,21 +213,15 @@ def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) ->
         "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1" if graph else "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
-        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_SHARDED": "0",
         "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1" if optimized_dflash else "0",
         "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
-        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "0",
-        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": "0",
@@ -289,10 +289,17 @@ def validate_profile(payload: dict[str, Any], rank: int) -> list[dict[str, Any]]
     for key, value in expected.items():
         if payload.get(key) != value:
             die(f"rank{rank} profile {key!r} drifted")
-    if not isinstance(payload.get("batch_descriptor"), str) or not payload["batch_descriptor"]:
+    if (
+        not isinstance(payload.get("batch_descriptor"), str)
+        or not payload["batch_descriptor"]
+    ):
         die(f"rank{rank} profile lacks batch descriptor")
     digest = payload.get("segment_kind_order_sha256")
-    if not isinstance(digest, str) or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(c not in "0123456789abcdef" for c in digest)
+    ):
         die(f"rank{rank} profile has an invalid segment-order digest")
     records = payload.get("records")
     if not isinstance(records, list) or len(records) != SAMPLES:
@@ -300,7 +307,13 @@ def validate_profile(payload: dict[str, Any], rank: int) -> list[dict[str, Any]]
     for sample, record in enumerate(records):
         if not isinstance(record, dict) or record.get("sample") != sample:
             die(f"rank{rank} replay sample order drifted at {sample}")
-        if set(record) != {"sample", *TIMING_FIELDS, "segment_host_call_ns", "segment_host_call_total_ns", "segment_ordered_host_call_ns"}:
+        if set(record) != {
+            "sample",
+            *TIMING_FIELDS,
+            "segment_host_call_ns",
+            "segment_host_call_total_ns",
+            "segment_ordered_host_call_ns",
+        }:
             die(f"rank{rank} sample {sample} schema drifted")
         for name in TIMING_FIELDS:
             nonnegative_int(record[name], f"rank{rank} sample {sample} {name}")
@@ -313,19 +326,28 @@ def validate_profile(payload: dict[str, Any], rank: int) -> list[dict[str, Any]]
             die(f"rank{rank} sample {sample} duration categories drifted")
         if not isinstance(totals, dict) or set(totals) != set(SEGMENT_COUNTS):
             die(f"rank{rank} sample {sample} total categories drifted")
-        if not isinstance(ordered, list) or len(ordered) != sum(SEGMENT_COUNTS.values()):
+        if not isinstance(ordered, list) or len(ordered) != sum(
+            SEGMENT_COUNTS.values()
+        ):
             die(f"rank{rank} sample {sample} ordered segment count drifted")
         seen = {kind: 0 for kind in SEGMENT_COUNTS}
         for kind, values in durations.items():
             if not isinstance(values, list) or len(values) != SEGMENT_COUNTS[kind]:
                 die(f"rank{rank} sample {sample} {kind} duration count drifted")
-            numbers = [nonnegative_int(value, f"rank{rank} sample {sample} {kind} duration") for value in values]
+            numbers = [
+                nonnegative_int(value, f"rank{rank} sample {sample} {kind} duration")
+                for value in values
+            ]
             if kind != "eager" and any(value == 0 for value in numbers):
                 die(f"rank{rank} sample {sample} {kind} duration must be positive")
             if totals[kind] != sum(numbers):
                 die(f"rank{rank} sample {sample} {kind} total does not equal its rows")
         for ordinal, value in enumerate(ordered):
-            if not isinstance(value, list) or len(value) != 2 or value[0] not in SEGMENT_COUNTS:
+            if (
+                not isinstance(value, list)
+                or len(value) != 2
+                or value[0] not in SEGMENT_COUNTS
+            ):
                 die(f"rank{rank} sample {sample} ordered segment {ordinal} drifted")
             kind, duration = value
             nonnegative_int(duration, f"rank{rank} sample {sample} ordered duration")
@@ -340,11 +362,9 @@ def validate_profile(payload: dict[str, Any], rank: int) -> list[dict[str, Any]]
         segment_total = sum(totals.values())
         if (
             record["capture_replay_host_loop_ns"] < segment_total
-            or record["replay_host_total_ns"]
-            < record["capture_replay_host_loop_ns"]
+            or record["replay_host_total_ns"] < record["capture_replay_host_loop_ns"]
             or record["whole_replay_completion_ns"]
-            < record["replay_host_total_ns"]
-            + record["post_replay_synchronize_ns"]
+            < record["replay_host_total_ns"] + record["post_replay_synchronize_ns"]
         ):
             die(f"rank{rank} sample {sample} timing containment drifted")
     return records
@@ -360,13 +380,19 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     root = args.run_dir.resolve(strict=True)
-    if not root.is_dir() or root.is_symlink() or not root.is_relative_to(Path("/mnt/fast-ai")):
+    if (
+        not root.is_dir()
+        or root.is_symlink()
+        or not root.is_relative_to(Path("/mnt/fast-ai"))
+    ):
         die("run directory must be an internal-NVMe non-symlink directory")
     if args.out.exists() or args.out.is_symlink():
         die("refusing to overwrite analysis output")
 
     arm_paths = {arm: arm_record_path(root, arm) for arm in ARM_NAMES}
-    arms = {arm: read_json(path, f"{arm} arm record") for arm, path in arm_paths.items()}
+    arms = {
+        arm: read_json(path, f"{arm} arm record") for arm, path in arm_paths.items()
+    }
     graph_profile_text = arms["graph"].get("profile_root")
     if not isinstance(graph_profile_text, str):
         die("graph arm has no profile root")
@@ -397,11 +423,17 @@ def main() -> int:
         "prompt_tokens",
     )
     for field in identity_fields:
-        if len({json.dumps(arms[arm].get(field), sort_keys=True) for arm in ARM_NAMES}) != 1:
+        if (
+            len({json.dumps(arms[arm].get(field), sort_keys=True) for arm in ARM_NAMES})
+            != 1
+        ):
             die(f"q1/eager/graph identity drifted at {field}")
     exact_fields = ("token_ids", "token_ids_sha256", "text_sha256", "finish_reason")
     for field in exact_fields:
-        if len({json.dumps(arms[arm].get(field), sort_keys=True) for arm in ARM_NAMES}) != 1:
+        if (
+            len({json.dumps(arms[arm].get(field), sort_keys=True) for arm in ARM_NAMES})
+            != 1
+        ):
             die(f"q1/eager/graph exact output mismatch at {field}")
 
     profiles: dict[int, dict[str, Any]] = {}
@@ -427,7 +459,9 @@ def main() -> int:
     digests = {profiles[rank]["segment_kind_order_sha256"] for rank in RANKS}
     if len(descriptors) != 1 or len(digests) != 1:
         die("four ranks disagree on descriptor or segment-order digest")
-    expected_kind_order = [row[0] for row in rank_records[0][0]["segment_ordered_host_call_ns"]]
+    expected_kind_order = [
+        row[0] for row in rank_records[0][0]["segment_ordered_host_call_ns"]
+    ]
     for rank in RANKS:
         for sample, record in enumerate(rank_records[rank]):
             kind_order = [row[0] for row in record["segment_ordered_host_call_ns"]]
@@ -441,12 +475,19 @@ def main() -> int:
             values = [rank_records[rank][sample][field] for rank in RANKS]
             maximum = max(values)
             row[field] = maximum
-            row[f"{field}_max_rank"] = min(rank for rank, value in zip(RANKS, values) if value == maximum)
+            row[f"{field}_max_rank"] = min(
+                rank for rank, value in zip(RANKS, values) if value == maximum
+            )
         for kind in SEGMENT_COUNTS:
-            values = [rank_records[rank][sample]["segment_host_call_total_ns"][kind] for rank in RANKS]
+            values = [
+                rank_records[rank][sample]["segment_host_call_total_ns"][kind]
+                for rank in RANKS
+            ]
             maximum = max(values)
             row[f"segment_host_call_total_ns_{kind}"] = maximum
-            row[f"segment_host_call_total_ns_{kind}_max_rank"] = min(rank for rank, value in zip(RANKS, values) if value == maximum)
+            row[f"segment_host_call_total_ns_{kind}_max_rank"] = min(
+                rank for rank, value in zip(RANKS, values) if value == maximum
+            )
         max_rank_rows.append(row)
 
     summary = {
@@ -457,7 +498,10 @@ def main() -> int:
             "p90_ns": percentile([row[field] for row in max_rank_rows], 0.9),
             "max_ns": max(row[field] for row in max_rank_rows),
         }
-        for field in (*TIMING_FIELDS, *(f"segment_host_call_total_ns_{kind}" for kind in SEGMENT_COUNTS))
+        for field in (
+            *TIMING_FIELDS,
+            *(f"segment_host_call_total_ns_{kind}" for kind in SEGMENT_COUNTS),
+        )
     }
     result = {
         "schema": "laguna-m8-inprocess-replay-analysis-v1",
@@ -475,18 +519,27 @@ def main() -> int:
             "segment_kind_order_sha256": next(iter(digests)),
         },
         "arms": {
-            arm: {"path": str(arm_paths[arm]), "sha256": sha256_file(arm_paths[arm]), "record": arms[arm]}
+            arm: {
+                "path": str(arm_paths[arm]),
+                "sha256": sha256_file(arm_paths[arm]),
+                "record": arms[arm],
+            }
             for arm in ARM_NAMES
         },
         "profiles": {
-            str(rank): {"path": str(profile_root / f"rank{rank}.json"), "sha256": sha256_file(profile_root / f"rank{rank}.json")}
+            str(rank): {
+                "path": str(profile_root / f"rank{rank}.json"),
+                "sha256": sha256_file(profile_root / f"rank{rank}.json"),
+            }
             for rank in RANKS
         },
         "max_rank_samples": max_rank_rows,
         "max_rank_summary": summary,
     }
     write_exclusive(args.out, result)
-    print("Laguna M8 in-process replay analysis PASS: q1/eager/graph exact; four rank profiles; max-rank aggregate")
+    print(
+        "Laguna M8 in-process replay analysis PASS: q1/eager/graph exact; four rank profiles; max-rank aggregate"
+    )
     return 0
 
 

@@ -13,6 +13,27 @@ import pytest
 import analyze_laguna_m8_inprocess_replay as analyzer
 
 
+def test_driver_analyzer_and_runner_completion_contract_agree() -> None:
+    tools = Path(__file__).parent
+    driver_tree = ast.parse(
+        (tools / "run_laguna_m8_inprocess_replay_arm.py").read_text()
+    )
+    max_tokens = [
+        node.value.value
+        for node in driver_tree.body
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "MAX_TOKENS"
+            for target in node.targets
+        )
+        and isinstance(node.value, ast.Constant)
+        and isinstance(node.value.value, int)
+    ]
+    assert max_tokens == [analyzer.COMPLETION_TOKENS]
+    runner = (tools / "run_laguna_m8_inprocess_replay.sh").read_text()
+    assert f"completion_tokens_per_arm={analyzer.COMPLETION_TOKENS}" in runner
+
+
 def test_runner_sets_every_driver_required_environment_key() -> None:
     tools = Path(__file__).parent
     driver_tree = ast.parse(
@@ -82,20 +103,14 @@ def _environment(arm: str, profile_root: Path) -> dict[str, str]:
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
-        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_SHARDED": "0",
         "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1" if optimized_dflash else "0",
         "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
-        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "0",
-        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": "0",
@@ -164,7 +179,7 @@ def _profile(rank: int) -> dict:
 
 
 def _arm(arm: str, profile_root: Path, rank_files: dict[str, dict]) -> dict:
-    token_ids = list(range(128))
+    token_ids = list(range(analyzer.COMPLETION_TOKENS))
     kernel_identity = {
         name: {
             "path": str(
@@ -175,7 +190,7 @@ def _arm(arm: str, profile_root: Path, rank_files: dict[str, dict]) -> dict:
         for name, digest in analyzer.EXPECTED_KERNELS.items()
     }
     return {
-        "schema": "laguna-m8-inprocess-replay-arm-v1",
+        "schema": "laguna-m8-inprocess-replay-arm-v2",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,
@@ -191,7 +206,7 @@ def _arm(arm: str, profile_root: Path, rank_files: dict[str, dict]) -> dict:
         "kernel_identity": kernel_identity,
         "prompt_sha256": "a" * 64,
         "prompt_tokens": 31,
-        "completion_tokens": 128,
+        "completion_tokens": analyzer.COMPLETION_TOKENS,
         "cached_tokens": 0,
         "generation_wall_ns": 1,
         "token_ids": token_ids,

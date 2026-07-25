@@ -35,7 +35,7 @@ PROMPT = (
     "Include type hints, a concise docstring, and four asserts covering an empty "
     "input, all true, all false, and mixed values. Return code only."
 )
-MAX_TOKENS = 128
+MAX_TOKENS = 272
 
 
 def die(message: str) -> None:
@@ -167,9 +167,7 @@ def main() -> int:
         "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1" if graph else "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
-        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_SHARDED": "0",
@@ -177,9 +175,7 @@ def main() -> int:
         "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
         "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1" if optimized_dflash else "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "0",
-        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": (
-            "1" if optimized_dflash else "0"
-        ),
+        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": ("1" if optimized_dflash else "0"),
         "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": "0",
@@ -280,7 +276,10 @@ def main() -> int:
     token_ids = list(output.token_ids)
     cached = getattr(generated[0], "num_cached_tokens", None)
     if cached != 0 or len(token_ids) != MAX_TOKENS:
-        die(f"expected 128 uncached tokens, got tokens={len(token_ids)} cached={cached}")
+        die(
+            f"expected {MAX_TOKENS} uncached tokens, "
+            f"got tokens={len(token_ids)} cached={cached}"
+        )
     profile_rank_files = None
     if graph:
         assert args.profile_root is not None
@@ -312,7 +311,7 @@ def main() -> int:
                 "sha256": sha(path),
             }
     record = {
-        "schema": "laguna-m8-inprocess-replay-arm-v1",
+        "schema": "laguna-m8-inprocess-replay-arm-v2",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,
