@@ -1,0 +1,63 @@
+{
+  "schema": "laguna-m8-persistent-attention-metadata-telemetry-v1",
+  "date": "2026-07-25",
+  "status": "pass",
+  "diagnostic_only": true,
+  "submittable": false,
+  "candidate": "persistent-exact-attention-metadata-v2",
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-persistent-attn-metadata-dd1619dca-ef334233d-20260725T013440Z",
+  "analysis_sha256": "8b3ac0676349e0e8bfef7b5603c67ceb189bc0e93a8292859ef71cdb45819020",
+  "source": {
+    "main_commit": "dd1619dca004ec1e121d2ab22d69a16ab60faf14",
+    "vllm_commit": "ef334233deabeaeedb607056a2db1c90edb3887c",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872"
+  },
+  "exactness": {
+    "q1_eager_graph_bitwise_exact": true,
+    "single_generation_per_fresh_process": true,
+    "completion_tokens_per_arm": 272,
+    "cached_tokens_per_arm": 0,
+    "finish_reason_per_arm": "length",
+    "token_ids_sha256": "ee44dfe987c199b248cfe8f752f5fa8600a34291815894c5fb6502ffd5187cee",
+    "text_sha256": "d41518e5781b3adafb966c1b9a91e46d4d23b1a1ef40d8992ccde9a55920e55f"
+  },
+  "profile_contract": {
+    "ranks": 4,
+    "samples_per_rank": 31,
+    "graphs": 146,
+    "eager_breaks": 145,
+    "attention_boundaries": 48,
+    "collective_boundaries": 97,
+    "segment_kind_order_sha256": "e5b64443ef499d8bb8b138a94ad504effeaa6434a8884ae9f885aecf12d34e1b"
+  },
+  "authoritative_control": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-inprocess-replay-17769a57d-8cf58ed0f-20260725T002351Z",
+    "attention_median_ns": 8117824,
+    "replay_host_total_median_ns": 16724431,
+    "post_replay_synchronize_median_ns": 6136466,
+    "whole_replay_completion_median_ns": 21543770,
+    "graph_generation_wall_ns": 22015380267
+  },
+  "candidate_result": {
+    "attention_median_ns": 4117625,
+    "replay_host_total_median_ns": 12163295,
+    "post_replay_synchronize_median_ns": 9507746,
+    "whole_replay_completion_median_ns": 21137799,
+    "graph_generation_wall_ns": 21915757354,
+    "static_signature_collect_median_ns": 334639,
+    "static_signature_compare_median_ns": 65153
+  },
+  "delta": {
+    "attention_saved_ns": 4000199,
+    "attention_saved_percent": 49.27674,
+    "replay_host_total_saved_ns": 4561136,
+    "replay_host_total_saved_percent": 27.272294,
+    "post_replay_synchronize_added_ns": 3371280,
+    "post_replay_synchronize_added_percent": 54.938461,
+    "whole_replay_completion_saved_ns": 405971,
+    "whole_replay_completion_saved_percent": 1.884401,
+    "graph_generation_wall_saved_ns": 99622913,
+    "graph_generation_wall_saved_percent": 0.452515
+  },
+  "disposition": "advance_to_separately_preregistered_uninstrumented_formal_crossover"
+}
