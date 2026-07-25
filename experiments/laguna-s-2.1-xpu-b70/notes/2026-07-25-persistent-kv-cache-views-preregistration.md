@@ -172,7 +172,8 @@ Only Gate 1 authorizes a fresh, no-promotion diagnostic on all four physical
 B70s. It must compare the current record control against the candidate and
 require:
 
-- one fresh q1 teacher, eager DFlash, and graph DFlash request;
+- one fresh q1 teacher, eager DFlash control, graph DFlash control, and graph
+  DFlash candidate request, each in its own fresh process;
 - complete bitwise token identity across q1/eager/graph;
 - `cached_tokens=0`;
 - unchanged DFlash depth and bounded acceptance;
@@ -187,6 +188,14 @@ positive median whole-replay saving on the maximum rank, a positive fresh
 generation-wall effect, no p90 instability, and no transfer of the apparent
 host saving into post-replay synchronization. Host-only improvement is not
 enough.
+
+The fourth arm clarifies the earlier three-arm wording before any Gate 2 tool
+or device run. It adds a same-session record-graph control rather than relying
+on historical timing. Every arm still performs exactly one cold generation;
+there is no warm-up, retry, cache reuse, or result-conditioned selection.
+Both graph arms must independently retain 31 samples per rank. A separate
+non-timing packet must compare q2 through q8 attention outputs bytewise with
+the selector off and on for every physical card.
 
 ## Gate 3: endpoint boundary
 
