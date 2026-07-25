@@ -307,3 +307,10 @@ import the frozen kernel package's public
 same direct interface used by the existing Laguna attention gates. It may not
 change tensors, seeds, selector construction, FA arguments, output checks,
 process isolation, or any model arm.
+
+The minimal import-only correction and its static provenance test are committed
+at `a15303cc00d9f1fcc05ce0dd924518a0cf650ac7`. An independent read-only audit
+approved it: the direct public function is exactly the function used by
+vLLM's XPU wrapper, accepts the frozen keyword call, and leaves selector and
+parity semantics unchanged. This approval occurred before any second XPU or
+model attempt.
