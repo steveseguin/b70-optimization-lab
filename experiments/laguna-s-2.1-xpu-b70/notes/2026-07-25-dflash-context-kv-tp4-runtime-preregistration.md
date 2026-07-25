@@ -74,6 +74,41 @@ compilation, and speculative configuration before constructing `LLM`, and to
 record only those launch snapshots. Runtime mutation therefore cannot corrupt
 the result schema. This requires another committed and reviewed packet.
 
+The reviewed `fc6580d381d733e680c67297925490c78f263afc` packet
+successfully completed and cleaned up both 32-token arms. Both final driver
+records, all 144 lifecycle events, both raw streams, post-arm idle proofs, and
+the evidence manifest were written. The final analyzer rejected the first
+control lifecycle event because its initial draft-profile context width is
+C8192, while the analyzer incorrectly allowed only C1-C8 for every lifecycle
+event. The sealed traces show the actual deterministic sequence on every rank:
+
+- initialization/profile: C8192 incumbent, then C8/C8/C1;
+- request prefill: C90 incumbent with six expected cache updates;
+- request DFlash cycles: repeated C8 with six expected cache updates;
+- selector-on uses the workspace exactly for eligible C1-C8 calls and the
+  incumbent path for C90/C8192, matching the frozen source contract.
+
+The root and both successful arm cleanups are sealed at:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dflash-context-kv-runtime-fc6580d38-7c38a2022-20260725T081640Z`
+
+The analyzer is revised to validate any positive lifecycle width through the
+frozen 8192-token model limit, require the incumbent branch above C8, and
+require workspace geometry/reuse only for selector-on C1-C8 events. Acceptance
+still requires an eligible request-phase workspace reuse on every rank. This
+analyzer repair requires a new committed and reviewed packet; the sealed
+fc658 evidence is not retroactively promoted.
+
+Direct replay of the repaired lifecycle validator against that sealed root
+then exposed a second analyzer-only fixture error before any rerun: the
+workspace was validated with the target model's six local KV heads instead of
+the DFlash draft model's two local KV heads. The frozen candidate source and
+sealed rank traces both establish the actual TP4 geometry as K/V width 512,
+`all_kv` shape `[2, 6, C, 2, 128]`, and normalized-K shape
+`[6, C, 2, 128]`. The analyzer and its fixtures now require that exact draft
+geometry. This correction also requires a newly committed and reviewed packet;
+no prior sealed evidence is promoted.
+
 ## Question
 
 Does the default-off DFlash context-KV workspace preserve the approved Laguna

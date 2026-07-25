@@ -900,7 +900,7 @@ def validate_lifecycle_trace(
             or event["precompute_returned"] is not True
             or not isinstance(event["request_phase_armed"], bool)
             or not isinstance(event["num_ctx"], int)
-            or not 0 < event["num_ctx"] <= 8
+            or not 0 < event["num_ctx"] <= 8192
         ):
             die(f"{treatment}: malformed lifecycle event {path.name}")
         num_ctx = event["num_ctx"]
@@ -940,7 +940,8 @@ def validate_lifecycle_trace(
         }
         if not isinstance(projection, dict) or set(projection) != projection_fields:
             die(f"{treatment}: projection witness fields drift")
-        if treatment == "control":
+        workspace_eligible = treatment == "candidate" and num_ctx <= 8
+        if not workspace_eligible:
             if projection != {
                 "branch": "incumbent",
                 "capturing": False,
@@ -960,9 +961,9 @@ def validate_lifecycle_trace(
                 die("candidate: workspace branch witness drift")
             expected_shapes = [
                 [6, num_ctx, 3072],
-                [6, num_ctx, 1536],
-                [2, 6, num_ctx, 6, 128],
-                [6, num_ctx, 6, 128],
+                [6, num_ctx, 512],
+                [2, 6, num_ctx, 2, 128],
+                [6, num_ctx, 2, 128],
             ]
             pointers: set[int] = set()
             for signature, shape in zip(signatures, expected_shapes, strict=True):
@@ -1046,7 +1047,7 @@ def validate_lifecycle_trace(
                     "request_phase_armed": event["request_phase_armed"],
                 }
             )
-            if treatment == "candidate":
+            if treatment == "candidate" and width <= 8:
                 signatures = projection["workspace_signatures"]
                 previous = workspace_by_width.get(width)
                 if previous is None:

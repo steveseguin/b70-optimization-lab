@@ -68,9 +68,9 @@ def write_lifecycle_trace(treatment: str, arm_root: Path) -> None:
             for offset, shape in enumerate(
                 (
                     [6, 1, 3072],
-                    [6, 1, 1536],
-                    [2, 6, 1, 6, 128],
-                    [6, 1, 6, 128],
+                    [6, 1, 512],
+                    [2, 6, 1, 2, 128],
+                    [6, 1, 2, 128],
                 )
             )
         ]
@@ -123,6 +123,32 @@ def write_lifecycle_trace(treatment: str, arm_root: Path) -> None:
             }
             path = trace / f"rank{rank}-event{index:05d}.json"
             path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+
+def resize_trace_event(event: dict, width: int) -> None:
+    rank = event["rank"]
+    event["num_ctx"] = width
+    event["context_states"] = trace_tensor(
+        rank,
+        [width, 3072],
+        dtype="torch.bfloat16",
+        pointer=event["context_states"]["data_ptr"],
+    )
+    event["context_positions"] = trace_tensor(
+        rank,
+        [width],
+        dtype="torch.int64",
+        pointer=event["context_positions"]["data_ptr"],
+    )
+    event["slot_mapping_signatures"] = [
+        trace_tensor(
+            rank,
+            [width],
+            dtype="torch.int64",
+            pointer=signature["data_ptr"],
+        )
+        for signature in event["slot_mapping_signatures"]
+    ]
 
 
 def valid_driver(treatment: str, root: Path) -> dict:
@@ -539,3 +565,100 @@ def test_lifecycle_trace_rejects_missing_unarmed_initialization(
 
     with pytest.raises(ValueError, match="unarmed initialization"):
         gate.validate_lifecycle_trace("control", arm_root)
+
+
+def test_lifecycle_trace_accepts_wide_request_prefill_on_incumbent(
+    tmp_path: Path,
+) -> None:
+    arm_root = tmp_path / "control"
+    write_lifecycle_trace("control", arm_root)
+    trace = arm_root / "dflash-lifecycle"
+    for rank in range(4):
+        path = trace / f"rank{rank}-event00001.json"
+        event = json.loads(path.read_text(encoding="utf-8"))
+        resize_trace_event(event, 90)
+        path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    result = gate.validate_lifecycle_trace("control", arm_root)
+
+    assert result["request_precompute_calls"] == {
+        rank: 1 for rank in range(4)
+    }
+
+
+def test_lifecycle_trace_accepts_wide_candidate_initialization(
+    tmp_path: Path,
+) -> None:
+    arm_root = tmp_path / "candidate"
+    write_lifecycle_trace("candidate", arm_root)
+    trace = arm_root / "dflash-lifecycle"
+    for rank in range(4):
+        first_path = trace / f"rank{rank}-event00000.json"
+        second_path = trace / f"rank{rank}-event00001.json"
+        first = json.loads(first_path.read_text(encoding="utf-8"))
+        request = json.loads(second_path.read_text(encoding="utf-8"))
+
+        wide = copy.deepcopy(first)
+        resize_trace_event(wide, 8192)
+        wide["projection"] = {
+            "branch": "incumbent",
+            "capturing": False,
+            "workspace_reused": None,
+            "workspace_signatures": None,
+        }
+        initialization = first
+        initialization["event_index"] = 1
+        request["event_index"] = 2
+
+        first_path.write_text(json.dumps(wide) + "\n", encoding="utf-8")
+        second_path.write_text(
+            json.dumps(initialization) + "\n",
+            encoding="utf-8",
+        )
+        (trace / f"rank{rank}-event00002.json").write_text(
+            json.dumps(request) + "\n",
+            encoding="utf-8",
+        )
+
+    result = gate.validate_lifecycle_trace("candidate", arm_root)
+
+    assert result["request_reused_precompute_calls"] == {
+        rank: 1 for rank in range(4)
+    }
+
+
+def test_lifecycle_trace_rejects_candidate_workspace_above_c8(
+    tmp_path: Path,
+) -> None:
+    arm_root = tmp_path / "candidate"
+    write_lifecycle_trace("candidate", arm_root)
+    trace = arm_root / "dflash-lifecycle"
+    for rank in range(4):
+        path = trace / f"rank{rank}-event00001.json"
+        event = json.loads(path.read_text(encoding="utf-8"))
+        resize_trace_event(event, 9)
+        path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="workspace branch unexpectedly observed"):
+        gate.validate_lifecycle_trace("candidate", arm_root)
+
+
+def test_lifecycle_trace_rejects_candidate_incumbent_at_c1(
+    tmp_path: Path,
+) -> None:
+    arm_root = tmp_path / "candidate"
+    write_lifecycle_trace("candidate", arm_root)
+    trace = arm_root / "dflash-lifecycle"
+    for rank in range(4):
+        path = trace / f"rank{rank}-event00001.json"
+        event = json.loads(path.read_text(encoding="utf-8"))
+        event["projection"] = {
+            "branch": "incumbent",
+            "capturing": False,
+            "workspace_reused": None,
+            "workspace_signatures": None,
+        }
+        path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="workspace branch witness drift"):
+        gate.validate_lifecycle_trace("candidate", arm_root)
