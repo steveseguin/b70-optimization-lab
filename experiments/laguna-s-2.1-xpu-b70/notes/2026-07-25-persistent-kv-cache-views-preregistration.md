@@ -2,8 +2,8 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: preregistered before implementation. No candidate source, XPU
-diagnostic, model load, prompt, generation, endpoint campaign, payload, or
+Status: Gate 1 complete; Gate 2 tooling frozen before any XPU diagnostic.
+No Gate 2 model load, prompt, generation, endpoint campaign, payload, or
 submission has started.
 
 ## Pre-implementation lifecycle addendum
@@ -240,3 +240,44 @@ The measured representative hot-path result after all validation was:
 This is only about 0.23% of the latest `21.137799 ms` whole replay and remains
 well inside endpoint noise. It authorizes Gate 2 only. It is not performance,
 promotion, record, payload, or submission evidence.
+
+## Gate 2 telemetry and parity addendum
+
+The independent pre-run audit rejected the first Gate 2 harness draft before
+any XPU or model use. It required three corrections:
+
+- selector parity must instantiate the real `FlashAttentionImpl` flag-off and
+  flag-on paths rather than construct the private cache manager directly;
+- each parity process must have its own process group, survivor cleanup,
+  post-process worker proof, and strict post-idle proof; and
+- the replay profile must measure the two actual KV-view preparation helpers
+  directly instead of treating aggregate attention-boundary host time as that
+  measurement.
+
+Those corrections are frozen in telemetry-only vLLM commit
+`5da4a8ccdde0abe77d2dd2abda7b6a12bc74c01a`, a descendant of Gate 1 candidate
+`4d3124f1a2a8f4f08ded49d148022ee660f68ff1`. Replay-profile schema v2 brackets
+the existing forward and update helper bodies with `perf_counter_ns`, and
+requires exactly 48 forward plus 48 update calls per replay. The graph control
+must report 96 incumbent calls. The candidate must report 96 persistent hits
+and zero builds after capture. The direct timer adds equal diagnostic overhead
+to both graph arms, so its values are mechanism evidence only; the existing
+whole-replay and post-sync fields remain the promotion gates for end-to-end
+effect.
+
+The parity packet now sets the exact graph contract first, constructs real
+selector-off/on attention implementations for both full and sliding attention,
+proves absent/present persistent state and repeated candidate object identity,
+and compares q2 through q8 FA2 outputs bitwise on each physical card. It remains
+non-timing and performs no model generation.
+
+After these fixes, focused checks passed:
+
+- 68 vLLM attention, lifecycle, runner, and Breakable-profile tests;
+- 11 analyzer/controller contract tests;
+- Ruff check and format;
+- shell syntax and whitespace checks; and
+- an independent final working-tree audit.
+
+The independent audit approved the corrected diagnostic conditional on
+committing the exact inspected source and tool trees before launch.
