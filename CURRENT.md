@@ -252,6 +252,24 @@ contamination. LocalMaxxing approved the conservative result as
 and compact
 [packet](data/laguna-s-2.1-m8-breakable-graph-record-20260724.json).
 
+The latest approved record keeps that exact Breakable graph runtime fixed and
+adds persistent exact q2..q8 attention metadata. Builder-owned fixed-address
+query-offset, KV-length, and expanded-block-table buffers replace repeated
+per-layer metadata construction; pointer, owner, offset, active-view, and
+metadata-object signatures fail closed on drift. In the preregistered
+graph-vs-graph A1-B1-B2-A2 crossover, metadata-on starts measured
+**94.920039** and **95.066548 tok/s** versus metadata-off controls at
+92.549618 and 92.877971. The conservative lower candidate is +2.990898% over
+the prior approved record. Both pairs won 13/13 rows, improved paired medians
+2.351%/2.561%, saved 0.911/1.648 ms per aggregate target cycle, and kept
+acceptance drift below 0.000308. Canonical exactness was 52/52, cross-leg
+exactness 39/39, cache-zero 52/52, long-next 8/8, and rollover 4/4. An
+independent raw-artifact audit approved the lower B start. LocalMaxxing
+approved it as `cmrzrd4tf001ipa013xpx4kid`. Resume from the
+[record note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-m8-persistent-attention-metadata-record.md)
+and
+[packet](data/laguna-s-2.1-m8-persistent-attention-metadata-record-20260725.json).
+
 The frozen routed-W1 N128 follow-up completed only A1/B1 after the local-NVMe
 recovery gate. Both starts were canonical-teacher exact 13/13, cache-zero
 13/13, long-next 2/2, rollover 1/1, and operationally clean. N128 reduced
@@ -262,10 +280,13 @@ median fell 3.0578%. The frozen analyzer classified
 made. Preserve the [closed negative](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-phase1-failed-stop.md)
 and [packet](data/laguna-s-2.1-w1-n128-nvme-phase1-failed-stop-20260723.json).
 
-Next, profile the exact graph stack and attack its remaining eager breaks,
-collective boundaries, or graph-external launch overhead without changing
-BF16 arithmetic boundaries. Shared-expert GEMM occupancy remains a secondary
-lane. The N128 endpoint treatment is closed. Do not stack
+Next, profile the new exact persistent-metadata graph stack and attack its
+remaining attention kernels, collective boundaries, or graph-external launch
+overhead without changing BF16 arithmetic boundaries. The prior full-attention
+subgraph attempt is closed because SYCL graph capture rejects FA2 work-group
+scratch memory; prefer independently exact occupancy work or smaller safe
+fusion boundaries. Shared-expert GEMM occupancy remains a secondary lane. The
+N128 endpoint treatment is closed. Do not stack
 the BF16 router candidate into another endpoint trial unless a future
 preregistered design explicitly isolates its contribution. Do not revisit
 route buffer fills or progressively serialize the whole model into opaque

@@ -2,9 +2,10 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: **VERIFIED, INDEPENDENTLY AUDITED, READY TO SUBMIT**. The conservative
-lower candidate start is `94.92003934159611 tok/s`, compared with approved
-record `cmrzjb7i906x4o401egrnm05m` at `92.16352215694299 tok/s`.
+Status: **VERIFIED, INDEPENDENTLY AUDITED, SUBMITTED, APPROVED RECORD**.
+LocalMaxxing ID `cmrzrd4tf001ipa013xpx4kid`. The conservative lower candidate
+start is `94.92003934159611 tok/s`, compared with prior approved record
+`cmrzjb7i906x4o401egrnm05m` at `92.16352215694299 tok/s`.
 
 ## Result
 
@@ -106,5 +107,7 @@ in the sealed campaign.
 
 ## Decision
 
-Submit only `94.92003934159611 tok/s`, never the faster B2 value. Preserve all
-four starts as the reproducibility record.
+The independently audited payload submitted only `94.92003934159611 tok/s`,
+never the faster B2 value. LocalMaxxing returned HTTP 201 and approved it as
+`cmrzrd4tf001ipa013xpx4kid`. Preserve all four starts as the reproducibility
+record.
