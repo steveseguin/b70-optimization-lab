@@ -47,6 +47,13 @@ Also serve it as the working coding model.
 | 2026-07-23 | BF16 router/top-k specialization | 32.31 candidate | YES (13/13 phase 1) | COMPONENT WIN / ENDPOINT LOSS: removed 0.45-0.48 ms/cycle in isolation and won 10/13 paired rows, but the frozen candidate headline was -1.9985% versus its adjacent control. Preregistered early stop; no B2/A2 or payload. Do not stack without a new isolating design. |
 | 2026-07-23 | shared-elementwise component bundle | component only | YES, exhaustive 4-card gate | Two native operations preserve literal BF16 rounding, remove 94 launches/cycle, and save 0.699-0.723 ms/cycle on every card. Promoted only as part of the following frozen stack endpoint. |
 | 2026-07-23 | **shared-elementwise + QKNorm/RoPE stack — RECORD cmrx6p5dv** | **33.895** | **YES (52/52 ABBA)** | APPROVED. Conservative candidate 33.895 (support 34.551) beat adjacent controls 32.827/33.273, won 12/13 and 13/13 rows, and saved 3.490/4.015 ms target-cycle time. All requests cache-zero; long-next 8/8 and rollover 4/4. +1.364% over cmrwot894. |
+| 2026-07-23 | routed-W1 N128 campaign | — | — | Long multi-abort campaign (peer loader, sycl-ls, UMF, XCCL log framing, NTFS3 post-reboot, device-lost incident). Recovery gate passed; no endpoint record. |
+| 2026-07-23 | shared gate/up/down native M8 MM | — | mixed | Component lane; counter failure and threshold miss. Not promoted. |
+| 2026-07-24 | **Breakable M8 PIECEWISE graph — RECORD cmrzjb7i9** | **92.164** | **YES (52/52 ABBA)** | **STEP CHANGE, +171.9%.** Conservative lower graph start 92.164 (support 92.761) vs eager controls 34.491/34.591. Won 13/13 and 12/13 rows; saved 55.049/54.220 ms per target cycle; acceptance drift <0.000308. Each start captured/replayed exactly once on all four ranks, audited 146/145 topology. Supersedes the earlier "graph RULED OUT" finding, which applied only to the non-breakable deterministic variant. |
+| 2026-07-24 | M8 actual-offline raw parity | — | — | Ten preregistration revisions and a long abort chain (driver-config serialization, eager contract, hybrid slot schema, ZMQ path, runtime capture monitor, target-hidden evidence, segmented eager label order). Live-capture materialization eventually passed. Tooling lane, no endpoint. |
+| 2026-07-25 | **persistent exact-attention metadata — RECORD cmrzrd4tf** | **94.920** | **YES (52/52 ABBA)** | APPROVED, current record. Conservative lower candidate 94.920 (support 95.067) vs metadata-off controls 92.550/92.878. Won 13/13 rows in both adjacent pairs, +2.561%/+2.356% headline, saved 0.911/1.648 ms per aggregate target cycle. Cross-leg exactness 39/39, long-next 8/8, rollover 4/4, all cache-zero. p10 65.964; full-512 wall 50.165. |
+| 2026-07-25 | routed-W1 N32 component | — | YES (exact) | **TERMINAL COMPONENT NEGATIVE.** Bitwise exact and won 31/31 paired timing blocks, but the paired median saving was 0.028110 ms against a required floor of 0.20 ms per 47-layer cycle. Too small to justify a noisy endpoint campaign. Closes lever 5. |
+| 2026-07-25 | DFlash context-KV workspace | — | **component PASS** | **IN FLIGHT.** Exact four-card component gate passed and promoted; sealed offline audit corrected the projected-V view-offset rule. TP4 runtime integration gate has consumed 4 one-shot packets, all failing closed in the harness before any token was generated. Fifth packet prepared, awaiting adversarial review. |
 
 ## Lever ladder (grind order; each exact + quality-gated)
 1. **[DONE] DFlash verifier exactness and batching** — q=8 verifier == q=1
@@ -62,15 +69,23 @@ Also serve it as the working coding model.
    while retaining every rounding boundary. The preregistered A-B-B-A endpoint
    promoted the lower 33.894985 tok/s candidate, LocalMaxxing
    `cmrx6p5dv001bo4017hb7sixz`.
-5. **[NEXT] Shared-expert and routed-W1 occupancy** — isolate the roughly
-   1 ms/cycle shared-expert GEMMs and remaining routed-W1 headroom against the
-   exact current stack. Require a four-card changed-input component gate before
-   another preregistered endpoint.
+5. **[CLOSED; TERMINAL NEGATIVE] Shared-expert and routed-W1 occupancy** — the
+   N32 policy is bitwise exact and won 31/31 paired timing blocks, but its
+   paired median saving of 0.028110 ms per 47-layer cycle missed the 0.20 ms
+   floor by an order of magnitude. Shared gate/up/down native M8 MM also closed
+   on a counter failure and threshold miss. Do not reopen without a new
+   isolating design.
 6. **[DONE] INT4 expert GEMM efficiency / occupancy** — N64 route-interleaved
    W1/W2 workgroups raised EU activity and produced the current record.
-7. **Graph coverage** — first fix AOT cache identity/artifact selection and
-   locate the first eager-vs-compiled tensor divergence. Fixed-rank reductions
-   alone produced only 1/13 teacher matches and were reverted.
+7. **[DONE; APPROVED — THE BIG WIN] Graph coverage** — the *Breakable* M8
+   PIECEWISE graph works where the deterministic non-breakable variant did not.
+   It produced `92.164` tok/s on 2026-07-24 (LocalMaxxing `cmrzjb7i906x4o401egrnm05m`),
+   a +171.9% step change over the 33.895 eager stack, saving ~55 ms per target
+   cycle with acceptance drift below 0.000308 and exactly one capture/replay
+   per rank on the audited 146/145 topology. Persistent exact-attention
+   metadata then took it to the current `94.920` record. The earlier
+   "RULED OUT" entry in the ledger above refers only to the non-breakable
+   deterministic graph at 30.99 tok/s and is superseded.
 8. **[DEPTH SWEEP DONE] Better speculation** — depth 7 remains best exact.
    Depths >7 require widening or serializing all M>8 target verifier boundaries
    before acceptance policy or tree/multi-branch drafting can be promoted.
@@ -79,10 +94,17 @@ Also serve it as the working coding model.
 10. **Quantization headroom (careful, quality-gated)** — if quality holds, reduce
    remaining BF16 bytes/token to raise the roofline itself. Only behind a real
    quality gate; never a silent lossy swap.
+11. **[CURRENT RUNG] DFlash context-KV workspace** — the draft's six-layer
+   context-KV precompute allocates fresh intermediate tensors every proposal
+   cycle. Distinct from the record, which touches only target q2-q8 attention
+   metadata. Exact four-card component gate has **passed**; the TP4 runtime
+   integration exactness gate is the blocker. See `RESUME.md`.
 
 ## Reusable assets
 - vLLM branch `experiment/laguna-s-2.1-xpu-bringup-20260721`; XPU kernels
   `experiment/laguna-s-2.1-fwht-20260721` (attention tuples compiled, H128 FWHT).
-- Weights on external drive: `.../laguna-s-2.1/{int4,dflash-int4}`.
+- Weights on **local NVMe**: `/mnt/fast-ai/llm-models/laguna-s-2.1/{int4,dflash-int4}`
+  (68 G target + 2.1 G draft). Migrated off the USB drive on 2026-07-23; the
+  external copy is backup only. See `notes/2026-07-23-laguna-usb-backup-only-nvme-migration.md`.
 - Gates/tools under `experiments/laguna-s-2.1-xpu-b70/tools/`.
 - Bring-up + result notes under `notes/` (dated).

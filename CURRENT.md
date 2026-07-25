@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-24**
+Last reviewed: **2026-07-25**
 
 ## Authority And Update Rule
 
@@ -90,8 +90,73 @@ not silently add authentication or change its exposure policy.
 
 ## Laguna S 2.1 Bring-Up
 
-The active bring-up lane is Poolside Laguna S 2.1 INT4 on four B70s. The
-target and DFlash attention set is now enumerated. The DFlash paged-decode
+### Current State (2026-07-25)
+
+**Approved record: `94.920039` tok/s**, LocalMaxxing `cmrzrd4tf001ipa013xpx4kid`.
+Support start `95.066548`; p10 `65.964050`; full-512 wall `50.165141`.
+Exact persistent-attention-metadata on the validated Breakable M8 PIECEWISE
+graph stack, DFlash depth 7, TP4+EP4, one active generation.
+
+Record identity: vLLM `ef334233deabeaeedb607056a2db1c90edb3887c`, XPU kernels
+`4772f727590c51b72add79350b913d098cf67872`.
+Packet: [`data/laguna-s-2.1-m8-persistent-attention-metadata-record-20260725.json`](data/laguna-s-2.1-m8-persistent-attention-metadata-record-20260725.json).
+Record note: [`notes/2026-07-25-m8-persistent-attention-metadata-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-m8-persistent-attention-metadata-record.md).
+
+Approved progression: `33.086` -> `33.268` -> `33.439` -> `33.895` (07-23
+launch-reduction stack) -> **`92.164`** (07-24 Breakable M8 PIECEWISE graph,
+the step change) -> **`94.920`** (07-25 persistent attention metadata). The
+graph lane is what moved this lane from the low 30s to the low 90s; the earlier
+"deterministic graph RULED OUT" finding applied to the non-breakable variant
+only.
+
+### Active Lever
+
+**DFlash context-KV workspace.** Laguna's eager context-KV precompute allocates
+new intermediate tensors on every proposal cycle in the draft's six-layer
+context-KV projection. The record touches only target q2-q8 attention metadata,
+so this lane is materially distinct. Selector
+`VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1`, default-off, fail-closed.
+
+Status: **exact four-card component gate PASSED and promoted**, including a
+sealed offline audit that corrected the projected-V view-offset rule.
+
+The preceding current-stream diagnostic found no other honest target-MoE or
+attention candidate. W1 N32/N128, QKV/O occupancy, remote-zero, fused expert
+transactions, native shared projections, attention capture, collective capture,
+and gather variants are all negative, terminal, unsafe, or already absorbed.
+
+### Blocked On
+
+The **TP4 runtime integration exactness gate**. Four one-shot packets have been
+consumed, each failing closed before generating a single token, and every
+failure was in the harness rather than the candidate:
+
+| Packet | Reached | Failure |
+| --- | --- | --- |
+| `de35c566b` | before vLLM import | frozen `PYTHONPATH` omitted the tracked gate-tools directory |
+| `f52f9e8ef` | preflight | correctly refused an RPC directory stranded by the first failure |
+| `649f150cf` | full TP4/XCCL load and PIECEWISE capture | `apply_model(function)` identity query rejected function serialization; insecure pickle fallback is deliberately disabled |
+| fifth, prepared | not yet run | awaiting review |
+
+The fifth packet replaces the pickled-function query with a named, default-off
+worker RPC. Harness is at `e9182e125`; candidate source is `7c38a2022` in
+`/home/steve/src/laguna-vllm-dflash-persistent-metadata-20260725`.
+
+**Next action: independent adversarial source review of the fifth packet**
+against its nine acceptance conditions, then mint a fresh `O_EXCL` one-shot
+marker and run it. A failed packet is terminal and must never be reused. A pass
+authorizes only the *design* of a separate preregistered cold graph-vs-graph
+crossover; it is not a record claim and not a submission.
+
+Resume detail: [`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
+
+### Historical Bring-Up Detail
+
+Everything below predates the graph records and is retained for provenance. It
+describes the eager-path bring-up and the 33.x-era ladder. Where it conflicts
+with the Current State block above, the block above wins.
+
+The target and DFlash attention set is now enumerated. The DFlash paged-decode
 tuple `16,128,64,false,false,false` was rebuilt with oneAPI 2025.3 at kernel
 commit `c615c38fb79d4035118c05675565dbf7e2443a90`; the expanded seven-case
 changed-input oracle passed independently on all four B70s. The tokenizer's
