@@ -12,6 +12,16 @@ community-reported unless they can be checked on matching hardware. A patch
 tested here on B70 is evidence about B70, not independent confirmation of the
 submitter's original hardware score.
 
+## A Note On Absolute Paths
+
+Recipes, notes, and result packets in this repository quote absolute paths such
+as `/mnt/fast-ai/llm-models/...` and `/mnt/usb-models/...`. Those are locations
+on the maintainer's reference lab host. They will not exist on your machine and
+are recorded to keep a result traceable to the exact weights it was measured
+against — not as commands to run as written. Substitute your own model
+directory. See
+[Reference Lab Storage Layout](docs/reference-lab-storage.md).
+
 ## Before Opening An Issue, Discussion, Or Pull Request
 
 Include, or link to, all of the following:

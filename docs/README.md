@@ -37,6 +37,12 @@ Docs should point to those artifacts instead of duplicating every script.
   required benchmark/result identity.
 - [Contribution Verification](contribution-verification.md): manual evidence
   and hardware-verification policy.
+- [Community Contributions](../community/README.md): where outside work lands,
+  and what has to happen before it enters the promoted ledger.
+- [Reference Lab Storage Layout](reference-lab-storage.md): what the
+  `/mnt/fast-ai/...` and `/mnt/usb-models/...` paths throughout this repo mean.
+  Read this first if a recipe points somewhere that does not exist on your
+  machine.
 - [Performance Index](../results/scoreboard.md): expected performance with
   explicit comparison and verification boundaries.
 - [Manager Playbook](../MANAGER.md): manual human/AI review procedure.
