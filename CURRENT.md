@@ -315,15 +315,25 @@ median fell 3.0578%. The frozen analyzer classified
 made. Preserve the [closed negative](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-phase1-failed-stop.md)
 and [packet](data/laguna-s-2.1-w1-n128-nvme-phase1-failed-stop-20260723.json).
 
-Next, inspect persistent workspace/address churn and expert W1/W2 dispatch/tile
-headroom inside the post-attention local-MoE segment without changing the
-exact persistent-metadata stack's 146/145 graph/break topology or BF16
-arithmetic boundaries. On selected rank 2, the 48 pre-attention graph segments
-totaled `25.393732 ms`, post-attention/local-O segments `23.700404 ms`, and
-post-attention/local-MLP segments `30.126720 ms`. Change one isolated lever and
-preserve router top-k ordering, grouped-GEMM reduction traversal, BF16
-materialization points, and fixed all-gather order. The current-stream
-diagnostic does not authorize collective capture or an attention rewrite. The
+The target-side follow-up audit found no clean untried MoE or
+attention-adjacent lever: the apparent candidates collapse into previously
+measured W1 N32/N128, QKV/O occupancy, remote-zero, native shared projection,
+gather, capture, or fusion negatives. The active lane is instead a distinct
+default-off Laguna DFlash context-KV workspace rooted directly at approved
+record vLLM `ef334233d`. The host-only implementation is frozen at candidate
+vLLM `4459910e2ac5a7b552887fc0a3f3e3cf9a4701c0` after 38 focused tests,
+full-file pre-commit checks, and two independent source-freeze approvals. It
+reuses exact-shape eager buffers only for steady
+context widths 1 through 8 while preserving the incumbent RMSNorm, BMM, bias,
+layout-copy, K-RMSNorm, RoPE, and cache-write order. Prompt/prefill widths stay
+on the incumbent path. No XPU or model action is authorized until a separate
+four-card raw-bit component gate is committed and independently reviewed.
+Resume from the
+[DFlash workspace preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-dflash-context-kv-workspace-preregistration.md).
+The completed current-stream diagnostic still records rank-2 repeated graph
+segments of `25.393732 ms` pre-attention, `23.700404 ms`
+post-attention/local-O, and `30.126720 ms` post-attention/local-MLP; it does
+not authorize collective capture or an attention rewrite. The
 prior full-attention subgraph attempt is closed
 because SYCL graph capture rejects FA2 work-group scratch memory. Shared-expert
 GEMM occupancy remains a secondary lane. The

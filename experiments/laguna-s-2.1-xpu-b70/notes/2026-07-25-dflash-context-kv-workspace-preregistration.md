@@ -1,0 +1,152 @@
+# Laguna DFlash context-KV workspace preregistration
+
+Date: 2026-07-25 America/Toronto
+
+Status: **host-only source frozen; no XPU, model, endpoint, or submission
+action authorized until the separate component packet is committed and
+reviewed**.
+
+## Purpose
+
+The approved record is the exact persistent-attention-metadata Breakable-graph
+stack at `94.92003934159611 tok/s`, LocalMaxxing
+`cmrzrd4tf001ipa013xpx4kid`, with vLLM
+`ef334233deabeaeedb607056a2db1c90edb3887c` and XPU kernels
+`4772f727590c51b72add79350b913d098cf67872`.
+
+The completed current-stream diagnostic and its source map found no honest
+new target-MoE or attention-adjacent candidate. W1 N32/N128, QKV/O occupancy,
+remote-zero, fused expert transactions, native shared projections, attention
+capture, collective capture, and gather variants are already negative,
+terminal, unsafe, or absorbed by the record. The source audit did identify a
+separate unoptimized DFlash path: Laguna's eager context-KV precompute creates
+new intermediate tensors on every proposal cycle.
+
+The prior persistent metadata record changes only target q2-through-q8
+attention metadata. It does not touch the DFlash model's six-layer context-KV
+projection, so this lane is materially distinct.
+
+## Frozen candidate
+
+The candidate starts directly from approved record vLLM
+`ef334233deabeaeedb607056a2db1c90edb3887c`. Its sole selector is:
+
+```text
+VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1
+```
+
+The frozen implementation is vLLM commit
+`4459910e2ac5a7b552887fc0a3f3e3cf9a4701c0` in
+`/home/steve/src/laguna-vllm-dflash-persistent-metadata-20260725`.
+
+The selector is default-off and must fail closed unless all of these hold:
+
+- Intel XPU;
+- draft architecture `DFlashLagunaForCausalLM`;
+- six DFlash layers with hidden size 3072 and target-layer IDs
+  `[1,10,19,29,38,47]`;
+- causal DFlash, depth seven, greedy draft sampling, and standard rejection;
+- configured maximum one sequence, synchronous scheduling, TP4, PP1, DP1,
+  no LoRA, and BF16 model dtype.
+
+The later component and endpoint controllers, rather than the model helper,
+own the rest of the frozen record identity: EP4, Breakable PIECEWISE graph,
+the existing target metadata/elementwise/QKNorm selectors, no async request
+boundary, exact model revisions, and the pinned XPU kernels.
+
+Only steady context widths 1 through 8 use persistent buffers. Larger prompt
+or prefill context widths retain the incumbent allocation path.
+
+For each exact context width, the candidate lazily owns four non-checkpoint
+buffers with the incumbent shapes and layouts:
+
+1. layer-major normalized context states `[L,C,H]`;
+2. BMM output `[L,C,2*kv]`;
+3. contiguous K/V-packed output `[2,L,C,nkv,hd]`; and
+4. normalized K `[L,C,nkv,hd]`.
+
+The operation order remains exactly:
+
+```text
+RMSNorm
+-> torch.bmm
+-> separate BF16 bias add when present
+-> permute plus contiguous-layout copy
+-> K RMSNorm
+-> in-place RoPE
+-> unchanged per-layer KV-cache writes
+```
+
+No operation is fused, removed, reassociated, quantized differently, moved
+across a BF16 store, or reordered. `positions.repeat`, RoPE, cache slot
+mapping, cache writes, query attention, dense MLP, logits, draft argmax,
+rejection, target verification, graph topology, and collective order remain
+unchanged.
+
+Every workspace tensor and all static context-KV weights are guarded by
+data pointer, storage offset, shape, stride, dtype, and device signatures.
+Workspace tensors must be mutually disjoint and may not alias context inputs
+or weights. Any drift after first use is a hard error; the candidate may not
+silently rebuild, fall back, or continue.
+
+## Required validation ladder
+
+Before any XPU action:
+
+- focused CPU/reference tests must prove byte equality with the allocation path
+  for changing context widths 1, 3, and 8 and repeated inputs; this is
+  structural host evidence, not XPU raw-bit proof;
+- exact-width buffers must retain object and tensor identity across reuse;
+- width greater than eight must take the literal incumbent path;
+- every workspace base, every static weight, projected-K handoff, input alias,
+  and stream-capture drift must fail closed;
+- a positive record-scope contract and one-field platform, architecture,
+  layer/shape, target-ID, causal, depth, sampling, batch, scheduling, TP, PP,
+  DP, LoRA, and dtype failures must be tested;
+- selector-off source and behavior must remain the incumbent;
+- Ruff, formatting, whitespace, relevant vLLM tests, and independent
+  read-only review must pass;
+- the exact vLLM source must be committed and the worktree clean.
+
+Those host-only requirements passed before the source freeze:
+
+- focused command:
+  `PYTHONPYCACHEPREFIX=/tmp/laguna-dflash-workspace-pycache
+  /home/steve/.venvs/deepseek-v4-xpu/bin/python -m pytest -q
+  tests/models/test_laguna_dflash_context_kv_workspace.py`;
+- result: `38 passed`, with no XPU use;
+- full-file pre-commit checks passed for `vllm/envs.py`,
+  `vllm/model_executor/models/laguna_dflash.py`, and
+  `tests/models/test_laguna_dflash_context_kv_workspace.py`;
+- `git diff --check` passed and the source commit left a clean worktree;
+- two independent read-only reviews approved the narrow host-only source
+  freeze. Both reviews explicitly withheld XPU, endpoint, throughput, and
+  record approval pending the component gate below.
+
+Only then may a separate committed component packet authorize an XPU run. The
+component gate must cover all four physical B70s, all steady widths 1 through
+8, changing BF16 context states, with and without KV bias if supported, and
+raw-bit equality at projected K, projected V, normalized K, RoPE K, and final
+cache-write boundaries. It must verify stable workspace pointers after first
+use and unchanged slot mappings/cache locations.
+
+No endpoint is authorized by a component pass. A later graph-vs-graph cold
+crossover may be constructed only if every card is bitwise exact and the
+candidate shows a conservative material saving in the complete six-layer
+context-KV precompute. That crossover must retain fresh cold prompts, one
+active generation, zero cached tokens, depth seven, exact teacher/cross-leg
+token arrays and text, no retries, and the approved graph/metadata stack.
+
+No LocalMaxxing payload or submission is allowed unless the lower independent
+candidate start is a real verified improvement over `94.92003934159611`
+tok/s and every frozen causal gate passes.
+
+## Explicit exclusions
+
+- Do not bundle proposer `CommonAttentionMetadata` persistence into this
+  treatment.
+- Do not change DFlash depth, draft logits, token IDs, acceptance semantics,
+  target verification, async scheduling, or request history.
+- Do not pre-warm context-width workspaces with hidden model generations.
+- Do not reuse terminal target-side components or weaken their old gates.
+- Do not use the external USB drive for live model reads or run artifacts.
