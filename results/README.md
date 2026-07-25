@@ -25,6 +25,26 @@ and hardware identities, see the [performance index](scoreboard.md).
 | MiniMax M2.7 INT4 AutoRound on B70 | [result packet](minimax-m27-int4-autoround-b70/README.md); [deploy repro](../repro/minimax-m27-b70-110tps-ubuntu24-20260523/README.md); [strict repro](../repro/minimax-m27-b70-89tps-20260520/README.md) | Deployable baseline plus historical strict and constrained-task lanes | Deployable 32K endpoint: `83.172` output tok/s on the comparable p512/n1536 gate. Historical strict 2K lane: `89.314195` output tok/s. Constrained structured-output results are labeled separately in the packet. |
 | Gemma 4 12B IT INT4 AutoRound | [../experiments/gemma4-12b-int4-autoround-vllm](../experiments/gemma4-12b-int4-autoround-vllm/README.md) | Production slot plus research profiles | c8 32K image+text endpoint; c10/c12/c16/c64 documented separately |
 
+Every row above was measured in the reference B70 lab. Contributed results that
+have not been reproduced here are listed separately below and are not part of
+this ledger.
+
+## Community-Reported
+
+Outside contributions that have **not** been reproduced in the reference lab.
+These are not lab results and are not comparable to the table above: the
+numbers are as reported by their contributor, on their hardware, under their
+methodology. Entries live in [`../community/`](../community/README.md) and each
+one carries a `STATUS.md` recording exactly what was and was not checked here.
+
+A row graduates out of this table into the ledger above only after it reaches
+`B70-tested` or better, per
+[`../docs/contribution-verification.md`](../docs/contribution-verification.md).
+
+| Model / Lane | Entry | Evidence level | Contributor-reported claim |
+| --- | --- | --- | --- |
+| Qwen3.6 27B FP8 native TP2 Docker on 2x B70 | [community entry](../community/dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md); [PR #9](https://github.com/steveseguin/b70-optimization-lab/pull/9) | `community-reported`; bounded multi-GPU runtime probe passed here, recipe itself not executed | Contributor reports a working TP2 Docker deploy of `Qwen/Qwen3.6-27B` under `intel/llm-scaler-vllm:0.21.0-b1` at 28.3-34.7 tok/s over 256-token outputs. Methodology, host identity, and cache policy were not supplied. A second contributor could not reproduce the TP2 deploy on an `xe`/kernel-7.x host; the specific multi-GPU Level Zero failure they reported does **not** reproduce in this lab, which refutes the container-runtime version-gap explanation as stated. |
+
 ## Promotion Rules
 
 Promote a result into this folder only when:

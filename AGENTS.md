@@ -36,6 +36,10 @@ Use these common folders consistently:
 - `scripts/` for reusable harnesses and submission helpers.
 - `experiments/` for active research lanes that are not production recipes.
 - `repro/` for runnable promoted reproduction recipes.
+- `community/` for outside contributions at any evidence level. Contributed
+  work stays here until it is reproduced on B70; never move an unverified
+  contribution into `results/` or `repro/`, and never record a contributor's
+  claim as a lab measurement.
 
 ## Local Secrets
 

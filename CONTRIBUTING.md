@@ -40,6 +40,18 @@ do not silently replace an old result. Put chronological investigations in
 `data/`, promoted summaries in `results/`, active research in `experiments/`,
 and runnable promoted recipes in `repro/`.
 
+**If you are contributing from outside the reference lab, your work belongs in
+`community/`, not in `repro/` or `results/`.** Create
+`community/<your-handle>-<model>-<topic>/` containing your recipe or evidence
+plus a `STATUS.md` started from
+[`community/STATUS-TEMPLATE.md`](community/STATUS-TEMPLATE.md). This is not a
+lesser location; it is where contributed evidence is preserved with its
+provenance intact and its evidence level stated honestly. Maintainer-run
+validation is recorded in the same entry, and the work is promoted into
+`repro/` or `results/` if and when it reproduces on B70. Placing an unverified
+result directly into the promoted ledger is the most common reason a
+contribution is sent back. See [`community/README.md`](community/README.md).
+
 `CURRENT.md` is the sole authority for active and protected work. Do not move,
 rename, clean, rebuild, or otherwise disturb the listed files, processes,
 result directories, or external source trees unless the maintainer explicitly

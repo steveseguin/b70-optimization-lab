@@ -1,0 +1,69 @@
+probe run: probe-20260725T141659Z
+image: docker.io/intel/llm-scaler-vllm:0.21.0-b1
+host kernel: 7.0.0-28-generic
+host driver module: xe 
+host runtime: intel-opencl-icd=26.18.38308.1-0 libze-intel-gpu1=26.18.38308.1-0 
+podman: podman version 4.9.3
+
+--- container runtime identity ---
+intel-opencl-icd 26.14.37833.4-1~24.04~ppa1
+libze-intel-gpu1 26.14.37833.4-1~24.04~ppa1
+
+=== ARM A | ZE_AFFINITY_MASK=0 | SYCL_UR_TRACE=0 ===
+torch 2.11.0+xpu
+xpu available: True
+xpu device_count: 1
+  device 0 Intel(R) Graphics [0xe223]
+ARM A EXIT=0
+
+=== ARM B | ZE_AFFINITY_MASK=0,1 | SYCL_UR_TRACE=0 ===
+torch 2.11.0+xpu
+xpu available: True
+xpu device_count: 2
+  device 0 Intel(R) Graphics [0xe223]
+  device 1 Intel(R) Graphics [0xe223]
+two-device alloc OK: 1024.0 1024.0
+ARM B EXIT=0
+
+=== ARM C | ZE_AFFINITY_MASK=0,1 | SYCL_UR_TRACE=2 ===
+UR <--- platform->initialize()(UR_RESULT_SUCCESS)
+   <--- urAdapterGet(.NumEntries = 0, .phAdapters = nullptr, .pNumAdapters = 0x7ffe63066fac (1)) -> UR_RESULT_SUCCESS;
+   <--- urAdapterGet(.NumEntries = 1, .phAdapters = 0x43d12cc0 {0x43be09f0}, .pNumAdapters = nullptr) -> UR_RESULT_SUCCESS;
+   <--- urAdapterGetInfo(.hAdapter = 0x43be09f0, .propName = UR_ADAPTER_INFO_BACKEND, .propSize = 4, .pPropValue = 0x7ffe63067010 (UR_BACKEND_LEVEL_ZERO), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   <--- urAdapterSetLoggerCallback(.hAdapter = 0x43be09f0, .pfnLoggerCallback = 0x7372d9dba5c0, .pUserData = nullptr, .level = UR_LOGGER_LEVEL_WARN) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGet
+   <--- urPlatformGet(.hAdapter = 0x43be09f0, .NumEntries = 0, .phPlatforms = nullptr, .pNumPlatforms = 0x7ffe63066f1c (1)) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGet
+   <--- urPlatformGet(.hAdapter = 0x43be09f0, .NumEntries = 1, .phPlatforms = 0x43d12cc0 {0x37555430}, .pNumPlatforms = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGetInfo
+   <--- urPlatformGetInfo(.hPlatform = 0x37555430, .propName = UR_PLATFORM_INFO_BACKEND, .propSize = 4, .pPropValue = 0x7ffe63066f8c (UR_BACKEND_LEVEL_ZERO), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGetInfo
+   <--- urPlatformGetInfo(.hPlatform = 0x37555430, .propName = UR_PLATFORM_INFO_NAME, .propSize = 0, .pPropValue = nullptr, .pPropSizeRet = 0x7ffe63066ea0 (51)) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGetInfo
+   <--- urPlatformGetInfo(.hPlatform = 0x37555430, .propName = UR_PLATFORM_INFO_NAME, .propSize = 51, .pPropValue = 0x43d25ea0 (Intel(R) oneAPI Unified Runtime over Level-Zero V2), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGetInfo
+   <--- urPlatformGetInfo(.hPlatform = 0x37555430, .propName = UR_PLATFORM_INFO_NAME, .propSize = 0, .pPropValue = nullptr, .pPropSizeRet = 0x7ffe63066ea0 (51)) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGetInfo
+   <--- urPlatformGetInfo(.hPlatform = 0x37555430, .propName = UR_PLATFORM_INFO_NAME, .propSize = 51, .pPropValue = 0x43d25ea0 (Intel(R) oneAPI Unified Runtime over Level-Zero V2), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGet
+UR <--- Device->initialize()(UR_RESULT_SUCCESS)
+UR <--- Device->initialize()(UR_RESULT_SUCCESS)
+   <--- urDeviceGet(.hPlatform = 0x37555430, .DeviceType = UR_DEVICE_TYPE_ALL, .NumEntries = 0, .phDevices = nullptr, .pNumDevices = 0x7ffe63066f04 (2)) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGet
+   <--- urDeviceGet(.hPlatform = 0x37555430, .DeviceType = UR_DEVICE_TYPE_ALL, .NumEntries = 2, .phDevices = 0x43d26640 {0x43d25f40, 0x43d26660}, .pNumDevices = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urPlatformGetInfo
+   <--- urPlatformGetInfo(.hPlatform = 0x37555430, .propName = UR_PLATFORM_INFO_BACKEND, .propSize = 4, .pPropValue = 0x7ffe63066dec (UR_BACKEND_LEVEL_ZERO), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGetInfo
+   <--- urDeviceGetInfo(.hDevice = 0x43d25f40, .propName = UR_DEVICE_INFO_TYPE, .propSize = 4, .pPropValue = 0x7ffe63066de4 (UR_DEVICE_TYPE_GPU), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGetInfo
+   <--- urDeviceGetInfo(.hDevice = 0x43d26660, .propName = UR_DEVICE_INFO_TYPE, .propSize = 4, .pPropValue = 0x7ffe63066de4 (UR_DEVICE_TYPE_GPU), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGetInfo
+   <--- urDeviceGetInfo(.hDevice = 0x43d25f40, .propName = UR_DEVICE_INFO_PARENT_DEVICE, .propSize = 8, .pPropValue = 0x7ffe63066de0 (nullptr), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGetInfo
+   <--- urDeviceGetInfo(.hDevice = 0x43d25f40, .propName = UR_DEVICE_INFO_TYPE, .propSize = 4, .pPropValue = 0x7ffe63066d80 (UR_DEVICE_TYPE_GPU), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGetInfo
+   <--- urDeviceGetInfo(.hDevice = 0x43d25f40, .propName = UR_DEVICE_INFO_USE_NATIVE_ASSERT, .propSize = 1, .pPropValue = 0x7ffe63066d80 (false), .pPropSizeRet = nullptr) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGetInfo
+   <--- urDeviceGetInfo(.hDevice = 0x43d25f40, .propName = UR_DEVICE_INFO_EXTENSIONS, .propSize = 0, .pPropValue = nullptr, .pPropSizeRet = 0x7ffe63066d30 (245)) -> UR_RESULT_SUCCESS;
+   ---> urDeviceGetInfo
+ARM C EXIT=0
