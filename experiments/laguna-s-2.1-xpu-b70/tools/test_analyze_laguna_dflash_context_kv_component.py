@@ -177,3 +177,47 @@ def test_capture_rejection_tampering_fails(field: str) -> None:
         record["context_sha256_before_after"][1] = digest("mutated")
     with pytest.raises(SystemExit):
         gate.validate_capture_rejection(value, rank=0)
+
+
+def discovery_payload(devices: tuple[tuple, ...]) -> dict:
+    return {
+        "device_list": [
+            {
+                "device_function_type": "physical",
+                "device_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+                "device_id": device_id,
+                "drm_device": drm,
+                "pci_bdf_address": bdf,
+                "uuid": uuid,
+            }
+            for device_id, drm, bdf, uuid in devices
+        ]
+    }
+
+
+def test_discovery_artifact_semantics_pass() -> None:
+    assert gate.validate_physical_mapping(
+        discovery_payload(gate.EXPECTED_DEVICES),
+        list(gate.EXPECTED_DEVICES),
+        "unfiltered",
+    ) == list(gate.EXPECTED_DEVICES)
+    assert gate.validate_physical_mapping(
+        discovery_payload((gate.EXPECTED_DEVICES[2],)),
+        [gate.EXPECTED_DEVICES[2]],
+        "filtered",
+    ) == [gate.EXPECTED_DEVICES[2]]
+
+
+@pytest.mark.parametrize("mutation", ["missing", "wrong_full", "wrong_filtered"])
+def test_discovery_artifact_tampering_fails(mutation: str) -> None:
+    if mutation == "missing":
+        payload = {}
+        expected = list(gate.EXPECTED_DEVICES)
+    elif mutation == "wrong_full":
+        payload = discovery_payload(gate.EXPECTED_DEVICES[:-1])
+        expected = list(gate.EXPECTED_DEVICES)
+    else:
+        payload = discovery_payload((gate.EXPECTED_DEVICES[1],))
+        expected = [gate.EXPECTED_DEVICES[0]]
+    with pytest.raises(SystemExit):
+        gate.validate_physical_mapping(payload, expected, mutation)

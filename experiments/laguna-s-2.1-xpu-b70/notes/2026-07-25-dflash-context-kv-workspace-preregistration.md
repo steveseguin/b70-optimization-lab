@@ -2,9 +2,9 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: **component packet independently approved; one component-only XPU
-execution becomes authorized after this exact packet is committed and the
-main worktree is clean. No endpoint, benchmark, or submission action is
+Status: **first component packet failed closed before native import; repaired
+packet independently approved for one new component-only XPU execution after
+it is committed cleanly. No endpoint, benchmark, or submission action is
 authorized**.
 
 ## Purpose
@@ -172,9 +172,39 @@ true, the exact candidate `RuntimeError`, and unchanged workspace registry,
 workspace pointers/bytes, cache bytes, and input bytes.
 
 Host packet validation passes Python compilation, Ruff, formatting, Bash
-syntax, whitespace checks, and 13 analyzer tamper tests. Two independent
+syntax, whitespace checks, and 17 analyzer tamper tests. Two independent
 read-only reviews approved committing and consuming the exact packet once for
 component-only XPU evidence. No XPU was used for these checks or reviews.
+
+## First packet failure
+
+Main commit `bd84a0384202676fd12d2731545c7638f8d58bab` was consumed once at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dflash-context-kv-component-bd84a0384-4459910e2-20260725T062703Z
+```
+
+It failed closed on physical-card leg zero in 1.8 seconds, before the
+pre-import seal, native imports, tensor work, or any accepted result:
+
+```text
+Laguna DFlash context-KV component: four-card physical mapping drift
+```
+
+Root cause is the discovery contract, not the candidate. `xpu-smi discovery`
+inherits `ZE_AFFINITY_MASK`; inside a rank-zero one-visible-card worker it
+correctly reports only physical card zero, while the worker incorrectly
+required the unfiltered four-card list. The packet remains permanently
+consumed and must not be rerun.
+
+The repair captures and fsyncs an unfiltered four-card discovery artifact in
+the launcher after the external packet is irreversibly consumed and before
+applying per-leg affinity. Each worker now requires that artifact to match the
+frozen four-card map and durably records its own affinity-filtered discovery,
+which must contain exactly the selected card. The analyzer independently
+parses, hashes, links, and validates both retained JSON artifacts. This
+repaired source received two independent approvals and has one component-only
+XPU execution after it is committed cleanly.
 
 No endpoint is authorized by a component pass. A later graph-vs-graph cold
 crossover may be constructed only if every card is bitwise exact and the

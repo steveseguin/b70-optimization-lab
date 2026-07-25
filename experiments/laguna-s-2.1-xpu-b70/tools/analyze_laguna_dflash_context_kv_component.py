@@ -82,6 +82,38 @@ def contiguous_stride(shape: list[int]) -> list[int]:
     return list(reversed(stride))
 
 
+def physical_mapping(payload: Any, label: str) -> list[tuple[Any, Any, Any, Any]]:
+    require(isinstance(payload, dict), f"{label}: discovery payload is not an object")
+    observed = payload.get("device_list")
+    require(isinstance(observed, list), f"{label}: device_list is absent")
+    rows = []
+    for row in observed:
+        require(isinstance(row, dict), f"{label}: device row is not an object")
+        if (
+            row.get("device_function_type") == "physical"
+            and row.get("device_name") == "Intel(R) Arc(TM) Pro B70 Graphics"
+        ):
+            rows.append(
+                (
+                    row.get("device_id"),
+                    row.get("drm_device"),
+                    row.get("pci_bdf_address"),
+                    row.get("uuid"),
+                )
+            )
+    return rows
+
+
+def validate_physical_mapping(
+    payload: Any,
+    expected: list[tuple[Any, Any, Any, Any]],
+    label: str,
+) -> list[tuple[Any, Any, Any, Any]]:
+    observed = physical_mapping(payload, label)
+    require(observed == expected, f"{label}: physical mapping drift")
+    return observed
+
+
 def validate_tensor_record(
     record: Any,
     *,
@@ -585,6 +617,60 @@ def main() -> int:
             )
             == expected_device,
             f"rank {rank} physical binding drift",
+        )
+        require(
+            result["device_discovery"].get("unfiltered_path")
+            == str(args.root / "device-discovery.json"),
+            f"rank {rank} filtered/unfiltered discovery linkage drift",
+        )
+        unfiltered_path = args.root / "device-discovery.json"
+        filtered_path = args.root / "cards" / f"rank{rank}.device-discovery.json"
+        require(
+            unfiltered_path.is_file()
+            and not unfiltered_path.is_symlink()
+            and filtered_path.is_file()
+            and not filtered_path.is_symlink()
+            and result["device_discovery"].get("filtered_path") == str(filtered_path)
+            and valid_sha(result["device_discovery"].get("unfiltered_sha256"))
+            and valid_sha(result["device_discovery"].get("filtered_sha256"))
+            and sha256_file(unfiltered_path)
+            == result["device_discovery"]["unfiltered_sha256"]
+            and sha256_file(filtered_path)
+            == result["device_discovery"]["filtered_sha256"],
+            f"rank {rank} discovery artifact identity drift",
+        )
+        parsed_unfiltered = validate_physical_mapping(
+            json.loads(unfiltered_path.read_text()),
+            list(EXPECTED_DEVICES),
+            f"rank {rank} unfiltered",
+        )
+        parsed_filtered = validate_physical_mapping(
+            json.loads(filtered_path.read_text()),
+            [expected_device],
+            f"rank {rank} filtered",
+        )
+        reported_unfiltered = [
+            (
+                row.get("device_id"),
+                row.get("drm_device"),
+                row.get("pci_bdf_address"),
+                row.get("uuid"),
+            )
+            for row in result["device_discovery"].get("unfiltered_mapping", [])
+        ]
+        reported_filtered = [
+            (
+                row.get("device_id"),
+                row.get("drm_device"),
+                row.get("pci_bdf_address"),
+                row.get("uuid"),
+            )
+            for row in result["device_discovery"].get("filtered_mapping", [])
+        ]
+        require(
+            reported_unfiltered == parsed_unfiltered
+            and reported_filtered == parsed_filtered,
+            f"rank {rank} discovery artifact semantics drift",
         )
         mappings.append(expected_device)
         results.append(

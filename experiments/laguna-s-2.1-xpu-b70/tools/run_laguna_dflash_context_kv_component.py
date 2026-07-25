@@ -177,18 +177,10 @@ def validated_config() -> dict[str, Any]:
     return config
 
 
-def validate_device_discovery(rank: int) -> dict[str, Any]:
-    completed = subprocess.run(
-        ["/usr/bin/xpu-smi", "discovery", "-j"],
-        check=True,
-        capture_output=True,
-        text=True,
-        timeout=15,
-    )
-    payload = json.loads(completed.stdout)
+def physical_mapping(payload: dict[str, Any]) -> list[dict[str, Any]]:
     observed = payload.get("device_list")
     require(isinstance(observed, list), "xpu-smi discovery schema drift")
-    physical = [
+    return [
         {
             "device_id": row.get("device_id"),
             "drm_device": row.get("drm_device"),
@@ -199,17 +191,56 @@ def validate_device_discovery(rank: int) -> dict[str, Any]:
         if row.get("device_function_type") == "physical"
         and row.get("device_name") == "Intel(R) Arc(TM) Pro B70 Graphics"
     ]
-    require(physical == list(DEVICES), "four-card physical mapping drift")
-    require(physical[rank] == DEVICES[rank], "selected physical-card drift")
+
+
+def validate_device_discovery(
+    rank: int,
+    unfiltered_path: Path,
+    filtered_path: Path,
+) -> dict[str, Any]:
+    require(
+        unfiltered_path.is_file()
+        and not unfiltered_path.is_symlink()
+        and unfiltered_path.name == "device-discovery.json",
+        "unfiltered discovery artifact drift",
+    )
+    unfiltered = physical_mapping(json.loads(unfiltered_path.read_text()))
+    require(unfiltered == list(DEVICES), "unfiltered four-card physical mapping drift")
+    require(
+        filtered_path.parent == unfiltered_path.parent / "cards"
+        and filtered_path.name == f"rank{rank}.device-discovery.json"
+        and not filtered_path.exists()
+        and not filtered_path.is_symlink(),
+        "filtered discovery artifact path drift",
+    )
+    completed = subprocess.run(
+        ["/usr/bin/xpu-smi", "discovery", "-j"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    payload = json.loads(completed.stdout)
+    filtered = physical_mapping(payload)
+    require(
+        filtered == [DEVICES[rank]],
+        "affinity-filtered physical-card mapping drift",
+    )
+    write_exclusive(filtered_path, payload)
     sysfs = Path("/sys/class/drm") / Path(DEVICES[rank]["drm_device"]).name / "device"
     require(
         sysfs.resolve(strict=True).name == DEVICES[rank]["pci_bdf_address"],
         "selected DRM-to-BDF binding drift",
     )
     return {
-        "mapping": physical,
-        "stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
-        "selected": physical[rank],
+        "unfiltered_mapping": unfiltered,
+        "unfiltered_path": str(unfiltered_path),
+        "unfiltered_sha256": sha256_file(unfiltered_path),
+        "filtered_mapping": filtered,
+        "filtered_path": str(filtered_path),
+        "filtered_sha256": sha256_file(filtered_path),
+        "filtered_stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
+        "selected": filtered[0],
     }
 
 
@@ -840,6 +871,7 @@ def main() -> int:
     parser.add_argument("--rank", type=int, choices=range(4), required=True)
     parser.add_argument("--main-commit", required=True)
     parser.add_argument("--consumption-marker", type=Path, required=True)
+    parser.add_argument("--device-discovery", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
@@ -894,7 +926,15 @@ def main() -> int:
     require(sha256_file(MODEL_FILE) == MODEL_SHA256, "DFlash weights drift")
     require(sha256_file(CONFIG_FILE) == CONFIG_SHA256, "DFlash config drift")
     config = validated_config()
-    discovery = validate_device_discovery(args.rank)
+    require(
+        args.device_discovery == parent.parent / "device-discovery.json",
+        "unfiltered discovery path is outside campaign root",
+    )
+    discovery = validate_device_discovery(
+        args.rank,
+        args.device_discovery,
+        parent / f"rank{args.rank}.device-discovery.json",
+    )
     preimport_path = parent / f"rank{args.rank}.preimport.json"
     write_exclusive(
         preimport_path,

@@ -77,6 +77,10 @@ readonly consumption_marker="$authorization_dir/laguna-dflash-context-kv-${main_
   --packet-sha256 "$packet_sha256" \
   >"$root/consumption-creator.stdout" ||
   die "this exact committed packet has already been consumed"
+/usr/bin/timeout --foreground --signal=TERM --kill-after=2s 15s \
+  env -i PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 \
+  /usr/bin/xpu-smi discovery -j >"$root/device-discovery.json"
+sync -f "$root/device-discovery.json"
 
 for rank in 0 1 2 3; do
   set +e
@@ -96,6 +100,7 @@ for rank in 0 1 2 3; do
     LD_LIBRARY_PATH="/home/steve/.venvs/deepseek-v4-xpu/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib" \
     "$python" "$worker" --rank "$rank" --main-commit "$main_commit" \
     --consumption-marker "$consumption_marker" \
+    --device-discovery "$root/device-discovery.json" \
     --out "$root/cards/rank${rank}.json" \
     >"$root/cards/rank${rank}.stdout" 2>"$root/cards/rank${rank}.stderr"
   status=$?
