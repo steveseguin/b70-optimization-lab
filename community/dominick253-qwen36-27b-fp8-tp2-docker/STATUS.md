@@ -176,6 +176,32 @@ the decode rate is nearly flat regardless of prompt length, with a standard
 deviation of 0.302 tok/s. A 6 tok/s swing driven by prompt length is not
 reproducible on this hardware.
 
+**Interconnect is not on the decode critical path.** The four B70s in this host
+split across two root complexes: cards 0 (`0000:23:00.0`) and 1
+(`0000:27:00.0`) hang off `0000:20`, cards 2 (`0000:43:00.0`) and 3
+(`0000:47:00.0`) off `0000:40`. Running the same 15-row measurement on a
+same-complex pair and a cross-complex pair:
+
+| Pairing | Cards | Median decode tok/s | Range |
+| --- | --- | --- | --- |
+| Same root complex | 0 + 1 | 30.171 | 29.564 - 30.528 |
+| Across root complexes | 0 + 2 | 30.482 | 29.752 - 30.964 |
+
+The cross-complex pair measured 1.0% *faster*, which is inside the 0.302
+standard deviation. There is no measurable penalty. Card selection was verified
+from the host rather than assumed: under `ZE_AFFINITY_MASK=0,2` the two
+allocations appeared on `0000:23:00.0` and `0000:43:00.0` at 1439 MiB each
+while cards 1 and 3 stayed at idle 43 MiB.
+
+This matches the arithmetic. At batch 1 this model moves about 1.31 MB per
+token across the tensor-parallel link (`hidden_size` 5120, 64 layers), roughly
+39 MB/s at 30 tok/s, against ~31.5 GB/s available on PCIe 4.0 x16 — about 0.1%
+utilization. The link is latency-bound with tiny payloads, not
+bandwidth-bound, so neither PCIe generation nor card placement explains the gap
+to the contributor's figure. Note this conclusion is specific to single-session
+decode; prefill-heavy, high-concurrency, or wider tensor-parallel
+configurations were not tested and may behave differently.
+
 **What this does not establish.** Sampling is enabled per the contributed
 generation config (`temperature 0.7`), so outputs are not deterministic and no
 exactness gate applies. This vLLM build did not populate

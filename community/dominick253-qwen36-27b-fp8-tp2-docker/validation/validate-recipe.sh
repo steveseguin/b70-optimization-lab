@@ -26,6 +26,10 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE="docker.io/intel/llm-scaler-vllm:0.21.0-b1"
+# Which two cards to use. Default 0,1 -- both on root complex 0000:20.
+# Set CARDS=0,2 to pair across root complexes (0000:20 and 0000:40) and
+# measure whether the interconnect path is on the decode critical path.
+CARDS="${CARDS:-0,1}"
 NAME="pr9-validate-qwen36-27b-fp8"
 REV="6a9e13bd6fc8f0983b9b99948120bc37f49c13e9"
 # Mount the whole repo dir, not just the snapshot: HF snapshots are symlinks
@@ -85,21 +89,21 @@ trap cleanup EXIT
 
   podman rm -f "${NAME}" >/dev/null 2>&1
 
-  echo "--- starting server (TP2 on cards 0,1) ---"
+  echo "--- starting server (TP2 on cards ${CARDS}) ---"
   podman run -d --name "${NAME}" \
     --net=host \
     --ipc=host \
     --device=/dev/dri \
     --group-add keep-groups \
     -v "${REPO}":/model:ro \
-    -e ZE_AFFINITY_MASK=0,1 \
+    -e ZE_AFFINITY_MASK="${CARDS}" \
     -e VLLM_ALLOW_LONG_MAX_MODEL_LEN=1 \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn \
     -e VLLM_OFFLOAD_WEIGHTS_BEFORE_QUANT=1 \
     -e PYTORCH_ALLOC_CONF=expandable_segments:True \
     -e CCL_TOPO_P2P_ACCESS=1 \
     -e CCL_ATL_TRANSPORT=ofi \
-    -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 \
+    -e ONEAPI_DEVICE_SELECTOR="level_zero:0,1" \
     -e TORCH_LLM_ALLREDUCE=1 \
     -e CCL_ZE_IPC_EXCHANGE=pidfd \
     -e UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1 \
@@ -138,7 +142,7 @@ trap cleanup EXIT
        [ "$(podman inspect -f '{{.State.Running}}' "${NAME}" 2>/dev/null)" != "true" ]; then
       echo "FATAL: container exited before becoming healthy"
       echo "--- last 60 log lines ---"
-      podman logs --tail 60 "${NAME}" 2>&1
+      podman logs "${NAME}" 2>&1 | tail -200
       exit 1
     fi
     sleep 10
@@ -146,7 +150,7 @@ trap cleanup EXIT
 
   if [ "${ready}" != "1" ]; then
     echo "FATAL: server never became healthy"
-    podman logs --tail 60 "${NAME}" 2>&1
+    podman logs "${NAME}" 2>&1 | tail -200
     exit 1
   fi
 

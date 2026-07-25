@@ -1,0 +1,75 @@
+validation run 20260725T164806Z
+image:  docker.io/intel/llm-scaler-vllm:0.21.0-b1
+model:  /mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+kernel: 7.0.0-28-generic  driver: xe
+
+model files: 29
+model bytes: 55586107940
+
+--- preflight: GPUs idle? ---
+containers running: 0
+vllm serve procs:   0
+card0 memory used:  43 MiB
+no active lane detected
+
+--- starting server (TP2 on cards 0,2) ---
+06bb8d812eb83211e60205acb0c1c40b372197c55fb30a3f40b05c5fc4839681
+--- waiting for /health (up to 30 min; FP8 quant of 27B is slow to load) ---
+server healthy after ~110s
+
+--- served models ---
+{"object":"list","data":[{"id":"qwen36-27b-fp8","object":"model","created":1784998188,"owned_by":"vllm","root":"/model/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9","parent":null,"max_model_len":262144,"permission":[{"id":"modelperm-8fd30fc5f69fcbcc","object":"model_permission","created":1784998188,"allow_create_engine":false,"allow_sampling":true,"allow_logprobs":true,"allow_search_indices":false,"allow_view":true,"allow_fine_tuning":false,"organization":"*","group":null,"is_blocking":false}]}]}
+
+--- throughput measurement ---
+warmup request (discarded)...
+  warmup: 256 tok in 21.62s
+
+pass   prompt   actual  cached   out   ttft_s  total_s    decode   overall
+   1       10       29    None   256    2.123   10.488    30.482    24.408
+   1       50       60    None   256    0.096    8.484    30.399    30.174
+   1      200      210    None   256    0.212    8.573    30.499    29.859
+   1      500      510    None   256    0.277    8.572    30.744    29.866
+   1     2000     2010    None   256    0.790    9.286    30.016    27.570
+   2       10       30    None   256    0.176    8.747    29.752    29.266
+   2       50       60    None   256    0.094    8.413    30.654    30.429
+   2      200      210    None   256    0.125    8.570    30.196    29.872
+   2      500      510    None   256    0.217    8.521    30.709    30.045
+   2     2000     2010    None   256    0.742    8.977    30.964    28.518
+   3       10       30    None   256    0.077    8.636    29.791    29.642
+   3       50       60    None   256    0.096    8.397    30.720    30.488
+   3      200      210    None   256    0.124    8.511    30.407    30.080
+   3      500      510    None   256    0.216    8.704    30.042    29.411
+   3     2000     2010    None   256    0.731    9.068    30.587    28.232
+
+decode  tok/s: median 30.482  range 29.752-30.964
+overall tok/s: median 29.859  range 24.408-30.488
+
+wrote /home/steve/llm-optimizations/community/dominick253-qwen36-27b-fp8-tp2-docker/validation/bench-20260725T164806Z.json
+bench rc=0
+
+--- server log tail (for the record) ---
+(APIServer pid=1) INFO:     127.0.0.1:41124 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41130 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41132 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41148 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41158 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41172 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41186 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41202 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41206 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41216 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41226 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41232 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41236 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41252 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41254 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41262 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41268 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41278 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41284 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41296 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41300 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41302 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41304 - "POST /tokenize HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     127.0.0.1:41314 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=1) INFO 07-25 16:52:57 [loggers.py:273] Engine 000: Avg prompt throughput: 201.0 tokens/s, Avg generation throughput: 16.6 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 1.1%, Prefix cache hit rate: 0.0%
