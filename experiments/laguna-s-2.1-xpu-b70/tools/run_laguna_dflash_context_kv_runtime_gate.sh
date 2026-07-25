@@ -140,9 +140,10 @@ stop_active() {
 
 archive_rpc() {
   [[ -n "$active_rpc" && -d "$active_rpc" && -n "$active_arm" ]] || return 0
-  if [[ ! -e "$active_arm/rpc-after-stop" && ! -L "$active_arm/rpc-after-stop" ]]; then
-    mv -- "$active_rpc" "$active_arm/rpc-after-stop"
-  fi
+  [[ ! -e "$active_arm/rpc-after-stop" &&
+     ! -L "$active_arm/rpc-after-stop" ]] ||
+    return 1
+  mv -- "$active_rpc" "$active_arm/rpc-after-stop" || return 1
   active_rpc=""
 }
 
@@ -151,11 +152,11 @@ seal_outputs() {
 }
 
 cleanup() {
-  local status=$? stop_status=0 worker_status=0 idle_status=0
+  local status=$? stop_status=0 worker_status=0 idle_status=0 rpc_archive_status=0
   trap - EXIT INT TERM
   set +e
   stop_active || stop_status=1
-  archive_rpc
+  archive_rpc || rpc_archive_status=1
   if [[ -d "$root" && ! -e "$root/failure-workers.txt" ]]; then
     assert_no_workers "$root/failure-workers.txt" || worker_status=1
   else
@@ -166,8 +167,9 @@ cleanup() {
       idle_status=1
   fi
   if [[ -d "$root" ]]; then
-    printf 'original_status=%s\nstop_status=%s\nworker_status=%s\nidle_status=%s\n' \
-      "$status" "$stop_status" "$worker_status" "$idle_status" \
+    printf 'original_status=%s\nstop_status=%s\nrpc_archive_status=%s\nworker_status=%s\nidle_status=%s\n' \
+      "$status" "$stop_status" "$rpc_archive_status" "$worker_status" \
+      "$idle_status" \
       >"$root/failure-cleanup-status.txt"
     find "$root" -type f ! -name failure-manifest.sha256 -print0 |
       sort -z | xargs -0 sha256sum >"$root/failure-manifest.sha256"
@@ -235,7 +237,6 @@ for treatment in control candidate; do
   mkdir --mode=700 -- "$root/$treatment/dflash-lifecycle"
   chmod -R 700 -- "$root/$treatment"
 done
-mkdir --mode=700 -- "$rpc_control" "$rpc_candidate"
 
 /usr/bin/timeout --foreground --signal=TERM --kill-after=2s 20s \
   /usr/bin/env -i PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 \
@@ -273,12 +274,15 @@ readonly consumption_marker="$authorization_dir/laguna-dflash-context-kv-runtime
 run_arm() {
   local treatment="$1" selector="$2" rpc="$3"
   local arm="$root/$treatment" status
+  [[ ! -e "$rpc" && ! -L "$rpc" ]] ||
+    die "refusing reused RPC path before $treatment: $rpc"
+  mkdir --mode=700 -- "$rpc"
+  active_rpc="$rpc"
+  active_arm="$arm"
   assert_no_workers "$arm/pre-workers.txt" ||
     die "existing worker blocks $treatment"
   "$python" "$idle_wrapper" --output "$arm/pre-idle.json" ||
     die "devices are not idle before $treatment"
-  active_rpc="$rpc"
-  active_arm="$arm"
 
   setsid /usr/bin/timeout --foreground --preserve-status --signal=TERM \
     --kill-after=30s 2400s \

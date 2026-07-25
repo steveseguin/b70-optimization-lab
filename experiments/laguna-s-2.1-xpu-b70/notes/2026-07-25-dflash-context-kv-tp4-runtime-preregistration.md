@@ -25,6 +25,21 @@ The revised packet explicitly freezes the tracked tools directory first in
 `PYTHONPATH`. It requires a new commit, independent review, and a new one-shot
 marker before execution.
 
+The revised `f52f9e8ef559f80de9a34857d501335f4daebeda` packet was invoked
+once, but stopped in preflight before creating a run root or consuming its
+marker. The first failure had created both fixed RPC directories up front and
+archived only the active control directory, leaving an empty candidate RPC
+directory. The second invocation correctly refused that reused path. The empty
+directory was moved recoverably to
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/dckvr-b-abandoned-de35c566b-20260725T073546Z`.
+
+The runner is revised again to create an arm's RPC directory only immediately
+before that arm and to bind it into active cleanup before worker and idle
+checks. A control failure can therefore no longer strand a precreated
+candidate RPC directory. RPC archival must itself succeed before active state
+is cleared; failure cleanup records `rpc_archive_status` and preserves the
+source path for recovery. This change also requires a new commit and review.
+
 ## Question
 
 Does the default-off DFlash context-KV workspace preserve the approved Laguna
