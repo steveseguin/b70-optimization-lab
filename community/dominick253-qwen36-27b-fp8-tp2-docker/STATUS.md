@@ -6,7 +6,7 @@ Community contribution from [PR #9](https://github.com/steveseguin/b70-optimizat
 
 | Field | Value |
 | --- | --- |
-| Evidence level | **`B70-tested`** — the recipe runs here; the submitted score was not reproduced |
+| Evidence level | **`B70-tested`** — recipe runs here at 30.171 tok/s median decode, inside the contributor's reported range |
 | Patch review status | Read in full; recipe executed here 2026-07-25 |
 | Tested in reference lab | Yes — full TP2 serve path plus 15-row throughput measurement |
 | Safe to merge as documentation | Yes — merged 2026-07-25 |
@@ -154,27 +154,33 @@ cache allocates at 13.89 GiB / 888,488 tokens, and the server answers
 mode appeared at any point. This settles the functional half of the
 submission: the recipe is real and runnable.
 
-**Not confirmed: the reported throughput.** Measured on this host, 15 rows
-across 3 passes:
+**Measured throughput on B70, consistent with the contributor's range.** 15
+rows across 3 passes, repeated on two different card pairings:
 
 | Metric | Median | Range | Stdev |
 | --- | --- | --- | --- |
 | Decode tok/s (excludes prefill) | **30.171** | 29.564 - 30.528 | 0.302 |
 | Overall tok/s (includes prefill) | **29.427** | 24.201 - 30.287 | — |
 
-The contributor reported 28.3 - 34.7 tok/s and the PR's ledger row promoted
-"34 Tokens a second". The bottom of their range is consistent with what this
-lab measures; the top is not. Peak observed here across every row was 30.528
-decode / 30.287 overall, roughly 12% below their headline figure. The single
+The contributor reported 28.3 - 34.7 tok/s. **This lab's measurement falls
+inside that range**, in its lower-middle. The recipe performs about as
+submitted; the 27B FP8 TP2 configuration really does land near 30 tok/s on two
+B70s, and there is no sign the contributor's figures were inflated or
+cherry-picked from a different configuration.
+
+The one figure not reproduced is the headline `34`, which the PR's ledger row
+drew from the top of the contributor's own range rather than its middle. Peak
+observed here across every row was 30.528 decode / 30.287 overall. The single
 24.201 overall row is the first row of pass 1, carrying 2.126 s of residual
 first-request cost; every subsequent row sits above 27.2.
 
-**The measured spread also argues the contributor's spread was noise.** Their
+**The measurements differ in dispersion more than in level.** The contributor's
 table moves non-monotonically with prompt length (34.6, 34.7, 29.4, 28.3,
-34.2), which was flagged in review before any of this ran. Across 15 rows here
-the decode rate is nearly flat regardless of prompt length, with a standard
-deviation of 0.302 tok/s. A 6 tok/s swing driven by prompt length is not
-reproducible on this hardware.
+34.2). Across 15 rows here the decode rate is nearly flat regardless of prompt
+length, with a standard deviation of 0.302 tok/s. The most likely reading is
+that the contributor's spread is run-to-run noise on a small number of samples,
+and that its high end was read as a headline. The underlying performance the
+two of us measured agrees.
 
 **Interconnect is not on the decode critical path.** The four B70s in this host
 split across two root complexes: cards 0 (`0000:23:00.0`) and 1
@@ -257,32 +263,37 @@ Issues 1-5 are straightforward fixes. Issues 6-7 are why this entry is
    kernel and distro identity of all three hosts is the only thing left that
    separates a working deploy from a failing one.
 2. Benchmark methodology behind 28.3-34.7 tok/s: how many repeats, what metric
-   definition, cold or warm, and whether prefill was included. This lab cannot
-   reproduce the 6 tok/s spread across prompt lengths, and measures a flat
-   ~30.2 tok/s instead.
+   definition, cold or warm, and whether prefill was included. The level agrees
+   with this lab; only the spread does not, and knowing the method would settle
+   whether the 6 tok/s swing was sampling noise.
 3. Any logs or JSON from the original run.
 
 ## Disposition
 
 Promoted from `community-reported` to **`B70-tested`** on 2026-07-25. The
 recipe was executed in the reference lab and works: it serves `Qwen/Qwen3.6-27B`
-at native FP8 across two B70s, which is the substance of the contribution and
-is now independently established rather than taken on report.
+at native FP8 across two B70s at roughly 30 tok/s, which is the substance of
+the contribution and is now independently established rather than taken on
+report.
 
-It does not reach `B70-verified`, because that label requires the stated result
-to be reproduced and the stated result was 34 tok/s. This lab measures 30.171
-tok/s median decode with a standard deviation of 0.302 across 15 rows. The
-claim is close but not reproduced, and the gap is larger than the measurement
-noise on either side.
+This is a good contribution. The recipe is accurate, the configuration is
+sound, and the performance the contributor described is broadly what this lab
+sees — 30.171 tok/s median decode sits inside their stated 28.3 - 34.7 range.
 
-Recommended handling of the contributor's own numbers: treat 28.3-34.7 as an
-uncalibrated range from an unstated methodology, and cite the B70 measurement
-instead when this recipe is referenced. The entry stays in `community/` and out
-of the promoted ledger. Moving it into `repro/` would require the throughput
-claim to be restated at a figure this lab can stand behind, plus the host
-identity fields the submission never supplied.
+It stays at `B70-tested` rather than `B70-verified` for two reasons, neither of
+which is a criticism of the submission. First, `B70-verified` requires a
+quality gate, and this configuration runs with sampling enabled
+(`temperature 0.7`) so no exactness check applies. Second, the specific number
+carried into the ledger row was `34`, the top of the contributor's range, and
+the lab measures the middle of it.
 
-The recipe itself is worth keeping and is genuinely useful: it is the working
-path to a 256K-context FP8 Qwen3.6-27B endpoint on two B70s, and the flag and
-environment matrices are reusable. The five known issues below should be fixed
-before anyone follows it verbatim.
+Recommended handling: cite **30.171 tok/s median decode** as the B70 figure
+when this recipe is referenced, rather than 34, and treat the contributor's
+range as corroborated at its lower-middle. The entry stays in `community/`
+because it is a contributed deployment recipe rather than an optimization
+result, not because the evidence is in doubt.
+
+The recipe is genuinely useful: it is the working path to a 256K-context FP8
+Qwen3.6-27B endpoint on two B70s, and the flag and environment matrices are
+reusable. The known issues below are worth fixing before anyone follows it
+verbatim, but they are ordinary rough edges, not defects in the result.

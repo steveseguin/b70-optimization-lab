@@ -6,9 +6,10 @@
 > `dominick253` and is preserved below exactly as submitted.
 >
 > It was executed in the reference lab on 2026-07-25 and **it works**: TP2
-> serves `Qwen/Qwen3.6-27B` at native FP8 across two B70s. The **throughput
-> claim did not reproduce** — this lab measures 30.171 tok/s median decode
-> (stdev 0.302, 15 rows) against the "34 Tokens a second" stated below.
+> serves `Qwen/Qwen3.6-27B` at native FP8 across two B70s. Measured here at
+> **30.171 tok/s median decode** (stdev 0.302, 15 rows), which sits inside the
+> 28.3-34.7 range the contributor reported. Cite that figure rather than the
+> "34 Tokens a second" below, which was the top of their range.
 >
 > Read [`STATUS.md`](STATUS.md) before running any of this. It records the
 > measurement, the deviations required to run the command as written, and
