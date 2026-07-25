@@ -270,6 +270,26 @@ approved it as `cmrzrd4tf001ipa013xpx4kid`. Resume from the
 and
 [packet](data/laguna-s-2.1-m8-persistent-attention-metadata-record-20260725.json).
 
+The subsequent persistent KV-cache-view diagnostic is an exact timing stop.
+All four fresh arms produced the same 272-token greedy output with zero cached
+tokens, and compiled-FA2 q2-through-q8 parity passed on all four cards. The
+candidate saved `0.313646 ms` median view-preparation time and `0.085631 ms`
+whole-replay time, but shifted `0.145214 ms` into median post-replay
+synchronization and made the fresh generation `0.138944 s` slower. No endpoint
+or submission is authorized. Preserve the
+[negative result](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-persistent-kv-cache-views-preregistration.md)
+and
+[structured summary](data/laguna-persistent-kv-views-diagnostic-20260725.json).
+
+The active next lane is a one-replay, default-off current-stream XPU event
+profile of the unchanged 146 graph, 97 collective, and 48 eager-attention
+callbacks. It is diagnostic-only and explicitly does not claim a global TP4
+critical path until XCCL cross-stream completion joining is proven. No XPU or
+model execution is authorized until the implementation, two-arm controller,
+analyzer, complete identity packet, and independent audit are committed. Resume
+from the
+[event-profile preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-m8-current-stream-event-profile-preregistration.md).
+
 The frozen routed-W1 N128 follow-up completed only A1/B1 after the local-NVMe
 recovery gate. Both starts were canonical-teacher exact 13/13, cache-zero
 13/13, long-next 2/2, rollover 1/1, and operationally clean. N128 reduced
