@@ -1,0 +1,96 @@
+{
+  "schema": "laguna-m8-inprocess-replay-telemetry-summary-v1",
+  "status": "pass",
+  "diagnostic_only": true,
+  "not_benchmark_or_submission_evidence": true,
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-inprocess-replay-17769a57d-8cf58ed0f-20260725T002351Z",
+  "protocol_commit": "17769a57d7de02e731899911ac76c41f60e3cb7a",
+  "vllm_commit": "8cf58ed0f3679245053b6f298b4bf1ccd13906ed",
+  "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+  "analysis_sha256": "d217d29b894e555e11b574329df5299c5ede659aa72e4ab5e72f3f8730fcb414",
+  "arm_record_sha256": {
+    "q1": "0254177dcdda89b11178a3dc0662d4957ee7c39d70fd0bcb7eee674d03721e4f",
+    "eager": "cdffc62362e63a93e96772b98185b8c577d90e56fa42fb56c910370f88d60083",
+    "graph": "ac14bbf6ba06524fe8939c9c32cf757c85615ac1e471f64c66f437c1683be7dd"
+  },
+  "profile_sha256": {
+    "rank0": "35a1e80321f423d211a710b59c1434789f66fdef5db068c732ff1ce337add46d",
+    "rank1": "4c5e85e8dff83bfff1edbb2704e9ae6a4db86d069e9747ea499348be9a589a69",
+    "rank2": "60a6233c71ed73c71050cb20536fb290adf5eae3da9378856edb247bc7eed039",
+    "rank3": "e1388ed534fbb6c829f8c41f94ea13938cf8fa186aee096a7366f54cec03c885"
+  },
+  "quality": {
+    "fresh_process_per_arm": true,
+    "single_generate_call_per_arm": true,
+    "completion_tokens_per_arm": 272,
+    "cached_tokens_per_arm": 0,
+    "bitwise_exact_q1_eager_graph": true,
+    "finish_reason": "length",
+    "token_ids_sha256": "ee44dfe987c199b248cfe8f752f5fa8600a34291815894c5fb6502ffd5187cee",
+    "text_sha256": "d41518e5781b3adafb966c1b9a91e46d4d23b1a1ef40d8992ccde9a55920e55f",
+    "worker_gates_passed": true,
+    "idle_gates_passed": true,
+    "internal_nvme_only": true
+  },
+  "profile_contract": {
+    "ranks": 4,
+    "samples_per_rank": 31,
+    "graphs": 146,
+    "eager_breaks": 145,
+    "collective_boundaries": 97,
+    "attention_boundaries": 48,
+    "segment_kind_order_sha256": "e5b64443ef499d8bb8b138a94ad504effeaa6434a8884ae9f885aecf12d34e1b"
+  },
+  "max_rank_summary_ns": {
+    "whole_replay_completion": {
+      "median": 21543770.0,
+      "p90": 21978357.0,
+      "max": 40711244
+    },
+    "replay_host_total": {
+      "median": 16724431.0,
+      "p90": 17943232.0,
+      "max": 20103833
+    },
+    "attention_boundary_total": {
+      "median": 8117824.0,
+      "p90": 8615088.0,
+      "max": 10627516
+    },
+    "collective_boundary_total": {
+      "median": 6079513.0,
+      "p90": 6326909.0,
+      "max": 7268602
+    },
+    "graph_replay_call_total": {
+      "median": 2097430.0,
+      "p90": 2306479.0,
+      "max": 2364801
+    },
+    "static_signature_collect": {
+      "median": 295476.0,
+      "p90": 368874.0,
+      "max": 440168
+    },
+    "static_signature_compare": {
+      "median": 64502.0,
+      "p90": 77727.0,
+      "max": 81453
+    },
+    "offloader_sync": {
+      "median": 1413.0,
+      "p90": 2054.0,
+      "max": 3015
+    },
+    "post_replay_synchronize": {
+      "median": 6136466.0,
+      "p90": 6348194.0,
+      "max": 23870034
+    }
+  },
+  "decision": {
+    "primary": "reduce host overhead at the 48 attention boundaries without changing arithmetic, queue order, or topology",
+    "secondary": "reduce submission overhead at the 97 causally separated collective boundaries without coalescing them",
+    "deferred": "capture-built static-input validation plan"
+  }
+}
