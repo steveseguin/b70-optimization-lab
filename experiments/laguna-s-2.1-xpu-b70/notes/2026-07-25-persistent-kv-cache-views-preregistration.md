@@ -284,3 +284,26 @@ committing the exact inspected source and tool trees before launch.
 The inspected Gate 2 tools are committed at
 `f2c9db671d0a80ebfac3da7d05fc82b2b187c54c`; no XPU or model command ran before
 that commit.
+
+## Gate 2 attempt 1: parity import failure
+
+The first sealed Gate 2 root was:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-persistent-kv-views-a1f4a4e60-5da4a8ccd-20260725T040536Z
+```
+
+It failed closed on physical card 0 before any model load, prompt, or
+generation. The standalone parity process tried to import
+`flash_attn_varlen_func` from the vLLM FlashAttention backend module, where
+that name is only conditionally re-exported. The import raised before a tensor
+or attention call. Post-process worker and strict idle proofs passed, and no
+worker survived.
+
+This is a harness import defect, not candidate, exactness, timing, or device
+evidence. The root is sealed and will not be reused. A corrected attempt may
+import the frozen kernel package's public
+`vllm_xpu_kernels.flash_attn_interface.flash_attn_varlen_func`, which is the
+same direct interface used by the existing Laguna attention gates. It may not
+change tensors, seeds, selector construction, FA arguments, output checks,
+process isolation, or any model arm.
