@@ -1,0 +1,138 @@
+{
+  "schema": "laguna-m8-current-stream-event-retrospective-summary-v1",
+  "status": "exact_event_profile_stop",
+  "diagnostic_only": true,
+  "not_benchmark_or_submission_evidence": true,
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-current-stream-event-f42f55690-fcc2506f7-20260725T052434Z",
+  "run_root_sealed_read_only": true,
+  "main_commit": "f42f5569029480b7e253c4996c188db6efe14254",
+  "vllm_commit": "fcc2506f7da3a9fd142928af9275d25b9687342a",
+  "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+  "exactness": {
+    "fresh_processes": 2,
+    "single_generate_call_per_process": true,
+    "prompt_tokens_per_arm": 55,
+    "completion_tokens_per_arm": 272,
+    "cached_tokens_per_arm": 0,
+    "finish_reason_per_arm": "length",
+    "bitwise_exact_q1_graph_event": true,
+    "token_ids_sha256": "ee44dfe987c199b248cfe8f752f5fa8600a34291815894c5fb6502ffd5187cee",
+    "text_sha256": "d41518e5781b3adafb966c1b9a91e46d4d23b1a1ef40d8992ccde9a55920e55f"
+  },
+  "profile_contract": {
+    "ranks": 4,
+    "events_per_rank": 292,
+    "intervals_per_rank": 291,
+    "graphs": 146,
+    "collective_boundaries": 97,
+    "attention_boundaries": 48,
+    "segment_kind_order_sha256": "e5b64443ef499d8bb8b138a94ad504effeaa6434a8884ae9f885aecf12d34e1b",
+    "rank_local_only": true,
+    "global_critical_path_validated": false,
+    "collective_cross_stream_completion_validated": false
+  },
+  "rank_total_duration_ns": {
+    "0": 122850884,
+    "1": 123062992,
+    "2": 124614464,
+    "3": 123328348
+  },
+  "selected_rank": {
+    "rank": 2,
+    "total_duration_ns": 124614464,
+    "stream_identity": {
+      "device_index": 2,
+      "device_type": "xpu",
+      "stream_id": 499
+    },
+    "category_duration_ns": {
+      "graph": 80297412,
+      "collective": 34930532,
+      "attention": 9386520
+    },
+    "category_share_percent": {
+      "graph": 64.436671,
+      "collective": 28.030881,
+      "attention": 7.532448
+    }
+  },
+  "post_run_source_audit": {
+    "xpu_event_intervals_include_python_callback_gap": false,
+    "prior_graph_replay_host_total_median_ns": 2097430,
+    "prior_graph_replay_host_total_p90_ns": 2306479,
+    "pure_replay_loop_candidate_promoted": false,
+    "selected_rank_graph_interval_classes": {
+      "index_mod_6_0": {
+        "count": 49,
+        "total_ns": 30558528,
+        "mean_ns": 623643
+      },
+      "index_mod_6_2": {
+        "count": 49,
+        "total_ns": 26038480,
+        "mean_ns": 531397
+      },
+      "index_mod_6_4": {
+        "count": 48,
+        "total_ns": 23700404,
+        "mean_ns": 493758
+      }
+    },
+    "largest_graph_interval_class_is_consistent_across_ranks": true,
+    "source_verified_topology": {
+      "prefix": [
+        "input_embedding_graph",
+        "embedding_all_reduce"
+      ],
+      "decoder_layers": 48,
+      "intervals_per_decoder_layer": 6,
+      "final_tail": "final_norm_and_downstream_graph",
+      "selected_rank_repeated_graph_classes": {
+        "pre_attention": {
+          "count": 48,
+          "total_ns": 25393732,
+          "mean_ns": 529036
+        },
+        "post_attention_local_o": {
+          "count": 48,
+          "total_ns": 23700404,
+          "mean_ns": 493758
+        },
+        "post_attention_local_mlp": {
+          "count": 48,
+          "total_ns": 30126720,
+          "mean_ns": 627640
+        }
+      },
+      "largest_repeated_graph_class": "post_attention_local_mlp",
+      "single_kernel_dominance_proven": false
+    }
+  },
+  "artifact_sha256": {
+    "analysis": "19ce562e3da8e9bea98c23f4c411a3613e8dba9274cd288b78d6209145a1faac",
+    "closure": "cc6799c044fe4ef3ce0126503d12a1feaed1007e3a468f4571866ed770cf74be",
+    "identity": "85326e8350440bdea75fa7a3082144fb15d87e492c3a02ffffb527a5d8ad5539",
+    "status": "30631a4768a730bccb92ef9e5cbc8dc278d2905858431c4cfe35e39df28af2ec",
+    "q1_driver": "cf81933028ca5f135e09dce105af8715f4a34c94794f2508bab4bbe531e7fd3c",
+    "graph_event_driver": "1e96d275084d64d63c739f8381773177c886840bb4e5216d6456b0d9b3ce4cf2",
+    "rank0_profile": "8df429c477f0b474da10647d83ef2601486056c2509ead82a28b4a701a61ad2b",
+    "rank1_profile": "119cc6317249a8389f306123151fa05e19d55eb360c02196731044cfdbc5bbe2",
+    "rank2_profile": "4d39a622ed5ce7d5f5e02adc0f820fcdcd0ea61991f85ef35f445ec099895a79",
+    "rank3_profile": "38951b2f52b4d4653b105a1b35950d7922ee610668d467686780726e4b217273"
+  },
+  "independent_read_only_audit": {
+    "status": "approved",
+    "closure_hashes_recomputed": true,
+    "exactness_recomputed": true,
+    "slowest_rank_and_category_arithmetic_recomputed": true,
+    "caveat": "rank-local current-stream diagnostic; no global TP4 critical-path or XCCL cross-stream completion proof"
+  },
+  "decision": {
+    "largest_kind_on_selected_rank": "graph",
+    "frozen_analyzer_next_action": "replay_plan_submission_research_only",
+    "post_run_source_audit_result": "pure replay submission lane closed as low ceiling",
+    "next_action": "inspect M=8 local-MoE workspace and expert W1/W2 dispatch headroom, then isolate one arithmetic-identical device-kernel lever",
+    "authorize_uninstrumented_endpoint": false,
+    "authorize_localmaxxing_submission": false
+  }
+}

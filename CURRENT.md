@@ -281,14 +281,29 @@ or submission is authorized. Preserve the
 and
 [structured summary](data/laguna-persistent-kv-views-diagnostic-20260725.json).
 
-The active next lane is a one-replay, default-off current-stream XPU event
-profile of the unchanged 146 graph, 97 collective, and 48 eager-attention
-callbacks. It is diagnostic-only and explicitly does not claim a global TP4
-critical path until XCCL cross-stream completion joining is proven. No XPU or
-model execution is authorized until the implementation, two-arm controller,
-analyzer, complete identity packet, and independent audit are committed. Resume
-from the
-[event-profile preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-m8-current-stream-event-profile-preregistration.md).
+The one-replay current-stream XPU event diagnostic completed exactly and
+stopped without a benchmark or submission. Both fresh 272-token arms were
+bitwise identical with zero cached tokens, and all four ranks reported the
+unchanged 146 graph, 97 collective, and 48 eager-attention intervals. Rank 2
+was the slowest rank-local timeline at `124.614464 ms`; using only that rank's
+own intervals, graph work was `80.297412 ms` (64.436671%), collective
+callbacks `34.930532 ms` (28.030881%), and attention `9.386520 ms`
+(7.532448%). An independent raw-artifact audit approved the sealed closure.
+This remains rank-local guidance, not a proven global TP4 critical path, and
+XCCL cross-stream completion is still unproven. The source map found a
+two-interval prefix, 48 identical six-interval layer bodies, and one final
+graph tail. The largest repeated graph class is post-attention normalization
+plus local dense/MoE work at `30.126720 ms` on selected rank 2. The active next
+lane is therefore an isolated arithmetic-identical M=8 local-MoE device-kernel
+candidate with unchanged graph coverage. The required post-run source audit
+closed a pure Python
+replay-loop campaign: same-stream XPU event intervals measure queued device
+work rather than the host callback gap, while prior host telemetry already
+bounded all 146 graph replay calls at `2.097430 ms` median per M8 replay.
+Resume from the
+[completed diagnostic](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-m8-current-stream-event-profile-preregistration.md)
+and
+[structured summary](data/laguna-s-2.1-m8-current-stream-event-diagnostic-20260725.json).
 
 The frozen routed-W1 N128 follow-up completed only A1/B1 after the local-NVMe
 recovery gate. Both starts were canonical-teacher exact 13/13, cache-zero
@@ -300,12 +315,18 @@ median fell 3.0578%. The frozen analyzer classified
 made. Preserve the [closed negative](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-23-w1-n128-nvme-phase1-failed-stop.md)
 and [packet](data/laguna-s-2.1-w1-n128-nvme-phase1-failed-stop-20260723.json).
 
-Next, profile the new exact persistent-metadata graph stack and attack its
-remaining attention kernels, collective boundaries, or graph-external launch
-overhead without changing BF16 arithmetic boundaries. The prior full-attention
-subgraph attempt is closed because SYCL graph capture rejects FA2 work-group
-scratch memory; prefer independently exact occupancy work or smaller safe
-fusion boundaries. Shared-expert GEMM occupancy remains a secondary lane. The
+Next, inspect persistent workspace/address churn and expert W1/W2 dispatch/tile
+headroom inside the post-attention local-MoE segment without changing the
+exact persistent-metadata stack's 146/145 graph/break topology or BF16
+arithmetic boundaries. On selected rank 2, the 48 pre-attention graph segments
+totaled `25.393732 ms`, post-attention/local-O segments `23.700404 ms`, and
+post-attention/local-MLP segments `30.126720 ms`. Change one isolated lever and
+preserve router top-k ordering, grouped-GEMM reduction traversal, BF16
+materialization points, and fixed all-gather order. The current-stream
+diagnostic does not authorize collective capture or an attention rewrite. The
+prior full-attention subgraph attempt is closed
+because SYCL graph capture rejects FA2 work-group scratch memory. Shared-expert
+GEMM occupancy remains a secondary lane. The
 N128 endpoint treatment is closed. Do not stack
 the BF16 router candidate into another endpoint trial unless a future
 preregistered design explicitly isolates its contribution. Do not revisit

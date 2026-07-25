@@ -2,7 +2,8 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: **host-only design frozen; no XPU or model execution authorized yet**.
+Status: **completed exact diagnostic stop; no benchmark or submission
+authorized**.
 
 ## Purpose
 
@@ -156,3 +157,115 @@ LocalMaxxing submission is authorized by this preregistration.
   joining. Direct collective capture and collective coalescing remain terminal.
 - If no category has a material non-overlapped interval, stop host-side
   micro-optimizations and return to a materially different device-kernel lane.
+
+## Executed result
+
+The one authorized execution completed at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-current-stream-event-f42f55690-fcc2506f7-20260725T052434Z
+```
+
+The root is sealed mode `0500` and its files are mode `0400`. The exact source
+identity was main `f42f5569029480b7e253c4996c188db6efe14254`, vLLM
+`fcc2506f7da3a9fd142928af9275d25b9687342a`, and kernels
+`4772f727590c51b72add79350b913d098cf67872`.
+
+Exactly two fresh processes each made one generation call. Both q1 and
+graph-event arms reported 55 prompt tokens, 272 completion tokens,
+`cached_tokens=0`, and finish reason `length`. Their token arrays matched
+bitwise, with token SHA-256
+`ee44dfe987c199b248cfe8f752f5fa8600a34291815894c5fb6502ffd5187cee`;
+their text SHA-256 was
+`d41518e5781b3adafb966c1b9a91e46d4d23b1a1ef40d8992ccde9a55920e55f`.
+
+All four rank profiles contained the exact preregistered 292 events and 291
+intervals: 146 graph, 97 collective, and 48 attention. The rank-local total
+durations were:
+
+| Rank | Total ns |
+| ---: | -------: |
+| 0 | 122,850,884 |
+| 1 | 123,062,992 |
+| 2 | 124,614,464 |
+| 3 | 123,328,348 |
+
+Rank 2 was therefore selected before inspecting category dominance. Its own
+category sums—not cross-rank maxima—were:
+
+| Category | Duration ns | Share |
+| -------- | ----------: | ----: |
+| graph | 80,297,412 | 64.436671% |
+| collective | 34,930,532 | 28.030881% |
+| attention | 9,386,520 | 7.532448% |
+
+The frozen analyzer emitted `exact_event_profile_stop`, selected `graph`, and
+authorized only `replay_plan_submission_research_only`. It explicitly emitted
+`global_critical_path_validated=false`,
+`collective_cross_stream_completion_validated=false`,
+`diagnostic_only=true`, and `not_benchmark_or_submission_evidence=true`.
+
+An independent read-only audit recomputed the closure hashes, exact-output
+comparison, idle/worker evidence, per-rank totals, slowest-rank selection, and
+category arithmetic without discrepancy. The audit retained the same caveat:
+these are rank-local current-stream intervals, and the collective intervals do
+not prove XCCL auxiliary-stream completion.
+
+No retry, endpoint campaign, network access, benchmark payload, or
+LocalMaxxing submission occurred. Continue only with an arithmetic-identical
+replay-plan/submission-overhead **source audit**; do not infer that an
+attention fusion is the primary next lever from this result.
+
+## Post-run source-audit interpretation
+
+The required replay-plan source audit closed a pure Python replay-loop
+candidate before any benchmark. The adjacent XPU events are enqueued on the
+same current stream, so their elapsed times measure device work issued by each
+callback; they do not include the host gap spent calling the callback. The
+earlier exact in-process host telemetry already bounded all 146 Python graph
+replay calls at `2.097430 ms` median and `2.306479 ms` p90 per whole M8
+replay. Therefore the `80.297412 ms` graph-event sum is not evidence of
+`80 ms` of replay-list or Python submission overhead.
+
+The source-verified topology is a two-interval prefix, 48 identical six-
+interval decoder-layer bodies, and one final graph tail. For layer `L`,
+`s = 2 + 6L`:
+
+| Interval | Kind | Source-level range |
+| -------: | ---- | ------------------ |
+| `s` | graph | input RMSNorm/residual, QKV projection, Q/K RMSNorm, RoPE |
+| `s+1` | attention | paged-attention body |
+| `s+2` | graph | attention gate/softplus/materialization and local O projection |
+| `s+3` | collective | O-projection fixed-address BF16 all-gather |
+| `s+4` | graph | post-attention RMSNorm/residual and local dense/MoE work |
+| `s+5` | collective | dense down-projection or MoE-combine all-gather |
+
+The prefix is input/embedding graph work followed by the embedding all-reduce;
+the tail is final RMSNorm and downstream graph work. On selected rank 2, the
+three repeated graph classes measured:
+
+| Repeated graph class | Count | Total ns | Mean ns |
+| -------------------- | ----: | -------: | ------: |
+| pre-attention | 48 | 25,393,732 | 529,036 |
+| post-attention/local O | 48 | 23,700,404 | 493,758 |
+| post-attention/local MLP | 48 | 30,126,720 | 627,640 |
+
+The local-MLP class is the largest repeated graph class. It contains
+post-attention RMSNorm/residual and, for MoE layers, replicated routing plus
+FusedMoE dispatch/expert/local computation. The event profile does not resolve
+individual kernels inside that segment, so it does not by itself prove that
+one expert GEMM or router kernel dominates.
+
+Merging graph replays is not available because the graph intervals are
+causally separated by attention and collective callbacks; the known failed
+attention capture and terminal collective capture/coalescing lanes remain
+closed. A native replay trampoline or prebound tuple iteration is deferred as
+a low-ceiling host micro-optimization rather than promoted to a record
+campaign.
+
+The next lane is an isolated, arithmetic-identical M=8 local-MoE device
+candidate: first inspect persistent workspace/address churn and current expert
+W1/W2 dispatch/tile headroom, then change only one lever while preserving
+router top-k ordering, grouped-GEMM reduction traversal, BF16 materialization
+points, graph topology, and fixed all-gather order. Pure layout/copy/indexing
+fusion is permissible only if every arithmetic boundary remains identical.
