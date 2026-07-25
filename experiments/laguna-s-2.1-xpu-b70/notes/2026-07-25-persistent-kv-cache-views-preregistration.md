@@ -314,3 +314,46 @@ approved it: the direct public function is exactly the function used by
 vLLM's XPU wrapper, accepts the frozen keyword call, and leaves selector and
 parity semantics unchanged. This approval occurred before any second XPU or
 model attempt.
+
+## Gate 2 attempt 2: incomplete runtime bundle
+
+The second sealed Gate 2 root was:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-persistent-kv-views-dc79f12c2-5da4a8ccd-20260725T041008Z
+```
+
+It again failed closed on physical card 0 before model load, prompt,
+generation, tensor allocation, or attention. The direct import correction
+worked, but vLLM's XPU platform plugin could not load `_xpu_C.abi3.so` because
+the new clean record worktree contained only four top-level binaries and
+omitted its frozen shared-library dependencies. Platform detection therefore
+returned `UnspecifiedPlatform`; the real selector-on constructor correctly
+rejected `not_xpu=True`. Post-process worker and strict idle proofs passed.
+
+A separate non-model import probe reproduced the exact loader failure:
+
+```text
+ImportError: libgrouped_gemm_xe_default.so: cannot open shared object file
+```
+
+This is a second harness/runtime-bundle defect, not candidate or performance
+evidence. The root is sealed and will not be reused. Before another attempt,
+the clean record worktree must contain and the harness must hash the complete
+approved runtime closure:
+
+- `_C.abi3.so`;
+- `_xpu_C.abi3.so`;
+- `_moe_C.abi3.so`;
+- `_vllm_fa2_C.abi3.so`;
+- `libattn_kernels_xe_2.so`;
+- `libgdn_attn_kernels_xe_2.so`;
+- `libgrouped_gemm_xe_2.so`;
+- `libgrouped_gemm_xe_default.so`;
+- `libmhc_kernels_xe_2.so`; and
+- `libmqa_logits_kernels_xe_2.so`.
+
+The six omitted files must be copied mechanically from the installed
+record-matched package only after matching their previously recorded SHA-256
+values. Parity must also fail unless the compiled FA2 extension is available
+from that exact package; fallback attention is forbidden.
