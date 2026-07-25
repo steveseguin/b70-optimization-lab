@@ -58,6 +58,7 @@ def test_runner_sets_every_driver_required_environment_key() -> None:
 
 def _environment(arm: str, profile_root: Path) -> dict[str, str]:
     graph = arm == "graph"
+    optimized_dflash = arm != "q1"
     values = {
         "CCL_ATL_TRANSPORT": "ofi",
         "CCL_KVS_IFACE": "eno1",
@@ -81,14 +82,20 @@ def _environment(arm: str, profile_root: Path) -> dict[str, str]:
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
-        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": "1",
+        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_SHARDED": "0",
-        "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1",
+        "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1" if optimized_dflash else "0",
         "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
-        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1",
+        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "0",
-        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": "1",
+        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": "0",
@@ -180,6 +187,7 @@ def _arm(arm: str, profile_root: Path, rank_files: dict[str, dict]) -> dict:
         "vllm_commit": analyzer.EXPECTED_VLLM_COMMIT,
         "kernel_root": analyzer.EXPECTED_KERNEL_ROOT,
         "kernel_commit": analyzer.EXPECTED_KERNEL_COMMIT,
+        "async_scheduling": arm == "q1",
         "kernel_identity": kernel_identity,
         "prompt_sha256": "a" * 64,
         "prompt_tokens": 31,
@@ -271,6 +279,17 @@ def test_rejects_q1_graph_token_mismatch(
     ).hexdigest()
     _write(path, payload)
     with pytest.raises(SystemExit, match="exact output mismatch"):
+        _run(monkeypatch, fixture_root)
+
+
+def test_rejects_noncanonical_q1_scheduler_identity(
+    fixture_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = fixture_root / "q1" / "driver.json"
+    payload = json.loads(path.read_text())
+    payload["async_scheduling"] = False
+    _write(path, payload)
+    with pytest.raises(SystemExit, match="async_scheduling"):
         _run(monkeypatch, fixture_root)
 
 

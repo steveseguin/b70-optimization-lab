@@ -13,8 +13,10 @@ benchmark, endpoint, or LocalMaxxing evidence.
 - kernels: `4772f727590c51b72add79350b913d098cf67872`;
 - models and all artifacts remain below `/mnt/fast-ai`;
 - exact production selector stack is unchanged;
-- three fresh processes run sequentially: q1 target eager without speculation,
-  DFlash eager, then DFlash audited Breakable graph;
+- three fresh processes run sequentially: canonical q1 target eager without
+  speculation and with its original async scheduler plus experimental M8
+  selectors disabled; synchronous optimized DFlash eager; then synchronous
+  optimized DFlash audited Breakable graph;
 - each process performs exactly one uncached greedy 128-token generation;
 - the shared prompt is used only for bitwise cross-arm verification;
 - q1, eager, and graph token IDs, text hash, and finish reason must all match.

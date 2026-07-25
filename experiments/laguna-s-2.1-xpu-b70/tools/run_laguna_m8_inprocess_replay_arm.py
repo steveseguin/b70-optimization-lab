@@ -101,6 +101,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     graph = args.arm == "graph"
+    optimized_dflash = args.arm != "q1"
     for path in (args.out, TARGET, DRAFT):
         resolved = path.resolve(strict=False)
         if (
@@ -166,15 +167,19 @@ def main() -> int:
         "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1" if graph else "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
-        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": "1",
+        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_SHARDED": "0",
-        "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1",
+        "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1" if optimized_dflash else "0",
         "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
-        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1",
+        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1" if optimized_dflash else "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "0",
-        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": "1",
+        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": "0",
@@ -242,7 +247,7 @@ def main() -> int:
         "kv_cache_dtype": "bfloat16",
         "gpu_memory_utilization": 0.90,
         "enable_prefix_caching": False,
-        "async_scheduling": False,
+        "async_scheduling": args.arm == "q1",
         "generation_config": "vllm",
         "enforce_eager": not graph,
     }
@@ -335,6 +340,7 @@ def main() -> int:
         "profile_samples": 31 if graph else None,
         "profile_rank_files": profile_rank_files,
         "compilation_config": compilation_config,
+        "async_scheduling": args.arm == "q1",
         "environment": {name: os.environ[name] for name in sorted(required)},
     }
     write_exclusive(args.out, record)

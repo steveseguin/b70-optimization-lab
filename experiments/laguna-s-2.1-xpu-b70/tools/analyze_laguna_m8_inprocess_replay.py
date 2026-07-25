@@ -134,6 +134,7 @@ def arm_record_path(root: Path, arm: str) -> Path:
 
 
 def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) -> None:
+    optimized_dflash = arm != "q1"
     required = {
         "schema": "laguna-m8-inprocess-replay-arm-v1",
         "status": "complete",
@@ -146,6 +147,7 @@ def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) ->
         "vllm_commit": EXPECTED_VLLM_COMMIT,
         "kernel_root": EXPECTED_KERNEL_ROOT,
         "kernel_commit": EXPECTED_KERNEL_COMMIT,
+        "async_scheduling": arm == "q1",
         "completion_tokens": 128,
         "cached_tokens": 0,
     }
@@ -205,15 +207,21 @@ def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) ->
         "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1" if graph else "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
-        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": "1",
+        "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE": "0",
         "VLLM_XPU_LAGUNA_M8_GATHER_SHARDED": "0",
-        "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1",
+        "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": "1" if optimized_dflash else "0",
         "VLLM_XPU_LAGUNA_M8_REMOTE_ZERO": "0",
-        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": "1",
+        "VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM": "0",
-        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": "1",
+        "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": (
+            "1" if optimized_dflash else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM": "0",
         "VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM": "0",
