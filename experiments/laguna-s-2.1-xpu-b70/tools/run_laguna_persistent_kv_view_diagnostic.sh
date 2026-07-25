@@ -146,7 +146,13 @@ git -C "$kernel_root" merge-base --is-ancestor "$record_kernels" "$expected_kern
 check_hash "$kernel_root/vllm_xpu_kernels/_C.abi3.so" 126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
 check_hash "$kernel_root/vllm_xpu_kernels/_xpu_C.abi3.so" f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" 6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b
+check_hash "$kernel_root/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" e6faed930bbcd7a366cc55281b99e1a8d7016a8db40ab10015d78f72937c8e64
+check_hash "$kernel_root/vllm_xpu_kernels/libattn_kernels_xe_2.so" 680d486970eb58dc63f0b7ef41e028e2bb4b5a630a2987c96f8609d46a00e161
+check_hash "$kernel_root/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so" cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb
 check_hash "$kernel_root/vllm_xpu_kernels/libgrouped_gemm_xe_2.so" fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
+check_hash "$kernel_root/vllm_xpu_kernels/libgrouped_gemm_xe_default.so" 982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c
+check_hash "$kernel_root/vllm_xpu_kernels/libmhc_kernels_xe_2.so" f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f
+check_hash "$kernel_root/vllm_xpu_kernels/libmqa_logits_kernels_xe_2.so" 58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb
 
 created+=("$run_dir")
 laguna_nvme_prepare_run_dir "$run_dir"

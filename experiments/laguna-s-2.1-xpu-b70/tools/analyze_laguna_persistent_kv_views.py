@@ -33,8 +33,26 @@ EXPECTED_KERNELS = {
     "_C.abi3.so": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2",
     "_xpu_C.abi3.so": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
     "_moe_C.abi3.so": "6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b",
+    "_vllm_fa2_C.abi3.so": (
+        "e6faed930bbcd7a366cc55281b99e1a8d7016a8db40ab10015d78f72937c8e64"
+    ),
+    "libattn_kernels_xe_2.so": (
+        "680d486970eb58dc63f0b7ef41e028e2bb4b5a630a2987c96f8609d46a00e161"
+    ),
+    "libgdn_attn_kernels_xe_2.so": (
+        "cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb"
+    ),
     "libgrouped_gemm_xe_2.so": (
         "fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96"
+    ),
+    "libgrouped_gemm_xe_default.so": (
+        "982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c"
+    ),
+    "libmhc_kernels_xe_2.so": (
+        "f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f"
+    ),
+    "libmqa_logits_kernels_xe_2.so": (
+        "58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb"
     ),
 }
 EXPECTED_SEGMENT_ORDER = (
@@ -302,6 +320,12 @@ def validate_parity(root: Path) -> dict[str, dict[str, str]]:
             "control_state_absent": True,
             "candidate_state_present": True,
             "candidate_view_identity_reused": True,
+            "compiled_fa2_fallback_forbidden": True,
+            "platform_is_xpu": True,
+            "fa2_available": True,
+            "fa2_extension": str(
+                Path(EXPECTED_KERNEL_ROOT) / "vllm_xpu_kernels" / "_vllm_fa2_C.abi3.so"
+            ),
             "non_timing": True,
         }
         for key, expected in required.items():

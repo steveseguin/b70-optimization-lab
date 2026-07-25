@@ -201,6 +201,14 @@ def build_parity_fixture(root: Path) -> None:
                 "control_state_absent": True,
                 "candidate_state_present": True,
                 "candidate_view_identity_reused": True,
+                "compiled_fa2_fallback_forbidden": True,
+                "platform_is_xpu": True,
+                "fa2_available": True,
+                "fa2_extension": str(
+                    Path(gate.EXPECTED_KERNEL_ROOT)
+                    / "vllm_xpu_kernels"
+                    / "_vllm_fa2_C.abi3.so"
+                ),
                 "non_timing": True,
                 "q_outputs": rows,
             },
@@ -299,9 +307,9 @@ def test_parity_runner_uses_real_selector_paths():
         .read_text(encoding="utf-8")
     )
     assert "_XPUPersistentKVCacheViews" not in source
-    assert (
-        "from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func"
-    ) in source
+    assert "import vllm_xpu_kernels.flash_attn_interface as fa_interface" in source
+    assert "not fa_interface.FA2_AVAILABLE" in source
+    assert "fa_interface._fallback_varlen_attn = forbid_fa2_fallback" in source
     assert "FlashAttentionImpl(**impl_args)" in source
     assert (
         source.count('os.environ["VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS"]') == 2
@@ -320,3 +328,23 @@ def test_controller_isolates_and_audits_parity_process_groups():
     assert source.count('active_pg="$!"') >= 2
     assert "parity-post-workers-rank${rank}.txt" in source
     assert "parity_survivors" in source
+
+
+def test_all_runtime_tools_freeze_the_complete_kernel_closure():
+    tool_root = Path(__file__).parent
+    sources = [
+        (tool_root / "run_laguna_persistent_kv_view_arm.py").read_text(
+            encoding="utf-8"
+        ),
+        (tool_root / "run_laguna_persistent_kv_view_parity.py").read_text(
+            encoding="utf-8"
+        ),
+        (tool_root / "run_laguna_persistent_kv_view_diagnostic.sh").read_text(
+            encoding="utf-8"
+        ),
+    ]
+    assert len(gate.EXPECTED_KERNELS) == 10
+    for name, digest in gate.EXPECTED_KERNELS.items():
+        for source in sources:
+            assert name in source
+            assert digest in source

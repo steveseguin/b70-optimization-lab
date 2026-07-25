@@ -22,8 +22,26 @@ KERNELS = {
     "_C.abi3.so": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2",
     "_xpu_C.abi3.so": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
     "_moe_C.abi3.so": "6a6794249421aceb51f14980a3e2c0b0a9d7b492abf2f8d25b129b86f099bc5b",
+    "_vllm_fa2_C.abi3.so": (
+        "e6faed930bbcd7a366cc55281b99e1a8d7016a8db40ab10015d78f72937c8e64"
+    ),
+    "libattn_kernels_xe_2.so": (
+        "680d486970eb58dc63f0b7ef41e028e2bb4b5a630a2987c96f8609d46a00e161"
+    ),
+    "libgdn_attn_kernels_xe_2.so": (
+        "cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb"
+    ),
     "libgrouped_gemm_xe_2.so": (
         "fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96"
+    ),
+    "libgrouped_gemm_xe_default.so": (
+        "982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c"
+    ),
+    "libmhc_kernels_xe_2.so": (
+        "f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f"
+    ),
+    "libmqa_logits_kernels_xe_2.so": (
+        "58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb"
     ),
 }
 ATTENTION_CASES = {
@@ -115,7 +133,8 @@ def main() -> int:
 
     import vllm
     import vllm_xpu_kernels
-    from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
+    import vllm_xpu_kernels.flash_attn_interface as fa_interface
+    from vllm.platforms import current_platform
     from vllm.v1.attention.backend import AttentionType
     from vllm.v1.attention.backends.flash_attn import FlashAttentionImpl
 
@@ -133,6 +152,23 @@ def main() -> int:
         if actual != expected:
             die(f"kernel binary drift: {name}")
         kernel_identity[name] = {"path": str(path), "sha256": actual}
+    fa2_extension = getattr(fa_interface, "_vllm_fa2_C", None)
+    expected_extension = (kernel_package / "_vllm_fa2_C.abi3.so").resolve()
+    extension_file = getattr(fa2_extension, "__file__", None)
+    if (
+        not current_platform.is_xpu()
+        or not fa_interface.FA2_AVAILABLE
+        or not isinstance(extension_file, str)
+        or Path(extension_file).resolve() != expected_extension
+    ):
+        die("compiled FA2 extension is unavailable or has the wrong origin")
+    extension_path = Path(extension_file).resolve()
+
+    def forbid_fa2_fallback(*_args: object, **_kwargs: object) -> None:
+        die("compiled FA2 fallback was attempted")
+
+    fa_interface._fallback_varlen_attn = forbid_fa2_fallback
+    flash_attn_varlen_func = fa_interface.flash_attn_varlen_func
 
     if not torch.xpu.is_available() or torch.xpu.device_count() != 1:
         die(
@@ -283,6 +319,10 @@ def main() -> int:
             "control_state_absent": True,
             "candidate_state_present": True,
             "candidate_view_identity_reused": True,
+            "compiled_fa2_fallback_forbidden": True,
+            "platform_is_xpu": True,
+            "fa2_available": True,
+            "fa2_extension": str(extension_path),
             "non_timing": True,
             "q_outputs": rows,
         },
