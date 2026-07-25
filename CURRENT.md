@@ -328,7 +328,7 @@ context widths 1 through 8 while preserving the incumbent RMSNorm, BMM, bias,
 layout-copy, K-RMSNorm, RoPE, and cache-write order. Prompt/prefill widths stay
 on the incumbent path. No XPU or model action is authorized until a separate
 four-card raw-bit component gate is committed and independently reviewed.
-The unexecuted gate tooling now exists and passes host syntax, lint, and 17
+The unexecuted gate tooling now exists and passes host syntax, lint, and 22
 analyzer tamper tests. Two independent reviews approved committing and
 consuming the exact packet once for component-only XPU evidence; no endpoint,
 benchmark, or submission is authorized.
@@ -347,6 +347,16 @@ terminally consumed. The narrow repair requires filtered logical ID zero on
 every leg while binding the stable identity fields to the selected physical
 ordinal. Two independent reviews approved committing the repair and consuming
 it once for another component-only attempt.
+That `145050c5d` packet completed `exact_component_pass` on all four physical
+cards. Its offline analyzer then false-rejected projected V because it
+required storage offset zero, although V is the second view of contiguous
+`[2,L,C,nkv,hd]` and correctly begins at `L*C*nkv*hd`. Do not rerun hardware:
+the packet is terminally consumed and all four worker artifacts are sealed.
+Commit and review the analyzer-only fix, then audit the existing evidence into
+a fresh owner-private directory under the separate internal-NVMe analysis
+root, recording the clean analyzer commit and exact analyzer-file hash. Two
+independent reviews approved that commit and one offline-only audit; no
+hardware rerun is allowed.
 Resume from the
 [DFlash workspace preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-dflash-context-kv-workspace-preregistration.md).
 The completed current-stream diagnostic still records rank-2 repeated graph

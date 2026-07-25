@@ -18,21 +18,31 @@ def digest(label: str) -> str:
     return hashlib.sha256(label.encode()).hexdigest()
 
 
-def record(shape: list[int], label: str, pointer: int) -> dict:
+def record(
+    shape: list[int],
+    label: str,
+    pointer: int,
+    storage_offset: int = 0,
+) -> dict:
     return {
         "shape": shape,
         "stride": gate.contiguous_stride(shape),
         "dtype": "torch.bfloat16",
         "device": "xpu:0",
         "data_ptr": pointer,
-        "storage_offset": 0,
+        "storage_offset": storage_offset,
         "nbytes": 2 * __import__("math").prod(shape),
         "sha256": digest(label),
     }
 
 
-def comparison(shape: list[int], label: str, pointer: int) -> dict:
-    tensor = record(shape, label, pointer)
+def comparison(
+    shape: list[int],
+    label: str,
+    pointer: int,
+    storage_offset: int = 0,
+) -> dict:
+    tensor = record(shape, label, pointer, storage_offset)
     return {
         "equal": True,
         "actual": tensor,
@@ -65,7 +75,10 @@ def branch_fixture() -> dict:
                             [6, width, 2, 128], f"{label}-k", 200003
                         ),
                         "projected_v": comparison(
-                            [6, width, 2, 128], f"{label}-v", 200004
+                            [6, width, 2, 128],
+                            f"{label}-v",
+                            200004,
+                            6 * width * 2 * 128,
                         ),
                         "normalized_k": comparison(
                             [6, width, 2, 128], f"{label}-knorm", 200005
@@ -105,6 +118,7 @@ def test_valid_branch_fixture_passes() -> None:
     [
         "digest",
         "shape",
+        "storage_offset",
         "pointer_alias",
         "pointer_reuse",
         "context_duplicate",
@@ -118,6 +132,8 @@ def test_branch_tampering_fails(mutation: str) -> None:
         value["rows"][0]["boundaries"]["flat"]["expected_sha256"] = digest("wrong")
     elif mutation == "shape":
         value["rows"][0]["boundaries"]["projected_k"]["actual"]["shape"] = [1]
+    elif mutation == "storage_offset":
+        value["rows"][0]["boundaries"]["projected_v"]["actual"]["storage_offset"] = 0
     elif mutation == "pointer_alias":
         value["rows"][0]["workspace_pointers"][1] = value["rows"][0][
             "workspace_pointers"
@@ -229,3 +245,9 @@ def test_discovery_artifact_tampering_fails(mutation: str) -> None:
         expected = [gate.EXPECTED_DEVICES[0]]
     with pytest.raises(SystemExit):
         gate.validate_physical_mapping(payload, expected, mutation)
+
+
+@pytest.mark.parametrize("commit", ["", "g" * 40, "a" * 39, "a" * 41])
+def test_analysis_source_rejects_invalid_commit(commit: str) -> None:
+    with pytest.raises(SystemExit):
+        gate.validate_analysis_source(commit)

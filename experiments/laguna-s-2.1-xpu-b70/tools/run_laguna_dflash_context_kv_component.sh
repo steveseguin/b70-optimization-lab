@@ -17,6 +17,7 @@ readonly consumer="$tools/create_laguna_dflash_context_kv_consumption.py"
 readonly worker="$tools/run_laguna_dflash_context_kv_component.py"
 readonly analyzer="$tools/analyze_laguna_dflash_context_kv_component.py"
 readonly root="${1:?usage: run_laguna_dflash_context_kv_component.sh FRESH_NVME_ROOT}"
+readonly analysis_dir="/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/analyses/${root##*/}"
 readonly expected_vllm=4459910e2ac5a7b552887fc0a3f3e3cf9a4701c0
 readonly expected_kernels=4772f727590c51b72add79350b913d098cf67872
 readonly authorization_dir=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/authorizations
@@ -26,6 +27,7 @@ die() { echo "Laguna DFlash context-KV gate: $*" >&2; exit 2; }
 cleanup() {
   local rc=$?
   [[ -d "$root" ]] && chmod -R a-w -- "$root" || true
+  [[ -d "$analysis_dir" ]] && chmod -R a-w -- "$analysis_dir" || true
   exit "$rc"
 }
 trap cleanup EXIT
@@ -37,6 +39,9 @@ trap cleanup EXIT
   die "run root must be beneath the internal-NVMe Laguna run root"
 [[ "$(realpath -m -- "$root")" == "$root" && ! -e "$root" && ! -L "$root" ]] ||
   die "run root must be fresh and canonical"
+[[ "$(realpath -m -- "$analysis_dir")" == "$analysis_dir" &&
+   ! -e "$analysis_dir" && ! -L "$analysis_dir" ]] ||
+  die "analysis directory must be fresh and canonical"
 [[ -z "$(git -C "$repo" status --porcelain=v1 --untracked-files=all)" ]] ||
   die "main worktree is dirty"
 [[ "$(git -C "$vllm" rev-parse HEAD)" == "$expected_vllm" &&
@@ -53,6 +58,7 @@ ambient_sensitive="$(compgen -e | LC_ALL=C sort -u | awk '/^(VLLM|LAGUNA|XPU_GRA
    "$(findmnt --noheadings --output FSTYPE --target "$(dirname -- "$root")" | xargs)" == ext4 ]] ||
   die "campaign root is not on the frozen internal NVMe/ext4 filesystem"
 mkdir --mode=700 -- "$root"
+mkdir --mode=700 -- "$analysis_dir"
 mkdir -p -- "$root/cards" "$root/private"/{home,tmp,cache,xdg/{config,data,state}}
 chmod -R 700 -- "$root"
 readonly main_commit="$(git -C "$repo" rev-parse HEAD)"
@@ -108,11 +114,16 @@ for rank in 0 1 2 3; do
   (( status == 0 )) || die "physical-card leg $rank failed with status $status"
 done
 
-"$python" "$analyzer" --root "$root" --out "$root/analysis.json" \
-  >"$root/analyzer.stdout" 2>"$root/analyzer.stderr"
+"$python" "$analyzer" --root "$root" --out "$analysis_dir/analysis.json" \
+  --analysis-source-commit "$main_commit" \
+  >"$analysis_dir/analyzer.stdout" 2>"$analysis_dir/analyzer.stderr"
 find "$root" -type f ! -name final-manifest.sha256 -print0 |
   sort -z | xargs -0 sha256sum >"$root/final-manifest.sha256"
 sync -f "$root/final-manifest.sha256"
+find "$analysis_dir" -type f ! -name final-manifest.sha256 -print0 |
+  sort -z | xargs -0 sha256sum >"$analysis_dir/final-manifest.sha256"
+sync -f "$analysis_dir/final-manifest.sha256"
 chmod -R a-w -- "$root"
+chmod -R a-w -- "$analysis_dir"
 trap - EXIT
-echo "Laguna DFlash context-KV component passed: $root"
+echo "Laguna DFlash context-KV component passed: $root analysis=$analysis_dir"

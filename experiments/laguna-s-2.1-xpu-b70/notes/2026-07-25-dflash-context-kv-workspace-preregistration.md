@@ -2,11 +2,12 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: **two component packets are terminally consumed; the second proved
-full exactness on physical card zero and failed closed before native import on
-card one. The ordinal-renumbering repair received two independent approvals
-for one new component-only XPU execution after a clean commit. No endpoint,
-benchmark, or submission action is authorized**.
+Status: **three component packets are terminally consumed. The third completed
+`exact_component_pass` on all four physical cards, then its offline analyzer
+rejected the valid projected-V storage offset. No hardware rerun is allowed;
+the analyzer repair received two independent approvals for one offline-only
+audit after a clean commit. No endpoint, benchmark, or submission action is
+authorized**.
 
 ## Purpose
 
@@ -173,7 +174,7 @@ true, the exact candidate `RuntimeError`, and unchanged workspace registry,
 workspace pointers/bytes, cache bytes, and input bytes.
 
 Host packet validation passes Python compilation, Ruff, formatting, Bash
-syntax, whitespace checks, and 17 analyzer tamper tests. Two independent
+syntax, whitespace checks, and 22 analyzer tamper tests. Two independent
 read-only reviews approved committing and consuming the exact packet once for
 component-only XPU evidence. No XPU was used for these checks or reviews.
 
@@ -239,6 +240,39 @@ consumed and must not be rerun.
 
 Two independent reviews approved the narrow ordinal repair for one new
 component-only packet after it is committed cleanly.
+
+## Third packet: four card passes, analyzer false negative
+
+Main commit `145050c5df2a7e0d9f6d056b7b1f5b1f61072d8e` was consumed once
+at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dflash-context-kv-component-145050c5d-4459910e2-20260725T063712Z
+```
+
+All four card workers completed with `status=exact_component_pass`, empty
+stderr, the full 32-row actual/synthetic matrix per card, capture-true
+fail-closed evidence, and every worker-side raw-bit comparison passing. The
+offline analyzer then rejected:
+
+```text
+rank 0/actual_no_bias/C1/r0/projected_v: storage offset drift
+```
+
+This is an analyzer bug. `projected_v` is the second dim-zero view of the
+contiguous `[2,L,C,nkv,hd]` packed workspace, so its correct storage offset is
+`L*C*nkv*hd`, or 1536 elements at C=1. The analyzer incorrectly required zero
+for every tensor view. The repair validates offset zero for K and the owning
+buffers, and exactly `6*C*2*128` for V. It also verifies frozen tool bytes from
+the evidence commit rather than the current checkout and permits a new
+analysis artifact only in a fresh owner-private child of the dedicated
+internal-NVMe analyses root. That artifact records and verifies the clean
+committed analyzer source SHA and exact analyzer-file SHA256. No XPU or worker
+rerun is needed or allowed.
+
+Two independent reviews approved committing this analyzer-only repair and
+running it once against the sealed `145050c5d` evidence. They authorized no
+XPU, worker, benchmark, endpoint, or submission action.
 
 No endpoint is authorized by a component pass. A later graph-vs-graph cold
 crossover may be constructed only if every card is bitwise exact and the

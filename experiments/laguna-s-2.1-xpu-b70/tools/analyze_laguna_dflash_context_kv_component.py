@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import os
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,8 @@ EXPECTED_KERNEL_HASHES = {
 AUTHORIZATION_ROOT = Path(
     "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/authorizations"
 )
+ANALYSIS_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/analyses")
+MAIN_ROOT = Path("/home/steve/llm-optimizations")
 HEX = set("0123456789abcdef")
 TOOLS = (
     Path(
@@ -71,6 +74,42 @@ def sha256_file(path: Path) -> str:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def validate_analysis_source(commit: str) -> dict[str, str]:
+    require(valid_sha(commit, 40), "analysis source commit is invalid")
+    observed_commit = subprocess.check_output(
+        ["git", "-C", str(MAIN_ROOT), "rev-parse", "HEAD"],
+        text=True,
+    ).strip()
+    status = subprocess.check_output(
+        [
+            "git",
+            "-C",
+            str(MAIN_ROOT),
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+        ],
+        text=True,
+    )
+    require(
+        observed_commit == commit and not status,
+        "analysis source is not the requested clean commit",
+    )
+    analyzer_path = Path(__file__).resolve()
+    relative = analyzer_path.relative_to(MAIN_ROOT)
+    committed = subprocess.check_output(
+        ["git", "-C", str(MAIN_ROOT), "show", f"{commit}:{relative}"]
+    )
+    live_sha256 = sha256_file(analyzer_path)
+    committed_sha256 = hashlib.sha256(committed).hexdigest()
+    require(live_sha256 == committed_sha256, "analysis source bytes drifted")
+    return {
+        "commit": commit,
+        "path": str(analyzer_path),
+        "sha256": live_sha256,
+    }
 
 
 def contiguous_stride(shape: list[int]) -> list[int]:
@@ -119,6 +158,7 @@ def validate_tensor_record(
     *,
     shape: list[int],
     label: str,
+    storage_offset: int = 0,
 ) -> None:
     require(isinstance(record, dict), f"{label}: tensor record absent")
     require(record.get("shape") == shape, f"{label}: shape drift")
@@ -130,7 +170,10 @@ def validate_tensor_record(
         isinstance(record.get("data_ptr"), int) and record["data_ptr"] > 0,
         f"{label}: pointer invalid",
     )
-    require(record.get("storage_offset") == 0, f"{label}: storage offset drift")
+    require(
+        record.get("storage_offset") == storage_offset,
+        f"{label}: storage offset drift",
+    )
     require(valid_sha(record.get("sha256")), f"{label}: digest invalid")
 
 
@@ -139,10 +182,16 @@ def validate_comparison(
     *,
     shape: list[int],
     label: str,
+    storage_offset: int = 0,
 ) -> None:
     require(isinstance(comparison, dict), f"{label}: comparison absent")
     require(comparison.get("equal") is True, f"{label}: equality false")
-    validate_tensor_record(comparison.get("actual"), shape=shape, label=label)
+    validate_tensor_record(
+        comparison.get("actual"),
+        shape=shape,
+        label=label,
+        storage_offset=storage_offset,
+    )
     require(
         comparison["actual"]["sha256"] == comparison.get("expected_sha256"),
         f"{label}: actual/expected digest mismatch",
@@ -187,7 +236,7 @@ def validate_preimport(
         preimport == root / "cards" / f"rank{rank}.preimport.json"
         and preimport.is_file()
         and not preimport.is_symlink()
-        and (preimport.stat().st_mode & 0o777) == 0o600
+        and (preimport.stat().st_mode & 0o777) in (0o600, 0o400)
         and valid_sha(result.get("preimport_sha256"))
         and hashlib.sha256(preimport.read_bytes()).hexdigest()
         == result["preimport_sha256"],
@@ -263,8 +312,20 @@ def validate_campaign_identity(root: Path, main_commit: str) -> None:
     require(len(lines) == 5 + len(TOOLS), "campaign tool manifest length drift")
     for line, tool in zip(lines[5:], TOOLS):
         parts = line.split()
+        relative = tool.relative_to(MAIN_ROOT)
+        committed = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(MAIN_ROOT),
+                "show",
+                f"{main_commit}:{relative}",
+            ]
+        )
         require(
-            len(parts) == 2 and parts[0] == sha256_file(tool) and parts[1] == str(tool),
+            len(parts) == 2
+            and parts[0] == hashlib.sha256(committed).hexdigest()
+            and parts[1] == str(tool),
             f"campaign tool identity drift: {tool.name}",
         )
     require(
@@ -460,23 +521,24 @@ def validate_branch(branch: Any, rank: int) -> tuple[str, dict[tuple[int, int], 
             f"rank {rank}/{name}/C{width}/r{repeat} warning evidence drift",
         )
         boundaries = row.get("boundaries")
-        expected_shapes = {
-            "normed_context": [6, width, 3072],
-            "flat": [6, width, 512],
-            "projected_k": [6, width, 2, 128],
-            "projected_v": [6, width, 2, 128],
-            "normalized_k": [6, width, 2, 128],
-            "rope_k": [6, width, 2, 128],
+        expected_records = {
+            "normed_context": ([6, width, 3072], 0),
+            "flat": ([6, width, 512], 0),
+            "projected_k": ([6, width, 2, 128], 0),
+            "projected_v": ([6, width, 2, 128], 6 * width * 2 * 128),
+            "normalized_k": ([6, width, 2, 128], 0),
+            "rope_k": ([6, width, 2, 128], 0),
         }
         require(
-            isinstance(boundaries, dict) and set(boundaries) == set(expected_shapes),
+            isinstance(boundaries, dict) and set(boundaries) == set(expected_records),
             f"rank {rank}/{name} boundary coverage drift",
         )
-        for boundary, shape in expected_shapes.items():
+        for boundary, (shape, storage_offset) in expected_records.items():
             validate_comparison(
                 boundaries[boundary],
                 shape=shape,
                 label=f"rank {rank}/{name}/C{width}/r{repeat}/{boundary}",
+                storage_offset=storage_offset,
             )
         caches = row.get("cache_layers")
         require(
@@ -500,6 +562,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--analysis-source-commit", required=True)
     args = parser.parse_args()
     require(
         not args.out.exists() and not args.out.is_symlink(),
@@ -509,10 +572,18 @@ def main() -> int:
     require(
         canonical_root.is_relative_to(
             Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs")
-        )
-        and args.out.parent.resolve(strict=True) == canonical_root,
-        "analysis paths are outside the canonical NVMe campaign root",
+        ),
+        "evidence root is outside the canonical NVMe campaign root",
     )
+    output_parent = args.out.parent.resolve(strict=True)
+    require(
+        output_parent != ANALYSIS_ROOT
+        and output_parent.is_relative_to(ANALYSIS_ROOT)
+        and not args.out.parent.is_symlink()
+        and (args.out.parent.stat().st_mode & 0o777) == 0o700,
+        "analysis output is not in a fresh owner-private NVMe analysis directory",
+    )
+    analysis_source = validate_analysis_source(args.analysis_source_commit)
 
     results = []
     mappings = []
@@ -522,7 +593,7 @@ def main() -> int:
         require(
             path.is_file()
             and not path.is_symlink()
-            and (path.stat().st_mode & 0o777) == 0o600,
+            and (path.stat().st_mode & 0o777) in (0o600, 0o400),
             f"missing or unsafe rank {rank}",
         )
         result = json.loads(path.read_text())
@@ -698,6 +769,8 @@ def main() -> int:
             "schema": "laguna-dflash-context-kv-component-analysis-v1",
             "status": "exact_four_card_component_pass",
             "authority": "component_only_no_endpoint_or_benchmark",
+            "evidence_root": str(canonical_root),
+            "analysis_source": analysis_source,
             "main_commit": main_commit,
             "vllm_commit": EXPECTED_COMMIT,
             "kernel_commit": EXPECTED_KERNEL,
