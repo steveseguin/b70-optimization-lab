@@ -19,7 +19,7 @@ readonly python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
 readonly driver="$script_dir/run_laguna_m8_inprocess_replay_arm.py"
 readonly analyzer="$script_dir/analyze_laguna_m8_inprocess_replay.py"
 readonly idle="$script_dir/capture_laguna_m8_idle_snapshot.py"
-readonly expected_vllm=6ba825e152a9d5e0f5f67bd4c7fee315f2f2ad5d
+readonly expected_vllm=ef334233deabeaeedb607056a2db1c90edb3887c
 readonly expected_kernels=4772f727590c51b72add79350b913d098cf67872
 readonly record_vllm=0ce373a3115fb4498c5e7a041d4fc9212fd6b5ca
 readonly record_kernels=b6076ce1249ffee0e30bee528f4cd15c3bffb234
@@ -165,11 +165,11 @@ assert_no_workers "$run_dir/pre-workers.txt" || die "existing vLLM/torchrun work
 capture_idle "$run_dir/pre-idle.json" || die "strict pre-campaign device idle proof failed"
 laguna_nvme_verify_model_contents
 {
-  printf 'schema=laguna-m8-inprocess-replay-v4\n'
+  printf 'schema=laguna-m8-inprocess-replay-v5\n'
   printf 'purpose=diagnostic-only in-process replay telemetry; never benchmark or submission evidence\n'
   printf 'arms=q1,eager,graph; one_generation_per_fresh_process=true\n'
   printf 'completion_tokens_per_arm=272\n'
-  printf 'graph_candidate=prebuilt-exact-attention-metadata-v1\n'
+  printf 'graph_candidate=persistent-exact-attention-metadata-v2\n'
   printf 'vllm=%s\nkernels=%s\n' "$expected_vllm" "$expected_kernels"
   printf 'run_tag=%s\n' "$run_tag"
   printf 'graph_telemetry_only=true\ngraph_profile_samples=31\n'

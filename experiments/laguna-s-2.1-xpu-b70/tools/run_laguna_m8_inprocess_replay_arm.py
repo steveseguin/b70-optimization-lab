@@ -18,7 +18,7 @@ DRAFT = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4")
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
 VLLM_ROOT = Path("/home/steve/src/laguna-vllm-runtime-graph-20260724")
-VLLM_COMMIT = "6ba825e152a9d5e0f5f67bd4c7fee315f2f2ad5d"
+VLLM_COMMIT = "ef334233deabeaeedb607056a2db1c90edb3887c"
 KERNEL_ROOT = Path("/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc")
 KERNEL_COMMIT = "4772f727590c51b72add79350b913d098cf67872"
 KERNELS = {
@@ -315,7 +315,7 @@ def main() -> int:
                 "sha256": sha(path),
             }
     record = {
-        "schema": "laguna-m8-inprocess-replay-arm-v4",
+        "schema": "laguna-m8-inprocess-replay-arm-v5",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,

@@ -194,7 +194,7 @@ def _arm(arm: str, profile_root: Path, rank_files: dict[str, dict]) -> dict:
         for name, digest in analyzer.EXPECTED_KERNELS.items()
     }
     return {
-        "schema": "laguna-m8-inprocess-replay-arm-v4",
+        "schema": "laguna-m8-inprocess-replay-arm-v5",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,

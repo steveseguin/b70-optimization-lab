@@ -26,7 +26,7 @@ COMPLETION_TOKENS = 272
 EXPECTED_MODEL = "/mnt/fast-ai/llm-models/laguna-s-2.1/int4"
 EXPECTED_DRAFT = "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4"
 EXPECTED_VLLM_ROOT = "/home/steve/src/laguna-vllm-runtime-graph-20260724"
-EXPECTED_VLLM_COMMIT = "6ba825e152a9d5e0f5f67bd4c7fee315f2f2ad5d"
+EXPECTED_VLLM_COMMIT = "ef334233deabeaeedb607056a2db1c90edb3887c"
 EXPECTED_KERNEL_ROOT = "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc"
 EXPECTED_KERNEL_COMMIT = "4772f727590c51b72add79350b913d098cf67872"
 EXPECTED_KERNELS = {
@@ -137,7 +137,7 @@ def arm_record_path(root: Path, arm: str) -> Path:
 def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) -> None:
     optimized_dflash = arm != "q1"
     required = {
-        "schema": "laguna-m8-inprocess-replay-arm-v4",
+        "schema": "laguna-m8-inprocess-replay-arm-v5",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,
@@ -508,7 +508,7 @@ def main() -> int:
         )
     }
     result = {
-        "schema": "laguna-m8-inprocess-replay-analysis-v2",
+        "schema": "laguna-m8-inprocess-replay-analysis-v3",
         "status": "pass",
         "diagnostic_only": True,
         "not_benchmark_or_submission_evidence": True,
