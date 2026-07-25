@@ -32,8 +32,8 @@ readonly benchmark="$repo_root/scripts/bench-openai-realistic-suite.py"
 readonly idle_wrapper="$script_dir/capture_laguna_m8_idle_snapshot.py"
 readonly suite="$repo_root/experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json"
 readonly teacher="$LAGUNA_NVME_RUN_ROOT/bulletproof-q1-canonical-cb616c6-6fc06b0-20260722T142908Z/bench.json"
-readonly expected_vllm=ef334233deabeaeedb607056a2db1c90edb3887c
-readonly expected_kernels=4772f727590c51b72add79350b913d098cf67872
+readonly expected_vllm="$(git -C "$vllm_root" rev-parse HEAD)"
+readonly expected_kernels="$(git -C "$kernel_root" rev-parse HEAD)"
 readonly record_vllm=0ce373a3115fb4498c5e7a041d4fc9212fd6b5ca
 readonly record_kernels=b6076ce1249ffee0e30bee528f4cd15c3bffb234
 readonly expected_suite=9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638
@@ -137,7 +137,7 @@ capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
 {
   printf 'schema=laguna-m8-metadata-formal-crossover-leg-v1\nlabel=%s\ntreatment=%s\n' "$label" "$treatment"
-  printf 'vllm_commit=%s\nkernel_commit=%s\nmodel=%s\ndraft=%s\nmodel_manifest_sha256=%s\n' "$expected_vllm" "$expected_kernels" "$LAGUNA_NVME_TARGET_ROOT" "$LAGUNA_NVME_DRAFT_ROOT" "$LAGUNA_NVME_MANIFEST_SHA256"
+  printf 'identity_source=actual_worktree_heads\nmeasurement_leg_not_record_leg=true\nvllm_commit=%s\nkernel_commit=%s\nmodel=%s\ndraft=%s\nmodel_manifest_sha256=%s\n' "$expected_vllm" "$expected_kernels" "$LAGUNA_NVME_TARGET_ROOT" "$LAGUNA_NVME_DRAFT_ROOT" "$LAGUNA_NVME_MANIFEST_SHA256"
   printf 'suite_sha256=%s\nteacher_sha256=%s\nselector_stack=exact-m8-dflash7-breakablegraph-w1routew2-routeinterleave-shared-elementwise-qknormrope-n64\n' "$expected_suite" "$expected_teacher"
   printf 'metadata_selector=%s\nsole_treatment_difference=VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA\n' "$metadata_selector"
   printf 'capture_attention_graphs=0\nno_warmup=true\nsuite_invocations=1\nretries=0\nverified_idle_interval_seconds=60\n'
