@@ -100,7 +100,10 @@ def _environment(arm: str, profile_root: Path) -> dict[str, str]:
         "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": "1",
         "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH": "0",
         "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1" if graph else "0",
-        "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS": ("1" if graph else "0"),
+        "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS": "0",
+        "VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA": (
+            "1" if graph else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
         "VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION": "0",
@@ -191,7 +194,7 @@ def _arm(arm: str, profile_root: Path, rank_files: dict[str, dict]) -> dict:
         for name, digest in analyzer.EXPECTED_KERNELS.items()
     }
     return {
-        "schema": "laguna-m8-inprocess-replay-arm-v3",
+        "schema": "laguna-m8-inprocess-replay-arm-v4",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,

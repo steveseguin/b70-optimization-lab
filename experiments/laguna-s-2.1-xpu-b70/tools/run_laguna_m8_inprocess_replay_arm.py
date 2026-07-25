@@ -18,7 +18,7 @@ DRAFT = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4")
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
 VLLM_ROOT = Path("/home/steve/src/laguna-vllm-runtime-graph-20260724")
-VLLM_COMMIT = "6bd7c5875fd1522b063abbfedef64678849f66f5"
+VLLM_COMMIT = "6ba825e152a9d5e0f5f67bd4c7fee315f2f2ad5d"
 KERNEL_ROOT = Path("/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc")
 KERNEL_COMMIT = "4772f727590c51b72add79350b913d098cf67872"
 KERNELS = {
@@ -165,7 +165,10 @@ def main() -> int:
         "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": "1",
         "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH": "0",
         "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1" if graph else "0",
-        "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS": ("1" if graph else "0"),
+        "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS": "0",
+        "VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA": (
+            "1" if graph else "0"
+        ),
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
         "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": ("1" if optimized_dflash else "0"),
@@ -312,7 +315,7 @@ def main() -> int:
                 "sha256": sha(path),
             }
     record = {
-        "schema": "laguna-m8-inprocess-replay-arm-v3",
+        "schema": "laguna-m8-inprocess-replay-arm-v4",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,
