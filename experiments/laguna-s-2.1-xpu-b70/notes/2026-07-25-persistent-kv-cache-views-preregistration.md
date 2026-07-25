@@ -281,3 +281,6 @@ After these fixes, focused checks passed:
 
 The independent audit approved the corrected diagnostic conditional on
 committing the exact inspected source and tool trees before launch.
+The inspected Gate 2 tools are committed at
+`f2c9db671d0a80ebfac3da7d05fc82b2b187c54c`; no XPU or model command ran before
+that commit.
