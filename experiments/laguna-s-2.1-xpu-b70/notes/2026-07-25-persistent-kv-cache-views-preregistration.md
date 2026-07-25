@@ -6,6 +6,29 @@ Status: preregistered before implementation. No candidate source, XPU
 diagnostic, model load, prompt, generation, endpoint campaign, payload, or
 submission has started.
 
+## Pre-implementation lifecycle addendum
+
+An independent source audit after preregistration, but before candidate code,
+found that vLLM binds a temporary minimal KV cache during profiling, clears it,
+and later binds the final runtime cache. A cache seeded from the profiling
+allocation cannot legally survive that existing lifecycle transition.
+
+The candidate may therefore expose one explicit invalidation method which is
+called only by the existing profiling-cache cleanup/final-cache binding
+lifecycle. Invalidation must discard the entire cached-view state; partial
+state is never retained. The next eligible use after that explicit lifecycle
+event may initialize one new complete state from the newly bound cache.
+
+This is not a per-use rebuild or fallback allowance. Outside that audited
+lifecycle call, any initialized source or view drift still raises immediately.
+Gate 1 must additionally prove that:
+
+- stable use cannot rebuild;
+- source drift cannot trigger an implicit reset;
+- explicit lifecycle invalidation clears the complete state; and
+- exactly one subsequent initialization is allowed before strict validation
+  resumes.
+
 ## Hypothesis
 
 Each of Laguna's 48 piecewise eager attention boundaries currently recreates
