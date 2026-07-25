@@ -1,0 +1,75 @@
+{
+  "format": "laguna-s-2.1-w1-n32-component-failed-stop-v1",
+  "status": "COMPONENT_FAILED_STOP",
+  "date": "2026-07-25",
+  "candidate": {
+    "scope": "routed W1 only at M=8",
+    "control_n_tile": 64,
+    "candidate_n_tile": 32,
+    "w2_n_tile": 64
+  },
+  "source": {
+    "preregistration_main_commit": "69075b84f",
+    "sealed_gate_main_commit": "0461926d0",
+    "vllm_commit": "ef334233deabeaeedb607056a2db1c90edb3887c",
+    "kernel_commit": "a5f99d8ed98c02eef87e29be44a8cd63b1ec9155",
+    "extension_sha256": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
+    "grouped_gemm_sha256": "8cdada551eab55e55aae2d33d852999df21c816f1f4575a51a259c714c12567f"
+  },
+  "quality": {
+    "smoke_passed": true,
+    "pre_timing_exact_epochs": 64,
+    "post_timing_exact_epochs": 64,
+    "tail_cases_passed": 7,
+    "invalid_contract_rejections_passed": 5,
+    "raw_w1_equal": true,
+    "activation_equal": true,
+    "unchanged_n64_w2_equal": true,
+    "final_output_equal": true,
+    "repeat_deterministic": true,
+    "inputs_unchanged": true,
+    "remote_rows_untouched": true
+  },
+  "timing": {
+    "design": "31 A-B-B-A blocks, 64 cycles per arm, 47 layers per cycle",
+    "card": 0,
+    "wins": 31,
+    "required_wins": 24,
+    "control_median_ms_per_47_layers": 6.489345257705281,
+    "candidate_median_ms_per_47_layers": 6.485808148227079,
+    "paired_median_saving_ms_per_47_layers": 0.028110124958402594,
+    "mean_saving_ms_per_47_layers": 0.027035875034691285,
+    "relative_median_improvement": 0.004331735150788187,
+    "required_saving_ms_per_47_layers": 0.2,
+    "required_cross_card_mean_relative_improvement": 0.02,
+    "passed": false
+  },
+  "evidence": {
+    "smoke_result": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n32-smoke-a5f99d8-0461926d-20260725/card0/result.json",
+      "sha256": "3dfc8042872d495b419ae011e7f6f714663f774e55d0319ec162bbbbe06bbb18"
+    },
+    "formal_card0_result": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n32-formal-a5f99d8-0461926d-20260725/card0/result.json",
+      "sha256": "474adcf7c75d9260cfe5b6ce9f569b9d1ca5f2d27221b90c20ac5d20d252300d"
+    },
+    "formal_card0_stdout": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/w1-n32-formal-a5f99d8-0461926d-20260725/card0/stdout.log",
+      "sha256": "f8378dd9da3575dfbd1fdd7f3eb2b1e580509b6ef9b4f99f8ca6a2c07affd061"
+    }
+  },
+  "downstream": {
+    "cards_1_to_3_run": false,
+    "counter_gate_run": false,
+    "graph_diagnostic_run": false,
+    "model_loaded": false,
+    "generation_run": false,
+    "endpoint_campaign_run": false,
+    "payload_created": false,
+    "localmaxxing_submitted": false
+  },
+  "approved_record_unchanged": {
+    "throughput_tok_s": 94.92003934159611,
+    "localmaxxing_id": "cmrzrd4tf001ipa013xpx4kid"
+  }
+}
