@@ -6,11 +6,11 @@ Community contribution from [PR #9](https://github.com/steveseguin/b70-optimizat
 
 | Field | Value |
 | --- | --- |
-| Evidence level | `community-reported` |
-| Patch review status | Read in full; no contributed code executed |
-| Tested in reference lab | Partial — bounded multi-GPU runtime probe passed; recipe itself not run |
-| Safe to merge as documentation | Yes — merged 2026-07-25, pending evaluation |
-| Eligible for `repro/` or `results/` | No |
+| Evidence level | **`B70-tested`** — the recipe runs here; the submitted score was not reproduced |
+| Patch review status | Read in full; recipe executed here 2026-07-25 |
+| Tested in reference lab | Yes — full TP2 serve path plus 15-row throughput measurement |
+| Safe to merge as documentation | Yes — merged 2026-07-25 |
+| Eligible for `repro/` or `results/` | Not yet; see Disposition |
 
 Merged into `main` as a community submission and relocated into this directory.
 The contributed recipe is not present in `repro/` and its claim is not in the
@@ -73,25 +73,43 @@ interpreted.
 
 ## What Was Actually Run Here
 
-The contributed recipe was **not** executed. No model was loaded, no endpoint
-was served, and no throughput number was produced in this lab.
+Two things, on 2026-07-25:
 
-What was run is a bounded multi-GPU Level Zero context probe
-([`validation/probe-multigpu-context.sh`](validation/probe-multigpu-context.sh))
-against the same pinned image, testing single-GPU and two-GPU context creation
-with and without `SYCL_UR_TRACE=2`. Its scope is the reproduction failure
-reported in the PR discussion, not the performance claim.
+1. A bounded multi-GPU Level Zero context probe
+   ([`validation/probe-multigpu-context.sh`](validation/probe-multigpu-context.sh)),
+   scoped to the reproduction failure reported in the PR discussion.
+2. The contributed recipe itself
+   ([`validation/validate-recipe.sh`](validation/validate-recipe.sh)), served
+   on cards 0 and 1, followed by a 15-row throughput measurement
+   ([`validation/bench-recipe.py`](validation/bench-recipe.py)).
 
-Full recipe validation is blocked on local infrastructure, not on the
-contribution:
+`Qwen/Qwen3.6-27B` was downloaded at the pinned revision
+`6a9e13bd6fc8f0983b9b99948120bc37f49c13e9` and verified at 29 files /
+55,586,107,940 bytes with no incomplete blobs.
 
-- The reference host had no container runtime; rootless podman was installed
-  for this probe.
-- `Qwen/Qwen3.6-27B` is not cached locally.
-- The host filesystem has ~34 GB free against a ~51.75 GiB checkpoint, so the
-  model cannot currently be staged.
+### Deviations from the contributed command
 
-These are host limitations. They are not evidence about the recipe.
+All deliberate, all recorded in the script header:
+
+| Deviation | Reason |
+| --- | --- |
+| podman (rootless) instead of docker | No docker on the reference host; same pinned image |
+| `--device=/dev/dri --group-add keep-groups` instead of `--privileged` | The probe proved `--privileged` unnecessary; it was not granted |
+| `--host 127.0.0.1` instead of `0.0.0.0` | The contributed command publishes an unauthenticated endpoint on every interface; this lab will not |
+| Model path from the local HF cache | The contributed `/home/dom/...` path cannot work for anyone else |
+| `--shm-size` dropped | podman rejects it together with `--ipc=host` |
+
+Quantization, dtype, KV dtype, context length, block size, `max-num-seqs`,
+memory utilization, eager mode, prefix caching, parsers, and the generation
+config overrides were all exactly as contributed.
+
+### Measurement method
+
+One request in flight at a time, so this is single-session decode and never
+aggregate. Prompts are freshly generated per row and per pass, calibrated to
+target length against the server's own `/tokenize` endpoint. A warmup request
+is issued and discarded. Three full passes over the contributor's five prompt
+lengths at 256 output tokens each, giving 15 measured rows.
 
 ## Findings
 
@@ -129,14 +147,46 @@ narrower: kernel `7.0.0-28-generic` here versus `7.0.10` there, Ubuntu 24.04
 versus Fedora 44 host stack, GuC firmware revision, and per-host P2P/BIOS
 configuration.
 
-**What this does not establish.** The probe says nothing about the throughput
-claim, and nothing about whether the full TP2 vLLM serve path completes — only
-that the specific call the reporter identified succeeds here. Note separately
-that a 27B FP8 model leaves too little room for KV cache on a single 32 GB B70
-to reach the advertised 256K context, so TP1 is not a workaround for this
-recipe.
+**Confirmed: the recipe works on B70.** The full TP2 serve path completes.
+Both workers initialize, weights load in 18.66 s at 14.13 GiB per card, KV
+cache allocates at 13.89 GiB / 888,488 tokens, and the server answers
+`/health` about 110 s after container start. Nothing in the reported failure
+mode appeared at any point. This settles the functional half of the
+submission: the recipe is real and runnable.
 
-Probe script and full log are in [`validation/`](validation/).
+**Not confirmed: the reported throughput.** Measured on this host, 15 rows
+across 3 passes:
+
+| Metric | Median | Range | Stdev |
+| --- | --- | --- | --- |
+| Decode tok/s (excludes prefill) | **30.171** | 29.564 - 30.528 | 0.302 |
+| Overall tok/s (includes prefill) | **29.427** | 24.201 - 30.287 | — |
+
+The contributor reported 28.3 - 34.7 tok/s and the PR's ledger row promoted
+"34 Tokens a second". The bottom of their range is consistent with what this
+lab measures; the top is not. Peak observed here across every row was 30.528
+decode / 30.287 overall, roughly 12% below their headline figure. The single
+24.201 overall row is the first row of pass 1, carrying 2.126 s of residual
+first-request cost; every subsequent row sits above 27.2.
+
+**The measured spread also argues the contributor's spread was noise.** Their
+table moves non-monotonically with prompt length (34.6, 34.7, 29.4, 28.3,
+34.2), which was flagged in review before any of this ran. Across 15 rows here
+the decode rate is nearly flat regardless of prompt length, with a standard
+deviation of 0.302 tok/s. A 6 tok/s swing driven by prompt length is not
+reproducible on this hardware.
+
+**What this does not establish.** Sampling is enabled per the contributed
+generation config (`temperature 0.7`), so outputs are not deterministic and no
+exactness gate applies. This vLLM build did not populate
+`prompt_tokens_details`, so `cached_tokens` reads `None` rather than a
+confirmed zero; prefix caching is disabled server-side and every prompt was
+unique, so cache-zero is inferred, not proven. Two of this host's four B70s
+were used, matching the contributor's card count. Note separately that a 27B
+FP8 model leaves too little room for KV cache on a single 32 GB B70 to reach
+the advertised 256K context, so TP1 is not a workaround for this recipe.
+
+Scripts, logs, and the result JSON are in [`validation/`](validation/).
 
 ## Known Issues
 
@@ -177,19 +227,36 @@ Issues 1-5 are straightforward fixes. Issues 6-7 are why this entry is
 
 1. Host kernel version, GPU driver (`i915` or `xe`), and compute-runtime /
    level-zero versions on the 2026-07-22 test host. Now that the version-gap
-   explanation is refuted, the exact kernel and distro identity of all three
-   hosts is what separates a working deploy from a failing one.
-2. Benchmark methodology: how many repeats, what metric definition, cold or
-   warm, and whether `cached_tokens` was zero.
+   explanation is refuted and the recipe is known to work here, the exact
+   kernel and distro identity of all three hosts is the only thing left that
+   separates a working deploy from a failing one.
+2. Benchmark methodology behind 28.3-34.7 tok/s: how many repeats, what metric
+   definition, cold or warm, and whether prefill was included. This lab cannot
+   reproduce the 6 tok/s spread across prompt lengths, and measures a flat
+   ~30.2 tok/s instead.
 3. Any logs or JSON from the original run.
 
 ## Disposition
 
-Keep as a `community-reported` entry. The recipe is useful and clearly written,
-and the flag and environment matrices are genuinely reusable even where the
-performance number is not yet verifiable.
+Promoted from `community-reported` to **`B70-tested`** on 2026-07-25. The
+recipe was executed in the reference lab and works: it serves `Qwen/Qwen3.6-27B`
+at native FP8 across two B70s, which is the substance of the contribution and
+is now independently established rather than taken on report.
 
-It should not enter `repro/` or `results/` at this evidence level. It would
-move to `B70-tested` if the recipe runs here, and to `B70-verified` only if the
-throughput claim is reproduced under a stated methodology. Both currently
-require staging a ~51.75 GiB checkpoint on a host with ~34 GB free.
+It does not reach `B70-verified`, because that label requires the stated result
+to be reproduced and the stated result was 34 tok/s. This lab measures 30.171
+tok/s median decode with a standard deviation of 0.302 across 15 rows. The
+claim is close but not reproduced, and the gap is larger than the measurement
+noise on either side.
+
+Recommended handling of the contributor's own numbers: treat 28.3-34.7 as an
+uncalibrated range from an unstated methodology, and cite the B70 measurement
+instead when this recipe is referenced. The entry stays in `community/` and out
+of the promoted ledger. Moving it into `repro/` would require the throughput
+claim to be restated at a figure this lab can stand behind, plus the host
+identity fields the submission never supplied.
+
+The recipe itself is worth keeping and is genuinely useful: it is the working
+path to a 256K-context FP8 Qwen3.6-27B endpoint on two B70s, and the flag and
+environment matrices are reusable. The five known issues below should be fixed
+before anyone follows it verbatim.

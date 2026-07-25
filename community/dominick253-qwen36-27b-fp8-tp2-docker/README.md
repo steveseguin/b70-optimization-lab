@@ -1,18 +1,20 @@
 # Qwen3.6 27B FP8 on 2x Intel Arc Pro B70 (Docker TP2)
 
-> **Maintainer note — community submission, pending evaluation.**
+> **Maintainer note — community submission, `B70-tested`.**
 > This recipe was contributed in
 > [PR #9](https://github.com/steveseguin/b70-optimization-lab/pull/9) by
-> `dominick253` and is preserved below exactly as submitted. It is **not** a
-> reference-lab result: the recipe has not been executed here and its
-> throughput claim has not been reproduced. Another contributor was unable to
-> reproduce the TP2 deploy on their hardware.
+> `dominick253` and is preserved below exactly as submitted.
+>
+> It was executed in the reference lab on 2026-07-25 and **it works**: TP2
+> serves `Qwen/Qwen3.6-27B` at native FP8 across two B70s. The **throughput
+> claim did not reproduce** — this lab measures 30.171 tok/s median decode
+> (stdev 0.302, 15 rows) against the "34 Tokens a second" stated below.
 >
 > Read [`STATUS.md`](STATUS.md) before running any of this. It records the
-> evidence level, what was and was not validated in the lab, and seven known
-> issues in the command below — including a hardcoded path that will fail for
-> you, and that the recipe as written exposes an unauthenticated endpoint on
-> every network interface.
+> measurement, the deviations required to run the command as written, and
+> seven known issues — including a hardcoded path that will fail for you, and
+> that the recipe as written exposes an unauthenticated endpoint on every
+> network interface.
 >
 > Everything below this line is the contributor's text, unedited.
 
