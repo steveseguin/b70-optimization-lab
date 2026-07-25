@@ -84,7 +84,7 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def require_regular(path: Path, label: str, mode: int = 0o600) -> None:
+def require_regular(path: Path, label: str) -> None:
     try:
         metadata = path.lstat()
     except OSError as exc:
@@ -92,9 +92,9 @@ def require_regular(path: Path, label: str, mode: int = 0o600) -> None:
     if (
         path.is_symlink()
         or not stat.S_ISREG(metadata.st_mode)
-        or stat.S_IMODE(metadata.st_mode) != mode
+        or stat.S_IMODE(metadata.st_mode) not in (0o400, 0o600)
     ):
-        die(f"{label} must be a regular mode-{mode:04o} non-symlink file")
+        die(f"{label} must be a regular mode-0400/0600 non-symlink file")
 
 
 def read_json(path: Path, label: str) -> dict[str, Any]:
@@ -198,6 +198,18 @@ def expected_environment(
             }
         )
     return environment
+
+
+def normalize_graph_environment_for_comparison(
+    environment: dict[str, str],
+    profile_root: Path,
+) -> dict[str, str]:
+    """Remove the validated arm-local telemetry destination."""
+    normalized = dict(environment)
+    profile_key = "VLLM_XPU_LAGUNA_REPLAY_PROFILE_ROOT"
+    if normalized.pop(profile_key, None) != str(profile_root):
+        die("graph replay-profile environment identity drifted")
+    return normalized
 
 
 def validate_arm(
@@ -412,21 +424,25 @@ def validate_profile_with_kv_prepare(
                 value,
                 f"{arm} rank{rank} sample{sample} KV preparation {key}",
             )
+        # The KV-update custom op is captured in the surrounding graph
+        # segments, so its Python view preparation runs at capture time, not
+        # during replay. Only the 48 eager attention boundaries execute
+        # Python view preparation in this hot-replay profile.
         if (
             kv_prepare["forward_calls"] != 48
-            or kv_prepare["update_calls"] != 48
-            or kv_prepare["total_calls"] != 96
+            or kv_prepare["update_calls"] != 0
+            or kv_prepare["total_calls"] != 48
             or kv_prepare["total_calls"]
             != kv_prepare["forward_calls"] + kv_prepare["update_calls"]
             or kv_prepare["total_ns"]
             != kv_prepare["forward_ns"] + kv_prepare["update_ns"]
             or kv_prepare["forward_ns"] <= 0
-            or kv_prepare["update_ns"] <= 0
+            or kv_prepare["update_ns"] != 0
         ):
             die(f"{arm} rank{rank} sample{sample} KV preparation counts drifted")
         if arm == "graph-control":
             expected_mode = {
-                "control_calls": 96,
+                "control_calls": 48,
                 "persistent_calls": 0,
                 "persistent_builds": 0,
                 "persistent_hits": 0,
@@ -434,9 +450,9 @@ def validate_profile_with_kv_prepare(
         else:
             expected_mode = {
                 "control_calls": 0,
-                "persistent_calls": 96,
+                "persistent_calls": 48,
                 "persistent_builds": 0,
-                "persistent_hits": 96,
+                "persistent_hits": 48,
             }
         if any(kv_prepare[key] != value for key, value in expected_mode.items()):
             die(f"{arm} rank{rank} sample{sample} KV preparation mode drifted")
@@ -461,7 +477,7 @@ def validate_profile_arm(
     if (
         profile_root.is_symlink()
         or not stat.S_ISDIR(metadata.st_mode)
-        or stat.S_IMODE(metadata.st_mode) != 0o700
+        or stat.S_IMODE(metadata.st_mode) not in (0o500, 0o700)
         or arm_record.get("profile_root") != str(profile_root)
     ):
         die(f"{arm} profile root identity drifted")
@@ -573,10 +589,11 @@ def main() -> int:
     unresolved_root = args.run_dir
     metadata = unresolved_root.lstat()
     root = unresolved_root.resolve(strict=True)
+    root_mode = stat.S_IMODE(metadata.st_mode)
     if (
         unresolved_root.is_symlink()
         or not stat.S_ISDIR(metadata.st_mode)
-        or stat.S_IMODE(metadata.st_mode) != 0o700
+        or root_mode not in (0o500, 0o700)
         or not root.is_relative_to(
             Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs")
         )
@@ -584,6 +601,11 @@ def main() -> int:
         die("run root must be an owner-private internal-NVMe directory")
     if args.out.exists() or args.out.is_symlink():
         die("refusing to overwrite analysis output")
+    output_parent = args.out.parent.resolve(strict=True)
+    if root_mode == 0o500 and (
+        output_parent == root or output_parent.is_relative_to(root)
+    ):
+        die("sealed run analysis output must stay outside the run root")
 
     arm_paths = {arm: root / arm / "driver.json" for arm in ARMS}
     arms = {
@@ -613,8 +635,14 @@ def main() -> int:
         values = {json.dumps(arms[arm].get(field), sort_keys=True) for arm in ARMS}
         if len(values) != 1:
             die(f"four-arm identity or exactness drifted at {field}")
-    control_environment = dict(arms["graph-control"]["environment"])
-    candidate_environment = dict(arms["graph-candidate"]["environment"])
+    control_environment = normalize_graph_environment_for_comparison(
+        arms["graph-control"]["environment"],
+        profile_roots["graph-control"],
+    )
+    candidate_environment = normalize_graph_environment_for_comparison(
+        arms["graph-candidate"]["environment"],
+        profile_roots["graph-candidate"],
+    )
     selector = "VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS"
     if control_environment.pop(selector) != "0":
         die("graph control selector drifted")
@@ -685,8 +713,8 @@ def main() -> int:
             "boundary_categories": {"attention": 48, "collective": 97},
             "kv_view_prepare_calls_per_replay": {
                 "forward": 48,
-                "update": 48,
-                "total": 96,
+                "update": 0,
+                "total": 48,
             },
             "batch_descriptor": graph_profiles["graph-control"]["batch_descriptor"],
             "segment_kind_order_sha256": EXPECTED_SEGMENT_ORDER,

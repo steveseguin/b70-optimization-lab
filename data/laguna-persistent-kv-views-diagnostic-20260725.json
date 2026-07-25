@@ -1,0 +1,92 @@
+{
+  "schema": "laguna-persistent-kv-view-retrospective-summary-v1",
+  "status": "exact_timing_stop",
+  "diagnostic_only": true,
+  "not_benchmark_or_submission_evidence": true,
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-persistent-kv-views-9e65e991b-5da4a8ccd-20260725T041943Z",
+  "run_root_sealed_read_only": true,
+  "vllm_commit": "5da4a8ccdde0abe77d2dd2abda7b6a12bc74c01a",
+  "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+  "sole_treatment": "VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS",
+  "exactness": {
+    "bitwise_exact_all_four_generation_arms": true,
+    "compiled_fa2_q2_q8_bitwise_parity_all_four_cards": true,
+    "completion_tokens_per_arm": 272,
+    "cached_tokens_per_arm": 0
+  },
+  "profile_contract": {
+    "ranks": 4,
+    "samples_per_rank_per_graph_arm": 31,
+    "graphs": 146,
+    "eager_breaks": 145,
+    "attention_boundaries": 48,
+    "collective_boundaries": 97,
+    "kv_view_prepare_calls_per_replay": {
+      "forward": 48,
+      "update": 0,
+      "total": 48
+    }
+  },
+  "gates": {
+    "positive_kv_view_prepare_median": true,
+    "positive_attention_host_median": true,
+    "positive_whole_replay_median": true,
+    "positive_fresh_generation_wall": false,
+    "whole_replay_p90_non_regression": true,
+    "no_post_replay_sync_cost_transfer": false
+  },
+  "comparison_ns": {
+    "kv_view_prepare_total": {
+      "control_median": 897617,
+      "candidate_median": 583971,
+      "median_saving": 313646,
+      "control_p90": 947804,
+      "candidate_p90": 606760,
+      "p90_saving": 341044
+    },
+    "attention_host_total": {
+      "control_median": 4484839,
+      "candidate_median": 4219462,
+      "median_saving": 265377,
+      "control_p90": 4840998,
+      "candidate_p90": 4329930,
+      "p90_saving": 511068
+    },
+    "whole_replay_completion": {
+      "control_median": 21097835,
+      "candidate_median": 21012204,
+      "median_saving": 85631,
+      "control_p90": 21420231,
+      "candidate_p90": 21264729,
+      "p90_saving": 155502
+    },
+    "post_replay_synchronize": {
+      "control_median": 9332333,
+      "candidate_median": 9477547,
+      "median_saving": -145214,
+      "control_p90": 9808770,
+      "candidate_p90": 9732106,
+      "p90_saving": 76664
+    },
+    "fresh_generation_wall": {
+      "control": 21700584833,
+      "candidate": 21839528862,
+      "saving": -138944029
+    }
+  },
+  "artifact_sha256": {
+    "q1_driver": "dcb26c15ed6acf781431ff4c4a5e76b17bd9613849965b99de861e723f030c20",
+    "eager_driver": "88dd99d36688b0aa17bdbc06fac3e7266033375f89a4d0e7bef56b6a3860690d",
+    "graph_control_driver": "f23c26b725789f901f8053738353ebeb2ad390258ca7f19f1b09f00ef14656d9",
+    "graph_candidate_driver": "343dbe696e1b0eebce26090756e235789550973b0c4586e8793fd70b6683ba98",
+    "parity_rank0": "5691e2c2507a22c76db295c8ce12d272cde31b9c699b8cc64653c087df87af8f",
+    "parity_rank1": "978561e13a29f2c5efad8cc55e5b3917a689ceb72ca42930a8063371889ed2f9",
+    "parity_rank2": "6ea7e59cf2fc8caed850f28134103b1918d1c4ec96194b92fbe08b0730e51d79",
+    "parity_rank3": "8533477724415c725a9dd31e7001721074fda2954e2baff792e64c56006a5518"
+  },
+  "decision": {
+    "authorize_uninstrumented_endpoint": false,
+    "authorize_localmaxxing_submission": false,
+    "next_action": "stop this lever and return to a larger clean occupancy or graph-overhead target"
+  }
+}

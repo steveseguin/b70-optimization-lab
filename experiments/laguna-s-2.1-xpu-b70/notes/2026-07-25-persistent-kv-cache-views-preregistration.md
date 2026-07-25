@@ -385,3 +385,65 @@ shell syntax, and whitespace checks. An independent read-only audit verified
 all ten actual hashes against durable Laguna evidence and conditionally
 approved one new sealed root after this exact tool commit. No third campaign,
 model load, prompt, or generation occurred before this freeze.
+
+## Gate 2 attempt 3: exact timing stop
+
+The third sealed Gate 2 root was:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-persistent-kv-views-9e65e991b-5da4a8ccd-20260725T041943Z
+```
+
+All four physical-card q2-through-q8 compiled-FA2 parity packets passed. The
+q1, eager, graph-control, and graph-candidate arms each ran once in a fresh
+process, reported zero cached tokens, and produced the same 272-token greedy
+output bitwise. Every pre/post idle check passed and no worker survived an arm.
+
+The controller nevertheless failed closed at its first analyzer comparison.
+The analyzer had validated each graph arm's distinct replay-profile destination
+and then compared the raw environment maps after removing only the treatment
+selector. The necessarily different `graph-control/replay-profile` and
+`graph-candidate/replay-profile` paths therefore tripped the sole-treatment
+guard. An independent artifact audit confirmed that this path was the only
+remaining environment difference; it is telemetry provenance, not a runtime
+treatment.
+
+The next fail-closed check exposed a second preregistration error. The addendum
+above expected 48 forward plus 48 update Python view preparations per replay.
+Source audit proved that `unified_kv_cache_update` is captured inside graph
+segments, so its Python `do_kv_cache_update` body runs at capture time rather
+than on each replay. Only the 48 eager attention boundaries re-enter Python and
+prepare forward views. Every one of the 31 samples on all four ranks in both
+graph arms independently reports exactly:
+
+- 48 forward preparations;
+- zero update preparations; and
+- 48 total preparations.
+
+The candidate reports 48 persistent hits and zero builds; the control reports
+48 incumbent calls. This is complete hot-replay coverage, not missing
+instrumentation. The analyzer correction therefore:
+
+- normalizes only the already-validated arm-local profile destination;
+- requires the source-correct 48/0/48 replay preparation contract; and
+- permits mode-0500/mode-0400 sealed roots as read-only inputs only when the
+  analysis output stays outside the sealed root.
+
+The sealed root was never modified or reopened. A corrected analyzer read it
+in place and wrote only to a private temporary directory. It classified the
+candidate as `exact_timing_stop`:
+
+| Gate or metric | Control | Candidate | Candidate saving | Result |
+|---|---:|---:|---:|---|
+| KV-view preparation median | 0.897617 ms | 0.583971 ms | 0.313646 ms | pass |
+| attention-host median | 4.484839 ms | 4.219462 ms | 0.265377 ms | pass |
+| whole-replay median | 21.097835 ms | 21.012204 ms | 0.085631 ms | pass |
+| whole-replay p90 | 21.420231 ms | 21.264729 ms | 0.155502 ms | pass |
+| post-replay sync median | 9.332333 ms | 9.477547 ms | -0.145214 ms | fail |
+| fresh 272-token generation | 21.700585 s | 21.839529 s | -0.138944 s | fail |
+
+This is exact mechanism evidence and a useful measured negative: persistent
+views remove their intended Python overhead, but the saving is mostly absorbed
+elsewhere and does not improve the fresh end-to-end generation. No
+uninstrumented endpoint campaign is authorized, and nothing from this attempt
+is benchmark, record, payload, or LocalMaxxing submission evidence.

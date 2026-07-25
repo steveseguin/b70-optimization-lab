@@ -99,7 +99,6 @@ def profile_payload(rank: int, base: int) -> dict:
     for sample in range(gate.SAMPLES):
         persistent = base < 100
         forward_ns = base + 300
-        update_ns = base + 200
         records.append(
             {
                 "sample": sample,
@@ -112,16 +111,16 @@ def profile_payload(rank: int, base: int) -> dict:
                 "static_signature_compare_ns": 50,
                 "whole_replay_completion_ns": 2 * base + 7000,
                 "kv_view_prepare": {
-                    "control_calls": 0 if persistent else 96,
+                    "control_calls": 0 if persistent else 48,
                     "forward_calls": 48,
                     "forward_ns": forward_ns,
                     "persistent_builds": 0,
-                    "persistent_calls": 96 if persistent else 0,
-                    "persistent_hits": 96 if persistent else 0,
-                    "total_calls": 96,
-                    "total_ns": forward_ns + update_ns,
-                    "update_calls": 48,
-                    "update_ns": update_ns,
+                    "persistent_calls": 48 if persistent else 0,
+                    "persistent_hits": 48 if persistent else 0,
+                    "total_calls": 48,
+                    "total_ns": forward_ns,
+                    "update_calls": 0,
+                    "update_ns": 0,
                 },
                 "segment_host_call_ns": durations,
                 "segment_host_call_total_ns": totals,
@@ -223,6 +222,22 @@ def test_arm_contract_accepts_all_four_arms(tmp_path):
         gate.validate_arm(arm_record(tmp_path, arm), arm, profile_root)
 
 
+def test_regular_evidence_accepts_active_and_sealed_modes(tmp_path):
+    path = tmp_path / "evidence.json"
+    path.write_text("{}\n", encoding="utf-8")
+    for mode in (0o600, 0o400):
+        path.chmod(mode)
+        gate.require_regular(path, "evidence")
+
+
+def test_regular_evidence_rejects_group_readable_mode(tmp_path):
+    path = tmp_path / "evidence.json"
+    path.write_text("{}\n", encoding="utf-8")
+    path.chmod(0o640)
+    with pytest.raises(SystemExit, match="mode-0400/0600"):
+        gate.require_regular(path, "evidence")
+
+
 def test_arm_contract_rejects_selector_drift(tmp_path):
     record = arm_record(tmp_path, "graph-candidate")
     record["environment"]["VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS"] = "0"
@@ -231,6 +246,33 @@ def test_arm_contract_rejects_selector_drift(tmp_path):
             record,
             "graph-candidate",
             tmp_path / "graph-candidate" / "replay-profile",
+        )
+
+
+def test_graph_environment_comparison_normalizes_only_profile_destination(tmp_path):
+    control_root = tmp_path / "graph-control" / "replay-profile"
+    candidate_root = tmp_path / "graph-candidate" / "replay-profile"
+    control = gate.normalize_graph_environment_for_comparison(
+        gate.expected_environment("graph-control", control_root),
+        control_root,
+    )
+    candidate = gate.normalize_graph_environment_for_comparison(
+        gate.expected_environment("graph-candidate", candidate_root),
+        candidate_root,
+    )
+    selector = "VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS"
+    assert control.pop(selector) == "0"
+    assert candidate.pop(selector) == "1"
+    assert control == candidate
+
+
+def test_graph_environment_comparison_rejects_profile_destination_drift(tmp_path):
+    expected_root = tmp_path / "graph-control" / "replay-profile"
+    environment = gate.expected_environment("graph-control", expected_root)
+    with pytest.raises(SystemExit, match="replay-profile environment identity drifted"):
+        gate.normalize_graph_environment_for_comparison(
+            environment,
+            tmp_path / "wrong-profile-root",
         )
 
 
