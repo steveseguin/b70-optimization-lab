@@ -43,6 +43,13 @@ The contribution `README.md` is preserved as submitted. Corrections belong in
 `STATUS.md` under "Known Issues", not silently edited into the contributor's
 text. If the recipe is later fixed, record the fix and its author explicitly.
 
+One exception: a maintainer note may be added at the top of a contributed
+README, clearly labelled as such and separated from the contributor's text by a
+horizontal rule. Its purpose is to stop a reader who lands directly on the file
+from mistaking a pending submission for a lab result, and to point at
+`STATUS.md`. It states status and directs the reader; it does not argue with
+the contribution.
+
 ## Evidence Labels
 
 Labels are defined in

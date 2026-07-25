@@ -1,5 +1,23 @@
 # Qwen3.6 27B FP8 on 2x Intel Arc Pro B70 (Docker TP2)
 
+> **Maintainer note — community submission, pending evaluation.**
+> This recipe was contributed in
+> [PR #9](https://github.com/steveseguin/b70-optimization-lab/pull/9) by
+> `dominick253` and is preserved below exactly as submitted. It is **not** a
+> reference-lab result: the recipe has not been executed here and its
+> throughput claim has not been reproduced. Another contributor was unable to
+> reproduce the TP2 deploy on their hardware.
+>
+> Read [`STATUS.md`](STATUS.md) before running any of this. It records the
+> evidence level, what was and was not validated in the lab, and seven known
+> issues in the command below — including a hardcoded path that will fail for
+> you, and that the recipe as written exposes an unauthenticated endpoint on
+> every network interface.
+>
+> Everything below this line is the contributor's text, unedited.
+
+---
+
 Deployable Docker recipe for serving `Qwen/Qwen3.6-27B` in native FP8 quantization
 across two Intel Arc Pro B70 GPUs using `intel/llm-scaler-vllm`.
 

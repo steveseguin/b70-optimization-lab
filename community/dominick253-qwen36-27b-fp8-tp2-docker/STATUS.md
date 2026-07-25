@@ -9,8 +9,13 @@ Community contribution from [PR #9](https://github.com/steveseguin/b70-optimizat
 | Evidence level | `community-reported` |
 | Patch review status | Read in full; no contributed code executed |
 | Tested in reference lab | Partial — bounded multi-GPU runtime probe passed; recipe itself not run |
-| Safe to merge as documentation | Yes, with changes (see Known Issues) |
+| Safe to merge as documentation | Yes — merged 2026-07-25, pending evaluation |
 | Eligible for `repro/` or `results/` | No |
+
+Merged into `main` as a community submission and relocated into this directory.
+The contributed recipe is not present in `repro/` and its claim is not in the
+promoted ledger; the only ledger reference is the Community-Reported row in
+[`results/README.md`](../../results/README.md).
 
 The contribution is documentation only: two Markdown files, no code, no CI, no
 workflows, no external URLs, no secrets, and a pinned official Intel image.
