@@ -357,3 +357,31 @@ The six omitted files must be copied mechanically from the installed
 record-matched package only after matching their previously recorded SHA-256
 values. Parity must also fail unless the compiled FA2 extension is available
 from that exact package; fallback attention is forbidden.
+
+## Gate 2 attempt 3 runtime freeze
+
+Before any third campaign, the six missing libraries were copied mechanically
+into the clean record worktree and verified against their durable recorded
+hashes. The controller, arm driver, parity packet, and analyzer now freeze the
+same ten-file closure. Parity additionally requires:
+
+- `current_platform.is_xpu()` is true;
+- exactly one post-affinity XPU is visible;
+- compiled FA2 is available;
+- `_vllm_fa2_C.abi3.so` resolves from the exact record package;
+- the direct FA2 fallback is replaced with a fatal handler; and
+- successful JSON explicitly records XPU platform, compiled FA2, fallback
+  prohibition, and extension origin.
+
+A terminal-only, non-model import check observed one visible XPU, XPU platform
+selection, compiled FA2 availability, and the exact record-package extension
+path. It is operational information, not durable evidence; the next sealed
+parity packet must independently record all four facts.
+
+The complete-closure tool update is committed at
+`880d638b377f97e10372f9a56617bf0d844b1ddd`. Twelve focused analyzer,
+controller, selector, process-cleanup, and closure tests pass, along with Ruff,
+shell syntax, and whitespace checks. An independent read-only audit verified
+all ten actual hashes against durable Laguna evidence and conditionally
+approved one new sealed root after this exact tool commit. No third campaign,
+model load, prompt, or generation occurred before this freeze.
