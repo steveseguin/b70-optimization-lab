@@ -19,7 +19,7 @@ readonly python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
 readonly driver="$script_dir/run_laguna_m8_inprocess_replay_arm.py"
 readonly analyzer="$script_dir/analyze_laguna_m8_inprocess_replay.py"
 readonly idle="$script_dir/capture_laguna_m8_idle_snapshot.py"
-readonly expected_vllm=8cf58ed0f3679245053b6f298b4bf1ccd13906ed
+readonly expected_vllm=6bd7c5875fd1522b063abbfedef64678849f66f5
 readonly expected_kernels=4772f727590c51b72add79350b913d098cf67872
 readonly record_vllm=0ce373a3115fb4498c5e7a041d4fc9212fd6b5ca
 readonly record_kernels=b6076ce1249ffee0e30bee528f4cd15c3bffb234
@@ -165,10 +165,11 @@ assert_no_workers "$run_dir/pre-workers.txt" || die "existing vLLM/torchrun work
 capture_idle "$run_dir/pre-idle.json" || die "strict pre-campaign device idle proof failed"
 laguna_nvme_verify_model_contents
 {
-  printf 'schema=laguna-m8-inprocess-replay-v2\n'
+  printf 'schema=laguna-m8-inprocess-replay-v3\n'
   printf 'purpose=diagnostic-only in-process replay telemetry; never benchmark or submission evidence\n'
   printf 'arms=q1,eager,graph; one_generation_per_fresh_process=true\n'
   printf 'completion_tokens_per_arm=272\n'
+  printf 'graph_candidate=attention-subgraphs-v1\n'
   printf 'vllm=%s\nkernels=%s\n' "$expected_vllm" "$expected_kernels"
   printf 'run_tag=%s\n' "$run_tag"
   printf 'graph_telemetry_only=true\ngraph_profile_samples=31\n'
@@ -220,7 +221,7 @@ run_arm() {
       VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=0 VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 \
       VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 \
       VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS=7 \
-      VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
+      VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$graph" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
       "${profile_env[@]}" "${driver_args[@]}" \
       >"$arm_dir/stdout.log" 2>"$arm_dir/stderr.log"
   ) &

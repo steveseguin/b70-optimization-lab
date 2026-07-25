@@ -26,7 +26,7 @@ COMPLETION_TOKENS = 272
 EXPECTED_MODEL = "/mnt/fast-ai/llm-models/laguna-s-2.1/int4"
 EXPECTED_DRAFT = "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4"
 EXPECTED_VLLM_ROOT = "/home/steve/src/laguna-vllm-runtime-graph-20260724"
-EXPECTED_VLLM_COMMIT = "8cf58ed0f3679245053b6f298b4bf1ccd13906ed"
+EXPECTED_VLLM_COMMIT = "6bd7c5875fd1522b063abbfedef64678849f66f5"
 EXPECTED_KERNEL_ROOT = "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc"
 EXPECTED_KERNEL_COMMIT = "4772f727590c51b72add79350b913d098cf67872"
 EXPECTED_KERNELS = {
@@ -137,7 +137,7 @@ def arm_record_path(root: Path, arm: str) -> Path:
 def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) -> None:
     optimized_dflash = arm != "q1"
     required = {
-        "schema": "laguna-m8-inprocess-replay-arm-v2",
+        "schema": "laguna-m8-inprocess-replay-arm-v3",
         "status": "complete",
         "diagnostic_only": True,
         "single_generate_call": True,
@@ -211,6 +211,7 @@ def validate_arm(record: dict[str, Any], arm: str, profile_root: Path | None) ->
         "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": "1",
         "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH": "0",
         "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1" if graph else "0",
+        "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS": ("1" if graph else "0"),
         "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM": "0",
         "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "0",
         "VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2": ("1" if optimized_dflash else "0"),
