@@ -95,6 +95,7 @@ def write_lifecycle_trace(treatment: str, arm_root: Path) -> None:
                 "rank": rank,
                 "event_index": index,
                 "selector_enabled": treatment == "candidate",
+                "request_phase_armed": bool(index),
                 "num_ctx": 1,
                 "context_states": trace_tensor(
                     rank,
@@ -143,6 +144,8 @@ def valid_driver(treatment: str, root: Path) -> dict:
         "nonbenchmark": True,
         "single_chat_call": True,
         "worker_identity_calls": 1,
+        "request_phase_arm_calls": 1,
+        "request_phase_arm_ranks": [0, 1, 2, 3],
         "warmup_calls": 0,
         "retry_count": 0,
         "prompt_id": arm.PROMPT_ID,
@@ -196,6 +199,8 @@ def valid_driver(treatment: str, root: Path) -> dict:
                 "global_rank": rank,
                 "global_world_size": 4,
                 "distributed_backend": "xccl",
+                "worker_rank": rank,
+                "local_rank": rank,
                 "tp_rank": rank,
                 "tp_world_size": 4,
                 "xpu_device": rank,
@@ -448,7 +453,10 @@ def test_lifecycle_trace_accepts_bounded_real_precompute(
         rank: 2 for rank in range(4)
     }
     expected_reuse = 1 if treatment == "candidate" else 0
-    assert result["reused_precompute_calls"] == {
+    assert result["request_precompute_calls"] == {
+        rank: 1 for rank in range(4)
+    }
+    assert result["request_reused_precompute_calls"] == {
         rank: expected_reuse for rank in range(4)
     }
 
@@ -475,3 +483,51 @@ def test_lifecycle_trace_rejects_partial_mapping(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="expected cache-update"):
         gate.validate_lifecycle_trace("candidate", arm_root)
+
+
+def test_lifecycle_trace_rejects_initialization_only_reuse(
+    tmp_path: Path,
+) -> None:
+    arm_root = tmp_path / "candidate"
+    write_lifecycle_trace("candidate", arm_root)
+    trace = arm_root / "dflash-lifecycle"
+    for path in trace.glob("*.json"):
+        event = json.loads(path.read_text(encoding="utf-8"))
+        event["request_phase_armed"] = False
+        path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="request-phase precompute"):
+        gate.validate_lifecycle_trace("candidate", arm_root)
+
+
+def test_lifecycle_trace_rejects_request_phase_regression(
+    tmp_path: Path,
+) -> None:
+    arm_root = tmp_path / "control"
+    write_lifecycle_trace("control", arm_root)
+    first = arm_root / "dflash-lifecycle/rank0-event00000.json"
+    second = arm_root / "dflash-lifecycle/rank0-event00001.json"
+    first_event = json.loads(first.read_text(encoding="utf-8"))
+    second_event = json.loads(second.read_text(encoding="utf-8"))
+    first_event["request_phase_armed"] = True
+    second_event["request_phase_armed"] = False
+    first.write_text(json.dumps(first_event) + "\n", encoding="utf-8")
+    second.write_text(json.dumps(second_event) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="request phase regressed"):
+        gate.validate_lifecycle_trace("control", arm_root)
+
+
+def test_lifecycle_trace_rejects_missing_unarmed_initialization(
+    tmp_path: Path,
+) -> None:
+    arm_root = tmp_path / "control"
+    write_lifecycle_trace("control", arm_root)
+    trace = arm_root / "dflash-lifecycle"
+    for path in trace.glob("*.json"):
+        event = json.loads(path.read_text(encoding="utf-8"))
+        event["request_phase_armed"] = True
+        path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unarmed initialization"):
+        gate.validate_lifecycle_trace("control", arm_root)

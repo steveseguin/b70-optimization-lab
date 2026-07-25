@@ -14,7 +14,7 @@ AUTHORIZATION_ROOT = Path(
     "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/authorizations"
 )
 RUN_ROOT = Path("/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs")
-VLLM_COMMIT = "94de2d07a40c64f91f52b17654a1f287ef7b3359"
+VLLM_COMMIT = "7c38a20229b7bcd0f149e3e9a6b6b5493c3bd85b"
 KERNEL_COMMIT = "4772f727590c51b72add79350b913d098cf67872"
 HEX = set("0123456789abcdef")
 

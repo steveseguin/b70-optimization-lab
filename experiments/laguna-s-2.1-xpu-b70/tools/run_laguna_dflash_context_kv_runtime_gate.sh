@@ -25,12 +25,14 @@ readonly prereg="$repo/experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-dflash-
 readonly suite="$repo/experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json"
 readonly teacher="$LAGUNA_NVME_RUN_ROOT/bulletproof-q1-canonical-cb616c6-6fc06b0-20260722T142908Z/bench.json"
 readonly candidate_source="$vllm/vllm/model_executor/models/laguna_dflash.py"
+readonly candidate_worker_source="$vllm/vllm/v1/worker/xpu_worker.py"
 readonly root="${1:?usage: run_laguna_dflash_context_kv_runtime_gate.sh FRESH_NVME_ROOT}"
-readonly expected_vllm=94de2d07a40c64f91f52b17654a1f287ef7b3359
+readonly expected_vllm=7c38a20229b7bcd0f149e3e9a6b6b5493c3bd85b
 readonly expected_kernels=4772f727590c51b72add79350b913d098cf67872
 readonly expected_suite=9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638
 readonly expected_teacher=d41d3d5e2471ee98f783e58407e44217ade67f7472147eeeb82780efa89879d1
-readonly expected_candidate_source=9569f9329fb50361623c53e6d3b1b10dee7ec8a0214142ded8cf88c5ec4eabd4
+readonly expected_candidate_source=4439472403047988f9f6d2022656d071f01753216c2afc119397e803aa1b1b0b
+readonly expected_candidate_worker_source=8b0c1519bdab675d100b231b68d87e1b39fa54272adb0874895187ef2b2ffa2a
 readonly expected_raw_analyzer=43526f74042d221b75895dc4760bf6664c32a51b247d317c13bcc941ce3a46fa
 readonly authorization_dir=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/authorizations
 readonly rpc_control="$LAGUNA_NVME_TMP_ROOT/dckvr-a"
@@ -195,7 +197,7 @@ ambient_sensitive="$(compgen -e | LC_ALL=C sort -u | awk '/^(VLLM|LAGUNA|XPU_GRA
 for path in \
   "$vllm" "$kernels" "$driver" "$analyzer" "$consumer" "$raw_analyzer" \
   "$idle_wrapper" "$nvme_paths" "$prereg" "$suite" "$teacher" \
-  "$candidate_source"; do
+  "$candidate_source" "$candidate_worker_source"; do
   [[ -e "$path" ]] || die "required path missing: $path"
   [[ "$(realpath -e -- "$path")" != /media/* ]] ||
     die "active path resolves to external USB: $path"
@@ -211,6 +213,7 @@ done
 check_hash "$suite" "$expected_suite"
 check_hash "$teacher" "$expected_teacher"
 check_hash "$candidate_source" "$expected_candidate_source"
+check_hash "$candidate_worker_source" "$expected_candidate_worker_source"
 check_hash "$raw_analyzer" "$expected_raw_analyzer"
 check_hash "$kernels/vllm_xpu_kernels/_C.abi3.so" \
   126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
@@ -256,7 +259,7 @@ readonly main_commit="$(git -C "$repo" rev-parse HEAD)"
   sha256sum -- \
     "$shell_path" "$driver" "$analyzer" "$consumer" "$raw_analyzer" \
     "$idle_wrapper" "$nvme_paths" "$prereg" "$suite" "$teacher" \
-    "$candidate_source"
+    "$candidate_source" "$candidate_worker_source"
 } >"$root/identity.txt"
 sync -f "$root/identity.txt"
 readonly packet_sha256="$(sha256sum -- "$root/identity.txt" | awk '{print $1}')"

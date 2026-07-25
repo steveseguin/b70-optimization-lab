@@ -21,7 +21,7 @@ TARGET_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/int4")
 DRAFT_MODEL = Path("/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4")
 TARGET_REVISION = "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb"
 DRAFT_REVISION = "5e07c246915c86dc6920fead03d019989224f2ba"
-VLLM_COMMIT = "94de2d07a40c64f91f52b17654a1f287ef7b3359"
+VLLM_COMMIT = "7c38a20229b7bcd0f149e3e9a6b6b5493c3bd85b"
 MODEL_MANIFEST_SHA256 = (
     "45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac"
 )
@@ -265,28 +265,6 @@ def runtime_identity() -> dict[str, str]:
     }
 
 
-def worker_model_identity(model: object) -> dict[str, Any]:
-    import torch
-    import torch.distributed as dist
-    from vllm.distributed import (
-        get_tensor_model_parallel_rank,
-        get_tensor_model_parallel_world_size,
-    )
-
-    device = torch.xpu.current_device()
-    properties = torch.xpu.get_device_properties(device)
-    return {
-        "global_rank": dist.get_rank(),
-        "global_world_size": dist.get_world_size(),
-        "distributed_backend": str(dist.get_backend()),
-        "tp_rank": get_tensor_model_parallel_rank(),
-        "tp_world_size": get_tensor_model_parallel_world_size(),
-        "xpu_device": device,
-        "xpu_device_name": properties.name,
-        "model_class": type(model).__name__,
-    }
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--treatment", choices=("control", "candidate"), required=True)
@@ -374,8 +352,11 @@ def main() -> int:
         speculative_config=speculative_config,
     )
     worker_identities = sorted(
-        llm.apply_model(worker_model_identity),
+        llm.collective_rpc("get_laguna_tp4_runtime_identity"),
         key=lambda value: value["global_rank"],
+    )
+    request_phase_arm_ranks = sorted(
+        llm.collective_rpc("arm_laguna_dflash_runtime_request_phase")
     )
     params = SamplingParams(
         temperature=0.0,
@@ -418,6 +399,8 @@ def main() -> int:
         "nonbenchmark": True,
         "single_chat_call": True,
         "worker_identity_calls": 1,
+        "request_phase_arm_calls": 1,
+        "request_phase_arm_ranks": request_phase_arm_ranks,
         "warmup_calls": 0,
         "retry_count": 0,
         "prompt_id": PROMPT_ID,

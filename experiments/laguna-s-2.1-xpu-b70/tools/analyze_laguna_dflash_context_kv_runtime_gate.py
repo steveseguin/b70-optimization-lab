@@ -51,7 +51,14 @@ CANDIDATE_SOURCE = Path(
     "vllm/model_executor/models/laguna_dflash.py"
 )
 CANDIDATE_SOURCE_SHA256 = (
-    "9569f9329fb50361623c53e6d3b1b10dee7ec8a0214142ded8cf88c5ec4eabd4"
+    "4439472403047988f9f6d2022656d071f01753216c2afc119397e803aa1b1b0b"
+)
+CANDIDATE_WORKER_SOURCE = Path(
+    "/home/steve/src/laguna-vllm-dflash-persistent-metadata-20260725/"
+    "vllm/v1/worker/xpu_worker.py"
+)
+CANDIDATE_WORKER_SOURCE_SHA256 = (
+    "8b0c1519bdab675d100b231b68d87e1b39fa54272adb0874895187ef2b2ffa2a"
 )
 RAW_ANALYZER_SHA256 = (
     "43526f74042d221b75895dc4760bf6664c32a51b247d317c13bcc941ce3a46fa"
@@ -411,7 +418,7 @@ def validate_campaign_identity(root: Path) -> dict[str, Any]:
             "capture_laguna_m8_idle_snapshot.py",
             "laguna_nvme_paths.sh",
         )
-    ] + [SUITE, TEACHER, CANDIDATE_SOURCE]
+    ] + [SUITE, TEACHER, CANDIDATE_SOURCE, CANDIDATE_WORKER_SOURCE]
     expected_paths.append(
         Path(
             "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/"
@@ -436,10 +443,10 @@ def validate_campaign_identity(root: Path) -> dict[str, Any]:
             die(f"campaign live file digest drift: {path}")
         if path.is_relative_to(repo) and git_blob_sha(repo, main_commit, path) != digest:
             die(f"campaign main-commit blob drift: {path}")
-        if path == CANDIDATE_SOURCE and (
+        if path in {CANDIDATE_SOURCE, CANDIDATE_WORKER_SOURCE} and (
             git_blob_sha(vllm_repo, VLLM_COMMIT, path) != digest
         ):
-            die("campaign candidate source blob drift")
+            die(f"campaign candidate source blob drift: {path}")
 
     packet_sha256 = sha256_file(identity_path)
     marker = AUTHORIZATION_ROOT / (
@@ -569,6 +576,8 @@ def validate_driver(
         "prompt_sha256",
         "prompt_token_ids",
         "prompt_token_ids_sha256",
+        "request_phase_arm_calls",
+        "request_phase_arm_ranks",
         "retry_count",
         "rpc_dir",
         "runtime",
@@ -602,6 +611,8 @@ def validate_driver(
         or driver["nonbenchmark"] is not True
         or driver["single_chat_call"] is not True
         or driver["worker_identity_calls"] != 1
+        or driver["request_phase_arm_calls"] != 1
+        or driver["request_phase_arm_ranks"] != [0, 1, 2, 3]
         or driver["warmup_calls"] != 0
         or driver["retry_count"] != 0
         or driver["prompt_id"] != PROMPT_ID
@@ -675,9 +686,11 @@ def validate_driver(
         "distributed_backend",
         "global_rank",
         "global_world_size",
+        "local_rank",
         "model_class",
         "tp_rank",
         "tp_world_size",
+        "worker_rank",
         "xpu_device",
         "xpu_device_name",
     }
@@ -689,6 +702,8 @@ def validate_driver(
             or set(identity) != expected_identity_fields
             or identity["global_rank"] != rank
             or identity["global_world_size"] != 4
+            or identity["worker_rank"] != rank
+            or identity["local_rank"] != rank
             or identity["tp_rank"] != rank
             or identity["tp_world_size"] != 4
             or identity["xpu_device"] != rank
@@ -859,6 +874,7 @@ def validate_lifecycle_trace(
         "precompute_returned",
         "projection",
         "rank",
+        "request_phase_armed",
         "schema",
         "selector_enabled",
         "slot_mapping_signatures",
@@ -882,6 +898,7 @@ def validate_lifecycle_trace(
             or event["schema"] != "laguna-dflash-context-kv-runtime-trace-v1"
             or event["selector_enabled"] is not (treatment == "candidate")
             or event["precompute_returned"] is not True
+            or not isinstance(event["request_phase_armed"], bool)
             or not isinstance(event["num_ctx"], int)
             or not 0 < event["num_ctx"] <= 8
         ):
@@ -978,14 +995,25 @@ def validate_lifecycle_trace(
     ):
         die(f"{treatment}: lifecycle ranks/counts drift")
     normalized: dict[int, list[dict[str, Any]]] = {}
-    reused_precompute: dict[int, int] = {}
     returned_precompute_calls: dict[int, int] = {}
+    request_precompute_calls: dict[int, int] = {}
+    request_reused_precompute_calls: dict[int, int] = {}
     for rank, events in events_by_rank.items():
         if [event["event_index"] for event in events] != list(range(len(events))):
             die(f"{treatment}: rank {rank} lifecycle event sequence drift")
         workspace_by_width: dict[int, list[dict[str, Any]]] = {}
+        request_phase_seen = False
+        initialization_phase_seen = False
         normalized[rank] = []
         for event in events:
+            if event["request_phase_armed"]:
+                request_phase_seen = True
+            elif request_phase_seen:
+                die(
+                    f"{treatment}: rank {rank} lifecycle request phase regressed"
+                )
+            else:
+                initialization_phase_seen = True
             width = event["num_ctx"]
             projection = event["projection"]
             normalized[rank].append(
@@ -1015,6 +1043,7 @@ def validate_lifecycle_trace(
                     "expected_cache_update_count": event[
                         "expected_cache_update_count"
                     ],
+                    "request_phase_armed": event["request_phase_armed"],
                 }
             )
             if treatment == "candidate":
@@ -1034,19 +1063,35 @@ def validate_lifecycle_trace(
         returned_precompute_calls[rank] = sum(
             event["expected_cache_update_count"] == 6 for event in events
         )
-        reused_precompute[rank] = sum(
-            event["expected_cache_update_count"] == 6
+        request_precompute_calls[rank] = sum(
+            event["request_phase_armed"]
+            and event["expected_cache_update_count"] == 6
+            for event in events
+        )
+        request_reused_precompute_calls[rank] = sum(
+            event["request_phase_armed"]
+            and event["expected_cache_update_count"] == 6
             and event["projection"]["workspace_reused"] is True
             for event in events
         )
         if returned_precompute_calls[rank] < 1:
             die(f"{treatment}: rank {rank} lacks a mapped precompute return")
-        if treatment == "candidate" and reused_precompute[rank] < 1:
-            die(f"candidate: rank {rank} lacks an actual workspace reuse")
+        if not initialization_phase_seen:
+            die(f"{treatment}: rank {rank} lacks an unarmed initialization event")
+        if request_precompute_calls[rank] < 1:
+            die(f"{treatment}: rank {rank} lacks a request-phase precompute")
+        if (
+            treatment == "candidate"
+            and request_reused_precompute_calls[rank] < 1
+        ):
+            die(
+                f"candidate: rank {rank} lacks a request-phase workspace reuse"
+            )
     return {
         "counts": counts,
         "returned_precompute_calls": returned_precompute_calls,
-        "reused_precompute_calls": reused_precompute,
+        "request_precompute_calls": request_precompute_calls,
+        "request_reused_precompute_calls": request_reused_precompute_calls,
         "normalized": normalized,
     }
 
@@ -1149,6 +1194,11 @@ def main() -> int:
         validate_private_nvme_dir(arm_root / "dflash-lifecycle")
     if sha256_file(CANDIDATE_SOURCE) != CANDIDATE_SOURCE_SHA256:
         die("candidate DFlash source hash drift")
+    if (
+        sha256_file(CANDIDATE_WORKER_SOURCE)
+        != CANDIDATE_WORKER_SOURCE_SHA256
+    ):
+        die("candidate XPU worker source hash drift")
     if RAW_ANALYZER != Path(
         "/home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/"
         "tools/analyze_laguna_m8_actual_offline_gate.py"
@@ -1224,6 +1274,8 @@ def main() -> int:
             "kernel_commit": KERNEL_COMMIT,
             "source": str(CANDIDATE_SOURCE),
             "source_sha256": CANDIDATE_SOURCE_SHA256,
+            "worker_source": str(CANDIDATE_WORKER_SOURCE),
+            "worker_source_sha256": CANDIDATE_WORKER_SOURCE_SHA256,
             "selector": "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE",
         },
         "campaign": campaign,
@@ -1269,13 +1321,13 @@ def main() -> int:
         },
         "workspace_execution_proof": {
             "selector_on_recorded": True,
-            "dflash_precompute_returned_with_six_expected_updates": lifecycle[
+            "request_phase_dflash_precompute_returned_with_six_expected_updates": lifecycle[
+                "candidate"
+            ]["request_precompute_calls"],
+            "request_phase_workspace_reuse_precompute_returned_calls": lifecycle[
                 "candidate"
             ][
-                "returned_precompute_calls"
-            ],
-            "workspace_reuse_precompute_returned_calls": lifecycle["candidate"][
-                "reused_precompute_calls"
+                "request_reused_precompute_calls"
             ],
             "control_lifecycle_event_counts": lifecycle["control"]["counts"],
             "candidate_lifecycle_event_counts": lifecycle["candidate"]["counts"],
