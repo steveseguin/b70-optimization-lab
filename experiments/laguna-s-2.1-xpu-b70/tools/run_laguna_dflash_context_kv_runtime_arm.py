@@ -50,6 +50,7 @@ RECORDED_ENVIRONMENT = (
     "HF_HUB_OFFLINE",
     "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS",
     "ONEAPI_DEVICE_SELECTOR",
+    "PYTHONPATH",
     "TRANSFORMERS_OFFLINE",
     "TORCH_XCCL_ASYNC_ERROR_HANDLING",
     "VLLM_DISABLE_SHARED_EXPERTS_STREAM",
@@ -179,6 +180,12 @@ def frozen_environment(
         "HF_HUB_OFFLINE": "1",
         "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS": "7",
         "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1,2,3",
+        "PYTHONPATH": (
+            "/home/steve/llm-optimizations/"
+            "experiments/laguna-s-2.1-xpu-b70/tools:"
+            "/home/steve/src/laguna-vllm-dflash-persistent-metadata-20260725:"
+            "/home/steve/src/deepseek-v4-xpu-kernels-record-4772f727"
+        ),
         "TRANSFORMERS_OFFLINE": "1",
         "TORCH_XCCL_ASYNC_ERROR_HANDLING": "1",
         "VLLM_DISABLE_SHARED_EXPERTS_STREAM": "0",

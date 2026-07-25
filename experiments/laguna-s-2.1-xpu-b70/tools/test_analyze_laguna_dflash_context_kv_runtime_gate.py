@@ -303,6 +303,14 @@ def test_environment_allowlist_is_complete(tmp_path: Path) -> None:
     )
     assert set(environment) == set(arm.RECORDED_ENVIRONMENT)
     assert environment["VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE"] == "1"
+    assert environment["PYTHONPATH"].split(":") == [
+        (
+            "/home/steve/llm-optimizations/"
+            "experiments/laguna-s-2.1-xpu-b70/tools"
+        ),
+        "/home/steve/src/laguna-vllm-dflash-persistent-metadata-20260725",
+        "/home/steve/src/deepseek-v4-xpu-kernels-record-4772f727",
+    ]
     control = copy.deepcopy(environment)
     control["VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE"] = "0"
     assert control == arm.frozen_environment(

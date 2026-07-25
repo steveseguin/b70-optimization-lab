@@ -5,6 +5,26 @@ Date: 2026-07-25 America/Toronto
 Status: **design and tooling only. No XPU/model execution is authorized until
 the committed packet receives independent source and adversarial review.**
 
+## Execution history
+
+The first reviewed packet, main commit
+`de35c566b9fa96525bdb864c41989924fd97bd7a`, was consumed once at:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dflash-context-kv-runtime-de35c566b-94de2d07a-20260725T073546Z`
+
+It failed closed before importing vLLM, loading a model, or generating any
+token. `PYTHONSAFEPATH=1` correctly removed the script directory from implicit
+module search, but the frozen `PYTHONPATH` omitted the tracked gate-tools
+directory required for importing the raw analyzer. The control driver exited
+with `ModuleNotFoundError`; candidate did not start. Failure cleanup found no
+workers, all devices idle, and sealed the root with
+`failure-manifest.sha256`. That consumed packet is terminal and will not be
+reused.
+
+The revised packet explicitly freezes the tracked tools directory first in
+`PYTHONPATH`. It requires a new commit, independent review, and a new one-shot
+marker before execution.
+
 ## Question
 
 Does the default-off DFlash context-KV workspace preserve the approved Laguna
