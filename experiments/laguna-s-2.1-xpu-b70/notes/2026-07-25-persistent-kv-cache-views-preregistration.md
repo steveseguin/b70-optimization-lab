@@ -198,3 +198,36 @@ and adjacent-pair causal gates.
 
 Only the lower candidate start may be promoted, and only if it is strictly
 above `94.92003934159611 tok/s`. No diagnostic result is submit-worthy.
+
+## Gate 1 result
+
+Gate 1 passed before any XPU diagnostic or generation:
+
+- candidate vLLM commit:
+  `4d3124f1a`;
+- strict default-off `0`/`1` parsing and invalid-value rejection passed;
+- 37 focused environment, cache-view, lifecycle, and runner-contract tests
+  passed;
+- an additional focused persistent-view run passed 18 tests;
+- Ruff check, Ruff format, whitespace, typos, SPDX, environment-default,
+  attention-documentation, forbidden-import, and other applicable pre-commit
+  hooks passed;
+- the full pre-commit run reached one pre-existing mypy error at
+  `gpu_model_runner.py`'s Laguna collective-state assignment, outside this
+  candidate's changed hunks; and
+- independent review approved Gate 1 after requiring and verifying direct
+  raw-update/canonical-forward routing, actual record-shape reuse, same-object
+  source/view drift rejection, explicit lifecycle invalidation, strict flag
+  parsing, and KV-transfer rejection.
+
+The measured representative hot-path result after all validation was:
+
+- control median: `0.366909 ms` per 48 forward+update preparations;
+- candidate median: `0.318848 ms`;
+- median saving: `0.048061 ms`;
+- control p90: `0.371708 ms`; and
+- candidate p90: `0.324279 ms`.
+
+This is only about 0.23% of the latest `21.137799 ms` whole replay and remains
+well inside endpoint noise. It authorizes Gate 2 only. It is not performance,
+promotion, record, payload, or submission evidence.
