@@ -339,6 +339,14 @@ run root is preserved and the packet is permanently consumed. The repaired
 tooling records unfiltered discovery in the launcher and validates exactly one
 filtered card in each worker. Two independent reviews approved committing that
 repair and consuming it once for one new component-only attempt.
+That `c547b2a43` packet passed the complete exact component on physical card
+zero, then failed closed before native import on card one because `xpu-smi`
+renumbers the single affinity-filtered device to logical ID zero. Its UUID,
+BDF, and DRM identity remained correct. Preserve the sealed run; the packet is
+terminally consumed. The narrow repair requires filtered logical ID zero on
+every leg while binding the stable identity fields to the selected physical
+ordinal. Two independent reviews approved committing the repair and consuming
+it once for another component-only attempt.
 Resume from the
 [DFlash workspace preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-dflash-context-kv-workspace-preregistration.md).
 The completed current-stream diagnostic still records rank-2 repeated graph

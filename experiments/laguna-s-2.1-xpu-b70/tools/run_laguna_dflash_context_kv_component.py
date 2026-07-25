@@ -222,8 +222,10 @@ def validate_device_discovery(
     )
     payload = json.loads(completed.stdout)
     filtered = physical_mapping(payload)
+    expected_filtered = dict(DEVICES[rank])
+    expected_filtered["device_id"] = 0
     require(
-        filtered == [DEVICES[rank]],
+        filtered == [expected_filtered],
         "affinity-filtered physical-card mapping drift",
     )
     write_exclusive(filtered_path, payload)
@@ -240,7 +242,7 @@ def validate_device_discovery(
         "filtered_path": str(filtered_path),
         "filtered_sha256": sha256_file(filtered_path),
         "filtered_stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
-        "selected": filtered[0],
+        "selected": DEVICES[rank],
     }
 
 

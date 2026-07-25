@@ -2,10 +2,11 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: **first component packet failed closed before native import; repaired
-packet independently approved for one new component-only XPU execution after
-it is committed cleanly. No endpoint, benchmark, or submission action is
-authorized**.
+Status: **two component packets are terminally consumed; the second proved
+full exactness on physical card zero and failed closed before native import on
+card one. The ordinal-renumbering repair received two independent approvals
+for one new component-only XPU execution after a clean commit. No endpoint,
+benchmark, or submission action is authorized**.
 
 ## Purpose
 
@@ -205,6 +206,39 @@ which must contain exactly the selected card. The analyzer independently
 parses, hashes, links, and validates both retained JSON artifacts. This
 repaired source received two independent approvals and has one component-only
 XPU execution after it is committed cleanly.
+
+## Second packet failure and card-zero pass
+
+Repaired main commit `c547b2a434c7f3ec852a02ca614c8a318ee58b1e` was consumed
+once at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dflash-context-kv-component-c547b2a43-4459910e2-20260725T063404Z
+```
+
+Physical card zero completed the full component and wrote
+`status=exact_component_pass`: both actual-no-bias and synthetic-bias arms
+passed 16/16 changing-context rows, widths one through eight created and
+reused stable workspaces, width nine stayed incumbent, every recorded BF16
+boundary and all six cache layers matched, and the capture-true rejection
+left workspace/cache/input state unchanged.
+
+The packet then failed closed on card one before its pre-import seal:
+
+```text
+Laguna DFlash context-KV component: affinity-filtered physical-card mapping drift
+```
+
+The remaining harness error is another documented `xpu-smi` behavior:
+after affinity filtering, the sole visible card is renumbered to logical
+`device_id=0`. The stable physical identity fields still correctly report
+card one's UUID, BDF, and DRM node. The repair therefore requires logical
+device zero in every filtered artifact while binding UUID/BDF/DRM to the
+selected unfiltered physical ordinal. The `c547b2a43` packet is permanently
+consumed and must not be rerun.
+
+Two independent reviews approved the narrow ordinal repair for one new
+component-only packet after it is committed cleanly.
 
 No endpoint is authorized by a component pass. A later graph-vs-graph cold
 crossover may be constructed only if every card is bitwise exact and the

@@ -201,11 +201,19 @@ def test_discovery_artifact_semantics_pass() -> None:
         list(gate.EXPECTED_DEVICES),
         "unfiltered",
     ) == list(gate.EXPECTED_DEVICES)
+    filtered_rank2 = (
+        (
+            0,
+            gate.EXPECTED_DEVICES[2][1],
+            gate.EXPECTED_DEVICES[2][2],
+            gate.EXPECTED_DEVICES[2][3],
+        ),
+    )
     assert gate.validate_physical_mapping(
-        discovery_payload((gate.EXPECTED_DEVICES[2],)),
-        [gate.EXPECTED_DEVICES[2]],
+        discovery_payload(filtered_rank2),
+        list(filtered_rank2),
         "filtered",
-    ) == [gate.EXPECTED_DEVICES[2]]
+    ) == list(filtered_rank2)
 
 
 @pytest.mark.parametrize("mutation", ["missing", "wrong_full", "wrong_filtered"])

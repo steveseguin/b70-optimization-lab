@@ -646,7 +646,14 @@ def main() -> int:
         )
         parsed_filtered = validate_physical_mapping(
             json.loads(filtered_path.read_text()),
-            [expected_device],
+            [
+                (
+                    0,
+                    expected_device[1],
+                    expected_device[2],
+                    expected_device[3],
+                )
+            ],
             f"rank {rank} filtered",
         )
         reported_unfiltered = [
