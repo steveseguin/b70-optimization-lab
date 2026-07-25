@@ -299,6 +299,9 @@ def test_parity_runner_uses_real_selector_paths():
         .read_text(encoding="utf-8")
     )
     assert "_XPUPersistentKVCacheViews" not in source
+    assert (
+        "from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func"
+    ) in source
     assert "FlashAttentionImpl(**impl_args)" in source
     assert (
         source.count('os.environ["VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS"]') == 2

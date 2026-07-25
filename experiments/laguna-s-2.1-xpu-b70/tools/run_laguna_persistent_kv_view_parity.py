@@ -115,11 +115,9 @@ def main() -> int:
 
     import vllm
     import vllm_xpu_kernels
+    from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
     from vllm.v1.attention.backend import AttentionType
-    from vllm.v1.attention.backends.flash_attn import (
-        FlashAttentionImpl,
-        flash_attn_varlen_func,
-    )
+    from vllm.v1.attention.backends.flash_attn import FlashAttentionImpl
 
     if Path(vllm.__file__).resolve().parents[1] != VLLM_ROOT:
         die("vLLM import origin drift")
