@@ -1,0 +1,113 @@
+{
+  "schema": "laguna-s-2.1-m8-persistent-attention-metadata-record-v1",
+  "date": "2026-07-25",
+  "status": "VERIFIED_INDEPENDENTLY_AUDITED_RECORD_CANDIDATE",
+  "source": {
+    "main_tooling_commit": "ea70d34fee12719889db8e23cb4e18f19d1e9555",
+    "vllm_commit": "ef334233deabeaeedb607056a2db1c90edb3887c",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba"
+  },
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m8-metadata-formal-ea70d34fe-ef334233d-20260725T015736Z",
+  "metric": "median_tok_s_1_100_after_ttft",
+  "starts": {
+    "A1_graph_metadata_off": 92.54961760665958,
+    "B1_graph_metadata_on": 94.92003934159611,
+    "B2_graph_metadata_on": 95.06654837534518,
+    "A2_graph_metadata_off": 92.87797142677606
+  },
+  "record": {
+    "submitted_value_policy": "lower of two metadata-on graph starts",
+    "candidate_lower_start_tok_s": 94.92003934159611,
+    "prior_approved_tok_s": 92.16352215694299,
+    "prior_approved_id": "cmrzjb7i906x4o401egrnm05m",
+    "delta_tok_s": 2.75651718465312,
+    "delta_pct": 2.990898264455555,
+    "multiple": 1.0299089826445555,
+    "strict_practical_floor_tok_s": 92.393930962335
+  },
+  "pairs": {
+    "B1_vs_A1": {
+      "row_wins": "13/13",
+      "headline_delta_pct": 2.5612442236238477,
+      "median_paired_delta_pct": 2.3511088081138385,
+      "aggregate_cycle_saving_ms": 0.9112340643584034,
+      "acceptance_rate_delta": 0.0003077489561834623,
+      "passed": true
+    },
+    "B2_vs_A2": {
+      "row_wins": "13/13",
+      "headline_delta_pct": 2.3564004628315667,
+      "median_paired_delta_pct": 2.5609196498322975,
+      "aggregate_cycle_saving_ms": 1.6476436413154687,
+      "acceptance_rate_delta": 0.0003070338847266929,
+      "passed": true
+    }
+  },
+  "quality": {
+    "teacher_exact": "52/52",
+    "cross_leg_exact": "39/39",
+    "cached_tokens_zero": "52/52",
+    "long_then_next": "8/8",
+    "rollover": "4/4",
+    "fresh_unique_prompts": true,
+    "single_active_generation": true,
+    "no_warmup_generation": true,
+    "no_retry": true,
+    "no_cache_history_ngram_or_response_reuse": true
+  },
+  "treatment": {
+    "sole_difference": "VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA",
+    "control_value": 0,
+    "candidate_value": 1,
+    "attention_graph_capture": 0,
+    "persistent_metadata_contract": "builder-owned fixed-address exact q2..q8 query offsets, KV lengths, and expanded block tables refreshed in place with identity/signature drift guards"
+  },
+  "graph": {
+    "mode": "NONE",
+    "cudagraph_mode": "PIECEWISE",
+    "capture_sizes": [
+      8
+    ],
+    "max_capture_size": 8,
+    "graphs_per_rank": 146,
+    "eager_breaks_per_rank": 145,
+    "all_four_starts_distinct_rank_captures": 4,
+    "all_four_starts_distinct_rank_replays": 4
+  },
+  "b1_submission_summary": {
+    "tok_s_out": 94.92003934159611,
+    "tok_s_out_p10": 65.96405025998898,
+    "tok_s_out_mean": 103.83247833389996,
+    "tok_s_out_stdev": 46.64442865330004,
+    "tok_s_full_after_ttft_median": 122.73475398406843,
+    "tok_s_wall_full_median": 50.165140974195374,
+    "ttft_ms_median": 5960.275208984967,
+    "draft_cycles": 1718,
+    "draft_tokens": 12026,
+    "accepted_draft_tokens": 4644,
+    "draft_acceptance_rate": 0.38616331282221855
+  },
+  "audits": {
+    "committed_analyzer_disposition": "record_candidate",
+    "formal_raw_performance_and_exactness": "CLEAN",
+    "operational_identity_topology_idle_and_sealing": "CLEAN",
+    "qualification_or_stopped_root_contamination": false,
+    "independent_final_audit": "APPROVED",
+    "rerun_caveat": "Invoke the sealed analyzer from the repository root because the controller self-path was recorded relative to that intended working directory."
+  },
+  "sha256": {
+    "full_analysis": "1f4334ccdf45e3c17e68366c4e24ff95adc022809d60986146c10d00cdd460f9",
+    "all_vs_teacher": "6b4c1aebfdc7bcd5779d640e4276f9dec33abcc54d3a8b958c8f19f443d7e332",
+    "cross_leg": "1a3a85587d2409a5ee04740ce78504796766baecbc5e2e0036eda751e0be2fa9",
+    "b1_bench": "5d7e9e49faac7046fdff4a6d83dc8ea7b4c6990ebb67d76d50cb42e98fdde6e2",
+    "b1_exactness": "04e18dde23f53ebf9eeee0a3760bf7daeb3d0a20bc1f119fa2f43bc013bdde56",
+    "b1_server_log": "3f26de97073a3283b50c7b762e8124c70434308be96faaa035bf52bdc64b85ac"
+  },
+  "localmaxxing": {
+    "submission_status": "NOT_YET_SUBMITTED",
+    "queue_path": "data/localmaxxing-laguna-s-2.1-int4-b70-dflash-persistent-metadata-94.920tok-20260725.queue.json",
+    "response_path": "data/localmaxxing-responses/laguna-s-2.1-int4-b70-dflash-persistent-metadata-94.920tok-20260725.response.json"
+  }
+}
