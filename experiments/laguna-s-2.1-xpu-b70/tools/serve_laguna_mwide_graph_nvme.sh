@@ -90,6 +90,6 @@ exec vllm serve "$model_root" \
   --generation-config vllm \
   --enable-prompt-tokens-details \
   --compilation-config \
-    '{"mode":"NONE","cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[${LAGUNA_M}],"max_cudagraph_capture_size":${LAGUNA_M}}' \
+    "{\"mode\":\"NONE\",\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[${LAGUNA_M}],\"max_cudagraph_capture_size\":${LAGUNA_M}}" \
   --speculative-config \
     "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\"}"
