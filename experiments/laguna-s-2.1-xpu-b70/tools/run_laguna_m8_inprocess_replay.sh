@@ -152,7 +152,8 @@ laguna_nvme_prepare_run_dir "$run_dir"
 chmod 700 -- "$run_dir"
 for arm in q1 eager graph; do
   arm_dir="$run_dir/$arm"
-  rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8ir-$run_tag-$arm"
+  rpc_dir="$LAGUNA_NVME_TMP_ROOT/i${run_tag:0:8}${arm:0:1}"
+  (( ${#rpc_dir} + 1 + 36 <= 107 )) || die "projected ZMQ IPC path is too long"
   [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "reused RPC path: $rpc_dir"
   mkdir --mode=700 -- "$rpc_dir"
   created+=("$rpc_dir")
@@ -175,7 +176,7 @@ laguna_nvme_verify_model_contents
 
 run_arm() {
   local arm="$1" graph=0 arm_dir="$run_dir/$1"
-  local rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8ir-$run_tag-$1"
+  local rpc_dir="$LAGUNA_NVME_TMP_ROOT/i${run_tag:0:8}${1:0:1}"
   local profile_dir="" status post_status=0 had_survivors=0 attempt
   local -a profile_env=() driver_args=()
   [[ "$arm" == graph ]] && graph=1
