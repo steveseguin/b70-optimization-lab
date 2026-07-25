@@ -357,6 +357,15 @@ a fresh owner-private directory under the separate internal-NVMe analysis
 root, recording the clean analyzer commit and exact analyzer-file hash. Two
 independent reviews approved that commit and one offline-only audit; no
 hardware rerun is allowed.
+The sealed offline audit passed as `exact_four_card_component_pass`: 128
+changing-input rows and 1,536 raw boundary/cache equality assertions passed
+across all four cards, with stable workspace pointers, unchanged weights, and
+capture-true rejection leaving workspace/cache/input state untouched. Promote
+the [structured component summary](data/laguna-s-2.1-dflash-context-kv-component-20260725.json).
+This is component-only evidence, not throughput or endpoint authority. Next,
+design a fresh non-timing TP4 full-runtime selector-off/on exactness gate over
+the real loaded model/cache lifecycle and full greedy target/draft/rejection
+tokens and text. Do not run a cold crossover yet.
 Resume from the
 [DFlash workspace preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-dflash-context-kv-workspace-preregistration.md).
 The completed current-stream diagnostic still records rank-2 repeated graph

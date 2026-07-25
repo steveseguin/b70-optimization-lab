@@ -2,12 +2,11 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: **three component packets are terminally consumed. The third completed
-`exact_component_pass` on all four physical cards, then its offline analyzer
-rejected the valid projected-V storage offset. No hardware rerun is allowed;
-the analyzer repair received two independent approvals for one offline-only
-audit after a clean commit. No endpoint, benchmark, or submission action is
-authorized**.
+Status: **promoted exact four-card component pass. The third packet completed
+`exact_component_pass` on all four physical cards; a separately committed and
+sealed offline audit corrected the projected-V view-offset rule and returned
+`exact_four_card_component_pass`. No endpoint, benchmark, or submission action
+is authorized**.
 
 ## Purpose
 
@@ -273,6 +272,22 @@ rerun is needed or allowed.
 Two independent reviews approved committing this analyzer-only repair and
 running it once against the sealed `145050c5d` evidence. They authorized no
 XPU, worker, benchmark, endpoint, or submission action.
+
+The offline audit at
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/analyses/laguna-dflash-context-kv-component-145050c5d-a97e9c086-20260725T064453Z`
+passed and was sealed with its own manifest. Across the four physical cards,
+the durable matrix contains 128 changing-input rows and 1,536 raw equality
+assertions: 768 recorded operation-boundary comparisons and 768 six-layer
+cache comparisons. Every comparison passed; weights, workspace pointers,
+capture-rejection state, caches, and inputs stayed within the frozen contract.
+Three independent read-only audits approved promotion as component-only
+evidence. Preserve the structured
+[`data` summary](../../../data/laguna-s-2.1-dflash-context-kv-component-20260725.json).
+
+The next authority is design only: construct a fresh non-timing TP4
+full-runtime exactness gate using the real loaded model/cache lifecycle and
+selector-off/on paths. It must validate full greedy target/draft/rejection
+token arrays and text before any cold performance crossover is authorized.
 
 No endpoint is authorized by a component pass. A later graph-vs-graph cold
 crossover may be constructed only if every card is bitwise exact and the

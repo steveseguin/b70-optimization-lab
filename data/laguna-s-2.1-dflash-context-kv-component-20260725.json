@@ -1,0 +1,65 @@
+{
+  "schema": "laguna-dflash-context-kv-component-promotion-v1",
+  "date": "2026-07-25",
+  "status": "exact_four_card_component_pass",
+  "authority": "component_only_no_endpoint_or_benchmark",
+  "candidate": {
+    "selector": "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1",
+    "vllm_commit": "4459910e2ac5a7b552887fc0a3f3e3cf9a4701c0",
+    "kernel_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "model_root": "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4",
+    "model_sha256": "0850e39b5c079a9f1a9bafed729a4545b088a91876541d010d871f6d6d8bf909"
+  },
+  "evidence": {
+    "main_commit": "145050c5df2a7e0d9f6d056b7b1f5b1f61072d8e",
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dflash-context-kv-component-145050c5d-4459910e2-20260725T063712Z",
+    "analysis_source_commit": "a97e9c086bb0af4b58bee6ab0b18f2bac3bb1086",
+    "analysis_source_sha256": "163ca08a21aad78364b6c2034e8fd7666d5eaa268976d50119bfca98800f1d60",
+    "analysis_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/analyses/laguna-dflash-context-kv-component-145050c5d-a97e9c086-20260725T064453Z",
+    "analysis_sha256": "468899030d8ccb524408b906470579fb9940131a3c4875e0dbba224f81f20788",
+    "analysis_manifest_sha256": "b2d899ad47ca381c0ec4d752629c1974b73e62440a0e2caf66d541ba9fb7f63d",
+    "rank_result_sha256": {
+      "0": "ab60e797ffb028a743a2f55b2b631a56679c77b386aba113374f7e516c47db6b",
+      "1": "dd01e55508121c316435ceb8d586038c83ed6250e18ab258ceb9f1f0e2a25dc3",
+      "2": "4d7f5b5684ad20db339537c5d07703ffc2b3a513e193a4e0256da4bb6a373ca2",
+      "3": "2ca7f1939fa0842586b207bcab42275696375223ff9dbdfd90f702bffbc967e4"
+    }
+  },
+  "coverage": {
+    "physical_cards": 4,
+    "branches_per_card": [
+      "actual_no_bias",
+      "synthetic_bias"
+    ],
+    "widths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "changing_repeats_per_width": 2,
+    "rows_per_branch_per_card": 16,
+    "total_rows": 128,
+    "boundary_comparisons_per_card": 192,
+    "cache_comparisons_per_card": 192,
+    "total_raw_equality_assertions": 1536,
+    "all_boundary_equal": true,
+    "all_cache_equal": true,
+    "all_weights_unchanged": true,
+    "capture_true_rejection_on_every_card": true,
+    "capture_workspace_cache_input_unchanged": true,
+    "width_9_incumbent_fallback_on_every_card": true
+  },
+  "excluded_claims": {
+    "tp4_process_group_integration": false,
+    "real_endpoint_generation": false,
+    "throughput": false,
+    "record": false,
+    "localmaxxing_submission": false
+  },
+  "next_authority": "design_only_tp4_full_runtime_exactness_gate"
+}
