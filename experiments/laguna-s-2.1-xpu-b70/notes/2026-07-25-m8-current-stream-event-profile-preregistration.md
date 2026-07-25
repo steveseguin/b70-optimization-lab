@@ -38,6 +38,30 @@ arithmetic, kernel argument, graph, collective, or boundary order.
 Any implementation and runtime harness must be separately committed and
 audited before an XPU action.
 
+## Committed implementation packet
+
+The default-off runtime implementation is frozen at vLLM
+`fcc2506f7da3a9fd142928af9275d25b9687342a`. Its focused Breakable-graph
+suite passes `36` tests with `11` expected CUDA-only skips, and the complete
+two-file vLLM pre-commit set passes, including Ruff, formatting, mypy,
+forbidden-import, and new-device-API checks.
+
+The dedicated two-arm packet is:
+
+- `tools/run_laguna_m8_current_stream_event_arm.py`;
+- `tools/run_laguna_m8_current_stream_event_diagnostic.sh`;
+- `tools/laguna_m8_current_stream_event_contract.py`;
+- `tools/analyze_laguna_m8_current_stream_event.py`; and
+- `tools/test_analyze_laguna_m8_current_stream_event.py`.
+
+The analyzer's focused CPU suite passes nine tests, including an explicit
+anti-fabrication fixture where the slowest total, largest attention sum, and
+largest collective sum occur on different ranks. The selected decision still
+uses only the slowest rank's own category sums. The controller, driver,
+analyzer, shell syntax, Ruff, formatting, and whitespace checks must all remain
+clean at the packet commit. No XPU or model process was run
+while constructing this packet.
+
 ## Event-profile contract
 
 The profiler is default-off and requires a new owner-private internal-NVMe
