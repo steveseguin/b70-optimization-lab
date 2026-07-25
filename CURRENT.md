@@ -328,6 +328,10 @@ context widths 1 through 8 while preserving the incumbent RMSNorm, BMM, bias,
 layout-copy, K-RMSNorm, RoPE, and cache-write order. Prompt/prefill widths stay
 on the incumbent path. No XPU or model action is authorized until a separate
 four-card raw-bit component gate is committed and independently reviewed.
+The unexecuted gate tooling now exists and passes host syntax, lint, and 13
+analyzer tamper tests. Two independent reviews approved committing and
+consuming the exact packet once for component-only XPU evidence; no endpoint,
+benchmark, or submission is authorized.
 Resume from the
 [DFlash workspace preregistration](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-dflash-context-kv-workspace-preregistration.md).
 The completed current-stream diagnostic still records rank-2 repeated graph

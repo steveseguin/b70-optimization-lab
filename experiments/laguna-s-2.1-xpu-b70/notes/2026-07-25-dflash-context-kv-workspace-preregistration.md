@@ -2,9 +2,10 @@
 
 Date: 2026-07-25 America/Toronto
 
-Status: **host-only source frozen; no XPU, model, endpoint, or submission
-action authorized until the separate component packet is committed and
-reviewed**.
+Status: **component packet independently approved; one component-only XPU
+execution becomes authorized after this exact packet is committed and the
+main worktree is clean. No endpoint, benchmark, or submission action is
+authorized**.
 
 ## Purpose
 
@@ -129,6 +130,51 @@ component gate must cover all four physical B70s, all steady widths 1 through
 raw-bit equality at projected K, projected V, normalized K, RoPE K, and final
 cache-write boundaries. It must verify stable workspace pointers after first
 use and unchanged slot mappings/cache locations.
+
+The component packet is now implemented, but remains unexecuted until its
+source is committed, the main worktree is clean, and independent re-review
+approves it:
+
+- `tools/run_laguna_dflash_context_kv_component.sh` owns the fresh one-shot
+  internal-NVMe campaign and four sequential one-visible-card legs;
+- `tools/create_laguna_dflash_context_kv_consumption.py` acquires the external
+  packet-specific marker with `O_CREAT|O_EXCL|O_NOFOLLOW`, full-write and
+  file/directory fsync semantics before any native import or tensor work;
+- `tools/run_laguna_dflash_context_kv_component.py` writes a durable
+  pre-import seal, verifies the frozen device/source/model identities, loads
+  the real TP4 rank-local DFlash checkpoint slices, passes those slices through
+  the actual `DFlashLagunaModel._build_context_kv_buffers` helper, and compares
+  incumbent allocation against the frozen workspace helper;
+- `tools/analyze_laguna_dflash_context_kv_component.py` independently rejects
+  missing or malformed boundary hashes, shapes, strides, byte counts, context
+  freshness, workspace-pointer reuse, checkpoint-to-builder linkage, cache
+  layers, source identities, or physical-card mappings;
+- `tools/test_analyze_laguna_dflash_context_kv_component.py` contains CPU-only
+  tamper tests for the analyzer.
+
+The real checkpoint arm is bias-free, as required by its hashed config and
+the absence of all six QKV bias keys. A separately labelled synthetic-bias arm
+exercises the source branch without representing it as the published model.
+The downstream check uses the config-derived actual YaRN RoPE parameters and
+the real `FlashAttentionImpl.do_kv_cache_update` implementation with its
+native BF16 cache layout and slot mapping. It is still component evidence, not
+an endpoint or TP4-generation claim. Width zero remains covered by host source
+tests rather than launching an unsupported zero-range XPU RMSNorm; the XPU
+fallback check uses width nine.
+
+The exact committed packet is consumable only once across run directories:
+before any native import or tensor work, the launcher must acquire an
+`O_EXCL` packet-hash-specific marker under the internal-NVMe authorization
+root. A failed packet therefore requires a new reviewed commit rather than a
+rerun or rescued sample. Each physical-card leg also contains a bounded
+non-generative XPU capture microcase. It must observe eager false, capture
+true, the exact candidate `RuntimeError`, and unchanged workspace registry,
+workspace pointers/bytes, cache bytes, and input bytes.
+
+Host packet validation passes Python compilation, Ruff, formatting, Bash
+syntax, whitespace checks, and 13 analyzer tamper tests. Two independent
+read-only reviews approved committing and consuming the exact packet once for
+component-only XPU evidence. No XPU was used for these checks or reviews.
 
 No endpoint is authorized by a component pass. A later graph-vs-graph cold
 crossover may be constructed only if every card is bitwise exact and the
