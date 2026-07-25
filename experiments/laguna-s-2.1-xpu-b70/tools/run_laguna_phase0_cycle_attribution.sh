@@ -14,7 +14,7 @@ readonly python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
 readonly tools="$repo/experiments/laguna-s-2.1-xpu-b70/tools"
 readonly driver="$tools/run_laguna_phase0_cycle_attribution_arm.py"
 readonly root="${1:?usage: run_laguna_phase0_cycle_attribution.sh RUN_ROOT}"
-readonly expected_vllm=ee2f07da4
+readonly expected_vllm=ea78a713e
 # zmq ipc sockets live here; the path must stay well under 107 characters
 readonly rpc="${LAGUNA_NVME_TMP_ROOT:-/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp}/p0a"
 
@@ -87,7 +87,8 @@ setsid /usr/bin/timeout --foreground --preserve-status --signal=TERM --kill-afte
   LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS=7 \
   VLLM_USE_BREAKABLE_CUDAGRAPH=1 XPU_GRAPH=1 VLLM_XPU_ENABLE_XPU_GRAPH=1 \
   VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_ROOT="$root/attribution" \
-  VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_DEVICE_CYCLES=512 \
+  VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_DEVICE_CYCLES=1 \
+  VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_TOPK_PROBE=1 \
   "$python" "$driver" --out "$root/arm.json" \
   >"$root/driver.stdout" 2>"$root/driver.stderr"
 
