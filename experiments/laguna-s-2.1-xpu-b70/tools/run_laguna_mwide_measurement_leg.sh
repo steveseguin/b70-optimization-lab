@@ -131,6 +131,9 @@ finalize() {
 }
 trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 
+# the M8-only fusions pin speculation to depth 7; disable at other widths
+se=1; qk=1
+if [[ "$laguna_m" != 8 ]]; then se=0; qk=0; fi
 metadata_selector="$metadata_arg"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
@@ -146,8 +149,6 @@ verify_idle_interval prestart
 } > "$run_dir/identity.txt"
 
 graph=1
-se=1; qk=1
-if [[ "$laguna_m" != 8 ]]; then se=0; qk=0; fi
 serve_script="$graph_serve"
 setsid /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp" \
