@@ -248,3 +248,32 @@ stable workspaces and capture rejection. Its retained root is:
 /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
 mwide-dflash-context-kv-clean-c699475-6eb01c9a9-20260726
 ```
+
+The clean selector-off endpoint control is valid:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-width12-stack-clean-control-40985722f-c6994754f-20260726T204225Z
+```
+
+It returned `13/13` bitwise exact, `cached_tokens=0` throughout, and audited
+`146/145` on all four ranks. Its cold scored median was
+`98.95528531492559 tok/s`; this is below the earlier `100.524890` leg but no
+favorable retry or baseline substitution was performed.
+
+The first clean selector-on integration attempt produced no performance
+sample. Its first benchmark request returned HTTP 500 because a second
+full-model cast-skip guard still required router logits shape `(8, 256)`, even
+though dispatch and the native op already admitted width 12:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-width12-stack-clean-candidate-40985722f-c6994754f-20260726T205059Z
+```
+
+The narrow correction is vLLM
+`13e211c3bb6d23ad50598980acb914a05bd1e8ba`: it admits only `(8, 256)` and
+`(12, 256)` BF16 logits in that cast-skip guard and keeps all other widths
+fail-closed. The focused suite now returns `74 passed`, including direct
+coverage of both admitted widths and rejection of width 11. The failed run is
+an integration/harness result, not a correctness or throughput result.
