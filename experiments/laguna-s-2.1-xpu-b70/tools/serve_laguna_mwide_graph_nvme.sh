@@ -50,6 +50,22 @@ case "${VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS:-}" in
   0|1) ;;
   *) echo "VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS must be 0 or 1" >&2; exit 2 ;;
 esac
+for name in \
+  VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK \
+  VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK \
+  VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE; do
+  case "${!name:-}" in
+    0|1) ;;
+    *) echo "$name must be 0 or 1" >&2; exit 2 ;;
+  esac
+done
+if [[ "$VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK" !=
+      "$VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE"
+      || "$VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK" !=
+      "$VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK" ]]; then
+  echo "width-12 router and DFlash workspace selectors must move together" >&2
+  exit 2
+fi
 if [[ "$VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS" == 1
       && "$VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA" == 1 ]]; then
   echo "attention subgraphs and prebuilt metadata cannot be combined" >&2
