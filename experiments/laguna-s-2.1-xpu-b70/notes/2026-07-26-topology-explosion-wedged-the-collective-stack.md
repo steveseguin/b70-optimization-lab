@@ -166,3 +166,19 @@ and the only one that has not come back.
 
 TP4 requires all four. No amount of further waiting will change this, and there
 is no unprivileged reset path. The reboot is the whole remaining blocker.
+
+## Single-card health is not collective health
+
+A later check found all four cards passing a single-device matmul
+simultaneously, including card 3. That looked like recovery and was used as the
+ladder's preflight. It was the wrong test: the first measurement leg started,
+hung in `init_device`'s warm-up `all_reduce`, and burned the full fifteen-minute
+health timeout, with its server log ending at the CCL topology warnings.
+
+Running the 4-rank probe directly then confirmed it: **0 of 4 ranks complete the
+all_reduce** while every card passes single-device work.
+
+So the fault is specifically in the collective path, and per-card execution says
+nothing about it. The ladder's preflight now runs the same 4-rank all_reduce a
+leg will run and refuses to start otherwise, so a wedged host costs seconds
+rather than a quarter of an hour.
