@@ -132,3 +132,22 @@ M. It is a real candidate, not a safe one. The width-two tree remains the lever
 with actual margin: greedily spending a 15-node budget on the measured top-2
 coverage (72.2% → 84.2%) projects ≈ 4.379 emitted/cycle, **+18.3%**. That needs
 tree attention in the verifier and is a much larger change.
+
+## Update: the cards flap, and probing may be feeding it
+
+Polling all four cards with a small matmul every four minutes produced, in
+order: `2/4 (0,2 ok)`, `2/4`, `2/4`, `3/4 (1 recovered)`, `3/4`, `2/4 (1
+regressed)`. Cards recover and re-wedge; the set never reached 4/4.
+
+Two things follow. First, waiting is not converging, so the reboot is the
+answer rather than patience. Second, between the check where card 1 passed and
+the one where it failed, the only thing that touched it was the probe itself —
+so the polling is plausibly contributing, since each attempt on a wedged device
+can leak another context. Polling has been stopped for that reason.
+
+Card 3 is BDF `0000:47:00.0`, the device named in the original
+`xe ... GT0: Kernel-submitted job timed out`. It has never recovered.
+
+Practical consequence: a TP4 leg needs all four cards for ~25 minutes. Under
+flapping, such a run would fail partway and risk re-wedging the set, which is
+how this started. No further GPU work should be attempted before a reboot.
