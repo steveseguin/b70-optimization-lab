@@ -59,10 +59,11 @@ for name in \
     *) echo "$name must be 0 or 1" >&2; exit 2 ;;
   esac
 done
-if [[ "$VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK" !=
-      "$VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE"
-      || "$VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK" !=
-      "$VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK" ]]; then
+if [[ "$VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK" != "$VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE" ]]; then
+  echo "width-12 router and DFlash workspace selectors must move together" >&2
+  exit 2
+fi
+if [[ "$VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK" != "$VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK" ]]; then
   echo "width-12 router and DFlash workspace selectors must move together" >&2
   exit 2
 fi
