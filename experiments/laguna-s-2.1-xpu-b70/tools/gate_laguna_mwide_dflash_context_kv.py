@@ -15,8 +15,12 @@ from typing import Any
 
 
 MAIN_ROOT = Path("/home/steve/llm-optimizations").resolve()
-VLLM_ROOT = Path("/home/steve/src/laguna-vllm-runtime-graph-20260724").resolve()
-KERNEL_ROOT = Path("/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc").resolve()
+VLLM_ROOT = Path(
+    "/home/steve/src/laguna-vllm-width12-stack-clean-20260726"
+).resolve()
+KERNEL_ROOT = Path(
+    "/home/steve/src/laguna-xpu-kernels-width12-router-clean-20260726"
+).resolve()
 BASE_COMPONENT = (
     MAIN_ROOT
     / "experiments/laguna-s-2.1-xpu-b70/tools"

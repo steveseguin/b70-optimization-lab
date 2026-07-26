@@ -193,3 +193,37 @@ Two earlier card-zero attempts are harness failures, not candidate results:
 Neither wrote a result, started a service, generated a token, or produced a
 performance sample. Both faults were corrected in committed source before the
 successful four-card campaign.
+
+## Accumulated-branch endpoint invalidation and clean rebase
+
+The first selector-off endpoint control on the accumulated source identity
+`9090947f229ef4110f4b71a79cba7114efbbac5a` is invalid as a baseline:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-width12-stack-control-211d26eab-9090947f2-20260726T161100Z
+```
+
+It was cache-zero and preserved the audited `146/145` topology, but measured
+only `91.03238 tok/s` and matched the frozen teacher on `12/13` prompts. The
+`shell-safety-review` prompt first diverged at generated token index 1
+(`4603` expected, `23950` actual). No candidate leg was authorized.
+
+That result exposed source-identity contamination rather than evidence about
+either treatment. The accumulated vLLM branch was 2,096 inserted lines beyond
+the last proven `13/13` source identity and carried unrelated tree, local
+argmax, and attention-capture experiments that had never been jointly
+re-proven. The clean correction ports only the two audited treatments onto:
+
+- vLLM base `6ae34833dda19b4d4315d2a2a236180b7fe44612`, clean candidate
+  `c6994754f7e41139772847b31af4363d2e742aaa`;
+- XPU-kernel base `a5f99d8ed98c02eef87e29be44a8cd63b1ec9155`, clean candidate
+  `6f9dd3c3a7b1b677a992ca4f431a968408f9c816`; and
+- clean `_moe_C.abi3.so` SHA256
+  `00fd81608f057039d31e1b316fecbecec60b3b03151e66b95d0f844185119715`.
+
+The clean source ports passed the same 71 focused vLLM tests and two kernel
+static tests, plus Ruff, Python compilation, clang-format, and whitespace
+checks. Physical-card component gates and the selector-off endpoint control
+must be rerun under these identities before a selector-on measurement is
+allowed.

@@ -18,10 +18,10 @@ ROWS = 12
 EXPERTS = 256
 TOPK = 10
 EXPECTED_KERNEL_ROOT = Path(
-    "/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc"
+    "/home/steve/src/laguna-xpu-kernels-width12-router-clean-20260726"
 ).resolve()
 EXPECTED_VLLM_ROOT = Path(
-    "/home/steve/src/laguna-vllm-runtime-graph-20260724"
+    "/home/steve/src/laguna-vllm-width12-stack-clean-20260726"
 ).resolve()
 BASE_GATE = Path(__file__).resolve().parent / "gate_laguna_m8_bf16_router_topk.py"
 EXPECTED_SELECTORS = {

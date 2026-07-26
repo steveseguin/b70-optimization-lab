@@ -54,8 +54,8 @@ readonly width12_stack="${13:-0}"
 
 readonly repo_root=/home/steve/llm-optimizations
 
-readonly vllm_root=/home/steve/src/laguna-vllm-runtime-graph-20260724
-readonly kernel_root=/home/steve/src/deepseek-v4-xpu-kernels-mwidth-mhc
+readonly vllm_root=/home/steve/src/laguna-vllm-width12-stack-clean-20260726
+readonly kernel_root=/home/steve/src/laguna-xpu-kernels-width12-router-clean-20260726
 readonly venv_python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
 readonly vllm_binary=/home/steve/.venvs/deepseek-v4-xpu/bin/vllm
 readonly graph_serve="$script_dir/serve_laguna_mwide_graph_nvme.sh"
@@ -145,7 +145,7 @@ check_hash "$kernel_root/vllm_xpu_kernels/_C.abi3.so" \
 check_hash "$kernel_root/vllm_xpu_kernels/_xpu_C.abi3.so" \
   f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" \
-  154eebd95beb83089b6628a21085e079b730c4474408d8fd2b484c385a0ce5d5
+  00fd81608f057039d31e1b316fecbecec60b3b03151e66b95d0f844185119715
 check_hash "$kernel_root/vllm_xpu_kernels/libgrouped_gemm_xe_2.so" \
   fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
 laguna_nvme_verify_model_contents
