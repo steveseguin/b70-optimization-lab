@@ -84,7 +84,7 @@ exec vllm serve "$model_root" \
   --max-num-seqs 1 \
   --block-size 64 \
   --kv-cache-dtype bfloat16 \
-  --gpu-memory-utilization 0.90 \
+  --gpu-memory-utilization "${LAGUNA_GPU_UTIL:-0.90}" \
   --no-enable-prefix-caching \
   --no-async-scheduling \
   --generation-config vllm \
