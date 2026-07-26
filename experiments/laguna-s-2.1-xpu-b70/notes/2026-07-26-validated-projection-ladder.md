@@ -70,6 +70,22 @@ This axis is independent of acceptance and multiplies with it:
 
 Alone, draft capture needs about **35%** to clear 102.
 
+## A caveat that trims the tree rows
+
+DFlash drafts every position from a single masked forward, so its distribution
+at a position is a marginal over paths, not a continuation of the token chosen
+before it. A node whose ancestry departs from the top-1 spine is therefore
+drafted from a distribution that assumed the spine, and its acceptance is below
+what its depth and rank imply. The model above does not capture that.
+
+In the 15-node tree the affected nodes are the descendants of the depth-1 rank-2
+node — rows 10 and 14, carrying path probability 0.167 of a 3.436 accepted
+total, so roughly **5%** of the tree's expected accepted tokens are
+overestimated. Node 7 itself is unaffected, since at depth 1 there is no
+ancestry to condition on, and so are rank-2 nodes hanging directly off the
+spine. Treating the tree rows as an upper bound with a few percent of slack,
+tree-15 lands nearer 4.35–4.44 and still sits clearly above every chain.
+
 ## Reading
 
 Three independent routes now clear 102: a depth-15 chain (105.5), an 11-node
