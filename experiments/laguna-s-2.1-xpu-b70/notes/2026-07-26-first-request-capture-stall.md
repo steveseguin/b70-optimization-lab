@@ -59,7 +59,24 @@ initialization. An earlier note in this lane asserted this stall was worth
 is robust to an outlier's *magnitude*, not to its *rank*, and this outlier
 occupies the bottom rank and shifts the index.
 
-## What is not being claimed
+## REJECTED as a route
+
+Moving the capture to startup is a cheat and is not being pursued. Cold start
+includes first-request initialization -- that is what cold start measures. The
+system would not be one token per second faster; the measurement would simply
+stop counting a cost the benchmark exists to count. The suite would still be
+"cold" by every other criterion, which is exactly what makes the rationalisation
+tempting and is why it is written down here as rejected rather than left as an
+open option.
+
+The finding still matters as engineering: a 10.478 s capture on the first live
+decode is worth fixing for real users. It is not worth anything on this
+scoreboard, and a fix should be measured on its own terms rather than folded
+into a record attempt.
+
+## Original framing, retained
+
+
 
 That removing it is automatically legitimate. Twelve prompts measure decode
 throughput; one measures decode throughput plus engine initialization. Moving
