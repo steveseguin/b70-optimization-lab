@@ -42,10 +42,15 @@ case "${VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA:-}" in
   0|1) ;;
   *) echo "VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA must be 0 or 1" >&2; exit 2 ;;
 esac
-[[ "${VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS:-}" == 0 ]] || {
-  echo "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS must be 0" >&2
+case "${VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS:-}" in
+  0|1) ;;
+  *) echo "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS must be 0 or 1" >&2; exit 2 ;;
+esac
+if [[ "$VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS" == 1
+      && "$VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA" == 1 ]]; then
+  echo "attention subgraphs and prebuilt metadata cannot be combined" >&2
   exit 2
-}
+fi
 [[ "${VLLM_USE_AOT_COMPILE:-}" == 0 ]] || {
   echo "VLLM_USE_AOT_COMPILE must be 0" >&2
   exit 2
