@@ -31,6 +31,22 @@ Do not print, paste, commit, or copy the API key into a repo. Keep payloads,
 responses, commands, result summaries, and LocalMaxxing IDs in Git; keep the
 secret itself outside Git.
 
+The current speed-result endpoint is
+`https://www.localmaxxing.com/api/speed-tests`; `/api/benchmarks` is reserved
+for quality-benchmark suites and runs. Before a real write, validate the exact
+projected request against the authenticated no-write endpoint:
+
+```bash
+scripts/submit_localmaxxing_results.py \
+  --payloads path/to/queue.json \
+  --label label-to-submit \
+  --server-dry-run
+```
+
+The helper accepts a real submission as successful only when the endpoint
+returns HTTP 201 JSON with nonempty `id` and `status` fields. An HTML response,
+redirected application shell, or generic 2xx response fails closed.
+
 ## Submit Flow
 
 For normal local submissions, rely on the fallback key file:

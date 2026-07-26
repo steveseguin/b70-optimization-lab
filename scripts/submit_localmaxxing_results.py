@@ -10,10 +10,20 @@ import urllib.request
 from pathlib import Path
 
 
-API_URL = "https://localmaxxing.com/api/benchmarks"
+API_URL = "https://www.localmaxxing.com/api/speed-tests"
+API_DRY_RUN_URL = f"{API_URL}/dry-run"
 DEFAULT_KEY_PATH = Path.home() / ".config" / "localmaxxing" / "api_key"
 API_KV_CACHE_DTYPES = {"q8_0", "q4_0", "fp8", "fp16", "auto"}
 API_ATTENTION_BACKENDS = {"flash_attn", "xformers", "sdpa", "triton"}
+API_STRING_LIMITS = {
+    "hfId": 256,
+    "modelRevision": 128,
+    "engineName": 64,
+    "engineVersion": 512,
+    "quantization": 64,
+    "backend": 64,
+    "notes": 2000,
+}
 
 
 def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[str]:
@@ -69,6 +79,13 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
     suite_id = engine.get("realisticSuiteId")
     if not isinstance(suite_id, str) or not suite_id:
         problems.append("missing realisticSuiteId")
+
+    for key, max_length in API_STRING_LIMITS.items():
+        value = payload.get(key)
+        if value is not None and len(str(value)) > max_length:
+            problems.append(
+                f"{key} exceeds the LocalMaxxing API limit of {max_length} characters"
+            )
 
     try:
         projected_engine = api_engine_flags(engine)
@@ -174,9 +191,8 @@ def api_engine_flags(engine_flags: dict) -> dict:
     if gpu_layers is None:
         gpu_layers = 99
 
-    api_flags = {
+    api_flags: dict[str, object] = {
         "commandSnippet": str(command),
-        "gpuLayers": int(gpu_layers),
         "kvCacheDtype": api_kv_cache_dtype,
         "flashAttn": bool(flash_attn_value),
         "attentionBackend": str(attention_backend),
@@ -190,17 +206,56 @@ def api_engine_flags(engine_flags: dict) -> dict:
         "topP": 1.0,
         "extraFlags": extra_text,
     }
+    if gpu_layers is not None and int(gpu_layers) >= 0:
+        api_flags["gpuLayers"] = int(gpu_layers)
+
+    optional_integer_flags = {
+        "tensorParallel": engine_flags.get("tensorParallel")
+        or engine_flags.get("tensorParallelSize"),
+        "pipelineParallel": engine_flags.get("pipelineParallel")
+        or engine_flags.get("pipelineParallelSize"),
+        "maxRunningSeqs": engine_flags.get("maxRunningSeqs")
+        or engine_flags.get("maxNumSeqs"),
+        "specNumTokens": engine_flags.get("specNumTokens"),
+        "specDraftTp": engine_flags.get("specDraftTp"),
+    }
+    for key, value in optional_integer_flags.items():
+        if value is not None:
+            api_flags[key] = int(value)
+
+    optional_float_flags = {
+        "gpuMemUtil": engine_flags.get("gpuMemUtil")
+        or engine_flags.get("gpuMemoryUtilization"),
+    }
+    for key, value in optional_float_flags.items():
+        if value is not None:
+            api_flags[key] = float(value)
+
+    optional_string_flags = {
+        "specMethod": engine_flags.get("specMethod"),
+        "specModel": engine_flags.get("specModel")
+        or engine_flags.get("draftModel"),
+    }
+    for key, value in optional_string_flags.items():
+        if value:
+            api_flags[key] = str(value)
+
     return api_flags
 
 
-def post_payload(key: str, payload: dict) -> tuple[int, str, int | None]:
+def post_payload(
+    key: str,
+    payload: dict,
+    *,
+    api_url: str = API_URL,
+) -> tuple[int, str, int | None]:
     post_payload = dict(payload)
     engine_flags = post_payload.get("engineFlags")
     if isinstance(engine_flags, dict):
         post_payload["engineFlags"] = api_engine_flags(engine_flags)
     body = json.dumps(post_payload).encode("utf-8")
     req = urllib.request.Request(
-        API_URL,
+        api_url,
         data=body,
         method="POST",
         headers={
@@ -223,12 +278,30 @@ def post_payload(key: str, payload: dict) -> tuple[int, str, int | None]:
         return exc.code, text, retry_after_ms
 
 
-def print_success_response(text: str) -> None:
+def parse_success_response(text: str, *, server_dry_run: bool = False) -> dict:
     try:
         parsed = json.loads(text)
-        print(json.dumps({"id": parsed.get("id"), "status": parsed.get("status")}))
-    except Exception:
-        print(text[:500])
+    except json.JSONDecodeError as exc:
+        raise ValueError("success response was not JSON") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("success response was not a JSON object")
+    if server_dry_run:
+        if parsed.get("valid") is not True:
+            raise ValueError("server dry-run response did not report valid=true")
+    else:
+        if not isinstance(parsed.get("id"), str) or not parsed["id"]:
+            raise ValueError("submission response did not include a nonempty id")
+        if not isinstance(parsed.get("status"), str) or not parsed["status"]:
+            raise ValueError("submission response did not include a nonempty status")
+    return parsed
+
+
+def print_success_response(text: str, *, server_dry_run: bool = False) -> None:
+    parsed = parse_success_response(text, server_dry_run=server_dry_run)
+    if server_dry_run:
+        print(json.dumps({"valid": True}))
+    else:
+        print(json.dumps({"id": parsed["id"], "status": parsed["status"]}))
 
 
 def main() -> int:
@@ -243,6 +316,14 @@ def main() -> int:
     parser.add_argument("--sleep-on-429", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
+        "--server-dry-run",
+        action="store_true",
+        help=(
+            "Validate projected payloads against the authenticated "
+            "LocalMaxxing dry-run endpoint without writing a result"
+        ),
+    )
+    parser.add_argument(
         "--allow-non-headline",
         action="store_true",
         help=(
@@ -252,6 +333,8 @@ def main() -> int:
         ),
     )
     args = parser.parse_args()
+    if args.dry_run and args.server_dry_run:
+        parser.error("--dry-run and --server-dry-run are mutually exclusive")
 
     queue = json.loads(Path(args.payloads).read_text())
     if args.label:
@@ -307,23 +390,44 @@ def main() -> int:
 
     for index, item in enumerate(queue, start=1):
         label = item["label"]
-        status, text, retry_after_ms = post_payload(key, item["payload"])
+        api_url = API_DRY_RUN_URL if args.server_dry_run else API_URL
+        status, text, retry_after_ms = post_payload(
+            key,
+            item["payload"],
+            api_url=api_url,
+        )
         print(f"{index}/{len(queue)} {label}: HTTP {status}")
-        if 200 <= status < 300:
-            print_success_response(text)
+        expected_status = 200 if args.server_dry_run else 201
+        if status == expected_status:
+            try:
+                print_success_response(text, server_dry_run=args.server_dry_run)
+            except ValueError as exc:
+                print(f"invalid success response: {exc}", file=sys.stderr)
+                print(text[:500], file=sys.stderr)
+                return 1
             continue
 
         print(text[:1000], file=sys.stderr)
-        if status == 429 and args.sleep_on_429 and retry_after_ms:
+        if (
+            not args.server_dry_run
+            and status == 429
+            and args.sleep_on_429
+            and retry_after_ms
+        ):
             sleep_s = max(1, int(retry_after_ms / 1000) + 2)
             print(f"rate limited; sleeping {sleep_s}s", file=sys.stderr)
             time.sleep(sleep_s)
             status, text, _ = post_payload(key, item["payload"])
             print(f"{index}/{len(queue)} {label} retry: HTTP {status}")
-            if not (200 <= status < 300):
+            if status != 201:
                 print(text[:1000], file=sys.stderr)
                 return 1
-            print_success_response(text)
+            try:
+                print_success_response(text)
+            except ValueError as exc:
+                print(f"invalid success response: {exc}", file=sys.stderr)
+                print(text[:500], file=sys.stderr)
+                return 1
         else:
             return 1
     return 0
