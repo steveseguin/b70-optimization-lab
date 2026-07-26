@@ -93,14 +93,18 @@ submission require the fixed realistic final gate:
 - target model and quantization are unchanged;
 - speculative decoding/MTP is allowed only when accepted tokens are verified by
   the declared target model;
-- primary metric is median tok/s for generated tokens 1-100 after TTFT across
+- primary metric is the conventional median rate for the 99 inter-token
+  intervals between generated-token timestamps 1 and 100 after TTFT across
   the suite, with p10, mean, TTFT, wall tok/s, full 512-token tok/s,
   prompt/output hashes, model identity, runtime commit, env vars, flags, and
   logs recorded.
 
 The submission helper fails closed unless payload `engineFlags` include a
-realistic-suite gate pass marker and `primaryMetricName` is
-`median_tok_s_1_100_after_ttft`.
+realistic-suite gate pass marker,
+`primaryMetricName="median_tok_s_1_100_intervals_after_ttft"`,
+`primaryMetricAccounting="inter-token-intervals"`, 100 generated-token events,
+and 99 intervals. The historical `median_tok_s_1_100_after_ttft` field remains
+in old receipts for compatibility but is not eligible for a new submission.
 
 The public API expects `engineFlags` as a typed object and requires a
 `commandSnippet` when the object is supplied. The local queue files may retain

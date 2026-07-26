@@ -42,11 +42,15 @@ Main entries:
 - [campaign transfer ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md)
 - [KV-cache precision decision](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md)
 - [source snapshots](../patches/laguna-s-2.1-xpu-b70/README.md)
+- [qualified result packet](../results/laguna-s-2.1-int4-b70/README.md)
+- [standalone repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md)
+- [metric correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md)
 
-Status: the requested strict four-B70 objective is complete at
-`102.971435596 tok/s`, 13/13 bitwise exact against the canonical q1 teacher,
-cache-zero on all rows, and approved by LocalMaxxing as
-`cms2ccv2d00lps201rej94pjy`. The record uses exact width 12, DFlash depth 11,
+Status: approved at `102.971435596 tok/s` under the submitted legacy
+100-event/99-interval convention and `101.941721240 tok/s` under conventional
+interval accounting. It is 13/13 token-and-text exact against the canonical
+q1 teacher, cache-zero on all rows, and approved by LocalMaxxing as
+`cms2ccv2d00lps201rej94pjy`. The result uses exact width 12, DFlash depth 11,
 an audited 146/145 Breakable PIECEWISE topology, BF16 KV, and 31 runtime
 E4M3FN W8A16 DFlash projection conversions per rank.
 

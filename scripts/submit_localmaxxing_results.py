@@ -13,6 +13,7 @@ from pathlib import Path
 API_URL = "https://www.localmaxxing.com/api/speed-tests"
 API_DRY_RUN_URL = f"{API_URL}/dry-run"
 DEFAULT_KEY_PATH = Path.home() / ".config" / "localmaxxing" / "api_key"
+PRIMARY_METRIC = "median_tok_s_1_100_intervals_after_ttft"
 API_KV_CACHE_DTYPES = {"q8_0", "q4_0", "fp8", "fp16", "auto"}
 API_ATTENTION_BACKENDS = {"flash_attn", "xformers", "sdpa", "triton"}
 API_STRING_LIMITS = {
@@ -71,8 +72,14 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
     metric_name = str(engine.get("primaryMetricName", ""))
     if not gate_passed:
         problems.append("missing realistic-suite final gate pass marker")
-    if metric_name != "median_tok_s_1_100_after_ttft":
-        problems.append("primaryMetricName must be median_tok_s_1_100_after_ttft")
+    if metric_name != PRIMARY_METRIC:
+        problems.append(f"primaryMetricName must be {PRIMARY_METRIC}")
+    if engine.get("primaryMetricAccounting") != "inter-token-intervals":
+        problems.append("primaryMetricAccounting must be inter-token-intervals")
+    if engine.get("metricWindowGeneratedTokens") != 100:
+        problems.append("metricWindowGeneratedTokens must be 100")
+    if engine.get("metricWindowIntervals") != 99:
+        problems.append("metricWindowIntervals must be 99")
     cached_all_zero = engine.get("realisticSuiteCachedTokensAllZero")
     if cached_all_zero is not True:
         problems.append("realistic suite must report cached_tokens=0 for every request")
@@ -154,6 +161,11 @@ def api_engine_flags(engine_flags: dict) -> dict:
         "realisticSuiteGatePassed": engine_flags.get("realisticSuiteGatePassed"),
         "realisticSuiteCachedTokensAllZero": engine_flags.get("realisticSuiteCachedTokensAllZero"),
         "primaryMetricName": engine_flags.get("primaryMetricName"),
+        "primaryMetricAccounting": engine_flags.get("primaryMetricAccounting"),
+        "metricWindowGeneratedTokens": engine_flags.get(
+            "metricWindowGeneratedTokens"
+        ),
+        "metricWindowIntervals": engine_flags.get("metricWindowIntervals"),
         "tokenTimingSource": engine_flags.get("tokenTimingSource"),
         "githubResultPacket": engine_flags.get("githubResultPacket"),
         "specMethod": engine_flags.get("specMethod"),
@@ -360,8 +372,8 @@ def main() -> int:
             for problem in problems:
                 print(f"  - {problem}", file=sys.stderr)
         print(
-            "synthetic/warmed/history/non-headline payloads are not submit-safe; "
-            "use --allow-non-headline with --dry-run only to inspect them",
+            "one or more payloads are not submission-safe; fix the listed "
+            "identity, accounting, or fresh-response problems before posting",
             file=sys.stderr,
         )
         return 2

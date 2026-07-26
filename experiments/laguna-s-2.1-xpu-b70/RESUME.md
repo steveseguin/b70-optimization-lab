@@ -4,13 +4,22 @@ Last updated: 2026-07-26 America/Toronto
 
 ## Status
 
-The requested objective is complete.
+The result is published, approved, sealed, and reproducible. A later metric
+audit found that the published helper used an inclusive-event numerator over
+an inter-event span, so the 102 tok/s objective is complete only under that
+historical convention, not under conventional interval accounting.
 
-- measured primary result: **`102.97143559613157 tok/s`**;
+- published legacy-convention result: **`102.97143559613157 tok/s`**;
+- conventional 99-interval result: **`101.94172124017027 tok/s`**;
 - objective: `102 tok/s`;
-- margin: `+0.97143559613157 tok/s`;
+- conventional margin: `-0.05827875982973 tok/s`;
 - LocalMaxxing: `cms2ccv2d00lps201rej94pjy` (`APPROVED`);
 - lane state: record sealed, no active benchmark, service, or worker.
+
+Read the
+[accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)
+before making any speed claim. The approved receipt remains historical
+evidence and must not be duplicate-submitted.
 
 Do not resume from the former 94.920 record, the obsolete recovery block, or
 the abandoned tree/selector ideas. They are historical evidence, not current
@@ -59,6 +68,10 @@ Promoted records:
   `data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json`;
 - note:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md`;
+- metric correction:
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md`;
+- standalone reproduction:
+  `repro/laguna-s-2.1-int4-b70-102tps-20260726/`;
 - submission queue:
   `data/localmaxxing-laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.queue.json`;
 - submission response:
@@ -133,6 +146,10 @@ nonempty ID and status.
 7. Keep every negative patch/result in the experiment ledger, commit focused
    changes, and leave all experimental selectors default-off.
 8. Report the first valid result honestly, whether it wins or loses.
+9. For timestamp windows, record event and interval counts separately. `N`
+   timestamped events span `N-1` intervals; report the conventional interval
+   field for new goals and qualify the historical compatibility field.
 
-No next action is required for the 102 tok/s goal. Any further benchmark or
-hardware action needs a new objective and a new preregistration.
+No recovery or hardware action is pending. Closing the conventional
+`0.05827875982973 tok/s` gap, or any other benchmark work, requires a new
+preregistered experiment.

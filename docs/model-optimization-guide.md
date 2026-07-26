@@ -169,8 +169,9 @@ For fresh-response headline throughput, use this rule:
   service-side replay;
 - speculative decoding is allowed only when accepted tokens are verified by the
   declared target model;
-- primary metric is median generated-token throughput for tokens 1-100 after
-  TTFT across a fixed realistic prompt suite;
+- primary metric is the median conventional rate across the 99 inter-token
+  intervals between timestamps 1 and 100 after TTFT across a fixed realistic
+  prompt suite;
 - also report p10, mean, TTFT, wall-clock full-output throughput, full output
   after-TTFT throughput, hashes, runtime identity, flags, logs, and server
   artifacts.
@@ -523,7 +524,8 @@ Before calling a result promoted:
 - no warmed n-gram/history acceleration;
 - canaries pass at the required repeat count;
 - quality gates relevant to the model pass;
-- primary metric is median tokens 1-100 after TTFT;
+- primary metric is the conventional 99-interval rate between generated-token
+  timestamps 1 and 100 after TTFT, with the formula recorded;
 - p10, mean, TTFT, wall throughput, and full-output throughput are recorded;
 - output hashes or response artifacts are saved;
 - server log path is recorded;

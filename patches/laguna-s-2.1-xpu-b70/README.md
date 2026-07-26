@@ -1,7 +1,8 @@
-# Laguna S 2.1 102.971 tok/s source snapshots
+# Laguna S 2.1 published-convention 102.971 tok/s source snapshots
 
 These files preserve the exact local vLLM and vLLM XPU-kernel source used by
-the approved four-B70 Laguna record. The original experiment branches point at
+the approved four-B70 Laguna result (`101.942 tok/s` under conventional
+interval accounting). The original experiment branches point at
 upstream project remotes and are not assumed to be publicly pushable.
 
 | Component | Public upstream base | Record commit | Bundle SHA-256 | Combined patch SHA-256 |

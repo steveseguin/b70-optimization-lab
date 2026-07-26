@@ -92,15 +92,18 @@ not silently add authentication or change its exposure policy.
 
 ### Current State (2026-07-26)
 
-**Approved record: `102.971435596 tok/s`**, LocalMaxxing
-`cms2ccv2d00lps201rej94pjy`. The 102 tok/s objective is achieved by
-`0.971435596 tok/s`.
+**Approved published-convention row: `102.971435596 tok/s`**, LocalMaxxing
+`cms2ccv2d00lps201rej94pjy`. A reproduction audit found that the historical
+helper counted 100 timestamped events over 99 inter-token intervals. The
+conventional rate from the same timestamps is **`101.941721240 tok/s`**, so a
+conventionally counted 102 tok/s objective remains short by
+`0.058278760 tok/s`.
 
 This is the first valid score from one preregistered cold width-12 / DFlash
-depth-11 service. The primary metric is the fixed 13-prompt suite median for
-generated tokens 1-100 after TTFT. P10 is `71.148884`, mean is `119.438409`,
-full-output after-TTFT median is `134.790886`, and full wall median is
-`52.767621 tok/s`.
+depth-11 service. Under the submitted legacy convention, the fixed 13-prompt
+suite median is `102.971435596`; p10 is `71.148884` and mean is `119.438409`.
+The conventional interval median is `101.941721240`. Full-output after-TTFT
+median is `134.790886`, and full wall median is `52.767621 tok/s`.
 
 All required honesty gates pass: 13/13 bitwise canonical-q1 exact, all 13
 requests have `cached_tokens=0`, long-next is 2/2, rollover is 1/1, each prompt
@@ -120,11 +123,16 @@ Packet:
 [`data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json`](data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json).
 Record note:
 [`2026-07-26-width12-dflash-fp8-w8a16-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md).
+Accounting correction:
+[`2026-07-26-throughput-window-accounting-correction.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md).
+Standalone repro:
+[`repro/laguna-s-2.1-int4-b70-102tps-20260726/`](repro/laguna-s-2.1-int4-b70-102tps-20260726/).
 Resume:
 [`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
 
-Approved progression: `33.086` -> `33.268` -> `33.439` -> `33.895` ->
-`92.164` -> `94.920` -> **`102.971`**.
+Approved/published progression under the same historical convention:
+`33.086` -> `33.268` -> `33.439` -> `33.895` -> `92.164` -> `94.920` ->
+**`102.971`**. Relative improvements are unchanged by the interval correction.
 
 ### Host And Lane Status
 
@@ -137,9 +145,10 @@ post-run idleness.
 
 As checked after submission on 2026-07-26, no vLLM, torchrun, or model worker
 is running and neither port 18080 nor 8000 is listening. No reboot, reset, or
-additional benchmark is required for the completed 102 tok/s objective.
+recovery action is required. Any attempt to close the conventional
+`0.058278760 tok/s` gap needs a new preregistered experiment.
 
-Future performance work is optional and needs a new preregistration. Preserve
+Future performance work needs a new preregistration. Preserve
 the exact target, canonical teacher, first-valid-score rule, one active
 generation, cache-zero policy, fixed suite/metric, 146/145 topology gate,
 source/binary identity, and clean pre/post idle checks. Inspect actual files

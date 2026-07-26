@@ -19,7 +19,9 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Model Lane Entry Points
 
-- [Laguna S 2.1 Record Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): approved exact four-B70 102.971 tok/s identity and future-work rules.
+- [Laguna S 2.1 Result Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): approved exact four-B70 published-convention 102.971 / conventional 101.942 tok/s identity and future-work rules.
+- [Laguna Metric Accounting Correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md): the 100-event versus 99-interval finding, impact, and prevention rule.
+- [Laguna Standalone Repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md): fail-closed source/runtime restoration, historical-receipt audit, and one-cold-suite replay.
 - [Laguna Campaign Transfer Ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md): condensed wins, losses, correctness failures, graph lessons, and harness rules for future models.
 - [Laguna KV-Cache Precision Decision](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md): why the exact record uses BF16 although the official quantized checkpoint specifies calibrated FP8 KV.
 - [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.

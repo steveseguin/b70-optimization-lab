@@ -2,8 +2,11 @@
 
 Date: 2026-07-26 America/Toronto
 
-Status: **campaign closeout and reusable-learning index.** The approved record
-remains `102.971435596` tok/s; no new run was performed for this note.
+Status: **campaign closeout and reusable-learning index.** The approved
+published-convention row remains `102.971435596` tok/s; the conventional
+interval rate is `101.941721240 tok/s`. No new run was performed for this
+note. See the
+[accounting correction](2026-07-26-throughput-window-accounting-correction.md).
 
 ## Why this file exists
 
@@ -21,7 +24,7 @@ The authoritative record identity and resume point remain
 
 ## Result progression and what actually worked
 
-| Stage | Valid tok/s | What moved the endpoint | Transferable lesson |
+| Stage | Published legacy tok/s | What moved the endpoint | Transferable lesson |
 | --- | ---: | --- | --- |
 | First exact DFlash | `33.086` | Batched verifier with M=1 numerical lanes, deterministic direct MoE, fixed-rank BF16 reductions | Speculation is useful only after target verification is numerically equivalent to the declared teacher |
 | Expert launch/occupancy stack | `33.268` then `33.439` | Fused W1+SiLU, route-parallel W2, route/N-tile interleave | Fewer launches can lose occupancy; preserve parallelism while fusing |
@@ -29,7 +32,7 @@ The authoritative record identity and resume point remain
 | Breakable PIECEWISE graph | `92.164` | Audited 146-graph/145-break target topology | Removing Python/launch/synchronization boundaries can dwarf kernel micro-tuning |
 | Persistent attention metadata | `94.920` | Fixed-address metadata refreshed in place | Allocation and metadata churn can be a real graph-path cost |
 | Width 12 / depth 11 | `100.525` | More target-verified tokens per cycle at almost unchanged cycle time | Sweep verifier width and acceptance together; the best depth is where marginal acceptance no longer pays for verifier cost |
-| Draft W8A16 projections | **`102.971`** | 31 DFlash dense projections converted to E4M3FN W8A16 plus exact auxiliary workspace | Quantize the disposable drafter before the canonical target; require execution logs and unchanged target verification |
+| Draft W8A16 projections | **`102.971`** (`101.942` conventional intervals) | 31 DFlash dense projections converted to E4M3FN W8A16 plus exact auxiliary workspace | Quantize the disposable drafter before the canonical target; require execution logs and unchanged target verification |
 
 The biggest step was graph coverage, not a GEMM tile. The final 3% came from
 several distinct, measured mechanisms. Future campaigns should profile the

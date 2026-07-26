@@ -74,7 +74,7 @@ These are entry points, not the whole repo:
 
 | Lane | Status | Best Current Pointer |
 | --- | --- | --- |
-| **Poolside Laguna S 2.1 INT4 on 4x B70** | **102 tok/s objective complete.** Exact target-verified DFlash depth 11 on the audited width-12 Breakable PIECEWISE graph, with persistent attention metadata and 31 W8A16 draft projections/rank: **`102.971436 tok/s`**, 13/13 bitwise exact vs canonical q1, all `cached_tokens=0`; LocalMaxxing `cms2ccv2d00lps201rej94pjy` | [resume point](experiments/laguna-s-2.1-xpu-b70/RESUME.md), [record note](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md), [transfer ledger](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md), [KV decision](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md) |
+| **Poolside Laguna S 2.1 INT4 on 4x B70** | Exact target-verified DFlash depth 11 on the audited width-12 Breakable PIECEWISE graph, with persistent attention metadata and 31 W8A16 draft projections/rank: approved published-convention row **`102.971436 tok/s`**; conventional 99-interval rate **`101.941721 tok/s`**. 13/13 token-and-text exact vs canonical q1, all `cached_tokens=0`; LocalMaxxing `cms2ccv2d00lps201rej94pjy` | [qualified result](results/laguna-s-2.1-int4-b70/README.md), [standalone repro](repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md), [accounting correction](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md), [transfer ledger](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md) |
 | DeepSeek V4 Flash experimental uniform-K160 on 4x B70 | Paused/closed frontier; target-verified DSpark7 record **`80.820 tok/s`** high and `78.287 tok/s` three-suite median-of-medians; exact source bundles and fail-closed launcher preserved; LocalMaxxing `cmrquta9905w3lg013m5vxoqx` | [result packet](results/deepseek-v4-flash-k160-b70/README.md), [standalone repro](repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md), [closeout](experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-21-deepseek-v4-flash-frontier-closeout.md) |
 | Qwen3.6 27B INT4 AutoRound on 1-2x B70 | Closed reference lane; strict fresh-response TP2 record **`95.385 tok/s`**; pinned public oneCCL, captured MTP draft, graph-safe FlashAttention full target graph, and exact ReplaySSM pending/direct-output transaction fusions; exact cases, repeat128, baseline parity, 1K needle, unique cold prompts, and `cached_tokens=0` all passed; both swapped four-GPU crossover assignments favored the candidate; LocalMaxxing `cmrh35ct50092mj01h7jgydqj`; current service ladder passes exact cold retrieval through `17706` actual prompt tokens at `MAX_MODEL_LEN=32768`, but the forced chunk-decode record path is short-context-only | [current record packet](results/qwen36-27b-autoround-int4-b70/tp2-fp16-fullgraph-transaction-20260711.json), [handoff](results/qwen36-27b-autoround-int4-b70/HANDOFF.md), [record note](experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-11-fullgraph-transaction-record.md), [service ladder](experiments/qwen36-27b-autoround-int4-b70/notes/2026-07-04-long-context-ladder-baseline.md), [general repro](repro/qwen36-27b-autoround-int4-b70/README.md) |
 | Gemma 4 26B A4B Q8 / INT8 on 1x B70 | Production-servable backend plus current strict fresh-response speed frontier; noisy near-record support band | [handoff](results/gemma4-26b-a4b-q8-b70/HANDOFF.md), [production service](results/gemma4-26b-a4b-q8-b70/production-service.md), [125 tok/s repro](repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) |
@@ -99,9 +99,11 @@ model-lane gate. For Gemma/Qwen-style fresh-response records, that means:
 - target model and quantization unchanged;
 - speculative decoding/MTP allowed only when accepted tokens are verified by
   the declared target model;
-- primary metric is median generated-token throughput for tokens 1-100 after
-  TTFT, with p10, mean, TTFT, wall-clock full-output throughput, full-output
-  after-TTFT throughput, hashes, runtime identity, env vars, flags, and logs.
+- primary metric is the median conventional rate across the 99 inter-token
+  intervals between timestamps 1 and 100 after TTFT, with p10, mean, TTFT,
+  wall-clock full-output throughput, full-output after-TTFT throughput, hashes,
+  runtime identity, env vars, flags, and logs. Historical 100-event/99-interval
+  compatibility fields must be labeled as such.
 
 Synthetic, repeated, warmed, cached, or history-assisted rows stay diagnostic
 unless revalidated by the lane's promotion gate. This matters because several

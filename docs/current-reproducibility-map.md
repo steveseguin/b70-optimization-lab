@@ -141,17 +141,23 @@ the production LAN endpoint:
   `QWEN36_27B_REASONING_PARSER=`; the no-parser 32K content check passed the
   same exact retrieval gate with all rows streaming visible content deltas.
 
-## Laguna S 2.1 INT4 Closed Record
+## Laguna S 2.1 INT4 Qualified Published Result
 
-The four-B70 Laguna objective is complete at `102.971435596 tok/s`, using the
-fixed realistic cold suite, exact width 12, DFlash depth 11, and the audited
-146/145 Breakable PIECEWISE topology. The first valid preregistered score was
-13/13 bitwise exact against the canonical q1 teacher, cache-zero on every row,
-and approved by LocalMaxxing as `cms2ccv2d00lps201rej94pjy`.
+The four-B70 Laguna row is approved at `102.971435596 tok/s` under the
+submitted legacy 100-event/99-interval convention. The conventional rate from
+the same timestamps is `101.941721240 tok/s`, so the conventionally counted
+102 objective remains short by `0.058278760 tok/s`. The fixed cold suite used
+exact width 12, DFlash depth 11, and the audited 146/145 Breakable PIECEWISE
+topology. The first valid preregistered score was 13/13 token-and-text exact
+against the canonical q1 teacher, cache-zero on every row, and approved by
+LocalMaxxing as `cms2ccv2d00lps201rej94pjy`.
 
 Use:
 
 - [record resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md);
+- [qualified result packet](../results/laguna-s-2.1-int4-b70/README.md);
+- [standalone repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md);
+- [accounting correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md);
 - [record note](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md);
 - [structured packet](../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json);
 - [source snapshots](../patches/laguna-s-2.1-xpu-b70/README.md);

@@ -1,10 +1,12 @@
 # Laguna S 2.1 on 4x Intel B70 — Optimization Roadmap
 
-> **Closed historical roadmap.** The 102 tok/s objective was achieved on
-> 2026-07-26 at `102.971435596 tok/s`; this file preserves the campaign's
+> **Closed historical roadmap.** The published benchmark convention reported
+> `102.971435596 tok/s` on 2026-07-26; a later audit recomputed the conventional
+> 99-interval rate as `101.941721240 tok/s`. This file preserves the campaign's
 > chronological plan and should not be read as current work. Start from
 > [RESUME.md](RESUME.md), the
 > [final record](notes/2026-07-26-width12-dflash-fp8-w8a16-record.md), the
+> [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md),
 > [campaign transfer ledger](notes/2026-07-26-campaign-transfer-ledger.md), and
 > the [KV-cache precision decision](notes/2026-07-26-kv-cache-precision-decision.md).
 > Any “current rung” wording below is historical.

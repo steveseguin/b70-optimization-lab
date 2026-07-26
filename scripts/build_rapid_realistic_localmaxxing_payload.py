@@ -8,6 +8,8 @@ import json
 import statistics
 from pathlib import Path
 
+from qualify_realistic_window_metrics import qualify
+
 
 def parse_identity(path: Path | None) -> dict[str, str]:
     if path is None or not path.exists():
@@ -30,7 +32,7 @@ def rounded_median_int(values: list[float]) -> int:
 
 
 def load_strict_bench(path: Path) -> dict:
-    bench = json.loads(path.read_text())
+    bench = qualify(json.loads(path.read_text()))
     gate = bench.get("realistic_final_gate") or {}
     fresh = bench.get("fresh_response_validity") or {}
     if gate.get("passed") is not True:
@@ -39,8 +41,15 @@ def load_strict_bench(path: Path) -> dict:
         raise SystemExit(f"{path}: cached_tokens_all_zero is not true")
     if fresh.get("valid") is not True:
         raise SystemExit(f"{path}: fresh_response_validity.valid is not true")
-    if fresh.get("primary_metric_name") != "median_tok_s_1_100_after_ttft":
-        raise SystemExit(f"{path}: primary metric is not median_tok_s_1_100_after_ttft")
+    if (
+        fresh.get("preferred_metric_name")
+        != "median_tok_s_1_100_intervals_after_ttft"
+    ):
+        raise SystemExit(
+            f"{path}: preferred metric is not the conventional interval field"
+        )
+    if "tok_s_1_100_intervals_after_ttft" not in (bench.get("summary") or {}):
+        raise SystemExit(f"{path}: conventional interval summary is missing")
     return bench
 
 
@@ -65,7 +74,7 @@ def main() -> int:
     identity = parse_identity(args.identity_env)
     rows = bench["rows"]
     summary = bench["summary"]
-    primary = summary["tok_s_1_100_after_ttft"]
+    primary = summary["tok_s_1_100_intervals_after_ttft"]
     full = summary["tok_s_after_ttft_full"]
     wall = summary["tok_s_wall_full"]
     ttft = summary["ttft_ms"]
@@ -100,10 +109,12 @@ def main() -> int:
         "prefixCaching": False,
         "localmaxxingSubmissionAllowedUnderCurrentPolicy": True,
         "metricWindowGeneratedTokens": fresh.get("primary_metric_tokens"),
+        "metricWindowIntervals": fresh.get("primary_metric_intervals"),
         "modelPath": identity.get("model") or identity.get("model_dir") or identity.get("MODEL_DIR"),
         "outputSha256": output_hashes,
         "outputTokens": completion_tokens,
-        "primaryMetricName": "median_tok_s_1_100_after_ttft",
+        "primaryMetricName": "median_tok_s_1_100_intervals_after_ttft",
+        "primaryMetricAccounting": "inter-token-intervals",
         "promptSha256": prompt_hashes,
         "promptTokens": prompt_tokens,
         "realisticSuiteCachedTokens": cached_tokens,
@@ -150,7 +161,17 @@ def main() -> int:
             ),
             "gpuLayers": 99,
             "kvCacheDtype": f"K={cache_k} V={cache_v}",
+            "apiKvCacheDtype": (
+                "fp16"
+                if cache_k == "f16" and cache_v == "f16"
+                else cache_k
+                if cache_k == cache_v and cache_k in {"q8_0", "q4_0", "fp8"}
+                else "auto"
+            ),
             "flashAttn": flash_attn == "on",
+            "apiAttentionBackend": (
+                "flash_attn" if flash_attn == "on" else "sdpa"
+            ),
             "prefixCaching": False,
             "specDecoding": False,
             "concurrency": int(n_parallel),

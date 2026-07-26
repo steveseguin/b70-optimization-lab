@@ -101,6 +101,30 @@ that the patch cannot affect, reducing variance and preventing a `+1-4%` MTP
 movement from being mistaken for a source win. For the Gemma 26B Q8 lane, see
 `results/gemma4-26b-a4b-q8-b70/reliability-protocol.md`.
 
+## Metric Accounting Gate
+
+Name and audit the exact formula before setting a numeric goal. Friendly labels
+such as "tokens 1-100 after TTFT" are insufficient.
+
+For timestamped event windows:
+
+- `N` event timestamps span `N-1` inter-event intervals;
+- record the timestamp source, event count, interval count, numerator, and
+  endpoints in the result schema;
+- preserve any historical compatibility field, but add an explicitly named
+  conventional interval field and use that field for new unqualified claims;
+- validate the implementation with synthetic known timestamps before
+  promotion;
+- recompute the promoted value directly from sealed raw timestamps during
+  reproduction review.
+
+The Laguna reproduction audit found that the historical
+`tok_s_1_100_after_ttft` helper divided 100 events by a 99-interval span. Its
+approved `102.971435596` row is `101.941721240 tok/s` under conventional
+interval accounting. Relative comparisons made entirely with the old helper
+retain the same ratio, but absolute claims need qualification. See the
+[correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md).
+
 ## Cross-Model Patterns Worth Reusing
 
 These are high-value investigation patterns, not universal flags. Recheck the
@@ -184,7 +208,9 @@ Gemma-specific lessons from the Q8 run:
   when `cached_tokens=0` and canaries pass. Current Gemma/Qwen promotion and
   LocalMaxxing submission require the fixed realistic prompt suite, one cold
   response per prompt, `cached_tokens=0` every row, no cache/history reuse, and
-  `median_tok_s_1_100_after_ttft` as the primary metric.
+  an explicitly accounted first-to-100th-token interval metric. The historical
+  `median_tok_s_1_100_after_ttft` compatibility field counts 100 events over 99
+  intervals and must not be used unqualified for a new goal.
 - For target-side Gemma changes that do not touch MTP/speculation, use the
   no-spec calibration lane when the apparent MTP delta is inside the current
   noise band. It keeps fresh prompts and `cached_tokens=0`, but disables

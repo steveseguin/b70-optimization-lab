@@ -1,0 +1,54 @@
+# Laguna S 2.1 INT4 on four Intel Arc Pro B70s
+
+## Qualified result
+
+The sealed width-12 / DFlash-depth-11 run is exact and approved by
+LocalMaxxing:
+
+- submitted historical benchmark convention: `102.97143559613157 tok/s`;
+- conventional 99-inter-token-interval rate from the same timestamps:
+  `101.94172124017027 tok/s`;
+- 13/13 canonical-q1 token IDs and output-text SHA-256 equal;
+- `cached_tokens=0` on all 13 unique cold requests;
+- four ranks each captured and replayed the exact 146/145 Breakable PIECEWISE
+  topology;
+- LocalMaxxing
+  [`cms2ccv2d00lps201rej94pjy`](https://www.localmaxxing.com/en/runs/cms2ccv2d00lps201rej94pjy),
+  `APPROVED`.
+
+The historical helper counted 100 timestamped token events over a span
+containing 99 intervals. The approved row is preserved as the receipt of what
+was submitted; it must be described as the published legacy convention. Under
+conventional interval accounting, the 102 tok/s threshold was missed by
+`0.05827875982973 tok/s`.
+
+## Identity
+
+| field | value |
+| --- | --- |
+| target | `poolside/Laguna-S-2.1-INT4` at `4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb` |
+| draft | `poolside/Laguna-S-2.1-DFlash-INT4` at `5e07c246915c86dc6920fead03d019989224f2ba` |
+| vLLM | `e596ef1543466ae1a05e5bb8091f58872e2b18ba` |
+| XPU kernels | `6f9dd3c3a7b1b677a992ca4f431a968408f9c816` |
+| hardware | 4x Intel Arc Pro B70 32 GB, TP4+EP4, one active generation |
+| verifier / draft | exact width 12 / DFlash depth 11 |
+| KV | BF16 |
+| treatment | 31 E4M3FN W8A16 draft projections per rank plus the exact auxiliary workspace |
+
+The FP8 treatment applies to disposable draft projections. It does not mean
+FP8 KV, and no gain is attributed to the intended separate draft LM-head path
+because its runtime preparation marker was absent.
+
+## Evidence and reproduction
+
+- [Standalone fail-closed reproduction](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md)
+- [Structured record](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json)
+- [Metric correction](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md)
+- [Original experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md)
+- [Source snapshots](../../patches/laguna-s-2.1-xpu-b70/README.md)
+- [Campaign learning ledger](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md)
+- [KV precision decision](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md)
+- [LocalMaxxing ledger](../localmaxxing-submissions.md)
+
+The immutable queue and HTTP 201/public-verification receipt remain under
+`data/`. The submission is already approved; do not POST a duplicate.

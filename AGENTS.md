@@ -94,10 +94,12 @@ require the fixed realistic final gate:
 - keep the target model and quantization unchanged;
 - allow speculative decoding/MTP only when accepted tokens are verified by the
   declared target model;
-- report median tok/s for generated tokens 1-100 after TTFT across the suite as
-  the primary metric, plus p10, mean, TTFT, wall tok/s, full 512-token tok/s,
+- report the median conventional rate across the 99 inter-token intervals
+  between generated-token timestamps 1 and 100 after TTFT as the primary
+  metric, plus p10, mean, TTFT, wall tok/s, full 512-token tok/s,
   prompt/output hashes, model identity, runtime commit, env vars, flags, and
-  logs.
+  logs. Record the event count, interval count, numerator, and endpoints;
+  historical 100-event/99-interval compatibility fields must be labeled.
 
 The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
 
@@ -107,8 +109,9 @@ The current Gemma 4 26B A4B Q8 one-B70 realistic-suite best is:
   `repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md`;
 - realistic suite: `repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json`;
 - best strict cold-suite result:
-  `124.97714084813418 tok/s` median generated-token throughput for tokens
-  1-100 after TTFT, `cached_tokens=0` on every prompt,
+  published legacy `124.97714084813418 tok/s`, or
+  `123.72736943965285 tok/s` under conventional 99-interval accounting,
+  `cached_tokens=0` on every prompt,
   `realistic_final_gate.passed=true`;
 - evidence:
   `data/gemma4-q8-gpu0-finalpostnorm-reproexact-full512-20260701T084728Z/summary.json`;

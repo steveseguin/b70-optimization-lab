@@ -11,7 +11,8 @@ There are two valid answers because the objectives are different:
 
 - For Poolside's normal `poolside/Laguna-S-2.1-INT4` deployment, **FP8 is the
   publisher-supplied official/default KV-cache format**.
-- For reproduction of this lab's `102.971435596` tok/s record and its
+- For reproduction of this lab's published-convention `102.971435596` tok/s
+  result (`101.941721240 tok/s` by conventional interval accounting) and its
   bitwise-exact BF16 canonical-teacher contract, **keep BF16 KV**.
 - Treat an FP8-KV B70 service as a separate long-context/capacity and quality
   lane. Do not silently replace the record's KV dtype or call the two lanes

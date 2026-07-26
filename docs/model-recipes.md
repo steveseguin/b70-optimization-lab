@@ -124,8 +124,10 @@ The deeper lab packet is
 [`../results/gemma4-26b-a4b-q8-b70/`](../results/gemma4-26b-a4b-q8-b70/README.md).
 This lane intentionally avoids tensor-parallel splitting at first: run one
 complete Gemma 4 26B A4B replica per B70 and use four replicas for parallel
-research. Current promoted result is the realistic cold-suite lane at
-`124.97714084813418 tok/s` median generated-token throughput for tokens 1-100 after TTFT:
+research. Current promoted result is the realistic cold-suite lane at a
+published legacy `124.97714084813418 tok/s` (`123.72736943965285 tok/s` under
+conventional 99-interval accounting) for the first-to-100th-token timestamp
+window:
 llama.cpp `c926ad098`, UD-Q8_K_XL target/verifier, Q4_0 MTP draft,
 reordered-Q8 VDR2, selected-down fused weighted-sum, bulk sampled-ID verifier
 host read, `FLASH_ATTN=on`, `CTX_SIZE=32768`, VMM on, final post-norm

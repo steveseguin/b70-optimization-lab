@@ -13,6 +13,8 @@ import re
 import shlex
 from pathlib import Path
 
+from qualify_realistic_window_metrics import qualify
+
 
 def flag_value(args: list[str], name: str) -> str | None:
     try:
@@ -42,6 +44,22 @@ def median(values: list[float]) -> float:
 
 def load_summary(path: Path) -> dict:
     summary = json.loads(path.read_text())
+    bench_path = Path(str(summary.get("bench_path") or ""))
+    if not bench_path.is_absolute():
+        bench_path = path.parent / bench_path
+    elif not bench_path.is_file():
+        tracked_sibling = path.parent / bench_path.name
+        if tracked_sibling.is_file():
+            bench_path = tracked_sibling
+    if not bench_path.is_file():
+        raise SystemExit(f"{path}: benchmark JSON is missing: {bench_path}")
+    summary["bench_path"] = str(bench_path)
+    qualified_bench = qualify(json.loads(bench_path.read_text()))
+    summary["bench_summary"] = qualified_bench["summary"]
+    summary["realistic_final_gate"] = qualified_bench["realistic_final_gate"]
+    summary["fresh_response_validity"] = qualified_bench[
+        "fresh_response_validity"
+    ]
     gate = summary.get("realistic_final_gate") or {}
     validity = summary.get("fresh_response_validity") or {}
     if not gate.get("passed"):
@@ -50,8 +68,15 @@ def load_summary(path: Path) -> dict:
         raise SystemExit(f"{path}: cached_tokens_all_zero is not true")
     if validity.get("valid") is not True:
         raise SystemExit(f"{path}: fresh_response_validity.valid is not true")
-    if validity.get("primary_metric_name") != "median_tok_s_1_100_after_ttft":
-        raise SystemExit(f"{path}: wrong primary metric")
+    if (
+        validity.get("preferred_metric_name")
+        != "median_tok_s_1_100_intervals_after_ttft"
+    ):
+        raise SystemExit(f"{path}: conventional interval metric is not preferred")
+    if "tok_s_1_100_intervals_after_ttft" not in (
+        summary.get("bench_summary") or {}
+    ):
+        raise SystemExit(f"{path}: conventional interval summary is missing")
     model_path = str(summary.get("model_path") or "")
     if "UD-Q8_K_XL" not in model_path:
         raise SystemExit(
@@ -100,7 +125,6 @@ def main() -> int:
     identity = summary["bench_run_identity"]
     launcher = summary["launcher_identity"]
     validity = summary["fresh_response_validity"]
-    gate = summary["realistic_final_gate"]
     bench_json = Path(summary["bench_path"])
     bench_rows = json.loads(bench_json.read_text())["rows"]
     extra_args = shlex.split(launcher.get("extra_llama_args") or "")
@@ -127,13 +151,13 @@ def main() -> int:
         f"ub{launcher.get('ubatch_size')}-{stamp}"
     )
 
-    primary = bench["tok_s_1_100_after_ttft"]
+    primary = bench["tok_s_1_100_intervals_after_ttft"]
     full = bench["tok_s_after_ttft_full"]
     wall = bench["tok_s_wall_full"]
     ttft = bench["ttft_ms"]
     confirmation_rows = []
     for item in confirmations:
-        s = item["bench_summary"]["tok_s_1_100_after_ttft"]
+        s = item["bench_summary"]["tok_s_1_100_intervals_after_ttft"]
         f = item["bench_summary"]["tok_s_after_ttft_full"]
         w = item["bench_summary"]["tok_s_wall_full"]
         confirmation_rows.append(
@@ -151,6 +175,15 @@ def main() -> int:
     engine_flags = {
         "apiMode": identity.get("api_mode"),
         "attentionBackend": "llama.cpp SYCL/Level Zero",
+        "apiAttentionBackend": (
+            "flash_attn" if launcher.get("flash_attn") == "on" else "sdpa"
+        ),
+        "apiKvCacheDtype": (
+            "fp16"
+            if launcher.get("cache_type_k") == "f16"
+            and launcher.get("cache_type_v") == "f16"
+            else "auto"
+        ),
         "benchmarkJson": str(bench_json),
         "batchSize": int(launcher["batch_size"]),
         "ubatchSize": int(launcher["ubatch_size"]),
@@ -170,6 +203,7 @@ def main() -> int:
         "engineSummaryJson": str(args.summary_json),
         "extraArgs": launcher.get("extra_llama_args"),
         "flashAttention": launcher.get("flash_attn") == "on",
+        "flashAttn": launcher.get("flash_attn") == "on",
         "freshResponseHeadlineValid": True,
         "freshResponseValidity": (
             "Fixed realistic prompt suite; each prompt sent once as a cold response; "
@@ -227,6 +261,7 @@ def main() -> int:
         "localmaxxingSubmissionAllowedUnderCurrentPolicy": True,
         "maxGeneratedTokens": identity.get("max_tokens"),
         "metricWindowGeneratedTokens": validity.get("primary_metric_tokens"),
+        "metricWindowIntervals": validity.get("primary_metric_intervals"),
         "modelFile": Path(summary["model_path"]).name,
         "modelFileBytes": summary.get("model_file_bytes"),
         "mtpEnabled": spec_enabled,
@@ -234,7 +269,8 @@ def main() -> int:
         "outputSha256": output_hashes,
         "poll": int(launcher["poll"]),
         "prefixCaching": False,
-        "primaryMetricName": "median_tok_s_1_100_after_ttft",
+        "primaryMetricName": "median_tok_s_1_100_intervals_after_ttft",
+        "primaryMetricAccounting": "inter-token-intervals",
         "promptSha256": prompt_hashes,
         "promptTokens": prompt_tokens,
         "realisticSuiteCachedTokens": cached_tokens,

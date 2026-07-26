@@ -2,7 +2,13 @@
 
 Date: 2026-07-26 America/Toronto
 
-Status: **verified exact four-B70 record; LocalMaxxing APPROVED**
+Status: **verified exact four-B70 result; LocalMaxxing APPROVED; throughput
+metric qualified by a later accounting audit**
+
+> Correction: `102.97143559613157 tok/s` is the submitted historical
+> `100 events / 99-interval span` convention. The conventional interval rate
+> from the same sealed timestamps is `101.94172124017027 tok/s`. See the
+> [accounting correction](2026-07-26-throughput-window-accounting-correction.md).
 
 ## Result
 
@@ -12,9 +18,10 @@ The preregistered single cold candidate measured:
 102.97143559613157 tok/s
 ```
 
-This is the median throughput for generated tokens 1 through 100 after TTFT
-over the fixed 13-prompt realistic suite. It exceeds the 102 tok/s objective
-by `0.97143559613157 tok/s`.
+This is the submitted legacy-convention median over the fixed 13-prompt
+realistic suite. It exceeds 102 under that convention by
+`0.97143559613157 tok/s`. The conventional 99-interval median is
+`101.94172124017027 tok/s`, short of 102 by `0.05827875982973 tok/s`.
 
 Artifact:
 
@@ -75,9 +82,10 @@ checksums.
 
 | metric | value |
 |---|---:|
-| median tokens 1--100 after TTFT | `102.97143559613157 tok/s` |
-| p10 tokens 1--100 after TTFT | `71.14888383025148 tok/s` |
-| mean tokens 1--100 after TTFT | `119.43840854755922 tok/s` |
+| submitted legacy median, 100 events / 99-interval span | `102.97143559613157 tok/s` |
+| conventional median, 99 intervals / same span | `101.94172124017027 tok/s` |
+| submitted legacy p10 | `71.14888383025148 tok/s` |
+| submitted legacy mean | `119.43840854755922 tok/s` |
 | full-output after-TTFT median | `134.79088555311446 tok/s` |
 | full wall-throughput median | `52.76762062661338 tok/s` |
 | median TTFT | `5758.738295000512 ms` |
