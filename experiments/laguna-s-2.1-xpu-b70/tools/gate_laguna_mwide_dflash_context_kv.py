@@ -220,7 +220,7 @@ def main() -> None:
             "_C.abi3.so",
             "_xpu_C.abi3.so",
             "_moe_C.abi3.so",
-            "libgrouped_gemm_bmg_xe2.so",
+            "libgrouped_gemm_xe_2.so",
         )
     }
     result = {
