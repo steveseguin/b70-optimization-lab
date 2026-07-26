@@ -17,7 +17,28 @@ readonly python=/home/steve/.venvs/deepseek-v4-xpu/bin/python
 readonly objective=102.0
 
 die() { echo "ladder: $*" >&2; exit 2; }
+
+# The interface carrying the cluster IP is resolved at runtime, not hardcoded.
+# A reboot on 2026-07-26 swapped the onboard NIC names: the port holding
+# 10.0.0.65 (MAC 3c:ec:ef:ce:5a:7e) moved from eno1 to eth1, and a different
+# port took the name eno1 and stayed down. oneCCL then failed with
+# "can't find interface eno1 to get host IP", which aborts KVS and PMI
+# bootstrap before any GPU transport is created. Deriving the name keeps the
+# harness correct across renames. This affects only CCL's rendezvous, not the
+# GPU data path.
+laguna_cluster_iface() {
+  local ip="${LAGUNA_CLUSTER_IP:-10.0.0.65}" iface
+  iface="$(ip -o -4 addr show 2>/dev/null | awk -v ip="$ip" '$4 ~ "^"ip"/" {print $2; exit}')"
+  [[ -n "$iface" ]] || { echo "no interface carries $ip" >&2; return 1; }
+  [[ "$(cat "/sys/class/net/$iface/operstate" 2>/dev/null)" == up ]] \
+    || { echo "interface $iface carrying $ip is not up" >&2; return 1; }
+  printf '%s\n' "$iface"
+}
+
 [[ -x "$leg" ]] || die "measurement leg missing: $leg"
+cluster_iface="$(laguna_cluster_iface)" || die "cannot resolve the cluster interface"
+readonly cluster_iface
+echo "cluster interface: $cluster_iface"
 
 # --- preflight -------------------------------------------------------------
 # A per-card matmul is NOT sufficient. Cards can pass single-device work while
@@ -48,7 +69,7 @@ mkdir -p -- "$probe_scratch" || die "cannot create collective preflight root: $p
 XCCL_PROBE_SCRATCH="$probe_scratch" \
   timeout 240 "$probe" ladder-preflight \
   ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 \
-  CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE=eno1 CCL_KVS_IFACE=eno1 \
+  CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" \
   >"$probe_log" 2>&1
 probe_rc=$?
 if ((probe_rc != 0)); then
