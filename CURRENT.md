@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-25**
+Last reviewed: **2026-07-26**
 
 ## Authority And Update Rule
 
@@ -90,82 +90,61 @@ not silently add authentication or change its exposure policy.
 
 ## Laguna S 2.1 Bring-Up
 
-### Current State (2026-07-25)
+### Current State (2026-07-26)
 
-**Approved record: `94.920039` tok/s**, LocalMaxxing `cmrzrd4tf001ipa013xpx4kid`.
-Support start `95.066548`; p10 `65.964050`; full-512 wall `50.165141`.
-Exact persistent-attention-metadata on the validated Breakable M8 PIECEWISE
-graph stack, DFlash depth 7, TP4+EP4, one active generation.
+**Approved record: `102.971435596 tok/s`**, LocalMaxxing
+`cms2ccv2d00lps201rej94pjy`. The 102 tok/s objective is achieved by
+`0.971435596 tok/s`.
 
-Record identity: vLLM `ef334233deabeaeedb607056a2db1c90edb3887c`, XPU kernels
-`4772f727590c51b72add79350b913d098cf67872`.
-Packet: [`data/laguna-s-2.1-m8-persistent-attention-metadata-record-20260725.json`](data/laguna-s-2.1-m8-persistent-attention-metadata-record-20260725.json).
-Record note: [`notes/2026-07-25-m8-persistent-attention-metadata-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-25-m8-persistent-attention-metadata-record.md).
+This is the first valid score from one preregistered cold width-12 / DFlash
+depth-11 service. The primary metric is the fixed 13-prompt suite median for
+generated tokens 1-100 after TTFT. P10 is `71.148884`, mean is `119.438409`,
+full-output after-TTFT median is `134.790886`, and full wall median is
+`52.767621 tok/s`.
 
-Approved progression: `33.086` -> `33.268` -> `33.439` -> `33.895` (07-23
-launch-reduction stack) -> **`92.164`** (07-24 Breakable M8 PIECEWISE graph,
-the step change) -> **`94.920`** (07-25 persistent attention metadata). The
-graph lane is what moved this lane from the low 30s to the low 90s; the earlier
-"deterministic graph RULED OUT" finding applied to the non-breakable variant
-only.
+All required honesty gates pass: 13/13 bitwise canonical-q1 exact, all 13
+requests have `cached_tokens=0`, long-next is 2/2, rollover is 1/1, each prompt
+ran once, and there was no warmup generation or retry. All four ranks captured
+and replayed the audited 146/145 Breakable PIECEWISE topology. Pre/post idle
+intervals were each 73 seconds and teardown was clean.
 
-### Host Safety Override (2026-07-26)
+Record identity: vLLM
+`e596ef1543466ae1a05e5bb8091f58872e2b18ba`, XPU kernels
+`6f9dd3c3a7b1b677a992ca4f431a968408f9c816`, exact target width 12,
+DFlash depth 11, persistent exact-attention metadata and context-KV workspace,
+plus 31 runtime E4M3FN W8A16 draft-projection conversions per rank. No gain is
+attributed to the intended draft FP8 LM head because its expected runtime
+preparation log is absent.
 
-The pre-recovery host fault is real, but collective health after the later
-module reload and FLRs is **unknown**. The tracked four-rank recovery wrapper
-used a nonexistent scratch-local Python path, so all retained `postreload`,
-`postflr`, `postshm`, and `ladder-preflight` logs are harness failures that
-never reached `import-done`; they are not `0/4` collective results.
+Packet:
+[`data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json`](data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json).
+Record note:
+[`2026-07-26-width12-dflash-fp8-w8a16-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md).
+Resume:
+[`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
 
-The wrapper and ladder are repaired and CPU-only tested, but no repaired XPU
-probe has been run. Do not launch a Laguna TP4 leg, perform a bus reset, delete
-more shared state, or infer a recovery action from the invalid runs. The next
-hardware action is an operator decision between the conservative clean-reboot
-path and exactly one explicitly authorized repaired minimal probe. This block
-overrides later historical statements that describe the host as clean.
-Resume from the
-[probe-harness correction](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-xccl-probe-harness-correction.md).
+Approved progression: `33.086` -> `33.268` -> `33.439` -> `33.895` ->
+`92.164` -> `94.920` -> **`102.971`**.
 
-### Active Lever
+### Host And Lane Status
 
-**DFlash context-KV workspace.** Laguna's eager context-KV precompute allocates
-new intermediate tensors on every proposal cycle in the draft's six-layer
-context-KV projection. The record touches only target q2-q8 attention metadata,
-so this lane is materially distinct. Selector
-`VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1`, default-off, fail-closed.
+The old post-FLR `0/4` claims remain invalid historical evidence because the
+probe wrapper never launched its Python source. They must never be used to
+infer recovery causality. They are now also superseded as a live-state block:
+later corrected four-card work and the sealed formal record completed full
+TP4/XCCL model execution, exact capture/replay, clean teardown, and strict
+post-run idleness.
 
-Status: **exact four-card component gate PASSED and promoted**, including a
-sealed offline audit that corrected the projected-V view-offset rule.
+As checked after submission on 2026-07-26, no vLLM, torchrun, or model worker
+is running and neither port 18080 nor 8000 is listening. No reboot, reset, or
+additional benchmark is required for the completed 102 tok/s objective.
 
-The preceding current-stream diagnostic found no other honest target-MoE or
-attention candidate. W1 N32/N128, QKV/O occupancy, remote-zero, fused expert
-transactions, native shared projections, attention capture, collective capture,
-and gather variants are all negative, terminal, unsafe, or already absorbed.
-
-### Blocked On
-
-The **TP4 runtime integration exactness gate**. Four one-shot packets have been
-consumed, each failing closed before generating a single token, and every
-failure was in the harness rather than the candidate:
-
-| Packet | Reached | Failure |
-| --- | --- | --- |
-| `de35c566b` | before vLLM import | frozen `PYTHONPATH` omitted the tracked gate-tools directory |
-| `f52f9e8ef` | preflight | correctly refused an RPC directory stranded by the first failure |
-| `649f150cf` | full TP4/XCCL load and PIECEWISE capture | `apply_model(function)` identity query rejected function serialization; insecure pickle fallback is deliberately disabled |
-| fifth, prepared | not yet run | awaiting review |
-
-The fifth packet replaces the pickled-function query with a named, default-off
-worker RPC. Harness is at `e9182e125`; candidate source is `7c38a2022` in
-`/home/steve/src/laguna-vllm-dflash-persistent-metadata-20260725`.
-
-**Next action: independent adversarial source review of the fifth packet**
-against its nine acceptance conditions, then mint a fresh `O_EXCL` one-shot
-marker and run it. A failed packet is terminal and must never be reused. A pass
-authorizes only the *design* of a separate preregistered cold graph-vs-graph
-crossover; it is not a record claim and not a submission.
-
-Resume detail: [`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
+Future performance work is optional and needs a new preregistration. Preserve
+the exact target, canonical teacher, first-valid-score rule, one active
+generation, cache-zero policy, fixed suite/metric, 146/145 topology gate,
+source/binary identity, and clean pre/post idle checks. Inspect actual files
+and per-rank logs before accepting harness summaries, and never escalate
+hardware recovery from a probe that did not prove it executed.
 
 ### Historical Bring-Up Detail
 

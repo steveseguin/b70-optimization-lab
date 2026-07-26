@@ -2,7 +2,7 @@
 
 Date: 2026-07-26 America/Toronto
 
-Status: **verified exact four-B70 record; LocalMaxxing submission pending**
+Status: **verified exact four-B70 record; LocalMaxxing APPROVED**
 
 ## Result
 
@@ -121,3 +121,22 @@ postcondition before claiming or measuring the separate FP8 head.
 
 The run directory was sealed read-only by the harness after successful
 teardown.
+
+## LocalMaxxing
+
+The current speed-test API accepted the record on 2026-07-26:
+
+- ID: `cms2ccv2d00lps201rej94pjy`;
+- status: `APPROVED`;
+- HTTP receipt: `201 Created`;
+- queue:
+  `data/localmaxxing-laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.queue.json`;
+- response:
+  `data/localmaxxing-responses/laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.response.json`.
+
+The public row was queried back and matched the score, model revision, four
+B70s, vLLM engine, TP4, DFlash model, and depth 11. LocalMaxxing reused an
+older canonical hardware object that displays `cpu=null` and `ramGb=15`;
+those two public display fields are not the actual host identity. The tracked
+queue and sealed run identify the actual Threadripper PRO 5955WX host with
+128 GB RAM.
