@@ -1,4 +1,50 @@
-# Laguna S 2.1 — Resume Point
+# Laguna resume point
+
+## BLOCKED: the host needs a reboot (2026-07-26)
+
+The GPU collective stack is wedged. Every run hangs in `xpu_worker.init_device`
+at its warm-up `all_reduce`, including runs at the untouched record commit.
+A 4-rank probe with no vLLM in it hangs identically, and three CCL
+configurations all fail, so there is no software workaround.
+
+    sudo reboot
+
+`modprobe -r xe` cannot work — the module refcount was 76. There is no
+passwordless sudo on this host, so this step needs Steve.
+
+Cause and full evidence:
+`notes/2026-07-26-topology-explosion-wedged-the-collective-stack.md`.
+A capture segment ceiling has since landed so the same explosion fails as a
+Python error instead of costing a reboot.
+
+## Post-reboot order
+
+1. Width 8 at the record commit `ef334233d` — startup completes, 146/145
+   captures, median near 94.920. Confirms the host.
+2. Width 8 at current HEAD — same checks; confirms the width parameterization
+   is inert in practice, not just in predicate.
+3. Width 12 — does the topology land near 146/145, and does it stay exact?
+   Still the untested hypothesis. Cheap to fail now.
+4. Measure width 12, then go to width 16 / depth 15.
+
+## Where the throughput has to come from
+
+Record: **94.920039** tok/s. Reaching 102 needs **+7.46%**.
+
+- Width 12 / depth 11 measured **+6.9%** emitted per cycle → ~101.5. Necessary,
+  not sufficient.
+- Width 16 / depth 15 projects **+7.9%** → ~102.4 at unchanged cycle time.
+  Clears 102 by 0.4%, which is thin and assumes cycle time is flat in M.
+  The drafter config carries `dflash_config.block_size: 16`, so depth 15 sits
+  inside the block the drafter was trained for. vLLM never reads that field.
+- Width-two tree over a 15-node budget projects **+18.3%** using the measured
+  top-2 coverage (72.2% → 84.2%). This is the lever with real margin, and it
+  needs tree attention in the verifier.
+
+
+---
+
+## Earlier resume notes
 
 Single page for picking this lane back up. Written 2026-07-25 after the lane
 was paused mid-gate. `CURRENT.md` remains the cross-repository authority;
