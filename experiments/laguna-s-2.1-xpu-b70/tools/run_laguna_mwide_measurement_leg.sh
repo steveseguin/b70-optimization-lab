@@ -96,7 +96,7 @@ check_hash "$suite" "$expected_suite"; check_hash "$teacher" "$expected_teacher"
 check_hash "$LAGUNA_NVME_TARGET_ROOT/config.json" "$expected_target_config"
 check_hash "$LAGUNA_NVME_DRAFT_ROOT/config.json" "$expected_draft_config"
 check_hash "$kernel_root/vllm_xpu_kernels/_C.abi3.so" \
-  126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
+  615d2de5926ec03592580a931f18e554a7d06479eb0ec9418da7bbf3a54bbb1b
 check_hash "$kernel_root/vllm_xpu_kernels/_xpu_C.abi3.so" \
   f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" \
@@ -165,9 +165,11 @@ finalize() {
 }
 trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 
-# the M8-only fusions pin speculation to depth 7; disable at other widths
+# The shared-elementwise and QKNorm/RoPE fusion kernels were pinned to eight
+# rows and so had to be disabled at other widths. They now take the row count at
+# runtime, so they are enabled at every width and the flags are recorded in
+# identity.txt alongside the width.
 se=1; qk=1; gpu_util=0.90
-if [[ "$laguna_m" != 8 ]]; then se=0; qk=0; fi
 metadata_selector="$metadata_arg"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
