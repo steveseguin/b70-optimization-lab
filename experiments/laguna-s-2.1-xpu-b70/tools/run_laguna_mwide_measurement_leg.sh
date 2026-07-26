@@ -131,7 +131,16 @@ finalize() {
   assert_no_workers || worker_status=1
   capture_idle "$run_dir/failure-post-idle.json" || idle_status=1
   printf 'original_status=%s\nstop_status=%s\nworker_status=%s\nidle_status=%s\n' "$status" "$stop_status" "$worker_status" "$idle_status" > "$run_dir/cleanup-status.txt"
-  chmod -R a-w -- "$run_dir" "$rpc_dir" 2>/dev/null || true
+  # Move the RPC directory under the failed run rather than leaving it in the
+  # shared tmp root. It stays as evidence, and the path is freed so a retry at
+  # the same label is not blocked by the reused-path guard -- which is an
+  # integrity check against cross-run contamination, not a reason to require
+  # manual cleanup after every failure.
+  if [[ -e "$rpc_dir" && ! -e "$run_dir/rpc-after-stop" ]]; then
+    mv -- "$rpc_dir" "$run_dir/rpc-after-failure" 2>/dev/null ||
+      rm -rf -- "$rpc_dir" 2>/dev/null || true
+  fi
+  chmod -R a-w -- "$run_dir" 2>/dev/null || true
   exit "$status"
 }
 trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
