@@ -66,6 +66,11 @@ acceleration, no response reuse, and no cached tokens.
 The service environment and `identity.txt` independently record the selector
 and worktree identities.
 
+The local source commits are preserved as exact Git bundles and reviewable
+combined patches under `patches/laguna-s-2.1-xpu-b70/`. See that directory's
+README for public prerequisite commits, restore commands, and snapshot
+checksums.
+
 ## Throughput and speculation
 
 | metric | value |

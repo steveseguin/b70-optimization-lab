@@ -53,6 +53,8 @@ laguna-width12-dflash-fp8-e596ef154-20260726T214259Z
 
 Promoted records:
 
+- exact source bundles and combined patches:
+  `patches/laguna-s-2.1-xpu-b70/`;
 - packet:
   `data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json`;
 - note:
