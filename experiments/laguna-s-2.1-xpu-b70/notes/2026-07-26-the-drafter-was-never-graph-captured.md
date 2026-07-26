@@ -81,9 +81,18 @@ reason the exclusion existed in the first place.
   8.694 ms draft figure is measured.
 - Device intervals in the Phase 0 data are stream-ordered and absorb work queued
   ahead of them; they are ordering evidence, not an additive budget.
-- Whether the drafter's forward captures cleanly at all is unverified. It
-  contains TP4 collectives, which the breakable wrapper handles by eager
-  breaks, but the resulting topology has never been observed.
+- Whether the drafter's forward captures cleanly is now **statically checked,
+  not observed**. The captured region is only `self.model(**model_kwargs)`:
+  `precompute_and_store_context_kv` and the fused input kernel run in
+  `build_model_inputs_first_pass`, outside it. Inside `laguna.py` the only
+  host syncs -- `.item()`, `.cpu()`, `torch.xpu.synchronize()` -- sit in trace
+  and parity-probe paths that early-return unless
+  `VLLM_LAGUNA_TARGET_TRACE_DIR`, `VLLM_LAGUNA_TARGET_TRACE_INPUTS`, or the
+  parity trigger are set; the leg sets `VLLM_XPU_LAGUNA_PARITY_PROBE=0` and
+  none of the trace variables. The drafter is also **dense**
+  (`num_experts: 0`), so there is no expert routing and no data-dependent
+  shape. What remains genuinely unobserved is the eager-break topology its TP4
+  collectives produce.
 - Every tok/s figure above is a projection.
 
 ## Revised priority
