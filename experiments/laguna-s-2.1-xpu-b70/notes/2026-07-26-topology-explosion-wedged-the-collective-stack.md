@@ -42,24 +42,30 @@ and Torch sees 4 × 32656 MiB. The `xe` module refcount is **76**, far above a
 quiescent value, so a module reload cannot succeed. Device enumeration and
 ordering are correct, so this is not a device-selection problem.
 
-## Refinement: it is one card, not the whole stack
+## Refinement: the driver has leaked execution resources, progressively
 
-The four-configuration sweep showed the collective always hangs, but that was
-the wrong conclusion to stop at. Testing each card **individually**, with no
-collective involved at all:
+The four-configuration sweep showed the collective always hangs, but stopping
+there was wrong. Testing each card **individually**, with no collective
+involved at all, shows plain single-card matmuls failing too:
 
-| device | single-card matmul |
-| --- | --- |
-| `xpu:0` | OK |
-| `xpu:1` | **fails** |
-| `xpu:2` | OK |
-| `xpu:3` | OK |
+| device | first pass | later pass |
+| --- | --- | --- |
+| `xpu:0` | OK | — |
+| `xpu:1` | **fails** | **fails** |
+| `xpu:2` | OK | — |
+| `xpu:3` | not reached | **fails** |
 
-`xpu:1` returns `UR_RESULT_ERROR_DEVICE_LOST` (20) on one attempt and
-`UR_RESULT_ERROR_OUT_OF_RESOURCES` (40) on the next, on an otherwise idle card
-reporting 43 MiB used. That is the signature of wedged GuC execution queues, and
-it fully explains the hang: `all_reduce` waits forever on a rank whose device
-cannot execute. The collective was the symptom, not the fault.
+The errors alternate between `UR_RESULT_ERROR_DEVICE_LOST` (20) and
+`UR_RESULT_ERROR_OUT_OF_RESOURCES` (40) on cards reporting 43 MiB used. An
+earlier reading of this as "one bad card" was too strong: `xpu:3` passed nothing
+and then failed, so cards are degrading as attempts accumulate. The consistent
+reading is driver-wide exhaustion of GuC execution resources, with each attempt
+leaking more.
+
+This fully explains the collective hang — `all_reduce` waits forever on a rank
+whose device cannot execute — and it means the collective was the symptom, not
+the fault. It also means single-card work is not a safe fallback: the cards that
+still pass today are not reliably usable.
 
 All four B70s remain bound to `xe` and PCI-enabled, so nothing has dropped off
 the bus. Network is not implicated either: `eno1`, which
@@ -71,8 +77,9 @@ No CCL configuration avoids the wedged card, and this build of `xpu-smi` has no
 `reset` subcommand, so there is no unprivileged reset path. `sysfs` FLR is
 root-only.
 
-The `xe` refcount fell from 76 to 26 as the leaked processes exited, so a module
-reload is worth trying before a reboot:
+The `xe` refcount fell from 76 to 10 as the leaked processes exited, with no
+process holding a render node. `modprobe -r` needs 0, so the reload is a long
+shot and the reboot is the realistic step:
 
     sudo modprobe -r xe && sudo modprobe xe   # try first, much less disruptive
     sudo reboot                                # reliable fallback
