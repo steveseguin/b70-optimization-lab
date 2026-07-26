@@ -157,6 +157,7 @@ def main() -> None:
     cache_impl.attn_type = AttentionType.DECODER
     cache_impl.head_size = base.HEAD_DIM
     cache_impl.kv_cache_dtype = "bfloat16"
+    cache_impl._xpu_persistent_kv_cache_views = None
 
     capture_rejection = base.run_capture_rejection(
         rank=args.rank,
