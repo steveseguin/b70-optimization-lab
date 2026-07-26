@@ -277,3 +277,22 @@ The narrow correction is vLLM
 fail-closed. The focused suite now returns `74 passed`, including direct
 coverage of both admitted widths and rejection of width 11. The failed run is
 an integration/harness result, not a correctness or throughput result.
+
+The corrected selector-on candidate is valid but below the promotion floor:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-width12-stack-clean-candidate2-1e9887a92-13e211c3b-20260726T205829Z
+```
+
+It returned `13/13` bitwise exact, `cached_tokens=0` throughout, audited
+`146/145` on all four ranks, normal decaying acceptance, and clean teardown.
+Its cold scored median was `99.72015184765868 tok/s`, versus
+`98.95528531492559 tok/s` for the valid selector-off control: a real
+`+0.7729%` paired treatment gain, but not `102 tok/s`.
+
+The suite-level speculative counters were materially matched
+(`1607/4749` control drafts/accepted tokens versus `1608/4748` candidate), so
+the gain is execution-time reduction rather than an acceptance change. No
+repeat was authorized: the candidate missed the preregistered promotion floor,
+and retrying for a favorable cold start would be invalid.
