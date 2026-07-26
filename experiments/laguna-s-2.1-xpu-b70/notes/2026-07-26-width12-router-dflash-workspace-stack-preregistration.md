@@ -227,3 +227,24 @@ static tests, plus Ruff, Python compilation, clang-format, and whitespace
 checks. Physical-card component gates and the selector-off endpoint control
 must be rerun under these identities before a selector-on measurement is
 allowed.
+
+All four clean-identity component reruns then passed their arithmetic gates.
+The router matched every raw BF16/FP32 output before and after timing, won
+`31/31` paired blocks on every card, and saved `0.499690`, `0.545085`,
+`0.500676`, and `0.554635 ms` per 47-call cycle on cards 0 through 3. As
+before, its old standalone `0.60 ms` timing floor remains formally false; this
+does not relabel that preregistered result. The retained root is:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+mwide-bf16-router-clean-6f9dd3c-6eb01c9a9-20260726
+```
+
+The clean workspace gate returned `exact_component_pass` on every card for
+widths 9, 10, 11, and 12, in both no-bias and synthetic-bias branches, with
+stable workspaces and capture rejection. Its retained root is:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+mwide-dflash-context-kv-clean-c699475-6eb01c9a9-20260726
+```
