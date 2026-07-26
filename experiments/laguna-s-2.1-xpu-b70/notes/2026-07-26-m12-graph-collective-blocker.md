@@ -66,11 +66,46 @@ metadata selector as passed, and the real fusion states, under a schema that
 identifies itself as a measurement leg. The exactness and acceptance evidence
 above is unaffected because it rests on token ids and server counters.
 
+## Continued: two further pins, still not capturing
+
+After the collective width pin, running with `PREBUILT_EXACT_ATTN_METADATA=1`
+(the record's setting, which avoids the single-row collective path) exposed two
+more:
+
+10. `_is_xpu_exact_spec_decode_metadata_eligible` — `1 < max_query_len <= 8`
+11. prebuilt metadata buffers sized `8`/`9` and both width enumerations
+    `range(2, 9)`
+
+Both parameterized. The run then reached a new failure:
+
+```
+XPU exact speculative attention persistent metadata identity drifted
+```
+
+so the width-12 metadata is now built and selected, but its persistent identity
+or signature check does not accept it. That is pin twelve, not yet diagnosed.
+
+## Honest assessment of scope
+
+Eleven width pins have been found and parameterized so far, each discovered only
+by running and reading the next failure, at roughly five to ten minutes per
+cycle. The chain has not terminated. This matches the campaign's own prior
+statement that depths above seven "require widening or serializing **all** M>8
+target verifier boundaries" — the stack is specialized to M=8 in many
+independent places, and widening it is a multi-day project rather than a
+session's work.
+
+Nothing here is blocked on a decision; it is blocked on the remaining volume of
+specialization.
+
 ## Next
 
-1. Make the collective transaction accept heterogeneous per-slot widths, or
-   scope the M8 collective manager to the verifier collectives only so that
-   single-row collectives bypass it.
-2. Then one clean M=12 graph run requiring four captures, four-rank replay,
-   13/13 q=1 exactness, cache-zero, and a scored median before any claim.
-3. Then the width-two tree, which is still required to clear 102.
+1. Diagnose pin twelve: the persistent metadata identity/signature check at
+   width 12. Adding the failing comparison to the error message is the cheapest
+   way to see which of base signatures, offset signature, metadata signature, or
+   object identity drifts.
+2. Continue the pin chain until the audited graph captures at width 12, then run
+   one clean measurement requiring four captures, four-rank replay, 13/13 q=1
+   exactness, cache-zero, and a scored median.
+3. Then the width-two tree, still required to clear 102 since M=12 alone
+   projects only about 101.5 at unchanged cycle time.
