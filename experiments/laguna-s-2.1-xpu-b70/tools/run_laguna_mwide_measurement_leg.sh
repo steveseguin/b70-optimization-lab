@@ -22,7 +22,11 @@ readonly metadata_arg="${6:?usage: TREATMENT LABEL RUN_DIR M SPEC METADATA DRAFT
 # 0 leaves the drafter eager, as every record run to date has. 1 captures it
 # in its own breakable graph; the target's audited topology is unaffected
 # because the two wrappers are independent instances.
-readonly draft_graph="${7:?usage: TREATMENT LABEL RUN_DIR M SPEC METADATA DRAFTGRAPH}"
+readonly draft_graph="${7:?usage: TREATMENT LABEL RUN_DIR M SPEC METADATA DRAFTGRAPH [FUSIONS]}"
+# The exact shared-elementwise and QKNorm/RoPE fusions, on by default. They are
+# separable so a width can be measured with and without them, which is the only
+# way to attribute a failure at a new width to the width or to the fusions.
+readonly fusions="${8:-1}"
 
 readonly repo_root=/home/steve/llm-optimizations
 
@@ -54,8 +58,9 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# == 7 )) || { echo "exactly seven arguments are required" >&2; exit 2; }
+(( $# == 7 || $# == 8 )) || { echo "seven or eight arguments are required" >&2; exit 2; }
 case "$draft_graph" in 0|1) ;; *) echo "DRAFTGRAPH must be 0 or 1" >&2; exit 2 ;; esac
+case "$fusions" in 0|1) ;; *) echo "FUSIONS must be 0 or 1" >&2; exit 2 ;; esac
 
 die() { echo "Laguna formal M8 crossover leg: $*" >&2; exit 2; }
 
@@ -169,7 +174,7 @@ trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 # rows and so had to be disabled at other widths. They now take the row count at
 # runtime, so they are enabled at every width and the flags are recorded in
 # identity.txt alongside the width.
-se=1; qk=1; gpu_util=0.90
+se="$fusions"; qk="$fusions"; gpu_util=0.90
 metadata_selector="$metadata_arg"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
