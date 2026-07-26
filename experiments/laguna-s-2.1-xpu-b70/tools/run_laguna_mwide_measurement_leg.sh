@@ -131,14 +131,15 @@ finalize() {
 }
 trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 
-metadata_selector=0
-[[ "$treatment" == candidate ]] && metadata_selector=1
+metadata_selector="$metadata_arg"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
 {
-  printf 'schema=laguna-m8-metadata-formal-crossover-leg-v1\nlabel=%s\ntreatment=%s\n' "$label" "$treatment"
+  printf 'schema=laguna-mwide-measurement-leg-v1\nlabel=%s\ntreatment=%s\n' "$label" "$treatment"
+  printf 'exact_max_m=%s\nnum_speculative_tokens=%s\nprebuilt_exact_attn_metadata=%s\n' "$laguna_m" "$laguna_spec" "$metadata_arg"
+  printf 'm8_shared_elementwise=%s\nm8_qknorm_rope=%s\n' "$se" "$qk"
   printf 'identity_source=actual_worktree_heads\nmeasurement_leg_not_record_leg=true\nvllm_commit=%s\nkernel_commit=%s\nmodel=%s\ndraft=%s\nmodel_manifest_sha256=%s\n' "$expected_vllm" "$expected_kernels" "$LAGUNA_NVME_TARGET_ROOT" "$LAGUNA_NVME_DRAFT_ROOT" "$LAGUNA_NVME_MANIFEST_SHA256"
-  printf 'suite_sha256=%s\nteacher_sha256=%s\nselector_stack=exact-m8-dflash7-breakablegraph-w1routew2-routeinterleave-shared-elementwise-qknormrope-n64\n' "$expected_suite" "$expected_teacher"
+  printf 'suite_sha256=%s\nteacher_sha256=%s\nselector_stack=exact-m%s-dflash%s-breakablegraph-w1routew2-routeinterleave-n64\n' "$expected_suite" "$expected_teacher" "$laguna_m" "$laguna_spec"
   printf 'metadata_selector=%s\nsole_treatment_difference=VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA\n' "$metadata_selector"
   printf 'capture_attention_graphs=0\nno_warmup=true\nsuite_invocations=1\nretries=0\nverified_idle_interval_seconds=60\n'
   sha256sum "$0" "$graph_serve" "$nvme_paths" "$comparator" "$benchmark" "$idle_wrapper" "$venv_python" "$vllm_binary"
