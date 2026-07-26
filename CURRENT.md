@@ -109,6 +109,23 @@ graph lane is what moved this lane from the low 30s to the low 90s; the earlier
 "deterministic graph RULED OUT" finding applied to the non-breakable variant
 only.
 
+### Host Safety Override (2026-07-26)
+
+The pre-recovery host fault is real, but collective health after the later
+module reload and FLRs is **unknown**. The tracked four-rank recovery wrapper
+used a nonexistent scratch-local Python path, so all retained `postreload`,
+`postflr`, `postshm`, and `ladder-preflight` logs are harness failures that
+never reached `import-done`; they are not `0/4` collective results.
+
+The wrapper and ladder are repaired and CPU-only tested, but no repaired XPU
+probe has been run. Do not launch a Laguna TP4 leg, perform a bus reset, delete
+more shared state, or infer a recovery action from the invalid runs. The next
+hardware action is an operator decision between the conservative clean-reboot
+path and exactly one explicitly authorized repaired minimal probe. This block
+overrides later historical statements that describe the host as clean.
+Resume from the
+[probe-harness correction](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-xccl-probe-harness-correction.md).
+
 ### Active Lever
 
 **DFlash context-KV workspace.** Laguna's eager context-KV precompute allocates

@@ -40,12 +40,23 @@ done
 echo "== preflight: 4-rank collective (the check that actually gates a leg) =="
 probe="$script_dir/run_xccl_collective_probe.sh"
 [[ -x "$probe" ]] || die "collective probe missing: $probe"
-XCCL_PROBE_SCRATCH="${XCCL_PROBE_SCRATCH:-/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/ladder-preflight}" \
+probe_scratch="${XCCL_PROBE_SCRATCH:-/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/ladder-preflight-$tag}"
+probe_log="$probe_scratch/launcher.log"
+mkdir -p -- "$probe_scratch" || die "cannot create collective preflight root: $probe_scratch"
+[[ ! -e "$probe_log" ]] \
+  || die "collective preflight log already exists; choose a fresh tag or scratch: $probe_log"
+XCCL_PROBE_SCRATCH="$probe_scratch" \
   timeout 240 "$probe" ladder-preflight \
   ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 \
   CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE=eno1 CCL_KVS_IFACE=eno1 \
-  >/dev/null 2>&1 \
-  || die "4-rank all_reduce does not complete -- the collective stack is wedged, reboot required"
+  >"$probe_log" 2>&1
+probe_rc=$?
+if ((probe_rc != 0)); then
+  probe_result="$(grep -E '^PROBE_RESULT=' "$probe_log" 2>/dev/null | tail -1)"
+  die "4-rank preflight failed (rc=$probe_rc; ${probe_result:-no classified result}); inspect $probe_log; do not infer a recovery action from a harness or startup failure"
+fi
+grep -Eq '^PROBE_RESULT=PASS clean_teardowns=4/4 ' "$probe_log" \
+  || die "collective probe exited zero without a complete PASS marker; inspect $probe_log"
 echo "  4-rank all_reduce ok"
 
 # Rung: LABEL TREATMENT M SPEC METADATA DRAFTGRAPH  -- cheapest lever first.

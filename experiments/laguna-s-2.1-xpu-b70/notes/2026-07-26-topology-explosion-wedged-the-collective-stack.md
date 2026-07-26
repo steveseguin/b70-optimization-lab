@@ -2,9 +2,20 @@
 
 Date: 2026-07-26 America/Toronto
 
-Status: **host blocked, reboot required.** Approved record remains
-**94.920039** tok/s. Goal of 102 not met. No measurement was possible this
-session.
+Status: **pre-recovery host fault established; post-recovery collective health
+unknown because the retained recovery probes did not execute.** Approved
+record remains **94.920039** tok/s. Goal of 102 not met. No valid
+post-recovery measurement was produced.
+
+> **Evidence correction, later on 2026-07-26:** the tracked four-rank wrapper
+> never executed its Python probe. The retained `postreload`, `postflr`,
+> `postshm`, and `ladder-preflight` rank logs contain only a missing-source
+> error and never reach `import-done`. Those runs cannot support a `0/4`
+> collective conclusion or establish the effect of the later recovery
+> actions. The original model-startup hangs, device errors, and kernel messages
+> remain independent evidence of the pre-recovery fault; current post-recovery
+> collective health is unknown. See
+> [the probe-harness correction](2026-07-26-xccl-probe-harness-correction.md).
 
 ## The failure, end to end
 

@@ -1,19 +1,31 @@
 # Laguna resume point
 
-## BLOCKED: the host needs a reboot (2026-07-26)
+## BLOCKED: post-recovery collective health is unmeasured (2026-07-26 correction)
 
-The GPU collective stack is wedged. Every run hangs in `xpu_worker.init_device`
-at its warm-up `all_reduce`, including runs at the untouched record commit.
-A 4-rank probe with no vLLM in it hangs identically, and three CCL
-configurations all fail, so there is no software workaround.
+The pre-recovery evidence established a real host fault: model runs hung in
+`xpu_worker.init_device`, the untouched record commit hung identically, and
+the kernel logged a timed-out job and GuC reset on card 3. However, the tracked
+four-rank probe wrapper never launched its Python probe. It asked Python to
+open a nonexistent file under its scratch directory instead of the committed
+sibling `tools/xccl_collective_probe.py`.
 
-    sudo reboot
+All retained `postreload`, `postflr`, `postshm`, and `ladder-preflight` rank
+logs contain only that missing-file error and never reach `import-done`.
+Therefore their reported `0/4` counts are harness failures, not collective
+results. They cannot show whether the module reload, FLR, or shared-memory
+cleanup changed collective health. The current post-recovery collective state
+is **unknown**.
 
-`modprobe -r xe` cannot work — the module refcount was 76. There is no
-passwordless sudo on this host, so this step needs Steve.
+The wrapper and ladder are now repaired fail-closed, with CPU-only regression
+coverage. Do not perform a bus reset or infer another recovery action from the
+invalid runs. A clean reboot remains the conservative operator recovery choice
+after the already-issued FLRs, but the broken probe does not prove that it is
+required.
 
 Cause and full evidence:
 `notes/2026-07-26-topology-explosion-wedged-the-collective-stack.md`.
+Probe correction and exact evidence boundary:
+`notes/2026-07-26-xccl-probe-harness-correction.md`.
 A capture segment ceiling has since landed so the same explosion fails as a
 Python error instead of costing a reboot.
 

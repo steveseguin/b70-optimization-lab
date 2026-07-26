@@ -23,8 +23,6 @@ def main() -> int:
     world = int(os.environ["WORLD_SIZE"])
     stage(rank, "import-done")
 
-
-
     device = torch.device(f"xpu:{rank}")
     torch.xpu.set_device(device)
     stage(rank, f"device-set {torch.xpu.get_device_name(int(rank))}")
@@ -40,6 +38,7 @@ def main() -> int:
     t = torch.ones(8, device=device, dtype=torch.float32) * (int(rank) + 1)
     stage(rank, "tensor-allocated")
 
+    stage(rank, "all_reduce-start")
     dist.all_reduce(t)
     torch.xpu.synchronize()
     stage(rank, f"all_reduce-done sum={t[0].item()}")
