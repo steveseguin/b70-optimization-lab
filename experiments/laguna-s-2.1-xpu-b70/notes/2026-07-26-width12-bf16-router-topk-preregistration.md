@@ -2,8 +2,11 @@
 
 Date: 2026-07-26 America/Toronto
 
-Status at registration: design only. No source change, candidate binary,
-component XPU call, model service, prompt, or endpoint run has occurred.
+Status: **standalone lane stopped at the first physical-card component gate.**
+The candidate is exact and materially faster, but its `0.498946 ms` paired
+median saving missed the preregistered `0.60 ms` floor. No other card and no
+endpoint was run. The implementation remains eligible only as a separately
+preregistered component of a combined treatment.
 
 ## Why this lane is open
 
@@ -115,3 +118,27 @@ Promotion requires the candidate to exceed `102 tok/s` on the frozen scored
 median. If it does, run one independent second cold confirmation before any
 record or submission claim. No favorable retry, prompt removal, capture-window
 relocation, cache reuse, or score-definition change is allowed.
+
+## Component result
+
+Kernel commit `906190641d708b8028018c5dde653e265c835348` produced candidate
+module SHA256
+`154eebd95beb83089b6628a21085e079b730c4474408d8fd2b484c385a0ce5d5`.
+The first and only formal component leg ran on physical card zero at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/mwide-bf16-router-component-9061906-41dd691d-20260726/card0/result.json
+```
+
+It passed all pre-timing and post-timing exactness checks over the 192-case
+width-12 random/adversarial corpus. The candidate was faster in `31/31`
+paired blocks:
+
+| metric | incumbent | candidate | paired saving |
+| --- | ---: | ---: | ---: |
+| median per 47-call cycle | `0.959458 ms` | `0.460524 ms` | `0.498946 ms` |
+
+The timing floor was `0.60 ms`, so `formal_component_pass=false` and the
+preregistered early stop fired. Cards one through three and the endpoint were
+not run. This is a positive micro-optimization result but not authority to
+claim, project, or benchmark a standalone path to 102.
