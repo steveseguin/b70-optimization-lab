@@ -52,6 +52,25 @@ That was not chased, because the candidate is rejected on speed regardless. It
 is recorded because the same 12/13 signature appeared at width 14, and a single
 diverging prompt is invisible to any throughput-only comparison.
 
+## Where this points instead
+
+If the per-cycle collective is latency-bound rather than bandwidth-bound, then
+the lever is the **number** of collectives, not their size. The audited topology
+is 146 graphs and 145 eager breaks, made of **97 collective boundaries** (96
+all-gathers plus one embedding all-reduce) and 48 attention boundaries, across
+49 layers. That is roughly two collectives per layer, each paying a PCIe round
+trip inside a 39.35 ms cycle.
+
+Nothing here measures what one of those round trips costs, so this is a
+direction rather than a claim. But it is the direction the local-argmax result
+argues for, and it is the opposite of what was tried: fewer, larger collectives
+rather than the same number of smaller ones.
+
+It is also expensive and risky. Changing the collective count changes the
+audited 146/145 topology, which is the invariant that has caught every
+structural regression in this lane, including the one that took the host down.
+Any attempt would need its own preregistration and a new audited count.
+
 ## Standing
 
 Best measured result remains **100.524890** tok/s at width 12, 13/13 bitwise
