@@ -2,10 +2,9 @@
 
 Date: 2026-07-26 America/Toronto
 
-Status at registration: design only. The width-12 router's first-card
-component result and the older width-8 DFlash workspace evidence already
-exist, but this combined treatment has not changed vLLM source, run a new XPU
-call, started a service, or generated a token.
+Status: **host and four-card component gates passed; cold endpoint crossover
+authorized but not yet run.** No model service or generation has occurred for
+this combined treatment.
 
 ## Question
 
@@ -138,3 +137,59 @@ cold candidate confirmation under the same gates. A single crossing, a
 full-window score, or a result obtained by moving work outside the scored
 window is not sufficient.
 
+## Source and component result
+
+The default-off combined implementation is vLLM
+`9090947f229ef4110f4b71a79cba7114efbbac5a`. Focused host validation returned
+`71 passed`; Ruff, Python compilation, and whitespace checks passed. The
+worktree was clean before every component leg.
+
+The width-12 router uses kernel
+`906190641d708b8028018c5dde653e265c835348` and `_moe_C.abi3.so` SHA256
+`154eebd95beb83089b6628a21085e079b730c4474408d8fd2b484c385a0ce5d5`.
+All four physical cards passed pre/post exactness over the frozen 192-case
+corpus and won 31/31 paired blocks:
+
+| physical card | paired median saving per 47 calls |
+| ---: | ---: |
+| 0 | `0.498946 ms` |
+| 1 | `0.535074 ms` |
+| 2 | `0.500916 ms` |
+| 3 | `0.510949 ms` |
+
+The retained root is:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/mwide-bf16-router-component-9061906-41dd691d-20260726
+```
+
+These legs remain `formal_component_pass=false` under the old standalone
+`0.60 ms` floor. They are used here only as exactness and measured component
+evidence; their status was not relabelled.
+
+The width-12 workspace gate is main
+`5eecb368d` with vLLM `9090947f2`. Every physical card returned
+`exact_component_pass` for changing real-shape BF16 widths 9, 10, 11, and 12
+in both actual no-bias and synthetic-bias branches. Each branch repeated every
+width and preserved raw bits at normalized context, BMM output, projected K,
+projected V, normalized K, RoPE K, and all six cache writes. Workspace
+pointers were stable, weights and inputs stayed unchanged, and capture
+rejection did not allocate or mutate state.
+
+The retained root is:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/mwide-dflash-context-kv-9090947-5eecb368d-20260726
+```
+
+Two earlier card-zero attempts are harness failures, not candidate results:
+
+1. main `b60ec7960` reached cache writes but the old fixture omitted the
+   current backend's `_xpu_persistent_kv_cache_views=None` initialization;
+2. the next attempt completed both arithmetic branches and then tried to hash
+   nonexistent `libgrouped_gemm_bmg_xe2.so` instead of the installed
+   `libgrouped_gemm_xe_2.so`.
+
+Neither wrote a result, started a service, generated a token, or produced a
+performance sample. Both faults were corrected in committed source before the
+successful four-card campaign.
