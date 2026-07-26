@@ -1,10 +1,5 @@
 # Laguna — width-two tree: design, and why the verifier is closer than expected
 
-> **Corrected 2026-07-26.** The 3.703 emitted-per-cycle baseline used below is a
-> preregistration assumption, not a measurement; the measured value is 3.122.
-> See `2026-07-26-correction-the-emitted-per-cycle-baseline.md`. On the corrected
-> baseline a depth-15 chain projects 100.2 tok/s and does **not** clear 102.
-
 Date: 2026-07-26 America/Toronto
 
 Status: **design only, nothing implemented, nothing measured.** Written while
