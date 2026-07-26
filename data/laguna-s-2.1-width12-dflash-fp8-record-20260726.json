@@ -1,0 +1,107 @@
+{
+  "schema": "laguna-s-2.1-width12-dflash-fp8-record-v1",
+  "date": "2026-07-26",
+  "status": "VERIFIED_RECORD_SUBMISSION_PENDING",
+  "source": {
+    "main_harness_commit": "c8942a8e4",
+    "vllm_commit": "e596ef1543466ae1a05e5bb8091f58872e2b18ba",
+    "kernel_commit": "6f9dd3c3a7b1b677a992ca4f431a968408f9c816",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba"
+  },
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-width12-dflash-fp8-e596ef154-20260726T214259Z",
+  "metric": "median_tok_s_1_100_after_ttft",
+  "record": {
+    "value_tok_s": 102.97143559613157,
+    "goal_tok_s": 102.0,
+    "margin_over_goal_tok_s": 0.97143559613157,
+    "prior_approved_tok_s": 94.92003934159611,
+    "prior_approved_id": "cmrzrd4tf001ipa013xpx4kid",
+    "delta_vs_approved_tok_s": 8.051396254535462,
+    "delta_vs_approved_pct": 8.48229342337321,
+    "prior_best_exact_tok_s": 100.5248896052723,
+    "delta_vs_prior_best_exact_tok_s": 2.4465459908592635,
+    "delta_vs_prior_best_exact_pct": 2.433771377880678
+  },
+  "summary": {
+    "tok_s_out": 102.97143559613157,
+    "tok_s_out_p10": 71.14888383025148,
+    "tok_s_out_mean": 119.43840854755922,
+    "tok_s_out_stdev": 62.783035589444644,
+    "tok_s_full_after_ttft_median": 134.79088555311446,
+    "tok_s_wall_full_median": 52.76762062661338,
+    "ttft_ms_median": 5758.738295000512,
+    "draft_cycles": 1609,
+    "draft_tokens": 17699,
+    "accepted_draft_tokens": 4747,
+    "draft_acceptance_rate": 0.26820724334708174,
+    "emitted_tokens_per_draft_cycle": 3.950279676817899
+  },
+  "quality": {
+    "teacher_exact": "13/13",
+    "cached_tokens_zero": "13/13",
+    "long_then_next": "2/2",
+    "rollover": "1/1",
+    "fresh_unique_prompts": true,
+    "single_active_generation": true,
+    "no_warmup_generation": true,
+    "suite_invocations": 1,
+    "retries": 0,
+    "no_cache_history_ngram_or_response_reuse": true,
+    "first_valid_score_is_reported_score": true
+  },
+  "treatment": {
+    "selector": "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1",
+    "target_unchanged": true,
+    "logged_fp8_draft_projection_count_per_rank": 31,
+    "auxiliary_hidden_slice_workspace": true,
+    "draft_lm_head_attribution": "not claimed because the expected preparation log message is absent",
+    "width12_router_context_kv_stack": true,
+    "exact_max_m": 12,
+    "num_speculative_tokens": 11,
+    "draft_sample_method": "greedy",
+    "rejection_sample_method": "standard"
+  },
+  "graph": {
+    "mode": "NONE",
+    "cudagraph_mode": "PIECEWISE",
+    "capture_sizes": [
+      12
+    ],
+    "max_capture_size": 12,
+    "graphs_per_rank": 146,
+    "eager_breaks_per_rank": 145,
+    "rank_captures": 4,
+    "rank_replays": 4
+  },
+  "operational": {
+    "prestart_idle_seconds": 73,
+    "poststop_idle_seconds": 73,
+    "prestart_idle_snapshots": 13,
+    "poststop_idle_snapshots": 13,
+    "cleanup_original_status": 0,
+    "cleanup_stop_status": 0,
+    "cleanup_worker_status": 0,
+    "cleanup_idle_status": 0,
+    "surviving_workers": 0,
+    "port_18080_listener_after_run": false,
+    "artifact_sealed_read_only": true
+  },
+  "sha256": {
+    "bench": "a266b6ed28fa963456b3fc626a8bbafe104433e8b5dbc0b749973f6cd5e7f413",
+    "exactness": "f69e461b88ce6291af7a31716e2a0184a3918ed0a9b517768b30425107b0e275",
+    "server_log": "5e082ef3cf85734119baa9f05ec83bcbca993408e5b0ad61c65169abfaa9a177",
+    "identity": "3569a13ae94a55d020d4250c23d1a67fb5e6310303e179a09e1e92f4b6c2ca8b",
+    "metrics_after_suite": "d74847ab08a05b512bbf22b8b8cbc11c52fb480455c7cf74cc1eca33144237af",
+    "shared_native_module": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2",
+    "xpu_native_module": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
+    "moe_native_module": "00fd81608f057039d31e1b316fecbecec60b3b03151e66b95d0f844185119715",
+    "grouped_gemm_native_module": "fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96"
+  },
+  "localmaxxing": {
+    "submission_status": "PENDING",
+    "queue_path": "data/localmaxxing-laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.queue.json",
+    "response_path": null,
+    "id": null
+  }
+}
