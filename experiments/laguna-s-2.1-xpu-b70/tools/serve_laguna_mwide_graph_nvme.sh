@@ -92,4 +92,4 @@ exec vllm serve "$model_root" \
   --compilation-config \
     "{\"mode\":\"NONE\",\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[${LAGUNA_M}],\"max_cudagraph_capture_size\":${LAGUNA_M}}" \
   --speculative-config \
-    "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\"}"
+    "{\"method\":\"dflash\",\"model\":\"$draft_root\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":${LAGUNA_LOCAL_ARGMAX:-false}}"
