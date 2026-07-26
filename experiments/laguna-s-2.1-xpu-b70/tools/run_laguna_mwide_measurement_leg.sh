@@ -208,6 +208,8 @@ trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 # identity.txt alongside the width.
 se="$fusions"; qk="$qknorm"; gpu_util=0.90
 metadata_selector="$metadata_arg"
+expected_num_graphs="$(( inline_attention == 1 ? 98 : 146 ))"
+expected_num_eager_breaks="$(( inline_attention == 1 ? 97 : 145 ))"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
 {
@@ -221,6 +223,7 @@ verify_idle_interval prestart
   printf 'attn_library_sha256=%s\n' "$(sha256sum "$kernel_root/vllm_xpu_kernels/libattn_kernels_xe_2.so" | awk '{print $1}')"
   printf 'suite_sha256=%s\nteacher_sha256=%s\nselector_stack=exact-m%s-dflash%s-breakablegraph-w1routew2-routeinterleave-n64\n' "$expected_suite" "$expected_teacher" "$laguna_m" "$laguna_spec"
   printf 'metadata_selector=%s\nattention_capture_selector=%s\ninline_attention_selector=%s\n' "$metadata_selector" "$capture_attention" "$inline_attention"
+  printf 'expected_num_graphs=%s\nexpected_num_eager_breaks=%s\n' "$expected_num_graphs" "$expected_num_eager_breaks"
   printf 'no_warmup=true\nsuite_invocations=1\nretries=0\nverified_idle_interval_seconds=60\n'
   sha256sum "$0" "$graph_serve" "$nvme_paths" "$comparator" "$benchmark" "$idle_wrapper" "$venv_python" "$vllm_binary"
 } > "$run_dir/identity.txt"
@@ -244,12 +247,15 @@ curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after-suite.prom"
 "$venv_python" "$comparator" --teacher "$teacher" --candidate "$run_dir/bench.json" --out "$run_dir/exactness-vs-q1.json" > "$run_dir/exactness-vs-q1.stdout"
 jq -e '.fresh_response_validity.valid == true and .fresh_response_validity.each_prompt_run_once == true and .fresh_response_validity.cached_tokens_all_zero == true and .realistic_final_gate.passed == true and .run_identity.prompt_count == 13 and .run_identity.max_tokens == 512 and .run_identity.seed == 1' "$run_dir/bench.json" >/dev/null
 jq -e '.all_exact == true and .candidates[0].comparison.exact_count == 13 and .candidates[0].comparison.total == 13 and .candidates[0].comparison.all_cached_zero == true' "$run_dir/exactness-vs-q1.json" >/dev/null
-"$venv_python" - "$run_dir/server.log" <<'PY'
+"$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" <<'PY'
 import re
 import sys
 from pathlib import Path
 
 lines = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").splitlines()
+expected_shape = (
+    f"(graphs={int(sys.argv[2])}, eager_breaks={int(sys.argv[3])})"
+)
 captures = [line for line in lines if "Captured audited breakable cudagraph" in line]
 replays = [line for line in lines if "Replayed audited breakable cudagraph" in line]
 rank = re.compile(r"Worker_TP([0-3])_EP([0-3])")
@@ -261,6 +267,10 @@ for name, rows in (("capture", captures), ("replay", replays)):
     shapes = {line.split("BreakableCUDAGraphCapture")[-1] for line in rows}
     if len(shapes) != 1:
         raise SystemExit(f"graph {name} topology differs across ranks: {shapes}")
+    if any(expected_shape not in line for line in rows):
+        raise SystemExit(
+            f"graph {name} topology is not {expected_shape}: {sorted(shapes)}"
+        )
 PY
 stop_service; server_pid=""
 assert_no_workers || die "workers or listener survived shutdown"
