@@ -109,3 +109,40 @@ specialization.
    exactness, cache-zero, and a scored median.
 3. Then the width-two tree, still required to clear 102 since M=12 alone
    projects only about 101.5 at unchanged cycle time.
+
+
+## Pin twelve resolved; the collective assumption is the real wall
+
+Pin twelve was another literal in the identity check itself:
+`persistent_block_table.shape != (8, block_table.shape[1])`. Parameterized.
+
+The run then returns to the collective failure, and the stack now identifies its
+source precisely:
+
+```
+laguna.py:1181  o_proj
+linear.py:1919  forward
+linear.py:102   _xpu_rank_order_all_reduce   ->  all_gather (1, 1, 3072)
+```
+
+`_xpu_rank_order_all_reduce` gathers each rank's local `o_proj` result and sums
+in fixed rank order — the mechanism that makes q=1 and speculative verification
+share reduction arithmetic. Inside the eligible width-12 forward, one such
+`o_proj` carries **one row**, not twelve.
+
+The collective state is correctly scoped: `active_laguna_m8_collective_state`
+returns non-None only when the forward context is marked eligible. So this is
+not leakage across forwards. A genuinely single-row `o_proj` occurs *within* the
+twelve-row verifier forward — almost certainly a DFlash layer, since DFlash
+decoder layers execute inside the same forward and its context-KV precompute
+operates on a different row count than the verifier query.
+
+**This is the structural wall.** `LagunaM8CollectiveState` preallocates
+non-aliasing buffers at a single `_ROWS` width and asserts every collective in
+the transaction matches it. That assumption is not merely a constant: at M=8 the
+verifier width and the DFlash layer width evidently coincide, and at M=12 they
+do not. Fixing it requires the transaction to carry per-slot widths, or to
+exclude DFlash-layer collectives from the M8 transaction entirely.
+
+That is a design change to the collective manager, and it is where this work
+stops for now.
