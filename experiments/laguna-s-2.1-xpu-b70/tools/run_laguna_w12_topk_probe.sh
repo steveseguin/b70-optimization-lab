@@ -23,6 +23,12 @@ readonly rpc="${LAGUNA_NVME_TMP_ROOT:-/mnt/fast-ai/llm-optimization-artifacts/la
 
 die() { echo "w12 topk probe: $*" >&2; exit 2; }
 
+# Resolve the interface carrying the cluster IP; a reboot on 2026-07-26 moved it
+# from eno1 to eth1 and oneCCL fails KVS bootstrap when the name is wrong.
+cluster_iface="$(ip -o -4 addr show 2>/dev/null | awk -v ip="${LAGUNA_CLUSTER_IP:-10.0.0.65}" '$4 ~ "^"ip"/" {print $2; exit}')"
+[[ -n "$cluster_iface" ]] || { echo "no interface carries the cluster IP" >&2; exit 2; }
+readonly cluster_iface
+
 [[ "$(git -C "$vllm" rev-parse --short=9 HEAD)" == "$expected_vllm" ]] ||
   die "vLLM identity drift"
 [[ -z "$(git -C "$vllm" status --porcelain=v1)" ]] || die "vLLM worktree dirty"
@@ -63,8 +69,8 @@ setsid /usr/bin/timeout --foreground --preserve-status --signal=TERM --kill-afte
   HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 \
   OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD= \
   ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 \
-  CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE=eno1 \
-  CCL_KVS_IFACE=eno1 TORCH_XCCL_ASYNC_ERROR_HANDLING=1 \
+  CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" \
+  CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 \
   LD_LIBRARY_PATH="/home/steve/.venvs/deepseek-v4-xpu/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib" \
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 \
   VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 \
