@@ -27,6 +27,12 @@ readonly draft_graph="${7:?usage: TREATMENT LABEL RUN_DIR M SPEC METADATA DRAFTG
 # separable so a width can be measured with and without them, which is the only
 # way to attribute a failure at a new width to the width or to the fusions.
 readonly fusions="${8:-1}"
+# QKNorm/RoPE is separable from shared-elementwise because only its launcher
+# maps work-groups onto whole heads. With the target's 48 attention heads that
+# is H=14 per TP4 rank, so rows*H divides HEADS_PER_WG at 8 and 16 but not at
+# 12. Shared-elementwise has no such constraint, so the two are controlled
+# independently and width 12 can use the half that is reachable.
+readonly qknorm="${9:-$fusions}"
 
 readonly repo_root=/home/steve/llm-optimizations
 
@@ -58,9 +64,10 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# == 7 || $# == 8 )) || { echo "seven or eight arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 9 )) || { echo "seven to nine arguments are required" >&2; exit 2; }
 case "$draft_graph" in 0|1) ;; *) echo "DRAFTGRAPH must be 0 or 1" >&2; exit 2 ;; esac
 case "$fusions" in 0|1) ;; *) echo "FUSIONS must be 0 or 1" >&2; exit 2 ;; esac
+case "$qknorm" in 0|1) ;; *) echo "QKNORM must be 0 or 1" >&2; exit 2 ;; esac
 
 die() { echo "Laguna formal M8 crossover leg: $*" >&2; exit 2; }
 
@@ -101,7 +108,7 @@ check_hash "$suite" "$expected_suite"; check_hash "$teacher" "$expected_teacher"
 check_hash "$LAGUNA_NVME_TARGET_ROOT/config.json" "$expected_target_config"
 check_hash "$LAGUNA_NVME_DRAFT_ROOT/config.json" "$expected_draft_config"
 check_hash "$kernel_root/vllm_xpu_kernels/_C.abi3.so" \
-  126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
+  42fcd169af9006b4aa4768f5f0f65d483554eeb547fe30d1ddc4c7857575e95e
 check_hash "$kernel_root/vllm_xpu_kernels/_xpu_C.abi3.so" \
   f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" \
@@ -174,7 +181,7 @@ trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 # rows and so had to be disabled at other widths. They now take the row count at
 # runtime, so they are enabled at every width and the flags are recorded in
 # identity.txt alongside the width.
-se="$fusions"; qk="$fusions"; gpu_util=0.90
+se="$fusions"; qk="$qknorm"; gpu_util=0.90
 metadata_selector="$metadata_arg"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
