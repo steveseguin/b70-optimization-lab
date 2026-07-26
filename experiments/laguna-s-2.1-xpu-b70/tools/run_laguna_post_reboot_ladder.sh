@@ -19,8 +19,12 @@ readonly objective=102.0
 die() { echo "ladder: $*" >&2; exit 2; }
 [[ -x "$leg" ]] || die "measurement leg missing: $leg"
 
-# --- preflight: every card must execute, or a leg will wedge the set ---------
-echo "== preflight: all four cards must run a real kernel =="
+# --- preflight -------------------------------------------------------------
+# A per-card matmul is NOT sufficient. Cards can pass single-device work while
+# the 4-rank collective is still wedged, and a leg that gets that far hangs for
+# fifteen minutes in init_device's warm-up all_reduce before timing out. The
+# preflight therefore runs the same collective the leg will run.
+echo "== preflight: single-card execution =="
 for d in 0 1 2 3; do
   out="$(timeout 60 env -i \
     PATH=/home/steve/.venvs/deepseek-v4-xpu/bin:/usr/bin:/bin \
@@ -32,6 +36,17 @@ torch.xpu.synchronize(); print('OK')" 2>&1 | tail -1)"
   [[ "$out" == OK ]] || die "xpu:$d is not healthy ($out) -- reboot before running the ladder"
   echo "  xpu:$d ok"
 done
+
+echo "== preflight: 4-rank collective (the check that actually gates a leg) =="
+probe="$script_dir/run_xccl_collective_probe.sh"
+[[ -x "$probe" ]] || die "collective probe missing: $probe"
+XCCL_PROBE_SCRATCH="${XCCL_PROBE_SCRATCH:-/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/ladder-preflight}" \
+  timeout 240 "$probe" ladder-preflight \
+  ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 \
+  CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE=eno1 CCL_KVS_IFACE=eno1 \
+  >/dev/null 2>&1 \
+  || die "4-rank all_reduce does not complete -- the collective stack is wedged, reboot required"
+echo "  4-rank all_reduce ok"
 
 # Rung: LABEL TREATMENT M SPEC METADATA DRAFTGRAPH  -- cheapest lever first.
 # Rung 1 is the control that re-establishes the record on the recovered host;
