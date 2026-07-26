@@ -151,3 +151,18 @@ Card 3 is BDF `0000:47:00.0`, the device named in the original
 Practical consequence: a TP4 leg needs all four cards for ~25 minutes. Under
 flapping, such a run would fail partway and risk re-wedging the set, which is
 how this started. No further GPU work should be attempted before a reboot.
+
+## Final state: card 3 is permanently wedged, the other three are not
+
+After ten minutes with no probing, cards 0, 1 and 2 pass simultaneously and card
+3 still returns `UR_RESULT_ERROR_OUT_OF_RESOURCES`. Over roughly ninety minutes
+card 3 has **never** passed once, while the other three have recovered
+repeatedly — which also explains the earlier flapping: quiet lets 0-2 heal, and
+probing re-wedges them, but card 3 is unaffected by either.
+
+Card 3 is BDF `0000:47:00.0`, the device named in the original
+`xe ... GT0: Kernel-submitted job timed out`. It is the first card that faulted
+and the only one that has not come back.
+
+TP4 requires all four. No amount of further waiting will change this, and there
+is no unprivileged reset path. The reboot is the whole remaining blocker.
