@@ -19,6 +19,9 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Model Lane Entry Points
 
+- [Laguna S 2.1 Record Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): approved exact four-B70 102.971 tok/s identity and future-work rules.
+- [Laguna Campaign Transfer Ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md): condensed wins, losses, correctness failures, graph lessons, and harness rules for future models.
+- [Laguna KV-Cache Precision Decision](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md): why the exact record uses BF16 although the official quantized checkpoint specifies calibrated FP8 KV.
 - [Gemma 4 26B Handoff](../results/gemma4-26b-a4b-q8-b70/HANDOFF.md): one-B70 Q8/INT8-quality production backend, speed frontier, resume bookmark, and next-work assessment.
 - [Gemma 4 26B Q8 Service Runbook](gemma4-26b-q8-service-runbook.md): restore or stop the temporary llama.cpp OpenAI endpoint on one or four B70 GPUs.
 - [Gemma 4 26B Result Packet](../results/gemma4-26b-a4b-q8-b70/README.md): detailed one-B70 speed frontier, long-context service lane, validity notes, and LocalMaxxing context.

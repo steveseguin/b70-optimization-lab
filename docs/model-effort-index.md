@@ -33,6 +33,28 @@ path.
 
 ## Active / Recent Efforts
 
+### Laguna S 2.1 INT4 On Four B70s
+
+Main entries:
+
+- [record resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md)
+- [record note](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md)
+- [campaign transfer ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md)
+- [KV-cache precision decision](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md)
+- [source snapshots](../patches/laguna-s-2.1-xpu-b70/README.md)
+
+Status: the requested strict four-B70 objective is complete at
+`102.971435596 tok/s`, 13/13 bitwise exact against the canonical q1 teacher,
+cache-zero on all rows, and approved by LocalMaxxing as
+`cms2ccv2d00lps201rej94pjy`. The record uses exact width 12, DFlash depth 11,
+an audited 146/145 Breakable PIECEWISE topology, BF16 KV, and 31 runtime
+E4M3FN W8A16 DFlash projection conversions per rank.
+
+Poolside's quantized checkpoint officially ships calibrated FP8 KV; BF16 is a
+deliberate record-lane override. The earlier B70 A/B doubled cache capacity
+with FP8 but slowed short decode and changed output. Keep future official
+long-context FP8 service work separate from the BF16 bitwise-exact record.
+
 ### Qwen3.6 27B INT4 AutoRound On B70
 
 Main entries:
@@ -217,3 +239,9 @@ For evidence-linked strategies and their transfer boundaries, start with
   cold-response suite. Synthetic filled-long, repeated, warmed, cached,
   n-gram/history, or continuation-learned scores can guide optimization but
   must remain diagnostic unless revalidated by that gate.
+- Treat weight, activation, router, draft, and KV precision as separate identity
+  fields. A lower-byte KV cache is a capacity candidate until its actual
+  attention path, long-context speed, and separately labeled quality gates pass.
+- Require runtime execution proof for experimental selectors, assert graph and
+  collective work counts, and never infer device health from a probe that did
+  not prove it entered.

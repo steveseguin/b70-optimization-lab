@@ -377,6 +377,33 @@ Try:
 Keep prompt-processing wins separate from short-decode headline records unless
 the same config passes both.
 
+### KV-Cache Precision Is A Separate Lane
+
+Do not infer KV precision from weight quantization or `torch_dtype`. Inspect the
+checkpoint's KV-specific scheme, the resolved engine config, and the attention
+backend actually selected.
+
+For every BF16/FP16 versus FP8/Q8/TurboQuant comparison:
+
+- record loaded cache scales and whether they are checkpoint-calibrated,
+  runtime-calibrated, or default `1.0`;
+- report actual cache tokens/card and memory reserved, not just theoretical
+  bytes/element;
+- separate short-decode speed, long-context decode, context capacity, and
+  concurrency;
+- treat a KV dtype change as a quality-lane change unless the declared quality
+  suite proves equivalence;
+- keep graph mode, attention backend, block size, model/draft identity, and
+  prompt construction fixed;
+- preserve a native-dtype control and run long-context retrieval, semantic,
+  repetition, and structured-output gates.
+
+FP8 halves the K/V payload in principle, but that does not guarantee a speedup.
+At short context, quantize/dequantize work or a weaker backend can dominate.
+Laguna's direct B70 screen doubled capacity but was `4.132%` slower than BF16
+on its early matched-DFlash short-context lane. See the
+[Laguna KV-cache decision](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md).
+
 ### Speculation
 
 Try:

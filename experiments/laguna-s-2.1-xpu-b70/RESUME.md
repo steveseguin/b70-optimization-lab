@@ -64,6 +64,24 @@ Promoted records:
 - submission response:
   `data/localmaxxing-responses/laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.response.json`.
 
+Durable learning indexes:
+
+- Laguna-specific wins, negative results, graph/correctness lessons, and
+  harness rules:
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md`;
+- official FP8-KV recommendation versus the record's deliberate BF16-KV
+  contract:
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-kv-cache-precision-decision.md`;
+- reusable cross-model rules:
+  `docs/research-workflow-playbook.md`.
+
+The official quantized checkpoint declares calibrated per-tensor FP8 KV and
+vLLM `auto` resolves to it. This record explicitly overrides that with BF16
+because the declared teacher is BF16, the benchmark used at most 0.5% of its
+allocated KV capacity, and the earlier controlled Laguna screen found FP8
+exactly doubled capacity but was `4.132%` slower and changed outputs. Do not
+confuse the record's FP8 DFlash projection weights with its BF16 KV cache.
+
 ## Gates that passed
 
 - fixed realistic suite, 13 unique prompts;
