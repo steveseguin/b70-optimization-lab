@@ -67,3 +67,26 @@ Two candidates were rejected today for producing large numbers with wrong
 output — draft graph capture at 198.7 tok/s and 95.91% acceptance, and width 16
 with fusions at 489.9 and 99.76%. Both showed a nearly flat per-position
 acceptance row, which is now a reliable tell that the check has stopped working.
+
+
+## Postscript: shared-elementwise alone was also measured, and also loses
+
+The head-divisibility constraint applies only to QKNorm/RoPE, so the
+shared-elementwise pair -- `[rows, 256]` and `[rows, 3072]`, indexed from the
+work-group id, no head math -- is reachable at width 12. It was widened on its
+own, with the QKNorm/RoPE kernel left exactly as the record built it, and
+measured:
+
+| width 12 | tok/s | exact | emitted/cycle |
+| --- | ---: | --- | ---: |
+| record kernels, no fusions | **100.524890** | 13/13 | 3.9552 |
+| shared-elementwise widened and on | 99.567429 | 13/13 | 3.9527 |
+
+**−0.95%.** Valid on every gate, acceptance decaying normally, so this is a real
+measurement rather than a broken run: the widened kernel's cost exceeds its
+fusion benefit at this width. The kernel change is reverted and the record
+binary restored again.
+
+The fusion route is therefore closed on measurement rather than inference. Every
+part of it has now been tried: both halves at width 16 (inexact), QKNorm/RoPE at
+width 12 (unreachable), and shared-elementwise at width 12 (slower).
