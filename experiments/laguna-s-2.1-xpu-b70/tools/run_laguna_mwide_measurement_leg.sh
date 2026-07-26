@@ -133,7 +133,7 @@ trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 
 # the M8-only fusions pin speculation to depth 7; disable at other widths
 se=1; qk=1; gpu_util=0.90
-if [[ "$laguna_m" != 8 ]]; then se=0; qk=0; gpu_util=0.82; fi
+if [[ "$laguna_m" != 8 ]]; then se=0; qk=0; fi
 metadata_selector="$metadata_arg"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
