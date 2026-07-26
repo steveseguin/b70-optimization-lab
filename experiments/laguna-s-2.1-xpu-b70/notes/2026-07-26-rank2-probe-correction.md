@@ -61,6 +61,36 @@ never observed. It is unsupported.
 The interval does not reach the requirement. Even taken at face value this probe
 is statistically incapable of authorising implementation.
 
+## The empirical ladder: the second and third alternates are nearly worthless
+
+Recomputing every shape on empirical counters rather than the flat-p model
+changes the shape of the answer, not just its level. The marginal value of the
+spine nodes an alternate displaces is far higher than the model implied:
+
+| spine depth | empirical value |
+| ---: | ---: |
+| 9 | 170/1607 = 0.1058 |
+| 10 | 138/1607 = 0.0859 |
+| 11 | 113/1607 = 0.0703 |
+
+Against alternate gains of 0.1199, 0.0876 and 0.0577 at the (mismatched) 43.71%:
+
+| shape | net | emitted/cycle | projected tok/s |
+| --- | ---: | ---: | ---: |
+| spine 11 (measured) | — | 3.9552 | **100.52 measured** |
+| spine 10 + 1 alternate | +0.0496 | 4.0048 | 101.79 |
+| spine 9 + 2 alternates | +0.0513 | 4.0065 | 101.83 |
+| spine 8 + 3 alternates | +0.0032 | 3.9584 | 100.61 |
+
+**Every alternate after the first is essentially break-even**, because the spine
+node it displaces is worth almost as much as the rescue it buys. The earlier
+claim that two alternates were meaningfully better than one was an artifact of
+the flat-p cost model understating the deep spine.
+
+So the whole tree route reduces to a single question: is the benchmark-matched
+rank-2 rescue rate at position 0 at least **46.77%**? At 43.71% it is not, and
+adding alternates cannot make up the difference.
+
 ## What a valid re-measurement requires
 
 1. A diagnostic that reuses the **exact** benchmark request construction: chat
