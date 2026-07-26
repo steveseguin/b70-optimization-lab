@@ -101,7 +101,7 @@ check_hash "$suite" "$expected_suite"; check_hash "$teacher" "$expected_teacher"
 check_hash "$LAGUNA_NVME_TARGET_ROOT/config.json" "$expected_target_config"
 check_hash "$LAGUNA_NVME_DRAFT_ROOT/config.json" "$expected_draft_config"
 check_hash "$kernel_root/vllm_xpu_kernels/_C.abi3.so" \
-  615d2de5926ec03592580a931f18e554a7d06479eb0ec9418da7bbf3a54bbb1b
+  126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
 check_hash "$kernel_root/vllm_xpu_kernels/_xpu_C.abi3.so" \
   f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" \
