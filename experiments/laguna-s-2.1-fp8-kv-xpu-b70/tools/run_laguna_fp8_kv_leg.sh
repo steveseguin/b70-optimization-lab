@@ -56,7 +56,10 @@ readonly expected_target_config=9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cc
 readonly expected_draft_config=6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14725ea5e86f20926
 readonly expected_scale_digest=3e6df440976ab2ed5229e1a39179cbc99d573c615386f223eeabc9de5ea9ddc0
 readonly rpc_tag="$(printf '%s' "$label" | sha256sum | cut -c1-16)"
-readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/f8-$rpc_tag"
+# ZMQ appends a 36-character UUID below this directory and Linux caps Unix
+# socket paths at 107 bytes. Keep the live IPC root directly on the same NVMe
+# mount instead of nesting it below the long artifact root.
+readonly rpc_dir="/mnt/fast-ai/.laguna-f8-$rpc_tag"
 readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
 readonly parity_only="${LAGUNA_FP8_PARITY_ONLY:-0}"
 readonly parity_trigger="$LAGUNA_NVME_ARTIFACT_ROOT/parity-trigger.json"
