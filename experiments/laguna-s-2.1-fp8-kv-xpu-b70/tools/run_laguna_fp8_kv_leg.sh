@@ -138,6 +138,8 @@ jq -e --arg digest "$expected_scale_digest" \
     "$execution_width" "$speculative_depth"
   printf 'prebuilt_exact_metadata=%s\ngraph_topology=%s\n' \
     "$graph" "$expected_graph_topology"
+  printf 'mwide_bf16_router=%s\ndflash_context_kv_workspace=%s\ndflash_w8a16=%s\n' \
+    "$graph" "$graph" "$graph"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
@@ -216,9 +218,9 @@ setsid /usr/bin/env -i \
   VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=0 \
   VLLM_XPU_LAGUNA_M8_W1_N_TILE=64 \
   VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12" \
-  VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12" \
-  VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12" \
-  VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$width12" \
+  VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$graph" \
+  VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$graph" \
+  VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$graph" \
   VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 \
   VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 \
   VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 \

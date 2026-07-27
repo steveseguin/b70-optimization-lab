@@ -73,3 +73,13 @@ The corrected eager arm keeps FP8 KV, width 12, depth 11, deterministic target
 arithmetic, and real DFlash speculation, but disables prebuilt graph metadata
 along with graph capture. This makes the arm a valid isolation of the graph
 execution contract rather than a runnable performance candidate.
+
+Source audit before the replacement run found three more selectors coupled to
+that graph contract: the M-wide BF16 router, DFlash context-KV workspace, and
+DFlash W8A16 path. The attempted run
+`candidate-eager128-20260727T143805Z` was rejected at model construction by
+the M-wide router guard, so it produced no performance or exactness result.
+The eager isolation now explicitly disables all four graph-coupled selectors.
+It retains the base BF16 router, fused W1-route-W2, route interleave, exact
+attention, and batched exact MoE selectors, all of which have an explicit
+enforce-eager contract.
