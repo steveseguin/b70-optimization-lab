@@ -56,8 +56,6 @@ readonly expected_target_config=9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cc
 readonly expected_draft_config=6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14725ea5e86f20926
 readonly expected_scale_digest=3e6df440976ab2ed5229e1a39179cbc99d573c615386f223eeabc9de5ea9ddc0
 readonly expected_base_runtime_lock=8c861e5c9d44232346770e2822aa795179f8f90c2678d2ebbb42a690ef4f4a97
-readonly expected_fp8_fa2_module=beb82bd676779984b6133f897b9f1d9f526558827be277d9114fa51548c8bac4
-readonly expected_fp8_attn_library=28b612c5495c007a80d312fdc2a4be035d37c6fa582013c376be4a8f2b627669
 readonly rpc_tag="$(printf '%s' "$label" | sha256sum | cut -c1-16)"
 # ZMQ appends a 36-character UUID below this directory and Linux caps Unix
 # socket paths at 107 bytes. Keep the live IPC root directly on the same NVMe
@@ -79,8 +77,21 @@ if [[ -n "$parity_precursor_csv" ]]; then
 fi
 [[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
   || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
-[[ "$block_size" == 16 || "$block_size" == 32 || "$block_size" == 64 ]] \
-  || die "LAGUNA_FP8_BLOCK_SIZE must be 16, 32, or 64"
+[[ "$block_size" == 32 || "$block_size" == 64 ]] \
+  || die "LAGUNA_FP8_BLOCK_SIZE must be 32 or 64"
+if [[ "$block_size" == 32 ]]; then
+  readonly expected_fp8_fa2_module=beb82bd676779984b6133f897b9f1d9f526558827be277d9114fa51548c8bac4
+  readonly expected_fp8_attn_library=28b612c5495c007a80d312fdc2a4be035d37c6fa582013c376be4a8f2b627669
+  readonly attention_build_commit=4e624337e84c0e9a71140d8d5f9e2ab25688f5dd
+  readonly paged_decode_config=paged_decode_laguna.conf
+  readonly chunk_prefill_config=chunk_prefill_laguna.conf
+else
+  readonly expected_fp8_fa2_module=3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4
+  readonly expected_fp8_attn_library=ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca
+  readonly attention_build_commit=906190641d708b8028018c5dde653e265c835348
+  readonly paged_decode_config=paged_decode_default.conf
+  readonly chunk_prefill_config=chunk_prefill_default.conf
+fi
 [[ "$parity_only" == 0 || "$parity_only" == 1 ]] \
   || die "LAGUNA_FP8_PARITY_ONLY must be 0 or 1"
 [[ "$parity_row" =~ ^-?[0-9]+$ ]] \
@@ -180,19 +191,22 @@ kernel_commit="$(git -C "$kernel_root" rev-parse HEAD)"
 readonly kernel_commit
 jq \
   --arg commit "$kernel_commit" \
+  --arg attention_commit "$attention_build_commit" \
   --arg fa2 "$expected_fp8_fa2_module" \
   --arg attn "$expected_fp8_attn_library" \
+  --arg paged_config "$paged_decode_config" \
+  --arg prefill_config "$chunk_prefill_config" \
   '
     .scope.sealed_result = "Laguna FP8 KV experimental lane"
     | .scope.disposition = "Derived from the sealed BF16 runtime lock; only the audited attention build and kernel source identity differ."
-    | .toolchain.attention_paged_decode_config = "paged_decode_laguna.conf"
-    | .toolchain.attention_chunk_prefill_config = "chunk_prefill_laguna.conf"
+    | .toolchain.attention_paged_decode_config = $paged_config
+    | .toolchain.attention_chunk_prefill_config = $prefill_config
     | .source.kernel_record_tree.commit = $commit
-    | .source.attention_runtime_tree.commit = $commit
+    | .source.attention_runtime_tree.commit = $attention_commit
     | (.native_modules[] | select(.path == "_vllm_fa2_C.abi3.so") | .sha256) = $fa2
-    | (.native_modules[] | select(.path == "_vllm_fa2_C.abi3.so") | .observed_build_source_commit) = $commit
+    | (.native_modules[] | select(.path == "_vllm_fa2_C.abi3.so") | .observed_build_source_commit) = $attention_commit
     | (.mapped_kernel_libraries[] | select(.path == "libattn_kernels_xe_2.so") | .sha256) = $attn
-    | (.mapped_kernel_libraries[] | select(.path == "libattn_kernels_xe_2.so") | .observed_build_source_commit) = $commit
+    | (.mapped_kernel_libraries[] | select(.path == "libattn_kernels_xe_2.so") | .observed_build_source_commit) = $attention_commit
   ' "$base_runtime_lock" > "$run_dir/runtime-lock-fp8.json"
 
 /usr/bin/env -i \

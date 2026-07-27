@@ -18,8 +18,8 @@ readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly fp8_run_root="$LAGUNA_NVME_RUN_ROOT/fp8-kv"
 readonly block_size="${LAGUNA_FP8_BLOCK_SIZE:-64}"
 
-[[ "$block_size" == 16 || "$block_size" == 32 || "$block_size" == 64 ]] || {
-  echo "LAGUNA_FP8_BLOCK_SIZE must be 16, 32, or 64" >&2
+[[ "$block_size" == 32 || "$block_size" == 64 ]] || {
+  echo "LAGUNA_FP8_BLOCK_SIZE must be 32 or 64" >&2
   exit 2
 }
 
