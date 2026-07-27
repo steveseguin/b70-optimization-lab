@@ -105,7 +105,7 @@ if [[ "$mode" == candidate ]]; then
       ;;
   esac
   readonly graph=1 width12=1 execution_width=12 speculative_depth=11
-  readonly expected_graph_topology=146/145
+  readonly expected_graph_topology=145/144
 elif [[ "$mode" == candidate-eager ]]; then
   readonly graph_stack=none prebuilt_metadata=0 mwide_router=0
   readonly dflash_context_workspace=0 dflash_w8a16=0
@@ -487,8 +487,8 @@ for marker in ("Captured", "Replayed"):
     }
     if len(rows) != 4 or observed != expected:
         raise SystemExit(f"{marker} graph ranks mismatch: rows={len(rows)} {observed}")
-    if any("(graphs=146, eager_breaks=145)" not in line for line in rows):
-        raise SystemExit(f"{marker} graph topology is not 146/145")
+    if any("(graphs=145, eager_breaks=144)" not in line for line in rows):
+        raise SystemExit(f"{marker} graph topology is not 145/144")
 PY
 fi
 
