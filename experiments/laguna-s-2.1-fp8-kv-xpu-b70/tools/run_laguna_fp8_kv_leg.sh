@@ -2,6 +2,7 @@
 # Reproducible target-only FP8 teacher or width-12/depth-11 FP8 candidate leg.
 set -euo pipefail
 umask 077
+export PYTHONDONTWRITEBYTECODE=1
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
