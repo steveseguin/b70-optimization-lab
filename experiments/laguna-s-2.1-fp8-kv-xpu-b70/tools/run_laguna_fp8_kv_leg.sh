@@ -271,8 +271,11 @@ jq -e '
 
 [[ "$(grep -ac 'LAGUNA_FP8_KV_SCALE_AUDIT=PASS model=target layers=48' "$run_dir/server.log")" == 4 ]] \
   || die "target runtime scale audit did not pass on all four ranks"
-[[ "$(grep -ac 'Using Flash Attention backend' "$run_dir/server.log")" -ge 4 ]] \
-  || die "Flash Attention backend was not selected on all ranks"
+# Backend selection uses logger.info_once and therefore appears once for the
+# TP4 engine. Per-rank execution identity is independently proved by the four
+# post-load scale-audit records above.
+[[ "$(grep -ac 'Using Flash Attention backend' "$run_dir/server.log")" == 1 ]] \
+  || die "Flash Attention backend selection marker is missing or duplicated"
 grep -aq 'kv_cache_dtype=fp8' "$run_dir/server.log" \
   || die "engine did not resolve FP8 KV"
 ! grep -qaiE 'attention backend.*fallback|kv_cache_dtype not supported|scaling factor.*1\\.0.*target' \
