@@ -71,7 +71,6 @@ if [[ "$mode" != teacher ]]; then
   required_environment=(
     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2
     VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE
-    VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
     VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
     VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE
     VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
@@ -86,6 +85,7 @@ fi
 
 if [[ "$mode" == candidate ]]; then
   for name in \
+    VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA \
     VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH \
     VLLM_USE_BREAKABLE_CUDAGRAPH \
     XPU_GRAPH \
@@ -99,6 +99,12 @@ if [[ "$mode" == candidate ]]; then
     --compilation-config
     '{"mode":"NONE","cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[12],"max_cudagraph_capture_size":12}'
   )
+elif [[ "$mode" == candidate-eager ]]; then
+  [[ "${VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA:-}" == 0 ]] || {
+    echo "prebuilt exact attention metadata must be disabled for the eager isolation" >&2
+    exit 2
+  }
+  common_args+=(--enforce-eager)
 else
   common_args+=(--enforce-eager)
 fi

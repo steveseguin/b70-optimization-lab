@@ -46,3 +46,30 @@ path for both teacher and candidate. Teacher mode still disables speculation,
 graph capture, width-12 router/workspace selectors, and the draft model. A new
 teacher must be generated after this correction before candidate exactness is
 interpreted.
+
+## Corrected reference and reinterpretation
+
+Two independent corrected 128-token q1 runs are bitwise identical for all 13
+prompts:
+
+- `teacher-q1-exact128-a-20260727T142000Z`;
+- `teacher-q1-exact128-b-20260727T142648Z`.
+
+The original graph candidate matches either corrected reference on 12/13
+prompts. The only mismatch is `shell-safety-review`, beginning at generated
+token index 1. Therefore the earlier 0/13 result came from the invalid teacher,
+but a narrow real difference remains in the width-12 speculative graph path.
+The first teacher and `teacher-q1-repeat128-20260727T141339Z` are retained as
+superseded diagnostics and must not be used as exactness oracles.
+
+## Eager-isolation harness correction
+
+The first `candidate-eager` launch
+(`candidate-eager128-20260727T143353Z`) failed before model load. It carried
+`VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA=1` while disabling the
+Breakable graph, and vLLM correctly rejected that invalid combination.
+
+The corrected eager arm keeps FP8 KV, width 12, depth 11, deterministic target
+arithmetic, and real DFlash speculation, but disables prebuilt graph metadata
+along with graph capture. This makes the arm a valid isolation of the graph
+execution contract rather than a runnable performance candidate.

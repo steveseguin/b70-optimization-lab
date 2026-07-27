@@ -137,7 +137,7 @@ jq -e --arg digest "$expected_scale_digest" \
   printf 'execution_width=%s\nspeculative_depth=%s\nexact_target_path=true\n' \
     "$execution_width" "$speculative_depth"
   printf 'prebuilt_exact_metadata=%s\ngraph_topology=%s\n' \
-    "$width12" "$expected_graph_topology"
+    "$graph" "$expected_graph_topology"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
@@ -242,7 +242,7 @@ setsid /usr/bin/env -i \
   VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" \
   VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS=0 \
   VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS=0 \
-  VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$width12" \
+  VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$graph" \
   VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" \
   VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
   "$server" "$mode" "$run_dir" > "$run_dir/server.log" 2>&1 &
