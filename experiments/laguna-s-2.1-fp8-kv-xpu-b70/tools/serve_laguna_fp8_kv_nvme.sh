@@ -7,9 +7,11 @@ repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 # shellcheck source=/dev/null
 source "$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh"
 
-mode="${1:?usage: serve_laguna_fp8_kv_nvme.sh teacher|candidate RUN_DIR}"
-run_dir="${2:?usage: serve_laguna_fp8_kv_nvme.sh teacher|candidate RUN_DIR}"
-case "$mode" in teacher|candidate) ;; *) echo "unsupported mode: $mode" >&2; exit 2 ;; esac
+mode="${1:?usage: serve_laguna_fp8_kv_nvme.sh teacher|candidate|candidate-eager RUN_DIR}"
+run_dir="${2:?usage: serve_laguna_fp8_kv_nvme.sh teacher|candidate|candidate-eager RUN_DIR}"
+case "$mode" in teacher|candidate|candidate-eager) ;;
+  *) echo "unsupported mode: $mode" >&2; exit 2 ;;
+esac
 
 readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
@@ -65,14 +67,8 @@ common_args=(
   --enable-prompt-tokens-details
 )
 
-if [[ "$mode" == teacher ]]; then
-  common_args+=(--enforce-eager)
-else
+if [[ "$mode" != teacher ]]; then
   required_environment=(
-    VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH
-    VLLM_USE_BREAKABLE_CUDAGRAPH
-    XPU_GRAPH
-    VLLM_XPU_ENABLE_XPU_GRAPH
     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2
     VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE
     VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
@@ -86,9 +82,29 @@ else
       exit 2
     }
   done
+fi
+
+if [[ "$mode" == candidate ]]; then
+  for name in \
+    VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH \
+    VLLM_USE_BREAKABLE_CUDAGRAPH \
+    XPU_GRAPH \
+    VLLM_XPU_ENABLE_XPU_GRAPH; do
+    [[ "${!name:-}" == 1 ]] || {
+      echo "$name must be explicitly enabled for the graph candidate" >&2
+      exit 2
+    }
+  done
   common_args+=(
     --compilation-config
     '{"mode":"NONE","cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[12],"max_cudagraph_capture_size":12}'
+  )
+else
+  common_args+=(--enforce-eager)
+fi
+
+if [[ "$mode" != teacher ]]; then
+  common_args+=(
     --speculative-config
     "{\"method\":\"dflash\",\"model\":\"$LAGUNA_NVME_DRAFT_ROOT\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":11,\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":false}"
   )

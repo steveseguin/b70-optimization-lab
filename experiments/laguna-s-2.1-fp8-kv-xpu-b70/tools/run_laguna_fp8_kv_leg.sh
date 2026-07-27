@@ -9,11 +9,14 @@ repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 # shellcheck source=/dev/null
 source "$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh"
 
-mode="${1:?usage: run_laguna_fp8_kv_leg.sh teacher|candidate LABEL RUN_DIR [TEACHER_JSON]}"
-label="${2:?usage: run_laguna_fp8_kv_leg.sh teacher|candidate LABEL RUN_DIR [TEACHER_JSON]}"
-run_dir="${3:?usage: run_laguna_fp8_kv_leg.sh teacher|candidate LABEL RUN_DIR [TEACHER_JSON]}"
+mode="${1:?usage: run_laguna_fp8_kv_leg.sh teacher|candidate|candidate-eager LABEL RUN_DIR [TEACHER_JSON]}"
+label="${2:?usage: run_laguna_fp8_kv_leg.sh teacher|candidate|candidate-eager LABEL RUN_DIR [TEACHER_JSON]}"
+run_dir="${3:?usage: run_laguna_fp8_kv_leg.sh teacher|candidate|candidate-eager LABEL RUN_DIR [TEACHER_JSON]}"
 teacher="${4:-}"
-case "$mode" in teacher) [[ -z "$teacher" ]] ;; candidate) [[ -n "$teacher" ]] ;; *)
+case "$mode" in
+  teacher) [[ -z "$teacher" ]] ;;
+  candidate|candidate-eager) [[ -n "$teacher" ]] ;;
+  *)
   echo "unsupported mode: $mode" >&2
   exit 2
 esac
@@ -59,6 +62,9 @@ readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
 if [[ "$mode" == candidate ]]; then
   readonly graph=1 width12=1 execution_width=12 speculative_depth=11
   readonly expected_graph_topology=146/145
+elif [[ "$mode" == candidate-eager ]]; then
+  readonly graph=0 width12=1 execution_width=12 speculative_depth=11
+  readonly expected_graph_topology=none-eager
 else
   readonly graph=0 width12=0 execution_width=1 speculative_depth=0
   readonly expected_graph_topology=none
@@ -288,7 +294,7 @@ grep -aq 'kv_cache_dtype=fp8' "$run_dir/server.log" \
 ! grep -qaiE 'attention backend.*fallback|kv_cache_dtype not supported|scaling factor.*1\\.0.*target' \
   "$run_dir/server.log" || die "FP8 backend or target scale fallback detected"
 
-if [[ "$mode" == candidate ]]; then
+if [[ "$mode" != teacher ]]; then
   [[ "$(grep -ac 'LAGUNA_FP8_KV_SCALE_AUDIT=PASS model=draft layers=6 scale_mode=unit_uncalibrated' "$run_dir/server.log")" == 4 ]] \
     || die "draft runtime scale classification did not pass on all four ranks"
   "$venv_python" "$comparator" \
@@ -304,6 +310,9 @@ if [[ "$mode" == candidate ]]; then
     and .candidates[0].comparison.text_sha256_checked_count == 13
     and .candidates[0].comparison.all_text_sha256_equal == true
   ' "$run_dir/exactness-vs-fp8-q1.json" >/dev/null
+fi
+
+if [[ "$mode" == candidate ]]; then
   "$venv_python" - "$run_dir/server.log" <<'PY'
 import re
 import sys
