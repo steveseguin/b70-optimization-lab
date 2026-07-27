@@ -66,8 +66,13 @@ readonly parity_prompt_id="${LAGUNA_FP8_PARITY_PROMPT_ID:-python-lru-cache}"
 readonly parity_row="${LAGUNA_FP8_PARITY_ROW:--1}"
 readonly parity_capture_call="${LAGUNA_FP8_PARITY_CAPTURE_CALL:-2}"
 readonly parity_precursor_id="${LAGUNA_FP8_PARITY_PRECURSOR_ID:-}"
+readonly parity_precursor_csv="${LAGUNA_FP8_PARITY_PRECURSOR_IDS:-$parity_precursor_id}"
 readonly parity_precursor_tokens="${LAGUNA_FP8_PARITY_PRECURSOR_TOKENS:-512}"
 readonly parity_trigger="$LAGUNA_NVME_ARTIFACT_ROOT/parity-trigger.json"
+declare -a parity_precursor_ids=()
+if [[ -n "$parity_precursor_csv" ]]; then
+  IFS=, read -r -a parity_precursor_ids <<< "$parity_precursor_csv"
+fi
 [[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
   || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
 [[ "$parity_only" == 0 || "$parity_only" == 1 ]] \
@@ -138,11 +143,11 @@ if [[ "$parity_only" == 1 ]]; then
   jq -e --arg id "$parity_prompt_id" \
     'any(.prompts[]; .id == $id)' "$suite" >/dev/null \
     || die "unknown parity prompt ID: $parity_prompt_id"
-  if [[ -n "$parity_precursor_id" ]]; then
-    jq -e --arg id "$parity_precursor_id" \
+  for precursor_id in "${parity_precursor_ids[@]}"; do
+    jq -e --arg id "$precursor_id" \
       'any(.prompts[]; .id == $id)' "$suite" >/dev/null \
-      || die "unknown parity precursor ID: $parity_precursor_id"
-  fi
+      || die "unknown parity precursor ID: $precursor_id"
+  done
 fi
 check_hash "$LAGUNA_NVME_TARGET_ROOT/config.json" "$expected_target_config"
 check_hash "$LAGUNA_NVME_DRAFT_ROOT/config.json" "$expected_draft_config"
@@ -197,8 +202,8 @@ jq -e --arg digest "$expected_scale_digest" \
     "$mwide_router" "$dflash_context_workspace" "$dflash_w8a16"
   printf 'parity_only=%s\nparity_prompt_id=%s\nparity_row=%s\nparity_capture_call=%s\n' \
     "$parity_only" "$parity_prompt_id" "$parity_row" "$parity_capture_call"
-  printf 'parity_precursor_id=%s\nparity_precursor_tokens=%s\n' \
-    "${parity_precursor_id:-none}" "$parity_precursor_tokens"
+  printf 'parity_precursor_ids=%s\nparity_precursor_tokens=%s\n' \
+    "${parity_precursor_csv:-none}" "$parity_precursor_tokens"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
@@ -329,11 +334,12 @@ tr '\0' '\n' < "/proc/$server_pid/environ" | LC_ALL=C sort \
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before-suite.prom"
 
 if [[ "$parity_only" == 1 ]]; then
-  if [[ -n "$parity_precursor_id" ]]; then
+  precursor_index=0
+  for precursor_id in "${parity_precursor_ids[@]}"; do
     jq -n \
       --arg model laguna-s-2.1-int4-fp8-kv \
       --arg prompt "$(
-        jq -r --arg id "$parity_precursor_id" \
+        jq -r --arg id "$precursor_id" \
           '.prompts[] | select(.id == $id) | .prompt' "$suite"
       )" \
       --argjson max_tokens "$parity_precursor_tokens" \
@@ -345,15 +351,16 @@ if [[ "$parity_only" == 1 ]]; then
         seed: 1,
         stream: false,
         chat_template_kwargs: {enable_thinking: false}
-      }' > "$run_dir/parity-precursor-request.json"
+      }' > "$run_dir/parity-precursor-$precursor_index-request.json"
     curl -fsS --max-time 1800 \
       -H 'Content-Type: application/json' \
-      --data-binary "@$run_dir/parity-precursor-request.json" \
+      --data-binary "@$run_dir/parity-precursor-$precursor_index-request.json" \
       http://127.0.0.1:18080/v1/chat/completions \
-      > "$run_dir/parity-precursor-response.json"
+      > "$run_dir/parity-precursor-$precursor_index-response.json"
     jq -e '.error == null and (.choices | length) == 1' \
-      "$run_dir/parity-precursor-response.json" >/dev/null
-  fi
+      "$run_dir/parity-precursor-$precursor_index-response.json" >/dev/null
+    precursor_index=$((precursor_index + 1))
+  done
   mkdir -- "$run_dir/parity"
   jq -n --arg run_label "$label" --arg output_dir "$run_dir/parity" \
     --argjson capture_call "$parity_capture_call" \
