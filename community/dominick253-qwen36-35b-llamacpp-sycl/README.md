@@ -1,6 +1,6 @@
-# Qwen3.6 35B A3B UD Q4_K_M on 2x Intel Arc Pro B70 (llama.cpp SYCL)
+# Qwen3.6 35B A3B Q8_0 on 2x Intel Arc Pro B70 (llama.cpp SYCL)
 
-Deployable llama.cpp SYCL recipe for serving `Qwen3.6-35B-A3B-UD` in Q4_K_M
+Deployable llama.cpp SYCL recipe for serving `Qwen3.6-35B-A3B` in Q8_0
 quantization across two Intel Arc Pro B70 GPUs using native SYCL (llama.cpp
 Intel build).
 
@@ -10,17 +10,16 @@ Intel build).
 - OpenAI-compatible endpoints: `0.0.0.0:8001` (GPU0), `0.0.0.0:8002` (GPU1)
 - Served model names: `qwen36-35b-mtp`, `Qwen35B-GPU2`
 - Max context: `524288` tokens (512K)
-- Quantization: Q4_K_M weights, Q8_0 KV cache
+- Quantization: Q8_0 (weights and KV cache)
 - Speculative decoding: draft-MTP2 (draft-n-max 2)
 - Reasoning parser: enabled, 4096-token budget, "Thought complete, rendering
   final output."
 
 ## Model
 
-- HF repo: `unsloth/Qwen3.6-35B-A3B-UD` (via LMStudio download)
-- GGUF file: `Qwen3.6-35B-A3B-UD-Q4_K_M.gguf`
-- mmproj: `mmproj-BF16.gguf`
-- Quantization: Q4_K_M (weights), Q8_0 (KV cache)
+- HF repo: `Qwen/Qwen3.6-35B-A3B` (via LMStudio download, Unsloth Dynamic 2.0 GGUF)
+- GGUF file: `Qwen3.6-35B-A3B-Q8_0.gguf` (37GB)
+- mmproj: `mmproj-BF16.gguf` (861MB)
 
 ## One-Command Start
 
@@ -40,7 +39,7 @@ export ZE_COMMAND_QUEUE_SYNCHRONIZE_ASYNC=1
 export LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/2026.1/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/mkl/2026.1/lib:$LD_LIBRARY_PATH
 
 llama-server \
-  --model /path/to/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf \
+  --model /path/to/Qwen3.6-35B-A3B-Q8_0.gguf \
   --mmproj /path/to/mmproj-BF16.gguf \
   --alias qwen36-35b-mtp \
   --host 0.0.0.0 --port 8001 \
@@ -117,5 +116,6 @@ Restart policy: `always`, restart delay 5s, start limit 300s.
 - `--reasoning-preserve` keeps thought content in the response.
 - Both GPUs run independently on separate ports; no tensor parallelism between
   them (each serves the full model).
-- The Q8_0 quantization is used for harder prompts; Q4_K_M is the default for
-  general use.
+- Q8_0 quantization used for production/harder prompts — provides better
+  quality than Q4 variants at the cost of higher memory usage.
+- Unsloth Dynamic 2.0 GGUF format with Apache 2.0 license (Qwen3.6).
