@@ -1,0 +1,25 @@
+{
+  "schema": "laguna-fp8-kv-experiment-result-v1",
+  "classification": "correctness-failure",
+  "date": "2026-07-27",
+  "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/candidate-graph-no-prebuilt512-20260727T150624Z",
+  "mode": "candidate",
+  "benchmark_max_tokens": 512,
+  "graph_stack": "no-prebuilt",
+  "graph_topology": "146/145",
+  "exact_count": 12,
+  "exact_total": 13,
+  "failed_prompt": "shell-safety-review",
+  "first_diff": {
+    "index": 0,
+    "expected": 378,
+    "actual": 110
+  },
+  "cached_tokens_all_zero": true,
+  "preferred_median_tok_s_rejected": 94.12946358948561,
+  "legacy_median_tok_s_rejected": 95.08026625200566,
+  "full_window_median_tok_s_rejected": 119.24644955387396,
+  "cleanup_worker_status": 0,
+  "cleanup_idle_status": 0,
+  "conclusion": "The no-prebuilt FP8 graph did not reproduce its first 128-token exact start; prebuilt metadata is not the sole cause."
+}

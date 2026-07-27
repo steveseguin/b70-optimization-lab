@@ -83,8 +83,6 @@ fi
 if [[ "$mode" == candidate ]]; then
   for name in \
     VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK \
-    VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE \
-    VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16 \
     VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH \
     VLLM_USE_BREAKABLE_CUDAGRAPH \
     XPU_GRAPH \
@@ -94,6 +92,11 @@ if [[ "$mode" == candidate ]]; then
       exit 2
     }
   done
+  if [[ "${VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16:-}" == 1 \
+        && "${VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE:-}" != 1 ]]; then
+    echo "DFlash W8A16 requires the DFlash context-KV workspace" >&2
+    exit 2
+  fi
   common_args+=(
     --compilation-config
     '{"mode":"NONE","cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[12],"max_cudagraph_capture_size":12}'

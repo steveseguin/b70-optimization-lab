@@ -70,8 +70,12 @@ if [[ "$mode" == candidate ]]; then
       readonly prebuilt_metadata=0 mwide_router=1
       readonly dflash_context_workspace=1 dflash_w8a16=1
       ;;
+    mwide)
+      readonly prebuilt_metadata=0 mwide_router=1
+      readonly dflash_context_workspace=0 dflash_w8a16=0
+      ;;
     *)
-      die "LAGUNA_FP8_GRAPH_STACK must be full or no-prebuilt"
+      die "LAGUNA_FP8_GRAPH_STACK must be full, no-prebuilt, or mwide"
       ;;
   esac
   readonly graph=1 width12=1 execution_width=12 speculative_depth=11

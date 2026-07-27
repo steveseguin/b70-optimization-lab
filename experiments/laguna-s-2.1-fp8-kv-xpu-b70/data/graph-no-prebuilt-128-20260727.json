@@ -1,6 +1,6 @@
 {
   "schema": "laguna-fp8-kv-experiment-result-v1",
-  "classification": "correctness-fix-needs-full-qualification",
+  "classification": "inconclusive-first-start-did-not-reproduce",
   "date": "2026-07-27",
   "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/candidate-graph-no-prebuilt128-20260727T144849Z",
   "mode": "candidate",
@@ -26,5 +26,12 @@
   "accepted_draft_tokens": 1198,
   "bench_sha256": "6fbd98e00dad0210b6ab5fc307e86531139c592ec1d5762e733a30b861c90094",
   "exactness_sha256": "2aa08a67380f274399e609ebbe63449b2b096369d893af97196d3d65b4a72746",
-  "conclusion": "Prebuilt exact-attention metadata caused the FP8 graph mismatch; disabling only that selector restores exactness while retaining the full audited graph and other optimized selectors."
+  "reproduction": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/candidate-graph-no-prebuilt512-20260727T150624Z",
+    "exact_count": 12,
+    "exact_total": 13,
+    "failed_prompt": "shell-safety-review",
+    "first_diff_index": 0
+  },
+  "conclusion": "The first 128-token start passed, but a fresh full start did not reproduce it. Disabling prebuilt metadata alone is not a correctness fix."
 }

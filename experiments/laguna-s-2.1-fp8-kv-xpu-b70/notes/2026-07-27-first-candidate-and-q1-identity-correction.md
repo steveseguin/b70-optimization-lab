@@ -106,9 +106,20 @@ all four ranks. The only selector changed from the original 12/13 graph run is
 `VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA=0`; the M-wide router,
 DFlash context workspace, and DFlash W8A16 path remain enabled.
 
-This names prebuilt exact-attention metadata as the correctness regression in
-the FP8 graph stack. The 128-token diagnostic median is 95.539908 tok/s under
-the preferred interval accounting (96.504958 under the legacy accounting),
-with 291,749 KV cache tokens. A corrected full-512 q1 teacher and full-512
-candidate are still required before this becomes a qualified performance
-baseline.
+This initially implicated prebuilt exact-attention metadata. The 128-token
+diagnostic median is 95.539908 tok/s under the preferred interval accounting
+(96.504958 under the legacy accounting), with 291,749 KV cache tokens. It was
+not promoted pending a corrected full-512 q1 teacher and fresh candidate.
+
+That hold was necessary. The fresh full candidate
+`candidate-graph-no-prebuilt512-20260727T150624Z` matched only 12/13; again
+`shell-safety-review` diverged, this time at generated token index 0. All three
+corrected q1 teachers agree on the first 128 tokens, while the two no-prebuilt
+graph candidates disagree at this token. Therefore the first no-prebuilt pass
+was a lucky start, and disabling prebuilt metadata alone is not a reproducible
+correctness fix.
+
+The next preregistered arm keeps the graph and M-wide target router but disables
+both DFlash context-KV workspace and DFlash W8A16. It tests whether the
+remaining nondeterminism originates in the optimized draft stack. No speed from
+the failed full run (`94.129464` preferred median) is admissible.
