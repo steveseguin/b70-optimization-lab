@@ -1,0 +1,35 @@
+{
+  "schema": "laguna-fp8-kv-experiment-result-v1",
+  "classification": "correctness-failure",
+  "date": "2026-07-27",
+  "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/candidate-graph-mwide512-20260727T151344Z",
+  "benchmark_max_tokens": 512,
+  "graph_stack": "mwide",
+  "prebuilt_exact_metadata": false,
+  "dflash_context_kv_workspace": false,
+  "dflash_w8a16": false,
+  "graph_topology": "146/145",
+  "exact_count": 11,
+  "exact_total": 13,
+  "failed_rows": [
+    {
+      "prompt_id": "arithmetic-reasoning",
+      "first_diff_index": 2,
+      "expected": 4760,
+      "actual": 7732
+    },
+    {
+      "prompt_id": "shell-safety-review",
+      "first_diff_index": 0,
+      "expected": 378,
+      "actual": 110
+    }
+  ],
+  "preferred_median_tok_s_rejected": 90.17767691289154,
+  "legacy_median_tok_s_rejected": 91.08856253827429,
+  "full_window_median_tok_s_rejected": 116.72577548226316,
+  "kv_cache_tokens": 280883,
+  "bench_sha256": "b84e44244fa444168ba50690a163e3598b459f8ef9e4b622760fc806c7a8732a",
+  "exactness_sha256": "01726c081bc58ff6a5ceefff4f12531bd89011d4dfc3116d0c8ea54cf2dd8d2c",
+  "conclusion": "Graph plus the M-wide target path remains inexact with both optimized DFlash selectors disabled; localize graph/eager target divergence next."
+}

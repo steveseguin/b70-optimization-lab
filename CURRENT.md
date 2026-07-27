@@ -182,9 +182,11 @@ nondeterminism rather than an oracle failure. The rejected full run measured
 94.129464 tok/s under preferred interval accounting and exposed 291,749 KV
 tokens; it is not a promoted result.
 
-The immediate order is: test the preregistered graph + M-wide-router arm with
-both DFlash context workspace and DFlash W8A16 disabled; continue bisection
-until two fresh graph starts are 13/13; then profile FP8 cache update and paged
+The graph + M-wide-router arm also failed (11/13) with both DFlash context
+workspace and DFlash W8A16 disabled. This clears those draft selectors as
+necessary causes. The immediate order is now a graph/eager target parity probe,
+not another selector sweep. Once the first divergent tensor is fixed, require
+two fresh 13/13 graph starts before profiling FP8 cache update and paged
 attention. The target must match the 48-layer calibrated scale digest on all
 ranks. The
 six DFlash cache layers must be labeled separately as unit-scale and

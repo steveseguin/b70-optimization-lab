@@ -123,3 +123,14 @@ The next preregistered arm keeps the graph and M-wide target router but disables
 both DFlash context-KV workspace and DFlash W8A16. It tests whether the
 remaining nondeterminism originates in the optimized draft stack. No speed from
 the failed full run (`94.129464` preferred median) is admissible.
+
+The M-wide-only graph arm
+`candidate-graph-mwide512-20260727T151344Z` also failed. It matched 11/13:
+`arithmetic-reasoning` first diverged at token 2 and `shell-safety-review` at
+token 0. Its rejected preferred median was 90.177677 tok/s. This clears the
+DFlash context workspace and DFlash W8A16 selectors as necessary causes; both
+were off.
+
+The remaining boundary is graph + M-wide target execution versus the stable
+eager width-12 path. Further selector sweeps are not justified until a parity
+probe identifies the first graph/eager target tensor divergence.
