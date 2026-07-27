@@ -60,12 +60,30 @@ readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
 [[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
   || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
 if [[ "$mode" == candidate ]]; then
+  readonly graph_stack="${LAGUNA_FP8_GRAPH_STACK:-full}"
+  case "$graph_stack" in
+    full)
+      readonly prebuilt_metadata=1 mwide_router=1
+      readonly dflash_context_workspace=1 dflash_w8a16=1
+      ;;
+    no-prebuilt)
+      readonly prebuilt_metadata=0 mwide_router=1
+      readonly dflash_context_workspace=1 dflash_w8a16=1
+      ;;
+    *)
+      die "LAGUNA_FP8_GRAPH_STACK must be full or no-prebuilt"
+      ;;
+  esac
   readonly graph=1 width12=1 execution_width=12 speculative_depth=11
   readonly expected_graph_topology=146/145
 elif [[ "$mode" == candidate-eager ]]; then
+  readonly graph_stack=none prebuilt_metadata=0 mwide_router=0
+  readonly dflash_context_workspace=0 dflash_w8a16=0
   readonly graph=0 width12=1 execution_width=12 speculative_depth=11
   readonly expected_graph_topology=none-eager
 else
+  readonly graph_stack=none prebuilt_metadata=0 mwide_router=0
+  readonly dflash_context_workspace=0 dflash_w8a16=0
   readonly graph=0 width12=0 execution_width=1 speculative_depth=0
   readonly expected_graph_topology=none
 fi
@@ -136,10 +154,10 @@ jq -e --arg digest "$expected_scale_digest" \
   printf 'benchmark_max_tokens=%s\n' "$max_tokens"
   printf 'execution_width=%s\nspeculative_depth=%s\nexact_target_path=true\n' \
     "$execution_width" "$speculative_depth"
-  printf 'prebuilt_exact_metadata=%s\ngraph_topology=%s\n' \
-    "$graph" "$expected_graph_topology"
+  printf 'graph_stack=%s\nprebuilt_exact_metadata=%s\ngraph_topology=%s\n' \
+    "$graph_stack" "$prebuilt_metadata" "$expected_graph_topology"
   printf 'mwide_bf16_router=%s\ndflash_context_kv_workspace=%s\ndflash_w8a16=%s\n' \
-    "$graph" "$graph" "$graph"
+    "$mwide_router" "$dflash_context_workspace" "$dflash_w8a16"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
@@ -218,9 +236,9 @@ setsid /usr/bin/env -i \
   VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=0 \
   VLLM_XPU_LAGUNA_M8_W1_N_TILE=64 \
   VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12" \
-  VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$graph" \
-  VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$graph" \
-  VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$graph" \
+  VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$mwide_router" \
+  VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$dflash_context_workspace" \
+  VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_w8a16" \
   VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 \
   VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 \
   VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 \
@@ -244,7 +262,7 @@ setsid /usr/bin/env -i \
   VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" \
   VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS=0 \
   VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS=0 \
-  VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$graph" \
+  VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$prebuilt_metadata" \
   VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" \
   VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
   "$server" "$mode" "$run_dir" > "$run_dir/server.log" 2>&1 &

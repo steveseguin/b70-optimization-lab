@@ -83,3 +83,18 @@ The eager isolation now explicitly disables all four graph-coupled selectors.
 It retains the base BF16 router, fused W1-route-W2, route interleave, exact
 attention, and batched exact MoE selectors, all of which have an explicit
 enforce-eager contract.
+
+The resulting run `candidate-eager128-20260727T144116Z` passed 13/13 token-ID
+and text-hash exactness against the corrected q1 reference. It used real
+depth-11 speculation (5,456 proposed and 1,200 accepted draft tokens), exposed
+280,735 FP8 KV tokens, and shut down cleanly. Its preferred 99-interval median
+was 29.075578 tok/s; performance is diagnostic only because this arm
+intentionally disables the optimized graph stack.
+
+This isolates the remaining 1/13 difference to the graph-coupled stack, not
+FP8 KV storage or the generic eager width-12 verifier. The next preregistered
+arm keeps the full 146/145 graph, M-wide router, DFlash context workspace, and
+DFlash W8A16 path, changing only prebuilt exact attention metadata from on to
+off. If it is 13/13, prebuilt metadata is the culprit. If it remains 12/13,
+the next arm must remove the rest of the graph-coupled performance selectors
+as a group before further bisection.
