@@ -61,6 +61,7 @@ readonly rpc_tag="$(printf '%s' "$label" | sha256sum | cut -c1-16)"
 # mount instead of nesting it below the long artifact root.
 readonly rpc_dir="/mnt/fast-ai/.laguna-f8-$rpc_tag"
 readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
+readonly block_size="${LAGUNA_FP8_BLOCK_SIZE:-64}"
 readonly parity_only="${LAGUNA_FP8_PARITY_ONLY:-0}"
 readonly parity_prompt_id="${LAGUNA_FP8_PARITY_PROMPT_ID:-python-lru-cache}"
 readonly parity_row="${LAGUNA_FP8_PARITY_ROW:--1}"
@@ -75,6 +76,8 @@ if [[ -n "$parity_precursor_csv" ]]; then
 fi
 [[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
   || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
+[[ "$block_size" == 16 || "$block_size" == 32 || "$block_size" == 64 ]] \
+  || die "LAGUNA_FP8_BLOCK_SIZE must be 16, 32, or 64"
 [[ "$parity_only" == 0 || "$parity_only" == 1 ]] \
   || die "LAGUNA_FP8_PARITY_ONLY must be 0 or 1"
 [[ "$parity_row" =~ ^-?[0-9]+$ ]] \
@@ -192,7 +195,8 @@ jq -e --arg digest "$expected_scale_digest" \
   printf 'target_revision=%s\ndraft_revision=%s\n' \
     4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb \
     5e07c246915c86dc6920fead03d019989224f2ba
-  printf 'tp=4\nep=4\nmax_model_len=8192\nblock_size=64\nmax_num_seqs=1\n'
+  printf 'tp=4\nep=4\nmax_model_len=8192\nblock_size=%s\nmax_num_seqs=1\n' \
+    "$block_size"
   printf 'benchmark_max_tokens=%s\n' "$max_tokens"
   printf 'execution_width=%s\nspeculative_depth=%s\nexact_target_path=true\n' \
     "$execution_width" "$speculative_depth"
@@ -315,6 +319,7 @@ setsid /usr/bin/env -i \
   LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS=11 \
   VLLM_XPU_LAGUNA_EXACT_MAX_M=12 \
   VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH=0 \
+  LAGUNA_FP8_BLOCK_SIZE="$block_size" \
   LAGUNA_M=12 LAGUNA_SPEC=11 LAGUNA_GPU_UTIL=0.90 \
   LAGUNA_LOCAL_ARGMAX=false VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 \
   VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" \

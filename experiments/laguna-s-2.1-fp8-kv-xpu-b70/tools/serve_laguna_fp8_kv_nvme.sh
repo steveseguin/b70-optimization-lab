@@ -16,6 +16,12 @@ esac
 readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly fp8_run_root="$LAGUNA_NVME_RUN_ROOT/fp8-kv"
+readonly block_size="${LAGUNA_FP8_BLOCK_SIZE:-64}"
+
+[[ "$block_size" == 16 || "$block_size" == 32 || "$block_size" == 64 ]] || {
+  echo "LAGUNA_FP8_BLOCK_SIZE must be 16, 32, or 64" >&2
+  exit 2
+}
 
 case "$run_dir" in "$fp8_run_root"/*) ;; *)
   echo "run directory is outside the FP8 KV run root" >&2
@@ -58,7 +64,7 @@ common_args=(
   --max-model-len 8192
   --max-num-batched-tokens 8192
   --max-num-seqs 1
-  --block-size 64
+  --block-size "$block_size"
   --kv-cache-dtype fp8
   --gpu-memory-utilization "${LAGUNA_GPU_UTIL:-0.90}"
   --no-enable-prefix-caching
