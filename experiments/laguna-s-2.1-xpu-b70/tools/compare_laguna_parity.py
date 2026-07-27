@@ -128,6 +128,16 @@ def main() -> int:
                 "rank": rank,
                 "input_id_equal": int(eager["input_id"]) == int(compiled["input_id"]),
                 "position_equal": int(eager["position"]) == int(compiled["position"]),
+                "input_ids_equal": (
+                    "input_ids" in eager
+                    and "input_ids" in compiled
+                    and bitwise_equal(eager["input_ids"], compiled["input_ids"])
+                ),
+                "positions_equal": (
+                    "positions" in eager
+                    and "positions" in compiled
+                    and bitwise_equal(eager["positions"], compiled["positions"])
+                ),
                 "first_divergence": rank_first,
                 "comparisons": comparisons,
             }
