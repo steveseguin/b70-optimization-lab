@@ -5,9 +5,9 @@ quantization on Intel Arc B70 with MTP speculative decoding.
 
 ## Model
 
-- HF repo: `Qwen/Qwen3.6-35B-A3B`
-- GGUF: `Qwen3.6-35B-A3B-Q8_0.gguf` (37GB)
-- mmproj: `mmproj-BF16.gguf` (861MB)
+- HF repo: `unsloth/Qwen3.6-35B-A3B-MTP-GGUF` (MTP variant with nextn head)
+- GGUF: `Qwen3.6-35B-A3B-Q8_0.gguf` (from MTP repo)
+- mmproj: `mmproj-BF16.gguf`
 
 ## One-Command Start
 
@@ -56,7 +56,6 @@ exec "${LLAMA_SERVER}" \
   --reasoning-preserve \
   --reasoning-budget 2048 \
   --reasoning-budget-message "Thought complete, rendering final output." \
-  --reasoning-format deepseek \
   --jinja
 ```
 
@@ -109,17 +108,16 @@ WantedBy=multi-user.target
 - Quantization: Q8_0 weights, Q8_0 KV cache
 - Context: 512K tokens
 - Speculative decoding: draft-MTP n-max=3
-- Reasoning: deepseek format, 2048-token budget, --reasoning-preserve
+- Reasoning: enabled, 2048-token budget, --reasoning-preserve
 - Build: llama.cpp fb92d8f18, IntelLLVM 2026.1.0
 
 ## Notes
 
 - `--jinja` enables Jinja2 chat template
-- `--reasoning-format deepseek` uses the DeepSeek-style reasoning parser
-- `--reasoning-budget 2048` limits thinking content to 2048 tokens
-- `--reasoning-preserve` keeps thought content in the response
 - `--spec-draft-n-max 3` with `--spec-type draft-mtp` enables MTP speculative decoding
 - `--ctx-size 512000` sets 512K context window
 - `-np 2` sets 2 request slots
 - Sampling: temp 0.6, top_p 0.95, top_k 20, min_p 0.0, presence_penalty 0.0, repeat_penalty 1.0
 - 39GB model size on disk; Q8_0 quantization
+- IMPORTANT: Must use the MTP variant from `unsloth/Qwen3.6-35B-A3B-MTP-GGUF` — the standard
+  Unsloth Q8_0 GGUF has no nextn/MTP tensors and `--spec-type draft-mtp` will fail
