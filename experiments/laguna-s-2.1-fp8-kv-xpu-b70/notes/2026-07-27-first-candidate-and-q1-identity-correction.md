@@ -98,3 +98,17 @@ DFlash W8A16 path, changing only prebuilt exact attention metadata from on to
 off. If it is 13/13, prebuilt metadata is the culprit. If it remains 12/13,
 the next arm must remove the rest of the graph-coupled performance selectors
 as a group before further bisection.
+
+The preregistered no-prebuilt run
+`candidate-graph-no-prebuilt128-20260727T144849Z` passed. It is 13/13 exact
+against the corrected FP8 q1 teacher and retains the audited 146/145 graph on
+all four ranks. The only selector changed from the original 12/13 graph run is
+`VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA=0`; the M-wide router,
+DFlash context workspace, and DFlash W8A16 path remain enabled.
+
+This names prebuilt exact-attention metadata as the correctness regression in
+the FP8 graph stack. The 128-token diagnostic median is 95.539908 tok/s under
+the preferred interval accounting (96.504958 under the legacy accounting),
+with 291,749 KV cache tokens. A corrected full-512 q1 teacher and full-512
+candidate are still required before this becomes a qualified performance
+baseline.

@@ -174,10 +174,17 @@ The clean vLLM worktree is
 plus a fail-closed post-load KV-scale audit. The XPU kernel tree remains
 unchanged at `6f9dd3c3a7b1b677a992ca4f431a968408f9c816`.
 
-Bring-up is not yet a throughput result. The immediate order is: generate a
-fresh target-only FP8 teacher; qualify width-12/depth-11 FP8 against it; repeat
-from a second cold start; then profile FP8 cache update and paged attention.
-The target must match the 48-layer calibrated scale digest on all ranks. The
+The 128-token bring-up now passes 13/13 within-FP8 exactness at width 12 /
+depth 11 with the audited 146/145 graph. Prebuilt exact-attention metadata was
+the isolated cause of the original 12/13 graph result and is disabled; the
+M-wide router, DFlash context workspace, and DFlash W8A16 path remain enabled.
+This diagnostic measured 95.539908 tok/s under preferred interval accounting
+and exposed 291,749 KV tokens, but it is not a promoted result.
+
+The immediate order is: generate a corrected full-512 target-only FP8 teacher;
+qualify the no-prebuilt width-12/depth-11 FP8 graph against it; repeat from a
+second cold start; then profile FP8 cache update and paged attention. The
+target must match the 48-layer calibrated scale digest on all ranks. The
 six DFlash cache layers must be labeled separately as unit-scale and
 uncalibrated.
 
