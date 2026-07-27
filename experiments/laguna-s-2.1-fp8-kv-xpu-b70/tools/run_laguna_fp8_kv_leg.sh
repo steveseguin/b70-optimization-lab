@@ -57,8 +57,12 @@ readonly expected_draft_config=6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14
 readonly expected_scale_digest=3e6df440976ab2ed5229e1a39179cbc99d573c615386f223eeabc9de5ea9ddc0
 readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/fp8kv-${label,,}"
 readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
+readonly parity_only="${LAGUNA_FP8_PARITY_ONLY:-0}"
+readonly parity_trigger="$LAGUNA_NVME_ARTIFACT_ROOT/parity-trigger.json"
 [[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
   || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
+[[ "$parity_only" == 0 || "$parity_only" == 1 ]] \
+  || die "LAGUNA_FP8_PARITY_ONLY must be 0 or 1"
 if [[ "$mode" == candidate ]]; then
   readonly graph_stack="${LAGUNA_FP8_GRAPH_STACK:-full}"
   case "$graph_stack" in
@@ -99,6 +103,8 @@ case "$run_dir" in "$fp8_run_root"/*) ;; *) die "run is outside $fp8_run_root" ;
 [[ "$(realpath -m -- "$run_dir")" == "$run_dir" ]] || die "run path is not canonical"
 [[ ! -e "$run_dir" ]] || die "run path already exists"
 [[ ! -e "$rpc_dir" ]] || die "RPC path already exists"
+[[ "$parity_only" == 0 || ! -e "$parity_trigger" ]] \
+  || die "parity trigger already exists: $parity_trigger"
 [[ -z "$(git -C "$repo_root" status --short)" ]] || die "main worktree is dirty"
 [[ -z "$(git -C "$vllm_root" status --short)" ]] || die "vLLM worktree is dirty"
 [[ -z "$(git -C "$kernel_root" status --short)" ]] || die "kernel worktree is dirty"
@@ -162,6 +168,7 @@ jq -e --arg digest "$expected_scale_digest" \
     "$graph_stack" "$prebuilt_metadata" "$expected_graph_topology"
   printf 'mwide_bf16_router=%s\ndflash_context_kv_workspace=%s\ndflash_w8a16=%s\n' \
     "$mwide_router" "$dflash_context_workspace" "$dflash_w8a16"
+  printf 'parity_only=%s\n' "$parity_only"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
@@ -192,6 +199,11 @@ finalize() {
   local status="$?"
   trap - EXIT INT TERM
   set +e
+  if [[ -f "$parity_trigger" ]] \
+    && jq -e --arg out "$run_dir/parity" '.output_dir == $out' \
+      "$parity_trigger" >/dev/null 2>&1; then
+    rm -- "$parity_trigger"
+  fi
   stop_service
   ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null
   worker_status="$?"
@@ -231,6 +243,7 @@ setsid /usr/bin/env -i \
   FI_TCP_IFACE="$iface" CCL_KVS_IFACE="$iface" \
   TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path" \
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_LAGUNA_FP8_KV_SCALE_AUDIT=1 \
+  VLLM_XPU_LAGUNA_ARTIFACT_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT" \
   VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS=0 \
   VLLM_XPU_EXACT_SPEC_ATTN=1 \
   VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 \
@@ -244,7 +257,7 @@ setsid /usr/bin/env -i \
   VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$dflash_context_workspace" \
   VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_w8a16" \
   VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 \
-  VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 \
+  VLLM_XPU_LAGUNA_PARITY_PROBE="$parity_only" VLLM_TRACE_FUNCTION=0 \
   VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 \
   VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 \
   VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 \
@@ -284,27 +297,69 @@ tr '\0' '\n' < "/proc/$server_pid/environ" | LC_ALL=C sort \
   > "$run_dir/service-environment.txt"
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before-suite.prom"
 
-cd "$repo_root"
-"$venv_python" "$benchmark" \
-  --base-url http://127.0.0.1:18080 \
-  --model laguna-s-2.1-int4-fp8-kv \
-  --suite experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json \
-  --max-tokens "$max_tokens" --metric-tokens 100 --seed 1 --timeout 1800 \
-  --return-token-ids \
-  --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false}}' \
-  --out "$run_dir/bench.json" > "$run_dir/bench.stdout"
-"$venv_python" "$qualifier" "$run_dir/bench.json" --in-place \
-  > "$run_dir/metric-accounting.stdout"
-curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after-suite.prom"
+if [[ "$parity_only" == 1 ]]; then
+  mkdir -- "$run_dir/parity"
+  jq -n --arg run_label "$label" --arg output_dir "$run_dir/parity" \
+    '{run_label: $run_label, output_dir: $output_dir, capture_call: 1}' \
+    > "$parity_trigger"
+  jq -n \
+    --arg model laguna-s-2.1-int4-fp8-kv \
+    --arg prompt "$(jq -r '.prompts[0].prompt' "$suite")" \
+    '{
+      model: $model,
+      messages: [{role: "user", content: $prompt}],
+      max_tokens: 16,
+      temperature: 0,
+      seed: 1,
+      stream: false,
+      chat_template_kwargs: {enable_thinking: false}
+    }' > "$run_dir/parity-request.json"
+  curl -fsS --max-time 1800 \
+    -H 'Content-Type: application/json' \
+    --data-binary "@$run_dir/parity-request.json" \
+    http://127.0.0.1:18080/v1/chat/completions \
+    > "$run_dir/parity-response.json"
+  jq -e '.error == null and (.choices | length) == 1' \
+    "$run_dir/parity-response.json" >/dev/null
+  for _ in $(seq 1 60); do
+    complete=1
+    for rank in 0 1 2 3; do
+      [[ -f "$run_dir/parity/$label-rank$rank.pt" ]] || complete=0
+    done
+    [[ "$complete" == 1 ]] && break
+    sleep 1
+  done
+  for rank in 0 1 2 3; do
+    [[ -f "$run_dir/parity/$label-rank$rank.pt" ]] \
+      || die "missing target parity packet for rank $rank"
+  done
+  rm -- "$parity_trigger"
+  curl -fsS http://127.0.0.1:18080/metrics \
+    > "$run_dir/metrics-after-suite.prom"
+else
+  cd "$repo_root"
+  "$venv_python" "$benchmark" \
+    --base-url http://127.0.0.1:18080 \
+    --model laguna-s-2.1-int4-fp8-kv \
+    --suite experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json \
+    --max-tokens "$max_tokens" --metric-tokens 100 --seed 1 --timeout 1800 \
+    --return-token-ids \
+    --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false}}' \
+    --out "$run_dir/bench.json" > "$run_dir/bench.stdout"
+  "$venv_python" "$qualifier" "$run_dir/bench.json" --in-place \
+    > "$run_dir/metric-accounting.stdout"
+  curl -fsS http://127.0.0.1:18080/metrics \
+    > "$run_dir/metrics-after-suite.prom"
 
-jq -e --argjson max_tokens "$max_tokens" '
-  .fresh_response_validity.valid == true
-  and .fresh_response_validity.cached_tokens_all_zero == true
-  and .realistic_final_gate.passed == true
-  and .run_identity.prompt_count == 13
-  and .run_identity.max_tokens == $max_tokens
-  and .run_identity.seed == 1
-' "$run_dir/bench.json" >/dev/null
+  jq -e --argjson max_tokens "$max_tokens" '
+    .fresh_response_validity.valid == true
+    and .fresh_response_validity.cached_tokens_all_zero == true
+    and .realistic_final_gate.passed == true
+    and .run_identity.prompt_count == 13
+    and .run_identity.max_tokens == $max_tokens
+    and .run_identity.seed == 1
+  ' "$run_dir/bench.json" >/dev/null
+fi
 
 [[ "$(grep -ac 'LAGUNA_FP8_KV_SCALE_AUDIT=PASS model=target layers=48' "$run_dir/server.log")" == 4 ]] \
   || die "target runtime scale audit did not pass on all four ranks"
@@ -321,22 +376,24 @@ grep -aq 'kv_cache_dtype=fp8' "$run_dir/server.log" \
 if [[ "$mode" != teacher ]]; then
   [[ "$(grep -ac 'LAGUNA_FP8_KV_SCALE_AUDIT=PASS model=draft layers=6 scale_mode=unit_uncalibrated' "$run_dir/server.log")" == 4 ]] \
     || die "draft runtime scale classification did not pass on all four ranks"
-  "$venv_python" "$comparator" \
-    --teacher "$teacher" --require-text-hash \
-    --candidate "$run_dir/bench.json" \
-    --out "$run_dir/exactness-vs-fp8-q1.json" \
-    > "$run_dir/exactness-vs-fp8-q1.stdout"
-  jq -e '
-    .all_exact == true
-    and .candidates[0].comparison.exact_count == 13
-    and .candidates[0].comparison.total == 13
-    and .candidates[0].comparison.all_cached_zero == true
-    and .candidates[0].comparison.text_sha256_checked_count == 13
-    and .candidates[0].comparison.all_text_sha256_equal == true
-  ' "$run_dir/exactness-vs-fp8-q1.json" >/dev/null
+  if [[ "$parity_only" == 0 ]]; then
+    "$venv_python" "$comparator" \
+      --teacher "$teacher" --require-text-hash \
+      --candidate "$run_dir/bench.json" \
+      --out "$run_dir/exactness-vs-fp8-q1.json" \
+      > "$run_dir/exactness-vs-fp8-q1.stdout"
+    jq -e '
+      .all_exact == true
+      and .candidates[0].comparison.exact_count == 13
+      and .candidates[0].comparison.total == 13
+      and .candidates[0].comparison.all_cached_zero == true
+      and .candidates[0].comparison.text_sha256_checked_count == 13
+      and .candidates[0].comparison.all_text_sha256_equal == true
+    ' "$run_dir/exactness-vs-fp8-q1.json" >/dev/null
+  fi
 fi
 
-if [[ "$mode" == candidate ]]; then
+if [[ "$mode" == candidate && "$parity_only" == 0 ]]; then
   "$venv_python" - "$run_dir/server.log" <<'PY'
 import re
 import sys
