@@ -47,7 +47,7 @@ readonly benchmark="$repo_root/scripts/bench-openai-realistic-suite.py"
 readonly qualifier="$repo_root/scripts/qualify_realistic_window_metrics.py"
 readonly comparator="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/compare_exact_runs.py"
 readonly idle_wrapper="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/capture_laguna_m8_idle_snapshot.py"
-readonly runtime_lock="$repo_root/repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/runtime-lock.json"
+readonly base_runtime_lock="$repo_root/repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/runtime-lock.json"
 readonly runtime_verifier="$repo_root/repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-runtime.py"
 readonly xpumem_module=/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so
 readonly fp8_run_root="$LAGUNA_NVME_RUN_ROOT/fp8-kv"
@@ -55,6 +55,9 @@ readonly expected_suite=9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc
 readonly expected_target_config=9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cce6549f7eba5b14e6
 readonly expected_draft_config=6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14725ea5e86f20926
 readonly expected_scale_digest=3e6df440976ab2ed5229e1a39179cbc99d573c615386f223eeabc9de5ea9ddc0
+readonly expected_base_runtime_lock=8c861e5c9d44232346770e2822aa795179f8f90c2678d2ebbb42a690ef4f4a97
+readonly expected_fp8_fa2_module=beb82bd676779984b6133f897b9f1d9f526558827be277d9114fa51548c8bac4
+readonly expected_fp8_attn_library=28b612c5495c007a80d312fdc2a4be035d37c6fa582013c376be4a8f2b627669
 readonly rpc_tag="$(printf '%s' "$label" | sha256sum | cut -c1-16)"
 # ZMQ appends a 36-character UUID below this directory and Linux caps Unix
 # socket paths at 107 bytes. Keep the live IPC root directly on the same NVMe
@@ -135,13 +138,14 @@ case "$run_dir" in "$fp8_run_root"/*) ;; *) die "run is outside $fp8_run_root" ;
 [[ -z "$(git -C "$kernel_root" status --short)" ]] || die "kernel worktree is dirty"
 for path in \
   "$venv_python" "$server" "$scale_audit" "$suite" "$benchmark" "$qualifier" \
-  "$comparator" "$idle_wrapper" "$runtime_lock" "$runtime_verifier" \
+  "$comparator" "$idle_wrapper" "$base_runtime_lock" "$runtime_verifier" \
   "$xpumem_module"; do
   [[ -e "$path" && "$(realpath -e -- "$path")" != /media/* ]] \
     || die "missing or USB-resident dependency: $path"
 done
 [[ "$mode" == teacher || -f "$teacher" ]] || die "missing FP8 teacher: $teacher"
 check_hash "$suite" "$expected_suite"
+check_hash "$base_runtime_lock" "$expected_base_runtime_lock"
 if [[ "$parity_only" == 1 ]]; then
   jq -e --arg id "$parity_prompt_id" \
     'any(.prompts[]; .id == $id)' "$suite" >/dev/null \
@@ -172,12 +176,31 @@ jq -e --arg digest "$expected_scale_digest" \
    and .all_finite_positive == true and .unit_scale_count == 0' \
   "$run_dir/checkpoint-fp8-kv-scales.json" >/dev/null
 
+kernel_commit="$(git -C "$kernel_root" rev-parse HEAD)"
+readonly kernel_commit
+jq \
+  --arg commit "$kernel_commit" \
+  --arg fa2 "$expected_fp8_fa2_module" \
+  --arg attn "$expected_fp8_attn_library" \
+  '
+    .scope.sealed_result = "Laguna FP8 KV experimental lane"
+    | .scope.disposition = "Derived from the sealed BF16 runtime lock; only the audited attention build and kernel source identity differ."
+    | .toolchain.attention_paged_decode_config = "paged_decode_laguna.conf"
+    | .toolchain.attention_chunk_prefill_config = "chunk_prefill_laguna.conf"
+    | .source.kernel_record_tree.commit = $commit
+    | .source.attention_runtime_tree.commit = $commit
+    | (.native_modules[] | select(.path == "_vllm_fa2_C.abi3.so") | .sha256) = $fa2
+    | (.native_modules[] | select(.path == "_vllm_fa2_C.abi3.so") | .observed_build_source_commit) = $commit
+    | (.mapped_kernel_libraries[] | select(.path == "libattn_kernels_xe_2.so") | .sha256) = $attn
+    | (.mapped_kernel_libraries[] | select(.path == "libattn_kernels_xe_2.so") | .observed_build_source_commit) = $commit
+  ' "$base_runtime_lock" > "$run_dir/runtime-lock-fp8.json"
+
 /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 \
   PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 \
   PYTHONPATH="$vllm_root:$kernel_root" LD_LIBRARY_PATH="$native_library_path" \
   "$venv_python" "$runtime_verifier" \
-  --lock "$runtime_lock" --vllm-tree "$vllm_root" \
+  --lock "$run_dir/runtime-lock-fp8.json" --vllm-tree "$vllm_root" \
   --kernel-tree "$kernel_root" --venv-root "$venv_root" \
   --xpumem-module "$xpumem_module" \
   --json-out "$run_dir/runtime-verification.json" \
