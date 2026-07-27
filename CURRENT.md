@@ -193,6 +193,22 @@ ranks. The
 six DFlash cache layers must be labeled separately as unit-scale and
 uncalibrated.
 
+The later replicated-target-embedding candidate at vLLM `8268dcca3` is now the
+current verified FP8 decode frontier. Two fresh 13/13 exact, cache-zero starts
+measured `95.019301665` and `95.818681878 tok/s` conventionally and retained
+145/144 graph topology on every rank. A native page-32 attention binary is
+built and component-tested but not endpoint-measured.
+
+The host is currently blocked by an executed and classified four-rank
+collective failure. A restored page-64 model control stalled at the same XCCL
+initialization boundary as the page-32 candidate; the single corrected minimal
+probe then showed all four ranks entering `all_reduce`, zero completing, and
+`PROBE_RESULT=COLLECTIVE_STAGE_FAILURE clean_teardowns=0/4`. No reset, driver
+reload, shared-memory deletion, or repeat probe followed. The next action is a
+clean reboot, followed by strict per-device checks and exactly one corrected
+probe requiring `PASS clean_teardowns=4/4`. Evidence and resume order:
+[`2026-07-27-replicated-embedding-page32-and-xccl-boundary.md`](experiments/laguna-s-2.1-fp8-kv-xpu-b70/notes/2026-07-27-replicated-embedding-page32-and-xccl-boundary.md).
+
 ### Historical Bring-Up Detail
 
 Everything below predates the graph records and is retained for provenance. It

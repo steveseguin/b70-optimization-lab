@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 16:38:39 -0400
+Subject: [PATCH 08/11] Synchronize Laguna speculative request boundaries
+
+---
+ vllm/envs.py                       |  4 ++++
+ vllm/v1/worker/gpu_model_runner.py | 17 +++++++++++++++++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 5b9b0dce0..f2ebe3922 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -312,6 +312,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH: bool = False
+     VLLM_XPU_LAGUNA_PARITY_PROBE: bool = False
+     VLLM_XPU_LAGUNA_PARITY_ROW: int = -1
++    VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC: bool = False
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+     VLLM_GPU_NIC_PCIE_MAPPING: str = ""
+     VLLM_NIC_SELECTION_VARS: str = ""
+@@ -2098,6 +2099,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_PARITY_ROW": lambda: int(
+         os.getenv("VLLM_XPU_LAGUNA_PARITY_ROW", "-1")
+     ),
++    "VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC": lambda: bool(
++        int(os.getenv("VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC", "0"))
++    ),
+     # whether use xpu specific sample kernel
+     "VLLM_XPU_USE_SAMPLER_KERNEL": lambda: bool(
+         int(os.getenv("VLLM_XPU_USE_SAMPLER_KERNEL", "1"))
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 1b3b8341b..fc4d58890 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4609,6 +4609,23 @@ class GPUModelRunner(
+                 "after execute_model() returns None."
+             )
+ 
++        if (
++            envs.VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC
++            and scheduler_output.scheduled_new_reqs
++            and self.speculative_config is not None
++            and self.model_config.hf_config.model_type == "laguna"
++        ):
++            # The scheduler can hand a new Laguna request to the target while
++            # work from the previous target/draft transaction is still live on
++            # an auxiliary XPU stream.  That crosses the request boundary at
++            # the shared embedding collective and corrupts the new prefill.
++            # Synchronize only once, when a new request enters; decode cycles
++            # remain untouched.
++            torch.xpu.synchronize()
++            logger.info_once(
++                "Laguna speculative request-boundary XPU synchronization enabled"
++            )
++
+         if self.routed_experts_initialized:
+             self.routed_experts_capturer.clear_buffer()
+ 

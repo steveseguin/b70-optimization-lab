@@ -1,0 +1,133 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 16:53:03 -0400
+Subject: [PATCH 10/11] Replicate Laguna target embeddings across TP ranks
+
+---
+ vllm/compilation/laguna_m8_collectives.py     | 13 +++++++---
+ vllm/envs.py                                  |  4 +++
+ .../layers/vocab_parallel_embedding.py        | 26 +++++++++++++++++++
+ vllm/model_executor/models/laguna.py          |  2 ++
+ 4 files changed, 42 insertions(+), 3 deletions(-)
+
+diff --git a/vllm/compilation/laguna_m8_collectives.py b/vllm/compilation/laguna_m8_collectives.py
+index 55221f6c6..d09884009 100644
+--- a/vllm/compilation/laguna_m8_collectives.py
++++ b/vllm/compilation/laguna_m8_collectives.py
+@@ -43,7 +43,12 @@ class LagunaM8CollectiveState:
+     """Runner-owned fixed-address buffers for one target verifier forward."""
+ 
+     def __init__(self, device: torch.device) -> None:
++        from vllm import envs
++
+         self.device = device
++        self._embedding_reduce_required = (
++            not envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
++        )
+         # Slot order is deterministic within a forward, so slot i always sees
+         # the same shape. Allocating per slot on first use keeps the fixed
+         # address, non-aliasing, and fixed-order guarantees while allowing a
+@@ -73,7 +78,7 @@ class LagunaM8CollectiveState:
+     def reset_for_eligible_forward(self) -> None:
+         self._next_gather = 0
+         self._executed = 0
+-        self._first_reduce_seen = False
++        self._first_reduce_seen = not self._embedding_reduce_required
+ 
+     def finish_eligible_forward(self) -> None:
+         if self._expected_gathers is None:
+@@ -91,11 +96,13 @@ class LagunaM8CollectiveState:
+                 f"saw {self._next_gather}, expected 0 (replay) or "
+                 f"{self._expected_gathers}"
+             )
+-        if not self._first_reduce_seen:
++        if self._embedding_reduce_required and not self._first_reduce_seen:
+             raise RuntimeError(
+                 "Laguna M8 model forward omitted its embedding all-reduce"
+             )
+-        expected_executed = (self._expected_gathers or 0) + 1
++        expected_executed = (self._expected_gathers or 0) + int(
++            self._embedding_reduce_required
++        )
+         if self._executed != expected_executed:
+             raise RuntimeError(
+                 "Laguna M8 collective capture/replay changed eager collective "
+diff --git a/vllm/envs.py b/vllm/envs.py
+index e6807fcfa..86a0a7f17 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -314,6 +314,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_PARITY_ROW: int = -1
+     VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC: bool = False
+     VLLM_XPU_LAGUNA_PREFILL_EMBEDDING_GATHER: bool = False
++    VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING: bool = False
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+     VLLM_GPU_NIC_PCIE_MAPPING: str = ""
+     VLLM_NIC_SELECTION_VARS: str = ""
+@@ -2106,6 +2107,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_PREFILL_EMBEDDING_GATHER": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_PREFILL_EMBEDDING_GATHER", "0"))
+     ),
++    "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING": lambda: bool(
++        int(os.getenv("VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING", "0"))
++    ),
+     # whether use xpu specific sample kernel
+     "VLLM_XPU_USE_SAMPLER_KERNEL": lambda: bool(
+         int(os.getenv("VLLM_XPU_USE_SAMPLER_KERNEL", "1"))
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index 471ecc286..1ed2c133f 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -471,6 +471,12 @@ class VocabParallelEmbedding(PluggableLayer):
+         param[loaded_weight.shape[0] :].data.fill_(0)
+ 
+     def forward(self, input_):
++        replicated_weight = getattr(
++            self, "_xpu_laguna_replicated_weight", None
++        )
++        if replicated_weight is not None:
++            return F.embedding(input_.long(), replicated_weight)
++
+         if self.tp_size > 1:
+             # Build the mask.
+             masked_input, input_mask = get_masked_input_and_mask(
+@@ -519,6 +525,26 @@ class VocabParallelEmbedding(PluggableLayer):
+             output = tensor_model_parallel_all_reduce(output_parallel)
+         return output
+ 
++    def prepare_xpu_laguna_replicated_embedding(self) -> None:
++        if getattr(self, "_xpu_laguna_replicated_weight", None) is not None:
++            return
++        if self.tp_size != 4 or self.weight.dtype != torch.bfloat16:
++            raise RuntimeError(
++                "Laguna replicated embedding requires TP4 BF16 weights"
++            )
++        weight = tensor_model_parallel_all_gather(
++            self.weight.detach(), dim=0
++        ).contiguous()
++        if weight.shape != (self.num_embeddings_padded, self.embedding_dim):
++            raise RuntimeError(
++                "Laguna replicated embedding shape mismatch: "
++                f"{tuple(weight.shape)} != "
++                f"{(self.num_embeddings_padded, self.embedding_dim)}"
++            )
++        self.register_buffer(
++            "_xpu_laguna_replicated_weight", weight, persistent=False
++        )
++
+     def extra_repr(self) -> str:
+         s = f"num_embeddings={self.num_embeddings_per_partition}"
+         s += f", embedding_dim={self.embedding_dim}"
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 3e23ce7e6..5325f64a0 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -1883,6 +1883,8 @@ class LagunaForCausalLM(nn.Module, SupportsPP, SupportsLoRA, SupportsEagle3):
+         return self.model.embed_input_ids(input_ids)
+ 
+     def audit_loaded_fp8_kv_scales(self) -> None:
++        if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING:
++            self.model.embed_tokens.prepare_xpu_laguna_replicated_embedding()
+         rows = _loaded_laguna_kv_scale_rows(self)
+         expected_layers = list(range(48))
+         if [row[0] for row in rows] != expected_layers:

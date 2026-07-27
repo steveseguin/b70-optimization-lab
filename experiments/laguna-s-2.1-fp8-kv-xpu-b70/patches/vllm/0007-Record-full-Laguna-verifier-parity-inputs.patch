@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 15:50:49 -0400
+Subject: [PATCH 07/11] Record full Laguna verifier parity inputs
+
+---
+ vllm/model_executor/models/laguna.py | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index e07e76e05..fa0383c09 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -1553,6 +1553,16 @@ class LagunaModel(nn.Module, EagleModelMixin):
+             self.register_buffer(
+                 "_parity_position", torch.empty((), dtype=torch.int64), persistent=False
+             )
++            self.register_buffer(
++                "_parity_input_ids",
++                torch.empty(12, dtype=torch.int64),
++                persistent=False,
++            )
++            self.register_buffer(
++                "_parity_positions",
++                torch.empty(12, dtype=torch.int64),
++                persistent=False,
++            )
+ 
+     def embed_input_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+         return self.embed_tokens(input_ids)
+@@ -1570,6 +1580,14 @@ class LagunaModel(nn.Module, EagleModelMixin):
+             inputs_embeds=inputs_embeds,
+         )
+         if self._parity_enabled:
++            if positions.numel() == 12:
++                _copy_laguna_parity(
++                    self._parity_positions, positions.reshape(-1)
++                )
++                if input_ids is not None:
++                    _copy_laguna_parity(
++                        self._parity_input_ids, input_ids.reshape(-1)
++                    )
+             _copy_laguna_parity(
+                 self._parity_position,
+                 positions.reshape(-1)[
+@@ -1959,6 +1977,8 @@ class LagunaForCausalLM(nn.Module, SupportsPP, SupportsLoRA, SupportsEagle3):
+             "tp_rank": get_tensor_model_parallel_rank(),
+             "input_id": self.model._parity_input_id.detach().cpu().clone(),
+             "position": self.model._parity_position.detach().cpu().clone(),
++            "input_ids": self.model._parity_input_ids.detach().cpu().clone(),
++            "positions": self.model._parity_positions.detach().cpu().clone(),
+             "hidden_states": hidden_states.detach().cpu().clone(),
+             "logits": None if logits is None else logits.detach().cpu().clone(),
+             "buffers": {

@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 15:08:59 -0400
+Subject: [PATCH 04/11] Scope Laguna parity packets to target model
+
+---
+ vllm/model_executor/models/laguna.py | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index b6eb77d0d..dc1b8117c 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -1879,6 +1879,11 @@ class LagunaForCausalLM(nn.Module, SupportsPP, SupportsLoRA, SupportsEagle3):
+     ) -> None:
+         if (
+             not envs.VLLM_XPU_LAGUNA_PARITY_PROBE
++            # A speculative Laguna service contains both the 48-layer target
++            # and the six-layer DFlash model.  They share this class and the
++            # same trigger path, so without a role guard the draft can race
++            # the target and overwrite the target packet.
++            or self.config.num_hidden_layers != 48
+             or self._parity_dumped
+             or not _LAGUNA_PARITY_TRIGGER.exists()
+         ):

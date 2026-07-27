@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 17:22:28 -0400
+Subject: [PATCH 1/2] attn: compile Laguna page-32 decode shapes
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ KERNEL_CONFIGURATION.md                                | 3 ++-
+ csrc/xpu/attn/kernel_configs/paged_decode_default.conf | 2 ++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/KERNEL_CONFIGURATION.md b/KERNEL_CONFIGURATION.md
+index 5a7256c..9dedc39 100644
+--- a/KERNEL_CONFIGURATION.md
++++ b/KERNEL_CONFIGURATION.md
+@@ -92,13 +92,14 @@ Config files are located in `csrc/xpu/attn/kernel_configs/`.
+ | File | Kernels | Use Case |
+ |------|---------|----------|
+ | `paged_decode_full.conf` | 384 | All combinations — supports every model |
+-| `paged_decode_default.conf` | ~17 | Llama, Qwen, DeepSeek MLA, Falcon (default build) |
++| `paged_decode_default.conf` | ~19 | Llama, Qwen, Laguna, DeepSeek MLA, Falcon (default build) |
+ 
+ ### Recommended Config per Model Family
+ 
+ | Model Family | head_size | Chunk Prefill | Paged Decode |
+ |--------------|-----------|---------------|--------------|
+ | Llama-2/3, Qwen, Mistral | 128 | `default` | `default` |
++| Laguna S 2.1 | 128 | `default` | `default` |
+ | DeepSeek-V2/V3/R1 (MLA) | 192 | `default` | `default` |
+ | Gemma-2 | 256 | `full` | `full` |
+ | Mixed / other models | multiple | `full` | `full` |
+diff --git a/csrc/xpu/attn/kernel_configs/paged_decode_default.conf b/csrc/xpu/attn/kernel_configs/paged_decode_default.conf
+index 603f508..72a4093 100644
+--- a/csrc/xpu/attn/kernel_configs/paged_decode_default.conf
++++ b/csrc/xpu/attn/kernel_configs/paged_decode_default.conf
+@@ -37,6 +37,8 @@
+ 
+ # Laguna S 2.1 target sliding attention and DFlash non-causal draft attention
+ # (18 Q / 2 KV heads per TP4 rank):
++16,128,32,false,true,false
++16,128,32,false,false,false
+ 16,128,64,false,true,false
+ 16,128,64,false,false,false
+ 

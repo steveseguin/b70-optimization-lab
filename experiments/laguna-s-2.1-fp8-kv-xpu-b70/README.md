@@ -59,3 +59,25 @@ decode-rate gain is not assumed.
 Negative results and failures belong in `notes/`; source deltas belong in
 `patches/`; structured outputs belong in `data/` or the referenced NVMe run
 directory.
+
+## Current decode frontier
+
+Replicating the deterministic target embedding removed one verifier collective
+and produced two fresh, exact endpoint medians of 95.0193 and 95.8187 tok/s
+under conventional 99-interval accounting. The audited topology is now
+145/144 on every rank. See
+[`notes/2026-07-27-replicated-embedding-page32-and-xccl-boundary.md`](notes/2026-07-27-replicated-embedding-page32-and-xccl-boundary.md).
+
+A focused native page-32 FP8 attention build has passed direct B70 component
+tests, but its endpoint performance is unmeasured. Both the candidate and a
+restored page-64 control subsequently stalled at XCCL initialization. One
+corrected four-rank probe proved a collective-stage failure: all ranks entered
+`all_reduce`, none completed, and all timed out. Resume only after a clean
+reboot and a single corrected probe passes with four clean teardowns.
+
+Decode remains the priority. Prefill tuning starts only after the page-size
+A/B and remaining decode profiling are complete.
+
+The complete vLLM FP8-lane commit series and the focused page-32 kernel commits
+are preserved as mail patches under [`patches/`](patches/) so the source state
+does not depend on either external worktree remaining available.

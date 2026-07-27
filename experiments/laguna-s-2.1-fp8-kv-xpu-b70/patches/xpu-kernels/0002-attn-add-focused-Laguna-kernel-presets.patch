@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 17:28:26 -0400
+Subject: [PATCH 2/2] attn: add focused Laguna kernel presets
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ KERNEL_CONFIGURATION.md                                | 2 ++
+ csrc/xpu/attn/kernel_configs/chunk_prefill_laguna.conf | 6 ++++++
+ csrc/xpu/attn/kernel_configs/paged_decode_laguna.conf  | 7 +++++++
+ 3 files changed, 15 insertions(+)
+ create mode 100644 csrc/xpu/attn/kernel_configs/chunk_prefill_laguna.conf
+ create mode 100644 csrc/xpu/attn/kernel_configs/paged_decode_laguna.conf
+
+diff --git a/KERNEL_CONFIGURATION.md b/KERNEL_CONFIGURATION.md
+index 9dedc39..d4a93ee 100644
+--- a/KERNEL_CONFIGURATION.md
++++ b/KERNEL_CONFIGURATION.md
+@@ -86,6 +86,7 @@ Config files are located in `csrc/xpu/attn/kernel_configs/`.
+ |------|---------|----------|
+ | `chunk_prefill_full.conf` | 216 | All combinations — supports every model |
+ | `chunk_prefill_default.conf` | ~13 | Llama, Qwen, DeepSeek MLA, Falcon (default build) |
++| `chunk_prefill_laguna.conf` | 4 | Laguna S 2.1 target and DFlash only |
+ 
+ ### Paged Decode
+ 
+@@ -93,6 +94,7 @@ Config files are located in `csrc/xpu/attn/kernel_configs/`.
+ |------|---------|----------|
+ | `paged_decode_full.conf` | 384 | All combinations — supports every model |
+ | `paged_decode_default.conf` | ~19 | Llama, Qwen, Laguna, DeepSeek MLA, Falcon (default build) |
++| `paged_decode_laguna.conf` | 4 | Laguna S 2.1 target and DFlash, page sizes 32/64 |
+ 
+ ### Recommended Config per Model Family
+ 
+diff --git a/csrc/xpu/attn/kernel_configs/chunk_prefill_laguna.conf b/csrc/xpu/attn/kernel_configs/chunk_prefill_laguna.conf
+new file mode 100644
+index 0000000..6e389f8
+--- /dev/null
++++ b/csrc/xpu/attn/kernel_configs/chunk_prefill_laguna.conf
+@@ -0,0 +1,6 @@
++# Laguna S 2.1 target and DFlash prompt-processing policies.
++# Format: headsize,paged,causal,local,sink,lse
++128,true,true,false,false,false
++128,false,true,false,false,false
++128,false,true,false,false,true
++128,true,false,true,false,false
+diff --git a/csrc/xpu/attn/kernel_configs/paged_decode_laguna.conf b/csrc/xpu/attn/kernel_configs/paged_decode_laguna.conf
+new file mode 100644
+index 0000000..3bff0e3
+--- /dev/null
++++ b/csrc/xpu/attn/kernel_configs/paged_decode_laguna.conf
+@@ -0,0 +1,7 @@
++# Laguna S 2.1 target sliding attention and DFlash non-causal attention.
++# TP4 uses 18 Q / 2 KV heads per rank, selecting the qgroup=16 bucket.
++# Format: qgroup,headsize,pagesize,causal,local,sink
++16,128,32,false,true,false
++16,128,32,false,false,false
++16,128,64,false,true,false
++16,128,64,false,false,false

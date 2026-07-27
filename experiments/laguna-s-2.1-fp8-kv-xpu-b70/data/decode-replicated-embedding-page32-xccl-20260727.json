@@ -1,0 +1,78 @@
+{
+  "schema": "laguna-fp8-kv-experiment-summary-v1",
+  "date": "2026-07-27",
+  "lane": "Laguna-S-2.1-INT4 target with calibrated E4M3 FP8 KV",
+  "vllm": {
+    "worktree": "/home/steve/src/laguna-vllm-fp8-kv-20260727",
+    "commit": "8268dcca3",
+    "change": "replicated deterministic target embeddings and audited 145/144 graph topology"
+  },
+  "kernel": {
+    "worktree": "/home/steve/src/laguna-xpu-kernels-width12-router-clean-20260726",
+    "page32_commits": ["1857f0098", "4e624337e"],
+    "compiler": "oneAPI DPC++ 2025.3",
+    "build_dir": "build/attn-laguna-p32",
+    "page32_binaries": {
+      "libattn_kernels_xe_2.so": "28b612c5495c007a80d312fdc2a4be035d37c6fa582013c376be4a8f2b627669",
+      "_vllm_fa2_C.abi3.so": "beb82bd676779984b6133f897b9f1d9f526558827be277d9114fa51548c8bac4"
+    },
+    "restored_page64_binaries": {
+      "libattn_kernels_xe_2.so": "ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca",
+      "_vllm_fa2_C.abi3.so": "3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4"
+    }
+  },
+  "qualified_decode_runs": [
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/decode-repl-8268dcca3-20260727T210433Z",
+      "bench_sha256": "f47fea9fb804382ea4bc66bb03575f1cf42cecdf342e9cef31699ebdb0349640",
+      "identity_sha256": "d7a6cc7a4a94defec1e7d52049ec3ff2628a605121a2ab1ea968ceb4286402fc",
+      "conventional_99_interval_median_tok_s": 95.01930166468581,
+      "historical_100_event_median_tok_s": 95.97909259059173,
+      "exact": "13/13",
+      "cached_tokens_zero": "13/13",
+      "graph_topology_per_rank": "145/144"
+    },
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/decode-repl-confirm-8268dcca3-20260727T211004Z",
+      "bench_sha256": "5cdf585dcc9c9b36386f63c26a5d6f8a5aa53b35382bb677dfd40d6b60a5ea91",
+      "identity_sha256": "2b9bd2a21a34434a1772a560e3395e4b3ad2c9e03fd2cdd9d413c62bced8d416",
+      "conventional_99_interval_median_tok_s": 95.81868187849797,
+      "historical_100_event_median_tok_s": 96.78654735201815,
+      "exact": "13/13",
+      "cached_tokens_zero": "13/13",
+      "graph_topology_per_rank": "145/144"
+    }
+  ],
+  "invalid_or_incomplete_runs": [
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/decode-bs32-screen-8268dcca3-20260727T211604Z",
+      "classification": "invalid fallback",
+      "reason": "native 16,128,32,false,false,false policy was absent"
+    },
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/decode-bs32-native-4e624337e-r2-20260727T213931Z",
+      "classification": "host-blocked before model load",
+      "reason": "stalled at XCCL initialization"
+    },
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/decode-bs64-health-4e624337e-20260727T214929Z",
+      "classification": "host health control failed before model load",
+      "reason": "restored page-64 runtime stalled at identical XCCL boundary"
+    }
+  ],
+  "xccl_probe": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/xccl-fp8-20260727-PmESMo/probe-fp8-post-identical-init-boundary",
+    "result": "COLLECTIVE_STAGE_FAILURE",
+    "clean_teardowns": "0/4",
+    "rank_exit_codes": [124, 124, 124, 124],
+    "furthest_stage": "all_reduce-start",
+    "repeated": false,
+    "recovery_actions_after_result": []
+  },
+  "decision": {
+    "decode_status": "active but host-blocked",
+    "page32_endpoint_result": "unmeasured",
+    "next_action": "clean reboot then one corrected 4-rank collective gate",
+    "prefill_status": "deferred until decode profiling is complete"
+  }
+}

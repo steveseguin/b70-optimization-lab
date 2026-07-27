@@ -1,0 +1,148 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 15:42:00 -0400
+Subject: [PATCH 06/11] Clamp Laguna parity row during narrow probes
+
+---
+ vllm/model_executor/layers/linear.py | 13 +++++----
+ vllm/model_executor/models/laguna.py | 41 +++++++++++++++++++++++-----
+ 2 files changed, 42 insertions(+), 12 deletions(-)
+
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 6e1b95a86..49208efb5 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -1866,11 +1866,16 @@ class RowParallelLinear(LinearBase):
+             )
+             input_parallel = split_input[self.tp_rank].contiguous()
+         parity_probe = getattr(self, "xpu_parity_probe", False)
++        parity_row = envs.VLLM_XPU_LAGUNA_PARITY_ROW
++        if parity_row >= input_parallel.reshape(
++            -1, input_parallel.shape[-1]
++        ).shape[0]:
++            parity_row = -1
+         if parity_probe:
+             torch.ops.vllm.laguna_parity_copy(
+                 self._parity_input,
+                 input_parallel.reshape(-1, input_parallel.shape[-1])[
+-                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                    parity_row
+                 ],
+             )
+ 
+@@ -1906,7 +1911,7 @@ class RowParallelLinear(LinearBase):
+                         self._parity_local,
+                         output_parallel.reshape(
+                             -1, output_parallel.shape[-1]
+-                        )[envs.VLLM_XPU_LAGUNA_PARITY_ROW],
++                        )[parity_row],
+                     )
+                 output = output_parallel
+                 if self.reduce_results and self.tp_size > 1:
+@@ -1935,9 +1940,7 @@ class RowParallelLinear(LinearBase):
+         if parity_probe:
+             torch.ops.vllm.laguna_parity_copy(
+                 self._parity_output,
+-                output.reshape(-1, output.shape[-1])[
+-                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
+-                ],
++                output.reshape(-1, output.shape[-1])[parity_row],
+             )
+ 
+         if not self.return_bias:
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 046497c37..e07e76e05 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -432,6 +432,13 @@ def _copy_laguna_parity(dst: torch.Tensor, src: torch.Tensor) -> None:
+     torch.ops.vllm.laguna_parity_copy(dst, src)
+ 
+ 
++def _laguna_parity_row_index(row_count: int) -> int:
++    requested = envs.VLLM_XPU_LAGUNA_PARITY_ROW
++    if requested >= row_count:
++        return row_count - 1
++    return requested
++
++
+ def _trace_laguna_target_component(
+     *,
+     layer_idx: int,
+@@ -1096,7 +1103,9 @@ class LagunaAttention(nn.Module):
+             _copy_laguna_parity(
+                 getattr(self, f"_parity_{stage}"),
+                 tensor.reshape(-1, tensor.shape[-1])[
+-                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                    _laguna_parity_row_index(
++                        tensor.reshape(-1, tensor.shape[-1]).shape[0]
++                    )
+                 ],
+             )
+ 
+@@ -1391,7 +1400,9 @@ class LagunaDecoderLayer(nn.Module):
+             _copy_laguna_parity(
+                 getattr(self, f"_parity_{stage}"),
+                 tensor.reshape(-1, tensor.shape[-1])[
+-                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                    _laguna_parity_row_index(
++                        tensor.reshape(-1, tensor.shape[-1]).shape[0]
++                    )
+                 ],
+             )
+ 
+@@ -1561,12 +1572,16 @@ class LagunaModel(nn.Module, EagleModelMixin):
+         if self._parity_enabled:
+             _copy_laguna_parity(
+                 self._parity_position,
+-                positions.reshape(-1)[envs.VLLM_XPU_LAGUNA_PARITY_ROW],
++                positions.reshape(-1)[
++                    _laguna_parity_row_index(positions.numel())
++                ],
+             )
+             if input_ids is not None:
+                 _copy_laguna_parity(
+                     self._parity_input_id,
+-                    input_ids.reshape(-1)[envs.VLLM_XPU_LAGUNA_PARITY_ROW],
++                    input_ids.reshape(-1)[
++                        _laguna_parity_row_index(input_ids.numel())
++                    ],
+                 )
+         if get_pp_group().is_first_rank:
+             if inputs_embeds is not None:
+@@ -1577,7 +1592,11 @@ class LagunaModel(nn.Module, EagleModelMixin):
+                 _copy_laguna_parity(
+                     self._parity_embedding,
+                     hidden_states.reshape(-1, hidden_states.shape[-1])[
+-                        envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                        _laguna_parity_row_index(
++                            hidden_states.reshape(
++                                -1, hidden_states.shape[-1]
++                            ).shape[0]
++                        )
+                     ],
+                 )
+             residual = None
+@@ -1619,13 +1638,21 @@ class LagunaModel(nn.Module, EagleModelMixin):
+             _copy_laguna_parity(
+                 self._parity_final_norm,
+                 hidden_states.reshape(-1, hidden_states.shape[-1])[
+-                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                    _laguna_parity_row_index(
++                        hidden_states.reshape(
++                            -1, hidden_states.shape[-1]
++                        ).shape[0]
++                    )
+                 ],
+             )
+             _copy_laguna_parity(
+                 self._parity_final_residual,
+                 final_residual.reshape(-1, final_residual.shape[-1])[
+-                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                    _laguna_parity_row_index(
++                        final_residual.reshape(
++                            -1, final_residual.shape[-1]
++                        ).shape[0]
++                    )
+                 ],
+             )
+         if len(aux_hidden_states) > 0:

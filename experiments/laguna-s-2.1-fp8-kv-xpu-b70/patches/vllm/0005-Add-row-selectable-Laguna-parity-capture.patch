@@ -1,0 +1,152 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 15:22:37 -0400
+Subject: [PATCH 05/11] Add row-selectable Laguna parity capture
+
+---
+ vllm/compilation/decorators.py       |  1 +
+ vllm/envs.py                         |  4 ++++
+ vllm/model_executor/layers/linear.py | 10 +++++++---
+ vllm/model_executor/models/laguna.py | 26 +++++++++++++++++++-------
+ 4 files changed, 31 insertions(+), 10 deletions(-)
+
+diff --git a/vllm/compilation/decorators.py b/vllm/compilation/decorators.py
+index 90bba16a0..f7991978e 100644
+--- a/vllm/compilation/decorators.py
++++ b/vllm/compilation/decorators.py
+@@ -291,6 +291,7 @@ def _aot_runtime_contract(model: Any) -> dict[str, Any]:
+         "m8_bf16_attn_mm": bool(envs.VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM),
+         "m8_qknorm_rope": bool(envs.VLLM_XPU_LAGUNA_M8_QKNORM_ROPE),
+         "parity_probe": bool(envs.VLLM_XPU_LAGUNA_PARITY_PROBE),
++        "parity_row": int(envs.VLLM_XPU_LAGUNA_PARITY_ROW),
+         "parity_return_stage": os.environ.get(
+             "VLLM_XPU_LAGUNA_PARITY_RETURN_STAGE", ""
+         ),
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 59c103e15..5b9b0dce0 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -311,6 +311,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE: bool = False
+     VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH: bool = False
+     VLLM_XPU_LAGUNA_PARITY_PROBE: bool = False
++    VLLM_XPU_LAGUNA_PARITY_ROW: int = -1
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+     VLLM_GPU_NIC_PCIE_MAPPING: str = ""
+     VLLM_NIC_SELECTION_VARS: str = ""
+@@ -2094,6 +2095,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_PARITY_PROBE": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_PARITY_PROBE", "0"))
+     ),
++    "VLLM_XPU_LAGUNA_PARITY_ROW": lambda: int(
++        os.getenv("VLLM_XPU_LAGUNA_PARITY_ROW", "-1")
++    ),
+     # whether use xpu specific sample kernel
+     "VLLM_XPU_USE_SAMPLER_KERNEL": lambda: bool(
+         int(os.getenv("VLLM_XPU_USE_SAMPLER_KERNEL", "1"))
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 0100d83db..6e1b95a86 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -1869,7 +1869,9 @@ class RowParallelLinear(LinearBase):
+         if parity_probe:
+             torch.ops.vllm.laguna_parity_copy(
+                 self._parity_input,
+-                input_parallel.reshape(-1, input_parallel.shape[-1])[-1]
++                input_parallel.reshape(-1, input_parallel.shape[-1])[
++                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                ],
+             )
+ 
+         # Matrix multiply.
+@@ -1904,7 +1906,7 @@ class RowParallelLinear(LinearBase):
+                         self._parity_local,
+                         output_parallel.reshape(
+                             -1, output_parallel.shape[-1]
+-                        )[-1]
++                        )[envs.VLLM_XPU_LAGUNA_PARITY_ROW],
+                     )
+                 output = output_parallel
+                 if self.reduce_results and self.tp_size > 1:
+@@ -1933,7 +1935,9 @@ class RowParallelLinear(LinearBase):
+         if parity_probe:
+             torch.ops.vllm.laguna_parity_copy(
+                 self._parity_output,
+-                output.reshape(-1, output.shape[-1])[-1]
++                output.reshape(-1, output.shape[-1])[
++                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                ],
+             )
+ 
+         if not self.return_bias:
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index dc1b8117c..046497c37 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -1095,7 +1095,9 @@ class LagunaAttention(nn.Module):
+         if self._parity_enabled:
+             _copy_laguna_parity(
+                 getattr(self, f"_parity_{stage}"),
+-                tensor.reshape(-1, tensor.shape[-1])[-1]
++                tensor.reshape(-1, tensor.shape[-1])[
++                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                ],
+             )
+ 
+     def _parity_stage_output(
+@@ -1388,7 +1390,9 @@ class LagunaDecoderLayer(nn.Module):
+         if self._parity_enabled:
+             _copy_laguna_parity(
+                 getattr(self, f"_parity_{stage}"),
+-                tensor.reshape(-1, tensor.shape[-1])[-1]
++                tensor.reshape(-1, tensor.shape[-1])[
++                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                ],
+             )
+ 
+     def forward(
+@@ -1556,11 +1560,13 @@ class LagunaModel(nn.Module, EagleModelMixin):
+         )
+         if self._parity_enabled:
+             _copy_laguna_parity(
+-                self._parity_position, positions.reshape(-1)[-1]
++                self._parity_position,
++                positions.reshape(-1)[envs.VLLM_XPU_LAGUNA_PARITY_ROW],
+             )
+             if input_ids is not None:
+                 _copy_laguna_parity(
+-                    self._parity_input_id, input_ids.reshape(-1)[-1]
++                    self._parity_input_id,
++                    input_ids.reshape(-1)[envs.VLLM_XPU_LAGUNA_PARITY_ROW],
+                 )
+         if get_pp_group().is_first_rank:
+             if inputs_embeds is not None:
+@@ -1570,7 +1576,9 @@ class LagunaModel(nn.Module, EagleModelMixin):
+             if self._parity_enabled:
+                 _copy_laguna_parity(
+                     self._parity_embedding,
+-                    hidden_states.reshape(-1, hidden_states.shape[-1])[-1]
++                    hidden_states.reshape(-1, hidden_states.shape[-1])[
++                        envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                    ],
+                 )
+             residual = None
+         else:
+@@ -1610,11 +1618,15 @@ class LagunaModel(nn.Module, EagleModelMixin):
+         if self._parity_enabled:
+             _copy_laguna_parity(
+                 self._parity_final_norm,
+-                hidden_states.reshape(-1, hidden_states.shape[-1])[-1]
++                hidden_states.reshape(-1, hidden_states.shape[-1])[
++                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                ],
+             )
+             _copy_laguna_parity(
+                 self._parity_final_residual,
+-                final_residual.reshape(-1, final_residual.shape[-1])[-1]
++                final_residual.reshape(-1, final_residual.shape[-1])[
++                    envs.VLLM_XPU_LAGUNA_PARITY_ROW
++                ],
+             )
+         if len(aux_hidden_states) > 0:
+             return hidden_states, aux_hidden_states

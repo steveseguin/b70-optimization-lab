@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 16:45:48 -0400
+Subject: [PATCH 09/11] Use fixed-order gather for Laguna target prefill
+ embeddings
+
+---
+ vllm/envs.py                                           | 4 ++++
+ vllm/model_executor/layers/vocab_parallel_embedding.py | 8 +++++++-
+ vllm/model_executor/models/laguna.py                   | 4 +++-
+ 3 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/vllm/envs.py b/vllm/envs.py
+index f2ebe3922..e6807fcfa 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -313,6 +313,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_PARITY_PROBE: bool = False
+     VLLM_XPU_LAGUNA_PARITY_ROW: int = -1
+     VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC: bool = False
++    VLLM_XPU_LAGUNA_PREFILL_EMBEDDING_GATHER: bool = False
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+     VLLM_GPU_NIC_PCIE_MAPPING: str = ""
+     VLLM_NIC_SELECTION_VARS: str = ""
+@@ -2102,6 +2103,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC", "0"))
+     ),
++    "VLLM_XPU_LAGUNA_PREFILL_EMBEDDING_GATHER": lambda: bool(
++        int(os.getenv("VLLM_XPU_LAGUNA_PREFILL_EMBEDDING_GATHER", "0"))
++    ),
+     # whether use xpu specific sample kernel
+     "VLLM_XPU_USE_SAMPLER_KERNEL": lambda: bool(
+         int(os.getenv("VLLM_XPU_USE_SAMPLER_KERNEL", "1"))
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index d3117b0f1..471ecc286 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -495,7 +495,13 @@ class VocabParallelEmbedding(PluggableLayer):
+             and getattr(self, "xpu_laguna_exact_target", False)
+             and input_.numel() <= 8
+         )
+-        if exact_laguna_graph_embedding:
++        exact_laguna_prefill_embedding = (
++            current_platform.is_xpu()
++            and envs.VLLM_XPU_LAGUNA_PREFILL_EMBEDDING_GATHER
++            and getattr(self, "xpu_laguna_exact_target", False)
++            and input_.numel() > envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
++        )
++        if exact_laguna_graph_embedding or exact_laguna_prefill_embedding:
+             gathered = tensor_model_parallel_all_gather(
+                 output_parallel.unsqueeze(0), dim=0
+             )
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index fa0383c09..3e23ce7e6 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -1515,7 +1515,9 @@ class LagunaModel(nn.Module, EagleModelMixin):
+                 quant_config=quant_config,
+                 prefix=f"{prefix}.embed_tokens",
+             )
+-            self.embed_tokens.xpu_laguna_exact_target = True
++            self.embed_tokens.xpu_laguna_exact_target = (
++                config.num_hidden_layers == 48
++            )
+         else:
+             self.embed_tokens = PPMissingLayer()
+ 

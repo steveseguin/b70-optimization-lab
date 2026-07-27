@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 16:58:27 -0400
+Subject: [PATCH 11/11] Audit Laguna replicated-embedding graph topology
+
+---
+ vllm/v1/worker/gpu_model_runner.py | 24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
+
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index fc4d58890..a583a76be 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -6144,10 +6144,26 @@ class GPUModelRunner(
+                     laguna_m8_breakable_graph
+                     and envs.VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS
+                 ),
+-                # One initial graph plus one graph after each of the 97
+-                # collective and 48 attention eager boundaries.
+-                expected_num_graphs=146 if laguna_m8_breakable_graph else None,
+-                expected_num_eager_breaks=(145 if laguna_m8_breakable_graph else None),
++                # One initial graph plus one graph after each eager boundary.
++                # Replicated target embeddings remove the verifier's embedding
++                # all-reduce, changing the audited topology from 146/145 to
++                # 145/144 without changing any decoder-layer boundary.
++                expected_num_graphs=(
++                    145
++                    if (
++                        laguna_m8_breakable_graph
++                        and envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
++                    )
++                    else 146 if laguna_m8_breakable_graph else None
++                ),
++                expected_num_eager_breaks=(
++                    144
++                    if (
++                        laguna_m8_breakable_graph
++                        and envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
++                    )
++                    else 145 if laguna_m8_breakable_graph else None
++                ),
+             )
+             drafter = getattr(self, "drafter", None)
+             # The Laguna M8 path deliberately left the drafter eager so its

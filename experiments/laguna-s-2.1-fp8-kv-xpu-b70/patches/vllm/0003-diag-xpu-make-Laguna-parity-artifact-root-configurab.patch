@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 11:21:26 -0400
+Subject: [PATCH 03/11] diag(xpu): make Laguna parity artifact root
+ configurable
+
+---
+ vllm/model_executor/models/laguna.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 1dea562dd..b6eb77d0d 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -79,7 +79,10 @@ from vllm.utils.torch_utils import direct_register_custom_op
+ logger = init_logger(__name__)
+ 
+ _LAGUNA_ARTIFACT_ROOT = Path(
+-    "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1"
++    os.environ.get(
++        "VLLM_XPU_LAGUNA_ARTIFACT_ROOT",
++        "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1",
++    )
+ )
+ _LAGUNA_PARITY_TRIGGER = _LAGUNA_ARTIFACT_ROOT / "parity-trigger.json"
+ _LAGUNA_FP8_KV_SCALE_DIGEST = (
