@@ -205,6 +205,7 @@ jq -e --arg digest "$expected_scale_digest" \
   printf 'parity_precursor_ids=%s\nparity_precursor_tokens=%s\n' \
     "${parity_precursor_csv:-none}" "$parity_precursor_tokens"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
+  printf 'request_boundary_xpu_sync=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
   sha256sum "$0" "$server" "$scale_audit" "$benchmark" "$qualifier" "$comparator"
@@ -292,6 +293,7 @@ setsid /usr/bin/env -i \
   VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$dflash_context_workspace" \
   VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_w8a16" \
   VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 \
+  VLLM_XPU_LAGUNA_REQUEST_BOUNDARY_SYNC=1 \
   VLLM_XPU_LAGUNA_PARITY_PROBE="$parity_only" \
   VLLM_XPU_LAGUNA_PARITY_ROW="$parity_row" VLLM_TRACE_FUNCTION=0 \
   VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 \
