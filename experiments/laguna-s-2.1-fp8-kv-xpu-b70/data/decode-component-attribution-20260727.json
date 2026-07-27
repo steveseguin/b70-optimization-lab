@@ -1,0 +1,129 @@
+{
+  "schema": "laguna-fp8-kv-decode-component-attribution-v1",
+  "date": "2026-07-27",
+  "classification": "diagnostic-only",
+  "device": "Intel B70 card 0",
+  "cache_update_microbenchmark": {
+    "operation": "reshape_and_cache_flash",
+    "shape": {
+      "tokens": 12,
+      "kv_heads": 2,
+      "head_size": 128,
+      "block_size": 64,
+      "blocks": 512
+    },
+    "input_dtype": "bfloat16",
+    "cache_scale_mode": "static",
+    "median_us_per_layer": {
+      "bf16_cache": 6.326562,
+      "fp8_cache": 6.4537
+    },
+    "projected_us_per_48_layer_target_pass": {
+      "bf16_cache": 303.675,
+      "fp8_cache": 309.778,
+      "fp8_minus_bf16": 6.103
+    },
+    "conclusion": "Cache insertion is not the endpoint decode bottleneck."
+  },
+  "paged_attention_microbenchmark": {
+    "operation": "paged FlashAttention",
+    "query_width": 12,
+    "kv_heads": 2,
+    "head_size": 128,
+    "block_size": 64,
+    "query_dtype": "bfloat16",
+    "fp8_kv_descale": 0.02,
+    "median_us": [
+      {
+        "query_heads": 12,
+        "context_tokens": 128,
+        "bf16_cache": 19.566,
+        "fp8_cache": 21.358
+      },
+      {
+        "query_heads": 12,
+        "context_tokens": 512,
+        "bf16_cache": 19.267,
+        "fp8_cache": 21.394
+      },
+      {
+        "query_heads": 12,
+        "context_tokens": 1024,
+        "bf16_cache": 24.556,
+        "fp8_cache": 33.613
+      },
+      {
+        "query_heads": 12,
+        "context_tokens": 4096,
+        "bf16_cache": 24.879,
+        "fp8_cache": 29.63
+      },
+      {
+        "query_heads": 18,
+        "context_tokens": 128,
+        "bf16_cache": 19.549,
+        "fp8_cache": 21.586
+      },
+      {
+        "query_heads": 18,
+        "context_tokens": 512,
+        "bf16_cache": 19.478,
+        "fp8_cache": 21.528
+      },
+      {
+        "query_heads": 18,
+        "context_tokens": 1024,
+        "bf16_cache": 24.85,
+        "fp8_cache": 34.574
+      },
+      {
+        "query_heads": 18,
+        "context_tokens": 4096,
+        "bf16_cache": 38.689,
+        "fp8_cache": 52.781
+      }
+    ],
+    "conclusion": "The current Xe2 FP8-cache attention path is slower than BF16 at every tested shape; reduced cache bytes do not yet produce a faster kernel."
+  },
+  "endpoint_cycle_attribution": {
+    "warning": "FP8 graph rows failed exactness and their timing is diagnostic only.",
+    "bf16_record": {
+      "artifact": "data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json",
+      "preferred_median_tok_s": 101.94172124,
+      "draft_cycles": 1609,
+      "draft_tokens": 17699,
+      "accepted_tokens": 4747,
+      "emitted_tokens_per_cycle": 3.950279676817899,
+      "inferred_ms_per_cycle": 38.7503725537242
+    },
+    "fp8_no_prebuilt_graph": {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/candidate-graph-no-prebuilt512-20260727T150624Z",
+      "preferred_median_tok_s_rejected": 94.12946358948561,
+      "draft_cycles": 1655,
+      "draft_tokens": 18205,
+      "accepted_tokens": 4779,
+      "emitted_tokens_per_cycle": 3.88761329305136,
+      "inferred_ms_per_cycle": 41.30070590868225,
+      "versus_bf16_percent": {
+        "endpoint_rate": -7.663454722,
+        "emitted_tokens_per_cycle": -1.586378406,
+        "cycle_time": 6.581442156
+      }
+    },
+    "fp8_mwide_graph": {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/fp8-kv/candidate-graph-mwide512-20260727T151344Z",
+      "preferred_median_tok_s_rejected": 90.17767691289154,
+      "draft_cycles": 1706,
+      "draft_tokens": 18766,
+      "accepted_tokens": 4727,
+      "emitted_tokens_per_cycle": 3.770808909730364,
+      "inferred_ms_per_cycle": 41.81532546433672,
+      "versus_bf16_percent": {
+        "endpoint_rate": -11.539970273,
+        "emitted_tokens_per_cycle": -4.543242043,
+        "cycle_time": 7.909479854
+      }
+    }
+  },
+  "decision": "Do not optimize cache insertion. First restore exact graph execution and localize its divergence; then profile the approximately 2.55 ms cycle-time gap. Treat FP8 paged attention as a kernel-tuning target, especially at longer context."
+}
