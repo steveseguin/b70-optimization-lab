@@ -5,6 +5,8 @@
 > 99-interval rate as `101.941721240 tok/s`. This file preserves the campaign's
 > chronological plan and should not be read as current work. Start from
 > [RESUME.md](RESUME.md), the
+> [qualified result packet](../../results/laguna-s-2.1-int4-b70/README.md),
+> [standalone reproducibility packet](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md),
 > [final record](notes/2026-07-26-width12-dflash-fp8-w8a16-record.md), the
 > [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md),
 > [campaign transfer ledger](notes/2026-07-26-campaign-transfer-ledger.md), and

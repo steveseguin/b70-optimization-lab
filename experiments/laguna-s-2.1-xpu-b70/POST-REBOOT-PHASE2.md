@@ -1,5 +1,14 @@
 # Laguna — post-reboot Phase 2 checklist
 
+> **SUPERSEDED — DO NOT EXECUTE.** This was a pre-recovery checklist and its
+> hardcoded `eno1` command is obsolete. Corrected TP4 work later completed and
+> the lane closed at `102.971435596 tok/s` under the published legacy
+> convention (`101.941721240 tok/s` conventionally). Start from the
+> [qualified result packet](../../results/laguna-s-2.1-int4-b70/README.md),
+> [resume](RESUME.md), and
+> [standalone repro](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md).
+> The body below is retained only as chronological evidence.
+
 Written immediately before an authorized clean reboot on 2026-07-26.
 Steve authorized the reboot; nothing beyond it is authorized yet.
 

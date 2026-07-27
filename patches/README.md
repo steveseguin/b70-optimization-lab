@@ -50,3 +50,9 @@ Promote only after quality and identity are clear:
   routed GEMM1 B-layout correctness fix.
 - [llm-optimizations-qwen36-routegemm1-blayoutfix-results-20260620.patch](llm-optimizations-qwen36-routegemm1-blayoutfix-results-20260620.patch):
   paired lab notes/results snapshot for the B-layout work.
+
+## Laguna S 2.1 Snapshot Pointer
+
+- [laguna-s-2.1-xpu-b70/](laguna-s-2.1-xpu-b70/): exact vLLM and XPU-kernel
+  bundles, reviewable combined patches, supplemental attention-runtime source
+  provenance, and links to the qualified four-B70 result and standalone repro.

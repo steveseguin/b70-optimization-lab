@@ -1,0 +1,48 @@
+schema=laguna-mwide-measurement-leg-v1
+label=B2
+treatment=candidate
+exact_max_m=12
+num_speculative_tokens=11
+prebuilt_exact_attn_metadata=1
+draft_breakable_graph=0
+cluster_iface=eth1
+local_argmax=0
+capture_attention_graphs=0
+inline_attention_graphs=0
+width12_router_workspace_stack=1
+mwide_bf16_router_topk=1
+dflash_context_kv_workspace=1
+dflash_fp8_w8a16=1
+dflash_fp8_target_unchanged=true
+m8_shared_elementwise=0
+m8_qknorm_rope=0
+gpu_memory_utilization=0.90
+identity_source=actual_worktree_heads
+measurement_leg_not_record_leg=true
+vllm_commit=e596ef1543466ae1a05e5bb8091f58872e2b18ba
+kernel_commit=6f9dd3c3a7b1b677a992ca4f431a968408f9c816
+model=/mnt/fast-ai/llm-models/laguna-s-2.1/int4
+draft=/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4
+model_manifest_sha256=45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
+fa2_binary_sha256=3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4
+attn_library_sha256=ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca
+suite_sha256=9fdaacfdc4de59407a73cbe0d8130fa0f6abe91fed782e399a58adbc035ea638
+teacher_sha256=d41d3d5e2471ee98f783e58407e44217ade67f7472147eeeb82780efa89879d1
+selector_stack=exact-m12-dflash11-breakablegraph-w1routew2-routeinterleave-n64-routerworkspace1-draftfp81
+metadata_selector=1
+attention_capture_selector=0
+inline_attention_selector=0
+expected_num_graphs=146
+expected_num_eager_breaks=145
+no_warmup=true
+suite_invocations=1
+retries=0
+verified_idle_interval_seconds=60
+168351646feeeea846a5d6040603f1f50f9cefa8ae9745732e2829b96cfd218e  /home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_mwide_measurement_leg.sh
+5618cfbe8d3206ee19fb6446ed5b4372b773491b25ca41676b3f602bd28cf745  /home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/serve_laguna_mwide_graph_nvme.sh
+99ea295ad3432c5b66aab91a4319f1d6bec827883548be7d10d5d1f77bf01e55  /home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh
+87ad4d57907a15afba221be42ea00e3a1975308d421e0edc13881dafe38e3db3  /home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/compare_exact_runs.py
+40a483d9127a42c6e9f4a3651a429d39d25336d39eee0c782ba2c7712988aa2a  /home/steve/llm-optimizations/scripts/bench-openai-realistic-suite.py
+1f491cd89a8659c05c9d5668c2c978ade3b2e98fc61d299977f196130522cf01  /home/steve/llm-optimizations/experiments/laguna-s-2.1-xpu-b70/tools/capture_laguna_m8_idle_snapshot.py
+202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8  /home/steve/.venvs/deepseek-v4-xpu/bin/python
+d16721cbe3e6bef44881b6b45ce64d9362a82bec4748754bd91ec85704c243fb  /home/steve/.venvs/deepseek-v4-xpu/bin/vllm

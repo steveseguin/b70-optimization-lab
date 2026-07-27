@@ -42,6 +42,7 @@ because its runtime preparation marker was absent.
 ## Evidence and reproduction
 
 - [Standalone fail-closed reproduction](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md)
+- [Source/runtime reconstruction and reproducibility tiers](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/BUILD.md)
 - [Structured record](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json)
 - [Metric correction](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md)
 - [Original experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md)
@@ -52,3 +53,11 @@ because its runtime preparation marker was absent.
 
 The immutable queue and HTTP 201/public-verification receipt remain under
 `data/`. The submission is already approved; do not POST a duplicate.
+
+The standalone packet now includes the sealed raw run, a release-only 32-file
+model manifest and download-at-revision helper, complete observed package and
+host identity, three kernel-source provenance points in addition to the final
+kernel tree, and checks for every direct and transitively loaded native
+library. Artifact-exact replay and source-equivalent rebuild are deliberately
+separate claims; rebuilt binaries require the full gate and are not silently
+substituted into the sealed environment.

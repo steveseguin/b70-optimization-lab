@@ -157,6 +157,7 @@ Use:
 - [record resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md);
 - [qualified result packet](../results/laguna-s-2.1-int4-b70/README.md);
 - [standalone repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md);
+- [source/runtime reconstruction and reproducibility tiers](../repro/laguna-s-2.1-int4-b70-102tps-20260726/BUILD.md);
 - [accounting correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md);
 - [record note](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md);
 - [structured packet](../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json);
@@ -168,6 +169,13 @@ The record uses BF16 KV to preserve its BF16 canonical-teacher contract.
 Poolside's quantized checkpoint officially specifies calibrated FP8 KV, which
 remains a separately labeled long-context/capacity service candidate rather
 than a silent record-lane substitution.
+
+The repro tracks the sealed raw benchmark, log, environment, cleanup, and idle
+evidence; portable release-only model hashes; the complete observed runtime;
+and every direct or transitively loaded native library. Exact lab replay and a
+source-equivalent clean rebuild are separate claims: a rebuild with different
+binary hashes is a new environment and must pass all semantic, topology,
+teardown, and performance gates.
 
 ## DeepSeek V4 Flash K160 Closed Frontier
 

@@ -48,9 +48,12 @@ was no retry, and this first valid score is the reported score.
 | shutdown / worker / idle cleanup statuses | `0 / 0 / 0` |
 | surviving vLLM workers or port-18080 listener | none |
 
-The long rollover prompt and the long-then-next boundary are exact. The
-benchmark reports `fresh-response`, no context checkpoint, no prefix/history
-acceleration, no response reuse, and no cached tokens.
+The long rollover prompt is exact. Rows 0 then 1 prove a
+full-512-output-then-next boundary at 2/2. The 863-token prompt is row 12, the
+last suite row, so this run does **not** test or claim
+long-context-then-next. The benchmark reports `fresh-response`, no context
+checkpoint, no prefix/history acceleration, no response reuse, and no cached
+tokens.
 
 ## Identity
 

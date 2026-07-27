@@ -23,6 +23,7 @@ Do not compare two results unless their model, quantization, prompt length, outp
 
 | Recipe | Status | What It Is For |
 | --- | --- | --- |
+| `../repro/laguna-s-2.1-int4-b70-102tps-20260726/` | Qualified closed-result repro | Portable sealed-evidence audit, exact source bundles, model-at-revision restore and manifest, native loader verification, and one-cold-suite replay for the four-B70 Laguna row: `102.971` under the submitted legacy convention, `101.942` conventionally. |
 | `../repro/deepseek-v4-flash-k160-b70-80tps-20260718/` | Closed-frontier strict speed repro | Exact source bundles, fail-closed launcher, validity gates, and evidence for the 80.820 tok/s target-verified DSpark7 result on four B70s. |
 | `../results/gemma4-26b-a4b-q8-b70/` | Result packet | Gemma 4 26B A4B Q8/INT8 one-B70 speed frontier, long-context service lane, older baselines, failed paths, validity gates, vLLM comparison lanes, and LocalMaxxing evidence. |
 | `../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/` | Copy-ready strict speed repro | Standalone Gemma 4 26B A4B Q8 target recipe for the `124.977 tok/s` strict cold-suite result on one B70. |

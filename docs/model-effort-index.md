@@ -54,6 +54,11 @@ q1 teacher, cache-zero on all rows, and approved by LocalMaxxing as
 an audited 146/145 Breakable PIECEWISE topology, BF16 KV, and 31 runtime
 E4M3FN W8A16 DFlash projection conversions per rank.
 
+This lane is sealed and closed; no benchmark or service is active. The
+conventional 102 objective remains short by `0.058278760 tok/s`. Reopening it
+requires a new preregistration, not a continuation from the superseded
+94.920 row.
+
 Poolside's quantized checkpoint officially ships calibrated FP8 KV; BF16 is a
 deliberate record-lane override. The earlier B70 A/B doubled cache capacity
 with FP8 but slowed short decode and changed output. Keep future official

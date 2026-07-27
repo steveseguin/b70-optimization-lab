@@ -14,6 +14,11 @@
     "kernel_public_base": "11f42aa47ff51924b3d9527cfc2bfef5fd2d98e5",
     "kernel_bundle": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-width12-102tps-record-20260726.bundle",
     "kernel_combined_patch": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-width12-102tps-record-20260726.patch",
+    "attention_runtime_commit": "906190641d708b8028018c5dde653e265c835348",
+    "attention_runtime_bundle": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-attention-runtime-906190641-20260726.bundle",
+    "attention_runtime_combined_patch": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-attention-runtime-906190641-20260726.patch",
+    "native_base_commit": "4772f727590c51b72add79350b913d098cf67872",
+    "xpumem_source_commit": "18a44f440ca3ac2006d5ba19cd12ccca0a0c9982",
     "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
     "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba"
   },
@@ -62,8 +67,9 @@
   "quality": {
     "teacher_exact": "13/13",
     "cached_tokens_zero": "13/13",
-    "long_then_next": "2/2",
     "full512_output_then_next": "2/2",
+    "long_context_then_next_tested": false,
+    "sequence_qualification": "Rows 0 then 1 prove full-512-output-then-next. The 863-token prompt is row 12, so this run does not test long-context-then-next.",
     "rollover": "1/1",
     "fresh_unique_prompts": true,
     "single_active_generation": true,
@@ -123,7 +129,19 @@
     "vllm_bundle": "56bb463925cf53ba20db81c980264fd2a993d1e76f15731ac5676674fa0b9126",
     "vllm_combined_patch": "23fc7766c1985c6237fcab12dae62096f759511dbc7c5dc7f9828fe93d4c6d6d",
     "kernel_bundle": "7aeec0b55e7b40f26d993ddf6dfb978ec267da1ae1e89d9f54c6db4d80022ed3",
-    "kernel_combined_patch": "0eb4337547160394ff4ebaa66782dd936fbad3fffeceb85af08832f6d99dbd69"
+    "kernel_combined_patch": "0eb4337547160394ff4ebaa66782dd936fbad3fffeceb85af08832f6d99dbd69",
+    "attention_runtime_bundle": "8c53de764a0c903a5e627a1c7a54a9c3bb21b500479a644b86af4c83e948149e",
+    "attention_runtime_combined_patch": "0420ac1a6db050d7a695dcfa60e8dcec2286b72b1660509862587aa537a05e0d",
+    "evidence_manifest": "e83bf2402b2f3183ba876c9c34bc1c59e068f6beea38650b1b8add48657e6f50",
+    "model_release_manifest": "c19edb79458a24ceb4bb26c991302de71ef29be40e70124e90bf6c13538c692e",
+    "runtime_lock": "8c861e5c9d44232346770e2822aa795179f8f90c2678d2ebbb42a690ef4f4a97"
+  },
+  "reproducibility": {
+    "portable_sealed_evidence": "repro/laguna-s-2.1-int4-b70-102tps-20260726/evidence/record-run",
+    "portable_model_manifest": "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/model-release-files.sha256",
+    "runtime_lock": "repro/laguna-s-2.1-int4-b70-102tps-20260726/manifests/runtime-lock.json",
+    "artifact_exact_scope": "originating host with byte-identical venv/native files",
+    "source_rebuild_scope": "new environment requiring all semantic, topology, teardown, and performance gates"
   },
   "localmaxxing": {
     "submission_status": "APPROVED",

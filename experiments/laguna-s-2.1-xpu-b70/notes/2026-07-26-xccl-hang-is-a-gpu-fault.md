@@ -1,5 +1,15 @@
 # Laguna — the XCCL startup hang is a GPU driver fault, not a code regression
 
+> **RETRACTED CAUSAL CLAIM — HISTORICAL NOTE ONLY.** The later audit proved
+> that post-recovery “0/4” summaries came from a wrapper that never launched
+> the Python probe. Module-reload, FLR, GPU-fault, and shared-memory conclusions
+> drawn from those non-runs were unfounded; host health was unknown at that
+> point. Later corrected TP4 work completed successfully and the lane closed at
+> the qualified 102.971-legacy / 101.942-conventional result. Read the
+> [probe correction](2026-07-26-xccl-probe-harness-correction.md) and
+> [current resume](../RESUME.md). The original text is preserved below so the
+> mistake remains auditable.
+
 Date: 2026-07-26 America/Toronto
 
 Status: **environment fault. All measurement is suspended until the box is

@@ -63,6 +63,13 @@ readonly vllm_root="${REPRO_VLLM_TREE:-/home/steve/src/laguna-vllm-width12-stack
 readonly kernel_root="${REPRO_KERNEL_TREE:-/home/steve/src/laguna-xpu-kernels-width12-router-clean-20260726}"
 readonly venv_python="$venv_root/bin/python"
 readonly vllm_binary="$venv_root/bin/vllm"
+readonly repro_root="$repo_root/repro/laguna-s-2.1-int4-b70-102tps-20260726"
+readonly runtime_lock="${REPRO_RUNTIME_LOCK:-$repro_root/manifests/runtime-lock.json}"
+readonly runtime_verifier="${REPRO_RUNTIME_VERIFIER:-$repro_root/verify-runtime.py}"
+readonly model_release_manifest="${REPRO_MODEL_MANIFEST:-$repro_root/manifests/model-release-files.sha256}"
+readonly xpumem_module="${REPRO_XPUMEM_MODULE:-/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so}"
+readonly kernel_package="$kernel_root/vllm_xpu_kernels"
+readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib"
 readonly graph_serve="$script_dir/serve_laguna_mwide_graph_nvme.sh"
 readonly comparator="$script_dir/compare_exact_runs.py"
 readonly benchmark="$repo_root/scripts/bench-openai-realistic-suite.py"
@@ -83,6 +90,9 @@ readonly expected_python=202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0
 readonly expected_vllm_binary=d16721cbe3e6bef44881b6b45ce64d9362a82bec4748754bd91ec85704c243fb
 readonly expected_target_config=9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cce6549f7eba5b14e6
 readonly expected_draft_config=6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14725ea5e86f20926
+readonly expected_runtime_lock=8c861e5c9d44232346770e2822aa795179f8f90c2678d2ebbb42a690ef4f4a97
+readonly expected_runtime_verifier=e43f3c9f46e299eeaa8d7bbc828fadeec2ae60f69f39529f7130f154d158f20d
+readonly expected_model_release_manifest=c19edb79458a24ceb4bb26c991302de71ef29be40e70124e90bf6c13538c692e
 readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8mc-${label,,}"
 
 case "$treatment:$label" in
@@ -143,7 +153,11 @@ laguna_nvme_prepare_paths
 laguna_nvme_assert_fresh_run_path "$run_dir"
 ambient_sensitive="$(compgen -e | LC_ALL=C sort -u | awk '/^(VLLM|LAGUNA|XPU_GRAPH$|ZE_|ZES_|SYCL|UR_|CCL_|FI_|I_MPI_|PSM|OMP_|MKL_|KMP_|ONEAPI_|INTEL_|IGC_|NEO|IPEX_|TORCH|PYTORCH_|TRITON_|LD_)/ {print}')"
 [[ -z "$ambient_sensitive" ]] || die "refusing inherited runtime variables: $ambient_sensitive"
-for path in "$vllm_root" "$kernel_root" "$graph_serve" "$nvme_paths" "$comparator" "$benchmark" "$metric_qualifier" "$idle_wrapper" "$suite" "$teacher"; do
+for path in \
+  "$vllm_root" "$kernel_root" "$graph_serve" "$nvme_paths" "$comparator" \
+  "$benchmark" "$metric_qualifier" "$idle_wrapper" "$suite" "$teacher" \
+  "$runtime_lock" "$runtime_verifier" "$model_release_manifest" \
+  "$xpumem_module"; do
   [[ -e "$path" && "$(realpath -e -- "$path")" != /media/* ]] || die "missing or USB-resident required path: $path"
 done
 if [[ -n "$teacher_text_oracle" ]]; then
@@ -159,6 +173,9 @@ check_hash "$suite" "$expected_suite"; check_hash "$teacher" "$expected_teacher"
 check_hash "$comparator" "$expected_comparator"
 check_hash "$benchmark" "$expected_benchmark"
 check_hash "$metric_qualifier" "$expected_metric_qualifier"
+check_hash "$runtime_lock" "$expected_runtime_lock"
+check_hash "$runtime_verifier" "$expected_runtime_verifier"
+check_hash "$model_release_manifest" "$expected_model_release_manifest"
 check_hash "$venv_python" "$expected_python"
 check_hash "$vllm_binary" "$expected_vllm_binary"
 check_hash "$LAGUNA_NVME_TARGET_ROOT/config.json" "$expected_target_config"
@@ -171,6 +188,20 @@ check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" \
   00fd81608f057039d31e1b316fecbecec60b3b03151e66b95d0f844185119715
 check_hash "$kernel_root/vllm_xpu_kernels/libgrouped_gemm_xe_2.so" \
   fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
+check_hash "$kernel_root/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
+  3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4
+check_hash "$kernel_root/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
+  ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca
+check_hash "$kernel_root/vllm_xpu_kernels/libgrouped_gemm_xe_default.so" \
+  982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c
+check_hash "$kernel_root/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so" \
+  cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb
+check_hash "$kernel_root/vllm_xpu_kernels/libmqa_logits_kernels_xe_2.so" \
+  58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb
+check_hash "$kernel_root/vllm_xpu_kernels/libmhc_kernels_xe_2.so" \
+  f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f
+check_hash "$xpumem_module" \
+  8981f5e312cfab901a5bfa8e40a5a1f194e65db3a207784bfa602e5901e5a1a8
 laguna_nvme_verify_model_contents
 [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "refusing reused RPC path"
 ! ss -H -ltn 'sport = :18080' | grep -q . || die "port 18080 already has a listener"
@@ -181,6 +212,23 @@ chmod 700 -- "$run_dir"
 mkdir --mode=700 "$rpc_dir"
 mkdir -p "$run_dir"/{private-home,private-tmp,private-cache/{hf,vllm,torchinductor,triton,sycl,numba,pycache},private-xdg/{config,data,state},idle-interval}
 chmod -R 700 -- "$run_dir"
+/usr/bin/env -i \
+  PATH="$frozen_path" \
+  LANG=C.UTF-8 \
+  LC_ALL=C.UTF-8 \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONNOUSERSITE=1 \
+  PYTHONSAFEPATH=1 \
+  PYTHONPATH="$vllm_root:$kernel_root" \
+  LD_LIBRARY_PATH="$native_library_path" \
+  "$venv_python" "$runtime_verifier" \
+  --lock "$runtime_lock" \
+  --vllm-tree "$vllm_root" \
+  --kernel-tree "$kernel_root" \
+  --venv-root "$venv_root" \
+  --xpumem-module "$xpumem_module" \
+  --json-out "$run_dir/runtime-verification.json" \
+  > "$run_dir/runtime-verification.stdout"
 
 capture_idle() { "$venv_python" "$idle_wrapper" --output "$1"; }
 verify_idle_interval() {
@@ -244,7 +292,7 @@ expected_num_eager_breaks="$(( inline_attention == 1 ? 97 : 145 ))"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
 {
-  printf 'schema=laguna-mwide-measurement-leg-v1\nlabel=%s\ntreatment=%s\n' "$label" "$treatment"
+  printf 'schema=laguna-mwide-measurement-leg-v2\nlabel=%s\ntreatment=%s\n' "$label" "$treatment"
   printf 'exact_max_m=%s\nnum_speculative_tokens=%s\nprebuilt_exact_attn_metadata=%s\n' "$laguna_m" "$laguna_spec" "$metadata_arg"
   printf 'draft_breakable_graph=%s\ncluster_iface=%s\nlocal_argmax=%s\n' "$draft_graph" "$cluster_iface" "$local_argmax"
   printf 'capture_attention_graphs=%s\ninline_attention_graphs=%s\n' "$capture_attention" "$inline_attention"
@@ -252,8 +300,12 @@ verify_idle_interval prestart
   printf 'dflash_fp8_w8a16=%s\ndflash_fp8_target_unchanged=true\n' "$dflash_fp8"
   printf 'm8_shared_elementwise=%s\nm8_qknorm_rope=%s\ngpu_memory_utilization=%s\n' "$se" "$qk" "$gpu_util"
   printf 'identity_source=actual_worktree_heads\nmeasurement_leg_not_record_leg=true\nvllm_commit=%s\nkernel_commit=%s\nmodel=%s\ndraft=%s\nmodel_manifest_sha256=%s\n' "$expected_vllm" "$expected_kernels" "$LAGUNA_NVME_TARGET_ROOT" "$LAGUNA_NVME_DRAFT_ROOT" "$LAGUNA_NVME_MANIFEST_SHA256"
+  printf 'model_release_manifest_sha256=%s\nruntime_lock_sha256=%s\nruntime_verifier_sha256=%s\n' "$expected_model_release_manifest" "$expected_runtime_lock" "$expected_runtime_verifier"
+  printf 'runtime_verification_sha256=%s\nxpumem_module_sha256=%s\n' "$(sha256sum "$run_dir/runtime-verification.json" | awk '{print $1}')" "$(sha256sum "$xpumem_module" | awk '{print $1}')"
+  printf 'shared_native_module_sha256=%s\nxpu_native_module_sha256=%s\nmoe_native_module_sha256=%s\ngrouped_gemm_native_module_sha256=%s\n' "$(sha256sum "$kernel_package/_C.abi3.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/_xpu_C.abi3.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/_moe_C.abi3.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/libgrouped_gemm_xe_2.so" | awk '{print $1}')"
   printf 'fa2_binary_sha256=%s\n' "$(sha256sum "$kernel_root/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" | awk '{print $1}')"
   printf 'attn_library_sha256=%s\n' "$(sha256sum "$kernel_root/vllm_xpu_kernels/libattn_kernels_xe_2.so" | awk '{print $1}')"
+  printf 'grouped_gemm_default_sha256=%s\ngdn_attn_library_sha256=%s\nmqa_logits_library_sha256=%s\nmhc_library_sha256=%s\n' "$(sha256sum "$kernel_package/libgrouped_gemm_xe_default.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/libgdn_attn_kernels_xe_2.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/libmqa_logits_kernels_xe_2.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/libmhc_kernels_xe_2.so" | awk '{print $1}')"
   printf 'suite_sha256=%s\nteacher_sha256=%s\nteacher_text_oracle_sha256=%s\nselector_stack=exact-m%s-dflash%s-breakablegraph-w1routew2-routeinterleave-n64-routerworkspace%s-draftfp8%s\n' "$expected_suite" "$expected_teacher" "${expected_teacher_text_oracle:-embedded-in-teacher}" "$laguna_m" "$laguna_spec" "$width12_stack" "$dflash_fp8"
   printf 'metadata_selector=%s\nattention_capture_selector=%s\ninline_attention_selector=%s\n' "$metadata_selector" "$capture_attention" "$inline_attention"
   printf 'expected_num_graphs=%s\nexpected_num_eager_breaks=%s\n' "$expected_num_graphs" "$expected_num_eager_breaks"
@@ -266,7 +318,7 @@ serve_script="$graph_serve"
 setsid /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp" \
   HF_HOME="$run_dir/private-cache/hf" HF_HUB_CACHE="$run_dir/private-cache/hf/hub" TRANSFORMERS_CACHE="$run_dir/private-cache/hf/transformers" VLLM_CACHE_ROOT="$run_dir/private-cache/vllm" TORCHINDUCTOR_CACHE_DIR="$run_dir/private-cache/torchinductor" TRITON_CACHE_DIR="$run_dir/private-cache/triton" SYCL_CACHE_DIR="$run_dir/private-cache/sycl" NUMBA_CACHE_DIR="$run_dir/private-cache/numba" PYTHONPYCACHEPREFIX="$run_dir/private-cache/pycache" XDG_CACHE_HOME="$run_dir/private-cache" XDG_CONFIG_HOME="$run_dir/private-xdg/config" XDG_DATA_HOME="$run_dir/private-xdg/data" XDG_STATE_HOME="$run_dir/private-xdg/state" \
-  PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD= ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib" \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD= ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path" \
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M8_W1_N_TILE=64 VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
   "$serve_script" "$run_dir" >"$run_dir/server.log" 2>&1 &
 server_pid="$!"; printf '%s\n' "$server_pid" > "$run_dir/server.pid"

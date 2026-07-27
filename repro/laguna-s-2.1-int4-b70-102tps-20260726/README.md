@@ -1,9 +1,10 @@
 # Laguna S 2.1 on 4x B70: published 102.971 / conventional 101.942 tok/s
 
-This is the fail-closed lab reproduction for the approved Laguna S 2.1 INT4
-four-B70 result. It restores the measured source and runtime identity, runs
-one cold 13-prompt suite, and rejects token, text, cache, treatment, graph, or
-teardown drift.
+This is the fail-closed reproduction packet for the approved Laguna S 2.1
+INT4 four-B70 result. It embeds the sealed raw evidence, restores every known
+source and model revision, verifies actual native loader origins, runs one cold
+13-prompt suite, and rejects token, text, cache, treatment, graph, teardown, or
+material performance drift.
 
 ## Result and metric qualification
 
@@ -50,36 +51,38 @@ cd /home/steve/llm-optimizations
 repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-record.sh
 ```
 
-When the sealed raw run is mounted, it verifies all tracked raw hashes,
-recomputes both throughput conventions from token timestamps, and compares all
-13 token streams and output-text hashes against the compact tracked oracles.
-Without the raw mount it still validates the packet, source snapshots,
-LocalMaxxing queue, and approved receipt.
+The sealed raw benchmark, exactness report, server log, identity, service
+environment, metrics, cleanup status, and all pre/post idle snapshots are
+tracked below `evidence/record-run/`. Verification therefore fails if evidence
+is absent; it never degrades to a packet-only PASS. The command recomputes both
+throughput conventions and compares all 13 token streams and output-text
+hashes against the compact tracked oracles.
 
 ## Restore source
 
-Starting from upstream clones that contain the public bases:
+The portable restore command fetches public prerequisites, imports all three
+tracked bundles, and creates five clean worktrees covering the mixed native
+provenance:
 
 ```bash
-repo=/home/steve/llm-optimizations
-
-git -C /home/steve/src/vllm fetch \
-  "$repo/patches/laguna-s-2.1-xpu-b70/vllm-laguna-width12-dflash-fp8-102tps-record-20260726.bundle" \
-  experiment/laguna-width12-stack-clean-20260726:refs/heads/laguna-record
-git -C /home/steve/src/vllm worktree add --detach \
-  /home/steve/src/laguna-vllm-width12-stack-clean-20260726 \
-  e596ef1543466ae1a05e5bb8091f58872e2b18ba
-
-git -C /home/steve/src/vllm-xpu-kernels fetch \
-  "$repo/patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-width12-102tps-record-20260726.bundle" \
-  experiment/laguna-width12-router-clean-20260726:refs/heads/laguna-record
-git -C /home/steve/src/vllm-xpu-kernels worktree add --detach \
-  /home/steve/src/laguna-xpu-kernels-width12-router-clean-20260726 \
-  6f9dd3c3a7b1b677a992ca4f431a968408f9c816
+repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-sources.sh \
+  /mnt/fast-ai/laguna-repro-sources
 ```
 
 The source bundles and reviewable combined patches are indexed in the
-[snapshot README](../../patches/laguna-s-2.1-xpu-b70/README.md).
+[snapshot README](../../patches/laguna-s-2.1-xpu-b70/README.md). Build and
+provenance details are in [BUILD.md](BUILD.md).
+
+Restore or verify the two model payloads at their immutable Hugging Face
+revisions:
+
+```bash
+repro/laguna-s-2.1-int4-b70-102tps-20260726/restore-models.sh \
+  --download /mnt/fast-ai/llm-models/laguna-s-2.1
+```
+
+The tracked manifest contains exactly 32 release files and excludes `.cache`
+locks, metadata, and incomplete downloads.
 
 ## Runtime and model prerequisites
 
@@ -93,22 +96,27 @@ The exact lab replay expects:
 - no vLLM worker and no listener on port 18080.
 
 The launcher pins and hashes the Python/vLLM entry points, oneCCL, SYCL,
-`libtorch_xpu`, six native XPU modules, model configs, model manifests, source
-trees, historical benchmark, interval-accounting qualifier, comparator, suite,
-and both compact teacher oracles. It also checks exact package versions.
+`libtorch_xpu`, four extension modules, six transitively loaded helper DSOs,
+`xpumem_allocator`, model configs, the release payload and original manifests,
+source trees, historical benchmark, interval-accounting qualifier, comparator,
+suite, and both compact teacher oracles. It also checks exact package versions,
+four B70 PCI identities, OS/kernel identity, cluster interface, model
+contents, and actual module and `/proc/self/maps` loader origins.
 Override `REPRO_VLLM_TREE`,
-`REPRO_KERNEL_TREE`, `REPRO_VENV_ROOT`, or `REPRO_CLUSTER_IP` only when the
-same byte-identical artifacts live elsewhere.
+`REPRO_KERNEL_TREE`, `REPRO_VENV_ROOT`, `REPRO_XPUMEM_MODULE`, or
+`REPRO_CLUSTER_IP` only when the same byte-identical artifacts live elsewhere.
 
-This is an exact lab replay, not yet a clean-room build recipe: the original
-compiler/build command and a portable model-download manifest were not fully
-sealed. A fresh rebuild that does not reproduce the pinned native binary
-hashes must be labeled a new environment and revalidated; do not weaken the
-checks to make it pass.
+The original single monolithic build invocation was not sealed. The packet
+therefore distinguishes a portable sealed-evidence audit, an artifact-exact
+originating-host replay, and a source-equivalent rebuild. A fresh rebuild that
+does not reproduce the pinned native binary hashes is a new environment and
+must pass the complete gate; do not weaken or replace the sealed hashes to
+make it look artifact-exact.
 
 ## Preflight and run
 
-Preflight performs no model launch:
+Complete preflight performs no model launch. It hashes the full model payload,
+so it is intentionally slower than a shallow syntax check:
 
 ```bash
 repro/laguna-s-2.1-int4-b70-102tps-20260726/run.sh --preflight
@@ -131,9 +139,20 @@ repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-run.sh \
   /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-width12-dflash-fp8-repro-YYYYMMDDTHHMMSSZ
 ```
 
-The validator reports both rate conventions. Throughput can vary; identity,
-13/13 token-and-text equality, cache-zero state, four treatment markers, and
-the 146/145 topology may not.
+The validator reports both rate conventions. Identity, 13/13 token-and-text
+equality, cache-zero state, four treatment markers, 146/145 topology, service
+environment, and cleanup/idle evidence may not drift. To distinguish “correct
+but much slower” from reproducing the performance result, it also requires a
+conventional suite median of at least `96.844635178 tok/s` (95% of the sealed
+conventional median).
+
+The post-packaging hardening has been validated with component checks of the
+sealed evidence, runtime loader mapping, source bundles, and model manifest.
+The integrated `run.sh --preflight` and a fresh source restore were not rerun
+after packaging: the former is intentionally left for a clean committed
+checkout, and the latter encountered a pathological local partial-clone fetch
+loop. No additional score-bearing cold suite was consumed; the tracked scored
+evidence remains the sealed first-valid historical run.
 
 ## Evidence
 
@@ -141,4 +160,5 @@ the 146/145 topology may not.
 - [Structured record](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json)
 - [Original record note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md)
 - [Campaign transfer ledger](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md)
+- [Reproducibility provenance audit](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-reproducibility-provenance-audit.md)
 - [LocalMaxxing ledger](../../results/localmaxxing-submissions.md)

@@ -88,7 +88,7 @@ virtual environment first.
 The unauthenticated LAN front door is intentional for this private network. Do
 not silently add authentication or change its exposure policy.
 
-## Laguna S 2.1 Bring-Up
+## Laguna S 2.1 Qualified Closed Result
 
 ### Current State (2026-07-26)
 
@@ -106,10 +106,12 @@ The conventional interval median is `101.941721240`. Full-output after-TTFT
 median is `134.790886`, and full wall median is `52.767621 tok/s`.
 
 All required honesty gates pass: 13/13 bitwise canonical-q1 exact, all 13
-requests have `cached_tokens=0`, long-next is 2/2, rollover is 1/1, each prompt
-ran once, and there was no warmup generation or retry. All four ranks captured
-and replayed the audited 146/145 Breakable PIECEWISE topology. Pre/post idle
-intervals were each 73 seconds and teardown was clean.
+requests have `cached_tokens=0`, the full-512-output-then-next boundary is 2/2,
+rollover is 1/1, each prompt ran once, and there was no warmup generation or
+retry. The 863-token prompt is the final suite row, so this run does not claim
+a long-context-then-next test. All four ranks captured and replayed the audited
+146/145 Breakable PIECEWISE topology. Pre/post idle intervals were each 73
+seconds and teardown was clean.
 
 Record identity: vLLM
 `e596ef1543466ae1a05e5bb8091f58872e2b18ba`, XPU kernels
@@ -121,6 +123,8 @@ preparation log is absent.
 
 Packet:
 [`data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json`](data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json).
+Qualified result packet:
+[`results/laguna-s-2.1-int4-b70/README.md`](results/laguna-s-2.1-int4-b70/README.md).
 Record note:
 [`2026-07-26-width12-dflash-fp8-w8a16-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md).
 Accounting correction:

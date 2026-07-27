@@ -9,6 +9,7 @@ upstream project remotes and are not assumed to be publicly pushable.
 | --- | --- | --- | --- | --- |
 | vLLM | `1d354c694eedf241b836319dba497345a5aa1167` | `e596ef1543466ae1a05e5bb8091f58872e2b18ba` | `56bb463925cf53ba20db81c980264fd2a993d1e76f15731ac5676674fa0b9126` | `23fc7766c1985c6237fcab12dae62096f759511dbc7c5dc7f9828fe93d4c6d6d` |
 | vLLM XPU kernels | `11f42aa47ff51924b3d9527cfc2bfef5fd2d98e5` | `6f9dd3c3a7b1b677a992ca4f431a968408f9c816` | `7aeec0b55e7b40f26d993ddf6dfb978ec267da1ae1e89d9f54c6db4d80022ed3` | `0eb4337547160394ff4ebaa66782dd936fbad3fffeceb85af08832f6d99dbd69` |
+| supplemental attention-runtime XPU source | `11f42aa47ff51924b3d9527cfc2bfef5fd2d98e5` | `906190641d708b8028018c5dde653e265c835348` | `8c53de764a0c903a5e627a1c7a54a9c3bb21b500479a644b86af4c83e948149e` | `0420ac1a6db050d7a695dcfa60e8dcec2286b72b1660509862587aa537a05e0d` |
 
 The `.bundle` files preserve the original commit graph after the listed public
 prerequisite. The `.patch` files are review-friendly binary-safe combined tree
@@ -33,6 +34,24 @@ git fetch /path/to/b70-optimization-lab/patches/laguna-s-2.1-xpu-b70/vllm-xpu-ke
 git checkout 6f9dd3c3a7b1b677a992ca4f431a968408f9c816
 ```
 
+Restore the supplemental attention-runtime source:
+
+```bash
+git fetch /path/to/b70-optimization-lab/patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-attention-runtime-906190641-20260726.bundle \
+  experiment/laguna-s-2.1-fwht-20260721:refs/heads/laguna-attention-runtime
+git checkout 906190641d708b8028018c5dde653e265c835348
+```
+
+The supplemental bundle closes an important provenance gap. The measured
+`_vllm_fa2_C.abi3.so` and `libattn_kernels_xe_2.so` were built from
+`906190641`, while the final router/workspace source tree was `6f9dd3c3a`.
+The measured `_C`, `_xpu_C`, grouped-GEMM/helper DSOs byte-match the earlier
+`4772f727590c51b72add79350b913d098cf67872` build, and
+`xpumem_allocator` came from
+`18a44f440ca3ac2006d5ba19cd12ccca0a0c9982`. Both earlier commits are
+contained by the main kernel bundle. The standalone repro restores all of
+these worktrees, pins every native hash, and checks the actual loaded paths.
+
 Validation performed before promotion:
 
 - both bundles pass `git bundle verify` in repositories containing their
@@ -40,7 +59,13 @@ Validation performed before promotion:
 - both combined patches pass `git apply --check --reverse` at their exact
   record commits;
 - bundle heads equal the record commits in the table;
-- all four file SHA-256 values were recomputed from the tracked snapshots.
+- all six file SHA-256 values were recomputed from the tracked snapshots.
+- the supplemental bundle and patch pass the same bundle-head, prerequisite,
+  hash, and reverse-apply checks.
 
-The result packet is
-[`../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json`](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json).
+Result and reproduction entry points:
+
+- [qualified result packet](../../results/laguna-s-2.1-int4-b70/README.md);
+- [structured record](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json);
+- [standalone repro](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md);
+- [metric correction](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md).

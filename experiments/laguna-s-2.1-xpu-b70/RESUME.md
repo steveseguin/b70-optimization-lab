@@ -72,6 +72,8 @@ Promoted records:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md`;
 - standalone reproduction:
   `repro/laguna-s-2.1-int4-b70-102tps-20260726/`;
+- reproducibility provenance audit:
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-reproducibility-provenance-audit.md`;
 - submission queue:
   `data/localmaxxing-laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.queue.json`;
 - submission response:
@@ -103,7 +105,8 @@ confuse the record's FP8 DFlash projection weights with its BF16 KV cache.
 - first valid score is the reported score;
 - 13/13 token IDs and text bitwise exact vs the canonical q1 teacher;
 - `cached_tokens=0` on all 13 requests;
-- long-then-next 2/2 and rollover 1/1 exact;
+- full-512-output-then-next 2/2 and rollover 1/1 exact; the 863-token prompt
+  is the final row, so no long-context-then-next claim is made;
 - target capture and replay witnessed on all four ranks;
 - 146/145 topology exact on every rank;
 - 73-second prestart and poststop idle intervals;

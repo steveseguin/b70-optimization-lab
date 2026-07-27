@@ -184,6 +184,20 @@ one request. Moving it outside the scored window was correctly rejected.
 Maintain separate first-request latency, steady decode, and suite-median
 metrics rather than hiding initialization.
 
+### Verify what the dynamic loader actually mapped
+
+The first promoted repro hashed the attention helper beside
+`_vllm_fa2_C.abi3.so`, but the extension's absolute RUNPATH selected an
+external build-tree copy. It was byte-identical at audit time, so the result
+does not change, but the original preflight could not prove that. `_xpu_C`
+also loaded four helper DSOs that were not pinned, while editable metadata
+supplied `xpumem_allocator` from another source tree.
+
+For every native runtime, record direct modules, `DT_NEEDED`, RUNPATH/RPATH,
+the complete loader search path, and actual `/proc/self/maps` origins. Pin
+transitive hashes and make external origin drift fatal. See the
+[provenance audit](2026-07-26-reproducibility-provenance-audit.md).
+
 ## Reusable experiment protocol
 
 For the next model:
@@ -208,6 +222,8 @@ For the next model:
 11. Inspect raw files and per-rank logs before believing a summary.
 12. Submit only after independent identity, correctness, cache-zero, metric,
     teardown, and API-response checks.
+13. Verify actual loaded native objects and every transitive helper; a sibling
+    file with the right hash is not proof that the loader used it.
 
 The cross-model form of these rules is indexed in
 [the research workflow playbook](../../../docs/research-workflow-playbook.md#cross-model-patterns-worth-reusing).
@@ -218,6 +234,7 @@ The cross-model form of these rules is indexed in
 - [record note](2026-07-26-width12-dflash-fp8-w8a16-record.md)
 - [KV-cache decision](2026-07-26-kv-cache-precision-decision.md)
 - [source snapshot index](../../../patches/laguna-s-2.1-xpu-b70/README.md)
+- [reproducibility provenance audit](2026-07-26-reproducibility-provenance-audit.md)
 - [structured record packet](../../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json)
 - sealed run:
   `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-width12-dflash-fp8-e596ef154-20260726T214259Z`

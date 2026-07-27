@@ -8,11 +8,19 @@ readonly leg="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_mwide
 readonly oracle="$script_dir/teacher-token-oracle-v1.json"
 readonly text_oracle="$script_dir/teacher-text-sha256-v1.json"
 readonly verifier="$script_dir/verify-record.sh"
+readonly runtime_verifier="$script_dir/verify-runtime.py"
+readonly runtime_lock="$script_dir/manifests/runtime-lock.json"
+readonly model_manifest="$script_dir/manifests/model-release-files.sha256"
+readonly model_restore="$script_dir/restore-models.sh"
+readonly source_restore="$script_dir/restore-sources.sh"
 
 readonly vllm_tree="${REPRO_VLLM_TREE:-/home/steve/src/laguna-vllm-width12-stack-clean-20260726}"
 readonly kernel_tree="${REPRO_KERNEL_TREE:-/home/steve/src/laguna-xpu-kernels-width12-router-clean-20260726}"
 readonly venv_root="${REPRO_VENV_ROOT:-/home/steve/.venvs/deepseek-v4-xpu}"
+readonly xpumem_module="${REPRO_XPUMEM_MODULE:-/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so}"
 readonly cluster_ip="${REPRO_CLUSTER_IP:-10.0.0.65}"
+readonly kernel_package="$kernel_tree/vllm_xpu_kernels"
+readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib"
 readonly run_root=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs
 readonly stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 readonly run_dir="${RUN_DIR:-$run_root/laguna-width12-dflash-fp8-repro-$stamp}"
@@ -46,8 +54,8 @@ check_tree() {
 }
 
 preflight() {
-  local main_dirty manifest_a manifest_b device fstype
-  for command in git jq sha256sum findmnt cmp ip ss pgrep curl; do
+  local main_dirty manifest_a manifest_b device fstype iface gpu_id bdf discovery
+  for command in git jq sha256sum findmnt cmp ip ss pgrep curl lspci xpu-smi; do
     command -v "$command" >/dev/null || die "missing command: $command"
   done
 
@@ -73,7 +81,17 @@ preflight() {
     5618cfbe8d3206ee19fb6446ed5b4372b773491b25ca41676b3f602bd28cf745
   check_hash "$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh" \
     99ea295ad3432c5b66aab91a4319f1d6bec827883548be7d10d5d1f77bf01e55
-  check_hash "$leg" c12a3c04cee81feee12fb477ecea8a3249c110eda6b978d7ef54bb13f0f20ca1
+  check_hash "$leg" 4986f9ab23005e29bb2371025b16c3668094a22b56c02ab99deb3db02ccf4b22
+  check_hash "$runtime_verifier" \
+    e43f3c9f46e299eeaa8d7bbc828fadeec2ae60f69f39529f7130f154d158f20d
+  check_hash "$runtime_lock" \
+    8c861e5c9d44232346770e2822aa795179f8f90c2678d2ebbb42a690ef4f4a97
+  check_hash "$model_manifest" \
+    c19edb79458a24ceb4bb26c991302de71ef29be40e70124e90bf6c13538c692e
+  check_hash "$model_restore" \
+    a4e3edd738130feb00b7bc5f6daff2afb69f2b9962cdbeacb337b094ce919bb8
+  check_hash "$source_restore" \
+    a5fa8b82c4b23483f0c6ea35dd0b71ea9d1be274d82ffd4dd60911f840e40944
 
   check_hash "$kernel_tree/vllm_xpu_kernels/_C.abi3.so" \
     126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
@@ -87,6 +105,16 @@ preflight() {
     3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4
   check_hash "$kernel_tree/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
     ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca
+  check_hash "$kernel_tree/vllm_xpu_kernels/libgrouped_gemm_xe_default.so" \
+    982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c
+  check_hash "$kernel_tree/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so" \
+    cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb
+  check_hash "$kernel_tree/vllm_xpu_kernels/libmqa_logits_kernels_xe_2.so" \
+    58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb
+  check_hash "$kernel_tree/vllm_xpu_kernels/libmhc_kernels_xe_2.so" \
+    f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f
+  check_hash "$xpumem_module" \
+    8981f5e312cfab901a5bfa8e40a5a1f194e65db3a207784bfa602e5901e5a1a8
 
   check_hash "$venv_root/bin/python" \
     202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8
@@ -98,6 +126,8 @@ preflight() {
     0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f
   check_hash "$venv_root/lib/python3.12/site-packages/torch/lib/libtorch_xpu.so" \
     63b7a56723482bc35d31842f442f6e903ef0b7fbd741c1a4ae309123bbc90572
+  check_hash /usr/bin/xpu-smi \
+    2b5b128edf28b38da8637413fe8bfe3a4a40e8113210ba9ddaed945bd56d826e
 
   "$venv_root/bin/python" - <<'PY'
 from importlib.metadata import version
@@ -126,6 +156,7 @@ PY
   check_hash "$manifest_b" 45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
   cmp -- "$manifest_a" "$manifest_b" >/dev/null \
     || die "source and NVMe model manifests differ"
+  "$model_restore" --verify /mnt/fast-ai/llm-models/laguna-s-2.1 >/dev/null
 
   read -r device fstype < <(
     findmnt --noheadings --output SOURCE,FSTYPE \
@@ -134,8 +165,57 @@ PY
   [[ "$device" == /dev/nvme0n1p2 && "$fstype" == ext4 ]] \
     || die "model root is on $device ($fstype), expected /dev/nvme0n1p2 (ext4)"
 
+  grep -Fx 'PRETTY_NAME="Ubuntu 24.04.4 LTS"' /etc/os-release >/dev/null \
+    || die "OS identity differs from Ubuntu 24.04.4 LTS"
+  [[ "$(uname -r)" == 7.0.0-28-generic ]] \
+    || die "kernel identity differs from 7.0.0-28-generic"
+  [[ -x /opt/intel/oneapi/compiler/2025.3/bin/icpx ]] \
+    || die "oneAPI 2025.3 compiler is absent"
+  /opt/intel/oneapi/compiler/2025.3/bin/icpx --version \
+    | grep -F '2025.3.3 (2025.3.3.20260319)' >/dev/null \
+    || die "oneAPI compiler version differs from 2025.3.3"
+
+  iface="$(ip -o -4 addr show | awk -v ip="$cluster_ip" '$4 ~ "^"ip"/" {print $2; exit}')"
+  [[ -n "$iface" && "$(cat "/sys/class/net/$iface/operstate")" == up ]] \
+    || die "no up interface carries cluster IP $cluster_ip"
+  ! ss -H -ltn 'sport = :18080' | grep -q . \
+    || die "port 18080 already has a listener"
+  ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 \
+    || die "existing vLLM workers block reproduction"
+
+  gpu_id=0
+  for bdf in 0000:23:00.0 0000:27:00.0 0000:43:00.0 0000:47:00.0; do
+    lspci -Dn -s "$bdf" | grep -F '8086:e223' >/dev/null \
+      || die "expected B70 8086:e223 is absent at $bdf"
+    discovery="$(xpu-smi discovery -d "$gpu_id" -j)"
+    jq -e --arg bdf "$bdf" '
+      .device_name == "Intel(R) Arc(TM) Pro B70 Graphics"
+      and .pci_vendor_id == "0x8086"
+      and .pci_device_id == "0xe223"
+      and .pci_bdf_address == $bdf
+    ' <<<"$discovery" >/dev/null \
+      || die "xpu-smi device $gpu_id does not match expected B70 at $bdf"
+    gpu_id=$((gpu_id + 1))
+  done
+
+  /usr/bin/env -i \
+    PATH="$venv_root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONNOUSERSITE=1 \
+    PYTHONSAFEPATH=1 \
+    PYTHONPATH="$vllm_tree:$kernel_tree" \
+    LD_LIBRARY_PATH="$native_library_path" \
+    "$venv_root/bin/python" "$runtime_verifier" \
+    --lock "$runtime_lock" \
+    --vllm-tree "$vllm_tree" \
+    --kernel-tree "$kernel_tree" \
+    --venv-root "$venv_root" \
+    --xpumem-module "$xpumem_module" >/dev/null
+
   "$verifier" >/dev/null
-  printf 'preflight=PASS\n'
+  printf 'complete_preflight=PASS\n'
   printf 'vllm_commit=%s\n' "$expected_vllm"
   printf 'kernel_commit=%s\n' "$expected_kernels"
   printf 'token_oracle_sha256=%s\n' "$expected_oracle"
@@ -180,6 +260,10 @@ exec /usr/bin/env -i \
   REPRO_KERNEL_TREE="$kernel_tree" \
   REPRO_VENV_ROOT="$venv_root" \
   REPRO_CLUSTER_IP="$cluster_ip" \
+  REPRO_RUNTIME_LOCK="$runtime_lock" \
+  REPRO_RUNTIME_VERIFIER="$runtime_verifier" \
+  REPRO_MODEL_MANIFEST="$model_manifest" \
+  REPRO_XPUMEM_MODULE="$xpumem_module" \
   REPRO_TEACHER="$oracle" \
   REPRO_TEACHER_SHA256="$expected_oracle" \
   REPRO_TEACHER_TEXT_ORACLE="$text_oracle" \
