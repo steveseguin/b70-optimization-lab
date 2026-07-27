@@ -64,6 +64,7 @@ readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
 readonly parity_only="${LAGUNA_FP8_PARITY_ONLY:-0}"
 readonly parity_prompt_id="${LAGUNA_FP8_PARITY_PROMPT_ID:-python-lru-cache}"
 readonly parity_row="${LAGUNA_FP8_PARITY_ROW:--1}"
+readonly parity_capture_call="${LAGUNA_FP8_PARITY_CAPTURE_CALL:-2}"
 readonly parity_trigger="$LAGUNA_NVME_ARTIFACT_ROOT/parity-trigger.json"
 [[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
   || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
@@ -72,6 +73,8 @@ readonly parity_trigger="$LAGUNA_NVME_ARTIFACT_ROOT/parity-trigger.json"
 [[ "$parity_row" =~ ^-?[0-9]+$ ]] \
   && (( parity_row >= -1 && parity_row < 12 )) \
   || die "LAGUNA_FP8_PARITY_ROW must be an integer from -1 through 11"
+[[ "$parity_capture_call" =~ ^[0-9]+$ ]] && (( parity_capture_call >= 1 )) \
+  || die "LAGUNA_FP8_PARITY_CAPTURE_CALL must be a positive integer"
 if [[ "$mode" == candidate ]]; then
   readonly graph_stack="${LAGUNA_FP8_GRAPH_STACK:-full}"
   case "$graph_stack" in
@@ -182,8 +185,8 @@ jq -e --arg digest "$expected_scale_digest" \
     "$graph_stack" "$prebuilt_metadata" "$expected_graph_topology"
   printf 'mwide_bf16_router=%s\ndflash_context_kv_workspace=%s\ndflash_w8a16=%s\n' \
     "$mwide_router" "$dflash_context_workspace" "$dflash_w8a16"
-  printf 'parity_only=%s\nparity_prompt_id=%s\nparity_row=%s\n' \
-    "$parity_only" "$parity_prompt_id" "$parity_row"
+  printf 'parity_only=%s\nparity_prompt_id=%s\nparity_row=%s\nparity_capture_call=%s\n' \
+    "$parity_only" "$parity_prompt_id" "$parity_row" "$parity_capture_call"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
@@ -316,7 +319,12 @@ curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before-suite.prom"
 if [[ "$parity_only" == 1 ]]; then
   mkdir -- "$run_dir/parity"
   jq -n --arg run_label "$label" --arg output_dir "$run_dir/parity" \
-    '{run_label: $run_label, output_dir: $output_dir, capture_call: 1}' \
+    --argjson capture_call "$parity_capture_call" \
+    '{
+      run_label: $run_label,
+      output_dir: $output_dir,
+      capture_call: $capture_call
+    }' \
     > "$parity_trigger"
   jq -n \
     --arg model laguna-s-2.1-int4-fp8-kv \
