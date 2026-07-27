@@ -169,10 +169,11 @@ exactness oracle.
 
 The clean vLLM worktree is
 `/home/steve/src/laguna-vllm-fp8-kv-20260727` at
-`c2dd002ff11a156392b8ba429ffd7259deae810c`. It is based on the sealed
+`a4f29b8719561627edcd9d0c018772162209c533`. It is based on the sealed
 `e596ef154` source and adds only explicit XPU FlashAttention FP8 eligibility
-plus a fail-closed post-load KV-scale audit. The XPU kernel tree remains
-unchanged at `6f9dd3c3a7b1b677a992ca4f431a968408f9c816`.
+plus a fail-closed post-load KV-scale audit and a default-off configurable
+parity artifact root. The XPU kernel tree remains unchanged at
+`6f9dd3c3a7b1b677a992ca4f431a968408f9c816`.
 
 The eager width-12/depth-11 FP8 verifier passes 13/13 within-FP8 exactness.
 Graph candidates remain unqualified: the first no-prebuilt-metadata 128-token

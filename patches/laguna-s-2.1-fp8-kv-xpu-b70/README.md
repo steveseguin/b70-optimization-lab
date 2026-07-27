@@ -4,7 +4,7 @@ These patches apply on top of the sealed Laguna BF16 record vLLM source:
 
 ```text
 base: e596ef1543466ae1a05e5bb8091f58872e2b18ba
-head: c2dd002ff11a156392b8ba429ffd7259deae810c
+head: a4f29b8719561627edcd9d0c018772162209c533
 ```
 
 Apply in order:
@@ -24,6 +24,11 @@ Patch 2 adds a default-off, fail-closed post-load audit. When
 48-layer checkpoint scale digest. Every DFlash rank must separately report its
 six FP8 cache layers as unit-scale and uncalibrated. This prevents a successful
 FP8 allocation from being mistaken for proof that calibrated scales loaded.
+
+Patch 3 is diagnostic-only. It makes the existing default-off Laguna parity
+probe artifact root configurable with `VLLM_XPU_LAGUNA_ARTIFACT_ROOT`, allowing
+the FP8 graph/eager comparison to write to internal NVMe instead of the retired
+external-drive path. It does not enable the probe or change model arithmetic.
 
 The active clean worktree is
 `/home/steve/src/laguna-vllm-fp8-kv-20260727`. The XPU kernel tree remains the
