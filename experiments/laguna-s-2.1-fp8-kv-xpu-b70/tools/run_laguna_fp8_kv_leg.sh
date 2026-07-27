@@ -52,6 +52,9 @@ readonly expected_target_config=9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cc
 readonly expected_draft_config=6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14725ea5e86f20926
 readonly expected_scale_digest=3e6df440976ab2ed5229e1a39179cbc99d573c615386f223eeabc9de5ea9ddc0
 readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/fp8kv-${label,,}"
+readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
+[[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
+  || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
 
 laguna_nvme_prepare_paths
 mkdir -p -- "$fp8_run_root"
@@ -116,6 +119,7 @@ jq -e --arg digest "$expected_scale_digest" \
     4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb \
     5e07c246915c86dc6920fead03d019989224f2ba
   printf 'tp=4\nep=4\nmax_model_len=8192\nblock_size=64\nmax_num_seqs=1\n'
+  printf 'benchmark_max_tokens=%s\n' "$max_tokens"
   printf 'width=12\nspeculative_depth=11\nprebuilt_exact_metadata=1\ngraph_topology=146/145\n'
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
@@ -252,7 +256,7 @@ cd "$repo_root"
   --base-url http://127.0.0.1:18080 \
   --model laguna-s-2.1-int4-fp8-kv \
   --suite experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json \
-  --max-tokens 512 --metric-tokens 100 --seed 1 --timeout 1800 \
+  --max-tokens "$max_tokens" --metric-tokens 100 --seed 1 --timeout 1800 \
   --return-token-ids \
   --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false}}' \
   --out "$run_dir/bench.json" > "$run_dir/bench.stdout"
@@ -260,12 +264,12 @@ cd "$repo_root"
   > "$run_dir/metric-accounting.stdout"
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after-suite.prom"
 
-jq -e '
+jq -e --argjson max_tokens "$max_tokens" '
   .fresh_response_validity.valid == true
   and .fresh_response_validity.cached_tokens_all_zero == true
   and .realistic_final_gate.passed == true
   and .run_identity.prompt_count == 13
-  and .run_identity.max_tokens == 512
+  and .run_identity.max_tokens == $max_tokens
   and .run_identity.seed == 1
 ' "$run_dir/bench.json" >/dev/null
 
