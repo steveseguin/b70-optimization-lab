@@ -55,6 +55,13 @@ readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/fp8kv-${label,,}"
 readonly max_tokens="${LAGUNA_FP8_MAX_TOKENS:-512}"
 [[ "$max_tokens" =~ ^[0-9]+$ ]] && (( max_tokens >= 100 && max_tokens <= 512 )) \
   || die "LAGUNA_FP8_MAX_TOKENS must be an integer from 100 through 512"
+if [[ "$mode" == candidate ]]; then
+  readonly graph=1 width12=1 execution_width=12 speculative_depth=11
+  readonly expected_graph_topology=146/145
+else
+  readonly graph=0 width12=0 execution_width=1 speculative_depth=0
+  readonly expected_graph_topology=none
+fi
 
 laguna_nvme_prepare_paths
 mkdir -p -- "$fp8_run_root"
@@ -120,7 +127,10 @@ jq -e --arg digest "$expected_scale_digest" \
     5e07c246915c86dc6920fead03d019989224f2ba
   printf 'tp=4\nep=4\nmax_model_len=8192\nblock_size=64\nmax_num_seqs=1\n'
   printf 'benchmark_max_tokens=%s\n' "$max_tokens"
-  printf 'width=12\nspeculative_depth=11\nprebuilt_exact_metadata=1\ngraph_topology=146/145\n'
+  printf 'execution_width=%s\nspeculative_depth=%s\nexact_target_path=true\n' \
+    "$execution_width" "$speculative_depth"
+  printf 'prebuilt_exact_metadata=%s\ngraph_topology=%s\n' \
+    "$width12" "$expected_graph_topology"
   printf 'prefix_caching=false\nasync_scheduling=false\none_active_generation=true\n'
   printf 'suite_sha256=%s\nteacher_sha256=%s\n' "$expected_suite" \
     "$([[ -n "$teacher" ]] && sha256sum "$teacher" | awk '{print $1}' || echo none)"
@@ -166,14 +176,6 @@ trap finalize EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-if [[ "$mode" == candidate ]]; then
-  graph=1
-  width12=1
-else
-  graph=0
-  width12=0
-fi
-
 setsid /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 \
   HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp" \
@@ -199,10 +201,10 @@ setsid /usr/bin/env -i \
   TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path" \
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_LAGUNA_FP8_KV_SCALE_AUDIT=1 \
   VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS=0 \
-  VLLM_XPU_EXACT_SPEC_ATTN="$width12" \
-  VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE="$width12" \
-  VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2="$width12" \
-  VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE="$width12" \
+  VLLM_XPU_EXACT_SPEC_ATTN=1 \
+  VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 \
+  VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 \
+  VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 \
   VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0 \
   VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=0 \
   VLLM_XPU_LAGUNA_M8_W1_N_TILE=64 \
