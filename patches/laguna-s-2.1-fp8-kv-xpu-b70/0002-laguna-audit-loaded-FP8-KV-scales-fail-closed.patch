@@ -1,0 +1,217 @@
+From c2dd002ff11a156392b8ba429ffd7259deae810c Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 09:48:05 -0400
+Subject: [PATCH 2/2] laguna: audit loaded FP8 KV scales fail closed
+
+---
+ vllm/envs.py                                  |  4 +
+ .../model_loader/base_loader.py               |  8 ++
+ vllm/model_executor/models/laguna.py          | 84 +++++++++++++++++++
+ vllm/model_executor/models/laguna_dflash.py   | 32 ++++++-
+ 4 files changed, 127 insertions(+), 1 deletion(-)
+
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 5d5b3ccc3..59c103e15 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -169,6 +169,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS: bool = False
+     VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA: bool = False
+     VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS: bool = False
++    VLLM_XPU_LAGUNA_FP8_KV_SCALE_AUDIT: bool = False
+     VLLM_DP_MASTER_IP: str = ""
+     VLLM_DP_MASTER_PORT: int = 0
+     VLLM_RANDOMIZE_DP_DUMMY_INPUTS: bool = False
+@@ -768,6 +769,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS": lambda: bool(
+         strict_bool_env("VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS")
+     ),
++    "VLLM_XPU_LAGUNA_FP8_KV_SCALE_AUDIT": lambda: bool(
++        strict_bool_env("VLLM_XPU_LAGUNA_FP8_KV_SCALE_AUDIT")
++    ),
+     # Debug pattern matching inside custom passes.
+     # Should be set to the fx.Node name (e.g. 'getitem_34' or 'scaled_mm_3').
+     "VLLM_PATTERN_MATCH_DEBUG": lambda: os.environ.get(
+diff --git a/vllm/model_executor/model_loader/base_loader.py b/vllm/model_executor/model_loader/base_loader.py
+index d1f44666c..2f343cf29 100644
+--- a/vllm/model_executor/model_loader/base_loader.py
++++ b/vllm/model_executor/model_loader/base_loader.py
+@@ -78,6 +78,14 @@ class BaseModelLoader(ABC):
+                 finalize_layerwise_processing(model, model_config)
+ 
+             process_weights_after_loading(model, model_config, target_device)
++            if envs.VLLM_XPU_LAGUNA_FP8_KV_SCALE_AUDIT:
++                audit = getattr(model, "audit_loaded_fp8_kv_scales", None)
++                if audit is None:
++                    raise RuntimeError(
++                        "VLLM_XPU_LAGUNA_FP8_KV_SCALE_AUDIT=1 requires the "
++                        f"loaded model to implement the audit callback: {type(model)}"
++                    )
++                audit()
+ 
+         return model.eval()
+ 
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index db688138c..1dea562dd 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -2,8 +2,10 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Inference-only Laguna model compatible with HuggingFace weights."""
+ 
++import hashlib
+ import json
+ import os
++import struct
+ import typing
+ from collections.abc import Callable, Iterable
+ from itertools import islice
+@@ -80,6 +82,54 @@ _LAGUNA_ARTIFACT_ROOT = Path(
+     "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1"
+ )
+ _LAGUNA_PARITY_TRIGGER = _LAGUNA_ARTIFACT_ROOT / "parity-trigger.json"
++_LAGUNA_FP8_KV_SCALE_DIGEST = (
++    "3e6df440976ab2ed5229e1a39179cbc99d573c615386f223eeabc9de5ea9ddc0"
++)
++
++
++def _loaded_laguna_kv_scale_rows(
++    model: nn.Module,
++) -> list[tuple[int, str, float, float]]:
++    """Return loaded per-layer K/V scales after quantization postprocessing."""
++    rows: list[tuple[int, str, float, float]] = []
++    for name, module in model.named_modules():
++        if not isinstance(module, Attention) or not name.endswith(".self_attn.attn"):
++            continue
++        layer = extract_layer_index(name)
++        if layer is None:
++            raise RuntimeError(f"cannot identify Laguna attention layer: {name}")
++        k_scale = getattr(module, "_k_scale", None)
++        v_scale = getattr(module, "_v_scale", None)
++        if not isinstance(k_scale, torch.Tensor) or k_scale.numel() != 1:
++            raise RuntimeError(f"invalid loaded K scale for {name}")
++        if not isinstance(v_scale, torch.Tensor) or v_scale.numel() != 1:
++            raise RuntimeError(f"invalid loaded V scale for {name}")
++        rows.append(
++            (
++                layer,
++                str(module.kv_cache_dtype),
++                float(k_scale.detach().float().cpu().item()),
++                float(v_scale.detach().float().cpu().item()),
++            )
++        )
++    rows.sort(key=lambda row: row[0])
++    return rows
++
++
++def _digest_laguna_target_kv_scales(
++    rows: list[tuple[int, str, float, float]],
++) -> str:
++    """Match the pinned checkpoint's length-prefixed FP32 scale manifest."""
++    digest = hashlib.sha256()
++    for layer, _, k_scale, v_scale in rows:
++        for kind, value in (("k", k_scale), ("v", v_scale)):
++            key = f"model.layers.{layer}.self_attn.{kind}_scale".encode()
++            raw = struct.pack("<f", value)
++            digest.update(len(key).to_bytes(4, "little"))
++            digest.update(key)
++            digest.update(len(raw).to_bytes(4, "little"))
++            digest.update(raw)
++    return digest.hexdigest()
+ 
+ 
+ def _laguna_m8_shared_elementwise_graph_contract(
+@@ -1770,6 +1820,40 @@ class LagunaForCausalLM(nn.Module, SupportsPP, SupportsLoRA, SupportsEagle3):
+     def embed_input_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+         return self.model.embed_input_ids(input_ids)
+ 
++    def audit_loaded_fp8_kv_scales(self) -> None:
++        rows = _loaded_laguna_kv_scale_rows(self)
++        expected_layers = list(range(48))
++        if [row[0] for row in rows] != expected_layers:
++            raise RuntimeError(
++                "Laguna FP8 KV scale audit expected target layers 0..47, "
++                f"got {[row[0] for row in rows]}"
++            )
++        bad_dtype = [
++            (layer, dtype)
++            for layer, dtype, _, _ in rows
++            if dtype not in {"fp8", "fp8_e4m3"}
++        ]
++        if bad_dtype:
++            raise RuntimeError(f"Laguna target KV cache is not FP8: {bad_dtype}")
++        values = [value for _, _, k, v in rows for value in (k, v)]
++        if not all(
++            torch.isfinite(torch.tensor(value)) and value > 0 for value in values
++        ):
++            raise RuntimeError("Laguna target has non-finite or non-positive KV scales")
++        digest = _digest_laguna_target_kv_scales(rows)
++        if digest != _LAGUNA_FP8_KV_SCALE_DIGEST:
++            raise RuntimeError(
++                "Laguna target FP8 KV scale digest mismatch: "
++                f"{digest} != {_LAGUNA_FP8_KV_SCALE_DIGEST}"
++            )
++        logger.info(
++            "LAGUNA_FP8_KV_SCALE_AUDIT=PASS model=target layers=48 "
++            "scale_mode=calibrated digest=%s min=%.10g max=%.10g",
++            digest,
++            min(values),
++            max(values),
++        )
++
+     def forward(
+         self,
+         input_ids: torch.Tensor,
+diff --git a/vllm/model_executor/models/laguna_dflash.py b/vllm/model_executor/models/laguna_dflash.py
+index dc35ac530..4545b78f9 100644
+--- a/vllm/model_executor/models/laguna_dflash.py
++++ b/vllm/model_executor/models/laguna_dflash.py
+@@ -38,7 +38,7 @@ from vllm.model_executor.utils import replace_parameter
+ from vllm.multimodal.inputs import NestedTensors
+ from vllm.platforms import current_platform
+ 
+-from .laguna import LagunaDecoderLayer
++from .laguna import LagunaDecoderLayer, _loaded_laguna_kv_scale_rows
+ from .qwen3_dflash import DFlashQwen3Model
+ from .utils import (
+     AutoWeightsLoader,
+@@ -1061,6 +1061,36 @@ class DFlashLagunaForCausalLM(nn.Module, SupportsEagle3):
+     ) -> torch.Tensor:
+         return self.model.embed_input_ids(input_ids)
+ 
++    def audit_loaded_fp8_kv_scales(self) -> None:
++        rows = _loaded_laguna_kv_scale_rows(self)
++        expected_layers = list(range(6))
++        if [row[0] for row in rows] != expected_layers:
++            raise RuntimeError(
++                "Laguna DFlash FP8 KV scale audit expected draft layers 0..5, "
++                f"got {[row[0] for row in rows]}"
++            )
++        bad_dtype = [
++            (layer, dtype)
++            for layer, dtype, _, _ in rows
++            if dtype not in {"fp8", "fp8_e4m3"}
++        ]
++        if bad_dtype:
++            raise RuntimeError(f"Laguna draft KV cache is not FP8: {bad_dtype}")
++        bad_scale = [
++            (layer, k_scale, v_scale)
++            for layer, _, k_scale, v_scale in rows
++            if k_scale != 1.0 or v_scale != 1.0
++        ]
++        if bad_scale:
++            raise RuntimeError(
++                "Laguna DFlash checkpoint has unexpected non-unit KV scales: "
++                f"{bad_scale}"
++            )
++        logger.info(
++            "LAGUNA_FP8_KV_SCALE_AUDIT=PASS model=draft layers=6 "
++            "scale_mode=unit_uncalibrated"
++        )
++
+     def forward(
+         self,
+         input_ids: torch.Tensor,
+-- 
+2.43.0
+

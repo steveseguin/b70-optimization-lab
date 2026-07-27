@@ -1,0 +1,30 @@
+From f060e3f8a8af6819b21c4c37b7ed970a947cd8d1 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 09:42:52 -0400
+Subject: [PATCH 1/2] xpu: restore explicit FP8 KV FlashAttention selection
+
+---
+ vllm/v1/attention/backends/flash_attn.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/vllm/v1/attention/backends/flash_attn.py b/vllm/v1/attention/backends/flash_attn.py
+index 826918a8e..3a5916ff2 100755
+--- a/vllm/v1/attention/backends/flash_attn.py
++++ b/vllm/v1/attention/backends/flash_attn.py
+@@ -122,6 +122,13 @@ class FlashAttentionBackend(AttentionBackend):
+         "auto",
+         "float16",
+         "bfloat16",
++        # XPU FlashAttention forwards calibrated K/V descales and keeps Q in
++        # the model dtype (vLLM #37731).  The backend file was later recreated
++        # without carrying these advertised cache dtypes forward, causing an
++        # explicit, fail-closed FP8 launch to fall back during selection even
++        # though the implementation and Xe2 kernels support the path.
++        "fp8",
++        "fp8_e4m3",
+     ]
+ 
+     @staticmethod
+-- 
+2.43.0
+

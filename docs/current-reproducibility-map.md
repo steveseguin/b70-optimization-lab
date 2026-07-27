@@ -167,8 +167,10 @@ Use:
 
 The record uses BF16 KV to preserve its BF16 canonical-teacher contract.
 Poolside's quantized checkpoint officially specifies calibrated FP8 KV, which
-remains a separately labeled long-context/capacity service candidate rather
-than a silent record-lane substitution.
+is now an active, separately labeled experiment under
+[`experiments/laguna-s-2.1-fp8-kv-xpu-b70/`](../experiments/laguna-s-2.1-fp8-kv-xpu-b70/).
+It has its own source patches, checkpoint/runtime scale audit, FP8 q1 teacher,
+and promotion gates; it is not a silent record-lane substitution.
 
 The repro tracks the sealed raw benchmark, log, environment, cleanup, and idle
 evidence; portable release-only model hashes; the complete observed runtime;

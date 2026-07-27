@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-26**
+Last reviewed: **2026-07-27**
 
 ## Authority And Update Rule
 
@@ -158,6 +158,28 @@ generation, cache-zero policy, fixed suite/metric, 146/145 topology gate,
 source/binary identity, and clean pre/post idle checks. Inspect actual files
 and per-rank logs before accepting harness summaries, and never escalate
 hardware recovery from a probe that did not prove it executed.
+
+### Active calibrated-FP8-KV lane (2026-07-27)
+
+The BF16 result above is sealed. New Laguna work is isolated under
+[`experiments/laguna-s-2.1-fp8-kv-xpu-b70/`](experiments/laguna-s-2.1-fp8-kv-xpu-b70/)
+and uses the checkpoint-native calibrated E4M3 FP8 KV format. This is a new
+quality and performance lane; it must never use the BF16 q1 hashes as an
+exactness oracle.
+
+The clean vLLM worktree is
+`/home/steve/src/laguna-vllm-fp8-kv-20260727` at
+`c2dd002ff11a156392b8ba429ffd7259deae810c`. It is based on the sealed
+`e596ef154` source and adds only explicit XPU FlashAttention FP8 eligibility
+plus a fail-closed post-load KV-scale audit. The XPU kernel tree remains
+unchanged at `6f9dd3c3a7b1b677a992ca4f431a968408f9c816`.
+
+Bring-up is not yet a throughput result. The immediate order is: generate a
+fresh target-only FP8 teacher; qualify width-12/depth-11 FP8 against it; repeat
+from a second cold start; then profile FP8 cache update and paged attention.
+The target must match the 48-layer calibrated scale digest on all ranks. The
+six DFlash cache layers must be labeled separately as unit-scale and
+uncalibrated.
 
 ### Historical Bring-Up Detail
 
