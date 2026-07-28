@@ -97,3 +97,46 @@ touched exactness.
 A reminder for anyone reading a single leg: run-to-run spread on this host was
 **1.63%** across three identical-config legs, so nothing under about 1.5% is
 detectable without repeats.
+
+## The generic N-tile knob, swept and closed
+
+At twelve rows the decode falls through every Laguna specialisation into the
+generic grouped GEMM: `fused_moe_interface.py` gates the Laguna family on
+`1 <= num_rows <= 8`, and in the generic path `A_avg_M = 120 routes / 64
+experts = 1`, which collapses the policy ladder so eight- and twelve-row
+decodes select the identical `w4a16_policy_m_8` tile of `8x64x32`. The M
+dimension is therefore 12-25% occupied at decode.
+
+`VLLM_XPU_MXFP4_SMALL_M_N` is the only tile knob that reaches that path -- it
+selects the INT4 policy despite the MXFP4 name -- and it had never been swept.
+Both alternatives are exact and both are slower:
+
+| N tile | legacy tok/s | conventional | exact |
+| ---: | ---: | ---: | ---: |
+| 128 | 99.723654 | 98.726418 | 13/13 |
+| 32 | 99.928858 | 98.929570 | 13/13 |
+| 64 (default) | 101.085084 (median of 3) | 100.074233 | 13/13 |
+
+Both landed below all three control legs. The margin is inside this host's
+1.63% spread, so the correct reading is that neither beat the default rather
+than that either is meaningfully worse. **The default 8x64x32 is the best of
+the three available tiles and this knob is closed.**
+
+## What the source says is left
+
+Structural, all requiring a kernel rebuild and re-proof of bitwise exactness:
+
+1. The mainloop applies the per-(N, K-group) scale to every B element: about 32
+   `apply_scale` instructions per work-item per k-tile feeding 2 DPAS issues, a
+   ratio fixed by `SG_N x SG_K` and independent of the M tile. Folding the
+   scale into the FP32 accumulator instead would cut that roughly 4x. It moves
+   the rounding boundary, so exactness must be re-established.
+2. `prefetch_dist` is fixed at 6 for INT4; the W2 GEMM has `k_tile_count = 32`,
+   so 19% of its K loop is warm-up.
+3. The M-tile selector uses `A_avg_M = A_total_M / num_experts`, which is 1 at
+   decode. Selecting on `max(rows_per_expert)` or an explicit row count would
+   let a twelve-row decode pick a tile matched to real occupancy.
+
+Measured context for all three: expert-weight streaming alone reaches 350-427
+GB/s of a 521 GB/s achievable ceiling on this host, so the memory system is
+delivering and the gap is in what the kernel does around the streaming.
