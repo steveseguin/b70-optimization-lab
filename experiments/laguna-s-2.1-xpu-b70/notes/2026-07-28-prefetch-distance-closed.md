@@ -44,6 +44,28 @@ That is **not established** -- two legs against a 1.63% spread, and the gap to
 the record packet is 1.0%. It is recorded because it is the only positive
 signal this session produced and because it would be lost otherwise.
 
+## The 3v3 confirmation, run
+
+All legs 13/13 exact with `cached_tokens=0`, both arms at prefetch distance 6.
+
+| binary | conventional legs, sorted | median | n |
+| --- | --- | ---: | ---: |
+| prefetch build | 100.403894, 100.955219, 101.243652, 101.330567, 101.508665 | 101.243652 | 5 |
+| incumbent | 99.250171, 99.378217, 100.074233, 100.293100, 100.439886, 100.995948, 101.171141 | 100.293100 | 7 |
+
+Separation is **+0.95%** at the median. Every prefetch leg lands at or above
+the incumbent's fifth-highest, but the ranges overlap -- prefetch's minimum
+100.404 sits below the incumbent's maximum 101.171 -- and 0.95% is inside this
+host's 1.63% spread.
+
+**Verdict: suggestive, not established.** The direction is consistent across
+five legs and the mechanism is plausible (instruction scheduling only; the
+arithmetic is provably unchanged), but the effect is smaller than the noise it
+must be separated from. It is not banked, and no record may rest on it.
+
+Best single leg measured anywhere this session: **101.508665 conventional**,
+prefetch build, 13/13 exact -- 0.491 short of 102.
+
 ## To confirm or kill it
 
 Three more control legs on the prefetch binary and three on the incumbent,
