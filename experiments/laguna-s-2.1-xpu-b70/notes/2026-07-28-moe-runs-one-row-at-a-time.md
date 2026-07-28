@@ -1,76 +1,68 @@
-# The Laguna MoE runs one row at a time at width 12
+# RETRACTED: "the Laguna MoE runs one row at a time at width 12"
 
 Date: 2026-07-28 America/Toronto
 
-Status: **structural finding, no throughput claim.** Scored baseline unchanged
-at **100.074 tok/s conventional**; sealed record `101.94172124017027`.
+Status: **retracted the same session it was written.** The claim was not
+supported by the instrument that produced it. Scored baseline unchanged at
+**100.074 tok/s conventional**; sealed record `101.94172124017027`.
 
-## Observation
+## The claim, and why it was wrong
 
-Logging the row count at every fused-expert invocation, across a full
-13-prompt run that passed **13/13 exact**:
+Logging every fused-expert invocation across a 13/13-exact run reported
+`num_rows=1` as the only value ever seen, and I concluded that the width-12
+verifier issues about 576 single-row expert-GEMM launches per cycle.
 
-```text
-LAGUNA_MOE_ROWS num_rows=1 seen=[1]
+The log was placed inside `_effective_laguna_m8_w1_n_tile`, which is called
+from within this block in `_apply_kernel`:
+
+```python
+if self._laguna_batched_exact_moe and 1 <= num_rows <= 8:
+    ...
+    _effective_laguna_m8_w1_n_tile(self._laguna_m8_w1_n_tile, num_rows)
 ```
 
-One is the only value ever observed. The verifier runs twelve rows per cycle,
-so the expert GEMM is invoked **once per row**: roughly `12 x 48 = 576`
-single-row expert-GEMM launches per cycle instead of about 48 batched ones.
+A twelve-row call skips that branch, so the logging function is never reached
+and **cannot observe the case it was meant to measure**. Seeing only `1` is
+what this instrument would report whether the decode path used one row or
+twelve. It is consistent with prefill's deliberate per-row split and with
+nothing else.
 
-Artifact:
-`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/moerows2-d1a72ff78-20260728T043222Z`
+## What is actually established
 
-The log sits immediately before `laguna_m8_fused_expert_interface`, and
-`num_rows` is `hidden_states.shape[0]`, so this is the count handed to the
-kernel and not a setup-time value.
+`LagunaMoE.forward` has two branches:
 
-## Why this matters
+- `batched_exact_rows`, taken when `VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1`, the
+  layer is the exact spec target, `1 <= rows <= xpu_laguna_exact_max_m()`, and
+  `_xpu_is_exact_decode_or_verifier_rows(rows)` holds. That helper returns True
+  for one row, or for any row count when the forward context carries
+  `xpu_exact_spec_verifier`. During a verifier pass at width 12 this should be
+  **True**, so the twelve rows go to `_forward_flat` together.
+- `exact_spec_rows`, the `not batched_exact_rows` fallback, which splits per
+  row. Its comment states the reason plainly: the generic `M>1` XPU remap path
+  uses atomic row counters and is not repeatable for this top-10 EP4 model, so
+  even target-only token 0 can change.
 
-Per-segment event profiling on the same stack puts **69.2%** of a verifier
-forward inside the graph segments that hold this GEMM, against 22.1% in the 97
-collectives and 8.7% in attention. Against 532 GB/s achievable, the 5.6 GB/rank
-of weight traffic floors at 11.5 ms versus a ~30.5 ms cycle: about **38% of the
-bandwidth roofline**, with compute near 1% utilised.
+So per-row execution **is** deliberate where it happens, and it exists to hold
+the bitwise contract. What remains unknown is which branch the scored width-12
+decode actually takes, and what row count reaches the kernel there.
 
-`M=1` explains that shape of result. Every launch is a GEMV, the worst
-arithmetic intensity available, and two tokens routed to the same expert in the
-same cycle cannot share that expert's weight read. At twelve rows and top-10
-routing, roughly 96 distinct experts are touched per layer while 120 expert
-reads are issued.
+## Correct way to answer this
 
-It also explains why the W1 N-tile could not be swept: the tuned `N32` and
-`N128` policies require **exactly eight rows**. At one row they are structurally
-unreachable, which is what the Python guard was encoding.
+Instrument `_apply_kernel` at its top, before any row-count branch, rather than
+inside the `<= 8` path. Log `num_rows` once per distinct value. That sees every
+call regardless of which branch handles it.
 
-And it explains the shape of this campaign's results. Width, fusions, KV format,
-boundary count, embedding replication and local argmax all moved the number by
-about +/-2% because they all act outside the 69%.
+## Standing
 
-## What is not yet known
+The cycle attribution from per-segment profiling is unaffected and still holds:
+**69.2%** of a verifier forward in the graph segments containing the expert
+GEMM, 22.1% in the 97 collectives, 8.7% in attention, against about **38% of
+the bandwidth roofline**. The MoE path remains the right target. What is not
+established is the row count it runs at.
 
-**Whether per-row execution is deliberate.** The selector is named
-`VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE` and this lane's entire contract is bitwise
-equality with the q=1 teacher. Executing one row at a time is a way to
-guarantee a fixed reduction order, so this may be a considered exactness
-tradeoff rather than an oversight. That question must be answered before any
-batching change is attempted, because the contract is not negotiable.
+## Lesson
 
-The kernel itself accepts `1..8` rows, so twelve rows cannot become a single
-launch. Eight plus four would be two launches instead of twelve, and the
-eight-row group would additionally make the existing `N32`/`N128` policies
-reachable with no new kernel code.
-
-## Next
-
-1. Determine why the batched path emits one row: read the caller that splits
-   the verifier's twelve rows, and establish whether the split exists for
-   fixed-order determinism or by accident.
-2. If determinism is the reason, find whether an eight-row group can preserve
-   the same reduction order. If it can, the change is a call-pattern change
-   rather than a kernel rewrite.
-3. Only then consider new `M=12` tile policies and a rebuild.
-
-Any candidate must clear 13/13 bitwise exactness, and this host's run-to-run
-spread was **1.63%** across three identical-config legs, so nothing under about
-1.5% is detectable without repeats.
+An instrument placed inside a conditional can only report on the branch it
+sits in. This one was gated on `num_rows <= 8` and then used to draw a
+conclusion about `num_rows == 12`. The reading was real; the inference from it
+was not.
