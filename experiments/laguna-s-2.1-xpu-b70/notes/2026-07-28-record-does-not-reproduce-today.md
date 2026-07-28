@@ -1,4 +1,4 @@
-# The sealed record does not reproduce at its recorded value today
+# The record was one favourable draw, not a host that drifted
 
 Date: 2026-07-28 America/Toronto
 
@@ -39,6 +39,31 @@ would put the conventional metric near 101.94 with no optimization at all.
 Every route closed this session was measured against the drifted baseline; none
 of those conclusions change sign at 1.5%, but the margin they were closed by
 does.
+
+## Correction: this is sampling, not drift
+
+The service environment of the record run and of today's reproduction differ
+only in run-directory paths and the kernel worktree path. Same oneAPI 2026.0
+libraries, same PYTHONPATH structure, same selectors. Environmental drift is
+ruled out.
+
+With seven incumbent-binary legs now measured this session, the configuration
+spans **99.250171 to 101.171141** conventional, a range of 1.9%, median
+**100.293100**. The record's `101.94172124017027` sits 0.77 above that observed
+maximum.
+
+The record packet states that no warmup was run and "this first valid score is
+the reported score" -- a single cold leg. A single draw landing 0.8% above the
+maximum of seven later draws is unremarkable for a distribution this wide.
+
+**So the correct statement is not that the host lost 1.5%. It is that the
+configuration's central tendency is about 100.3 conventional, and the record is
+the high tail of it.** That is a more demanding baseline, not a less demanding
+one: reaching 102 conventional requires roughly **+1.7% over the median**, not
+0.06% over a record.
+
+Anyone planning work against "we were at 101.94 and lost it" would be chasing a
+regression that does not exist.
 
 ## What changed since the record
 
