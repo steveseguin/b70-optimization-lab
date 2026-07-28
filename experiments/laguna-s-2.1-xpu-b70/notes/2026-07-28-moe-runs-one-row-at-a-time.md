@@ -46,6 +46,25 @@ So per-row execution **is** deliberate where it happens, and it exists to hold
 the bitwise contract. What remains unknown is which branch the scored width-12
 decode actually takes, and what row count reaches the kernel there.
 
+## Answered
+
+With the probe moved above every row-count branch, a full 13/13-exact run
+reports the distinct counts reaching `_apply_kernel`:
+
+```text
+seen=[1, 12, 863, 8192]
+```
+
+`12` is the scored verifier decode, `863` the longest prompt's prefill, `8192`
+the warmup, and `1` the deliberate per-row exact path. **The width-12 decode
+batches: twelve rows reach the kernel in one call.** The retracted claim was
+wrong and is now settled by measurement rather than by inference.
+
+This relocates the target. The roofline gap is inside the wide-M expert GEMM
+itself, not in per-row launch overhead, and the `N32`/`N128` policies are
+genuinely unreachable at twelve rows because they require exactly eight -- the
+tile sweep is closed on its merits, not by an accident of the guard.
+
 ## Correct way to answer this
 
 Instrument `_apply_kernel` at its top, before any row-count branch, rather than
