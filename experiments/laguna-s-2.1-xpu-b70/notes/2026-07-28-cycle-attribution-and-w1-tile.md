@@ -50,11 +50,26 @@ kernel:
 RuntimeError: Laguna fused expert W1 N128 requires M=8 W1-only route interleave
 ```
 
-Tiles 32 and 128 are specialised for `M=8` only; at `M=12` the binary provides
-64 alone. The Python guard was reporting a real binary constraint rather than
-an untested combination. **Sweeping the tile at width 12 requires rebuilding
-the kernel with M=12 specialisations**, which is the concrete form the MoE work
-takes.
+Reading the source makes the constraint precise. The fused-expert entry point
+accepts `hidden_states` of `[1..8, 3072]`, and the tile check is
+
+```cpp
+w1_n_tile == 64 || (w1_only && route_interleave && num_rows == 8)
+```
+
+so non-64 tiles require **exactly eight rows**, while the kernel itself serves
+one to eight. The tile assertion fired rather than the row-count one, which
+means the width-12 batched-exact-MoE path reaches this kernel with row counts
+that are not 8. Tile 64 is therefore the only legal choice for every group the
+record's width actually produces, and the dispatch selects among
+`w4a16_policy_m_8_n_32`, `w4a16_policy_m_8_n_128` and `w4a16_policy_m_8` -- all
+M=8 policies.
+
+**Sweeping the tile at width 12 requires new policies and a kernel rebuild**,
+not a configuration change. That is the concrete form the MoE work takes, and
+the first question it should answer is what row counts the batched path
+actually emits, since a batching that produced groups of exactly eight would
+make the existing 32/128 policies reachable without writing new ones.
 
 Both arms failed at service startup, so neither produced a rate and neither
 touched exactness.
