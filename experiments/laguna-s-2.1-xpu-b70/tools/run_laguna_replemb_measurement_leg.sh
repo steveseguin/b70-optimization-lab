@@ -220,7 +220,7 @@ check_hash "$kernel_root/vllm_xpu_kernels/_xpu_C.abi3.so" \
 check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" \
   00fd81608f057039d31e1b316fecbecec60b3b03151e66b95d0f844185119715
 check_hash "$kernel_root/vllm_xpu_kernels/libgrouped_gemm_xe_2.so" \
-  fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96
+  "${REPRO_GROUPED_GEMM_SHA256:-fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96}"
 check_hash "$kernel_root/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" \
   3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4
 check_hash "$kernel_root/vllm_xpu_kernels/libattn_kernels_xe_2.so" \
