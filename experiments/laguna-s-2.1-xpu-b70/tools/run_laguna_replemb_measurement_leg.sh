@@ -109,7 +109,7 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 14 )) || { echo "seven to fourteen arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 15 )) || { echo "seven to fifteen arguments are required" >&2; exit 2; }
 case "$draft_graph" in 0|1) ;; *) echo "DRAFTGRAPH must be 0 or 1" >&2; exit 2 ;; esac
 case "$metadata_arg" in 0|1) ;; *) echo "METADATA must be 0 or 1" >&2; exit 2 ;; esac
 case "$fusions" in 0|1) ;; *) echo "FUSIONS must be 0 or 1" >&2; exit 2 ;; esac
