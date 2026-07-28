@@ -80,3 +80,40 @@ Provenance: kernel `/home/steve/src/laguna-xpu-kernels-tile12-20260728` at
 oneAPI DPC++ 2025.3.3. Its runtime lock is
 `experiments/laguna-s-2.1-xpu-b70/tools/runtime-lock-prefetch.json`; the sealed
 packet's lock was copied, never edited.
+
+## Settled at higher n: the separation was noise
+
+| binary | n | median conventional | range |
+| --- | ---: | ---: | --- |
+| prefetch build | 9 | 100.955219 | 100.359046 - 101.515529 |
+| incumbent | 11 | 100.439886 | 99.250171 - 101.915276 |
+
+The separation fell from +0.95% at n=5/7 to **+0.51%** at n=9/11, and the
+incumbent's maximum now exceeds the prefetch build's. The distributions overlap
+almost entirely. **Not a win, not banked.** The prefetch binary should be
+reverted to the incumbent unless some other reason to keep it appears.
+
+## The record is reproducible, and it is the high tail
+
+Leg `cmp-inc7-20260728T085156Z`, incumbent binary, no experimental selectors:
+
+```text
+published_legacy_tok_s=102.94472299200812
+conventional_interval_tok_s=101.91527576208804
+13/13 exact, cached_tokens=0, text hashes equal, all gates pass
+```
+
+That is within 0.03% of the sealed record's `102.97143559613157` /
+`101.94172124017027`. The record reproduces. It sits at the top of a
+distribution whose median across eleven legs is `100.439886`.
+
+**102 conventional was not reached.** The best draw is 0.085 short, and the
+median is 1.5% short.
+
+## A note on how this must be reported
+
+About twenty legs were run this session. Reporting the maximum as the result
+would be selection, not measurement, and it is exactly how a single cold leg
+came to make the target look 0.058 away when the median puts it near 1.5%
+away. The honest summary of a configuration is its median with its range and n,
+not its best observed draw.
