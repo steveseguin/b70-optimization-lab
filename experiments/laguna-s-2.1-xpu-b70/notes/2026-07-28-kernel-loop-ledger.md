@@ -227,9 +227,26 @@ Four arms, round-robin, binary swapped in per leg by
 
 Interleaving at **leg** granularity rather than in blocks is what makes a
 cross-binary comparison defensible: every arm sees the same drift, thermal
-state and ordering. The driver verifies the swapped-in binary's sha256 landed
-before each leg, so a failed install cannot silently measure the previous arm.
-n=5 per arm is 20 legs, roughly 140 minutes.
+state and ordering. n=5 per arm is 20 legs, roughly 140 minutes.
+
+**One checked-out tree per binary, not a swapped `.so`.** The leg script stamps
+`kernel_commit` from `git -C "$kernel_root" rev-parse HEAD`
+(`run_laguna_replemb_measurement_leg.sh:135`, recorded at line 356) and never
+validates it against the binary actually loaded. Installing the incumbent
+`.so` into a tree checked out at `ec4c7ea` would therefore have stamped every
+`old` leg with the wrong commit — the `.so` hash is recorded and validated, so
+no decision was at risk, but the artifact would have been misleading. Fixed by
+giving the incumbent its own worktree,
+`/home/steve/src/laguna-xpu-kernels-incumbent-46a88e0`, checked out at
+`46a88e0` with the incumbent binary in place. Commit and binary now agree per
+arm, and the per-leg install — along with its failure mode of silently
+measuring the previous arm — is gone entirely.
+
+`run_pfreach_campaign.sh` asserts each tree's grouped-GEMM sha256 against the
+binary its arm is named for before the first leg. Verified to fire: with the
+new `.so` not yet installed it aborts with the incumbent hash and the reason.
+Without that guard a forgotten install would leave all four arms measuring the
+same code for 140 minutes and produce a confident null result meaning nothing.
 
 The ship decision is `best-new-arm` vs `old`. `new-pd6` vs `old` is reported
 separately as the plumbing tax, and `pd3`/`pd12` vs `new-pd6` as the lever
