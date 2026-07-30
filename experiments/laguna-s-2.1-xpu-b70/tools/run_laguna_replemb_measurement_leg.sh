@@ -116,6 +116,9 @@ readonly dflash_segmented_graph="${26:-0}"
 # the q=1 teacher prefix, request-local speculation, graph topology, and clean
 # teardown. It emits no score and is valid only for the segmented candidate.
 readonly dflash_segmented_smoke="${27:-0}"
+# Explicit graph-memory reserve. The default preserves every promoted result;
+# 0.82 is the previously established width-12 high-graph-memory setting.
+readonly gpu_util="${28:-0.90}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
@@ -160,7 +163,8 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 27 )) || { echo "seven to twenty-seven arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 28 )) || { echo "seven to twenty-eight arguments are required" >&2; exit 2; }
+case "$gpu_util" in 0.82|0.90) ;; *) echo "GPU_UTIL must be 0.82 or 0.90" >&2; exit 2 ;; esac
 [[ "$dflash_segmented_graph" == 0 || "$dflash_segmented_graph" == 1 ]] ||
   { echo "DFLASH_SEGMENTED_GRAPH must be 0 or 1" >&2; exit 2; }
 [[ "$dflash_segmented_smoke" == 0 || "$dflash_segmented_smoke" == 1 ]] ||
@@ -363,7 +367,7 @@ trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 # rows and so had to be disabled at other widths. They now take the row count at
 # runtime, so they are enabled at every width and the flags are recorded in
 # identity.txt alongside the width.
-se="$fusions"; qk="$qknorm"; gpu_util=0.90
+se="$fusions"; qk="$qknorm"
 metadata_selector="$metadata_arg"
 expected_num_graphs="$(( inline_attention == 1 ? 98 : (replicated_embedding == 1 ? 145 : 146) ))"
 expected_num_eager_breaks="$(( inline_attention == 1 ? 97 : (replicated_embedding == 1 ? 144 : 145) ))"

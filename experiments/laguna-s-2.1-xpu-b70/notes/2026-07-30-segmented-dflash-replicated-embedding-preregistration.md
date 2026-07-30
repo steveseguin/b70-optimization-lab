@@ -86,3 +86,29 @@ The source keeps the unreplicated 13-slot/20/19 contract as the default and
 selects the 12-slot/19/18 contract only when replicated embedding is enabled.
 The harness independently derives and records both target and draft topology
 from that selector.
+
+## First live smoke: memory failure, no score
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-segmented-replemb-smoke-20260730T151418Z
+```
+
+Both reduced topologies captured successfully, but request 0 failed after a
+Level Zero `UR_RESULT_ERROR_OUT_OF_DEVICE_MEMORY`, followed by
+`UR_RESULT_ERROR_DEVICE_LOST`. The apparent 400-token prefix failure was a
+truncated response after engine death, not evidence of a token mismatch.
+Available profiled KV memory was 6.99 GiB versus 7.56 GiB without replicated
+weights.
+
+Cleanup passed (`stop_status=0`, `worker_status=0`, `idle_status=0`); no reset,
+probe, FLR, driver reload, shared-memory cleanup, or reboot was used. The run
+has no correctness or throughput claim.
+
+The only permitted retry changes the explicitly recorded
+`gpu_memory_utilization` from 0.90 to 0.82. This is the already established
+width-12 graph-memory reserve and leaves substantially more headroom for graph
+allocation. It does not change weights, arithmetic, prompts, cache dtype,
+sampling, or scoring. If that retry fails, this stacked route closes.
