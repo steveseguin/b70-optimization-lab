@@ -193,3 +193,28 @@ So the fault is specifically in the collective path, and per-card execution says
 nothing about it. The ladder's preflight now runs the same 4-rank all_reduce a
 leg will run and refuses to start otherwise, so a wedged host costs seconds
 rather than a quarter of an hour.
+
+## 2026-07-30 recurrence after a device-memory fault
+
+A replicated-embedding segmented-DFlash smoke exhausted Level Zero device
+memory during its first request and then reported
+`UR_RESULT_ERROR_DEVICE_LOST`. The harness shut down cleanly and the formal
+process/idle check passed, but the next resource-corrected launch reproduced
+the collective-path signature from this note:
+
+- all four ranks initialized XCCL;
+- all four logged topology recognition;
+- none reached model loading;
+- the server log remained unchanged for more than two minutes.
+
+The run was interrupted with SIGINT so the normal cleanup trap could execute;
+no `kill -9`, probe loop, FLR, unbind/rebind, driver reload, or shared-memory
+cleanup was attempted. Cleanup removed all workers and the listener and passed
+the idle gate.
+
+This adds a useful discriminator: successful process cleanup and idle GPU
+accounting after `DEVICE_LOST` do not establish collective health. An immediate
+next TP4 launch stuck after topology recognition is enough to stop experiments;
+repeated probing can only add risk. The conservative recovery remains a clean,
+separately authorized reboot followed by one corrected bounded TP4 health
+gate.

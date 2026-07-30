@@ -112,3 +112,28 @@ The only permitted retry changes the explicitly recorded
 width-12 graph-memory reserve and leaves substantially more headroom for graph
 allocation. It does not change weights, arithmetic, prompts, cache dtype,
 sampling, or scoring. If that retry fails, this stacked route closes.
+
+## Memory-reserved retry: host collective path stalled
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-segmented-replemb-mem82-smoke-20260730T152132Z
+```
+
+The recorded 0.82 retry did not reach model loading. All four ranks initialized
+XCCL and logged topology recognition at 11:25:26, then the log remained
+byte-for-byte unchanged for more than two minutes. This matches the historical
+post-device-loss collective wedge pattern.
+
+The harness was interrupted with SIGINT, not `kill -9`. Its cleanup trap
+reported `stop_status=0`, `worker_status=0`, and `idle_status=0`; no workers or
+port-18080 listener survived. No probe loop, FLR, unbind/rebind, driver reload,
+shared-memory deletion, or reboot followed.
+
+The replicated-embedding stack is closed: no correctness or throughput result
+was obtained, and it must not be retried on the current boot. The valid
+unreplicated segmented-DFlash result remains `119.18937096651626 tok/s`,
+13/13 exact. Further device work requires a separately authorized clean reboot
+and post-boot bounded health gate.
