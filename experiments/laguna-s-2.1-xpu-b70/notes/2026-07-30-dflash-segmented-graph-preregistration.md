@@ -129,3 +129,30 @@ Offline gates on the committed candidate:
 
 These are offline results only. They prove the contract and fail-closed
 plumbing, not XPU graph correctness, throughput, or host recovery.
+
+## Authorized recovery gate
+
+Steve authorized one clean reboot on 2026-07-30. The recovered host reported:
+
+- boot ID `aa094a14-86a2-4615-b0db-7b84d42c7970`;
+- boot time `2026-07-30 10:12:28` America/Toronto;
+- kernel `7.0.0-28-generic`, taint `0`;
+- the expected four B70 BDFs `23:00.0`, `27:00.0`, `43:00.0`, and `47:00.0`;
+- four render nodes, no vLLM/probe workers, and no port-18080 listener;
+- one bounded changing-value allocation/arithmetic/copy/synchronize pass on
+  each physical card; and
+- dynamic CCL interface resolution to `eth1`.
+
+Exactly one corrected four-rank collective probe then passed:
+
+```text
+PROBE_RESULT=PASS clean_teardowns=4/4
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/
+  xccl-postreboot-segmented-2HC3w2/probe-postreboot-segmented
+```
+
+Every rank reached `all_reduce-done`, verified the expected sum, destroyed the
+process group, and exited zero. No FLR, driver reload, unbind/rebind,
+shared-memory deletion, retry, or reset ladder was used. This establishes
+post-reboot TP4 collective health; it does not yet establish the segmented
+DFlash candidate.
