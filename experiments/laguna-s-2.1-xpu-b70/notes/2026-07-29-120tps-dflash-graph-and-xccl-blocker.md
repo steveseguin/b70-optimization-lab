@@ -207,3 +207,63 @@ live-capture candidate can be made from this infrastructure failure. Recovery
 policy remains a clean reboot followed by one corrected probe—never driver
 reload, FLR, shared-memory deletion, or a ladder triggered from summary
 counters.
+
+## First-live capture after the clean reboot
+
+The clean reboot produced boot ID
+`97391e78-45de-4095-a226-20421cbf146d`, kernel `7.0.0-28`, taint `0`, a
+strict idle pass, and exactly one corrected four-rank probe:
+
+```text
+PROBE_RESULT=PASS clean_teardowns=4/4
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/
+  xccl-postreboot-livecapture-IpxU2t/probe-postreboot-livecapture-20260730
+```
+
+The first-live candidate then executed:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-livecapture-postreboot-20260730T030016Z
+```
+
+All four ranks captured and replayed the target's expected 146/145 topology,
+and the drafter emitted the marker
+`Captured Laguna DFlash graph from first live request state`. The first
+request was plausible: mean accepted length `7.69`, average proposal
+acceptance `60.8%`, with a decaying per-position curve from `0.910` to
+`0.522`. The second request immediately changed to a flat `100%` curve at
+every draft position, followed by the same corrupt pattern on the next
+request. The run was stopped and no rate was reported.
+
+This result disproves synthetic warmup state as the root cause. The graph can
+replay dynamically throughout one complete request; corruption begins at
+request rollover.
+
+Diagnostic commit `51041d05e` records the immediate drafter inputs, hidden
+state statistics, and sampled draft at the first proposer call of each request,
+before the verifier consumes it. Its targeted CPU gate is `60 passed`. The
+first attempt to execute it did not reach model loading:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-rollover-probe-20260730T031150Z
+```
+
+All four workers entered XCCL initialization, the server log stopped at the
+topology-recognition messages, and no candidate or model-loading marker
+appeared. The formal cleanup trap produced `failure-post-idle.json` and
+`cleanup-status.txt`; no workers or listeners remained. This is an
+infrastructure non-result, not evidence about the diagnostic or graph code.
+
+The next safe action is another clean reboot, the strict idle gate, and exactly
+one corrected probe. If it passes, run `51041d05e` only long enough to capture
+the first two `LAGUNA_ROLLOVER_PROBE` rows. Diagnostic timing is invalid and
+must not be quoted. Interpret the rows as follows:
+
+- immediate request-2 draft/hidden state already corrupt: localize persistent
+  graph inputs, DFlash KV lifecycle, and per-request metadata reset;
+- immediate request-2 draft valid but verifier-side draft zero/corrupt: fix
+  the proposer-to-verifier handoff or persistent draft-token storage;
+- request-2 inputs stale with otherwise live hidden output: fix the specific
+  stale persistent input rather than changing graph topology.
