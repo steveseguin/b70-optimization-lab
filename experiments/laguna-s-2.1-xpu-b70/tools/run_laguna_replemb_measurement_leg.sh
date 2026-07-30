@@ -112,6 +112,10 @@ readonly scale_hoist="${25:-}"
 # compute segments; six attention calls and twelve TP all-reduces remain eager.
 # The candidate has its own audited 19/18 topology and requires draft_graph=0.
 readonly dflash_segmented_graph="${26:-0}"
+# Diagnostic gate only: run two 128-token requests and validate each against
+# the q=1 teacher prefix, request-local speculation, graph topology, and clean
+# teardown. It emits no score and is valid only for the segmented candidate.
+readonly dflash_segmented_smoke="${27:-0}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
@@ -129,6 +133,7 @@ readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/u
 readonly graph_serve="$script_dir/serve_laguna_mwide_graph_nvme.sh"
 readonly comparator="$script_dir/compare_exact_runs.py"
 readonly benchmark="$repo_root/scripts/bench-openai-realistic-suite.py"
+readonly segmented_smoke_runner="$script_dir/run_laguna_dflash_segmented_smoke.py"
 readonly metric_qualifier="$repo_root/scripts/qualify_realistic_window_metrics.py"
 readonly idle_wrapper="$script_dir/capture_laguna_m8_idle_snapshot.py"
 readonly suite="$repo_root/experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json"
@@ -155,9 +160,11 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 26 )) || { echo "seven to twenty-six arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 27 )) || { echo "seven to twenty-seven arguments are required" >&2; exit 2; }
 [[ "$dflash_segmented_graph" == 0 || "$dflash_segmented_graph" == 1 ]] ||
   { echo "DFLASH_SEGMENTED_GRAPH must be 0 or 1" >&2; exit 2; }
+[[ "$dflash_segmented_smoke" == 0 || "$dflash_segmented_smoke" == 1 ]] ||
+  { echo "DFLASH_SEGMENTED_SMOKE must be 0 or 1" >&2; exit 2; }
 (( draft_graph == 0 || dflash_segmented_graph == 0 )) ||
   { echo "retired whole-draft graph and segmented draft graph are mutually exclusive" >&2; exit 2; }
 case "$draft_graph" in 0|1) ;; *) echo "DRAFTGRAPH must be 0 or 1" >&2; exit 2 ;; esac
@@ -191,6 +198,8 @@ case "$dflash_fp8" in 0|1) ;; *) echo "DFLASH_FP8 must be 0 or 1" >&2; exit 2 ;;
   || { echo "DFLASH_SEGMENTED_GRAPH=1 requires M=12 and SPEC=11" >&2; exit 2; }
 [[ "$dflash_segmented_graph" == 0 || "$treatment" == candidate ]] \
   || { echo "DFLASH_SEGMENTED_GRAPH=1 requires candidate treatment" >&2; exit 2; }
+(( dflash_segmented_smoke == 0 || dflash_segmented_graph == 1 )) \
+  || { echo "DFLASH_SEGMENTED_SMOKE=1 requires DFLASH_SEGMENTED_GRAPH=1" >&2; exit 2; }
 
 die() { echo "Laguna formal M8 crossover leg: $*" >&2; exit 2; }
 
@@ -223,7 +232,8 @@ ambient_sensitive="$(compgen -e | LC_ALL=C sort -u | awk '/^(VLLM|LAGUNA|XPU_GRA
 [[ -z "$ambient_sensitive" ]] || die "refusing inherited runtime variables: $ambient_sensitive"
 for path in \
   "$vllm_root" "$kernel_root" "$graph_serve" "$nvme_paths" "$comparator" \
-  "$benchmark" "$metric_qualifier" "$idle_wrapper" "$suite" "$teacher" \
+  "$benchmark" "$segmented_smoke_runner" "$metric_qualifier" "$idle_wrapper" \
+  "$suite" "$teacher" \
   "$runtime_lock" "$runtime_verifier" "$model_release_manifest" \
   "$xpumem_module"; do
   [[ -e "$path" && "$(realpath -e -- "$path")" != /media/* ]] || die "missing or USB-resident required path: $path"
@@ -365,6 +375,7 @@ verify_idle_interval prestart
   printf 'exact_max_m=%s\nnum_speculative_tokens=%s\nprebuilt_exact_attn_metadata=%s\n' "$laguna_m" "$laguna_spec" "$metadata_arg"
   printf 'draft_breakable_graph=%s\ncluster_iface=%s\nlocal_argmax=%s\n' "$draft_graph" "$cluster_iface" "$local_argmax"
   printf 'dflash_segmented_graph=%s\ndflash_segmented_expected_graphs=19\ndflash_segmented_expected_eager_breaks=18\n' "$dflash_segmented_graph"
+  printf 'dflash_segmented_smoke=%s\nscored_measurement=%s\n' "$dflash_segmented_smoke" "$(( 1 - dflash_segmented_smoke ))"
   printf 'capture_attention_graphs=%s\ninline_attention_graphs=%s\n' "$capture_attention" "$inline_attention"
   printf 'width12_router_workspace_stack=%s\nmwide_bf16_router_topk=%s\ndflash_context_kv_workspace=%s\n' "$width12_stack" "$width12_stack" "$width12_stack"
   printf 'dflash_fp8_w8a16=%s\ndflash_fp8_target_unchanged=true\n' "$dflash_fp8"
@@ -380,7 +391,9 @@ verify_idle_interval prestart
   printf 'metadata_selector=%s\nattention_capture_selector=%s\ninline_attention_selector=%s\n' "$metadata_selector" "$capture_attention" "$inline_attention"
   printf 'expected_num_graphs=%s\nexpected_num_eager_breaks=%s\n' "$expected_num_graphs" "$expected_num_eager_breaks"
   printf 'no_warmup=true\nsuite_invocations=1\nretries=0\nverified_idle_interval_seconds=60\n'
-  sha256sum "$0" "$graph_serve" "$nvme_paths" "$comparator" "$benchmark" "$metric_qualifier" "$idle_wrapper" "$venv_python" "$vllm_binary"
+  sha256sum "$0" "$graph_serve" "$nvme_paths" "$comparator" "$benchmark" \
+    "$segmented_smoke_runner" "$metric_qualifier" "$idle_wrapper" \
+    "$venv_python" "$vllm_binary"
 } > "$run_dir/identity.txt"
 
 graph=1
@@ -402,6 +415,29 @@ grep -Fx "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=$dflash_fp8" "$run_dir/service-enviro
 grep -Fx "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=$dflash_segmented_graph" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING=$replicated_embedding" "$run_dir/service-environment.txt" >/dev/null
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before-suite.prom"
+if (( dflash_segmented_smoke == 1 )); then
+  "$venv_python" "$segmented_smoke_runner" \
+    --base-url http://127.0.0.1:18080 \
+    --model laguna-s-2.1-int4 \
+    --suite "$suite" \
+    --teacher "$teacher" \
+    --benchmark-helper "$benchmark" \
+    --server-log "$run_dir/server.log" \
+    --out "$run_dir/segmented-smoke.json" \
+    > "$run_dir/segmented-smoke.stdout"
+  curl -fsS http://127.0.0.1:18080/metrics \
+    > "$run_dir/metrics-after-smoke.prom"
+  stop_service; server_pid=""
+  assert_no_workers || die "workers or listener survived smoke shutdown"
+  capture_idle "$run_dir/post-idle.json"
+  verify_idle_interval poststop
+  mv -- "$rpc_dir" "$run_dir/rpc-after-stop"
+  printf 'status=PASS\nscored_measurement=false\n' > "$run_dir/status.txt"
+  trap - EXIT INT TERM
+  chmod -R a-w -- "$run_dir"
+  echo "Laguna segmented DFlash smoke PASS: $label $treatment $run_dir"
+  exit 0
+fi
 cd "$repo_root"
 "$venv_python" "$benchmark" --base-url http://127.0.0.1:18080 --model laguna-s-2.1-int4 --suite experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json --max-tokens 512 --metric-tokens 100 --seed 1 --timeout 1800 --return-token-ids --request-extra-json '{"chat_template_kwargs":{"enable_thinking":false}}' --out "$run_dir/bench.json" > "$run_dir/bench.stdout"
 "$venv_python" "$metric_qualifier" "$run_dir/bench.json" --in-place > "$run_dir/metric-accounting.stdout"

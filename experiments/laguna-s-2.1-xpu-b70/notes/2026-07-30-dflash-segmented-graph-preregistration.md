@@ -156,3 +156,25 @@ process group, and exited zero. No FLR, driver reload, unbind/rebind,
 shared-memory deletion, retry, or reset ladder was used. This establishes
 post-reboot TP4 collective health; it does not yet establish the segmented
 DFlash candidate.
+
+## Bounded live-smoke harness
+
+Before the scored suite, the measurement leg's explicit 27th argument can
+select a non-scored two-request smoke. It:
+
+- emits exactly 128 tokens from fixed suite rows 0 and 1, crossing the old
+  cycle-33 failure boundary and one live request rollover;
+- requires each emitted token prefix to equal the canonical q=1 teacher and
+  requires `cached_tokens=0`;
+- snapshots speculation metrics around each request independently, requiring
+  depth 11, more than 33 drafts, neither zero nor flat-full acceptance, and a
+  non-increasing curve whose final position is below its first;
+- requires target 146/145 and draft 19/18 capture/replay records from all four
+  ranks;
+- reports `scored_measurement=false` and no throughput; and
+- uses the formal leg's graceful shutdown, worker/listener proof, post-stop
+  idle interval, artifact sealing, and failure trap.
+
+CPU-only parser/contract tests are `4 passed`; Bash syntax, Python compilation,
+Ruff, and whitespace checks pass. This harness exists to reject the candidate
+before the 13-prompt score, not to create a smaller or easier benchmark.
