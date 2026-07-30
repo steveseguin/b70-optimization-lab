@@ -1,0 +1,167 @@
+From f7f0eac0f5b547422cd59de57f2b5b4662aa0432 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 30 Jul 2026 11:13:39 -0400
+Subject: [PATCH] xpu: segment replicated DFlash embedding
+
+---
+ .../test_laguna_dflash_collectives.py         | 20 +++++++++++
+ vllm/compilation/laguna_dflash_collectives.py | 34 +++++++++++++------
+ vllm/v1/worker/gpu_model_runner.py            | 21 ++++++++++--
+ 3 files changed, 62 insertions(+), 13 deletions(-)
+
+diff --git a/tests/v1/cudagraph/test_laguna_dflash_collectives.py b/tests/v1/cudagraph/test_laguna_dflash_collectives.py
+index 60dda9cec..352104e6a 100644
+--- a/tests/v1/cudagraph/test_laguna_dflash_collectives.py
++++ b/tests/v1/cudagraph/test_laguna_dflash_collectives.py
+@@ -75,6 +75,26 @@ def test_dflash_collective_replay_accounting(
+     state.finish_forward()
+ 
+ 
++def test_dflash_collective_replicated_embedding_uses_twelve_slots(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    _patch_collective(monkeypatch)
++    state = LagunaDFlashCollectiveState(torch.device("cpu"), reduce_count=12)
++    local = torch.ones((12, 3072), dtype=torch.bfloat16)
++    assert len(state.reduces) == 12
++    state.reset_for_forward()
++    for _ in range(12):
++        state.all_reduce(local)
++    state.finish_forward()
++    with pytest.raises(RuntimeError, match="exceeded its 12"):
++        state.all_reduce(local)
++
++
++def test_dflash_collective_rejects_unknown_topology() -> None:
++    with pytest.raises(ValueError, match="must be 12.*or 13"):
++        LagunaDFlashCollectiveState(torch.device("cpu"), reduce_count=11)
++
++
+ def test_dflash_collective_detects_replay_output_substitution(
+     monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+diff --git a/vllm/compilation/laguna_dflash_collectives.py b/vllm/compilation/laguna_dflash_collectives.py
+index e7ce550ce..705a6e4cc 100644
+--- a/vllm/compilation/laguna_dflash_collectives.py
++++ b/vllm/compilation/laguna_dflash_collectives.py
+@@ -23,21 +23,32 @@ from vllm.utils.torch_utils import weak_ref_tensor
+ 
+ _ROWS = 12
+ _HIDDEN_SIZE = 3072
+-_REDUCE_COUNT = 13
++_DEFAULT_REDUCE_COUNT = 13
+ 
+ 
+ class LagunaDFlashCollectiveState:
+     """Fixed-address outputs for one width-12 DFlash forward."""
+ 
+-    def __init__(self, device: torch.device) -> None:
++    def __init__(
++        self,
++        device: torch.device,
++        *,
++        reduce_count: int = _DEFAULT_REDUCE_COUNT,
++    ) -> None:
++        if reduce_count not in (12, 13):
++            raise ValueError(
++                "Laguna DFlash collective count must be 12 (replicated "
++                f"embedding) or 13 (sharded embedding), got {reduce_count}"
++            )
+         self.device = device
++        self._reduce_count = reduce_count
+         self.reduces = [
+             torch.empty(
+                 (_ROWS, _HIDDEN_SIZE),
+                 dtype=torch.bfloat16,
+                 device=device,
+             )
+-            for _ in range(_REDUCE_COUNT)
++            for _ in range(self._reduce_count)
+         ]
+         self._next_reduce = 0
+         self._executed = 0
+@@ -47,20 +58,22 @@ class LagunaDFlashCollectiveState:
+         self._executed = 0
+ 
+     def finish_forward(self) -> None:
+-        # Capture walks the Python model and claims all thirteen slots. Replay
++        # Capture walks the Python model and claims every configured slot.
++        # Sharded embedding uses thirteen; replicated embedding removes the
++        # first reduction and uses twelve. Replay
+         # invokes the recorded eager callables directly, so no slot claims are
+         # observed. Both states are intentional; every eager callable must
+         # still execute.
+-        if self._next_reduce not in (0, _REDUCE_COUNT):
++        if self._next_reduce not in (0, self._reduce_count):
+             raise RuntimeError(
+                 "Laguna DFlash segmented graph changed collective order: "
+                 f"saw {self._next_reduce}, expected 0 (replay) or "
+-                f"{_REDUCE_COUNT} (capture)"
++                f"{self._reduce_count} (capture)"
+             )
+-        if self._executed != _REDUCE_COUNT:
++        if self._executed != self._reduce_count:
+             raise RuntimeError(
+                 "Laguna DFlash segmented graph changed eager collective count: "
+-                f"saw {self._executed}, expected {_REDUCE_COUNT}"
++                f"saw {self._executed}, expected {self._reduce_count}"
+             )
+ 
+     def all_reduce(self, local: torch.Tensor) -> torch.Tensor:
+@@ -76,9 +89,10 @@ class LagunaDFlashCollectiveState:
+                 f"{expected} BF16 contiguous contract: got "
+                 f"{tuple(local.shape)} {local.dtype} {local.device}"
+             )
+-        if self._next_reduce >= _REDUCE_COUNT:
++        if self._next_reduce >= self._reduce_count:
+             raise RuntimeError(
+-                f"Laguna DFlash graph exceeded its {_REDUCE_COUNT} all-reduce slots"
++                "Laguna DFlash graph exceeded its "
++                f"{self._reduce_count} all-reduce slots"
+             )
+         index = self._next_reduce
+         output = self.reduces[index]
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 388832b80..48d19a521 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -6149,7 +6149,10 @@ class GPUModelRunner(
+                     "Laguna DFlash segmented graph has no drafter proposer"
+                 )
+             self.laguna_dflash_collective_state = LagunaDFlashCollectiveState(
+-                self.device
++                self.device,
++                reduce_count=(
++                    12 if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING else 13
++                ),
+             )
+             drafter.laguna_dflash_collective_state = self.laguna_dflash_collective_state
+         mm_config = self.model_config.multimodal_config
+@@ -6265,10 +6268,22 @@ class GPUModelRunner(
+                         envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+                     ),
+                     expected_num_graphs=(
+-                        20 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
++                        (
++                            19
++                            if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
++                            else 20
++                        )
++                        if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
++                        else None
+                     ),
+                     expected_num_eager_breaks=(
+-                        19 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
++                        (
++                            18
++                            if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
++                            else 19
++                        )
++                        if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
++                        else None
+                     ),
+                 )
+         elif (
+-- 
+2.43.0
+

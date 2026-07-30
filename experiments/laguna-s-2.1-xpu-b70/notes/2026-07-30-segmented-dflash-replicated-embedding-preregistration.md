@@ -70,3 +70,19 @@ window, and all correctness gates remain unchanged.
 The first scored leg is evidence, not a confirmed median. Promotion requires
 matched confirmation against the segmented candidate. This note makes no
 throughput claim for the stacked treatment.
+
+## Offline implementation
+
+- vLLM commit: `f7f0eac0f5b547422cd59de57f2b5b4662aa0432`;
+- patch:
+  `patches/laguna-s-2.1-xpu-b70/0003-xpu-segment-replicated-DFlash-embedding.patch`;
+- patch SHA-256:
+  `52c579c204ed2bef6839407f787e1319639b498806e883cbbc22b8750a5ae634`;
+- focused vLLM tests: `11 passed`;
+- smoke/harness tests: `6 passed`;
+- Python compilation, Ruff, Bash syntax, and whitespace checks: pass.
+
+The source keeps the unreplicated 13-slot/20/19 contract as the default and
+selects the 12-slot/19/18 contract only when replicated embedding is enabled.
+The harness independently derives and records both target and draft topology
+from that selector.

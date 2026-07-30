@@ -367,6 +367,8 @@ se="$fusions"; qk="$qknorm"; gpu_util=0.90
 metadata_selector="$metadata_arg"
 expected_num_graphs="$(( inline_attention == 1 ? 98 : (replicated_embedding == 1 ? 145 : 146) ))"
 expected_num_eager_breaks="$(( inline_attention == 1 ? 97 : (replicated_embedding == 1 ? 144 : 145) ))"
+dflash_segmented_expected_graphs="$(( replicated_embedding == 1 ? 19 : 20 ))"
+dflash_segmented_expected_eager_breaks="$(( dflash_segmented_expected_graphs - 1 ))"
 capture_idle "$run_dir/pre-idle.json"
 verify_idle_interval prestart
 {
@@ -374,7 +376,7 @@ verify_idle_interval prestart
   printf 'replicated_embedding=%s\n' "$replicated_embedding"
   printf 'exact_max_m=%s\nnum_speculative_tokens=%s\nprebuilt_exact_attn_metadata=%s\n' "$laguna_m" "$laguna_spec" "$metadata_arg"
   printf 'draft_breakable_graph=%s\ncluster_iface=%s\nlocal_argmax=%s\n' "$draft_graph" "$cluster_iface" "$local_argmax"
-  printf 'dflash_segmented_graph=%s\ndflash_segmented_expected_graphs=20\ndflash_segmented_expected_eager_breaks=19\n' "$dflash_segmented_graph"
+  printf 'dflash_segmented_graph=%s\ndflash_segmented_expected_graphs=%s\ndflash_segmented_expected_eager_breaks=%s\n' "$dflash_segmented_graph" "$dflash_segmented_expected_graphs" "$dflash_segmented_expected_eager_breaks"
   printf 'dflash_segmented_smoke=%s\nscored_measurement=%s\n' "$dflash_segmented_smoke" "$(( 1 - dflash_segmented_smoke ))"
   printf 'capture_attention_graphs=%s\ninline_attention_graphs=%s\n' "$capture_attention" "$inline_attention"
   printf 'width12_router_workspace_stack=%s\nmwide_bf16_router_topk=%s\ndflash_context_kv_workspace=%s\n' "$width12_stack" "$width12_stack" "$width12_stack"
@@ -423,6 +425,7 @@ if (( dflash_segmented_smoke == 1 )); then
     --teacher "$teacher" \
     --benchmark-helper "$benchmark" \
     --server-log "$run_dir/server.log" \
+    --replicated-embedding "$replicated_embedding" \
     --out "$run_dir/segmented-smoke.json" \
     > "$run_dir/segmented-smoke.stdout"
   curl -fsS http://127.0.0.1:18080/metrics \
@@ -449,7 +452,7 @@ fi
 "$venv_python" "$comparator" "${comparator_args[@]}" --candidate "$run_dir/bench.json" --out "$run_dir/exactness-vs-q1.json" > "$run_dir/exactness-vs-q1.stdout"
 jq -e '.fresh_response_validity.valid == true and .fresh_response_validity.each_prompt_run_once == true and .fresh_response_validity.cached_tokens_all_zero == true and .realistic_final_gate.passed == true and .run_identity.prompt_count == 13 and .run_identity.max_tokens == 512 and .run_identity.seed == 1' "$run_dir/bench.json" >/dev/null
 jq -e '.all_exact == true and .candidates[0].comparison.exact_count == 13 and .candidates[0].comparison.total == 13 and .candidates[0].comparison.all_cached_zero == true and .candidates[0].comparison.text_sha256_checked_count == 13 and .candidates[0].comparison.all_text_sha256_equal == true' "$run_dir/exactness-vs-q1.json" >/dev/null
-"$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" "$dflash_fp8" "$dflash_segmented_graph" <<'PY'
+"$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" "$dflash_fp8" "$dflash_segmented_graph" "$replicated_embedding" <<'PY'
 import re
 import sys
 from pathlib import Path
@@ -474,7 +477,11 @@ for name, rows in (("capture", captures), ("replay", replays)):
             f"target graph {name} topology mismatch: "
             f"rows={len(target_rows)} ranks={sorted(observed)}"
         )
-    draft_shape = "(graphs=20, eager_breaks=19)"
+    draft_shape = (
+        "(graphs=19, eager_breaks=18)"
+        if int(sys.argv[6]) == 1
+        else "(graphs=20, eager_breaks=19)"
+    )
     draft_rows = [line for line in rows if draft_shape in line]
     draft_observed = {
         tuple(map(int, match.groups()))

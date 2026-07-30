@@ -148,15 +148,29 @@ def graph_rows(lines: list[str], action: str, shape: str) -> tuple[int, set[tupl
     return len(rows), ranks
 
 
-def validate_graph_log(server_log: Path) -> None:
+def expected_graph_topologies(
+    replicated_embedding: bool,
+) -> tuple[tuple[int, int], tuple[int, int]]:
+    return (
+        (145, 144) if replicated_embedding else (146, 145),
+        (19, 18) if replicated_embedding else (20, 19),
+    )
+
+
+def validate_graph_log(server_log: Path, *, replicated_embedding: bool) -> None:
     expected = {(0, 0), (1, 1), (2, 2), (3, 3)}
+    target_topology, draft_topology = expected_graph_topologies(replicated_embedding)
+    target_shape = (
+        f"(graphs={target_topology[0]}, eager_breaks={target_topology[1]})"
+    )
+    draft_shape = f"(graphs={draft_topology[0]}, eager_breaks={draft_topology[1]})"
     deadline = time.monotonic() + 15
     while True:
         lines = server_log.read_text(encoding="utf-8", errors="replace").splitlines()
         checks = []
         for action in ("Captured", "Replayed"):
-            checks.append(graph_rows(lines, action, "(graphs=146, eager_breaks=145)"))
-            checks.append(graph_rows(lines, action, "(graphs=20, eager_breaks=19)"))
+            checks.append(graph_rows(lines, action, target_shape))
+            checks.append(graph_rows(lines, action, draft_shape))
         if all(count == 4 and ranks == expected for count, ranks in checks):
             return
         if time.monotonic() >= deadline:
@@ -173,6 +187,12 @@ def main() -> int:
     parser.add_argument("--benchmark-helper", type=Path, required=True)
     parser.add_argument("--server-log", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument(
+        "--replicated-embedding",
+        type=int,
+        choices=(0, 1),
+        required=True,
+    )
     args = parser.parse_args()
 
     suite = json.loads(args.suite.read_text(encoding="utf-8"))
@@ -218,14 +238,24 @@ def main() -> int:
         )
         before = after
 
-    validate_graph_log(args.server_log)
+    replicated_embedding = bool(args.replicated_embedding)
+    target_topology, draft_topology = expected_graph_topologies(replicated_embedding)
+    validate_graph_log(
+        args.server_log,
+        replicated_embedding=replicated_embedding,
+    )
     output = {
         "schema": "laguna-dflash-segmented-smoke-v2",
         "status": "PASS",
         "scored_measurement": False,
         "requests": records,
-        "target_graph_topology": "146/145 on 4/4 ranks",
-        "draft_graph_topology": "20/19 on 4/4 ranks",
+        "replicated_embedding": replicated_embedding,
+        "target_graph_topology": (
+            f"{target_topology[0]}/{target_topology[1]} on 4/4 ranks"
+        ),
+        "draft_graph_topology": (
+            f"{draft_topology[0]}/{draft_topology[1]} on 4/4 ranks"
+        ),
     }
     args.out.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(output, indent=2))
