@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-13**
+Last reviewed: **2026-07-30**
 
 ## Authority And Update Rule
 
@@ -15,79 +15,11 @@ that its model is currently loaded.
 
 ## Live Service
 
-### Current two-card host
-
-This host now has **two ASRock Arc Pro B70 32 GiB cards**, not the historical
-four Intel-branded cards described later in this file. Both use `xe`, expose
-full 32 GiB ReBAR, train at PCIe 5.0 x16, and enumerate `normal`. The current
-service is the loopback-only Qwen3.6 27B Q8_0 target-only TP2 endpoint:
-
-- unit: `qwen36-q8-b70.service` (enabled and active; health and exact target-only
-  smoke verified 2026-08-13 after the final optimization deployment; recheck
-  `is-active` before relying on it later);
-- endpoint: `http://127.0.0.1:18080`;
-- launcher: `/home/steve/bin/run-qwen36-q8-b70.sh`;
-- model: `ggml-org/Qwen3.6-27B-GGUF` Q8_0 at revision
-  `8a7ee08e8b9bfb857107ecc25a5599d2f38b76f8`;
-- runtime: mndodd llama.cpp/SYCL fork `4302fb599` plus the complete promoted
-  target-only TP2 lab patch, built low-RAM and DNN-off;
-- protected source: `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl` is dirty by
-  design with that 17-file patch; do not reset or clean it. The independently
-  replayed patch artifact is the durable restore path;
-- contract: target only, F16 KV, graph off, no draft, no prompt cache, one
-  slot, 8192-token context, equal tensor split;
-- safety: `MemoryHigh=8G`, `MemoryMax=10G`, `MemorySwapMax=8G`,
-  `OOMScoreAdjust=900`, and no automatic restart.
-
-Validated fixed-suite performance is **`35.699225 tok/s`** under conventional
-99-inter-token-interval counting and `36.059823 tok/s` under the historical
-helper convention. All 12 outputs were 512 tokens, cache-zero, and byte-exact
-against the accepted pre-state-I/O target-only control. This is `+15.065%`
-over the matched mndodd fork baseline. The promoted [result
-packet](results/qwen36-27b-q8-tp2-asrock-b70/README.md), [standalone
-repro](repro/qwen36-27b-q8-tp2-asrock-b70/README.md), and [complete source
-patch](patches/qwen36-27b-q8-tp2-asrock-b70/README.md) own the final identity.
-The contributor-only baseline and attribution remain in
-[`community/mndodd-qwen36-27b-llamacpp-sycl/`](community/mndodd-qwen36-27b-llamacpp-sycl/).
-TP2 command graphs and `GGML_SYCL_PROFILE=1` are prohibited: graph decode
-aborted/hung, and the profiler reset both compute engines. Both cards recovered
-and passed ordinary workloads.
-
-The target-only Q8 TP2 campaign is promoted at this result. The winning lab
-stack adds exact collective/quantized handoffs, direct persistent-state I/O
-for the recurrent GDN and convolution paths, and a final recurrent RMS/gate/
-multiply/Q8-tail fusion. The state-I/O changes contributed `+3.132%` and
-`+0.855%` respectively; the tail added `+0.219%` in pooled matched A/Bs. Speculative
-MTP/DFlash measurements remain support rows and do not satisfy this objective.
-Do not overlap a model workload with a full BMG AOT compile on this 15 GiB
-host. Equal `1/1` tensor split is required for the symmetry-dependent recurrent
-matchers. Rejected cache hints, asymmetric split, workgroup packing, batched Q/K normalization/RoPE, graph,
-profiler, root-barrier, phase-ordering, and peer-copy doors are recorded in the
-result packet and must not be silently re-enabled. The next compatibility probe
-is the forthcoming Qwen 27B release; first test its architecture and target-only
-quality on the modern upstream tree before porting this exact-shape patch.
-
-### Historical four-card state
-
-The remainder of this section predates the two-card ASRock host and is retained
-for recovery/history only; it does not override the current block above.
-
 No process was listening on the public LAN `:8000` endpoint when the Qwen lane
 was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 26B A4B Q8 coding-agent service. Its restore, validation, and stop procedure is
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
-
-The 2026-08-08 community-validation maintenance window ended with a clean host
-reboot at 17:05 local. All four B70s enumerate and pass per-device XPU
-allocation/matrix compute. All four external root/peer paths are Gen4 x16, all
-four root-port target fields are back at `0004`, and all relevant AER totals are
-zero. The five tracked Gemma/MiniMax/model-slot units are disabled and inactive;
-no model container, worker, or inference listener is running. The external USB
-model volume was remounted read/write at `/mnt/usb-models`, and the stable Qwen
-aliases resolve. The community B2 runtime is not loaded in Docker; its verified
-recoverable archive remains on USB. The maintenance evidence is linked from
-[`community/dominick253-qwen36-35b-fp8-b2-tp2/validation/2026-08-08-pcie-link-sensitivity.md`](community/dominick253-qwen36-35b-fp8-b2-tp2/validation/2026-08-08-pcie-link-sensitivity.md).
 
 No DeepSeek service is currently running. The promoted DSpark7 sharded target-
 argmax record service was stopped cleanly after three strict suites and the
@@ -149,12 +81,9 @@ both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
 per-device allocation/compute, runtime status, and a four-rank exact XCCL gate
 pass, all four external links report Gen4 x16, and ASPM is `default`. The
-external `/mnt/usb-models` volume does not automount. It was recovered from an
-NTFS mirror mismatch and mounted read/write on 2026-08-08; its inventory and
-maintenance warning are recorded in
-[`docs/reference-lab-storage.md`](docs/reference-lab-storage.md). The active
-K160 model is on `/mnt/fast-ai`, and the record launcher maps oneCCL from the
-DeepSeek virtual environment first.
+external `/mnt/usb-models` volume did not automount, but the active K160 model
+is on `/mnt/fast-ai` and the record launcher maps oneCCL from the DeepSeek
+virtual environment first.
 
 The unauthenticated LAN front door is intentional for this private network. Do
 not silently add authentication or change its exposure policy.
@@ -229,6 +158,34 @@ generation, cache-zero policy, fixed suite/metric, 146/145 topology gate,
 source/binary identity, and clean pre/post idle checks. Inspect actual files
 and per-rank logs before accepting harness summaries, and never escalate
 hardware recovery from a probe that did not prove it executed.
+
+### Reopened BF16 frontier: provisional exact 119.189 (2026-07-30)
+
+BF16-KV work was reopened under a new preregistered segmented-DFlash treatment.
+The first formal cold 13-prompt leg measured
+**`119.18937096651626 tok/s`** under the historical published metric and
+**`117.9974772568511 tok/s`** under preferred 99-interval accounting. It is
+13/13 token/text exact, cache-zero, and retained target 146/145 plus draft
+20/19 audited capture/replay on all four ranks:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-segmented-scored-20260730T150033Z
+```
+
+This is a single exact leg, not yet a promoted multi-leg record or a 120 tok/s
+claim. Detailed source, patches, failed-smoke corrections, and evidence are in
+[`2026-07-30-dflash-segmented-graph-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-dflash-segmented-graph-preregistration.md).
+
+The attempted replicated-embedding stack exhausted device memory and reported
+device lost. Its sole 0.82 memory-reserved retry then stalled after all ranks
+logged XCCL topology recognition, before model loading. It was interrupted
+with SIGINT; cleanup and idle checks passed, and no reset ladder followed.
+Current collective health is therefore blocked/unknown despite process
+idleness. Do not run another GPU leg or repeat probes on this boot. Recovery
+requires a separately authorized clean reboot, then strict device checks and
+one corrected bounded TP4 health gate. The replicated route is closed. See
+[`2026-07-30-segmented-dflash-replicated-embedding-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-replicated-embedding-preregistration.md).
 
 ### Active calibrated-FP8-KV lane (2026-07-27)
 
@@ -1424,19 +1381,17 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Keep `qwen36-q8-b70.service` as the bounded loopback target-only endpoint;
-   verify `/health` before relying on it.
-2. Preserve `/mnt/fast-ai/src/llama.cpp-mndodd-intel-sycl` as dirty promoted
-   source. Restore elsewhere from the complete patch; never reset this tree.
-3. Never overlap a BMG AOT build and a loaded model on this host. Retain the
-   documented build and service memory caps.
-4. On the next Qwen 27B release, establish modern-upstream architecture,
-   conversion, target-only load, and quality first. Port only strict-shape
-   optimizations whose graph contracts still match.
-5. Keep DeepSeek and historical four-card lanes paused unless explicitly
-   reopened. Continue to publish only verified matching LocalMaxxing records
-   after the cold realistic gate, complete identity capture, and correctness
-   pass.
+1. Keep the DeepSeek lane paused. Restore the record only from the standalone
+   repro and reopen research only under the explicit frontier-closeout gates.
+2. Preserve the exact DeepSeek vLLM, XPU-kernel, oneCCL, patch, and result
+   identities. Do not relabel later default-off experiments as the record.
+3. Leave the newly started configuration and its active setup work untouched;
+   it is outside this DeepSeek publication closeout.
+4. Preserve `/home/steve/src/llama.cpp` as dirty Qwen research state until its
+   patch snapshots are independently reviewed. Do not reset or clean it for a
+   different model bring-up.
+5. Continue to publish only verified new matching LocalMaxxing records after
+   the cold realistic gate, complete identity capture, and correctness pass.
 
 The detailed state formerly accumulated in this file remains available in Git
 at commit `95b4ca413` (`git show 95b4ca413:CURRENT.md`).
