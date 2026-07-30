@@ -267,3 +267,63 @@ must not be quoted. Interpret the rows as follows:
   the proposer-to-verifier handoff or persistent draft-token storage;
 - request-2 inputs stale with otherwise live hidden output: fix the specific
   stale persistent input rather than changing graph topology.
+
+## Cycle-33 localization and destructive-route retirement
+
+On boot ID `c8586563-1733-4a1d-bbea-c2e49740a1b5`, a strict idle snapshot
+passed and the one corrected pre-run probe completed:
+
+```text
+PROBE_RESULT=PASS clean_teardowns=4/4
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/
+  xccl-rollover-resume-tmKS9k/probe-rollover-resume
+```
+
+Diagnostic commit `51041d05e` then reached candidate code:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-rollover-probe-20260730T130813Z
+```
+
+The first immediate proposer row was healthy: nonzero inputs and positions,
+nonzero hidden state (`abs_mean=0.796171784`, `abs_max=4.1875`), and nonzero
+draft IDs. Final verifier-side draft IDs remained nonzero through cycle 32.
+They changed to eleven zeros at cycle 33 and remained flat zero through every
+observed later cycle. This happened inside the first request: the target
+sequence length entering cycle 33 was about 197, so request rollover was only
+correlated with the earlier observation and is not the cause.
+
+Commit `9f9393bb9` extends the diagnostic to record immediate proposer output
+on every cycle. Its targeted CPU gate is `60 passed`. The attempt to execute it
+never reached model loading:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-cycle33-probe-20260730T131759Z
+```
+
+It stopped after all ranks initialized XCCL and printed topology recognition.
+Formal cleanup passed. A single corrected post-failure probe then established
+that this was a real host-wide collective failure, not a full-model-only
+startup issue:
+
+```text
+PROBE_RESULT=COLLECTIVE_STAGE_FAILURE clean_teardowns=0/4
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/
+  xccl-post-model-hang-7Zi15z/probe-post-model-hang
+```
+
+Every rank reached `all_reduce-start`; none returned. The repeatable sequence
+on this boot was: corrected probe PASS, one DFlash-graph service executes and
+turns drafts to zero at cycle 33, clean process teardown, then both the next
+service and a minimal corrected collective fail. The graph route is therefore
+retired as both incorrect and operationally destructive. Apparent graph rates
+remain invalid. No driver reload, FLR, shared-memory deletion, or automatic
+reboot followed.
+
+Future work must return to the safe BF16 incumbent and must not enable
+`VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH`. Offline kernel work can continue on
+the current host; any later GPU validation requires a user-approved clean
+reboot and should keep the healthy service alive across as many diagnostics as
+possible.
