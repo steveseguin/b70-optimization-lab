@@ -273,3 +273,27 @@ This validates bounded live correctness and graph replay beyond cycle 33. It
 does not establish 13/13 full-suite exactness or throughput. The next permitted
 step is one formal scored leg with the same identity and the smoke-only flag
 disabled.
+
+## First formal scored leg: exact 119.189 tok/s
+
+The first full-suite leg passed:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-segmented-scored-20260730T150033Z
+```
+
+- historical published metric:
+  `119.18937096651626 tok/s`;
+- preferred 99-interval metric:
+  `117.9974772568511 tok/s`;
+- 13/13 exact token IDs and response text hashes against q=1;
+- all 13 `cached_tokens` values zero;
+- one invocation of each fixed unique prompt, no retries or warmup;
+- target capture/replay 146/145 and draft capture/replay 20/19 on all four
+  ranks; and
+- graceful shutdown plus formal post-idle proof: pass.
+
+Relative to the `102.134914 tok/s` incumbent cited at preregistration, the
+historical metric is about 16.7% higher. This is one cold leg, not a confirmed
+multi-leg median or a 120 tok/s claim. It is 0.811 tok/s below the 120 target.
