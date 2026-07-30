@@ -152,3 +152,58 @@ If the graph is exact and its conventional rate is promising, measure it
 interleaved against the frozen `46a88e0` incumbent. Do not report the first
 high draw as 120; promote only a repeated median win.
 
+## Post-reboot draft-graph results
+
+The reboot restored the four-rank probe:
+
+```text
+PROBE_RESULT=PASS clean_teardowns=4/4
+```
+
+The length-generic warmup candidate then ran, but was rejected:
+
+| candidate | result |
+| --- | --- |
+| max-model-length attention metadata | 0/13 exact; median 540.006 tok/s; token id 0 after capture |
+| retain final graph output | 0/13 exact; median 535.338 tok/s; first request plausible, later requests flat 100% acceptance |
+| retain output + materialize graph/eager boundaries | rejected early; later requests again flat 100% acceptance |
+
+The apparent 535–540 tok/s rates are corrupt-output artifacts and must never
+be quoted as throughput. Retaining the final output and materializing
+cross-boundary intermediates did not fix replay. Their source commits remain
+preserved as failed experiments:
+
+```text
+15202057c xpu: retain captured Laguna drafter outputs
+28684cb3b xpu: materialize Laguna drafter graph boundaries
+```
+
+The stronger pattern is request rollover: the first request has a normal
+decaying acceptance curve near 50%, while later requests become flat 100%.
+That rules out a graph that is universally unable to replay and points at the
+synthetic-warmup to live-request state transition.
+
+A guarded first-live capture candidate was therefore implemented:
+
+```text
+worktree=/home/steve/src/laguna-vllm-dflash-graph-bf16-20260729
+commit=ea6dac25f
+```
+
+It leaves synthetic DFlash warmup eager, then authorizes exactly one capture
+from the first live request after real context K/V, positions, and block-table
+state exist. The 60-test CPU gate passes. It has **not** reached candidate code
+on TP4: its first formal launch stalled during XCCL initialization.
+
+After clean harness teardown, exactly one corrected probe classified the host:
+
+```text
+PROBE_RESULT=COLLECTIVE_STAGE_FAILURE clean_teardowns=0/4
+artifacts=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/tmp/xccl-livecapture-uJl0ll/probe-livecapture-gate-20260730T0152Z
+```
+
+All ranks reached `all_reduce-start`; none completed. No causal claim about the
+live-capture candidate can be made from this infrastructure failure. Recovery
+policy remains a clean reboot followed by one corrected probe—never driver
+reload, FLR, shared-memory deletion, or a ladder triggered from summary
+counters.
