@@ -247,3 +247,29 @@ tokens cannot guarantee more than 33 cycles when one cycle can emit as many as
 cycles even with perfect draft acceptance. The two selected q=1 teacher rows
 both contain 512 tokens, so the exact-prefix oracle remains available. This
 diagnostic remains non-scored and makes no throughput claim.
+
+## Corrected bounded smoke: pass
+
+The 400-token correction passed:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-segmented-smoke-20260730T145325Z
+```
+
+- status: `PASS`, `scored_measurement=false`;
+- both fixed q=1 teacher prefixes exact for 400 tokens;
+- `cached_tokens=0` for both requests;
+- request-local draft cycles: 105 and 62;
+- accepted draft tokens: 299/1155 and 338/682;
+- both per-position acceptance curves were non-increasing and extended through
+  position 10;
+- target capture and replay: 146/145 on all four ranks;
+- draft capture and replay: 20/19 on all four ranks; and
+- graceful shutdown, worker/listener removal, and formal post-idle proof:
+  pass.
+
+This validates bounded live correctness and graph replay beyond cycle 33. It
+does not establish 13/13 full-suite exactness or throughput. The next permitted
+step is one formal scored leg with the same identity and the smoke-only flag
+disabled.
