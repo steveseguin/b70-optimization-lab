@@ -75,13 +75,13 @@ def test_speculation_gate_rejects_flat_or_nondecaying_curve(
 def test_graph_rows_require_rank_complete_topology() -> None:
     lines = [
         f"Worker_TP{rank}_EP{rank} Captured audited breakable cudagraph "
-        "BreakableCUDAGraphCapture(graphs=19, eager_breaks=18)"
+        "BreakableCUDAGraphCapture(graphs=20, eager_breaks=19)"
         for rank in range(4)
     ]
     count, ranks = smoke.graph_rows(
         lines,
         "Captured",
-        "(graphs=19, eager_breaks=18)",
+        "(graphs=20, eager_breaks=19)",
     )
     assert count == 4
     assert ranks == {(0, 0), (1, 1), (2, 2), (3, 3)}

@@ -151,7 +151,7 @@ def validate_graph_log(server_log: Path) -> None:
         checks = []
         for action in ("Captured", "Replayed"):
             checks.append(graph_rows(lines, action, "(graphs=146, eager_breaks=145)"))
-            checks.append(graph_rows(lines, action, "(graphs=19, eager_breaks=18)"))
+            checks.append(graph_rows(lines, action, "(graphs=20, eager_breaks=19)"))
         if all(count == 4 and ranks == expected for count, ranks in checks):
             return
         if time.monotonic() >= deadline:
@@ -218,7 +218,7 @@ def main() -> int:
         "scored_measurement": False,
         "requests": records,
         "target_graph_topology": "146/145 on 4/4 ranks",
-        "draft_graph_topology": "19/18 on 4/4 ranks",
+        "draft_graph_topology": "20/19 on 4/4 ranks",
     }
     args.out.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(output, indent=2))

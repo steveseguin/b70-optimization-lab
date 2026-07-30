@@ -109,8 +109,8 @@ readonly dequant_mad="${24:-}"
 # group_size % tile_k == 0 is asserted. Bitwise-neutral by construction.
 readonly scale_hoist="${25:-}"
 # Safe replacement for the retired whole-drafter graph. Captures only DFlash
-# compute segments; six attention calls and twelve TP all-reduces remain eager.
-# The candidate has its own audited 19/18 topology and requires draft_graph=0.
+# compute segments; six attention calls and thirteen TP all-reduces remain eager.
+# The candidate has its own audited 20/19 topology and requires draft_graph=0.
 readonly dflash_segmented_graph="${26:-0}"
 # Diagnostic gate only: run two 128-token requests and validate each against
 # the q=1 teacher prefix, request-local speculation, graph topology, and clean
@@ -374,7 +374,7 @@ verify_idle_interval prestart
   printf 'replicated_embedding=%s\n' "$replicated_embedding"
   printf 'exact_max_m=%s\nnum_speculative_tokens=%s\nprebuilt_exact_attn_metadata=%s\n' "$laguna_m" "$laguna_spec" "$metadata_arg"
   printf 'draft_breakable_graph=%s\ncluster_iface=%s\nlocal_argmax=%s\n' "$draft_graph" "$cluster_iface" "$local_argmax"
-  printf 'dflash_segmented_graph=%s\ndflash_segmented_expected_graphs=19\ndflash_segmented_expected_eager_breaks=18\n' "$dflash_segmented_graph"
+  printf 'dflash_segmented_graph=%s\ndflash_segmented_expected_graphs=20\ndflash_segmented_expected_eager_breaks=19\n' "$dflash_segmented_graph"
   printf 'dflash_segmented_smoke=%s\nscored_measurement=%s\n' "$dflash_segmented_smoke" "$(( 1 - dflash_segmented_smoke ))"
   printf 'capture_attention_graphs=%s\ninline_attention_graphs=%s\n' "$capture_attention" "$inline_attention"
   printf 'width12_router_workspace_stack=%s\nmwide_bf16_router_topk=%s\ndflash_context_kv_workspace=%s\n' "$width12_stack" "$width12_stack" "$width12_stack"
@@ -474,7 +474,7 @@ for name, rows in (("capture", captures), ("replay", replays)):
             f"target graph {name} topology mismatch: "
             f"rows={len(target_rows)} ranks={sorted(observed)}"
         )
-    draft_shape = "(graphs=19, eager_breaks=18)"
+    draft_shape = "(graphs=20, eager_breaks=19)"
     draft_rows = [line for line in rows if draft_shape in line]
     draft_observed = {
         tuple(map(int, match.groups()))

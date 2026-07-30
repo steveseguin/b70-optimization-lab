@@ -1,0 +1,91 @@
+From 4f5e7a63cbd0d0bb409207e079421d0d5532d197 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 30 Jul 2026 10:45:15 -0400
+Subject: [PATCH] xpu: account for DFlash embedding collective
+
+---
+ tests/v1/cudagraph/test_laguna_dflash_collectives.py |  6 +++---
+ vllm/compilation/laguna_dflash_collectives.py        | 10 ++++++----
+ vllm/v1/worker/gpu_model_runner.py                   |  4 ++--
+ 3 files changed, 11 insertions(+), 9 deletions(-)
+
+diff --git a/tests/v1/cudagraph/test_laguna_dflash_collectives.py b/tests/v1/cudagraph/test_laguna_dflash_collectives.py
+index 8aa2aed41..60dda9cec 100644
+--- a/tests/v1/cudagraph/test_laguna_dflash_collectives.py
++++ b/tests/v1/cudagraph/test_laguna_dflash_collectives.py
+@@ -30,7 +30,7 @@ def test_dflash_collective_slots_are_fixed_and_ordered(
+     state = LagunaDFlashCollectiveState(torch.device("cpu"))
+     local = torch.ones((12, 3072), dtype=torch.bfloat16)
+     addresses = [output.data_ptr() for output in state.reduces]
+-    assert len(addresses) == len(set(addresses)) == 12
++    assert len(addresses) == len(set(addresses)) == 13
+ 
+     state.reset_for_forward()
+     for index, address in enumerate(addresses):
+@@ -54,9 +54,9 @@ def test_dflash_collective_contract_fails_closed(
+         state.finish_forward()
+ 
+     local = torch.ones((12, 3072), dtype=torch.bfloat16)
+-    for _ in range(12):
++    for _ in range(13):
+         state.all_reduce(local)
+-    with pytest.raises(RuntimeError, match="exceeded its 12"):
++    with pytest.raises(RuntimeError, match="exceeded its 13"):
+         state.all_reduce(local)
+ 
+ 
+diff --git a/vllm/compilation/laguna_dflash_collectives.py b/vllm/compilation/laguna_dflash_collectives.py
+index b9a3fb709..e7ce550ce 100644
+--- a/vllm/compilation/laguna_dflash_collectives.py
++++ b/vllm/compilation/laguna_dflash_collectives.py
+@@ -4,8 +4,10 @@
+ 
+ The rejected whole-drafter graph did not give DFlash collectives explicit
+ eager boundaries. This state mirrors the proven target-graph rule on a much
+-narrower contract: twelve ordered BF16 all-reduces, each [12, 3072], with a
+-dedicated fixed-address output allocated before capture.
++narrower contract: thirteen ordered BF16 all-reduces, each [12, 3072], with a
++dedicated fixed-address output allocated before capture. The shared
++vocabulary-parallel embedding contributes one reduction before the two
++reductions in each of the six DFlash decoder layers.
+ """
+ 
+ from __future__ import annotations
+@@ -21,7 +23,7 @@ from vllm.utils.torch_utils import weak_ref_tensor
+ 
+ _ROWS = 12
+ _HIDDEN_SIZE = 3072
+-_REDUCE_COUNT = 12
++_REDUCE_COUNT = 13
+ 
+ 
+ class LagunaDFlashCollectiveState:
+@@ -45,7 +47,7 @@ class LagunaDFlashCollectiveState:
+         self._executed = 0
+ 
+     def finish_forward(self) -> None:
+-        # Capture walks the Python model and claims all twelve slots. Replay
++        # Capture walks the Python model and claims all thirteen slots. Replay
+         # invokes the recorded eager callables directly, so no slot claims are
+         # observed. Both states are intentional; every eager callable must
+         # still execute.
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 2c1a67d02..388832b80 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -6265,10 +6265,10 @@ class GPUModelRunner(
+                         envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+                     ),
+                     expected_num_graphs=(
+-                        19 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
++                        20 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
+                     ),
+                     expected_num_eager_breaks=(
+-                        18 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
++                        19 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
+                     ),
+                 )
+         elif (
+-- 
+2.43.0
+
