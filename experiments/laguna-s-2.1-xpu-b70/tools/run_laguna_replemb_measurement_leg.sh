@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # One Laguna M8 Breakable-graph leg with the replicated-embedding selector.
-# A copy of the sealed measurement leg, which must stay byte-identical because
-# the record packet hashes it. Every difference from that file is the fifteenth
-# argument and what it controls.
+# Descended from the sealed measurement leg. Every added treatment is explicit,
+# recorded in identity.txt, and validated before the service starts.
 # No warmup is performed.  The caller must execute the four legs sequentially.
 set -euo pipefail
 umask 077
@@ -109,6 +108,10 @@ readonly dequant_mad="${24:-}"
 # of the mainloop body; the scale only changes on group boundaries and
 # group_size % tile_k == 0 is asserted. Bitwise-neutral by construction.
 readonly scale_hoist="${25:-}"
+# Safe replacement for the retired whole-drafter graph. Captures only DFlash
+# compute segments; six attention calls and twelve TP all-reduces remain eager.
+# The candidate has its own audited 19/18 topology and requires draft_graph=0.
+readonly dflash_segmented_graph="${26:-0}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
@@ -152,7 +155,11 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 25 )) || { echo "seven to twenty-five arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 26 )) || { echo "seven to twenty-six arguments are required" >&2; exit 2; }
+[[ "$dflash_segmented_graph" == 0 || "$dflash_segmented_graph" == 1 ]] ||
+  { echo "DFLASH_SEGMENTED_GRAPH must be 0 or 1" >&2; exit 2; }
+(( draft_graph == 0 || dflash_segmented_graph == 0 )) ||
+  { echo "retired whole-draft graph and segmented draft graph are mutually exclusive" >&2; exit 2; }
 case "$draft_graph" in 0|1) ;; *) echo "DRAFTGRAPH must be 0 or 1" >&2; exit 2 ;; esac
 case "$metadata_arg" in 0|1) ;; *) echo "METADATA must be 0 or 1" >&2; exit 2 ;; esac
 case "$fusions" in 0|1) ;; *) echo "FUSIONS must be 0 or 1" >&2; exit 2 ;; esac
@@ -176,6 +183,14 @@ case "$dflash_fp8" in 0|1) ;; *) echo "DFLASH_FP8 must be 0 or 1" >&2; exit 2 ;;
   || { echo "DFLASH_FP8=1 requires WIDTH12_STACK=1" >&2; exit 2; }
 [[ "$dflash_fp8" == 0 || "$treatment" == candidate ]] \
   || { echo "DFLASH_FP8=1 requires candidate treatment" >&2; exit 2; }
+(( dflash_segmented_graph == 0 || width12_stack == 1 )) \
+  || { echo "DFLASH_SEGMENTED_GRAPH=1 requires WIDTH12_STACK=1" >&2; exit 2; }
+(( dflash_segmented_graph == 0 || dflash_fp8 == 1 )) \
+  || { echo "DFLASH_SEGMENTED_GRAPH=1 requires DFLASH_FP8=1" >&2; exit 2; }
+(( dflash_segmented_graph == 0 || (laguna_m == 12 && laguna_spec == 11) )) \
+  || { echo "DFLASH_SEGMENTED_GRAPH=1 requires M=12 and SPEC=11" >&2; exit 2; }
+[[ "$dflash_segmented_graph" == 0 || "$treatment" == candidate ]] \
+  || { echo "DFLASH_SEGMENTED_GRAPH=1 requires candidate treatment" >&2; exit 2; }
 
 die() { echo "Laguna formal M8 crossover leg: $*" >&2; exit 2; }
 
@@ -349,6 +364,7 @@ verify_idle_interval prestart
   printf 'replicated_embedding=%s\n' "$replicated_embedding"
   printf 'exact_max_m=%s\nnum_speculative_tokens=%s\nprebuilt_exact_attn_metadata=%s\n' "$laguna_m" "$laguna_spec" "$metadata_arg"
   printf 'draft_breakable_graph=%s\ncluster_iface=%s\nlocal_argmax=%s\n' "$draft_graph" "$cluster_iface" "$local_argmax"
+  printf 'dflash_segmented_graph=%s\ndflash_segmented_expected_graphs=19\ndflash_segmented_expected_eager_breaks=18\n' "$dflash_segmented_graph"
   printf 'capture_attention_graphs=%s\ninline_attention_graphs=%s\n' "$capture_attention" "$inline_attention"
   printf 'width12_router_workspace_stack=%s\nmwide_bf16_router_topk=%s\ndflash_context_kv_workspace=%s\n' "$width12_stack" "$width12_stack" "$width12_stack"
   printf 'dflash_fp8_w8a16=%s\ndflash_fp8_target_unchanged=true\n' "$dflash_fp8"
@@ -360,7 +376,7 @@ verify_idle_interval prestart
   printf 'fa2_binary_sha256=%s\n' "$(sha256sum "$kernel_root/vllm_xpu_kernels/_vllm_fa2_C.abi3.so" | awk '{print $1}')"
   printf 'attn_library_sha256=%s\n' "$(sha256sum "$kernel_root/vllm_xpu_kernels/libattn_kernels_xe_2.so" | awk '{print $1}')"
   printf 'grouped_gemm_default_sha256=%s\ngdn_attn_library_sha256=%s\nmqa_logits_library_sha256=%s\nmhc_library_sha256=%s\n' "$(sha256sum "$kernel_package/libgrouped_gemm_xe_default.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/libgdn_attn_kernels_xe_2.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/libmqa_logits_kernels_xe_2.so" | awk '{print $1}')" "$(sha256sum "$kernel_package/libmhc_kernels_xe_2.so" | awk '{print $1}')"
-  printf 'suite_sha256=%s\nteacher_sha256=%s\nteacher_text_oracle_sha256=%s\nselector_stack=exact-m%s-dflash%s-breakablegraph-w1routew2-routeinterleave-n64-routerworkspace%s-draftfp8%s\n' "$expected_suite" "$expected_teacher" "${expected_teacher_text_oracle:-embedded-in-teacher}" "$laguna_m" "$laguna_spec" "$width12_stack" "$dflash_fp8"
+  printf 'suite_sha256=%s\nteacher_sha256=%s\nteacher_text_oracle_sha256=%s\nselector_stack=exact-m%s-dflash%s-breakablegraph-w1routew2-routeinterleave-n64-routerworkspace%s-draftfp8%s-draftseg%s\n' "$expected_suite" "$expected_teacher" "${expected_teacher_text_oracle:-embedded-in-teacher}" "$laguna_m" "$laguna_spec" "$width12_stack" "$dflash_fp8" "$dflash_segmented_graph"
   printf 'metadata_selector=%s\nattention_capture_selector=%s\ninline_attention_selector=%s\n' "$metadata_selector" "$capture_attention" "$inline_attention"
   printf 'expected_num_graphs=%s\nexpected_num_eager_breaks=%s\n' "$expected_num_graphs" "$expected_num_eager_breaks"
   printf 'no_warmup=true\nsuite_invocations=1\nretries=0\nverified_idle_interval_seconds=60\n'
@@ -373,7 +389,7 @@ setsid /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp" \
   HF_HOME="$run_dir/private-cache/hf" HF_HUB_CACHE="$run_dir/private-cache/hf/hub" TRANSFORMERS_CACHE="$run_dir/private-cache/hf/transformers" VLLM_CACHE_ROOT="$run_dir/private-cache/vllm" TORCHINDUCTOR_CACHE_DIR="$run_dir/private-cache/torchinductor" TRITON_CACHE_DIR="$run_dir/private-cache/triton" SYCL_CACHE_DIR="$run_dir/private-cache/sycl" NUMBA_CACHE_DIR="$run_dir/private-cache/numba" PYTHONPYCACHEPREFIX="$run_dir/private-cache/pycache" XDG_CACHE_HOME="$run_dir/private-cache" XDG_CONFIG_HOME="$run_dir/private-xdg/config" XDG_DATA_HOME="$run_dir/private-xdg/data" XDG_STATE_HOME="$run_dir/private-xdg/state" \
   PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD= ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path" \
-  VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
+  VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH="$dflash_segmented_graph" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0 VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
   "$serve_script" "$run_dir" >"$run_dir/server.log" 2>&1 &
 server_pid="$!"; printf '%s\n' "$server_pid" > "$run_dir/server.pid"
 for _ in $(seq 1 180); do curl -fsS http://127.0.0.1:18080/health >/dev/null 2>&1 && break; service_alive || die "service exited before health"; sleep 5; done
@@ -383,6 +399,7 @@ grep -Fx "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=$width12_stack" "$run_dir/service-
 grep -Fx "VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=$width12_stack" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=$width12_stack" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=$dflash_fp8" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=$dflash_segmented_graph" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING=$replicated_embedding" "$run_dir/service-environment.txt" >/dev/null
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before-suite.prom"
 cd "$repo_root"
@@ -396,7 +413,7 @@ fi
 "$venv_python" "$comparator" "${comparator_args[@]}" --candidate "$run_dir/bench.json" --out "$run_dir/exactness-vs-q1.json" > "$run_dir/exactness-vs-q1.stdout"
 jq -e '.fresh_response_validity.valid == true and .fresh_response_validity.each_prompt_run_once == true and .fresh_response_validity.cached_tokens_all_zero == true and .realistic_final_gate.passed == true and .run_identity.prompt_count == 13 and .run_identity.max_tokens == 512 and .run_identity.seed == 1' "$run_dir/bench.json" >/dev/null
 jq -e '.all_exact == true and .candidates[0].comparison.exact_count == 13 and .candidates[0].comparison.total == 13 and .candidates[0].comparison.all_cached_zero == true and .candidates[0].comparison.text_sha256_checked_count == 13 and .candidates[0].comparison.all_text_sha256_equal == true' "$run_dir/exactness-vs-q1.json" >/dev/null
-"$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" "$dflash_fp8" <<'PY'
+"$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" "$dflash_fp8" "$dflash_segmented_graph" <<'PY'
 import re
 import sys
 from pathlib import Path
@@ -410,15 +427,36 @@ replays = [line for line in lines if "Replayed audited breakable cudagraph" in l
 rank = re.compile(r"Worker_TP([0-3])_EP([0-3])")
 expected = {(0, 0), (1, 1), (2, 2), (3, 3)}
 for name, rows in (("capture", captures), ("replay", replays)):
-    observed = {tuple(map(int, match.groups())) for line in rows if (match := rank.search(line))}
-    if len(rows) != 4 or observed != expected:
-        raise SystemExit(f"graph {name} topology mismatch: rows={len(rows)} ranks={sorted(observed)}")
-    shapes = {line.split("BreakableCUDAGraphCapture")[-1] for line in rows}
-    if len(shapes) != 1:
-        raise SystemExit(f"graph {name} topology differs across ranks: {shapes}")
-    if any(expected_shape not in line for line in rows):
+    target_rows = [line for line in rows if expected_shape in line]
+    observed = {
+        tuple(map(int, match.groups()))
+        for line in target_rows
+        if (match := rank.search(line))
+    }
+    if len(target_rows) != 4 or observed != expected:
         raise SystemExit(
-            f"graph {name} topology is not {expected_shape}: {sorted(shapes)}"
+            f"target graph {name} topology mismatch: "
+            f"rows={len(target_rows)} ranks={sorted(observed)}"
+        )
+    draft_shape = "(graphs=19, eager_breaks=18)"
+    draft_rows = [line for line in rows if draft_shape in line]
+    draft_observed = {
+        tuple(map(int, match.groups()))
+        for line in draft_rows
+        if (match := rank.search(line))
+    }
+    if int(sys.argv[5]) == 1:
+        if len(draft_rows) != 4 or draft_observed != expected:
+            raise SystemExit(
+                f"draft graph {name} topology mismatch: "
+                f"rows={len(draft_rows)} ranks={sorted(draft_observed)}"
+            )
+        if len(rows) != 8:
+            raise SystemExit(f"unexpected audited {name} rows: {len(rows)}")
+    elif draft_rows or len(rows) != 4:
+        raise SystemExit(
+            f"draft graph appeared in flag-off {name}: "
+            f"draft_rows={len(draft_rows)} all_rows={len(rows)}"
         )
 fp8_rows = [
     line for line in lines
