@@ -163,7 +163,7 @@ DFlash candidate.
 Before the scored suite, the measurement leg's explicit 27th argument can
 select a non-scored two-request smoke. It:
 
-- emits exactly 128 tokens from fixed suite rows 0 and 1, crossing the old
+- emits exactly 400 tokens from fixed suite rows 0 and 1, crossing the old
   cycle-33 failure boundary and one live request rollover;
 - requires each emitted token prefix to equal the canonical q=1 teacher and
   requires `cached_tokens=0`;
@@ -224,3 +224,26 @@ The correction is preserved separately from the initial implementation:
 - focused vLLM tests: `9 passed`;
 - smoke parser tests: `4 passed`; and
 - Python compilation, Ruff, Bash syntax, and Git whitespace checks: pass.
+
+## Corrected-topology smoke: graph pass, harness gate invalid
+
+The corrected source reached the live endpoint in:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-segmented-smoke-20260730T144638Z
+```
+
+All four ranks captured and replayed the corrected draft 20/19 topology and
+the unchanged target 146/145 topology. Both 128-token requests returned HTTP
+200, after which the diagnostic rejected request index 1 because it used no
+more than 33 speculative cycles. The service again shut down gracefully and
+the formal worker and idle checks passed.
+
+That rejection exposed a harness error, not a candidate error: 128 emitted
+tokens cannot guarantee more than 33 cycles when one cycle can emit as many as
+12 tokens. The smoke length is therefore corrected to 400 tokens. Since
+`400 > 33 * 12`, every complete 400-token response must execute at least 34
+cycles even with perfect draft acceptance. The two selected q=1 teacher rows
+both contain 512 tokens, so the exact-prefix oracle remains available. This
+diagnostic remains non-scored and makes no throughput claim.

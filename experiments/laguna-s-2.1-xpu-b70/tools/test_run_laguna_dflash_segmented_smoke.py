@@ -12,6 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import run_laguna_dflash_segmented_smoke as smoke
 
 
+def test_smoke_length_guarantees_crossing_prior_failure_cycle() -> None:
+    assert (
+        smoke._SMOKE_TOKENS
+        > smoke._PRIOR_FAILURE_CYCLE * smoke._MAX_EMITTED_PER_CYCLE
+    )
+
+
 def metrics(
     *,
     drafts: int,

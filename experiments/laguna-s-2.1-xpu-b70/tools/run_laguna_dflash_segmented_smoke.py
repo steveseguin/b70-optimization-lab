@@ -14,6 +14,10 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+_PRIOR_FAILURE_CYCLE = 33
+_MAX_EMITTED_PER_CYCLE = 12
+_SMOKE_TOKENS = 400
+
 
 def load_benchmark(path: Path) -> ModuleType:
     spec = importlib.util.spec_from_file_location("laguna_smoke_benchmark", path)
@@ -78,7 +82,7 @@ def validate_speculation(delta: dict[str, Any], request_index: int) -> None:
     draft_tokens = int(delta["draft_tokens"])
     accepted = int(delta["accepted_tokens"])
     per_position = [int(value) for value in delta["accepted_per_position"]]
-    if drafts <= 33:
+    if drafts <= _PRIOR_FAILURE_CYCLE:
         raise RuntimeError(
             f"request {request_index} did not cross the prior cycle-33 boundary"
         )
@@ -110,13 +114,13 @@ def validate_response(
     request_index: int,
 ) -> None:
     actual_ids = [int(value) for value in result["token_ids"]]
-    expected_ids = [int(value) for value in expected["token_ids"][:128]]
+    expected_ids = [int(value) for value in expected["token_ids"][:_SMOKE_TOKENS]]
     prompt_sha = hashlib.sha256(prompt["prompt"].encode()).hexdigest()
     if (
         expected.get("prompt_index") != request_index
         or expected.get("prompt_id") != prompt["id"]
         or expected.get("prompt_sha256") != prompt_sha
-        or result.get("completion_tokens") != 128
+        or result.get("completion_tokens") != _SMOKE_TOKENS
         or actual_ids != expected_ids
         or result.get("usage", {})
         .get("prompt_tokens_details", {})
@@ -124,7 +128,8 @@ def validate_response(
         != 0
     ):
         raise RuntimeError(
-            f"request {request_index} failed its 128-token q=1 prefix/cache gate"
+            f"request {request_index} failed its {_SMOKE_TOKENS}-token "
+            "q=1 prefix/cache gate"
         )
 
 
@@ -176,6 +181,8 @@ def main() -> int:
     expected_rows = teacher["rows"][:2]
     if len(prompts) != 2 or len(expected_rows) != 2:
         raise RuntimeError("smoke requires the first two fixed suite/teacher rows")
+    if _SMOKE_TOKENS <= _PRIOR_FAILURE_CYCLE * _MAX_EMITTED_PER_CYCLE:
+        raise RuntimeError("smoke length cannot guarantee crossing cycle 33")
 
     benchmark = load_benchmark(args.benchmark_helper)
     before = fetch_metrics(args.base_url)
@@ -185,7 +192,7 @@ def main() -> int:
             base_url=args.base_url,
             model=args.model,
             prompt=prompt["prompt"],
-            max_tokens=128,
+            max_tokens=_SMOKE_TOKENS,
             timeout=600,
             api_mode="chat",
             seed=1,
@@ -213,7 +220,7 @@ def main() -> int:
 
     validate_graph_log(args.server_log)
     output = {
-        "schema": "laguna-dflash-segmented-smoke-v1",
+        "schema": "laguna-dflash-segmented-smoke-v2",
         "status": "PASS",
         "scored_measurement": False,
         "requests": records,

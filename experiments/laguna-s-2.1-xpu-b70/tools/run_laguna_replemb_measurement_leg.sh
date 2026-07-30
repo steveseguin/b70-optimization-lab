@@ -112,7 +112,7 @@ readonly scale_hoist="${25:-}"
 # compute segments; six attention calls and thirteen TP all-reduces remain eager.
 # The candidate has its own audited 20/19 topology and requires draft_graph=0.
 readonly dflash_segmented_graph="${26:-0}"
-# Diagnostic gate only: run two 128-token requests and validate each against
+# Diagnostic gate only: run two 400-token requests and validate each against
 # the q=1 teacher prefix, request-local speculation, graph topology, and clean
 # teardown. It emits no score and is valid only for the segmented candidate.
 readonly dflash_segmented_smoke="${27:-0}"
