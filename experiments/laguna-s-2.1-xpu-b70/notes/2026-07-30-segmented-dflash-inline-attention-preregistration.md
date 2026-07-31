@@ -90,3 +90,31 @@ draft expectation to 14/13 only when inline mode is selected.
 
 These are offline results only. The next authorized device action is one
 non-scored 400-token smoke.
+
+## Non-scored live smoke: substantive gates pass, stale analyzer rejects
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-inline-attention-smoke-20260731T034640Z
+```
+
+The sole authorized smoke ran both 400-token requests. The smoke program
+validates each response, cache counter, draft-cycle count, and decaying
+accepted-per-position curve before it inspects graph logs. It reached the
+graph-log check, proving those request gates passed. The server log records
+target 146/145 and the preregistered draft 14/13 for capture and replay on all
+four ranks, with no runtime/device/collective error. Cleanup reports
+`original_status=1 stop_status=0 worker_status=0 idle_status=0`.
+
+The nonzero original status came only from a stale smoke-analyzer constant:
+it still searched for draft 20/19, so it reported zero matching draft rows
+despite the actual required 14/13 rows being present 4/4 for both capture and
+replay. The service is not rerun. The analyzer and scored topology checker now
+take explicit expected draft graph/break counts from the harness; their CPU
+gate passes, including 14/13.
+
+All substantive preregistered smoke gates passed in the one device attempt.
+The next authorized action is one cold 13-prompt score with the repaired
+analyzer plumbing and the same candidate identity.

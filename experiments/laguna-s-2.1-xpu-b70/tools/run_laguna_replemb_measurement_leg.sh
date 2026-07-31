@@ -479,6 +479,8 @@ if (( dflash_segmented_smoke == 1 )); then
     --benchmark-helper "$benchmark" \
     --server-log "$run_dir/server.log" \
     --replicated-embedding "$replicated_embedding" \
+    --draft-graphs "$dflash_segmented_expected_graphs" \
+    --draft-eager-breaks "$dflash_segmented_expected_eager_breaks" \
     --out "$run_dir/segmented-smoke.json" \
     > "$run_dir/segmented-smoke.stdout"
   curl -fsS http://127.0.0.1:18080/metrics \
@@ -505,7 +507,7 @@ fi
 "$venv_python" "$comparator" "${comparator_args[@]}" --candidate "$run_dir/bench.json" --out "$run_dir/exactness-vs-q1.json" > "$run_dir/exactness-vs-q1.stdout"
 jq -e '.fresh_response_validity.valid == true and .fresh_response_validity.each_prompt_run_once == true and .fresh_response_validity.cached_tokens_all_zero == true and .realistic_final_gate.passed == true and .run_identity.prompt_count == 13 and .run_identity.max_tokens == 512 and .run_identity.seed == 1' "$run_dir/bench.json" >/dev/null
 jq -e '.all_exact == true and .candidates[0].comparison.exact_count == 13 and .candidates[0].comparison.total == 13 and .candidates[0].comparison.all_cached_zero == true and .candidates[0].comparison.text_sha256_checked_count == 13 and .candidates[0].comparison.all_text_sha256_equal == true' "$run_dir/exactness-vs-q1.json" >/dev/null
-"$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" "$dflash_fp8" "$dflash_segmented_graph" "$replicated_embedding" <<'PY'
+"$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" "$dflash_fp8" "$dflash_segmented_graph" "$dflash_segmented_expected_graphs" "$dflash_segmented_expected_eager_breaks" <<'PY'
 import re
 import sys
 from pathlib import Path
@@ -531,9 +533,7 @@ for name, rows in (("capture", captures), ("replay", replays)):
             f"rows={len(target_rows)} ranks={sorted(observed)}"
         )
     draft_shape = (
-        "(graphs=19, eager_breaks=18)"
-        if int(sys.argv[6]) == 1
-        else "(graphs=20, eager_breaks=19)"
+        f"(graphs={int(sys.argv[6])}, eager_breaks={int(sys.argv[7])})"
     )
     draft_rows = [line for line in rows if draft_shape in line]
     draft_observed = {

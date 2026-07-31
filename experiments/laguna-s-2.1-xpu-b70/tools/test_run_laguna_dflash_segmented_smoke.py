@@ -22,6 +22,10 @@ def test_smoke_length_guarantees_crossing_prior_failure_cycle() -> None:
 def test_graph_topologies_follow_replicated_embedding() -> None:
     assert smoke.expected_graph_topologies(False) == ((146, 145), (20, 19))
     assert smoke.expected_graph_topologies(True) == ((145, 144), (19, 18))
+    assert smoke.expected_graph_topologies(False, 14, 13) == (
+        (146, 145),
+        (14, 13),
+    )
 
 
 def metrics(

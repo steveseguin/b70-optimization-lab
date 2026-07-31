@@ -150,16 +150,35 @@ def graph_rows(lines: list[str], action: str, shape: str) -> tuple[int, set[tupl
 
 def expected_graph_topologies(
     replicated_embedding: bool,
+    draft_graphs: int | None = None,
+    draft_eager_breaks: int | None = None,
 ) -> tuple[tuple[int, int], tuple[int, int]]:
+    draft = (
+        (draft_graphs, draft_eager_breaks)
+        if draft_graphs is not None and draft_eager_breaks is not None
+        else (19, 18)
+        if replicated_embedding
+        else (20, 19)
+    )
     return (
         (145, 144) if replicated_embedding else (146, 145),
-        (19, 18) if replicated_embedding else (20, 19),
+        draft,
     )
 
 
-def validate_graph_log(server_log: Path, *, replicated_embedding: bool) -> None:
+def validate_graph_log(
+    server_log: Path,
+    *,
+    replicated_embedding: bool,
+    draft_graphs: int,
+    draft_eager_breaks: int,
+) -> None:
     expected = {(0, 0), (1, 1), (2, 2), (3, 3)}
-    target_topology, draft_topology = expected_graph_topologies(replicated_embedding)
+    target_topology, draft_topology = expected_graph_topologies(
+        replicated_embedding,
+        draft_graphs,
+        draft_eager_breaks,
+    )
     target_shape = (
         f"(graphs={target_topology[0]}, eager_breaks={target_topology[1]})"
     )
@@ -193,6 +212,8 @@ def main() -> int:
         choices=(0, 1),
         required=True,
     )
+    parser.add_argument("--draft-graphs", type=int, required=True)
+    parser.add_argument("--draft-eager-breaks", type=int, required=True)
     args = parser.parse_args()
 
     suite = json.loads(args.suite.read_text(encoding="utf-8"))
@@ -239,10 +260,16 @@ def main() -> int:
         before = after
 
     replicated_embedding = bool(args.replicated_embedding)
-    target_topology, draft_topology = expected_graph_topologies(replicated_embedding)
+    target_topology, draft_topology = expected_graph_topologies(
+        replicated_embedding,
+        args.draft_graphs,
+        args.draft_eager_breaks,
+    )
     validate_graph_log(
         args.server_log,
         replicated_embedding=replicated_embedding,
+        draft_graphs=args.draft_graphs,
+        draft_eager_breaks=args.draft_eager_breaks,
     )
     output = {
         "schema": "laguna-dflash-segmented-smoke-v2",
