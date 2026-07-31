@@ -152,6 +152,9 @@ def expected_graph_topologies(
     replicated_embedding: bool,
     draft_graphs: int | None = None,
     draft_eager_breaks: int | None = None,
+    *,
+    target_graphs: int | None = None,
+    target_eager_breaks: int | None = None,
 ) -> tuple[tuple[int, int], tuple[int, int]]:
     draft = (
         (draft_graphs, draft_eager_breaks)
@@ -160,16 +163,22 @@ def expected_graph_topologies(
         if replicated_embedding
         else (20, 19)
     )
-    return (
-        (145, 144) if replicated_embedding else (146, 145),
-        draft,
+    target = (
+        (target_graphs, target_eager_breaks)
+        if target_graphs is not None and target_eager_breaks is not None
+        else (145, 144)
+        if replicated_embedding
+        else (146, 145)
     )
+    return target, draft
 
 
 def validate_graph_log(
     server_log: Path,
     *,
     replicated_embedding: bool,
+    target_graphs: int,
+    target_eager_breaks: int,
     draft_graphs: int,
     draft_eager_breaks: int,
 ) -> None:
@@ -178,6 +187,8 @@ def validate_graph_log(
         replicated_embedding,
         draft_graphs,
         draft_eager_breaks,
+        target_graphs=target_graphs,
+        target_eager_breaks=target_eager_breaks,
     )
     target_shape = (
         f"(graphs={target_topology[0]}, eager_breaks={target_topology[1]})"
@@ -214,6 +225,8 @@ def main() -> int:
     )
     parser.add_argument("--draft-graphs", type=int, required=True)
     parser.add_argument("--draft-eager-breaks", type=int, required=True)
+    parser.add_argument("--target-graphs", type=int, required=True)
+    parser.add_argument("--target-eager-breaks", type=int, required=True)
     args = parser.parse_args()
 
     suite = json.loads(args.suite.read_text(encoding="utf-8"))
@@ -264,10 +277,14 @@ def main() -> int:
         replicated_embedding,
         args.draft_graphs,
         args.draft_eager_breaks,
+        target_graphs=args.target_graphs,
+        target_eager_breaks=args.target_eager_breaks,
     )
     validate_graph_log(
         args.server_log,
         replicated_embedding=replicated_embedding,
+        target_graphs=args.target_graphs,
+        target_eager_breaks=args.target_eager_breaks,
         draft_graphs=args.draft_graphs,
         draft_eager_breaks=args.draft_eager_breaks,
     )

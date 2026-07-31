@@ -26,6 +26,13 @@ def test_graph_topologies_follow_replicated_embedding() -> None:
         (146, 145),
         (14, 13),
     )
+    assert smoke.expected_graph_topologies(
+        False,
+        14,
+        13,
+        target_graphs=50,
+        target_eager_breaks=49,
+    ) == ((50, 49), (14, 13))
 
 
 def metrics(
