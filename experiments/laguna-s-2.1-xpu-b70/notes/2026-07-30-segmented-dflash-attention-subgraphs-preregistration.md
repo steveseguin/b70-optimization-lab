@@ -81,3 +81,31 @@ sampling/rejection rule, prompt, cache policy, or scoring window changes.
    or cherry-pick starts.
 
 This note makes no correctness or throughput claim for the treatment.
+
+## Offline implementation
+
+- vLLM base:
+  `4f5e7a63cbd0d0bb409207e079421d0d5532d197`;
+- branch:
+  `experiment/laguna-dflash-attention-subgraphs-20260730`;
+- candidate commit:
+  `e63b413ea1bbeb8a367ec390e097c478bd84b7ed`;
+- worktree:
+  `/home/steve/src/laguna-vllm-dflash-attention-subgraphs-20260730`;
+- preserved patch:
+  `patches/laguna-s-2.1-xpu-b70/0001-xpu-capture-segmented-DFlash-attention-subgraphs.patch`;
+- patch SHA-256:
+  `76a3295fe4d8295aa83a3a191906785b992c0019cc4a62541d4dd1e5d48b8632`;
+- focused wrapper and breakable-graph gate:
+  `47 passed, 11 skipped`;
+- Ruff lint and formatting, Python compilation, Bash syntax, patch apply, and
+  relevant whitespace checks: pass.
+
+The wrapper options are generated in one tested helper: the new selector can
+enable attention capture only when segmented DFlash is active, while the
+expected outer topology remains 20/19. The measurement harness carries the
+treatment as its explicit 31st argument, records it in `identity.txt`, verifies
+the live service environment, and rejects it without segmented DFlash.
+
+These are offline results only. The next authorized device action is exactly
+one non-scored 400-token smoke.

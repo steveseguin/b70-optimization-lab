@@ -1,0 +1,227 @@
+From e63b413ea1bbeb8a367ec390e097c478bd84b7ed Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 30 Jul 2026 23:17:22 -0400
+Subject: [PATCH] xpu: capture segmented DFlash attention subgraphs
+
+---
+ tests/v1/worker/test_gpu_model_runner.py | 97 ++++++++++++++++++++++--
+ vllm/envs.py                             | 12 +++
+ vllm/v1/worker/gpu_model_runner.py       | 43 +++++++----
+ 3 files changed, 130 insertions(+), 22 deletions(-)
+
+diff --git a/tests/v1/worker/test_gpu_model_runner.py b/tests/v1/worker/test_gpu_model_runner.py
+index 9054c0f91..f1a400d67 100644
+--- a/tests/v1/worker/test_gpu_model_runner.py
++++ b/tests/v1/worker/test_gpu_model_runner.py
+@@ -972,9 +972,26 @@ def test_laguna_m8_breakable_graph_config_accepts_exact_contract(monkeypatch):
+ 
+ 
+ def test_laguna_dflash_segmented_graph_config_accepts_exact_contract(monkeypatch):
+-    monkeypatch.setenv("VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH", "1")
+-    monkeypatch.setenv("VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH", "0")
+-    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH", "1")
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH",
++        True,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS",
++        True,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH",
++        False,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH",
++        True,
++    )
+     monkeypatch.setenv("VLLM_XPU_LAGUNA_EXACT_MAX_M", "12")
+     monkeypatch.setenv("VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE", "1")
+     monkeypatch.setenv("VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16", "1")
+@@ -998,10 +1015,78 @@ def test_laguna_dflash_segmented_graph_config_accepts_exact_contract(monkeypatch
+     _laguna_dflash_segmented_config_runner()._validate_laguna_m8_breakable_graph_config()
+ 
+ 
++def test_laguna_dflash_attention_graphs_require_segmented_graph(monkeypatch):
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH",
++        False,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS",
++        True,
++    )
++
++    with pytest.raises(
++        ValueError,
++        match="attention subgraphs require the segmented DFlash graph contract",
++    ):
++        _laguna_dflash_segmented_config_runner()._validate_laguna_m8_breakable_graph_config()
++
++
++@pytest.mark.parametrize(
++    ("segmented", "capture_attention", "expected_capture"),
++    [
++        ("0", "0", False),
++        ("0", "1", False),
++        ("1", "0", False),
++        ("1", "1", True),
++    ],
++)
++def test_laguna_dflash_graph_wrapper_options(
++    monkeypatch,
++    segmented,
++    capture_attention,
++    expected_capture,
++):
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH",
++        segmented == "1",
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS",
++        capture_attention == "1",
++    )
++    runner = _laguna_dflash_segmented_config_runner()
++
++    options = runner._laguna_dflash_graph_wrapper_kwargs()
++
++    assert options["capture_attention_graphs"] is expected_capture
++    assert options["expected_num_graphs"] == (20 if segmented == "1" else None)
++    assert options["expected_num_eager_breaks"] == (19 if segmented == "1" else None)
++    assert options["materialize_capture_segments"] is (segmented == "1")
++    assert options["keep_output_alive"] is (segmented == "1")
++    assert options["enforce_static_inputs"] is True
++
++
+ def test_laguna_dflash_segmented_graph_rejects_legacy_graph(monkeypatch):
+-    monkeypatch.setenv("VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH", "1")
+-    monkeypatch.setenv("VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH", "1")
+-    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH", "1")
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH",
++        True,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH",
++        True,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH",
++        True,
++    )
+     monkeypatch.setenv("VLLM_XPU_LAGUNA_EXACT_MAX_M", "12")
+     monkeypatch.setenv("VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE", "1")
+     monkeypatch.setenv("VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16", "1")
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 46e7f0291..a892996b0 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -300,6 +300,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING: bool = False
+     VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH: bool = False
+     VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH: bool = False
++    VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS: bool = False
+     VLLM_XPU_LAGUNA_M8_REMOTE_ZERO: bool = False
+     VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION: bool = False
+     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2: bool = False
+@@ -2068,6 +2069,17 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH", "0"))
+     ),
++    # Replace only the six eager attention bodies inside the segmented DFlash
++    # wrapper with bound subgraph replays. Collectives and the audited outer
++    # 20/19 topology remain unchanged.
++    "VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS": lambda: bool(
++        int(
++            os.getenv(
++                "VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS",
++                "0",
++            )
++        )
++    ),
+     "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE", "0"))
+     ),
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 388832b80..50c0a064c 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4120,6 +4120,14 @@ class GPUModelRunner(
+         )
+ 
+     def _validate_laguna_m8_breakable_graph_config(self) -> None:
++        if (
++            envs.VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS
++            and not envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
++        ):
++            raise ValueError(
++                "Laguna DFlash attention subgraphs require the segmented "
++                "DFlash graph contract"
++            )
+         if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH:
+             segmented_invalid = {
+                 "legacy_draft_graph": envs.VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH,
+@@ -4223,6 +4231,24 @@ class GPUModelRunner(
+                 f"runtime-capture contract: {invalid}"
+             )
+ 
++    def _laguna_dflash_graph_wrapper_kwargs(self) -> dict[str, Any]:
++        segmented = envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
++        return {
++            "capture_filter": (
++                self._laguna_dflash_segmented_graph_capture_filter
++                if segmented
++                else None
++            ),
++            "keep_output_alive": segmented,
++            "enforce_static_inputs": True,
++            "materialize_capture_segments": segmented,
++            "capture_attention_graphs": (
++                segmented and envs.VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS
++            ),
++            "expected_num_graphs": 20 if segmented else None,
++            "expected_num_eager_breaks": 19 if segmented else None,
++        }
++
+     def _validate_laguna_m8_evidence_config(self) -> None:
+         arm = self.laguna_m8_evidence_arm
+         if arm is None:
+@@ -6254,22 +6280,7 @@ class GPUModelRunner(
+                 drafter.model = BreakableCUDAGraphWrapper(
+                     drafter.model,
+                     self.vllm_config,
+-                    capture_filter=(
+-                        self._laguna_dflash_segmented_graph_capture_filter
+-                        if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+-                        else None
+-                    ),
+-                    keep_output_alive=(envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH),
+-                    enforce_static_inputs=True,
+-                    materialize_capture_segments=(
+-                        envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+-                    ),
+-                    expected_num_graphs=(
+-                        20 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
+-                    ),
+-                    expected_num_eager_breaks=(
+-                        19 if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH else None
+-                    ),
++                    **self._laguna_dflash_graph_wrapper_kwargs(),
+                 )
+         elif (
+             cudagraph_mode.has_full_cudagraphs()
+-- 
+2.43.0
