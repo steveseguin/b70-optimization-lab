@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "hardware": "Intel Arc Pro B70 code-generation target",
+  "lane": "BF16 KV, exact target, TP4/EP4, width 12/depth 11 DFlash",
+  "experiment": "full-pair SIMD32 exact INT4 dequant MAD",
+  "classification": "static_neutral",
+  "full_production_build_performed": false,
+  "endpoint_run_performed": false,
+  "gpu_model_load_performed": false,
+  "throughput_claim": null,
+  "base_commit": "46a88e09d96fe06871c87a23de534fb47f1e039b",
+  "candidate_commit": "7557817d0e8c564be74f2cd7717e0195c1cb3911",
+  "igc_probe": {
+    "policy": "w4a16_policy_m_8",
+    "group_size": 32,
+    "incumbent_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-mad-inplace-incumbent2-20260731T0821Z",
+    "candidate_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-mad-simd32-candidate2-20260731T0833Z",
+    "incumbent": {
+      "instructions": 376,
+      "dpas": 2,
+      "bf16_mad": 32,
+      "total_mad": 33,
+      "total_mov": 156,
+      "total_add": 37,
+      "total_mul": 6
+    },
+    "candidate": {
+      "instructions": 376,
+      "dpas": 2,
+      "bf16_mad": 32,
+      "total_mad": 33,
+      "total_mov": 156,
+      "total_add": 37,
+      "total_mul": 6
+    }
+  },
+  "lowering": "The source SIMD32 MAD is finalized into native SIMD16 M0 and M16 halves.",
+  "stop_reason": "Preregistered static gate failed: total instructions improve by 0, below the required 8.",
+  "component_exactness_skipped": true,
+  "scored_leg_skipped": true,
+  "review_patch": {
+    "path": "patches/laguna-s-2.1-xpu-b70/0001-laguna-preserve-neutral-SIMD32-dequant-MAD-probe.patch",
+    "sha256": "fdf90dbd88fcdf6f507df2fd5123fc15f0de46c35daa43d69918911a19b68549"
+  },
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-mad-simd32-negative-7557817d0-20260731.bundle",
+    "sha256": "38933d1eb3561fcddf6c00cea5d6c7d629bddc518b6593a0e67e17856047f496"
+  }
+}

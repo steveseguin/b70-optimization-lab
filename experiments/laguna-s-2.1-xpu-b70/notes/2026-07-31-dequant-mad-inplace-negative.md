@@ -38,11 +38,11 @@ three selector variants. The exact same probe source and dependency headers
 were compiled once against the frozen incumbent tree and once against the
 candidate tree.
 
-| Selector variant | Incumbent instructions | Candidate instructions | DPAS | BF16 MAD | BF16 mul | word mov |
+| Selector variant | Incumbent instructions | Candidate instructions | DPAS | BF16 MAD | BF16 mul | total mov |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `SCALE_VEC=0, DEQUANT_MAD=0` | 422 | 422 | 2 | 0 | 32 | 32 |
-| `SCALE_VEC=1, DEQUANT_MAD=0` | 389 | 389 | 2 | 0 | 32 | 0 |
-| `SCALE_VEC=1, DEQUANT_MAD=1` | **376** | **408** | 2 | 32 | 0 | 0 -> 8 |
+| `SCALE_VEC=0, DEQUANT_MAD=0` | 422 | 422 | 2 | 0 | 32 | 172 |
+| `SCALE_VEC=1, DEQUANT_MAD=0` | 389 | 389 | 2 | 0 | 32 | 140 |
+| `SCALE_VEC=1, DEQUANT_MAD=1` | **376** | **408** | 2 | 32 | 0 | 156 -> 188 |
 
 A full mnemonic census of the MAD kernel localizes the complete delta:
 everything is unchanged except `mov`, which rises from 156 to 188. Thus the
@@ -96,4 +96,3 @@ harness omitted the explicit policy include, and the frozen incumbent
 worktree lacked its untracked CUTLASS dependency cache. The corrected runner
 accepts a separate `LAGUNA_XPU_DEPS_TREE`, and only the fresh successful roots
 listed above are used in the table.
-

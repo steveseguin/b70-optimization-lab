@@ -81,9 +81,9 @@ for assembly in "${assemblies[@]}"; do
   grep -m1 'instCount' "$assembly" || true
   printf 'dpas=%s mad_bf=%s mul_bf=%s mov_w=%s shr=%s bfn=%s spill_markers=%s\n' \
     "$(grep -cE '^[[:space:]]*dpas' "$assembly" || true)" \
-    "$(grep -cE 'mad \(16\|M0\).*:bf' "$assembly" || true)" \
-    "$(grep -cE 'mul \(16\|M0\).*:bf' "$assembly" || true)" \
-    "$(grep -cE 'mov \(16\|M0\).*:w ' "$assembly" || true)" \
+    "$(grep -cE 'mad \(16\|M[0-9]+\).*:bf' "$assembly" || true)" \
+    "$(grep -cE 'mul \(16\|M[0-9]+\).*:bf' "$assembly" || true)" \
+    "$(grep -cE 'mov \(16\|M[0-9]+\).*:w ' "$assembly" || true)" \
     "$(grep -cE '^[[:space:]]*shr ' "$assembly" || true)" \
     "$(grep -cE '^[[:space:]]*bfn ' "$assembly" || true)" \
     "$(grep -ciE 'spill|scratch' "$assembly" || true)"

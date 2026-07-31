@@ -1,0 +1,74 @@
+From 7557817d0e8c564be74f2cd7717e0195c1cb3911 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 08:27:16 -0400
+Subject: [PATCH] laguna: preserve neutral SIMD32 dequant MAD probe
+
+Present each exact dequant-MAD channel pair as one SIMD32 vISA operation over adjacent scale and bias pairs. IGC accepts the form and halves the source-level M0 MAD count, but final BMG ISA still contains the same 33 MAD, 156 mov and 376 total instructions as the incumbent; the second native half is emitted under M16. Preserve this static negative without a production build or endpoint run.
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp | 32 ++++++++++++-------------
+ 1 file changed, 15 insertions(+), 17 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 7520bca..4b0c032 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -382,25 +382,19 @@ CUTE_DEVICE void reorder_dequant_nobias(
+ CUTE_DEVICE void apply_scale_pair_mad(
+     intel::storage_vector_t<bfloat16_t, 32>& d,
+     intel::storage_vector_t<bfloat16_t, 32> const& s,
+-    float& y0,
+-    float& y1,
+-    float& c0,
+-    float& c1) {
++    intel::storage_vector_t<float, 64> const& y,
++    intel::storage_vector_t<float, 64> const& c) {
+ #if defined(__SYCL_DEVICE_ONLY__) && defined(SYCL_INTEL_TARGET)
+   asm("{\n"
+       ".decl D_BF v_type=G type=BF num_elts=32 alias=<%0,0>\n"
+       ".decl S_BF v_type=G type=BF num_elts=32 alias=<%1,0>\n"
+-      ".decl Y0_F v_type=G type=F num_elts=16 alias=<%2,0>\n"
+-      ".decl Y1_F v_type=G type=F num_elts=16 alias=<%3,0>\n"
+-      ".decl C0_F v_type=G type=F num_elts=16 alias=<%4,0>\n"
+-      ".decl C1_F v_type=G type=F num_elts=16 alias=<%5,0>\n"
+-      "mad (M1, 16) D_BF(0,0)<1> Y0_F(0,0)<1;1,0> S_BF(0,0)<1;1,0> "
+-      "C0_F(0,0)<1;1,0>\n"
+-      "mad (M1, 16) D_BF(0,16)<1> Y1_F(0,0)<1;1,0> S_BF(0,16)<1;1,0> "
+-      "C1_F(0,0)<1;1,0>\n"
++      ".decl Y_F v_type=G type=F num_elts=32 alias=<%2,0>\n"
++      ".decl C_F v_type=G type=F num_elts=32 alias=<%3,0>\n"
++      "mad (M1, 32) D_BF(0,0)<1> Y_F(0,0)<1;1,0> S_BF(0,0)<1;1,0> "
++      "C_F(0,0)<1;1,0>\n"
+       "}\n"
+       : "=rw"(d)
+-      : "rw"(s), "rw"(y0), "rw"(y1), "rw"(c0), "rw"(c1));
++      : "rw"(s), "rw"(y), "rw"(c));
+ #endif
+ }
+ 
+@@ -1062,13 +1056,17 @@ CUTE_DEVICE void xe_gemm_4bits(
+         for (int i = 0; i < tCrB.size() / thr_N / channel_num; ++i) {
+           auto& pair = *recast_ptr<intel::storage_vector_t<BFragElement, 32>>(
+               &tCrB(cute::tuple(0, _), n, _)[i]);
++          auto& scale_pair =
++              *recast_ptr<intel::storage_vector_t<float, 64>>(
++                  &scales[n * channel_num]);
++          auto& bias_pair =
++              *recast_ptr<intel::storage_vector_t<float, 64>>(
++                  &mad_bias[n * channel_num]);
+           apply_scale_pair_mad(
+               pair,
+               pair,
+-              scales[n * channel_num + 0],
+-              scales[n * channel_num + 1],
+-              mad_bias[n * channel_num + 0],
+-              mad_bias[n * channel_num + 1]);
++              scale_pair,
++              bias_pair);
+         }
+       }
+     } else if constexpr (mad_scales) {
+-- 
+2.43.0
+

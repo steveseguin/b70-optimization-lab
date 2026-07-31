@@ -79,6 +79,7 @@ not promoted record sources:
 | --- | --- | --- | --- | --- |
 | width-12 target inline gathers | `34b43849fc7c8ff8633f223469cc2a0d525c256e` | `ce2f3dfc02bce59095d8654d299c52b05c72d423` | `e9af21c63f399ccace945077cf1fbef883f4e8cfbe3ec9cd412dc3233eae070e` | `231d391d4526e7816ba69e80d211aefb0df663699846d5211e50c659c1ee9ea7` |
 | rejected in-place dequant MAD | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `7df9806e9eb12fb8e880c7ba0c6b4a104ef73832` | `ef639c3cc2a05fa4db870301fa3f732cf4ae031c2b16509d658d46c6c886e632` | `735d958c6c5d47e49d5184bcb30cc166033b69f94c38b5081d5f42d727e0ade2` |
+| neutral SIMD32 dequant MAD | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `7557817d0e8c564be74f2cd7717e0195c1cb3911` | `fdf90dbd88fcdf6f507df2fd5123fc15f0de46c35daa43d69918911a19b68549` | `38933d1eb3561fcddf6c00cea5d6c7d629bddc518b6593a0e67e17856047f496` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -94,3 +95,9 @@ decode-policy probe grew from 376 to 408 instructions by adding 32 moves, so
 the preregistered process stopped before component or endpoint execution. Its
 bundle ref is `experiment/laguna-mad-inplace-20260731`; see the
 [negative result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-dequant-mad-inplace-negative.md).
+
+The full-pair SIMD32 dequant-MAD candidate is also a static negative. BMG
+finalizes the widened vISA operation into the same `M0`/`M16` native SIMD16
+halves, leaving 376 total instructions and 156 moves unchanged. No production
+build or GPU run occurred. See the
+[negative result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-dequant-mad-simd32-negative.md).
