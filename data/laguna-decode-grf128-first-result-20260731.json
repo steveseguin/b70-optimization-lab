@@ -1,0 +1,47 @@
+{
+  "schema": "laguna-experiment-result-v1",
+  "status": "valid-first-leg-pending-confirmation",
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "layout": "TP4+EP4, one active generation",
+  "kv_cache_dtype": "bf16",
+  "verifier_width": 12,
+  "draft_depth": 11,
+  "result": {
+    "historical_100_event_metric_tok_s": 121.29932116191253,
+    "conventional_99_interval_metric_tok_s": 120.0863279502934,
+    "incumbent_historical_tok_s": 121.03724088473012,
+    "incumbent_conventional_tok_s": 119.82686847588282,
+    "relative_improvement_fraction": 0.002165,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "target_graphs_per_rank": 146,
+    "target_eager_breaks_per_rank": 145,
+    "draft_graphs_per_rank": 14,
+    "draft_eager_breaks_per_rank": 13,
+    "pre_idle_seconds": 72,
+    "post_idle_seconds": 72
+  },
+  "identity": {
+    "vllm_commit": "34b43849fc7c8ff8633f223469cc2a0d525c256e",
+    "kernel_commit": "e4163f93574326b2772742e0f51372a5a3777aa5",
+    "grouped_gemm_dso_sha256": "df2f63a04630c3b50d3ffe2d61db3e3d68914436ba14270dcc45ddfec6b3467f",
+    "runtime_lock_sha256": "4207f80d96b4219aa48b4d71f2d59333c1d77c942127b5c325c7107853dcb3b4",
+    "selector": "VLLM_XPU_LAGUNA_DECODE_GRF128=1"
+  },
+  "artifacts": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-decode-grf128-scored-20260731T0931Z",
+    "preserved_dso": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-decode-grf128-build-e4163f9-20260731T0918Z/libgrouped_gemm_xe_2.so",
+    "patch": "patches/laguna-s-2.1-xpu-b70/0001-laguna-add-exact-decode-GRF128-kernel.patch",
+    "patch_sha256": "f4a4cfa61d47526d02586822f8c00a6e983062737df79e4e141675ae91bc32c0",
+    "bundle": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-decode-grf128-e4163f9-20260731.bundle",
+    "bundle_sha256": "e21141feecf16de832ca841b0046c8ea523113795498c392ddc91c08833a5596"
+  },
+  "promotion": {
+    "localmaxxing_submitted": false,
+    "reason": "The 0.22% first-leg margin is below observed host noise; require one same-identity cold confirmation."
+  }
+}

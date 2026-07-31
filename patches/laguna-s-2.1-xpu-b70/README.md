@@ -80,6 +80,7 @@ not promoted record sources:
 | width-12 target inline gathers | `34b43849fc7c8ff8633f223469cc2a0d525c256e` | `ce2f3dfc02bce59095d8654d299c52b05c72d423` | `e9af21c63f399ccace945077cf1fbef883f4e8cfbe3ec9cd412dc3233eae070e` | `231d391d4526e7816ba69e80d211aefb0df663699846d5211e50c659c1ee9ea7` |
 | rejected in-place dequant MAD | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `7df9806e9eb12fb8e880c7ba0c6b4a104ef73832` | `ef639c3cc2a05fa4db870301fa3f732cf4ae031c2b16509d658d46c6c886e632` | `735d958c6c5d47e49d5184bcb30cc166033b69f94c38b5081d5f42d727e0ade2` |
 | neutral SIMD32 dequant MAD | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `7557817d0e8c564be74f2cd7717e0195c1cb3911` | `fdf90dbd88fcdf6f507df2fd5123fc15f0de46c35daa43d69918911a19b68549` | `38933d1eb3561fcddf6c00cea5d6c7d629bddc518b6593a0e67e17856047f496` |
+| provisional exact decode GRF128 | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `e4163f93574326b2772742e0f51372a5a3777aa5` | `f4a4cfa61d47526d02586822f8c00a6e983062737df79e4e141675ae91bc32c0` | `e21141feecf16de832ca841b0046c8ea523113795498c392ddc91c08833a5596` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -101,3 +102,12 @@ finalizes the widened vISA operation into the same `M0`/`M16` native SIMD16
 halves, leaving 376 total instructions and 156 moves unchanged. No production
 build or GPU run occurred. See the
 [negative result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-dequant-mad-simd32-negative.md).
+
+The decode-GRF128 candidate is a valid first endpoint leg, not yet a promoted
+record. Its separately named 128-GRF kernel is reachable only for the exact
+Laguna width-12 target-MoE decode shape and leaves draft, prefill, and selector-
+off behavior at 256 GRFs. It passed 6/6 raw-BF16 component comparisons and the
+full 13/13 cold endpoint gate at `121.299321` historical / `120.086328`
+conventional tok/s. Because the `+0.22%` first-leg margin is smaller than host
+noise, one same-identity confirmation is required before promotion. See the
+[first result note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-first-endpoint-result.md).

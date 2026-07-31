@@ -1,0 +1,250 @@
+From e4163f93574326b2772742e0f51372a5a3777aa5 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 08:59:21 -0400
+Subject: [PATCH] Add decode-only 128-GRF grouped GEMM
+
+---
+ cmake/utils.cmake                             |   9 +-
+ csrc/xpu/grouped_gemm/xe_2/CMakeLists.txt     |   2 +-
+ .../grouped_gemm/xe_2/grouped_gemm_xe2.hpp    |  16 +--
+ .../xe_2/grouped_gemm_xe2_interface.hpp       | 101 +++++++++++++++---
+ 4 files changed, 99 insertions(+), 29 deletions(-)
+
+diff --git a/cmake/utils.cmake b/cmake/utils.cmake
+index ba4bb67..cd93116 100644
+--- a/cmake/utils.cmake
++++ b/cmake/utils.cmake
+@@ -549,7 +549,7 @@ endfunction()
+ #
+ function(add_xe2_kernel_library LIBRARY_NAME)
+   cmake_parse_arguments(
+-    PARSE_ARGV 1 ARG "INCLUDE_CMAKE_SOURCE_DIR" # Boolean options
++    PARSE_ARGV 1 ARG "AUTO_GRF;INCLUDE_CMAKE_SOURCE_DIR" # Boolean options
+     "DESTINATION" # Single value keywords
+     "" # Multi-value keywords
+   )
+@@ -602,10 +602,15 @@ function(add_xe2_kernel_library LIBRARY_NAME)
+   # Set link options for XE2 devices
+   set(XE2_GPU_LINK_FLAGS ${SYCL_DEVICE_LINK_FLAGS})
+   if(XE2_AOT_DEVICES)
++    if(ARG_AUTO_GRF)
++      set(XE2_GRF_OPTION "-cl-intel-enable-auto-large-GRF-mode")
++    else()
++      set(XE2_GRF_OPTION "-cl-intel-256-GRF-per-thread")
++    endif()
+     list(
+       APPEND
+       XE2_GPU_LINK_FLAGS
+-      "-device ${XE2_AOT_DEVICES} -internal_options -cl-intel-256-GRF-per-thread"
++      "-device ${XE2_AOT_DEVICES} -internal_options ${XE2_GRF_OPTION}"
+     )
+   endif()
+   target_link_options(${LIBRARY_NAME} PRIVATE ${XE2_GPU_LINK_FLAGS})
+diff --git a/csrc/xpu/grouped_gemm/xe_2/CMakeLists.txt b/csrc/xpu/grouped_gemm/xe_2/CMakeLists.txt
+index ff6e826..705827d 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/CMakeLists.txt
++++ b/csrc/xpu/grouped_gemm/xe_2/CMakeLists.txt
+@@ -1,3 +1,3 @@
+ cmake_minimum_required(VERSION 3.18)
+ 
+-add_xe2_kernel_library(grouped_gemm_xe_2 INCLUDE_CMAKE_SOURCE_DIR)
++add_xe2_kernel_library(grouped_gemm_xe_2 AUTO_GRF INCLUDE_CMAKE_SOURCE_DIR)
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index c21f7e8..d7c3a2c 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -54,9 +54,9 @@ using namespace cute;
+ // `VLLM_XPU_LAGUNA_SCALE_VEC` and `VLLM_XPU_LAGUNA_DEQUANT_MAD` selectors
+ // reach them through this uniform runtime branch. The fold path never runs
+ // the per-element scale loop, so it composes with neither of the other two
+-// and takes priority. Vectorisation and fusion are independent -- the fusion
+-// replaces the `mul` the vectorisation issues -- so all four of their
+-// combinations are instantiated.
++// and takes priority. The fusion is retained only with vectorisation, which is
++// the sole measured combination and avoids carrying a fifth full mainloop
++// instantiation for the rejected non-vectorized MAD route.
+ // Requires `GmemTiledCopyA/B/D` and `scale_fold` / `scale_vec` /
+ // `scale_mad` bools in scope.
+ #define XE_GEMM_4BITS_FOLD_DISPATCH(GroupSize, TileMajorV, ...)   \
+@@ -90,16 +90,6 @@ using namespace cute;
+         false,                                                    \
+         true,                                                     \
+         false>(__VA_ARGS__);                                      \
+-  } else if (scale_mad) {                                         \
+-    xe_gemm_4bits<                                                \
+-        GmemTiledCopyA,                                           \
+-        GmemTiledCopyB,                                           \
+-        GmemTiledCopyD,                                           \
+-        GroupSize,                                                \
+-        TileMajorV,                                               \
+-        false,                                                    \
+-        false,                                                    \
+-        true>(__VA_ARGS__);                                       \
+   } else {                                                        \
+     xe_gemm_4bits<                                                \
+         GmemTiledCopyA,                                           \
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 2cbbeb1..9554318 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -74,6 +74,9 @@ using namespace cute;
+ template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteName;
+ 
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128Name;
++
+ template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+@@ -203,7 +206,13 @@ inline bool laguna_int4_dequant_mad() {
+     const char* value = std::getenv("VLLM_XPU_LAGUNA_DEQUANT_MAD");
+     if (value == nullptr) return false;
+     if (std::strcmp(value, "0") == 0) return false;
+-    if (std::strcmp(value, "1") == 0) return true;
++    if (std::strcmp(value, "1") == 0) {
++      TORCH_CHECK(
++          laguna_int4_scale_vec(),
++          "VLLM_XPU_LAGUNA_DEQUANT_MAD=1 requires "
++          "VLLM_XPU_LAGUNA_SCALE_VEC=1");
++      return true;
++    }
+     TORCH_CHECK(
+         false,
+         "VLLM_XPU_LAGUNA_DEQUANT_MAD must be literal 0 or 1, got '",
+@@ -214,6 +223,25 @@ inline bool laguna_int4_dequant_mad() {
+   return mad;
+ }
+ 
++// Select a separately named 128-GRF generic decode kernel. The host dispatch
++// below further constrains this to the exact BF16 group-32 width-12 route;
++// every non-qualifying call retains the historical 256-GRF kernel.
++inline bool laguna_int4_decode_grf128() {
++  static const bool enabled = [] {
++    const char* value = std::getenv("VLLM_XPU_LAGUNA_DECODE_GRF128");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_GRF128 must be literal 0 or 1, got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
+ // Range gate for the INT4 dequantize-scale fusion.
+ //
+ // The fused form evaluates `x * s + (-136 * s)` where the incumbent evaluates
+@@ -299,6 +327,7 @@ void MoEGEMMLauncher(
+     ElementD* outputs,
+     const int gemm_n,
+     const int gemm_k,
++    const int total_m,
+     const int* rows_per_expert,
+     const int num_experts,
+     const int group_size,
+@@ -335,25 +364,26 @@ void MoEGEMMLauncher(
+   namespace syclex = sycl::ext::oneapi::experimental;
+   namespace intelex = sycl::ext::intel::experimental;
+ 
+-  syclex::properties kernel_props{
++  syclex::properties kernel_props_256{
+       syclex::sub_group_size<16>, intelex::grf_size<256>};
+ 
++  constexpr bool can_use_grf128 =
++      layoutA == 'R' && layoutB == 'C' && !TileMajor &&
++      std::is_same_v<ElementA_non_CV, bfloat16_t> &&
++      std::is_same_v<ElementB, uint8_t> &&
++      std::is_same_v<ElementS, bfloat16_t> &&
++      std::is_same_v<policy, w4a16_policy_m_8>;
++  const bool use_grf128 =
++      can_use_grf128 && laguna_int4_decode_grf128() && total_m == 120 &&
++      group_size == 32 && scale_vec && !scale_mad && !scale_fold;
++
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+   using GmemTiledCopyD = typename policy::GmemTiledCopyD;
+ 
+   stream.submit([&](sycl::handler& cgh) {
+     sycl::local_accessor<int32_t, 1> local_mem(sycl::range<1>(1), cgh);
+-    cgh.parallel_for<GemmCuteName<
+-        ElementA,
+-        ElementB,
+-        ElementS,
+-        ElementD,
+-        layoutA,
+-        layoutB,
+-        policy,
+-        TileMajor>>(
+-        sycl::nd_range<3>{global * local, local}, kernel_props, [=](auto) {
++    auto kernel = [=](auto) {
+           MoE::MoEGEMM<
+               GmemTiledCopyA,
+               GmemTiledCopyB,
+@@ -378,7 +408,51 @@ void MoEGEMMLauncher(
+               scale_fold,
+               scale_vec,
+               scale_mad);
+-        });
++        };
++    if constexpr (can_use_grf128) {
++      if (use_grf128) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128Name<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_128,
++            kernel);
++      } else {
++        cgh.parallel_for<GemmCuteName<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_256,
++            kernel);
++      }
++    } else {
++      cgh.parallel_for<GemmCuteName<
++          ElementA,
++          ElementB,
++          ElementS,
++          ElementD,
++          layoutA,
++          layoutB,
++          policy,
++          TileMajor>>(
++          sycl::nd_range<3>{global * local, local},
++          kernel_props_256,
++          kernel);
++    }
+   });
+ }
+ 
+@@ -989,6 +1063,7 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+       reinterpret_cast<ElementA*>(ptr_D.data_ptr()),                           \
+       N,                                                                       \
+       K,                                                                       \
++      A_total_M,                                                               \
+       reinterpret_cast<int*>(rows_per_expert.data_ptr()),                      \
+       num_experts,                                                             \
+       group_size,                                                              \
+-- 
+2.43.0
+
