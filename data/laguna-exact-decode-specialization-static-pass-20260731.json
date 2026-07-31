@@ -1,0 +1,40 @@
+{
+  "schema": "laguna-static-kernel-gate-v1",
+  "status": "pass-for-full-dso-and-component",
+  "date": "2026-07-31",
+  "base_commit": "e4163f93574326b2772742e0f51372a5a3777aa5",
+  "candidate_commit": "ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2",
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-decode-exact-specialized-ec507e8-20260731T0951Z",
+  "candidate": {
+    "kernel_name": "GemmCuteGrf128ExactVecName",
+    "instructions": 674,
+    "grf_count": 128,
+    "eu_threads": 8,
+    "simd": 16,
+    "bf16_mul": 32,
+    "int4_shr": 16,
+    "int4_bfn": 16,
+    "dpas": 2,
+    "sync_allrd": 6,
+    "sync_nop": 14,
+    "scratch_metadata": false
+  },
+  "control": {
+    "kernel_name": "GemmCuteGrf128Name",
+    "instructions": 6174,
+    "grf_count": 128,
+    "eu_threads": 8,
+    "simd": 16,
+    "bf16_mul_all_variants": 256,
+    "int4_shr_all_variants": 256,
+    "int4_bfn_all_variants": 256,
+    "dpas_all_variants": 32,
+    "sync_allrd": 217,
+    "sync_nop": 261,
+    "scratch_metadata": false
+  },
+  "device_compile": "passed",
+  "host_link": "expected-unlinked-pytorch-failure-after-aot",
+  "patch_sha256": "540235f285cc84457c30b74d1ddb322ca9355e1fd7a0c44a1f4df70a22936d26",
+  "bundle_sha256": "8cf6b505bbb3f96f9c75c30cee46576af9972dc896dabc0dca0aaaf34e237c15"
+}

@@ -81,6 +81,7 @@ not promoted record sources:
 | rejected in-place dequant MAD | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `7df9806e9eb12fb8e880c7ba0c6b4a104ef73832` | `ef639c3cc2a05fa4db870301fa3f732cf4ae031c2b16509d658d46c6c886e632` | `735d958c6c5d47e49d5184bcb30cc166033b69f94c38b5081d5f42d727e0ade2` |
 | neutral SIMD32 dequant MAD | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `7557817d0e8c564be74f2cd7717e0195c1cb3911` | `fdf90dbd88fcdf6f507df2fd5123fc15f0de46c35daa43d69918911a19b68549` | `38933d1eb3561fcddf6c00cea5d6c7d629bddc518b6593a0e67e17856047f496` |
 | provisional exact decode GRF128 | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `e4163f93574326b2772742e0f51372a5a3777aa5` | `f4a4cfa61d47526d02586822f8c00a6e983062737df79e4e141675ae91bc32c0` | `e21141feecf16de832ca841b0046c8ea523113795498c392ddc91c08833a5596` |
+| exact decode mainloop specialization | `e4163f93574326b2772742e0f51372a5a3777aa5` | `ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2` | `540235f285cc84457c30b74d1ddb322ca9355e1fd7a0c44a1f4df70a22936d26` | `8cf6b505bbb3f96f9c75c30cee46576af9972dc896dabc0dca0aaaf34e237c15` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -111,3 +112,10 @@ full 13/13 cold endpoint gate at `121.299321` historical / `120.086328`
 conventional tok/s. Because the `+0.22%` first-leg margin is smaller than host
 noise, one same-identity confirmation is required before promotion. See the
 [first result note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-first-endpoint-result.md).
+
+The exact-decode specialization is a static pass, not an endpoint result. It
+retains only the live group-32 vectorized mainloop in a new named kernel and
+shrinks matched production BMG ISA from 6,174 to 674 instructions while
+preserving 128 GRFs, eight EU threads, and the exact 32-mul/16-shift/16-bfn/
+2-DPAS arithmetic body. See the
+[static pass](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-exact-decode-mainloop-specialization-static-pass.md).

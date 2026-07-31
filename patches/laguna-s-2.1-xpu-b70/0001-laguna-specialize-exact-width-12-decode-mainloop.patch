@@ -1,0 +1,172 @@
+From ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 09:48:44 -0400
+Subject: [PATCH] Specialize exact width-12 decode mainloop
+
+---
+ .../grouped_gemm/xe_2/grouped_gemm_xe2.hpp    | 31 +++++++-
+ .../xe_2/grouped_gemm_xe2_interface.hpp       | 70 ++++++++++++++++++-
+ 2 files changed, 97 insertions(+), 4 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index d7c3a2c..d229895 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -121,6 +121,7 @@ template <
+     char LayoutKindB,
+     char LayoutKindD,
+     bool TileMajor = false,
++    bool ExactVecGroup32 = false,
+     class TiledMMA,
+     typename ElementA,
+     typename ElementB,
+@@ -210,8 +211,13 @@ CUTE_DEVICE void MoEGEMM(
+     ElementD* ptr_D_curr_batch = Outputs + pre_rows * gemm_n;
+     ElementS* ptr_Scales_curr_batch = const_cast<ElementS*>(Scales) + expert_id;
+     if constexpr (is_B_4bits) {
+-      ptr_Scales_curr_batch =
+-          const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
++      if constexpr (ExactVecGroup32) {
++        ptr_Scales_curr_batch =
++            const_cast<ElementS*>(Scales) + B_offset * 2 / 32;
++      } else {
++        ptr_Scales_curr_batch =
++            const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
++      }
+       if constexpr (TileMajor) {
+         ptr_Scales_curr_batch =
+             const_cast<ElementS*>(Scales) + B_offset;
+@@ -245,7 +251,26 @@ CUTE_DEVICE void MoEGEMM(
+       auto tile_coord = make_coord(m_coord, n_coord, _, 0);
+ 
+       if constexpr (is_B_4bits) {
+-        if constexpr (TileMajor) {
++        if constexpr (ExactVecGroup32) {
++          static_assert(is_B_int4, "exact vectorized route is INT4-only");
++          static_assert(!TileMajor, "exact vectorized route is not tile-major");
++          xe_gemm_4bits<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              32,
++              false,
++              false,
++              true,
++              false>(
++              A_tensor,
++              B_tensor,
++              ptr_Scales_curr_batch,
++              ptr_Bias_curr_batch,
++              D_tensor,
++              tile_coord,
++              mma);
++        } else if constexpr (TileMajor) {
+           XE_GEMM_4BITS_FOLD_DISPATCH(
+               32,
+               true,
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 9554318..7f3a1eb 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -77,6 +77,9 @@ class GemmCuteName;
+ template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteGrf128Name;
+ 
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128ExactVecName;
++
+ template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+@@ -242,6 +245,27 @@ inline bool laguna_int4_decode_grf128() {
+   return enabled;
+ }
+ 
++// Select a separately named compile-time-specialized version of the verified
++// width-12 GRF128 kernel. Host dispatch below requires the exact group-32,
++// vectorized, non-folded, non-MAD route before this can reach device code.
++inline bool laguna_int4_decode_exact_specialized() {
++  static const bool enabled = [] {
++    const char* value =
++        std::getenv("VLLM_XPU_LAGUNA_DECODE_EXACT_SPECIALIZED");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_EXACT_SPECIALIZED must be literal 0 or 1, "
++        "got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
+ // Range gate for the INT4 dequantize-scale fusion.
+ //
+ // The fused form evaluates `x * s + (-136 * s)` where the incumbent evaluates
+@@ -376,6 +400,8 @@ void MoEGEMMLauncher(
+   const bool use_grf128 =
+       can_use_grf128 && laguna_int4_decode_grf128() && total_m == 120 &&
+       group_size == 32 && scale_vec && !scale_mad && !scale_fold;
++  const bool use_exact_specialized =
++      use_grf128 && laguna_int4_decode_exact_specialized();
+ 
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+@@ -409,8 +435,50 @@ void MoEGEMMLauncher(
+               scale_vec,
+               scale_mad);
+         };
++    auto exact_vec_kernel = [=](auto) {
++          MoE::MoEGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              layoutA,
++              layoutB,
++              'R',
++              TileMajor,
++              true>(
++              activations,
++              weights,
++              scales,
++              bias,
++              outputs,
++              mma,
++              rows_per_expert,
++              num_experts,
++              group_size,
++              gemm_n,
++              gemm_k,
++              atomic_buffer,
++              local_mem,
++              false,
++              true,
++              false);
++        };
+     if constexpr (can_use_grf128) {
+-      if (use_grf128) {
++      if (use_exact_specialized) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128ExactVecName<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_128,
++            exact_vec_kernel);
++      } else if (use_grf128) {
+         syclex::properties kernel_props_128{
+             syclex::sub_group_size<16>, intelex::grf_size<128>};
+         cgh.parallel_for<GemmCuteGrf128Name<
+-- 
+2.43.0
+
