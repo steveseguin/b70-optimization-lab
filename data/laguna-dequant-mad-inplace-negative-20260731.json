@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "hardware": "4x Intel Arc Pro B70",
+  "lane": "BF16 KV, exact target, TP4/EP4, width 12/depth 11 DFlash",
+  "experiment": "in-place full-GRF binding for exact INT4 dequant MAD",
+  "classification": "static_negative",
+  "endpoint_run_performed": false,
+  "gpu_model_load_performed": false,
+  "throughput_claim": null,
+  "base_commit": "46a88e09d96fe06871c87a23de534fb47f1e039b",
+  "candidate_commit": "7df9806e9eb12fb8e880c7ba0c6b4a104ef73832",
+  "candidate_binary": {
+    "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-mad-inplace-static-negative-20260731T0823Z/libgrouped_gemm_xe_2.so",
+    "sha256": "9e7cb7a00bbdc4a4808dee5ec03ab7954d1129b3d64a6740e83aaa8ca08afe33",
+    "size_bytes": 30334776
+  },
+  "build": {
+    "command": "ninja -C build/temp libgrouped_gemm_xe_2.so",
+    "compiler": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+    "result": "pass",
+    "approx_wall_minutes": 42,
+    "approx_peak_rss_gib": 122.8
+  },
+  "igc_probe": {
+    "policy": "w4a16_policy_m_8",
+    "group_size": 32,
+    "incumbent_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-mad-inplace-incumbent2-20260731T0821Z",
+    "candidate_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-mad-inplace-candidate2-20260731T0819Z",
+    "variants": [
+      {
+        "scale_vec": false,
+        "dequant_mad": false,
+        "incumbent_instructions": 422,
+        "candidate_instructions": 422,
+        "dpas": 2,
+        "bf16_mad": 0,
+        "bf16_mul": 32
+      },
+      {
+        "scale_vec": true,
+        "dequant_mad": false,
+        "incumbent_instructions": 389,
+        "candidate_instructions": 389,
+        "dpas": 2,
+        "bf16_mad": 0,
+        "bf16_mul": 32
+      },
+      {
+        "scale_vec": true,
+        "dequant_mad": true,
+        "incumbent_instructions": 376,
+        "candidate_instructions": 408,
+        "instruction_delta": 32,
+        "incumbent_mov": 156,
+        "candidate_mov": 188,
+        "dpas": 2,
+        "bf16_mad": 32,
+        "bf16_mul": 0
+      }
+    ]
+  },
+  "stop_reason": "Preregistered static gate failed: candidate adds 32 moves and grows the MAD kernel from 376 to 408 instructions.",
+  "component_exactness_skipped": true,
+  "scored_leg_skipped": true,
+  "review_patch": {
+    "path": "patches/laguna-s-2.1-xpu-b70/0001-laguna-preserve-rejected-in-place-dequant-MAD-bindin.patch",
+    "sha256": "ef639c3cc2a05fa4db870301fa3f732cf4ae031c2b16509d658d46c6c886e632"
+  },
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-mad-inplace-negative-7df9806e9-20260731.bundle",
+    "sha256": "735d958c6c5d47e49d5184bcb30cc166033b69f94c38b5081d5f42d727e0ade2"
+  }
+}

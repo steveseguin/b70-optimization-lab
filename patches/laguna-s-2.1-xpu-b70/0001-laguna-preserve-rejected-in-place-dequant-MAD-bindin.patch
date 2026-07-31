@@ -1,0 +1,69 @@
+From 7df9806e9eb12fb8e880c7ba0c6b4a104ef73832 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 08:20:31 -0400
+Subject: [PATCH] laguna: preserve rejected in-place dequant MAD binding
+
+Name the fused dequant MAD fragment once as a read-write assembly operand instead of binding the same C++ GRF separately as source and destination. This was a plausible operand-plumbing reduction but the BMG compiler schedules it worse: the matched IGC probe grows 376 to 408 instructions, entirely from 32 additional movs, while retaining 2 DPAS and 32 MADs. The candidate is therefore preserved as a negative experiment and must not be promoted or endpoint-benchmarked.
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 7520bca..9fe07a5 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -379,9 +379,13 @@ CUTE_DEVICE void reorder_dequant_nobias(
+ // Measured on bmg for w4a16_policy_m_8 with the scale written second: 154
+ // k-tile instructions, 97 of them on the int pipe. Written first: 122, of
+ // which 65 int. Keep the scale as the first operand.
++//
++// The destination and fragment source are the same full channel-pair GRF.
++// Naming that storage once as a read-write operand avoids asking IGC to bind
++// two assembly operands for one C++ object. The two MADs and all four numeric
++// source vectors are unchanged; only the operand identity is made explicit.
+ CUTE_DEVICE void apply_scale_pair_mad(
+     intel::storage_vector_t<bfloat16_t, 32>& d,
+-    intel::storage_vector_t<bfloat16_t, 32> const& s,
+     float& y0,
+     float& y1,
+     float& c0,
+@@ -389,18 +393,17 @@ CUTE_DEVICE void apply_scale_pair_mad(
+ #if defined(__SYCL_DEVICE_ONLY__) && defined(SYCL_INTEL_TARGET)
+   asm("{\n"
+       ".decl D_BF v_type=G type=BF num_elts=32 alias=<%0,0>\n"
+-      ".decl S_BF v_type=G type=BF num_elts=32 alias=<%1,0>\n"
+-      ".decl Y0_F v_type=G type=F num_elts=16 alias=<%2,0>\n"
+-      ".decl Y1_F v_type=G type=F num_elts=16 alias=<%3,0>\n"
+-      ".decl C0_F v_type=G type=F num_elts=16 alias=<%4,0>\n"
+-      ".decl C1_F v_type=G type=F num_elts=16 alias=<%5,0>\n"
+-      "mad (M1, 16) D_BF(0,0)<1> Y0_F(0,0)<1;1,0> S_BF(0,0)<1;1,0> "
++      ".decl Y0_F v_type=G type=F num_elts=16 alias=<%1,0>\n"
++      ".decl Y1_F v_type=G type=F num_elts=16 alias=<%2,0>\n"
++      ".decl C0_F v_type=G type=F num_elts=16 alias=<%3,0>\n"
++      ".decl C1_F v_type=G type=F num_elts=16 alias=<%4,0>\n"
++      "mad (M1, 16) D_BF(0,0)<1> Y0_F(0,0)<1;1,0> D_BF(0,0)<1;1,0> "
+       "C0_F(0,0)<1;1,0>\n"
+-      "mad (M1, 16) D_BF(0,16)<1> Y1_F(0,0)<1;1,0> S_BF(0,16)<1;1,0> "
++      "mad (M1, 16) D_BF(0,16)<1> Y1_F(0,0)<1;1,0> D_BF(0,16)<1;1,0> "
+       "C1_F(0,0)<1;1,0>\n"
+       "}\n"
+-      : "=rw"(d)
+-      : "rw"(s), "rw"(y0), "rw"(y1), "rw"(c0), "rw"(c1));
++      : "+rw"(d)
++      : "rw"(y0), "rw"(y1), "rw"(c0), "rw"(c1));
+ #endif
+ }
+ 
+@@ -1063,7 +1066,6 @@ CUTE_DEVICE void xe_gemm_4bits(
+           auto& pair = *recast_ptr<intel::storage_vector_t<BFragElement, 32>>(
+               &tCrB(cute::tuple(0, _), n, _)[i]);
+           apply_scale_pair_mad(
+-              pair,
+               pair,
+               scales[n * channel_num + 0],
+               scales[n * channel_num + 1],
+-- 
+2.43.0
+
