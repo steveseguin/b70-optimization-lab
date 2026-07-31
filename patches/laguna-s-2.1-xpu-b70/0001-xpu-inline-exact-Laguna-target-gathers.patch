@@ -1,0 +1,436 @@
+From ce2f3dfc02bce59095d8654d299c52b05c72d423 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 07:20:19 -0400
+Subject: [PATCH] xpu: inline exact Laguna target gathers
+
+---
+ .../cudagraph/test_laguna_m8_collectives.py   | 112 +++++++++++++++++-
+ tests/v1/worker/test_gpu_model_runner.py      |  65 ++++++++++
+ vllm/compilation/laguna_m8_collectives.py     |  31 +++--
+ vllm/envs.py                                  |   4 +
+ vllm/v1/worker/gpu_model_runner.py            |  60 ++++++++--
+ 5 files changed, 249 insertions(+), 23 deletions(-)
+
+diff --git a/tests/v1/cudagraph/test_laguna_m8_collectives.py b/tests/v1/cudagraph/test_laguna_m8_collectives.py
+index 8fc593911..e7dfe86a8 100644
+--- a/tests/v1/cudagraph/test_laguna_m8_collectives.py
++++ b/tests/v1/cudagraph/test_laguna_m8_collectives.py
+@@ -44,9 +44,9 @@ def test_laguna_m8_runner_buffers_have_fixed_order_and_addresses(monkeypatch):
+ 
+ def test_laguna_m8_runner_buffers_fail_closed_on_geometry():
+     state = LagunaM8CollectiveState(torch.device("cpu"))
+-    with pytest.raises(RuntimeError, match=r"fixed \[1,8,3072\]"):
+-        state.all_gather(torch.empty((1, 7, 3072), dtype=torch.bfloat16), dim=0)
+-    with pytest.raises(RuntimeError, match=r"fixed \[8,3072\]"):
++    with pytest.raises(RuntimeError, match=r"\[1,\*,3072\] BF16 contiguous"):
++        state.all_gather(torch.empty((1, 8, 3071), dtype=torch.bfloat16), dim=0)
++    with pytest.raises(RuntimeError, match=r"\[\*,3072\] BF16 non-aliasing"):
+         state.all_reduce(torch.empty((8, 3072), dtype=torch.float32))
+     with pytest.raises(RuntimeError, match="before embedding all-reduce"):
+         state.all_gather(torch.empty((1, 8, 3072), dtype=torch.bfloat16), dim=0)
+@@ -81,7 +81,7 @@ def test_laguna_m8_runner_buffers_fail_closed_on_order_and_count(monkeypatch):
+ 
+     for _ in range(96):
+         state.all_gather(local, dim=0)
+-    with pytest.raises(RuntimeError, match="exceeded its 96"):
++    with pytest.raises(RuntimeError, match="exceeded its learned 96"):
+         state.all_gather(local, dim=0)
+     state.finish_eligible_forward()
+ 
+@@ -111,3 +111,107 @@ def test_laguna_m8_runner_buffers_accept_replay_counters(monkeypatch):
+     for index, output in enumerate(state.gathers):
+         state._run_gather(local, output, index)
+     state.finish_eligible_forward()
++
++
++def test_laguna_m8_inline_gathers_keep_embedding_reduce_eager(monkeypatch):
++    import vllm.compilation.laguna_m8_collectives as collectives
++    from vllm.compilation.breakable_cudagraph import BreakableCUDAGraphCapture
++
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_INLINE_GATHERS", "1")
++    monkeypatch.setattr(collectives, "get_tp_group", lambda: _Group())
++    monkeypatch.setattr(collectives, "weak_ref_tensor", lambda tensor: tensor)
++    monkeypatch.setattr(
++        collectives.dist,
++        "all_gather_into_tensor",
++        lambda output, local, group: output.copy_(local.expand_as(output)),
++    )
++    monkeypatch.setattr(
++        collectives.dist,
++        "all_reduce",
++        lambda output, group: output.add_(1),
++    )
++
++    eager_kinds = []
++
++    class _Capture:
++        _capturing = True
++
++        def add_eager(self, callback, *, kind):
++            eager_kinds.append(kind)
++            return callback()
++
++    capture = _Capture()
++    monkeypatch.setattr(
++        BreakableCUDAGraphCapture,
++        "current",
++        classmethod(lambda cls: capture),
++    )
++
++    state = LagunaM8CollectiveState(torch.device("cpu"))
++    monkeypatch.setattr(collectives, "_require_active_state", lambda: state)
++    local = torch.ones((1, 8, 3072), dtype=torch.bfloat16)
++
++    # Capture: the embedding all-reduce is the only eager callback. All 96
++    # gathers execute directly while the surrounding graph is recording.
++    state.reset_for_eligible_forward()
++    state.all_reduce(local.squeeze(0))
++    for _ in range(96):
++        state.all_gather(local, dim=0)
++    assert eager_kinds == ["collective"]
++    state.finish_eligible_forward()
++
++    # Replay: the model body does not re-enter Python, while the embedding
++    # callback does. This is the only accepted zero-cursor inline state.
++    state.reset_for_eligible_forward()
++    state._run_reduce(local.squeeze(0), state.embedding_reduce)
++    state.finish_eligible_forward()
++
++
++def test_laguna_m8_inline_gathers_flag_off_keeps_gather_eager(monkeypatch):
++    import vllm.compilation.laguna_m8_collectives as collectives
++    from vllm.compilation.breakable_cudagraph import BreakableCUDAGraphCapture
++
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_INLINE_GATHERS", "0")
++    monkeypatch.setattr(collectives, "get_tp_group", lambda: _Group())
++    monkeypatch.setattr(collectives, "weak_ref_tensor", lambda tensor: tensor)
++    monkeypatch.setattr(
++        collectives.dist,
++        "all_gather_into_tensor",
++        lambda output, local, group: output.copy_(local.expand_as(output)),
++    )
++    monkeypatch.setattr(collectives.dist, "all_reduce", lambda output, group: None)
++
++    eager_kinds = []
++
++    class _Capture:
++        _capturing = True
++
++        def add_eager(self, callback, *, kind):
++            eager_kinds.append(kind)
++            return callback()
++
++    monkeypatch.setattr(
++        BreakableCUDAGraphCapture,
++        "current",
++        classmethod(lambda cls: _Capture()),
++    )
++
++    state = LagunaM8CollectiveState(torch.device("cpu"))
++    monkeypatch.setattr(collectives, "_require_active_state", lambda: state)
++    local = torch.ones((1, 8, 3072), dtype=torch.bfloat16)
++    state.reset_for_eligible_forward()
++    state.all_reduce(local.squeeze(0))
++    state.all_gather(local, dim=0)
++
++    assert eager_kinds == ["collective", "collective"]
++
++
++def test_laguna_m8_inline_gathers_reject_partial_capture(monkeypatch):
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_INLINE_GATHERS", "1")
++    state = LagunaM8CollectiveState(torch.device("cpu"))
++    state._first_reduce_seen = True
++    state._next_gather = 95
++    state._executed = 95
++
++    with pytest.raises(RuntimeError, match="changed gather order"):
++        state.finish_eligible_forward()
+diff --git a/tests/v1/worker/test_gpu_model_runner.py b/tests/v1/worker/test_gpu_model_runner.py
+index 267121851..8e3a07b78 100644
+--- a/tests/v1/worker/test_gpu_model_runner.py
++++ b/tests/v1/worker/test_gpu_model_runner.py
+@@ -971,6 +971,71 @@ def test_laguna_m8_breakable_graph_config_accepts_exact_contract(monkeypatch):
+     _laguna_m8_graph_config_runner()._validate_laguna_m8_breakable_graph_config()
+ 
+ 
++def test_laguna_inline_gathers_accept_sealed_width12_contract(monkeypatch):
++    for name, value in {
++        "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH": "1",
++        "VLLM_XPU_LAGUNA_M8_INLINE_GATHERS": "1",
++        "VLLM_XPU_LAGUNA_EXACT_MAX_M": "12",
++        "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH": "1",
++        "VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS": "1",
++        "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE": "1",
++        "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16": "1",
++        "VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA": "1",
++        "VLLM_XPU_EXACT_SPEC_ATTN": "1",
++        "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": "1",
++        "VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK": "1",
++    }.items():
++        monkeypatch.setenv(name, value)
++    monkeypatch.setattr(
++        gpu_model_runner_module.current_platform,
++        "is_xpu",
++        lambda: True,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module,
++        "is_breakable_cudagraph_enabled",
++        lambda: True,
++    )
++    monkeypatch.setattr(gpu_model_runner_module.envs, "VLLM_USE_AOT_COMPILE", False)
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
++        False,
++    )
++
++    _laguna_dflash_segmented_config_runner()._validate_laguna_m8_breakable_graph_config()
++
++
++@pytest.mark.parametrize(
++    ("inline_gathers", "replicated_embedding", "expected"),
++    [
++        ("0", "0", (146, 145)),
++        ("0", "1", (145, 144)),
++        ("1", "0", (50, 49)),
++    ],
++)
++def test_laguna_target_graph_topology(
++    monkeypatch,
++    inline_gathers,
++    replicated_embedding,
++    expected,
++):
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_INLINE_GATHERS", inline_gathers)
++    monkeypatch.setenv(
++        "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING",
++        replicated_embedding,
++    )
++
++    assert GPUModelRunner._laguna_m8_target_graph_topology() == expected
++
++
++def test_laguna_inline_gathers_require_guarded_graph(monkeypatch):
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_INLINE_GATHERS", "1")
++
++    with pytest.raises(ValueError, match="guarded Breakable-graph contract"):
++        _laguna_m8_graph_config_runner()._validate_laguna_m8_breakable_graph_config()
++
++
+ def test_laguna_dflash_segmented_graph_config_accepts_exact_contract(monkeypatch):
+     monkeypatch.setattr(
+         gpu_model_runner_module.envs,
+diff --git a/vllm/compilation/laguna_m8_collectives.py b/vllm/compilation/laguna_m8_collectives.py
+index 6a7e7da8f..413599156 100644
+--- a/vllm/compilation/laguna_m8_collectives.py
++++ b/vllm/compilation/laguna_m8_collectives.py
+@@ -23,6 +23,8 @@ from vllm.utils.torch_utils import weak_ref_tensor
+ # MLP down projection (`mlp_only_layers=[0]`), and 47 MoE final combines.
+ _MODEL_GATHER_COUNT = 96
+ _HIDDEN_SIZE = 3072
++
++
+ def _laguna_rows() -> int:
+     """Verifier width for the pinned collective buffers.
+ 
+@@ -46,9 +48,7 @@ class LagunaM8CollectiveState:
+         from vllm import envs
+ 
+         self.device = device
+-        self._embedding_reduce_required = (
+-            not envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
+-        )
++        self._embedding_reduce_required = not envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
+         # Slot order is deterministic within a forward, so slot i always sees
+         # the same shape. Allocating per slot on first use keeps the fixed
+         # address, non-aliasing, and fixed-order guarantees while allowing a
+@@ -65,9 +65,7 @@ class LagunaM8CollectiveState:
+         # eligible forward, but a large deviation from the record topology is
+         # a regression -- per-row serialization inflates it -- so it fails
+         # rather than being normalized.
+-        self._expected_gathers: int | None = (
+-            _MODEL_GATHER_COUNT if _ROWS == 8 else None
+-        )
++        self._expected_gathers: int | None = _MODEL_GATHER_COUNT if _ROWS == 8 else None
+         self.embedding_reduce: torch.Tensor | None = torch.empty(
+             (_ROWS, _HIDDEN_SIZE), dtype=torch.bfloat16, device=device
+         )
+@@ -81,6 +79,8 @@ class LagunaM8CollectiveState:
+         self._first_reduce_seen = not self._embedding_reduce_required
+ 
+     def finish_eligible_forward(self) -> None:
++        from vllm import envs
++
+         if self._expected_gathers is None:
+             if self._next_gather > _MODEL_GATHER_COUNT * 3 // 2:
+                 raise RuntimeError(
+@@ -103,6 +103,13 @@ class LagunaM8CollectiveState:
+         expected_executed = (self._expected_gathers or 0) + int(
+             self._embedding_reduce_required
+         )
++        # Inline gathers execute their Python body once while the outer graph
++        # is recorded. On replay the model does not re-enter Python, so only
++        # the still-eager embedding all-reduce callback increments this
++        # counter. The gather cursor distinguishes those states without
++        # accepting a partial capture or changed gather order.
++        if envs.VLLM_XPU_LAGUNA_M8_INLINE_GATHERS and self._next_gather == 0:
++            expected_executed = int(self._embedding_reduce_required)
+         if self._executed != expected_executed:
+             raise RuntimeError(
+                 "Laguna M8 collective capture/replay changed eager collective "
+@@ -230,9 +237,19 @@ def _eager_break_or_run(
+     capture = BreakableCUDAGraphCapture.current()
+     if capture is None or not capture._capturing:
+         return run(local, output) if index is None else run(local, output, index)
++    state = _require_active_state()
++    if index is not None:
++        from vllm import envs
++
++        if envs.VLLM_XPU_LAGUNA_M8_INLINE_GATHERS:
++            # The fixed-address gather output and its following literal
++            # rank-ordered BF16 sum are recorded in the surrounding graph.
++            # The ordinary embedding all-reduce deliberately stays below on
++            # an eager boundary: changing-input replay proved the gathers
++            # exact and localized the stale result to that all-reduce.
++            return state._run_gather(local, output, index)
+     weak_local = weak_ref_tensor(local)
+     weak_output = weak_ref_tensor(output)
+-    state = _require_active_state()
+     # Bind the state method, not the original local tensor, so replay uses the
+     # fixed graph-pool address without keeping its capture-time handle alive.
+     if index is not None:
+diff --git a/vllm/envs.py b/vllm/envs.py
+index bcca1d5e8..25845219c 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -167,6 +167,7 @@ if TYPE_CHECKING:
+     VLLM_USE_BREAKABLE_CUDAGRAPH: bool = False
+     VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH: bool = False
+     VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS: bool = False
++    VLLM_XPU_LAGUNA_M8_INLINE_GATHERS: bool = False
+     VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA: bool = False
+     VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS: bool = False
+     VLLM_DP_MASTER_IP: str = ""
+@@ -761,6 +762,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS": lambda: bool(
+         int(os.environ.get("VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS", "0"))
+     ),
++    "VLLM_XPU_LAGUNA_M8_INLINE_GATHERS": lambda: bool(
++        int(os.environ.get("VLLM_XPU_LAGUNA_M8_INLINE_GATHERS", "0"))
++    ),
+     "VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA": lambda: bool(
+         int(
+             os.environ.get(
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 4197aa80c..fc6487a13 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4150,6 +4150,7 @@ class GPUModelRunner(
+                 )
+         if (
+             envs.VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS
++            or envs.VLLM_XPU_LAGUNA_M8_INLINE_GATHERS
+             or envs.VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
+             or envs.VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS
+         ) and not envs.VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH:
+@@ -4161,6 +4162,7 @@ class GPUModelRunner(
+             return
+ 
+         capture_attention_graphs = envs.VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS
++        inline_gathers = envs.VLLM_XPU_LAGUNA_M8_INLINE_GATHERS
+         prebuilt_exact_attn_metadata = (
+             envs.VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
+         )
+@@ -4228,6 +4230,36 @@ class GPUModelRunner(
+                 persistent_kv_cache_views
+                 and self.vllm_config.kv_transfer_config is not None
+             ),
++            "inline_gathers_wrong_width": (
++                inline_gathers and envs.VLLM_XPU_LAGUNA_EXACT_MAX_M != 12
++            ),
++            "inline_gathers_without_segmented_draft": (
++                inline_gathers and not envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
++            ),
++            "inline_gathers_without_inline_draft_attention": (
++                inline_gathers
++                and not envs.VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
++            ),
++            "inline_gathers_with_nested_target_attention": (
++                inline_gathers and capture_attention_graphs
++            ),
++            "inline_gathers_without_prebuilt_metadata": (
++                inline_gathers and not prebuilt_exact_attn_metadata
++            ),
++            "inline_gathers_without_width12_router": (
++                inline_gathers
++                and (
++                    not envs.VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK
++                    or not envs.VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
++                )
++            ),
++            "inline_gathers_with_replicated_embedding": (
++                inline_gathers and envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
++            ),
++            "inline_gathers_with_evidence": (
++                inline_gathers
++                and os.environ.get("VLLM_XPU_LAGUNA_M8_EVIDENCE", "0") == "1"
++            ),
+         }
+         if any(invalid.values()):
+             raise ValueError(
+@@ -4261,6 +4293,14 @@ class GPUModelRunner(
+             ),
+         }
+ 
++    @staticmethod
++    def _laguna_m8_target_graph_topology() -> tuple[int, int]:
++        if envs.VLLM_XPU_LAGUNA_M8_INLINE_GATHERS:
++            return 50, 49
++        if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING:
++            return 145, 144
++        return 146, 145
++
+     def _validate_laguna_m8_evidence_config(self) -> None:
+         arm = self.laguna_m8_evidence_arm
+         if arm is None:
+@@ -6232,6 +6272,7 @@ class GPUModelRunner(
+             and not self.parallel_config.use_ubatching
+         ):
+             laguna_m8_breakable_graph = envs.VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH
++            target_graphs, target_eager_breaks = self._laguna_m8_target_graph_topology()
+             self.model = BreakableCUDAGraphWrapper(
+                 self.model,
+                 self.vllm_config,
+@@ -6247,24 +6288,19 @@ class GPUModelRunner(
+                     laguna_m8_breakable_graph
+                     and envs.VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS
+                 ),
+-                # One initial graph plus one graph after each of the 97
+-                # collective and 48 attention eager boundaries.
++                # Ordinarily this is one initial graph plus one graph after
++                # each of the 97 collective and 48 attention eager boundaries.
++                # The guarded inline-gather treatment retires exactly 96 model
++                # gather boundaries while retaining the embedding all-reduce
++                # and all 48 attention boundaries, giving 50/49.
+                 # Replicated target embeddings remove the verifier's embedding
+                 # all-reduce, changing the audited topology from 146/145 to
+                 # 145/144 without moving any decoder-layer boundary.
+                 expected_num_graphs=(
+-                    None
+-                    if not laguna_m8_breakable_graph
+-                    else 145
+-                    if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
+-                    else 146
++                    target_graphs if laguna_m8_breakable_graph else None
+                 ),
+                 expected_num_eager_breaks=(
+-                    None
+-                    if not laguna_m8_breakable_graph
+-                    else 144
+-                    if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
+-                    else 145
++                    target_eager_breaks if laguna_m8_breakable_graph else None
+                 ),
+             )
+             drafter = getattr(self, "drafter", None)

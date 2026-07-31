@@ -69,3 +69,19 @@ Result and reproduction entry points:
 - [structured record](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json);
 - [standalone repro](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md);
 - [metric correction](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md).
+
+## Post-record experimental snapshots
+
+The following snapshots are retained for review and exact reproduction but are
+not promoted record sources unless their linked live gate passes:
+
+| Experiment | Base | Commit | Patch SHA-256 | Bundle SHA-256 |
+| --- | --- | --- | --- | --- |
+| width-12 target inline gathers | `34b43849fc7c8ff8633f223469cc2a0d525c256e` | `ce2f3dfc02bce59095d8654d299c52b05c72d423` | `e9af21c63f399ccace945077cf1fbef883f4e8cfbe3ec9cd412dc3233eae070e` | `231d391d4526e7816ba69e80d211aefb0df663699846d5211e50c659c1ee9ea7` |
+
+The inline-gather candidate is preregistered in
+[the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
+Its bundle ref is
+`experiment/laguna-target-inline-gathers-20260731`; its review patch is
+`0001-xpu-inline-exact-Laguna-target-gathers.patch`. It remains default-off
+and unpromoted until the non-scored smoke and exact scored leg are complete.
