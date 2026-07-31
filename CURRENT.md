@@ -159,18 +159,18 @@ source/binary identity, and clean pre/post idle checks. Inspect actual files
 and per-rank logs before accepting harness summaries, and never escalate
 hardware recovery from a probe that did not prove it executed.
 
-### Reopened BF16 frontier: exact 120.807 / conventional 119.599 (2026-07-30)
+### Reopened BF16 frontier: exact 121.037 / conventional 119.827 (2026-07-30)
 
 The BF16-KV lane now has a verified and LocalMaxxing-approved successor.
 Segmented DFlash captures stateless compute around unchanged eager collectives;
 the latest treatment additionally replaces the six eager draft-attention
 Python submissions with graph-safe attention subgraph replays.
 
-The first authorized cold 13-prompt score measured:
+The current authorized cold 13-prompt score measured:
 
-- **`120.80663308919503 tok/s`** under the historical published
+- **`121.03724088473012 tok/s`** under the historical published
   100-event/99-interval-span formula; and
-- **`119.5985667583031 tok/s`** under the current-policy conventional
+- **`119.82686847588282 tok/s`** under the current-policy conventional
   99-inter-token-interval formula.
 
 It is 13/13 token-and-text exact against canonical q1, cache-zero on every row,
@@ -178,16 +178,16 @@ target 146/145 and draft 20/19 on all four ranks, and operationally clean:
 
 ```text
 /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
-  laguna-dflash-attention-subgraph-scored-20260731T032738Z
+  laguna-dflash-inline-attention-scored-20260731T035401Z
 ```
 
 LocalMaxxing approved the conventional score as
-`cms8e85mr00fmpf013wvkqc0s`. The historical 120 objective is met without
+`cms8f38fd00ftpf01mk0bwfql`. The historical 120 objective is met without
 changing quality, prompts, or the scored window; the stricter 120 objective is
-still short by `0.401433242 tok/s`.
+still short by `0.173131524 tok/s`.
 
 Detailed preregistration, source identity, patch, smoke, score, and submission:
-[`2026-07-30-segmented-dflash-attention-subgraphs-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-attention-subgraphs-preregistration.md).
+[`2026-07-30-segmented-dflash-inline-attention-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-inline-attention-preregistration.md).
 The underlying independently reproduced segmented result and its failed routes
 remain recorded in the adjacent 2026-07-30 notes. The current host completed
 the scored run and strict teardown/idle gates; no recovery action is pending.

@@ -118,3 +118,29 @@ gate passes, including 14/13.
 All substantive preregistered smoke gates passed in the one device attempt.
 The next authorized action is one cold 13-prompt score with the repaired
 analyzer plumbing and the same candidate identity.
+
+## Cold scored leg: exact improvement
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-inline-attention-scored-20260731T035401Z
+```
+
+The first authorized score passed: 13/13 token-and-text exact, all cache-zero,
+target 146/145 and draft 14/13 on all ranks, and
+`original_status=0 stop_status=0 worker_status=0 idle_status=0`.
+
+| treatment | historical tok/s | conventional tok/s |
+| --- | ---: | ---: |
+| **inline draft attention** | **121.037240885** | **119.826868476** |
+| nested draft attention | 120.806633089 | 119.598566758 |
+
+Inline attention improves the current-policy metric by 0.1909%. It is the new
+exact record, while remaining honestly short of conventional 120 by
+0.173131524 tok/s. No retry, warmup, prompt omission, cache/history reuse, or
+metric substitution occurred.
+
+LocalMaxxing accepted the conventional score after authenticated dry-run:
+`cms8f38fd00ftpf01mk0bwfql`, `APPROVED`.
