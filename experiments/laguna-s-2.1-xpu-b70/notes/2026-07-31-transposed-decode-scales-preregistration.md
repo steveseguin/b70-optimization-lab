@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **component gate passed; guarded integration smoke authorized; no
-endpoint authorized**.
+Status: **component and guarded integration gates passed; exact TP4 endpoint
+pending clean GPU-0 recovery**.
 
 ## Premise
 
@@ -95,3 +95,31 @@ therefore separately authorized with these boundaries:
 5. Even an integration-smoke pass does not authorize a score claim.  GPU 0
    must first be recovered at a user-visible reboot boundary, then the fixed
    cold 13-prompt exactness/topology/cache gate must pass.
+
+## Integration-smoke outcome
+
+The first gate launch stopped before a kernel call because the standalone
+worker had not explicitly loaded `_moe_C`; this was a harness failure, not a
+candidate result.  Commit `3d53af816` repaired the import and the fresh run
+passed:
+
+- real `XpuFusedMoe.apply`, not a direct grouped-GEMM call;
+- healthy physical GPU 1 only;
+- three independently seeded 12-row BF16 hidden-state inputs;
+- identical input and logical-scale hashes between control and candidate;
+- raw BF16 output exactness `3/3`;
+- control created no transposed tables;
+- candidate created exact physical shapes `[64,96,2048]` and
+  `[64,32,3072]` while retaining the ordinary tables;
+- mapped grouped-GEMM DSO and source identities matched the pins above.
+
+Result: `INTEGRATION_RESULT=PASS exact=3/3 layout_correct=True`.
+
+Artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-integration-8dd94f2-20260731T155418Z`
+
+This authorizes the unchanged TP4 endpoint gate after a clean reboot restores
+GPU 0.  It does not predict or claim endpoint throughput; the component gain
+is only 2.42% in the two MoE GEMMs and must survive 48 layers, graph capture,
+collectives, attention, draft work, and fixed-window metric noise.
