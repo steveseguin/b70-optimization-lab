@@ -2,7 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **source/static and component work authorized; no endpoint authorized**.
+Status: **component gate passed; guarded integration smoke authorized; no
+endpoint authorized**.
 
 ## Premise
 
@@ -44,3 +45,53 @@ No target/draft/KV precision, model, prompt, acceptance policy, benchmark
 metric, teacher, or quality contract may change. No reboot, reset, driver
 action, endpoint, or submission is authorized here.
 
+## Component outcome and integration design
+
+The first device run of source `fdbe3b633` was invalid and is retained as a
+negative result.  Its transposed prefetch reused the old two-dimensional
+`[N,1]` descriptor with a one-element dynamic pitch.  The candidate failed
+with `UR_RESULT_ERROR_DEVICE_LOST` and wedged physical GPU 0's compute queue.
+No reset or reboot was taken; GPU 0 remains quarantined.  Artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-component-fdbe3b6-20260731T152243Z`
+
+Source `2f0b0611b3999a76592c79a314d69f4b7ab8f285` fixes the descriptor by
+representing a scale line as a real `[1,SG_N]` surface with physical strides
+`[N,1]`.  The production static probe passed on healthy GPU 1: 128 GRFs, no
+spill-memory accesses, 32 BF16 multiplies, two DPAS instructions, and the same
+shift/bitfield instruction counts as control.  The ABI-matched DSO is SHA-256
+`c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839`.
+
+The changed-input component gate then passed all six raw-BF16 comparisons:
+
+| shape | control median | candidate median | speedup |
+|---|---:|---:|---:|
+| W13, `N=2048 K=3072 M=120` | 0.324687 ms | 0.320999 ms | 1.011489x |
+| W2, `N=3072 K=1024 M=120` | 0.191079 ms | 0.182581 ms | 1.046546x |
+| summed | 0.515766 ms | 0.503580 ms | **1.024200x** |
+
+Artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-component-2f0b061-20260731T154509Z`
+
+This clears the preregistered 2.0% component threshold.  The integration is
+therefore separately authorized with these boundaries:
+
+1. `VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES` is strict literal `0/1` in
+   both Python and C++ and requires the established Laguna INT4/BF16-scale,
+   top-10, 64-local/256-global-expert EP4 exact-MoE contract.
+2. Each of the 48 target MoE layers retains its checkpoint `[E,N,K/32]`
+   scales for prefill and creates immutable `[E,K/32,N]` clones before graph
+   capture.  The total added persistent storage is 1,811,939,328 bytes per
+   rank.  vLLM profiles this model memory before sizing KV cache.
+3. Only a 12-row target call selects the clones.  With top-10 routing this is
+   the exact `M=120` generic grouped-GEMM route screened above.  The dense
+   six-layer DFlash draft has no MoE scales and is untouched.  Every other row
+   count retains the checkpoint layout.
+4. Source commit `8dd94f2` implements that model-side integration and includes
+   selector/row-routing unit tests (15 targeted tests passed).  A real
+   `XpuFusedMoe.apply` control/candidate smoke on healthy GPU 1 must raw-match
+   before any TP4 endpoint is considered.
+5. Even an integration-smoke pass does not authorize a score claim.  GPU 0
+   must first be recovered at a user-visible reboot boundary, then the fixed
+   cold 13-prompt exactness/topology/cache gate must pass.
