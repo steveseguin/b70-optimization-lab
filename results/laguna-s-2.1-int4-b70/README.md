@@ -2,6 +2,24 @@
 
 ## Qualified result
 
+The current four-B70 record is the exact segmented-DFlash attention-subgraph
+run approved by LocalMaxxing as
+[`cms8e85mr00fmpf013wvkqc0s`](https://www.localmaxxing.com/en/runs/cms8e85mr00fmpf013wvkqc0s):
+
+- current-policy conventional 99-interval median:
+  **`119.5985667583031 tok/s`**;
+- historical 100-event compatibility formula:
+  **`120.80663308919503 tok/s`**;
+- 13/13 canonical-q1 token IDs and output-text hashes equal;
+- `cached_tokens=0` on all 13 unique cold requests;
+- target 146/145 and draft 20/19 on all four ranks; and
+- one cold suite, no warmup or retry, clean teardown and post-idle gate.
+
+The complete new source/patch/run packet is
+[the segmented DFlash attention note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-attention-subgraphs-preregistration.md).
+
+### Superseded 2026-07-26 result
+
 The sealed width-12 / DFlash-depth-11 run is exact and approved by
 LocalMaxxing:
 

@@ -150,3 +150,53 @@ The one authorized device smoke passed:
 
 This diagnostic emitted no throughput score. The preregistered next action is
 one cold 13-prompt scored leg with the same candidate identity.
+
+## Cold scored leg: exact 120 tok/s win
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-attention-subgraph-scored-20260731T032738Z
+```
+
+The first authorized cold score passed every validity gate:
+
+- **13/13 token-and-text exact** against the canonical q1 teacher;
+- all prompt-cache counters zero;
+- draft 20/19 and target 146/145 on all four ranks;
+- no XPU, graph, static-address, or collective error; and
+- `original_status=0 stop_status=0 worker_status=0 idle_status=0`.
+
+Measured throughput:
+
+| leg | historical tok/s | preferred 99-interval tok/s |
+| --- | ---: | ---: |
+| **draft attention subgraphs** | **120.806633089** | **119.598566758** |
+| segmented confirmation | 119.695499867 | 118.498544868 |
+| segmented first | 119.189370967 | 117.997477257 |
+
+The candidate improves on the stronger confirmation by 0.9283% under either
+accounting convention and clears the requested 120 tok/s under the established
+published metric by 0.806633 tok/s. It remains 0.401433 tok/s below 120 under
+the stricter 99-interval convention.
+
+This is a valid new performance result, not diagnostic timing: the same cold
+13-prompt window, one start, no warmup, no retries, no omitted prompts, and no
+capture work moved outside the score. The next optimization should remain on
+this proven attention seam and try to retire the six draft attention boundary
+submissions themselves; do not combine this result with the closed captured-
+copy or in-place-collective treatments.
+
+The current-policy conventional result was submitted to LocalMaxxing after
+both local and authenticated server-side dry-run validation. HTTP 201 returned:
+
+```text
+id=cms8e85mr00fmpf013wvkqc0s
+status=APPROVED
+```
+
+Queue and receipt:
+
+- `data/localmaxxing-laguna-s-2.1-int4-b70-segmented-dflash-attn-119.599tok-20260730.queue.json`;
+- `data/localmaxxing-responses/laguna-s-2.1-int4-b70-segmented-dflash-attn-119.599tok-20260730.response.json`.
