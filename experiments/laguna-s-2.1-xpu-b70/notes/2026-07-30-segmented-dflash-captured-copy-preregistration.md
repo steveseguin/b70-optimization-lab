@@ -118,3 +118,26 @@ the closed in-place treatment.
 
 These are offline results only. The next authorized device action is exactly
 one non-scored 400-token smoke.
+
+## Non-scored live smoke: pass
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-captured-copy-smoke-20260731T025411Z
+```
+
+The one authorized smoke passed:
+
+- both 400-token responses matched their canonical q1 prefixes;
+- both reported `cached_tokens=0`;
+- request-local draft-cycle counts were 105 and 62;
+- accepted-per-position curves were non-flat and decayed from 83 to 6 and
+  from 54 to 15;
+- draft 20/19 and target 146/145 capture/replay appeared on all four ranks;
+- no OOM, device-lost, static-identity, or collective error occurred; and
+- formal service stop, worker/listener cleanup, and post-idle interval passed.
+
+This diagnostic emitted no throughput score. The preregistered next action is
+one cold 13-prompt scored leg with the same candidate identity.
