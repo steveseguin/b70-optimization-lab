@@ -109,3 +109,44 @@ the live service environment, and rejects it without segmented DFlash.
 
 These are offline results only. The next authorized device action is exactly
 one non-scored 400-token smoke.
+
+## Preflight-only harness rejection
+
+The first invocation stopped before service startup or device execution at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-attention-subgraph-smoke-20260731T032002Z
+```
+
+The generic harness default expected an older grouped-GEMM binary. The active
+confirmed record binary is
+`53f3d2941ce322bcdff1b0463ec6fe72387036ea54d3f602a08d690744b3459f`
+and matches both cold segmented record legs and the selected runtime lock. The
+harness rejected the mismatch before installing cleanup traps, writing an
+identity, or launching vLLM. A fresh invocation pinned that expected hash
+explicitly. This is not a device attempt or candidate result.
+
+## Non-scored live smoke: pass
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-attention-subgraph-smoke-20260731T032030Z
+```
+
+The one authorized device smoke passed:
+
+- both 400-token responses matched their canonical q1 prefixes;
+- both reported `cached_tokens=0`;
+- request-local draft-cycle counts were 105 and 62;
+- accepted-per-position curves were non-flat and decayed from 83 to 6 and
+  from 54 to 15;
+- draft 20/19 and target 146/145 appeared on all four ranks;
+- the graph-safe FA2 launch captured without the historical SYCL scratch error;
+- no OOM, device-lost, static-identity, or collective error occurred; and
+- formal service stop, worker/listener cleanup, and post-idle interval passed.
+
+This diagnostic emitted no throughput score. The preregistered next action is
+one cold 13-prompt scored leg with the same candidate identity.
