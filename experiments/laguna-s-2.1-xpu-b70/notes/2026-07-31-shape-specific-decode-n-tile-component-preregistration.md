@@ -35,3 +35,22 @@ least `1.5%`. A pass authorizes source design for shape-specific dispatch, not
 an endpoint. No model service, score, reboot, reset, or submission is
 authorized here.
 
+## Result and closure
+
+All three tiles were raw-BF16 exact on both shapes. Medians in milliseconds:
+
+| N tile | W13 | W2 |
+| ---: | ---: | ---: |
+| 32 | 0.368387200 | 0.190762950 |
+| 64 | 0.361346500 | **0.179260350** |
+| 128 | **0.358837750** | 0.180853350 |
+
+The best hybrid is W13=N128 plus W2=N64: `0.538098100 ms` versus
+`0.540606850 ms` for N64+N64, only **0.4662%** faster. It misses the 1.5%
+component gate, so no shape-specific source change or endpoint is authorized.
+Artifact:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-shape-tile-component-ec507e8-20260731T1055Z`.
+
+This closes the ambiguity left by the earlier global endpoint sweep: N128
+does help W13 slightly, but the independently optimal hybrid is far too small
+to explain or close the remaining throughput gap.

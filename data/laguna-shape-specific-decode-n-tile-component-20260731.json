@@ -1,0 +1,25 @@
+{
+  "schema": "laguna-shape-specific-decode-n-tile-component-v1",
+  "date": "2026-07-31",
+  "status": "exact_threshold_miss",
+  "endpoint_run": false,
+  "source_commit": "ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2",
+  "dso_sha256": "888d0fd33bf1b355e534b3eda7ea6be2a1d924fc7686f9bdfd2ad0cec6edabf5",
+  "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-shape-tile-component-ec507e8-20260731T1055Z",
+  "all_raw_bf16_exact": true,
+  "timing_ms": {
+    "32": {"w13": 0.3683872, "w2": 0.19076295},
+    "64": {"w13": 0.3613465, "w2": 0.17926035},
+    "128": {"w13": 0.35883775, "w2": 0.18085335}
+  },
+  "control_n64_sum_ms": 0.54060685,
+  "best_hybrid": {
+    "w13_n_tile": 128,
+    "w2_n_tile": 64,
+    "sum_ms": 0.5380981,
+    "speedup": 1.0046622539644723,
+    "percent": 0.4662253964472285
+  },
+  "required_percent": 1.5,
+  "decision": "stop_before_source_change"
+}
