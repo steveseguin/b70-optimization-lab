@@ -141,3 +141,35 @@ The one authorized smoke passed:
 
 This diagnostic emitted no throughput score. The preregistered next action is
 one cold 13-prompt scored leg with the same candidate identity.
+
+## Cold scored leg: exact, operationally clean, no throughput win
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-captured-copy-scored-20260731T030057Z
+```
+
+The first and only authorized cold score passed every validity gate:
+
+- 13/13 token-and-text exact against the canonical q1 teacher;
+- all prompt-cache counters zero;
+- draft 20/19 and target 146/145 on all four ranks;
+- graceful worker shutdown and strict post-idle pass; and
+- `original_status=0 stop_status=0 worker_status=0 idle_status=0`.
+
+Measured throughput:
+
+| leg | historical tok/s | preferred 99-interval tok/s |
+| --- | ---: | ---: |
+| captured copies | 119.192374497 | 118.000450752 |
+| segmented first | 119.189370967 | 117.997477257 |
+| segmented confirmation | 119.695499867 | 118.498544868 |
+
+The treatment reproduced the first segmented result almost exactly and was
+about 0.42% below the independent confirmation. Removing thirteen standalone
+copy submissions therefore has no measurable throughput benefit under the
+cold-suite noise floor. The implementation is correct and preserved for
+reference, but this route is **closed as a performance optimization**. Do not
+retry it or combine it speculatively with another treatment.
