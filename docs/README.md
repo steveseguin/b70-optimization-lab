@@ -19,7 +19,7 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Model Lane Entry Points
 
-- [Laguna S 2.1 Result Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): historical sealed 102.971 / 101.942 repro plus the linked current exact four-B70 segmented-DFlash record at historical 120.807 / conventional 119.599 tok/s.
+- [Laguna S 2.1 Result Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): historical sealed repro plus the current exact four-B70 segmented-DFlash/decode-GRF128 record at historical 122.516 / conventional 121.291 tok/s.
 - [Laguna S 2.1 Qualified Result Packet](../results/laguna-s-2.1-int4-b70/README.md): promoted identity, qualification, evidence, patches, and LocalMaxxing receipt.
 - [Laguna Metric Accounting Correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md): the 100-event versus 99-interval finding, impact, and prevention rule.
 - [Laguna Standalone Repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md): fail-closed source/runtime restoration, historical-receipt audit, and one-cold-suite replay.

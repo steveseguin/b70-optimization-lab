@@ -159,20 +159,23 @@ Intel-branded host:
 
 ## Laguna S 2.1 INT4 Qualified Published Result
 
-The four-B70 Laguna row is approved at `102.971435596 tok/s` under the
-submitted legacy 100-event/99-interval convention. The conventional rate from
-the same timestamps is `101.941721240 tok/s`, so the conventionally counted
-102 objective remains short by `0.058278760 tok/s`. The fixed cold suite used
-exact width 12, DFlash depth 11, and the audited 146/145 Breakable PIECEWISE
-topology. The first valid preregistered score was 13/13 token-and-text exact
-against the canonical q1 teacher, cache-zero on every row, and approved by
-LocalMaxxing as `cms2ccv2d00lps201rej94pjy`.
+The current four-B70 Laguna row is approved at **`121.290560973 tok/s`** under
+conventional 99-inter-token-interval accounting; the same timestamps produce
+`122.515718154 tok/s` under the historical compatibility formula. A second
+independent same-identity cold suite measured `120.086327950 tok/s`
+conventionally. Both fixed suites used BF16 KV, exact width 12, DFlash depth
+11, the audited 146/145 target and 14/13 draft graph topologies, and a
+decode-only spill-free 128-GRF INT4 kernel. All 26 prompts were token-and-text
+exact against the canonical q1 teacher and cache-zero. LocalMaxxing approved
+the record as `cms905x22003spm01pwyvp3c9`.
 
 Use:
 
 - [record resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md);
 - [qualified result packet](../results/laguna-s-2.1-int4-b70/README.md);
-- [standalone repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md);
+- [current record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-confirmed-record.md);
+- [current structured packet](../data/laguna-decode-grf128-confirmed-record-20260731.json);
+- [older standalone repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md);
 - [source/runtime reconstruction and reproducibility tiers](../repro/laguna-s-2.1-int4-b70-102tps-20260726/BUILD.md);
 - [accounting correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md);
 - [record note](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md);

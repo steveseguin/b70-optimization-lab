@@ -24,11 +24,11 @@ historical convention, not under conventional interval accounting.
 - current approved conventional record: **`119.82686847588282 tok/s`**,
   LocalMaxxing `cms8f38fd00ftpf01mk0bwfql`;
 - confirmed GRF128 record: **`121.29056097255466 tok/s`** conventional;
+- LocalMaxxing: `cms905x22003spm01pwyvp3c9` (`APPROVED`);
 - lane state: active optimization, no service or worker currently running.
 
 Current GRF128 result and exact artifacts:
 [`2026-07-31-decode-grf128-confirmed-record.md`](notes/2026-07-31-decode-grf128-confirmed-record.md).
-Submit the conventional metric through the fail-closed LocalMaxxing helper.
 The next higher-upside static candidate is a
 separately named exact-decode kernel with compile-time-fixed
 `SCALE_VEC=1/MAD=0/FOLD=0`, eliminating dead runtime-selected mainloops before

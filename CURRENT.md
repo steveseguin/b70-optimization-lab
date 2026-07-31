@@ -161,9 +161,8 @@ hardware recovery from a probe that did not prove it executed.
 
 ### Reopened BF16 frontier: exact 122.516 / conventional 121.291 (2026-07-31)
 
-The BF16-KV lane has a newly confirmed exact GRF128 record. The prior 119.827
-conventional row remains the currently approved LocalMaxxing receipt until the
-new submission is accepted.
+The BF16-KV lane has a newly confirmed exact GRF128 record, approved by
+LocalMaxxing as `cms905x22003spm01pwyvp3c9`.
 Segmented DFlash captures stateless compute around unchanged eager collectives;
 the latest treatment additionally replaces the six eager draft-attention
 Python submissions with graph-safe attention subgraph replays.
@@ -186,8 +185,9 @@ target 146/145 and draft 14/13 on all four ranks, and operationally clean:
 An independent same-identity first leg measured `120.0863279502934 tok/s`
 conventional and also passed every gate. The confirmation beats the approved
 incumbent by `1.2215%`, so GRF128 is now promoted rather than classified as
-noise. LocalMaxxing submission is pending; the prior approved receipt is
-`cms8f38fd00ftpf01mk0bwfql`.
+noise. LocalMaxxing approved the conventional result as
+`cms905x22003spm01pwyvp3c9`; the prior receipt
+`cms8f38fd00ftpf01mk0bwfql` is superseded.
 
 Detailed preregistration, source identity, patch, smoke, score, and submission:
 [`2026-07-30-segmented-dflash-inline-attention-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-inline-attention-preregistration.md).

@@ -18,8 +18,9 @@ the segmented-DFlash inline-attention stack:
 
 The complete source/patch/run packet is
 [the confirmed GRF128 note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-confirmed-record.md).
-LocalMaxxing submission is pending. The preceding approved row is
-[`cms8f38fd00ftpf01mk0bwfql`](https://www.localmaxxing.com/en/runs/cms8f38fd00ftpf01mk0bwfql).
+LocalMaxxing approved it as
+[`cms905x22003spm01pwyvp3c9`](https://www.localmaxxing.com/en/runs/cms905x22003spm01pwyvp3c9).
+The preceding `cms8f38fd00ftpf01mk0bwfql` row is superseded.
 
 ### Superseded 2026-07-26 result
 

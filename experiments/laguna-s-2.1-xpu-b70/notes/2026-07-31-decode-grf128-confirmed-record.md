@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **confirmed exact BF16-KV record; eligible for promotion and
-LocalMaxxing submission**.
+Status: **confirmed exact BF16-KV record; approved by LocalMaxxing as
+`cms905x22003spm01pwyvp3c9`**.
 
 ## Two independent cold legs
 
@@ -38,6 +38,11 @@ independently valid cold suite—not a retry of a failed run or a cherry-picked
 partial prompt set. The first lower leg remains visible as reproducibility
 support.
 
+The conventional result passed the authenticated server preflight
+(`valid: true`) and was accepted with HTTP 201 as LocalMaxxing
+[`cms905x22003spm01pwyvp3c9`](https://www.localmaxxing.com/en/runs/cms905x22003spm01pwyvp3c9),
+status `APPROVED`.
+
 Record identity:
 
 - vLLM `34b43849fc7c8ff8633f223469cc2a0d525c256e`;
@@ -64,4 +69,3 @@ use**. An instruction-level optimization that lowers pressure cannot improve
 occupancy while a global or per-kernel 256-GRF property pins the residency
 class. Use a separately named kernel and an exact shape/type gate so a resource
 mode experiment cannot silently alter unrelated prefill or draft paths.
-
