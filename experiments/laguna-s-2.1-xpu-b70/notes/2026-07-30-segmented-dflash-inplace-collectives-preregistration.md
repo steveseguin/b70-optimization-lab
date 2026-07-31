@@ -83,3 +83,58 @@ count, or collective count changes.
    repeated starts.
 
 This note makes no throughput or correctness claim for the treatment.
+
+## Matched-source confirmation before treatment
+
+Before changing the measured path, a detached clean main worktree at
+`647b58e879fa5afceffabebf5073e35b86dd9b38` and a detached clean vLLM
+worktree at the exact winning source
+`4f5e7a63cbd0d0bb409207e079421d0d5532d197` reproduced the segmented
+configuration:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-segmented-confirm-20260731T023333Z
+```
+
+- historical published metric: `119.69549986706798 tok/s`;
+- preferred 99-interval metric: `118.4985448683973 tok/s`;
+- 13/13 token-and-text exact against the canonical q1 teacher;
+- `cached_tokens=0` on 13/13;
+- target 146/145 and draft 20/19 capture/replay on every rank; and
+- `stop_status=0`, `worker_status=0`, `idle_status=0`.
+
+This is an independent cold confirmation of the first
+`119.18937096651626` / `117.9974772568511` leg, not a candidate score or a
+best-of selection.
+
+## Offline implementation
+
+- vLLM base:
+  `4f5e7a63cbd0d0bb409207e079421d0d5532d197`;
+- candidate branch:
+  `experiment/laguna-dflash-inplace-collectives-20260730`;
+- candidate commit:
+  `26edc1b73`;
+- worktree:
+  `/home/steve/src/laguna-vllm-dflash-inplace-collectives-20260730`;
+- preserved patch:
+  `patches/laguna-s-2.1-xpu-b70/0001-xpu-reduce-segmented-DFlash-collectives-in-place.patch`;
+- patch SHA-256:
+  `fdcb2d824bfc3456001887651348ca5232b3484d972baa0fe07da8d6000ec1ba`;
+- focused vLLM gate: `49 passed`;
+- segmented smoke parser gate: `6 passed`; and
+- Ruff, Python compilation, Bash syntax, and relevant whitespace checks:
+  pass.
+
+The implementation keeps the default path unchanged. With the selector on,
+the thirteen slots begin unbound, bind exactly once to distinct
+graph-produced tensors during capture, retain strong ownership, and reject
+binding outside capture or any later signature replacement. Replay keeps the
+slot cursor at zero while the same thirteen eager callbacks execute. The
+measurement harness records and verifies the selector explicitly as its 29th
+argument.
+
+These are offline results only. They establish the fail-closed contract, not
+XPU graph correctness or throughput. The next authorized action is exactly
+one non-scored 400-token smoke.
