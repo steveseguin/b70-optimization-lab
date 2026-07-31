@@ -2,7 +2,8 @@
 
 Date: 2026-07-30 America/Toronto
 
-Status: **preregistered before implementation or device execution.**
+Status: **rejected by the first non-scored smoke; no score or correctness
+claim.**
 
 ## Evidence and hypothesis
 
@@ -138,3 +139,47 @@ argument.
 These are offline results only. They establish the fail-closed contract, not
 XPU graph correctness or throughput. The next authorized action is exactly
 one non-scored 400-token smoke.
+
+## First live smoke: rejected by static-identity guard
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-dflash-inplace-smoke-20260731T024424Z
+```
+
+All four ranks loaded the model and captured the expected target 146/145 and
+draft 20/19 topologies. At the first drafter replay, the wrapper's independent
+static-input guard rejected the collective state. Its capture-time signature
+contained thirteen `None` slots because signatures are recorded before the
+model walk; after capture, those slots held the thirteen retained boundary
+tensors. Every rank reported the same explicit drift:
+
+```text
+Static tensor identity changed before breakable graph replay
+captured=None current=(address, offset, [12,3072], stride, BF16, XPU)
+```
+
+The endpoint returned a truncated error response, so the outer smoke runner
+reported request 0 as failing its 400-token q1-prefix gate. This is not a
+measured token mismatch: no complete candidate response exists.
+
+Formal cleanup passed:
+
+```text
+original_status=1
+stop_status=0
+worker_status=0
+idle_status=0
+```
+
+There was no OOM, device-lost report, or collective-stage failure. No retry,
+probe, reset, driver action, shared-memory deletion, or reboot followed.
+
+The in-place route is closed. Excluding the mutable state from the static
+signature would weaken a guard that has caught real stale-input failures.
+A distinct follow-up may instead keep the original preallocated fixed outputs,
+record each `copy_(local)` at the tail of the preceding compute graph, and
+leave only the unchanged all-reduce in the eager callback. That requires a new
+preregistration and is not evidence from this failed run.
