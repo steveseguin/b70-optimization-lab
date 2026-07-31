@@ -1,0 +1,232 @@
+From cbbaff46984e69e31fcc9c6ffffa6569116a955d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 30 Jul 2026 22:52:40 -0400
+Subject: [PATCH] xpu: capture segmented DFlash collective copies
+
+---
+ .../test_laguna_dflash_collectives.py         | 55 +++++++++++++++++++
+ tests/v1/worker/test_gpu_model_runner.py      | 12 ++++
+ vllm/compilation/laguna_dflash_collectives.py | 33 ++++++++++-
+ vllm/envs.py                                  |  6 ++
+ vllm/v1/worker/gpu_model_runner.py            | 13 ++++-
+ 5 files changed, 115 insertions(+), 4 deletions(-)
+
+diff --git a/tests/v1/cudagraph/test_laguna_dflash_collectives.py b/tests/v1/cudagraph/test_laguna_dflash_collectives.py
+index 60dda9cec..d6a89452e 100644
+--- a/tests/v1/cudagraph/test_laguna_dflash_collectives.py
++++ b/tests/v1/cudagraph/test_laguna_dflash_collectives.py
+@@ -21,6 +21,7 @@ def _patch_collective(monkeypatch: pytest.MonkeyPatch) -> None:
+         "all_reduce",
+         lambda output, group: output.add_(1),
+     )
++    monkeypatch.setattr(collectives, "weak_ref_tensor", lambda tensor: tensor)
+ 
+ 
+ def test_dflash_collective_slots_are_fixed_and_ordered(
+@@ -84,3 +85,57 @@ def test_dflash_collective_detects_replay_output_substitution(
+     replacement = torch.empty_like(state.reduces[0])
+     with pytest.raises(RuntimeError, match="output identity drifted"):
+         state._run_reduce(local, replacement, 0)
++
++
++class _Capture:
++    _capturing = True
++
++    def add_eager(self, fn, *, kind):
++        assert kind == "collective"
++        return fn()
++
++
++def test_dflash_captured_copy_prepares_fixed_output_before_reduce(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    import vllm.compilation.laguna_dflash_collectives as collectives
++    from vllm.compilation.breakable_cudagraph import BreakableCUDAGraphCapture
++
++    events = []
++
++    def reduce(output, group):
++        assert group is _Group.device_group
++        assert torch.equal(output, torch.full_like(output, 3))
++        events.append("reduce")
++        output.add_(1)
++
++    monkeypatch.setattr(collectives, "get_tp_group", lambda: _Group())
++    monkeypatch.setattr(collectives.dist, "all_reduce", reduce)
++    monkeypatch.setattr(collectives, "weak_ref_tensor", lambda tensor: tensor)
++    capture = _Capture()
++    monkeypatch.setattr(
++        BreakableCUDAGraphCapture,
++        "current",
++        classmethod(lambda cls: capture),
++    )
++    state = LagunaDFlashCollectiveState(
++        torch.device("cpu"),
++        capture_collective_copies=True,
++    )
++    monkeypatch.setattr(
++        collectives,
++        "active_laguna_dflash_collective_state",
++        lambda: state,
++    )
++    local = torch.full((12, 3072), 3, dtype=torch.bfloat16)
++    output = state.all_reduce(local)
++    assert events == ["reduce"]
++    assert output is state.reduces[0]
++    assert output.data_ptr() != local.data_ptr()
++    assert torch.equal(output, torch.full_like(output, 4))
++
++    state.reset_for_forward()
++    output.fill_(3)
++    state._run_copied_reduce(output, 0)
++    assert state._next_reduce == 0
++    assert state._executed == 1
+diff --git a/tests/v1/worker/test_gpu_model_runner.py b/tests/v1/worker/test_gpu_model_runner.py
+index 9054c0f91..b50e69c91 100644
+--- a/tests/v1/worker/test_gpu_model_runner.py
++++ b/tests/v1/worker/test_gpu_model_runner.py
+@@ -1011,6 +1011,18 @@ def test_laguna_dflash_segmented_graph_rejects_legacy_graph(monkeypatch):
+         runner._validate_laguna_m8_breakable_graph_config()
+ 
+ 
++def test_laguna_dflash_captured_copies_require_segmented_graph(monkeypatch):
++    monkeypatch.setenv(
++        "VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES",
++        "1",
++    )
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH", "0")
++    runner = _laguna_dflash_segmented_config_runner()
++
++    with pytest.raises(ValueError, match="require.*segmented-DFlash graph"):
++        runner._validate_laguna_m8_breakable_graph_config()
++
++
+ def test_laguna_m8_prebuilt_exact_metadata_accepts_exact_contract(monkeypatch):
+     monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH", "1")
+     monkeypatch.setenv(
+diff --git a/vllm/compilation/laguna_dflash_collectives.py b/vllm/compilation/laguna_dflash_collectives.py
+index e7ce550ce..f17a998cc 100644
+--- a/vllm/compilation/laguna_dflash_collectives.py
++++ b/vllm/compilation/laguna_dflash_collectives.py
+@@ -29,8 +29,14 @@ _REDUCE_COUNT = 13
+ class LagunaDFlashCollectiveState:
+     """Fixed-address outputs for one width-12 DFlash forward."""
+ 
+-    def __init__(self, device: torch.device) -> None:
++    def __init__(
++        self,
++        device: torch.device,
++        *,
++        capture_collective_copies: bool = False,
++    ) -> None:
+         self.device = device
++        self.capture_collective_copies = capture_collective_copies
+         self.reduces = [
+             torch.empty(
+                 (_ROWS, _HIDDEN_SIZE),
+@@ -95,6 +101,11 @@ class LagunaDFlashCollectiveState:
+         output: torch.Tensor,
+         index: int,
+     ) -> torch.Tensor:
++        self._check_output(output, index)
++        output.copy_(local)
++        return self._run_copied_reduce(output, index)
++
++    def _check_output(self, output: torch.Tensor, index: int) -> None:
+         expected = self.reduces[index]
+         if (
+             output.data_ptr() != expected.data_ptr()
+@@ -107,7 +118,13 @@ class LagunaDFlashCollectiveState:
+             raise RuntimeError(
+                 f"Laguna DFlash all-reduce slot {index} output identity drifted"
+             )
+-        output.copy_(local)
++
++    def _run_copied_reduce(
++        self,
++        output: torch.Tensor,
++        index: int,
++    ) -> torch.Tensor:
++        self._check_output(output, index)
+         dist.all_reduce(output, group=get_tp_group().device_group)
+         self._executed += 1
+         return output
+@@ -124,9 +141,19 @@ def _eager_break_or_run(
+     capture = BreakableCUDAGraphCapture.current()
+     if capture is None or not capture._capturing:
+         return run(local, output, index)
+-    weak_local = weak_ref_tensor(local)
+     weak_output = weak_ref_tensor(output)
+     state = _require_active_state()
++    if state.capture_collective_copies:
++        # This executes while the preceding compute segment is still open, so
++        # the copy is recorded at its tail. add_eager then materializes that
++        # segment before the unchanged all-reduce consumes the fixed output.
++        state._check_output(output, index)
++        output.copy_(local)
++        return capture.add_eager(
++            lambda: state._run_copied_reduce(weak_output, index),
++            kind="collective",
++        )
++    weak_local = weak_ref_tensor(local)
+     return capture.add_eager(
+         lambda: state._run_reduce(weak_local, weak_output, index),
+         kind="collective",
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 46e7f0291..e500e39d7 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -300,6 +300,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING: bool = False
+     VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH: bool = False
+     VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH: bool = False
++    VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES: bool = False
+     VLLM_XPU_LAGUNA_M8_REMOTE_ZERO: bool = False
+     VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION: bool = False
+     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2: bool = False
+@@ -2068,6 +2069,11 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH", "0"))
+     ),
++    # Record each fixed-output DFlash collective copy at the tail of the
++    # preceding compute graph. The all-reduce remains an eager boundary.
++    "VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES": lambda: bool(
++        int(os.getenv("VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES", "0"))
++    ),
+     "VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE", "0"))
+     ),
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 388832b80..feae9b424 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4120,6 +4120,14 @@ class GPUModelRunner(
+         )
+ 
+     def _validate_laguna_m8_breakable_graph_config(self) -> None:
++        if (
++            envs.VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES
++            and not envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
++        ):
++            raise ValueError(
++                "Laguna DFlash captured collective copies require the guarded "
++                "segmented-DFlash graph"
++            )
+         if envs.VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH:
+             segmented_invalid = {
+                 "legacy_draft_graph": envs.VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH,
+@@ -6149,7 +6157,10 @@ class GPUModelRunner(
+                     "Laguna DFlash segmented graph has no drafter proposer"
+                 )
+             self.laguna_dflash_collective_state = LagunaDFlashCollectiveState(
+-                self.device
++                self.device,
++                capture_collective_copies=(
++                    envs.VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES
++                ),
+             )
+             drafter.laguna_dflash_collective_state = self.laguna_dflash_collective_state
+         mm_config = self.model_config.multimodal_config
+-- 
+2.43.0
+

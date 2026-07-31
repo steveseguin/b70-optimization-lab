@@ -85,3 +85,36 @@ or scoring window changes.
    omit prompts, retry, move capture outside the score, or cherry-pick starts.
 
 This note makes no correctness or throughput claim for the treatment.
+
+## Offline implementation
+
+- vLLM base:
+  `4f5e7a63cbd0d0bb409207e079421d0d5532d197`;
+- branch:
+  `experiment/laguna-dflash-captured-copies-20260730`;
+- candidate commit:
+  `cbbaff469`;
+- worktree:
+  `/home/steve/src/laguna-vllm-dflash-captured-copies-20260730`;
+- preserved patch:
+  `patches/laguna-s-2.1-xpu-b70/0001-xpu-capture-segmented-DFlash-collective-copies.patch`;
+- patch SHA-256:
+  `ba142d3eb8a406e7f6003d961f4464d9a35600aacd850a772a8267e34a6473a6`;
+- focused vLLM gate: `47 passed`;
+- segmented smoke parser gate: `6 passed`; and
+- Ruff, Python compilation, Bash syntax, and relevant whitespace checks:
+  pass.
+
+The implementation uses the original thirteen preallocated outputs. With the
+selector on, `copy_(local)` executes while the preceding outer graph segment
+is still recording. Ending that segment materializes the copy before the eager
+callback invokes only the checked all-reduce. The wrapper's static signature
+therefore remains unchanged before and after capture. Selector-off execution
+still calls the original copy-plus-reduce callback.
+
+The measurement harness records and verifies this as its explicit 30th
+argument, rejects use without segmented DFlash, and rejects combining it with
+the closed in-place treatment.
+
+These are offline results only. The next authorized device action is exactly
+one non-scored 400-token smoke.
