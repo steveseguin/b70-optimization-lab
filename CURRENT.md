@@ -159,20 +159,20 @@ source/binary identity, and clean pre/post idle checks. Inspect actual files
 and per-rank logs before accepting harness summaries, and never escalate
 hardware recovery from a probe that did not prove it executed.
 
-### Reopened BF16 frontier: provisional 121.299 / conventional 120.086 (2026-07-31)
+### Reopened BF16 frontier: exact 122.516 / conventional 121.291 (2026-07-31)
 
-The BF16-KV lane has a verified and LocalMaxxing-approved 119.827 conventional
-record plus a newer valid first candidate leg pending confirmation.
+The BF16-KV lane has a newly confirmed exact GRF128 record. The prior 119.827
+conventional row remains the currently approved LocalMaxxing receipt until the
+new submission is accepted.
 Segmented DFlash captures stateless compute around unchanged eager collectives;
 the latest treatment additionally replaces the six eager draft-attention
 Python submissions with graph-safe attention subgraph replays.
 
-The decode-only GRF128 candidate's first authorized cold 13-prompt score
-measured:
+The decode-only GRF128 confirmation cold 13-prompt score measured:
 
-- **`121.29932116191253 tok/s`** under the historical published
+- **`122.51571815409562 tok/s`** under the historical published
   100-event/99-interval-span formula; and
-- **`120.0863279502934 tok/s`** under the current-policy conventional
+- **`121.29056097255466 tok/s`** under the current-policy conventional
   99-inter-token-interval formula.
 
 It is 13/13 token-and-text exact against canonical q1, cache-zero on every row,
@@ -180,13 +180,13 @@ target 146/145 and draft 14/13 on all four ranks, and operationally clean:
 
 ```text
 /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
-  laguna-decode-grf128-scored-20260731T0931Z
+  laguna-decode-grf128-confirm-20260731T0943Z
 ```
 
-The first-leg improvement over the approved incumbent is only `0.22%`, below
-the host noise floor. It is therefore provisional until one identical cold
-confirmation completes; it has not been submitted to LocalMaxxing. The current
-approved record remains conventional `119.82686847588282 tok/s`, LocalMaxxing
+An independent same-identity first leg measured `120.0863279502934 tok/s`
+conventional and also passed every gate. The confirmation beats the approved
+incumbent by `1.2215%`, so GRF128 is now promoted rather than classified as
+noise. LocalMaxxing submission is pending; the prior approved receipt is
 `cms8f38fd00ftpf01mk0bwfql`.
 
 Detailed preregistration, source identity, patch, smoke, score, and submission:
@@ -194,6 +194,8 @@ Detailed preregistration, source identity, patch, smoke, score, and submission:
 The GRF128 static/component gates, source snapshots, and first endpoint result
 are linked from
 [`2026-07-31-decode-grf128-first-endpoint-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-first-endpoint-result.md).
+The confirmed promotion is
+[`2026-07-31-decode-grf128-confirmed-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-confirmed-record.md).
 The underlying independently reproduced segmented result and its failed routes
 remain recorded in the adjacent 2026-07-30 notes. The current host completed
 the scored run and strict teardown/idle gates; no recovery action is pending.

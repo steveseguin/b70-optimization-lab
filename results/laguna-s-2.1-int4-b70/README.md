@@ -2,21 +2,24 @@
 
 ## Qualified result
 
-The current four-B70 record is the exact segmented-DFlash attention-subgraph
-run approved by LocalMaxxing as
-[`cms8f38fd00ftpf01mk0bwfql`](https://www.localmaxxing.com/en/runs/cms8f38fd00ftpf01mk0bwfql):
+The current four-B70 record is the confirmed exact decode-GRF128 treatment on
+the segmented-DFlash inline-attention stack:
 
 - current-policy conventional 99-interval median:
-  **`119.82686847588282 tok/s`**;
+  **`121.29056097255466 tok/s`**;
 - historical 100-event compatibility formula:
-  **`121.03724088473012 tok/s`**;
+  **`122.51571815409562 tok/s`**;
 - 13/13 canonical-q1 token IDs and output-text hashes equal;
 - `cached_tokens=0` on all 13 unique cold requests;
 - target 146/145 and draft 20/19 on all four ranks; and
-- one cold suite, no warmup or retry, clean teardown and post-idle gate.
+- two independent cold suites passed; the supporting conventional result is
+  `120.0863279502934 tok/s`; no warmup or retry, clean teardown and post-idle
+  gates.
 
-The complete new source/patch/run packet is
-[the segmented DFlash inline-attention note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-inline-attention-preregistration.md).
+The complete source/patch/run packet is
+[the confirmed GRF128 note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-confirmed-record.md).
+LocalMaxxing submission is pending. The preceding approved row is
+[`cms8f38fd00ftpf01mk0bwfql`](https://www.localmaxxing.com/en/runs/cms8f38fd00ftpf01mk0bwfql).
 
 ### Superseded 2026-07-26 result
 

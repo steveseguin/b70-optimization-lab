@@ -1,0 +1,54 @@
+{
+  "schema": "laguna-confirmed-record-v1",
+  "status": "verified-exact-record",
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "kv_cache_dtype": "bfloat16",
+  "layout": "TP4+EP4, one active generation",
+  "verifier_width": 12,
+  "draft_depth": 11,
+  "record": {
+    "historical_100_event_metric_tok_s": 122.51571815409562,
+    "conventional_99_interval_metric_tok_s": 121.29056097255466,
+    "conventional_p10_tok_s": 83.69888445691096,
+    "conventional_mean_tok_s": 140.2101844413668,
+    "full_after_ttft_median_tok_s": 160.45741127915022,
+    "wall_median_tok_s": 54.42668422155413,
+    "ttft_median_ms": 5934.338426995964,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "target_topology": "146/145 on 4/4 ranks",
+    "draft_topology": "14/13 on 4/4 ranks",
+    "pre_idle_seconds": 73,
+    "post_idle_seconds": 72
+  },
+  "supporting_leg": {
+    "historical_100_event_metric_tok_s": 121.29932116191253,
+    "conventional_99_interval_metric_tok_s": 120.0863279502934,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-decode-grf128-scored-20260731T0931Z"
+  },
+  "identity": {
+    "vllm_commit": "34b43849fc7c8ff8633f223469cc2a0d525c256e",
+    "kernel_commit": "e4163f93574326b2772742e0f51372a5a3777aa5",
+    "grouped_gemm_dso_sha256": "df2f63a04630c3b50d3ffe2d61db3e3d68914436ba14270dcc45ddfec6b3467f",
+    "runtime_lock_sha256": "4207f80d96b4219aa48b4d71f2d59333c1d77c942127b5c325c7107853dcb3b4",
+    "selector": "VLLM_XPU_LAGUNA_DECODE_GRF128=1"
+  },
+  "artifacts": {
+    "record_run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-decode-grf128-confirm-20260731T0943Z",
+    "note": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-confirmed-record.md",
+    "patch": "patches/laguna-s-2.1-xpu-b70/0001-laguna-add-exact-decode-GRF128-kernel.patch",
+    "bundle": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-decode-grf128-e4163f9-20260731.bundle",
+    "preserved_dso": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-decode-grf128-build-e4163f9-20260731T0918Z/libgrouped_gemm_xe_2.so"
+  },
+  "localmaxxing": {
+    "eligible": true,
+    "submitted": false
+  }
+}

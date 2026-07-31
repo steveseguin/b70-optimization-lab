@@ -6,10 +6,11 @@ Last updated: 2026-07-31 America/Toronto
 
 The original result is published, approved, sealed, and reproducible. Later
 segmented-DFlash work raised the approved conventional record to
-`119.82686847588282 tok/s`. A decode-only GRF128 candidate has since completed
-one valid cold leg at `120.0863279502934 tok/s` conventional
-(`121.29932116191253` historical), but its `+0.22%` margin is below host noise
-and requires one same-identity confirmation before promotion or submission.
+`119.82686847588282 tok/s`. A decode-only GRF128 candidate then passed two
+independent cold suites at `120.0863279502934` and **`121.29056097255466
+tok/s`** conventional. The confirmation's historical compatibility value is
+**`122.51571815409562 tok/s`**. Both are 13/13 exact and cache-zero with the
+frozen 146/145 target and 14/13 draft topology.
 A later metric
 audit found that the published helper used an inclusive-event numerator over
 an inter-event span, so the 102 tok/s objective is complete only under that
@@ -22,14 +23,13 @@ historical convention, not under conventional interval accounting.
 - LocalMaxxing: `cms2ccv2d00lps201rej94pjy` (`APPROVED`);
 - current approved conventional record: **`119.82686847588282 tok/s`**,
   LocalMaxxing `cms8f38fd00ftpf01mk0bwfql`;
-- provisional GRF128 first leg: **`120.0863279502934 tok/s`** conventional;
+- confirmed GRF128 record: **`121.29056097255466 tok/s`** conventional;
 - lane state: active optimization, no service or worker currently running.
 
 Current GRF128 result and exact artifacts:
-[`2026-07-31-decode-grf128-first-endpoint-result.md`](notes/2026-07-31-decode-grf128-first-endpoint-result.md).
-The immediate action is exactly one cold same-identity confirmation. If it
-confirms, promote and submit the conventional metric; otherwise classify the
-candidate as noise-neutral. The next higher-upside static candidate is a
+[`2026-07-31-decode-grf128-confirmed-record.md`](notes/2026-07-31-decode-grf128-confirmed-record.md).
+Submit the conventional metric through the fail-closed LocalMaxxing helper.
+The next higher-upside static candidate is a
 separately named exact-decode kernel with compile-time-fixed
 `SCALE_VEC=1/MAD=0/FOLD=0`, eliminating dead runtime-selected mainloops before
 any GPU execution.
