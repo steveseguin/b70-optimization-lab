@@ -66,3 +66,27 @@ prompt, cache policy, or scoring-window change is allowed.
    119.598566758 conventional tok/s; 120 conventional remains the objective.
 
 This note makes no correctness or performance claim for the candidate.
+
+## Offline implementation
+
+- vLLM base:
+  `e63b413ea1bbeb8a367ec390e097c478bd84b7ed`;
+- candidate:
+  `34b43849fc7c8ff8633f223469cc2a0d525c256e`;
+- worktree:
+  `/home/steve/src/laguna-vllm-dflash-inline-attention-20260730`;
+- source-delta bundle:
+  `patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-inline-attention-34b43849f-20260730.bundle`;
+- bundle SHA-256:
+  `fa2caf605a53b8c84aacf281d5e90e3eac2b989aa62f8fcd330d2d69fe821451`;
+- focused wrapper/breakable-graph gate:
+  `51 passed, 11 skipped`; and
+- Ruff, Python compilation, Bash syntax, bundle verification, and whitespace
+  checks: pass.
+
+The harness carries inline attention as its explicit 32nd argument, records
+and verifies the live flag, rejects nested+inline use, and changes the audited
+draft expectation to 14/13 only when inline mode is selected.
+
+These are offline results only. The next authorized device action is one
+non-scored 400-token smoke.
