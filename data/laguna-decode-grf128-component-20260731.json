@@ -1,0 +1,37 @@
+{
+  "date": "2026-07-31",
+  "status": "pass",
+  "throughput_claim": null,
+  "candidate_source_head": "e4163f93574326b2772742e0f51372a5a3777aa5",
+  "candidate_dso_sha256": "df2f63a04630c3b50d3ffe2d61db3e3d68914436ba14270dcc45ddfec6b3467f",
+  "candidate_dso_size": 25896936,
+  "component_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-decode-grf128-component-20260731T0925Z",
+  "exact": 6,
+  "total": 6,
+  "cases": [
+    {
+      "name": "w13",
+      "shape": [120, 2048, 3072],
+      "control_median_ms": 0.3448967,
+      "candidate_median_ms": 0.3424806,
+      "speedup": 1.0070547061643782,
+      "exact": 3,
+      "total": 3
+    },
+    {
+      "name": "w2",
+      "shape": [120, 3072, 1024],
+      "control_median_ms": 0.1866898,
+      "candidate_median_ms": 0.18069805,
+      "speedup": 1.033158907912952,
+      "exact": 3,
+      "total": 3
+    }
+  ],
+  "invalid_attempt": {
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-decode-grf128-component-20260731T0924Z",
+    "classification": "system-python-missing-torch",
+    "gpu_call_occurred": false
+  },
+  "next_gate": "one-frozen-cold-endpoint-leg"
+}
