@@ -58,6 +58,7 @@ def mapped_grouped_gemm() -> list[str]:
 
 def run_worker(args: argparse.Namespace) -> int:
     import torch
+    import vllm_xpu_kernels._moe_C as moe_extension  # noqa: F401
     import vllm_xpu_kernels._xpu_C as xpu_extension  # noqa: F401
     from vllm_xpu_kernels.fused_moe_interface import XpuFusedMoe
 
