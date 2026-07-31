@@ -53,3 +53,8 @@ the 256-GRF fallback must be byte/source-identical to that control.
 No reboot, reset, driver action, quality/metric change, teacher regeneration,
 or score-bearing GPU run is authorized by this preregistration.
 
+## Closure
+
+The [component result](2026-07-31-exact-decode-mainloop-specialization-component-result.md)
+passed raw-BF16 equality `6/6` but projected a `0.0742%` summed W13+W2
+regression. The performance stop fired; no endpoint was authorized or run.

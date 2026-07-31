@@ -1,0 +1,40 @@
+{
+  "schema": "laguna-exact-decode-specialization-component-v1",
+  "date": "2026-07-31",
+  "status": "component_exact_performance_stop",
+  "endpoint_run": false,
+  "source_commit": "ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2",
+  "dso_sha256": "888d0fd33bf1b355e534b3eda7ea6be2a1d924fc7686f9bdfd2ad0cec6edabf5",
+  "dso_sycl_abi": "libsycl.so.8",
+  "component_artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-specialized-component-ec507e8-20260731T1047Z",
+  "exact": {
+    "passed": 6,
+    "total": 6,
+    "raw_dtype": "BF16",
+    "changing_inputs_per_shape": 3
+  },
+  "timing": {
+    "w13": {
+      "shape": [120, 2048, 3072],
+      "control_median_ms": 0.3622006,
+      "candidate_median_ms": 0.35986725,
+      "speedup": 1.0064839187228067
+    },
+    "w2": {
+      "shape": [120, 3072, 1024],
+      "control_median_ms": 0.1773347,
+      "candidate_median_ms": 0.18006835,
+      "speedup": 0.9848188201868903
+    },
+    "summed_control_ms": 0.5395353,
+    "summed_candidate_ms": 0.5399356,
+    "summed_speedup": 0.9992586152867121
+  },
+  "decision": "stop_before_endpoint",
+  "invalid_build": {
+    "sha256": "98eca5957f7a9056e1d9030e1dcabfb110b462f6c2baf38b5ac8414e2a7818b1",
+    "sycl_abi": "libsycl.so.9",
+    "failure_stage": "native_import_before_gpu_execution",
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-specialized-build-ec507e8-20260731T1025Z"
+  }
+}

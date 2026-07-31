@@ -67,3 +67,6 @@ Source snapshots:
 - bundle SHA-256:
   `8cf6b505bbb3f96f9c75c30cee46576af9972dc896dabc0dca0aaaf34e237c15`.
 
+The subsequent [component gate](2026-07-31-exact-decode-mainloop-specialization-component-result.md)
+was bitwise exact but performance-neutral/slightly negative, so the lane
+stopped before an endpoint.
