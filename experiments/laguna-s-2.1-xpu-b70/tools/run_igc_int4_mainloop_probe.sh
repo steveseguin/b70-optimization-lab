@@ -9,10 +9,25 @@ fi
 kernel_tree=$1
 output_dir=$2
 deps_tree=${LAGUNA_XPU_DEPS_TREE:-$kernel_tree}
+grf_mode=${LAGUNA_IGC_GRF_MODE:-256}
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-probe_source="$script_dir/igc_int4_mainloop_probe.cpp"
+probe_source=${LAGUNA_IGC_PROBE_SOURCE:-$script_dir/igc_int4_mainloop_probe.cpp}
+kernel_pattern=${LAGUNA_IGC_KERNEL_PATTERN:-LagunaInt4}
 compiler=/opt/intel/oneapi/compiler/2025.3/bin/icpx
 torch_root=/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages/torch
+
+case "$grf_mode" in
+  128|256)
+    grf_option="-cl-intel-${grf_mode}-GRF-per-thread"
+    ;;
+  auto)
+    grf_option="-cl-intel-enable-auto-large-GRF-mode"
+    ;;
+  *)
+    echo "LAGUNA_IGC_GRF_MODE must be literal 128, 256, or auto, got: $grf_mode" >&2
+    exit 2
+    ;;
+esac
 
 for required in \
   "$probe_source" \
@@ -32,6 +47,7 @@ if [[ -e "$output_dir" ]]; then
   exit 2
 fi
 mkdir -p -- "$output_dir"
+echo "grf_mode=$grf_mode"
 
 IGC_ShaderDumpEnable=1 \
 IGC_DumpToCustomDir="$output_dir" \
@@ -54,7 +70,7 @@ IGC_DumpToCustomDir="$output_dir" \
   -fsycl \
   -fsycl-targets=spir64_gen \
   -Xsycl-target-backend=spir64_gen \
-  "-device bmg -internal_options -cl-intel-256-GRF-per-thread" \
+  "-device bmg -internal_options ${grf_option}" \
   -Xspirv-translator \
   -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate \
   -DVLLM_XPU_ENABLE_XE2 \
@@ -76,7 +92,7 @@ fi
 
 for assembly in "${assemblies[@]}"; do
   kernel=$(head -n 1 -- "$assembly")
-  [[ "$kernel" == *LagunaInt4MainloopProbe* ]] || continue
+  [[ "$kernel" == *"$kernel_pattern"* ]] || continue
   echo "kernel=$kernel"
   grep -m1 'instCount' "$assembly" || true
   printf 'dpas=%s mad_bf=%s mul_bf=%s mov_w=%s shr=%s bfn=%s spill_markers=%s\n' \

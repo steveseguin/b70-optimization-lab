@@ -1,0 +1,57 @@
+{
+  "date": "2026-07-31",
+  "status": "static-pass-component-authorized",
+  "throughput_claim": null,
+  "gpu_used": false,
+  "kernel_base": "46a88e09d96fe06871c87a23de534fb47f1e039b",
+  "kernel_candidate": "e4163f93574326b2772742e0f51372a5a3777aa5",
+  "branch": "experiment/laguna-decode-grf128-20260731",
+  "selector": "VLLM_XPU_LAGUNA_DECODE_GRF128",
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-decode-grf128-dispatch-20260731T0857Z",
+  "dispatch_contract": {
+    "element_a": "bf16",
+    "element_b": "uint8-int4-packed",
+    "element_s": "bf16",
+    "layout": "R/C",
+    "policy": "w4a16_policy_m_8",
+    "tile_major": false,
+    "total_m": 120,
+    "group_size": 32,
+    "scale_vec": 1,
+    "dequant_mad": 0,
+    "scale_fold": 0
+  },
+  "candidate_isa": {
+    "grf_count": 128,
+    "eu_thread_count": 8,
+    "simd_size": 16,
+    "instruction_count": 6174,
+    "dpas": 32,
+    "sync_allrd": 217,
+    "sync_nop": 261,
+    "scratch_metadata": false
+  },
+  "control_isa": {
+    "grf_count": 256,
+    "eu_thread_count": 4,
+    "simd_size": 16,
+    "instruction_count": 6134,
+    "dpas": 32,
+    "sync_allrd": 225,
+    "sync_nop": 213,
+    "scratch_metadata": false
+  },
+  "delta": {
+    "instruction_count": 40,
+    "sync_allrd": -8,
+    "sync_nop": 48,
+    "all_other_mnemonics": 0
+  },
+  "probe_exit": {
+    "device_compile": "pass",
+    "bmg_aot": "pass",
+    "host_link": "failed-unlinked-pytorch-symbols",
+    "classification": "post-aot-harness-link-failure"
+  },
+  "next_gate": "full-dso-then-changed-input-component-exactness"
+}
