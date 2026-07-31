@@ -122,9 +122,7 @@ def validate_response(
         or expected.get("prompt_sha256") != prompt_sha
         or result.get("completion_tokens") != _SMOKE_TOKENS
         or actual_ids != expected_ids
-        or result.get("usage", {})
-        .get("prompt_tokens_details", {})
-        .get("cached_tokens")
+        or result.get("usage", {}).get("prompt_tokens_details", {}).get("cached_tokens")
         != 0
     ):
         raise RuntimeError(
@@ -133,7 +131,27 @@ def validate_response(
         )
 
 
-def graph_rows(lines: list[str], action: str, shape: str) -> tuple[int, set[tuple[int, int]]]:
+def persist_request_evidence(
+    out: Path,
+    request_index: int,
+    result: dict[str, Any],
+    speculation: dict[str, Any],
+) -> Path:
+    """Persist raw response evidence before any correctness assertion raises."""
+    path = out.with_name(f"{out.stem}-request-{request_index}-raw.json")
+    payload = {
+        "schema": "laguna-dflash-segmented-smoke-request-v1",
+        "request_index": request_index,
+        "result": result,
+        "speculation": speculation,
+    }
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def graph_rows(
+    lines: list[str], action: str, shape: str
+) -> tuple[int, set[tuple[int, int]]]:
     rank_pattern = re.compile(r"Worker_TP([0-3])_EP([0-3])")
     rows = [
         line
@@ -190,9 +208,7 @@ def validate_graph_log(
         target_graphs=target_graphs,
         target_eager_breaks=target_eager_breaks,
     )
-    target_shape = (
-        f"(graphs={target_topology[0]}, eager_breaks={target_topology[1]})"
-    )
+    target_shape = f"(graphs={target_topology[0]}, eager_breaks={target_topology[1]})"
     draft_shape = f"(graphs={draft_topology[0]}, eager_breaks={draft_topology[1]})"
     deadline = time.monotonic() + 15
     while True:
@@ -204,7 +220,9 @@ def validate_graph_log(
         if all(count == 4 and ranks == expected for count, ranks in checks):
             return
         if time.monotonic() >= deadline:
-            raise RuntimeError(f"audited target/draft graph topology mismatch: {checks}")
+            raise RuntimeError(
+                f"audited target/draft graph topology mismatch: {checks}"
+            )
         time.sleep(0.5)
 
 
@@ -241,7 +259,9 @@ def main() -> int:
     benchmark = load_benchmark(args.benchmark_helper)
     before = fetch_metrics(args.base_url)
     records = []
-    for index, (prompt, expected) in enumerate(zip(prompts, expected_rows, strict=True)):
+    for index, (prompt, expected) in enumerate(
+        zip(prompts, expected_rows, strict=True)
+    ):
         result = benchmark.post_stream(
             base_url=args.base_url,
             model=args.model,
@@ -256,6 +276,7 @@ def main() -> int:
         )
         after = fetch_metrics(args.base_url)
         delta = speculation_delta(before, after)
+        persist_request_evidence(args.out, index, result, delta)
         validate_response(result, expected, prompt, index)
         validate_speculation(delta, index)
         records.append(

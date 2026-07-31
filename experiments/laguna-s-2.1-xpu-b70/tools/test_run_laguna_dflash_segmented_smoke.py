@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import json
 
 import pytest
 
@@ -14,8 +15,7 @@ import run_laguna_dflash_segmented_smoke as smoke
 
 def test_smoke_length_guarantees_crossing_prior_failure_cycle() -> None:
     assert (
-        smoke._SMOKE_TOKENS
-        > smoke._PRIOR_FAILURE_CYCLE * smoke._MAX_EMITTED_PER_CYCLE
+        smoke._SMOKE_TOKENS > smoke._PRIOR_FAILURE_CYCLE * smoke._MAX_EMITTED_PER_CYCLE
     )
 
 
@@ -108,3 +108,20 @@ def test_graph_rows_require_rank_complete_topology() -> None:
     )
     assert count == 4
     assert ranks == {(0, 0), (1, 1), (2, 2), (3, 3)}
+
+
+def test_raw_request_evidence_is_persisted_before_validation(tmp_path: Path) -> None:
+    result = {"token_ids": [1, 2, 3], "text": "example"}
+    speculation = {"drafts": 2, "draft_tokens": 22, "accepted_tokens": 4}
+
+    path = smoke.persist_request_evidence(
+        tmp_path / "segmented-smoke.json",
+        0,
+        result,
+        speculation,
+    )
+
+    assert path.name == "segmented-smoke-request-0-raw.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["result"] == result
+    assert payload["speculation"] == speculation

@@ -1,0 +1,42 @@
+{
+  "schema": "laguna-experiment-result-v1",
+  "date": "2026-07-31",
+  "experiment": "width12-target-inline-gathers",
+  "status": "rejected",
+  "scored_measurement": false,
+  "throughput_reported": false,
+  "candidate": {
+    "selector": "VLLM_XPU_LAGUNA_M8_INLINE_GATHERS=1",
+    "vllm_base": "34b43849fc7c8ff8633f223469cc2a0d525c256e",
+    "vllm_commit": "ce2f3dfc02bce59095d8654d299c52b05c72d423",
+    "xpu_kernel_commit": "46a88e09d96fe06871c87a23de534fb47f1e039b",
+    "bf16_kv": true,
+    "tp": 4,
+    "ep": 4,
+    "verifier_width": 12,
+    "speculative_depth": 11
+  },
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-gathers-smoke-ce2f3dfc0-20260731T0718Z",
+  "gates": {
+    "target_capture_topology_4_of_4": "50/49",
+    "target_replay_topology_4_of_4": "50/49",
+    "draft_capture_topology_4_of_4": "14/13",
+    "draft_replay_topology_4_of_4": "14/13",
+    "request_0_q1_prefix_cache_gate": "FAIL",
+    "raw_response_persisted": false,
+    "clean_shutdown": true,
+    "post_failure_idle": true
+  },
+  "decision": "do_not_rerun_or_promote",
+  "incumbent": {
+    "historical_window_tokens_per_second": 121.03724088473012,
+    "conventional_99_interval_tokens_per_second": 119.82686847588282,
+    "exact_prompts": "13/13"
+  },
+  "artifacts": {
+    "source_patch_sha256": "e9af21c63f399ccace945077cf1fbef883f4e8cfbe3ec9cd412dc3233eae070e",
+    "source_bundle_sha256": "231d391d4526e7816ba69e80d211aefb0df663699846d5211e50c659c1ee9ea7",
+    "runtime_lock_sha256": "792ed7a94f77881b72935f28470f6d2281b738d99c681eb09a0fc801ee6f1563",
+    "grouped_gemm_sha256": "53f3d2941ce322bcdff1b0463ec6fe72387036ea54d3f602a08d690744b3459f"
+  }
+}
