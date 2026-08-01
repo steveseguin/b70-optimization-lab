@@ -2,7 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **component gate passed; one frozen cold TP4 endpoint leg authorized**.
+Status: **first cold TP4 endpoint passed at 124.443 tok/s conventional; one
+same-identity confirmation authorized**.
 
 ## Premise
 
@@ -84,3 +85,28 @@ selector enabled on top of the confirmed transposed-scale record. Require
 146/145 target and 14/13 draft topology on all four ranks, one invocation per
 prompt, and clean teardown. Report the conventional 99-interval median first.
 Do not combine native BF16 MM or shared-elementwise work in this first leg.
+
+## First endpoint result
+
+The first and only authorized candidate leg passed:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-qknorm-rope-m12-candidate-20260801T031134Z
+```
+
+- conventional 99-interval median: **`124.44278011260164 tok/s`**;
+- historical compatibility median: `125.6997778915168 tok/s`;
+- conventional p10 / mean: `85.48550264537951` / `142.05705499315516`;
+- gain over the confirmed `122.828558121099` record: **`1.314207393%`**;
+- token and text exactness: `13/13` against canonical q1;
+- cache policy: `cached_tokens=0` on `13/13` rows;
+- graph topology: target `146/145` and draft `14/13` on all four ranks;
+- cold policy: 73-second prestart and poststop idle intervals, no warmup
+  request and no retry;
+- cleanup: original, stop, worker, and idle statuses all zero.
+
+The endpoint establishes a positive exact seam but is a single leg. One cold
+same-source, same-binary, same-config confirmation is authorized before
+promotion or combination work. Report that first valid confirmation whether
+it wins or loses. No reset or reboot is authorized or indicated.
