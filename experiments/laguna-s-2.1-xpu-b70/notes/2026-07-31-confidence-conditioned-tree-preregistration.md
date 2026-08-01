@@ -88,3 +88,23 @@ an attribution-enabled process may be promoted or submitted.
 - Stop on any collective failure and report the exact boundary.
 - Preserve the diagnostic patch, identities, raw rank files, analyzer, and
   negative result if the gate fails.
+
+## First diagnostic attempt: correctly rejected
+
+Run:
+`laguna-confidence-tree-diag-20260801T093915Z`
+
+The exact endpoint leg itself passed: 13/13 token-and-text exact against q1,
+cache-zero, the protected 146/145 target and 14/13 draft topology, 1,622 probe
+rows per rank, clean teardown, and the full post-stop idle interval. The
+analyzer nevertheless refused to emit a projection because rank 3 differed
+from ranks 0--2 on one of 3,244 recorded draft positions. At cycle 719,
+position 1, ranks 0--2 selected token 330 at logit 25.125 as rank 2; rank 3
+selected token 585 at 25.375. The top-1 token and emitted output were unchanged.
+
+This is a useful implementation finding, not grounds to weaken the gate: a TP
+tree needs one canonical alternate identity. Diagnostic vLLM commit
+`8546e88e4` now broadcasts rank 0's two top-k values and indices across the TP
+group only while the non-scored probe is armed. One corrected diagnostic is
+authorised. The rejected run and original `d4ad0ba2d` recorder commit remain
+preserved.
