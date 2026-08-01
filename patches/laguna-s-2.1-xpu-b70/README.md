@@ -89,6 +89,7 @@ not promoted record sources:
 | confirmed M12 QKNorm/RoPE vLLM selector | `34b43849fc7c8ff8633f223469cc2a0d525c256e` | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `c73b88bfea5029920b0764889d734b7a9b9e53aab3b4af5e8bb77f17922e982f` | `b5f13674bc32058d22e5fe44ed90a4d4eac3f3abdb9849b9f34019aeca263d48` |
 | rejected exact M12 attention-gate kernel | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` | `0ecea928c3b447b103bb0cd46ffe75ae94f2c065` | `e7e843a47b4b1dfbce8c5857814b4243fac9130f7fe6b47a370ba513f1488592` | `4d959374fc579ee8d2cb6503b6c8c8aedbc9635238f78c159b2f88b5bbc22477` |
 | rejected exact M12 attention-gate vLLM selector | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `2b644445e573f37d67919ac854167159eecf5493` | `8eb9b96eb8d892b07ebb0d2a646ce6c0c3df7c6ce87d6bd37786f876bda4d6a9` | `ef132ee3a9a1e4794386db3b51a6147d932ad4d68dada5a851920c42169a3c6d` |
+| rejected reachable DFlash FP8 draft LM head | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `b90f9509bd5e7b7123753a0047ef7958d184d571` | `77e799ae54f554a170de34c0f65228a01cc146497f5c1780ca6e716ddb5d58f9` | `b14eae17b8364ebcafb40bc2379f90957b7d710e6e6d996bc7465d8105340c54` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -161,3 +162,11 @@ kernel was exhaustive over all finite BF16 gate inputs and reduced four XPU
 submissions to one, but the strict endpoint measured `124.344637819 tok/s`,
 `0.238903%` below the record. See the
 [closed experiment](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-attention-gate-m12-preregistration.md).
+
+The DFlash FP8 draft LM-head snapshot fixes a real reachability defect: the
+existing conversion hook was attached to a proposer path that the XPU runtime
+does not use. The corrected default-off path passed 65 focused tests and a
+real-weight one-B70 component gate, but saved only `0.0360594 ms` per draft
+cycle and failed the preregistered absolute-time threshold. No endpoint run was
+performed. See the
+[closed experiment](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-dflash-fp8-lm-head-reachability-preregistration.md).
