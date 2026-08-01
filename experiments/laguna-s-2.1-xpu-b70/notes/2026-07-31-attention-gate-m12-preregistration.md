@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **one-card component gate passed; default-off vLLM integration and one
-strict endpoint leg authorized**.
+Status: **closed endpoint negative; exact but `0.238903%` slower than the
+confirmed record**.
 
 ## Premise
 
@@ -97,3 +97,36 @@ external allocator was retained. That early stop also exposed that the RPC
 directory was created before the cleanup trap; the launcher now creates it
 only after installing the trap. Neither preflight stop loaded the model or
 produced a throughput result.
+
+## First valid endpoint result: reject
+
+The single authorized cold endpoint leg passed every honesty and operational
+gate but lost on the primary metric:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-attention-gate-m12-candidate3-20260801T052000Z
+```
+
+- conventional 99-interval median: `124.34463781920448 tok/s`;
+- historical compatibility median: `125.60064426182271 tok/s`;
+- conventional p10 / mean: `86.21236189100075 / 143.41712440903672`;
+- full-output-after-TTFT median: `165.4201300837471 tok/s`;
+- wall median / TTFT median: `54.98022575132142 tok/s` /
+  `5967.311908003467 ms`;
+- 13/13 token IDs and text hashes exact against canonical q1;
+- `cached_tokens=0` on all 13 prompts;
+- target `146/145` and draft `14/13` captured on all four ranks;
+- pre/post idle intervals were 72 seconds; cleanup status was all zero.
+
+Against the confirmed `124.64241272122038 tok/s` record, the candidate lost
+`0.2977749020159024 tok/s` or `0.238903352%`. It remains default-off and is not
+promoted or submitted.
+
+The component evidence remains valid but did not transfer: reducing four tiny
+eager device kernels to one measured an `8.16-8.18x` isolated speedup, yet the
+work lives inside already segmented graph replay and saves too little of the
+complete target/draft/collective cycle to overcome endpoint variance and any
+new graph-node overhead. Future candidates need to remove or shorten a
+material graph segment, attention body, collective boundary, or MoE mainloop;
+another isolated elementwise launch-count win is not enough by itself.

@@ -216,6 +216,22 @@ physical line honestly, inspect the final descriptor, and gate component work
 before endpoint execution. See the
 [confirmed record](2026-07-31-transposed-decode-scales-confirmed-record.md).
 
+### Large isolated launch-count wins can disappear inside graph replay
+
+The exact M12 per-head attention-gate kernel replaced four measured XPU
+submissions with one and was `8.16-8.18x` faster in the isolated component.
+It also matched all 65,280 finite BF16 gate encodings and 64 changing full
+tensors. The first valid cold endpoint was nevertheless `0.238903%` slower
+than the record (`124.344637819` versus `124.642412721 tok/s`).
+
+Treat tiny elementwise launch fusion inside an already segmented captured
+graph as a weak candidate class, even when its component ratio looks large.
+Rank candidates by absolute full-cycle milliseconds and whether they remove a
+material graph segment, collective boundary, attention body, or MoE mainloop.
+The component gate proves correctness and local cost; it does not establish
+endpoint relevance. See the
+[attention-gate negative](2026-07-31-attention-gate-m12-preregistration.md).
+
 ## Reusable experiment protocol
 
 For the next model:
@@ -244,6 +260,8 @@ For the next model:
     file with the right hash is not proof that the loader used it.
 14. Audit groupwise quantization metadata layout alongside packed weights;
     immutable decode-only clones can improve locality without changing math.
+15. Require an absolute full-cycle saving estimate for graph-contained
+    micro-fusions; a large component ratio on a few microseconds is not enough.
 
 The cross-model form of these rules is indexed in
 [the research workflow playbook](../../../docs/research-workflow-playbook.md#cross-model-patterns-worth-reusing).

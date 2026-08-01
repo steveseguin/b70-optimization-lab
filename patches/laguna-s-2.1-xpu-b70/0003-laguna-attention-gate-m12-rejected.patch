@@ -1,0 +1,161 @@
+From 0ecea928c3b447b103bb0cd46ffe75ae94f2c065 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 23:44:51 -0400
+Subject: [PATCH] Add exact M12 attention gate fusion candidate
+
+---
+ csrc/activation.cpp     | 96 +++++++++++++++++++++++++++++++++++++++++
+ csrc/ops.h              |  5 +++
+ csrc/torch_bindings.cpp |  6 +++
+ 3 files changed, 107 insertions(+)
+
+diff --git a/csrc/activation.cpp b/csrc/activation.cpp
+index ca7851f..c9a9738 100644
+--- a/csrc/activation.cpp
++++ b/csrc/activation.cpp
+@@ -283,6 +283,51 @@ class laguna_m8_scale_add_kernel {
+   const scalar_t* __restrict__ routed_;
+ };
+ 
++class laguna_m12_attention_gate_kernel {
++ public:
++  using scalar_t = sycl::ext::oneapi::bfloat16;
++
++  laguna_m12_attention_gate_kernel(
++      scalar_t* __restrict__ out,
++      const scalar_t* __restrict__ attention,
++      const scalar_t* __restrict__ gate,
++      const int num_heads)
++      : out_(out), attention_(attention), gate_(gate), num_heads_(num_heads) {}
++
++  void operator() [[sycl::reqd_sub_group_size(32)]] (
++      sycl::nd_item<1> item) const {
++    constexpr int kHeadDim = 128;
++    const int64_t row_head = item.get_group(0);
++    const int64_t row = row_head / num_heads_;
++    const int64_t head = row_head % num_heads_;
++    const int64_t lane = item.get_local_linear_id();
++
++    // Match F.softplus(gate.float(), beta=1, threshold=20), including the
++    // explicit BF16 store before the broadcast multiply. Only lane zero does
++    // the transcendental work; the work-group broadcast keeps one softplus
++    // evaluation per row/head just like the incumbent elementwise kernel.
++    uint16_t gate_bits = 0;
++    if (lane == 0) {
++      const float x = static_cast<float>(gate_[row * num_heads_ + head]);
++      const float activated = x > 20.0f ? x : sycl::log1p(sycl::exp(x));
++      gate_bits = sycl::bit_cast<uint16_t>(static_cast<scalar_t>(activated));
++    }
++    gate_bits = sycl::group_broadcast(item.get_group(), gate_bits, 0);
++    const scalar_t activated = sycl::bit_cast<scalar_t>(gate_bits);
++
++    const int64_t offset = row_head * kHeadDim + lane;
++    out_[offset] = static_cast<scalar_t>(
++        static_cast<float>(attention_[offset]) *
++        static_cast<float>(activated));
++  }
++
++ private:
++  scalar_t* __restrict__ out_;
++  const scalar_t* __restrict__ attention_;
++  const scalar_t* __restrict__ gate_;
++  const int num_heads_;
++};
++
+ template <typename scalar_t, int VEC_SIZE>
+ class silu_and_mul_clamp_vec_kernel {
+  public:
+@@ -749,6 +794,57 @@ void laguna_m8_scale_add(
+   });
+ }
+ 
++void laguna_m12_attention_gate(
++    torch::Tensor& out,
++    const torch::Tensor& attention,
++    const torch::Tensor& gate) {
++  TORCH_CHECK(attention.device().is_xpu(), "attention must be on XPU");
++  TORCH_CHECK(gate.device().is_xpu(), "gate must be on XPU");
++  TORCH_CHECK(out.device().is_xpu(), "out must be on XPU");
++  TORCH_CHECK(
++      attention.device() == gate.device() && attention.device() == out.device(),
++      "attention, gate, and out must be on the same XPU device");
++  TORCH_CHECK(
++      attention.scalar_type() == torch::kBFloat16 &&
++          gate.scalar_type() == torch::kBFloat16 &&
++          out.scalar_type() == torch::kBFloat16,
++      "attention, gate, and out must be BF16");
++  TORCH_CHECK(
++      attention.is_contiguous() && gate.is_contiguous() && out.is_contiguous(),
++      "attention, gate, and out must be contiguous");
++  TORCH_CHECK(
++      attention.dim() == 2 && attention.size(0) == 12,
++      "attention must have 12 rows");
++  TORCH_CHECK(
++      gate.dim() == 2 && gate.size(0) == 12 &&
++          (gate.size(1) == 12 || gate.size(1) == 18),
++      "gate must have exact shape [12, 12] or [12, 18]");
++  const int64_t num_heads = gate.size(1);
++  TORCH_CHECK(
++      attention.size(1) == num_heads * 128,
++      "attention width must equal gate heads times 128");
++  TORCH_CHECK(out.sizes() == attention.sizes(), "out must match attention");
++  at::assert_no_internal_overlap(out);
++  at::assert_no_overlap(out, attention);
++  at::assert_no_overlap(out, gate);
++
++  using sycl_t = sycl::ext::oneapi::bfloat16;
++  constexpr int kRows = 12;
++  constexpr int kHeadDim = 128;
++  auto* out_ptr = reinterpret_cast<sycl_t*>(out.data_ptr());
++  const auto* attention_ptr =
++      reinterpret_cast<const sycl_t*>(attention.data_ptr());
++  const auto* gate_ptr = reinterpret_cast<const sycl_t*>(gate.data_ptr());
++  at::DeviceGuard device_guard(attention.device());
++  auto& queue = vllm::xpu::vllmGetQueue();
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for(
++        sycl::nd_range<1>(kRows * num_heads * kHeadDim, kHeadDim),
++        vllm::laguna_m12_attention_gate_kernel(
++            out_ptr, attention_ptr, gate_ptr, static_cast<int>(num_heads)));
++  });
++}
++
+ void silu_and_mul_clamp(
+     torch::Tensor& out,
+     torch::Tensor& input,
+diff --git a/csrc/ops.h b/csrc/ops.h
+index 6b849e7..24f2f1a 100644
+--- a/csrc/ops.h
++++ b/csrc/ops.h
+@@ -75,6 +75,11 @@ void laguna_m8_scale_add(
+     const torch::Tensor& shared,
+     const torch::Tensor& routed);
+ 
++void laguna_m12_attention_gate(
++    torch::Tensor& out,
++    const torch::Tensor& attention,
++    const torch::Tensor& gate);
++
+ void silu_and_mul_clamp(
+     torch::Tensor& out, torch::Tensor& input, double limit);
+ 
+diff --git a/csrc/torch_bindings.cpp b/csrc/torch_bindings.cpp
+index affbc70..2a47cea 100644
+--- a/csrc/torch_bindings.cpp
++++ b/csrc/torch_bindings.cpp
+@@ -96,6 +96,12 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
+       "Tensor(a!) out, Tensor shared, Tensor routed) -> ()");
+   ops.impl("laguna_m8_scale_add", torch::kXPU, &laguna_m8_scale_add);
+ 
++  ops.def(
++      "laguna_m12_attention_gate("
++      "Tensor(a!) out, Tensor attention, Tensor gate) -> ()");
++  ops.impl(
++      "laguna_m12_attention_gate", torch::kXPU, &laguna_m12_attention_gate);
++
+   ops.def(
+       "silu_and_mul_clamp(Tensor(a!) result, Tensor input, float limit) -> ()");
+   ops.impl("silu_and_mul_clamp", torch::kXPU, &silu_and_mul_clamp);
+-- 
+2.43.0
+

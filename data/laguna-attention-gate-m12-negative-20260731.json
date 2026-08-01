@@ -1,0 +1,41 @@
+{
+  "schema": "laguna-experiment-result-v1",
+  "date": "2026-07-31 America/Toronto",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "kv_cache_dtype": "bfloat16",
+  "candidate": "exact M12 per-head attention-gate fusion",
+  "disposition": "rejected_exact_endpoint_regression",
+  "record_conventional_tok_s": 124.64241272122038,
+  "candidate_conventional_tok_s": 124.34463781920448,
+  "candidate_historical_tok_s": 125.60064426182271,
+  "delta_tok_s": -0.2977749020159024,
+  "delta_percent": -0.23890335200901225,
+  "correctness": {
+    "canonical_q1_exact": "13/13",
+    "all_text_sha256_equal": true,
+    "cached_tokens_all_zero": true,
+    "target_topology_all_ranks": "146/145",
+    "draft_topology_all_ranks": "14/13",
+    "cleanup_status_all_zero": true
+  },
+  "component": {
+    "random_shape_seed_cases_exact": "64/64",
+    "finite_bf16_gate_values_checked": 65280,
+    "finite_bf16_gate_mismatches": 0,
+    "speedup_12_heads": 8.183954393770858,
+    "speedup_18_heads": 8.158658288671225,
+    "profiled_incumbent_xpu_kernels_per_call": 4,
+    "profiled_candidate_xpu_kernels_per_call": 1
+  },
+  "source": {
+    "vllm_commit": "2b644445e573f37d67919ac854167159eecf5493",
+    "xpu_kernel_commit": "0ecea928c3b447b103bb0cd46ffe75ae94f2c065",
+    "candidate_C_sha256": "6613ae0de241c9de5c3722c606ae89138a00e4c8f4486cab59eaaa4c4217fa13"
+  },
+  "artifacts": {
+    "component": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-attention-gate-m12-component-exhaustive-20260801T041000Z",
+    "endpoint": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-attention-gate-m12-candidate3-20260801T052000Z",
+    "note": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-attention-gate-m12-preregistration.md"
+  }
+}

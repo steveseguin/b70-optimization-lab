@@ -1,0 +1,146 @@
+From 2b644445e573f37d67919ac854167159eecf5493 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 23:48:47 -0400
+Subject: [PATCH] Select exact M12 attention gate fusion
+
+---
+ vllm/_custom_ops.py                  |  8 ++++
+ vllm/compilation/decorators.py       |  3 ++
+ vllm/envs.py                         |  4 ++
+ vllm/model_executor/models/laguna.py | 64 +++++++++++++++++++++-------
+ 4 files changed, 64 insertions(+), 15 deletions(-)
+
+diff --git a/vllm/_custom_ops.py b/vllm/_custom_ops.py
+index 22492407e..2a741b8da 100644
+--- a/vllm/_custom_ops.py
++++ b/vllm/_custom_ops.py
+@@ -357,6 +357,14 @@ def laguna_m8_qk_norm_rope_out(
+     )
+ 
+ 
++def laguna_m12_attention_gate(
++    out: torch.Tensor,
++    attention: torch.Tensor,
++    gate: torch.Tensor,
++) -> None:
++    torch.ops._C.laguna_m12_attention_gate(out, attention, gate)
++
++
+ def laguna_m8_silu_mul(
+     out: torch.Tensor,
+     gate: torch.Tensor,
+diff --git a/vllm/compilation/decorators.py b/vllm/compilation/decorators.py
+index 90bba16a0..a648eedcf 100644
+--- a/vllm/compilation/decorators.py
++++ b/vllm/compilation/decorators.py
+@@ -290,6 +290,9 @@ def _aot_runtime_contract(model: Any) -> dict[str, Any]:
+         ),
+         "m8_bf16_attn_mm": bool(envs.VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM),
+         "m8_qknorm_rope": bool(envs.VLLM_XPU_LAGUNA_M8_QKNORM_ROPE),
++        "m12_attention_gate": bool(
++            envs.VLLM_XPU_LAGUNA_M12_ATTENTION_GATE
++        ),
+         "parity_probe": bool(envs.VLLM_XPU_LAGUNA_PARITY_PROBE),
+         "parity_return_stage": os.environ.get(
+             "VLLM_XPU_LAGUNA_PARITY_RETURN_STAGE", ""
+diff --git a/vllm/envs.py b/vllm/envs.py
+index bcca1d5e8..ad497218c 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -307,6 +307,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2: bool = False
+     VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM: bool = False
+     VLLM_XPU_LAGUNA_M8_QKNORM_ROPE: bool = False
++    VLLM_XPU_LAGUNA_M12_ATTENTION_GATE: bool = False
+     VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK: bool = False
+     VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK: bool = False
+     VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE: bool = False
+@@ -2102,6 +2103,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_M8_QKNORM_ROPE", "0"))
+     ),
++    "VLLM_XPU_LAGUNA_M12_ATTENTION_GATE": lambda: bool(
++        int(os.getenv("VLLM_XPU_LAGUNA_M12_ATTENTION_GATE", "0"))
++    ),
+     "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK", "0"))
+     ),
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 4e9e4cb20..2b0f5b994 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -1180,22 +1180,56 @@ class LagunaAttention(nn.Module):
+         if self.gating and self.g_proj is not None:
+             gate, _ = self.g_proj(hidden_states)
+             self._parity_copy("gate_raw", gate)
+-            if exact_graph_rows:
+-                gate = _xpu_exact_softplus(gate)
+-            else:
+-                gate = F.softplus(gate.float()).type_as(attn_output)
+-            self._parity_copy("gate_softplus", gate)
+-            if self.gate_per_head:
+-                # gate: [..., num_heads]; broadcast across head_dim
+-                attn_shape = attn_output.shape
+-                attn_output = (
+-                    attn_output.view(*attn_shape[:-1], self.num_heads, self.head_dim)
+-                    * gate.unsqueeze(-1)
+-                ).view(attn_shape)
++            fused_m12_attention_gate = (
++                envs.VLLM_XPU_LAGUNA_M12_ATTENTION_GATE
++                and not self.is_dflash_layer
++                and not self._parity_enabled
++                and not torch.compiler.is_compiling()
++                and not os.environ.get("VLLM_LAGUNA_TARGET_TRACE_DIR")
++                and hidden_states.shape[0] == 12
++                and _xpu_is_exact_decode_or_verifier_rows(12)
++                and self.gate_per_head
++                and self.head_dim == 128
++                and self.num_heads in (12, 18)
++                and attn_output.dtype == torch.bfloat16
++                and gate.dtype == torch.bfloat16
++            )
++            if fused_m12_attention_gate:
++                expected_attention_shape = (12, self.num_heads * 128)
++                if (
++                    attn_output.shape != expected_attention_shape
++                    or gate.shape != (12, self.num_heads)
++                    or not attn_output.is_contiguous()
++                    or not gate.is_contiguous()
++                ):
++                    raise RuntimeError(
++                        "Laguna M12 attention-gate dispatch diverged from the "
++                        "exact contiguous BF16 verifier contract"
++                    )
++                gated_output = torch.empty_like(attn_output)
++                ops.laguna_m12_attention_gate(
++                    gated_output, attn_output, gate
++                )
++                attn_output = gated_output
+             else:
+-                attn_output = attn_output * gate
+-            if exact_graph_rows:
+-                attn_output = _xpu_exact_materialize(attn_output)
++                if exact_graph_rows:
++                    gate = _xpu_exact_softplus(gate)
++                else:
++                    gate = F.softplus(gate.float()).type_as(attn_output)
++                self._parity_copy("gate_softplus", gate)
++                if self.gate_per_head:
++                    # gate: [..., num_heads]; broadcast across head_dim
++                    attn_shape = attn_output.shape
++                    attn_output = (
++                        attn_output.view(
++                            *attn_shape[:-1], self.num_heads, self.head_dim
++                        )
++                        * gate.unsqueeze(-1)
++                    ).view(attn_shape)
++                else:
++                    attn_output = attn_output * gate
++                if exact_graph_rows:
++                    attn_output = _xpu_exact_materialize(attn_output)
+             self._parity_copy("gated_attn", attn_output)
+             stage_output = self._parity_stage_output("gated_attn", attn_output)
+             if stage_output is not None:
+-- 
+2.43.0
+
