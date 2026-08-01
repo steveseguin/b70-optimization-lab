@@ -2,7 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered non-scored diagnostic; no score is authorized.**
+Status: **closed negative at the non-scored smoke; no score was run or
+authorized.**
 
 ## Evidence and treatment
 
@@ -42,3 +43,18 @@ unchanged.
 
 No model, weight, BF16 KV, width/depth, verification, sampler, teacher, prompt,
 cache, acceptance, metric, or scoring-window change is authorized.
+
+## Result
+
+The treatment activated exactly 95 captured inputs on all four ranks and
+captured/replayed target `51/50` plus draft `14/13`. Request 0 returned 400
+tokens with `cached_tokens=0` and normal DFlash acceptance, but diverged from
+the q=1 teacher at token index 164. There was no runtime/device error and
+teardown was clean.
+
+Artifact:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-gather-skip48-smoke-20260801T171658Z`.
+
+Conclusion: slot 48 is the first unsafe boundary, not the only unsafe later
+boundary. Do not iterate one skipped slot at a time. Preserve the proven
+48-slot prefix and advance it to a broader correctness gate.
