@@ -75,3 +75,30 @@ all-reduce is excluded.
 No target/draft/KV precision, model revision, width/depth, teacher, sampling,
 prompt, cache, topology, benchmark metric, or scoring window changes are
 authorized here.
+
+## Result
+
+The single authorized component invocation passed and the host returned to a
+strictly idle process state without recovery:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-m12-inline-gather-composition-04f01cdb1-20260801T160547Z
+```
+
+- tool commit: `04f01cdb10ac6ca8251aea6e4fd5353e59b01ad3`;
+- tool SHA-256: `50615bed652c937d4d3bd273dd9cb0d71def81656b21086b7c63d1d48dfc83f8`;
+- all four ranks: `status=pass`;
+- four changed-input samples and three changed-output transitions per rank;
+- 48 graph segments, 48 eager boundaries, and 96 captured M12 gathers per
+  cycle;
+- 1,536 raw intermediate comparisons per rank, all exact; and
+- no surviving torchrun/probe worker; post-run `xpu-smi` showed only its own
+  observer.
+
+This disproves the broad claim that M12 captured XCCL gathers become stale
+merely because their input is produced in the graph or because graph replay is
+interleaved with eager consumers. It does not prove the live model patch: that
+patch did not own or audit each model-local gather input, and its failed smoke
+did not persist the response. The next distinct model diagnostic must add
+fixed per-slot gather inputs and persist the raw response before validation.

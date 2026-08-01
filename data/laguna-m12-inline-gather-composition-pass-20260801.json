@@ -1,0 +1,27 @@
+{
+  "schema": "laguna-m12-inline-gather-composition-pass-v1",
+  "date": "2026-08-01",
+  "status": "PASS",
+  "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-inline-gather-composition-04f01cdb1-20260801T160547Z",
+  "tool_commit": "04f01cdb10ac6ca8251aea6e4fd5353e59b01ad3",
+  "tool_sha256": "50615bed652c937d4d3bd273dd9cb0d71def81656b21086b7c63d1d48dfc83f8",
+  "protocol": {
+    "world_size": 4,
+    "rows": 12,
+    "hidden": 3072,
+    "graph_segments": 48,
+    "eager_boundaries": 48,
+    "captured_all_gathers_per_cycle": 96,
+    "changed_input_samples": 4,
+    "raw_comparisons_per_rank": 1536,
+    "final_all_reduce_included": false
+  },
+  "result": {
+    "passing_ranks": 4,
+    "raw_exact": true,
+    "changed_output_transitions_per_rank": 3,
+    "clean_process_teardown": true,
+    "recovery_used": false
+  },
+  "interpretation": "Captured M12 XCCL gathers with in-graph producers and eager inter-segment consumers are not generically stale. Live-model follow-up must test fixed per-slot input ownership rather than rerun the rejected output-only branch."
+}
