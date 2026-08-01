@@ -90,6 +90,9 @@ def run_worker(args: argparse.Namespace) -> int:
         "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST": (
             args.mode if args.selector == "persistent_worklist" else "0"
         ),
+        "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4": (
+            args.mode if args.selector == "persistent_chunk4" else "0"
+        ),
         "VLLM_XPU_LAGUNA_SCALE_VEC": "1",
         "VLLM_XPU_LAGUNA_DEQUANT_MAD": "0",
         "VLLM_XPU_LAGUNA_SCALE_FOLD": "0",
@@ -318,6 +321,7 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST"] = "0"
+    env_base["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4"] = "0"
     env_base["VLLM_XPU_LAGUNA_PREFETCH_DIST"] = "6"
     env_base.pop("VLLM_XPU_MXFP4_SMALL_M_N", None)
 
@@ -341,6 +345,9 @@ def run_gate(args: argparse.Namespace) -> int:
         )
         env["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST"] = (
             mode if args.selector == "persistent_worklist" else "0"
+        )
+        env["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4"] = (
+            mode if args.selector == "persistent_chunk4" else "0"
         )
         command = [
             sys.executable,
@@ -458,6 +465,7 @@ def parse_args() -> argparse.Namespace:
             "deterministic_scheduler",
             "direct_offsets",
             "persistent_worklist",
+            "persistent_chunk4",
         ),
         default="transposed_scales",
     )
