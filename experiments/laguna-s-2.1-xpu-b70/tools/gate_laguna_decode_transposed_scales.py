@@ -73,22 +73,19 @@ def run_worker(args: argparse.Namespace) -> int:
         raise RuntimeError(
             f"worker requires exactly one visible XPU, got {torch.xpu.device_count()}"
         )
-    transposed_mode = (
-        args.mode
-        if args.selector == "transposed_scales"
-        else "1"
-    )
+    transposed_mode = args.mode if args.selector == "transposed_scales" else "1"
     expected_env = {
         "VLLM_XPU_LAGUNA_DECODE_GRF128": "1",
         "VLLM_XPU_LAGUNA_DECODE_EXACT_SPECIALIZED": "0",
         "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES": transposed_mode,
         "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD": (
-            args.mode
-            if args.selector == "dequant_mad_grf128_transposed"
-            else "0"
+            args.mode if args.selector == "dequant_mad_grf128_transposed" else "0"
         ),
         "VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER": (
             args.mode if args.selector == "deterministic_scheduler" else "0"
+        ),
+        "VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS": (
+            args.mode if args.selector == "direct_offsets" else "0"
         ),
         "VLLM_XPU_LAGUNA_SCALE_VEC": "1",
         "VLLM_XPU_LAGUNA_DEQUANT_MAD": "0",
@@ -136,6 +133,17 @@ def run_worker(args: argparse.Namespace) -> int:
             "rows_max": int(rows_cpu.max()),
             "rows_nonzero": int(torch.count_nonzero(rows_cpu)),
         }
+        if args.selector == "direct_offsets" and args.mode == "1":
+            rows_arg_cpu = torch.cat(
+                (
+                    torch.zeros(1, dtype=torch.int32),
+                    torch.cumsum(rows_cpu, dim=0, dtype=torch.int32),
+                )
+            )
+            scheduler_metadata = "exclusive_offsets_65"
+        else:
+            rows_arg_cpu = rows_cpu
+            scheduler_metadata = "counts_64"
         if transposed_mode == "1":
             physical_scale_cpu = logical_scale_cpu.permute(0, 2, 1).contiguous()
             physical_layout = "expert_group_n"
@@ -149,8 +157,14 @@ def run_worker(args: argparse.Namespace) -> int:
         }
         weight = weight_cpu.to("xpu")
         scales = physical_scale_cpu.to("xpu")
-        rows = rows_cpu.to("xpu")
-        del weight_cpu, logical_scale_cpu, physical_scale_cpu, route_ids
+        rows = rows_arg_cpu.to("xpu")
+        del (
+            weight_cpu,
+            logical_scale_cpu,
+            physical_scale_cpu,
+            route_ids,
+            rows_arg_cpu,
+        )
 
         output_hashes: list[str] = []
         input_hashes: list[str] = []
@@ -214,6 +228,7 @@ def run_worker(args: argparse.Namespace) -> int:
                 "total_m": ROUTES,
                 "logical_identity": logical_identity,
                 "physical_scale": physical_scale,
+                "scheduler_metadata": scheduler_metadata,
                 "input_sha256": input_hashes,
                 "output_sha256": output_hashes,
                 "timing_ms_per_call": timing_ms,
@@ -226,9 +241,7 @@ def run_worker(args: argparse.Namespace) -> int:
     payload = {
         "mode": args.mode,
         "selector": args.selector,
-        "environment": {
-            name: os.environ.get(name) for name in sorted(expected_env)
-        },
+        "environment": {name: os.environ.get(name) for name in sorted(expected_env)},
         "prefetch_dist": os.environ.get("VLLM_XPU_LAGUNA_PREFETCH_DIST"),
         "ze_affinity_mask": os.environ.get("ZE_AFFINITY_MASK"),
         "oneapi_device_selector": os.environ.get("ONEAPI_DEVICE_SELECTOR"),
@@ -289,6 +302,7 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_SCALE_FOLD"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = "0"
+    env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = "0"
     env_base["VLLM_XPU_LAGUNA_PREFETCH_DIST"] = "6"
     env_base.pop("VLLM_XPU_MXFP4_SMALL_M_N", None)
 
@@ -306,6 +320,9 @@ def run_gate(args: argparse.Namespace) -> int:
         )
         env["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = (
             mode if args.selector == "deterministic_scheduler" else "0"
+        )
+        env["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = (
+            mode if args.selector == "direct_offsets" else "0"
         )
         command = [
             sys.executable,
@@ -421,6 +438,7 @@ def parse_args() -> argparse.Namespace:
             "transposed_scales",
             "dequant_mad_grf128_transposed",
             "deterministic_scheduler",
+            "direct_offsets",
         ),
         default="transposed_scales",
     )
