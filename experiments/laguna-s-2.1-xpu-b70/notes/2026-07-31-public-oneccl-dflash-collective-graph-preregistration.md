@@ -80,3 +80,36 @@ does not override PyTorch's runtime binding.  Every result records the actual
 No target/draft/KV precision, prompt, metric, sampling, teacher, quality,
 cache, retry, warmup-generation, or scoring-window change is allowed.
 
+## Result: stopped on the eager-control upper bound
+
+The installed-runtime direct control passed `128/128` changing-input
+transactions on all four ranks and tore down cleanly.  Each transaction
+contained all thirteen producer -> BF16 `[12,3072]` all-reduce -> consumer
+stages.  Slowest-rank median transaction time was:
+
+```text
+1.1832992999916314 ms
+```
+
+This is the entire eliminable scope before integration.  Even an impossible
+zero-cost graph would save only `1.1832993 ms`, which is `0.2167007 ms` short
+of the frozen `1.4 ms` component gate.  The public-runtime direct and graph
+arms were therefore **not executed**.  This is a quantitative stop, not a
+claim that the public runtime is incorrect.
+
+Evidence:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/
+  public-oneccl-dflash-20260801T075003Z
+```
+
+The artifact records both loaded installed libraries on every rank,
+`mismatch_iterations=0`, the raw timing samples, checksums, clean teardown,
+and explicit `PUBLIC_DIRECT_RUN=0` / `PUBLIC_GRAPH_RUN=0` status.  There was
+no service, score, model load, reset, driver action, FLR, or reboot.
+
+This closes collective graph capture as a standalone route to 130 under the
+current `1.4 ms` admission rule.  It does not erase the Qwen public-oneCCL
+result, and it does not forbid collective capture as a secondary addition to
+another independently sufficient treatment.

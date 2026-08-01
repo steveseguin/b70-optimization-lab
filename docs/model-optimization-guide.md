@@ -680,6 +680,13 @@ Use this as the default operating sequence for a new model.
    latency-bound, but replication was still the wrong trade. Compute the gross
    collective time required to cover replicated work plus the endpoint margin,
    and reject locally when the measured collective budget is smaller.
+4. Measure the complete removable scope before exercising a risky replacement.
+   A later Laguna control timed all thirteen draft producer/all-reduce/consumer
+   boundaries at only `1.183299 ms` on the slowest TP4 rank.  Because the
+   preregistered integration gate required `1.4 ms`, even a zero-cost
+   replacement could not pass; the candidate graph runtime was correctly left
+   unexecuted.  An upper-bound control can be both safer and more decisive than
+   testing the candidate first.
 
 ### Phase F: Variance Control
 

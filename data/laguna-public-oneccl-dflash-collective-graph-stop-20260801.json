@@ -1,0 +1,38 @@
+{
+  "schema": "laguna-public-oneccl-dflash-collective-graph-stop-v1",
+  "status": "STOPPED_ON_CONTROL_UPPER_BOUND",
+  "record_conventional_tok_s": 125.4619731637751,
+  "goal_tok_s": 130.0,
+  "required_component_saving_ms": 1.4,
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/public-oneccl-dflash-20260801T075003Z",
+  "control": {
+    "runtime": "installed Laguna record oneCCL",
+    "mode": "direct",
+    "world_size": 4,
+    "shape": [12, 3072],
+    "dtype": "bfloat16",
+    "stages_per_transaction": 13,
+    "changing_input_iterations_per_rank": 128,
+    "exact_ranks": 4,
+    "fleet_max_rank_median_transaction_ms": 1.1832992999916314,
+    "clean_teardown": true
+  },
+  "upper_bound": {
+    "maximum_theoretical_saving_ms": 1.1832992999916314,
+    "shortfall_to_gate_ms": 0.2167007000083685,
+    "assumption": "candidate transaction has physically impossible zero cost"
+  },
+  "public_runtime": {
+    "parent_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+    "libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "lib_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "direct_arm_run": false,
+    "graph_arm_run": false,
+    "correctness_claim": "NOT_TESTED_ON_LAGUNA"
+  },
+  "endpoint_run": false,
+  "model_loaded": false,
+  "reboot_or_reset": false,
+  "next_action": "component-gate a compact deterministic target-MoE worklist scheduler"
+}
