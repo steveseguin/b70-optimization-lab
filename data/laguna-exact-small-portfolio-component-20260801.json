@@ -1,0 +1,49 @@
+{
+  "format": "laguna-exact-small-portfolio-component-v1",
+  "status": "pass",
+  "record_conventional_tok_s": 125.4619731637751,
+  "kernel_source": {
+    "path": "/home/steve/src/laguna-xpu-kernels-exact-small-portfolio-20260801",
+    "commit": "662b223d9fa8b3f3aa77e4df2409a78c3389470f"
+  },
+  "build": {
+    "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/exact-small-portfolio-662b223",
+    "compiler": "oneAPI 2025.3",
+    "grouped_dso_sha256": "5d2d29e63f40c62d31b61808d74a0ef7ba71f2c6a62754c3220ed4d0c8281d4b",
+    "grouped_wall_seconds": 1077.61,
+    "grouped_peak_rss_kib": 107095588,
+    "moe_dso_sha256": "51a1f2b02fc8a21e420edfff79c30ff0f2170d4bab0b6b1efb25d1f79b1f8a66",
+    "moe_wall_seconds": 344.34,
+    "moe_peak_rss_kib": 1265952,
+    "swaps": 0
+  },
+  "isa": {
+    "combined_asm_sha256": "d75d9185c75d91ceb4d247f278067afd2d6f3a5a8248dc52d62ed0e0fb8dd540",
+    "grf": 128,
+    "simd": 16,
+    "instruction_count": 378,
+    "transposed_control_instruction_count": 396,
+    "dpas": 2,
+    "bf16_mul": 32,
+    "scratch_private_spill_allocation": false
+  },
+  "component": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/exact-small-portfolio-component-20260801T2228Z",
+    "grouped_exact": "6/6",
+    "mapped_tail_exact": "6/6",
+    "inputs_immutable": true,
+    "grouped_control_sum_ms": 0.504531275,
+    "grouped_candidate_sum_ms": 0.50346925,
+    "grouped_cycle_saving_ms": 0.05097719999999839,
+    "tail_control_ms": 0.014574299999999998,
+    "tail_candidate_ms": 0.0092144,
+    "tail_cycle_saving_ms": 0.2572751999999999,
+    "joint_cycle_saving_ms": 0.3082523999999983,
+    "joint_threshold_ms": 0.3,
+    "joint_margin_ms": 0.008252399999998328,
+    "pre_idle": "passed_after_one_preserved_timeout_preflight",
+    "post_idle": "passed"
+  },
+  "authorization": "vllm_integration_and_one_non_scored_tp4_2x400_smoke_only",
+  "endpoint_claim": false
+}

@@ -42,6 +42,16 @@ four-rank smoke, endpoint run, or recovery action followed. Do not retry this
 interleave family or count it as headroom. See
 [`2026-08-01-m12-hybrid-nchunk-preregistration.md`](notes/2026-08-01-m12-hybrid-nchunk-preregistration.md).
 
+The exact small-component portfolio has passed its preregistered one-B70
+component gate and is the active bounded treatment. It combines the exact M12
+mapped gather/scale/add tail with the jointly compiled no-K-loop-barrier and
+scale-lane-dedup grouped kernel. All 12 raw-BF16 comparisons passed, inputs
+were immutable, and the direct joint saving was `0.3082524 ms/cycle` against a
+frozen `0.30 ms/cycle` threshold. This authorizes only vLLM integration and one
+non-scored TP4 2x400 smoke; it is not yet an endpoint win. Resume from
+[`2026-08-01-exact-small-component-portfolio-preregistration.md`](notes/2026-08-01-exact-small-component-portfolio-preregistration.md)
+and preserve the protected record trees.
+
 Do not implement the proposed paired-K32 split-barrier variant. A follow-up
 dominance audit found it is subsumed by the exact full-removal result: retaining
 half the barriers cannot plausibly beat removing all of them, and full removal
