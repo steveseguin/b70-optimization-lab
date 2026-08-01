@@ -73,3 +73,28 @@ behavior remains the promoted path.
    precision change, metric substitution, or reboot/reset is authorized.
 
 The component extrapolations are scope estimates, not an endpoint claim.
+
+## Pre-health symbol-check failure and correction
+
+The first smoke invocation stopped before health, weight loading, graph
+capture, collective execution, or any request at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-ranksum-attn-smoke-20260801T064500Z
+```
+
+All four workers rejected the candidate during `LagunaModel` construction
+because the fail-closed symbol check ran before decoder-layer construction had
+imported `vllm_xpu_kernels._C`. A clean-process check against the SHA-locked
+candidate proved the distinction directly: the operator namespace was absent
+before importing that module and present immediately afterward. Runtime-lock
+verification had already proved the candidate file and source identity.
+
+This was a false-negative evidence check, not a missing operator or device
+failure. Cleanup was clean (`stop_status=0`, `worker_status=0`,
+`idle_status=0`). vLLM commit `15d9b2d40` moves only the symbol/evidence check
+after decoder-layer construction; the configuration checks, arithmetic,
+dispatch, and native module are unchanged. Because no request or score existed,
+one corrected smoke remains authorized. Its first substantive result stands;
+no retry of a measured result is authorized.
