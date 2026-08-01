@@ -98,7 +98,7 @@ The component passed every frozen gate:
 
 The combined saving exceeds the preregistered `0.50 ms` floor. Default-off
 vLLM selector integration is committed at
-`e74318cdad3cc630399fdffe3ae2d55243c7d499`. Its focused B70 suite passes
+`1a7f61feffbc61b21b73f812d231c7426386ccdc`. Its focused B70 suite passes
 `37/37`, covering M12 dispatch for both operations, record-contract rejection,
 missing-symbol failure, compiled-path rejection, incumbent fallback for other
 widths, and distinct preserved MoE layer prefixes. Ruff and `git diff --check`
@@ -106,7 +106,7 @@ also pass.
 
 The endpoint runtime is locked by
 `tools/runtime-lock-shared-elementwise-m12.json` at SHA256
-`dbaceac218b18a3d8849ac95691c041e3a0578c51c9b46910d4723a30f10ed1d`.
+`64b0f04d29aabcabd65c0f71ff6a4c0923208228abd0559f2308e63fb3334829`.
 The verifier passed against candidate `_C.abi3.so` SHA256
 `36d97dda1438cd06b5f707859edb2a0960fd05d09ef6c6d29a53aa89cdd04095`
 and byte-identical record copies of every other native module and mapped DSO.
@@ -137,3 +137,27 @@ discarding or repeating a measured score because there was no request and no
 score. The corrected source and updated runtime lock authorize one first
 score-bearing strict cold leg under the otherwise unchanged stop rules. Its
 first valid score remains final; no benchmark retry is authorized.
+
+## Complete diagnostic rejected by evidence scope
+
+The corrected-prefix process at
+`laguna-shared-elementwise-m12-fixed-20260801T052000Z` completed all 13
+requests and produced a diagnostic conventional median of
+`125.06865574449961 tok/s`. It was 13/13 token-ID and text-hash exact against
+the canonical q1 teacher, all cached-token counts were zero, and target
+`146/145` plus draft `14/13` capture/replay each appeared on all four ranks.
+Shutdown and idle cleanup all returned zero.
+
+The wrapper still classified the run FAIL because the selector evidence had
+one TP0 marker rather than the preregistered four. This was not absent
+execution: vLLM's `logger.info_once` defaults to `scope="local"`, which emits
+only on the local first rank. The observed single marker was therefore the
+specified logging behavior, but it did not satisfy the frozen proof rule. The
+`125.06865574449961` row remains diagnostic and is not a record or submission.
+
+Commit `1a7f61fe` changes only that evidence call to `scope="process"`; native
+dispatch, arithmetic, model execution, and benchmark semantics are unchanged.
+The focused test now asserts process scope. Since the complete diagnostic did
+not pass its frozen runtime-evidence gate, one first formally valid leg is
+authorized with the updated lock. Its first valid score stands even if it is
+below the diagnostic or incumbent; no score retry is authorized.
