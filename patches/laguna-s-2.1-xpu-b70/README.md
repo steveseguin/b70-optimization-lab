@@ -291,3 +291,15 @@ or rerun. The complete branch is in
 incremental delta is
 `0002-xpu-fill-Laguna-M12-mapped-tail-workgroups.patch`. See the
 [closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-m12-mapped-gather-192x16-preregistration.md).
+
+The target inline-gather prefix-bisection snapshot is a closed graph-dataflow
+negative, not a record source. Its default-off selectors gave target gather
+boundaries stable ordinals, derived topology from the captured prefix, and
+could leave one named slot eager. Short smoke localized the first failing
+addition to slot 48 (layer 24 attention O-projection), but the broader gate
+rejected both prefix 48 across request turnover and prefix 24 within request 0
+at token 331. The treatment never received a score. The thin source bundle is
+`vllm-laguna-target-inline-gather-prefix-bisection-b63557f78-20260801.bundle`
+and requires base commit `68a4a5f3e44f2d1ab62c5d7cb3741e316914d32f`.
+See the
+[closed full-gate result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-target-inline-prefix-full-gate-bisection.md).

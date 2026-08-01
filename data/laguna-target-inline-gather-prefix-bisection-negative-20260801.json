@@ -1,0 +1,62 @@
+{
+  "schema": "laguna-target-inline-gather-prefix-bisection-v1",
+  "date": "2026-08-01 America/Toronto",
+  "status": "CLOSED_NEGATIVE",
+  "scored_measurement": false,
+  "protected_record_tok_s_conventional": 125.4619731637751,
+  "candidate_vllm_commit": "b63557f7838e1338f930075b8f163475aef4d23e",
+  "protected_kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+  "source_bundle": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gather-prefix-bisection-b63557f78-20260801.bundle",
+  "fixed_identity": {
+    "kv_cache_dtype": "bfloat16",
+    "target_verifier_width": 12,
+    "dflash_depth": 11,
+    "target_model_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft_model_revision": "5e07c246915c86dc6920fead03d019989224f2ba"
+  },
+  "short_smoke": [
+    {"prefix": 48, "requests": 2, "max_tokens": 400, "result": "PASS", "target_topology": "98/97"},
+    {"prefix": 72, "requests": 2, "max_tokens": 400, "result": "FAIL", "first_mismatch_request": 0, "first_mismatch_token": 374, "target_topology": "74/73"},
+    {"prefix": 60, "requests": 2, "max_tokens": 400, "result": "FAIL", "first_mismatch_request": 0, "first_mismatch_token": 168, "target_topology": "86/85"},
+    {"prefix": 54, "requests": 2, "max_tokens": 400, "result": "FAIL", "first_mismatch_request": 0, "first_mismatch_token": 50, "target_topology": "92/91"},
+    {"prefix": 51, "requests": 2, "max_tokens": 400, "result": "FAIL", "first_mismatch_request": 0, "first_mismatch_token": 49, "target_topology": "95/94"},
+    {"prefix": 49, "requests": 2, "max_tokens": 400, "result": "FAIL", "first_mismatch_request": 0, "first_mismatch_token": 96, "target_topology": "97/96"}
+  ],
+  "one_hole": {
+    "captured_prefix": 96,
+    "eager_slot": 48,
+    "result": "FAIL",
+    "first_mismatch_request": 0,
+    "first_mismatch_token": 164,
+    "target_topology": "51/50"
+  },
+  "full_exactness": [
+    {
+      "prefix": 48,
+      "requests_planned": 13,
+      "max_tokens": 512,
+      "result": "FAIL",
+      "request_0": "PASS_512",
+      "first_mismatch_request": 1,
+      "first_mismatch_token": 0,
+      "target_topology": "98/97",
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-prefix48-full-exactness-20260801T172528Z"
+    },
+    {
+      "prefix": 24,
+      "requests_planned": 13,
+      "max_tokens": 512,
+      "result": "FAIL",
+      "first_mismatch_request": 0,
+      "first_mismatch_token": 331,
+      "actual_token": 72,
+      "expected_token": 372,
+      "cached_tokens": 0,
+      "target_topology": "122/121",
+      "draft_topology": "14/13",
+      "clean_teardown": true,
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-prefix24-full-exactness-20260801T173202Z"
+    }
+  ],
+  "conclusion": "Captured target collectives are closed as an optimization route until first-divergent-tensor tracing explains the model-specific replay dependency. No score was authorized."
+}
