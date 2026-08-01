@@ -179,16 +179,19 @@ def run_worker(args: argparse.Namespace) -> int:
             last_input = input_a
 
         assert last_input is not None
-        for _ in range(8):
+        for _ in range(args.warmup_launches):
             launch(last_input)
         torch.xpu.synchronize()
         timing_ms: list[float] = []
-        for _ in range(9):
+        for _ in range(args.timing_samples):
             start = time.perf_counter_ns()
-            for _ in range(20):
+            for _ in range(args.launches_per_sample):
                 launch(last_input)
             torch.xpu.synchronize()
-            timing_ms.append((time.perf_counter_ns() - start) / 20_000_000.0)
+            timing_ms.append(
+                (time.perf_counter_ns() - start)
+                / (args.launches_per_sample * 1_000_000.0)
+            )
 
         results.append(
             {
@@ -215,6 +218,11 @@ def run_worker(args: argparse.Namespace) -> int:
         "prefetch_dist": os.environ.get("VLLM_XPU_LAGUNA_PREFETCH_DIST"),
         "ze_affinity_mask": os.environ.get("ZE_AFFINITY_MASK"),
         "oneapi_device_selector": os.environ.get("ONEAPI_DEVICE_SELECTOR"),
+        "timing_protocol": {
+            "warmup_launches": args.warmup_launches,
+            "timing_samples": args.timing_samples,
+            "launches_per_sample": args.launches_per_sample,
+        },
         "candidate_so": str(candidate_so),
         "candidate_sha256": sha256_file(candidate_so),
         "mapped_grouped_gemm": mapped,
@@ -373,7 +381,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--mode", choices=("0", "1"))
     parser.add_argument("--worker-output")
+    parser.add_argument("--warmup-launches", type=int, default=8)
+    parser.add_argument("--timing-samples", type=int, default=9)
+    parser.add_argument("--launches-per-sample", type=int, default=20)
     args = parser.parse_args()
+    for name in ("warmup_launches", "timing_samples", "launches_per_sample"):
+        if getattr(args, name) <= 0:
+            parser.error(f"--{name.replace('_', '-')} must be positive")
     if args.worker:
         required = (args.mode, args.candidate_so, args.worker_output)
     else:
