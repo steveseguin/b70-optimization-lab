@@ -84,6 +84,7 @@ not promoted record sources:
 | exact decode mainloop specialization | `e4163f93574326b2772742e0f51372a5a3777aa5` | `ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2` | `540235f285cc84457c30b74d1ddb322ca9355e1fd7a0c44a1f4df70a22936d26` | `8cf6b505bbb3f96f9c75c30cee46576af9972dc896dabc0dca0aaaf34e237c15` |
 | confirmed transposed decode scales | `e4163f93574326b2772742e0f51372a5a3777aa5` | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `87337d0244f3f81a4b7d2a8b669d3e01610a8eff133bce04696bdb06559bd075` | `0c23d0c5a8bf358d9e20b095fe4b771273e01992468aa3b805207b04c7a44809` |
 | rejected transposed-scale prefetch removal | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `32aa4a4057414163411d0388af10d896da1df442` | `a1bf0a9ba567306ff57eb420e732df5eb26037aa88cf5396dba2351f0922634a` | `cbf4f4994fee46df8c4c7f2cbd84fb54a54425908cbee6961836868fc43ec126` |
+| rejected transposed-scale-only distance 3 | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `588ce4e636e7ad7561aec533bda85e2eaf35cdac` | `078ce5bde9f38262c93e1377e9e2ec9236d09672d7017cf22c9dd27027a3fed0` | `a7be5434b720c5a301e33f0a6894a8796b6f7cf10fa8b9c422b4b5c299fa6c3b` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -136,3 +137,10 @@ record source. It remained raw-BF16 exact 6/6 but slowed the summed real W13+W2
 component from 0.50334 ms to 0.73220335 ms (`0.687432x`). Its patch is
 `0001-laguna-skip-prefetch-for-contiguous-transposed-scale.patch`; see the
 [preregistered negative result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-scale-prefetch-preregistration.md).
+
+The transposed-scale-only distance-3 snapshot is another exact component
+negative. It leaves packed-weight prefetch at six while moving only contiguous
+scale prefetch to three. Under the stabilized 200-warmup/15-sample protocol it
+was 6/6 exact but `0.997847x` the record component. Its patch is
+`0001-laguna-prefetch-transposed-scales-closer-to-use.patch`; see the
+[component result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-scale-distance3-preregistration.md).

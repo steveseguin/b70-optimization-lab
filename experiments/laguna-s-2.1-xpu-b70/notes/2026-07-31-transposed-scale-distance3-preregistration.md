@@ -2,7 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **static and component gate only; no endpoint authorized**.
+Status: **stopped at component gate; exact but slightly slower; no endpoint
+authorized**.
 
 ## Premise
 
@@ -55,3 +56,47 @@ selector and integration smoke. It does not authorize an endpoint or score
 claim. No model, target/draft precision, BF16 KV, prompt, metric, teacher,
 acceptance, graph topology, cache, warmup, retry, or quality contract may
 change. No reset, reboot, or privileged recovery is authorized.
+
+## Result
+
+Candidate source commit:
+`588ce4e636e7ad7561aec533bda85e2eaf35cdac`. Matched BMG inspection retained
+128 GRFs, the same 32 BF16 multiplies and two DPAS instructions, and no spill
+load/store. In the small transposed probe it emitted six packed-weight A/B
+prefetch pairs, three scale prefetches, and steady-state scale immediate 3;
+the record emitted six of each and scale immediate 6. The ordinary-layout
+probe remained at 370 instructions.
+
+The oneAPI-2025.3 full build completed in 16:36.43, peaked at 106,673,668 KiB
+RSS, exported the same ABI as the record, and produced:
+
+- DSO:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scale-dist3-build-588ce4e-20260801T0230Z/libgrouped_gemm_xe_2.so`;
+- SHA-256:
+  `91e90c002f2f0d7d2bb5a8ce92d2067b32c854b712b7a70c8b6298dfb203ca0f`.
+
+Component artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scale-dist3-component-588ce4e-20260801T0250Z`
+
+Both fresh workers used the preregistered 200 warmups per shape and 15 samples
+of 40 launches. The prior W2 mid-series transition did not recur, and the
+sample ranges overlap tightly.
+
+| shape | record distance 6 | scale-only distance 3 | speedup | raw BF16 exact |
+|---|---:|---:|---:|---:|
+| W13, N=2048 K=3072 M=120 | 0.320845075 ms | 0.3211281 ms | 0.999119x | 3/3 |
+| W2, N=3072 K=1024 M=120 | 0.183574375 ms | 0.18437965 ms | 0.995633x | 3/3 |
+| summed | 0.50441945 ms | 0.50550775 ms | 0.997847x | 6/6 |
+
+The candidate is **0.2153% slower** by the preregistered summed measure and
+misses the 1.0% promotion threshold. No integration selector, model load,
+endpoint, score claim, reset, or reboot followed.
+
+## Learning
+
+The record distance six is not merely compensating for packed-weight latency:
+bringing only the contiguous 128-byte scale line closer does not help. Together
+with the `0.687432x` no-scale-prefetch loss and the stabilized null coupled
+sweep, this closes the transposed-scale prefetch seam. Further attempts should
+not tune this same mechanism by one more nearby distance without new evidence.

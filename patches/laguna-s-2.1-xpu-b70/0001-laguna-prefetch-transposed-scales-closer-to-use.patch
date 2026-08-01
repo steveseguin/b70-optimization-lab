@@ -1,0 +1,91 @@
+From 588ce4e636e7ad7561aec533bda85e2eaf35cdac Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 21:57:38 -0400
+Subject: [PATCH] laguna: prefetch transposed scales closer to use
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp | 46 +++++++++++++++----------
+ 1 file changed, 28 insertions(+), 18 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 30c7118..25b15e4 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -689,6 +689,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+   auto pBgB = thr_prefetch_B.partition_S(gB);
+ 
+   const int prefetch_dist = prefetch_dist_override;
++  // Contiguous [group,N] decode scales are a 128-byte line per subgroup and
++  // need less lead time than the much larger packed-weight tile. Keep the
++  // weight pipeline at its selected distance while bringing only this line
++  // closer to use.
++  static constexpr int transposed_scale_prefetch_dist = 3;
+ 
+   constexpr int barrier_scope = 2;
+ 
+@@ -855,19 +860,21 @@ CUTE_DEVICE void xe_gemm_4bits(
+ 
+     if (k_tile_prefetch * group_size < shape<1>(A)) {
+       if constexpr (TransposedScales) {
+-        const ElementS* scale_base = Scales +
+-            k_tile_prefetch * shape<0>(B) + n_tile_start + n_sg_start;
+-        auto next_scales_tensor = make_tensor(
+-            make_gmem_ptr(scale_base),
+-            make_layout(
+-                make_shape(Int<1>{}, Int<SG_N>{}),
+-                make_stride(shape<0>(B), Int<1>{})));
+-        auto prefetch_scales = make_block_2d_prefetch<1>(
+-            make_shape(Int<1>{}, Int<SG_N>{}), next_scales_tensor);
+-        auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
+-        auto pSgS = thr_prefetch_scales.partition_S(
+-            make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+-        prefetch(prefetch_scales, pSgS(_, 0, 0));
++        if (k_tile_prefetch < transposed_scale_prefetch_dist) {
++          const ElementS* scale_base = Scales +
++              k_tile_prefetch * shape<0>(B) + n_tile_start + n_sg_start;
++          auto next_scales_tensor = make_tensor(
++              make_gmem_ptr(scale_base),
++              make_layout(
++                  make_shape(Int<1>{}, Int<SG_N>{}),
++                  make_stride(shape<0>(B), Int<1>{})));
++          auto prefetch_scales = make_block_2d_prefetch<1>(
++              make_shape(Int<1>{}, Int<SG_N>{}), next_scales_tensor);
++          auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
++          auto pSgS = thr_prefetch_scales.partition_S(
++              make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
++          prefetch(prefetch_scales, pSgS(_, 0, 0));
++        }
+       } else {
+         const ElementS* scale_base;
+         int scale_stride;
+@@ -1018,11 +1025,12 @@ CUTE_DEVICE void xe_gemm_4bits(
+         }
+       }
+ 
+-      if ((group_idx + prefetch_dist) * group_size < shape<1>(A)) {
+-        if constexpr (TransposedScales) {
++      if constexpr (TransposedScales) {
++        if ((group_idx + transposed_scale_prefetch_dist) * group_size <
++            shape<1>(A)) {
+           const ElementS* scale_base = Scales +
+-              (group_idx + prefetch_dist) * shape<0>(B) + n_tile_start +
+-              n_sg_start;
++              (group_idx + transposed_scale_prefetch_dist) * shape<0>(B) +
++              n_tile_start + n_sg_start;
+           auto next_scales_tensor = make_tensor(
+               make_gmem_ptr(scale_base),
+               make_layout(
+@@ -1034,7 +1042,9 @@ CUTE_DEVICE void xe_gemm_4bits(
+           auto pSgS = thr_prefetch_scales.partition_S(
+               make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+           prefetch(prefetch_scales, pSgS(_, 0, 0));
+-        } else {
++        }
++      } else {
++        if ((group_idx + prefetch_dist) * group_size < shape<1>(A)) {
+           const ElementS* scale_base;
+           int scale_stride;
+           if constexpr (TileMajor) {
+-- 
+2.43.0
+
