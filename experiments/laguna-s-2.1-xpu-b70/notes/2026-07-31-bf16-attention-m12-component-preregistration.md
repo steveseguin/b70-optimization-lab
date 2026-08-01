@@ -103,3 +103,33 @@ Require 13/13 token and text exactness, all cached-token counts zero, target
 retry, and clean teardown. A failure yields no quoted rate. A pass may be
 compared with the confirmed 122.829 record, while any small delta still
 requires an independent confirmation before promotion.
+
+## Endpoint result: valid, below the promotion floor
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-bf16-attention-m12-candidate-20260801T025015Z
+```
+
+The candidate passed every frozen gate:
+
+- 13/13 token IDs and text hashes exact against canonical q1;
+- all 13 cached-token counts zero, rollover and cross-request gates passed;
+- target 146/145 and draft 14/13 capture/replay on all four ranks;
+- one suite invocation, no warmup or retry;
+- original, stop, worker, and post-idle status all zero.
+
+It measured `123.12667107333559 tok/s` conventionally and
+`124.3703748215511 tok/s` under the historical compatibility accounting. The
+confirmed record is `122.828558121099` / `124.069250627373`, so the apparent
+conventional delta is only `+0.298112952237` tok/s (`+0.2427%`). This is far
+below the host noise floor and far below the component projection.
+
+The result is not promoted and no LocalMaxxing payload is created. An
+independent confirmation is intentionally not spent on a 0.24% single-leg
+delta while the 130-tok/s objective remains open. The discrepancy establishes
+that the eager component's primitive-dispatch saving mostly does not survive
+Breakable graph replay. This selector remains a valid exact experiment, not a
+record treatment.
