@@ -2,8 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **static BMG gate passed; production component build in progress. No
-endpoint score is authorized.**
+Status: **closed at the component gate; exact but too small. No endpoint was
+run.**
 
 ## Evidence and hypothesis
 
@@ -79,8 +79,8 @@ binary, ISA, and component evidence.
 
 ## Static BMG result
 
-The isolated source implementation is commit
-`5d77d83` on branch
+The isolated source implementation is head commit
+`9aa4754` on branch
 `experiment/laguna-m12-kloop-barrier-20260801`. The selector is literal,
 default off, and fail-closed as
 `VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS`. It creates a separately named
@@ -98,3 +98,51 @@ their two address/control instructions: instruction count falls from 396 to
 392. No arithmetic, DPAS, load, store, or register-pressure increase appears,
 and no actual scratch/spill traffic is present. This passes the frozen static
 gate and authorizes only the isolated production build and component test.
+The static kernel body was compiled at parent `5d77d83`; `9aa4754` changes
+only the host dispatch guard to additionally require BF16 output, 64 local
+experts, and exactly the W13/W2 N/K shapes. A partial production compile of the
+broader parent selector was stopped before it produced a DSO or ran a device,
+then the build was restarted from the tightened head.
+
+The two-commit source delta is preserved as
+`patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-no-kloop-barriers-9aa4754-20260801.bundle`
+(SHA-256
+`acbb2781921801cb2fa6eae1702bd98885315ffba09cc29373fb37ba7afc5853`).
+The bundle was verified and declares protected commit `99886d783` as its sole
+prerequisite.
+
+## Production build and component result
+
+The tightened head built successfully with IntelLLVM 2025.3.3 in `17:52.79`,
+peaking at `106,815,540 KiB` RSS with zero build-time swaps. The frozen DSO is:
+
+- `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-no-kbarrier-build-9aa4754-20260801T1840Z/libgrouped_gemm_xe_2.so`;
+- SHA-256
+  `ad3c88bcc79b1313e6c3a6b2096f537c4b149fe82d8bf5c45ef9fe78431632f7`;
+- ABI: `libsycl.so.8` and `libintlc.so.5`, with all dependencies resolved in
+  the frozen component environment.
+
+The same-ELF selector-off/on component gate used three changed activation
+inputs per production shape, physical transposed BF16 scales, 200 warmups,
+and 15 samples of 40 launches on one idle B70. Artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-no-kbarrier-component-9aa4754-20260801T1900Z`.
+
+| shape | control | no K-loop barriers | speedup | raw BF16 exact |
+|---|---:|---:|---:|---:|
+| W13 | 0.320749 ms | 0.319870 ms | 1.002749x | 3/3 |
+| W2 | 0.183501 ms | 0.182418 ms | 1.005936x | 3/3 |
+| summed | 0.504250 ms | 0.502288 ms | **1.003906x** | **6/6** |
+
+The result proves that the 96 W13 and 32 W2 per-K barrier pairs are not needed
+for raw output equality on the frozen route, but their complete removal saves
+only `0.3906%` in the summed component. That is far below the preregistered
+`5%` promotion gate and cannot credibly cover the current 130-tok/s gap. No
+model service, endpoint benchmark, reset, reboot, or privileged action
+followed.
+
+Reusable conclusion: even a synchronization operation repeated once per K32
+tile can be throughput-insensitive when independent subgroups are already
+kept busy by the DPAS/load pipeline. Static dynamic-count arguments must still
+pass a real-shape component timing gate. Preserve this exact-small result, but
+do not spend another endpoint leg on barrier micro-removals in this mainloop.

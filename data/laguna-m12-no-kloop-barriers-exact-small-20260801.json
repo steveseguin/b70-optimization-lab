@@ -1,0 +1,69 @@
+{
+  "date": "2026-08-01",
+  "status": "closed_exact_performance_too_small",
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "candidate": {
+    "source_tree": "/home/steve/src/laguna-xpu-kernels-m12-kloop-barrier-20260801",
+    "source_head": "9aa4754644fd61a77281c45dddd80d63db6f3c0a",
+    "branch": "experiment/laguna-m12-kloop-barrier-20260801",
+    "dso": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-no-kbarrier-build-9aa4754-20260801T1840Z/libgrouped_gemm_xe_2.so",
+    "dso_sha256": "ad3c88bcc79b1313e6c3a6b2096f537c4b149fe82d8bf5c45ef9fe78431632f7"
+  },
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-no-kloop-barriers-9aa4754-20260801.bundle",
+    "sha256": "acbb2781921801cb2fa6eae1702bd98885315ffba09cc29373fb37ba7afc5853",
+    "prerequisite": "99886d783372e621941228250091dc8ebdc1595d"
+  },
+  "static_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-no-kbarrier-igc-5d77d83-20260801T1815Z",
+    "control_instructions": 396,
+    "candidate_instructions": 392,
+    "dpas_both": 2,
+    "bf16_scale_multiplies_both": 32,
+    "block_2d_loads_both": 23,
+    "stores_both": 1,
+    "grfs_both": 128,
+    "scratch_or_spill_both": false
+  },
+  "build": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-no-kbarrier-build-9aa4754-20260801T1840Z",
+    "compiler": "Intel oneAPI DPC++ 2025.3.3",
+    "elapsed_seconds": 1072.79,
+    "max_rss_kib": 106815540,
+    "swaps": 0,
+    "runtime_abi": ["libsycl.so.8", "libintlc.so.5"]
+  },
+  "component_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-no-kbarrier-component-9aa4754-20260801T1900Z",
+    "protocol": {
+      "warmup_launches": 200,
+      "timing_samples": 15,
+      "launches_per_sample": 40
+    },
+    "exact": 6,
+    "total": 6,
+    "control_sum_ms": 0.5042496750000001,
+    "candidate_sum_ms": 0.5022875,
+    "summed_speedup": 1.0039064778637734,
+    "promotion_threshold": 1.05,
+    "cases": [
+      {
+        "name": "w13",
+        "control_median_ms": 0.3207491,
+        "candidate_median_ms": 0.3198697,
+        "speedup": 1.0027492444579778,
+        "raw_bf16_exact": "3/3"
+      },
+      {
+        "name": "w2",
+        "control_median_ms": 0.183500575,
+        "candidate_median_ms": 0.1824178,
+        "speedup": 1.0059356871971925,
+        "raw_bf16_exact": "3/3"
+      }
+    ]
+  },
+  "endpoint_run_performed": false,
+  "recovery_action_performed": false,
+  "conclusion": "All per-K32 barriers are unnecessary on the exact M12 route, but removing them improves the real W13+W2 component by only 0.3906%."
+}
