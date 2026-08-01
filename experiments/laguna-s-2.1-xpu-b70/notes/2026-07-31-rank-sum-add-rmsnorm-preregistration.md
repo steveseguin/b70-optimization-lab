@@ -2,7 +2,7 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **preregistered component screen; no model endpoint authorized.**
+Status: **closed at the component gate; exact and faster, but too small.**
 
 ## Evidence and hypothesis
 
@@ -70,3 +70,48 @@ callable for component testing but no model path selects it by default.
 No target/draft/KV precision change, teacher change, prompt change, warmed
 generation, retry, metric substitution, collective-count change, reset,
 reboot, or privileged recovery is authorized by this component screen.
+
+## Result
+
+The fused arithmetic is correct and locally faster, but it misses the frozen
+minimum saving and therefore stops before model integration.
+
+- Candidate source:
+  `ead1a16036afe825816453b549ee94ed6978539e`.
+- ABI-matched candidate `_C.abi3.so` SHA-256:
+  `14a6aea3c11701f7275e2037793df666ed7b9baa489042860ce4f27a349ccb86`.
+- ABI-matched build artifact:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-rank-sum-rmsnorm-build-abi8-ead1a16-20260801T060804Z`.
+- Component artifact:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-rank-sum-rmsnorm-component-ead1a16-20260801T061037Z`.
+
+The corrected oneAPI 2025.3 build completed in `6:20.41`, peaked at
+`1,187,468` KiB RSS, used no swaps, and requires `libsycl.so.8`, matching the
+record/Torch ABI. Five deterministic changed-input cases produced raw-identical
+BF16 normalized output and updated residual: 10/10 comparisons exact.
+
+The timing gate used 200 warmups per arm and 16 balanced alternating samples
+of 100 launches on rank 1:
+
+| chain | median per boundary |
+|---|---:|
+| incumbent rank sum + fused add-RMSNorm | 0.01465947 ms |
+| fused TP4 finalizer | 0.00845637 ms |
+| saving | 0.00620310 ms |
+
+The local speedup is `1.733542x`, and the samples have clear non-overlapping
+ordering, but 96 boundaries extrapolate to only about `0.5965 ms` per target
+cycle. That is below the preregistered `0.010 ms` per-boundary / `0.96 ms`
+integration floor and cannot close the 130-tok/s gap alone. No vLLM model
+restructuring, service load, endpoint score, reset, or reboot followed.
+
+## Rejected build artifact
+
+The first successful compile produced
+`laguna-rank-sum-rmsnorm-build-ead1a16-20260801T060055Z`, SHA-256
+`f724671b6d682460b15b1a767142675bf3c072cc0ad8b8bd7cfd616edbb0f848`.
+It was rejected before device execution because CMake resolved the host's 2026
+`compiler/latest` SYCL toolkit and linked `libsycl.so.9`, while the record and
+Torch runtime use `libsycl.so.8`. Reconfiguring all SYCL include and library
+cache entries to `/opt/intel/oneapi/compiler/2025.3` produced the tested ABI-8
+artifact above. Never use the ABI-9 ELF for a Laguna result.
