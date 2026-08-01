@@ -13,10 +13,10 @@
 using namespace cute;
 using namespace MoE;
 
-template <bool VEC, bool MAD>
+template <bool VEC, bool MAD, bool TRANSPOSED>
 class LagunaInt4MainloopProbe;
 
-template <bool VEC, bool MAD, class Policy>
+template <bool VEC, bool MAD, bool TRANSPOSED, class Policy>
 void launch(
     sycl::queue& q,
     const bfloat16_t* a,
@@ -38,7 +38,7 @@ void launch(
 
   sycl::range<3> local(1, 1, size(mma));
   sycl::range<3> global(1, 8, 1);
-  q.parallel_for<LagunaInt4MainloopProbe<VEC, MAD>>(
+  q.parallel_for<LagunaInt4MainloopProbe<VEC, MAD, TRANSPOSED>>(
        sycl::nd_range<3>(global * local, local),
        [=](sycl::nd_item<3>) [[sycl::reqd_sub_group_size(16)]] {
          auto a_tensor = make_moe_tensor<bfloat16_t, 'R'>(
@@ -55,7 +55,8 @@ void launch(
              false,
              false,
              VEC,
-             MAD>(
+             MAD,
+             TRANSPOSED>(
              a_tensor,
              b_tensor,
              scales,
@@ -75,11 +76,15 @@ int main() {
   auto* b = sycl::malloc_device<uint8_t>(n * k / 2, q);
   auto* scales = sycl::malloc_device<bfloat16_t>(n * k / 32, q);
   auto* d = sycl::malloc_device<bfloat16_t>(8 * n, q);
-  launch<false, false, w4a16_policy_m_8>(
+  launch<false, false, false, w4a16_policy_m_8>(
       q, a, b, scales, nullptr, d, n, k);
-  launch<true, false, w4a16_policy_m_8>(
+  launch<true, false, false, w4a16_policy_m_8>(
       q, a, b, scales, nullptr, d, n, k);
-  launch<true, true, w4a16_policy_m_8>(
+  launch<true, true, false, w4a16_policy_m_8>(
+      q, a, b, scales, nullptr, d, n, k);
+  launch<true, false, true, w4a16_policy_m_8>(
+      q, a, b, scales, nullptr, d, n, k);
+  launch<true, true, true, w4a16_policy_m_8>(
       q, a, b, scales, nullptr, d, n, k);
   printf("ok\n");
   return 0;
