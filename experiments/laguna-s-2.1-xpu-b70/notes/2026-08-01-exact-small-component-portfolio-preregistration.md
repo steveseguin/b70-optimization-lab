@@ -15,12 +15,14 @@ component floors, but each is raw-BF16 exact and removes distinct work:
 | M12 mapped gather/scale/add, 192x16 geometry | `0.249288 ms` |
 | M12 grouped-GEMM K-loop barrier removal | `0.094176 ms` |
 | exact INT4 scale-lane deduplication | `0.030000 ms` |
-| projected sum | **`0.373464 ms`** |
+| optimistic isolated projection | **`0.373464 ms`** |
 
 At the record's approximate `32.326922 ms` verifier cycle this is `1.1553%`,
-projecting about `126.928 tok/s` at unchanged acceptance. This cannot reach
-130 alone, but it is large enough to test only as a combined portfolio. The
-projection is not a measured endpoint result.
+projecting about `126.928 tok/s` at unchanged acceptance. The two grouped-GEMM
+deltas are not assumed additive: they modify one kernel and can interact in
+code generation or scheduling. Only direct both-on timing may contribute to
+the gate. This cannot reach 130 alone, but it is large enough to test only as a
+combined portfolio. The projection is not a measured endpoint result.
 
 ## Frozen composition
 
@@ -52,11 +54,13 @@ sampling, cache policy, graph/scoring window, or benchmark metric may change.
    source commit, DSOs, hashes, ABI, wall time, peak RSS, and selector-off/on
    symbol evidence.
 3. Reuse the existing changed-input corpora and compare same-DSO selector-off
-   versus all-three-on. Require raw-BF16 equality for all six W13/W2 cases and
-   all six mapped-tail cases, input immutability, and no per-component
-   regression greater than 1%.
-4. Require at least `0.30 ms/cycle` summed saving under matched component
-   timings. A smaller result stops before vLLM/model integration.
+   versus both-grouped-selectors-on, plus generic-tail versus fused-tail.
+   Require raw-BF16 equality for all six W13/W2 cases and all six mapped-tail
+   cases, input immutability, and no component regression greater than 1%.
+4. Require at least `0.30 ms/cycle` under the direct joint formula
+   `48 * ((tail_control-tail_fused) + (W13_control+W2_control-
+   W13_both_on-W2_both_on))`. Do not sum the isolated grouped-GEMM deltas. A
+   smaller result stops before vLLM/model integration.
 5. A component pass authorizes a separately recorded vLLM integration, focused
    tests, and one non-scored TP4 2x400 exact/cache/topology smoke. Only a smoke
    pass authorizes a first-result cold 13-prompt endpoint leg.
