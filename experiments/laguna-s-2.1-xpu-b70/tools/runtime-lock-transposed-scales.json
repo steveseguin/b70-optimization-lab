@@ -1,0 +1,152 @@
+{
+  "schema": "laguna-s-2.1-b70-runtime-lock-v1",
+  "scope": {
+    "sealed_result": "candidate runtime identity only; no endpoint throughput claimed before the exact TP4 gate",
+    "disposition": "Observed originating-host identity. Exact hashes define lab replay; source rebuilds are new environments and must pass the complete semantic and performance gates."
+  },
+  "host": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "kernel": "7.0.0-28-generic",
+    "architecture": "x86_64",
+    "gpu_name": "Intel(R) Arc(TM) Pro B70 Graphics",
+    "gpu_vendor_device": "8086:e223",
+    "gpu_bdfs": [
+      "0000:23:00.0",
+      "0000:27:00.0",
+      "0000:43:00.0",
+      "0000:47:00.0"
+    ],
+    "gpu_count": 4,
+    "xpu_smi_sha256": "2b5b128edf28b38da8637413fe8bfe3a4a40e8113210ba9ddaed945bd56d826e"
+  },
+  "toolchain": {
+    "python": "3.12.13",
+    "oneapi_dpcpp": "2025.3.3 (2025.3.3.20260319)",
+    "oneapi_compiler_root": "/opt/intel/oneapi/compiler/2025.3",
+    "cmake_build_type": "Release",
+    "cc": "/opt/intel/oneapi/compiler/2025.3/bin/icx",
+    "cxx": "/opt/intel/oneapi/compiler/2025.3/bin/icpx",
+    "attention_paged_decode_config": "paged_decode_default.conf",
+    "attention_chunk_prefill_config": "chunk_prefill_default.conf",
+    "original_monolithic_build_command_sealed": false
+  },
+  "python_packages": {
+    "torch": "2.12.0+xpu",
+    "triton-xpu": "3.7.1",
+    "oneccl": "2021.17.2",
+    "compressed-tensors": "0.17.0",
+    "transformers": "5.13.1",
+    "safetensors": "0.8.0",
+    "observed_full_freeze": "pip-freeze-observed.txt",
+    "warning": "Installed editable metadata reports older local vLLM/kernel trees. PYTHONPATH plus Git HEADs, module origins, hashes, and loaded DSO maps are authoritative."
+  },
+  "source": {
+    "vllm": {
+      "commit": "e596ef1543466ae1a05e5bb8091f58872e2b18ba",
+      "bundle": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-width12-dflash-fp8-102tps-record-20260726.bundle"
+    },
+    "kernel_record_tree": {
+      "commit": "8dd94f2307db3b830fe07f212c4b36f719652a5c",
+      "bundle": "pending endpoint promotion; source worktree and component artifacts are authoritative"
+    },
+    "attention_runtime_tree": {
+      "commit": "906190641d708b8028018c5dde653e265c835348",
+      "bundle": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-attention-runtime-906190641-20260726.bundle"
+    },
+    "native_base_tree": {
+      "commit": "4772f727590c51b72add79350b913d098cf67872",
+      "contained_by": "kernel_record_tree.bundle"
+    },
+    "xpumem_source_tree": {
+      "commit": "18a44f440ca3ac2006d5ba19cd12ccca0a0c9982",
+      "contained_by": "kernel_record_tree.bundle",
+      "mem_alloc_cpp_sha256": "9edf92a453b100bcfc09c1f82f1a23676b05594e3f0ac20c36855c6bb177f755"
+    }
+  },
+  "native_modules": [
+    {
+      "module": "vllm_xpu_kernels._C",
+      "path": "_C.abi3.so",
+      "sha256": "126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2",
+      "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
+    },
+    {
+      "module": "vllm_xpu_kernels._xpu_C",
+      "path": "_xpu_C.abi3.so",
+      "sha256": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
+      "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
+    },
+    {
+      "module": "vllm_xpu_kernels._moe_C",
+      "path": "_moe_C.abi3.so",
+      "sha256": "00fd81608f057039d31e1b316fecbecec60b3b03151e66b95d0f844185119715",
+      "observed_build_source_commit": "6f9dd3c3a7b1b677a992ca4f431a968408f9c816"
+    },
+    {
+      "module": "vllm_xpu_kernels._vllm_fa2_C",
+      "path": "_vllm_fa2_C.abi3.so",
+      "sha256": "3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4",
+      "observed_build_source_commit": "906190641d708b8028018c5dde653e265c835348"
+    }
+  ],
+  "mapped_kernel_libraries": [
+    {
+      "path": "libattn_kernels_xe_2.so",
+      "sha256": "ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca",
+      "observed_build_source_commit": "906190641d708b8028018c5dde653e265c835348"
+    },
+    {
+      "path": "libgrouped_gemm_xe_2.so",
+      "sha256": "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839",
+      "observed_build_source_commit": "2f0b0611b3999a76592c79a314d69f4b7ab8f285"
+    },
+    {
+      "path": "libgrouped_gemm_xe_default.so",
+      "sha256": "982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c",
+      "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
+    },
+    {
+      "path": "libgdn_attn_kernels_xe_2.so",
+      "sha256": "cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb",
+      "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
+    },
+    {
+      "path": "libmqa_logits_kernels_xe_2.so",
+      "sha256": "58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb",
+      "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
+    },
+    {
+      "path": "libmhc_kernels_xe_2.so",
+      "sha256": "f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f",
+      "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
+    }
+  ],
+  "external_native_module": {
+    "module": "vllm_xpu_kernels.xpumem_allocator",
+    "sha256": "8981f5e312cfab901a5bfa8e40a5a1f194e65db3a207784bfa602e5901e5a1a8",
+    "observed_path": "/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so",
+    "observed_build_source_commit": "18a44f440ca3ac2006d5ba19cd12ccca0a0c9982"
+  },
+  "runtime_files": [
+    {
+      "path_template": "{venv}/bin/python",
+      "sha256": "202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8"
+    },
+    {
+      "path_template": "{venv}/bin/vllm",
+      "sha256": "d16721cbe3e6bef44881b6b45ce64d9362a82bec4748754bd91ec85704c243fb"
+    },
+    {
+      "path_template": "{venv}/lib/libccl.so.2.0",
+      "sha256": "1185b0591e66f3b94f19b891367ad1c4ad5a95792f658f46d284fc7c643aedb7"
+    },
+    {
+      "path_template": "{venv}/lib/libsycl.so.8.0.0",
+      "sha256": "0336997fdfed9b2e6385e9f1cea2395eb5e130d3e5e9c943df5b0c10c1b5e57f"
+    },
+    {
+      "path_template": "{venv}/lib/python3.12/site-packages/torch/lib/libtorch_xpu.so",
+      "sha256": "63b7a56723482bc35d31842f442f6e903ef0b7fbd741c1a4ae309123bbc90572"
+    }
+  ]
+}
