@@ -1,0 +1,97 @@
+{
+  "date": "2026-08-01",
+  "status": "closed_all_exact_all_performance_regressions",
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "candidate": {
+    "source_tree": "/home/steve/src/laguna-xpu-kernels-m12-hybrid-nchunk-20260801",
+    "source_head": "d7db05849983f26e91cc4dce296806159c8d5f41",
+    "branch": "experiment/laguna-m12-hybrid-nchunk-20260801",
+    "dso": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-hybrid-nchunk-build-d7db058-20260801T193423Z/libgrouped_gemm_xe_2.so",
+    "dso_sha256": "cf6979cb144101c288215d60bbd66b484cb02345c555ed6b7bd3ff5eac2f59a9"
+  },
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-hybrid-nchunk-d7db058-20260801.bundle",
+    "sha256": "6d06dd70680b80a536eb5287d21032020840331d8febd336fed206a8fd6a9ee6",
+    "prerequisite": "522ca66587f5db288c9d8c6d8db918889c6cc467"
+  },
+  "static_evidence": {
+    "independent_source_audit_passed": true,
+    "cpu_task_ownership_cases_passed": 12,
+    "cpu_task_ownership_cases_total": 12,
+    "inherited_packed_family_igc_artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-igc-522ca66-20260801T1930Z",
+    "hybrid_specific_igc_rerun": false,
+    "hybrid_specific_no_scratch_claim_authorized": false,
+    "reason": "The exact mainloop and packed-kernel type are unchanged; after all component modes regressed, another 18-minute 107-GB compile solely for a fresh dump had no promotion value."
+  },
+  "build": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-hybrid-nchunk-build-d7db058-20260801T193423Z",
+    "compiler": "Intel oneAPI DPC++ 2025.3.3",
+    "elapsed_seconds": 1067.50,
+    "max_rss_kib": 106781940,
+    "swaps": 0,
+    "runtime_abi": ["libsycl.so.8", "libintlc.so.5"],
+    "interrupted_pre_mask_artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-hybrid-nchunk-build-63ca385-20260801T193223Z"
+  },
+  "component_protocol": {
+    "warmup_launches": 200,
+    "timing_samples": 15,
+    "launches_per_sample": 40,
+    "raw_bf16_outputs_per_treatment": 6,
+    "candidate_sentinels_per_treatment": 6,
+    "promotion_threshold_speedup": 1.03,
+    "maximum_allowed_shape_regression_fraction": 0.01
+  },
+  "treatments": [
+    {
+      "chunk": 4,
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-hybrid-nchunk-c4-d7db058-20260801T1955Z",
+      "exact": 6,
+      "total": 6,
+      "candidate_sentinel_complete": 6,
+      "control_sum_ms": 0.50565005,
+      "candidate_sum_ms": 0.514063125,
+      "summed_speedup": 0.9836341597153073,
+      "w13_speedup": 0.9837128753804298,
+      "w2_speedup": 0.9834963895008297,
+      "decision": "stop"
+    },
+    {
+      "chunk": 8,
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-hybrid-nchunk-c8-d7db058-20260801T1957Z",
+      "exact": 6,
+      "total": 6,
+      "candidate_sentinel_complete": 6,
+      "control_sum_ms": 0.5057039,
+      "candidate_sum_ms": 0.515443175,
+      "summed_speedup": 0.9811050461576099,
+      "w13_speedup": 0.9740852235981338,
+      "w2_speedup": 0.9936303117646931,
+      "decision": "stop"
+    },
+    {
+      "chunk": 16,
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-hybrid-nchunk-c16-d7db058-20260801T1958Z",
+      "exact": 6,
+      "total": 6,
+      "candidate_sentinel_complete": 6,
+      "control_sum_ms": 0.506080375,
+      "candidate_sum_ms": 0.5104272750000001,
+      "summed_speedup": 0.9914838014876849,
+      "w13_speedup": 0.992139140341154,
+      "w2_speedup": 0.9903373211376251,
+      "decision": "stop"
+    }
+  ],
+  "descriptor_identity": {
+    "w13_tile_count": 51,
+    "w13_storage_sha256": "d69d2bb2911949c575c283ea785bd88c7e5597cedf5789f2b40d96175e79010d",
+    "w2_tile_count": 57,
+    "w2_storage_sha256": "d98b3e21b793020fc606cb07d878c5e017879bc2ec25a3bd7774581f534a0c15",
+    "identical_between_all_control_treatment_pairs": true
+  },
+  "production_metadata_integration_performed": false,
+  "four_rank_smoke_performed": false,
+  "endpoint_run_performed": false,
+  "recovery_action_performed": false,
+  "conclusion": "All bounded hybrid expert/N-tile interleaves were exact but slower. Preserve full same-expert N-tile locality on this M12 grouped-MoE workload."
+}

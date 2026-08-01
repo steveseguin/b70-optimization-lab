@@ -1,6 +1,6 @@
 # Laguna S 2.1 resume point
 
-Last updated: 2026-07-31 America/Toronto
+Last updated: 2026-08-01 America/Toronto
 
 ## Status
 
@@ -32,6 +32,22 @@ The next bounded exact work should continue reducing real device submissions
 inside captured graph segments or the dominant MoE mainloop. The remaining
 conventional gap to 130 is `4.5380268362249 tok/s` (`3.6170536154%` relative
 to the current row).
+
+The latest bounded grouped-MoE scheduling screen is closed. Full packed
+N-major ordering and the complete preregistered C=4/8/16 hybrid chunk sweep
+were all raw-BF16 exact, but every ordering was slower than the protected
+same-expert scheduler. C=16 was the least harmful at `0.991484x`; it still
+missed both the per-shape and summed promotion gates. No production metadata,
+four-rank smoke, endpoint run, or recovery action followed. Do not retry this
+interleave family or count it as headroom. See
+[`2026-08-01-m12-hybrid-nchunk-preregistration.md`](notes/2026-08-01-m12-hybrid-nchunk-preregistration.md).
+
+The strongest remaining independently audited grouped-GEMM idea is a distinct
+paired-K32 exact mainloop that reduces split-barrier round trips without
+changing either K32 dequantization/scale boundary or DPAS order. It is not yet
+implemented or measured and needs its own preregistration/static gate; in
+particular, GRF128 already reaches `r127`, so any spill or scratch traffic is a
+hard stop.
 
 Read the
 [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)
