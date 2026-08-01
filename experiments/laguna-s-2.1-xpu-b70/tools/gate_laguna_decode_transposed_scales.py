@@ -84,6 +84,9 @@ def run_worker(args: argparse.Namespace) -> int:
         "VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP": (
             args.mode if args.selector == "scale_lane_dedup" else "0"
         ),
+        "VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS": (
+            args.mode if args.selector == "no_kloop_barriers" else "0"
+        ),
         "VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER": (
             args.mode if args.selector == "deterministic_scheduler" else "0"
         ),
@@ -381,6 +384,7 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_SCALE_FOLD"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD"] = "0"
     env_base["VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP"] = "0"
+    env_base["VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST"] = "0"
@@ -403,6 +407,9 @@ def run_gate(args: argparse.Namespace) -> int:
         )
         env["VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP"] = (
             mode if args.selector == "scale_lane_dedup" else "0"
+        )
+        env["VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS"] = (
+            mode if args.selector == "no_kloop_barriers" else "0"
         )
         env["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = (
             mode if args.selector == "deterministic_scheduler" else "0"
@@ -533,6 +540,7 @@ def parse_args() -> argparse.Namespace:
             "transposed_scales",
             "dequant_mad_grf128_transposed",
             "scale_lane_dedup",
+            "no_kloop_barriers",
             "deterministic_scheduler",
             "direct_offsets",
             "persistent_worklist",

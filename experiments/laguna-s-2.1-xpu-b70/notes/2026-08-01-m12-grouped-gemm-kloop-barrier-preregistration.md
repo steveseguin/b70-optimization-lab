@@ -2,7 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered before source implementation or device execution. No
+Status: **static BMG gate passed; production component build in progress. No
 endpoint score is authorized.**
 
 ## Evidence and hypothesis
@@ -76,3 +76,25 @@ No target/draft/KV precision change, teacher change, prompt change, retry,
 warmup generation, metric substitution, reboot, reset, driver operation, or
 privileged recovery is authorized by this screen. Preserve all failed source,
 binary, ISA, and component evidence.
+
+## Static BMG result
+
+The isolated source implementation is commit
+`5d77d83` on branch
+`experiment/laguna-m12-kloop-barrier-20260801`. The selector is literal,
+default off, and fail-closed as
+`VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS`. It creates a separately named
+GRF128/transposed-scale kernel only under the complete frozen M12 route. The
+post-GEMM scheduler barrier remains present.
+
+The oneAPI 2025.3 BMG probe is preserved at:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-no-kbarrier-igc-5d77d83-20260801T1815Z`.
+
+The live control and treatment variants both use 128 GRFs through `r127`, two
+DPAS instructions, 32 BF16 scale multiplies, 23 block-2D loads, and one output
+store. The treatment removes only the gateway barrier signal, its wait, and
+their two address/control instructions: instruction count falls from 396 to
+392. No arithmetic, DPAS, load, store, or register-pressure increase appears,
+and no actual scratch/spill traffic is present. This passes the frozen static
+gate and authorizes only the isolated production build and component test.
