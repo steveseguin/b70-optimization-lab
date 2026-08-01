@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **component-only screen authorized; no model endpoint or throughput
-claim authorized**.
+Status: **repeated- and streamed-weight component gates passed; one frozen
+candidate endpoint is authorized; no endpoint throughput is yet claimed**.
 
 ## New evidence and bounded premise
 
@@ -54,6 +54,52 @@ if native M12 loses the repeated-weight screen, if the streamed-weight result
 does not improve both projection aggregates, or if the honest projected gain
 is below the endpoint noise floor.
 
-No KV/model/draft precision change, arithmetic relaxation, teacher change,
-benchmark metric change, reset, reboot, service launch, endpoint, or
-LocalMaxxing submission is authorized here.
+The component stage authorizes no KV/model/draft precision change, arithmetic
+relaxation, teacher change, benchmark metric change, reset, reboot, or
+LocalMaxxing submission. A service launch becomes authorized only by the
+explicit integration section below after both component gates pass.
+
+## Component results
+
+Artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-bf16-attention-m12-component-20260801T024524Z
+```
+
+The original changed-input gate at rows 12 passed `224/224` raw-BF16 checks.
+The four physical projection shapes were each 25--27% faster in the
+repeated-weight timing. This result alone did not authorize integration.
+
+The streamed gate then allocated the actual 12-full/36-sliding sequence of 48
+distinct weights per family and ran ten interleaved samples of four complete
+passes per arm:
+
+| family | working set | raw exact | stride-zero BMM | native M12 | speedup |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| QKV | 777,388,032 B | 48/48 | 2.432115 ms | 1.838702 ms | **1.322734x** |
+| O projection | 625,287,168 B | 48/48 | 2.430738 ms | 1.834386 ms | **1.325096x** |
+
+Both families are far larger than device cache, both arms use identical
+inputs and weights, the arm order alternates by sample, and every individual
+sample preserves the same ordering. The combined component saving is about
+1.190 ms per target forward.
+
+## Integration authorization
+
+vLLM source `f5cdc7401d623bc510734e304f1da782a022f620` changes only the existing
+default-off native-BF16-attention selector's row gate from exactly 8 to
+`{8,12}`. It retains the exact-target marker, exact-spec-attention requirement,
+BF16 input/weight requirement, verifier-row requirement, and the four physical
+shape allowlist. Draft, gate projection, prefill, M=1 fallback, quantized
+linears, and every selector-off call remain unchanged.
+
+The measurement leg exposes the treatment only as optional literal argument
+37, records it in identity, and verifies the service environment. One fresh
+cold candidate on the exact 122.829 BF16-KV record identity is authorized.
+Require 13/13 token and text exactness, all cached-token counts zero, target
+146/145 and draft 14/13 on all four ranks, one suite invocation, no warmup or
+retry, and clean teardown. A failure yields no quoted rate. A pass may be
+compared with the confirmed 122.829 record, while any small delta still
+requires an independent confirmation before promotion.
