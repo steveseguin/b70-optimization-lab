@@ -51,3 +51,36 @@ No model, weight, BF16 KV semantic, verifier width, draft depth, target
 verification, sampler, acceptance rule, prompt, output length, or score metric
 may change.  No reset, driver reload, FLR, reboot, or privileged recovery is
 authorized by this screen.
+
+## Result
+
+Status: **rejected at raw exactness; no smoke or endpoint run.**
+
+The first invocation at
+`laguna-exact-attn-page32-20260801T084404Z` combined a physical selector and
+an affinity mask in a way that exposed zero devices.  It stopped during
+`torch.xpu.set_device(0)` and is classified as a pre-device harness error, not
+candidate evidence.  The corrected visibility syntax exposed exactly rank 1.
+
+The substantive artifact is:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/
+laguna-exact-attn-page32-20260801T084437Z
+```
+
+Page 32 differed from page 64 in **208/208** raw-BF16 comparisons: two seeds
+at every one of 52 real-window contexts for both full and sliding attention.
+The route therefore fails gate 1 decisively.  No model service, smoke, score,
+reset, or reboot followed.
+
+The harness's synchronized Python-call timings are retained in the artifact,
+but are not used as a target-cycle estimate: metadata construction and
+allocation are not amortized as they are under the record's graph replay, and
+the resulting projected totals exceed the measured target cycle.  Exactness
+alone closes the treatment.
+
+The FA2 extension was the promoted byte (`3390a306...aedc9dd4`).  The loader
+mapped the previously audited external attention-library origin with the
+promoted byte-identical SHA-256 (`ad0eb26f...333b65ca`), so this result does
+not introduce a new binary identity.

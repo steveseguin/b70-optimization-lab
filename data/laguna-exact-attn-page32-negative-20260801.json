@@ -1,0 +1,23 @@
+{
+  "schema": "laguna-exact-attn-page32-negative-v1",
+  "status": "RAW_EXACTNESS_REJECT",
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/laguna-exact-attn-page32-20260801T084437Z",
+  "pre_device_harness_error_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/laguna-exact-attn-page32-20260801T084404Z",
+  "logical_shape": {
+    "verifier_rows": 12,
+    "local_q_heads": 12,
+    "local_kv_heads": 2,
+    "head_dim": 128,
+    "kv_dtype": "BF16"
+  },
+  "contexts": 52,
+  "attention_modes": 2,
+  "seeds": 2,
+  "exact": "0/208",
+  "fa2_sha256": "3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4",
+  "attention_library_sha256": "ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca",
+  "timing_disposition": "retained but not interpreted because synchronized Python-call totals do not model graph replay",
+  "endpoint_run": false,
+  "reboot_or_reset": false,
+  "next_action": "do not change the physical KV block size; preserve the per-row reduction order in any shared-prefix kernel"
+}
