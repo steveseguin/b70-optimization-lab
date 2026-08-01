@@ -1,0 +1,394 @@
+From defec37d44526f55ab71287cabfe28251aad96c7 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 09:17:04 -0400
+Subject: [PATCH] xpu: fuse exact Laguna M12 mapped MoE tail
+
+---
+ csrc/moe/moe_gather.cpp                       | 196 ++++++++++++++++++
+ csrc/moe/moe_ops.h                            |   8 +
+ csrc/moe/torch_bindings.cpp                   |  11 +
+ custom-kernels-inventory.md                   |   1 +
+ ...guna_m12_mapped_gather_scale_add_static.py |  68 ++++++
+ .../test_laguna_m8_gather_finalize_static.py  |   8 +-
+ 6 files changed, 289 insertions(+), 3 deletions(-)
+ create mode 100644 tests/test_laguna_m12_mapped_gather_scale_add_static.py
+
+diff --git a/csrc/moe/moe_gather.cpp b/csrc/moe/moe_gather.cpp
+index 3425c3c..8a349a2 100644
+--- a/csrc/moe/moe_gather.cpp
++++ b/csrc/moe/moe_gather.cpp
+@@ -421,6 +421,88 @@ class MoeGatherM2Direct {
+   const int hidden_size;
+ };
+ 
++// Exact M12 counterpart for the current expert-grouped decode path. Unlike
++// the older canonical-row M8 specialization, this kernel consumes the same
++// permutation map as MoeGather and therefore preserves its -1 skip and fixed
++// slot traversal before using the audited three-BF16-boundary helper above.
++class LagunaM12MappedGatherScaleAdd {
++ public:
++  static constexpr int NumTokens = 12;
++  static constexpr int TopK = 10;
++  static constexpr int HiddenSize = 3072;
++  static constexpr int GroupWorkItem = 256;
++  static constexpr int WARP_SIZE = 32;
++  static constexpr int ElemsPerItem = 8;
++  static constexpr int Stride = GroupWorkItem * ElemsPerItem;
++
++  LagunaM12MappedGatherScaleAdd(
++      LagunaM8BFloat16* output,
++      const LagunaM8BFloat16* moe_output,
++      const float* topk_weights,
++      const int* unpermuted_row_to_permuted_row,
++      const LagunaM8BFloat16* shared)
++      : output(output),
++        moe_output(moe_output),
++        topk_weights(topk_weights),
++        unpermuted_row_to_permuted_row(unpermuted_row_to_permuted_row),
++        shared(shared) {}
++
++  static inline sycl::nd_range<1> get_nd_range() {
++    sycl::range<1> local(GroupWorkItem);
++    sycl::range<1> group(NumTokens);
++    return sycl::nd_range<1>(local * group, local);
++  }
++
++  void operator()
++      [[sycl::reqd_sub_group_size(WARP_SIZE)]] (sycl::nd_item<1> item) const {
++    const int token_idx = item.get_group(0);
++    const int local_id_x = item.get_local_id(0);
++
++    int moe_ids[TopK];
++    float scores[TopK];
++#pragma unroll
++    for (int i = 0; i < TopK; ++i) {
++      const int slot = token_idx * TopK + i;
++      moe_ids[i] = unpermuted_row_to_permuted_row[slot];
++      scores[i] = topk_weights[slot];
++    }
++
++    constexpr int LoopCount = (HiddenSize + Stride - 1) / Stride;
++#pragma unroll
++    for (int i = 0; i < LoopCount; ++i) {
++      const int hidden_idx = i * Stride + local_id_x * ElemsPerItem;
++      if (hidden_idx < HiddenSize) {
++        float accum[ElemsPerItem] = {};
++#pragma unroll
++        for (int k = 0; k < TopK; ++k) {
++          if (moe_ids[k] == -1) continue;
++#pragma unroll
++          for (int e = 0; e < ElemsPerItem; ++e) {
++            accum[e] +=
++                static_cast<float>(
++                    moe_output[moe_ids[k] * HiddenSize + hidden_idx + e]) *
++                scores[k];
++          }
++        }
++#pragma unroll
++        for (int e = 0; e < ElemsPerItem; ++e) {
++          const int output_idx = token_idx * HiddenSize + hidden_idx + e;
++          output[output_idx] =
++              laguna_m8_gather_finalize_arithmetic(accum[e], shared[output_idx])
++                  .final_bf16;
++        }
++      }
++    }
++  }
++
++ private:
++  LagunaM8BFloat16* output;
++  const LagunaM8BFloat16* moe_output;
++  const float* topk_weights;
++  const int* unpermuted_row_to_permuted_row;
++  const LagunaM8BFloat16* shared;
++};
++
+ template <typename T>
+ void MoeGatherLauncher(
+     T* output,
+@@ -514,6 +596,25 @@ void LagunaM8MoeGatherFinalizeDiagnosticLauncher(
+   });
+ }
+ 
++void LagunaM12MappedGatherScaleAddLauncher(
++    LagunaM8BFloat16* output,
++    const LagunaM8BFloat16* moe_output,
++    const float* topk_weights,
++    const int* unpermuted_row_to_permuted_row,
++    const LagunaM8BFloat16* shared,
++    sycl::queue& queue) {
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for(
++        LagunaM12MappedGatherScaleAdd::get_nd_range(),
++        LagunaM12MappedGatherScaleAdd{
++            output,
++            moe_output,
++            topk_weights,
++            unpermuted_row_to_permuted_row,
++            shared});
++  });
++}
++
+ template <typename T, typename IndexT>
+ void MoeGatherDirectM1Launcher(
+     T* output,
+@@ -719,6 +820,101 @@ void laguna_m8_moe_gather_finalize(
+       queue);
+ }
+ 
++void laguna_m12_mapped_gather_scale_add(
++    torch::Tensor& output,
++    const torch::Tensor& moe_output,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    const torch::Tensor& shared,
++    int64_t num_local_experts) {
++  constexpr int kNumTokens = 12;
++  constexpr int kTopK = 10;
++  constexpr int kHiddenSize = 3072;
++  constexpr int kMoeRows = kNumTokens * kTopK;
++  constexpr int kNumLocalExperts = 64;
++
++  TORCH_CHECK(output.is_xpu(), "output must be on XPU");
++  TORCH_CHECK(moe_output.is_xpu(), "moe_output must be on XPU");
++  TORCH_CHECK(topk_weights.is_xpu(), "topk_weights must be on XPU");
++  TORCH_CHECK(
++      unpermuted_row_to_permuted_row.is_xpu(),
++      "unpermuted_row_to_permuted_row must be on XPU");
++  TORCH_CHECK(shared.is_xpu(), "shared must be on XPU");
++  TORCH_CHECK(
++      moe_output.device() == output.device() &&
++          topk_weights.device() == output.device() &&
++          unpermuted_row_to_permuted_row.device() == output.device() &&
++          shared.device() == output.device(),
++      "Laguna M12 gather/scale/add tensors must share one XPU device");
++  TORCH_CHECK(
++      output.scalar_type() == torch::kBFloat16 &&
++          moe_output.scalar_type() == torch::kBFloat16 &&
++          shared.scalar_type() == torch::kBFloat16,
++      "output, moe_output, and shared must be BF16");
++  TORCH_CHECK(
++      topk_weights.scalar_type() == torch::kFloat32,
++      "topk_weights must be FP32");
++  TORCH_CHECK(
++      unpermuted_row_to_permuted_row.scalar_type() == torch::kInt32,
++      "unpermuted_row_to_permuted_row must be int32");
++  TORCH_CHECK(
++      output.is_contiguous() && moe_output.is_contiguous() &&
++          topk_weights.is_contiguous() &&
++          unpermuted_row_to_permuted_row.is_contiguous() &&
++          shared.is_contiguous(),
++      "Laguna M12 gather/scale/add tensors must be contiguous");
++  TORCH_CHECK(
++      output.dim() == 2 && output.size(0) == kNumTokens &&
++          output.size(1) == kHiddenSize,
++      "output must have exact shape [12,3072]");
++  TORCH_CHECK(
++      moe_output.dim() == 2 && moe_output.size(0) == kMoeRows &&
++          moe_output.size(1) == kHiddenSize,
++      "moe_output must have exact shape [120,3072]");
++  TORCH_CHECK(
++      topk_weights.dim() == 2 && topk_weights.size(0) == kNumTokens &&
++          topk_weights.size(1) == kTopK,
++      "topk_weights must have exact shape [12,10]");
++  TORCH_CHECK(
++      unpermuted_row_to_permuted_row.dim() == 2 &&
++          unpermuted_row_to_permuted_row.size(0) == kNumTokens &&
++          unpermuted_row_to_permuted_row.size(1) == kTopK,
++      "unpermuted_row_to_permuted_row must have exact shape [12,10]");
++  TORCH_CHECK(
++      shared.dim() == 2 && shared.size(0) == kNumTokens &&
++          shared.size(1) == kHiddenSize,
++      "shared must have exact shape [12,3072]");
++  TORCH_CHECK(
++      num_local_experts == kNumLocalExperts,
++      "Laguna M12 gather/scale/add requires exactly 64 local experts");
++  TORCH_CHECK(
++      reinterpret_cast<uintptr_t>(output.data_ptr()) % 16 == 0 &&
++          reinterpret_cast<uintptr_t>(moe_output.data_ptr()) % 16 == 0 &&
++          reinterpret_cast<uintptr_t>(topk_weights.data_ptr()) % 16 == 0 &&
++          reinterpret_cast<uintptr_t>(
++              unpermuted_row_to_permuted_row.data_ptr()) %
++                  16 ==
++              0 &&
++          reinterpret_cast<uintptr_t>(shared.data_ptr()) % 16 == 0,
++      "Laguna M12 gather/scale/add pointers must be 16-byte aligned");
++  at::assert_no_internal_overlap(output);
++  at::assert_no_overlap(output, moe_output);
++  at::assert_no_overlap(output, topk_weights);
++  at::assert_no_overlap(output, unpermuted_row_to_permuted_row);
++  at::assert_no_overlap(output, shared);
++
++  using scalar_t = sycl::ext::oneapi::bfloat16;
++  const at::DeviceGuard device_guard(output.device());
++  auto& queue = vllm::xpu::vllmGetQueue();
++  vllm::moe::LagunaM12MappedGatherScaleAddLauncher(
++      reinterpret_cast<scalar_t*>(output.data_ptr()),
++      reinterpret_cast<const scalar_t*>(moe_output.data_ptr()),
++      topk_weights.data_ptr<float>(),
++      unpermuted_row_to_permuted_row.data_ptr<int>(),
++      reinterpret_cast<const scalar_t*>(shared.data_ptr()),
++      queue);
++}
++
+ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor>
+ laguna_m8_moe_gather_finalize_diagnostic(
+     const torch::Tensor& moe_output,
+diff --git a/csrc/moe/moe_ops.h b/csrc/moe/moe_ops.h
+index f6ae05a..280cff1 100755
+--- a/csrc/moe/moe_ops.h
++++ b/csrc/moe/moe_ops.h
+@@ -103,6 +103,14 @@ laguna_m8_moe_gather_finalize_diagnostic(
+     const torch::Tensor& shared,
+     int64_t num_local_experts);
+ 
++void laguna_m12_mapped_gather_scale_add(
++    torch::Tensor& output,
++    const torch::Tensor& moe_output,
++    const torch::Tensor& topk_weights,
++    const torch::Tensor& unpermuted_row_to_permuted_row,
++    const torch::Tensor& shared,
++    int64_t num_local_experts);
++
+ void moe_gather_direct_m1(
+     torch::Tensor& output,
+     const torch::Tensor& moe_output,
+diff --git a/csrc/moe/torch_bindings.cpp b/csrc/moe/torch_bindings.cpp
+index 770b39a..ef8946e 100644
+--- a/csrc/moe/torch_bindings.cpp
++++ b/csrc/moe/torch_bindings.cpp
+@@ -110,6 +110,17 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, m) {
+       torch::kXPU,
+       &laguna_m8_moe_gather_finalize_diagnostic);
+ 
++  // Exact, default-unused Laguna M=12 expert-grouped gather plus scale/add.
++  m.def(
++      "laguna_m12_mapped_gather_scale_add(Tensor(a!) output, "
++      "Tensor moe_output, Tensor topk_weights, "
++      "Tensor unpermuted_row_to_permuted_row, Tensor shared, "
++      "int num_local_experts) -> ()");
++  m.impl(
++      "laguna_m12_mapped_gather_scale_add",
++      torch::kXPU,
++      &laguna_m12_mapped_gather_scale_add);
++
+   m.def(
+       "moe_gather_direct_m1(Tensor(a!) output, Tensor moe_output, "
+       "Tensor topk_weights, Tensor topk_ids, Tensor? expert_map, "
+diff --git a/custom-kernels-inventory.md b/custom-kernels-inventory.md
+index a796900..d940567 100644
+--- a/custom-kernels-inventory.md
++++ b/custom-kernels-inventory.md
+@@ -10,4 +10,5 @@ not yet backfilled.
+ | `_C::laguna_m8_silu_mul(Tensor(a!) out, Tensor gate, Tensor up) -> ()` | `csrc/activation.cpp` | Separate, contiguous, 16-byte-aligned BF16 XPU tensors `[8, 256]`; non-overlapping output; bitwise `F.silu(gate) * up`, including the `gate=0x40be` midpoint correction | vLLM Laguna shared expert under default-off `VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE` | Exhaustive 65,280 finite BF16 gate values on every visible XPU, adversarial finite `up`, and guard tests in `tests/test_activation.py` |
+ | `_C::laguna_m8_scale_add(Tensor(a!) out, Tensor shared, Tensor routed) -> ()` | `csrc/activation.cpp` | Separate, contiguous, 16-byte-aligned BF16 XPU tensors `[8, 3072]`; non-overlapping output; round `routed * 2.5` to BF16 before the BF16 `shared + scaled` round | vLLM Laguna MoE runner under default-off `VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE` | Exhaustive finite BF16 routed/shared pairing and guard tests in `tests/test_activation.py` |
+ | `_moe_C::laguna_m8_moe_gather_finalize(Tensor(a!) output, Tensor moe_output, Tensor topk_weights, Tensor shared, int num_local_experts) -> ()` | `csrc/moe/moe_gather.cpp` | Default-unused strict XPU-only BF16 specialization: separate, contiguous, 16-byte-aligned output `[8,3072]`, canonical routed rows `[80,3072]`, shared `[8,3072]`, FP32 weights `[8,10]`, and exactly 64 local experts; output cannot overlap an input. Consumes canonical row `token*10 + slot` in fixed slot order, relying on unchanged zero-filled W2 rows for remote routes, then preserves BF16 routed, BF16 routed×2.5, and final BF16 shared-add boundaries. | Candidate-only Laguna target-verifier M=8 post-W2 consumer under default-off `VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE`; an explicit shared-output argument distinguishes the dedicated call while generic M1–M8 remains incumbent. | CPU/static schema and source-contract coverage in `tests/test_laguna_m8_gather_finalize_static.py`, plus the independent value-level CPU oracle in `tests/test_laguna_m8_gather_finalize_oracle.py`; XPU exactness gate remains required before record use. |
++| `_moe_C::laguna_m12_mapped_gather_scale_add(Tensor(a!) output, Tensor moe_output, Tensor topk_weights, Tensor unpermuted_row_to_permuted_row, Tensor shared, int num_local_experts) -> ()` | `csrc/moe/moe_gather.cpp` | Default-unused strict XPU-only BF16 specialization for output/shared `[12,3072]`, expert-grouped routed rows `[120,3072]`, FP32 weights and int32 permutation map `[12,10]`, and exactly 64 local experts. It preserves generic gather's slot order and `-1` skip, then the routed-BF16, scaled-BF16, and final-BF16 boundaries. | Candidate-only exact M12 target-verifier tail; production integration remains separately gated and selector-off is incumbent. | Static source-contract and changed-input XPU component gates are required before integration. |
+ | `_moe_C::laguna_m8_moe_gather_finalize_diagnostic(Tensor moe_output, Tensor topk_weights, Tensor shared, int num_local_experts) -> (Tensor, Tensor, Tensor)` | `csrc/moe/moe_gather.cpp` | Diagnostic-only strict XPU BF16 companion to the production tail. Allocates and returns canonical routed-BF16, scaled-BF16, and final-BF16 `[8,3072]` tensors after the same literal helper sequence; it accepts only canonical rows `[80,3072]`, FP32 `[8,10]` weights, and 64 local experts. | No production consumer; component exactness gate only. The production schema and production kernel instantiate the helper without the diagnostic stores. | CPU/static source-contract coverage in `tests/test_laguna_m8_gather_finalize_static.py`; XPU diagnostic equality remains an explicitly later, opt-in gate. |
+diff --git a/tests/test_laguna_m12_mapped_gather_scale_add_static.py b/tests/test_laguna_m12_mapped_gather_scale_add_static.py
+new file mode 100644
+index 0000000..ccc4ee9
+--- /dev/null
++++ b/tests/test_laguna_m12_mapped_gather_scale_add_static.py
+@@ -0,0 +1,68 @@
++# SPDX-License-Identifier: Apache-2.0
++"""CPU-only contract checks for the default-unused exact M12 MoE tail."""
++
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[1]
++SOURCE = (ROOT / "csrc/moe/moe_gather.cpp").read_text()
++HEADER = (ROOT / "csrc/moe/moe_ops.h").read_text()
++BINDINGS = (ROOT / "csrc/moe/torch_bindings.cpp").read_text()
++
++CLASS_START = SOURCE.index("class LagunaM12MappedGatherScaleAdd")
++CLASS_END = SOURCE.index("template <typename T, typename IndexT", CLASS_START)
++CANDIDATE = SOURCE[CLASS_START:CLASS_END]
++FUNCTION_START = SOURCE.index("void laguna_m12_mapped_gather_scale_add(")
++FUNCTION_END = SOURCE.index(
++    "std::tuple<torch::Tensor, torch::Tensor, torch::Tensor>", FUNCTION_START
++)
++FUNCTION = SOURCE[FUNCTION_START:FUNCTION_END]
++
++
++def test_exact_fixed_geometry_and_mapped_slot_order() -> None:
++    for contract in (
++        "static constexpr int NumTokens = 12;",
++        "static constexpr int TopK = 10;",
++        "static constexpr int HiddenSize = 3072;",
++        "static constexpr int GroupWorkItem = 256;",
++        "static constexpr int ElemsPerItem = 8;",
++        "moe_ids[i] = unpermuted_row_to_permuted_row[slot];",
++        "scores[i] = topk_weights[slot];",
++        "for (int k = 0; k < TopK; ++k)",
++        "if (moe_ids[k] == -1) continue;",
++        "laguna_m8_gather_finalize_arithmetic(",
++        ".final_bf16;",
++    ):
++        assert contract in CANDIDATE
++
++
++def test_binding_fails_closed_on_full_contract() -> None:
++    for contract in (
++        '"output must have exact shape [12,3072]"',
++        '"moe_output must have exact shape [120,3072]"',
++        '"topk_weights must have exact shape [12,10]"',
++        '"unpermuted_row_to_permuted_row must have exact shape [12,10]"',
++        '"shared must have exact shape [12,3072]"',
++        "topk_weights.scalar_type() == torch::kFloat32",
++        "unpermuted_row_to_permuted_row.scalar_type() == torch::kInt32",
++        "num_local_experts == kNumLocalExperts",
++        "at::assert_no_overlap(output, moe_output);",
++        "at::assert_no_overlap(output, topk_weights);",
++        "at::assert_no_overlap(output, unpermuted_row_to_permuted_row);",
++        "at::assert_no_overlap(output, shared);",
++    ):
++        assert contract in FUNCTION
++
++
++def test_schema_is_explicit_and_declared_once() -> None:
++    symbol = "laguna_m12_mapped_gather_scale_add"
++    assert HEADER.count(symbol) == 1
++    assert BINDINGS.count(f'"{symbol}') == 2
++    assert "Tensor(a!) output" in BINDINGS
++    assert "Tensor unpermuted_row_to_permuted_row" in BINDINGS
++
++
++def test_existing_m8_candidate_and_generic_gather_remain_present() -> None:
++    assert "class LagunaM8MoeGatherFinalize" in SOURCE
++    assert "class MoeGather" in SOURCE
++    assert "void moe_gather(" in SOURCE
+diff --git a/tests/test_laguna_m8_gather_finalize_static.py b/tests/test_laguna_m8_gather_finalize_static.py
+index 3552605..a9e2e7e 100644
+--- a/tests/test_laguna_m8_gather_finalize_static.py
++++ b/tests/test_laguna_m8_gather_finalize_static.py
+@@ -41,7 +41,9 @@ DIAGNOSTIC_FUNCTION_START = GATHER_SOURCE.index(
+     "std::tuple<torch::Tensor, torch::Tensor, torch::Tensor>\n"
+     "laguna_m8_moe_gather_finalize_diagnostic("
+ )
+-FUNCTION_END = DIAGNOSTIC_FUNCTION_START
++FUNCTION_END = GATHER_SOURCE.index(
++    "void laguna_m12_mapped_gather_scale_add(", FUNCTION_START
++)
+ CANDIDATE_FUNCTION = GATHER_SOURCE[FUNCTION_START:FUNCTION_END]
+ 
+ DIAGNOSTIC_FUNCTION_END = GATHER_SOURCE.index(
+@@ -61,7 +63,7 @@ BINDING_END = DIAGNOSTIC_BINDING_START
+ CANDIDATE_BINDING = BINDINGS[BINDING_START:BINDING_END]
+ 
+ DIAGNOSTIC_BINDING_END = BINDINGS.index(
+-    'm.def(\n      "moe_gather_direct_m1', DIAGNOSTIC_BINDING_START
++    "  // Exact, default-unused Laguna M=12", DIAGNOSTIC_BINDING_START
+ )
+ DIAGNOSTIC_BINDING = BINDINGS[
+     DIAGNOSTIC_BINDING_START:DIAGNOSTIC_BINDING_END
+@@ -76,7 +78,7 @@ HEADER_END = DIAGNOSTIC_HEADER_START
+ CANDIDATE_HEADER = HEADER[HEADER_START:HEADER_END]
+ 
+ DIAGNOSTIC_HEADER_END = HEADER.index(
+-    "void moe_gather_direct_m1(", DIAGNOSTIC_HEADER_START
++    "void laguna_m12_mapped_gather_scale_add(", DIAGNOSTIC_HEADER_START
+ )
+ DIAGNOSTIC_HEADER = HEADER[DIAGNOSTIC_HEADER_START:DIAGNOSTIC_HEADER_END]
+ 

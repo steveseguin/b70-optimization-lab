@@ -2,7 +2,9 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: preregistered before source change, build, or device execution.
+Status: **closed exact component-positive below the absolute gate**. The
+candidate was exact 6/6 and `1.624981x` faster, but its extrapolated
+`0.261955 ms/cycle` saving missed the required `0.30 ms/cycle`.
 
 ## Premise and distinction
 
@@ -62,3 +64,43 @@ No model, checkpoint value, INT4 weight, BF16 scale, BF16 KV, speculative
 width/depth, verification, sampling, prompt, teacher, cache policy, metric,
 retry, warm generation, graph-capture window, or scoring window may change.
 No reboot, reset, FLR, driver reload, or privileged recovery is authorized.
+
+## Result
+
+Candidate source is
+`defec37d44526f55ab71287cabfe28251aad96c7`. The sealed `_moe_C.abi3.so`
+has SHA-256
+`d10d9d1cd3592eaa073f93546b77d078c8e9e1229c2d3880b6a0307989aeff07`
+under
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/m12-mapped-gather-defec37/package`.
+The 10-object build took 4:01.29, peaked at 1,267,576 KiB RSS, and used zero
+swaps. Its only spill warnings were the unchanged generic TopKGating kernels;
+the new mapped-tail kernel emitted no spill warning.
+
+The one-B70 gate used three changed-input corpora, including two with remote
+`-1` routes, and compared the generic gather plus exact M12 scale/add against
+the fused op before and after timing. All six raw-BF16 comparisons passed and
+all route, weight, routed, and shared inputs remained immutable. Alternating
+15x40 timing after 200 warmups per arm measured:
+
+| scope | median |
+| --- | ---: |
+| generic mapped gather + M12 scale/add | 0.014189500 ms |
+| fused mapped gather/scale/add | 0.008732100 ms |
+| component speedup | **1.624981x** |
+| extrapolated 48-layer saving | **0.261955 ms/cycle** |
+
+The relative `1.10x` gate passed, but the preregistered absolute `0.30
+ms/cycle` gate did not. No vLLM integration, topology smoke, model run, or
+LocalMaxxing action occurred.
+
+This establishes the mechanism as exact and materially faster while rejecting
+the first 256-workitem/eight-element geometry for endpoint integration. It is
+only `0.000793 ms/layer` short of the absolute gate. One separately
+preregistered geometry treatment is justified because 128 of the 256
+work-items are idle on the second 2,048-wide pass. It must keep the arithmetic,
+map, boundary helper, and this frozen control unchanged; threshold relaxation
+or direct integration is forbidden.
+
+Raw result:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/m12-mapped-gather-component-defec37-20260801T093000Z/summary.json`.

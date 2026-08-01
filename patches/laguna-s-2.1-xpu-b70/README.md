@@ -271,3 +271,13 @@ source history is in
 candidate delta is
 `0001-xpu-decode-losslessly-packed-Laguna-BF16-scales.patch`. See the
 [closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-lossless-packed-bf16-scales-preregistration.md).
+
+The M12 mapped gather/scale/add snapshot is exact and component-positive but
+below its absolute integration gate, so it is not a record source. It consumed
+the real `[12,10]` permutation map, preserved remote `-1` skips and all three
+BF16 boundaries, and passed 6/6 changed-input comparisons. It improved the
+tail by `1.624981x`, but the extrapolated `0.261955 ms/cycle` saving missed the
+preregistered `0.30 ms/cycle` threshold. The complete source history is in
+`xpu-laguna-m12-mapped-gather-below-gate-defec37-20260801.bundle`; the source
+delta is `0001-xpu-fuse-exact-Laguna-M12-mapped-MoE-tail.patch`. See the
+[closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-m12-mapped-gather-scale-add-preregistration.md).

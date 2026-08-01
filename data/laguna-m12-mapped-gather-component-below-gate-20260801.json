@@ -1,0 +1,29 @@
+{
+  "status": "closed_exact_component_positive_below_absolute_gate",
+  "date": "2026-08-01",
+  "candidate_source_head": "defec37d44526f55ab71287cabfe28251aad96c7",
+  "candidate_moe_sha256": "d10d9d1cd3592eaa073f93546b77d078c8e9e1229c2d3880b6a0307989aeff07",
+  "raw_summary": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/m12-mapped-gather-component-defec37-20260801T093000Z/summary.json",
+  "protocol": {
+    "device": "Intel Arc Pro B70 rank 0",
+    "warmups_per_arm": 200,
+    "samples_per_arm": 15,
+    "launches_per_sample": 40,
+    "alternating_order": true,
+    "speedup_threshold": 1.10,
+    "cycle_saving_threshold_ms": 0.30
+  },
+  "correctness": {
+    "raw_bf16_exact": 6,
+    "raw_bf16_total": 6,
+    "inputs_immutable": true,
+    "remote_minus_one_routes_tested": true
+  },
+  "timing_ms": {
+    "control_median": 0.0141895,
+    "candidate_median": 0.0087321,
+    "speedup": 1.6249813901764771,
+    "extrapolated_48_layer_saving": 0.2619552
+  },
+  "decision": "Stop before integration because the exact candidate passed the relative gate but missed the preregistered 0.30 ms/cycle absolute gate. A separately gated geometry treatment may address the measured 0.000793 ms/layer gap."
+}
