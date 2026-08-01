@@ -188,9 +188,9 @@ readonly dflash_full_exactness="${44:-0}"
 # restricted to the non-scored segmented smoke and may never emit a rate.
 readonly parity_probe="${45:-0}"
 # Diagnostic only: preload the checksum-pinned public oneCCL 2022 runtime that
-# passed the Laguna TP4 captured-gather transaction oracle. This is initially
-# restricted to the row-0 non-scored smoke; scored legs require a separate
-# runtime lock and preregistration.
+# passed the Laguna TP4 transaction and row-0 model oracles. This remains
+# restricted to non-scored smoke/full-exactness gates; scored legs require a
+# separate runtime lock and preregistration.
 readonly public_oneccl="${46:-0}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
@@ -262,8 +262,8 @@ case "$parity_probe" in 0|1) ;; *) echo "PARITY_PROBE must be 0 or 1" >&2; exit 
 (( parity_probe == 0 || (dflash_segmented_smoke == 1 && dflash_full_exactness == 0) )) \
   || { echo "PARITY_PROBE=1 requires the 2x400 non-scored smoke" >&2; exit 2; }
 case "$public_oneccl" in 0|1) ;; *) echo "PUBLIC_ONECCL must be 0 or 1" >&2; exit 2 ;; esac
-(( public_oneccl == 0 || (parity_probe == 1 && dflash_segmented_smoke == 1) )) \
-  || { echo "PUBLIC_ONECCL=1 requires the row-0 non-scored smoke" >&2; exit 2; }
+(( public_oneccl == 0 || dflash_segmented_smoke == 1 )) \
+  || { echo "PUBLIC_ONECCL=1 requires a non-scored smoke/exactness gate" >&2; exit 2; }
 if [[ -n "$confidence_probe_root" ]]; then
   [[ "$confidence_probe_root" == "$run_dir"/* ]] \
     || { echo "confidence probe root must be inside the run directory" >&2; exit 2; }
