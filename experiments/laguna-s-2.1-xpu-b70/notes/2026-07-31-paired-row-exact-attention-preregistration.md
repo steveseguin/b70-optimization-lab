@@ -2,7 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **preregistered before source change, build, or device execution.**
+Status: **rejected at the one-B70 component gate; no vLLM integration or
+endpoint run.**
 
 ## New mechanism
 
@@ -58,3 +59,79 @@ No weight, target or draft precision, BF16 KV semantic, verifier width, draft
 depth, target verification, sampler, acceptance rule, prompt, output length,
 or score metric may change.  No reset, driver reload, FLR, reboot, or
 privileged recovery is authorized.
+
+## Result (2026-08-01 America/Toronto)
+
+The arithmetic mechanism is exact, but it is not faster.  The final component
+compared the incumbent qgroup-8 control with the packed qgroup-16 candidate on
+physical B70 rank 1 across all 52 real-window contexts, full and sliding
+attention, and two changing seeds:
+
+| Metric | Control | Paired candidate |
+| --- | ---: | ---: |
+| raw BF16 equality | - | **208/208** |
+| full-attention mean | 0.022639569 ms | 0.023645231 ms |
+| sliding-attention mean | 0.021955918 ms | 0.021993689 ms |
+| projected 12 full + 36 sliding | 1.062087889 ms | 1.075515588 ms |
+
+The projected change is **-0.013427699 ms**: a regression, not the required
+`+1.5 ms` saving.  The selector's invalid-literal and selector-on-control-shape
+fail-closed checks also passed.  The mapped native library was the candidate
+artifact, and stderr contained no missing-policy fallback or runtime failure.
+
+This closes the seam before integration.  Pairing halves logical verifier
+batches but changes the incumbent qgroup-8 tile into qgroup-16; the measured
+core result shows that this does not reduce effective B70 attention cost.  The
+component does not isolate whether tile resource use, scheduling, or another
+kernel detail consumes the theoretical K/V reuse, so no stronger causal claim
+is made.
+
+## Build and harness chronology
+
+1. Source `079b503c` compiled every heavy kernel object but failed its final
+   host object on a one-character guard typo (`is_var_len` instead of
+   `is_varlen`).  The failed build took `16:18.23`, peaked at `5,090,744 KiB`,
+   and reported zero swaps.  No device work occurred.
+2. Source `4ab83266` fixed that typo and produced DSO SHA-256
+   `a3d76dccbf541307318db4822debf0a581dbfea5cf4461bf9d9b3e5f592ccdba`.
+   The first component invocation then proved the reduced build lacked the
+   incumbent qgroup-8 policies.  The control fell back to the PyTorch
+   reference, so its `0/208` result and timings are classified strictly as a
+   build-policy/harness failure and are not kernel evidence.
+3. Final source `8a1b059356eea1d7368ffaa67ac3dafe5543234d` added only the two
+   qgroup-8 control policies.  The corrected four-policy incremental build
+   took `3:41.50`, peaked at `4,244,008 KiB`, reported zero swaps, and produced
+   a 23,440,040-byte DSO with SHA-256
+   `29f91afac61ed2447cc5581c7cb0838f452086fd17fa49b1ed1fb2796922f155`.
+   It links `libsycl.so.8`; the resolved oneAPI 2025.3 library SHA-256 is
+   `18fa367fb7be21f05e718555b50e4d5dec000322cc40e6c48d596b3f2ab4f394`.
+
+Final component artifact:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/
+laguna-paired-attn-8a1b059-20260801T092049Z
+```
+
+Invalid first invocation retained for audit:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/
+laguna-paired-attn-4ab8326-20260801T091540Z
+```
+
+Tracked reproduction artifacts:
+
+- full structured result:
+  `data/laguna-paired-attn-component-negative-20260801.json`;
+- component gate:
+  `tools/gate_laguna_paired_attn.py`;
+- source patch:
+  `patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-paired-attn-rejected-8a1b059-20260801.patch`;
+- source bundle:
+  `patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-paired-attn-rejected-8a1b059-20260801.bundle`.
+
+The protected `125.4619731637751 tok/s` conventional record worktrees and
+runtime were never modified.  The host returned to strict idle after the
+component.  No reboot, reset, driver action, model service, endpoint score, or
+LocalMaxxing submission occurred.

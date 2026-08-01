@@ -97,6 +97,7 @@ attention state and is a separate quality lane. See
 | Remote-route zeroing | Removed 95 fills/cycle, regressed to `32.591` | Launch count alone is not a cost model; replacement work and occupancy matter |
 | Fused persistent expert transaction | 282 to 94 launches, slower lower start | Fusion that serializes expert slots can lose more occupancy than it saves |
 | Native BF16 attention MM | Component exact, endpoint slower | A custom GEMM is not automatically better than the runtime-selected small-GEMM path |
+| Paired-row exact attention | `208/208` raw BF16 exact; projected core `1.06209` to `1.07552 ms` | Halving logical batches does not imply lower cost when it widens the dispatched qgroup tile; gate shared-prefix ideas on the real control policy |
 | QKNorm/RoPE standalone | 144 to 48 isolated launches, lower endpoint start missed record | Component wins need causal endpoint crossover evidence |
 | Shared-elementwise at width 12 | Exact, `100.525` to `99.567` | A kernel widened beyond its original hot shape can erase its fusion benefit |
 | Width 14 / 16 | `97.226` at `12/13`; `87.899` at `0/13` | Max draft depth is not max throughput; acceptance tails and verifier cost must be co-optimized |
@@ -175,6 +176,17 @@ Every diagnostic wrapper should:
 
 Never escalate hardware recovery until the probe proves it executed and names
 the boundary that failed.
+
+### A reduced native build must contain both treatment and control policies
+
+The first paired-attention component library compiled only the candidate's
+qgroup-16 policies.  The incumbent six-head-per-KV control actually dispatched
+qgroup-8 and silently fell back to a PyTorch reference, yielding an invalid
+`0/208` comparison and absurd apparent speedup.  Before timing a reduced
+native library, enumerate the dispatch key for every arm, require the native
+path for both, make fallback text fatal, and confirm the mapped DSO in
+`/proc/self/maps`.  Preserve the invalid invocation as a harness result, not
+as evidence about either kernel.
 
 ### Cold costs remain cold costs
 

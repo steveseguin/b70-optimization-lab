@@ -1,0 +1,364 @@
+From c0d55a82c906a83a0e1fb47609d75e1945c34fc5 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sun, 26 Jul 2026 14:29:42 -0400
+Subject: [PATCH 1/5] xpu: make paged decode scratch graph-recordable
+
+Signed-off-by: Codex Agent <codex-agent@users.noreply.github.com>
+---
+ csrc/xpu/attn/xe_2/paged_decode.hpp | 91 ++++++++++++++++++++---------
+ 1 file changed, 63 insertions(+), 28 deletions(-)
+
+diff --git a/csrc/xpu/attn/xe_2/paged_decode.hpp b/csrc/xpu/attn/xe_2/paged_decode.hpp
+index d31702b..957c2a3 100644
+--- a/csrc/xpu/attn/xe_2/paged_decode.hpp
++++ b/csrc/xpu/attn/xe_2/paged_decode.hpp
+@@ -408,49 +408,84 @@ struct DecodeKernelLauncher {
+     dim3 const block = FMHAKernel::get_block_shape();
+     dim3 const grid = FMHAKernel::get_grid_shape(params);
+ 
++    static_assert(cute::intel::sg_size == 16);
++    using SharedStorage = typename FMHAKernel::SharedStorage;
++    static_assert(sizeof(SharedStorage) == FMHAKernel::SharedStorageSize);
++
+     // cute::print("Launching FMHAKernel with grid: "); cute::print("%d x %d x
+     // %d ", grid.x, grid.y, grid.z); cute::print("and block: ");
+     // cute::print("%d x %d x %d\n", block.x, block.y, block.z);
+ 
+-    // configure smem size and carveout
+-    int smem_size = FMHAKernel::SharedStorageSize;
+-
+     const auto sycl_block = compat::dim3(block.x, block.y, block.z);
+     const auto sycl_grid = compat::dim3(grid.x, grid.y, grid.z);
+-
+-    // Launch parameters depend on whether SYCL compiler supports work-group
+-    // scratch memory extension
+-    compat::experimental::launch_properties launch_props{
+-        syclex::work_group_scratch_size(smem_size),
+-    };
+-    compat::experimental::kernel_properties kernel_props{
+-        syclex::sub_group_size<cute::intel::sg_size>, intelex::grf_size<256>};
+-    compat::experimental::launch_policy policy{
+-        sycl_grid, sycl_block, launch_props, kernel_props};
+-    compat::experimental::launch<cutlass::device_kernel<FMHAKernel>>(
+-        policy, queue, params);
++    const sycl::range<3> local_range = sycl_block;
++    const sycl::range<3> global_range = sycl_grid * sycl_block;
++
++    syclex::properties kernel_props{
++        syclex::sub_group_size<16>, intelex::grf_size<256>};
++    queue.submit([&](sycl::handler& cgh) {
++      // Handler-owned local memory is represented explicitly in a command
++      // graph. The dynamic work_group_scratch_size property is not.
++      sycl::local_accessor<SharedStorage, 1> scratch{sycl::range<1>(1), cgh};
++      struct KernelFunctor {
++        decltype(kernel_props) properties;
++        sycl::local_accessor<SharedStorage, 1> scratch;
++        typename FMHAKernel::Params params;
++
++        auto get(syclex::properties_tag) const { return properties; }
++
++        void operator()(sycl::nd_item<3>) const {
++          auto* scratch_ptr = reinterpret_cast<char*>(
++              scratch
++                  .template get_multi_ptr<sycl::access::decorated::no>()
++                  .get());
++          FMHAKernel{}(params, scratch_ptr);
++        }
++      };
++      cgh.parallel_for<FMHAKernel>(
++          sycl::nd_range<3>{global_range, local_range},
++          KernelFunctor{kernel_props, scratch, params});
++    });
+ 
+     // event.wait();
+ 
+     if (need_reduce) {
+       dim3 const reduce_grid =
+           ReductionSplitKernel::get_grid_shape(reduce_params);
+-      int reduce_smem_size = ReductionSplitKernel::SharedStorageSize;
++      using ReduceSharedStorage =
++          typename ReductionSplitKernel::SharedStorage;
++      static_assert(
++          sizeof(ReduceSharedStorage) ==
++          ReductionSplitKernel::SharedStorageSize);
++
+       const auto reduce_sycl_block = compat::dim3(block.x, block.y, block.z);
+       const auto reduce_sycl_grid =
+           compat::dim3(reduce_grid.x, reduce_grid.y, reduce_grid.z);
+-      compat::experimental::launch_properties launch_props_reduce{
+-          syclex::work_group_scratch_size(reduce_smem_size),
+-      };
+-      compat::experimental::launch_policy reduce_policy{
+-          reduce_sycl_grid,
+-          reduce_sycl_block,
+-          launch_props_reduce,
+-          kernel_props};
+-
+-      compat::experimental::launch<
+-          cutlass::device_kernel<ReductionSplitKernel>>(
+-          reduce_policy, queue, reduce_params);
++      const sycl::range<3> reduce_local_range = reduce_sycl_block;
++      const sycl::range<3> reduce_global_range =
++          reduce_sycl_grid * reduce_sycl_block;
++      queue.submit([&](sycl::handler& cgh) {
++        sycl::local_accessor<ReduceSharedStorage, 1> scratch{
++            sycl::range<1>(1), cgh};
++        struct ReduceKernelFunctor {
++          decltype(kernel_props) properties;
++          sycl::local_accessor<ReduceSharedStorage, 1> scratch;
++          typename ReductionSplitKernel::Params params;
++
++          auto get(syclex::properties_tag) const { return properties; }
++
++          void operator()(sycl::nd_item<3>) const {
++            auto* scratch_ptr = reinterpret_cast<char*>(
++                scratch
++                    .template get_multi_ptr<sycl::access::decorated::no>()
++                    .get());
++            ReductionSplitKernel{}(params, scratch_ptr);
++          }
++        };
++        cgh.parallel_for<ReductionSplitKernel>(
++            sycl::nd_range<3>{reduce_global_range, reduce_local_range},
++            ReduceKernelFunctor{kernel_props, scratch, reduce_params});
++      });
+       // reduce_event.wait();
+     }
+   }
+-- 
+2.43.0
+
+
+From 440dede46e2302a6912b52e4a6ce7abecf9dc640 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 04:52:51 -0400
+Subject: [PATCH 2/5] Pack paired Laguna verifier rows in paged attention
+
+---
+ .../collective/chunk_prefill_mainloop.hpp     | 36 ++++++++++++++++---
+ .../attn/xe_2/kernel/paged_decode_kernel.hpp  |  6 +++-
+ csrc/xpu/attn/xe_2/paged_decode.hpp           |  4 ++-
+ csrc/xpu/attn/xe_2/paged_decode_xe2.cpp       | 24 +++++++++++++
+ 4 files changed, 63 insertions(+), 7 deletions(-)
+
+diff --git a/csrc/xpu/attn/xe_2/collective/chunk_prefill_mainloop.hpp b/csrc/xpu/attn/xe_2/collective/chunk_prefill_mainloop.hpp
+index 0401d05..07de1cf 100644
+--- a/csrc/xpu/attn/xe_2/collective/chunk_prefill_mainloop.hpp
++++ b/csrc/xpu/attn/xe_2/collective/chunk_prefill_mainloop.hpp
+@@ -708,6 +708,9 @@ struct DecodeFwdMainloop<
+     int window_size_right;
+     // Physical stride between paged blocks in seq-position units
+     int page_stride_elements;
++    // Laguna M12 packs two consecutive six-head GQA rows into one qgroup-16
++    // decode tile. The first half has one fewer valid KV token.
++    bool laguna_pair_rows;
+   };
+ 
+   // Kernel-facing parameters
+@@ -738,7 +741,8 @@ struct DecodeFwdMainloop<
+         args.total_seqlen_kv,
+         args.window_size_left,
+         args.window_size_right,
+-        args.page_stride_elements};
++        args.page_stride_elements,
++        args.laguna_pair_rows};
+   }
+ 
+   CUTLASS_HOST_DEVICE static bool can_implement(Arguments const&) {
+@@ -938,10 +942,32 @@ struct DecodeFwdMainloop<
+       //   }
+       // }
+ 
+-      /* Local/sliding window masking */
+-      if constexpr (LocalMask) {
+-        // For decode, all packed GQA heads share the same KV position
+-        // (seq_len_kv - 1). Use a fixed decode row for all elements.
++      /* Laguna paired-row remainder and local/sliding-window masking. */
++      if (params.laguna_pair_rows) {
++        Tensor cPgP = make_identity_tensor(make_shape(seq_len, seq_len));
++        Tensor gP = local_tile(
++            cPgP, take<0, 2>(TileShapeQK{}), make_coord(get<0>(blk_qv), K));
++        auto cS_thread = thr_mma_qk.partition_C(gP);
++        CUTLASS_PRAGMA_UNROLL
++        for (int i = 0; i < tSrS.size(); ++i) {
++          int packed_q = get<0>(cS_thread(i));
++          int temporal_delta = packed_q < 6 ? 1 : 0;
++          int col_abs = get<1>(cS_thread(i));
++          int col_idx = get<1>(cS_thread(i)) - full_tile_offset;
++          int decode_row = -temporal_delta;
++          bool tail_mask = col_abs >= seq_len - temporal_delta;
++          bool left_mask = false;
++          bool right_mask = false;
++          if constexpr (LocalMask) {
++            left_mask = col_idx < decode_row - params.window_size_left;
++            right_mask = col_idx > decode_row + params.window_size_right;
++          }
++          if (tail_mask || left_mask || right_mask) {
++            tSrS(i) = ElementS(-INFINITY);
++          }
++        }
++      } else if constexpr (LocalMask) {
++        // Ordinary decode uses one KV position for all packed GQA heads.
+         int decode_row = seq_len - 1 - full_tile_offset;
+         Tensor cPgP = make_identity_tensor(make_shape(seq_len, seq_len));
+         Tensor gP = local_tile(
+diff --git a/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp b/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp
+index 8f90189..2f26690 100644
+--- a/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp
++++ b/csrc/xpu/attn/xe_2/kernel/paged_decode_kernel.hpp
+@@ -290,9 +290,13 @@ class XeFMHAFwdSplitKVKernel {
+       // For decode, all packed GQA heads are at position seq_len_kv - 1.
+       // Use seq_len - 1 (= seq_len_kv - 1) as the decode position for
+       // k_block0 to match ReduceSplitK's computation.
++      const int earliest_decode_position =
++          seq_len - 1 - (params.mainloop.laguna_pair_rows ? 1 : 0);
+       const int k_block0 =
+           CollectiveMainloop::LocalMask
+-              ? cute::max(seq_len - 1 - params.mainloop.window_size_left, 0) /
++              ? cute::max(
++                    earliest_decode_position - params.mainloop.window_size_left,
++                    0) /
+                     get<1>(TileShapeQK{})
+               : 0;
+       const int k_blocks = cute::ceil_div(seq_len, get<1>(TileShapeQK{}));
+diff --git a/csrc/xpu/attn/xe_2/paged_decode.hpp b/csrc/xpu/attn/xe_2/paged_decode.hpp
+index 957c2a3..d994b4e 100644
+--- a/csrc/xpu/attn/xe_2/paged_decode.hpp
++++ b/csrc/xpu/attn/xe_2/paged_decode.hpp
+@@ -141,6 +141,7 @@ struct paged_decode_args_t {
+   int64_t q_stride_heads = 0;
+   int64_t q_stride_batch = 0;
+   int page_stride_elements = 0;
++  bool laguna_pair_rows = false;
+ };
+ 
+ template <class FMHAKernel, class ReductionSplitKernel, bool isVarLen>
+@@ -334,7 +335,8 @@ struct DecodeKernelLauncher {
+          args.window_size_right,
+          // page_stride_elements: physical stride between paged blocks in
+          // seq-position units. It includes interleaved and cross-layer gaps.
+-         args.page_stride_elements},
++         args.page_stride_elements,
++         args.laguna_pair_rows},
+         {},
+         hw_info,
+         args.num_kv_splits};
+diff --git a/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp b/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp
+index bec8b52..1640456 100644
+--- a/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp
++++ b/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp
+@@ -1,5 +1,7 @@
+ #include "paged_decode_xe2.h"
+ #include "paged_decode_utils.hpp"
++#include <cstdlib>
++#include <cstring>
+ // Use the generated extern header (only declares enabled policies)
+ #if __has_include("paged_decode_extern_gen.hpp")
+   #include "paged_decode_extern_gen.hpp"
+@@ -227,6 +229,28 @@ void cutlass_paged_decode_impl(
+       is_varlen ? int64_t{0} : query.stride(0),
+       page_stride_elements};
+ 
++  const char* pair_rows_env = std::getenv("VLLM_XPU_LAGUNA_M12_PAIR_ATTN");
++  TORCH_CHECK(
++      pair_rows_env == nullptr || std::strcmp(pair_rows_env, "0") == 0 ||
++          std::strcmp(pair_rows_env, "1") == 0,
++      "VLLM_XPU_LAGUNA_M12_PAIR_ATTN must be literal 0 or 1");
++  args.laguna_pair_rows =
++      pair_rows_env != nullptr && std::strcmp(pair_rows_env, "1") == 0;
++  if (args.laguna_pair_rows) {
++    TORCH_CHECK(
++        is_var_len && is_paged && !is_causal && !is_sink &&
++            query.scalar_type() == at::ScalarType::BFloat16 &&
++            key_cache.scalar_type() == at::ScalarType::BFloat16 &&
++            value_cache.scalar_type() == at::ScalarType::BFloat16 &&
++            batch_size == 6 && total_seqlen_q == 6 && num_heads_q == 24 &&
++            num_heads_kv == 2 && head_size == 128 && v_head_size == 128 &&
++            max_seqlen_q == 1 && block_size == 64 &&
++            block_table.size(0) == 6 && cu_seqlens_q.numel() == 7 &&
++            cu_seqlens_k.numel() == 6,
++        "VLLM_XPU_LAGUNA_M12_PAIR_ATTN=1 requires the exact packed Laguna "
++        "M12 BF16 paged-decode shape");
++  }
++
+   // For non-contiguous paged KV (e.g., cross-layer KV cache), enlarge
+   // total_seqlen_k to cover the full physical extent for the 2D block
+   // load surface descriptor. Without this, block loads for blocks at
+-- 
+2.43.0
+
+
+From 079b503c240705f72a30583c69657a00853e1460 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 04:53:45 -0400
+Subject: [PATCH 3/5] Limit paired Laguna attention build policies
+
+---
+ csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf | 4 ++++
+ 1 file changed, 4 insertions(+)
+ create mode 100644 csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf
+
+diff --git a/csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf b/csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf
+new file mode 100644
+index 0000000..2c7d7dd
+--- /dev/null
++++ b/csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf
+@@ -0,0 +1,4 @@
++# Laguna S 2.1 block-64 target and DFlash decode policies.
++# Format: qgroup,headsize,pagesize,causal,local,sink
++16,128,64,false,true,false
++16,128,64,false,false,false
+-- 
+2.43.0
+
+
+From 4ab83266fc60142b93bd4dd02c85b9963320fe0b Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 05:14:18 -0400
+Subject: [PATCH 4/5] Fix paired attention varlen guard
+
+---
+ csrc/xpu/attn/xe_2/paged_decode_xe2.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp b/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp
+index 1640456..a9d8f91 100644
+--- a/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp
++++ b/csrc/xpu/attn/xe_2/paged_decode_xe2.cpp
+@@ -238,7 +238,7 @@ void cutlass_paged_decode_impl(
+       pair_rows_env != nullptr && std::strcmp(pair_rows_env, "1") == 0;
+   if (args.laguna_pair_rows) {
+     TORCH_CHECK(
+-        is_var_len && is_paged && !is_causal && !is_sink &&
++        is_varlen && is_paged && !is_causal && !is_sink &&
+             query.scalar_type() == at::ScalarType::BFloat16 &&
+             key_cache.scalar_type() == at::ScalarType::BFloat16 &&
+             value_cache.scalar_type() == at::ScalarType::BFloat16 &&
+-- 
+2.43.0
+
+
+From 8a1b059356eea1d7368ffaa67ac3dafe5543234d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 05:16:34 -0400
+Subject: [PATCH 5/5] Include paired attention control policies
+
+---
+ csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf b/csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf
+index 2c7d7dd..2442a77 100644
+--- a/csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf
++++ b/csrc/xpu/attn/kernel_configs/paged_decode_laguna_pair.conf
+@@ -1,4 +1,6 @@
+-# Laguna S 2.1 block-64 target and DFlash decode policies.
++# Laguna S 2.1 block-64 incumbent-control and paired-candidate policies.
+ # Format: qgroup,headsize,pagesize,causal,local,sink
++8,128,64,false,true,false
++8,128,64,false,false,false
+ 16,128,64,false,true,false
+ 16,128,64,false,false,false
+-- 
+2.43.0
+
