@@ -97,15 +97,16 @@ The component passed every frozen gate:
 - structural device operations: `192 -> 96` per target cycle.
 
 The combined saving exceeds the preregistered `0.50 ms` floor. Default-off
-vLLM selector integration was committed at
-`cf247e55d14ce918c06e89252649b50b9292ba20`. Its focused B70 suite passed
-`36/36`, covering M12 dispatch for both operations, record-contract rejection,
-missing-symbol failure, compiled-path rejection, and incumbent fallback for
-other widths. Ruff and `git diff --check` also passed.
+vLLM selector integration is committed at
+`e74318cdad3cc630399fdffe3ae2d55243c7d499`. Its focused B70 suite passes
+`37/37`, covering M12 dispatch for both operations, record-contract rejection,
+missing-symbol failure, compiled-path rejection, incumbent fallback for other
+widths, and distinct preserved MoE layer prefixes. Ruff and `git diff --check`
+also pass.
 
 The endpoint runtime is locked by
 `tools/runtime-lock-shared-elementwise-m12.json` at SHA256
-`96e26345d8567a8e57370f8806cfaa0635207a7ecc9c5909d063fed35bf3e3db`.
+`dbaceac218b18a3d8849ac95691c041e3a0578c51c9b46910d4723a30f10ed1d`.
 The verifier passed against candidate `_C.abi3.so` SHA256
 `36d97dda1438cd06b5f707859edb2a0960fd05d09ef6c6d29a53aa89cdd04095`
 and byte-identical record copies of every other native module and mapped DSO.
@@ -117,3 +118,22 @@ Gates 1-4 are therefore complete. Per the frozen plan, exactly one strict cold
 endpoint leg is now authorized. Its first valid result is final for this
 candidate whether it wins or loses; no automatic retry or hardware recovery is
 authorized.
+
+## Pre-health construction failure and corrected authorization
+
+The first endpoint process at
+`laguna-shared-elementwise-m12-endpoint-20260801T051000Z` never reached health,
+loaded weights, captured a graph, or issued a benchmark request. It produced no
+throughput or correctness result. All ranks failed closed while constructing
+the model with `ValueError: Duplicate layer name: laguna_m12.experts`; cleanup
+reported `stop_status=0`, `worker_status=0`, and `idle_status=0`.
+
+The cause was a local integration defect: the symbol-family temporary reused
+the constructor's `prefix` parameter, replacing every real layer prefix with
+`laguna_m12`. Commit `e74318cd` renames that temporary and adds a constructor
+regression that instantiates two layers and requires distinct
+`model.layers.{0,1}.mlp.experts` prefixes. This failure does not authorize
+discarding or repeating a measured score because there was no request and no
+score. The corrected source and updated runtime lock authorize one first
+score-bearing strict cold leg under the otherwise unchanged stop rules. Its
+first valid score remains final; no benchmark retry is authorized.
