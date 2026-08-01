@@ -108,3 +108,32 @@ Requirements before another model action:
 This amendment changes diagnostic selection only. It does not authorize any
 ordinary runtime treatment, score, retry after a second failure, reset,
 reboot, or submission.
+
+## Amendment implementation
+
+The scoped diagnostic source is committed cleanly at:
+
+- worktree: `/home/steve/src/laguna-vllm-target-only-event-profile-20260731`;
+- vLLM commit: `50bf5df198d8835f6b59725cbf5cc31da666f814`;
+- commit subject: `xpu: scope Laguna event profile to target replay`.
+
+It adds the default-off literal environment variable
+`VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY`. Literal one makes the
+14/13 draft wrapper replay normally without claiming the process-global
+profile and selects only the exact existing 146/145 target topology. Unset or
+literal zero follows the previous code path. Invalid values fail closed.
+
+Validation on that exact source commit:
+
+- full Breakable-graph test file: 44 passed, 11 platform skips;
+- focused XPU event-profile cases: 20 passed;
+- formatting, lint, and diff checks passed;
+- draft bypass, process-global claim preservation, exact-target selection,
+  and invalid-literal behavior have dedicated tests.
+
+The measurement leg now accepts this selector only as optional argument 36,
+records it in identity, verifies it in the captured service environment, and
+requires an event-profile root when enabled. Any nonempty event-profile root
+forces `scored_measurement=0` in identity, independently of the resulting
+throughput fields. The default record invocation remains argument-compatible
+and passes literal zero to the service.
