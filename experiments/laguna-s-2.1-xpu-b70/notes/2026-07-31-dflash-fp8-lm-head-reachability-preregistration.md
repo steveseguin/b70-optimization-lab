@@ -2,7 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **preregistered; source integration not yet authorized beyond tests**.
+Status: **closed component negative; reachable and correct, but only saves
+`0.0360594 ms` per draft cycle**.
 
 ## Premise and reachability finding
 
@@ -71,3 +72,38 @@ large matrix multiply and is therefore eligible for a component gate.
    prompt filtering, warmup, cached/history reuse or LocalMaxxing submission is
    authorized by this preregistration.
 
+## Component result: reject before endpoint
+
+The active-path fix is vLLM commit
+`b90f9509bd5e7b7123753a0047ef7958d184d571`. Its focused suite passed `65/65`
+tests, including selector-off inertness, selector-on preparation through the
+legacy proposer, target immutability/non-aliasing, and fail-closed cases.
+
+The one-B70 component used the real rank-0 `(25088, 3072)` BF16 slice of
+`lm_head.weight` from the frozen model shard:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-dflash-fp8-lm-head-component-20260801T041815Z
+```
+
+- target BF16 weight unchanged: pass;
+- independent FP8 weight/scale, no target alias: pass;
+- finite BF16 outputs: pass;
+- rank-0 local-vocabulary top-1 agreement: `78/88` (`88.6364%`); this is
+  diagnostic only because final target verification is authoritative;
+- incumbent BF16 local LM head: `0.2669498 ms` median;
+- candidate FP8 W8A16 local LM head: `0.2308904 ms` median;
+- isolated speedup: `1.156175x`;
+- absolute saving: only `0.0360594 ms` per speculative cycle.
+
+The candidate met the relative-speed half of the gate but failed the frozen
+`>0.05 ms` absolute-saving requirement. Relative to the measured roughly
+`32 ms` decode cycle, its isolated ceiling is about `0.11%`, far below the
+roughly `4.3%` improvement needed to reach `130 tok/s`. No four-GPU smoke or
+endpoint run is authorized or performed. The selector remains default-off and
+the candidate is not promoted or submitted.
+
+Transferable lesson: a large-looking vocabulary matrix is not automatically a
+large endpoint seam at batch-1 speculative decode. Measure absolute time at the
+actual proposal row count before paying model startup and collective costs.
