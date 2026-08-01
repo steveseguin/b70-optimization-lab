@@ -93,6 +93,9 @@ def run_worker(args: argparse.Namespace) -> int:
         "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4": (
             args.mode if args.selector == "persistent_chunk4" else "0"
         ),
+        "VLLM_XPU_LAGUNA_DECODE_LOSSLESS_PACKED_SCALES": (
+            args.mode if args.selector == "lossless_packed_scales" else "0"
+        ),
         "VLLM_XPU_LAGUNA_SCALE_VEC": "1",
         "VLLM_XPU_LAGUNA_DEQUANT_MAD": "0",
         "VLLM_XPU_LAGUNA_SCALE_FOLD": "0",
@@ -122,9 +125,39 @@ def run_worker(args: argparse.Namespace) -> int:
             dtype=torch.int8,
             generator=generator,
         )
-        logical_scale_cpu = torch.empty(
-            (LOCAL_EXPERTS, n, k // 32), dtype=torch.bfloat16
-        ).uniform_(0.0001, 0.02, generator=generator)
+        if args.selector == "lossless_packed_scales":
+            scale_low = torch.randint(
+                0,
+                256,
+                (LOCAL_EXPERTS, k // 32, n // 32, 32),
+                dtype=torch.int32,
+                generator=generator,
+            )
+            scale_base = torch.randint(
+                57,
+                59,
+                (LOCAL_EXPERTS, k // 32, n // 32, 1),
+                dtype=torch.int32,
+                generator=generator,
+            )
+            scale_delta = torch.randint(
+                0,
+                4,
+                (LOCAL_EXPERTS, k // 32, n // 32, 32),
+                dtype=torch.int32,
+                generator=generator,
+            )
+            scale_bits = scale_low | ((scale_base + scale_delta) << 8)
+            physical_seed = (
+                scale_bits.to(torch.uint16)
+                .view(torch.bfloat16)
+                .reshape(LOCAL_EXPERTS, k // 32, n)
+            )
+            logical_scale_cpu = physical_seed.permute(0, 2, 1).contiguous()
+        else:
+            logical_scale_cpu = torch.empty(
+                (LOCAL_EXPERTS, n, k // 32), dtype=torch.bfloat16
+            ).uniform_(0.0001, 0.02, generator=generator)
         route_ids = torch.randint(
             0, LOCAL_EXPERTS, (ROUTES,), dtype=torch.int64, generator=generator
         )
@@ -167,10 +200,36 @@ def run_worker(args: argparse.Namespace) -> int:
         else:
             physical_scale_cpu = logical_scale_cpu
             physical_layout = "expert_n_group"
+        packed_scale_bytes = None
+        if args.selector == "lossless_packed_scales" and args.mode == "1":
+            scale_bits = physical_scale_cpu.view(torch.uint16).to(torch.int32)
+            scale_blocks = scale_bits.reshape(LOCAL_EXPERTS, k // 32, n // 32, 32)
+            scale_high = scale_blocks >> 8
+            scale_base = scale_high.amin(dim=-1)
+            scale_delta = scale_high - scale_base.unsqueeze(-1)
+            if int(scale_delta.amax()) > 3:
+                raise RuntimeError("lossless scale record high-byte span exceeded 3")
+            scale_low = (scale_blocks & 0xFF).to(torch.uint8)
+            delta_quads = scale_delta.reshape(LOCAL_EXPERTS, k // 32, n // 32, 8, 4)
+            shifts = torch.tensor((0, 2, 4, 6), dtype=torch.int32)
+            scale_codes = torch.sum(delta_quads << shifts, dim=-1).to(torch.uint8)
+            scale_records = torch.empty(
+                (LOCAL_EXPERTS, k // 32, n // 32, 41), dtype=torch.uint8
+            )
+            scale_records[..., :32] = scale_low
+            scale_records[..., 32:40] = scale_codes
+            scale_records[..., 40] = scale_base.to(torch.uint8)
+            packed = scale_records.flatten()
+            packed_storage = torch.zeros_like(physical_scale_cpu)
+            packed_storage.view(torch.uint8).flatten()[: packed.numel()].copy_(packed)
+            physical_scale_cpu = packed_storage
+            physical_layout = "expert_group_n_lossless_32x41"
+            packed_scale_bytes = packed.numel()
         physical_scale = {
             "layout": physical_layout,
             "shape": list(physical_scale_cpu.shape),
             "sha256": tensor_sha256(physical_scale_cpu),
+            "packed_bytes": packed_scale_bytes,
         }
         weight = weight_cpu.to("xpu")
         scales = physical_scale_cpu.to("xpu")
@@ -322,6 +381,7 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4"] = "0"
+    env_base["VLLM_XPU_LAGUNA_DECODE_LOSSLESS_PACKED_SCALES"] = "0"
     env_base["VLLM_XPU_LAGUNA_PREFETCH_DIST"] = "6"
     env_base.pop("VLLM_XPU_MXFP4_SMALL_M_N", None)
 
@@ -348,6 +408,9 @@ def run_gate(args: argparse.Namespace) -> int:
         )
         env["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4"] = (
             mode if args.selector == "persistent_chunk4" else "0"
+        )
+        env["VLLM_XPU_LAGUNA_DECODE_LOSSLESS_PACKED_SCALES"] = (
+            mode if args.selector == "lossless_packed_scales" else "0"
         )
         command = [
             sys.executable,
@@ -466,6 +529,7 @@ def parse_args() -> argparse.Namespace:
             "direct_offsets",
             "persistent_worklist",
             "persistent_chunk4",
+            "lossless_packed_scales",
         ),
         default="transposed_scales",
     )
