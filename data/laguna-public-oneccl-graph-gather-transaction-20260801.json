@@ -1,0 +1,68 @@
+{
+  "schema": "laguna-public-oneccl-graph-gather-transaction-result-v1",
+  "date": "2026-08-01",
+  "status": "PUBLIC_RUNTIME_ADMITTED_TO_MODEL_DIAGNOSTIC",
+  "scored_measurement": false,
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "transaction": {
+    "world_size": 4,
+    "dtype": "bfloat16",
+    "local_shape": [1, 12, 3072],
+    "operations": [
+      "fixed-address producer copy",
+      "all_gather_into_tensor",
+      "literal rank-ordered BF16 additions",
+      "fixed-address consumer copy"
+    ],
+    "changing_input_replays": 512
+  },
+  "installed_control": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-oneccl-transaction-installed-20260801T204331Z",
+    "result_sha256": "de050a0eeb78f23448f876077bad7193545b1998e6de85033da5215d62317836",
+    "status": "FAIL",
+    "completed_iterations_per_rank": [512, 512, 512, 512],
+    "gather_mismatch_iterations_by_rank": [511, 510, 511, 511],
+    "consumer_mismatch_iterations_by_rank": [510, 509, 511, 510],
+    "first_mismatch_iteration_by_rank": [1, 2, 1, 1],
+    "expected_wrapper": {
+      "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so.1",
+      "sha256": "ace144a390a53720b2743844decf127661c942b56f3b414900b9d8c11461acc3"
+    },
+    "mapped_dependency": {
+      "path": "/home/steve/.venvs/deepseek-v4-xpu/lib/libccl.so.2",
+      "sha256": "1185b0591e66f3b94f19b891367ad1c4ad5a95792f658f46d284fc7c643aedb7"
+    },
+    "identity_caveat": "The original report's singleton-library predicate was overstrict. The expected wrapper hash is present and legitimately maps libccl.so.2; transaction failure data remain valid."
+  },
+  "public_candidate": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-oneccl-transaction-public4ce-20260801T204508Z",
+    "result_sha256": "edfc74e4951c118ca130bf8361f27d398db8b56764c34cfeb1435fb105410799",
+    "status": "PASS",
+    "completed_iterations_per_rank": [512, 512, 512, 512],
+    "gather_mismatch_iterations_by_rank": [0, 0, 0, 0],
+    "consumer_mismatch_iterations_by_rank": [0, 0, 0, 0],
+    "exclusive_library_identity_passed_by_rank": [true, true, true, true],
+    "runtime": {
+      "oneccl_parent_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+      "libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+      "path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0",
+      "sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+      "kernels_path": "/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/ccl/kernels/kernels.spv",
+      "kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9"
+    }
+  },
+  "probe": {
+    "path": "experiments/laguna-s-2.1-xpu-b70/tools/probe_laguna_tp4_graph_gather_transaction.py",
+    "sha256": "3a8140c8ba268b9fbae5dca151d9c30413b8c77ba618afd5f0265ca5d779bd43"
+  },
+  "conclusion": {
+    "established": "Installed oneCCL corrupts the captured Laguna gather transaction under changing replay, while the pinned public runtime preserves both gathered and consumer-visible outputs for 512/512 replays on all four ranks.",
+    "authorized_next_action": "One separately preregistered non-scored prefix-24 model smoke under the pinned public runtime, with all-rank row-0 parity.",
+    "not_established": [
+      "model exactness",
+      "multi-request service-lifetime correctness",
+      "endpoint throughput",
+      "record eligibility"
+    ]
+  }
+}

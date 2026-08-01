@@ -2,8 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered; diagnostic component only. No endpoint score is
-authorized.**
+Status: **complete; public runtime admitted to one non-scored model smoke. No
+endpoint score is authorized.**
 
 ## Motivation
 
@@ -75,3 +75,41 @@ memory, or reboot.
 
 The model, teacher, BF16 KV, width/depth, sampler, acceptance, graph topology,
 and protected record sources remain untouched.
+
+## Result
+
+The installed-runtime control reproduced the suspected replay defect. All four
+ranks completed 512 replays, but gathered output was wrong on 510–511 replays
+per rank and the consumer-visible rank-ordered sum was wrong on 509–511. First
+failure occurred at iteration 1 on ranks 0, 2, and 3 and iteration 2 on rank 1.
+
+The first control report marked `library_identity_passed=false` because the
+initial checker incorrectly required exactly one `libccl.so` mapping. Direct
+inspection proved that the expected installed compatibility library hash was
+present and that it legitimately mapped its `libccl.so.2` dependency. The
+checker was corrected before the candidate to require exactly one matching
+expected hash; the transaction body did not change. The control's numerical
+failure is therefore valid, while its singleton identity boolean is retained
+as a known harness-reporting defect.
+
+The pinned public candidate passed:
+
+- 512/512 changing-input replays on ranks 0–3;
+- zero gathered-output mismatch iterations;
+- zero consumer-output mismatch iterations;
+- the exclusive mapped public library path and hash on every rank; and
+- clean process/port teardown, with no recovery action.
+
+This is a direct A/B at Laguna's `[1,12,3072]` producer-copy, all-gather, and
+rank-ordered BF16 consumer transaction. It admits the pinned public runtime to
+one separately preregistered prefix-24 model smoke. It does not yet prove model
+exactness, service-lifetime correctness, performance, or a new record.
+
+Artifacts:
+
+- installed control:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-oneccl-transaction-installed-20260801T204331Z/result.json`;
+- public candidate:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-oneccl-transaction-public4ce-20260801T204508Z/result.json`;
+- structured summary:
+  `data/laguna-public-oneccl-graph-gather-transaction-20260801.json`.
