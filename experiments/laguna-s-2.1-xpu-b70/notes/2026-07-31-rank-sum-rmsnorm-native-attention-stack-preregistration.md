@@ -84,12 +84,13 @@ capture, collective execution, or any request at:
 laguna-ranksum-attn-smoke-20260801T064500Z
 ```
 
-All four workers rejected the candidate during `LagunaModel` construction
-because the fail-closed symbol check ran before decoder-layer construction had
-imported `vllm_xpu_kernels._C`. A clean-process check against the SHA-locked
-candidate proved the distinction directly: the operator namespace was absent
-before importing that module and present immediately afterward. Runtime-lock
-verification had already proved the candidate file and source identity.
+All four workers rejected the candidate during `LagunaModel` construction.
+This was initially attributed to the fail-closed symbol check running before
+decoder-layer construction imported `vllm_xpu_kernels._C`. The later v2 audit
+below disproves that ordering explanation: XPU platform initialization imports
+`_C` before `LagunaModel.__init__`. The observation that an isolated process
+can register the operator by explicitly importing the SHA-locked module was
+real, but it did not establish the worker import order.
 
 This was a false-negative evidence check, not a missing operator or device
 failure. Cleanup was clean (`stop_status=0`, `worker_status=0`,
@@ -98,3 +99,55 @@ after decoder-layer construction; the configuration checks, arithmetic,
 dispatch, and native module are unchanged. Because no request or score existed,
 one corrected smoke remains authorized. Its first substantive result stands;
 no retry of a measured result is authorized.
+
+## Corrected-smoke pre-health failure and v2 wiring candidate
+
+The corrected smoke stopped before health at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-ranksum-attn-smoke-corrected-20260801T070500Z
+```
+
+It did not load weights, capture or replay a graph, execute a model collective,
+serve a request, or produce a score. All four workers rejected model
+construction with the same fail-closed error, and teardown was clean:
+`original_status=2`, `stop_status=0`, `worker_status=0`, `idle_status=0`.
+The pre- and failure-post-idle records both pass.
+
+The first invocation immediately before this artifact also stopped before
+server launch because its command transcribed the grouped-GEMM checksum
+incorrectly. The on-disk DSO and runtime lock both carry
+`c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839`;
+that invocation is not runtime evidence.
+
+Direct source inspection identified a different wiring defect in the corrected
+smoke. The candidate native operator is compiled by `_C.abi3.so` and registered
+under `torch.ops._C`, but the vLLM guard, live consumer, and focused test all
+used `torch.ops._xpu_C`. The test had hidden the error by installing its fake
+operator in that same wrong namespace. A clean-process registration check now
+proves:
+
+```text
+native_namespace True
+wrong_namespace False
+```
+
+vLLM commit `19c44a739` changes only those three namespace references and the
+test fake. Independent audit then confirmed that XPU platform initialization
+already imports `_C` before model construction; commit `bfd3f21d7` therefore
+restores the native-op guard to the early fail-closed contract block and leaves
+the post-layer message as activation evidence only. The same audit caught that
+this returned-Tensor operator lacked a FakeTensor implementation required by
+the compiled model path. Commit `1ddb7d6bb` conditionally registers the
+`_C` fake and returns an empty tensor matching the mutated residual's shape,
+dtype, and device. A direct FakeTensor dispatch check passes at
+`[12,3072]` BF16. The focused suite remains `3 passed`, Ruff and `compileall`
+pass, and selector-off behavior is unchanged.
+This is recorded as a **new v2 wiring candidate**, not a retry or
+reinterpretation of an endpoint result. Since
+neither failed artifact reached health or a request, one fresh non-scored v2
+smoke is authorized after a new runtime lock and independent source audit. The
+original gates and stop rules apply without relaxation: the first v2 smoke that
+reaches model execution stands, and no scored leg is authorized unless it
+passes exactness, topology, cache-zero, marker, and teardown gates.
