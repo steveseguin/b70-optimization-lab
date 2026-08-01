@@ -65,9 +65,12 @@ def validate_benchmark(candidate: dict[str, Any], reference: dict[str, Any]) -> 
             die(f"benchmark row {index} is not cache-zero")
 
 
-def validate_rank_payloads(root: Path) -> list[dict[str, Any]]:
+def validate_rank_payloads(
+    root: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     payloads = [load(root / f"cycle-attribution-rank{rank}.json") for rank in range(4)]
     reference: list[dict[str, Any]] | None = None
+    disagreements: list[dict[str, Any]] = []
     for rank, payload in enumerate(payloads):
         if payload.get("schema") != "laguna-cycle-attribution-v1":
             die(f"rank {rank} schema drift")
@@ -86,10 +89,23 @@ def validate_rank_payloads(root: Path) -> list[dict[str, Any]]:
             die(f"rank {rank} has no confidence rows")
         if reference is None:
             reference = probe
-        elif probe != reference:
-            die(f"rank {rank} confidence rows differ from rank 0")
+        else:
+            if len(probe) != len(reference):
+                die(f"rank {rank} confidence row count differs from rank 0")
+            for index, (rank0_row, rank_row) in enumerate(
+                zip(reference, probe, strict=True)
+            ):
+                if rank_row != rank0_row:
+                    disagreements.append(
+                        {
+                            "rank": rank,
+                            "row": index,
+                            "rank0": rank0_row,
+                            "observed": rank_row,
+                        }
+                    )
     assert reference is not None
-    return reference
+    return reference, disagreements
 
 
 def joined_cycles(rows: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
@@ -218,7 +234,9 @@ def main() -> int:
     candidate_bench = load(args.run / "bench.json")
     reference_bench = load(args.reference_bench)
     validate_benchmark(candidate_bench, reference_bench)
-    probe_rows = validate_rank_payloads(args.run / "confidence-attribution")
+    probe_rows, rank_disagreements = validate_rank_payloads(
+        args.run / "confidence-attribution"
+    )
     requests = joined_cycles(probe_rows)
     rows = [row for request in requests for row in request]
 
@@ -290,6 +308,8 @@ def main() -> int:
         },
         "joined_cycles": len(rows),
         "request_cycles": [len(request) for request in requests],
+        "rank0_canonical_for_screening_only": bool(rank_disagreements),
+        "rank_disagreements": rank_disagreements,
         "counts": {
             "position0_misses": sum(row["accepted"] == 0 for row in rows),
             "position0_rescues": sum(row["rescue0"] for row in rows),
@@ -326,8 +346,11 @@ def main() -> int:
             "observable_requires_tok_s": 130.5,
             "oracle_pass": projected_rate(oracle) >= 131.0,
             "observable_pass": projected_rate(lopo) >= 130.5,
+            "rank_agreement_pass": not rank_disagreements,
             "integration_authorized": (
-                projected_rate(oracle) >= 131.0 and projected_rate(lopo) >= 130.5
+                projected_rate(oracle) >= 131.0
+                and projected_rate(lopo) >= 130.5
+                and not rank_disagreements
             ),
         },
     }
