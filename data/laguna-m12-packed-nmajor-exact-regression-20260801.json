@@ -1,0 +1,75 @@
+{
+  "date": "2026-08-01",
+  "status": "closed_exact_performance_regression",
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "candidate": {
+    "source_tree": "/home/steve/src/laguna-xpu-kernels-m12-packed-nmajor-20260801",
+    "source_head": "522ca66587f5db288c9d8c6d8db918889c6cc467",
+    "branch": "experiment/laguna-m12-packed-nmajor-20260801",
+    "dso": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-build-522ca66-20260801T2000Z/libgrouped_gemm_xe_2.so",
+    "dso_sha256": "23baa7fb545048576f20939e7d0a83c412066314e01121c6a16444a3d2bcc9b9"
+  },
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-packed-nmajor-522ca66-20260801.bundle",
+    "sha256": "71385642ad9419fd829b2e9534771803f8e30c00b8de17b254c64875dd50a367",
+    "prerequisite": "99886d783372e621941228250091dc8ebdc1595d"
+  },
+  "static_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-igc-522ca66-20260801T1930Z",
+    "control_instructions": 679,
+    "candidate_instructions": 681,
+    "dpas_both": 2,
+    "stores_both": 1,
+    "control_global_loads": 31,
+    "candidate_global_loads": 32,
+    "control_flag_spill_store_load": [4, 5],
+    "candidate_flag_spill_store_load": [2, 2],
+    "scratch_traffic_both": false,
+    "grfs_both": 128
+  },
+  "build": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-build-522ca66-20260801T2000Z",
+    "compiler": "Intel oneAPI DPC++ 2025.3.3",
+    "elapsed_seconds": 1069.40,
+    "max_rss_kib": 106786808,
+    "swaps": 0,
+    "runtime_abi": ["libsycl.so.8", "libintlc.so.5"]
+  },
+  "component_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-component-522ca66-20260801T2030Z",
+    "protocol": {
+      "warmup_launches": 200,
+      "timing_samples": 15,
+      "launches_per_sample": 40
+    },
+    "exact": 6,
+    "total": 6,
+    "sentinel_complete": 6,
+    "control_sum_ms": 0.5053791,
+    "candidate_sum_ms": 0.51901525,
+    "summed_speedup": 0.973726879894184,
+    "promotion_threshold": 1.03,
+    "cases": [
+      {
+        "name": "w13",
+        "tile_count": 51,
+        "control_median_ms": 0.321705525,
+        "candidate_median_ms": 0.3266398,
+        "speedup": 0.9848938341255414,
+        "raw_bf16_exact": "3/3"
+      },
+      {
+        "name": "w2",
+        "tile_count": 57,
+        "control_median_ms": 0.183673575,
+        "candidate_median_ms": 0.19237545,
+        "speedup": 0.9547661876814323,
+        "raw_bf16_exact": "3/3"
+      }
+    ]
+  },
+  "production_metadata_integration_performed": false,
+  "endpoint_run_performed": false,
+  "recovery_action_performed": false,
+  "conclusion": "Full N-major exposure destroys useful same-expert weight locality and regresses the real W13+W2 component by 2.627%."
+}

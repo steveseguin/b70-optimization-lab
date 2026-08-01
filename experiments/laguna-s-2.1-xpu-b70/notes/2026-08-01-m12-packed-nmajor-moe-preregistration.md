@@ -2,8 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **source/static gate passed; production component build pending. No
-endpoint score is authorized.**
+Status: **closed at the component gate; exact but slower. No production
+metadata integration or endpoint was run.**
 
 ## Evidence and hypothesis
 
@@ -119,3 +119,47 @@ adds one global metadata load and two net static instructions (`681` versus
 arithmetic mainloop remains the same template call. This passes the frozen
 static gate and authorizes only the ABI-8 DSO build and synthetic component
 test.
+
+The source delta is preserved as
+`patches/laguna-s-2.1-xpu-b70/xpu-laguna-m12-packed-nmajor-522ca66-20260801.bundle`
+(SHA-256
+`71385642ad9419fd829b2e9534771803f8e30c00b8de17b254c64875dd50a367`).
+The verified bundle declares protected commit `99886d783` as its sole
+prerequisite.
+
+## Production build and component result
+
+The ABI-8 DSO built successfully with IntelLLVM 2025.3.3 in `17:49.40`,
+peaking at `106,786,808 KiB` RSS with zero build-time swaps. The frozen DSO is:
+
+- `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-build-522ca66-20260801T2000Z/libgrouped_gemm_xe_2.so`;
+- SHA-256
+  `23baa7fb545048576f20939e7d0a83c412066314e01121c6a16444a3d2bcc9b9`;
+- runtime ABI `libsycl.so.8` and `libintlc.so.5`.
+
+The same-ELF component gate passed descriptor round-trip, unique coverage,
+sentinel completion, and `6/6` raw-BF16 equality. W13 carried 51 packed expert
+tiles and W2 carried 57; both arms used byte-identical descriptor storage and
+coverage hashes. Artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-component-522ca66-20260801T2030Z`.
+
+| shape | M-major control | packed N-major | speedup | raw BF16 exact |
+|---|---:|---:|---:|---:|
+| W13 | 0.321706 ms | 0.326640 ms | 0.984894x | 3/3 |
+| W2 | 0.183674 ms | 0.192375 ms | 0.954766x | 3/3 |
+| summed | 0.505379 ms | 0.519015 ms | **0.973727x** | **6/6** |
+
+Full N-major ordering is a stable `2.627%` summed regression, with the larger
+W2 loss (`4.523%`) showing that same-expert weight locality is materially more
+valuable than immediate cross-expert exposure at this width. The one-load
+packed descriptor removed the old four-int worklist tax, so that older defect
+cannot explain this result. Per the frozen stop rule, the remap path was not
+changed and no service, endpoint benchmark, reset, reboot, or privileged
+action followed.
+
+Reusable conclusion: scheduling wins do not transfer on ordering alone. The
+M8 route-interleave win and M12 grouped-MoE loss differ in cross-row weight
+reuse and the number of N tiles per expert. For expert-grouped GEMMs, preserve
+several consecutive N tiles per expert and screen a bounded hybrid chunk size
+before considering full interleave again.
