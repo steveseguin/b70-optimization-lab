@@ -27,7 +27,12 @@ def tensor_sha256(tensor, torch) -> str:
     return hashlib.sha256(value.numpy().tobytes()).hexdigest()
 
 
-def make_cpu_corpus(seed: int, remote_stride: int | None, torch) -> dict:
+def make_cpu_corpus(
+    seed: int,
+    remote_stride: int | None,
+    repeat_stride: int | None,
+    torch,
+) -> dict:
     generator = torch.Generator(device="cpu").manual_seed(seed)
     routes = (torch.randn((120, 3072), generator=generator) * 0.20).to(torch.bfloat16)
     shared = (torch.randn((12, 3072), generator=generator) * 0.10).to(torch.bfloat16)
@@ -39,6 +44,10 @@ def make_cpu_corpus(seed: int, remote_stride: int | None, torch) -> dict:
     )
     if remote_stride is not None:
         route_map[::remote_stride] = -1
+    if repeat_stride is not None:
+        for index in range(repeat_stride, route_map.numel(), repeat_stride):
+            if route_map[index - 1] >= 0:
+                route_map[index] = route_map[index - 1]
     return {
         "routes": routes,
         "shared": shared,
@@ -49,6 +58,16 @@ def make_cpu_corpus(seed: int, remote_stride: int | None, torch) -> dict:
 
 def input_hashes(item: dict, torch) -> dict[str, str]:
     return {name: tensor_sha256(value, torch) for name, value in item.items()}
+
+
+def route_map_stats(item: dict, torch) -> dict[str, int]:
+    route_map = item["route_map"].flatten()
+    local = route_map[route_map >= 0]
+    return {
+        "remote_entries": int(torch.count_nonzero(route_map == -1)),
+        "local_entries": int(local.numel()),
+        "repeated_local_entries": int(local.numel() - torch.unique(local).numel()),
+    }
 
 
 def run_control(item: dict, routed, output, torch) -> None:
@@ -122,10 +141,15 @@ def main() -> int:
         raise RuntimeError("exactly one re-indexed XPU is required")
 
     cpu_corpus = [
-        make_cpu_corpus(0x12A0, None, torch),
-        make_cpu_corpus(0x12A1, 4, torch),
-        make_cpu_corpus(0x12A2, 3, torch),
+        make_cpu_corpus(0x12A0, None, None, torch),
+        make_cpu_corpus(0x12A1, 4, None, torch),
+        make_cpu_corpus(0x12A2, 3, 5, torch),
     ]
+    corpus_map_stats = [route_map_stats(item, torch) for item in cpu_corpus]
+    if corpus_map_stats[2]["remote_entries"] == 0:
+        raise RuntimeError("repeated-map corpus lost remote -1 entries")
+    if corpus_map_stats[2]["repeated_local_entries"] == 0:
+        raise RuntimeError("repeated-map corpus contains no repeated local entries")
     corpus = [
         {name: value.to("xpu") for name, value in item.items()} for item in cpu_corpus
     ]
@@ -225,6 +249,7 @@ def main() -> int:
             "launches_per_sample": args.launches,
             "alternating_order": True,
         },
+        "corpus_map_stats": corpus_map_stats,
         "exact": exact,
         "total": len(comparisons),
         "inputs_immutable": hashes_before == hashes_after,
