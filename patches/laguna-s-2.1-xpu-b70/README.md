@@ -1,4 +1,19 @@
-# Laguna S 2.1 published-convention 102.971 tok/s source snapshots
+# Laguna S 2.1 source snapshots
+
+## Rejected local TP4-emulated DFlash body (2026-08-01)
+
+- `vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle`
+- SHA-256:
+  `18317f6a824bd8f3dc788225462cc292f8e572292061c83a0945e8da854cea98`
+- Default-off vLLM commit `448351379`; raw projection parity passed, but four
+  local shard evaluations added `4.208694 ms/cycle` while the 12 removed TP4
+  reductions measured only `1.239689 ms/cycle` at maximum-rank median. It was
+  rejected before any smoke or endpoint run.
+- Evidence:
+  `data/laguna-dflash-local-tp4-negative-20260801.json` and
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-local-tp-emulated-dflash-preregistration.md`.
+
+## Published-convention 102.971 tok/s source snapshots
 
 These files preserve the exact local vLLM and vLLM XPU-kernel source used by
 the approved four-B70 Laguna result (`101.942 tok/s` under conventional

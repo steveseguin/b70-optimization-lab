@@ -134,3 +134,66 @@ all four decoder projection shards locally or removed the 12 per-layer
 reductions. A configuration-only `draft_tensor_parallel_size=1` is not a
 shortcut: Laguna DFlash inherits the target TP4 parallel configuration.
 
+## Offline implementation and component result: rejected
+
+The default-off implementation is vLLM commit
+`448351379b4ced80891725dc16a4b7f14cdb5663`. It constructs full 72-Q/8-KV
+DFlash attention and full dense MLP geometry on each rank, retains four
+independently quantized logical FP8 shards per projection, reconstructs fused
+Q/K/V by component then rank, and performs O/down additions in literal BF16
+rank order. The target constructors and selector-off path remain unchanged.
+
+Offline gates passed:
+
+- `74 passed` for DFlash model/workspace, selector, full-shape construction,
+  shard-order, runtime reconstruction, and BF16 rank-order tests;
+- `5 passed` for the 13-reduction incumbent and one-reduction local-TP4
+  collective-state contracts;
+- Ruff, Python compilation, and whitespace checks passed.
+
+The real-weight one-B70 projection gate used the official checkpoint and the
+record FP8 W8A16 kernel:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/
+  laguna-dflash-local-tp4-projections-20260801T073600Z.json
+```
+
+All five projection families were raw-equal to an independent four-shard
+reference. The maximum incumbent-rank projection body measured
+`0.209433 ms/layer`; local TP4 measured `0.910882 ms/layer`. The extra local
+projection cost is therefore `0.701449 ms/layer`, or **`4.208694 ms` over six
+layers**, before counting additional full-head attention cost.
+
+One bounded TP4 gate then timed the exact 12 `[12,3072]` BF16 reductions, with
+each reduction synchronized and verified on all ranks:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/
+  laguna-local-tp4-collective-gate-20260801T074100Z/summary.json
+```
+
+The maximum-rank median was only `1.239689 ms` for all 12 reductions
+(`103.307 us/reduction`). To clear the preregistered `1.4 ms` net gate before
+even paying the unmeasured extra attention cost, the removed collectives would
+have needed to cost at least `4.208694 + 1.4 = 5.608694 ms`.
+
+The candidate therefore misses the component gate by at least
+`4.369005 ms/cycle`; it is **rejected before smoke or endpoint execution**.
+No model service, prompt, score, OOM, device error, reset, or reboot occurred.
+All four ranks verified and tore down cleanly. The promoted record remains
+`125.4619731637751 tok/s` conventional.
+
+Preserved source bundle:
+
+```text
+patches/laguna-s-2.1-xpu-b70/
+  vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle
+```
+
+SHA-256:
+`18317f6a824bd8f3dc788225462cc292f8e572292061c83a0945e8da854cea98`.
+
+This closes full local replication of the six-layer draft body. The result
+does not close mechanisms that reduce collective latency without multiplying
+the draft projection work.

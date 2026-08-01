@@ -1,0 +1,34 @@
+{
+  "schema": "laguna-dflash-local-tp4-negative-v1",
+  "status": "rejected_before_endpoint",
+  "promoted_record_conventional_tok_s": 125.4619731637751,
+  "goal_tok_s": 130.0,
+  "vllm_commit": "448351379b4ced80891725dc16a4b7f14cdb5663",
+  "projection_component": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/laguna-dflash-local-tp4-projections-20260801T073600Z.json",
+    "raw_parity": "5/5",
+    "candidate_median_ms_per_layer": 0.910882,
+    "incumbent_max_rank_median_ms_per_layer": 0.209433,
+    "extra_ms_per_layer": 0.701449,
+    "extra_ms_six_layers": 4.208694
+  },
+  "collective_component": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/laguna-local-tp4-collective-gate-20260801T074100Z/summary.json",
+    "shape": [12, 3072],
+    "dtype": "bfloat16",
+    "count": 12,
+    "max_rank_median_ms": 1.239689,
+    "max_rank_median_us_per_reduction": 103.30741666666667,
+    "all_ranks_valid": true
+  },
+  "required_net_saving_ms": 1.4,
+  "required_gross_collective_ms": 5.608694,
+  "component_shortfall_ms_before_extra_attention": 4.369005,
+  "endpoint_authorized": false,
+  "endpoint_run": false,
+  "hardware_recovery": false,
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle",
+    "sha256": "18317f6a824bd8f3dc788225462cc292f8e572292061c83a0945e8da854cea98"
+  }
+}

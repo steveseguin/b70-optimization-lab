@@ -672,6 +672,14 @@ Use this as the default operating sequence for a new model.
    exact micro-fusion with an apparently additive saving can regress after
    allocation, graph scheduling, and runtime interaction costs; one frozen
    endpoint remains the disposition gate.
+9. Before replacing small TP collectives with replicated compute, measure both
+   sides of the exchange in the same units. On Laguna's six-layer drafter,
+   twelve synchronized 73,728-byte BF16 reductions cost only `1.239689 ms` per
+   cycle, while evaluating all four FP8 projection shards locally added
+   `4.208694 ms` before extra attention work. The communication was visibly
+   latency-bound, but replication was still the wrong trade. Compute the gross
+   collective time required to cover replicated work plus the endpoint margin,
+   and reject locally when the measured collective budget is smaller.
 
 ### Phase F: Variance Control
 
