@@ -1,0 +1,142 @@
+From 69e8ad9119a9cc70c3906b82be6254dd0160f00e Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 23:02:06 -0400
+Subject: [PATCH] xpu: extend exact Laguna QKNorm RoPE to M12
+
+---
+ csrc/fused_qknorm_rope.cpp | 63 ++++++++++++++++++++++++++++++--------
+ 1 file changed, 50 insertions(+), 13 deletions(-)
+
+diff --git a/csrc/fused_qknorm_rope.cpp b/csrc/fused_qknorm_rope.cpp
+index fe53904..56a09f2 100644
+--- a/csrc/fused_qknorm_rope.cpp
++++ b/csrc/fused_qknorm_rope.cpp
+@@ -630,13 +630,12 @@ namespace vllm {
+ // incumbent BF16 round after x*rrms and after the BF16 weight multiply. RoPE
+ // then consumes those BF16 values and the existing BF16 cache, just as the
+ // standalone NeoX kernel does.
+-template <typename scalar_t>
++template <typename scalar_t, int ROWS, int HEADS_PER_WG>
+ class laguna_m8_qk_norm_rope_kernel {
+  public:
+   static constexpr int HEAD_DIM = 128;
+   static constexpr int VEC_SIZE = 8;
+   static constexpr int LANES_PER_HEAD = HEAD_DIM / VEC_SIZE;
+-  static constexpr int HEADS_PER_WG = 16;
+   static constexpr int WG_SIZE = HEADS_PER_WG * LANES_PER_HEAD;
+ 
+   laguna_m8_qk_norm_rope_kernel(
+@@ -678,7 +677,7 @@ class laguna_m8_qk_norm_rope_kernel {
+     const int lane_in_head = local_id % LANES_PER_HEAD;
+     const int global_head =
+         item.get_group_linear_id() * HEADS_PER_WG + head_in_wg;
+-    const int q_rows = 8 * num_q_heads;
++    const int q_rows = ROWS * num_q_heads;
+     const bool is_q = global_head < q_rows;
+     const int typed_head = is_q ? global_head : global_head - q_rows;
+     const int typed_heads = is_q ? num_q_heads : num_k_heads;
+@@ -772,8 +771,8 @@ class laguna_m8_qk_norm_rope_kernel {
+   sycl::local_accessor<float, 1> s_variance;
+ };
+ 
+-template <typename scalar_t>
+-void launch_laguna_m8_qk_norm_rope(
++template <typename scalar_t, int ROWS, int HEADS_PER_WG>
++void launch_laguna_qk_norm_rope_geometry(
+     torch::Tensor& q_out,
+     torch::Tensor& k_out,
+     torch::Tensor& q,
+@@ -784,11 +783,13 @@ void launch_laguna_m8_qk_norm_rope(
+     torch::Tensor& position_ids,
+     float eps) {
+   using sycl_t = typename vllm::xpu::SyclTypeTrait<scalar_t>::Type;
+-  constexpr int HEADS_PER_WG = 16;
+-  constexpr int WG_SIZE = 256;
++  constexpr int WG_SIZE = HEADS_PER_WG * 16;
+   const int num_q_heads = q.size(1) / 128;
+   const int num_k_heads = k.size(1) / 128;
+-  const int total_heads = 8 * (num_q_heads + num_k_heads);
++  const int total_heads = ROWS * (num_q_heads + num_k_heads);
++  TORCH_CHECK(
++      total_heads % HEADS_PER_WG == 0,
++      "Laguna exact QKNorm+RoPE workgroup geometry drift");
+   const int num_groups = total_heads / HEADS_PER_WG;
+ 
+   auto& queue = vllm::xpu::vllmGetQueue();
+@@ -797,7 +798,7 @@ void launch_laguna_m8_qk_norm_rope(
+         sycl::range<1>(HEADS_PER_WG), cgh);
+     cgh.parallel_for(
+         sycl::nd_range<1>(num_groups * WG_SIZE, WG_SIZE),
+-        laguna_m8_qk_norm_rope_kernel<sycl_t>(
++        laguna_m8_qk_norm_rope_kernel<sycl_t, ROWS, HEADS_PER_WG>(
+             reinterpret_cast<sycl_t*>(q_out.data_ptr<scalar_t>()),
+             reinterpret_cast<sycl_t*>(k_out.data_ptr<scalar_t>()),
+             reinterpret_cast<const sycl_t*>(q.data_ptr<scalar_t>()),
+@@ -817,6 +818,42 @@ void launch_laguna_m8_qk_norm_rope(
+   });
+ }
+ 
++template <typename scalar_t>
++void launch_laguna_m8_qk_norm_rope(
++    torch::Tensor& q_out,
++    torch::Tensor& k_out,
++    torch::Tensor& q,
++    torch::Tensor& k,
++    torch::Tensor& q_weight,
++    torch::Tensor& k_weight,
++    torch::Tensor& cos_sin_cache,
++    torch::Tensor& position_ids,
++    float eps) {
++  if (q.size(0) == 8) {
++    launch_laguna_qk_norm_rope_geometry<scalar_t, 8, 16>(
++        q_out,
++        k_out,
++        q,
++        k,
++        q_weight,
++        k_weight,
++        cos_sin_cache,
++        position_ids,
++        eps);
++  } else {
++    launch_laguna_qk_norm_rope_geometry<scalar_t, 12, 8>(
++        q_out,
++        k_out,
++        q,
++        k,
++        q_weight,
++        k_weight,
++        cos_sin_cache,
++        position_ids,
++        eps);
++  }
++}
++
+ }  // namespace vllm
+ 
+ void laguna_m8_qk_norm_rope_out(
+@@ -861,9 +898,9 @@ void laguna_m8_qk_norm_rope_out(
+       q.dim() == 2 && k.dim() == 2 && q_out.dim() == 2 && k_out.dim() == 2,
+       "Laguna exact QKNorm+RoPE tensors must be rank 2");
+   TORCH_CHECK(
+-      q.size(0) == 8 && k.size(0) == 8 && q_out.sizes() == q.sizes() &&
+-          k_out.sizes() == k.sizes(),
+-      "Laguna exact QKNorm+RoPE requires M=8 matching outputs");
++      (q.size(0) == 8 || q.size(0) == 12) && k.size(0) == q.size(0) &&
++          q_out.sizes() == q.sizes() && k_out.sizes() == k.sizes(),
++      "Laguna exact QKNorm+RoPE requires M=8/12 matching outputs");
+   TORCH_CHECK(
+       q.stride(1) == 1 && k.stride(1) == 1,
+       "Laguna exact QKNorm+RoPE requires contiguous head dimensions");
+@@ -875,7 +912,7 @@ void laguna_m8_qk_norm_rope_out(
+       "Laguna exact QKNorm+RoPE requires head_dim=128 weights");
+   TORCH_CHECK(
+       (cos_sin_cache.size(1) == 64 || cos_sin_cache.size(1) == 128) &&
+-          position_ids.numel() == 8,
++          position_ids.numel() == q.size(0),
+       "Laguna exact QKNorm+RoPE requires NeoX rotary_dim 64 or 128");
+   TORCH_CHECK(
+       q.device() == k.device() && q.device() == q_out.device() &&
+-- 
+2.43.0
+

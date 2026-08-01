@@ -85,6 +85,8 @@ not promoted record sources:
 | confirmed transposed decode scales | `e4163f93574326b2772742e0f51372a5a3777aa5` | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `87337d0244f3f81a4b7d2a8b669d3e01610a8eff133bce04696bdb06559bd075` | `0c23d0c5a8bf358d9e20b095fe4b771273e01992468aa3b805207b04c7a44809` |
 | rejected transposed-scale prefetch removal | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `32aa4a4057414163411d0388af10d896da1df442` | `a1bf0a9ba567306ff57eb420e732df5eb26037aa88cf5396dba2351f0922634a` | `cbf4f4994fee46df8c4c7f2cbd84fb54a54425908cbee6961836868fc43ec126` |
 | rejected transposed-scale-only distance 3 | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `588ce4e636e7ad7561aec533bda85e2eaf35cdac` | `078ce5bde9f38262c93e1377e9e2ec9236d09672d7017cf22c9dd27027a3fed0` | `a7be5434b720c5a301e33f0a6894a8796b6f7cf10fa8b9c422b4b5c299fa6c3b` |
+| confirmed exact M12 QKNorm/RoPE kernel | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` | `36b6991b32172618ad444cd533ca6c32e2938401cc0cee869f760ece52423e59` | `670883c59fb2f45c73919a42623431fd9376bcc1e1e6e5b80e6785b4905c1f1d` |
+| confirmed M12 QKNorm/RoPE vLLM selector | `34b43849fc7c8ff8633f223469cc2a0d525c256e` | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `c73b88bfea5029920b0764889d734b7a9b9e53aab3b4af5e8bb77f17922e982f` | `b5f13674bc32058d22e5fe44ed90a4d4eac3f3abdb9849b9f34019aeca263d48` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -144,3 +146,10 @@ scale prefetch to three. Under the stabilized 200-warmup/15-sample protocol it
 was 6/6 exact but `0.997847x` the record component. Its patch is
 `0001-laguna-prefetch-transposed-scales-closer-to-use.patch`; see the
 [component result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-scale-distance3-preregistration.md).
+
+The M12 QKNorm/RoPE kernel and selector snapshots form the current confirmed
+exact BF16-KV record source. They preserve the incumbent BF16 reduction and
+rounding boundaries while reducing Q/K RMSNorm plus NeoX RoPE from three
+device kernels to one per target attention layer. Two cold exact endpoint legs
+measured `124.442780113` and `124.642412721 tok/s` conventionally. See the
+[confirmed record](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md).

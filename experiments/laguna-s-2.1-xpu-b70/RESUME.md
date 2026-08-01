@@ -5,13 +5,13 @@ Last updated: 2026-07-31 America/Toronto
 ## Status
 
 The original result is published, approved, sealed, and reproducible. Later
-segmented-DFlash and decode-GRF128 work raised the conventional record to
-`121.29056097255466 tok/s`. The current treatment additionally clones
-immutable target BF16 group scales into contiguous decode layout and passed
-two independent cold suites at `121.3837766716154` and
-**`122.828558121099 tok/s`** conventional. The confirmation's historical
-compatibility value is **`124.06925062737271 tok/s`**. Both are 13/13 exact
-and cache-zero with the frozen 146/145 target and 14/13 draft topology.
+segmented-DFlash, decode-GRF128, and transposed-scale work raised the
+conventional record to `122.828558121099 tok/s`. The current treatment adds
+exact width-12 Q/K RMSNorm plus NeoX RoPE fusion and passed two independent
+cold suites at `124.44278011260164` and **`124.64241272122038 tok/s`**
+conventional. The confirmation's historical compatibility value is
+**`125.9014269911317 tok/s`**. Both are 13/13 exact and cache-zero with the
+frozen 146/145 target and 14/13 draft topology.
 A later metric
 audit found that the published helper used an inclusive-event numerator over
 an inter-event span, so the 102 tok/s objective is complete only under that
@@ -24,15 +24,18 @@ historical convention, not under conventional interval accounting.
 - LocalMaxxing: `cms2ccv2d00lps201rej94pjy` (`APPROVED`);
 - current approved conventional record: **`119.82686847588282 tok/s`**,
   LocalMaxxing `cms8f38fd00ftpf01mk0bwfql`;
-- confirmed transposed-scale record: **`122.828558121099 tok/s`** conventional;
+- confirmed QKNorm/RoPE record: **`124.64241272122038 tok/s`** conventional;
 - LocalMaxxing: `cms9osksu00b3pm010hf9bnk8` (`APPROVED`);
 - lane state: active optimization, no service or worker currently running.
 
 Current result and exact artifacts:
-[`2026-07-31-transposed-decode-scales-confirmed-record.md`](notes/2026-07-31-transposed-decode-scales-confirmed-record.md).
-The next bounded exact candidate is transposed-scale prefetch removal or a
-separate scale-prefetch distance while retaining weight prefetch distance 6.
-Screen it statically and in the W13+W2 component before any endpoint.
+[`2026-07-31-qknorm-rope-m12-confirmed-record.md`](notes/2026-07-31-qknorm-rope-m12-confirmed-record.md).
+The next bounded exact work should continue reducing real device submissions
+inside captured graph segments. Shared elementwise work is the nearest
+existing exact fusion but regressed when tested alone at width 12, so any
+combination with QKNorm/RoPE needs a new preregistered test and must not be
+assumed additive. The remaining conventional gap to 130 is `5.357587279
+tok/s` (`4.298%`).
 
 Read the
 [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)
@@ -49,15 +52,15 @@ work.
 | --- | --- |
 | Target | `poolside/Laguna-S-2.1-INT4` at `4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb` |
 | Draft | `poolside/Laguna-S-2.1-DFlash-INT4` at `5e07c246915c86dc6920fead03d019989224f2ba` |
-| vLLM | `34b43849fc7c8ff8633f223469cc2a0d525c256e` |
-| XPU kernels | `8dd94f2307db3b830fe07f212c4b36f719652a5c` |
+| vLLM | `58608c6361f1a958a7e933bed0be8c88c35aa26e` |
+| XPU kernels | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` |
 | Layout | TP4+EP4, one active generation |
 | Target verifier | exact width 12 |
 | DFlash | depth 11, greedy draft, standard rejection |
 | Graph | audited Breakable PIECEWISE capture size 12, 146 graphs / 145 eager breaks per rank |
 | KV | BF16 |
-| Treatment | segmented inline DFlash attention, decode-only GRF128, and contiguous `[expert,K/32,N]` BF16 target scale clones |
-| Selectors | `VLLM_XPU_LAGUNA_DECODE_GRF128=1`, `VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1` |
+| Treatment | segmented inline DFlash attention, decode-only GRF128, contiguous `[expert,K/32,N]` BF16 target scale clones, and exact M12 Q/K RMSNorm plus RoPE fusion |
+| Selectors | `VLLM_XPU_LAGUNA_DECODE_GRF128=1`, `VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1`, `VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1` |
 
 The intended separate FP8 draft-LM-head path exists in source, but its expected
 runtime preparation message is absent from the record log. Do not attribute
@@ -68,7 +71,7 @@ the 31 logged draft projections and auxiliary workspace.
 
 ```bash
 experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_replemb_measurement_leg.sh \
-  candidate B2 RUN_DIR 12 11 1 0 0 0 0 0 0 1 1 0 0 '' 64 0 '' \
+  candidate B2 RUN_DIR 12 11 1 0 0 1 0 0 0 1 1 0 0 '' 64 0 '' \
   6 0 1 0 0 1 0 0.90 0 0 0 1 0 1 1
 ```
 
@@ -76,7 +79,7 @@ Sealed run:
 
 ```text
 /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
-laguna-transposed-scales-confirm-20260801T010855Z
+laguna-qknorm-rope-m12-confirm-20260801T032027Z
 ```
 
 Promoted records:
@@ -84,19 +87,16 @@ Promoted records:
 - exact source bundles and combined patches:
   `patches/laguna-s-2.1-xpu-b70/`;
 - packet:
-  `data/laguna-transposed-scales-confirmed-record-20260731.json`;
+  `data/laguna-qknorm-rope-m12-confirmed-record-20260731.json`;
 - note:
-  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md`;
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md`;
 - metric correction:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md`;
 - standalone reproduction:
   `repro/laguna-s-2.1-int4-b70-102tps-20260726/`;
 - reproducibility provenance audit:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-reproducibility-provenance-audit.md`;
-- submission queue:
-  `data/localmaxxing-laguna-s-2.1-int4-b70-transposed-scales-122.829tok-20260731.queue.json`;
-- submission response:
-  `data/localmaxxing-responses/laguna-s-2.1-int4-b70-transposed-scales-122.829tok-20260731.response.json`.
+- submission queue and response: pending.
 
 Durable learning indexes:
 

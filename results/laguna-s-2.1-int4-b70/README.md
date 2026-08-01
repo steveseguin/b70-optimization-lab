@@ -2,25 +2,26 @@
 
 ## Qualified result
 
-The current four-B70 record adds contiguous decode-transposed BF16 group scales
-to the exact decode-GRF128 and segmented-DFlash inline-attention stack:
+The current four-B70 record adds exact width-12 Q/K RMSNorm plus RoPE fusion
+to the decode-transposed-scale, decode-GRF128, and segmented-DFlash
+inline-attention stack:
 
 - current-policy conventional 99-interval median:
-  **`122.828558121099 tok/s`**;
+  **`124.64241272122038 tok/s`**;
 - historical 100-event compatibility formula:
-  **`124.06925062737271 tok/s`**;
+  **`125.9014269911317 tok/s`**;
 - 13/13 canonical-q1 token IDs and output-text hashes equal;
 - `cached_tokens=0` on all 13 unique cold requests;
 - target 146/145 and draft 14/13 on all four ranks; and
 - two independent cold suites passed; the supporting conventional result is
-  `121.3837766716154 tok/s`; no warmup or retry, clean teardown and post-idle
+  `124.44278011260164 tok/s`; no warmup or retry, clean teardown and post-idle
   gates.
 
 The complete source/patch/run packet is
-[the confirmed transposed-scale note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md).
-LocalMaxxing approved it as
-[`cms9osksu00b3pm010hf9bnk8`](https://www.localmaxxing.com/en/runs/cms9osksu00b3pm010hf9bnk8).
-The preceding `cms905x22003spm01pwyvp3c9` row is superseded.
+[the confirmed QKNorm/RoPE note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md).
+LocalMaxxing submission is pending. The preceding approved
+`cms9osksu00b3pm010hf9bnk8` row remains the public record until the new
+submission is accepted.
 
 ### Superseded 2026-07-26 result
 
@@ -50,12 +51,12 @@ conventional interval accounting, the 102 tok/s threshold was missed by
 | --- | --- |
 | target | `poolside/Laguna-S-2.1-INT4` at `4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb` |
 | draft | `poolside/Laguna-S-2.1-DFlash-INT4` at `5e07c246915c86dc6920fead03d019989224f2ba` |
-| vLLM | `34b43849fc7c8ff8633f223469cc2a0d525c256e` |
-| XPU kernels | `8dd94f2307db3b830fe07f212c4b36f719652a5c` |
+| vLLM | `58608c6361f1a958a7e933bed0be8c88c35aa26e` |
+| XPU kernels | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` |
 | hardware | 4x Intel Arc Pro B70 32 GB, TP4+EP4, one active generation |
 | verifier / draft | exact width 12 / DFlash depth 11 |
 | KV | BF16 |
-| treatment | segmented inline DFlash attention, decode-only GRF128, and width-12 target decode-transposed BF16 scale tables |
+| treatment | segmented inline DFlash attention, decode-only GRF128, width-12 target decode-transposed BF16 scale tables, and exact M12 Q/K RMSNorm plus RoPE fusion |
 
 The FP8 treatment applies to disposable draft projections. It does not mean
 FP8 KV, and no gain is attributed to the intended separate draft LM-head path
@@ -65,8 +66,8 @@ because its runtime preparation marker was absent.
 
 - [Standalone fail-closed reproduction](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md)
 - [Source/runtime reconstruction and reproducibility tiers](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/BUILD.md)
-- [Current structured record](../../data/laguna-transposed-scales-confirmed-record-20260731.json)
-- [Current confirmed record note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md)
+- [Current structured record](../../data/laguna-qknorm-rope-m12-confirmed-record-20260731.json)
+- [Current confirmed record note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md)
 - [Historical structured record](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json)
 - [Metric correction](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md)
 - [Original experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md)

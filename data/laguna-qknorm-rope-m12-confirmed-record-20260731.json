@@ -1,0 +1,69 @@
+{
+  "schema": "laguna-confirmed-record-v1",
+  "status": "verified-exact-record",
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "kv_cache_dtype": "bfloat16",
+  "layout": "TP4+EP4, one active generation",
+  "verifier_width": 12,
+  "draft_depth": 11,
+  "record": {
+    "historical_100_event_metric_tok_s": 125.9014269911317,
+    "conventional_99_interval_metric_tok_s": 124.64241272122038,
+    "conventional_p10_tok_s": 85.97400539920716,
+    "conventional_mean_tok_s": 143.27624708560066,
+    "full_after_ttft_median_tok_s": 163.15570866833949,
+    "wall_median_tok_s": 56.060120509476505,
+    "ttft_median_ms": 5811.516057998233,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "target_topology": "146/145 on 4/4 ranks",
+    "draft_topology": "14/13 on 4/4 ranks",
+    "pre_idle_seconds": 72,
+    "post_idle_seconds": 72,
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-qknorm-rope-m12-confirm-20260801T032027Z"
+  },
+  "supporting_leg": {
+    "historical_100_event_metric_tok_s": 125.6997778915168,
+    "conventional_99_interval_metric_tok_s": 124.44278011260164,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-qknorm-rope-m12-candidate-20260801T031134Z"
+  },
+  "prior_record": {
+    "conventional_99_interval_metric_tok_s": 122.828558121099,
+    "record_improvement_percent": 1.476736866,
+    "lower_candidate_improvement_percent": 1.314207393
+  },
+  "identity": {
+    "vllm_commit": "58608c6361f1a958a7e933bed0be8c88c35aa26e",
+    "kernel_commit": "69e8ad9119a9cc70c3906b82be6254dd0160f00e",
+    "native_c_sha256": "ba7a3f6d21a15eec2a78a458b92a11ef4b8f4c8655752d9c47386dba628b0e9b",
+    "grouped_gemm_dso_sha256": "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839",
+    "runtime_lock_sha256": "1b7a6d01969d09c3f9bde114a75748dace0ecbaecd7f01ebc3051d22ad74d606",
+    "selectors": [
+      "VLLM_XPU_LAGUNA_DECODE_GRF128=1",
+      "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1",
+      "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1"
+    ]
+  },
+  "artifacts": {
+    "record_run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-qknorm-rope-m12-confirm-20260801T032027Z",
+    "note": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md",
+    "component_run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-qknorm-rope-m12-component-20260801T030706Z",
+    "kernel_patch": "patches/laguna-s-2.1-xpu-b70/0001-laguna-qknorm-rope-exact-m12.patch",
+    "vllm_patch": "patches/laguna-s-2.1-xpu-b70/0002-vllm-select-laguna-qknorm-rope-m12.patch",
+    "kernel_bundle": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-qknorm-rope-m12-69e8ad9-20260731.bundle",
+    "vllm_bundle": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-qknorm-rope-m12-58608c6-20260731.bundle"
+  },
+  "localmaxxing": {
+    "eligible": true,
+    "submitted": false,
+    "id": null,
+    "status": "PENDING"
+  }
+}

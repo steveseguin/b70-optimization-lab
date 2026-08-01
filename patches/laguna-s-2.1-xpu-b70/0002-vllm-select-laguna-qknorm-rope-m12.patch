@@ -1,0 +1,25 @@
+From 58608c6361f1a958a7e933bed0be8c88c35aa26e Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 23:07:51 -0400
+Subject: [PATCH] xpu: select exact Laguna QKNorm RoPE at width 12
+
+---
+ vllm/model_executor/models/laguna.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 08138aaba..4e9e4cb20 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -1080,7 +1080,7 @@ class LagunaAttention(nn.Module):
+             and not self.is_dflash_layer
+             and not self._parity_enabled
+             and not torch.compiler.is_compiling()
+-            and hidden_states.shape[0] == 8
++            and hidden_states.shape[0] in (8, 12)
+             and _xpu_is_exact_decode_or_verifier_rows(hidden_states.shape[0])
+             and qkv.dtype == torch.bfloat16
+             and self.q_norm.weight.dtype == torch.bfloat16
+-- 
+2.43.0
+
