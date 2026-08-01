@@ -1,0 +1,56 @@
+{
+  "schema": "laguna-rank-sum-attn-stack-negative-v1",
+  "date": "2026-08-01",
+  "status": "EXACT_ENDPOINT_REGRESSION_REJECTED",
+  "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-ranksum-attn-v2-formal-20260801T073000Z",
+  "source": {
+    "main_prereg_and_smoke_commit": "5216c37ca",
+    "vllm_base": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "vllm_commit": "1ddb7d6bbe2579e0dd07a8fe7edfc135432ab85e",
+    "kernel_base": "99886d783372e621941228250091dc8ebdc1595d",
+    "kernel_commit": "ead1a16036afe825816453b549ee94ed6978539e",
+    "runtime_lock_sha256": "20333d695976cffac6309ffb13de29979853c01e16ec800318184d04aebc6af4",
+    "native_module_sha256": "14a6aea3c11701f7275e2037793df666ed7b9baa489042860ce4f27a349ccb86",
+    "grouped_gemm_sha256": "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839"
+  },
+  "configuration": {
+    "target_width": 12,
+    "speculative_tokens": 11,
+    "kv_cache_dtype": "bfloat16",
+    "tensor_parallel_size": 4,
+    "max_num_seqs": 1,
+    "gpu_memory_utilization": 0.9,
+    "target_graph_topology": "146/145 on 4/4 ranks",
+    "draft_graph_topology": "14/13 on 4/4 ranks"
+  },
+  "result": {
+    "conventional_tok_s": 119.14564399183764,
+    "historical_legacy_tok_s": 120.34913534529055,
+    "incumbent_conventional_tok_s": 125.4619731637751,
+    "delta_tok_s": -6.316329171937454,
+    "delta_percent": -5.034457065083986,
+    "teacher_exact": "13/13",
+    "cached_tokens_zero": "13/13",
+    "prompts_run_once": true,
+    "realistic_final_gate": true,
+    "pre_post_idle": true,
+    "harness_status": "PASS"
+  },
+  "disposition": {
+    "classification": "exact negative",
+    "promoted": false,
+    "localmaxxing_submitted": false,
+    "rule": "Do not rerun or stack this treatment as-is; a new mechanism requires a new preregistration."
+  },
+  "bundles": {
+    "vllm": {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-rank-sum-attn-rejected-1ddb7d6bb-20260801.bundle",
+      "sha256": "8fc8fa3073a5aba06ce9962aa1f4c25d403497175d9c5ac84a3c313c125599e3"
+    },
+    "kernel": {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-rank-sum-rmsnorm-rejected-ead1a160-20260801.bundle",
+      "sha256": "3bcf72afe09d0a6b68fdfeae1714aa0f5d711561135451dd7cef7c6248f7b488"
+    }
+  },
+  "note": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-rank-sum-rmsnorm-native-attention-stack-preregistration.md"
+}

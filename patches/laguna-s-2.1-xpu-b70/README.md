@@ -92,6 +92,8 @@ not promoted record sources:
 | rejected reachable DFlash FP8 draft LM head | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `b90f9509bd5e7b7123753a0047ef7958d184d571` | `77e799ae54f554a170de34c0f65228a01cc146497f5c1780ca6e716ddb5d58f9` | `b14eae17b8364ebcafb40bc2379f90957b7d710e6e6d996bc7465d8105340c54` |
 | confirmed exact M12 shared-elementwise kernel | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` | `99886d783372e621941228250091dc8ebdc1595d` | `024e979f1d3a3f1f17804abfb1c325604eaa1dfd8aba761782cbd67dd797ea3a` | `57807decf1aec8cfe7a7bab6319cdf540697116bbb41faf3f6a6ecabe161c342` |
 | confirmed M12 shared-elementwise vLLM selector | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `1a7f61feffbc61b21b73f812d231c7426386ccdc` | three patches: `7bbfd791a79c022501525a3563e7c5bbf8713ba33d6c5efd6bdf2117577eca83`, `9ac2536eba2c5e1a2bb9c9d2495272a846bbc6f51240898763ed7b816054f8d0`, `7e6b12da71a2a3e94622a3ef7d5a16b461c774e7c105f0374e35927918f3e443` | `52e1682aa7e7595f9e4807b6a45f7b2e29683a2d61dae155b1f1b823f8a3e82b` |
+| rejected deferred rank-sum/RMSNorm plus native-attention vLLM stack | `1a7f61feffbc61b21b73f812d231c7426386ccdc` | `1ddb7d6bbe2579e0dd07a8fe7edfc135432ab85e` | source deltas contained by bundle | `8fc8fa3073a5aba06ce9962aa1f4c25d403497175d9c5ac84a3c313c125599e3` |
+| rejected exact TP4 rank-sum/add-RMSNorm native kernel | `99886d783372e621941228250091dc8ebdc1595d` | `ead1a16036afe825816453b549ee94ed6978539e` | source delta contained by bundle | `3bcf72afe09d0a6b68fdfeae1714aa0f5d711561135451dd7cef7c6248f7b488` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -182,3 +184,10 @@ execution evidence. The vLLM patch set deliberately preserves the two
 integration corrections: unique model-layer prefixes and process-scoped
 runtime markers. See the
 [confirmed record](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md).
+
+The deferred rank-sum/RMSNorm plus native-attention stack is a retained exact
+negative. Its isolated native component was exact and faster, and its live
+smoke preserved both graph topologies, but the single formal endpoint measured
+`119.145643992 tok/s` conventionally: `5.034457%` below the promoted record.
+The treatment is default-off and must not be promoted or rerun as-is. See the
+[full preregistration and result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-rank-sum-rmsnorm-native-attention-stack-preregistration.md).

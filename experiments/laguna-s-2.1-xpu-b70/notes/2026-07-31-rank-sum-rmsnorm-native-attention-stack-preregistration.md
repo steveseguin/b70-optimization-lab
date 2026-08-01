@@ -176,3 +176,44 @@ sends `SIGINT` for teardown, after both requests and the PASS artifact already
 exist. It is shutdown noise, not an inference failure. This smoke authorizes
 the single preregistered formal cold endpoint leg. No performance conclusion is
 drawn from the smoke.
+
+## Formal endpoint result: exact but rejected
+
+The first and only authorized formal endpoint completed successfully at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-ranksum-attn-v2-formal-20260801T073000Z
+```
+
+Its result is:
+
+- `119.14564399183764 tok/s` under conventional 99-interval accounting;
+- `120.34913534529055 tok/s` under the historical inclusive-event formula;
+- 13/13 token-and-text exact against canonical q1;
+- `cached_tokens=0` on all 13 rows, every prompt run once, and the realistic
+  final gate passed;
+- target `146/145` and draft `14/13` capture/replay on all four ranks; and
+- clean pre/post idleness with harness `status=PASS`.
+
+This is `6.316329172 tok/s` or `5.034457%` below the promoted
+`125.4619731637751 tok/s` conventional record. The candidate is therefore
+**rejected**, not promoted, and was not submitted to LocalMaxxing. The result
+does not support blaming the already-small native-attention member alone; it
+only proves that this combined deferred-rank-sum/native-attention endpoint does
+not transfer its component savings. No endpoint profile was collected, so
+allocation, graph scheduling, and interaction costs remain hypotheses rather
+than causal claims.
+
+The default-off source is preserved in:
+
+- `patches/laguna-s-2.1-xpu-b70/vllm-laguna-rank-sum-attn-rejected-1ddb7d6bb-20260801.bundle`
+  (SHA-256 `8fc8fa3073a5aba06ce9962aa1f4c25d403497175d9c5ac84a3c313c125599e3`);
+- `patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-rank-sum-rmsnorm-rejected-ead1a160-20260801.bundle`
+  (SHA-256 `3bcf72afe09d0a6b68fdfeae1714aa0f5d711561135451dd7cef7c6248f7b488`).
+
+Compact structured result:
+`data/laguna-rank-sum-attn-stack-negative-20260801.json`.
+
+The promoted record remains unchanged. Do not rerun or stack this treatment
+without a new mechanism and new preregistration.

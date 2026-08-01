@@ -662,6 +662,16 @@ Use this as the default operating sequence for a new model.
 3. Pick source changes tied to hotspots.
 4. Add default-off flags for risky patches.
 5. Build and run focused A/B.
+6. For a native custom op, prove the loaded module and `torch.ops` namespace
+   from the real binary; a unit test that installs a fake into the same wrong
+   namespace can mask an integration defect.
+7. If the op returns a tensor or mutates an argument inside a compiled model,
+   exercise its FakeTensor/Meta path before model startup. File placement must
+   follow the registered namespace (for example `_C` versus `_xpu_C`).
+8. Treat component timing as a scope gate, not an endpoint projection. Even an
+   exact micro-fusion with an apparently additive saving can regress after
+   allocation, graph scheduling, and runtime interaction costs; one frozen
+   endpoint remains the disposition gate.
 
 ### Phase F: Variance Control
 
