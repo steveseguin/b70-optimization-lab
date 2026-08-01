@@ -2,7 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered non-scored diagnostic ladder; no score is authorized.**
+Status: **complete; slot 48 is the first unsafe captured boundary. No score was
+run or authorized.**
 
 ## Motivation
 
@@ -56,3 +57,31 @@ unchanged. Invalid, out-of-range, or selector-off nondefault limits fail closed.
 
 The frozen model, draft, BF16 KV, width 12, DFlash depth 11, teacher, prompts,
 sampling, cache policy, verification, and metric remain unchanged.
+
+## Result
+
+The source at vLLM `3dafc2a51` implemented a validated mixed captured/eager
+prefix and derived graph topology from the same limit. One initial `N=48`
+attempt never reached the treatment because an inherited V1 topology guard
+still demanded `50/49`; it observed the correct `98/97`, aborted, and cleaned
+up. That plumbing failure is not a model result. After the guard fix and
+focused tests, the first-result ladder was:
+
+| Captured prefix | Target topology | Result | First mismatch |
+| ---: | ---: | --- | ---: |
+| 48 | 98/97 | pass, two 400-token requests | none |
+| 72 | 74/73 | fail request 0 | 374 |
+| 60 | 86/85 | fail request 0 | 168 |
+| 54 | 92/91 | fail request 0 | 50 |
+| 51 | 95/94 | fail request 0 | 49 |
+| 49 | 97/96 | fail request 0 | 96 |
+
+Every model result had 400 returned tokens, `cached_tokens=0`, real DFlash
+speculation, the expected topology on all ranks, no device/runtime error, and
+clean teardown. The mismatch index is deliberately not treated as a quality
+score; pass/fail is the only ordering signal.
+
+Prefix 48 captures slots 0 through 47 and passes. Prefix 49 differs only by
+capturing slot 48 and fails. With two gathers per target layer, slot 48 is
+layer 24's attention O-projection gather. The next distinct experiment is not
+another prefix: retain slot 48 eager and capture the other 95 slots.
