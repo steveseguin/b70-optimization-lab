@@ -413,7 +413,6 @@ laguna_nvme_verify_model_contents
 
 laguna_nvme_prepare_run_dir "$run_dir"
 chmod 700 -- "$run_dir"
-mkdir --mode=700 "$rpc_dir"
 mkdir -p "$run_dir"/{private-home,private-tmp,private-cache/{hf,vllm,torchinductor,triton,sycl,numba,pycache},private-xdg/{config,data,state},idle-interval}
 chmod -R 700 -- "$run_dir"
 /usr/bin/env -i \
@@ -496,6 +495,7 @@ finalize() {
   exit "$status"
 }
 trap finalize EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
+mkdir --mode=700 "$rpc_dir"
 
 # The shared-elementwise and QKNorm/RoPE fusion kernels were pinned to eight
 # rows and so had to be disabled at other widths. They now take the row count at

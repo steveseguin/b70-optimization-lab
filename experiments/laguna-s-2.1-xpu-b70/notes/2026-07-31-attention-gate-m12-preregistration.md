@@ -89,3 +89,11 @@ authorized. No target/draft/KV precision, width/depth, model, prompt, teacher,
 metric, acceptance, graph topology, cache, warmup, retry, reboot, reset, or
 LocalMaxxing change is authorized. Report the first valid endpoint score even
 if it loses; stop on any bitwise, topology, cache, or operational gate failure.
+
+The first formal invocation stopped before GPU use because the focus build had
+also emitted a local `xpumem_allocator.abi3.so`; the runtime verifier rejected
+that unapproved origin. The generated extra was quarantined and the frozen
+external allocator was retained. That early stop also exposed that the RPC
+directory was created before the cleanup trap; the launcher now creates it
+only after installing the trap. Neither preflight stop loaded the model or
+produced a throughput result.
