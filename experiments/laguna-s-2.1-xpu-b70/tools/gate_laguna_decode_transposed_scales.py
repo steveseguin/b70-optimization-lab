@@ -175,10 +175,14 @@ def run_worker(args: argparse.Namespace) -> int:
             args.mode if args.selector == "dequant_mad_grf128_transposed" else "0"
         ),
         "VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP": (
-            args.mode if args.selector == "scale_lane_dedup" else "0"
+            args.mode
+            if args.selector in ("scale_lane_dedup", "small_exact_portfolio")
+            else "0"
         ),
         "VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS": (
-            args.mode if args.selector == "no_kloop_barriers" else "0"
+            args.mode
+            if args.selector in ("no_kloop_barriers", "small_exact_portfolio")
+            else "0"
         ),
         "VLLM_XPU_LAGUNA_DECODE_NMAJOR_PACKED_WORKLIST": (
             args.mode if args.selector == "nmajor_packed_worklist" else "0"
@@ -523,10 +527,14 @@ def run_gate(args: argparse.Namespace) -> int:
             mode if args.selector == "dequant_mad_grf128_transposed" else "0"
         )
         env["VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP"] = (
-            mode if args.selector == "scale_lane_dedup" else "0"
+            mode
+            if args.selector in ("scale_lane_dedup", "small_exact_portfolio")
+            else "0"
         )
         env["VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS"] = (
-            mode if args.selector == "no_kloop_barriers" else "0"
+            mode
+            if args.selector in ("no_kloop_barriers", "small_exact_portfolio")
+            else "0"
         )
         env["VLLM_XPU_LAGUNA_DECODE_NMAJOR_PACKED_WORKLIST"] = (
             mode if args.selector == "nmajor_packed_worklist" else "0"
@@ -667,6 +675,7 @@ def parse_args() -> argparse.Namespace:
             "dequant_mad_grf128_transposed",
             "scale_lane_dedup",
             "no_kloop_barriers",
+            "small_exact_portfolio",
             "nmajor_packed_worklist",
             "deterministic_scheduler",
             "direct_offsets",
