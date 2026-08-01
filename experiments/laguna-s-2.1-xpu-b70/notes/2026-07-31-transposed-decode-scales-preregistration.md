@@ -123,3 +123,23 @@ This authorizes the unchanged TP4 endpoint gate after a clean reboot restores
 GPU 0.  It does not predict or claim endpoint throughput; the component gain
 is only 2.42% in the two MoE GEMMs and must survive 48 layers, graph capture,
 collectives, attention, draft work, and fixed-window metric noise.
+
+## First post-reboot control: harness-only failure
+
+The first same-DSO selector-off control completed the entire frozen suite with
+13/13 token/text exactness, all cached-token counts zero, one invocation, and
+the required target 146/145 plus draft 14/13 topology.  Its conventional
+median was `120.796931473 tok/s`, but it is **not a valid control leg** and is
+not used for a performance claim: after the service parent exited, the runner
+checked for multiprocessing children before their ordinary shutdown completed
+and aborted before the required post-stop idle interval.
+
+Artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-control-20260801T004218Z`
+
+`cleanup-status.txt` records `original_status=2`, and no `status.txt` exists.
+The children disappeared without reset or intervention and all devices were
+idle afterward.  The harness now waits up to 30 seconds for ordinary child
+reaping after stopping the parent; this boundary is after the scored request
+window.  A fresh control remains required before the candidate.

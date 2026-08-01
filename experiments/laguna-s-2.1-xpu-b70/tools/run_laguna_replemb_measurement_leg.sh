@@ -420,6 +420,18 @@ assert_no_workers() {
   ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 || return 1
   ! ss -H -ltn 'sport = :18080' | grep -q .
 }
+wait_for_no_workers() {
+  # The API parent can reap before its multiprocessing children finish their
+  # ordinary shutdown.  This boundary is outside the scored request window;
+  # wait a bounded interval for clean exit rather than misclassifying that
+  # short reaping lag as a surviving worker.
+  local attempt
+  for attempt in $(seq 1 30); do
+    assert_no_workers && return 0
+    sleep 1
+  done
+  return 1
+}
 server_pid=""
 service_alive() { [[ -n "$server_pid" ]] && (kill -0 "$server_pid" 2>/dev/null || kill -0 -- "-$server_pid" 2>/dev/null); }
 stop_service() {
@@ -438,7 +450,7 @@ finalize() {
   local status="$?" stop_status=0 worker_status=0 idle_status=0
   trap - EXIT INT TERM; set +e
   stop_service || stop_status=1
-  assert_no_workers || worker_status=1
+  wait_for_no_workers || worker_status=1
   capture_idle "$run_dir/failure-post-idle.json" || idle_status=1
   printf 'original_status=%s\nstop_status=%s\nworker_status=%s\nidle_status=%s\n' "$status" "$stop_status" "$worker_status" "$idle_status" > "$run_dir/cleanup-status.txt"
   # Move the RPC directory under the failed run rather than leaving it in the
@@ -545,7 +557,7 @@ if (( dflash_segmented_smoke == 1 )); then
   curl -fsS http://127.0.0.1:18080/metrics \
     > "$run_dir/metrics-after-smoke.prom"
   stop_service; server_pid=""
-  assert_no_workers || die "workers or listener survived smoke shutdown"
+  wait_for_no_workers || die "workers or listener survived smoke shutdown"
   capture_idle "$run_dir/post-idle.json"
   verify_idle_interval poststop
   mv -- "$rpc_dir" "$run_dir/rpc-after-stop"
@@ -634,7 +646,7 @@ elif fp8_rows:
     )
 PY
 stop_service; server_pid=""
-assert_no_workers || die "workers or listener survived shutdown"
+wait_for_no_workers || die "workers or listener survived shutdown"
 capture_idle "$run_dir/post-idle.json"
 verify_idle_interval poststop
 mv -- "$rpc_dir" "$run_dir/rpc-after-stop"
