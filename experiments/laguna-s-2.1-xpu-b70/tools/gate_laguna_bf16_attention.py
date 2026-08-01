@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Changing-input exactness/timing gate for Laguna M=8 BF16 attention GEMMs."""
+"""Changing-input exactness/timing gate for Laguna BF16 attention GEMMs."""
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ from pathlib import Path
 import torch
 
 
-ROWS = 8
 CASES = {
     "full-qkv": (3072, 2048, (1536, 256, 256)),
     "sliding-qkv": (3072, 2816, (2304, 256, 256)),
@@ -54,6 +53,7 @@ def timed_ms(call, iterations: int) -> float:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rank", type=int, required=True, choices=range(4))
+    parser.add_argument("--rows", type=int, default=8, choices=range(1, 17))
     parser.add_argument("--epochs", type=int, default=16)
     parser.add_argument("--timing-iterations", type=int, default=100)
     parser.add_argument("--out", type=Path, required=True)
@@ -74,7 +74,9 @@ def main() -> None:
 
     for case_index, (name, (k_dim, n_dim, splits)) in enumerate(selected.items()):
         torch.manual_seed(72100 + args.rank * 1000 + case_index)
-        rows = torch.randn((ROWS, k_dim), dtype=torch.bfloat16, device="xpu")
+        rows = torch.randn(
+            (args.rows, k_dim), dtype=torch.bfloat16, device="xpu"
+        )
         weight = torch.randn((n_dim, k_dim), dtype=torch.bfloat16, device="xpu")
 
         if args.counter_only:
@@ -99,7 +101,9 @@ def main() -> None:
             torch.manual_seed(
                 72100 + args.rank * 1000 + case_index * 100 + epoch
             )
-            rows = torch.randn((ROWS, k_dim), dtype=torch.bfloat16, device="xpu")
+            rows = torch.randn(
+                (args.rows, k_dim), dtype=torch.bfloat16, device="xpu"
+            )
             weight = torch.randn((n_dim, k_dim), dtype=torch.bfloat16, device="xpu")
             baseline = record_bmm(rows, weight)
             candidate = candidate_mm(rows, weight)
@@ -144,7 +148,7 @@ def main() -> None:
     payload = {
         "rank": args.rank,
         "device": torch.xpu.get_device_name(0),
-        "rows": ROWS,
+        "rows": args.rows,
         "epochs": 0 if args.counter_only else args.epochs,
         "passed": exact == checks if not args.counter_only else True,
         "exact": f"{exact}/{checks}",

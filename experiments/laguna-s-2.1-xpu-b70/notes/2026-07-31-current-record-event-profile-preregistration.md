@@ -2,9 +2,9 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **first diagnostic stopped fail-closed before profiling; one scoped
-source fix is authorized below; no benchmark, endpoint, or submission claim
-authorized**.
+Status: **scoped target diagnostic passed; graph work remains dominant but is
+distributed across all three per-layer graph slots; no benchmark, endpoint,
+or submission claim is authorized from the perturbed profile**.
 
 ## Purpose
 
@@ -137,3 +137,60 @@ requires an event-profile root when enabled. Any nonempty event-profile root
 forces `scored_measurement=0` in identity, independently of the resulting
 throughput fields. The default record invocation remains argument-compatible
 and passes literal zero to the service.
+
+## Scoped execution result
+
+The one authorized rerun passed the complete diagnostic gate:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-current-record-target-event-profile-20260801T023248Z
+
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-current-record-target-event-data-20260801T023248Z
+```
+
+- identity records `scored_measurement=0`, target-only profiling literal one,
+  vLLM `50bf5df198d8835f6b59725cbf5cc31da666f814`, and kernel
+  `8dd94f2307db3b830fe07f212c4b36f719652a5c`;
+- draft capture/replay was exactly 14/13 on all four ranks;
+- target capture/replay was exactly 146/145 on all four ranks;
+- four complete rank files contain the same 291-kind order and digest
+  `e5b64443ef499d8bb8b138a94ad504effeaa6434a8884ae9f885aecf12d34e1b`;
+- the frozen suite was 13/13 token and text exact, all cached-token counts were
+  zero, and the rollover/cross-request gates passed;
+- formal cleanup reports original, stop, worker, and idle status zero. No
+  reset or reboot occurred.
+
+The diagnostic rate is intentionally discarded. On the slowest internally
+consistent rank (rank 2), the profiled first target replay was 130.573 ms:
+
+| interval kind | count | sum | share | median |
+| --- | ---: | ---: | ---: | ---: |
+| graph | 146 | 91.200 ms | 69.8% | 622.34 us |
+| collective | 97 | 28.141 ms | 21.6% | 297.23 us |
+| attention | 48 | 11.232 ms | 8.6% | 216.27 us |
+
+All four ranks agree on the ordering: graph 64.9--69.8%, collective
+21.6--26.7%, and attention 8.3--8.9%. These reproduce the older directional
+ordering on the current 122.829 stack rather than relying on the former
+100-tok/s runtime.
+
+The repeated six-interval layer pattern further splits rank 2's graph sum:
+
+| graph slot | source-level contents | 48-layer sum |
+| --- | --- | ---: |
+| before attention | input norm, fused QKV, Q/K norm and RoPE | 28.645 ms |
+| after attention | gate, gated attention, output projection | 27.442 ms |
+| after output collective | post-attention norm and target MoE | 34.028 ms |
+
+The source-level labels are derived from the fixed decoder order around the
+attention and collective boundaries. They are not per-kernel timing labels.
+The result therefore says that captured device work remains the correct class
+to optimize, but it does not support treating the already heavily optimized
+MoE slot as the only remaining graph cost.
+
+As preregistered, event synchronization makes the absolute 130.573 ms
+non-representative, the first replay may contain cold effects, and XCCL
+cross-stream completion is not validated. Do not convert these shares into a
+throughput projection or combine category maxima from different ranks.
