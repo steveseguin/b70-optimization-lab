@@ -187,6 +187,11 @@ readonly dflash_full_exactness="${44:-0}"
 # position 420/input 20253. The synchronous copy perturbs timing, so this is
 # restricted to the non-scored segmented smoke and may never emit a rate.
 readonly parity_probe="${45:-0}"
+# Diagnostic only: preload the checksum-pinned public oneCCL 2022 runtime that
+# passed the Laguna TP4 captured-gather transaction oracle. This is initially
+# restricted to the row-0 non-scored smoke; scored legs require a separate
+# runtime lock and preregistration.
+readonly public_oneccl="${46:-0}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
@@ -201,6 +206,11 @@ readonly model_release_manifest="${REPRO_MODEL_MANIFEST:-$repro_root/manifests/m
 readonly xpumem_module="${REPRO_XPUMEM_MODULE:-/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so}"
 readonly kernel_package="$kernel_root/vllm_xpu_kernels"
 readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib"
+readonly public_oneccl_root="/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public"
+readonly public_oneccl_library="$public_oneccl_root/lib/libccl.so.1.0"
+readonly public_oneccl_kernels="$public_oneccl_root/lib/ccl/kernels/kernels.spv"
+readonly expected_public_oneccl=43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700
+readonly expected_public_oneccl_kernels=0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9
 readonly graph_serve="$script_dir/serve_laguna_mwide_graph_nvme.sh"
 readonly comparator="$script_dir/compare_exact_runs.py"
 readonly benchmark="$repo_root/scripts/bench-openai-realistic-suite.py"
@@ -232,7 +242,7 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 45 )) || { echo "seven to forty-five arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 46 )) || { echo "seven to forty-six arguments are required" >&2; exit 2; }
 [[ "$target_inline_gather_limit" =~ ^[0-9]+$ ]] \
   && (( target_inline_gather_limit >= 1 && target_inline_gather_limit <= 96 )) \
   || { echo "TARGET_INLINE_GATHER_LIMIT must be an integer from 1 to 96" >&2; exit 2; }
@@ -251,6 +261,9 @@ case "$dflash_full_exactness" in 0|1) ;; *) echo "DFLASH_FULL_EXACTNESS must be 
 case "$parity_probe" in 0|1) ;; *) echo "PARITY_PROBE must be 0 or 1" >&2; exit 2 ;; esac
 (( parity_probe == 0 || (dflash_segmented_smoke == 1 && dflash_full_exactness == 0) )) \
   || { echo "PARITY_PROBE=1 requires the 2x400 non-scored smoke" >&2; exit 2; }
+case "$public_oneccl" in 0|1) ;; *) echo "PUBLIC_ONECCL must be 0 or 1" >&2; exit 2 ;; esac
+(( public_oneccl == 0 || (parity_probe == 1 && dflash_segmented_smoke == 1) )) \
+  || { echo "PUBLIC_ONECCL=1 requires the row-0 non-scored smoke" >&2; exit 2; }
 if [[ -n "$confidence_probe_root" ]]; then
   [[ "$confidence_probe_root" == "$run_dir"/* ]] \
     || { echo "confidence probe root must be inside the run directory" >&2; exit 2; }
@@ -437,6 +450,14 @@ for path in \
   "$xpumem_module"; do
   [[ -e "$path" && "$(realpath -e -- "$path")" != /media/* ]] || die "missing or USB-resident required path: $path"
 done
+if (( public_oneccl == 1 )); then
+  for path in "$public_oneccl_library" "$public_oneccl_kernels"; do
+    [[ -f "$path" && "$(realpath -e -- "$path")" == /mnt/fast-ai/* ]] \
+      || die "missing or non-NVMe public oneCCL artifact: $path"
+  done
+  check_hash "$public_oneccl_library" "$expected_public_oneccl"
+  check_hash "$public_oneccl_kernels" "$expected_public_oneccl_kernels"
+fi
 if [[ -n "$teacher_text_oracle" ]]; then
   [[ -n "$expected_teacher_text_oracle" ]] \
     || die "REPRO_TEACHER_TEXT_ORACLE_SHA256 is required with the text oracle"
@@ -579,6 +600,14 @@ mkdir --mode=700 "$rpc_dir"
 # identity.txt alongside the width.
 se="$fusions"; qk="$qknorm"
 metadata_selector="$metadata_arg"
+selected_ld_preload=""
+selected_ccl_kernel_path=""
+selected_native_library_path="$native_library_path"
+if (( public_oneccl == 1 )); then
+  selected_ld_preload="$public_oneccl_library"
+  selected_ccl_kernel_path="$(dirname -- "$public_oneccl_kernels")"
+  selected_native_library_path="$public_oneccl_root/lib:$native_library_path"
+fi
 captured_target_gathers="$(( target_inline_gather_limit - (target_inline_gather_skip >= 0 ? 1 : 0) ))"
 expected_num_graphs="$(( target_inline_gathers == 1 ? 146 - captured_target_gathers : (inline_attention == 1 ? 98 : (replicated_embedding == 1 ? 145 : 146)) ))"
 expected_num_eager_breaks="$(( target_inline_gathers == 1 ? 145 - captured_target_gathers : (inline_attention == 1 ? 97 : (replicated_embedding == 1 ? 144 : 145)) ))"
@@ -601,6 +630,10 @@ verify_idle_interval prestart
   printf 'target_inline_gather_skip=%s\n' "$target_inline_gather_skip"
   printf 'dflash_full_exactness=%s\n' "$dflash_full_exactness"
   printf 'parity_probe=%s\nparity_row=%s\n' "$parity_probe" "$(( parity_probe == 1 ? 0 : -1 ))"
+  printf 'public_oneccl=%s\npublic_oneccl_library=%s\npublic_oneccl_sha256=%s\npublic_oneccl_kernels_sha256=%s\n' \
+    "$public_oneccl" "$selected_ld_preload" \
+    "$([[ "$public_oneccl" == 1 ]] && echo "$expected_public_oneccl" || echo '')" \
+    "$([[ "$public_oneccl" == 1 ]] && echo "$expected_public_oneccl_kernels" || echo '')"
   printf 'decode_grf128=%s\n' "$decode_grf128"
   printf 'decode_transposed_scales=%s\n' "$decode_transposed_scales"
   printf 'event_profile_target_only=%s\n' "$event_profile_target_only"
@@ -642,7 +675,7 @@ serve_script="$graph_serve"
 setsid /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp" \
   HF_HOME="$run_dir/private-cache/hf" HF_HUB_CACHE="$run_dir/private-cache/hf/hub" TRANSFORMERS_CACHE="$run_dir/private-cache/hf/transformers" VLLM_CACHE_ROOT="$run_dir/private-cache/vllm" TORCHINDUCTOR_CACHE_DIR="$run_dir/private-cache/torchinductor" TRITON_CACHE_DIR="$run_dir/private-cache/triton" SYCL_CACHE_DIR="$run_dir/private-cache/sycl" NUMBA_CACHE_DIR="$run_dir/private-cache/numba" PYTHONPYCACHEPREFIX="$run_dir/private-cache/pycache" XDG_CACHE_HOME="$run_dir/private-cache" XDG_CONFIG_HOME="$run_dir/private-xdg/config" XDG_DATA_HOME="$run_dir/private-xdg/data" XDG_STATE_HOME="$run_dir/private-xdg/state" \
-  PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD= ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path" \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD="$selected_ld_preload" CCL_KERNEL_PATH="$selected_ccl_kernel_path" ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$selected_native_library_path" \
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="$m12_shared_elementwise" VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM="$m12_rank_sum_rmsnorm" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M12_ATTENTION_GATE="$m12_attention_gate" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_DECODE_GRF128="$decode_grf128" VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES="$decode_transposed_scales" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH="$dflash_segmented_graph" VLLM_XPU_LAGUNA_DFLASH_INPLACE_COLLECTIVES="$dflash_inplace_collectives" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES="$dflash_capture_collective_copies" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS="$dflash_capture_attention_graphs" VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS="$dflash_inline_attention_graphs" VLLM_XPU_LAGUNA_M8_INLINE_GATHERS="$target_inline_gathers" LAGUNA_TARGET_INLINE_GATHER_LIMIT="$target_inline_gather_limit" LAGUNA_TARGET_INLINE_GATHER_SKIP="$target_inline_gather_skip" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY="$event_profile_target_only" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM="$bf16_attn_native_mm" VLLM_XPU_LAGUNA_ARTIFACT_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT" VLLM_XPU_LAGUNA_PARITY_ROW="$(( parity_probe == 1 ? 0 : -1 ))" VLLM_XPU_LAGUNA_PARITY_PROBE="$parity_probe" VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
   VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 \
   VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_ROOT="$confidence_probe_root" VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_TOPK_PROBE="$([[ -n "$confidence_probe_root" ]] && echo 1 || echo 0)" \
@@ -674,6 +707,27 @@ grep -Fx "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING=$replicated_embedding" "$run_dir/
 grep -Fx "VLLM_XPU_LAGUNA_ARTIFACT_ROOT=$LAGUNA_NVME_ARTIFACT_ROOT" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_PARITY_ROW=$(( parity_probe == 1 ? 0 : -1 ))" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_PARITY_PROBE=$parity_probe" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "LD_PRELOAD=$selected_ld_preload" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "CCL_KERNEL_PATH=$selected_ccl_kernel_path" "$run_dir/service-environment.txt" >/dev/null
+if (( public_oneccl == 1 )); then
+  mapfile -t public_oneccl_workers < <(pgrep -f 'VLLM::Worker' | sort -n)
+  (( ${#public_oneccl_workers[@]} == 4 )) \
+    || die "public oneCCL gate expected four model workers"
+  : > "$run_dir/public-oneccl-worker-maps.txt"
+  for worker_pid in "${public_oneccl_workers[@]}"; do
+    mapfile -t mapped_ccl < <(
+      awk '$NF ~ /^\// && $NF ~ /libccl\.so/ {print $NF}' "/proc/$worker_pid/maps" \
+        | sort -u
+    )
+    (( ${#mapped_ccl[@]} == 1 )) \
+      || die "worker $worker_pid did not map exactly one public libccl"
+    [[ "$(realpath -e -- "${mapped_ccl[0]}")" == "$public_oneccl_library" ]] \
+      || die "worker $worker_pid mapped the wrong libccl: ${mapped_ccl[0]}"
+    check_hash "${mapped_ccl[0]}" "$expected_public_oneccl"
+    printf 'pid=%s path=%s sha256=%s\n' "$worker_pid" "${mapped_ccl[0]}" \
+      "$expected_public_oneccl" >> "$run_dir/public-oneccl-worker-maps.txt"
+  done
+fi
 if (( parity_probe == 1 )); then
   jq -n \
     --arg output_dir "$run_dir/parity" \
