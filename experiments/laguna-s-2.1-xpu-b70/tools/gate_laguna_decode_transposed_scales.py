@@ -87,6 +87,41 @@ def build_packed_nmajor_rows(rows: Any) -> tuple[Any, dict[str, Any]]:
     }
 
 
+def packed_nmajor_task_coverage(
+    tile_count: int, n_tiles: int, chunk: int
+) -> dict[str, Any]:
+    if tile_count <= 0 or n_tiles <= 0:
+        raise RuntimeError("packed N-major task dimensions must be positive")
+    if chunk not in (1, 4, 8, 16) or n_tiles % chunk:
+        raise RuntimeError("packed N-major chunk must divide the N-tile count")
+    shift = {1: 0, 4: 2, 8: 3, 16: 4}[chunk]
+    actual: list[tuple[int, int]] = []
+    for task in range(tile_count * n_tiles):
+        within = task & (chunk - 1)
+        quotient = task >> shift
+        m_tile = quotient % tile_count
+        n_tile = (quotient // tile_count) * chunk + within
+        actual.append((m_tile, n_tile))
+    expected = [
+        (m_tile, n_tile)
+        for n_base in range(0, n_tiles, chunk)
+        for m_tile in range(tile_count)
+        for n_tile in range(n_base, n_base + chunk)
+    ]
+    if actual != expected or len(set(actual)) != tile_count * n_tiles:
+        raise RuntimeError("packed N-major task ownership is not one-to-one")
+    coverage_bytes = json.dumps(actual, separators=(",", ":")).encode()
+    return {
+        "format": "nchunk_task_ownership_v1",
+        "chunk": chunk,
+        "shift": shift,
+        "n_tiles": n_tiles,
+        "task_count": len(actual),
+        "coverage_unique": len(set(actual)),
+        "coverage_sha256": hashlib.sha256(coverage_bytes).hexdigest(),
+    }
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -241,6 +276,10 @@ def run_worker(args: argparse.Namespace) -> int:
         }
         if args.selector == "nmajor_packed_worklist":
             rows_arg_cpu, scheduler_metadata = build_packed_nmajor_rows(rows_cpu)
+            if args.mode != "0":
+                scheduler_metadata["task_ownership"] = packed_nmajor_task_coverage(
+                    scheduler_metadata["tile_count"], n // 64, int(args.mode)
+                )
         elif args.selector == "persistent_worklist" and args.mode == "1":
             worklist = []
             pre_rows = 0
@@ -466,8 +505,13 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_PREFETCH_DIST"] = "6"
     env_base.pop("VLLM_XPU_MXFP4_SMALL_M_N", None)
 
+    treatment_mode = args.treatment_mode
+    if args.selector != "nmajor_packed_worklist" and treatment_mode != "1":
+        raise RuntimeError(
+            "non-default treatment modes apply only to nmajor_packed_worklist"
+        )
     records: dict[str, Any] = {}
-    for mode in ("0", "1"):
+    for mode in ("0", treatment_mode):
         worker_output = output_dir / f"mode-{mode}.json"
         stdout_path = output_dir / f"mode-{mode}.stdout"
         stderr_path = output_dir / f"mode-{mode}.stderr"
@@ -534,7 +578,9 @@ def run_gate(args: argparse.Namespace) -> int:
 
     comparisons: list[dict[str, Any]] = []
     exact_count = 0
-    for control, candidate in zip(records["0"]["cases"], records["1"]["cases"]):
+    for control, candidate in zip(
+        records["0"]["cases"], records[treatment_mode]["cases"]
+    ):
         if control["name"] != candidate["name"]:
             raise RuntimeError("case order drift")
         inputs_equal = (
@@ -570,6 +616,7 @@ def run_gate(args: argparse.Namespace) -> int:
         "performance_passed": performance_passed,
         "performance_threshold_speedup": args.performance_threshold,
         "selector": args.selector,
+        "treatment_mode": treatment_mode,
         "candidate_source_head": expected_head,
         "candidate_so": str(candidate_so),
         "candidate_sha256": expected_sha256,
@@ -609,7 +656,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir")
     parser.add_argument("--rank", type=int, default=0)
     parser.add_argument("--worker", action="store_true")
-    parser.add_argument("--mode", choices=("0", "1"))
+    parser.add_argument("--mode", choices=("0", "1", "4", "8", "16"))
+    parser.add_argument(
+        "--treatment-mode", choices=("1", "4", "8", "16"), default="1"
+    )
     parser.add_argument(
         "--selector",
         choices=(
