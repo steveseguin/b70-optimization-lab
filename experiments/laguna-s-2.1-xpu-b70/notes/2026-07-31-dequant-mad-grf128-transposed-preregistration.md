@@ -2,7 +2,7 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **preregistered static and component screen; no endpoint authorized.**
+Status: **closed at the component gate; exact but performance-neutral.**
 
 ## Evidence and hypothesis
 
@@ -72,3 +72,55 @@ allowed.
 No target/draft/KV precision change, teacher change, prompt change, warmed
 generation, retry, metric substitution, reset, reboot, or privileged recovery
 is authorized by this screen.
+
+## Result
+
+The static screen passed but the device component stopped the treatment.
+
+- Candidate source:
+  `daa9e94f9dab4a52f655d54f9a87483aa941fd2e`.
+- Candidate DSO SHA-256:
+  `f3f736290f5e2aea3720b7aa920511d5eba4b301e7834a711468ae608b810cfd`.
+- Frozen build artifact:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dequant-mad-grf128-transposed-build-daa9e94-20260801T054606Z`.
+- Corrected component artifact:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-dequant-mad-grf128-transposed-component-fixed-daa9e94-20260801T054721Z`.
+
+The oneAPI 2025.3 build completed in `16:37.89`, peaked at `106,749,392`
+KiB RSS, used no swaps, and linked against the expected `libsycl.so.8` ABI.
+The BMG 128-GRF static probe retained two DPAS instructions and no spill
+traffic while reducing the transposed kernel from 396 to 383 instructions.
+
+Both component workers recorded the frozen 200 warmups per shape followed by
+15 samples of 40 launches. The selector-off control and selector-on treatment
+loaded the same candidate ELF and used identical transposed scales; only
+`VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD` changed.
+
+| shape | control | treatment | speedup | raw BF16 exact |
+|---|---:|---:|---:|---:|
+| W13, `M=120 N=2048 K=3072` | 0.321024 ms | 0.321206 ms | 0.999432x | 3/3 |
+| W2, `M=120 N=3072 K=1024` | 0.183683 ms | 0.183573 ms | 1.000596x | 3/3 |
+| summed | 0.504707 ms | 0.504779 ms | 0.999856x | 6/6 |
+
+This misses the preregistered 1.03 summed promotion threshold by a wide margin.
+No model service, endpoint score, reset, or reboot followed. Exact dequant-MAD
+on the GRF128 transposed-scale route is therefore closed unless new profiling
+evidence changes the premise.
+
+An earlier artifact at
+`laguna-dequant-mad-grf128-transposed-component-daa9e94-20260801T054636Z`
+has valid 6/6 exactness but **invalid timing evidence**: the gate parent parsed
+the requested 200/15x40 protocol without forwarding it to its workers, which
+therefore used the obsolete 8/9x20 defaults and reproduced the known W2
+mid-series transition. The gate now forwards and records all timing arguments;
+the corrected artifact above is the only performance evidence.
+
+## Accounting clarification
+
+The 6,356 figure above is the metrics-counter quantity `1,609` verifier drafts
+plus `4,747` accepted draft tokens. It is useful for a median-rate-derived
+cycle estimate but should not be described as an independently timed emitted
+token count. The final record's aggregate suite accounting reports 6,354
+output tokens over 52.014 seconds after TTFT, or about 32.327 ms per verifier
+cycle. The endpoint requirement remains roughly 1.1 ms of average-cycle
+savings at unchanged acceptance; neither estimate affects this component stop.

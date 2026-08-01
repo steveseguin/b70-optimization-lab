@@ -73,10 +73,20 @@ def run_worker(args: argparse.Namespace) -> int:
         raise RuntimeError(
             f"worker requires exactly one visible XPU, got {torch.xpu.device_count()}"
         )
+    transposed_mode = (
+        args.mode
+        if args.selector == "transposed_scales"
+        else "1"
+    )
     expected_env = {
         "VLLM_XPU_LAGUNA_DECODE_GRF128": "1",
         "VLLM_XPU_LAGUNA_DECODE_EXACT_SPECIALIZED": "0",
-        "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES": args.mode,
+        "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES": transposed_mode,
+        "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD": (
+            args.mode
+            if args.selector == "dequant_mad_grf128_transposed"
+            else "0"
+        ),
         "VLLM_XPU_LAGUNA_SCALE_VEC": "1",
         "VLLM_XPU_LAGUNA_DEQUANT_MAD": "0",
         "VLLM_XPU_LAGUNA_SCALE_FOLD": "0",
@@ -123,7 +133,7 @@ def run_worker(args: argparse.Namespace) -> int:
             "rows_max": int(rows_cpu.max()),
             "rows_nonzero": int(torch.count_nonzero(rows_cpu)),
         }
-        if args.mode == "1":
+        if transposed_mode == "1":
             physical_scale_cpu = logical_scale_cpu.permute(0, 2, 1).contiguous()
             physical_layout = "expert_group_n"
         else:
@@ -212,6 +222,7 @@ def run_worker(args: argparse.Namespace) -> int:
 
     payload = {
         "mode": args.mode,
+        "selector": args.selector,
         "environment": {
             name: os.environ.get(name) for name in sorted(expected_env)
         },
@@ -240,9 +251,11 @@ def run_gate(args: argparse.Namespace) -> int:
     output_dir = Path(args.output_dir).resolve()
     if not candidate_so.is_file():
         raise RuntimeError(f"missing candidate DSO: {candidate_so}")
-    if sha256_file(candidate_so) != EXPECTED_CANDIDATE_SHA256:
+    expected_sha256 = args.expected_sha256 or EXPECTED_CANDIDATE_SHA256
+    expected_head = args.expected_head or EXPECTED_CANDIDATE_HEAD
+    if sha256_file(candidate_so) != expected_sha256:
         raise RuntimeError("candidate DSO SHA-256 drift")
-    if git_head(Path(args.candidate_tree).resolve()) != EXPECTED_CANDIDATE_HEAD:
+    if git_head(Path(args.candidate_tree).resolve()) != expected_head:
         raise RuntimeError("candidate source HEAD drift")
     extension = kernel_tree / "vllm_xpu_kernels/_xpu_C.abi3.so"
     if not extension.is_file():
@@ -271,6 +284,7 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_SCALE_VEC"] = "1"
     env_base["VLLM_XPU_LAGUNA_DEQUANT_MAD"] = "0"
     env_base["VLLM_XPU_LAGUNA_SCALE_FOLD"] = "0"
+    env_base["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD"] = "0"
     env_base["VLLM_XPU_LAGUNA_PREFETCH_DIST"] = "6"
     env_base.pop("VLLM_XPU_MXFP4_SMALL_M_N", None)
 
@@ -280,17 +294,30 @@ def run_gate(args: argparse.Namespace) -> int:
         stdout_path = output_dir / f"mode-{mode}.stdout"
         stderr_path = output_dir / f"mode-{mode}.stderr"
         env = env_base.copy()
-        env["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES"] = mode
+        env["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES"] = (
+            mode if args.selector == "transposed_scales" else "1"
+        )
+        env["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD"] = (
+            mode if args.selector == "dequant_mad_grf128_transposed" else "0"
+        )
         command = [
             sys.executable,
             str(Path(__file__).resolve()),
             "--worker",
             "--mode",
             mode,
+            "--selector",
+            args.selector,
             "--candidate-so",
             str(candidate_so),
             "--worker-output",
             str(worker_output),
+            "--warmup-launches",
+            str(args.warmup_launches),
+            "--timing-samples",
+            str(args.timing_samples),
+            "--launches-per-sample",
+            str(args.launches_per_sample),
         ]
         with stdout_path.open("w") as stdout, stderr_path.open("w") as stderr:
             completed = subprocess.run(
@@ -334,15 +361,16 @@ def run_gate(args: argparse.Namespace) -> int:
     candidate_sum_ms = sum(item["candidate_median_ms"] for item in comparisons)
     summed_speedup = control_sum_ms / candidate_sum_ms
     exact_passed = exact_count == total_exact
-    performance_passed = summed_speedup >= 1.02
+    performance_passed = summed_speedup >= args.performance_threshold
     summary = {
         "status": "pass" if exact_passed and performance_passed else "stop",
         "exact_passed": exact_passed,
         "performance_passed": performance_passed,
-        "performance_threshold_speedup": 1.02,
-        "candidate_source_head": EXPECTED_CANDIDATE_HEAD,
+        "performance_threshold_speedup": args.performance_threshold,
+        "selector": args.selector,
+        "candidate_source_head": expected_head,
         "candidate_so": str(candidate_so),
-        "candidate_sha256": EXPECTED_CANDIDATE_SHA256,
+        "candidate_sha256": expected_sha256,
         "kernel_tree": str(kernel_tree),
         "rank": args.rank,
         "exact": exact_count,
@@ -380,6 +408,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rank", type=int, default=0)
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--mode", choices=("0", "1"))
+    parser.add_argument(
+        "--selector",
+        choices=("transposed_scales", "dequant_mad_grf128_transposed"),
+        default="transposed_scales",
+    )
+    parser.add_argument("--expected-head")
+    parser.add_argument("--expected-sha256")
+    parser.add_argument("--performance-threshold", type=float, default=1.02)
     parser.add_argument("--worker-output")
     parser.add_argument("--warmup-launches", type=int, default=8)
     parser.add_argument("--timing-samples", type=int, default=9)
