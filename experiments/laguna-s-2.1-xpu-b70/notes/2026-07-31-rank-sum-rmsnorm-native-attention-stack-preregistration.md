@@ -151,3 +151,28 @@ smoke is authorized after a new runtime lock and independent source audit. The
 original gates and stop rules apply without relaxation: the first v2 smoke that
 reaches model execution stands, and no scored leg is authorized unless it
 passes exactness, topology, cache-zero, marker, and teardown gates.
+
+## V2 smoke result
+
+The one authorized v2 non-scored smoke passed:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-ranksum-attn-v2-smoke-20260801T071500Z
+```
+
+- both changing 400-token requests completed with canonical-q1 prefix
+  exactness and `cached_tokens=0`;
+- target capture/replay was `146/145` and draft capture/replay was `14/13` on
+  all four ranks;
+- all four workers emitted the rank-sum/RMSNorm activation marker;
+- the live state machine's fail-closed `96`-producer/consumer count invariant
+  completed without underflow, overlap, leak, or count drift; and
+- `post-idle.json` passes and the harness exited zero with
+  `Laguna segmented DFlash smoke PASS`.
+
+The API server logs an `EngineDeadError` only after the harness deliberately
+sends `SIGINT` for teardown, after both requests and the PASS artifact already
+exist. It is shutdown noise, not an inference failure. This smoke authorizes
+the single preregistered formal cold endpoint leg. No performance conclusion is
+drawn from the smoke.
