@@ -57,12 +57,15 @@ out of scope.
    physical-transposed-scale corpus for W13 and W2. Compare selector off and on
    from the same candidate DSO. Require `6/6` raw-BF16 equality, 200 warmups per
    shape, 15 samples of 40 launches, no shape regression greater than 1%, and
-   at least `3.0%` improvement in the summed stable W13+W2 median. A smaller
+   at least `5.0%` improvement in the summed stable W13+W2 median. That is the
+   approximate standalone grouped-GEMM improvement required to cover the
+   current 130-tok/s cycle gap. A smaller
    result stops before model integration.
-3. **Portfolio accounting.** A component pass may be combined in a separately
-   preregistered endpoint portfolio with the previously measured independent
-   exact M12 router component (`~0.499 ms/cycle`) only after source/dataflow
-   overlap is ruled out. The component result alone authorizes no endpoint.
+3. **No router double-counting.** The protected `125.461973` record already
+   enables both exact M12 router flags and the persistent DFlash context-KV
+   workspace. Their earlier `~0.499 ms/cycle` component saving is already in
+   the baseline and cannot be added to this candidate by projection. The
+   grouped-GEMM component result alone authorizes no endpoint.
 4. **Endpoint safety.** Any later smoke must retain the protected model and
    draft revisions, BF16 KV, width 12/depth 11, canonical q1 teacher, fixed
    prompt construction, cache-zero policy, one active generation, 146/145

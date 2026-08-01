@@ -69,16 +69,17 @@ and [M12 shared elementwise](2026-07-31-shared-elementwise-m12-record.md).
 - The BF16 router plus persistent DFlash context-KV workspace improved a
   matched endpoint from `98.955285` to `99.720152 tok/s` (`+0.7729%`) without
   changing acceptance. It removed FP32 router overhead and repeated workspace
-  allocation/layout work, but missed its promotion floor. Reuse the mechanism,
-  not the old score.
+  allocation/layout work, but missed its promotion floor at that time. The
+  router and workspace flags are **already enabled in the current 125.462
+  record**, so their saving cannot be added again to a new candidate.
 - Native M12 BF16 QKV/O reached `123.126671 tok/s`, `+0.2427%` over its valid
   control, but was below noise and not promoted despite a much larger eager
   component saving. This warns that primitive-dispatch wins can disappear in
   Breakable replay.
 - Exact M12 router fusion saved about `0.499 ms` over 47 layers but missed its
-  `0.60 ms` standalone integration floor. It remains useful only as a
-  preregistered, non-overlapping portfolio member—not as an independently
-  proven endpoint win.
+  old `0.60 ms` standalone floor. It was later retained in the valid
+  router/workspace stack and is part of the protected record identity. Treat
+  it as harvested headroom, not a future portfolio member.
 - The mapped gather-scale-add component was exact and `1.625x` faster, but its
   projected `0.262 ms/cycle` saving missed the `0.30 ms` floor. Stopping before
   endpoint integration was a research victory.
@@ -190,9 +191,10 @@ Rank candidates by expected **absolute full-cycle saving**, not novelty:
 2. A complete repeated boundary that can be absorbed without changing live
    dataflow. Do not retry fixed-address gather variants until first-divergent-
    tensor tracing explains the model-specific cross-request failure.
-3. A preregistered portfolio of independent exact savings. The proven
-   `0.499 ms` M12 router component becomes interesting only beside a genuinely
-   non-overlapping mechanism large enough to clear the full-cycle floor.
+3. A preregistered portfolio of genuinely new independent exact savings. Audit
+   the complete current selector stack first: the M12 router and persistent
+   context-KV workspace are already enabled and must not receive duplicate
+   projected credit.
 4. Persistent storage only where replay-time traces show allocation, copy, or
    layout churn. Do not optimize Python work already amortized by capture.
 5. Prefill as a separate lane after decode. Max-batched-token direction is
