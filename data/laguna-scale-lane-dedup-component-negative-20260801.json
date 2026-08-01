@@ -1,0 +1,68 @@
+{
+  "date": "2026-08-01",
+  "status": "closed_exact_performance_neutral",
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "candidate": {
+    "source_tree": "/home/steve/src/laguna-xpu-kernels-scale-lane-dedup-20260801",
+    "source_head": "1ed3b0b7482376fede57ec36726eacc9f6faa6d3",
+    "branch": "experiment/laguna-scale-lane-dedup-20260801",
+    "dso": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scale-lane-dedup-build-1ed3b0b-20260801T1515Z/libgrouped_gemm_xe_2.so",
+    "dso_sha256": "97a1c40115ece18ff4b9cd949f0d0c3c92b7a3d008aa7548fe0b695575be1357"
+  },
+  "static_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-scale-lane-dedup-candidate-20260801T1505Z",
+    "control_instructions": 396,
+    "candidate_instructions": 382,
+    "control_scale_loads": 3,
+    "candidate_scale_loads": 2,
+    "control_sync_allrd": 6,
+    "candidate_sync_allrd": 0,
+    "bf16_scale_multiplies_both": 32,
+    "dpas_both": 2,
+    "grf_mode_both": 128
+  },
+  "build": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scale-lane-dedup-build-1ed3b0b-20260801T1515Z",
+    "compiler": "Intel oneAPI DPC++ 2025.3.3",
+    "elapsed_seconds": 1072.68,
+    "max_rss_kib": 106818360,
+    "swaps": 0
+  },
+  "component_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scale-lane-dedup-component-1ed3b0b-20260801T1545Z",
+    "protocol": {
+      "warmup_launches": 200,
+      "timing_samples": 15,
+      "launches_per_sample": 40
+    },
+    "exact": 6,
+    "total": 6,
+    "control_sum_ms": 0.5042513750000001,
+    "candidate_sum_ms": 0.50362645,
+    "summed_speedup": 1.001240850237314,
+    "promotion_threshold": 1.03,
+    "cases": [
+      {
+        "name": "w13",
+        "control_median_ms": 0.320789625,
+        "candidate_median_ms": 0.320685175,
+        "speedup": 1.0003257088513682,
+        "raw_bf16_exact": "3/3"
+      },
+      {
+        "name": "w2",
+        "control_median_ms": 0.18346175,
+        "candidate_median_ms": 0.182941275,
+        "speedup": 1.0028450386606305,
+        "raw_bf16_exact": "3/3"
+      }
+    ]
+  },
+  "endpoint_run_performed": false,
+  "recovery_action_performed": false,
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-scale-lane-dedup-exact-neutral-1ed3b0b-20260801.bundle",
+    "sha256": "46e70f98c009861d51468e346fef789aed75602b6117bddb36b809baaeecd94c"
+  },
+  "conclusion": "Exact lane dedup removes static scale-path work but is performance-neutral at real W13/W2 shapes."
+}

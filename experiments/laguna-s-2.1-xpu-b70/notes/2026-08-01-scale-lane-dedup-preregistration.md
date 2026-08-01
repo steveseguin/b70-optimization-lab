@@ -2,7 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **static ISA gate passed; isolated production build in progress.**
+Status: **closed at the component gate; exact but performance-neutral.**
 
 ## Motivation
 
@@ -87,3 +87,46 @@ preregistered eight-instruction threshold by six additional instructions,
 removes one scale load, and preserves the arithmetic/DPAS topology. This
 authorizes the isolated production build and component correctness gate; it is
 not yet a performance or correctness result.
+
+## Production build and component result
+
+The isolated grouped-GEMM DSO built successfully from full source commit
+`1ed3b0b7482376fede57ec36726eacc9f6faa6d3` with oneAPI 2025.3. The grouped
+target took 17:52.68, peaked at 106,818,360 KiB RSS, and recorded zero swaps.
+The frozen DSO is:
+
+- path:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scale-lane-dedup-build-1ed3b0b-20260801T1515Z/libgrouped_gemm_xe_2.so`;
+- SHA-256:
+  `97a1c40115ece18ff4b9cd949f0d0c3c92b7a3d008aa7548fe0b695575be1357`;
+- runtime ABI: oneAPI 2025.3 `libsycl.so.8` and `libintlc.so.5` with no
+  unresolved dependency under the frozen component environment.
+
+The component gate compared selector-off and selector-on from that same ELF,
+used distinct random BF16 scales per column, three changed BF16 activation
+inputs per shape, 200 warmups, and 15 samples of 40 launches on one healthy
+B70. Artifact:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scale-lane-dedup-component-1ed3b0b-20260801T1545Z`.
+
+| shape | control | lane dedup | speedup | raw BF16 exact |
+|---|---:|---:|---:|---:|
+| W13, `M=120 N=2048 K=3072` | 0.320790 ms | 0.320685 ms | 1.000326x | 3/3 |
+| W2, `M=120 N=3072 K=1024` | 0.183462 ms | 0.182941 ms | 1.002845x | 3/3 |
+| summed | 0.504251 ms | 0.503626 ms | **1.001241x** | **6/6** |
+
+The candidate is bitwise exact, proving the lane mapping and vISA regioning.
+Its 0.124% summed gain is far below the preregistered 3% component threshold
+and cannot credibly close the 3.62% endpoint gap. No model service, endpoint
+score, reset, or reboot followed.
+
+Reusable conclusion: eliminating one scale load, six dependency synchronizes,
+and fourteen native instructions from this kernel is nearly invisible at the
+real W13/W2 shapes. Further small instruction-count changes in the same
+dequantize/scale prologue should be statically screened but not promoted unless
+they alter a genuinely limiting resource such as DPAS issue, occupancy, or the
+number of full memory transactions.
+
+The source branch is preserved as
+`patches/laguna-s-2.1-xpu-b70/xpu-laguna-scale-lane-dedup-exact-neutral-1ed3b0b-20260801.bundle`
+with SHA-256
+`46e70f98c009861d51468e346fef789aed75602b6117bddb36b809baaeecd94c`.
