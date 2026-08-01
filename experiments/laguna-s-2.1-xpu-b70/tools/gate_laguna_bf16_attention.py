@@ -64,9 +64,7 @@ def main() -> None:
 
     torch.xpu.set_device(0)
     selected = (
-        {args.counter_only: CASES[args.counter_only]}
-        if args.counter_only
-        else CASES
+        {args.counter_only: CASES[args.counter_only]} if args.counter_only else CASES
     )
     results: dict[str, object] = {}
     exact = 0
@@ -74,9 +72,7 @@ def main() -> None:
 
     for case_index, (name, (k_dim, n_dim, splits)) in enumerate(selected.items()):
         torch.manual_seed(72100 + args.rank * 1000 + case_index)
-        rows = torch.randn(
-            (args.rows, k_dim), dtype=torch.bfloat16, device="xpu"
-        )
+        rows = torch.randn((args.rows, k_dim), dtype=torch.bfloat16, device="xpu")
         weight = torch.randn((n_dim, k_dim), dtype=torch.bfloat16, device="xpu")
 
         if args.counter_only:
@@ -98,12 +94,8 @@ def main() -> None:
         case_exact = 0
         hashes = []
         for epoch in range(args.epochs):
-            torch.manual_seed(
-                72100 + args.rank * 1000 + case_index * 100 + epoch
-            )
-            rows = torch.randn(
-                (args.rows, k_dim), dtype=torch.bfloat16, device="xpu"
-            )
+            torch.manual_seed(72100 + args.rank * 1000 + case_index * 100 + epoch)
+            rows = torch.randn((args.rows, k_dim), dtype=torch.bfloat16, device="xpu")
             weight = torch.randn((n_dim, k_dim), dtype=torch.bfloat16, device="xpu")
             baseline = record_bmm(rows, weight)
             candidate = candidate_mm(rows, weight)
