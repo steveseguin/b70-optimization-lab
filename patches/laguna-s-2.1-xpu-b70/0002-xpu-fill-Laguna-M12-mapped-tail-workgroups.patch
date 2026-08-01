@@ -1,0 +1,41 @@
+From 4174a071690fc164823c90d29f29c8b98dae423a Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 09:25:13 -0400
+Subject: [PATCH] xpu: fill Laguna M12 mapped tail workgroups
+
+---
+ csrc/moe/moe_gather.cpp                                 | 4 ++--
+ tests/test_laguna_m12_mapped_gather_scale_add_static.py | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/csrc/moe/moe_gather.cpp b/csrc/moe/moe_gather.cpp
+index 8a349a2..43b430d 100644
+--- a/csrc/moe/moe_gather.cpp
++++ b/csrc/moe/moe_gather.cpp
+@@ -430,9 +430,9 @@ class LagunaM12MappedGatherScaleAdd {
+   static constexpr int NumTokens = 12;
+   static constexpr int TopK = 10;
+   static constexpr int HiddenSize = 3072;
+-  static constexpr int GroupWorkItem = 256;
++  static constexpr int GroupWorkItem = 192;
+   static constexpr int WARP_SIZE = 32;
+-  static constexpr int ElemsPerItem = 8;
++  static constexpr int ElemsPerItem = 16;
+   static constexpr int Stride = GroupWorkItem * ElemsPerItem;
+ 
+   LagunaM12MappedGatherScaleAdd(
+diff --git a/tests/test_laguna_m12_mapped_gather_scale_add_static.py b/tests/test_laguna_m12_mapped_gather_scale_add_static.py
+index ccc4ee9..e18c4b4 100644
+--- a/tests/test_laguna_m12_mapped_gather_scale_add_static.py
++++ b/tests/test_laguna_m12_mapped_gather_scale_add_static.py
+@@ -24,8 +24,8 @@ def test_exact_fixed_geometry_and_mapped_slot_order() -> None:
+         "static constexpr int NumTokens = 12;",
+         "static constexpr int TopK = 10;",
+         "static constexpr int HiddenSize = 3072;",
+-        "static constexpr int GroupWorkItem = 256;",
+-        "static constexpr int ElemsPerItem = 8;",
++        "static constexpr int GroupWorkItem = 192;",
++        "static constexpr int ElemsPerItem = 16;",
+         "moe_ids[i] = unpermuted_row_to_permuted_row[slot];",
+         "scores[i] = topk_weights[slot];",
+         "for (int k = 0; k < TopK; ++k)",

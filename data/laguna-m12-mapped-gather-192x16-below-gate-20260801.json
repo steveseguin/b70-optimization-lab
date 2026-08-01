@@ -1,0 +1,35 @@
+{
+  "status": "closed_exact_component_positive_below_absolute_gate",
+  "date": "2026-08-01",
+  "candidate_source_head": "4174a071690fc164823c90d29f29c8b98dae423a",
+  "candidate_moe_sha256": "6c23b5b03cc489c58b3c0d3693777808827cfce44cf5ea40596023c3701c5c88",
+  "raw_summary": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/m12-mapped-gather-192x16-component-4174a07-20260801T094000Z/summary.json",
+  "geometry": {
+    "workgroup_size": 192,
+    "elements_per_item": 16,
+    "row_passes": 1,
+    "spill_warning": false
+  },
+  "protocol": {
+    "device": "Intel Arc Pro B70 rank 0",
+    "warmups_per_arm": 200,
+    "samples_per_arm": 15,
+    "launches_per_sample": 40,
+    "alternating_order": true,
+    "speedup_threshold": 1.10,
+    "cycle_saving_threshold_ms": 0.30
+  },
+  "correctness": {
+    "raw_bf16_exact": 6,
+    "raw_bf16_total": 6,
+    "inputs_immutable": true,
+    "remote_minus_one_routes_tested": true
+  },
+  "timing_ms": {
+    "control_median": 0.0131807,
+    "candidate_median": 0.0079872,
+    "speedup": 1.650228,
+    "extrapolated_48_layer_saving": 0.249288
+  },
+  "decision": "Stop before integration. Geometry improved the fused op but the first valid matched leg remained below the unchanged absolute gate."
+}

@@ -281,3 +281,13 @@ preregistered `0.30 ms/cycle` threshold. The complete source history is in
 `xpu-laguna-m12-mapped-gather-below-gate-defec37-20260801.bundle`; the source
 delta is `0001-xpu-fuse-exact-Laguna-M12-mapped-MoE-tail.patch`. See the
 [closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-m12-mapped-gather-scale-add-preregistration.md).
+
+The follow-up M12 mapped-tail 192x16 geometry is also exact and
+component-positive below the absolute gate. It filled all work-items in one
+3,072-element pass and accelerated the fused op itself, but the first valid
+matched leg projected only `0.249288 ms/cycle` saving. It was not integrated
+or rerun. The complete branch is in
+`xpu-laguna-m12-mapped-gather-192x16-rejected-4174a07-20260801.bundle`; the
+incremental delta is
+`0002-xpu-fill-Laguna-M12-mapped-tail-workgroups.patch`. See the
+[closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-m12-mapped-gather-192x16-preregistration.md).

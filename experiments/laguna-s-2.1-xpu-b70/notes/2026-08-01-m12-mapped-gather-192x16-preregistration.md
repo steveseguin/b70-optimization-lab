@@ -2,7 +2,9 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: preregistered before source change, build, or device execution.
+Status: **closed exact component-positive below the absolute gate**. The
+192x16 kernel was exact 6/6 and `1.650228x` faster than its matched control,
+but the extrapolated `0.249288 ms/cycle` saving missed `0.30 ms/cycle`.
 
 ## Measured premise
 
@@ -45,3 +47,40 @@ No arithmetic, model, INT4 weight, BF16 scale, BF16 KV, width/depth,
 verification, sampling, prompt, teacher, cache, metric, retry, graph/scoring
 window, or benchmark identity may change. No reboot, reset, FLR, driver
 reload, or privileged recovery is authorized.
+
+## Result
+
+Candidate source is
+`4174a071690fc164823c90d29f29c8b98dae423a`. The sealed `_moe_C.abi3.so`
+has SHA-256
+`6c23b5b03cc489c58b3c0d3693777808827cfce44cf5ea40596023c3701c5c88`
+under
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/m12-mapped-gather-192x16-4174a07/package`.
+The incremental build completed in 47.88 seconds with 1,113,716 KiB maximum
+RSS and zero swaps. It emitted only the same unrelated TopKGating spill
+warnings as the parent build; the treatment emitted no spill warning.
+
+The unchanged component gate passed all six raw-BF16 comparisons, including
+remote `-1` maps before and after timing, and all inputs remained immutable:
+
+| scope | median |
+| --- | ---: |
+| generic mapped gather + M12 scale/add | 0.013180700 ms |
+| fused 192x16 mapped gather/scale/add | 0.007987200 ms |
+| component speedup | **1.650228x** |
+| extrapolated 48-layer saving | **0.249288 ms/cycle** |
+
+The 192x16 treatment made the fused kernel 8.53% faster than the preceding
+256x8 candidate, but its matched control was also faster in this first valid
+leg. Net saving missed the unchanged absolute gate by `0.050712 ms/cycle`.
+The first result stands; there was no retry, integration, topology smoke,
+model run, or LocalMaxxing action.
+
+This closes geometry-only tuning of the exact mapped gather fusion for
+endpoint use. Both tested geometries are exact and strongly faster relatively,
+but the whole tail is too small to satisfy the conservative absolute gate.
+Do not rerun for favorable noise or integrate by relaxing that gate. A future
+tail treatment must remove additional real work beyond this same boundary.
+
+Raw result:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/m12-mapped-gather-192x16-component-4174a07-20260801T094000Z/summary.json`.
