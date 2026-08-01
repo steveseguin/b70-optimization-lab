@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-01",
+  "status": "closed_static_regression",
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "candidate": {
+    "source_tree": "/home/steve/src/laguna-xpu-kernels-bf16-scale-operand-20260801",
+    "source_head": "62fea48",
+    "branch": "experiment/laguna-bf16-scale-operand-20260801"
+  },
+  "static_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-bf16-scale-operand-candidate2-20260801T1557Z",
+    "grf_mode": 128,
+    "control_instructions": 370,
+    "candidate_instructions": 378,
+    "control_word_moves": 0,
+    "candidate_word_moves": 2,
+    "bf16_scale_multiplies_both": 32,
+    "dpas_both": 2
+  },
+  "production_build_performed": false,
+  "gpu_run_performed": false,
+  "endpoint_run_performed": false,
+  "recovery_action_performed": false,
+  "source_bundle": {
+    "path": "patches/laguna-s-2.1-xpu-b70/xpu-laguna-bf16-scale-operand-static-negative-62fea48-20260801.bundle",
+    "sha256": "e47b98f834e97b196982c7b8a93d47c206e3992e1d118b10be563c1c2c2fabdb"
+  },
+  "conclusion": "BF16 scale operands add marshalling and eight native instructions versus exact FP32 widening on BMG."
+}

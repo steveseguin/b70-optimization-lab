@@ -2,7 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered; static ISA screen only.**
+Status: **closed at the static ISA gate; treatment is worse.**
 
 ## Motivation
 
@@ -68,3 +68,35 @@ them away.
 No target/draft/KV precision change, prompt or teacher change, warmed score,
 retry selection, metric substitution, reset, reboot, driver reload, or other
 recovery action is authorized by this screen.
+
+## Result
+
+The isolated probe was implemented on branch
+`experiment/laguna-bf16-scale-operand-20260801` at commit
+`62fea48`. It kept each checkpoint scale as BF16 in `scales[]` and changed only
+the paired multiply's scale source type from FP32 to BF16. Artifact:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-bf16-scale-operand-candidate2-20260801T1557Z`.
+
+| Final BMG metric | FP32-widened control | BF16 operand |
+|---|---:|---:|
+| instructions | **370** | 378 |
+| BF16 scale multiplies | 32 | 32 |
+| DPAS | 2 | 2 |
+| word moves | **0** | 2 |
+| configured GRFs | 128 | 128 |
+
+The narrower representation adds eight final instructions and two word moves;
+it does not reduce multiply or DPAS issue. It therefore fails the requirement
+to remove at least eight instructions or materially reduce register use. No
+production extension build, GPU component, model service, endpoint score,
+reset, or reboot followed.
+
+Reusable conclusion: on BMG, merely narrowing an inline-asm scale operand from
+FP32 to BF16 introduces marshalling rather than eliminating it. Checkpoint
+storage precision does not imply the same type is cheaper in the vector
+register interface.
+
+The negative source is preserved as
+`patches/laguna-s-2.1-xpu-b70/xpu-laguna-bf16-scale-operand-static-negative-62fea48-20260801.bundle`
+with SHA-256
+`e47b98f834e97b196982c7b8a93d47c206e3992e1d118b10be563c1c2c2fabdb`.
