@@ -1,0 +1,219 @@
+From efe33d2d3434dee15e240e86b0f89a72349b5572 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 07:02:33 -0400
+Subject: [PATCH] Map persistent Laguna MoE work from a compact worklist
+
+---
+ .../grouped_gemm/xe_2/grouped_gemm_xe2.hpp    | 52 +++++++++---
+ .../xe_2/grouped_gemm_xe2_interface.hpp       | 81 ++++++++++++++++++-
+ 2 files changed, 120 insertions(+), 13 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index a809b26..80a430d 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -125,6 +125,7 @@ template <
+     bool TransposedScales = false,
+     bool DirectSchedule = false,
+     bool DirectOffsets = false,
++    bool PersistentWorklist = false,
+     class TiledMMA,
+     typename ElementA,
+     typename ElementB,
+@@ -156,6 +157,9 @@ CUTE_DEVICE void MoEGEMM(
+   static constexpr bool is_B_mxfp4 = (std::is_same_v<ElementB, uint8_t>) &&
+                                      (std::is_same_v<ElementS, uint8_t>);
+   static constexpr bool is_B_4bits = std::is_same_v<ElementB, uint8_t>;
++  static_assert(
++      !(PersistentWorklist && (DirectSchedule || DirectOffsets)),
++      "persistent worklist is mutually exclusive with direct schedulers");
+ 
+   auto item = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+   auto wg_tile = mma.tile_mnk();
+@@ -188,13 +192,36 @@ CUTE_DEVICE void MoEGEMM(
+           .get());
+ 
+   for (int i = DirectOffsets ? direct_expert_id : 0; i < num_experts; ++i) {
+-    int gemm_m = DirectOffsets
+-        ? rows_per_expert[i + 1] - rows_per_expert[i]
+-        : rows_per_expert[i];
+-    int cumsum_rows_for_experts =
+-        DirectOffsets ? rows_per_expert[i + 1] : pre_rows + gemm_m;
+-    int cumsum_tiles_for_experts =
+-        (gemm_m + wg_tile_m - 1) / wg_tile_m + pre_tiles;
++    int expert_id = i;
++    int gemm_m;
++    int cumsum_rows_for_experts;
++    int cumsum_tiles_for_experts;
++
++    if constexpr (PersistentWorklist) {
++      const int total_m_tiles = rows_per_expert[0];
++      if (group_m_id >= total_m_tiles) return;
++
++      // Compact metadata maps the persistent scheduler's global M-tile id to
++      // the expert-local tile without scanning all preceding experts:
++      //   [total_m_tiles,
++      //    expert_id, packed_row_offset, expert_rows, expert_m_tile, ...]
++      const int entry = 1 + 4 * group_m_id;
++      expert_id = rows_per_expert[entry];
++      pre_rows = rows_per_expert[entry + 1];
++      gemm_m = rows_per_expert[entry + 2];
++      const int expert_m_tile = rows_per_expert[entry + 3];
++      pre_tiles = group_m_id - expert_m_tile;
++      cumsum_rows_for_experts = pre_rows + gemm_m;
++      cumsum_tiles_for_experts = group_m_id + 1;
++    } else {
++      gemm_m = DirectOffsets
++          ? rows_per_expert[i + 1] - rows_per_expert[i]
++          : rows_per_expert[i];
++      cumsum_rows_for_experts =
++          DirectOffsets ? rows_per_expert[i + 1] : pre_rows + gemm_m;
++      cumsum_tiles_for_experts =
++          (gemm_m + wg_tile_m - 1) / wg_tile_m + pre_tiles;
++    }
+ 
+     if constexpr (DirectSchedule) {
+       if constexpr (DirectOffsets) {
+@@ -216,7 +243,6 @@ CUTE_DEVICE void MoEGEMM(
+       continue;
+     }
+ 
+-    int expert_id = i;
+     int64_t B_offset = static_cast<int64_t>(expert_id) *
+                        static_cast<int64_t>(gemm_n) *
+                        static_cast<int64_t>(gemm_k);
+@@ -351,8 +377,14 @@ CUTE_DEVICE void MoEGEMM(
+         group_m_id = (group_id * wg_tile_n) / gemm_n_pad;
+       }
+     }
+-    pre_rows = cumsum_rows_for_experts;
+-    pre_tiles = cumsum_tiles_for_experts;
++    if constexpr (PersistentWorklist) {
++      // The atomic scheduler has advanced to a new global M tile. Re-enter
++      // with i == 0 and decode its compact metadata entry.
++      i = -1;
++    } else {
++      pre_rows = cumsum_rows_for_experts;
++      pre_tiles = cumsum_tiles_for_experts;
++    }
+   }
+ }
+ 
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 95c4be4..e296f9c 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -89,6 +89,9 @@ class GemmCuteGrf128DirectSchedulerName;
+ template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteGrf128DirectOffsetsName;
+ 
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128PersistentWorklistName;
++
+ template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+@@ -331,6 +334,26 @@ inline bool laguna_int4_decode_direct_offsets() {
+   return enabled;
+ }
+ 
++// Preserve the incumbent persistent atomic scheduler while replacing its
++// repeated expert-count scan with a compact global-M-tile worklist.
++inline bool laguna_int4_decode_persistent_worklist() {
++  static const bool enabled = [] {
++    const char* value =
++        std::getenv("VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST must be literal 0 or 1, "
++        "got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
+ // Range gate for the INT4 dequantize-scale fusion.
+ //
+ // The fused form evaluates `x * s + (-136 * s)` where the incumbent evaluates
+@@ -476,9 +499,15 @@ void MoEGEMMLauncher(
+       use_transposed_scales && laguna_int4_decode_direct_scheduler();
+   const bool use_direct_offsets =
+       use_transposed_scales && laguna_int4_decode_direct_offsets();
++  const bool use_persistent_worklist =
++      use_transposed_scales && laguna_int4_decode_persistent_worklist();
+   TORCH_CHECK(
+-      !(use_direct_scheduler && use_direct_offsets),
+-      "direct scheduler and direct-offset scheduler are mutually exclusive");
++      static_cast<int>(use_direct_scheduler) +
++              static_cast<int>(use_direct_offsets) +
++              static_cast<int>(use_persistent_worklist) <=
++          1,
++      "direct scheduler, direct-offset scheduler, and persistent worklist "
++      "are mutually exclusive");
+ 
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+@@ -626,8 +655,54 @@ void MoEGEMMLauncher(
+               true,
+               false);
+         };
++    auto persistent_worklist_kernel = [=](auto) {
++          MoE::MoEGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              layoutA,
++              layoutB,
++              'R',
++              TileMajor,
++              true,
++              true,
++              false,
++              false,
++              true>(
++              activations,
++              weights,
++              scales,
++              bias,
++              outputs,
++              mma,
++              rows_per_expert,
++              num_experts,
++              group_size,
++              gemm_n,
++              gemm_k,
++              atomic_buffer,
++              local_mem,
++              false,
++              true,
++              false);
++        };
+     if constexpr (can_use_grf128) {
+-      if (use_direct_offsets) {
++      if (use_persistent_worklist) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128PersistentWorklistName<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_128,
++            persistent_worklist_kernel);
++      } else if (use_direct_offsets) {
+         syclex::properties kernel_props_128{
+             syclex::sub_group_size<16>, intelex::grf_size<128>};
+         cgh.parallel_for<GemmCuteGrf128DirectOffsetsName<
+-- 
+2.43.0
+

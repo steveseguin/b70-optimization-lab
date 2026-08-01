@@ -2,7 +2,7 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: preregistered before source change, build, or device execution.
+Status: **closed exact component negative; do not integrate or endpoint-run.**
 
 ## Why this is distinct
 
@@ -55,3 +55,48 @@ sampling, prompts, teacher, cache, metric, retry, warmup generation, graph
 capture window, or scoring window may change. No reboot, reset, FLR, driver
 reload, or privileged recovery is authorized.
 
+## Result
+
+The candidate source is kernel commit
+`efe33d2d3434dee15e240e86b0f89a72349b5572`. The sealed DSO is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/persistent-worklist-efe33d2/libgrouped_gemm_xe_2.so`
+with SHA-256
+`a18843906358204bbc891238389aba846f1a2db92dee57c810cb8b43f517526f`.
+The incremental production build completed in 16:51.92 with 106,995,696 KiB
+maximum RSS and zero swaps.
+
+Static BMG inspection found the intended separately named 128-GRF worklist
+kernel. It retained the incumbent persistent atomic/barrier markers and the
+exact arithmetic body of 2 DPAS and 32 BF16 multiplies. Final ISA was nearly
+identical: 677 instructions for the candidate and 679 for the transposed-scale
+control, with the same assembly spill/scratch marker counts. The probe's
+device compilation and all BMG builds succeeded, but its unused host
+executable then failed to link unresolved PyTorch symbols. The emitted device
+assembly remains valid static evidence; the linker failure is classified as
+probe plumbing, not a performance result.
+
+The frozen changed-input component gate used physical B70 rank 0, the same DSO
+for both arms, 200 warmups, 15 timing samples, and 40 launches per sample:
+
+| shape | persistent control | compact worklist | speedup |
+| --- | ---: | ---: | ---: |
+| W13 | 0.320965125 ms | 0.324983675 ms | 0.987635x |
+| W2 | 0.183557450 ms | 0.185832475 ms | 0.987758x |
+| sum | 0.504522575 ms | 0.510816150 ms | **0.987679x** |
+
+All six changed-input raw-BF16 comparisons were bitwise exact. Both shapes
+regressed, and the summed result missed the preregistered `1.05x` gate.
+Production remap worklist emission, model loading, and endpoint measurement
+therefore did not occur.
+
+The durable result is narrower than the fixed-grid negatives: preserving the
+persistent distributor is necessary, but its 64-count scan is not a useful
+latency target at these exact M12 shapes. Replacing that scan with four compact
+metadata loads removed only two final BMG instructions and made both real
+grouped-GEMM shapes about 1.2% slower. Do not retry fixed grids or this
+four-int persistent worklist. A future scheduler treatment needs a genuinely
+lower-cost task-acquisition representation demonstrated in final ISA before a
+production build.
+
+Raw result:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/persistent-worklist-component-efe33d2-20260801T080500Z/summary.json`.

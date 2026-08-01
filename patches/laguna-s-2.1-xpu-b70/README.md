@@ -234,3 +234,16 @@ source history is in
 single candidate delta is
 `0001-xpu-index-exact-laguna-moe-work-from-direct-offsets.patch`. See the
 [closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-direct-offset-moe-scheduler-preregistration.md).
+
+The persistent compact-worklist MoE scheduler snapshot is also an exact
+component negative, not a record source. Unlike the fixed-grid attempts, it
+retained the incumbent atomic/barrier work distributor and replaced only the
+64-count expert scan with four-int metadata entries. The named 128-GRF kernel
+was almost identical in final ISA (677 versus 679 instructions), and the 6/6
+exact component measured `0.987679x` the incumbent across W13+W2. It was
+stopped before remap integration or endpoint measurement. The complete source
+history is in
+`xpu-laguna-persistent-worklist-scheduler-rejected-efe33d2-20260801.bundle`;
+the candidate delta is
+`0001-xpu-map-persistent-laguna-moe-work-from-compact-worklist.patch`. See the
+[closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-persistent-worklist-moe-scheduler-preregistration.md).

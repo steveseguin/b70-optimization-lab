@@ -1,0 +1,42 @@
+{
+  "status": "closed_exact_component_negative",
+  "date": "2026-07-31",
+  "candidate_source_head": "efe33d2d3434dee15e240e86b0f89a72349b5572",
+  "candidate_so": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/persistent-worklist-efe33d2/libgrouped_gemm_xe_2.so",
+  "candidate_sha256": "a18843906358204bbc891238389aba846f1a2db92dee57c810cb8b43f517526f",
+  "raw_summary": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/persistent-worklist-component-efe33d2-20260801T080500Z/summary.json",
+  "selector": "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST",
+  "protocol": {
+    "device": "Intel Arc Pro B70 rank 0",
+    "warmup_launches": 200,
+    "timing_samples": 15,
+    "launches_per_sample": 40,
+    "performance_gate_speedup": 1.05
+  },
+  "correctness": {
+    "raw_bf16_exact": 6,
+    "raw_bf16_total": 6
+  },
+  "timing_ms": {
+    "w13_control": 0.320965125,
+    "w13_candidate": 0.324983675,
+    "w13_speedup": 0.9876346096461615,
+    "w2_control": 0.18355745,
+    "w2_candidate": 0.185832475,
+    "w2_speedup": 0.9877576564591308,
+    "control_sum": 0.504522575,
+    "candidate_sum": 0.51081615,
+    "summed_speedup": 0.9876793734888765
+  },
+  "static_bmg": {
+    "candidate_kernel": "GemmCuteGrf128PersistentWorklistName",
+    "grf": 128,
+    "candidate_instruction_count": 677,
+    "control_instruction_count": 679,
+    "dpas": 2,
+    "bf16_mul": 32,
+    "persistent_atomic_markers": 2,
+    "persistent_barrier_or_fence_markers": 9
+  },
+  "decision": "Stop before remap integration and endpoint measurement. Preserving persistent distribution while replacing the 64-count scan with a four-int worklist was exact but slower on both shapes."
+}
