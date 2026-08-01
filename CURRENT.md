@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-30**
+Last reviewed: **2026-07-31**
 
 ## Authority And Update Rule
 
@@ -159,19 +159,20 @@ source/binary identity, and clean pre/post idle checks. Inspect actual files
 and per-rank logs before accepting harness summaries, and never escalate
 hardware recovery from a probe that did not prove it executed.
 
-### Reopened BF16 frontier: exact 122.516 / conventional 121.291 (2026-07-31)
+### Reopened BF16 frontier: exact 124.069 / conventional 122.829 (2026-07-31)
 
-The BF16-KV lane has a newly confirmed exact GRF128 record, approved by
-LocalMaxxing as `cms905x22003spm01pwyvp3c9`.
+The BF16-KV lane has a newly confirmed exact transposed-scale record, approved
+by LocalMaxxing as `cms9osksu00b3pm010hf9bnk8`.
 Segmented DFlash captures stateless compute around unchanged eager collectives;
 the latest treatment additionally replaces the six eager draft-attention
 Python submissions with graph-safe attention subgraph replays.
 
-The decode-only GRF128 confirmation cold 13-prompt score measured:
+The current confirmation adds contiguous decode-transposed BF16 group scales
+to the decode-only GRF128 kernel. Its cold 13-prompt score measured:
 
-- **`122.51571815409562 tok/s`** under the historical published
+- **`124.06925062737271 tok/s`** under the historical published
   100-event/99-interval-span formula; and
-- **`121.29056097255466 tok/s`** under the current-policy conventional
+- **`122.828558121099 tok/s`** under the current-policy conventional
   99-inter-token-interval formula.
 
 It is 13/13 token-and-text exact against canonical q1, cache-zero on every row,
@@ -179,30 +180,31 @@ target 146/145 and draft 14/13 on all four ranks, and operationally clean:
 
 ```text
 /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
-  laguna-decode-grf128-confirm-20260731T0943Z
+  laguna-transposed-scales-confirm-20260801T010855Z
 ```
 
-An independent same-identity first leg measured `120.0863279502934 tok/s`
-conventional and also passed every gate. The confirmation beats the approved
-incumbent by `1.2215%`, so GRF128 is now promoted rather than classified as
-noise. LocalMaxxing approved the conventional result as
-`cms905x22003spm01pwyvp3c9`; the prior receipt
-`cms8f38fd00ftpf01mk0bwfql` is superseded.
+An independent same-identity first candidate measured `121.3837766716154
+tok/s` conventional and also passed every gate. A selector-off same-DSO
+control measured `118.80218367959617 tok/s`, so the first paired gain was
+`2.1730%`. The confirmation beats the preceding GRF128 record by `1.2680%`.
+LocalMaxxing approved the conventional result as
+`cms9osksu00b3pm010hf9bnk8`; the prior `cms905x22003spm01pwyvp3c9` receipt is
+superseded.
 
 Detailed preregistration, source identity, patch, smoke, score, and submission:
 [`2026-07-30-segmented-dflash-inline-attention-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-inline-attention-preregistration.md).
-The GRF128 static/component gates, source snapshots, and first endpoint result
-are linked from
-[`2026-07-31-decode-grf128-first-endpoint-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-first-endpoint-result.md).
+The transposed-scale static/component/integration gates, retained failure,
+source snapshots, control, and endpoint results are linked from
+[`2026-07-31-transposed-decode-scales-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-preregistration.md).
 The confirmed promotion is
-[`2026-07-31-decode-grf128-confirmed-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-decode-grf128-confirmed-record.md).
+[`2026-07-31-transposed-decode-scales-confirmed-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md).
 The underlying independently reproduced segmented result and its failed routes
 remain recorded in the adjacent 2026-07-30 notes. The current host completed
 the scored run and strict teardown/idle gates; no recovery action is pending.
 
-### Active calibrated-FP8-KV lane (2026-07-27)
+### Paused calibrated-FP8-KV lane (2026-07-27)
 
-The BF16 result above is sealed. New Laguna work is isolated under
+This separately labeled Laguna work is isolated under
 [`experiments/laguna-s-2.1-fp8-kv-xpu-b70/`](experiments/laguna-s-2.1-fp8-kv-xpu-b70/)
 and uses the checkpoint-native calibrated E4M3 FP8 KV format. This is a new
 quality and performance lane; it must never use the BF16 q1 hashes as an
@@ -240,14 +242,16 @@ measured `95.019301665` and `95.818681878 tok/s` conventionally and retained
 145/144 graph topology on every rank. A native page-32 attention binary is
 built and component-tested but not endpoint-measured.
 
-The host is currently blocked by an executed and classified four-rank
-collective failure. A restored page-64 model control stalled at the same XCCL
+This historical lane ended at an executed and classified four-rank collective
+failure. A restored page-64 model control stalled at the same XCCL
 initialization boundary as the page-32 candidate; the single corrected minimal
 probe then showed all four ranks entering `all_reduce`, zero completing, and
 `PROBE_RESULT=COLLECTIVE_STAGE_FAILURE clean_teardowns=0/4`. No reset, driver
-reload, shared-memory deletion, or repeat probe followed. The next action is a
-clean reboot, followed by strict per-device checks and exactly one corrected
-probe requiring `PASS clean_teardowns=4/4`. Evidence and resume order:
+reload, shared-memory deletion, or repeat probe followed. A later clean reboot
+and corrected four-rank probe restored and proved host health before the BF16
+work above; no recovery is now pending. FP8 KV remains paused because its
+verified `95.818681878 tok/s` frontier is materially slower than BF16. Evidence
+and historical resume order:
 [`2026-07-27-replicated-embedding-page32-and-xccl-boundary.md`](experiments/laguna-s-2.1-fp8-kv-xpu-b70/notes/2026-07-27-replicated-embedding-page32-and-xccl-boundary.md).
 
 ### Historical Bring-Up Detail

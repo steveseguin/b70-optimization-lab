@@ -1,0 +1,70 @@
+{
+  "schema": "laguna-confirmed-record-v1",
+  "status": "verified-exact-record",
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "kv_cache_dtype": "bfloat16",
+  "layout": "TP4+EP4, one active generation",
+  "verifier_width": 12,
+  "draft_depth": 11,
+  "record": {
+    "historical_100_event_metric_tok_s": 124.06925062737271,
+    "conventional_99_interval_metric_tok_s": 122.828558121099,
+    "conventional_p10_tok_s": 84.88609915588175,
+    "conventional_mean_tok_s": 141.95163927349464,
+    "full_after_ttft_median_tok_s": 162.99819470201743,
+    "wall_median_tok_s": 56.004046913693884,
+    "ttft_median_ms": 5852.6640700001735,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "target_topology": "146/145 on 4/4 ranks",
+    "draft_topology": "14/13 on 4/4 ranks",
+    "pre_idle_seconds": 73,
+    "post_idle_seconds": 72
+  },
+  "supporting_leg": {
+    "historical_100_event_metric_tok_s": 122.60987542587414,
+    "conventional_99_interval_metric_tok_s": 121.3837766716154,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-candidate-20260801T005945Z"
+  },
+  "paired_control": {
+    "historical_100_event_metric_tok_s": 120.00220573696582,
+    "conventional_99_interval_metric_tok_s": 118.80218367959617,
+    "paired_candidate_speedup_percent": 2.1730181315367636,
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-control-20260801T005044Z"
+  },
+  "prior_record": {
+    "conventional_99_interval_metric_tok_s": 121.29056097255466,
+    "record_improvement_percent": 1.2680270716963316,
+    "lower_candidate_improvement_percent": 0.07685321785413368
+  },
+  "identity": {
+    "vllm_commit": "34b43849fc7c8ff8633f223469cc2a0d525c256e",
+    "kernel_commit": "8dd94f2307db3b830fe07f212c4b36f719652a5c",
+    "grouped_gemm_dso_sha256": "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839",
+    "runtime_lock_sha256": "5993828ee79c2ff5239e5a30ecd9e1f72acb62537cdb291fada7080d21354f5f",
+    "selectors": [
+      "VLLM_XPU_LAGUNA_DECODE_GRF128=1",
+      "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1"
+    ]
+  },
+  "artifacts": {
+    "record_run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-confirm-20260801T010855Z",
+    "note": "experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md",
+    "patch": "patches/laguna-s-2.1-xpu-b70/0001-laguna-transpose-exact-width12-decode-scales.patch",
+    "bundle": "patches/laguna-s-2.1-xpu-b70/vllm-xpu-kernels-laguna-transposed-scales-8dd94f2-20260731.bundle",
+    "preserved_dso": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-build-2f0b061-20260731T152719Z/libgrouped_gemm_xe_2.so"
+  },
+  "localmaxxing": {
+    "eligible": true,
+    "submitted": true,
+    "id": "cms9osksu00b3pm010hf9bnk8",
+    "status": "APPROVED"
+  }
+}

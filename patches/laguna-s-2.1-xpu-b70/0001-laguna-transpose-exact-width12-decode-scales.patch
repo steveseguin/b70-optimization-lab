@@ -1,0 +1,724 @@
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 7520bca..30c7118 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -608,6 +608,10 @@ template <
+     // saturated BF16 float pipe. Compile-time switch so the incumbent
+     // instantiation keeps its exact code, and composable with `ScaleVec`.
+     bool DequantMad = false,
++    // Decode-only scale layout. The checkpoint stores [N,K/GroupSize], which
++    // makes one K group's N scales strided. A load-time transpose stores
++    // [K/GroupSize,N], so the identical BF16 values are contiguous here.
++    bool TransposedScales = false,
+     class ATensor,
+     class BTensor,
+     class DTensor,
+@@ -705,6 +709,9 @@ CUTE_DEVICE void xe_gemm_4bits(
+   static_assert(
+       !TileMajor || (tile_n == 64 && tile_k == 32 && group_size == 32),
+       "tile-major MXFP4 staging requires an N64/K32/group32 policy");
++  static_assert(
++      !TransposedScales || (!TileMajor && group_size == 32),
++      "transposed INT4 scales require non-tile-major group32");
+ 
+   static constexpr auto SG_M = tile_m / ATOM_M;  // BLK_M / ATOM_M;
+   static constexpr auto SG_N = tile_n / ATOM_N;  // BLK_N / ATOM_N;
+@@ -847,32 +854,48 @@ CUTE_DEVICE void xe_gemm_4bits(
+     }
+ 
+     if (k_tile_prefetch * group_size < shape<1>(A)) {
+-      const ElementS* scale_base;
+-      int scale_stride;
+-      if constexpr (TileMajor) {
+-        constexpr int32_t weight_bytes = 64 * 32 / 2;
+-        constexpr int32_t record_bytes = weight_bytes + 64;
+-        scale_base = reinterpret_cast<const ElementS*>(
+-            tile_records +
+-            (wg_n * group_num + k_tile_prefetch) * record_bytes +
+-            weight_bytes + n_sg_start);
+-        scale_stride = 1;
++      if constexpr (TransposedScales) {
++        const ElementS* scale_base = Scales +
++            k_tile_prefetch * shape<0>(B) + n_tile_start + n_sg_start;
++        auto next_scales_tensor = make_tensor(
++            make_gmem_ptr(scale_base),
++            make_layout(
++                make_shape(Int<1>{}, Int<SG_N>{}),
++                make_stride(shape<0>(B), Int<1>{})));
++        auto prefetch_scales = make_block_2d_prefetch<1>(
++            make_shape(Int<1>{}, Int<SG_N>{}), next_scales_tensor);
++        auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
++        auto pSgS = thr_prefetch_scales.partition_S(
++            make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
++        prefetch(prefetch_scales, pSgS(_, 0, 0));
+       } else {
+-        scale_base = Scales +
+-            (n_tile_start + n_sg_start) * group_num + k_tile_prefetch;
+-        scale_stride = group_num;
++        const ElementS* scale_base;
++        int scale_stride;
++        if constexpr (TileMajor) {
++          constexpr int32_t weight_bytes = 64 * 32 / 2;
++          constexpr int32_t record_bytes = weight_bytes + 64;
++          scale_base = reinterpret_cast<const ElementS*>(
++              tile_records +
++              (wg_n * group_num + k_tile_prefetch) * record_bytes +
++              weight_bytes + n_sg_start);
++          scale_stride = 1;
++        } else {
++          scale_base = Scales +
++              (n_tile_start + n_sg_start) * group_num + k_tile_prefetch;
++          scale_stride = group_num;
++        }
++        auto next_scales_tensor = make_tensor(
++            make_gmem_ptr(scale_base),
++            make_layout(
++                make_shape(Int<SG_N>{}, Int<1>{}),
++                make_stride(scale_stride, Int<1>{})));
++        auto prefetch_scales = make_block_2d_prefetch<1>(
++            make_shape(Int<SG_N>{}, Int<1>{}), next_scales_tensor);
++        auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
++        auto pSgS = thr_prefetch_scales.partition_S(
++            make_identity_tensor(make_shape(Int<SG_N>{}, Int<1>{})));
++        prefetch(prefetch_scales, pSgS(_, 0, 0));
+       }
+-      auto next_scales_tensor = make_tensor(
+-          make_gmem_ptr(scale_base),
+-          make_layout(
+-              make_shape(Int<SG_N>{}, Int<1>{}),
+-              make_stride(scale_stride, Int<1>{})));
+-      auto prefetch_scales = make_block_2d_prefetch<1>(
+-          make_shape(Int<SG_N>{}, Int<1>{}), next_scales_tensor);
+-      auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
+-      auto pSgS = thr_prefetch_scales.partition_S(
+-          make_identity_tensor(make_shape(Int<SG_N>{}, Int<1>{})));
+-      prefetch(prefetch_scales, pSgS(_, 0, 0));
+     }
+   }
+ 
+@@ -916,10 +939,17 @@ CUTE_DEVICE void xe_gemm_4bits(
+           int sg_local_n = sn * sg_local_range + sg_local_id;
+           float scale = 0.0f;
+           if constexpr (std::is_same_v<TB, int4_t>) {
+-            scale = static_cast<float>(
+-                Scales
+-                    [(n_tile_start + n_sg_start + sg_local_n) * group_num +
+-                     group_idx]);
++            if constexpr (TransposedScales) {
++              scale = static_cast<float>(
++                  Scales
++                      [group_idx * shape<0>(B) + n_tile_start + n_sg_start +
++                       sg_local_n]);
++            } else {
++              scale = static_cast<float>(
++                  Scales
++                      [(n_tile_start + n_sg_start + sg_local_n) * group_num +
++                       group_idx]);
++            }
+           } else if constexpr (std::is_same_v<TB, float_e2m1_t>) {
+             uint8_t scale_byte;
+             if constexpr (TileMajor) {
+@@ -948,9 +978,15 @@ CUTE_DEVICE void xe_gemm_4bits(
+             int sg_local_n = n * sg_local_range + real_idx;
+             scaleStoreType scale;
+             if constexpr (std::is_same_v<TB, int4_t>) {
+-              scale = Scales
+-                  [(n_tile_start + n_sg_start + sg_local_n) * group_num +
+-                   group_idx];
++              if constexpr (TransposedScales) {
++                scale = Scales
++                    [group_idx * shape<0>(B) + n_tile_start + n_sg_start +
++                     sg_local_n];
++              } else {
++                scale = Scales
++                    [(n_tile_start + n_sg_start + sg_local_n) * group_num +
++                     group_idx];
++              }
+             } else if constexpr (std::is_same_v<TB, float_e2m1_t>) {
+               uint8_t scale_byte;
+               if constexpr (TileMajor) {
+@@ -983,33 +1019,50 @@ CUTE_DEVICE void xe_gemm_4bits(
+       }
+ 
+       if ((group_idx + prefetch_dist) * group_size < shape<1>(A)) {
+-        const ElementS* scale_base;
+-        int scale_stride;
+-        if constexpr (TileMajor) {
+-          constexpr int32_t weight_bytes = 64 * 32 / 2;
+-          constexpr int32_t record_bytes = weight_bytes + 64;
+-          scale_base = reinterpret_cast<const ElementS*>(
+-              tile_records +
+-              (wg_n * group_num + group_idx + prefetch_dist) * record_bytes +
+-              weight_bytes + n_sg_start);
+-          scale_stride = 1;
++        if constexpr (TransposedScales) {
++          const ElementS* scale_base = Scales +
++              (group_idx + prefetch_dist) * shape<0>(B) + n_tile_start +
++              n_sg_start;
++          auto next_scales_tensor = make_tensor(
++              make_gmem_ptr(scale_base),
++              make_layout(
++                  make_shape(Int<1>{}, Int<SG_N>{}),
++                  make_stride(shape<0>(B), Int<1>{})));
++          auto prefetch_scales = make_block_2d_prefetch<1>(
++              make_shape(Int<1>{}, Int<SG_N>{}), next_scales_tensor);
++          auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
++          auto pSgS = thr_prefetch_scales.partition_S(
++              make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
++          prefetch(prefetch_scales, pSgS(_, 0, 0));
+         } else {
+-          scale_base = Scales +
+-              (n_tile_start + n_sg_start) * group_num + group_idx +
+-              prefetch_dist;
+-          scale_stride = group_num;
++          const ElementS* scale_base;
++          int scale_stride;
++          if constexpr (TileMajor) {
++            constexpr int32_t weight_bytes = 64 * 32 / 2;
++            constexpr int32_t record_bytes = weight_bytes + 64;
++            scale_base = reinterpret_cast<const ElementS*>(
++                tile_records +
++                (wg_n * group_num + group_idx + prefetch_dist) * record_bytes +
++                weight_bytes + n_sg_start);
++            scale_stride = 1;
++          } else {
++            scale_base = Scales +
++                (n_tile_start + n_sg_start) * group_num + group_idx +
++                prefetch_dist;
++            scale_stride = group_num;
++          }
++          auto next_scales_tensor = make_tensor(
++              make_gmem_ptr(scale_base),
++              make_layout(
++                  make_shape(Int<SG_N>{}, Int<1>{}),
++                  make_stride(scale_stride, Int<1>{})));
++          auto prefetch_scales = make_block_2d_prefetch<1>(
++              make_shape(Int<SG_N>{}, Int<1>{}), next_scales_tensor);
++          auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
++          auto pSgS = thr_prefetch_scales.partition_S(
++              make_identity_tensor(make_shape(Int<SG_N>{}, Int<1>{})));
++          prefetch(prefetch_scales, pSgS(_, 0, 0));
+         }
+-        auto next_scales_tensor = make_tensor(
+-            make_gmem_ptr(scale_base),
+-            make_layout(
+-                make_shape(Int<SG_N>{}, Int<1>{}),
+-                make_stride(scale_stride, Int<1>{})));
+-        auto prefetch_scales = make_block_2d_prefetch<1>(
+-            make_shape(Int<SG_N>{}, Int<1>{}), next_scales_tensor);
+-        auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
+-        auto pSgS = thr_prefetch_scales.partition_S(
+-            make_identity_tensor(make_shape(Int<SG_N>{}, Int<1>{})));
+-        prefetch(prefetch_scales, pSgS(_, 0, 0));
+       }
+     }
+ 
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index d7c3a2c..72f2c25 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -121,6 +121,8 @@ template <
+     char LayoutKindB,
+     char LayoutKindD,
+     bool TileMajor = false,
++    bool ExactVecGroup32 = false,
++    bool TransposedScales = false,
+     class TiledMMA,
+     typename ElementA,
+     typename ElementB,
+@@ -210,8 +212,13 @@ CUTE_DEVICE void MoEGEMM(
+     ElementD* ptr_D_curr_batch = Outputs + pre_rows * gemm_n;
+     ElementS* ptr_Scales_curr_batch = const_cast<ElementS*>(Scales) + expert_id;
+     if constexpr (is_B_4bits) {
+-      ptr_Scales_curr_batch =
+-          const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
++      if constexpr (ExactVecGroup32) {
++        ptr_Scales_curr_batch =
++            const_cast<ElementS*>(Scales) + B_offset * 2 / 32;
++      } else {
++        ptr_Scales_curr_batch =
++            const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
++      }
+       if constexpr (TileMajor) {
+         ptr_Scales_curr_batch =
+             const_cast<ElementS*>(Scales) + B_offset;
+@@ -245,7 +252,27 @@ CUTE_DEVICE void MoEGEMM(
+       auto tile_coord = make_coord(m_coord, n_coord, _, 0);
+ 
+       if constexpr (is_B_4bits) {
+-        if constexpr (TileMajor) {
++        if constexpr (ExactVecGroup32) {
++          static_assert(is_B_int4, "exact vectorized route is INT4-only");
++          static_assert(!TileMajor, "exact vectorized route is not tile-major");
++          xe_gemm_4bits<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              32,
++              false,
++              false,
++              true,
++              false,
++              TransposedScales>(
++              A_tensor,
++              B_tensor,
++              ptr_Scales_curr_batch,
++              ptr_Bias_curr_batch,
++              D_tensor,
++              tile_coord,
++              mma);
++        } else if constexpr (TileMajor) {
+           XE_GEMM_4BITS_FOLD_DISPATCH(
+               32,
+               true,
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 9554318..445f689 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -77,6 +77,12 @@ class GemmCuteName;
+ template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteGrf128Name;
+ 
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128ExactVecName;
++
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128TransposedScalesName;
++
+ template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+@@ -242,6 +248,45 @@ inline bool laguna_int4_decode_grf128() {
+   return enabled;
+ }
+ 
++// Select a separately named compile-time-specialized version of the verified
++// width-12 GRF128 kernel. Host dispatch below requires the exact group-32,
++// vectorized, non-folded, non-MAD route before this can reach device code.
++inline bool laguna_int4_decode_exact_specialized() {
++  static const bool enabled = [] {
++    const char* value =
++        std::getenv("VLLM_XPU_LAGUNA_DECODE_EXACT_SPECIALIZED");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_EXACT_SPECIALIZED must be literal 0 or 1, "
++        "got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
++inline bool laguna_int4_decode_transposed_scales() {
++  static const bool enabled = [] {
++    const char* value =
++        std::getenv("VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES must be literal 0 or 1, "
++        "got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
+ // Range gate for the INT4 dequantize-scale fusion.
+ //
+ // The fused form evaluates `x * s + (-136 * s)` where the incumbent evaluates
+@@ -376,6 +421,10 @@ void MoEGEMMLauncher(
+   const bool use_grf128 =
+       can_use_grf128 && laguna_int4_decode_grf128() && total_m == 120 &&
+       group_size == 32 && scale_vec && !scale_mad && !scale_fold;
++  const bool use_exact_specialized =
++      use_grf128 && laguna_int4_decode_exact_specialized();
++  const bool use_transposed_scales =
++      use_grf128 && laguna_int4_decode_transposed_scales();
+ 
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+@@ -409,8 +458,93 @@ void MoEGEMMLauncher(
+               scale_vec,
+               scale_mad);
+         };
++    auto exact_vec_kernel = [=](auto) {
++          MoE::MoEGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              layoutA,
++              layoutB,
++              'R',
++              TileMajor,
++              true>(
++              activations,
++              weights,
++              scales,
++              bias,
++              outputs,
++              mma,
++              rows_per_expert,
++              num_experts,
++              group_size,
++              gemm_n,
++              gemm_k,
++              atomic_buffer,
++              local_mem,
++              false,
++              true,
++              false);
++        };
++    auto transposed_scales_kernel = [=](auto) {
++          MoE::MoEGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              layoutA,
++              layoutB,
++              'R',
++              TileMajor,
++              true,
++              true>(
++              activations,
++              weights,
++              scales,
++              bias,
++              outputs,
++              mma,
++              rows_per_expert,
++              num_experts,
++              group_size,
++              gemm_n,
++              gemm_k,
++              atomic_buffer,
++              local_mem,
++              false,
++              true,
++              false);
++        };
+     if constexpr (can_use_grf128) {
+-      if (use_grf128) {
++      if (use_transposed_scales) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128TransposedScalesName<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_128,
++            transposed_scales_kernel);
++      } else if (use_exact_specialized) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128ExactVecName<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_128,
++            exact_vec_kernel);
++      } else if (use_grf128) {
+         syclex::properties kernel_props_128{
+             syclex::sub_group_size<16>, intelex::grf_size<128>};
+         cgh.parallel_for<GemmCuteGrf128Name<
+@@ -1083,6 +1217,7 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+     TORCH_CHECK(
+         ptr_scales->size(0) == num_experts,
+         "ptr_scales.size(0) of int4 must match num_experts");
++    bool transposed_scale_layout = false;
+     if (tile_major) {
+       const int64_t packed_last = (K / 32) * 17;
+       TORCH_CHECK(
+@@ -1094,12 +1229,18 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+           "tile-major scales must alias combined weight record storage");
+       group_size = 32;
+     } else {
++      transposed_scale_layout =
++          is_B_int4 && laguna_int4_decode_transposed_scales() &&
++          ptr_scales->size(2) == N;
++      const int group_dim = transposed_scale_layout ? 1 : 2;
++      const int n_dim = transposed_scale_layout ? 2 : 1;
+       TORCH_CHECK(
+-          K % ptr_scales->size(2) == 0,
+-          "ptr_scales.size(2) of int4 must be divisible by K");
++          ptr_scales->size(n_dim) == N,
++          "ptr_scales N dimension of int4 must match N");
+       TORCH_CHECK(
+-          ptr_scales->size(1) == N, "ptr_scales.size(1) of int4 must match N");
+-      int group_num = ptr_scales->size(2);
++          K % ptr_scales->size(group_dim) == 0,
++          "ptr_scales group dimension of int4 must divide K");
++      int group_num = ptr_scales->size(group_dim);
+       group_size = K / group_num;
+     }
+ 
+@@ -1108,6 +1249,24 @@ at::Tensor cutlass_grouped_gemm_xe2_impl(
+             group_size == 256,
+         "group_size must be 32, 64, 128 or 256");
+ 
++    const char* small_m_n = std::getenv("VLLM_XPU_MXFP4_SMALL_M_N");
++    const bool default_small_m_policy =
++        A_avg_M <= 4 &&
++        (small_m_n == nullptr ||
++         (std::strcmp(small_m_n, "32") != 0 &&
++          std::strcmp(small_m_n, "128") != 0));
++    const bool transposed_decode_route =
++        is_B_int4 && A_dtype == at::kBFloat16 && !tile_major &&
++        laguna_int4_decode_grf128() &&
++        laguna_int4_decode_transposed_scales() && A_total_M == 120 &&
++        group_size == 32 && laguna_int4_scale_vec() &&
++        !laguna_int4_dequant_mad() && !laguna_int4_scale_fold() &&
++        default_small_m_policy;
++    TORCH_CHECK(
++        transposed_scale_layout == transposed_decode_route,
++        "transposed INT4 scales must be used if and only if the exact "
++        "width-12 GRF128 transposed-scale route is selected");
++
+ #define W4A16LauncherCallER(policy, TileMajor)                      \
+   if (is_B_int4) {                                                  \
+     if (A_dtype == at::kBFloat16) {                                 \
+diff --git a/tests/fused_moe/test_fused_moe.py b/tests/fused_moe/test_fused_moe.py
+index cc536dd..1318362 100755
+--- a/tests/fused_moe/test_fused_moe.py
++++ b/tests/fused_moe/test_fused_moe.py
+@@ -7,8 +7,10 @@ import torch
+ from tests.ops.fp8_quant_op import scaled_fp8_quant
+ from tests.utils import format_tc, seed_everything
+ from vllm_xpu_kernels.fused_moe_interface import (
+-    LAGUNA_M8_W1_N_TILE_ENV, XpuFusedMoe, _effective_laguna_m8_w1_n_tile,
+-    _get_laguna_m8_w1_n_tile, _validate_laguna_m8_w1_n_tile_contract)
++    LAGUNA_DECODE_TRANSPOSED_SCALES_ENV, LAGUNA_M8_W1_N_TILE_ENV,
++    XpuFusedMoe, _effective_laguna_m8_w1_n_tile,
++    _get_laguna_decode_transposed_scales, _get_laguna_m8_w1_n_tile,
++    _select_laguna_decode_scales, _validate_laguna_m8_w1_n_tile_contract)
+ 
+ DEVICE = "xpu"
+ 
+@@ -122,6 +124,49 @@ def test_laguna_m8_fused_expert_schema_requires_w1_n_tile():
+     assert "bool route_interleave, int w1_n_tile)" in schema
+ 
+ 
++@pytest.mark.parametrize("value,expected", [(None, False), ("0", False), ("1", True)])
++def test_laguna_decode_transposed_scales_values(monkeypatch, value, expected):
++    if value is None:
++        monkeypatch.delenv(
++            LAGUNA_DECODE_TRANSPOSED_SCALES_ENV, raising=False
++        )
++    else:
++        monkeypatch.setenv(LAGUNA_DECODE_TRANSPOSED_SCALES_ENV, value)
++    assert _get_laguna_decode_transposed_scales() is expected
++
++
++@pytest.mark.parametrize("value", ["", "ON", "TRUE", "01", "2", "false"])
++def test_laguna_decode_transposed_scales_rejects_aliases(monkeypatch, value):
++    monkeypatch.setenv(LAGUNA_DECODE_TRANSPOSED_SCALES_ENV, value)
++    with pytest.raises(RuntimeError, match="must be literal 0 or 1"):
++        _get_laguna_decode_transposed_scales()
++
++
++@pytest.mark.parametrize("enabled,rows,use_transposed", [
++    (False, 12, False),
++    (True, 1, False),
++    (True, 8, False),
++    (True, 12, True),
++    (True, 13, False),
++])
++def test_select_laguna_decode_scales(enabled, rows, use_transposed):
++    ordinary = (object(), object())
++    transposed = (object(), object())
++    selected = _select_laguna_decode_scales(
++        enabled, rows, *ordinary, *transposed
++    )
++    expected = transposed if use_transposed else ordinary
++    assert selected[0] is expected[0]
++    assert selected[1] is expected[1]
++
++
++def test_width12_transposed_scales_must_exist():
++    with pytest.raises(RuntimeError, match="no persistent scales"):
++        _select_laguna_decode_scales(
++            True, 12, object(), object(), None, None
++        )
++
++
+ def dequantize_uint4(qweight, scales, group_size):
+     import numpy as np
+     k = qweight.shape[1] * 2
+diff --git a/vllm_xpu_kernels/fused_moe_interface.py b/vllm_xpu_kernels/fused_moe_interface.py
+index 1fec91a..b715773 100755
+--- a/vllm_xpu_kernels/fused_moe_interface.py
++++ b/vllm_xpu_kernels/fused_moe_interface.py
+@@ -42,6 +42,9 @@ LAGUNA_M8_ROUTE_INTERLEAVE_ENV = (
+ )
+ LAGUNA_M8_W1_N_TILE_ENV = "VLLM_XPU_LAGUNA_M8_W1_N_TILE"
+ LAGUNA_PREFETCH_DIST_ENV = "VLLM_XPU_LAGUNA_PREFETCH_DIST"
++LAGUNA_DECODE_TRANSPOSED_SCALES_ENV = (
++    "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES"
++)
+ 
+ 
+ def _is_env_enabled(env_name: str, default: str = "0") -> bool:
+@@ -74,6 +77,45 @@ def _get_laguna_prefetch_dist() -> int:
+     return int(value)
+ 
+ 
++def _get_laguna_decode_transposed_scales() -> bool:
++    # Keep the Python model-layout selector byte-for-byte aligned with the
++    # C++ kernel selector.  Permissive spellings are deliberately rejected:
++    # a typo must not leave the model and kernel interpreting the same scale
++    # storage differently.
++    value = os.environ.get(LAGUNA_DECODE_TRANSPOSED_SCALES_ENV, "0")
++    if value == "0":
++        return False
++    if value == "1":
++        return True
++    raise RuntimeError(
++        f"{LAGUNA_DECODE_TRANSPOSED_SCALES_ENV} must be literal 0 or 1, "
++        f"got {value!r}"
++    )
++
++
++def _select_laguna_decode_scales(
++    enabled: bool,
++    num_rows: int,
++    gemm1_wei_scales,
++    gemm2_wei_scales,
++    transposed_gemm1_wei_scales,
++    transposed_gemm2_wei_scales,
++):
++    if enabled and num_rows == 12:
++        if (
++            transposed_gemm1_wei_scales is None
++            or transposed_gemm2_wei_scales is None
++        ):
++            raise RuntimeError(
++                "width-12 transposed-scale route has no persistent scales"
++            )
++        return (
++            transposed_gemm1_wei_scales,
++            transposed_gemm2_wei_scales,
++        )
++    return gemm1_wei_scales, gemm2_wei_scales
++
++
+ _LAGUNA_OBSERVED_MOE_ROWS: set = set()
+ 
+ 
+@@ -337,6 +379,11 @@ class XpuFusedMoe:
+             LAGUNA_M8_ROUTE_INTERLEAVE_ENV)
+         self._laguna_m8_w1_n_tile = _get_laguna_m8_w1_n_tile()
+         self._laguna_prefetch_dist = _get_laguna_prefetch_dist()
++        self._laguna_decode_transposed_scales = (
++            _get_laguna_decode_transposed_scales()
++        )
++        self._laguna_transposed_gemm1_wei_scales = None
++        self._laguna_transposed_gemm2_wei_scales = None
+         self._laguna_route_maps = {}
+         self._laguna_fused_buffers = None
+         if self.activation == "silu":
+@@ -441,6 +488,53 @@ class XpuFusedMoe:
+                 raise RuntimeError(
+                     f"{LAGUNA_BATCHED_EXACT_MOE_ENV}=1 requires BF16 scales"
+                 )
++        if self._laguna_decode_transposed_scales:
++            if not self._laguna_batched_exact_moe:
++                raise RuntimeError(
++                    f"{LAGUNA_DECODE_TRANSPOSED_SCALES_ENV}=1 requires "
++                    f"{LAGUNA_BATCHED_EXACT_MOE_ENV}=1"
++                )
++            scale_contracts = (
++                (
++                    "w13_scales",
++                    self.gemm1_wei_scales,
++                    (64, 2048, 96),
++                ),
++                (
++                    "w2_scales",
++                    self.gemm2_wei_scales,
++                    (64, 3072, 32),
++                ),
++            )
++            for name, scales, shape in scale_contracts:
++                if (
++                    scales is None
++                    or tuple(scales.shape) != shape
++                    or scales.dtype != torch.bfloat16
++                    or not scales.is_contiguous()
++                    or scales.device != self.w13.device
++                ):
++                    actual = None if scales is None else (
++                        tuple(scales.shape),
++                        scales.dtype,
++                        scales.is_contiguous(),
++                        scales.device,
++                    )
++                    raise RuntimeError(
++                        f"{LAGUNA_DECODE_TRANSPOSED_SCALES_ENV}=1 requires "
++                        f"contiguous BF16 {name}{shape} on {self.w13.device}, "
++                        f"got {actual}"
++                    )
++            # Keep the checkpoint layout for prefill and every non-width-12
++            # call.  These immutable persistent clones have stable addresses
++            # before graph capture and make each K32 group's N scales
++            # contiguous without changing a BF16 value.
++            self._laguna_transposed_gemm1_wei_scales = (
++                self.gemm1_wei_scales.permute(0, 2, 1).contiguous()
++            )
++            self._laguna_transposed_gemm2_wei_scales = (
++                self.gemm2_wei_scales.permute(0, 2, 1).contiguous()
++            )
+         if self._laguna_m8_fused_transaction:
+             if not self._laguna_batched_exact_moe:
+                 raise RuntimeError(
+@@ -929,6 +1023,14 @@ class XpuFusedMoe:
+                 )
+         num_moe_inputs = self.n_experts_per_token * num_rows
+         act_quant = a1q_scale is not None
++        gemm1_wei_scales, gemm2_wei_scales = _select_laguna_decode_scales(
++            self._laguna_decode_transposed_scales,
++            num_rows,
++            self.gemm1_wei_scales,
++            self.gemm2_wei_scales,
++            self._laguna_transposed_gemm1_wei_scales,
++            self._laguna_transposed_gemm2_wei_scales,
++        )
+ 
+         if shared_output is not None and not (
+             self._laguna_m8_gather_finalize
+@@ -1188,7 +1290,7 @@ class XpuFusedMoe:
+             ptr_A=remapped_hidden_states,
+             ptr_A_scale=remapped_scales,
+             ptr_B=self.w13,
+-            ptr_B_scale=self.gemm1_wei_scales,
++            ptr_B_scale=gemm1_wei_scales,
+             ptr_bias=self.w13_bias,
+             ptr_D=gemm1_output,
+             rows_per_expert=rows_per_expert,
+@@ -1233,7 +1335,7 @@ class XpuFusedMoe:
+             ptr_A=act_output,
+             ptr_A_scale=gemm2_act_scale if act_quant else None,
+             ptr_B=self.w2,
+-            ptr_B_scale=self.gemm2_wei_scales,
++            ptr_B_scale=gemm2_wei_scales,
+             ptr_bias=self.w2_bias,
+             ptr_D=gemm2_output,
+             rows_per_expert=rows_per_expert,

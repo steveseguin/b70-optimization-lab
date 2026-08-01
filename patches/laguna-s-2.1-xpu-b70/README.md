@@ -82,6 +82,7 @@ not promoted record sources:
 | neutral SIMD32 dequant MAD | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `7557817d0e8c564be74f2cd7717e0195c1cb3911` | `fdf90dbd88fcdf6f507df2fd5123fc15f0de46c35daa43d69918911a19b68549` | `38933d1eb3561fcddf6c00cea5d6c7d629bddc518b6593a0e67e17856047f496` |
 | provisional exact decode GRF128 | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `e4163f93574326b2772742e0f51372a5a3777aa5` | `f4a4cfa61d47526d02586822f8c00a6e983062737df79e4e141675ae91bc32c0` | `e21141feecf16de832ca841b0046c8ea523113795498c392ddc91c08833a5596` |
 | exact decode mainloop specialization | `e4163f93574326b2772742e0f51372a5a3777aa5` | `ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2` | `540235f285cc84457c30b74d1ddb322ca9355e1fd7a0c44a1f4df70a22936d26` | `8cf6b505bbb3f96f9c75c30cee46576af9972dc896dabc0dca0aaaf34e237c15` |
+| confirmed transposed decode scales | `e4163f93574326b2772742e0f51372a5a3777aa5` | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `87337d0244f3f81a4b7d2a8b669d3e01610a8eff133bce04696bdb06559bd075` | `0c23d0c5a8bf358d9e20b095fe4b771273e01992468aa3b805207b04c7a44809` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -119,3 +120,12 @@ shrinks matched production BMG ISA from 6,174 to 674 instructions while
 preserving 128 GRFs, eight EU threads, and the exact 32-mul/16-shift/16-bfn/
 2-DPAS arithmetic body. See the
 [static pass](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-exact-decode-mainloop-specialization-static-pass.md).
+
+The transposed-scale bundle is the current confirmed exact BF16-KV record
+source. It includes the exact mainloop specialization, the retained malformed
+prefetch negative, its corrected `[1,SG_N]` block-prefetch geometry, and the
+guarded model integration. The immutable BF16 scale tables are cloned from
+`[expert,N,K/32]` to `[expert,K/32,N]` only for exact width-12 target decode.
+Two independent exact cold starts measured `121.383776672` and
+`122.828558121 tok/s` conventionally. See the
+[confirmed record](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md).

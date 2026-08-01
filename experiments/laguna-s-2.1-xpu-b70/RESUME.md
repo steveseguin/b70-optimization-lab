@@ -5,12 +5,13 @@ Last updated: 2026-07-31 America/Toronto
 ## Status
 
 The original result is published, approved, sealed, and reproducible. Later
-segmented-DFlash work raised the approved conventional record to
-`119.82686847588282 tok/s`. A decode-only GRF128 candidate then passed two
-independent cold suites at `120.0863279502934` and **`121.29056097255466
-tok/s`** conventional. The confirmation's historical compatibility value is
-**`122.51571815409562 tok/s`**. Both are 13/13 exact and cache-zero with the
-frozen 146/145 target and 14/13 draft topology.
+segmented-DFlash and decode-GRF128 work raised the conventional record to
+`121.29056097255466 tok/s`. The current treatment additionally clones
+immutable target BF16 group scales into contiguous decode layout and passed
+two independent cold suites at `121.3837766716154` and
+**`122.828558121099 tok/s`** conventional. The confirmation's historical
+compatibility value is **`124.06925062737271 tok/s`**. Both are 13/13 exact
+and cache-zero with the frozen 146/145 target and 14/13 draft topology.
 A later metric
 audit found that the published helper used an inclusive-event numerator over
 an inter-event span, so the 102 tok/s objective is complete only under that
@@ -23,16 +24,15 @@ historical convention, not under conventional interval accounting.
 - LocalMaxxing: `cms2ccv2d00lps201rej94pjy` (`APPROVED`);
 - current approved conventional record: **`119.82686847588282 tok/s`**,
   LocalMaxxing `cms8f38fd00ftpf01mk0bwfql`;
-- confirmed GRF128 record: **`121.29056097255466 tok/s`** conventional;
-- LocalMaxxing: `cms905x22003spm01pwyvp3c9` (`APPROVED`);
+- confirmed transposed-scale record: **`122.828558121099 tok/s`** conventional;
+- LocalMaxxing: `cms9osksu00b3pm010hf9bnk8` (`APPROVED`);
 - lane state: active optimization, no service or worker currently running.
 
-Current GRF128 result and exact artifacts:
-[`2026-07-31-decode-grf128-confirmed-record.md`](notes/2026-07-31-decode-grf128-confirmed-record.md).
-The next higher-upside static candidate is a
-separately named exact-decode kernel with compile-time-fixed
-`SCALE_VEC=1/MAD=0/FOLD=0`, eliminating dead runtime-selected mainloops before
-any GPU execution.
+Current result and exact artifacts:
+[`2026-07-31-transposed-decode-scales-confirmed-record.md`](notes/2026-07-31-transposed-decode-scales-confirmed-record.md).
+The next bounded exact candidate is transposed-scale prefetch removal or a
+separate scale-prefetch distance while retaining weight prefetch distance 6.
+Screen it statically and in the W13+W2 component before any endpoint.
 
 Read the
 [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)
@@ -49,15 +49,15 @@ work.
 | --- | --- |
 | Target | `poolside/Laguna-S-2.1-INT4` at `4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb` |
 | Draft | `poolside/Laguna-S-2.1-DFlash-INT4` at `5e07c246915c86dc6920fead03d019989224f2ba` |
-| vLLM | `e596ef1543466ae1a05e5bb8091f58872e2b18ba` |
-| XPU kernels | `6f9dd3c3a7b1b677a992ca4f431a968408f9c816` |
+| vLLM | `34b43849fc7c8ff8633f223469cc2a0d525c256e` |
+| XPU kernels | `8dd94f2307db3b830fe07f212c4b36f719652a5c` |
 | Layout | TP4+EP4, one active generation |
 | Target verifier | exact width 12 |
 | DFlash | depth 11, greedy draft, standard rejection |
 | Graph | audited Breakable PIECEWISE capture size 12, 146 graphs / 145 eager breaks per rank |
 | KV | BF16 |
-| Treatment | 31 runtime E4M3FN W8A16 DFlash dense-projection conversions per rank plus the exact auxiliary workspace |
-| Selector | `VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1` |
+| Treatment | segmented inline DFlash attention, decode-only GRF128, and contiguous `[expert,K/32,N]` BF16 target scale clones |
+| Selectors | `VLLM_XPU_LAGUNA_DECODE_GRF128=1`, `VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1` |
 
 The intended separate FP8 draft-LM-head path exists in source, but its expected
 runtime preparation message is absent from the record log. Do not attribute
@@ -67,15 +67,16 @@ the 31 logged draft projections and auxiliary workspace.
 ## Formal command and artifact
 
 ```bash
-experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_mwide_measurement_leg.sh \
-  candidate B2 RUN_DIR 12 11 1 0 0 0 0 0 0 1 1
+experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_replemb_measurement_leg.sh \
+  candidate B2 RUN_DIR 12 11 1 0 0 0 0 0 0 1 1 0 0 '' 64 0 '' \
+  6 0 1 0 0 1 0 0.90 0 0 0 1 0 1 1
 ```
 
 Sealed run:
 
 ```text
 /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
-laguna-width12-dflash-fp8-e596ef154-20260726T214259Z
+laguna-transposed-scales-confirm-20260801T010855Z
 ```
 
 Promoted records:
@@ -83,9 +84,9 @@ Promoted records:
 - exact source bundles and combined patches:
   `patches/laguna-s-2.1-xpu-b70/`;
 - packet:
-  `data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json`;
+  `data/laguna-transposed-scales-confirmed-record-20260731.json`;
 - note:
-  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md`;
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md`;
 - metric correction:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md`;
 - standalone reproduction:
@@ -93,9 +94,9 @@ Promoted records:
 - reproducibility provenance audit:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-reproducibility-provenance-audit.md`;
 - submission queue:
-  `data/localmaxxing-laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.queue.json`;
+  `data/localmaxxing-laguna-s-2.1-int4-b70-transposed-scales-122.829tok-20260731.queue.json`;
 - submission response:
-  `data/localmaxxing-responses/laguna-s-2.1-int4-b70-width12-dflash-fp8-102.971tok-20260726.response.json`.
+  `data/localmaxxing-responses/laguna-s-2.1-int4-b70-transposed-scales-122.829tok-20260731.response.json`.
 
 Durable learning indexes:
 

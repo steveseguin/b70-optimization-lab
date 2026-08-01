@@ -198,6 +198,24 @@ the complete loader search path, and actual `/proc/self/maps` origins. Pin
 transitive hashes and make external origin drift fatal. See the
 [provenance audit](2026-07-26-reproducibility-provenance-audit.md).
 
+### Optimize quantization metadata layout, not only packed weights
+
+The exact width-12 grouped GEMM streamed packed INT4 weights along K but read
+its BF16 group scales from checkpoint layout `[expert,N,K/32]`. At each K
+group, adjacent output columns were therefore separated by the full K-group
+stride. Cloning the immutable tables once into `[expert,K/32,N]` made the
+decode scale line contiguous without changing a BF16 value or arithmetic
+operation. The isolated W13+W2 component improved `2.4200%`; two exact cold
+endpoint candidates measured `121.383776672` and `122.828558121 tok/s`, with
+the latter becoming the new record.
+
+The failed first implementation is equally important: reusing the old 2D
+prefetch descriptor with an invalid dynamic pitch caused device loss. Ordinary
+load correctness does not validate block-prefetch geometry. Represent the
+physical line honestly, inspect the final descriptor, and gate component work
+before endpoint execution. See the
+[confirmed record](2026-07-31-transposed-decode-scales-confirmed-record.md).
+
 ## Reusable experiment protocol
 
 For the next model:
@@ -224,6 +242,8 @@ For the next model:
     teardown, and API-response checks.
 13. Verify actual loaded native objects and every transitive helper; a sibling
     file with the right hash is not proof that the loader used it.
+14. Audit groupwise quantization metadata layout alongside packed weights;
+    immutable decode-only clones can improve locality without changing math.
 
 The cross-model form of these rules is indexed in
 [the research workflow playbook](../../../docs/research-workflow-playbook.md#cross-model-patterns-worth-reusing).

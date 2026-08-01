@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **component and guarded integration gates passed; exact TP4 endpoint
-pending clean GPU-0 recovery**.
+Status: **confirmed exact BF16-KV record at 122.828558 tok/s conventional;
+all component, integration, endpoint, topology, and operational gates passed**.
 
 ## Premise
 
@@ -143,3 +143,40 @@ The children disappeared without reset or intervention and all devices were
 idle afterward.  The harness now waits up to 30 seconds for ordinary child
 reaping after stopping the parent; this boundary is after the scored request
 window.  A fresh control remains required before the candidate.
+
+## Valid endpoint control and two candidate starts
+
+After the bounded worker-reaping fix, the selector-off control and both
+selector-on starts completed the entire frozen gate:
+
+| Leg | Conventional 99 intervals | Historical compatibility | Exact | Idle |
+| --- | ---: | ---: | ---: | ---: |
+| selector-off control | 118.802183680 | 120.002205737 | 13/13 | 72/72 s |
+| first candidate | 121.383776672 | 122.609875426 | 13/13 | 73/73 s |
+| independent confirmation | **122.828558121** | **124.069250627** | 13/13 | 73/72 s |
+
+Artifacts:
+
+- control: `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-control-20260801T005044Z`;
+- first candidate: `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-candidate-20260801T005945Z`;
+- confirmation: `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scales-confirm-20260801T010855Z`.
+
+The first candidate improved its same-DSO adjacent control by
+`2.581592992 tok/s` (`+2.1730%`).  Both candidate starts independently beat
+the preceding `121.290560973 tok/s` GRF128 record.  The lower candidate margin
+was only `0.093215699 tok/s` (`+0.0769%`), so it was not promoted alone.  The
+predeclared independent cold confirmation then measured `122.828558121 tok/s`,
+beating the preceding record by `1.537997149 tok/s` (`+1.2680%`).
+
+All 39 endpoint responses were token-and-text exact against canonical q1 and
+reported `cached_tokens=0`.  Each service used one suite invocation, no warmup
+generation, no retry, target 146/145 and draft 14/13 graph topology on all four
+ranks, and clean process, port, device, and idle teardown.  The candidate did
+not change weights, BF16 scale values, arithmetic, accumulation, routing,
+sampling, target verification, KV precision, prompts, or metric accounting.
+
+The confirmation is therefore promoted as a new exact BF16-KV record.  The
+record packet is
+[`2026-07-31-transposed-decode-scales-confirmed-record.md`](2026-07-31-transposed-decode-scales-confirmed-record.md),
+and its structured summary is
+[`data/laguna-transposed-scales-confirmed-record-20260731.json`](../../../data/laguna-transposed-scales-confirmed-record-20260731.json).
