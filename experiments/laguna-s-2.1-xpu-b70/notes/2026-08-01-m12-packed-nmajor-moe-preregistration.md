@@ -2,7 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered before source implementation or device execution. No
+Status: **source/static gate passed; production component build pending. No
 endpoint score is authorized.**
 
 ## Evidence and hypothesis
@@ -91,3 +91,31 @@ No target/draft/KV precision change, teacher change, prompt change, retry,
 warmup generation, metric substitution, reset, reboot, driver operation, or
 privileged recovery is authorized by this screen. Preserve every source,
 binary, log, and result whether positive or negative.
+
+## Source and static result
+
+The isolated implementation is commit `522ca66` on branch
+`experiment/laguna-m12-packed-nmajor-20260801`. Selector-off retains the
+protected scheduler. Selector-on is separately named and additionally gates
+BF16 output, 64 local experts, and exactly W13/W2. Out-of-scope calls fall back
+to the protected path; matching calls reject undersized descriptor storage.
+
+The CPU descriptor builder passed exact round-trip and one-to-one coverage
+checks for both a 64-active-expert corpus and an adversarial multi-tile corpus
+with 17, 9, and 94 rows. It allocates room for the worst-case 120 descriptors,
+preserves the first 64 count entries for the selector-off arm, and records
+storage and coverage hashes.
+
+The production launcher/policy compiled successfully with oneAPI 2025.3 for
+BMG/128-GRF. Artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-m12-packed-nmajor-igc-522ca66-20260801T1930Z`.
+
+The named packed-N-major kernel and transposed-scale control both use 128 GRFs
+through `r127`, two DPAS instructions, one output store, the same eight
+barrier/atomic scheduler instructions, and no scratch traffic. The candidate
+adds one global metadata load and two net static instructions (`681` versus
+`679`) while reducing IGC flag spills from store/load `4/5` to `2/2`. The
+arithmetic mainloop remains the same template call. This passes the frozen
+static gate and authorizes only the ABI-8 DSO build and synthetic component
+test.

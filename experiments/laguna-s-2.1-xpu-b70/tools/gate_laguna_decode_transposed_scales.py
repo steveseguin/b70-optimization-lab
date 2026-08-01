@@ -29,6 +29,64 @@ CASES = (
 )
 
 
+def build_packed_nmajor_rows(rows: Any) -> tuple[Any, dict[str, Any]]:
+    import torch
+
+    if rows.dtype != torch.int32 or rows.dim() != 1 or rows.numel() != LOCAL_EXPERTS:
+        raise RuntimeError("packed N-major rows require 64 int32 expert counts")
+    descriptors: list[int] = []
+    decoded: list[tuple[int, int, int, int]] = []
+    pre_rows = 0
+    for expert_id, expert_rows in enumerate(rows.tolist()):
+        for expert_m_tile in range((expert_rows + 7) // 8):
+            descriptor = (
+                expert_id
+                | (pre_rows << 6)
+                | (expert_rows << 13)
+                | (expert_m_tile << 20)
+            )
+            decoded_descriptor = (
+                descriptor & 0x3F,
+                (descriptor >> 6) & 0x7F,
+                (descriptor >> 13) & 0x7F,
+                (descriptor >> 20) & 0x0F,
+            )
+            expected = (expert_id, pre_rows, expert_rows, expert_m_tile)
+            if descriptor >> 24 or decoded_descriptor != expected:
+                raise RuntimeError("packed N-major descriptor round-trip failed")
+            descriptors.append(descriptor)
+            decoded.append(decoded_descriptor)
+        pre_rows += expert_rows
+    if pre_rows != ROUTES or not descriptors or len(descriptors) > ROUTES:
+        raise RuntimeError("packed N-major descriptor count/row coverage drift")
+    expected_coverage = [
+        (expert_id, expert_m_tile)
+        for expert_id, expert_rows in enumerate(rows.tolist())
+        for expert_m_tile in range((expert_rows + 7) // 8)
+    ]
+    actual_coverage = [(item[0], item[3]) for item in decoded]
+    if actual_coverage != expected_coverage or len(set(actual_coverage)) != len(
+        actual_coverage
+    ):
+        raise RuntimeError("packed N-major descriptor coverage is not one-to-one")
+
+    storage = torch.zeros(LOCAL_EXPERTS + 1 + ROUTES, dtype=torch.int32)
+    storage[:LOCAL_EXPERTS].copy_(rows)
+    storage[LOCAL_EXPERTS] = len(descriptors)
+    storage[LOCAL_EXPERTS + 1 : LOCAL_EXPERTS + 1 + len(descriptors)] = torch.tensor(
+        descriptors, dtype=torch.int32
+    )
+    coverage_tensor = torch.tensor(actual_coverage, dtype=torch.int32)
+    return storage, {
+        "format": "counts64_tile_count_packed24_v1",
+        "tile_count": len(descriptors),
+        "storage_numel": storage.numel(),
+        "storage_sha256": tensor_sha256(storage),
+        "coverage_sha256": tensor_sha256(coverage_tensor),
+        "coverage_unique": len(set(actual_coverage)),
+    }
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -86,6 +144,9 @@ def run_worker(args: argparse.Namespace) -> int:
         ),
         "VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS": (
             args.mode if args.selector == "no_kloop_barriers" else "0"
+        ),
+        "VLLM_XPU_LAGUNA_DECODE_NMAJOR_PACKED_WORKLIST": (
+            args.mode if args.selector == "nmajor_packed_worklist" else "0"
         ),
         "VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER": (
             args.mode if args.selector == "deterministic_scheduler" else "0"
@@ -178,7 +239,9 @@ def run_worker(args: argparse.Namespace) -> int:
             "rows_max": int(rows_cpu.max()),
             "rows_nonzero": int(torch.count_nonzero(rows_cpu)),
         }
-        if args.selector == "persistent_worklist" and args.mode == "1":
+        if args.selector == "nmajor_packed_worklist":
+            rows_arg_cpu, scheduler_metadata = build_packed_nmajor_rows(rows_cpu)
+        elif args.selector == "persistent_worklist" and args.mode == "1":
             worklist = []
             pre_rows = 0
             for expert_id, expert_rows in enumerate(rows_cpu.tolist()):
@@ -250,6 +313,7 @@ def run_worker(args: argparse.Namespace) -> int:
 
         output_hashes: list[str] = []
         input_hashes: list[str] = []
+        sentinel_complete: list[bool] = []
         last_input = None
         output = torch.empty((ROUTES, n), dtype=torch.bfloat16, device="xpu")
 
@@ -282,8 +346,15 @@ def run_worker(args: argparse.Namespace) -> int:
             input_hashes.append(tensor_sha256(input_cpu))
             input_a = input_cpu.to("xpu")
             del input_cpu
+            if args.selector == "nmajor_packed_worklist":
+                output.fill_(float("nan"))
             launch(input_a)
             torch.xpu.synchronize()
+            if args.selector == "nmajor_packed_worklist":
+                complete = not bool(torch.isnan(output).any().item())
+                sentinel_complete.append(complete)
+                if not complete:
+                    raise RuntimeError(f"unwritten output sentinel in {name}")
             output_hashes.append(tensor_sha256(output))
             last_input = input_a
 
@@ -313,6 +384,7 @@ def run_worker(args: argparse.Namespace) -> int:
                 "scheduler_metadata": scheduler_metadata,
                 "input_sha256": input_hashes,
                 "output_sha256": output_hashes,
+                "sentinel_complete": sentinel_complete,
                 "timing_ms_per_call": timing_ms,
                 "timing_median_ms": statistics.median(timing_ms),
             }
@@ -385,6 +457,7 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD"] = "0"
     env_base["VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS"] = "0"
+    env_base["VLLM_XPU_LAGUNA_DECODE_NMAJOR_PACKED_WORKLIST"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST"] = "0"
@@ -410,6 +483,9 @@ def run_gate(args: argparse.Namespace) -> int:
         )
         env["VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS"] = (
             mode if args.selector == "no_kloop_barriers" else "0"
+        )
+        env["VLLM_XPU_LAGUNA_DECODE_NMAJOR_PACKED_WORKLIST"] = (
+            mode if args.selector == "nmajor_packed_worklist" else "0"
         )
         env["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = (
             mode if args.selector == "deterministic_scheduler" else "0"
@@ -541,6 +617,7 @@ def parse_args() -> argparse.Namespace:
             "dequant_mad_grf128_transposed",
             "scale_lane_dedup",
             "no_kloop_barriers",
+            "nmajor_packed_worklist",
             "deterministic_scheduler",
             "direct_offsets",
             "persistent_worklist",
