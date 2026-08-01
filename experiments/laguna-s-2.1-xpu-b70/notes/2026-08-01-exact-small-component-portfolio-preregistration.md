@@ -135,7 +135,7 @@ Structured summary: `data/laguna-exact-small-portfolio-component-20260801.json`.
 ## Integration checkpoint
 
 The candidate-only integration is committed as vLLM
-`0c9dea8cfefdcf4b293cddc9a4f47d56a11ecf4b` and XPU kernels
+`0c9dea8cf9aa46c1854d5bce8f4dfb180732b16d` and XPU kernels
 `46a6393fc188c11661ddab9cf1320d2f3de45087`. The promoted checkpoint uses
 `CompressedTensorsWNA16MarlinMoEMethod`; the integration therefore enters
 through that method rather than an unreachable AutoGPTQ-only adapter. Shared
@@ -148,6 +148,6 @@ Six kernel/source contract tests and three focused vLLM tests pass. The latter
 cover M12-selector dependency, one-time shared-output consumption, and the
 actual compressed-tensors XPU adapter. The candidate runtime lock is
 `data/laguna-exact-small-portfolio-runtime-lock-20260801.json` with SHA-256
-`e0697c3ce6c3b76821f3f2144c746a5e47596d9c110d4035b1967872218feddd`.
+`42e50b479b9ecc31db63998cd1b7bfe5cb7865ee38ed80516232bc9428765836`.
 This is still an integration checkpoint, not endpoint evidence; the
 preregistered non-scored TP4 smoke remains the next gate.
