@@ -30,7 +30,11 @@ CALLS_PER_BLOCK = 20
 
 
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(8 * 1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_rank0_weight(shard: Path) -> torch.Tensor:
