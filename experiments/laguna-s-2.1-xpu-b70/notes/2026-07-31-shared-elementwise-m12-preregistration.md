@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **component passed; default-off vLLM integration and focused tests
-authorized**.
+Status: **component and default-off integration gates passed; exactly one
+strict cold endpoint leg authorized**.
 
 ## Premise
 
@@ -97,6 +97,23 @@ The component passed every frozen gate:
 - structural device operations: `192 -> 96` per target cycle.
 
 The combined saving exceeds the preregistered `0.50 ms` floor. Default-off
-vLLM selector integration and its focused tests are now authorized. A model
-endpoint remains conditional on those tests and a fail-closed runtime lock
-that proves the candidate symbols and exact record identity.
+vLLM selector integration was committed at
+`cf247e55d14ce918c06e89252649b50b9292ba20`. Its focused B70 suite passed
+`36/36`, covering M12 dispatch for both operations, record-contract rejection,
+missing-symbol failure, compiled-path rejection, and incumbent fallback for
+other widths. Ruff and `git diff --check` also passed.
+
+The endpoint runtime is locked by
+`tools/runtime-lock-shared-elementwise-m12.json` at SHA256
+`96e26345d8567a8e57370f8806cfaa0635207a7ecc9c5909d063fed35bf3e3db`.
+The verifier passed against candidate `_C.abi3.so` SHA256
+`36d97dda1438cd06b5f707859edb2a0960fd05d09ef6c6d29a53aa89cdd04095`
+and byte-identical record copies of every other native module and mapped DSO.
+The formal launcher records the selector, verifies its service environment,
+and requires exactly one rank-local enable marker from each of TP/EP ranks
+`0/0` through `3/3`; selector-off marker leakage fails closed.
+
+Gates 1-4 are therefore complete. Per the frozen plan, exactly one strict cold
+endpoint leg is now authorized. Its first valid result is final for this
+candidate whether it wins or loses; no automatic retry or hardware recovery is
+authorized.
