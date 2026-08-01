@@ -2,7 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **preregistered for source and one-card component work only**.
+Status: **component passed; default-off vLLM integration and focused tests
+authorized**.
 
 ## Premise
 
@@ -67,3 +68,35 @@ workgroups and the guarded tensor shape.
    change, cache/history reuse, warmup, response reuse or LocalMaxxing
    submission is authorized here.
 
+## One-B70 component result
+
+The M12 native source is committed at XPU-kernel commit
+`99886d7` and the focused `_C.abi3.so` SHA256 is
+`36d97dda1438cd06b5f707859edb2a0960fd05d09ef6c6d29a53aa89cdd04095`.
+The exact component artifact is:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-shared-elementwise-m12-component-20260801T042945Z
+```
+
+The component passed every frozen gate:
+
+- all 65,280 finite BF16 activation inputs under ones, reversed-finite and
+  signed-zero up corpora: raw-BF16 exact;
+- all 65,280 finite BF16 routed inputs under zero, one, reversed-finite and
+  signed-zero shared corpora: raw-BF16 exact;
+- 32/32 changing activation and 32/32 changing scale/add epochs exact before
+  timing, and 32/32 plus 32/32 exact again after timing;
+- activation stack: `0.560984575 -> 0.229509625 ms`, saving
+  `0.328323575 ms`, 15/15 paired blocks won;
+- scale/add stack: `0.545047825 -> 0.240437050 ms`, saving
+  `0.302611075 ms`, 15/15 paired blocks won;
+- combined 48-layer stack: `1.216545725 -> 0.479045650 ms`, saving
+  **`0.734276300 ms`**, 15/15 paired blocks won;
+- structural device operations: `192 -> 96` per target cycle.
+
+The combined saving exceeds the preregistered `0.50 ms` floor. Default-off
+vLLM selector integration and its focused tests are now authorized. A model
+endpoint remains conditional on those tests and a fail-closed runtime lock
+that proves the candidate symbols and exact record identity.
