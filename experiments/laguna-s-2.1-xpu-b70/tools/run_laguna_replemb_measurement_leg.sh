@@ -179,6 +179,10 @@ readonly target_inline_gather_limit="${42:-96}"
 # Diagnostic-only single gather kept eager inside the selected prefix. -1
 # preserves both the promoted selector-off path and the original full prefix.
 readonly target_inline_gather_skip="${43:--1}"
+# Expand the non-scored smoke from its default 2x400 contract to the complete
+# frozen 13x512 exactness contract. It remains inside the smoke branch and
+# never emits a promoted score.
+readonly dflash_full_exactness="${44:-0}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
@@ -224,7 +228,7 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 43 )) || { echo "seven to forty-three arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 44 )) || { echo "seven to forty-four arguments are required" >&2; exit 2; }
 [[ "$target_inline_gather_limit" =~ ^[0-9]+$ ]] \
   && (( target_inline_gather_limit >= 1 && target_inline_gather_limit <= 96 )) \
   || { echo "TARGET_INLINE_GATHER_LIMIT must be an integer from 1 to 96" >&2; exit 2; }
@@ -237,6 +241,9 @@ esac
   || { echo "TARGET_INLINE_GATHER_SKIP requires target inline gathers" >&2; exit 2; }
 (( target_inline_gather_skip < target_inline_gather_limit )) \
   || { echo "TARGET_INLINE_GATHER_SKIP must be below the prefix limit" >&2; exit 2; }
+case "$dflash_full_exactness" in 0|1) ;; *) echo "DFLASH_FULL_EXACTNESS must be 0 or 1" >&2; exit 2 ;; esac
+(( dflash_full_exactness == 0 || dflash_segmented_smoke == 1 )) \
+  || { echo "DFLASH_FULL_EXACTNESS requires the non-scored smoke mode" >&2; exit 2; }
 if [[ -n "$confidence_probe_root" ]]; then
   [[ "$confidence_probe_root" == "$run_dir"/* ]] \
     || { echo "confidence probe root must be inside the run directory" >&2; exit 2; }
@@ -581,6 +588,7 @@ verify_idle_interval prestart
   printf 'target_inline_gathers=%s\n' "$target_inline_gathers"
   printf 'target_inline_gather_limit=%s\n' "$target_inline_gather_limit"
   printf 'target_inline_gather_skip=%s\n' "$target_inline_gather_skip"
+  printf 'dflash_full_exactness=%s\n' "$dflash_full_exactness"
   printf 'decode_grf128=%s\n' "$decode_grf128"
   printf 'decode_transposed_scales=%s\n' "$decode_transposed_scales"
   printf 'event_profile_target_only=%s\n' "$event_profile_target_only"
@@ -652,6 +660,8 @@ grep -Fx "VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM=$m12_rank_sum_rmsnorm" "$run_dir/
 grep -Fx "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING=$replicated_embedding" "$run_dir/service-environment.txt" >/dev/null
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before-suite.prom"
 if (( dflash_segmented_smoke == 1 )); then
+  smoke_request_count="$(( dflash_full_exactness == 1 ? 13 : 2 ))"
+  smoke_max_tokens="$(( dflash_full_exactness == 1 ? 512 : 400 ))"
   "$venv_python" "$segmented_smoke_runner" \
     --base-url http://127.0.0.1:18080 \
     --model laguna-s-2.1-int4 \
@@ -664,6 +674,8 @@ if (( dflash_segmented_smoke == 1 )); then
     --target-eager-breaks "$expected_num_eager_breaks" \
     --draft-graphs "$dflash_segmented_expected_graphs" \
     --draft-eager-breaks "$dflash_segmented_expected_eager_breaks" \
+    --request-count "$smoke_request_count" \
+    --max-tokens "$smoke_max_tokens" \
     --out "$run_dir/segmented-smoke.json" \
     > "$run_dir/segmented-smoke.stdout"
   curl -fsS http://127.0.0.1:18080/metrics \

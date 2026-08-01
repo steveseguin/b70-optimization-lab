@@ -3,9 +3,10 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from pathlib import Path
-import json
 
 import pytest
 
@@ -125,3 +126,21 @@ def test_raw_request_evidence_is_persisted_before_validation(tmp_path: Path) -> 
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["result"] == result
     assert payload["speculation"] == speculation
+
+
+def test_response_gate_accepts_configured_full_exactness_length() -> None:
+    prompt = {"id": "full", "prompt": "fixed prompt"}
+    token_ids = list(range(512))
+    expected = {
+        "prompt_index": 0,
+        "prompt_id": "full",
+        "prompt_sha256": hashlib.sha256(b"fixed prompt").hexdigest(),
+        "token_ids": token_ids,
+    }
+    result = {
+        "token_ids": token_ids,
+        "completion_tokens": 512,
+        "usage": {"prompt_tokens_details": {"cached_tokens": 0}},
+    }
+
+    smoke.validate_response(result, expected, prompt, 0, 512)

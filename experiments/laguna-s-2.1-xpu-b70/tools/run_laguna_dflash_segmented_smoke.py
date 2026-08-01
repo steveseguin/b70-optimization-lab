@@ -112,21 +112,22 @@ def validate_response(
     expected: dict[str, Any],
     prompt: dict[str, str],
     request_index: int,
+    max_tokens: int = _SMOKE_TOKENS,
 ) -> None:
     actual_ids = [int(value) for value in result["token_ids"]]
-    expected_ids = [int(value) for value in expected["token_ids"][:_SMOKE_TOKENS]]
+    expected_ids = [int(value) for value in expected["token_ids"][:max_tokens]]
     prompt_sha = hashlib.sha256(prompt["prompt"].encode()).hexdigest()
     if (
         expected.get("prompt_index") != request_index
         or expected.get("prompt_id") != prompt["id"]
         or expected.get("prompt_sha256") != prompt_sha
-        or result.get("completion_tokens") != _SMOKE_TOKENS
+        or result.get("completion_tokens") != max_tokens
         or actual_ids != expected_ids
         or result.get("usage", {}).get("prompt_tokens_details", {}).get("cached_tokens")
         != 0
     ):
         raise RuntimeError(
-            f"request {request_index} failed its {_SMOKE_TOKENS}-token "
+            f"request {request_index} failed its {max_tokens}-token "
             "q=1 prefix/cache gate"
         )
 
@@ -245,15 +246,19 @@ def main() -> int:
     parser.add_argument("--draft-eager-breaks", type=int, required=True)
     parser.add_argument("--target-graphs", type=int, required=True)
     parser.add_argument("--target-eager-breaks", type=int, required=True)
+    parser.add_argument("--request-count", type=int, choices=(2, 13), default=2)
+    parser.add_argument("--max-tokens", type=int, choices=(400, 512), default=400)
     args = parser.parse_args()
 
     suite = json.loads(args.suite.read_text(encoding="utf-8"))
     teacher = json.loads(args.teacher.read_text(encoding="utf-8"))
-    prompts = suite["prompts"][:2]
-    expected_rows = teacher["rows"][:2]
-    if len(prompts) != 2 or len(expected_rows) != 2:
-        raise RuntimeError("smoke requires the first two fixed suite/teacher rows")
-    if _SMOKE_TOKENS <= _PRIOR_FAILURE_CYCLE * _MAX_EMITTED_PER_CYCLE:
+    prompts = suite["prompts"][: args.request_count]
+    expected_rows = teacher["rows"][: args.request_count]
+    if len(prompts) != args.request_count or len(expected_rows) != args.request_count:
+        raise RuntimeError(
+            f"smoke requires {args.request_count} fixed suite/teacher rows"
+        )
+    if args.max_tokens <= _PRIOR_FAILURE_CYCLE * _MAX_EMITTED_PER_CYCLE:
         raise RuntimeError("smoke length cannot guarantee crossing cycle 33")
 
     benchmark = load_benchmark(args.benchmark_helper)
@@ -266,7 +271,7 @@ def main() -> int:
             base_url=args.base_url,
             model=args.model,
             prompt=prompt["prompt"],
-            max_tokens=_SMOKE_TOKENS,
+            max_tokens=args.max_tokens,
             timeout=600,
             api_mode="chat",
             seed=1,
@@ -277,7 +282,7 @@ def main() -> int:
         after = fetch_metrics(args.base_url)
         delta = speculation_delta(before, after)
         persist_request_evidence(args.out, index, result, delta)
-        validate_response(result, expected, prompt, index)
+        validate_response(result, expected, prompt, index, args.max_tokens)
         validate_speculation(delta, index)
         records.append(
             {
@@ -313,6 +318,8 @@ def main() -> int:
         "schema": "laguna-dflash-segmented-smoke-v2",
         "status": "PASS",
         "scored_measurement": False,
+        "request_count": args.request_count,
+        "max_tokens": args.max_tokens,
         "requests": records,
         "replicated_embedding": replicated_embedding,
         "target_graph_topology": (
