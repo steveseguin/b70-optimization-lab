@@ -2,7 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered; component-only screen, no model integration authorized.**
+Status: **closed exact-but-slower; no model integration authorized.**
 
 ## Motivation
 
@@ -44,7 +44,8 @@ Build a separate default-unused component operator against a oneDNN build with
 
 - BF16 source `[120,K]` grouped by contiguous expert rows;
 - 64 local experts;
-- load-time converted signed INT4 weights in physical `[64,K/8,N]` form;
+- signed INT4 weights in zero-copy physical `[64,N,K/2]` byte storage,
+  described logically to oneDNN as `[64,K,N]` with `acb` layout;
 - immutable BF16 group-32 scales `[64,K/32,N]`;
 - cumulative int32 expert end offsets `[64]`; and
 - BF16 destination `[120,N]`.
@@ -79,3 +80,54 @@ No target/draft/KV precision change, teacher change, prompt change, warmed
 generation, retry, metric substitution, reset, reboot or privileged recovery
 is authorized by this screen.
 
+## Result
+
+The grouped-memory implementation was built as a default-unused registration
+sidecar against vendored oneDNN `3.12.0` (`80afa710...`).  The protected vLLM
+extension and grouped-GEMM DSO remained hash-pinned.  oneDNN verbose output
+confirmed `gpu,matmul,grouped_gemm:micro` with BF16 grouped source/destination,
+signed INT4 `acb` weights, BF16 mask-7 scales and groups `32x1`; it did not use
+the reference fallback.
+
+Two runtime/build identity defects were caught before any numerical result:
+
+- the first gate selected oneAPI 2026 while PyTorch and the record use 2025.3;
+- CMake used the 2025.3 compiler executable but resolved
+  `/opt/intel/oneapi/compiler/latest` headers and library to 2026, embedding
+  incompatible SYCL 8 and SYCL 9 dependencies.
+
+The final sidecar was compiled and linked entirely against explicit oneAPI
+2025.3 paths.  Its SHA-256 is
+`8357200e33987de704a69799c8b46f757bb60010370a6ad075c1310ebdf3a5e0`.
+
+Exactness passed twice: the construction oracle and then the cached,
+caller-output implementation each produced `6/6` raw-BF16 matches in strict
+mode and `6/6` in BF16 fpmath mode.  Every comparison had zero differing
+elements.  The cached exactness artifact is:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-grouped-onednn-int4-cache-00fbed3-20260801T141348Z`
+
+The preregistered 200-warmup, 15-sample x 40-launch paired timing gate then
+measured:
+
+| shape | incumbent | oneDNN strict | oneDNN BF16 |
+|---|---:|---:|---:|
+| W13 | 0.321951 ms | 0.342322 ms | 0.342305 ms |
+| W2 | 0.184469 ms | 0.192580 ms | 0.192930 ms |
+| sum | **0.506421 ms** | **0.534902 ms** | **0.535234 ms** |
+
+Strict reached only `0.946754x` of incumbent summed throughput; BF16 reached
+`0.946167x`.  Both shapes regressed, both candidates missed the frozen
+`0.480070 ms` absolute ceiling, and neither passed the paired 1.05x gate.
+There is no endpoint projection and no model integration.
+
+Formal timing artifact:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-grouped-onednn-int4-timing-00fbed3-20260801T141601Z`
+
+Durable conclusion: oneDNN's grouped INT4 path is a useful exact arithmetic
+oracle for Laguna, but its current micro-kernel is about 5.6% slower than the
+specialized Xe2 incumbent at these sparse M=120 distributions.  Cache and
+allocation overhead were removed before measurement, so further wrapper work
+is not justified.  Revisit only after a materially different oneDNN grouped
+micro-kernel or tile strategy, not another integration attempt.

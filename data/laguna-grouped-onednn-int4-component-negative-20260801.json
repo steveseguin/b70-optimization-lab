@@ -1,0 +1,35 @@
+{
+  "date": "2026-08-01",
+  "classification": "exact_but_slower_component_negative",
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "candidate_source_head": "00fbed32f69b7e6288c656ae866c4bff3be33996",
+  "candidate_sidecar_sha256": "8357200e33987de704a69799c8b46f757bb60010370a6ad075c1310ebdf3a5e0",
+  "protected_extension_sha256": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
+  "protected_grouped_gemm_sha256": "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839",
+  "implementation": "oneDNN 3.12 grouped_gemm:micro, BF16 x signed INT4, BF16 output",
+  "exactness": {
+    "strict_raw_bf16": "6/6",
+    "bf16_fpmath_raw_bf16": "6/6",
+    "different_elements": 0
+  },
+  "timing_protocol": {
+    "warmup_launches_per_arm": 200,
+    "samples": 15,
+    "launches_per_sample": 40,
+    "rotated_arm_order": true
+  },
+  "medians_ms": {
+    "w13": {"incumbent": 0.3219514, "strict": 0.342321975, "bf16": 0.342304675},
+    "w2": {"incumbent": 0.184469475, "strict": 0.192580475, "bf16": 0.19292965},
+    "sum": {"incumbent": 0.506420875, "strict": 0.53490245, "bf16": 0.535234325}
+  },
+  "sum_speedup": {"strict": 0.9467537024741614, "bf16": 0.9461666626108106},
+  "gate": {
+    "required_sum_speedup": 1.05,
+    "required_candidate_max_sum_ms": 0.48007,
+    "passed": false
+  },
+  "exactness_artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-grouped-onednn-int4-cache-00fbed3-20260801T141348Z",
+  "timing_artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-grouped-onednn-int4-timing-00fbed3-20260801T141601Z",
+  "decision": "Do not integrate. Revisit only for a materially different grouped micro-kernel or tile strategy."
+}
