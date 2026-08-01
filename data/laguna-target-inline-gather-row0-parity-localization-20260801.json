@@ -1,0 +1,152 @@
+{
+  "schema": "laguna-target-inline-gather-parity-localization-v1",
+  "date": "2026-08-01",
+  "status": "LOCALIZED",
+  "evidence_class": "diagnostic",
+  "score_authorized": false,
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "source": {
+    "vllm_base": "b63557f7838e1338f930075b8f163475aef4d23e",
+    "vllm_diagnostic": "3b68edc7501c546b03994ea8b6d6fa7bf23cc088",
+    "xpu_kernels": "99886d783372e621941228250091dc8ebdc1595d",
+    "patch": {
+      "path": "patches/laguna-s-2.1-xpu-b70/0001-diag-select-Laguna-parity-verifier-row.patch",
+      "sha256": "c1bec9baf291d0aac5873ea0b51c26887fe900ffee352bc0d7b886c27489bc69"
+    },
+    "bundle": {
+      "path": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-row0-parity-diagnostic-3b68edc75-20260801.bundle",
+      "sha256": "0c4206fffb55d2023ea59f278e7eb60a755bdbbb4c2fafeb5ca507aa9938b77f"
+    }
+  },
+  "trigger": {
+    "request_index": 0,
+    "prompt_tokens": 90,
+    "output_index": 331,
+    "candidate_token": 72,
+    "teacher_token": 372,
+    "verifier_row": 0,
+    "position": 420,
+    "input_token": 20253
+  },
+  "candidate": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-prefix24-row0-parity-20260801T201718Z",
+    "target_inline_gather_prefix": 24,
+    "target_topology": "122/121 on 4/4 ranks",
+    "draft_topology": "14/13 on 4/4 ranks",
+    "cached_tokens": 0,
+    "completion_tokens": 400,
+    "speculation": {
+      "drafts": 105,
+      "draft_tokens": 1155,
+      "accepted_tokens": 299
+    },
+    "teardown": {
+      "original_status": 1,
+      "stop_status": 0,
+      "worker_status": 0,
+      "idle_status": 0
+    },
+    "identity_sha256": "6a3aada35cb439041d8d2da14689e9725fb747a52fcb894d2071e120abeaf367",
+    "raw_response_sha256": "1fd6d9f8c0743bf452817fb43d33ee6df2611a2cc29d718007b1eceaa39e4f09",
+    "server_log_sha256": "4df011963352d8a45e88ed598a8b75271038d40d9b87388eb628ccec4fdb4e4c",
+    "parity_packet_sha256": {
+      "rank0": "6731e678682ec878cc81a1deb29945c42c74c05817e7523bd4ee931e1d901822",
+      "rank1": "da16f8c931f579324a19a851ade7c840262f15090a2ed821364f5d187e7b2bdf",
+      "rank2": "e299108e53ec21a1ebfdfc8bbd21583ac4fe9cf798e690b70224d4380560135f",
+      "rank3": "6df44c15452d53ffb8ba5573deb8d87ec1bdc26c03fe6165ea523e216f5a1498"
+    }
+  },
+  "control": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-control-row0-parity-20260801T202322Z",
+    "target_inline_gathers": false,
+    "status": "PASS",
+    "request_count": 2,
+    "completion_tokens_per_request": 400,
+    "exact_requests": "2/2",
+    "cached_tokens": "0 on 2/2",
+    "target_topology": "146/145 on 4/4 ranks",
+    "draft_topology": "14/13 on 4/4 ranks",
+    "identity_sha256": "232fba90adb13e48f79db506e54d380c2ef38b82590ae2d48a0f8ff63ab39464",
+    "summary_sha256": "9f21a0a35650a81decce9246f2a7e021b0f7a6e4c12f66e77122a6fcdd1bd9e7",
+    "server_log_sha256": "b556c61ec5e25f046fc1c221e8be018b5e784ded2ce5b3f2f679eb4d721dcd75",
+    "parity_packet_sha256": {
+      "rank0": "e8b5f6098daff53e89630fabc6c80cb9c2169b0398cdd92b8c38ca1af2ed2f98",
+      "rank1": "f555044ef6104cf92d487f7ec71237ddbcf3e25ca644fcccce108c4315cae258",
+      "rank2": "31dec502e6e0ed2e72e4200eafadbc6fbebed7a81273cf0a68b68e42eb835af9",
+      "rank3": "fd604168422371b0f9bb21731f043cc73c04c78164f8ad6f7c697deb88a88348"
+    }
+  },
+  "comparison": {
+    "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/evidence/laguna-target-inline-prefix24-row0-parity-20260801T2030Z/parity-comparison.json",
+    "sha256": "14d4115518c7e29720c6e79c51b0c3d3995dec59950bbaf23070c6cfbb4dee4c",
+    "legacy_rank_major_report": {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/evidence/laguna-target-inline-prefix24-row0-parity-20260801T2030Z/parity-comparison.rank-major-v1.json",
+      "sha256": "2f10983206916366a234d7d6747fab2dfee178f249a488057e3e38bfb4d8acad",
+      "caveat": "Its top-level first_divergence chose rank before model stage and must not be read as the global model-order boundary."
+    },
+    "comparator": {
+      "path": "experiments/laguna-s-2.1-xpu-b70/tools/compare_laguna_parity.py",
+      "sha256": "e7a18cbdb6c75a7948f626a8bb77153fa0f54a3920a77dab54435a9f26bd5b93",
+      "ordering": "model stage before rank",
+      "optional_absent_arrays": "null"
+    },
+    "aligned_before_collective": [
+      "input_id",
+      "position",
+      "layer0_embedding",
+      "layer0_attention_norm",
+      "layer0_qkv",
+      "layer0_q_norm",
+      "layer0_k_norm",
+      "layer0_rope_q",
+      "layer0_rope_k",
+      "layer0_attention_kernel",
+      "layer0_attention_gate",
+      "layer0_o_projection_input",
+      "layer0_o_projection_local"
+    ],
+    "first_divergence_by_rank": {
+      "rank0": {
+        "tensor": "layers.0._parity_mlp_out",
+        "differing_elements": 3069,
+        "total_elements": 3072,
+        "max_abs_diff": 0.013153076171875
+      },
+      "rank1": {
+        "tensor": "layers.0.self_attn.o_proj._parity_output",
+        "differing_elements": 3072,
+        "total_elements": 3072,
+        "max_abs_diff": 13.53369140625
+      },
+      "rank2": {
+        "tensor": "layers.0.self_attn.o_proj._parity_output",
+        "differing_elements": 2952,
+        "total_elements": 3072,
+        "max_abs_diff": 15.17919921875
+      },
+      "rank3": {
+        "tensor": "layers.0.self_attn.o_proj._parity_output",
+        "differing_elements": 3072,
+        "total_elements": 3072,
+        "max_abs_diff": 35.28662109375
+      }
+    },
+    "model_order_first_divergence": {
+      "tensor": "layers.0.self_attn.o_proj._parity_output",
+      "ranks": [1, 2, 3]
+    }
+  },
+  "conclusion": {
+    "established": "The first corruption occurs at captured collective slot 0, the layer-0 attention O-projection all-gather, on nonzero ranks. Earlier attention and local projection values match the control.",
+    "leading_hypothesis": "The captured collective lacks a correct replay-time cross-rank completion or ordering dependency before its graph consumer.",
+    "hypothesis_proven": false,
+    "disposition": "Keep direct captured target collectives default-off. Permit only a separately preregistered minimal repair that first proves per-rank slot-0 output equality."
+  },
+  "limitations": [
+    "The trace covers one selected verifier row and one request lifetime.",
+    "The slot-0 label follows the source ordinal mapping; the exact runtime race mechanism is not proven.",
+    "Rank 0 remains equal at the attention gather output.",
+    "Later tensor differences are propagation evidence, not independent causes.",
+    "No throughput, score, or endpoint-integration claim is authorized."
+  ]
+}

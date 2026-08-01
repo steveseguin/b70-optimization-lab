@@ -109,6 +109,7 @@ not promoted record sources:
 | confirmed M12 shared-elementwise vLLM selector | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `1a7f61feffbc61b21b73f812d231c7426386ccdc` | three patches: `7bbfd791a79c022501525a3563e7c5bbf8713ba33d6c5efd6bdf2117577eca83`, `9ac2536eba2c5e1a2bb9c9d2495272a846bbc6f51240898763ed7b816054f8d0`, `7e6b12da71a2a3e94622a3ef7d5a16b461c774e7c105f0374e35927918f3e443` | `52e1682aa7e7595f9e4807b6a45f7b2e29683a2d61dae155b1f1b823f8a3e82b` |
 | rejected deferred rank-sum/RMSNorm plus native-attention vLLM stack | `1a7f61feffbc61b21b73f812d231c7426386ccdc` | `1ddb7d6bbe2579e0dd07a8fe7edfc135432ab85e` | source deltas contained by bundle | `8fc8fa3073a5aba06ce9962aa1f4c25d403497175d9c5ac84a3c313c125599e3` |
 | rejected exact TP4 rank-sum/add-RMSNorm native kernel | `99886d783372e621941228250091dc8ebdc1595d` | `ead1a16036afe825816453b549ee94ed6978539e` | source delta contained by bundle | `3bcf72afe09d0a6b68fdfeae1714aa0f5d711561135451dd7cef7c6248f7b488` |
+| target inline-gather row-0 parity diagnostic | `b63557f7838e1338f930075b8f163475aef4d23e` | `3b68edc7501c546b03994ea8b6d6fa7bf23cc088` | `c1bec9baf291d0aac5873ea0b51c26887fe900ffee352bc0d7b886c27489bc69` | `0c4206fffb55d2023ea59f278e7eb60a755bdbbb4c2fafeb5ca507aa9938b77f` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -303,3 +304,14 @@ at token 331. The treatment never received a score. The thin source bundle is
 and requires base commit `68a4a5f3e44f2d1ab62c5d7cb3741e316914d32f`.
 See the
 [closed full-gate result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-target-inline-prefix-full-gate-bisection.md).
+
+The row-0 parity diagnostic is instrumentation, not a record source. It makes
+the artifact root and verifier row explicit, keeps layer-0 QKNorm/RoPE fusion
+active, and dumps one target-only parity packet per rank at a matched
+position/input trigger. The candidate reproduced the known prefix-24 failure;
+the selector-off control remained exact. The comparison localized the first
+corruption to captured slot 0's consumer-visible O-projection all-gather output
+on ranks 1–3. The diagnostic patch is
+`0001-diag-select-Laguna-parity-verifier-row.patch`; the thin bundle requires
+base `b63557f7838e1338f930075b8f163475aef4d23e`. See the
+[completed trace](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-target-inline-gather-first-divergent-tensor-preregistration.md).

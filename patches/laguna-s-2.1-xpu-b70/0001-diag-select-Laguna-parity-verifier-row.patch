@@ -1,0 +1,187 @@
+From 3b68edc7501c546b03994ea8b6d6fa7bf23cc088 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 16:12:41 -0400
+Subject: [PATCH] diag: select Laguna parity verifier row
+
+---
+ vllm/model_executor/layers/linear.py | 16 ++++++----
+ vllm/model_executor/models/laguna.py | 45 ++++++++++++++++++++--------
+ 2 files changed, 43 insertions(+), 18 deletions(-)
+
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 0100d83db..90f80494c 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -47,6 +47,14 @@ from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ logger = init_logger(__name__)
+ 
++_LAGUNA_PARITY_ROW = int(os.environ.get("VLLM_XPU_LAGUNA_PARITY_ROW", "-1"))
++if _LAGUNA_PARITY_ROW not in (-1, 0):
++    raise RuntimeError("VLLM_XPU_LAGUNA_PARITY_ROW must be -1 or 0")
++
++
++def _laguna_parity_row(tensor: torch.Tensor) -> torch.Tensor:
++    return tensor.reshape(-1, tensor.shape[-1])[_LAGUNA_PARITY_ROW]
++
+ 
+ def _xpu_exact_batched_m1_bmm_out(
+     rows: torch.Tensor, weight: torch.Tensor, output: torch.Tensor
+@@ -1869,7 +1877,7 @@ class RowParallelLinear(LinearBase):
+         if parity_probe:
+             torch.ops.vllm.laguna_parity_copy(
+                 self._parity_input,
+-                input_parallel.reshape(-1, input_parallel.shape[-1])[-1]
++                _laguna_parity_row(input_parallel),
+             )
+ 
+         # Matrix multiply.
+@@ -1902,9 +1910,7 @@ class RowParallelLinear(LinearBase):
+                 if parity_probe:
+                     torch.ops.vllm.laguna_parity_copy(
+                         self._parity_local,
+-                        output_parallel.reshape(
+-                            -1, output_parallel.shape[-1]
+-                        )[-1]
++                        _laguna_parity_row(output_parallel),
+                     )
+                 output = output_parallel
+                 if self.reduce_results and self.tp_size > 1:
+@@ -1933,7 +1939,7 @@ class RowParallelLinear(LinearBase):
+         if parity_probe:
+             torch.ops.vllm.laguna_parity_copy(
+                 self._parity_output,
+-                output.reshape(-1, output.shape[-1])[-1]
++                _laguna_parity_row(output),
+             )
+ 
+         if not self.return_bias:
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index c490a2276..042b7898d 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -77,9 +77,19 @@ from vllm.utils.torch_utils import direct_register_custom_op
+ logger = init_logger(__name__)
+ 
+ _LAGUNA_ARTIFACT_ROOT = Path(
+-    "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1"
+-)
++    os.environ.get(
++        "VLLM_XPU_LAGUNA_ARTIFACT_ROOT",
++        "/media/steve/CorsairExternal/llm-optimization-artifacts/laguna-s-2.1",
++    )
++).resolve()
+ _LAGUNA_PARITY_TRIGGER = _LAGUNA_ARTIFACT_ROOT / "parity-trigger.json"
++_LAGUNA_PARITY_ROW = int(os.environ.get("VLLM_XPU_LAGUNA_PARITY_ROW", "-1"))
++if _LAGUNA_PARITY_ROW not in (-1, 0):
++    raise RuntimeError("VLLM_XPU_LAGUNA_PARITY_ROW must be -1 or 0")
++
++
++def _laguna_parity_row(tensor: torch.Tensor) -> torch.Tensor:
++    return tensor.reshape(-1, tensor.shape[-1])[_LAGUNA_PARITY_ROW]
+ 
+ 
+ def _laguna_m8_shared_elementwise_graph_contract(
+@@ -1081,7 +1091,7 @@ class LagunaAttention(nn.Module):
+         if self._parity_enabled:
+             _copy_laguna_parity(
+                 getattr(self, f"_parity_{stage}"),
+-                tensor.reshape(-1, tensor.shape[-1])[-1]
++                _laguna_parity_row(tensor),
+             )
+ 
+     def _parity_stage_output(
+@@ -1117,7 +1127,7 @@ class LagunaAttention(nn.Module):
+         fused_m8_qknorm_rope = (
+             envs.VLLM_XPU_LAGUNA_M8_QKNORM_ROPE
+             and not self.is_dflash_layer
+-            and not self._parity_enabled
++            and not self._parity_return_stage
+             and not torch.compiler.is_compiling()
+             and hidden_states.shape[0] in (8, 12)
+             and _xpu_is_exact_decode_or_verifier_rows(hidden_states.shape[0])
+@@ -1374,7 +1384,7 @@ class LagunaDecoderLayer(nn.Module):
+         if self._parity_enabled:
+             _copy_laguna_parity(
+                 getattr(self, f"_parity_{stage}"),
+-                tensor.reshape(-1, tensor.shape[-1])[-1]
++                _laguna_parity_row(tensor),
+             )
+ 
+     def forward(
+@@ -1510,7 +1520,9 @@ class LagunaModel(nn.Module, EagleModelMixin):
+         self.make_empty_intermediate_tensors = make_empty_intermediate_tensors_factory(
+             ["hidden_states", "residual"], config.hidden_size
+         )
+-        self._parity_enabled = envs.VLLM_XPU_LAGUNA_PARITY_PROBE
++        self._parity_enabled = (
++            envs.VLLM_XPU_LAGUNA_PARITY_PROBE and config.num_hidden_layers == 48
++        )
+         if self._parity_enabled:
+             for stage in ("embedding", "final_norm", "final_residual"):
+                 self.register_buffer(
+@@ -1542,11 +1554,12 @@ class LagunaModel(nn.Module, EagleModelMixin):
+         )
+         if self._parity_enabled:
+             _copy_laguna_parity(
+-                self._parity_position, positions.reshape(-1)[-1]
++                self._parity_position, positions.reshape(-1)[_LAGUNA_PARITY_ROW]
+             )
+             if input_ids is not None:
+                 _copy_laguna_parity(
+-                    self._parity_input_id, input_ids.reshape(-1)[-1]
++                    self._parity_input_id,
++                    input_ids.reshape(-1)[_LAGUNA_PARITY_ROW],
+                 )
+         if get_pp_group().is_first_rank:
+             if inputs_embeds is not None:
+@@ -1556,7 +1569,7 @@ class LagunaModel(nn.Module, EagleModelMixin):
+             if self._parity_enabled:
+                 _copy_laguna_parity(
+                     self._parity_embedding,
+-                    hidden_states.reshape(-1, hidden_states.shape[-1])[-1]
++                    _laguna_parity_row(hidden_states),
+                 )
+             residual = None
+         else:
+@@ -1596,11 +1609,11 @@ class LagunaModel(nn.Module, EagleModelMixin):
+         if self._parity_enabled:
+             _copy_laguna_parity(
+                 self._parity_final_norm,
+-                hidden_states.reshape(-1, hidden_states.shape[-1])[-1]
++                _laguna_parity_row(hidden_states),
+             )
+             _copy_laguna_parity(
+                 self._parity_final_residual,
+-                final_residual.reshape(-1, final_residual.shape[-1])[-1]
++                _laguna_parity_row(final_residual),
+             )
+         if len(aux_hidden_states) > 0:
+             return hidden_states, aux_hidden_states
+@@ -1831,6 +1844,7 @@ class LagunaForCausalLM(nn.Module, SupportsPP, SupportsLoRA, SupportsEagle3):
+     ) -> None:
+         if (
+             not envs.VLLM_XPU_LAGUNA_PARITY_PROBE
++            or not self.model._parity_enabled
+             or self._parity_dumped
+             or not _LAGUNA_PARITY_TRIGGER.exists()
+         ):
+@@ -1867,8 +1881,13 @@ class LagunaForCausalLM(nn.Module, SupportsPP, SupportsLoRA, SupportsEagle3):
+             "tp_rank": get_tensor_model_parallel_rank(),
+             "input_id": self.model._parity_input_id.detach().cpu().clone(),
+             "position": self.model._parity_position.detach().cpu().clone(),
+-            "hidden_states": hidden_states.detach().cpu().clone(),
+-            "logits": None if logits is None else logits.detach().cpu().clone(),
++            "parity_row": _LAGUNA_PARITY_ROW,
++            "hidden_states": _laguna_parity_row(hidden_states).detach().cpu().clone(),
++            "logits": (
++                None
++                if logits is None
++                else _laguna_parity_row(logits).detach().cpu().clone()
++            ),
+             "buffers": {
+                 name: tensor.detach().cpu().clone()
+                 for name, tensor in self.model.named_buffers()
+-- 
+2.43.0
+

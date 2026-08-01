@@ -128,6 +128,17 @@ the dependency. The lesson is to binary-search structural boundaries under a
 fresh service, then separately gate length, request turnover, and rollover. A
 mismatch index is diagnostic evidence, never a quality score.
 
+The follow-up row-0 tensor trace closed the ambiguity. At the known failing
+position 420/input token 20253, all ranks matched through layer-0 attention and
+the O-projection's local output. Captured collective slot 0 then returned the
+correct gathered tensor on rank 0 and corrupted tensors on ranks 1–3. The
+transferable rule is to compare the first collective's producer, rank-local
+value, and consumer-visible output on **every rank**. Rank-0 equality is not a
+collective-correctness proof. When inputs and local values match but nonzero
+ranks first diverge at the consumer-visible collective result, investigate the
+capture/replay completion dependency before changing model arithmetic or KV
+state. The mechanism remains a hypothesis until a minimal repair proves it.
+
 ### Persist evidence before assertions
 
 The first inline-gather harness proved topology but discarded the response when

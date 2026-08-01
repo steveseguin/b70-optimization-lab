@@ -50,6 +50,18 @@ unsupported non-monotonic phase-alignment effect to matter; no evidence points
 there. Mainloop work must attack a different cost class rather than another
 barrier spelling.
 
+The target inline-gather correctness failure is now localized. A matched
+row-0 parity trace reproduced the prefix-24 token-331 failure and kept the
+selector-off control exact. At verifier position 420/input token 20253, every
+rank matched through the layer-0 O-projection input and local projection. The
+captured slot-0 gathered output remained correct on rank 0 but was corrupt on
+ranks 1–3. This rules out earlier attention/KV/model math at the trigger and
+names the first captured collective boundary. It does not yet prove the
+runtime mechanism; missing replay-time cross-rank completion is the leading
+hypothesis. Do not run another prefix sweep. A separately preregistered repair
+must first prove per-rank slot-0 output equality. See
+[`2026-08-01-target-inline-gather-first-divergent-tensor-preregistration.md`](notes/2026-08-01-target-inline-gather-first-divergent-tensor-preregistration.md).
+
 Read the
 [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)
 before making any speed claim. The approved receipt remains historical

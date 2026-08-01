@@ -2,8 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered; diagnostic only. No score or speed claim is
-authorized.**
+Status: **complete; diagnostic only. No score or speed claim is authorized.**
 
 ## Motivation
 
@@ -77,3 +76,67 @@ at that boundary. No endpoint integration is authorized by this trace. If the
 first difference precedes a captured gather, or the instrumentation changes the
 known output failure, close the inline-gather route until a less perturbative
 probe exists.
+
+## Result
+
+The ordered gate completed on the same diagnostic vLLM source
+`3b68edc7501c546b03994ea8b6d6fa7bf23cc088` and protected XPU-kernel source
+`99886d783372e621941228250091dc8ebdc1595d`.
+
+The prefix-24 candidate reproduced the known defect without moving it:
+
+- request 0 returned all 400 tokens but first differed at output index 331,
+  candidate token `72` versus teacher token `372`;
+- `cached_tokens=0`, with real depth-11 speculation (`105` drafts, `1,155`
+  draft tokens, `299` accepted tokens);
+- target topology was `122/121` and draft topology was `14/13` on all four
+  ranks;
+- every rank dumped verifier row 0 at position `420`, input token `20253`;
+- teardown classified `original_status=1`, `stop_status=0`,
+  `worker_status=0`, and `idle_status=0`.
+
+The matched selector-off control passed two 400-token requests exactly, both
+cache-zero, with target topology `146/145`, draft topology `14/13`, the same
+four parity packets, and clean teardown.
+
+The raw-BF16 comparator found identical layer-0 embedding, attention norm,
+QKV, Q/K norm, RoPE, attention-kernel, gate, O-projection input, and local
+O-projection tensors on every rank. The first divergent boundary was:
+
+| Rank | First differing tensor | Differing elements | Maximum absolute difference |
+| --- | --- | ---: | ---: |
+| 0 | `layers.0._parity_mlp_out` | 3069 / 3072 | `0.013153076171875` |
+| 1 | `layers.0.self_attn.o_proj._parity_output` | 3072 / 3072 | `13.53369140625` |
+| 2 | `layers.0.self_attn.o_proj._parity_output` | 2952 / 3072 | `15.17919921875` |
+| 3 | `layers.0.self_attn.o_proj._parity_output` | 3072 / 3072 | `35.28662109375` |
+
+Rank 0's gathered O-projection output equals the control. Ranks 1–3 receive
+wrong gathered outputs even though their gather input and rank-local projected
+tensor equal the control. This localizes the first corruption to captured
+collective slot 0, the layer-0 attention O-projection all-gather, on nonzero
+ranks. It rules out earlier KV, QKV, Q/K normalization, RoPE, attention, gate,
+and local O-projection math as the cause at this trigger.
+
+The evidence does **not** yet prove the runtime mechanism. A missing or
+incorrect replay-time cross-rank completion dependency is the leading source
+hypothesis, not an established causal claim. Any repair needs a separate
+preregistration and must prove all-rank slot-0 output equality before a longer
+model gate. Direct captured target collectives remain closed until then.
+
+## Artifacts
+
+- candidate:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-prefix24-row0-parity-20260801T201718Z`;
+- control:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-control-row0-parity-20260801T202322Z`;
+- comparison:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/evidence/laguna-target-inline-prefix24-row0-parity-20260801T2030Z/parity-comparison.json`;
+- original rank-major comparator report, retained with its headline-ordering
+  caveat:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/evidence/laguna-target-inline-prefix24-row0-parity-20260801T2030Z/parity-comparison.rank-major-v1.json`;
+- structured summary:
+  `data/laguna-target-inline-gather-row0-parity-localization-20260801.json`;
+- diagnostic source patch:
+  `patches/laguna-s-2.1-xpu-b70/0001-diag-select-Laguna-parity-verifier-row.patch`;
+- thin source bundle:
+  `patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-row0-parity-diagnostic-3b68edc75-20260801.bundle`.
