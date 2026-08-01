@@ -2,8 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered non-scored model diagnostic; no endpoint score is yet
-authorized.**
+Status: **closed negative at the preregistered non-scored model gate; no
+endpoint score was run or authorized.**
 
 ## Evidence and distinct mechanism
 
@@ -61,3 +61,49 @@ shared-elementwise record changes remain present.
 No weight, target/draft/KV precision, width/depth, verification, sampler,
 teacher, prompt, cache, metric, acceptance rule, or scoring-window change is
 authorized.
+
+## Result
+
+V2 was implemented in the dedicated vLLM worktree at `68a4a5f3e` on top of
+protected vLLM `1a7f61fef`. The selector-off path allocates no new buffers. The
+selector-on path owns 96 distinct fixed `[1,12,3072]` BF16 inputs and 96
+distinct fixed `[4,12,3072]` BF16 outputs per rank, copies each model-local
+input into its fixed slot immediately before the unchanged gather, and rejects
+shape, pointer, aliasing, order, or count drift. Focused static and unit gates
+passed before model load.
+
+The one authorized smoke ran at:
+
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-gathers-fixed-input-v2-smoke-20260801T161655Z`
+
+It proved that all four ranks activated the 96 fixed input/output slots and
+that capture and replay both had the intended target `50/49` and draft `14/13`
+topologies. Request 0 returned 400 tokens with `cached_tokens=0` and a normal
+decaying DFlash acceptance curve (`297/1188`, 108 draft cycles). It nevertheless
+diverged from the canonical q=1 teacher at zero-based token index 176. The
+first 176 tokens were exact. This is a real token mismatch, not the old
+combined prefix/cache ambiguity.
+
+The harness stopped normally after the assertion. `cleanup-status.txt` records
+`stop_status=0`, `worker_status=0`, and `idle_status=0`; the post-failure idle
+snapshot passed with only the four self-observer rows. The server log contains
+no `RuntimeError`, traceback, or device error. No reset, reload, unbind, FLR,
+shared-memory deletion, or reboot was performed.
+
+Conclusion: stable runner-owned input addresses are insufficient to make the
+model's captured target gathers exact. Together with the independent M12
+composition pass, this narrows the problem to model-specific producer/consumer
+semantics rather than a generic M12 XCCL inability. Do not retry V1 or V2
+unchanged. Any future work on this seam requires first-divergent-layer tensor
+localization under the model, not another address-lifetime variation.
+
+Durable evidence:
+
+- structured result: `data/laguna-target-inline-gathers-fixed-input-v2-negative-20260801.json`;
+- complete vLLM bundle:
+  `patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle`,
+  SHA256 `a181c0036436860b24cacea057e1f285ddd1fcf75a9e010f3d32fecb65095fad`;
+- raw response SHA256:
+  `7f1d855ffe472aae3ab60ce5f192839962ad2b62e7557cfba174620c489b7071`;
+- server-log SHA256:
+  `4bea2da23253ee4e39cf7918a0a7003bb259deb3f5dcbdabb2a36abff6995e81`.

@@ -1,0 +1,59 @@
+{
+  "schema": "laguna-target-inline-gathers-fixed-input-v2-result-v1",
+  "date": "2026-08-01",
+  "classification": "negative",
+  "scored_measurement": false,
+  "endpoint_score_authorized": false,
+  "protected_record_tok_s": 125.4619731637751,
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-gathers-fixed-input-v2-smoke-20260801T161655Z",
+  "source": {
+    "vllm_base_commit": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "vllm_v2_commit": "68a4a5f3e44f2d1ab62c5d7cb3741e316914d32f",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "bundle": "patches/laguna-s-2.1-xpu-b70/vllm-laguna-target-inline-gathers-fixed-input-v2-68a4a5f3e-20260801.bundle",
+    "bundle_sha256": "a181c0036436860b24cacea057e1f285ddd1fcf75a9e010f3d32fecb65095fad"
+  },
+  "identity": {
+    "kv_cache_dtype": "bfloat16",
+    "target_width": 12,
+    "dflash_depth": 11,
+    "target_graph_topology": "50/49",
+    "draft_graph_topology": "14/13",
+    "fixed_gather_slots_per_rank": 96,
+    "fixed_input_shape": [1, 12, 3072],
+    "fixed_output_shape": [4, 12, 3072]
+  },
+  "activation": {
+    "fixed_slot_marker_rows": 4,
+    "capture_target_rows": 4,
+    "replay_target_rows": 4,
+    "capture_draft_rows": 4,
+    "replay_draft_rows": 4
+  },
+  "request_0": {
+    "completion_tokens": 400,
+    "cached_tokens": 0,
+    "teacher_exact": false,
+    "exact_prefix_tokens": 176,
+    "first_mismatch_zero_based": 176,
+    "draft_cycles": 108,
+    "draft_tokens": 1188,
+    "accepted_tokens": 297,
+    "accepted_per_position": [88, 60, 42, 34, 24, 15, 12, 7, 7, 5, 3],
+    "raw_response_sha256": "7f1d855ffe472aae3ab60ce5f192839962ad2b62e7557cfba174620c489b7071"
+  },
+  "teardown": {
+    "stop_status": 0,
+    "worker_status": 0,
+    "idle_status": 0,
+    "post_idle_status": "passed",
+    "device_error_observed": false
+  },
+  "hashes": {
+    "server_log_sha256": "4bea2da23253ee4e39cf7918a0a7003bb259deb3f5dcbdabb2a36abff6995e81",
+    "identity_sha256": "fdd1232d4447b950420d8d99ad754f0312a8e200080ae9fc0cf2c19f75957aa2",
+    "cleanup_status_sha256": "621005e3d8f4e0443c8d076bb4e5104f2bab517cb45d97b03a1d7f2e66ba35c8",
+    "failure_post_idle_sha256": "3d850c3021273438d2e042ab8e1fe0f215d6f1af2f8d642c78fec0966848c5dc"
+  },
+  "conclusion": "Fixed-address gather inputs and outputs do not restore model-level exactness. Do not retry V1 or V2 unchanged; localize the first divergent model tensor before further work on this seam."
+}
