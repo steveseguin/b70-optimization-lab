@@ -225,8 +225,8 @@ def run_parent(args: argparse.Namespace) -> int:
         str(extension.parent),
         "/home/steve/.venvs/deepseek-v4-xpu/lib",
         "/opt/intel/oneapi/umf/1.1/lib",
-        "/opt/intel/oneapi/compiler/2026.0/lib",
-        "/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib",
+        "/opt/intel/oneapi/compiler/2025.3/lib",
+        "/opt/intel/oneapi/compiler/2025.3/opt/compiler/lib",
     ]
     environment["LD_LIBRARY_PATH"] = ":".join(library_dirs)
     completed = subprocess.run(command, env=environment, text=True, capture_output=True)
