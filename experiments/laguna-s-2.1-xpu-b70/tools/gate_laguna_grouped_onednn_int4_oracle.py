@@ -17,7 +17,10 @@ HIDDEN = 3072
 INTERMEDIATE = 1024
 EXPERTS = 64
 ROUTES = 120
-EXPECTED_SOURCE_HEAD = "0b5c203bc476598fd6aa3999312aed2f478cdb18"
+EXPECTED_SOURCE_HEAD = "c168f9e28a5cd508f9a195d7e9ef15dfecbe20ed"
+EXPECTED_PROTECTED_EXTENSION_SHA256 = (
+    "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8"
+)
 EXPECTED_GROUPED_SHA256 = (
     "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839"
 )
@@ -53,6 +56,7 @@ def mapped_grouped_gemm() -> list[str]:
 def run_worker(args: argparse.Namespace) -> int:
     import torch
 
+    torch.ops.load_library(str(Path(args.protected_extension).resolve()))
     torch.ops.load_library(str(Path(args.extension).resolve()))
     if torch.xpu.device_count() != 1:
         raise RuntimeError("worker requires exactly one visible XPU")
@@ -162,6 +166,8 @@ def run_worker(args: argparse.Namespace) -> int:
     result = {
         "extension": str(Path(args.extension).resolve()),
         "extension_sha256": sha256_file(Path(args.extension)),
+        "protected_extension": str(Path(args.protected_extension).resolve()),
+        "protected_extension_sha256": sha256_file(Path(args.protected_extension)),
         "grouped_dso": expected_grouped,
         "grouped_dso_sha256": sha256_file(Path(args.grouped_dso)),
         "mapped_grouped_gemm": mapped,
@@ -174,11 +180,18 @@ def run_worker(args: argparse.Namespace) -> int:
 
 def run_parent(args: argparse.Namespace) -> int:
     extension = Path(args.extension).resolve()
+    protected_extension = Path(args.protected_extension).resolve()
     grouped_dso = Path(args.grouped_dso).resolve()
     output_dir = Path(args.output_dir).resolve()
     source_tree = Path(args.source_tree).resolve()
-    if not extension.is_file() or not grouped_dso.is_file():
-        raise RuntimeError("missing extension or protected grouped-GEMM DSO")
+    if (
+        not extension.is_file()
+        or not protected_extension.is_file()
+        or not grouped_dso.is_file()
+    ):
+        raise RuntimeError("missing oracle sidecar or protected extension/DSO")
+    if sha256_file(protected_extension) != EXPECTED_PROTECTED_EXTENSION_SHA256:
+        raise RuntimeError("protected extension hash drift")
     if sha256_file(grouped_dso) != EXPECTED_GROUPED_SHA256:
         raise RuntimeError("protected grouped-GEMM DSO hash drift")
     head = subprocess.run(
@@ -201,6 +214,8 @@ def run_parent(args: argparse.Namespace) -> int:
         "--worker",
         "--extension",
         str(extension),
+        "--protected-extension",
+        str(protected_extension),
         "--grouped-dso",
         str(grouped_dso),
         "--worker-output",
@@ -221,6 +236,7 @@ def run_parent(args: argparse.Namespace) -> int:
         }
     )
     library_dirs = [
+        str(protected_extension.parent),
         str(grouped_dso.parent),
         str(extension.parent),
         "/home/steve/.venvs/deepseek-v4-xpu/lib",
@@ -260,6 +276,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--extension", required=True)
+    parser.add_argument("--protected-extension", required=True)
     parser.add_argument("--grouped-dso", required=True)
     parser.add_argument("--source-tree")
     parser.add_argument("--output-dir")
