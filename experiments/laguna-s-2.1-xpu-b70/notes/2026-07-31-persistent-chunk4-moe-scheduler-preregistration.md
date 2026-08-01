@@ -2,7 +2,7 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: preregistered before source change, build, or device execution.
+Status: **closed exact component negative; do not model-run.**
 
 ## Distinct premise
 
@@ -58,3 +58,48 @@ No model, INT4 weights, BF16 KV, speculative width/depth, verification,
 sampling, prompts, teacher, cache, metric, retry, warmup generation, graph
 capture window, or scoring window may change. No reboot, reset, FLR, driver
 reload, or privileged recovery is authorized.
+
+## Result
+
+Candidate kernel source is
+`7ad886aaf00fe431810f5ad8ea1b71b585771b06`. The sealed DSO is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/persistent-chunk4-7ad886a/libgrouped_gemm_xe_2.so`
+with SHA-256
+`e46a2abe17d3bc691641abd87cce44003433ad0f682e791d8769cec9a7610e6a`.
+The incremental production build completed in 16:39.85 with 106,783,464 KiB
+maximum RSS and zero swaps.
+
+Static BMG inspection found the separately named 128-GRF candidate and the
+byte-path control in one compile. The control retained its established 679
+instructions; chunk-4 grew to 705. Both retained 2 DPAS, 32 BF16 multiplies,
+and the persistent atomic/barrier markers. The candidate assembly contained
+the four-ID reservation path. As in the preceding dispatcher probe, all
+device builds and assembly emission succeeded before the unused host stub
+failed to link unresolved PyTorch symbols; that host-link failure is plumbing,
+not performance evidence.
+
+The frozen one-B70 component used one DSO for both arms, changed inputs, 200
+warmups, 15 timing samples, and 40 launches per sample:
+
+| shape | persistent control | chunk-4 | speedup |
+| --- | ---: | ---: | ---: |
+| W13 | 0.321221275 ms | 0.366445675 ms | 0.876586x |
+| W2 | 0.183582125 ms | 0.197057175 ms | 0.931619x |
+| sum | 0.504803400 ms | 0.563502850 ms | **0.895831x** |
+
+All six raw-BF16 output comparisons were bitwise exact. Both shapes regressed
+well beyond the allowed boundary, so no topology smoke, model load, endpoint
+run, or LocalMaxxing action occurred.
+
+The measured result closes coarse chunked task acquisition on these sparse
+M12 grouped GEMMs. Reserving four consecutive flat tasks reduced the number
+of dynamic atomic reservations but serialized ownership within a workgroup
+and added 26 final instructions; the net component cost rose by 10.4%. This
+does not isolate whether load-balance loss, reduced workgroup-level
+parallelism, added control flow, or a combination dominates. It does show
+that the incumbent per-task atomic is cheaper than this chunking trade. Do
+not retry chunk sizes above one without new evidence that preserves tile-level
+parallelism.
+
+Raw result:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/persistent-chunk4-component-7ad886a-20260801T090500Z/summary.json`.

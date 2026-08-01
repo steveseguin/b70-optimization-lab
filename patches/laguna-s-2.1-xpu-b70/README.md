@@ -247,3 +247,15 @@ history is in
 the candidate delta is
 `0001-xpu-map-persistent-laguna-moe-work-from-compact-worklist.patch`. See the
 [closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-persistent-worklist-moe-scheduler-preregistration.md).
+
+The persistent chunk-4 scheduler snapshot is an exact component negative, not
+a record source. It retained the 256-workgroup persistent pool but reserved
+four consecutive flat tasks per atomic acquisition. The candidate preserved
+the 2-DPAS/32-multiply body and passed 6/6 raw-BF16 comparisons, but grew final
+ISA from 679 to 705 instructions and measured only `0.895831x` the incumbent
+across W13+W2. It was stopped before a topology smoke or model run. The
+complete source history is in
+`xpu-laguna-persistent-chunk4-scheduler-rejected-7ad886a-20260801.bundle`;
+the candidate delta is
+`0001-xpu-reserve-laguna-persistent-moe-work-in-chunks-of-four.patch`. See the
+[closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-persistent-chunk4-moe-scheduler-preregistration.md).

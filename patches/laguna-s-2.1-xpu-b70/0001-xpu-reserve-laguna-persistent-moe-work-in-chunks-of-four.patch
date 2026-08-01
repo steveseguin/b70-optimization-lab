@@ -1,0 +1,173 @@
+From 7ad886aaf00fe431810f5ad8ea1b71b585771b06 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 07:44:28 -0400
+Subject: [PATCH] Reserve Laguna persistent MoE work in chunks of four
+
+---
+ .../grouped_gemm/xe_2/grouped_gemm_xe2.hpp    | 22 +++++-
+ .../xe_2/grouped_gemm_xe2_interface.hpp       | 71 ++++++++++++++++++-
+ 2 files changed, 89 insertions(+), 4 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index 72f2c25..fd3182e 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -123,6 +123,7 @@ template <
+     bool TileMajor = false,
+     bool ExactVecGroup32 = false,
+     bool TransposedScales = false,
++    int PersistentChunkSize = 1,
+     class TiledMMA,
+     typename ElementA,
+     typename ElementB,
+@@ -154,6 +155,9 @@ CUTE_DEVICE void MoEGEMM(
+   static constexpr bool is_B_mxfp4 = (std::is_same_v<ElementB, uint8_t>) &&
+                                      (std::is_same_v<ElementS, uint8_t>);
+   static constexpr bool is_B_4bits = std::is_same_v<ElementB, uint8_t>;
++  static_assert(
++      PersistentChunkSize == 1 || PersistentChunkSize == 4,
++      "persistent chunk size must be 1 or 4");
+ 
+   auto item = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+   auto wg_tile = mma.tile_mnk();
+@@ -177,6 +181,7 @@ CUTE_DEVICE void MoEGEMM(
+ 
+   int pre_rows = 0;
+   int pre_tiles = 0;
++  int chunk_remaining = 0;
+ 
+   int32_t* slm_mem = static_cast<int32_t*>(
+       slm_mem_const.template get_multi_ptr<sycl::access::decorated::no>()
+@@ -318,11 +323,22 @@ CUTE_DEVICE void MoEGEMM(
+             mma);
+       }
+ 
+-      if (local_id == 0) {
+-        slm_mem[0] = cutlass::atomicAdd(atomic_buffer, 1);
++      if (local_id == 0 && chunk_remaining == 0) {
++        slm_mem[0] =
++            cutlass::atomicAdd(atomic_buffer, PersistentChunkSize);
+       }
+       item.barrier(sycl::access::fence_space::local_space);
+-      group_id = group_range + slm_mem[0];
++      if constexpr (PersistentChunkSize == 1) {
++        group_id = group_range + slm_mem[0];
++      } else {
++        if (chunk_remaining == 0) {
++          group_id = group_range + slm_mem[0];
++          chunk_remaining = PersistentChunkSize - 1;
++        } else {
++          ++group_id;
++          --chunk_remaining;
++        }
++      }
+       group_m_id = (group_id * wg_tile_n) / gemm_n_pad;
+     }
+     pre_rows = cumsum_rows_for_experts;
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 445f689..f0821bb 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -83,6 +83,9 @@ class GemmCuteGrf128ExactVecName;
+ template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteGrf128TransposedScalesName;
+ 
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128PersistentChunk4Name;
++
+ template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+@@ -287,6 +290,26 @@ inline bool laguna_int4_decode_transposed_scales() {
+   return enabled;
+ }
+ 
++// Reserve four consecutive flat MoE tile ids per persistent atomic
++// acquisition while retaining the incumbent workgroup pool and tile body.
++inline bool laguna_int4_decode_persistent_chunk4() {
++  static const bool enabled = [] {
++    const char* value =
++        std::getenv("VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4 must be literal 0 or 1, "
++        "got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
+ // Range gate for the INT4 dequantize-scale fusion.
+ //
+ // The fused form evaluates `x * s + (-136 * s)` where the incumbent evaluates
+@@ -425,6 +448,8 @@ void MoEGEMMLauncher(
+       use_grf128 && laguna_int4_decode_exact_specialized();
+   const bool use_transposed_scales =
+       use_grf128 && laguna_int4_decode_transposed_scales();
++  const bool use_persistent_chunk4 =
++      use_transposed_scales && laguna_int4_decode_persistent_chunk4();
+ 
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+@@ -513,8 +538,52 @@ void MoEGEMMLauncher(
+               true,
+               false);
+         };
++    auto persistent_chunk4_kernel = [=](auto) {
++          MoE::MoEGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              layoutA,
++              layoutB,
++              'R',
++              TileMajor,
++              true,
++              true,
++              4>(
++              activations,
++              weights,
++              scales,
++              bias,
++              outputs,
++              mma,
++              rows_per_expert,
++              num_experts,
++              group_size,
++              gemm_n,
++              gemm_k,
++              atomic_buffer,
++              local_mem,
++              false,
++              true,
++              false);
++        };
+     if constexpr (can_use_grf128) {
+-      if (use_transposed_scales) {
++      if (use_persistent_chunk4) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128PersistentChunk4Name<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_128,
++            persistent_chunk4_kernel);
++      } else if (use_transposed_scales) {
+         syclex::properties kernel_props_128{
+             syclex::sub_group_size<16>, intelex::grf_size<128>};
+         cgh.parallel_for<GemmCuteGrf128TransposedScalesName<
+-- 
+2.43.0
+

@@ -1,0 +1,42 @@
+{
+  "status": "closed_exact_component_negative",
+  "date": "2026-07-31",
+  "candidate_source_head": "7ad886aaf00fe431810f5ad8ea1b71b585771b06",
+  "candidate_so": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/persistent-chunk4-7ad886a/libgrouped_gemm_xe_2.so",
+  "candidate_sha256": "e46a2abe17d3bc691641abd87cce44003433ad0f682e791d8769cec9a7610e6a",
+  "raw_summary": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/persistent-chunk4-component-7ad886a-20260801T090500Z/summary.json",
+  "selector": "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_CHUNK4",
+  "protocol": {
+    "device": "Intel Arc Pro B70 rank 0",
+    "warmup_launches": 200,
+    "timing_samples": 15,
+    "launches_per_sample": 40,
+    "performance_gate_speedup": 1.05
+  },
+  "correctness": {
+    "raw_bf16_exact": 6,
+    "raw_bf16_total": 6
+  },
+  "timing_ms": {
+    "w13_control": 0.321221275,
+    "w13_candidate": 0.366445675,
+    "w13_speedup": 0.8765863453020696,
+    "w2_control": 0.183582125,
+    "w2_candidate": 0.197057175,
+    "w2_speedup": 0.9316185771972019,
+    "control_sum": 0.5048034,
+    "candidate_sum": 0.56350285,
+    "summed_speedup": 0.8958311390971669
+  },
+  "static_bmg": {
+    "candidate_kernel": "GemmCuteGrf128PersistentChunk4Name",
+    "grf": 128,
+    "candidate_instruction_count": 705,
+    "control_instruction_count": 679,
+    "dpas": 2,
+    "bf16_mul": 32,
+    "persistent_atomic_markers": 2,
+    "persistent_barrier_or_fence_markers": 9
+  },
+  "decision": "Stop before topology smoke and endpoint measurement. Chunking four flat tasks per persistent acquisition was exact but substantially slower on both grouped-GEMM shapes."
+}
