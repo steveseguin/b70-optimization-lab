@@ -1,0 +1,23 @@
+{
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1",
+  "scope": "BF16-scale INT4 target grouped-GEMM tile-record static gate",
+  "baseline_layout": "ordinary_int4_plus_transposed_bf16_scales",
+  "candidate_layout": "n64_k32_1024B_int4_plus_128B_bf16_record",
+  "grf_count": 128,
+  "baseline_instructions": 370,
+  "candidate_instructions": 468,
+  "delta_instructions": 98,
+  "delta_percent": 26.486486486486488,
+  "baseline_dpas": 2,
+  "candidate_dpas": 2,
+  "baseline_mul": 33,
+  "candidate_mul": 33,
+  "decision": "reject_at_static_gate",
+  "gpu_component_run": false,
+  "endpoint_run": false,
+  "candidate_kernel_commit": "7af3f6204f",
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-int4-tile-record-20260731T061354",
+  "patch": "patches/laguna-s-2.1-xpu-b70/0001-xpu-probe-INT4-tile-record-locality.patch",
+  "protected_record_conventional_tok_s": 125.4619731637751
+}

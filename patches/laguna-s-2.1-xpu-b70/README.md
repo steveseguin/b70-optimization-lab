@@ -216,3 +216,9 @@ complete branch is in
 rank-0 offline screen put the hindsight oracle below its gate and closed the
 route before integration. See the
 [negative result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-confidence-conditioned-tree-preregistration.md).
+
+The INT4 tile-record snapshot is a static negative, not a record source. It
+preserved the matched GRF128 kernel's 2 DPAS and 33 multiplies, but blocked
+record address/view materialization grew final BMG ISA from 370 to 468
+instructions (+26.5%). No GPU component or endpoint run occurred. See the
+[static result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-int4-tile-record-preregistration.md).
