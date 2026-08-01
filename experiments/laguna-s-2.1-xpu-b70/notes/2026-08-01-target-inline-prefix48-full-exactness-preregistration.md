@@ -2,8 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered non-scored full exactness diagnostic; no score is
-authorized.**
+Status: **closed negative on request 1; no score was run or authorized.**
 
 ## Candidate
 
@@ -36,3 +35,17 @@ loses.
 
 The model, draft, BF16 KV, width 12, DFlash depth 11, sampler, teacher, prompt
 set, cache policy, verification, and production score accounting remain fixed.
+
+## Result
+
+Request 0 was fully exact for all 512 tokens with `cached_tokens=0` and normal
+speculation. Request 1 returned 512 cache-zero tokens but diverged from its q=1
+teacher at token 0. Target `98/97`, draft `14/13`, and four-rank prefix-48
+activation were all exact; no runtime/device error occurred and teardown was
+clean.
+
+Artifact:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-target-inline-prefix48-full-exactness-20260801T172528Z`.
+
+This exposes a length/cross-request failure that the earlier two 400-token
+requests did not cover. Prefix 48 is rejected and must not be scored.
