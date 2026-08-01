@@ -75,3 +75,38 @@ verification, prompt, teacher, cache, sampling, metric, retry, warmup
 generation, or scoring-window change is allowed.  No reset, driver reload,
 FLR, reboot, or privileged recovery is authorized by this experiment.
 
+## Result: exact but rejected
+
+Candidate XPU-kernel commit:
+`ceaedbae9a3522854783a8d6ea2bba20e8ef697d`.  Its oneAPI-2025.3 build took
+`16:41.36`, peaked at `106,782,148 KiB` RSS with zero swaps, required
+`libsycl.so.8`, and produced DSO SHA-256
+`1684db768115558c342886142214264f4456904cf33355eacabf46e0d1f9f989`.
+
+The stabilized component used 200 warmups and 15 samples of 40 launches per
+shape.  Selector off/on loaded the same candidate DSO.  All six changing-input
+raw-BF16 outputs matched.
+
+| shape | persistent control | flattened deterministic | speedup | exact |
+| --- | ---: | ---: | ---: | ---: |
+| W13 | 0.32108195 ms | 0.33352205 ms | 0.962701x | 3/3 |
+| W2 | 0.18375140 ms | 0.21739555 ms | 0.845240x | 3/3 |
+| summed | 0.50483335 ms | 0.55091760 ms | **0.916350x** | 6/6 |
+
+The mechanism removed the atomic/barrier but launched the conservative
+`total_m * N_tiles` maximum: 3,840 W13 and 5,760 W2 workgroups.  The measured
+corpora had only 51 and 57 nonzero experts with at most six rows per expert,
+so over half of the grid performed only expert scans before returning.  The
+W2 loss is large and stable enough to close this mapping.
+
+Artifact:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/laguna-deterministic-scheduler-ceaedba-20260801T081548Z`.
+Bundle:
+`patches/laguna-s-2.1-xpu-b70/xpu-laguna-flattened-deterministic-scheduler-rejected-ceaedba-20260801.bundle`,
+SHA-256 `f9585f6202293b4f41df67ec6604a1c2afd08f04ada5978ae8c0fb00d4f87aef`.
+No model service, endpoint, score, reset, or reboot followed.
+
+This rejects the flattened maximum grid, not deterministic scheduling.  The
+next distinct mapping is one workgroup per `(expert,N tile)` which directly
+indexes the expert, loops only that expert's M tiles, and launches exactly
+`64 * N_tiles` workgroups.
