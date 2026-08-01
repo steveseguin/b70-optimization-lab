@@ -42,13 +42,18 @@ four-rank smoke, endpoint run, or recovery action followed. Do not retry this
 interleave family or count it as headroom. See
 [`2026-08-01-m12-hybrid-nchunk-preregistration.md`](notes/2026-08-01-m12-hybrid-nchunk-preregistration.md).
 
-The exact small-component portfolio has passed its preregistered one-B70
+The exact small-component portfolio passed its preregistered one-B70
 component gate and is the active bounded treatment. It combines the exact M12
 mapped gather/scale/add tail with the jointly compiled no-K-loop-barrier and
 scale-lane-dedup grouped kernel. All 12 raw-BF16 comparisons passed, inputs
 were immutable, and the direct joint saving was `0.3082524 ms/cycle` against a
-frozen `0.30 ms/cycle` threshold. This authorizes only vLLM integration and one
-non-scored TP4 2x400 smoke; it is not yet an endpoint win. Resume from
+frozen `0.30 ms/cycle` threshold. Candidate-only vLLM/XPU integration and its
+runtime lock are committed. The first non-scored TP4 smoke stopped before
+model loading at the oneCCL PCIe-topology initialization boundary and timed
+out; no request or candidate dispatch occurred. Teardown and post-failure idle
+checks passed, and no reset/reboot/retry occurred. Collective health must be
+restored under separate authorization before the model gate can be attempted;
+there is no endpoint result yet. Resume from
 [`2026-08-01-exact-small-component-portfolio-preregistration.md`](notes/2026-08-01-exact-small-component-portfolio-preregistration.md)
 and preserve the protected record trees.
 

@@ -151,3 +151,33 @@ actual compressed-tensors XPU adapter. The candidate runtime lock is
 `42e50b479b9ecc31db63998cd1b7bfe5cb7865ee38ed80516232bc9428765836`.
 This is still an integration checkpoint, not endpoint evidence; the
 preregistered non-scored TP4 smoke remains the next gate.
+
+## First integration smoke: host collective-init failure
+
+The first and only authorized non-scored smoke was attempted at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+laguna-exact-small-portfolio-smoke-20260801T230000Z
+```
+
+It did not reach model loading, graph capture, the mapped-tail dispatch, or a
+request. All four workers entered XCCL initialization and logged oneCCL's PCIe
+topology-recognition message. Only rank 0 logged the subsequent parallel-rank
+assignment; no rank made forward progress after that boundary. The four
+workers remained CPU-running until the wrapper's unchanged 15-minute health
+timeout classified the attempt as `service startup timed out`.
+
+This is a host TP4 collective-initialization failure, not a candidate kernel,
+correctness, topology, or throughput result. An initial interpretation as
+candidate-library cold JIT was withdrawn after the complete rank log located
+the stop inside oneCCL initialization. The wrapper performed its ordinary
+bounded teardown: `stop_status=0`, `worker_status=0`, `idle_status=0`. The
+post-failure strict snapshot passed with only the four `xpu-smi` self-observer
+rows. No reset, driver reload, FLR, reboot, privileged recovery, request, or
+retry occurred.
+
+The candidate remains component-positive and statically integrated, but the
+model gate is blocked until collective health is restored through a separately
+authorized host recovery. The `0.3082524 ms/cycle` component saving and roughly
+`126.7 tok/s` projection remain projections, not measured endpoint evidence.
