@@ -2,10 +2,13 @@
 
 Date: 2026-07-26 America/Toronto
 
-Status: **campaign closeout and reusable-learning index.** The approved
-published-convention row remains `102.971435596` tok/s; the conventional
-interval rate is `101.941721240 tok/s`. No new run was performed for this
-note. See the
+Status: **historical campaign ledger through the first 102 tok/s result.** Its
+former headline has been superseded by the exact BF16-KV
+`125.4619731637751 tok/s` conventional record. For the complete current win
+ladder and reusable methods, start with the
+[optimization victory ledger](2026-08-01-optimization-victories-and-transferable-methods.md).
+The historical `102.971435596` published-convention row is
+`101.941721240 tok/s` under conventional interval accounting; see the
 [accounting correction](2026-07-26-throughput-window-accounting-correction.md).
 
 ## Why this file exists
@@ -317,6 +320,7 @@ The cross-model form of these rules is indexed in
 
 ## Durable record pointers
 
+- [current optimization victory ledger](2026-08-01-optimization-victories-and-transferable-methods.md)
 - [record resume](../RESUME.md)
 - [record note](2026-07-26-width12-dflash-fp8-w8a16-record.md)
 - [KV-cache decision](2026-07-26-kv-cache-precision-decision.md)

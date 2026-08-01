@@ -99,6 +99,9 @@ Promoted records:
 
 Durable learning indexes:
 
+- complete current endpoint-win ladder, research victories, transfer
+  conditions, and future-model recording template:
+  `experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-optimization-victories-and-transferable-methods.md`;
 - Laguna-specific wins, negative results, graph/correctness lessons, and
   harness rules:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md`;
