@@ -206,3 +206,13 @@ smoke preserved both graph topologies, but the single formal endpoint measured
 `119.145643992 tok/s` conventionally: `5.034457%` below the promoted record.
 The treatment is default-off and must not be promoted or rerun as-is. See the
 [full preregistration and result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-rank-sum-rmsnorm-native-attention-stack-preregistration.md).
+
+The confidence-tree diagnostic snapshots are screening instrumentation, not a
+production tree. `0001-xpu-record-Laguna-draft-confidence-diagnostic.patch`
+records two positions and explicit request boundaries; patch 2 preserves the
+rejected in-loop TP broadcast, and patch 3 reverts it after it deadlocked. The
+complete branch is in
+`vllm-laguna-confidence-tree-diagnostic-8b8cd5227-20260801.bundle`. The valid
+rank-0 offline screen put the hindsight oracle below its gate and closed the
+route before integration. See the
+[negative result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-confidence-conditioned-tree-preregistration.md).

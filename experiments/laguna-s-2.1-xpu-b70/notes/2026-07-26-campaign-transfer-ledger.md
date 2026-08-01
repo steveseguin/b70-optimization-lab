@@ -260,6 +260,23 @@ test model construction with multiple layer prefixes: a temporary named
 `prefix` silently replaced all MoE identities and failed before load. See the
 [shared-elementwise record](2026-07-31-shared-elementwise-m12-record.md).
 
+### Speculative branch candidates need a TP-wide identity and an oracle gate
+
+A benchmark-matched two-position probe found one near-tied rank-2 candidate
+disagreement among 3,244 recorded positions even though top-1 output remained
+exact. A diagnostic attempt to canonicalize it with two new broadcasts inside
+the speculative loop deadlocked after one request. Candidate identity must be
+made deterministic using an already existing communication boundary or a
+single-owner design; do not add an unprofiled collective in the loop.
+
+More importantly, screen acceptance schemes with hindsight before wiring them.
+On the current record, a perfect per-cycle choice among chain, one-alternate,
+and two-alternate layouts projected only `130.890237 tok/s`; a leave-one-prompt-
+out margin policy projected `129.271627`, with a prompt-bootstrap upper bound of
+`130.007626` before overhead. Both missed their preregistered gates, so a large
+tree integration was avoided. See the
+[conditional-tree negative](2026-07-31-confidence-conditioned-tree-preregistration.md).
+
 ## Reusable experiment protocol
 
 For the next model:
@@ -290,6 +307,10 @@ For the next model:
     immutable decode-only clones can improve locality without changing math.
 15. Require an absolute full-cycle saving estimate for graph-contained
     micro-fusions; a large component ratio on a few microseconds is not enough.
+16. Before implementing a speculative tree, compute a benchmark-matched
+    hindsight oracle and cross-validated observable policy; also prove that
+    alternate-token identity is deterministic across TP ranks without adding
+    a new deadlock-prone collective boundary.
 
 The cross-model form of these rules is indexed in
 [the research workflow playbook](../../../docs/research-workflow-playbook.md#cross-model-patterns-worth-reusing).

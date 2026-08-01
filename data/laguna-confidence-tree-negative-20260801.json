@@ -1,0 +1,56 @@
+{
+  "schema": "laguna-confidence-tree-negative-v1",
+  "status": "REJECTED_BEFORE_INTEGRATION",
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "diagnostic_run": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-confidence-tree-diag-20260801T093915Z",
+  "analysis": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/analyses/laguna-confidence-tree-20260801T093915Z-rank0-screen.json",
+  "benchmark_identity": {
+    "kv_cache_dtype": "bfloat16",
+    "target_rows": 12,
+    "draft_tokens": 11,
+    "prompts": 13,
+    "exact_vs_q1": "13/13",
+    "cache_zero": true,
+    "target_graph_topology": "146/145",
+    "draft_graph_topology": "14/13"
+  },
+  "counts": {
+    "joined_cycles": 1609,
+    "position0_misses": 438,
+    "position0_rank2_rescues": 157,
+    "position1_misses": 324,
+    "position1_rank2_rescues": 118,
+    "tp_rank_disagreements": 1
+  },
+  "projected_tok_s_at_zero_overhead": {
+    "static_one_alternate": 126.35023445898747,
+    "static_two_alternates": 125.9159733813281,
+    "per_cycle_hindsight_oracle": 130.89023663451744,
+    "leave_one_prompt_out_margin_policy": 129.2716271632415
+  },
+  "leave_one_prompt_out_prompt_bootstrap_95pct_tok_s": [
+    128.38496560601502,
+    130.00762562203747
+  ],
+  "projected_policy_tok_s_at_0_5pct_overhead": 128.6284847395438,
+  "gates": {
+    "oracle_required_tok_s": 131.0,
+    "observable_required_tok_s": 130.5,
+    "oracle_pass": false,
+    "observable_pass": false,
+    "rank_agreement_pass": false,
+    "integration_authorized": false
+  },
+  "failed_canonicalization_run": {
+    "run": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-confidence-tree-diag-20260801T094924Z",
+    "result": "deadlock after an in-loop TP broadcast",
+    "cleanup": {
+      "original_status": 130,
+      "stop_status": 0,
+      "worker_status": 0,
+      "idle_status": 0
+    },
+    "reboot_or_reset_used": false
+  },
+  "decision": "Close conditional tree without vLLM integration; preserve the TP near-tie and unsafe-broadcast findings."
+}

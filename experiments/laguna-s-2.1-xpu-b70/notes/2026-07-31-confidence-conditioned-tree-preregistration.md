@@ -108,3 +108,45 @@ tree needs one canonical alternate identity. Diagnostic vLLM commit
 group only while the non-scored probe is armed. One corrected diagnostic is
 authorised. The rejected run and original `d4ad0ba2d` recorder commit remain
 preserved.
+
+## Canonical-broadcast attempt: rejected
+
+Run:
+`laguna-confidence-tree-diag-20260801T094924Z`
+
+The extra in-loop TP broadcasts deadlocked after the first request. The engine
+reported no shared-memory broadcast block for 60 seconds twice. The run was
+interrupted through the launcher's normal cleanup trap; cleanup recorded
+`original_status=130`, `stop_status=0`, `worker_status=0`, and `idle_status=0`.
+No process or port survived, and no reboot, driver reload, device reset, or FLR
+was used. Commit `8b8cd5227` removes the unsafe broadcast while retaining both
+the failed commit and run as evidence. **Do not insert a new collective at this
+point in the speculative loop.**
+
+## Final offline screen: route closed
+
+The complete first run was analyzed with rank 0 as an explicitly labelled
+screening canonical source. This does not satisfy the four-rank agreement gate,
+and the analyzer therefore keeps `integration_authorized=false`. It is still a
+valid upper-bound screen because the benchmark output was 13/13 exact and the
+single disagreement is fully reported.
+
+Analysis:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/analyses/laguna-confidence-tree-20260801T093915Z-rank0-screen.json`
+
+| quantity | result |
+| --- | ---: |
+| joined benchmark-matched cycles | 1,609 |
+| position-0 rank-2 rescues | 157 / 438 |
+| position-1 rank-2 rescues | 118 / 324 |
+| static one-alternate projection | 126.350234 tok/s |
+| static two-alternate projection | 125.915973 tok/s |
+| per-cycle hindsight oracle | **130.890237 tok/s** |
+| leave-one-prompt-out margin policy | **129.271627 tok/s** |
+| prompt-bootstrap 95% interval | 128.384966--130.007626 tok/s |
+| policy projection at 0.5% overhead | 128.628485 tok/s |
+
+Both preregistered gates fail: the hindsight oracle is below 131, and the
+observable policy is below 130.5 even before implementation overhead. The
+conditional-tree route is therefore closed without integration. The protected
+record remains **125.461973 tok/s conventional**, unchanged.

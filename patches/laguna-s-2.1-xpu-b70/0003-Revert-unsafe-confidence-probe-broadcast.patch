@@ -1,0 +1,42 @@
+From 8b8cd522754aeecc9fb26405fb8d34fc1b8c9aff Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 05:57:34 -0400
+Subject: [PATCH 3/3] Revert unsafe confidence-probe broadcast
+
+---
+ vllm/v1/spec_decode/llm_base_proposer.py | 12 +-----------
+ 1 file changed, 1 insertion(+), 11 deletions(-)
+
+diff --git a/vllm/v1/spec_decode/llm_base_proposer.py b/vllm/v1/spec_decode/llm_base_proposer.py
+index dd1f9d39c..ee310766a 100644
+--- a/vllm/v1/spec_decode/llm_base_proposer.py
++++ b/vllm/v1/spec_decode/llm_base_proposer.py
+@@ -22,7 +22,7 @@ if TYPE_CHECKING:
+     from vllm.v1.spec_decode.vocab_mapping import VocabMapping
+ 
+ from vllm.distributed.eplb.eplb_state import EplbState
+-from vllm.distributed.parallel_state import get_pp_group, get_tp_group
++from vllm.distributed.parallel_state import get_pp_group
+ from vllm.forward_context import set_forward_context
+ from vllm.logger import init_logger
+ from vllm.model_executor.layers.attention_layer_base import AttentionLayerBase
+@@ -689,16 +689,6 @@ class SpecDecodeBaseProposer:
+                     top2_values, top2_indices = logits.view(
+                         -1, self.num_speculative_tokens, logits.shape[-1]
+                     )[0, :2].topk(2, dim=-1)
+-                    # The tree would need one TP-wide candidate identity. A
+-                    # near tie can otherwise choose a different rank-2 token
+-                    # on one worker even though the greedy top-1 output is
+-                    # unchanged. Canonicalize the diagnostic to TP rank 0 so
+-                    # every rank records the candidate an implementation must
+-                    # verify. This path is reachable only when attribution is
+-                    # explicitly armed, and its timing is never scored.
+-                    tp_group = get_tp_group()
+-                    tp_group.broadcast(top2_values, src=0)
+-                    tp_group.broadcast(top2_indices, src=0)
+                     values = top2_values.tolist()
+                     indices = top2_indices.tolist()
+                     attribution.record_topk_probe(
+-- 
+2.43.0
+
