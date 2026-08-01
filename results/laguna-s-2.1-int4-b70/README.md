@@ -19,9 +19,9 @@ inline-attention stack:
 
 The complete source/patch/run packet is
 [the confirmed QKNorm/RoPE note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md).
-LocalMaxxing submission is pending. The preceding approved
-`cms9osksu00b3pm010hf9bnk8` row remains the public record until the new
-submission is accepted.
+LocalMaxxing approved it as
+[`cms9thsax00ccpm01cmddk057`](https://www.localmaxxing.com/en/runs/cms9thsax00ccpm01cmddk057).
+The preceding `cms9osksu00b3pm010hf9bnk8` row is superseded.
 
 ### Superseded 2026-07-26 result
 

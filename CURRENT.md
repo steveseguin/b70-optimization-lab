@@ -162,8 +162,7 @@ hardware recovery from a probe that did not prove it executed.
 ### Reopened BF16 frontier: exact 125.901 / conventional 124.642 (2026-07-31)
 
 The BF16-KV lane has a newly confirmed exact width-12 Q/K RMSNorm plus RoPE
-fusion record. LocalMaxxing submission is pending; the preceding
-transposed-scale record remains approved as `cms9osksu00b3pm010hf9bnk8`.
+fusion record, approved by LocalMaxxing as `cms9thsax00ccpm01cmddk057`.
 Segmented DFlash captures stateless compute around unchanged eager collectives;
 the latest treatment additionally replaces the six eager draft-attention
 Python submissions with graph-safe attention subgraph replays.

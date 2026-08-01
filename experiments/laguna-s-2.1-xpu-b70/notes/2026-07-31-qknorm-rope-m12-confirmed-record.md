@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **confirmed exact BF16-KV four-B70 record; LocalMaxxing submission
-pending**.
+Status: **confirmed exact BF16-KV four-B70 record; approved by LocalMaxxing as
+`cms9thsax00ccpm01cmddk057`**.
 
 ## Result
 
@@ -84,3 +84,12 @@ component timing as an upper bound, not an endpoint prediction. A fusion can
 remain exact across a wider verifier batch when the head-local reduction tree
 and arithmetic order stay identical and the new workgroup geometry divides
 all physical Q+K head totals without a tail.
+
+## Publication
+
+The authenticated LocalMaxxing preflight returned `valid: true`. The
+conventional result was then accepted with HTTP 201 and approved as
+[`cms9thsax00ccpm01cmddk057`](https://www.localmaxxing.com/en/runs/cms9thsax00ccpm01cmddk057).
+The queue and response are preserved under `data/`; the preceding
+`cms9osksu00b3pm010hf9bnk8` row is superseded for the matching four-B70
+configuration.

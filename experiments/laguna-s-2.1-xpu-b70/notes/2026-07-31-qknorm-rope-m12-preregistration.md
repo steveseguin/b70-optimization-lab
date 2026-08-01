@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **first cold TP4 endpoint passed at 124.443 tok/s conventional; one
-same-identity confirmation authorized**.
+Status: **confirmed exact record at 124.642 tok/s conventional; promoted in
+`2026-07-31-qknorm-rope-m12-confirmed-record.md`**.
 
 ## Premise
 

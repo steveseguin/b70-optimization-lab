@@ -25,7 +25,7 @@ historical convention, not under conventional interval accounting.
 - current approved conventional record: **`119.82686847588282 tok/s`**,
   LocalMaxxing `cms8f38fd00ftpf01mk0bwfql`;
 - confirmed QKNorm/RoPE record: **`124.64241272122038 tok/s`** conventional;
-- LocalMaxxing: `cms9osksu00b3pm010hf9bnk8` (`APPROVED`);
+- LocalMaxxing: `cms9thsax00ccpm01cmddk057` (`APPROVED`);
 - lane state: active optimization, no service or worker currently running.
 
 Current result and exact artifacts:
@@ -96,7 +96,10 @@ Promoted records:
   `repro/laguna-s-2.1-int4-b70-102tps-20260726/`;
 - reproducibility provenance audit:
   `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-reproducibility-provenance-audit.md`;
-- submission queue and response: pending.
+- submission queue:
+  `data/localmaxxing-laguna-s-2.1-int4-b70-qknorm-rope-m12-124.642tok-20260731.queue.json`;
+- submission response:
+  `data/localmaxxing-responses/laguna-s-2.1-int4-b70-qknorm-rope-m12-124.642tok-20260731.response.json`.
 
 Durable learning indexes:
 
