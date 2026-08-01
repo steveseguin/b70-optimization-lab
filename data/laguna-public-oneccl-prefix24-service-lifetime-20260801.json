@@ -1,0 +1,52 @@
+{
+  "schema": "laguna-public-oneccl-prefix24-service-lifetime-v1",
+  "date": "2026-08-01",
+  "status": "FAIL_CLOSED_CAPTURE_LIVENESS",
+  "scored_measurement": false,
+  "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-public4ce-prefix24-full-exact-20260801T211021Z",
+  "identity": {
+    "vllm_commit": "3b68edc7501c546b03994ea8b6d6fa7bf23cc088",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "kv_cache_dtype": "bfloat16",
+    "exact_width": 12,
+    "num_speculative_tokens": 11,
+    "target_inline_gather_prefix": 24,
+    "public_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "public_oneccl_library_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "public_oneccl_kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9",
+    "exclusive_worker_library_maps": 4
+  },
+  "contract": {
+    "request_count": 13,
+    "tokens_per_request": 512,
+    "teacher_exact_required": 13,
+    "cached_tokens_required": 0,
+    "expected_target_topology": "122/121 on 4/4 ranks",
+    "expected_draft_topology": "14/13 on 4/4 ranks"
+  },
+  "failure": {
+    "request_index": 0,
+    "completed_responses": 0,
+    "last_num_computed_tokens": 90,
+    "last_num_output_tokens": 1,
+    "draft_capture_ranks": [0, 1, 2, 3],
+    "draft_replay_ranks": [0, 1, 2, 3],
+    "target_capture_ranks": [0, 1, 2],
+    "target_replay_ranks": [],
+    "shared_memory_broadcast_starvation_warnings": 4,
+    "terminal_error": "TimeoutError: RPC call to execute_model timed out"
+  },
+  "artifacts": {
+    "identity_sha256": "f2196b958c6362801879e0bc7c02cee5ce28d82720b03414dbf39a24d9ce9276",
+    "worker_maps_sha256": "daf55f0c5b0fe43904753d0115f208ddf23fcccefbe5d076dad65abcb91d483b",
+    "server_log_sha256": "adc8f3a9288ea9bbab88cfa9ffc90fa8f8a10bfe94de8b7a12e59a794edea309",
+    "cleanup_status_sha256": "621005e3d8f4e0443c8d076bb4e5104f2bab517cb45d97b03a1d7f2e66ba35c8"
+  },
+  "cleanup": {
+    "stop_status": 0,
+    "worker_status": 0,
+    "idle_status": 0,
+    "recovery_action_used": false
+  },
+  "decision": "Close direct captured target gathers under this public oneCCL build. Do not retry, widen, score, or promote without a new narrower mechanism and preregistration."
+}

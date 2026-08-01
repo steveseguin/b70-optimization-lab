@@ -57,11 +57,13 @@ Laguna gather transaction under changing inputs, while pinned public libccl
 runtime, a matched prefix-24 model arm passed 2x400 exact with zero cache hits,
 changed target topology from `146/145` to `122/121`, and matched all 402 traced
 tensors on all four ranks—including the layer-0 gathered O-projection that
-previously diverged. This is not a score. The next action is one separately
-preregistered non-scored 13x512 prefix-24 service-lifetime gate; do not widen to
-full 96 or score before it passes and the runtime is represented in a new lock.
+previously diverged. The required fresh 13x512 lifetime gate then failed on
+request 0: target capture completed on ranks 0-2 but not rank 3, no target rank
+replayed, and `execute_model` timed out at one emitted token. Cleanup and idle
+checks passed without recovery. Direct captured target gathers under public
+libccl `4ceafd15c` are closed: do not retry, widen to 96, score, or promote.
 See
-[`2026-08-01-public-oneccl-prefix24-row0-model-result.md`](notes/2026-08-01-public-oneccl-prefix24-row0-model-result.md).
+[`2026-08-01-public-oneccl-prefix24-service-lifetime-result.md`](notes/2026-08-01-public-oneccl-prefix24-service-lifetime-result.md).
 
 Read the
 [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)

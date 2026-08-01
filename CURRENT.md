@@ -211,10 +211,12 @@ the pinned public libccl `4ceafd15c` passed 512/512 replays on all four ranks.
 With that runtime, Laguna's prefix-24 target-inline-gather arm passed 2x400
 teacher exact and cache-zero, reduced target topology from `146/145` to
 `122/121`, and matched all 402 traced tensors on every rank at the previously
-failing trigger. This does not update the `125.4619731637751 tok/s` record.
-Next is a preregistered non-scored 13x512 service-lifetime gate, followed only
-on pass by a separately gated wider-prefix treatment. See
-[`2026-08-01-public-oneccl-prefix24-row0-model-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-public-oneccl-prefix24-row0-model-result.md).
+failing trigger. The required fresh 13x512 lifetime start then hung during the
+first target capture: ranks 0-2 completed `122/121`, rank 3 did not, no target
+rank replayed, and `execute_model` timed out at one emitted token. Cleanup was
+strictly idle without recovery. This path is closed and does not update the
+`125.4619731637751 tok/s` record. See
+[`2026-08-01-public-oneccl-prefix24-service-lifetime-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-public-oneccl-prefix24-service-lifetime-result.md).
 
 ### Paused calibrated-FP8-KV lane (2026-07-27)
 

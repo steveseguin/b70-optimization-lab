@@ -2,7 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered; non-scored full exactness gate.**
+Status: **completed FAIL; treatment closed.** See
+[`2026-08-01-public-oneccl-prefix24-service-lifetime-result.md`](2026-08-01-public-oneccl-prefix24-service-lifetime-result.md).
 
 ## Basis
 
