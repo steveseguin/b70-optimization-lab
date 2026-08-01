@@ -41,6 +41,12 @@ every replay it must:
    changing-input oracle on every rank; and
 6. record the actually mapped `libccl.so` path and hash.
 
+The installed Python compatibility library legitimately maps its
+`libccl.so.2` dependency, so the control requires exactly one match for the
+expected installed-wrapper hash and records every dependency. The preloaded
+public candidate must map the expected public library exclusively; any second
+`libccl.so` mapping fails its identity gate.
+
 Run exactly two fresh, bounded 512-replay arms in this order:
 
 - installed oneCCL control;

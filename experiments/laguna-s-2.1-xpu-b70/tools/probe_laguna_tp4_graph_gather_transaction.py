@@ -69,6 +69,7 @@ def main() -> int:
     parser.add_argument("--rows", type=int, default=12)
     parser.add_argument("--hidden-size", type=int, default=3072)
     parser.add_argument("--expected-libccl-sha256", required=True)
+    parser.add_argument("--require-exclusive-libccl", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -161,9 +162,14 @@ def main() -> int:
         {"path": str(path), "sha256": sha256_file(path)}
         for path in loaded_ccl_paths
     ]
+    matching_ccl = [
+        library
+        for library in loaded_ccl
+        if library["sha256"] == args.expected_libccl_sha256
+    ]
     library_identity_passed = (
-        len(loaded_ccl) == 1
-        and loaded_ccl[0]["sha256"] == args.expected_libccl_sha256
+        len(matching_ccl) == 1
+        and (not args.require_exclusive_libccl or len(loaded_ccl) == 1)
     )
     local_result = {
         "rank": rank,
@@ -175,6 +181,7 @@ def main() -> int:
         "completed_iterations": completed_iterations,
         "loaded_ccl": loaded_ccl,
         "expected_libccl_sha256": args.expected_libccl_sha256,
+        "require_exclusive_libccl": args.require_exclusive_libccl,
         "library_identity_passed": library_identity_passed,
         "gather_mismatch_iterations": gather_mismatch_iterations,
         "consumer_mismatch_iterations": consumer_mismatch_iterations,
