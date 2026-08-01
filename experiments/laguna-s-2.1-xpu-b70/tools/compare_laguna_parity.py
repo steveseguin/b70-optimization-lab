@@ -61,6 +61,14 @@ def tensor_result(name: str, left: torch.Tensor, right: torch.Tensor) -> dict:
     return result
 
 
+def optional_tensor_equal(
+    left: dict, right: dict, name: str
+) -> bool | None:
+    if name not in left or name not in right:
+        return None
+    return bitwise_equal(left[name], right[name])
+
+
 def ordered_names(packet: dict) -> list[str]:
     buffers = packet["buffers"]
     names = ["_parity_embedding"]
@@ -101,7 +109,6 @@ def main() -> int:
     args = parser.parse_args()
 
     rows = []
-    first_divergence = None
     for rank in range(4):
         eager_path = next(args.eager_dir.glob(f"*-rank{rank}.pt"))
         compiled_path = next(args.compiled_dir.glob(f"*-rank{rank}.pt"))
@@ -121,27 +128,34 @@ def main() -> int:
                 tensor_result("logits", eager["logits"], compiled["logits"])
             )
         rank_first = next((row for row in comparisons if not row["equal"]), None)
-        if first_divergence is None and rank_first is not None:
-            first_divergence = {"rank": rank, **rank_first}
         rows.append(
             {
                 "rank": rank,
                 "input_id_equal": int(eager["input_id"]) == int(compiled["input_id"]),
                 "position_equal": int(eager["position"]) == int(compiled["position"]),
-                "input_ids_equal": (
-                    "input_ids" in eager
-                    and "input_ids" in compiled
-                    and bitwise_equal(eager["input_ids"], compiled["input_ids"])
+                "input_ids_equal": optional_tensor_equal(
+                    eager, compiled, "input_ids"
                 ),
-                "positions_equal": (
-                    "positions" in eager
-                    and "positions" in compiled
-                    and bitwise_equal(eager["positions"], compiled["positions"])
+                "positions_equal": optional_tensor_equal(
+                    eager, compiled, "positions"
                 ),
                 "first_divergence": rank_first,
                 "comparisons": comparisons,
             }
         )
+
+    first_divergence = None
+    if rows:
+        for comparison_index in range(len(rows[0]["comparisons"])):
+            differing_ranks = [
+                row for row in rows if not row["comparisons"][comparison_index]["equal"]
+            ]
+            if differing_ranks:
+                first_divergence = {
+                    "ranks": [row["rank"] for row in differing_ranks],
+                    **differing_ranks[0]["comparisons"][comparison_index],
+                }
+                break
 
     result = {
         "status": "PASS" if first_divergence is None else "FAIL",
