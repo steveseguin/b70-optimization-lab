@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Changing-input exactness/timing gate for Laguna M=8 QKNorm+RoPE."""
+"""Changing-input exactness/timing gate for Laguna QKNorm+RoPE."""
 
 from __future__ import annotations
 
@@ -14,7 +14,6 @@ import torch
 from vllm import _custom_ops as ops
 
 
-ROWS = 8
 HEAD_DIM = 128
 KV_HEADS = 2
 CASES = {
@@ -36,18 +35,19 @@ def baseline(
     cache: torch.Tensor,
     positions: torch.Tensor,
     eps: float,
+    rows: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     q_out = torch.empty_like(q)
     k_out = torch.empty_like(k)
     ops.rms_norm(
-        q_out.view(ROWS, -1, HEAD_DIM),
-        q.view(ROWS, -1, HEAD_DIM),
+        q_out.view(rows, -1, HEAD_DIM),
+        q.view(rows, -1, HEAD_DIM),
         q_weight,
         eps,
     )
     ops.rms_norm(
-        k_out.view(ROWS, -1, HEAD_DIM),
-        k.view(ROWS, -1, HEAD_DIM),
+        k_out.view(rows, -1, HEAD_DIM),
+        k.view(rows, -1, HEAD_DIM),
         k_weight,
         eps,
     )
@@ -94,6 +94,7 @@ def timed_ms(call, iterations: int) -> float:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rank", type=int, required=True, choices=range(4))
+    parser.add_argument("--rows", type=int, default=8, choices=(8, 12))
     parser.add_argument("--epochs", type=int, default=16)
     parser.add_argument("--timing-iterations", type=int, default=200)
     parser.add_argument("--out", type=Path, required=True)
@@ -116,18 +117,22 @@ def main() -> None:
         for epoch in range(args.epochs):
             torch.manual_seed(72200 + args.rank * 1000 + case_index * 100 + epoch)
             width = (q_heads + 2 * KV_HEADS) * HEAD_DIM
-            qkv = torch.randn((ROWS, width), dtype=torch.bfloat16, device="xpu")
+            qkv = torch.randn((args.rows, width), dtype=torch.bfloat16, device="xpu")
             q_weight = torch.randn((HEAD_DIM,), dtype=torch.bfloat16, device="xpu")
             k_weight = torch.randn((HEAD_DIM,), dtype=torch.bfloat16, device="xpu")
             cache = torch.randn((2048, rotary_dim), dtype=torch.bfloat16, device="xpu")
             positions = (
-                torch.arange(ROWS, dtype=torch.int64, device="xpu") * 17 + 31 + epoch
+                torch.arange(args.rows, dtype=torch.int64, device="xpu") * 17
+                + 31
+                + epoch
             )
             q, k, _ = qkv.split(
                 [q_heads * HEAD_DIM, KV_HEADS * HEAD_DIM, KV_HEADS * HEAD_DIM],
                 dim=-1,
             )
-            base_q, base_k = baseline(q, k, q_weight, k_weight, cache, positions, eps)
+            base_q, base_k = baseline(
+                q, k, q_weight, k_weight, cache, positions, eps, args.rows
+            )
             cand_q, cand_k = candidate(q, k, q_weight, k_weight, cache, positions, eps)
             torch.xpu.synchronize()
             for component, base, cand in (
@@ -151,7 +156,9 @@ def main() -> None:
         assert last_inputs is not None
         q, k, q_weight, k_weight, cache, positions = last_inputs
         base_ms = timed_ms(
-            lambda: baseline(q, k, q_weight, k_weight, cache, positions, eps),
+            lambda: baseline(
+                q, k, q_weight, k_weight, cache, positions, eps, args.rows
+            ),
             args.timing_iterations,
         )
         candidate_ms = timed_ms(
@@ -181,7 +188,7 @@ def main() -> None:
     payload = {
         "rank": args.rank,
         "device": torch.xpu.get_device_name(0),
-        "rows": ROWS,
+        "rows": args.rows,
         "epochs": args.epochs,
         "passed": exact == checks,
         "exact": f"{exact}/{checks}",
