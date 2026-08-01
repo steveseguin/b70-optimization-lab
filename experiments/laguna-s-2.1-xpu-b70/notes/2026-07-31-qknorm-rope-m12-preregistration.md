@@ -2,8 +2,7 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **source, focused build, and one-card component gate authorized; no
-model endpoint or throughput claim authorized**.
+Status: **component gate passed; one frozen cold TP4 endpoint leg authorized**.
 
 ## Premise
 
@@ -48,6 +47,40 @@ Do not use a partial workgroup or add a tail path.
    count reduction before separately authorizing vLLM selection or a model
    endpoint.
 
-No KV/model/draft precision change, arithmetic relaxation, teacher or metric
-change, reset, reboot, service launch, endpoint, or LocalMaxxing submission is
-authorized by this stage.
+The component stage authorizes no KV/model/draft precision change, arithmetic
+relaxation, teacher or metric change, reset, reboot, or LocalMaxxing
+submission. Endpoint authorization is conditional on the results below.
+
+## Component result and endpoint authorization
+
+The focused `_C.abi3.so` build passed the changing-input rows-12 component
+gate on one B70:
+
+- artifact:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-qknorm-rope-m12-component-20260801T030706Z`;
+- raw BF16 equality: `64/64` total (`32/32` full attention and `32/32`
+  sliding attention);
+- full shape: `0.033718685 ms` incumbent to `0.012145815 ms` candidate;
+- sliding shape: `0.034321015 ms` incumbent to `0.012058350 ms` candidate;
+- 48-layer weighted projection: `1.640180760 ms` to `0.579850380 ms`;
+- structural submissions: `144` incumbent kernels to `48` candidate kernels.
+
+The source and runtime identity for the endpoint candidate are:
+
+- XPU-kernel source `69e8ad9119a9cc70c3906b82be6254dd0160f00e`;
+- candidate `_C.abi3.so` SHA256
+  `ba7a3f6d21a15eec2a78a458b92a11ef4b8f4c8655752d9c47386dba628b0e9b`;
+- vLLM selector source `58608c6361f1a958a7e933bed0be8c88c35aa26e`;
+- unchanged record grouped-GEMM DSO SHA256
+  `c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839`;
+- runtime lock
+  `tools/runtime-lock-qknorm-rope-m12.json`, SHA256
+  `1b7a6d01969d09c3f9bde114a75748dace0ecbaecd7f01ebc3051d22ad74d606`.
+
+This passes the preregistered component stop boundary. Exactly one cold,
+first-valid-score endpoint leg is now authorized with only the QKNorm/RoPE
+selector enabled on top of the confirmed transposed-scale record. Require
+13/13 canonical-q1 token and text equality, `cached_tokens=0` on every row,
+146/145 target and 14/13 draft topology on all four ranks, one invocation per
+prompt, and clean teardown. Report the conventional 99-interval median first.
+Do not combine native BF16 MM or shared-elementwise work in this first leg.

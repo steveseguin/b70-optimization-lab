@@ -188,6 +188,7 @@ readonly expected_benchmark=40a483d9127a42c6e9f4a3651a429d39d25336d39eee0c782ba2
 readonly expected_metric_qualifier=3f930c1789a468873b23181353c77c7f8ba875db8415b409670f034e9ca92b20
 readonly expected_python=202c17d1671602a4ef1d43e9b2fdbef0769443f37bf5e51f6b603e0b2c27d9d8
 readonly expected_vllm_binary=d16721cbe3e6bef44881b6b45ce64d9362a82bec4748754bd91ec85704c243fb
+readonly expected_native_c="${REPRO_NATIVE_C_SHA256:-126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2}"
 readonly expected_target_config=9f139560db8fd723a75ee4adc24a9fece4101df0e8e7f1cce6549f7eba5b14e6
 readonly expected_draft_config=6f2aac901675ce9c9a12454d0432df7609dac0bc46614ca14725ea5e86f20926
 readonly expected_runtime_lock="${REPRO_RUNTIME_LOCK_SHA256:-8c861e5c9d44232346770e2822aa795179f8f90c2678d2ebbb42a690ef4f4a97}"
@@ -372,8 +373,7 @@ check_hash "$venv_python" "$expected_python"
 check_hash "$vllm_binary" "$expected_vllm_binary"
 check_hash "$LAGUNA_NVME_TARGET_ROOT/config.json" "$expected_target_config"
 check_hash "$LAGUNA_NVME_DRAFT_ROOT/config.json" "$expected_draft_config"
-check_hash "$kernel_root/vllm_xpu_kernels/_C.abi3.so" \
-  126da37b23e5eff6840dd256c90164e3a282469e5fafa27830530e63ff36bce2
+check_hash "$kernel_root/vllm_xpu_kernels/_C.abi3.so" "$expected_native_c"
 check_hash "$kernel_root/vllm_xpu_kernels/_xpu_C.abi3.so" \
   f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8
 check_hash "$kernel_root/vllm_xpu_kernels/_moe_C.abi3.so" \
@@ -512,6 +512,7 @@ verify_idle_interval prestart
   printf 'decode_transposed_scales=%s\n' "$decode_transposed_scales"
   printf 'event_profile_target_only=%s\n' "$event_profile_target_only"
   printf 'bf16_attn_native_mm=%s\n' "$bf16_attn_native_mm"
+  printf 'native_c_sha256=%s\n' "$expected_native_c"
   scored_measurement=1
   [[ "$dflash_segmented_smoke" == 0 && -z "$event_profile_root" ]] \
     || scored_measurement=0
