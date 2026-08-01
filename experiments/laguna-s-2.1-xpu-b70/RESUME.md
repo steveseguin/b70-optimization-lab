@@ -42,12 +42,13 @@ four-rank smoke, endpoint run, or recovery action followed. Do not retry this
 interleave family or count it as headroom. See
 [`2026-08-01-m12-hybrid-nchunk-preregistration.md`](notes/2026-08-01-m12-hybrid-nchunk-preregistration.md).
 
-The strongest remaining independently audited grouped-GEMM idea is a distinct
-paired-K32 exact mainloop that reduces split-barrier round trips without
-changing either K32 dequantization/scale boundary or DPAS order. It is not yet
-implemented or measured and needs its own preregistration/static gate; in
-particular, GRF128 already reaches `r127`, so any spill or scratch traffic is a
-hard stop.
+Do not implement the proposed paired-K32 split-barrier variant. A follow-up
+dominance audit found it is subsumed by the exact full-removal result: retaining
+half the barriers cannot plausibly beat removing all of them, and full removal
+improved the summed component by only `0.3906%`. The pairing idea would need an
+unsupported non-monotonic phase-alignment effect to matter; no evidence points
+there. Mainloop work must attack a different cost class rather than another
+barrier spelling.
 
 Read the
 [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)

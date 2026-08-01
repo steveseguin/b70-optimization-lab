@@ -146,3 +146,21 @@ tile can be throughput-insensitive when independent subgroups are already
 kept busy by the DPAS/load pipeline. Static dynamic-count arguments must still
 pass a real-shape component timing gate. Preserve this exact-small result, but
 do not spend another endpoint leg on barrier micro-removals in this mainloop.
+
+## Paired-K32 follow-up closed by dominance
+
+A later independent source audit considered retaining one split-barrier pair
+around every two complete K32 bodies. The only valid structure would be one
+`arrive`, two ordered and otherwise unchanged K32 bodies, then one `wait`;
+issuing two arrivals before one wait is not a defined pairing for Intel's
+tokenless split-control barrier.
+
+No implementation or build followed. The proposed variant retains half of the
+barrier operations, whereas the measured treatment above retains none. Since
+full removal was exact, improved both shapes, and saved only `0.3906%`, pairing
+cannot beat it through barrier-cost reduction. It would require a speculative
+non-monotonic benefit from phase alignment or throttling, for which the
+positive full-removal result provides no evidence. This closes paired-K32 as
+subsumed evidence rather than spending another approximately 18-minute,
+107-GB production build on a treatment whose likely ceiling is below the
+already failed result.
