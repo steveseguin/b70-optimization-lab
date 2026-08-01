@@ -644,6 +644,33 @@ if (( dflash_segmented_smoke == 1 )); then
     > "$run_dir/segmented-smoke.stdout"
   curl -fsS http://127.0.0.1:18080/metrics \
     > "$run_dir/metrics-after-smoke.prom"
+  "$venv_python" - "$run_dir/server.log" "$target_inline_gathers" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+lines = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").splitlines()
+marker = "Laguna target inline gathers using 96 fixed BF16 input/output slots"
+rows = [line for line in lines if marker in line]
+rank = re.compile(r"Worker_TP([0-3])_EP([0-3])")
+observed = {
+    tuple(map(int, match.groups()))
+    for line in rows
+    if (match := rank.search(line))
+}
+expected = {(0, 0), (1, 1), (2, 2), (3, 3)}
+if int(sys.argv[2]) == 1:
+    if len(rows) != 4 or observed != expected:
+        raise SystemExit(
+            "target inline-gather fixed-slot activation mismatch: "
+            f"rows={len(rows)} ranks={sorted(observed)}"
+        )
+elif rows:
+    raise SystemExit(
+        "target inline-gather fixed-slot marker appeared in a flag-off smoke: "
+        f"rows={len(rows)}"
+    )
+PY
   stop_service; server_pid=""
   wait_for_no_workers || die "workers or listener survived smoke shutdown"
   capture_idle "$run_dir/post-idle.json"
