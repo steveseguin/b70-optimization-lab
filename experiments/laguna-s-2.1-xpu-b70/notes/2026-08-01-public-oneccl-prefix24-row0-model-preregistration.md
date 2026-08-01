@@ -2,7 +2,8 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered; non-scored model diagnostic only.**
+Status: **completed PASS; non-scored model diagnostic only.** See
+[`2026-08-01-public-oneccl-prefix24-row0-model-result.md`](2026-08-01-public-oneccl-prefix24-row0-model-result.md).
 
 ## Motivation
 

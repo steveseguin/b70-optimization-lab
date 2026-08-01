@@ -204,6 +204,18 @@ The underlying independently reproduced segmented result and its failed routes
 remain recorded in the adjacent 2026-07-30 notes. The current host completed
 the scored run and strict teardown/idle gates; no recovery action is pending.
 
+The next exact collective-count seam has cleared its component and bounded
+model gates but remains non-scored. The installed oneCCL runtime corrupted a
+changing-input captured width-12 gather transaction on nearly every replay;
+the pinned public libccl `4ceafd15c` passed 512/512 replays on all four ranks.
+With that runtime, Laguna's prefix-24 target-inline-gather arm passed 2x400
+teacher exact and cache-zero, reduced target topology from `146/145` to
+`122/121`, and matched all 402 traced tensors on every rank at the previously
+failing trigger. This does not update the `125.4619731637751 tok/s` record.
+Next is a preregistered non-scored 13x512 service-lifetime gate, followed only
+on pass by a separately gated wider-prefix treatment. See
+[`2026-08-01-public-oneccl-prefix24-row0-model-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-public-oneccl-prefix24-row0-model-result.md).
+
 ### Paused calibrated-FP8-KV lane (2026-07-27)
 
 This separately labeled Laguna work is isolated under

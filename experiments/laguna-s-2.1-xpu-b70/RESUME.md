@@ -50,17 +50,18 @@ unsupported non-monotonic phase-alignment effect to matter; no evidence points
 there. Mainloop work must attack a different cost class rather than another
 barrier spelling.
 
-The target inline-gather correctness failure is now localized. A matched
-row-0 parity trace reproduced the prefix-24 token-331 failure and kept the
-selector-off control exact. At verifier position 420/input token 20253, every
-rank matched through the layer-0 O-projection input and local projection. The
-captured slot-0 gathered output remained correct on rank 0 but was corrupt on
-ranks 1–3. This rules out earlier attention/KV/model math at the trigger and
-names the first captured collective boundary. It does not yet prove the
-runtime mechanism; missing replay-time cross-rank completion is the leading
-hypothesis. Do not run another prefix sweep. A separately preregistered repair
-must first prove per-rank slot-0 output equality. See
-[`2026-08-01-target-inline-gather-first-divergent-tensor-preregistration.md`](notes/2026-08-01-target-inline-gather-first-divergent-tensor-preregistration.md).
+The target inline-gather correctness failure is now both localized and repaired
+at the bounded model gate. The installed oneCCL runtime corrupted the captured
+Laguna gather transaction under changing inputs, while pinned public libccl
+`4ceafd15c` passed 512/512 transaction replays on all ranks. Under that public
+runtime, a matched prefix-24 model arm passed 2x400 exact with zero cache hits,
+changed target topology from `146/145` to `122/121`, and matched all 402 traced
+tensors on all four ranks—including the layer-0 gathered O-projection that
+previously diverged. This is not a score. The next action is one separately
+preregistered non-scored 13x512 prefix-24 service-lifetime gate; do not widen to
+full 96 or score before it passes and the runtime is represented in a new lock.
+See
+[`2026-08-01-public-oneccl-prefix24-row0-model-result.md`](notes/2026-08-01-public-oneccl-prefix24-row0-model-result.md).
 
 Read the
 [accounting correction](notes/2026-07-26-throughput-window-accounting-correction.md)

@@ -1,0 +1,67 @@
+{
+  "schema": "laguna-public-oneccl-prefix24-model-gate-v1",
+  "date": "2026-08-01",
+  "status": "PASS_NON_SCORED_MODEL_GATE",
+  "scored_measurement": false,
+  "protected_record_conventional_tok_s": 125.4619731637751,
+  "identity": {
+    "vllm_commit": "3b68edc7501c546b03994ea8b6d6fa7bf23cc088",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "kv_cache_dtype": "bfloat16",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "exact_width": 12,
+    "num_speculative_tokens": 11,
+    "public_oneccl_parent_commit": "b52f40c07f0b140e6aba87548c80720a350a9827",
+    "public_libccl_commit": "4ceafd15c03ce46f11eeaf91781a92afebd3cecf",
+    "public_oneccl_library_sha256": "43d94d43506e30096dd099b9d53b54f932be964751e92ff0cbb8d3a37fad6700",
+    "public_oneccl_kernels_sha256": "0d549c35a558f1b216cb7d1efeaa9f86d7596ffc47b383644e075290d314f0c9"
+  },
+  "control": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-public4ce-control-row0-parity-20260801T205042Z",
+    "identity_sha256": "0e0ac019cc33481d77bba9d0ef91b7855084658409a1c19f8da732afbbe4b940",
+    "smoke_sha256": "9f21a0a35650a81decce9246f2a7e021b0f7a6e4c12f66e77122a6fcdd1bd9e7",
+    "worker_maps_sha256": "a6f48875225fa1814edb92d4428586fc3b7280cfceb4874be59473ffd587c2c0",
+    "status": "PASS",
+    "request_count": 2,
+    "tokens_per_request": 400,
+    "cache_zero": true,
+    "token_prefix_exact": [true, true],
+    "target_graph_topology": "146/145 on 4/4 ranks",
+    "draft_graph_topology": "14/13 on 4/4 ranks"
+  },
+  "candidate": {
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-public4ce-prefix24-row0-parity-20260801T205835Z",
+    "identity_sha256": "53528462a797ee1416191b63570298c87a2e429e514917d1c0e096442f90460b",
+    "smoke_sha256": "2f12d17246e35301d82f0100c2f78d7be6da571dd680b451790c9f7a4e3a3868",
+    "worker_maps_sha256": "fb55fef4ca3ba1bbd0b55a5d9d1b0406b8cca14b157012a4fe7b71fa33ff8173",
+    "status": "PASS",
+    "request_count": 2,
+    "tokens_per_request": 400,
+    "cache_zero": true,
+    "token_prefix_exact": [true, true],
+    "target_graph_topology": "122/121 on 4/4 ranks",
+    "draft_graph_topology": "14/13 on 4/4 ranks",
+    "captured_target_gather_prefix": 24
+  },
+  "parity": {
+    "trigger_position": 420,
+    "trigger_input_token": 20253,
+    "comparison_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/evidence/laguna-public4ce-prefix24-row0-parity-20260801T2110Z",
+    "comparison_sha256": "92334468f056ed791f467fc9c8068db4b560e80ef682e4bc0d4178f88b542c2f",
+    "status": "PASS",
+    "compared_tensors_per_rank": 402,
+    "all_tensors_bitwise_equal_by_rank": [true, true, true, true],
+    "first_divergence_by_rank": [null, null, null, null]
+  },
+  "conclusion": {
+    "established": "The pinned public oneCCL runtime repairs the known model-level captured-gather corruption for the prefix-24 treatment at the preregistered trigger; token outputs, speculation counts, and all 402 traced tensors match the selector-off control on every rank.",
+    "authorized_next_action": "One separately preregistered non-scored 13x512 prefix-24 service-lifetime exactness gate under the same pinned runtime.",
+    "not_established": [
+      "full-suite service-lifetime exactness",
+      "full-96 captured-gather exactness",
+      "endpoint throughput",
+      "record eligibility"
+    ]
+  }
+}
