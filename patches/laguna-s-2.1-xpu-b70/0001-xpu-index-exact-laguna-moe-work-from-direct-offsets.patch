@@ -1,0 +1,154 @@
+From fabf61f6dd5ea95157db7b1401543ce2c8586480 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 06:20:08 -0400
+Subject: [PATCH] Index exact Laguna MoE work from direct offsets
+
+---
+ .../grouped_gemm/xe_2/grouped_gemm_xe2.hpp    | 14 +++-
+ .../xe_2/grouped_gemm_xe2_interface.hpp       | 72 ++++++++++++++++++-
+ 2 files changed, 82 insertions(+), 4 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index 757f4f0..a809b26 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -124,6 +124,7 @@ template <
+     bool ExactVecGroup32 = false,
+     bool TransposedScales = false,
+     bool DirectSchedule = false,
++    bool DirectOffsets = false,
+     class TiledMMA,
+     typename ElementA,
+     typename ElementB,
+@@ -186,13 +187,20 @@ CUTE_DEVICE void MoEGEMM(
+       slm_mem_const.template get_multi_ptr<sycl::access::decorated::no>()
+           .get());
+ 
+-  for (int i = 0; i < num_experts; ++i) {
+-    int gemm_m = rows_per_expert[i];
+-    int cumsum_rows_for_experts = pre_rows + gemm_m;
++  for (int i = DirectOffsets ? direct_expert_id : 0; i < num_experts; ++i) {
++    int gemm_m = DirectOffsets
++        ? rows_per_expert[i + 1] - rows_per_expert[i]
++        : rows_per_expert[i];
++    int cumsum_rows_for_experts =
++        DirectOffsets ? rows_per_expert[i + 1] : pre_rows + gemm_m;
+     int cumsum_tiles_for_experts =
+         (gemm_m + wg_tile_m - 1) / wg_tile_m + pre_tiles;
+ 
+     if constexpr (DirectSchedule) {
++      if constexpr (DirectOffsets) {
++        pre_rows = rows_per_expert[i];
++        pre_tiles = 0;
++      }
+       if (i < direct_expert_id) {
+         pre_rows = cumsum_rows_for_experts;
+         pre_tiles = cumsum_tiles_for_experts;
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 707dd2b..95c4be4 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -86,6 +86,9 @@ class GemmCuteGrf128TransposedScalesName;
+ template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteGrf128DirectSchedulerName;
+ 
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128DirectOffsetsName;
++
+ template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+@@ -311,6 +314,23 @@ inline bool laguna_int4_decode_direct_scheduler() {
+   return enabled;
+ }
+ 
++inline bool laguna_int4_decode_direct_offsets() {
++  static const bool enabled = [] {
++    const char* value =
++        std::getenv("VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS must be literal 0 or 1, got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
+ // Range gate for the INT4 dequantize-scale fusion.
+ //
+ // The fused form evaluates `x * s + (-136 * s)` where the incumbent evaluates
+@@ -454,6 +474,11 @@ void MoEGEMMLauncher(
+       use_grf128 && laguna_int4_decode_transposed_scales();
+   const bool use_direct_scheduler =
+       use_transposed_scales && laguna_int4_decode_direct_scheduler();
++  const bool use_direct_offsets =
++      use_transposed_scales && laguna_int4_decode_direct_offsets();
++  TORCH_CHECK(
++      !(use_direct_scheduler && use_direct_offsets),
++      "direct scheduler and direct-offset scheduler are mutually exclusive");
+ 
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+@@ -571,8 +596,53 @@ void MoEGEMMLauncher(
+               true,
+               false);
+         };
++    auto direct_offsets_kernel = [=](auto) {
++          MoE::MoEGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              layoutA,
++              layoutB,
++              'R',
++              TileMajor,
++              true,
++              true,
++              true,
++              true>(
++              activations,
++              weights,
++              scales,
++              bias,
++              outputs,
++              mma,
++              rows_per_expert,
++              num_experts,
++              group_size,
++              gemm_n,
++              gemm_k,
++              atomic_buffer,
++              local_mem,
++              false,
++              true,
++              false);
++        };
+     if constexpr (can_use_grf128) {
+-      if (use_direct_scheduler) {
++      if (use_direct_offsets) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128DirectOffsetsName<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{direct_global * local, local},
++            kernel_props_128,
++            direct_offsets_kernel);
++      } else if (use_direct_scheduler) {
+         syclex::properties kernel_props_128{
+             syclex::sub_group_size<16>, intelex::grf_size<128>};
+         cgh.parallel_for<GemmCuteGrf128DirectSchedulerName<
+-- 
+2.43.0
+

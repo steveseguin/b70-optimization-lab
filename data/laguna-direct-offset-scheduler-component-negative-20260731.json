@@ -1,0 +1,45 @@
+{
+  "status": "closed_exact_component_negative",
+  "date": "2026-07-31",
+  "candidate_source_head": "fabf61f6dd5ea95157db7b1401543ce2c8586480",
+  "candidate_so": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/direct-offset-fabf61f/libgrouped_gemm_xe_2.so",
+  "candidate_sha256": "9690f49d531e0fb6149ae37a33cac0f41533124d4d862d2c8b4db753cf5157a8",
+  "raw_summary": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/direct-offset-component-fabf61f-20260801T065500Z/summary.json",
+  "selector": "VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS",
+  "protocol": {
+    "device": "Intel Arc Pro B70 rank 0",
+    "warmup_launches": 200,
+    "timing_samples": 15,
+    "launches_per_sample": 40,
+    "performance_gate_speedup": 1.05
+  },
+  "correctness": {
+    "raw_bf16_exact": 6,
+    "raw_bf16_total": 6
+  },
+  "timing_ms": {
+    "w13_control": 0.3209201,
+    "w13_candidate": 0.344646275,
+    "w13_speedup": 0.9311578951491641,
+    "w2_control": 0.183373325,
+    "w2_candidate": 0.19775065,
+    "w2_speedup": 0.9272956877765004,
+    "control_sum": 0.504293425,
+    "candidate_sum": 0.542396925,
+    "summed_speedup": 0.9297497860999119
+  },
+  "static_bmg": {
+    "candidate_kernel": "GemmCuteGrf128DirectOffsetsName",
+    "grf": 128,
+    "candidate_instruction_count": 562,
+    "control_instruction_count": 679,
+    "candidate_spill_store_flags": 2,
+    "candidate_spill_load_flags": 3,
+    "control_spill_store_flags": 4,
+    "control_spill_load_flags": 5,
+    "dpas": 2,
+    "bf16_mul": 32
+  },
+  "decision": "Stop before remap integration and endpoint measurement. Fixed per-expert grids remain slower than the persistent scheduler even when prefix scans are removed."
+}
+

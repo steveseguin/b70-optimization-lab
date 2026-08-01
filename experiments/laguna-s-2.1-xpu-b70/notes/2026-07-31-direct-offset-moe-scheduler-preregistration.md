@@ -48,3 +48,46 @@ No model, INT4 weights, BF16 KV, speculative width/depth, verification,
 sampling, prompts, teacher, cache, metric, retry, warmup generation, graph
 capture window, or scoring window may change. No reboot, reset, FLR, driver
 reload, or privileged recovery is authorized.
+
+## Result
+
+Status: **closed exact component negative; do not integrate or endpoint-run.**
+
+The candidate source is kernel commit
+`fabf61f6dd5ea95157db7b1401543ce2c8586480`. The sealed DSO is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/direct-offset-fabf61f/libgrouped_gemm_xe_2.so`
+with SHA-256
+`9690f49d531e0fb6149ae37a33cac0f41533124d4d862d2c8b4db753cf5157a8`.
+The build completed in 16:42.97 with 106,881,836 KiB maximum RSS and zero
+swaps.
+
+Static BMG inspection found the intended separately named 128-GRF kernel. It
+retained the exact arithmetic body (2 DPAS and 32 BF16 multiplies). Its final
+ISA had 562 instructions and 2/3 spill store/load flags, compared with 679 and
+4/5 for the persistent transposed-scale control. That justified measurement,
+but did not predict runtime value.
+
+The frozen changed-input component gate used one B70, the same DSO for both
+arms, 200 warmups, 15 samples, and 40 launches per sample:
+
+| shape | persistent control | direct offsets | speedup |
+| --- | ---: | ---: | ---: |
+| W13 | 0.320920100 ms | 0.344646275 ms | 0.931158x |
+| W2 | 0.183373325 ms | 0.197750650 ms | 0.927296x |
+| sum | 0.504293425 ms | 0.542396925 ms | **0.929750x** |
+
+All six changed-input raw-BF16 comparisons were bitwise exact. Performance
+missed the preregistered `1.05x` gate by a wide margin, so production remap
+integration and endpoint measurement are forbidden by this experiment.
+
+The durable lesson is that fewer scheduler instructions and fewer compiler
+spill markers did not translate to lower latency. On these small, sparse MoE
+shapes, replacing the persistent work distributor with a fixed expert grid
+cost about 7%. Supplying prefix offsets removed the losing prefix scan from the
+earlier expert-indexed candidate, yet made that candidate only marginally
+different (`0.974647x` to `0.929750x`) and did not recover the persistent
+scheduler. Future scheduler work must preserve dynamic compact work
+distribution; another fixed grid over all 64 experts is not justified.
+
+Raw result:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/direct-offset-component-fabf61f-20260801T065500Z/summary.json`.

@@ -222,3 +222,15 @@ preserved the matched GRF128 kernel's 2 DPAS and 33 multiplies, but blocked
 record address/view materialization grew final BMG ISA from 370 to 468
 instructions (+26.5%). No GPU component or endpoint run occurred. See the
 [static result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-int4-tile-record-preregistration.md).
+
+The direct-offset MoE scheduler snapshot is an exact component negative, not a
+record source. It replaced the persistent atomic scheduler and per-workgroup
+expert scan with a fixed expert grid consuming 65 exclusive offsets. Although
+the named 128-GRF kernel reduced generated ISA from 679 to 562 instructions,
+the 6/6-exact component gate measured only `0.929750x` the persistent control.
+It was stopped before remap integration or endpoint measurement. The complete
+source history is in
+`xpu-laguna-direct-offset-scheduler-rejected-fabf61f-20260801.bundle`; the
+single candidate delta is
+`0001-xpu-index-exact-laguna-moe-work-from-direct-offsets.patch`. See the
+[closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-direct-offset-moe-scheduler-preregistration.md).
