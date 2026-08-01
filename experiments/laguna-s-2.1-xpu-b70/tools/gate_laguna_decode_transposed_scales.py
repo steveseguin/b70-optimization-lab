@@ -87,6 +87,9 @@ def run_worker(args: argparse.Namespace) -> int:
         "VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS": (
             args.mode if args.selector == "direct_offsets" else "0"
         ),
+        "VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST": (
+            args.mode if args.selector == "persistent_worklist" else "0"
+        ),
         "VLLM_XPU_LAGUNA_SCALE_VEC": "1",
         "VLLM_XPU_LAGUNA_DEQUANT_MAD": "0",
         "VLLM_XPU_LAGUNA_SCALE_FOLD": "0",
@@ -133,7 +136,18 @@ def run_worker(args: argparse.Namespace) -> int:
             "rows_max": int(rows_cpu.max()),
             "rows_nonzero": int(torch.count_nonzero(rows_cpu)),
         }
-        if args.selector == "direct_offsets" and args.mode == "1":
+        if args.selector == "persistent_worklist" and args.mode == "1":
+            worklist = []
+            pre_rows = 0
+            for expert_id, expert_rows in enumerate(rows_cpu.tolist()):
+                for expert_m_tile in range((expert_rows + 7) // 8):
+                    worklist.extend((expert_id, pre_rows, expert_rows, expert_m_tile))
+                pre_rows += expert_rows
+            rows_arg_cpu = torch.tensor(
+                (len(worklist) // 4, *worklist), dtype=torch.int32
+            )
+            scheduler_metadata = "persistent_m_tile_worklist_v1"
+        elif args.selector == "direct_offsets" and args.mode == "1":
             rows_arg_cpu = torch.cat(
                 (
                     torch.zeros(1, dtype=torch.int32),
@@ -303,6 +317,7 @@ def run_gate(args: argparse.Namespace) -> int:
     env_base["VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_MAD"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_SCHEDULER"] = "0"
     env_base["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = "0"
+    env_base["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST"] = "0"
     env_base["VLLM_XPU_LAGUNA_PREFETCH_DIST"] = "6"
     env_base.pop("VLLM_XPU_MXFP4_SMALL_M_N", None)
 
@@ -323,6 +338,9 @@ def run_gate(args: argparse.Namespace) -> int:
         )
         env["VLLM_XPU_LAGUNA_DECODE_DIRECT_OFFSETS"] = (
             mode if args.selector == "direct_offsets" else "0"
+        )
+        env["VLLM_XPU_LAGUNA_DECODE_PERSISTENT_WORKLIST"] = (
+            mode if args.selector == "persistent_worklist" else "0"
         )
         command = [
             sys.executable,
@@ -439,6 +457,7 @@ def parse_args() -> argparse.Namespace:
             "dequant_mad_grf128_transposed",
             "deterministic_scheduler",
             "direct_offsets",
+            "persistent_worklist",
         ),
         default="transposed_scales",
     )
