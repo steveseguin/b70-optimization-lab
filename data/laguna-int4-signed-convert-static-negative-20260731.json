@@ -1,0 +1,16 @@
+{
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1",
+  "scope": "BF16-activation INT4 target grouped-GEMM static BMG AOT probe",
+  "baseline_instructions": 61,
+  "candidate_instructions": 72,
+  "delta_instructions": 11,
+  "baseline_scale_mul_instructions": 8,
+  "candidate_scale_mul_instructions": 8,
+  "decision": "reject_at_static_gate",
+  "reason": "signed-word to BF16 mixed-mode conversion is illegal; legal FP32 widening adds region and conversion marshalling",
+  "gpu_run": false,
+  "endpoint_run": false,
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-int4-signed-scale-20260731T060721",
+  "protected_record_conventional_tok_s": 125.4619731637751
+}
