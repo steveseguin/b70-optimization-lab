@@ -2,7 +2,7 @@
 
 Date: 2026-08-01 America/Toronto
 
-Status: **preregistered; static ISA screen only.**
+Status: **static ISA gate passed; isolated production build in progress.**
 
 ## Motivation
 
@@ -62,3 +62,28 @@ folding, so any ISA result has one cause.
 No target/draft/KV precision change, model or teacher change, prompt change,
 warmed score, retry selection, metric substitution, reset, reboot, driver
 reload, or privileged recovery is authorized by this screen.
+
+## Static gate result
+
+Source branch `experiment/laguna-scale-lane-dedup-20260801` at candidate
+commit `1ed3b0b` was compiled with oneAPI 2025.3 for BMG in 128-GRF mode.
+Artifact root:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/igc-scale-lane-dedup-candidate-20260801T1505Z`.
+
+| Final BMG metric | exact transposed control | lane dedup |
+|---|---:|---:|
+| instructions | 396 | **382** |
+| BF16 scale multiplies | 32 | 32 |
+| DPAS | 2 | 2 |
+| scale `load.ugm.d16u32.a64` | 3 | **2** |
+| `sync.allrd` | 6 | **0** |
+| total `shl` | 22 | **20** |
+| total `shr` | 18 | **17** |
+| configured GRFs | 128 | 128 |
+
+The apparent text matches for `spill`/`scratch` are declarations and compiler
+options common to both arms, not spill traffic. The candidate clears the
+preregistered eight-instruction threshold by six additional instructions,
+removes one scale load, and preserves the arithmetic/DPAS topology. This
+authorizes the isolated production build and component correctness gate; it is
+not yet a performance or correctness result.
