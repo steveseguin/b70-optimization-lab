@@ -131,3 +131,23 @@ not an endpoint throughput claim.
 Raw evidence:
 `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/exact-small-portfolio-component-20260801T2228Z`.
 Structured summary: `data/laguna-exact-small-portfolio-component-20260801.json`.
+
+## Integration checkpoint
+
+The candidate-only integration is committed as vLLM
+`0c9dea8cfefdcf4b293cddc9a4f47d56a11ecf4b` and XPU kernels
+`46a6393fc188c11661ddab9cf1320d2f3de45087`. The promoted checkpoint uses
+`CompressedTensorsWNA16MarlinMoEMethod`; the integration therefore enters
+through that method rather than an unreachable AutoGPTQ-only adapter. Shared
+expert output is consumed exactly once and passed synchronously through a
+separately named method chain to the existing mapped-gather site. The fused
+result bypasses the replaced late scale/add, while the final EP4 fixed-rank
+all-reduce remains unchanged.
+
+Six kernel/source contract tests and three focused vLLM tests pass. The latter
+cover M12-selector dependency, one-time shared-output consumption, and the
+actual compressed-tensors XPU adapter. The candidate runtime lock is
+`data/laguna-exact-small-portfolio-runtime-lock-20260801.json` with SHA-256
+`e0697c3ce6c3b76821f3f2144c746a5e47596d9c110d4035b1967872218feddd`.
+This is still an integration checkpoint, not endpoint evidence; the
+preregistered non-scored TP4 smoke remains the next gate.
