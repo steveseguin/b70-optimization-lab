@@ -1,0 +1,167 @@
+From 99886d783372e621941228250091dc8ebdc1595d Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 00:27:33 -0400
+Subject: [PATCH] xpu: add exact Laguna M12 shared elementwise ops
+
+---
+ csrc/activation.cpp     | 103 ++++++++++++++++++++++++++++++++++++++++
+ csrc/ops.h              |   8 ++++
+ csrc/torch_bindings.cpp |  10 ++++
+ 3 files changed, 121 insertions(+)
+
+diff --git a/csrc/activation.cpp b/csrc/activation.cpp
+index ca7851f..3c83b02 100644
+--- a/csrc/activation.cpp
++++ b/csrc/activation.cpp
+@@ -749,6 +749,109 @@ void laguna_m8_scale_add(
+   });
+ }
+
++void laguna_m12_silu_mul(
++    torch::Tensor& out, const torch::Tensor& gate, const torch::Tensor& up) {
++  TORCH_CHECK(gate.device().is_xpu(), "gate must be on XPU");
++  TORCH_CHECK(up.device().is_xpu(), "up must be on XPU");
++  TORCH_CHECK(out.device().is_xpu(), "out must be on XPU");
++  TORCH_CHECK(
++      gate.device() == up.device() && gate.device() == out.device(),
++      "gate, up, and out must be on the same XPU device");
++  TORCH_CHECK(
++      gate.scalar_type() == torch::kBFloat16 &&
++          up.scalar_type() == torch::kBFloat16 &&
++          out.scalar_type() == torch::kBFloat16,
++      "gate, up, and out must be BF16");
++  TORCH_CHECK(
++      gate.is_contiguous() && up.is_contiguous() && out.is_contiguous(),
++      "gate, up, and out must be contiguous");
++  TORCH_CHECK(
++      gate.dim() == 2 && gate.size(0) == 12 && gate.size(1) == 256,
++      "gate must have exact shape [12, 256]");
++  TORCH_CHECK(
++      up.dim() == 2 && up.size(0) == 12 && up.size(1) == 256,
++      "up must have exact shape [12, 256]");
++  TORCH_CHECK(
++      out.dim() == 2 && out.size(0) == 12 && out.size(1) == 256,
++      "out must have exact shape [12, 256]");
++  TORCH_CHECK(
++      reinterpret_cast<uintptr_t>(gate.data_ptr()) % 16 == 0 &&
++          reinterpret_cast<uintptr_t>(up.data_ptr()) % 16 == 0 &&
++          reinterpret_cast<uintptr_t>(out.data_ptr()) % 16 == 0,
++      "gate, up, and out pointers must be 16-byte aligned");
++  at::assert_no_internal_overlap(out);
++  at::assert_no_overlap(out, gate);
++  at::assert_no_overlap(out, up);
++
++  using sycl_t = sycl::ext::oneapi::bfloat16;
++  constexpr int kVecSize = 1;
++  constexpr int kRows = 12;
++  constexpr int kWorkGroupSize = 256 / kVecSize;
++  auto* out_ptr = reinterpret_cast<sycl_t*>(out.data_ptr());
++  const auto* gate_ptr = reinterpret_cast<const sycl_t*>(gate.data_ptr());
++  const auto* up_ptr = reinterpret_cast<const sycl_t*>(up.data_ptr());
++  at::DeviceGuard device_guard(gate.device());
++  auto& queue = vllm::xpu::vllmGetQueue();
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for(
++        sycl::nd_range<1>(kRows * kWorkGroupSize, kWorkGroupSize),
++        vllm::laguna_m8_silu_mul_kernel<kVecSize>(out_ptr, gate_ptr, up_ptr));
++  });
++}
++
++void laguna_m12_scale_add(
++    torch::Tensor& out,
++    const torch::Tensor& shared,
++    const torch::Tensor& routed) {
++  TORCH_CHECK(shared.device().is_xpu(), "shared must be on XPU");
++  TORCH_CHECK(routed.device().is_xpu(), "routed must be on XPU");
++  TORCH_CHECK(out.device().is_xpu(), "out must be on XPU");
++  TORCH_CHECK(
++      shared.device() == routed.device() && shared.device() == out.device(),
++      "shared, routed, and out must be on the same XPU device");
++  TORCH_CHECK(
++      shared.scalar_type() == torch::kBFloat16 &&
++          routed.scalar_type() == torch::kBFloat16 &&
++          out.scalar_type() == torch::kBFloat16,
++      "shared, routed, and out must be BF16");
++  TORCH_CHECK(
++      shared.is_contiguous() && routed.is_contiguous() && out.is_contiguous(),
++      "shared, routed, and out must be contiguous");
++  TORCH_CHECK(
++      shared.dim() == 2 && shared.size(0) == 12 && shared.size(1) == 3072,
++      "shared must have exact shape [12, 3072]");
++  TORCH_CHECK(
++      routed.dim() == 2 && routed.size(0) == 12 && routed.size(1) == 3072,
++      "routed must have exact shape [12, 3072]");
++  TORCH_CHECK(
++      out.dim() == 2 && out.size(0) == 12 && out.size(1) == 3072,
++      "out must have exact shape [12, 3072]");
++  TORCH_CHECK(
++      reinterpret_cast<uintptr_t>(shared.data_ptr()) % 16 == 0 &&
++          reinterpret_cast<uintptr_t>(routed.data_ptr()) % 16 == 0 &&
++          reinterpret_cast<uintptr_t>(out.data_ptr()) % 16 == 0,
++      "shared, routed, and out pointers must be 16-byte aligned");
++  at::assert_no_internal_overlap(out);
++  at::assert_no_overlap(out, shared);
++  at::assert_no_overlap(out, routed);
++
++  using sycl_t = sycl::ext::oneapi::bfloat16;
++  constexpr int kVecSize = 8;
++  constexpr int kRows = 12;
++  constexpr int kWorkGroupSize = 256;
++  auto* out_ptr = reinterpret_cast<sycl_t*>(out.data_ptr());
++  const auto* shared_ptr = reinterpret_cast<const sycl_t*>(shared.data_ptr());
++  const auto* routed_ptr = reinterpret_cast<const sycl_t*>(routed.data_ptr());
++  at::DeviceGuard device_guard(shared.device());
++  auto& queue = vllm::xpu::vllmGetQueue();
++  queue.submit([&](sycl::handler& cgh) {
++    cgh.parallel_for(
++        sycl::nd_range<1>(kRows * kWorkGroupSize, kWorkGroupSize),
++        vllm::laguna_m8_scale_add_kernel<kVecSize>(
++            out_ptr, shared_ptr, routed_ptr));
++  });
++}
++
+ void silu_and_mul_clamp(
+     torch::Tensor& out,
+     torch::Tensor& input,
+diff --git a/csrc/ops.h b/csrc/ops.h
+index 6b849e7..e680f0e 100644
+--- a/csrc/ops.h
++++ b/csrc/ops.h
+@@ -75,6 +75,14 @@ void laguna_m8_scale_add(
+     const torch::Tensor& shared,
+     const torch::Tensor& routed);
+
++void laguna_m12_silu_mul(
++    torch::Tensor& out, const torch::Tensor& gate, const torch::Tensor& up);
++
++void laguna_m12_scale_add(
++    torch::Tensor& out,
++    const torch::Tensor& shared,
++    const torch::Tensor& routed);
++
+ void silu_and_mul_clamp(
+     torch::Tensor& out, torch::Tensor& input, double limit);
+
+diff --git a/csrc/torch_bindings.cpp b/csrc/torch_bindings.cpp
+index affbc70..3164278 100644
+--- a/csrc/torch_bindings.cpp
++++ b/csrc/torch_bindings.cpp
+@@ -96,6 +96,16 @@ TORCH_LIBRARY_EXPAND(TORCH_EXTENSION_NAME, ops) {
+       "Tensor(a!) out, Tensor shared, Tensor routed) -> ()");
+   ops.impl("laguna_m8_scale_add", torch::kXPU, &laguna_m8_scale_add);
+
++  ops.def(
++      "laguna_m12_silu_mul("
++      "Tensor(a!) out, Tensor gate, Tensor up) -> ()");
++  ops.impl("laguna_m12_silu_mul", torch::kXPU, &laguna_m12_silu_mul);
++
++  ops.def(
++      "laguna_m12_scale_add("
++      "Tensor(a!) out, Tensor shared, Tensor routed) -> ()");
++  ops.impl("laguna_m12_scale_add", torch::kXPU, &laguna_m12_scale_add);
++
+   ops.def(
+       "silu_and_mul_clamp(Tensor(a!) result, Tensor input, float limit) -> ()");
+   ops.impl("silu_and_mul_clamp", torch::kXPU, &silu_and_mul_clamp);
+--
+2.43.0

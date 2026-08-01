@@ -1,0 +1,102 @@
+From e74318cdad3cc630399fdffe3ae2d55243c7d499 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 00:45:45 -0400
+Subject: [PATCH 2/3] xpu: preserve Laguna MoE layer prefixes
+
+---
+ .../models/test_laguna_shared_elementwise.py  | 55 +++++++++++++++++++
+ vllm/model_executor/models/laguna.py          |  7 ++-
+ 2 files changed, 60 insertions(+), 2 deletions(-)
+
+diff --git a/tests/models/test_laguna_shared_elementwise.py b/tests/models/test_laguna_shared_elementwise.py
+index 2018ce6b8..d24e362f4 100644
+--- a/tests/models/test_laguna_shared_elementwise.py
++++ b/tests/models/test_laguna_shared_elementwise.py
+@@ -139,6 +139,61 @@ def test_laguna_m12_shared_elementwise_record_contract(monkeypatch) -> None:
+     assert "speculation is not DFlash depth 11" in violations
+
+
++def test_laguna_m12_symbol_selection_preserves_layer_prefix(monkeypatch) -> None:
++    config, _ = _record_contract()
++    config.moe_intermediate_size = 1024
++    config.moe_apply_router_weight_on_input = False
++    vllm_config = SimpleNamespace(
++        parallel_config=SimpleNamespace(
++            eplb_config=SimpleNamespace(num_redundant_experts=0)
++        )
++    )
++    ep_group = SimpleNamespace(rank=lambda: 0, size=lambda: 1)
++    observed_prefixes = []
++
++    def fake_fused_moe(**kwargs):
++        observed_prefixes.append(kwargs["prefix"])
++        return SimpleNamespace()
++
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE", "1")
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE", "0")
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK", "0")
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK", "0")
++    monkeypatch.setattr(laguna, "get_tensor_model_parallel_world_size", lambda: 1)
++    monkeypatch.setattr(
++        laguna, "get_ep_group", lambda: SimpleNamespace(device_group=ep_group)
++    )
++    monkeypatch.setattr(laguna, "get_current_vllm_config", lambda: vllm_config)
++    monkeypatch.setattr(
++        laguna,
++        "_laguna_m8_shared_elementwise_contract_violations",
++        lambda *_args, **_kwargs: [],
++    )
++    monkeypatch.setattr(
++        laguna,
++        "ReplicatedLinear",
++        lambda *_args, **_kwargs: SimpleNamespace(),
++    )
++    monkeypatch.setattr(
++        laguna,
++        "LagunaMLP",
++        lambda *_args, **_kwargs: SimpleNamespace(),
++    )
++    monkeypatch.setattr(laguna, "FusedMoE", fake_fused_moe)
++
++    for layer in (0, 1):
++        laguna.LagunaMoE(
++            config,
++            prefix=f"model.layers.{layer}.mlp",
++            exact_spec_target=True,
++        )
++
++    assert observed_prefixes == [
++        "model.layers.0.mlp.experts",
++        "model.layers.1.mlp.experts",
++    ]
++
++
+ @pytest.mark.parametrize("evidence", [False, True])
+ def test_laguna_m8_shared_elementwise_graph_contract(
+     monkeypatch,
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 7b0ea6e5c..b5dd9cb0a 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -622,14 +622,17 @@ class LagunaMoE(nn.Module):
+                 enable_eplb=self.enable_eplb,
+                 num_redundant_experts=self.n_redundant_experts,
+             )
+-            prefix = (
++            symbol_prefix = (
+                 "laguna_m12"
+                 if envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
+                 else "laguna_m8"
+             )
+             missing_symbols = [
+                 symbol
+-                for symbol in (f"{prefix}_silu_mul", f"{prefix}_scale_add")
++                for symbol in (
++                    f"{symbol_prefix}_silu_mul",
++                    f"{symbol_prefix}_scale_add",
++                )
+                 if not hasattr(torch.ops._C, symbol)
+             ]
+             if violations or missing_symbols:
+--
+2.43.0

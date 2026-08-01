@@ -1,0 +1,59 @@
+From 1a7f61feffbc61b21b73f812d231c7426386ccdc Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 00:55:03 -0400
+Subject: [PATCH 3/3] xpu: emit Laguna selector evidence per worker
+
+---
+ tests/models/test_laguna_shared_elementwise.py | 7 +++++++
+ vllm/model_executor/models/laguna.py           | 4 +++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/tests/models/test_laguna_shared_elementwise.py b/tests/models/test_laguna_shared_elementwise.py
+index d24e362f4..b1e771246 100644
+--- a/tests/models/test_laguna_shared_elementwise.py
++++ b/tests/models/test_laguna_shared_elementwise.py
+@@ -150,6 +150,7 @@ def test_laguna_m12_symbol_selection_preserves_layer_prefix(monkeypatch) -> None
+     )
+     ep_group = SimpleNamespace(rank=lambda: 0, size=lambda: 1)
+     observed_prefixes = []
++    observed_log_scopes = []
+
+     def fake_fused_moe(**kwargs):
+         observed_prefixes.append(kwargs["prefix"])
+@@ -180,6 +181,11 @@ def test_laguna_m12_symbol_selection_preserves_layer_prefix(monkeypatch) -> None
+         lambda *_args, **_kwargs: SimpleNamespace(),
+     )
+     monkeypatch.setattr(laguna, "FusedMoE", fake_fused_moe)
++    monkeypatch.setattr(
++        laguna.logger,
++        "info_once",
++        lambda *_args, **kwargs: observed_log_scopes.append(kwargs.get("scope")),
++    )
+
+     for layer in (0, 1):
+         laguna.LagunaMoE(
+@@ -192,6 +198,7 @@ def test_laguna_m12_symbol_selection_preserves_layer_prefix(monkeypatch) -> None
+         "model.layers.0.mlp.experts",
+         "model.layers.1.mlp.experts",
+     ]
++    assert observed_log_scopes == ["process", "process"]
+
+
+ @pytest.mark.parametrize("evidence", [False, True])
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index b5dd9cb0a..c490a2276 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -651,7 +651,9 @@ class LagunaMoE(nn.Module):
+                 )
+             width = 12 if envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE else 8
+             logger.info_once(
+-                "Enabled exact Laguna M=%d shared elementwise ops.", width
++                "Enabled exact Laguna M=%d shared elementwise ops.",
++                width,
++                scope="process",
+             )
+
+         # Router gate
+--
+2.43.0

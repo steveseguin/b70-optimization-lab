@@ -159,21 +159,22 @@ source/binary identity, and clean pre/post idle checks. Inspect actual files
 and per-rank logs before accepting harness summaries, and never escalate
 hardware recovery from a probe that did not prove it executed.
 
-### Reopened BF16 frontier: exact 125.901 / conventional 124.642 (2026-07-31)
+### Reopened BF16 frontier: exact 126.729 / conventional 125.462 (2026-07-31)
 
-The BF16-KV lane has a newly confirmed exact width-12 Q/K RMSNorm plus RoPE
-fusion record, approved by LocalMaxxing as `cms9thsax00ccpm01cmddk057`.
+The BF16-KV lane has a new exact width-12 shared-elementwise fusion record,
+approved by LocalMaxxing as `cms9wuuf300cqpm01t5i285tq`.
 Segmented DFlash captures stateless compute around unchanged eager collectives;
 the latest treatment additionally replaces the six eager draft-attention
 Python submissions with graph-safe attention subgraph replays.
 
-The current confirmation fuses the exact Q/K RMSNorm and NeoX RoPE device work
-from three kernels to one per attention layer while preserving BF16 rounding
-boundaries. Its cold 13-prompt score measured:
+The current treatment retains exact Q/K RMSNorm plus NeoX RoPE and additionally
+reduces shared-expert SiLU/multiply plus routed-scale/add from 192 to 96 device
+operations per 48-layer target cycle while preserving BF16 rounding
+boundaries. Its first formally valid cold 13-prompt score measured:
 
-- **`125.9014269911317 tok/s`** under the historical published
+- **`126.72926582199506 tok/s`** under the historical published
   100-event/99-interval-span formula; and
-- **`124.64241272122038 tok/s`** under the current-policy conventional
+- **`125.4619731637751 tok/s`** under the current-policy conventional
   99-inter-token-interval formula.
 
 It is 13/13 token-and-text exact against canonical q1, cache-zero on every row,
@@ -181,19 +182,24 @@ target 146/145 and draft 14/13 on all four ranks, and operationally clean:
 
 ```text
 /mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
-laguna-qknorm-rope-m12-confirm-20260801T032027Z
+laguna-shared-elementwise-m12-formal-20260801T053000Z
 ```
 
-An independent same-identity first candidate measured `124.44278011260164
-tok/s` conventional and also passed every gate. The confirmation beats the
-preceding confirmed transposed-scale record by `1.476736866%`; the two new
-starts differ by only `0.160421206%`.
+A preceding complete diagnostic measured `125.06865574449961 tok/s`
+conventional and was exact, but is not promoted because its local-scope logger
+emitted only one of the four preregistered execution markers. The final source
+changed only that evidence scope to per-process. The formal result beats the
+preceding QKNorm/RoPE record by `0.6575293471%` and leaves `4.5380268362 tok/s`
+to the 130 objective.
 
 Detailed preregistration, source identity, patch, smoke, score, and submission:
 [`2026-07-30-segmented-dflash-inline-attention-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-30-segmented-dflash-inline-attention-preregistration.md).
 The QKNorm/RoPE component gate, exact source identities, endpoint runs, and
 transferable graph-fusion learning are in
 [`2026-07-31-qknorm-rope-m12-confirmed-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md).
+The current record, component proof, construction/evidence failures, patches,
+and exact final identity are in
+[`2026-07-31-shared-elementwise-m12-record.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md).
 The underlying independently reproduced segmented result and its failed routes
 remain recorded in the adjacent 2026-07-30 notes. The current host completed
 the scored run and strict teardown/idle gates; no recovery action is pending.

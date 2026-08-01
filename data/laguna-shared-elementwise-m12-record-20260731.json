@@ -1,0 +1,66 @@
+{
+  "schema": "laguna-confirmed-record-v1",
+  "status": "verified-exact-record",
+  "date": "2026-07-31",
+  "model": "poolside/Laguna-S-2.1-INT4",
+  "draft": "poolside/Laguna-S-2.1-DFlash-INT4",
+  "hardware": "4x Intel Arc Pro B70 32GB",
+  "kv_cache_dtype": "bfloat16",
+  "layout": "TP4+EP4, one active generation",
+  "verifier_width": 12,
+  "draft_depth": 11,
+  "record": {
+    "historical_100_event_metric_tok_s": 126.72926582199506,
+    "conventional_99_interval_metric_tok_s": 125.4619731637751,
+    "conventional_p10_tok_s": 87.14257704068571,
+    "conventional_mean_tok_s": 145.39496746282836,
+    "full_after_ttft_median_tok_s": 165.87634713661552,
+    "wall_median_tok_s": 56.18228440405635,
+    "ttft_median_ms": 5953.834546999133,
+    "exact_prompts": 13,
+    "total_prompts": 13,
+    "cached_tokens_all_zero": true,
+    "target_topology": "146/145 on 4/4 ranks",
+    "draft_topology": "14/13 on 4/4 ranks",
+    "selector_markers": "4/4 ranks",
+    "pre_idle_seconds": 72,
+    "post_idle_seconds": 72,
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-shared-elementwise-m12-formal-20260801T053000Z"
+  },
+  "prior_record": {
+    "conventional_99_interval_metric_tok_s": 124.64241272122038,
+    "improvement_tok_s": 0.8195604425547174,
+    "improvement_percent": 0.6575293470832966
+  },
+  "diagnostic_not_promoted": {
+    "conventional_99_interval_metric_tok_s": 125.06865574449961,
+    "reason": "vLLM local-scope info_once emitted one marker; frozen four-rank execution-proof gate failed",
+    "run_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-shared-elementwise-m12-fixed-20260801T052000Z"
+  },
+  "identity": {
+    "vllm_commit": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "native_c_sha256": "36d97dda1438cd06b5f707859edb2a0960fd05d09ef6c6d29a53aa89cdd04095",
+    "grouped_gemm_dso_sha256": "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839",
+    "runtime_lock_sha256": "64b0f04d29aabcabd65c0f71ff6a4c0923208228abd0559f2308e63fb3334829",
+    "selectors": [
+      "VLLM_XPU_LAGUNA_DECODE_GRF128=1",
+      "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1",
+      "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1",
+      "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=1"
+    ]
+  },
+  "evidence_sha256": {
+    "bench_json": "7cb1fcf1e8abeee48df5974e5748b60add2632547d7d9150f37c4e707768fb9a",
+    "exactness_json": "94032da724f95397312ca05ef4382e1805e252ed46505efd209d0f0bd36c199c",
+    "identity_txt": "a5494b5434cec5610cfc62ad15c92819dffc8f92985f01c66a0e14fd129ea156",
+    "server_log": "b207d8dd8d38a3bab03ef5d62a90f24b475680b30ad80c702c8ff8044e606a99",
+    "runtime_verification_json": "df62cd86906ac802818ce121f49870786713471a209b029786ffe6e3c46ed8be"
+  },
+  "localmaxxing": {
+    "eligible": true,
+    "submitted": true,
+    "id": "cms9wuuf300cqpm01t5i285tq",
+    "status": "APPROVED"
+  }
+}

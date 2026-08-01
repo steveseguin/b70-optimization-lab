@@ -1,0 +1,484 @@
+From cf247e55d14ce918c06e89252649b50b9292ba20 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 00:36:50 -0400
+Subject: [PATCH 1/3] xpu: enable exact Laguna M12 shared elementwise ops
+
+---
+ .../models/test_laguna_shared_elementwise.py  | 148 ++++++++++++++++++
+ vllm/_custom_ops.py                           |  38 +++++
+ vllm/envs.py                                  |   4 +
+ .../layers/fused_moe/runner/moe_runner.py     |  25 ++-
+ vllm/model_executor/models/laguna.py          |  66 ++++++--
+ 5 files changed, 257 insertions(+), 24 deletions(-)
+
+diff --git a/tests/models/test_laguna_shared_elementwise.py b/tests/models/test_laguna_shared_elementwise.py
+index dd3834960..2018ce6b8 100644
+--- a/tests/models/test_laguna_shared_elementwise.py
++++ b/tests/models/test_laguna_shared_elementwise.py
+@@ -110,6 +110,35 @@ def test_laguna_m8_shared_elementwise_record_contract(monkeypatch) -> None:
+     assert "speculation is not DFlash depth 7" in violations
+
+
++def test_laguna_m12_shared_elementwise_record_contract(monkeypatch) -> None:
++    config, vllm_config = _record_contract()
++    vllm_config.model_config.enforce_eager = False
++    vllm_config.speculative_config.num_speculative_tokens = 11
++    vllm_config.compilation_config.cudagraph_mode = CUDAGraphMode.PIECEWISE
++    vllm_config.compilation_config.cudagraph_capture_sizes = [12]
++    vllm_config.compilation_config.max_cudagraph_capture_size = 12
++    monkeypatch.setattr(laguna.current_platform, "is_xpu", lambda: True)
++    _set_graph_environment(monkeypatch)
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_EXACT_MAX_M", "12")
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE", "1")
++
++    assert not laguna._laguna_m8_shared_elementwise_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=False,
++        num_redundant_experts=0,
++    )
++
++    vllm_config.speculative_config.num_speculative_tokens = 7
++    violations = laguna._laguna_m8_shared_elementwise_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=False,
++        num_redundant_experts=0,
++    )
++    assert "speculation is not DFlash depth 11" in violations
++
++
+ @pytest.mark.parametrize("evidence", [False, True])
+ def test_laguna_m8_shared_elementwise_graph_contract(
+     monkeypatch,
+@@ -315,6 +344,40 @@ def test_laguna_scale_add_keeps_non_m8_incumbent(
+     assert actual is None
+
+
++def test_laguna_m12_shared_elementwise_keeps_other_widths_incumbent(
++    monkeypatch,
++) -> None:
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE", "1")
++    monkeypatch.setattr(
++        laguna,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    monkeypatch.setattr(
++        moe_runner,
++        "_xpu_is_exact_decode_or_verifier_rows",
++        lambda _: True,
++    )
++    for rows in (1, 8, 11):
++        gate = torch.randn(rows, 256, dtype=torch.bfloat16)
++        up = torch.randn_like(gate)
++        expected = F.silu(gate) * up
++        actual = laguna._laguna_m8_shared_silu_mul(gate, up, enabled=True)
++        assert torch.equal(actual.view(torch.int16), expected.view(torch.int16))
++
++        runner = SimpleNamespace(
++            use_laguna_m8_shared_elementwise=True,
++            routed_scaling_factor=2.5,
++            routed_output_transform=None,
++        )
++        shared = torch.randn(rows, 3072, dtype=torch.bfloat16)
++        routed = torch.randn_like(shared)
++        assert (
++            moe_runner.MoERunner._maybe_laguna_m8_scale_add(runner, shared, routed)
++            is None
++        )
++
++
+ def test_laguna_m8_shared_elementwise_rejects_compiled_dispatch(
+     monkeypatch,
+ ) -> None:
+@@ -409,6 +472,56 @@ def test_laguna_m8_shared_elementwise_dispatches_both_ops(monkeypatch) -> None:
+     )
+
+
++@pytest.mark.skipif(not torch.xpu.is_available(), reason="XPU is required")
++def test_laguna_m12_shared_elementwise_dispatches_both_ops(monkeypatch) -> None:
++    activation_calls = []
++    scale_add_calls = []
++
++    def fake_silu_mul(out, gate, up):
++        activation_calls.append((out, gate, up))
++        out.copy_(F.silu(gate) * up)
++
++    def fake_scale_add(out, shared, routed):
++        scale_add_calls.append((out, shared, routed))
++        scaled = routed.clone()
++        scaled.mul_(2.5)
++        out.copy_(shared + scaled)
++
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE", "1")
++    monkeypatch.setattr(laguna, "_xpu_is_exact_decode_or_verifier_rows", lambda _: True)
++    monkeypatch.setattr(
++        moe_runner, "_xpu_is_exact_decode_or_verifier_rows", lambda _: True
++    )
++    monkeypatch.setattr(laguna.ops, "laguna_m12_silu_mul", fake_silu_mul)
++    monkeypatch.setattr(moe_runner.ops, "laguna_m12_scale_add", fake_scale_add)
++
++    gate = torch.randn(12, 256, dtype=torch.bfloat16, device="xpu")
++    up = torch.randn_like(gate)
++    activated = laguna._laguna_m8_shared_silu_mul(gate, up, enabled=True)
++    assert len(activation_calls) == 1
++    assert torch.equal(
++        activated.cpu().view(torch.int16),
++        (F.silu(gate) * up).cpu().view(torch.int16),
++    )
++
++    runner = SimpleNamespace(
++        use_laguna_m8_shared_elementwise=True,
++        routed_scaling_factor=2.5,
++        routed_output_transform=None,
++    )
++    shared = torch.randn(12, 3072, dtype=torch.bfloat16, device="xpu")
++    routed = torch.randn_like(shared)
++    combined = moe_runner.MoERunner._maybe_laguna_m8_scale_add(runner, shared, routed)
++    assert combined is not None
++    assert len(scale_add_calls) == 1
++    scaled = routed.clone()
++    scaled.mul_(2.5)
++    assert torch.equal(
++        combined.cpu().view(torch.int16),
++        (shared + scaled).cpu().view(torch.int16),
++    )
++
++
+ @pytest.mark.skipif(not torch.xpu.is_available(), reason="XPU is required")
+ def test_laguna_m8_shared_elementwise_fails_closed_on_missing_ops(
+     monkeypatch,
+@@ -447,3 +560,38 @@ def test_laguna_m8_shared_elementwise_fails_closed_on_missing_ops(
+             shared,
+             routed,
+         )
++
++
++@pytest.mark.skipif(not torch.xpu.is_available(), reason="XPU is required")
++@pytest.mark.parametrize("compiled", [False, True])
++def test_laguna_m12_shared_elementwise_fails_closed(
++    monkeypatch,
++    compiled: bool,
++) -> None:
++    def missing(*_args):
++        raise AttributeError("missing test symbol")
++
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE", "1")
++    monkeypatch.setattr(laguna, "_xpu_is_exact_decode_or_verifier_rows", lambda _: True)
++    monkeypatch.setattr(
++        moe_runner, "_xpu_is_exact_decode_or_verifier_rows", lambda _: True
++    )
++    monkeypatch.setattr(torch.compiler, "is_compiling", lambda: compiled)
++    monkeypatch.setattr(laguna.ops, "laguna_m12_silu_mul", missing)
++    monkeypatch.setattr(moe_runner.ops, "laguna_m12_scale_add", missing)
++    expected = "eager-only" if compiled else "_C::laguna_m12"
++
++    gate = torch.empty(12, 256, dtype=torch.bfloat16, device="xpu")
++    up = torch.empty_like(gate)
++    with pytest.raises(RuntimeError, match=expected):
++        laguna._laguna_m8_shared_silu_mul(gate, up, enabled=True)
++
++    runner = SimpleNamespace(
++        use_laguna_m8_shared_elementwise=True,
++        routed_scaling_factor=2.5,
++        routed_output_transform=None,
++    )
++    shared = torch.empty(12, 3072, dtype=torch.bfloat16, device="xpu")
++    routed = torch.empty_like(shared)
++    with pytest.raises(RuntimeError, match=expected):
++        moe_runner.MoERunner._maybe_laguna_m8_scale_add(runner, shared, routed)
+diff --git a/vllm/_custom_ops.py b/vllm/_custom_ops.py
+index 22492407e..cc53818d7 100644
+--- a/vllm/_custom_ops.py
++++ b/vllm/_custom_ops.py
+@@ -373,6 +373,22 @@ def laguna_m8_scale_add(
+     torch.ops._C.laguna_m8_scale_add(out, shared, routed)
+
+
++def laguna_m12_silu_mul(
++    out: torch.Tensor,
++    gate: torch.Tensor,
++    up: torch.Tensor,
++) -> None:
++    torch.ops._C.laguna_m12_silu_mul(out, gate, up)
++
++
++def laguna_m12_scale_add(
++    out: torch.Tensor,
++    shared: torch.Tensor,
++    routed: torch.Tensor,
++) -> None:
++    torch.ops._C.laguna_m12_scale_add(out, shared, routed)
++
++
+ if hasattr(torch.ops, "_C") and hasattr(torch.ops._C, "laguna_m8_silu_mul"):
+
+     @register_fake("_C::laguna_m8_silu_mul")
+@@ -395,6 +411,28 @@ if hasattr(torch.ops, "_C") and hasattr(torch.ops._C, "laguna_m8_scale_add"):
+         return None
+
+
++if hasattr(torch.ops, "_C") and hasattr(torch.ops._C, "laguna_m12_silu_mul"):
++
++    @register_fake("_C::laguna_m12_silu_mul")
++    def _laguna_m12_silu_mul_fake(
++        out: torch.Tensor,
++        gate: torch.Tensor,
++        up: torch.Tensor,
++    ) -> None:
++        return None
++
++
++if hasattr(torch.ops, "_C") and hasattr(torch.ops._C, "laguna_m12_scale_add"):
++
++    @register_fake("_C::laguna_m12_scale_add")
++    def _laguna_m12_scale_add_fake(
++        out: torch.Tensor,
++        shared: torch.Tensor,
++        routed: torch.Tensor,
++    ) -> None:
++        return None
++
++
+ def apply_repetition_penalties_torch(
+     logits: torch.Tensor,
+     prompt_mask: torch.Tensor,
+diff --git a/vllm/envs.py b/vllm/envs.py
+index bcca1d5e8..869d5c60f 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -312,6 +312,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE: bool = False
+     VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16: bool = False
+     VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE: bool = False
++    VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE: bool = False
+     VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH: bool = False
+     VLLM_XPU_LAGUNA_PARITY_PROBE: bool = False
+     VLLM_LORA_ENABLE_DUAL_STREAM: bool = False
+@@ -2117,6 +2118,9 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE", "0"))
+     ),
++    "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE": lambda: bool(
++        int(os.getenv("VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE", "0"))
++    ),
+     "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH", "0"))
+     ),
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index 1d5eb30b6..7a7420495 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
+ import torch
+ import torch.nn.functional as F
+
++import vllm.envs as envs
+ from vllm import _custom_ops as ops
+ from vllm.config import VllmConfig, get_current_vllm_config
+ from vllm.config.parallel import ExpertPlacementStrategy
+@@ -419,11 +420,13 @@ class MoERunner(MoERunnerInterface):
+         shared_output: torch.Tensor | None,
+         fused_output: torch.Tensor,
+     ) -> torch.Tensor | None:
++        m12 = envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
++        rows = 12 if m12 else 8
+         candidate_call = (
+             self.use_laguna_m8_shared_elementwise
+             and fused_output.dim() == 2
+-            and fused_output.shape[0] == 8
+-            and _xpu_is_exact_decode_or_verifier_rows(8)
++            and fused_output.shape[0] == rows
++            and _xpu_is_exact_decode_or_verifier_rows(rows)
+         )
+         if not candidate_call:
+             return None
+@@ -435,8 +438,8 @@ class MoERunner(MoERunnerInterface):
+
+         contract_ok = (
+             shared_output is not None
+-            and shared_output.shape == (8, 3072)
+-            and fused_output.shape == (8, 3072)
++            and shared_output.shape == (rows, 3072)
++            and fused_output.shape == (rows, 3072)
+             and shared_output.dtype == torch.bfloat16
+             and fused_output.dtype == torch.bfloat16
+             and shared_output.device.type == "xpu"
+@@ -449,17 +452,23 @@ class MoERunner(MoERunnerInterface):
+         if not contract_ok:
+             raise RuntimeError(
+                 "Laguna M8 shared scale/add dispatch diverged from the exact "
+-                "BF16 [8, 3072] verifier contract"
++                f"BF16 [{rows}, 3072] verifier contract"
+             )
+
+         assert shared_output is not None
+         output = torch.empty_like(shared_output)
+         try:
+-            ops.laguna_m8_scale_add(output, shared_output, fused_output)
++            op = ops.laguna_m12_scale_add if m12 else ops.laguna_m8_scale_add
++            op(output, shared_output, fused_output)
+         except AttributeError as error:
++            symbol = (
++                "_C::laguna_m12_scale_add"
++                if m12
++                else "_C::laguna_m8_scale_add"
++            )
+             raise RuntimeError(
+-                "Laguna M8 shared elementwise requires a rebuilt XPU kernel "
+-                "extension with _C::laguna_m8_scale_add"
++                "Laguna shared elementwise requires a rebuilt XPU kernel "
++                f"extension with {symbol}"
+             ) from error
+         return output
+
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 4e9e4cb20..7b0ea6e5c 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -128,6 +128,8 @@ def _laguna_m8_shared_elementwise_contract_violations(
+         vllm_config
+     )
+
++    m12 = envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
++    expected_depth = 11 if m12 else 7
+     checks = (
+         (current_platform.is_xpu(), "platform is not XPU"),
+         (
+@@ -146,8 +148,8 @@ def _laguna_m8_shared_elementwise_contract_violations(
+         (
+             speculative_config is not None
+             and speculative_config.method == "dflash"
+-            and speculative_config.num_speculative_tokens == 7,
+-            "speculation is not DFlash depth 7",
++            and speculative_config.num_speculative_tokens == expected_depth,
++            f"speculation is not DFlash depth {expected_depth}",
+         ),
+         (
+             scheduler_config.max_num_seqs == 1,
+@@ -178,6 +180,10 @@ def _laguna_m8_shared_elementwise_contract_violations(
+             and envs.VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2,
+             "exact attention/MoE/W1-route-W2 selectors are not all enabled",
+         ),
++        (
++            not m12 or xpu_laguna_exact_max_m() == 12,
++            "M12 shared elementwise requires exact verifier width 12",
++        ),
+         (
+             (
+                 not envs.VLLM_XPU_ENABLE_XPU_GRAPH
+@@ -223,22 +229,26 @@ def _laguna_m8_shared_silu_mul(
+     *,
+     enabled: bool,
+ ) -> torch.Tensor:
+-    """Use the exact M=8 shared-expert op, otherwise preserve incumbent math."""
++    """Use the exact fixed-width shared-expert op or preserve incumbent math."""
++    m12 = envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
++    rows = 12 if m12 else 8
+     candidate_call = (
+         enabled
+         and gate.dim() == 2
+-        and gate.shape[0] == 8
+-        and _xpu_is_exact_decode_or_verifier_rows(8)
++        and gate.shape[0] == rows
++        and _xpu_is_exact_decode_or_verifier_rows(rows)
+     )
+     if not candidate_call:
+         return F.silu(gate) * up
+
+     if torch.compiler.is_compiling():
+-        raise RuntimeError("Laguna M8 shared SiLU/mul is an eager-only exact-record op")
++        raise RuntimeError(
++            "Laguna shared SiLU/mul is an eager-only exact-record op"
++        )
+
+     contract_ok = (
+-        gate.shape == (8, 256)
+-        and up.shape == (8, 256)
++        gate.shape == (rows, 256)
++        and up.shape == (rows, 256)
+         and gate.dtype == torch.bfloat16
+         and up.dtype == torch.bfloat16
+         and gate.device.type == "xpu"
+@@ -249,16 +259,22 @@ def _laguna_m8_shared_silu_mul(
+     if not contract_ok:
+         raise RuntimeError(
+             "Laguna M8 shared SiLU/mul dispatch diverged from the exact "
+-            "BF16 [8, 256] verifier contract"
++            f"BF16 [{rows}, 256] verifier contract"
+         )
+
+     output = torch.empty_like(gate)
+     try:
+-        ops.laguna_m8_silu_mul(output, gate, up)
++        op = ops.laguna_m12_silu_mul if m12 else ops.laguna_m8_silu_mul
++        op(output, gate, up)
+     except AttributeError as error:
++        symbol = (
++            "_C::laguna_m12_silu_mul"
++            if m12
++            else "_C::laguna_m8_silu_mul"
++        )
+         raise RuntimeError(
+-            "Laguna M8 shared elementwise requires a rebuilt XPU kernel "
+-            "extension with _C::laguna_m8_silu_mul"
++            "Laguna shared elementwise requires a rebuilt XPU kernel "
++            f"extension with {symbol}"
+         ) from error
+     return output
+
+@@ -587,8 +603,17 @@ class LagunaMoE(nn.Module):
+             self.physical_expert_start + self.n_local_physical_experts
+         )
+
++        if (
++            envs.VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE
++            and envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
++        ):
++            raise ValueError("Laguna M8 and M12 shared elementwise are exclusive")
+         self._use_m8_shared_elementwise = bool(
+-            envs.VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE and exact_spec_target
++            (
++                envs.VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE
++                or envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
++            )
++            and exact_spec_target
+         )
+         if self._use_m8_shared_elementwise:
+             violations = _laguna_m8_shared_elementwise_contract_violations(
+@@ -597,9 +622,14 @@ class LagunaMoE(nn.Module):
+                 enable_eplb=self.enable_eplb,
+                 num_redundant_experts=self.n_redundant_experts,
+             )
++            prefix = (
++                "laguna_m12"
++                if envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
++                else "laguna_m8"
++            )
+             missing_symbols = [
+                 symbol
+-                for symbol in ("laguna_m8_silu_mul", "laguna_m8_scale_add")
++                for symbol in (f"{prefix}_silu_mul", f"{prefix}_scale_add")
+                 if not hasattr(torch.ops._C, symbol)
+             ]
+             if violations or missing_symbols:
+@@ -612,10 +642,14 @@ class LagunaMoE(nn.Module):
+                     )
+                 )
+                 raise ValueError(
+-                    "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1 requires the "
+-                    "exact eager record or frozen graph-diagnostic Laguna M8 "
++                    "Laguna shared-elementwise selection requires the exact "
++                    "eager record or frozen graph-diagnostic fixed-width "
+                     f"verifier contract: {detail}"
+                 )
++            width = 12 if envs.VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE else 8
++            logger.info_once(
++                "Enabled exact Laguna M=%d shared elementwise ops.", width
++            )
+
+         # Router gate
+         self.gate = ReplicatedLinear(
+--
+2.43.0

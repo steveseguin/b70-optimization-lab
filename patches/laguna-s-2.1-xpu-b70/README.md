@@ -90,6 +90,8 @@ not promoted record sources:
 | rejected exact M12 attention-gate kernel | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` | `0ecea928c3b447b103bb0cd46ffe75ae94f2c065` | `e7e843a47b4b1dfbce8c5857814b4243fac9130f7fe6b47a370ba513f1488592` | `4d959374fc579ee8d2cb6503b6c8c8aedbc9635238f78c159b2f88b5bbc22477` |
 | rejected exact M12 attention-gate vLLM selector | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `2b644445e573f37d67919ac854167159eecf5493` | `8eb9b96eb8d892b07ebb0d2a646ce6c0c3df7c6ce87d6bd37786f876bda4d6a9` | `ef132ee3a9a1e4794386db3b51a6147d932ad4d68dada5a851920c42169a3c6d` |
 | rejected reachable DFlash FP8 draft LM head | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `b90f9509bd5e7b7123753a0047ef7958d184d571` | `77e799ae54f554a170de34c0f65228a01cc146497f5c1780ca6e716ddb5d58f9` | `b14eae17b8364ebcafb40bc2379f90957b7d710e6e6d996bc7465d8105340c54` |
+| confirmed exact M12 shared-elementwise kernel | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` | `99886d783372e621941228250091dc8ebdc1595d` | `024e979f1d3a3f1f17804abfb1c325604eaa1dfd8aba761782cbd67dd797ea3a` | `57807decf1aec8cfe7a7bab6319cdf540697116bbb41faf3f6a6ecabe161c342` |
+| confirmed M12 shared-elementwise vLLM selector | `58608c6361f1a958a7e933bed0be8c88c35aa26e` | `1a7f61feffbc61b21b73f812d231c7426386ccdc` | three patches: `7bbfd791a79c022501525a3563e7c5bbf8713ba33d6c5efd6bdf2117577eca83`, `9ac2536eba2c5e1a2bb9c9d2495272a846bbc6f51240898763ed7b816054f8d0`, `7e6b12da71a2a3e94622a3ef7d5a16b461c774e7c105f0374e35927918f3e443` | `52e1682aa7e7595f9e4807b6a45f7b2e29683a2d61dae155b1f1b823f8a3e82b` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -170,3 +172,13 @@ real-weight one-B70 component gate, but saved only `0.0360594 ms` per draft
 cycle and failed the preregistered absolute-time threshold. No endpoint run was
 performed. See the
 [closed experiment](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-dflash-fp8-lm-head-reachability-preregistration.md).
+
+The M12 shared-elementwise kernel and vLLM selector snapshots form the current
+exact BF16-KV record source. The component was exhaustive over every finite
+BF16 encoding, reduced 192 device operations to 96 per 48-layer target cycle,
+and saved `0.734276300 ms`. The first formally valid cold endpoint measured
+`125.461973164 tok/s` conventionally with 13/13 exactness and four-rank
+execution evidence. The vLLM patch set deliberately preserves the two
+integration corrections: unique model-layer prefixes and process-scoped
+runtime markers. See the
+[confirmed record](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md).

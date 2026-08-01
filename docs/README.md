@@ -19,8 +19,9 @@ Docs should point to those artifacts instead of duplicating every script.
 
 ## Model Lane Entry Points
 
-- [Laguna S 2.1 Result Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): historical sealed repro plus the current exact four-B70 transposed-scale record at historical 124.069 / conventional 122.829 tok/s.
+- [Laguna S 2.1 Result Resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md): historical sealed repro plus the current exact four-B70 M12 shared-elementwise record at historical 126.729 / conventional 125.462 tok/s.
 - [Laguna S 2.1 Qualified Result Packet](../results/laguna-s-2.1-int4-b70/README.md): promoted identity, qualification, evidence, patches, and LocalMaxxing receipt.
+- [Laguna S 2.1 125 tok/s Standalone Repro](../repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md): exact source bundles, binary/runtime lock, formal command, and first-valid cold gate.
 - [Laguna Metric Accounting Correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md): the 100-event versus 99-interval finding, impact, and prevention rule.
 - [Laguna Standalone Repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md): fail-closed source/runtime restoration, historical-receipt audit, and one-cold-suite replay.
 - [Laguna Campaign Transfer Ledger](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-campaign-transfer-ledger.md): condensed wins, losses, correctness failures, graph lessons, and harness rules for future models.

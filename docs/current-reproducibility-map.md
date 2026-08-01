@@ -159,23 +159,23 @@ Intel-branded host:
 
 ## Laguna S 2.1 INT4 Qualified Published Result
 
-The current four-B70 Laguna row is approved at **`122.828558121 tok/s`** under
+The current four-B70 Laguna row is approved at **`125.461973164 tok/s`** under
 conventional 99-inter-token-interval accounting; the same timestamps produce
-`124.069250627 tok/s` under the historical compatibility formula. A second
-independent same-identity cold suite measured `121.383776672 tok/s`
-conventionally. Both fixed suites used BF16 KV, exact width 12, DFlash depth
-11, the audited 146/145 target and 14/13 draft graph topologies, and a
-decode-only spill-free 128-GRF INT4 kernel with contiguous transposed BF16
-group scales. All 26 prompts were token-and-text
-exact against the canonical q1 teacher and cache-zero. LocalMaxxing approved
-the record as `cms9osksu00b3pm010hf9bnk8`.
+`126.729265822 tok/s` under the historical compatibility formula. The fixed
+suite used BF16 KV, exact width 12, DFlash depth 11, audited 146/145 target and
+14/13 draft graphs, decode GRF128 with transposed BF16 scales, exact Q/K
+RMSNorm+RoPE, and exact M12 shared elementwise fusions. All 13 prompts were
+token-and-text exact against the canonical q1 teacher and cache-zero, with
+selector evidence on all four ranks. LocalMaxxing approved the record as
+`cms9wuuf300cqpm01t5i285tq`.
 
 Use:
 
 - [record resume](../experiments/laguna-s-2.1-xpu-b70/RESUME.md);
 - [qualified result packet](../results/laguna-s-2.1-int4-b70/README.md);
-- [current record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md);
-- [current structured packet](../data/laguna-transposed-scales-confirmed-record-20260731.json);
+- [current record evidence](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md);
+- [current structured packet](../data/laguna-shared-elementwise-m12-record-20260731.json);
+- [current standalone repro](../repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md);
 - [older standalone repro](../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md);
 - [source/runtime reconstruction and reproducibility tiers](../repro/laguna-s-2.1-int4-b70-102tps-20260726/BUILD.md);
 - [accounting correction](../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md);

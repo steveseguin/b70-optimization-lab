@@ -232,6 +232,22 @@ The component gate proves correctness and local cost; it does not establish
 endpoint relevance. See the
 [attention-gate negative](2026-07-31-attention-gate-m12-preregistration.md).
 
+### Repeated exact micro-fusions need an absolute full-cycle floor
+
+The exact M12 shared-elementwise portfolio was superficially similar to the
+rejected attention-gate micro-fusion, but its measured complete-cycle saving
+was materially larger: `0.734276300 ms` across 48 layers. It reduced 192
+device operations to 96 while preserving explicit BF16 SiLU and routed-scale
+rounding boundaries. The first formally valid endpoint improved the record
+from `124.642412721` to `125.461973164 tok/s` conventionally (`+0.657529%`).
+
+The distinction is absolute repeated cost, not component speedup ratio. Use a
+full-cycle millisecond floor before integration; preserve low-precision store
+boundaries literally; and require execution evidence on every worker. Also
+test model construction with multiple layer prefixes: a temporary named
+`prefix` silently replaced all MoE identities and failed before load. See the
+[shared-elementwise record](2026-07-31-shared-elementwise-m12-record.md).
+
 ## Reusable experiment protocol
 
 For the next model:

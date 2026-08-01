@@ -2,26 +2,24 @@
 
 ## Qualified result
 
-The current four-B70 record adds exact width-12 Q/K RMSNorm plus RoPE fusion
-to the decode-transposed-scale, decode-GRF128, and segmented-DFlash
-inline-attention stack:
+The current four-B70 record adds exact width-12 shared-expert SiLU/multiply and
+routed-scale/add fusions to the Q/K RMSNorm+RoPE, decode-transposed-scale,
+decode-GRF128, and segmented-DFlash inline-attention stack:
 
 - current-policy conventional 99-interval median:
-  **`124.64241272122038 tok/s`**;
+  **`125.4619731637751 tok/s`**;
 - historical 100-event compatibility formula:
-  **`125.9014269911317 tok/s`**;
+  **`126.72926582199506 tok/s`**;
 - 13/13 canonical-q1 token IDs and output-text hashes equal;
 - `cached_tokens=0` on all 13 unique cold requests;
-- target 146/145 and draft 14/13 on all four ranks; and
-- two independent cold suites passed; the supporting conventional result is
-  `124.44278011260164 tok/s`; no warmup or retry, clean teardown and post-idle
-  gates.
+- target 146/145, draft 14/13, and selector execution markers on all four
+  ranks; no warmup or benchmark retry, clean teardown and post-idle gates.
 
 The complete source/patch/run packet is
-[the confirmed QKNorm/RoPE note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md).
+[the confirmed M12 shared-elementwise note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md).
 LocalMaxxing approved it as
-[`cms9thsax00ccpm01cmddk057`](https://www.localmaxxing.com/en/runs/cms9thsax00ccpm01cmddk057).
-The preceding `cms9osksu00b3pm010hf9bnk8` row is superseded.
+[`cms9wuuf300cqpm01t5i285tq`](https://www.localmaxxing.com/en/runs/cms9wuuf300cqpm01t5i285tq).
+The preceding `cms9thsax00ccpm01cmddk057` row is superseded.
 
 ### Superseded 2026-07-26 result
 
@@ -51,12 +49,12 @@ conventional interval accounting, the 102 tok/s threshold was missed by
 | --- | --- |
 | target | `poolside/Laguna-S-2.1-INT4` at `4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb` |
 | draft | `poolside/Laguna-S-2.1-DFlash-INT4` at `5e07c246915c86dc6920fead03d019989224f2ba` |
-| vLLM | `58608c6361f1a958a7e933bed0be8c88c35aa26e` |
-| XPU kernels | `69e8ad9119a9cc70c3906b82be6254dd0160f00e` |
+| vLLM | `1a7f61feffbc61b21b73f812d231c7426386ccdc` |
+| XPU kernels | `99886d783372e621941228250091dc8ebdc1595d` |
 | hardware | 4x Intel Arc Pro B70 32 GB, TP4+EP4, one active generation |
 | verifier / draft | exact width 12 / DFlash depth 11 |
 | KV | BF16 |
-| treatment | segmented inline DFlash attention, decode-only GRF128, width-12 target decode-transposed BF16 scale tables, and exact M12 Q/K RMSNorm plus RoPE fusion |
+| treatment | segmented inline DFlash attention, decode-only GRF128, width-12 target decode-transposed BF16 scale tables, exact M12 Q/K RMSNorm plus RoPE, and exact M12 shared elementwise fusions |
 
 The FP8 treatment applies to disposable draft projections. It does not mean
 FP8 KV, and no gain is attributed to the intended separate draft LM-head path
@@ -65,9 +63,10 @@ because its runtime preparation marker was absent.
 ## Evidence and reproduction
 
 - [Standalone fail-closed reproduction](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/README.md)
+- [Current 125 tok/s fail-closed reproduction](../../repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md)
 - [Source/runtime reconstruction and reproducibility tiers](../../repro/laguna-s-2.1-int4-b70-102tps-20260726/BUILD.md)
-- [Current structured record](../../data/laguna-qknorm-rope-m12-confirmed-record-20260731.json)
-- [Current confirmed record note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-qknorm-rope-m12-confirmed-record.md)
+- [Current structured record](../../data/laguna-shared-elementwise-m12-record-20260731.json)
+- [Current confirmed record note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-shared-elementwise-m12-record.md)
 - [Historical structured record](../../data/laguna-s-2.1-width12-dflash-fp8-record-20260726.json)
 - [Metric correction](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-throughput-window-accounting-correction.md)
 - [Original experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-width12-dflash-fp8-w8a16-record.md)

@@ -2,8 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: **component and default-off integration gates passed; exactly one
-strict cold endpoint leg authorized**.
+Status: **complete; first formally valid endpoint is a new exact record at
+`125.4619731637751 tok/s` conventional**.
 
 ## Premise
 
@@ -161,3 +161,13 @@ The focused test now asserts process scope. Since the complete diagnostic did
 not pass its frozen runtime-evidence gate, one first formally valid leg is
 authorized with the updated lock. Its first valid score stands even if it is
 below the diagnostic or incumbent; no score retry is authorized.
+
+## Final disposition
+
+The process-scoped final identity passed the formal wrapper at
+`laguna-shared-elementwise-m12-formal-20260801T053000Z`: 13/13 token-and-text
+exact, cache-zero, target `146/145`, draft `14/13`, four selector markers,
+72-second pre/post idle, and clean teardown. Its first valid conventional
+median is `125.4619731637751 tok/s`, `0.6575293471%` above the preceding
+record. The promoted packet is
+[`2026-07-31-shared-elementwise-m12-record.md`](2026-07-31-shared-elementwise-m12-record.md).
