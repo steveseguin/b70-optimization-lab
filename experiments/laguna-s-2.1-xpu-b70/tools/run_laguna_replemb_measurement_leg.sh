@@ -183,6 +183,10 @@ readonly target_inline_gather_skip="${43:--1}"
 # frozen 13x512 exactness contract. It remains inside the smoke branch and
 # never emits a promoted score.
 readonly dflash_full_exactness="${44:-0}"
+# Diagnostic only: record the preregistered target verifier row-0 packet at
+# position 420/input 20253. The synchronous copy perturbs timing, so this is
+# restricted to the non-scored segmented smoke and may never emit a rate.
+readonly parity_probe="${45:-0}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
@@ -228,7 +232,7 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 44 )) || { echo "seven to forty-four arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 45 )) || { echo "seven to forty-five arguments are required" >&2; exit 2; }
 [[ "$target_inline_gather_limit" =~ ^[0-9]+$ ]] \
   && (( target_inline_gather_limit >= 1 && target_inline_gather_limit <= 96 )) \
   || { echo "TARGET_INLINE_GATHER_LIMIT must be an integer from 1 to 96" >&2; exit 2; }
@@ -244,6 +248,9 @@ esac
 case "$dflash_full_exactness" in 0|1) ;; *) echo "DFLASH_FULL_EXACTNESS must be 0 or 1" >&2; exit 2 ;; esac
 (( dflash_full_exactness == 0 || dflash_segmented_smoke == 1 )) \
   || { echo "DFLASH_FULL_EXACTNESS requires the non-scored smoke mode" >&2; exit 2; }
+case "$parity_probe" in 0|1) ;; *) echo "PARITY_PROBE must be 0 or 1" >&2; exit 2 ;; esac
+(( parity_probe == 0 || (dflash_segmented_smoke == 1 && dflash_full_exactness == 0) )) \
+  || { echo "PARITY_PROBE=1 requires the 2x400 non-scored smoke" >&2; exit 2; }
 if [[ -n "$confidence_probe_root" ]]; then
   [[ "$confidence_probe_root" == "$run_dir"/* ]] \
     || { echo "confidence probe root must be inside the run directory" >&2; exit 2; }
@@ -475,6 +482,9 @@ laguna_nvme_verify_model_contents
 [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "refusing reused RPC path"
 ! ss -H -ltn 'sport = :18080' | grep -q . || die "port 18080 already has a listener"
 ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 || die "existing vLLM workers block leg"
+parity_trigger="$LAGUNA_NVME_ARTIFACT_ROOT/parity-trigger.json"
+(( parity_probe == 0 )) || [[ ! -e "$parity_trigger" && ! -L "$parity_trigger" ]] \
+  || die "refusing a stale Laguna parity trigger"
 
 laguna_nvme_prepare_run_dir "$run_dir"
 chmod 700 -- "$run_dir"
@@ -543,6 +553,7 @@ stop_service() {
 finalize() {
   local status="$?" stop_status=0 worker_status=0 idle_status=0
   trap - EXIT INT TERM; set +e
+  (( parity_probe == 0 )) || rm -f -- "$parity_trigger"
   stop_service || stop_status=1
   wait_for_no_workers || worker_status=1
   capture_idle "$run_dir/failure-post-idle.json" || idle_status=1
@@ -589,6 +600,7 @@ verify_idle_interval prestart
   printf 'target_inline_gather_limit=%s\n' "$target_inline_gather_limit"
   printf 'target_inline_gather_skip=%s\n' "$target_inline_gather_skip"
   printf 'dflash_full_exactness=%s\n' "$dflash_full_exactness"
+  printf 'parity_probe=%s\nparity_row=%s\n' "$parity_probe" "$(( parity_probe == 1 ? 0 : -1 ))"
   printf 'decode_grf128=%s\n' "$decode_grf128"
   printf 'decode_transposed_scales=%s\n' "$decode_transposed_scales"
   printf 'event_profile_target_only=%s\n' "$event_profile_target_only"
@@ -601,7 +613,7 @@ verify_idle_interval prestart
     "$confidence_probe_root"
   printf 'native_c_sha256=%s\n' "$expected_native_c"
   scored_measurement=1
-  [[ "$dflash_segmented_smoke" == 0 && -z "$event_profile_root" \
+  [[ "$dflash_segmented_smoke" == 0 && "$parity_probe" == 0 && -z "$event_profile_root" \
       && -z "$confidence_probe_root" ]] \
     || scored_measurement=0
   printf 'dflash_segmented_smoke=%s\nscored_measurement=%s\n' "$dflash_segmented_smoke" "$scored_measurement"
@@ -631,7 +643,8 @@ setsid /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp" \
   HF_HOME="$run_dir/private-cache/hf" HF_HUB_CACHE="$run_dir/private-cache/hf/hub" TRANSFORMERS_CACHE="$run_dir/private-cache/hf/transformers" VLLM_CACHE_ROOT="$run_dir/private-cache/vllm" TORCHINDUCTOR_CACHE_DIR="$run_dir/private-cache/torchinductor" TRITON_CACHE_DIR="$run_dir/private-cache/triton" SYCL_CACHE_DIR="$run_dir/private-cache/sycl" NUMBA_CACHE_DIR="$run_dir/private-cache/numba" PYTHONPYCACHEPREFIX="$run_dir/private-cache/pycache" XDG_CACHE_HOME="$run_dir/private-cache" XDG_CONFIG_HOME="$run_dir/private-xdg/config" XDG_DATA_HOME="$run_dir/private-xdg/data" XDG_STATE_HOME="$run_dir/private-xdg/state" \
   PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD= ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path" \
-  VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="$m12_shared_elementwise" VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM="$m12_rank_sum_rmsnorm" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M12_ATTENTION_GATE="$m12_attention_gate" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_DECODE_GRF128="$decode_grf128" VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES="$decode_transposed_scales" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH="$dflash_segmented_graph" VLLM_XPU_LAGUNA_DFLASH_INPLACE_COLLECTIVES="$dflash_inplace_collectives" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES="$dflash_capture_collective_copies" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS="$dflash_capture_attention_graphs" VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS="$dflash_inline_attention_graphs" VLLM_XPU_LAGUNA_M8_INLINE_GATHERS="$target_inline_gathers" LAGUNA_TARGET_INLINE_GATHER_LIMIT="$target_inline_gather_limit" LAGUNA_TARGET_INLINE_GATHER_SKIP="$target_inline_gather_skip" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY="$event_profile_target_only" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM="$bf16_attn_native_mm" VLLM_XPU_LAGUNA_PARITY_PROBE=0 VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
+  VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="$m12_shared_elementwise" VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM="$m12_rank_sum_rmsnorm" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M12_ATTENTION_GATE="$m12_attention_gate" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_DECODE_GRF128="$decode_grf128" VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES="$decode_transposed_scales" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH="$dflash_segmented_graph" VLLM_XPU_LAGUNA_DFLASH_INPLACE_COLLECTIVES="$dflash_inplace_collectives" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES="$dflash_capture_collective_copies" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS="$dflash_capture_attention_graphs" VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS="$dflash_inline_attention_graphs" VLLM_XPU_LAGUNA_M8_INLINE_GATHERS="$target_inline_gathers" LAGUNA_TARGET_INLINE_GATHER_LIMIT="$target_inline_gather_limit" LAGUNA_TARGET_INLINE_GATHER_SKIP="$target_inline_gather_skip" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY="$event_profile_target_only" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM="$bf16_attn_native_mm" VLLM_XPU_LAGUNA_ARTIFACT_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT" VLLM_XPU_LAGUNA_PARITY_ROW="$(( parity_probe == 1 ? 0 : -1 ))" VLLM_XPU_LAGUNA_PARITY_PROBE="$parity_probe" VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
+  VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 \
   VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_ROOT="$confidence_probe_root" VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_TOPK_PROBE="$([[ -n "$confidence_probe_root" ]] && echo 1 || echo 0)" \
   "$serve_script" "$run_dir" >"$run_dir/server.log" 2>&1 &
 server_pid="$!"; printf '%s\n' "$server_pid" > "$run_dir/server.pid"
@@ -658,6 +671,16 @@ grep -Fx "VLLM_XPU_LAGUNA_M12_ATTENTION_GATE=$m12_attention_gate" "$run_dir/serv
 grep -Fx "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=$m12_shared_elementwise" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM=$m12_rank_sum_rmsnorm" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING=$replicated_embedding" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_ARTIFACT_ROOT=$LAGUNA_NVME_ARTIFACT_ROOT" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_PARITY_ROW=$(( parity_probe == 1 ? 0 : -1 ))" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_PARITY_PROBE=$parity_probe" "$run_dir/service-environment.txt" >/dev/null
+if (( parity_probe == 1 )); then
+  jq -n \
+    --arg output_dir "$run_dir/parity" \
+    --arg run_label "$label" \
+    '{expected_position:420, expected_input_id:20253, output_dir:$output_dir, run_label:$run_label}' \
+    > "$parity_trigger"
+fi
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before-suite.prom"
 if (( dflash_segmented_smoke == 1 )); then
   smoke_request_count="$(( dflash_full_exactness == 1 ? 13 : 2 ))"
@@ -716,6 +739,7 @@ elif rows:
     )
 PY
   stop_service; server_pid=""
+  (( parity_probe == 0 )) || rm -f -- "$parity_trigger"
   wait_for_no_workers || die "workers or listener survived smoke shutdown"
   capture_idle "$run_dir/post-idle.json"
   verify_idle_interval poststop
