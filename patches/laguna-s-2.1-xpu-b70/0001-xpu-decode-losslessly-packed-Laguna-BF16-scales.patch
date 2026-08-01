@@ -1,0 +1,293 @@
+From a0b6ed99b2e60660d2bd0abb6feff5d5317094bb Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 1 Aug 2026 08:32:57 -0400
+Subject: [PATCH] Decode losslessly packed Laguna BF16 scales
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp       | 72 +++++++++++++++++--
+ .../grouped_gemm/xe_2/grouped_gemm_xe2.hpp    | 23 +++++-
+ .../xe_2/grouped_gemm_xe2_interface.hpp       | 69 +++++++++++++++++-
+ 3 files changed, 156 insertions(+), 8 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 30c7118..12f198e 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -612,6 +612,11 @@ template <
+     // makes one K group's N scales strided. A load-time transpose stores
+     // [K/GroupSize,N], so the identical BF16 values are contiguous here.
+     bool TransposedScales = false,
++    // Lossless decode-only BF16 scale records. Each 32-scale record stores
++    // the 32 low bytes, eight packed two-bit high-byte deltas, and one common
++    // high-byte base. The original BF16 word is reconstructed before the
++    // existing multiply.
++    bool LosslessPackedScales = false,
+     class ATensor,
+     class BTensor,
+     class DTensor,
+@@ -712,6 +717,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+   static_assert(
+       !TransposedScales || (!TileMajor && group_size == 32),
+       "transposed INT4 scales require non-tile-major group32");
++  static_assert(
++      !LosslessPackedScales ||
++          (TransposedScales && !TileMajor && group_size == 32 &&
++           is_same_v<ElementS, bfloat16_t>),
++      "lossless packed scales require transposed BF16 group32 scales");
+ 
+   static constexpr auto SG_M = tile_m / ATOM_M;  // BLK_M / ATOM_M;
+   static constexpr auto SG_N = tile_n / ATOM_N;  // BLK_N / ATOM_N;
+@@ -727,6 +737,44 @@ CUTE_DEVICE void xe_gemm_4bits(
+   int group_num = get<1>(A.shape()) / group_size;
+   int x_idx = sg_local_id / channel_num;
+ 
++  static constexpr int packed_scale_block = 32;
++  static constexpr int packed_scale_record_bytes = 41;
++  auto load_lossless_scale = [&](int group_idx, int global_n) {
++    const int record_idx =
++        group_idx * (shape<0>(B) / packed_scale_block) +
++        global_n / packed_scale_block;
++    const int within = global_n % packed_scale_block;
++    const uint8_t* record = reinterpret_cast<const uint8_t*>(Scales) +
++        record_idx * packed_scale_record_bytes;
++    const uint16_t low = record[within];
++    const uint8_t packed_delta = record[32 + within / 4];
++    const uint16_t high = static_cast<uint16_t>(
++        record[40] + ((packed_delta >> (2 * (within % 4))) & 0x3));
++    return static_cast<float>(bfloat16_t::bitcast(low | (high << 8)));
++  };
++
++  auto prefetch_lossless_scale_record = [&](int group_idx) {
++    const int global_n = n_tile_start + n_sg_start;
++    const int record_idx =
++        group_idx * (shape<0>(B) / packed_scale_block) +
++        global_n / packed_scale_block;
++    const uint8_t* record = reinterpret_cast<const uint8_t*>(Scales) +
++        record_idx * packed_scale_record_bytes;
++    auto record_tensor = make_tensor(
++        make_gmem_ptr(const_cast<uint8_t*>(record)),
++        make_layout(
++            make_shape(Int<1>{}, Int<64>{}),
++            make_stride(Int<64>{}, Int<1>{})));
++    auto record_prefetch = make_block_2d_prefetch<1>(
++        make_shape(Int<1>{}, Int<64>{}), record_tensor);
++    auto record_prefetch_slice = record_prefetch.get_slice(sg_local_id);
++    auto record_identity =
++        make_identity_tensor(make_shape(Int<1>{}, Int<64>{}));
++    auto record_partition =
++        record_prefetch_slice.partition_S(record_identity);
++    prefetch(record_prefetch, record_partition(_, 0, 0));
++  };
++
+   using scaleStoreType = conditional_t<is_same_v<TA, half_t>, half_t, float>;
+   scaleStoreType scales[thr_N * channel_num];
+ 
+@@ -854,7 +902,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+     }
+ 
+     if (k_tile_prefetch * group_size < shape<1>(A)) {
+-      if constexpr (TransposedScales) {
++      if constexpr (LosslessPackedScales) {
++        if ((sg_local_n_coord % 2) == 0) {
++          prefetch_lossless_scale_record(k_tile_prefetch);
++        }
++      } else if constexpr (TransposedScales) {
+         const ElementS* scale_base = Scales +
+             k_tile_prefetch * shape<0>(B) + n_tile_start + n_sg_start;
+         auto next_scales_tensor = make_tensor(
+@@ -939,7 +991,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+           int sg_local_n = sn * sg_local_range + sg_local_id;
+           float scale = 0.0f;
+           if constexpr (std::is_same_v<TB, int4_t>) {
+-            if constexpr (TransposedScales) {
++            if constexpr (LosslessPackedScales) {
++              scale = load_lossless_scale(
++                  group_idx,
++                  n_tile_start + n_sg_start + sg_local_n);
++            } else if constexpr (TransposedScales) {
+               scale = static_cast<float>(
+                   Scales
+                       [group_idx * shape<0>(B) + n_tile_start + n_sg_start +
+@@ -978,7 +1034,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+             int sg_local_n = n * sg_local_range + real_idx;
+             scaleStoreType scale;
+             if constexpr (std::is_same_v<TB, int4_t>) {
+-              if constexpr (TransposedScales) {
++              if constexpr (LosslessPackedScales) {
++                scale = load_lossless_scale(
++                    group_idx,
++                    n_tile_start + n_sg_start + sg_local_n);
++              } else if constexpr (TransposedScales) {
+                 scale = Scales
+                     [group_idx * shape<0>(B) + n_tile_start + n_sg_start +
+                      sg_local_n];
+@@ -1019,7 +1079,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+       }
+ 
+       if ((group_idx + prefetch_dist) * group_size < shape<1>(A)) {
+-        if constexpr (TransposedScales) {
++        if constexpr (LosslessPackedScales) {
++          if ((sg_local_n_coord % 2) == 0) {
++            prefetch_lossless_scale_record(group_idx + prefetch_dist);
++          }
++        } else if constexpr (TransposedScales) {
+           const ElementS* scale_base = Scales +
+               (group_idx + prefetch_dist) * shape<0>(B) + n_tile_start +
+               n_sg_start;
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+index 72f2c25..8e23e71 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2.hpp
+@@ -123,6 +123,7 @@ template <
+     bool TileMajor = false,
+     bool ExactVecGroup32 = false,
+     bool TransposedScales = false,
++    bool LosslessPackedScales = false,
+     class TiledMMA,
+     typename ElementA,
+     typename ElementB,
+@@ -154,6 +155,9 @@ CUTE_DEVICE void MoEGEMM(
+   static constexpr bool is_B_mxfp4 = (std::is_same_v<ElementB, uint8_t>) &&
+                                      (std::is_same_v<ElementS, uint8_t>);
+   static constexpr bool is_B_4bits = std::is_same_v<ElementB, uint8_t>;
++  static_assert(
++      !LosslessPackedScales || (ExactVecGroup32 && TransposedScales),
++      "lossless packed scales require exact transposed-scale route");
+ 
+   auto item = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+   auto wg_tile = mma.tile_mnk();
+@@ -213,8 +217,20 @@ CUTE_DEVICE void MoEGEMM(
+     ElementS* ptr_Scales_curr_batch = const_cast<ElementS*>(Scales) + expert_id;
+     if constexpr (is_B_4bits) {
+       if constexpr (ExactVecGroup32) {
+-        ptr_Scales_curr_batch =
+-            const_cast<ElementS*>(Scales) + B_offset * 2 / 32;
++        if constexpr (LosslessPackedScales) {
++          constexpr int packed_scale_block = 32;
++          constexpr int packed_scale_record_bytes = 41;
++          const int groups = gemm_k / 32;
++          const int records_per_group = gemm_n / packed_scale_block;
++          const int packed_bytes_per_expert =
++              groups * records_per_group * packed_scale_record_bytes;
++          ptr_Scales_curr_batch = reinterpret_cast<ElementS*>(
++              reinterpret_cast<uint8_t*>(const_cast<ElementS*>(Scales)) +
++              expert_id * packed_bytes_per_expert);
++        } else {
++          ptr_Scales_curr_batch =
++              const_cast<ElementS*>(Scales) + B_offset * 2 / 32;
++        }
+       } else {
+         ptr_Scales_curr_batch =
+             const_cast<ElementS*>(Scales) + B_offset * 2 / group_size;
+@@ -264,7 +280,8 @@ CUTE_DEVICE void MoEGEMM(
+               false,
+               true,
+               false,
+-              TransposedScales>(
++              TransposedScales,
++              LosslessPackedScales>(
+               A_tensor,
+               B_tensor,
+               ptr_Scales_curr_batch,
+diff --git a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+index 445f689..f6e1644 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/grouped_gemm_xe2_interface.hpp
+@@ -83,6 +83,9 @@ class GemmCuteGrf128ExactVecName;
+ template <typename, typename, typename, typename, char, char, class, bool>
+ class GemmCuteGrf128TransposedScalesName;
+ 
++template <typename, typename, typename, typename, char, char, class, bool>
++class GemmCuteGrf128LosslessPackedScalesName;
++
+ template <typename, class, bool>
+ class GemmM1TopkCuteName;
+ 
+@@ -287,6 +290,24 @@ inline bool laguna_int4_decode_transposed_scales() {
+   return enabled;
+ }
+ 
++inline bool laguna_int4_decode_lossless_packed_scales() {
++  static const bool enabled = [] {
++    const char* value =
++        std::getenv("VLLM_XPU_LAGUNA_DECODE_LOSSLESS_PACKED_SCALES");
++    if (value == nullptr) return false;
++    if (std::strcmp(value, "0") == 0) return false;
++    if (std::strcmp(value, "1") == 0) return true;
++    TORCH_CHECK(
++        false,
++        "VLLM_XPU_LAGUNA_DECODE_LOSSLESS_PACKED_SCALES must be literal 0 or "
++        "1, got '",
++        value,
++        "'");
++    return false;
++  }();
++  return enabled;
++}
++
+ // Range gate for the INT4 dequantize-scale fusion.
+ //
+ // The fused form evaluates `x * s + (-136 * s)` where the incumbent evaluates
+@@ -425,6 +446,8 @@ void MoEGEMMLauncher(
+       use_grf128 && laguna_int4_decode_exact_specialized();
+   const bool use_transposed_scales =
+       use_grf128 && laguna_int4_decode_transposed_scales();
++  const bool use_lossless_packed_scales =
++      use_transposed_scales && laguna_int4_decode_lossless_packed_scales();
+ 
+   using GmemTiledCopyA = typename policy::GmemTiledCopyA;
+   using GmemTiledCopyB = typename policy::GmemTiledCopyB;
+@@ -513,8 +536,52 @@ void MoEGEMMLauncher(
+               true,
+               false);
+         };
++    auto lossless_packed_scales_kernel = [=](auto) {
++          MoE::MoEGEMM<
++              GmemTiledCopyA,
++              GmemTiledCopyB,
++              GmemTiledCopyD,
++              layoutA,
++              layoutB,
++              'R',
++              TileMajor,
++              true,
++              true,
++              true>(
++              activations,
++              weights,
++              scales,
++              bias,
++              outputs,
++              mma,
++              rows_per_expert,
++              num_experts,
++              group_size,
++              gemm_n,
++              gemm_k,
++              atomic_buffer,
++              local_mem,
++              false,
++              true,
++              false);
++        };
+     if constexpr (can_use_grf128) {
+-      if (use_transposed_scales) {
++      if (use_lossless_packed_scales) {
++        syclex::properties kernel_props_128{
++            syclex::sub_group_size<16>, intelex::grf_size<128>};
++        cgh.parallel_for<GemmCuteGrf128LosslessPackedScalesName<
++            ElementA,
++            ElementB,
++            ElementS,
++            ElementD,
++            layoutA,
++            layoutB,
++            policy,
++            TileMajor>>(
++            sycl::nd_range<3>{global * local, local},
++            kernel_props_128,
++            lossless_packed_scales_kernel);
++      } else if (use_transposed_scales) {
+         syclex::properties kernel_props_128{
+             syclex::sub_group_size<16>, intelex::grf_size<128>};
+         cgh.parallel_for<GemmCuteGrf128TransposedScalesName<

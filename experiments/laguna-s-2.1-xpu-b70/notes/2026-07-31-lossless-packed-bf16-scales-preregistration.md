@@ -2,7 +2,8 @@
 
 Date: 2026-07-31 America/Toronto
 
-Status: preregistered before source change, build, or device execution.
+Status: **closed exact component negative**. The candidate was exact 6/6 but
+measured `0.994250x` the promoted component and stopped before integration.
 
 ## Checkpoint evidence and premise
 
@@ -71,3 +72,45 @@ No model value, target/draft/KV precision, BF16 KV, width/depth, verification,
 sampling, prompt, teacher, cache policy, metric, retry, warm generation,
 capture window, or scoring window may change. No reboot, reset, FLR, driver
 reload, or privileged recovery is authorized.
+
+## Result
+
+Candidate kernel source is
+`a0b6ed99b2e60660d2bd0abb6feff5d5317094bb`. The sealed DSO is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/lossless-packed-scales-a0b6ed9/libgrouped_gemm_xe_2.so`
+with SHA-256
+`3282609370b8c85ddf2b93b0c763775b543f52bd2d10271da6bfd3d5fe835298`.
+The incremental production build completed in 16:43.56 with 106,825,448 KiB
+maximum RSS and zero swaps.
+
+Static BMG inspection found both the separately named packed-scale treatment
+and its byte-path control in the same compile. Both retained 128 GRFs, 2 DPAS,
+the persistent atomic/barrier topology, and no scratch/spill path. The control
+retained 679 instructions; exact high-byte reconstruction raised the treatment
+to 787 instructions. The additional 108 instructions are the cost the device
+gate tested against the reduced scale traffic.
+
+The frozen one-B70 component used one DSO for both arms, changed inputs, 200
+warmups, 15 timing samples, and 40 launches per sample:
+
+| shape | BF16 control | lossless packed scales | speedup |
+| --- | ---: | ---: | ---: |
+| W13 | 0.333258075 ms | 0.334758375 ms | 0.995518x |
+| W2 | 0.177906700 ms | 0.179362425 ms | 0.991884x |
+| sum | 0.511164775 ms | 0.514120800 ms | **0.994250x** |
+
+All six raw-BF16 output comparisons were bitwise exact. The candidate missed
+the preregistered `1.025x` gate and regressed both real shapes, so no model
+packing, topology smoke, endpoint run, or LocalMaxxing action occurred.
+
+This result closes per-use lossless scale reconstruction in the grouped-GEMM
+mainloop in its tested 32-scale/41-byte form. Although it removes 35.94% of
+the scale bytes, scales are only a small fraction of total INT4-plus-scale
+traffic and the reconstruction executes in the hot loop. Do not infer that
+fewer bytes are faster without pricing exact decode instructions in final ISA.
+A future representation must demonstrate materially cheaper reconstruction in
+static BMG before another production build; changing BF16 values or rounding
+remains forbidden.
+
+Raw result:
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/lossless-packed-scales-component-a0b6ed9-20260801T091500Z/summary.json`.

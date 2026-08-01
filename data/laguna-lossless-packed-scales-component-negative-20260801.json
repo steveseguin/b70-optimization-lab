@@ -1,0 +1,49 @@
+{
+  "status": "closed_exact_component_negative",
+  "date": "2026-08-01",
+  "candidate_source_head": "a0b6ed99b2e60660d2bd0abb6feff5d5317094bb",
+  "candidate_so": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/builds/lossless-packed-scales-a0b6ed9/libgrouped_gemm_xe_2.so",
+  "candidate_sha256": "3282609370b8c85ddf2b93b0c763775b543f52bd2d10271da6bfd3d5fe835298",
+  "raw_summary": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/lossless-packed-scales-component-a0b6ed9-20260801T091500Z/summary.json",
+  "selector": "VLLM_XPU_LAGUNA_DECODE_LOSSLESS_PACKED_SCALES",
+  "protocol": {
+    "device": "Intel Arc Pro B70 rank 0",
+    "warmup_launches": 200,
+    "timing_samples": 15,
+    "launches_per_sample": 40,
+    "performance_gate_speedup": 1.025
+  },
+  "correctness": {
+    "raw_bf16_exact": 6,
+    "raw_bf16_total": 6
+  },
+  "timing_ms": {
+    "w13_control": 0.333258075,
+    "w13_candidate": 0.334758375,
+    "w13_speedup": 0.9955182599987229,
+    "w2_control": 0.1779067,
+    "w2_candidate": 0.179362425,
+    "w2_speedup": 0.9918838909543066,
+    "control_sum": 0.511164775,
+    "candidate_sum": 0.5141208,
+    "summed_speedup": 0.9942503298835605
+  },
+  "static_bmg": {
+    "candidate_kernel": "GemmCuteGrf128LosslessPackedScalesName",
+    "grf": 128,
+    "candidate_instruction_count": 787,
+    "control_instruction_count": 679,
+    "dpas": 2,
+    "persistent_atomic_markers": 2,
+    "persistent_barrier_markers": 7,
+    "unexpected_scratch_or_spill": false
+  },
+  "packing": {
+    "logical_scales_per_record": 32,
+    "control_bytes_per_record": 64,
+    "candidate_bytes_per_record": 41,
+    "scale_byte_ratio": 0.640625,
+    "value_or_rounding_change": false
+  },
+  "decision": "Stop before load-time packing, topology smoke, and endpoint measurement. Exact reconstruction overhead outweighed the reduced scale traffic on both grouped-GEMM shapes."
+}

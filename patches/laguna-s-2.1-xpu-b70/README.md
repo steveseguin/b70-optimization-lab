@@ -259,3 +259,15 @@ complete source history is in
 the candidate delta is
 `0001-xpu-reserve-laguna-persistent-moe-work-in-chunks-of-four.patch`. See the
 [closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-persistent-chunk4-moe-scheduler-preregistration.md).
+
+The lossless packed-BF16 scale snapshot is an exact component negative, not a
+record source. It stored each 32-scale transposed record in 41 bytes rather
+than 64 and reconstructed every BF16 bit before the incumbent multiply. The
+candidate passed 6/6 raw-BF16 comparisons, but exact reconstruction grew final
+BMG ISA from 679 to 787 instructions and measured only `0.994250x` across
+W13+W2. It stopped before model packing or an endpoint run. The complete
+source history is in
+`xpu-laguna-lossless-packed-scales-rejected-a0b6ed9-20260801.bundle`; the
+candidate delta is
+`0001-xpu-decode-losslessly-packed-Laguna-BF16-scales.patch`. See the
+[closed result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-lossless-packed-bf16-scales-preregistration.md).
