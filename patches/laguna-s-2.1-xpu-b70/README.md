@@ -83,6 +83,7 @@ not promoted record sources:
 | provisional exact decode GRF128 | `46a88e09d96fe06871c87a23de534fb47f1e039b` | `e4163f93574326b2772742e0f51372a5a3777aa5` | `f4a4cfa61d47526d02586822f8c00a6e983062737df79e4e141675ae91bc32c0` | `e21141feecf16de832ca841b0046c8ea523113795498c392ddc91c08833a5596` |
 | exact decode mainloop specialization | `e4163f93574326b2772742e0f51372a5a3777aa5` | `ec507e8b0b1bb7ca36adb81565e29c781fbc0cc2` | `540235f285cc84457c30b74d1ddb322ca9355e1fd7a0c44a1f4df70a22936d26` | `8cf6b505bbb3f96f9c75c30cee46576af9972dc896dabc0dca0aaaf34e237c15` |
 | confirmed transposed decode scales | `e4163f93574326b2772742e0f51372a5a3777aa5` | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `87337d0244f3f81a4b7d2a8b669d3e01610a8eff133bce04696bdb06559bd075` | `0c23d0c5a8bf358d9e20b095fe4b771273e01992468aa3b805207b04c7a44809` |
+| rejected transposed-scale prefetch removal | `8dd94f2307db3b830fe07f212c4b36f719652a5c` | `32aa4a4057414163411d0388af10d896da1df442` | `a1bf0a9ba567306ff57eb420e732df5eb26037aa88cf5396dba2351f0922634a` | `cbf4f4994fee46df8c4c7f2cbd84fb54a54425908cbee6961836868fc43ec126` |
 
 The inline-gather candidate was preregistered in
 [the 2026-07-31 experiment note](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-target-inline-gathers-preregistration.md).
@@ -129,3 +130,9 @@ guarded model integration. The immutable BF16 scale tables are cloned from
 Two independent exact cold starts measured `121.383776672` and
 `122.828558121 tok/s` conventionally. See the
 [confirmed record](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-decode-scales-confirmed-record.md).
+
+The transposed-scale prefetch-removal snapshot is a component negative, not a
+record source. It remained raw-BF16 exact 6/6 but slowed the summed real W13+W2
+component from 0.50334 ms to 0.73220335 ms (`0.687432x`). Its patch is
+`0001-laguna-skip-prefetch-for-contiguous-transposed-scale.patch`; see the
+[preregistered negative result](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-07-31-transposed-scale-prefetch-preregistration.md).

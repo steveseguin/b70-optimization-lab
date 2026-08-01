@@ -1,0 +1,63 @@
+From 32aa4a4057414163411d0388af10d896da1df442 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 31 Jul 2026 21:31:07 -0400
+Subject: [PATCH] laguna: skip prefetch for contiguous transposed scales
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp | 33 ++-----------------------
+ 1 file changed, 2 insertions(+), 31 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 30c7118..0f922ee 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -854,21 +854,7 @@ CUTE_DEVICE void xe_gemm_4bits(
+     }
+ 
+     if (k_tile_prefetch * group_size < shape<1>(A)) {
+-      if constexpr (TransposedScales) {
+-        const ElementS* scale_base = Scales +
+-            k_tile_prefetch * shape<0>(B) + n_tile_start + n_sg_start;
+-        auto next_scales_tensor = make_tensor(
+-            make_gmem_ptr(scale_base),
+-            make_layout(
+-                make_shape(Int<1>{}, Int<SG_N>{}),
+-                make_stride(shape<0>(B), Int<1>{})));
+-        auto prefetch_scales = make_block_2d_prefetch<1>(
+-            make_shape(Int<1>{}, Int<SG_N>{}), next_scales_tensor);
+-        auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
+-        auto pSgS = thr_prefetch_scales.partition_S(
+-            make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+-        prefetch(prefetch_scales, pSgS(_, 0, 0));
+-      } else {
++      if constexpr (!TransposedScales) {
+         const ElementS* scale_base;
+         int scale_stride;
+         if constexpr (TileMajor) {
+@@ -1019,22 +1005,7 @@ CUTE_DEVICE void xe_gemm_4bits(
+       }
+ 
+       if ((group_idx + prefetch_dist) * group_size < shape<1>(A)) {
+-        if constexpr (TransposedScales) {
+-          const ElementS* scale_base = Scales +
+-              (group_idx + prefetch_dist) * shape<0>(B) + n_tile_start +
+-              n_sg_start;
+-          auto next_scales_tensor = make_tensor(
+-              make_gmem_ptr(scale_base),
+-              make_layout(
+-                  make_shape(Int<1>{}, Int<SG_N>{}),
+-                  make_stride(shape<0>(B), Int<1>{})));
+-          auto prefetch_scales = make_block_2d_prefetch<1>(
+-              make_shape(Int<1>{}, Int<SG_N>{}), next_scales_tensor);
+-          auto thr_prefetch_scales = prefetch_scales.get_slice(sg_local_id);
+-          auto pSgS = thr_prefetch_scales.partition_S(
+-              make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+-          prefetch(prefetch_scales, pSgS(_, 0, 0));
+-        } else {
++        if constexpr (!TransposedScales) {
+           const ElementS* scale_base;
+           int scale_stride;
+           if constexpr (TileMajor) {
+-- 
+2.43.0
+

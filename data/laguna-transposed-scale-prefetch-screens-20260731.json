@@ -1,0 +1,37 @@
+{
+  "date": "2026-07-31 America/Toronto",
+  "record_source": "8dd94f2307db3b830fe07f212c4b36f719652a5c",
+  "record_dso_sha256": "c4845ed7704a9afcf59e12f9d51e288f293f2e39966e283e2a7e322fed68b839",
+  "contract": {
+    "kv_cache_dtype": "bfloat16",
+    "transposed_scales": true,
+    "scale_vec": true,
+    "dequant_mad": false,
+    "scale_fold": false,
+    "rank": 1,
+    "cases": [
+      {"name": "w13", "n": 2048, "k": 3072, "m": 120},
+      {"name": "w2", "n": 3072, "k": 1024, "m": 120}
+    ]
+  },
+  "prefetch_removal": {
+    "classification": "loss",
+    "candidate_source": "32aa4a4057414163411d0388af10d896da1df442",
+    "candidate_dso_sha256": "2381bb5ce32f67bfdd9123f06d823f7dd81774ba1bc4d467393130e26d711d14",
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scale-noprefetch-component-32aa4a4-20260801T0150Z",
+    "raw_bf16_exact": "6/6",
+    "control_sum_ms": 0.50334,
+    "candidate_sum_ms": 0.73220335,
+    "speedup": 0.6874319818394712,
+    "percent_change": -31.25680181605288
+  },
+  "coupled_prefetch_distance": {
+    "classification": "inconclusive_null",
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-transposed-scale-prefetch-distance-component-8dd94f2-20260801T0200Z",
+    "raw_bf16_exact": {"3_vs_6": "6/6", "12_vs_6": "6/6"},
+    "distance_6_sum_ms": 0.513045,
+    "distance_3_sum_ms": 0.50338645,
+    "distance_12_sum_ms": 0.5114756,
+    "reason_not_promoted": "W2 changed between approximately 0.192 and 0.182 ms within every worker; stable-tail samples overlap and W13 differs by less than 0.04%."
+  }
+}
