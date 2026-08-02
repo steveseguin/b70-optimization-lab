@@ -54,10 +54,11 @@ rows. A serious lane should leave behind:
   experiments worth preserving.
 - `data/`: compact structured benchmark records, payloads, responses, and logs.
 - `scripts/`: reusable harnesses, analyzers, launchers, and submission helpers.
-- `community/<contributor>-...`: work contributed from outside the reference
-  lab, at any evidence level. Contributions land here first and move into
-  `repro/` or `results/` only after they are reproduced on B70. See
-  [`community/README.md`](community/README.md).
+- `community/<contributor>-...`: runnable work contributed from outside the
+  reference lab, with explicit evidence status and validation history.
+- `community/field-reports/`: unverified measurements and observations from
+  community systems, kept separate from recipes, patches, validation assets,
+  and promoted results. See [`community/README.md`](community/README.md).
 
 The point is to make model switching cheap. Gemma, Qwen, MiniMax, and future
 lanes should all share validation discipline, result-packet shape, and reusable
