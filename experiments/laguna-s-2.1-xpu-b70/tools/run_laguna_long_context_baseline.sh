@@ -43,11 +43,11 @@ case "$candidate_profile" in
   q12)
     readonly candidate_m=12 candidate_spec=11 candidate_draft_topology=14/13
     ;;
-  q8)
+  q8|q8fp8)
     readonly candidate_m=8 candidate_spec=7 candidate_draft_topology=none
     ;;
   *)
-    echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12 or q8" >&2
+    echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12, q8, or q8fp8" >&2
     exit 2
     ;;
 esac
@@ -77,7 +77,7 @@ done
 [[ "$role" == candidate || "$exact_prefill_chunks" == 0 ]] \
   || die "exact prefill chunks are only valid for the candidate"
 [[ "$candidate_profile" == q12 || "$exact_prefill_chunks" == 0 ]] \
-  || die "exact prefill chunks are not valid for the q8 candidate"
+  || die "exact prefill chunks are only valid for the q12 candidate"
 awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
   || die "LAGUNA_GPU_UTIL must be between zero and one"
 [[ "$request_timeout" =~ ^[0-9]+$ && "$request_timeout" -ge 1 ]] \
@@ -310,6 +310,7 @@ if [[ "$role" == candidate ]]; then
       VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=1
       VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1
       VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1
+      VLLM_XPU_LAGUNA_DFLASH_FP8_Q8=0
       VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=1
       VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=1
       VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=1
@@ -317,12 +318,27 @@ if [[ "$role" == candidate ]]; then
       VLLM_XPU_LAGUNA_DECODE_GRF128=1
       VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1
     )
-  else
+  elif [[ "$candidate_profile" == q8 ]]; then
     common_env+=(
       VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=0
       VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=0
       VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=0
       VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=0
+      VLLM_XPU_LAGUNA_DFLASH_FP8_Q8=0
+      VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=0
+      VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=0
+      VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=0
+      VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1
+      VLLM_XPU_LAGUNA_DECODE_GRF128=0
+      VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=0
+    )
+  else
+    common_env+=(
+      VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=0
+      VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=0
+      VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1
+      VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1
+      VLLM_XPU_LAGUNA_DFLASH_FP8_Q8=1
       VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=0
       VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=0
       VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=0
@@ -444,9 +460,9 @@ if [[ "$role" == candidate ]]; then
       || die "q12 candidate emitted an unexpected Breakable topology line"
   else
     (( draft_capture_count == 0 && draft_replay_count == 0 )) \
-      || die "q8 candidate unexpectedly captured or replayed a draft graph"
+      || die "$candidate_profile candidate unexpectedly captured or replayed a draft graph"
     (( all_topology_count == 8 )) \
-      || die "q8 candidate emitted an unexpected Breakable topology line"
+      || die "$candidate_profile candidate emitted an unexpected Breakable topology line"
   fi
 fi
 

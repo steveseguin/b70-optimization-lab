@@ -103,6 +103,10 @@ if [[ "$role" == candidate ]]; then
         echo "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE must be zero for q12" >&2
         exit 2
       }
+      [[ "${VLLM_XPU_LAGUNA_DFLASH_FP8_Q8:-}" == 0 ]] || {
+        echo "VLLM_XPU_LAGUNA_DFLASH_FP8_Q8 must be zero for q12" >&2
+        exit 2
+      }
       [[ "${LAGUNA_M:-}" == 12 && "${LAGUNA_SPEC:-}" == 11 ]] || {
         echo "q12 candidate requires LAGUNA_M=12 and LAGUNA_SPEC=11" >&2
         exit 2
@@ -123,6 +127,7 @@ if [[ "$role" == candidate ]]; then
         VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
         VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE
         VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
+        VLLM_XPU_LAGUNA_DFLASH_FP8_Q8
         VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
         VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
         VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
@@ -140,8 +145,41 @@ if [[ "$role" == candidate ]]; then
         exit 2
       }
       ;;
+    q8fp8)
+      required_profile_values=(
+        VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE
+        VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE
+        VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
+        VLLM_XPU_LAGUNA_DFLASH_FP8_Q8
+      )
+      for name in "${required_profile_values[@]}"; do
+        [[ "${!name:-}" == 1 ]] || {
+          echo "$name must be enabled for the q8fp8 candidate" >&2
+          exit 2
+        }
+      done
+      disabled_profile_values=(
+        VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+        VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
+        VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
+        VLLM_XPU_LAGUNA_DECODE_GRF128
+        VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES
+      )
+      for name in "${disabled_profile_values[@]}"; do
+        [[ "${!name:-}" == 0 ]] || {
+          echo "$name must be zero for the q8fp8 candidate" >&2
+          exit 2
+        }
+      done
+      [[ "${LAGUNA_M:-}" == 8 && "${LAGUNA_SPEC:-}" == 7 ]] || {
+        echo "q8fp8 candidate requires LAGUNA_M=8 and LAGUNA_SPEC=7" >&2
+        exit 2
+      }
+      ;;
     *)
-      echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12 or q8" >&2
+      echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12, q8, or q8fp8" >&2
       exit 2
       ;;
   esac
