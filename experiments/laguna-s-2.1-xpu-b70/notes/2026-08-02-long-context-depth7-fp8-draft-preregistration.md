@@ -52,6 +52,36 @@ Any need to modify the FP8 kernel, enable segmented graph capture, relax model
 shape checks, or share quantized draft weights with the target is outside this
 candidate and closes it for redesign.
 
+## Implemented source checkpoint
+
+The isolated vLLM source is committed at
+`9565e7224b9d2d9e9aee9c985f5f5685ba44df2c` in
+`/home/steve/src/laguna-vllm-q8-fp8-draft-20260802`. It adds only the
+default-off `VLLM_XPU_LAGUNA_DFLASH_FP8_Q8` authorization and exact q8 arms
+for the existing context-workspace and FP8 contracts. The q12 arm is
+unchanged. The live loader does not invoke the optional FP8 draft-LM-head
+hook, so this experiment converts the 31 draft projections but continues to
+share the target's BF16 head.
+
+Validation completed before service launch:
+
+- 104 focused DFlash context-workspace/FP8 tests passed;
+- 60 environment-selector tests passed;
+- 37 Laguna shared-elementwise tests passed;
+- Ruff passed for all three changed source/test files;
+- the two Laguna GPU-model-runner cases that fail together because of the
+  pre-existing environment-cache test-order issue each passed in isolation;
+- a real-XPU M8/BF16/E4M3 per-channel `fp8_gemm_w8a16` kernel case passed at
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/components/`
+  `q8-fp8-draft-20260802/fp8-gemm-m8-bf16-e4m3.xml`; and
+- positive service-contract stubs passed for q12, q8, and q8fp8, while a
+  q8fp8 invocation missing its authorization selector failed closed.
+
+The thin source bundle is
+`patches/laguna-s-2.1-xpu-b70/`
+`vllm-laguna-q8-fp8-draft-9565e7224-20260802.bundle`, with SHA-256
+`d781e01a927e053448c0ce6032e430b2bf93d7ce612f7fefe4a4124fcb2e4aa1`.
+
 ## Required source tests
 
 Before a service launch:
