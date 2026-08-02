@@ -1,0 +1,171 @@
+{
+  "suite_id": "laguna-s-2.1-int4-b70-long-context-v1",
+  "description": "Exact-token cold long-context retrieval and sustained-decode suite for Laguna-S-2.1 INT4 on four Intel Arc Pro B70 GPUs.",
+  "policy": "Service/prefill experiment only. Every long row is unique, must report cached_tokens=0, emits exactly 128 tokens, and reserves its output inside max_model_len=32768. This suite does not replace the frozen short-context record gate.",
+  "max_model_len": 32768,
+  "max_output_tokens": 128,
+  "cases": [
+    {
+      "id": "laguna-lc-01024-early",
+      "target_prompt_tokens": 1024,
+      "needle_position": "early",
+      "project_code": "QUARTZ-01024-E",
+      "answer_phrase": "LAGUNA-QUARTZ-01024-EARLY",
+      "arithmetic_result": 2051,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-01024-middle",
+      "target_prompt_tokens": 1024,
+      "needle_position": "middle",
+      "project_code": "QUARTZ-01024-M",
+      "answer_phrase": "LAGUNA-QUARTZ-01024-MIDDLE",
+      "arithmetic_result": 2053,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-01024-late",
+      "target_prompt_tokens": 1024,
+      "needle_position": "late",
+      "project_code": "QUARTZ-01024-L",
+      "answer_phrase": "LAGUNA-QUARTZ-01024-LATE",
+      "arithmetic_result": 2057,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-04096-early",
+      "target_prompt_tokens": 4096,
+      "needle_position": "early",
+      "project_code": "HARBOR-04096-E",
+      "answer_phrase": "LAGUNA-HARBOR-04096-EARLY",
+      "arithmetic_result": 8195,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-04096-middle",
+      "target_prompt_tokens": 4096,
+      "needle_position": "middle",
+      "project_code": "HARBOR-04096-M",
+      "answer_phrase": "LAGUNA-HARBOR-04096-MIDDLE",
+      "arithmetic_result": 8197,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-04096-late",
+      "target_prompt_tokens": 4096,
+      "needle_position": "late",
+      "project_code": "HARBOR-04096-L",
+      "answer_phrase": "LAGUNA-HARBOR-04096-LATE",
+      "arithmetic_result": 8201,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-08192-early",
+      "target_prompt_tokens": 8192,
+      "needle_position": "early",
+      "project_code": "CIRCUIT-08192-E",
+      "answer_phrase": "LAGUNA-CIRCUIT-08192-EARLY",
+      "arithmetic_result": 16387,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-08192-middle",
+      "target_prompt_tokens": 8192,
+      "needle_position": "middle",
+      "project_code": "CIRCUIT-08192-M",
+      "answer_phrase": "LAGUNA-CIRCUIT-08192-MIDDLE",
+      "arithmetic_result": 16391,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-08192-late",
+      "target_prompt_tokens": 8192,
+      "needle_position": "late",
+      "project_code": "CIRCUIT-08192-L",
+      "answer_phrase": "LAGUNA-CIRCUIT-08192-LATE",
+      "arithmetic_result": 16393,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-16384-early",
+      "target_prompt_tokens": 16384,
+      "needle_position": "early",
+      "project_code": "KEYSTONE-16384-E",
+      "answer_phrase": "LAGUNA-KEYSTONE-16384-EARLY",
+      "arithmetic_result": 32771,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-16384-middle",
+      "target_prompt_tokens": 16384,
+      "needle_position": "middle",
+      "project_code": "KEYSTONE-16384-M",
+      "answer_phrase": "LAGUNA-KEYSTONE-16384-MIDDLE",
+      "arithmetic_result": 32773,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-16384-late",
+      "target_prompt_tokens": 16384,
+      "needle_position": "late",
+      "project_code": "KEYSTONE-16384-L",
+      "answer_phrase": "LAGUNA-KEYSTONE-16384-LATE",
+      "arithmetic_result": 32779,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-24576-early",
+      "target_prompt_tokens": 24576,
+      "needle_position": "early",
+      "project_code": "VECTOR-24576-E",
+      "answer_phrase": "LAGUNA-VECTOR-24576-EARLY",
+      "arithmetic_result": 49157,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-24576-middle",
+      "target_prompt_tokens": 24576,
+      "needle_position": "middle",
+      "project_code": "VECTOR-24576-M",
+      "answer_phrase": "LAGUNA-VECTOR-24576-MIDDLE",
+      "arithmetic_result": 49159,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-24576-late",
+      "target_prompt_tokens": 24576,
+      "needle_position": "late",
+      "project_code": "VECTOR-24576-L",
+      "answer_phrase": "LAGUNA-VECTOR-24576-LATE",
+      "arithmetic_result": 49163,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-32640-early",
+      "target_prompt_tokens": 32640,
+      "needle_position": "early",
+      "project_code": "SUMMIT-32640-E",
+      "answer_phrase": "LAGUNA-SUMMIT-32640-EARLY",
+      "arithmetic_result": 65281,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-32640-middle",
+      "target_prompt_tokens": 32640,
+      "needle_position": "middle",
+      "project_code": "SUMMIT-32640-M",
+      "answer_phrase": "LAGUNA-SUMMIT-32640-MIDDLE",
+      "arithmetic_result": 65287,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "laguna-lc-32640-late",
+      "target_prompt_tokens": 32640,
+      "needle_position": "late",
+      "project_code": "SUMMIT-32640-L",
+      "answer_phrase": "LAGUNA-SUMMIT-32640-LATE",
+      "arithmetic_result": 65293,
+      "sort_order": "blue, green, orange, red"
+    }
+  ]
+}

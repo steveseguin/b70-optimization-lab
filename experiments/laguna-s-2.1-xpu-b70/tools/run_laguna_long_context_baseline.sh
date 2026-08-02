@@ -1,0 +1,276 @@
+#!/usr/bin/env bash
+# Cold diagnostic 32K service run; never emits a LocalMaxxing score.
+set -euo pipefail
+umask 077
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
+# shellcheck source=laguna_nvme_paths.sh
+source "$script_dir/laguna_nvme_paths.sh"
+
+role="${1:?usage: run_laguna_long_context_baseline.sh candidate|teacher RUN_DIR}"
+run_dir="${2:?usage: run_laguna_long_context_baseline.sh candidate|teacher RUN_DIR}"
+case "$role" in candidate|teacher) ;; *) echo "unsupported role: $role" >&2; exit 2 ;; esac
+
+readonly venv_root="${REPRO_VENV_ROOT:-/home/steve/.venvs/deepseek-v4-xpu}"
+readonly vllm_root="${REPRO_VLLM_TREE:-/home/steve/src/laguna-vllm-shared-elementwise-m12-20260731}"
+readonly kernel_root="${REPRO_KERNEL_TREE:-/home/steve/src/laguna-xpu-kernels-shared-elementwise-m12-20260731}"
+readonly venv_python="$venv_root/bin/python"
+readonly benchmark="$script_dir/bench_laguna_long_context.py"
+readonly service="$script_dir/serve_laguna_long_context_nvme.sh"
+readonly suite="$repo_root/experiments/laguna-s-2.1-xpu-b70/long-context-suite-v1.json"
+readonly runtime_lock="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/runtime-lock-shared-elementwise-m12.json"
+readonly runtime_verifier="$repo_root/repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-runtime.py"
+readonly xpumem_module=/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so
+readonly kernel_package="$kernel_root/vllm_xpu_kernels"
+readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib"
+readonly frozen_path="$venv_root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/long-context-${role}-$(basename -- "$run_dir")"
+readonly max_model_len="${LAGUNA_MAX_MODEL_LEN:-32768}"
+readonly max_num_batched_tokens="${LAGUNA_MAX_NUM_BATCHED_TOKENS:-8192}"
+readonly oracle="${LAGUNA_LONG_ORACLE:-}"
+
+die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }
+
+laguna_cluster_iface() {
+  local ip="${REPRO_CLUSTER_IP:-${LAGUNA_CLUSTER_IP:-10.0.0.65}}" iface
+  iface="$(ip -o -4 addr show 2>/dev/null | awk -v ip="$ip" '$4 ~ "^"ip"/" {print $2; exit}')"
+  [[ -n "$iface" ]] || return 1
+  [[ "$(cat "/sys/class/net/$iface/operstate" 2>/dev/null)" == up ]] || return 1
+  printf '%s\n' "$iface"
+}
+
+case "$run_dir" in "$LAGUNA_NVME_RUN_ROOT"/*) ;; *) die "run directory is outside the fixed NVMe run root" ;; esac
+[[ "$(realpath -m -- "$run_dir")" == "$run_dir" ]] || die "run directory must be canonical"
+for path in "$vllm_root" "$kernel_root" "$venv_python" "$benchmark" "$service" \
+  "$suite" "$runtime_lock" "$runtime_verifier" "$xpumem_module"; do
+  [[ -e "$path" ]] || die "missing required path: $path"
+done
+[[ -z "$(git -C "$repo_root" status --short)" ]] || die "main worktree is dirty"
+[[ -z "$(git -C "$vllm_root" status --short)" ]] || die "vLLM worktree is dirty"
+[[ -z "$(git -C "$kernel_root" status --short)" ]] || die "kernel worktree is dirty"
+[[ -z "$oracle" || -f "$oracle" ]] || die "missing oracle: $oracle"
+! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 || die "existing vLLM workers block run"
+! ss -H -ltn 'sport = :18080' | grep -q . || die "port 18080 already has a listener"
+[[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "RPC directory already exists"
+cluster_iface="$(laguna_cluster_iface)" || die "cannot resolve cluster interface"
+readonly cluster_iface
+
+laguna_nvme_prepare_paths
+laguna_nvme_assert_fresh_run_path "$run_dir"
+laguna_nvme_prepare_run_dir "$run_dir"
+mkdir -p "$run_dir"/{private-home,private-tmp,private-cache/{hf,vllm,torchinductor,triton,sycl,numba,pycache},private-xdg/{config,data,state}}
+mkdir --mode=700 "$rpc_dir"
+chmod -R 700 "$run_dir"
+
+/usr/bin/env -i \
+  PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 \
+  PYTHONPATH="$vllm_root:$kernel_root" LD_LIBRARY_PATH="$native_library_path" \
+  "$venv_python" "$runtime_verifier" \
+  --lock "$runtime_lock" --vllm-tree "$vllm_root" \
+  --kernel-tree "$kernel_root" --venv-root "$venv_root" \
+  --xpumem-module "$xpumem_module" \
+  --json-out "$run_dir/runtime-verification.json" \
+  > "$run_dir/runtime-verification.stdout"
+
+{
+  printf 'schema=laguna-long-context-baseline-v1\nrole=%s\n' "$role"
+  printf 'vllm_commit=%s\nkernel_commit=%s\n' \
+    "$(git -C "$vllm_root" rev-parse HEAD)" \
+    "$(git -C "$kernel_root" rev-parse HEAD)"
+  printf 'max_model_len=%s\nmax_num_batched_tokens=%s\n' \
+    "$max_model_len" "$max_num_batched_tokens"
+  printf 'enable_chunked_prefill=true\nmax_num_seqs=1\nblock_size=64\n'
+  printf 'kv_cache_dtype=bfloat16\ngpu_memory_utilization=0.90\n'
+  printf 'prefix_caching=false\nasync_scheduling=%s\n' \
+    "$([[ "$role" == candidate ]] && echo false || echo true)"
+  printf 'candidate_record_conventional_tok_s=125.4619731637751\n'
+  printf 'candidate_target_topology=146/145\ncandidate_draft_topology=14/13\n'
+  printf 'oracle=%s\ncluster_iface=%s\nscored_measurement=false\n' "$oracle" "$cluster_iface"
+  sha256sum "$benchmark" "$service" "$suite" "$runtime_lock" \
+    "$venv_python" "$kernel_package/_C.abi3.so" \
+    "$kernel_package/_xpu_C.abi3.so" "$kernel_package/_moe_C.abi3.so" \
+    "$kernel_package/libgrouped_gemm_xe_2.so" \
+    "$LAGUNA_NVME_TARGET_ROOT/config.json" \
+    "$LAGUNA_NVME_DRAFT_ROOT/config.json"
+} > "$run_dir/identity.txt"
+xpu-smi ps -j > "$run_dir/xpu-processes-before.json" 2>&1 || true
+
+server_pid=""
+service_alive() {
+  [[ -n "$server_pid" ]] && (
+    kill -0 "$server_pid" 2>/dev/null || kill -0 -- "-$server_pid" 2>/dev/null
+  )
+}
+stop_service() {
+  local signal attempts
+  [[ -n "$server_pid" ]] || return 0
+  for signal in INT TERM KILL; do
+    service_alive || break
+    kill "-$signal" -- "-$server_pid" 2>/dev/null || true
+    kill "-$signal" "$server_pid" 2>/dev/null || true
+    case "$signal" in INT) attempts=30 ;; TERM) attempts=15 ;; KILL) attempts=10 ;; esac
+    for _ in $(seq 1 "$attempts"); do service_alive || break; sleep 1; done
+  done
+  wait "$server_pid" 2>/dev/null || true
+  ! service_alive
+}
+finalize() {
+  local status="$?" stop_status=0
+  trap - EXIT INT TERM
+  set +e
+  stop_service || stop_status=1
+  xpu-smi ps -j > "$run_dir/xpu-processes-after.json" 2>&1 || true
+  printf 'original_status=%s\nstop_status=%s\n' "$status" "$stop_status" \
+    > "$run_dir/cleanup-status.txt"
+  if [[ -e "$rpc_dir" && ! -e "$run_dir/rpc-after-stop" ]]; then
+    mv -- "$rpc_dir" "$run_dir/rpc-after-stop" 2>/dev/null || true
+  fi
+  chmod -R a-w "$run_dir" 2>/dev/null || true
+  exit "$status"
+}
+trap finalize EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+common_env=(
+  PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8
+  HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp"
+  HF_HOME="$run_dir/private-cache/hf"
+  HF_HUB_CACHE="$run_dir/private-cache/hf/hub"
+  TRANSFORMERS_CACHE="$run_dir/private-cache/hf/transformers"
+  VLLM_CACHE_ROOT="$run_dir/private-cache/vllm"
+  TORCHINDUCTOR_CACHE_DIR="$run_dir/private-cache/torchinductor"
+  TRITON_CACHE_DIR="$run_dir/private-cache/triton"
+  SYCL_CACHE_DIR="$run_dir/private-cache/sycl"
+  NUMBA_CACHE_DIR="$run_dir/private-cache/numba"
+  PYTHONPYCACHEPREFIX="$run_dir/private-cache/pycache"
+  XDG_CACHE_HOME="$run_dir/private-cache"
+  XDG_CONFIG_HOME="$run_dir/private-xdg/config"
+  XDG_DATA_HOME="$run_dir/private-xdg/data"
+  XDG_STATE_HOME="$run_dir/private-xdg/state"
+  PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1
+  PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root"
+  HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1
+  VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+  ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3
+  CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1
+  FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface"
+  TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path"
+  VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1
+  VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_USE_AOT_COMPILE=0
+  LAGUNA_MAX_MODEL_LEN="$max_model_len"
+  LAGUNA_MAX_NUM_BATCHED_TOKENS="$max_num_batched_tokens"
+  LAGUNA_GPU_UTIL=0.90
+)
+if [[ "$role" == candidate ]]; then
+  common_env+=(
+    VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1
+    VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1
+    VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA=1
+    VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=1
+    VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=1
+    VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1
+    VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1
+    VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=1
+    VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=1
+    VLLM_XPU_LAGUNA_DECODE_GRF128=1
+    VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1
+    VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1
+    VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=1
+    VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
+    VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0
+    VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0
+    VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0
+    VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0
+    VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0
+    VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0
+    VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0
+    VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0
+    VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS=0
+    VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS=0
+    VLLM_XPU_LAGUNA_M8_INLINE_GATHERS=0
+    VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=0
+    VLLM_XPU_LAGUNA_M8_W1_N_TILE=64
+    VLLM_XPU_LAGUNA_M12_ATTENTION_GATE=0
+    VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING=0
+    VLLM_XPU_LAGUNA_SCALE_VEC=1
+    VLLM_XPU_LAGUNA_SCALE_FOLD=0
+    VLLM_XPU_LAGUNA_SCALE_HOIST=0
+    VLLM_XPU_LAGUNA_DEQUANT_MAD=0
+    VLLM_XPU_LAGUNA_PREFETCH_DIST=6
+    VLLM_XPU_LAGUNA_EXACT_MAX_M=12
+    VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH=0
+    VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE=0
+    VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS=0
+    VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES=0
+    VLLM_XPU_LAGUNA_DFLASH_INPLACE_COLLECTIVES=0
+    VLLM_XPU_LAGUNA_PARITY_PROBE=0
+    VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT=
+    VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY=0
+    VLLM_XPU_MXFP4_SMALL_M_N=
+    VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0
+    VLLM_XPU_V4_M1_BIASED_TOPK=0
+    VLLM_XPU_V4_M1_ROUTER_NORM=0
+    VLLM_DISABLE_SHARED_EXPERTS_STREAM=0
+    VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256
+    VLLM_TRACE_FUNCTION=0
+    LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS=11
+    LAGUNA_LOCAL_ARGMAX=false LAGUNA_LOG_MOE_ROWS=0
+    LAGUNA_M=12 LAGUNA_SPEC=11
+    VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH=1
+    VLLM_USE_BREAKABLE_CUDAGRAPH=1 XPU_GRAPH=1
+    VLLM_XPU_ENABLE_XPU_GRAPH=1 VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0
+    VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1
+  )
+else
+  common_env+=(
+    XPU_GRAPH=0 VLLM_XPU_ENABLE_XPU_GRAPH=0
+    VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=0
+    VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=0
+    VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
+    VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=0
+  )
+fi
+
+setsid /usr/bin/env -i "${common_env[@]}" \
+  "$service" "$role" "$run_dir" > "$run_dir/server.log" 2>&1 &
+server_pid="$!"
+printf '%s\n' "$server_pid" > "$run_dir/server.pid"
+for _ in $(seq 1 240); do
+  curl -fsS http://127.0.0.1:18080/health >/dev/null 2>&1 && break
+  service_alive || die "service exited before health"
+  sleep 5
+done
+curl -fsS http://127.0.0.1:18080/health >/dev/null || die "service startup timed out"
+tr '\0' '\n' < "/proc/$server_pid/environ" | LC_ALL=C sort \
+  > "$run_dir/service-environment.txt"
+curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before.prom"
+
+benchmark_args=(
+  --base-url http://127.0.0.1:18080
+  --model laguna-s-2.1-int4
+  --model-path "$LAGUNA_NVME_TARGET_ROOT"
+  --suite "$suite"
+  --run-role "$role"
+  --timeout 3600
+  --out "$run_dir/bench.json"
+)
+[[ -z "$oracle" ]] || benchmark_args+=(--oracle "$oracle")
+"$venv_python" "$benchmark" "${benchmark_args[@]}" \
+  > "$run_dir/bench.stdout"
+curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after.prom"
+
+if [[ "$role" == candidate ]]; then
+  target_count="$(grep -c 'BreakableCUDAGraphCapture(graphs=146, eager_breaks=145)' "$run_dir/server.log" || true)"
+  draft_count="$(grep -c 'BreakableCUDAGraphCapture(graphs=14, eager_breaks=13)' "$run_dir/server.log" || true)"
+  (( target_count >= 4 )) || die "missing candidate target 146/145 topology"
+  (( draft_count >= 4 )) || die "missing candidate draft 14/13 topology"
+fi
+
+stop_service
+server_pid=""
+! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 \
+  || die "vLLM workers survived ordinary shutdown"
+printf 'PASS\n' > "$run_dir/run-status.txt"
