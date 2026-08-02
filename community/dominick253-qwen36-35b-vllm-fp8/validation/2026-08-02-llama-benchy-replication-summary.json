@@ -1,0 +1,218 @@
+{
+  "schema": "community-benchmark-replication-summary-v1",
+  "date": "2026-08-02",
+  "source_pr": 15,
+  "verdict": "contributor decode throughput not reproduced",
+  "contributor_report": {
+    "artifact": "../reported/bench-qwen36-35b-fp8-20260801-102317.csv",
+    "source_attachment_sha256": "36b9b376c4948a333797e3b1c211e392113245edda6225d098648f6e7b735483",
+    "tracked_lf_normalized_sha256": "b14da3b712151522ffc60f3d80aa8a62349f42dcf9236364106594cf45a751f9",
+    "prompt_tokens": 2048,
+    "requested_completion_tokens": 1024,
+    "depths": [0, 4096, 8192, 16384, 32768],
+    "runs_per_test": 5,
+    "concurrency": 1,
+    "latency_mode": "generation",
+    "decode_tok_s": [
+      134.53648074229838,
+      135.0526803142688,
+      134.80765099299242,
+      132.12424165369526,
+      127.86447635475231
+    ],
+    "missing_identity": [
+      "llama-benchy version and exact command",
+      "JSON/per-request output",
+      "immutable container image digest",
+      "model revision",
+      "effective benchmark engine process identity",
+      "XPU graph and communication environment"
+    ],
+    "submitted_launcher_default_eager": true,
+    "submitted_launcher_speculative_config": null,
+    "mtp_served_name_was_alias_only": true
+  },
+  "reference_lab_identity": {
+    "model_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "image": "docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780",
+    "vllm": "0.21.1.dev0+gad7125a43.d20260709",
+    "vllm_commit": "ad7125a431e176d4161099480a66f0169609a690",
+    "xpu_kernels_commit": "3cab97adf65f7e85fb96f4a08db5611832d37382",
+    "runtime": "rootless Podman 4.9.3",
+    "corrected_launcher_sha256": "737f8dd32523efb2101175748613a7ddc96856368cf08c3ec63221f17249c0ff",
+    "gpu_count": 2,
+    "tensor_parallel_size": 2,
+    "weight_quantization": "runtime FP8",
+    "activation_dtype": "float16",
+    "mamba_ssm_cache_dtype": "float16 explicit experimental override",
+    "prefix_caching": false,
+    "max_model_len": 262144,
+    "max_num_seqs": 4
+  },
+  "image_source_audit": {
+    "upstream_base_commit": "ad7125a431e176d4161099480a66f0169609a690",
+    "stock_upstream_tree": false,
+    "installed_components": {
+      "vllm": {
+        "version": "0.21.1.dev0+gad7125a43.d20260709.xpu",
+        "wheel_sha256": "824d08168089a6b161f1005be0ee943644e8a808eb4e3f2dd132379665d0f9b1"
+      },
+      "vllm_xpu_kernels": {
+        "version": "0.1.8.3.dev0+g3cab97a.d20260709",
+        "base_commit": "3cab97adf65f7e85fb96f4a08db5611832d37382",
+        "wheel_sha256": "a9d9039ce91efaa52b01f7bda8cdf20fe287c09bd46fc00de987a50cfebacd80",
+        "modified_tracked_files": 25,
+        "tracked_insertions": 2192,
+        "tracked_deletions": 379,
+        "tracked_diff_bytes": 157568,
+        "tracked_diff_sha256": "c3d5e80737ccfda6a01e4527e5793f881dd1931ba75cb3076c0c96ea9d86c922"
+      },
+      "custom_esimd_kernels_vllm": {
+        "version": "0.1.0",
+        "source_git_metadata": false,
+        "wheel_sha256": "7ef116a5ead4f640dce31bfa20baf4a797b76cc22a869fba4b0d6ef59eabc900",
+        "source_archive_sha256": "9bc63ee91cebdc9958bccf0e3d489ee7376197bdb1995403a41341bfe4f45e9b",
+        "relative_file_manifest_sha256": "4df7dba31691d3fc9ad44f122f73827a8e9f8b26a1fcafe8445cf5b7f6d0e6a0"
+      }
+    },
+    "modified_tracked_files": 64,
+    "tracked_insertions": 4283,
+    "tracked_deletions": 340,
+    "untracked_files": 18,
+    "untracked_source_test_files": 17,
+    "untracked_release_note_files": 1,
+    "tracked_diff_bytes": 299851,
+    "qwen3_5_mtp_loader_matches_upstream_sha256": "bc3a6c2a1981aa18d619d41ab0486c407b82e5112b7ab2a345e2b2df95101c9f",
+    "qwen3_next_mtp_loader_matches_upstream_sha256": "e17515418db5df57bde97e9699ac15212aa0cfeee99dd5d48ad4efd4c6c2cbed",
+    "common_speculative_paths_modified": true,
+    "performance_relevant_qwen_delta": "The downstream fused ESIMD Qwen3.5/3.6 GDN decode path requires actual float16 SSM cache state. The submitted float16 override makes it eligible, and the matched replay retained that override and registered the image's custom ESIMD operations.",
+    "separate_contributor_patch_found": false,
+    "interpretation": "The immutable OCI digest includes downstream vLLM and vllm-xpu-kernels changes plus custom ESIMD source with no Git identity. It is the reproducible source identity; plain upstream repositories at the advertised commits are not equivalent.",
+    "tracked_diff_sha256": "65b9842578560d1ca42eba754119bf36d9d244d504fcbb768975c3febbee5dd6",
+    "untracked_archive_sha256": "08ebdf02c5ebacefdbaeba49c4c2036fcffdb775c92fa1928ea24d4dea2f0b26"
+  },
+  "matched_eager_replay": {
+    "eager": true,
+    "speculative_decoding": false,
+    "llama_benchy_commit": "e9be344578cec17745066b220798b80a0d2686d3",
+    "llama_benchy_note": "last upstream commit before the contributor post; the contributor did not record their version",
+    "prompt_tokens": 2048,
+    "requested_completion_tokens": 1024,
+    "depths": [0, 4096, 8192, 16384, 32768],
+    "runs_per_test": 5,
+    "warmup_runs_per_test": 1,
+    "concurrency": 1,
+    "latency_mode": "generation",
+    "coherence_test": "pass",
+    "request_errors": 0,
+    "measured_completion_token_counts": {
+      "1013": 1,
+      "1020": 1,
+      "1023": 3,
+      "1024": 20
+    },
+    "prefill_tok_s": [
+      9101.389303692458,
+      11090.162269181594,
+      10427.87053202971,
+      10014.36081306581,
+      9249.46535618697
+    ],
+    "decode_tok_s": [
+      54.92260383225927,
+      53.58333232753411,
+      54.00942829611466,
+      53.93653698254451,
+      54.83000267089837
+    ],
+    "peak_decode_tok_s": [57.4, 56.6, 56.6, 57.4, 58.0],
+    "mean_decode_tok_s_across_depth_rows": 54.25638082187019,
+    "contributor_mean_decode_tok_s_across_depth_rows": 132.87710601160143,
+    "relative_shortfall": 0.591678560134104,
+    "result_sha256": "423941e06ce9a725105a151053204f42675cf0f7f5dfcdfb9a83dd89446ae925",
+    "progress_sha256": "c08c168c581df6cb4036009a6306e7ddb2f17958799d606786147fb3afd6c830"
+  },
+  "model_card_mtp2_calibration": {
+    "checkpoint_mtp_num_hidden_layers": 1,
+    "checkpoint_contains_mtp_weights": true,
+    "eager": true,
+    "mamba_ssm_cache_dtype": "float16 explicit experimental override",
+    "speculative_config": {
+      "method_requested_by_model_card": "qwen3_next_mtp",
+      "method_canonicalized_by_vllm": "mtp",
+      "num_speculative_tokens": 2
+    },
+    "loaded_draft_architecture": "Qwen3_5MoeMTP",
+    "depth": 0,
+    "runs": 1,
+    "prefill_tok_s": 10854.950946493416,
+    "decode_tok_s": 46.43575032440603,
+    "peak_decode_tok_s": 56.0,
+    "completion_tokens": 1024,
+    "draft_events": 900,
+    "draft_tokens": 1800,
+    "accepted_tokens": 1247,
+    "acceptance_fraction": 0.6927777777777778,
+    "mtp_off_decode_tok_s": 54.92260383225927,
+    "relative_decode_change": -0.1545238738821122,
+    "kv_cache_tokens_mtp_off": 1010114,
+    "kv_cache_tokens_mtp2": 860623,
+    "bounded_deterministic_canaries_pass": true,
+    "deterministic_repeat_pass": true,
+    "concurrency4_completed": true,
+    "corrected_launcher_mtp2_float32_ssm": {
+      "service_reached_health": true,
+      "health_seconds": 142,
+      "plain_smoke": "pass",
+      "thinking_smoke": "pass",
+      "cleanup": "exact-name container stopped and removed; localhost port 18221 clear",
+      "transcript_sha256": "c42a22d8a6c0b71a89e386970c06291a971f573ffe2ebeaffb8ddd431df25fed",
+      "container_log_sha256": "a8372e2b977c509b8d76bccd64c2c8d4958628048550941f0a6f06c8c48c90fe"
+    },
+    "verdict": "functional but slower; does not explain contributor throughput and should remain opt-in",
+    "calibration_sha256": "5d74690a81ab2f85dee84f8d3a8c0729fe652525743bf038f6a3d1f5ad7f79b8",
+    "quality_sha256": "04e00e7396f21f9946c02ba0775d66abcfa8cfc82336f320f72f4e1fb4fdda46",
+    "concurrency4_sha256": "4b614cef098c304b82e3d01bce41611237c4e861c0f13c8c413770f59a2db634"
+  },
+  "release_calibration": {
+    "llama_benchy_version": "0.4.0",
+    "llama_benchy_commit": "446dd42fde2ebbaa1d68a0dfe9dc1e5b833f95ad",
+    "depth": 0,
+    "runs": 1,
+    "prefill_tok_s": 11661.4612576296,
+    "decode_tok_s": 55.53509620775105,
+    "peak_decode_tok_s": 58.0,
+    "completion_tokens": 1024
+  },
+  "compiled_calibration": {
+    "eager": false,
+    "xpu_graph_enabled": false,
+    "depth": 0,
+    "runs": 1,
+    "prefill_tok_s": 13401.891073984812,
+    "decode_tok_s": 21.10900690126294,
+    "peak_decode_tok_s": 22.0,
+    "completion_tokens": 880,
+    "result_sha256": "2fc3c09b21b70be59ef519c3a6f2d16918da9b4cd4fefbc4b39be29f9ec3e125"
+  },
+  "launcher_float16_ssm_smoke": {
+    "service_reached_health": true,
+    "plain_smoke": "pass",
+    "thinking_smoke": "fail strict formatting check",
+    "observed_final_content": "17 × 24 = 408",
+    "expected_final_content": "408",
+    "cleanup": "launcher removed only its newly created exact-name container"
+  },
+  "not_tested": [
+    "forced-communication XPU graph variants, because they were not in the submission and are a materially different, historically hazardous identity",
+    "the contributor's unknown image digest or model revision",
+    "Docker-specific execution; this host has Podman only"
+  ],
+  "raw_artifact_root": "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z",
+  "teardown": {
+    "exact_test_containers_removed": true,
+    "ports_18218_through_18221_clear": true,
+    "reset_reboot_or_service_change": false,
+    "laguna_worktree_touched": false
+  }
+}

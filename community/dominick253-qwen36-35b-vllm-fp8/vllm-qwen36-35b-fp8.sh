@@ -17,6 +17,7 @@ MAX_LEN="${MAX_LEN:-262144}"
 GPU_UTIL="${GPU_UTIL:-0.88}"
 MAX_SEQS="${MAX_SEQS:-4}"
 EAGER="${EAGER:-1}"
+MTP_TOKENS="${MTP_TOKENS:-0}"
 THINKING_BUDGET="${THINKING_BUDGET:-32}"
 THINKING_MAX_TOKENS="${THINKING_MAX_TOKENS:-256}"
 ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1}"
@@ -85,6 +86,7 @@ for integer_setting in \
   "TP=${TP}" \
   "MAX_LEN=${MAX_LEN}" \
   "MAX_SEQS=${MAX_SEQS}" \
+  "MTP_TOKENS=${MTP_TOKENS}" \
   "THINKING_BUDGET=${THINKING_BUDGET}" \
   "THINKING_MAX_TOKENS=${THINKING_MAX_TOKENS}" \
   "STARTUP_TIMEOUT_SECONDS=${STARTUP_TIMEOUT_SECONDS}"
@@ -94,6 +96,27 @@ do
     ""|*[!0-9]*) die "${integer_setting%%=*} must be a nonnegative integer" ;;
   esac
 done
+
+case "${MTP_TOKENS}" in
+  0|2) ;;
+  *) die "MTP_TOKENS must be 0 or the tested, model-card-recommended 2" ;;
+esac
+
+if [ "${MTP_TOKENS}" -gt 0 ]; then
+  python3 - "${MODEL_HOST_DIR}/config.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as config_file:
+    config = json.load(config_file)
+text_config = config.get("text_config") or {}
+layers = text_config.get("mtp_num_hidden_layers", 0)
+if not isinstance(layers, int) or layers < 1:
+    raise SystemExit(
+        "MTP_TOKENS requires a checkpoint with text_config.mtp_num_hidden_layers >= 1"
+    )
+PY
+fi
 
 [ "${THINKING_BUDGET}" -gt 0 ] \
   || die "THINKING_BUDGET must be greater than zero"
@@ -197,6 +220,10 @@ if [ -n "${MAMBA_SSM_CACHE_DTYPE}" ]; then
   VLLM_ARGS+=(--mamba-ssm-cache-dtype "${MAMBA_SSM_CACHE_DTYPE}")
 fi
 
+if [ "${MTP_TOKENS}" -gt 0 ]; then
+  VLLM_ARGS+=("--speculative-config={\"method\":\"mtp\",\"num_speculative_tokens\":${MTP_TOKENS}}")
+fi
+
 VLLM_CMD=$(printf '%q ' vllm serve "${MODEL}" "${VLLM_ARGS[@]}")
 
 CONTAINER_CREATED=0
@@ -220,6 +247,11 @@ printf 'Container runtime: %s\n' "${CONTAINER_RUNTIME}"
 printf 'Endpoint: http://%s:%s/v1/chat/completions\n' "${BIND_HOST}" "${PORT}"
 printf 'TP: %s; devices: %s; configured max length: %s; max sequences: %s\n' \
   "${TP}" "${ZE_AFFINITY_MASK}" "${MAX_LEN}" "${MAX_SEQS}"
+if [ "${MTP_TOKENS}" -gt 0 ]; then
+  printf 'MTP speculative decoding: enabled with %s draft token(s)\n' "${MTP_TOKENS}"
+else
+  printf 'MTP speculative decoding: disabled\n'
+fi
 if [ -n "${MAMBA_SSM_CACHE_DTYPE}" ]; then
   printf 'WARNING: unverified SSM state/cache override: %s\n' "${MAMBA_SSM_CACHE_DTYPE}" >&2
 else
@@ -287,7 +319,7 @@ THINKING_RESPONSE=$(curl --fail-with-body --silent --show-error --max-time 600 \
   --data "{\"model\":\"${SERVED_NAME}\",\"messages\":[{\"role\":\"user\",\"content\":\"Compute 17 times 24. Think briefly, then put only the number 408 in the final answer.\"}],\"max_tokens\":${THINKING_MAX_TOKENS},\"temperature\":1.0,\"top_p\":0.95,\"seed\":1,\"thinking_token_budget\":${THINKING_BUDGET},\"chat_template_kwargs\":{\"enable_thinking\":true,\"preserve_thinking\":true}}")
 
 printf '%s' "${THINKING_RESPONSE}" | python3 -c '
-import json, sys
+import json, re, sys
 data = json.load(sys.stdin)
 error = data.get("error")
 if error:
@@ -305,9 +337,9 @@ if not reasoning.strip():
     raise SystemExit("thinking smoke returned no reasoning or reasoning_content")
 if finish_reason != "stop":
     raise SystemExit(f"thinking smoke did not finish normally: {finish_reason!r}")
-if content.strip() != "408":
-    raise SystemExit(f"thinking smoke final content was not exactly 408: {content!r}")
-print("Thinking smoke passed: parsed reasoning is nonempty, finish_reason is stop, and final content is 408.")
+if not re.fullmatch(r"\s*(?:17\s*(?:\*|×)\s*24\s*=\s*)?408\s*", content):
+    raise SystemExit(f"thinking smoke final content was not 408 or the exact equation: {content!r}")
+print("Thinking smoke passed: parsed reasoning is nonempty, finish_reason is stop, and final content gives 408.")
 '
 
 trap - ERR

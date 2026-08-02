@@ -38,12 +38,20 @@ definition, because the reference hardware is here.
 community/<contributor>-<model>-<topic>/
   STATUS.md      required; evidence label, provenance, what was tested here
   README.md      the contribution, or a clearly documented maintainer-corrected recipe
+  reported/      optional; contributor-reported measurements and source artifacts
   validation/    logs, JSON, and commands from any local validation attempt
 ```
 
 `STATUS.md` is mandatory and is the first file a reader should open. Copy
 [`STATUS-TEMPLATE.md`](STATUS-TEMPLATE.md) to start one. An entry without a
 current `STATUS.md` is incomplete regardless of how good its README is.
+
+Material under an entry's `reported/` directory remains
+`community-reported`, even when that entry also has separate reference-lab
+validation. It is the right place for contributor CSVs, screenshots, and
+results that are useful to preserve but have not been reproduced. Keep those
+artifacts out of `validation/`, `repro/`, `results/`, `patches/`, and runnable
+recipe paths so their evidence status is unambiguous.
 
 The submitted state must remain recoverable from Git history. Maintainers may
 correct a contributed `README.md` when that is safer or more useful than
@@ -125,7 +133,7 @@ must not be recorded the same way.
 | --- | --- | --- | --- | --- |
 | [Qwen3.6 27B FP8 TP2 Docker](dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) | dominick253 | [PR #9](https://github.com/steveseguin/b70-optimization-lab/pull/9) | `B70-tested` | Yes; recipe runs at 30.171 tok/s median decode, inside the reported range |
 | [Qwen3.6 35B UD-Q8_K_XL llama.cpp SYCL](dominick253-qwen36-35b-llamacpp-sycl/STATUS.md) | dominick253 | [PR #14](https://github.com/steveseguin/b70-optimization-lab/pull/14) | `B70-tested` | Yes; corrected MTP-off recipe, semantic/concurrency gates, 34,649-token retrieval, and cold fixed suite |
-| [Qwen3.6 35B dynamic-FP8 vLLM Docker](dominick253-qwen36-35b-vllm-fp8/STATUS.md) | dominick253 | [PR #15](https://github.com/steveseguin/b70-optimization-lab/pull/15) | `B70-tested` | Yes; corrected exact-revision TP2 replay, completed smoke/semantic/concurrency gates, and 261,794-token retrieval plus next request |
+| [Qwen3.6 35B dynamic-FP8 vLLM Docker](dominick253-qwen36-35b-vllm-fp8/STATUS.md) | dominick253 | [PR #15](https://github.com/steveseguin/b70-optimization-lab/pull/15) | `B70-tested` | Yes; corrected exact-revision TP2 replay and functional gates; the contributor's 128–135 tok/s benchmark was not reproduced |
 
 ## Field Report Index
 

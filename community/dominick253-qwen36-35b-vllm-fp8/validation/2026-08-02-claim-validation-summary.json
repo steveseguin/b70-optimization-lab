@@ -29,7 +29,11 @@
     "vllm_version": "0.21.1.dev0+gad7125a43.d20260709",
     "vllm_commit": "ad7125a431e176d4161099480a66f0169609a690",
     "vllm_xpu_kernels_commit": "3cab97adf65f7e85fb96f4a08db5611832d37382",
-    "published_launcher_sha256": "33854405b7c15402e25f30a1059268ec547080c07c27e2f95a6dd57483bdcd02"
+    "published_launcher_sha256": "737f8dd32523efb2101175748613a7ddc96856368cf08c3ec63221f17249c0ff",
+    "stock_upstream_vllm_tree": false,
+    "downstream_vllm_source_delta": "64 modified tracked files, 4283 insertions, 340 deletions, plus 18 untracked files: 17 source/test files and one release-note file",
+    "downstream_xpu_kernels_source_delta": "25 modified tracked files, 2192 insertions, 379 deletions beyond 3cab97adf65f7e85fb96f4a08db5611832d37382",
+    "custom_esimd_kernels_vllm": "0.1.0; included source tree has no Git metadata"
   },
   "runtime": {
     "weight_quantization": "dynamic FP8",
@@ -39,7 +43,9 @@
     "max_model_len": 262144,
     "max_num_seqs": 4,
     "prefix_caching": false,
-    "eager": true
+    "eager": true,
+    "mtp_speculative_decoding_default": false,
+    "mtp_tokens_option": "0 or 2; tested model-card MTP2 is explicitly opt-in"
   },
   "claim_verdicts": {
     "corrected_container_recipe_starts": {
@@ -71,11 +77,19 @@
     },
     "thinking_and_reasoning": {
       "verdict": "bounded pass; universal hard-budget claim unverified",
-      "details": "Explicit 32- and 128-token-budget examples stopped normally with parsed reasoning and final content 408, at 37 and 133 completion tokens. Two fresh strengthened smoke candidates instead ended with finish_reason=length, but their complete request payloads were not preserved, so no more specific configuration claim is made. The final launcher uses the reproducible seeded 32-token smoke and requires finish_reason=stop plus final content exactly 408."
+      "details": "Explicit 32- and 128-token-budget examples stopped normally with parsed reasoning and final content 408, at 37 and 133 completion tokens. Two fresh strengthened smoke candidates instead ended with finish_reason=length, but their complete request payloads were not preserved, so no more specific configuration claim is made. The final launcher uses the reproducible seeded 32-token smoke, requires finish_reason=stop, and narrowly accepts bare 408 or the exact equivalent equation."
     },
     "golden_150_tok_s_baseline": {
       "verdict": "unsupported and not reproducible as stated",
       "details": "The contributor supplied no workload, metric window, run identity, repeats, logs, or quality gate. It cannot be meaningfully compared to a lab measurement."
+    },
+    "llama_benchy_128_to_135_tok_s": {
+      "verdict": "defined community report; not reproduced",
+      "details": "The PR-attached CSV defines five concurrency-1 runs per depth with a 2048-token prompt, 1024-token generation, depths 0/4096/8192/16384/32768, and generation-latency accounting. The closest recoverable eager TP2 online-FP8 float16-SSM replay completed all 25 measured requests at 53.58-54.92 tok/s, versus 127.86-135.05 tok/s reported. Tool/runtime identity gaps prevent a causal diagnosis. See 2026-08-02-llama-benchy-replication-summary.json."
+    },
+    "model_card_mtp2": {
+      "verdict": "functional but slower; opt-in",
+      "details": "The checkpoint declares one MTP layer and contains mtp.* weights, but the submitted launcher did not pass speculative_config. Adding only the model-card MTP2 setting produced 46.4358 tok/s versus 54.9226 tok/s MTP-off, with 69.28% draft-token acceptance. Bounded exact-answer, repeatability, and concurrency-4 checks passed. The final corrected launcher also reached health in 142 seconds and passed plain/thinking smoke with MTP_TOKENS=2 and checkpoint-default float32 SSM state."
     },
     "in_place_fp8_no_vram_spike_correct_scales": {
       "verdict": "partial",
@@ -103,14 +117,16 @@
     "metric_classification": "diagnostic only; not promotion or LocalMaxxing evidence"
   },
   "launcher_corrections_from_this_validation": [
-    "require a completed thinking response with finish_reason=stop and final content exactly 408",
+    "require a completed thinking response with finish_reason=stop and final content that is bare 408 or the exact equivalent equation",
     "use a reproducible seeded 32-token thinking smoke instead of treating a 2048-token setting as a reliable hard budget",
     "put container-log options before the container name for Docker/Podman compatibility",
-    "preserve both finish_reason=length failures as narrowly classified negative evidence"
+    "preserve both finish_reason=length failures as narrowly classified negative evidence",
+    "expose checkpoint MTP as an explicit MTP_TOKENS option but leave it disabled by default after a measured regression"
   ],
   "teardown": {
     "exact_test_containers_removed": true,
     "ports_18216_and_18217_clear": true,
+    "later_benchmark_mtp_ports_18218_through_18221_clear": true,
     "post_teardown_gpu_memory_mib": [
       42.88671875,
       42.875
@@ -119,7 +135,8 @@
     "laguna_worktree_touched": false
   },
   "raw_artifacts": [
-    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z"
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z",
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z"
   ],
   "artifact_sha256": {
     "claim_run_container_log": "fc8b0f57ccca7c7074706989f945bc84f1fb99e680371d43a5d1e8d311d95587",
@@ -131,9 +148,10 @@
   "promotion_limits": [
     "the contributor's original image/model/runtime identity remains unknown",
     "the 150 tok/s statement has no reproducible benchmark definition",
+    "the separately defined 128-135 tok/s llama-benchy report was not reproduced",
     "the strict realistic-suite cache-zero telemetry gate remains incomplete",
     "runtime FP8 equivalence to the BF16 checkpoint is not established",
-    "the optional float16 SSM-state override remains untested",
+    "float16 SSM and MTP2 have bounded throughput/functional evidence but no BF16-relative quality equivalence",
     "the Docker-specific launcher branch was not executed; runtime validation used Podman",
     "not eligible for LocalMaxxing submission"
   ]
