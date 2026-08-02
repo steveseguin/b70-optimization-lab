@@ -1,0 +1,127 @@
+{
+  "schema": "laguna-exact-prefill-chunks-result-v1",
+  "status": "pass_short_oracle_exact_long_retrieval_one_order_mismatch",
+  "date_local": "2026-08-02",
+  "record_changed": false,
+  "identity": {
+    "model": "Laguna-S 2.1 INT4",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "vllm_base_commit": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "vllm_candidate_commit": "4ddb915284d4442885f72bed48311fd04640977c",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "selector": "VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS",
+    "selector_default": false,
+    "chunk_width": 12,
+    "eligibility_tokens_min": 13,
+    "eligibility_tokens_max": 512,
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 1,
+    "kv_cache_dtype": "bfloat16",
+    "gpu_memory_utilization": 0.8,
+    "prefix_caching": false,
+    "async_scheduling": false,
+    "speculative_method": "dflash",
+    "num_speculative_tokens": 11,
+    "target_graph_topology": "146/145",
+    "draft_graph_topology": "14/13",
+    "swap_total_gib": 24,
+    "memory_guard_min_available_gib": 8
+  },
+  "source_artifact": {
+    "path": "patches/laguna-s-2.1-xpu-b70/vllm-exact-prefill-chunks-4ddb91528-20260802.bundle",
+    "sha256": "2c96ceacbee8e4554254bb5f2a6b01436964d3ea86be3f0a78373526bc01cc61",
+    "requires_commit": "1a7f61feffbc61b21b73f812d231c7426386ccdc"
+  },
+  "short_gate": {
+    "suite": "experiments/laguna-s-2.1-xpu-b70/exact-prefill-chunk-suite-v1.json",
+    "prompt_tokens": 256,
+    "rows": 3,
+    "first_row_excluded_as_jit_warmup": true,
+    "selector_on": {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-prefill-chunks-m12-gpu080-20260802T190000Z",
+      "status": "PASS_ORACLE_EXACT",
+      "bench_sha256": "7ffea4e3bb2cde258caa05753168f198a19b75a73d92a93605777bbab95d6248",
+      "identity_sha256": "06aaa101664d2caf277a3316ce25d745349d9e3ff361b3dcd8ce3f470c61fb00",
+      "server_log_sha256": "803488b5c0f9c58603b0f814af729f91ae98ffe93c2580133be99ef5d476c11e",
+      "memory_guard_sha256": "8f256c7b3f46bca96d095bc13002125cc0f0849f26faa074892571ff02c866a5",
+      "warmed_prefill_tok_s_median": 184.59766685326235,
+      "warmed_client_ttft_s_median": 1.3994266760000755,
+      "warmed_decode_tok_s_median": 161.15992489755826
+    },
+    "selector_off_control": {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-prefill-control-off-gpu080-20260802T190200Z",
+      "status": "PASS_ORACLE_EXACT",
+      "bench_sha256": "efbbb8368f42600bb8232f43869829287a60e8b06367cf68c544c588785584d0",
+      "identity_sha256": "f3e9ae08953b59365f5d39ce428d540dc08b4a28c149c4f9f84bf5a30c41621b",
+      "server_log_sha256": "ed27151940b16be69947bbb525777e396c87ced5771bae5bc7eed306fc82e341",
+      "memory_guard_sha256": "ca64298853970e7d1fba8a0aa2cd58243300ebb08bb73dfd445aa829667c9eb5",
+      "warmed_prefill_tok_s_median": 19.875154521317505,
+      "warmed_client_ttft_s_median": 12.883278073000383,
+      "warmed_decode_tok_s_median": 162.91132780645881
+    },
+    "comparison": {
+      "prefill_speedup": 9.287860713498773,
+      "ttft_ratio": 0.10862349380883644,
+      "decode_ratio": 0.9892493485107355,
+      "selector_on_q1_oracle_exact_rows": 3,
+      "selector_off_q1_oracle_exact_rows": 3,
+      "between_arms_output_exact_rows": 3,
+      "retrieval_all": true
+    }
+  },
+  "long_context_gate": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-prefill-chunks-32k-warm-gpu080-20260802T191200Z",
+    "bench_sha256": "9141d073fee0ebbd33c09ef6a345511f124e615f7282f1778bb396f07a472964",
+    "identity_sha256": "571be68ec0ce803b814f7383034636dcf49ec5dfc3f8681d120e2da5ea97974a",
+    "server_log_sha256": "dec873d733cb3f6999028ab3132ff5969c8a7398924042f92303bbefd8ba140c",
+    "memory_guard_sha256": "6ffec3946bf20207fc69909841a99cc21dddd86384601d47fee2f826fe494756",
+    "status": "FAIL_ORACLE_ONE_ORDER_DEPENDENT_32K_ROW",
+    "warmup_1024_oracle_exact": true,
+    "prompt_tokens": 32640,
+    "rows": 3,
+    "retrieval_all": true,
+    "completion_tokens_all": 128,
+    "prefill_tok_s_median": 7351.14703085532,
+    "client_ttft_s_median": 4.476903639999364,
+    "decode_tok_s_median": 39.75449281273973,
+    "acceptance_rate_median": 0.005582137161084529,
+    "candidate_oracle_exact_rows": 2,
+    "candidate_oracle_mismatch_rows": 1,
+    "mismatch_case": "laguna-lc-32640-early",
+    "new_run_repeat_exact_rows": 3,
+    "post_32k_sentinels": {
+      "rows": 3,
+      "q1_oracle_exact_rows": 3,
+      "retrieval_all": true,
+      "prefill_tok_s_median": 197.86993876600502,
+      "client_ttft_s_median": 1.2991069600002447,
+      "decode_tok_s_median": 165.08937498538873
+    },
+    "baseline_comparison": {
+      "baseline_prefill_tok_s_median": 7345.07048562943,
+      "baseline_client_ttft_s_median": 4.477591568999742,
+      "baseline_decode_tok_s_median": 39.58863491052164,
+      "prefill_ratio": 1.000827300861243,
+      "ttft_ratio": 0.999846365192004,
+      "decode_ratio": 1.0041895330454015
+    }
+  },
+  "negative_artifact": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-prefill-chunks-32k-gpu080-20260802T190700Z",
+    "status": "FAIL_COLD_FIRST_32K_ORACLE",
+    "bench_sha256": "fd5aa5acf210137fc400b4972953b02c1b06d6715473a38a4860483352122cc6",
+    "identity_sha256": "e8eacedb618912228252fcaed36d46511b7d7766e60e78c6576e446765836f11",
+    "server_log_sha256": "2e8a5cd6c75c07547b76675896a3a6ba31248bb6ff574367e96a4d72676a20d6",
+    "memory_guard_sha256": "aa8fc0fc8f445c78c4319cc72a38dcd2c173b072ad581c1bc266949b2abcff13"
+  },
+  "disposition": {
+    "source_candidate": "win_default_off",
+    "protected_short_record_changed": false,
+    "localmaxxing_submission": false,
+    "reason": "The selector improves pure 13..512-token prefill only; it is not a new scored decode record."
+  }
+}
