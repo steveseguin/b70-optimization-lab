@@ -11,6 +11,12 @@ started. The following audit amendment was frozen after recovery but before
 control A so the original underspecified phrases cannot be resolved after
 seeing a result.
 
+Execution freeze: harness/recovery/oracle commit
+`ff1a2b05c9cbb2214690da0352b7d7072af82489`; non-self-referential execution
+lock `tools/scheduler-alignment-lock.json`. The lock's own SHA-256 is recorded
+by the pair wrapper in its external identity packet. No arm had started when
+the lock was created.
+
 ## Pre-execution audit amendment
 
 The fixed request order is:
