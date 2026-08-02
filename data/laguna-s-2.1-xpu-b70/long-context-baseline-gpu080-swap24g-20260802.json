@@ -1,0 +1,158 @@
+{
+  "schema": "laguna-long-context-composed-baseline-v1",
+  "status": "pass_baseline_oracle_not_tested",
+  "date_local": "2026-08-02",
+  "protected_short_record_conventional_tok_s": 125.4619731637751,
+  "record_changed": false,
+  "identity": {
+    "model": "Laguna-S 2.1 INT4",
+    "target_path": "/mnt/fast-ai/llm-models/laguna-s-2.1/int4",
+    "target_revision": "4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb",
+    "draft_path": "/mnt/fast-ai/llm-models/laguna-s-2.1/dflash-int4",
+    "draft_revision": "5e07c246915c86dc6920fead03d019989224f2ba",
+    "vllm_commit": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 1,
+    "chunked_prefill": true,
+    "kv_cache_dtype": "bfloat16",
+    "gpu_memory_utilization": 0.8,
+    "prefix_caching": false,
+    "async_scheduling": false,
+    "speculative_method": "dflash",
+    "num_speculative_tokens": 11,
+    "target_graph_topology": "146/145",
+    "draft_graph_topology": "14/13",
+    "swap_total_gib": 24,
+    "memory_guard_min_available_gib": 8
+  },
+  "artifacts": [
+    {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-swap24g-baseline-20260802T182000Z",
+      "role": "1k-and-4k-baseline-then-guarded-abort",
+      "bench_status": "RUNNING",
+      "bench_sha256": "94e789806929c57b1ad409ace3f5108f0cd3e3ac6e79ac14c6c3eca00fda924c",
+      "identity_sha256": "41c97e75f03ffd8b0f940299d8ad06c21f7b63b640d849da6df75918f08ad703",
+      "server_log_sha256": "f4af603cb9ccf299a4a833ade9284b8b665365513e915e5163004b110c5274d6",
+      "memory_guard_sha256": "2deca7ddf01f3e834a61a1c676910a1f2e30e44b4cc0b0d89156ea81f353fd1c"
+    },
+    {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-swap24g-8k-probe-20260802T182500Z",
+      "role": "warmup-and-8k-early",
+      "bench_status": "PASS_BASELINE_ORACLE_NOT_TESTED",
+      "bench_sha256": "e145c6970b167990a8722dd9342cda064c4f8931b932cd0223ba2ab319bcf6d6",
+      "identity_sha256": "32171c1895c97baf9291317e5b9c3cc178f4527d0b2dfd1eab841c01ca7e15f7",
+      "server_log_sha256": "9a960c01f66c10117a95c9b1c4e93830b70faa48b037bb672a43a96b99d444b1",
+      "memory_guard_sha256": "0091ba744258e8211cac4b2fc0606d99040cdedbe7c854be8bab16e7f1dbd1e1"
+    },
+    {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-swap24g-remaining-20260802T183000Z",
+      "role": "warmup-remaining-8k-through-32k-and-sentinels",
+      "bench_status": "PASS_BASELINE_ORACLE_NOT_TESTED",
+      "bench_sha256": "a9b2b51c255319103ad5ac3cffdadc2e6734c1d2efdb8e580ed5d24479bcb25a",
+      "identity_sha256": "480ce75269b25734c513c4a28d1aec6501e0e8cc2d26cb1d56f178d99c819755",
+      "server_log_sha256": "650be3814238c5241475cd65a84a9059b6636db63e5fd4f5af51a6810c47a16d",
+      "memory_guard_sha256": "39e5e761e67b93223d7b9eab2d84ca2300a14655e2b76be78e0f36df8cfca3df"
+    }
+  ],
+  "context_groups": [
+    {
+      "prompt_tokens": 1024,
+      "rows": 2,
+      "first_live_row_excluded": true,
+      "prefill_tok_s_median": 5171.877711197638,
+      "client_ttft_s_median": 0.20177322600011393,
+      "decode_tok_s_99_interval_median": 153.6043924981438,
+      "acceptance_rate_median": 0.23564213564213565,
+      "retrieval_all": true
+    },
+    {
+      "prompt_tokens": 4096,
+      "rows": 3,
+      "prefill_tok_s_median": 7331.793132902693,
+      "client_ttft_s_median": 0.5643018349996964,
+      "decode_tok_s_99_interval_median": 80.24333572713317,
+      "acceptance_rate_median": 0.11363636363636363,
+      "retrieval_all": true
+    },
+    {
+      "prompt_tokens": 8192,
+      "rows": 3,
+      "prefill_tok_s_median": 4129.893501143041,
+      "client_ttft_s_median": 1.9931577850002213,
+      "decode_tok_s_99_interval_median": 46.80992228390887,
+      "acceptance_rate_median": 0.023402340234023402,
+      "retrieval_all": true
+    },
+    {
+      "prompt_tokens": 16384,
+      "rows": 3,
+      "prefill_tok_s_median": 5111.21405464208,
+      "client_ttft_s_median": 3.227641733999917,
+      "decode_tok_s_99_interval_median": 40.413761445523036,
+      "acceptance_rate_median": 0.008620689655172414,
+      "retrieval_all": true
+    },
+    {
+      "prompt_tokens": 24576,
+      "rows": 3,
+      "prefill_tok_s_median": 5053.232558316487,
+      "client_ttft_s_median": 4.882659674000024,
+      "decode_tok_s_99_interval_median": 39.782690532944315,
+      "acceptance_rate_median": 0.008547008547008548,
+      "retrieval_all": true
+    },
+    {
+      "prompt_tokens": 32640,
+      "rows": 3,
+      "prefill_tok_s_median": 7345.07048562943,
+      "client_ttft_s_median": 4.477591568999742,
+      "decode_tok_s_99_interval_median": 39.58863491052164,
+      "acceptance_rate_median": 0.0047430830039525695,
+      "retrieval_all": true
+    }
+  ],
+  "post_32k_sentinels": {
+    "rows": 3,
+    "retrieval_all": true,
+    "prefill_tok_s": [
+      19.40443321587024,
+      19.67961529565964,
+      19.60108168587665
+    ],
+    "client_ttft_s": [
+      13.20471280699985,
+      13.010891228000219,
+      13.063047194000319
+    ],
+    "decode_tok_s_99_interval": [
+      166.03943397647546,
+      150.79310938190756,
+      176.7231975078809
+    ]
+  },
+  "correctness": {
+    "exact_prompt_lengths": true,
+    "returned_prompt_ids_exact": true,
+    "cached_tokens_all_zero": true,
+    "completion_tokens_all_128": true,
+    "retrieval_all": true,
+    "post_32k_sentinels_all": true,
+    "target_only_oracle_tested": false
+  },
+  "infrastructure": {
+    "minimum_mem_available_kib_successful_long_sweep": 10569440,
+    "minimum_swap_free_kib_successful_long_sweep": 17194160,
+    "oom_occurred": false,
+    "xpu_diag_level_1_after": "pass-all-four-devices",
+    "nvme_corrected_pcie_rxerr_count_observed": 3,
+    "nvme_uncorrected_aer_observed": false,
+    "nvme_state_after": "live",
+    "temporary_swap_path": "/swap-laguna-longctx.img",
+    "temporary_swap_persistent": false
+  },
+  "next_experiment": "default-off pure-prefill deterministic chunks-of-8 for exact Laguna 13<=M<=512; preserve M<=12 decode and graph topology"
+}
