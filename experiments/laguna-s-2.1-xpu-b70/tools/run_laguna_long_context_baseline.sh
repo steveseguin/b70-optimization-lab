@@ -34,6 +34,7 @@ readonly request_timeout="${LAGUNA_LONG_TIMEOUT:-900}"
 readonly selected_case_ids_csv="${LAGUNA_LONG_CASE_IDS:-}"
 readonly min_mem_available_kb="${LAGUNA_MIN_MEM_AVAILABLE_KB:-12582912}"
 readonly min_swap_free_kb="${LAGUNA_MIN_SWAP_FREE_KB:-4194304}"
+readonly low_swap_min_mem_available_kb="${LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB:-25165824}"
 readonly oracle="${LAGUNA_LONG_ORACLE:-}"
 
 die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }
@@ -64,6 +65,8 @@ awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
   || die "LAGUNA_MIN_MEM_AVAILABLE_KB must be a non-negative integer"
 [[ "$min_swap_free_kb" =~ ^[0-9]+$ ]] \
   || die "LAGUNA_MIN_SWAP_FREE_KB must be a non-negative integer"
+[[ "$low_swap_min_mem_available_kb" =~ ^[0-9]+$ ]] \
+  || die "LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB must be a non-negative integer"
 ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 || die "existing vLLM workers block run"
 ! ss -H -ltn 'sport = :18080' | grep -q . || die "port 18080 already has a listener"
 [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "RPC directory already exists"
@@ -105,6 +108,8 @@ chmod -R 700 "$run_dir"
     "$request_timeout" "$selected_case_ids_csv"
   printf 'memory_guard_min_available_kb=%s\nmemory_guard_min_swap_free_kb=%s\n' \
     "$min_mem_available_kb" "$min_swap_free_kb"
+  printf 'memory_guard_low_swap_min_available_kb=%s\n' \
+    "$low_swap_min_mem_available_kb"
   printf 'candidate_record_conventional_tok_s=125.4619731637751\n'
   printf 'candidate_target_topology=146/145\ncandidate_draft_topology=14/13\n'
   printf 'oracle=%s\ncluster_iface=%s\nscored_measurement=false\n' "$oracle" "$cluster_iface"
@@ -273,7 +278,9 @@ printf 'timestamp_utc\tmem_available_kb\tswap_free_kb\taction\n' \
     available_kb="$(awk '$1 == "MemAvailable:" { print $2 }' /proc/meminfo)"
     swap_free_kb="$(awk '$1 == "SwapFree:" { print $2 }' /proc/meminfo)"
     action=continue
-    if (( available_kb < min_mem_available_kb || swap_free_kb < min_swap_free_kb )); then
+    if (( available_kb < min_mem_available_kb \
+          || (swap_free_kb < min_swap_free_kb \
+              && available_kb < low_swap_min_mem_available_kb) )); then
       action=stop-service
     fi
     printf '%s\t%s\t%s\t%s\n' \

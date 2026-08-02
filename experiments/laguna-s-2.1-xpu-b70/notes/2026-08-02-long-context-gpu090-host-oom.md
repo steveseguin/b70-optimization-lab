@@ -72,7 +72,24 @@ for this test. Before any source optimization, the next run changes only GPU
 memory utilization to 0.80 and selects the single 4096-early case. This is a
 separate capacity identity, not a retry mislabeled as the 0.90 baseline.
 
-The runner now records the requested utilization and selected cases, bounds
-each request to 900 seconds, and stops the service if host available memory
-drops below 12 GiB or free swap below 4 GiB. A clean 4K diagnostic is required
-before the complete 1K--32K sweep resumes.
+The runner now records the requested utilization and selected cases and bounds
+each request to 900 seconds. A clean 4K diagnostic is required before the
+complete 1K--32K sweep resumes.
+
+The first 0.80 startup probe was deliberately stopped by the initial memory
+guard before service health:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-4k-probe-20260802T175000Z
+```
+
+At the stop point, `MemAvailable` was 32,698,140 KiB while `SwapFree` had
+fallen to 2,589,608 KiB. No OOM occurred, cleanup was clean, and memory was
+reclaimed immediately. This is a guard-calibration abort with no request or
+performance result. Linux had moved cold model-worker pages to swap despite
+roughly 31 GiB of available RAM, so treating low swap alone as terminal was
+overly conservative.
+
+The corrected guard stops unconditionally below 12 GiB available RAM, or when
+both free swap is below 4 GiB and available RAM is below 24 GiB. This preserves
+substantial allocation headroom while allowing harmless proactive swapping.

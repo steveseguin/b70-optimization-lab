@@ -68,6 +68,28 @@
     "kernel_path": "ttm_pool_alloc_page -> xe_ttm_tt_populate -> xe_gem_prime_export",
     "gpu_diagnostic_after_reboot": "pass-level-1-all-four-devices"
   },
+  "follow_up_attempts": [
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-4k-probe-20260802T175000Z",
+      "identity_delta": {
+        "gpu_memory_utilization": 0.8,
+        "selected_case_ids": [
+          "laguna-lc-04096-early"
+        ]
+      },
+      "classification": "memory-guard-calibration-abort-before-service-health",
+      "request_started": false,
+      "oom_occurred": false,
+      "cleanup_status": {
+        "original_status": 2,
+        "stop_status": 0
+      },
+      "guard_stop": {
+        "mem_available_kib": 32698140,
+        "swap_free_kib": 2589608
+      }
+    }
+  ],
   "artifact_sha256": {
     "bench.json": "be2ca32a01f50e1d48ac07f0ebd3ab891bb7289afea85c1aeb1d751dad7785e7",
     "bench.stdout": "404cc2bfe310fcff596550ab9acd1db483978db9204c8377065803b6d39fd337",
