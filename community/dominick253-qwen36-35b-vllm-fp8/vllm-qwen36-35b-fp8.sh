@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Community recipe: Qwen3.6 35B A3B, BF16 checkpoint -> runtime FP8, TP2.
-# Reviewed but not executed in the reference lab. See STATUS.md.
+# B70-tested as a corrected prospective replay; see STATUS.md for limits.
 set -euo pipefail
 
 IMAGE="${IMAGE:-docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780}"
@@ -197,6 +197,8 @@ cleanup_failed_launch() {
   cleanup_status=$?
   trap - ERR
   if [ "${CONTAINER_CREATED}" = "1" ]; then
+    printf 'Recent container logs before cleanup:\n' >&2
+    "${CONTAINER_RUNTIME}" logs "${NAME}" --tail 120 >&2 || true
     printf 'Launch or smoke check failed; stopping and removing newly created container %s.\n' \
       "${NAME}" >&2
     "${CONTAINER_RUNTIME}" stop -t 30 "${NAME}" >/dev/null 2>&1 || true
@@ -275,7 +277,7 @@ print("Plain smoke passed: assistant content contains HELLO.")
 THINKING_RESPONSE=$(curl --fail-with-body --silent --show-error --max-time 600 \
   --header 'Content-Type: application/json' \
   "http://${CHECK_HOST}:${PORT}/v1/chat/completions" \
-  --data "{\"model\":\"${SERVED_NAME}\",\"messages\":[{\"role\":\"user\",\"content\":\"Solve 17*24 step by step and give the numerical answer.\"}],\"max_tokens\":500,\"thinking_token_budget\":${THINKING_BUDGET}}")
+  --data "{\"model\":\"${SERVED_NAME}\",\"messages\":[{\"role\":\"user\",\"content\":\"Solve 17*24 step by step and give the numerical answer.\"}],\"max_tokens\":500,\"thinking_token_budget\":${THINKING_BUDGET},\"chat_template_kwargs\":{\"enable_thinking\":true,\"preserve_thinking\":true}}")
 
 printf '%s' "${THINKING_RESPONSE}" | python3 -c '
 import json, sys
@@ -288,14 +290,14 @@ try:
 except (KeyError, IndexError, TypeError) as exc:
     raise SystemExit(f"thinking smoke response shape invalid: {exc}")
 content = message.get("content") or ""
-reasoning = message.get("reasoning_content") or ""
+reasoning = message.get("reasoning") or message.get("reasoning_content") or ""
 if not isinstance(content, str) or not isinstance(reasoning, str):
     raise SystemExit("thinking smoke content/reasoning fields are not strings")
 if not reasoning.strip():
-    raise SystemExit("thinking smoke returned no reasoning_content")
+    raise SystemExit("thinking smoke returned no reasoning or reasoning_content")
 if "408" not in f"{reasoning}\n{content}":
     raise SystemExit("thinking smoke did not contain the expected answer 408")
-print("Thinking smoke passed: reasoning is nonempty and response contains 408.")
+print("Thinking smoke passed: parsed reasoning is nonempty and response contains 408.")
 '
 
 trap - ERR

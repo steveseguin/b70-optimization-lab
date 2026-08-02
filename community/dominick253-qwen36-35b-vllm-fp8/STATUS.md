@@ -4,11 +4,11 @@
 
 | Field | Value |
 | --- | --- |
-| Evidence level | `community-reported` |
-| Patch review status | read, no execution |
-| Tested in reference lab | no |
+| Evidence level | `B70-tested` for the corrected prospective replay; contributor identity and claims remain `community-reported` |
+| Patch review status | read, corrected, and executed |
+| Tested in reference lab | yes; startup, smoke, semantic, concurrency, and 30,049-token retrieval gates |
 | Safe to merge as documentation | yes, after maintainer corrections recorded below |
-| Eligible for `repro/` or `results/` | no until `B70-tested` |
+| Eligible for `repro/` or `results/` | no; strict realistic-suite telemetry and promotion gates remain incomplete |
 
 ## Provenance
 
@@ -24,6 +24,10 @@
   to fail closed around ports/containers, default to localhost, remove broad
   container privileges, make configuration effective, distinguish precision
   modes, and replace syntax-only smoke tests with bounded semantic checks.
+  Runtime validation additionally fixed the executable bit, accepted this
+  image's `message.reasoning` response field with a legacy fallback, made the
+  thinking-mode request explicit, and preserved recent container logs before
+  failure cleanup.
 
 ## Claim
 
@@ -56,16 +60,46 @@ evidence, and was removed rather than preserved as a supported claim.
 
 ## Reference Lab Environment
 
-Not recorded because nothing from this contribution has been executed in the
-reference lab.
+| Field | Value |
+| --- | --- |
+| GPU | 2x Intel Arc B70, logical devices 0 and 1 |
+| Kernel / driver source | `7.0.0-28-generic`; xe srcversion `85B7CA089405934276CBAD3` |
+| Container runtime | rootless Podman 4.9.3 |
+| Image | `docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780` |
+| vLLM / XPU kernels / torch | `ad7125a431e176d4161099480a66f0169609a690` / `3cab97adf65f7e85fb96f4a08db5611832d37382` / `2.11.0+xpu` |
+| Model | `Qwen/Qwen3.6-35B-A3B` revision `995ad96eacd98c81ed38be0c5b274b04031597b0`; 40 files, 71,926,865,825 bytes; 27/27 LFS SHA-256 checks passed |
+| Runtime | TP2, dynamic FP8 weights, float16 activation dtype, model-default float32 Mamba SSM state, eager, prefix caching off, max length 262144, max sequences 4 |
+| Bind / name | `127.0.0.1:18215`; `qwen36-35b-fp8` |
+| Raw artifacts | `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-exact-lab-20260802T0408Z` |
 
 ## What Was Actually Run Here
 
-No Docker image, model load, GPU workload, endpoint request, or benchmark was
-run in the reference lab during this review. Review was limited to source and
-documentation inspection plus static shell checks. This avoids disturbing the
-active/protected work described by `CURRENT.md`; a later validation must first
-confirm that the relevant GPUs, port, and runtime paths are free.
+After the lane owner paused Laguna and released the community lane, the exact
+model snapshot was downloaded to internal NVMe and checked against the upstream
+40-file size manifest plus all 27 LFS SHA-256 values. The corrected launcher
+then started the pinned image on two B70s, reached HTTP health in 121 seconds,
+reported the intended model and 262144 configured maximum, selected the XPU
+FP8 linear/MoE kernels, and passed its plain and thinking smoke checks.
+
+Additional checks passed:
+
+- exact plain sentinel;
+- structured JSON with `17 * 24 = 408`;
+- nonempty parsed thinking containing the correct result;
+- four simultaneous unique-sentinel requests with no cross-talk;
+- exact key retrieval with 30,049 actual prompt tokens.
+
+The fixed 12-prompt realistic suite completed 12/12 at 128 output tokens per
+prompt with thinking disabled. Its diagnostic medians were
+`48.580979765184026 tok/s` under the historical 100-event convention and
+`48.095169967532186 tok/s` under conventional 99-interval accounting. The
+strict gate is `invalid-or-incomplete`: every response omitted
+`prompt_tokens_details`, so `cached_tokens=0` could not be observed. Prefix
+caching was disabled, but missing telemetry is not equivalent to a passing
+cache-zero gate. These rates are not promoted or LocalMaxxing evidence.
+
+The exact container was stopped and removed. Port 18215 and all four B70s were
+idle afterward. No reset, reboot, service change, or collective retry was used.
 
 ## Findings
 
@@ -93,49 +127,47 @@ confirm that the relevant GPUs, port, and runtime paths are free.
    float32 declaration. The corrected default does not override the model;
    optional float16 is labeled and gated as an unverified quality-changing
    experiment.
-8. The configured `MAX_LEN=262144` has not been validated at or near that
-   length. It is not evidence of working 256K context.
+8. The configured `MAX_LEN=262144` was not validated at or near that length.
+   A 30,049-token retrieval passed, but that is not evidence of working 256K
+   context.
 9. Corrected smoke tests fail on HTTP/API errors and assert a bounded plain
-   response plus arithmetic/reasoning behavior. They remain smoke tests, not a
-   comprehensive quality gate.
+   response plus arithmetic/reasoning behavior. Runtime validation found that
+   this image emits parsed thinking as `message.reasoning`; the published check
+   now handles that field plus the older `reasoning_content` spelling.
 10. `THINKING_BUDGET` affects only the corrected script's thinking smoke
     request; it is not a server-wide request policy.
+11. All fixed-suite responses completed, but the strict suite did not pass
+    because cached-token telemetry was absent. Its throughput is diagnostic.
 
 ## Known Issues
 
 - No contributor-side immutable image digest, internal vLLM commit, XPU runtime
   identity, model revision, or model artifact digest is recorded.
-- No contributor logs or machine-readable smoke-test responses are preserved.
-- The image/model combination has not been pulled, loaded, or tested here.
+- No contributor logs or machine-readable smoke-test responses are preserved;
+  the reference-lab replay has separate artifacts and identity.
 - Runtime FP8 accuracy relative to the source checkpoint has not been measured.
 - Float32/default and optional float16 SSM-state quality and memory behavior
   have not been compared.
-- No cold realistic-suite quality, cached-token, throughput, TTFT, full-output,
-  long-context retrieval, 262144 boundary, rollover, or next-request evidence
-  exists.
+- The fixed realistic suite lacks cached-token telemetry and therefore remains
+  invalid/incomplete despite completing all 12 prompts.
+- Context evidence stops at 30,049 actual prompt tokens; no 262144 boundary,
+  rollover, or post-boundary next-request evidence exists.
 - The endpoint has no authentication. Remote publication requires an explicit
   opt-in and an operator-provided firewall or authenticated proxy.
 
-## Open Questions For The Contributor
+## Remaining Unknowns
 
-1. Which immutable Docker image digest and internal vLLM/XPU runtime commits
-   produced the reported smoke-test success?
-2. Which exact model revision and local artifact digest were loaded?
-3. Can the original command, complete environment, startup log, and raw plain
-   and thinking response JSON be supplied?
-4. What output is obtained with model-config/default float32 SSM state, and is
-   any float16 SSM-state run exact or semantically equivalent on fixed prompts?
-5. What context lengths were actually exercised, including a cold retrieval
-   gate and a next-request check?
+No contributor action is required for this entry. The contributor's immutable
+image digest, internal runtime commits, exact model revision, raw responses,
+and actually exercised context lengths remain unknown and are not inferred
+from the separate reference-lab replay. Optional float16 SSM state and the
+configured 256K context boundary remain separate future experiments.
 
 ## Disposition
 
-Keep the corrected entry in `community/` at `community-reported` level. It is
-safe to merge as reviewed documentation, but it is not promoted evidence.
-
-Raise it to `B70-tested` only after an isolated reference-lab run records the
-immutable image/runtime and model identity, startup logs, raw responses, and
-the required fixed realistic quality/performance gate. Validate long context
-separately if it is claimed. Do not move this entry to `repro/` or `results/`
-and do not submit anything to LocalMaxxing unless those verification gates pass
-and a real matching record improvement is confirmed.
+Keep the corrected entry in `community/` at `B70-tested`: the corrected
+prospective replay starts and passes bounded functional checks on the local B70
+lab. Do not move it to `repro/` or `results/` because the contributor identity
+is still unknown, the strict realistic-suite cache-zero telemetry gate did not
+pass, runtime-FP8 equivalence is unestablished, and 256K context is untested.
+Do not submit the diagnostic throughput to LocalMaxxing.

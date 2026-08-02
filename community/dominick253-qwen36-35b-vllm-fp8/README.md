@@ -1,10 +1,12 @@
 # Qwen3.6 35B A3B FP8 on Intel Arc B70 (vLLM Docker)
 
-> **Maintainer note — corrected community submission, `community-reported`.**
-> The launcher below was safety- and reproducibility-edited after submission.
-> It has been read but not executed in the reference lab. The contributor's
-> environment and unverified claims are recorded in [STATUS.md](STATUS.md); do
-> not treat this entry as a lab result.
+> **Maintainer note — corrected community submission, `B70-tested`.** The
+> corrected launcher now starts and passes bounded smoke, semantic,
+> concurrency, and 30,049-token retrieval checks in the reference lab. This is
+> a prospective replay at pinned model/image revisions; it does not verify the
+> contributor's original identity, the configured 256K boundary, or a
+> performance claim. See [STATUS.md](STATUS.md) and the
+> [lab summary](validation/2026-08-01-reference-lab-summary.json).
 
 ---
 
@@ -16,15 +18,17 @@ launcher defaults to the immutable image identity
 which is how that tag resolved when inspected in the reference lab. The image
 used by the contributor remains unknown because no digest was recorded there.
 
-The contributor reported that the service passed initial smoke tests. No
-throughput result, long-context result, or quality result is currently
-supported by durable evidence in this entry.
+The contributor reported that the service passed initial smoke tests. The
+reference lab separately confirmed the corrected recipe at the identities
+below. No contributor throughput, long-context, or quality result was supplied.
 
 ## Model And Precision
 
 - Model repo: `Qwen/Qwen3.6-35B-A3B`.
-- Model revision and local artifact digest: unknown; pin and record both before
-  comparing results.
+- Contributor model revision and local artifact digest: unknown.
+- Reference-lab model revision:
+  `995ad96eacd98c81ed38be0c5b274b04031597b0`; all 40 files matched the
+  upstream size manifest and all 27 LFS objects passed SHA-256 verification.
 - Source checkpoint: BF16.
 - Runtime weight quantization: FP8 via `--quantization fp8` and
   `VLLM_OFFLOAD_WEIGHTS_BEFORE_QUANT=1`.
@@ -72,6 +76,7 @@ uses Podman. Set `CONTAINER_RUNTIME=docker` or `CONTAINER_RUNTIME=podman` to
 choose explicitly. Docker receives the numeric render GID; rootless Podman uses
 `--group-add keep-groups`, matching this lab's prior B70 container validation.
 Podman omits `--shm-size` because it rejects that option with `--ipc=host`.
+The reference-lab run used rootless Podman 4.9.3.
 
 The model mount is read-only. The script fails if the requested host port is
 already listening or if a container with `NAME` already exists. It never stops
@@ -116,9 +121,10 @@ The container uses `/dev/dri`, host IPC, and the render group, but does not use
 | Thinking | enabled by default in chat-template kwargs |
 | Reasoning parser | `qwen3` |
 
-`MAX_LEN=262144` is only a configured limit. This contribution contains no
-262144-token prefill, retrieval, boundary, or next-request validation, so it
-does not establish working 256K context.
+`MAX_LEN=262144` is only a configured limit. The reference-lab run passed one
+30,049-token retrieval request, but did not attempt a 262144-token prefill,
+near-boundary retrieval, rollover, or next-request check. It therefore does not
+establish working 256K context.
 
 ## Thinking Budget
 
@@ -131,10 +137,44 @@ The launcher smoke tests check more than JSON syntax:
 
 - `curl --fail-with-body` rejects HTTP errors;
 - the plain response must contain `HELLO` in assistant content;
-- the thinking response must expose nonempty reasoning and contain the correct
-  arithmetic answer `408` in reasoning or final content.
+- the thinking response must expose nonempty parsed reasoning and contain the
+  correct arithmetic answer `408` in reasoning or final content. The pinned
+  image uses `message.reasoning`; the check retains a
+  `message.reasoning_content` fallback for older compatible images.
 
 These are startup checks, not a quality or benchmark suite.
+
+## Reference-Lab Validation
+
+On 2026-08-01/02, the corrected recipe ran on two reference-lab B70s with:
+
+- model revision `995ad96eacd98c81ed38be0c5b274b04031597b0`;
+- pinned image digest `sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780`;
+- vLLM `0.21.1.dev0+gad7125a43.d20260709` at commit `ad7125a431`;
+- vLLM XPU kernels `3cab97adf` and torch `2.11.0+xpu`;
+- TP2, eager mode, runtime FP8, float16 activation dtype, prefix caching off,
+  and model-default float32 Mamba SSM state.
+
+The service reached health in 121 seconds and selected the XPU FP8 linear and
+MoE kernels. It passed exact plain text, structured JSON/arithmetic, parsed
+thinking/arithmetic, four simultaneous unique-sentinel requests, and exact
+retrieval at 30,049 prompt tokens. Teardown removed only the exact test
+container and returned the endpoint and GPUs to idle.
+
+All 12 prompts in the fixed realistic suite completed with 128 output tokens
+and no reasoning deltas in non-thinking mode. Their diagnostic conventional
+99-interval median was `48.095169967532186 tok/s`. The suite remains
+`invalid-or-incomplete`, not promoted evidence, because this vLLM build omitted
+`prompt_tokens_details.cached_tokens` on every response, so the required
+`cached_tokens=0` telemetry gate could not pass even though prefix caching was
+disabled.
+
+Runtime validation also found and fixed two packaging/API issues: the launcher
+lacked its executable bit, and its thinking check read only the deprecated
+`reasoning_content` field instead of this image's `reasoning` field. Failure
+cleanup now emits recent container logs before removing its own container.
+Raw artifacts are outside Git at
+`/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-exact-lab-20260802T0408Z`.
 
 ## Contributor Environment
 

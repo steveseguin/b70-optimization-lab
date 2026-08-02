@@ -16,7 +16,8 @@ state remain distinguishable in history.
 
 ## Corrections Applied
 
-PR #14 is classified `community-reported` and now:
+PR #14 was initially classified `community-reported`, then raised to
+`B70-tested` after the corrected prospective replay. It now:
 
 - identifies the actual artifact as UD-Q8_K_XL rather than Q8_0;
 - labels the implicit KV cache as F16 because no `-ctk`/`-ctv` override was
@@ -31,7 +32,8 @@ PR #14 is classified `community-reported` and now:
 - records the exact locally pre-positioned candidate GGUF identity without
   treating its presence as execution evidence.
 
-PR #15 is classified `community-reported` and now:
+PR #15 was initially classified `community-reported`, then raised to
+`B70-tested` after the corrected prospective replay. It now:
 
 - removes the unsupported `150 tok/s` / "golden" claim;
 - pins the image digest resolved in the reference lab while leaving the
@@ -48,76 +50,71 @@ PR #15 is classified `community-reported` and now:
 - defaults to no container restart loop and removes only the newly created
   exact container when launch/smoke validation fails.
 
-Both entries are indexed in `community/README.md`. Neither is eligible for
-`repro/`, `results/`, or LocalMaxxing until its required validation passes.
+Both entries are indexed in `community/README.md` at `B70-tested`. They remain
+in `community/`: neither has the complete promotion evidence required for
+`repro/`, `results/`, or LocalMaxxing.
 
-## Review Validation
+## Static Review Validation
 
-Completed without loading either model:
+Before the lane was released, both contributions passed `git diff --check`,
+shell syntax checks, embedded-Python parser checks, fail-closed input checks,
+and image/source identity review. No active Laguna path or runtime was changed.
 
-- `git diff --check`;
-- `bash -n` for the corrected launchers/snippets;
-- AST parsing of the two embedded Python response validators in the vLLM
-  launcher;
-- a fail-closed missing-model-path check for the vLLM launcher;
-- local resolution of the pinned OCI image digest.
+## Runtime Release And Safety Boundary
 
-No service, container, model workload, sudo command, reset, reboot, or driver
-operation was performed.
+The lane owner explicitly paused Laguna and released cards 0 and 1 for this
+community validation. A host boot had occurred earlier during model staging;
+afterward the B70s passed isolated allocation/compute checks. The community
+work did not perform a reset, reboot, driver reload, service change, or
+standalone collective retry. Each recipe used its own source tree, loopback
+port, process/container name, and external artifact directory.
 
-## Why Runtime Validation Is Deferred
+An unrelated USB `aria2c` process became stuck in an uninterruptible NTFS
+truncate syscall during model mirroring. It used no GPU and did not overlap the
+final NVMe model. It was left untouched rather than escalating to reset or
+reboot.
 
-`CURRENT.md` still marks the Laguna calibrated-FP8-KV work as active and says
-the host is blocked by an executed four-rank XCCL collective failure. Its next
-authorized action is a clean reboot, strict per-device checks, and exactly one
-corrected collective probe requiring `PASS clean_teardowns=4/4`.
+## PR #14 Reference-Lab Result
 
-Idle cards and the absence of a public endpoint do not override that state.
-Do not download/stage the missing large model, build a community runtime, or
-start either recipe until the Laguna lane owner releases the cards and the
-post-recovery gate is authoritative.
+The corrected llama.cpp recipe ran from clean commit `fb92d8f1873` with the
+UD-Q8_K_XL GGUF and BF16 projector at pinned revision
+`5bc3e238d916f48a861bac2f8a1990a0e9b7e98d`. Startup, health, semantic,
+concurrency, seven retrieval cases through 34,649 actual prompt tokens, and all
+12 fixed-suite prompts passed. The conventional 99-interval content-delta
+median was `48.181817970061076 tok/s`.
 
-## Validation Prerequisites
+MTP-on measured `45.7156408565 tok/s`; three MTP-off confirmations measured
+`48.4407013911`, `48.4534088298`, and `48.4744558553 tok/s`. MTP was slower for
+this identity. Exact MTP quality attribution remains inconclusive because the
+MTP-off greedy control was itself nondeterministic across fresh starts.
 
-For PR #14:
+Summary:
+`community/dominick253-qwen36-35b-llamacpp-sycl/validation/2026-08-01-reference-lab-summary.json`.
 
-- use a clean isolated llama.cpp checkout at contributor commit `fb92d8f18`;
-- do not use or clean the modified `/home/steve/src/llama.cpp` tree;
-- acquire and hash `mmproj-BF16.gguf`, or explicitly label a text-only run;
-- use the pre-positioned GGUF at revision
-  `5bc3e238d916f48a861bac2f8a1990a0e9b7e98d`, size `39099447584`, SHA-256
-  `6c6b816537abad90b250a0972b345466028d861ddfe316d5f0de31ca6440f781`.
+## PR #15 Reference-Lab Result
 
-For PR #15:
+The full BF16 `Qwen/Qwen3.6-35B-A3B` snapshot at revision
+`995ad96eacd98c81ed38be0c5b274b04031597b0` matched the upstream 40-file size
+manifest; all 27 LFS SHA-256 checks passed. The pinned Intel image contained
+vLLM `ad7125a431`, XPU kernels `3cab97adf`, and torch `2.11.0+xpu`.
 
-- download the full BF16 `Qwen/Qwen3.6-35B-A3B` checkpoint at a pinned revision
-  into an isolated cache and verify every shard;
-- use rootless Podman as a recorded deviation because Docker is absent;
-- use image
-  `docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780`;
-- keep SSM state at the checkpoint/model default for the baseline.
+Runtime validation found two correctable launcher defects before the final
+pass: the file lacked its executable bit, and the smoke check read only the
+deprecated `reasoning_content` field while this image returns parsed thinking
+as `reasoning`. The published launcher now handles both field spellings, makes
+thinking explicit per request, and preserves recent logs on smoke failure.
 
-## Validation Ladder After Lane Release
+The corrected TP2 service reached health in 121 seconds and selected the XPU
+dynamic-FP8 linear and MoE kernels. Exact text, JSON/arithmetic, parsed
+thinking, four-request concurrency, and 30,049-token retrieval checks passed.
+The fixed 12-prompt suite completed with a conventional 99-interval median of
+`48.095169967532186 tok/s`, but remains `invalid-or-incomplete` because this
+image omitted cached-token telemetry. Prefix caching was disabled; missing
+telemetry was not converted into a passing `cached_tokens=0` gate. No 256K,
+float16-SSM, or LocalMaxxing claim is made.
 
-Run the recipes sequentially on cards 0 and 1, using distinct loopback ports
-and unique process/container names. Preserve exact source, binary, DSO, image,
-model, driver, runtime, command, environment, request, response, and cleanup
-identities.
+Summary:
+`community/dominick253-qwen36-35b-vllm-fp8/validation/2026-08-01-reference-lab-summary.json`.
 
-1. Require clean startup, `/health`, `/v1/models`, one intended model identity,
-   and no precision fallback or device error.
-2. Run plain, reasoning, arithmetic, JSON, and deterministic output canaries.
-3. Run unique cold realistic prompts and sequential/concurrency contamination
-   checks.
-4. For PR #14, compare greedy MTP-off and MTP-on on identical fresh prompts,
-   requiring target-token identity before interpreting speed or acceptance.
-5. For PR #15, validate dynamic FP8 quality at default float32/model SSM state;
-   keep any float16-SSM test in a separately labeled lane.
-6. Progress through exact-token long-context retrieval ladders rather than
-   treating configured maximum lengths as proof.
-7. Only after correctness passes, run the fixed cold 13-prompt performance
-   suite with conventional 99-interval accounting and complete artifacts.
-
-Stop at the first correctness, device, collective, context, teardown, or
-identity failure. Preserve the negative result; do not reboot, reset, retry a
-collective, or continue into performance under the community-validation scope.
+The exact test container was stopped and removed, its port was clear, and all
+four B70s were idle after teardown.

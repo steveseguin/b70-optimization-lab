@@ -125,7 +125,7 @@ must not be recorded the same way.
 | --- | --- | --- | --- | --- |
 | [Qwen3.6 27B FP8 TP2 Docker](dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) | dominick253 | [PR #9](https://github.com/steveseguin/b70-optimization-lab/pull/9) | `B70-tested` | Yes; recipe runs at 30.171 tok/s median decode, inside the reported range |
 | [Qwen3.6 35B UD-Q8_K_XL llama.cpp SYCL](dominick253-qwen36-35b-llamacpp-sycl/STATUS.md) | dominick253 | [PR #14](https://github.com/steveseguin/b70-optimization-lab/pull/14) | `B70-tested` | Yes; corrected MTP-off recipe, semantic/concurrency gates, 34,649-token retrieval, and cold fixed suite |
-| [Qwen3.6 35B dynamic-FP8 vLLM Docker](dominick253-qwen36-35b-vllm-fp8/STATUS.md) | dominick253 | [PR #15](https://github.com/steveseguin/b70-optimization-lab/pull/15) | `community-reported` | No |
+| [Qwen3.6 35B dynamic-FP8 vLLM Docker](dominick253-qwen36-35b-vllm-fp8/STATUS.md) | dominick253 | [PR #15](https://github.com/steveseguin/b70-optimization-lab/pull/15) | `B70-tested` | Yes; corrected exact-revision TP2 replay, smoke/semantic/concurrency gates, and 30,049-token retrieval |
 
 ## Field Report Index
 
