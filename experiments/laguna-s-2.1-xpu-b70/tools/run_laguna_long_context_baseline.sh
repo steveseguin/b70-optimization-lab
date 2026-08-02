@@ -15,6 +15,8 @@ case "$role" in candidate|teacher) ;; *) echo "unsupported role: $role" >&2; exi
 readonly venv_root="${REPRO_VENV_ROOT:-/home/steve/.venvs/deepseek-v4-xpu}"
 readonly vllm_root="${REPRO_VLLM_TREE:-/home/steve/src/laguna-vllm-shared-elementwise-m12-20260731}"
 readonly kernel_root="${REPRO_KERNEL_TREE:-/home/steve/src/laguna-xpu-kernels-shared-elementwise-m12-20260731}"
+readonly expected_vllm_commit="${REPRO_EXPECTED_VLLM_COMMIT:-}"
+readonly expected_kernel_commit="${REPRO_EXPECTED_KERNEL_COMMIT:-}"
 readonly venv_python="$venv_root/bin/python"
 readonly benchmark="$script_dir/bench_laguna_long_context.py"
 readonly service="$script_dir/serve_laguna_long_context_nvme.sh"
@@ -35,10 +37,17 @@ readonly request_timeout="${LAGUNA_LONG_TIMEOUT:-900}"
 readonly selected_case_ids_csv="${LAGUNA_LONG_CASE_IDS:-}"
 readonly min_mem_available_kb="${LAGUNA_MIN_MEM_AVAILABLE_KB:-12582912}"
 readonly min_swap_free_kb="${LAGUNA_MIN_SWAP_FREE_KB:-4194304}"
+readonly min_swap_total_kb="${LAGUNA_MIN_SWAP_TOTAL_KB:-0}"
+readonly required_swap_layout="${LAGUNA_REQUIRED_SWAP_LAYOUT:-}"
 readonly low_swap_min_mem_available_kb="${LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB:-16777216}"
 readonly oracle="${LAGUNA_LONG_ORACLE:-}"
+readonly require_oracle="${LAGUNA_REQUIRE_ORACLE:-0}"
 readonly exact_prefill_chunks="${LAGUNA_EXACT_PREFILL_CHUNKS:-0}"
 readonly candidate_profile="${LAGUNA_LONG_CANDIDATE_PROFILE:-q12}"
+readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
+readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
+readonly model_manifest=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256
+readonly model_manifest_sha256=45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
 
 case "$candidate_profile" in
   q12)
@@ -66,12 +75,20 @@ laguna_cluster_iface() {
 case "$run_dir" in "$LAGUNA_NVME_RUN_ROOT"/*) ;; *) die "run directory is outside the fixed NVMe run root" ;; esac
 [[ "$(realpath -m -- "$run_dir")" == "$run_dir" ]] || die "run directory must be canonical"
 for path in "$vllm_root" "$kernel_root" "$venv_python" "$benchmark" "$service" \
-  "$suite" "$runtime_lock" "$runtime_verifier" "$xpumem_module"; do
+  "$suite" "$runtime_lock" "$runtime_verifier" "$xpumem_module" "$model_manifest"; do
   [[ -e "$path" ]] || die "missing required path: $path"
 done
 [[ -z "$(git -C "$repo_root" status --short)" ]] || die "main worktree is dirty"
 [[ -z "$(git -C "$vllm_root" status --short)" ]] || die "vLLM worktree is dirty"
 [[ -z "$(git -C "$kernel_root" status --short)" ]] || die "kernel worktree is dirty"
+readonly vllm_commit="$(git -C "$vllm_root" rev-parse HEAD)"
+readonly kernel_commit="$(git -C "$kernel_root" rev-parse HEAD)"
+[[ -z "$expected_vllm_commit" || "$vllm_commit" == "$expected_vllm_commit" ]] \
+  || die "vLLM commit does not match REPRO_EXPECTED_VLLM_COMMIT"
+[[ -z "$expected_kernel_commit" || "$kernel_commit" == "$expected_kernel_commit" ]] \
+  || die "kernel commit does not match REPRO_EXPECTED_KERNEL_COMMIT"
+[[ "$(sha256sum "$model_manifest" | cut -d' ' -f1)" == "$model_manifest_sha256" ]] \
+  || die "Laguna model manifest hash mismatch"
 [[ -z "$oracle" || -f "$oracle" ]] || die "missing oracle: $oracle"
 [[ "$exact_prefill_chunks" == 0 || "$exact_prefill_chunks" == 1 ]] \
   || die "LAGUNA_EXACT_PREFILL_CHUNKS must be zero or one"
@@ -112,8 +129,27 @@ awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
   || die "LAGUNA_MIN_MEM_AVAILABLE_KB must be a non-negative integer"
 [[ "$min_swap_free_kb" =~ ^[0-9]+$ ]] \
   || die "LAGUNA_MIN_SWAP_FREE_KB must be a non-negative integer"
+[[ "$min_swap_total_kb" =~ ^[0-9]+$ ]] \
+  || die "LAGUNA_MIN_SWAP_TOTAL_KB must be a non-negative integer"
 [[ "$low_swap_min_mem_available_kb" =~ ^[0-9]+$ ]] \
   || die "LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB must be a non-negative integer"
+[[ "$require_oracle" == 0 || "$require_oracle" == 1 ]] \
+  || die "LAGUNA_REQUIRE_ORACLE must be zero or one"
+[[ "$require_oracle" == 0 || -n "$oracle" ]] \
+  || die "LAGUNA_REQUIRE_ORACLE=1 requires LAGUNA_LONG_ORACLE"
+readonly swap_total_kb="$(awk '$1 == "SwapTotal:" { print $2 }' /proc/meminfo)"
+(( swap_total_kb >= min_swap_total_kb )) \
+  || die "host SwapTotal ${swap_total_kb} kB is below required ${min_swap_total_kb} kB"
+case "$required_swap_layout" in
+  "") ;;
+  laguna-longctx-24g)
+    readonly observed_swap_layout="$(awk 'NR > 1 { print $1 ":" $3 }' /proc/swaps | sort)"
+    readonly expected_swap_layout=$'/swap-laguna-longctx.img:16777212\n/swap.img:8388604'
+    [[ "$observed_swap_layout" == "$expected_swap_layout" ]] \
+      || die "active swap layout does not match the frozen Laguna 24 GiB layout"
+    ;;
+  *) die "unsupported LAGUNA_REQUIRED_SWAP_LAYOUT: $required_swap_layout" ;;
+esac
 ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 || die "existing vLLM workers block run"
 ! ss -H -ltn 'sport = :18080' | grep -q . || die "port 18080 already has a listener"
 [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "RPC directory already exists"
@@ -143,8 +179,18 @@ chmod -R 700 "$run_dir"
 {
   printf 'schema=laguna-long-context-baseline-v1\nrole=%s\n' "$role"
   printf 'vllm_commit=%s\nkernel_commit=%s\n' \
-    "$(git -C "$vllm_root" rev-parse HEAD)" \
-    "$(git -C "$kernel_root" rev-parse HEAD)"
+    "$vllm_commit" "$kernel_commit"
+  printf 'expected_vllm_commit=%s\nexpected_kernel_commit=%s\n' \
+    "$expected_vllm_commit" "$expected_kernel_commit"
+  printf 'target_revision=%s\ndraft_revision=%s\n' \
+    "$target_revision" "$draft_revision"
+  printf 'model_manifest=%s\nmodel_manifest_sha256=%s\n' \
+    "$model_manifest" "$model_manifest_sha256"
+  printf 'target_root=%s\ndraft_root=%s\n' \
+    "$LAGUNA_NVME_TARGET_ROOT" "$LAGUNA_NVME_DRAFT_ROOT"
+  printf 'target_config_sha256=%s\ndraft_config_sha256=%s\n' \
+    "$(sha256sum "$LAGUNA_NVME_TARGET_ROOT/config.json" | cut -d' ' -f1)" \
+    "$(sha256sum "$LAGUNA_NVME_DRAFT_ROOT/config.json" | cut -d' ' -f1)"
   printf 'max_model_len=%s\nmax_num_batched_tokens=%s\n' \
     "$max_model_len" "$max_num_batched_tokens"
   printf 'max_num_scheduled_tokens=%s\nexpected_effective_scheduled_tokens=%s\n' \
@@ -157,14 +203,19 @@ chmod -R 700 "$run_dir"
     "$request_timeout" "$selected_case_ids_csv"
   printf 'suite=%s\nexact_prefill_chunks=%s\n' \
     "$suite" "$exact_prefill_chunks"
+  printf 'suite_sha256=%s\nruntime_lock_sha256=%s\n' \
+    "$(sha256sum "$suite" | cut -d' ' -f1)" \
+    "$(sha256sum "$runtime_lock" | cut -d' ' -f1)"
   printf 'candidate_profile=%s\ncandidate_m=%s\ncandidate_spec=%s\n' \
     "$candidate_profile" "$candidate_m" "$candidate_spec"
   printf 'memory_guard_min_available_kb=%s\nmemory_guard_min_swap_free_kb=%s\n' \
     "$min_mem_available_kb" "$min_swap_free_kb"
+  printf 'memory_guard_min_swap_total_kb=%s\n' "$min_swap_total_kb"
+  printf 'required_swap_layout=%s\n' "$required_swap_layout"
   printf 'memory_guard_low_swap_min_available_kb=%s\n' \
     "$low_swap_min_mem_available_kb"
-  printf 'host_swap_total_kb=%s\n' \
-    "$(awk '$1 == "SwapTotal:" { print $2 }' /proc/meminfo)"
+  printf 'host_swap_total_kb=%s\nrequire_oracle=%s\n' \
+    "$swap_total_kb" "$require_oracle"
   printf 'q12_short_record_reference_conventional_tok_s=125.4619731637751\n'
   printf 'candidate_target_topology=146/145\ncandidate_draft_topology=%s\n' \
     "$candidate_draft_topology"
@@ -186,6 +237,7 @@ xpu-smi ps -j > "$run_dir/xpu-processes-before.json" 2>&1 || true
 server_pid=""
 memory_guard_pid=""
 benchmark_pid=""
+readonly kernel_journal_start_epoch="$(date +%s)"
 service_alive() {
   [[ -n "$server_pid" ]] && (
     kill -0 "$server_pid" 2>/dev/null || kill -0 -- "-$server_pid" 2>/dev/null
@@ -226,20 +278,31 @@ stop_service() {
   ! service_alive
 }
 finalize() {
-  local status="$?" stop_status=0
+  local status="$?" stop_status=0 device_error_status=0
   trap - EXIT INT TERM
   set +e
   stop_memory_guard
   stop_benchmark
   stop_service || stop_status=1
   xpu-smi ps -j > "$run_dir/xpu-processes-after.json" 2>&1 || true
+  journalctl -k -b --no-pager --since "@$kernel_journal_start_epoch" \
+    > "$run_dir/kernel-journal.log" 2>&1 || stop_status=1
+  grep -Ei \
+    'guc.*(timeout|reset|error)|exec.*queue.*timeout|wedg|gpu.*(hang|reset|fault)|xe.*(timeout|reset|error|fail|fault|hang)|drm.*(timeout|reset|error|fail|fault|hang)' \
+    "$run_dir/kernel-journal.log" > "$run_dir/device-error-scan.log" || true
+  [[ ! -s "$run_dir/device-error-scan.log" ]] || device_error_status=1
   {
     date -u +timestamp_utc=%Y-%m-%dT%H:%M:%SZ
     free --bytes
     swapon --show --bytes
   } > "$run_dir/host-memory-after.txt"
-  printf 'original_status=%s\nstop_status=%s\n' "$status" "$stop_status" \
+  printf 'original_status=%s\nstop_status=%s\ndevice_error_status=%s\n' \
+    "$status" "$stop_status" "$device_error_status" \
     > "$run_dir/cleanup-status.txt"
+  if (( (stop_status != 0 || device_error_status != 0) && status == 0 )); then
+    status=1
+    printf 'FAIL_POSTRUN\n' > "$run_dir/run-status.txt"
+  fi
   if [[ -e "$rpc_dir" && ! -e "$run_dir/rpc-after-stop" ]]; then
     mv -- "$rpc_dir" "$run_dir/rpc-after-stop" 2>/dev/null || true
   fi
@@ -465,33 +528,48 @@ curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after.prom"
 
 if [[ "$role" == candidate ]]; then
   topology_count() {
-    local verb="$1" graphs="$2" eager_breaks="$3"
+    local rank="$1" verb="$2" graphs="$3" eager_breaks="$4"
     grep -F "$verb audited breakable cudagraph for BatchDescriptor(num_tokens=${candidate_m}," \
       "$run_dir/server.log" \
+      | grep -F "(Worker_TP${rank}_EP${rank} " \
       | grep -Fc "BreakableCUDAGraphCapture(graphs=$graphs, eager_breaks=$eager_breaks)" \
       || true
   }
-  target_capture_count="$(topology_count Captured 146 145)"
-  target_replay_count="$(topology_count Replayed 146 145)"
-  draft_capture_count="$(topology_count Captured 14 13)"
-  draft_replay_count="$(topology_count Replayed 14 13)"
   all_topology_count="$(grep -Fc 'BreakableCUDAGraphCapture(graphs=' "$run_dir/server.log" || true)"
-  (( target_capture_count == 4 )) \
-    || die "candidate target capture topology count is not exactly four"
-  (( target_replay_count == 4 )) \
-    || die "candidate target replay topology count is not exactly four"
-  if [[ "$candidate_profile" == q12 ]]; then
-    (( draft_capture_count == 4 )) \
-      || die "q12 candidate draft capture topology count is not exactly four"
-    (( draft_replay_count == 4 )) \
-      || die "q12 candidate draft replay topology count is not exactly four"
-    (( all_topology_count == 16 )) \
-      || die "q12 candidate emitted an unexpected Breakable topology line"
+  for rank in 0 1 2 3; do
+    (( $(topology_count "$rank" Captured 146 145) == 1 )) \
+      || die "candidate target capture topology is not exactly once on rank $rank"
+    (( $(topology_count "$rank" Replayed 146 145) == 1 )) \
+      || die "candidate target replay topology is not exactly once on rank $rank"
+    if [[ "$candidate_profile" == q12 ]]; then
+      (( $(topology_count "$rank" Captured 14 13) == 1 )) \
+        || die "q12 draft capture topology is not exactly once on rank $rank"
+      (( $(topology_count "$rank" Replayed 14 13) == 1 )) \
+        || die "q12 draft replay topology is not exactly once on rank $rank"
+    else
+      (( $(topology_count "$rank" Captured 14 13) == 0 )) \
+        || die "$candidate_profile unexpectedly captured a draft graph on rank $rank"
+      (( $(topology_count "$rank" Replayed 14 13) == 0 )) \
+        || die "$candidate_profile unexpectedly replayed a draft graph on rank $rank"
+    fi
+  done
+  [[ "$candidate_profile" != q12 && "$all_topology_count" == 8 \
+    || "$candidate_profile" == q12 && "$all_topology_count" == 16 ]] \
+    || die "candidate emitted an unexpected Breakable topology line"
+  if [[ "$max_num_scheduled_tokens" == auto ]]; then
+    grep -Fq "max_num_scheduled_tokens is set to $expected_effective_scheduled_tokens based on" \
+      "$run_dir/server.log" \
+      || die "automatic runtime scheduler budget was not proved in server.log"
   else
-    (( draft_capture_count == 0 && draft_replay_count == 0 )) \
-      || die "$candidate_profile candidate unexpectedly captured or replayed a draft graph"
-    (( all_topology_count == 8 )) \
-      || die "$candidate_profile candidate emitted an unexpected Breakable topology line"
+    grep -Fq "Laguna long scheduler budget: batched=$max_num_batched_tokens scheduled=$max_num_scheduled_tokens" \
+      "$run_dir/server.log" \
+      || die "explicit launcher scheduler budget was not proved in server.log"
+    explicit_budget_log="$(grep -F 'non-default args:' "$run_dir/server.log" \
+      | grep -F "'max_num_batched_tokens': $max_num_batched_tokens" \
+      | grep -F "'max_num_scheduled_tokens': $max_num_scheduled_tokens" \
+      || true)"
+    [[ -n "$explicit_budget_log" ]] \
+      || die "explicit vLLM runtime scheduler budget was not proved in server.log"
   fi
 fi
 

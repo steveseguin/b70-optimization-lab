@@ -1,0 +1,45 @@
+{
+  "schema": "laguna-device-recovery-gate-v1",
+  "status": "PASS",
+  "date": "2026-08-02",
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/device-recovery-scheduler-gate-20260802T231513Z",
+  "boot": {
+    "before_id": "216cdd68-fae6-44c5-bc4a-aff261a0da95",
+    "after_id": "ee67272f-9fee-41cf-9a37-b9eaa438a5cf",
+    "after_time_local": "2026-08-02 19:05:59",
+    "kernel": "7.0.0-28-generic",
+    "taint_before": 512,
+    "taint_after": 0
+  },
+  "single_card": {
+    "attempts": 4,
+    "passed": 4,
+    "retried": 0,
+    "physical_ranks": [0, 1, 2, 3],
+    "output_sha256": "29c84bde8be1af469370d1725be4a8bcfde77e85a10728d88bb5202033594f6c"
+  },
+  "collective": {
+    "attempts": 1,
+    "passed": 1,
+    "retried": 0,
+    "world_size": 4,
+    "verified_sum": 10.0,
+    "clean_teardowns": 4,
+    "cluster_interface_resolved_at_runtime": "eno1"
+  },
+  "post_gate": {
+    "device_error_matches": 0,
+    "residual_processes": 0,
+    "protected_listeners": 0
+  },
+  "probe_source_sha256": {
+    "laguna_xpu_device_probe.py": "0c5d3b8315b9690d785a6ecd6b35bf0f0701ff48c7112254e352c85d105b553f",
+    "run_xccl_collective_probe.sh": "5c2a7925f43ed2e8ec22c9e41b99de98c8cebc38775978e8005ef009df00f50c",
+    "xccl_collective_probe.py": "01e2fcd6b64b0e886cd8fe6904c75dc4ec1d42c5a91b333d845aca0c278ee31e"
+  },
+  "notes": [
+    "No XPU probe was retried.",
+    "No FLR, driver reload, unbind/rebind, shared-memory deletion, or automatic recovery ladder was used.",
+    "This is host/device recovery evidence, not scheduler-treatment performance evidence."
+  ]
+}

@@ -144,8 +144,11 @@ Update 2026-08-02: no Laguna service or worker is running. A preregistered q12
 mixed-depth feasibility diagnostic stalled before model loading, and the kernel
 then reported repeated GuC timeouts and resets on `0000:47:00.0`. The launcher
 cleaned up with no residual worker; temporary validation swap was removed.
-Treat the mixed-depth hypothesis as unmeasured and do not run another XPU job
-until the device is freshly recovered. The next offline-prepared lane is the
+The authorized clean reboot and bounded post-reboot gate are now complete:
+all four one-shot device probes and the single corrected TP4 collective passed,
+with clean teardowns and no device-error journal match. Evidence is sealed at
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/device-recovery-scheduler-gate-20260802T231513Z`.
+The mixed-depth hypothesis remains unmeasured. The next model lane is the
 configuration-only 8,202/8,192 long scheduler-budget alignment in
 [`2026-08-02-long-scheduler-budget-alignment-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-long-scheduler-budget-alignment-preregistration.md).
 The subsequent default-off wide-prefill Q/K normalization plus RoPE fusion is
@@ -154,13 +157,14 @@ also implemented and host-validated in isolated source commits vLLM
 and its endpoint gate is additionally dependent on the scheduler-alignment
 A/B passing; see
 [`2026-08-02-wide-prefill-qknorm-rope-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-wide-prefill-qknorm-rope-preregistration.md).
-Steve authorized device recovery on 2026-08-02. One clean reboot and the
-bounded post-reboot single-card plus corrected four-rank collective gate are
-registered in
+Steve authorized device recovery on 2026-08-02. The one clean reboot and the
+bounded post-reboot single-card plus corrected four-rank collective gate passed
+under the registration in
 [`2026-08-02-device-recovery-scheduler-alignment-gate.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-device-recovery-scheduler-alignment-gate.md).
-Do not use FLR, driver reload, unbind/rebind, shared-memory deletion, or an
-automatic retry ladder. The scheduler A/B remains the first model work after a
-complete recovery pass.
+No FLR, driver reload, unbind/rebind, shared-memory deletion, or automatic retry
+ladder was used. The scheduler A/B remains the first model work after the
+complete recovery pass; its pre-execution audit amendment, fixed repeat oracle,
+and fail-closed pair analyzer are recorded in the scheduler preregistration.
 
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to

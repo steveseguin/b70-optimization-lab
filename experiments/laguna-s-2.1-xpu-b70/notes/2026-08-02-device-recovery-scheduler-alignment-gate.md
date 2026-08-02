@@ -2,8 +2,36 @@
 
 Date registered: 2026-08-02 America/Toronto
 
-Status: clean reboot authorized by Steve; pre-reboot state recorded; reboot and
-post-reboot validation pending.
+Status: **PASS**. The authorized clean reboot and the complete one-shot
+post-reboot validation finished on 2026-08-02. No retry, reset, driver reload,
+FLR, unbind/rebind, or shared-memory deletion occurred.
+
+## Recovery result
+
+- new boot ID: `ee67272f-9fee-41cf-9a37-b9eaa438a5cf`, different from the
+  preregistered `216cdd68-fae6-44c5-bc4a-aff261a0da95`;
+- kernel `7.0.0-28-generic`, taint recovered from `512` to `0`;
+- all four `8086:e223` BDFs bound to `xe` with their expected DRM nodes;
+- both Gemma quad units inactive, protected ports free, and no foreign GPU
+  process or B70 DRM-node opener;
+- four sequential single-card changing-value probes passed exactly once each,
+  with every required stage and the same verified output digest;
+- the single corrected TP4/XCCL attempt passed verified sum `10.0` on all four
+  ranks with `clean_teardowns=4/4`;
+- the bounded current-boot device-error scan was empty before and through the
+  gate; and
+- post-gate process and listener checks were clean.
+
+Sealed internal-NVMe evidence:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+device-recovery-scheduler-gate-20260802T231513Z
+```
+
+The interface was resolved from `10.0.0.65` at execution time as `eno1`; the
+name was not taken from the superseded historical checklist. Recovery is now
+complete. The scheduler A/B remains separate model evidence.
 
 ## Why recovery is required
 
