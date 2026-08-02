@@ -52,3 +52,26 @@ the regressing commit or exclude other build/runtime differences.
 The narrow useful output is a community-supplied candidate window from
 `b9455`/`8e6fff84` to `dee2a84`/`dee2a846` for investigation alongside
 [`ggml-org/llama.cpp#23797`](https://github.com/ggml-org/llama.cpp/issues/23797).
+
+## Reported batched throughput at concurrency
+
+Separate from the single-stream and two-GPU results above, the contributor ran
+`llama-batched-bench` on one B70 to measure aggregate throughput versus parallel
+request count. Qwen3-30B-A3B-Instruct-2507 UD-Q4_K_XL, `-npp 128 -ntg 128 -fa 1`,
+build `11924d4`:
+
+| Parallel (npl) | Generation tok/s (aggregate) | Total tok/s (incl prompt) |
+| --- | --- | --- |
+| 1 | 65.7 | 115.8 |
+| 4 | 110.7 | 199.8 |
+| 16 | 202.5 | 354.1 |
+| 32 | 299.8 | 495.2 |
+| 50 | 382.7 | 601.5 |
+
+The contributor offers this as one single-B70 data point against community
+reports of roughly 370 tok/s (peaks near 550) at fifty-way concurrency: here
+382.7 generation / 601.5 total tok/s on plain llama.cpp continuous batching, for
+a 3B-active MoE. It is not a controlled reproduction of any specific third-party
+report — model revision and engine differ, and a dense model or vLLM-XPU would
+shift the prompt/generation mix — but the batched-throughput ceiling on one card
+is in that range. Prompt processing held near 1400 tok/s across the sweep.
