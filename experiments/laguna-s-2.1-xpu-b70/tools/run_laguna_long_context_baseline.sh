@@ -110,6 +110,8 @@ chmod -R 700 "$run_dir"
     "$min_mem_available_kb" "$min_swap_free_kb"
   printf 'memory_guard_low_swap_min_available_kb=%s\n' \
     "$low_swap_min_mem_available_kb"
+  printf 'host_swap_total_kb=%s\n' \
+    "$(awk '$1 == "SwapTotal:" { print $2 }' /proc/meminfo)"
   printf 'candidate_record_conventional_tok_s=125.4619731637751\n'
   printf 'candidate_target_topology=146/145\ncandidate_draft_topology=14/13\n'
   printf 'oracle=%s\ncluster_iface=%s\nscored_measurement=false\n' "$oracle" "$cluster_iface"
@@ -121,9 +123,15 @@ chmod -R 700 "$run_dir"
     "$LAGUNA_NVME_DRAFT_ROOT/config.json"
 } > "$run_dir/identity.txt"
 xpu-smi ps -j > "$run_dir/xpu-processes-before.json" 2>&1 || true
+{
+  date -u +timestamp_utc=%Y-%m-%dT%H:%M:%SZ
+  free --bytes
+  swapon --show --bytes
+} > "$run_dir/host-memory-before.txt"
 
 server_pid=""
 memory_guard_pid=""
+benchmark_pid=""
 service_alive() {
   [[ -n "$server_pid" ]] && (
     kill -0 "$server_pid" 2>/dev/null || kill -0 -- "-$server_pid" 2>/dev/null
@@ -134,6 +142,21 @@ stop_memory_guard() {
   kill "$memory_guard_pid" 2>/dev/null || true
   wait "$memory_guard_pid" 2>/dev/null || true
   memory_guard_pid=""
+}
+benchmark_alive() {
+  [[ -n "$benchmark_pid" ]] && kill -0 "$benchmark_pid" 2>/dev/null
+}
+stop_benchmark() {
+  local signal attempts
+  [[ -n "$benchmark_pid" ]] || return 0
+  for signal in TERM KILL; do
+    benchmark_alive || break
+    kill "-$signal" "$benchmark_pid" 2>/dev/null || true
+    case "$signal" in TERM) attempts=10 ;; KILL) attempts=5 ;; esac
+    for _ in $(seq 1 "$attempts"); do benchmark_alive || break; sleep 1; done
+  done
+  wait "$benchmark_pid" 2>/dev/null || true
+  benchmark_pid=""
 }
 stop_service() {
   local signal attempts
@@ -153,8 +176,14 @@ finalize() {
   trap - EXIT INT TERM
   set +e
   stop_memory_guard
+  stop_benchmark
   stop_service || stop_status=1
   xpu-smi ps -j > "$run_dir/xpu-processes-after.json" 2>&1 || true
+  {
+    date -u +timestamp_utc=%Y-%m-%dT%H:%M:%SZ
+    free --bytes
+    swapon --show --bytes
+  } > "$run_dir/host-memory-after.txt"
   printf 'original_status=%s\nstop_status=%s\n' "$status" "$stop_status" \
     > "$run_dir/cleanup-status.txt"
   if [[ -e "$rpc_dir" && ! -e "$run_dir/rpc-after-stop" ]]; then
@@ -289,6 +318,12 @@ printf 'timestamp_utc\tmem_available_kb\tswap_free_kb\taction\n' \
     if [[ "$action" == stop-service ]]; then
       printf 'memory guard stopped the service: MemAvailable=%s kB, SwapFree=%s kB\n' \
         "$available_kb" "$swap_free_kb" > "$run_dir/memory-guard-stop.txt"
+      if [[ -s "$run_dir/benchmark.pid" ]]; then
+        read -r active_benchmark_pid < "$run_dir/benchmark.pid" || true
+        if [[ "$active_benchmark_pid" =~ ^[0-9]+$ ]]; then
+          kill -TERM "$active_benchmark_pid" 2>/dev/null || true
+        fi
+      fi
       kill -TERM -- "-$server_pid" 2>/dev/null || true
       kill -TERM "$server_pid" 2>/dev/null || true
       break
@@ -326,7 +361,16 @@ if [[ -n "$selected_case_ids_csv" ]]; then
   done
 fi
 "$venv_python" "$benchmark" "${benchmark_args[@]}" \
-  > "$run_dir/bench.stdout"
+  > "$run_dir/bench.stdout" &
+benchmark_pid="$!"
+printf '%s\n' "$benchmark_pid" > "$run_dir/benchmark.pid"
+set +e
+wait "$benchmark_pid"
+benchmark_status="$?"
+set -e
+benchmark_pid=""
+printf 'completed\n' > "$run_dir/benchmark.pid"
+(( benchmark_status == 0 )) || exit "$benchmark_status"
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after.prom"
 
 if [[ "$role" == candidate ]]; then

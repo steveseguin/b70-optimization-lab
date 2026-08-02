@@ -139,6 +139,39 @@
         "original_status": 2,
         "stop_status": 0
       }
+    },
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-baseline-20260802T181000Z",
+      "identity_delta": {
+        "gpu_memory_utilization": 0.8,
+        "selected_case_ids": []
+      },
+      "classification": "memory-guard-abort-after-three-1k-rows",
+      "completed_rows": 3,
+      "oom_occurred": false,
+      "guard_stop": {
+        "mem_available_kib": 16037464,
+        "swap_free_kib": 935928
+      },
+      "cleanup_status": {
+        "original_status": 130,
+        "stop_status": 0,
+        "manual_interrupt_required": true
+      },
+      "warmed_rows": [
+        {
+          "case_id": "laguna-lc-01024-middle",
+          "prefill_tok_s_prometheus": 5185.442671819004,
+          "decode_tok_s_99_interval": 155.15993071458698,
+          "retrieval_pass": true
+        },
+        {
+          "case_id": "laguna-lc-01024-late",
+          "prefill_tok_s_prometheus": 5167.26617214932,
+          "decode_tok_s_99_interval": 153.04454717718028,
+          "retrieval_pass": true
+        }
+      ]
     }
   ],
   "artifact_sha256": {

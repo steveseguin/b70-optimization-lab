@@ -104,3 +104,23 @@ free swap is below 4 GiB and available RAM is below 16 GiB. The 0.80 identity
 is retained because its measured 109,059-token KV capacity comfortably covers
 the exact 32K request while its observed host minimum remains more than 6 GiB
 above the combined floor.
+
+The first full 0.80 sweep completed the three 1024-token rows, then the guard
+stopped it before the first 4096-token row completed:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-baseline-20260802T181000Z
+```
+
+The two warmed 1K rows again passed retrieval and measured 155.160 and 153.045
+tok/s decode with 5,185.443 and 5,167.266 prefill tok/s. The guard fired at
+16,037,464 KiB available RAM and 935,928 KiB free swap. It prevented OOM, but
+the benchmark's active streaming read did not terminate with the service, so
+the runner was manually interrupted and recorded status 130 with clean service
+cleanup. The runner now launches the benchmark as a tracked child and the
+guard terminates both sides of an active request.
+
+A temporary, non-persistent 16 GiB `/swap-laguna-longctx.img` was then enabled,
+raising total swap to 24 GiB. It is not in `fstab` and must be disabled and
+removed after this validation lane. The extra swap provides reclaim space for
+cold worker pages; it does not relax the 12/16 GiB available-RAM guard.
