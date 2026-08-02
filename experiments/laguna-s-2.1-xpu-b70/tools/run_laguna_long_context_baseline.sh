@@ -25,7 +25,8 @@ readonly xpumem_module=/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfo
 readonly kernel_package="$kernel_root/vllm_xpu_kernels"
 readonly native_library_path="$kernel_package:$venv_root/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib"
 readonly frozen_path="$venv_root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/long-context-${role}-$(basename -- "$run_dir")"
+readonly rpc_tag="$(printf '%s' "$run_dir" | sha256sum | cut -c1-12)"
+readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/l${rpc_tag:0:6}"
 readonly max_model_len="${LAGUNA_MAX_MODEL_LEN:-32768}"
 readonly max_num_batched_tokens="${LAGUNA_MAX_NUM_BATCHED_TOKENS:-8192}"
 readonly oracle="${LAGUNA_LONG_ORACLE:-}"
@@ -53,6 +54,8 @@ done
 ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 || die "existing vLLM workers block run"
 ! ss -H -ltn 'sport = :18080' | grep -q . || die "port 18080 already has a listener"
 [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "RPC directory already exists"
+rpc_probe="$rpc_dir/00000000-0000-0000-0000-000000000000"
+(( ${#rpc_probe} <= 107 )) || die "RPC socket path exceeds the platform limit"
 cluster_iface="$(laguna_cluster_iface)" || die "cannot resolve cluster interface"
 readonly cluster_iface
 
