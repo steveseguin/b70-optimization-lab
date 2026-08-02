@@ -58,3 +58,41 @@ The sentinels are expected to accept deeper tokens and therefore prove that a
 future treatment must be explicitly long-context-only. Any long-row token
 beyond position 6 closes this exact depth-7 hypothesis before implementation.
 Any operational failure is preserved with no retry or guard change.
+
+## Result
+
+Status: closed as an operational failure; the mixed-depth hypothesis remains
+unmeasured and source implementation is not authorized.
+
+The frozen run artifact is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/`
+`laguna-long-mixed-depth-feasibility-q12-20260802T211100Z`. Runtime verification
+passed and all four workers reached distributed initialization, but the server
+log stopped growing after the final topology warning at 17:12:54 local time.
+Unlike prior matching starts, it never printed `Starting to load model` or a
+checkpoint progress line. No health endpoint, benchmark process, benchmark
+row, graph capture, or performance measurement was reached.
+
+At 17:15:30, after the service had already made no progress for more than two
+minutes, an observer `xpu-smi dump` was started to inspect the devices. That
+observer also hung. Beginning at approximately 17:15:33, the kernel reported
+repeated GuC execution-queue timeouts and resets for `0000:47:00.0`, including
+`Kernel-submitted job timed out` and timed-out jobs reported as belonging to
+`no process [-1]`. The observer may have participated in or exposed the bad
+device state, so these messages must not be attributed solely to vLLM. They do
+make the service run invalid. At the time evidence was collected, the boot log
+contained 17 distinct affected sequence numbers from 262239 through 262257.
+
+The launcher was interrupted through its normal cleanup path rather than
+waiting for the full startup deadline. Cleanup recorded `original_status=130`
+and `stop_status=0`; no vLLM worker or port-18080 listener remained. The memory
+guard never fired: its minimum `MemAvailable` was 121,612,888 KiB and minimum
+`SwapFree` was 25,027,888 KiB across 467 samples. The temporary 16 GiB swap file
+was disabled and deleted after cleanup, restoring the host to its normal 8 GiB
+swap configuration.
+
+Per the frozen stopping rule there is no retry, guard relaxation, or source
+implementation from this run. A later fresh-device campaign must repeat the
+diagnostic before the position-7-through-10 acceptance gate can be evaluated.
+Structured status and artifact hashes are in
+`data/laguna-s-2.1-xpu-b70/long-context-mixed-depth-feasibility-20260802.json`.

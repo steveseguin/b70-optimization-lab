@@ -1,0 +1,85 @@
+{
+  "schema": "laguna-long-context-mixed-depth-feasibility-result-v1",
+  "status": "operational_failure_before_model_load",
+  "date_local": "2026-08-02",
+  "performance_result_available": false,
+  "mixed_depth_source_authorized": false,
+  "record_changed": false,
+  "identity": {
+    "model": "Laguna-S 2.1 INT4",
+    "main_tooling_commit": "3e549ca85",
+    "vllm_commit": "4ddb915284d4442885f72bed48311fd04640977c",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "candidate_profile": "q12",
+    "num_speculative_tokens": 11,
+    "exact_max_m": 12,
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "gpu_memory_utilization": 0.8,
+    "exact_prefill_chunks": true,
+    "memory_guard_min_available_kib": 8388608,
+    "memory_guard_min_swap_free_kib": 4194304,
+    "host_swap_total_kib_at_start": 25165816
+  },
+  "run": {
+    "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-mixed-depth-feasibility-q12-20260802T211100Z",
+    "runtime_verification_passed": true,
+    "workers_initialized": 4,
+    "model_load_started": false,
+    "health_reached": false,
+    "benchmark_started": false,
+    "benchmark_rows": 0,
+    "graph_capture_lines": 0,
+    "memory_guard_fired": false,
+    "memory_guard_samples": 467,
+    "minimum_mem_available_kib": 121612888,
+    "minimum_swap_free_kib": 25027888,
+    "cleanup_original_status": 130,
+    "cleanup_stop_status": 0,
+    "residual_vllm_processes": 0,
+    "port_18080_listener_after": false
+  },
+  "driver_evidence": {
+    "device_bdf": "0000:47:00.0",
+    "service_stalled_before_observer": true,
+    "observer_command": "xpu-smi dump",
+    "observer_hung": true,
+    "first_observed_timeout_local": "2026-08-02T17:15:33-04:00",
+    "distinct_timed_out_sequence_numbers_at_observation": 17,
+    "observed_sequence_number_min": 262239,
+    "observed_sequence_number_max": 262257,
+    "representative_messages": [
+      "Kernel-submitted job timed out",
+      "trying reset from guc_exec_queue_timedout_job",
+      "Timedout job reported in no process [-1]"
+    ],
+    "causality_caution": "The observer began after the service was already stalled but immediately preceded the kernel reports; do not attribute the GPU reset solely to vLLM."
+  },
+  "artifact_sha256": {
+    "identity": "4d89439938df43300707e13478bee24ad4d2adc8c1a5da2eff674308e5fb4d4d",
+    "server_log": "cc1af8f3920f49ca91100ccccdd79d87f046b65a6aaa818e31693cf51aca9507",
+    "memory_guard": "d8b5431b512a3df424976602ff043024923697ce5264eb390c4fe9ac8137ce5b",
+    "cleanup_status": "09ea838a4237a5f866dbad4ace27ef510cd5aa9ba244c884a581bf1132e3d846",
+    "runtime_verification": "2ed507106e113dcc7245c1d0eed7fe74c6264f9f05ddf4b951aada28b1f7e5b3",
+    "xpu_processes_before": "0996337738b4e8f799c6374a19eeb90eed9f505a217c0a86ea7c5f1ed519802b",
+    "xpu_processes_after": "25901275f10be0e8efc1cb3614d9112cd5320248bfca878163a35ab69000e032",
+    "host_memory_before": "49711a3462b86b5161c32b260a5949ad40276d0e2e74826324ffc92be1afe5e2",
+    "host_memory_after": "67d992bb029d3dab82082ff29a93d0b5887d88dab7081ae71d59bbccead9aee8"
+  },
+  "interpretation": {
+    "per_position_acceptance_hypothesis": "unmeasured",
+    "mixed_depth_feasibility_gate": "not_evaluated",
+    "reason": "The device entered a reset loop during distributed initialization, before model loading or benchmark execution."
+  },
+  "disposition": {
+    "candidate": "closed_operational_failure",
+    "retry_in_current_device_state": false,
+    "source_implementation_authorized": false,
+    "temporary_swap_removed": true,
+    "protected_q12_record_changed": false,
+    "localmaxxing_submission": false,
+    "next_lane": "Recover or freshly initialize the affected XPU, then preregister a new diagnostic attempt before considering mixed-depth source work."
+  }
+}
