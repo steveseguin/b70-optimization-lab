@@ -25,6 +25,7 @@ DECODE_TIME = "vllm:request_decode_time_seconds"
 SPEC_DRAFTS = "vllm:spec_decode_num_drafts_total"
 SPEC_DRAFT_TOKENS = "vllm:spec_decode_num_draft_tokens_total"
 SPEC_ACCEPTED = "vllm:spec_decode_num_accepted_tokens_total"
+SPEC_ACCEPTED_PER_POS = "vllm:spec_decode_num_accepted_tokens_per_pos_total"
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -207,6 +208,32 @@ def metric_value(metrics: str, name: str) -> float:
     return sum(values)
 
 
+def labeled_metric_values(
+    metrics: str,
+    name: str,
+    label: str,
+) -> dict[int, float]:
+    line_pattern = re.compile(
+        rf"^{re.escape(name)}\{{([^}}]*)\}}\s+([^\s]+)$"
+    )
+    label_pattern = re.compile(
+        rf'(?:^|,){re.escape(label)}="([0-9]+)"(?:,|$)'
+    )
+    values: dict[int, float] = {}
+    for line in metrics.splitlines():
+        line_match = line_pattern.match(line)
+        if line_match is None:
+            continue
+        label_match = label_pattern.search(line_match.group(1))
+        if label_match is None:
+            continue
+        key = int(label_match.group(1))
+        if key in values:
+            raise ValueError(f"duplicate {name} {label}={key} metric")
+        values[key] = float(line_match.group(2))
+    return values
+
+
 def metric_snapshot(base_url: str, timeout: int) -> dict[str, float]:
     metrics = get_text(f"{base_url.rstrip('/')}/metrics", timeout)
     names = (
@@ -220,11 +247,34 @@ def metric_snapshot(base_url: str, timeout: int) -> dict[str, float]:
         SPEC_DRAFT_TOKENS,
         SPEC_ACCEPTED,
     )
-    return {name: metric_value(metrics, name) for name in names}
+    snapshot = {name: metric_value(metrics, name) for name in names}
+    snapshot.update(
+        {
+            f"{SPEC_ACCEPTED_PER_POS}[{position}]": value
+            for position, value in labeled_metric_values(
+                metrics,
+                SPEC_ACCEPTED_PER_POS,
+                "position",
+            ).items()
+        }
+    )
+    return snapshot
 
 
 def metric_delta(before: dict[str, float], after: dict[str, float]) -> dict[str, float]:
+    if before.keys() != after.keys():
+        raise ValueError("Prometheus metric key set changed during request")
     return {name: after[name] - before[name] for name in before}
+
+
+def accepted_per_position(deltas: dict[str, float]) -> dict[int, float]:
+    pattern = re.compile(rf"^{re.escape(SPEC_ACCEPTED_PER_POS)}\[([0-9]+)\]$")
+    result = {}
+    for name, value in deltas.items():
+        match = pattern.match(name)
+        if match is not None:
+            result[int(match.group(1))] = value
+    return dict(sorted(result.items()))
 
 
 def post_stream(
@@ -546,11 +596,27 @@ def main() -> int:
         row["timing"] = timing_metrics(row)
         drafted = deltas[SPEC_DRAFT_TOKENS]
         accepted = deltas[SPEC_ACCEPTED]
+        accepted_positions = accepted_per_position(deltas)
+        accepted_position_sum = sum(accepted_positions.values())
+        max_accepted_position = max(
+            (position for position, count in accepted_positions.items() if count > 0),
+            default=None,
+        )
         row["spec_decode"] = {
             "drafts": deltas[SPEC_DRAFTS],
             "draft_tokens": drafted,
             "accepted_tokens": accepted,
             "acceptance_rate": accepted / drafted if drafted > 0 else None,
+            "accepted_tokens_per_position": {
+                str(position): count
+                for position, count in accepted_positions.items()
+            },
+            "max_accepted_draft_position": max_accepted_position,
+            "accepted_tokens_beyond_position_6": sum(
+                count
+                for position, count in accepted_positions.items()
+                if position > 6
+            ),
         }
         oracle_row = oracle.get(case["id"])
         row["oracle"] = {
@@ -582,6 +648,13 @@ def main() -> int:
             "prefill_token_metric_count_one": deltas[f"{PREFILL_TOKENS}_count"] == 1,
             "prefill_metric_tokens_exact": prefill_tokens == len(prompt_ids),
             "decode_metric_count_one": deltas[f"{DECODE_TIME}_count"] == 1,
+            "spec_position_counter_consistent": (
+                drafted == 0
+                or (
+                    bool(accepted_positions)
+                    and math.isclose(accepted_position_sum, accepted)
+                )
+            ),
             "first_100_timed": (
                 row_kind == "sentinel"
                 or row["timing"]["conventional_99_interval_first_100_tok_s"]
@@ -618,6 +691,9 @@ def main() -> int:
                         "conventional_99_interval_first_100_tok_s"
                     ],
                     "acceptance_rate": row["spec_decode"]["acceptance_rate"],
+                    "max_accepted_draft_position": row["spec_decode"][
+                        "max_accepted_draft_position"
+                    ],
                 },
                 sort_keys=True,
             ),
