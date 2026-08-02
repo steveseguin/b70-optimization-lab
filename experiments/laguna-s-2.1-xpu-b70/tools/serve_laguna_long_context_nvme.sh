@@ -12,6 +12,7 @@ readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly max_model_len="${LAGUNA_MAX_MODEL_LEN:-32768}"
 readonly max_num_batched_tokens="${LAGUNA_MAX_NUM_BATCHED_TOKENS:-8192}"
+readonly candidate_profile="${LAGUNA_LONG_CANDIDATE_PROFILE:-q12}"
 
 case "$role" in candidate|teacher) ;; *) echo "unsupported role: $role" >&2; exit 2 ;; esac
 [[ "$max_model_len" == 32768 ]] || {
@@ -71,16 +72,9 @@ if [[ "$role" == candidate ]]; then
     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2
     VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE
     VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
-    VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK
-    VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
-    VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE
-    VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
-    VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
-    VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
     VLLM_XPU_LAGUNA_DECODE_GRF128
     VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES
     VLLM_XPU_LAGUNA_M8_QKNORM_ROPE
-    VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
   )
   for name in "${required_environment[@]}"; do
     [[ "${!name:-}" == 1 ]] || {
@@ -88,10 +82,67 @@ if [[ "$role" == candidate ]]; then
       exit 2
     }
   done
-  [[ "${LAGUNA_M:-}" == 12 && "${LAGUNA_SPEC:-}" == 11 ]] || {
-    echo "candidate requires LAGUNA_M=12 and LAGUNA_SPEC=11" >&2
-    exit 2
-  }
+  case "$candidate_profile" in
+    q12)
+      required_profile_values=(
+        VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE
+        VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
+        VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+        VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
+        VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
+      )
+      for name in "${required_profile_values[@]}"; do
+        [[ "${!name:-}" == 1 ]] || {
+          echo "$name must be enabled for the q12 candidate" >&2
+          exit 2
+        }
+      done
+      [[ "${VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE:-}" == 0 ]] || {
+        echo "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE must be zero for q12" >&2
+        exit 2
+      }
+      [[ "${LAGUNA_M:-}" == 12 && "${LAGUNA_SPEC:-}" == 11 ]] || {
+        echo "q12 candidate requires LAGUNA_M=12 and LAGUNA_SPEC=11" >&2
+        exit 2
+      }
+      ;;
+    q8)
+      required_profile_values=(
+        VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE
+      )
+      for name in "${required_profile_values[@]}"; do
+        [[ "${!name:-}" == 1 ]] || {
+          echo "$name must be enabled for the q8 candidate" >&2
+          exit 2
+        }
+      done
+      disabled_profile_values=(
+        VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE
+        VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
+        VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+        VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
+        VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
+      )
+      for name in "${disabled_profile_values[@]}"; do
+        [[ "${!name:-}" == 0 ]] || {
+          echo "$name must be zero for the q8 candidate" >&2
+          exit 2
+        }
+      done
+      [[ "${LAGUNA_M:-}" == 8 && "${LAGUNA_SPEC:-}" == 7 ]] || {
+        echo "q8 candidate requires LAGUNA_M=8 and LAGUNA_SPEC=7" >&2
+        exit 2
+      }
+      ;;
+    *)
+      echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12 or q8" >&2
+      exit 2
+      ;;
+  esac
   [[ "${VLLM_USE_AOT_COMPILE:-}" == 0 ]] || {
     echo "candidate requires VLLM_USE_AOT_COMPILE=0" >&2
     exit 2
@@ -99,9 +150,9 @@ if [[ "$role" == candidate ]]; then
   common_args+=(
     --no-async-scheduling
     --compilation-config
-    '{"mode":"NONE","cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[12],"max_cudagraph_capture_size":12}'
+    "{\"mode\":\"NONE\",\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[${LAGUNA_M}],\"max_cudagraph_capture_size\":${LAGUNA_M}}"
     --speculative-config
-    "{\"method\":\"dflash\",\"model\":\"$LAGUNA_NVME_DRAFT_ROOT\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":11,\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":false}"
+    "{\"method\":\"dflash\",\"model\":\"$LAGUNA_NVME_DRAFT_ROOT\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":false}"
   )
 else
   # The canonical q=1 identity is target-only eager execution with its original

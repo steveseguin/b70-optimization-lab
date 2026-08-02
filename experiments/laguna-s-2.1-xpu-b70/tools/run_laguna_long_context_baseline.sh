@@ -37,6 +37,20 @@ readonly min_swap_free_kb="${LAGUNA_MIN_SWAP_FREE_KB:-4194304}"
 readonly low_swap_min_mem_available_kb="${LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB:-16777216}"
 readonly oracle="${LAGUNA_LONG_ORACLE:-}"
 readonly exact_prefill_chunks="${LAGUNA_EXACT_PREFILL_CHUNKS:-0}"
+readonly candidate_profile="${LAGUNA_LONG_CANDIDATE_PROFILE:-q12}"
+
+case "$candidate_profile" in
+  q12)
+    readonly candidate_m=12 candidate_spec=11 candidate_draft_topology=14/13
+    ;;
+  q8)
+    readonly candidate_m=8 candidate_spec=7 candidate_draft_topology=none
+    ;;
+  *)
+    echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12 or q8" >&2
+    exit 2
+    ;;
+esac
 
 die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }
 
@@ -62,6 +76,8 @@ done
   || die "LAGUNA_EXACT_PREFILL_CHUNKS must be zero or one"
 [[ "$role" == candidate || "$exact_prefill_chunks" == 0 ]] \
   || die "exact prefill chunks are only valid for the candidate"
+[[ "$candidate_profile" == q12 || "$exact_prefill_chunks" == 0 ]] \
+  || die "exact prefill chunks are not valid for the q8 candidate"
 awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
   || die "LAGUNA_GPU_UTIL must be between zero and one"
 [[ "$request_timeout" =~ ^[0-9]+$ && "$request_timeout" -ge 1 ]] \
@@ -113,6 +129,8 @@ chmod -R 700 "$run_dir"
     "$request_timeout" "$selected_case_ids_csv"
   printf 'suite=%s\nexact_prefill_chunks=%s\n' \
     "$suite" "$exact_prefill_chunks"
+  printf 'candidate_profile=%s\ncandidate_m=%s\ncandidate_spec=%s\n' \
+    "$candidate_profile" "$candidate_m" "$candidate_spec"
   printf 'memory_guard_min_available_kb=%s\nmemory_guard_min_swap_free_kb=%s\n' \
     "$min_mem_available_kb" "$min_swap_free_kb"
   printf 'memory_guard_low_swap_min_available_kb=%s\n' \
@@ -120,7 +138,8 @@ chmod -R 700 "$run_dir"
   printf 'host_swap_total_kb=%s\n' \
     "$(awk '$1 == "SwapTotal:" { print $2 }' /proc/meminfo)"
   printf 'candidate_record_conventional_tok_s=125.4619731637751\n'
-  printf 'candidate_target_topology=146/145\ncandidate_draft_topology=14/13\n'
+  printf 'candidate_target_topology=146/145\ncandidate_draft_topology=%s\n' \
+    "$candidate_draft_topology"
   printf 'oracle=%s\ncluster_iface=%s\nscored_measurement=false\n' "$oracle" "$cluster_iface"
   sha256sum "$benchmark" "$service" "$suite" "$runtime_lock" \
     "$venv_python" "$kernel_package/_C.abi3.so" \
@@ -232,23 +251,16 @@ common_env=(
   LAGUNA_MAX_MODEL_LEN="$max_model_len"
   LAGUNA_MAX_NUM_BATCHED_TOKENS="$max_num_batched_tokens"
   LAGUNA_GPU_UTIL="$gpu_util"
+  LAGUNA_LONG_CANDIDATE_PROFILE="$candidate_profile"
 )
 if [[ "$role" == candidate ]]; then
   common_env+=(
     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1
     VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1
     VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA=1
-    VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=1
-    VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=1
-    VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1
-    VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1
-    VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=1
-    VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=1
     VLLM_XPU_LAGUNA_DECODE_GRF128=1
     VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1
     VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1
-    VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=1
-    VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
     VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0
     VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0
     VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0
@@ -269,7 +281,7 @@ if [[ "$role" == candidate ]]; then
     VLLM_XPU_LAGUNA_SCALE_HOIST=0
     VLLM_XPU_LAGUNA_DEQUANT_MAD=0
     VLLM_XPU_LAGUNA_PREFETCH_DIST=6
-    VLLM_XPU_LAGUNA_EXACT_MAX_M=12
+    VLLM_XPU_LAGUNA_EXACT_MAX_M="$candidate_m"
     VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS="$exact_prefill_chunks"
     VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH=0
     VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE=0
@@ -286,14 +298,37 @@ if [[ "$role" == candidate ]]; then
     VLLM_DISABLE_SHARED_EXPERTS_STREAM=0
     VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256
     VLLM_TRACE_FUNCTION=0
-    LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS=11
+    LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$candidate_spec"
     LAGUNA_LOCAL_ARGMAX=false LAGUNA_LOG_MOE_ROWS=0
-    LAGUNA_M=12 LAGUNA_SPEC=11
+    LAGUNA_M="$candidate_m" LAGUNA_SPEC="$candidate_spec"
     VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH=1
     VLLM_USE_BREAKABLE_CUDAGRAPH=1 XPU_GRAPH=1
     VLLM_XPU_ENABLE_XPU_GRAPH=1 VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0
     VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1
   )
+  if [[ "$candidate_profile" == q12 ]]; then
+    common_env+=(
+      VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=1
+      VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=1
+      VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1
+      VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1
+      VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=1
+      VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=1
+      VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=1
+      VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
+    )
+  else
+    common_env+=(
+      VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=0
+      VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=0
+      VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=0
+      VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=0
+      VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=0
+      VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=0
+      VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=0
+      VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=1
+    )
+  fi
 else
   common_env+=(
     XPU_GRAPH=0 VLLM_XPU_ENABLE_XPU_GRAPH=0
@@ -385,7 +420,11 @@ if [[ "$role" == candidate ]]; then
   target_count="$(grep -c 'BreakableCUDAGraphCapture(graphs=146, eager_breaks=145)' "$run_dir/server.log" || true)"
   draft_count="$(grep -c 'BreakableCUDAGraphCapture(graphs=14, eager_breaks=13)' "$run_dir/server.log" || true)"
   (( target_count >= 4 )) || die "missing candidate target 146/145 topology"
-  (( draft_count >= 4 )) || die "missing candidate draft 14/13 topology"
+  if [[ "$candidate_profile" == q12 ]]; then
+    (( draft_count >= 4 )) || die "missing q12 candidate draft 14/13 topology"
+  else
+    (( draft_count == 0 )) || die "unexpected q8 candidate draft 14/13 topology"
+  fi
 fi
 
 stop_service
