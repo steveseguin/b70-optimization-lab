@@ -1,6 +1,6 @@
 # Laguna S 2.1 resume point
 
-Last updated: 2026-08-01 America/Toronto
+Last updated: 2026-08-02 America/Toronto
 
 ## Status
 
@@ -25,6 +25,37 @@ historical convention, not under conventional interval accounting.
 - confirmed M12 shared-elementwise record: **`125.4619731637751 tok/s`** conventional;
 - LocalMaxxing: `cms9wuuf300cqpm01t5i285tq` (`APPROVED`);
 - lane state: active optimization, no service or worker currently running.
+
+### 2026-08-02 operational checkpoint
+
+Do not start with another device job. The latest q12 mixed-depth diagnostic
+stalled in distributed initialization before model loading, after which the
+kernel reported repeated GuC timeouts/resets on `0000:47:00.0`. Cleanup passed,
+but the hypothesis remains unmeasured and the XPU state requires freshly
+authorized recovery before another run.
+
+The next matched model gate is the configuration-only scheduler alignment:
+control 8,192/auto=8,182 versus candidate 8,202/explicit=8,192, under the
+default-off exact-prefill source `4ddb91528`. Its launcher and fail-closed
+identity are committed in the main repository; follow
+[`2026-08-02-long-scheduler-budget-alignment-preregistration.md`](notes/2026-08-02-long-scheduler-budget-alignment-preregistration.md)
+exactly after recovery.
+
+A subsequent source treatment is ready offline but must not enter an endpoint
+until that A/B passes. It fuses exact wide-prefill Q/K RMSNorm plus NeoX RoPE
+under a default-off selector:
+
+- vLLM `1234ff004d57f1f0c102bd2afff9690c16bf995a`;
+- XPU kernels `a67a396245696a9df2a8929b445c721fa8899c92`;
+- worktrees
+  `/home/steve/src/laguna-vllm-wide-prefill-qknorm-rope-20260802` and
+  `/home/steve/src/laguna-xpu-kernels-wide-prefill-qknorm-rope-20260802`.
+
+The oneAPI 2025.3 build, dispatcher registration, kernel static tests, 51
+focused vLLM tests, Ruff checks, and independent source audit pass. Raw-BF16
+XPU equivalence and performance remain explicitly unverified. After recovery,
+run the four-row/four-rank component gate and aggregator described in
+[`2026-08-02-wide-prefill-qknorm-rope-preregistration.md`](notes/2026-08-02-wide-prefill-qknorm-rope-preregistration.md).
 
 Current result and exact artifacts:
 [`2026-07-31-shared-elementwise-m12-record.md`](notes/2026-07-31-shared-elementwise-m12-record.md).

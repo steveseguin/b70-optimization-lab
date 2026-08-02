@@ -2,8 +2,84 @@
 
 Date registered: 2026-08-02 America/Toronto
 
-Status at registration: source design only. No source worktree, build, device
-probe, component run, service, or recovery action has started.
+Status: isolated source and host validation complete; XPU component and endpoint
+validation remain blocked by the recorded device reset state and the scheduler
+alignment dependency. No device probe, component run, service, reset, or
+recovery action was performed for this treatment.
+
+## Offline implementation checkpoint
+
+The default-off treatment is preserved in isolated commits:
+
+- vLLM `1234ff004d57f1f0c102bd2afff9690c16bf995a` in
+  `/home/steve/src/laguna-vllm-wide-prefill-qknorm-rope-20260802`;
+- XPU kernel `a67a396245696a9df2a8929b445c721fa8899c92` in
+  `/home/steve/src/laguna-xpu-kernels-wide-prefill-qknorm-rope-20260802`.
+
+The native op reuses the authenticated M8/M12 kernel arithmetic verbatim with
+eight heads per workgroup. It accepts only the registered rows, paired
+Q/rotary widths 1,536/64 or 2,304/128, aligned BF16 vector storage and row
+strides, rank-one caller-bounded positions, separate non-overlapping outputs,
+and one XPU device. The existing M8/M12 entry point and launcher are unchanged.
+
+The vLLM selector is strict `0`/`1` and default off. Selector-on startup checks
+that the rebuilt native symbol is present and rejects any drift from q12 DFlash,
+BF16, exact attention/MoE/prefill/router flags, TP4/PP1/DP1/EP, one request,
+eager/no-parity/no-async execution, or the explicit 8,202/8,192 scheduler pair.
+Each forward is separately authenticated as a pure target-prefill chunk before
+the model can dispatch the op; decode, verifier, draft, graph, padding,
+multi-request, LoRA, encoder, cascade, and KV-scale-calculation paths fall back.
+
+Offline validation completed:
+
+- oneAPI 2025.3.3 core `_C` build passed for PVC and BMG targets;
+- the built dispatcher exposes the intended two-output alias schema;
+- four kernel static source-contract tests passed;
+- 51 focused vLLM environment, runner, and model-dispatch tests passed,
+  including the real computed=24,576, prompt=32,640, rows=8,064 final chunk;
+- Ruff checks and diff whitespace checks passed; and
+- an independent read-only audit found no arithmetic, workgroup,
+  synchronization, decode-isolation, or default-off blocker. Its shape-pair,
+  alignment, stale-DSO, and coverage findings were incorporated before these
+  commits.
+
+An unfiltered run of the three containing vLLM test files is not reported as a
+pass: an unrelated generic CPU-runner test fails before this treatment because
+the installed XPU-only PyTorch build cannot construct `torch.cuda.Stream`.
+That failure leaves distributed fixture state dirty and cascades into later
+tests. The existing Laguna prebuilt-metadata control passes when isolated; the
+51 treatment-focused tests above ran together and passed cleanly.
+
+The existing component harness now has a `wide-prefill` mode with changing
+inputs, all required starts and the 32,767 boundary, immutable-input checks,
+aligned guard regions, storage-level non-alias checks, exact BF16 comparison,
+per-shape timing enforcement, and durable failure JSON. The companion
+`aggregate_laguna_wide_qknorm_rope.py` requires all four rows on all four ranks
+and enforces the 25 ms aligned-prefill projected-saving gate. These XPU gates
+are implemented but intentionally unrun.
+
+After authorized recovery, run one process at a time with the physical card
+isolated by `ZE_AFFINITY_MASK`. For each `rank` in `0..3` and each `rows` in
+`1024 4096 8064 8192`, use this command shape with a unique JSON output:
+
+```bash
+ZE_AFFINITY_MASK="$rank" \
+PYTHONPATH=/home/steve/src/laguna-vllm-wide-prefill-qknorm-rope-20260802:/home/steve/src/laguna-xpu-kernels-wide-prefill-qknorm-rope-20260802 \
+/home/steve/.venvs/deepseek-v4-xpu/bin/python \
+  experiments/laguna-s-2.1-xpu-b70/tools/gate_laguna_qknorm_rope.py \
+  --mode wide-prefill --rank "$rank" --rows "$rows" \
+  --out "$run_dir/rank${rank}-rows${rows}.json"
+```
+
+Then aggregate all 16 JSON files; the aggregator rejects a missing/duplicate
+rank-row identity, any failed component row, or any rank below the 25 ms
+aligned 32,640-token projected-saving threshold:
+
+```bash
+/home/steve/.venvs/deepseek-v4-xpu/bin/python \
+  experiments/laguna-s-2.1-xpu-b70/tools/aggregate_laguna_wide_qknorm_rope.py \
+  "$run_dir"/rank*-rows*.json --out "$run_dir/aggregate.json"
+```
 
 ## Premise
 

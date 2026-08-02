@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-31**
+Last reviewed: **2026-08-02**
 
 ## Authority And Update Rule
 
@@ -148,6 +148,12 @@ Treat the mixed-depth hypothesis as unmeasured and do not run another XPU job
 until the device is freshly recovered. The next offline-prepared lane is the
 configuration-only 8,202/8,192 long scheduler-budget alignment in
 [`2026-08-02-long-scheduler-budget-alignment-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-long-scheduler-budget-alignment-preregistration.md).
+The subsequent default-off wide-prefill Q/K normalization plus RoPE fusion is
+also implemented and host-validated in isolated source commits vLLM
+`1234ff004` and XPU kernels `a67a39624`. Its XPU component gate remains unrun
+and its endpoint gate is additionally dependent on the scheduler-alignment
+A/B passing; see
+[`2026-08-02-wide-prefill-qknorm-rope-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-wide-prefill-qknorm-rope-preregistration.md).
 No reboot, reset, driver reload, FLR, or new device probe is authorized by that
 preregistration.
 
