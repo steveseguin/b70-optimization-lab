@@ -72,8 +72,6 @@ if [[ "$role" == candidate ]]; then
     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2
     VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE
     VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
-    VLLM_XPU_LAGUNA_DECODE_GRF128
-    VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES
     VLLM_XPU_LAGUNA_M8_QKNORM_ROPE
   )
   for name in "${required_environment[@]}"; do
@@ -92,6 +90,8 @@ if [[ "$role" == candidate ]]; then
         VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
         VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
         VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
+        VLLM_XPU_LAGUNA_DECODE_GRF128
+        VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES
       )
       for name in "${required_profile_values[@]}"; do
         [[ "${!name:-}" == 1 ]] || {
@@ -126,6 +126,8 @@ if [[ "$role" == candidate ]]; then
         VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
         VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
         VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
+        VLLM_XPU_LAGUNA_DECODE_GRF128
+        VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES
       )
       for name in "${disabled_profile_values[@]}"; do
         [[ "${!name:-}" == 0 ]] || {

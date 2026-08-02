@@ -97,3 +97,17 @@ Run, under fresh services:
 Only after those gates pass should adaptive context-aware depth selection be
 considered. Static q8 remains an experiment and the production q12 record lane
 stays unchanged.
+
+## Pre-launch audit correction
+
+Before any q8 service start, an independent source audit found that the first
+tooling commit inherited `VLLM_XPU_LAGUNA_DECODE_GRF128=1` and
+`VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1` from q12. Both selectors are
+width-12-only. GRF128 is dormant at q8, while transposed scales eagerly create
+persistent scale-table clones in every target MoE layer and only consume them
+when `num_rows == 12`. At 32K this is pure memory cost.
+
+The frozen q8 identity is therefore corrected to require both selectors at
+literal zero. The q12 default continues to require both at one. This correction
+narrows the q8 candidate to its actually exercised code and was committed and
+contract-tested before the first service launch; it does not replace any run.
