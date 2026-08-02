@@ -29,6 +29,7 @@ readonly rpc_tag="$(printf '%s' "$run_dir" | sha256sum | cut -c1-12)"
 readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/l${rpc_tag:0:6}"
 readonly max_model_len="${LAGUNA_MAX_MODEL_LEN:-32768}"
 readonly max_num_batched_tokens="${LAGUNA_MAX_NUM_BATCHED_TOKENS:-8192}"
+readonly max_num_scheduled_tokens="${LAGUNA_MAX_NUM_SCHEDULED_TOKENS:-auto}"
 readonly gpu_util="${LAGUNA_GPU_UTIL:-0.90}"
 readonly request_timeout="${LAGUNA_LONG_TIMEOUT:-900}"
 readonly selected_case_ids_csv="${LAGUNA_LONG_CASE_IDS:-}"
@@ -78,6 +79,31 @@ done
   || die "exact prefill chunks are only valid for the candidate"
 [[ "$candidate_profile" == q12 || "$exact_prefill_chunks" == 0 ]] \
   || die "exact prefill chunks are only valid for the q12 candidate"
+case "$max_num_batched_tokens" in
+  4096|8192|8202|16384|32768) ;;
+  *) die "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8192, 8202, 16384, or 32768" ;;
+esac
+case "$max_num_scheduled_tokens" in
+  auto) ;;
+  8192)
+    [[ "$role" == candidate && "$candidate_profile" == q12 \
+      && "$exact_prefill_chunks" == 1 \
+      && "$max_num_batched_tokens" == 8202 ]] \
+      || die "scheduled-token alignment requires q12 exact-prefill candidate with batched=8202 and scheduled=8192"
+    ;;
+  *) die "LAGUNA_MAX_NUM_SCHEDULED_TOKENS must be auto or 8192" ;;
+esac
+[[ "$max_num_batched_tokens" != 8202 || "$max_num_scheduled_tokens" == 8192 ]] \
+  || die "batched=8202 is reserved for the explicit scheduled=8192 alignment treatment"
+if [[ "$max_num_scheduled_tokens" == auto ]]; then
+  if [[ "$role" == candidate ]]; then
+    readonly expected_effective_scheduled_tokens="$((max_num_batched_tokens - candidate_spec + 1))"
+  else
+    readonly expected_effective_scheduled_tokens="$max_num_batched_tokens"
+  fi
+else
+  readonly expected_effective_scheduled_tokens="$max_num_scheduled_tokens"
+fi
 awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
   || die "LAGUNA_GPU_UTIL must be between zero and one"
 [[ "$request_timeout" =~ ^[0-9]+$ && "$request_timeout" -ge 1 ]] \
@@ -121,6 +147,8 @@ chmod -R 700 "$run_dir"
     "$(git -C "$kernel_root" rev-parse HEAD)"
   printf 'max_model_len=%s\nmax_num_batched_tokens=%s\n' \
     "$max_model_len" "$max_num_batched_tokens"
+  printf 'max_num_scheduled_tokens=%s\nexpected_effective_scheduled_tokens=%s\n' \
+    "$max_num_scheduled_tokens" "$expected_effective_scheduled_tokens"
   printf 'enable_chunked_prefill=true\nmax_num_seqs=1\nblock_size=64\n'
   printf 'kv_cache_dtype=bfloat16\ngpu_memory_utilization=%s\n' "$gpu_util"
   printf 'prefix_caching=false\nasync_scheduling=%s\n' \
@@ -250,6 +278,7 @@ common_env=(
   VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_USE_AOT_COMPILE=0
   LAGUNA_MAX_MODEL_LEN="$max_model_len"
   LAGUNA_MAX_NUM_BATCHED_TOKENS="$max_num_batched_tokens"
+  LAGUNA_MAX_NUM_SCHEDULED_TOKENS="$max_num_scheduled_tokens"
   LAGUNA_GPU_UTIL="$gpu_util"
   LAGUNA_LONG_CANDIDATE_PROFILE="$candidate_profile"
 )

@@ -65,11 +65,14 @@ The first 32,640-token case did not match the earlier speculative candidate
 oracle, even after the standard 1K warmup. The next two cases matched. All
 three new 32K outputs repeated exactly across two independent selector-on
 services, and all retrieval JSON passed. The selector cannot activate on the
-8,192/8,192/8,192/8,064 pure-prefill schedule because every step exceeds its
-512-token ceiling. This is therefore recorded as an existing order-dependent
-long-path arithmetic caveat, not hidden or promoted as full-response exactness.
-The target-only q=1 comparison already classified all 4K+ speculative outputs
-as non-exact, so the long gate remains a retrieval and performance gate.
+actual 8,182/8,182/8,182/8,094 pure-prefill schedule because every step exceeds
+its 512-token ceiling. The earlier 8,192/8,192/8,192/8,064 description missed
+vLLM's ten-slot DFlash reservation and is corrected here. This does not change
+the selector or result interpretation. The behavior remains an existing
+order-dependent long-path arithmetic caveat, not hidden or promoted as
+full-response exactness. The target-only q=1 comparison already classified all
+4K+ speculative outputs as non-exact, so the long gate remains a retrieval and
+performance gate.
 
 ## Verification and disposition
 

@@ -12,6 +12,7 @@ readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly max_model_len="${LAGUNA_MAX_MODEL_LEN:-32768}"
 readonly max_num_batched_tokens="${LAGUNA_MAX_NUM_BATCHED_TOKENS:-8192}"
+readonly max_num_scheduled_tokens="${LAGUNA_MAX_NUM_SCHEDULED_TOKENS:-auto}"
 readonly candidate_profile="${LAGUNA_LONG_CANDIDATE_PROFILE:-q12}"
 
 case "$role" in candidate|teacher) ;; *) echo "unsupported role: $role" >&2; exit 2 ;; esac
@@ -20,9 +21,25 @@ case "$role" in candidate|teacher) ;; *) echo "unsupported role: $role" >&2; exi
   exit 2
 }
 case "$max_num_batched_tokens" in
-  4096|8192|16384|32768) ;;
-  *) echo "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8192, 16384, or 32768" >&2; exit 2 ;;
+  4096|8192|8202|16384|32768) ;;
+  *) echo "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8192, 8202, 16384, or 32768" >&2; exit 2 ;;
 esac
+case "$max_num_scheduled_tokens" in
+  auto) ;;
+  8192)
+    [[ "$role" == candidate && "$candidate_profile" == q12 \
+      && "${VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS:-}" == 1 \
+      && "$max_num_batched_tokens" == 8202 ]] || {
+      echo "scheduled-token alignment requires q12 exact-prefill candidate with batched=8202 and scheduled=8192" >&2
+      exit 2
+    }
+    ;;
+  *) echo "LAGUNA_MAX_NUM_SCHEDULED_TOKENS must be auto or 8192" >&2; exit 2 ;;
+esac
+[[ "$max_num_batched_tokens" != 8202 || "$max_num_scheduled_tokens" == 8192 ]] || {
+  echo "batched=8202 is reserved for the explicit scheduled=8192 alignment treatment" >&2
+  exit 2
+}
 case "$run_dir" in "$LAGUNA_NVME_RUN_ROOT"/*) ;; *)
   echo "run directory is outside the fixed Laguna NVMe run root" >&2
   exit 2
@@ -62,6 +79,11 @@ common_args=(
   --enable-prompt-tokens-details
   --enable-per-request-metrics
 )
+if [[ "$max_num_scheduled_tokens" != auto ]]; then
+  common_args+=(--max-num-scheduled-tokens "$max_num_scheduled_tokens")
+fi
+printf 'Laguna long scheduler budget: batched=%s scheduled=%s\n' \
+  "$max_num_batched_tokens" "$max_num_scheduled_tokens" >&2
 
 if [[ "$role" == candidate ]]; then
   required_environment=(
