@@ -18,7 +18,7 @@ readonly kernel_root="${REPRO_KERNEL_TREE:-/home/steve/src/laguna-xpu-kernels-sh
 readonly venv_python="$venv_root/bin/python"
 readonly benchmark="$script_dir/bench_laguna_long_context.py"
 readonly service="$script_dir/serve_laguna_long_context_nvme.sh"
-readonly suite="$repo_root/experiments/laguna-s-2.1-xpu-b70/long-context-suite-v1.json"
+readonly suite="${LAGUNA_LONG_SUITE:-$repo_root/experiments/laguna-s-2.1-xpu-b70/long-context-suite-v1.json}"
 readonly runtime_lock="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/runtime-lock-shared-elementwise-m12.json"
 readonly runtime_verifier="$repo_root/repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-runtime.py"
 readonly xpumem_module=/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so
@@ -36,6 +36,7 @@ readonly min_mem_available_kb="${LAGUNA_MIN_MEM_AVAILABLE_KB:-12582912}"
 readonly min_swap_free_kb="${LAGUNA_MIN_SWAP_FREE_KB:-4194304}"
 readonly low_swap_min_mem_available_kb="${LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB:-16777216}"
 readonly oracle="${LAGUNA_LONG_ORACLE:-}"
+readonly exact_prefill_chunks="${LAGUNA_EXACT_PREFILL_CHUNKS:-0}"
 
 die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }
 
@@ -57,6 +58,10 @@ done
 [[ -z "$(git -C "$vllm_root" status --short)" ]] || die "vLLM worktree is dirty"
 [[ -z "$(git -C "$kernel_root" status --short)" ]] || die "kernel worktree is dirty"
 [[ -z "$oracle" || -f "$oracle" ]] || die "missing oracle: $oracle"
+[[ "$exact_prefill_chunks" == 0 || "$exact_prefill_chunks" == 1 ]] \
+  || die "LAGUNA_EXACT_PREFILL_CHUNKS must be zero or one"
+[[ "$role" == candidate || "$exact_prefill_chunks" == 0 ]] \
+  || die "exact prefill chunks are only valid for the candidate"
 awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
   || die "LAGUNA_GPU_UTIL must be between zero and one"
 [[ "$request_timeout" =~ ^[0-9]+$ && "$request_timeout" -ge 1 ]] \
@@ -106,6 +111,8 @@ chmod -R 700 "$run_dir"
     "$([[ "$role" == candidate ]] && echo false || echo true)"
   printf 'request_timeout_seconds=%s\nselected_case_ids=%s\n' \
     "$request_timeout" "$selected_case_ids_csv"
+  printf 'suite=%s\nexact_prefill_chunks=%s\n' \
+    "$suite" "$exact_prefill_chunks"
   printf 'memory_guard_min_available_kb=%s\nmemory_guard_min_swap_free_kb=%s\n' \
     "$min_mem_available_kb" "$min_swap_free_kb"
   printf 'memory_guard_low_swap_min_available_kb=%s\n' \
@@ -263,6 +270,7 @@ if [[ "$role" == candidate ]]; then
     VLLM_XPU_LAGUNA_DEQUANT_MAD=0
     VLLM_XPU_LAGUNA_PREFETCH_DIST=6
     VLLM_XPU_LAGUNA_EXACT_MAX_M=12
+    VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS="$exact_prefill_chunks"
     VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH=0
     VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE=0
     VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS=0

@@ -1,0 +1,36 @@
+{
+  "suite_id": "laguna-s-2.1-int4-b70-exact-prefill-chunks-v1",
+  "description": "Exact-token 256-row gate for the default-off Laguna pure-prefill chunk experiment.",
+  "policy": "These cases reproduce the three post-32K sentinels from the long-context suite without requiring the 32K parent requests. They must match the target-only oracle exactly and do not replace the frozen record gate.",
+  "max_model_len": 32768,
+  "max_output_tokens": 128,
+  "cases": [
+    {
+      "id": "sentinel-after-laguna-lc-32640-early",
+      "target_prompt_tokens": 256,
+      "needle_position": "middle",
+      "project_code": "SENTINEL-01",
+      "answer_phrase": "LAGUNA-NEXT-REQUEST-OK-01",
+      "arithmetic_result": 7001,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "sentinel-after-laguna-lc-32640-middle",
+      "target_prompt_tokens": 256,
+      "needle_position": "middle",
+      "project_code": "SENTINEL-02",
+      "answer_phrase": "LAGUNA-NEXT-REQUEST-OK-02",
+      "arithmetic_result": 7002,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "sentinel-after-laguna-lc-32640-late",
+      "target_prompt_tokens": 256,
+      "needle_position": "middle",
+      "project_code": "SENTINEL-03",
+      "answer_phrase": "LAGUNA-NEXT-REQUEST-OK-03",
+      "arithmetic_result": 7003,
+      "sort_order": "blue, green, orange, red"
+    }
+  ]
+}
