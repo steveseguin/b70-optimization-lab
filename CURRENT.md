@@ -154,8 +154,13 @@ also implemented and host-validated in isolated source commits vLLM
 and its endpoint gate is additionally dependent on the scheduler-alignment
 A/B passing; see
 [`2026-08-02-wide-prefill-qknorm-rope-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-wide-prefill-qknorm-rope-preregistration.md).
-No reboot, reset, driver reload, FLR, or new device probe is authorized by that
-preregistration.
+Steve authorized device recovery on 2026-08-02. One clean reboot and the
+bounded post-reboot single-card plus corrected four-rank collective gate are
+registered in
+[`2026-08-02-device-recovery-scheduler-alignment-gate.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-device-recovery-scheduler-alignment-gate.md).
+Do not use FLR, driver reload, unbind/rebind, shared-memory deletion, or an
+automatic retry ladder. The scheduler A/B remains the first model work after a
+complete recovery pass.
 
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to
