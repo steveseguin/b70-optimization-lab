@@ -34,7 +34,7 @@ readonly request_timeout="${LAGUNA_LONG_TIMEOUT:-900}"
 readonly selected_case_ids_csv="${LAGUNA_LONG_CASE_IDS:-}"
 readonly min_mem_available_kb="${LAGUNA_MIN_MEM_AVAILABLE_KB:-12582912}"
 readonly min_swap_free_kb="${LAGUNA_MIN_SWAP_FREE_KB:-4194304}"
-readonly low_swap_min_mem_available_kb="${LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB:-25165824}"
+readonly low_swap_min_mem_available_kb="${LAGUNA_LOW_SWAP_MIN_MEM_AVAILABLE_KB:-16777216}"
 readonly oracle="${LAGUNA_LONG_ORACLE:-}"
 
 die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }

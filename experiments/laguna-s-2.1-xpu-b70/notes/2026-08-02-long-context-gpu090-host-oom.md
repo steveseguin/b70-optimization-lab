@@ -90,6 +90,17 @@ performance result. Linux had moved cold model-worker pages to swap despite
 roughly 31 GiB of available RAM, so treating low swap alone as terminal was
 overly conservative.
 
-The corrected guard stops unconditionally below 12 GiB available RAM, or when
-both free swap is below 4 GiB and available RAM is below 24 GiB. This preserves
-substantial allocation headroom while allowing harmless proactive swapping.
+The initial combined 24 GiB floor was still too conservative. A second 0.80
+startup reached KV profiling and reported 109,059 cache tokens, or 3.33
+concurrent 32,768-token requests, before the guard stopped it at 23,442,908 KiB
+available RAM and 984,824 KiB free swap. No request was sent and cleanup was
+clean. A 0.75 probe stopped at the same guard before KV profiling. A 0.70 probe
+kept ample host headroom but reported `-0.14 GiB` available KV memory and
+exited cleanly because no cache blocks could be allocated. These are capacity
+and guard-calibration results, not performance results.
+
+The final guard stops unconditionally below 12 GiB available RAM, or when both
+free swap is below 4 GiB and available RAM is below 16 GiB. The 0.80 identity
+is retained because its measured 109,059-token KV capacity comfortably covers
+the exact 32K request while its observed host minimum remains more than 6 GiB
+above the combined floor.

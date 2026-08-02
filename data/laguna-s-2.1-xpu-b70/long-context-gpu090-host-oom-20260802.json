@@ -88,6 +88,57 @@
         "mem_available_kib": 32698140,
         "swap_free_kib": 2589608
       }
+    },
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu080-4k-probe2-20260802T175500Z",
+      "identity_delta": {
+        "gpu_memory_utilization": 0.8,
+        "selected_case_ids": [
+          "laguna-lc-04096-early"
+        ]
+      },
+      "classification": "memory-guard-calibration-abort-after-kv-profile",
+      "request_started": false,
+      "oom_occurred": false,
+      "kv_cache_tokens": 109059,
+      "max_concurrency_at_32768": 3.33,
+      "guard_stop": {
+        "mem_available_kib": 23442908,
+        "swap_free_kib": 984824
+      }
+    },
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu075-4k-probe-20260802T180000Z",
+      "identity_delta": {
+        "gpu_memory_utilization": 0.75,
+        "selected_case_ids": [
+          "laguna-lc-04096-early"
+        ]
+      },
+      "classification": "memory-guard-calibration-abort-before-kv-profile",
+      "request_started": false,
+      "oom_occurred": false,
+      "guard_stop": {
+        "mem_available_kib": 25027968,
+        "swap_free_kib": 1236532
+      }
+    },
+    {
+      "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-gpu070-4k-probe-20260802T180200Z",
+      "identity_delta": {
+        "gpu_memory_utilization": 0.7,
+        "selected_case_ids": [
+          "laguna-lc-04096-early"
+        ]
+      },
+      "classification": "insufficient-gpu-memory-for-kv-cache",
+      "request_started": false,
+      "oom_occurred": false,
+      "available_kv_cache_gib": -0.14,
+      "cleanup_status": {
+        "original_status": 2,
+        "stop_status": 0
+      }
     }
   ],
   "artifact_sha256": {
