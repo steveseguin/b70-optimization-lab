@@ -81,8 +81,10 @@ as non-exact, so the long gate remains a retrieval and performance gate.
   fixture failure when run as a group; that test passed alone. The shared
   elementwise suite had one missing-symbol failure when run without the sealed
   kernel tree on `PYTHONPATH`; this was an environment mismatch, not this diff.
-- Four level-1 XPU diagnostics passed before the GPU gates.
+- All four level-1 XPU diagnostics passed before and after the GPU gates.
 - All services shut down ordinarily and no memory guard fired.
+- The non-persistent `/swap-laguna-longctx.img` 16 GiB validation swap was
+  disabled and removed afterward; only the ordinary 8 GiB `/swap.img` remains.
 
 Keep the selector default-off until this branch is deliberately promoted.
 This is not a new LocalMaxxing submission: the protected short decode record
