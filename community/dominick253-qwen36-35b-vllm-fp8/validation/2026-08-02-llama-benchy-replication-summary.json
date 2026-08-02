@@ -38,7 +38,7 @@
     "vllm": "0.21.1.dev0+gad7125a43.d20260709",
     "vllm_commit": "ad7125a431e176d4161099480a66f0169609a690",
     "xpu_kernels_commit": "3cab97adf65f7e85fb96f4a08db5611832d37382",
-    "runtime": "rootless Podman 4.9.3",
+    "runtime": "rootless Podman 4.9.3 initially; rootful Docker Engine 29.7.1 follow-up",
     "corrected_launcher_sha256": "737f8dd32523efb2101175748613a7ddc96856368cf08c3ec63221f17249c0ff",
     "gpu_count": 2,
     "tensor_parallel_size": 2,
@@ -132,6 +132,76 @@
     "result_sha256": "423941e06ce9a725105a151053204f42675cf0f7f5dfcdfb9a83dd89446ae925",
     "progress_sha256": "c08c168c581df6cb4036009a6306e7ddb2f17958799d606786147fb3afd6c830"
   },
+  "docker_engine_replay": {
+    "docker_engine_version": "29.7.1",
+    "docker_ce_package": "5:29.7.1-1~ubuntu.24.04~noble",
+    "containerd_version": "2.2.6",
+    "runtime_mode": "rootful daemon; CLI invoked through sudo; user not added to docker group",
+    "image": "docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780",
+    "image_reference_used_by_container": "digest-pinned",
+    "docker_specific_launcher_args": [
+      "--group-add 992",
+      "--shm-size=32g"
+    ],
+    "corrected_launcher_sha256": "737f8dd32523efb2101175748613a7ddc96856368cf08c3ec63221f17249c0ff",
+    "service_reached_health": true,
+    "health_seconds": 121,
+    "plain_smoke": "pass",
+    "thinking_smoke": "pass",
+    "eager": true,
+    "speculative_decoding": false,
+    "mamba_ssm_cache_dtype": "float16 explicit experimental override",
+    "llama_benchy_version": "0.1.dev1+ge9be34457",
+    "llama_benchy_commit": "e9be344578cec17745066b220798b80a0d2686d3",
+    "prompt_tokens": 2048,
+    "requested_completion_tokens": 1024,
+    "depths": [0, 4096, 8192, 16384, 32768],
+    "runs_per_test": 5,
+    "warmup_runs_per_test": 1,
+    "concurrency": 1,
+    "latency_mode": "generation",
+    "coherence_test": "pass",
+    "request_errors": 0,
+    "measured_completion_token_counts": {
+      "672": 1,
+      "715": 1,
+      "756": 1,
+      "931": 1,
+      "1023": 2,
+      "1024": 19
+    },
+    "prefill_tok_s": [
+      11164.824208009499,
+      9108.682463479487,
+      10447.676758412126,
+      9944.285404198345,
+      9210.626122152436
+    ],
+    "decode_tok_s": [
+      53.88523919898048,
+      54.286769493013345,
+      53.89589687990193,
+      54.4104659764428,
+      55.071567372357514
+    ],
+    "peak_decode_tok_s": [56.8, 58.2, 57.6, 57.8, 59.8],
+    "mean_decode_tok_s_across_depth_rows": 54.30998778413922,
+    "podman_mean_decode_tok_s_across_depth_rows": 54.25638082187018,
+    "relative_change_vs_podman": 0.0009880305589315963,
+    "contributor_mean_decode_tok_s_across_depth_rows": 132.87710601160143,
+    "relative_shortfall_vs_contributor": 0.5912765606183699,
+    "contributor_multiple_of_docker": 2.446642163495516,
+    "verdict": "Docker and Podman are performance-equivalent for the pinned image and recovered command; container-engine choice does not explain the contributor gap",
+    "raw_artifact_root": "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-docker-engine-replay-20260802T151250Z",
+    "result_sha256": "aeded8f24d79081baa7aab3ab894b2faec560126502e458b0ddd69178c0b442d",
+    "progress_sha256": "d4bb76ebc16d07f7f8e880fe70b7d06ec7c2f983afe02a535247e61fa0b8a3c7",
+    "benchmark_transcript_sha256": "aefe7006c7f330ef9d4b38611f6b211ee08f2f8e1948ef733946642d2430724a",
+    "launcher_transcript_sha256": "6c1d6e4022d080e2a47698de57d15916f072a6169e63b4c56c1e7192d926d7c3",
+    "container_log_sha256": "d3fca863d074825f0597bcf6f33b7b1d7e7284e0ddbc3305c5596adc337d8387",
+    "container_inspect_sha256": "319d99c314ced8ebcb409889cc8bf4e238e9b00bb7a0920640188de4ec339f4e",
+    "image_inspect_sha256": "64db0d7cf351e48ad63425df616855890f3e605a8fb8ece682f7a890c69d7df6",
+    "docker_version_sha256": "585827db563705ce6a191e43d0f065142507ca45a1f6d54066f48615f1ff1111"
+  },
   "model_card_mtp2_calibration": {
     "checkpoint_mtp_num_hidden_layers": 1,
     "checkpoint_contains_mtp_weights": true,
@@ -205,14 +275,19 @@
   },
   "not_tested": [
     "forced-communication XPU graph variants, because they were not in the submission and are a materially different, historically hazardous identity",
-    "the contributor's unknown image digest or model revision",
-    "Docker-specific execution; this host has Podman only"
+    "the contributor's unknown image digest or model revision"
   ],
   "raw_artifact_root": "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z",
+  "docker_raw_artifact_root": "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-docker-engine-replay-20260802T151250Z",
   "teardown": {
     "exact_test_containers_removed": true,
-    "ports_18218_through_18221_clear": true,
-    "reset_reboot_or_service_change": false,
+    "ports_18218_through_18222_clear": true,
+    "docker_container_count_after": 0,
+    "podman_container_count_after": 0,
+    "reset_reboot_or_model_service_change": false,
+    "reset_reboot_or_service_change": true,
+    "service_change_detail": "Docker Engine and containerd were installed and enabled; no model service was changed and no reset or reboot occurred",
+    "docker_and_containerd_services_installed_enabled_active": true,
     "laguna_worktree_touched": false
   }
 }

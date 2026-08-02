@@ -6,7 +6,7 @@
 | --- | --- |
 | Evidence level | `B70-tested` for the corrected prospective replay; contributor identity and claims remain `community-reported` |
 | Patch review status | read, corrected, and executed |
-| Tested in reference lab | yes; startup/functional/context gates, matched `llama-benchy` replay, image source-delta audit, and MTP2 calibration |
+| Tested in reference lab | yes; startup/functional/context gates, matched `llama-benchy` replay under Podman and Docker Engine, image source-delta audit, and MTP2 calibration |
 | Safe to merge as documentation | yes, after maintainer corrections recorded below |
 | Eligible for `repro/` or `results/` | no; strict realistic-suite telemetry and promotion gates remain incomplete |
 
@@ -69,13 +69,13 @@ evidence, and was removed rather than preserved as a supported claim.
 | --- | --- |
 | GPU | 2x Intel Arc B70, logical devices 0 and 1 |
 | Kernel / driver source | `7.0.0-28-generic`; xe srcversion `85B7CA089405934276CBAD3` |
-| Container runtime | rootless Podman 4.9.3 |
+| Container runtime | rootless Podman 4.9.3 initially; rootful Docker Engine 29.7.1 follow-up |
 | Image | `docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780` |
 | vLLM / native kernels / torch | `0.21.1.dev0+gad7125a43.d20260709` plus downstream tree changes; `vllm-xpu-kernels 0.1.8.3.dev0+g3cab97a.d20260709` plus downstream tree changes; `custom-esimd-kernels-vllm 0.1.0`; torch `2.11.0+xpu` |
 | Model | `Qwen/Qwen3.6-35B-A3B` revision `995ad96eacd98c81ed38be0c5b274b04031597b0`; 40 files, 71,926,865,825 bytes; 27/27 LFS SHA-256 checks passed |
 | Initial corrected/default runtime | TP2, dynamic FP8 weights, float16 activation dtype, no SSM-state override (checkpoint declares float32), eager, prefix caching off, max length 262144, max sequences 4 |
-| Bind / name | initial localhost ports 18215–18217; follow-up benchmark/MTP ports 18218–18221; unique exact test-container names; served name `qwen36-35b-fp8` |
-| Raw artifacts | `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-exact-lab-20260802T0408Z`; `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z`; `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z` |
+| Bind / name | initial localhost ports 18215–18217; Podman benchmark/MTP ports 18218–18221; Docker follow-up port 18222; unique exact test-container names; served name `qwen36-35b-fp8` |
+| Raw artifacts | `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-exact-lab-20260802T0408Z`; `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z`; `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z`; `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-docker-engine-replay-20260802T151250Z` |
 
 ## What Was Actually Run Here
 
@@ -121,6 +121,16 @@ gave 55.5351 tok/s in a depth-0 calibration, ruling out the small upstream tool
 revision difference as the explanation. A graph-disabled, non-eager depth-0
 calibration was worse at 21.1090 tok/s.
 
+Docker Engine 29.7.1 was then installed from Docker's official Ubuntu
+repository and the corrected Docker-specific launcher branch was executed with
+the same digest-pinned image and float16-SSM benchmark identity. It reached
+health in 121 seconds, passed both smokes, and completed the same 25 measured
+requests without API errors. The five Docker decode means were 53.8852,
+54.2868, 53.8959, 54.4105, and 55.0716 tok/s, for a 54.3100 tok/s overall
+mean. This is only `+0.10%` versus Podman's 54.2564 tok/s mean, so the
+container engine is not the source of the contributor's approximately 2.45x
+higher report.
+
 The downloaded checkpoint does contain MTP: `text_config` declares one MTP
 hidden layer and its index contains `mtp.*` weights. The model card recommends
 two speculative tokens for vLLM, but the submitted launcher did not enable
@@ -163,9 +173,10 @@ specific configuration claim is made from them. The final smoke uses the
 reproducible seeded 32-token case and does not describe the budget as a
 universal hard limit.
 
-All exact test containers were stopped and removed, localhost ports
-18215–18221 were clear after their respective runs, and no reset, reboot,
-service change, or collective retry was used.
+All exact test containers were stopped and removed and localhost ports
+18215–18222 were clear after their respective runs. No reset, reboot, model
+service change, or collective retry was used. The newly installed Docker and
+containerd system services remain enabled and active with no containers.
 
 ## Findings
 
@@ -240,9 +251,10 @@ service change, or collective retry was used.
   speculative methods. It remains opt-in.
 - The fixed realistic suite lacks cached-token telemetry and therefore remains
   invalid/incomplete despite completing all 12 prompts.
-- Reference-lab execution used rootless Podman. The pinned OCI image and Podman
-  launcher branch passed, but the Docker-specific render-GID and `--shm-size`
-  branch was not executed because the Docker CLI is absent on this host.
+- Both rootless-Podman and rootful-Docker launcher branches passed. Docker's
+  numeric render-GID and `--shm-size` path produced essentially the same
+  matched decode rate as Podman; this does not validate the contributor's
+  unrecorded historical Docker/image identity.
 - The endpoint has no authentication. Remote publication requires an explicit
   opt-in and an operator-provided firewall or authenticated proxy.
 
@@ -251,10 +263,11 @@ service change, or collective retry was used.
 No contributor action is required for this entry. The contributor's immutable
 image digest, internal runtime commits, exact model revision, raw responses,
 and exact benchmark tool/runtime environment remain unknown and are not
-inferred from the separate reference-lab replay. Runtime-FP8 and float16-SSM
+inferred from the separate reference-lab replays. Runtime-FP8 and float16-SSM
 quality equivalence, peak load memory, scale correctness, and whether a
 different immutable Intel image explains the decode gap remain separate future
-experiments.
+experiments. The current pinned image under Docker versus Podman is now ruled
+out as the explanation.
 
 ## Disposition
 

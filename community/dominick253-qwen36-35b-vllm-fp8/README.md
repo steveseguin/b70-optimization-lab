@@ -26,9 +26,9 @@ runs at each context depth, using a 2,048-token prompt and 1,024-token
 generation. It reports 127.86–135.05 decode tok/s. The CSV is preserved under
 [`reported/`](reported/README.md), not mixed into lab validation. The
 reference lab separately confirmed the corrected recipe but did not reproduce
-that decode rate: the closest recoverable matched replay measured
-53.58–54.92 tok/s. The older `150 tok/s` launcher comment remains undefined
-and unsupported.
+that decode rate: matched rootless-Podman and Docker Engine replays both
+measured about 54 tok/s. The older `150 tok/s` launcher comment remains
+undefined and unsupported.
 
 ## Model And Precision
 
@@ -99,10 +99,14 @@ uses Podman. Set `CONTAINER_RUNTIME=docker` or `CONTAINER_RUNTIME=podman` to
 choose explicitly. Docker receives the numeric render GID; rootless Podman uses
 `--group-add keep-groups`, matching this lab's prior B70 container validation.
 Podman omits `--shm-size` because it rejects that option with `--ipc=host`.
-The reference-lab runs used rootless Podman 4.9.3. They validate the pinned OCI
-image, serve command, and Podman branch; the Docker-specific group and shared-
-memory branch was reviewed but not executed because the Docker CLI is absent on
-this host.
+The initial reference-lab runs used rootless Podman 4.9.3. A follow-up installed
+Docker Engine 29.7.1 from Docker's official Ubuntu repository and executed the
+Docker-specific numeric-render-GID and `--shm-size=32g` branch. The launcher
+reached health in 121 seconds and passed both bounded smokes. A full matched
+five-depth replay then measured `54.3100 tok/s` mean decode under Docker versus
+`54.2564 tok/s` under Podman, a `+0.10%` difference. Both runtime branches are
+therefore exercised; Docker versus Podman does not explain the contributor's
+reported rate.
 
 The model mount is read-only. The script fails if the requested host port is
 already listening or if a container with `NAME` already exists. It never stops
@@ -225,6 +229,16 @@ did not preserve the benchmark tool version/command, immutable image digest,
 model revision, or JSON requests, so the remaining 2.45x decode gap cannot be
 assigned to one missing setting.
 
+The same complete 25-request matrix was then rerun through Docker Engine 29.7.1
+with the exact pinned image digest and otherwise matched identity. Its five
+decode means were `53.8852`, `54.2868`, `53.8959`, `54.4105`, and
+`55.0716 tok/s`, for a `54.3100 tok/s` overall mean. The corresponding Podman
+mean was `54.2564 tok/s`; Docker was `+0.10%`. All 25 measured requests
+completed without API errors. This directly rules out the container-engine
+choice as the source of the roughly 2.45x gap, while leaving the contributor's
+unrecorded image digest, model revision, tool version, and effective runtime
+identity unresolved.
+
 The pinned image is not stock upstream vLLM at commit `ad7125a431`. Its
 embedded vLLM Git working tree contains an Intel downstream patchset: 64
 tracked files differ by 4,283 insertions and 340 deletions, plus 18 untracked
@@ -271,6 +285,9 @@ and
 `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z`.
 The matched benchmark, image source-delta audit, and MTP artifacts are under
 `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z`.
+The Docker Engine launcher, inspect data, logs, and full matched replay are
+under
+`/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-docker-engine-replay-20260802T151250Z`.
 
 ## Contributor Environment
 

@@ -10,8 +10,11 @@ not edited. Before each service start, no model service or relevant endpoint
 was active. The initial claim-validation runs used logical B70 devices 0 and 1,
 unique rootless-Podman container names, localhost ports 18216 or 18217, and
 read-only model mounts; the later benchmark/MTP runs used ports 18218–18221
-under the same isolation policy. No service change, reset, driver reload, or
-reboot was used. The unrelated
+under the same isolation policy. A final Docker Engine replay used the same
+two logical B70s, a unique exact container name, a read-only model mount, and
+localhost port 18222. Docker Engine installation created and enabled the
+Docker/containerd system services, but no model service, reset, driver reload,
+or reboot was used. The unrelated
 `aria2c` process stuck in D state on the external NTFS volume was left alone.
 
 ## Identity
@@ -23,7 +26,8 @@ reboot was used. The unrelated
   checked all 40 files, upstream sizes, and 27 LFS SHA-256 values.
 - Image:
   `docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780`.
-- Image ID: `2950f3361abbedc07719e8c4f4e032f007232c6ad23e6d1eb64703789cbba73a`.
+- Podman image/config ID:
+  `2950f3361abbedc07719e8c4f4e032f007232c6ad23e6d1eb64703789cbba73a`.
 - vLLM: `0.21.1.dev0+gad7125a43.d20260709`, commit `ad7125a431`.
 - XPU kernels: `3cab97adf`.
 - Pre-MTP claim-validation launcher SHA-256:
@@ -34,10 +38,9 @@ reboot was used. The unrelated
   dtype, prefix caching disabled, no SSM-state override, max model length
   262144, max sequences 4. Later benchmark/MTP sections identify their separate
   float16-SSM and speculation settings explicitly.
-- Container runtime: rootless Podman 4.9.3. This executed the pinned OCI image
-  and Podman launcher branch; the Docker-specific render-GID and shared-memory
-  branch was reviewed but not executed because the Docker CLI is absent on this
-  host.
+- Container runtimes: rootless Podman 4.9.3 for the initial work and Docker
+  Engine 29.7.1 for the follow-up. Both executed the digest-pinned image. The
+  Docker run exercised the numeric render-GID and `--shm-size=32g` branch.
 
 ## Results
 
@@ -126,6 +129,17 @@ mean. Prefill means were broadly similar. A v0.4.0 tool calibration gave
 55.5351 tok/s and a graph-disabled non-eager calibration gave 21.1090 tok/s,
 so neither tested tool revision nor simply disabling eager explains the gap.
 
+Docker Engine 29.7.1 was then installed from Docker's official Ubuntu apt
+repository. The exact corrected launcher, pinned OCI digest, model revision,
+TP2/eager/online-FP8 identity, submitted float16 SSM override, and benchmark
+command were retained. The Docker-specific launcher branch reached health in
+121 seconds and passed both smokes. Its full five-depth replay completed all
+25 measured requests without API errors and produced decode means of 53.8852,
+54.2868, 53.8959, 54.4105, and 55.0716 tok/s. The 54.3100 tok/s overall mean
+is `+0.10%` versus the 54.2564 tok/s Podman mean and 59.13% below the
+contributor's 132.8771 tok/s mean. Docker versus Podman is therefore ruled out
+as the discrepancy's cause for the pinned image and recovered command.
+
 The contributor did not preserve the exact tool version/command, benchmark
 JSON/per-request output, immutable image digest, model revision, or effective
 XPU graph/communication environment. The result is therefore classified as a
@@ -186,6 +200,10 @@ Matched benchmark, MTP, and image source-audit root:
 
 `/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z`
 
+Docker Engine launcher, inspect, log, and matched-benchmark root:
+
+`/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-docker-engine-replay-20260802T151250Z`
+
 Key SHA-256 values:
 
 - primary claim-run container log:
@@ -208,7 +226,17 @@ Key SHA-256 values:
   `9bc63ee91cebdc9958bccf0e3d489ee7376197bdb1995403a41341bfe4f45e9b`;
 - final corrected MTP2 launcher transcript:
   `c42a22d8a6c0b71a89e386970c06291a971f573ffe2ebeaffb8ddd431df25fed`.
+- Docker matched five-depth benchmark JSON:
+  `aeded8f24d79081baa7aab3ab894b2faec560126502e458b0ddd69178c0b442d`;
+- Docker benchmark progress stream:
+  `d4bb76ebc16d07f7f8e880fe70b7d06ec7c2f983afe02a535247e61fa0b8a3c7`;
+- Docker container log:
+  `d3fca863d074825f0597bcf6f33b7b1d7e7284e0ddbc3305c5596adc337d8387`;
+- Docker container inspect:
+  `319d99c314ced8ebcb409889cc8bf4e238e9b00bb7a0920640188de4ec339f4e`.
 
-All exact test containers were stopped and removed. Ports 18216 through 18221
-were clear after their respective runs. Post-teardown device memory after the
-initial validation was approximately 42.9 MiB on each tested B70.
+All exact test containers were stopped and removed. Ports 18216 through 18222
+were clear after their respective runs. Docker and Podman both had zero
+containers after teardown. Post-teardown device memory after the initial
+validation was approximately 42.9 MiB on each tested B70; the final Docker
+teardown process report contained only the observing `xpu-smi` process.

@@ -25,7 +25,8 @@
   "engine": {
     "image": "docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780",
     "image_id": "2950f3361abbedc07719e8c4f4e032f007232c6ad23e6d1eb64703789cbba73a",
-    "container_runtime": "Podman 4.9.3 rootless",
+    "image_id_scope": "Podman image config ID; the immutable cross-runtime identity is the image digest",
+    "container_runtime": "Podman 4.9.3 rootless initially; Docker Engine 29.7.1 rootful follow-up",
     "vllm_version": "0.21.1.dev0+gad7125a43.d20260709",
     "vllm_commit": "ad7125a431e176d4161099480a66f0169609a690",
     "vllm_xpu_kernels_commit": "3cab97adf65f7e85fb96f4a08db5611832d37382",
@@ -49,8 +50,8 @@
   },
   "claim_verdicts": {
     "corrected_container_recipe_starts": {
-      "verdict": "pass under rootless Podman",
-      "details": "The exact published launcher reached health in 121 seconds, passed its plain smoke, and passed its strengthened completed-thinking smoke. The Docker-specific CLI branch was reviewed but not executed because Docker is absent on the lab host."
+      "verdict": "pass under rootless Podman and rootful Docker Engine",
+      "details": "The exact published launcher reached health in 121 seconds and passed its plain and strengthened completed-thinking smokes under both supported runtime branches. Docker exercised the numeric render-GID and 32 GiB shared-memory arguments."
     },
     "dynamic_fp8_tp2_xpu_path": {
       "verdict": "pass for the corrected prospective replay",
@@ -85,7 +86,7 @@
     },
     "llama_benchy_128_to_135_tok_s": {
       "verdict": "defined community report; not reproduced",
-      "details": "The PR-attached CSV defines five concurrency-1 runs per depth with a 2048-token prompt, 1024-token generation, depths 0/4096/8192/16384/32768, and generation-latency accounting. The closest recoverable eager TP2 online-FP8 float16-SSM replay completed all 25 measured requests at 53.58-54.92 tok/s, versus 127.86-135.05 tok/s reported. Tool/runtime identity gaps prevent a causal diagnosis. See 2026-08-02-llama-benchy-replication-summary.json."
+      "details": "The PR-attached CSV defines five concurrency-1 runs per depth with a 2048-token prompt, 1024-token generation, depths 0/4096/8192/16384/32768, and generation-latency accounting. The closest recoverable eager TP2 online-FP8 float16-SSM replay completed all 25 measured requests at a 54.2564 tok/s mean under Podman and 54.3100 tok/s under Docker, versus 132.8771 tok/s reported. Docker versus Podman is ruled out for the pinned image; contributor-side identity gaps prevent a complete causal diagnosis. See 2026-08-02-llama-benchy-replication-summary.json."
     },
     "model_card_mtp2": {
       "verdict": "functional but slower; opt-in",
@@ -127,23 +128,33 @@
     "exact_test_containers_removed": true,
     "ports_18216_and_18217_clear": true,
     "later_benchmark_mtp_ports_18218_through_18221_clear": true,
+    "docker_followup_port_18222_clear": true,
+    "docker_container_count_after": 0,
+    "podman_container_count_after": 0,
     "post_teardown_gpu_memory_mib": [
       42.88671875,
       42.875
     ],
-    "reset_reboot_or_service_change": false,
+    "reset_reboot_or_model_service_change": false,
+    "reset_reboot_or_service_change": true,
+    "service_change_detail": "Docker Engine and containerd were installed and enabled; no model service was changed and no reset or reboot occurred",
+    "docker_and_containerd_services_installed_enabled_active": true,
     "laguna_worktree_touched": false
   },
   "raw_artifacts": [
     "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z",
-    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z"
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-llama-benchy-replication-20260802T133000Z",
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-docker-engine-replay-20260802T151250Z"
   ],
   "artifact_sha256": {
     "claim_run_container_log": "fc8b0f57ccca7c7074706989f945bc84f1fb99e680371d43a5d1e8d311d95587",
     "realistic_suite_qualified": "2e5323acc7e91a26489d0460feeb600446685ff42da4d189b2dacb0e002522eb",
     "near_context_summary": "3bd9de36ab6a98c39ecace8ba2b095fd82800c76268a3fc6e86546c86b6bbe92",
     "final_launcher_log": "c41626a9976231d1598d7b3a762fe87b1193cdf552d56d41c8cb0b5e6cd94593",
-    "final_launcher_container_log": "871ec9bec943b0eb9b47a2a45545c0fb44caca6bbfdce53372b4e3aa592e5070"
+    "final_launcher_container_log": "871ec9bec943b0eb9b47a2a45545c0fb44caca6bbfdce53372b4e3aa592e5070",
+    "docker_matched_benchmark": "aeded8f24d79081baa7aab3ab894b2faec560126502e458b0ddd69178c0b442d",
+    "docker_container_log": "d3fca863d074825f0597bcf6f33b7b1d7e7284e0ddbc3305c5596adc337d8387",
+    "docker_container_inspect": "319d99c314ced8ebcb409889cc8bf4e238e9b00bb7a0920640188de4ec339f4e"
   },
   "promotion_limits": [
     "the contributor's original image/model/runtime identity remains unknown",
@@ -152,7 +163,7 @@
     "the strict realistic-suite cache-zero telemetry gate remains incomplete",
     "runtime FP8 equivalence to the BF16 checkpoint is not established",
     "float16 SSM and MTP2 have bounded throughput/functional evidence but no BF16-relative quality equivalence",
-    "the Docker-specific launcher branch was not executed; runtime validation used Podman",
+    "the contributor's historical Docker/image identity remains unknown even though the current pinned image was equivalent under Docker and Podman",
     "not eligible for LocalMaxxing submission"
   ]
 }
