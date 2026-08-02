@@ -111,3 +111,29 @@ The frozen q8 identity is therefore corrected to require both selectors at
 literal zero. The q12 default continues to require both at one. This correction
 narrows the q8 candidate to its actually exercised code and was committed and
 contract-tested before the first service launch; it does not replace any run.
+
+## First screen result: terminal guard stop, unmeasured
+
+The frozen screen started at:
+
+```text
+/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/
+  laguna-long-depth7-screen-gpu080-20260802T201509Z
+```
+
+It completed runtime verification and all four ranks captured the exact q8
+target topology `146/145`. Before any completed benchmark row or graph replay,
+the memory guard stopped the service at `12,504,872 KiB` available, only
+`78,040 KiB` below the frozen `12,582,912 KiB` floor. Swap free was still
+`24,940,828 KiB`. Cleanup succeeded, no worker survived, and port 18080 was
+free. The artifact is sealed with a zero-row `RUNNING` benchmark file and exit
+status 143; it contains no throughput, retrieval, or acceptance result.
+
+The successful q12 32K comparison had explicitly used an 8 GiB available-RAM
+floor. This q8 launch accidentally inherited the runner's 12 GiB default, so
+the guard identities did not match. The preregistered failure policy is still
+honored: the static q8 plus 8,192-token prefill candidate is closed as an
+operational failure and will not be rerun under a relaxed guard.
+
+The durable structured result is
+`data/laguna-s-2.1-xpu-b70/long-context-depth7-screen-20260802.json`.

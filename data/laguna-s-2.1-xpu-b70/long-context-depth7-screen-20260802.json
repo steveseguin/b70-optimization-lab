@@ -1,0 +1,60 @@
+{
+  "schema": "laguna-long-context-depth-screen-result-v1",
+  "status": "terminal_memory_guard_stop_before_completed_row",
+  "date_local": "2026-08-02",
+  "performance_result_available": false,
+  "record_changed": false,
+  "identity": {
+    "model": "Laguna-S 2.1 INT4",
+    "main_tooling_commit": "873f7265e",
+    "vllm_commit": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "candidate_profile": "q8",
+    "num_speculative_tokens": 7,
+    "exact_max_m": 8,
+    "tensor_parallel_size": 4,
+    "expert_parallel_size": 4,
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "gpu_memory_utilization": 0.8,
+    "memory_guard_min_available_kib": 12582912,
+    "memory_guard_min_swap_free_kib": 4194304,
+    "host_swap_total_kib": 25165816
+  },
+  "artifact": {
+    "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-depth7-screen-gpu080-20260802T201509Z",
+    "bench_sha256": "668b026142f7fdd55fee9efe7547c2c9b82ff84182b9d8fe4e610110c655b90d",
+    "identity_sha256": "5ee3cb55b007c1ec1fdaf6d5c66dbfb2d9e5e646d93e1d714dbf68dafd565c6f",
+    "server_log_sha256": "cf70a861f7e36cda4f3fe3b1169f487aee051337ddd7c72e066e6f2ae3bf88a1",
+    "memory_guard_sha256": "8389129f5cdd657d197a10a477975a5a8df6862bbeb09aa228b70415d475ac32",
+    "memory_guard_stop_sha256": "446844384b2356a760796a38fc5f1f15eb85951f8ee37a546675a39b95361071",
+    "cleanup_status_sha256": "45c1c39a060e9b1d048d89dc1bc15a6d7b25b545b95fa392b0ef0c5d45c576c5",
+    "runtime_verification_sha256": "df62cd86906ac802818ce121f49870786713471a209b029786ffe6e3c46ed8be"
+  },
+  "observed": {
+    "completed_rows": 0,
+    "bench_status_at_stop": "RUNNING",
+    "memory_guard_fired": true,
+    "mem_available_kib_at_stop": 12504872,
+    "swap_free_kib_at_stop": 24940828,
+    "guard_shortfall_kib": 78040,
+    "target_capture_146_145_count": 4,
+    "target_replay_146_145_count": 0,
+    "all_breakable_topology_lines": 4,
+    "draft_topology_lines": 0,
+    "cleanup_original_status": 143,
+    "cleanup_stop_status": 0,
+    "residual_vllm_processes": 0,
+    "port_18080_listener_after": false
+  },
+  "comparison_identity_error": {
+    "successful_q12_memory_guard_min_available_kib": 8388608,
+    "screen_memory_guard_min_available_kib": 12582912,
+    "description": "The q8 screen inherited the runner's 12 GiB default instead of the successful q12 32K comparison's explicit 8 GiB floor. The service was stopped before a completed row, so no decode or retrieval comparison exists."
+  },
+  "disposition": {
+    "static_q8_8192_prefill_candidate": "closed_operational_failure_unmeasured",
+    "localmaxxing_submission": false,
+    "next_lane": "Preregister a distinct q8 plus 4096-token chunked-prefill identity that must satisfy the original 12 GiB guard."
+  }
+}
