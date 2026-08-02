@@ -1,15 +1,17 @@
 # Qwen3.6 35B A3B UD-Q8_K_XL on Intel Arc B70 (llama.cpp SYCL)
 
-> **Maintainer note — community submission, not reproduced in the reference lab.**
+> **Maintainer note — corrected community submission, `B70-tested`.**
 >
 > Read [`STATUS.md`](STATUS.md) before running this recipe. The contributor's
 > environment and measurements are retained below as community-reported
-> evidence. On 2026-08-01 the maintainer corrected the GGUF identity, the KV
+> evidence. On 2026-08-01/02 the maintainer corrected the GGUF identity, the KV
 > cache label, and unsafe launch defaults. The original submission called the
 > model Q8_0 while linking UD-Q8_K_XL, called the implicit F16 KV cache Q8_0,
 > enabled MTP by default, bound to `0.0.0.0`, ran systemd as root, and used
 > `pkill -9`. The corrected recipe defaults to no MTP, loopback-only serving, a
-> dedicated unprivileged service user, and no forced process termination.
+> dedicated unprivileged service user, and no forced process termination. The
+> corrected recipe was then started and exercised on two reference-lab B70s;
+> the exact scope and limitations are recorded below and in `STATUS.md`.
 
 ---
 
@@ -28,12 +30,13 @@ MTP is an optional diagnostic rather than the recommended default.
 The linked artifact is UD-Q8_K_XL, not Q8_0. Record the model revision and file
 checksum before treating runs on a later download as comparable.
 
-For future maintainer validation, the locally pre-positioned artifact is pinned
-to Hugging Face revision `5bc3e238d916f48a861bac2f8a1990a0e9b7e98d`, size
+The artifact used for reference-lab validation is pinned to Hugging Face
+revision `5bc3e238d916f48a861bac2f8a1990a0e9b7e98d`, size
 `39099447584` bytes, and SHA-256
 `6c6b816537abad90b250a0972b345466028d861ddfe316d5f0de31ca6440f781`.
-It was identified but not loaded or executed during this review; this does not
-prove that it is byte-identical to the contributor's benchmark artifact.
+This exact artifact was loaded during maintainer validation. It cannot be
+proven byte-identical to the contributor's benchmark artifact because the
+contributor did not record a revision or checksum.
 
 ## One-Command Start
 
@@ -94,6 +97,10 @@ No `-ctk` or `-ctv` option is supplied, so this recipe uses llama.cpp's
 default F16 KV cache. A Q8 KV-cache run is a different quality and memory
 configuration and must be labeled and validated separately.
 
+With `--ctx-size 512000 -np 2`, the tested server reported two slots of 256000
+tokens each. The value is a total server allocation, not 512000 tokens per
+request slot.
+
 ## Optional MTP Diagnostic
 
 To reproduce the contributor's original MTP-on configuration, add both flags
@@ -107,8 +114,38 @@ to either command:
 Use the MTP GGUF variant above; a model without the required next-token tensors
 will fail with `draft-mtp`. The contributor reported high draft acceptance,
 but their later control was approximately 45 tok/s with MTP off versus 40 tok/s
-with MTP on. Keep MTP off unless a controlled same-prompt A/B on the target
-runtime demonstrates a benefit without a correctness regression.
+with MTP on. The reference-lab diagnostic also found MTP slower: 45.716 tok/s
+with MTP versus three MTP-off observations of 48.441, 48.453, and 48.474 tok/s
+on the same native prompt shape. Draft acceptance was 167/262 (63.74%). Exact
+token comparison was inconclusive because MTP-off greedy output itself varied
+across fresh starts and within one process. Keep MTP off; do not infer an
+MTP-specific quality change from this experiment.
+
+## Reference-Lab Validation
+
+The maintainer tested a prospective reproduction identity, not the unknown
+byte-for-byte contributor environment:
+
+- llama.cpp `fb92d8f1873c96ec63f9c59721d58a55bf46d441`, built in a clean
+  checkout with SYCL and `GGML_SYCL_F16=ON` using IntelLLVM 2026.0.0;
+- the pinned GGUF above and `mmproj-BF16.gguf` from the same revision (SHA-256
+  `da63cb47a76763c712393f8a017070188a304fa39f8aeea6edc629ed7b975cfa`);
+- two Arc B70s, kernel `7.0.0-28-generic`, corrected MTP-off command, F16 KV,
+  two 256000-token slots, loopback-only endpoint, and cold unique prompts.
+
+Startup and health/model checks passed. Plain, exact JSON, reasoning/arithmetic,
+sequential, concurrent, and post-long canaries passed with `cached_tokens=0`.
+A seven-case retrieval ladder passed 7/7 with actual prompt lengths through
+34649 tokens, followed by another clean exact response. This is useful
+longer-context evidence but is not a near-256K boundary test.
+
+The repository's fixed 12-prompt realistic suite passed 12/12 with unique
+prompts and no reported cached tokens. Conventional 99-interval accounting was
+48.1818 content-delta events/s. llama.cpp's OpenAI SSE response does not expose
+token IDs for those deltas, so this is a stream-delta timing proxy, not an
+exact-token throughput result and not a LocalMaxxing record. The full compact
+identity and artifact pointers are in
+[`validation/2026-08-01-reference-lab-summary.json`](validation/2026-08-01-reference-lab-summary.json).
 
 ## systemd Service
 

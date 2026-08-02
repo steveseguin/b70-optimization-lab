@@ -1,0 +1,86 @@
+{
+  "schema": "community-reference-lab-summary-v1",
+  "date": "2026-08-01/02",
+  "evidence_level": "B70-tested",
+  "source_pr": 14,
+  "prospective_reproduction": true,
+  "hardware": {
+    "gpu": "Intel Arc B70",
+    "count": 2,
+    "logical_devices": [0, 1],
+    "kernel": "7.0.0-28-generic",
+    "xe_srcversion": "85B7CA089405934276CBAD3"
+  },
+  "engine": {
+    "repo": "ggml-org/llama.cpp",
+    "commit": "fb92d8f1873c96ec63f9c59721d58a55bf46d441",
+    "compiler": "IntelLLVM 2026.0.0",
+    "cmake_flags": ["GGML_SYCL=ON", "GGML_SYCL_F16=ON", "CMAKE_BUILD_TYPE=Release"],
+    "llama_server_sha256": "fa949864987efaf4d2ff720faa2384ef5a6a5ce96dfd7c6d0d7d0840cfadec27",
+    "libggml_sycl_sha256": "8c457fb58bd863a4632ca7f40d44e03c9d7afbee344a636f63b82bd60ac1d0c2",
+    "libllama_sha256": "b2138e520931d81e9d2b6f3a94e1b06c98cab8a241443d50d9a45f119a5e5e17"
+  },
+  "model": {
+    "repo": "unsloth/Qwen3.6-35B-A3B-MTP-GGUF",
+    "revision": "5bc3e238d916f48a861bac2f8a1990a0e9b7e98d",
+    "gguf": {
+      "filename": "Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf",
+      "bytes": 39099447584,
+      "sha256": "6c6b816537abad90b250a0972b345466028d861ddfe316d5f0de31ca6440f781"
+    },
+    "mmproj": {
+      "filename": "mmproj-BF16.gguf",
+      "bytes": 902822528,
+      "sha256": "da63cb47a76763c712393f8a017070188a304fa39f8aeea6edc629ed7b975cfa"
+    }
+  },
+  "runtime": {
+    "mtp_default": "off",
+    "kv_cache": "F16 default",
+    "ctx_size_total": 512000,
+    "slots": 2,
+    "ctx_per_slot_reported": 256000,
+    "bind": "127.0.0.1:18214"
+  },
+  "gates": {
+    "startup_health_model": "pass",
+    "semantic_and_reasoning_canaries": "pass",
+    "sequential_and_concurrent_canaries": "pass",
+    "long_retrieval": {
+      "result": "pass",
+      "cases": 7,
+      "max_actual_prompt_tokens": 34649,
+      "post_long_exact_response": "pass"
+    },
+    "fixed_realistic_suite": {
+      "result": "pass",
+      "cases": 12,
+      "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
+      "cached_tokens": 0,
+      "legacy_100_over_span": 48.66850300006169,
+      "conventional_99_interval_stream_delta_rate": 48.181817970061076,
+      "metric_caveat": "OpenAI content-delta timing proxy; SSE response did not expose token IDs"
+    }
+  },
+  "mtp_diagnostic": {
+    "mtp_off_tok_s": [48.4407013911, 48.4534088298, 48.4744558553],
+    "mtp_on_tok_s": 45.7156408565,
+    "draft_accepted": 167,
+    "draft_total": 262,
+    "acceptance_rate": 0.6374045802,
+    "mean_accepted_length": 2.90,
+    "speed_conclusion": "MTP was reproducibly slower for this identity",
+    "quality_conclusion": "inconclusive: MTP-off greedy output was itself nondeterministic across fresh starts and within one process"
+  },
+  "raw_artifacts": [
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr14-baseline-lab-20260802T0130Z",
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr14-mtp-on-lab-20260802T0145Z",
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr14-mtp-off-confirm-lab-20260802T0155Z"
+  ],
+  "promotion_limits": [
+    "not near-boundary context validated",
+    "realistic-suite metric is not exact-token timing",
+    "MTP exact-quality comparison blocked by baseline nondeterminism",
+    "not eligible for LocalMaxxing submission"
+  ]
+}

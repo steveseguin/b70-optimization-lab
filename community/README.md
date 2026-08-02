@@ -37,7 +37,7 @@ definition, because the reference hardware is here.
 ```
 community/<contributor>-<model>-<topic>/
   STATUS.md      required; evidence label, provenance, what was tested here
-  README.md      the contribution as submitted
+  README.md      the contribution, or a clearly documented maintainer-corrected recipe
   validation/    logs, JSON, and commands from any local validation attempt
 ```
 
@@ -45,9 +45,13 @@ community/<contributor>-<model>-<topic>/
 [`STATUS-TEMPLATE.md`](STATUS-TEMPLATE.md) to start one. An entry without a
 current `STATUS.md` is incomplete regardless of how good its README is.
 
-The contribution `README.md` is preserved as submitted. Corrections belong in
-`STATUS.md` under "Known Issues", not silently edited into the contributor's
-text. If the recipe is later fixed, record the fix and its author explicitly.
+The submitted state must remain recoverable from Git history. Maintainers may
+correct a contributed `README.md` when that is safer or more useful than
+carrying a known-bad copy-ready command, but the correction must be explicit:
+identify it in the maintainer note and `STATUS.md`, preserve contributor
+authorship/history, and keep contributor-reported claims separate from local
+findings. Never silently rewrite provenance or turn a maintainer result into a
+contributor claim.
 
 One exception: a maintainer note may be added at the top of a contributed
 README, clearly labelled as such and separated from the contributor's text by a
@@ -120,7 +124,7 @@ must not be recorded the same way.
 | Entry | Contributor | Source | Evidence level | Tested here |
 | --- | --- | --- | --- | --- |
 | [Qwen3.6 27B FP8 TP2 Docker](dominick253-qwen36-27b-fp8-tp2-docker/STATUS.md) | dominick253 | [PR #9](https://github.com/steveseguin/b70-optimization-lab/pull/9) | `B70-tested` | Yes; recipe runs at 30.171 tok/s median decode, inside the reported range |
-| [Qwen3.6 35B UD-Q8_K_XL llama.cpp SYCL](dominick253-qwen36-35b-llamacpp-sycl/STATUS.md) | dominick253 | [PR #14](https://github.com/steveseguin/b70-optimization-lab/pull/14) | `community-reported` | No |
+| [Qwen3.6 35B UD-Q8_K_XL llama.cpp SYCL](dominick253-qwen36-35b-llamacpp-sycl/STATUS.md) | dominick253 | [PR #14](https://github.com/steveseguin/b70-optimization-lab/pull/14) | `B70-tested` | Yes; corrected MTP-off recipe, semantic/concurrency gates, 34,649-token retrieval, and cold fixed suite |
 | [Qwen3.6 35B dynamic-FP8 vLLM Docker](dominick253-qwen36-35b-vllm-fp8/STATUS.md) | dominick253 | [PR #15](https://github.com/steveseguin/b70-optimization-lab/pull/15) | `community-reported` | No |
 
 ## Field Report Index
