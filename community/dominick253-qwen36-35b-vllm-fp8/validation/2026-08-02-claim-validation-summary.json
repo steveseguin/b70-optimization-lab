@@ -1,0 +1,140 @@
+{
+  "schema": "community-claim-validation-summary-v1",
+  "date": "2026-08-02",
+  "source_pr": 15,
+  "contributor_commit": "975a097891fb00e0cdf989b9f3a13d3c09114321",
+  "evidence_level": "B70-tested",
+  "prospective_reproduction": true,
+  "hardware": {
+    "gpu": "Intel Arc B70",
+    "count": 2,
+    "logical_devices": [
+      0,
+      1
+    ],
+    "kernel": "7.0.0-28-generic"
+  },
+  "model": {
+    "repo": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "source_checkpoint_dtype": "bfloat16",
+    "files": 40,
+    "bytes": 71926865825,
+    "lfs_files_verified_sha256": 27
+  },
+  "engine": {
+    "image": "docker.io/intel/llm-scaler-vllm@sha256:5d87be271e4db54539f1dbb29c071e9122f4e57b74594dbb26a55d27a569d780",
+    "image_id": "2950f3361abbedc07719e8c4f4e032f007232c6ad23e6d1eb64703789cbba73a",
+    "container_runtime": "Podman 4.9.3 rootless",
+    "vllm_version": "0.21.1.dev0+gad7125a43.d20260709",
+    "vllm_commit": "ad7125a431e176d4161099480a66f0169609a690",
+    "vllm_xpu_kernels_commit": "3cab97adf65f7e85fb96f4a08db5611832d37382",
+    "published_launcher_sha256": "33854405b7c15402e25f30a1059268ec547080c07c27e2f95a6dd57483bdcd02"
+  },
+  "runtime": {
+    "weight_quantization": "dynamic FP8",
+    "runtime_dtype": "float16",
+    "ssm_state_cache": "no override; checkpoint configuration declares float32",
+    "tensor_parallel_size": 2,
+    "max_model_len": 262144,
+    "max_num_seqs": 4,
+    "prefix_caching": false,
+    "eager": true
+  },
+  "claim_verdicts": {
+    "corrected_container_recipe_starts": {
+      "verdict": "pass under rootless Podman",
+      "details": "The exact published launcher reached health in 121 seconds, passed its plain smoke, and passed its strengthened completed-thinking smoke. The Docker-specific CLI branch was reviewed but not executed because Docker is absent on the lab host."
+    },
+    "dynamic_fp8_tp2_xpu_path": {
+      "verdict": "pass for the corrected prospective replay",
+      "details": "Runtime identity records TP2, FP8OnlineLinearMethod selected XPUFP8ScaledMMLinearKernel, and the XPU FP8 MoE backend."
+    },
+    "near_256k_context": {
+      "verdict": "pass",
+      "actual_prompt_tokens": 261794,
+      "completion_tokens": 18,
+      "total_tokens": 261812,
+      "reserved_prompt_plus_max_output_tokens": 261826,
+      "configured_max_model_len": 262144,
+      "expected_and_returned_key": "PR15-NEAR256K-6F2A9C",
+      "response_model": "qwen36-35b-fp8",
+      "finish_reason": "stop",
+      "elapsed_seconds": 63.787578190000204,
+      "immediate_next_request": {
+        "verdict": "pass",
+        "expected_and_returned_key": "PR15-AFTER256K-READY",
+        "response_model": "qwen36-35b-fp8",
+        "finish_reason": "stop",
+        "elapsed_seconds": 0.2939514870013227
+      }
+    },
+    "thinking_and_reasoning": {
+      "verdict": "bounded pass; universal hard-budget claim unverified",
+      "details": "Explicit 32- and 128-token-budget examples stopped normally with parsed reasoning and final content 408, at 37 and 133 completion tokens. Two fresh strengthened smoke candidates instead ended with finish_reason=length, but their complete request payloads were not preserved, so no more specific configuration claim is made. The final launcher uses the reproducible seeded 32-token smoke and requires finish_reason=stop plus final content exactly 408."
+    },
+    "golden_150_tok_s_baseline": {
+      "verdict": "unsupported and not reproducible as stated",
+      "details": "The contributor supplied no workload, metric window, run identity, repeats, logs, or quality gate. It cannot be meaningfully compared to a lab measurement."
+    },
+    "in_place_fp8_no_vram_spike_correct_scales": {
+      "verdict": "partial",
+      "details": "The online FP8 runtime path and selected XPU kernels are observed. Peak load memory, quantization granularity, and scale correctness were not instrumented or compared to a BF16 quality reference."
+    },
+    "pretrained_fp8_fallback_slow_or_incorrect": {
+      "verdict": "unverified",
+      "details": "No pretrained-FP8 checkpoint was loaded in this validation."
+    },
+    "contributor_original_runtime_identity": {
+      "verdict": "unverified",
+      "details": "The contributor did not record an immutable image digest, model revision, runtime commits, or raw responses."
+    }
+  },
+  "fixed_realistic_suite": {
+    "classification": "invalid-or-incomplete",
+    "cases_completed": 12,
+    "completion_tokens_each": 128,
+    "thinking_disabled": true,
+    "cached_tokens": null,
+    "failure_reason": "the image omits prompt_tokens_details, so the required cached_tokens=0 telemetry gate cannot pass even though prefix caching is disabled",
+    "legacy_100_over_span_median_tok_s": 50.43388928995701,
+    "conventional_99_interval_median_tok_s": 49.92955039705744,
+    "prior_conventional_99_interval_median_tok_s": 48.095169967532186,
+    "metric_classification": "diagnostic only; not promotion or LocalMaxxing evidence"
+  },
+  "launcher_corrections_from_this_validation": [
+    "require a completed thinking response with finish_reason=stop and final content exactly 408",
+    "use a reproducible seeded 32-token thinking smoke instead of treating a 2048-token setting as a reliable hard budget",
+    "put container-log options before the container name for Docker/Podman compatibility",
+    "preserve both finish_reason=length failures as narrowly classified negative evidence"
+  ],
+  "teardown": {
+    "exact_test_containers_removed": true,
+    "ports_18216_and_18217_clear": true,
+    "post_teardown_gpu_memory_mib": [
+      42.88671875,
+      42.875
+    ],
+    "reset_reboot_or_service_change": false,
+    "laguna_worktree_touched": false
+  },
+  "raw_artifacts": [
+    "/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z"
+  ],
+  "artifact_sha256": {
+    "claim_run_container_log": "fc8b0f57ccca7c7074706989f945bc84f1fb99e680371d43a5d1e8d311d95587",
+    "realistic_suite_qualified": "2e5323acc7e91a26489d0460feeb600446685ff42da4d189b2dacb0e002522eb",
+    "near_context_summary": "3bd9de36ab6a98c39ecace8ba2b095fd82800c76268a3fc6e86546c86b6bbe92",
+    "final_launcher_log": "c41626a9976231d1598d7b3a762fe87b1193cdf552d56d41c8cb0b5e6cd94593",
+    "final_launcher_container_log": "871ec9bec943b0eb9b47a2a45545c0fb44caca6bbfdce53372b4e3aa592e5070"
+  },
+  "promotion_limits": [
+    "the contributor's original image/model/runtime identity remains unknown",
+    "the 150 tok/s statement has no reproducible benchmark definition",
+    "the strict realistic-suite cache-zero telemetry gate remains incomplete",
+    "runtime FP8 equivalence to the BF16 checkpoint is not established",
+    "the optional float16 SSM-state override remains untested",
+    "the Docker-specific launcher branch was not executed; runtime validation used Podman",
+    "not eligible for LocalMaxxing submission"
+  ]
+}

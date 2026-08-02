@@ -1,12 +1,13 @@
 # Qwen3.6 35B A3B FP8 on Intel Arc B70 (vLLM Docker)
 
 > **Maintainer note — corrected community submission, `B70-tested`.** The
-> corrected launcher now starts and passes bounded smoke, semantic,
-> concurrency, and 30,049-token retrieval checks in the reference lab. This is
-> a prospective replay at pinned model/image revisions; it does not verify the
-> contributor's original identity, the configured 256K boundary, or a
-> performance claim. See [STATUS.md](STATUS.md) and the
-> [lab summary](validation/2026-08-01-reference-lab-summary.json).
+> corrected launcher starts and passes bounded smoke, semantic, concurrency,
+> and exact near-256K retrieval plus next-request checks in the reference lab.
+> This is a prospective replay at pinned model/image revisions; it does not
+> verify the contributor's original identity or unsupported `150 tok/s`
+> comment. See [STATUS.md](STATUS.md), the
+> [initial lab summary](validation/2026-08-01-reference-lab-summary.json), and
+> the [claim-validation summary](validation/2026-08-02-claim-validation-summary.json).
 
 ---
 
@@ -20,7 +21,8 @@ used by the contributor remains unknown because no digest was recorded there.
 
 The contributor reported that the service passed initial smoke tests. The
 reference lab separately confirmed the corrected recipe at the identities
-below. No contributor throughput, long-context, or quality result was supplied.
+below. Apart from the unsupported `150 tok/s` launcher comment, no defined
+contributor benchmark, long-context result, or quality result was supplied.
 
 ## Model And Precision
 
@@ -68,7 +70,7 @@ All launcher settings use the exported environment when present. Important
 optional settings include `CONTAINER_RUNTIME`, `NAME`, `SERVED_NAME`,
 `BIND_HOST`, `ALLOW_REMOTE_BIND`, `GPU_UTIL`, `ZE_AFFINITY_MASK`,
 `ONEAPI_DEVICE_SELECTOR`, `RESTART_POLICY`, `STARTUP_TIMEOUT_SECONDS`, and
-`THINKING_BUDGET`.
+`THINKING_BUDGET` / `THINKING_MAX_TOKENS`.
 `RESTART_POLICY` defaults to `no` until this recipe is locally validated.
 
 The script prefers Docker when both supported CLIs are installed and otherwise
@@ -76,7 +78,10 @@ uses Podman. Set `CONTAINER_RUNTIME=docker` or `CONTAINER_RUNTIME=podman` to
 choose explicitly. Docker receives the numeric render GID; rootless Podman uses
 `--group-add keep-groups`, matching this lab's prior B70 container validation.
 Podman omits `--shm-size` because it rejects that option with `--ipc=host`.
-The reference-lab run used rootless Podman 4.9.3.
+The reference-lab runs used rootless Podman 4.9.3. They validate the pinned OCI
+image, serve command, and Podman branch; the Docker-specific group and shared-
+memory branch was reviewed but not executed because the Docker CLI is absent on
+this host.
 
 The model mount is read-only. The script fails if the requested host port is
 already listening or if a container with `NAME` already exists. It never stops
@@ -121,26 +126,34 @@ The container uses `/dev/dri`, host IPC, and the render group, but does not use
 | Thinking | enabled by default in chat-template kwargs |
 | Reasoning parser | `qwen3` |
 
-`MAX_LEN=262144` is only a configured limit. The reference-lab run passed one
-30,049-token retrieval request, but did not attempt a 262144-token prefill,
-near-boundary retrieval, rollover, or next-request check. It therefore does not
-establish working 256K context.
+`MAX_LEN=262144` is the configured combined request limit, not permission to
+send 262144 prompt tokens plus output. The reference lab passed exact retrieval
+with 261,794 prompt tokens and 18 completion tokens (261,812 total), followed
+immediately by an independent exact next-request sentinel. That validates this
+pinned corrected recipe near the configured boundary; it does not retroactively
+validate the contributor's unknown model/image identity.
 
 ## Thinking Budget
 
 The server enables thinking by default, but `THINKING_BUDGET` is not a global
-server limit. It is used only by the launcher's thinking smoke-test request.
-Clients that want a hard budget must send `thinking_token_budget` in each
-request (subject to the selected vLLM/chat-template API behavior).
+server limit. It is used only by the launcher's thinking smoke-test request,
+which defaults to a seeded 32-token reasoning budget and a separate 256-token
+overall response cap. Clients may send `thinking_token_budget` per request, but
+must also bound `max_tokens` and inspect the finish reason. In lab probes, 32-
+and 128-token examples completed as intended, while two fresh strengthened
+smoke attempts ended with `finish_reason=length`. The latter attempts' complete
+request payloads were not preserved, so they support only that narrow failure
+classification. This evidence does not support the contributor's unqualified
+"hard budget" description.
 
 The launcher smoke tests check more than JSON syntax:
 
 - `curl --fail-with-body` rejects HTTP errors;
 - the plain response must contain `HELLO` in assistant content;
-- the thinking response must expose nonempty parsed reasoning and contain the
-  correct arithmetic answer `408` in reasoning or final content. The pinned
-  image uses `message.reasoning`; the check retains a
-  `message.reasoning_content` fallback for older compatible images.
+- the thinking response must expose nonempty parsed reasoning, finish with
+  `finish_reason=stop`, and put exactly `408` in final content. The pinned image
+  uses `message.reasoning`; the check retains a `message.reasoning_content`
+  fallback for older compatible images.
 
 These are startup checks, not a quality or benchmark suite.
 
@@ -153,13 +166,16 @@ On 2026-08-01/02, the corrected recipe ran on two reference-lab B70s with:
 - vLLM `0.21.1.dev0+gad7125a43.d20260709` at commit `ad7125a431`;
 - vLLM XPU kernels `3cab97adf` and torch `2.11.0+xpu`;
 - TP2, eager mode, runtime FP8, float16 activation dtype, prefix caching off,
-  and model-default float32 Mamba SSM state.
+  and no SSM-state override (the checkpoint declares float32).
 
 The service reached health in 121 seconds and selected the XPU FP8 linear and
 MoE kernels. It passed exact plain text, structured JSON/arithmetic, parsed
 thinking/arithmetic, four simultaneous unique-sentinel requests, and exact
-retrieval at 30,049 prompt tokens. Teardown removed only the exact test
-container and returned the endpoint and GPUs to idle.
+retrieval first at 30,049 prompt tokens and then at 261,794 prompt tokens. The
+near-boundary request returned the exact key in 63.79 seconds and an immediate
+next request returned its independent exact sentinel in 0.29 seconds. Teardown
+removed only the exact test containers and returned the endpoints and GPUs to
+idle.
 
 All 12 prompts in the fixed realistic suite completed with 128 output tokens
 and no reasoning deltas in non-thinking mode. Their diagnostic conventional
@@ -167,14 +183,19 @@ and no reasoning deltas in non-thinking mode. Their diagnostic conventional
 `invalid-or-incomplete`, not promoted evidence, because this vLLM build omitted
 `prompt_tokens_details.cached_tokens` on every response, so the required
 `cached_tokens=0` telemetry gate could not pass even though prefix caching was
-disabled.
+disabled. A fresh second suite measured `49.92955039705744 tok/s` under the
+same conventional accounting and had the same missing-telemetry failure. The
+contributor's `150 tok/s` comment had no workload or metric definition, so it
+cannot be treated as a comparable result.
 
-Runtime validation also found and fixed two packaging/API issues: the launcher
-lacked its executable bit, and its thinking check read only the deprecated
-`reasoning_content` field instead of this image's `reasoning` field. Failure
-cleanup now emits recent container logs before removing its own container.
-Raw artifacts are outside Git at
-`/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-exact-lab-20260802T0408Z`.
+Runtime validation found and fixed packaging/API issues: the launcher lacked
+its executable bit, read only the deprecated `reasoning_content` field, and
+accepted length-truncated thinking as a smoke pass. It now requires a completed
+final answer, and failure logging uses Docker/Podman's portable option order
+before removing only its own container. Raw artifacts are outside Git at
+`/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-exact-lab-20260802T0408Z`
+and
+`/mnt/fast-ai/bench-results/community-qwen36-pr14-pr15/pr15-claim-validation-20260802T045055Z`.
 
 ## Contributor Environment
 
@@ -187,6 +208,6 @@ The contributor reported:
 | GPU | 2x Intel Arc B70, 32 GB each, PCIe 4.0 x8 |
 | Driver | `xe`, version unknown |
 | Image | `intel/llm-scaler-vllm:0.21.0-b1` |
-| Context setting | 262144, not validated at length |
+| Context setting | 262144 reported; contributor run unvalidated, separate corrected lab replay passed at 261,794 prompt / 261,812 total tokens |
 
 See [STATUS.md](STATUS.md) for the evidence gaps and promotion requirements.

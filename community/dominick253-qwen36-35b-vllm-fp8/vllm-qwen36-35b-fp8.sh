@@ -17,7 +17,8 @@ MAX_LEN="${MAX_LEN:-262144}"
 GPU_UTIL="${GPU_UTIL:-0.88}"
 MAX_SEQS="${MAX_SEQS:-4}"
 EAGER="${EAGER:-1}"
-THINKING_BUDGET="${THINKING_BUDGET:-2048}"
+THINKING_BUDGET="${THINKING_BUDGET:-32}"
+THINKING_MAX_TOKENS="${THINKING_MAX_TOKENS:-256}"
 ZE_AFFINITY_MASK="${ZE_AFFINITY_MASK:-0,1}"
 ONEAPI_DEVICE_SELECTOR="${ONEAPI_DEVICE_SELECTOR:-level_zero:0,1}"
 RESTART_POLICY="${RESTART_POLICY:-no}"
@@ -85,6 +86,7 @@ for integer_setting in \
   "MAX_LEN=${MAX_LEN}" \
   "MAX_SEQS=${MAX_SEQS}" \
   "THINKING_BUDGET=${THINKING_BUDGET}" \
+  "THINKING_MAX_TOKENS=${THINKING_MAX_TOKENS}" \
   "STARTUP_TIMEOUT_SECONDS=${STARTUP_TIMEOUT_SECONDS}"
 do
   integer_value=${integer_setting#*=}
@@ -92,6 +94,11 @@ do
     ""|*[!0-9]*) die "${integer_setting%%=*} must be a nonnegative integer" ;;
   esac
 done
+
+[ "${THINKING_BUDGET}" -gt 0 ] \
+  || die "THINKING_BUDGET must be greater than zero"
+[ "${THINKING_MAX_TOKENS}" -gt "${THINKING_BUDGET}" ] \
+  || die "THINKING_MAX_TOKENS must leave room after THINKING_BUDGET for the final answer"
 
 case "${SERVED_NAME}" in
   ""|*[!A-Za-z0-9._/-]*)
@@ -198,7 +205,7 @@ cleanup_failed_launch() {
   trap - ERR
   if [ "${CONTAINER_CREATED}" = "1" ]; then
     printf 'Recent container logs before cleanup:\n' >&2
-    "${CONTAINER_RUNTIME}" logs "${NAME}" --tail 120 >&2 || true
+    "${CONTAINER_RUNTIME}" logs --tail 120 "${NAME}" >&2 || true
     printf 'Launch or smoke check failed; stopping and removing newly created container %s.\n' \
       "${NAME}" >&2
     "${CONTAINER_RUNTIME}" stop -t 30 "${NAME}" >/dev/null 2>&1 || true
@@ -230,7 +237,7 @@ START_TIME=$(date +%s)
 while true; do
   if [ "$("${CONTAINER_RUNTIME}" inspect -f '{{.State.Running}}' "${NAME}" 2>/dev/null)" != "true" ]; then
     printf 'Engine process exited during startup. Recent logs:\n' >&2
-    "${CONTAINER_RUNTIME}" logs "${NAME}" --tail 80 >&2 || true
+    "${CONTAINER_RUNTIME}" logs --tail 80 "${NAME}" >&2 || true
     false
   fi
 
@@ -243,7 +250,7 @@ while true; do
   if [ "${ELAPSED}" -ge "${STARTUP_TIMEOUT_SECONDS}" ]; then
     printf 'Engine did not pass the HTTP health check within %ss. Recent logs:\n' \
       "${STARTUP_TIMEOUT_SECONDS}" >&2
-    "${CONTAINER_RUNTIME}" logs "${NAME}" --tail 80 >&2 || true
+    "${CONTAINER_RUNTIME}" logs --tail 80 "${NAME}" >&2 || true
     false
   fi
 
@@ -277,7 +284,7 @@ print("Plain smoke passed: assistant content contains HELLO.")
 THINKING_RESPONSE=$(curl --fail-with-body --silent --show-error --max-time 600 \
   --header 'Content-Type: application/json' \
   "http://${CHECK_HOST}:${PORT}/v1/chat/completions" \
-  --data "{\"model\":\"${SERVED_NAME}\",\"messages\":[{\"role\":\"user\",\"content\":\"Solve 17*24 step by step and give the numerical answer.\"}],\"max_tokens\":500,\"thinking_token_budget\":${THINKING_BUDGET},\"chat_template_kwargs\":{\"enable_thinking\":true,\"preserve_thinking\":true}}")
+  --data "{\"model\":\"${SERVED_NAME}\",\"messages\":[{\"role\":\"user\",\"content\":\"Compute 17 times 24. Think briefly, then put only the number 408 in the final answer.\"}],\"max_tokens\":${THINKING_MAX_TOKENS},\"temperature\":1.0,\"top_p\":0.95,\"seed\":1,\"thinking_token_budget\":${THINKING_BUDGET},\"chat_template_kwargs\":{\"enable_thinking\":true,\"preserve_thinking\":true}}")
 
 printf '%s' "${THINKING_RESPONSE}" | python3 -c '
 import json, sys
@@ -287,6 +294,7 @@ if error:
     raise SystemExit(f"thinking smoke returned API error: {error!r}")
 try:
     message = data["choices"][0]["message"]
+    finish_reason = data["choices"][0]["finish_reason"]
 except (KeyError, IndexError, TypeError) as exc:
     raise SystemExit(f"thinking smoke response shape invalid: {exc}")
 content = message.get("content") or ""
@@ -295,9 +303,11 @@ if not isinstance(content, str) or not isinstance(reasoning, str):
     raise SystemExit("thinking smoke content/reasoning fields are not strings")
 if not reasoning.strip():
     raise SystemExit("thinking smoke returned no reasoning or reasoning_content")
-if "408" not in f"{reasoning}\n{content}":
-    raise SystemExit("thinking smoke did not contain the expected answer 408")
-print("Thinking smoke passed: parsed reasoning is nonempty and response contains 408.")
+if finish_reason != "stop":
+    raise SystemExit(f"thinking smoke did not finish normally: {finish_reason!r}")
+if content.strip() != "408":
+    raise SystemExit(f"thinking smoke final content was not exactly 408: {content!r}")
+print("Thinking smoke passed: parsed reasoning is nonempty, finish_reason is stop, and final content is 408.")
 '
 
 trap - ERR
