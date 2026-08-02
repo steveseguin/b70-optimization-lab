@@ -132,3 +132,32 @@ must also be reported, but the headline question is sustained decode.
 A pass authorizes a complete three-position 32K campaign and a matched q8 BF16
 control under the same source commit. A failure is preserved and closes this
 q8 FP8 eager-drafter candidate; there is no rescue run or threshold change.
+
+## Result
+
+The short gate passed. The artifact is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/`
+`laguna-long-q8fp8-short-exact-gpu080-20260802T204900Z`. All three rows passed
+intrinsic and retrieval checks and matched the q1 oracle exactly for returned
+prompt IDs, output token IDs, and text hashes. Cached tokens were zero. The
+log contains exactly four target `146/145` captures and four replays, no draft
+graph, and one count-31 FP8 projection marker on every rank. Cleanup was clean.
+
+The authorized 32K screen then stopped on the frozen memory guard before the
+32,640-token row completed. The artifact is
+`/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/`
+`laguna-long-q8fp8-depth7-prefill4k-screen-gpu080-20260802T205400Z`.
+The 1,024-token warm-up passed, including retrieval and cache-zero checks. At
+the start of the long request, `MemAvailable` fell to `11,151,672 KiB`, which
+is `1,431,240 KiB` below the preregistered `12,582,912 KiB` floor;
+`SwapFree` remained `17,216,936 KiB`. The guard sent SIGTERM, the runner exited
+143, and cleanup stopped the service without residual workers. Target topology
+had already completed its exact four captures and four replays.
+
+This is an operational rejection with no 32K performance result. It does not
+show that FP8 decode is faster or slower than q8 BF16, and the lower host
+available-memory sample is not a controlled measurement of device-weight
+memory. Per the frozen rule, this q8 FP8 eager-drafter identity is closed with
+no retry or threshold relaxation. The complete structured record is
+`data/laguna-s-2.1-xpu-b70/`
+`long-context-depth7-fp8-draft-screen-20260802.json`.
