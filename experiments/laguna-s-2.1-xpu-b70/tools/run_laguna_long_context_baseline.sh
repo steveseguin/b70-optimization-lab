@@ -137,7 +137,7 @@ chmod -R 700 "$run_dir"
     "$low_swap_min_mem_available_kb"
   printf 'host_swap_total_kb=%s\n' \
     "$(awk '$1 == "SwapTotal:" { print $2 }' /proc/meminfo)"
-  printf 'candidate_record_conventional_tok_s=125.4619731637751\n'
+  printf 'q12_short_record_reference_conventional_tok_s=125.4619731637751\n'
   printf 'candidate_target_topology=146/145\ncandidate_draft_topology=%s\n' \
     "$candidate_draft_topology"
   printf 'oracle=%s\ncluster_iface=%s\nscored_measurement=false\n' "$oracle" "$cluster_iface"
@@ -419,13 +419,34 @@ printf 'completed\n' > "$run_dir/benchmark.pid"
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after.prom"
 
 if [[ "$role" == candidate ]]; then
-  target_count="$(grep -c 'BreakableCUDAGraphCapture(graphs=146, eager_breaks=145)' "$run_dir/server.log" || true)"
-  draft_count="$(grep -c 'BreakableCUDAGraphCapture(graphs=14, eager_breaks=13)' "$run_dir/server.log" || true)"
-  (( target_count >= 4 )) || die "missing candidate target 146/145 topology"
+  topology_count() {
+    local verb="$1" graphs="$2" eager_breaks="$3"
+    grep -F "$verb audited breakable cudagraph for BatchDescriptor(num_tokens=${candidate_m}," \
+      "$run_dir/server.log" \
+      | grep -Fc "BreakableCUDAGraphCapture(graphs=$graphs, eager_breaks=$eager_breaks)" \
+      || true
+  }
+  target_capture_count="$(topology_count Captured 146 145)"
+  target_replay_count="$(topology_count Replayed 146 145)"
+  draft_capture_count="$(topology_count Captured 14 13)"
+  draft_replay_count="$(topology_count Replayed 14 13)"
+  all_topology_count="$(grep -Fc 'BreakableCUDAGraphCapture(graphs=' "$run_dir/server.log" || true)"
+  (( target_capture_count == 4 )) \
+    || die "candidate target capture topology count is not exactly four"
+  (( target_replay_count == 4 )) \
+    || die "candidate target replay topology count is not exactly four"
   if [[ "$candidate_profile" == q12 ]]; then
-    (( draft_count >= 4 )) || die "missing q12 candidate draft 14/13 topology"
+    (( draft_capture_count == 4 )) \
+      || die "q12 candidate draft capture topology count is not exactly four"
+    (( draft_replay_count == 4 )) \
+      || die "q12 candidate draft replay topology count is not exactly four"
+    (( all_topology_count == 16 )) \
+      || die "q12 candidate emitted an unexpected Breakable topology line"
   else
-    (( draft_count == 0 )) || die "unexpected q8 candidate draft 14/13 topology"
+    (( draft_capture_count == 0 && draft_replay_count == 0 )) \
+      || die "q8 candidate unexpectedly captured or replayed a draft graph"
+    (( all_topology_count == 8 )) \
+      || die "q8 candidate emitted an unexpected Breakable topology line"
   fi
 fi
 

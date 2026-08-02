@@ -20,8 +20,8 @@ case "$role" in candidate|teacher) ;; *) echo "unsupported role: $role" >&2; exi
   exit 2
 }
 case "$max_num_batched_tokens" in
-  8192|16384|32768) ;;
-  *) echo "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 8192, 16384, or 32768" >&2; exit 2 ;;
+  4096|8192|16384|32768) ;;
+  *) echo "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8192, 16384, or 32768" >&2; exit 2 ;;
 esac
 case "$run_dir" in "$LAGUNA_NVME_RUN_ROOT"/*) ;; *)
   echo "run directory is outside the fixed Laguna NVMe run root" >&2
