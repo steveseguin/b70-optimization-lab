@@ -90,7 +90,10 @@ for spec in "${device_specs[@]}"; do
   observed_drm="$(find "$device_dir/drm" -mindepth 1 -maxdepth 1 -printf '%f\n' | LC_ALL=C sort | paste -sd, -)"
   expected_drm="$(printf '%s\n' "$card" "$control" "$render" | LC_ALL=C sort | paste -sd, -)"
   [[ "$observed_drm" == "$expected_drm" ]] || { echo "DRM node set mismatch: $bdf" >&2; exit 2; }
-  for node in "$card" "$control" "$render"; do
+  # Modern xe exposes controlD* in sysfs but this host's udev does not create
+  # control character devices. Card and render nodes are the actual openable
+  # device interface and therefore the complete foreign-opener surface here.
+  for node in "$card" "$render"; do
     [[ -c "/dev/dri/$node" ]] || { echo "missing DRM character device: $node" >&2; exit 2; }
     drm_paths+=("/dev/dri/$node")
   done

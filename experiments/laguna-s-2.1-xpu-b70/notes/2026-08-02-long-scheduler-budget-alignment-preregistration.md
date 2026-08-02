@@ -17,6 +17,20 @@ lock `tools/scheduler-alignment-lock.json`. The lock's own SHA-256 is recorded
 by the pair wrapper in its external identity packet. No arm had started when
 the lock was created.
 
+Pre-arm host-check amendment: the first wrapper invocation stopped with exit
+2 before model-content verification, service launch, or arm A because the new
+preflight incorrectly required `/dev/dri/controlD67` as a character device.
+On this xe host, each BDF's sysfs `drm/` directory legitimately includes a
+`controlD*` entry while udev creates only the card and render character nodes.
+Evidence is sealed at
+`laguna-scheduler-alignment-20260802-first-valid-pair`. The corrected preflight
+still requires the exact sysfs card/control/render set and BDF/driver binding,
+but checks and audits foreign openers only on the actual card/render character
+devices. The execution lock was regenerated before any scheduler service or
+request. The first scheduler arm remains unobserved, and the replacement tag
+is `20260802-first-valid-preflight2`; this is a harness-preflight correction,
+not an arm retry.
+
 ## Pre-execution audit amendment
 
 The fixed request order is:
@@ -55,7 +69,7 @@ The only executable entry point for this pair is:
 
 ```bash
 experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_scheduler_alignment_pair.sh \
-  20260802-first-valid \
+  20260802-first-valid-preflight2 \
   data/laguna-scheduler-alignment-repeat-oracle-20260802.json
 ```
 

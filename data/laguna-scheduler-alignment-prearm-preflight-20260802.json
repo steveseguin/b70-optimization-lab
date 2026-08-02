@@ -1,0 +1,20 @@
+{
+  "artifact_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scheduler-alignment-20260802-first-valid-pair",
+  "completed_at_utc": "2026-08-02T23:55:11Z",
+  "exit_status": 2,
+  "failure": "host preflight required missing /dev/dri/controlD67 character device",
+  "model_content_verification_started": false,
+  "notes": [
+    "The exact expected card/control/render set was present in sysfs.",
+    "This xe host creates card and render character devices, not controlD character devices.",
+    "The replacement preflight retains exact sysfs identity and audits the actual card/render opener surface.",
+    "This was a harness-preflight stop, not an A or B arm result."
+  ],
+  "replacement_tag": "20260802-first-valid-preflight2",
+  "requests_started": 0,
+  "scheduler_arms_started": 0,
+  "schema": "laguna-scheduler-alignment-prearm-preflight-v1",
+  "service_started": false,
+  "status": "FAIL_PREARM_HARNESS",
+  "wrapper_tag": "20260802-first-valid"
+}
