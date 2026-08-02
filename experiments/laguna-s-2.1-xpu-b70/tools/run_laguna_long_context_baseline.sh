@@ -29,6 +29,11 @@ readonly rpc_tag="$(printf '%s' "$run_dir" | sha256sum | cut -c1-12)"
 readonly rpc_dir="$LAGUNA_NVME_TMP_ROOT/l${rpc_tag:0:6}"
 readonly max_model_len="${LAGUNA_MAX_MODEL_LEN:-32768}"
 readonly max_num_batched_tokens="${LAGUNA_MAX_NUM_BATCHED_TOKENS:-8192}"
+readonly gpu_util="${LAGUNA_GPU_UTIL:-0.90}"
+readonly request_timeout="${LAGUNA_LONG_TIMEOUT:-900}"
+readonly selected_case_ids_csv="${LAGUNA_LONG_CASE_IDS:-}"
+readonly min_mem_available_kb="${LAGUNA_MIN_MEM_AVAILABLE_KB:-12582912}"
+readonly min_swap_free_kb="${LAGUNA_MIN_SWAP_FREE_KB:-4194304}"
 readonly oracle="${LAGUNA_LONG_ORACLE:-}"
 
 die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }
@@ -51,6 +56,14 @@ done
 [[ -z "$(git -C "$vllm_root" status --short)" ]] || die "vLLM worktree is dirty"
 [[ -z "$(git -C "$kernel_root" status --short)" ]] || die "kernel worktree is dirty"
 [[ -z "$oracle" || -f "$oracle" ]] || die "missing oracle: $oracle"
+awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
+  || die "LAGUNA_GPU_UTIL must be between zero and one"
+[[ "$request_timeout" =~ ^[0-9]+$ && "$request_timeout" -ge 1 ]] \
+  || die "LAGUNA_LONG_TIMEOUT must be a positive integer"
+[[ "$min_mem_available_kb" =~ ^[0-9]+$ ]] \
+  || die "LAGUNA_MIN_MEM_AVAILABLE_KB must be a non-negative integer"
+[[ "$min_swap_free_kb" =~ ^[0-9]+$ ]] \
+  || die "LAGUNA_MIN_SWAP_FREE_KB must be a non-negative integer"
 ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 || die "existing vLLM workers block run"
 ! ss -H -ltn 'sport = :18080' | grep -q . || die "port 18080 already has a listener"
 [[ ! -e "$rpc_dir" && ! -L "$rpc_dir" ]] || die "RPC directory already exists"
@@ -85,9 +98,13 @@ chmod -R 700 "$run_dir"
   printf 'max_model_len=%s\nmax_num_batched_tokens=%s\n' \
     "$max_model_len" "$max_num_batched_tokens"
   printf 'enable_chunked_prefill=true\nmax_num_seqs=1\nblock_size=64\n'
-  printf 'kv_cache_dtype=bfloat16\ngpu_memory_utilization=0.90\n'
+  printf 'kv_cache_dtype=bfloat16\ngpu_memory_utilization=%s\n' "$gpu_util"
   printf 'prefix_caching=false\nasync_scheduling=%s\n' \
     "$([[ "$role" == candidate ]] && echo false || echo true)"
+  printf 'request_timeout_seconds=%s\nselected_case_ids=%s\n' \
+    "$request_timeout" "$selected_case_ids_csv"
+  printf 'memory_guard_min_available_kb=%s\nmemory_guard_min_swap_free_kb=%s\n' \
+    "$min_mem_available_kb" "$min_swap_free_kb"
   printf 'candidate_record_conventional_tok_s=125.4619731637751\n'
   printf 'candidate_target_topology=146/145\ncandidate_draft_topology=14/13\n'
   printf 'oracle=%s\ncluster_iface=%s\nscored_measurement=false\n' "$oracle" "$cluster_iface"
@@ -101,10 +118,17 @@ chmod -R 700 "$run_dir"
 xpu-smi ps -j > "$run_dir/xpu-processes-before.json" 2>&1 || true
 
 server_pid=""
+memory_guard_pid=""
 service_alive() {
   [[ -n "$server_pid" ]] && (
     kill -0 "$server_pid" 2>/dev/null || kill -0 -- "-$server_pid" 2>/dev/null
   )
+}
+stop_memory_guard() {
+  [[ -n "$memory_guard_pid" ]] || return 0
+  kill "$memory_guard_pid" 2>/dev/null || true
+  wait "$memory_guard_pid" 2>/dev/null || true
+  memory_guard_pid=""
 }
 stop_service() {
   local signal attempts
@@ -123,6 +147,7 @@ finalize() {
   local status="$?" stop_status=0
   trap - EXIT INT TERM
   set +e
+  stop_memory_guard
   stop_service || stop_status=1
   xpu-smi ps -j > "$run_dir/xpu-processes-after.json" 2>&1 || true
   printf 'original_status=%s\nstop_status=%s\n' "$status" "$stop_status" \
@@ -165,7 +190,7 @@ common_env=(
   VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_USE_AOT_COMPILE=0
   LAGUNA_MAX_MODEL_LEN="$max_model_len"
   LAGUNA_MAX_NUM_BATCHED_TOKENS="$max_num_batched_tokens"
-  LAGUNA_GPU_UTIL=0.90
+  LAGUNA_GPU_UTIL="$gpu_util"
 )
 if [[ "$role" == candidate ]]; then
   common_env+=(
@@ -241,6 +266,30 @@ setsid /usr/bin/env -i "${common_env[@]}" \
   "$service" "$role" "$run_dir" > "$run_dir/server.log" 2>&1 &
 server_pid="$!"
 printf '%s\n' "$server_pid" > "$run_dir/server.pid"
+printf 'timestamp_utc\tmem_available_kb\tswap_free_kb\taction\n' \
+  > "$run_dir/memory-guard.tsv"
+(
+  while service_alive; do
+    available_kb="$(awk '$1 == "MemAvailable:" { print $2 }' /proc/meminfo)"
+    swap_free_kb="$(awk '$1 == "SwapFree:" { print $2 }' /proc/meminfo)"
+    action=continue
+    if (( available_kb < min_mem_available_kb || swap_free_kb < min_swap_free_kb )); then
+      action=stop-service
+    fi
+    printf '%s\t%s\t%s\t%s\n' \
+      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$available_kb" "$swap_free_kb" "$action" \
+      >> "$run_dir/memory-guard.tsv"
+    if [[ "$action" == stop-service ]]; then
+      printf 'memory guard stopped the service: MemAvailable=%s kB, SwapFree=%s kB\n' \
+        "$available_kb" "$swap_free_kb" > "$run_dir/memory-guard-stop.txt"
+      kill -TERM -- "-$server_pid" 2>/dev/null || true
+      kill -TERM "$server_pid" 2>/dev/null || true
+      break
+    fi
+    sleep 1
+  done
+) &
+memory_guard_pid="$!"
 for _ in $(seq 1 240); do
   curl -fsS http://127.0.0.1:18080/health >/dev/null 2>&1 && break
   service_alive || die "service exited before health"
@@ -257,10 +306,18 @@ benchmark_args=(
   --model-path "$LAGUNA_NVME_TARGET_ROOT"
   --suite "$suite"
   --run-role "$role"
-  --timeout 3600
+  --timeout "$request_timeout"
   --out "$run_dir/bench.json"
 )
 [[ -z "$oracle" ]] || benchmark_args+=(--oracle "$oracle")
+if [[ -n "$selected_case_ids_csv" ]]; then
+  IFS=',' read -r -a selected_case_ids <<< "$selected_case_ids_csv"
+  for case_id in "${selected_case_ids[@]}"; do
+    [[ "$case_id" =~ ^[A-Za-z0-9._-]+$ ]] \
+      || die "invalid case ID in LAGUNA_LONG_CASE_IDS: $case_id"
+    benchmark_args+=(--case-id "$case_id")
+  done
+fi
 "$venv_python" "$benchmark" "${benchmark_args[@]}" \
   > "$run_dir/bench.stdout"
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after.prom"
@@ -274,6 +331,7 @@ fi
 
 stop_service
 server_pid=""
+stop_memory_guard
 ! pgrep -f 'vllm serve|VLLM::EngineCore|VLLM::Worker' >/dev/null 2>&1 \
   || die "vLLM workers survived ordinary shutdown"
 printf 'PASS\n' > "$run_dir/run-status.txt"

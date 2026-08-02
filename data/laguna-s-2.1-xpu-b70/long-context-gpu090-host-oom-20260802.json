@@ -1,0 +1,79 @@
+{
+  "schema": "laguna-long-context-interruption-v1",
+  "classification": "infrastructure-host-oom-interrupted",
+  "date_local": "2026-08-02",
+  "artifact": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-mbt8192-baseline-retry-20260802T170509Z",
+  "identity": {
+    "role": "candidate",
+    "vllm_commit": "1a7f61feffbc61b21b73f812d231c7426386ccdc",
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 1,
+    "kv_cache_dtype": "bfloat16",
+    "gpu_memory_utilization": 0.9,
+    "prefix_caching": false,
+    "async_scheduling": false,
+    "target_graph_topology": "146/145",
+    "draft_graph_topology": "14/13",
+    "oracle_tested": false
+  },
+  "completed_rows": [
+    {
+      "case_id": "laguna-lc-01024-early",
+      "prompt_tokens": 1024,
+      "completion_tokens": 128,
+      "retrieval_pass": true,
+      "prefill_tok_s_prometheus": 175.84820377221908,
+      "client_ttft_s": 5.852237637998769,
+      "decode_tok_s_99_interval": 8.162285963049928,
+      "acceptance_rate": 0.24866310160427807,
+      "steady_state": false
+    },
+    {
+      "case_id": "laguna-lc-01024-middle",
+      "prompt_tokens": 1024,
+      "completion_tokens": 128,
+      "retrieval_pass": true,
+      "prefill_tok_s_prometheus": 4854.042175236125,
+      "client_ttft_s": 0.21498937799333362,
+      "decode_tok_s_99_interval": 153.48004871460785,
+      "acceptance_rate": 0.23896103896103896,
+      "steady_state": true
+    },
+    {
+      "case_id": "laguna-lc-01024-late",
+      "prompt_tokens": 1024,
+      "completion_tokens": 128,
+      "retrieval_pass": true,
+      "prefill_tok_s_prometheus": 5158.627025343368,
+      "client_ttft_s": 0.20171233500150265,
+      "decode_tok_s_99_interval": 152.31509482174363,
+      "acceptance_rate": 0.23232323232323232,
+      "steady_state": true
+    }
+  ],
+  "interrupted_request": {
+    "case_id": "laguna-lc-04096-early",
+    "prompt_tokens": 4096,
+    "scheduled_tokens": 4096,
+    "kv_cache_usage_fraction": 0.0362858206177894,
+    "result": "inconclusive-no-response-before-reboot"
+  },
+  "host_failure": {
+    "first_global_oom_local": "2026-08-02T13:08:32-04:00",
+    "swap_total_kib": 8388604,
+    "swap_free_at_oom_kib": 0,
+    "reboot_started_local": "2026-08-02T13:40:49-04:00",
+    "kernel_path": "ttm_pool_alloc_page -> xe_ttm_tt_populate -> xe_gem_prime_export",
+    "gpu_diagnostic_after_reboot": "pass-level-1-all-four-devices"
+  },
+  "artifact_sha256": {
+    "bench.json": "be2ca32a01f50e1d48ac07f0ebd3ab891bb7289afea85c1aeb1d751dad7785e7",
+    "bench.stdout": "404cc2bfe310fcff596550ab9acd1db483978db9204c8377065803b6d39fd337",
+    "identity.txt": "c3d1bde58d528873f49b9baeced6fa5546430135b6cf17ded6a3cffd3ce82b8e",
+    "server.log": "a7ca951803975e72208571f78d399c226ff37486aa33bbe18ec4778fa2649e8c",
+    "runtime-verification.json": "df62cd86906ac802818ce121f49870786713471a209b029786ffe6e3c46ed8be",
+    "runtime-verification.stdout": "fab860383620288cfd80827ae5f2a309b02e5914527ab7ae881d8b5e9e792f17"
+  }
+}
