@@ -4,8 +4,10 @@
 > These pages are documentation, not recipes, validated results, or project
 > recommendations.
 
-This collection preserves four reports contributed by **bosd** in
-[PR #16](https://github.com/steveseguin/b70-optimization-lab/pull/16). The
+This collection preserves five report pages contributed by **bosd** in
+[PR #16](https://github.com/steveseguin/b70-optimization-lab/pull/16), with two
+follow-up measurements supplied in
+[PR #17](https://github.com/steveseguin/b70-optimization-lab/pull/17). The
 reported host is an ASRock TRX50 WS with a Threadripper 9960X, two Intel Arc Pro
 B70 GPUs, and an Arc Pro B60 used for some comparisons.
 
@@ -14,7 +16,10 @@ B70 GPUs, and an Arc Pro B60 used for some comparisons.
 - Contributor commits:
   [`4fc422441`](https://github.com/steveseguin/b70-optimization-lab/commit/4fc422441fdaf41dda1681fb69d4364a6930be69)
   and
-  [`f56bb4070`](https://github.com/steveseguin/b70-optimization-lab/commit/f56bb4070cdfba23b9057f9908dbd0dabe3ea1b4).
+  [`f56bb4070`](https://github.com/steveseguin/b70-optimization-lab/commit/f56bb4070cdfba23b9057f9908dbd0dabe3ea1b4)
+  from PR #16, and
+  [`a1bb15c23`](https://github.com/steveseguin/b70-optimization-lab/commit/a1bb15c23018b17504f57f2e4d1bff0ad984cd0c)
+  from PR #17.
 - Contributor source snapshot:
   [`fda0d86c47ff02d8e36f813a8e0121a2152d4478`](https://github.com/bosd/trx50-arc-b70-benchmarks/tree/fda0d86c47ff02d8e36f813a8e0121a2152d4478).
 - Reference-lab execution: none.
@@ -24,8 +29,11 @@ B70 GPUs, and an Arc Pro B60 used for some comparisons.
 The source snapshot contains narrative summaries and benchmark helpers, but it
 does not contain the `raw-mtp1` or `raw-q8q4` run directories referenced by the
 helpers. The build-freshness report links the source repository as a whole and
-does not identify committed raw logs for its runs. Accordingly, the reported
-measurements are preserved but not artifact-checked.
+does not identify committed raw logs for its runs. The mixed B60+B70 result has
+a narrative table in the pinned snapshot but no raw output. The batched-decode
+addition was supplied only as prose and a table in PR #17 and is not in that
+snapshot. Accordingly, the reported measurements are preserved but not
+artifact-checked.
 
 No external helper was imported here. In particular, the source snapshot's
 `bench-mtp-1gpu.sh` uses a broad `pkill -9` match for llama processes; it should
@@ -38,11 +46,13 @@ PID-scoped process management.
 - [MTP single-stream observation](mtp-single-stream.md)
 - [Q8_0 versus Q4_K_M](q8-vs-q4.md)
 - [SYCL build freshness and layer-split regression](sycl-build-and-layer-split.md)
+- [Single-B70 synthetic batched-decode throughput](batched-decode-throughput.md)
 
 ## Maintainer normalization
 
 The contributor's original text remains in Git history. The published field
 reports correct the evidence label, recalculate several comparisons, pin the
 available source snapshot, distinguish measurements from causal hypotheses,
-and narrow conclusions that changed models, quantization, GPU count, runtime,
-or backend at the same time.
+interpret `llama-batched-bench` as a synthetic parallel-sequence workload rather
+than server request throughput, and narrow conclusions that changed models,
+quantization, GPU count, runtime, or backend at the same time.

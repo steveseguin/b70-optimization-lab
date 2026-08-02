@@ -18,4 +18,4 @@ separate, fully identified result packet.
 
 | Collection | Contributor | Hardware | Source | Evidence |
 | --- | --- | --- | --- | --- |
-| [TRX50 with Arc Pro B70/B60](bosd/trx50-2xb70/README.md) | bosd | 2× Arc Pro B70 plus Arc Pro B60 | [PR #16](https://github.com/steveseguin/b70-optimization-lab/pull/16) | `community-reported` |
+| [TRX50 with Arc Pro B70/B60](bosd/trx50-2xb70/README.md) | bosd | 2× Arc Pro B70 plus Arc Pro B60 | [PR #16](https://github.com/steveseguin/b70-optimization-lab/pull/16), [PR #17](https://github.com/steveseguin/b70-optimization-lab/pull/17) | `community-reported` |
