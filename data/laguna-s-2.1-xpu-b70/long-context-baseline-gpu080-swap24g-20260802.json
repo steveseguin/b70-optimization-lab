@@ -1,6 +1,6 @@
 {
   "schema": "laguna-long-context-composed-baseline-v1",
-  "status": "pass_baseline_oracle_not_tested",
+  "status": "pass_retrieval_q1_mismatch",
   "date_local": "2026-08-02",
   "protected_short_record_conventional_tok_s": 125.4619731637751,
   "record_changed": false,
@@ -56,6 +56,15 @@
       "identity_sha256": "480ce75269b25734c513c4a28d1aec6501e0e8cc2d26cb1d56f178d99c819755",
       "server_log_sha256": "650be3814238c5241475cd65a84a9059b6636db63e5fd4f5af51a6810c47a16d",
       "memory_guard_sha256": "39e5e761e67b93223d7b9eab2d84ca2300a14655e2b76be78e0f36df8cfca3df"
+    },
+    {
+      "path": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-long-context-teacher-q1-gpu080-swap24g-20260802T184000Z",
+      "role": "target-only-q1-oracle",
+      "bench_status": "PASS_BASELINE_ORACLE_NOT_TESTED",
+      "bench_sha256": "b0e41df6b7e5b798749c97221dbae4c41e345a41785e9c6793d5f76b5b9b11b8",
+      "identity_sha256": "328106900a7ae8205c35c23e3237ec375f4bff8e6a0a41c1eef0102b86e93712",
+      "server_log_sha256": "b02b8ae4a892879bac86929d729d5cf7eb309e3a3cb7e724babbc61b44929d6c",
+      "memory_guard_sha256": "d0ee9bab02fe0f1320a4804f5b1d5a73f2ab1225205c4ed8d64fa0e196e38ea3"
     }
   ],
   "context_groups": [
@@ -141,7 +150,28 @@
     "completion_tokens_all_128": true,
     "retrieval_all": true,
     "post_32k_sentinels_all": true,
-    "target_only_oracle_tested": false
+    "target_only_oracle_tested": true,
+    "q1_prompt_hash_equal_rows": 21,
+    "q1_output_token_equal_rows": 6,
+    "q1_output_token_mismatch_rows": 15,
+    "q1_exact_case_classes": [
+      "1024-token-long-rows",
+      "256-token-post-32k-sentinels"
+    ],
+    "q1_mismatch_case_classes": [
+      "4096-token-long-rows",
+      "8192-token-long-rows",
+      "16384-token-long-rows",
+      "24576-token-long-rows",
+      "32640-token-long-rows"
+    ],
+    "q1_mismatch_common_prefix_tokens_min": 67,
+    "q1_mismatch_common_prefix_tokens_max": 107,
+    "retrieval_json_equal_on_q1_mismatches": true,
+    "candidate_repeat_deterministic_cases": [
+      "laguna-lc-01024-early",
+      "laguna-lc-04096-early"
+    ]
   },
   "infrastructure": {
     "minimum_mem_available_kib_successful_long_sweep": 10569440,
