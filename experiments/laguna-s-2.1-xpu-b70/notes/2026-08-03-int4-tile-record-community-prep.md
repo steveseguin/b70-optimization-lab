@@ -2,8 +2,8 @@
 
 Date: 2026-08-03 America/Toronto
 
-Status: **two focused current-upstream branches are committed and host-tested;
-community push is blocked only by missing GitHub authentication/forks**.
+Status: **two focused current-upstream branches are committed, host-tested,
+and pushed to contributor forks; no pull request opened**.
 
 ## What is appropriate to publish
 
@@ -36,14 +36,15 @@ The optimization-lab branch
 `experiment/laguna-kernel-loop-20260728` was pushed successfully to
 `steveseguin/b70-optimization-lab` using its repository deploy key.
 
-The host has no authenticated `gh` session, no general GitHub SSH identity,
-and no public `steveseguin/vllm-xpu-kernels` or `steveseguin/vllm` fork. The
-community branches were therefore not pushed to the upstream repositories or
-to guessed/nonexistent remotes.
+Contributor forks were created and added as the separate writable remote
+`fork`; community upstream remains `origin`. The focused branches are now at:
 
-After authenticating GitHub and creating the two forks, add each fork as a
-separate writable remote and push only the corresponding focused branch. Do
-not push the full experiment branches as community PR branches.
+- `steveseguin/vllm-xpu-kernels`, branch
+  `community/laguna-int4-tile-record-20260803`, commit `268cb6e`;
+- `steveseguin/vllm`, branch
+  `community/laguna-int4-tile-record-20260803`, commit `31f2e44e1`.
+
+The full experiment branches were not pushed as community PR branches.
 
 No pull request has been opened. Before opening one, explain that these are
 host packing primitives with byte-exact tests; they do not claim device-speed
