@@ -24,7 +24,7 @@ are isolated in one-commit community branches:
 | repository | worktree / branch | commit | validation |
 | --- | --- | --- | --- |
 | `vllm-project/vllm-xpu-kernels` | `/home/steve/src/community-vllm-xpu-kernels-laguna-int4-20260803`, `community/laguna-int4-tile-record-20260803` | `268cb6e` | 9/9 host tests, Ruff pass |
-| `vllm-project/vllm` | `/home/steve/src/community-vllm-laguna-int4-20260803`, `community/laguna-int4-tile-record-20260803` | `31f2e44e1` | 6/6 host tests, Ruff pass |
+| `vllm-project/vllm` | `/home/steve/src/community-vllm-laguna-int4-20260803`, `community/laguna-int4-tile-record-20260803` | `b23676262` | 6/6 host tests, Ruff pass |
 
 Both branches are based directly on the refreshed upstream heads and are one
 commit ahead. They contain no model artifacts, credentials, build outputs,
@@ -42,12 +42,13 @@ Contributor forks were created and added as the separate writable remote
 - `steveseguin/vllm-xpu-kernels`, branch
   `community/laguna-int4-tile-record-20260803`, commit `268cb6e`;
 - `steveseguin/vllm`, branch
-  `community/laguna-int4-tile-record-20260803`, commit `3ab3e1927`.
+  `community/laguna-int4-tile-record-20260803`, commit `b23676262`.
 
-The vLLM branch was rebased after upstream advanced from `9ae11a6b8` to
-`68ca6fd02`. Its six host tests and Ruff checks passed again, and the fork
+The vLLM branch was first rebased after upstream advanced from `9ae11a6b8` to
+`68ca6fd02`, then rebased again when upstream reached `5df9999fc` during this
+work window. Its six host tests and Ruff checks passed again, and the fork
 branch was updated with `--force-with-lease`. Both contributor-fork `main`
-branches were synchronized to their matching community upstreams.
+branches are synchronized to their matching community upstreams.
 
 The full experiment branches were not pushed as community PR branches.
 

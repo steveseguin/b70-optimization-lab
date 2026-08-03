@@ -234,7 +234,7 @@ is now combined with the INT4 tile-record integration at vLLM `f9e167ad0` in
 `/home/steve/src/laguna-vllm-e2e-latency-integration-20260803`; 36 host tests
 pass. The long-context harness now summarizes TTFT, request wall time,
 end-to-end delivered output rate, and prompt-length buckets. Community and
-fork `main` track upstream vLLM `68ca6fd02`, while measured Laguna branches
+fork `main` track upstream vLLM `5df9999fc`, while measured Laguna branches
 remain pinned evidence rather than being rebased across roughly 763 upstream
 commits. See
 [`2026-08-03-e2e-latency-upstream-sync.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-e2e-latency-upstream-sync.md).

@@ -56,10 +56,10 @@ A fresh community worktree was created at:
 ```text
 /home/steve/src/community-vllm-laguna-e2e-latency-20260803
 community/laguna-e2e-latency-20260803
-3ab3e1927 xpu: add direct GPTQ INT4 tile-record packer
+93afa2841 xpu: add direct GPTQ INT4 tile-record packer
 ```
 
-It is based on fork/upstream `68ca6fd02`, so the staging lineage is current.
+It is based on fork/upstream `5df9999fc`, so the staging lineage is current.
 A trial cherry-pick of the measured exact-prefill commit conflicted in all six
 touched files and was aborted cleanly. This is a semantic dependency, not just
 text drift: current upstream Laguna uses the generic `FusedMoEFactory` path and

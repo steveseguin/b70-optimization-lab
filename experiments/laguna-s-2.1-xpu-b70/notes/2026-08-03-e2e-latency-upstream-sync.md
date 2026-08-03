@@ -65,9 +65,16 @@ original tile/prefill coverage and the v2 worker-attestation contract.
 ## Upstream policy
 
 Community upstream `vllm-project/vllm:main` and contributor fork
-`steveseguin/vllm:main` are synchronized at `68ca6fd02`. The focused public
-community packer branch is rebased on that tip and is one commit ahead at
-`3ab3e1927`.
+`steveseguin/vllm:main` are synchronized at `5df9999fc`. Upstream advanced by
+three commits during this work, so the fork was fast-forwarded from
+`68ca6fd02`. The focused public community packer branch was retested and
+rebased with lease protection onto the new tip; it is one commit ahead at
+`b23676262`. Its six host tests and Ruff checks pass after the rebase.
+
+The separate local semantic-forward-port staging branch
+`community/laguna-e2e-latency-20260803` is also rebased on `5df9999fc` at
+`93afa2841`. It remains unpushed because it contains no distinct change beyond
+the already published packer commit.
 
 The measured Laguna branches are approximately 763 upstream commits behind
 and contain 130--219 local commits. They are exact experiment and record
@@ -95,8 +102,10 @@ work.
    offline gate now has a `long-full` profile for exact 8K/16K/24K/32K
    contexts; see
    [`2026-08-03-long-full-attention-screen-offline.md`](2026-08-03-long-full-attention-screen-offline.md).
-5. Adapt wide-prefill Q/K normalization plus RoPE to the incumbent 8,182/8,094
-   partitions instead of reviving the inexact 8,202/8,192 scheduler identity.
+5. The default-off wide-prefill Q/K normalization plus RoPE successor is now
+   adapted to the incumbent 8,182/8,094 partitions; run its component matrix
+   only after separate authorization. See
+   [`2026-08-03-incumbent-wide-prefill-qknorm-rope-offline.md`](2026-08-03-incumbent-wide-prefill-qknorm-rope-offline.md).
 6. For production only, put the loopback backend behind the readiness canary
    and expose the frontdoor only after its atomic ready marker exists.
 
