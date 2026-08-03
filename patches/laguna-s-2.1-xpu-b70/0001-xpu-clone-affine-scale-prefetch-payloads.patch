@@ -1,0 +1,115 @@
+From 86c1c8bdf75bbd84803f4d256b925b3f509e5ea4 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 01:22:09 -0400
+Subject: [PATCH] xpu: clone affine scale prefetch payloads
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp       | 36 ++++++++++++++++++-
+ ...t_laguna_int4_affine_tile_record_static.py | 10 ++++--
+ 2 files changed, 42 insertions(+), 4 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 5d55d5a..72f2ece 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -778,16 +778,37 @@ CUTE_DEVICE void xe_gemm_4bits(
+           make_layout(
+               make_shape(Int<tile_n>{}, group_num),
+               make_stride(Int<1>{}, Int<tile_record_scale_stride>{})));
++      auto tile_record_cS = make_identity_tensor(tile_record_S.shape());
++      auto tile_record_gS = local_tile(
++          tile_record_cS,
++          make_shape(Int<tile_n>{}, Int<1>{}),
++          make_coord(0, _));
++      auto tile_record_prefetch_s = make_block_2d_prefetch<4>(
++          make_shape(Int<tile_n>{}, Int<1>{}), tile_record_S);
++      auto tile_record_thr_prefetch_s =
++          tile_record_prefetch_s.get_slice(sg_local_id);
++      auto tile_record_pSgS =
++          tile_record_thr_prefetch_s.partition_S(tile_record_gS);
+       return make_tuple(
+           tile_record_copy_b,
+           tile_record_tBgB,
+           tile_record_prefetch_b,
+           tile_record_pBgB,
+-          tile_record_S);
++          tile_record_S,
++          tile_record_prefetch_s,
++          tile_record_pSgS);
+     } else {
+       return make_tuple();
+     }
+   }();
++  auto clone_block_2d_payload = [](auto tiled_copy) {
++#if defined(__SYCL_DEVICE_ONLY__)
++    auto& traits = cute::detail::as_block_2d_traits(tiled_copy);
++    traits.payload =
++        __builtin_IB_subgroup_copyBlock2DAddressPayload(traits.payload);
++#endif
++    return tiled_copy;
++  };
+ 
+   using scaleStoreType = conditional_t<is_same_v<TA, half_t>, half_t, float>;
+   scaleStoreType scales[thr_N * channel_num];
+@@ -932,6 +953,12 @@ CUTE_DEVICE void xe_gemm_4bits(
+         auto pSgS = thr_prefetch_scales.partition_S(
+             make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+         prefetch(prefetch_scales, pSgS(_, 0, 0));
++      } else if constexpr (affine_tile_records) {
++        auto issue_prefetch =
++            clone_block_2d_payload(get<5>(tile_record_state));
++        prefetch(
++            issue_prefetch,
++            get<6>(tile_record_state)(_, 0, 0, k_tile_prefetch));
+       } else {
+         const ElementS* scale_base;
+         int scale_stride;
+@@ -1107,6 +1134,13 @@ CUTE_DEVICE void xe_gemm_4bits(
+           auto pSgS = thr_prefetch_scales.partition_S(
+               make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+           prefetch(prefetch_scales, pSgS(_, 0, 0));
++        } else if constexpr (affine_tile_records) {
++          auto issue_prefetch =
++              clone_block_2d_payload(get<5>(tile_record_state));
++          prefetch(
++              issue_prefetch,
++              get<6>(tile_record_state)(
++                  _, 0, 0, group_idx + prefetch_dist));
+         } else {
+           const ElementS* scale_base;
+           int scale_stride;
+diff --git a/tests/test_laguna_int4_affine_tile_record_static.py b/tests/test_laguna_int4_affine_tile_record_static.py
+index a2ac4b6..40c52b7 100644
+--- a/tests/test_laguna_int4_affine_tile_record_static.py
++++ b/tests/test_laguna_int4_affine_tile_record_static.py
+@@ -41,12 +41,13 @@ def test_weight_record_uses_one_rank3_affine_view_and_payload() -> None:
+     assert setup.count("make_block_2d_prefetch(tile_record_copy_b)") == 1
+ 
+ 
+-def test_scale_record_uses_affine_load_view_and_per_issue_prefetches() -> None:
++def test_scale_record_clones_one_affine_prefetch_payload_per_issue() -> None:
+     setup = _affine_setup()
+     assert "make_shape(Int<tile_n>{}, group_num)" in setup
+     assert "make_stride(Int<1>{}, Int<tile_record_scale_stride>{})" in setup
+     assert setup.count("auto tile_record_S = make_tensor") == 1
+-    assert "tile_record_prefetch_s" not in setup
++    assert setup.count("make_block_2d_prefetch<4>(") == 1
++    assert "__builtin_IB_subgroup_copyBlock2DAddressPayload" in setup
+ 
+ 
+ def test_affine_hot_path_uses_coordinates_without_rebuilding_views() -> None:
+@@ -61,7 +62,10 @@ def test_affine_hot_path_uses_coordinates_without_rebuilding_views() -> None:
+     )
+     assert "get<1>(tile_record_state)(_, _, _, 0, k_tile)" in affine_blocks
+     assert "get<4>(tile_record_state)(" in traversal
+-    assert "get<5>(tile_record_state)" not in traversal
++    assert (
++        traversal.count("clone_block_2d_payload(get<5>(tile_record_state))")
++        == 2
++    )
+     assert (
+         traversal.count("auto prefetch_scales = make_block_2d_prefetch<1>(")
+         == 4
+-- 
+2.43.0
+
