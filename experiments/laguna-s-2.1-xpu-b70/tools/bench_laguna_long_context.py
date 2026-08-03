@@ -51,7 +51,7 @@ def find_subsequence(haystack: list[int], needle: list[int]) -> int:
     matches = [
         index
         for index in range(len(haystack) - len(needle) + 1)
-        if haystack[index:index + len(needle)] == needle
+        if haystack[index : index + len(needle)] == needle
     ]
     if len(matches) != 1:
         raise ValueError(f"chat marker matches={matches}, expected exactly one")
@@ -70,7 +70,7 @@ def chat_frame(tokenizer: Any) -> tuple[list[int], list[int]]:
     )
     marker_ids = tokenizer.encode(marker, add_special_tokens=False)
     start = find_subsequence(full, marker_ids)
-    return full[:start], full[start + len(marker_ids):]
+    return full[:start], full[start + len(marker_ids) :]
 
 
 def expected_json(case: dict[str, Any]) -> dict[str, Any]:
@@ -83,7 +83,9 @@ def expected_json(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def filler_ids(tokenizer: Any, case: dict[str, Any], count: int, salt: str) -> list[int]:
+def filler_ids(
+    tokenizer: Any, case: dict[str, Any], count: int, salt: str
+) -> list[int]:
     if count <= 0:
         return []
     nonce = sha256_bytes(f"{case['id']}:{salt}".encode())[:12]
@@ -213,12 +215,8 @@ def labeled_metric_values(
     name: str,
     label: str,
 ) -> dict[int, float]:
-    line_pattern = re.compile(
-        rf"^{re.escape(name)}\{{([^}}]*)\}}\s+([^\s]+)$"
-    )
-    label_pattern = re.compile(
-        rf'(?:^|,){re.escape(label)}="([0-9]+)"(?:,|$)'
-    )
+    line_pattern = re.compile(rf"^{re.escape(name)}\{{([^}}]*)\}}\s+([^\s]+)$")
+    label_pattern = re.compile(rf'(?:^|,){re.escape(label)}="([0-9]+)"(?:,|$)')
     values: dict[int, float] = {}
     for line in metrics.splitlines():
         line_match = line_pattern.match(line)
@@ -382,7 +380,7 @@ def post_stream(
 
 def validate_json(text: str, expected: dict[str, Any]) -> dict[str, Any]:
     stripped = text.lstrip()
-    prefix = text[:len(text) - len(stripped)]
+    prefix = text[: len(text) - len(stripped)]
     try:
         parsed, end = json.JSONDecoder().raw_decode(stripped)
     except json.JSONDecodeError as error:
@@ -409,6 +407,9 @@ def validate_json(text: str, expected: dict[str, Any]) -> dict[str, Any]:
 
 def timing_metrics(row: dict[str, Any]) -> dict[str, Any]:
     offsets = row["token_id_offsets_s"]
+    elapsed_s = row.get("elapsed_s")
+    client_ttft_s = row.get("client_ttft_s")
+    prompt_tokens = row.get("prompt_tokens")
     conventional = None
     historical = None
     full = None
@@ -420,6 +421,20 @@ def timing_metrics(row: dict[str, Any]) -> dict[str, Any]:
     server = row.get("per_request_metrics") or {}
     mean_itl_ms = server.get("mean_itl_ms")
     return {
+        "client_ttft_s": client_ttft_s,
+        "client_e2e_s": elapsed_s,
+        "client_e2e_output_tok_s": (
+            len(offsets) / elapsed_s
+            if offsets and isinstance(elapsed_s, (int, float)) and elapsed_s > 0
+            else None
+        ),
+        "prompt_tok_s_lower_bound_from_ttft": (
+            prompt_tokens / client_ttft_s
+            if isinstance(prompt_tokens, (int, float))
+            and isinstance(client_ttft_s, (int, float))
+            and client_ttft_s > 0
+            else None
+        ),
         "conventional_99_interval_first_100_tok_s": conventional,
         "historical_100_event_first_100_tok_s": historical,
         "full_interval_tok_s": full,
@@ -448,6 +463,46 @@ def stats(values: list[float]) -> dict[str, float] | None:
         "min": min(values),
         "max": max(values),
         "stdev": statistics.stdev(values) if len(values) > 1 else 0.0,
+    }
+
+
+def latency_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Summarize client-visible latency without replacing server metrics."""
+
+    fields = (
+        "client_ttft_s",
+        "client_e2e_s",
+        "client_e2e_output_tok_s",
+        "prompt_tok_s_lower_bound_from_ttft",
+    )
+
+    def summarize(selected: list[dict[str, Any]]) -> dict[str, Any]:
+        return {
+            field: stats(
+                [
+                    float(row["timing"][field])
+                    for row in selected
+                    if isinstance(row.get("timing", {}).get(field), (int, float))
+                ]
+            )
+            for field in fields
+        }
+
+    prompt_lengths = sorted(
+        {
+            int(row["prompt_tokens"])
+            for row in rows
+            if isinstance(row.get("prompt_tokens"), (int, float))
+        }
+    )
+    return {
+        **summarize(rows),
+        "by_prompt_tokens": {
+            str(prompt_tokens): summarize(
+                [row for row in rows if row.get("prompt_tokens") == prompt_tokens]
+            )
+            for prompt_tokens in prompt_lengths
+        },
     }
 
 
@@ -483,16 +538,16 @@ def main() -> int:
     near_max_index = 0
     for case in cases:
         prompt_ids, metadata = build_prompt_ids(tokenizer, frame, case)
-        prompts.append((case, prompt_ids, metadata, int(suite["max_output_tokens"]), "long"))
+        prompts.append(
+            (case, prompt_ids, metadata, int(suite["max_output_tokens"]), "long")
+        )
         if int(case["target_prompt_tokens"]) == 32640:
             near_max_index += 1
             sentinel = build_sentinel_case(case, near_max_index)
             sentinel_ids, sentinel_metadata = build_prompt_ids(
                 tokenizer, frame, sentinel
             )
-            prompts.append(
-                (sentinel, sentinel_ids, sentinel_metadata, 128, "sentinel")
-            )
+            prompts.append((sentinel, sentinel_ids, sentinel_metadata, 128, "sentinel"))
 
     tokenizer_files = [
         args.model_path / "tokenizer.json",
@@ -560,7 +615,9 @@ def main() -> int:
     )
     for index, (case, prompt_ids, metadata, max_tokens, row_kind) in enumerate(prompts):
         before = metric_snapshot(args.base_url, args.timeout)
-        request_id = re.sub(r"[^A-Za-z0-9_.:-]", "-", f"laguna-lc-{index:02d}-{case['id']}")
+        request_id = re.sub(
+            r"[^A-Za-z0-9_.:-]", "-", f"laguna-lc-{index:02d}-{case['id']}"
+        )
         row = post_stream(
             base_url=args.base_url,
             model=args.model,
@@ -608,14 +665,11 @@ def main() -> int:
             "accepted_tokens": accepted,
             "acceptance_rate": accepted / drafted if drafted > 0 else None,
             "accepted_tokens_per_position": {
-                str(position): count
-                for position, count in accepted_positions.items()
+                str(position): count for position, count in accepted_positions.items()
             },
             "max_accepted_draft_position": max_accepted_position,
             "accepted_tokens_beyond_position_6": sum(
-                count
-                for position, count in accepted_positions.items()
-                if position > 6
+                count for position, count in accepted_positions.items() if position > 6
             ),
         }
         oracle_row = oracle.get(case["id"])
@@ -628,7 +682,9 @@ def main() -> int:
                 == oracle_row.get("prompt_token_ids_sha256")
             ),
             "token_ids_equal": (
-                None if oracle_row is None else row["token_ids"] == oracle_row.get("token_ids")
+                None
+                if oracle_row is None
+                else row["token_ids"] == oracle_row.get("token_ids")
             ),
             "text_hash_equal": (
                 None
@@ -657,8 +713,7 @@ def main() -> int:
             ),
             "first_100_timed": (
                 row_kind == "sentinel"
-                or row["timing"]["conventional_99_interval_first_100_tok_s"]
-                is not None
+                or row["timing"]["conventional_99_interval_first_100_tok_s"] is not None
             ),
             "oracle_exact_if_requested": (
                 args.oracle is None
@@ -710,8 +765,7 @@ def main() -> int:
         "oracle_exact_all": (
             args.oracle is not None
             and all(
-                row["oracle"]["token_ids_equal"]
-                and row["oracle"]["text_hash_equal"]
+                row["oracle"]["token_ids_equal"] and row["oracle"]["text_hash_equal"]
                 for row in rows
             )
         ),
@@ -727,17 +781,15 @@ def main() -> int:
                 float(row["timing"]["conventional_99_interval_first_100_tok_s"])
                 for row in long_rows
                 if isinstance(
-                    row["timing"].get(
-                        "conventional_99_interval_first_100_tok_s"
-                    ),
+                    row["timing"].get("conventional_99_interval_first_100_tok_s"),
                     (int, float),
                 )
             ]
         ),
+        "client_visible_latency": latency_summary(long_rows),
         "cached_tokens_all_zero": all(row["cached_tokens"] == 0 for row in rows),
-        "prompts_unique": len(
-            {row["prompt_token_ids_sha256"] for row in rows}
-        ) == len(rows),
+        "prompts_unique": len({row["prompt_token_ids_sha256"] for row in rows})
+        == len(rows),
     }
     status = (
         "PASS_ORACLE_EXACT"

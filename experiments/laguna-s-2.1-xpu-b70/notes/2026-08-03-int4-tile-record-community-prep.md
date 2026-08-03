@@ -42,7 +42,12 @@ Contributor forks were created and added as the separate writable remote
 - `steveseguin/vllm-xpu-kernels`, branch
   `community/laguna-int4-tile-record-20260803`, commit `268cb6e`;
 - `steveseguin/vllm`, branch
-  `community/laguna-int4-tile-record-20260803`, commit `31f2e44e1`.
+  `community/laguna-int4-tile-record-20260803`, commit `3ab3e1927`.
+
+The vLLM branch was rebased after upstream advanced from `9ae11a6b8` to
+`68ca6fd02`. Its six host tests and Ruff checks passed again, and the fork
+branch was updated with `--force-with-lease`. Both contributor-fork `main`
+branches were synchronized to their matching community upstreams.
 
 The full experiment branches were not pushed as community PR branches.
 

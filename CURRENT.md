@@ -225,6 +225,22 @@ tok/s result remains unchanged, and the NVMe quarantine still prohibits any
 device/model retry. Exact details and corrected 47-layer accounting are in
 [`2026-08-03-int4-tile-record-replacement-design.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-int4-tile-record-replacement-design.md).
 
+The current offline successor shifts the product objective to real-use
+latency while protecting the `125.4619731637751 tok/s` conventional decode
+record. Exact pure-prefill chunks previously improved 256-token prefill
+`19.875 -> 184.598 tok/s` and client TTFT `12.883 -> 1.399 s`, with 32K
+decode effectively flat at `39.589 -> 39.754 tok/s`. That measured treatment
+is now combined with the INT4 tile-record integration at vLLM `f9e167ad0` in
+`/home/steve/src/laguna-vllm-e2e-latency-integration-20260803`; 36 host tests
+pass. The long-context harness now summarizes TTFT, request wall time,
+end-to-end delivered output rate, and prompt-length buckets. Community and
+fork `main` track upstream vLLM `68ca6fd02`, while measured Laguna branches
+remain pinned evidence rather than being rebased across roughly 763 upstream
+commits. See
+[`2026-08-03-e2e-latency-upstream-sync.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-e2e-latency-upstream-sync.md).
+This remains offline work only; the NVMe/device quarantine still forbids a
+model, endpoint, benchmark, XPU probe, reset, reboot, or recovery action.
+
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to
 infer recovery causality. They are now also superseded as a live-state block:

@@ -1,6 +1,6 @@
 # Laguna S 2.1 resume point
 
-Last updated: 2026-08-02 America/Toronto
+Last updated: 2026-08-03 America/Toronto
 
 ## Status
 
@@ -25,6 +25,25 @@ historical convention, not under conventional interval accounting.
 - confirmed M12 shared-elementwise record: **`125.4619731637751 tok/s`** conventional;
 - LocalMaxxing: `cms9wuuf300cqpm01t5i285tq` (`APPROVED`);
 - lane state: active optimization, no service or worker currently running.
+
+### 2026-08-03 real-use latency and upstream checkpoint
+
+The immediate product objective is now client-visible latency: prompt
+processing, TTFT, full request wall time, and long-context decode, while
+protecting the `125.4619731637751 tok/s` conventional short-decode record.
+The strongest measured treatment already exists: exact pure-prefill chunks
+improved 256-token prefill `19.875 -> 184.598 tok/s` and TTFT
+`12.883 -> 1.399 s`, while 32K decode remained effectively flat
+(`39.589 -> 39.754 tok/s`). It has been combined offline with the INT4
+tile-record integration at vLLM `f9e167ad0`; 36 host tests pass.
+
+Community/fork vLLM `main` is synchronized to upstream `68ca6fd02`, and the
+focused public packer branch is current at `3ab3e1927`. Measured Laguna
+branches remain pinned evidence rather than being rebased across roughly 763
+upstream commits. Full policy, metrics, and successor ordering are in
+[`2026-08-03-e2e-latency-upstream-sync.md`](notes/2026-08-03-e2e-latency-upstream-sync.md).
+This is offline progress only; the NVMe/device quarantine still prohibits a
+model, endpoint, XPU probe, benchmark, or recovery action.
 
 ### 2026-08-02 operational checkpoint
 
