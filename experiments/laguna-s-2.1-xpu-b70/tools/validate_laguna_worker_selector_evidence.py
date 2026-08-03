@@ -13,6 +13,8 @@ from typing import Any
 
 MARKER = "LAGUNA_EXACT_SMALL_WORKER_SELECTORS_V1"
 SCHEMA = "laguna-exact-small-worker-selectors-v1"
+LATENCY_MARKER = "LAGUNA_EXACT_SMALL_WORKER_SELECTORS_V2"
+LATENCY_SCHEMA = "laguna-exact-small-worker-selectors-v2"
 EXPECTED_SELECTORS = {
     "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS": "11",
     "LAGUNA_LOG_MOE_ROWS": "1",
@@ -36,8 +38,15 @@ EXPECTED_SELECTORS = {
     "VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP": "1",
     "VLLM_XPU_LAGUNA_SCALE_VEC": "1",
 }
+LATENCY_EXPECTED_SELECTORS = {
+    **EXPECTED_SELECTORS,
+    "VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS": "1",
+}
 SELECTOR_CONTRACT_SHA256 = (
     "fef0594c56fb917c212af09b5b7573acf528bbcc4ebd46543179994282ba8f52"
+)
+LATENCY_SELECTOR_CONTRACT_SHA256 = (
+    "5bf0319dfa3e931e66c8a1f8c5292b14cb1054cca7c65eb5763951a12ba9752b"
 )
 TOP_LEVEL_KEYS = {
     "schema",
@@ -66,7 +75,13 @@ def _reject_nonfinite(value: str) -> None:
     raise ValueError(f"non-finite JSON value: {value}")
 
 
-def _load_record(encoded: str) -> dict[str, Any]:
+def _load_record(
+    encoded: str,
+    *,
+    schema: str,
+    expected_selectors: dict[str, str],
+    expected_contract_sha256: str,
+) -> dict[str, Any]:
     value = json.loads(
         encoded,
         object_pairs_hook=_reject_duplicate_keys,
@@ -79,12 +94,12 @@ def _load_record(encoded: str) -> dict[str, Any]:
         raise ValueError("worker selector evidence JSON is not canonical")
     if set(value) != TOP_LEVEL_KEYS:
         raise ValueError("worker selector evidence top-level fields drifted")
-    if value["schema"] != SCHEMA:
+    if value["schema"] != schema:
         raise ValueError("worker selector evidence schema drifted")
-    if value["selector_contract_sha256"] != SELECTOR_CONTRACT_SHA256:
+    if value["selector_contract_sha256"] != expected_contract_sha256:
         raise ValueError("worker selector evidence contract hash drifted")
     if type(value["selector_count"]) is not int or value["selector_count"] != len(
-        EXPECTED_SELECTORS
+        expected_selectors
     ):
         raise ValueError("worker selector evidence selector count drifted")
 
@@ -110,21 +125,40 @@ def _load_record(encoded: str) -> dict[str, Any]:
         )
     if value["worker_name"] != f"Worker_TP{rank}_EP{rank}":
         raise ValueError("worker selector evidence process name disagrees with rank")
-    if value["selectors"] != EXPECTED_SELECTORS:
+    if value["selectors"] != expected_selectors:
         raise ValueError("worker selector evidence values differ from the frozen map")
     return value
 
 
-def parse_worker_selector_log(log_path: Path) -> list[dict[str, Any]]:
-    if selector_contract_sha256() != SELECTOR_CONTRACT_SHA256:
+def parse_worker_selector_log(
+    log_path: Path, *, require_exact_prefill: bool = False
+) -> list[dict[str, Any]]:
+    marker_name = LATENCY_MARKER if require_exact_prefill else MARKER
+    schema = LATENCY_SCHEMA if require_exact_prefill else SCHEMA
+    expected_selectors = (
+        LATENCY_EXPECTED_SELECTORS if require_exact_prefill else EXPECTED_SELECTORS
+    )
+    expected_contract_sha256 = (
+        LATENCY_SELECTOR_CONTRACT_SHA256
+        if require_exact_prefill
+        else SELECTOR_CONTRACT_SHA256
+    )
+    if selector_contract_sha256(expected_selectors) != expected_contract_sha256:
         raise ValueError("frozen worker selector contract hash drifted")
     records = []
-    marker = MARKER + " "
+    marker = marker_name + " "
     for line in log_path.read_text(encoding="utf-8", errors="strict").splitlines():
         if marker not in line:
             continue
         _, encoded = line.split(marker, 1)
-        records.append(_load_record(encoded))
+        records.append(
+            _load_record(
+                encoded,
+                schema=schema,
+                expected_selectors=expected_selectors,
+                expected_contract_sha256=expected_contract_sha256,
+            )
+        )
 
     if len(records) != 4:
         raise ValueError(f"expected four worker selector records, found {len(records)}")
@@ -139,9 +173,11 @@ def parse_worker_selector_log(log_path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def selector_contract_sha256() -> str:
+def selector_contract_sha256(
+    selectors: dict[str, str] = EXPECTED_SELECTORS,
+) -> str:
     payload = "".join(
-        f"{name}={value}\n" for name, value in sorted(EXPECTED_SELECTORS.items())
+        f"{name}={value}\n" for name, value in sorted(selectors.items())
     ).encode("ascii")
     return hashlib.sha256(payload).hexdigest()
 
@@ -374,12 +410,23 @@ def main() -> int:
     parser.add_argument("--expected-dso", type=Path, required=True)
     parser.add_argument("--expected-dso-sha256", required=True)
     parser.add_argument("--proc-root", type=Path, default=Path("/proc"))
+    parser.add_argument("--require-exact-prefill", action="store_true")
     args = parser.parse_args()
 
-    if selector_contract_sha256() != SELECTOR_CONTRACT_SHA256:
+    expected_selectors = (
+        LATENCY_EXPECTED_SELECTORS if args.require_exact_prefill else EXPECTED_SELECTORS
+    )
+    expected_contract_sha256 = (
+        LATENCY_SELECTOR_CONTRACT_SHA256
+        if args.require_exact_prefill
+        else SELECTOR_CONTRACT_SHA256
+    )
+    if selector_contract_sha256(expected_selectors) != expected_contract_sha256:
         raise ValueError("frozen worker selector contract hash drifted")
 
-    records = parse_worker_selector_log(args.server_log)
+    records = parse_worker_selector_log(
+        args.server_log, require_exact_prefill=args.require_exact_prefill
+    )
     maps = verify_grouped_gemm_maps(
         records,
         proc_root=args.proc_root,

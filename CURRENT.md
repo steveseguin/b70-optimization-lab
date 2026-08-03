@@ -249,6 +249,16 @@ passes 56 host tests, including exhaustive planner coverage, but no raw XPU or
 endpoint evidence exists. Required gates and caveats are in
 [`2026-08-03-exact-prefill-tail-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-exact-prefill-tail-offline.md).
 
+The same successor now has a production-only readiness path at vLLM
+`d9e7e2f1a`. Its v2 worker evidence proves the exact-prefill selector, and a
+default-off canary pays and validates the known 10.478-second first-live
+graph/JIT capture before an orchestrator exposes a frontdoor. It requires one
+exact cache-zero 400-token response, consistent speculation, exact worker/DSO
+identity, and 146/145 target plus 14/13 draft capture/replay on all ranks.
+Cold benchmark launchers remain untouched. This shifts latency from the first
+user into startup-to-ready time and is not a new speed measurement. See
+[`2026-08-03-production-readiness-canary-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-production-readiness-canary-offline.md).
+
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to
 infer recovery causality. They are now also superseded as a live-state block:

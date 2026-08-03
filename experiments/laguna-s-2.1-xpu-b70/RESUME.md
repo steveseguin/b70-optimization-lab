@@ -53,6 +53,16 @@ changing the scheduler partition. This directly targets the incumbent
 but raw XPU and endpoint exactness remain unmeasured. See
 [`2026-08-03-exact-prefill-tail-offline.md`](notes/2026-08-03-exact-prefill-tail-offline.md).
 
+Production first-user latency is now handled separately from cold measurement.
+vLLM `d9e7e2f1a` adds a v2 worker contract that proves the exact-prefill
+selector is active, and a default-off production readiness canary runs one
+exact 400-token request before publishing an atomic ready marker. It validates
+worker/DSO identity, cache-zero response exactness, speculative counters, and
+146/145 target plus 14/13 draft capture/replay on all ranks. Cold runners do
+not reference it. This moves the known 10.478-second first-live graph/JIT tax
+into startup-to-ready time; it is not a cold benchmark improvement. See
+[`2026-08-03-production-readiness-canary-offline.md`](notes/2026-08-03-production-readiness-canary-offline.md).
+
 ### 2026-08-02 operational checkpoint
 
 The latest q12 mixed-depth diagnostic stalled in distributed initialization

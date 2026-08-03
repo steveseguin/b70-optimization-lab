@@ -20,24 +20,38 @@ validator = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validator)
 
 
-def _record(rank: int, *, pid: int | None = None) -> dict:
+def _record(rank: int, *, pid: int | None = None, exact_prefill: bool = False) -> dict:
+    selectors = (
+        validator.LATENCY_EXPECTED_SELECTORS
+        if exact_prefill
+        else validator.EXPECTED_SELECTORS
+    )
     return {
-        "schema": validator.SCHEMA,
+        "schema": validator.LATENCY_SCHEMA if exact_prefill else validator.SCHEMA,
         "pid": 1000 + rank if pid is None else pid,
         "pid_start_time_ticks": 2000 + rank,
         "worker_name": f"Worker_TP{rank}_EP{rank}",
         "world_size": 4,
         "ranks": {"global": rank, "local": rank, "tp": rank, "ep": rank},
-        "selector_contract_sha256": validator.SELECTOR_CONTRACT_SHA256,
-        "selector_count": len(validator.EXPECTED_SELECTORS),
-        "selectors": dict(validator.EXPECTED_SELECTORS),
+        "selector_contract_sha256": (
+            validator.LATENCY_SELECTOR_CONTRACT_SHA256
+            if exact_prefill
+            else validator.SELECTOR_CONTRACT_SHA256
+        ),
+        "selector_count": len(selectors),
+        "selectors": dict(selectors),
     }
 
 
 def _log_line(record: dict) -> str:
     encoded = json.dumps(record, sort_keys=True, separators=(",", ":"))
     rank = record["ranks"]["global"]
-    return f"(Worker_TP{rank}_EP{rank}) {validator.MARKER} {encoded}\n"
+    marker = (
+        validator.LATENCY_MARKER
+        if record["schema"] == validator.LATENCY_SCHEMA
+        else validator.MARKER
+    )
+    return f"(Worker_TP{rank}_EP{rank}) {marker} {encoded}\n"
 
 
 def _stat_line(pid: int, start_time: int) -> str:
@@ -75,6 +89,33 @@ class WorkerSelectorEvidenceTests(unittest.TestCase):
                 for record in records
             )
         )
+
+    def test_latency_contract_requires_exact_prefill_selector(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "server.log"
+            log.write_text(
+                "".join(
+                    _log_line(_record(rank, exact_prefill=True)) for rank in range(4)
+                )
+            )
+
+            records = validator.parse_worker_selector_log(
+                log, require_exact_prefill=True
+            )
+
+        self.assertTrue(
+            all(
+                record["selectors"]["VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS"] == "1"
+                for record in records
+            )
+        )
+
+    def test_latency_contract_rejects_legacy_records(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "server.log"
+            log.write_text("".join(_log_line(_record(rank)) for rank in range(4)))
+            with self.assertRaisesRegex(ValueError, "expected four"):
+                validator.parse_worker_selector_log(log, require_exact_prefill=True)
 
     def test_duplicate_json_key_is_rejected(self) -> None:
         encoded = json.dumps(_record(0), sort_keys=True, separators=(",", ":"))

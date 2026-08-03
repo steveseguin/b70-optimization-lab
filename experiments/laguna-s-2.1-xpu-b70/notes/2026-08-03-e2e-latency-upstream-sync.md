@@ -52,6 +52,16 @@ The combined host suite passes 36 tests: 21 tile-record host/static/post-load
 cases plus 15 exact-prefill model/runner contract cases. Ruff lint passes. No
 native module was imported and no XPU work was performed.
 
+The offline successor now also attests the exact-prefill selector in each
+worker before model loading at vLLM `d9e7e2f1a`. A separate default-off
+production readiness canary can pay and validate the known 10.478-second
+first-live graph/JIT capture before a frontdoor advertises readiness. It is
+strictly excluded from cold runners and does not change or improve any cold
+benchmark result. See
+[`2026-08-03-production-readiness-canary-offline.md`](2026-08-03-production-readiness-canary-offline.md).
+The comprehensive successor host run now passes 77 tests, including the
+original tile/prefill coverage and the v2 worker-attestation contract.
+
 ## Upstream policy
 
 Community upstream `vllm-project/vllm:main` and contributor fork
@@ -82,6 +92,8 @@ work.
    if the 8K--32K component crossover reverses its short-context loss.
 5. Adapt wide-prefill Q/K normalization plus RoPE to the incumbent 8,182/8,094
    partitions instead of reviving the inexact 8,202/8,192 scheduler identity.
+6. For production only, put the loopback backend behind the readiness canary
+   and expose the frontdoor only after its atomic ready marker exists.
 
 A real-use promotion must preserve short-suite q1 exactness, cache-zero cold
 identity, accepted/drafted counters for a prefill-only change, 146/145 target

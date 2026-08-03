@@ -96,6 +96,11 @@ def validate_speculation(delta: dict[str, Any], request_index: int) -> None:
             f"request {request_index} has zero or flat-full acceptance: "
             f"{accepted}/{draft_tokens}"
         )
+    if any(value < 0 for value in per_position) or sum(per_position) != accepted:
+        raise RuntimeError(
+            f"request {request_index} acceptance counters disagree: "
+            f"positions={per_position}, accepted={accepted}"
+        )
     if (
         any(left < right for left, right in zip(per_position, per_position[1:]))
         or per_position[0] >= drafts
@@ -214,6 +219,21 @@ def validate_graph_log(
     deadline = time.monotonic() + 15
     while True:
         lines = server_log.read_text(encoding="utf-8", errors="replace").splitlines()
+        audited = [
+            line
+            for line in lines
+            if re.search(r"(?:Captured|Replayed) audited breakable cudagraph", line)
+        ]
+        unexpected = [
+            line
+            for line in audited
+            if target_shape not in line and draft_shape not in line
+        ]
+        if unexpected:
+            raise RuntimeError(
+                "unexpected audited target/draft graph topology rows: "
+                + repr(unexpected)
+            )
         checks = []
         for action in ("Captured", "Replayed"):
             checks.append(graph_rows(lines, action, target_shape))
@@ -246,7 +266,7 @@ def main() -> int:
     parser.add_argument("--draft-eager-breaks", type=int, required=True)
     parser.add_argument("--target-graphs", type=int, required=True)
     parser.add_argument("--target-eager-breaks", type=int, required=True)
-    parser.add_argument("--request-count", type=int, choices=(2, 13), default=2)
+    parser.add_argument("--request-count", type=int, choices=(1, 2, 13), default=2)
     parser.add_argument("--max-tokens", type=int, choices=(400, 512), default=400)
     args = parser.parse_args()
 
@@ -292,6 +312,8 @@ def main() -> int:
                 "cached_tokens": result["usage"]["prompt_tokens_details"][
                     "cached_tokens"
                 ],
+                "client_ttft_s": result.get("ttft_s"),
+                "client_e2e_s": result.get("elapsed_s"),
                 "token_prefix_exact": True,
                 "speculation": delta,
             }

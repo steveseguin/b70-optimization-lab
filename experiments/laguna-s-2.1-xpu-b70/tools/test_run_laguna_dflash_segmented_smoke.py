@@ -66,13 +66,24 @@ def test_speculation_delta_accepts_realistic_request() -> None:
     after = metrics(
         drafts=50,
         draft_tokens=550,
-        accepted=145,
+        accepted=209,
         per_position=[43, 36, 29, 24, 20, 16, 13, 10, 8, 6, 4],
     )
     delta = smoke.speculation_delta(before, after)
     smoke.validate_speculation(delta, 0)
     assert delta["drafts"] == 40
     assert delta["accepted_per_position"] == [35, 30, 25, 21, 18, 15, 12, 10, 8, 6, 4]
+
+
+def test_speculation_gate_rejects_counter_disagreement() -> None:
+    delta = {
+        "drafts": 40,
+        "draft_tokens": 440,
+        "accepted_tokens": 12,
+        "accepted_per_position": [10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    }
+    with pytest.raises(RuntimeError, match="counters disagree"):
+        smoke.validate_speculation(delta, 0)
 
 
 @pytest.mark.parametrize(
@@ -109,6 +120,36 @@ def test_graph_rows_require_rank_complete_topology() -> None:
     )
     assert count == 4
     assert ranks == {(0, 0), (1, 1), (2, 2), (3, 3)}
+
+
+def test_graph_gate_rejects_unexpected_audited_topology(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    log = tmp_path / "server.log"
+    lines = []
+    for action in ("Captured", "Replayed"):
+        for rank in range(4):
+            for graphs, breaks in ((146, 145), (14, 13)):
+                lines.append(
+                    f"Worker_TP{rank}_EP{rank} {action} audited breakable "
+                    f"cudagraph (graphs={graphs}, eager_breaks={breaks})"
+                )
+    lines.append(
+        "Worker_TP0_EP0 Captured audited breakable cudagraph "
+        "(graphs=99, eager_breaks=98)"
+    )
+    log.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    monkeypatch.setattr(smoke.time, "sleep", lambda _seconds: None)
+
+    with pytest.raises(RuntimeError, match="unexpected audited"):
+        smoke.validate_graph_log(
+            log,
+            replicated_embedding=False,
+            target_graphs=146,
+            target_eager_breaks=145,
+            draft_graphs=14,
+            draft_eager_breaks=13,
+        )
 
 
 def test_raw_request_evidence_is_persisted_before_validation(tmp_path: Path) -> None:
