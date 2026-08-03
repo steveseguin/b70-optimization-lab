@@ -1,0 +1,239 @@
+From 1ef527526e8ca18e7c04dc9bb8b23020e6f8dec2 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 01:04:50 -0400
+Subject: [PATCH] xpu: isolate affine tile record state
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp       | 130 ++++++++++--------
+ ...t_laguna_int4_affine_tile_record_static.py |  14 +-
+ 2 files changed, 80 insertions(+), 64 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 1df4abb..d9c3b26 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -742,58 +742,65 @@ CUTE_DEVICE void xe_gemm_4bits(
+       tile_record_weight_bytes + tile_record_scale_bytes;
+   static constexpr int32_t tile_record_stride =
+       tile_record_bytes * 8 / sizeof_bits_v<ElementB>;
+-  const uint8_t* tile_record_base = [&]() {
++  auto tile_record_state = [&]() {
+     if constexpr (affine_tile_records) {
+-      return tile_records + wg_n * group_num * tile_record_bytes;
+-    } else {
+-      return reinterpret_cast<const uint8_t*>(&*B.data());
+-    }
+-  }();
+-  auto tile_record_B = make_tensor(
+-      make_gmem_ptr(reinterpret_cast<ElementB*>(
+-          const_cast<uint8_t*>(tile_record_base))),
+-      make_layout(
+-          make_shape(Int<tile_n>{}, Int<tile_k>{}, group_num),
+-          make_stride(
+-              Int<tile_k>{}, Int<1>{}, Int<tile_record_stride>{})));
+-  auto tile_record_cB = make_identity_tensor(tile_record_B.shape());
+-  auto tile_record_gB = local_tile(
+-      tile_record_cB,
+-      make_shape(Int<tile_n>{}, Int<tile_k>{}, Int<1>{}),
+-      make_coord(0, 0, _));
+-  auto tile_record_copy_b = [&]() {
+-    if constexpr (affine_tile_records) {
+-      return get_block_2d_copy_B<GmemTiledCopyB>(mma, tile_record_B);
++      const uint8_t* tile_record_base =
++          tile_records + wg_n * group_num * tile_record_bytes;
++      auto tile_record_B = make_tensor(
++          make_gmem_ptr(reinterpret_cast<ElementB*>(
++              const_cast<uint8_t*>(tile_record_base))),
++          make_layout(
++              make_shape(Int<tile_n>{}, Int<tile_k>{}, group_num),
++              make_stride(
++                  Int<tile_k>{}, Int<1>{}, Int<tile_record_stride>{})));
++      auto tile_record_cB = make_identity_tensor(tile_record_B.shape());
++      auto tile_record_gB = local_tile(
++          tile_record_cB,
++          make_shape(Int<tile_n>{}, Int<tile_k>{}, Int<1>{}),
++          make_coord(0, 0, _));
++      auto tile_record_copy_b =
++          get_block_2d_copy_B<GmemTiledCopyB>(mma, tile_record_B);
++      auto tile_record_thr_copy_b = tile_record_copy_b.get_slice(local_id);
++      auto tile_record_tBgB =
++          tile_record_thr_copy_b.partition_S(tile_record_gB);
++      auto tile_record_prefetch_b = make_block_2d_prefetch(tile_record_copy_b);
++      auto tile_record_thr_prefetch_b =
++          tile_record_prefetch_b.get_slice(local_id);
++      auto tile_record_pBgB =
++          tile_record_thr_prefetch_b.partition_S(tile_record_gB);
++      static constexpr int32_t tile_record_scale_stride =
++          tile_record_bytes / sizeof(ElementS);
++      const ElementS* tile_record_scale_base =
++          reinterpret_cast<const ElementS*>(
++              tile_record_base + tile_record_weight_bytes);
++      auto tile_record_S = make_tensor(
++          make_gmem_ptr(tile_record_scale_base),
++          make_layout(
++              make_shape(Int<tile_n>{}, group_num),
++              make_stride(Int<1>{}, Int<tile_record_scale_stride>{})));
++      auto tile_record_cS = make_identity_tensor(tile_record_S.shape());
++      auto tile_record_gS = local_tile(
++          tile_record_cS,
++          make_shape(Int<tile_n>{}, Int<1>{}),
++          make_coord(0, _));
++      auto tile_record_prefetch_s = make_block_2d_prefetch<4>(
++          make_shape(Int<tile_n>{}, Int<1>{}), tile_record_S);
++      auto tile_record_thr_prefetch_s =
++          tile_record_prefetch_s.get_slice(sg_local_id);
++      auto tile_record_pSgS =
++          tile_record_thr_prefetch_s.partition_S(tile_record_gS);
++      return make_tuple(
++          tile_record_copy_b,
++          tile_record_tBgB,
++          tile_record_prefetch_b,
++          tile_record_pBgB,
++          tile_record_S,
++          tile_record_prefetch_s,
++          tile_record_pSgS);
+     } else {
+-      return copy_b;
++      return make_tuple();
+     }
+   }();
+-  auto tile_record_thr_copy_b = tile_record_copy_b.get_slice(local_id);
+-  auto tile_record_tBgB = tile_record_thr_copy_b.partition_S(tile_record_gB);
+-  auto tile_record_prefetch_b = make_block_2d_prefetch(tile_record_copy_b);
+-  auto tile_record_thr_prefetch_b = tile_record_prefetch_b.get_slice(local_id);
+-  auto tile_record_pBgB =
+-      tile_record_thr_prefetch_b.partition_S(tile_record_gB);
+-  static constexpr int32_t tile_record_scale_stride =
+-      tile_record_bytes / sizeof(ElementS);
+-  const ElementS* tile_record_scale_base = reinterpret_cast<const ElementS*>(
+-      tile_record_base + tile_record_weight_bytes);
+-  auto tile_record_S = make_tensor(
+-      make_gmem_ptr(tile_record_scale_base),
+-      make_layout(
+-          make_shape(Int<tile_n>{}, group_num),
+-          make_stride(Int<1>{}, Int<tile_record_scale_stride>{})));
+-  auto tile_record_cS = make_identity_tensor(tile_record_S.shape());
+-  auto tile_record_gS = local_tile(
+-      tile_record_cS,
+-      make_shape(Int<tile_n>{}, Int<1>{}),
+-      make_coord(0, _));
+-  auto tile_record_prefetch_s = make_block_2d_prefetch<4>(
+-      make_shape(Int<tile_n>{}, Int<1>{}), tile_record_S);
+-  auto tile_record_thr_prefetch_s =
+-      tile_record_prefetch_s.get_slice(sg_local_id);
+-  auto tile_record_pSgS =
+-      tile_record_thr_prefetch_s.partition_S(tile_record_gS);
+ 
+   using scaleStoreType = conditional_t<is_same_v<TA, half_t>, half_t, float>;
+   scaleStoreType scales[thr_N * channel_num];
+@@ -896,8 +903,8 @@ CUTE_DEVICE void xe_gemm_4bits(
+     prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+     if constexpr (affine_tile_records) {
+       prefetch(
+-          tile_record_prefetch_b,
+-          tile_record_pBgB(_, _, _, 0, k_tile_prefetch));
++          get<2>(tile_record_state),
++          get<3>(tile_record_state)(_, _, _, 0, k_tile_prefetch));
+     } else if constexpr (TileMajor) {
+       const uint8_t* record =
+           tile_records +
+@@ -940,8 +947,8 @@ CUTE_DEVICE void xe_gemm_4bits(
+         prefetch(prefetch_scales, pSgS(_, 0, 0));
+       } else if constexpr (affine_tile_records) {
+         prefetch(
+-            tile_record_prefetch_s,
+-            tile_record_pSgS(_, 0, 0, k_tile_prefetch));
++            get<5>(tile_record_state),
++            get<6>(tile_record_state)(_, 0, 0, k_tile_prefetch));
+       } else {
+         const ElementS* scale_base;
+         int scale_stride;
+@@ -977,8 +984,8 @@ CUTE_DEVICE void xe_gemm_4bits(
+     copy(copy_a, tAgA(_, _, _, k_tile), tArA);
+     if constexpr (affine_tile_records) {
+       copy(
+-          tile_record_copy_b,
+-          tile_record_tBgB(_, _, _, 0, k_tile),
++          get<0>(tile_record_state),
++          get<1>(tile_record_state)(_, _, _, 0, k_tile),
+           tBrB);
+     } else if constexpr (TileMajor) {
+       const uint8_t* record =
+@@ -1016,7 +1023,8 @@ CUTE_DEVICE void xe_gemm_4bits(
+           if constexpr (std::is_same_v<TB, int4_t>) {
+             if constexpr (TileMajor) {
+               scale =
+-                  tile_record_S(n_sg_start + sg_local_n, group_idx);
++                  get<4>(tile_record_state)(
++                      n_sg_start + sg_local_n, group_idx);
+             } else if constexpr (TransposedScales) {
+               scale = static_cast<float>(
+                   Scales
+@@ -1058,7 +1066,8 @@ CUTE_DEVICE void xe_gemm_4bits(
+             if constexpr (std::is_same_v<TB, int4_t>) {
+               if constexpr (TileMajor) {
+                 scale =
+-                    tile_record_S(n_sg_start + sg_local_n, group_idx);
++                    get<4>(tile_record_state)(
++                        n_sg_start + sg_local_n, group_idx);
+               } else if constexpr (TransposedScales) {
+                 scale = Scales
+                     [group_idx * shape<0>(B) + n_tile_start + n_sg_start +
+@@ -1117,8 +1126,9 @@ CUTE_DEVICE void xe_gemm_4bits(
+           prefetch(prefetch_scales, pSgS(_, 0, 0));
+         } else if constexpr (affine_tile_records) {
+           prefetch(
+-              tile_record_prefetch_s,
+-              tile_record_pSgS(_, 0, 0, group_idx + prefetch_dist));
++              get<5>(tile_record_state),
++              get<6>(tile_record_state)(
++                  _, 0, 0, group_idx + prefetch_dist));
+         } else {
+           const ElementS* scale_base;
+           int scale_stride;
+@@ -1154,8 +1164,8 @@ CUTE_DEVICE void xe_gemm_4bits(
+       prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+       if constexpr (affine_tile_records) {
+         prefetch(
+-            tile_record_prefetch_b,
+-            tile_record_pBgB(_, _, _, 0, k_tile_prefetch));
++            get<2>(tile_record_state),
++            get<3>(tile_record_state)(_, _, _, 0, k_tile_prefetch));
+       } else if constexpr (TileMajor) {
+         const uint8_t* record =
+             tile_records +
+diff --git a/tests/test_laguna_int4_affine_tile_record_static.py b/tests/test_laguna_int4_affine_tile_record_static.py
+index f3b5745..f032f44 100644
+--- a/tests/test_laguna_int4_affine_tile_record_static.py
++++ b/tests/test_laguna_int4_affine_tile_record_static.py
+@@ -28,6 +28,7 @@ def test_affine_int4_route_is_separate_from_mxfp4_tile_major() -> None:
+     setup = _affine_setup()
+     assert "TileMajor && is_same_v<ElementB, int4_t>" in setup
+     assert "if constexpr (affine_tile_records)" in setup
++    assert "return make_tuple();" in setup
+ 
+ 
+ def test_weight_record_uses_one_rank3_affine_view_and_payload() -> None:
+@@ -54,10 +55,15 @@ def test_affine_hot_path_uses_coordinates_without_rebuilding_views() -> None:
+         block.split("} else if constexpr (TileMajor)", 1)[0]
+         for block in traversal.split("if constexpr (affine_tile_records)")[1:]
+     )
+-    assert "tile_record_pBgB(_, _, _, 0, k_tile_prefetch)" in affine_blocks
+-    assert "tile_record_tBgB(_, _, _, 0, k_tile)" in affine_blocks
+-    assert "tile_record_pSgS(_, 0, 0, k_tile_prefetch)" in affine_blocks
+-    assert "tile_record_S(n_sg_start + sg_local_n, group_idx)" in traversal
++    assert (
++        "get<3>(tile_record_state)(_, _, _, 0, k_tile_prefetch)"
++        in affine_blocks
++    )
++    assert "get<1>(tile_record_state)(_, _, _, 0, k_tile)" in affine_blocks
++    assert (
++        "get<6>(tile_record_state)(_, 0, 0, k_tile_prefetch)" in affine_blocks
++    )
++    assert "get<4>(tile_record_state)(" in traversal
+     assert (
+         "if constexpr (affine_tile_records) {\n      const uint8_t* record"
+         not in traversal
+-- 
+2.43.0
+
