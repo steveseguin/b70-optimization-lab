@@ -63,6 +63,15 @@ not reference it. This moves the known 10.478-second first-live graph/JIT tax
 into startup-to-ready time; it is not a cold benchmark improvement. See
 [`2026-08-03-production-readiness-canary-offline.md`](notes/2026-08-03-production-readiness-canary-offline.md).
 
+The secondary 32K attention lane is also prepared offline. The previously
+208/208 exact but short-context-slower paired-row mechanism now has a
+`long-full` component profile at exact contexts 8,192, 16,384, 24,576, and
+32,640, projected only across the 12 full-attention layers. It requires at
+least `0.25 ms/token` component saving before integration; no device run is
+authorized or measured. The accepted-position/mixed-depth diagnostic remains
+higher priority. See
+[`2026-08-03-long-full-attention-screen-offline.md`](notes/2026-08-03-long-full-attention-screen-offline.md).
+
 ### 2026-08-02 operational checkpoint
 
 The latest q12 mixed-depth diagnostic stalled in distributed initialization

@@ -17,6 +17,10 @@ import torch
 
 PROMPT_TOKENS = (90, 132, 110, 102, 112, 89, 149, 111, 125, 140, 229, 112, 863)
 OFFSETS = (0, 33, 66, 99)
+SHORT_RECORD_CONTEXTS = tuple(
+    prompt + offset for prompt in PROMPT_TOKENS for offset in OFFSETS
+)
+LONG_FULL_CONTEXTS = (8192, 16384, 24576, 32640)
 Q_WIDTH = 12
 Q_HEADS = 12
 PACKED_BATCH = 6
@@ -25,6 +29,26 @@ KV_HEADS = 2
 HEAD_DIM = 128
 BLOCK_SIZE = 64
 SELECTOR = "VLLM_XPU_LAGUNA_M12_PAIR_ATTN"
+
+
+def profile_contract(name: str) -> dict[str, object]:
+    if name == "short-record":
+        return {
+            "contexts": SHORT_RECORD_CONTEXTS,
+            "attention_modes": (False, True),
+            "full_layers": 12,
+            "sliding_layers": 36,
+            "minimum_projected_saving_ms": 1.5,
+        }
+    if name == "long-full":
+        return {
+            "contexts": LONG_FULL_CONTEXTS,
+            "attention_modes": (False,),
+            "full_layers": 12,
+            "sliding_layers": 0,
+            "minimum_projected_saving_ms": 0.25,
+        }
+    raise ValueError(f"unsupported paired-attention profile: {name}")
 
 
 def file_hash(path: Path) -> str:
@@ -65,7 +89,9 @@ def unpack_output(packed: torch.Tensor) -> torch.Tensor:
     )
 
 
-def host_contract_checks() -> dict[str, object]:
+def host_contract_checks(
+    contexts: tuple[int, ...] = SHORT_RECORD_CONTEXTS,
+) -> dict[str, object]:
     marker = torch.arange(Q_WIDTH * Q_HEADS * HEAD_DIM, dtype=torch.int64).view(
         Q_WIDTH, Q_HEADS, HEAD_DIM
     )
@@ -86,7 +112,6 @@ def host_contract_checks() -> dict[str, object]:
                     f"wrong physical layout for pair={pair}, kv={kv_head}"
                 )
 
-    contexts = tuple(prompt + offset for prompt in PROMPT_TOKENS for offset in OFFSETS)
     for context in contexts:
         ordinary = context + torch.arange(1, Q_WIDTH + 1, dtype=torch.int32)
         paired = context + torch.arange(2, Q_WIDTH + 1, 2, dtype=torch.int32)
@@ -100,6 +125,8 @@ def host_contract_checks() -> dict[str, object]:
         "physical_kv_group_order": True,
         "paired_staircase": True,
         "contexts": len(contexts),
+        "minimum_context": min(contexts),
+        "maximum_context": max(contexts),
     }
 
 
@@ -120,7 +147,9 @@ def metadata(
     batch = PACKED_BATCH if paired else Q_WIDTH
     cu_q = torch.arange(batch + 1, dtype=torch.int32, device=device)
     if paired:
-        seq_k = context + torch.arange(2, Q_WIDTH + 1, 2, dtype=torch.int32, device=device)
+        seq_k = context + torch.arange(
+            2, Q_WIDTH + 1, 2, dtype=torch.int32, device=device
+        )
     else:
         seq_k = context + torch.arange(1, Q_WIDTH + 1, dtype=torch.int32, device=device)
     block_table = (
@@ -192,16 +221,42 @@ def expected_failure(call: Callable[[], object], selector: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rank", type=int, required=True, choices=range(4))
+    parser.add_argument(
+        "--profile",
+        choices=("short-record", "long-full"),
+        default="short-record",
+    )
     parser.add_argument("--seeds", type=int, default=2)
     parser.add_argument("--timing-iterations", type=int, default=20)
-    parser.add_argument("--minimum-projected-saving-ms", type=float, default=1.5)
+    parser.add_argument("--minimum-projected-saving-ms", type=float)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--host-only", action="store_true")
     args = parser.parse_args()
 
-    host_checks = host_contract_checks()
+    profile = profile_contract(args.profile)
+    contexts = profile["contexts"]
+    attention_modes = profile["attention_modes"]
+    full_layers = int(profile["full_layers"])
+    sliding_layers = int(profile["sliding_layers"])
+    minimum_projected_saving_ms = (
+        float(args.minimum_projected_saving_ms)
+        if args.minimum_projected_saving_ms is not None
+        else float(profile["minimum_projected_saving_ms"])
+    )
+    assert isinstance(contexts, tuple)
+    assert isinstance(attention_modes, tuple)
+    host_checks = host_contract_checks(contexts)
     if args.host_only:
-        print(json.dumps({"status": "PASS", "host_checks": host_checks}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "status": "PASS",
+                    "profile": args.profile,
+                    "host_checks": host_checks,
+                },
+                indent=2,
+            )
+        )
         return
 
     from vllm_xpu_kernels.flash_attn_interface import flash_attn_varlen_func
@@ -211,16 +266,17 @@ def main() -> None:
     if os.environ.get("ZE_AFFINITY_MASK") != str(args.rank):
         raise SystemExit("ZE_AFFINITY_MASK must equal --rank")
     if torch.xpu.device_count() != 1:
-        raise SystemExit(f"expected exactly one visible XPU, saw {torch.xpu.device_count()}")
+        raise SystemExit(
+            f"expected exactly one visible XPU, saw {torch.xpu.device_count()}"
+        )
     torch.xpu.set_device(0)
     device = torch.device("xpu", 0)
-    contexts = tuple(prompt + offset for prompt in PROMPT_TOKENS for offset in OFFSETS)
     cases: list[dict[str, object]] = []
     exact = 0
     total = 0
     native_rejections: dict[str, str] = {}
 
-    for local in (False, True):
+    for local in attention_modes:
         for case_index, context in enumerate(contexts):
             case_exact = True
             control_timings: list[float] = []
@@ -254,32 +310,35 @@ def main() -> None:
                     context=context, blocks=key.shape[0], paired=True, device=device
                 )
 
-                control_call = lambda: attention_call(
-                    flash_attn_varlen_func,
-                    query=query,
-                    key=key,
-                    value=value,
-                    out=control_out,
-                    context=context,
-                    local=local,
-                    paired=False,
-                    cu_q=control_meta[0],
-                    seq_k=control_meta[1],
-                    block_table=control_meta[2],
-                )
-                paired_call = lambda: attention_call(
-                    flash_attn_varlen_func,
-                    query=packed_query,
-                    key=key,
-                    value=value,
-                    out=packed_out,
-                    context=context,
-                    local=local,
-                    paired=True,
-                    cu_q=paired_meta[0],
-                    seq_k=paired_meta[1],
-                    block_table=paired_meta[2],
-                )
+                def control_call() -> torch.Tensor:
+                    return attention_call(
+                        flash_attn_varlen_func,
+                        query=query,
+                        key=key,
+                        value=value,
+                        out=control_out,
+                        context=context,
+                        local=local,
+                        paired=False,
+                        cu_q=control_meta[0],
+                        seq_k=control_meta[1],
+                        block_table=control_meta[2],
+                    )
+
+                def paired_call() -> torch.Tensor:
+                    return attention_call(
+                        flash_attn_varlen_func,
+                        query=packed_query,
+                        key=key,
+                        value=value,
+                        out=packed_out,
+                        context=context,
+                        local=local,
+                        paired=True,
+                        cu_q=paired_meta[0],
+                        seq_k=paired_meta[1],
+                        block_table=paired_meta[2],
+                    )
 
                 if not native_rejections:
                     native_rejections["invalid_literal"] = expected_failure(
@@ -333,15 +392,25 @@ def main() -> None:
     sliding = [row for row in cases if row["attention"] == "sliding"]
     full_control = sum(float(row["control_ms"]) for row in full) / len(full)
     full_paired = sum(float(row["paired_ms"]) for row in full) / len(full)
-    sliding_control = sum(float(row["control_ms"]) for row in sliding) / len(sliding)
-    sliding_paired = sum(float(row["paired_ms"]) for row in sliding) / len(sliding)
-    projected_control = 12 * full_control + 36 * sliding_control
-    projected_paired = 12 * full_paired + 36 * sliding_paired
+    sliding_control = (
+        sum(float(row["control_ms"]) for row in sliding) / len(sliding)
+        if sliding
+        else 0.0
+    )
+    sliding_paired = (
+        sum(float(row["paired_ms"]) for row in sliding) / len(sliding)
+        if sliding
+        else 0.0
+    )
+    projected_control = full_layers * full_control + sliding_layers * sliding_control
+    projected_paired = full_layers * full_paired + sliding_layers * sliding_paired
     saving = projected_control - projected_paired
     raw_exact = exact == total
-    passed = raw_exact and saving >= args.minimum_projected_saving_ms
+    passed = raw_exact and saving >= minimum_projected_saving_ms
 
-    fa2_module = Path(importlib.import_module("vllm_xpu_kernels._vllm_fa2_C").__file__).resolve()
+    fa2_module = Path(
+        importlib.import_module("vllm_xpu_kernels._vllm_fa2_C").__file__
+    ).resolve()
     mapped_attn = sorted(
         {
             Path(line.rsplit(maxsplit=1)[-1]).resolve()
@@ -350,7 +419,8 @@ def main() -> None:
         }
     )
     payload = {
-        "schema": "laguna-paired-row-attention-component-v1",
+        "schema": "laguna-paired-row-attention-component-v2",
+        "profile": args.profile,
         "rank": args.rank,
         "device": torch.xpu.get_device_name(0),
         "environment": {
@@ -361,6 +431,13 @@ def main() -> None:
         "host_checks": host_checks,
         "native_rejections": native_rejections,
         "contexts": list(contexts),
+        "attention_modes": [
+            "sliding" if local else "full" for local in attention_modes
+        ],
+        "projected_layer_counts": {
+            "full": full_layers,
+            "sliding": sliding_layers,
+        },
         "seeds": args.seeds,
         "exact": f"{exact}/{total}",
         "raw_exact_passed": raw_exact,
@@ -371,7 +448,7 @@ def main() -> None:
         "projected_control_ms": projected_control,
         "projected_paired_ms": projected_paired,
         "projected_saving_ms": saving,
-        "minimum_projected_saving_ms": args.minimum_projected_saving_ms,
+        "minimum_projected_saving_ms": minimum_projected_saving_ms,
         "timing_includes_pack_unpack": False,
         "status": "PASS" if passed else "STOP",
         "native": {

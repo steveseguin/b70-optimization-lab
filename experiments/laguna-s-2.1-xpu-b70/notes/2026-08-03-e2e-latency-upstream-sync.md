@@ -89,7 +89,10 @@ work.
 3. Complete the accepted-position diagnostic before implementing a
    long-context depth-7 drafter with the unchanged width-12 target verifier.
 4. Re-screen exact paired-row attention only for long full-attention layers
-   if the 8K--32K component crossover reverses its short-context loss.
+   if the 8K--32K component crossover reverses its short-context loss. The
+   offline gate now has a `long-full` profile for exact 8K/16K/24K/32K
+   contexts; see
+   [`2026-08-03-long-full-attention-screen-offline.md`](2026-08-03-long-full-attention-screen-offline.md).
 5. Adapt wide-prefill Q/K normalization plus RoPE to the incumbent 8,182/8,094
    partitions instead of reviving the inexact 8,202/8,192 scheduler identity.
 6. For production only, put the loopback backend behind the readiness canary

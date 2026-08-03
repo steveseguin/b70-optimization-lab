@@ -259,6 +259,15 @@ Cold benchmark launchers remain untouched. This shifts latency from the first
 user into startup-to-ready time and is not a new speed measurement. See
 [`2026-08-03-production-readiness-canary-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-production-readiness-canary-offline.md).
 
+The 32K secondary attention screen is now ready offline. The existing paired
+M12 attention mechanism was 208/208 raw-BF16 exact but slower at short
+contexts; its gate now adds a full-attention-only profile at 8,192, 16,384,
+24,576, and 32,640 tokens and requires at least `0.25 ms/token` projected
+saving across the 12 full layers. Five CPU-only tests pass. No component or
+endpoint rate exists, and the accepted-position/mixed-depth diagnostic remains
+the primary 32K lever. See
+[`2026-08-03-long-full-attention-screen-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-long-full-attention-screen-offline.md).
+
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to
 infer recovery causality. They are now also superseded as a live-state block:
