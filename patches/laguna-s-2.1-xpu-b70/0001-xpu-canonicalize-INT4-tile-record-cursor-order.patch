@@ -1,0 +1,95 @@
+From 58092a5a436170921208da96b8fd713a9d954071 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 02:08:41 -0400
+Subject: [PATCH] xpu: canonicalize INT4 tile-record cursor order
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp       |  9 +++++--
+ ...t_laguna_int4_affine_tile_record_static.py | 24 ++++++++++++-------
+ 2 files changed, 22 insertions(+), 11 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index c834f74..9f386e4 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -1015,7 +1015,6 @@ CUTE_DEVICE void xe_gemm_4bits(
+           get<0>(tile_record_state),
+           get<1>(tile_record_state)(_, _, _, 0),
+           tBrB);
+-      get<7>(tile_record_state) += tile_record_bytes;
+     } else if constexpr (TileMajor) {
+       const uint8_t* record =
+           tile_records + (wg_n * group_num + k_tile) * tile_record_bytes;
+@@ -1194,10 +1193,12 @@ CUTE_DEVICE void xe_gemm_4bits(
+     if (k_tile_prefetch < k_tile_count) {
+       prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+       if constexpr (affine_tile_records) {
++        // The copy cursor still names the current record here.  Add the full
++        // lookahead distance, then advance the cursor once for the next loop.
+         retarget_block_2d_payload(
+             get<2>(tile_record_state),
+             get<7>(tile_record_state) +
+-                (prefetch_dist - 1) * tile_record_bytes);
++                prefetch_dist * tile_record_bytes);
+         prefetch(
+             get<2>(tile_record_state),
+             get<3>(tile_record_state)(_, _, _, 0));
+@@ -1227,6 +1228,10 @@ CUTE_DEVICE void xe_gemm_4bits(
+       }
+     }
+ 
++    if constexpr (affine_tile_records) {
++      get<7>(tile_record_state) += tile_record_bytes;
++    }
++
+     reorder(tArA, tCrA);
+     if constexpr (mad_scales) {
+       // Leave the -136 bias out of the dequantize; the `mad` below applies
+diff --git a/tests/test_laguna_int4_affine_tile_record_static.py b/tests/test_laguna_int4_affine_tile_record_static.py
+index abc6d88..7dd2dfa 100644
+--- a/tests/test_laguna_int4_affine_tile_record_static.py
++++ b/tests/test_laguna_int4_affine_tile_record_static.py
+@@ -88,8 +88,8 @@ def test_affine_hot_path_inducts_weight_bases_without_rebuild() -> None:
+     prologue_base = """get<8>(tile_record_state) +
+               k_tile_prefetch * tile_record_bytes"""
+     future_base = """get<7>(tile_record_state) +
+-                (prefetch_dist - 1) * tile_record_bytes"""
+-    assert affine_blocks.count(copy_advance) == 1
++                prefetch_dist * tile_record_bytes"""
++    assert traversal.count(copy_advance) == 1
+     assert affine_blocks.count(copy_retarget) == 1
+     assert prologue_base in prologue
+     assert future_base in future
+@@ -99,16 +99,22 @@ def test_affine_hot_path_inducts_weight_bases_without_rebuild() -> None:
+     prologue_retarget = prologue.index("retarget_block_2d_payload(")
+     assert prologue_retarget < prologue.index("prefetch(\n", prologue_retarget)
+     copy_retarget_at = copy_block.index("retarget_block_2d_payload(")
+-    assert (
+-        copy_retarget_at
+-        < copy_block.index("copy(\n", copy_retarget_at)
+-        < copy_block.index(copy_advance)
+-    )
+-    copy_advance_at = traversal.index(copy_advance)
++    assert copy_retarget_at < copy_block.index("copy(\n", copy_retarget_at)
++    assert copy_advance not in copy_block
+     future_guard_at = traversal.index("if (k_tile_prefetch < k_tile_count)")
+-    assert copy_advance_at < future_guard_at
+     future_retarget = future.index("retarget_block_2d_payload(")
+     assert future_retarget < future.index("prefetch(\n", future_retarget)
++    copy_advance_at = traversal.index(copy_advance)
++    assert future_guard_at < copy_advance_at < traversal.index("reorder(tArA")
++    all_path_advance = f"""      }}
++    }}
++
++    if constexpr (affine_tile_records) {{
++      {copy_advance};
++    }}
++
++    reorder(tArA"""
++    assert all_path_advance in traversal
+     assert "get<8>(tile_record_state) +=" not in traversal
+     assert "get<8>(tile_record_state) =" not in traversal
+     assert "++get<8>(tile_record_state)" not in traversal
+-- 
+2.43.0
+
