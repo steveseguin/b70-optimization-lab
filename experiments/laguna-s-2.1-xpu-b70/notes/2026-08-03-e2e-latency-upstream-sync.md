@@ -88,6 +88,8 @@ work.
    authorization.
 3. Complete the accepted-position diagnostic before implementing a
    long-context depth-7 drafter with the unchanged width-12 target verifier.
+   The next artifact now has a fail-closed offline analyzer; see
+   [`2026-08-03-mixed-depth-analyzer-offline.md`](2026-08-03-mixed-depth-analyzer-offline.md).
 4. Re-screen exact paired-row attention only for long full-attention layers
    if the 8K--32K component crossover reverses its short-context loss. The
    offline gate now has a `long-full` profile for exact 8K/16K/24K/32K

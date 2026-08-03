@@ -96,3 +96,14 @@ implementation from this run. A later fresh-device campaign must repeat the
 diagnostic before the position-7-through-10 acceptance gate can be evaluated.
 Structured status and artifact hashes are in
 `data/laguna-s-2.1-xpu-b70/long-context-mixed-depth-feasibility-20260802.json`.
+
+## Offline successor tooling (2026-08-03)
+
+The next run's decision is now automated by
+`tools/analyze_laguna_long_mixed_depth.py`. It preserves this stopping rule,
+requires the exact warmup/three-long/three-sentinel sequence, fails closed on
+all intrinsic/oracle/cache/metric drift, requires every long row to have zero
+acceptance past position 6, and requires every sentinel to prove deeper short
+acceptance. Six CPU-only tests pass. This does not alter the failed result or
+authorize a retry; see
+[`2026-08-03-mixed-depth-analyzer-offline.md`](2026-08-03-mixed-depth-analyzer-offline.md).

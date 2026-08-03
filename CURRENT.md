@@ -268,6 +268,14 @@ endpoint rate exists, and the accepted-position/mixed-depth diagnostic remains
 the primary 32K lever. See
 [`2026-08-03-long-full-attention-screen-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-long-full-attention-screen-offline.md).
 
+The primary 32K mixed-depth decision now has a fail-closed offline analyzer.
+It requires the exact 1K warmup, three 32,640-token rows, and their three
+256-token sentinels; full oracle/cache/intrinsic consistency; zero long-row
+acceptance past position 6; and positive deep acceptance in every sentinel.
+Six CPU-only tests pass, but no successful diagnostic artifact exists, so no
+mixed-depth source treatment is authorized. See
+[`2026-08-03-mixed-depth-analyzer-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-mixed-depth-analyzer-offline.md).
+
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to
 infer recovery causality. They are now also superseded as a live-state block:

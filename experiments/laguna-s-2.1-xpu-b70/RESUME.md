@@ -72,6 +72,14 @@ authorized or measured. The accepted-position/mixed-depth diagnostic remains
 higher priority. See
 [`2026-08-03-long-full-attention-screen-offline.md`](notes/2026-08-03-long-full-attention-screen-offline.md).
 
+The primary 32K accepted-position decision is now automated offline. The new
+analyzer requires the exact 1K warmup plus three 32,640-token rows and three
+256-token sentinels, full oracle/cache/intrinsic consistency, zero long-row
+acceptance beyond position 6, and positive beyond-position-6 acceptance in
+every sentinel. Six CPU-only tests pass. There is still no successful input
+artifact, so mixed-depth source work remains unauthorized. See
+[`2026-08-03-mixed-depth-analyzer-offline.md`](notes/2026-08-03-mixed-depth-analyzer-offline.md).
+
 ### 2026-08-02 operational checkpoint
 
 The latest q12 mixed-depth diagnostic stalled in distributed initialization
