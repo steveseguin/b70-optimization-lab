@@ -178,7 +178,15 @@ capture, candidate dispatch, correctness result, or score occurred. Cleanup,
 terminal device audit, and sealing passed. The authorization is consumed and
 the endpoint remains locked; see
 [`2026-08-02-exact-small-postrecovery-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-postrecovery-result.md).
-No retry, new device probe, or recovery action is currently authorized.
+No retry of that tag and no new device probe or recovery action is authorized.
+The next bounded lane is one separately tagged resource-remediation smoke under
+[`2026-08-02-exact-small-swap24-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-swap24-preregistration.md).
+It keeps GPU utilization and every model/selector/request identity field fixed
+while adding the already-proven nonpersistent 16 GiB validation swap. It may
+run only after the fail-closed resource wrapper and a new lock-only commit are
+frozen. The wrapper may restore ordinary 8 GiB swap only after exact teardown,
+identity, and inactive-state proofs; otherwise it must preserve the temporary
+swap state for controlled recovery and report failure.
 
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to

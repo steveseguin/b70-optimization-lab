@@ -8,15 +8,18 @@ readonly wrapper_path=/home/steve/.venvs/deepseek-v4-xpu/bin:/usr/local/sbin:/us
 if [[ "${LAGUNA_EXACT_SMALL_CLEAN_ENV:-0}" != 1 ]]; then
   exec /usr/bin/env -i \
     PATH="$wrapper_path" HOME=/home/steve LANG=C.UTF-8 LC_ALL=C.UTF-8 \
+    LAGUNA_EXACT_SMALL_SWAP24_ARMED="${LAGUNA_EXACT_SMALL_SWAP24_ARMED:-0}" \
     LAGUNA_EXACT_SMALL_CLEAN_ENV=1 /usr/bin/bash "$0" "$@"
 fi
 while IFS= read -r env_name; do
   case "$env_name" in
-    HOME|LAGUNA_EXACT_SMALL_CLEAN_ENV|LANG|LC_ALL|PATH|PWD|SHLVL) ;;
+    HOME|LAGUNA_EXACT_SMALL_CLEAN_ENV|LAGUNA_EXACT_SMALL_SWAP24_ARMED|LANG|LC_ALL|PATH|PWD|SHLVL) ;;
     *) echo "unexpected coordinator environment variable: $env_name" >&2; exit 2 ;;
   esac
 done < <(compgen -e)
 export PATH="$wrapper_path" HOME=/home/steve LANG=C.UTF-8 LC_ALL=C.UTF-8
+[[ "${LAGUNA_EXACT_SMALL_SWAP24_ARMED:-0}" == 1 ]] \
+  || { echo "swap24 resource wrapper did not arm the smoke" >&2; exit 2; }
 
 tag="${1:?usage: run_laguna_exact_small_postrecovery.sh TAG}"
 (( $# == 1 )) || { echo "exactly one tag is required" >&2; exit 2; }
@@ -29,7 +32,7 @@ repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 source "$script_dir/laguna_nvme_paths.sh"
 
 readonly runner="$script_dir/run_laguna_replemb_measurement_leg.sh"
-readonly lock="$script_dir/exact-small-postrecovery-lock.json"
+readonly lock="$script_dir/exact-small-swap24-lock.json"
 readonly recovery_packet="$repo_root/data/laguna-device-recovery-scheduler-gate-20260802.json"
 readonly runtime_lock="$repo_root/data/laguna-exact-small-portfolio-runtime-lock-20260801.json"
 readonly vllm_tree=/home/steve/src/laguna-vllm-exact-small-portfolio-20260801
@@ -44,6 +47,8 @@ readonly grouped_gemm_sha=5d2d29e63f40c62d31b61808d74a0ef7ba71f2c6a62754c3220ed4
 readonly runs=/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs
 readonly campaign_root="$runs/laguna-exact-small-postrecovery-$tag-campaign"
 readonly smoke_run="$runs/laguna-exact-small-postrecovery-$tag-smoke"
+readonly resource_root="$runs/laguna-exact-small-postrecovery-$tag-swap24-resource"
+readonly temporary_swap=/swap-laguna-longctx.img
 readonly smoke_rpc_dir="$LAGUNA_NVME_TMP_ROOT/m8mc-b1"
 readonly device_error_regex='guc.*(timeout|reset|error)|exec.*queue.*timeout|wedg|gpu.*(hang|reset|fault)|xe.*(timeout|reset|error|fail|fault|hang)|drm.*(timeout|reset|error|fail|fault|hang)'
 readonly mem_available_floor_kb=8388608
@@ -57,7 +62,7 @@ sha256() { sha256sum -- "$1" | awk '{print $1}'; }
 [[ -f "$lock" && -f "$recovery_packet" && -f "$runtime_lock" ]] \
   || die "missing execution evidence or lock"
 [[ -z "$(git -C "$repo_root" status --short)" ]] || die "main repository is dirty"
-[[ "$(jq -r .schema "$lock")" == laguna-exact-small-postrecovery-execution-lock-v1 \
+[[ "$(jq -r .schema "$lock")" == laguna-exact-small-swap24-execution-lock-v1 \
    && "$(jq -r .status "$lock")" == PASS ]] || die "execution lock is not PASS"
 
 required_lock_files=(
@@ -65,16 +70,23 @@ required_lock_files=(
   data/laguna-device-recovery-scheduler-gate-20260802.json
   data/laguna-exact-small-portfolio-component-20260801.json
   data/laguna-exact-small-portfolio-runtime-lock-20260801.json
+  data/laguna-exact-small-postrecovery-smoke-20260803.json
   data/laguna-shared-elementwise-m12-record-20260731.json
   experiments/laguna-s-2.1-xpu-b70/RESUME.md
   experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-exact-small-component-portfolio-preregistration.md
   experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-postrecovery-preregistration.md
+  experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-postrecovery-result.md
+  experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-swap24-preregistration.md
   experiments/laguna-s-2.1-xpu-b70/realistic-suite-v1.json
   experiments/laguna-s-2.1-xpu-b70/tools/capture_laguna_m8_idle_snapshot.py
   experiments/laguna-s-2.1-xpu-b70/tools/compare_exact_runs.py
+  experiments/laguna-s-2.1-xpu-b70/tools/exact-small-postrecovery-lock.json
   experiments/laguna-s-2.1-xpu-b70/tools/laguna_nvme_paths.sh
+  experiments/laguna-s-2.1-xpu-b70/tools/laguna_resource_safety.sh
+  experiments/laguna-s-2.1-xpu-b70/tools/manage_laguna_swap_file.py
   experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_dflash_segmented_smoke.py
   experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_exact_small_postrecovery.sh
+  experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_exact_small_swap24.sh
   experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_replemb_measurement_leg.sh
   experiments/laguna-s-2.1-xpu-b70/tools/serve_laguna_mwide_graph_nvme.sh
   experiments/laguna-s-2.1-xpu-b70/tools/test_laguna_exact_small_postrecovery.py
@@ -102,8 +114,13 @@ lock_commit="$(git -C "$repo_root" log -1 --format=%H -- "$lock")"
   || die "execution lock is not bound to its harness commit"
 [[ "$tag" == "$(jq -r .authorized.tag "$lock")" \
    && "$campaign_root" == "$(jq -r .authorized.campaign_root "$lock")" \
-   && "$smoke_run" == "$(jq -r .authorized.smoke_root "$lock")" ]] \
+   && "$smoke_run" == "$(jq -r .authorized.smoke_root "$lock")" \
+   && "$resource_root" == "$(jq -r .authorized.resource_root "$lock")" ]] \
   || die "tag or run roots differ from the one-shot authorization"
+[[ -d "$resource_root" && -f "$resource_root/prepared-status.txt" \
+   && -w "$resource_root" \
+   && "$(<"$resource_root/prepared-status.txt")" == SWAP24_PASS ]] \
+  || die "swap24 resource preparation evidence is missing"
 git_common_dir="$(git -C "$repo_root" rev-parse --git-common-dir)"
 [[ "$git_common_dir" == /* ]] || git_common_dir="$repo_root/$git_common_dir"
 readonly campaign_mutex="$git_common_dir/laguna-exact-small-postrecovery.lock"
@@ -210,9 +227,11 @@ verify_host_idle() {
       || die "$unit is not exactly inactive at $phase"
   done
   observed_swap="$(awk 'NR > 1 {print $1 ":" $3}' /proc/swaps | LC_ALL=C sort)"
-  [[ "$observed_swap" == /swap.img:8388604 \
-     && ! -e /swap-laguna-longctx.img ]] \
-    || die "ordinary 8 GiB swap layout drift at $phase"
+  [[ "$observed_swap" == $'/swap-laguna-longctx.img:16777212\n/swap.img:8388604' \
+     && -f "$temporary_swap" && ! -L "$temporary_swap" \
+     && "$(stat -c %s -- "$temporary_swap")" == 17179869184 \
+     && "$(stat -c %a -- "$temporary_swap")" == 600 ]] \
+    || die "frozen 24 GiB swap layout drift at $phase"
   [[ ! -e "$smoke_rpc_dir" && ! -L "$smoke_rpc_dir" ]] \
     || die "smoke RPC path survives at $phase"
   ip -o -4 addr show dev eno1 | grep -Eq 'inet 10\.0\.0\.65/' \
@@ -389,8 +408,10 @@ terminal_audit() {
   [[ ! -s "$campaign_root/device-error-scan-terminal.log" ]] || audit_status=1
   [[ "$(</proc/sys/kernel/random/boot_id)" == "$expected_boot_id" \
      && "$(</proc/sys/kernel/tainted)" == 0 ]] || audit_status=1
-  [[ "$observed_swap" == /swap.img:8388604 \
-     && ! -e /swap-laguna-longctx.img ]] || audit_status=1
+  [[ "$observed_swap" == $'/swap-laguna-longctx.img:16777212\n/swap.img:8388604' \
+     && -f "$temporary_swap" && ! -L "$temporary_swap" \
+     && "$(stat -c %s -- "$temporary_swap")" == 17179869184 \
+     && "$(stat -c %a -- "$temporary_swap")" == 600 ]] || audit_status=1
   [[ ! -e "$smoke_rpc_dir" && ! -L "$smoke_rpc_dir" ]] || audit_status=1
   ip -o -4 addr show dev eno1 > "$campaign_root/interface-terminal.txt" 2>&1
   interface_status=$?
@@ -541,9 +562,10 @@ campaign_started_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 mkdir -m 700 "$campaign_root"
 campaign_created=true
 
-printf 'schema=laguna-exact-small-postrecovery-smoke-campaign-v1\ntag=%s\nstarted_at_utc=%s\nrepo_head=%s\nlock_commit=%s\nlock_sha256=%s\nrecovery_boot_id=%s\nsmoke_run=%s\n' \
+printf 'schema=laguna-exact-small-swap24-smoke-campaign-v1\ntag=%s\nstarted_at_utc=%s\nrepo_head=%s\nlock_commit=%s\nlock_sha256=%s\nrecovery_boot_id=%s\nsmoke_run=%s\nresource_root=%s\n' \
   "$tag" "$campaign_started_utc" "$(git -C "$repo_root" rev-parse HEAD)" \
   "$lock_commit" "$(sha256 "$lock")" "$expected_boot_id" "$smoke_run" \
+  "$resource_root" \
   > "$campaign_root/identity.txt"
 
 verify_host_idle prestart

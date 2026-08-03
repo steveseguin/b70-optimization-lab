@@ -81,6 +81,15 @@ audit passed and both roots are sealed. Treat the authorization as consumed,
 the candidate as still unmeasured, and the endpoint as locked. Result:
 [`2026-08-02-exact-small-postrecovery-result.md`](notes/2026-08-02-exact-small-postrecovery-result.md).
 
+A separately tagged resource-remediation successor is preregistered in
+[`2026-08-02-exact-small-swap24-preregistration.md`](notes/2026-08-02-exact-small-swap24-preregistration.md).
+It keeps GPU utilization `0.90` and all model/selector/request fields unchanged,
+but adds the previously proven nonpersistent 16 GiB swap file for exactly
+24 GiB total swap. Execution remains blocked until the resource harness and a
+new lock-only commit pass review. The wrapper must stop the core and may
+`swapoff` and remove only the same proven inactive temporary file. If those
+proofs fail, it preserves the exact state and fails for controlled recovery.
+
 The remaining material below is historical lane context, not authorization to
 run another component, model, or endpoint gate.
 
