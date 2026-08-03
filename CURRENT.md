@@ -238,6 +238,16 @@ fork `main` track upstream vLLM `68ca6fd02`, while measured Laguna branches
 remain pinned evidence rather than being rebased across roughly 763 upstream
 commits. See
 [`2026-08-03-e2e-latency-upstream-sync.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-e2e-latency-upstream-sync.md).
+
+The incumbent-scheduler wide-prefill Q/K RMSNorm plus NeoX RoPE successor is
+now isolated at vLLM `505b59cb9` and XPU kernels `13cd7e0`. It targets the
+unchanged 8,192/8,182 scheduler and exact 32,640 partition
+`8182 + 8182 + 8182 + 8094`, uses a new native symbol so an older aligned DSO
+fails at startup, and restricts dispatch to rows 1,024/4,096/8,094/8,182.
+The 16-row/four-rank component matrix and v3 worker-attestation contract are
+host-tested but unrun. This is not a measured improvement or execution
+authorization; the NVMe/device quarantine remains controlling. See
+[`2026-08-03-incumbent-wide-prefill-qknorm-rope-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-incumbent-wide-prefill-qknorm-rope-offline.md).
 This remains offline work only; the NVMe/device quarantine still forbids a
 model, endpoint, benchmark, XPU probe, reset, reboot, or recovery action.
 

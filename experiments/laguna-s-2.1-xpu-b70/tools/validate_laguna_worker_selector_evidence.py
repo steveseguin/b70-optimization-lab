@@ -15,6 +15,8 @@ MARKER = "LAGUNA_EXACT_SMALL_WORKER_SELECTORS_V1"
 SCHEMA = "laguna-exact-small-worker-selectors-v1"
 LATENCY_MARKER = "LAGUNA_EXACT_SMALL_WORKER_SELECTORS_V2"
 LATENCY_SCHEMA = "laguna-exact-small-worker-selectors-v2"
+WIDE_PREFILL_MARKER = "LAGUNA_EXACT_SMALL_WORKER_SELECTORS_V3"
+WIDE_PREFILL_SCHEMA = "laguna-exact-small-worker-selectors-v3"
 EXPECTED_SELECTORS = {
     "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS": "11",
     "LAGUNA_LOG_MOE_ROWS": "1",
@@ -42,11 +44,18 @@ LATENCY_EXPECTED_SELECTORS = {
     **EXPECTED_SELECTORS,
     "VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS": "1",
 }
+WIDE_PREFILL_EXPECTED_SELECTORS = {
+    **LATENCY_EXPECTED_SELECTORS,
+    "VLLM_XPU_LAGUNA_WIDE_PREFILL_QKNORM_ROPE": "1",
+}
 SELECTOR_CONTRACT_SHA256 = (
     "fef0594c56fb917c212af09b5b7573acf528bbcc4ebd46543179994282ba8f52"
 )
 LATENCY_SELECTOR_CONTRACT_SHA256 = (
     "5bf0319dfa3e931e66c8a1f8c5292b14cb1054cca7c65eb5763951a12ba9752b"
+)
+WIDE_PREFILL_SELECTOR_CONTRACT_SHA256 = (
+    "93040e5dfbcb09403f71450e951c6250f73652cdffcdec76ff158427904a3147"
 )
 TOP_LEVEL_KEYS = {
     "schema",
@@ -130,18 +139,37 @@ def _load_record(
     return value
 
 
+def _worker_contract(
+    *, require_exact_prefill: bool, require_wide_prefill: bool
+) -> tuple[str, str, dict[str, str], str]:
+    if require_wide_prefill:
+        return (
+            WIDE_PREFILL_MARKER,
+            WIDE_PREFILL_SCHEMA,
+            WIDE_PREFILL_EXPECTED_SELECTORS,
+            WIDE_PREFILL_SELECTOR_CONTRACT_SHA256,
+        )
+    if require_exact_prefill:
+        return (
+            LATENCY_MARKER,
+            LATENCY_SCHEMA,
+            LATENCY_EXPECTED_SELECTORS,
+            LATENCY_SELECTOR_CONTRACT_SHA256,
+        )
+    return MARKER, SCHEMA, EXPECTED_SELECTORS, SELECTOR_CONTRACT_SHA256
+
+
 def parse_worker_selector_log(
-    log_path: Path, *, require_exact_prefill: bool = False
+    log_path: Path,
+    *,
+    require_exact_prefill: bool = False,
+    require_wide_prefill: bool = False,
 ) -> list[dict[str, Any]]:
-    marker_name = LATENCY_MARKER if require_exact_prefill else MARKER
-    schema = LATENCY_SCHEMA if require_exact_prefill else SCHEMA
-    expected_selectors = (
-        LATENCY_EXPECTED_SELECTORS if require_exact_prefill else EXPECTED_SELECTORS
-    )
-    expected_contract_sha256 = (
-        LATENCY_SELECTOR_CONTRACT_SHA256
-        if require_exact_prefill
-        else SELECTOR_CONTRACT_SHA256
+    marker_name, schema, expected_selectors, expected_contract_sha256 = (
+        _worker_contract(
+            require_exact_prefill=require_exact_prefill,
+            require_wide_prefill=require_wide_prefill,
+        )
     )
     if selector_contract_sha256(expected_selectors) != expected_contract_sha256:
         raise ValueError("frozen worker selector contract hash drifted")
@@ -411,21 +439,20 @@ def main() -> int:
     parser.add_argument("--expected-dso-sha256", required=True)
     parser.add_argument("--proc-root", type=Path, default=Path("/proc"))
     parser.add_argument("--require-exact-prefill", action="store_true")
+    parser.add_argument("--require-wide-prefill", action="store_true")
     args = parser.parse_args()
 
-    expected_selectors = (
-        LATENCY_EXPECTED_SELECTORS if args.require_exact_prefill else EXPECTED_SELECTORS
-    )
-    expected_contract_sha256 = (
-        LATENCY_SELECTOR_CONTRACT_SHA256
-        if args.require_exact_prefill
-        else SELECTOR_CONTRACT_SHA256
+    _, _, expected_selectors, expected_contract_sha256 = _worker_contract(
+        require_exact_prefill=args.require_exact_prefill,
+        require_wide_prefill=args.require_wide_prefill,
     )
     if selector_contract_sha256(expected_selectors) != expected_contract_sha256:
         raise ValueError("frozen worker selector contract hash drifted")
 
     records = parse_worker_selector_log(
-        args.server_log, require_exact_prefill=args.require_exact_prefill
+        args.server_log,
+        require_exact_prefill=args.require_exact_prefill,
+        require_wide_prefill=args.require_wide_prefill,
     )
     maps = verify_grouped_gemm_maps(
         records,

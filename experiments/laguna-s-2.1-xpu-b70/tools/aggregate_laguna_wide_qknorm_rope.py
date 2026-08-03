@@ -7,9 +7,14 @@ import argparse
 import json
 from pathlib import Path
 
+from laguna_wide_qknorm_rope_contract import (
+    CHUNK_MULTIPLICITY,
+    NATIVE_OP,
+    REQUIRED_ROWS,
+    position_starts,
+)
 
 REQUIRED_RANKS = range(4)
-REQUIRED_ROWS = (1024, 4096, 8064, 8192)
 MIN_PROJECTED_SAVING_MS = 25.0
 
 
@@ -26,6 +31,9 @@ def main() -> None:
         identity = (payload.get("rank"), payload.get("rows"))
         if payload.get("mode") != "wide-prefill":
             failures.append(f"{path}: mode is not wide-prefill")
+            continue
+        if payload.get("native_op") != NATIVE_OP:
+            failures.append(f"{path}: native op is not {NATIVE_OP}")
             continue
         if identity in runs:
             failures.append(f"{path}: duplicate rank/rows identity {identity}")
@@ -49,8 +57,25 @@ def main() -> None:
         failed_rows = [rows for rows, row in rank_runs.items() if not row["passed"]]
         if failed_rows:
             failures.append(f"rank {rank} failed rows: {failed_rows}")
+        for rows, row in rank_runs.items():
+            expected_starts = list(position_starts(rows))
+            if row.get("position_starts") != expected_starts:
+                failures.append(
+                    f"rank {rank} rows {rows} position starts are not "
+                    f"{expected_starts}"
+                )
+            projection = row.get("incumbent_32640_projection_contribution")
+            if not isinstance(projection, dict):
+                failures.append(f"rank {rank} rows {rows} projection is missing")
+            elif projection.get("chunk_multiplicity") != CHUNK_MULTIPLICITY[rows]:
+                failures.append(
+                    f"rank {rank} rows {rows} chunk multiplicity is not "
+                    f"{CHUNK_MULTIPLICITY[rows]}"
+                )
         projected_saving_ms = sum(
-            row["aligned_32640_projection_contribution"]["saving_ms"]
+            row.get("incumbent_32640_projection_contribution", {}).get(
+                "saving_ms", 0.0
+            )
             for row in rank_runs.values()
         )
         if len(rank_runs) == len(REQUIRED_ROWS) and (
@@ -70,13 +95,15 @@ def main() -> None:
                 }
                 for rows, row in rank_runs.items()
             },
-            "aligned_32640_projected_saving_ms": projected_saving_ms,
+            "incumbent_32640_projected_saving_ms": projected_saving_ms,
         }
 
     output = {
         "passed": not failures,
         "required_ranks": list(REQUIRED_RANKS),
         "required_rows": list(REQUIRED_ROWS),
+        "required_native_op": NATIVE_OP,
+        "incumbent_schedule": "8182 + 8182 + 8182 + 8094 = 32640",
         "minimum_projected_saving_ms_per_rank": MIN_PROJECTED_SAVING_MS,
         "failures": failures,
         "ranks": ranks,

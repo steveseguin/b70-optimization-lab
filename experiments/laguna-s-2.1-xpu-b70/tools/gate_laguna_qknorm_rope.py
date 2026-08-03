@@ -13,12 +13,19 @@ import torch
 
 from vllm import _custom_ops as ops
 
+from laguna_wide_qknorm_rope_contract import (
+    NATIVE_OP,
+    PROMPT_TOKENS,
+    REQUIRED_ROWS,
+    position_starts as incumbent_position_starts,
+    projection_contribution,
+)
+
 
 HEAD_DIM = 128
 KV_HEADS = 2
 GUARD_ELEMENTS = 8
 GUARD_VALUE = 123.5
-WIDE_ROWS = (1024, 4096, 8064, 8192)
 CASES = {
     "full": {"q_heads": 12, "rotary_dim": 64, "layers": 12},
     "sliding": {"q_heads": 18, "rotary_dim": 128, "layers": 36},
@@ -122,9 +129,7 @@ def candidate(
 def position_starts(rows: int, mode: str) -> tuple[int, ...]:
     if mode == "exact-verifier":
         return (0,)
-    starts = [start for start in (0, 8192, 16384, 24576) if start + rows <= 32768]
-    starts.append(32768 - rows)
-    return tuple(sorted(set(starts)))
+    return incumbent_position_starts(rows)
 
 
 def timed_ms(call, iterations: int) -> float:
@@ -155,16 +160,16 @@ def main() -> None:
     rows = args.rows
     if rows is None:
         rows = 8 if args.mode == "exact-verifier" else 8192
-    allowed_rows = (8, 12) if args.mode == "exact-verifier" else WIDE_ROWS
+    allowed_rows = (8, 12) if args.mode == "exact-verifier" else REQUIRED_ROWS
     if rows not in allowed_rows:
         parser.error(f"--rows must be one of {allowed_rows} for mode {args.mode}")
     op_name = (
         "laguna_m8_qk_norm_rope_out"
         if args.mode == "exact-verifier"
-        else "laguna_wide_prefill_qk_norm_rope_out"
+        else NATIVE_OP
     )
     starts = position_starts(rows, args.mode)
-    cache_rows = 2048 if args.mode == "exact-verifier" else 32768
+    cache_rows = 2048 if args.mode == "exact-verifier" else PROMPT_TOKENS
 
     torch.xpu.set_device(0)
     eps = 1e-6
@@ -322,7 +327,6 @@ def main() -> None:
         row["layers"] * row["candidate_ms_per_layer"] for row in results.values()
     )
     cycle_saving_ms = baseline_cycle_ms - candidate_cycle_ms
-    aligned_multiplicity = 3 if rows == 8192 else 1 if rows == 8064 else 0
     payload = {
         "rank": args.rank,
         "device": torch.xpu.get_device_name(0),
@@ -342,14 +346,9 @@ def main() -> None:
             "baseline_launches": 144,
             "candidate_launches": 48,
         },
-        "aligned_32640_projection_contribution": {
-            "chunk_multiplicity": aligned_multiplicity,
-            "saving_ms": aligned_multiplicity * cycle_saving_ms,
-            "aggregate_requirement": (
-                "sum three 8192-token chunks and one 8064-token chunk; "
-                "require at least 25 ms"
-            ),
-        },
+        "incumbent_32640_projection_contribution": projection_contribution(
+            rows, cycle_saving_ms
+        ),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, indent=2) + "\n")

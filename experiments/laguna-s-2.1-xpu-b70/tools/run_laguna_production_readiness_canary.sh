@@ -35,6 +35,11 @@ die() { echo "Laguna production readiness: $*" >&2; exit 2; }
   || die "EXPECTED_DSO_SHA256 must be 64 lowercase hexadecimal characters"
 [[ "$timeout_s" =~ ^[0-9]+$ && "$timeout_s" -ge 1 ]] \
   || die "LAGUNA_PRODUCTION_READINESS_TIMEOUT must be a positive integer"
+case "${LAGUNA_PRODUCTION_REQUIRE_WIDE_PREFILL:-0}" in
+  0) wide_prefill_attested=false ;;
+  1) wide_prefill_attested=true ;;
+  *) die "LAGUNA_PRODUCTION_REQUIRE_WIDE_PREFILL must be 0 or 1" ;;
+esac
 case "${LAGUNA_PRODUCTION_READINESS_VALIDATE_ONLY:-0}" in
   0) ;;
   1) printf 'argument_validation=PASS\n'; exit 0 ;;
@@ -63,13 +68,18 @@ until curl --fail --silent --show-error --max-time 5 "$base_url/health" >/dev/nu
   sleep 1
 done
 
-"$venv_python" "$worker_validator" \
-  --server-log "$server_log" \
-  --selector-output "$run_dir/production-worker-selectors.jsonl" \
-  --map-output "$run_dir/production-worker-maps.jsonl" \
-  --expected-dso "$expected_dso" \
-  --expected-dso-sha256 "$expected_dso_sha256" \
+worker_validator_args=(
+  --server-log "$server_log"
+  --selector-output "$run_dir/production-worker-selectors.jsonl"
+  --map-output "$run_dir/production-worker-maps.jsonl"
+  --expected-dso "$expected_dso"
+  --expected-dso-sha256 "$expected_dso_sha256"
   --require-exact-prefill
+)
+if [[ "$wide_prefill_attested" == true ]]; then
+  worker_validator_args+=(--require-wide-prefill)
+fi
+"$venv_python" "$worker_validator" "${worker_validator_args[@]}"
 
 "$venv_python" "$smoke" \
   --base-url "$base_url" \
@@ -95,6 +105,7 @@ done
   printf '  "production_canary": true,\n'
   printf '  "prefix_caching": false,\n'
   printf '  "exact_prefill_worker_attested": true,\n'
+  printf '  "wide_prefill_worker_attested": %s,\n' "$wide_prefill_attested"
   printf '  "request_count": 1,\n'
   printf '  "max_tokens": 400,\n'
   printf '  "created_at_utc": "%s",\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"

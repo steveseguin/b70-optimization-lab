@@ -20,24 +20,44 @@ validator = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validator)
 
 
-def _record(rank: int, *, pid: int | None = None, exact_prefill: bool = False) -> dict:
+def _record(
+    rank: int,
+    *,
+    pid: int | None = None,
+    exact_prefill: bool = False,
+    wide_prefill: bool = False,
+) -> dict:
     selectors = (
-        validator.LATENCY_EXPECTED_SELECTORS
-        if exact_prefill
-        else validator.EXPECTED_SELECTORS
+        validator.WIDE_PREFILL_EXPECTED_SELECTORS
+        if wide_prefill
+        else (
+            validator.LATENCY_EXPECTED_SELECTORS
+            if exact_prefill
+            else validator.EXPECTED_SELECTORS
+        )
+    )
+    schema = (
+        validator.WIDE_PREFILL_SCHEMA
+        if wide_prefill
+        else validator.LATENCY_SCHEMA if exact_prefill else validator.SCHEMA
+    )
+    contract_hash = (
+        validator.WIDE_PREFILL_SELECTOR_CONTRACT_SHA256
+        if wide_prefill
+        else (
+            validator.LATENCY_SELECTOR_CONTRACT_SHA256
+            if exact_prefill
+            else validator.SELECTOR_CONTRACT_SHA256
+        )
     )
     return {
-        "schema": validator.LATENCY_SCHEMA if exact_prefill else validator.SCHEMA,
+        "schema": schema,
         "pid": 1000 + rank if pid is None else pid,
         "pid_start_time_ticks": 2000 + rank,
         "worker_name": f"Worker_TP{rank}_EP{rank}",
         "world_size": 4,
         "ranks": {"global": rank, "local": rank, "tp": rank, "ep": rank},
-        "selector_contract_sha256": (
-            validator.LATENCY_SELECTOR_CONTRACT_SHA256
-            if exact_prefill
-            else validator.SELECTOR_CONTRACT_SHA256
-        ),
+        "selector_contract_sha256": contract_hash,
         "selector_count": len(selectors),
         "selectors": dict(selectors),
     }
@@ -46,11 +66,11 @@ def _record(rank: int, *, pid: int | None = None, exact_prefill: bool = False) -
 def _log_line(record: dict) -> str:
     encoded = json.dumps(record, sort_keys=True, separators=(",", ":"))
     rank = record["ranks"]["global"]
-    marker = (
-        validator.LATENCY_MARKER
-        if record["schema"] == validator.LATENCY_SCHEMA
-        else validator.MARKER
-    )
+    marker = {
+        validator.SCHEMA: validator.MARKER,
+        validator.LATENCY_SCHEMA: validator.LATENCY_MARKER,
+        validator.WIDE_PREFILL_SCHEMA: validator.WIDE_PREFILL_MARKER,
+    }[record["schema"]]
     return f"(Worker_TP{rank}_EP{rank}) {marker} {encoded}\n"
 
 
@@ -116,6 +136,40 @@ class WorkerSelectorEvidenceTests(unittest.TestCase):
             log.write_text("".join(_log_line(_record(rank)) for rank in range(4)))
             with self.assertRaisesRegex(ValueError, "expected four"):
                 validator.parse_worker_selector_log(log, require_exact_prefill=True)
+
+    def test_wide_prefill_contract_requires_v3_selector(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "server.log"
+            log.write_text(
+                "".join(
+                    _log_line(_record(rank, wide_prefill=True)) for rank in range(4)
+                )
+            )
+
+            records = validator.parse_worker_selector_log(
+                log, require_wide_prefill=True
+            )
+
+        self.assertTrue(
+            all(
+                record["selectors"][
+                    "VLLM_XPU_LAGUNA_WIDE_PREFILL_QKNORM_ROPE"
+                ]
+                == "1"
+                for record in records
+            )
+        )
+
+    def test_wide_prefill_contract_rejects_v2_records(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "server.log"
+            log.write_text(
+                "".join(
+                    _log_line(_record(rank, exact_prefill=True)) for rank in range(4)
+                )
+            )
+            with self.assertRaisesRegex(ValueError, "expected four"):
+                validator.parse_worker_selector_log(log, require_wide_prefill=True)
 
     def test_duplicate_json_key_is_rejected(self) -> None:
         encoded = json.dumps(_record(0), sort_keys=True, separators=(",", ":"))
