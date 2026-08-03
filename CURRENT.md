@@ -258,11 +258,19 @@ just as two does, so it halves dispatch at identical arithmetic; the component
 matrix therefore grows to 24 runs and the aggregator promotes the faster
 geometry only after proving both produced identical bits. The worker-proof leg's
 runtime `check_hash` of the selector validator had been stale since `f79ea0943`
-and is re-pinned. vLLM is unchanged and the sealed q12 startup contract is
-untouched, but `enable_prefix_caching` and `max_num_partial_prefills` are still
-not enforced by it and must be pinned under a fresh preregistration before the
-component window. See
+and is re-pinned. See
 [`2026-08-03-wide-prefill-occupancy-variant-and-pin-repair.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-wide-prefill-occupancy-variant-and-pin-repair.md).
+
+The sealed q12 startup contract now also pins `enable_prefix_caching` off and
+`max_num_partial_prefills` at one, at vLLM `200fd98c5`. Either setting destroys
+the `8182 + 8182 + 8182 + 8094` partition while every previously gated condition
+still reports valid; prefix caching in particular would silently disable the
+fused path from the second repeated long request onward and read as a null
+result. Both checks are fail-closed, cannot change a numerical result, remain
+behind the default-off selector, and leave the v3 selector contract hash
+unchanged. The focused suite is unchanged at 12 pre-existing unrelated failures
+with passing `218 -> 221`. See
+[`2026-08-03-wide-prefill-cache-partition-contract-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-wide-prefill-cache-partition-contract-preregistration.md).
 
 The next default-off prefill treatment is now committed at vLLM `015fee586`.
 It leaves the scheduler partition unchanged and decomposes pure-prefill widths
