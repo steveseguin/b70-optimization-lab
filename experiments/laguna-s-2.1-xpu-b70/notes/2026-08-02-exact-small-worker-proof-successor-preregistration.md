@@ -36,7 +36,7 @@ does not modify or reactivate the consumed runner, lock, tag, or roots.
 - multiprocess executor SHA-256:
   `e7a0a503a82bc5252cedba686bc080ed193d9bc1b5ed086855415b372111c54b`;
 - host validator SHA-256:
-  `b7bb4e5ee439262b2db0e01a26ae7da29f71fb011320a2907f154d534457b500`;
+  `744554c9599091966b8cba0af1ae744d816b5ba599689dbb2c80c3ff6563210f`;
 - exact 21-value contract SHA-256:
   `fef0594c56fb917c212af09b5b7573acf528bbcc4ebd46543179994282ba8f52`.
 
@@ -110,9 +110,9 @@ Component hashes:
 - successor runtime identity:
   `90591f46c8b9204d6e967a825a57a8d2e7c58d0a055ab43a1caafe232314993f`;
 - successor measurement leg:
-  `9b8f68fb0cb7249d1fc487ae81103831098f69eb85aaddfa0f2a070c30d65eab`;
+  `503e3cf3a5da6520f38c07dd8ead95dd36ce8fe9e8d0de4c939cea7845abe5c3`;
 - structural test:
-  `93da6f6c92d995aee53846c54f586375704816adfe38ff88a76eb599250e1f4d`.
+  `eba88cc42f16a0eb28a9b1c98b9b9133d7ff7838098520b0003f1089fd2352d9`.
 
 ## Remaining authorization boundary
 

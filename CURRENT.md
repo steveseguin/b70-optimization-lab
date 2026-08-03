@@ -251,6 +251,19 @@ authorization; the NVMe/device quarantine remains controlling. See
 This remains offline work only; the NVMe/device quarantine still forbids a
 model, endpoint, benchmark, XPU probe, reset, reboot, or recovery action.
 
+A review of that successor then added a measurement-only 4-head long-row
+companion, `laguna_incumbent_wide_prefill_qk_norm_rope_wg4_out`, and repaired a
+two-commit-stale integrity pin. Four divides every registered row/head product
+just as two does, so it halves dispatch at identical arithmetic; the component
+matrix therefore grows to 24 runs and the aggregator promotes the faster
+geometry only after proving both produced identical bits. The worker-proof leg's
+runtime `check_hash` of the selector validator had been stale since `f79ea0943`
+and is re-pinned. vLLM is unchanged and the sealed q12 startup contract is
+untouched, but `enable_prefix_caching` and `max_num_partial_prefills` are still
+not enforced by it and must be pinned under a fresh preregistration before the
+component window. See
+[`2026-08-03-wide-prefill-occupancy-variant-and-pin-repair.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-wide-prefill-occupancy-variant-and-pin-repair.md).
+
 The next default-off prefill treatment is now committed at vLLM `015fee586`.
 It leaves the scheduler partition unchanged and decomposes pure-prefill widths
 2--512 into exact M12/M8 MoE chunks plus the minimum scalar remainder. This

@@ -37,8 +37,9 @@ improved 256-token prefill `19.875 -> 184.598 tok/s` and TTFT
 (`39.589 -> 39.754 tok/s`). It has been combined offline with the INT4
 tile-record integration at vLLM `f9e167ad0`; 36 host tests pass.
 
-Community/fork vLLM `main` is synchronized to upstream `68ca6fd02`, and the
-focused public packer branch is current at `3ab3e1927`. Measured Laguna
+Community/fork vLLM `main` is synchronized to upstream `5df9999fc`, having been
+fast-forwarded from `68ca6fd02`, and the focused public packer branch is
+current at `b23676262`. Measured Laguna
 branches remain pinned evidence rather than being rebased across roughly 763
 upstream commits. Full policy, metrics, and successor ordering are in
 [`2026-08-03-e2e-latency-upstream-sync.md`](notes/2026-08-03-e2e-latency-upstream-sync.md).

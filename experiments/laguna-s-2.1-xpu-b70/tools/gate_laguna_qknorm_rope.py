@@ -14,9 +14,12 @@ import torch
 from vllm import _custom_ops as ops
 
 from laguna_wide_qknorm_rope_contract import (
-    NATIVE_OP,
+    DEFAULT_GEOMETRY,
+    GEOMETRIES,
     PROMPT_TOKENS,
     REQUIRED_ROWS,
+    geometries_for_rows,
+    native_op_for_geometry,
     position_starts as incumbent_position_starts,
     projection_contribution,
 )
@@ -152,6 +155,15 @@ def main() -> None:
         default="exact-verifier",
     )
     parser.add_argument("--rows", type=int)
+    parser.add_argument(
+        "--geometry",
+        choices=GEOMETRIES,
+        default=DEFAULT_GEOMETRY,
+        help=(
+            "long-row work-group packing to measure; wide-prefill mode only. "
+            "Both geometries must return identical bits."
+        ),
+    )
     parser.add_argument("--epochs", type=int, default=16)
     parser.add_argument("--timing-iterations", type=int, default=200)
     parser.add_argument("--out", type=Path, required=True)
@@ -163,11 +175,17 @@ def main() -> None:
     allowed_rows = (8, 12) if args.mode == "exact-verifier" else REQUIRED_ROWS
     if rows not in allowed_rows:
         parser.error(f"--rows must be one of {allowed_rows} for mode {args.mode}")
-    op_name = (
-        "laguna_m8_qk_norm_rope_out"
-        if args.mode == "exact-verifier"
-        else NATIVE_OP
-    )
+    if args.mode == "exact-verifier":
+        if args.geometry != DEFAULT_GEOMETRY:
+            parser.error("--geometry applies only to wide-prefill mode")
+        op_name = "laguna_m8_qk_norm_rope_out"
+    else:
+        if args.geometry not in geometries_for_rows(rows):
+            parser.error(
+                f"--geometry {args.geometry} is not measured for {rows} rows; "
+                f"expected one of {geometries_for_rows(rows)}"
+            )
+        op_name = native_op_for_geometry(args.geometry)
     starts = position_starts(rows, args.mode)
     cache_rows = 2048 if args.mode == "exact-verifier" else PROMPT_TOKENS
 
@@ -332,6 +350,7 @@ def main() -> None:
         "device": torch.xpu.get_device_name(0),
         "mode": args.mode,
         "native_op": op_name,
+        "geometry": args.geometry,
         "rows": rows,
         "position_starts": starts,
         "epochs": args.epochs,
