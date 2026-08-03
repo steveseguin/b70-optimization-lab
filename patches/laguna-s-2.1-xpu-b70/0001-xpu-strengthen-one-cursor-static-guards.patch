@@ -1,0 +1,35 @@
+From 683265470c5cdb30115c1027e6f0ad6780819d7e Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 01:56:43 -0400
+Subject: [PATCH] xpu: strengthen one-cursor static guards
+
+---
+ tests/test_laguna_int4_affine_tile_record_static.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/tests/test_laguna_int4_affine_tile_record_static.py b/tests/test_laguna_int4_affine_tile_record_static.py
+index 7b34db9..abc6d88 100644
+--- a/tests/test_laguna_int4_affine_tile_record_static.py
++++ b/tests/test_laguna_int4_affine_tile_record_static.py
+@@ -70,6 +70,7 @@ def test_scale_record_clones_one_affine_prefetch_payload_per_issue() -> None:
+ 
+ 
+ def test_affine_hot_path_inducts_weight_bases_without_rebuild() -> None:
++    function = _xe_gemm_4bits()
+     traversal = _k_traversal()
+     prologue = _affine_branch_after(
+         traversal, "CUTE_UNROLL\n  for (; k_tile_prefetch"
+@@ -93,8 +94,8 @@ def test_affine_hot_path_inducts_weight_bases_without_rebuild() -> None:
+     assert prologue_base in prologue
+     assert future_base in future
+     assert traversal.count("get<7>(tile_record_state)") == 3
+-    assert traversal.count("get<8>(tile_record_state)") == 1
+-    assert "get<9>(tile_record_state)" not in traversal
++    assert function.count("get<8>(tile_record_state)") == 1
++    assert "get<9>(tile_record_state)" not in function
+     prologue_retarget = prologue.index("retarget_block_2d_payload(")
+     assert prologue_retarget < prologue.index("prefetch(\n", prologue_retarget)
+     copy_retarget_at = copy_block.index("retarget_block_2d_payload(")
+-- 
+2.43.0
+

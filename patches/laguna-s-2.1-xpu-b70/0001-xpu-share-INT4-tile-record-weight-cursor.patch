@@ -1,0 +1,139 @@
+From 2dc2b2a867ffd7d07428e1d65e584c4d3b64afa3 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 01:54:19 -0400
+Subject: [PATCH] xpu: share INT4 tile-record weight cursor
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp       | 15 ++++---
+ ...t_laguna_int4_affine_tile_record_static.py | 45 ++++++++++++-------
+ 2 files changed, 38 insertions(+), 22 deletions(-)
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 4053e82..c834f74 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -730,8 +730,9 @@ CUTE_DEVICE void xe_gemm_4bits(
+   // A tile record is logically one N64/K32 weight surface followed by its
+   // N64 scales.  Keep the weight payload geometry rank-2 and advance its base
+   // explicitly: making K-group a third tensor mode asks CUTE to rematerialize
+-  // `group * 1152` for both the copy and future prefetch.  Independent cursors
+-  // preserve the two payloads' issue order without rebuilding either one.
++  // `group * 1152` for both the copy and future prefetch.  One copy cursor and
++  // an immutable record-zero base preserve issue order without making the
++  // unrolled prologue carry a second cursor through constant record addresses.
+   using ElementB = typename BTensor::element_type;
+   static constexpr bool affine_tile_records =
+       TileMajor && is_same_v<ElementB, int4_t>;
+@@ -922,11 +923,12 @@ CUTE_DEVICE void xe_gemm_4bits(
+     prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+     if constexpr (affine_tile_records) {
+       retarget_block_2d_payload(
+-          get<2>(tile_record_state), get<8>(tile_record_state));
++          get<2>(tile_record_state),
++          get<8>(tile_record_state) +
++              k_tile_prefetch * tile_record_bytes);
+       prefetch(
+           get<2>(tile_record_state),
+           get<3>(tile_record_state)(_, _, _, 0));
+-      get<8>(tile_record_state) += tile_record_bytes;
+     } else if constexpr (TileMajor) {
+       const uint8_t* record =
+           tile_records +
+@@ -1193,11 +1195,12 @@ CUTE_DEVICE void xe_gemm_4bits(
+       prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+       if constexpr (affine_tile_records) {
+         retarget_block_2d_payload(
+-            get<2>(tile_record_state), get<8>(tile_record_state));
++            get<2>(tile_record_state),
++            get<7>(tile_record_state) +
++                (prefetch_dist - 1) * tile_record_bytes);
+         prefetch(
+             get<2>(tile_record_state),
+             get<3>(tile_record_state)(_, _, _, 0));
+-        get<8>(tile_record_state) += tile_record_bytes;
+       } else if constexpr (TileMajor) {
+         const uint8_t* record =
+             tile_records +
+diff --git a/tests/test_laguna_int4_affine_tile_record_static.py b/tests/test_laguna_int4_affine_tile_record_static.py
+index 33ebe48..7b34db9 100644
+--- a/tests/test_laguna_int4_affine_tile_record_static.py
++++ b/tests/test_laguna_int4_affine_tile_record_static.py
+@@ -38,7 +38,7 @@ def test_affine_int4_route_is_separate_from_mxfp4_tile_major() -> None:
+     assert "return make_tuple();" in setup
+ 
+ 
+-def test_weight_record_uses_one_rank2_view_and_independent_cursors() -> None:
++def test_weight_record_uses_one_rank2_view_cursor_and_immutable_base() -> None:
+     setup = _affine_setup()
+     assert "make_shape(Int<tile_n>{}, Int<tile_k>{})" in setup
+     assert "make_stride(Int<tile_k>{}, Int<1>{})" in setup
+@@ -50,7 +50,7 @@ def test_weight_record_uses_one_rank2_view_and_independent_cursors() -> None:
+     assert setup.count("make_block_2d_prefetch(tile_record_copy_b)") == 1
+     cursor_state = (
+         "tile_record_pSgS,\n          tile_record_base,\n"
+-        "          tile_record_base"
++        "          tile_record_base);"
+     )
+     assert cursor_state in setup
+     assert "__builtin_IB_subgroup_setBlock2DAddressPayloadBase" in setup
+@@ -82,30 +82,43 @@ def test_affine_hot_path_inducts_weight_bases_without_rebuild() -> None:
+     assert "get<3>(tile_record_state)(_, _, _, 0)" in affine_blocks
+     assert "get<1>(tile_record_state)(_, _, _, 0)" in affine_blocks
+     copy_advance = "get<7>(tile_record_state) += tile_record_bytes"
+-    prefetch_advance = "get<8>(tile_record_state) += tile_record_bytes"
+     copy_retarget = """retarget_block_2d_payload(
+           get<0>(tile_record_state), get<7>(tile_record_state))"""
+-    prefetch_pair = "get<2>(tile_record_state), get<8>(tile_record_state)"
++    prologue_base = """get<8>(tile_record_state) +
++              k_tile_prefetch * tile_record_bytes"""
++    future_base = """get<7>(tile_record_state) +
++                (prefetch_dist - 1) * tile_record_bytes"""
+     assert affine_blocks.count(copy_advance) == 1
+-    assert affine_blocks.count(prefetch_advance) == 2
+     assert affine_blocks.count(copy_retarget) == 1
+-    assert affine_blocks.count(prefetch_pair) == 2
+-    assert traversal.count("get<7>(tile_record_state)") == 2
+-    assert traversal.count("get<8>(tile_record_state)") == 4
+-    for block, issue, advance in (
+-        (prologue, "prefetch(\n", prefetch_advance),
+-        (copy_block, "copy(\n", copy_advance),
+-        (future, "prefetch(\n", prefetch_advance),
+-    ):
+-        retarget = block.index("retarget_block_2d_payload(")
+-        assert retarget < block.index(issue, retarget) < block.index(advance)
++    assert prologue_base in prologue
++    assert future_base in future
++    assert traversal.count("get<7>(tile_record_state)") == 3
++    assert traversal.count("get<8>(tile_record_state)") == 1
++    assert "get<9>(tile_record_state)" not in traversal
++    prologue_retarget = prologue.index("retarget_block_2d_payload(")
++    assert prologue_retarget < prologue.index("prefetch(\n", prologue_retarget)
++    copy_retarget_at = copy_block.index("retarget_block_2d_payload(")
++    assert (
++        copy_retarget_at
++        < copy_block.index("copy(\n", copy_retarget_at)
++        < copy_block.index(copy_advance)
++    )
++    copy_advance_at = traversal.index(copy_advance)
++    future_guard_at = traversal.index("if (k_tile_prefetch < k_tile_count)")
++    assert copy_advance_at < future_guard_at
++    future_retarget = future.index("retarget_block_2d_payload(")
++    assert future_retarget < future.index("prefetch(\n", future_retarget)
++    assert "get<8>(tile_record_state) +=" not in traversal
++    assert "get<8>(tile_record_state) =" not in traversal
++    assert "++get<8>(tile_record_state)" not in traversal
++    assert "--get<8>(tile_record_state)" not in traversal
+     old_prefetch_coord = (
+         "get<3>(tile_record_state)(_, _, _, 0, k_tile_prefetch)"
+     )
+     old_copy_coord = "get<1>(tile_record_state)(_, _, _, 0, k_tile)"
+     assert old_prefetch_coord not in affine_blocks
+     assert old_copy_coord not in affine_blocks
+-    assert "* tile_record_bytes" not in affine_blocks
++    assert affine_blocks.count("* tile_record_bytes") == 2
+     assert "tile_record_stride" not in affine_blocks
+     assert "get<4>(tile_record_state)(" in traversal
+     assert (
+-- 
+2.43.0
+
