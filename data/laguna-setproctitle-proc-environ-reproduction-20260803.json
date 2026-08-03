@@ -1,0 +1,41 @@
+{
+  "child_python_environment": {
+    "getenv_after_title": "present-before-and-after-title-change",
+    "getenv_before_title": "present-before-and-after-title-change",
+    "reported_process_title": "VLLM::Worker_Test"
+  },
+  "format": "laguna-setproctitle-proc-environ-reproduction-v1",
+  "interpretation": "Direct setproctitle reproduces the frozen vLLM wrapper's statically verified call. The child retains the sentinel in Python after the title change, but the post-title kernel-visible initial environment block is incomplete. Absence from /proc/PID/environ cannot prove selector loss.",
+  "post_title_proc_environ": {
+    "byte_count": 148,
+    "nonempty_entries": 0,
+    "nul_separated_positions": 149,
+    "sentinel_present": false
+  },
+  "pre_title_proc_environ": {
+    "byte_count": 148,
+    "nonempty_entries": 5,
+    "nul_separated_positions": 6,
+    "sentinel_present": true
+  },
+  "process_title": "VLLM::Worker_Test",
+  "python_executable": "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+  "sentinel_name": "LAGUNA_SETPROCTITLE_SENTINEL",
+  "sentinel_value": "present-before-and-after-title-change",
+  "setproctitle_version": "1.3.7",
+  "validated_invariants": {
+    "child_getenv_after_retains_sentinel": true,
+    "child_getenv_before_retains_sentinel": true,
+    "post_title_proc_lacks_sentinel": true,
+    "pre_title_proc_has_sentinel": true,
+    "reported_process_title_matches": true
+  },
+  "vllm_static_equivalence": {
+    "commit": "0c9dea8cf9aa46c1854d5bce8f4dfb180732b16d",
+    "delegation": "setproctitle.setproctitle(f\"{prefix}::{name}\")",
+    "delegation_line": 198,
+    "static_equivalence_verified": true,
+    "system_utils_path": "/home/steve/src/laguna-vllm-exact-small-portfolio-20260801/vllm/utils/system_utils.py",
+    "system_utils_sha256": "f22b8d420dcfde31f92114d7f5b916797d5dcce4b840bfddfc99d287ce185452"
+  }
+}

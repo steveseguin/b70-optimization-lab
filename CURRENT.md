@@ -178,15 +178,20 @@ capture, candidate dispatch, correctness result, or score occurred. Cleanup,
 terminal device audit, and sealing passed. The authorization is consumed and
 the endpoint remains locked; see
 [`2026-08-02-exact-small-postrecovery-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-postrecovery-result.md).
-No retry of that tag and no new device probe or recovery action is authorized.
-The next bounded lane is one separately tagged resource-remediation smoke under
-[`2026-08-02-exact-small-swap24-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-swap24-preregistration.md).
-It keeps GPU utilization and every model/selector/request identity field fixed
-while adding the already-proven nonpersistent 16 GiB validation swap. It may
-run only after the fail-closed resource wrapper and a new lock-only commit are
-frozen. The wrapper may restore ordinary 8 GiB swap only after exact teardown,
-identity, and inactive-state proofs; otherwise it must preserve the temporary
-swap state for controlled recovery and report failure.
+The separately tagged swap24 successor is also complete and consumed under
+[`2026-08-02-exact-small-swap24-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-swap24-result.md).
+The added 16 GiB temporary swap cleared the initialization resource gate:
+KV-cache creation, graph capture, application startup, and health all passed,
+with independent minima of `9,892,724 kB` memory and `14,714,468 kB` free
+swap. The runner then stopped before requests because post-`setproctitle`
+`/proc/<worker>/environ` can be incomplete and is not a valid absence-proof
+source for selectors. Separately, the resource journal rejected three corrected
+PCIe RxErr events from the `0000:01:00.0` root-filesystem NVMe endpoint.
+Cleanup restored the ordinary 8 GiB swap-only layout, removed the temporary
+file, left no model process/listener, and sealed all roots. There is still no
+candidate correctness or performance result. No retry, score, submission,
+heavy model run, XPU probe, or recovery action is authorized; continue with
+offline proof-harness work only.
 
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to

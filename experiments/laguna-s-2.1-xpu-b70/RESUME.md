@@ -81,14 +81,18 @@ audit passed and both roots are sealed. Treat the authorization as consumed,
 the candidate as still unmeasured, and the endpoint as locked. Result:
 [`2026-08-02-exact-small-postrecovery-result.md`](notes/2026-08-02-exact-small-postrecovery-result.md).
 
-A separately tagged resource-remediation successor is preregistered in
-[`2026-08-02-exact-small-swap24-preregistration.md`](notes/2026-08-02-exact-small-swap24-preregistration.md).
-It keeps GPU utilization `0.90` and all model/selector/request fields unchanged,
-but adds the previously proven nonpersistent 16 GiB swap file for exactly
-24 GiB total swap. Execution remains blocked until the resource harness and a
-new lock-only commit pass review. The wrapper must stop the core and may
-`swapoff` and remove only the same proven inactive temporary file. If those
-proofs fail, it preserves the exact state and fails for controlled recovery.
+The separately tagged resource-remediation successor is complete and consumed;
+see [`2026-08-02-exact-small-swap24-result.md`](notes/2026-08-02-exact-small-swap24-result.md).
+The exact 24 GiB swap layout cleared model/KV/graph/API initialization, but the
+runner stopped before requests on an invalid proof assumption: vLLM worker
+`setproctitle` can overwrite the kernel-visible initial environment block, so
+post-title `/proc/<worker>/environ` is incomplete and cannot prove selector
+propagation by absence. The resource journal independently failed on three
+corrected RxErr events from the root-filesystem NVMe PCIe endpoint. All
+owned processes stopped, ordinary swap was restored, the temporary file was
+removed, and all roots were sealed. No candidate result exists. Only offline
+worker-emitted selector-proof work is open; no new model/device/recovery action
+is authorized.
 
 The remaining material below is historical lane context, not authorization to
 run another component, model, or endpoint gate.
