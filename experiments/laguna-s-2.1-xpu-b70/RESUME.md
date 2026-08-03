@@ -45,6 +45,14 @@ upstream commits. Full policy, metrics, and successor ordering are in
 This is offline progress only; the NVMe/device quarantine still prohibits a
 model, endpoint, XPU probe, benchmark, or recovery action.
 
+The first tail follow-up is also complete offline. vLLM `015fee586` extends
+the authenticated pure-prefill marker to widths 2--512 and decomposes MoE
+tails into exact M12/M8 chunks plus the minimum scalar remainder, without
+changing the scheduler partition. This directly targets the incumbent
+8K/16K/24K tails of 10/20/30 rows. The combined suite passes 56 host tests,
+but raw XPU and endpoint exactness remain unmeasured. See
+[`2026-08-03-exact-prefill-tail-offline.md`](notes/2026-08-03-exact-prefill-tail-offline.md).
+
 ### 2026-08-02 operational checkpoint
 
 The latest q12 mixed-depth diagnostic stalled in distributed initialization

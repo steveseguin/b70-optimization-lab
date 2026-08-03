@@ -241,6 +241,14 @@ commits. See
 This remains offline work only; the NVMe/device quarantine still forbids a
 model, endpoint, benchmark, XPU probe, reset, reboot, or recovery action.
 
+The next default-off prefill treatment is now committed at vLLM `015fee586`.
+It leaves the scheduler partition unchanged and decomposes pure-prefill widths
+2--512 into exact M12/M8 MoE chunks plus the minimum scalar remainder. This
+targets the incumbent 8K/16K/24K tails of 10/20/30 rows. The combined suite
+passes 56 host tests, including exhaustive planner coverage, but no raw XPU or
+endpoint evidence exists. Required gates and caveats are in
+[`2026-08-03-exact-prefill-tail-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-exact-prefill-tail-offline.md).
+
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to
 infer recovery causality. They are now also superseded as a live-state block:

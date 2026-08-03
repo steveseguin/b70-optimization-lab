@@ -72,12 +72,14 @@ work.
 
 1. Promote exact pure-prefill chunking through a fresh real-use A/B when the
    device quarantine is separately lifted.
-2. Extend the authenticated prefill path to the incumbent scheduler's small
-   10/20/30-row tails without changing the rejected scheduler partition.
-3. Re-screen exact paired-row attention only for long full-attention layers,
-   where K/V reuse can amortize its fixed cost.
-4. Complete the accepted-position diagnostic before implementing a
+2. The authenticated M12/M8/scalar decomposition for the incumbent
+   scheduler's 10/20/30-row tails is now implemented offline at vLLM
+   `015fee586`; run its raw and endpoint exactness gates only after separate
+   authorization.
+3. Complete the accepted-position diagnostic before implementing a
    long-context depth-7 drafter with the unchanged width-12 target verifier.
+4. Re-screen exact paired-row attention only for long full-attention layers
+   if the 8K--32K component crossover reverses its short-context loss.
 5. Adapt wide-prefill Q/K normalization plus RoPE to the incumbent 8,182/8,094
    partitions instead of reviving the inexact 8,202/8,192 scheduler identity.
 
