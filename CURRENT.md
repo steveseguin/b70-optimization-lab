@@ -193,6 +193,23 @@ candidate correctness or performance result. No retry, score, submission,
 heavy model run, XPU probe, or recovery action is authorized; continue with
 offline proof-harness work only.
 
+That offline proof repair is now committed. The worker-side selector emitter
+lives in the clean vLLM worktree
+`/home/steve/src/laguna-vllm-worker-selector-evidence-20260803` at
+`d6a509e6f5bddd4c426ff970da4243c3af3e5306`; the strict host validator is main
+repo commit `453c8d13d`, and the preregistered successor measurement leg plus
+runtime packet is main repo commit `4a0d961ef`. Their offline suites pass
+`21/21`, `17/17`, and `10/10`, respectively. The successor rejects inherited
+runtime/Python overrides and, after API health but before metrics or inference,
+requires four worker-emitted selector records plus four descriptor- and
+inode-bound DSO records. The consumed runner remains byte-identical. See
+[`2026-08-02-exact-small-worker-selector-proof-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-worker-selector-proof-offline.md)
+and
+[`2026-08-02-exact-small-worker-proof-successor-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-worker-proof-successor-preregistration.md).
+This is not execution authorization: there is no caller, component tag, fresh
+artifact root, or execution lock. The NVMe journal failure still prohibits a
+retry or any model/device/recovery action; only offline work remains open.
+
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to
 infer recovery causality. They are now also superseded as a live-state block:

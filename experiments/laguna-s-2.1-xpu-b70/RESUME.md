@@ -94,6 +94,23 @@ removed, and all roots were sealed. No candidate result exists. Only offline
 worker-emitted selector-proof work is open; no new model/device/recovery action
 is authorized.
 
+The offline worker-proof repair is now complete and committed. The clean vLLM
+worktree `/home/steve/src/laguna-vllm-worker-selector-evidence-20260803` is at
+`d6a509e6f5bddd4c426ff970da4243c3af3e5306`; the strict host validator is main
+repo commit `453c8d13d`, and the successor measurement leg/runtime packet is
+main repo commit `4a0d961ef`. Offline suites pass `21/21`, `17/17`, and `10/10`.
+The successor rejects inherited runtime and Python overrides, then requires
+four worker-emitted selector records and four descriptor/inode-bound DSO
+records after health and before metrics or inference. The consumed runner is
+still byte-identical. Details:
+[`2026-08-02-exact-small-worker-selector-proof-offline.md`](notes/2026-08-02-exact-small-worker-selector-proof-offline.md)
+and
+[`2026-08-02-exact-small-worker-proof-successor-preregistration.md`](notes/2026-08-02-exact-small-worker-proof-successor-preregistration.md).
+There is deliberately no caller, component tag, fresh artifact root, or
+execution lock. Do not create those or execute the successor without separate
+authorization. The NVMe journal failure continues to prohibit retries and all
+model, device, probe, reset, or recovery work; continue offline only.
+
 The remaining material below is historical lane context, not authorization to
 run another component, model, or endpoint gate.
 
