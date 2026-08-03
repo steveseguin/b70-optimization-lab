@@ -1,0 +1,276 @@
+From a0c7ae628ff1249c3fb105220b4dd664b960ad95 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Mon, 3 Aug 2026 00:53:51 -0400
+Subject: [PATCH] xpu: hoist INT4 tile records into affine views
+
+---
+ csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp       | 116 +++++++++++++++---
+ ...t_laguna_int4_affine_tile_record_static.py |  71 +++++++++++
+ 2 files changed, 169 insertions(+), 18 deletions(-)
+ create mode 100644 tests/test_laguna_int4_affine_tile_record_static.py
+
+diff --git a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+index 9d1766c..1df4abb 100644
+--- a/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
++++ b/csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp
+@@ -727,6 +727,74 @@ CUTE_DEVICE void xe_gemm_4bits(
+   int group_num = get<1>(A.shape()) / group_size;
+   int x_idx = sg_local_id / channel_num;
+ 
++  // A tile record is logically [N64, K32, K-group].  Keeping K-group as a
++  // third affine mode lets the Xe block-2D copy own one address payload for
++  // the whole traversal: N and K32 remain the hardware 2-D surface while the
++  // record stride advances the base pointer.  The earlier probe rebuilt the
++  // tensor and payload around every dynamic K record, which added 98 final
++  // BMG instructions and defeated the locality premise before timing.
++  using ElementB = typename BTensor::element_type;
++  static constexpr bool affine_tile_records =
++      TileMajor && is_same_v<ElementB, int4_t>;
++  static constexpr int32_t tile_record_weight_bytes = tile_n * tile_k / 2;
++  static constexpr int32_t tile_record_scale_bytes = tile_n * sizeof(ElementS);
++  static constexpr int32_t tile_record_bytes =
++      tile_record_weight_bytes + tile_record_scale_bytes;
++  static constexpr int32_t tile_record_stride =
++      tile_record_bytes * 8 / sizeof_bits_v<ElementB>;
++  const uint8_t* tile_record_base = [&]() {
++    if constexpr (affine_tile_records) {
++      return tile_records + wg_n * group_num * tile_record_bytes;
++    } else {
++      return reinterpret_cast<const uint8_t*>(&*B.data());
++    }
++  }();
++  auto tile_record_B = make_tensor(
++      make_gmem_ptr(reinterpret_cast<ElementB*>(
++          const_cast<uint8_t*>(tile_record_base))),
++      make_layout(
++          make_shape(Int<tile_n>{}, Int<tile_k>{}, group_num),
++          make_stride(
++              Int<tile_k>{}, Int<1>{}, Int<tile_record_stride>{})));
++  auto tile_record_cB = make_identity_tensor(tile_record_B.shape());
++  auto tile_record_gB = local_tile(
++      tile_record_cB,
++      make_shape(Int<tile_n>{}, Int<tile_k>{}, Int<1>{}),
++      make_coord(0, 0, _));
++  auto tile_record_copy_b = [&]() {
++    if constexpr (affine_tile_records) {
++      return get_block_2d_copy_B<GmemTiledCopyB>(mma, tile_record_B);
++    } else {
++      return copy_b;
++    }
++  }();
++  auto tile_record_thr_copy_b = tile_record_copy_b.get_slice(local_id);
++  auto tile_record_tBgB = tile_record_thr_copy_b.partition_S(tile_record_gB);
++  auto tile_record_prefetch_b = make_block_2d_prefetch(tile_record_copy_b);
++  auto tile_record_thr_prefetch_b = tile_record_prefetch_b.get_slice(local_id);
++  auto tile_record_pBgB =
++      tile_record_thr_prefetch_b.partition_S(tile_record_gB);
++  static constexpr int32_t tile_record_scale_stride =
++      tile_record_bytes / sizeof(ElementS);
++  const ElementS* tile_record_scale_base = reinterpret_cast<const ElementS*>(
++      tile_record_base + tile_record_weight_bytes);
++  auto tile_record_S = make_tensor(
++      make_gmem_ptr(tile_record_scale_base),
++      make_layout(
++          make_shape(Int<tile_n>{}, group_num),
++          make_stride(Int<1>{}, Int<tile_record_scale_stride>{})));
++  auto tile_record_cS = make_identity_tensor(tile_record_S.shape());
++  auto tile_record_gS = local_tile(
++      tile_record_cS,
++      make_shape(Int<tile_n>{}, Int<1>{}),
++      make_coord(0, _));
++  auto tile_record_prefetch_s = make_block_2d_prefetch<4>(
++      make_shape(Int<tile_n>{}, Int<1>{}), tile_record_S);
++  auto tile_record_thr_prefetch_s =
++      tile_record_prefetch_s.get_slice(sg_local_id);
++  auto tile_record_pSgS =
++      tile_record_thr_prefetch_s.partition_S(tile_record_gS);
++
+   using scaleStoreType = conditional_t<is_same_v<TA, half_t>, half_t, float>;
+   scaleStoreType scales[thr_N * channel_num];
+ 
+@@ -819,11 +887,6 @@ CUTE_DEVICE void xe_gemm_4bits(
+     clear(tCrC_fold);
+   }
+ 
+-  using ElementB = typename BTensor::element_type;
+-  static constexpr int32_t tile_record_weight_bytes = tile_n * tile_k / 2;
+-  static constexpr int32_t tile_record_scale_bytes = tile_n * sizeof(ElementS);
+-  static constexpr int32_t tile_record_bytes =
+-      tile_record_weight_bytes + tile_record_scale_bytes;
+   static constexpr bool is_B_fp8_type =
+       std::is_same_v<ElementB, cutlass::float_e5m2_t> ||
+       std::is_same_v<ElementB, cutlass::float_e4m3_t>;
+@@ -831,7 +894,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+   CUTE_UNROLL
+   for (; k_tile_prefetch < prefetch_dist; k_tile_prefetch++) {
+     prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+-    if constexpr (TileMajor) {
++    if constexpr (affine_tile_records) {
++      prefetch(
++          tile_record_prefetch_b,
++          tile_record_pBgB(_, _, _, 0, k_tile_prefetch));
++    } else if constexpr (TileMajor) {
+       const uint8_t* record =
+           tile_records +
+           (wg_n * group_num + k_tile_prefetch) * tile_record_bytes;
+@@ -871,6 +938,10 @@ CUTE_DEVICE void xe_gemm_4bits(
+         auto pSgS = thr_prefetch_scales.partition_S(
+             make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+         prefetch(prefetch_scales, pSgS(_, 0, 0));
++      } else if constexpr (affine_tile_records) {
++        prefetch(
++            tile_record_prefetch_s,
++            tile_record_pSgS(_, 0, 0, k_tile_prefetch));
+       } else {
+         const ElementS* scale_base;
+         int scale_stride;
+@@ -904,7 +975,12 @@ CUTE_DEVICE void xe_gemm_4bits(
+     barrier_arrive(barrier_scope);
+ 
+     copy(copy_a, tAgA(_, _, _, k_tile), tArA);
+-    if constexpr (TileMajor) {
++    if constexpr (affine_tile_records) {
++      copy(
++          tile_record_copy_b,
++          tile_record_tBgB(_, _, _, 0, k_tile),
++          tBrB);
++    } else if constexpr (TileMajor) {
+       const uint8_t* record =
+           tile_records + (wg_n * group_num + k_tile) * tile_record_bytes;
+       auto packed_B = make_tensor(
+@@ -937,12 +1013,10 @@ CUTE_DEVICE void xe_gemm_4bits(
+         for (int sn = 0; sn < acc_N; ++sn) {
+           int sg_local_n = sn * sg_local_range + sg_local_id;
+           float scale = 0.0f;
+-            if constexpr (std::is_same_v<TB, int4_t>) {
++          if constexpr (std::is_same_v<TB, int4_t>) {
+             if constexpr (TileMajor) {
+-              scale = reinterpret_cast<const ElementS*>(
+-                  tile_records +
+-                  (wg_n * group_num + group_idx) * tile_record_bytes +
+-                  tile_record_weight_bytes)[n_sg_start + sg_local_n];
++              scale =
++                  tile_record_S(n_sg_start + sg_local_n, group_idx);
+             } else if constexpr (TransposedScales) {
+               scale = static_cast<float>(
+                   Scales
+@@ -981,12 +1055,10 @@ CUTE_DEVICE void xe_gemm_4bits(
+             int real_idx = x_idx + c * (sg_local_range / channel_num);
+             int sg_local_n = n * sg_local_range + real_idx;
+             scaleStoreType scale;
+-          if constexpr (std::is_same_v<TB, int4_t>) {
++            if constexpr (std::is_same_v<TB, int4_t>) {
+               if constexpr (TileMajor) {
+-                scale = reinterpret_cast<const ElementS*>(
+-                    tile_records +
+-                    (wg_n * group_num + group_idx) * tile_record_bytes +
+-                    tile_record_weight_bytes)[n_sg_start + sg_local_n];
++                scale =
++                    tile_record_S(n_sg_start + sg_local_n, group_idx);
+               } else if constexpr (TransposedScales) {
+                 scale = Scales
+                     [group_idx * shape<0>(B) + n_tile_start + n_sg_start +
+@@ -1043,6 +1115,10 @@ CUTE_DEVICE void xe_gemm_4bits(
+           auto pSgS = thr_prefetch_scales.partition_S(
+               make_identity_tensor(make_shape(Int<1>{}, Int<SG_N>{})));
+           prefetch(prefetch_scales, pSgS(_, 0, 0));
++        } else if constexpr (affine_tile_records) {
++          prefetch(
++              tile_record_prefetch_s,
++              tile_record_pSgS(_, 0, 0, group_idx + prefetch_dist));
+         } else {
+           const ElementS* scale_base;
+           int scale_stride;
+@@ -1076,7 +1152,11 @@ CUTE_DEVICE void xe_gemm_4bits(
+ 
+     if (k_tile_prefetch < k_tile_count) {
+       prefetch(prefetch_a, pAgA(_, _, _, k_tile_prefetch));
+-      if constexpr (TileMajor) {
++      if constexpr (affine_tile_records) {
++        prefetch(
++            tile_record_prefetch_b,
++            tile_record_pBgB(_, _, _, 0, k_tile_prefetch));
++      } else if constexpr (TileMajor) {
+         const uint8_t* record =
+             tile_records +
+             (wg_n * group_num + k_tile_prefetch) * tile_record_bytes;
+diff --git a/tests/test_laguna_int4_affine_tile_record_static.py b/tests/test_laguna_int4_affine_tile_record_static.py
+new file mode 100644
+index 0000000..f3b5745
+--- /dev/null
++++ b/tests/test_laguna_int4_affine_tile_record_static.py
+@@ -0,0 +1,71 @@
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[1]
++GEMM = (ROOT / "csrc/xpu/grouped_gemm/xe_2/gemm_xe2.hpp").read_text()
++
++
++def _xe_gemm_4bits() -> str:
++    start = GEMM.index("CUTE_DEVICE void xe_gemm_4bits(")
++    return GEMM[start:]
++
++
++def _affine_setup() -> str:
++    function = _xe_gemm_4bits()
++    start = function.index("// A tile record is logically [N64, K32, K-group].")
++    end = function.index("using scaleStoreType", start)
++    return function[start:end]
++
++
++def _k_traversal() -> str:
++    function = _xe_gemm_4bits()
++    start = function.index("CUTE_UNROLL\n  for (; k_tile_prefetch")
++    end = function.index("if (Bias != nullptr)", start)
++    return function[start:end]
++
++
++def test_affine_int4_route_is_separate_from_mxfp4_tile_major() -> None:
++    setup = _affine_setup()
++    assert "TileMajor && is_same_v<ElementB, int4_t>" in setup
++    assert "if constexpr (affine_tile_records)" in setup
++
++
++def test_weight_record_uses_one_rank3_affine_view_and_payload() -> None:
++    setup = _affine_setup()
++    assert "make_shape(Int<tile_n>{}, Int<tile_k>{}, group_num)" in setup
++    assert "Int<tile_k>{}, Int<1>{}, Int<tile_record_stride>{}" in setup
++    assert setup.count("auto tile_record_B = make_tensor") == 1
++    copy_build = "get_block_2d_copy_B<GmemTiledCopyB>(mma, tile_record_B)"
++    assert setup.count(copy_build) == 1
++    assert setup.count("make_block_2d_prefetch(tile_record_copy_b)") == 1
++
++
++def test_scale_record_uses_one_rank2_affine_view_and_payload() -> None:
++    setup = _affine_setup()
++    assert "make_shape(Int<tile_n>{}, group_num)" in setup
++    assert "make_stride(Int<1>{}, Int<tile_record_scale_stride>{})" in setup
++    assert setup.count("auto tile_record_S = make_tensor") == 1
++    assert setup.count("make_block_2d_prefetch<4>(") == 1
++
++
++def test_affine_hot_path_uses_coordinates_without_rebuilding_views() -> None:
++    traversal = _k_traversal()
++    affine_blocks = "\n".join(
++        block.split("} else if constexpr (TileMajor)", 1)[0]
++        for block in traversal.split("if constexpr (affine_tile_records)")[1:]
++    )
++    assert "tile_record_pBgB(_, _, _, 0, k_tile_prefetch)" in affine_blocks
++    assert "tile_record_tBgB(_, _, _, 0, k_tile)" in affine_blocks
++    assert "tile_record_pSgS(_, 0, 0, k_tile_prefetch)" in affine_blocks
++    assert "tile_record_S(n_sg_start + sg_local_n, group_idx)" in traversal
++    assert (
++        "if constexpr (affine_tile_records) {\n      const uint8_t* record"
++        not in traversal
++    )
++
++
++def test_mxfp4_fallback_retains_dynamic_tile_major_construction() -> None:
++    traversal = _k_traversal()
++    assert traversal.count("else if constexpr (TileMajor)") >= 3
++    assert traversal.count("auto packed_B = make_tensor") == 3
++    assert "std::is_same_v<TB, float_e2m1_t>" in traversal
+-- 
+2.43.0
+
