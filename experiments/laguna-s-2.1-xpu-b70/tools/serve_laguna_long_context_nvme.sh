@@ -22,7 +22,29 @@ case "$role" in candidate|teacher) ;; *) echo "unsupported role: $role" >&2; exi
 }
 case "$max_num_batched_tokens" in
   4096|8192|8202|16384|32768) ;;
-  *) echo "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8192, 8202, 16384, or 32768" >&2; exit 2 ;;
+  8184|8188)
+    # Only the depth-sweep profile pins an off-stride budget, and only to keep
+    # the derived scheduler budget at 8182 once the draft depth changes. These
+    # are 8182+(depth-1) for depths 3 and 7; the profile still decides which of
+    # those depths it will actually run.
+    [[ "$role" == candidate && "$candidate_profile" == qdepth ]] || {
+      echo "batched=$max_num_batched_tokens is reserved for the qdepth depth-sweep candidate" >&2
+      exit 2
+    }
+    ;;
+  8182)
+    # The depth-1 qdepth pin, and the only budget that gives the speculation-off
+    # teacher the candidate's partition. With no speculative config the derived
+    # budget is never computed and the scheduler falls back to the batched
+    # budget, so a teacher at 8192 silently runs the 8192/8064 partition that
+    # was rejected on 2026-08-02 rather than the candidate's 8182/8094.
+    [[ "$role" == teacher \
+      || ( "$role" == candidate && "$candidate_profile" == qdepth ) ]] || {
+      echo "batched=8182 is reserved for the qdepth candidate and the partition-aligned teacher" >&2
+      exit 2
+    }
+    ;;
+  *) echo "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8182, 8184, 8188, 8192, 8202, 16384, or 32768" >&2; exit 2 ;;
 esac
 case "$max_num_scheduled_tokens" in
   auto) ;;
@@ -200,8 +222,96 @@ if [[ "$role" == candidate ]]; then
         exit 2
       }
       ;;
+    qdepth)
+      # Long-context draft-depth sweep. The only interpretable arm-to-arm
+      # difference must be the draft depth, so every selector that the vLLM
+      # fork pins to one depth or one verifier width is held off at every
+      # depth, including at depth 11 where the incumbent enables it:
+      #   MWIDE/M8 BF16 router top-k     exact width 12 only
+      #     (models/laguna.py `_use_mwide_bf16_router_topk` contract; with the
+      #     base router on and MWIDE off a non-eager target raises outright)
+      #   DFlash context-KV workspace    depth 11 and width 12
+      #     (models/laguna_dflash.py context-KV contract failures)
+      #   DFlash FP8 W8A16 / Q8          require the context-KV workspace
+      #   DFlash segmented/inline graph  width 12
+      #     (worker `_validate_laguna_m8_breakable_graph_config` plus a
+      #     capture filter hard-coded to num_tokens == 12)
+      #   M12 shared elementwise         depth 11 exactly
+      #   M8 shared elementwise          depth 7 exactly, so it cannot be held
+      #     constant across arms either and stays off at both depths
+      #   M12 mapped gather/scale/add    requires M12 shared elementwise
+      #   exact prefill chunks           width 12
+      #   wide-prefill QKNorm+RoPE       width 12, depth 11, and batched 8192
+      #   decode GRF128 / transposed scales
+      #     no width gate anywhere in the vLLM fork, so their width
+      #     independence cannot be established here; held off rather than
+      #     assumed safe at a width they have never run at
+      # The shared candidate selectors above this case stay on. Of those only
+      # the fused M8 QKNorm+RoPE is width-sensitive, and it fires at verifier
+      # width 8 and 12 alike, which is what limits the measurable depths.
+      disabled_profile_values=(
+        VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK
+        VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE
+        VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
+        VLLM_XPU_LAGUNA_DFLASH_FP8_Q8
+        VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
+        VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
+        VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
+        VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE
+        VLLM_XPU_LAGUNA_M12_MAPPED_GATHER_SCALE_ADD
+        VLLM_XPU_LAGUNA_EXACT_PREFILL_CHUNKS
+        VLLM_XPU_LAGUNA_WIDE_PREFILL_QKNORM_ROPE
+        VLLM_XPU_LAGUNA_DECODE_GRF128
+        VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES
+      )
+      for name in "${disabled_profile_values[@]}"; do
+        [[ "${!name:-}" == 0 ]] || {
+          echo "$name must be zero for the qdepth candidate" >&2
+          exit 2
+        }
+      done
+      case "${LAGUNA_SPEC:-}" in
+        11|7) ;;
+        3|1)
+          echo "qdepth depth ${LAGUNA_SPEC} is not cleanly measurable: the fused target QKNorm+RoPE only fires at verifier width 8 or 12, and no width-4 or width-2 shared-elementwise op exists, so the target path would silently degrade" >&2
+          exit 2
+          ;;
+        *)
+          echo "qdepth candidate requires LAGUNA_SPEC=11 or LAGUNA_SPEC=7" >&2
+          exit 2
+          ;;
+      esac
+      [[ "${LAGUNA_M:-}" == "$((LAGUNA_SPEC + 1))" ]] || {
+        echo "qdepth candidate requires LAGUNA_M to be LAGUNA_SPEC plus one" >&2
+        exit 2
+      }
+      [[ "${VLLM_XPU_LAGUNA_EXACT_MAX_M:-}" == "$LAGUNA_M" ]] || {
+        echo "qdepth candidate requires VLLM_XPU_LAGUNA_EXACT_MAX_M to equal LAGUNA_M" >&2
+        exit 2
+      }
+      [[ "$max_num_scheduled_tokens" == auto ]] || {
+        echo "qdepth candidate requires the automatic scheduled-token budget" >&2
+        exit 2
+      }
+      [[ "$max_num_batched_tokens" != 8202 ]] || {
+        echo "batched=8202 belongs to the closed alignment treatment, not to qdepth" >&2
+        exit 2
+      }
+      # Parallel drafting reserves LAGUNA_SPEC-1 slots per sequence at
+      # max_num_seqs=1, so pinning the batched budget to 8182+(depth-1) keeps
+      # the derived per-step budget, and therefore the 32,640-token prefill
+      # partition, byte-identical to the incumbent at every depth.
+      readonly derived_scheduled_tokens="$((max_num_batched_tokens - (LAGUNA_SPEC - 1)))"
+      [[ "$derived_scheduled_tokens" == 8182 ]] || {
+        echo "qdepth derives max_num_scheduled_tokens=$derived_scheduled_tokens from batched=$max_num_batched_tokens at depth $LAGUNA_SPEC; set LAGUNA_MAX_NUM_BATCHED_TOKENS=$((8182 + LAGUNA_SPEC - 1)) so it derives 8182" >&2
+        exit 2
+      }
+      printf 'Laguna qdepth arm: depth=%s width=%s batched=%s derived_scheduled=%s\n' \
+        "$LAGUNA_SPEC" "$LAGUNA_M" "$max_num_batched_tokens" "$derived_scheduled_tokens" >&2
+      ;;
     *)
-      echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12, q8, or q8fp8" >&2
+      echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12, q8, q8fp8, or qdepth" >&2
       exit 2
       ;;
   esac

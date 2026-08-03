@@ -44,6 +44,7 @@ readonly oracle="${LAGUNA_LONG_ORACLE:-}"
 readonly require_oracle="${LAGUNA_REQUIRE_ORACLE:-0}"
 readonly exact_prefill_chunks="${LAGUNA_EXACT_PREFILL_CHUNKS:-0}"
 readonly candidate_profile="${LAGUNA_LONG_CANDIDATE_PROFILE:-q12}"
+readonly long_depth="${LAGUNA_LONG_DEPTH:-}"
 readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly model_manifest=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256
@@ -56,8 +57,16 @@ case "$candidate_profile" in
   q8|q8fp8)
     readonly candidate_m=8 candidate_spec=7 candidate_draft_topology=none
     ;;
+  qdepth)
+    # Depth-sweep arm. Only widths with a fused target QKNorm+RoPE path are
+    # measurable; the launcher refuses the rest with the specific reason.
+    [[ "$long_depth" == 11 || "$long_depth" == 7 ]] \
+      || { echo "qdepth requires LAGUNA_LONG_DEPTH=11 or LAGUNA_LONG_DEPTH=7" >&2; exit 2; }
+    readonly candidate_m="$((long_depth + 1))" candidate_spec="$long_depth" \
+      candidate_draft_topology=none
+    ;;
   *)
-    echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12, q8, or q8fp8" >&2
+    echo "LAGUNA_LONG_CANDIDATE_PROFILE must be q12, q8, q8fp8, or qdepth" >&2
     exit 2
     ;;
 esac
@@ -98,8 +107,24 @@ readonly kernel_commit="$(git -C "$kernel_root" rev-parse HEAD)"
   || die "exact prefill chunks are only valid for the q12 candidate"
 case "$max_num_batched_tokens" in
   4096|8192|8202|16384|32768) ;;
-  *) die "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8192, 8202, 16384, or 32768" ;;
+  8184|8188)
+    [[ "$role" == candidate && "$candidate_profile" == qdepth ]] \
+      || die "batched=$max_num_batched_tokens is reserved for the qdepth depth-sweep candidate"
+    ;;
+  8182)
+    # Also the speculation-off teacher's partition-aligned budget; see the
+    # launcher for why 8192 gives the teacher the rejected partition instead.
+    [[ "$role" == teacher || ( "$role" == candidate && "$candidate_profile" == qdepth ) ]] \
+      || die "batched=8182 is reserved for the qdepth candidate and the partition-aligned teacher"
+    ;;
+  *) die "LAGUNA_MAX_NUM_BATCHED_TOKENS must be 4096, 8182, 8184, 8188, 8192, 8202, 16384, or 32768" ;;
 esac
+if [[ "$candidate_profile" == qdepth && "$role" == candidate ]]; then
+  # Keep the derived per-step budget, and therefore the 32,640-token prefill
+  # partition, identical to the incumbent at every depth.
+  (( max_num_batched_tokens - candidate_spec + 1 == 8182 )) \
+    || die "qdepth depth $candidate_spec needs LAGUNA_MAX_NUM_BATCHED_TOKENS=$((8182 + candidate_spec - 1))"
+fi
 case "$max_num_scheduled_tokens" in
   auto) ;;
   8192)
@@ -409,6 +434,24 @@ if [[ "$role" == candidate ]]; then
       VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
       VLLM_XPU_LAGUNA_DECODE_GRF128=1
       VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1
+    )
+  elif [[ "$candidate_profile" == qdepth ]]; then
+    # Every selector the vLLM fork pins to one depth or one verifier width is
+    # off at every depth, so the only arm-to-arm difference is the draft depth.
+    common_env+=(
+      VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=0
+      VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=0
+      VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=0
+      VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=0
+      VLLM_XPU_LAGUNA_DFLASH_FP8_Q8=0
+      VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=0
+      VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=0
+      VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=0
+      VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
+      VLLM_XPU_LAGUNA_M12_MAPPED_GATHER_SCALE_ADD=0
+      VLLM_XPU_LAGUNA_WIDE_PREFILL_QKNORM_ROPE=0
+      VLLM_XPU_LAGUNA_DECODE_GRF128=0
+      VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=0
     )
   elif [[ "$candidate_profile" == q8 ]]; then
     common_env+=(
