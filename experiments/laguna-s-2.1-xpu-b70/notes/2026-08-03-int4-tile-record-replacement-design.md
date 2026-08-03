@@ -135,9 +135,9 @@ Two focused source commits now preserve the packing work:
 
 The integrated successors are:
 
-- kernel consumer/capability commits `5f019f0` and `f050bec`, on the same
-  kernel worktree, with the restored exact M12 mapped-tail commits `0c0d9bd`
-  and `8944dcd`;
+- kernel consumer/capability commits `5f019f0`, `f050bec`, and `f5506a8`, on
+  the same kernel worktree, with the restored exact M12 mapped-tail commits
+  `0c0d9bd` and `8944dcd`;
 - vLLM post-load ownership/factory/reload/offload commit `8fe856e1a` and
   follow-up test commit `7d4c50696`, on the same vLLM worktree.
 
@@ -193,8 +193,12 @@ with XE2 support, the selected architecture is accepted, XE-default is not
 forced, and the same cached native record selector used by every consumer is
 enabled. The Python capability additionally requires the separately built
 `_moe_C` M12 mapped-tail op, so a skewed partial install fails before packing.
-Record-mode public apply entrypoints repeat that device-specific capability
-check, catching later force-default drift.
+After construction, build support, loaded symbols, tensor device, architecture,
+and the cached native record selector are immutable. Record-mode public apply
+entrypoints therefore recheck only the Python record/M12 selectors and an exact
+mirror of the one dynamic native XE-default environment parser. This catches
+force-default drift without a native capability dispatch for every MoE layer
+and decoded token.
 
 The selector-on factory is limited to the exact protected Laguna INT4/group32/
 symmetric/BF16/E64-of-256/EP4/K10/3072x1024/SILU contract and the required
@@ -208,7 +212,7 @@ storage would defeat the lower logical peak.
 
 Named offline validation:
 
-- kernel host/static matrix: **48 passed**;
+- kernel host/static matrix: **55 passed**;
 - vLLM packer/integration/real-method ownership: **21 passed**;
 - strict-env/reload/offload nodes: **14 passed**;
 - Ruff, Python byte compilation, and `git diff --check`: passed;

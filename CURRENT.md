@@ -211,12 +211,13 @@ artifact root, or execution lock. The NVMe journal failure still prohibits a
 retry or any model/device/recovery action; only offline work remains open.
 
 The offline INT4 tile-record replacement lane is now source-integrated and
-compile-clean. Kernel worktree commits `5f019f0` and `f050bec` cover every
-known generic/fixed/fused weight consumer plus a paired, device-indexed native
-capability; restored M12 mapped-tail commits are `0c0d9bd` and `8944dcd`.
+compile-clean. Kernel worktree commits `5f019f0`, `f050bec`, and `f5506a8`
+cover every known generic/fixed/fused weight consumer, a paired,
+device-indexed native capability, and a native-call-free record hot-path drift
+guard; restored M12 mapped-tail commits are `0c0d9bd` and `8944dcd`.
 vLLM commits `8fe856e1a` and `7d4c50696` provide projection-sequential
 one-owner post-load replacement and fail-closed factory, offload, reload, and
-lifetime gates. Host/static suites pass 48 kernel, 21 vLLM ownership/
+lifetime gates. Host/static suites pass 55 kernel, 21 vLLM ownership/
 integration, and 14 strict-env/reload/offload cases; compile-only BMG `_xpu_C`
 and `_moe_C` both link. This is still not device correctness, allocator-memory,
 latency, throughput, or record evidence. The protected 125.461973 conventional
