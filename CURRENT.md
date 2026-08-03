@@ -168,13 +168,17 @@ under the registration in
 No FLR, driver reload, unbind/rebind, shared-memory deletion, or automatic retry
 ladder was used. The scheduler A/B was the first model work after the complete
 recovery pass and ended cleanly as a correctness no-go. Steve then explicitly
-asked to continue optimizing. The active bounded successor is one fresh,
+asked to continue optimizing. The bounded successor was one fresh,
 non-scored exact-small portfolio 2x400 smoke under
 [`2026-08-02-exact-small-postrecovery-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-postrecovery-preregistration.md).
-It may run only after the corrected 49-argument harness and a lock-only commit
-are frozen. It is not a retry under the consumed 2026-08-01 packet, and it does
-not authorize a scored endpoint. No new device probe or recovery action is
-needed or authorized.
+The corrected harness and one-shot lock were committed, but the run stopped
+during KV-cache initialization when `MemAvailable=16,013,720 kB` and
+`SwapFree=341,476 kB` crossed the frozen combined guard. No request, graph
+capture, candidate dispatch, correctness result, or score occurred. Cleanup,
+terminal device audit, and sealing passed. The authorization is consumed and
+the endpoint remains locked; see
+[`2026-08-02-exact-small-postrecovery-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-postrecovery-result.md).
+No retry, new device probe, or recovery action is currently authorized.
 
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to

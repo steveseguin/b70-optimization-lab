@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shlex
@@ -268,29 +269,43 @@ class ExactSmallHarnessTests(unittest.TestCase):
             "laguna-exact-small-postrecovery-20260803T010333Z-smoke",
         )
         for relative, expected in payload["files"].items():
-            path = REPO / relative
-            self.assertTrue(path.is_file(), relative)
-            observed = subprocess.check_output(
-                ["sha256sum", str(path)], text=True
-            ).split()[0]
+            historical = subprocess.check_output(
+                [
+                    "git",
+                    "-C",
+                    str(REPO),
+                    "show",
+                    f"{payload['harness_commit']}:{relative}",
+                ]
+            )
+            observed = hashlib.sha256(historical).hexdigest()
             self.assertEqual(observed, expected, relative)
-        completed = subprocess.run(
-            [str(WRAPPER), "not-the-authorized-tag"],
+        lock_commit = subprocess.check_output(
+            ["git", "-C", str(REPO), "log", "-1", "--format=%H", "--", str(LOCK)],
             text=True,
-            capture_output=True,
-            check=False,
-            env={
-                "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-                "HOME": "/home/steve",
-                "LANG": "C.UTF-8",
-                "LC_ALL": "C.UTF-8",
-            },
+        ).strip()
+        changed = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(REPO),
+                "diff-tree",
+                "--no-commit-id",
+                "--name-only",
+                "-r",
+                lock_commit,
+            ],
+            text=True,
+        ).splitlines()
+        self.assertEqual(
+            changed,
+            [str(LOCK.relative_to(REPO))],
         )
-        self.assertNotEqual(completed.returncode, 0)
-        self.assertIn(
-            "tag or run roots differ from the one-shot authorization",
-            completed.stdout + completed.stderr,
-        )
+        parent = subprocess.check_output(
+            ["git", "-C", str(REPO), "rev-parse", f"{lock_commit}^"],
+            text=True,
+        ).strip()
+        self.assertEqual(parent, payload["harness_commit"])
 
 
 if __name__ == "__main__":

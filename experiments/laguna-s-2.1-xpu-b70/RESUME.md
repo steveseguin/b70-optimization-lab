@@ -68,13 +68,18 @@ gate, aggregator, or endpoint described in
 [`2026-08-02-wide-prefill-qknorm-rope-preregistration.md`](notes/2026-08-02-wide-prefill-qknorm-rope-preregistration.md).
 
 Steve explicitly asked to continue optimizing. One fresh non-scored exact-small
-portfolio 2x400 post-recovery smoke is now preregistered in
+portfolio 2x400 post-recovery smoke was preregistered in
 [`2026-08-02-exact-small-postrecovery-preregistration.md`](notes/2026-08-02-exact-small-postrecovery-preregistration.md).
-Its corrected runner wires both grouped-GEMM selectors through `env -i`, proves
-their presence in all four workers, records the exact grouped DSO maps, and
-requires four-rank M12 row evidence. Execution remains blocked until the clean
-harness commit is followed by a lock-only commit. A pass authorizes a separate
-endpoint preregistration; this smoke packet does not authorize a score.
+Its corrected runner wires both grouped-GEMM selectors through `env -i` and
+was designed to prove their presence in all four workers, record the exact
+grouped DSO maps, and require four-rank M12 row evidence. This launch did not
+reach those post-health checks. The clean harness and lock-only commits were
+frozen, but the one launch crossed the host-memory guard during KV-cache
+initialization at `16,013,720 kB` MemAvailable and `341,476 kB` SwapFree. It
+stopped before API health, graph capture, or any request. Cleanup and terminal
+audit passed and both roots are sealed. Treat the authorization as consumed,
+the candidate as still unmeasured, and the endpoint as locked. Result:
+[`2026-08-02-exact-small-postrecovery-result.md`](notes/2026-08-02-exact-small-postrecovery-result.md).
 
 The remaining material below is historical lane context, not authorization to
 run another component, model, or endpoint gate.
@@ -106,10 +111,9 @@ runtime lock are committed. The first non-scored TP4 smoke stopped before
 model loading at the oneCCL PCIe-topology initialization boundary and timed
 out; no request or candidate dispatch occurred. Teardown and post-failure idle
 checks passed, and no reset/reboot/retry occurred. Collective health was later
-restored. The new post-recovery smoke registration above supersedes the old
-authorization boundary without changing the old result: the portfolio still
-has no model or endpoint evidence until that smoke passes. Its historical
-record is
+restored. The post-recovery smoke above then stopped at its resource guard
+before any request, so the portfolio still has no model or endpoint evidence.
+Its historical component record is
 [`2026-08-01-exact-small-component-portfolio-preregistration.md`](notes/2026-08-01-exact-small-component-portfolio-preregistration.md)
 and the protected record trees must remain preserved.
 

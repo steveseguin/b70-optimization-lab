@@ -1,0 +1,82 @@
+{
+  "format": "laguna-exact-small-postrecovery-smoke-v1",
+  "recorded_at_utc": "2026-08-03T01:43:14Z",
+  "status": "FAIL_RESOURCE_GUARD",
+  "classification": "INCONCLUSIVE_NO_REQUEST",
+  "authorization_consumed": true,
+  "retry_under_this_packet": false,
+  "scored_measurement": false,
+  "candidate_result": false,
+  "campaign": {
+    "tag": "20260803T010333Z",
+    "started_at_utc": "2026-08-03T01:30:44Z",
+    "completed_at_utc": "2026-08-03T01:36:05Z",
+    "root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-small-postrecovery-20260803T010333Z-campaign",
+    "smoke_root": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-exact-small-postrecovery-20260803T010333Z-smoke",
+    "sealed_read_only": true,
+    "repo_head": "7ff670b9aa0eba9f0549084d4c44bfbdcd1003dd",
+    "execution_lock_sha256": "f78052e67cb405693adfa77a138bdaa36581a8f2a1f629f80a64deeadb9bc274"
+  },
+  "source_commits": {
+    "vllm": "0c9dea8cf9aa46c1854d5bce8f4dfb180732b16d",
+    "kernel": "46a6393fc188c11661ddab9cf1320d2f3de45087"
+  },
+  "runtime_lock_sha256": "42e50b479b9ecc31db63998cd1b7bfe5cb7865ee38ed80516232bc9428765836",
+  "failure": {
+    "phase": "kv_cache_initialization_before_graph_capture_and_api_health",
+    "reason": "frozen host memory guard crossed",
+    "alarm_at_utc": "2026-08-03T01:35:40Z",
+    "mem_available_kb": 16013720,
+    "swap_free_kb": 341476,
+    "mem_available_floor_kb": 8388608,
+    "combined_mem_floor_kb": 16777216,
+    "combined_swap_floor_kb": 4194304,
+    "memory_samples": 250,
+    "model_loading_complete": true,
+    "target_and_draft_loaded_gib": 17.27,
+    "model_loading_seconds": 37.694256,
+    "reported_available_kv_cache_gib": 5.92,
+    "reported_gpu_kv_cache_tokens": 114030,
+    "api_healthy": false,
+    "requests_started": 0,
+    "requests_completed": 0,
+    "graph_capture_reached": false
+  },
+  "route_evidence_before_stop": {
+    "m12_shared_elementwise_enable_rank_count": 4,
+    "m12_mapped_tail_enable_rank_count": 4,
+    "model_profile_num_rows_8192_rank_count": 4,
+    "request_num_rows_12_rank_count": 0,
+    "m12_mapped_tail_dispatch_rank_count": 0,
+    "worker_environment_proof_reached": false,
+    "grouped_dso_map_proof_reached": false,
+    "interpretation": "Initialization markers only; there is no real-request candidate dispatch evidence."
+  },
+  "cleanup": {
+    "runner_original_status": 143,
+    "runner_stop_status": 0,
+    "runner_worker_status": 0,
+    "runner_idle_status": 0,
+    "wrapper_exit_status": 2,
+    "wrapper_cleanup_status": 0,
+    "terminal_audit_status": 0,
+    "seal_status": 0,
+    "surviving_model_processes": 0,
+    "protected_listeners": 0,
+    "drm_openers": 0,
+    "device_journal_matches": 0,
+    "terminal_mem_available_kb": 126619840,
+    "terminal_swap_free_kb": 8205016
+  },
+  "evidence_sha256": {
+    "campaign_identity": "b3225c71d626ee1b2180cc27802d2809a83c2d6f6c667f795620aa2705576844",
+    "smoke_arguments": "f16806d278782ded65b4ed331464d460401384629168b43ec1f3b3749a03f441",
+    "memory_samples": "ec93e5c4eb2226131d57ea882f1a43f26fe50cc925480fda73822ed9afcd822b",
+    "memory_alarm": "123837bbe27c4c6cfd8f9bd0d002cb9110ef7e09c8fe23cd8a357def424fef2c",
+    "wrapper_status": "845f780095744e4b0b70e7eec4a3f3e8a57aa8b9d544fbdb024fb8770c97cbde",
+    "terminal_audit": "c17a3d7043270bc463dc7c51e9700b6411b60dff0e132dc41063febd4b67b65e",
+    "server_log": "255de06564ab958740ba71b71706deec537a30d8af7e037433c492ec1dc9e769",
+    "runner_cleanup_status": "b840e51ee151a7db6d19235bbebb4f5fa01ccf61e15a106ac5cfce6a880090d4"
+  },
+  "decision": "Preserve as a consumed resource-gate failure. Do not interpret it as candidate correctness or performance evidence, do not score or submit it, and do not retry under the consumed execution lock."
+}
