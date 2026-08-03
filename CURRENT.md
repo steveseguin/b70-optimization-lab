@@ -167,9 +167,14 @@ under the registration in
 [`2026-08-02-device-recovery-scheduler-alignment-gate.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-device-recovery-scheduler-alignment-gate.md).
 No FLR, driver reload, unbind/rebind, shared-memory deletion, or automatic retry
 ladder was used. The scheduler A/B was the first model work after the complete
-recovery pass and ended cleanly as a correctness no-go. There is no currently
-authorized successor model experiment; any follow-up needs a new
-preregistration.
+recovery pass and ended cleanly as a correctness no-go. Steve then explicitly
+asked to continue optimizing. The active bounded successor is one fresh,
+non-scored exact-small portfolio 2x400 smoke under
+[`2026-08-02-exact-small-postrecovery-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-exact-small-postrecovery-preregistration.md).
+It may run only after the corrected 49-argument harness and a lock-only commit
+are frozen. It is not a retry under the consumed 2026-08-01 packet, and it does
+not authorize a scored endpoint. No new device probe or recovery action is
+needed or authorized.
 
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to

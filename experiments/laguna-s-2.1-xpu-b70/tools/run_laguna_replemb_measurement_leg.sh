@@ -196,6 +196,15 @@ readonly public_oneccl="${46:-0}"
 # with one arithmetic-identical mapped tail. This is valid only on the frozen
 # M12 shared-elementwise candidate and remains default-off.
 readonly m12_mapped_tail="${47:-0}"
+# Select the separately named exact-small M12 GRF128 kernel that omits only
+# the component-proven K-loop barrier pair. This process-wide native selector
+# is wired explicitly here so an integration gate cannot silently measure the
+# mapped-tail half of the portfolio alone.
+readonly decode_no_kloop_barriers="${48:-0}"
+# Select scale-lane deduplication in the same exact-small M12 kernel. The two
+# grouped-GEMM members are a single preregistered treatment and therefore must
+# be enabled together.
+readonly scale_lane_dedup="${49:-0}"
 
 readonly repo_root="$(git -C "$script_dir" rev-parse --show-toplevel)"
 
@@ -247,7 +256,7 @@ case "$treatment:$label" in
   control:A1|control:A2|candidate:B1|candidate:B2) ;;
   *) echo "formal label/treatment must be control:A1, candidate:B1, candidate:B2, or control:A2" >&2; exit 2 ;;
 esac
-(( $# >= 7 && $# <= 47 )) || { echo "seven to forty-seven arguments are required" >&2; exit 2; }
+(( $# >= 7 && $# <= 49 )) || { echo "seven to forty-nine arguments are required" >&2; exit 2; }
 [[ "$target_inline_gather_limit" =~ ^[0-9]+$ ]] \
   && (( target_inline_gather_limit >= 1 && target_inline_gather_limit <= 96 )) \
   || { echo "TARGET_INLINE_GATHER_LIMIT must be an integer from 1 to 96" >&2; exit 2; }
@@ -338,6 +347,31 @@ esac
   || { echo "M12_MAPPED_TAIL=1 requires M12_SHARED_ELEMENTWISE=1" >&2; exit 2; }
 [[ "$m12_mapped_tail" == 0 || "$treatment" == candidate ]] \
   || { echo "M12_MAPPED_TAIL=1 requires candidate treatment" >&2; exit 2; }
+case "$decode_no_kloop_barriers" in
+  0|1) ;;
+  *) echo "DECODE_NO_KLOOP_BARRIERS must be 0 or 1" >&2; exit 2 ;;
+esac
+case "$scale_lane_dedup" in
+  0|1) ;;
+  *) echo "SCALE_LANE_DEDUP must be 0 or 1" >&2; exit 2 ;;
+esac
+(( decode_no_kloop_barriers == scale_lane_dedup )) \
+  || { echo "exact-small grouped-GEMM selectors must be enabled together" >&2; exit 2; }
+(( decode_no_kloop_barriers == 0 || m12_mapped_tail == 1 )) \
+  || { echo "exact-small grouped-GEMM portfolio requires M12_MAPPED_TAIL=1" >&2; exit 2; }
+(( decode_no_kloop_barriers == 0 || (laguna_m == 12 && laguna_spec == 11) )) \
+  || { echo "exact-small grouped-GEMM portfolio requires M=12 and SPEC=11" >&2; exit 2; }
+(( decode_no_kloop_barriers == 0 || (width12_stack == 1 && decode_grf128 == 1 && decode_transposed_scales == 1) )) \
+  || { echo "exact-small grouped-GEMM portfolio requires width-12 GRF128/transposed scales" >&2; exit 2; }
+[[ "$decode_no_kloop_barriers" == 0 || \
+   ("$scale_vec" == 1 && "$scale_fold" == 0 && "$dequant_mad" == 0) ]] \
+  || { echo "exact-small grouped-GEMM portfolio requires SCALE_VEC=1, SCALE_FOLD=0, DEQUANT_MAD=0" >&2; exit 2; }
+[[ "$decode_no_kloop_barriers" == 0 || "$LAGUNA_LOG_MOE_ROWS_ARG" == 1 ]] \
+  || { echo "exact-small grouped-GEMM portfolio requires LAGUNA_LOG_MOE_ROWS=1" >&2; exit 2; }
+(( decode_no_kloop_barriers == 0 || (dflash_segmented_smoke == 1 && dflash_full_exactness == 0) )) \
+  || { echo "exact-small grouped-GEMM portfolio is authorized only for the 2x400 non-scored smoke" >&2; exit 2; }
+[[ "$decode_no_kloop_barriers" == 0 || "$treatment" == candidate ]] \
+  || { echo "exact-small grouped-GEMM portfolio requires candidate treatment" >&2; exit 2; }
 case "$m12_rank_sum_rmsnorm" in
   0|1) ;;
   *) echo "M12_RANK_SUM_RMSNORM must be 0 or 1" >&2; exit 2 ;;
@@ -425,6 +459,16 @@ case "$dflash_fp8" in 0|1) ;; *) echo "DFLASH_FP8 must be 0 or 1" >&2; exit 2 ;;
   || { echo "DECODE_TRANSPOSED_SCALES=1 requires M=12 and WIDTH12_STACK=1" >&2; exit 2; }
 [[ "$decode_transposed_scales" == 0 || "$treatment" == candidate ]] \
   || { echo "DECODE_TRANSPOSED_SCALES=1 requires candidate treatment" >&2; exit 2; }
+
+# CPU-only argument-contract tests set this explicit guard. It exits after all
+# argument validation but before interface discovery, Git/NVMe checks, model
+# verification, an idle observer, or any service/device action. The production
+# coordinator launches through env -i and never sets it.
+case "${LAGUNA_RUNNER_VALIDATE_ONLY:-0}" in
+  0) ;;
+  1) printf 'argument_validation=PASS\n'; exit 0 ;;
+  *) echo "LAGUNA_RUNNER_VALIDATE_ONLY must be 0 or 1" >&2; exit 2 ;;
+esac
 
 die() { echo "Laguna formal M8 crossover leg: $*" >&2; exit 2; }
 
@@ -654,13 +698,16 @@ verify_idle_interval prestart
   printf 'm12_attention_gate=%s\n' "$m12_attention_gate"
   printf 'm12_shared_elementwise=%s\n' "$m12_shared_elementwise"
   printf 'm12_mapped_tail=%s\n' "$m12_mapped_tail"
+  printf 'decode_no_kloop_barriers=%s\n' "$decode_no_kloop_barriers"
+  printf 'scale_lane_dedup=%s\n' "$scale_lane_dedup"
   printf 'm12_rank_sum_rmsnorm=%s\n' "$m12_rank_sum_rmsnorm"
   printf 'confidence_probe=%s\nconfidence_probe_root=%s\n' \
     "$([[ -n "$confidence_probe_root" ]] && echo 1 || echo 0)" \
     "$confidence_probe_root"
   printf 'native_c_sha256=%s\n' "$expected_native_c"
   scored_measurement=1
-  [[ "$dflash_segmented_smoke" == 0 && "$parity_probe" == 0 && -z "$event_profile_root" \
+  [[ "$dflash_segmented_smoke" == 0 && "$LAGUNA_LOG_MOE_ROWS_ARG" == 0 \
+      && "$parity_probe" == 0 && -z "$event_profile_root" \
       && -z "$confidence_probe_root" ]] \
     || scored_measurement=0
   printf 'dflash_segmented_smoke=%s\nscored_measurement=%s\n' "$dflash_segmented_smoke" "$scored_measurement"
@@ -668,6 +715,7 @@ verify_idle_interval prestart
   printf 'width12_router_workspace_stack=%s\nmwide_bf16_router_topk=%s\ndflash_context_kv_workspace=%s\n' "$width12_stack" "$width12_stack" "$width12_stack"
   printf 'dflash_fp8_w8a16=%s\ndflash_fp8_target_unchanged=true\n' "$dflash_fp8"
   printf 'm8_shared_elementwise=%s\nm8_qknorm_rope=%s\ngpu_memory_utilization=%s\n' "$se" "$qk" "$gpu_util"
+  printf 'log_moe_rows=%s\n' "$LAGUNA_LOG_MOE_ROWS_ARG"
   printf 'identity_source=actual_worktree_heads\nmeasurement_leg_not_record_leg=true\nvllm_commit=%s\nkernel_commit=%s\nmodel=%s\ndraft=%s\nmodel_manifest_sha256=%s\n' "$expected_vllm" "$expected_kernels" "$LAGUNA_NVME_TARGET_ROOT" "$LAGUNA_NVME_DRAFT_ROOT" "$LAGUNA_NVME_MANIFEST_SHA256"
   printf 'model_release_manifest_sha256=%s\nruntime_lock_sha256=%s\nruntime_verifier_sha256=%s\n' "$expected_model_release_manifest" "$expected_runtime_lock" "$expected_runtime_verifier"
   printf 'runtime_verification_sha256=%s\nxpumem_module_sha256=%s\n' "$(sha256sum "$run_dir/runtime-verification.json" | awk '{print $1}')" "$(sha256sum "$xpumem_module" | awk '{print $1}')"
@@ -690,7 +738,7 @@ setsid /usr/bin/env -i \
   PATH="$frozen_path" LANG=C.UTF-8 LC_ALL=C.UTF-8 HOME="$run_dir/private-home" TMPDIR="$run_dir/private-tmp" \
   HF_HOME="$run_dir/private-cache/hf" HF_HUB_CACHE="$run_dir/private-cache/hf/hub" TRANSFORMERS_CACHE="$run_dir/private-cache/hf/transformers" VLLM_CACHE_ROOT="$run_dir/private-cache/vllm" TORCHINDUCTOR_CACHE_DIR="$run_dir/private-cache/torchinductor" TRITON_CACHE_DIR="$run_dir/private-cache/triton" SYCL_CACHE_DIR="$run_dir/private-cache/sycl" NUMBA_CACHE_DIR="$run_dir/private-cache/numba" PYTHONPYCACHEPREFIX="$run_dir/private-cache/pycache" XDG_CACHE_HOME="$run_dir/private-cache" XDG_CONFIG_HOME="$run_dir/private-xdg/config" XDG_DATA_HOME="$run_dir/private-xdg/data" XDG_STATE_HOME="$run_dir/private-xdg/state" \
   PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONSAFEPATH=1 PYTHONHASHSEED=0 PYTHONPATH="$vllm_root:$kernel_root" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1 VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 LD_PRELOAD="$selected_ld_preload" CCL_KERNEL_PATH="$selected_ccl_kernel_path" ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3 CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1 FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface" TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$selected_native_library_path" \
-  VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="$m12_shared_elementwise" VLLM_XPU_LAGUNA_M12_MAPPED_GATHER_SCALE_ADD="$m12_mapped_tail" VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM="$m12_rank_sum_rmsnorm" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M12_ATTENTION_GATE="$m12_attention_gate" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_DECODE_GRF128="$decode_grf128" VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES="$decode_transposed_scales" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH="$dflash_segmented_graph" VLLM_XPU_LAGUNA_DFLASH_INPLACE_COLLECTIVES="$dflash_inplace_collectives" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES="$dflash_capture_collective_copies" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS="$dflash_capture_attention_graphs" VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS="$dflash_inline_attention_graphs" VLLM_XPU_LAGUNA_M8_INLINE_GATHERS="$target_inline_gathers" LAGUNA_TARGET_INLINE_GATHER_LIMIT="$target_inline_gather_limit" LAGUNA_TARGET_INLINE_GATHER_SKIP="$target_inline_gather_skip" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY="$event_profile_target_only" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM="$bf16_attn_native_mm" VLLM_XPU_LAGUNA_ARTIFACT_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT" VLLM_XPU_LAGUNA_PARITY_ROW="$(( parity_probe == 1 ? 0 : -1 ))" VLLM_XPU_LAGUNA_PARITY_PROBE="$parity_probe" VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
+  VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1 VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1 VLLM_XPU_LAGUNA_M8_ROUTE_INTERLEAVE=1 VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE="$se" VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="$m12_shared_elementwise" VLLM_XPU_LAGUNA_M12_MAPPED_GATHER_SCALE_ADD="$m12_mapped_tail" VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS="$decode_no_kloop_barriers" VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP="$scale_lane_dedup" VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM="$m12_rank_sum_rmsnorm" VLLM_XPU_LAGUNA_M8_QKNORM_ROPE="$qk" VLLM_XPU_LAGUNA_M12_ATTENTION_GATE="$m12_attention_gate" VLLM_XPU_LAGUNA_M8_W1_N_TILE="$w1_n_tile" LAGUNA_LOG_MOE_ROWS="${LAGUNA_LOG_MOE_ROWS_ARG:-0}" VLLM_XPU_MXFP4_SMALL_M_N="$mxfp4_small_m_n" VLLM_XPU_LAGUNA_PREFETCH_DIST="$prefetch_dist" VLLM_XPU_LAGUNA_SCALE_FOLD="$scale_fold" VLLM_XPU_LAGUNA_SCALE_VEC="$scale_vec" VLLM_XPU_LAGUNA_DEQUANT_MAD="$dequant_mad" VLLM_XPU_LAGUNA_SCALE_HOIST="$scale_hoist" VLLM_XPU_LAGUNA_DECODE_GRF128="$decode_grf128" VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES="$decode_transposed_scales" VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE="$width12_stack" VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16="$dflash_fp8" VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH="$dflash_segmented_graph" VLLM_XPU_LAGUNA_DFLASH_INPLACE_COLLECTIVES="$dflash_inplace_collectives" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_COLLECTIVE_COPIES="$dflash_capture_collective_copies" VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS="$dflash_capture_attention_graphs" VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS="$dflash_inline_attention_graphs" VLLM_XPU_LAGUNA_M8_INLINE_GATHERS="$target_inline_gathers" LAGUNA_TARGET_INLINE_GATHER_LIMIT="$target_inline_gather_limit" LAGUNA_TARGET_INLINE_GATHER_SKIP="$target_inline_gather_skip" VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING="$replicated_embedding" VLLM_XPU_LAGUNA_DRAFT_IDENTITY_PROBE="$draft_identity_probe" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="$event_profile_root" VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_TARGET_ONLY="$event_profile_target_only" VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM="$bf16_attn_native_mm" VLLM_XPU_LAGUNA_ARTIFACT_ROOT="$LAGUNA_NVME_ARTIFACT_ROOT" VLLM_XPU_LAGUNA_PARITY_ROW="$(( parity_probe == 1 ? 0 : -1 ))" VLLM_XPU_LAGUNA_PARITY_PROBE="$parity_probe" VLLM_TRACE_FUNCTION=0 VLLM_XPU_LAGUNA_M8_FUSED_TRANSACTION=0 VLLM_XPU_LAGUNA_M8_REMOTE_ZERO=0 VLLM_XPU_LAGUNA_M8_SHARED_EXPERT_STREAM=0 VLLM_XPU_LAGUNA_M8_SHARED_DOWN_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_MM=0 VLLM_XPU_LAGUNA_M8_SHARED_GATE_UP_MM=0 VLLM_XPU_LAGUNA_M8_GATHER_SHARDED=0 VLLM_XPU_LAGUNA_M8_GATHER_FINALIZE=0 VLLM_DISABLE_SHARED_EXPERTS_STREAM=0 VLLM_SHARED_EXPERTS_STREAM_TOKEN_THRESHOLD=256 VLLM_XPU_EXPERT_MAP_ROUND_ROBIN=0 VLLM_XPU_V4_M1_BIASED_TOPK=0 VLLM_XPU_V4_M1_ROUTER_NORM=0 VLLM_USE_AOT_COMPILE=0 LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$laguna_spec" VLLM_XPU_LAGUNA_EXACT_MAX_M="$laguna_m" VLLM_XPU_LAGUNA_DRAFT_BREAKABLE_GRAPH="$draft_graph" LAGUNA_M="$laguna_m" LAGUNA_SPEC="$laguna_spec" LAGUNA_GPU_UTIL="$gpu_util" LAGUNA_LOCAL_ARGMAX="$([[ "$local_argmax" == 1 ]] && echo true || echo false)" VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1 VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph" VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS="$capture_attention" VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS="$inline_attention" VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA="$metadata_arg" VLLM_USE_BREAKABLE_CUDAGRAPH="$graph" XPU_GRAPH="$graph" VLLM_XPU_ENABLE_XPU_GRAPH="$graph" \
   VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0 \
   VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_ROOT="$confidence_probe_root" VLLM_XPU_LAGUNA_CYCLE_ATTRIBUTION_TOPK_PROBE="$([[ -n "$confidence_probe_root" ]] && echo 1 || echo 0)" \
   "$serve_script" "$run_dir" >"$run_dir/server.log" 2>&1 &
@@ -717,13 +765,107 @@ grep -Fx "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM=$bf16_attn_native_mm" "$run_dir/servic
 grep -Fx "VLLM_XPU_LAGUNA_M12_ATTENTION_GATE=$m12_attention_gate" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=$m12_shared_elementwise" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_M12_MAPPED_GATHER_SCALE_ADD=$m12_mapped_tail" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS=$decode_no_kloop_barriers" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP=$scale_lane_dedup" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_SCALE_FOLD=$scale_fold" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_SCALE_VEC=$scale_vec" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_DEQUANT_MAD=$dequant_mad" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=$qk" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_M12_RANK_SUM_RMSNORM=$m12_rank_sum_rmsnorm" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING=$replicated_embedding" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_ARTIFACT_ROOT=$LAGUNA_NVME_ARTIFACT_ROOT" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_PARITY_ROW=$(( parity_probe == 1 ? 0 : -1 ))" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "VLLM_XPU_LAGUNA_PARITY_PROBE=$parity_probe" "$run_dir/service-environment.txt" >/dev/null
+grep -Fx "LAGUNA_LOG_MOE_ROWS=$LAGUNA_LOG_MOE_ROWS_ARG" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "LD_PRELOAD=$selected_ld_preload" "$run_dir/service-environment.txt" >/dev/null
 grep -Fx "CCL_KERNEL_PATH=$selected_ccl_kernel_path" "$run_dir/service-environment.txt" >/dev/null
+if (( decode_no_kloop_barriers == 1 )); then
+  mapfile -t portfolio_workers < <(pgrep -f 'VLLM::Worker' | sort -n)
+  (( ${#portfolio_workers[@]} == 4 )) \
+    || die "exact-small portfolio expected four model workers"
+  : > "$run_dir/exact-small-worker-environments.txt"
+  : > "$run_dir/exact-small-worker-grouped-gemm-maps.txt"
+  for worker_pid in "${portfolio_workers[@]}"; do
+    worker_environment="$run_dir/worker-environment-${worker_pid}.txt"
+    tr '\0' '\n' < "/proc/$worker_pid/environ" | LC_ALL=C sort \
+      > "$worker_environment"
+    grep -Fx "VLLM_XPU_LAGUNA_DECODE_NO_KLOOP_BARRIERS=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_SCALE_LANE_DEDUP=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_DECODE_GRF128=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_SCALE_FOLD=0" "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_SCALE_VEC=1" "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_DEQUANT_MAD=0" "$worker_environment" >/dev/null
+    grep -Fx "LAGUNA_LOG_MOE_ROWS=1" "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_M12_MAPPED_GATHER_SCALE_ADD=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_M8_QKNORM_ROPE=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=1" \
+      "$worker_environment" >/dev/null
+    grep -Fx "VLLM_XPU_LAGUNA_EXACT_MAX_M=12" "$worker_environment" >/dev/null
+    grep -Fx "LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS=11" \
+      "$worker_environment" >/dev/null
+    grep -Fx "LAGUNA_M=12" "$worker_environment" >/dev/null
+    grep -Fx "LAGUNA_SPEC=11" "$worker_environment" >/dev/null
+    printf 'pid=%s sha256=%s\n' "$worker_pid" \
+      "$(sha256sum "$worker_environment" | awk '{print $1}')" \
+      >> "$run_dir/exact-small-worker-environments.txt"
+    mapfile -t grouped_maps < <(
+      awk '$NF ~ /^\// && $NF ~ /libgrouped_gemm_xe_2\.so$/ {print $NF}' \
+        "/proc/$worker_pid/maps" | sort -u
+    )
+    (( ${#grouped_maps[@]} == 1 )) \
+      || die "worker $worker_pid did not map exactly one grouped-GEMM DSO"
+    [[ "$(realpath -e -- "${grouped_maps[0]}")" == \
+       "$(realpath -e -- "$kernel_package/libgrouped_gemm_xe_2.so")" ]] \
+      || die "worker $worker_pid mapped the wrong grouped-GEMM DSO"
+    check_hash "${grouped_maps[0]}" \
+      "${REPRO_GROUPED_GEMM_SHA256:-fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96}"
+    printf 'pid=%s path=%s sha256=%s\n' "$worker_pid" "${grouped_maps[0]}" \
+      "${REPRO_GROUPED_GEMM_SHA256:-fc74a6452b95643768889e2598df77bc4f4aa2b0925257a4c0eff371b1cf6c96}" \
+      >> "$run_dir/exact-small-worker-grouped-gemm-maps.txt"
+  done
+fi
+verify_exact_small_route_evidence() {
+  (( decode_no_kloop_barriers == 1 )) || return 0
+  "$venv_python" - "$run_dir/server.log" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+lines = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").splitlines()
+rank_pattern = re.compile(r"Worker_TP([0-3])_EP([0-3])")
+rows = [line for line in lines if "LAGUNA_MOE_ROWS num_rows=12" in line]
+ranks = {
+    tuple(map(int, match.groups()))
+    for line in rows
+    if (match := rank_pattern.search(line))
+}
+expected = {(0, 0), (1, 1), (2, 2), (3, 3)}
+if len(rows) != 4 or ranks != expected:
+    raise SystemExit(
+        "exact-small real-M12 route evidence mismatch: "
+        f"rows={len(rows)} ranks={sorted(ranks)}"
+    )
+PY
+}
 if (( public_oneccl == 1 )); then
   mapfile -t public_oneccl_workers < <(pgrep -f 'VLLM::Worker' | sort -n)
   (( ${#public_oneccl_workers[@]} == 4 )) \
@@ -772,6 +914,7 @@ if (( dflash_segmented_smoke == 1 )); then
     > "$run_dir/segmented-smoke.stdout"
   curl -fsS http://127.0.0.1:18080/metrics \
     > "$run_dir/metrics-after-smoke.prom"
+  verify_exact_small_route_evidence
   "$venv_python" - "$run_dir/server.log" "$target_inline_gathers" "$target_inline_gather_limit" "$target_inline_gather_skip" "$m12_mapped_tail" <<'PY'
 import re
 import sys
@@ -814,6 +957,11 @@ mapped_dispatched = [
     line for line in lines
     if "LAGUNA_M12_MAPPED_GATHER_SCALE_ADD dispatched" in line
 ]
+dispatched_ranks = {
+    tuple(map(int, match.groups()))
+    for line in mapped_dispatched
+    if (match := rank.search(line))
+}
 enabled_ranks = {
     tuple(map(int, match.groups()))
     for line in mapped_enabled
@@ -824,11 +972,13 @@ if int(sys.argv[5]) == 1:
         len(mapped_enabled) != 4
         or enabled_ranks != expected
         or len(mapped_dispatched) != 4
+        or dispatched_ranks != expected
     ):
         raise SystemExit(
             "M12 mapped-tail activation mismatch: "
             f"enabled={len(mapped_enabled)} ranks={sorted(enabled_ranks)} "
-            f"dispatched={len(mapped_dispatched)}"
+            f"dispatched={len(mapped_dispatched)} "
+            f"dispatch_ranks={sorted(dispatched_ranks)}"
         )
 elif mapped_enabled or mapped_dispatched:
     raise SystemExit(
@@ -859,6 +1009,7 @@ fi
 "$venv_python" "$comparator" "${comparator_args[@]}" --candidate "$run_dir/bench.json" --out "$run_dir/exactness-vs-q1.json" > "$run_dir/exactness-vs-q1.stdout"
 jq -e '.fresh_response_validity.valid == true and .fresh_response_validity.each_prompt_run_once == true and .fresh_response_validity.cached_tokens_all_zero == true and .realistic_final_gate.passed == true and .run_identity.prompt_count == 13 and .run_identity.max_tokens == 512 and .run_identity.seed == 1' "$run_dir/bench.json" >/dev/null
 jq -e '.all_exact == true and .candidates[0].comparison.exact_count == 13 and .candidates[0].comparison.total == 13 and .candidates[0].comparison.all_cached_zero == true and .candidates[0].comparison.text_sha256_checked_count == 13 and .candidates[0].comparison.all_text_sha256_equal == true' "$run_dir/exactness-vs-q1.json" >/dev/null
+verify_exact_small_route_evidence
 "$venv_python" - "$run_dir/server.log" "$expected_num_graphs" "$expected_num_eager_breaks" "$dflash_fp8" "$dflash_segmented_graph" "$dflash_segmented_expected_graphs" "$dflash_segmented_expected_eager_breaks" "$m12_shared_elementwise" "$m12_rank_sum_rmsnorm" "$m12_mapped_tail" <<'PY'
 import re
 import sys
@@ -973,6 +1124,11 @@ mapped_dispatched = [
     line for line in lines
     if "LAGUNA_M12_MAPPED_GATHER_SCALE_ADD dispatched" in line
 ]
+mapped_dispatch_ranks = {
+    tuple(map(int, match.groups()))
+    for line in mapped_dispatched
+    if (match := rank.search(line))
+}
 mapped_ranks = {
     tuple(map(int, match.groups()))
     for line in mapped_enabled
@@ -983,11 +1139,13 @@ if int(sys.argv[10]) == 1:
         len(mapped_enabled) != 4
         or mapped_ranks != expected
         or len(mapped_dispatched) != 4
+        or mapped_dispatch_ranks != expected
     ):
         raise SystemExit(
             "M12 mapped-tail treatment mismatch: "
             f"enabled={len(mapped_enabled)} ranks={sorted(mapped_ranks)} "
-            f"dispatched={len(mapped_dispatched)}"
+            f"dispatched={len(mapped_dispatched)} "
+            f"dispatch_ranks={sorted(mapped_dispatch_ranks)}"
         )
 elif mapped_enabled or mapped_dispatched:
     raise SystemExit(
