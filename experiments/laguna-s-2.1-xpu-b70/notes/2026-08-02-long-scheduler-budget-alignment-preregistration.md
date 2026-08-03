@@ -31,6 +31,16 @@ request. The first scheduler arm remains unobserved, and the replacement tag
 is `20260802-first-valid-preflight2`; this is a harness-preflight correction,
 not an arm retry.
 
+Result update: **REJECT — correctness gate failed**. Control A passed 12/12
+repeat-oracle exact plus the A-only analyzer. Candidate B changed output token
+IDs and text on all eight selected long rows at or above 8K; only the 1K row
+and three sentinels remained exact. The runner exited 1, cleanup and device
+scans passed, temporary swap was removed, and no retry or LocalMaxxing
+submission followed. The diagnostic speed thresholds passed but are
+ineligible. See
+[`2026-08-02-scheduler-alignment-result.md`](2026-08-02-scheduler-alignment-result.md)
+and `data/laguna-scheduler-alignment-ab-result-20260802.json`.
+
 ## Pre-execution audit amendment
 
 The fixed request order is:

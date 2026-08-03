@@ -1,0 +1,217 @@
+{
+  "artifact_hashes": {
+    "candidate_bench_json": "f00be42fff8bb6768387237511301bb238aaf526f226bdc07435ff5be98963ef",
+    "candidate_cleanup_status_txt": "d662863bcecaf1e681e17437238085719535d316cbfa8e9297b43a842af9ab3b",
+    "candidate_device_error_scan_log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "candidate_identity_txt": "1dc5c54631ddfa970ac9443f51250e6bc1e4a30df6d208be6972b65f9d710698",
+    "candidate_kernel_journal_log": "f86b17312427e02919d36f37384f642ab82de59a15156efff8696dc74f4c9a98",
+    "candidate_memory_guard_tsv": "2e7ff4c2d69ff4531c2432b75fe022766b10ed3c40ee6a15b2a5a0513e9e73d4",
+    "candidate_server_log": "26f863cb4e51b61e33eab775e19e83388254cfef14af5da7ea6902fc5a8186e9",
+    "candidate_xpu_processes_after_json": "7072aa9f35c77490df3d71285fcedef614dd591ae2ea2bc58890dbc8184f9ca8",
+    "candidate_xpu_processes_before_json": "970afbf199b871f1aa7d732da876098265cb8ee9d95e9c33019e2bc56f77b57b",
+    "control_bench_json": "183dde1d61634a8f7afc1fb1930dba45c3dbd0e12d78194bf7b2fd92abf6eb43",
+    "control_cleanup_status_txt": "6317143211c38bd6f4ece29e87280996db4ddee4f16a4653a7ab262009b096bb",
+    "control_device_error_scan_log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control_identity_txt": "22d01788c0cf07bbaa53ab7abac40a6e5ee22dff192b3e813a4072c68d9a695b",
+    "control_kernel_journal_log": "82e94bc578a0e4aba01cbe2fc787f31ec6060893b678926ea4646825a8c9077d",
+    "control_memory_guard_tsv": "b7a874de5e9c8c2438541b5361c28b20b3d9d8dfa853f59c8f97da0b5ed419d5",
+    "control_run_status_txt": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431",
+    "control_server_log": "af25797fa059646e465540447acdd7b82c682d066e3031ea54b0822e3f19bc0a",
+    "control_validation_json": "6f3d646c186abd9ffd339fd4fa6fad6f56e2fc2099b7754c46495d911552f0ba",
+    "control_xpu_processes_after_json": "af9bfecbddd3267ce13aa36d404cd694cb315f5627931c16395364cb963c0bbe",
+    "control_xpu_processes_before_json": "1940f798c42434bab0d112b9937a566aeccbb014cd8b804e4608258c96c865a0",
+    "final_postpair_host_json": "d83aedf1dd8a9e64be936386e11860bc788eccca10bffe6896e235ab16e4c9f7",
+    "model_content_verification_status": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431",
+    "model_content_verification_log": "e5253a91768200dd0c0c82bcf871a3479633defa10adf0ed3a54df10c0fbdec1",
+    "pair_current_device_error_scan_log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pair_current_device_identities_txt": "22ea603935296ef2af6ae9adc7d74fd07e81bfcd99f54216f3bb7b16519393bd",
+    "pair_current_kernel_journal_log": "70297d433bbede18e62f9527bef0a70c335423616393eaa889b3952c9d2b0972",
+    "pair_identity_txt": "cc671fe6de5f3f631c3c38e0307d058f8a77abfba8e9ecfe685b497da6b82e3d",
+    "pair_wrapper_status_txt": "061226c01e0daa1b91a7b467020a3a90e7a06fe1f51e9398f7b6a72df07ad1c7"
+  },
+  "artifacts": {
+    "candidate": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scheduler-alignment-20260802-first-valid-preflight2-B",
+    "control": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scheduler-alignment-20260802-first-valid-preflight2-A",
+    "final_postpair_host": "/home/steve/llm-optimizations/data/laguna-scheduler-alignment-postpair-host-20260802.json",
+    "pair": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scheduler-alignment-20260802-first-valid-preflight2-pair",
+    "prearm_harness_stop": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/laguna-scheduler-alignment-20260802-first-valid-pair",
+    "recovery": "/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/device-recovery-scheduler-gate-20260802T231513Z"
+  },
+  "candidate": {
+    "exact_rows": [
+      "laguna-lc-01024-early",
+      "sentinel-after-laguna-lc-32640-early",
+      "sentinel-after-laguna-lc-32640-middle",
+      "sentinel-after-laguna-lc-32640-late"
+    ],
+    "failed_rows": {
+      "laguna-lc-08192-early": {
+        "candidate_output_sha256": "be011a3ad37a7b7fa55e82d6e4d595322c99e9f7cc4a861df30e1278a9e3e2f5",
+        "control_output_sha256": "99bb855083e672b68fbfc585420dd33fbb02ceadff25486d9e2d62c0e3792b7c",
+        "first_token_mismatch_zero_based_index": 73
+      },
+      "laguna-lc-08192-late": {
+        "candidate_output_sha256": "faf792dbb4ea6dc554b6f2880395de0b0abc091d904a921c41cdca9c87138d80",
+        "control_output_sha256": "356189a4f5db6b1130808b261d33b1ef58d561f5f95f97fcc29f8a05b5046da8",
+        "first_token_mismatch_zero_based_index": 82
+      },
+      "laguna-lc-08192-middle": {
+        "candidate_output_sha256": "66d879c7594494d0843cce67ac8547b9902c82fa27373fb88269297a848cbaa0",
+        "control_output_sha256": "b5cdacfcd73f3d8718ffbd76941da01d25679c15dab41ea65158f97d57305dd2",
+        "first_token_mismatch_zero_based_index": 82
+      },
+      "laguna-lc-16384-middle": {
+        "candidate_output_sha256": "5253fc8c77f0807cb97eed7e46e3e4ec689279391b6ec3b0f2a07bbf8f808a75",
+        "control_output_sha256": "78d076bd993d5ca6db43e9e8737cf5496c9c1c0a1a2edff53ab35576f43bec89",
+        "first_token_mismatch_zero_based_index": 81
+      },
+      "laguna-lc-24576-middle": {
+        "candidate_output_sha256": "67688959a07b609642430bfd69fb992f7d2f46c345dde323fbf36be0f0189c1e",
+        "control_output_sha256": "aa588273b5d555ca65a2c3d2b528fa41cf06acc738d9a6777e9eb50840458749",
+        "first_token_mismatch_zero_based_index": 67
+      },
+      "laguna-lc-32640-early": {
+        "candidate_output_sha256": "a2b3431157acc56ed3f85df4adfb369020614294781f601f71d505c21194c67c",
+        "control_output_sha256": "154c7d6e19b3e2f5502c9dba4cc64c16601d0762a808f23b4d12792cae24b423",
+        "first_token_mismatch_zero_based_index": 91
+      },
+      "laguna-lc-32640-late": {
+        "candidate_output_sha256": "977657501d9913e2713fcd96aa9ca3f42766dc5b77389cf2bd18e5186ad24eaa",
+        "control_output_sha256": "81693123739ba7b223f7da369de4192d4deed81fd95db0452490c340650826a3",
+        "first_token_mismatch_zero_based_index": 76
+      },
+      "laguna-lc-32640-middle": {
+        "candidate_output_sha256": "623ebc2ce4ede43c6e70fa390c6887c6fa292495d66d2bfe034415b9800a647d",
+        "control_output_sha256": "eae64546fb3df2e9870f93f5c733003d8ea7fa360b127af5b3f8d609abf4178e",
+        "first_token_mismatch_zero_based_index": 85
+      }
+    },
+    "failed_rows_count": 8,
+    "failure_scope": "all selected long rows at or above 8192 tokens",
+    "intrinsic_checks_other_than_oracle": "PASS_ALL_ROWS",
+    "max_num_batched_tokens": 8202,
+    "max_num_scheduled_tokens": 8192,
+    "prompt_hashes_equal": "12/12",
+    "row_count": 12,
+    "runtime_budget_proof": "vLLM non-default args contains max_num_batched_tokens=8202 and max_num_scheduled_tokens=8192",
+    "spec_position_counter_consistent": "12/12",
+    "status": "FAIL"
+  },
+  "cleanup": {
+    "candidate_device_error_status": 0,
+    "candidate_original_status": 1,
+    "candidate_stop_status": 0,
+    "control_device_error_status": 0,
+    "control_original_status": 0,
+    "control_stop_status": 0,
+    "final_gemma_quad_units": "INACTIVE",
+    "final_kernel_taint": 0,
+    "final_postpair_device_error_scan": "EMPTY",
+    "current_protected_listeners": 0,
+    "final_swap_layout": "/swap.img:8388604 kB",
+    "pair_wrapper_exit_status": 1,
+    "temporary_swap_removed": true,
+    "xpu_process_capture_gate": "PASS_BOTH_ARMS"
+  },
+  "control": {
+    "control_only_analyzer": "PASS",
+    "effective_scheduled_tokens": 8182,
+    "max_num_batched_tokens": 8192,
+    "max_num_scheduled_tokens": "auto",
+    "oracle_exact_rows": "12/12",
+    "status": "PASS_ORACLE_EXACT"
+  },
+  "created_at_utc": "2026-08-03T00:06:15Z",
+  "eligibility": {
+    "localmaxxing_submitted": false,
+    "performance_claim_allowed": false,
+    "promotion_allowed": false,
+    "wide_prefill_dependency_satisfied": false
+  },
+  "identity": {
+    "kernel_commit": "99886d783372e621941228250091dc8ebdc1595d",
+    "lock_sha256": "e0f89ec9912f931c96bad11429f4e3dc1477845ee67fa9d965ce4ea858c42d01",
+    "model_manifest_sha256": "45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac",
+    "model_verification": "PASS_SHA256SUM_ALL_FILES",
+    "oracle_sha256": "f493347a9cf94125096ac62033f5210922f16e2ae0092687717c1a32c49b4d8d",
+    "recovery_boot_id": "ee67272f-9fee-41cf-9a37-b9eaa438a5cf",
+    "repo_head": "76880c691a21222a92ba50535212ad46ffd8470e",
+    "swap_total_kb": 25165816,
+    "vllm_commit": "4ddb915284d4442885f72bed48311fd04640977c"
+  },
+  "matched_equality": {
+    "complete_speculative_counters_equal": "4/12",
+    "output_token_ids_equal": "4/12",
+    "prompt_token_hashes_equal": "12/12",
+    "text_hashes_equal": "4/12"
+  },
+  "performance_diagnostic_only": {
+    "16384": {
+      "candidate_prefill_median": 7702.828371762976,
+      "candidate_ttft_median": 2.15109707900001,
+      "control_prefill_median": 6483.06888610852,
+      "control_ttft_median": 2.5499752279997665,
+      "count": 1,
+      "decode_ratio": 1.014642236974847,
+      "prefill_ratio": 1.1881453840893275,
+      "ttft_ratio": 0.843575676885049
+    },
+    "24576": {
+      "candidate_prefill_median": 7551.74099494994,
+      "candidate_ttft_median": 3.2827613209997253,
+      "control_prefill_median": 6512.793082420092,
+      "control_ttft_median": 3.7941466460001725,
+      "count": 1,
+      "decode_ratio": 1.009271067411307,
+      "prefill_ratio": 1.1595241702571923,
+      "ttft_ratio": 0.8652173010920508
+    },
+    "32640": {
+      "candidate_prefill_median": 7399.626687518075,
+      "candidate_ttft_median": 4.44373567599996,
+      "control_prefill_median": 7365.804702553309,
+      "control_ttft_median": 4.465648381999927,
+      "count": 3,
+      "decode_ratio": 0.9964431823942976,
+      "per_row_decode_ratios": {
+        "early": 0.9781160193752014,
+        "late": 1.0175952979129232,
+        "middle": 0.9935011614401293
+      },
+      "prefill_ratio": 1.0045917569540015,
+      "ttft_ratio": 0.9950930516409908
+    },
+    "8192": {
+      "candidate_prefill_median": 7902.9642484036995,
+      "candidate_ttft_median": 1.055819991000135,
+      "control_prefill_median": 5348.95656287686,
+      "control_ttft_median": 1.5463648140002988,
+      "count": 3,
+      "decode_ratio": 0.9931807335079285,
+      "prefill_ratio": 1.4774777389766656,
+      "ttft_ratio": 0.682775488320139
+    },
+    "all_preregistered_speed_thresholds": true,
+    "sentinel": {
+      "count": 3,
+      "decode_ratio": 0.9858528636068467
+    },
+    "warning": "These measurements are diagnostic only because candidate correctness failed."
+  },
+  "schema": "laguna-scheduler-alignment-ab-result-v1",
+  "status": "REJECT_CORRECTNESS",
+  "topology": {
+    "candidate": {
+      "draft_capture_14_13": 4,
+      "draft_replay_14_13": 4,
+      "target_capture_146_145": 4,
+      "target_replay_146_145": 4
+    },
+    "control": {
+      "draft_capture_14_13": 4,
+      "draft_replay_14_13": 4,
+      "target_capture_146_145": 4,
+      "target_replay_146_145": 4
+    }
+  }
+}

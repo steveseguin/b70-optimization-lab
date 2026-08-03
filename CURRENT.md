@@ -148,23 +148,28 @@ The authorized clean reboot and bounded post-reboot gate are now complete:
 all four one-shot device probes and the single corrected TP4 collective passed,
 with clean teardowns and no device-error journal match. Evidence is sealed at
 `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/device-recovery-scheduler-gate-20260802T231513Z`.
-The mixed-depth hypothesis remains unmeasured. The next model lane is the
-configuration-only 8,202/8,192 long scheduler-budget alignment in
+The mixed-depth hypothesis remains unmeasured. The configuration-only
+8,202/8,192 long scheduler-budget alignment is now complete and rejected in
 [`2026-08-02-long-scheduler-budget-alignment-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-long-scheduler-budget-alignment-preregistration.md).
+Control passed 12/12 repeat-oracle exact. Candidate B changed token IDs and
+text on all eight selected long rows at or above 8K, despite passing every
+intrinsic check and every diagnostic speed threshold; it is not promotable and
+was not retried or submitted. Result:
+[`2026-08-02-scheduler-alignment-result.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-scheduler-alignment-result.md).
 The subsequent default-off wide-prefill Q/K normalization plus RoPE fusion is
-also implemented and host-validated in isolated source commits vLLM
+implemented and host-validated in isolated source commits vLLM
 `1234ff004` and XPU kernels `a67a39624`. Its XPU component gate remains unrun
-and its endpoint gate is additionally dependent on the scheduler-alignment
-A/B passing; see
+and is not authorized because its scheduler-alignment dependency failed; see
 [`2026-08-02-wide-prefill-qknorm-rope-preregistration.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-wide-prefill-qknorm-rope-preregistration.md).
 Steve authorized device recovery on 2026-08-02. The one clean reboot and the
 bounded post-reboot single-card plus corrected four-rank collective gate passed
 under the registration in
 [`2026-08-02-device-recovery-scheduler-alignment-gate.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-02-device-recovery-scheduler-alignment-gate.md).
 No FLR, driver reload, unbind/rebind, shared-memory deletion, or automatic retry
-ladder was used. The scheduler A/B remains the first model work after the
-complete recovery pass; its pre-execution audit amendment, fixed repeat oracle,
-and fail-closed pair analyzer are recorded in the scheduler preregistration.
+ladder was used. The scheduler A/B was the first model work after the complete
+recovery pass and ended cleanly as a correctness no-go. There is no currently
+authorized successor model experiment; any follow-up needs a new
+preregistration.
 
 The old post-FLR `0/4` claims remain invalid historical evidence because the
 probe wrapper never launched its Python source. They must never be used to

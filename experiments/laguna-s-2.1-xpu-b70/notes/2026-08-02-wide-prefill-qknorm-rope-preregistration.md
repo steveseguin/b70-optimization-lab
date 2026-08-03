@@ -2,10 +2,17 @@
 
 Date registered: 2026-08-02 America/Toronto
 
-Status: isolated source and host validation complete; XPU component and endpoint
-validation remain blocked by the recorded device reset state and the scheduler
-alignment dependency. No device probe, component run, service, reset, or
-recovery action was performed for this treatment.
+Status: **CLOSED UNRUN — dependency failed**. Isolated source and host
+validation completed, but the scheduler-alignment candidate was not
+output-exact. The earlier device reset state was recovered separately; it no
+longer controls this decision. No XPU component, aggregator, or endpoint run
+was performed for this treatment.
+
+Result update: the scheduler gate in
+`2026-08-02-long-scheduler-budget-alignment-preregistration.md` ended
+`REJECT_CORRECTNESS`. Therefore the commands retained below are unauthorized
+historical instructions and must not be executed under this preregistration.
+Any revival requires a new preregistration and a new valid scheduler identity.
 
 ## Offline implementation checkpoint
 
@@ -58,9 +65,10 @@ per-shape timing enforcement, and durable failure JSON. The companion
 and enforces the 25 ms aligned-prefill projected-saving gate. These XPU gates
 are implemented but intentionally unrun.
 
-After authorized recovery, run one process at a time with the physical card
-isolated by `ZE_AFFINITY_MASK`. For each `rank` in `0..3` and each `rows` in
-`1024 4096 8064 8192`, use this command shape with a unique JSON output:
+The originally planned, now unauthorized component command would have run one
+process at a time with the physical card isolated by `ZE_AFFINITY_MASK`. For
+each `rank` in `0..3` and each `rows` in `1024 4096 8064 8192`, the preserved
+historical command shape was:
 
 ```bash
 ZE_AFFINITY_MASK="$rank" \
@@ -71,9 +79,10 @@ PYTHONPATH=/home/steve/src/laguna-vllm-wide-prefill-qknorm-rope-20260802:/home/s
   --out "$run_dir/rank${rank}-rows${rows}.json"
 ```
 
-Then aggregate all 16 JSON files; the aggregator rejects a missing/duplicate
-rank-row identity, any failed component row, or any rank below the 25 ms
-aligned 32,640-token projected-saving threshold:
+The historical plan then aggregated all 16 JSON files. Do not run this
+aggregator now. It rejects a missing/duplicate rank-row identity, any failed
+component row, or any rank below the 25 ms aligned 32,640-token projected-
+saving threshold:
 
 ```bash
 /home/steve/.venvs/deepseek-v4-xpu/bin/python \
@@ -150,19 +159,21 @@ before endpoint work.
 
 ## Endpoint dependency and gate
 
-Source and host tests may proceed offline. No XPU component may run in the
-current `0000:47:00.0` reset-loop state. The scheduler-budget A/B in
-`2026-08-02-long-scheduler-budget-alignment-preregistration.md` must pass
-before this treatment may enter a model endpoint.
+Source and host tests completed offline. The former `0000:47:00.0` reset-loop
+state was later recovered, but the scheduler-budget A/B in
+`2026-08-02-long-scheduler-budget-alignment-preregistration.md` failed its
+mandatory exactness gate. No XPU component, aggregator, or model endpoint is
+authorized.
 
-If both dependencies pass, compare selector off/on under the winning aligned
-8,202/8,192 q12 identity, with one 1K warmup, all three 32,640-token rows, and
-their sentinels. Require exact repeat-oracle output and prompt hashes, q1-exact
-sentinels, retrieval and cache-zero passes, identical accepted/drafted/cycle
-counters, exact 146/145 target and 14/13 draft topology on every rank, and
-clean memory/teardown gates. The candidate 32K median must reach at least
-1.01x prefill throughput, at most 0.99x TTFT, and at least 0.98x conventional
-decode, with no long decode row below 0.95x control.
+The unexecuted endpoint plan would have compared selector off/on under a valid
+aligned q12 scheduler identity, with one 1K warmup, all three 32,640-token
+rows, and their sentinels. Its frozen gates are retained for history only:
+exact repeat-oracle output and prompt hashes, q1-exact sentinels, retrieval and
+cache-zero passes, identical accepted/drafted/cycle counters, exact 146/145
+target and 14/13 draft topology on every rank, and clean memory/teardown. The
+candidate 32K median would have needed at least 1.01x prefill throughput, at
+most 0.99x TTFT, and at least 0.98x conventional decode, with no long decode
+row below 0.95x control.
 
 This is a prompt-processing treatment. It cannot change the protected short
 decode record or produce a LocalMaxxing submission.

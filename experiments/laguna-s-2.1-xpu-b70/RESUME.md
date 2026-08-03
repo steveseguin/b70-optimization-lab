@@ -37,18 +37,22 @@ TP4 collective passed without retry, the collective had `4/4` clean teardowns,
 and the bounded journal scan stayed clear. Evidence is sealed at
 `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/device-recovery-scheduler-gate-20260802T231513Z`.
 
-The next matched model gate is the configuration-only scheduler alignment:
-control 8,192/auto=8,182 versus candidate 8,202/explicit=8,192, under the
-default-off exact-prefill source `4ddb91528`. Its launcher and fail-closed
-identity are committed in the main repository; follow
+The matched configuration-only scheduler alignment is complete: control
+8,192/auto=8,182 passed 12/12 repeat-oracle exact, while candidate
+8,202/explicit=8,192 changed token IDs and text on all eight selected long
+rows at or above 8K. The candidate passed its intrinsic checks and all
+diagnostic speed thresholds, but exactness is mandatory; the treatment is
+rejected, was not retried, and produced no submission. See
 [`2026-08-02-long-scheduler-budget-alignment-preregistration.md`](notes/2026-08-02-long-scheduler-budget-alignment-preregistration.md)
-exactly. Its pre-execution amendment fixes the representative cases, repeat
-oracle, temporary-swap enforcement, one-shot A-before-B wrapper, and complete
-classifier. No scheduler service has started yet.
+and
+[`2026-08-02-scheduler-alignment-result.md`](notes/2026-08-02-scheduler-alignment-result.md).
+Both services stopped cleanly, device scans remained clear, and the temporary
+swap file was removed.
 
-A subsequent source treatment is ready offline but must not enter an endpoint
-until that A/B passes. It fuses exact wide-prefill Q/K RMSNorm plus NeoX RoPE
-under a default-off selector:
+A subsequent source treatment remains ready offline, but its required A/B
+failed, so it must not enter a component or endpoint gate under the current
+preregistration. It fuses exact wide-prefill Q/K RMSNorm plus NeoX RoPE under a
+default-off selector:
 
 - vLLM `1234ff004d57f1f0c102bd2afff9690c16bf995a`;
 - XPU kernels `a67a396245696a9df2a8929b445c721fa8899c92`;
@@ -58,17 +62,24 @@ under a default-off selector:
 
 The oneAPI 2025.3 build, dispatcher registration, kernel static tests, 51
 focused vLLM tests, Ruff checks, and independent source audit pass. Raw-BF16
-XPU equivalence and performance remain explicitly unverified. Only after the
-scheduler pair passes, run the four-row/four-rank component gate and aggregator
-described in
+XPU equivalence and performance remain explicitly unverified. Its required
+scheduler dependency failed, so do not run the four-row/four-rank component
+gate, aggregator, or endpoint described in
 [`2026-08-02-wide-prefill-qknorm-rope-preregistration.md`](notes/2026-08-02-wide-prefill-qknorm-rope-preregistration.md).
 
-Current result and exact artifacts:
+No successor model experiment is currently authorized. Preserve the rejected
+scheduler artifacts and require a new preregistration for any follow-up that
+changes long-prefill partitioning or arithmetic.
+
+The remaining material below is historical lane context, not authorization to
+run another component, model, or endpoint gate.
+
+Current promoted result and exact artifacts:
 [`2026-07-31-shared-elementwise-m12-record.md`](notes/2026-07-31-shared-elementwise-m12-record.md).
-The next bounded exact work should continue reducing real device submissions
-inside captured graph segments or the dominant MoE mainloop. The remaining
-conventional gap to 130 is `4.5380268362249 tok/s` (`3.6170536154%` relative
-to the current row).
+Before this closeout, the research direction was to continue reducing real
+device submissions inside captured graph segments or the dominant MoE
+mainloop. The remaining conventional gap to 130 is `4.5380268362249 tok/s`
+(`3.6170536154%` relative to the current row). This is strategic context only.
 
 The latest bounded grouped-MoE scheduling screen is closed. Full packed
 N-major ordering and the complete preregistered C=4/8/16 hybrid chunk sweep
@@ -79,20 +90,22 @@ four-rank smoke, endpoint run, or recovery action followed. Do not retry this
 interleave family or count it as headroom. See
 [`2026-08-01-m12-hybrid-nchunk-preregistration.md`](notes/2026-08-01-m12-hybrid-nchunk-preregistration.md).
 
-The exact small-component portfolio passed its preregistered one-B70
-component gate and is the active bounded treatment. It combines the exact M12
-mapped gather/scale/add tail with the jointly compiled no-K-loop-barrier and
-scale-lane-dedup grouped kernel. All 12 raw-BF16 comparisons passed, inputs
-were immutable, and the direct joint saving was `0.3082524 ms/cycle` against a
+The exact small-component portfolio previously passed its preregistered one-B70
+component gate and was the active bounded treatment at that time. It combines
+the exact M12 mapped gather/scale/add tail with the jointly compiled no-K-loop-
+barrier and scale-lane-dedup grouped kernel. All 12 raw-BF16 comparisons
+passed, inputs were immutable, and the direct joint saving was
+`0.3082524 ms/cycle` against a
 frozen `0.30 ms/cycle` threshold. Candidate-only vLLM/XPU integration and its
 runtime lock are committed. The first non-scored TP4 smoke stopped before
 model loading at the oneCCL PCIe-topology initialization boundary and timed
 out; no request or candidate dispatch occurred. Teardown and post-failure idle
-checks passed, and no reset/reboot/retry occurred. Collective health must be
-restored under separate authorization before the model gate can be attempted;
-there is no endpoint result yet. Resume from
+checks passed, and no reset/reboot/retry occurred. Collective health was later
+restored, but this portfolio has no current model-gate authorization and still
+has no endpoint result. Do not resume it without a new preregistration; its
+historical record is
 [`2026-08-01-exact-small-component-portfolio-preregistration.md`](notes/2026-08-01-exact-small-component-portfolio-preregistration.md)
-and preserve the protected record trees.
+and the protected record trees must remain preserved.
 
 Do not implement the proposed paired-K32 split-barrier variant. A follow-up
 dominance audit found it is subsumed by the exact full-removal result: retaining
