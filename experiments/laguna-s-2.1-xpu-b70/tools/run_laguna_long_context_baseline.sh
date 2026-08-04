@@ -373,11 +373,6 @@ common_env=(
   ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3
   CCL_ATL_TRANSPORT="${CCL_ATL_TRANSPORT:-ofi}" CCL_TOPO_P2P_ACCESS=1
   FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface"
-  # All four B70s are local, so the OFI provider decides collective latency.
-  # A 12-row decode step moves ~73 KiB per allgatherv yet measures ~122 us,
-  # about 0.6 GB/s -- latency-bound, not bandwidth-bound. Empty keeps whatever
-  # libfabric selects by default.
-  FI_PROVIDER="${FI_PROVIDER:-}"
   TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path"
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1
   VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_USE_AOT_COMPILE=0
@@ -398,6 +393,9 @@ common_env=(
   LAGUNA_PROFILE_DELAY="${LAGUNA_PROFILE_DELAY:-6}"
   LAGUNA_PROFILE_ITERS="${LAGUNA_PROFILE_ITERS:-25}"
 )
+# An empty FI_PROVIDER is not the same as unset: libfabric then matches no
+# provider and oneCCL fails ATL init. Only pass it when actually chosen.
+[[ -z "${FI_PROVIDER:-}" ]] || common_env+=(FI_PROVIDER="$FI_PROVIDER")
 if [[ "$role" == candidate ]]; then
   common_env+=(
     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1
