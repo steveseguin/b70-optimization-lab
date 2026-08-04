@@ -40,7 +40,11 @@ ROLES: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("collective", re.compile(r"ccl|allreduce|all_reduce|allgather|all_gather|"
                               r"reduce_scatter|reducescatter|all2all|alltoall", re.I)),
     ("moe-gemm", re.compile(r"grouped_gemm|moe|expert|gate_up|down_mm|w1|w2|w3", re.I)),
-    ("attention", re.compile(r"attn|attention|flash|paged|rope|qk_norm|kv_cache", re.I)),
+    # fmha must precede the gemm rule: the cutlass FMHA decode kernels carry
+    # "gemm"-adjacent names but are attention, and misfiling them understates
+    # attention by ~16% of device time.
+    ("attention", re.compile(r"attn|attention|flash|fmha|paged|rope|qk_norm|"
+                             r"kv_cache|reshape_and_cache|splitk|decode", re.I)),
     ("dequant", re.compile(r"dequant|awq|gptq|int4|unpack|woq", re.I)),
     ("gemm", re.compile(r"gemm|matmul|linear|mm_|xetla|cutlass|brgemm", re.I)),
     ("norm", re.compile(r"norm|rms|layernorm", re.I)),
