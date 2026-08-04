@@ -123,6 +123,14 @@ common_args+=(
 if [[ "$max_num_scheduled_tokens" != auto ]]; then
   common_args+=(--max-num-scheduled-tokens "$max_num_scheduled_tokens")
 fi
+# Async scheduling overlaps host-side preparation of step N+1 with device
+# execution of step N. The shared-elementwise contract forbids it, so it has
+# never been measured on this stack -- and sampling puts ~41% of decode wall
+# clock in host frames that block on the device queue, which is exactly what
+# overlapping would hide. Default off; diagnostic only.
+if [[ "${LAGUNA_ASYNC_SCHED:-0}" == 1 ]]; then
+  common_args+=(--async-scheduling)
+fi
 # Kernel-time profiling arm. ProfilerConfig.compute_hash has no factors, so
 # these flags cannot perturb the compiled graph or the runner identity; the
 # served configuration is the same one the timings were taken on. Iteration
