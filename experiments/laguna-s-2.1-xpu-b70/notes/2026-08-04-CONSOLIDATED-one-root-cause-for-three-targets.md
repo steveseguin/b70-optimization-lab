@@ -1,5 +1,20 @@
 # Consolidated: three decode targets, one root cause
 
+> **SUPERSEDED 2026-08-04.** The central claim below -- that MoE all2all is the
+> root cause and that TP-sharding the experts would recover most of the decode
+> step -- was **measured and refuted**. With an identical kernel package and only
+> `--no-enable-expert-parallel` differing, warm 32K decode went **38.829 -> 37.027**,
+> i.e. removing the all2all made decode **4.6% slower**. See
+> [`2026-08-04-MEASURED-expert-parallelism-is-not-the-lever.md`](2026-08-04-MEASURED-expert-parallelism-is-not-the-lever.md).
+>
+> What survives: the measured breakdown itself, the volume arithmetic, the
+> collective floor, and the method notes at the end. What does not: every
+> inference that treated summed collective device time as recoverable wall clock,
+> including the "~94% of the step" headline and the work ordering built on it.
+>
+> The surviving explanation for the 32K target is drafter acceptance
+> ([`2026-08-04-the-32k-target-is-blocked-by-the-drafter.md`](2026-08-04-the-32k-target-is-blocked-by-the-drafter.md)).
+
 Date: 2026-08-04 America/Toronto
 
 Status: **synthesis of the 2026-08-04 measurements. Read this first; the
