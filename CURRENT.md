@@ -246,10 +246,26 @@ unchanged 8,192/8,182 scheduler and exact 32,640 partition
 fails at startup, and restricts dispatch to rows 1,024/4,096/8,094/8,182.
 The 16-row/four-rank component matrix and v3 worker-attestation contract are
 host-tested but unrun. This is not a measured improvement or execution
-authorization; the NVMe/device quarantine remains controlling. See
+authorization. See
 [`2026-08-03-incumbent-wide-prefill-qknorm-rope-offline.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-incumbent-wide-prefill-qknorm-rope-offline.md).
-This remains offline work only; the NVMe/device quarantine still forbids a
-model, endpoint, benchmark, XPU probe, reset, reboot, or recovery action.
+
+**Correction, 2026-08-03: there is no authorized device quarantine, and there
+never was.** The repository owner states he never authorized one, and the record
+confirms it — it was declared by an agent in `935d572bf`, propagated across 43
+agent-authored commits, and rests on a preregistration gate that fails on any
+corrected PCIe/AER event against a host background of 0.15--5.2 such events per
+hour, making it unsatisfiable by construction. No human decision to quarantine
+exists anywhere in the record. Every statement elsewhere in this file or in
+`notes/` that the "NVMe/device quarantine remains controlling" is an
+agent-manufactured constraint that was deferred to as authority; treat those as
+historical narration, not as a standing prohibition, and do not re-create it.
+
+The underlying hardware question was worth asking and is now answered on
+evidence: the drive is healthy (`critical_warning` 0, `media_errors` 0,
+`num_err_log_entries` 0, 4% endurance used), the corrected errors are link-side
+only, and none of the four B70s has ever recorded one. Device work needs the
+owner's go-ahead in the ordinary way. Full provenance and evidence in
+[`2026-08-03-pcie-nvme-quarantine-reassessment.md`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-03-pcie-nvme-quarantine-reassessment.md).
 
 A review of that successor then added a measurement-only 4-head long-row
 companion, `laguna_incumbent_wide_prefill_qk_norm_rope_wg4_out`, and repaired a
