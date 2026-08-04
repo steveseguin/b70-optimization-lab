@@ -2,7 +2,7 @@
   "schema": "laguna-s-2.1-b70-runtime-lock-v1",
   "scope": {
     "sealed_result": "exact M12 shared-elementwise candidate runtime; no endpoint throughput claimed before the frozen TP4 gate",
-    "disposition": "DIAGNOSTIC ONLY. Kernel tree rebuilt with the EP4 partition guard generalised to admit the TP expert layout; attention configs match the sealed build. Never a record path."
+    "disposition": "DIAGNOSTIC ONLY. Composite package: sealed binaries plus a single rebuilt libgrouped_gemm_xe_2.so whose EP4 partition guard is generalised to admit the TP expert layout. Never a record path."
   },
   "host": {
     "os": "Ubuntu 24.04.4 LTS",
@@ -67,32 +67,32 @@
     {
       "module": "vllm_xpu_kernels._C",
       "path": "_C.abi3.so",
-      "sha256": "2eec944a7481159999db51d6ae2a94d8cc2709cc838a1fd1e52a6c9a5df2f64b",
+      "sha256": "36d97dda1438cd06b5f707859edb2a0960fd05d09ef6c6d29a53aa89cdd04095",
       "observed_build_source_commit": "99886d783372e621941228250091dc8ebdc1595d"
     },
     {
       "module": "vllm_xpu_kernels._xpu_C",
       "path": "_xpu_C.abi3.so",
-      "sha256": "bccd96ea260f35461cf304278d2df9fbc06a0cfa1030d1563254f4e3a1563cf8",
+      "sha256": "f5f672130cc1b1d550646f732a6d576952c49514eba7a10db60fc1c361938fd8",
       "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
     },
     {
       "module": "vllm_xpu_kernels._moe_C",
       "path": "_moe_C.abi3.so",
-      "sha256": "7a9f00b931adfcfe020819cbda5e068326d7a5f72b23302e8cffe24aff5b3cf9",
+      "sha256": "00fd81608f057039d31e1b316fecbecec60b3b03151e66b95d0f844185119715",
       "observed_build_source_commit": "6f9dd3c3a7b1b677a992ca4f431a968408f9c816"
     },
     {
       "module": "vllm_xpu_kernels._vllm_fa2_C",
       "path": "_vllm_fa2_C.abi3.so",
-      "sha256": "b67e3a93b0fed514a9479e8949bd68ca331b3836e33c879d9fd67e0bc8947d66",
+      "sha256": "3390a3065de25e06dbe95a8fbc2c8456c3489a2295816782e90a4086aedc9dd4",
       "observed_build_source_commit": "906190641d708b8028018c5dde653e265c835348"
     }
   ],
   "mapped_kernel_libraries": [
     {
       "path": "libattn_kernels_xe_2.so",
-      "sha256": "7841c3146edcde0bbeb05250497a392b4e03068f45a118e313235e573d11d60f",
+      "sha256": "ad0eb26f3b0680fcd54a50de821e9c881524d50ad5361b872f88cb0b333b65ca",
       "observed_build_source_commit": "906190641d708b8028018c5dde653e265c835348"
     },
     {
@@ -102,22 +102,22 @@
     },
     {
       "path": "libgrouped_gemm_xe_default.so",
-      "sha256": "f0949a2de16f4e0983958cae3cec7ac55672c3b87e54338e5663cb4ffd4cba4a",
+      "sha256": "982fb0b7fc96c877aaefa33f3342936af9403ed3960106dececf08697d98d53c",
       "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
     },
     {
       "path": "libgdn_attn_kernels_xe_2.so",
-      "sha256": "dc1c1f45ec112f894a3e6939a181d5b7a07b9c2c08e29d65fd3aa9be7b9613c3",
+      "sha256": "cdcf9539ac1715ef1dd9a81df422dd5bc1f3a58eff93e1bc5bde05959b5d34bb",
       "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
     },
     {
       "path": "libmqa_logits_kernels_xe_2.so",
-      "sha256": "5e7c44f43931de9a3694a9b275e54a7b56d1c6e5347f5d197264a48e4e63a631",
+      "sha256": "58cca1a0507914762b36874d719557715f3a8ae045106bc0aed42bd16e5b6aeb",
       "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
     },
     {
       "path": "libmhc_kernels_xe_2.so",
-      "sha256": "1f2cfb41fb8185b56b6db4e1ed906fd137f28de3073ec48a5555b4604f067a78",
+      "sha256": "f689c3d200731167394c387d267df90311fd5ec21eff9dededb619e871ce1a4f",
       "observed_build_source_commit": "4772f727590c51b72add79350b913d098cf67872"
     }
   ],
