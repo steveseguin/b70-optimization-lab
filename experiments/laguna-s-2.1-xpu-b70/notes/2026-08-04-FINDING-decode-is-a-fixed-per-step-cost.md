@@ -75,6 +75,50 @@ unexamined term left.
 All three now reduce to the same question: **what consumes 25-31 ms per step
 when only 2.2 ms is device compute?**
 
+## The serving configuration pays this cost once per request, not once per token
+
+Every measurement in this campaign runs `--max-num-seqs 1`: a single sequence,
+one step at a time. A fixed ~25-31 ms per step is therefore charged against
+1.08 tokens at 32K and 3.66 at short context, which is exactly why throughput
+tracks tokens-per-step so closely.
+
+**A deployed server batching concurrent requests amortises that same fixed cost
+across every sequence in the batch.** Nothing measured here bounds aggregate
+throughput under concurrency; these figures bound *single-stream* decode with a
+batch of one. For "a real world deployed system", the fixed cost is the strongest
+argument for serving concurrent requests, and the gap between single-stream and
+batched throughput on this stack is unmeasured.
+
+That is worth stating plainly because it cuts both ways: it does not help the
+stated single-stream targets at all, and it may matter more than any of them for
+actual deployment.
+
+## What the host trace can and cannot show
+
+Host spans from the warm trace, per step:
+
+```
+execute_context_0(0)_generation_1(12)   59.99 ms   (outer span, overlaps all)
+c10d::_allgather_base_                  12.17 ms   n=98
+_vllm_fa2_C::varlen_fwd                  6.59 ms   n=48
+c10d::allreduce_                         1.83 ms   n=14
+```
+
+Three further spans -- `aten::copy_`, `aten::to`, `aten::_to_copy` -- report
+~54 s each, one capture-boundary artifact per span, the same distortion seen in
+the collective events. And `execute_context` at 59.99 ms exceeds the measured
+27.9 ms step, so the outer spans overlap or include waiting.
+
+The profiler therefore cannot attribute the fixed cost: its spans include the
+waiting they are meant to explain. The allgather's 12.17 ms is the clearest
+case -- removing 95% of its bytes changed decode by -4.6%, so that time is
+blocking, not transferring.
+
+**Attribution needs differential measurement, not tracing.** Two such
+measurements are already done and both null (expert parallelism, draft depth).
+The next candidates are `max_num_seqs`, which tests the amortisation directly,
+and a host-side timer around the scheduler and sampler.
+
 ## Boundaries
 
 Warm server, cold prefix cache, TP4, util 0.80. The qdepth arms disable the M12
