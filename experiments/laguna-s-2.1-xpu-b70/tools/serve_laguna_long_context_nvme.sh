@@ -10,6 +10,16 @@ role="${1:?usage: serve_laguna_long_context_nvme.sh candidate|teacher RUN_DIR}"
 run_dir="${2:?usage: serve_laguna_long_context_nvme.sh candidate|teacher RUN_DIR}"
 readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
+# Diagnostic drafter override. The rejection sampler sets the emitted token to
+# the target's argmax unconditionally, so the drafter cannot change output --
+# only how many positions are accepted. Swapping it is therefore speed-only, and
+# the output SHA in bench.json proves it. An override copy carries no pinned
+# revision, so the revision field is dropped for it.
+if [[ -n "${LAGUNA_DRAFT_ROOT_OVERRIDE:-}" ]]; then
+  readonly draft_revision_field=""
+else
+  readonly draft_revision_field="\"revision\":\"$draft_revision\","
+fi
 readonly max_model_len="${LAGUNA_MAX_MODEL_LEN:-32768}"
 readonly max_num_batched_tokens="${LAGUNA_MAX_NUM_BATCHED_TOKENS:-8192}"
 readonly max_num_scheduled_tokens="${LAGUNA_MAX_NUM_SCHEDULED_TOKENS:-auto}"
@@ -381,7 +391,7 @@ if [[ "$role" == candidate ]]; then
   else
     common_args+=(
       --speculative-config
-      "{\"method\":\"dflash\",\"model\":\"$LAGUNA_NVME_DRAFT_ROOT\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":false}"
+      "{\"method\":\"dflash\",\"model\":\"${LAGUNA_DRAFT_ROOT_OVERRIDE:-$LAGUNA_NVME_DRAFT_ROOT}\",${draft_revision_field}\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":false}"
     )
   fi
 else
