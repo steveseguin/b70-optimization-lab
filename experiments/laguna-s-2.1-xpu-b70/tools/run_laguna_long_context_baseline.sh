@@ -381,6 +381,7 @@ common_env=(
   LAGUNA_NOSPEC_GRAPH="${LAGUNA_NOSPEC_GRAPH:-0}"
   LAGUNA_NO_EP="${LAGUNA_NO_EP:-0}"
   VLLM_XPU_LAGUNA_ALLOW_NO_EP="${LAGUNA_NO_EP:-0}"
+  VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
 )
 if [[ "$role" == candidate ]]; then
   common_env+=(
