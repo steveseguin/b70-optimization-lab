@@ -191,9 +191,13 @@ if [[ "$role" == candidate ]]; then
         }
         # Transposed decode scales assume w13_scales(64, ...), i.e. the EP4
         # expert count, so they come off with the rest of the EP4-shaped path.
-        required_profile_values=(
-          "${required_profile_values[@]/VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES/}"
-        )
+        # Rebuild the array without that entry; a substitution would leave an
+        # empty element and ${!name} then fails on the empty name.
+        _kept=()
+        for _n in "${required_profile_values[@]}"; do
+          [[ "$_n" == VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES ]] || _kept+=("$_n")
+        done
+        required_profile_values=("${_kept[@]}")
       else
         required_profile_values+=(VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE)
       fi
