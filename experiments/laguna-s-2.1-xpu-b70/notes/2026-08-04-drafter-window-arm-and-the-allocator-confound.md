@@ -81,6 +81,29 @@ confirm it returns to ~7,345 prefill and ~39.589 decode before anything else is
 measured.** Pair it with the GuC 70.44.1 -> 70.54.0 firmware upgrade. Both need
 authorisation.
 
+## Non-reboot recovery is exhausted
+
+Everything short of a reboot was tried and none of it restores the host:
+
+| attempted | result |
+| :--- | :--- |
+| `xe` driver unbind + module reload (six times) | init still OOMs, 96 MiB refused with ~14 GiB free |
+| stock config on a *freshly reloaded* driver | same OOM -- the reload does not clear it |
+| `/dev/shm` leak from ~15 killed runs | clean, 96 KiB in 4 segments; not the cause |
+| host memory pressure | 79 GiB available; the failures are device-side |
+| `gpu_memory_utilization` 0.80 / 0.85 / 0.90 | all fail; raising it *increases* reported free memory while the same small allocation still fails |
+| `PYTORCH_ALLOC_CONF=expandable_segments:True` | initialises, but 2x slow prefill and 5x slow decode |
+
+The `free -g` accounting shows ~44 GiB unattributed to any process, which looked
+like a driver leak, but unloading the module does not reclaim it and 79 GiB
+remains available -- so it is a red herring for this failure.
+
+**A reboot is the remaining action, and it needs authorisation.** After it, the
+first thing to run is the stock configuration with no allocator flag and no
+profiler; it must return ~7,345 prefill and ~39.589 decode before any
+optimisation is evaluated, because nothing measured in the degraded state is
+comparable.
+
 ## Boundaries
 
 No quantisation change, no caching or speculation setting used to inflate any
