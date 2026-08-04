@@ -119,6 +119,61 @@ Decision rule: `critical_warning` nonzero, `media_errors` nonzero, or
 `percentage_used` near end-of-life means replace the drive and ship nothing. All
 clean means the corrected errors are link-side only.
 
+## GAP CLOSED — SMART result, 2026-08-03
+
+The user ran both commands. The controller reports clean on every criterion the
+rule named, and on every other health field it exposes:
+
+| field | value | reading |
+| :--- | :--- | :--- |
+| `critical_warning` | 0 | clean |
+| `media_errors` | **0** | no uncorrectable data errors, ever |
+| `num_err_log_entries` | **0** | controller error log is completely empty |
+| `percentage_used` | 4% | ~4% of rated endurance consumed |
+| `available_spare` | 100% (threshold 10%) | not one spare block consumed |
+| `temperature` | 40 °C (sensors 40/41) | cool |
+| `Warning`/`Critical Composite Temperature Time` | 0 / 0 | never ran hot |
+| `Thermal Management T1/T2 Trans Count` | 0 / 0 | never thermally throttled |
+| `endurance group critical warning` | 0 | clean |
+| `power_on_hours` | 761 | ~32 days powered |
+| `Data Units Written` | 24.33 TB | consistent with 4% of a ~600 TBW rating |
+| `Data Units Read` | 81.17 TB | heavy reads, as expected for repeated model loads |
+
+`num_err_log_entries = 0` is the decisive one. The controller has not logged a
+single internal error across 761 power-on hours and 81 TB of reads, while the
+PCIe link accumulated ~490 corrected receiver errors over the same device. That
+is the exact signature of a link-side signal-integrity nuisance with a healthy
+device behind it, and it independently corroborates the ext4 `errors_count = 0`
+finding above.
+
+**Verdict: the drive is healthy. The corrected errors are link-side only.** The
+last material gap in this assessment is closed, and no evidence anywhere in the
+system supports a failing device or an escalating fault.
+
+### One number worth noting, which is not a drive fault
+
+`unsafe_shutdowns` is **23 against 60 `power_cycles`** — 38% of power cycles
+ended uncleanly. Unsafe shutdowns are host-side events (power loss, hard reset,
+kernel panic), not drive defects, and no data loss followed: `media_errors`,
+`num_err_log_entries`, and the ext4 `errors_count` are all zero. It is
+nonetheless a real signal about how this host has been operated, and it is
+consistent with the campaign's recorded history of wedged collective stacks and
+GPU hangs followed by hard resets. Production should reduce that rate rather
+than accept it, because an unclean shutdown during a weights write is how a
+healthy drive still costs a service its data.
+
+### What this changes
+
+The technical basis for the quarantine is now resolved on both halves. The GPU
+half never had supporting evidence: zero corrected errors on any of the four
+B70s, by two independent mechanisms. The NVMe half is a healthy drive behind a
+marginal-but-stable link, with a filesystem that has never recorded an error.
+
+Lifting the quarantine remains a human decision and this note does not lift it.
+But the evidence now supports lifting it, and the gate that declared it still
+must be rewritten to a rate threshold on *uncorrectable* events, or it will
+re-declare the quarantine after the very next run regardless of this result.
+
 **Never write to an AER counter file.** Any write zeroes it, destroying the
 accumulated count and the only cheap trend baseline that exists. The same applies
 to `setpci` on the AER status register, and no NVMe or PCIe reset should be
