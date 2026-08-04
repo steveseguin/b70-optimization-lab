@@ -21,7 +21,9 @@ readonly venv_python="$venv_root/bin/python"
 readonly benchmark="$script_dir/bench_laguna_long_context.py"
 readonly service="$script_dir/serve_laguna_long_context_nvme.sh"
 readonly suite="${LAGUNA_LONG_SUITE:-$repo_root/experiments/laguna-s-2.1-xpu-b70/long-context-suite-v1.json}"
-readonly runtime_lock="$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/runtime-lock-shared-elementwise-m12.json"
+# The lock pins kernel binary SHA256s, so a deliberately rebuilt kernel tree
+# needs its own lock. Default unchanged; diagnostics point at their own.
+readonly runtime_lock="${LAGUNA_RUNTIME_LOCK:-$repo_root/experiments/laguna-s-2.1-xpu-b70/tools/runtime-lock-shared-elementwise-m12.json}"
 readonly runtime_verifier="$repo_root/repro/laguna-s-2.1-int4-b70-102tps-20260726/verify-runtime.py"
 readonly xpumem_module=/home/steve/src/deepseek-v4-xpu-kernels-qnorm-routeportfolio/vllm_xpu_kernels/xpumem_allocator.abi3.so
 readonly kernel_package="$kernel_root/vllm_xpu_kernels"
