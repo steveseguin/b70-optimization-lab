@@ -375,7 +375,10 @@ common_env=(
   FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface"
   TORCH_XCCL_ASYNC_ERROR_HANDLING=1 LD_LIBRARY_PATH="$native_library_path"
   VLLM_KV_CACHE_LAYOUT=NHD VLLM_XPU_EXACT_SPEC_ATTN=1
-  VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE=1 VLLM_USE_AOT_COMPILE=0
+  # The batched-exact MoE kernel asserts local_experts=64/ep_size=4, so it is
+  # also EP4-specific and must come off on BOTH arms of the EP-cost
+  # diagnostic. Default unchanged.
+  VLLM_XPU_LAGUNA_BATCHED_EXACT_MOE="${LAGUNA_BATCHED_EXACT_MOE:-1}" VLLM_USE_AOT_COMPILE=0
   LAGUNA_MAX_MODEL_LEN="$max_model_len"
   LAGUNA_MAX_NUM_BATCHED_TOKENS="$max_num_batched_tokens"
   LAGUNA_MAX_NUM_SCHEDULED_TOKENS="$max_num_scheduled_tokens"
