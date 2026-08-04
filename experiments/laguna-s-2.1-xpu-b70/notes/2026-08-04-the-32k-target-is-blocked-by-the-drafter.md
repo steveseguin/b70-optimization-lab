@@ -89,6 +89,60 @@ not. Speculation is currently buying **batch shape, not tokens**, at long
 context. That is worth stating plainly: the mechanism is real, but it is not the
 one the design intends.
 
+## The spec, in per-position acceptance
+
+Speculative decoding is sequential: one rejection discards the rest of the
+chain, so tokens/step = `1 + sum_{i=1..d} p^i` for per-position acceptance `p`
+at depth `d`. Inverting the measured tokens/step gives:
+
+| context | measured `p` |
+| ---: | ---: |
+| 1,024 | **73.3%** |
+| 4,096 | 53.1% |
+| 32,640 | **7.4%** |
+
+And what the targets demand:
+
+| target | tokens/step needed | required `p` | current `p` |
+| :--- | ---: | ---: | ---: |
+| 250 tok/s @ 1K | 6.00 | **86.1%** | 73.3% |
+| >150 tok/s @ 32K | 4.09 | **76.6%** | 7.4% |
+
+The 32K target requires `p = 76.6%`, which is **above the 73.3% this drafter
+achieves at 1K**. Restated precisely: the drafter would have to be better at
+32,640 tokens than it currently is at 1,024. That is the clearest statement of
+why the target is out of reach without a different drafter.
+
+## Deeper drafting does not help -- a negative result worth recording
+
+Prior notes list "deeper drafts trade more experts touched against more accepted
+tokens" as an open lever with an unswept crossover. It is not open. At the
+measured `p = 0.733`, the chain saturates almost immediately:
+
+| depth | tokens/step | tok/s at 24.0 ms/step |
+| ---: | ---: | ---: |
+| 11 (current) | 3.660 | 152.5 |
+| 15 | 3.725 | 155.2 |
+| 20 | 3.745 | 156.1 |
+| 30 | 3.751 | 156.3 |
+| 60 | 3.751 | 156.3 |
+
+Going from depth 11 to unbounded depth is worth **+2.5%**. The chain length is
+governed by `p`, not by `d`, and depth 11 already captures 97.6% of what any
+depth could deliver. Draft depth should be closed as a lever; the width-12 lock
+that constrains it costs almost nothing.
+
+## The alternative to acceptance is step time, and it is steeper
+
+Holding acceptance at today's values, the same targets need:
+
+- **250 @ 1K**: 14.6 ms/step against 24.0 ms today -- **1.64x**
+- **150 @ 32K**: 7.2 ms/step against 27.3 ms today -- **3.8x**
+
+Mixtures work too: 150 @ 32K is also reachable at `p = 50%` combined with a 2x
+faster step. Any credible plan for the decode targets has to name which of these
+two quantities it moves, and by how much.
+
 ## Boundaries
 
 All figures are prometheus counters from cold-cache runs already recorded in
