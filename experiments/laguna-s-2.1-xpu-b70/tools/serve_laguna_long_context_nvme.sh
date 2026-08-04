@@ -117,6 +117,14 @@ printf 'Laguna long scheduler budget: batched=%s scheduled=%s\n' \
   "$max_num_batched_tokens" "$max_num_scheduled_tokens" >&2
 
 if [[ "$role" == candidate ]]; then
+  # Eager fan-out arm: routing depends on model and input, not execution mode,
+  # so distinct-expert counts measured eagerly at M=12 are the same counts the
+  # graphed path has. Graph replay executes no Python, so this is the only way
+  # to observe M=12 routing at all.
+  if [[ "${LAGUNA_EAGER_FANOUT:-0}" == 1 ]]; then
+    common_args+=(--enforce-eager)
+    required_environment=()
+  else
   required_environment=(
     VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH
     VLLM_USE_BREAKABLE_CUDAGRAPH
@@ -127,7 +135,8 @@ if [[ "$role" == candidate ]]; then
     VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
     VLLM_XPU_LAGUNA_M8_QKNORM_ROPE
   )
-  for name in "${required_environment[@]}"; do
+  fi
+  for name in "${required_environment[@]+"${required_environment[@]}"}"; do
     [[ "${!name:-}" == 1 ]] || {
       echo "$name must be explicitly enabled for the candidate" >&2
       exit 2

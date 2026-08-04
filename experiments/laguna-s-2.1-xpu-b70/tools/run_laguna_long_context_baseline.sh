@@ -45,6 +45,9 @@ readonly require_oracle="${LAGUNA_REQUIRE_ORACLE:-0}"
 readonly exact_prefill_chunks="${LAGUNA_EXACT_PREFILL_CHUNKS:-0}"
 readonly candidate_profile="${LAGUNA_LONG_CANDIDATE_PROFILE:-q12}"
 readonly long_depth="${LAGUNA_LONG_DEPTH:-}"
+# The eager fan-out arm must not capture graphs: graph replay executes no
+# Python, so instrumentation in the model forward cannot observe decode steps.
+readonly graph_flag="$([[ "${LAGUNA_EAGER_FANOUT:-0}" == 1 ]] && echo 0 || echo 1)"
 readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly model_manifest=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256
@@ -382,6 +385,7 @@ common_env=(
   LAGUNA_NO_EP="${LAGUNA_NO_EP:-0}"
   VLLM_XPU_LAGUNA_ALLOW_NO_EP="${LAGUNA_NO_EP:-0}"
   VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
+  LAGUNA_EAGER_FANOUT="${LAGUNA_EAGER_FANOUT:-0}"
 )
 if [[ "$role" == candidate ]]; then
   common_env+=(
@@ -429,9 +433,9 @@ if [[ "$role" == candidate ]]; then
     LAGUNA_DFLASH_NUM_SPECULATIVE_TOKENS="$candidate_spec"
     LAGUNA_LOCAL_ARGMAX=false LAGUNA_LOG_MOE_ROWS=0
     LAGUNA_M="$candidate_m" LAGUNA_SPEC="$candidate_spec"
-    VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH=1
-    VLLM_USE_BREAKABLE_CUDAGRAPH=1 XPU_GRAPH=1
-    VLLM_XPU_ENABLE_XPU_GRAPH=1 VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0
+    VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH="$graph_flag"
+    VLLM_USE_BREAKABLE_CUDAGRAPH="$graph_flag" XPU_GRAPH="$graph_flag"
+    VLLM_XPU_ENABLE_XPU_GRAPH="$graph_flag" VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH=0
     VLLM_XPU_LAGUNA_CAPTURE_FILTER_DEBUG=1
   )
   if [[ "$candidate_profile" == q12 ]]; then
