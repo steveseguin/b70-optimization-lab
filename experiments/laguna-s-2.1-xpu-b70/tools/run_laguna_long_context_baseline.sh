@@ -386,6 +386,9 @@ common_env=(
   VLLM_XPU_LAGUNA_ALLOW_NO_EP="${LAGUNA_NO_EP:-0}"
   VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
   LAGUNA_EAGER_FANOUT="${LAGUNA_EAGER_FANOUT:-0}"
+  LAGUNA_PROFILE_DIR="${LAGUNA_PROFILE_DIR:-}"
+  LAGUNA_PROFILE_DELAY="${LAGUNA_PROFILE_DELAY:-6}"
+  LAGUNA_PROFILE_ITERS="${LAGUNA_PROFILE_ITERS:-25}"
 )
 if [[ "$role" == candidate ]]; then
   common_env+=(
@@ -555,6 +558,13 @@ tr '\0' '\n' < "/proc/$server_pid/environ" | LC_ALL=C sort \
   > "$run_dir/service-environment.txt"
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before.prom"
 
+# Profiling arm: arm the profiler before the request. delay_iterations skips
+# the chunked-prefill iterations so the captured window is decode steps only.
+if [[ -n "${LAGUNA_PROFILE_DIR:-}" ]]; then
+  curl -fsS -X POST http://127.0.0.1:18080/start_profile >/dev/null \
+    || die "profiler failed to start"
+fi
+
 benchmark_args=(
   --base-url http://127.0.0.1:18080
   --model laguna-s-2.1-int4
@@ -583,6 +593,10 @@ benchmark_status="$?"
 set -e
 benchmark_pid=""
 printf 'completed\n' > "$run_dir/benchmark.pid"
+if [[ -n "${LAGUNA_PROFILE_DIR:-}" ]]; then
+  curl -fsS -X POST http://127.0.0.1:18080/stop_profile >/dev/null || true
+  sleep 20
+fi
 (( benchmark_status == 0 )) || exit "$benchmark_status"
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after.prom"
 

@@ -113,6 +113,21 @@ common_args+=(
 if [[ "$max_num_scheduled_tokens" != auto ]]; then
   common_args+=(--max-num-scheduled-tokens "$max_num_scheduled_tokens")
 fi
+# Kernel-time profiling arm. ProfilerConfig.compute_hash has no factors, so
+# these flags cannot perturb the compiled graph or the runner identity; the
+# served configuration is the same one the timings were taken on. Iteration
+# scoping skips the prefill chunks so the trace holds decode steps only.
+if [[ -n "${LAGUNA_PROFILE_DIR:-}" ]]; then
+  common_args+=(
+    --profiler-config.profiler=torch
+    --profiler-config.torch_profiler_dir="$LAGUNA_PROFILE_DIR"
+    --profiler-config.torch_profiler_with_stack=false
+    --profiler-config.torch_profiler_use_gzip=false
+    --profiler-config.ignore_frontend=true
+    --profiler-config.delay_iterations="${LAGUNA_PROFILE_DELAY:-6}"
+    --profiler-config.max_iterations="${LAGUNA_PROFILE_ITERS:-25}"
+  )
+fi
 printf 'Laguna long scheduler budget: batched=%s scheduled=%s\n' \
   "$max_num_batched_tokens" "$max_num_scheduled_tokens" >&2
 
