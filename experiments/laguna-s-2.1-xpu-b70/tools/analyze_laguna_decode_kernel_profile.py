@@ -18,7 +18,18 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-DEVICE_CATEGORIES = {"kernel", "gpu_op", "xpu_op", "gpu_memcpy", "gpu_memset"}
+# Kineto's own category names vary by backend and version, and the XPU device
+# category is not a fixed string across builds. Excluding the host-side ones is
+# stable where whitelisting device ones is not, so anything left with a real
+# duration is treated as device activity and the observed categories are always
+# printed for inspection.
+HOST_CATEGORIES = {
+    "cpu_op", "cpu_instant_event", "python_function", "user_annotation",
+    "external_correlation", "overhead", "ac2g", "fwdbwd", "async_task",
+    "cuda_runtime", "cuda_driver", "xpu_runtime", "xpu_driver",
+    "mtia_runtime", "glow_runtime", "privateuse1_runtime", "privateuse1_driver",
+    "cuda_profiler_range", "profiler_step",
+}
 
 ROLES: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("collective", re.compile(r"ccl|allreduce|all_reduce|allgather|all_gather|"
@@ -33,7 +44,9 @@ ROLES: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 
-def classify(name: str) -> str:
+def classify(name: str, category: str = "") -> str:
+    if category == "collective_comm":
+        return "collective"
     for role, pattern in ROLES:
         if pattern.search(name):
             return role
@@ -52,6 +65,8 @@ def main(argv: list[str]) -> int:
         return 2
 
     by_name: dict[str, list[float]] = defaultdict(list)
+    name_category: dict[str, str] = {}
+    by_category: dict[str, tuple[float, int]] = defaultdict(lambda: (0.0, 0))
     device_total = 0.0
     span_lo, span_hi = None, None
 
@@ -60,18 +75,27 @@ def main(argv: list[str]) -> int:
         for event in load(path):
             if event.get("ph") != "X":
                 continue
-            category = (event.get("cat") or "").lower()
-            if category not in DEVICE_CATEGORIES:
-                continue
             duration = float(event.get("dur") or 0.0)
             if duration <= 0:
                 continue
+            category = (event.get("cat") or "").lower()
+            total, count = by_category[category or "<none>"]
+            by_category[category or "<none>"] = (total + duration, count + 1)
+            if category in HOST_CATEGORIES:
+                continue
             name = event.get("name") or "<anon>"
+            name_category.setdefault(name, category)
             by_name[name].append(duration)
             device_total += duration
             start = float(event.get("ts") or 0.0)
             span_lo = start if span_lo is None else min(span_lo, start)
             span_hi = start + duration if span_hi is None else max(span_hi, start + duration)
+
+    print("-- all trace categories (host ones are excluded from totals) --")
+    for category, (total, count) in sorted(by_category.items(), key=lambda kv: -kv[1][0]):
+        mark = "host" if category in HOST_CATEGORIES else "DEVICE"
+        print(f"{category:>24}  {total / 1000:10.3f} ms  n={count:6d}  [{mark}]")
+    print()
 
     if not by_name:
         print("no device kernel events found -- check that the XPU profiler "
@@ -81,7 +105,7 @@ def main(argv: list[str]) -> int:
 
     by_role: dict[str, tuple[float, int]] = defaultdict(lambda: (0.0, 0))
     for name, durations in by_name.items():
-        role = classify(name)
+        role = classify(name, name_category.get(name, ""))
         total, count = by_role[role]
         by_role[role] = (total + sum(durations), count + len(durations))
 
@@ -105,8 +129,9 @@ def main(argv: list[str]) -> int:
         share = 100 * total / device_total
         mean = total / len(durations)
         label = name if len(name) <= 68 else name[:65] + "..."
+        role = classify(name, name_category.get(name, ""))
         print(f"{total / 1000:9.3f} ms {share:5.1f}%  n={len(durations):5d} "
-              f"mean={mean:8.1f} us  [{classify(name)}] {label}")
+              f"mean={mean:8.1f} us  [{role}] {label}")
 
     return 0
 
