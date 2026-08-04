@@ -90,6 +90,33 @@ quantisation.
   context, and the crossover has not been swept.
 - Prefill already exceeds target everywhere measured and needs no work.
 
+## Addendum: the configuration cannot be perturbed in any dimension
+
+Three independent dimensions were varied to find recoverable headroom. All three
+fail, each blocked by a contract that exists because a kernel genuinely depends
+on the configuration.
+
+| dimension varied | result |
+| :--- | :--- |
+| draft depth 11 -> 7 (`q8`), and selectors off at depth 11 (`qdepth`) | 7.10 / 7.25 tok/s at 32K, ~0.18x |
+| speculation removed entirely (eager, and graphed width-1) | 12.1 / 13.3 tok/s, ~0.34x at 32K |
+| expert parallelism removed (`--no-enable-expert-parallel`) | **engine will not initialise** |
+
+The third fails with `Laguna shared-elementwise selection requires the exact
+eager record or frozen graph-diagnostic fixed-width verifier contract: parallel
+identity ...`. The M12 shared-elementwise kernel depends on the expert-parallel
+layout. Relaxing that contract would mean disabling the fused kernel in order to
+test its own configuration, which is precisely the confound that made the
+`q8` and `qdepth` arms uninterpretable.
+
+The serving configuration is a **local optimum welded across three axes** --
+verifier width, speculation depth, and expert parallelism. Every perturbation
+falls off a cliff rather than trading smoothly. That is a real property of the
+stack, not an accident, and it means the remaining 39% between 61% of peak and
+the roofline is inside the kernels: INT4 dequantisation, expert-gather
+coalescing, or long-context attention. Locating it needs a profiler, not
+configuration changes. The configuration space is exhausted.
+
 ## Boundaries
 
 Six configurations, cold cache, `gpu_memory_utilization=0.80`, TP4, no
