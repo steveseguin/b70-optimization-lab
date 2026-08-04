@@ -379,6 +379,8 @@ common_env=(
   LAGUNA_GPU_UTIL="$gpu_util"
   LAGUNA_LONG_CANDIDATE_PROFILE="$candidate_profile"
   LAGUNA_NOSPEC_GRAPH="${LAGUNA_NOSPEC_GRAPH:-0}"
+  LAGUNA_NO_EP="${LAGUNA_NO_EP:-0}"
+  VLLM_XPU_LAGUNA_ALLOW_NO_EP="${LAGUNA_NO_EP:-0}"
 )
 if [[ "$role" == candidate ]]; then
   common_env+=(

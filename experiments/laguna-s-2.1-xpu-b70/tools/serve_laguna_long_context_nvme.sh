@@ -87,7 +87,16 @@ common_args=(
   --data-parallel-size 1
   --pipeline-parallel-size 1
   --distributed-executor-backend mp
-  --enable-expert-parallel
+)
+# Diagnostic: expert parallelism costs two all2all collectives per layer on a
+# PCIe fabric with no XeLink. Disabling it TP-shards the experts instead, same
+# bytes per rank, all-reduce instead of all2all.
+if [[ "${LAGUNA_NO_EP:-0}" == 1 ]]; then
+  common_args+=(--no-enable-expert-parallel)
+else
+  common_args+=(--enable-expert-parallel)
+fi
+common_args+=(
   --all2all-backend allgather_reducescatter
   --max-model-len "$max_model_len"
   --max-num-batched-tokens "$max_num_batched_tokens"
