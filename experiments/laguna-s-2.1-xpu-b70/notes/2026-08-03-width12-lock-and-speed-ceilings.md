@@ -89,7 +89,7 @@ is 230 GB/s, roughly 11% of the 2.12 TB/s available across four cards. q12's
 | target | status |
 | :--- | :--- |
 | 1000 tok/s prefill | **met** in bulk — 5,169 at 1K, 7,345 at 4K and 32K |
-| 100 tok/s decode, no speculation | **reachable in principle** (roofline 197.8 at 32K) but needs a width-1 decode stack that does not exist |
+| 100 tok/s decode, no speculation | **not met today (12.1 measured); reaches ~118 at 32K and ~139 at 1K with width-1 graphs** at the measured 60% efficiency |
 | 250 tok/s decode with speculation | **above the ceiling.** 246.7 at 1K at *perfect* efficiency, falling with context |
 | >150 tok/s at 32K with speculation | **physically impossible.** Ceiling is 68.5--78.6 tok/s even at 100% bandwidth |
 
@@ -121,6 +121,53 @@ further quantisation.
 Steps 1--2 are small. Steps 3--4 are the real work and are why 32K decode has
 stayed at 39.589 through the whole campaign: the ladder was built on a width-12
 verifier because that is the only width where the decode stack exists.
+
+## Addendum: the first true no-speculation measurement
+
+The teacher role finally ran after the driver reload; its two earlier CCL wedges
+were a symptom of the post-hang GPU state, not intrinsic to the role.
+
+| context | no-spec decode | TTFT s | prefill tok/s |
+| ---: | ---: | ---: | ---: |
+| 1,024 | **12.09** | 1.363 | 771 |
+| 32,640 | **12.12** | 5.222 | 6283 |
+
+Decode is **flat across a 32x context range**. That is the decisive evidence.
+A bandwidth-bound path would be ~17% slower at 32K (10.72 GB/step versus 9.16).
+Identical throughput means the eager path is not bandwidth-bound at all: 9.16 GB
+in 82.6 ms is 111 GB/s, **5.2% of the 2.12 TB/s available**. Roughly 95% of a
+step is kernel-launch overhead across 48 layers, and that cost is
+context-independent.
+
+The graphed q12 path, by contrast, is bandwidth-bound at a consistent ~60% of
+roofline: 1.31 TB/s at 1K and 1.28 TB/s at 32K.
+
+### Efficiency ladder, measured
+
+| path | efficiency vs roofline |
+| :--- | ---: |
+| q12 - draft graphs + decode kernels | ~60% |
+| q8 / qdepth - target graphs only | ~11% |
+| teacher - eager, no graphs | **5.2%** |
+
+### What a width-1 graphed path would deliver
+
+Applying the measured 60% efficiency of the graphed path to the M=1 byte budget:
+
+| context | M=1 roofline | at 60% |
+| ---: | ---: | ---: |
+| 1,024 | 231.5 | **~139** |
+| 32,768 | 197.8 | **~118** |
+
+That **meets the 100 tok/s no-speculation target at both ends**, and 118 tok/s
+at 32K is **3x** today's 39.589. The headroom is real, it is bounded by launch
+overhead rather than bandwidth or quantisation, and the fix is porting graph
+capture plus the decode kernels to width 1.
+
+Turning speculation off *today* is 12.6x worse at 1K (12.09 versus 152.3),
+because the bytes saved are dwarfed by the stack forfeited. The dynamic
+speculation policy is therefore correct in principle and unrunnable in practice
+until width-1 graphs exist.
 
 ## Boundaries
 
