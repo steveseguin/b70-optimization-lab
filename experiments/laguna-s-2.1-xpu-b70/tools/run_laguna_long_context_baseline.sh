@@ -456,7 +456,10 @@ if [[ "$role" == candidate ]]; then
       VLLM_XPU_LAGUNA_DFLASH_FP8_Q8=0
       VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH=1
       VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS=1
-      VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE=1
+      # The shared-elementwise contract requires EP4, so measuring the cost of
+      # expert parallelism means turning this selector off on BOTH arms. That
+      # confounds absolute throughput, but the EP-on/EP-off delta stays clean.
+      VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="${LAGUNA_M12_SHARED:-1}"
       VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
       VLLM_XPU_LAGUNA_DECODE_GRF128=1
       VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1
