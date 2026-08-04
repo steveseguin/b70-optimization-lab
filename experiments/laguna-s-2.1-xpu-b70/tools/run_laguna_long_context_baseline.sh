@@ -123,9 +123,16 @@ case "$max_num_batched_tokens" in
 esac
 if [[ "$candidate_profile" == qdepth && "$role" == candidate ]]; then
   # Keep the derived per-step budget, and therefore the 32,640-token prefill
-  # partition, identical to the incumbent at every depth.
-  (( max_num_batched_tokens - candidate_spec + 1 == 8182 )) \
-    || die "qdepth depth $candidate_spec needs LAGUNA_MAX_NUM_BATCHED_TOKENS=$((8182 + candidate_spec - 1))"
+  # partition, identical to the incumbent at every depth. With no speculative
+  # config the scheduler reserves nothing and falls back to the batched value,
+  # so the no-drafter arm pins 8182 directly rather than 8182+(depth-1).
+  if [[ "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]]; then
+    (( max_num_batched_tokens == 8182 )) \
+      || die "the no-drafter arm needs LAGUNA_MAX_NUM_BATCHED_TOKENS=8182"
+  else
+    (( max_num_batched_tokens - candidate_spec + 1 == 8182 )) \
+      || die "qdepth depth $candidate_spec needs LAGUNA_MAX_NUM_BATCHED_TOKENS=$((8182 + candidate_spec - 1))"
+  fi
 fi
 case "$max_num_scheduled_tokens" in
   auto) ;;
