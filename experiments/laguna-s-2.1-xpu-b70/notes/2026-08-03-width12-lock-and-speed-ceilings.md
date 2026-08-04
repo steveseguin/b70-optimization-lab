@@ -150,24 +150,51 @@ roofline: 1.31 TB/s at 1K and 1.28 TB/s at 32K.
 | q8 / qdepth - target graphs only | ~11% |
 | teacher - eager, no graphs | **5.2%** |
 
-### What a width-1 graphed path would deliver
+### What a width-1 graphed path would deliver — bounded, not a point estimate
 
-Applying the measured 60% efficiency of the graphed path to the M=1 byte budget:
+An earlier draft of this note applied the full-stack 60% efficiency to the M=1
+byte budget and projected ~139 tok/s at 1K and ~118 at 32K. **That was wrong and
+is retracted.** The 60% figure includes contributions that cannot exist without
+a draft model.
 
-| context | M=1 roofline | at 60% |
-| ---: | ---: | ---: |
-| 1,024 | 231.5 | **~139** |
-| 32,768 | 197.8 | **~118** |
+Decomposing the measured ladder:
 
-That **meets the 100 tok/s no-speculation target at both ends**, and 118 tok/s
-at 32K is **3x** today's 39.589. The headroom is real, it is bounded by launch
-overhead rather than bandwidth or quantisation, and the fix is porting graph
-capture plus the decode kernels to width 1.
+| step | efficiency | attributable to |
+| :--- | ---: | :--- |
+| eager, no graphs | 5.2% | baseline |
+| + target graphs | ~11% | target-side capture (~2x) |
+| + draft graphs, decode kernels, routers | ~60% | the rest (~5.5x) |
 
-Turning speculation off *today* is 12.6x worse at 1K (12.09 versus 152.3),
-because the bytes saved are dwarfed by the stack forfeited. The dynamic
-speculation policy is therefore correct in principle and unrunnable in practice
-until width-1 graphs exist.
+A no-speculation path has **no draft**, so the draft-side segmented and inline
+attention graphs are structurally unavailable to it. What remains reachable is
+target graphs plus whatever decode kernels can be ported off their width-12
+gates.
+
+| scenario | efficiency | 32K no-spec |
+| :--- | ---: | ---: |
+| target graphs only (small validator edits) | ~11% | **~22 tok/s** |
+| + `DECODE_GRF128`, `DECODE_TRANSPOSED_SCALES`, routers ported to width 1 | 30--40% | **~60--80 tok/s** |
+| theoretical maximum at full bandwidth | 100% | 197.8 tok/s |
+
+So the honest bound on the 100 tok/s no-speculation target is that target-graph
+work alone will not reach it, and a full port of the decode kernels lands
+plausibly near but possibly short of it. Anyone planning that work should treat
+100 tok/s as the optimistic end of a 60--80 range, not a projection.
+
+### A structural blocker for the no-speculation path
+
+`_validate_laguna_m8_breakable_graph_config` refuses target-graph capture when
+speculation is absent:
+
+```
+"not_dflash": self.speculative_config is None or not use_dflash(),
+"spec_depth": self.num_spec_tokens != VLLM_XPU_LAGUNA_EXACT_MAX_M - 1,
+```
+
+Graph capture therefore *requires* DFlash speculation. Width 1 additionally
+implies depth 0, which `num_speculative_tokens` rejects (`gt=0`). Enabling a
+graphed no-speculation path needs both terms relaxed before any kernel work
+begins.
 
 ## Boundaries
 
