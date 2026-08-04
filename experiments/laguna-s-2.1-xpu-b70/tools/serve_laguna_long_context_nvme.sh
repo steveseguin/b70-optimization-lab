@@ -176,10 +176,22 @@ if [[ "$role" == candidate ]]; then
         VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16
         VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH
         VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
-        VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE
         VLLM_XPU_LAGUNA_DECODE_GRF128
         VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES
       )
+      # The shared-elementwise contract requires the EP4 parallel identity, so
+      # the cost of expert parallelism cannot be measured while this selector is
+      # on. It stays required by default. The diagnostic turns it off on BOTH
+      # arms so that only expert parallelism differs: that confounds absolute
+      # throughput but leaves the EP-on/EP-off delta clean. Never a record path.
+      if [[ "${LAGUNA_EP_COST_DIAGNOSTIC:-0}" == 1 ]]; then
+        [[ "${VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE:-}" == 0 ]] || {
+          echo "LAGUNA_EP_COST_DIAGNOSTIC requires the M12 selector to be 0" >&2
+          exit 2
+        }
+      else
+        required_profile_values+=(VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE)
+      fi
       for name in "${required_profile_values[@]}"; do
         [[ "${!name:-}" == 1 ]] || {
           echo "$name must be enabled for the q12 candidate" >&2
