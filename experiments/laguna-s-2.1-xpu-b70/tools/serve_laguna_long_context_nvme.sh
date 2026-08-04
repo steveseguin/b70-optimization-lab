@@ -308,7 +308,13 @@ if [[ "$role" == candidate ]]; then
       # max_num_seqs=1, so pinning the batched budget to 8182+(depth-1) keeps
       # the derived per-step budget, and therefore the 32,640-token prefill
       # partition, byte-identical to the incumbent at every depth.
-      readonly derived_scheduled_tokens="$((max_num_batched_tokens - (LAGUNA_SPEC - 1)))"
+      # With no speculative config nothing is reserved and the scheduler falls
+      # back to the batched budget, so the no-drafter arm derives it directly.
+      if [[ "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]]; then
+        readonly derived_scheduled_tokens="$max_num_batched_tokens"
+      else
+        readonly derived_scheduled_tokens="$((max_num_batched_tokens - (LAGUNA_SPEC - 1)))"
+      fi
       [[ "$derived_scheduled_tokens" == 8182 ]] || {
         echo "qdepth derives max_num_scheduled_tokens=$derived_scheduled_tokens from batched=$max_num_batched_tokens at depth $LAGUNA_SPEC; set LAGUNA_MAX_NUM_BATCHED_TOKENS=$((8182 + LAGUNA_SPEC - 1)) so it derives 8182" >&2
         exit 2
