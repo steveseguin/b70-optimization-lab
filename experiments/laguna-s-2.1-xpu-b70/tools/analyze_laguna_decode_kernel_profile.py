@@ -29,6 +29,11 @@ HOST_CATEGORIES = {
     "cuda_runtime", "cuda_driver", "xpu_runtime", "xpu_driver",
     "mtia_runtime", "glow_runtime", "privateuse1_runtime", "privateuse1_driver",
     "cuda_profiler_range", "profiler_step",
+    # 'trace' holds the profiler's own span markers ("PyTorch Profiler (0)",
+    # "__xpu_profiler__ (0)"). They span the whole capture, so counting them as
+    # device time swamps every real kernel -- observed at 99.7% of the total on
+    # a real XPU trace before this exclusion.
+    "trace",
 }
 
 ROLES: tuple[tuple[str, re.Pattern[str]], ...] = (
