@@ -60,8 +60,10 @@ case "$candidate_profile" in
   qdepth)
     # Depth-sweep arm. Only widths with a fused target QKNorm+RoPE path are
     # measurable; the launcher refuses the rest with the specific reason.
-    [[ "$long_depth" == 11 || "$long_depth" == 7 ]] \
-      || { echo "qdepth requires LAGUNA_LONG_DEPTH=11 or LAGUNA_LONG_DEPTH=7" >&2; exit 2; }
+    # Depth 0 is the diagnostic width-1 no-drafter arm; it isolates what graph
+    # capture alone is worth, which neither depth 11 nor depth 7 can show.
+    [[ "$long_depth" == 11 || "$long_depth" == 7 || "$long_depth" == 0 ]] \
+      || { echo "qdepth requires LAGUNA_LONG_DEPTH=11, 7, or 0" >&2; exit 2; }
     readonly candidate_m="$((long_depth + 1))" candidate_spec="$long_depth" \
       candidate_draft_topology=none
     ;;
@@ -369,6 +371,7 @@ common_env=(
   LAGUNA_MAX_NUM_SCHEDULED_TOKENS="$max_num_scheduled_tokens"
   LAGUNA_GPU_UTIL="$gpu_util"
   LAGUNA_LONG_CANDIDATE_PROFILE="$candidate_profile"
+  LAGUNA_NOSPEC_GRAPH="${LAGUNA_NOSPEC_GRAPH:-0}"
 )
 if [[ "$role" == candidate ]]; then
   common_env+=(

@@ -273,6 +273,12 @@ if [[ "$role" == candidate ]]; then
       done
       case "${LAGUNA_SPEC:-}" in
         11|7) ;;
+        0)
+          [[ "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]] || {
+            echo "qdepth depth 0 is the no-drafter arm and requires LAGUNA_NOSPEC_GRAPH=1" >&2
+            exit 2
+          }
+          ;;
         3|1)
           echo "qdepth depth ${LAGUNA_SPEC} is not cleanly measurable: the fused target QKNorm+RoPE only fires at verifier width 8 or 12, and no width-4 or width-2 shared-elementwise op exists, so the target path would silently degrade" >&2
           exit 2
@@ -323,9 +329,22 @@ if [[ "$role" == candidate ]]; then
     --no-async-scheduling
     --compilation-config
     "{\"mode\":\"NONE\",\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[${LAGUNA_M}],\"max_cudagraph_capture_size\":${LAGUNA_M}}"
-    --speculative-config
-    "{\"method\":\"dflash\",\"model\":\"$LAGUNA_NVME_DRAFT_ROOT\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":false}"
   )
+  # Diagnostic width-1 arm: graphed target execution with no drafter at all.
+  # It isolates what graph capture alone is worth, which neither the M=8 nor the
+  # M=12 arm can show because both pay for draft passes inside the same step,
+  # and which the eager teacher cannot show because it captures nothing.
+  if [[ "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]]; then
+    [[ "$LAGUNA_M" == 1 && "${VLLM_XPU_LAGUNA_EXACT_MAX_M:-}" == 1 ]] || {
+      echo "LAGUNA_NOSPEC_GRAPH requires LAGUNA_M=1 and VLLM_XPU_LAGUNA_EXACT_MAX_M=1" >&2
+      exit 2
+    }
+  else
+    common_args+=(
+      --speculative-config
+      "{\"method\":\"dflash\",\"model\":\"$LAGUNA_NVME_DRAFT_ROOT\",\"revision\":\"$draft_revision\",\"num_speculative_tokens\":${LAGUNA_SPEC},\"draft_sample_method\":\"greedy\",\"rejection_sample_method\":\"standard\",\"use_local_argmax_reduction\":false}"
+    )
+  fi
 else
   # The canonical q=1 identity is target-only eager execution with its original
   # asynchronous scheduler. The runner records the source revision separately.
