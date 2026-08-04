@@ -371,7 +371,7 @@ common_env=(
   HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1
   VLLM_RPC_BASE_PATH="$rpc_dir" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
   ONEAPI_DEVICE_SELECTOR=level_zero:0,1,2,3 ZE_AFFINITY_MASK=0,1,2,3
-  CCL_ATL_TRANSPORT=ofi CCL_TOPO_P2P_ACCESS=1
+  CCL_ATL_TRANSPORT="${CCL_ATL_TRANSPORT:-ofi}" CCL_TOPO_P2P_ACCESS=1
   FI_TCP_IFACE="$cluster_iface" CCL_KVS_IFACE="$cluster_iface"
   # All four B70s are local, so the OFI provider decides collective latency.
   # A 12-row decode step moves ~73 KiB per allgatherv yet measures ~122 us,
