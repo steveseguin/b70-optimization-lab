@@ -466,7 +466,7 @@ if [[ "$role" == candidate ]]; then
       VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE="${LAGUNA_M12_SHARED:-1}"
       VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE=0
       VLLM_XPU_LAGUNA_DECODE_GRF128=1
-      VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES=1
+      VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES="${LAGUNA_TRANSPOSED_SCALES:-1}"
     )
   elif [[ "$candidate_profile" == qdepth ]]; then
     # Every selector the vLLM fork pins to one depth or one verifier width is

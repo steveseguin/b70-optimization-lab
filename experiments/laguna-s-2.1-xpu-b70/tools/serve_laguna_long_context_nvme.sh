@@ -189,6 +189,11 @@ if [[ "$role" == candidate ]]; then
           echo "LAGUNA_EP_COST_DIAGNOSTIC requires the M12 selector to be 0" >&2
           exit 2
         }
+        # Transposed decode scales assume w13_scales(64, ...), i.e. the EP4
+        # expert count, so they come off with the rest of the EP4-shaped path.
+        required_profile_values=(
+          "${required_profile_values[@]/VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES/}"
+        )
       else
         required_profile_values+=(VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE)
       fi
