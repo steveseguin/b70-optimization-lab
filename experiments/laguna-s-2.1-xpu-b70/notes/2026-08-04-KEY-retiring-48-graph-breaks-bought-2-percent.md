@@ -39,6 +39,29 @@ both arms:
 | 32,640 early | 32.102 | 31.931 | **-0.5%** | **differs** |
 | 256 sentinel | 131.530 | 134.718 | **+2.4%** | identical |
 
+## In step time, which is the honest unit
+
+`tok/s = tokens_per_step / step_time`, so any arm that perturbs arithmetic also
+perturbs acceptance and its tok/s delta conflates the two. Here it does not:
+**tokens per step is identical to three decimals**, so the tok/s delta is
+purely a step-time delta.
+
+| case | tok/step | step ms, control | step ms, inline | saved |
+| :--- | ---: | ---: | ---: | ---: |
+| 8,192 | 1.347 -> 1.347 | 177.48 | 174.29 | 3.19 ms |
+| 32,640 | 1.058 -> 1.049 | 32.95 | 32.86 | 0.09 ms |
+| 256 sentinel | 3.765 -> 3.765 | 28.62 | 27.95 | **0.67 ms** |
+
+**0.67 ms across 48 retired boundaries is ~14 us per boundary** -- which is
+almost exactly the 07-25 telemetry's own **14.4 us per graph replay call**.
+
+That is the whole story, and it is self-consistent: retiring an attention
+boundary retires **one graph-segment replay**, not the attention kernel. The
+169.1 us attributed to an attention boundary is ~155 us of kernel and ~14 us of
+segment. So **graph-segment overhead is ~14 us per segment, and all 291
+segments together are ~4.2 ms of a 28.6 ms step.** Retiring every boundary that
+exists could not have paid for more than that.
+
 ## Why it is rejected
 
 **Exactness.** `154c7d6e19b3...` is the canonical 32,640 token stream: eight
