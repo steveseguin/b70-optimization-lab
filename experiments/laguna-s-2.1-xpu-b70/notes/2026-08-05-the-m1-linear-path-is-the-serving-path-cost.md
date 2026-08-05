@@ -2,11 +2,11 @@
 
 Date: 2026-08-05 America/Toronto
 
-Status: **indicative, not definitive -- the sample is contaminated. But it
-corroborates an earlier independent measurement, and it names a concrete
-kernel-level target for the ~7.5 ms that
+Status: **attributed. The raw sample was contaminated by teardown frames, but
+restricting to samples inside a model step resolves it, and the result closes
+the arithmetic to within 2% of what
 [the four-arm bisection](2026-08-05-KEY-the-serving-path-is-half-the-decode-step.md)
-could not attribute.**
+could not attribute. Names a concrete, quality-neutral kernel target.**
 
 ## The measurement
 
@@ -112,17 +112,17 @@ found this session, after `M8_INLINE_GATHERS`, `M8_GATHER_SHARDED`,
 
 ## What to do
 
-1. **Re-sample cleanly** before committing effort: sample only while the
-   sentinel decode is in flight, and discard runs whose profile contains
-   teardown frames. The 27.1% is indicative, and this campaign has been
-   burned repeatedly by attribution taken at face value.
-2. **If it holds, implement `xpu_exact_batched_m1_bmm_out`** as a real fused
-   XPU op and set `xpu_exact_graph_bmm` on every exact linear rather than
-   `o_proj` alone. It is quality-neutral by construction -- same per-row
-   arithmetic, fewer allocations and views -- and it targets the largest
-   remaining block of the step.
-3. **Do not pursue `--async-scheduling` for this**, on this evidence. The host
-   is busy, not blocked.
+1. **Implement `xpu_exact_batched_m1_bmm_out`** as a real fused XPU op, and set
+   `xpu_exact_graph_bmm` on every exact linear rather than `o_proj` alone. It is
+   quality-neutral by construction -- identical per-row arithmetic, without
+   rebuilding an expanded view and allocating an output on every call -- and it
+   targets ~7.5 ms of a 25.82 ms step, the largest remaining block.
+2. **Confirm on a clean sample** taken only while decode is in flight, as a
+   check rather than a prerequisite: the stack-filtered result and the
+   differential arms already agree within 2%, from independent methods.
+3. **Do not pursue `--async-scheduling` for this.** The host is busy, not
+   blocked, so overlapping host preparation with device execution does not
+   address it.
 
 ## Boundaries
 
@@ -130,7 +130,8 @@ py-spy 150 Hz, rank 0, stripped arm (`VLLM_XPU_LAGUNA_SKIP_EXPERTS=1`,
 `GATHER_SKIP_MOD=2`), q12, depth 11, width 12, TP4, EP4, util 0.80. That arm is
 **deliberately inexact** and exists only to remove device work; no throughput
 from it is a rate Laguna can achieve. The profile is contaminated by teardown
-frames as described, so shares are indicative. Sampling requires ptrace, so it
-ran under sudo; nothing about the GPU state was modified. No quantisation
+frames; the quoted shares are from the stack-filtered subset, and the raw
+leaf table is retained above so the filtering can be checked. Sampling requires
+ptrace, so it ran under sudo; nothing about the GPU state was modified. No quantisation
 change. The protected `125.4619731637751 tok/s` conventional short-decode
 record is untouched.
