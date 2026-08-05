@@ -52,18 +52,34 @@ sampling found the process blocking inside `copy_to_gpu` with only ~0.007
 explicit `synchronize()` calls per step. Segment boundaries are where the host
 waits on the device queue, and there are 145 of them per step by construction.
 
-## The arithmetic
+## The per-boundary cost was already measured, on 2026-07-25
 
-Short context: 22.4 ms step against ~2.2 ms of device kernel time, so ~20 ms
-unattributed across 145 breaks -- **~138 us per break**. That is the same order
-as the two independent standalone measurements:
+[`2026-07-25-m8-inprocess-replay-telemetry-result.md`](2026-07-25-m8-inprocess-replay-telemetry-result.md)
+timed each boundary in process, max-rank, 31 samples:
 
-- `bench_laguna_step_floor.py`: 145 us per layer with collectives removed
-- `bench_laguna_collective_scaling.py`: ~83 us per collective call, linear
+| field | median | per call | share of host total |
+| :--- | ---: | ---: | ---: |
+| whole replay completion | 21.544 ms | | |
+| replay host total | 16.724 ms | | 100% |
+| **48 attention boundaries** | **8.118 ms** | **169.1 us** | **48.5%** |
+| 97 collective boundaries | 6.080 ms | 62.7 us | 36.4% |
+| 146 graph replays | 2.097 ms | 14.4 us | 12.5% |
+| static-signature validation | 0.360 ms | | 2.2% |
 
-Three independent routes landing at 80-145 us per boundary is why this is worth
-building on. It is not yet a per-boundary measurement of the real model, which
-is the next step.
+Host submission is **77.6%** of whole replay completion. So the decode step is
+not device-bound at all: it is the host walking 291 segments, and **the 48
+attention boundaries alone are 8.1 ms of a 21.5 ms replay**.
+
+This also independently corroborates the standalone harnesses, which reached
+the same order from a different direction: `bench_laguna_step_floor.py` gives
+145 us per layer with collectives removed, and
+`bench_laguna_collective_scaling.py` gives ~83 us per collective call.
+
+That note set "reducing host overhead at the 48 attention boundaries" as the
+primary lane, but constrained the candidate to preserve "the exact graph
+topology". Retiring the boundaries changes the topology to 98/97, which is what
+the 2026-07-26 control concluded was necessary once nested capture -- which
+preserved topology -- returned 0.53%.
 
 ## The lever, already named by this campaign
 
@@ -83,11 +99,24 @@ exists for the *drafter*; there is no target-side equivalent. The nested
 selector `VLLM_XPU_LAGUNA_M8_CAPTURE_ATTENTION_GRAPHS` is pinned to 0 in
 `run_laguna_long_context_baseline.sh:432`, which is correct given it buys 0.53%.
 
-Retiring the 48 attention boundaries is a **33% reduction in break count**. At
-138 us per break that is ~6.6 ms off a 22.4 ms step, which at today's 3.66
-tokens/step is **163.57 -> ~231 tok/s**. The remaining 97 boundaries are
-collectives, which is where the sequence-parallel and deferred-reduce ideas
-apply -- and the 250 target needs both.
+Retiring the 48 attention boundaries is a **33% reduction in break count** and,
+by the 07-25 telemetry, up to **8.1 ms off a 21.5 ms replay**. The remaining 97
+boundaries are collectives at 62.7 us each -- 6.1 ms -- which is where the
+sequence-parallel and deferred-reduce ideas apply. The 250 target plausibly
+needs both.
+
+Two implementation routes exist, and only one is available:
+
+- **`CUDAGraphMode.FULL`.** `unified_attention_with_output` is decorated
+  `break_in_full=False`, so the existing wrapper already inlines it under FULL.
+  **Refused**: the breakable-graph contract's `runtime_mode` term is
+  `cudagraph_mode != CUDAGraphMode.PIECEWISE`, measured 2026-08-04. FULL is not
+  reachable on the candidate path.
+- **Inline under PIECEWISE.** Apply the same inlining without changing the
+  runtime mode, so dispatch keys and capture sizes are untouched. Built as
+  `VLLM_XPU_LAGUNA_M8_INLINE_ATTENTION_GRAPHS`, default off. The harness had
+  already reserved this exact selector name and pinned it to 0; vLLM had no
+  reader for it.
 
 ## What is deliberately not claimed
 
