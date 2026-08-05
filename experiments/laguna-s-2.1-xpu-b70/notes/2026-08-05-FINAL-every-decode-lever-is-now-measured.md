@@ -1,5 +1,18 @@
 # Every decode lever is now measured, and 250 tok/s is out of reach
 
+> **PARTLY SUPERSEDED the same day.** A fourth arm (skip-experts *plus*
+> gather-skip mod 2) put the step at **13.43 ms**, and the decomposition that
+> follows shows **~7.5 ms of the step is unattributed serving-path work** --
+> neither model nor collective, and therefore not bounded by the model's
+> arithmetic or by device memory. See
+> [`2026-08-05-KEY-the-serving-path-is-half-the-decode-step.md`](2026-08-05-KEY-the-serving-path-is-half-the-decode-step.md).
+>
+> The conclusion below is **correct about tokens per step**, which the
+> drafter's 0.756 rank-1 rate caps at 4.098. It is **too strong about step
+> time**: removing that 7.5 ms would reach about 200 tok/s with no memory cost.
+> 250 remains out of reach; "every lever is closed" does not.
+
+
 Date: 2026-08-05 America/Toronto
 
 Status: **closure. Both halves of `tok/s = tokens_per_step / step_time` are
