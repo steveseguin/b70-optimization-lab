@@ -99,6 +99,43 @@ def main() -> None:
         print(f"  step floor, no collectives = {dt2 * 1e3:8.2f} ms")
         print(f"  collectives cost           = {(dt - dt2) * 1e3:8.2f} ms")
 
+
+    # Variant: add the per-step host-to-device copies the serving path performs.
+    # The warm trace shows ~75 aten::copy_ per decode step (input ids, positions,
+    # slot mapping, block tables), and sampling puts 27.6% of decode wall clock
+    # inside copy_to_gpu. Each enqueues in 2-3 us standalone; the question is
+    # what they cost when the queue already holds a step's work.
+    COPIES = 75
+    hostbufs = [
+        torch.zeros(4096, dtype=torch.int32, pin_memory=True) for _ in range(8)
+    ]
+    devbufs = [torch.zeros(4096, dtype=torch.int32, device=dev) for _ in range(8)]
+
+    def step_copies() -> None:
+        h = x
+        for i in range(LAYERS):
+            h = h @ qkv
+            a = h @ w13
+            a = torch.nn.functional.silu(a[:, :INTER]) * a[:, INTER:]
+            h = a @ w2
+            dist.all_gather_into_tensor(gathered, disp)
+            dist.all_reduce(reduced)
+        for j in range(COPIES):
+            devbufs[j % 8].copy_(hostbufs[j % 8], non_blocking=True)
+
+    for _ in range(5):
+        step_copies()
+    torch.xpu.synchronize()
+    dist.barrier()
+    t0 = time.perf_counter()
+    for _ in range(iters):
+        step_copies()
+    torch.xpu.synchronize()
+    dt3 = (time.perf_counter() - t0) / iters
+    if rank == 0:
+        print(f"  step floor + {COPIES} H2D copies = {dt3 * 1e3:8.2f} ms")
+        print(f"  copies cost                  = {(dt3 - dt) * 1e3:8.2f} ms")
+
     dist.destroy_process_group()
 
 

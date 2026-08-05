@@ -1,5 +1,24 @@
 # The step floor is 14.43 ms, and roughly half the decode step is recoverable
 
+> **CORRECTED, same day.** The claim that the remainder above the floor is
+> *recoverable serving-path overhead* was too strong, and the 253.6 tok/s
+> projection built on it should not be quoted.
+>
+> Adding the serving path's ~75 per-step H2D copies to the floor costs
+> **0.59 ms**, not the ~10 ms that sampling's 27.6% in `copy_to_gpu` implied. So
+> the copies are cheap; `copy_to_gpu` is merely *where the process blocks* while
+> the device queue drains. Explicit synchronisation was already excluded at
+> ~0.007 calls per step.
+>
+> The floor models dense BF16 GEMMs. Laguna additionally does INT4 dequantisation,
+> MoE expert gather, attention over a 32K KV, and 11 sequential drafter passes --
+> **real work the floor omits**. The 8-13 ms above the floor is therefore not
+> demonstrated to be overhead; a large part is likely model work.
+>
+> **What survives, and it matters more:** the floor is a *hard lower bound*.
+> 48 layers with TP4 collectives cost ~14 ms on this hardware before the model
+> does anything. See "Feasibility against the floor" below.
+
 Date: 2026-08-04 America/Toronto
 
 Status: **measured, standalone, no model and no vLLM. The most actionable
@@ -68,6 +87,30 @@ model, and any serving-path construct can be added to it one at a time --
 scheduler, sampler, input preparation, the drafter -- until the 8-13 ms appears.
 That is a bisection over a 14 ms baseline rather than a hunt inside a 27 ms
 black box.
+
+## Feasibility against the floor
+
+Treating 14.43 ms as a hard lower bound on a 48-layer TP4 step, and holding
+tokens-per-step at measured values:
+
+| target | needs | ceiling at the floor | verdict |
+| :--- | ---: | ---: | :--- |
+| 250 tok/s short context | 3.61 tok/step at the floor | **253.6** | at the ceiling; needs the model to add ~0 ms |
+| >150 tok/s at 32,640 | 2.17 tok/step at the floor | **74.8** | **unreachable at 1.08 tok/step** |
+| 100 tok/s no speculation | 1 tok/step, 10 ms/step | **69.3** | **unreachable**; the floor alone exceeds 10 ms |
+
+Two of the three decode targets are **below the floor at their current
+tokens-per-step**, independent of any optimisation to the serving path:
+
+- **>150 at 32K** would need 2.17 tokens/step even if the model cost nothing
+  above the floor. Measured is 1.08. Only acceptance closes that.
+- **100 without speculation** requires a 10 ms step; 48 layers of TP4
+  collectives alone cost ~14 ms. It is unreachable at this layer count and
+  topology unless the collective structure changes.
+
+That is the sharpest result available tonight: it converts two targets from
+"not yet achieved" into "not achievable without changing tokens-per-step or the
+per-layer collective structure", on a measured basis rather than an argued one.
 
 ## Caveats
 
