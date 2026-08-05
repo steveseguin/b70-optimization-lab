@@ -389,6 +389,7 @@ common_env=(
   LAGUNA_NOSPEC_GRAPH="${LAGUNA_NOSPEC_GRAPH:-0}"
   LAGUNA_NO_EP="${LAGUNA_NO_EP:-0}"
   VLLM_XPU_LAGUNA_ALLOW_NO_EP="${LAGUNA_NO_EP:-0}"
+  VLLM_XPU_LAGUNA_ALLOW_NO_SPEC="${LAGUNA_ALLOW_NO_SPEC:-0}"
   VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
   LAGUNA_EAGER_FANOUT="${LAGUNA_EAGER_FANOUT:-0}"
   VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}"
@@ -404,6 +405,16 @@ common_env=(
 # An empty FI_PROVIDER is not the same as unset: libfabric then matches no
 # provider and oneCCL fails ATL init. Only pass it when actually chosen.
 [[ -z "${FI_PROVIDER:-}" ]] || common_env+=(FI_PROVIDER="$FI_PROVIDER")
+# Per-segment replay profile. The reader parses the sample count, so an empty
+# value is a hard error rather than "off": pass both or neither.
+if [[ -n "${LAGUNA_REPLAY_PROFILE_ROOT:-}" ]]; then
+  [[ -n "${LAGUNA_REPLAY_PROFILE_SAMPLES:-}" ]] \
+    || die "LAGUNA_REPLAY_PROFILE_ROOT needs LAGUNA_REPLAY_PROFILE_SAMPLES"
+  common_env+=(
+    VLLM_XPU_LAGUNA_REPLAY_PROFILE_ROOT="$LAGUNA_REPLAY_PROFILE_ROOT"
+    VLLM_XPU_LAGUNA_REPLAY_PROFILE_SAMPLES="$LAGUNA_REPLAY_PROFILE_SAMPLES"
+  )
+fi
 if [[ "$role" == candidate ]]; then
   common_env+=(
     VLLM_XPU_LAGUNA_M8_FUSED_W1_ROUTE_W2=1
