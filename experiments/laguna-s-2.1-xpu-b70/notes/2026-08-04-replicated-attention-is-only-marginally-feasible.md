@@ -32,15 +32,42 @@ Measured from the q12 server at util 0.80, per rank:
 | implied per token, 8 KV heads | 132.8 KiB |
 | GPU physical memory | 31.9 GiB |
 
-| configuration | KV budget | capacity | vs 32,768 required |
-| :--- | ---: | ---: | :--- |
-| today, util 0.80 | 2.89 GiB | 91,258 | 2.8x headroom |
-| replicated, util 0.80 | 2.89 GiB | **22,814** | **does not fit** |
-| replicated, full utilisation | 7.44 - 2.95 = 4.49 GiB | **~35,447** | 1.08x |
+### Corrected: token capacity does not scale linearly on a hybrid model
 
-The 7.44 GiB figure is the server's own: it reports
+My first pass scaled the reported 91,258 tokens by 1/4 and got 22,814. **That
+is wrong.** On a hybrid model the reported token figure is not linear in KV
+heads, because full-attention and sliding-attention layers reserve different
+numbers of blocks. The right calculation sizes one sequence directly.
+
+From `SlidingWindowSpec.max_admission_blocks_per_request`, blocks reserved per
+sliding layer are `cdiv(min(sliding_window - 1 + max_in_flight_tokens,
+max_model_len), block_size) + 1`, and `max_in_flight_tokens =
+max_concurrent_batches x max_num_batched_tokens = 8192`. So each sliding layer
+reserves **137 blocks** against a full layer's 512, at block size 64.
+
+One 32,768-token sequence, per rank:
+
+| | 2 KV heads (today) | 8 KV heads (replicated) |
+| :--- | ---: | ---: |
+| 12 full layers | 384 MiB | 1,536 MiB |
+| 36 sliding layers | 308 MiB | 1,233 MiB |
+| **total** | **692 MiB** | **2,769 MiB** |
+
+| configuration | KV budget | needed | verdict |
+| :--- | ---: | ---: | :--- |
+| today, util 0.80 | 2,960 MiB | 692 | fits, 4.3x |
+| replicated, util 0.80 | 2,960 - 3,021 weights | 2,769 | **does not fit** |
+| replicated, full utilisation | 7,618 - 3,021 = **4,597 MiB** | 2,769 | **fits, 1.66x** |
+
+The 7,618 MiB figure is the server's own: it reports
 `--kv-cache-memory=7989950976 (7.44 GiB) to fully utilize gpu memory` against
 the 2.89 GiB it takes at util 0.80.
+
+At util 0.80 the extra **3,021 MiB of replicated attention weights alone
+exceeds the entire 2,960 MiB KV budget**, so the configuration is impossible
+before KV is even considered. At full utilisation it fits with **1.66x margin**
+-- better than the 1.08x I first claimed, but still requiring the GPU to run
+with essentially no reserve.
 
 ## Reading it
 
@@ -72,7 +99,27 @@ So the honest status of the session's one validated lever is:
 - **Shrink KV on the windowed layers.** This is the first thing to check, and
   the arithmetic says it is large.
 
-### The windowed-layer KV lead
+### The windowed-layer KV lead -- RETRACTED
+
+**The reasoning below is wrong and is kept only so the mistake is not
+repeated.** I inferred that windowed layers "should" cost 0.016 of a full layer
+because a 512-token window holds 512 of 32,768 positions, and called the
+measured share waste.
+
+`SlidingWindowSpec.max_admission_blocks_per_request` shows it is not waste. A
+sliding layer must hold `sliding_window - 1 + max_in_flight_tokens` tokens,
+because during chunked prefill out-of-window blocks are freed on the
+processed-token basis and in-flight steps transiently keep theirs. With
+`max_in_flight_tokens = 8192` that is 8,703 tokens, or **137 blocks** -- a
+principled reservation, not an over-allocation.
+
+It *is* reducible, but only by shrinking `max_num_batched_tokens`: at 512
+in-flight a sliding layer needs 17 blocks and one sequence drops from 692 to
+422 MiB. That value is contract-pinned to the 8,182-token prefill partition,
+and prefill currently measures 7,505 tok/s against a 7,000 floor -- so trading
+it for KV would put a met target at risk. Not recommended.
+
+### Original reasoning, retained as the error
 
 One full-attention layer costs `2 (K,V) x 2 KV heads x 128 x 2 bytes` =
 **1.00 KiB per token** per rank. Laguna has **12 full-attention layers and 36
