@@ -129,3 +129,36 @@ Standalone, four ranks, no model loaded, no quantisation involved, no caching or
 speculation setting used to inflate any number. Laguna's 163.57 and 39.85 are
 prior warm cold-prefix measurements. The protected `125.4619731637751 tok/s`
 conventional short-decode record is untouched.
+
+## Addendum: the floor scales with collective count, ~83 us per call
+
+Varying how often the 48 layers perform their two collectives, same harness:
+
+| collectives | calls | step | ceiling at 1.08 tok/step | at 3.66 tok/step |
+| :--- | ---: | ---: | ---: | ---: |
+| every layer (today) | 96 | 14.72 ms | 73.4 | 248.6 |
+| every 2 layers | 48 | 11.23 ms | 96.2 | 326.0 |
+| every 4 layers | 24 | **9.42 ms** | **114.6** | 388.5 |
+| every 8 layers | 12 | 8.48 ms | 127.3 | 431.5 |
+| none | 0 | 6.71 ms | **161.1** | 545.8 |
+
+**~83 us of floor per collective call**, linear in count. That turns each target
+into a specific structural requirement:
+
+- **100 tok/s without speculation** (1 tok/step, needs a 10 ms step): reachable
+  at **collectives every 4 layers** (9.42 ms, ceiling 106 tok/s). Not reachable
+  at today's per-layer structure, whose floor alone is 14.72 ms.
+- **250 tok/s short context** (3.66 tok/step): today's structure ceilings at
+  **248.6** -- essentially exactly the target, with no room for the model. Every
+  2 layers lifts the ceiling to 326 and makes it comfortable.
+- **>150 tok/s at 32,640** (1.08 tok/step): needs a ceiling above 150, which
+  arrives only at **zero** per-layer collectives (161.1). Collective reduction
+  alone cannot deliver it; acceptance has to rise.
+
+So two of the three decode targets are gated on **how often tensor-parallel
+collectives run**, not on kernels, quantisation, bandwidth or the drafter. That
+is a restructuring problem -- keeping activations sharded across several layers
+before reducing, as sequence-parallel and fused-collective schemes do -- and it
+is measurable in this harness before any of it is built.
+
+Reproduce with `bench_laguna_collective_scaling.py`.
