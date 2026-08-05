@@ -81,9 +81,27 @@ comparable; the EP-off arm paid an unfused generic MoE cost that masked a real
 collective gain; or in situ the collectives overlap enough that their bandwidth
 is not on the critical path.
 
-**Until that is resolved, no mechanism story should be built on either.** What
-is not in doubt is the count result, which two independent instruments agree
-on.
+### It resolves with the arms already run
+
+The two existing arms happen to separate the variables:
+
+| arm | bytes | count | result |
+| :--- | :--- | :--- | ---: |
+| expert parallelism off | **-95%** | held at 97 | **-4.6%** |
+| gather skip modulus 2 | halved | **halved** | **-18.3%** |
+
+Bytes alone are worth about **4.6%** for a 95% reduction. Count and bytes
+together are worth 18.3%, so **count carries roughly 14 of those points**.
+
+That reconciles the standalone benchmark with the in-situ behaviour without
+contradiction: standalone, a collective in a tight loop has nothing to overlap
+with, so it runs at its bandwidth limit of 69% of PCIe. In situ it overlaps
+compute, so most of its transfer is hidden and what remains on the critical
+path is the **per-call fixed cost**. That is why bytes barely move the step and
+call count moves it a lot.
+
+The prediction this makes is testable: step time should fall roughly linearly
+in gather count, not in gather bytes. Modulus 4 would confirm it.
 
 ## Where this points
 
