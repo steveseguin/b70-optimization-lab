@@ -162,3 +162,41 @@ before reducing, as sequence-parallel and fused-collective schemes do -- and it
 is measurable in this harness before any of it is built.
 
 Reproduce with `bench_laguna_collective_scaling.py`.
+
+## Addendum 2: sequence parallelism and breakable graphs are mutually exclusive
+
+Sequence parallelism is the standard way to cut per-layer tensor-parallel
+collectives -- exactly the lever the scaling law above prices at ~83 us per call.
+vLLM exposes it as `compilation_config.pass_config.enable_sp`, and
+`compilation.py:1172` gates it behind the inductor pass pipeline. It therefore
+requires `CompilationMode != NONE`.
+
+Both breakable-graph validators require the opposite:
+
+```
+gpu_model_runner.py:4200  "compile_enabled": mode != CompilationMode.NONE
+gpu_model_runner.py:4306  "compile_enabled": mode != CompilationMode.NONE
+```
+
+`compile_enabled` being true is a **violation**. The served configuration runs
+`'mode': <CompilationMode.NONE: 0>`, so compilation is off and the SP pass can
+never run.
+
+**So the one lever that reduces collective frequency is unreachable while the
+breakable-cudagraph path is in use, by construction rather than by oversight.**
+That is the same shape as every other blocked lever tonight: the optimised path
+is defined by a contract that excludes the alternative.
+
+It also sharpens the engineering decision. Reducing collectives means choosing
+one of:
+
+1. **Make sequence parallelism work without the inductor pipeline** -- a manual
+   sharded-activation implementation in the Laguna model, no compilation needed.
+2. **Make the breakable-graph path tolerate compilation**, then use the existing
+   SP pass. Requires understanding why the contract excludes it.
+3. **Restructure the collectives directly** -- keep activations sharded across
+   several layers and reduce every N layers, which is what the scaling law
+   measures.
+
+Route 3 is the one the harness already prices: every-2-layers is 11.23 ms,
+every-4 is 9.42 ms, against 14.72 ms today.
