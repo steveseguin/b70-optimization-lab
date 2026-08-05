@@ -657,6 +657,8 @@ if [[ "$role" == candidate ]]; then
   retired=0
   if [[ "${LAGUNA_INLINE_ATTN:-0}" == 1 ]]; then retired=$((retired + 48)); fi
   if [[ "${LAGUNA_REPLICATED_ATTN:-0}" == 1 ]]; then retired=$((retired + 48)); fi
+  # Skipping the experts also retires the 47 MoE final-combine gathers.
+  if [[ "${LAGUNA_SKIP_EXPERTS:-0}" == 1 ]]; then retired=$((retired + 47)); fi
   target_graphs=$((146 - retired)) target_eager_breaks=$((145 - retired))
   for rank in 0 1 2 3; do
     (( $(topology_count "$rank" Captured "$target_graphs" "$target_eager_breaks") == 1 )) \
