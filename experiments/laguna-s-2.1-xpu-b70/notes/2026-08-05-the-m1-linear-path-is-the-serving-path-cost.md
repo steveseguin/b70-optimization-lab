@@ -50,6 +50,31 @@ Reading 2 matters for what to build: `--async-scheduling` overlaps host
 preparation with device execution, which helps when the host waits. Here the
 host is busy, so async scheduling is **not** the indicated fix.
 
+## Cleaned: restrict to samples inside a model step
+
+The contamination is removable without another run, because the profile carries
+full stacks. Keeping only samples whose stack enters a model step
+(`execute_model`, `forward`, `_forward_flat`, `propose`, `sample`) and dropping
+any containing a teardown or JIT frame leaves **249 of 506 samples**:
+
+| leaf frame, decode only | share |
+| :--- | ---: |
+| **`_xpu_apply_batched_m1_method` linear.py:199** | **49.4%** |
+| `_forward_flat` laguna.py:843 | 6.0% |
+| `_xpu_apply_batched_m1_method` linear.py:198 | 5.6% |
+| `__call__` _ops.py:1275 | 3.6% |
+| `_xpu_apply_batched_m1_method` linear.py:186 | 2.4% |
+| `all_gather` base_device_communicator.py:207 | 2.0% |
+
+**The M=1 batched linear path is 57.4% of in-step host time**, and the
+stride-zero `torch.bmm` on line 199 alone is 49.4%.
+
+**The arithmetic closes.** 57.4% of the stripped arm's 13.4 ms step is
+**~7.6 ms**, against the **~7.5 ms** the four-arm bisection could not
+attribute. Two independent methods -- differential arms and stack-filtered
+sampling -- landing within 2% of each other is the strongest attribution this
+campaign has produced.
+
 ## The target
 
 `vllm/model_executor/layers/linear.py:198-199`:
