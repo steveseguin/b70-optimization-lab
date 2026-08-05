@@ -16,9 +16,11 @@
 
 - `vllm-qwen36-int4-b2-1gpu.sh` — full launcher with health check + smoke tests
 - One model per GPU: 27B on GPU 0 (port 8001), 35B on GPU 1 (port 8002)
+- **FINAL config (2026-08-05):** 27B = 131k ctx / 2 seqs / temp 0.6 / presence 0.0;
+  35B = 262k ctx / 3 seqs / temp 1.0 / presence 1.5
 - INT4 in-place quant (`sym_int4`) via `VLLM_OFFLOAD_WEIGHTS_BEFORE_QUANT=1`
 - FP8 KV cache (`fp8_e4m3`) via Triton attention backend
-- MTP speculative decoding (`qwen3_5_mtp`, 2 tokens)
+- **MTP disabled** (A/B-verified deep-context penalty; see benchmarks/)
 - Thinking mode ON + preserved, reasoning parser qwen3
 - Tool calling: `--enable-auto-tool-choice --tool-call-parser qwen3_xml`
 - Vision enabled and verified
@@ -53,7 +55,10 @@ Method + verification + reproduction in `benchmarks/BENCHMARKS.md`.
   buffers (Intel's own source comment); TP=1 required
 - **MTP degrades deep-context decode** (A/B verified 2026-08-05): at depth 32k,
   MTP costs 3.45x (35B MoE) / 1.56x (27B) decode throughput — draft+verify both
-  attend the full KV cache. Disable for deep-context workloads.
+  attend the full KV cache. Disabled by default in the final config.
+- **35B MoE + thinking emits `!`-repetition garbage (open)**: reproduced across
+  all sampling values; 27B dense clean on identical recipe. Workaround: thinking
+  OFF on 35B or different quantization. Details in benchmarks/BENCHMARKS.md.
 - Eager mode enabled (`--enforce-eager`) — may impact perf vs XPU graph
 - `min_p`/`logit_bias` ignored under speculative decoding (vLLM warning)
 

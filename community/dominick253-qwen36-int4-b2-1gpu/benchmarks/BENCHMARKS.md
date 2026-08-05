@@ -101,3 +101,33 @@ dense-model serving where it measurably helps (27B: 46 vs 28 tok/s at depth 0).
 
 Raw: `bench-qwen36-35b-nomtp-20260805-062613.json`,
 `bench-qwen36-27b-nomtp-20260805-063206.json`
+
+## Quality finding (2026-08-05) — 35B MoE INT4 + thinking mode emits "!"-repetition garbage
+
+**Symptom:** with thinking enabled (`enable_thinking:true`), the 35B-A3B MoE
+degenerates into `!!!!...` repetition inside the reasoning chain on trivial
+prompts ("Hello"), burning the whole token budget with empty content.
+Reproduced across every sampling configuration tried:
+
+| Config change | Result |
+| --- | --- |
+| temp 0.6 / presence 0.0 (27B values) | `!` spam (immediate) |
+| temp 1.0 / presence 1.5 (golden values) | `!` spam (after ~40 tokens of coherent reasoning) |
+| temp 0.9 / rep_penalty 1.15 | `!` spam |
+| thinking OFF | **clean** ("Hello! How can I help you today?") |
+
+**Isolation:** the 27B dense on the identical recipe (INT4, fp8 KV, same image,
+same reasoning parser) is **clean** — full coherent reasoning + answer,
+`finish: stop`. Same KV cache dtype, same quantization path, same vLLM image.
+The differentiator is the **MoE architecture under `sym_int4`**
+(`XPUGPTQ4...` MoE INT4 method) with the long reasoning chain. This matches the
+failure mode Intel's own `xpu_communicator.py` comment attributes to hidden
+state corruption ("cascades to garbage ('!!!!') decode output"), though this is
+TP=1 so it is not the multi-GPU all-reduce path.
+
+**Status:** open issue, not yet resolved. Workarounds that produce clean output:
+- Thinking OFF on the 35B (verified clean)
+- Run the 35B under a different quantization (FP8 MoE was the b1 golden path,
+  untested here as a fix)
+
+Raw reproduction: `curl -s localhost:8002/v1/chat/completions -d '{"model":"qwen36-35b","messages":[{"role":"user","content":"Hello"}],"max_tokens":250}'` → reasoning starts coherent then degenerates to `!`.

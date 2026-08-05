@@ -64,14 +64,14 @@ See `vllm-qwen36-int4-b2-1gpu.sh` for the full launcher with:
 | Model | Qwen3.6-27B (dense) / Qwen3.6-35B-A3B (35B total, 3B active MoE) |
 | Quantization | INT4 (sym_int4, in-place, group_size 128, GPTQ layout) |
 | KV cache | fp8_e4m3 (Triton attention backend) |
-| Context | 256K tokens (262144) |
+| Context | 27B: 131072 (131k) | 35B: 262144 (262k) |
 | Tensor parallelism | 1 (one GPU per instance; see design notes) |
 | Thinking mode | enabled via chat template kwargs, preserved |
 | Reasoning parser | qwen3 |
-| MTP | `qwen3_5_mtp`, 2 speculative tokens |
+| MTP | **disabled** (A/B-verified: costs 3.45x decode at depth 32k on 35B) |
 | Tool calling | `--enable-auto-tool-choice --tool-call-parser qwen3_xml` |
-| Sampling | temp 0.6, top_p 0.95, top_k 20, min_p 0.0 |
-| Max sequences | 2 |
+| Sampling | 27B: temp 0.6, top_p 0.95, top_k 20, min_p 0.0, presence 0.0 | 35B: temp 1.0, top_p 0.95, top_k 20, min_p 0.0, presence 1.5 |
+| Max sequences | 27B: 2 | 35B: 3 |
 
 ## Measured Results (2026-08-04, dual B70 host)
 
@@ -146,8 +146,12 @@ Both models ran simultaneously (one GPU each) with no interference.
 - **MTP is a tradeoff, not a default win**: verified by A/B — at depth 32768,
   MTP costs 3.45x (35B) / 1.56x (27B) decode throughput because draft+verify
   both attend the full KV cache. It only helps shallow-context dense serving.
-  Set `MTP_TOKENS=0`-equivalent (omit `--speculative-config`) for deep-context
-  workloads. See `benchmarks/BENCHMARKS.md`.
+  **Disabled by default in the final config.** See `benchmarks/BENCHMARKS.md`.
+- **35B MoE + thinking mode emits `!`-repetition garbage (open issue)**: the
+  MoE under `sym_int4` degenerates into `!!!!...` in the reasoning chain on
+  trivial prompts, across all sampling values; 27B dense is clean on the same
+  recipe. Workaround: thinking OFF on the 35B, or a different quantization.
+  See `benchmarks/BENCHMARKS.md` quality finding.
 
 ## Dead Ends Documented (do not retry)
 

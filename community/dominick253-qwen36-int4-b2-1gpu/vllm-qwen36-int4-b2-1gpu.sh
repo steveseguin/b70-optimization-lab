@@ -34,16 +34,17 @@ SERVED_NAME="qwen36-27b"        # or qwen36-35b
 NAME="vllm-qwen36-27b-int4"     # unique container name per instance
 PORT=8001                       # 8002 for the second instance
 GPU_ID="${GPU_ID:-0}"           # 0 -> 27B, 1 -> 35B
-MAX_LEN="${MAX_LEN:-262144}"    # native Qwen3.6 context
+MAX_LEN="${MAX_LEN:-131072}"    # FINAL: 27B=131072 (131k), 35B=262144 (262k)
 GPU_UTIL="${GPU_UTIL:-0.95}"    # fp8 KV fits full 262144 at 0.95 (needs ~9.1 GiB)
-MAX_SEQS="${MAX_SEQS:-2}"
-MTP_TOKENS="${MTP_TOKENS:-2}"
+MAX_SEQS="${MAX_SEQS:-2}"       # FINAL: 27B=2, 35B=3
 # ──────────────────────────────────────────────
 
-# Qwen3.6 recommended thinking-mode sampling (user-tuned).
+# FINAL sampling (A/B-verified 2026-08-05):
+#   27B: temp 0.6, presence_penalty 0.0  |  35B: temp 1.0, presence_penalty 1.5
+# MTP is DISABLED (default) — A/B showed MTP costs 3.45x (35B) / 1.56x (27B)
+# decode throughput at depth 32768. See benchmarks/BENCHMARKS.md.
 OVERRIDE_GEN='{"temperature":0.6,"top_p":0.95,"top_k":20,"min_p":0.0,"presence_penalty":0.0,"repetition_penalty":1.0}'
 CHAT_TMPL='{"enable_thinking":true,"preserve_thinking":true}'
-SPEC_CFG="{\"method\":\"qwen3_5_mtp\",\"num_speculative_tokens\":${MTP_TOKENS}}"
 
 test -s "${MODEL_HOST_DIR}/config.json" || { echo "ERROR: model dir incomplete: ${MODEL_HOST_DIR}" >&2; exit 2; }
 
@@ -62,7 +63,6 @@ exec vllm serve ${MODEL} \\
   --max-model-len ${MAX_LEN} --gpu-memory-utilization ${GPU_UTIL} \\
   --max-num-seqs ${MAX_SEQS} --max-num-batched-tokens 4096 \\
   --kv-cache-dtype fp8_e4m3 \\
-  --speculative-config '${SPEC_CFG}' \\
   --enable-auto-tool-choice --tool-call-parser qwen3_xml \\
   --reasoning-parser qwen3 \\
   --override-generation-config '${OVERRIDE_GEN}' \\
