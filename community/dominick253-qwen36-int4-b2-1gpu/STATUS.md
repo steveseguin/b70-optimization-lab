@@ -2,8 +2,8 @@
 
 ## Current State
 
-**PENDING BENCHMARK** — Smoke tests pass (text, thinking, tool calls, vision,
-MTP ~85-88% acceptance). Full benchmark not yet run. Benchmark coming.
+**BENCHMARKED** — llama-benchy results recorded (2026-08-04). Full tables in
+`benchmarks/BENCHMARKS.md`; raw per-run JSON/CSV in `benchmarks/`.
 
 ## Environment
 
@@ -23,6 +23,23 @@ MTP ~85-88% acceptance). Full benchmark not yet run. Benchmark coming.
 - Tool calling: `--enable-auto-tool-choice --tool-call-parser qwen3_xml`
 - Vision enabled and verified
 
+## Benchmarks (llama-benchy 0.4.1.dev1, pp=2048 tg=1024, 5 runs/depth)
+
+| Model | depth | pp tok/s | tg tok/s | peak tok/s | TTFR ms |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.6-35B-A3B MoE (GPU 1) | 0 | 5647.8 | 103.3 | 119.4 | 378.3 |
+| Qwen3.6-35B-A3B MoE (GPU 1) | 4096 | 6220.4 | 77.8 | 89.4 | 946.6 |
+| Qwen3.6-35B-A3B MoE (GPU 1) | 8192 | 5671.5 | 33.3 | 43.4 | 1691.0 |
+| Qwen3.6-35B-A3B MoE (GPU 1) | 16384 | 5573.9 | 39.7 | 52.8 | 3021.2 |
+| Qwen3.6-35B-A3B MoE (GPU 1) | 32768 | 4677.6 | 24.8 | 33.4 | 6814.8 |
+| Qwen3.6-27B (GPU 0) | 0 | 1494.6 | 46.3 | 54.8 | 1307.1 |
+| Qwen3.6-27B (GPU 0) | 4096 | 1536.1 | 35.9 | 44.4 | 3711.1 |
+| Qwen3.6-27B (GPU 0) | 8192 | 1506.8 | 29.0 | 37.4 | 6211.4 |
+| Qwen3.6-27B (GPU 0) | 16384 | 1421.5 | 21.6 | 28.8 | 11781.5 |
+| Qwen3.6-27B (GPU 0) | 32768 | 1264.3 | 14.9 | 19.2 | 25060.4 |
+
+Method + verification + reproduction in `benchmarks/BENCHMARKS.md`.
+
 ## Measured (smoke-level, 2026-08-04)
 
 | Model | GPU | Weights | KV cache | KV tokens |
@@ -39,7 +56,5 @@ MTP ~85-88% acceptance). Full benchmark not yet run. Benchmark coming.
 
 ## Next Steps
 
-- Run full benchmark suite (throughput, TTFT, thinking vs non-thinking, MTP
-  acceptance, fp8-KV vs fp16-KV comparison)
-- Update README.md with benchmark results
 - Submit to LocalMaxxing if results beat current baseline
+- Optional: XPU-graph mode benchmark once stability permits

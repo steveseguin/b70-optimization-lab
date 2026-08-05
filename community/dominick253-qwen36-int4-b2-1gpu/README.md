@@ -7,9 +7,10 @@ and vision — using the `intel/llm-scaler-vllm:0.21.0-b2` image.
 
 ## Status
 
-> **Benchmark coming.** Smoke tests pass (text, thinking, tool calls, vision,
-> MTP acceptance ~85-88%). Full benchmark suite will be run and added to this
-> PR when available.
+> **Benchmarked (2026-08-04).** llama-benchy results recorded for both models
+> (pp 2048 / tg 1024, 5 runs per depth, depths 0–32k). Tables in
+> [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md); raw per-run data in
+> `benchmarks/*.json` / `*.csv`.
 
 ## Model
 
@@ -86,6 +87,28 @@ Verified on live servers:
 - Vision: correctly identified red circle / green square / blue triangle +
   dark blue background on a generated test image
 - Thinking: `reasoning` field populated in API responses
+
+## Benchmark Results (llama-benchy 0.4.1.dev1, pp=2048 tg=1024, 5 runs/depth)
+
+Method, verification, and raw per-run data in
+[`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
+
+| Model | depth | pp tok/s | tg tok/s | peak tok/s | TTFR ms |
+| --- | --- | --- | --- | --- | --- |
+| 35B-A3B MoE | 0 | 5647.8 ± 399.2 | 103.3 ± 3.5 | 119.4 | 378.3 |
+| 35B-A3B MoE | 4096 | 6220.4 ± 188.8 | 77.8 ± 3.7 | 89.4 | 946.6 |
+| 35B-A3B MoE | 8192 | 5671.5 ± 303.8 | 33.3 ± 13.1 | 43.4 | 1691.0 |
+| 35B-A3B MoE | 16384 | 5573.9 ± 29.4 | 39.7 ± 2.8 | 52.8 | 3021.2 |
+| 35B-A3B MoE | 32768 | 4677.6 ± 13.2 | 24.8 ± 2.0 | 33.4 | 6814.8 |
+| 27B dense | 0 | 1494.6 ± 107.7 | 46.3 ± 1.5 | 54.8 | 1307.1 |
+| 27B dense | 4096 | 1536.1 ± 6.8 | 35.9 ± 2.2 | 44.4 | 3711.1 |
+| 27B dense | 8192 | 1506.8 ± 5.7 | 29.0 ± 0.7 | 37.4 | 6211.4 |
+| 27B dense | 16384 | 1421.5 ± 7.5 | 21.6 ± 1.2 | 28.8 | 11781.5 |
+| 27B dense | 32768 | 1264.3 ± 1.6 | 14.9 ± 0.7 | 19.2 | 25060.4 |
+
+Note: the 35B MoE benches faster than the 27B dense because only ~3B experts
+are active per token (~9x less compute), despite the larger parameter count.
+Both models ran simultaneously (one GPU each) with no interference.
 
 ## Key Design Decisions
 
