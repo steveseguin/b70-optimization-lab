@@ -391,6 +391,11 @@ common_env=(
   VLLM_XPU_LAGUNA_ALLOW_NO_EP="${LAGUNA_NO_EP:-0}"
   VLLM_XPU_LAGUNA_ALLOW_NO_SPEC="${LAGUNA_ALLOW_NO_SPEC:-0}"
   LAGUNA_CUDAGRAPH_MODE="${LAGUNA_CUDAGRAPH_MODE:-PIECEWISE}"
+  # Diagnostic, default 1 (off). Skips all but every Nth all-gather, which makes
+  # the model's arithmetic wrong on purpose. It prices the count of four-rank
+  # rendezvous while holding boundaries, topology and kernels fixed. Never a
+  # record path; its throughput is not a rate Laguna can achieve.
+  VLLM_XPU_LAGUNA_GATHER_SKIP_MOD="${LAGUNA_GATHER_SKIP_MOD:-1}"
   VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
   LAGUNA_EAGER_FANOUT="${LAGUNA_EAGER_FANOUT:-0}"
   VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}"
