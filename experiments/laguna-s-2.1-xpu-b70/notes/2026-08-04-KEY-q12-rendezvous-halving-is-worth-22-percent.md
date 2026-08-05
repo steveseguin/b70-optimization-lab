@@ -36,6 +36,36 @@ Long-context rows are unusable under this diagnostic: garbage activations
 change generation dynamics enough that the derived step time is meaningless.
 The same happened to the 8,192 row on qdepth. Only short context is quoted.
 
+## It saturates at half, which caps the lever
+
+Modulus 4 removes 72 of the 96 gathers rather than 48. It bought nothing more:
+
+| gathers per step | step ms | vs base |
+| ---: | ---: | ---: |
+| 96 (baseline) | 25.82 | -- |
+| **48** (modulus 2) | **20.21** | **-21.7%** |
+| 24 (modulus 4) | 20.25 | -21.6% |
+
+Removing the first 48 gathers is worth 5.6 ms. Removing 24 more is worth
+**zero**.
+
+This is not a payload effect: every one of the 96 gather buffers is the same
+shape, `(TP=4, rows=12, hidden=3072)` bfloat16 = **288 KiB**, allocated
+uniformly in `laguna_m8_collectives.py`. Attention-O and MoE-combine gathers
+move identical bytes.
+
+The plateau means the gathers **stop being the binding constraint** once about
+half are gone, and a **~20.2 ms floor of non-collective work** takes over.
+
+Two consequences, and the first is good news for the planned change:
+
+- **The lever is fully captured by removing half.** Replicated attention
+  removes the 48 attention-O gathers, leaving one gather per layer -- the same
+  structure modulus 2 produced. It should land on the same ~20.2 ms floor.
+- **21.7% is the ceiling for all collective work combined.** Even eliminating
+  every gather cannot beat ~20.2 ms. Anything past ~207 tok/s has to come from
+  the floor itself, not from the collectives.
+
 ## Three instruments, one answer
 
 | instrument | change | step-time effect |
