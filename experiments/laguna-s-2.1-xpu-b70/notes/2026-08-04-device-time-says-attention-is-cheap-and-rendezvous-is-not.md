@@ -52,40 +52,54 @@ which is the same order as the whole step. Against that:
 | **measured per-call device time** | **~252 us** |
 | **remainder** | **~180 us** |
 
-**About 70% of every rendezvous is not data movement.** It is the collective
-sitting on the device until the slowest of four ranks arrives.
+I first read the ~180 us remainder as **rank arrival skew** and built an
+expert-placement lever on it. **That does not survive my own earlier standalone
+measurement**, and is retracted here rather than left to propagate.
 
-That single number reconciles every result in the campaign:
+`bench_laguna_xccl_allgather.py`, four ranks in a tight loop with negligible
+skew, at the real 1.44 MB payload: **225 us standalone, 205 us in situ**, an
+ingress of **19.66 GB/s, which is 69% of PCIe**. An allgather over four ranks
+moves 3x the payload into each rank, so 1.44 MB x 3 = 4.32 MB in 225 us is
+19.2 GB/s -- the same figure.
 
-- removing 95% of the **bytes** (expert parallelism off) touched only the 72 us
-  part, and measured **-4.6%**;
-- retiring 48 of 145 **graph breaks** touched neither part, and measured **+2%**;
-- halving the **count** of rendezvous removed 48 whole 252 us waits, and
-  measured **-18.3%**.
+**So ~252 us is close to what this collective costs on this fabric with no skew
+at all.** The naive 72 us was wrong because it counted the payload once rather
+than the (world-1) copies an allgather actually ingests.
+
+## An unresolved conflict, stated rather than papered over
+
+Two measurements disagree about whether **bytes** matter:
+
+- the standalone benchmark says the collective runs at **69% of PCIe**, i.e.
+  bandwidth-limited, so bytes should dominate;
+- disabling expert parallelism removed ~95% of collective bytes and measured
+  **-4.6%**.
+
+Both cannot be straightforwardly true. Possible resolutions, none established:
+the EP-off arm replaced an allgather with an allreduce whose own traffic is
+comparable; the EP-off arm paid an unfused generic MoE cost that masked a real
+collective gain; or in situ the collectives overlap enough that their bandwidth
+is not on the critical path.
+
+**Until that is resolved, no mechanism story should be built on either.** What
+is not in doubt is the count result, which two independent instruments agree
+on.
 
 ## Where this points
 
-Two independent levers now exist, and the second is new:
+One lever is supported by the evidence, and it is the count:
 
-1. **Fewer rendezvous.** Replicated attention with expert parallelism only
-   removes the 48 attention O-projection gathers outright, for +2.95 GiB per
-   rank. Priced at about -18%.
-2. **Less skew per rendezvous.** If ~180 us of each 252 us is waiting for the
-   slowest rank, the ranks are arriving unevenly. With top-10 routing over 256
-   experts on 4 ranks, the per-rank expert count varies every step, so one rank
-   is always doing more MoE work than the others and gates the meeting. This
-   lever shrinks **all 96** rendezvous rather than removing half.
+**Fewer rendezvous.** Replicated attention with expert parallelism only removes
+the 48 attention O-projection gathers outright, for +2.95 GiB per rank.
+Measured at -18.3% on qdepth and corroborated by the standalone floor sweep at
+-23.7%. Notably this does **not** hit the compiled-in EP4 gate: it keeps 64
+local experts per rank, and gate 7 in
+[`2026-08-04-FINAL-the-ep4-partition-is-compiled-in.md`](2026-08-04-FINAL-the-ep4-partition-is-compiled-in.md)
+constrains `num_local_experts`, not which ranks hold attention.
 
-Lever 2 is the more interesting one because **expert placement is not expert
-routing**. Which experts a token selects is fixed by the model and must not
-change. Which rank *hosts* a given expert is a deployment choice, and choosing
-it so that frequently co-activated experts land on different ranks is
-arithmetically neutral -- the same experts run on the same inputs, only on
-different devices.
-
-Neither lever is built. Skew has not yet been measured directly; that is the
-next measurement, and per-rank arrival timestamps at a few boundaries would
-settle it.
+The next measurement should settle the bytes-versus-count conflict directly:
+run the gather-skip diagnostic at modulus 2 and 4 on the same profile. If step
+time falls linearly with count, count is the lever and bytes are incidental.
 
 ## Boundaries
 
