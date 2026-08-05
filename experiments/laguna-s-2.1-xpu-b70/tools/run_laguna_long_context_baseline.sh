@@ -396,6 +396,10 @@ common_env=(
   # rendezvous while holding boundaries, topology and kernels fixed. Never a
   # record path; its throughput is not a rate Laguna can achieve.
   VLLM_XPU_LAGUNA_GATHER_SKIP_MOD="${LAGUNA_GATHER_SKIP_MOD:-1}"
+  # Per-segment XPU *event* timings, i.e. device time rather than host call
+  # time. Empty means off, which is what a frozen environment can express, so
+  # unlike the host-call profile this one passes through unconditionally.
+  VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT="${LAGUNA_EVENT_PROFILE_ROOT:-}"
   VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
   LAGUNA_EAGER_FANOUT="${LAGUNA_EAGER_FANOUT:-0}"
   VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}"
