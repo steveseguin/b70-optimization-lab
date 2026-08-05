@@ -639,10 +639,19 @@ if [[ "$role" == candidate ]]; then
       || true
   }
   all_topology_count="$(grep -Fc 'BreakableCUDAGraphCapture(graphs=' "$run_dir/server.log" || true)"
+  # Inlining attention records all 48 attention calls into their surrounding
+  # segments, retiring each boundary and the graph it started: 146/145 -> 98/97.
+  # The count stays pinned, so any drift other than the one the selector
+  # explains still fails.
+  if [[ "${LAGUNA_INLINE_ATTN:-0}" == 1 ]]; then
+    target_graphs=98 target_eager_breaks=97
+  else
+    target_graphs=146 target_eager_breaks=145
+  fi
   for rank in 0 1 2 3; do
-    (( $(topology_count "$rank" Captured 146 145) == 1 )) \
+    (( $(topology_count "$rank" Captured "$target_graphs" "$target_eager_breaks") == 1 )) \
       || die "candidate target capture topology is not exactly once on rank $rank"
-    (( $(topology_count "$rank" Replayed 146 145) == 1 )) \
+    (( $(topology_count "$rank" Replayed "$target_graphs" "$target_eager_breaks") == 1 )) \
       || die "candidate target replay topology is not exactly once on rank $rank"
     if [[ "$candidate_profile" == q12 ]]; then
       (( $(topology_count "$rank" Captured 14 13) == 1 )) \

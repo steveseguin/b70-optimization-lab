@@ -2,9 +2,25 @@
 
 Date: 2026-08-04 America/Toronto
 
+> **REFUTED the same day, by building the lever it proposes.** Inlining
+> attention retired 48 of the 145 breaks exactly as predicted (146/145 -> 98/97
+> on every rank) and measured **+1.8% / -0.5% / +2.4%**, while changing the
+> 32,640 token stream. See
+> [`2026-08-04-KEY-retiring-48-graph-breaks-bought-2-percent.md`](2026-08-04-KEY-retiring-48-graph-breaks-bought-2-percent.md).
+>
+> **The topology described below is accurate and worth keeping.** The inference
+> drawn from it -- that the 8.1 ms attributed to attention boundaries is
+> retirable overhead -- is wrong: that figure is overwhelmingly the attention
+> kernel itself, executed eagerly and awaited. A boundary's cost is mostly the
+> work it performs.
+>
+> What survives is narrower and better supported: **every arm that held the
+> collective rendezvous count at 97 moved nothing**, including this one, which
+> cut total breaks by a third. Rendezvous count, not break count, is the
+> untested structural quantity.
+
 Status: **mechanism identified from the code's own audited topology and from
-two prior measured runs. Not yet priced per boundary -- the audited replay
-profile does that, and is the immediate next measurement.**
+two prior measured runs; the lever it proposed was built and refuted.**
 
 ## The topology is fixed and hard-coded
 
