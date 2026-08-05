@@ -114,6 +114,7 @@ common_args+=(
   --block-size 64
   --kv-cache-dtype bfloat16
   --gpu-memory-utilization "${LAGUNA_GPU_UTIL:-0.90}"
+  ${LAGUNA_KV_CACHE_BYTES:+--kv-cache-memory-bytes "${LAGUNA_KV_CACHE_BYTES}"}
   --enable-chunked-prefill
   --no-enable-prefix-caching
   --generation-config vllm
