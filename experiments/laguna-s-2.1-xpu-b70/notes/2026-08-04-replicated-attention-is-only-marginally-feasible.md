@@ -69,11 +69,42 @@ So the honest status of the session's one validated lever is:
   attention gather then runs among 2 ranks instead of vanishing, and **count is
   the lever, not participants**, so this likely recovers little. Cheap to test
   with the existing skip diagnostic before building.
-- **Shrink KV elsewhere.** 36 of 48 layers are sliding-attention with a
-  512-token window and cannot need full-context KV; if the allocator is sizing
-  all 48 layers uniformly at 33.2 KiB/token, there is large headroom to reclaim
-  without touching quality. **This is the first thing to check** -- 12 full
-  layers plus 36 windowed layers should cost far less than 48 full layers.
+- **Shrink KV on the windowed layers.** This is the first thing to check, and
+  the arithmetic says it is large.
+
+### The windowed-layer KV lead
+
+One full-attention layer costs `2 (K,V) x 2 KV heads x 128 x 2 bytes` =
+**1.00 KiB per token** per rank. Laguna has **12 full-attention layers and 36
+sliding-attention layers with a 512-token window**. So:
+
+| | KiB/token | implied share per sliding layer |
+| :--- | ---: | ---: |
+| 12 full layers alone | 12.0 | -- |
+| all 48 layers as full | 48.0 | 1.000 |
+| **measured** | **33.2** | **0.589** |
+| a 512 window over 32,768 | 12.6 | 0.016 |
+
+The windowed layers are being charged **0.589 of a full layer each**, against a
+window that can only ever hold 512 of 32,768 positions. Whatever the allocator
+is doing, it is not sizing them to their window.
+
+| configuration | KiB/token | capacity | replicated (4x) |
+| :--- | ---: | ---: | ---: |
+| today | 33.2 | 91,277 | 22,819 (**short**) |
+| windowed layers sized to their window | **12.6** | 241,225 | **60,306** |
+
+**If that headroom is real, replicated attention fits at util 0.80 with 1.84x
+margin over the required 32,768**, and the near-full-utilisation risk above
+disappears entirely. It is also quality-neutral by construction: a
+sliding-attention layer cannot attend outside its window, so storing more of
+the context for it changes no arithmetic.
+
+This is **arithmetic on reported numbers, not a measurement**, and vLLM's
+hybrid KV allocator is subtle -- speculative decode needs window plus draft
+depth, and block granularity is 64. Verify against
+`kv_cache_config` before believing it. But a 0.589-versus-0.016 gap is large
+enough that even a partial reclaim changes the feasibility verdict.
 
 ## Boundaries
 
