@@ -403,10 +403,20 @@ if [[ "$role" == candidate ]]; then
     echo "candidate requires VLLM_USE_AOT_COMPILE=0" >&2
     exit 2
   }
+  # PIECEWISE makes every attention call an eager break, because
+  # unified_attention_with_output is decorated break_in_full=False: under FULL
+  # the same wrapper records it into the surrounding segment instead. Laguna's
+  # collectives break unconditionally either way, so FULL is expected to retire
+  # exactly the 48 attention boundaries -- 146/145 becomes 98/97. Default
+  # PIECEWISE, so no existing arm changes.
+  case "${LAGUNA_CUDAGRAPH_MODE:-PIECEWISE}" in
+    PIECEWISE|FULL) laguna_cudagraph_mode="${LAGUNA_CUDAGRAPH_MODE:-PIECEWISE}" ;;
+    *) echo "LAGUNA_CUDAGRAPH_MODE must be PIECEWISE or FULL" >&2; exit 2 ;;
+  esac
   common_args+=(
     --no-async-scheduling
     --compilation-config
-    "{\"mode\":\"NONE\",\"cudagraph_mode\":\"PIECEWISE\",\"cudagraph_capture_sizes\":[${LAGUNA_M}],\"max_cudagraph_capture_size\":${LAGUNA_M}}"
+    "{\"mode\":\"NONE\",\"cudagraph_mode\":\"${laguna_cudagraph_mode}\",\"cudagraph_capture_sizes\":[${LAGUNA_M}],\"max_cudagraph_capture_size\":${LAGUNA_M}}"
   )
   # Diagnostic width-1 arm: graphed target execution with no drafter at all.
   # It isolates what graph capture alone is worth, which neither the M=8 nor the
