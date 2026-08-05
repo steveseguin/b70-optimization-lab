@@ -7,10 +7,13 @@ and vision — using the `intel/llm-scaler-vllm:0.21.0-b2` image.
 
 ## Status
 
-> **Benchmarked (2026-08-04).** llama-benchy results recorded for both models
-> (pp 2048 / tg 1024, 5 runs per depth, depths 0–32k). Tables in
-> [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md); raw per-run data in
-> `benchmarks/*.json` / `*.csv`.
+> **27B: verified working + benchmarked.** llama-benchy results in
+> [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md); vision/tools/thinking
+> verified; deployed on both GPUs (ports 8001 + 8002).
+>
+> **35B: NOT USABLE without MTP** — with MTP off + thinking on it emits `!!!!`
+> garbage on every prompt; with MTP on it loses 3.45x decode speed at depth.
+> See Known Issues. Replaced in production by a second 27B until resolved.
 
 ## Model
 
@@ -147,11 +150,12 @@ Both models ran simultaneously (one GPU each) with no interference.
   MTP costs 3.45x (35B) / 1.56x (27B) decode throughput because draft+verify
   both attend the full KV cache. It only helps shallow-context dense serving.
   **Disabled by default in the final config.** See `benchmarks/BENCHMARKS.md`.
-- **35B MoE + thinking mode emits `!`-repetition garbage (open issue)**: the
+- **35B MoE + thinking mode emits `!`-repetition garbage (NOT USABLE)**: the
   MoE under `sym_int4` degenerates into `!!!!...` in the reasoning chain on
   trivial prompts, across all sampling values; 27B dense is clean on the same
-  recipe. Workaround: thinking OFF on the 35B, or a different quantization.
-  See `benchmarks/BENCHMARKS.md` quality finding.
+  recipe. Thinking off is clean but loses reasoning. **The 35B requires MTP for
+  usable output, and MTP costs 3.45x deep-context decode — unusable for
+  production on b2/INT4 until resolved.** See `benchmarks/BENCHMARKS.md`.
 
 ## Dead Ends Documented (do not retry)
 

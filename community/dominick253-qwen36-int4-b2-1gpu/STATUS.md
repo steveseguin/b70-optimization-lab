@@ -2,8 +2,10 @@
 
 ## Current State
 
-**BENCHMARKED** — llama-benchy results recorded (2026-08-04). Full tables in
-`benchmarks/BENCHMARKS.md`; raw per-run JSON/CSV in `benchmarks/`.
+**27B: BENCHMARKED + VERIFIED WORKING** — llama-benchy results recorded
+(2026-08-04), vision/tools/thinking verified, runs on both GPUs.
+**35B: NOT USABLE without MTP** — see Known Issues. Production deployment
+switched to 2x 27B (one per GPU) until the MoE thinking issue is resolved.
 
 ## Environment
 
@@ -55,10 +57,17 @@ Method + verification + reproduction in `benchmarks/BENCHMARKS.md`.
   buffers (Intel's own source comment); TP=1 required
 - **MTP degrades deep-context decode** (A/B verified 2026-08-05): at depth 32k,
   MTP costs 3.45x (35B MoE) / 1.56x (27B) decode throughput — draft+verify both
-  attend the full KV cache. Disabled by default in the final config.
-- **35B MoE + thinking emits `!`-repetition garbage (open)**: reproduced across
-  all sampling values; 27B dense clean on identical recipe. Workaround: thinking
-  OFF on 35B or different quantization. Details in benchmarks/BENCHMARKS.md.
+  attend the full KV cache.
+- **35B MoE is NOT USABLE without MTP (critical, 2026-08-05)**: with MTP off and
+  thinking on, the 35B degenerates into `!!!!` repetition in the reasoning chain
+  on every prompt and every sampling config tried (temp 0.6/0.9/1.0, presence
+  0.0/1.5, rep_penalty 1.15). Thinking off produces clean output but loses
+  reasoning. **Net: the 35B MoE requires MTP for usable output, and MTP costs
+  3.45x decode speed at deep context — the model is effectively unusable for
+  production on b2/INT4 until this is resolved.** The 27B dense is clean on the
+  identical recipe. Details in benchmarks/BENCHMARKS.md.
+- **Production deployment (2026-08-05): 2x 27B** — one on each GPU (ports 8001
+  + 8002) — replacing the 35B until the MoE issue is fixed.
 - Eager mode enabled (`--enforce-eager`) — may impact perf vs XPU graph
 - `min_p`/`logit_bias` ignored under speculative decoding (vLLM warning)
 
