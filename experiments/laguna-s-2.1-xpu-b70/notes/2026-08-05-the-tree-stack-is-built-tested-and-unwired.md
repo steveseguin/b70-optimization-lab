@@ -2,8 +2,23 @@
 
 Date: 2026-08-05 America/Toronto
 
-Status: **the one remaining decode lever that is not blocked by hardware, the
-model, or a measured cost. 240 tests pass; nothing calls it.**
+> **CHECKED, and it is blocked too.** The tree needs the drafter's rank-2
+> candidate at branching positions. **DFlash emits top-1 only**: its reduction
+> is `local_argmax`, and the M8 breakable-graph contract independently requires
+> `draft_sample_method == "greedy"`. So wiring it needs a new top-2 reduction on
+> the drafter path plus a contract change, not plumbing.
+>
+> The **+3.3% is also an upper bound**, by the spec module's own admission: a
+> node whose ancestry departs from the top-1 spine "is drafted from a
+> distribution that assumed the spine, so its acceptance is lower than its depth
+> and rank alone imply." The realised gain is smaller than 3.3%.
+>
+> **Verdict: not worth it.** Sub-3% for a drafter-side kernel change and a
+> contract relaxation in the exactness-critical path. Recorded so the next
+> person does not rediscover the stack and assume it is ready to switch on.
+
+Status: **the last candidate lever, examined and declined on cost. 240 tests
+pass; nothing calls it; and the piece it depends on does not exist.**
 
 ## What exists
 

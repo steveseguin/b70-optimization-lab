@@ -82,7 +82,7 @@ hardware, the model, or a measured cost.
 | graph break count | -2.4% | rejected, breaks 32K exactness |
 | attention kernel | ~1.25 ms total | not worth attacking |
 | verifier width 16 | +0.21% tokens, +14.6% cycle | closed, and inexact |
-| **greedy tree at width 12** | **+3.3% tokens, +0% cycle** | **unbuilt, worth doing** |
+| greedy tree at width 12 | <+3.3% tokens, +0% cycle | **blocked**: DFlash emits top-1 only (`local_argmax`), and the contract requires greedy drafting |
 
 ## The honest bottom line
 
