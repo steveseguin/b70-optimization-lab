@@ -69,3 +69,35 @@ bash benchmarks/bench-qwen36-35b-int4-b2-8002.sh
 # 27B (port 8001) — run while vllm-qwen36-27b-int4 is serving
 bash benchmarks/bench-qwen36-27b-int4-b2-8001.sh
 ```
+
+## MTP A/B finding (2026-08-05) — MTP causes the deep-context decode collapse
+
+Follow-up A/B on the reported slowdown: same recipe, `--speculative-config` removed
+as the ONLY change. Focused sweep: depths 0 and 32768, pp=2048 tg=512, 3 runs.
+
+| Model | depth | tg MTP ON (tok/s) | tg MTP OFF (tok/s) | Effect |
+| --- | --- | --- | --- | --- |
+| 35B-A3B MoE | 0 | 103.3 | 108.1 | neutral |
+| 35B-A3B MoE | 32768 | 24.8 | 85.5 | MTP OFF **3.45x faster** |
+| 27B dense | 0 | 46.3 | 27.7 | MTP ON 1.67x faster |
+| 27B dense | 32768 | 14.9 | 23.3 | MTP OFF 1.56x faster |
+
+**Cause:** with MTP, each step runs a draft forward + verify forward; at deep
+context both do full attention over the entire KV cache, doubling attention
+work per accepted token. MTP wins when GEMMs dominate (shallow context on the
+dense 27B), loses hard when attention dominates (deep context). MTP acceptance
+remained 85-100% throughout — this is not draft rejection, it is per-step
+attention overhead.
+
+**Corrected interpretation:** the deep-context decode ceiling on one B70 is
+~85 tok/s (35B MoE) / ~23 tok/s (27B dense) with MTP off — the MTP-on numbers
+in the tables above understate the hardware. The 8192-depth row anomaly
+(33.3 tok/s, slower than 16384's 39.7) is MTP instability at the
+attention-heavy transition.
+
+**Recommendation:** disable MTP (`--speculative-config` omitted) for
+deep-context workloads on this hardware; enable it only for shallow-context
+dense-model serving where it measurably helps (27B: 46 vs 28 tok/s at depth 0).
+
+Raw: `bench-qwen36-35b-nomtp-20260805-062613.json`,
+`bench-qwen36-27b-nomtp-20260805-063206.json`

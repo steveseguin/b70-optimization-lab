@@ -51,6 +51,9 @@ Method + verification + reproduction in `benchmarks/BENCHMARKS.md`.
 
 - TP=2 is unusable on b2/B70: multi-GPU all-reduce returns NaN on prefill-sized
   buffers (Intel's own source comment); TP=1 required
+- **MTP degrades deep-context decode** (A/B verified 2026-08-05): at depth 32k,
+  MTP costs 3.45x (35B MoE) / 1.56x (27B) decode throughput — draft+verify both
+  attend the full KV cache. Disable for deep-context workloads.
 - Eager mode enabled (`--enforce-eager`) — may impact perf vs XPU graph
 - `min_p`/`logit_bias` ignored under speculative decoding (vLLM warning)
 

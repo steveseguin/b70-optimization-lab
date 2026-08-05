@@ -110,6 +110,15 @@ Note: the 35B MoE benches faster than the 27B dense because only ~3B experts
 are active per token (~9x less compute), despite the larger parameter count.
 Both models ran simultaneously (one GPU each) with no interference.
 
+> **MTP A/B finding (2026-08-05):** the MTP-on decode numbers above **understate
+> deep-context throughput**. With `--speculative-config` removed (only change),
+> tg at depth 32768 rises from 24.8 → **85.5 tok/s** (35B MoE, 3.45x) and
+> 14.9 → **23.3 tok/s** (27B, 1.56x). MTP's draft+verify forwards both attend
+> the full KV cache at deep context, doubling per-step attention work. MTP
+> helps only shallow-context dense serving (27B depth 0: 46 vs 28 tok/s).
+> Disable MTP for deep-context workloads. Full A/B in
+> [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
+
 ## Key Design Decisions
 
 - **One GPU, not TP=2**: b2's multi-GPU all-reduce is broken on B70. Intel's own
@@ -134,6 +143,11 @@ Both models ran simultaneously (one GPU each) with no interference.
   re-maps the chosen GPU to index 0.
 - **gpu_memory_utilization 0.95**: full 262144 context needs ~9.1 GiB fp8 KV;
   0.90 leaves only 8.6 GiB ("estimated maximum model length is 245760").
+- **MTP is a tradeoff, not a default win**: verified by A/B — at depth 32768,
+  MTP costs 3.45x (35B) / 1.56x (27B) decode throughput because draft+verify
+  both attend the full KV cache. It only helps shallow-context dense serving.
+  Set `MTP_TOKENS=0`-equivalent (omit `--speculative-config`) for deep-context
+  workloads. See `benchmarks/BENCHMARKS.md`.
 
 ## Dead Ends Documented (do not retry)
 
