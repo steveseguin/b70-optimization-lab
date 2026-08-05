@@ -4,7 +4,7 @@ Date: 2026-08-05 America/Toronto
 
 Status: **closure. Both halves of `tok/s = tokens_per_step / step_time` are
 bounded by measurement, and the product cannot reach 250 at short context on
-this stack. One small quality-neutral win remains unbuilt.**
+this stack. Every lever is now closed, including the last candidate.**
 
 ## The identity
 
@@ -63,13 +63,25 @@ Applying that cost to the *optimal tree* rather than the chain it measured:
 reasons. Width is closed, and wider is worse: the tree gain grows sublinearly
 while the row cost does not.
 
-## What remains, and it is small
+## The last candidate, and why it is closed too
 
-**The greedy tree at the current width 12 is worth +3.3% for zero extra rows**,
-hence zero extra cycle time. That is 162.0 -> about **167 tok/s**,
-quality-neutral because verification stays exact, and the topology builder is
-already written. It is the only unbuilt lever left that is not blocked by
-hardware, the model, or a measured cost.
+The greedy tree at width 12 scores +3.3% for zero extra rows, so it looked like
+the one remaining win. It is not available:
+
+- **The drafter cannot supply it.** A tree needs the rank-2 candidate at
+  branching positions. DFlash reduces with `local_argmax` -- top-1 only -- and
+  the M8 breakable-graph contract independently requires
+  `draft_sample_method == "greedy"`. Wiring the tree means a new top-2 reduction
+  on the drafter path plus a contract relaxation, in the exactness-critical
+  path.
+- **The +3.3% is an upper bound**, by the spec module's own admission: a node
+  whose ancestry departs from the top-1 spine "is drafted from a distribution
+  that assumed the spine, so its acceptance is lower than its depth and rank
+  alone imply."
+
+Sub-3% for drafter-side kernel work and a contract change is not a good trade.
+The stack is built and tested ([detail](2026-08-05-the-tree-stack-is-built-tested-and-unwired.md));
+it is recorded so nobody rediscovers it and assumes it is ready to switch on.
 
 ## The complete ledger
 
@@ -87,9 +99,10 @@ hardware, the model, or a measured cost.
 ## The honest bottom line
 
 **250 tok/s at short context is not achievable on this hardware with this
-model.** The reachable figure is about **167** with the tree, or about **202**
-if a device with ~3 GiB more per rank unblocked the collective lever
-(4.084 / 20.21 ms).
+model.** The measured figure is **162.0**, and no available lever moves it:
+about **202** would need a device with ~3 GiB more per rank to unblock the
+collective lever, and about 167 would need drafter-side top-2 work for the
+tree.
 
 **200 tok/s at 32,640 is further out still**: it is gated at 1.058 tokens per
 step by a drafter whose sliding window is 512 against a 32K context, and no
