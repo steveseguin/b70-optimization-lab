@@ -396,6 +396,7 @@ common_env=(
   # rendezvous while holding boundaries, topology and kernels fixed. Never a
   # record path; its throughput is not a rate Laguna can achieve.
   VLLM_XPU_LAGUNA_GATHER_SKIP_MOD="${LAGUNA_GATHER_SKIP_MOD:-1}"
+  VLLM_XPU_LAGUNA_REPLICATED_ATTENTION="${LAGUNA_REPLICATED_ATTN:-0}"
   VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
   LAGUNA_EAGER_FANOUT="${LAGUNA_EAGER_FANOUT:-0}"
   VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}"
@@ -648,11 +649,13 @@ if [[ "$role" == candidate ]]; then
   # segments, retiring each boundary and the graph it started: 146/145 -> 98/97.
   # The count stays pinned, so any drift other than the one the selector
   # explains still fails.
-  if [[ "${LAGUNA_INLINE_ATTN:-0}" == 1 ]]; then
-    target_graphs=98 target_eager_breaks=97
-  else
-    target_graphs=146 target_eager_breaks=145
-  fi
+  # Replicated attention retires the 48 attention-O all-gathers instead of the
+  # 48 attention boundaries, which is a different 48 but the same arithmetic.
+  # `set -e` aborts on a false `[[ ]] && ...` list, so use explicit ifs.
+  retired=0
+  if [[ "${LAGUNA_INLINE_ATTN:-0}" == 1 ]]; then retired=$((retired + 48)); fi
+  if [[ "${LAGUNA_REPLICATED_ATTN:-0}" == 1 ]]; then retired=$((retired + 48)); fi
+  target_graphs=$((146 - retired)) target_eager_breaks=$((145 - retired))
   for rank in 0 1 2 3; do
     (( $(topology_count "$rank" Captured "$target_graphs" "$target_eager_breaks") == 1 )) \
       || die "candidate target capture topology is not exactly once on rank $rank"
