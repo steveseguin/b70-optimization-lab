@@ -2,7 +2,27 @@
 
 Date: 2026-08-05 America/Toronto
 
-Status: **attributed. The raw sample was contaminated by teardown frames, but
+> **DOWNGRADED, same day, before it was acted on.** The sampling window was
+> ~100 s but this arm's decode is only ~1.7 s (128 tokens at 13.4 ms/step), so
+> the overwhelming majority of samples come from model load, graph capture and
+> warm-up rather than steady-state decode. `execute_model` also encloses the
+> startup dummy and profile runs, so the "inside a model step" filter does
+> **not** isolate decode.
+>
+> The 57.4% figure is therefore **not** a decode attribution, and its ~2%
+> agreement with the bisection's unattributed 7.5 ms should be treated as
+> coincidence until re-measured. What survives is weaker but still useful: the
+> M=1 linear path is expensive *somewhere*, and `copy_to_gpu` collapsing from
+> 27.6% to 2.2% when device work is removed is a window-independent comparison
+> that still argues the host waits rather than works when the device is busy.
+>
+> **The correct experiment**: sample only while decode is in flight. The window
+> is short, so either raise the sample rate and gate on first-token emission,
+> or drive a long generation so decode dominates the window. Until then the
+> ~7.5 ms from the four-arm bisection stands as a *quantity* with no attributed
+> owner.
+
+Status: **downgraded to unattributed. The raw sample was contaminated by teardown frames, but
 restricting to samples inside a model step resolves it, and the result closes
 the arithmetic to within 2% of what
 [the four-arm bisection](2026-08-05-KEY-the-serving-path-is-half-the-decode-step.md)
