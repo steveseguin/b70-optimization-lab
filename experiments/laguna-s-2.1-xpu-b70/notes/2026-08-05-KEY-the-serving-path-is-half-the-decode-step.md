@@ -203,18 +203,28 @@ flips on a larger sample.
 Two attempts to profile EngineCore failed on process identification, so the
 answer is recorded here rather than rediscovered.
 
-vLLM sets process titles, and the **exact** titles are:
+**At decode time there are only five processes**, and none of them is a
+separate EngineCore:
 
 ```
-VLLM::EngineCore
-VLLM::Worker_TP0_EP0   VLLM::Worker_TP1_EP1
-VLLM::Worker_TP2_EP2   VLLM::Worker_TP3_EP3
+<pid>  .../bin/vllm serve /mnt/fast-ai/llm-models/laguna-s-2.1/int4 --host ...
+<pid>  VLLM::Worker_TP0_EP0   <pid>  VLLM::Worker_TP1_EP1
+<pid>  VLLM::Worker_TP2_EP2   <pid>  VLLM::Worker_TP3_EP3
 ```
 
-- `pgrep -f "VLLM::EngineCore"` is the correct selector.
+With `--distributed-executor-backend mp`, **EngineCore runs in-process with the
+API server**. A `VLLM::EngineCore` title does appear transiently during
+startup, which is what made the first two attempts look like identification
+bugs rather than a structural fact.
+
+- **Sample the `vllm serve` process** -- match on `bin/vllm serve`, not on a
+  title. That is where scheduling, sampling, rejection and input preparation
+  run.
 - **Do not** resolve it as the workers' parent: that PID is a spawn helper with
   no Python stack, and py-spy returns **0 samples, 0 errors** against it, which
   looks like success.
+- **Do not** rely on `pgrep -f "VLLM::EngineCore"`: it matches only during
+  startup, and returns nothing during decode.
 - Sampling needs ptrace, so it must run under `sudo`.
 - Trigger on the first case's result line appearing in `$run_dir/bench.stdout`
   (`grep -q '"case_id": "laguna-lc-'`), then sample ~8 s at 500 Hz: the
