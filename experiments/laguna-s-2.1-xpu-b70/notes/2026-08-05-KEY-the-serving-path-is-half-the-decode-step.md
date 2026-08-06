@@ -124,6 +124,44 @@ profiler's export path is unreliable on this stack at this trace size and
 either shrink `LAGUNA_PROFILE_ITERS` well below 25 or drive a long generation
 against a manually started server and sample it with `py-spy` instead.
 
+## Resolved: the device is idle for most of the step
+
+A third attempt succeeded by shrinking the trace -- 4 profile iterations
+instead of 25, on the 8,192 case. Two findings.
+
+**First, the "decode-only window" does not exist.** `LAGUNA_PROFILE_DELAY` and
+`LAGUNA_PROFILE_ITERS` have **no readers in the vLLM fork**; the harness comment
+describes intent that nothing implements. The capture spans 215 s, the whole
+benchmark. They are the eighth and ninth referenced-but-unimplemented selectors
+found this session.
+
+**Second, the per-event device figures answer the question anyway**, because
+they do not depend on the window:
+
+| role | device time | events | mean |
+| :--- | ---: | ---: | ---: |
+| attention | 5.092 ms | 268 | 19 us |
+| gemm | 2.928 ms | 16 | 183 us |
+| elementwise | 0.587 ms | 260 | 2 us |
+| norm, memory, other | 0.83 ms | 160 | -- |
+
+Non-collective device work totals **~9.4 ms across roughly four decode steps**,
+i.e. **~2.3 ms per step** -- matching the independent kineto measurement of the
+full configuration exactly. The 215 s "collective" total is the idle
+inter-request barrier and must not be counted, the same trap as the original
+94%-collective-bound reading.
+
+**Against a 13.4 ms step in this arm, ~2.3 ms of device kernel work means the
+device is idle for roughly 83% of the step.** The ~7.5 ms is therefore
+**host-side**, which settles the direction the four-arm bisection could not.
+
+What it does **not** settle is *which* host cost: per-op dispatch (fix:
+implement `xpu_exact_batched_m1_bmm_out`) or blocking on the queue (fix: async
+scheduling). Those need opposite work, and distinguishing them needs a
+genuinely decode-scoped sample -- which on this stack means py-spy against a
+long generation on a manually started server, since the harness's window
+selectors are not implemented.
+
 ## What to do next
 
 1. **Attribute the 7.5 ms before optimising it.** Differential arms, not
