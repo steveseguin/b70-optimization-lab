@@ -241,6 +241,44 @@ already identified as the next tool when the same question arose about what the
 device queue waits on. That recommendation is now unavoidable rather than
 optional.
 
+## The native route exists and is ready; only the plumbing is missing
+
+`unitrace` is **present and hash-matched** at
+`/home/steve/src/pti-gpu/build-unitrace/unitrace` (350,352 bytes, sha256
+`5aaca1f4…`, exactly the pin in `run_laguna_m8_replay_trace.sh`). It is simply
+not on `PATH`.
+
+Better, the **current** fork already supports decode-scoped PTI tracing.
+`breakable_cudagraph.py:1400` reads three variables:
+
+| variable | requirement |
+| :--- | :--- |
+| `VLLM_XPU_LAGUNA_REPLAY_TRACE_SESSION` | must match `LagunaReplay[A-Za-z0-9]{32,48}` |
+| `VLLM_XPU_LAGUNA_REPLAY_TRACE_UNITRACE` | path to the binary |
+| `VLLM_XPU_LAGUNA_REPLAY_TRACE_UNITRACE_SHA256` | 64 hex chars, verified before use |
+
+and **resumes the paused PTI session at the first graph replay** -- logging
+`Resumed audited Laguna PTI session at first graph replay`. That makes the
+trace decode-scoped *by construction*, which is precisely what defeated every
+Python-level attempt: py-spy and the torch profiler had to be aimed at a ~1.7 s
+window inside a multi-minute run, and the harness's own
+`LAGUNA_PROFILE_DELAY`/`ITERS` window selectors turned out to have no readers.
+
+**What is missing is only plumbing.** The existing
+`run_laguna_m8_replay_trace.sh` is pinned to superseded trees
+(`laguna-vllm-runtime-graph-20260724`,
+`deepseek-v4-xpu-kernels-mwidth-mhc`), so it cannot be pointed at the current
+q12 stack. The work is:
+
+1. Wrap the service launch in `serve_laguna_long_context_nvme.sh` with
+   `unitrace` in its paused/conditional-collection mode.
+2. Pass the three variables through the runner's `common_env` -- **not** on the
+   command line, since the runner uses `env -i`.
+3. Analyze with `analyze_laguna_m8_replay_trace.py`, which already exists.
+
+This is the only instrument left that can see the ~7.5 ms, and every piece of
+it is already on the machine.
+
 ## How to sample EngineCore, for whoever does it next
 
 Two attempts to profile EngineCore failed on process identification, so the
