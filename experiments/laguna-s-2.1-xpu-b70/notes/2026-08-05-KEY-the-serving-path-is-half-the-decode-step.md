@@ -86,6 +86,29 @@ That attempt was made before this decomposition existed, when the prize looked
 speculative. It is now measured at ~7.5 ms, which changes whether it is worth
 retrying on a fresh stack with a control arm first.
 
+## The measurement that would settle it, and why it has not run
+
+The harness already supports a **decode-only** profile window:
+`LAGUNA_PROFILE_DIR` arms the torch profiler over `/start_profile`, and
+`LAGUNA_PROFILE_DELAY` "skips the chunked-prefill iterations so the captured
+window is decode steps only". The torch profiler costs **2.7% warm**, so it is
+usable here.
+
+Attempting it on the stripped arm failed, and the failure is worth recording
+precisely because the obvious diagnosis is wrong:
+
+- the health wait (lines 589-593) **is** before the profiler arm (line 600), so
+  the ordering is correct;
+- the server logged `Application startup complete` and stayed up for 13
+  minutes;
+- yet the profiler `POST /start_profile` returned `curl: (7) ... Couldn't
+  connect`, and it is that `die` which triggered the SIGTERM.
+
+So the profiling arm **races the server's readiness** rather than being
+mis-sequenced, and only when `--profiler-config.torch_profiler_dir` is passed.
+Retrying with a short retry loop around the `/start_profile` POST is the
+obvious repair, and it is a harness fix rather than a Laguna question.
+
 ## What to do next
 
 1. **Attribute the 7.5 ms before optimising it.** Differential arms, not
