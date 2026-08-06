@@ -198,6 +198,49 @@ small. But an 81% concentration in one coherent signature -- spin, acquire,
 fence, wait, all on the same IPC channel -- is not the kind of result that
 flips on a larger sample.
 
+## Refuted: the engine is not busy either, and the tools are exhausted
+
+Sampling the whole process tree (`py-spy --subprocesses` on `bin/vllm serve`,
+4,987 samples, triggered on the decode window) splits by process:
+
+| process | share of kept samples |
+| :--- | ---: |
+| `VLLM::Worker_TP3_EP3` | 25.9% |
+| `VLLM::Worker_TP2_EP2` | 24.4% |
+| `VLLM::Worker_TP1_EP1` | 24.0% |
+| `VLLM::Worker_TP0_EP0` | 23.5% |
+| **`vllm serve` (engine, in-process)** | **1.5%** |
+
+**This refutes the EngineCore hypothesis from the previous section.** If the
+engine were spending ~7.5 ms of every step scheduling, sampling and preparing
+inputs, it could not be 1.5% of samples. It is idle too.
+
+And the worker entries are bare `process <pid>:"VLLM::Worker_..."` leaves --
+py-spy found **no Python stack at all** at those moments. The workers are inside
+**native code**. The earlier `sched_yield` / `shm_broadcast` result was only the
+Python-visible sliver of their time.
+
+So every layer measures as idle:
+
+| layer | measured | instrument |
+| :--- | :--- | :--- |
+| device kernels | idle ~83% of the step | decode-scoped kineto |
+| engine / scheduler | 1.5% of samples | py-spy, whole tree |
+| worker Python | ~81% spinning in IPC | py-spy, worker |
+| worker native | **not visible** | -- |
+
+**The ~7.5 ms is in native code that none of the available instruments can
+see.** py-spy is Python-only by construction; kineto's collective totals are
+polluted by the idle inter-request barrier; and the XPU event profile inflates
+the step 3.4x non-uniformly. That exhausts the tools this campaign has.
+
+Attributing it needs a **native** profiler -- `unitrace` or `ze_tracer` at the
+Level Zero boundary -- which
+[`2026-08-04-explicit-syncs-are-not-the-fixed-cost.md`](2026-08-04-explicit-syncs-are-not-the-fixed-cost.md)
+already identified as the next tool when the same question arose about what the
+device queue waits on. That recommendation is now unavoidable rather than
+optional.
+
 ## How to sample EngineCore, for whoever does it next
 
 Two attempts to profile EngineCore failed on process identification, so the
