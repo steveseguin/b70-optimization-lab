@@ -598,8 +598,19 @@ curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-before.prom"
 # Profiling arm: arm the profiler before the request. delay_iterations skips
 # the chunked-prefill iterations so the captured window is decode steps only.
 if [[ -n "${LAGUNA_PROFILE_DIR:-}" ]]; then
-  curl -fsS -X POST http://127.0.0.1:18080/start_profile >/dev/null \
-    || die "profiler failed to start"
+  # /health can answer before the profiler endpoint is reachable when the server
+  # is started with torch_profiler_dir, so a single POST races startup: it
+  # returned curl(7) against a server that then stayed up for 13 minutes.
+  profile_started=0
+  for _ in $(seq 1 30); do
+    if curl -fsS -X POST http://127.0.0.1:18080/start_profile >/dev/null 2>&1; then
+      profile_started=1
+      break
+    fi
+    service_alive || die "service exited while arming the profiler"
+    sleep 2
+  done
+  (( profile_started == 1 )) || die "profiler failed to start"
 fi
 
 benchmark_args=(
