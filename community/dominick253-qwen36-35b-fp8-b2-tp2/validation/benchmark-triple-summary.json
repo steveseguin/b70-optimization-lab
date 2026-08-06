@@ -1,0 +1,64 @@
+{
+  "benchmark": "llama-benchy 0.4.1.dev1+ge9be34457",
+  "benchmark_commit": "e9be344578cec17745066b220798b80a0d2686d3",
+  "workload": {
+    "prompt_tokens": 1024,
+    "generation_tokens": 256,
+    "exact_generation_tokens": true,
+    "depth": 0,
+    "measured_runs_per_sweep": 5,
+    "warmup_runs_per_sweep": 1,
+    "sweeps": 3,
+    "concurrency": [1, 2, 4, 8, 12],
+    "latency_mode": "api",
+    "prefix_caching": false
+  },
+  "traffic_validation": {
+    "expected_successful_requests_per_sweep": 165,
+    "actual_successful_requests_per_sweep": [165, 165, 165],
+    "request_count_clean_per_sweep": [true, true, true],
+    "new_xe_faults_per_sweep": [0, 0, 0]
+  },
+  "raw_sha256": {
+    "benchmark-clean-r1.json": "f35db3a46712b6db96ea5d8d520833356f3997cec19a52d6d6283abe614880f4",
+    "benchmark-clean-r2.json": "325fa5dd6b74ffa1a84050cb2bf8524e634dfe5c7946321ac40f88cc17ea242c",
+    "benchmark-clean-r3.json": "9818e007e23a7fcbdca5481460dee09914df872d7bb22e90c16696b4c3433baf"
+  },
+  "results": [
+    {
+      "concurrency": 1,
+      "prompt_tokens_per_second": {"three_sweep_mean": 5257.018028, "sweep_means": [5302.256122, 5307.544590, 5161.253370], "range": [5161.253370, 5307.544590]},
+      "aggregate_generation_tokens_per_second": {"three_sweep_mean": 105.228465, "sweep_means": [103.625300, 107.191901, 104.868194], "range": [103.625300, 107.191901]},
+      "per_request_generation_tokens_per_second": {"three_sweep_mean": 105.228465, "sweep_means": [103.625300, 107.191901, 104.868194], "range": [103.625300, 107.191901]},
+      "time_to_first_response_ms": {"three_sweep_mean": 196.195084, "sweep_means": [194.375288, 194.538077, 199.671887]}
+    },
+    {
+      "concurrency": 2,
+      "prompt_tokens_per_second": {"three_sweep_mean": 5936.956369, "sweep_means": [5824.807533, 6018.248790, 5967.812784], "range": [5824.807533, 6018.248790]},
+      "aggregate_generation_tokens_per_second": {"three_sweep_mean": 185.766710, "sweep_means": [190.305894, 182.356500, 184.637735], "range": [182.356500, 190.305894]},
+      "per_request_generation_tokens_per_second": {"three_sweep_mean": 96.000985, "sweep_means": [97.587954, 93.881708, 96.533292], "range": [93.881708, 97.587954]},
+      "time_to_first_response_ms": {"three_sweep_mean": 314.663455, "sweep_means": [313.599430, 322.865442, 307.525494]}
+    },
+    {
+      "concurrency": 4,
+      "prompt_tokens_per_second": {"three_sweep_mean": 6647.523253, "sweep_means": [6889.873625, 6548.038321, 6504.657813], "range": [6504.657813, 6889.873625]},
+      "aggregate_generation_tokens_per_second": {"three_sweep_mean": 278.716153, "sweep_means": [285.308713, 281.220454, 269.619291], "range": [269.619291, 285.308713]},
+      "per_request_generation_tokens_per_second": {"three_sweep_mean": 74.547026, "sweep_means": [75.466999, 74.066586, 74.107492], "range": [74.066586, 75.466999]},
+      "time_to_first_response_ms": {"three_sweep_mean": 549.876266, "sweep_means": [563.909737, 541.611726, 544.107334]}
+    },
+    {
+      "concurrency": 8,
+      "prompt_tokens_per_second": {"three_sweep_mean": 7069.377248, "sweep_means": [7109.315547, 7170.499230, 6928.316967], "range": [6928.316967, 7170.499230]},
+      "aggregate_generation_tokens_per_second": {"three_sweep_mean": 401.022237, "sweep_means": [400.636821, 416.638310, 385.791578], "range": [385.791578, 416.638310]},
+      "per_request_generation_tokens_per_second": {"three_sweep_mean": 53.917522, "sweep_means": [53.733227, 54.266892, 53.752446], "range": [53.733227, 54.266892]},
+      "time_to_first_response_ms": {"three_sweep_mean": 1050.661286, "sweep_means": [1070.029405, 1094.110463, 987.843990]}
+    },
+    {
+      "concurrency": 12,
+      "prompt_tokens_per_second": {"three_sweep_mean": 6955.946243, "sweep_means": [6977.709050, 6880.668643, 7009.461036], "range": [6880.668643, 7009.461036]},
+      "aggregate_generation_tokens_per_second": {"three_sweep_mean": 432.168608, "sweep_means": [434.540574, 434.631195, 427.334057], "range": [427.334057, 434.631195]},
+      "per_request_generation_tokens_per_second": {"three_sweep_mean": 44.930347, "sweep_means": [45.051310, 44.882887, 44.856843], "range": [44.856843, 45.051310]},
+      "time_to_first_response_ms": {"three_sweep_mean": 1341.492534, "sweep_means": [1340.396122, 1334.117635, 1349.963846]}
+    }
+  ]
+}

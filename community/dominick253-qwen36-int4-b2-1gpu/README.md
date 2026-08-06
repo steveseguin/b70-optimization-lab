@@ -13,7 +13,8 @@ and vision — using the `intel/llm-scaler-vllm:0.21.0-b2` image.
 >
 > **35B: NOT USABLE without MTP** — with MTP off + thinking on it emits `!!!!`
 > garbage on every prompt; with MTP on it loses 3.45x decode speed at depth.
-> See Known Issues. Replaced in production by a second 27B until resolved.
+> See Known Issues. The INT4 deployment temporarily used a second 27B. A
+> separate offline-FP8 TP2 service replaced it on 2026-08-06.
 
 ## Model
 
@@ -124,11 +125,12 @@ Both models ran simultaneously (one GPU each) with no interference.
 
 ## Key Design Decisions
 
-- **One GPU, not TP=2**: b2's multi-GPU all-reduce is broken on B70. Intel's own
-  source (`vllm/distributed/device_communicators/xpu_communicator.py`) states the
-  XPU all-reduce "only returns NaN on large (prefill-sized) buffers" and the NaN
-  "cascades to garbage ('!!!!') decode output". Every TP=2 launch died with
-  `UR_RESULT_ERROR_DEVICE_LOST` at the first forward pass; TP=1 serves correctly.
+- **One GPU for this INT4 recipe**: every recorded INT4 TP2 attempt failed with
+  `UR_RESULT_ERROR_DEVICE_LOST` at the first forward pass, so this packet keeps
+  its tested TP1 configuration. Those attempts predated Intel issue #550's
+  simple-collective workaround. A separate offline-FP8 packet now verifies TP2
+  on this host with that workaround; it does not retroactively validate INT4
+  TP2.
 - **sym_int4 instead of FP8**: b2 ships dedicated ESIMD INT4 fused kernels;
   `sym_int4` is its native online-quant method (registered CLI choice, no
   checkpoint metadata needed). Its fast path is the GPTQ layout (`qweight [K/8, N]`,
@@ -138,9 +140,10 @@ Both models ran simultaneously (one GPU each) with no interference.
   Result: ~3x KV tokens at the same memory (103k -> 293k on the 27B).
 - **In-place INT4 quant**: `VLLM_OFFLOAD_WEIGHTS_BEFORE_QUANT=1` stages BF16
   weights in system RAM and quantizes in place — no VRAM spike.
-- **Full BF16 checkpoint, NOT pretrained quantized**: online quant is the proven
-  path on this image (same as the FP8 recipe); pretrained FP8 still hit the
-  TP=2 all-reduce crash.
+- **Full BF16 checkpoint for this INT4 recipe**: online `sym_int4` remains the
+  measured INT4 path. The earlier pre-quantized-FP8 TP2 failure is superseded by
+  the separate offline-FP8 B2 TP2 packet after applying Intel's simple-
+  collective workaround.
 - **`ZE_AFFINITY_MASK` only**: `ONEAPI_DEVICE_SELECTOR=level_zero:1` breaks
   device discovery on the second GPU (torch sees zero devices). Mask alone
   re-maps the chosen GPU to index 0.
@@ -161,7 +164,7 @@ Both models ran simultaneously (one GPU each) with no interference.
 
 | Attempt | Result |
 | --- | --- |
-| TP=2 with pre-quantized `Qwen/Qwen3.6-27B-FP8` (block-128) | loads in 4s, correct `XPUFp8BlockScaledMMKernel`, still DEVICE_LOST at first forward |
+| TP=2 with pre-quantized `Qwen/Qwen3.6-27B-FP8` before the issue #550 workaround | loaded in 4s, selected `XPUFp8BlockScaledMMKernel`, then hit DEVICE_LOST; superseded as a general FP8/TP2 conclusion by the separate offline-FP8 packet |
 | `TORCH_LLM_ALLREDUCE=1` | causes DEVICE_LOST at profile_run — remove |
 | `VLLM_XPU_ALLREDUCE_RETRY_ON_NAN=1` | hangs at 98% CPU in `_xpu_tensor_has_nan` |
 | Host L0/NEO stack mount (libze 39122 + igc 2.38.2) | b1/b2 ship identical bundled drivers; no effect |

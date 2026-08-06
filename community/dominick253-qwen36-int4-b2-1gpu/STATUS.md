@@ -4,8 +4,9 @@
 
 **27B: BENCHMARKED + VERIFIED WORKING** — llama-benchy results recorded
 (2026-08-04), vision/tools/thinking verified, runs on both GPUs.
-**35B: NOT USABLE without MTP** — see Known Issues. Production deployment
-switched to 2x 27B (one per GPU) until the MoE thinking issue is resolved.
+**35B INT4: NOT USABLE without MTP** — see Known Issues. The deployment
+temporarily switched to 2x 27B, then moved to a separate offline-FP8 TP2
+service on 2026-08-06.
 
 ## Environment
 
@@ -53,8 +54,9 @@ Method + verification + reproduction in `benchmarks/BENCHMARKS.md`.
 
 ## Known Issues
 
-- TP=2 is unusable on b2/B70: multi-GPU all-reduce returns NaN on prefill-sized
-  buffers (Intel's own source comment); TP=1 required
+- This INT4 packet remains TP1 because its recorded TP2 attempts failed before
+  Intel issue #550's simple-collective workaround. A separate offline-FP8 B2
+  packet verifies TP2 on this host; INT4 TP2 remains untested with that fix.
 - **MTP degrades deep-context decode** (A/B verified 2026-08-05): at depth 32k,
   MTP costs 3.45x (35B MoE) / 1.56x (27B) decode throughput — draft+verify both
   attend the full KV cache.
@@ -66,8 +68,8 @@ Method + verification + reproduction in `benchmarks/BENCHMARKS.md`.
   3.45x decode speed at deep context — the model is effectively unusable for
   production on b2/INT4 until this is resolved.** The 27B dense is clean on the
   identical recipe. Details in benchmarks/BENCHMARKS.md.
-- **Production deployment (2026-08-05): 2x 27B** — one on each GPU (ports 8001
-  + 8002) — replacing the 35B until the MoE issue is fixed.
+- **Historical deployment (2026-08-05): 2x 27B** — one on each GPU. This was
+  replaced on 2026-08-06 by a separate offline-FP8 TP2 service.
 - Eager mode enabled (`--enforce-eager`) — may impact perf vs XPU graph
 - `min_p`/`logit_bias` ignored under speculative decoding (vLLM warning)
 
