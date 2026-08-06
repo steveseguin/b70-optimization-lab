@@ -106,8 +106,23 @@ precisely because the obvious diagnosis is wrong:
 
 So the profiling arm **races the server's readiness** rather than being
 mis-sequenced, and only when `--profiler-config.torch_profiler_dir` is passed.
-Retrying with a short retry loop around the `/start_profile` POST is the
-obvious repair, and it is a harness fix rather than a Laguna question.
+A retry loop around the `/start_profile` POST is the repair, and it is now in
+the runner (failing fast if the service dies meanwhile).
+
+**The retry fixed the arming and exposed a second, worse problem.** With the
+profiler armed, the run **hung in shutdown**: `server.log` stopped changing for
+40 minutes at `Waiting for connections to close`, the profile directory stayed
+empty, and the runner sat for 54 minutes before being terminated. The trace was
+never written. Cleanup was clean -- no vLLM processes survived, host memory
+returned to 117 GiB, and `dmesg` showed no GuC resets, so the hang did not
+wedge the stack.
+
+**Net: the decode-only window has now failed twice, for two unrelated reasons**
+-- a readiness race, then a profiler-export hang. The ~7.5 ms therefore remains
+a *quantity without an owner*. Any future attempt should assume the torch
+profiler's export path is unreliable on this stack at this trace size and
+either shrink `LAGUNA_PROFILE_ITERS` well below 25 or drive a long generation
+against a manually started server and sample it with `py-spy` instead.
 
 ## What to do next
 
