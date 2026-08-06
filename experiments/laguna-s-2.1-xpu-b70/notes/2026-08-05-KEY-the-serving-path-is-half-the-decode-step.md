@@ -162,6 +162,42 @@ genuinely decode-scoped sample -- which on this stack means py-spy against a
 long generation on a manually started server, since the harness's window
 selectors are not implemented.
 
+## The worker idles; the cost is upstream in EngineCore
+
+Sampling the **sentinel decode specifically** -- triggered on the first case's
+result line in `bench.stdout`, 8 s at 500 Hz -- gives a completely different
+picture from any earlier profile:
+
+| leaf frame during decode | share |
+| :--- | ---: |
+| `sched_yield` utils.py:48 | **38.0%** |
+| `acquire_read` shm_broadcast.py:698 | 11.7% |
+| `wait` shm_broadcast.py:196 | 11.7% |
+| `memory_fence` shm_broadcast.py:87 | 10.5% |
+| `acquire_read` shm_broadcast.py:690 | 5.3% |
+| other `shm_broadcast` frames | ~4.2% |
+| `_del_library` library.py:477 | 14.6% |
+
+**`sched_yield` plus `shm_broadcast` is ~81% of decode samples.** The worker is
+spinning on the shared-memory channel waiting to be handed the next step. It is
+not dispatching operators and not blocking on the device queue.
+
+**So I sampled the wrong process.** The worker idles; the ~7.5 ms is upstream in
+**EngineCore** -- scheduling, sampling, rejection, input preparation -- while
+all four workers wait. That also explains the device being idle ~83% of the
+step: nobody has given it work yet.
+
+**This revives async scheduling**, which I ruled out earlier on worker-side
+evidence that "the host is busy, not blocked". That reading was about the wrong
+host. `--async-scheduling` prepares step N+1 while step N executes, which is
+precisely the gap this profile shows.
+
+**Caveat:** only 171 of 653 samples survived teardown filtering, and
+`_del_library` at 14.6% shows some teardown still leaked in. The sample is
+small. But an 81% concentration in one coherent signature -- spin, acquire,
+fence, wait, all on the same IPC channel -- is not the kind of result that
+flips on a larger sample.
+
 ## What to do next
 
 1. **Attribute the 7.5 ms before optimising it.** Differential arms, not
