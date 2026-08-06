@@ -198,6 +198,33 @@ small. But an 81% concentration in one coherent signature -- spin, acquire,
 fence, wait, all on the same IPC channel -- is not the kind of result that
 flips on a larger sample.
 
+## How to sample EngineCore, for whoever does it next
+
+Two attempts to profile EngineCore failed on process identification, so the
+answer is recorded here rather than rediscovered.
+
+vLLM sets process titles, and the **exact** titles are:
+
+```
+VLLM::EngineCore
+VLLM::Worker_TP0_EP0   VLLM::Worker_TP1_EP1
+VLLM::Worker_TP2_EP2   VLLM::Worker_TP3_EP3
+```
+
+- `pgrep -f "VLLM::EngineCore"` is the correct selector.
+- **Do not** resolve it as the workers' parent: that PID is a spawn helper with
+  no Python stack, and py-spy returns **0 samples, 0 errors** against it, which
+  looks like success.
+- Sampling needs ptrace, so it must run under `sudo`.
+- Trigger on the first case's result line appearing in `$run_dir/bench.stdout`
+  (`grep -q '"case_id": "laguna-lc-'`), then sample ~8 s at 500 Hz: the
+  sentinel's decode begins about a second later and lasts ~1.7 s. Sampling any
+  earlier captures model load and graph capture, which is ~98% of the run and
+  produced a completely misleading profile once already.
+- Filter out any sample whose stack contains `shutdown`,
+  `_cleanup_profiling_kv_cache`, `empty_cache`, `make_llir`, `load_model` or
+  `_del_library` before computing shares.
+
 ## What to do next
 
 1. **Attribute the 7.5 ms before optimising it.** Differential arms, not
