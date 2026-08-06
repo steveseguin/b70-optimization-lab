@@ -241,7 +241,50 @@ already identified as the next tool when the same question arose about what the
 device queue waits on. That recommendation is now unavoidable rather than
 optional.
 
-## The native route exists and is ready; only the plumbing is missing
+## Native tracing was plumbed in, and it does not work on this stack
+
+The plumbing is now built and committed (`LAGUNA_UNITRACE=1` wraps the service
+launch with `unitrace --start-paused`, and the three `REPLAY_TRACE_*` variables
+pass through `common_env`, conditionally, because the fork tests them for
+`is None` rather than emptiness). Two attempts:
+
+1. **Resume acknowledgement mismatch.** The fork resumes the paused session by
+   invoking unitrace and matching its stderr against
+   `…[INFO] Log is stored in unitrace\.<N>`. Passing a full path as the output
+   name breaks that regex. **Useful negative:** it proves the resume hook *is*
+   reached on the served decode path and the contract validates -- only the
+   acknowledgement string mismatched.
+2. **With the default output name, oneCCL init stalls.** The run sat 15 minutes
+   at `topology recognition shows PCIe connection between devices`, never
+   reaching `Application startup complete`, resumes=0, trace 292 bytes. unitrace
+   intercepting Level Zero with `--device-timing --kernel-submission` across
+   four ranks appears to deadlock collective initialisation. Cleanup was clean:
+   no surviving processes, memory recovered, **no GuC resets**.
+
+## Every available instrument has now failed on this question
+
+| instrument | failure mode |
+| :--- | :--- |
+| torch profiler (kineto), full run | collective totals polluted by the idle inter-request barrier |
+| torch profiler, decode window | `LAGUNA_PROFILE_DELAY`/`ITERS` have no readers; window is the whole run |
+| torch profiler, 25 iters | hung 40 min in export, trace never written |
+| XPU event profile | inflates the step **3.4x**, non-uniformly (attention 13x, collectives 1.3x) |
+| py-spy, worker | Python-only; workers are in native code, leaves are bare process entries |
+| py-spy, whole tree | engine is 1.5% of samples -- refutes its own hypothesis, attributes nothing |
+| **unitrace (native)** | **stalls oneCCL init at 4 ranks** |
+
+**The ~7.5 ms is bounded but unattributable with the tooling on this machine.**
+What is known: it is 29% of the decode step, it is not device kernel work (the
+device idles ~83%), it is not the engine (1.5% of samples), and it is not
+Python-visible worker work (~81% of that is spinning in IPC). It is native, and
+nothing here can see inside it.
+
+Anyone resuming this should either get unitrace working at lower intrusion
+(host timing only, no `--device-timing`, possibly one rank) or accept the bound
+and spend the effort on the two structural blockers instead, which are
+quantified and need no further measurement.
+
+## The native route: what was built
 
 `unitrace` is **present and hash-matched** at
 `/home/steve/src/pti-gpu/build-unitrace/unitrace` (350,352 bytes, sha256
