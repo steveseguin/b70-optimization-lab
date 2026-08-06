@@ -440,4 +440,19 @@ else
   common_args+=(--enforce-eager)
 fi
 
+# Native PTI tracing, default off. unitrace starts paused; the fork resumes the
+# session at the first graph replay, so the trace is decode-scoped by
+# construction -- which is what every Python-level sampler failed to achieve.
+if [[ "${LAGUNA_UNITRACE:-0}" == 1 ]]; then
+  [[ -x "${LAGUNA_UNITRACE_BIN:-}" ]] \
+    || { echo "LAGUNA_UNITRACE=1 needs LAGUNA_UNITRACE_BIN to be executable" >&2; exit 2; }
+  [[ -n "${VLLM_XPU_LAGUNA_REPLAY_TRACE_SESSION:-}" ]] \
+    || { echo "LAGUNA_UNITRACE=1 needs VLLM_XPU_LAGUNA_REPLAY_TRACE_SESSION" >&2; exit 2; }
+  exec "$LAGUNA_UNITRACE_BIN" \
+    --host-timing --device-timing --kernel-submission --pid --start-paused \
+    --session "$VLLM_XPU_LAGUNA_REPLAY_TRACE_SESSION" \
+    --output "${LAGUNA_UNITRACE_OUTPUT:-unitrace}" \
+    vllm serve "${common_args[@]}"
+fi
+
 exec vllm serve "${common_args[@]}"

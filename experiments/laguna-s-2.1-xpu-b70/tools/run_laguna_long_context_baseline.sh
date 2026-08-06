@@ -399,6 +399,7 @@ common_env=(
   VLLM_XPU_LAGUNA_REPLICATED_ATTENTION="${LAGUNA_REPLICATED_ATTN:-0}"
   LAGUNA_KV_CACHE_BYTES="${LAGUNA_KV_CACHE_BYTES:-}"
   VLLM_XPU_LAGUNA_SKIP_EXPERTS="${LAGUNA_SKIP_EXPERTS:-0}"
+  LAGUNA_UNITRACE="${LAGUNA_UNITRACE:-0}"
   VLLM_XPU_LAGUNA_COUNT_EXPERTS="${VLLM_XPU_LAGUNA_COUNT_EXPERTS:-0}"
   LAGUNA_EAGER_FANOUT="${LAGUNA_EAGER_FANOUT:-0}"
   VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}"
@@ -414,6 +415,20 @@ common_env=(
 # An empty FI_PROVIDER is not the same as unset: libfabric then matches no
 # provider and oneCCL fails ATL init. Only pass it when actually chosen.
 [[ -z "${FI_PROVIDER:-}" ]] || common_env+=(FI_PROVIDER="$FI_PROVIDER")
+# The fork tests these for `is None`, not emptiness, so exporting them empty
+# under `env -i` would fail the replay-trace contract on every ordinary run.
+# Pass them only when actually tracing.
+if [[ "${LAGUNA_UNITRACE:-0}" == 1 ]]; then
+  [[ -n "${LAGUNA_TRACE_SESSION:-}" && -n "${LAGUNA_UNITRACE_BIN:-}" && -n "${LAGUNA_UNITRACE_SHA256:-}" ]] \
+    || die "LAGUNA_UNITRACE=1 needs LAGUNA_TRACE_SESSION, LAGUNA_UNITRACE_BIN and LAGUNA_UNITRACE_SHA256"
+  common_env+=(
+    LAGUNA_UNITRACE_BIN="$LAGUNA_UNITRACE_BIN"
+    LAGUNA_UNITRACE_OUTPUT="${LAGUNA_UNITRACE_OUTPUT:-unitrace}"
+    VLLM_XPU_LAGUNA_REPLAY_TRACE_SESSION="$LAGUNA_TRACE_SESSION"
+    VLLM_XPU_LAGUNA_REPLAY_TRACE_UNITRACE="$LAGUNA_UNITRACE_BIN"
+    VLLM_XPU_LAGUNA_REPLAY_TRACE_UNITRACE_SHA256="$LAGUNA_UNITRACE_SHA256"
+  )
+fi
 # Per-segment replay profile. The reader parses the sample count, so an empty
 # value is a hard error rather than "off": pass both or neither.
 if [[ -n "${LAGUNA_REPLAY_PROFILE_ROOT:-}" ]]; then
