@@ -152,7 +152,10 @@ esac
 [[ "$max_num_batched_tokens" != 8202 || "$max_num_scheduled_tokens" == 8192 ]] \
   || die "batched=8202 is reserved for the explicit scheduled=8192 alignment treatment"
 if [[ "$max_num_scheduled_tokens" == auto ]]; then
-  if [[ "$role" == candidate ]]; then
+  # Parallel drafting reserves depth-1 slots per sequence, so the candidate's
+  # effective budget is the batched one less that reservation. A no-drafter arm
+  # reserves nothing and keeps the batched budget, exactly as the teacher does.
+  if [[ "$role" == candidate && "${LAGUNA_NOSPEC_GRAPH:-0}" != 1 ]]; then
     readonly expected_effective_scheduled_tokens="$((max_num_batched_tokens - candidate_spec + 1))"
   else
     readonly expected_effective_scheduled_tokens="$max_num_batched_tokens"
@@ -706,7 +709,15 @@ if [[ "$role" == candidate ]]; then
   [[ "$candidate_profile" != q12 && "$all_topology_count" == 8 \
     || "$candidate_profile" == q12 && "$all_topology_count" == 16 ]] \
     || die "candidate emitted an unexpected Breakable topology line"
-  if [[ "$max_num_scheduled_tokens" == auto ]]; then
+  if [[ "$max_num_scheduled_tokens" == auto && "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]]; then
+    # vLLM only emits "set to N based on" when speculation reserves slots, so a
+    # no-drafter arm has no reduction to report and the line never appears. The
+    # launcher's own derivation is the stronger proof: it refuses to start
+    # unless the derived budget equals the batched one.
+    grep -Fq "Laguna qdepth arm: depth=$candidate_spec width=$candidate_m batched=$max_num_batched_tokens derived_scheduled=$expected_effective_scheduled_tokens" \
+      "$run_dir/server.log" \
+      || die "no-drafter scheduler budget was not proved in server.log"
+  elif [[ "$max_num_scheduled_tokens" == auto ]]; then
     grep -Fq "max_num_scheduled_tokens is set to $expected_effective_scheduled_tokens based on" \
       "$run_dir/server.log" \
       || die "automatic runtime scheduler budget was not proved in server.log"
