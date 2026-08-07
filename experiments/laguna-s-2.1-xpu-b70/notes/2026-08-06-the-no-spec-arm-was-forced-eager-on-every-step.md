@@ -104,6 +104,97 @@ Committed as `63da5e0ea`, with three tests: the width-1 admission, a guard that
 an absent request is still rejected above width 1, and a guard that the filter
 still demands the verifier flag above width 1.
 
+## What it was worth
+
+`20260806-nospec-graphfix-e`, same harness configuration as
+`20260804-nospec-warm-3` so the only variable is the vLLM commit. The capture
+audit reports **`graphs=146, eager_breaks=145`** -- the audited topology, at
+M=1, on all four ranks, captured *and* replayed. The arm reaches the graph path
+for the first time, this time for real.
+
+| case | eager (2026-08-04) | graphed (2026-08-06) | step ms | speedup |
+| :--- | ---: | ---: | ---: | ---: |
+| 8,192 middle (1st, pays capture) | 12.260 | **39.173** | 82 -> 25.5 | 3.20x |
+| 32,640 early | 12.213 | **63.533** | 82 -> 15.7 | 5.20x |
+| 256 sentinel | 12.128 | **67.521** | 82 -> 14.8 | 5.57x |
+
+Benchmark status `PASS_BASELINE_ORACLE_NOT_TESTED`, all rows `passed=true`,
+`cached_tokens_all_zero`, `prompts_unique`. The first case pays graph capture
+inside its own first-100-token window, which is why it trails the other two;
+the sentinel is the clean short-context figure.
+
+**The step is no longer flat in context** -- 14.8 ms at 256 against 15.7 ms at
+32,640 -- but it is very nearly so, which is expected: 36 of 48 layers have a
+512-token window, and the 12 full-attention layers read only ~400 MB per rank
+at 32K.
+
+## The consequence: speculation is the wrong choice at 32K
+
+Compared at matched positions in the same suite, so warmth and ordering match
+(q12 figures from `20260804-eventprofile-q12`):
+
+| position | case | q12, speculative | no-spec, graphed | winner |
+| :--- | :--- | ---: | ---: | :--- |
+| 1st, cold | 8,192 middle | 7.855 | **39.173** | no-spec, 4.99x |
+| 2nd, warm | 32,640 early | 38.425 | **63.533** | **no-spec, 1.65x** |
+| 3rd, warm | 256 sentinel | **162.029** | 67.521 | speculative, 2.40x |
+
+Speculation wins at short context by 2.4x and **loses at 32K by 1.65x**. The
+32K target was written off as drafter-limited at 1.058 tokens per step; that
+diagnosis was right about speculation and wrong about the machine. Turning the
+drafter *off* past some context is now the faster configuration, which is the
+dynamic-speculation policy the goal statement explicitly permits. Finding the
+crossover needs a context sweep (the suite has 1,024 through 32,640); it lies
+somewhere between 256 and 32,640.
+
+The cold-first-case penalty is also far worse for q12 (7.855) than for the
+no-drafter arm (39.173), because q12 captures a second graph for the drafter
+and warms DFlash as well.
+
+## Exactness, with the confounds removed
+
+Three controls, all on sealed run directories.
+
+**The eager path is bitwise stable across the two code versions.**
+`20260804-nospec-warm-3` (old tree) against `20260806-nospec-eager-control`
+(current tree, `LAGUNA_EAGER_FANOUT=1`): all three cases identical, and 12.151
+/ 12.316 / 12.401 tok/s against the old 12.260 / 12.213 / 12.128. **The forty
+intervening commits changed neither the arithmetic nor the speed.** The whole
+5.2x is the graph path and nothing else.
+
+**The graphed path is deterministic run to run.** Two graphed runs emit
+identical `output_token_ids_sha256` and identical `token_ids` for 8,192 middle.
+
+**Eager against graphed, same tree, same day, same driver state:**
+
+| case | tokens | retrieval identical |
+| :--- | :--- | :--- |
+| 8,192 middle | **identical** | yes |
+| 32,640 early | 9 of 128 differ, from index 115 | yes |
+| 256 sentinel | **identical** | yes |
+
+So there is one real difference, it is confined to 32K, and it is
+reproducible -- the same nine positions from the same index as against the old
+tree. It begins at token 115 of 128, **after** the JSON answer has closed at
+character 177, and all five retrieval fields parse to identical values on both
+paths. It is a divergence in the unconstrained continuation, not in the answer.
+
+The likely mechanism is not replay arithmetic but **KV cache sizing**, which
+the graph configuration changes: same 5.34 GiB, but **212,832 tokens eager
+against 258,132 graphed**, a 21% difference in per-token footprint and
+therefore a different block layout and a different long-context attention
+tiling. That it appears only at 32K, where the full-attention layers actually
+read a long KV, and not at 8,192 or 256, fits that mechanism and does not fit a
+systematic arithmetic change in replay.
+
+**This is not settled, and it should not be quoted as settled.** Pinning bytes
+with `LAGUNA_KV_CACHE_BYTES` cannot equalise the two, because what differs is
+the per-token cost rather than the budget; separating them needs the KV spec
+itself examined. Until then the honest statement is: *the graphed no-speculation
+path is bitwise equal to eager at 8,192 and 256, and differs from it at 32,640
+in the tail after the answer, deterministically, with the retrieval answer
+unchanged.*
+
 ## What this does not fix
 
 The selectors the `qdepth` profile disables are mostly **not** recoverable at
