@@ -101,23 +101,37 @@ curl -fsS http://127.0.0.1:8002/health
 Do not stop or replace an active service solely to reproduce this packet without
 first checking the host's current work authority and GPU ownership.
 
-## Existing llama-benchy data
+## Existing benchmark data
 
-The benchmark was previously run from the separate local repository
-`/home/dom/llama-benchy`; it was not rerun for this contribution. The available
-27B llama-benchy packet is the INT4/vLLM comparison run, not this llama.cpp
-SYCL service, so it is preserved as related context rather than relabeled as a
-llama.cpp measurement. See `STATUS.md` for that distinction.
+The benchmark was already run in the setup session and was **not rerun** for
+this contribution. The preserved data is in
+[`benchmarks/qwen36-27b-mtp-b70.md`](benchmarks/qwen36-27b-mtp-b70.md).
 
-The inspected historical 27B packet reports, for the separate vLLM service,
-1,494.6 ± 107.7 pp tok/s and 46.3 ± 1.5 tg tok/s at depth 0, declining to
-1,264.3 ± 1.6 pp and 14.9 ± 0.7 tg at depth 32768. These numbers are included
-only to identify the artifact and are **not** claimed for this llama.cpp
-recipe.
+It used the matching Qwen3.6-27B MTP Q4_K_M service family, one B70, generic
+SYCL, oneAPI 2026.1.1, Flash Attention `squeezed`, greedy temperature 0.0,
+and a context sweep. The benchmark harness was
+`/home/dom/scripts/benchmark-qwen36-llamacpp-sycl-mtp.py`; it exercised the
+OpenAI-compatible endpoint directly and recorded wall rate, decode rate,
+prompt rate, and MTP acceptance.
 
-The prior llama.cpp benchmark record located in session history is the 35B
-Q8/UD-Q8 lane, not this 27B service. It must not be copied into this packet as
-27B evidence.
+### Recorded results
+
+| draft n | depth | wall tok/s | decode tok/s | prompt tok/s | acceptance |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 2,048 | 17.8 | 31.4 | 654 | 85% (58/68) |
+| 1 | 32,768 | 3.1 | 24.7 | 927 | 75% (54/72) |
+| 1 | 65,536 | 1.5 | 20.9 | 838 | 76% (55/72) |
+| 1 | 120,000 | 0.73 | 17.6 | 718 | 85% (58/68) |
+| 2 | 2,048 | 39.7 | 16.9 | 935 | 80% (58/68) |
+| 2 | 32,768 | 3.0 | 21.9 | 788 | 66% (54/72) |
+
+These are historical benchmark measurements, not a new run. The benchmark
+identity uses `draft_n=1` or `2` and greedy temperature 0.0, while the current
+persisted service defaults to `draft_n=2` and temperature 0.6. Keep those
+identities separate when comparing results.
+
+The separate `/home/dom/llama-benchy/results/` 27B packet is for vLLM INT4,
+not this llama.cpp service, and is not copied or relabeled here.
 
 ## Safety and scope
 
@@ -132,9 +146,10 @@ weights, or private logs.
 - Benchmark tool: <https://github.com/dominick253/llama-benchy>
 - Related prior llama.cpp packet: `community/dominick253-qwen36-35b-llamacpp-sycl/`
 - Operations/session context: `@session:default/20260806_065933_add186`
+- Setup benchmark session: `@session:default/20260806_065933_add186`
 - Earlier llama.cpp benchmark session: `@session:default/20260727_093033_7695fc`
-- Exact public benchmark data must be added only after a matching 27B llama.cpp
-  run is performed and its raw JSON/logs are preserved.
+- Raw benchmark output remains outside this contribution; the preserved summary
+  and method are in `benchmarks/qwen36-27b-mtp-b70.md`.
 
 ## Contributor statement
 

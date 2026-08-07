@@ -62,12 +62,18 @@ architecture. No service was stopped, restarted, or modified.
    parallelism: selector 0 → port 8001 and selector 1 → port 8002.
 2. The exact live launcher uses generic SYCL JIT, Flash Attention, F16 KV, 150K
    context, batch/ubatch 2048, and draft-MTP with two speculative tokens.
-3. Existing `/home/dom/llama-benchy/results/` data is for the separate Intel
-   vLLM `0.21.0-b2` INT4 service. It must not be presented as llama.cpp data.
-4. The prior llama.cpp benchmark found in session history is for a 35B Q8/UD-Q8
-   lane, not the live 27B Q4_K_M service. It is not included as 27B evidence.
-5. Therefore this packet intentionally contains a recipe and provenance, but no
-   performance table.
+3. The setup-session benchmark data is preserved in `benchmarks/` and was not
+   rerun: draft_n=1 recorded 17.8 wall tok/s at 2K and 0.73 at 120K; draft_n=2
+   recorded 39.7 wall tok/s at 2K and 3.0 at 32K, with the full table and
+   acceptance counts in the benchmark artifact.
+4. The benchmark identity used greedy temperature 0.0 and oneAPI 2026.1.1;
+   the current service uses temperature 0.6. These are related but distinct
+   identities and must not be compared as an exact A/B.
+5. The separate `/home/dom/llama-benchy/results/` 27B packet is for Intel vLLM
+   INT4 and is not presented as llama.cpp data.
+6. Therefore this packet contains the exact recipe plus historical benchmark
+   evidence, labeled `community-reported` because it was not independently
+   reproduced in the reference lab.
 
 ## Known issues
 
