@@ -25,7 +25,7 @@ exec "${LLAMA_ROOT}/build-sycl/bin/llama-server" \
   --model "${MODEL}" \
   --host "${HOST:-127.0.0.1}" \
   --port "${PORT}" \
-  --ctx-size 150000 \
+  --ctx-size 160000 \
   --n-gpu-layers 99 \
   --device SYCL0 \
   --split-mode none \

@@ -33,7 +33,7 @@ Each process sees its selected physical device as `SYCL0`.
 --model /models/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-Q4_K_M.gguf
 --host 0.0.0.0
 --port 8001                 # 8002 for GPU 1
---ctx-size 150000
+--ctx-size 160000
 --n-gpu-layers 99
 --device SYCL0
 --split-mode none
@@ -82,7 +82,7 @@ Flash Attention, MTP, and sampling defaults shown above.
 - Build commit: `15586e2d7`
 - Endpoints: `:8001` and `:8002`
 - KV cache: F16 for target and draft
-- Context: 150,000 total server context; one slot per instance
+- Context: 160,000 total server context; one slot per instance
 - MTP: draft-MTP, two speculative tokens, `p_min=0.0`
 
 ## Reproduction

@@ -35,7 +35,7 @@ SYCL servers, one per Intel Arc Pro B70, on ports 8001 and 8002.
 | Model | `Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-Q4_K_M.gguf`; 17,106,773,120 bytes; revision/checksum unknown |
 | Quantization | Q4_K_M weights; F16 target and draft KV |
 | Command | documented in `README.md`; installed launcher inspected at `/usr/local/bin/launch-llama-qwen36-27b-mtp.sh` |
-| Context / concurrency | 150000; `--parallel 1`; one endpoint per GPU |
+| Context / concurrency | 160000; `--parallel 1`; one endpoint per GPU |
 | Cache/speculation | F16 KV; draft-MTP, n-max 2, p-min 0.0; graph disabled |
 | Metrics | no matching llama.cpp 27B benchmark packet supplied |
 | Logs / JSON | none added; historical llama-benchy artifacts are a different vLLM recipe |
