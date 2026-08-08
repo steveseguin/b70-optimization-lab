@@ -13,7 +13,7 @@ where the weights happen to live.
 **For the maintainer:** this is the map of what sits where, and which storage
 has to be mounted before a lane will run.
 
-Last verified: 2026-07-25.
+Last verified: 2026-08-08.
 
 ## Internal NVMe
 
@@ -37,6 +37,20 @@ which had reached 98% full.
 
 `/dev/sda2`, 3.6 TB NTFS, volume label `CorsairExternal`, mounted at
 `/mnt/usb-models`.
+
+On 2026-08-08 the drive was still physically present but unmounted. An NTFS
+`$MFT`/`$MFTMirr` record-3 mismatch prevented `ntfs-3g` from mounting it. The
+model tree was first inventoried through a read-only kernel `ntfs3` mount, SMART
+reported no media/data-integrity errors, and `ntfsfix` then repaired the mirror
+record and reset the NTFS journal. The drive is mounted read/write again with
+about 1.8 TB free. The pre-repair inventory and key-model checksums are under
+`/mnt/fast-ai/storage-recovery/`; the drive-local recovery record is
+`/mnt/usb-models/.storage-health/README.md`.
+
+`ntfsfix` is not a replacement for Windows filesystem repair. At the next safe
+maintenance window, cleanly unmount the drive, attach it to Windows, run
+`chkdsk /f`, and reboot Windows twice before considering the NTFS metadata
+fully checked.
 
 **This drive does not auto-mount.** If it is not mounted, every path below
 fails with a "no such file or directory" error that looks like missing data
@@ -66,6 +80,19 @@ Already resident before that move: `qwen3.6-27b-fp8-vrfai`,
 `gemma4-26b-a4b-it-eagle3-gguf`, `gemma4-26b-a4b-it-qat-gguf`,
 `gemma4-e4b-it-gguf`. The drive also holds an `hf-cache/` tree with further
 Qwen3.6-27B quantizations.
+
+Use the following top-level conventions for new material:
+
+- `llm-cache/hf/` is the canonical Hugging Face cache;
+- `llm-models/` holds complete directly runnable model directories;
+- `models/` holds standalone GGUF files and source-specific groupings;
+- `bench-results/` and `llm-optimization-artifacts/` hold evidence, not model
+  weights.
+
+The older `hf-cache/` tree is intentionally preserved until its snapshots have
+been reconciled into `llm-cache/hf/`. Do not merge or delete cache trees by
+filename alone. The drive-local `/mnt/usb-models/MODEL-STORAGE.md` records the
+same convention for operators working outside this repository.
 
 ## Old Paths Still Work
 

@@ -65,7 +65,7 @@ storage and archived benchmark artifacts:
 /mnt/usb-models
 ```
 
-Device identity observed at setup:
+Device identity observed at setup and revalidated on 2026-08-08:
 
 - block device: `/dev/sda2`;
 - filesystem: `ntfs3`;
@@ -76,11 +76,24 @@ Device identity observed at setup:
   - `/mnt/usb-models/bench-results`;
   - `/mnt/usb-models/models`.
 
+The volume does not auto-mount. On 2026-08-08, apparent missing models were an
+unmounted-drive symptom, followed by an NTFS `$MFT`/`$MFTMirr` mismatch. The
+tree was inventoried read-only before repair, SMART reported no media errors,
+and `ntfsfix` restored read/write mounting. See
+[`reference-lab-storage.md`](reference-lab-storage.md) and the drive-local
+`.storage-health/README.md` before filesystem maintenance. A Windows
+`chkdsk /f` plus two reboots remains required at the next safe maintenance
+window.
+
 Use the internal NVMe cache for active benchmark hot paths unless disk pressure
 or model count makes that impractical. Use the USB drive for alternate model
 variants, overflow downloads, and archived large artifacts. Do not commit model
 weights, USB paths full of artifacts, or generated cache contents to Git; record
 only the model identity, local path, checksum if useful, and result summaries.
+Use `/mnt/usb-models/llm-cache/hf` as `HF_HOME` for new large Hugging Face
+downloads and `/mnt/usb-models/models/<model-family>/` for pinned standalone
+GGUFs. Preserve the older `/mnt/usb-models/hf-cache` until it has been audited;
+do not combine the two cache trees mechanically.
 
 For Laguna S 2.1, the stricter policy established on 2026-07-23 overrides the
 general overflow rule: the external Corsair `ntfs3` volume is backup-only.
