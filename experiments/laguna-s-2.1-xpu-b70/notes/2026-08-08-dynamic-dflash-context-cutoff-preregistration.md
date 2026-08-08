@@ -5,10 +5,21 @@ Date: 2026-08-08 America/Toronto
 Status: **offline candidate only. Default off; no device result and no
 throughput claim.**
 
-Source candidate: `ae15e59d4d6ab67912de69011e6e5dd1ce2ce4b6` on prerequisite
+Source candidate: `00c8bbbb5c950abc69a27a2e733330652eece478` on prerequisite
 `561698049656690a55ea0ca9826dceba0e33a9c7`. Preserved bundle and patch
 checksums are in
 [`2026-08-08-dynamic-cutoff-manifest.md`](../../../patches/laguna-s-2.1-xpu-b70/2026-08-08-dynamic-cutoff-manifest.md).
+
+The first device attempt,
+`20260808-dynamic-cutoff-transition-a`, is a harness-rejected source failure.
+It reached committed context 4,162, latched DFlash off on all four ranks, and
+the scheduler produced the intended M1 step. Before executing that step,
+eligibility raised `AttributeError` because the new guard referenced mock-only
+`num_prompt_tokens_cpu` instead of the real `InputBatch.num_prompt_tokens`.
+The runner exited 1, worker shutdown completed, and the device-error scan was
+empty. Commit `00c8bbbb5` corrects the field and its test fixture; 27 focused
+worker tests pass after the correction. No throughput or correctness result is
+claimed from attempt A.
 
 ## Why this treatment exists
 

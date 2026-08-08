@@ -1,0 +1,48 @@
+From 00c8bbbb5c950abc69a27a2e733330652eece478 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 8 Aug 2026 00:51:24 -0400
+Subject: [PATCH] xpu: use InputBatch prompt length in cutoff guard
+
+---
+ tests/v1/worker/test_gpu_model_runner.py | 4 ++--
+ vllm/v1/worker/gpu_model_runner.py       | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tests/v1/worker/test_gpu_model_runner.py b/tests/v1/worker/test_gpu_model_runner.py
+index 2039c29e7..f6a886ea3 100644
+--- a/tests/v1/worker/test_gpu_model_runner.py
++++ b/tests/v1/worker/test_gpu_model_runner.py
+@@ -842,7 +842,7 @@ def _laguna_m8_graph_runner() -> GPUModelRunner:
+         req_ids=["req_0"],
+         lora_id_to_lora_request={},
+         num_computed_tokens_cpu=np.array([1], dtype=np.int32),
+-        num_prompt_tokens_cpu=np.array([1], dtype=np.int32),
++        num_prompt_tokens=np.array([1], dtype=np.int32),
+     )
+     return runner
+ 
+@@ -1828,7 +1828,7 @@ def test_laguna_context_cutoff_m1_graph_rejects_final_prefill(monkeypatch):
+     )
+     runner = _laguna_m8_graph_runner()
+     runner.input_batch.num_computed_tokens_cpu[0] = 8191
+-    runner.input_batch.num_prompt_tokens_cpu[0] = 8192
++    runner.input_batch.num_prompt_tokens[0] = 8192
+     scheduler_output = _laguna_m8_graph_scheduler_output()
+     scheduler_output.scheduled_spec_decode_tokens = {}
+     scheduler_output.num_scheduled_tokens = {"req_0": 1}
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 1ed0e6aaf..31df38aa9 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4477,7 +4477,7 @@ class GPUModelRunner(
+         # attention/state contract is not the captured decode contract.
+         if num_tokens_unpadded == 1 and int(
+             self.input_batch.num_computed_tokens_cpu[0]
+-        ) < int(self.input_batch.num_prompt_tokens_cpu[0]):
++        ) < int(self.input_batch.num_prompt_tokens[0]):
+             return False
+ 
+         req_id = self.input_batch.req_ids[0]
+-- 
+2.43.0
+

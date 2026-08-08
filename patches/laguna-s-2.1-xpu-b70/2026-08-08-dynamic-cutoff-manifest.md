@@ -2,14 +2,15 @@
 
 Date: 2026-08-08 America/Toronto
 
-Status: default-off candidate; offline review complete, no device result at
-snapshot time.
+Status: default-off candidate; offline review complete, first device attempt
+failed safely before M1 execution and has no promotable result.
 
 ## Source identity
 
 - worktree: `/home/steve/src/laguna-vllm-shared-elementwise-m12-20260731`;
 - prerequisite: `561698049656690a55ea0ca9826dceba0e33a9c7`;
-- candidate: `ae15e59d4d6ab67912de69011e6e5dd1ce2ce4b6`;
+- initial candidate: `ae15e59d4d6ab67912de69011e6e5dd1ce2ce4b6`;
+- corrected candidate: `00c8bbbb5c950abc69a27a2e733330652eece478`;
 - branch: `experiment/laguna-shared-elementwise-m12-20260731`.
 
 ## Preserved artifacts
@@ -23,8 +24,20 @@ snapshot time.
 - patch SHA-256:
   `54f34ce64b42cb2a89788e295c4b9e96cd8b3992f1ea6557ca9dd647860fa21e`.
 
-`git bundle verify` passed on 2026-08-08. The bundle contains the candidate
-branch head and requires the prerequisite above.
+The first device smoke exposed a field-name mismatch in the M1 prefill guard.
+The preserved correction is:
+
+- superseding thin bundle:
+  `vllm-laguna-dynamic-cutoff-00c8bbbb5-20260808.bundle`;
+- bundle SHA-256:
+  `a1f0025bf9bd7cfe06e5e565ce48683258b08b119ebd6fc7c71873b6a0de5510`;
+- incremental patch:
+  `0001-xpu-use-InputBatch-prompt-length-in-cutoff-guard.patch`;
+- patch SHA-256:
+  `3df42c0d556bbdb7ae433707966266984f4081cbb2bb432283819c461ed0c732`.
+
+`git bundle verify` passed for both bundles on 2026-08-08. The superseding
+bundle contains both source commits and requires the prerequisite above.
 
 ## Offline evidence
 

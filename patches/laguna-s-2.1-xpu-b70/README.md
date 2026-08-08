@@ -328,8 +328,8 @@ The August 8 dynamic DFlash cutoff snapshot is a default-off, offline-reviewed
 candidate, not a record source. It adds runtime-owned scheduler-budget
 attestation, a per-request post-bookkeeping DFlash cutoff, exact M1/M12 graph
 eligibility, and separately preallocated fixed-width collective buffers. The
-thin source bundle is
-`vllm-laguna-dynamic-cutoff-ae15e59d4-20260808.bundle`, requires base
+superseding thin source bundle is
+`vllm-laguna-dynamic-cutoff-00c8bbbb5-20260808.bundle`, requires base
 `561698049656690a55ea0ca9826dceba0e33a9c7`, and is indexed in
 `2026-08-08-dynamic-cutoff-manifest.md`. Device promotion remains conditional
 on the exact-oracle within-request transition gate.
