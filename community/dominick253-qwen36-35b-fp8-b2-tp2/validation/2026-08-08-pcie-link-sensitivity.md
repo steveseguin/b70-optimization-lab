@@ -63,10 +63,17 @@ x16 to 8.0 GT/s x16. The links were changed one at a time; device discovery,
 AER totals, kernel faults, and a bounded two-device XPU computation were gated
 around the transition.
 
-After the B arm, both links were restored to 16.0 GT/s x16 and both saved root
-words were restored exactly to `0004`. All four relevant root/peer AER
-correctable, nonfatal, and fatal totals ended at zero; the bounded two-device
-compute passed; no inference container, worker, or listener remained.
+Immediately after the B arm, both links were restored to 16.0 GT/s x16 and both
+saved root words were restored exactly to `0004`; the bounded two-device
+compute passed. After the A2 model start, both root-port target-speed fields
+read `0003`. A post-teardown attempt to restore `0004` persisted for two
+seconds, then both fields returned to `0003` again without retraining the live
+links; the component responsible was not identified. No further register
+writes were attempted. The final
+durable state is 16.0 GT/s x16 at both root and peer ends, root target fields
+`0003`, all four relevant root/peer AER correctable, nonfatal, and fatal totals
+at zero, and no inference container, worker, or listener. The final-state file
+in the external manifest records this distinction.
 
 ## Throughput observations
 
@@ -121,11 +128,12 @@ Raw artifacts are outside Git under:
 
 `/mnt/fast-ai/llm-optimization-artifacts/community-dominick253/qwen36-35b-fp8-b2-tp2/`
 
-The focused manifest is
+The focused 17-entry manifest is
 `20260808-pcie-bandwidth-manifest.sha256`, whose SHA-256 is
-`ad601fa42ff016d5d5e37713972593bb89a15085b2990a87be74a9ab541035ce`.
+`5544e0316ec5f9ba6fb2a5363212951d84f04aa094b08a6e2cf80ccbbdef6780`.
 It covers benchmark JSON, the zero-valued counter series, container identity,
-link/AER state, saved registers, and both all-reduce rows.
+link/AER state, saved registers, the post-A2 final host state, and both
+all-reduce rows.
 
 The contributor's faster rate remains valid only as contributor-host evidence.
 The current data close PCIe link bandwidth as the leading explanation; they do
