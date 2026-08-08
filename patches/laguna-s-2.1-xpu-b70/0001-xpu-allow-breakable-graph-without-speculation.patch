@@ -1,0 +1,108 @@
+From 63e904974d4a3b5b5958911e983cf8e5c1ced22b Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Tue, 4 Aug 2026 20:39:42 -0400
+Subject: [PATCH] xpu: allow the M8 breakable-graph contract without
+ speculation, default off
+
+The contract's not_dflash, draft_not_greedy and rejection_not_standard terms
+constrain how draft tokens are produced and verified. With no speculative
+config at all there are no draft tokens and no rejection sampling, so those
+guarantees hold vacuously while the capture stays target-only -- yet the terms
+are written as `speculative_config is None or ...`, so absent speculation trips
+all three and the no-drafter arm cannot use the graph path at all.
+
+Add VLLM_XPU_LAGUNA_ALLOW_NO_SPEC (default off) to waive exactly those three,
+and only when speculation is absent entirely. A drafter that is present but
+differently configured remains a violation, because that is a real exactness
+risk rather than a vacuous one.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ vllm/v1/worker/gpu_model_runner.py | 39 +++++++++++++++++++++++++-----
+ 1 file changed, 33 insertions(+), 6 deletions(-)
+
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index e001e13fa..dbbced9f4 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -287,6 +287,25 @@ def _laguna_probe_draft_identity(
+     )
+ 
+ 
++def _laguna_no_spec_escape(speculative_config) -> bool:
++    """Whether the drafting terms of the M8 contract may be waived.
++
++    `not_dflash`, `draft_not_greedy` and `rejection_not_standard` constrain how
++    draft tokens are produced and verified. With no speculative config at all
++    there are no draft tokens and no rejection sampling, so what those terms
++    guarantee holds vacuously and the capture stays target-only either way.
++
++    Diagnostic escape, default off, and deliberately narrow: it applies only
++    when speculation is absent entirely. A drafter that is present but
++    differently configured is still a violation, because that is a real
++    exactness risk rather than a vacuous one.
++    """
++    return (
++        speculative_config is None
++        and os.environ.get("VLLM_XPU_LAGUNA_ALLOW_NO_SPEC", "0") == "1"
++    )
++
++
+ # Wrapper for ModelRunnerOutput to support overlapped execution.
+ class AsyncGPUModelRunnerOutput(AsyncModelRunnerOutput):
+     def __init__(
+@@ -4165,18 +4184,22 @@ class GPUModelRunner(
+             envs.VLLM_XPU_LAGUNA_M8_PREBUILT_EXACT_ATTN_METADATA
+         )
+         persistent_kv_cache_views = envs.VLLM_XPU_LAGUNA_M8_PERSISTENT_KV_CACHE_VIEWS
++        no_spec_escape = _laguna_no_spec_escape(self.speculative_config)
+         invalid = {
+             "not_xpu": not current_platform.is_xpu(),
+             "not_laguna": self.model_config.architecture != "LagunaForCausalLM",
+-            "not_dflash": (
++            "not_dflash": not no_spec_escape
++            and (
+                 self.speculative_config is None
+                 or not self.speculative_config.use_dflash()
+             ),
+-            "draft_not_greedy": (
++            "draft_not_greedy": not no_spec_escape
++            and (
+                 self.speculative_config is None
+                 or self.speculative_config.draft_sample_method != "greedy"
+             ),
+-            "rejection_not_standard": (
++            "rejection_not_standard": not no_spec_escape
++            and (
+                 self.speculative_config is None
+                 or self.speculative_config.rejection_sample_method != "standard"
+             ),
+@@ -4272,18 +4295,22 @@ class GPUModelRunner(
+         arm = self.laguna_m8_evidence_arm
+         if arm is None:
+             return
++        no_spec_escape = _laguna_no_spec_escape(self.speculative_config)
+         common_invalid = {
+             "not_xpu": not current_platform.is_xpu(),
+             "not_laguna": self.model_config.architecture != "LagunaForCausalLM",
+-            "not_dflash": (
++            "not_dflash": not no_spec_escape
++            and (
+                 self.speculative_config is None
+                 or not self.speculative_config.use_dflash()
+             ),
+-            "draft_not_greedy": (
++            "draft_not_greedy": not no_spec_escape
++            and (
+                 self.speculative_config is None
+                 or self.speculative_config.draft_sample_method != "greedy"
+             ),
+-            "rejection_not_standard": (
++            "rejection_not_standard": not no_spec_escape
++            and (
+                 self.speculative_config is None
+                 or self.speculative_config.rejection_sample_method != "standard"
+             ),
+-- 
+2.43.0
+

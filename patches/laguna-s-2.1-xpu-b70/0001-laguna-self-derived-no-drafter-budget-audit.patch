@@ -1,0 +1,60 @@
+From 3e15051e634b5f5cdc312ec1642f22d6a4895efa Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 6 Aug 2026 21:07:22 -0400
+Subject: [PATCH] laguna: prove the no-drafter scheduler budget from the
+ launcher line
+
+The candidate branch derived `batched - depth + 1`, which is right only when
+parallel drafting reserves depth-1 slots per sequence. A no-drafter arm
+reserves nothing, so its effective budget is the batched one -- the same rule
+the teacher already follows -- and vLLM never emits the "set to N based on"
+line because there is no reduction to report.
+
+The audit demanded that absent line and killed an otherwise passing run. Prove
+it instead from the launcher's own `Laguna qdepth arm:` line, which is
+stronger: the launcher refuses to start unless the derived budget matches.
+
+This was masked until now because the topology audit ran first and the
+no-drafter arm never captured a graph to satisfy it.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ .../tools/run_laguna_long_context_baseline.sh     | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_long_context_baseline.sh b/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_long_context_baseline.sh
+index 4d8c47a77..82272ccfb 100755
+--- a/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_long_context_baseline.sh
++++ b/experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_long_context_baseline.sh
+@@ -152,7 +152,10 @@ esac
+ [[ "$max_num_batched_tokens" != 8202 || "$max_num_scheduled_tokens" == 8192 ]] \
+   || die "batched=8202 is reserved for the explicit scheduled=8192 alignment treatment"
+ if [[ "$max_num_scheduled_tokens" == auto ]]; then
+-  if [[ "$role" == candidate ]]; then
++  # Parallel drafting reserves depth-1 slots per sequence, so the candidate's
++  # effective budget is the batched one less that reservation. A no-drafter arm
++  # reserves nothing and keeps the batched budget, exactly as the teacher does.
++  if [[ "$role" == candidate && "${LAGUNA_NOSPEC_GRAPH:-0}" != 1 ]]; then
+     readonly expected_effective_scheduled_tokens="$((max_num_batched_tokens - candidate_spec + 1))"
+   else
+     readonly expected_effective_scheduled_tokens="$max_num_batched_tokens"
+@@ -706,7 +709,15 @@ if [[ "$role" == candidate ]]; then
+   [[ "$candidate_profile" != q12 && "$all_topology_count" == 8 \
+     || "$candidate_profile" == q12 && "$all_topology_count" == 16 ]] \
+     || die "candidate emitted an unexpected Breakable topology line"
+-  if [[ "$max_num_scheduled_tokens" == auto ]]; then
++  if [[ "$max_num_scheduled_tokens" == auto && "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]]; then
++    # vLLM only emits "set to N based on" when speculation reserves slots, so a
++    # no-drafter arm has no reduction to report and the line never appears. The
++    # launcher's own derivation is the stronger proof: it refuses to start
++    # unless the derived budget equals the batched one.
++    grep -Fq "Laguna qdepth arm: depth=$candidate_spec width=$candidate_m batched=$max_num_batched_tokens derived_scheduled=$expected_effective_scheduled_tokens" \
++      "$run_dir/server.log" \
++      || die "no-drafter scheduler budget was not proved in server.log"
++  elif [[ "$max_num_scheduled_tokens" == auto ]]; then
+     grep -Fq "max_num_scheduled_tokens is set to $expected_effective_scheduled_tokens based on" \
+       "$run_dir/server.log" \
+       || die "automatic runtime scheduler budget was not proved in server.log"
+-- 
+2.43.0
+

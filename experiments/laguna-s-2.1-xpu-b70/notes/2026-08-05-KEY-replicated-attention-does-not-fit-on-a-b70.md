@@ -2,9 +2,9 @@
 
 Date: 2026-08-05 America/Toronto
 
-Status: **built, mechanism verified, and blocked on device memory. The blocker
-is quantified rather than estimated: it needs roughly 3 GiB per rank more than
-this hardware has at the required 32,768-token context.**
+Status: **built and negative in every tested q12 initialization. These attempts
+do not isolate a pure device-capacity bound, so the extra memory required and
+the sufficiency of a larger card are not established.**
 
 ## What it is
 

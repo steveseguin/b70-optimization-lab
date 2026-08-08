@@ -2,8 +2,9 @@
 
 Date: 2026-08-07 America/Toronto
 
-Status: **closed. It does not fit, and this was the most favourable
-configuration that exists on this machine.**
+Status: **negative for the tested B70 configurations. The util-0.80 capacity
+failure is measured; the util-0.90 failures are host/runtime-confounded and do
+not establish a general device-capacity requirement.**
 
 ## Why retry it here
 
@@ -45,14 +46,17 @@ ValueError: To serve at least one request with the model's max seq len
 
 against 0.68 GiB for the sharded baseline at the same context.
 
-## Why util 0.80 cannot work, in one line
+## Why util 0.80 cannot work
 
-    3.92 GiB more weights  +  (2.7 - 0.68) GiB more KV  =  ~5.94 GiB
+The direct post-replication comparison is the relevant one:
 
-against **5.34 GiB** of headroom. It is short by roughly 0.6 GiB -- which is
-why this was never going to fit at the campaign's standard utilisation, and why
-the earlier q12 attempts, with a drafter also resident, failed by a wider
-margin.
+    2.70 GiB required KV - 1.42 GiB available KV = 1.28 GiB short
+
+The earlier `3.92 + (2.70 - 0.68) = 5.94 GiB` arithmetic double-counted the
+comparison against baseline headroom. Equivalently, baseline has only
+`5.34 - 0.68 = 4.66 GiB` spare after its own minimum KV reservation, again
+leaving `5.94 - 4.66 = 1.28 GiB` short. The tested util-0.80 arm therefore
+cannot serve 32K, but the deficit is **1.28 GiB**, not 0.6 GiB.
 
 Raising utilisation to 0.90 adds 0.10 x 31.9 = **3.19 GiB**, and that does
 clear the KV requirement -- but not the rest.
@@ -64,27 +68,28 @@ clear the KV requirement -- but not the rest.
 | util 0.90 | 4.45 GiB / 48,104 tokens | **OOM**: "Tried to allocate 340.00 MiB ... 4.81 GiB is free" |
 | util 0.90, KV pinned to 3 GiB | 3 GiB / 36,353 tokens | **`RuntimeError: cancelled`** |
 
-The KV is not the binding constraint at 0.90: 48,104 tokens comfortably exceeds
-the 32,768 needed, and pinning it down to 36,353 to hand 1.45 GiB back to the
-activation working set did not help either. `RuntimeError: cancelled` is the
-bare, causeless failure the runbook already documents for util 0.90 on this
-machine.
+The KV is not the first reported constraint at 0.90: 48,104 tokens comfortably
+exceeds the 32,768 needed. However, the first failure was a host OOM event and
+the pinned-KV run ended only with the causeless `RuntimeError: cancelled` that
+the runbook documents for util 0.90 on this machine. Those outcomes do **not**
+prove an activation-working-set limit or quantify how much larger a card would
+need to be.
 
 Model load is **20.83 GiB** with replication against 16.92 GiB without, which
 confirms the 3.92 GiB weight cost independently.
 
 ## Verdict
 
-**Replicated attention does not fit on a 31.9 GiB B70**, and the no-drafter arm
-is the most favourable configuration that exists here -- no DFlash weights, no
-DFlash workspace, the largest KV headroom this campaign has ever measured. It
-fails below the KV minimum at util 0.80 and fails on the activation working set
-at util 0.90.
+**Replicated attention did not produce a runnable 32K service in any tested
+31.9 GiB B70 configuration.** The no-drafter util-0.80 arm is a clean capacity
+negative: it is 1.28 GiB short of the required KV allocation after replicated
+weights load. The util-0.90 arms are failures, but host/runtime confounding
+prevents attributing them specifically to device activation capacity.
 
-The -21.7% that the rendezvous measurement priced remains real and remains
-unavailable. It is a device-capacity conclusion, not an engineering one: the
-lever needs a card with roughly 6 GiB more, exactly as the q12 attempts
-implied, and removing the drafter does not buy enough of it back.
+The -21.7% collective opportunity remains unavailable in this tested lane.
+This evidence does not support the earlier claim that a card roughly 6 GiB
+larger is required; establishing a minimum capacity would need a clean device-
+memory-controlled run without the host OOM/cancellation confounders.
 
 ## Boundaries
 

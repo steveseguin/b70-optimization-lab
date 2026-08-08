@@ -1,0 +1,181 @@
+From 63da5e0eacd78090dc8c8552d4227555492a7a59 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Thu, 6 Aug 2026 20:39:39 -0400
+Subject: [PATCH] xpu: stop forcing eager on every no-speculation decode step
+
+`_laguna_m8_eligible` required the decoding request to be a key of
+`scheduled_spec_decode_tokens`. The scheduler only creates that key when a
+request actually carries draft tokens, so with no drafter the map is empty
+and the predicate was false on every step. `_determine_batch_execution_and_
+padding` then received `force_eager=True`, and a no-speculation run captured
+and replayed nothing at all -- its server logs contain zero breakable
+topology lines.
+
+Require the draft *count* instead. It states the same invariant, and above
+width 1 it is unchanged: M-1 >= 1 drafts cannot be present without the key.
+The capture filter's verifier term is relaxed the same way and only at width
+1, where a single row is exact by construction -- the reason the row-count
+gate in `linear.py` already accepts one row without consulting the flag.
+
+This is a scheduling-path fix, not an arithmetic one: no kernel, dtype, or
+quantisation behaviour changes, and widths above 1 admit exactly the steps
+they admitted before.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ tests/v1/worker/test_gpu_model_runner.py | 93 ++++++++++++++++++++++++
+ vllm/v1/worker/gpu_model_runner.py       | 19 ++++-
+ 2 files changed, 109 insertions(+), 3 deletions(-)
+
+diff --git a/tests/v1/worker/test_gpu_model_runner.py b/tests/v1/worker/test_gpu_model_runner.py
+index 267121851..8a81e7855 100644
+--- a/tests/v1/worker/test_gpu_model_runner.py
++++ b/tests/v1/worker/test_gpu_model_runner.py
+@@ -892,6 +892,26 @@ def _laguna_m8_graph_scheduler_output():
+     )
+ 
+ 
++def _set_laguna_env(monkeypatch, *, breakable_graph=None, exact_max_m=None):
++    """Override resolved env values rather than the environment itself.
++
++    `enable_envs_cache` memoizes `envs.__getattr__`, so once any earlier test
++    in the session has triggered it a `setenv` no longer reaches these reads.
++    """
++    if breakable_graph is not None:
++        monkeypatch.setattr(
++            gpu_model_runner_module.envs,
++            "VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH",
++            breakable_graph,
++        )
++    if exact_max_m is not None:
++        monkeypatch.setattr(
++            gpu_model_runner_module.envs,
++            "VLLM_XPU_LAGUNA_EXACT_MAX_M",
++            exact_max_m,
++        )
++
++
+ def test_laguna_m8_evidence_extracts_primary_hidden_from_dflash_output():
+     hidden_states = torch.randn(8, 16)
+     aux_hidden_states = [torch.randn(8, 16) for _ in range(6)]
+@@ -1529,6 +1549,79 @@ def test_laguna_m8_breakable_graph_capture_filter_is_defense_in_depth():
+     assert not capture_filter(context)
+ 
+ 
++def test_laguna_m8_breakable_graph_eligibility_accepts_drafterless_width_one(
++    monkeypatch,
++):
++    """A no-speculation step must reach the graph path, not be forced eager.
++
++    Without a drafter the scheduler leaves the request out of the spec-token
++    map entirely, so a predicate keyed on the request being present rejects
++    every decode step and `force_eager` then costs the whole graph speedup.
++    """
++    _set_laguna_env(monkeypatch, breakable_graph=True, exact_max_m=1)
++    runner = _laguna_m8_graph_runner()
++    scheduler_output = _laguna_m8_graph_scheduler_output()
++    scheduler_output.scheduled_spec_decode_tokens = {}
++    scheduler_output.num_scheduled_tokens = {"req_0": 1}
++
++    assert runner._laguna_m8_breakable_graph_eligible(
++        scheduler_output,
++        num_tokens_unpadded=1,
++        num_reqs=1,
++        max_num_scheduled_tokens=1,
++        use_cascade_attn=False,
++    )
++
++
++def test_laguna_m8_breakable_graph_eligibility_still_needs_drafts_above_width_one(
++    monkeypatch,
++):
++    """The drafterless admission is confined to width 1.
++
++    At any wider verifier an absent request means the drafts this width was
++    captured for are missing, which must stay a rejection.
++    """
++    _set_laguna_env(monkeypatch, breakable_graph=True, exact_max_m=8)
++    runner = _laguna_m8_graph_runner()
++    scheduler_output = _laguna_m8_graph_scheduler_output()
++    scheduler_output.scheduled_spec_decode_tokens = {}
++
++    assert not runner._laguna_m8_breakable_graph_eligible(
++        scheduler_output,
++        num_tokens_unpadded=8,
++        num_reqs=1,
++        max_num_scheduled_tokens=8,
++        use_cascade_attn=False,
++    )
++
++
++def test_laguna_m8_capture_filter_accepts_width_one_without_verifier(monkeypatch):
++    """Width 1 is exact by construction, so it carries no verifier flag."""
++    descriptor = SimpleNamespace(num_tokens=1)
++    context = SimpleNamespace(
++        batch_descriptor=descriptor,
++        cudagraph_runtime_mode=gpu_model_runner_module.CUDAGraphMode.PIECEWISE,
++        additional_kwargs={
++            "xpu_exact_spec_verifier": False,
++            "xpu_laguna_m8_breakable_graph_eligible": True,
++        },
++    )
++    capture_filter = GPUModelRunner._laguna_m8_breakable_graph_capture_filter
++
++    _set_laguna_env(monkeypatch, exact_max_m=1)
++    assert capture_filter(context)
++
++    # The eligibility term is still load-bearing at width 1.
++    context.additional_kwargs["xpu_laguna_m8_breakable_graph_eligible"] = False
++    assert not capture_filter(context)
++
++    # A wider verifier still has something to verify, so it still must say so.
++    _set_laguna_env(monkeypatch, exact_max_m=8)
++    context.additional_kwargs["xpu_laguna_m8_breakable_graph_eligible"] = True
++    descriptor.num_tokens = 8
++    assert not capture_filter(context)
++
++
+ def test_laguna_dflash_segmented_graph_capture_filter_is_exactly_width_12():
+     descriptor = SimpleNamespace(num_tokens=12)
+     context = SimpleNamespace(
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index dda73eeda..317059ea2 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -4414,9 +4414,15 @@ class GPUModelRunner(
+ 
+         req_id = self.input_batch.req_ids[0]
+         spec_tokens = scheduler_output.scheduled_spec_decode_tokens
++        # A drafterless step schedules no speculative tokens at all, so the
++        # request is absent from the map rather than present with an empty
++        # list. Requiring the key would force eager on every no-speculation
++        # decode step; requiring the draft *count* states the same invariant
++        # and is unchanged for M > 1, where M-1 >= 1 already implies the key.
+         return (
+-            list(spec_tokens) == [req_id]
+-            and len(spec_tokens[req_id]) == envs.VLLM_XPU_LAGUNA_EXACT_MAX_M - 1
++            set(spec_tokens) <= {req_id}
++            and len(spec_tokens.get(req_id, ()))
++            == envs.VLLM_XPU_LAGUNA_EXACT_MAX_M - 1
+             and scheduler_output.num_scheduled_tokens.get(req_id)
+             == envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
+         )
+@@ -4428,7 +4434,14 @@ class GPUModelRunner(
+             forward_context.cudagraph_runtime_mode == CUDAGraphMode.PIECEWISE
+             and batch_descriptor is not None
+             and batch_descriptor.num_tokens == envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
+-            and forward_context.additional_kwargs.get("xpu_exact_spec_verifier") is True
++            and (
++                forward_context.additional_kwargs.get("xpu_exact_spec_verifier")
++                is True
++                # Width 1 has nothing to verify: a single row is exact by
++                # construction, which is why the row-count gate in `linear.py`
++                # accepts it without consulting the verifier flag either.
++                or envs.VLLM_XPU_LAGUNA_EXACT_MAX_M == 1
++            )
+             and forward_context.additional_kwargs.get(
+                 "xpu_laguna_m8_breakable_graph_eligible"
+             )
+-- 
+2.43.0
+

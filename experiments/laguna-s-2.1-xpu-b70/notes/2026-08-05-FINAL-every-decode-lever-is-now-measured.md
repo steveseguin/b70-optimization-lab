@@ -11,13 +11,18 @@
 > drafter's 0.756 rank-1 rate caps at 4.098. It is **too strong about step
 > time**: removing that 7.5 ms would reach about 200 tok/s with no memory cost.
 > 250 remains out of reach; "every lever is closed" does not.
+>
+> **Further correction, 2026-08-07.** The August 6 M=1 graph fix also
+> invalidates the conclusion that speculation must stay enabled at 32K. The
+> native-MM A/B rules out one kernel spelling as a demonstrated win; it does
+> not close all serving-path work.
 
 
 Date: 2026-08-05 America/Toronto
 
-Status: **closure. Both halves of `tok/s = tokens_per_step / step_time` are
-bounded by measurement, and the product cannot reach 250 at short context on
-this stack. Every lever is now closed, including the last candidate.**
+Status: **historical partial closure. The measured token-per-step ceiling
+survives, but serving-path attribution and the long-context speculation policy
+remain open.**
 
 ## The identity
 

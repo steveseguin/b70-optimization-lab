@@ -1,9 +1,10 @@
-# The native-MM attention path is exact, reachable, and slower
+# The native-MM attention path is exact, reachable, and has no demonstrated win
 
 Date: 2026-08-07 America/Toronto
 
-Status: **closed as a negative result, with a useful byproduct: the exactness
-machinery is now validated end to end on the served path.**
+Status: **closed as no demonstrated endpoint win. The latest one-point A/B is
+2.8% slower, while the earlier stronger multi-prompt endpoint evidence was
+0.243% faster and explicitly below noise. Exactness is validated.**
 
 ## What was found
 
@@ -57,22 +58,28 @@ Both legs sealed, `original_status=0`, q12, width 12, TP4, EP4, util 0.80.
 | 1,024 middle | **156.60** | 152.21 | **-2.8%** | identical |
 | 1,024 early (cold) | 8.43 | 8.39 | -0.5% | identical |
 
-**It is slower.** Not by much, and not ambiguously.
+This latest warm point is **2.8% slower**. It is a valid observation, but one
+point does not establish a general kernel ordering.
+
+The earlier 13-prompt exact endpoint experiment recorded native MM at
+`+0.2427%`, explicitly below its noise floor, after 224/224 raw and streamed
+component comparisons passed. Taken together, the supported conclusion is
+that native MM is exact and has **no demonstrated endpoint win**, not that it
+is universally slower.
 
 ## Why, and what it means for the wider hypothesis
 
 The shapes are extremely skinny: a 12x3072 activation against a 3072x2048
-weight. Presenting that as twelve independent M=1 lanes evidently maps onto the
-Xe tile grid better than a single 12-row GEMM does, so oneDNN's stride-zero BMM
-is not a workaround here -- it is the better kernel.
+weight. The latest point is consistent with the stride-zero BMM mapping better
+on that run, but the prior near-zero result prevents promoting that explanation
+to a measured general fact.
 
 That matters beyond this selector. The downgraded py-spy note
 ([2026-08-05](2026-08-05-the-m1-linear-path-is-the-serving-path-cost.md))
-suggested the M=1 linear path was where the serving-path time went, and the
-natural inference was that replacing the odd-looking stride-zero BMM with a
-"proper" matmul would recover it. **That inference is now measured and wrong.**
-Whatever the exact linear path costs, it is not being wasted on a poorly chosen
-kernel, and swapping the kernel does not recover it.
+suggested the M=1 linear path was where the serving-path time went. Replacing
+the stride-zero BMM with a plain matmul has not recovered endpoint time in
+either measurement. That specific optimization is therefore not supported,
+without claiming a universal ranking between the two kernels.
 
 ## What was changed anyway, and why it should stay
 

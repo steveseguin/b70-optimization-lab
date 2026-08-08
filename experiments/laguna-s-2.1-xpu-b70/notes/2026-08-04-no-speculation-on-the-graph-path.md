@@ -2,9 +2,10 @@
 
 Date: 2026-08-04 America/Toronto
 
-Status: **measured. The no-drafter arm reaches the breakable-graph path for the
-first time; it does not help. Read together with the caveat below, which is
-large.**
+Status: **retracted 2026-08-06. This arm captured zero breakable graphs and
+exited through the runner audit with status 2. Its throughput rows are eager-
+path diagnostics, not graph-path evidence. The corrected M=1 graph result is
+in `2026-08-06-the-no-spec-arm-was-forced-eager-on-every-step.md`.**
 
 ## What was blocking it
 

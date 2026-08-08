@@ -1,0 +1,160 @@
+From 8ed1012e9d5028bc7a5e70e6498e76d7e28b0050 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 5 Aug 2026 06:07:32 -0400
+Subject: [PATCH] xpu: replicated Laguna attention, default off
+
+Halving the four-rank all-gathers measured -21.7% of the q12 decode step, and
+the effect saturates at half, so retiring 48 of the 96 is the whole collective
+lever. The 96 are 48 attention O projections, 1 dense MLP down and 47 MoE final
+combines; only the attention half can be removed exactly, by giving every rank
+all the heads so the output projection produces the full hidden vector and
+needs no collective.
+
+QKVParallelLinear, RowParallelLinear and ColumnParallelLinear already accept
+disable_tp, and RowParallelLinear's reduce path is guarded by `tp_size > 1`, so
+the collective disappears without touching the collective module. Head counts,
+the sink parameter and the KV cache spec follow the same per-layer tp size.
+
+Drafter layers are excluded: their topology is separately audited at 14/13.
+
+Cost is memory, not arithmetic: each rank holds all 8 KV heads instead of 2, so
+the KV cache per token quadruples. One 32,768-token sequence goes from 692 MiB
+to 2,769 MiB per rank, which does not fit at util 0.80 -- the extra 3,021 MiB
+of weights alone exceeds that budget -- and fits with 1.66x margin at full
+utilisation.
+
+Default off. The audited topology becomes 98 graphs / 97 eager breaks, derived
+by subtracting the boundaries the active selectors retire.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ vllm/model_executor/models/laguna.py | 31 +++++++++++++++++++++-------
+ vllm/v1/worker/gpu_model_runner.py   | 23 +++++++++++++++++++--
+ 2 files changed, 45 insertions(+), 9 deletions(-)
+
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index c490a2276..710e59f48 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -882,15 +882,29 @@ class LagunaAttention(nn.Module):
+             attention_prefix = prefix
+         self.hidden_size = hidden_size
+         tp_size = get_tensor_model_parallel_world_size()
++        # Replicated attention, default off. Each rank holds every head, so the
++        # output projection produces the full hidden vector and needs no
++        # collective: it retires the 48 attention-O all-gathers, half of the
++        # audited 96. Halving the gathers measured -21.7% of the decode step at
++        # q12, and the effect saturates there, so this is the whole collective
++        # lever. The cost is that each rank also holds all 8 KV heads instead
++        # of 2, which quadruples the KV cache and needs near-full utilisation.
++        # Never applied to drafter layers: the drafter's own topology is
++        # separately audited at 14/13.
++        self.xpu_replicated_attention = (
++            os.environ.get("VLLM_XPU_LAGUNA_REPLICATED_ATTENTION", "0") == "1"
++            and attention_prefix is None
++        )
++        attn_tp_size = 1 if self.xpu_replicated_attention else tp_size
+         self.total_num_heads = num_heads
+-        assert self.total_num_heads % tp_size == 0
+-        self.num_heads = self.total_num_heads // tp_size
++        assert self.total_num_heads % attn_tp_size == 0
++        self.num_heads = self.total_num_heads // attn_tp_size
+         self.total_num_kv_heads = num_kv_heads
+-        if self.total_num_kv_heads >= tp_size:
+-            assert self.total_num_kv_heads % tp_size == 0
++        if self.total_num_kv_heads >= attn_tp_size:
++            assert self.total_num_kv_heads % attn_tp_size == 0
+         else:
+-            assert tp_size % self.total_num_kv_heads == 0
+-        self.num_kv_heads = max(1, self.total_num_kv_heads // tp_size)
++            assert attn_tp_size % self.total_num_kv_heads == 0
++        self.num_kv_heads = max(1, self.total_num_kv_heads // attn_tp_size)
+         self.head_dim = head_dim or (hidden_size // self.total_num_heads)
+         self.q_size = self.num_heads * self.head_dim
+         self.kv_size = self.num_kv_heads * self.head_dim
+@@ -917,6 +931,7 @@ class LagunaAttention(nn.Module):
+             bias=config.qkv_bias,
+             quant_config=quant_config,
+             prefix=f"{prefix}.qkv_proj",
++            disable_tp=self.xpu_replicated_attention,
+         )
+         self.qkv_proj.xpu_exact_spec_rows = not self.is_dflash_layer
+         self.qkv_proj.xpu_laguna_m8_bf16_attn_mm = not self.is_dflash_layer
+@@ -928,6 +943,7 @@ class LagunaAttention(nn.Module):
+             bias=config.attention_bias,
+             quant_config=quant_config,
+             prefix=f"{prefix}.o_proj",
++            disable_tp=self.xpu_replicated_attention,
+         )
+         self.o_proj.xpu_exact_spec_rows = not self.is_dflash_layer
+         self.o_proj.xpu_laguna_m8_bf16_attn_mm = not self.is_dflash_layer
+@@ -953,6 +969,7 @@ class LagunaAttention(nn.Module):
+                 bias=False,
+                 quant_config=quant_config,
+                 prefix=f"{prefix}.g_proj",
++                disable_tp=self.xpu_replicated_attention,
+             )
+             self.g_proj.xpu_exact_spec_rows = not self.is_dflash_layer
+             self.gate_per_head = gate_per_head
+@@ -964,7 +981,7 @@ class LagunaAttention(nn.Module):
+         sinks = None
+         if attention_sink:
+             self.sink = torch.nn.Parameter(
+-                torch.empty(self.total_num_heads // tp_size, requires_grad=False)
++                torch.empty(self.total_num_heads // attn_tp_size, requires_grad=False)
+             )
+             sinks = self.sink
+ 
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 75c5df29d..74be1a1c3 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -288,6 +288,22 @@ def _laguna_probe_draft_identity(
+     )
+ 
+ 
++def _laguna_retired_boundaries() -> int:
++    """Eager breaks the active selectors remove from the audited 145.
++
++    Each decoder layer contributes one attention boundary and two collective
++    boundaries. Inlining attention retires its 48 attention boundaries;
++    replicated attention retires the 48 attention-O all-gathers. Both remove a
++    boundary and the graph segment it started, so each is worth 48.
++    """
++    retired = 0
++    if laguna_inline_attention_enabled():
++        retired += 48
++    if os.environ.get("VLLM_XPU_LAGUNA_REPLICATED_ATTENTION", "0") == "1":
++        retired += 48
++    return retired
++
++
+ def _laguna_no_spec_escape(speculative_config) -> bool:
+     """Whether the drafting terms of the M8 contract may be waived.
+ 
+@@ -6297,17 +6313,20 @@ class GPUModelRunner(
+                 # Inlining attention records all 48 attention calls into their
+                 # surrounding segments, retiring those boundaries and the graph
+                 # each one started: 146/145 becomes 98/97.
++                # Replicated attention retires the 48 attention-O all-gathers
++                # instead, which is a different 48 boundaries but the same
++                # arithmetic. Both together would retire 96.
+                 expected_num_graphs=(
+                     None
+                     if not laguna_m8_breakable_graph
+                     else (145 if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING else 146)
+-                    - (48 if laguna_inline_attention_enabled() else 0)
++                    - _laguna_retired_boundaries()
+                 ),
+                 expected_num_eager_breaks=(
+                     None
+                     if not laguna_m8_breakable_graph
+                     else (144 if envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING else 145)
+-                    - (48 if laguna_inline_attention_enabled() else 0)
++                    - _laguna_retired_boundaries()
+                 ),
+             )
+             drafter = getattr(self, "drafter", None)
+-- 
+2.43.0
+

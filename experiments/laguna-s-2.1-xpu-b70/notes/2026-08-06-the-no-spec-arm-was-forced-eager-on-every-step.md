@@ -2,9 +2,11 @@
 
 Date: 2026-08-06 America/Toronto
 
-Status: **defect found and fixed. The 12.1-12.3 tok/s no-speculation figure was
-never a measurement of the graph path; the arm captured and replayed nothing,
-and the run directory recorded that fact at the time.**
+Status: **defect found and source-fixed; result remains diagnostic. The
+corrected path captured/replayed 146/145 and measured 63.533 tok/s at 32,640,
+but the headline runner exited 2, recorded a pre-correction scheduler-budget
+identity, ran without an oracle, and differs from eager by 9/128 tokens at
+32K.**
 
 ## The claim that was wrong
 
@@ -123,6 +125,12 @@ Benchmark status `PASS_BASELINE_ORACLE_NOT_TESTED`, all rows `passed=true`,
 inside its own first-100-token window, which is why it trails the other two;
 the sentinel is the clean short-context figure.
 
+This is not a complete passing runner. `cleanup-status.txt` records
+`original_status=2`, there is no `run-status.txt`, and `identity.txt` records
+the subsequently corrected wrong `expected_effective_scheduled_tokens=8183`.
+The benchmark and topology evidence remain useful diagnostics, but “sealed”
+below means immutable evidence, not exit-zero validation.
+
 **The step is no longer flat in context** -- 14.8 ms at 256 against 15.7 ms at
 32,640 -- but it is very nearly so, which is expected: 36 of 48 layers have a
 512-token window, and the 12 full-attention layers read only ~400 MB per rank
@@ -139,13 +147,13 @@ Compared at matched positions in the same suite, so warmth and ordering match
 | 2nd, warm | 32,640 early | 38.425 | **63.533** | **no-spec, 1.65x** |
 | 3rd, warm | 256 sentinel | **162.029** | 67.521 | speculative, 2.40x |
 
-Speculation wins at short context by 2.4x and **loses at 32K by 1.65x**. The
+Speculation wins at short context by 2.4x and **loses at 32K by 1.65x** in
+these separate static configurations. The
 32K target was written off as drafter-limited at 1.058 tokens per step; that
 diagnosis was right about speculation and wrong about the machine. Turning the
-drafter *off* past some context is now the faster configuration, which is the
-dynamic-speculation policy the goal statement explicitly permits. Finding the
-crossover needs a context sweep (the suite has 1,024 through 32,640); it lies
-somewhere between 256 and 32,640.
+drafter off is therefore a candidate long-context policy. The current launcher
+and runtime do not implement per-request context switching between q12/M12 and
+no-drafter/M1 graphs, so this is not yet deployable dynamic speculation.
 
 The cold-first-case penalty is also far worse for q12 (7.855) than for the
 no-drafter arm (39.173), because q12 captures a second graph for the drafter
@@ -160,7 +168,8 @@ Three controls, all on sealed run directories.
 (current tree, `LAGUNA_EAGER_FANOUT=1`): all three cases identical, and 12.151
 / 12.316 / 12.401 tok/s against the old 12.260 / 12.213 / 12.128. **The forty
 intervening commits changed neither the arithmetic nor the speed.** The whole
-5.2x is the graph path and nothing else.
+32K `12.213 -> 63.533` 5.20x delta is attributable to the graph path. The
+separate 256-token sentinel is `12.128 -> 67.521`, or 5.57x.
 
 **The graphed path is deterministic run to run.** Two graphed runs emit
 identical `output_token_ids_sha256` and identical `token_ids` for 8,192 middle.
@@ -195,6 +204,10 @@ path is bitwise equal to eager at 8,192 and 256, and differs from it at 32,640
 in the tail after the answer, deterministically, with the retrieval answer
 unchanged.*
 
+Because the 32K paths differ by 9/128 tokens and no canonical oracle ran, this
+result is diagnostic under the repository's exact-token promotion rule even
+though the requested retrieval fields agree.
+
 ## What this does not fix
 
 The selectors the `qdepth` profile disables are mostly **not** recoverable at
@@ -222,4 +235,6 @@ The zero-topology-line and `original_status=2` facts are from the sealed
 at `68a4965de`; the fix is `63da5e0ea`. No quantisation change, and no caching
 or speculation setting used to inflate any number -- the arm has no speculation
 at all, which is the point. The protected `125.4619731637751 tok/s` conventional
-short-decode record is untouched.
+short-decode record is untouched. The quoted 32K speculative comparison is
+from vLLM `d881b94d1`, while the no-spec graph diagnostic is `63da5e0ea`; a
+same-commit crossover remains required.

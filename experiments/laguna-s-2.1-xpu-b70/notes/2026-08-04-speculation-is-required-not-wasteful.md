@@ -2,8 +2,10 @@
 
 Date: 2026-08-04 America/Toronto
 
-Status: **measured, six device configurations. Supersedes the two projections in
-`2026-08-03-width12-lock-and-speed-ceilings.md`, both of which were wrong.**
+Status: **partly superseded 2026-08-06. The measured speculative rows remain
+useful, but the alleged width-1 graph arm was forced eager. Do not use its
+12-13 tok/s rows to conclude that speculation is structurally required or that
+M=1 tops out there.**
 
 ## The measurement that settles it
 

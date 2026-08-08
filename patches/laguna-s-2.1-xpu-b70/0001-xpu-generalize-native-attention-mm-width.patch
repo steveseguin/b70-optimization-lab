@@ -1,0 +1,152 @@
+From 561698049656690a55ea0ca9826dceba0e33a9c7 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Fri, 7 Aug 2026 09:54:04 -0400
+Subject: [PATCH] xpu: let the native-MM attention path fire at the configured
+ verifier width
+
+The `torch.mm` branch in `_xpu_apply_batched_m1_method` was gated on
+`rows.shape[0] == 8`. This campaign runs a width-12 verifier, so the branch
+was unreachable and `VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM` could not do anything
+whatever it was set to. Its shape set is already exactly the target and
+drafter qkv/o projections at TP4, so the width was the only thing standing
+between it and the 96 stride-zero BMMs the verifier issues per step.
+
+Track the configured exact width instead. Width 8 admits exactly what it did
+before, since `xpu_laguna_exact_max_m()` is 8 there.
+
+The precondition is the invariant the campaign rests on -- a verifier row must
+produce what that row would have produced alone -- so it was checked against
+row-at-a-time BMM rather than against the batched BMM. `torch.mm` is bitwise
+equal to row-at-a-time BMM at all four listed shapes, at width 8 and width 12,
+over random BF16 inputs. The selector remains default-off.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ .../models/test_laguna_exact_attn_mm_width.py | 81 +++++++++++++++++++
+ vllm/model_executor/layers/linear.py          | 14 +++-
+ 2 files changed, 92 insertions(+), 3 deletions(-)
+ create mode 100644 tests/models/test_laguna_exact_attn_mm_width.py
+
+diff --git a/tests/models/test_laguna_exact_attn_mm_width.py b/tests/models/test_laguna_exact_attn_mm_width.py
+new file mode 100644
+index 000000000..aa35a0a0c
+--- /dev/null
++++ b/tests/models/test_laguna_exact_attn_mm_width.py
+@@ -0,0 +1,81 @@
++"""The native-MM fast path must fire at the width the run is configured for.
++
++`_xpu_apply_batched_m1_method` presents each verifier row to oneDNN as a
++stride-zero BMM so a row produces what it would have produced alone. The
++faster `torch.mm` branch above it was gated on `rows.shape[0] == 8` -- a width
++this campaign never runs -- so at the width-12 verifier the branch was
++unreachable and the selector that enables it was inert.
++
++These tests pin the width term to the configured exact width. They do not
++re-check the arithmetic: the two branches are bitwise equal at these shapes by
++construction, which is why the branch is only detectable by instrumenting
++`torch.mm` rather than by comparing outputs.
++"""
++
++import pytest
++import torch
++
++from vllm.model_executor.layers import linear as linear_mod
++from vllm.model_executor.layers.linear import (
++    UnquantizedLinearMethod,
++    _xpu_apply_batched_m1_method,
++)
++
++
++def _layer(out_features=2048, in_features=3072):
++    layer = torch.nn.Module()
++    layer.weight = torch.nn.Parameter(
++        torch.zeros((out_features, in_features), dtype=torch.bfloat16),
++        requires_grad=False,
++    )
++    layer.xpu_laguna_m8_bf16_attn_mm = True
++    return layer
++
++
++def _arm(monkeypatch, exact_max_m):
++    monkeypatch.setattr(linear_mod.envs, "VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM", True)
++    monkeypatch.setattr(linear_mod.envs, "VLLM_XPU_EXACT_SPEC_ATTN", True)
++    monkeypatch.setattr(linear_mod.envs, "VLLM_XPU_LAGUNA_EXACT_MAX_M", exact_max_m)
++    # The verifier-rows term is a separate contract; hold it true so these
++    # tests isolate the width term.
++    monkeypatch.setattr(
++        linear_mod, "_xpu_is_exact_decode_or_verifier_rows", lambda _rows: True
++    )
++    calls = []
++    real_mm = torch.mm
++    monkeypatch.setattr(
++        torch, "mm", lambda a, b: calls.append(a.shape[0]) or real_mm(a, b)
++    )
++    return calls
++
++
++@pytest.mark.parametrize("width", [8, 12])
++def test_native_mm_fires_at_the_configured_width(monkeypatch, width):
++    calls = _arm(monkeypatch, width)
++    rows = torch.zeros((width, 3072), dtype=torch.bfloat16)
++
++    _xpu_apply_batched_m1_method(_layer(), UnquantizedLinearMethod(), rows, None)
++
++    assert calls == [width]
++
++
++def test_native_mm_stays_off_at_other_widths(monkeypatch):
++    """A batch that is not the configured width keeps the stride-zero BMM."""
++    calls = _arm(monkeypatch, 12)
++    rows = torch.zeros((7, 3072), dtype=torch.bfloat16)
++
++    _xpu_apply_batched_m1_method(_layer(), UnquantizedLinearMethod(), rows, None)
++
++    assert calls == []
++
++
++def test_native_mm_stays_off_for_unlisted_shapes(monkeypatch):
++    """Only the target and drafter qkv/o projections at TP4 are covered."""
++    calls = _arm(monkeypatch, 12)
++    rows = torch.zeros((12, 3072), dtype=torch.bfloat16)
++
++    _xpu_apply_batched_m1_method(
++        _layer(out_features=999), UnquantizedLinearMethod(), rows, None
++    )
++
++    assert calls == []
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 0100d83db..e822be522 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -167,17 +167,25 @@ def _xpu_apply_batched_m1_method(
+             envs.VLLM_XPU_LAGUNA_M8_BF16_ATTN_MM
+             and envs.VLLM_XPU_EXACT_SPEC_ATTN
+             and getattr(layer, "xpu_laguna_m8_bf16_attn_mm", False)
+-            and rows.shape[0] == 8
++            and rows.shape[0] == xpu_laguna_exact_max_m()
+             and _xpu_is_exact_decode_or_verifier_rows(rows.shape[0])
+             and rows.dtype == torch.bfloat16
+             and layer.weight.dtype == torch.bfloat16
+             and (rows.shape[1], layer.weight.shape[0])
+             in {(3072, 2048), (3072, 2816), (1536, 3072), (2304, 3072)}
+         ):
+-            # The record path presents eight independent M=1 lanes to oneDNN
+-            # as a stride-zero BMM. Native M=8 MM exposes the row/N tile grid
++            # The record path presents the verifier's independent M=1 lanes to
++            # oneDNN as a stride-zero BMM. Native MM exposes the row/N tile grid
+             # directly; changing-input gates require bitwise-equal BF16 output
+             # before this default-off selector can be enabled for a run.
++            #
++            # The width was pinned to 8 and so could never fire at the width-12
++            # verifier this campaign runs. It now tracks the configured exact
++            # width, which leaves width 8 admitting exactly what it did before.
++            # Both widths were checked against the invariant that actually
++            # matters -- a row must produce what it would have produced alone --
++            # and `mm` is bitwise equal to row-at-a-time BMM at all four listed
++            # shapes, at width 8 and width 12 alike.
+             output = torch.mm(rows, layer.weight.t())
+             if bias is not None:
+                 output.add_(bias)
+-- 
+2.43.0
+

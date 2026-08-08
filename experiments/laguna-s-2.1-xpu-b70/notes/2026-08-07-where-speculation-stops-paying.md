@@ -2,10 +2,10 @@
 
 Date: 2026-08-07 America/Toronto
 
-Status: **measured at four contexts on both arms; the crossing itself is
-interpolated, not measured.** The 8,192 point was attempted four times and lost
-every time to host-side infrastructure, never to the model. What is solid is
-the bracket, the mechanism, and the arithmetic that locates the crossing.
+Status: **diagnostic bracket plus model-dependent interpolation; no dynamic
+policy is implemented or promoted.** Four no-spec 8,192 sweep attempts hit the
+host-memory guard, while other q12 8K attempts also include device-error and
+interrupted outcomes. The crossing itself is not measured.
 
 ## Why this measurement exists
 
@@ -17,8 +17,9 @@ full-attention layers read only ~400 MB per rank at 32K. Speculation, by
 contrast, decays with context, because the drafter's own window is 512 against
 a prompt up to 32,640.
 
-Two curves that cross. The goal statement permits dynamic speculation, so the
-crossing point is a deployment parameter, not a curiosity.
+The measured endpoints bracket at least one crossing. The goal statement
+permits dynamic speculation, so the crossing is a candidate parameter for a
+not-yet-implemented policy.
 
 ## Method
 
@@ -46,25 +47,26 @@ No-drafter leg: `qdepth` depth 0, `LAGUNA_NOSPEC_GRAPH=1`,
 The no-drafter column is flat to within 6% across a 128x range. The
 speculative column halves between 1,024 and 4,096 and halves again by 32,640.
 
-**The crossing is bracketed by measurement and located by arithmetic, not
-observed directly.** At 4,096 speculation still leads by 1.19x; at 32,640 it
-trails by 1.65x. Between those two points the curves cross once, because one is
-flat and the other is monotonically decaying.
+**The crossing is bracketed by measurement, not observed directly.** At 4,096
+speculation leads by 1.19x; at 32,640 it trails by 1.65x. Missing 8K and 16K
+measurements mean neither a unique crossing nor a safe production cutoff has
+been established.
 
 ## Why the missing cells are missing
 
 None of the gaps are model behaviour; all are host-side.
 
-**24,576 is unmeasurable, and that is a finding.** Both legs that included
+**Both recorded 24,576 attempts failed.** Both legs that included
 `laguna-lc-24576-middle` died on it and neither tripped the memory guard: one
 raised `TimeoutError: RPC call to execute_model timed out` with zero device
-errors, the other raised `EngineDeadError` with **195 GuC reset lines**, an
-actual GPU wedge that then had to be cleared with an `xe` reload. No other
-context in the suite does this. Note that 24,576 / 8,182 = 3.004, so the final
-prefill chunk is about **30 tokens** -- a degenerate chunk boundary is the
-obvious suspect and has not yet been checked.
+errors, the other raised `EngineDeadError` with **195 device-error lines: 192
+fault-response lines and three GuC/reset lines**, an actual GPU wedge that then
+had to be cleared with an `xe` reload. The 30-token remainder applies only to
+the no-spec 8,182 partition. The q12 arm uses 8,192 and
+`24,576 = 3 * 8,192` exactly, so that remainder cannot explain the shared
+failure. Root cause is unknown.
 
-**8,192 was attempted four times and lost to the host memory guard each time.**
+**Four no-spec 8,192 sweep attempts were lost to the host-memory guard.**
 During a run the host holds only ~35 GB available at the median, because four
 workers each materialise ~17 GiB of host-side weights while the 67 GiB
 checkpoint is still in page cache. Whether the guard's one-per-second sample
@@ -101,20 +103,21 @@ wins precisely while
 
     tokens_per_step  >  step_time_spec / step_time_nospec  ~=  26 / 15  ~=  1.73
 
-which is a statement about the *drafter*, not about the machine. Interpolating
-the measured tokens-per-step curve log-linearly between 4,096 and 32,640 puts
-the crossing at **roughly 7,600 prompt tokens**.
+which is a statement about the *drafter*, not about the machine. Power-law
+interpolation of the measured tokens-per-step curve between 4,096 and 32,640
+puts the threshold near **7,600 prompt tokens**. Other reasonable fits to
+these sparse endpoints give roughly 6,900-8,900, so this is an experiment
+target, not a safe deployment cutoff.
 
 That number is a property of this drafter's window. A drafter with
 full-attention layers would push it out; there is no such checkpoint on disk.
 
 ## What the crossover is worth
 
-Speculation is still the right default below the crossing, by 2.4x at the
-sentinel. Above it, leaving the drafter on costs throughput outright: at 32,640
-it is 38.43 against 63.53, so **switching speculation off past the crossing is
-worth about 1.65x at long context** and nothing is given up at short context,
-because the policy keeps speculation there.
+At the measured 32K endpoints, separate static configurations differ by 1.65x:
+38.43 speculative against 63.53 no-drafter. Implementing a switch without
+forcing M=1 eager, preserving exactness, and paying no service-reload cost was
+not part of these runs and remains to be demonstrated.
 
 This does not reach the 200 tok/s target at 32K. It does move the number that
 had been declared unreachable, on an axis the goal statement explicitly opened
@@ -131,4 +134,6 @@ throwaway and is not reported. The 32,640 no-drafter figure is from
 `20260806-nospec-graphfix-e` on the `-early` needle position; the sweep legs
 use `-middle`. No quantisation change, and no caching or speculation setting
 used to inflate any number. The protected `125.4619731637751 tok/s`
-conventional short-decode record is untouched.
+conventional short-decode record is untouched. The 32K comparison crosses
+vLLM commits, the no-spec run has no canonical oracle and overall runner status
+2, and the result is diagnostic only.

@@ -2,6 +2,9 @@
 
 Date: 2026-08-05 America/Toronto
 
+Status: **downgraded. The sampling window did not isolate decode, and the
+roughly 7.5 ms serving-path remainder is still unattributed.**
+
 > **DOWNGRADED, same day, before it was acted on.** The sampling window was
 > ~100 s but this arm's decode is only ~1.7 s (128 tokens at 13.4 ms/step), so
 > the overwhelming majority of samples come from model load, graph capture and

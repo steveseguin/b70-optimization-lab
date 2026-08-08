@@ -1,0 +1,36 @@
+From 945a554bf008de840b9d9feed70f156b2b8f6b41 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Wed, 5 Aug 2026 06:35:30 -0400
+Subject: [PATCH] xpu: fix the replicated-attention gate, it never enabled
+
+attention_prefix is rebound to prefix a few lines above when it arrives None,
+so 'attention_prefix is None' was False for every target layer and the selector
+was inert: a run with it set still captured the audited 146/145 topology and
+the unchanged KV size. Test self.is_dflash_layer, which captured the original
+value.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+---
+ vllm/model_executor/models/laguna.py | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index e94af63ed..5e57dc53d 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -901,9 +901,11 @@ class LagunaAttention(nn.Module):
+         # of 2, which quadruples the KV cache and needs near-full utilisation.
+         # Never applied to drafter layers: the drafter's own topology is
+         # separately audited at 14/13.
++        # `attention_prefix` is rebound to `prefix` above when it arrives None,
++        # so test the flag it was captured into rather than the argument.
+         self.xpu_replicated_attention = (
+             os.environ.get("VLLM_XPU_LAGUNA_REPLICATED_ATTENTION", "0") == "1"
+-            and attention_prefix is None
++            and not self.is_dflash_layer
+         )
+         attn_tp_size = 1 if self.xpu_replicated_attention else tp_size
+         self.total_num_heads = num_heads
+-- 
+2.43.0
+

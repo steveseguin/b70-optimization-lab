@@ -2,9 +2,10 @@
 
 Date: 2026-08-04 America/Toronto
 
-Status: **measured across three context lengths, from prometheus counters in
-runs that were already on disk. This is the controlling fact for the >150 tok/s
-at 32K target.**
+Status: **partly superseded 2026-08-06. The drafter's 32K acceptance collapse
+remains measured. The deployment conclusion does not: after the M=1 graph fix,
+a separate no-drafter configuration measured 63.533 tok/s versus 38.425 for
+speculation, diagnostically. Neither reaches 150 or 200 tok/s.**
 
 ## The drafter cannot see the context
 

@@ -2,9 +2,10 @@
 
 Date: 2026-08-04 America/Toronto
 
-Status: **structural finding. Reframes the 100 tok/s no-speculation target: the
-13.31 figure does not describe the model without speculation, it describes a
-different code path.**
+Status: **superseded 2026-08-06. The 13.31 figure was an eager-path diagnostic,
+but the reason was a runtime eligibility defect, not an inherent requirement
+that the optimized target use speculation. Commit `63da5e0ea` makes the M=1
+target graph reachable.**
 
 ## The contract requires speculation
 
