@@ -2,7 +2,7 @@
 
 Date: 2026-08-08
 
-Status: model download in progress; offline preflight complete; no GPU/model run yet.
+Status: model verified on USB; offline preflight complete; no GPU/model run yet.
 
 ## User requirement
 
@@ -42,7 +42,26 @@ HF_XET_HIGH_PERFORMANCE=1 hf download \
   --local-dir /mnt/fast-ai/llm-models/qwen36-27b-q8-gguf-staging
 ```
 
-The first USB-direct attempt was stopped after retaining a small resumable partial because Xet's small-chunk writes were inefficient on the NTFS volume. The active transfer uses internal NVMe staging. After exact size and SHA-256 verification, the completed single file will be copied sequentially to `/mnt/usb-models/models/qwen36-27b-q8-gguf/` and the staging copy will be removed after the USB checksum passes.
+The first USB-direct attempt was stopped because Xet's small-chunk writes were
+inefficient on the NTFS volume. The transfer instead completed through internal
+NVMe staging. After exact size and SHA-256 verification, the completed file was
+copied sequentially to `/mnt/usb-models/models/qwen36-27b-q8-gguf/`; the staging
+copy and two small abandoned USB partials were removed after the USB checksum
+passed.
+
+Completed artifact verification:
+
+- staging size and SHA-256 matched the pin;
+- the sequential USB copy independently matched the same size and SHA-256;
+- GGUF version 3, architecture `qwen35`, declared 64 blocks, 851 tensors;
+- maximum tensor block index 63 and no `blk.64.*` tensors;
+- no MTP, projector, mmproj, or vision-named metadata/tensor entries;
+- internal staging copy and the two abandoned USB partials were removed only
+  after the canonical USB hash passed.
+
+Raw inspection evidence is retained outside Git at
+`/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/model-inspection-20260808`;
+the compact result is tracked in [`../data/model-inspection-20260808.json`](../data/model-inspection-20260808.json).
 
 ## Historical local evidence recovered
 

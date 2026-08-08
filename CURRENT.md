@@ -24,14 +24,13 @@ The active preparation lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70 with a 32K ceiling. MTP and vision are optional later lanes and must
 not be mixed into this baseline. The exact Unsloth artifact is pinned in
 [`experiments/qwen36-27b-q8-gguf-b70/model-manifest.json`](experiments/qwen36-27b-q8-gguf-b70/model-manifest.json)
-and is downloading through the protected staging directory
-`/mnt/fast-ai/llm-models/qwen36-27b-q8-gguf-staging`; its verified destination
-will be `/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf`.
-Do not start another downloader into either path. The lane entry point and
+and is size/SHA/GGUF-table verified at
+`/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf`. The internal
+staging copy and abandoned partials were removed after USB verification. Do not
+start another downloader into the canonical path. The lane entry point and
 offline-validated launcher/gates are in
 [`experiments/qwen36-27b-q8-gguf-b70/README.md`](experiments/qwen36-27b-q8-gguf-b70/README.md).
-Immediate next actions are: finish and hash the download, copy and re-hash it
-on USB, then run the one-card 4K smoke, fixed cold exact-token/realistic suite,
+Immediate next actions are: run the one-card 4K smoke, fixed cold exact-token/realistic suite,
 and calibrated 4K/17K/31,846-token F16-KV retrieval ladder. Q8 KV is a
 separately labeled fallback only if F16 KV lacks 32K headroom.
 

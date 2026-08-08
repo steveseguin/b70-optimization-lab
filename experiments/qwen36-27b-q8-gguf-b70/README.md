@@ -1,6 +1,7 @@
 # Qwen3.6 27B Q8_0 GGUF on one B70
 
-Status: bring-up in progress. No result is promoted from this lane yet.
+Status: artifact verified on USB; GPU bring-up pending. No result is promoted
+from this lane yet.
 
 ## Scope
 
@@ -25,7 +26,11 @@ MTP and vision are optional follow-ups. They must not be mixed into the target-o
 - SHA-256: `f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce`
 - Canonical USB path: `/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf`
 
-The machine-readable identity is in [`model-manifest.json`](model-manifest.json). The model is currently being downloaded through a bounded internal-NVMe staging directory and will be copied to the canonical USB path only after size and SHA-256 validation.
+The machine-readable identity is in [`model-manifest.json`](model-manifest.json).
+The canonical USB file independently passed the declared size and SHA-256.
+Its GGUF table has 64 blocks (`0` through `63`), no block-64 tensors, and no
+MTP/projector/vision-named metadata or tensors. The internal staging copy was
+removed only after the USB checksum passed.
 
 ## Fit expectation
 

@@ -104,7 +104,7 @@ Main entry:
 - [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md)
 
 Status: active preparation lane as of 2026-08-08. The exact target-only
-Unsloth Q8_0 artifact is pinned and downloading for a text-only, target-only,
+Unsloth Q8_0 artifact is pinned and verified on USB for a text-only, target-only,
 one-B70 baseline with a 32K ceiling. No new throughput or 32K fit claim is
 promoted yet. The historically recorded Q8_0 family result of `15.275 tok/s`
 at p512/n128 is only a trend anchor because its raw evidence, revision, and
