@@ -24,9 +24,16 @@ historical convention, not under conventional interval accounting.
 - LocalMaxxing: `cms2ccv2d00lps201rej94pjy` (`APPROVED`);
 - confirmed M12 shared-elementwise record: **`125.4619731637751 tok/s`** conventional;
 - LocalMaxxing: `cms9wuuf300cqpm01t5i285tq` (`APPROVED`);
-- lane state: active optimization, no service or worker currently running.
+- lane state: paused at the user's request, with no service, worker, or
+  authorized experiment running.
 
-### 2026-08-08 long-context evidence correction and active recovery
+### 2026-08-08 pause closeout and long-context disposition
+
+Laguna is paused so the host can move to other models. The promoted static
+record remains intact, all August diagnostic and rejected work is preserved,
+and no hardware recovery or follow-up run is pending. The durable stopping
+point, source identities, and restart conditions are in
+[`2026-08-08-laguna-lane-pause-closeout.md`](notes/2026-08-08-laguna-lane-pause-closeout.md).
 
 The August 4--7 long-context work contains a real diagnostic discovery but no
 new promoted result. The no-drafter graph fix reached `63.532897 tok/s` at
@@ -39,7 +46,7 @@ baseline oracle. Treat it as diagnostic evidence only.
 The quoted ~7,600-token speculation crossover is a power-law interpolation
 from separate M12-with-drafter and M1-no-drafter services. No context-dependent
 switch existed in those commits, and the static graph contract would force a
-naive M12-to-M1 switch eager. The active offline treatment is a default-off
+naive M12-to-M1 switch eager. The subsequent offline treatment was a default-off
 single-service DFlash cutoff with independently captured M1 and M12 target
 graphs, separate collective buffers per width, worker transition evidence, and
 runtime-owned scheduler-budget evidence. That treatment is now device-rejected:
@@ -396,5 +403,5 @@ nonempty ID and status.
    field for new goals and qualify the historical compatibility field.
 
 No recovery or hardware action is pending. Closing the conventional
-`0.05827875982973 tok/s` gap, or any other benchmark work, requires a new
-preregistered experiment.
+`0.05827875982973 tok/s` gap, or any other benchmark work, requires an explicit
+decision to reopen the paused lane and a new preregistered experiment.

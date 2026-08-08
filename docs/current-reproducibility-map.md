@@ -10,38 +10,36 @@ the session-cache experiments, the TurboQuant patch, and the long-context
 research path. It is meant for a fresh human or agent who needs to reproduce or
 review the current work without reading every historical note first.
 
-Current hardware scope: two ASRock Arc Pro B70 32 GB GPUs (`64 GB` aggregate
-VRAM) on the EPYC 9015 host. Historical packets below were produced on the
-former four-card Intel-branded lab and retain that identity. Never infer the
-current GPU count or topology from a historical recipe.
+Hardware scope: the local Intel lab is four Arc Pro B70 32 GB GPUs
+(`128 GB` aggregate VRAM). Results here are useful because they are produced on
+real community-accessible XPU hardware, but the same limit also constrains
+larger model coverage. Additional high-VRAM Intel hardware would let this map
+include larger GLM/DeepSeek-class lanes and more concurrent service/optimization
+comparisons without sacrificing the current endpoint. The lab has spare EPYC
+9015 PCIe 5.0 slot capacity, so the missing piece for broader Intel coverage is
+higher-memory XPU hardware rather than host expansion.
 
-## What Is Production Today
+## Historical Production Recipes
 
-As of 2026-08-13, the configured endpoint is Qwen3.6 27B Q8_0 target-only TP2:
+As of the 2026-08-08 Laguna closeout, no model endpoint is known to be running;
+`CURRENT.md` is the operational authority and requires a fresh check. The most
+recent temporary LAN endpoint recipe was the Gemma 4 26B Q8 coding-agent
+service:
 
-- hardware: 2x ASRock Arc Pro B70 32 GB;
-- engine: mndodd llama.cpp/SYCL `4302fb599` plus the complete promoted lab
-  patch;
-- endpoint: OpenAI-compatible API on `127.0.0.1:18080`;
-- served context: 8192 tokens, one active generation;
-- precision: Q8_0 weights, F16 KV, exact-F32 two-card reduction;
-- no speculation, prompt cache, graph capture, or LAN exposure.
+- model: `gemma4-26b-a4b-q8`
+- local target model:
+  `/mnt/fast-ai/llm-models/gemma4-26b-a4b-it-q8-gguf/gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf`
+- hardware: 4x Intel Arc Pro B70 32GB
+- engine: llama.cpp/SYCL replicas plus no-auth OpenAI frontdoor
+- endpoint: OpenAI-compatible API on `0.0.0.0:8000`
+- served context: `65536` tokens per active request
+- max active generations: `8`
+- prompt cache: enabled with strict sticky routing available
+- modalities: text
+- auth: none
 
-The enabled unit is `qwen36-q8-b70.service`; it was active and passed health,
-an exact cache-zero target-only smoke, and post-stress GPU/kernel checks on
-2026-08-13. The launcher is `/home/steve/bin/run-qwen36-q8-b70.sh`. The fixed
-12-prompt, 512-token suite measured **`35.699225 tok/s`** conventionally
-(`36.059823 tok/s` historical-helper compatibility), with all 12 output hashes
-exact. Use the [result packet](../results/qwen36-27b-q8-tp2-asrock-b70/README.md),
-[standalone repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), and [full
-source patch](../patches/qwen36-27b-q8-tp2-asrock-b70/README.md). The original
-mndodd attribution and matched fork baseline remain in
-[`../community/mndodd-qwen36-27b-llamacpp-sycl/`](../community/mndodd-qwen36-27b-llamacpp-sycl/).
-Always check the unit and `/health`; installed/enabled is not proof that the
-model is loaded.
-
-The Gemma 4 services and the model-slot profile below are historical four-card
-restore recipes, not the currently loaded service.
+Restore or stop it from
+`docs/gemma4-26b-q8-service-runbook.md`.
 
 The usual model-slot production profile to restore after this temporary service
 is the Gemma 4 c8 profile:
@@ -82,22 +80,10 @@ Latest full-32K concurrency conclusion:
   content. In the half-shared synthetic test, c8 near-32K TTFT improved from
   about `22.20 s` to `12.45 s`.
 
-## Latest Optimization Lane
+## Historical Qwen3.6 27B Optimization Lane
 
-Qwen3.6 27B Q8_0 target-only TP2 is promoted at `35.699225 tok/s`
-conventional on the two-card ASRock host. The result is `+15.065%` over the
-matched mndodd-fork baseline, uses no speculation or response reuse, and is
-12/12 output-hash exact. The direct recurrent GDN and convolution persistent-
-state I/O paths and recurrent RMS/gate/multiply/Q8 tail are the final
-incremental wins. Continue from the standalone
-[repro](../repro/qwen36-27b-q8-tp2-asrock-b70/README.md), not from an older
-community-only launcher. The next bounded task is release-day compatibility
-testing for the new Qwen 27B before transferring exact-shape optimizations.
-
-## Historical Qwen3.6 27B INT4 AutoRound Lane
-
-Qwen3.6 27B INT4 AutoRound was the prior optimization target on the historical
-Intel-branded host:
+Qwen3.6 27B INT4 AutoRound was a prior optimization target, separate from the
+production LAN endpoint:
 
 - current fastest variant: `webhie/Qwen3.6-27B-int4-AutoRound`
 - webhie revision: `f5750c90b3776db658594df5fe8051098226dd8e`
@@ -187,7 +173,7 @@ Use:
 
 The record uses BF16 KV to preserve its BF16 canonical-teacher contract.
 Poolside's quantized checkpoint officially specifies calibrated FP8 KV, which
-is now an active, separately labeled experiment under
+has a paused, separately labeled experiment under
 [`experiments/laguna-s-2.1-fp8-kv-xpu-b70/`](../experiments/laguna-s-2.1-fp8-kv-xpu-b70/).
 It has its own source patches, checkpoint/runtime scale audit, FP8 q1 teacher,
 and promotion gates; it is not a silent record-lane substitution.

@@ -15,12 +15,15 @@ that its model is currently loaded.
 
 ## Live Service
 
-No Laguna service, worker, Ray process, or experiment listener is running as
-of the 2026-08-08 recovery audit; all four B70s were idle at approximately
-42.9 MiB each. Recheck immediately before any operational change.
+No model service, worker, Ray process, benchmark, or experiment listener is
+running as of the 2026-08-08 Laguna closeout audit; all four B70s were idle at
+approximately 42.9 MiB each. Recheck immediately before any operational
+change.
 
-The active lane is Laguna long-context decode recovery. The August 4--7
-no-drafter graph result is diagnostic, not promoted: its benchmark completed
+There is no active optimization lane. Laguna is paused at the user's request
+so another model can be selected and brought up under a fresh, isolated run
+identity. The August 4--7 Laguna no-drafter graph result is diagnostic, not
+promoted: its benchmark completed
 at 63.533 tok/s at 32,640 tokens with graph capture/replay, but the full runner
 exited 2 on a defective scheduler audit, no corrected-harness full reproduction
 exists, and its token stream differs from same-tree eager without an oracle.
@@ -34,6 +37,8 @@ positions); M1 captured on all ranks but emitted no audited replay line. Its
 8,192 policy/crossover gate from this candidate. The 24,576 engine failure also
 remains unresolved. Detailed state is in
 [`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
+The final stopping point is in the
+[`Laguna pause closeout`](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-08-laguna-lane-pause-closeout.md).
 
 No process was listening on the public LAN `:8000` endpoint when the Qwen lane
 was closed on 2026-07-13. The last configured role was the temporary Gemma 4
@@ -681,8 +686,8 @@ This remains rank-local guidance, not a proven global TP4 critical path, and
 XCCL cross-stream completion is still unproven. The source map found a
 two-interval prefix, 48 identical six-interval layer bodies, and one final
 graph tail. The largest repeated graph class is post-attention normalization
-plus local dense/MoE work at `30.126720 ms` on selected rank 2. The active next
-lane is therefore an isolated arithmetic-identical M=8 local-MoE device-kernel
+plus local dense/MoE work at `30.126720 ms` on selected rank 2. The then-active
+next lane was an isolated arithmetic-identical M=8 local-MoE device-kernel
 candidate with unchanged graph coverage. The required post-run source audit
 closed a pure Python
 replay-loop campaign: same-stream XPU event intervals measure queued device
@@ -706,7 +711,7 @@ and [packet](data/laguna-s-2.1-w1-n128-nvme-phase1-failed-stop-20260723.json).
 The target-side follow-up audit found no clean untried MoE or
 attention-adjacent lever: the apparent candidates collapse into previously
 measured W1 N32/N128, QKV/O occupancy, remote-zero, native shared projection,
-gather, capture, or fusion negatives. The active lane is instead a distinct
+gather, capture, or fusion negatives. The then-active lane was instead a distinct
 default-off Laguna DFlash context-KV workspace rooted directly at approved
 record vLLM `ef334233d`. The host-only implementation is frozen at candidate
 vLLM `4459910e2ac5a7b552887fc0a3f3e3cf9a4701c0` after 38 focused tests,
@@ -861,7 +866,7 @@ reinterpret it. Preserve the
 and
 [structured summary](data/laguna-s-2.1-shared-gate-up-m8-counter-terminal-negative-20260724.json).
 No model generation, payload, network access, submission, or reboot occurred.
-The active lane is a materially different exact post-W2 fusion. It keeps
+The then-active lane was a materially different exact post-W2 fusion. It keeps
 the incumbent route-parallel W2 unchanged and proposes one strict M=8 kernel
 for the existing `MoeGather -> laguna_m8_scale_add` tail. The current record
 already fuses scale with shared add, so the honest structural target is
@@ -1605,6 +1610,7 @@ result trees as mutable research state as well.
 
 ## Paused And Bookmarked Lanes
 
+- [Laguna S 2.1 INT4 pause closeout](experiments/laguna-s-2.1-xpu-b70/notes/2026-08-08-laguna-lane-pause-closeout.md)
 - [DeepSeek V4 Flash uniform-K160 closed frontier](results/deepseek-v4-flash-k160-b70/README.md)
 - [Gemma 4 26B A4B Q8](results/gemma4-26b-a4b-q8-b70/HANDOFF.md)
 - [MiniMax M2.7 INT4](results/minimax-m27-int4-autoround-b70/README.md)
@@ -1617,20 +1623,21 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Keep the dynamic Laguna M12-to-M1 cutoff rejected. If reopened, first
-   explain the output-index-96 exactness failure and missing audited M1 replay;
-   do not begin with performance measurement.
-2. Reproduce the static no-drafter graph result under the corrected full
-   harness and pinned oracle before treating its 63.533 tok/s diagnostic as a
-   usable baseline.
-3. Fix or localize the reproducible 24,576-token engine failure independently
-   of the rejected switch lane.
-4. Keep the ~7,600 crossover labeled as an estimate. Do not call the existing
-   separate-service 1.65x comparison a banked or shippable win.
-5. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
-   Do not relabel later default-off experiments as promoted records.
-6. Continue to publish only verified new matching LocalMaxxing records after
-   the cold realistic gate, complete identity capture, and correctness pass.
+1. Select the next model before changing runtime state. Give it a distinct
+   source/worktree identity, artifact namespace, benchmark contract, and lane
+   handoff; do not reuse Laguna flags or result directories implicitly.
+2. Recheck processes, listeners, Git status, device health, memory, and model
+   storage before launch. The idle statement above is a closure-time fact, not
+   standing authorization.
+3. Keep Laguna paused and its dynamic M12-to-M1 cutoff rejected. Any Laguna
+   restart requires a new decision and preregistration; the closeout records
+   the correctness and stability gates that would come first.
+4. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
+   Do not reset protected worktrees or relabel default-off experiments as
+   promoted records.
+5. Continue to publish only verified new matching LocalMaxxing records after
+   the applicable cold realistic gate, complete identity capture, and
+   correctness pass.
 
 The detailed state formerly accumulated in this file remains available in Git
 at commit `95b4ca413` (`git show 95b4ca413:CURRENT.md`).
