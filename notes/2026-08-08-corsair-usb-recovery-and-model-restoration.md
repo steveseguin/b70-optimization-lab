@@ -44,3 +44,34 @@ or copied from an unrelated service.
 Installed `smartmontools`, `cifs-utils`, and `smbclient` for storage diagnosis
 and future authenticated backup work. No model or benchmark service was
 started during recovery.
+
+## BF16 backup repair
+
+The historical USB copy of `Qwen-Qwen3.6-35B-A3B-995ad96e` had all 26 shard
+names but 13 files were truncated. A verified append restored 27.0 GB. A full
+content comparison then found three additional same-size mismatches in shards
+1, 5, and 6. Those bad copies and their hashes were preserved under the model's
+`.quarantine/20260808-content-mismatch/` directory before clean source copies
+were installed. The final full `rsync -nrc` comparison against the 71.93 GB
+internal source emitted no differences.
+
+## Restored contributor models
+
+The official `unsloth/Qwen3.6-27B-MTP-GGUF` Q4_K_M file was downloaded at
+pinned repository commit `5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace` to
+`/mnt/usb-models/models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf`.
+The completed size is `17,106,773,120` bytes and its SHA-256 is
+`a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f`,
+matching the published artifact.
+
+The complete `Qwen/Qwen3.6-27B` BF16 snapshot
+`6a9e13bd6fc8f0983b9b99948120bc37f49c13e9` was also backed up from the
+internal Hugging Face cache to
+`/mnt/usb-models/llm-models/Qwen-Qwen3.6-27B-6a9e13bd6/`. Cache symlinks were
+dereferenced so the 55.59 GB backup is self-contained. A full `rsync -nrcL`
+comparison emitted no differences across all 15 weight shards and support
+files.
+
+Safetensors header parsing also passed for both BF16 backups: 26 shards and
+1,045 tensor entries for 35B-A3B, and 15 shards and 1,199 tensor entries for
+27B.
