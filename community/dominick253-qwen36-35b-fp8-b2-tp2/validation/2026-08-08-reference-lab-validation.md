@@ -15,6 +15,18 @@ Raw artifacts are outside Git under:
 
 `/mnt/fast-ai/llm-optimization-artifacts/community-dominick253/qwen36-35b-fp8-b2-tp2/`
 
+The tested container filesystem and runtime configuration are backed up on the
+USB at
+`/mnt/usb-models/models/runtime-images/intel-llm-scaler-vllm-b2-3f0a8c60.tar.zst`
+(5,157,140,427 bytes; SHA-256
+`7ed46ef7f9e26a1b8a3ec5a5bcf57c0994b35b0bd12893d983b6328b3552a0e2`).
+Docker 29's containerd image store could export only an index for the original
+digest reference, so the archive was materialized with a no-op `FROM` build.
+Its architecture, OS, complete image config, and RootFS layer identities were
+compared with the exact digest and match, but loading the archive restores the
+local tag `community-b2-export:3f0a8c60`, not the registry digest name. Re-pin
+the source digest when online.
+
 ## Launcher bring-up
 
 The initial reduced-privilege launcher failed before model load. oneCCL
