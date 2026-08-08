@@ -1,0 +1,54 @@
+{
+  "status": "B70 target-only baseline validated; not a promoted localmaxxing result",
+  "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+  "runtime_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+  "validated_config": {
+    "gpu_count": 1,
+    "short_context_size": 4096,
+    "long_context_size": 32768,
+    "cache_type_k": "f16",
+    "cache_type_v": "f16",
+    "GGML_SYCL_ENABLE_VMM": 1,
+    "GGML_SYCL_ENABLE_GRAPH": 0,
+    "GGML_SYCL_ENABLE_DNN": 0,
+    "GGML_SYCL_ENABLE_OPT": 1,
+    "speculation": "none",
+    "vision_projector": "none"
+  },
+  "short_exact": {
+    "run_directory": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/qwen36-27b-q8_0-f16kv-short-dnn0-exact-20260808T232639Z",
+    "exact_tokens_json_sha256": "e4477808823cdf9bb182d5abc4788cee216011a0195cf49bf03a7bda35f5dbcc",
+    "run_identity_sha256": "bc2348703217fc044f1d5750f8f9e797f76ab8aca9025140f849196e50c848dd",
+    "prompt_count": 12,
+    "generated_tokens_per_prompt": 128,
+    "metric": "99 / (timestamp(token 100) - timestamp(token 1))",
+    "median_tok_s": 15.550256588703753,
+    "p10_tok_s": 15.548172179501558,
+    "mean_tok_s": 15.550044283229964,
+    "exact_stream_replay_rows_passed": 12,
+    "cached_tokens_zero_all": true,
+    "loaded_vram_mib": 26573,
+    "clean_teardown": true
+  },
+  "long_context": {
+    "run_directory": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/qwen36-27b-q8_0-f16kv-long32k-dnn0-20260808T233129Z",
+    "long_context_json_sha256": "2a497b5524e2859c8bef3bc2aa45c1f27822b0b1bc69c4362cade71af694c32f",
+    "validation_json_sha256": "39eac6995402741c6edbcb9ae9f19985893564f10313acbf85f42783c404a1b9",
+    "run_identity_sha256": "92d589faec4077d367f5dddfbd7ecd924bcf21500183b5bd5d36827a2df0e980",
+    "prompt_tokens": [4369, 17274, 31846],
+    "retrieval_rows_passed": 3,
+    "cached_tokens_zero_all": true,
+    "median_prefill_tok_s_approx": 156.04306808778801,
+    "median_decode_tok_s_after_ttft": 14.025001944666018,
+    "min_decode_tok_s_after_ttft": 12.782893782279674,
+    "max_decode_tok_s_after_ttft": 15.239550368728084,
+    "loaded_vram_mib": 28372,
+    "full_offload": "65/65 layers",
+    "clean_teardown": true
+  },
+  "dnn_selector_finding": {
+    "dnn_on": "fast but failed same-runtime temperature-zero replay exactness",
+    "dnn_off": "12/12 exact, same short-decode rate class, about 2.8% lower median long-context prefill in one A/B",
+    "opt_off_control_tok_s": 5.032735745345515
+  }
+}

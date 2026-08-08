@@ -1,7 +1,7 @@
 # Qwen3.6 27B Q8_0 GGUF on one B70
 
-Status: artifact verified on USB; GPU bring-up pending. No result is promoted
-from this lane yet.
+Status: one-B70 target-only baseline validated through 32K. No localmaxxing
+performance result is promoted from this lane yet.
 
 ## Scope
 
@@ -32,18 +32,42 @@ Its GGUF table has 64 blocks (`0` through `63`), no block-64 tensors, and no
 MTP/projector/vision-named metadata or tensors. The internal staging copy was
 removed only after the USB checksum passed.
 
-## Fit expectation
+## Validated fit
 
-The GGUF file is 26.63 GiB, leaving about 5.37 GiB of nominal device memory on a 32 GiB card before KV cache, recurrent state, compute buffers, and backend workspaces.
+The GGUF file is 26.63 GiB. With a 32,768-token F16 KV allocation, the server
+fully offloaded `65/65` layers and XPU-SMI reported `28,372 MiB` loaded on one
+B70. The retained buffers include a `25,972.29 MiB` model buffer, `2,048 MiB`
+KV buffer, `149.62 MiB` recurrent-state buffer, and `38.50 MiB` device compute
+buffer.
 
-Qwen3.6 27B has 64 layers with conventional attention every fourth layer. With 16 conventional-attention layers, four KV heads, head dimension 256, and F16 K/V, the conventional KV allocation is approximately 64 KiB per token, or 2 GiB at 32,768 tokens. This makes F16 KV plausible but tight. It remains an unverified capacity estimate until the server loads and completes the 32K retrieval gate.
+Qwen3.6 27B has 64 layers with conventional attention every fourth layer. With
+16 conventional-attention layers, four KV heads, head dimension 256, and F16
+K/V, the conventional KV allocation is 64 KiB per token, matching the retained
+2 GiB allocation at 32K. The F16 lane therefore fits with roughly 4.3 GiB of
+reported device-memory headroom; Q8 KV is not needed for the requested ceiling.
 
-Validation order:
+Validated results under the correctness-qualified default
+`GGML_SYCL_ENABLE_DNN=0`, `GGML_SYCL_ENABLE_OPT=1`:
+
+- fixed cold 12-prompt, 128-token suite: `15.550257 tok/s` median tokens 1--100,
+  p10 `15.548172`, mean `15.550044`; 12/12 stream/replay exactness checks
+  passed, all native cache-reuse counts were zero;
+- one UTF-8 byte-fallback token at generated index 89 was intentionally absent
+  from SSE; the complete replay uniquely aligned it and retained valid token-1
+  and token-100 timing endpoints;
+- calibrated 4,369 / 17,274 / 31,846 prompt-token retrieval rows all passed
+  exact JSON fields with zero cached tokens;
+- 32K prefill median `156.043 tok/s`; decode-after-TTFT median `14.025 tok/s`,
+  ranging from `15.240` at 4K to `12.783` at 31.8K;
+- both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
+  26,573 MiB to 43 MiB, and retained empty device/server fault scans.
+
+The validation sequence remains useful for future runtimes:
 
 1. 4K target-only compatibility smoke with a 4K F16-KV allocation and full GPU offload.
 2. Fixed cold realistic suite through llama.cpp's native streaming endpoint to establish the Q8_0 exact-token regression oracle and conventional 100-event/99-interval baseline speed.
 3. A separately labeled 32K F16-KV allocation and calibrated long-context retrieval gate.
-4. Q8_0 KV only if F16 KV cannot retain safe headroom. Treat Q8 KV as a separate quality identity and compare it against the F16-KV oracle.
+4. Q8_0 KV only for a different capacity target. Treat Q8 KV as a separate quality identity and compare it against the F16-KV oracle.
 5. Optional MTP only after the target-only 32K baseline passes. Use an integrated publisher artifact, or a same-publisher and same-revision target/MTP pair; do not cross-pair converters without tensor and metadata validation, and do not graft the third-party head-only extraction into the baseline.
 
 If full GPU offload fails even with Q8 KV and a smaller microbatch, do not hide that result with CPU layer offload. The product goal is one fast, independent B70 lane, so partial offload is a separate capacity diagnostic rather than a successful configuration.
@@ -69,6 +93,15 @@ Initial compatibility smoke uses the archived community-validation build:
 
 This build is a reproducible compatibility baseline, not automatically the optimization winner. Before source changes, create a dedicated clean worktree and preserve its commit, build flags, binary hash, and patch. Do not modify `/home/steve/src/llama.cpp`; that tree contains protected Q4/DFlash experiments.
 
+The archived build's DNN selector is not correctness-safe for this Q8 target.
+With DNN enabled, the fast path stayed near `15.55 tok/s` but four of twelve
+temperature-zero replay rows diverged; an immediate A/A repeat also diverged.
+Disabling the broader optimization stack restored exactness but fell to
+`5.033 tok/s`. Disabling only DNN restored exactness at `15.551 tok/s` in the
+focused A/A test and `15.550 tok/s` across the full suite. The DNN-off 32K
+confirmation paid about 2.8% in median prefill versus the DNN-on diagnostic,
+with no meaningful decode change. Keep DNN-off as the lane default.
+
 ## Four-GPU use
 
 Four one-card processes can be used for independent functional or optimization lanes, each with its own source worktree, port, GPU ordinal, and run directory. Official throughput comparisons remain one active model at a time with the other cards idle, unless the result is explicitly labeled as simultaneous multi-service throughput. This avoids host, USB, power, and thermal interference in single-card timing.
@@ -83,6 +116,8 @@ Four one-card processes can be used for independent functional or optimization l
 - Short realistic suite: [`repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json`](../../repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json)
 - Calibrated 4K/17K/31K retrieval ladder: [`long-context-suite-v1.json`](long-context-suite-v1.json)
 - Long-context harness: [`scripts/bench-openai-long-context-suite.py`](../../scripts/bench-openai-long-context-suite.py)
+- Result summary: [`data/baseline-summary-20260808.json`](data/baseline-summary-20260808.json)
+- Chronological result note: [`notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`](notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md)
 
 The exact-token file is a self-regression oracle for later runtime/kernel/MTP changes; it is not an external proof that Q8_0 reproduces BF16. Do not publish or submit a rate until the model hash, runtime identity, fixed cold suite, native `cache_n=0`, 100 token events/99 intervals, full-offload evidence, clean teardown, and relevant context/quality gate are retained together.
 

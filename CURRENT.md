@@ -20,7 +20,7 @@ running as of the 2026-08-08 Qwen3.6 27B Q8_0 preflight; all four B70s were
 idle at approximately 43 MiB each. Recheck immediately before any operational
 change.
 
-The active preparation lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
+The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70 with a 32K ceiling. MTP and vision are optional later lanes and must
 not be mixed into this baseline. The exact Unsloth artifact is pinned in
 [`experiments/qwen36-27b-q8-gguf-b70/model-manifest.json`](experiments/qwen36-27b-q8-gguf-b70/model-manifest.json)
@@ -30,9 +30,14 @@ staging copy and abandoned partials were removed after USB verification. Do not
 start another downloader into the canonical path. The lane entry point and
 offline-validated launcher/gates are in
 [`experiments/qwen36-27b-q8-gguf-b70/README.md`](experiments/qwen36-27b-q8-gguf-b70/README.md).
-Immediate next actions are: run the one-card 4K smoke, fixed cold exact-token/realistic suite,
-and calibrated 4K/17K/31,846-token F16-KV retrieval ladder. Q8 KV is a
-separately labeled fallback only if F16 KV lacks 32K headroom.
+The one-card baseline is now validated: DNN-off/OPT-on reached `15.550257 tok/s`
+median on the 12-prompt 128-token exact suite, and the 4K/17K/31,846-token
+F16-KV ladder passed at a 32,768-token allocation with `28,372 MiB` loaded.
+Q8 KV is unnecessary for the requested ceiling. Keep
+`GGML_SYCL_ENABLE_DNN=0`: DNN-on retained speed but failed immediate and
+suite-level greedy replay exactness. Immediate next actions are a separately
+labeled full-512 performance packet if promotion is wanted, then isolated
+source/kernel optimization lanes; MTP and vision remain optional bonuses.
 
 Laguna is paused at the user's request. The August 4--7 Laguna no-drafter
 graph result is diagnostic, not promoted: its benchmark completed

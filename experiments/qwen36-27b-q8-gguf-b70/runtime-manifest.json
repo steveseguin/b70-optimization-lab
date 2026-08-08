@@ -6,5 +6,12 @@
   "llama_server_path": "/dev/shm/llama.cpp-pr19-15586/build-sycl/bin/llama-server",
   "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
   "archive_path": "/mnt/usb-models/models/runtime-builds/llama.cpp-15586e2d7-oneapi2026.0-sycl-worktree.tar.zst",
-  "archive_sha256": "0ab088aac2cb2c12331fd18c4dbda4a30228a25e06bc2a8a95f770693da8d4d8"
+  "archive_sha256": "0ab088aac2cb2c12331fd18c4dbda4a30228a25e06bc2a8a95f770693da8d4d8",
+  "validated_lane_defaults": {
+    "GGML_SYCL_ENABLE_VMM": 1,
+    "GGML_SYCL_ENABLE_GRAPH": 0,
+    "GGML_SYCL_ENABLE_DNN": 0,
+    "GGML_SYCL_ENABLE_OPT": 1
+  },
+  "dnn_note": "DNN=1 retained decode speed but failed immediate and suite-level greedy replay exactness; DNN=0 passed 12/12 exact with the same short-decode rate class."
 }

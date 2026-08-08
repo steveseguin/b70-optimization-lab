@@ -17,6 +17,9 @@ UBATCH_SIZE="${UBATCH_SIZE:-128}"
 N_GPU_LAYERS="${N_GPU_LAYERS:-99}"
 THREADS="${THREADS:-8}"
 POLL="${POLL:-50}"
+LOG_VERBOSITY="${LOG_VERBOSITY:-4}"
+LANE_DNN_ENABLED="${LANE_DNN_ENABLED:-0}"
+LANE_OPT_ENABLED="${LANE_OPT_ENABLED:-1}"
 FLASH_ATTN="${FLASH_ATTN:-on}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
@@ -36,6 +39,17 @@ if [[ ! "$PORT" =~ ^[0-9]+$ ]] || (( PORT < 1024 || PORT > 65535 )); then
   echo "PORT must be an integer from 1024 through 65535" >&2
   exit 2
 fi
+if [[ ! "$LOG_VERBOSITY" =~ ^[3-5]$ ]]; then
+  echo "LOG_VERBOSITY must be 3, 4, or 5" >&2
+  exit 2
+fi
+for toggle_name in LANE_DNN_ENABLED LANE_OPT_ENABLED; do
+  toggle_value="${!toggle_name}"
+  if [[ "$toggle_value" != "0" && "$toggle_value" != "1" ]]; then
+    echo "$toggle_name must be 0 or 1" >&2
+    exit 2
+  fi
+done
 
 unexpected_env=()
 while IFS='=' read -r name _; do
@@ -93,8 +107,8 @@ export UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1
 export GGML_SYCL_ENABLE_VMM=1
 export GGML_SYCL_ENABLE_GRAPH=0
 export GGML_SYCL_GRAPH_CACHE_SIZE=0
-export GGML_SYCL_ENABLE_DNN=1
-export GGML_SYCL_ENABLE_OPT=1
+export GGML_SYCL_ENABLE_DNN="$LANE_DNN_ENABLED"
+export GGML_SYCL_ENABLE_OPT="$LANE_OPT_ENABLED"
 
 RUNTIME_VERSION="$($LLAMA_SERVER --version 2>&1)"
 if ! grep -Fqx "$EXPECTED_RUNTIME_VERSION" <<< "$RUNTIME_VERSION"; then
@@ -117,6 +131,7 @@ server_cmd=(
   -ub "$UBATCH_SIZE"
   -t "$THREADS"
   --poll "$POLL"
+  -lv "$LOG_VERBOSITY"
   -ctk "$CACHE_TYPE_K"
   -ctv "$CACHE_TYPE_V"
   -fa "$FLASH_ATTN"
@@ -143,6 +158,7 @@ server_cmd=(
   echo "batch_size=$BATCH_SIZE"
   echo "ubatch_size=$UBATCH_SIZE"
   echo "n_gpu_layers=$N_GPU_LAYERS"
+  echo "log_verbosity=$LOG_VERBOSITY"
   echo "flash_attn=$FLASH_ATTN"
   echo "cache_type_k=$CACHE_TYPE_K"
   echo "cache_type_v=$CACHE_TYPE_V"
@@ -153,6 +169,8 @@ server_cmd=(
   echo "ZE_AFFINITY_MASK=$ZE_AFFINITY_MASK"
   echo "GGML_SYCL_ENABLE_VMM=$GGML_SYCL_ENABLE_VMM"
   echo "GGML_SYCL_ENABLE_GRAPH=$GGML_SYCL_ENABLE_GRAPH"
+  echo "GGML_SYCL_ENABLE_DNN=$GGML_SYCL_ENABLE_DNN"
+  echo "GGML_SYCL_ENABLE_OPT=$GGML_SYCL_ENABLE_OPT"
   printf 'argv='
   printf '%q ' "${server_cmd[@]}"
   printf '\n'

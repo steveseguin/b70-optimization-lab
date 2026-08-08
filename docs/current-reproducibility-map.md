@@ -80,6 +80,25 @@ Latest full-32K concurrency conclusion:
   content. In the half-shared synthetic test, c8 near-32K TTFT improved from
   about `22.20 s` to `12.45 s`.
 
+## Qwen3.6 27B Q8_0 One-B70 Baseline
+
+The target-only Unsloth Q8_0 GGUF now has a validated one-card baseline and a
+32K F16-KV capacity/quality gate. The correctness-qualified default disables
+the archived runtime's DNN selector while retaining the broader SYCL
+optimization path. It measured `15.550257 tok/s` median on the 12-prompt
+128-token exact suite, fully offloaded `65/65` layers, used `28,372 MiB` at
+32K, and passed exact retrieval at 4,369 / 17,274 / 31,846 prompt tokens.
+
+Start with:
+
+- `../experiments/qwen36-27b-q8-gguf-b70/README.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/data/baseline-summary-20260808.json`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`.
+
+This is not yet a full-512 localmaxxing promotion packet. Keep DNN disabled:
+the DNN-on control retained speed but failed temperature-zero replay exactness.
+Q8 KV, MTP, and vision are separate optional identities.
+
 ## Historical Qwen3.6 27B Optimization Lane
 
 Qwen3.6 27B INT4 AutoRound was a prior optimization target, separate from the

@@ -11,6 +11,9 @@ PORT="${PORT:-19460}"
 RUN_SCOPE="${RUN_SCOPE:-smoke}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
+LOG_VERBOSITY="${LOG_VERBOSITY:-4}"
+LANE_DNN_ENABLED="${LANE_DNN_ENABLED:-0}"
+LANE_OPT_ENABLED="${LANE_OPT_ENABLED:-1}"
 MODEL="${MODEL:-/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf}"
 MODEL_ALIAS="${MODEL_ALIAS:-qwen36-27b-q8_0-target-only}"
 LLAMA_SERVER="${LLAMA_SERVER:-/dev/shm/llama.cpp-pr19-15586/build-sycl/bin/llama-server}"
@@ -219,6 +222,11 @@ done
   echo "ctx_size=$CTX_SIZE"
   echo "cache_type_k=$CACHE_TYPE_K"
   echo "cache_type_v=$CACHE_TYPE_V"
+  echo "log_verbosity=$LOG_VERBOSITY"
+  echo "sycl_dnn_enabled=$LANE_DNN_ENABLED"
+  echo "sycl_opt_enabled=$LANE_OPT_ENABLED"
+  echo "sycl_vmm_enabled=1"
+  echo "sycl_graph_enabled=0"
   echo "speculation=none"
   echo "vision_projector=none"
   echo "case_id=${CASE_ID:-<scope-default>}"
@@ -236,6 +244,9 @@ RUNTIME_MANIFEST="$RUNTIME_MANIFEST" \
 CTX_SIZE="$CTX_SIZE" \
 CACHE_TYPE_K="$CACHE_TYPE_K" \
 CACHE_TYPE_V="$CACHE_TYPE_V" \
+LOG_VERBOSITY="$LOG_VERBOSITY" \
+LANE_DNN_ENABLED="$LANE_DNN_ENABLED" \
+LANE_OPT_ENABLED="$LANE_OPT_ENABLED" \
 LOG="$RUN_DIR/server.identity.log" \
 OUT_DIR="$RUN_DIR" \
   "$LANE/scripts/serve-target-only.sh" > "$RUN_DIR/server.stdout.log" 2>&1 &
@@ -285,6 +296,8 @@ if [[ "$RUN_SCOPE" == "smoke" || "$RUN_SCOPE" == "short" || "$RUN_SCOPE" == "ful
     --cache-type-k "$CACHE_TYPE_K"
     --cache-type-v "$CACHE_TYPE_V"
     --ctx-size "$CTX_SIZE"
+    --sycl-dnn-enabled "$LANE_DNN_ENABLED"
+    --sycl-opt-enabled "$LANE_OPT_ENABLED"
     --out "$RUN_DIR/exact-tokens.json"
   )
   if [[ "$RUN_SCOPE" == "smoke" ]]; then
