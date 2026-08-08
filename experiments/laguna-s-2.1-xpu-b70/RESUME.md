@@ -42,10 +42,13 @@ switch existed in those commits, and the static graph contract would force a
 naive M12-to-M1 switch eager. The active offline treatment is a default-off
 single-service DFlash cutoff with independently captured M1 and M12 target
 graphs, separate collective buffers per width, worker transition evidence, and
-runtime-owned scheduler-budget evidence. It is not a result until host tests,
-exact-token transition gates, dual-width graph topology, and bounded endpoint
-measurements pass. The 24,576-token engine failure is reproduced but its cause
-is unknown; exclude that case from initial validation.
+runtime-owned scheduler-budget evidence. That treatment is now device-rejected:
+corrected source `00c8bbbb5` transitioned at committed context 4,162 but failed
+the pinned Q1 oracle from output index 96, with 32/128 positions different.
+M1 captured on all four ranks but produced no audited replay line. The observed
+7.339 tok/s is correctness-failing and first-capture-contaminated, so it is not
+a score. Do not run its 8,192 policy gate. The 24,576-token engine failure is
+also reproduced but its cause remains unknown.
 
 Exact source snapshots for the August 4--7 diagnostic commits are indexed in
 [`patches/laguna-s-2.1-xpu-b70/2026-08-07-diagnostics-manifest.md`](../../patches/laguna-s-2.1-xpu-b70/2026-08-07-diagnostics-manifest.md).

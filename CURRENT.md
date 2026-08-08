@@ -25,12 +25,15 @@ at 63.533 tok/s at 32,640 tokens with graph capture/replay, but the full runner
 exited 2 on a defective scheduler audit, no corrected-harness full reproduction
 exists, and its token stream differs from same-tree eager without an oracle.
 The ~7,600 context switch is an interpolation and was not implemented by those
-commits. Current work is a default-off, dual-width M12-to-M1 single-service
-treatment with runtime-owned scheduler evidence; it must pass offline tests,
-exact-token transition checks, dual-width topology, and bounded endpoint gates
-before any performance claim. Do not use 24,576 in the first gate because that
-case reproducibly kills the engine for an unresolved reason. Detailed state is
-in [`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
+commits. A default-off dual-width implementation was subsequently built and
+reviewed, then rejected by its first exact-token gate. On corrected source
+`00c8bbbb5`, one request transitioned M12-to-M1 at committed context 4,162,
+but diverged from the pinned Q1 oracle at output index 96 (32/128 differing
+positions); M1 captured on all ranks but emitted no audited replay line. Its
+7.339 tok/s timing is contaminated, incorrect, and not a score. Do not run the
+8,192 policy/crossover gate from this candidate. The 24,576 engine failure also
+remains unresolved. Detailed state is in
+[`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
 
 No process was listening on the public LAN `:8000` endpoint when the Qwen lane
 was closed on 2026-07-13. The last configured role was the temporary Gemma 4
@@ -1614,18 +1617,19 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Finish and host-test the default-off Laguna M12-to-M1 context-cutoff
-   treatment, including dual-width collective storage and runtime-owned
-   scheduler-budget attestation.
-2. Independently review that source before a bounded GPU run. The first device
-   gate must prove exact tokens across the transition and both M12 and M1 graph
-   capture/replay in one process; exclude the unresolved 24,576 case.
-3. Keep the ~7,600 crossover labeled as an estimate until matched measurements
-   establish a threshold. Do not call the existing separate-service 1.65x
-   comparison a banked or shippable win.
-4. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
+1. Keep the dynamic Laguna M12-to-M1 cutoff rejected. If reopened, first
+   explain the output-index-96 exactness failure and missing audited M1 replay;
+   do not begin with performance measurement.
+2. Reproduce the static no-drafter graph result under the corrected full
+   harness and pinned oracle before treating its 63.533 tok/s diagnostic as a
+   usable baseline.
+3. Fix or localize the reproducible 24,576-token engine failure independently
+   of the rejected switch lane.
+4. Keep the ~7,600 crossover labeled as an estimate. Do not call the existing
+   separate-service 1.65x comparison a banked or shippable win.
+5. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
    Do not relabel later default-off experiments as promoted records.
-5. Continue to publish only verified new matching LocalMaxxing records after
+6. Continue to publish only verified new matching LocalMaxxing records after
    the cold realistic gate, complete identity capture, and correctness pass.
 
 The detailed state formerly accumulated in this file remains available in Git

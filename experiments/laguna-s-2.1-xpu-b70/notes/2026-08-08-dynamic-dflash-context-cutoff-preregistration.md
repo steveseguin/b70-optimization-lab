@@ -2,8 +2,7 @@
 
 Date: 2026-08-08 America/Toronto
 
-Status: **offline candidate only. Default off; no device result and no
-throughput claim.**
+Status: **device-rejected candidate. Default off; no throughput claim.**
 
 Source candidate: `00c8bbbb5c950abc69a27a2e733330652eece478` on prerequisite
 `561698049656690a55ea0ca9826dceba0e33a9c7`. Preserved bundle and patch
@@ -20,6 +19,35 @@ The runner exited 1, worker shutdown completed, and the device-error scan was
 empty. Commit `00c8bbbb5` corrects the field and its test fixture; 27 focused
 worker tests pass after the correction. No throughput or correctness result is
 claimed from attempt A.
+
+The corrected retry,
+`20260808-dynamic-cutoff-transition-b`, completed all 128 tokens but failed the
+pinned exact-token oracle. This is the promotion result: **reject**.
+
+- source: `00c8bbbb5c950abc69a27a2e733330652eece478`;
+- Scheduler marker: resolved/configured 8,182, batched 8,192, exactly once;
+- transition: committed context 4,162 for cutoff 4,160 on all four ranks;
+- M12 target 146/145 and DFlash 14/13 capture/replay were present on all four
+  ranks;
+- M1 target 146/145 captured on all four ranks, but no audited M1 replay line
+  appeared before completion;
+- retrieval, prompt length, completion length, cache-zero, stream-token count,
+  and metric-count checks passed;
+- candidate token SHA-256:
+  `9640329650a8bc97fdd3510bc4077cb28cf32de4e47f17398448bf677c92523e`;
+- pinned Q1 token SHA-256:
+  `a9e167a1283b37f3bbf27992f984f42dfa5dfdadee9170608c9ecf77081f4b37`;
+- first candidate/Q1 divergence: output index 96; 32/128 positions differ;
+- the static q12 comparison first diverges from Q1 at index 79, while failed
+  attempt A's 66 emitted tokens matched Q1 exactly;
+- benchmark status: `FAIL`; runner/cleanup original status 1, stop status 0,
+  device-error status 0;
+- all workers stopped and each GPU returned to approximately 42.88 MiB.
+
+The observed `7.339 tok/s` conventional interval is contaminated by first-live
+M1 capture and comes from a correctness-failing run. It is not a score or a
+performance estimate. No cutoff-8,192 or crossover run is authorized from
+this candidate.
 
 ## Why this treatment exists
 
@@ -93,10 +121,9 @@ harness pass these offline gates and re-review. Follow-up review also caught
 and closed the padded-DFlash retry type, request-ID reuse, first-capture
 topology, oracle-qualification, and delayed-transition gaps.
 
-## Bounded device gate
+## Bounded device gate (completed and rejected)
 
-No device work begins unless independent review is clean. The first device
-gate is correctness-only: one q12 service with cutoff 4,160 and the
+The first device gate was correctness-only: one q12 service with cutoff 4,160 and the
 `laguna-lc-04096-middle` request. That request starts below the cutoff and must
 cross it during its 128-token generation, proving an actual within-request
 M12-to-M1 transition. It is not a throughput measurement.
@@ -147,3 +174,5 @@ above 16K, and a decision about retaining DFlash weights and reserved
 lookahead after the switch. The dynamic service retains those costs, so the
 static no-drafter arm's 1.65x endpoint ratio is not its expected gain. No
 LocalMaxxing submission follows from this diagnostic lane.
+
+The 4,160 gate did not pass, so the promotion boundary was not reached.

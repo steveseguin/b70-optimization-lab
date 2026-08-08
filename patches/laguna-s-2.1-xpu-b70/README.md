@@ -331,5 +331,6 @@ eligibility, and separately preallocated fixed-width collective buffers. The
 superseding thin source bundle is
 `vllm-laguna-dynamic-cutoff-00c8bbbb5-20260808.bundle`, requires base
 `561698049656690a55ea0ca9826dceba0e33a9c7`, and is indexed in
-`2026-08-08-dynamic-cutoff-manifest.md`. Device promotion remains conditional
-on the exact-oracle within-request transition gate.
+`2026-08-08-dynamic-cutoff-manifest.md`. The corrected device transition
+completed but failed the pinned exact-token oracle at output index 96, so this
+snapshot is rejected for promotion and has no valid throughput claim.

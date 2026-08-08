@@ -2,8 +2,8 @@
 
 Date: 2026-08-08 America/Toronto
 
-Status: default-off candidate; offline review complete, first device attempt
-failed safely before M1 execution and has no promotable result.
+Status: default-off, device-rejected candidate. The corrected retry completed
+but failed the pinned exact-token oracle; there is no promotable result.
 
 ## Source identity
 
@@ -52,3 +52,23 @@ bundle contains both source commits and requires the prerequisite above.
 
 The associated preregistration is
 [`2026-08-08-dynamic-dflash-context-cutoff-preregistration.md`](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-08-dynamic-dflash-context-cutoff-preregistration.md).
+
+## Device disposition
+
+- attempt A:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/20260808-dynamic-cutoff-transition-a`;
+  rejected source failure before M1 execution, clean shutdown/no device error;
+  `bench.json` SHA-256
+  `8eee4c037654cf405fab88b8f27220990bb023aa62a7cf036bbee52542990799`,
+  `server.log` SHA-256
+  `d82a159835ab3f72047acb70617f41479fc23d086f9de8c23c94b4a4fc0bd876`;
+- attempt B:
+  `/mnt/fast-ai/llm-optimization-artifacts/laguna-s-2.1/runs/20260808-dynamic-cutoff-transition-b`;
+  completed 128 tokens, exact oracle failed from output index 96, clean
+  shutdown/no device error; `bench.json` SHA-256
+  `a26099804f15c165d0287ed6d09fb7754ee63ba188ba82e5e5065d3e6a9b6b33`,
+  `server.log` SHA-256
+  `ab8a3bb0a6f03fb2b32e7271d93c22e49f97668cb5a0d6ee5c8b0ac5f9437d0e`.
+
+Attempt B captured M1 on all four ranks but emitted no audited M1 replay line.
+Its benchmark status is `FAIL`; its measured timing is not promotable.
