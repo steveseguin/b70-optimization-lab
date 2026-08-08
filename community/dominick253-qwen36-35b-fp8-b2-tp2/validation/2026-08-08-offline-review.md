@@ -1,11 +1,15 @@
 # Maintainer offline review — 2026-08-08
 
+This file records the pre-device review. A later same-day device run raised the
+packet to `B70-tested`; see
+[`2026-08-08-reference-lab-validation.md`](2026-08-08-reference-lab-validation.md).
+
 ## Scope
 
 This review covers the files contributed by `dominick253` in PR #18 at
 `1604d0b1d444f47c58c1abedd88d879908425b21`. No model, container, GPU,
 service, endpoint, journal, or contributor host was accessed. The evidence
-level remains `community-reported`.
+level at the time of this review remained `community-reported`.
 
 The submitted launcher and evidence are isolated under `reported/`. Every file
 there is non-executable. The packet-root launcher and the verifier in this

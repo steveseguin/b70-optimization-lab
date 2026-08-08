@@ -4,9 +4,9 @@
 
 | Field | Value |
 | --- | --- |
-| Evidence level | `community-reported` |
-| Patch review status | read; offline evidence executed; no model/container execution |
-| Tested in reference lab | offline review only |
+| Evidence level | `B70-tested` |
+| Patch review status | read; offline evidence executed; exact model/image/runtime replay under a reduced-privilege container configuration completed |
+| Tested in reference lab | yes; functional deployment passed, reported throughput not reproduced |
 | Safe to merge as documentation | yes, after maintainer isolation and launcher hardening |
 | Eligible for `repro/` or `results/` | no |
 
@@ -49,8 +49,10 @@ contained no detected `!!!!` corruption.
 
 ## What was run in the reference lab
 
-No model, container, GPU, service, or network benchmark was run. The maintainer
-performed only isolated offline review:
+The maintainer first performed the isolated offline review described below,
+then ran the exact model revision and image on two local B70s. The device run
+used the contributor's pp1024/tg256 exact workload and preserved request,
+identity, fault, and teardown evidence.
 
 - all JSON parsed;
 - all changed scripts passed syntax parsing;
@@ -60,6 +62,15 @@ performed only isolated offline review:
   and bounded output checks;
 - launcher dry-run and invalid-input guards were exercised;
 - secret-pattern, path, file-type, and dangerous-command review completed.
+
+The hardened and contributor-privilege sweeps each completed 165/165 expected
+requests. The operator's post-run checks found no new matching `xe` fault, but
+the raw directories retain only empty scan outputs rather than the scan command
+and exit status. The hardened c12 mean was 268.866
+tok/s and the privilege control was 286.003 tok/s, versus 432.169 reported.
+Arithmetic, coherence, and three 1,536-token bounded long-output checks passed.
+See
+[`validation/2026-08-08-reference-lab-validation.md`](validation/2026-08-08-reference-lab-validation.md).
 
 See [`validation/2026-08-08-offline-review.md`](validation/2026-08-08-offline-review.md).
 
@@ -82,15 +93,21 @@ See [`validation/2026-08-08-offline-review.md`](validation/2026-08-08-offline-re
 - The exact reported launcher is privileged, host-networked, host-IPC, disables
   seccomp, publishes an unauthenticated endpoint, force-removes containers, and
   enables restart persistence. It is preserved as non-copy-ready evidence.
-- The hardened launcher is offline-reviewed but has not been run. Reduced
-  privileges may require further adjustment on a fresh isolated host.
+- The maintainer-reduced launcher is B70-tested. It still gives the rootful
+  container every `/dev/dri` node, host IPC, `CAP_SYS_PTRACE`, and a nominal
+  200 GiB shared-memory allocation; use only the pinned trusted digest with
+  exclusive GPU ownership. Broader contributor privileges were unnecessary
+  for bring-up and did not recover the reported rate.
 - FP8 KV scale 1.0 has no native-KV semantic control here.
-- All three sweeps share one service start; no cold-start replication exists.
+- The contributor's three sweeps share one service start; no contributor-host
+  cold-start replication exists.
 - There is no clean matched MTP-off control.
 
 ## Disposition
 
-Keep this packet in `community/` at `community-reported`. A future reference-lab
-run records new artifacts under `validation/<date>/` and may raise the status to
-`B70-tested`. Promotion to `repro/`, `results/`, or LocalMaxxing requires a
-separate maintainer decision and the repository's full quality gate.
+Keep this packet in `community/` at `B70-tested`. The exact model/image/runtime
+identity works under the maintainer-reduced container configuration, but the
+contributor's exact deployment surface and throughput headline remain
+contributor-host evidence.
+Promotion to `repro/`, `results/`, or LocalMaxxing requires a separate
+maintainer decision and the repository's full quality gate.

@@ -1,5 +1,9 @@
 # Maintainer offline review — 2026-08-08
 
+This file records the pre-device review. A later same-day device run raised the
+packet to `B70-tested`; see
+[`2026-08-08-reference-lab-validation.md`](2026-08-08-reference-lab-validation.md).
+
 ## Scope
 
 This review covers `dominick253` PR #19 at
