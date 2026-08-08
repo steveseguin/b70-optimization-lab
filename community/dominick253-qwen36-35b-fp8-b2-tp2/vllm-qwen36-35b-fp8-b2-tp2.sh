@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Maintainer-hardened launcher derived from PR #18.
 # The contributor's exact measured launcher is preserved under reported/.
+# Trusted-local workload only: this rootful container receives all /dev/dri
+# nodes, host IPC, CAP_SYS_PTRACE, and a large shared-memory allocation.
 set -euo pipefail
 
 IMAGE="${IMAGE:-intel/llm-scaler-vllm@sha256:3f0a8c60fbaf376ec09538f093cba91f171238b99c117445c0bcc6096272ec3e}"
@@ -12,6 +14,7 @@ MAX_LEN="${MAX_LEN:-131072}"
 MAX_SEQS="${MAX_SEQS:-12}"
 GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
 MTP="${MTP:-1}"
+AUTO_REMOVE="${AUTO_REMOVE:-1}"
 DRY_RUN="${DRY_RUN:-0}"
 MODEL="/model/snapshots/${REVISION}"
 MODEL_SNAPSHOT="${MODEL_REPO}/snapshots/${REVISION}"
@@ -27,6 +30,7 @@ MODEL_SNAPSHOT="${MODEL_REPO}/snapshots/${REVISION}"
 [[ "${MAX_SEQS}" =~ ^[0-9]+$ ]] && ((MAX_SEQS > 0)) || { echo "Invalid MAX_SEQS" >&2; exit 2; }
 [[ "${GPU_MEMORY_UTILIZATION}" =~ ^0\.[0-9]+$ ]] || { echo "Invalid GPU_MEMORY_UTILIZATION" >&2; exit 2; }
 [[ "${MTP}" == "0" || "${MTP}" == "1" ]] || { echo "MTP must be 0 or 1" >&2; exit 2; }
+[[ "${AUTO_REMOVE}" == "0" || "${AUTO_REMOVE}" == "1" ]] || { echo "AUTO_REMOVE must be 0 or 1" >&2; exit 2; }
 [[ "${DRY_RUN}" == "0" || "${DRY_RUN}" == "1" ]] || { echo "DRY_RUN must be 0 or 1" >&2; exit 2; }
 
 if [[ "${DRY_RUN}" == "0" ]]; then
@@ -54,10 +58,16 @@ fi
 RENDER_GID="${RENDER_GID:-$(getent group render | cut -d: -f3)}"
 [[ "${RENDER_GID}" =~ ^[0-9]+$ ]] || { echo "Could not resolve render group; set RENDER_GID" >&2; exit 2; }
 
-command=(
-  docker run --rm -d
+command=(docker run -d)
+if [[ "${AUTO_REMOVE}" == "1" ]]; then
+  command+=(--rm)
+fi
+command+=(
   --name "${NAME}"
   --device=/dev/dri
+  # oneCCL pidfd exchange needs shared IPC and pidfd_getfd permission.
+  --ipc=host
+  --cap-add=SYS_PTRACE
   --shm-size=200g
   --group-add "${RENDER_GID}"
   --publish "127.0.0.1:${PORT}:${PORT}"
