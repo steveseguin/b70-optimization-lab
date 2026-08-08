@@ -97,6 +97,21 @@ deliberate record-lane override. The earlier B70 A/B doubled cache capacity
 with FP8 but slowed short decode and changed output. Keep future official
 long-context FP8 service work separate from the BF16 bitwise-exact record.
 
+### Qwen3.6 27B Q8_0 GGUF On One B70
+
+Main entry:
+
+- [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md)
+
+Status: active preparation lane as of 2026-08-08. The exact target-only
+Unsloth Q8_0 artifact is pinned and downloading for a text-only, target-only,
+one-B70 baseline with a 32K ceiling. No new throughput or 32K fit claim is
+promoted yet. The historically recorded Q8_0 family result of `15.275 tok/s`
+at p512/n128 is only a trend anchor because its raw evidence, revision, and
+binary were not retained. F16 KV is the first capacity gate; Q8 KV is a
+separate fallback quality identity. MTP and vision remain optional later
+lanes.
+
 ### Qwen3.6 27B INT4 AutoRound On B70
 
 Main entries:

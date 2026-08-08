@@ -185,6 +185,15 @@ service/prompt-processing lane is separate: see
 for the cold long-context ladder, including the 32K-capability anchor through
 `17706` actual prompt tokens with exact JSON retrieval and `cached_tokens=0`.
 
+### Qwen3.6 27B Q8_0 GGUF
+
+The current preparation lane is the target-only, text-only Unsloth Q8_0 GGUF
+on one B70 with a 32K context ceiling. The artifact is pinned and downloading;
+no new Q8_0 rate or 32K result has been promoted. MTP and vision are optional
+later identities, while UD-Q8_K_XL is excluded from the one-card fit target.
+Start with
+[the experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md).
+
 ### Gemma 4 26B Short Decode And Service Lanes
 
 Start with the handoff and production backend recipe:

@@ -1,0 +1,44 @@
+{
+  "suite_id": "qwen36-27b-q8-gguf-b70-long-context-v1",
+  "description": "Cold text-only retrieval ladder for the Qwen3.6 27B Q8_0 one-B70 32K lane. target_prompt_tokens is the historical prompt-generator sizing input, not the measured tokenizer count.",
+  "policy": "Run each selected case once with cache_prompt=false, context checkpoints disabled, reasoning disabled, and no speculative decoding. Require exact JSON field retrieval and cached_tokens=0. The final calibrated case plus 128 output tokens must remain below the 32768-token service limit.",
+  "tokenizer_identity": {
+    "repository": "Qwen/Qwen3.6-27B",
+    "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    }
+  },
+  "cases": [
+    {
+      "id": "q27-q8-lc-04k-middle",
+      "target_prompt_tokens": 3072,
+      "calibrated_prompt_tokens": 4369,
+      "needle_position": "middle",
+      "project_code": "QUARTZ-Q8-04K",
+      "answer_phrase": "QWEN27-Q8-LONG-CONTEXT-QUARTZ-04K",
+      "arithmetic_result": 8011,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "q27-q8-lc-17k-early",
+      "target_prompt_tokens": 12288,
+      "calibrated_prompt_tokens": 17274,
+      "needle_position": "early",
+      "project_code": "LANTERN-Q8-17K",
+      "answer_phrase": "QWEN27-Q8-LONG-CONTEXT-LANTERN-17K",
+      "arithmetic_result": 35527,
+      "sort_order": "blue, green, orange, red"
+    },
+    {
+      "id": "q27-q8-lc-31k-middle",
+      "target_prompt_tokens": 23250,
+      "calibrated_prompt_tokens": 31846,
+      "needle_position": "middle",
+      "project_code": "ONYX-Q8-31K",
+      "answer_phrase": "QWEN27-Q8-LONG-CONTEXT-ONYX-31K",
+      "arithmetic_result": 63659,
+      "sort_order": "blue, green, orange, red"
+    }
+  ]
+}

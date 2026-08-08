@@ -16,14 +16,27 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running as of the 2026-08-08 Laguna closeout audit; all four B70s were idle at
-approximately 42.9 MiB each. Recheck immediately before any operational
+running as of the 2026-08-08 Qwen3.6 27B Q8_0 preflight; all four B70s were
+idle at approximately 43 MiB each. Recheck immediately before any operational
 change.
 
-There is no active optimization lane. Laguna is paused at the user's request
-so another model can be selected and brought up under a fresh, isolated run
-identity. The August 4--7 Laguna no-drafter graph result is diagnostic, not
-promoted: its benchmark completed
+The active preparation lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
+on one B70 with a 32K ceiling. MTP and vision are optional later lanes and must
+not be mixed into this baseline. The exact Unsloth artifact is pinned in
+[`experiments/qwen36-27b-q8-gguf-b70/model-manifest.json`](experiments/qwen36-27b-q8-gguf-b70/model-manifest.json)
+and is downloading through the protected staging directory
+`/mnt/fast-ai/llm-models/qwen36-27b-q8-gguf-staging`; its verified destination
+will be `/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf`.
+Do not start another downloader into either path. The lane entry point and
+offline-validated launcher/gates are in
+[`experiments/qwen36-27b-q8-gguf-b70/README.md`](experiments/qwen36-27b-q8-gguf-b70/README.md).
+Immediate next actions are: finish and hash the download, copy and re-hash it
+on USB, then run the one-card 4K smoke, fixed cold exact-token/realistic suite,
+and calibrated 4K/17K/31,846-token F16-KV retrieval ladder. Q8 KV is a
+separately labeled fallback only if F16 KV lacks 32K headroom.
+
+Laguna is paused at the user's request. The August 4--7 Laguna no-drafter
+graph result is diagnostic, not promoted: its benchmark completed
 at 63.533 tok/s at 32,640 tokens with graph capture/replay, but the full runner
 exited 2 on a defective scheduler audit, no corrected-harness full reproduction
 exists, and its token stream differs from same-tree eager without an oracle.
