@@ -56,6 +56,10 @@ A useful community result includes:
 - Quality gate or validation method.
 - Whether speculative decoding was used.
 - Whether power limits, clocks, or cooling changes were used.
+- The negotiated PCIe generation and width for every selected card, whether
+  links share a root/chipset uplink, and whether an external enclosure or riser
+  was used. See the
+  [PCIe topology and inference guide](pcie-topology-and-llm-inference.md).
 - Raw logs or JSON artifacts where possible.
 
 ## Suggested Result Format

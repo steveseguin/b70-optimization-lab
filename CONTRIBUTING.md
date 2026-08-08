@@ -26,7 +26,9 @@ directory. See
 
 Include, or link to, all of the following:
 
-- GPU model, count, VRAM, and relevant interconnect details;
+- GPU model, count, VRAM, and relevant interconnect details, including the
+  negotiated PCIe generation/width per selected card and any shared chipset
+  uplink, riser, bifurcation, or external enclosure;
 - OS, kernel, driver, compiler, and accelerator runtime versions;
 - model name and exact revision;
 - quantization and any draft/speculative model;

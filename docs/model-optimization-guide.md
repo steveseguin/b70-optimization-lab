@@ -361,6 +361,11 @@ If the model fits on one B70:
   the actual target.
 
 TP can help capacity, but PCIe collectives can erase decode gains at batch 1.
+Record the negotiated generation, width, and root topology for every selected
+device. Use the
+[PCIe topology and local-LLM inference guide](pcie-topology-and-llm-inference.md)
+before attributing a TP result to the nominal motherboard generation or slot
+shape.
 
 ### Prompt Processing And Context
 

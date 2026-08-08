@@ -13,7 +13,7 @@ or result packet where applicable.
 
 ## Test Identity And Evidence
 
-- GPU model/count/VRAM/interconnect:
+- GPU model/count/VRAM/interconnect (including negotiated PCIe generation/width per card and shared uplinks/risers/external enclosures):
 - OS/kernel/driver/compiler/accelerator runtime:
 - Model and exact revision:
 - Quantization (including KV/draft model):

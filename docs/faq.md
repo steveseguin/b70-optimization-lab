@@ -79,11 +79,20 @@ random p512/n1536 decode test. The closer comparison is the older strict
 output tok/s`.
 
 The current host is running the cards over PCIe4 x16. A PCIe5 x16 path has about
-twice the raw signaling rate. Our XCCL allreduce check matched that simple
-math: the older reference was `27.88 GB/s`, while this host measured
-`13.79 GB/s`, almost exactly half. MiniMax TP4 decode communicates across GPUs
-often, so that is a plausible reason for most of the gap without changing model
-quality.
+twice the encoding capacity. A cross-host XCCL observation measured `27.88
+GB/s` on the older reference and `13.79 GB/s` here, while the closer MiniMax
+TP4 decode comparison changed much less, from `89.314` to `83.17-83.79 output
+tok/s`. That makes fabric bandwidth a plausible contributor, not a proven
+one-variable cause.
+
+A later controlled Qwen TP2 experiment reduced the same selected B70 links
+from Gen4 x16 to Gen3 x16. Its bulk all-reduce slowed by 21.2%, but c1 and c12
+decode stayed inside the Gen4 control envelope. PCIe sensitivity is therefore
+workload- and topology-dependent; a 2x link-rate change does not imply a 2x
+token-rate change. See the
+[PCIe topology and local-LLM inference guide](pcie-topology-and-llm-inference.md)
+for Gen3 boards, Thunderbolt, x1 risers, topology inspection, and a safe
+measurement ladder.
 
 Also compare warm runs to warm runs. Cold runs can be much slower because they
 include compilation, graph capture, cache setup, or model-load effects.
