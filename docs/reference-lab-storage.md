@@ -60,6 +60,11 @@ rather than a missing drive. Mount it first:
 sudo mount -t ntfs-3g -o rw,uid=1000,gid=1000,umask=022 /dev/sda2 /mnt/usb-models
 ```
 
+The 2026-08-08 17:05 maintenance reboot confirmed this behavior. The drive was
+remounted read/write with the command above; the four stable Qwen aliases,
+selected FP8 snapshot/config, 27B GGUF size, and archived B2 runtime size were
+then rechecked before the next model lane.
+
 Note that `mount -o remount,rw` does **not** work on this filesystem; ntfs-3g
 silently keeps the old mode and writes fail with a misleading `ENOENT`.
 Unmount and mount fresh instead.

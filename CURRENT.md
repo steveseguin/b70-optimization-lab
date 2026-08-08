@@ -21,6 +21,17 @@ was closed on 2026-07-13. The last configured role was the temporary Gemma 4
 in [`docs/gemma4-26b-q8-service-runbook.md`](docs/gemma4-26b-q8-service-runbook.md).
 Confirm the endpoint and process state before relying on this observation.
 
+The 2026-08-08 community-validation maintenance window ended with a clean host
+reboot at 17:05 local. All four B70s enumerate and pass per-device XPU
+allocation/matrix compute. All four external root/peer paths are Gen4 x16, all
+four root-port target fields are back at `0004`, and all relevant AER totals are
+zero. The five tracked Gemma/MiniMax/model-slot units are disabled and inactive;
+no model container, worker, or inference listener is running. The external USB
+model volume was remounted read/write at `/mnt/usb-models`, and the stable Qwen
+aliases resolve. The community B2 runtime is not loaded in Docker; its verified
+recoverable archive remains on USB. The maintenance evidence is linked from
+[`community/dominick253-qwen36-35b-fp8-b2-tp2/validation/2026-08-08-pcie-link-sensitivity.md`](community/dominick253-qwen36-35b-fp8-b2-tp2/validation/2026-08-08-pcie-link-sensitivity.md).
+
 No DeepSeek service is currently running. The promoted DSpark7 sharded target-
 argmax record service was stopped cleanly after three strict suites and the
 final exact canary. Its evidence is
