@@ -69,11 +69,17 @@ compute passed. After the A2 model start, both root-port target-speed fields
 read `0003`. A post-teardown attempt to restore `0004` persisted for two
 seconds, then both fields returned to `0003` again without retraining the live
 links; the component responsible was not identified. No further register
-writes were attempted. The final
-durable state is 16.0 GT/s x16 at both root and peer ends, root target fields
-`0003`, all four relevant root/peer AER correctable, nonfatal, and fatal totals
-at zero, and no inference container, worker, or listener. The final-state file
-in the external manifest records this distinction.
+writes were attempted in that boot. The pre-reboot state remained 16.0 GT/s
+x16 at both root and peer ends, with root target fields `0003`, all relevant
+AER totals at zero, and no inference container, worker, or listener.
+
+A clean host reboot then restored all four B70 root-port target fields to their
+normal `0004` values. All four root/peer paths negotiated 16.0 GT/s x16, all
+AER totals remained zero, and a real allocation/matrix-compute check passed on
+all four B70s. Model services remained disabled and inactive. The USB model
+volume was remounted read/write and its Qwen aliases, FP8 snapshot, GGUF, and
+runtime archive were checked. The pre-reboot, post-reboot, and compute files in
+the external manifest preserve both states.
 
 ## Throughput observations
 
@@ -128,12 +134,12 @@ Raw artifacts are outside Git under:
 
 `/mnt/fast-ai/llm-optimization-artifacts/community-dominick253/qwen36-35b-fp8-b2-tp2/`
 
-The focused 17-entry manifest is
+The focused 20-entry manifest is
 `20260808-pcie-bandwidth-manifest.sha256`, whose SHA-256 is
-`5544e0316ec5f9ba6fb2a5363212951d84f04aa094b08a6e2cf80ccbbdef6780`.
+`182f182198a895e1a21262ab57ac7bc3bc2bdaea169436e185034daeb237fc92`.
 It covers benchmark JSON, the zero-valued counter series, container identity,
-link/AER state, saved registers, the post-A2 final host state, and both
-all-reduce rows.
+link/AER state, saved registers, the post-A2 state, the clean reboot gate, and
+both all-reduce rows.
 
 The contributor's faster rate remains valid only as contributor-host evidence.
 The current data close PCIe link bandwidth as the leading explanation; they do
