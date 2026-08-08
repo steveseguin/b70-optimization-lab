@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-07-27**
+Last reviewed: **2026-08-08**
 
 ## Authority And Update Rule
 
@@ -81,9 +81,12 @@ both units were stopped before DeepSeek testing and remain stopped.
 The authorized 2026-07-15 host reboot recovered all four B70s: discovery,
 per-device allocation/compute, runtime status, and a four-rank exact XCCL gate
 pass, all four external links report Gen4 x16, and ASPM is `default`. The
-external `/mnt/usb-models` volume did not automount, but the active K160 model
-is on `/mnt/fast-ai` and the record launcher maps oneCCL from the DeepSeek
-virtual environment first.
+external `/mnt/usb-models` volume does not automount. It was recovered from an
+NTFS mirror mismatch and mounted read/write on 2026-08-08; its inventory and
+maintenance warning are recorded in
+[`docs/reference-lab-storage.md`](docs/reference-lab-storage.md). The active
+K160 model is on `/mnt/fast-ai`, and the record launcher maps oneCCL from the
+DeepSeek virtual environment first.
 
 The unauthenticated LAN front door is intentional for this private network. Do
 not silently add authentication or change its exposure policy.
