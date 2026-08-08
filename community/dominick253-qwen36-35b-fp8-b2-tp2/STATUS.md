@@ -72,6 +72,13 @@ Arithmetic, coherence, and three 1,536-token bounded long-output checks passed.
 See
 [`validation/2026-08-08-reference-lab-validation.md`](validation/2026-08-08-reference-lab-validation.md).
 
+A follow-up causal A/B/A reduced both selected external PCIe links from Gen4
+x16 to Gen3 x16. The adjacent 256 MiB-per-rank XCCL calibration slowed, but
+decode throughput did not show a monotonic loss and remained inside the Gen4
+control envelope. PCIe bandwidth is therefore not supported as the cause of
+the contributor/reference-lab throughput gap. See
+[`validation/2026-08-08-pcie-link-sensitivity.md`](validation/2026-08-08-pcie-link-sensitivity.md).
+
 See [`validation/2026-08-08-offline-review.md`](validation/2026-08-08-offline-review.md).
 
 ## Findings
