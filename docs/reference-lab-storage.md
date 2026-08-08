@@ -94,6 +94,21 @@ been reconciled into `llm-cache/hf/`. Do not merge or delete cache trees by
 filename alone. The drive-local `/mnt/usb-models/MODEL-STORAGE.md` records the
 same convention for operators working outside this repository.
 
+Verified or repaired on 2026-08-08:
+
+| Model | Location | Verification |
+| --- | --- | --- |
+| Qwen3.6-27B MTP Q4_K_M | `models/qwen36-27b-mtp-gguf/Qwen3.6-27B-Q4_K_M.gguf` | 17,106,773,120 bytes; published SHA-256 match |
+| Qwen3.6-35B-A3B-FP8 | `llm-cache/hf/hub/models--Qwen--Qwen3.6-35B-A3B-FP8` | pinned `95a723d0...`; 56/56 remote-aware checksum pass |
+| Qwen3.6-27B BF16 backup | `llm-models/Qwen-Qwen3.6-27B-6a9e13bd6` | 55.59 GB; full source checksum and 15/15 safetensors header pass |
+| Qwen3.6-35B-A3B BF16 backup | `llm-models/Qwen-Qwen3.6-35B-A3B-995ad96e` | 71.93 GB; repaired, quarantined old mismatches, full source checksum and 26/26 header pass |
+
+Stable aliases under `/mnt/fast-ai/llm-models/` are
+`qwen3.6-27b-mtp-gguf`, `qwen3.6-35b-a3b-fp8-qwen`,
+`qwen3.6-27b-bf16-qwen`, and `qwen3.6-35b-a3b-bf16-qwen`. The first two
+require the USB mount; the BF16 aliases point to the internal sources, whose
+verified backups are on USB.
+
 ## Old Paths Still Work
 
 Each relocated model left a symlink behind at its original NVMe path:

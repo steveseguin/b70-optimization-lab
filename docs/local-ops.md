@@ -68,7 +68,8 @@ storage and archived benchmark artifacts:
 Device identity observed at setup and revalidated on 2026-08-08:
 
 - block device: `/dev/sda2`;
-- filesystem: `ntfs3`;
+- filesystem: NTFS (normally mounted through `ntfs-3g`, reported as
+  `fuseblk`; kernel `ntfs3` was used only for the read-only recovery mount);
 - label: `CorsairExternal`;
 - mount path: `/mnt/usb-models`;
 - created folders:

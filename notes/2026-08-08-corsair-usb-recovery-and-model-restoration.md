@@ -75,3 +75,22 @@ files.
 Safetensors header parsing also passed for both BF16 backups: 26 shards and
 1,045 tensor entries for 35B-A3B, and 15 shards and 1,199 tensor entries for
 27B.
+
+The exact `Qwen/Qwen3.6-35B-A3B-FP8` snapshot was downloaded to the canonical
+USB Hugging Face cache at pinned revision
+`95a723d08a9490559dae23d0cff1d9466213d989`. A post-download dry-run required
+0 files and 0 bytes. `hf cache verify --fail-on-missing-files` checked all 56
+remote files. The snapshot contains 40 layer shards, 42 indexed safetensors,
+no missing indexed file, and 64,196 tensor entries; its total size is
+`37,493,015,668` bytes. Config metadata identifies FP8 `e4m3` weights with
+dynamic activation scaling.
+
+A 56-entry independent SHA-256 manifest is stored at
+`/mnt/fast-ai/storage-recovery/qwen36-35b-a3b-fp8-95a723d08a9490559dae23d0cff1d9466213d989.sha256`
+and copied to USB `.storage-health/`. Both manifest copies hash to
+`cc0d1f15345146beb453d10a103968ede1f2db1de43b3cfcba35dcef12d991ae`.
+
+Stable aliases were added under `/mnt/fast-ai/llm-models/` for the exact GGUF,
+exact FP8 cache repository, and the two internal BF16 sources. The USB-backed
+GGUF and FP8 aliases intentionally fail when the non-automounted drive is not
+present rather than falling back to a different model.
