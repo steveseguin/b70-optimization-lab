@@ -29,6 +29,7 @@ at your own risk.
 | See every active, paused, and archived model lane | [Model effort index](docs/model-effort-index.md) |
 | Reproduce promoted results | [Results index](results/README.md) and [model recipes](docs/model-recipes.md) |
 | Start optimizing a new model | [Model optimization guide](docs/model-optimization-guide.md) |
+| Plan PCIe slots, risers, or external GPUs | [PCIe topology and local-LLM inference](docs/pcie-topology-and-llm-inference.md) |
 | Compare expected model performance | [Performance scoreboard](results/scoreboard.md) |
 | Contribute a result, patch, or correction | [Contribution guide](CONTRIBUTING.md) and [verification policy](docs/contribution-verification.md) |
 | Review or validate incoming work | [Manager playbook](MANAGER.md) |

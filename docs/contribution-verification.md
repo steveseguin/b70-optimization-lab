@@ -20,7 +20,9 @@ Every performance or quality claim should identify:
 
 - contributor and source/PR URL;
 - source base commit, candidate commit, and patch or checksum;
-- GPU model/count/VRAM and interconnect;
+- GPU model/count/VRAM and interconnect, including negotiated PCIe
+  generation/width per selected card and any shared uplink, riser, or external
+  enclosure;
 - OS/kernel, driver, compiler, accelerator runtime, and important libraries;
 - model repository/path and exact revision;
 - weight, KV, activation, and draft-model quantization where applicable;

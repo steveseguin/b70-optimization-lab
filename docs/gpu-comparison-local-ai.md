@@ -77,12 +77,15 @@ For example, the current fresh MiniMax deployment reports:
 
 That is not directly comparable to single-GPU 7B tests, chat UI subjective speed, MLPerf Client numbers, or synthetic prefill-only numbers.
 
-The current 4x B70 host appears limited by PCIe4 fabric versus an earlier PCIe5
-host. In lay terms, PCIe5 x16 can move about twice as much data per second as
-PCIe4 x16. The measured 256 MiB allreduce bandwidth was also almost exactly
-half: `13.79 GB/s` current versus `27.88 GB/s` older reference. For multi-GPU
-tensor parallel inference, that can matter because cards must exchange small
-pieces of the calculation repeatedly during decode.
+The current 4x B70 host uses PCIe4 x16. A cross-host MiniMax TP4 observation
+measured 256 MiB all-reduce bandwidth of `13.79 GB/s` here versus `27.88 GB/s`
+on an older PCIe5 reference, while the closer decode comparison changed much
+less. A separate controlled Qwen TP2 test reduced Gen4 x16 to Gen3 x16 and saw
+no decode loss outside the control envelope even though its adjacent
+all-reduce slowed. Multi-GPU fabric can matter, but sensitivity depends on the
+model, parallelism, collective shape, and topology; link capacity does not map
+linearly to token rate. See
+[PCIe Topology And Local-LLM Inference](pcie-topology-and-llm-inference.md).
 
 ## B70 Strengths
 

@@ -56,6 +56,7 @@ Docs should point to those artifacts instead of duplicating every script.
   repository `LICENSE` remains controlling.
 - [FAQ](faq.md): practical answers for users new to B70s, vLLM, XPU, and local model deployment.
 - [GPU Comparison for Local AI](gpu-comparison-local-ai.md): rough pricing/spec/performance framing for B70s versus common alternatives.
+- [PCIe Topology And Local-LLM Inference](pcie-topology-and-llm-inference.md): what Gen3, narrow slots, Thunderbolt, and multi-GPU fabrics can change; measured B70 examples and topology checks.
 - [Community Results And Build Notes](community-results.md): how to share records, build photos, reproducible logs, and discussion links.
 - [LocalMaxxing Submissions](localmaxxing.md): credential location, submit helper, and secret-handling rules.
 - [Local Operations](local-ops.md): sudo-password location, driver/runtime ops guidance, and Claude/OpenCode-to-Codex delegation.

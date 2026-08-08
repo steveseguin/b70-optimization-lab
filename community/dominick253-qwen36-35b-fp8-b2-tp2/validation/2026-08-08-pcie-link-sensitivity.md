@@ -95,7 +95,7 @@ bandwidth-bound explanation requires.
 The fresh A2 control was 7.38% above fresh A1 at c1 and 8.37% above it at c12,
 so the preregistered 3% A1/A2 stability rule was not met. The arms are not
 pooled into a precision estimate. This control drift weakens any claim about a
-small percentage effect, but it cannot conceal the approximately 40-50% loss
+small percentage effect, but it cannot conceal the approximately 35-50% loss
 that would be required to explain the contributor/reference-lab gap.
 
 ## Adjacent effective-bandwidth calibration

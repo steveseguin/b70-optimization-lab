@@ -22,6 +22,18 @@ aggregate c12 tok/s was not reproduced; the hardened run measured 268.87 and a
 contributor-privilege control measured 286.00. See
 [`validation/2026-08-08-reference-lab-validation.md`](validation/2026-08-08-reference-lab-validation.md).
 
+| Evidence source | c1 generation tok/s | c12 generation tok/s | Interpretation |
+| --- | ---: | ---: | --- |
+| Contributor, three same-start sweeps | 105.23 | 432.17 | Contributor-host report; arithmetic and submitted hashes checked |
+| Reference lab, hardened launcher | 54.87 | 268.87 | Exact model/image/runtime identity replayed; functional gates passed |
+| Reference lab, contributor privileges | 52.61 | 286.00 | Broader privileges did not reproduce the reported rate |
+
+A follow-up Gen4 x16 / Gen3 x16 / Gen4 x16 causal test found that the Gen3
+decode observations remained inside the Gen4 control envelope, while an
+adjacent bulk XCCL calibration did respond to the link change. PCIe bandwidth
+does not explain the missing throughput in this packet. See the
+[`PCIe link-sensitivity validation`](validation/2026-08-08-pcie-link-sensitivity.md).
+
 ## Reported identity
 
 | Field | Contributor report |
