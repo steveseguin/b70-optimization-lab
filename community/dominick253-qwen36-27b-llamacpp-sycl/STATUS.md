@@ -1,98 +1,66 @@
-# Qwen3.6-27B MTP Q4_K_M llama.cpp SYCL service
+# STATUS — Qwen3.6 27B Q4_K_M llama.cpp SYCL
 
 ## Classification
 
 | Field | Value |
 | --- | --- |
 | Evidence level | `community-reported` |
-| Patch review status | read and executed here (inspection only) |
-| Tested in reference lab | no — service inspected on contributor VM |
-| Safe to merge as documentation | yes, with explicit benchmark boundary |
+| Patch review status | read; shell dry-run only; no model/service execution |
+| Tested in reference lab | no |
+| Safe to merge as documentation | yes, after maintainer corrections |
 | Eligible for `repro/` or `results/` | no |
 
 ## Provenance
 
-- Contributor: `dominick253`
-- Source: new contribution
-- Base commit: upstream `main` at contribution time
-- Right-to-submit statement: yes
-- Third-party material: llama.cpp and llama-benchy are referenced, not vendored
+- Contributor: `dominick253`.
+- Source: [PR #19](https://github.com/steveseguin/b70-optimization-lab/pull/19).
+- Contributor head: `22c1bea916c5ae2e8c6f8eaff84c3e4e2e0a200d`.
+- Right-to-submit statement: present in the PR.
+- The contributor's exact final launcher and historical benchmark summary are
+  preserved under [`reported/`](reported/).
 
-## Claim
+## Contributor claim
 
-The contributor's VM runs two independent Qwen3.6-27B MTP Q4_K_M llama.cpp
-SYCL servers, one per Intel Arc Pro B70, on ports 8001 and 8002.
+The contributor reports two independent Qwen3.6-27B MTP Q4_K_M llama.cpp/SYCL
+services, one per B70, and supplies a historical context-sweep summary.
 
 ## Contributor environment
 
 | Field | Value |
 | --- | --- |
-| GPU model / count / VRAM | 2x Intel Arc Pro B70 / 32 GiB each |
-| OS / kernel | Ubuntu 24.04.4 LTS / `6.17.0-1009-intel` |
-| GPU driver | `xe` |
-| Compute runtime | Intel oneAPI environment, Level Zero selector |
-| Engine / exact version | llama.cpp commit `15586e2d7`; `build-sycl` |
-| Model | `Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-Q4_K_M.gguf`; 17,106,773,120 bytes; revision/checksum unknown |
-| Quantization | Q4_K_M weights; F16 target and draft KV |
-| Command | documented in `README.md`; installed launcher inspected at `/usr/local/bin/launch-llama-qwen36-27b-mtp.sh` |
-| Context / concurrency | 175000; `--parallel 1`; one endpoint per GPU |
-| Cache/speculation | F16 KV; draft-MTP, n-max 2, p-min 0.0; graph disabled |
-| Metrics | no matching llama.cpp 27B benchmark packet supplied |
-| Logs / JSON | none added; historical llama-benchy artifacts are a different vLLM recipe |
+| GPU | 2x Intel Arc Pro B70, 32 GiB each |
+| OS / kernel | Ubuntu 24.04.4 / `6.17.0-1009-intel` |
+| llama.cpp | reported commit `15586e2d7165570fb3aa7c26e0d442e289ef69de` |
+| Model | Qwen3.6-27B MTP Q4_K_M GGUF, reported size 17,106,773,120 bytes |
+| Model revision / SHA-256 | unknown |
+| Precision | Q4_K_M weights; F16 target and draft KV |
+| Service | independent per-GPU process, `parallel=1`, MTP draft maximum 2 |
 
-## Reference lab environment
+## What was run in the reference lab
 
-No reference-lab execution was performed. The remote contributor VM was
-inspected over SSH at `dom@192.168.122.109` on 2026-08-07. Both endpoints
-reported healthy, and `/proc` command lines matched the documented per-GPU
-architecture. No service was stopped, restarted, or modified.
-
-## What was actually run here
-
-- Inspected both systemd units and the shared launcher.
-- Inspected the two live llama-server command lines and health endpoints.
-- Confirmed the model path and file size.
-- Confirmed llama.cpp source commit, OS/kernel, and GPU driver identity.
-- Searched the prior session history and `/home/dom/llama-benchy` artifacts.
-- Did **not** rerun llama-benchy or any other benchmark.
+No contributor host, model, GPU, service, or endpoint was accessed. Maintainer
+review covered the full diff, shell syntax, dry-run argument generation,
+identity consistency, paths, links, and secret patterns. See
+[`validation/2026-08-08-offline-review.md`](validation/2026-08-08-offline-review.md).
 
 ## Findings
 
-1. The live recipe is one independent process per physical GPU, not tensor
-   parallelism: selector 0 → port 8001 and selector 1 → port 8002.
-2. The exact live launcher uses generic SYCL JIT, Flash Attention, F16 KV, 150K
-   context, batch/ubatch 2048, and draft-MTP with two speculative tokens.
-3. The setup-session benchmark data is preserved in `benchmarks/` and was not
-   rerun: draft_n=1 recorded 17.8 wall tok/s at 2K and 0.73 at 120K; draft_n=2
-   recorded 39.7 wall tok/s at 2K and 3.0 at 32K, with the full table and
-   acceptance counts in the benchmark artifact.
-4. The benchmark identity used greedy temperature 0.0 and oneAPI 2026.1.1;
-   the current service uses temperature 0.6. These are related but distinct
-   identities and must not be compared as an exact A/B.
-5. The separate `/home/dom/llama-benchy/results/` 27B packet is for Intel vLLM
-   INT4 and is not presented as llama.cpp data.
-6. Therefore this packet contains the exact recipe plus historical benchmark
-   evidence, labeled `community-reported` because it was not independently
-   reproduced in the reference lab.
-
-## Known issues
-
-- Model revision and SHA-256 are not recorded.
-- No matching llama.cpp 27B llama-benchy JSON, CSV, or log is available.
-- The recipe currently binds `0.0.0.0`; network exposure should be reviewed.
-- Reference-lab reproduction and quality gates remain outstanding.
-
-## Open questions
-
-- Capture the exact model revision and SHA-256.
-- Run llama-benchy against both matching llama.cpp endpoints with raw JSON/CSV,
-  prompt/output/context sizes, repeats, cold/cache policy, TTFT, and quality
-  gates recorded.
-- Record the exact oneAPI/compiler versions and kernel fault/restart checks.
+1. The contributor head is internally inconsistent: its identity table and
+   launcher say 175,000 context, while the retained inspection finding says the
+   exact live launcher used 150,000. The 160K and 175K updates added no matching
+   raw runtime record. Current exact context is therefore unknown.
+2. No raw benchmark JSON/CSV/log is included. The historical summary uses
+   greedy temperature 0.0 and draft widths 1/2, while the reported service uses
+   temperature 0.6 and draft maximum 2.
+3. Contributor-authored “maintainer note” and review-state claims were replaced
+   by this maintainer-owned status rather than accepted as prior certification.
+4. The hardened launcher requires the caller to choose context explicitly,
+   provide model and server-binary SHA-256 values, and use the reported clean
+   llama.cpp commit. It defaults to loopback and validates device and port
+   inputs.
 
 ## Disposition
 
-Keep in `community/` as a `community-reported` recipe. This is suitable for
-review because it accurately separates the inspected live configuration from
-unmatched historical benchmark data. It should not move to `repro/` or
-`results/` until a matching benchmark and quality evidence are preserved.
+Keep as a useful `community-reported` recipe. Before reference-lab execution,
+capture the exact model revision/hash and choose one explicit context identity.
+Raw matching benchmark and quality artifacts are required for any promotion.
