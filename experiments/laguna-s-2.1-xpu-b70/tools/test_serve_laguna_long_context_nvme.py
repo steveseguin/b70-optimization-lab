@@ -296,7 +296,84 @@ def test_existing_q12_profile_is_undisturbed(sandbox: Path) -> None:
     assert result.returncode == 0, result.stderr
     argv = (sandbox / "vllm-argv.txt").read_text(encoding="utf-8").splitlines()
     assert argv[argv.index("--max-num-batched-tokens") + 1] == "8192"
+    assert '"cudagraph_capture_sizes":[12]' in "".join(argv)
     assert "qdepth" not in result.stderr
+
+
+def test_q12_context_cutoff_captures_m1_and_m12(sandbox: Path) -> None:
+    q12_env = {
+        name: "1"
+        for name in (
+            "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK",
+            "VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK",
+            "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE",
+            "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16",
+            "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH",
+            "VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS",
+            "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE",
+            "VLLM_XPU_LAGUNA_DECODE_GRF128",
+            "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES",
+        )
+    }
+    q12_env.update(
+        {
+            "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": "0",
+            "VLLM_XPU_LAGUNA_DFLASH_FP8_Q8": "0",
+            "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF": "8192",
+        }
+    )
+
+    result = launch(
+        sandbox,
+        depth=11,
+        batched="8192",
+        profile="q12",
+        overrides=q12_env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    argv = (sandbox / "vllm-argv.txt").read_text(encoding="utf-8").splitlines()
+    joined = "".join(argv)
+    assert '"cudagraph_capture_sizes":[1,12]' in joined
+    assert '"max_cudagraph_capture_size":12' in joined
+    assert '"num_speculative_tokens":11' in joined
+
+
+def test_q12_context_cutoff_rejects_replay_diagnostics(sandbox: Path) -> None:
+    q12_env = {
+        name: "1"
+        for name in (
+            "VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK",
+            "VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK",
+            "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE",
+            "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16",
+            "VLLM_XPU_LAGUNA_DFLASH_SEGMENTED_GRAPH",
+            "VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS",
+            "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE",
+            "VLLM_XPU_LAGUNA_DECODE_GRF128",
+            "VLLM_XPU_LAGUNA_DECODE_TRANSPOSED_SCALES",
+        )
+    }
+    q12_env.update(
+        {
+            "VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE": "0",
+            "VLLM_XPU_LAGUNA_DFLASH_FP8_Q8": "0",
+            "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF": "8192",
+            "LAGUNA_PROFILE_DIR": "/tmp/diagnostic",
+        }
+    )
+
+    result = launch(
+        sandbox,
+        depth=11,
+        batched="8192",
+        profile="q12",
+        overrides=q12_env,
+    )
+
+    assert result.returncode == 2
+    assert "rejects replay diagnostics" in result.stderr
+    assert not (sandbox / "vllm-argv.txt").exists()
 
 
 def test_unknown_profile_names_the_supported_set(sandbox: Path) -> None:

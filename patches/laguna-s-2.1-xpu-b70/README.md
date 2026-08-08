@@ -1,5 +1,13 @@
 # Laguna S 2.1 source snapshots
 
+## August 4-7 diagnostic history
+
+The no-spec graph fix, replicated-attention diagnostics, native-MM reachability
+change, and their exact local source history are preserved in
+[`2026-08-07-diagnostics-manifest.md`](2026-08-07-diagnostics-manifest.md).
+These are diagnostic artifacts, not a promoted replacement for the sealed
+record source below.
+
 ## Rejected local TP4-emulated DFlash body (2026-08-01)
 
 - `vllm-laguna-dflash-local-tp4-rejected-448351379-20260801.bundle`
@@ -315,3 +323,13 @@ on ranks 1–3. The diagnostic patch is
 `0001-diag-select-Laguna-parity-verifier-row.patch`; the thin bundle requires
 base `b63557f7838e1338f930075b8f163475aef4d23e`. See the
 [completed trace](../../experiments/laguna-s-2.1-xpu-b70/notes/2026-08-01-target-inline-gather-first-divergent-tensor-preregistration.md).
+
+The August 8 dynamic DFlash cutoff snapshot is a default-off, offline-reviewed
+candidate, not a record source. It adds runtime-owned scheduler-budget
+attestation, a per-request post-bookkeeping DFlash cutoff, exact M1/M12 graph
+eligibility, and separately preallocated fixed-width collective buffers. The
+thin source bundle is
+`vllm-laguna-dynamic-cutoff-ae15e59d4-20260808.bundle`, requires base
+`561698049656690a55ea0ca9826dceba0e33a9c7`, and is indexed in
+`2026-08-08-dynamic-cutoff-manifest.md`. Device promotion remains conditional
+on the exact-oracle within-request transition gate.

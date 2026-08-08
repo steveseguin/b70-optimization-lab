@@ -1,0 +1,1324 @@
+From ae15e59d4d6ab67912de69011e6e5dd1ce2ce4b6 Mon Sep 17 00:00:00 2001
+From: Codex Agent <codex-agent@users.noreply.github.com>
+Date: Sat, 8 Aug 2026 00:44:14 -0400
+Subject: [PATCH] xpu: add guarded Laguna context cutoff graphs
+
+---
+ .../models/test_laguna_shared_elementwise.py  |  28 +-
+ tests/v1/core/test_scheduler.py               | 120 +++++++
+ tests/v1/core/utils.py                        |   2 +
+ .../cudagraph/test_laguna_m8_collectives.py   |  63 +++-
+ tests/v1/worker/test_gpu_model_runner.py      | 317 +++++++++++++++++-
+ vllm/compilation/laguna_m8_collectives.py     | 136 +++++---
+ vllm/envs.py                                  |   8 +
+ vllm/model_executor/models/laguna.py          |   6 +-
+ vllm/v1/core/sched/scheduler.py               |  16 +-
+ vllm/v1/worker/gpu_model_runner.py            | 224 ++++++++++++-
+ 10 files changed, 850 insertions(+), 70 deletions(-)
+
+diff --git a/tests/models/test_laguna_shared_elementwise.py b/tests/models/test_laguna_shared_elementwise.py
+index b1e771246..879eef1d1 100644
+--- a/tests/models/test_laguna_shared_elementwise.py
++++ b/tests/models/test_laguna_shared_elementwise.py
+@@ -139,6 +139,30 @@ def test_laguna_m12_shared_elementwise_record_contract(monkeypatch) -> None:
+     assert "speculation is not DFlash depth 11" in violations
+ 
+ 
++def test_laguna_m12_context_cutoff_accepts_dual_width_graph_contract(
++    monkeypatch,
++) -> None:
++    config, vllm_config = _record_contract()
++    vllm_config.model_config.enforce_eager = False
++    vllm_config.speculative_config.num_speculative_tokens = 11
++    vllm_config.compilation_config.cudagraph_mode = CUDAGraphMode.PIECEWISE
++    vllm_config.compilation_config.cudagraph_capture_sizes = [1, 12]
++    vllm_config.compilation_config.max_cudagraph_capture_size = 12
++    monkeypatch.setattr(laguna.current_platform, "is_xpu", lambda: True)
++    _set_graph_environment(monkeypatch)
++    monkeypatch.setattr(laguna.envs, "VLLM_XPU_LAGUNA_EXACT_MAX_M", 12)
++    monkeypatch.setattr(laguna.envs, "VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE", True)
++    monkeypatch.setattr(laguna.envs, "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF", 8192)
++
++    assert laguna._laguna_m8_shared_elementwise_graph_contract(vllm_config)
++    assert not laguna._laguna_m8_shared_elementwise_contract_violations(
++        config,
++        vllm_config,
++        enable_eplb=False,
++        num_redundant_experts=0,
++    )
++
++
+ def test_laguna_m12_symbol_selection_preserves_layer_prefix(monkeypatch) -> None:
+     config, _ = _record_contract()
+     config.moe_intermediate_size = 1024
+@@ -274,9 +298,7 @@ def test_laguna_m8_shared_elementwise_rejects_graph_contract_drift(
+     elif drift == "aot_enabled":
+         monkeypatch.setenv("VLLM_USE_AOT_COMPILE", "1")
+ 
+-    assert not laguna._laguna_m8_shared_elementwise_graph_contract(
+-        vllm_config
+-    )
++    assert not laguna._laguna_m8_shared_elementwise_graph_contract(vllm_config)
+     violations = laguna._laguna_m8_shared_elementwise_contract_violations(
+         config,
+         vllm_config,
+diff --git a/tests/v1/core/test_scheduler.py b/tests/v1/core/test_scheduler.py
+index 157170400..703c041ee 100644
+--- a/tests/v1/core/test_scheduler.py
++++ b/tests/v1/core/test_scheduler.py
+@@ -7,6 +7,7 @@ import pytest
+ import torch
+ 
+ import vllm.envs as envs
++import vllm.v1.core.sched.scheduler as scheduler_module
+ from vllm.config import (
+     CacheConfig,
+     ECTransferConfig,
+@@ -43,6 +44,125 @@ from .utils import EOS_TOKEN_ID, create_requests, create_scheduler, mock_kv
+ pytestmark = pytest.mark.cpu_test
+ 
+ 
++def test_scheduler_logs_runtime_owned_token_budget(monkeypatch):
++    observed = []
++    monkeypatch.setattr(
++        scheduler_module.logger,
++        "info",
++        lambda message, *args: observed.append(message % args),
++    )
++    scheduler = create_scheduler(max_num_batched_tokens=8182)
++
++    assert scheduler.max_num_scheduled_tokens == 8182
++    marker = (
++        "Scheduler runtime token budget: max_num_scheduled_tokens=8182 "
++        "max_num_batched_tokens=8182 scheduler_config_max_num_scheduled_tokens=None"
++    )
++    assert observed.count(marker) == 1
++
++
++def test_scheduler_logs_q12_runtime_owned_token_budget(monkeypatch):
++    observed = []
++    monkeypatch.setattr(
++        scheduler_module.logger,
++        "info",
++        lambda message, *args: observed.append(message % args),
++    )
++    scheduler = create_scheduler(
++        max_num_batched_tokens=8192,
++        max_num_scheduled_tokens=8182,
++    )
++
++    assert scheduler.max_num_scheduled_tokens == 8182
++    marker = (
++        "Scheduler runtime token budget: max_num_scheduled_tokens=8182 "
++        "max_num_batched_tokens=8192 scheduler_config_max_num_scheduled_tokens=8182"
++    )
++    assert observed.count(marker) == 1
++
++
++def test_empty_draft_update_transitions_next_target_step_to_width_one():
++    scheduler = create_scheduler(max_num_seqs=1, num_speculative_tokens=3)
++    request = create_requests(num_requests=1, num_tokens=1, max_tokens=16)[0]
++    req_id = request.request_id
++    scheduler.add_request(request)
++
++    prefill = scheduler.schedule()
++    scheduler.update_from_output(
++        prefill,
++        ModelRunnerOutput(
++            req_ids=[req_id],
++            req_id_to_index={req_id: 0},
++            sampled_token_ids=[[10]],
++            logprobs=None,
++            prompt_logprobs_dict={},
++            pooler_output=[],
++        ),
++    )
++    scheduler.update_draft_token_ids(DraftTokenIds([req_id], [[11, 12, 13]]))
++    verifier = scheduler.schedule()
++    assert verifier.num_scheduled_tokens[req_id] == 4
++    assert len(verifier.scheduled_spec_decode_tokens[req_id]) == 3
++
++    scheduler.update_from_output(
++        verifier,
++        ModelRunnerOutput(
++            req_ids=[req_id],
++            req_id_to_index={req_id: 0},
++            sampled_token_ids=[[14]],
++            logprobs=None,
++            prompt_logprobs_dict={},
++            pooler_output=[],
++        ),
++    )
++    scheduler.update_draft_token_ids(DraftTokenIds([req_id], [[]]))
++
++    target_only = scheduler.schedule()
++    assert target_only.num_scheduled_tokens[req_id] == 1
++    assert req_id not in target_only.scheduled_spec_decode_tokens
++
++
++def test_worker_empty_draft_publication_clears_scheduler_speculation():
++    from types import SimpleNamespace
++
++    from vllm.v1.worker.gpu_model_runner import GPUModelRunner
++
++    scheduler = create_scheduler(max_num_seqs=1, num_speculative_tokens=3)
++    request = create_requests(num_requests=1, num_tokens=1, max_tokens=16)[0]
++    req_id = request.request_id
++    scheduler.add_request(request)
++
++    prefill = scheduler.schedule()
++    scheduler.update_from_output(
++        prefill,
++        ModelRunnerOutput(
++            req_ids=[req_id],
++            req_id_to_index={req_id: 0},
++            sampled_token_ids=[[10]],
++            logprobs=None,
++            prompt_logprobs_dict={},
++            pooler_output=[],
++        ),
++    )
++    scheduler.update_draft_token_ids(DraftTokenIds([req_id], [[11, 12, 13]]))
++
++    # Exercise the public worker handoff, not just a directly constructed
++    # Scheduler payload. The list form models the completed CPU copy of a
++    # width-zero draft tensor.
++    runner = GPUModelRunner.__new__(GPUModelRunner)
++    runner.num_spec_tokens = 3
++    runner._draft_token_req_ids = [req_id]
++    runner._draft_token_ids = [[]]
++    runner.input_batch = SimpleNamespace(req_ids=[req_id])
++    worker_drafts = runner.take_draft_token_ids()
++    assert worker_drafts == DraftTokenIds([req_id], [[]])
++    scheduler.update_draft_token_ids(worker_drafts)
++
++    target_only = scheduler.schedule()
++    assert target_only.num_scheduled_tokens == {req_id: 1}
++    assert target_only.scheduled_spec_decode_tokens == {}
++
++
+ def test_add_requests():
+     scheduler = create_scheduler()
+     requests = create_requests(num_requests=10)
+diff --git a/tests/v1/core/utils.py b/tests/v1/core/utils.py
+index 19beba1a5..4e7d6216b 100644
+--- a/tests/v1/core/utils.py
++++ b/tests/v1/core/utils.py
+@@ -46,6 +46,7 @@ def create_scheduler(
+     model: str = "facebook/opt-125m",
+     max_num_seqs: int = 16,
+     max_num_batched_tokens: int = 8192,
++    max_num_scheduled_tokens: int | None = None,
+     enable_chunked_prefill: bool = True,
+     enable_prefix_caching: bool = False,
+     long_prefill_token_threshold: int = 0,
+@@ -91,6 +92,7 @@ def create_scheduler(
+     scheduler_config = SchedulerConfig(
+         max_num_seqs=max_num_seqs,
+         max_num_batched_tokens=max_num_batched_tokens,
++        max_num_scheduled_tokens=max_num_scheduled_tokens,
+         max_model_len=max_model_len,
+         long_prefill_token_threshold=long_prefill_token_threshold,
+         disable_chunked_mm_input=disable_chunked_mm_input,
+diff --git a/tests/v1/cudagraph/test_laguna_m8_collectives.py b/tests/v1/cudagraph/test_laguna_m8_collectives.py
+index 8fc593911..bddd5b9c5 100644
+--- a/tests/v1/cudagraph/test_laguna_m8_collectives.py
++++ b/tests/v1/cudagraph/test_laguna_m8_collectives.py
+@@ -44,9 +44,9 @@ def test_laguna_m8_runner_buffers_have_fixed_order_and_addresses(monkeypatch):
+ 
+ def test_laguna_m8_runner_buffers_fail_closed_on_geometry():
+     state = LagunaM8CollectiveState(torch.device("cpu"))
+-    with pytest.raises(RuntimeError, match=r"fixed \[1,8,3072\]"):
++    with pytest.raises(RuntimeError, match="fixed supported rows"):
+         state.all_gather(torch.empty((1, 7, 3072), dtype=torch.bfloat16), dim=0)
+-    with pytest.raises(RuntimeError, match=r"fixed \[8,3072\]"):
++    with pytest.raises(RuntimeError, match=r"fixed \[\*,3072\]"):
+         state.all_reduce(torch.empty((8, 3072), dtype=torch.float32))
+     with pytest.raises(RuntimeError, match="before embedding all-reduce"):
+         state.all_gather(torch.empty((1, 8, 3072), dtype=torch.bfloat16), dim=0)
+@@ -111,3 +111,62 @@ def test_laguna_m8_runner_buffers_accept_replay_counters(monkeypatch):
+     for index, output in enumerate(state.gathers):
+         state._run_gather(local, output, index)
+     state.finish_eligible_forward()
++
++
++def test_laguna_context_cutoff_preallocates_stable_m1_and_m12_buffers(
++    monkeypatch,
++):
++    import vllm.compilation.laguna_m8_collectives as collectives
++    from vllm import envs
++
++    monkeypatch.setattr(envs, "VLLM_XPU_LAGUNA_EXACT_MAX_M", 12)
++    monkeypatch.setattr(envs, "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF", 8192)
++    monkeypatch.setattr(collectives, "get_tp_group", lambda: _Group())
++    monkeypatch.setattr(
++        collectives.dist,
++        "all_gather_into_tensor",
++        lambda output, local, group: output.copy_(local.expand_as(output)),
++    )
++    monkeypatch.setattr(
++        collectives.dist,
++        "all_reduce",
++        lambda output, group: None,
++    )
++
++    state = LagunaM8CollectiveState(torch.device("cpu"))
++    assert state._supported_rows == (1, 12)
++    assert state.gathers is state._gathers_by_rows[12]
++    assert state.embedding_reduce is state._embedding_reduce_by_rows[12]
++    m1_gather_address = state._gathers_by_rows[1][0].data_ptr()
++    m12_gather_address = state._gathers_by_rows[12][0].data_ptr()
++    assert m1_gather_address != m12_gather_address
++
++    for rows, expected_address in ((1, m1_gather_address), (12, m12_gather_address)):
++        local = torch.ones((1, rows, 3072), dtype=torch.bfloat16)
++        state.reset_for_eligible_forward()
++        state.all_reduce(local.squeeze(0))
++        for index in range(96):
++            output = state.all_gather(local, dim=0)
++            if index == 0:
++                assert output.data_ptr() == expected_address
++        state.finish_eligible_forward()
++
++        state.reset_for_eligible_forward()
++        state._run_reduce(local.squeeze(0), state._embedding_reduce_by_rows[rows])
++        for index, output in enumerate(state._gathers_by_rows[rows]):
++            state._run_gather(local, output, index)
++        state.finish_eligible_forward()
++
++    state.reset_for_eligible_forward()
++    with pytest.raises(RuntimeError, match="fixed supported rows"):
++        state.all_reduce(torch.ones((2, 3072), dtype=torch.bfloat16))
++
++    # The first capture is audited too; it cannot redefine a truncated M1
++    # topology as the learned contract.
++    state.reset_for_eligible_forward()
++    local = torch.ones((1, 1, 3072), dtype=torch.bfloat16)
++    state.all_reduce(local.squeeze(0))
++    for _ in range(95):
++        state.all_gather(local, dim=0)
++    with pytest.raises(RuntimeError, match="changed gather order"):
++        state.finish_eligible_forward()
+diff --git a/tests/v1/worker/test_gpu_model_runner.py b/tests/v1/worker/test_gpu_model_runner.py
+index 8a81e7855..2039c29e7 100644
+--- a/tests/v1/worker/test_gpu_model_runner.py
++++ b/tests/v1/worker/test_gpu_model_runner.py
+@@ -841,6 +841,8 @@ def _laguna_m8_graph_runner() -> GPUModelRunner:
+     runner.input_batch = SimpleNamespace(
+         req_ids=["req_0"],
+         lora_id_to_lora_request={},
++        num_computed_tokens_cpu=np.array([1], dtype=np.int32),
++        num_prompt_tokens_cpu=np.array([1], dtype=np.int32),
+     )
+     return runner
+ 
+@@ -850,11 +852,13 @@ def _laguna_m8_graph_config_runner() -> GPUModelRunner:
+     runner.model_config = SimpleNamespace(
+         architecture="LagunaForCausalLM",
+         enforce_eager=False,
++        max_model_len=32768,
+     )
+     runner.speculative_config = SimpleNamespace(
+         use_dflash=lambda: True,
+         draft_sample_method="greedy",
+         rejection_sample_method="standard",
++        disable_padded_drafter_batch=False,
+     )
+     runner.num_spec_tokens = 7
+     runner.max_num_reqs = 1
+@@ -892,7 +896,9 @@ def _laguna_m8_graph_scheduler_output():
+     )
+ 
+ 
+-def _set_laguna_env(monkeypatch, *, breakable_graph=None, exact_max_m=None):
++def _set_laguna_env(
++    monkeypatch, *, breakable_graph=None, exact_max_m=None, context_cutoff=None
++):
+     """Override resolved env values rather than the environment itself.
+ 
+     `enable_envs_cache` memoizes `envs.__getattr__`, so once any earlier test
+@@ -910,6 +916,12 @@ def _set_laguna_env(monkeypatch, *, breakable_graph=None, exact_max_m=None):
+             "VLLM_XPU_LAGUNA_EXACT_MAX_M",
+             exact_max_m,
+         )
++    if context_cutoff is not None:
++        monkeypatch.setattr(
++            gpu_model_runner_module.envs,
++            "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF",
++            context_cutoff,
++        )
+ 
+ 
+ def test_laguna_m8_evidence_extracts_primary_hidden_from_dflash_output():
+@@ -991,6 +1003,153 @@ def test_laguna_m8_breakable_graph_config_accepts_exact_contract(monkeypatch):
+     _laguna_m8_graph_config_runner()._validate_laguna_m8_breakable_graph_config()
+ 
+ 
++def test_laguna_context_cutoff_config_accepts_dual_width_contract(monkeypatch):
++    _set_laguna_env(
++        monkeypatch,
++        breakable_graph=True,
++        exact_max_m=12,
++        context_cutoff=8192,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.current_platform, "is_xpu", lambda: True
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module, "is_breakable_cudagraph_enabled", lambda: True
++    )
++    monkeypatch.setattr(gpu_model_runner_module.envs, "VLLM_USE_AOT_COMPILE", False)
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
++        False,
++    )
++    runner = _laguna_m8_graph_config_runner()
++    runner.num_spec_tokens = 11
++    runner.compilation_config.cudagraph_capture_sizes = [1, 12]
++
++    runner._validate_laguna_m8_breakable_graph_config()
++
++
++@pytest.mark.parametrize(
++    ("capture_sizes", "num_spec_tokens", "cutoff", "match"),
++    [
++        ([12], 11, 8192, "'capture_sizes': True"),
++        ([1, 12], 7, 8192, "'spec_depth': True"),
++        ([1, 12], 11, 32769, "'cutoff_above_model_len': True"),
++    ],
++)
++def test_laguna_context_cutoff_config_rejects_drift(
++    monkeypatch, capture_sizes, num_spec_tokens, cutoff, match
++):
++    _set_laguna_env(
++        monkeypatch,
++        breakable_graph=True,
++        exact_max_m=12,
++        context_cutoff=cutoff,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.current_platform, "is_xpu", lambda: True
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module, "is_breakable_cudagraph_enabled", lambda: True
++    )
++    monkeypatch.setattr(gpu_model_runner_module.envs, "VLLM_USE_AOT_COMPILE", False)
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
++        False,
++    )
++    runner = _laguna_m8_graph_config_runner()
++    runner.num_spec_tokens = num_spec_tokens
++    runner.compilation_config.cudagraph_capture_sizes = capture_sizes
++
++    with pytest.raises(ValueError, match=match):
++        runner._validate_laguna_m8_breakable_graph_config()
++
++
++def test_laguna_context_cutoff_rejects_replay_diagnostics(monkeypatch):
++    _set_laguna_env(
++        monkeypatch,
++        breakable_graph=True,
++        exact_max_m=12,
++        context_cutoff=8192,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.current_platform, "is_xpu", lambda: True
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module, "is_breakable_cudagraph_enabled", lambda: True
++    )
++    monkeypatch.setattr(gpu_model_runner_module.envs, "VLLM_USE_AOT_COMPILE", False)
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
++        False,
++    )
++    monkeypatch.setenv("VLLM_XPU_LAGUNA_REPLAY_PROFILE_ROOT", "/tmp/diagnostic")
++    runner = _laguna_m8_graph_config_runner()
++    runner.num_spec_tokens = 11
++    runner.compilation_config.cudagraph_capture_sizes = [1, 12]
++
++    with pytest.raises(ValueError, match="'replay_diagnostic_enabled': True"):
++        runner._validate_laguna_m8_breakable_graph_config()
++
++
++def test_laguna_context_cutoff_rejects_kv_transfer(monkeypatch):
++    _set_laguna_env(
++        monkeypatch,
++        breakable_graph=True,
++        exact_max_m=12,
++        context_cutoff=8192,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.current_platform, "is_xpu", lambda: True
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module, "is_breakable_cudagraph_enabled", lambda: True
++    )
++    monkeypatch.setattr(gpu_model_runner_module.envs, "VLLM_USE_AOT_COMPILE", False)
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
++        False,
++    )
++    runner = _laguna_m8_graph_config_runner()
++    runner.num_spec_tokens = 11
++    runner.compilation_config.cudagraph_capture_sizes = [1, 12]
++    runner.vllm_config.kv_transfer_config = SimpleNamespace(kv_connector="test")
++
++    with pytest.raises(ValueError, match="'kv_transfer_enabled': True"):
++        runner._validate_laguna_m8_breakable_graph_config()
++
++
++def test_laguna_context_cutoff_rejects_unpadded_drafter(monkeypatch):
++    _set_laguna_env(
++        monkeypatch,
++        breakable_graph=True,
++        exact_max_m=12,
++        context_cutoff=8192,
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module.current_platform, "is_xpu", lambda: True
++    )
++    monkeypatch.setattr(
++        gpu_model_runner_module, "is_breakable_cudagraph_enabled", lambda: True
++    )
++    monkeypatch.setattr(gpu_model_runner_module.envs, "VLLM_USE_AOT_COMPILE", False)
++    monkeypatch.setattr(
++        gpu_model_runner_module.envs,
++        "VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH",
++        False,
++    )
++    runner = _laguna_m8_graph_config_runner()
++    runner.num_spec_tokens = 11
++    runner.compilation_config.cudagraph_capture_sizes = [1, 12]
++    runner.speculative_config.disable_padded_drafter_batch = True
++
++    with pytest.raises(ValueError, match="'padded_drafter_disabled': True"):
++        runner._validate_laguna_m8_breakable_graph_config()
++
++
+ def test_laguna_dflash_segmented_graph_config_accepts_exact_contract(monkeypatch):
+     monkeypatch.setattr(
+         gpu_model_runner_module.envs,
+@@ -1462,7 +1621,7 @@ def test_laguna_m8_breakable_graph_config_rejects_compile(monkeypatch):
+ def test_laguna_m8_breakable_graph_eligibility_accepts_exact_verifier(
+     monkeypatch,
+ ):
+-    monkeypatch.setenv("VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH", "1")
++    _set_laguna_env(monkeypatch, breakable_graph=True, exact_max_m=8)
+     runner = _laguna_m8_graph_runner()
+ 
+     assert runner._laguna_m8_breakable_graph_eligible(
+@@ -1622,6 +1781,160 @@ def test_laguna_m8_capture_filter_accepts_width_one_without_verifier(monkeypatch
+     assert not capture_filter(context)
+ 
+ 
++def test_laguna_context_cutoff_accepts_only_m1_and_m12(monkeypatch):
++    _set_laguna_env(
++        monkeypatch,
++        breakable_graph=True,
++        exact_max_m=12,
++        context_cutoff=8192,
++    )
++    runner = _laguna_m8_graph_runner()
++    scheduler_output = _laguna_m8_graph_scheduler_output()
++    scheduler_output.scheduled_spec_decode_tokens = {"req_0": list(range(11))}
++    scheduler_output.num_scheduled_tokens = {"req_0": 12}
++
++    assert runner._laguna_m8_breakable_graph_eligible(
++        scheduler_output,
++        num_tokens_unpadded=12,
++        num_reqs=1,
++        max_num_scheduled_tokens=12,
++        use_cascade_attn=False,
++    )
++
++    scheduler_output.scheduled_spec_decode_tokens = {}
++    scheduler_output.num_scheduled_tokens = {"req_0": 1}
++    assert runner._laguna_m8_breakable_graph_eligible(
++        scheduler_output,
++        num_tokens_unpadded=1,
++        num_reqs=1,
++        max_num_scheduled_tokens=1,
++        use_cascade_attn=False,
++    )
++    assert not runner._laguna_m8_breakable_graph_eligible(
++        scheduler_output,
++        num_tokens_unpadded=2,
++        num_reqs=1,
++        max_num_scheduled_tokens=2,
++        use_cascade_attn=False,
++    )
++
++
++def test_laguna_context_cutoff_m1_graph_rejects_final_prefill(monkeypatch):
++    _set_laguna_env(
++        monkeypatch,
++        breakable_graph=True,
++        exact_max_m=12,
++        context_cutoff=8192,
++    )
++    runner = _laguna_m8_graph_runner()
++    runner.input_batch.num_computed_tokens_cpu[0] = 8191
++    runner.input_batch.num_prompt_tokens_cpu[0] = 8192
++    scheduler_output = _laguna_m8_graph_scheduler_output()
++    scheduler_output.scheduled_spec_decode_tokens = {}
++    scheduler_output.num_scheduled_tokens = {"req_0": 1}
++
++    assert not runner._laguna_m8_breakable_graph_eligible(
++        scheduler_output,
++        num_tokens_unpadded=1,
++        num_reqs=1,
++        max_num_scheduled_tokens=1,
++        use_cascade_attn=False,
++    )
++
++
++def test_laguna_dflash_context_cutoff_boundary(monkeypatch):
++    _set_laguna_env(monkeypatch, context_cutoff=8192)
++    runner = GPUModelRunner.__new__(GPUModelRunner)
++    runner.speculative_config = SimpleNamespace(use_dflash=lambda: True)
++    runner.input_batch = SimpleNamespace(
++        num_reqs=1,
++        req_ids=["req_0"],
++        num_tokens_no_spec=np.array([8191], dtype=np.int32),
++    )
++
++    assert runner._laguna_dflash_context_cutoff_reached() == (False, 8191)
++    runner.input_batch.num_tokens_no_spec[0] = 8192
++    assert runner._laguna_dflash_context_cutoff_reached() == (True, 8192)
++
++    # A sync-KV/output correction can shrink visible state. The drafter must
++    # remain disabled because its KV cache has not advanced since the cutoff.
++    runner.input_batch.num_tokens_no_spec[0] = 8190
++    assert runner._laguna_dflash_context_cutoff_reached() == (True, 8190)
++
++    # The latch is request-local rather than process-global.
++    runner.input_batch.req_ids[0] = "req_1"
++    assert runner._laguna_dflash_context_cutoff_reached() == (False, 8190)
++
++
++def test_laguna_dflash_context_cutoff_defers_only_boundary_cycle(monkeypatch):
++    _set_laguna_env(monkeypatch, context_cutoff=8192)
++    runner = GPUModelRunner.__new__(GPUModelRunner)
++    runner.speculative_config = SimpleNamespace(use_dflash=lambda: True)
++    runner.input_batch = SimpleNamespace(
++        num_reqs=1,
++        req_ids=["req_0"],
++        num_tokens_no_spec=np.array([8179], dtype=np.int32),
++    )
++
++    assert runner._laguna_dflash_cutoff_before_bookkeeping(12) == (False, False)
++    runner.input_batch.num_tokens_no_spec[0] = 8180
++    assert runner._laguna_dflash_cutoff_before_bookkeeping(12) == (False, True)
++
++    # Conservative deferral need not become a transition when acceptance is
++    # short. The padded DFlash retry after bookkeeping must retain GPU inputs.
++    runner.input_batch.num_tokens_no_spec[0] = 8181
++    assert runner._laguna_dflash_context_cutoff_reached() == (False, 8181)
++    gpu_ids = torch.tensor([[1]], dtype=torch.int32)
++    cpu_ids = [[1]]
++    assert (
++        runner._laguna_post_bookkeeping_draft_inputs(True, gpu_ids, cpu_ids)
++        is gpu_ids
++    )
++    assert (
++        runner._laguna_post_bookkeeping_draft_inputs(False, gpu_ids, cpu_ids)
++        is cpu_ids
++    )
++
++    # Once bookkeeping commits the crossing cycle, the request is latched.
++    runner.input_batch.num_tokens_no_spec[0] = 8192
++    assert runner._laguna_dflash_cutoff_before_bookkeeping(12) == (True, False)
++
++
++def test_laguna_dflash_context_cutoff_clears_finished_id_for_reuse(monkeypatch):
++    _set_laguna_env(monkeypatch, context_cutoff=8192)
++    runner = GPUModelRunner.__new__(GPUModelRunner)
++    runner.speculative_config = SimpleNamespace(use_dflash=lambda: True)
++    runner.input_batch = SimpleNamespace(
++        num_reqs=1,
++        req_ids=["reused"],
++        num_tokens_no_spec=np.array([8192], dtype=np.int32),
++    )
++
++    assert runner._laguna_dflash_context_cutoff_reached() == (True, 8192)
++    runner._laguna_forget_dflash_context_cutoff("reused")
++    runner.input_batch.num_tokens_no_spec[0] = 128
++    assert runner._laguna_dflash_context_cutoff_reached() == (False, 128)
++
++
++def test_laguna_dflash_context_cutoff_returns_empty_drafts(monkeypatch):
++    _set_laguna_env(monkeypatch, context_cutoff=8192)
++    runner = GPUModelRunner.__new__(GPUModelRunner)
++    runner.speculative_config = SimpleNamespace(use_dflash=lambda: True)
++    runner.input_batch = SimpleNamespace(
++        num_reqs=1,
++        req_ids=["req_0"],
++        num_tokens_no_spec=np.array([8192], dtype=np.int32),
++    )
++    runner.device = torch.device("cpu")
++    runner._copy_draft_token_ids_to_cpu = Mock()
++    scheduler_output = SimpleNamespace()
++
++    assert runner._laguna_apply_dflash_context_cutoff(scheduler_output)
++    assert runner._draft_token_ids.shape == (1, 0)
++    assert runner._draft_token_ids.dtype == torch.int32
++    runner._copy_draft_token_ids_to_cpu.assert_called_once_with(scheduler_output)
++
++
+ def test_laguna_dflash_segmented_graph_capture_filter_is_exactly_width_12():
+     descriptor = SimpleNamespace(num_tokens=12)
+     context = SimpleNamespace(
+diff --git a/vllm/compilation/laguna_m8_collectives.py b/vllm/compilation/laguna_m8_collectives.py
+index 6619a98ac..9c2687df9 100644
+--- a/vllm/compilation/laguna_m8_collectives.py
++++ b/vllm/compilation/laguna_m8_collectives.py
+@@ -23,6 +23,8 @@ from vllm.utils.torch_utils import weak_ref_tensor
+ # MLP down projection (`mlp_only_layers=[0]`), and 47 MoE final combines.
+ _MODEL_GATHER_COUNT = 96
+ _HIDDEN_SIZE = 3072
++
++
+ def _laguna_rows() -> int:
+     """Verifier width for the pinned collective buffers.
+ 
+@@ -34,6 +36,15 @@ def _laguna_rows() -> int:
+     return envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
+ 
+ 
++def _laguna_supported_rows() -> tuple[int, ...]:
++    from vllm import envs
++
++    exact_rows = _laguna_rows()
++    if envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF:
++        return (1, exact_rows)
++    return (exact_rows,)
++
++
+ _ROWS = _laguna_rows()
+ _TP = 4
+ _EXPECTED_MODEL_EAGER_COLLECTIVES = _MODEL_GATHER_COUNT + 1
+@@ -62,42 +73,62 @@ class LagunaM8CollectiveState:
+         from vllm import envs
+ 
+         self.device = device
+-        self._embedding_reduce_required = (
+-            not envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
+-        )
+-        # Slot order is deterministic within a forward, so slot i always sees
+-        # the same shape. Allocating per slot on first use keeps the fixed
+-        # address, non-aliasing, and fixed-order guarantees while allowing a
+-        # verifier forward to mix widths -- a wider verifier does not share its
+-        # row count with every collective in the transaction.
+-        # Preallocate eagerly at construction. Allocating inside the forward
+-        # deadlocked four-rank startup after XCCL topology recognition.
+-        self.gathers: list[torch.Tensor | None] = [
+-            torch.empty((_TP, _ROWS, _HIDDEN_SIZE), dtype=torch.bfloat16, device=device)
+-            for _ in range(_MODEL_GATHER_COUNT)
++        self._embedding_reduce_required = not envs.VLLM_XPU_LAGUNA_REPLICATED_EMBEDDING
++        self._supported_rows = _laguna_supported_rows()
++        exact_rows = _laguna_rows()
++        # Preallocate every permitted width at construction. Allocating inside
++        # an eligible forward previously deadlocked four-rank startup, and M1
++        # cannot replay against M12-shaped collective outputs.
++        self._gathers_by_rows: dict[int, list[torch.Tensor | None]] = {
++            rows: [
++                torch.empty(
++                    (_TP, rows, _HIDDEN_SIZE),
++                    dtype=torch.bfloat16,
++                    device=device,
++                )
++                for _ in range(_MODEL_GATHER_COUNT)
++            ]
++            for rows in self._supported_rows
++        }
++        self._embedding_reduce_by_rows: dict[int, torch.Tensor] = {
++            rows: torch.empty((rows, _HIDDEN_SIZE), dtype=torch.bfloat16, device=device)
++            for rows in self._supported_rows
++        }
++        # Preserve the record-width public aliases used by existing evidence
++        # and tests. Runtime selection happens through the per-width maps.
++        self.gathers = self._gathers_by_rows[exact_rows]
++        self.embedding_reduce: torch.Tensor | None = self._embedding_reduce_by_rows[
++            exact_rows
+         ]
+-        # At the proved record width the count is the audited constant and is
+-        # asserted outright. At any other width it is learned on the first
+-        # eligible forward, but a large deviation from the record topology is
+-        # a regression -- per-row serialization inflates it -- so it fails
+-        # rather than being normalized.
+-        self._expected_gathers: int | None = (
+-            _MODEL_GATHER_COUNT if _ROWS == 8 else None
+-        )
+-        self.embedding_reduce: torch.Tensor | None = torch.empty(
+-            (_ROWS, _HIDDEN_SIZE), dtype=torch.bfloat16, device=device
+-        )
++        # The model has the same audited 96 gather sites at every supported
++        # row width. Pin this before the first capture; learning the first
++        # observed count would normalize a truncated or duplicated graph.
++        self._expected_gathers_by_rows: dict[int, int | None] = {
++            rows: _MODEL_GATHER_COUNT for rows in self._supported_rows
++        }
++        self._expected_gathers: int | None = self._expected_gathers_by_rows[exact_rows]
++        self._active_rows: int | None = None
+         self._next_gather = 0
+         self._executed = 0
+         self._first_reduce_seen = not self._embedding_reduce_required
+ 
+     def reset_for_eligible_forward(self) -> None:
++        self._active_rows = None
+         self._next_gather = 0
+         self._executed = 0
+         self._first_reduce_seen = not self._embedding_reduce_required
+ 
+     def finish_eligible_forward(self) -> None:
+-        if self._expected_gathers is None:
++        if self._active_rows is None:
++            if self._embedding_reduce_required:
++                raise RuntimeError(
++                    "Laguna M8 model forward omitted its embedding all-reduce"
++                )
++            raise RuntimeError(
++                "Laguna M8 collective transaction never selected a width"
++            )
++        expected_gathers = self._expected_gathers_by_rows[self._active_rows]
++        if expected_gathers is None:
+             if self._next_gather > _MODEL_GATHER_COUNT * 3 // 2:
+                 raise RuntimeError(
+                     "Laguna M8 collective topology exploded: saw "
+@@ -105,18 +136,21 @@ class LagunaM8CollectiveState:
+                     f"{_MODEL_GATHER_COUNT}; per-row serialization is the "
+                     "usual cause and must be fixed, not accepted"
+                 )
+-            self._expected_gathers = self._next_gather
+-        if self._next_gather not in (0, self._expected_gathers):
++            expected_gathers = self._next_gather
++            self._expected_gathers_by_rows[self._active_rows] = expected_gathers
++            if self._active_rows == _laguna_rows():
++                self._expected_gathers = expected_gathers
++        if self._next_gather not in (0, expected_gathers):
+             raise RuntimeError(
+                 "Laguna M8 collective capture/replay changed gather order: "
+                 f"saw {self._next_gather}, expected 0 (replay) or "
+-                f"{self._expected_gathers}"
++                f"{expected_gathers}"
+             )
+         if self._embedding_reduce_required and not self._first_reduce_seen:
+             raise RuntimeError(
+                 "Laguna M8 model forward omitted its embedding all-reduce"
+             )
+-        expected_executed = (self._expected_gathers or 0) + int(
++        expected_executed = (expected_gathers or 0) + int(
+             self._embedding_reduce_required
+         )
+         if self._executed != expected_executed:
+@@ -131,6 +165,20 @@ class LagunaM8CollectiveState:
+         if (evidence := active_laguna_m8_evidence_recorder()) is not None:
+             evidence.finish_topology(self._executed)
+ 
++    def _activate_rows(self, rows: int) -> None:
++        if rows not in self._supported_rows:
++            raise RuntimeError(
++                "Laguna M8 collective width drifted from fixed supported rows "
++                f"{self._supported_rows}: got {rows}"
++            )
++        if self._active_rows is None:
++            self._active_rows = rows
++        elif self._active_rows != rows:
++            raise RuntimeError(
++                "Laguna M8 collective changed width within one transaction: "
++                f"{self._active_rows} -> {rows}"
++            )
++
+     def _check_local(self, local: torch.Tensor) -> None:
+         if (
+             len(local.shape) != 3
+@@ -145,6 +193,7 @@ class LagunaM8CollectiveState:
+                 f"[1,*,{_HIDDEN_SIZE}] BF16 contiguous contract: got "
+                 f"{tuple(local.shape)} {local.dtype}"
+             )
++        self._activate_rows(int(local.shape[1]))
+ 
+     def all_gather(self, local: torch.Tensor, dim: int) -> torch.Tensor:
+         if dim not in (0, -3):
+@@ -152,17 +201,15 @@ class LagunaM8CollectiveState:
+         self._check_local(local)
+         if not self._first_reduce_seen:
+             raise RuntimeError("Laguna M8 gather occurred before embedding all-reduce")
+-        if (
+-            self._expected_gathers is not None
+-            and self._next_gather >= self._expected_gathers
+-        ):
++        assert self._active_rows is not None
++        expected_gathers = self._expected_gathers_by_rows[self._active_rows]
++        if expected_gathers is not None and self._next_gather >= expected_gathers:
+             raise RuntimeError(
+-                f"Laguna M8 graph exceeded its learned "
+-                f"{self._expected_gathers} BF16 all-gather slots"
++                f"Laguna M8 graph exceeded its {expected_gathers} BF16 all-gather slots"
+             )
+         index = self._next_gather
+         expected = (_TP, local.shape[1], _HIDDEN_SIZE)
+-        output = self.gathers[index]
++        output = self._gathers_by_rows[self._active_rows][index]
+         if output is None or tuple(output.shape) != expected:
+             raise RuntimeError(
+                 f"Laguna M8 gather slot {index} changed shape: "
+@@ -181,33 +228,35 @@ class LagunaM8CollectiveState:
+             or local.dtype != torch.bfloat16
+             or local.device != self.device
+             or not local.is_contiguous()
+-            or (
+-                self.embedding_reduce is not None
+-                and self.embedding_reduce.data_ptr() == local.data_ptr()
+-            )
+         ):
+             raise RuntimeError(
+                 f"Laguna M8 embedding all-reduce drifted from fixed "
+                 f"[*,{_HIDDEN_SIZE}] BF16 non-aliasing contract: got "
+                 f"{tuple(local.shape)}"
+             )
++        self._activate_rows(int(local.shape[0]))
+         if self._first_reduce_seen or self._next_gather:
+             raise RuntimeError(
+                 "Laguna M8 embedding all-reduce changed its required first order"
+             )
+         self._first_reduce_seen = True
+ 
+-        if tuple(self.embedding_reduce.shape) != (local.shape[0], _HIDDEN_SIZE):
++        assert self._active_rows is not None
++        output = self._embedding_reduce_by_rows[self._active_rows]
++        if output.data_ptr() == local.data_ptr():
++            raise RuntimeError("Laguna M8 embedding all-reduce aliases its input")
++        if tuple(output.shape) != (local.shape[0], _HIDDEN_SIZE):
+             raise RuntimeError(
+                 f"Laguna M8 embedding reduce changed shape: "
+-                f"{tuple(self.embedding_reduce.shape)} -> "
++                f"{tuple(output.shape)} -> "
+                 f"{(local.shape[0], _HIDDEN_SIZE)}"
+             )
+-        return _eager_break_or_run(self._run_reduce, local, self.embedding_reduce)
++        return _eager_break_or_run(self._run_reduce, local, output)
+ 
+     def _run_gather(
+         self, local: torch.Tensor, output: torch.Tensor, index: int
+     ) -> torch.Tensor:
++        self._activate_rows(int(local.shape[1]))
+         if _gather_skip_modulus() > 1 and index % _gather_skip_modulus() != 0:
+             # DIAGNOSTIC ONLY, AND DELIBERATELY INEXACT. The output buffer keeps
+             # whatever it last held, so the model's arithmetic is wrong and its
+@@ -231,6 +280,7 @@ class LagunaM8CollectiveState:
+         return output
+ 
+     def _run_reduce(self, local: torch.Tensor, output: torch.Tensor) -> torch.Tensor:
++        self._activate_rows(int(local.shape[0]))
+         self._first_reduce_seen = True
+         output.copy_(local)
+         dist.all_reduce(output, group=get_tp_group().device_group)
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 869d5c60f..cac03ee5a 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -310,6 +310,7 @@ if TYPE_CHECKING:
+     VLLM_XPU_LAGUNA_M8_BF16_ROUTER_TOPK: bool = False
+     VLLM_XPU_LAGUNA_MWIDE_BF16_ROUTER_TOPK: bool = False
+     VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE: bool = False
++    VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF: int = 0
+     VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16: bool = False
+     VLLM_XPU_LAGUNA_M8_SHARED_ELEMENTWISE: bool = False
+     VLLM_XPU_LAGUNA_M12_SHARED_ELEMENTWISE: bool = False
+@@ -2112,6 +2113,13 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_DFLASH_CONTEXT_KV_WORKSPACE", "0"))
+     ),
++    # Default-off single-request policy for the Laguna long-context lane. Once
++    # committed context reaches this value, stop running DFlash permanently for
++    # that request and let the next target cycle use the independently captured
++    # M=1 graph. Zero preserves the static-width record path.
++    "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF": lambda: int(
++        os.getenv("VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF", "0")
++    ),
+     "VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16": lambda: bool(
+         int(os.getenv("VLLM_XPU_LAGUNA_DFLASH_FP8_W8A16", "0"))
+     ),
+diff --git a/vllm/model_executor/models/laguna.py b/vllm/model_executor/models/laguna.py
+index 5e57dc53d..847e69e5c 100644
+--- a/vllm/model_executor/models/laguna.py
++++ b/vllm/model_executor/models/laguna.py
+@@ -105,7 +105,11 @@ def _laguna_m8_shared_elementwise_graph_contract(
+         and compilation_config.mode == CompilationMode.NONE
+         and compilation_config.cudagraph_mode == CUDAGraphMode.PIECEWISE
+         and compilation_config.cudagraph_capture_sizes
+-        == [xpu_laguna_exact_max_m()]
++        == (
++            [1, xpu_laguna_exact_max_m()]
++            if envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF
++            else [xpu_laguna_exact_max_m()]
++        )
+         and compilation_config.max_cudagraph_capture_size
+         == xpu_laguna_exact_max_m()
+     )
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 5bb3e0c09..541107358 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -113,6 +113,13 @@ class Scheduler(SchedulerInterface):
+             if self.scheduler_config.max_num_scheduled_tokens is not None
+             else self.scheduler_config.max_num_batched_tokens
+         )
++        logger.info(
++            "Scheduler runtime token budget: max_num_scheduled_tokens=%d "
++            "max_num_batched_tokens=%d scheduler_config_max_num_scheduled_tokens=%s",
++            self.max_num_scheduled_tokens,
++            self.scheduler_config.max_num_batched_tokens,
++            self.scheduler_config.max_num_scheduled_tokens,
++        )
+         self.max_model_len = vllm_config.model_config.max_model_len
+         self.enable_kv_cache_events = (
+             self.kv_events_config is not None
+@@ -255,8 +262,13 @@ class Scheduler(SchedulerInterface):
+             raise ValueError(
+                 "persistent K-step decode requires prefix caching disabled"
+             )
+-        if self.persistent_decode_k and self.parallel_config.pipeline_parallel_size != 1:
+-            raise ValueError("persistent K-step decode requires pipeline parallel size 1")
++        if (
++            self.persistent_decode_k
++            and self.parallel_config.pipeline_parallel_size != 1
++        ):
++            raise ValueError(
++                "persistent K-step decode requires pipeline parallel size 1"
++            )
+         self.dynamic_sd_lookup: list[int] | None = None
+         if speculative_config is not None:
+             if speculative_config.num_speculative_tokens_per_batch_size:
+diff --git a/vllm/v1/worker/gpu_model_runner.py b/vllm/v1/worker/gpu_model_runner.py
+index 317059ea2..1ed0e6aaf 100644
+--- a/vllm/v1/worker/gpu_model_runner.py
++++ b/vllm/v1/worker/gpu_model_runner.py
+@@ -1435,6 +1435,7 @@ class GPUModelRunner(
+         for req_id in scheduler_output.finished_req_ids:
+             self.requests.pop(req_id, None)
+             self.num_prompt_logprobs.pop(req_id, None)
++            self._laguna_forget_dflash_context_cutoff(req_id)
+         self.late_interaction_runner.on_requests_finished(
+             scheduler_output.finished_req_ids
+         )
+@@ -4162,6 +4163,58 @@ class GPUModelRunner(
+         )
+ 
+     def _validate_laguna_m8_breakable_graph_config(self) -> None:
++        context_cutoff = envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF
++        if context_cutoff < 0:
++            raise ValueError("Laguna DFlash context cutoff cannot be negative")
++        if context_cutoff:
++            cutoff_invalid = {
++                "not_xpu": not current_platform.is_xpu(),
++                "not_laguna": self.model_config.architecture != "LagunaForCausalLM",
++                "not_dflash": (
++                    self.speculative_config is None
++                    or not self.speculative_config.use_dflash()
++                ),
++                "draft_not_greedy": (
++                    self.speculative_config is None
++                    or self.speculative_config.draft_sample_method != "greedy"
++                ),
++                "rejection_not_standard": (
++                    self.speculative_config is None
++                    or self.speculative_config.rejection_sample_method != "standard"
++                ),
++                "wrong_width": envs.VLLM_XPU_LAGUNA_EXACT_MAX_M != 12,
++                "spec_depth": self.num_spec_tokens != 11,
++                "padded_drafter_disabled": (
++                    self.speculative_config is not None
++                    and self.speculative_config.disable_padded_drafter_batch
++                ),
++                "max_num_seqs": self.max_num_reqs != 1,
++                "target_graph_disabled": (not envs.VLLM_XPU_LAGUNA_M8_BREAKABLE_GRAPH),
++                "cutoff_above_model_len": context_cutoff
++                > getattr(self.model_config, "max_model_len", context_cutoff),
++                "evidence_enabled": (
++                    os.environ.get("VLLM_XPU_LAGUNA_M8_EVIDENCE") is not None
++                    or os.environ.get("VLLM_XPU_LAGUNA_M8_EVIDENCE_ARM") is not None
++                ),
++                "replay_diagnostic_enabled": any(
++                    os.environ.get(name)
++                    for name in (
++                        "VLLM_XPU_LAGUNA_REPLAY_PROFILE_ROOT",
++                        "VLLM_XPU_LAGUNA_REPLAY_PROFILE_SAMPLES",
++                        "VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT",
++                        "VLLM_XPU_LAGUNA_REPLAY_TRACE_SESSION",
++                        "VLLM_XPU_LAGUNA_REPLAY_TRACE_UNITRACE",
++                        "LAGUNA_PROFILE_DIR",
++                    )
++                ),
++                "kv_transfer_enabled": self.vllm_config.kv_transfer_config
++                is not None,
++            }
++            if any(cutoff_invalid.values()):
++                raise ValueError(
++                    "Laguna DFlash context cutoff requires the exact default-off "
++                    f"single-request M1/M12 contract: {cutoff_invalid}"
++                )
+         if (
+             envs.VLLM_XPU_LAGUNA_DFLASH_CAPTURE_ATTENTION_GRAPHS
+             or envs.VLLM_XPU_LAGUNA_DFLASH_INLINE_ATTENTION_GRAPHS
+@@ -4247,9 +4300,11 @@ class GPUModelRunner(
+             "runtime_mode": (
+                 self.compilation_config.cudagraph_mode != CUDAGraphMode.PIECEWISE
+             ),
+-            "capture_sizes": (
+-                self.compilation_config.cudagraph_capture_sizes
+-                != [envs.VLLM_XPU_LAGUNA_EXACT_MAX_M]
++            "capture_sizes": self.compilation_config.cudagraph_capture_sizes
++            != (
++                [1, envs.VLLM_XPU_LAGUNA_EXACT_MAX_M]
++                if context_cutoff
++                else [envs.VLLM_XPU_LAGUNA_EXACT_MAX_M]
+             ),
+             "aot_compile": envs.VLLM_USE_AOT_COMPILE,
+             "deterministic_graph": envs.VLLM_XPU_LAGUNA_DETERMINISTIC_GRAPH,
+@@ -4401,10 +4456,15 @@ class GPUModelRunner(
+         max_num_scheduled_tokens: int,
+         use_cascade_attn: bool,
+     ) -> bool:
++        allowed_widths = (
++            {1, envs.VLLM_XPU_LAGUNA_EXACT_MAX_M}
++            if envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF
++            else {envs.VLLM_XPU_LAGUNA_EXACT_MAX_M}
++        )
+         if (
+-            num_tokens_unpadded != envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
++            num_tokens_unpadded not in allowed_widths
+             or num_reqs != 1
+-            or max_num_scheduled_tokens != envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
++            or max_num_scheduled_tokens != num_tokens_unpadded
+             or use_cascade_attn
+             or self.calculate_kv_scales
+             or scheduler_output.scheduled_encoder_inputs
+@@ -4412,6 +4472,14 @@ class GPUModelRunner(
+         ):
+             return False
+ 
++        # Width 1 is the post-cutoff decode graph. A final one-token prefill
++        # chunk has the same scheduler width but must remain eager: its
++        # attention/state contract is not the captured decode contract.
++        if num_tokens_unpadded == 1 and int(
++            self.input_batch.num_computed_tokens_cpu[0]
++        ) < int(self.input_batch.num_prompt_tokens_cpu[0]):
++            return False
++
+         req_id = self.input_batch.req_ids[0]
+         spec_tokens = scheduler_output.scheduled_spec_decode_tokens
+         # A drafterless step schedules no speculative tokens at all, so the
+@@ -4421,10 +4489,8 @@ class GPUModelRunner(
+         # and is unchanged for M > 1, where M-1 >= 1 already implies the key.
+         return (
+             set(spec_tokens) <= {req_id}
+-            and len(spec_tokens.get(req_id, ()))
+-            == envs.VLLM_XPU_LAGUNA_EXACT_MAX_M - 1
+-            and scheduler_output.num_scheduled_tokens.get(req_id)
+-            == envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
++            and len(spec_tokens.get(req_id, ())) == num_tokens_unpadded - 1
++            and scheduler_output.num_scheduled_tokens.get(req_id) == num_tokens_unpadded
+         )
+ 
+     @staticmethod
+@@ -4433,14 +4499,18 @@ class GPUModelRunner(
+         return bool(
+             forward_context.cudagraph_runtime_mode == CUDAGraphMode.PIECEWISE
+             and batch_descriptor is not None
+-            and batch_descriptor.num_tokens == envs.VLLM_XPU_LAGUNA_EXACT_MAX_M
++            and batch_descriptor.num_tokens
++            in (
++                (1, envs.VLLM_XPU_LAGUNA_EXACT_MAX_M)
++                if envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF
++                else (envs.VLLM_XPU_LAGUNA_EXACT_MAX_M,)
++            )
+             and (
+-                forward_context.additional_kwargs.get("xpu_exact_spec_verifier")
+-                is True
++                forward_context.additional_kwargs.get("xpu_exact_spec_verifier") is True
+                 # Width 1 has nothing to verify: a single row is exact by
+                 # construction, which is why the row-count gate in `linear.py`
+                 # accepts it without consulting the verifier flag either.
+-                or envs.VLLM_XPU_LAGUNA_EXACT_MAX_M == 1
++                or batch_descriptor.num_tokens == 1
+             )
+             and forward_context.additional_kwargs.get(
+                 "xpu_laguna_m8_breakable_graph_eligible"
+@@ -4448,6 +4518,107 @@ class GPUModelRunner(
+             is True
+         )
+ 
++    def _laguna_dflash_context_cutoff_reached(self) -> tuple[bool, int]:
++        cutoff = envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF
++        spec_config = self.speculative_config
++        if not cutoff or spec_config is None or not spec_config.use_dflash():
++            return False, 0
++        if self.input_batch.num_reqs != 1:
++            raise RuntimeError(
++                "Laguna DFlash context cutoff drifted from max_num_seqs=1"
++            )
++        req_id = self.input_batch.req_ids[0]
++        context = int(self.input_batch.num_tokens_no_spec[0])
++        disabled_req_ids = getattr(
++            self, "_laguna_dflash_disabled_req_ids", None
++        )
++        if disabled_req_ids is None:
++            disabled_req_ids = set()
++            self._laguna_dflash_disabled_req_ids = disabled_req_ids
++        if req_id in disabled_req_ids:
++            return True, context
++        if context >= cutoff:
++            # Request state may later shrink after a sync-KV/output
++            # correction. Never resume a drafter whose KV cache has been
++            # intentionally skipped since this transition.
++            disabled_req_ids.add(req_id)
++            return True, context
++        return False, context
++
++    def _laguna_forget_dflash_context_cutoff(self, req_id: str) -> None:
++        disabled_req_ids = getattr(
++            self, "_laguna_dflash_disabled_req_ids", None
++        )
++        if disabled_req_ids is not None:
++            # Abort + resubmit may reuse a request ID in one SchedulerOutput.
++            # `_update_states` calls this before installing the new request.
++            disabled_req_ids.discard(req_id)
++
++    def _laguna_apply_dflash_context_cutoff(
++        self, scheduler_output: "SchedulerOutput"
++    ) -> bool:
++        cutoff_reached, context = self._laguna_dflash_context_cutoff_reached()
++        if not cutoff_reached:
++            return False
++
++        # The per-request latch above prevents DFlash from resuming even if a
++        # later state correction shrinks the visible committed context. Return
++        # an actual width-zero proposal without running its forward merely to
++        # keep a now-unused draft KV cache in sync.
++        self._draft_token_ids = torch.empty(
++            (len(self.input_batch.req_ids), 0),
++            device=self.device,
++            dtype=torch.int32,
++        )
++        self._copy_draft_token_ids_to_cpu(scheduler_output)
++        req_id = self.input_batch.req_ids[0]
++        if not getattr(self, "_laguna_dflash_cutoff_logged", False):
++            logger.info(
++                "Laguna DFlash context transition: request_id=%s "
++                "committed_context=%d cutoff=%d next_target_width=1 "
++                "drafter_skipped=true",
++                req_id,
++                context,
++                envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF,
++            )
++            self._laguna_dflash_cutoff_logged = True
++        return True
++
++    def _laguna_dflash_cutoff_before_bookkeeping(
++        self, max_sampled_tokens: int
++    ) -> tuple[bool, bool]:
++        """Return (already_disabled, must_defer_draft).
++
++        The accepted-token count is not available until bookkeeping. Near the
++        boundary, conservatively defer the DFlash proposal until then so a
++        crossing cycle can publish zero drafts without running DFlash. Away
++        from the boundary, retain the existing GPU-token overlap path.
++        """
++        cutoff_reached, context = self._laguna_dflash_context_cutoff_reached()
++        cutoff = envs.VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF
++        may_cross = bool(
++            cutoff
++            and not cutoff_reached
++            and context + max_sampled_tokens >= cutoff
++        )
++        return cutoff_reached, may_cross
++
++    @staticmethod
++    def _laguna_post_bookkeeping_draft_inputs(
++        deferred_gpu_drafter: bool,
++        gpu_sampled_token_ids: torch.Tensor,
++        cpu_sampled_token_ids: list[list[int]],
++    ) -> torch.Tensor | list[list[int]]:
++        # Padded DFlash normally proposes before bookkeeping and requires the
++        # GPU tensor. A boundary-risk cycle is deliberately deferred, but if
++        # it does not actually cross it must still receive that tensor rather
++        # than the CPU list used by ordinary after-bookkeeping drafters.
++        return (
++            gpu_sampled_token_ids
++            if deferred_gpu_drafter
++            else cpu_sampled_token_ids
++        )
++
+     @staticmethod
+     def _laguna_dflash_segmented_graph_capture_filter(
+         forward_context: Any,
+@@ -5434,6 +5605,12 @@ class GPUModelRunner(
+         self._draft_token_req_ids = None
+         self.valid_sampled_token_count_gpu = None
+         self.input_batch.prev_sampled_token_ids = None
++        (
++            cutoff_reached_before_bookkeeping,
++            defer_dflash_for_cutoff,
++        ) = self._laguna_dflash_cutoff_before_bookkeeping(
++            int(sampler_output.sampled_token_ids.shape[1])
++        )
+ 
+         def propose_draft_token_ids(sampled_token_ids):
+             assert spec_decode_common_attn_metadata is not None
+@@ -5468,8 +5645,11 @@ class GPUModelRunner(
+             use_gpu_toks = (
+                 drafter_runs_model_forward
+                 and not spec_config.disable_padded_drafter_batch
++                and not defer_dflash_for_cutoff
+             )
+-            if use_gpu_toks:
++            if cutoff_reached_before_bookkeeping:
++                pass
++            elif use_gpu_toks:
+                 # EAGLE/DraftModel speculative decoding can use the GPU sampled tokens
+                 # as inputs, and does not need to wait for bookkeeping to finish.
+                 assert isinstance(
+@@ -5527,7 +5707,7 @@ class GPUModelRunner(
+                 # after bookkeeping.
+                 draft_after_bookkeeping = True
+ 
+-            if not input_fits_in_drafter:
++            if not input_fits_in_drafter and not cutoff_reached_before_bookkeeping:
+                 # Zero out draft tokens so the scheduler doesn't schedule
+                 # stale drafts from the previous step.
+                 # For Nemotron-H: it is necessary to zero out the draft tokens,
+@@ -5562,11 +5742,21 @@ class GPUModelRunner(
+                 {"emitted_ids": valid_sampled_token_ids},
+             )
+ 
+-        if draft_after_bookkeeping:
++        # Bookkeeping above commits the tokens accepted by this target cycle.
++        # Evaluate the boundary only now, so the first cycle that crosses it
++        # publishes an empty proposal and the following target step is M1.
++        cutoff_reached = self._laguna_apply_dflash_context_cutoff(scheduler_output)
++
++        if draft_after_bookkeeping and not cutoff_reached:
+             # ngram and other speculative decoding methods use the sampled
+             # tokens on the CPU, so they are run after bookkeeping.
+             if input_fits_in_drafter:
+-                propose_draft_token_ids(valid_sampled_token_ids)
++                draft_inputs = self._laguna_post_bookkeeping_draft_inputs(
++                    defer_dflash_for_cutoff,
++                    sampler_output.sampled_token_ids,
++                    valid_sampled_token_ids,
++                )
++                propose_draft_token_ids(draft_inputs)
+             elif (
+                 drafter_runs_model_forward
+                 and self.parallel_config.data_parallel_size > 1
+-- 
+2.43.0
+

@@ -47,6 +47,9 @@ readonly require_oracle="${LAGUNA_REQUIRE_ORACLE:-0}"
 readonly exact_prefill_chunks="${LAGUNA_EXACT_PREFILL_CHUNKS:-0}"
 readonly candidate_profile="${LAGUNA_LONG_CANDIDATE_PROFILE:-q12}"
 readonly long_depth="${LAGUNA_LONG_DEPTH:-}"
+readonly context_cutoff="${LAGUNA_DFLASH_CONTEXT_CUTOFF:-0}"
+readonly require_within_request_transition="${LAGUNA_REQUIRE_WITHIN_REQUEST_TRANSITION:-1}"
+readonly cutoff_oracle_sha256=b0e41df6b7e5b798749c97221dbae4c41e345a41785e9c6793d5f76b5b9b11b8
 # The eager fan-out arm must not capture graphs: graph replay executes no
 # Python, so instrumentation in the model forward cannot observe decode steps.
 readonly graph_flag="$([[ "${LAGUNA_EAGER_FANOUT:-0}" == 1 ]] && echo 0 || echo 1)"
@@ -54,6 +57,8 @@ readonly target_revision=4bbfc285f2f8b3b6b526274c133b7b17aae6c8cb
 readonly draft_revision=5e07c246915c86dc6920fead03d019989224f2ba
 readonly model_manifest=/mnt/fast-ai/llm-models/laguna-s-2.1/.verification/nvme-files.sha256
 readonly model_manifest_sha256=45aa105ef4eceaf05cad33012e0752369f77cbbd76f2213ccfe0ce130fa6c0ac
+
+die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }
 
 case "$candidate_profile" in
   q12)
@@ -78,7 +83,22 @@ case "$candidate_profile" in
     ;;
 esac
 
-die() { echo "Laguna long-context baseline: $*" >&2; exit 2; }
+[[ "$context_cutoff" =~ ^[0-9]+$ ]] \
+  || die "LAGUNA_DFLASH_CONTEXT_CUTOFF must be a non-negative integer"
+if (( context_cutoff > 0 )); then
+  [[ "$role" == candidate && "$candidate_profile" == q12 ]] \
+    || die "the DFlash context cutoff is only valid for the q12 candidate"
+  (( context_cutoff <= max_model_len )) \
+    || die "the DFlash context cutoff exceeds max model length"
+  [[ "${LAGUNA_NOSPEC_GRAPH:-0}" == 0 ]] \
+    || die "the DFlash context cutoff retains the drafter configuration"
+  [[ "$require_oracle" == 1 && -n "$oracle" ]] \
+    || die "the DFlash context cutoff requires an exact oracle"
+  [[ -n "$selected_case_ids_csv" ]] \
+    || die "the DFlash context cutoff requires an explicit bounded case set"
+  [[ "$selected_case_ids_csv" != *laguna-lc-24576-* ]] \
+    || die "the unresolved 24,576-token failure is excluded from cutoff runs"
+fi
 
 laguna_cluster_iface() {
   local ip="${REPRO_CLUSTER_IP:-${LAGUNA_CLUSTER_IP:-10.0.0.65}}" iface
@@ -179,6 +199,88 @@ awk -v value="$gpu_util" 'BEGIN { exit !(value > 0 && value < 1) }' \
   || die "LAGUNA_REQUIRE_ORACLE must be zero or one"
 [[ "$require_oracle" == 0 || -n "$oracle" ]] \
   || die "LAGUNA_REQUIRE_ORACLE=1 requires LAGUNA_LONG_ORACLE"
+if (( context_cutoff > 0 )); then
+  [[ "$require_oracle" == 1 && -n "$oracle" ]] \
+    || die "the DFlash context cutoff requires an exact oracle"
+  [[ "$require_within_request_transition" == 0 \
+    || "$require_within_request_transition" == 1 ]] \
+    || die "LAGUNA_REQUIRE_WITHIN_REQUEST_TRANSITION must be zero or one"
+  if [[ "$require_within_request_transition" == 1 ]]; then
+    [[ -n "$selected_case_ids_csv" && "$selected_case_ids_csv" != *,* ]] \
+      || die "the DFlash transition gate requires exactly one selected case"
+    "$venv_python" - "$suite" "$selected_case_ids_csv" "$context_cutoff" <<'PY'
+import json
+import sys
+
+suite_path, case_id, cutoff_text = sys.argv[1:]
+suite = json.load(open(suite_path, encoding="utf-8"))
+cutoff = int(cutoff_text)
+matches = [case for case in suite["cases"] if case["id"] == case_id]
+if len(matches) != 1:
+    raise SystemExit("selected transition case is absent or duplicated in the suite")
+case = matches[0]
+prompt = int(case["target_prompt_tokens"])
+max_output = int(suite["max_output_tokens"])
+if not prompt < cutoff <= prompt + max_output:
+    raise SystemExit(
+        "selected transition case cannot cross the cutoff within one request: "
+        f"prompt={prompt} cutoff={cutoff} max_output={max_output}"
+    )
+PY
+  fi
+  [[ "$(sha256sum "$oracle" | cut -d' ' -f1)" == "$cutoff_oracle_sha256" ]] \
+    || die "the DFlash context cutoff oracle is not the pinned Q1 authority"
+  "$venv_python" - "$oracle" "$suite" "$selected_case_ids_csv" <<'PY'
+import json
+import sys
+
+oracle_path, suite_path, selected_text = sys.argv[1:]
+oracle = json.load(open(oracle_path, encoding="utf-8"))
+suite = json.load(open(suite_path, encoding="utf-8"))
+if oracle.get("schema") != "laguna-long-context-gate-v1":
+    raise SystemExit("cutoff oracle schema drifted")
+if oracle.get("status") != "PASS_BASELINE_ORACLE_NOT_TESTED":
+    raise SystemExit("cutoff oracle is not the sealed passing teacher baseline")
+summary = oracle.get("summary", {})
+if not all(
+    summary.get(field) is True
+    for field in ("intrinsic_pass_all", "cached_tokens_all_zero", "prompts_unique")
+):
+    raise SystemExit("cutoff oracle failed its intrinsic/cache/prompt gates")
+identity = oracle.get("run_identity", {})
+if (
+    identity.get("run_role") != "teacher"
+    or identity.get("model") != "laguna-s-2.1-int4"
+    or identity.get("api_mode") != "completions-token-ids"
+    or identity.get("seed") != 1
+):
+    raise SystemExit("cutoff oracle run identity drifted")
+rows = oracle.get("rows", [])
+row_map = {row.get("case_id"): row for row in rows}
+if len(row_map) != len(rows):
+    raise SystemExit("cutoff oracle contains duplicate case IDs")
+manifest = {
+    row.get("case_id"): row for row in oracle.get("prompt_build_manifest", [])
+}
+suite_cases = {case["id"]: case for case in suite["cases"]}
+for case_id in selected_text.split(","):
+    row = row_map.get(case_id)
+    built = manifest.get(case_id)
+    case = suite_cases.get(case_id)
+    if row is None or built is None or case is None:
+        raise SystemExit(f"cutoff oracle is missing selected case {case_id}")
+    if (
+        row.get("passed") is not True
+        or row.get("cached_tokens") != 0
+        or row.get("completion_tokens") != suite["max_output_tokens"]
+        or len(row.get("token_ids", [])) != suite["max_output_tokens"]
+        or row.get("target_prompt_tokens") != case["target_prompt_tokens"]
+        or row.get("prompt_token_ids_sha256")
+        != built.get("prompt_token_ids_sha256")
+    ):
+        raise SystemExit(f"cutoff oracle row failed identity for {case_id}")
+PY
+fi
 readonly swap_total_kb="$(awk '$1 == "SwapTotal:" { print $2 }' /proc/meminfo)"
 (( swap_total_kb >= min_swap_total_kb )) \
   || die "host SwapTotal ${swap_total_kb} kB is below required ${min_swap_total_kb} kB"
@@ -250,6 +352,10 @@ chmod -R 700 "$run_dir"
     "$(sha256sum "$runtime_lock" | cut -d' ' -f1)"
   printf 'candidate_profile=%s\ncandidate_m=%s\ncandidate_spec=%s\n' \
     "$candidate_profile" "$candidate_m" "$candidate_spec"
+  printf 'dflash_context_cutoff=%s\n' "$context_cutoff"
+  printf 'cutoff_oracle_expected_sha256=%s\n' "$cutoff_oracle_sha256"
+  printf 'require_within_request_transition=%s\n' \
+    "$require_within_request_transition"
   printf 'memory_guard_min_available_kb=%s\nmemory_guard_min_swap_free_kb=%s\n' \
     "$min_mem_available_kb" "$min_swap_free_kb"
   printf 'memory_guard_min_swap_total_kb=%s\n' "$min_swap_total_kb"
@@ -389,6 +495,8 @@ common_env=(
   LAGUNA_MAX_NUM_SCHEDULED_TOKENS="$max_num_scheduled_tokens"
   LAGUNA_GPU_UTIL="$gpu_util"
   LAGUNA_LONG_CANDIDATE_PROFILE="$candidate_profile"
+  LAGUNA_DFLASH_CONTEXT_CUTOFF="$context_cutoff"
+  VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF="$context_cutoff"
   LAGUNA_NOSPEC_GRAPH="${LAGUNA_NOSPEC_GRAPH:-0}"
   LAGUNA_NO_EP="${LAGUNA_NO_EP:-0}"
   VLLM_XPU_LAGUNA_ALLOW_NO_EP="${LAGUNA_NO_EP:-0}"
@@ -664,12 +772,19 @@ if [[ -n "${LAGUNA_PROFILE_DIR:-}" ]]; then
   sleep 20
 fi
 (( benchmark_status == 0 )) || exit "$benchmark_status"
+if (( context_cutoff > 0 )); then
+  benchmark_result_status="$("$venv_python" -c \
+    'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["status"])' \
+    "$run_dir/bench.json")"
+  [[ "$benchmark_result_status" == PASS_ORACLE_EXACT ]] \
+    || die "the DFlash context cutoff did not finish PASS_ORACLE_EXACT"
+fi
 curl -fsS http://127.0.0.1:18080/metrics > "$run_dir/metrics-after.prom"
 
 if [[ "$role" == candidate ]]; then
   topology_count() {
-    local rank="$1" verb="$2" graphs="$3" eager_breaks="$4"
-    grep -F "$verb audited breakable cudagraph for BatchDescriptor(num_tokens=${candidate_m}," \
+    local rank="$1" verb="$2" width="$3" graphs="$4" eager_breaks="$5"
+    grep -F "$verb audited breakable cudagraph for BatchDescriptor(num_tokens=${width}," \
       "$run_dir/server.log" \
       | grep -F "(Worker_TP${rank}_EP${rank} " \
       | grep -Fc "BreakableCUDAGraphCapture(graphs=$graphs, eager_breaks=$eager_breaks)" \
@@ -690,48 +805,78 @@ if [[ "$role" == candidate ]]; then
   if [[ "${LAGUNA_SKIP_EXPERTS:-0}" == 1 ]]; then retired=$((retired + 47)); fi
   target_graphs=$((146 - retired)) target_eager_breaks=$((145 - retired))
   for rank in 0 1 2 3; do
-    (( $(topology_count "$rank" Captured "$target_graphs" "$target_eager_breaks") == 1 )) \
+    (( $(topology_count "$rank" Captured "$candidate_m" "$target_graphs" "$target_eager_breaks") == 1 )) \
       || die "candidate target capture topology is not exactly once on rank $rank"
-    (( $(topology_count "$rank" Replayed "$target_graphs" "$target_eager_breaks") == 1 )) \
+    (( $(topology_count "$rank" Replayed "$candidate_m" "$target_graphs" "$target_eager_breaks") == 1 )) \
       || die "candidate target replay topology is not exactly once on rank $rank"
+    if (( context_cutoff > 0 )); then
+      (( $(topology_count "$rank" Captured 1 "$target_graphs" "$target_eager_breaks") == 1 )) \
+        || die "dynamic candidate M1 target capture is not exactly once on rank $rank"
+      (( $(topology_count "$rank" Replayed 1 "$target_graphs" "$target_eager_breaks") == 1 )) \
+        || die "dynamic candidate M1 target replay is not exactly once on rank $rank"
+    fi
     if [[ "$candidate_profile" == q12 ]]; then
-      (( $(topology_count "$rank" Captured 14 13) == 1 )) \
+      (( $(topology_count "$rank" Captured 12 14 13) == 1 )) \
         || die "q12 draft capture topology is not exactly once on rank $rank"
-      (( $(topology_count "$rank" Replayed 14 13) == 1 )) \
+      (( $(topology_count "$rank" Replayed 12 14 13) == 1 )) \
         || die "q12 draft replay topology is not exactly once on rank $rank"
     else
-      (( $(topology_count "$rank" Captured 14 13) == 0 )) \
+      (( $(topology_count "$rank" Captured "$candidate_m" 14 13) == 0 )) \
         || die "$candidate_profile unexpectedly captured a draft graph on rank $rank"
-      (( $(topology_count "$rank" Replayed 14 13) == 0 )) \
+      (( $(topology_count "$rank" Replayed "$candidate_m" 14 13) == 0 )) \
         || die "$candidate_profile unexpectedly replayed a draft graph on rank $rank"
     fi
   done
-  [[ "$candidate_profile" != q12 && "$all_topology_count" == 8 \
-    || "$candidate_profile" == q12 && "$all_topology_count" == 16 ]] \
+  expected_topology_lines=8
+  if [[ "$candidate_profile" == q12 ]]; then expected_topology_lines=16; fi
+  if (( context_cutoff > 0 )); then expected_topology_lines=24; fi
+  [[ "$all_topology_count" == "$expected_topology_lines" ]] \
     || die "candidate emitted an unexpected Breakable topology line"
-  if [[ "$max_num_scheduled_tokens" == auto && "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]]; then
-    # vLLM only emits "set to N based on" when speculation reserves slots, so a
-    # no-drafter arm has no reduction to report and the line never appears. The
-    # launcher's own derivation is the stronger proof: it refuses to start
-    # unless the derived budget equals the batched one.
-    grep -Fq "Laguna qdepth arm: depth=$candidate_spec width=$candidate_m batched=$max_num_batched_tokens derived_scheduled=$expected_effective_scheduled_tokens" \
-      "$run_dir/server.log" \
-      || die "no-drafter scheduler budget was not proved in server.log"
-  elif [[ "$max_num_scheduled_tokens" == auto ]]; then
-    grep -Fq "max_num_scheduled_tokens is set to $expected_effective_scheduled_tokens based on" \
-      "$run_dir/server.log" \
-      || die "automatic runtime scheduler budget was not proved in server.log"
-  else
-    grep -Fq "Laguna long scheduler budget: batched=$max_num_batched_tokens scheduled=$max_num_scheduled_tokens" \
-      "$run_dir/server.log" \
-      || die "explicit launcher scheduler budget was not proved in server.log"
-    explicit_budget_log="$(grep -F 'non-default args:' "$run_dir/server.log" \
-      | grep -F "'max_num_batched_tokens': $max_num_batched_tokens" \
-      | grep -F "'max_num_scheduled_tokens': $max_num_scheduled_tokens" \
-      || true)"
-    [[ -n "$explicit_budget_log" ]] \
-      || die "explicit vLLM runtime scheduler budget was not proved in server.log"
+  if (( context_cutoff > 0 )); then
+    (( $(grep -Fc "Laguna DFlash context transition:" "$run_dir/server.log" || true) == 4 )) \
+      || die "dynamic candidate did not emit exactly one transition per worker"
+    (( $(grep -F "Laguna DFlash context transition:" "$run_dir/server.log" \
+      | grep -Fc "cutoff=$context_cutoff next_target_width=1 drafter_skipped=true" || true) == 4 )) \
+      || die "dynamic candidate transition identity drifted"
+    awk -v cutoff="$context_cutoff" '
+      /Laguna DFlash context transition:/ {
+        found = 0
+        for (i = 1; i <= NF; i++) {
+          if ($i ~ /^committed_context=/) {
+            split($i, value, "=")
+            if (value[2] + 0 < cutoff || value[2] + 0 > cutoff + 11) exit 1
+            found = 1
+          }
+        }
+        if (!found) exit 1
+        count++
+      }
+      END { if (count != 4) exit 1 }
+    ' "$run_dir/server.log" \
+      || die "dynamic candidate transition context fell outside cutoff..cutoff+11"
+    if [[ "$require_within_request_transition" == 1 ]]; then
+      transition_request_id="$("$venv_python" -c \
+        'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); print(d["rows"][0]["request_id"])' \
+        "$run_dir/bench.json")"
+      (( $(grep -F "Laguna DFlash context transition:" "$run_dir/server.log" \
+        | grep -Fc "request_id=$transition_request_id " || true) == 4 )) \
+        || die "dynamic transition marker did not match the sole benchmark request"
+    fi
   fi
+
+  runtime_budget_marker="Scheduler runtime token budget: max_num_scheduled_tokens=$expected_effective_scheduled_tokens max_num_batched_tokens=$max_num_batched_tokens"
+  (( $(grep -Fc "$runtime_budget_marker" "$run_dir/server.log" || true) == 1 )) \
+    || die "runtime-owned scheduler budget was not proved exactly once"
+  if [[ "$max_num_scheduled_tokens" == auto && "${LAGUNA_NOSPEC_GRAPH:-0}" == 1 ]]; then
+    expected_scheduler_config_budget=None
+  elif [[ "$max_num_scheduled_tokens" == auto ]]; then
+    expected_scheduler_config_budget="$expected_effective_scheduled_tokens"
+  else
+    expected_scheduler_config_budget="$max_num_scheduled_tokens"
+  fi
+  grep -Fq "$runtime_budget_marker scheduler_config_max_num_scheduled_tokens=$expected_scheduler_config_budget" \
+    "$run_dir/server.log" \
+    || die "runtime scheduler config budget identity drifted"
 fi
 
 stop_service

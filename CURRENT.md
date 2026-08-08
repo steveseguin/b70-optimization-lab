@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-03**
+Last reviewed: **2026-08-08**
 
 ## Authority And Update Rule
 
@@ -14,6 +14,23 @@ operational change. A runnable recipe or installed service unit does not prove
 that its model is currently loaded.
 
 ## Live Service
+
+No Laguna service, worker, Ray process, or experiment listener is running as
+of the 2026-08-08 recovery audit; all four B70s were idle at approximately
+42.9 MiB each. Recheck immediately before any operational change.
+
+The active lane is Laguna long-context decode recovery. The August 4--7
+no-drafter graph result is diagnostic, not promoted: its benchmark completed
+at 63.533 tok/s at 32,640 tokens with graph capture/replay, but the full runner
+exited 2 on a defective scheduler audit, no corrected-harness full reproduction
+exists, and its token stream differs from same-tree eager without an oracle.
+The ~7,600 context switch is an interpolation and was not implemented by those
+commits. Current work is a default-off, dual-width M12-to-M1 single-service
+treatment with runtime-owned scheduler evidence; it must pass offline tests,
+exact-token transition checks, dual-width topology, and bounded endpoint gates
+before any performance claim. Do not use 24,576 in the first gate because that
+case reproducibly kills the engine for an unresolved reason. Detailed state is
+in [`experiments/laguna-s-2.1-xpu-b70/RESUME.md`](experiments/laguna-s-2.1-xpu-b70/RESUME.md).
 
 No process was listening on the public LAN `:8000` endpoint when the Qwen lane
 was closed on 2026-07-13. The last configured role was the temporary Gemma 4
@@ -1597,15 +1614,17 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Keep the DeepSeek lane paused. Restore the record only from the standalone
-   repro and reopen research only under the explicit frontier-closeout gates.
-2. Preserve the exact DeepSeek vLLM, XPU-kernel, oneCCL, patch, and result
-   identities. Do not relabel later default-off experiments as the record.
-3. Leave the newly started configuration and its active setup work untouched;
-   it is outside this DeepSeek publication closeout.
-4. Preserve `/home/steve/src/llama.cpp` as dirty Qwen research state until its
-   patch snapshots are independently reviewed. Do not reset or clean it for a
-   different model bring-up.
+1. Finish and host-test the default-off Laguna M12-to-M1 context-cutoff
+   treatment, including dual-width collective storage and runtime-owned
+   scheduler-budget attestation.
+2. Independently review that source before a bounded GPU run. The first device
+   gate must prove exact tokens across the transition and both M12 and M1 graph
+   capture/replay in one process; exclude the unresolved 24,576 case.
+3. Keep the ~7,600 crossover labeled as an estimate until matched measurements
+   establish a threshold. Do not call the existing separate-service 1.65x
+   comparison a banked or shippable win.
+4. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
+   Do not relabel later default-off experiments as promoted records.
 5. Continue to publish only verified new matching LocalMaxxing records after
    the cold realistic gate, complete identity capture, and correctness pass.
 

@@ -151,6 +151,11 @@ printf 'Laguna long scheduler budget: batched=%s scheduled=%s\n' \
   "$max_num_batched_tokens" "$max_num_scheduled_tokens" >&2
 
 if [[ "$role" == candidate ]]; then
+  laguna_context_cutoff="${VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF:-0}"
+  [[ "$laguna_context_cutoff" =~ ^[0-9]+$ ]] || {
+    echo "VLLM_XPU_LAGUNA_DFLASH_CONTEXT_CUTOFF must be a non-negative integer" >&2
+    exit 2
+  }
   # Eager fan-out arm: routing depends on model and input, not execution mode,
   # so distinct-expert counts measured eagerly at M=12 are the same counts the
   # graphed path has. Graph replay executes no Python, so this is the only way
@@ -228,6 +233,31 @@ if [[ "$role" == candidate ]]; then
         echo "q12 candidate requires LAGUNA_M=12 and LAGUNA_SPEC=11" >&2
         exit 2
       }
+      if (( laguna_context_cutoff > 0 )); then
+        [[ "$laguna_context_cutoff" -le "$max_model_len" ]] || {
+          echo "Laguna DFlash context cutoff exceeds max model length" >&2
+          exit 2
+        }
+        [[ "${LAGUNA_NOSPEC_GRAPH:-0}" == 0 ]] || {
+          echo "Laguna DFlash context cutoff retains the drafter configuration" >&2
+          exit 2
+        }
+        [[ "${LAGUNA_UNITRACE:-0}" == 0 ]] || {
+          echo "Laguna DFlash context cutoff rejects replay diagnostics" >&2
+          exit 2
+        }
+        for diagnostic_name in \
+          LAGUNA_PROFILE_DIR \
+          LAGUNA_REPLAY_PROFILE_ROOT \
+          LAGUNA_EVENT_PROFILE_ROOT \
+          VLLM_XPU_LAGUNA_REPLAY_PROFILE_ROOT \
+          VLLM_XPU_LAGUNA_REPLAY_EVENT_PROFILE_ROOT; do
+          [[ -z "${!diagnostic_name:-}" ]] || {
+            echo "Laguna DFlash context cutoff rejects replay diagnostics" >&2
+            exit 2
+          }
+        done
+      fi
       ;;
     q8)
       required_profile_values=(
@@ -414,10 +444,18 @@ if [[ "$role" == candidate ]]; then
     PIECEWISE|FULL) laguna_cudagraph_mode="${LAGUNA_CUDAGRAPH_MODE:-PIECEWISE}" ;;
     *) echo "LAGUNA_CUDAGRAPH_MODE must be PIECEWISE or FULL" >&2; exit 2 ;;
   esac
+  laguna_capture_sizes="${LAGUNA_M}"
+  if (( laguna_context_cutoff > 0 )); then
+    [[ "$candidate_profile" == q12 && "$laguna_cudagraph_mode" == PIECEWISE ]] || {
+      echo "Laguna DFlash context cutoff requires the q12 PIECEWISE graph profile" >&2
+      exit 2
+    }
+    laguna_capture_sizes="1,12"
+  fi
   common_args+=(
     --no-async-scheduling
     --compilation-config
-    "{\"mode\":\"NONE\",\"cudagraph_mode\":\"${laguna_cudagraph_mode}\",\"cudagraph_capture_sizes\":[${LAGUNA_M}],\"max_cudagraph_capture_size\":${LAGUNA_M}}"
+    "{\"mode\":\"NONE\",\"cudagraph_mode\":\"${laguna_cudagraph_mode}\",\"cudagraph_capture_sizes\":[${laguna_capture_sizes}],\"max_cudagraph_capture_size\":${LAGUNA_M}}"
   )
   # Diagnostic width-1 arm: graphed target execution with no drafter at all.
   # It isolates what graph capture alone is worth, which neither the M=8 nor the

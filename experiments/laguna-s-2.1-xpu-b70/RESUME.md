@@ -1,6 +1,6 @@
 # Laguna S 2.1 resume point
 
-Last updated: 2026-08-03 America/Toronto
+Last updated: 2026-08-08 America/Toronto
 
 ## Status
 
@@ -26,6 +26,30 @@ historical convention, not under conventional interval accounting.
 - LocalMaxxing: `cms9wuuf300cqpm01t5i285tq` (`APPROVED`);
 - lane state: active optimization, no service or worker currently running.
 
+### 2026-08-08 long-context evidence correction and active recovery
+
+The August 4--7 long-context work contains a real diagnostic discovery but no
+new promoted result. The no-drafter graph fix reached `63.532897 tok/s` at
+32,640 tokens with 146/145 target capture/replay, versus `12.213020 tok/s` on
+the old eager arm. Its complete runner nevertheless exited 2 on the then-bad
+scheduler audit, it was never rerun to completion under the corrected harness,
+and its 32K output differs from same-tree eager by 9/128 tokens without a
+baseline oracle. Treat it as diagnostic evidence only.
+
+The quoted ~7,600-token speculation crossover is a power-law interpolation
+from separate M12-with-drafter and M1-no-drafter services. No context-dependent
+switch existed in those commits, and the static graph contract would force a
+naive M12-to-M1 switch eager. The active offline treatment is a default-off
+single-service DFlash cutoff with independently captured M1 and M12 target
+graphs, separate collective buffers per width, worker transition evidence, and
+runtime-owned scheduler-budget evidence. It is not a result until host tests,
+exact-token transition gates, dual-width graph topology, and bounded endpoint
+measurements pass. The 24,576-token engine failure is reproduced but its cause
+is unknown; exclude that case from initial validation.
+
+Exact source snapshots for the August 4--7 diagnostic commits are indexed in
+[`patches/laguna-s-2.1-xpu-b70/2026-08-07-diagnostics-manifest.md`](../../patches/laguna-s-2.1-xpu-b70/2026-08-07-diagnostics-manifest.md).
+
 ### 2026-08-03 real-use latency and upstream checkpoint
 
 The immediate product objective is now client-visible latency: prompt
@@ -43,8 +67,10 @@ current at `b23676262`. Measured Laguna
 branches remain pinned evidence rather than being rebased across roughly 763
 upstream commits. Full policy, metrics, and successor ordering are in
 [`2026-08-03-e2e-latency-upstream-sync.md`](notes/2026-08-03-e2e-latency-upstream-sync.md).
-This is offline progress only; the NVMe/device quarantine still prohibits a
-model, endpoint, XPU probe, benchmark, or recovery action.
+That checkpoint was offline progress only. Its contemporaneous quarantine
+statement was later corrected: no authorized device quarantine exists. The
+current operational authority is `CURRENT.md` plus a fresh process/device
+check before any bounded run.
 
 The first tail follow-up is also complete offline. vLLM `015fee586` extends
 the authenticated pure-prefill marker to widths 2--512 and decomposes MoE
