@@ -268,6 +268,22 @@ class ManifestAndHealthTests(unittest.TestCase):
 
 
 class RunnerStaticTests(unittest.TestCase):
+    @staticmethod
+    def shell_function(name: str, following_name: str) -> str:
+        runner_text = RUNNER.read_text()
+        start = runner_text.index(f"{name}() {{\n")
+        end = runner_text.index(f"\n{following_name}() {{", start)
+        return runner_text[start:end]
+
+    @staticmethod
+    def run_bash(script: str, *arguments: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["bash", "-c", script, "bash", *arguments],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
     def test_shell_xpu_parser_binds_device_and_memory(self) -> None:
         runner_text = RUNNER.read_text()
         start = runner_text.index("parse_gpu_used_mib() {\n")
@@ -301,6 +317,114 @@ class RunnerStaticTests(unittest.TestCase):
             )
             self.assertNotEqual(fractional.returncode, 0)
 
+    def test_owned_child_group_uses_argument_not_caller_gpu(self) -> None:
+        function = self.shell_function("owned_child_group", "recorded_session_alive")
+        script = f"""
+set -u
+declare -a CHILD_PIDS=([0]=100 [1]=200)
+declare -a CHILD_START_TICKS=([0]=10 [1]=20)
+declare -a CHILD_PGIDS=([0]=100 [1]=200)
+declare -a CHILD_SIDS=([0]=100 [1]=200)
+gpu=1
+pid_running() {{ [[ "$1" == 100 ]]; }}
+process_start_ticks() {{ [[ "$1" == 100 ]] && printf '10\\n'; }}
+ps() {{
+  if [[ "$*" == *"pgid="* ]]; then printf '100\\n'
+  elif [[ "$*" == *"sid="* ]]; then printf '100\\n'
+  else return 2
+  fi
+}}
+group_alive() {{ [[ "$1" == 100 ]]; }}
+{function}
+owned_child_group 0
+"""
+        result = self.run_bash(script)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_recorded_session_alive_exact_rc_semantics(self) -> None:
+        function = self.shell_function(
+            "recorded_session_alive", "signal_recorded_session"
+        )
+        script = f"""
+set -u
+declare -a CHILD_PGIDS=([0]=100 [1]=200)
+declare -a CHILD_SIDS=([0]=100 [1]=200)
+gpu=1
+PS_MODE="$1"
+ps() {{
+  case "$PS_MODE" in
+    active) printf '100 100 S\\n' ;;
+    none) printf '200 200 S\\n' ;;
+    error) return 2 ;;
+  esac
+}}
+{function}
+recorded_session_alive 0
+"""
+        active = self.run_bash(script, "active")
+        none = self.run_bash(script, "none")
+        error = self.run_bash(script, "error")
+        self.assertEqual(active.returncode, 0, active.stderr)
+        self.assertEqual(none.returncode, 1, none.stderr)
+        self.assertEqual(
+            error.returncode,
+            0,
+            "a process-query error must conservatively report the session alive",
+        )
+
+    def test_signal_recorded_session_uses_argument_sid(self) -> None:
+        function = self.shell_function(
+            "signal_recorded_session", "capture_recorded_group_members"
+        )
+        script = f"""
+set -u
+declare -a CHILD_SIDS=([0]=100 [1]=200)
+gpu=1
+ps() {{ printf '111 100 S\\n222 200 S\\n333 100 Z\\n'; }}
+kill() {{ printf '%s\\n' "$*"; }}
+{function}
+signal_recorded_session 0 TERM
+"""
+        result = self.run_bash(script)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "-TERM -- -111\n")
+
+    def test_failure_handoff_margin_guard_and_deadline(self) -> None:
+        runner_lines = RUNNER.read_text().splitlines()
+        assignment = next(
+            line
+            for line in runner_lines
+            if line.startswith('FAILURE_HANDOFF_MARGIN_S="${')
+        )
+        guard = next(
+            line
+            for line in runner_lines
+            if line.startswith("(( FAILURE_HANDOFF_MARGIN_S >= 15 ))")
+        )
+        deadline = next(
+            line.strip()
+            for line in runner_lines
+            if "SECONDS + PASSIVE_DRAIN_S + FAILURE_HANDOFF_MARGIN_S" in line
+        )
+        script = f"""
+die() {{ exit 2; }}
+FAILURE_HANDOFF_MARGIN_S="$1"
+{assignment}
+{guard}
+PASSIVE_DRAIN_S=60
+start=$SECONDS
+{deadline}
+printf '%s\\n' "$((quiet_deadline - start))"
+"""
+        default = self.run_bash(script, "")
+        weakened = self.run_bash(script, "14")
+        minimum = self.run_bash(script, "15")
+        self.assertEqual(default.returncode, 0, default.stderr)
+        self.assertEqual(default.stdout, "80\n")
+        self.assertEqual(weakened.returncode, 2)
+        self.assertEqual(minimum.returncode, 0, minimum.stderr)
+        self.assertEqual(minimum.stdout, "75\n")
+
     def test_shell_syntax_plan_and_default_fail_closed(self) -> None:
         subprocess.run(["bash", "-n", str(RUNNER)], check=True)
         plan = subprocess.run(
@@ -330,6 +454,9 @@ class RunnerStaticTests(unittest.TestCase):
             "$4==sid && $5 !~ /^Z/",
             "sort -n -u",
             "PASSIVE_DRAIN_S:-60",
+            "FAILURE_HANDOFF_MARGIN_S:-20",
+            "FAILURE_HANDOFF_MARGIN_S >= 15",
+            "SECONDS + PASSIVE_DRAIN_S + FAILURE_HANDOFF_MARGIN_S",
             "phase_passive_scan preprobe",
             "phase_passive_scan postprobe",
             "preflight_pgrep_rc == 1",

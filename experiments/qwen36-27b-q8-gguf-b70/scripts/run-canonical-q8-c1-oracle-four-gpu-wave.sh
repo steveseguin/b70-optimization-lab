@@ -59,6 +59,7 @@ WAVE_TIMEOUT_S="${WAVE_TIMEOUT_S:-7200}"
 TERM_GRACE_S="${TERM_GRACE_S:-90}"
 KILL_GRACE_S="${KILL_GRACE_S:-10}"
 PASSIVE_DRAIN_S="${PASSIVE_DRAIN_S:-60}"
+FAILURE_HANDOFF_MARGIN_S="${FAILURE_HANDOFF_MARGIN_S:-20}"
 GPU_IDLE_MAX_MIB=256
 MIN_LOADED_DELTA_MIB=25000
 MIN_FIT_FREE_MIB=1024
@@ -511,12 +512,13 @@ done
 [[ -f /opt/intel/oneapi/setvars.sh ]] || die "oneAPI setup is missing"
 
 for value_name in PORT_BASE START_STAGGER_S READINESS_TIMEOUT_S REQUEST_TIMEOUT_S \
-  WAVE_TIMEOUT_S TERM_GRACE_S KILL_GRACE_S PASSIVE_DRAIN_S MIN_HOST_AVAILABLE_KIB \
-  MIN_FAST_FREE_KIB; do require_uint "$value_name" "${!value_name}"; done
+  WAVE_TIMEOUT_S TERM_GRACE_S KILL_GRACE_S PASSIVE_DRAIN_S FAILURE_HANDOFF_MARGIN_S \
+  MIN_HOST_AVAILABLE_KIB MIN_FAST_FREE_KIB; do require_uint "$value_name" "${!value_name}"; done
 (( PORT_BASE >= 1024 && PORT_BASE <= 65532 )) || die "PORT_BASE must leave four valid ports"
 (( START_STAGGER_S >= 5 )) || die "START_STAGGER_S may not weaken the 5s floor"
 (( READINESS_TIMEOUT_S >= 600 && REQUEST_TIMEOUT_S >= 900 && WAVE_TIMEOUT_S >= 3600 )) || die "timeout safety floor violated"
 (( TERM_GRACE_S >= 60 && KILL_GRACE_S >= 10 && PASSIVE_DRAIN_S >= 60 )) || die "cleanup safety floor violated"
+(( FAILURE_HANDOFF_MARGIN_S >= 15 )) || die "failure handoff margin may not be less than 15s"
 (( MIN_HOST_AVAILABLE_KIB >= 100663296 && MIN_FAST_FREE_KIB >= 10485760 )) || die "resource floor weakened"
 [[ "$WAVE_DIR" == /* && "$WAVE_DIR" != / && ! -e "$WAVE_DIR" ]] || die "WAVE_DIR must be a new non-root absolute path"
 
@@ -563,7 +565,11 @@ declare -a CHILD_PIDS=() CHILD_START_TICKS=() CHILD_PGIDS=() CHILD_SIDS=() CHILD
 declare -a GPU_LEASE_FDS=() PORT_LEASE_FDS=()
 
 owned_child_group() {
-  local gpu="$1" pid="${CHILD_PIDS[$gpu]:-}" ticks="${CHILD_START_TICKS[$gpu]:-}" pgid="${CHILD_PGIDS[$gpu]:-}" sid="${CHILD_SIDS[$gpu]:-}"
+  local gpu="$1" pid ticks pgid sid
+  pid="${CHILD_PIDS[$gpu]:-}"
+  ticks="${CHILD_START_TICKS[$gpu]:-}"
+  pgid="${CHILD_PGIDS[$gpu]:-}"
+  sid="${CHILD_SIDS[$gpu]:-}"
   [[ -n "$pid" && -n "$ticks" && -n "$pgid" && -n "$sid" ]] || return 1
   pid_running "$pid" || return 1
   [[ "$(process_start_ticks "$pid" 2>/dev/null || true)" == "$ticks" ]] || return 1
@@ -573,21 +579,24 @@ owned_child_group() {
 }
 
 recorded_session_alive() {
-  local gpu="$1" pgid="${CHILD_PGIDS[$gpu]:-}" sid="${CHILD_SIDS[$gpu]:-}"
+  local gpu="$1" pgid sid table rc
+  pgid="${CHILD_PGIDS[$gpu]:-}"
+  sid="${CHILD_SIDS[$gpu]:-}"
   [[ -n "$pgid" && -n "$sid" && "$pgid" == "$sid" ]] || return 1
-  local table rc
   if ! table="$(ps -eo pgid=,sid=,stat= 2>/dev/null)"; then return 0; fi
   if printf '%s\n' "$table" | awk -v sid="$sid" \
       '$2==sid && $3 !~ /^Z/ {found=1} END{exit(found?0:1)}'; then
     return 0
+  else
+    rc=$?
   fi
-  rc=$?
   (( rc == 1 )) && return 1
   return 0
 }
 
 signal_recorded_session() {
-  local gpu="$1" signal="$2" sid="${CHILD_SIDS[$gpu]:-}" table group
+  local gpu="$1" signal="$2" sid table group
+  sid="${CHILD_SIDS[$gpu]:-}"
   [[ "$sid" =~ ^[1-9][0-9]*$ ]] || return 1
   table="$(ps -eo pgid=,sid=,stat= 2>/dev/null)" || return 1
   while read -r group; do
@@ -622,7 +631,7 @@ terminate_child_groups() {
     fi
   fi
   capture_recorded_group_members "$WAVE_DIR/failure-drain-members-before.txt" || true
-  quiet_deadline=$((SECONDS + PASSIVE_DRAIN_S))
+  quiet_deadline=$((SECONDS + PASSIVE_DRAIN_S + FAILURE_HANDOFF_MARGIN_S))
   while (( SECONDS < quiet_deadline )); do
     any=0; for gpu in 0 1 2 3; do recorded_session_alive "$gpu" && any=1; done
     (( any == 0 )) && break
