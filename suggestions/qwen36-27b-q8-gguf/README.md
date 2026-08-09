@@ -65,7 +65,7 @@ valuable result.
 
 ## Current intake
 
-Last external scan: 2026-08-08. These are leads, not claimed local wins or a
+Last external scan: 2026-08-09. These are leads, not claimed local wins or a
 fixed execution order.
 
 | Status | Mechanism lead | Why it remains relevant | Evidence needed next |
@@ -76,11 +76,16 @@ fixed execution order.
 | `shaped` | Launch, allocation, copy, and synchronization removal | Short prompt and decode paths contain many small recurrent operations where orchestration cost may matter. | Count complete-cycle overhead and prove that removal survives the service endpoint. |
 | `shaped` | Full-attention and KV-cache path toward 32K | Sixteen full-attention layers remain context-sensitive even when GDN state is fixed-size. | Maintain context-stratified profiles and validate exact attention, latency, and memory behavior near 32K. |
 | `parked` | Replay/checkpoint-based state traffic reduction and GDN-aware speculation | It may become valuable with concurrency, but upstream evidence suggests different economics from batch-one target execution. | Reopen after ordinary c2 behavior and batch/context crossover evidence exist; retain exact state/output gates. |
+| `ready` | Forced VEC versus TILE SYCL FA decode selector | A new upstream selector permits a cheap F16-KV 32K discriminator without changing the model or KV format. | Isolated exact 32K c1 A/B; c2 only after a clean win. |
+| `inbox` | RMSNorm/MUL/RoPE Q/K preparation fusion | A newly merged CUDA implementation targets a repeated full-attention boundary that may transfer to SYCL. | Profile the complete local boundary and require a material endpoint ceiling before porting. |
+| `inbox` | Q8 gate/up/GLU fusion | New upstream Q4_K work suggests an M=1/M=2 fusion shape, but cannot execute for Q8_0 as written. | Measure Q8 gate/up/GLU critical-path share before any trait/kernel prototype. |
 
 At each cycle boundary, the external scout, internal historian, bottleneck
 analyst, and integrity reviewer should update or challenge these entries.
 Detailed candidates and source deltas belong in dated scouting notes linked
 from the relevant row so this page remains small and current.
+
+Latest detail: [`2026-08-09-upstream-delta.md`](2026-08-09-upstream-delta.md).
 
 ## Review trigger
 
