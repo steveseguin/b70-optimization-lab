@@ -1,7 +1,8 @@
 # Qwen3.6 27B Q8_0 GGUF on one B70
 
-Status: one-B70 target-only baseline validated through 32K. No localmaxxing
-performance result is promoted from this lane yet.
+Status: one-B70 target-only baseline validated through 32K, and the simultaneous
+four-replica 4K functional topology passes. No localmaxxing performance result
+is promoted from this lane yet.
 
 ## Scope
 
@@ -10,10 +11,17 @@ This lane has one primary identity:
 - target-only `Qwen3.6-27B-Q8_0.gguf`;
 - text-only, with no multimodal projector;
 - one Intel Arc Pro B70 with 32 GiB VRAM;
-- target context ceiling of 32,768 tokens;
+- validated reference context of 32,768 tokens with F16 KV;
+- planned stretch capacity of 100K to 128K with Q8 KV, validation pending;
 - no MTP, DFlash, n-gram, prompt-cache, or response-cache acceleration.
 
 MTP and vision are optional follow-ups. They must not be mixed into the target-only baseline identity or result packet.
+
+The selected deployment direction is four independent one-GPU processes. At
+one slot each this already gives four cluster-wide concurrent requests. A
+second slot per process is a separate capacity/throughput identity; in
+llama.cpp, `-c` is the total budget across all `-np` slots, so two 32K slots
+require `-c 65536 -np 2`.
 
 `UD-Q8_K_XL` is excluded from the one-card lane because its file is already larger than one B70 before KV cache and runtime buffers. `Q8_0` is the intended Q8 fit candidate.
 
@@ -44,7 +52,15 @@ Qwen3.6 27B has 64 layers with conventional attention every fourth layer. With
 16 conventional-attention layers, four KV heads, head dimension 256, and F16
 K/V, the conventional KV allocation is 64 KiB per token, matching the retained
 2 GiB allocation at 32K. The F16 lane therefore fits with roughly 4.3 GiB of
-reported device-memory headroom; Q8 KV is not needed for the requested ceiling.
+reported device-memory headroom; Q8 KV is not needed for the validated 32K
+reference. It is required for the new 100K-or-more stretch target on one
+32 GiB card.
+
+Measured-memory modeling predicts F16 c1/64K and c2/32K can fit. Q8_0 KV is
+predicted to permit c1/100K and probably c1/128K; c2/100K is a no-go, while
+c2/64K is borderline. These are not fit results. The exact estimates, slot
+semantics, stop conditions, and validation order are in
+[`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md).
 
 Validated results under the correctness-qualified default
 `GGML_SYCL_ENABLE_DNN=0`, `GGML_SYCL_ENABLE_OPT=1`:
@@ -69,6 +85,9 @@ The validation sequence remains useful for future runtimes:
 3. A separately labeled 32K F16-KV allocation and calibrated long-context retrieval gate.
 4. Q8_0 KV only for a different capacity target. Treat Q8 KV as a separate quality identity and compare it against the F16-KV oracle.
 5. Optional MTP only after the target-only 32K baseline passes. Use an integrated publisher artifact, or a same-publisher and same-revision target/MTP pair; do not cross-pair converters without tensor and metadata validation, and do not graft the third-party head-only extraction into the baseline.
+6. Optional vision only after the text optimization and context envelope are
+   settled. Use the same-repository, same-revision F16 projector pinned in
+   [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
 
 If full GPU offload fails even with Q8 KV and a smaller microbatch, do not hide that result with CPU layer offload. The product goal is one fast, independent B70 lane, so partial offload is a separate capacity diagnostic rather than a successful configuration.
 
@@ -106,18 +125,28 @@ with no meaningful decode change. Keep DNN-off as the lane default.
 
 Four one-card processes can be used for independent functional or optimization lanes, each with its own source worktree, port, GPU ordinal, and run directory. Official throughput comparisons remain one active model at a time with the other cards idle, unless the result is explicitly labeled as simultaneous multi-service throughput. This avoids host, USB, power, and thermal interference in single-card timing.
 
+The simultaneous four-replica functional smoke passed: all four services were
+resident at 4K with `26,573 MiB` on each card, fully offloaded, and generated
+the same sealed 128-token output concurrently before clean teardown to 43 MiB.
+This proves the process topology, not a four-card performance score. See
+[`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md).
+
 ## Entry points
 
 - Target-only server: [`scripts/serve-target-only.sh`](scripts/serve-target-only.sh)
 - Validation runner: [`scripts/run-validation.sh`](scripts/run-validation.sh)
+- Four-replica functional smoke: [`scripts/run-four-replica-smoke.sh`](scripts/run-four-replica-smoke.sh)
 - Exact emitted-token capture/comparison and 99-interval primary metric: [`scripts/capture-exact-tokens.py`](scripts/capture-exact-tokens.py)
 - Model identity: [`model-manifest.json`](model-manifest.json)
 - Runtime identity: [`runtime-manifest.json`](runtime-manifest.json)
+- Optional future artifact identities: [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json)
 - Short realistic suite: [`repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json`](../../repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json)
 - Calibrated 4K/17K/31K retrieval ladder: [`long-context-suite-v1.json`](long-context-suite-v1.json)
 - Long-context harness: [`scripts/bench-openai-long-context-suite.py`](../../scripts/bench-openai-long-context-suite.py)
 - Result summary: [`data/baseline-summary-20260808.json`](data/baseline-summary-20260808.json)
 - Chronological result note: [`notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`](notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md)
+- Four-replica result: [`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md)
+- Context/concurrency and optional-feature plan: [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md)
 
 The exact-token file is a self-regression oracle for later runtime/kernel/MTP changes; it is not an external proof that Q8_0 reproduces BF16. Do not publish or submit a rate until the model hash, runtime identity, fixed cold suite, native `cache_n=0`, 100 token events/99 intervals, full-offload evidence, clean teardown, and relevant context/quality gate are retained together.
 

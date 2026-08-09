@@ -50,5 +50,17 @@
     "dnn_on": "fast but failed same-runtime temperature-zero replay exactness",
     "dnn_off": "12/12 exact, same short-decode rate class, about 2.8% lower median long-context prefill in one A/B",
     "opt_off_control_tok_s": 5.032735745345515
+  },
+  "four_replica_functional": {
+    "status": "PASS; functional topology only, not a promoted throughput result",
+    "run_directory": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/qwen36-27b-q8_0-four-replica-smoke-20260809T011029Z",
+    "replica_count": 4,
+    "context_size_per_process": 4096,
+    "slots_per_process": 1,
+    "loaded_vram_mib_per_gpu": [26573, 26573, 26573, 26573],
+    "sealed_token_ids_sha256": "e6480d7ef60af9764f6dacb1ff1a37bacdf6dffe8b34c33d1790aed9e46fe769",
+    "oracle_exact_all": true,
+    "clean_teardown_all": true,
+    "artifacts_manifest_sha256": "ec294eb5d456f5680aea902c66d17648fa0a74a3929cf7c604a326a4cbcada81"
   }
 }

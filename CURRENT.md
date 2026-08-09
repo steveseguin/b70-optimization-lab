@@ -16,12 +16,12 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running as of the 2026-08-08 Qwen3.6 27B Q8_0 preflight; all four B70s were
-idle at approximately 43 MiB each. Recheck immediately before any operational
-change.
+running after the 2026-08-08 Qwen3.6 27B Q8_0 four-replica smoke; all four B70s
+returned to 43 MiB. Recheck immediately before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
-on one B70 with a 32K ceiling. MTP and vision are optional later lanes and must
+on one B70. The validated F16-KV reference reaches 32K; the newly selected
+stretch target is 100K to 128K with Q8 KV. MTP and vision are optional later lanes and must
 not be mixed into this baseline. The exact Unsloth artifact is pinned in
 [`experiments/qwen36-27b-q8-gguf-b70/model-manifest.json`](experiments/qwen36-27b-q8-gguf-b70/model-manifest.json)
 and is size/SHA/GGUF-table verified at
@@ -33,11 +33,18 @@ offline-validated launcher/gates are in
 The one-card baseline is now validated: DNN-off/OPT-on reached `15.550257 tok/s`
 median on the 12-prompt 128-token exact suite, and the 4K/17K/31,846-token
 F16-KV ladder passed at a 32,768-token allocation with `28,372 MiB` loaded.
-Q8 KV is unnecessary for the requested ceiling. Keep
+Q8 KV is unnecessary for the validated 32K reference but required for the
+100K-or-more stretch target. Four independent one-GPU processes are the
+selected deployment direction, providing four c1 requests cluster-wide. Keep
 `GGML_SYCL_ENABLE_DNN=0`: DNN-on retained speed but failed immediate and
-suite-level greedy replay exactness. Immediate next actions are a separately
-labeled full-512 performance packet if promotion is wanted, then isolated
-source/kernel optimization lanes; MTP and vision remain optional bonuses.
+suite-level greedy replay exactness. The simultaneous four-replica functional
+smoke also passed: all four 4K services were fully resident at `26,573 MiB`,
+generated the same sealed output concurrently, and returned cleanly to 43 MiB.
+Immediate next actions are a separately labeled full-512 performance packet,
+then isolated source/kernel optimization lanes. After text optimization, test
+the fail-closed context/concurrency ladder documented in the lane: F16 c1/64K
+and c2/32K, then Q8-KV c1 64K to 100K to 128K. MTP is relevant if long context
+forces c1; vision follows the text/context work.
 
 Laguna is paused at the user's request. The August 4--7 Laguna no-drafter
 graph result is diagnostic, not promoted: its benchmark completed
@@ -1640,9 +1647,10 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Select the next model before changing runtime state. Give it a distinct
-   source/worktree identity, artifact namespace, benchmark contract, and lane
-   handoff; do not reuse Laguna flags or result directories implicitly.
+1. Continue the selected target-only Qwen3.6 27B Q8_0 lane. The simultaneous
+   four-process topology now passes; complete the full-512 packet and create
+   isolated one-card optimization worktrees. Do not reuse Laguna
+   flags or result directories implicitly.
 2. Recheck processes, listeners, Git status, device health, memory, and model
    storage before launch. The idle statement above is a closure-time fact, not
    standing authorization.
