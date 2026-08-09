@@ -198,6 +198,7 @@ cards were active. See
 - Context/concurrency and optional-feature plan: [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md)
 - Four-GPU optimization and c2 execution plan: [`notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`](notes/2026-08-08-four-gpu-optimization-and-c2-plan.md)
 - Goal-1 measurement preregistration: [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md)
+- First c2 attestation failure and fix: [`notes/2026-08-09-c2-nonunified-kv-attestation-fix.md`](notes/2026-08-09-c2-nonunified-kv-attestation-fix.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

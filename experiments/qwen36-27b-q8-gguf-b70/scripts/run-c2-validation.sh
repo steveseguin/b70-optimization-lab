@@ -1274,9 +1274,14 @@ runtime_fields = {
     "kv_unified_false": context_value("kv_unified") == "false",
     "two_slot_runtime": bool(slot_matches)
     and slot_matches[-1] == ("2", "32768", "false"),
+    # With non-unified KV, llama.cpp reports the per-sequence cell capacity
+    # followed by n_seq_max/n_stream.  The 4096-MiB total,
+    # n_ctx=65536, n_ctx_seq=32768, and 2/2 sequence gates together attest the
+    # full two-slot allocation; expecting 65536 in this per-sequence field is
+    # incorrect for --no-kv-unified.
     "f16_kv_4096_mib": bool(kv)
     and abs(float(kv[0]) - 4096.0) <= 0.1
-    and kv[1:5] == ("65536", "16", "2", "2")
+    and kv[1:5] == ("32768", "16", "2", "2")
     and kv[5] == "f16"
     and abs(float(kv[6]) - 2048.0) <= 0.1
     and kv[7] == "f16"
