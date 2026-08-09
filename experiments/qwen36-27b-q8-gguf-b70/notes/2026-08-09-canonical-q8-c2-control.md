@@ -79,7 +79,8 @@ Archive SHA-256:
 1. Offline manifest, loader, selector, parser, and lifecycle checks.
 2. A component GPU gate at the real Q8 `ssm_out` weight shape
    `[6144,5120]`, using distinct A/B inputs, both M=2 layouts, both bootstrap
-   orders, and bitwise comparison with separate M=1 calls.
+   orders, and bitwise comparison with separate M=1 calls. This gate now
+   [passes](2026-08-09-canonical-q8-component-gpu-pass.md).
 3. A sealed candidate-runtime-matched c1 oracle for every c2 prompt.
 4. A two-wave four-GPU baseline/candidate crossover that swaps treatment on
    the same cards and proves candidate route activation.

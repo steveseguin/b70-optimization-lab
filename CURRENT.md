@@ -67,9 +67,11 @@ boundary. The forward B tail was same-lane repeatable but differed between GPU
 1 and GPU 3 after the shared token-71 split; card, launch order, readiness age,
 port, and request epoch remain confounded. Reordered Q8 MMVQ and
 recurrent-output DMMV are leading suspects to test, not established causes. The
-immediate bounded action is a default-off combined canonical per-vector Q8
-control with verified dispatch activation and a candidate-runtime-matched
-sealed c1 oracle, followed by a two-wave baseline/candidate card crossover; do not rerun the
+default-off combined canonical per-vector Q8 control now passes its isolated
+real-shape GPU gate with selector-off/on bitwise equality, exact route
+activation, clean teardown, and no device fault. The immediate bounded action
+is a candidate-runtime-matched sealed c1 oracle followed by a two-wave
+selector-off/on card crossover; do not rerun the
 unchanged full formal test or promote an aggregate c2 rate. Parallel timing
 remains diagnostic; performance promotion remains isolated, same-card
 bracketed, and second-card confirmed.
@@ -1683,10 +1685,10 @@ loaded service.
 
 1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
    strategy. The trustworthy short c1 full-512 baseline and c2 fit now exist.
-   The fixed A/B workload matrix is complete. Build and test the default-off
-   canonical per-vector Q8 control, prove its dispatch activation, establish a
-   candidate-runtime-matched sealed c1 oracle, and run a two-wave
-   baseline/candidate card crossover before separating recurrent-output DMMV from flattened
+   The fixed A/B workload matrix is complete, and the default-off canonical
+   per-vector Q8 control passes its isolated real-shape GPU gate. Establish a
+   candidate-runtime-matched sealed c1 oracle and run a two-wave selector-off/on
+   card crossover before separating recurrent-output DMMV from flattened
    multi-column MMVQ. Directly measure a synchronized natural-stop pair as a
    separate relevance gate. Add a held-out prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only

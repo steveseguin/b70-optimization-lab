@@ -128,9 +128,10 @@ causes. Duplicate-A was exact in both slots on two cards and repeated exactly;
 forward A0/B1 reproduced B's first split at token 71 on both cards and both
 waves. Its later tail was stable on each fixed lane but differed across GPU 1
 and GPU 3 after token 71, with card and launch-order effects still confounded.
-The next bounded gate is a default-off combined canonical per-vector Q8 control
-with verified dispatch activation and a candidate-runtime-matched sealed c1
-oracle, followed by a two-wave baseline/candidate card crossover. No aggregate c2 rate is
+The default-off combined canonical per-vector Q8 control now passes its
+isolated real-shape GPU gate with selector-off/on bitwise equality and verified
+dispatch activation. The next bounded gate is a candidate-runtime-matched
+sealed c1 oracle, followed by a two-wave selector-off/on card crossover. No aggregate c2 rate is
 official until that boundary is classified. See
 [`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md).
 
@@ -247,6 +248,7 @@ cards were active. See
 - Goal-1 measurement preregistration: [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md)
 - First c2 attestation failure and fix: [`notes/2026-08-09-c2-nonunified-kv-attestation-fix.md`](notes/2026-08-09-c2-nonunified-kv-attestation-fix.md)
 - Concurrent token-512 failure diagnostic: [`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md)
+- Canonical Q8 component GPU result: [`notes/2026-08-09-canonical-q8-component-gpu-pass.md`](notes/2026-08-09-canonical-q8-component-gpu-pass.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 
