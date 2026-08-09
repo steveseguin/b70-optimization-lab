@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SERVER_PID="$$"
+[[ "$SERVER_PID" =~ ^[1-9][0-9]*$ ]] || {
+  echo "launcher PID is not a positive decimal: $SERVER_PID" >&2
+  exit 2
+}
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 MANIFEST="$ROOT/experiments/qwen36-27b-q8-gguf-b70/model-manifest.json"
 RUNTIME_MANIFEST="${RUNTIME_MANIFEST:-$ROOT/experiments/qwen36-27b-q8-gguf-b70/runtime-manifest.json}"
@@ -28,13 +34,14 @@ LANE_FA_ONEDNN="${LANE_FA_ONEDNN:-1}"
 LANE_FA_ONEDNN_MAX_KV="${LANE_FA_ONEDNN_MAX_KV:-0}"
 LANE_MKL_FA="${LANE_MKL_FA:-1}"
 LANE_SYCL_FLASH_ATTN="${LANE_SYCL_FLASH_ATTN:-1}"
+LANE_Q8_0_C2_CANONICAL_MMVQ="${LANE_Q8_0_C2_CANONICAL_MMVQ-0}"
 FLASH_ATTN="${FLASH_ATTN:-on}"
 CACHE_TYPE_K="${CACHE_TYPE_K:-f16}"
 CACHE_TYPE_V="${CACHE_TYPE_V:-f16}"
 OUT_DIR="${OUT_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/servers}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 LOG="${LOG:-$OUT_DIR/target-only-gpu${GPU_INDEX}-port${PORT}-${STAMP}.log}"
-SERVER_OUTPUT_LOG="${SERVER_OUTPUT_LOG:-$LOG}"
+SERVER_OUTPUT_LOG="${SERVER_OUTPUT_LOG:-${LOG}.stdout}"
 
 source_oneapi() {
   if [[ ! -f /opt/intel/oneapi/setvars.sh ]]; then
@@ -45,6 +52,61 @@ source_oneapi() {
   # shellcheck disable=SC1091
   source /opt/intel/oneapi/setvars.sh --force >/dev/null
   set -u
+}
+
+read_runtime_loader_policy() {
+  python3 - "$RUNTIME_MANIFEST" <<'PY'
+import json
+import sys
+
+try:
+    with open(sys.argv[1]) as stream:
+        manifest = json.load(stream)
+except (OSError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"cannot read runtime loader policy: {exc}")
+
+if "runtime_loader_policy" not in manifest:
+    print("runpath-default")
+    raise SystemExit(0)
+policy = manifest["runtime_loader_policy"]
+if not isinstance(policy, dict):
+    raise SystemExit("runtime manifest runtime_loader_policy must be an object")
+if not (
+    policy.get("mode") == "origin-first"
+    and policy.get("variable") == "LD_LIBRARY_PATH"
+):
+    raise SystemExit(
+        "runtime manifest runtime_loader_policy must declare "
+        'mode="origin-first", variable="LD_LIBRARY_PATH"'
+    )
+print("origin-first")
+PY
+}
+
+configure_runtime_loader_policy() {
+  RUNTIME_LOADER_ORIGIN=""
+  case "$RUNTIME_LOADER_POLICY_MODE" in
+    runpath-default)
+      ;;
+    origin-first)
+      RUNTIME_LOADER_ORIGIN="$(dirname "$LLAMA_SERVER")"
+      if [[ "$RUNTIME_LOADER_ORIGIN" != /* || "$RUNTIME_LOADER_ORIGIN" == "/" || \
+            "$RUNTIME_LOADER_ORIGIN" == *:* || "$RUNTIME_LOADER_ORIGIN" == *$'\n'* || \
+            ! -d "$RUNTIME_LOADER_ORIGIN" ]]; then
+        echo "origin-first runtime loader directory is unsafe or absent: $RUNTIME_LOADER_ORIGIN" >&2
+        return 1
+      fi
+      export LD_LIBRARY_PATH="$RUNTIME_LOADER_ORIGIN${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+      [[ "${LD_LIBRARY_PATH%%:*}" == "$RUNTIME_LOADER_ORIGIN" ]] || {
+        echo "origin-first runtime loader directory did not take precedence" >&2
+        return 1
+      }
+      ;;
+    *)
+      echo "unsupported resolved runtime loader policy: $RUNTIME_LOADER_POLICY_MODE" >&2
+      return 1
+      ;;
+  esac
 }
 
 verify_runtime_bundle() {
@@ -128,6 +190,37 @@ if not isinstance(expected_binary_sha, str) or not sha_re.fullmatch(expected_bin
 if binary_sha != expected_binary_sha:
     fail("llama-server SHA-256 does not match the runtime manifest")
 
+origin = os.path.dirname(binary)
+raw_loader_policy = manifest.get("runtime_loader_policy")
+if raw_loader_policy is None and "runtime_loader_policy" not in manifest:
+    loader_policy_mode = "runpath-default"
+elif not isinstance(raw_loader_policy, dict) or not (
+    raw_loader_policy.get("mode") == "origin-first"
+    and raw_loader_policy.get("variable") == "LD_LIBRARY_PATH"
+):
+    fail(
+        "runtime_loader_policy must declare "
+        'mode="origin-first", variable="LD_LIBRARY_PATH"'
+    )
+else:
+    loader_policy_mode = "origin-first"
+ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
+ld_library_path_first = ld_library_path.split(":", 1)[0] if ld_library_path else None
+if loader_policy_mode == "origin-first" and ld_library_path_first != origin:
+    fail(
+        "origin-first runtime directory is not first in LD_LIBRARY_PATH: "
+        f"expected {origin!r}, observed {ld_library_path_first!r}"
+    )
+loader_policy = {
+    "mode": loader_policy_mode,
+    "variable": "LD_LIBRARY_PATH" if loader_policy_mode == "origin-first" else None,
+    "binary_origin": origin,
+    "ld_library_path_first": ld_library_path_first,
+    "origin_precedence_attested": (
+        ld_library_path_first == origin if loader_policy_mode == "origin-first" else None
+    ),
+}
+
 ldd_text = Path(ldd_path).read_text(errors="replace")
 dependencies = []
 unresolved = []
@@ -174,7 +267,6 @@ sonames = [entry["soname"] for entry in dependencies]
 if len(sonames) != len(set(sonames)):
     fail("ldd returned duplicate dependency sonames")
 
-origin = os.path.dirname(binary)
 expected_origin = {}
 for index, item in enumerate(objects):
     if not isinstance(item, dict):
@@ -234,6 +326,7 @@ report = {
         "size_bytes": os.stat(binary_resolved).st_size,
         "sha256": binary_sha,
     },
+    "loader_policy": loader_policy,
     "dependency_count": len(dependencies),
     "origin_shared_object_count": len(observed_origin),
     "origin_shared_object_sonames": sorted(observed_origin),
@@ -249,6 +342,7 @@ if reference_path:
         "runtime_bundle_schema_version",
         "runtime_manifest_sha256",
         "binary",
+        "loader_policy",
         "dependency_count",
         "origin_shared_object_count",
         "origin_shared_object_sonames",
@@ -285,7 +379,9 @@ if [[ "${1:-}" == "--verify-runtime-bundle" ]]; then
     echo "runtime manifest not found: $RUNTIME_MANIFEST" >&2
     exit 2
   }
+  RUNTIME_LOADER_POLICY_MODE="$(read_runtime_loader_policy)"
   source_oneapi
+  configure_runtime_loader_policy
   verify_runtime_bundle "$2" "$3" "$4" "${5:-}"
   exit 0
 elif (( $# != 0 )); then
@@ -309,7 +405,7 @@ if [[ ! "$LOG_VERBOSITY" =~ ^[3-5]$ ]]; then
   echo "LOG_VERBOSITY must be 3, 4, or 5" >&2
   exit 2
 fi
-for toggle_name in LANE_DNN_ENABLED LANE_OPT_ENABLED KV_UNIFIED CONT_BATCHING LANE_FA_ONEDNN LANE_MKL_FA LANE_SYCL_FLASH_ATTN; do
+for toggle_name in LANE_DNN_ENABLED LANE_OPT_ENABLED KV_UNIFIED CONT_BATCHING LANE_FA_ONEDNN LANE_MKL_FA LANE_SYCL_FLASH_ATTN LANE_Q8_0_C2_CANONICAL_MMVQ; do
   toggle_value="${!toggle_name}"
   if [[ "$toggle_value" != "0" && "$toggle_value" != "1" ]]; then
     echo "$toggle_name must be 0 or 1" >&2
@@ -356,6 +452,50 @@ fi
 EXPECTED_SIZE="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["size_bytes"])' "$MANIFEST")"
 EXPECTED_RUNTIME_SHA256="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["llama_server_sha256"])' "$RUNTIME_MANIFEST")"
 EXPECTED_RUNTIME_VERSION="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["runtime_version_line"])' "$RUNTIME_MANIFEST")"
+RUNTIME_LOADER_POLICY_MODE="$(read_runtime_loader_policy)"
+Q8_0_C2_CANONICAL_CONTROL_STATE="$(python3 - "$RUNTIME_MANIFEST" <<'PY'
+import json
+import sys
+
+name = "GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ"
+try:
+    with open(sys.argv[1]) as stream:
+        manifest = json.load(stream)
+except (OSError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"cannot read runtime manifest for {name}: {exc}")
+
+if "experimental_controls" not in manifest:
+    print("absent")
+    raise SystemExit(0)
+controls = manifest["experimental_controls"]
+if not isinstance(controls, dict):
+    raise SystemExit("runtime manifest experimental_controls must be an object")
+if name not in controls:
+    print("absent")
+    raise SystemExit(0)
+control = controls[name]
+if not isinstance(control, dict):
+    raise SystemExit(f"runtime manifest experimental_controls.{name} must be an object")
+if not (
+    control.get("supported") is True
+    and control.get("default") == "0"
+    and control.get("values") == ["0", "1"]
+):
+    raise SystemExit(
+        f"runtime manifest experimental_controls.{name} must exactly declare "
+        'supported=true, default="0", values=["0","1"]'
+    )
+print("supported")
+PY
+)"
+if [[ "$LANE_Q8_0_C2_CANONICAL_MMVQ" == "1" && "$Q8_0_C2_CANONICAL_CONTROL_STATE" != "supported" ]]; then
+  echo "LANE_Q8_0_C2_CANONICAL_MMVQ=1 requires a supporting runtime manifest" >&2
+  exit 2
+fi
+if [[ "$LANE_Q8_0_C2_CANONICAL_MMVQ" == "1" && "$LANE_OPT_ENABLED" != "1" ]]; then
+  echo "LANE_Q8_0_C2_CANONICAL_MMVQ=1 requires LANE_OPT_ENABLED=1" >&2
+  exit 2
+fi
 if [[ ! -f "$MODEL" ]]; then
   echo "model not found: $MODEL" >&2
   exit 2
@@ -451,6 +591,8 @@ if ss -H -ltn "sport = :$PORT" | grep -q .; then
 fi
 
 source_oneapi
+configure_runtime_loader_policy
+unset GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ GGML_SYCL_PRIORITIZE_DMMV
 
 RUNTIME_GATE_TMP="$(mktemp -d "${TMPDIR:-/tmp}/qwen36-runtime-gate.XXXXXX")"
 RUNTIME_GATE_LDD="$RUNTIME_GATE_TMP/llama-server-ldd-post-oneapi.txt"
@@ -476,6 +618,10 @@ export GGML_SYCL_FA_ONEDNN="$LANE_FA_ONEDNN"
 export GGML_SYCL_FA_ONEDNN_MAX_KV="$LANE_FA_ONEDNN_MAX_KV"
 export GGML_SYCL_ENABLE_MKL_FA="$LANE_MKL_FA"
 export GGML_SYCL_ENABLE_FLASH_ATTN="$LANE_SYCL_FLASH_ATTN"
+if [[ "$Q8_0_C2_CANONICAL_CONTROL_STATE" == "supported" ]]; then
+  export GGML_SYCL_PRIORITIZE_DMMV=0
+  export GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ="$LANE_Q8_0_C2_CANONICAL_MMVQ"
+fi
 
 RUNTIME_VERSION="$($LLAMA_SERVER --version 2>&1)"
 if ! grep -Fqx "$EXPECTED_RUNTIME_VERSION" <<< "$RUNTIME_VERSION"; then
@@ -490,6 +636,32 @@ for log_path in "$LOG" "$SERVER_OUTPUT_LOG"; do
   fi
 done
 mkdir -p "$OUT_DIR" "$(dirname "$LOG")" "$(dirname "$SERVER_OUTPUT_LOG")"
+LOG="$(realpath -m -- "$LOG")"
+SERVER_OUTPUT_LOG="$(realpath -m -- "$SERVER_OUTPUT_LOG")"
+for log_path in "$LOG" "$SERVER_OUTPUT_LOG"; do
+  if [[ "$log_path" != /* || "$log_path" == "/" || "$log_path" == *$'\n'* ]]; then
+    echo "resolved log paths must be non-root absolute paths without newlines: $log_path" >&2
+    exit 2
+  fi
+done
+if [[ "$LOG" == "$SERVER_OUTPUT_LOG" ]]; then
+  echo "LOG and SERVER_OUTPUT_LOG must resolve to distinct files" >&2
+  exit 2
+fi
+if [[ -e "$LOG" && -e "$SERVER_OUTPUT_LOG" && "$LOG" -ef "$SERVER_OUTPUT_LOG" ]]; then
+  echo "LOG and SERVER_OUTPUT_LOG must not be hard links to the same file" >&2
+  exit 2
+fi
+if [[ -e "$SERVER_OUTPUT_LOG" ]]; then
+  if [[ ! -f "$SERVER_OUTPUT_LOG" ]]; then
+    echo "SERVER_OUTPUT_LOG exists but is not a regular file: $SERVER_OUTPUT_LOG" >&2
+    exit 2
+  fi
+  if [[ -s "$SERVER_OUTPUT_LOG" ]]; then
+    echo "SERVER_OUTPUT_LOG must be absent or empty: $SERVER_OUTPUT_LOG" >&2
+    exit 2
+  fi
+fi
 server_cmd=(
   "$LLAMA_SERVER"
   -m "$MODEL_LOAD_PATH"
@@ -546,6 +718,12 @@ fi
   echo "runtime_manifest=$RUNTIME_MANIFEST"
   echo "runtime_manifest_sha256=$(sha256sum "$RUNTIME_MANIFEST" | awk '{print $1}')"
   echo "runtime_bundle_verified=1"
+  echo "runtime_loader_policy=$RUNTIME_LOADER_POLICY_MODE"
+  if [[ "$RUNTIME_LOADER_POLICY_MODE" == "origin-first" ]]; then
+    echo "runtime_loader_origin=$RUNTIME_LOADER_ORIGIN"
+    echo "runtime_loader_origin_precedence=1"
+  fi
+  echo "server_pid=$SERVER_PID"
   echo "server_output_log=$SERVER_OUTPUT_LOG"
   echo "gpu_lease_path=$GPU_LEASE_PATH"
   echo "port_lease_path=$PORT_LEASE_PATH"
@@ -577,6 +755,10 @@ fi
   echo "GGML_SYCL_FA_ONEDNN_MAX_KV=$GGML_SYCL_FA_ONEDNN_MAX_KV"
   echo "GGML_SYCL_ENABLE_MKL_FA=$GGML_SYCL_ENABLE_MKL_FA"
   echo "GGML_SYCL_ENABLE_FLASH_ATTN=$GGML_SYCL_ENABLE_FLASH_ATTN"
+  if [[ "$Q8_0_C2_CANONICAL_CONTROL_STATE" == "supported" ]]; then
+    echo "GGML_SYCL_PRIORITIZE_DMMV=$GGML_SYCL_PRIORITIZE_DMMV"
+    echo "GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ=$GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ"
+  fi
   printf 'argv='
   printf '%q ' "${server_cmd[@]}"
   printf '\n'
@@ -589,9 +771,14 @@ fi
   echo "--- server ---"
 } > "$LOG"
 
+if [[ -e "$SERVER_OUTPUT_LOG" && "$LOG" -ef "$SERVER_OUTPUT_LOG" ]]; then
+  echo "LOG and SERVER_OUTPUT_LOG must not be hard links to the same file" >&2
+  exit 2
+fi
+
 cleanup_runtime_gate_tmp
 trap - EXIT
-if [[ "$SERVER_OUTPUT_LOG" != "$LOG" ]]; then
-  : > "$SERVER_OUTPUT_LOG"
-fi
-exec "${server_cmd[@]}" >> "$SERVER_OUTPUT_LOG" 2>&1
+: > "$SERVER_OUTPUT_LOG"
+exec >> "$SERVER_OUTPUT_LOG" 2>&1
+printf 'QWEN36_SERVER_PROCESS_BINDING pid=%s\n' "$SERVER_PID"
+exec "${server_cmd[@]}"
