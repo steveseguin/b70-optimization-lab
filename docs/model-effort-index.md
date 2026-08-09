@@ -101,6 +101,7 @@ long-context FP8 service work separate from the BF16 bitwise-exact record.
 
 Main entry:
 
+- [adaptive strategy](../experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md)
 - [experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md)
 
 Status: validated baseline lane as of 2026-08-08. The exact target-only

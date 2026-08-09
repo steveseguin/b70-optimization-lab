@@ -5,6 +5,10 @@ four-replica 4K functional topology passes. The next service target is two F16-
 KV 32K slots per card. No localmaxxing performance result is promoted from this
 lane yet.
 
+The durable goal, integrity boundary, adaptive research loop, four-GPU model,
+and recurring subagent roles are in [`STRATEGY.md`](STRATEGY.md). Dated plans
+are replaceable tactical proposals beneath that strategy.
+
 ## Scope
 
 This lane has one primary identity:
@@ -170,6 +174,8 @@ This proves the process topology, not a four-card performance score. See
 - Four-replica result: [`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md)
 - Context/concurrency and optional-feature plan: [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md)
 - Four-GPU optimization and c2 execution plan: [`notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`](notes/2026-08-08-four-gpu-optimization-and-c2-plan.md)
+- Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
+- Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 
 The exact-token file is a self-regression oracle for later runtime/kernel/MTP
 changes; it is not an external proof that Q8_0 reproduces BF16. Do not publish

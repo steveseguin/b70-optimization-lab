@@ -91,6 +91,7 @@ optimization path. It measured `15.550257 tok/s` median on the 12-prompt
 
 Start with:
 
+- `../experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/README.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/data/baseline-summary-20260808.json`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`;
@@ -99,9 +100,11 @@ Start with:
 
 This is not yet a full-512 localmaxxing promotion packet. Keep DNN disabled:
 the DNN-on control retained speed but failed temperature-zero replay exactness.
-The validated reference remains 32K F16 KV. The primary next target is F16
-c2/32K on each of four independent processes, under the rotating parallel-
-screening and isolated-promotion protocol. The optional stretch ladder treats
+The validated reference remains 32K F16 KV. The durable strategy maintains a
+Pareto frontier across prompt processing, decode, context, concurrency,
+quality, and stability, using adaptive research cycles rather than a fixed
+experiment sequence. F16 c2/32K is the current tactical candidate on each of
+four independent processes. The optional stretch ladder treats
 Q8 KV as a separate quality identity and tests c1 at 64K, 100K, and 128K;
 MTP and vision are also separate identities. See
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-context-concurrency-mtp-vision-plan.md`.

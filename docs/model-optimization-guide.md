@@ -296,9 +296,8 @@ Do:
 
 Gemma 26B Q8 lesson:
 
-- same-recipe MTP runs had several-percent spread;
-- no-spec calibration found about `4.4%` p90 pairwise absolute run-median
-  delta;
+- same-recipe MTP runs had `4.409%` p90 pairwise absolute run-median spread;
+- no-spec calibration reduced that measure to `0.577%`;
 - temperature telemetry did not explain it;
 - small single-run wins were not credible without paired analysis.
 

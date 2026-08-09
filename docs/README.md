@@ -195,8 +195,9 @@ promotion packet. The primary next target is four independent processes with
 two F16-KV 32K slots each; parallel discovery and isolated promotion are kept
 as separate evidence classes. MTP, vision, and Q8-KV long context are optional
 later identities, while UD-Q8_K_XL is excluded from the one-card fit target.
-Start with
-[the experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md).
+Start with the
+[adaptive strategy](../experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md) and
+[experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md).
 
 ### Gemma 4 26B Short Decode And Service Lanes
 

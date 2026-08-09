@@ -46,7 +46,9 @@ Immediate next actions are the missing full-512/c2 harness, a separately
 labeled isolated full-512 reference, then fail-closed F16 c2/32K validation and
 four parallel source/kernel screening lanes. Parallel timing is diagnostic;
 promotion remains isolated, same-card bracketed, and second-card confirmed.
-The working protocol is
+The durable authority is
+[`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
+The first replaceable tactical proposal is
 [`the four-GPU optimization and c2 plan`](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md).
 MTP is relevant only if ordinary concurrency is insufficient; vision and the
 Q8-KV long-context stretch follow the text/c2 work.
@@ -1652,21 +1654,26 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Continue the selected target-only Qwen3.6 27B Q8_0 lane. Build the missing
-   full-512/c2 harness, seal the isolated c1 reference, validate F16 c2/32K,
-   then run four rotating optimization worktrees under the documented screening
-   and promotion protocol. Do not reuse Laguna flags or result directories
-   implicitly.
+1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
+   strategy. Begin each research cycle with external scouting, internal history,
+   current bottleneck evidence, and an integrity review; keep only the current
+   cycle tactically detailed. The present first cycle still starts with the
+   missing trustworthy full-512/c2 measurement foundation. Do not reuse Laguna
+   flags or result directories implicitly.
 2. Recheck processes, listeners, Git status, device health, memory, and model
    storage before launch. The idle statement above is a closure-time fact, not
    standing authorization.
-3. Keep Laguna paused and its dynamic M12-to-M1 cutoff rejected. Any Laguna
+3. Schedule a non-operational workspace consolidation before substantially
+   more history accumulates: review the inherited branch name and unpublished
+   commits, make durable remote/integration decisions, compact this authority,
+   and repair stale indexes without deleting chronological notes or patches.
+4. Keep Laguna paused and its dynamic M12-to-M1 cutoff rejected. Any Laguna
    restart requires a new decision and preregistration; the closeout records
    the correctness and stability gates that would come first.
-4. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
+5. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
    Do not reset protected worktrees or relabel default-off experiments as
    promoted records.
-5. Continue to publish only verified new matching LocalMaxxing records after
+6. Continue to publish only verified new matching LocalMaxxing records after
    the applicable cold realistic gate, complete identity capture, and
    correctness pass.
 

@@ -2,8 +2,10 @@
 
 Date: 2026-08-08
 
-Status: approved working plan; the c2 configuration and optimization results
-below remain unvalidated until their stated gates pass.
+Status: retained first tactical proposal. The durable strategy is now
+[`../STRATEGY.md`](../STRATEGY.md); adapt or supersede the sequence below when
+new evidence changes priorities. The c2 configuration and optimization results
+remain unvalidated until their stated gates pass.
 
 ## Decision
 

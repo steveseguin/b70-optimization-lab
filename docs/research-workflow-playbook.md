@@ -240,8 +240,9 @@ Gemma-specific lessons from the Q8 run:
   n-gram/history acceleration, and `cached_tokens=0`.
 - Use the 4-GPU host for same-window A/B and cross-over screens, then confirm
   promising candidates with a clean solo run. The measured no-spec calibration
-  spread was about `4.4%` p90 pairwise absolute run-median delta, so sub-1%
-  changes need paired analysis rather than single-run comparison.
+  spread was `0.577%` p90 pairwise absolute run-median delta, versus `4.409%`
+  for the noisier MTP example. Sub-1% changes still need paired analysis rather
+  than a single-run comparison.
 - Capture thermal/frequency telemetry when investigating variance. The
   2026-07-01 Gemma sweep found no throttle explanation for the spread
   (`77-78 C` active core, `86-90 C` memory, near-max frequency), which is why

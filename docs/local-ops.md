@@ -42,6 +42,54 @@ Keep tasks bounded: provide the target repo, files or lane, expected output, and
 what must not be touched. For active experiments, explicitly say whether Codex
 may stage, commit, push, or only report findings.
 
+## B70 xe recovery policy
+
+Do not reboot automatically and do not treat every stalled process as a device
+wedge.
+
+1. Stop new launches. Preserve the failing run directory and first capture
+   passive process, listener, progress, and journal evidence. Do not start an
+   XPU-SMI or compute-probe loop on a possibly flapping card.
+2. After clients are stopped, allow at least a 60-second bounded quiet period
+   when work may still drain. Recheck passive progress and ownership evidence;
+   do not create a retry storm on a possibly unhealthy driver.
+3. Request graceful workload shutdown. If workers are blocked in the runtime
+   and cannot exit after the chosen bound, preserve that fact before targeted
+   termination. Only after assessing the risk, use at most one bounded active
+   discovery/health probe if it is needed to classify the failure. The existing
+   `scripts/qwen36-xpu-recovery-snapshot.sh` is not passive: even without
+   `--copy-smoke` it makes many XPU-SMI calls across all four cards. Never use
+   it as a polling loop during a suspected wedge.
+4. If the bounded evidence shows a real device-wide/GuC wedge, verify that no
+   process holds the render nodes, the console is still on the `ast` adapter,
+   and no display manager uses xe. Also verify the booted kernel command line
+   retains `xe.disable_display=1`. Then the locally proven recovery is to
+   unbind all four B70s and reload xe. Re-resolve the live BDFs before use
+   rather than assuming the currently recorded topology below:
+
+   ```bash
+   for bdf in 0000:23:00.0 0000:27:00.0 0000:43:00.0 0000:47:00.0; do
+     echo "$bdf" | sudo tee /sys/bus/pci/drivers/xe/unbind >/dev/null
+   done
+   sudo modprobe -r xe
+   sudo modprobe xe
+   ```
+5. After reload, require four-device discovery, expected BDF/UUID mapping,
+   idle VRAM, a small per-card copy/compute smoke, a peer-access check, a
+   representative XCCL/collective check, a known-good generation canary, and a
+   clean new journal window before model work.
+
+Do not use PCI FLR on this stack; prior FLR attempts wedged xe/Level Zero. A
+host reboot is the last resort after evidence capture and failure of the less-
+disruptive path, and requires explicit user authorization. Recovery never
+converts the failed attempt into a valid measurement; start a fresh run with a
+new identity.
+
+Detailed local evidence is in
+`experiments/laguna-s-2.1-xpu-b70/notes/2026-08-04-guc-firmware-wedge-root-cause.md`
+and
+`experiments/laguna-s-2.1-xpu-b70/notes/2026-07-26-topology-explosion-wedged-the-collective-stack.md`.
+
 ## Codex Subagents
 
 Codex should use subagents whenever reasonable and available, especially for
