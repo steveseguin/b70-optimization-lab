@@ -456,6 +456,10 @@ child_main() {
   ' "$RUN_DIR/token-matrix.json" >/dev/null || die "child matrix evidence is invalid"
   result_valid=1
   body_complete=1
+  # Run normal teardown while child_main's local lifecycle state is still in
+  # scope.  Relying on the outer `exit 0` would fire the EXIT trap only after
+  # these locals had been destroyed under `set -u`.
+  child_finish
 }
 
 if [[ "${1:-}" == "--child" ]]; then
