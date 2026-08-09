@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-08**
+Last reviewed: **2026-08-09**
 
 ## Authority And Update Rule
 
@@ -42,10 +42,13 @@ throughput, latency, and fairness gates pass. Keep
 suite-level greedy replay exactness. The simultaneous four-replica functional
 smoke also passed: all four 4K services were fully resident at `26,573 MiB`,
 generated the same sealed output concurrently, and returned cleanly to 43 MiB.
-Immediate next actions are the missing full-512/c2 harness, a separately
-labeled isolated full-512 reference, then fail-closed F16 c2/32K validation and
-four parallel source/kernel screening lanes. Parallel timing is diagnostic;
-promotion remains isolated, same-card bracketed, and second-card confirmed.
+The full-512/c2 measurement foundation is implemented and offline-audited,
+including strict cold timing, external exact canaries, selected-band semantic
+retrieval, runtime/model identity, cleanup, and detached evidence seals. The
+immediate next action is the preregistered four-card functional-only full-512
+wave, followed by a separately labeled isolated full-512 reference and
+fail-closed F16 c2/32K validation. Parallel timing is diagnostic; promotion
+remains isolated, same-card bracketed, and second-card confirmed.
 The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is

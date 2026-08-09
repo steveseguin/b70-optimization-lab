@@ -1,0 +1,82 @@
+{
+  "chat_template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+  "ctx_size": 32768,
+  "output_tokens": 512,
+  "passed": true,
+  "prompt_builder": "scripts/bench-openai-long-context-suite.py",
+  "prompt_builder_sha256": "2286c9fd1ef59136a92a857be2992b31e0ff3bc844c7489239ab8f76f515cf72",
+  "rows": [
+    {
+      "actual_prompt_tokens": 4369,
+      "band": "short",
+      "case_id": "q27-q8-lc-04k-middle",
+      "ctx_size": 32768,
+      "declared_prompt_tokens": 4369,
+      "output_tokens": 512,
+      "passed": true,
+      "prompt_sha256": "c5128b9866383f4a8467938645e2339f09340d1a206130f17bc62ecec80cf369",
+      "total_tokens": 4881
+    },
+    {
+      "actual_prompt_tokens": 4317,
+      "band": "short",
+      "case_id": "q27-q8-c2-04k-b",
+      "ctx_size": 32768,
+      "declared_prompt_tokens": 4317,
+      "output_tokens": 512,
+      "passed": true,
+      "prompt_sha256": "44598c8efa80f75326d3b8d00bb8c24ee960df826de29ab70c2ac6e670af1d73",
+      "total_tokens": 4829
+    },
+    {
+      "actual_prompt_tokens": 17274,
+      "band": "middle",
+      "case_id": "q27-q8-lc-17k-early",
+      "ctx_size": 32768,
+      "declared_prompt_tokens": 17274,
+      "output_tokens": 512,
+      "passed": true,
+      "prompt_sha256": "5438ac7cca1779b293ab4bf6bce9c4264e94ad970bcf2342ac8957d9f311c2ea",
+      "total_tokens": 17786
+    },
+    {
+      "actual_prompt_tokens": 17171,
+      "band": "middle",
+      "case_id": "q27-q8-c2-17k-b",
+      "ctx_size": 32768,
+      "declared_prompt_tokens": 17171,
+      "output_tokens": 512,
+      "passed": true,
+      "prompt_sha256": "7e314fefe4396274e51b429503b776c9b4caeb40d0b6cd16b2ca7127c727e609",
+      "total_tokens": 17683
+    },
+    {
+      "actual_prompt_tokens": 31846,
+      "band": "near32k",
+      "case_id": "q27-q8-lc-31k-middle",
+      "ctx_size": 32768,
+      "declared_prompt_tokens": 31846,
+      "output_tokens": 512,
+      "passed": true,
+      "prompt_sha256": "7774d773648b98c40c39cdfbc80a33403d34273520dff0310248b1ce4ab926fc",
+      "total_tokens": 32358
+    },
+    {
+      "actual_prompt_tokens": 31841,
+      "band": "near32k",
+      "case_id": "q27-q8-c2-31k-b",
+      "ctx_size": 32768,
+      "declared_prompt_tokens": 31841,
+      "output_tokens": 512,
+      "passed": true,
+      "prompt_sha256": "4393d2b5bf2e45760839bb1737786f89cd8ebf7c376a1e114e45ad10ccdd778c",
+      "total_tokens": 32353
+    }
+  ],
+  "suite": "experiments/qwen36-27b-q8-gguf-b70/c2-long-context-suite-v1.json",
+  "suite_sha256": "053523440e4a23d7f772dec5025fe4831ba33c0a8eaba76795e4ee76718860af",
+  "tokenizer": "/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+  "tokenizer_class": "Qwen2Tokenizer",
+  "tokenizer_resolved": "/mnt/fast-ai/llm-cache/hf/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+  "transformers_version": "5.13.1"
+}

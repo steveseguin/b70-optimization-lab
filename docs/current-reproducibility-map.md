@@ -110,6 +110,11 @@ MTP and vision are also separate identities. See
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-context-concurrency-mtp-vision-plan.md`.
 The four-process 4K functional topology is validated; that smoke is not an
 aggregate throughput record and does not validate c2 slots or long context.
+The fail-closed full-512 and synchronized c2 measurement foundation is now
+offline-audited and preregistered in
+`../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-09-goal1-measurement-foundation.md`.
+It is infrastructure, not a new GPU result; the four-card functional wave and
+isolated c1/c2 scorecard remain the next evidence steps.
 
 ## Historical Qwen3.6 27B Optimization Lane
 

@@ -110,6 +110,15 @@ The validation sequence remains useful for future runtimes:
    settled. Use the same-repository, same-revision F16 projector pinned in
    [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
 
+The full-512/c2 measurement foundation is now implemented and offline-tested;
+no c2 fit or performance result is claimed until its GPU packet passes. The
+metric definitions, paired prompt counts, integrity gates, and four-card first
+wave are preregistered in
+[`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md).
+For new full-512 and c2 packets, only a verified detached
+`completion-status.json` is an authoritative PASS; a `run-status.txt` file by
+itself is not completion evidence.
+
 If full GPU offload fails even with Q8 KV and a smaller microbatch, do not hide that result with CPU layer offload. The product goal is one fast, independent B70 lane, so partial offload is a separate capacity diagnostic rather than a successful configuration.
 
 ## Historical evidence
@@ -163,6 +172,11 @@ This proves the process topology, not a four-card performance score. See
 - Validation runner: [`scripts/run-validation.sh`](scripts/run-validation.sh)
 - Four-replica functional smoke: [`scripts/run-four-replica-smoke.sh`](scripts/run-four-replica-smoke.sh)
 - Exact emitted-token capture/comparison and 99-interval primary metric: [`scripts/capture-exact-tokens.py`](scripts/capture-exact-tokens.py)
+- Synchronized exact c2 capture and occupancy proof: [`scripts/capture-simultaneous-c2.py`](scripts/capture-simultaneous-c2.py)
+- Fresh-server c2 validation lifecycle: [`scripts/run-c2-validation.sh`](scripts/run-c2-validation.sh)
+- Four-card Goal-1 functional wave: [`scripts/run-goal1-four-gpu-wave.sh`](scripts/run-goal1-four-gpu-wave.sh)
+- Paired 4K/17K/near-32K c2 suite: [`c2-long-context-suite-v1.json`](c2-long-context-suite-v1.json)
+- Pinned paired-suite calibration: [`data/c2-suite-calibration-v1.json`](data/c2-suite-calibration-v1.json)
 - Model identity: [`model-manifest.json`](model-manifest.json)
 - Runtime identity: [`runtime-manifest.json`](runtime-manifest.json)
 - Optional future artifact identities: [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json)
@@ -174,6 +188,7 @@ This proves the process topology, not a four-card performance score. See
 - Four-replica result: [`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md)
 - Context/concurrency and optional-feature plan: [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md)
 - Four-GPU optimization and c2 execution plan: [`notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`](notes/2026-08-08-four-gpu-optimization-and-c2-plan.md)
+- Goal-1 measurement preregistration: [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

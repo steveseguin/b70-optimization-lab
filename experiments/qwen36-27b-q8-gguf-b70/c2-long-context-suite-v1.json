@@ -1,0 +1,89 @@
+{
+  "suite_id": "qwen36-27b-q8-gguf-b70-c2-long-context-v1",
+  "description": "Paired distinct cold prompts for simultaneous c2 timing and exact sequential-versus-concurrent comparison at short, middle, and near-32K context.",
+  "policy": "Each pair is calibrated with the pinned tokenizer and must be run on explicit slots 0 and 1 with cache_prompt=false. Sequential oracle and concurrent timing use fresh server starts. The 512-token timing identity uses ignore_eos=true and requires prompt plus output to remain within the 32768-token per-slot limit. Natural-stop exact-JSON retrieval remains a separate 128-token quality gate.",
+  "tokenizer_identity": {
+    "repository": "Qwen/Qwen3.6-27B",
+    "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    }
+  },
+  "pairs": [
+    {
+      "band": "short",
+      "cases": [
+        {
+          "id": "q27-q8-lc-04k-middle",
+          "target_prompt_tokens": 3072,
+          "calibrated_prompt_tokens": 4369,
+          "needle_position": "middle",
+          "project_code": "QUARTZ-Q8-04K",
+          "answer_phrase": "QWEN27-Q8-LONG-CONTEXT-QUARTZ-04K",
+          "arithmetic_result": 8011,
+          "sort_order": "blue, green, orange, red"
+        },
+        {
+          "id": "q27-q8-c2-04k-b",
+          "target_prompt_tokens": 3050,
+          "calibrated_prompt_tokens": 4317,
+          "needle_position": "late",
+          "project_code": "EMBER-Q8-C2-04K",
+          "answer_phrase": "QWEN27-Q8-C2-EMBER-04K",
+          "arithmetic_result": 9127,
+          "sort_order": "blue, green, orange, red"
+        }
+      ]
+    },
+    {
+      "band": "middle",
+      "cases": [
+        {
+          "id": "q27-q8-lc-17k-early",
+          "target_prompt_tokens": 12288,
+          "calibrated_prompt_tokens": 17274,
+          "needle_position": "early",
+          "project_code": "LANTERN-Q8-17K",
+          "answer_phrase": "QWEN27-Q8-LONG-CONTEXT-LANTERN-17K",
+          "arithmetic_result": 35527,
+          "sort_order": "blue, green, orange, red"
+        },
+        {
+          "id": "q27-q8-c2-17k-b",
+          "target_prompt_tokens": 12250,
+          "calibrated_prompt_tokens": 17171,
+          "needle_position": "middle",
+          "project_code": "EMBER-Q8-C2-17K",
+          "answer_phrase": "QWEN27-Q8-C2-EMBER-17K",
+          "arithmetic_result": 40219,
+          "sort_order": "blue, green, orange, red"
+        }
+      ]
+    },
+    {
+      "band": "near32k",
+      "cases": [
+        {
+          "id": "q27-q8-lc-31k-middle",
+          "target_prompt_tokens": 23250,
+          "calibrated_prompt_tokens": 31846,
+          "needle_position": "middle",
+          "project_code": "ONYX-Q8-31K",
+          "answer_phrase": "QWEN27-Q8-LONG-CONTEXT-ONYX-31K",
+          "arithmetic_result": 63659,
+          "sort_order": "blue, green, orange, red"
+        },
+        {
+          "id": "q27-q8-c2-31k-b",
+          "target_prompt_tokens": 22000,
+          "calibrated_prompt_tokens": 31841,
+          "needle_position": "late",
+          "project_code": "EMBER-Q8-C2-31K",
+          "answer_phrase": "QWEN27-Q8-C2-EMBER-31K",
+          "arithmetic_result": 72841,
+          "sort_order": "blue, green, orange, red"
+        }
+      ]
+    }
+  ]
+}

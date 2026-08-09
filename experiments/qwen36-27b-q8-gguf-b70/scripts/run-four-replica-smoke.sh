@@ -268,6 +268,7 @@ for gpu in 0 1 2 3; do
   LANE_DNN_ENABLED=0 \
   LANE_OPT_ENABLED=1 \
   LOG="$RUN_DIR/gpu${gpu}/server.identity.log" \
+  SERVER_OUTPUT_LOG="$RUN_DIR/gpu${gpu}/server.stdout.log" \
   OUT_DIR="$RUN_DIR/gpu${gpu}" \
     "$LANE/scripts/serve-target-only.sh" > "$RUN_DIR/gpu${gpu}/server.stdout.log" 2>&1 &
   SERVER_PIDS[gpu]=$!
