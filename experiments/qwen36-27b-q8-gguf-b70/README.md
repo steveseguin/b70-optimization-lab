@@ -1,8 +1,9 @@
 # Qwen3.6 27B Q8_0 GGUF on one B70
 
 Status: one-B70 target-only baseline validated through 32K, and the simultaneous
-four-replica 4K functional topology passes. No localmaxxing performance result
-is promoted from this lane yet.
+four-replica 4K functional topology passes. The next service target is two F16-
+KV 32K slots per card. No localmaxxing performance result is promoted from this
+lane yet.
 
 ## Scope
 
@@ -12,18 +13,22 @@ This lane has one primary identity:
 - text-only, with no multimodal projector;
 - one Intel Arc Pro B70 with 32 GiB VRAM;
 - validated reference context of 32,768 tokens with F16 KV;
-- planned stretch capacity of 100K to 128K with Q8 KV, validation pending;
+- primary next target of two F16-KV 32K slots per card, validation pending;
+- optional later stretch capacity of 100K to 128K with Q8 KV;
 - no MTP, DFlash, n-gram, prompt-cache, or response-cache acceleration.
 
-MTP and vision are optional follow-ups. They must not be mixed into the target-only baseline identity or result packet.
+MTP and vision are optional follow-ups. They must not be mixed into the target-
+only baseline identity or result packet.
 
-The selected deployment direction is four independent one-GPU processes. At
-one slot each this already gives four cluster-wide concurrent requests. A
-second slot per process is a separate capacity/throughput identity; in
-llama.cpp, `-c` is the total budget across all `-np` slots, so two 32K slots
-require `-c 65536 -np 2`.
+The selected deployment direction is four independent one-GPU processes. The
+primary candidate is two slots per process, for up to eight cluster-wide
+requests. This is a separate capacity/throughput identity that still needs to
+pass: in llama.cpp, `-c` is the total budget across all `-np` slots, so two 32K
+slots require `-c 65536 -np 2`.
 
-`UD-Q8_K_XL` is excluded from the one-card lane because its file is already larger than one B70 before KV cache and runtime buffers. `Q8_0` is the intended Q8 fit candidate.
+`UD-Q8_K_XL` is excluded from the one-card lane because its file is already
+larger than one B70 before KV cache and runtime buffers. `Q8_0` is the intended
+Q8 fit candidate.
 
 ## Pinned model
 
@@ -53,13 +58,14 @@ Qwen3.6 27B has 64 layers with conventional attention every fourth layer. With
 K/V, the conventional KV allocation is 64 KiB per token, matching the retained
 2 GiB allocation at 32K. The F16 lane therefore fits with roughly 4.3 GiB of
 reported device-memory headroom; Q8 KV is not needed for the validated 32K
-reference. It is required for the new 100K-or-more stretch target on one
-32 GiB card.
+reference or the primary c2/32K target. It would be required only for the
+optional 100K-or-more stretch target on one 32 GiB card.
 
-Measured-memory modeling predicts F16 c1/64K and c2/32K can fit. Q8_0 KV is
-predicted to permit c1/100K and probably c1/128K; c2/100K is a no-go, while
-c2/64K is borderline. These are not fit results. The exact estimates, slot
-semantics, stop conditions, and validation order are in
+Measured-memory modeling predicts F16 c1/64K and c2/32K can fit. The c2/32K
+shape is now the next target. Q8_0 KV is predicted to permit c1/100K and
+probably c1/128K; those are optional capacity rows, not immediate work. These
+are not fit results. The exact estimates, slot semantics, stop conditions, and
+validation order are in
 [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md).
 
 Validated results under the correctness-qualified default
@@ -80,12 +86,23 @@ Validated results under the correctness-qualified default
 
 The validation sequence remains useful for future runtimes:
 
-1. 4K target-only compatibility smoke with a 4K F16-KV allocation and full GPU offload.
-2. Fixed cold realistic suite through llama.cpp's native streaming endpoint to establish the Q8_0 exact-token regression oracle and conventional 100-event/99-interval baseline speed.
-3. A separately labeled 32K F16-KV allocation and calibrated long-context retrieval gate.
-4. Q8_0 KV only for a different capacity target. Treat Q8 KV as a separate quality identity and compare it against the F16-KV oracle.
-5. Optional MTP only after the target-only 32K baseline passes. Use an integrated publisher artifact, or a same-publisher and same-revision target/MTP pair; do not cross-pair converters without tensor and metadata validation, and do not graft the third-party head-only extraction into the baseline.
-6. Optional vision only after the text optimization and context envelope are
+1. 4K target-only compatibility smoke with a 4K F16-KV allocation and full GPU
+   offload.
+2. Fixed cold realistic suite through llama.cpp's native streaming endpoint to
+   establish the Q8_0 exact-token regression oracle and conventional 100-event/
+   99-interval baseline speed.
+3. A separately labeled 32K F16-KV allocation and calibrated long-context
+   retrieval gate.
+4. A full-512 c1 packet, then simultaneous F16-KV c2/32K fit, exactness,
+   retrieval, turnover, aggregate-rate, latency, and fairness gates.
+5. Q8_0 KV only for an optional larger-context target. Treat Q8 KV as a
+   separate quality identity and compare it against the F16-KV corpus.
+6. Optional MTP only if ordinary c2 does not meet the serving objective. Use an
+   integrated publisher artifact, or a same-publisher and same-revision target/
+   MTP pair; do not cross-pair converters without tensor and metadata
+   validation, and do not graft the third-party head-only extraction into the
+   baseline.
+7. Optional vision only after the text optimization and context envelope are
    settled. Use the same-repository, same-revision F16 projector pinned in
    [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
 
@@ -123,7 +140,12 @@ with no meaningful decode change. Keep DNN-off as the lane default.
 
 ## Four-GPU use
 
-Four one-card processes can be used for independent functional or optimization lanes, each with its own source worktree, port, GPU ordinal, and run directory. Official throughput comparisons remain one active model at a time with the other cards idle, unless the result is explicitly labeled as simultaneous multi-service throughput. This avoids host, USB, power, and thermal interference in single-card timing.
+Four one-card processes will be used for independent functional or optimization
+lanes, each with its own source worktree, build, port, GPU ordinal, and run
+directory. Parallel runs are screening or aggregate-service evidence. Official
+single-card throughput comparisons remain isolated, same-card bracketed, and
+confirmed on a second card. The working protocol is in
+[`notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`](notes/2026-08-08-four-gpu-optimization-and-c2-plan.md).
 
 The simultaneous four-replica functional smoke passed: all four services were
 resident at 4K with `26,573 MiB` on each card, fully offloaded, and generated
@@ -147,8 +169,13 @@ This proves the process topology, not a four-card performance score. See
 - Chronological result note: [`notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`](notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md)
 - Four-replica result: [`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md)
 - Context/concurrency and optional-feature plan: [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md)
+- Four-GPU optimization and c2 execution plan: [`notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`](notes/2026-08-08-four-gpu-optimization-and-c2-plan.md)
 
-The exact-token file is a self-regression oracle for later runtime/kernel/MTP changes; it is not an external proof that Q8_0 reproduces BF16. Do not publish or submit a rate until the model hash, runtime identity, fixed cold suite, native `cache_n=0`, 100 token events/99 intervals, full-offload evidence, clean teardown, and relevant context/quality gate are retained together.
+The exact-token file is a self-regression oracle for later runtime/kernel/MTP
+changes; it is not an external proof that Q8_0 reproduces BF16. Do not publish
+or submit a rate until the model hash, runtime identity, fixed cold suite,
+native `cache_n=0`, 100 token events/99 intervals, full-offload evidence, clean
+teardown, and relevant context/quality gate are retained together.
 
 The 128-token fixed suite is the bring-up and regression gate. A promotable
 performance packet additionally needs TTFT, request-wall throughput, and the

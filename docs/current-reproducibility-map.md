@@ -94,13 +94,16 @@ Start with:
 - `../experiments/qwen36-27b-q8-gguf-b70/README.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/data/baseline-summary-20260808.json`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`;
-- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-replica-functional-smoke.md`.
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-replica-functional-smoke.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`.
 
 This is not yet a full-512 localmaxxing promotion packet. Keep DNN disabled:
 the DNN-on control retained speed but failed temperature-zero replay exactness.
-The validated reference remains 32K F16 KV. The planned stretch ladder treats
+The validated reference remains 32K F16 KV. The primary next target is F16
+c2/32K on each of four independent processes, under the rotating parallel-
+screening and isolated-promotion protocol. The optional stretch ladder treats
 Q8 KV as a separate quality identity and tests c1 at 64K, 100K, and 128K;
-ordinary c2 concurrency, MTP, and vision are also separate identities. See
+MTP and vision are also separate identities. See
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-context-concurrency-mtp-vision-plan.md`.
 The four-process 4K functional topology is validated; that smoke is not an
 aggregate throughput record and does not validate c2 slots or long context.

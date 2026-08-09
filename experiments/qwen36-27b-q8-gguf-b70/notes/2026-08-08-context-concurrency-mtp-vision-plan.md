@@ -12,8 +12,10 @@ be judged only after long-context and ordinary server-slot concurrency are
 measured.
 
 This changes the future capacity target, not the completed baseline result:
-32K F16 KV remains the validated reference, while 100K or more is now a stretch
-goal under a distinct Q8-KV identity.
+32K F16 KV remains the validated reference. The immediate serving target is now
+two F16-KV 32K slots per card. A 100K-or-more Q8-KV lane remains an optional
+stretch goal rather than immediate work. The detailed execution order is in
+[`2026-08-08-four-gpu-optimization-and-c2-plan.md`](2026-08-08-four-gpu-optimization-and-c2-plan.md).
 
 ## Slot semantics
 
@@ -73,16 +75,19 @@ token-for-token equality with F16 KV.
 2. Prove that four independent `np=1`, 4K services can be resident together,
    fully offloaded, deterministic against one common oracle, and cleanly torn
    down. Do not treat simultaneous rates as isolated single-card scores.
-3. Establish Q8-KV behavior at one slot/32K, including the expected 1,088 MiB KV
-   allocation, self-replay, retrieval, and quality gates.
-4. Validate F16 one-slot/64K and simultaneous two-slot/32K. For two slots, fill
+3. Validate simultaneous F16 two-slot/32K. For two slots, fill
    both concurrently; two sequential requests do not prove the allocation or
    scheduler behavior.
-5. Climb Q8 one-slot capacity through 64K, 100K, then 128K. Stop at the first
+4. Complete the four-GPU text optimization plan, then choose whether ordinary
+   c2 concurrency already meets the serving objective.
+5. Optionally establish Q8-KV behavior at one slot/32K, including the expected
+   1,088 MiB allocation, self-replay, retrieval, and quality gates.
+6. If longer context still matters, climb Q8 one-slot capacity through 64K,
+   100K, then 128K. Stop at the first
    failed fit, quality, or device-health gate.
-6. Test Q8 two-slot/32K, then the borderline two-slot/64K shape. Do not attempt
-   the modeled no-go rows.
-7. Compare the resulting workload choices: four cluster-wide 100K/128K c1
+7. Optionally test Q8 two-slot/32K, then the borderline two-slot/64K shape. Do
+   not attempt the modeled no-go rows.
+8. Compare the resulting workload choices: four cluster-wide 100K/128K c1
    requests, or up to eight shorter requests using c2. Choose by aggregate
    throughput and latency, not slot count alone.
 

@@ -110,8 +110,10 @@ tok/s` median and the full 32K F16-KV retrieval ladder at `28,372 MiB` loaded;
 no full-512 throughput result is promoted yet. The historically recorded Q8_0 family result of `15.275 tok/s`
 at p512/n128 is only a trend anchor because its raw evidence, revision, and
 binary were not retained. F16 KV is validated; Q8 KV is a separate fallback
-quality identity and is unnecessary for the requested 32K ceiling. MTP and
-vision remain optional later lanes.
+quality identity and is unnecessary for the requested 32K ceiling. The primary
+next target is F16 c2/32K on each of four independent one-GPU processes, using
+parallel screening but isolated same-card promotion. MTP and vision remain
+optional later lanes.
 
 ### Qwen3.6 27B INT4 AutoRound On B70
 

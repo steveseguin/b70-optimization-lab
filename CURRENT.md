@@ -20,9 +20,10 @@ running after the 2026-08-08 Qwen3.6 27B Q8_0 four-replica smoke; all four B70s
 returned to 43 MiB. Recheck immediately before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
-on one B70. The validated F16-KV reference reaches 32K; the newly selected
-stretch target is 100K to 128K with Q8 KV. MTP and vision are optional later lanes and must
-not be mixed into this baseline. The exact Unsloth artifact is pinned in
+on one B70. The validated F16-KV reference reaches 32K; the next service target
+is two F16-KV 32K slots per card, using all four B70s as independent
+optimization lanes. Q8-KV 100K--128K capacity, MTP, and vision are optional
+later lanes and must not be mixed into this baseline. The exact Unsloth artifact is pinned in
 [`experiments/qwen36-27b-q8-gguf-b70/model-manifest.json`](experiments/qwen36-27b-q8-gguf-b70/model-manifest.json)
 and is size/SHA/GGUF-table verified at
 `/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf`. The internal
@@ -33,18 +34,22 @@ offline-validated launcher/gates are in
 The one-card baseline is now validated: DNN-off/OPT-on reached `15.550257 tok/s`
 median on the 12-prompt 128-token exact suite, and the 4K/17K/31,846-token
 F16-KV ladder passed at a 32,768-token allocation with `28,372 MiB` loaded.
-Q8 KV is unnecessary for the validated 32K reference but required for the
-100K-or-more stretch target. Four independent one-GPU processes are the
-selected deployment direction, providing four c1 requests cluster-wide. Keep
+Q8 KV is unnecessary for the validated 32K reference or planned c2/32K target.
+Four independent one-GPU processes are the selected deployment direction,
+with c2 offering up to eight requests cluster-wide if its fit, exactness,
+throughput, latency, and fairness gates pass. Keep
 `GGML_SYCL_ENABLE_DNN=0`: DNN-on retained speed but failed immediate and
 suite-level greedy replay exactness. The simultaneous four-replica functional
 smoke also passed: all four 4K services were fully resident at `26,573 MiB`,
 generated the same sealed output concurrently, and returned cleanly to 43 MiB.
-Immediate next actions are a separately labeled full-512 performance packet,
-then isolated source/kernel optimization lanes. After text optimization, test
-the fail-closed context/concurrency ladder documented in the lane: F16 c1/64K
-and c2/32K, then Q8-KV c1 64K to 100K to 128K. MTP is relevant if long context
-forces c1; vision follows the text/context work.
+Immediate next actions are the missing full-512/c2 harness, a separately
+labeled isolated full-512 reference, then fail-closed F16 c2/32K validation and
+four parallel source/kernel screening lanes. Parallel timing is diagnostic;
+promotion remains isolated, same-card bracketed, and second-card confirmed.
+The working protocol is
+[`the four-GPU optimization and c2 plan`](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md).
+MTP is relevant only if ordinary concurrency is insufficient; vision and the
+Q8-KV long-context stretch follow the text/c2 work.
 
 Laguna is paused at the user's request. The August 4--7 Laguna no-drafter
 graph result is diagnostic, not promoted: its benchmark completed
@@ -1647,10 +1652,11 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Continue the selected target-only Qwen3.6 27B Q8_0 lane. The simultaneous
-   four-process topology now passes; complete the full-512 packet and create
-   isolated one-card optimization worktrees. Do not reuse Laguna
-   flags or result directories implicitly.
+1. Continue the selected target-only Qwen3.6 27B Q8_0 lane. Build the missing
+   full-512/c2 harness, seal the isolated c1 reference, validate F16 c2/32K,
+   then run four rotating optimization worktrees under the documented screening
+   and promotion protocol. Do not reuse Laguna flags or result directories
+   implicitly.
 2. Recheck processes, listeners, Git status, device health, memory, and model
    storage before launch. The idle statement above is a closure-time fact, not
    standing authorization.

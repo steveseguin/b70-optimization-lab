@@ -191,7 +191,9 @@ The current lane is the target-only, text-only Unsloth Q8_0 GGUF on one B70
 with a 32K context ceiling. The artifact is pinned and verified on USB; the
 DNN-off baseline passed the 12-prompt exact suite at `15.550 tok/s` median and
 the full 32K F16-KV retrieval gate. This is not yet a full-512 localmaxxing
-promotion packet. MTP and vision are optional
+promotion packet. The primary next target is four independent processes with
+two F16-KV 32K slots each; parallel discovery and isolated promotion are kept
+as separate evidence classes. MTP, vision, and Q8-KV long context are optional
 later identities, while UD-Q8_K_XL is excluded from the one-card fit target.
 Start with
 [the experiment lane](../experiments/qwen36-27b-q8-gguf-b70/README.md).
