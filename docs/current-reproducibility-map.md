@@ -112,19 +112,25 @@ F16 c2/32K now has a measured one-card fit at `30,570 MiB` loaded with
 forced streams contain the complete correct answer prefixes, while later
 sequential natural-stop probes pass; a synchronized natural-stop pair is not
 yet measured. Its forced-512 cross-mode gate fails only beyond those answer
-prefixes: prompt reversal moved the alternate continuation with slot 1,
-localizing a column-sensitive M=2 numerical path. Reordered Q8 MMVQ and
-recurrent-output DMMV are leading suspects to test, not established causes. A
-c2 performance score is therefore not promoted. The optional stretch ladder
+prefixes: prompt reversal moved the alternate continuation with slot 1. A
+replicated four-card compact matrix then made duplicate-B exact in both slots
+while swapped B+A matched the historical A/slot-1 stream prefix on two cards
+through generated token 128, including the 33-token divergent suffix after the
+95-token common
+prefix. This establishes replicated workload-sensitive, slot-1-associated
+forced-tail behavior; reordered Q8 MMVQ and recurrent-output DMMV are leading
+suspects to test, not established causes. A c2 performance score is therefore
+not promoted. The optional stretch ladder
 treats Q8 KV as a separate quality
 identity and tests c1 at 64K, 100K, and 128K; MTP and vision are also separate
 identities. See
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-context-concurrency-mtp-vision-plan.md`.
 
 The four-process 4K topology and later full-512 four-band functional wave are
-validated, but their concurrent timings remain diagnostic. The next evidence
-step is the bounded duplicate-prompt c2 column test, followed by narrow
-recurrent-output DMMV and multi-column MMVQ controls. See
+validated, but their concurrent timings remain diagnostic. The compact c2
+matrix is also sealed diagnostic evidence. The next evidence step is
+duplicate-A plus a fresh forward-order replication, followed by a canonical
+per-vector Q8 control and then narrower DMMV/MMVQ controls as warranted. See
 `../experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json`
 and
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`.

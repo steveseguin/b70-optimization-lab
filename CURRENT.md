@@ -16,7 +16,7 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-09 reversed-order Qwen3.6 27B Q8 c2 diagnostic; all
+running after the 2026-08-09 four-GPU Qwen3.6 27B Q8 compact c2 matrix; all
 four B70s returned to 43 MiB. Recheck immediately before any operational
 change.
 
@@ -54,13 +54,19 @@ external canaries are exact. A synchronized natural-stop pair remains
 unmeasured. The strict forced-512 c1/c2 comparison is blocked: when EOS is
 suppressed, the stream in slot 1 diverges only after the complete answer prefix.
 Reversing the prompts moved the failure to the other prompt while it stayed in
-slot 1. This is a column-sensitive M=2 numerical-path diagnostic, with no
-observed corruption in the answer prefixes. Reordered Q8 MMVQ and
+slot 1. The replicated four-card compact matrix then found duplicate-B exact in
+both slots on two cards, while swapped B+A matched the historical A/slot-1
+stream prefix through generated token 128, including its 33-token
+divergent suffix, on two other cards. This rules out a simple
+unconditional slot-1 failure and establishes replicated workload-sensitive,
+slot-1-associated forced-tail behavior, with no observed corruption before
+the separately measured answer boundaries. Reordered Q8 MMVQ and
 recurrent-output DMMV are leading suspects to test, not established causes. The
-immediate bounded action is a 128-token duplicate-prompt c2 test, followed by
-narrow per-column Q8 controls; do not rerun the unchanged full formal test or
-promote an aggregate c2 rate. Parallel timing remains diagnostic; performance
-promotion remains isolated, same-card bracketed, and second-card confirmed.
+immediate bounded action is duplicate-A plus fresh forward-order replication,
+then the canonical per-vector Q8 control if warranted; do not rerun the
+unchanged full formal test or promote an aggregate c2 rate. Parallel timing
+remains diagnostic; performance promotion remains isolated, same-card
+bracketed, and second-card confirmed.
 The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
@@ -1671,10 +1677,11 @@ loaded service.
 
 1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
    strategy. The trustworthy short c1 full-512 baseline and c2 fit now exist.
-   First classify the slot-1 forced-post-EOS divergence with the bounded
-   duplicate-prompt test and directly measure a synchronized natural-stop pair,
-   then isolate recurrent-output DMMV versus flattened multi-column MMVQ before
-   performance work. Add a held-out prompt that
+   First complete the fixed A/B workload matrix with duplicate-A and fresh
+   forward-order cross-card replicates. Then, if warranted, test the canonical
+   per-vector Q8 control before separating recurrent-output DMMV from flattened
+   multi-column MMVQ. Directly measure a synchronized natural-stop pair as a
+   separate relevance gate. Add a held-out prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only
    on forcing short JSON answers past EOS. Do not reuse Laguna flags or result
    directories implicitly.

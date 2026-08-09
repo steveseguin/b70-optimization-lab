@@ -77,7 +77,7 @@
     },
     "forced_512_cross_mode_exactness": {
       "passed": false,
-      "classification": "slot1_or_second_column_divergence_beyond_separately_measured_natural_eos_boundary",
+      "classification": "replicated_workload_sensitive_slot1_associated_forced_tail_divergence_beyond_separately_measured_natural_stop_boundary",
       "forward": {
         "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-formal-c2-gpu0-short-diag-20260809T171516.435188879Z",
         "slot0_case": "q27-q8-lc-04k-middle",
@@ -99,6 +99,34 @@
         "sequential_natural_probe_eos_generated_token": 95,
         "result_sha256": "55fd86dc97087689d24dcf0e546296a01bfe82f4748b0e1a1b71ebdc80645618",
         "artifact_manifest_sha256": "a05aec67deedbb6dcd3cc1a0d7ef1a75f60ab6a1f172b5aeb9bb489e0f7413af"
+      },
+      "compact_matrix": {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-c2-token-matrix-four-gpu-20260809T190254.454934782Z",
+        "evidence_class": "diagnostic-only",
+        "performance_promotable": false,
+        "replicates_per_scenario": 2,
+        "duplicate_b": {
+          "gpus": [0, 2],
+          "slot0_exact_tokens": 128,
+          "slot1_exact_tokens": 128,
+          "cross_slot_exact": true,
+          "cross_gpu_repeat_exact": true
+        },
+        "swap_b0_a1": {
+          "gpus": [1, 3],
+          "b_slot0_exact_tokens": 128,
+          "a_slot1_common_prefix_tokens": 95,
+          "a_slot1_first_divergent_generated_token": 96,
+          "a_slot1_observed_token": 90,
+          "a_slot1_expected_c1_token": 71093,
+          "a_slot1_historical_m2_prefix_exact_tokens": 128,
+          "cross_gpu_repeat_exact": true
+        },
+        "potential_answer_prefix_corruption": false,
+        "interpretation": "Duplicate-B exactness rules out an unconditional slot-1 divergence. Heterogeneous B+A matches the historical A/slot-1 stream prefix through token 128, including the 33-token divergent suffix after LCP95. This is replicated workload-sensitive, slot-1-associated forced-tail behavior; prompt-versus-companion causality, Q8 kernel causality, and synchronized natural-stop parity remain unproven.",
+        "wave_summary_sha256": "a676c58ca0f56ba3d10c3049643ca900d386de0fcdc08390c203701da69b4733",
+        "artifact_manifest_sha256": "2f4a3128c0b902c60810770cb8a652de2ffebbd0f53c4e21742487fdecf6b76d",
+        "completion_status_sha256": "acb13c4a382bd1b0b1492cd74ea1d73450017748530bd510363e820c1e768f0b"
       }
     },
     "m2_occupancy": {
@@ -111,5 +139,5 @@
     "official_performance_result": null,
     "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
   },
-  "next_gate": "Run synchronized duplicate-B and natural-stop c2 diagnostics, then isolate the column-sensitive M=2 numerical path before performance promotion. Reordered Q8 MMVQ and recurrent-output DMMV are leading suspects, not established causes. Add a held-out naturally sustained 512-token serving challenge."
+  "next_gate": "Run synchronized duplicate-A plus a fresh forward-order replication to complete the fixed A/B pairing matrix. Then test a canonical per-vector Q8 control if the result warrants source isolation. Reordered Q8 MMVQ and recurrent-output DMMV are leading suspects, not established causes. Separately add synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge."
 }

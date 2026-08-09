@@ -5,8 +5,13 @@ four-replica 4K topology and the four-band full-512 functional wave both pass.
 The official isolated short full-512 c1 baseline also passes and is reproduced
 exactly. Two F16-KV 32K slots fit on one card; synchronized forced streams retain
 the complete correct answer prefixes and later sequential natural-stop probes
-pass. The strict forced-post-EOS c1/c2 exactness gate is blocked by a slot-1
-numerical divergence, and a synchronized natural-stop pair is still unmeasured.
+pass. The strict c1/c2 exactness gate is blocked by replicated
+workload-sensitive, slot-1-associated behavior only in the forced continuation
+beyond a separately measured sequential natural-stop boundary. A four-card
+compact matrix made duplicate-B exact in both slots while swapped
+B+A matched the historical A/slot-1 stream prefix through generated token 128
+on two cards. A synchronized
+natural-stop pair is still unmeasured.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -110,10 +115,15 @@ pair has not yet been measured. The forced 512-token comparison intentionally
 suppresses EOS. In forward order slot 1 diverged from M=1 at token 71, after the
 answer boundary later measured at token 70; after prompt reversal slot 1
 diverged at token 96, after the other prompt's measured boundary at token 95,
-while slot 0 became 512/512 exact. This localizes the strict failure to a
-column-sensitive M=2 numerical path, not to prompt B or SSE loss. Reordered Q8
-MMVQ and recurrent-output DMMV are leading suspects to test, not established
-causes. No aggregate c2 rate is official until that boundary is classified. See
+while slot 0 became 512/512 exact. A later four-GPU 128-token matrix matched
+the historical A/slot-1 stream prefix through token 128 on two cards, including
+the 33-token divergent suffix, while duplicate-B was 128/128 c1-exact
+in both slots on two other cards. This rules out a simple unconditional slot-1
+failure and establishes replicated workload-sensitive, slot-1-associated
+forced-tail behavior, not prompt B or SSE loss. Reordered Q8 MMVQ and
+recurrent-output DMMV are leading suspects to test, not established
+causes. Duplicate-A plus fresh forward-order replication is the next bounded
+gate. No aggregate c2 rate is official until that boundary is classified. See
 [`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md).
 
 The validation sequence remains useful for future runtimes:
