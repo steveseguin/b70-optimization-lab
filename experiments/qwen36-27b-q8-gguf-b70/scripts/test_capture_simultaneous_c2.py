@@ -504,6 +504,31 @@ class ConcurrentAggregateGateTests(unittest.TestCase):
         self.assertFalse(result["intrinsic_gate"]["passed"])
         self.assertEqual(return_code, 1)
 
+    def test_missing_concurrent_endpoint_is_retained_and_fails_closed(self) -> None:
+        rows = self.passing_rows()
+        rows[0].update({"case_id": "case-0", "slot_id": 0})
+        rows[1].update({"case_id": "case-1", "slot_id": 1})
+        rows[0]["passed"] = False
+        rows[0]["t512_perf_s"] = None
+        rows[0]["sustained_metric"]["tok_s"] = None
+        return_code, result = self.run_concurrent(rows)
+        self.assertEqual(return_code, 1)
+        self.assertFalse(result["intrinsic_gate"]["timing_endpoints_present"])
+        self.assertFalse(result["intrinsic_gate"]["overlap_passed"])
+        self.assertFalse(result["intrinsic_gate"]["passed"])
+        self.assertFalse(result["aggregate"]["timing_endpoints_present"])
+        self.assertEqual(
+            result["aggregate"]["missing_timing_endpoints"],
+            [
+                {
+                    "case_id": rows[0]["case_id"],
+                    "slot_id": rows[0].get("slot_id"),
+                    "missing": ["t512_perf_s"],
+                }
+            ],
+        )
+        self.assertIsNone(result["aggregate"]["aggregate_tok_s_1_512_intervals"])
+
     def test_serial_decode_windows_fail_overlap_gate(self) -> None:
         rows = self.passing_rows()
         rows[0].update(

@@ -8,6 +8,7 @@ import hashlib
 import http.client
 import importlib.util
 import json
+import math
 import socket
 import threading
 import time
@@ -27,6 +28,14 @@ def is_json_integer(value: Any) -> bool:
 
 def integer_equals(value: Any, expected: int) -> bool:
     return is_json_integer(value) and value == expected
+
+
+def is_finite_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+    )
 
 
 def is_token_id(value: Any) -> bool:
@@ -1061,6 +1070,7 @@ def main() -> int:
 
     aggregate: dict[str, Any] | None = None
     overlap_passed = True
+    timing_endpoints_present = True
     predicted_delta = (
         metrics_after_streams["tokens_predicted_total"]
         - metrics_before["tokens_predicted_total"]
@@ -1085,36 +1095,74 @@ def main() -> int:
         t1s = [row["t1_perf_s"] for row in rows]
         t100s = [row["t100_perf_s"] for row in rows]
         t512s = [row["t512_perf_s"] for row in rows]
-        if not all(isinstance(value, (int, float)) for value in t1s + t100s + t512s):
-            raise RuntimeError("missing concurrent timing endpoint")
         send_skew_s = max(starts) - min(starts)
-        broad_decode_overlap = max(t100s) < min(t512s)
-        both_decode_overlap_s = min(t512s) - max(t1s)
-        conventional_window_s = max(t512s) - min(t1s)
-        wall_s = max(ends) - barrier_release_perf_s  # type: ignore[operator]
-        pp_wall_s = max(t1s) - barrier_release_perf_s  # type: ignore[operator]
-        sustained_rates = [row["sustained_metric"]["tok_s"] for row in rows]
-        aggregate = {
-            "barrier_release_perf_s": barrier_release_perf_s,
-            "send_skew_s": send_skew_s,
-            "send_skew_limit_s": 0.025,
-            "broad_decode_overlap": broad_decode_overlap,
-            "both_decode_overlap_s": both_decode_overlap_s,
-            "conventional_decode_window_s": conventional_window_s,
-            "aggregate_tok_s_1_512_intervals": 1022 / conventional_window_s,
-            "request_wall_s": wall_s,
-            "aggregate_full_512_wall_tok_s": 1024 / wall_s,
-            "aggregate_pp_wall_s": pp_wall_s,
-            "aggregate_prompt_tok_s_wall": sum(
-                row["prompt_tokens"] for row in rows
+        timing_endpoints_present = all(
+            is_finite_number(value) for value in t1s + t100s + t512s
+        )
+        missing_timing_endpoints = [
+            {
+                "case_id": row["case_id"],
+                "slot_id": row["slot_id"],
+                "missing": [
+                    name
+                    for name in ("t1_perf_s", "t100_perf_s", "t512_perf_s")
+                    if not is_finite_number(row.get(name))
+                ],
+            }
+            for row in rows
+            if any(
+                not is_finite_number(row.get(name))
+                for name in ("t1_perf_s", "t100_perf_s", "t512_perf_s")
             )
-            / pp_wall_s,
-            "fairness_min_over_max": min(sustained_rates) / max(sustained_rates),
-        }
-        overlap_passed = send_skew_s <= 0.025 and broad_decode_overlap
+        ]
+        if timing_endpoints_present:
+            broad_decode_overlap = max(t100s) < min(t512s)
+            both_decode_overlap_s = min(t512s) - max(t1s)
+            conventional_window_s = max(t512s) - min(t1s)
+            wall_s = max(ends) - barrier_release_perf_s  # type: ignore[operator]
+            pp_wall_s = max(t1s) - barrier_release_perf_s  # type: ignore[operator]
+            sustained_rates = [row["sustained_metric"]["tok_s"] for row in rows]
+            aggregate = {
+                "barrier_release_perf_s": barrier_release_perf_s,
+                "send_skew_s": send_skew_s,
+                "send_skew_limit_s": 0.025,
+                "timing_endpoints_present": True,
+                "missing_timing_endpoints": [],
+                "broad_decode_overlap": broad_decode_overlap,
+                "both_decode_overlap_s": both_decode_overlap_s,
+                "conventional_decode_window_s": conventional_window_s,
+                "aggregate_tok_s_1_512_intervals": 1022 / conventional_window_s,
+                "request_wall_s": wall_s,
+                "aggregate_full_512_wall_tok_s": 1024 / wall_s,
+                "aggregate_pp_wall_s": pp_wall_s,
+                "aggregate_prompt_tok_s_wall": sum(
+                    row["prompt_tokens"] for row in rows
+                )
+                / pp_wall_s,
+                "fairness_min_over_max": min(sustained_rates) / max(sustained_rates),
+            }
+            overlap_passed = send_skew_s <= 0.025 and broad_decode_overlap
+        else:
+            aggregate = {
+                "barrier_release_perf_s": barrier_release_perf_s,
+                "send_skew_s": send_skew_s,
+                "send_skew_limit_s": 0.025,
+                "timing_endpoints_present": False,
+                "missing_timing_endpoints": missing_timing_endpoints,
+                "broad_decode_overlap": None,
+                "both_decode_overlap_s": None,
+                "conventional_decode_window_s": None,
+                "aggregate_tok_s_1_512_intervals": None,
+                "request_wall_s": None,
+                "aggregate_full_512_wall_tok_s": None,
+                "aggregate_pp_wall_s": None,
+                "aggregate_prompt_tok_s_wall": None,
+                "fairness_min_over_max": None,
+            }
+            overlap_passed = False
         decode_occupancy["passed"] = (
             predicted_delta == 1024
-            and isinstance(predicted_per_decode, (int, float))
+            and is_finite_number(predicted_per_decode)
             and predicted_per_decode >= 1.5
         )
         overlap_passed = overlap_passed and bool(decode_occupancy["passed"])
@@ -1165,6 +1213,7 @@ def main() -> int:
                     canary.get("passed") is True for canary in baseline_canaries
                 )
             ),
+            "timing_endpoints_present": timing_endpoints_present,
             "overlap_passed": overlap_passed,
         },
         "oracle_comparison": comparison,
