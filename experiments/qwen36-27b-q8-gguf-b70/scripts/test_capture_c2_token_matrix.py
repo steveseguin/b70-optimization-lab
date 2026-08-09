@@ -6,6 +6,8 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -28,6 +30,7 @@ def load_script(filename: str, module_name: str):
 
 
 MODULE = load_script("capture-c2-token-matrix.py", "capture_c2_token_matrix")
+WAVE_WRAPPER = SCRIPT_DIR / "run-c2-token-matrix-four-gpu-wave.sh"
 
 
 def prepared(case_id: str, slot_id: int, prompt_n: int = 4_000) -> dict:
@@ -270,6 +273,15 @@ class ScenarioClassificationTests(unittest.TestCase):
         self.assertEqual(result["classification"], "VALID_EXACT_TO_C1")
         self.assertAlmostEqual(result["synchronization"]["request_skew_s"], 0.001)
 
+    def test_forward_exact_is_valid_exact_evidence(self) -> None:
+        left = prepared("case-a", 0)
+        right = prepared("case-b", 1)
+        rows = [stream(left, self.a_tokens), stream(right, self.b_tokens)]
+        result = self.classify("forward", [left, right], rows)
+        self.assertTrue(result["evidence_valid"])
+        self.assertTrue(result["exact_to_c1"])
+        self.assertFalse(result["duplicate_equality"]["applicable"])
+
     def test_token_mismatch_does_not_invalidate_diagnostic_evidence(self) -> None:
         mismatched = list(self.a_tokens)
         mismatched[23] += 1
@@ -299,6 +311,37 @@ class ScenarioClassificationTests(unittest.TestCase):
         self.assertTrue(result["evidence_valid"])
         self.assertFalse(result["duplicate_equality"]["passed"])
         self.assertFalse(result["exact_to_c1"])
+
+    def test_duplicate_a_reports_cross_slot_equality(self) -> None:
+        left = prepared("case-a", 0)
+        right = prepared("case-a", 1)
+        rows = [stream(left, self.a_tokens), stream(right, self.a_tokens)]
+        result = self.classify("duplicate-a", [left, right], rows)
+        self.assertTrue(result["evidence_valid"])
+        self.assertTrue(result["duplicate_equality"]["passed"])
+        self.assertTrue(result["exact_to_c1"])
+
+    def test_all_scenario_assignments_are_exact(self) -> None:
+        cases = [prepared("case-a", 0), prepared("case-b", 1)]
+        expected = {
+            "swap": ["case-b", "case-a"],
+            "duplicate-b": ["case-b", "case-b"],
+            "forward": ["case-a", "case-b"],
+            "duplicate-a": ["case-a", "case-a"],
+        }
+        self.assertEqual(set(MODULE.SCENARIO_CASE_INDEXES), set(expected))
+        for scenario, case_ids in expected.items():
+            with self.subTest(scenario=scenario):
+                assigned = [
+                    MODULE.assign_slot(cases[index], slot)
+                    for slot, index in enumerate(
+                        MODULE.SCENARIO_CASE_INDEXES[scenario]
+                    )
+                ]
+                self.assertEqual(
+                    [item["case"]["id"] for item in assigned], case_ids
+                )
+                self.assertEqual([item["slot_id"] for item in assigned], [0, 1])
 
     def test_missing_tokens_wrong_slot_cache_or_predicted_count_invalidates_evidence(self) -> None:
         for mutation in ("missing", "slot", "cache", "predicted"):
@@ -358,6 +401,89 @@ class ScenarioClassificationTests(unittest.TestCase):
                 item = prepared("case-a", 0)
                 item["payload"][key] = value
                 self.assertFalse(MODULE.validate_payload(item)["formal_fields_exact"])
+
+
+class WaveModePlanTests(unittest.TestCase):
+    def run_plan(self, mode: str | None) -> subprocess.CompletedProcess[str]:
+        environment = os.environ.copy()
+        if mode is None:
+            environment.pop("WAVE_MODE", None)
+        else:
+            environment["WAVE_MODE"] = mode
+        return subprocess.run(
+            ["bash", str(WAVE_WRAPPER), "--print-wave-plan"],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+    def test_default_mode_preserves_duplicate_b_swap_plan(self) -> None:
+        result = self.run_plan(None)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout.splitlines(),
+            [
+                "wave_mode=duplicate-b-swap",
+                "gpu=0\tscenario=duplicate-b",
+                "gpu=1\tscenario=swap",
+                "gpu=2\tscenario=duplicate-b",
+                "gpu=3\tscenario=swap",
+            ],
+        )
+
+    def test_alternate_mode_locks_duplicate_a_forward_plan(self) -> None:
+        result = self.run_plan("duplicate-a-forward")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout.splitlines(),
+            [
+                "wave_mode=duplicate-a-forward",
+                "gpu=0\tscenario=duplicate-a",
+                "gpu=1\tscenario=forward",
+                "gpu=2\tscenario=duplicate-a",
+                "gpu=3\tscenario=forward",
+            ],
+        )
+
+    def test_unknown_mode_fails_before_wave_work(self) -> None:
+        result = self.run_plan("unknown")
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("WAVE_MODE must be", result.stderr)
+
+    def test_child_rejects_scenario_outside_locked_mode_before_run_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            run_dir = base / "must-not-exist"
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "WAVE_MODE": "duplicate-a-forward",
+                    "GPU_INDEX": "0",
+                    "PORT": "19520",
+                    "SCENARIO": "forward",
+                    "RUN_DIR": str(run_dir),
+                    "MODEL_FD": "99",
+                    "QWEN36_GPU_LEASE_FD": "98",
+                    "QWEN36_PORT_LEASE_FD": "97",
+                    "WAVE_RELEASE_FILE": str(base / "release.json"),
+                    "WAVE_ABORT_FILE": str(base / "abort"),
+                    "ORACLE_SNAPSHOT": str(base / "oracle.json"),
+                    "RUNTIME_REFERENCE_REPORT": str(base / "runtime.json"),
+                    "MODEL_STAT_BASELINE": str(base / "model-stat.json"),
+                }
+            )
+            result = subprocess.run(
+                ["bash", str(WAVE_WRAPPER), "--child"],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("does not match locked wave mode", result.stderr)
+            self.assertFalse(run_dir.exists())
 
 
 class OracleAndInputIntegrityTests(unittest.TestCase):

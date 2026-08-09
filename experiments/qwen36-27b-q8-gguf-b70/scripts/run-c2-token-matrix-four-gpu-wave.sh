@@ -27,6 +27,7 @@ HIST_FORWARD_SHA256="39416de77fb20d88523dc83c15f629dec7d7a9e341e98d8104368dcd027
 HIST_REVERSE="/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-formal-c2-gpu0-short-reverse-20260809T173515.954289991Z/concurrent/result.json"
 HIST_REVERSE_SHA256="55fd86dc97087689d24dcf0e546296a01bfe82f4748b0e1a1b71ebdc80645618"
 
+WAVE_MODE="${WAVE_MODE:-duplicate-b-swap}"
 PORT_BASE="${PORT_BASE:-19520}"
 START_STAGGER_S="${START_STAGGER_S:-5}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-1200}"
@@ -46,6 +47,23 @@ die() {
   echo "ERROR: $*" >&2
   exit 2
 }
+
+configure_wave_mode() {
+  case "$WAVE_MODE" in
+    duplicate-b-swap)
+      scenarios=(duplicate-b swap duplicate-b swap)
+      ;;
+    duplicate-a-forward)
+      scenarios=(duplicate-a forward duplicate-a forward)
+      ;;
+    *)
+      die "WAVE_MODE must be duplicate-b-swap or duplicate-a-forward"
+      ;;
+  esac
+}
+
+declare -a scenarios=()
+configure_wave_mode
 
 require_uint() {
   local name="$1"
@@ -149,12 +167,13 @@ validate_lease_fd() {
 }
 
 child_main() {
-  : "${GPU_INDEX:?}" "${PORT:?}" "${SCENARIO:?}" "${RUN_DIR:?}" \
+  : "${WAVE_MODE:?}" "${GPU_INDEX:?}" "${PORT:?}" "${SCENARIO:?}" "${RUN_DIR:?}" \
     "${MODEL_FD:?}" "${QWEN36_GPU_LEASE_FD:?}" "${QWEN36_PORT_LEASE_FD:?}" \
     "${WAVE_RELEASE_FILE:?}" "${WAVE_ABORT_FILE:?}" "${ORACLE_SNAPSHOT:?}" \
     "${RUNTIME_REFERENCE_REPORT:?}" "${MODEL_STAT_BASELINE:?}"
   [[ "$GPU_INDEX" =~ ^[0-3]$ ]] || die "child GPU_INDEX is invalid"
-  case "$SCENARIO" in swap|duplicate-b) ;; *) die "child scenario is invalid" ;; esac
+  [[ "$SCENARIO" == "${scenarios[$GPU_INDEX]}" ]] || \
+    die "child scenario does not match locked wave mode $WAVE_MODE"
   require_uint PORT "$PORT"
   [[ ! -e "$RUN_DIR" ]] || die "child RUN_DIR already exists: $RUN_DIR"
   mkdir "$RUN_DIR"
@@ -262,6 +281,8 @@ child_main() {
     {
       echo "original_status=$original_status"
       echo "final_status=$final_status"
+      echo "wave_mode=$WAVE_MODE"
+      echo "scenario=$SCENARIO"
       echo "body_complete=$body_complete"
       echo "result_valid=$result_valid"
       echo "server_alive_before_stop=$server_alive_before_stop"
@@ -292,20 +313,21 @@ child_main() {
       if (( final_status == 0 )); then marker_tmp="$(mktemp "$RUN_DIR/.diagnostic-completion-status.XXXXXX")" || final_status=1; fi
       if (( final_status == 0 )); then jq -n \
         --arg status EVIDENCE_VALID \
+        --arg wave_mode "$WAVE_MODE" \
         --arg scenario "$SCENARIO" \
         --argjson gpu_index "$GPU_INDEX" \
         --arg manifest_sha "$manifest_sha" \
         --arg result_sha "$result_sha" \
         --arg attestation_sha "$attestation_sha" \
-        '{status:$status,evidence_valid:true,evidence_class:"diagnostic-only",performance_promotable:false,scenario:$scenario,gpu_index:$gpu_index,artifact_manifest:"artifacts.sha256",artifact_manifest_sha256:$manifest_sha,result:"token-matrix.json",result_sha256:$result_sha,server_attestation_sha256:$attestation_sha}' \
+        '{status:$status,evidence_valid:true,evidence_class:"diagnostic-only",performance_promotable:false,wave_mode:$wave_mode,scenario:$scenario,gpu_index:$gpu_index,artifact_manifest:"artifacts.sha256",artifact_manifest_sha256:$manifest_sha,result:"token-matrix.json",result_sha256:$result_sha,server_attestation_sha256:$attestation_sha}' \
         > "$marker_tmp" || final_status=1; fi
       if (( final_status == 0 )); then
-        jq -e --arg scenario "$SCENARIO" --argjson gpu "$GPU_INDEX" \
+        jq -e --arg wave_mode "$WAVE_MODE" --arg scenario "$SCENARIO" --argjson gpu "$GPU_INDEX" \
           --arg manifest_sha "$manifest_sha" --arg result_sha "$result_sha" \
           --arg attestation_sha "$attestation_sha" '
             .status=="EVIDENCE_VALID" and .evidence_valid==true
             and .evidence_class=="diagnostic-only" and .performance_promotable==false
-            and .scenario==$scenario and .gpu_index==$gpu
+            and .wave_mode==$wave_mode and .scenario==$scenario and .gpu_index==$gpu
             and .artifact_manifest_sha256==$manifest_sha
             and .result_sha256==$result_sha
             and .server_attestation_sha256==$attestation_sha
@@ -392,10 +414,10 @@ child_main() {
 
   local ready_tmp
   ready_tmp="$(mktemp "$RUN_DIR/.ready.XXXXXX")"
-  jq -n --arg scenario "$SCENARIO" --arg attestation_sha "$attestation_sha" \
+  jq -n --arg wave_mode "$WAVE_MODE" --arg scenario "$SCENARIO" --arg attestation_sha "$attestation_sha" \
     --argjson gpu_index "$GPU_INDEX" --argjson port "$PORT" --argjson server_pid "$server_pid" \
     --argjson pre_mib "$pre_mib" --argjson loaded_mib "$loaded_mib" \
-    '{ready:true,scenario:$scenario,gpu_index:$gpu_index,port:$port,server_pid:$server_pid,pre_mib:$pre_mib,loaded_mib:$loaded_mib,server_attestation_sha256:$attestation_sha}' \
+    '{ready:true,wave_mode:$wave_mode,scenario:$scenario,gpu_index:$gpu_index,port:$port,server_pid:$server_pid,pre_mib:$pre_mib,loaded_mib:$loaded_mib,server_attestation_sha256:$attestation_sha}' \
     > "$ready_tmp"
   mv "$ready_tmp" "$RUN_DIR/ready.json"
 
@@ -406,6 +428,10 @@ child_main() {
     (( SECONDS < deadline )) || die "child release timeout"
     sleep 1
   done
+  jq -e --arg wave_mode "$WAVE_MODE" '
+    .released==true and .wave_mode==$wave_mode
+    and (.released_utc|type)=="string"
+  ' "$WAVE_RELEASE_FILE" >/dev/null || die "wave release identity is invalid"
 
   timeout --signal=TERM --kill-after=30 "$REQUEST_TIMEOUT_S" \
     python3 "$MATRIX_CLIENT" \
@@ -448,8 +474,13 @@ child_main() {
     and (
       if $scenario=="duplicate-b" then
         [.scenario.rows[].case_id]==["q27-q8-c2-04k-b","q27-q8-c2-04k-b"]
-      else
+      elif $scenario=="swap" then
         [.scenario.rows[].case_id]==["q27-q8-c2-04k-b","q27-q8-lc-04k-middle"]
+      elif $scenario=="duplicate-a" then
+        [.scenario.rows[].case_id]==["q27-q8-lc-04k-middle","q27-q8-lc-04k-middle"]
+      elif $scenario=="forward" then
+        [.scenario.rows[].case_id]==["q27-q8-lc-04k-middle","q27-q8-c2-04k-b"]
+      else false
       end
     )
     and (.classification=="VALID_EXACT_TO_C1" or .classification=="VALID_DIVERGENCE_FROM_C1")
@@ -461,6 +492,16 @@ child_main() {
   # these locals had been destroyed under `set -u`.
   child_finish
 }
+
+if [[ "${1:-}" == "--print-wave-plan" ]]; then
+  shift
+  [[ $# -eq 0 ]] || die "--print-wave-plan takes no positional arguments"
+  printf 'wave_mode=%s\n' "$WAVE_MODE"
+  for gpu in 0 1 2 3; do
+    printf 'gpu=%s\tscenario=%s\n' "$gpu" "${scenarios[$gpu]}"
+  done
+  exit 0
+fi
 
 if [[ "${1:-}" == "--child" ]]; then
   shift
@@ -548,12 +589,12 @@ verify_child_packet() {
   actual_manifest_sha="$(file_sha256 "$directory/artifacts.sha256")" || return 1
   actual_result_sha="$(file_sha256 "$directory/token-matrix.json")" || return 1
   actual_attestation_sha="$(file_sha256 "$directory/server-attestation.json")" || return 1
-  jq -e --arg scenario "$expected_scenario" --argjson gpu "$gpu" \
+  jq -e --arg wave_mode "$WAVE_MODE" --arg scenario "$expected_scenario" --argjson gpu "$gpu" \
     --arg manifest_sha "$actual_manifest_sha" --arg result_sha "$actual_result_sha" \
     --arg attestation_sha "$actual_attestation_sha" '
       .status=="EVIDENCE_VALID" and .evidence_valid==true
       and .evidence_class=="diagnostic-only" and .performance_promotable==false
-      and .scenario==$scenario and .gpu_index==$gpu
+      and .wave_mode==$wave_mode and .scenario==$scenario and .gpu_index==$gpu
       and .artifact_manifest=="artifacts.sha256"
       and .artifact_manifest_sha256==$manifest_sha
       and .result=="token-matrix.json" and .result_sha256==$result_sha
@@ -680,6 +721,7 @@ outer_finish() {
     echo "original_status=$original_status"
     echo "final_status=$final_status"
     echo "body_complete=$OUTER_BODY_COMPLETE"
+    echo "wave_mode=$WAVE_MODE"
     echo "forced_kill=$OUTER_FORCED_KILL"
     echo "cleanup_survivor=$OUTER_CLEANUP_SURVIVOR"
     echo "passive_fault_detected=$fault_detected"
@@ -693,13 +735,14 @@ outer_finish() {
       final_status=1
     fi
     if (( final_status == 0 )); then marker_tmp="$(mktemp "$WAVE_DIR/.wave-diagnostic-completion-status.XXXXXX")" || final_status=1; fi
-    if (( final_status == 0 )); then jq -n --arg manifest_sha "$manifest_sha" --arg summary_sha "$summary_sha" \
-      '{status:"EVIDENCE_VALID",evidence_valid:true,evidence_class:"diagnostic-only",performance_promotable:false,artifact_manifest:"wave-artifacts.sha256",artifact_manifest_sha256:$manifest_sha,summary:"wave-summary.json",summary_sha256:$summary_sha}' \
+    if (( final_status == 0 )); then jq -n --arg wave_mode "$WAVE_MODE" --arg manifest_sha "$manifest_sha" --arg summary_sha "$summary_sha" \
+      '{status:"EVIDENCE_VALID",evidence_valid:true,evidence_class:"diagnostic-only",performance_promotable:false,wave_mode:$wave_mode,artifact_manifest:"wave-artifacts.sha256",artifact_manifest_sha256:$manifest_sha,summary:"wave-summary.json",summary_sha256:$summary_sha}' \
       > "$marker_tmp" || final_status=1; fi
     if (( final_status == 0 )); then
-      jq -e --arg manifest_sha "$manifest_sha" --arg summary_sha "$summary_sha" '
+      jq -e --arg wave_mode "$WAVE_MODE" --arg manifest_sha "$manifest_sha" --arg summary_sha "$summary_sha" '
         .status=="EVIDENCE_VALID" and .evidence_valid==true
         and .evidence_class=="diagnostic-only" and .performance_promotable==false
+        and .wave_mode==$wave_mode
         and .artifact_manifest=="wave-artifacts.sha256"
         and .artifact_manifest_sha256==$manifest_sha
         and .summary=="wave-summary.json" and .summary_sha256==$summary_sha
@@ -797,7 +840,6 @@ sha256sum "$SCRIPT" "$LAUNCHER" "$ATTESTER" "$MATRIX_CLIENT" "$FORMAL_CAPTURE" \
 INPUTS_READY=1
 verify_wave_inputs initial || die "wave inputs failed their initial digest check"
 
-scenarios=(duplicate-b swap duplicate-b swap)
 WAVE_RELEASE_FILE="$WAVE_DIR/release.json"
 WAVE_ABORT_FILE="$WAVE_DIR/abort"
 for gpu in 0 1 2 3; do
@@ -809,7 +851,7 @@ for gpu in 0 1 2 3; do
     HOME="/home/steve" USER="steve" LOGNAME="steve" SHELL="/bin/bash" \
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
     LANG="C.utf8" LC_ALL="C.utf8" XDG_RUNTIME_DIR="/run/user/$(id -u)" \
-    GPU_INDEX="$gpu" PORT="$port" SCENARIO="$scenario" RUN_DIR="$run_dir" \
+    WAVE_MODE="$WAVE_MODE" GPU_INDEX="$gpu" PORT="$port" SCENARIO="$scenario" RUN_DIR="$run_dir" \
     MODEL_FD="$MODEL_FD" QWEN36_MODEL_FD="$MODEL_FD" \
     QWEN36_GPU_LEASE_FD="${GPU_LEASE_FDS[$gpu]}" \
     QWEN36_PORT_LEASE_FD="${PORT_LEASE_FDS[$gpu]}" \
@@ -843,8 +885,8 @@ while :; do
 done
 for gpu in 0 1 2 3; do
   leader_running "${CHILD_PIDS[$gpu]}" || die "child $gpu is not live at the release barrier"
-  jq -e --arg scenario "${scenarios[$gpu]}" --argjson gpu "$gpu" --argjson port "$((PORT_BASE + gpu))" '
-    .ready==true and .scenario==$scenario and .gpu_index==$gpu and .port==$port
+  jq -e --arg wave_mode "$WAVE_MODE" --arg scenario "${scenarios[$gpu]}" --argjson gpu "$gpu" --argjson port "$((PORT_BASE + gpu))" '
+    .ready==true and .wave_mode==$wave_mode and .scenario==$scenario and .gpu_index==$gpu and .port==$port
     and (.server_attestation_sha256|test("^[0-9a-f]{64}$"))
   ' "${CHILD_DIRS[$gpu]}/ready.json" >/dev/null || die "child $gpu readiness marker is invalid"
 done
@@ -853,7 +895,8 @@ available_loaded_kib="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"
 printf 'MemAvailable_kib=%s\n' "$available_loaded_kib" > "$WAVE_DIR/host-memory-all-loaded.env"
 (( available_loaded_kib >= 33554432 )) || die "host memory fell below 32 GiB with all services loaded"
 release_tmp="$(mktemp "$WAVE_DIR/.release.XXXXXX")"
-jq -n --arg released_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{released:true,released_utc:$released_utc}' > "$release_tmp"
+jq -n --arg wave_mode "$WAVE_MODE" --arg released_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '{released:true,wave_mode:$wave_mode,released_utc:$released_utc}' > "$release_tmp"
 mv "$release_tmp" "$WAVE_RELEASE_FILE"
 
 wave_deadline=$((SECONDS + WAVE_TIMEOUT_S))
@@ -875,10 +918,10 @@ for gpu in 0 1 2 3; do
   fi
   CHILD_PIDS[$gpu]=""
   marker="${CHILD_DIRS[$gpu]}/diagnostic-completion-status.json"
-  jq -e --arg scenario "${scenarios[$gpu]}" --argjson gpu "$gpu" '
+  jq -e --arg wave_mode "$WAVE_MODE" --arg scenario "${scenarios[$gpu]}" --argjson gpu "$gpu" '
     .status=="EVIDENCE_VALID" and .evidence_valid==true
     and .evidence_class=="diagnostic-only" and .performance_promotable==false
-    and .scenario==$scenario and .gpu_index==$gpu
+    and .wave_mode==$wave_mode and .scenario==$scenario and .gpu_index==$gpu
     and .artifact_manifest=="artifacts.sha256" and .result=="token-matrix.json"
   ' "$marker" >/dev/null || die "child $gpu completion marker is invalid"
   (cd "${CHILD_DIRS[$gpu]}" && sha256sum -c artifacts.sha256 >/dev/null) || die "child $gpu artifact manifest failed"
@@ -887,7 +930,7 @@ for gpu in 0 1 2 3; do
   [[ "$(sha256sum "${CHILD_DIRS[$gpu]}/server-attestation.json" | awk '{print $1}')" == "$(jq -r .server_attestation_sha256 "$marker")" ]] || die "child $gpu attestation digest mismatch"
 done
 
-python3 - "$WAVE_DIR" "$HIST_FORWARD" "$HIST_REVERSE" "${CHILD_DIRS[@]}" <<'PY'
+python3 - "$WAVE_DIR" "$WAVE_MODE" "$HIST_FORWARD" "$HIST_REVERSE" "${CHILD_DIRS[@]}" <<'PY'
 import hashlib
 import json
 import sys
@@ -895,8 +938,16 @@ from collections import defaultdict
 from pathlib import Path
 
 wave = Path(sys.argv[1])
-historical_paths = [Path(sys.argv[2]), Path(sys.argv[3])]
-lane_paths = [Path(value) for value in sys.argv[4:]]
+wave_mode = sys.argv[2]
+historical_paths = [Path(sys.argv[3]), Path(sys.argv[4])]
+lane_paths = [Path(value) for value in sys.argv[5:]]
+expected_scenarios_by_mode = {
+    "duplicate-b-swap": ["duplicate-b", "swap", "duplicate-b", "swap"],
+    "duplicate-a-forward": ["duplicate-a", "forward", "duplicate-a", "forward"],
+}
+expected_scenarios = expected_scenarios_by_mode.get(wave_mode)
+if expected_scenarios is None:
+    raise SystemExit("aggregate wave mode is unsupported")
 
 def digest_tokens(tokens):
     return hashlib.sha256(json.dumps(tokens, separators=(",", ":")).encode()).hexdigest()
@@ -948,6 +999,8 @@ for gpu_index, path in enumerate(lane_paths):
     result_path = path / "token-matrix.json"
     value = json.load(result_path.open())
     scenario = value["diagnostic_identity"]["scenario"]
+    if scenario != expected_scenarios[gpu_index]:
+        raise SystemExit("lane scenario does not match the locked wave mode")
     rows = []
     for row in value["scenario"]["rows"]:
         observed = row["token_ids"]
@@ -984,7 +1037,7 @@ for gpu_index, path in enumerate(lane_paths):
         "exact_to_c1": value["exact_to_c1"],
         "rows": rows,
         "cross_slot": {
-            "applicable": scenario == "duplicate-b",
+            "applicable": scenario in {"duplicate-a", "duplicate-b"},
             **cross_slot,
         },
     })
@@ -1005,6 +1058,8 @@ summary = {
     "status": "EVIDENCE_VALID",
     "evidence_class": "diagnostic-only",
     "performance_promotable": False,
+    "wave_mode": wave_mode,
+    "expected_scenarios": expected_scenarios,
     "all_lanes_evidence_valid": all(lane["evidence_valid"] for lane in lanes),
     "repeat_structure_complete": len(repeats) == 4
     and all(item["replicate_count"] == 2 for item in repeats),
@@ -1033,8 +1088,9 @@ with (wave / "wave-summary.json").open("w") as stream:
     stream.write("\n")
 PY
 
-jq -e '
+jq -e --arg wave_mode "$WAVE_MODE" '
   .status=="EVIDENCE_VALID" and .evidence_class=="diagnostic-only"
+  and .wave_mode==$wave_mode
   and .performance_promotable==false and .all_lanes_evidence_valid==true
   and .repeat_structure_complete==true and (.lanes|length)==4
 ' "$WAVE_DIR/wave-summary.json" >/dev/null || die "wave aggregate summary failed"

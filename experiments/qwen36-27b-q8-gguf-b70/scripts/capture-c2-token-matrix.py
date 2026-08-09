@@ -28,6 +28,8 @@ OCCUPANCY_MINIMUM = 1.5
 SCENARIO_CASE_INDEXES = {
     "swap": (1, 0),
     "duplicate-b": (1, 1),
+    "forward": (0, 1),
+    "duplicate-a": (0, 0),
 }
 PAYLOAD_FIELDS = {
     "n_predict": TOKEN_COUNT,
@@ -908,7 +910,7 @@ def classify_scenario(
     exact_to_c1 = evidence_valid and all(row["exact_to_c1"] for row in rows)
     duplicate = (
         duplicate_equality(rows)
-        if scenario == "duplicate-b"
+        if scenario in ("duplicate-a", "duplicate-b")
         else {"applicable": False, "passed": None}
     )
     return {
