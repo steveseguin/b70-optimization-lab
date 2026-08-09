@@ -119,14 +119,40 @@ the child EXIT trap ran after Bash had destroyed its local lifecycle variables.
 Commit `a38f75433` moved normal finalization into that scope. Only the clean
 rerun above is authoritative.
 
-The next smallest workload discriminator is duplicate-A, ideally alongside a
-fresh forward A-in-slot-0/B-in-slot-1 replication. If duplicate-A is exact in
-both slots while heterogeneous forward order matches B's historical slot-1
-stream prefix through token 128, heterogeneous pairing is necessary within this
-fixed A/B matrix and source work should begin with
-the combined canonical per-vector Q8 control. If duplicate-A itself splits by
-slot, the slot-sensitive source control becomes direct. A synchronized
-natural-stop pair remains a separate relevance gate.
+The fixed A/B pairing matrix was completed by two more sealed four-card waves:
+
+- `/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-c2-token-matrix-four-gpu-20260809T193014.551019338Z`;
+- `/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-c2-token-matrix-four-gpu-20260809T193726.670980888Z`.
+
+Both used the locked `duplicate-a-forward` mode: GPU 0 and GPU 2 ran A+A;
+GPU 1 and GPU 3 ran forward A-in-slot-0/B-in-slot-1. Every A row was 128/128
+c1-exact, including both duplicate-A slots. Both forward B/slot-1 rows selected
+token `332` instead of c1 token `71093` at generated token 71, immediately
+after B's separately measured 70-token natural-stop boundary.
+
+The later forced tail was stable on the same lane across the two fresh waves,
+but not equal across lanes. GPU 1 repeated SHA-256
+`5851bfb89c915c195e2e703d5b3a3673d94db1e20123878c19075e0200830e28`;
+GPU 3 repeated
+`780992bb943b4ef398e8e07a2474b04f5d0ad75a9d4fa7433069d3e54a12733a`,
+which also matched the historical forward stream through token 128. GPU 1 and
+GPU 3 shared 71 tokens, then selected `81639` and
+`8839` respectively at token 72; every remaining token through 128 differed.
+This demonstrates exact repeatability across these two fixed-lane waves, but
+does not establish physical-GPU causality because card, port, launch ordinal,
+readiness age, and request epoch remained aliased.
+
+Within this fixed A/B matrix, homogeneous A+A and B+B pairings are exact while
+both heterogeneous directions reproduce a slot-1 first split immediately after
+the corresponding separately measured answer boundary. That first mismatch,
+not the later artificial tail hash, is the causal-control endpoint. The next
+source experiment is a default-off combined canonical per-vector Q8 control,
+tested with forward and reverse heterogeneous pairs in a two-wave
+baseline/candidate card crossover. The candidate must first establish its own
+sealed c1 oracle and prove the intended dispatch paths active; pass requires
+full c2 exactness to that matched oracle, while B71/A96 are the baseline
+mismatch landmarks. A synchronized natural-stop pair remains a separate
+serving-relevance gate.
 
 ## Diagnostic-only harness change
 
@@ -160,15 +186,13 @@ The pinned SYCL backend changes more than one Q8 path at c2:
 - the 48 recurrent `ssm_out` projections retain shape `[K,1,2]` and select
   reordered DMMV per sequence, while c1 selects reordered MMVQ.
 
-The prompt reversal and replicated compact matrix make HTTP routing and gross
-prompt/response slot swapping unlikely. Data-dependent recurrent/KV handling
-remains possible. Duplicate-B did not reproduce the alternate tail: both slots
-were exact on both cards. The next bounded diagnostic is
-duplicate-A plus a fresh forward-order replication. Only after that workload
-discriminator should the source controls begin with a combined per-vector
-canonical-Q8 arm, followed as warranted by separate controls for multi-column
-MMVQ and recurrent-output DMMV. Broad `OPT=0` is not a causal test because it
-changes several dispatches.
+The completed A/B pairing matrix makes HTTP routing and gross prompt/response
+slot swapping unlikely. Data-dependent recurrent/KV handling remains possible.
+Both homogeneous pairings were exact; both heterogeneous directions reproduced
+the first slot-1 split after the separately measured boundary. Source controls
+therefore begin with a combined per-vector canonical-Q8 arm, followed as
+warranted by separate controls for multi-column MMVQ and recurrent-output DMMV.
+Broad `OPT=0` is not a causal test because it changes several dispatches.
 
 This general class is not unique to this host: upstream
 [issue #7052](https://github.com/ggml-org/llama.cpp/issues/7052) tracks greedy
@@ -199,3 +223,11 @@ decode result is not based only on forcing short JSON answers past EOS.
   `2f4a3128c0b902c60810770cb8a652de2ffebbd0f53c4e21742487fdecf6b76d`;
 - compact-matrix detached completion marker:
   `acb13c4a382bd1b0b1492cd74ea1d73450017748530bd510363e820c1e768f0b`.
+- duplicate-A/forward wave 1 `wave-summary.json`:
+  `3a0b8ff8bcea3c24aa06efe8547a314e5ee91edd3d9e9afc9977a723d97aa7ec`;
+- duplicate-A/forward wave 1 `wave-artifacts.sha256`:
+  `77fe35034d637f90cf6007279052b1a602f6d176bc44aed761369ff83031c0fb`;
+- duplicate-A/forward wave 2 `wave-summary.json`:
+  `a5a8d938174a56b0b05db603fb300e12fbed169a0d6bbc00ee41650c7f3018d6`;
+- duplicate-A/forward wave 2 `wave-artifacts.sha256`:
+  `463f86dd5c87679dad17d21d3303a882bb2f770d4907c2ba9462ad87dbbdfe86`.

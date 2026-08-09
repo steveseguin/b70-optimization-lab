@@ -60,10 +60,16 @@ stream prefix through generated token 128, including its 33-token
 divergent suffix, on two other cards. This rules out a simple
 unconditional slot-1 failure and establishes replicated workload-sensitive,
 slot-1-associated forced-tail behavior, with no observed corruption before
-the separately measured answer boundaries. Reordered Q8 MMVQ and
+the separately measured answer boundaries. Two later four-card waves completed
+the fixed A/B matrix: A+A and B+B were exact in both slots, while both mixed
+directions reproduced the first slot-1 split one token after the corresponding
+boundary. The forward B tail was same-lane repeatable but differed between GPU
+1 and GPU 3 after the shared token-71 split; card, launch order, readiness age,
+port, and request epoch remain confounded. Reordered Q8 MMVQ and
 recurrent-output DMMV are leading suspects to test, not established causes. The
-immediate bounded action is duplicate-A plus fresh forward-order replication,
-then the canonical per-vector Q8 control if warranted; do not rerun the
+immediate bounded action is a default-off combined canonical per-vector Q8
+control with verified dispatch activation and a candidate-runtime-matched
+sealed c1 oracle, followed by a two-wave baseline/candidate card crossover; do not rerun the
 unchanged full formal test or promote an aggregate c2 rate. Parallel timing
 remains diagnostic; performance promotion remains isolated, same-card
 bracketed, and second-card confirmed.
@@ -1677,9 +1683,10 @@ loaded service.
 
 1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
    strategy. The trustworthy short c1 full-512 baseline and c2 fit now exist.
-   First complete the fixed A/B workload matrix with duplicate-A and fresh
-   forward-order cross-card replicates. Then, if warranted, test the canonical
-   per-vector Q8 control before separating recurrent-output DMMV from flattened
+   The fixed A/B workload matrix is complete. Build and test the default-off
+   canonical per-vector Q8 control, prove its dispatch activation, establish a
+   candidate-runtime-matched sealed c1 oracle, and run a two-wave
+   baseline/candidate card crossover before separating recurrent-output DMMV from flattened
    multi-column MMVQ. Directly measure a synchronized natural-stop pair as a
    separate relevance gate. Add a held-out prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only

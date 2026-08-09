@@ -10,8 +10,10 @@ workload-sensitive, slot-1-associated behavior only in the forced continuation
 beyond a separately measured sequential natural-stop boundary. A four-card
 compact matrix made duplicate-B exact in both slots while swapped
 B+A matched the historical A/slot-1 stream prefix through generated token 128
-on two cards. A synchronized
-natural-stop pair is still unmeasured.
+on two cards. Two repeat waves completed the fixed A/B matrix: A+A and B+B were
+exact, while both mixed directions reproduced the first slot-1 split after the
+separately measured answer boundary. A synchronized natural-stop pair is still
+unmeasured.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -122,8 +124,14 @@ in both slots on two other cards. This rules out a simple unconditional slot-1
 failure and establishes replicated workload-sensitive, slot-1-associated
 forced-tail behavior, not prompt B or SSE loss. Reordered Q8 MMVQ and
 recurrent-output DMMV are leading suspects to test, not established
-causes. Duplicate-A plus fresh forward-order replication is the next bounded
-gate. No aggregate c2 rate is official until that boundary is classified. See
+causes. Duplicate-A was exact in both slots on two cards and repeated exactly;
+forward A0/B1 reproduced B's first split at token 71 on both cards and both
+waves. Its later tail was stable on each fixed lane but differed across GPU 1
+and GPU 3 after token 71, with card and launch-order effects still confounded.
+The next bounded gate is a default-off combined canonical per-vector Q8 control
+with verified dispatch activation and a candidate-runtime-matched sealed c1
+oracle, followed by a two-wave baseline/candidate card crossover. No aggregate c2 rate is
+official until that boundary is classified. See
 [`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md).
 
 The validation sequence remains useful for future runtimes:
