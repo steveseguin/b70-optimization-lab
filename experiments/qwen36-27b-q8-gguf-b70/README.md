@@ -1,9 +1,9 @@
 # Qwen3.6 27B Q8_0 GGUF on one B70
 
-Status: one-B70 target-only baseline validated through 32K, and the simultaneous
-four-replica 4K functional topology passes. The next service target is two F16-
-KV 32K slots per card. No localmaxxing performance result is promoted from this
-lane yet.
+Status: one-B70 target-only baseline validated through 32K; the simultaneous
+four-replica 4K topology and the four-band full-512 functional wave both pass.
+The next service target is two F16-KV 32K slots per card. No LocalMaxxing
+performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
 and recurring subagent roles are in [`STRATEGY.md`](STRATEGY.md). Dated plans
@@ -110,10 +110,10 @@ The validation sequence remains useful for future runtimes:
    settled. Use the same-repository, same-revision F16 projector pinned in
    [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
 
-The full-512/c2 measurement foundation is now implemented and offline-tested;
-no c2 fit or performance result is claimed until its GPU packet passes. The
-metric definitions, paired prompt counts, integrity gates, and four-card first
-wave are preregistered in
+The full-512/c2 measurement foundation is now implemented, offline-tested, and
+validated by a sealed four-card functional wave; no c2 fit or performance result
+is claimed until its GPU packet passes. The metric definitions, paired prompt
+counts, integrity gates, and four-card first wave are preregistered in
 [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md).
 For new full-512 and c2 packets, only a verified detached
 `completion-status.json` is an authoritative PASS; a `run-status.txt` file by
@@ -166,6 +166,13 @@ the same sealed 128-token output concurrently before clean teardown to 43 MiB.
 This proves the process topology, not a four-card performance score. See
 [`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md).
 
+The later Goal-1 wave simultaneously completed 18 full-512 rows spanning 4K,
+17K, near-32K, and the 12-prompt realistic suite. Every child and outer
+checksum chain passed, all post-workload canaries were exact, and every card
+returned cleanly to 43 MiB. Its rates are explicitly diagnostic because four
+cards were active. See
+[`notes/2026-08-09-four-gpu-goal1-functional-screen.md`](notes/2026-08-09-four-gpu-goal1-functional-screen.md).
+
 ## Entry points
 
 - Target-only server: [`scripts/serve-target-only.sh`](scripts/serve-target-only.sh)
@@ -186,6 +193,8 @@ This proves the process topology, not a four-card performance score. See
 - Result summary: [`data/baseline-summary-20260808.json`](data/baseline-summary-20260808.json)
 - Chronological result note: [`notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`](notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md)
 - Four-replica result: [`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md)
+- Four-band full-512 functional result: [`notes/2026-08-09-four-gpu-goal1-functional-screen.md`](notes/2026-08-09-four-gpu-goal1-functional-screen.md)
+- Four-band structured summary: [`data/goal1-four-gpu-functional-summary-20260809.json`](data/goal1-four-gpu-functional-summary-20260809.json)
 - Context/concurrency and optional-feature plan: [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md)
 - Four-GPU optimization and c2 execution plan: [`notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`](notes/2026-08-08-four-gpu-optimization-and-c2-plan.md)
 - Goal-1 measurement preregistration: [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md)
