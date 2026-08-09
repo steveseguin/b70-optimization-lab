@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-09",
+  "status": "c1_short_reproduced_c2_fit_validated_forced_tail_exactness_blocked",
+  "identity": {
+    "model": "Qwen3.6-27B-Q8_0.gguf",
+    "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+    "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+    "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+    "weights": "Q8_0",
+    "kv": "F16",
+    "dnn": false,
+    "sycl_opt": true,
+    "graph": false,
+    "speculation": false
+  },
+  "c1_short_official": {
+    "evidence_class": "official-isolated",
+    "performance_promotable": true,
+    "context_tokens": 32768,
+    "rows": 2,
+    "baseline": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-isolated-baseline-gpu0-short-20260809T163733.326112517Z",
+      "prompt_processing_median_tok_s": 156.9170103015228,
+      "ttft_median_s": 27.699281466499087,
+      "decode_1_100_median_tok_s": 15.071589860853006,
+      "decode_1_512_median_tok_s": 15.073735726699674,
+      "request_wall_median_tok_s": 8.312796712587279,
+      "exact_tokens_sha256": "fe03bfdd5adb826a3c9b5a68f9922c543b3767f3afce7ca388139dd6613356c4",
+      "completion_status_sha256": "5cbb5809398fa6edb6ea08d96edb54e7f166328d23a4dbe0412016858c796a56",
+      "artifact_manifest_sha256": "d1203c993a50c1d1ced03f20e85f96c61ee23c6c349b27326310fe8b6c4ce65c"
+    },
+    "same_card_exact_repeat": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-isolated-oracle-gpu0-short-20260809T164353.133797026Z",
+      "prompt_processing_median_tok_s": 156.87164364560607,
+      "ttft_median_s": 27.707529099003295,
+      "decode_1_100_median_tok_s": 15.070933904313005,
+      "decode_1_512_median_tok_s": 15.070316939672612,
+      "request_wall_median_tok_s": 8.31069294296189,
+      "oracle_status": "PASS_ORACLE_EXACT",
+      "exact_tokens_sha256": "e193e29c37cf55b5d22a982279bb316557459aa9e1549c7768238624a8d542d1",
+      "completion_status_sha256": "58788e20bf6f70ed4ab6546b879eabfcb49e42abe2285e214d3ca22bbc9ff9d4",
+      "artifact_manifest_sha256": "143697efbcc6f4415e6c2b4e704228acbc4bae0ceaf76e529019ae5b0d33b032"
+    },
+    "target_attainment": {
+      "prompt_processing_target_tok_s": 300.0,
+      "prompt_processing_attainment": 0.5229054788186869,
+      "decode_1_512_target_tok_s": 20.0,
+      "decode_1_512_attainment": 0.7535158469836306,
+      "ttft_target_s": 15.0,
+      "ttft_target_passed": false
+    }
+  },
+  "c2_short": {
+    "configuration": {
+      "total_context_tokens": 65536,
+      "parallel_slots": 2,
+      "context_tokens_per_slot": 32768,
+      "kv_unified": false,
+      "continuous_batching": true,
+      "ubatch": 128
+    },
+    "fit": {
+      "validated": true,
+      "full_offload_layers": "65/65",
+      "loaded_mib": 30570,
+      "free_mib": 1814,
+      "f16_kv_mib": 4096,
+      "recurrent_state_mib": 299.25
+    },
+    "natural_quality_evidence": {
+      "simultaneous_forced_stream_answer_prefix_passed": true,
+      "sequential_natural_stop_probes_passed": true,
+      "simultaneous_natural_stop_pair_passed": null,
+      "status": "simultaneous_natural_stop_pair_unmeasured",
+      "note": "The synchronized ignore_eos=true streams matched the complete expected answer prefixes through 70/95 tokens. Later per-slot natural-stop probes were sequential and returned exact JSON plus EOS with cache_n=0. A synchronized ignore_eos=false natural-stop pair has not been measured."
+    },
+    "forced_512_cross_mode_exactness": {
+      "passed": false,
+      "classification": "slot1_or_second_column_divergence_beyond_separately_measured_natural_eos_boundary",
+      "forward": {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-formal-c2-gpu0-short-diag-20260809T171516.435188879Z",
+        "slot0_case": "q27-q8-lc-04k-middle",
+        "slot0_exact_tokens": 512,
+        "slot1_case": "q27-q8-c2-04k-b",
+        "slot1_common_prefix_tokens": 70,
+        "slot1_first_divergent_generated_token": 71,
+        "sequential_natural_probe_eos_generated_token": 70,
+        "result_sha256": "39416de77fb20d88523dc83c15f629dec7d7a9e341e98d8104368dcd02778763",
+        "artifact_manifest_sha256": "5d9de5da683174a3fe097d8eb4ffcbf1f21f486b45633c4ad5a78f49cfe66226"
+      },
+      "reverse": {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-formal-c2-gpu0-short-reverse-20260809T173515.954289991Z",
+        "slot0_case": "q27-q8-c2-04k-b",
+        "slot0_exact_tokens": 512,
+        "slot1_case": "q27-q8-lc-04k-middle",
+        "slot1_common_prefix_tokens": 95,
+        "slot1_first_divergent_generated_token": 96,
+        "sequential_natural_probe_eos_generated_token": 95,
+        "result_sha256": "55fd86dc97087689d24dcf0e546296a01bfe82f4748b0e1a1b71ebdc80645618",
+        "artifact_manifest_sha256": "a05aec67deedbb6dcd3cc1a0d7ef1a75f60ab6a1f172b5aeb9bb489e0f7413af"
+      }
+    },
+    "m2_occupancy": {
+      "predicted_tokens": 1024,
+      "llama_decode_calls": 520,
+      "predicted_tokens_per_decode": 1.9692307692307693,
+      "average_busy_slots_per_decode": 1.99231,
+      "passed": true
+    },
+    "official_performance_result": null,
+    "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
+  },
+  "next_gate": "Run synchronized duplicate-B and natural-stop c2 diagnostics, then isolate the column-sensitive M=2 numerical path before performance promotion. Reordered Q8 MMVQ and recurrent-output DMMV are leading suspects, not established causes. Add a held-out naturally sustained 512-token serving challenge."
+}

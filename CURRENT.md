@@ -16,8 +16,9 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-08 Qwen3.6 27B Q8_0 four-replica smoke; all four B70s
-returned to 43 MiB. Recheck immediately before any operational change.
+running after the 2026-08-09 reversed-order Qwen3.6 27B Q8 c2 diagnostic; all
+four B70s returned to 43 MiB. Recheck immediately before any operational
+change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -42,13 +43,24 @@ throughput, latency, and fairness gates pass. Keep
 suite-level greedy replay exactness. The simultaneous four-replica functional
 smoke also passed: all four 4K services were fully resident at `26,573 MiB`,
 generated the same sealed output concurrently, and returned cleanly to 43 MiB.
-The full-512/c2 measurement foundation is implemented and offline-audited,
-including strict cold timing, external exact canaries, selected-band semantic
-retrieval, runtime/model identity, cleanup, and detached evidence seals. The
-immediate next action is the preregistered four-card functional-only full-512
-wave, followed by a separately labeled isolated full-512 reference and
-fail-closed F16 c2/32K validation. Parallel timing is diagnostic; promotion
-remains isolated, same-card bracketed, and second-card confirmed.
+The full-512/c2 measurement foundation is implemented and GPU-validated. The
+sealed four-card functional wave passed all 18 rows. The official isolated
+short c1 packet then passed and reproduced exactly on the same card at about
+`156.9 tok/s` PP, `27.7 s` TTFT, and `15.07 tok/s` through token 512. F16
+c2/32K also fits: `65/65` layers offloaded, `30,570 MiB` loaded, and `1,814 MiB`
+free with true two-slot occupancy. Both synchronized forced streams contain
+the complete correct answer prefixes; later sequential natural-stop probes and
+external canaries are exact. A synchronized natural-stop pair remains
+unmeasured. The strict forced-512 c1/c2 comparison is blocked: when EOS is
+suppressed, the stream in slot 1 diverges only after the complete answer prefix.
+Reversing the prompts moved the failure to the other prompt while it stayed in
+slot 1. This is a column-sensitive M=2 numerical-path diagnostic, with no
+observed corruption in the answer prefixes. Reordered Q8 MMVQ and
+recurrent-output DMMV are leading suspects to test, not established causes. The
+immediate bounded action is a 128-token duplicate-prompt c2 test, followed by
+narrow per-column Q8 controls; do not rerun the unchanged full formal test or
+promote an aggregate c2 rate. Parallel timing remains diagnostic; performance
+promotion remains isolated, same-card bracketed, and second-card confirmed.
 The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
@@ -1658,11 +1670,14 @@ loaded service.
 ## Immediate Manager Actions
 
 1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
-   strategy. Begin each research cycle with external scouting, internal history,
-   current bottleneck evidence, and an integrity review; keep only the current
-   cycle tactically detailed. The present first cycle still starts with the
-   missing trustworthy full-512/c2 measurement foundation. Do not reuse Laguna
-   flags or result directories implicitly.
+   strategy. The trustworthy short c1 full-512 baseline and c2 fit now exist.
+   First classify the slot-1 forced-post-EOS divergence with the bounded
+   duplicate-prompt test and directly measure a synchronized natural-stop pair,
+   then isolate recurrent-output DMMV versus flattened multi-column MMVQ before
+   performance work. Add a held-out prompt that
+   naturally sustains 512 tokens so the serving scorecard does not depend only
+   on forcing short JSON answers past EOS. Do not reuse Laguna flags or result
+   directories implicitly.
 2. Recheck processes, listeners, Git status, device health, memory, and model
    storage before launch. The idle statement above is a closure-time fact, not
    standing authorization.

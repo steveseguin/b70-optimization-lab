@@ -2,8 +2,12 @@
 
 Status: one-B70 target-only baseline validated through 32K; the simultaneous
 four-replica 4K topology and the four-band full-512 functional wave both pass.
-The next service target is two F16-KV 32K slots per card. No LocalMaxxing
-performance result is promoted from this lane yet.
+The official isolated short full-512 c1 baseline also passes and is reproduced
+exactly. Two F16-KV 32K slots fit on one card; synchronized forced streams retain
+the complete correct answer prefixes and later sequential natural-stop probes
+pass. The strict forced-post-EOS c1/c2 exactness gate is blocked by a slot-1
+numerical divergence, and a synchronized natural-stop pair is still unmeasured.
+No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
 and recurring subagent roles are in [`STRATEGY.md`](STRATEGY.md). Dated plans
@@ -17,7 +21,9 @@ This lane has one primary identity:
 - text-only, with no multimodal projector;
 - one Intel Arc Pro B70 with 32 GiB VRAM;
 - validated reference context of 32,768 tokens with F16 KV;
-- primary next target of two F16-KV 32K slots per card, validation pending;
+- primary next target of two F16-KV 32K slots per card; fit, simultaneous answer
+  prefixes, and sequential natural probes pass, while synchronized natural-stop
+  behavior and strict forced-tail invariance remain under diagnosis;
 - optional later stretch capacity of 100K to 128K with Q8 KV;
 - no MTP, DFlash, n-gram, prompt-cache, or response-cache acceleration.
 
@@ -65,11 +71,13 @@ reported device-memory headroom; Q8 KV is not needed for the validated 32K
 reference or the primary c2/32K target. It would be required only for the
 optional 100K-or-more stretch target on one 32 GiB card.
 
-Measured-memory modeling predicts F16 c1/64K and c2/32K can fit. The c2/32K
-shape is now the next target. Q8_0 KV is predicted to permit c1/100K and
-probably c1/128K; those are optional capacity rows, not immediate work. These
-are not fit results. The exact estimates, slot semantics, stop conditions, and
-validation order are in
+Measured-memory modeling predicts F16 c1/64K can fit. F16 c2/32K is now a
+measured fit result: `-c 65536 -np 2 --no-kv-unified` fully offloaded `65/65`
+layers, used `30,570 MiB`, and left `1,814 MiB` free while allocating 4 GiB of
+F16 KV. Its performance/exactness score is not promoted because the forced-tail
+gate below failed. Q8_0 KV is predicted to permit c1/100K and probably c1/128K;
+those are optional capacity rows, not immediate work. The exact estimates,
+slot semantics, stop conditions, and validation order are in
 [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md).
 
 Validated results under the correctness-qualified default
@@ -87,6 +95,26 @@ Validated results under the correctness-qualified default
   ranging from `15.240` at 4K to `12.783` at 31.8K;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
+
+The first official isolated short full-512 c1 packet measured `156.917 tok/s`
+prompt processing, `27.699 s` TTFT, `15.0716 tok/s` over tokens 1--100, and
+`15.0737 tok/s` over the 511 intervals from token 1 through token 512. A fresh
+same-card repeat was token/content exact and measured `156.872`, `27.708`,
+`15.0709`, and `15.0703` respectively. Both packets are authoritative,
+detached-seal PASS evidence; neither meets the Goal-1 speed targets yet.
+
+The formal c2 short lane proved true M=2 occupancy. Both synchronized forced
+streams contained the complete correct JSON answer prefixes, and later
+sequential natural-stop probes passed on both slots; a synchronized natural-stop
+pair has not yet been measured. The forced 512-token comparison intentionally
+suppresses EOS. In forward order slot 1 diverged from M=1 at token 71, after the
+answer boundary later measured at token 70; after prompt reversal slot 1
+diverged at token 96, after the other prompt's measured boundary at token 95,
+while slot 0 became 512/512 exact. This localizes the strict failure to a
+column-sensitive M=2 numerical path, not to prompt B or SSE loss. Reordered Q8
+MMVQ and recurrent-output DMMV are leading suspects to test, not established
+causes. No aggregate c2 rate is official until that boundary is classified. See
+[`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md).
 
 The validation sequence remains useful for future runtimes:
 
@@ -111,8 +139,8 @@ The validation sequence remains useful for future runtimes:
    [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
 
 The full-512/c2 measurement foundation is now implemented, offline-tested, and
-validated by a sealed four-card functional wave; no c2 fit or performance result
-is claimed until its GPU packet passes. The metric definitions, paired prompt
+validated by a sealed four-card functional wave. The c2 fit is measured; no c2
+performance result is claimed until its exactness and timing packet passes. The metric definitions, paired prompt
 counts, integrity gates, and four-card first wave are preregistered in
 [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md).
 For new full-512 and c2 packets, only a verified detached
@@ -195,6 +223,7 @@ cards were active. See
 - Four-replica result: [`notes/2026-08-08-four-replica-functional-smoke.md`](notes/2026-08-08-four-replica-functional-smoke.md)
 - Four-band full-512 functional result: [`notes/2026-08-09-four-gpu-goal1-functional-screen.md`](notes/2026-08-09-four-gpu-goal1-functional-screen.md)
 - Four-band structured summary: [`data/goal1-four-gpu-functional-summary-20260809.json`](data/goal1-four-gpu-functional-summary-20260809.json)
+- Current c1/c2 scorecard: [`data/goal1-c1-c2-scorecard-20260809.json`](data/goal1-c1-c2-scorecard-20260809.json)
 - Context/concurrency and optional-feature plan: [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md)
 - Four-GPU optimization and c2 execution plan: [`notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`](notes/2026-08-08-four-gpu-optimization-and-c2-plan.md)
 - Goal-1 measurement preregistration: [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md)
