@@ -93,7 +93,7 @@ printf '%s|%s|%s|%s|%s\n' \
 
 
 class CrossbandWrapperStaticTests(unittest.TestCase):
-    def test_pending_live_path_stops_before_external_commands(self) -> None:
+    def test_missing_ack_stops_before_external_commands(self) -> None:
         completed = subprocess.run(
             ["/bin/bash", str(SCRIPT)],
             cwd=Path("/"),
@@ -104,7 +104,7 @@ class CrossbandWrapperStaticTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stdout, "")
-        self.assertIn("PENDING independent review", completed.stderr)
+        self.assertIn("requires the exact acknowledgement", completed.stderr)
 
     def test_wrong_ack_stops_before_external_commands_after_activation(self) -> None:
         activated = SCRIPT.read_text().replace(
@@ -148,7 +148,7 @@ class CrossbandWrapperStaticTests(unittest.TestCase):
             METRIC_GATES: "7af3cf19eee537a8381b4583b09649e6a616b375b72685b569c96f7094363a2b",
             CROSSBAND_GATES: "9154afc0ea874d26cc2028bad922921ca54d8a2b70f75341aff97990a3e9695b",
         }
-        self.assertIn('LIVE_ENABLE_STATE="PENDING"', source)
+        self.assertIn('LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"', source)
         for path, digest in expected.items():
             with self.subTest(path=path.name):
                 self.assertEqual(sha256(path), digest)
