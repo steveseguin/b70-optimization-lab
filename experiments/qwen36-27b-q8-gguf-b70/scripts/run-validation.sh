@@ -5,7 +5,35 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 LANE="$ROOT/experiments/qwen36-27b-q8-gguf-b70"
 MANIFEST="$LANE/model-manifest.json"
 CANONICAL_RUNTIME_MANIFEST="$LANE/runtime-manifest.json"
-RUNTIME_MANIFEST="${RUNTIME_MANIFEST:-$LANE/runtime-manifest.json}"
+VDR4_RUNTIME_MANIFEST="$LANE/runtime-manifest-q8-vdr4-control.json"
+VDR2_RUNTIME_MANIFEST="$LANE/runtime-manifest-q8-vdr2-candidate.json"
+RUNTIME_PROFILE="${RUNTIME_PROFILE-canonical-baseline}"
+
+case "$RUNTIME_PROFILE" in
+  canonical-baseline)
+    RUNTIME_PROFILE_EXPECTED_MANIFEST="$CANONICAL_RUNTIME_MANIFEST"
+    RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256="ebab7496fa6665c3f7e8e3dcfd8e18945b4cc5e365a009f5bbffd7c7e878ede6"
+    RUNTIME_PROFILE_EXPECTED_Q8_VDR=4
+    RUNTIME_PROFILE_DIAGNOSTIC=0
+    ;;
+  q8-vdr4-control)
+    RUNTIME_PROFILE_EXPECTED_MANIFEST="$VDR4_RUNTIME_MANIFEST"
+    RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256="d127dbaaf30e014cbae0dc59a3c0b0f61f329eabadffb74ce40e01264bee79cc"
+    RUNTIME_PROFILE_EXPECTED_Q8_VDR=4
+    RUNTIME_PROFILE_DIAGNOSTIC=1
+    ;;
+  q8-vdr2-candidate)
+    RUNTIME_PROFILE_EXPECTED_MANIFEST="$VDR2_RUNTIME_MANIFEST"
+    RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256="4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
+    RUNTIME_PROFILE_EXPECTED_Q8_VDR=2
+    RUNTIME_PROFILE_DIAGNOSTIC=1
+    ;;
+  *)
+    echo "invalid RUNTIME_PROFILE=$RUNTIME_PROFILE; expected canonical-baseline, q8-vdr4-control, or q8-vdr2-candidate" >&2
+    exit 2
+    ;;
+esac
+RUNTIME_MANIFEST="${RUNTIME_MANIFEST:-$RUNTIME_PROFILE_EXPECTED_MANIFEST}"
 
 GPU_INDEX="${GPU_INDEX:-0}"
 PORT="${PORT:-19460}"
@@ -33,7 +61,6 @@ LANE_SYCL_FLASH_ATTN="${LANE_SYCL_FLASH_ATTN:-1}"
 HTTP_THREADS="${HTTP_THREADS:-6}"
 MODEL="${MODEL:-/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf}"
 MODEL_ALIAS="${MODEL_ALIAS:-qwen36-27b-q8_0-target-only}"
-LLAMA_SERVER="${LLAMA_SERVER:-/dev/shm/llama.cpp-pr19-15586/build-sycl/bin/llama-server}"
 VERIFY_MODEL_SHA256="${VERIFY_MODEL_SHA256:-1}"
 READINESS_TIMEOUT_S="${READINESS_TIMEOUT_S:-900}"
 GPU_IDLE_MAX_MIB="${GPU_IDLE_MAX_MIB:-256}"
@@ -74,6 +101,9 @@ LABEL="${LABEL:-qwen36-27b-q8_0-${CACHE_TYPE_K}kv-${RUN_SCOPE}-gpu${GPU_INDEX}-$
 if [[ "$RUN_SCOPE" == "promotion512" ]]; then
   LABEL="${LABEL}-${PROMOTION_PROFILE}-ub${PROMOTION_EXPECTED_UBATCH_SIZE}"
 fi
+if (( RUNTIME_PROFILE_DIAGNOSTIC == 1 )); then
+  LABEL="${LABEL}-${RUNTIME_PROFILE}-vdr${RUNTIME_PROFILE_EXPECTED_Q8_VDR}"
+fi
 RUN_DIR="${RUN_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/${LABEL}-${STAMP}}"
 
 case "$RUN_SCOPE" in
@@ -105,6 +135,124 @@ for numeric_name in READINESS_TIMEOUT_S MIN_HOST_AVAILABLE_KIB MIN_LOADED_DELTA_
     exit 2
   fi
 done
+if (( RUNTIME_PROFILE_DIAGNOSTIC == 1 )); then
+  [[ "$RUN_SCOPE" == "promotion512" ]] || {
+    echo "RUNTIME_PROFILE=$RUNTIME_PROFILE is restricted to RUN_SCOPE=promotion512" >&2
+    exit 2
+  }
+  [[ "$FULL512_BAND" == "short" ]] || {
+    echo "RUNTIME_PROFILE=$RUNTIME_PROFILE is restricted to FULL512_BAND=short" >&2
+    exit 2
+  }
+  [[ "$EVIDENCE_CLASS" == "parallel-functional-screen" ]] || {
+    echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires EVIDENCE_CLASS=parallel-functional-screen" >&2
+    exit 2
+  }
+  [[ "$REQUIRE_ALL_GPUS_IDLE" == "0" ]] || {
+    echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires REQUIRE_ALL_GPUS_IDLE=0" >&2
+    exit 2
+  }
+fi
+
+[[ -f "$RUNTIME_PROFILE_EXPECTED_MANIFEST" ]] || {
+  echo "runtime profile manifest not found: $RUNTIME_PROFILE_EXPECTED_MANIFEST" >&2
+  exit 2
+}
+[[ -f "$RUNTIME_MANIFEST" ]] || {
+  echo "runtime manifest not found: $RUNTIME_MANIFEST" >&2
+  exit 2
+}
+resolved_runtime_manifest="$(readlink -f "$RUNTIME_MANIFEST")"
+resolved_expected_runtime_manifest="$(readlink -f "$RUNTIME_PROFILE_EXPECTED_MANIFEST")"
+if [[ "$resolved_runtime_manifest" != "$resolved_expected_runtime_manifest" ]]; then
+  echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires RUNTIME_MANIFEST=$RUNTIME_PROFILE_EXPECTED_MANIFEST" >&2
+  exit 2
+fi
+runtime_manifest_sha256="$(sha256sum "$RUNTIME_MANIFEST" | awk '{print $1}')"
+if [[ ! "$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]] || \
+   [[ "$runtime_manifest_sha256" != "$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256" ]]; then
+  echo "RUNTIME_PROFILE=$RUNTIME_PROFILE runtime manifest SHA-256 mismatch" >&2
+  exit 2
+fi
+RUNTIME_PROFILE_CHECK_JSON="$(python3 - \
+  "$RUNTIME_MANIFEST" "$RUNTIME_PROFILE" "$RUNTIME_PROFILE_EXPECTED_Q8_VDR" \
+  "$RUNTIME_PROFILE_DIAGNOSTIC" "$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256" <<'PY'
+import json
+import os
+import re
+import sys
+
+manifest_path, profile, expected_vdr_raw, diagnostic_raw, expected_sha = sys.argv[1:]
+expected_vdr = int(expected_vdr_raw)
+diagnostic = diagnostic_raw == "1"
+try:
+    with open(manifest_path) as stream:
+        manifest = json.load(stream)
+except (OSError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"cannot read runtime profile manifest: {exc}")
+
+binary_path = manifest.get("llama_server_path")
+binary_sha = manifest.get("llama_server_sha256")
+if not isinstance(binary_path, str) or not os.path.isabs(binary_path):
+    raise SystemExit("runtime manifest llama_server_path must be absolute")
+if not isinstance(binary_sha, str) or re.fullmatch(r"[0-9a-f]{64}", binary_sha) is None:
+    raise SystemExit("runtime manifest llama_server_sha256 must be a lowercase SHA-256")
+
+manifest_profile = manifest.get("runtime_profile")
+controls = manifest.get("compile_time_controls")
+manifest_vdr = (
+    controls.get("GGML_SYCL_REORDER_Q8_0_VDR_MMVQ")
+    if isinstance(controls, dict)
+    else None
+)
+if diagnostic:
+    if manifest_profile != profile:
+        raise SystemExit(
+            f"runtime manifest runtime_profile mismatch: expected {profile!r}, "
+            f"observed {manifest_profile!r}"
+        )
+    if type(manifest_vdr) is not int or manifest_vdr != expected_vdr:
+        raise SystemExit(
+            "runtime manifest compile_time_controls."
+            "GGML_SYCL_REORDER_Q8_0_VDR_MMVQ mismatch: "
+            f"expected integer {expected_vdr}, observed {manifest_vdr!r}"
+        )
+    declared_vdr = manifest_vdr
+    declared_vdr_source = (
+        "runtime-manifest:compile_time_controls."
+        "GGML_SYCL_REORDER_Q8_0_VDR_MMVQ"
+    )
+else:
+    declared_vdr = expected_vdr
+    declared_vdr_source = "frozen-canonical-manifest-and-source"
+
+report = {
+    "passed": True,
+    "runtime_profile": profile,
+    "diagnostic_profile": diagnostic,
+    "runtime_manifest": os.path.realpath(manifest_path),
+    "runtime_manifest_sha256": expected_sha,
+    "manifest_runtime_profile": manifest_profile,
+    "declared_q8_reorder_vdr_mmvq": declared_vdr,
+    "declared_q8_reorder_vdr_mmvq_source": declared_vdr_source,
+    "manifest_declared_q8_reorder_vdr_mmvq": manifest_vdr,
+    "llama_server_path": os.path.normpath(binary_path),
+    "llama_server_sha256": binary_sha,
+}
+print(json.dumps(report, sort_keys=True))
+PY
+)"
+RUNTIME_DECLARED_Q8_VDR="$(python3 -c \
+  'import json,sys; print(json.loads(sys.argv[1])["declared_q8_reorder_vdr_mmvq"])' \
+  "$RUNTIME_PROFILE_CHECK_JSON")"
+RUNTIME_PROFILE_MANIFEST_LLAMA_SERVER="$(python3 -c \
+  'import json,sys; print(json.loads(sys.argv[1])["llama_server_path"])' \
+  "$RUNTIME_PROFILE_CHECK_JSON")"
+LLAMA_SERVER="${LLAMA_SERVER:-$RUNTIME_PROFILE_MANIFEST_LLAMA_SERVER}"
+if [[ "$(readlink -m "$LLAMA_SERVER")" != "$(readlink -m "$RUNTIME_PROFILE_MANIFEST_LLAMA_SERVER")" ]]; then
+  echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires LLAMA_SERVER=$RUNTIME_PROFILE_MANIFEST_LLAMA_SERVER" >&2
+  exit 2
+fi
 if [[ "$RUN_SCOPE" == "promotion512" ]]; then
   if [[ "$UBATCH_SIZE" != "$PROMOTION_EXPECTED_UBATCH_SIZE" ]]; then
     echo "PROMOTION_PROFILE=$PROMOTION_PROFILE requires UBATCH_SIZE=$PROMOTION_EXPECTED_UBATCH_SIZE" >&2
@@ -148,10 +296,6 @@ if [[ "$RUN_SCOPE" == "promotion512" ]]; then
     echo "promotion512 MODEL_ALIAS is locked" >&2
     exit 2
   }
-  [[ "$(readlink -f "$RUNTIME_MANIFEST")" == "$(readlink -f "$CANONICAL_RUNTIME_MANIFEST")" ]] || {
-    echo "promotion512 requires the canonical baseline runtime manifest" >&2
-    exit 2
-  }
   [[ "$LOG_VERBOSITY" == "4" ]] || {
     echo "promotion512 requires LOG_VERBOSITY=4" >&2
     exit 2
@@ -193,6 +337,10 @@ if [[ "$RUN_SCOPE" == "promotion512" ]]; then
       exit 2
     fi
   fi
+fi
+if (( RUNTIME_PROFILE_DIAGNOSTIC == 1 && PERFORMANCE_PROMOTABLE != 0 )); then
+  echo "diagnostic RUNTIME_PROFILE=$RUNTIME_PROFILE must remain performance_promotable=false" >&2
+  exit 2
 fi
 if [[ "$RUN_SCOPE" != "promotion512" && "$EVIDENCE_CLASS" != "legacy-validation" ]]; then
   echo "non-promotion scopes require EVIDENCE_CLASS=legacy-validation" >&2
@@ -292,6 +440,8 @@ if ! mkdir "$RUN_DIR"; then
   echo "RUN_DIR already exists or could not be created: $RUN_DIR" >&2
   exit 2
 fi
+printf '%s\n' "$RUNTIME_PROFILE_CHECK_JSON" > "$RUN_DIR/runtime-profile-check.json"
+RUNTIME_PROFILE_CHECK_SHA256="$(sha256sum "$RUN_DIR/runtime-profile-check.json" | awk '{print $1}')"
 
 exec {QWEN36_MODEL_FD}<"$MODEL"
 flock -s -n "$QWEN36_MODEL_FD" || {
@@ -816,6 +966,10 @@ on_exit() {
       --arg runtime_bundle_report_sha256 "$RUNTIME_BUNDLE_REPORT_SHA256" \
       --arg runtime_resolved_manifest_sha256 "$RUNTIME_RESOLVED_MANIFEST_SHA256" \
       --arg run_scope "$RUN_SCOPE" \
+      --arg runtime_profile "$RUNTIME_PROFILE" \
+      --argjson declared_q8_reorder_vdr_mmvq "$RUNTIME_DECLARED_Q8_VDR" \
+      --arg runtime_manifest_sha256 "$runtime_manifest_sha256" \
+      --arg runtime_profile_check_sha256 "$RUNTIME_PROFILE_CHECK_SHA256" \
       --arg promotion_profile "$PROMOTION_PROFILE" \
       --argjson promotion_expected_ubatch_size "$PROMOTION_EXPECTED_UBATCH_SIZE" \
       --arg full512_band "$FULL512_BAND" \
@@ -824,7 +978,7 @@ on_exit() {
       --argjson post_512_canary_passed "$post_canary_passed" \
       --argjson performance_promotable "$PERFORMANCE_PROMOTABLE" \
       --argjson promotion_required "$([[ "$RUN_SCOPE" == "promotion512" ]] && echo 1 || echo 0)" \
-      '{status:"PASS", evidence_valid:true, evidence_class:$evidence_class, performance_promotable:($performance_promotable == 1), run_scope:$run_scope, promotion_profile:$promotion_profile, promotion_expected_ubatch_size:$promotion_expected_ubatch_size, full512_band:$full512_band, gpu_index:$gpu_index, result:(if $result_sha256 == "" then null else "exact-tokens.json" end), result_sha256:(if $result_sha256 == "" then null else $result_sha256 end), post_512_canary_passed:($post_512_canary_passed == 1), artifacts_manifest_verified:true, artifacts_manifest:"artifacts.sha256", artifacts_manifest_sha256:$manifest_sha256, pre_seal_run_status:"run-status.txt", pre_seal_run_status_sha256:$run_status_sha256, pre_seal_exit_status:"exit-status.txt", pre_seal_exit_status_sha256:$exit_status_sha256, harness_manifest_sha256:$harness_manifest_sha256, runtime_bundle_report_sha256:$runtime_bundle_report_sha256, runtime_resolved_manifest_sha256:$runtime_resolved_manifest_sha256}' \
+      '{status:"PASS", evidence_valid:true, evidence_class:$evidence_class, performance_promotable:($performance_promotable == 1), run_scope:$run_scope, runtime_profile:$runtime_profile, declared_q8_reorder_vdr_mmvq:$declared_q8_reorder_vdr_mmvq, runtime_manifest_sha256:$runtime_manifest_sha256, runtime_profile_check:"runtime-profile-check.json", runtime_profile_check_sha256:$runtime_profile_check_sha256, promotion_profile:$promotion_profile, promotion_expected_ubatch_size:$promotion_expected_ubatch_size, full512_band:$full512_band, gpu_index:$gpu_index, result:(if $result_sha256 == "" then null else "exact-tokens.json" end), result_sha256:(if $result_sha256 == "" then null else $result_sha256 end), post_512_canary_passed:($post_512_canary_passed == 1), artifacts_manifest_verified:true, artifacts_manifest:"artifacts.sha256", artifacts_manifest_sha256:$manifest_sha256, pre_seal_run_status:"run-status.txt", pre_seal_run_status_sha256:$run_status_sha256, pre_seal_exit_status:"exit-status.txt", pre_seal_exit_status_sha256:$exit_status_sha256, harness_manifest_sha256:$harness_manifest_sha256, runtime_bundle_report_sha256:$runtime_bundle_report_sha256, runtime_resolved_manifest_sha256:$runtime_resolved_manifest_sha256}' \
       > "$completion_tmp" &&
       jq -e \
         --arg manifest_sha256 "$manifest_sha" \
@@ -832,6 +986,10 @@ on_exit() {
         --arg exit_status_sha256 "$exit_status_sha" \
         --arg evidence_class "$EVIDENCE_CLASS" \
         --arg run_scope "$RUN_SCOPE" \
+        --arg runtime_profile "$RUNTIME_PROFILE" \
+        --argjson declared_q8_reorder_vdr_mmvq "$RUNTIME_DECLARED_Q8_VDR" \
+        --arg runtime_manifest_sha256 "$runtime_manifest_sha256" \
+        --arg runtime_profile_check_sha256 "$RUNTIME_PROFILE_CHECK_SHA256" \
         --arg promotion_profile "$PROMOTION_PROFILE" \
         --argjson promotion_expected_ubatch_size "$PROMOTION_EXPECTED_UBATCH_SIZE" \
         --arg full512_band "$FULL512_BAND" \
@@ -845,6 +1003,11 @@ on_exit() {
           and .evidence_valid == true
           and .evidence_class == $evidence_class
           and .run_scope == $run_scope
+          and .runtime_profile == $runtime_profile
+          and .declared_q8_reorder_vdr_mmvq == $declared_q8_reorder_vdr_mmvq
+          and .runtime_manifest_sha256 == $runtime_manifest_sha256
+          and .runtime_profile_check == "runtime-profile-check.json"
+          and .runtime_profile_check_sha256 == $runtime_profile_check_sha256
           and .promotion_profile == $promotion_profile
           and .promotion_expected_ubatch_size == $promotion_expected_ubatch_size
           and .full512_band == $full512_band
@@ -852,6 +1015,11 @@ on_exit() {
           and .result_sha256 == (if $result_sha256 == "" then null else $result_sha256 end)
           and .post_512_canary_passed == ($post_512_canary_passed == 1)
           and .performance_promotable == ($performance_promotable == 1)
+          and (if $runtime_profile == "canonical-baseline" then
+            true
+          else
+            .performance_promotable == false
+          end)
           and .harness_manifest_sha256 == $harness_manifest_sha256
           and .artifacts_manifest_verified == true
           and .artifacts_manifest_sha256 == $manifest_sha256
@@ -864,6 +1032,7 @@ on_exit() {
             and .post_512_canary_passed == true
           else true end)
         ' "$completion_tmp" >/dev/null &&
+      [[ "$(sha256sum "$RUN_DIR/runtime-profile-check.json" | awk '{print $1}')" == "$RUNTIME_PROFILE_CHECK_SHA256" ]] &&
       [[ "$RUN_SCOPE" != "promotion512" || \
          "$(sha256sum "$RUN_DIR/exact-tokens.json" | awk '{print $1}')" == "$result_sha" ]] &&
       (cd "$RUN_DIR" && sha256sum -c artifacts.sha256 >/dev/null) &&
@@ -966,6 +1135,12 @@ done
   echo "date_utc=$STAMP"
   echo "label=$LABEL"
   echo "run_scope=$RUN_SCOPE"
+  echo "runtime_profile=$RUNTIME_PROFILE"
+  echo "runtime_profile_diagnostic=$RUNTIME_PROFILE_DIAGNOSTIC"
+  echo "declared_q8_reorder_vdr_mmvq=$RUNTIME_DECLARED_Q8_VDR"
+  echo "runtime_profile_expected_manifest=$RUNTIME_PROFILE_EXPECTED_MANIFEST"
+  echo "runtime_profile_expected_manifest_sha256=$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256"
+  echo "runtime_profile_check_sha256=$RUNTIME_PROFILE_CHECK_SHA256"
   echo "promotion_profile=$PROMOTION_PROFILE"
   echo "promotion_expected_ubatch_size=$PROMOTION_EXPECTED_UBATCH_SIZE"
   echo "evidence_class=$EVIDENCE_CLASS"
@@ -1144,8 +1319,13 @@ if not valid:
     raise SystemExit("no full target offload >=65 layers found")
 PY
 
-python3 - "$RUN_DIR/server.stdout.log" "$RUN_DIR/server.identity.log" "$RUN_DIR/server-config-check.json" "$CTX_SIZE" "$PARALLEL_SLOTS" "$KV_UNIFIED" "$RUN_SCOPE" "$PROMOTION_EXPECTED_UBATCH_SIZE" <<'PY'
+python3 - "$RUN_DIR/server.stdout.log" "$RUN_DIR/server.identity.log" "$RUN_DIR/server-config-check.json" \
+  "$CTX_SIZE" "$PARALLEL_SLOTS" \
+  "$KV_UNIFIED" "$RUN_SCOPE" "$RUNTIME_PROFILE" "$RUNTIME_DECLARED_Q8_VDR" \
+  "$resolved_runtime_manifest" "$runtime_manifest_sha256" "$LLAMA_SERVER" \
+  "$EXPECTED_RUNTIME_SHA256" "$PROMOTION_EXPECTED_UBATCH_SIZE" <<'PY'
 import json
+import os
 import re
 import sys
 
@@ -1157,6 +1337,12 @@ import sys
     slots_raw,
     kv_raw,
     run_scope,
+    runtime_profile,
+    declared_q8_vdr_raw,
+    expected_runtime_manifest,
+    expected_runtime_manifest_sha256,
+    expected_llama_server,
+    expected_llama_server_sha256,
     promotion_expected_ubatch_raw,
 ) = sys.argv[1:]
 text = open(log_path, errors="replace").read()
@@ -1166,6 +1352,25 @@ expected_slots = int(slots_raw)
 expected_ctx_seq = expected_ctx // expected_slots
 expected_kv = "true" if int(kv_raw) else "false"
 promotion_expected_ubatch = int(promotion_expected_ubatch_raw)
+declared_q8_vdr = int(declared_q8_vdr_raw)
+
+identity = {}
+for line in identity_text.split("--- server ---", 1)[0].splitlines():
+    if "=" in line:
+        key, value = line.split("=", 1)
+        identity[key] = value
+
+runtime_identity_fields = {
+    "runtime_manifest": os.path.realpath(identity.get("runtime_manifest", ""))
+    == os.path.realpath(expected_runtime_manifest),
+    "runtime_manifest_sha256": identity.get("runtime_manifest_sha256")
+    == expected_runtime_manifest_sha256,
+    "llama_server": os.path.realpath(identity.get("llama_server", ""))
+    == os.path.realpath(expected_llama_server),
+    "llama_server_sha256": identity.get("llama_server_sha256")
+    == expected_llama_server_sha256,
+    "runtime_bundle_verified": identity.get("runtime_bundle_verified") == "1",
+}
 
 def last_int(label: str) -> int | None:
     values = re.findall(rf"{re.escape(label)}\s*=\s*(\d+)", text)
@@ -1191,21 +1396,26 @@ slot_matches = re.findall(
     text,
 )
 result["observed"]["slot_config"] = slot_matches[-1] if slot_matches else None
+result["runtime_profile"] = {
+    "runtime_profile": runtime_profile,
+    "declared_q8_reorder_vdr_mmvq": declared_q8_vdr,
+    "expected_runtime_manifest": os.path.realpath(expected_runtime_manifest),
+    "expected_runtime_manifest_sha256": expected_runtime_manifest_sha256,
+    "expected_llama_server": os.path.realpath(expected_llama_server),
+    "expected_llama_server_sha256": expected_llama_server_sha256,
+    "server_identity_fields": runtime_identity_fields,
+}
 base_passed = (
     result["observed"]["n_seq_max"] == expected_slots
     and result["observed"]["n_ctx"] == expected_ctx
     and result["observed"]["n_ctx_seq"] == expected_ctx_seq
     and bool(slot_matches)
     and slot_matches[-1] == (str(expected_slots), str(expected_ctx_seq), expected_kv)
+    and all(runtime_identity_fields.values())
 )
 result["base_passed"] = base_passed
 promotion_passed = True
 if run_scope == "promotion512":
-    identity = {}
-    for line in identity_text.split("--- server ---", 1)[0].splitlines():
-        if "=" in line:
-            key, value = line.split("=", 1)
-            identity[key] = value
     expected_identity = {
         "ctx_size": "32768",
         "parallel_slots": "1",

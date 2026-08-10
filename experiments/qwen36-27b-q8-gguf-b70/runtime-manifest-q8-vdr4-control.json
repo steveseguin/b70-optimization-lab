@@ -1,0 +1,126 @@
+{
+  "role": "Qwen3.6 27B Q8_0 reordered-MMVQ VDR4 compile-time control",
+  "runtime_profile": "q8-vdr4-control",
+  "compile_time_controls": {
+    "GGML_SYCL_REORDER_Q8_0_VDR_MMVQ": 4
+  },
+  "runtime_identity_note": "Origin-first hybrid of the sealed 15586e2d7 baseline. The only changed regular file is libggml-sycl.so.0.18.1, rebuilt from the same patched detached source as the VDR2 candidate with the declared compile-time VDR value.",
+  "llama_cpp_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+  "runtime_version_line": "version: 10298 (15586e2d7)",
+  "runtime_build_line": "built with IntelLLVM 2026.0.0 for Linux x86_64",
+  "llama_server_path": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr4-hybrid/llama-server",
+  "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+  "runtime_bundle_schema_version": 1,
+  "runtime_loader_policy": {
+    "mode": "origin-first",
+    "variable": "LD_LIBRARY_PATH"
+  },
+  "origin_shared_objects": [
+    {
+      "soname": "libllama-server-impl.so",
+      "loader_path": "$ORIGIN/libllama-server-impl.so",
+      "resolved_path": "$ORIGIN/libllama-server-impl.so",
+      "size_bytes": 7416464,
+      "sha256": "cbf95973702633d9b603a5f119cfb6f991acd869ee3f7472f71c005a6162913f"
+    },
+    {
+      "soname": "libllama-common.so.0",
+      "loader_path": "$ORIGIN/libllama-common.so.0",
+      "resolved_path": "$ORIGIN/libllama-common.so.0.0.10298",
+      "size_bytes": 5613104,
+      "sha256": "6dfc358f766ed84a33879421a8a2747557ddea257fe7256c9a003caa19680aad"
+    },
+    {
+      "soname": "libmtmd.so.0",
+      "loader_path": "$ORIGIN/libmtmd.so.0",
+      "resolved_path": "$ORIGIN/libmtmd.so.0.0.10298",
+      "size_bytes": 1817200,
+      "sha256": "d213efaa5c43f93890034aae621509c9adf56e01d00e3aae6009430058c46a14"
+    },
+    {
+      "soname": "libllama.so.0",
+      "loader_path": "$ORIGIN/libllama.so.0",
+      "resolved_path": "$ORIGIN/libllama.so.0.0.10298",
+      "size_bytes": 3911408,
+      "sha256": "664613ebeab1e208585abd82319ead63327e6b2c9061321174d60c4caeb8bcdb"
+    },
+    {
+      "soname": "libggml.so.0",
+      "loader_path": "$ORIGIN/libggml.so.0",
+      "resolved_path": "$ORIGIN/libggml.so.0.18.1",
+      "size_bytes": 55440,
+      "sha256": "c9c5d6a332f6f4f47af9afd57a2696ae0925b8e5433d39f50d4aee491217d79c"
+    },
+    {
+      "soname": "libggml-cpu.so.0",
+      "loader_path": "$ORIGIN/libggml-cpu.so.0",
+      "resolved_path": "$ORIGIN/libggml-cpu.so.0.18.1",
+      "size_bytes": 1750784,
+      "sha256": "e964205599e02d875b2d861e743541285a9e5d5e7acc74bc67421eb0f50b170b"
+    },
+    {
+      "soname": "libggml-sycl.so.0",
+      "loader_path": "$ORIGIN/libggml-sycl.so.0",
+      "resolved_path": "$ORIGIN/libggml-sycl.so.0.18.1",
+      "size_bytes": 86885752,
+      "sha256": "e545c2363689de3aced49bf2f26003f499cf19eb1bb302babffc2c17132b98e7"
+    },
+    {
+      "soname": "libggml-base.so.0",
+      "loader_path": "$ORIGIN/libggml-base.so.0",
+      "resolved_path": "$ORIGIN/libggml-base.so.0.18.1",
+      "size_bytes": 1043152,
+      "sha256": "71876bc702d43f5da637844b53b70939d08b10e9293f90f9097f8da9ffdb52a4"
+    }
+  ],
+  "hybrid_delta": {
+    "baseline_bundle": "/dev/shm/llama.cpp-pr19-15586/build-sycl/bin",
+    "candidate_build_bundle": "/dev/shm/qwen36-27b-q8-vdr-screen-20260810/build-vdr4/bin",
+    "changed_regular_file_count": 1,
+    "changed_regular_file": "libggml-sycl.so.0.18.1",
+    "baseline_sha256": "5c28055ba08fa5ee29c39a4d15cd060c49c05f3f8c16499125208c848c81d3f0",
+    "candidate_sha256": "e545c2363689de3aced49bf2f26003f499cf19eb1bb302babffc2c17132b98e7"
+  },
+  "source_provenance": {
+    "base_repo": "/home/steve/src/llama.cpp-community-pr14-20260801",
+    "fresh_detached_clone": "/dev/shm/qwen36-27b-q8-vdr-screen-20260810/src",
+    "base_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+    "patch": "../../patches/gemma4-26b-a4b-q8-b70/q8-reorder-vdr-compile-knob-20260627.patch",
+    "patch_sha256": "9b211cd6d4b2648cd195decfbc865e0cdf7130d76d428c36d3384e883e1f05a4",
+    "tracked_diff_sha256": "9b211cd6d4b2648cd195decfbc865e0cdf7130d76d428c36d3384e883e1f05a4",
+    "quants_hpp_sha256": "798e3794c14542cae2144ff15a53fbbbd238315309a59ae48b32225fb848295a"
+  },
+  "candidate_build": {
+    "build_root": "/dev/shm/qwen36-27b-q8-vdr-screen-20260810/build-vdr4",
+    "build_type": "Release",
+    "compiler": "IntelLLVM 2026.0.0",
+    "GGML_SYCL": true,
+    "GGML_SYCL_F16": true,
+    "GGML_SYCL_GRAPH": true,
+    "GGML_SYCL_DNN": true,
+    "GGML_NATIVE": true,
+    "GGML_SYCL_DEVICE_ARCH": "",
+    "cmake_cache_sha256": "d8737ddd780d1aa2ce4f3ec29670416fc9af902af57f9e788aebde67decac904",
+    "compile_commands_sha256": "8677c2d77d89ff8b664bc6b8745726fd5b6af3ad03ce97f4b0fafb4a2ec00666",
+    "libggml_sycl_sha256": "e545c2363689de3aced49bf2f26003f499cf19eb1bb302babffc2c17132b98e7"
+  },
+  "build_evidence": {
+    "root": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr-screen-build-evidence-20260810",
+    "configure_log": "vdr4/configure.log",
+    "configure_log_sha256": "0888b1648e67f060583bd002570188314085e24f76ea9364eb422efd90e89e5d",
+    "build_log": "vdr4/build.log",
+    "build_log_sha256": "ed1b0fb7ce2d518b132e9d5fd2e567a48fb08bb2b3754bbf1e9ebd2c12a98936",
+    "ldd_report": "runtime-reports/vdr4-ldd.txt",
+    "ldd_report_sha256": "6e66661c7b5ff568877613ee91a9346711b26eb77670611278c12ec3352c0c07",
+    "baseline_diff_report": "runtime-reports/vdr4-baseline-diff.txt",
+    "baseline_diff_report_sha256": "e9abf362472fe665362d79d29cad43c2da336c6b0330fdc1ed3da18794463f29"
+  },
+  "validated_lane_defaults": {
+    "GGML_SYCL_ENABLE_VMM": 1,
+    "GGML_SYCL_ENABLE_GRAPH": 0,
+    "GGML_SYCL_ENABLE_DNN": 0,
+    "GGML_SYCL_ENABLE_OPT": 1,
+    "GGML_SYCL_PRIORITIZE_DMMV": 0
+  },
+  "validation_status": "offline build, exact hybrid-delta, ELF and origin-first ldd checks passed; no GPU or model validation run"
+}
