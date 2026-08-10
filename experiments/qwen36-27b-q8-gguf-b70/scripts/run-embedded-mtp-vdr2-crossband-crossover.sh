@@ -4,7 +4,7 @@ set -euo pipefail
 # Default-off live wrapper for the fixed four-card, two-wave middle/near-32K
 # embedded-MTP crossover.  The no-argument path must remain before ROOT
 # resolution and every external command until independent review activates it.
-LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"
+LIVE_ENABLE_STATE="PENDING"
 LIVE_ENABLE_REQUIRED="REVIEWED_AND_PINNED"
 LIVE_ACK_REQUIRED="I_ACCEPT_FOUR_B70_EMBEDDED_MTP_VDR2_CROSSBAND_CROSSOVER"
 CHILD_ACK_REQUIRED="INTERNAL_REVIEWED_CROSSBAND_CHILD_V1"
@@ -151,6 +151,11 @@ case "${1:-}" in
     ;;
 esac
 
+# xpu-smi is not reliable under concurrent callers on this stack.  Every
+# parent/child residency sample uses one host-wide lock; model execution is
+# unaffected and the measured capture still runs concurrently across cards.
+XPU_SMI_LOCK="/run/user/$(id -u)/qwen36-b70-xpu-smi-stats.lock"
+
 port_is_listening() {
   local port="$1"
   local listeners
@@ -164,7 +169,8 @@ port_is_listening() {
 gpu_used_mib() {
   local device="$1"
   local output="$2"
-  timeout 20 xpu-smi stats -d "$device" > "$output" 2>&1 || return 1
+  flock -w 45 "$XPU_SMI_LOCK" timeout 20 xpu-smi stats -d "$device" \
+    > "$output" 2>&1 || return 1
   awk -F '|' '/GPU Memory Used/{gsub(/[^0-9.]/, "", $3); print int($3); exit}' "$output"
 }
 
@@ -366,7 +372,13 @@ child_main() {
   local model_load_path="/proc/self/fd/$QWEN36_MODEL_FD"
   local alias="qwen36-27b-mtp-crossband-w${wave}-g${gpu}-${band}-${mode}"
   local server_pid=""
-  local child_finalizing=0
+  CHILD_FINALIZING=0
+  CHILD_SERVER_PID=""
+  CHILD_ARM_DIR="$arm_dir"
+  CHILD_GPU="$gpu"
+  CHILD_PORT="$port"
+  CHILD_PRE_GPU_USED="$pre_gpu_used"
+  CHILD_CLEANUP_CONCLUSIVE=1
 
   stop_child_server() {
     local forced=0
@@ -376,35 +388,36 @@ child_main() {
     local port_closed=0
     local port_status=0
     local vram_returned=0
-    [[ -n "$server_pid" ]] || return 0
-    if kill -0 "$server_pid" 2>/dev/null; then
-      kill "$server_pid" 2>/dev/null || true
+    [[ -n "$CHILD_SERVER_PID" ]] || return 0
+    CHILD_CLEANUP_CONCLUSIVE=0
+    if kill -0 "$CHILD_SERVER_PID" 2>/dev/null; then
+      kill "$CHILD_SERVER_PID" 2>/dev/null || true
       for _ in {1..30}; do
-        if ! kill -0 "$server_pid" 2>/dev/null; then break; fi
-        state="$(ps -o stat= -p "$server_pid" 2>/dev/null | awk '{print $1}' || true)"
+        if ! kill -0 "$CHILD_SERVER_PID" 2>/dev/null; then break; fi
+        state="$(ps -o stat= -p "$CHILD_SERVER_PID" 2>/dev/null | awk '{print $1}' || true)"
         [[ "$state" == Z* ]] && break
         sleep 1
       done
     fi
-    state="$(ps -o stat= -p "$server_pid" 2>/dev/null | awk '{print $1}' || true)"
-    if kill -0 "$server_pid" 2>/dev/null && [[ "$state" != Z* ]]; then
+    state="$(ps -o stat= -p "$CHILD_SERVER_PID" 2>/dev/null | awk '{print $1}' || true)"
+    if kill -0 "$CHILD_SERVER_PID" 2>/dev/null && [[ "$state" != Z* ]]; then
       forced=1
-      kill -KILL "$server_pid" 2>/dev/null || true
+      kill -KILL "$CHILD_SERVER_PID" 2>/dev/null || true
       for _ in {1..10}; do
-        if ! kill -0 "$server_pid" 2>/dev/null; then break; fi
-        state="$(ps -o stat= -p "$server_pid" 2>/dev/null | awk '{print $1}' || true)"
+        if ! kill -0 "$CHILD_SERVER_PID" 2>/dev/null; then break; fi
+        state="$(ps -o stat= -p "$CHILD_SERVER_PID" 2>/dev/null | awk '{print $1}' || true)"
         [[ "$state" == Z* ]] && break
         sleep 1
       done
     fi
-    state="$(ps -o stat= -p "$server_pid" 2>/dev/null | awk '{print $1}' || true)"
-    if kill -0 "$server_pid" 2>/dev/null && [[ "$state" != Z* ]]; then
+    state="$(ps -o stat= -p "$CHILD_SERVER_PID" 2>/dev/null | awk '{print $1}' || true)"
+    if kill -0 "$CHILD_SERVER_PID" 2>/dev/null && [[ "$state" != Z* ]]; then
       survivor=1
     else
-      wait "$server_pid" 2>/dev/null || true
+      wait "$CHILD_SERVER_PID" 2>/dev/null || true
     fi
     for _ in {1..20}; do
-      if port_is_listening "$port"; then
+      if port_is_listening "$CHILD_PORT"; then
         :
       else
         port_status=$?
@@ -413,40 +426,46 @@ child_main() {
       sleep 1
     done
     for attempt in {1..30}; do
-      final_used="$(gpu_used_mib "$gpu" "$arm_dir/xpu-smi-after-${attempt}.txt" || true)"
+      final_used="$(gpu_used_mib "$CHILD_GPU" "$CHILD_ARM_DIR/xpu-smi-after-${attempt}.txt" || true)"
       if [[ "$final_used" =~ ^[0-9]+$ ]] && \
-        (( final_used <= pre_gpu_used + GPU_IDLE_MAX_MIB )); then
+        (( final_used <= CHILD_PRE_GPU_USED + GPU_IDLE_MAX_MIB )); then
         vram_returned=1
         break
       fi
       sleep 1
     done
-    cat > "$arm_dir/cleanup-status.env" <<EOF
+    cat > "$CHILD_ARM_DIR/cleanup-status.env" <<EOF
 forced_kill=$forced
 cleanup_survivor=$survivor
 port_closed=$port_closed
 vram_returned=$vram_returned
-pre_gpu_used_mib=$pre_gpu_used
+pre_gpu_used_mib=$CHILD_PRE_GPU_USED
 final_gpu_used_mib=${final_used:-unknown}
 EOF
-    if (( survivor == 0 )); then server_pid=""; fi
+    if (( survivor == 0 )); then CHILD_SERVER_PID=""; fi
+    if (( survivor == 0 && port_closed == 1 )); then CHILD_CLEANUP_CONCLUSIVE=1; fi
     (( forced == 0 && survivor == 0 && port_closed == 1 && vram_returned == 1 ))
   }
 
   child_finalize() {
     local original_status=$?
     local final_status="$original_status"
-    if (( child_finalizing == 1 )); then exit "$original_status"; fi
-    child_finalizing=1
+    if (( CHILD_FINALIZING == 1 )); then exit "$original_status"; fi
+    CHILD_FINALIZING=1
     trap - EXIT INT TERM
     set +e
-    if [[ -n "$server_pid" ]]; then stop_child_server || final_status=1; fi
-    if [[ -d "$arm_dir" && "$final_status" != 0 ]]; then
-      chmod u+rwx "$arm_dir" 2>/dev/null || true
-      find "$arm_dir" -type f -exec chmod u+rw {} + 2>/dev/null || true
-      rm -f -- "$arm_dir/artifacts.sha256" "$arm_dir/completion-status.json" || true
-      printf 'FAIL\n' > "$arm_dir/run-status.txt" || true
-      seal_directory "$arm_dir" || true
+    if [[ -n "$CHILD_SERVER_PID" ]]; then stop_child_server || final_status=1; fi
+    if (( CHILD_CLEANUP_CONCLUSIVE == 0 )); then
+      rm -f -- "$CHILD_ARM_DIR/artifacts.sha256" "$CHILD_ARM_DIR/completion-status.json" || true
+      printf 'FAIL_UNSEALED_ACTIVE_SERVER\n' > "$CHILD_ARM_DIR/run-status.txt" || true
+      exit 1
+    fi
+    if [[ -d "$CHILD_ARM_DIR" && "$final_status" != 0 ]]; then
+      chmod u+rwx "$CHILD_ARM_DIR" 2>/dev/null || true
+      find "$CHILD_ARM_DIR" -type f -exec chmod u+rw {} + 2>/dev/null || true
+      rm -f -- "$CHILD_ARM_DIR/artifacts.sha256" "$CHILD_ARM_DIR/completion-status.json" || true
+      printf 'FAIL\n' > "$CHILD_ARM_DIR/run-status.txt" || true
+      seal_directory "$CHILD_ARM_DIR" || true
     fi
     exit "$final_status"
   }
@@ -519,7 +538,16 @@ EOF
     "$wave" "$ubatch" "$port" "$alias" "$model_load_path" "${server_cmd[@]}"
   "${server_cmd[@]}" > "$arm_dir/server.stdout.log" 2>&1 &
   server_pid=$!
+  CHILD_SERVER_PID="$server_pid"
+  CHILD_CLEANUP_CONCLUSIVE=0
   printf '%s\n' "$server_pid" > "$arm_dir/server.pid"
+  local server_starttime
+  server_starttime="$(awk '{print $22}' "/proc/$server_pid/stat" 2>/dev/null || true)"
+  [[ "$server_starttime" =~ ^[0-9]+$ ]] || {
+    echo "could not bind child server process start time" >&2
+    return 1
+  }
+  printf '%s\n' "$server_starttime" > "$arm_dir/server.starttime"
   local deadline=$((SECONDS + READINESS_TIMEOUT_S))
   until curl --noproxy '*' -fsS "http://127.0.0.1:${port}/v1/models" \
     > "$arm_dir/models.json" 2> "$arm_dir/models.err"; do
@@ -743,28 +771,125 @@ process_is_live() {
   [[ -n "$state" && "$state" != Z* ]]
 }
 
+process_group_is_live() {
+  local pgid="$1"
+  [[ "$pgid" =~ ^[0-9]+$ ]] || return 1
+  ps -eo pgid=,stat= | awk -v target="$pgid" '
+    $1 == target && $2 !~ /^Z/ { found = 1 }
+    END { exit(found ? 0 : 1) }
+  '
+}
+
 kill_active_children() {
   local pid
+  local clean=1
   for pid in "${ACTIVE_CHILD_PIDS[@]}"; do
-    if [[ "$pid" =~ ^[0-9]+$ ]] && process_is_live "$pid"; then
-      kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+    if [[ "$pid" =~ ^[0-9]+$ ]]; then
+      if process_group_is_live "$pid"; then kill -TERM -- "-$pid" 2>/dev/null || true; fi
+      if process_is_live "$pid"; then kill -TERM "$pid" 2>/dev/null || true; fi
     fi
   done
-  for _ in {1..30}; do
+  for _ in {1..45}; do
     local alive=0
     for pid in "${ACTIVE_CHILD_PIDS[@]}"; do
-      process_is_live "$pid" && alive=1
+      if process_is_live "$pid" || process_group_is_live "$pid"; then alive=1; fi
     done
     (( alive == 0 )) && break
     sleep 1
   done
   for pid in "${ACTIVE_CHILD_PIDS[@]}"; do
-    if [[ "$pid" =~ ^[0-9]+$ ]] && process_is_live "$pid"; then
-      kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+    if [[ "$pid" =~ ^[0-9]+$ ]]; then
+      if process_group_is_live "$pid"; then kill -KILL -- "-$pid" 2>/dev/null || true; fi
+      if process_is_live "$pid"; then kill -KILL "$pid" 2>/dev/null || true; fi
     fi
     wait "$pid" 2>/dev/null || true
+    if process_is_live "$pid" || process_group_is_live "$pid"; then clean=0; fi
   done
   ACTIVE_CHILD_PIDS=()
+  (( clean == 1 ))
+}
+
+recorded_server_identity_matches() {
+  local pid_file="$1"
+  local pid="$2"
+  local expected_start
+  local actual_start
+  local start_file="${pid_file%server.pid}server.starttime"
+  [[ -f "$start_file" ]] || return 1
+  expected_start="$(<"$start_file")"
+  actual_start="$(awk '{print $22}' "/proc/$pid/stat" 2>/dev/null || true)"
+  [[ "$expected_start" =~ ^[0-9]+$ && "$actual_start" == "$expected_start" ]] || return 1
+  [[ -e "/proc/$pid/exe" && "$LLAMA_SERVER" -ef "/proc/$pid/exe" ]]
+}
+
+cleanup_recorded_servers() {
+  local pid_file
+  local pid
+  local state
+  local clean=1
+  local log="$RUN_DIR/parent-recorded-server-cleanup.log"
+  : > "$log"
+  while IFS= read -r -d '' pid_file; do
+    pid="$(<"$pid_file")"
+    if [[ ! "$pid" =~ ^[0-9]+$ ]]; then
+      printf 'invalid_pid_file=%s\n' "$pid_file" >> "$log"
+      clean=0
+      continue
+    fi
+    if ! process_is_live "$pid"; then
+      printf 'already_stopped_pid=%s pid_file=%s\n' "$pid" "$pid_file" >> "$log"
+      continue
+    fi
+    if ! recorded_server_identity_matches "$pid_file" "$pid"; then
+      printf 'refused_unverified_live_pid=%s pid_file=%s\n' "$pid" "$pid_file" >> "$log"
+      clean=0
+      continue
+    fi
+    printf 'term_verified_pid=%s pid_file=%s\n' "$pid" "$pid_file" >> "$log"
+    kill -TERM "$pid" 2>/dev/null || true
+    for _ in {1..45}; do
+      process_is_live "$pid" || break
+      sleep 1
+    done
+    if process_is_live "$pid"; then
+      if recorded_server_identity_matches "$pid_file" "$pid"; then
+        printf 'kill_verified_pid=%s pid_file=%s\n' "$pid" "$pid_file" >> "$log"
+        kill -KILL "$pid" 2>/dev/null || true
+        for _ in {1..10}; do
+          process_is_live "$pid" || break
+          sleep 1
+        done
+      else
+        printf 'refused_reused_pid=%s pid_file=%s\n' "$pid" "$pid_file" >> "$log"
+      fi
+    fi
+    state="$(ps -o stat= -p "$pid" 2>/dev/null | awk '{print $1}' || true)"
+    if process_is_live "$pid" && [[ "$state" != Z* ]]; then clean=0; fi
+  done < <(find "$RUN_DIR" -type f -name server.pid -print0)
+  (( clean == 1 ))
+}
+
+wait_for_all_ports_closed() {
+  local attempt
+  local gpu
+  local port
+  local status
+  local all_closed
+  for attempt in {1..90}; do
+    all_closed=1
+    for gpu in 0 1 2 3; do
+      port=$((PORT_BASE_DECIMAL + gpu))
+      if port_is_listening "$port"; then
+        all_closed=0
+      else
+        status=$?
+        (( status == 1 )) || return 2
+      fi
+    done
+    (( all_closed == 1 )) && return 0
+    sleep 1
+  done
+  return 1
 }
 
 verify_harness_inputs() {
@@ -790,13 +915,25 @@ finalize() {
   local runtime_ok=0
   local idle_ok=1
   local port_ok=1
+  local cleanup_conclusive=1
   local device_scan_status=0
   if (( FINALIZING == 1 )); then exit "$original_status"; fi
   FINALIZING=1
   trap - EXIT INT TERM
   set +e
   set +u
-  kill_active_children
+  if ! kill_active_children; then
+    cleanup_conclusive=0
+    final_status=1
+  fi
+  if ! cleanup_recorded_servers; then
+    cleanup_conclusive=0
+    final_status=1
+  fi
+  if ! wait_for_all_ports_closed; then
+    cleanup_conclusive=0
+    final_status=1
+  fi
   if (( HARNESS_BASELINE_READY == 1 )) && verify_harness_inputs final; then harness_ok=1; else final_status=1; fi
   if (( MODEL_BASELINE_READY == 1 )) && verify_model_stat final; then model_stat_ok=1; else final_status=1; fi
   if (( MODEL_BASELINE_READY == 1 )) && \
@@ -826,9 +963,11 @@ finalize() {
     port=$((PORT_BASE_DECIMAL + gpu))
     if port_is_listening "$port"; then
       port_ok=0
+      cleanup_conclusive=0
       final_status=1
     elif [[ $? != 1 ]]; then
       port_ok=0
+      cleanup_conclusive=0
       final_status=1
     fi
   done
@@ -847,7 +986,13 @@ finalize() {
     "runtime_bundle_unchanged=$runtime_ok" \
     "all_gpus_idle=$idle_ok" \
     "all_ports_closed=$port_ok" \
+    "cleanup_conclusive=$cleanup_conclusive" \
     "body_completed=$BODY_COMPLETED" > "$RUN_DIR/final-integrity.env"
+  if (( cleanup_conclusive == 0 )); then
+    rm -f -- "$RUN_DIR/artifacts.sha256" "$RUN_DIR/completion-status.json"
+    printf 'FAIL_UNSEALED_ACTIVE_OR_UNVERIFIED_SERVER\n' > "$RUN_DIR/run-status.txt"
+    exit 1
+  fi
   rm -f -- "$RUN_DIR/artifacts.sha256" "$RUN_DIR/completion-status.json"
   if (( final_status == 0 )); then
     printf 'PASS_EVIDENCE_VALID\n' > "$RUN_DIR/run-status.txt"
@@ -929,7 +1074,8 @@ check_host_memory "$RUN_DIR/host-memory-preflight.env" || {
   echo "host MemAvailable is below the 32 GiB floor" >&2
   exit 2
 }
-xpu-smi discovery -j > "$RUN_DIR/xpu-smi-discovery.json"
+flock -w 45 "$XPU_SMI_LOCK" timeout 30 xpu-smi discovery -j \
+  > "$RUN_DIR/xpu-smi-discovery.json"
 jq -e '
   ([.device_list[] |
     select(.device_function_type == "physical" and (.device_name | contains("Arc(TM) Pro B70"))) |
@@ -1059,10 +1205,35 @@ launch_arm() {
   ACTIVE_CHILD_PIDS+=("$!")
 }
 
+wait_arm_ready() {
+  local wave="$1"
+  local gpu="$2"
+  local band="$3"
+  local mode="$4"
+  local directory="$RUN_DIR/wave${wave}/gpu${gpu}-${band}-${mode}"
+  local pid="${ACTIVE_CHILD_PIDS[$gpu]}"
+  local port=$((PORT_BASE_DECIMAL + gpu))
+  local deadline=$((SECONDS + READINESS_TIMEOUT_S))
+  while [[ ! -f "$directory/ready.json" ]]; do
+    process_is_live "$pid" || {
+      echo "wave $wave GPU $gpu child exited before readiness" >&2
+      return 1
+    }
+    (( SECONDS < deadline )) || {
+      echo "wave $wave GPU $gpu serialized readiness timed out" >&2
+      return 1
+    }
+    sleep 1
+  done
+  jq -e --argjson wave "$wave" --argjson gpu "$gpu" --arg band "$band" --arg mode "$mode" '
+    .status == "READY" and .wave == $wave and .gpu_index == $gpu
+    and .band == $band and .mode == $mode
+  ' "$directory/ready.json" >/dev/null
+  port_is_listening "$port"
+}
+
 run_wave() {
   local wave="$1"
-  local deadline
-  local all_ready
   local failed=0
   local pid
   local gpu
@@ -1074,44 +1245,31 @@ run_wave() {
   mkdir "$RUN_DIR/wave${wave}"
   if [[ "$wave" == 1 ]]; then
     launch_arm 1 0 middle control 128
+    wait_arm_ready 1 0 middle control
     launch_arm 1 1 middle mtp3 128
+    wait_arm_ready 1 1 middle mtp3
     launch_arm 1 2 near32k control 1024
+    wait_arm_ready 1 2 near32k control
     launch_arm 1 3 near32k mtp3 1024
+    wait_arm_ready 1 3 near32k mtp3
   else
     launch_arm 2 0 middle mtp3 128
+    wait_arm_ready 2 0 middle mtp3
     launch_arm 2 1 middle control 128
+    wait_arm_ready 2 1 middle control
     launch_arm 2 2 near32k mtp3 1024
+    wait_arm_ready 2 2 near32k mtp3
     launch_arm 2 3 near32k control 1024
+    wait_arm_ready 2 3 near32k control
   fi
-  deadline=$((SECONDS + BARRIER_TIMEOUT_S))
-  while :; do
-    all_ready=1
-    for gpu in 0 1 2 3; do
-      read -r band mode ubatch <<< "$(expected_assignment "$wave" "$gpu")"
-      directory="$RUN_DIR/wave${wave}/gpu${gpu}-${band}-${mode}"
-      [[ -f "$directory/ready.json" ]] || all_ready=0
-      pid="${ACTIVE_CHILD_PIDS[$gpu]}"
-      process_is_live "$pid" || {
-        echo "wave $wave GPU $gpu child exited before the barrier" >&2
-        return 1
-      }
-    done
-    (( all_ready == 1 )) && break
-    (( SECONDS < deadline )) || {
-      echo "wave $wave readiness barrier timed out" >&2
-      return 1
-    }
-    sleep 1
-  done
   for gpu in 0 1 2 3; do
     read -r band mode ubatch <<< "$(expected_assignment "$wave" "$gpu")"
     directory="$RUN_DIR/wave${wave}/gpu${gpu}-${band}-${mode}"
-    jq -e --argjson wave "$wave" --argjson gpu "$gpu" --arg band "$band" --arg mode "$mode" '
-      .status == "READY" and .wave == $wave and .gpu_index == $gpu
-      and .band == $band and .mode == $mode
-    ' "$directory/ready.json" >/dev/null
-    port=$((PORT_BASE_DECIMAL + gpu))
-    port_is_listening "$port"
+    pid="${ACTIVE_CHILD_PIDS[$gpu]}"
+    process_is_live "$pid" || {
+      echo "wave $wave GPU $gpu child exited before the release barrier" >&2
+      return 1
+    }
   done
   python3 - "$RUN_DIR/wave${wave}-release.json.tmp" "$wave" <<'PY'
 import json
@@ -1130,9 +1288,10 @@ PY
   mv "$RUN_DIR/wave${wave}-release.json.tmp" "$RUN_DIR/wave${wave}-release.json"
   for pid in "${ACTIVE_CHILD_PIDS[@]}"; do
     if ! wait "$pid"; then failed=1; fi
+    if process_group_is_live "$pid"; then failed=1; fi
   done
-  ACTIVE_CHILD_PIDS=()
   (( failed == 0 )) || return 1
+  ACTIVE_CHILD_PIDS=()
   for gpu in 0 1 2 3; do
     read -r band mode ubatch <<< "$(expected_assignment "$wave" "$gpu")"
     directory="$RUN_DIR/wave${wave}/gpu${gpu}-${band}-${mode}"
