@@ -101,6 +101,7 @@ Start with:
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`.
 
 The official isolated short full-512 c1 packet now passes and has an exact
@@ -234,35 +235,41 @@ aggregate / `16` each targets fail. Bank the functional PASS and honest
 performance FAIL as the ordinary-c2 comparator; do not claim the per-card or
 eight-slot serving objective or rerun the unchanged recipe.
 
-The separate integrated publisher-MTP identity has now advanced from a short
-two-prompt diagnostic, not into promotion. The pinned 29,047,084,160-byte
-artifact is revision `5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace`, SHA-256
+The separate integrated publisher-MTP identity has now cleared a scoped fixed
+cold realistic-suite gate. Its pinned 29,047,084,160-byte artifact is revision
+`5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace`, SHA-256
 `9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8`.
-Two sealed pre-measurement failures remain part of the provenance: the
-42-entry `99a07a5f...` manifest stopped on unsupported `-fitp`, and the
-43-entry `42239f5f...` manifest stopped when a stale matcher missed the actual
-`qwen35.nextn_predict_layers = 1` metadata line. The first valid packet
-(`35820eb...` manifest, `f52d9093...` completion, `bc484bc4...` comparison)
-passed exactness and measured the same large gain, but retains the historical
-`ONE_BOUNDED_NMAX_PMIN_FOLLOWUP` classification because its comparator co-gated
-unmatched early-99-interval and all-512 native horizons.
+The preceding two-prompt confirmation remains
+`official-isolated-diagnostic`, `performance_promotable=false`, and is retained
+in its focused note rather than being relabeled.
 
-Commit `d878aecb9` corrected that comparator prospectively: the policy
-99-interval metric remains independently reported and gated, while timing
-consistency uses matched full-window D511/native views. An unchanged replay
-then sealed manifest `2d044a5c...`, comparison `0fde58da...`, and completion
-`56755607...` as `ADVANCE_FULL_VALIDATION`. MTP3 measured `44.696620` versus
-`16.586788 tok/s` on the 99-interval view and `48.037351` versus
-`16.590928 tok/s` on matched D511; both two-prompt full-512 rows, replays,
-canary, cache-zero, counters, `66/66` offload, fit, and cleanup passed.
-Acceptance was `0.934465`, with 1,597 accepted / 1,709 drafted tokens over 572
-verifications. Control/MTP loaded `28,642 / 29,911 MiB` and each returned GPU 0
-from `43 -> 43 MiB`. This remains `official-isolated-diagnostic`,
-`performance_promotable=false`: it is not the fixed realistic suite, a
-cross-band or second-card result, production evidence, c2 evidence, or a
-LocalMaxxing candidate. Reproduce the fixed cold realistic suite next, then
-advance only on PASS to middle/near-32K retention, a second card, and the
-relevant concurrency gate.
+The first realistic-suite run root
+`embedded-mtp-vdr2-realistic-gpu0-20260810T100440.907192568Z` stopped safely
+when the client assumed the wrong partial verbose `id_slot` sentinel. Its
+48-entry manifest `3f2749a3...` verifies, and commit `612f6660d` fixed the
+parser. The complete measurement root
+`embedded-mtp-vdr2-realistic-gpu0-20260810T101337.129519194Z` also retains its
+original `FAIL` and 132-entry manifest `8b0e18c...`: the then-current gate used
+an identity-mismatched 4K/128 legacy oracle, which matched only 6/12 32K/512
+control prefixes. It does not show context-caused quality loss; prior evidence
+favors ubatch sensitivity and exact causality remains unresolved.
+
+An immutable offline supplement at
+`offline-supplemental/embedded-mtp-realistic-stale-oracle-final-20260810T101337.KjteSJ`
+sealed manifest `d44cef31...`, comparison `41d75481...`, completion
+`3eaf8d2c...`, and identity `d966b5d2...` as
+`PASS_REALISTIC_MTP_WIN` under `matched_fresh_control_v1`. Candidate and control
+full token arrays and content are exact on all 12 prompts. Median D99 is
+`36.048707` versus `17.107772 tok/s` (`2.107154x`), matched full-window rate is
+`34.545186` versus `17.017022 tok/s` (`2.030037x`), and native rate is
+`34.612807` versus `17.050342 tok/s` (`2.030036x`). TTFT is `1.028123x`, the
+minimum per-prompt D99 ratio is `1.757122x`, and counters bind 3,709 accepted /
+6,448 draft tokens over 2,152 verifications (`0.575217` acceptance,
+`1.723513` accepted/verification). Eleven prompts reached 512 tokens;
+`customer-email` stopped normally at 248. The scoped one-B70 short result is
+realistic-policy valid but remains `localmaxxing_submission_ready=false`, and
+no submission was made. Advance to middle/near-32K retention and concurrency
+generalization, not submission or tuning against the stale oracle.
 
 ## Historical Qwen3.6 27B Optimization Lane
 

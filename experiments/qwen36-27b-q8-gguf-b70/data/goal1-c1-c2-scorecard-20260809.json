@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail_embedded_mtp_short_diagnostic_advance",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail_embedded_mtp_realistic_matched_control_pass",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -1589,8 +1589,159 @@
         "device_server_kernel_fault_scans_clear": true
       }
     },
-    "decision": "advance_to_fixed_cold_realistic_suite_without_promotion",
-    "next_gate": "Run the fixed realistic suite once per prompt, cold and cache-zero, with exact target-verified outputs and conventional 99-interval accounting. Only after that passes, test middle and near32k retention, then confirm on a second B70 and advance to the relevant concurrency gate."
+    "decision": "advanced_to_fixed_cold_realistic_suite_without_promotion",
+    "next_gate": "Completed by embedded_mtp_realistic below. Preserve this diagnostic packet and its historical classifications."
   },
-  "next_gate": "The embedded publisher-MTP short two-prompt diagnostic confirmed ADVANCE after the prospectively committed matched-horizon comparator correction: MTP3 reproduced 44.696620 tok/s on the primary 99-interval view and 48.037351 tok/s over matched full-window D511 versus 16.586788 and 16.590928 controls, with exact output, 0.934465 acceptance, and clean fit/teardown. It remains performance_promotable=false and is not a broad-suite, production, c2, or LocalMaxxing result. Run the fixed cold realistic suite next; only on PASS advance to cross-band retention, second-card confirmation, and relevant concurrency gates. The sealed formal ordinary-c2 packet remains the functional comparator and honest performance failure."
+  "embedded_mtp_realistic": {
+    "identity": {
+      "model": "Qwen3.6-27B-Q8_0.gguf",
+      "model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "model_size_bytes": 29047084160,
+      "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+      "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+      "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+      "q8_reorder_vdr_mmvq": 2,
+      "gpu": 0,
+      "context_tokens": 32768,
+      "parallel_slots": 1,
+      "batch_size": 1024,
+      "ubatch_size": 1024,
+      "cache_type_k": "f16",
+      "cache_type_v": "f16",
+      "full_offload_layers": "66/66",
+      "control_speculation": "none",
+      "candidate_speculation": "embedded_mtp_nmax3_nmin0_psplit010_pmin000_backend_sampling",
+      "separate_draft_model": false
+    },
+    "scope": {
+      "evidence_class": "offline-supplemental-reclassification",
+      "quality_reference": "matched_fresh_control_v1",
+      "fixed_realistic_suite": true,
+      "suite_sha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac",
+      "prompt_count": 12,
+      "requests_per_prompt_per_arm": 1,
+      "replay_requests": 0,
+      "ordinary_eos": true,
+      "max_tokens": 512,
+      "completion_length_distribution": {
+        "512": 11,
+        "248": 1
+      },
+      "short_prompt_band": true,
+      "cross_band": false,
+      "second_card": false,
+      "same_server_concurrency": false,
+      "production_ready": false,
+      "performance_promotable": false,
+      "localmaxxing_submission_ready": false,
+      "submission_blocker": "customer-email stopped naturally at 248 tokens; all_rows_full_512=false"
+    },
+    "failed_parser_attempt": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-realistic-gpu0-20260810T100440.907192568Z",
+      "status": "FAIL",
+      "measurement_complete": false,
+      "failure": "partial_verbose_id_slot_sentinel_assumed_zero_but_runtime_emitted_minus_one",
+      "cleanup_passed": true,
+      "artifact_manifest_entries": 48,
+      "artifact_manifest_sha256": "3f2749a30005cac0a0a6203fddb2e8a9ed101ac13c79354d5ec88bb38767b1e9",
+      "artifact_manifest_verified": true,
+      "fix_commit": "612f6660d6f0b3738c1acf6156879a969a89cb3c"
+    },
+    "original_measurement_packet": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-realistic-gpu0-20260810T101337.129519194Z",
+      "original_status": "FAIL",
+      "original_status_preserved": true,
+      "measurement_artifacts_complete": true,
+      "failure": "identity_mismatched_legacy_prefix_oracle_matched_6_of_12_control_rows",
+      "legacy_prefix_oracle_sha256": "e07298632346a62f78af9d532593c15f8622b166104ee157bf383bed25228b9d",
+      "legacy_oracle_identity": {
+        "context_tokens": 4096,
+        "max_tokens": 128
+      },
+      "current_gate_identity": {
+        "context_tokens": 32768,
+        "max_tokens": 512
+      },
+      "legacy_prefix_matches": 6,
+      "legacy_prefix_prompt_count": 12,
+      "causal_attribution": "unresolved; the mismatch is not evidence of context-caused quality loss and prior evidence favors ubatch sensitivity over context size",
+      "artifact_manifest_entries": 132,
+      "artifact_manifest_sha256": "8b0e18c529eabaf837bfb8fc2b2f7b5bc4f280c1952b741dc85e1fefc9425f89",
+      "artifact_manifest_verified": true,
+      "raw_artifacts": {
+        "scored_control_sha256": "16d87bf37f6654e5ac920849dc5c97288bea14d70904354780894d7b9fc7a29c",
+        "forensic_control_sha256": "8af30d579a30aedf3cadaa8f0728d883acc7d0da188bd2b30125b472f37a2ad2",
+        "scored_mtp3_sha256": "0ce2399561568c4d80d112f42457fc31acedbddac576f1900e64ba88ee1352e7",
+        "forensic_mtp3_sha256": "886107c29af70fba5ce0919091d1122c5e0317a0811cce9169819d65076c49c0"
+      },
+      "cleanup": {
+        "all_four_lifetimes_passed": true,
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "ports_closed": true,
+        "gpu_pre_mib": 43,
+        "gpu_final_mib": 43
+      }
+    },
+    "supplemental_reclassification": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/offline-supplemental/embedded-mtp-realistic-stale-oracle-final-20260810T101337.KjteSJ",
+      "classification": "PASS_REALISTIC_MTP_WIN",
+      "evidence_passed": true,
+      "performance_passed": true,
+      "realistic_policy_passed": true,
+      "source_run_unchanged": true,
+      "quality_reference": "matched_fresh_control_v1",
+      "artifact_manifest_entries": 6,
+      "artifact_manifest_sha256": "d44cef315a2d88652bdaeb9694a718897f2d301f916a4d9d419f41190519a2c3",
+      "artifact_manifest_verified": true,
+      "completion_status_sha256": "3eaf8d2c72bc64e2440e42486ca69b3605d357cc6e782aae79fd21c059e03c7f",
+      "supplemental_identity_sha256": "d966b5d2996cee86faba0ef95b68afdabfcd95fb25d97078319680b8b922ae49",
+      "comparison_sha256": "41d754812311ad657f7f59b7f51794e7b394a82096587123280fdf76dc510ae3"
+    },
+    "quality": {
+      "candidate_control_full_token_ids_exact_all_prompts": true,
+      "candidate_control_full_content_exact_all_prompts": true,
+      "scored_forensic_binding_passed": true,
+      "fresh_lifetime_per_arm_passed": true,
+      "one_scored_request_per_prompt_passed": true,
+      "cached_tokens_all_zero": true,
+      "target_verified": true
+    },
+    "performance": {
+      "primary_metric": "median_tok_s_1_100_intervals_after_ttft",
+      "timestamped_events_per_prompt": 100,
+      "inter_token_intervals_per_prompt": 99,
+      "control_d99_median_tok_s": 17.107772327446934,
+      "mtp3_d99_median_tok_s": 36.04870684253697,
+      "d99_ratio_mtp3_over_control": 2.107153763362987,
+      "control_full_interval_median_tok_s": 17.017021645103114,
+      "mtp3_full_interval_median_tok_s": 34.54518603632866,
+      "full_interval_ratio_mtp3_over_control": 2.030037144970637,
+      "control_native_median_tok_s": 17.050341574299075,
+      "mtp3_native_median_tok_s": 34.61280726375882,
+      "native_ratio_mtp3_over_control": 2.030036003262986,
+      "ttft_ratio_mtp3_over_control": 1.028123341888915,
+      "minimum_per_prompt_d99_ratio": 1.7571220575024087,
+      "full_native_ratio_disagreement": 0.0000011417076510866764
+    },
+    "acceptance": {
+      "accepted_tokens": 3709,
+      "draft_tokens": 6448,
+      "drafts": 2152,
+      "verifications": 2152,
+      "accepted_over_drafted": 0.5752171215880894,
+      "accepted_per_verification": 1.7235130111524164,
+      "effective_tokens_per_target_verification": 2.7235130111524164,
+      "accepted_per_position": {
+        "0": 1722,
+        "1": 1190,
+        "2": 797
+      }
+    },
+    "decision": "bank_scoped_realistic_mtp_win_without_submission",
+    "next_gate": "Run middle and near32k retention, then concurrency generalization and a second-card confirmation. Do not submit this 11x512-plus-one-natural-EOS packet."
+  },
+  "next_gate": "The integrated publisher-MTP identity now passes the fixed cold 12-prompt realistic suite against matched_fresh_control_v1: full candidate/control tokens and content are exact on every prompt, median D99 improves 17.107772 to 36.048707 tok/s (2.107154x), matched full-window throughput improves 17.017022 to 34.545186 tok/s (2.030037x), and native throughput improves 17.050342 to 34.612807 tok/s (2.030036x). Preserve the original measurement root's immutable FAIL from its identity-mismatched legacy oracle and the separate supplemental PASS. One prompt stopped naturally at 248 tokens, so no LocalMaxxing submission is allowed. Advance to middle/near32k retention and concurrency generalization; the sealed formal ordinary-c2 packet remains the honest functional comparator and performance failure."
 }

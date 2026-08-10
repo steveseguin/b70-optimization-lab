@@ -16,17 +16,19 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener was
-left by the sealed end of the 2026-08-10 embedded-MTP confirmation. Both the
-control and MTP3 services closed without a survivor, listener, forced kill,
-device fault, or server fault, and each returned GPU 0 from `43 -> 43 MiB`.
-Recheck immediately before any operational change.
+left by the sealed end of the 2026-08-10 embedded-MTP realistic-suite run. Its
+four sequential scored/forensic control and MTP3 services closed without a
+survivor, listener, or forced kill, and every lifetime returned GPU 0 from
+`43 -> 43 MiB`; retained fault scans are clear. Recheck immediately before any
+operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
 is two F16-KV 32K slots per card, using all four B70s as independent
 optimization lanes. Q8-KV 100K--128K capacity and vision are optional later
-lanes. The separate integrated-MTP identity has advanced only through its short
-two-prompt diagnostic and must not be mixed into this baseline. The exact
+lanes. The separate integrated-MTP identity now passes its fixed cold
+realistic-suite gate under a matched fresh-control quality reference, but it
+must not be mixed into this baseline. The exact
 target-only Unsloth artifact is pinned in
 [`experiments/qwen36-27b-q8-gguf-b70/model-manifest.json`](experiments/qwen36-27b-q8-gguf-b70/model-manifest.json)
 and is size/SHA/GGUF-table verified at
@@ -179,25 +181,35 @@ aggregate D511 is `10.144217 tok/s`; the two requests measure
 targets. Bank the functional PASS and honest performance FAIL; do not claim the
 per-card or eight-slot serving objective or rerun the unchanged recipe.
 
-The separate integrated publisher-MTP identity now has a confirmed short
-two-prompt diagnostic lead. After two sealed pre-measurement harness failures
-(`-fitp` rejected, then a stale next-token metadata matcher), the first valid
-packet was exact and fast but retained its historical
-`ONE_BOUNDED_NMAX_PMIN_FOLLOWUP` classification because the original comparator
-co-gated unlike 99-interval and all-512 timing horizons. Commit `d878aecb9`
-prospectively matched the full-window D511/native horizons while retaining the
-99-interval metric. The unchanged confirmation then classified
-`ADVANCE_FULL_VALIDATION`: MTP3 measured `44.696620 tok/s` versus `16.586788`
-on the primary 99-interval view and `48.037351 tok/s` versus `16.590928` over
-matched D511, with both full-512 rows, replays, canary, counter binding, fit,
-and cleanup exact. Acceptance was `0.934465`; the MTP arm loaded `29,911 MiB`
-and returned `43 -> 43 MiB`. This remains an
-`official-isolated-diagnostic`, `performance_promotable=false` two-prompt
-result: it is not a fixed realistic-suite, cross-band, second-card, c2,
-production, or LocalMaxxing result. Run the fixed cold realistic suite next;
-only on PASS advance to cross-band retention, second-card confirmation, and
-the relevant concurrency gate. The full chronology and sealed hashes are in
-the [embedded-MTP closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md).
+The separate integrated publisher-MTP identity now clears its fixed cold
+12-prompt realistic-suite gate under the matched fresh-control reference. The
+first realistic attempt stopped safely on a partial-event `id_slot` sentinel
+mismatch; commit `612f6660d` fixed that parser assumption. The complete source
+packet at `embedded-mtp-vdr2-realistic-gpu0-20260810T101337.129519194Z` remains
+immutably `FAIL` with manifest `8b0e18c...`: its only evidence-gate failure was
+that the legacy 4K/128 prefix oracle matched 6/12 current 32K/512 control rows.
+The captures, lifetimes, counters, and cleanup were otherwise valid. A separate
+offline supplemental packet, manifest `d44cef31...`, preserves that status and
+reclassifies against `matched_fresh_control_v1` as
+`PASS_REALISTIC_MTP_WIN`. Candidate and control full token arrays and content
+are exact on all 12 prompts. Median D99 improves
+`17.107772 -> 36.048707 tok/s` (`2.107154x`), matched full-window throughput
+`17.017022 -> 34.545186 tok/s` (`2.030037x`), and native throughput
+`17.050342 -> 34.612807 tok/s` (`2.030036x`); TTFT is `1.028123x`, and the
+minimum per-prompt D99 gain is `1.757122x`. MTP accepted 3,709 of 6,448 draft
+tokens over 2,152 verifications (`0.575217` acceptance,
+`1.723513` accepted/verification). Eleven prompts reached 512 tokens and
+`customer-email` stopped normally at EOS after 248, so
+`localmaxxing_submission_ready=false`; no submission was made. The old-oracle
+mismatch is not evidence of context-caused quality loss: the identities differ,
+prior evidence favors ubatch sensitivity, and causality remains unresolved.
+This is a scoped one-B70 short realistic-suite win, not middle/near-32K,
+second-card, c2, concurrency, production, or LocalMaxxing evidence. The next
+gate is middle/near-32K retention followed by concurrency generalization. The
+full chronology and sealed hashes are in the
+[realistic-suite closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md);
+the preceding two-prompt evidence remains in the
+[short diagnostic closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md).
 See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md),
 the [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md),
 the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md),
@@ -206,9 +218,9 @@ The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
 [`the four-GPU optimization and c2 plan`](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md).
-The embedded-MTP lane has advanced only from its short diagnostic into the
-fixed cold realistic-suite gate. Vision and the Q8-KV long-context stretch
-remain later, separate identities.
+The embedded-MTP lane has advanced through its scoped short realistic-suite
+gate. Its next work is middle/near-32K retention and concurrency generalization;
+vision and the Q8-KV long-context stretch remain later, separate identities.
 
 Laguna is paused at the user's request. The August 4--7 Laguna no-drafter
 graph result is diagnostic, not promoted: its benchmark completed
@@ -1832,8 +1844,13 @@ loaded service.
    fails primary/stretch performance at `10.144217 tok/s` aggregate D511,
    `5.185072 / 10.391849 tok/s` per request, and `0.498956` fairness. Keep it as
    the ordinary-c2 comparator; do not claim the eight-slot objective or rerun
-   the unchanged recipe. Do not promote either concurrent screen or rerun the
-   banked VDR2 packets. Directly measure a
+   the unchanged recipe. The separate embedded-MTP identity now passes its
+   fixed cold realistic suite against a matched fresh control at `2.107154x`
+   median D99 with exact full tokens/content on all 12 prompts. Preserve the
+   source packet's legacy-oracle `FAIL` and the separate supplemental PASS;
+   do not submit the 11x512-plus-one-EOS result. Advance MTP only to
+   middle/near-32K retention and concurrency generalization. Do not promote
+   either concurrent screen or rerun the banked VDR2 packets. Directly measure a
    synchronized natural-stop pair as a separate relevance gate. Add a held-out
    prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only

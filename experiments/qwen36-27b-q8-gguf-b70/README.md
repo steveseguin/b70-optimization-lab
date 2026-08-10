@@ -32,7 +32,12 @@ match the fresh sequential phase with true M=2 occupancy, while aggregate D511
 is only `10.144217 tok/s`, the requests measure `5.185072 / 10.391849 tok/s`,
 and fairness is `0.498956`. Aggregate PP passes at `598.149228 tok/s`. This
 banks an honest ordinary-c2 comparator, not the per-card or eight-slot serving
-objective.
+objective. The separate integrated-MTP identity now passes the fixed cold
+12-prompt realistic suite against a matched fresh control: median D99 improves
+`17.107772 -> 36.048707 tok/s` (`2.107154x`) with full candidate/control token
+and content equality on all prompts. This is a scoped one-B70 short result;
+middle/near-32K, concurrency, second-card, production, and submission gates
+remain open.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -56,8 +61,9 @@ This lane has one primary identity:
 
 MTP and vision are optional, separate identities. They must not be mixed into
 the target-only baseline identity or result packet. The integrated publisher
-MTP artifact now has a confirmed short diagnostic lead described below; it is
-not yet a broad or promotable result.
+MTP artifact now has a matched-control realistic-suite PASS described below.
+It remains a separate, scoped one-B70 short identity and is not yet a
+cross-band, concurrent, production, or submit-ready result.
 
 The selected deployment direction is four independent one-GPU processes. The
 primary candidate is two slots per process, for up to eight cluster-wide
@@ -210,6 +216,21 @@ Validated results under the correctness-qualified default
   `official-isolated-diagnostic`, `performance_promotable=false` evidence, not
   a fixed realistic-suite, cross-band, second-card, c2, production, or
   LocalMaxxing result;
+- the follow-up fixed cold realistic-suite capture has a valid offline
+  matched-control classification of `PASS_REALISTIC_MTP_WIN`. The original
+  complete run remains immutably `FAIL` solely because its identity-mismatched
+  legacy 4K/128 oracle matched 6/12 current 32K/512 control prefixes. Under
+  `matched_fresh_control_v1`, candidate and control full tokens and content are
+  exact on all 12 prompts. Median D99 is `36.048707` versus
+  `17.107772 tok/s` (`2.107154x`), matched full-window throughput is
+  `34.545186` versus `17.017022 tok/s` (`2.030037x`), native throughput is
+  `34.612807` versus `17.050342 tok/s` (`2.030036x`), TTFT is `1.028123x`,
+  and every prompt gains at least `1.757122x` on D99. MTP counters bind 3,709
+  accepted / 6,448 draft tokens over 2,152 verifications. Eleven prompts
+  reached 512 tokens; `customer-email` stopped normally at 248, so
+  `localmaxxing_submission_ready=false`. This clears the scoped realistic-suite
+  generality gate only; it is not middle/near-32K, concurrency, second-card,
+  production, or submission evidence;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -288,11 +309,17 @@ forced kill. The exact identities, hashes, measurements, and preserved false
 starts are in
 [`notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`](notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md).
 
-Do not tune from the historical bounded label or promote the two known prompts.
-The next MTP gate is the fixed realistic suite, once per prompt, cold and
-cache-zero. Only after it passes should this exact MTP3 policy advance to
-middle and near-32K retention, a second-card confirmation, and the relevant
-concurrency gate.
+Do not tune from the historical bounded label or rewrite either realistic run's
+status. The first realistic attempt stopped safely on a partial verbose
+`id_slot` sentinel mismatch and was fixed by commit `612f6660d`. The complete
+measurement packet remains `FAIL` with manifest `8b0e18c...`; the separate
+supplemental packet preserves it and seals manifest `d44cef31...` as
+`PASS_REALISTIC_MTP_WIN`. The old-oracle mismatch is not evidence of
+context-caused quality loss: the identities differ, prior evidence favors
+ubatch sensitivity, and the cause remains unresolved. Advance this exact MTP3
+policy to middle and near-32K retention and then concurrency generalization;
+do not submit the current packet. See
+[`notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md`](notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md).
 
 The validation sequence remains useful for future runtimes:
 
@@ -308,11 +335,11 @@ The validation sequence remains useful for future runtimes:
 5. Q8_0 KV only for an optional larger-context target. Treat Q8 KV as a
    separate quality identity and compare it against the F16-KV corpus.
 6. Optional MTP only if ordinary c2 does not meet the serving objective. The
-   integrated publisher artifact has passed only its short two-prompt
-   diagnostic; run the fixed cold realistic suite next, then cross-band and
-   second-card gates. Do not cross-pair converters without tensor and metadata
-   validation, and do not graft the third-party head-only extraction into the
-   baseline.
+   integrated publisher artifact has passed its scoped one-B70 short realistic
+   suite against a matched fresh control. Run middle/near-32K retention and
+   concurrency generalization next, then a second-card gate. Do not cross-pair
+   converters without tensor and metadata validation, and do not graft the
+   third-party head-only extraction into the baseline.
 7. Optional vision only after the text optimization and context envelope are
    settled. Use the same-repository, same-revision F16 projector pinned in
    [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
@@ -417,6 +444,8 @@ cards were active. See
 - Formal VDR2 near-32K c2 result: [`notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md`](notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md)
 - Embedded publisher-MTP diagnostic runner: [`scripts/run-embedded-mtp-vdr2-diagnostic.sh`](scripts/run-embedded-mtp-vdr2-diagnostic.sh)
 - Embedded publisher-MTP diagnostic closeout: [`notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`](notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md)
+- Embedded publisher-MTP realistic runner: [`scripts/run-embedded-mtp-vdr2-realistic.sh`](scripts/run-embedded-mtp-vdr2-realistic.sh)
+- Embedded publisher-MTP realistic closeout: [`notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md`](notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

@@ -19,16 +19,17 @@ the measurement.
 
 These are baselines, not goals.
 
-The optional integrated publisher-MTP identity has separately reached a
-confirmed short diagnostic `ADVANCE`: primary 99-interval decode is
-`44.696620` versus `16.586788 tok/s` control and matched full-window D511 is
-`48.037351` versus `16.590928 tok/s`, with exact two-prompt output, `0.934465`
-acceptance, full offload, fit, and clean teardown. This result remains
-`performance_promotable=false`; it does not alter the target-only starting
-line or satisfy broad quality, cross-band, second-card, c2, production, or
-LocalMaxxing gates. Its next step is the fixed cold realistic suite, followed
-only on PASS by middle/near-32K retention, second-card confirmation, and the
-relevant concurrency gate.
+The optional integrated publisher-MTP identity has separately cleared a scoped
+fixed cold 12-prompt realistic-suite gate under
+`matched_fresh_control_v1`. Full candidate/control tokens and content are exact
+on all prompts. Median primary 99-interval decode improves
+`17.107772 -> 36.048707 tok/s` (`2.107154x`), matched full-window throughput
+improves `17.017022 -> 34.545186 tok/s` (`2.030037x`), TTFT is `1.028123x`,
+and the minimum per-prompt D99 gain is `1.757122x`. This does not alter the
+target-only starting line. It remains a scoped one-B70 short result: one prompt
+stopped normally at 248 tokens, `localmaxxing_submission_ready=false`, and
+middle/near-32K, concurrency, second-card, production, and submission gates
+remain open.
 
 ## Goals
 
@@ -92,13 +93,16 @@ Repeat until Goals 1--5 pass together:
    second card; integrate compatible wins.
 6. Record every result, including failures and the condition for retrying them.
 
-The immediate bounded frontier is the embedded-MTP fixed cold realistic-suite
-gate. Preserve the original valid packet's historical
-`ONE_BOUNDED_NMAX_PMIN_FOLLOWUP` label: commit `d878aecb9` prospectively fixed
-its unlike-horizon consistency check, and an unchanged replay then classified
-`ADVANCE_FULL_VALIDATION`. Do not tune from the old label or promote the two
-known prompts. The ordinary VDR2 c2 packet remains the honest functional
-comparator and performance failure.
+The immediate bounded frontier is embedded-MTP middle/near-32K retention and
+concurrency generalization. Preserve all prior statuses: the short diagnostic
+keeps its historical `ONE_BOUNDED_NMAX_PMIN_FOLLOWUP`; the first realistic
+parser run remains `FAIL`; and the complete realistic measurement root remains
+`FAIL` because its identity-mismatched legacy oracle matched 6/12 rows. The
+separate immutable supplement, not a rewrite, classifies the same captures as
+`PASS_REALISTIC_MTP_WIN` against the matched fresh control. Do not tune against
+the stale oracle or submit the current 11x512-plus-one-EOS packet. The ordinary
+VDR2 c2 packet remains the honest functional comparator and performance
+failure.
 
 The four rotating GPU lanes are: reference/reproduction, prompt processing,
 decode/state, and concurrency/long-context or independent challenge. Parallel
