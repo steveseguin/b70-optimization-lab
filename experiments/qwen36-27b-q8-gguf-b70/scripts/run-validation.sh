@@ -143,12 +143,12 @@ if (( RUNTIME_PROFILE_DIAGNOSTIC == 1 )); then
     echo "RUNTIME_PROFILE=$RUNTIME_PROFILE is restricted to RUN_SCOPE=promotion512" >&2
     exit 2
   }
-  [[ "$FULL512_BAND" == "short" ]] || {
-    echo "RUNTIME_PROFILE=$RUNTIME_PROFILE is restricted to FULL512_BAND=short" >&2
-    exit 2
-  }
   case "$EVIDENCE_CLASS" in
     parallel-functional-screen)
+      [[ "$FULL512_BAND" == "short" ]] || {
+        echo "RUNTIME_PROFILE=$RUNTIME_PROFILE with EVIDENCE_CLASS=parallel-functional-screen is restricted to FULL512_BAND=short" >&2
+        exit 2
+      }
       [[ "$REQUIRE_ALL_GPUS_IDLE" == "0" ]] || {
         echo "RUNTIME_PROFILE=$RUNTIME_PROFILE with EVIDENCE_CLASS=parallel-functional-screen requires REQUIRE_ALL_GPUS_IDLE=0" >&2
         exit 2
@@ -163,6 +163,16 @@ if (( RUNTIME_PROFILE_DIAGNOSTIC == 1 )); then
         echo "RUNTIME_PROFILE=$RUNTIME_PROFILE with EVIDENCE_CLASS=official-isolated requires REQUIRE_ALL_GPUS_IDLE=1" >&2
         exit 2
       }
+      case "$FULL512_BAND:$PROMOTION_PROFILE:$UBATCH_SIZE" in
+        short:prefill-ub1024:1024|\
+        middle:goal1-baseline-ub128:128|\
+        near32k:prefill-ub1024:1024)
+          ;;
+        *)
+          echo "RUNTIME_PROFILE=$RUNTIME_PROFILE with EVIDENCE_CLASS=official-isolated requires short:prefill-ub1024:1024, middle:goal1-baseline-ub128:128, or near32k:prefill-ub1024:1024" >&2
+          exit 2
+          ;;
+      esac
       ;;
     *)
       echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires EVIDENCE_CLASS=parallel-functional-screen or an explicitly authorized official-isolated profile" >&2

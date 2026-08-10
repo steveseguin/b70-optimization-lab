@@ -44,6 +44,8 @@ class RuntimeProfileTests(unittest.TestCase):
         full512_band: str = "realistic",
         evidence_class: str = "legacy-validation",
         require_all_gpus_idle: str = "1",
+        promotion_profile: str = "goal1-baseline-ub128",
+        ubatch_size: str = "128",
     ) -> tuple[subprocess.CompletedProcess[str], Path]:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -57,6 +59,8 @@ class RuntimeProfileTests(unittest.TestCase):
             "FULL512_BAND": full512_band,
             "EVIDENCE_CLASS": evidence_class,
             "REQUIRE_ALL_GPUS_IDLE": require_all_gpus_idle,
+            "PROMOTION_PROFILE": promotion_profile,
+            "UBATCH_SIZE": ubatch_size,
             "MODEL": str(root / "deliberately-missing-model.gguf"),
             "RUN_DIR": str(run_dir),
         }
@@ -96,6 +100,8 @@ class RuntimeProfileTests(unittest.TestCase):
         full512_band: str = "short",
         evidence_class: str = "parallel-functional-screen",
         require_all_gpus_idle: str = "0",
+        promotion_profile: str = "goal1-baseline-ub128",
+        ubatch_size: str = "128",
     ) -> tuple[subprocess.CompletedProcess[str], Path]:
         return self.run_runner(
             runner=runner,
@@ -106,6 +112,8 @@ class RuntimeProfileTests(unittest.TestCase):
             full512_band=full512_band,
             evidence_class=evidence_class,
             require_all_gpus_idle=require_all_gpus_idle,
+            promotion_profile=promotion_profile,
+            ubatch_size=ubatch_size,
         )
 
     def test_implicit_canonical_default_is_unchanged(self) -> None:
@@ -189,19 +197,73 @@ class RuntimeProfileTests(unittest.TestCase):
                 self.assertNotIn("model not found:", completed.stderr)
                 self.assertFalse(run_dir.exists())
 
-    def test_vdr2_official_isolated_reaches_model_gate(self) -> None:
-        completed, run_dir = self.run_diagnostic_profile(
-            VDR2_PROFILE,
-            evidence_class="official-isolated",
-            require_all_gpus_idle="1",
+    def test_vdr2_official_isolated_allowlist_reaches_model_gate(self) -> None:
+        allowed = (
+            ("short", "prefill-ub1024", "1024"),
+            ("middle", "goal1-baseline-ub128", "128"),
+            ("near32k", "prefill-ub1024", "1024"),
         )
-        self.assert_reaches_missing_model_gate(completed, run_dir)
+        for band, promotion_profile, ubatch_size in allowed:
+            with self.subTest(
+                band=band,
+                promotion_profile=promotion_profile,
+                ubatch_size=ubatch_size,
+            ):
+                completed, run_dir = self.run_diagnostic_profile(
+                    VDR2_PROFILE,
+                    full512_band=band,
+                    evidence_class="official-isolated",
+                    require_all_gpus_idle="1",
+                    promotion_profile=promotion_profile,
+                    ubatch_size=ubatch_size,
+                )
+                self.assert_reaches_missing_model_gate(completed, run_dir)
+
+    def test_vdr2_official_isolated_rejects_crossed_and_realistic_tuples(self) -> None:
+        allowed = {
+            ("short", "prefill-ub1024", "1024"),
+            ("middle", "goal1-baseline-ub128", "128"),
+            ("near32k", "prefill-ub1024", "1024"),
+        }
+        for band in ("short", "middle", "near32k", "realistic"):
+            for promotion_profile in (
+                "goal1-baseline-ub128",
+                "prefill-ub1024",
+            ):
+                for ubatch_size in ("128", "1024"):
+                    candidate = (band, promotion_profile, ubatch_size)
+                    if candidate in allowed:
+                        continue
+                    with self.subTest(
+                        band=band,
+                        promotion_profile=promotion_profile,
+                        ubatch_size=ubatch_size,
+                    ):
+                        completed, run_dir = self.run_diagnostic_profile(
+                            VDR2_PROFILE,
+                            full512_band=band,
+                            evidence_class="official-isolated",
+                            require_all_gpus_idle="1",
+                            promotion_profile=promotion_profile,
+                            ubatch_size=ubatch_size,
+                        )
+                        self.assertEqual(completed.returncode, 2, completed.stderr)
+                        self.assertIn(
+                            "requires short:prefill-ub1024:1024, "
+                            "middle:goal1-baseline-ub128:128, or "
+                            "near32k:prefill-ub1024:1024",
+                            completed.stderr,
+                        )
+                        self.assertNotIn("model not found:", completed.stderr)
+                        self.assertFalse(run_dir.exists())
 
     def test_vdr2_official_isolated_requires_all_gpus_idle(self) -> None:
         completed, run_dir = self.run_diagnostic_profile(
             VDR2_PROFILE,
             evidence_class="official-isolated",
             require_all_gpus_idle="0",
+            promotion_profile="prefill-ub1024",
+            ubatch_size="1024",
         )
         self.assertEqual(completed.returncode, 2, completed.stderr)
         self.assertIn(
@@ -230,6 +292,8 @@ class RuntimeProfileTests(unittest.TestCase):
             runtime_manifest=VDR4_MANIFEST,
             evidence_class="official-isolated",
             require_all_gpus_idle="1",
+            promotion_profile="prefill-ub1024",
+            ubatch_size="1024",
         )
         self.assertEqual(completed.returncode, 2, completed.stderr)
         self.assertIn("requires RUNTIME_MANIFEST=", completed.stderr)
@@ -241,6 +305,8 @@ class RuntimeProfileTests(unittest.TestCase):
             llama_server="/definitely/wrong/llama-server",
             evidence_class="official-isolated",
             require_all_gpus_idle="1",
+            promotion_profile="prefill-ub1024",
+            ubatch_size="1024",
         )
         self.assertEqual(completed.returncode, 2, completed.stderr)
         self.assertIn("requires LLAMA_SERVER=", completed.stderr)
