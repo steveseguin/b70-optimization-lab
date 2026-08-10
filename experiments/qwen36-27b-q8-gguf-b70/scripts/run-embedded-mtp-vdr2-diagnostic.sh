@@ -767,7 +767,6 @@ run_arm() {
     -ctv f16
     -fa on
     -fit on
-    -fitp on
     -fitt 1024
     "${spec_args[@]}"
     --reasoning off

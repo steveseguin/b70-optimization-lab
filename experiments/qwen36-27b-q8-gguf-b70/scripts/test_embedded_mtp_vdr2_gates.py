@@ -105,7 +105,7 @@ def server_argv(mode: str) -> list[str]:
         "--host", "127.0.0.1", "--port", "19950", "-dev", "SYCL0", "-ngl", "all",
         "-c", "32768", "-np", "1", "-b", "1024", "-ub", "1024", "-t", "8",
         "--threads-http", "6", "--poll", "50", "-lv", "4", "-ctk", "f16", "-ctv", "f16",
-        "-fa", "on", "-fit", "on", "-fitp", "on", "-fitt", "1024",
+        "-fa", "on", "-fit", "on", "-fitt", "1024",
     ]
     if mode == "control":
         argv += ["--spec-type", "none"]
@@ -590,6 +590,9 @@ llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="2"} 20
             script,
         )
         self.assertNotIn("--spec-draft-model", "\n".join(
+            line for line in script.splitlines() if not line.lstrip().startswith("#")
+        ))
+        self.assertNotIn("-fitp", "\n".join(
             line for line in script.splitlines() if not line.lstrip().startswith("#")
         ))
         self.assertIn("--spec-type draft-mtp", script)

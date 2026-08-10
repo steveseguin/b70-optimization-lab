@@ -484,7 +484,7 @@ def gate_server(args: argparse.Namespace) -> int:
         "-dev": "SYCL0", "-ngl": "all", "-c": "32768", "-np": "1",
         "-b": "1024", "-ub": "1024", "-t": "8", "--threads-http": "6",
         "--poll": "50", "-lv": "4", "-ctk": "f16", "-ctv": "f16",
-        "-fa": "on", "-fit": "on", "-fitp": "on", "-fitt": "1024",
+        "-fa": "on", "-fit": "on", "-fitt": "1024",
         "--reasoning": "off", "--ctx-checkpoints": "0", "--cache-ram": "0",
     }
     common_flags = {
