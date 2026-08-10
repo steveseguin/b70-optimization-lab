@@ -91,7 +91,50 @@ It is excluded from correctness and performance evidence; the corrected
 
 ## Decision
 
-VDR2 advances from the four-card diagnostic screen. The next gate is one
-official-isolated short full-512 VDR2 packet with promotable timing and the same
-exact-output, canary, cache-zero, full-offload, runtime-identity, and clean-
-teardown requirements. Do not promote the concurrent screen itself.
+VDR2 advanced from the four-card diagnostic screen. The concurrent screen
+itself remains nonpromotable.
+
+## Official isolated VDR2 short result
+
+The follow-up isolated GPU-0 packet passed:
+
+`/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-vdr2-official-isolated-gpu0-short-20260810T053540.789566819Z`
+
+- 80/80-entry artifact-manifest SHA-256:
+  `68060e762c655ff93b34f53bd162edece86accde83ad16642a0033cc15318e66`;
+- detached completion-marker SHA-256:
+  `c7f02356e23ba2a94dad123dcb7f005d95f9d628036049875437e16b7b3015fc`;
+- exact-result SHA-256:
+  `49d16dd2e12fd16901b886cce0b7f075308b0e25d4e2ce0a44f7816ca4c312e5`;
+- exact-result-gate SHA-256:
+  `9a63ba6468b10e488c6fcae64a4e7ba59ab85aedff99c553541bad34ff7af411`;
+- run-identity SHA-256:
+  `a966a84aeb569b6c45c95161efa89f12db9997d7bbc7db3cbeb5a0a37dea610a`;
+- runtime-profile-check SHA-256:
+  `7d2dc67eaf9d8938414dfc909f2db0f5c8f349830fa18ca10fdf1f92f4596a0c`.
+
+The marker is `PASS`, `evidence_valid=true`, `official-isolated`, and
+`performance_promotable=true`. Both 512-token rows are `PASS_ORACLE_EXACT`;
+the intrinsic, exact-result, post-512 canary, cache-zero, `65/65` offload,
+runtime-profile, model, and cleanup gates pass.
+
+Against the official isolated VDR4 short `-ub 1024` packet, VDR2 measured:
+
+| Metric | VDR4 | VDR2 | VDR2/VDR4 |
+|---|---:|---:|---:|
+| PP tok/s | `605.8452528247` | `606.0653917226` | `1.00036x` |
+| TTFT s | `7.1908603735` | `7.1874381265` | `0.99952x` |
+| D100 tok/s | `15.0812900263` | `16.5871550224` | `1.09985x` |
+| D511 tok/s | `15.0835290852` | `16.5889072472` | `1.09980x` |
+| legacy D512-after-TTFT tok/s | `15.1128678281` | `16.6211250758` | `1.09980x` |
+
+Prompt processing and TTFT are neutral while all three decode views retain the
+approximately 10% lead from the four-card screen. Cleanup required no forced
+kill, retained no survivor or listener, returned GPU 0 `43 -> 43 MiB`, kept
+all nonselected GPUs idle, reverified model/runtime identity, and found no
+device or server fault.
+
+The official short VDR2 decode win is banked, but conventional D511 remains
+below the immediate decode target: `16.5889072472 < 18 tok/s`. The next bounded
+gate is cross-band VDR2 guarding and selection of the next decode candidate;
+the short VDR2 packet does not need another reproduction now.

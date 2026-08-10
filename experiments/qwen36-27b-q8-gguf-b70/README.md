@@ -19,7 +19,9 @@ as `NO_EFFECT` and is closed. A later near-32K four-card screen found a
 and short full-512 PP/TTFT gates pass. The matched middle gate fails exact
 output, so `-ub 1024` is not a broad default. A balanced four-card VDR
 crossover then gave VDR2 a repeatable roughly 10% short D100/D511 lead over
-VDR4 with exact output; it now advances to an official-isolated gate.
+VDR4 with exact output. Its official isolated GPU-0 follow-up passes and banks
+the scoped short decode win; cross-band VDR2 guards and the next decode
+candidate follow because conventional D511 remains below `18 tok/s`.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -137,6 +139,15 @@ Validated results under the correctness-qualified default
   `1.10025 / 1.09846 / 1.10081 / 1.09931`. PP and TTFT are neutral. These are
   concurrent `parallel-functional-screen`, `performance_promotable=false`
   diagnostics, not an official score;
+- the official isolated GPU-0 VDR2 short full-512 packet is `PASS`,
+  `evidence_valid=true`, and `performance_promotable=true`. Both rows are
+  `PASS_ORACLE_EXACT`, cache-zero, `65/65` offloaded, post-canary exact, and
+  clean. Against the official isolated VDR4 short baseline, D100 is
+  `16.5872 / 15.0813 = 1.09985x`, conventional D511 is
+  `16.5889 / 15.0835 = 1.09980x`, and legacy D512 is
+  `16.6211 / 15.1129 = 1.09980x`; PP and TTFT remain neutral. This banks the
+  scoped official short decode win, but D511 remains below the immediate
+  `18 tok/s` target;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -181,8 +192,10 @@ recurrent-output DMMV is closed as a source lane. See
 
 Bank the official short and near-32K PP/TTFT wins, reject the middle result, and
 do not integrate `UBATCH_SIZE=1024` as a broad default. The VDR2 diagnostic
-screen now passes on all four cards; the next bounded speed gate is one
-official-isolated VDR2 short full-512 packet. See
+screen passes on all four cards and its official isolated GPU-0 short follow-up
+banks the scoped roughly 10% decode win. The next bounded speed gate is
+cross-band VDR2 guarding and selection of the next decode candidate, not
+another short reproduction. See
 [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md).
 
 The validation sequence remains useful for future runtimes:

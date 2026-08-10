@@ -175,8 +175,17 @@ same-card PP and TTFT ratios stayed within `0.99551--1.00296` and
 `0.99676--1.00473`. All eight lanes passed exact oracle,
 intrinsic/result/post-canary, cache-zero, full-offload, runtime-binding, and
 cleanup gates. The concurrent screen remains `parallel-functional-screen`,
-`performance_promotable=false`; its only promotion decision is to advance VDR2
-to one official-isolated short full-512 gate. See
+`performance_promotable=false`; it is not an official score. The follow-up
+official isolated GPU-0 VDR2 packet is `PASS`, `evidence_valid=true`, and
+`performance_promotable=true`. Both rows are full-512 oracle/intrinsic/result/
+post-canary exact with cache zero, `65/65` offload, and clean teardown. Against
+the official isolated VDR4 short baseline, VDR2 measured D100
+`16.5871550224 / 15.0812900263 = 1.09985x`, conventional D511
+`16.5889072472 / 15.0835290852 = 1.09980x`, and legacy D512
+`16.6211250758 / 15.1128678281 = 1.09980x`; PP and TTFT remained neutral.
+Bank this scoped official short decode win. D511 remains below the immediate
+`18 tok/s` target, so the next bounded gate is cross-band VDR2 guarding and
+selection of the next decode candidate. See
 `../experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json`
 and
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md`.
