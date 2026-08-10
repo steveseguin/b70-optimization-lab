@@ -52,11 +52,12 @@ class ProfilePlanTest(unittest.TestCase):
             "--require-full-512-metric",
             "--require-post-512-canary",
             "--band short",
-            "resume_marker=task 0 | n_decoded = 100",
-            "pause_stop_marker=task 0 | n_decoded = 150",
+            "resume_decode_min=100",
+            "trace_cycles_min=45",
+            "trace_cycles_max=55",
             "control_timeout_s=900",
             "trace_cap_bytes=104857600",
-            "capture_window_decode_cycles=50",
+            "capture_window_target_decode_cycles=50",
             "baseline_token_ns=60281000",
         )
         for value in required:
@@ -120,6 +121,9 @@ class ProfilePlanTest(unittest.TestCase):
             "offloaded[[:space:]]+65/65 layers to GPU",
             "trace-files.sha256",
             "TRACE_CAP_BYTES",
+            "latest_task0_decoded >= resume_decoded + TRACE_CYCLES_MIN",
+            "observed_decode_cycles >= TRACE_CYCLES_MIN",
+            "observed_decode_cycles <= TRACE_CYCLES_MAX",
         ):
             self.assertIn(value, source)
         for value in (

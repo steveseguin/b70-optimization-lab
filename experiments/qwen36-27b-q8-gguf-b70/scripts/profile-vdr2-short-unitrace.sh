@@ -10,7 +10,7 @@ LAUNCHER_SHA256="fa9475956c9de8dc225e23c13b25e5851bc545ae24ec1ede92939f3ae7f0801
 CAPTURE="$LANE/scripts/capture-exact-tokens.py"
 CAPTURE_SHA256="94595b6962e64981723a063b6ec23b80c3701a22d0e256e85b596e6bf75f5b05"
 TRACE_SUMMARIZER="$LANE/scripts/summarize-vdr2-unitrace.py"
-TRACE_SUMMARIZER_SHA256="91e641fd0a439772a063eda4539ffe0f26db0efd784fb51e754dccb74e2b0eae"
+TRACE_SUMMARIZER_SHA256="6bb552e74e83f719ff842bf20102e5a0942a43fe165be872ddf32cdd2dd852ad"
 RUNTIME_MANIFEST="$LANE/runtime-manifest-q8-vdr2-candidate.json"
 RUNTIME_MANIFEST_SHA256="4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
 MODEL_MANIFEST="$LANE/model-manifest.json"
@@ -30,6 +30,9 @@ KERNEL="reorder_mul_mat_vec_q8_0_q8_1_sycl"
 TRACE_CAP_BYTES=$((100 * 1024 * 1024))
 CONTROL_TIMEOUT_S=900
 BASELINE_TOKEN_NS=60281000
+RESUME_DECODE_MIN=100
+TRACE_CYCLES_MIN=45
+TRACE_CYCLES_MAX=55
 PORT="${PORT:-19940}"
 STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%S.%NZ)}"
 RUN_DIR="${RUN_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/profile-vdr2-short-${STAMP}}"
@@ -92,9 +95,9 @@ print_plan() {
   printf 'run_dir=%s\ntrace_dir=%s\nsession=%s\n' "$RUN_DIR" "$TRACE_DIR" "$SESSION"
   printf 'control_timeout_s=%s\ntrace_cap_bytes=%s\n' "$CONTROL_TIMEOUT_S" "$TRACE_CAP_BYTES"
   printf 'baseline_token_ns=%s\n' "$BASELINE_TOKEN_NS"
-  printf 'capture_window_decode_cycles=50\n'
-  printf 'resume_marker=%s\npause_stop_marker=%s\n' \
-    'task 0 | n_decoded = 100' 'task 0 | n_decoded = 150'
+  printf 'capture_window_target_decode_cycles=50\n'
+  printf 'resume_decode_min=%s\ntrace_cycles_min=%s\ntrace_cycles_max=%s\n' \
+    "$RESUME_DECODE_MIN" "$TRACE_CYCLES_MIN" "$TRACE_CYCLES_MAX"
   printf 'runtime_verify='; printf '%q ' env -u LD_PRELOAD \
     RUNTIME_MANIFEST="$RUNTIME_MANIFEST" LLAMA_SERVER="$LLAMA_SERVER" \
     "$LAUNCHER" --verify-runtime-bundle \
@@ -233,6 +236,7 @@ timeout --signal=TERM --kill-after=15s "$capture_budget" \
   "${capture_cmd[@]}" > "$RUN_DIR/exact-tokens.stdout.log" 2>&1 &
 capture_pid=$!
 resume_count=0 pause_count=0 stop_count=0 control_failed=0
+resume_decoded=0 pause_decoded=0
 resume_attempted=0 pause_attempted=0 stop_attempted=0
 control_deadline=$((SECONDS + CONTROL_TIMEOUT_S))
 : > "$RUN_DIR/profile-control.log"
@@ -259,6 +263,11 @@ control_once() {
   return "$status"
 }
 while (( stop_count == 0 )); do
+  latest_task0_decoded="$(
+    sed -nE 's/.*task 0 \| n_decoded = +([0-9]+),.*/\1/p' \
+      "$RUN_DIR/server.stdout.log" | tail -n 1
+  )"
+  latest_task0_decoded="${latest_task0_decoded:-0}"
   trace_bytes="$(du -sb "$TRACE_DIR" 2>/dev/null | awk '{print $1}')"; trace_bytes="${trace_bytes:-0}"
   if (( trace_bytes > TRACE_CAP_BYTES )); then
     printf '%s cap_exceeded bytes=%s\n' "$(date -u +%FT%TZ)" "$trace_bytes" >> "$RUN_DIR/profile-control.log"
@@ -267,18 +276,22 @@ while (( stop_count == 0 )); do
     control_once stop || true
     break
   fi
-  if (( resume_count == 0 )) && grep -Eq 'task 0 \| n_decoded =[[:space:]]+100,' "$RUN_DIR/server.stdout.log"; then
+  if (( resume_count == 0 && latest_task0_decoded >= RESUME_DECODE_MIN )); then
     if control_once resume; then
-      printf '%s resumed marker="task 0 | n_decoded = 100"\n' "$(date -u +%FT%TZ)" >> "$RUN_DIR/profile-control.log"
+      resume_decoded=$latest_task0_decoded
+      printf '%s resumed observed_n_decoded=%s\n' \
+        "$(date -u +%FT%TZ)" "$resume_decoded" >> "$RUN_DIR/profile-control.log"
     else
       control_failed=1
       break
     fi
   fi
-  if (( resume_count == 1 && pause_count == 0 )) && grep -Eq 'task 0 \| n_decoded =[[:space:]]+150,' "$RUN_DIR/server.stdout.log"; then
+  if (( resume_count == 1 && pause_count == 0 && latest_task0_decoded >= resume_decoded + TRACE_CYCLES_MIN )); then
+    pause_decoded=$latest_task0_decoded
     control_once pause || control_failed=1
     control_once stop || control_failed=1
-    (( control_failed == 1 )) || printf '%s paused_stopped marker="task 0 | n_decoded = 150"\n' "$(date -u +%FT%TZ)" >> "$RUN_DIR/profile-control.log"
+    (( control_failed == 1 )) || printf '%s paused_stopped observed_n_decoded=%s\n' \
+      "$(date -u +%FT%TZ)" "$pause_decoded" >> "$RUN_DIR/profile-control.log"
     break
   fi
   if ! kill -0 "$capture_pid" 2>/dev/null; then control_failed=1; break; fi
@@ -311,8 +324,13 @@ for gpu in 0 1 2 3; do
   [[ -n "$used" ]] && (( used <= 256 )) || { echo "GPU $gpu did not return idle" >&2; exit 1; }
 done
 
+observed_decode_cycles=$((pause_decoded - resume_decoded))
+(( observed_decode_cycles >= TRACE_CYCLES_MIN && observed_decode_cycles <= TRACE_CYCLES_MAX )) || {
+  echo "observed trace window was not ${TRACE_CYCLES_MIN}..${TRACE_CYCLES_MAX} decode cycles: $observed_decode_cycles" >&2
+  exit 1
+}
 python3 "$TRACE_SUMMARIZER" --trace-dir "$TRACE_DIR" --kernel "$KERNEL" \
-  --expected-decode-cycles 50 --baseline-token-ns "$BASELINE_TOKEN_NS" \
+  --expected-decode-cycles "$observed_decode_cycles" --baseline-token-ns "$BASELINE_TOKEN_NS" \
   --out "$RUN_DIR/unitrace-summary.json"
 
 python3 - "$RUN_DIR/exact-tokens.json" "$RUN_DIR/exact-result-gate.json" <<'PY'
@@ -344,6 +362,9 @@ sha256sum -c "$RUN_DIR/trace-files.sha256" >/dev/null
   echo "resume_attempted=$resume_attempted"
   echo "pause_attempted=$pause_attempted"
   echo "stop_attempted=$stop_attempted"
+  echo "resume_decoded=$resume_decoded"
+  echo "pause_decoded=$pause_decoded"
+  echo "observed_decode_cycles=$observed_decode_cycles"
   echo "control_failed=$control_failed"
   echo "capture_status=$capture_status"
   echo "unitrace_status=$unitrace_status"

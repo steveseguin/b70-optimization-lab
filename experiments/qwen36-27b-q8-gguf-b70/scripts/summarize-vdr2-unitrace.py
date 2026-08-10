@@ -139,7 +139,10 @@ def main() -> int:
         "nominal_hotspot_share": nominal_hotspot_share,
         "calls_per_nominal_decode_cycle": calls / args.expected_decode_cycles,
         "zero_spill": zero_spill,
-        "capture_window_note": "resume at task-0 decoded 100; pause+stop at 150; nominally 50 cycles",
+        "capture_window_note": (
+            "resume at first task-0 marker >=100; pause+stop at the first later "
+            "marker 45..55 decoded cycles after the observed resume marker"
+        ),
         "checks": checks,
         "passed": all(checks.values()),
     }
