@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -19,8 +20,80 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def run_fake_xpu_probe(
+    script: Path,
+) -> tuple[subprocess.CompletedProcess[str], str, str, str]:
+    """Execute the runner's exact telemetry fragments against a fake xpu-smi."""
+    source = script.read_text(encoding="utf-8")
+    function_start = source.index("gpu_used_mib() {\n")
+    function_end = source.index("\n}\n", function_start) + len("\n}\n")
+    gpu_used_mib = source[function_start:function_end]
+    discovery_start = source.index(
+        'flock -w 45 "$XPU_SMI_LOCK" timeout 30 \\\n'
+    )
+    discovery_end = source.index(
+        '> "$RUN_DIR/xpu-smi-discovery.json"', discovery_start
+    ) + len('> "$RUN_DIR/xpu-smi-discovery.json"')
+    discovery = source[discovery_start:discovery_end]
+
+    with tempfile.TemporaryDirectory() as temporary:
+        temporary_path = Path(temporary)
+        fake_log = temporary_path / "fake-xpu.log"
+        fake_xpu = temporary_path / "xpu-smi"
+        fake_xpu.write_text(
+            """#!/bin/sh
+set -eu
+test "${ZE_AFFINITY_MASK+x}" != x
+test "${ONEAPI_DEVICE_SELECTOR+x}" != x
+test "${SYCL_DEVICE_FILTER+x}" != x
+test "${UR_DEVICE_AFFINITY_MASK+x}" != x
+test "${ZES_ENABLE_SYSMAN:-}" = 1
+printf '%s\n' "$*" >> "$FAKE_XPU_LOG"
+case "${1:-}" in
+  stats) printf '%s\n' '| GPU Memory Used | 43 MiB |' ;;
+  discovery) printf '%s\n' '{"device_list":[]}' ;;
+  *) exit 96 ;;
+esac
+""",
+            encoding="utf-8",
+        )
+        fake_xpu.chmod(0o755)
+        probe = f"""set -euo pipefail
+XPU_SMI_LOCK="$1/xpu-smi.lock"
+RUN_DIR="$1"
+{gpu_used_mib}
+export ZE_AFFINITY_MASK=masked-ze
+export ONEAPI_DEVICE_SELECTOR=masked-oneapi
+export SYCL_DEVICE_FILTER=masked-sycl
+export UR_DEVICE_AFFINITY_MASK=masked-ur
+export ZES_ENABLE_SYSMAN=parent-zes
+gpu_used_mib 2 "$RUN_DIR/xpu-smi-stats.txt"
+{discovery}
+printf '%s|%s|%s|%s|%s\n' \
+  "$ZE_AFFINITY_MASK" "$ONEAPI_DEVICE_SELECTOR" "$SYCL_DEVICE_FILTER" \
+  "$UR_DEVICE_AFFINITY_MASK" "$ZES_ENABLE_SYSMAN"
+"""
+        completed = subprocess.run(
+            ["/bin/bash", "-c", probe, "fake-xpu-probe", temporary],
+            env={
+                "FAKE_XPU_LOG": str(fake_log),
+                "LC_ALL": "C",
+                "PATH": f"{temporary}:/usr/bin:/bin",
+            },
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        fake_log_text = fake_log.read_text(encoding="utf-8") if fake_log.exists() else ""
+        stats_text = (temporary_path / "xpu-smi-stats.txt").read_text(encoding="utf-8")
+        discovery_text = (temporary_path / "xpu-smi-discovery.json").read_text(
+            encoding="utf-8"
+        )
+    return completed, fake_log_text, stats_text, discovery_text
+
+
 class CrossbandWrapperStaticTests(unittest.TestCase):
-    def test_missing_ack_stops_before_external_commands(self) -> None:
+    def test_pending_live_path_stops_before_external_commands(self) -> None:
         completed = subprocess.run(
             ["/bin/bash", str(SCRIPT)],
             cwd=Path("/"),
@@ -31,21 +104,25 @@ class CrossbandWrapperStaticTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stdout, "")
-        self.assertIn("requires the exact acknowledgement", completed.stderr)
+        self.assertIn("PENDING independent review", completed.stderr)
 
-    def test_wrong_ack_stops_before_external_commands(self) -> None:
-        completed = subprocess.run(
-            ["/bin/bash", str(SCRIPT)],
-            cwd=Path("/"),
-            env={
-                "PATH": "/definitely-empty",
-                "LC_ALL": "C",
-                "QWEN36_EMBEDDED_MTP_CROSSBAND_LIVE_ACK": "INTENTIONALLY_WRONG",
-            },
-            text=True,
-            capture_output=True,
-            check=False,
+    def test_wrong_ack_stops_before_external_commands_after_activation(self) -> None:
+        activated = SCRIPT.read_text().replace(
+            'LIVE_ENABLE_STATE="PENDING"',
+            'LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"',
+            1,
         )
+        with tempfile.TemporaryDirectory() as temporary:
+            probe = Path(temporary) / "runner.sh"
+            probe.write_text(activated, encoding="utf-8")
+            completed = subprocess.run(
+                ["/bin/bash", str(probe)],
+                cwd=Path("/"),
+                env={"PATH": "/definitely-empty", "LC_ALL": "C"},
+                text=True,
+                capture_output=True,
+                check=False,
+            )
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stdout, "")
         self.assertIn("requires the exact acknowledgement", completed.stderr)
@@ -71,7 +148,7 @@ class CrossbandWrapperStaticTests(unittest.TestCase):
             METRIC_GATES: "7af3cf19eee537a8381b4583b09649e6a616b375b72685b569c96f7094363a2b",
             CROSSBAND_GATES: "9154afc0ea874d26cc2028bad922921ca54d8a2b70f75341aff97990a3e9695b",
         }
-        self.assertIn('LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"', source)
+        self.assertIn('LIVE_ENABLE_STATE="PENDING"', source)
         for path, digest in expected.items():
             with self.subTest(path=path.name):
                 self.assertEqual(sha256(path), digest)
@@ -116,8 +193,29 @@ class CrossbandWrapperStaticTests(unittest.TestCase):
                 self.assertLess(launch_at, ready_at)
                 if index + 1 < len(pairs) and index not in (3,):
                     self.assertLess(ready_at, source.index(pairs[index + 1][0]))
-        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 20 xpu-smi stats', source)
-        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 30 xpu-smi discovery', source)
+        self.assertEqual(source.count("xpu-smi stats"), 1)
+        self.assertEqual(source.count("xpu-smi discovery"), 1)
+        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 20 \\', source)
+        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 30 \\', source)
+        for selector in (
+            "ZE_AFFINITY_MASK",
+            "ONEAPI_DEVICE_SELECTOR",
+            "SYCL_DEVICE_FILTER",
+            "UR_DEVICE_AFFINITY_MASK",
+        ):
+            self.assertEqual(source.count(f"-u {selector}"), 2)
+        self.assertEqual(source.count("ZES_ENABLE_SYSMAN=1 xpu-smi"), 2)
+        self.assertIn(
+            "-u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi stats",
+            source,
+        )
+        self.assertIn(
+            "-u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi discovery",
+            source,
+        )
+        self.assertNotIn("env -i", source)
+        self.assertNotIn("-u ZES_ENABLE_SYSMAN", source)
+        self.assertNotIn("unset ZES_ENABLE_SYSMAN", source)
         self.assertIn("CHILD_FINALIZING=0", source)
         self.assertIn('CHILD_SERVER_PID=""', source)
         self.assertIn("CHILD_CLEANUP_CONCLUSIVE=1", source)
@@ -144,6 +242,17 @@ class CrossbandWrapperStaticTests(unittest.TestCase):
             "cleanup_conclusive=0",
             finalize[late_port_check:cleanup_guard],
         )
+
+    def test_xpu_telemetry_sanitizes_only_the_fake_process_environment(self) -> None:
+        completed, fake_log, stats_text, discovery_text = run_fake_xpu_probe(SCRIPT)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(
+            completed.stdout,
+            "43\nmasked-ze|masked-oneapi|masked-sycl|masked-ur|parent-zes\n",
+        )
+        self.assertEqual(fake_log, "stats -d 2\ndiscovery -j\n")
+        self.assertEqual(stats_text, "| GPU Memory Used | 43 MiB |\n")
+        self.assertEqual(discovery_text, '{"device_list":[]}\n')
 
     def test_capture_is_forced_512_without_historical_oracle_or_canary(self) -> None:
         source = SCRIPT.read_text()

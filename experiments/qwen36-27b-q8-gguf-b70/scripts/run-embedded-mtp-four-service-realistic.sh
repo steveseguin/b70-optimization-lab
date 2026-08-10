@@ -319,7 +319,9 @@ verify_model_integrity() {
 gpu_used_mib() {
   local gpu="$1"
   local output="$2"
-  flock -w 45 "$XPU_SMI_LOCK" timeout 20 xpu-smi stats -d "$gpu" \
+  flock -w 45 "$XPU_SMI_LOCK" timeout 20 \
+    env -u ZE_AFFINITY_MASK -u ONEAPI_DEVICE_SELECTOR -u SYCL_DEVICE_FILTER \
+    -u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi stats -d "$gpu" \
     > "$output" 2>&1 || return 1
   awk -F '|' '/GPU Memory Used/{gsub(/[^0-9.]/, "", $3); print int($3); exit}' "$output"
 }
@@ -618,7 +620,10 @@ for gpu in 0 1 2 3; do
   fi
 done
 
-xpu-smi discovery -j > "$RUN_DIR/xpu-smi-discovery.json"
+flock -w 45 "$XPU_SMI_LOCK" timeout 30 \
+  env -u ZE_AFFINITY_MASK -u ONEAPI_DEVICE_SELECTOR -u SYCL_DEVICE_FILTER \
+  -u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi discovery -j \
+  > "$RUN_DIR/xpu-smi-discovery.json"
 jq -e '
   [.device_list[] |
     select(.device_function_type == "physical" and (.device_name | contains("Arc(TM) Pro B70"))) |

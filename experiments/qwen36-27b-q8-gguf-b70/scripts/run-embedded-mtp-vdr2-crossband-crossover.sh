@@ -4,7 +4,7 @@ set -euo pipefail
 # Default-off live wrapper for the fixed four-card, two-wave middle/near-32K
 # embedded-MTP crossover.  The no-argument path must remain before ROOT
 # resolution and every external command until independent review activates it.
-LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"
+LIVE_ENABLE_STATE="PENDING"
 LIVE_ENABLE_REQUIRED="REVIEWED_AND_PINNED"
 LIVE_ACK_REQUIRED="I_ACCEPT_FOUR_B70_EMBEDDED_MTP_VDR2_CROSSBAND_CROSSOVER"
 CHILD_ACK_REQUIRED="INTERNAL_REVIEWED_CROSSBAND_CHILD_V1"
@@ -169,7 +169,9 @@ port_is_listening() {
 gpu_used_mib() {
   local device="$1"
   local output="$2"
-  flock -w 45 "$XPU_SMI_LOCK" timeout 20 xpu-smi stats -d "$device" \
+  flock -w 45 "$XPU_SMI_LOCK" timeout 20 \
+    env -u ZE_AFFINITY_MASK -u ONEAPI_DEVICE_SELECTOR -u SYCL_DEVICE_FILTER \
+    -u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi stats -d "$device" \
     > "$output" 2>&1 || return 1
   awk -F '|' '/GPU Memory Used/{gsub(/[^0-9.]/, "", $3); print int($3); exit}' "$output"
 }
@@ -1074,7 +1076,9 @@ check_host_memory "$RUN_DIR/host-memory-preflight.env" || {
   echo "host MemAvailable is below the 32 GiB floor" >&2
   exit 2
 }
-flock -w 45 "$XPU_SMI_LOCK" timeout 30 xpu-smi discovery -j \
+flock -w 45 "$XPU_SMI_LOCK" timeout 30 \
+  env -u ZE_AFFINITY_MASK -u ONEAPI_DEVICE_SELECTOR -u SYCL_DEVICE_FILTER \
+  -u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi discovery -j \
   > "$RUN_DIR/xpu-smi-discovery.json"
 jq -e '
   ([.device_list[] |

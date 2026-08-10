@@ -6,11 +6,84 @@ from __future__ import annotations
 import subprocess
 import hashlib
 import re
+import tempfile
 import unittest
 from pathlib import Path
 
 
 SCRIPT = Path(__file__).with_name("run-embedded-mtp-four-service-realistic.sh")
+
+
+def run_fake_xpu_probe(
+    script: Path,
+) -> tuple[subprocess.CompletedProcess[str], str, str, str]:
+    """Execute the runner's exact telemetry fragments against a fake xpu-smi."""
+    source = script.read_text(encoding="utf-8")
+    function_start = source.index("gpu_used_mib() {\n")
+    function_end = source.index("\n}\n", function_start) + len("\n}\n")
+    gpu_used_mib = source[function_start:function_end]
+    discovery_start = source.index(
+        'flock -w 45 "$XPU_SMI_LOCK" timeout 30 \\\n'
+    )
+    discovery_end = source.index(
+        '> "$RUN_DIR/xpu-smi-discovery.json"', discovery_start
+    ) + len('> "$RUN_DIR/xpu-smi-discovery.json"')
+    discovery = source[discovery_start:discovery_end]
+
+    with tempfile.TemporaryDirectory() as temporary:
+        temporary_path = Path(temporary)
+        fake_log = temporary_path / "fake-xpu.log"
+        fake_xpu = temporary_path / "xpu-smi"
+        fake_xpu.write_text(
+            """#!/bin/sh
+set -eu
+test "${ZE_AFFINITY_MASK+x}" != x
+test "${ONEAPI_DEVICE_SELECTOR+x}" != x
+test "${SYCL_DEVICE_FILTER+x}" != x
+test "${UR_DEVICE_AFFINITY_MASK+x}" != x
+test "${ZES_ENABLE_SYSMAN:-}" = 1
+printf '%s\n' "$*" >> "$FAKE_XPU_LOG"
+case "${1:-}" in
+  stats) printf '%s\n' '| GPU Memory Used | 43 MiB |' ;;
+  discovery) printf '%s\n' '{"device_list":[]}' ;;
+  *) exit 96 ;;
+esac
+""",
+            encoding="utf-8",
+        )
+        fake_xpu.chmod(0o755)
+        probe = f"""set -euo pipefail
+XPU_SMI_LOCK="$1/xpu-smi.lock"
+RUN_DIR="$1"
+{gpu_used_mib}
+export ZE_AFFINITY_MASK=masked-ze
+export ONEAPI_DEVICE_SELECTOR=masked-oneapi
+export SYCL_DEVICE_FILTER=masked-sycl
+export UR_DEVICE_AFFINITY_MASK=masked-ur
+export ZES_ENABLE_SYSMAN=parent-zes
+gpu_used_mib 2 "$RUN_DIR/xpu-smi-stats.txt"
+{discovery}
+printf '%s|%s|%s|%s|%s\n' \
+  "$ZE_AFFINITY_MASK" "$ONEAPI_DEVICE_SELECTOR" "$SYCL_DEVICE_FILTER" \
+  "$UR_DEVICE_AFFINITY_MASK" "$ZES_ENABLE_SYSMAN"
+"""
+        completed = subprocess.run(
+            ["/bin/bash", "-c", probe, "fake-xpu-probe", temporary],
+            env={
+                "FAKE_XPU_LOG": str(fake_log),
+                "LC_ALL": "C",
+                "PATH": f"{temporary}:/usr/bin:/bin",
+            },
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        fake_log_text = fake_log.read_text(encoding="utf-8") if fake_log.exists() else ""
+        stats_text = (temporary_path / "xpu-smi-stats.txt").read_text(encoding="utf-8")
+        discovery_text = (temporary_path / "xpu-smi-discovery.json").read_text(
+            encoding="utf-8"
+        )
+    return completed, fake_log_text, stats_text, discovery_text
 
 
 class FourServiceWrapperTests(unittest.TestCase):
@@ -87,8 +160,41 @@ class FourServiceWrapperTests(unittest.TestCase):
             source,
         )
         self.assertEqual(source.count("xpu-smi stats"), 1)
-        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 20 xpu-smi stats', source)
+        self.assertEqual(source.count("xpu-smi discovery"), 1)
+        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 20 \\', source)
+        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 30 \\', source)
+        for selector in (
+            "ZE_AFFINITY_MASK",
+            "ONEAPI_DEVICE_SELECTOR",
+            "SYCL_DEVICE_FILTER",
+            "UR_DEVICE_AFFINITY_MASK",
+        ):
+            self.assertEqual(source.count(f"-u {selector}"), 2)
+        self.assertEqual(source.count("ZES_ENABLE_SYSMAN=1 xpu-smi"), 2)
+        self.assertIn(
+            "-u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi stats",
+            source,
+        )
+        self.assertIn(
+            "-u UR_DEVICE_AFFINITY_MASK ZES_ENABLE_SYSMAN=1 xpu-smi discovery",
+            source,
+        )
+        self.assertNotIn("env -i", source)
+        self.assertNotIn("-u ZES_ENABLE_SYSMAN", source)
+        self.assertNotIn("unset ZES_ENABLE_SYSMAN", source)
+        self.assertNotIn("export ZE_AFFINITY_MASK", source)
         self.assertGreater(source.index('setsid python3 "$CAPTURE" run'), next_phase)
+
+    def test_xpu_telemetry_sanitizes_only_the_fake_process_environment(self) -> None:
+        completed, fake_log, stats_text, discovery_text = run_fake_xpu_probe(SCRIPT)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(
+            completed.stdout,
+            "43\nmasked-ze|masked-oneapi|masked-sycl|masked-ur|parent-zes\n",
+        )
+        self.assertEqual(fake_log, "stats -d 2\ndiscovery -j\n")
+        self.assertEqual(stats_text, "| GPU Memory Used | 43 MiB |\n")
+        self.assertEqual(discovery_text, '{"device_list":[]}\n')
 
     def test_fault_scans_preserve_status_and_fail_closed(self) -> None:
         source = SCRIPT.read_text()
