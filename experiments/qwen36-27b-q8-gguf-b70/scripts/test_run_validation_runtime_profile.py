@@ -19,9 +19,11 @@ RUNNER = SCRIPT_DIR / "run-validation.sh"
 CANONICAL_MANIFEST = LANE / "runtime-manifest.json"
 VDR4_MANIFEST = LANE / "runtime-manifest-q8-vdr4-control.json"
 VDR2_MANIFEST = LANE / "runtime-manifest-q8-vdr2-candidate.json"
+VDR1_MANIFEST = LANE / "runtime-manifest-q8-vdr1-candidate.json"
 CANONICAL_PROFILE = "canonical-baseline"
 VDR4_PROFILE = "q8-vdr4-control"
 VDR2_PROFILE = "q8-vdr2-candidate"
+VDR1_PROFILE = "q8-vdr1-candidate"
 
 
 def sha256_file(path: Path) -> str:
@@ -125,7 +127,7 @@ class RuntimeProfileTests(unittest.TestCase):
         self.assert_reaches_missing_model_gate(completed, run_dir)
 
     def test_registered_diagnostic_profiles_reach_model_gate(self) -> None:
-        for profile in (VDR4_PROFILE, VDR2_PROFILE):
+        for profile in (VDR4_PROFILE, VDR2_PROFILE, VDR1_PROFILE):
             with self.subTest(profile=profile):
                 completed, run_dir = self.run_diagnostic_profile(profile)
                 self.assert_reaches_missing_model_gate(completed, run_dir)
@@ -143,6 +145,8 @@ class RuntimeProfileTests(unittest.TestCase):
         for profile, manifest in (
             (VDR4_PROFILE, VDR2_MANIFEST),
             (VDR2_PROFILE, VDR4_MANIFEST),
+            (VDR1_PROFILE, VDR2_MANIFEST),
+            (VDR2_PROFILE, VDR1_MANIFEST),
             (CANONICAL_PROFILE, VDR4_MANIFEST),
         ):
             with self.subTest(profile=profile, manifest=manifest.name):
@@ -160,13 +164,15 @@ class RuntimeProfileTests(unittest.TestCase):
                 self.assertFalse(run_dir.exists())
 
     def test_llama_server_override_mismatch_fails_closed(self) -> None:
-        completed, run_dir = self.run_diagnostic_profile(
-            VDR2_PROFILE, llama_server="/definitely/wrong/llama-server"
-        )
-        self.assertEqual(completed.returncode, 2, completed.stderr)
-        self.assertIn("requires LLAMA_SERVER=", completed.stderr)
-        self.assertNotIn("model not found:", completed.stderr)
-        self.assertFalse(run_dir.exists())
+        for profile in (VDR2_PROFILE, VDR1_PROFILE):
+            with self.subTest(profile=profile):
+                completed, run_dir = self.run_diagnostic_profile(
+                    profile, llama_server="/definitely/wrong/llama-server"
+                )
+                self.assertEqual(completed.returncode, 2, completed.stderr)
+                self.assertIn("requires LLAMA_SERVER=", completed.stderr)
+                self.assertNotIn("model not found:", completed.stderr)
+                self.assertFalse(run_dir.exists())
 
     def test_noncanonical_scope_is_exactly_restricted(self) -> None:
         cases = (
@@ -187,15 +193,16 @@ class RuntimeProfileTests(unittest.TestCase):
                 "with EVIDENCE_CLASS=parallel-functional-screen requires REQUIRE_ALL_GPUS_IDLE=0",
             ),
         )
-        for kwargs, expected in cases:
-            with self.subTest(kwargs=kwargs):
-                completed, run_dir = self.run_diagnostic_profile(
-                    VDR2_PROFILE, **kwargs
-                )
-                self.assertEqual(completed.returncode, 2, completed.stderr)
-                self.assertIn(expected, completed.stderr)
-                self.assertNotIn("model not found:", completed.stderr)
-                self.assertFalse(run_dir.exists())
+        for profile in (VDR2_PROFILE, VDR1_PROFILE):
+            for kwargs, expected in cases:
+                with self.subTest(profile=profile, kwargs=kwargs):
+                    completed, run_dir = self.run_diagnostic_profile(
+                        profile, **kwargs
+                    )
+                    self.assertEqual(completed.returncode, 2, completed.stderr)
+                    self.assertIn(expected, completed.stderr)
+                    self.assertNotIn("model not found:", completed.stderr)
+                    self.assertFalse(run_dir.exists())
 
     def test_vdr2_official_isolated_allowlist_reaches_model_gate(self) -> None:
         allowed = (
@@ -273,18 +280,21 @@ class RuntimeProfileTests(unittest.TestCase):
         self.assertNotIn("model not found:", completed.stderr)
         self.assertFalse(run_dir.exists())
 
-    def test_vdr4_control_remains_parallel_only(self) -> None:
-        completed, run_dir = self.run_diagnostic_profile(
-            VDR4_PROFILE,
-            evidence_class="official-isolated",
-            require_all_gpus_idle="1",
-        )
-        self.assertEqual(completed.returncode, 2, completed.stderr)
-        self.assertIn(
-            "does not permit EVIDENCE_CLASS=official-isolated", completed.stderr
-        )
-        self.assertNotIn("model not found:", completed.stderr)
-        self.assertFalse(run_dir.exists())
+    def test_nonpromotable_profiles_remain_parallel_only(self) -> None:
+        for profile in (VDR4_PROFILE, VDR1_PROFILE):
+            with self.subTest(profile=profile):
+                completed, run_dir = self.run_diagnostic_profile(
+                    profile,
+                    evidence_class="official-isolated",
+                    require_all_gpus_idle="1",
+                )
+                self.assertEqual(completed.returncode, 2, completed.stderr)
+                self.assertIn(
+                    "does not permit EVIDENCE_CLASS=official-isolated",
+                    completed.stderr,
+                )
+                self.assertNotIn("model not found:", completed.stderr)
+                self.assertFalse(run_dir.exists())
 
     def test_vdr2_official_isolated_keeps_runtime_bindings(self) -> None:
         completed, run_dir = self.run_diagnostic_profile(
@@ -386,6 +396,7 @@ class RuntimeProfileTests(unittest.TestCase):
         )
         self.assertIn('"server_identity_fields": runtime_identity_fields', source)
         self.assertIn('elif $runtime_profile == "q8-vdr2-candidate" then', source)
+        self.assertIn('elif $runtime_profile == "q8-vdr1-candidate" then', source)
         self.assertIn(
             "only q8-vdr2-candidate official-isolated with all GPUs idle may be "
             "performance_promotable",

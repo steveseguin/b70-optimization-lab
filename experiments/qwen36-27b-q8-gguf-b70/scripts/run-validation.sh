@@ -7,6 +7,7 @@ MANIFEST="$LANE/model-manifest.json"
 CANONICAL_RUNTIME_MANIFEST="$LANE/runtime-manifest.json"
 VDR4_RUNTIME_MANIFEST="$LANE/runtime-manifest-q8-vdr4-control.json"
 VDR2_RUNTIME_MANIFEST="$LANE/runtime-manifest-q8-vdr2-candidate.json"
+VDR1_RUNTIME_MANIFEST="$LANE/runtime-manifest-q8-vdr1-candidate.json"
 RUNTIME_PROFILE="${RUNTIME_PROFILE-canonical-baseline}"
 
 case "$RUNTIME_PROFILE" in
@@ -31,8 +32,15 @@ case "$RUNTIME_PROFILE" in
     RUNTIME_PROFILE_DIAGNOSTIC=1
     RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE=1
     ;;
+  q8-vdr1-candidate)
+    RUNTIME_PROFILE_EXPECTED_MANIFEST="$VDR1_RUNTIME_MANIFEST"
+    RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256="827f8cd08bacd8a7039114782701b339a8e92d6a7bd0ece5616bb383c05375cc"
+    RUNTIME_PROFILE_EXPECTED_Q8_VDR=1
+    RUNTIME_PROFILE_DIAGNOSTIC=1
+    RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE=0
+    ;;
   *)
-    echo "invalid RUNTIME_PROFILE=$RUNTIME_PROFILE; expected canonical-baseline, q8-vdr4-control, or q8-vdr2-candidate" >&2
+    echo "invalid RUNTIME_PROFILE=$RUNTIME_PROFILE; expected canonical-baseline, q8-vdr4-control, q8-vdr2-candidate, or q8-vdr1-candidate" >&2
     exit 2
     ;;
 esac
@@ -1069,6 +1077,9 @@ on_exit() {
              and .performance_promotable == false)
             or (.evidence_class == "official-isolated"
                 and .performance_promotable == true)
+          elif $runtime_profile == "q8-vdr1-candidate" then
+            .evidence_class == "parallel-functional-screen"
+            and .performance_promotable == false
           else
             false
           end)
