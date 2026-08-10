@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Phase-1 only: four fresh c2-topology servers, sequential M=1 oracle capture.
-# Live execution is an explicit --run-phase1 action and remains disabled by the
-# pending analyzer hash until the frozen offline test/reviewer gates pass.
+# Live execution is an explicit --run-phase1 action and is bound to the frozen
+# analyzer, launcher, attester, runtime, model, and capture inputs below.
 # --print-wave-plan is always read-only and cannot touch XPU.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -38,14 +38,14 @@ EXPECTED_OLD_ORACLE_SHA256="7a884c14ecd1705981aea63c22e8fd96b9b6646aeca98a53850d
 EXPECTED_SUITE_SHA256="053523440e4a23d7f772dec5025fe4831ba33c0a8eaba76795e4ee76718860af"
 EXPECTED_CANARY_SHA256="e4477808823cdf9bb182d5abc4788cee216011a0195cf49bf03a7bda35f5dbcc"
 EXPECTED_CANARY_SUITE_SHA256="df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
-EXPECTED_LAUNCHER_SHA256="96ee485eadc69949ad2035a1cc33a8f1433b6ce826399c4294e60e43b263ca74"
-EXPECTED_SERVER_ATTESTER_SHA256="9a3fab9c74728a12bdba0401c89154564dd0b5115ea2731dbc8035eae8109f00"
+EXPECTED_LAUNCHER_SHA256="fa9475956c9de8dc225e23c13b25e5851bc545ae24ec1ede92939f3ae7f08010"
+EXPECTED_SERVER_ATTESTER_SHA256="3ca549cd971fd76b3152c8bb9e0a55689eb398051ee61a2ed2e532b3f8b2ec78"
 EXPECTED_CAPTURE_CLIENT_SHA256="7d89e99ee8f69dea24f27a6a0b83b7c9faf8285273159c2b771149126d2d0f00"
 EXPECTED_COMMON_CAPTURE_SHA256="94595b6962e64981723a063b6ec23b80c3701a22d0e256e85b596e6bf75f5b05"
 EXPECTED_PROMPT_BUILDER_SHA256="2286c9fd1ef59136a92a857be2992b31e0ff3bc844c7489239ab8f76f515cf72"
 EXPECTED_MODEL_MANIFEST_SHA256="858a15c80b51fdedf7bed24f32906369d1c0b7b8534a04b3822bc1b80f6829b9"
 # Patched to the final analyzer hash after the offline suite is frozen.
-EXPECTED_ANALYZER_SHA256="43c707c0b8040d694efa89e13638820fff5eed4cc95fa9129bcd0110452d65d6"
+EXPECTED_ANALYZER_SHA256="3ea1d0eb23b7783f0e3a87b9782230c2f66e5eb2b249cc53063a77794463b547"
 EXPECTED_OFFICIAL_C1_RESULT_SHA256="fe03bfdd5adb826a3c9b5a68f9922c543b3767f3afce7ca388139dd6613356c4"
 EXPECTED_OFFICIAL_C1_MANIFEST_SHA256="d1203c993a50c1d1ced03f20e85f96c61ee23c6c349b27326310fe8b6c4ce65c"
 EXPECTED_OFFICIAL_C1_MARKER_SHA256="5cbb5809398fa6edb6ea08d96edb54e7f166328d23a4dbe0412016858c796a56"
@@ -59,7 +59,12 @@ WAVE_TIMEOUT_S="${WAVE_TIMEOUT_S:-7200}"
 TERM_GRACE_S="${TERM_GRACE_S:-90}"
 KILL_GRACE_S="${KILL_GRACE_S:-10}"
 PASSIVE_DRAIN_S="${PASSIVE_DRAIN_S:-60}"
-FAILURE_HANDOFF_MARGIN_S="${FAILURE_HANDOFF_MARGIN_S:-20}"
+FAILURE_HANDOFF_MARGIN_S="${FAILURE_HANDOFF_MARGIN_S:-40}"
+PHASE1_SLEEP_IDLE_SECONDS=60
+KEEP_AWAKE_INTERVAL_S=20
+KEEP_AWAKE_REQUEST_TIMEOUT_S=15
+IDLE_UNLOAD_TIMEOUT_S=180
+PREFIX_STABILITY_TIMEOUT_S=10
 GPU_IDLE_MAX_MIB=256
 MIN_LOADED_DELTA_MIB=25000
 MIN_FIT_FREE_MIB=1024
@@ -68,7 +73,24 @@ MIN_FAST_FREE_KIB="${MIN_FAST_FREE_KIB:-10485760}"
 STAMP="$(date -u +%Y%m%dT%H%M%S.%NZ)"
 WAVE_DIR="${WAVE_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/canonical-q8-c1-oracle-four-gpu-${STAMP}}"
 
+# EXIT handlers run after child_main's local frame has unwound.  Every value
+# consulted by child_failure therefore lives in this initialized durable state.
+CHILD_STATE_ACTIVE=0
+CHILD_FAILURE_REASON="child exited without a classified cause"
+CHILD_SERVER_PID=""
+CHILD_SERVER_START_TICKS=""
+CHILD_SERVER_PGID=""
+CHILD_KEEP_AWAKE_PID=""
+CHILD_KEEP_AWAKE_START_TICKS=""
+CHILD_KEEP_AWAKE_ACTIVE=0
+CHILD_CLEANUP_FORCED=0
+CHILD_CLEANUP_SURVIVOR=0
+CHILD_NORMAL_COMPLETE=0
+
 die() {
+  if [[ "${CHILD_STATE_ACTIVE:-0}" == 1 ]]; then
+    CHILD_FAILURE_REASON="$*"
+  fi
   echo "ERROR: $*" >&2
   exit 2
 }
@@ -176,6 +198,97 @@ atomic_json() {
   rm -f "$temporary"
 }
 
+copy_file_new() {
+  python3 - "$1" "$2" "$3" <<'PY'
+import os
+import stat
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+destination = Path(sys.argv[2])
+expected_size = int(sys.argv[3])
+source_stat = source.lstat()
+if (
+    not stat.S_ISREG(source_stat.st_mode)
+    or source.is_symlink()
+    or destination.exists()
+    or expected_size <= 0
+    or source_stat.st_size < expected_size
+):
+    raise SystemExit(1)
+temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)
+try:
+    with source.open("rb") as input_stream, os.fdopen(descriptor, "wb") as output_stream:
+        remaining = expected_size
+        while remaining:
+            block = input_stream.read(min(8 * 1024 * 1024, remaining))
+            if not block:
+                raise SystemExit(1)
+            output_stream.write(block)
+            remaining -= len(block)
+        output_stream.flush()
+        os.fsync(output_stream.fileno())
+    with temporary.open("rb") as stream:
+        stream.seek(-1, os.SEEK_END)
+        if stream.read(1) != b"\n":
+            raise SystemExit(1)
+    os.link(temporary, destination)
+    directory_fd = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+finally:
+    temporary.unlink(missing_ok=True)
+PY
+}
+
+stable_log_size() {
+  python3 - "$1" <<'PY'
+import os
+import stat
+import sys
+
+flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+descriptor = os.open(sys.argv[1], flags)
+try:
+    value = os.fstat(descriptor)
+    if not stat.S_ISREG(value.st_mode) or value.st_size <= 0:
+        raise SystemExit(1)
+    os.lseek(descriptor, value.st_size - 1, os.SEEK_SET)
+    if os.read(descriptor, 1) != b"\n":
+        raise SystemExit(1)
+    print(value.st_size)
+finally:
+    os.close(descriptor)
+PY
+}
+
+wait_for_stable_line_boundary() {
+  local path="$1" timeout_seconds="$2" deadline first_size second_size
+  [[ "$timeout_seconds" =~ ^[1-9][0-9]*$ ]] || return 1
+  deadline=$((SECONDS + timeout_seconds))
+  while (( SECONDS < deadline )); do
+    [[ ! -e "$WAVE_ABORT_FILE" ]] || return 1
+    owned_server_running || return 1
+    first_size="$(stable_log_size "$path" 2>/dev/null || true)"
+    if [[ "$first_size" =~ ^[1-9][0-9]*$ ]]; then
+      sleep 0.2
+      [[ ! -e "$WAVE_ABORT_FILE" ]] || return 1
+      owned_server_running || return 1
+      second_size="$(stable_log_size "$path" 2>/dev/null || true)"
+      if [[ "$second_size" == "$first_size" ]]; then
+        printf '%s\n' "$first_size"
+        return 0
+      fi
+    fi
+    sleep 0.2
+  done
+  return 1
+}
+
 seal_directory() {
   local directory="$1" manifest_name="$2" marker_name="$3" temporary
   temporary="$(mktemp "$directory/.${manifest_name}.XXXXXX")" || return 1
@@ -236,14 +349,84 @@ child_main() {
 
   local gpu_lease="/run/user/$(id -u)/qwen36-b70-gpu-leases/gpu${GPU_INDEX}.lock"
   local port_lease="/run/user/$(id -u)/qwen36-b70-port-leases/port${PORT}.lock"
-  local server_pid="" server_start_ticks="" server_pgid="" pre_mib="" loaded_mib="" start_epoch cleanup_forced=0
-  local normal_complete=0 cleanup_survivor=0 capture_started=0 capture_complete=0
-  start_epoch="$(date +%s)"
+  local pre_mib="" loaded_mib="" prefix_size=""
+  CHILD_STATE_ACTIVE=1
+  CHILD_FAILURE_REASON="child exited without a classified cause"
+  CHILD_SERVER_PID=""
+  CHILD_SERVER_START_TICKS=""
+  CHILD_SERVER_PGID=""
+  CHILD_KEEP_AWAKE_PID=""
+  CHILD_KEEP_AWAKE_START_TICKS=""
+  CHILD_KEEP_AWAKE_ACTIVE=0
+  CHILD_CLEANUP_FORCED=0
+  CHILD_CLEANUP_SURVIVOR=0
+  CHILD_NORMAL_COMPLETE=0
   owned_server_running() {
-    [[ -n "$server_pid" && -n "$server_start_ticks" && -n "$server_pgid" ]] || return 1
-    pid_running "$server_pid" || return 1
-    [[ "$(process_start_ticks "$server_pid" 2>/dev/null || true)" == "$server_start_ticks" ]] || return 1
-    [[ "$(ps -o pgid= -p "$server_pid" 2>/dev/null | awk '{print $1}')" == "$server_pgid" ]]
+    [[ -n "${CHILD_SERVER_PID:-}" && -n "${CHILD_SERVER_START_TICKS:-}" && -n "${CHILD_SERVER_PGID:-}" ]] || return 1
+    pid_running "$CHILD_SERVER_PID" || return 1
+    [[ "$(process_start_ticks "$CHILD_SERVER_PID" 2>/dev/null || true)" == "$CHILD_SERVER_START_TICKS" ]] || return 1
+    [[ "$(ps -o pgid= -p "$CHILD_SERVER_PID" 2>/dev/null | awk '{print $1}')" == "$CHILD_SERVER_PGID" ]]
+  }
+  owned_keep_awake_running() {
+    [[ -n "${CHILD_KEEP_AWAKE_PID:-}" && -n "${CHILD_KEEP_AWAKE_START_TICKS:-}" ]] || return 1
+    pid_running "$CHILD_KEEP_AWAKE_PID" || return 1
+    [[ "$(process_start_ticks "$CHILD_KEEP_AWAKE_PID" 2>/dev/null || true)" == "$CHILD_KEEP_AWAKE_START_TICKS" ]]
+  }
+  keep_awake_metrics_loop() {
+    local request_count=0 request_rc=0 tick
+    : > "$RUN_DIR/keep-awake-metrics-events.tsv"
+    while [[ ! -e "$RUN_DIR/keep-awake.stop" ]]; do
+      request_count=$((request_count + 1))
+      request_rc=0
+      : > "$RUN_DIR/keep-awake.inflight"
+      printf 'event=request-start\trequest=%s\tepoch_ns=%s\n' "$request_count" "$(date +%s%N)" \
+        >> "$RUN_DIR/keep-awake-metrics-events.tsv"
+      curl -fsS --max-time "$KEEP_AWAKE_REQUEST_TIMEOUT_S" \
+        "http://127.0.0.1:${PORT}/metrics" > /dev/null \
+        2>> "$RUN_DIR/keep-awake-metrics.stderr" || request_rc=$?
+      rm -f "$RUN_DIR/keep-awake.inflight"
+      printf 'event=request-end\trequest=%s\tepoch_ns=%s\trc=%s\n' \
+        "$request_count" "$(date +%s%N)" "$request_rc" \
+        >> "$RUN_DIR/keep-awake-metrics-events.tsv"
+      (( request_rc == 0 )) || return "$request_rc"
+      for ((tick=0; tick<KEEP_AWAKE_INTERVAL_S; tick++)); do
+        [[ ! -e "$RUN_DIR/keep-awake.stop" ]] || return 0
+        sleep 1
+      done
+    done
+  }
+  wait_keep_awake_quiet() {
+    local deadline=$((SECONDS + 20))
+    while [[ -e "$RUN_DIR/keep-awake.inflight" ]]; do
+      owned_keep_awake_running || return 1
+      (( SECONDS < deadline )) || return 1
+      sleep 0.1
+    done
+    owned_keep_awake_running
+  }
+  stop_keep_awake() {
+    local status=0 stop_epoch_ns stopped_epoch_ns request_starts request_ends clean_ends
+    (( ${CHILD_KEEP_AWAKE_ACTIVE:-0} == 1 )) || return 0
+    [[ -n "${CHILD_KEEP_AWAKE_PID:-}" ]] || return 1
+    stop_epoch_ns="$(date +%s%N)"
+    : > "$RUN_DIR/keep-awake.stop"
+    if owned_keep_awake_running; then
+      wait "$CHILD_KEEP_AWAKE_PID" || status=$?
+    else
+      wait "$CHILD_KEEP_AWAKE_PID" || status=$?
+    fi
+    stopped_epoch_ns="$(date +%s%N)"
+    CHILD_KEEP_AWAKE_ACTIVE=0
+    request_starts="$(grep -c '^event=request-start' "$RUN_DIR/keep-awake-metrics-events.tsv" 2>/dev/null || true)"
+    request_ends="$(grep -c '^event=request-end' "$RUN_DIR/keep-awake-metrics-events.tsv" 2>/dev/null || true)"
+    clean_ends="$(grep -c $'^event=request-end.*\trc=0$' "$RUN_DIR/keep-awake-metrics-events.tsv" 2>/dev/null || true)"
+    atomic_json "$RUN_DIR/keep-awake-status.json" -n \
+      --argjson pid "$CHILD_KEEP_AWAKE_PID" --arg start_ticks "$CHILD_KEEP_AWAKE_START_TICKS" \
+      --argjson stop_epoch_ns "$stop_epoch_ns" --argjson stopped_epoch_ns "$stopped_epoch_ns" \
+      --argjson request_starts "$request_starts" --argjson request_ends "$request_ends" \
+      --argjson clean_ends "$clean_ends" --argjson exit_status "$status" \
+      '{passed:($exit_status==0 and $request_starts>0 and $request_starts==$request_ends and $request_ends==$clean_ends),pid:$pid,start_ticks:$start_ticks,stop_requested_epoch_ns:$stop_epoch_ns,stopped_epoch_ns:$stopped_epoch_ns,request_starts:$request_starts,request_ends:$request_ends,clean_ends:$clean_ends,exit_status:$exit_status}' || return 1
+    (( status == 0 )) || return "$status"
   }
   publish_abort() {
     local temporary
@@ -253,18 +436,29 @@ child_main() {
     ln "$temporary" "$WAVE_ABORT_FILE" || { rm -f "$temporary"; return 1; }
     rm -f "$temporary"
   }
+  child_error() {
+    local status=$?
+    if [[ "${CHILD_FAILURE_REASON:-}" == "child exited without a classified cause" ]]; then
+      CHILD_FAILURE_REASON="command failed at line ${BASH_LINENO[0]} with rc=${status}: ${BASH_COMMAND}"
+    fi
+    return "$status"
+  }
   child_failure() {
     local status=$? deadline quiet_deadline still_owned=0
-    trap - EXIT INT TERM
+    (( status != 0 )) || status=1
+    trap - EXIT ERR INT TERM
     set +e
     rm -f "$RUN_DIR/ready.json"
     publish_abort
+    if (( ${CHILD_KEEP_AWAKE_ACTIVE:-0} == 1 )); then
+      stop_keep_awake
+    fi
     if owned_server_running; then
       {
         date -u +epoch_s=%s
-        echo "server_pid=$server_pid"
-        echo "server_start_ticks=$server_start_ticks"
-        echo "server_pgid=$server_pgid"
+        echo "server_pid=$CHILD_SERVER_PID"
+        echo "server_start_ticks=$CHILD_SERVER_START_TICKS"
+        echo "server_pgid=$CHILD_SERVER_PGID"
         stat -c 'server_log_size=%s' "$RUN_DIR/server.stdout.log" 2>/dev/null || true
       } > "$RUN_DIR/passive-drain-before.env"
       quiet_deadline=$((SECONDS + PASSIVE_DRAIN_S))
@@ -277,25 +471,26 @@ child_main() {
       } > "$RUN_DIR/passive-drain-after.env"
     fi
     if owned_server_running; then
-      kill -TERM "$server_pid" 2>/dev/null
+      kill -TERM "$CHILD_SERVER_PID" 2>/dev/null
       deadline=$((SECONDS + TERM_GRACE_S))
       while (( SECONDS < deadline )) && owned_server_running; do sleep 1; done
       if owned_server_running; then
-        cleanup_forced=1
-        kill -KILL "$server_pid" 2>/dev/null
+        CHILD_CLEANUP_FORCED=1
+        kill -KILL "$CHILD_SERVER_PID" 2>/dev/null
         deadline=$((SECONDS + KILL_GRACE_S))
         while (( SECONDS < deadline )) && owned_server_running; do sleep 1; done
       fi
-      if owned_server_running; then cleanup_survivor=1; else wait "$server_pid" 2>/dev/null || true; fi
+      if owned_server_running; then CHILD_CLEANUP_SURVIVOR=1; else wait "$CHILD_SERVER_PID" 2>/dev/null || true; fi
     fi
     {
       echo "status=FAIL"
       echo "exit_status=$status"
+      printf 'failure_reason=%q\n' "${CHILD_FAILURE_REASON:-unclassified child failure}"
       echo "gpu_index=$GPU_INDEX"
       echo "selector=$SELECTOR"
-      echo "forced_kill=$cleanup_forced"
-      echo "cleanup_survivor=$cleanup_survivor"
-      echo "normal_complete=$normal_complete"
+      echo "forced_kill=$CHILD_CLEANUP_FORCED"
+      echo "cleanup_survivor=$CHILD_CLEANUP_SURVIVOR"
+      echo "normal_complete=$CHILD_NORMAL_COMPLETE"
     } > "$RUN_DIR/cleanup-status.env"
     printf 'FAIL\n' > "$RUN_DIR/run-status.txt"
     rm -f "$RUN_DIR/artifacts.sha256" "$RUN_DIR/diagnostic-completion-status.json"
@@ -303,6 +498,7 @@ child_main() {
     exit "$status"
   }
   trap child_failure EXIT
+  trap child_error ERR
   trap 'exit 130' INT TERM
 
   validate_lease_fd "$QWEN36_GPU_LEASE_FD" "$gpu_lease" || die "invalid inherited GPU lease"
@@ -335,15 +531,16 @@ child_main() {
   LANE_DNN_ENABLED=0 LANE_OPT_ENABLED=1 \
   LANE_FA_ONEDNN=1 LANE_FA_ONEDNN_MAX_KV=0 LANE_MKL_FA=1 \
   LANE_SYCL_FLASH_ATTN=1 LANE_Q8_0_C2_CANONICAL_MMVQ="$SELECTOR" \
+  SLEEP_IDLE_SECONDS="$PHASE1_SLEEP_IDLE_SECONDS" \
   LOG="$RUN_DIR/server.identity.log" SERVER_OUTPUT_LOG="$RUN_DIR/server.stdout.log" \
   OUT_DIR="$RUN_DIR" \
     "$LAUNCHER" > "$RUN_DIR/launcher.stdout.log" 2> "$RUN_DIR/launcher.stderr.log" &
-  server_pid=$!
-  server_start_ticks="$(process_start_ticks "$server_pid")"
-  server_pgid="$(ps -o pgid= -p "$server_pid" | awk '{print $1}')"
-  [[ "$server_start_ticks" =~ ^[1-9][0-9]*$ ]] || die "server start-tick capture failed"
-  [[ "$server_pgid" == "$(ps -o pgid= -p $$ | awk '{print $1}')" ]] || die "server escaped child process group"
-  printf '%s\n' "$server_pid" > "$RUN_DIR/server.pid"
+  CHILD_SERVER_PID=$!
+  CHILD_SERVER_START_TICKS="$(process_start_ticks "$CHILD_SERVER_PID")"
+  CHILD_SERVER_PGID="$(ps -o pgid= -p "$CHILD_SERVER_PID" | awk '{print $1}')"
+  [[ "$CHILD_SERVER_START_TICKS" =~ ^[1-9][0-9]*$ ]] || die "server start-tick capture failed"
+  [[ "$CHILD_SERVER_PGID" == "$(ps -o pgid= -p $$ | awk '{print $1}')" ]] || die "server escaped child process group"
+  printf '%s\n' "$CHILD_SERVER_PID" > "$RUN_DIR/server.pid"
 
   local deadline=$((SECONDS + READINESS_TIMEOUT_S))
   until curl -fsS "http://127.0.0.1:${PORT}/v1/models" > "$RUN_DIR/models.json" 2> "$RUN_DIR/models.err"; do
@@ -356,10 +553,16 @@ child_main() {
     (.data|length)==1 and .data[0].id==$alias and .data[0].meta.n_ctx==32768
     and .data[0].meta.ftype=="Q8_0" and .data[0].meta.n_params==26895998464
   ' "$RUN_DIR/models.json" >/dev/null || die "model endpoint identity failed"
+  keep_awake_metrics_loop &
+  CHILD_KEEP_AWAKE_PID=$!
+  CHILD_KEEP_AWAKE_ACTIVE=1
+  CHILD_KEEP_AWAKE_START_TICKS="$(process_start_ticks "$CHILD_KEEP_AWAKE_PID")"
+  [[ "$CHILD_KEEP_AWAKE_START_TICKS" =~ ^[1-9][0-9]*$ ]] || die "keep-awake start-tick capture failed"
   python3 "$SERVER_ATTESTER" --server-log "$RUN_DIR/server.stdout.log" \
     --identity-log "$RUN_DIR/server.identity.log" --out "$RUN_DIR/server-attestation.json" \
     --model-size "$EXPECTED_MODEL_SIZE" --runtime-sha256 "$EXPECTED_RUNTIME_SHA256" \
-    --minimum-fit-free-mib "$MIN_FIT_FREE_MIB"
+    --minimum-fit-free-mib "$MIN_FIT_FREE_MIB" \
+    --sleep-idle-seconds "$PHASE1_SLEEP_IDLE_SECONDS"
   local server_attestation_sha
   server_attestation_sha="$(file_sha256 "$RUN_DIR/server-attestation.json")" || die "server attestation hash failed"
   [[ ! -e "$WAVE_ABORT_FILE" ]] || die "peer aborted before loaded XPU sample"
@@ -379,16 +582,19 @@ child_main() {
     done
   fi
   sleep 1
-  cp --no-clobber "$RUN_DIR/server.stdout.log" "$RUN_DIR/prerelease-prefix.log"
+  wait_keep_awake_quiet || die "keep-awake worker was not quiet for prerelease snapshot"
+  prefix_size="$(wait_for_stable_line_boundary "$RUN_DIR/server.stdout.log" "$PREFIX_STABILITY_TIMEOUT_S")" || die "prerelease log did not reach a stable line boundary"
+  copy_file_new "$RUN_DIR/server.stdout.log" "$RUN_DIR/prerelease-prefix.log" "$prefix_size"
   [[ -s "$RUN_DIR/prerelease-prefix.log" ]] || die "empty prerelease log prefix"
   cmp -n "$(stat -c %s "$RUN_DIR/prerelease-prefix.log")" \
     "$RUN_DIR/prerelease-prefix.log" "$RUN_DIR/server.stdout.log" || die "prefix snapshot is not a byte prefix"
 
   atomic_json "$RUN_DIR/ready.json" -n --argjson gpu "$GPU_INDEX" \
-    --argjson selector "$SELECTOR" --argjson port "$PORT" --argjson pid "$server_pid" \
+    --argjson selector "$SELECTOR" --argjson port "$PORT" --argjson pid "$CHILD_SERVER_PID" \
+    --argjson sleep_idle_seconds "$PHASE1_SLEEP_IDLE_SECONDS" \
     --arg attestation_sha "$server_attestation_sha" \
     --arg prefix_sha "$(file_sha256 "$RUN_DIR/prerelease-prefix.log")" \
-    '{ready:true,gpu_index:$gpu,selector:$selector,port:$port,server_pid:$pid,server_attestation_sha256:$attestation_sha,prerelease_prefix_sha256:$prefix_sha}'
+    '{ready:true,gpu_index:$gpu,selector:$selector,port:$port,server_pid:$pid,sleep_idle_seconds:$sleep_idle_seconds,server_attestation_sha256:$attestation_sha,prerelease_prefix_sha256:$prefix_sha}'
 
   deadline=$((SECONDS + READINESS_TIMEOUT_S))
   while [[ ! -f "$WAVE_RELEASE_FILE" ]]; do
@@ -399,11 +605,23 @@ child_main() {
   done
   jq -e '.released==true and .phase=="canonical-q8-c1-oracle"' "$WAVE_RELEASE_FILE" >/dev/null || die "invalid release marker"
 
+  owned_keep_awake_running || die "keep-awake worker exited before capture"
+  stop_keep_awake || die "keep-awake worker failed before capture"
+  prefix_size="$(wait_for_stable_line_boundary "$RUN_DIR/server.stdout.log" "$PREFIX_STABILITY_TIMEOUT_S")" || die "preclient log did not reach a stable line boundary"
+  copy_file_new "$RUN_DIR/server.stdout.log" "$RUN_DIR/preclient-prefix.log" "$prefix_size"
+  [[ -s "$RUN_DIR/preclient-prefix.log" ]] || die "empty preclient log prefix"
+  cmp -n "$(stat -c %s "$RUN_DIR/preclient-prefix.log")" \
+    "$RUN_DIR/preclient-prefix.log" "$RUN_DIR/server.stdout.log" || die "preclient snapshot is not a byte prefix"
+  if grep -Eq 'entering sleeping state$|exiting sleeping state$|SYCL_Q8_0_C2_CANONICAL_MMVQ summary:' \
+      "$RUN_DIR/preclient-prefix.log"; then
+    die "sleep, wake, or summary marker appeared before capture"
+  fi
+
   python3 "$ANALYZER" capture-live-binding --matrix-client "$MATRIX_CLIENT" \
-    --matrix-client-sha256 "$EXPECTED_MATRIX_SHA256" --server-pid "$server_pid" \
+    --matrix-client-sha256 "$EXPECTED_MATRIX_SHA256" --server-pid "$CHILD_SERVER_PID" \
     --port "$PORT" --runtime-sha256 "$EXPECTED_RUNTIME_SHA256" \
     --out "$RUN_DIR/live-binding-before.json"
-  capture_started=1
+  set +e
   timeout --signal=TERM --kill-after=30 "$REQUEST_TIMEOUT_S" \
     python3 "$CAPTURE_CLIENT" --mode sequential-oracle \
       --base-url "http://127.0.0.1:${PORT}" --suite "$SUITE" --band short \
@@ -417,19 +635,60 @@ child_main() {
       --runtime-sha256 "$EXPECTED_RUNTIME_SHA256" --cache-type-k f16 --cache-type-v f16 \
       --ctx-size-total 65536 --ctx-size-per-slot 32768 \
       > "$RUN_DIR/client.stdout.log" 2> "$RUN_DIR/client.stderr.log"
-  capture_complete=1
+  capture_status=$?
+  set -e
+  if (( capture_status != 0 )); then
+    CHILD_FAILURE_REASON="sequential oracle capture failed with rc=${capture_status}"
+    return "$capture_status"
+  fi
   python3 "$ANALYZER" capture-live-binding --matrix-client "$MATRIX_CLIENT" \
-    --matrix-client-sha256 "$EXPECTED_MATRIX_SHA256" --server-pid "$server_pid" \
+    --matrix-client-sha256 "$EXPECTED_MATRIX_SHA256" --server-pid "$CHILD_SERVER_PID" \
     --port "$PORT" --runtime-sha256 "$EXPECTED_RUNTIME_SHA256" \
     --out "$RUN_DIR/live-binding-after.json"
   owned_server_running || die "server died during oracle capture"
+  prefix_size="$(wait_for_stable_line_boundary "$RUN_DIR/server.stdout.log" "$PREFIX_STABILITY_TIMEOUT_S")" || die "postcapture log did not reach a stable line boundary"
+  copy_file_new "$RUN_DIR/server.stdout.log" "$RUN_DIR/postcapture-prefix.log" "$prefix_size"
+  [[ -s "$RUN_DIR/postcapture-prefix.log" ]] || die "empty postcapture log prefix"
+  cmp -n "$(stat -c %s "$RUN_DIR/postcapture-prefix.log")" \
+    "$RUN_DIR/postcapture-prefix.log" "$RUN_DIR/server.stdout.log" || die "postcapture snapshot is not a byte prefix"
+  if grep -Eq 'entering sleeping state$|exiting sleeping state$|SYCL_Q8_0_C2_CANONICAL_MMVQ summary:' \
+      "$RUN_DIR/postcapture-prefix.log"; then
+    die "sleep, wake, or summary marker appeared before intentional idle unload"
+  fi
   sha256sum -c "$WAVE_INPUT_MANIFEST" > "$RUN_DIR/wave-inputs-postcapture.check.txt"
 
-  kill -TERM "$server_pid"
+  deadline=$((SECONDS + IDLE_UNLOAD_TIMEOUT_S))
+  while :; do
+    owned_server_running || die "server died awaiting intentional idle unload"
+    queue_sleep_count="$(grep -Ec 'start_loop: entering sleeping state$' "$RUN_DIR/server.stdout.log" || true)"
+    server_sleep_count="$(grep -Ec 'srv +handle_sleep: server is entering sleeping state$' "$RUN_DIR/server.stdout.log" || true)"
+    wake_count="$(grep -Ec 'exiting sleeping state$|loading the model$' "$RUN_DIR/server.stdout.log" || true)"
+    summary_count="$(grep -Ec '^.*SYCL_Q8_0_C2_CANONICAL_MMVQ summary:' "$RUN_DIR/server.stdout.log" || true)"
+    [[ "$wake_count" == 0 ]] || die "wake or reload marker appeared during intentional idle unload"
+    if [[ "$queue_sleep_count" == 1 && "$server_sleep_count" == 1 ]]; then
+      if [[ "$SELECTOR" == 0 && "$summary_count" == 0 ]] || \
+         [[ "$SELECTOR" == 1 && "$summary_count" == 1 ]]; then
+        break
+      fi
+    fi
+    (( SECONDS < deadline )) || die "intentional idle unload evidence timeout"
+    sleep 1
+  done
+  sleep 2
+  owned_server_running || die "server died after intentional idle unload evidence"
+  prefix_size="$(wait_for_stable_line_boundary "$RUN_DIR/server.stdout.log" "$PREFIX_STABILITY_TIMEOUT_S")" || die "sleeping log did not reach a stable line boundary"
+  copy_file_new "$RUN_DIR/server.stdout.log" "$RUN_DIR/sleeping-prefix.log" "$prefix_size"
+  python3 "$ANALYZER" capture-live-binding --matrix-client "$MATRIX_CLIENT" \
+    --matrix-client-sha256 "$EXPECTED_MATRIX_SHA256" --server-pid "$CHILD_SERVER_PID" \
+    --port "$PORT" --runtime-sha256 "$EXPECTED_RUNTIME_SHA256" \
+    --out "$RUN_DIR/live-binding-sleeping.json"
+  owned_server_running || die "server died during sleeping live binding"
+
+  kill -TERM "$CHILD_SERVER_PID"
   deadline=$((SECONDS + TERM_GRACE_S))
   while (( SECONDS < deadline )) && owned_server_running; do sleep 1; done
-  if owned_server_running; then cleanup_forced=1; die "server did not stop gracefully"; fi
-  wait "$server_pid" 2>/dev/null || true
+  if owned_server_running; then CHILD_CLEANUP_FORCED=1; die "server did not stop gracefully"; fi
+  wait "$CHILD_SERVER_PID" 2>/dev/null || true
   timeout 10 ss -H -ltn "sport = :$PORT" > "$RUN_DIR/port-postteardown.txt" \
     2> "$RUN_DIR/port-postteardown.stderr" || die "post-teardown port query failed"
   [[ ! -s "$RUN_DIR/port-postteardown.txt" ]] || die "port remained open"
@@ -437,9 +696,15 @@ child_main() {
   runtime_report "$RUN_DIR/runtime-final.json" "$RUN_DIR/runtime-reference.json"
   local runtime_final_sha
   runtime_final_sha="$(file_sha256 "$RUN_DIR/runtime-final.json")" || die "final runtime report hash failed"
+  set +e
   python3 "$ANALYZER" attest-lane --oracle "$RUN_DIR/oracle.json" \
     --server-log "$RUN_DIR/server.stdout.log" --identity-log "$RUN_DIR/server.identity.log" \
     --prerelease-prefix "$RUN_DIR/prerelease-prefix.log" \
+    --preclient-prefix "$RUN_DIR/preclient-prefix.log" \
+    --postcapture-prefix "$RUN_DIR/postcapture-prefix.log" \
+    --sleeping-prefix "$RUN_DIR/sleeping-prefix.log" \
+    --keep-awake-status "$RUN_DIR/keep-awake-status.json" \
+    --keep-awake-events "$RUN_DIR/keep-awake-metrics-events.tsv" \
     --runtime-manifest "$RUNTIME_MANIFEST" --runtime-manifest-sha256 "$EXPECTED_MANIFEST_SHA256" \
     --runtime-reference-report "$RUN_DIR/runtime-reference.json" \
     --runtime-reference-report-sha256 "$runtime_reference_sha" \
@@ -449,13 +714,27 @@ child_main() {
     --server-attestation "$RUN_DIR/server-attestation.json" \
     --server-attestation-sha256 "$server_attestation_sha" \
     --binding-before "$RUN_DIR/live-binding-before.json" \
-    --binding-after "$RUN_DIR/live-binding-after.json" --matrix-client "$MATRIX_CLIENT" \
+    --binding-after "$RUN_DIR/live-binding-after.json" \
+    --binding-sleeping "$RUN_DIR/live-binding-sleeping.json" --matrix-client "$MATRIX_CLIENT" \
     --matrix-client-sha256 "$EXPECTED_MATRIX_SHA256" --model-sha256 "$EXPECTED_MODEL_SHA256" \
     --runtime-sha256 "$EXPECTED_RUNTIME_SHA256" --suite-sha256 "$EXPECTED_SUITE_SHA256" \
-    --gpu-index "$GPU_INDEX" --selector "$SELECTOR" --server-pid "$server_pid" \
+    --gpu-index "$GPU_INDEX" --selector "$SELECTOR" --server-pid "$CHILD_SERVER_PID" \
     --port "$PORT" --out "$RUN_DIR/lane-attestation.json"
+  attestation_status=$?
+  set -e
+  if (( attestation_status != 0 )); then
+    CHILD_FAILURE_REASON="lane attestation command failed with rc=${attestation_status}"
+    return "$attestation_status"
+  fi
+  set +e
   jq -e '.passed==true and .evidence_class=="diagnostic-only" and .performance_promotable==false' \
-    "$RUN_DIR/lane-attestation.json" >/dev/null || die "lane attestation failed"
+    "$RUN_DIR/lane-attestation.json" >/dev/null
+  attestation_gate_status=$?
+  set -e
+  if (( attestation_gate_status != 0 )); then
+    CHILD_FAILURE_REASON="post-attestation validation failed with rc=${attestation_gate_status}"
+    return "$attestation_gate_status"
+  fi
 
   capture_model_stat "/proc/$$/fd/$MODEL_FD" "$RUN_DIR/model-stat-final.json"
   cmp -s "$MODEL_STAT_BASELINE" "$RUN_DIR/model-stat-final.json" || die "final model stat drift"
@@ -471,8 +750,9 @@ child_main() {
     echo "port_closed=1"
   } > "$RUN_DIR/cleanup-status.env"
   seal_directory "$RUN_DIR" artifacts.sha256 diagnostic-completion-status.json || die "lane seal failed"
-  normal_complete=1
-  trap - EXIT INT TERM
+  CHILD_NORMAL_COMPLETE=1
+  CHILD_STATE_ACTIVE=0
+  trap - EXIT ERR INT TERM
 }
 
 print_wave_plan() {
@@ -518,8 +798,13 @@ for value_name in PORT_BASE START_STAGGER_S READINESS_TIMEOUT_S REQUEST_TIMEOUT_
 (( START_STAGGER_S >= 5 )) || die "START_STAGGER_S may not weaken the 5s floor"
 (( READINESS_TIMEOUT_S >= 600 && REQUEST_TIMEOUT_S >= 900 && WAVE_TIMEOUT_S >= 3600 )) || die "timeout safety floor violated"
 (( TERM_GRACE_S >= 60 && KILL_GRACE_S >= 10 && PASSIVE_DRAIN_S >= 60 )) || die "cleanup safety floor violated"
-(( FAILURE_HANDOFF_MARGIN_S >= 15 )) || die "failure handoff margin may not be less than 15s"
+(( KEEP_AWAKE_REQUEST_TIMEOUT_S == 15 )) || die "keep-awake request timeout must remain 15s"
+(( FAILURE_HANDOFF_MARGIN_S >= 40 && FAILURE_HANDOFF_MARGIN_S >= KEEP_AWAKE_REQUEST_TIMEOUT_S + 15 )) || die "failure handoff margin does not cover keep-awake stop plus child sealing"
 (( MIN_HOST_AVAILABLE_KIB >= 100663296 && MIN_FAST_FREE_KIB >= 10485760 )) || die "resource floor weakened"
+(( PHASE1_SLEEP_IDLE_SECONDS == 60 )) || die "Phase1 idle-unload interval must remain 60s"
+(( KEEP_AWAKE_INTERVAL_S >= 5 && KEEP_AWAKE_INTERVAL_S <= 20 && KEEP_AWAKE_INTERVAL_S < PHASE1_SLEEP_IDLE_SECONDS )) || die "keep-awake interval is unsafe"
+(( IDLE_UNLOAD_TIMEOUT_S >= 2 * PHASE1_SLEEP_IDLE_SECONDS )) || die "idle-unload evidence timeout is too short"
+(( PREFIX_STABILITY_TIMEOUT_S >= 2 && PREFIX_STABILITY_TIMEOUT_S <= 15 && PREFIX_STABILITY_TIMEOUT_S < PHASE1_SLEEP_IDLE_SECONDS )) || die "log-prefix stability timeout is unsafe"
 [[ "$WAVE_DIR" == /* && "$WAVE_DIR" != / && ! -e "$WAVE_DIR" ]] || die "WAVE_DIR must be a new non-root absolute path"
 
 assert_sha "$LAUNCHER" "$EXPECTED_LAUNCHER_SHA256"
@@ -933,7 +1218,7 @@ while :; do
 done
 for gpu in 0 1 2 3; do
   owned_child_group "$gpu" || die "child $gpu not live at release"
-  jq -e --argjson gpu "$gpu" --argjson selector "${SELECTORS[$gpu]}" --argjson port "$((PORT_BASE + gpu))" '.ready==true and .gpu_index==$gpu and .selector==$selector and .port==$port and (.server_pid|type)=="number" and (.server_attestation_sha256|test("^[0-9a-f]{64}$")) and (.prerelease_prefix_sha256|test("^[0-9a-f]{64}$"))' "${CHILD_DIRS[$gpu]}/ready.json" >/dev/null || die "invalid lane readiness marker"
+  jq -e --argjson gpu "$gpu" --argjson selector "${SELECTORS[$gpu]}" --argjson port "$((PORT_BASE + gpu))" --argjson sleep_idle_seconds "$PHASE1_SLEEP_IDLE_SECONDS" '.ready==true and .gpu_index==$gpu and .selector==$selector and .port==$port and .sleep_idle_seconds==$sleep_idle_seconds and (.server_pid|type)=="number" and (.server_attestation_sha256|test("^[0-9a-f]{64}$")) and (.prerelease_prefix_sha256|test("^[0-9a-f]{64}$"))' "${CHILD_DIRS[$gpu]}/ready.json" >/dev/null || die "invalid lane readiness marker"
 done
 available_loaded_kib="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"
 printf 'available_kib=%s\nminimum_kib=33554432\n' "$available_loaded_kib" > "$WAVE_DIR/host-memory-all-loaded.env"

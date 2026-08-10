@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 from pathlib import Path
 from typing import Any
 
@@ -21,9 +22,7 @@ SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
 def context_value(text: str, name: str) -> str | None:
-    values = re.findall(
-        rf"llama_context:\s+{re.escape(name)}\s*=\s*([^\s]+)", text
-    )
+    values = re.findall(rf"llama_context:\s+{re.escape(name)}\s*=\s*([^\s]+)", text)
     return values[-1] if values else None
 
 
@@ -33,6 +32,7 @@ def build_attestation(
     model_size: int,
     runtime_sha256: str,
     minimum_fit_free_mib: int,
+    sleep_idle_seconds: int | None = None,
 ) -> dict[str, Any]:
     """Return the exact c2 attestation object used by the formal runner."""
 
@@ -74,6 +74,8 @@ def build_attestation(
         "GGML_SYCL_ENABLE_MKL_FA": "1",
         "GGML_SYCL_ENABLE_FLASH_ATTN": "1",
     }
+    if sleep_idle_seconds is not None:
+        expected_identity["sleep_idle_seconds"] = str(sleep_idle_seconds)
     identity_fields = {
         key: identity.get(key) == value for key, value in expected_identity.items()
     }
@@ -85,6 +87,10 @@ def build_attestation(
     )
 
     argv = identity.get("argv", "")
+    try:
+        argv_tokens = shlex.split(argv)
+    except ValueError:
+        argv_tokens = []
     required_argv = (
         "-ngl 99",
         "-c 65536",
@@ -108,6 +114,18 @@ def build_attestation(
         "--jinja",
     )
     argv_fields = {value: value in argv for value in required_argv}
+    if sleep_idle_seconds is not None:
+        sleep_argv = f"--sleep-idle-seconds {sleep_idle_seconds}"
+        sleep_indexes = [
+            index
+            for index, value in enumerate(argv_tokens)
+            if value == "--sleep-idle-seconds"
+        ]
+        argv_fields[sleep_argv] = (
+            len(sleep_indexes) == 1
+            and sleep_indexes[0] + 1 < len(argv_tokens)
+            and argv_tokens[sleep_indexes[0] + 1] == str(sleep_idle_seconds)
+        )
 
     offload_pairs = [
         (int(left), int(right))
@@ -144,8 +162,7 @@ def build_attestation(
         "n_ctx_seq_32768": context_value(server_text, "n_ctx_seq") == "32768",
         "n_batch_1024": context_value(server_text, "n_batch") == "1024",
         "n_ubatch_128": context_value(server_text, "n_ubatch") == "128",
-        "flash_attn_enabled": context_value(server_text, "flash_attn")
-        == "enabled",
+        "flash_attn_enabled": context_value(server_text, "flash_attn") == "enabled",
         "kv_unified_false": context_value(server_text, "kv_unified") == "false",
         "two_slot_runtime": bool(slot_matches)
         and slot_matches[-1] == ("2", "32768", "false"),
@@ -165,8 +182,7 @@ def build_attestation(
         "post_fit_free_at_least_minimum": isinstance(fit_free_mib, int)
         and fit_free_mib >= minimum_fit_free_mib,
         "prompt_cache_disabled": "prompt cache is disabled" in server_text,
-        "context_checkpoints_disabled": "context checkpoints disabled"
-        in server_text,
+        "context_checkpoints_disabled": "context checkpoints disabled" in server_text,
         "speculation_disabled": (
             "no implementations specified for speculative decoding" in server_text
         ),
@@ -221,6 +237,7 @@ def main() -> int:
     parser.add_argument("--model-size", type=int, required=True)
     parser.add_argument("--runtime-sha256", required=True)
     parser.add_argument("--minimum-fit-free-mib", type=int, default=1024)
+    parser.add_argument("--sleep-idle-seconds", type=int)
     args = parser.parse_args()
 
     for label, path in (
@@ -240,6 +257,10 @@ def main() -> int:
         parser.error("--runtime-sha256 must be a lowercase SHA-256 digest")
     if args.minimum_fit_free_mib < 1024:
         parser.error("--minimum-fit-free-mib cannot be below 1024")
+    if args.sleep_idle_seconds is not None and not (
+        1 <= args.sleep_idle_seconds <= 3600
+    ):
+        parser.error("--sleep-idle-seconds must be from 1 through 3600")
 
     result = build_attestation(
         args.server_log.read_text(errors="replace"),
@@ -247,6 +268,7 @@ def main() -> int:
         args.model_size,
         args.runtime_sha256,
         args.minimum_fit_free_mib,
+        args.sleep_idle_seconds,
     )
     write_json_exclusive(args.out, result)
     return 0 if result["passed"] else 1

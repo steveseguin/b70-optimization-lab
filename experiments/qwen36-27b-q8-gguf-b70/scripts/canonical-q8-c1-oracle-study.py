@@ -29,6 +29,10 @@ PROCESS_BINDING = "QWEN36_SERVER_PROCESS_BINDING"
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 PID_RE = re.compile(r"^[1-9][0-9]*$")
 PROCESS_RE = re.compile(r"^QWEN36_SERVER_PROCESS_BINDING pid=([1-9][0-9]*)$")
+QUEUE_SLEEP_RE = re.compile(r"^que +start_loop: entering sleeping state$")
+SERVER_SLEEP_RE = re.compile(r"^srv +handle_sleep: server is entering sleeping state$")
+QUEUE_WAKE_RE = re.compile(r"^que +start_loop: exiting sleeping state$")
+SERVER_WAKE_RE = re.compile(r"^srv +handle_sleep: server is exiting sleeping state$")
 SUMMARY_RE = re.compile(
     rf"^{MARKER} summary: "
     r"flat_dispatches=([0-9]+) "
@@ -85,6 +89,7 @@ CANONICAL_ATTESTER_SHA256 = (
 MATRIX_CLIENT_SHA256 = (
     "aac9348d09340bfdc2b21725512ff4784f1fe42be533f69f7cf8a96277a872a7"
 )
+MODEL_STUDY_SLEEP_IDLE_SECONDS = 60
 MODEL_SHA256 = "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce"
 RUNTIME_SHA256 = "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7"
 SUITE_SHA256 = "053523440e4a23d7f772dec5025fe4831ba33c0a8eaba76795e4ee76718860af"
@@ -336,8 +341,9 @@ def validate_runtime_reports(
 def validate_prefix_snapshot(prefix_path: Path, full_log: bytes) -> dict[str, Any]:
     prefix = prefix_path.read_bytes()
     fields = {
-        "prefix_regular_file": prefix_path.is_file(),
+        "prefix_regular_file": prefix_path.is_file() and not prefix_path.is_symlink(),
         "prefix_nonempty": bool(prefix),
+        "prefix_ends_at_line_boundary": prefix.endswith(b"\n"),
         "full_log_begins_with_prefix": full_log.startswith(prefix),
     }
     normalized = [
@@ -347,6 +353,7 @@ def validate_prefix_snapshot(prefix_path: Path, full_log: bytes) -> dict[str, An
     return {
         "path": str(prefix_path),
         "size_bytes": len(prefix),
+        "line_count": len(normalized),
         "sha256": sha256_bytes(prefix),
         "canonical_marker_lines": [
             line
@@ -359,14 +366,93 @@ def validate_prefix_snapshot(prefix_path: Path, full_log: bytes) -> dict[str, An
                 )
             )
         ],
+        "sleep_entry_lines": [
+            line for line in normalized if line.endswith("entering sleeping state")
+        ],
+        "wake_lines": [
+            line for line in normalized if line.endswith("exiting sleeping state")
+        ],
         "fields": fields,
         "passed": all(fields.values()),
     }
 
 
+def validate_keep_awake_lifecycle(
+    status_path: Path,
+    events_path: Path,
+    preclient_prefix_path: Path,
+    postcapture_prefix_path: Path,
+) -> tuple[dict[str, bool], dict[str, Any]]:
+    status = load_json(status_path, "keep-awake status")
+    event_lines = events_path.read_text().splitlines()
+    starts: list[tuple[int, int]] = []
+    ends: list[tuple[int, int, int]] = []
+    for line in event_lines:
+        start = re.fullmatch(
+            r"event=request-start\trequest=([1-9][0-9]*)\tepoch_ns=([1-9][0-9]*)",
+            line,
+        )
+        end = re.fullmatch(
+            r"event=request-end\trequest=([1-9][0-9]*)\tepoch_ns=([1-9][0-9]*)\trc=([0-9]+)",
+            line,
+        )
+        if start is not None:
+            starts.append((int(start.group(1)), int(start.group(2))))
+        elif end is not None:
+            ends.append((int(end.group(1)), int(end.group(2)), int(end.group(3))))
+    request_count = len(starts)
+    strict_pairs = len(event_lines) == 2 * request_count == 2 * len(ends)
+    strict_pairs = strict_pairs and all(
+        starts[index] == (index + 1, starts[index][1])
+        and ends[index][0] == index + 1
+        and starts[index][1] <= ends[index][1]
+        and (index == 0 or ends[index - 1][1] <= starts[index][1])
+        and ends[index][2] == 0
+        and event_lines[2 * index].startswith(
+            f"event=request-start\trequest={index + 1}\t"
+        )
+        and event_lines[2 * index + 1].startswith(
+            f"event=request-end\trequest={index + 1}\t"
+        )
+        for index in range(request_count)
+    )
+    stop_requested_ns = status.get("stop_requested_epoch_ns")
+    stopped_ns = status.get("stopped_epoch_ns")
+    fields = {
+        "status_files_regular": status_path.is_file()
+        and not status_path.is_symlink()
+        and events_path.is_file()
+        and not events_path.is_symlink(),
+        "status_passed": status.get("passed") is True,
+        "worker_identity_typed": type(status.get("pid")) is int
+        and status["pid"] > 0
+        and isinstance(status.get("start_ticks"), str)
+        and PID_RE.fullmatch(status["start_ticks"]) is not None,
+        "event_pairs_exact": request_count > 0 and strict_pairs,
+        "status_counts_exact": type(status.get("request_starts")) is int
+        and type(status.get("request_ends")) is int
+        and type(status.get("clean_ends")) is int
+        and type(status.get("exit_status")) is int
+        and status.get("request_starts") == request_count
+        and status.get("request_ends") == request_count
+        and status.get("clean_ends") == request_count
+        and status.get("exit_status") == 0,
+        "stop_order_exact": type(stop_requested_ns) is int
+        and type(stopped_ns) is int
+        and (not ends or ends[-1][1] <= stopped_ns)
+        and stop_requested_ns <= stopped_ns
+        and stopped_ns <= preclient_prefix_path.stat().st_mtime_ns
+        and stopped_ns <= postcapture_prefix_path.stat().st_mtime_ns,
+    }
+    return fields, {"status": status, "starts": starts, "ends": ends}
+
+
 def parse_selector_markers(
     full_log: bytes,
-    prefix: dict[str, Any],
+    prerelease_prefix: dict[str, Any],
+    preclient_prefix: dict[str, Any],
+    postcapture_prefix: dict[str, Any],
+    sleeping_prefix: dict[str, Any],
     selector: int,
     server_pid: str,
 ) -> tuple[dict[str, bool], dict[str, Any]]:
@@ -410,11 +496,14 @@ def parse_selector_markers(
         line for line in normalized if line.startswith(f"{MARKER} violation:")
     ]
     startup_candidates = [
-        line for line in normalized if line.startswith(f"  {CONTROL}:")
+        line for line in normalized if line.strip().startswith(f"{CONTROL}:")
     ]
     expected_startup = f"  {CONTROL}: {selector}"
-    startup_valid = startup_candidates == [expected_startup]
-    prefix_markers = prefix.get("canonical_marker_lines", [])
+    startup_valid = startup_candidates in ([], [expected_startup])
+    prerelease_markers = prerelease_prefix.get("canonical_marker_lines", [])
+    preclient_markers = preclient_prefix.get("canonical_marker_lines", [])
+    postcapture_markers = postcapture_prefix.get("canonical_marker_lines", [])
+    sleeping_markers = sleeping_prefix.get("canonical_marker_lines", [])
     process_line_numbers = [
         index
         for index, line in enumerate(raw_lines, 1)
@@ -434,8 +523,37 @@ def parse_selector_markers(
     startup_line_numbers = [
         index
         for index, line in enumerate(normalized, 1)
-        if line.startswith(f"  {CONTROL}:")
+        if line.strip().startswith(f"{CONTROL}:")
     ]
+    queue_sleep_line_numbers = [
+        index
+        for index, line in enumerate(normalized, 1)
+        if QUEUE_SLEEP_RE.fullmatch(line) is not None
+    ]
+    server_sleep_line_numbers = [
+        index
+        for index, line in enumerate(normalized, 1)
+        if SERVER_SLEEP_RE.fullmatch(line) is not None
+    ]
+    wake_line_numbers = [
+        index
+        for index, line in enumerate(normalized, 1)
+        if QUEUE_WAKE_RE.fullmatch(line) is not None
+        or SERVER_WAKE_RE.fullmatch(line) is not None
+    ]
+    summary_line_numbers = [
+        index
+        for index, line in enumerate(normalized, 1)
+        if line.startswith(f"{MARKER} summary:")
+    ]
+    postcapture_line_count = int(postcapture_prefix.get("line_count", -1))
+    sleeping_line_count = int(sleeping_prefix.get("line_count", -1))
+    reload_line_numbers = [
+        index
+        for index, line in enumerate(normalized, 1)
+        if index > postcapture_line_count and "load_model: loading model " in line
+    ]
+    boundaries = (prerelease_prefix, preclient_prefix, postcapture_prefix)
     fields = {
         "process_binding_exactly_once": len(process_candidates) == 1
         and len(process_matches) == 1,
@@ -445,14 +563,40 @@ def parse_selector_markers(
         and (
             not route_line_numbers or process_line_numbers[0] < min(route_line_numbers)
         ),
-        "startup_marker_exactly_once": startup_valid,
-        "startup_order_valid": len(startup_line_numbers) == 1
-        and len(process_line_numbers) == 1
-        and process_line_numbers[0] < startup_line_numbers[0]
-        and (
-            not route_line_numbers or startup_line_numbers[0] < min(route_line_numbers)
+        "process_binding_precedes_sleep_markers": len(process_line_numbers) == 1
+        and len(queue_sleep_line_numbers) == 1
+        and process_line_numbers[0] < queue_sleep_line_numbers[0],
+        "startup_marker_optional_but_exact": startup_valid,
+        "startup_order_valid_if_present": not startup_line_numbers
+        or (
+            len(startup_line_numbers) == 1
+            and len(process_line_numbers) == 1
+            and process_line_numbers[0] < startup_line_numbers[0]
+            and (
+                not route_line_numbers
+                or startup_line_numbers[0] < min(route_line_numbers)
+            )
         ),
         "no_violation_markers": not violations,
+        "boundary_prefixes_have_no_sleep_wake_or_summary": all(
+            boundary.get("sleep_entry_lines") == []
+            and boundary.get("wake_lines") == []
+            and not any(
+                " summary:" in line
+                for line in boundary.get("canonical_marker_lines", [])
+            )
+            for boundary in boundaries
+        ),
+        "intentional_sleep_entries_exactly_once": len(queue_sleep_line_numbers) == 1
+        and len(server_sleep_line_numbers) == 1,
+        "intentional_sleep_after_postcapture": postcapture_line_count > 0
+        and len(queue_sleep_line_numbers) == 1
+        and len(server_sleep_line_numbers) == 1
+        and queue_sleep_line_numbers[0] > postcapture_line_count
+        and server_sleep_line_numbers[0] > queue_sleep_line_numbers[0],
+        "sleep_entries_retained_while_live": len(server_sleep_line_numbers) == 1
+        and sleeping_line_count >= server_sleep_line_numbers[0],
+        "zero_wake_or_reload": not wake_line_numbers and not reload_line_numbers,
     }
     if selector == 0:
         fields.update(
@@ -495,16 +639,23 @@ def parse_selector_markers(
                 and summary["single_col_mmvq_calls"] == 2 * dispatch_sum,
                 "selector_on_summary_violations_zero": summary is not None
                 and summary["violations"] == 0,
-                "selector_on_prerelease_exact_flat_hit": bool(prefix_markers)
-                and len(prefix_markers) == 1
-                and f"{MARKER} first-hit: layout=flat " in prefix_markers[0],
+                "selector_on_prerelease_exact_flat_hit": bool(prerelease_markers)
+                and len(prerelease_markers) == 1
+                and f"{MARKER} first-hit: layout=flat " in prerelease_markers[0],
                 "selector_on_prerelease_no_recurrent_summary_or_violation": not any(
                     any(
                         term in line
                         for term in ("layout=recurrent", " summary:", " violation:")
                     )
-                    for line in prefix_markers
+                    for line in prerelease_markers
                 ),
+                "selector_on_summary_after_sleep": len(summary_line_numbers) == 1
+                and len(server_sleep_line_numbers) == 1
+                and summary_line_numbers[0] > server_sleep_line_numbers[0]
+                and summary_line_numbers[0] <= sleeping_line_count,
+                "selector_on_sleeping_prefix_exact_routes": len(sleeping_markers) == 2
+                and f"{MARKER} first-hit: layout=flat " in sleeping_markers[0]
+                and f"{MARKER} summary:" in sleeping_markers[1],
             }
         )
     observed = {
@@ -514,15 +665,27 @@ def parse_selector_markers(
         "summary": summary,
         "violation_lines": violations,
         "startup_candidates": startup_candidates,
-        "prerelease_canonical_marker_lines": prefix_markers,
+        "prerelease_canonical_marker_lines": prerelease_markers,
+        "preclient_canonical_marker_lines": preclient_markers,
+        "postcapture_canonical_marker_lines": postcapture_markers,
+        "sleeping_canonical_marker_lines": sleeping_markers,
+        "queue_sleep_line_numbers": queue_sleep_line_numbers,
+        "server_sleep_line_numbers": server_sleep_line_numbers,
+        "wake_line_numbers": wake_line_numbers,
+        "reload_line_numbers_after_postcapture": reload_line_numbers,
+        "summary_line_numbers": summary_line_numbers,
+        "postcapture_line_count": postcapture_line_count,
+        "sleeping_line_count": sleeping_line_count,
         "flat_first_hit_present_before_release": any(
-            f"{MARKER} first-hit: layout=flat " in line for line in prefix_markers
+            f"{MARKER} first-hit: layout=flat " in line for line in prerelease_markers
         ),
         "recurrent_first_hit_present_before_release": any(
-            f"{MARKER} first-hit: layout=recurrent " in line for line in prefix_markers
+            f"{MARKER} first-hit: layout=recurrent " in line
+            for line in prerelease_markers
         ),
         "attribution_guard": (
-            "process totals may include startup warmup; prerelease prefix is retained, "
+            "summary counters are process totals that include possible startup warmup; "
+            "the boundary prefixes prove only that destruction happened after capture, "
             "and this phase makes no request-time dispatch claim"
         ),
     }
@@ -833,7 +996,10 @@ def validate_oracle(
             abs_tol=1e-12,
         ),
         "server_benchmark_identity_exact": identity.get("server_benchmark_identity")
-        == EXPECTED_SERVER_BENCHMARK_IDENTITY,
+        in (
+            EXPECTED_SERVER_BENCHMARK_IDENTITY,
+            {**EXPECTED_SERVER_BENCHMARK_IDENTITY, "sleep_idle_seconds": "60"},
+        ),
     }
     comparison_rows = {
         case_id: {
@@ -900,12 +1066,16 @@ def validate_live_attestation(
     server_attestation_sha256: str,
     binding_before_path: Path,
     binding_after_path: Path,
+    binding_sleeping_path: Path,
     matrix_client_path: Path,
     matrix_client_sha256: str,
     runtime_sha256: str,
     server_pid: str,
     port: int,
     oracle_path: Path,
+    preclient_prefix_path: Path,
+    postcapture_prefix_path: Path,
+    sleeping_prefix_path: Path,
 ) -> tuple[dict[str, bool], dict[str, Any]]:
     if (
         matrix_client_sha256 != MATRIX_CLIENT_SHA256
@@ -916,17 +1086,28 @@ def validate_live_attestation(
     attestation = load_json(server_attestation_path, "live c2 server attestation")
     before = load_json(binding_before_path, "live binding before capture")
     after = load_json(binding_after_path, "live binding after capture")
+    sleeping = load_json(binding_sleeping_path, "live binding while sleeping")
     server_fields = matrix.attest_server(
         attestation, oracle.get("run_identity") or {}, runtime_sha256
     )
     continuity = matrix.compare_live_server_bindings(before, after)
+    sleeping_continuity = matrix.compare_live_server_bindings(after, sleeping)
     attestation_binding = matrix.bind_attestation_to_process(
         server_attestation_path, before
     )
     identity = oracle.get("run_identity") or {}
     before_capture_ns = before.get("captured_at_epoch_ns")
     after_capture_ns = after.get("captured_at_epoch_ns")
+    sleeping_capture_ns = sleeping.get("captured_at_epoch_ns")
     oracle_mtime_ns = oracle_path.stat().st_mtime_ns
+    preclient_mtime_ns = preclient_prefix_path.stat().st_mtime_ns
+    postcapture_mtime_ns = postcapture_prefix_path.stat().st_mtime_ns
+    sleeping_prefix_mtime_ns = sleeping_prefix_path.stat().st_mtime_ns
+    argv = before.get("argv")
+    argv = argv if isinstance(argv, list) else []
+    sleep_flag_indexes = [
+        index for index, value in enumerate(argv) if value == "--sleep-idle-seconds"
+    ]
     fields = {
         "server_attestation_expected_hash_well_formed": SHA_RE.fullmatch(
             server_attestation_sha256
@@ -946,31 +1127,56 @@ def validate_live_attestation(
         "oracle_base_url_exact": identity.get("base_url") == f"http://127.0.0.1:{port}",
         "binding_before_passed": before.get("passed") is True,
         "binding_after_passed": after.get("passed") is True,
+        "binding_sleeping_passed": sleeping.get("passed") is True,
         "binding_continuity_passed": continuity.get("passed") is True,
+        "sleeping_binding_continuity_passed": sleeping_continuity.get("passed") is True,
         "attestation_process_binding_passed": attestation_binding.get("passed") is True,
         "binding_pid_exact": before.get("pid") == int(server_pid)
-        and after.get("pid") == int(server_pid),
+        and after.get("pid") == int(server_pid)
+        and sleeping.get("pid") == int(server_pid),
         "binding_port_exact": (before.get("fields") or {}).get("port_argument_exact")
         is True
         and (after.get("fields") or {}).get("port_argument_exact") is True,
+        "sleeping_binding_port_exact": (sleeping.get("fields") or {}).get(
+            "port_argument_exact"
+        )
+        is True,
         "binding_runtime_exact": before.get("executable_sha256") == runtime_sha256
-        and after.get("executable_sha256") == runtime_sha256,
+        and after.get("executable_sha256") == runtime_sha256
+        and sleeping.get("executable_sha256") == runtime_sha256,
+        "binding_argv_exact_across_lifecycle": before.get("argv")
+        == after.get("argv")
+        == sleeping.get("argv"),
+        "sleep_idle_argv_exact": len(sleep_flag_indexes) == 1
+        and sleep_flag_indexes[0] + 1 < len(argv)
+        and argv[sleep_flag_indexes[0] + 1] == "60",
         "binding_capture_times_exact": type(before_capture_ns) is int
         and type(after_capture_ns) is int
         and before_capture_ns > 0
+        and preclient_mtime_ns <= before_capture_ns
         and before_capture_ns <= oracle_mtime_ns
-        and oracle_mtime_ns <= after_capture_ns,
+        and oracle_mtime_ns <= after_capture_ns
+        and type(sleeping_capture_ns) is int
+        and after_capture_ns <= postcapture_mtime_ns
+        and postcapture_mtime_ns <= sleeping_prefix_mtime_ns
+        and sleeping_prefix_mtime_ns <= sleeping_capture_ns,
     }
     return fields, {
         "server_fields": server_fields,
         "binding_before": before,
         "binding_after": after,
+        "binding_sleeping": sleeping,
         "continuity": continuity,
+        "sleeping_continuity": sleeping_continuity,
         "attestation_process_binding": attestation_binding,
         "capture_time_order": {
             "before_capture_epoch_ns": before_capture_ns,
+            "preclient_prefix_mtime_epoch_ns": preclient_mtime_ns,
             "oracle_mtime_epoch_ns": oracle_mtime_ns,
             "after_capture_epoch_ns": after_capture_ns,
+            "postcapture_prefix_mtime_epoch_ns": postcapture_mtime_ns,
+            "sleeping_prefix_mtime_epoch_ns": sleeping_prefix_mtime_ns,
+            "sleeping_capture_epoch_ns": sleeping_capture_ns,
         },
     }
 
@@ -998,6 +1204,11 @@ def attest_lane(args: argparse.Namespace) -> int:
         args.server_log,
         args.identity_log,
         args.prerelease_prefix,
+        args.preclient_prefix,
+        args.postcapture_prefix,
+        args.sleeping_prefix,
+        args.keep_awake_status,
+        args.keep_awake_events,
         args.runtime_manifest,
         args.runtime_reference_report,
         args.runtime_final_report,
@@ -1005,6 +1216,7 @@ def attest_lane(args: argparse.Namespace) -> int:
         args.server_attestation,
         args.binding_before,
         args.binding_after,
+        args.binding_sleeping,
         args.matrix_client,
     ):
         if not path.is_file():
@@ -1019,7 +1231,27 @@ def attest_lane(args: argparse.Namespace) -> int:
     )
     full_log = args.server_log.read_bytes()
     identity_bytes = args.identity_log.read_bytes()
-    prefix = validate_prefix_snapshot(args.prerelease_prefix, full_log)
+    prerelease_prefix = validate_prefix_snapshot(args.prerelease_prefix, full_log)
+    preclient_prefix = validate_prefix_snapshot(args.preclient_prefix, full_log)
+    postcapture_prefix = validate_prefix_snapshot(args.postcapture_prefix, full_log)
+    sleeping_prefix = validate_prefix_snapshot(args.sleeping_prefix, full_log)
+    prefix_order_fields = {
+        "prerelease_is_preclient_prefix": args.preclient_prefix.read_bytes().startswith(
+            args.prerelease_prefix.read_bytes()
+        ),
+        "preclient_is_postcapture_prefix": args.postcapture_prefix.read_bytes().startswith(
+            args.preclient_prefix.read_bytes()
+        ),
+        "postcapture_is_sleeping_prefix": args.sleeping_prefix.read_bytes().startswith(
+            args.postcapture_prefix.read_bytes()
+        ),
+    }
+    keep_awake_fields, keep_awake_observed = validate_keep_awake_lifecycle(
+        args.keep_awake_status,
+        args.keep_awake_events,
+        args.preclient_prefix,
+        args.postcapture_prefix,
+    )
     runtime_fields, runtime_observed = validate_runtime_reports(
         args.runtime_manifest.resolve(),
         args.runtime_manifest_sha256,
@@ -1036,12 +1268,16 @@ def attest_lane(args: argparse.Namespace) -> int:
         args.server_attestation_sha256,
         args.binding_before.resolve(),
         args.binding_after.resolve(),
+        args.binding_sleeping.resolve(),
         args.matrix_client.resolve(),
         args.matrix_client_sha256,
         args.runtime_sha256,
         args.server_pid,
         args.port,
         args.oracle,
+        args.preclient_prefix,
+        args.postcapture_prefix,
+        args.sleeping_prefix,
     )
     manifest = load_json(args.runtime_manifest, "runtime manifest")
     expected_header = {
@@ -1073,18 +1309,42 @@ def attest_lane(args: argparse.Namespace) -> int:
         "parallel_slots": "2",
         "ctx_size_per_slot": "32768",
         "kv_unified": "0",
+        "sleep_idle_seconds": "60",
     }
     identity_fields, _ = exact_header_fields(identity_bytes, expected_header)
+    oracle_server_identity = (oracle.get("run_identity") or {}).get(
+        "server_benchmark_identity"
+    )
+    identity_fields["oracle_sleep_idle_seconds_exact"] = (
+        isinstance(oracle_server_identity, dict)
+        and oracle_server_identity.get("sleep_idle_seconds") == "60"
+    )
     marker_fields, marker_observed = parse_selector_markers(
-        full_log, prefix, args.selector, args.server_pid
+        full_log,
+        prerelease_prefix,
+        preclient_prefix,
+        postcapture_prefix,
+        sleeping_prefix,
+        args.selector,
+        args.server_pid,
     )
     fields = {
         "oracle": all(oracle_fields.values()),
         "identity": all(identity_fields.values()),
         "runtime": all(runtime_fields.values()),
-        "prerelease_prefix": prefix["passed"],
+        "prefix_boundaries": all(
+            prefix["passed"]
+            for prefix in (
+                prerelease_prefix,
+                preclient_prefix,
+                postcapture_prefix,
+                sleeping_prefix,
+            )
+        )
+        and all(prefix_order_fields.values()),
         "selector_markers": all(marker_fields.values()),
         "live_server_binding": all(live_fields.values()),
+        "keep_awake_lifecycle": all(keep_awake_fields.values()),
     }
     result = {
         "schema_version": SCHEMA_VERSION,
@@ -1102,11 +1362,19 @@ def attest_lane(args: argparse.Namespace) -> int:
         "runtime_fields": runtime_fields,
         "marker_fields": marker_fields,
         "live_server_fields": live_fields,
+        "keep_awake_fields": keep_awake_fields,
         "observed": {
             "runtime": runtime_observed,
             "markers": marker_observed,
-            "prerelease_prefix": prefix,
+            "prefixes": {
+                "prerelease": prerelease_prefix,
+                "preclient": preclient_prefix,
+                "postcapture": postcapture_prefix,
+                "sleeping": sleeping_prefix,
+                "ordering_fields": prefix_order_fields,
+            },
             "live_server": live_observed,
+            "keep_awake": keep_awake_observed,
         },
         "inputs": {
             name: {
@@ -1119,6 +1387,11 @@ def attest_lane(args: argparse.Namespace) -> int:
                 ("server_log", args.server_log),
                 ("identity_log", args.identity_log),
                 ("prerelease_prefix", args.prerelease_prefix),
+                ("preclient_prefix", args.preclient_prefix),
+                ("postcapture_prefix", args.postcapture_prefix),
+                ("sleeping_prefix", args.sleeping_prefix),
+                ("keep_awake_status", args.keep_awake_status),
+                ("keep_awake_events", args.keep_awake_events),
                 ("runtime_manifest", args.runtime_manifest),
                 ("runtime_reference_report", args.runtime_reference_report),
                 ("runtime_final_report", args.runtime_final_report),
@@ -1126,6 +1399,7 @@ def attest_lane(args: argparse.Namespace) -> int:
                 ("server_attestation", args.server_attestation),
                 ("binding_before", args.binding_before),
                 ("binding_after", args.binding_after),
+                ("binding_sleeping", args.binding_sleeping),
                 ("matrix_client", args.matrix_client),
                 ("study_analyzer", Path(__file__).resolve()),
             )
@@ -1504,6 +1778,7 @@ def validate_lane_packet(
         "runtime_fields",
         "marker_fields",
         "live_server_fields",
+        "keep_awake_fields",
     )
     attestation_inputs = attestation.get("inputs")
     attestation_inputs = (
@@ -1514,6 +1789,11 @@ def validate_lane_packet(
         "server_log",
         "identity_log",
         "prerelease_prefix",
+        "preclient_prefix",
+        "postcapture_prefix",
+        "sleeping_prefix",
+        "keep_awake_status",
+        "keep_awake_events",
         "runtime_manifest",
         "runtime_reference_report",
         "runtime_final_report",
@@ -1521,6 +1801,7 @@ def validate_lane_packet(
         "server_attestation",
         "binding_before",
         "binding_after",
+        "binding_sleeping",
         "matrix_client",
         "study_analyzer",
     }
@@ -1531,6 +1812,11 @@ def validate_lane_packet(
         "server_log": lane / "server.stdout.log",
         "identity_log": lane / "server.identity.log",
         "prerelease_prefix": lane / "prerelease-prefix.log",
+        "preclient_prefix": lane / "preclient-prefix.log",
+        "postcapture_prefix": lane / "postcapture-prefix.log",
+        "sleeping_prefix": lane / "sleeping-prefix.log",
+        "keep_awake_status": lane / "keep-awake-status.json",
+        "keep_awake_events": lane / "keep-awake-metrics-events.tsv",
         "runtime_manifest": script_dir.parent / "runtime-manifest-canonical-q8-c2.json",
         "runtime_reference_report": lane / "runtime-reference.json",
         "runtime_final_report": lane / "runtime-final.json",
@@ -1538,6 +1824,7 @@ def validate_lane_packet(
         "server_attestation": lane / "server-attestation.json",
         "binding_before": lane / "live-binding-before.json",
         "binding_after": lane / "live-binding-after.json",
+        "binding_sleeping": lane / "live-binding-sleeping.json",
         "matrix_client": script_dir / "capture-c2-token-matrix.py",
         "study_analyzer": Path(__file__).resolve(),
     }
@@ -1816,6 +2103,7 @@ def aggregate(args: argparse.Namespace) -> int:
                 lanes[1]["oracle_sha256"],
             ],
             "cross_card_correctness_rows_exact": True,
+            "required_phase2_sleep_idle_seconds": MODEL_STUDY_SLEEP_IDLE_SECONDS,
         },
         "1": {
             "path": str(args.selector1_oracle.resolve()),
@@ -1826,6 +2114,7 @@ def aggregate(args: argparse.Namespace) -> int:
                 lanes[3]["oracle_sha256"],
             ],
             "cross_card_correctness_rows_exact": True,
+            "required_phase2_sleep_idle_seconds": MODEL_STUDY_SLEEP_IDLE_SECONDS,
         },
     }
     result = {
@@ -1844,6 +2133,9 @@ def aggregate(args: argparse.Namespace) -> int:
             "request_mode": "sequential-oracle",
             "case_order": "A-slot0-then-B-slot1",
             "forced_tokens": 512,
+            "sleep_idle_seconds": 60,
+            "keep_awake_interval_seconds": 20,
+            "idle_unload_evidence": True,
         },
         "model_sha256": args.model_sha256,
         "runtime_sha256": args.runtime_sha256,
@@ -1866,11 +2158,23 @@ def aggregate(args: argparse.Namespace) -> int:
             field: value for field, value in zip(SUMMARY_FIELDS, on_counters[0])
         },
         "selector_oracles": selector_oracles,
+        "phase2_handoff_contract": {
+            "sleep_idle_seconds": MODEL_STUDY_SLEEP_IDLE_SECONDS,
+            "server_benchmark_identity_exact_match_required": True,
+            "ready_barrier_keep_awake_required": True,
+            "keeper_stopped_before_preclient_boundary_required": True,
+            "postcapture_idle_unload_and_summary_evidence_required": True,
+            "http_after_postcapture_forbidden": True,
+        },
         "interpretation_guard": {
             "performance_claim": False,
             "c2_correctness_claim": False,
             "request_time_dispatch_claim": False,
             "selector_on_counts_may_include_startup_warmup": True,
+            "selector_on_counter_scope": (
+                "whole process through the sequential suite and intentional idle "
+                "unload, including any startup warmup"
+            ),
             "next_gate": "two-wave heterogeneous c2 same-card selector crossover",
         },
     }
@@ -1885,7 +2189,8 @@ def print_plan(args: argparse.Namespace) -> int:
         print(
             f"gpu={row['gpu_index']}\tselector={row['selector']}\t"
             f"port={args.port_base + row['gpu_index']}\t"
-            "topology=c65536-np2-no-kv-unified\tmode=sequential-oracle"
+            "topology=c65536-np2-no-kv-unified\tmode=sequential-oracle\t"
+            "sleep_idle_seconds=60"
         )
     return 0
 
@@ -1911,6 +2216,11 @@ def build_parser() -> argparse.ArgumentParser:
     lane.add_argument("--server-log", type=Path, required=True)
     lane.add_argument("--identity-log", type=Path, required=True)
     lane.add_argument("--prerelease-prefix", type=Path, required=True)
+    lane.add_argument("--preclient-prefix", type=Path, required=True)
+    lane.add_argument("--postcapture-prefix", type=Path, required=True)
+    lane.add_argument("--sleeping-prefix", type=Path, required=True)
+    lane.add_argument("--keep-awake-status", type=Path, required=True)
+    lane.add_argument("--keep-awake-events", type=Path, required=True)
     lane.add_argument("--runtime-manifest", type=Path, required=True)
     lane.add_argument("--runtime-manifest-sha256", required=True)
     lane.add_argument("--runtime-reference-report", type=Path, required=True)
@@ -1923,6 +2233,7 @@ def build_parser() -> argparse.ArgumentParser:
     lane.add_argument("--server-attestation-sha256", required=True)
     lane.add_argument("--binding-before", type=Path, required=True)
     lane.add_argument("--binding-after", type=Path, required=True)
+    lane.add_argument("--binding-sleeping", type=Path, required=True)
     lane.add_argument("--matrix-client", type=Path, required=True)
     lane.add_argument("--matrix-client-sha256", required=True)
     lane.add_argument("--model-sha256", required=True)

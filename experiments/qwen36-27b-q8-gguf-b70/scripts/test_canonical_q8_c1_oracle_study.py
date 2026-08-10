@@ -19,6 +19,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ANALYZER = HERE / "canonical-q8-c1-oracle-study.py"
 RUNNER = HERE / "run-canonical-q8-c1-oracle-four-gpu-wave.sh"
+MATRIX_CLIENT = HERE / "capture-c2-token-matrix.py"
 OLD_ORACLE = Path(
     "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/"
     "goal1-formal-c2-gpu0-short-diag-20260809T171516.435188879Z/"
@@ -39,6 +40,7 @@ def load_analyzer():
 
 
 STUDY = load_analyzer()
+MATRIX = STUDY.load_module(MATRIX_CLIENT, "canonical_c2_handoff_regression")
 
 
 class OracleTests(unittest.TestCase):
@@ -86,6 +88,55 @@ class OracleTests(unittest.TestCase):
             mutate(value)
             self.assertTrue(self.failed_fields(value))
 
+    def test_phase1_sleep_identity_is_the_only_allowed_extension(self) -> None:
+        value = copy.deepcopy(self.oracle)
+        value["run_identity"]["server_benchmark_identity"]["sleep_idle_seconds"] = "60"
+        self.assertEqual(self.failed_fields(value), [])
+        value["run_identity"]["server_benchmark_identity"]["sleep_idle_seconds"] = "59"
+        self.assertIn("server_benchmark_identity_exact", self.failed_fields(value))
+
+    def test_phase2_handoff_requires_matching_sleep60_identity(self) -> None:
+        phase1_oracle_identity = copy.deepcopy(self.oracle["run_identity"])
+        phase1_oracle_identity["server_benchmark_identity"]["sleep_idle_seconds"] = "60"
+        source_attestation = json.loads(
+            Path(self.oracle["run_identity"]["server_attestation_path"]).read_text()
+        )
+        phase2_attestation = copy.deepcopy(source_attestation)
+        phase2_attestation["expected_identity"] = copy.deepcopy(
+            phase1_oracle_identity["server_benchmark_identity"]
+        )
+        phase2_attestation["identity_fields"]["sleep_idle_seconds"] = True
+        phase2_attestation["argv_fields"]["--sleep-idle-seconds 60"] = True
+        phase2_attestation["passed"] = True
+
+        matched = MATRIX.attest_server(
+            phase2_attestation,
+            phase1_oracle_identity,
+            STUDY.RUNTIME_SHA256,
+        )
+        self.assertTrue(all(matched.values()), matched)
+
+        sleep_disabled = copy.deepcopy(phase2_attestation)
+        sleep_disabled["expected_identity"].pop("sleep_idle_seconds")
+        sleep_disabled["identity_fields"].pop("sleep_idle_seconds")
+        sleep_disabled["argv_fields"].pop("--sleep-idle-seconds 60")
+        mismatch = MATRIX.attest_server(
+            sleep_disabled,
+            phase1_oracle_identity,
+            STUDY.RUNTIME_SHA256,
+        )
+        self.assertFalse(mismatch["oracle_server_identity_exact"])
+        self.assertFalse(all(mismatch.values()))
+        analyzer_text = ANALYZER.read_text()
+        self.assertIn(
+            '"required_phase2_sleep_idle_seconds": MODEL_STUDY_SLEEP_IDLE_SECONDS',
+            analyzer_text,
+        )
+        self.assertIn(
+            '"postcapture_idle_unload_and_summary_evidence_required": True',
+            analyzer_text,
+        )
+
     def test_row_semantic_and_canary_mutations_fail(self) -> None:
         mutations = (
             lambda value: value["rows"][0].__setitem__("stream_cache_n", 1),
@@ -116,39 +167,222 @@ class MarkerTests(unittest.TestCase):
         "src0=weight src0_ne=[64,128,1,1] src1_ne=[64,2,1,1] "
         "dst_ne=[128,2,1,1]"
     )
+    SUMMARY = (
+        "SYCL_Q8_0_C2_CANONICAL_MMVQ summary: flat_dispatches=3 "
+        "recurrent_dispatches=0 flat_multicol_suppressed=3 "
+        "recurrent_dmmv_suppressed=0 reorder_ready_dispatches=3 "
+        "single_col_mmvq_calls=6 violations=0"
+    )
+    QUEUE_SLEEP = "que  start_loop: entering sleeping state"
+    SERVER_SLEEP = "srv  handle_sleep: server is entering sleeping state"
 
-    def test_selector_off_startup_is_not_a_route_marker(self) -> None:
+    @staticmethod
+    def prefix(
+        line_count: int,
+        markers: list[str],
+        *,
+        sleep: list[str] | None = None,
+        wake: list[str] | None = None,
+    ) -> dict:
+        return {
+            "line_count": line_count,
+            "canonical_marker_lines": markers,
+            "sleep_entry_lines": sleep or [],
+            "wake_lines": wake or [],
+        }
+
+    def test_selector_off_absent_startup_and_zero_routes_pass(self) -> None:
         log = (
             "QWEN36_SERVER_PROCESS_BINDING pid=123\n"
-            "  GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ: 0\n"
+            f"{self.QUEUE_SLEEP}\n"
+            f"{self.SERVER_SLEEP}\n"
         ).encode()
-        prefix = {"canonical_marker_lines": []}
-        fields, _ = STUDY.parse_selector_markers(log, prefix, 0, "123")
+        boundary = self.prefix(1, [])
+        sleeping = self.prefix(3, [], sleep=[self.QUEUE_SLEEP, self.SERVER_SLEEP])
+        fields, _ = STUDY.parse_selector_markers(
+            log, boundary, boundary, boundary, sleeping, 0, "123"
+        )
         self.assertTrue(all(fields.values()), fields)
 
-    def test_selector_on_exact_warmup_contract(self) -> None:
-        prefix_lines = [self.FLAT]
+    def test_selector_on_exact_sleep_unload_contract(self) -> None:
         log = (
             "QWEN36_SERVER_PROCESS_BINDING pid=123\n"
-            "  GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ: 1\n"
-            f"{self.FLAT}\n"
-            "SYCL_Q8_0_C2_CANONICAL_MMVQ summary: flat_dispatches=3 "
-            "recurrent_dispatches=0 flat_multicol_suppressed=3 "
-            "recurrent_dmmv_suppressed=0 reorder_ready_dispatches=3 "
-            "single_col_mmvq_calls=6 violations=0\n"
+            f"0.00.100.001 I {self.FLAT}\n"
+            f"0.00.100.002 I {self.QUEUE_SLEEP}\n"
+            f"0.00.100.003 I {self.SERVER_SLEEP}\n"
+            f"0.00.100.004 I {self.SUMMARY}\n"
         ).encode()
+        boundary = self.prefix(2, [self.FLAT])
+        sleeping = self.prefix(
+            5,
+            [self.FLAT, self.SUMMARY],
+            sleep=[self.QUEUE_SLEEP, self.SERVER_SLEEP],
+        )
         fields, _ = STUDY.parse_selector_markers(
-            log, {"canonical_marker_lines": prefix_lines}, 1, "123"
+            log, boundary, boundary, boundary, sleeping, 1, "123"
         )
         self.assertTrue(all(fields.values()), fields)
         malformed = log.replace(b"src1_ne=[64,2,1,1]", b"src1_ne=[64,9,1,1]")
         fields, _ = STUDY.parse_selector_markers(
             malformed,
-            {"canonical_marker_lines": [prefix_lines[0].replace("64,2", "64,9")]},
+            self.prefix(2, [self.FLAT.replace("64,2", "64,9")]),
+            self.prefix(2, [self.FLAT.replace("64,2", "64,9")]),
+            self.prefix(2, [self.FLAT.replace("64,2", "64,9")]),
+            self.prefix(
+                5,
+                [self.FLAT.replace("64,2", "64,9"), self.SUMMARY],
+                sleep=[self.QUEUE_SLEEP, self.SERVER_SLEEP],
+            ),
             1,
             "123",
         )
         self.assertFalse(fields["selector_on_first_hit_shapes_exact"])
+
+    def test_optional_startup_is_strict_and_ordered(self) -> None:
+        boundary = self.prefix(3, [self.FLAT])
+        sleeping = self.prefix(
+            6,
+            [self.FLAT, self.SUMMARY],
+            sleep=[self.QUEUE_SLEEP, self.SERVER_SLEEP],
+        )
+        exact = (
+            "QWEN36_SERVER_PROCESS_BINDING pid=123\n"
+            "  GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ: 1\n"
+            f"{self.FLAT}\n{self.QUEUE_SLEEP}\n{self.SERVER_SLEEP}\n{self.SUMMARY}\n"
+        ).encode()
+        fields, _ = STUDY.parse_selector_markers(
+            exact, boundary, boundary, boundary, sleeping, 1, "123"
+        )
+        self.assertTrue(all(fields.values()), fields)
+        wrong = exact.replace(
+            b"GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ: 1",
+            b"GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ: 0",
+        )
+        fields, _ = STUDY.parse_selector_markers(
+            wrong, boundary, boundary, boundary, sleeping, 1, "123"
+        )
+        self.assertFalse(fields["startup_marker_optional_but_exact"])
+
+    def test_early_duplicate_or_wake_sleep_evidence_fails(self) -> None:
+        base = (
+            "QWEN36_SERVER_PROCESS_BINDING pid=123\n"
+            f"{self.FLAT}\n{self.QUEUE_SLEEP}\n{self.SERVER_SLEEP}\n{self.SUMMARY}\n"
+        )
+        boundary = self.prefix(2, [self.FLAT])
+        sleeping = self.prefix(
+            5,
+            [self.FLAT, self.SUMMARY],
+            sleep=[self.QUEUE_SLEEP, self.SERVER_SLEEP],
+        )
+        variants = (
+            (
+                base,
+                self.prefix(3, [self.FLAT], sleep=[self.QUEUE_SLEEP]),
+                "boundary_prefixes_have_no_sleep_wake_or_summary",
+            ),
+            (
+                base.replace(
+                    self.SERVER_SLEEP, f"{self.QUEUE_SLEEP}\n{self.SERVER_SLEEP}"
+                ),
+                sleeping,
+                "intentional_sleep_entries_exactly_once",
+            ),
+            (
+                base
+                + "0.00.100.005 I srv  handle_sleep: server is exiting sleeping state\n",
+                sleeping,
+                "zero_wake_or_reload",
+            ),
+            (
+                base.replace(
+                    f"{self.QUEUE_SLEEP}\n{self.SERVER_SLEEP}\n{self.SUMMARY}",
+                    f"{self.SUMMARY}\n{self.QUEUE_SLEEP}\n{self.SERVER_SLEEP}",
+                ),
+                sleeping,
+                "selector_on_summary_after_sleep",
+            ),
+            (
+                base + "srv  load_model: loading model '/proc/self/fd/18'\n",
+                sleeping,
+                "zero_wake_or_reload",
+            ),
+        )
+        for log, postcapture, failed_field in variants:
+            with self.subTest(field=failed_field):
+                fields, _ = STUDY.parse_selector_markers(
+                    log.encode(),
+                    boundary,
+                    boundary,
+                    postcapture,
+                    sleeping,
+                    1,
+                    "123",
+                )
+                self.assertFalse(fields[failed_field])
+
+    def test_keep_awake_worker_is_stopped_before_preclient_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            events = root / "events.tsv"
+            status = root / "status.json"
+            prefix = root / "postcapture.log"
+            start_ns = time.time_ns()
+            end_ns = start_ns + 1
+            stopped_ns = end_ns + 1
+            events.write_text(
+                f"event=request-start\trequest=1\tepoch_ns={start_ns}\n"
+                f"event=request-end\trequest=1\tepoch_ns={end_ns}\trc=0\n"
+            )
+            valid_status = {
+                "passed": True,
+                "pid": 123,
+                "start_ticks": "456",
+                "stop_requested_epoch_ns": end_ns,
+                "stopped_epoch_ns": stopped_ns,
+                "request_starts": 1,
+                "request_ends": 1,
+                "clean_ends": 1,
+                "exit_status": 0,
+            }
+            status.write_text(json.dumps(valid_status))
+            prefix.write_text("boundary\n")
+            fields, _ = STUDY.validate_keep_awake_lifecycle(
+                status, events, prefix, prefix
+            )
+            self.assertTrue(all(fields.values()), fields)
+            for key, boolean_value in (
+                ("request_starts", True),
+                ("request_ends", True),
+                ("clean_ends", True),
+                ("exit_status", False),
+            ):
+                with self.subTest(boolean_count=key):
+                    tampered = {**valid_status, key: boolean_value}
+                    status.write_text(json.dumps(tampered))
+                    fields, _ = STUDY.validate_keep_awake_lifecycle(
+                        status, events, prefix, prefix
+                    )
+                    self.assertFalse(fields["status_counts_exact"])
+            status.write_text(json.dumps(valid_status))
+            events.write_text(events.read_text().replace("rc=0", "rc=2"))
+            fields, _ = STUDY.validate_keep_awake_lifecycle(
+                status, events, prefix, prefix
+            )
+            self.assertFalse(fields["event_pairs_exact"])
+
+            events.write_text(
+                f"event=request-start\trequest=1\tepoch_ns={start_ns}\n"
+                f"event=request-start\trequest=2\tepoch_ns={start_ns}\n"
+                f"event=request-end\trequest=1\tepoch_ns={end_ns}\trc=0\n"
+                f"event=request-end\trequest=2\tepoch_ns={end_ns}\trc=0\n"
+            )
+            status_value = json.loads(status.read_text())
+            status_value.update(request_starts=2, request_ends=2, clean_ends=2)
+            status.write_text(json.dumps(status_value))
+            fields, _ = STUDY.validate_keep_awake_lifecycle(
+                status, events, prefix, prefix
+            )
+            self.assertFalse(fields["event_pairs_exact"])
 
 
 class ManifestAndHealthTests(unittest.TestCase):
@@ -284,6 +518,13 @@ class RunnerStaticTests(unittest.TestCase):
             check=False,
         )
 
+    @staticmethod
+    def shell_slice(start_marker: str, end_marker: str) -> str:
+        runner_text = RUNNER.read_text()
+        start = runner_text.index(start_marker)
+        end = runner_text.index(end_marker, start)
+        return runner_text[start:end]
+
     def test_shell_xpu_parser_binds_device_and_memory(self) -> None:
         runner_text = RUNNER.read_text()
         start = runner_text.index("parse_gpu_used_mib() {\n")
@@ -399,7 +640,7 @@ signal_recorded_session 0 TERM
         guard = next(
             line
             for line in runner_lines
-            if line.startswith("(( FAILURE_HANDOFF_MARGIN_S >= 15 ))")
+            if line.startswith("(( FAILURE_HANDOFF_MARGIN_S >= 40 ")
         )
         deadline = next(
             line.strip()
@@ -410,6 +651,7 @@ signal_recorded_session 0 TERM
 die() {{ exit 2; }}
 FAILURE_HANDOFF_MARGIN_S="$1"
 {assignment}
+KEEP_AWAKE_REQUEST_TIMEOUT_S=15
 {guard}
 PASSIVE_DRAIN_S=60
 start=$SECONDS
@@ -417,13 +659,184 @@ start=$SECONDS
 printf '%s\\n' "$((quiet_deadline - start))"
 """
         default = self.run_bash(script, "")
-        weakened = self.run_bash(script, "14")
-        minimum = self.run_bash(script, "15")
+        weakened = self.run_bash(script, "39")
+        minimum = self.run_bash(script, "40")
         self.assertEqual(default.returncode, 0, default.stderr)
-        self.assertEqual(default.stdout, "80\n")
+        self.assertEqual(default.stdout, "100\n")
         self.assertEqual(weakened.returncode, 2)
         self.assertEqual(minimum.returncode, 0, minimum.stderr)
-        self.assertEqual(minimum.stdout, "75\n")
+        self.assertEqual(minimum.stdout, "100\n")
+
+    def test_idle_unload_wait_is_bounded_above_two_sleep_intervals(self) -> None:
+        text = RUNNER.read_text()
+        self.assertIn("PHASE1_SLEEP_IDLE_SECONDS=60", text)
+        self.assertIn("IDLE_UNLOAD_TIMEOUT_S=180", text)
+        self.assertIn(
+            "deadline=$((SECONDS + IDLE_UNLOAD_TIMEOUT_S))",
+            text,
+        )
+        self.assertIn(
+            '(( SECONDS < deadline )) || die "intentional idle unload evidence timeout"',
+            text,
+        )
+        self.assertIn(
+            "IDLE_UNLOAD_TIMEOUT_S >= 2 * PHASE1_SLEEP_IDLE_SECONDS",
+            text,
+        )
+
+    def test_log_prefix_snapshot_waits_for_stable_complete_line(self) -> None:
+        stable = self.shell_function("stable_log_size", "wait_for_stable_line_boundary")
+        wait = self.shell_function("wait_for_stable_line_boundary", "seal_directory")
+        copy = self.shell_function("copy_file_new", "stable_log_size")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stable_log = root / "stable.log"
+            partial_log = root / "partial.log"
+            growing_log = root / "growing.log"
+            snapshot = root / "snapshot.log"
+            stable_log.write_bytes(b"first complete line\n")
+            partial_log.write_bytes(b"partial final line")
+            growing_log.write_bytes(b"initial line\n")
+            script = f"""
+set -u
+WAVE_ABORT_FILE="$1/abort"
+owned_server_running() {{ return 0; }}
+{copy}
+{stable}
+{wait}
+stable_size="$(wait_for_stable_line_boundary "$1/stable.log" 2)" || exit 10
+printf 'appended after freeze' >> "$1/stable.log"
+copy_file_new "$1/stable.log" "$1/snapshot.log" "$stable_size" || exit 11
+[[ "$(cat "$1/snapshot.log")" == 'first complete line' ]] || exit 12
+wait_for_stable_line_boundary "$1/partial.log" 1 >/dev/null 2>&1 && exit 13
+(
+  while :; do
+    printf 'growing line\n' >> "$1/growing.log"
+    sleep 0.05
+  done
+) &
+writer=$!
+set +e
+wait_for_stable_line_boundary "$1/growing.log" 1 >/dev/null 2>&1
+unstable_rc=$?
+set -e
+kill "$writer" 2>/dev/null || true
+wait "$writer" 2>/dev/null || true
+[[ "$unstable_rc" -ne 0 ]] || exit 14
+"""
+            result = self.run_bash(script, str(root))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(snapshot.read_bytes(), b"first complete line\n")
+
+    def test_log_prefix_stability_wait_aborts_on_peer_or_server_loss(self) -> None:
+        stable = self.shell_function("stable_log_size", "wait_for_stable_line_boundary")
+        wait = self.shell_function("wait_for_stable_line_boundary", "seal_directory")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            log = root / "server.log"
+            log.write_text("complete line\n")
+            script = f"""
+set -u
+WAVE_ABORT_FILE="$1/abort"
+{stable}
+{wait}
+owned_server_running() {{ return 1; }}
+if wait_for_stable_line_boundary "$1/server.log" 2 >/dev/null 2>&1; then exit 10; fi
+owned_server_running() {{ return 0; }}
+: > "$WAVE_ABORT_FILE"
+if wait_for_stable_line_boundary "$1/server.log" 2 >/dev/null 2>&1; then exit 11; fi
+"""
+            result = self.run_bash(script, str(root))
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_keeper_is_reaped_before_preclient_binding_and_capture(self) -> None:
+        text = RUNNER.read_text()
+        release = text.index(
+            "jq -e '.released==true and .phase==\"canonical-q8-c1-oracle\"'"
+        )
+        stop = text.index(
+            'stop_keep_awake || die "keep-awake worker failed before capture"',
+            release,
+        )
+        preclient = text.index(
+            'copy_file_new "$RUN_DIR/server.stdout.log" '
+            '"$RUN_DIR/preclient-prefix.log"',
+            stop,
+        )
+        binding = text.index('python3 "$ANALYZER" capture-live-binding', preclient)
+        capture = text.index(
+            'timeout --signal=TERM --kill-after=30 "$REQUEST_TIMEOUT_S"', binding
+        )
+        self.assertLess(release, stop)
+        self.assertLess(stop, preclient)
+        self.assertLess(preclient, binding)
+        self.assertLess(binding, capture)
+
+    def test_post_attestation_failure_trap_preserves_cause_and_seals(self) -> None:
+        seal = self.shell_slice("seal_directory() {\n", "validate_lease_fd() {\n")
+        owned = self.shell_slice(
+            "  owned_server_running() {\n", "  owned_keep_awake_running() {\n"
+        )
+        publish = self.shell_slice("  publish_abort() {\n", "  child_error() {\n")
+        failure = self.shell_slice(
+            "  child_failure() {\n", "  trap child_failure EXIT\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run_dir = root / "lane"
+            run_dir.mkdir()
+            script = f"""
+set -Eeuo pipefail
+RUN_DIR="$1"
+WAVE_ABORT_FILE="$2"
+GPU_INDEX=2
+SELECTOR=1
+PASSIVE_DRAIN_S=60
+TERM_GRACE_S=90
+KILL_GRACE_S=10
+CHILD_STATE_ACTIVE=1
+CHILD_FAILURE_REASON='post-attestation validation failed with rc=7'
+CHILD_SERVER_PID=''
+CHILD_SERVER_START_TICKS=''
+CHILD_SERVER_PGID=''
+CHILD_KEEP_AWAKE_PID=''
+CHILD_KEEP_AWAKE_START_TICKS=''
+CHILD_KEEP_AWAKE_ACTIVE=0
+CHILD_CLEANUP_FORCED=0
+CHILD_CLEANUP_SURVIVOR=0
+CHILD_NORMAL_COMPLETE=0
+pid_running() {{ return 1; }}
+process_start_ticks() {{ return 1; }}
+stop_keep_awake() {{ return 0; }}
+{seal}
+{owned}
+{publish}
+{failure}
+trap child_failure EXIT
+force_post_attestation_failure() {{
+  local server_pid='out-of-scope-decoy'
+  return 7
+}}
+force_post_attestation_failure
+"""
+            result = self.run_bash(script, str(run_dir), str(root / "abort"))
+            self.assertEqual(result.returncode, 7, result.stderr)
+            self.assertNotIn("unbound variable", result.stderr)
+            cleanup = (run_dir / "cleanup-status.env").read_text()
+            self.assertIn("exit_status=7\n", cleanup)
+            self.assertIn(
+                "failure_reason=post-attestation\\ validation\\ failed\\ with\\ rc=7\n",
+                cleanup,
+            )
+            self.assertEqual((run_dir / "run-status.txt").read_text(), "FAIL\n")
+            self.assertTrue((run_dir / "artifacts.sha256").is_file())
+            subprocess.run(
+                ["sha256sum", "-c", "artifacts.sha256"],
+                cwd=run_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
     def test_shell_syntax_plan_and_default_fail_closed(self) -> None:
         subprocess.run(["bash", "-n", str(RUNNER)], check=True)
@@ -437,6 +850,7 @@ printf '%s\\n' "$((quiet_deadline - start))"
         self.assertIn("gpu=0\tselector=0", plan[0])
         self.assertIn("gpu=3\tselector=1", plan[3])
         self.assertTrue(all("c65536-np2-no-kv-unified" in row for row in plan))
+        self.assertTrue(all("sleep_idle_seconds=60" in row for row in plan))
         noarg = subprocess.run(
             ["bash", str(RUNNER)], text=True, capture_output=True, check=False
         )
@@ -446,7 +860,9 @@ printf '%s\\n' "$((quiet_deadline - start))"
     def test_lifecycle_static_fail_closed_contract(self) -> None:
         text = RUNNER.read_text()
         required = (
-            'EXPECTED_ANALYZER_SHA256="43c707c0b8040d694efa89e13638820fff5eed4cc95fa9129bcd0110452d65d6"',
+            'EXPECTED_ANALYZER_SHA256="3ea1d0eb23b7783f0e3a87b9782230c2f66e5eb2b249cc53063a77794463b547"',
+            'EXPECTED_LAUNCHER_SHA256="fa9475956c9de8dc225e23c13b25e5851bc545ae24ec1ede92939f3ae7f08010"',
+            'EXPECTED_SERVER_ATTESTER_SHA256="3ca549cd971fd76b3152c8bb9e0a55689eb398051ee61a2ed2e532b3f8b2ec78"',
             '"${1:-}" != "--run-phase1"',
             'SESSION_GATE="$session_gate"',
             "recorded_session_alive",
@@ -454,8 +870,10 @@ printf '%s\\n' "$((quiet_deadline - start))"
             "$4==sid && $5 !~ /^Z/",
             "sort -n -u",
             "PASSIVE_DRAIN_S:-60",
-            "FAILURE_HANDOFF_MARGIN_S:-20",
-            "FAILURE_HANDOFF_MARGIN_S >= 15",
+            "FAILURE_HANDOFF_MARGIN_S:-40",
+            "KEEP_AWAKE_REQUEST_TIMEOUT_S=15",
+            "FAILURE_HANDOFF_MARGIN_S >= 40",
+            "FAILURE_HANDOFF_MARGIN_S >= KEEP_AWAKE_REQUEST_TIMEOUT_S + 15",
             "SECONDS + PASSIVE_DRAIN_S + FAILURE_HANDOFF_MARGIN_S",
             "phase_passive_scan preprobe",
             "phase_passive_scan postprobe",
@@ -469,6 +887,18 @@ printf '%s\\n' "$((quiet_deadline - start))"
             "--mode sequential-oracle",
             "CTX_SIZE=65536 PARALLEL_SLOTS=2",
             "KV_UNIFIED=0",
+            'SLEEP_IDLE_SECONDS="$PHASE1_SLEEP_IDLE_SECONDS"',
+            "PHASE1_SLEEP_IDLE_SECONDS=60",
+            "KEEP_AWAKE_INTERVAL_S=20",
+            "IDLE_UNLOAD_TIMEOUT_S=180",
+            "PREFIX_STABILITY_TIMEOUT_S=10",
+            "PREFIX_STABILITY_TIMEOUT_S >= 2",
+            "PREFIX_STABILITY_TIMEOUT_S <= 15",
+            "wait_for_stable_line_boundary",
+            'curl -fsS --max-time "$KEEP_AWAKE_REQUEST_TIMEOUT_S"',
+            'copy_file_new "$RUN_DIR/server.stdout.log" "$RUN_DIR/postcapture-prefix.log"',
+            'copy_file_new "$RUN_DIR/server.stdout.log" "$RUN_DIR/sleeping-prefix.log"',
+            '--binding-sleeping "$RUN_DIR/live-binding-sleeping.json"',
         )
         for needle in required:
             self.assertIn(needle, text)

@@ -28,6 +28,7 @@ THREADS="${THREADS:-8}"
 HTTP_THREADS="${HTTP_THREADS:-6}"
 POLL="${POLL:-50}"
 LOG_VERBOSITY="${LOG_VERBOSITY:-4}"
+SLEEP_IDLE_SECONDS="${SLEEP_IDLE_SECONDS--1}"
 LANE_DNN_ENABLED="${LANE_DNN_ENABLED:-0}"
 LANE_OPT_ENABLED="${LANE_OPT_ENABLED:-1}"
 LANE_FA_ONEDNN="${LANE_FA_ONEDNN:-1}"
@@ -405,6 +406,11 @@ if [[ ! "$LOG_VERBOSITY" =~ ^[3-5]$ ]]; then
   echo "LOG_VERBOSITY must be 3, 4, or 5" >&2
   exit 2
 fi
+if [[ "$SLEEP_IDLE_SECONDS" != "-1" ]] && \
+   { [[ ! "$SLEEP_IDLE_SECONDS" =~ ^[1-9][0-9]*$ ]] || (( SLEEP_IDLE_SECONDS > 3600 )); }; then
+  echo "SLEEP_IDLE_SECONDS must be -1 (disabled) or an integer from 1 through 3600" >&2
+  exit 2
+fi
 for toggle_name in LANE_DNN_ENABLED LANE_OPT_ENABLED KV_UNIFIED CONT_BATCHING LANE_FA_ONEDNN LANE_MKL_FA LANE_SYCL_FLASH_ATTN LANE_Q8_0_C2_CANONICAL_MMVQ; do
   toggle_value="${!toggle_name}"
   if [[ "$toggle_value" != "0" && "$toggle_value" != "1" ]]; then
@@ -701,6 +707,9 @@ if [[ "$CONT_BATCHING" == "1" ]]; then
 else
   server_cmd+=(--no-cont-batching)
 fi
+if [[ "$SLEEP_IDLE_SECONDS" != "-1" ]]; then
+  server_cmd+=(--sleep-idle-seconds "$SLEEP_IDLE_SECONDS")
+fi
 {
   echo "date_utc=$STAMP"
   echo "gpu_index=$GPU_INDEX"
@@ -739,6 +748,7 @@ fi
   echo "threads=$THREADS"
   echo "http_threads=$HTTP_THREADS"
   echo "log_verbosity=$LOG_VERBOSITY"
+  echo "sleep_idle_seconds=$SLEEP_IDLE_SECONDS"
   echo "flash_attn=$FLASH_ATTN"
   echo "cache_type_k=$CACHE_TYPE_K"
   echo "cache_type_v=$CACHE_TYPE_V"

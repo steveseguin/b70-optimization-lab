@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
@@ -15,6 +16,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 LAUNCHER = SCRIPT_DIR / "serve-target-only.sh"
+SERVER_ATTESTER = SCRIPT_DIR / "attest-c2-server.py"
 BASELINE_MANIFEST = SCRIPT_DIR.parent / "runtime-manifest.json"
 CANDIDATE_MANIFEST = SCRIPT_DIR.parent / "runtime-manifest-canonical-q8-c2.json"
 CONTROL = "GGML_SYCL_Q8_0_C2_CANONICAL_MMVQ"
@@ -26,6 +28,14 @@ def sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def load_server_attester():
+    spec = importlib.util.spec_from_file_location("c2_server_attester", SERVER_ATTESTER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class LauncherControlTests(unittest.TestCase):
@@ -96,6 +106,49 @@ class LauncherControlTests(unittest.TestCase):
                 completed = self.run_launcher(value=value)
                 self.assertEqual(completed.returncode, 2)
                 self.assertIn("must be 0 or 1", completed.stderr)
+
+    def test_sleep_idle_control_is_strict_and_default_disabled(self) -> None:
+        for value in ("", "0", "-2", "1x", "3601"):
+            with self.subTest(value=value):
+                completed = self.run_launcher(
+                    extra_environment={"SLEEP_IDLE_SECONDS": value}
+                )
+                self.assertEqual(completed.returncode, 2)
+                self.assertIn("SLEEP_IDLE_SECONDS", completed.stderr)
+                self.assertNotIn("model not found", completed.stderr)
+        completed = self.run_launcher(extra_environment={"SLEEP_IDLE_SECONDS": "60"})
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("model not found", completed.stderr)
+
+    def test_attester_opt_in_sleep_identity_preserves_default_contract(self) -> None:
+        attester = load_server_attester()
+        default = attester.build_attestation("", "", 1, "a" * 64, 1024)
+        self.assertNotIn("sleep_idle_seconds", default["expected_identity"])
+        opted_in = attester.build_attestation(
+            "",
+            "sleep_idle_seconds=60\nargv=llama-server --sleep-idle-seconds 60\n",
+            1,
+            "a" * 64,
+            1024,
+            60,
+        )
+        self.assertEqual(opted_in["expected_identity"]["sleep_idle_seconds"], "60")
+        self.assertTrue(opted_in["identity_fields"]["sleep_idle_seconds"])
+        self.assertTrue(opted_in["argv_fields"]["--sleep-idle-seconds 60"])
+        for argv in (
+            "llama-server --sleep-idle-seconds 600",
+            "llama-server --sleep-idle-seconds 60 --sleep-idle-seconds 60",
+        ):
+            with self.subTest(argv=argv):
+                malformed = attester.build_attestation(
+                    "",
+                    f"sleep_idle_seconds=60\nargv={argv}\n",
+                    1,
+                    "a" * 64,
+                    1024,
+                    60,
+                )
+                self.assertFalse(malformed["argv_fields"]["--sleep-idle-seconds 60"])
 
     def test_exact_manifest_contract_allows_selector_zero_and_one(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -356,8 +409,9 @@ int main(int argc, char **argv) {
                 command.write_text("#!/bin/sh\nexit 0\n")
                 command.chmod(0o755)
 
-            for index, outer_mode in enumerate(("server-output", "wrapper-output")):
-                with self.subTest(outer_mode=outer_mode):
+            modes = (("server-output", "60"), ("wrapper-output", "-1"))
+            for index, (outer_mode, sleep_idle) in enumerate(modes):
+                with self.subTest(outer_mode=outer_mode, sleep_idle=sleep_idle):
                     run_dir = output_dir / outer_mode
                     run_dir.mkdir()
                     identity_log = run_dir / "server.identity.log"
@@ -378,6 +432,7 @@ int main(int argc, char **argv) {
                             "LOG": str(identity_log),
                             "SERVER_OUTPUT_LOG": str(server_output),
                             "OUT_DIR": str(run_dir),
+                            "SLEEP_IDLE_SECONDS": sleep_idle,
                             "PATH": (f"{fake_bin}{os.pathsep}{environment['PATH']}"),
                         }
                     )
@@ -404,6 +459,17 @@ int main(int argc, char **argv) {
                         1,
                     )
                     self.assertEqual(identity_lines.count("--- server ---"), 1)
+                    self.assertEqual(
+                        identity_lines.count(f"sleep_idle_seconds={sleep_idle}"), 1
+                    )
+                    argv_line = next(
+                        line for line in identity_lines if line.startswith("argv=")
+                    )
+                    expected_sleep_argv_count = 1 if sleep_idle == "60" else 0
+                    self.assertEqual(
+                        argv_line.count("--sleep-idle-seconds 60"),
+                        expected_sleep_argv_count,
+                    )
                     self.assertNotEqual(identity_log.resolve(), server_output.resolve())
                     self.assertEqual(
                         output_lines,
