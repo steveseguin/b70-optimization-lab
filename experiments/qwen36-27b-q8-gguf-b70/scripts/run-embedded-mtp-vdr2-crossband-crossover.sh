@@ -4,7 +4,7 @@ set -euo pipefail
 # Default-off live wrapper for the fixed four-card, two-wave middle/near-32K
 # embedded-MTP crossover.  The no-argument path must remain before ROOT
 # resolution and every external command until independent review activates it.
-LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"
+LIVE_ENABLE_STATE="PENDING"
 LIVE_ENABLE_REQUIRED="REVIEWED_AND_PINNED"
 LIVE_ACK_REQUIRED="I_ACCEPT_FOUR_B70_EMBEDDED_MTP_VDR2_CROSSBAND_CROSSOVER"
 CHILD_ACK_REQUIRED="INTERNAL_REVIEWED_CROSSBAND_CHILD_V1"
