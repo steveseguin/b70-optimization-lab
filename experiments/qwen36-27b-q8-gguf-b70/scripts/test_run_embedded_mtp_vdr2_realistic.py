@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline source checks for the realistic embedded-MTP wrapper."""
+"""Offline source checks for the reviewed realistic embedded-MTP wrapper."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ SCRIPT = Path(__file__).with_name("run-embedded-mtp-vdr2-realistic.sh")
 
 
 class RealisticWrapperStaticTests(unittest.TestCase):
-    def test_pending_live_path_stops_before_external_commands(self) -> None:
+    def test_live_path_requires_ack_before_external_commands(self) -> None:
         completed = subprocess.run(
             ["/bin/bash", str(SCRIPT)],
             cwd=Path("/"),
@@ -24,11 +24,11 @@ class RealisticWrapperStaticTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stdout, "")
-        self.assertIn("PENDING", completed.stderr)
+        self.assertIn("requires the exact acknowledgement", completed.stderr)
 
-    def test_source_is_pending_and_four_lifetimes_are_ordered(self) -> None:
+    def test_source_is_reviewed_and_four_lifetimes_are_ordered(self) -> None:
         source = SCRIPT.read_text()
-        self.assertIn('LIVE_ENABLE_STATE="PENDING"', source)
+        self.assertIn('LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"', source)
         self.assertIn(
             'EXPECTED_CAPTURE_SHA256="20f082206de7deafdc679fbd638f8361d69dfd647943919732270709e232cd33"',
             source,
