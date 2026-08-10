@@ -10,6 +10,7 @@ RUNTIME_MANIFEST="${RUNTIME_MANIFEST:-$LANE/runtime-manifest.json}"
 GPU_INDEX="${GPU_INDEX:-0}"
 PORT="${PORT:-19460}"
 RUN_SCOPE="${RUN_SCOPE:-smoke}"
+PROMOTION_PROFILE="${PROMOTION_PROFILE-goal1-baseline-ub128}"
 FULL512_BAND="${FULL512_BAND:-realistic}"
 PARALLEL_SLOTS="${PARALLEL_SLOTS:-1}"
 KV_UNIFIED="${KV_UNIFIED:-0}"
@@ -56,8 +57,23 @@ if [[ -z "${EVIDENCE_CLASS:-}" ]]; then
   fi
 fi
 PERFORMANCE_PROMOTABLE=0
+case "$PROMOTION_PROFILE" in
+  goal1-baseline-ub128) PROMOTION_EXPECTED_UBATCH_SIZE=128 ;;
+  prefill-ub1024) PROMOTION_EXPECTED_UBATCH_SIZE=1024 ;;
+  *)
+    echo "invalid PROMOTION_PROFILE=$PROMOTION_PROFILE; expected goal1-baseline-ub128 or prefill-ub1024" >&2
+    exit 2
+    ;;
+esac
+if [[ "$RUN_SCOPE" != "promotion512" && "$PROMOTION_PROFILE" != "goal1-baseline-ub128" ]]; then
+  echo "PROMOTION_PROFILE=$PROMOTION_PROFILE is only allowed with RUN_SCOPE=promotion512" >&2
+  exit 2
+fi
 STAMP="$(date -u +%Y%m%dT%H%M%S.%NZ)"
 LABEL="${LABEL:-qwen36-27b-q8_0-${CACHE_TYPE_K}kv-${RUN_SCOPE}-gpu${GPU_INDEX}-${FULL512_BAND}-${EVIDENCE_CLASS}}"
+if [[ "$RUN_SCOPE" == "promotion512" ]]; then
+  LABEL="${LABEL}-${PROMOTION_PROFILE}-ub${PROMOTION_EXPECTED_UBATCH_SIZE}"
+fi
 RUN_DIR="${RUN_DIR:-/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/${LABEL}-${STAMP}}"
 
 case "$RUN_SCOPE" in
@@ -90,6 +106,10 @@ for numeric_name in READINESS_TIMEOUT_S MIN_HOST_AVAILABLE_KIB MIN_LOADED_DELTA_
   fi
 done
 if [[ "$RUN_SCOPE" == "promotion512" ]]; then
+  if [[ "$UBATCH_SIZE" != "$PROMOTION_EXPECTED_UBATCH_SIZE" ]]; then
+    echo "PROMOTION_PROFILE=$PROMOTION_PROFILE requires UBATCH_SIZE=$PROMOTION_EXPECTED_UBATCH_SIZE" >&2
+    exit 2
+  fi
   promotion_identity=(
     "$KV_UNIFIED" "$CONT_BATCHING" "$BATCH_SIZE" "$UBATCH_SIZE"
     "$N_GPU_LAYERS" "$THREADS" "$POLL" "$CACHE_TYPE_K" "$CACHE_TYPE_V"
@@ -98,7 +118,7 @@ if [[ "$RUN_SCOPE" == "promotion512" ]]; then
     "$LANE_SYCL_FLASH_ATTN" "$HTTP_THREADS"
   )
   promotion_expected=(
-    0 1 1024 128 99 8 50 f16 f16 on 0 1 1 0 1 1 6
+    0 1 1024 "$PROMOTION_EXPECTED_UBATCH_SIZE" 99 8 50 f16 f16 on 0 1 1 0 1 1 6
   )
   if [[ "${promotion_identity[*]}" != "${promotion_expected[*]}" ]]; then
     echo "RUN_SCOPE=promotion512 requires the locked F16/DNN0/OPT1 Goal-1 baseline identity" >&2
@@ -796,13 +816,15 @@ on_exit() {
       --arg runtime_bundle_report_sha256 "$RUNTIME_BUNDLE_REPORT_SHA256" \
       --arg runtime_resolved_manifest_sha256 "$RUNTIME_RESOLVED_MANIFEST_SHA256" \
       --arg run_scope "$RUN_SCOPE" \
+      --arg promotion_profile "$PROMOTION_PROFILE" \
+      --argjson promotion_expected_ubatch_size "$PROMOTION_EXPECTED_UBATCH_SIZE" \
       --arg full512_band "$FULL512_BAND" \
       --argjson gpu_index "$GPU_INDEX" \
       --arg result_sha256 "$result_sha" \
       --argjson post_512_canary_passed "$post_canary_passed" \
       --argjson performance_promotable "$PERFORMANCE_PROMOTABLE" \
       --argjson promotion_required "$([[ "$RUN_SCOPE" == "promotion512" ]] && echo 1 || echo 0)" \
-      '{status:"PASS", evidence_valid:true, evidence_class:$evidence_class, performance_promotable:($performance_promotable == 1), run_scope:$run_scope, full512_band:$full512_band, gpu_index:$gpu_index, result:(if $result_sha256 == "" then null else "exact-tokens.json" end), result_sha256:(if $result_sha256 == "" then null else $result_sha256 end), post_512_canary_passed:($post_512_canary_passed == 1), artifacts_manifest_verified:true, artifacts_manifest:"artifacts.sha256", artifacts_manifest_sha256:$manifest_sha256, pre_seal_run_status:"run-status.txt", pre_seal_run_status_sha256:$run_status_sha256, pre_seal_exit_status:"exit-status.txt", pre_seal_exit_status_sha256:$exit_status_sha256, harness_manifest_sha256:$harness_manifest_sha256, runtime_bundle_report_sha256:$runtime_bundle_report_sha256, runtime_resolved_manifest_sha256:$runtime_resolved_manifest_sha256}' \
+      '{status:"PASS", evidence_valid:true, evidence_class:$evidence_class, performance_promotable:($performance_promotable == 1), run_scope:$run_scope, promotion_profile:$promotion_profile, promotion_expected_ubatch_size:$promotion_expected_ubatch_size, full512_band:$full512_band, gpu_index:$gpu_index, result:(if $result_sha256 == "" then null else "exact-tokens.json" end), result_sha256:(if $result_sha256 == "" then null else $result_sha256 end), post_512_canary_passed:($post_512_canary_passed == 1), artifacts_manifest_verified:true, artifacts_manifest:"artifacts.sha256", artifacts_manifest_sha256:$manifest_sha256, pre_seal_run_status:"run-status.txt", pre_seal_run_status_sha256:$run_status_sha256, pre_seal_exit_status:"exit-status.txt", pre_seal_exit_status_sha256:$exit_status_sha256, harness_manifest_sha256:$harness_manifest_sha256, runtime_bundle_report_sha256:$runtime_bundle_report_sha256, runtime_resolved_manifest_sha256:$runtime_resolved_manifest_sha256}' \
       > "$completion_tmp" &&
       jq -e \
         --arg manifest_sha256 "$manifest_sha" \
@@ -810,6 +832,8 @@ on_exit() {
         --arg exit_status_sha256 "$exit_status_sha" \
         --arg evidence_class "$EVIDENCE_CLASS" \
         --arg run_scope "$RUN_SCOPE" \
+        --arg promotion_profile "$PROMOTION_PROFILE" \
+        --argjson promotion_expected_ubatch_size "$PROMOTION_EXPECTED_UBATCH_SIZE" \
         --arg full512_band "$FULL512_BAND" \
         --argjson gpu_index "$GPU_INDEX" \
         --arg result_sha256 "$result_sha" \
@@ -821,6 +845,8 @@ on_exit() {
           and .evidence_valid == true
           and .evidence_class == $evidence_class
           and .run_scope == $run_scope
+          and .promotion_profile == $promotion_profile
+          and .promotion_expected_ubatch_size == $promotion_expected_ubatch_size
           and .full512_band == $full512_band
           and .gpu_index == $gpu_index
           and .result_sha256 == (if $result_sha256 == "" then null else $result_sha256 end)
@@ -938,7 +964,10 @@ done
 
 {
   echo "date_utc=$STAMP"
+  echo "label=$LABEL"
   echo "run_scope=$RUN_SCOPE"
+  echo "promotion_profile=$PROMOTION_PROFILE"
+  echo "promotion_expected_ubatch_size=$PROMOTION_EXPECTED_UBATCH_SIZE"
   echo "evidence_class=$EVIDENCE_CLASS"
   echo "performance_promotable=$PERFORMANCE_PROMOTABLE"
   echo "gpu_index=$GPU_INDEX"
@@ -1115,18 +1144,28 @@ if not valid:
     raise SystemExit("no full target offload >=65 layers found")
 PY
 
-python3 - "$RUN_DIR/server.stdout.log" "$RUN_DIR/server.identity.log" "$RUN_DIR/server-config-check.json" "$CTX_SIZE" "$PARALLEL_SLOTS" "$KV_UNIFIED" "$RUN_SCOPE" <<'PY'
+python3 - "$RUN_DIR/server.stdout.log" "$RUN_DIR/server.identity.log" "$RUN_DIR/server-config-check.json" "$CTX_SIZE" "$PARALLEL_SLOTS" "$KV_UNIFIED" "$RUN_SCOPE" "$PROMOTION_EXPECTED_UBATCH_SIZE" <<'PY'
 import json
 import re
 import sys
 
-log_path, identity_path, out_path, ctx_raw, slots_raw, kv_raw, run_scope = sys.argv[1:]
+(
+    log_path,
+    identity_path,
+    out_path,
+    ctx_raw,
+    slots_raw,
+    kv_raw,
+    run_scope,
+    promotion_expected_ubatch_raw,
+) = sys.argv[1:]
 text = open(log_path, errors="replace").read()
 identity_text = open(identity_path, errors="replace").read()
 expected_ctx = int(ctx_raw)
 expected_slots = int(slots_raw)
 expected_ctx_seq = expected_ctx // expected_slots
 expected_kv = "true" if int(kv_raw) else "false"
+promotion_expected_ubatch = int(promotion_expected_ubatch_raw)
 
 def last_int(label: str) -> int | None:
     values = re.findall(rf"{re.escape(label)}\s*=\s*(\d+)", text)
@@ -1174,7 +1213,7 @@ if run_scope == "promotion512":
         "kv_unified": "0",
         "cont_batching": "1",
         "batch_size": "1024",
-        "ubatch_size": "128",
+        "ubatch_size": str(promotion_expected_ubatch),
         "n_gpu_layers": "99",
         "threads": "8",
         "http_threads": "6",
@@ -1203,7 +1242,8 @@ if run_scope == "promotion512":
     )
     argv = identity.get("argv", "")
     required_argv = (
-        "-ngl 99", "-c 32768", "-np 1", "-b 1024", "-ub 128",
+        "-ngl 99", "-c 32768", "-np 1", "-b 1024",
+        f"-ub {promotion_expected_ubatch}",
         "--threads-http 6", "-ctk f16", "-ctv f16", "-fa on",
         "--spec-type none", "--reasoning off", "--ctx-checkpoints 0",
         "--cache-ram 0", "--no-cache-idle-slots", "--no-context-shift",
