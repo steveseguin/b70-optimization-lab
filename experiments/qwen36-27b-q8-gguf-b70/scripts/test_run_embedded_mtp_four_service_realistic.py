@@ -87,7 +87,7 @@ printf '%s|%s|%s|%s|%s\n' \
 
 
 class FourServiceWrapperTests(unittest.TestCase):
-    def test_pending_path_stops_before_any_external_command(self) -> None:
+    def test_missing_ack_stops_before_any_external_command(self) -> None:
         completed = subprocess.run(
             ["/bin/bash", str(SCRIPT)],
             cwd=Path("/"),
@@ -98,7 +98,7 @@ class FourServiceWrapperTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stdout, "")
-        self.assertIn("PENDING independent review", completed.stderr)
+        self.assertIn("requires the exact acknowledgement", completed.stderr)
 
     def test_explicit_empty_argument_cannot_bypass_live_latch(self) -> None:
         completed = subprocess.run(
@@ -115,7 +115,7 @@ class FourServiceWrapperTests(unittest.TestCase):
 
     def test_live_state_and_identity_are_fixed(self) -> None:
         source = SCRIPT.read_text()
-        self.assertIn('LIVE_ENABLE_STATE="PENDING"', source)
+        self.assertIn('LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"', source)
         self.assertNotIn("--spec-draft-model", source)
         self.assertIn("-c 32768", source)
         self.assertIn("-np 1", source)
@@ -219,7 +219,7 @@ class FourServiceWrapperTests(unittest.TestCase):
         self.assertIn("capture-embedded-mtp-four-service-realistic.py", source)
         self.assertIn("embedded_mtp_four_service_realistic_gates.py", source)
 
-    def test_helper_hashes_are_frozen_but_live_latch_is_pending(self) -> None:
+    def test_helper_hashes_are_frozen_and_live_latch_is_reviewed(self) -> None:
         source = SCRIPT.read_text()
         capture = SCRIPT.with_name("capture-embedded-mtp-four-service-realistic.py")
         gates = SCRIPT.with_name("embedded_mtp_four_service_realistic_gates.py")
@@ -238,7 +238,7 @@ class FourServiceWrapperTests(unittest.TestCase):
         self.assertEqual(
             expected_gates.group(1), hashlib.sha256(gates.read_bytes()).hexdigest()
         )
-        self.assertIn('LIVE_ENABLE_STATE="PENDING"', source)
+        self.assertIn('LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"', source)
 
 
 if __name__ == "__main__":

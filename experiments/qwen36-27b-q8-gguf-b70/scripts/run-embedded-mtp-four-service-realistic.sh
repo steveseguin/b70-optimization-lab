@@ -5,7 +5,7 @@ set -euo pipefail
 # Activating this file requires a separate review after the helper hashes below
 # are frozen.  With no arguments, PENDING is checked before ROOT resolution or
 # any external command.
-LIVE_ENABLE_STATE="PENDING"
+LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"
 LIVE_ENABLE_REQUIRED="REVIEWED_AND_PINNED"
 LIVE_ACK_REQUIRED="I_ACCEPT_FOUR_B70_EMBEDDED_MTP_REALISTIC_SCALING_GATE"
 EXPECTED_CAPTURE_SHA256="d51ad8957cf46a703fb12e8de493dafd767d49d32ef07306a995e299496d2547"
