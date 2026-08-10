@@ -200,5 +200,121 @@ VDR2 is now officially banked at short `-ub 1024`, middle `-ub 128`, and
 near-32K `-ub 1024`. D100/D511 improves by `8.2%--10.0%` across those bands
 while PP and TTFT remain neutral. Conventional D511 remains below the
 immediate `18 tok/s` target everywhere: `16.5889072472`, `15.0772808986`, and
-`13.6861593539 tok/s`. The current next gate is a balanced VDR1 screen against
-the banked VDR2 profile.
+`13.6861593539 tok/s`. This advanced to a balanced VDR1 screen against the
+banked VDR2 profile.
+
+## VDR1 versus VDR2 exact negative
+
+The balanced two-wave, same-card short screen used these roots:
+
+- Wave 1:
+  `/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr1-vdr2-short-crossover-wave1-20260810T061123.825274887Z`;
+- Wave 2:
+  `/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr1-vdr2-short-crossover-wave2-20260810T061552.715532233Z`.
+
+The candidate build is bound by:
+
+- VDR1 runtime-manifest SHA-256:
+  `827f8cd08bacd8a7039114782701b339a8e92d6a7bd0ece5616bb383c05375cc`;
+- VDR1 `libggml-sycl.so.0.18.1` SHA-256:
+  `a30a78b2849af509bca70be92bfff8f0b322c84a5e9206ed093bbec1c1d7c109`;
+- 36-entry VDR1 evidence-ledger SHA-256:
+  `45b2f5809e6630708b198f112ca950a77f8ee28e18b5d3a2ca888cf6a9d47174`.
+
+The evidence ledger is
+`/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr-screen-build-evidence-20260810/evidence-files-vdr1.sha256`.
+Its VDR1/VDR2 bundle-diff report SHA-256 is
+`2ad035f2596afc05a7c9633aedb0a8854d3ced752ef8324dfe79c81171ebd4e3`;
+it records exactly one changed regular file,
+`libggml-sycl.so.0.18.1`. The VDR1 manifest declares
+`GGML_SYCL_REORDER_Q8_0_VDR_MMVQ=1`; VDR2 remains the previously bound
+one-file hybrid with DSO SHA-256
+`eff26ef9562196d454fdc54cca7680304e6ce37e9a9d92ef3b514e8c34f3d0a0`.
+
+All lane manifests contain and verify 74/74 entries:
+
+| Wave | GPU | Profile | Artifact-manifest SHA-256 |
+|---:|---:|---|---|
+| 1 | 0 | VDR2 | `47918c942339c9d7e8ec2da8c4fad2d2334363e92cce4d28092198d7bac51f4a` |
+| 1 | 1 | VDR1 | `95aeab4df815324b76ccef5e48150e449e7bfbba4f4e2782269e4112655f2eb3` |
+| 1 | 2 | VDR2 | `bc3324c809fc3dd6fe534937efc09ec70bc3098ac197ad6cd2502491970725e6` |
+| 1 | 3 | VDR1 | `5cd9bb7c27b57aff11512a307727b28000891391d7aa8a01d496a900e9b17908` |
+| 2 | 0 | VDR1 | `188ccdde3f4b6ae8373facb63c59684e6cf33fbafea12cbad0f21ee137027781` |
+| 2 | 1 | VDR2 | `2bddb53a3e5f1ad6fcbfc921ade8c8763432a007226a2700595bef107d08f2b1` |
+| 2 | 2 | VDR1 | `1779f88acbe86b14a1af5303c2eff6428980e0d944bfadcfe3d9af97b2562cec` |
+| 2 | 3 | VDR2 | `a13f9c544d6ddb4dbe0d7d014590a074d62deba868372da7f79a234521f7af47` |
+
+Every lane is `PASS`, `PASS_ORACLE_EXACT`, cache-zero, `65/65` offloaded,
+intrinsic/result/post-canary exact, runtime-bound, artifact-verified, and clean.
+All services stopped without a forced kill or survivor, all ports closed,
+runtime identity and model stat stayed unchanged, final VRAM was `43--46 MiB`,
+and the device/server fault scans were empty. The concurrent screen remains
+`parallel-functional-screen`, `performance_promotable=false`.
+
+Arm means were:
+
+| Arm | D100 tok/s | D511 tok/s | legacy D512 tok/s |
+|---|---:|---:|---:|
+| VDR2 | `16.5460981454` | `16.5373219825` | `16.5694070839` |
+| VDR1 | `14.3610362758` | `14.3201198151` | `14.3479685762` |
+
+Median same-card VDR1/VDR2 ratios were `0.8688584319` D100
+(`-13.1142%`), `0.8665527551` D511 (`-13.3447%`), and `0.8665552968`
+legacy D512. No card favored VDR1 on any decode view (`0/4`). Median
+same-card PP `1.0003339413x` and TTFT `0.9995691707x` were neutral.
+
+Reject and close VDR1; retain the officially banked VDR2 profile. No isolated
+VDR1 promotion run is warranted. This advanced to all-VDR2 four-service
+validation.
+
+## All-VDR2 four-service validation
+
+The four-service short screen used:
+
+`/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr2-four-service-short-20260810T062146.396585101Z`
+
+A direct monitor snapshot at `2026-08-10T06:23:27Z` observed all four
+listeners and task-0 decode active concurrently; server-log mtimes were within
+`2.8 s`. This is direct overlap evidence, not an inference from aggregate
+throughput alone.
+
+All lane manifests contain and verify 74/74 entries:
+
+| GPU | Artifact-manifest SHA-256 |
+|---:|---|
+| 0 | `72c1bed9babfd399896838591b51b23d2489fc0ffab9f1a89b78183bde559642` |
+| 1 | `105759e5f72384dabd6697c2bdb45b801b22b456d5ced26b61127f8f7ad85e53` |
+| 2 | `22840535f6bc701d4c5fc8c3a947a14643a11668ce6432665c08ede41834c852` |
+| 3 | `9e44c68b85aa50aeefc086079d808e753a03f46e397f21b9d5061e3676bb699d` |
+
+Every lane is `PASS`, `PASS_ORACLE_EXACT`, cache-zero, `65/65` offloaded,
+intrinsic/result/post-canary exact, runtime-bound, artifact-verified, and clean.
+All services stopped without a forced kill or survivor, all ports closed,
+runtime identity and model stat stayed unchanged, final VRAM was `46--48 MiB`,
+and the device/server fault scans were empty.
+
+Per-lane decode was:
+
+| GPU | D100 tok/s | D511 tok/s | legacy D512 tok/s |
+|---:|---:|---:|---:|
+| 0 | `16.5623129384` | `16.5635298808` | `16.5957144632` |
+| 1 | `16.5238915700` | `16.5187247956` | `16.5508409891` |
+| 2 | `16.5730766158` | `16.5781861419` | `16.6103604139` |
+| 3 | `16.5345574317` | `16.5370418915` | `16.5691765823` |
+
+Against four times the official isolated VDR2 short packet:
+
+| Metric | Four-service sum | Fraction of ideal 4x isolated |
+|---|---:|---:|
+| D100 | `66.1938385560 tok/s` | `0.997667x` (`99.7667%`) |
+| D511 | `66.1974827097 tok/s` | `0.997617x` (`99.7617%`) |
+| legacy D512 | `66.3260924486 tok/s` | `0.997617x` (`99.7617%`) |
+| PP | `2414.1843431880 tok/s` | `0.995843x` (`99.5843%`) |
+
+This establishes essentially linear scaling across four independent VDR2
+services under direct overlap. The packet remains a
+`parallel-functional-screen`, `performance_promotable=false`; it is not an
+official isolated score and does not measure same-server concurrency.
+
+The four-service validation goal is complete. With VDR1 rejected and VDR2
+retained, structural decode profiling is the current next gate.

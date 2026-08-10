@@ -23,7 +23,10 @@ VDR4 with exact output. Its official isolated GPU-0 follow-up passes and banks
 the scoped short `-ub 1024` decode win. Official middle `-ub 128` and near-32K
 `-ub 1024` guards also pass, banking an `8.2%--10.0%` VDR2 decode lead across
 all three bands with neutral PP/TTFT. Conventional D511 remains below
-`18 tok/s`; a balanced VDR1 screen is next.
+`18 tok/s`. A balanced four-card VDR1 screen then lost `13.1%--13.3%` decode
+on every card with neutral PP/TTFT, so VDR1 is closed. All-VDR2 four-service
+validation then passed with `99.76%` of ideal four-times-isolated decode and
+direct overlap. Structural decode profiling is next.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -162,6 +165,21 @@ Validated results under the correctness-qualified default
   `0.99934x` and `1.00062x`. All three official VDR2 bands retain cache-zero,
   `65/65` offload, exact canaries, and clean teardown, but remain below the
   immediate `18 tok/s` D511 target;
+- the balanced two-wave, same-card VDR1/VDR2 short screen passed all eight
+  exact-output, canary, cache-zero, full-offload, runtime-binding, artifact,
+  and cleanup gates. Median same-card VDR1/VDR2 ratios were `0.868858` D100
+  (`-13.1142%`), `0.866553` D511 (`-13.3447%`), and `0.866555` legacy D512;
+  zero of four cards favored VDR1. PP `1.000334x` and TTFT `0.999569x` were
+  neutral. This is `parallel-functional-screen`,
+  `performance_promotable=false` evidence: reject and close VDR1, retain VDR2;
+- the all-VDR2 four-service short screen directly overlapped all four listeners
+  and task-0 decode. Every lane passed exactness, canary, cache-zero,
+  full-offload, runtime-binding, artifact, and cleanup gates. Aggregate D100
+  was `66.193839 tok/s` (`99.7667%` of ideal four-times isolated), D511
+  `66.197483 tok/s` (`99.7617%`), legacy D512 `66.326092 tok/s` (`99.7617%`),
+  and PP `2414.184 tok/s` (`99.5843%`). This establishes essentially linear
+  scaling across four independent services, but remains a nonpromotable screen
+  and makes no same-server concurrency claim;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -209,8 +227,10 @@ do not integrate `UBATCH_SIZE=1024` as a broad default. The VDR2 diagnostic
 screen passes on all four cards and its official isolated GPU-0 short follow-up
 banks the scoped roughly 10% decode win. The official middle `-ub 128` and
 near-32K `-ub 1024` guards also pass, banking VDR2 across all three bands with
-an `8.2%--10.0%` decode lead and neutral PP/TTFT. The next bounded speed gate
-is a balanced VDR1 screen, not another VDR2 reproduction. See
+an `8.2%--10.0%` decode lead and neutral PP/TTFT. The balanced VDR1 screen is
+an exact `13.1%--13.3%` decode loss and closes that lane. The directly
+overlapped all-VDR2 four-service screen retains `99.76%` of ideal decode and
+completes service validation. Structural decode profiling is now next. See
 [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md).
 
 The validation sequence remains useful for future runtimes:

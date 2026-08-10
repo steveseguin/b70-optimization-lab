@@ -16,10 +16,9 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-10 official isolated VDR2 GPU-0 near-32K packet.
-GPU 0 returned from 43 to 43 MiB, the three nonselected GPUs remained idle,
-and the port closed without a device or server fault. Recheck immediately
-before any operational change.
+running after the 2026-08-10 all-VDR2 four-service short screen. All four lanes
+closed without a survivor, listener, device fault, or server fault and returned
+to 46--48 MiB. Recheck immediately before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -110,9 +109,9 @@ matched the old GPU-1 oracle. This same-card control attributes the divergence
 to the ubatch treatment rather than card or epoch. Do not make `-ub 1024` a
 broad default or spend another gate on broad ubatch integration.
 
-The subsequent balanced two-wave, same-card four-B70 short full-512 screen is
-the current decode result. Changing only reordered-Q8 MMVQ VDR4 to VDR2
-improved D100 by `1.09849x--1.10087x` and D511 by
+The subsequent balanced two-wave, same-card four-B70 short full-512 screen
+established the current decode direction. Changing only reordered-Q8 MMVQ VDR4
+to VDR2 improved D100 by `1.09849x--1.10087x` and D511 by
 `1.09846x--1.10081x` on every card; same-card prompt-processing and TTFT ratios
 remained within `0.99551--1.00296` and `0.99676--1.00473`, respectively. All
 eight lanes passed exact oracle, intrinsic/result/post-canary, cache-zero,
@@ -140,8 +139,31 @@ result/post-canary exact, cache-zero, `65/65` offloaded, and clean. VDR2 is
 therefore banked at short `-ub 1024`, middle `-ub 128`, and near-32K
 `-ub 1024`, with an `8.2%--10.0%` decode improvement and neutral PP/TTFT.
 Conventional D511 remains below the immediate `18 tok/s` target in all three
-bands. The current next gate is a balanced VDR1 screen against the banked VDR2
-profile.
+bands. This advanced to a balanced VDR1 screen against the banked VDR2 profile.
+
+That balanced two-wave, same-card VDR1/VDR2 short screen is now a decisive
+exact negative for VDR1. All eight lanes passed oracle/intrinsic/result/
+post-canary exactness, cache-zero, `65/65` offload, runtime binding, artifact,
+and cleanup gates. VDR2 arm means were D100 `16.546098`, D511 `16.537322`, and
+legacy D512 `16.569407 tok/s`; VDR1 means were `14.361036`, `14.320120`, and
+`14.347969 tok/s`. Median same-card VDR1/VDR2 ratios were `0.868858` D100
+(`-13.1142%`), `0.866553` D511 (`-13.3447%`), and `0.866555` legacy D512,
+with zero positive decode comparisons on four cards. PP `1.000334x` and TTFT
+`0.999569x` remained neutral. Reject and close VDR1; retain VDR2. This advanced
+to all-VDR2 four-service validation.
+
+That four-service goal is now complete. A direct snapshot at
+`2026-08-10T06:23:27Z` found all four listeners and task-0 decode active
+concurrently, with server-log mtimes within `2.8 s`. All four VDR2 lanes passed
+full-512 oracle/intrinsic/result/post-canary exactness, cache-zero, `65/65`
+offload, runtime binding, artifact, and cleanup gates. Aggregate D100 was
+`66.193839 tok/s` (`99.7667%` of ideal four-times isolated), D511
+`66.197483 tok/s` (`99.7617%`), legacy D512 `66.326092 tok/s` (`99.7617%`),
+and PP `2414.184 tok/s` (`99.5843%`). This demonstrates essentially linear
+scaling across four independent services. It remains a
+`parallel-functional-screen`, `performance_promotable=false` result and is not
+a same-server concurrency claim. With VDR1 closed and four-service VDR2
+validated, the current next gate is structural decode profiling.
 See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md),
 the [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md),
 and the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md).
@@ -1765,9 +1787,13 @@ loaded service.
    banks the scoped short decode win. The official middle `-ub 128` and
    near-32K `-ub 1024` guards also pass exact, giving VDR2 an official
    `8.2%--10.0%` decode lead across all three bands with neutral PP/TTFT.
-   Conventional D511 remains below `18 tok/s` throughout; run the balanced
-   VDR1 screen next. Do not promote the concurrent screen or rerun the banked
-   VDR2 packets. Directly measure a
+   Conventional D511 remains below `18 tok/s` throughout. The balanced VDR1
+   screen then lost `13.1%--13.3%` decode on every card with neutral PP/TTFT;
+   reject and close VDR1. The directly overlapped all-VDR2 four-service screen
+   then retained `99.76%` of ideal four-times-isolated decode and passed every
+   exactness/lifecycle gate. Four-service validation is complete; use
+   structural decode profiling to select the next candidate. Do not promote
+   either concurrent screen or rerun the banked VDR2 packets. Directly measure a
    synchronized natural-stop pair as a separate relevance gate. Add a held-out
    prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only

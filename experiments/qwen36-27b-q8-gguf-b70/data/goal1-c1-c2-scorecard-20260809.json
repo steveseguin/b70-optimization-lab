@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_decode_win_banked_vdr1_screen_next",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -437,7 +437,7 @@
     "promotion_status": "official_isolated_short_and_near32k_prompt_ttft_banked_middle_exact_rejected_no_broad_default",
     "causal_conclusion": "On GPU 0 in the current epoch, ubatch 128 exactly reproduces both old GPU-1 middle oracle rows while ubatch 1024 diverges on row 2; the controlled difference is attributable to ubatch treatment rather than card or epoch.",
     "broad_default": false,
-    "subsequent_speed_gate": "vdr2_official_cross_band_pass_vdr1_screen_next",
+    "subsequent_speed_gate": "vdr1_closed_vdr2_four_service_validated_structural_profiling_next",
     "full_512_decode_target_evaluated": true,
     "full_512_decode_target_passed": false
   },
@@ -821,9 +821,273 @@
       "immediate_decode_1_512_passed_any": false,
       "immediate_decode_1_512_passed_all": false
     },
-    "decision": "bank_official_vdr2_cross_band_decode_win_vdr1_balanced_screen_next",
+    "decision": "bank_official_vdr2_cross_band_decode_win_vdr1_rejected_closed",
     "diagnostic_screen_official_performance_claim": false,
-    "next_gate": "balanced_vdr1_screen_against_banked_vdr2"
+    "next_gate": "structural_decode_profiling"
+  },
+  "c1_short_vdr1_vdr2_screen": {
+    "evidence_class": "parallel-functional-screen",
+    "evidence_valid": true,
+    "performance_promotable": false,
+    "design": "two_wave_same_card_vdr1_vdr2_crossover_balanced_across_four_gpus",
+    "implementation": {
+      "compile_knob_patch_sha256": "9b211cd6d4b2648cd195decfbc865e0cdf7130d76d428c36d3384e883e1f05a4",
+      "vdr1": {
+        "runtime_profile": "q8-vdr1-candidate",
+        "declared_q8_reorder_vdr_mmvq": 1,
+        "runtime_manifest": "experiments/qwen36-27b-q8-gguf-b70/runtime-manifest-q8-vdr1-candidate.json",
+        "runtime_manifest_sha256": "827f8cd08bacd8a7039114782701b339a8e92d6a7bd0ece5616bb383c05375cc",
+        "libggml_sycl_sha256": "a30a78b2849af509bca70be92bfff8f0b322c84a5e9206ed093bbec1c1d7c109"
+      },
+      "vdr2": {
+        "runtime_profile": "q8-vdr2-candidate",
+        "declared_q8_reorder_vdr_mmvq": 2,
+        "runtime_manifest": "experiments/qwen36-27b-q8-gguf-b70/runtime-manifest-q8-vdr2-candidate.json",
+        "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+        "libggml_sycl_sha256": "eff26ef9562196d454fdc54cca7680304e6ce37e9a9d92ef3b514e8c34f3d0a0"
+      },
+      "build_evidence_ledger": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr-screen-build-evidence-20260810/evidence-files-vdr1.sha256",
+      "build_evidence_entries": 36,
+      "build_evidence_ledger_sha256": "45b2f5809e6630708b198f112ca950a77f8ee28e18b5d3a2ca888cf6a9d47174",
+      "source_bundle_diff_report": "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr-screen-build-evidence-20260810/runtime-reports/vdr1-vdr2-diff.txt",
+      "source_bundle_diff_report_sha256": "2ad035f2596afc05a7c9633aedb0a8854d3ced752ef8324dfe79c81171ebd4e3",
+      "changed_regular_file_count": 1,
+      "changed_regular_file": "libggml-sycl.so.0.18.1"
+    },
+    "waves": [
+      {
+        "wave": 1,
+        "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr1-vdr2-short-crossover-wave1-20260810T061123.825274887Z",
+        "lanes": [
+          {
+            "gpu": 0,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "47918c942339c9d7e8ec2da8c4fad2d2334363e92cce4d28092198d7bac51f4a"
+          },
+          {
+            "gpu": 1,
+            "runtime_profile": "q8-vdr1-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "95aeab4df815324b76ccef5e48150e449e7bfbba4f4e2782269e4112655f2eb3"
+          },
+          {
+            "gpu": 2,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "bc3324c809fc3dd6fe534937efc09ec70bc3098ac197ad6cd2502491970725e6"
+          },
+          {
+            "gpu": 3,
+            "runtime_profile": "q8-vdr1-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "5cd9bb7c27b57aff11512a307727b28000891391d7aa8a01d496a900e9b17908"
+          }
+        ]
+      },
+      {
+        "wave": 2,
+        "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr1-vdr2-short-crossover-wave2-20260810T061552.715532233Z",
+        "lanes": [
+          {
+            "gpu": 0,
+            "runtime_profile": "q8-vdr1-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "188ccdde3f4b6ae8373facb63c59684e6cf33fbafea12cbad0f21ee137027781"
+          },
+          {
+            "gpu": 1,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "2bddb53a3e5f1ad6fcbfc921ade8c8763432a007226a2700595bef107d08f2b1"
+          },
+          {
+            "gpu": 2,
+            "runtime_profile": "q8-vdr1-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "1779f88acbe86b14a1af5303c2eff6428980e0d944bfadcfe3d9af97b2562cec"
+          },
+          {
+            "gpu": 3,
+            "runtime_profile": "q8-vdr2-candidate",
+            "artifact_manifest_entries": 74,
+            "artifact_manifest_sha256": "a13f9c544d6ddb4dbe0d7d014590a074d62deba868372da7f79a234521f7af47"
+          }
+        ]
+      }
+    ],
+    "quality": {
+      "lanes_passed": 8,
+      "artifact_manifest_entries_per_lane": 74,
+      "oracle_status_all": "PASS_ORACLE_EXACT",
+      "rows_per_lane": 2,
+      "completion_tokens_per_row": 512,
+      "intrinsic_gate_passed_all": true,
+      "exact_result_gate_passed_all": true,
+      "post_512_canary_passed_all": true,
+      "cache_n_all_zero": true,
+      "full_offload_all": true,
+      "runtime_profile_binding_passed_all": true,
+      "artifact_manifests_verified_all": true,
+      "runtime_bundle_unchanged_all": true,
+      "model_stat_unchanged_all": true,
+      "clean_teardown_all": true,
+      "device_server_faults_all_empty": true
+    },
+    "arm_means": {
+      "vdr2": {
+        "decode_1_100_tok_s": 16.546098145424985,
+        "decode_1_512_tok_s": 16.537321982470885,
+        "full_512_after_ttft_legacy_tok_s": 16.569407083937506
+      },
+      "vdr1": {
+        "decode_1_100_tok_s": 14.361036275844956,
+        "decode_1_512_tok_s": 14.320119815091774,
+        "full_512_after_ttft_legacy_tok_s": 14.347968576222591
+      }
+    },
+    "same_card_effect_vdr1_over_vdr2": {
+      "gpu0": {
+        "prompt_processing_ratio": 0.9953442792628311,
+        "ttft_ratio": 1.0049532562405978,
+        "decode_1_100_ratio": 0.868619495008046,
+        "decode_1_512_ratio": 0.8659036074123232,
+        "full_512_after_ttft_legacy_ratio": 0.8659069499764104
+      },
+      "gpu1": {
+        "prompt_processing_ratio": 1.0024574353496765,
+        "ttft_ratio": 0.9974904553598047,
+        "decode_1_100_ratio": 0.861199448025581,
+        "decode_1_512_ratio": 0.8598026543634603,
+        "full_512_after_ttft_legacy_ratio": 0.8598047042269958
+      },
+      "gpu2": {
+        "prompt_processing_ratio": 0.99821044733146,
+        "ttft_ratio": 1.001647886026854,
+        "decode_1_100_ratio": 0.8728402995287061,
+        "decode_1_512_ratio": 0.8707853608574586,
+        "full_512_after_ttft_legacy_ratio": 0.870794043513574
+      },
+      "gpu3": {
+        "prompt_processing_ratio": 1.0025080283369505,
+        "ttft_ratio": 0.9973459954579431,
+        "decode_1_100_ratio": 0.8690973688027415,
+        "decode_1_512_ratio": 0.8672019028042339,
+        "full_512_after_ttft_legacy_ratio": 0.8672036435874158
+      },
+      "median": {
+        "prompt_processing_ratio": 1.0003339413405683,
+        "ttft_ratio": 0.9995691706933294,
+        "decode_1_100_ratio": 0.8688584319053938,
+        "decode_1_100_percent_change": -13.11415680946062,
+        "decode_1_512_ratio": 0.8665527551082786,
+        "decode_1_512_percent_change": -13.344724489172144,
+        "full_512_after_ttft_legacy_ratio": 0.866555296781913
+      },
+      "positive_decode_cards": 0,
+      "cards_compared": 4,
+      "prompt_processing_interpretation": "neutral",
+      "ttft_interpretation": "neutral",
+      "decode_interpretation": "decisive_vdr1_regression_on_every_card"
+    },
+    "decision": "reject_and_close_vdr1_retain_vdr2",
+    "official_performance_claim": false,
+    "next_gate": "structural_decode_profiling"
+  },
+  "vdr2_four_service_short_screen": {
+    "run_root": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/vdr2-four-service-short-20260810T062146.396585101Z",
+    "evidence_class": "parallel-functional-screen",
+    "evidence_valid": true,
+    "performance_promotable": false,
+    "runtime_profile": "q8-vdr2-candidate",
+    "declared_q8_reorder_vdr_mmvq": 2,
+    "service_topology": "four_independent_one_gpu_services",
+    "same_server_concurrency": false,
+    "direct_overlap_snapshot": {
+      "observed_at_utc": "2026-08-10T06:23:27Z",
+      "listeners_active": 4,
+      "services_with_task0_decode_active": 4,
+      "server_log_mtime_span_max_s": 2.8,
+      "passed": true
+    },
+    "lanes": [
+      {
+        "gpu": 0,
+        "artifact_manifest_entries": 74,
+        "artifact_manifest_sha256": "72c1bed9babfd399896838591b51b23d2489fc0ffab9f1a89b78183bde559642",
+        "prompt_processing_tok_s": 603.0588731428959,
+        "decode_1_100_tok_s": 16.562312938416895,
+        "decode_1_512_tok_s": 16.56352988076238,
+        "full_512_after_ttft_legacy_tok_s": 16.59571446322599
+      },
+      {
+        "gpu": 1,
+        "artifact_manifest_entries": 74,
+        "artifact_manifest_sha256": "105759e5f72384dabd6697c2bdb45b801b22b456d5ced26b61127f8f7ad85e53",
+        "prompt_processing_tok_s": 594.5893761551617,
+        "decode_1_100_tok_s": 16.52389157001332,
+        "decode_1_512_tok_s": 16.51872479561709,
+        "full_512_after_ttft_legacy_tok_s": 16.5508409891281
+      },
+      {
+        "gpu": 2,
+        "artifact_manifest_entries": 74,
+        "artifact_manifest_sha256": "22840535f6bc701d4c5fc8c3a947a14643a11668ce6432665c08ede41834c852",
+        "prompt_processing_tok_s": 610.5096088161056,
+        "decode_1_100_tok_s": 16.57307661581096,
+        "decode_1_512_tok_s": 16.57818614188973,
+        "full_512_after_ttft_legacy_tok_s": 16.610360413886518
+      },
+      {
+        "gpu": 3,
+        "artifact_manifest_entries": 74,
+        "artifact_manifest_sha256": "9e44c68b85aa50aeefc086079d808e753a03f46e397f21b9d5061e3676bb699d",
+        "prompt_processing_tok_s": 606.0264850738508,
+        "decode_1_100_tok_s": 16.534557431716983,
+        "decode_1_512_tok_s": 16.537041891479742,
+        "full_512_after_ttft_legacy_tok_s": 16.56917658234078
+      }
+    ],
+    "quality": {
+      "lanes_passed": 4,
+      "artifact_manifest_entries_per_lane": 74,
+      "oracle_status_all": "PASS_ORACLE_EXACT",
+      "rows_per_lane": 2,
+      "completion_tokens_per_row": 512,
+      "intrinsic_gate_passed_all": true,
+      "exact_result_gate_passed_all": true,
+      "post_512_canary_passed_all": true,
+      "cache_n_all_zero": true,
+      "full_offload_all": true,
+      "runtime_profile_binding_passed_all": true,
+      "artifact_manifests_verified_all": true,
+      "runtime_bundle_unchanged_all": true,
+      "model_stat_unchanged_all": true,
+      "clean_teardown_all": true,
+      "final_vram_mib": [
+        46,
+        46,
+        46,
+        48
+      ],
+      "device_server_faults_all_empty": true
+    },
+    "aggregate_scaling": {
+      "isolated_reference_scorecard_ref": "c1_short_vdr2_vdr4_screen.official_isolated_vdr2_short",
+      "decode_1_100_sum_tok_s": 66.19383855595817,
+      "decode_1_100_fraction_of_ideal_4x": 0.9976671476591591,
+      "decode_1_512_sum_tok_s": 66.19748270974894,
+      "decode_1_512_fraction_of_ideal_4x": 0.9976166863071376,
+      "full_512_after_ttft_legacy_sum_tok_s": 66.32609244858139,
+      "full_512_after_ttft_legacy_fraction_of_ideal_4x": 0.9976173716573207,
+      "prompt_processing_sum_tok_s": 2414.1843431880143,
+      "prompt_processing_fraction_of_ideal_4x": 0.9958431780464602,
+      "interpretation": "essentially_linear_four_independent_service_scaling"
+    },
+    "official_performance_claim": false,
+    "claim_scope": "directly_overlapped_four_independent_service_functional_scaling_not_same_server_concurrency",
+    "decision": "four_service_validation_complete_retain_vdr2",
+    "next_gate": "structural_decode_profiling"
   },
   "c2_short": {
     "configuration": {
@@ -983,5 +1247,5 @@
     "official_performance_result": null,
     "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
   },
-  "next_gate": "The balanced four-card VDR2/VDR4 short full-512 crossover remains diagnostic and performance_promotable=false. Official isolated GPU-0 VDR2 packets now pass exact-output, canary, runtime-binding, and lifecycle gates at short ub1024, middle ub128, and near32k ub1024. D100/D511 improves by 8.2%--10.0% across the three bands while prompt processing and TTFT remain neutral. Conventional D511 remains below the immediate 18 tok/s target in every band. Bank the scoped VDR2 cross-band win and run a balanced VDR1 screen next; do not rerun the banked VDR2 packets. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
+  "next_gate": "Official isolated GPU-0 VDR2 packets pass at short ub1024, middle ub128, and near32k ub1024, banking an 8.2%--10.0% D100/D511 gain with neutral prompt processing and TTFT. The balanced four-card VDR1 screen loses 13.1%--13.3% decode on every card; VDR1 is rejected and closed. The directly overlapped all-VDR2 four-service screen passes every exactness and lifecycle gate and retains 99.76% of ideal four-times-isolated decode, completing the four-service validation goal. It remains performance_promotable=false and is not same-server concurrency. Conventional VDR2 D511 remains below the immediate 18 tok/s target in every band. Run structural decode profiling next. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
 }

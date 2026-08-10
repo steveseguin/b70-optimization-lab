@@ -168,8 +168,8 @@ the divergence to the ubatch treatment rather than card or epoch. Therefore
 `-ub 1024` is not a broad default; no further ubatch integration gate is
 pending.
 
-The subsequent balanced two-wave, same-card VDR2/VDR4 short full-512 screen is
-the current decode result. VDR2 improved D100 by
+The subsequent balanced two-wave, same-card VDR2/VDR4 short full-512 screen
+established the current decode direction. VDR2 improved D100 by
 `1.09849x--1.10087x` and D511 by `1.09846x--1.10081x` on every B70, while
 same-card PP and TTFT ratios stayed within `0.99551--1.00296` and
 `0.99676--1.00473`. All eight lanes passed exact oracle,
@@ -192,10 +192,35 @@ neutral in both bands. Both packets are official/promotable, full-512 exact,
 cache-zero, fully offloaded, post-canary exact, and clean. Bank VDR2 at short
 `-ub 1024`, middle `-ub 128`, and near-32K `-ub 1024`, with an
 `8.2%--10.0%` decode improvement. D511 remains below `18 tok/s` throughout;
-the next gate is a balanced VDR1 screen against banked VDR2. See
+this advanced to a balanced VDR1 screen against banked VDR2. See
 `../experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json`
 and
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md`.
+
+That balanced two-wave, same-card VDR1/VDR2 short screen is now a durable
+exact negative. All eight lanes passed oracle/intrinsic/result/post-canary,
+cache-zero, full-offload, runtime-binding, artifact-manifest, and cleanup
+gates. VDR2 arm means were D100 `16.546098`, D511 `16.537322`, and legacy D512
+`16.569407 tok/s`; VDR1 means were `14.361036`, `14.320120`, and
+`14.347969 tok/s`. Median same-card VDR1/VDR2 ratios were `0.868858` D100
+(`-13.1142%`), `0.866553` D511 (`-13.3447%`), and `0.866555` legacy D512;
+zero of four cards favored VDR1 on any decode view. PP `1.000334x` and TTFT
+`0.999569x` were neutral. The screen remains
+`parallel-functional-screen`, `performance_promotable=false`; reject and
+close VDR1 and retain VDR2. The scorecard and VDR chronology above bind the
+complete two-wave packet.
+
+The subsequent all-VDR2 four-service short screen completes the service-scaling
+goal. A direct `2026-08-10T06:23:27Z` snapshot observed all four listeners and
+task-0 decode concurrently, with server-log mtimes within `2.8 s`. All four
+lanes passed full-512 exactness, canary, cache-zero, full-offload,
+runtime-binding, artifact, and cleanup gates. Aggregate D100 was
+`66.193839 tok/s` (`99.7667%` of ideal four-times isolated), D511
+`66.197483 tok/s` (`99.7617%`), legacy D512 `66.326092 tok/s` (`99.7617%`),
+and PP `2414.184 tok/s` (`99.5843%`). This is essentially linear scaling for
+four independent services, not same-server concurrency. It remains
+`parallel-functional-screen`, `performance_promotable=false`. Four-service
+validation is complete; structural decode profiling is the current next gate.
 
 ## Historical Qwen3.6 27B Optimization Lane
 
