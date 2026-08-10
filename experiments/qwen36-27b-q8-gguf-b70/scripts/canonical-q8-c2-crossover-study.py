@@ -1005,9 +1005,8 @@ def command_has_exact_option(argv: list[str], option: str, expected: str) -> boo
 
 
 def canonical_server_argv(argv: list[str], port: int) -> bool:
-    gpu_index = port - 19720
     if (
-        gpu_index not in range(4)
+        port not in range(19720, 19724)
         or len(argv) < 3
         or re.fullmatch(r"/proc/self/fd/[1-9][0-9]*", argv[2]) is None
     ):
@@ -1023,7 +1022,7 @@ def canonical_server_argv(argv: list[str], port: int) -> bool:
         "--port",
         str(port),
         "-dev",
-        f"SYCL{gpu_index}",
+        "SYCL0",
         "-ngl",
         "99",
         "-c",

@@ -20,7 +20,7 @@ from typing import Any
 SCRIPT = Path(__file__).with_name("canonical-q8-c2-crossover-study.py")
 RUNNER = Path(__file__).with_name("run-canonical-q8-c2-crossover-four-gpu-wave.sh")
 FROZEN_RUNNER_SHA256 = (
-    "22863f08d545b675a18aa90ebf0097ffdbfcf792247c997aa25e521803cf176a"
+    "12ea06c970737870f97bb1b3b5593fa688e3cba1949769f1e28c8c3092d6ad35"
 )
 
 
@@ -69,7 +69,6 @@ def process_line(pid: str = "123") -> str:
 
 
 def canonical_argv(port: int = 19720) -> list[str]:
-    gpu = port - 19720
     return [
         "/mnt/fast-ai/runtime/llama.cpp-15586e2d-q8-c2-canonical-109eee6f-hybrid/llama-server",
         "-m",
@@ -81,7 +80,7 @@ def canonical_argv(port: int = 19720) -> list[str]:
         "--port",
         str(port),
         "-dev",
-        f"SYCL{gpu}",
+        "SYCL0",
         "-ngl",
         "99",
         "-c",
@@ -937,6 +936,20 @@ class LiveBindingTests(unittest.TestCase):
     def test_exclusive_listener_and_canonical_argv_pass(self) -> None:
         fields, _ = STUDY.validate_retained_live_binding(self.binding(), 123, 19720)
         self.assertTrue(all(fields.values()), fields)
+
+    def test_affinity_local_sycl0_is_required_on_all_four_ports(self) -> None:
+        for port in range(19720, 19724):
+            with self.subTest(port=port, device="SYCL0"):
+                argv = canonical_argv(port)
+                self.assertTrue(STUDY.canonical_server_argv(argv, port))
+            for device in ("SYCL1", "SYCL2", "SYCL3"):
+                with self.subTest(port=port, device=device):
+                    argv = canonical_argv(port)
+                    argv[argv.index("-dev") + 1] = device
+                    self.assertFalse(STUDY.canonical_server_argv(argv, port))
+        for port in (19719, 19724):
+            with self.subTest(port=port, device="SYCL0"):
+                self.assertFalse(STUDY.canonical_server_argv(canonical_argv(port), port))
 
     def test_extra_unowned_listener_and_duplicate_conflicting_option_fail(self) -> None:
         binding = self.binding()
