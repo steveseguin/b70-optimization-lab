@@ -15,18 +15,21 @@ case "$RUNTIME_PROFILE" in
     RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256="ebab7496fa6665c3f7e8e3dcfd8e18945b4cc5e365a009f5bbffd7c7e878ede6"
     RUNTIME_PROFILE_EXPECTED_Q8_VDR=4
     RUNTIME_PROFILE_DIAGNOSTIC=0
+    RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE=0
     ;;
   q8-vdr4-control)
     RUNTIME_PROFILE_EXPECTED_MANIFEST="$VDR4_RUNTIME_MANIFEST"
     RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256="d127dbaaf30e014cbae0dc59a3c0b0f61f329eabadffb74ce40e01264bee79cc"
     RUNTIME_PROFILE_EXPECTED_Q8_VDR=4
     RUNTIME_PROFILE_DIAGNOSTIC=1
+    RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE=0
     ;;
   q8-vdr2-candidate)
     RUNTIME_PROFILE_EXPECTED_MANIFEST="$VDR2_RUNTIME_MANIFEST"
     RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256="4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49"
     RUNTIME_PROFILE_EXPECTED_Q8_VDR=2
     RUNTIME_PROFILE_DIAGNOSTIC=1
+    RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE=1
     ;;
   *)
     echo "invalid RUNTIME_PROFILE=$RUNTIME_PROFILE; expected canonical-baseline, q8-vdr4-control, or q8-vdr2-candidate" >&2
@@ -144,14 +147,28 @@ if (( RUNTIME_PROFILE_DIAGNOSTIC == 1 )); then
     echo "RUNTIME_PROFILE=$RUNTIME_PROFILE is restricted to FULL512_BAND=short" >&2
     exit 2
   }
-  [[ "$EVIDENCE_CLASS" == "parallel-functional-screen" ]] || {
-    echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires EVIDENCE_CLASS=parallel-functional-screen" >&2
-    exit 2
-  }
-  [[ "$REQUIRE_ALL_GPUS_IDLE" == "0" ]] || {
-    echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires REQUIRE_ALL_GPUS_IDLE=0" >&2
-    exit 2
-  }
+  case "$EVIDENCE_CLASS" in
+    parallel-functional-screen)
+      [[ "$REQUIRE_ALL_GPUS_IDLE" == "0" ]] || {
+        echo "RUNTIME_PROFILE=$RUNTIME_PROFILE with EVIDENCE_CLASS=parallel-functional-screen requires REQUIRE_ALL_GPUS_IDLE=0" >&2
+        exit 2
+      }
+      ;;
+    official-isolated)
+      (( RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE == 1 )) || {
+        echo "RUNTIME_PROFILE=$RUNTIME_PROFILE does not permit EVIDENCE_CLASS=official-isolated" >&2
+        exit 2
+      }
+      [[ "$REQUIRE_ALL_GPUS_IDLE" == "1" ]] || {
+        echo "RUNTIME_PROFILE=$RUNTIME_PROFILE with EVIDENCE_CLASS=official-isolated requires REQUIRE_ALL_GPUS_IDLE=1" >&2
+        exit 2
+      }
+      ;;
+    *)
+      echo "RUNTIME_PROFILE=$RUNTIME_PROFILE requires EVIDENCE_CLASS=parallel-functional-screen or an explicitly authorized official-isolated profile" >&2
+      exit 2
+      ;;
+  esac
 fi
 
 [[ -f "$RUNTIME_PROFILE_EXPECTED_MANIFEST" ]] || {
@@ -176,15 +193,25 @@ if [[ ! "$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]] || \
 fi
 RUNTIME_PROFILE_CHECK_JSON="$(python3 - \
   "$RUNTIME_MANIFEST" "$RUNTIME_PROFILE" "$RUNTIME_PROFILE_EXPECTED_Q8_VDR" \
-  "$RUNTIME_PROFILE_DIAGNOSTIC" "$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256" <<'PY'
+  "$RUNTIME_PROFILE_DIAGNOSTIC" "$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256" \
+  "$EVIDENCE_CLASS" "$RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE" <<'PY'
 import json
 import os
 import re
 import sys
 
-manifest_path, profile, expected_vdr_raw, diagnostic_raw, expected_sha = sys.argv[1:]
+(
+    manifest_path,
+    profile,
+    expected_vdr_raw,
+    diagnostic_raw,
+    expected_sha,
+    evidence_class,
+    official_isolated_promotable_raw,
+) = sys.argv[1:]
 expected_vdr = int(expected_vdr_raw)
 diagnostic = diagnostic_raw == "1"
+official_isolated_promotable = official_isolated_promotable_raw == "1"
 try:
     with open(manifest_path) as stream:
         manifest = json.load(stream)
@@ -230,6 +257,8 @@ report = {
     "passed": True,
     "runtime_profile": profile,
     "diagnostic_profile": diagnostic,
+    "evidence_class": evidence_class,
+    "runtime_profile_official_isolated_promotable": official_isolated_promotable,
     "runtime_manifest": os.path.realpath(manifest_path),
     "runtime_manifest_sha256": expected_sha,
     "manifest_runtime_profile": manifest_profile,
@@ -339,8 +368,13 @@ if [[ "$RUN_SCOPE" == "promotion512" ]]; then
   fi
 fi
 if (( RUNTIME_PROFILE_DIAGNOSTIC == 1 && PERFORMANCE_PROMOTABLE != 0 )); then
-  echo "diagnostic RUNTIME_PROFILE=$RUNTIME_PROFILE must remain performance_promotable=false" >&2
-  exit 2
+  if [[ "$RUNTIME_PROFILE" != "q8-vdr2-candidate" || \
+        "$EVIDENCE_CLASS" != "official-isolated" || \
+        "$REQUIRE_ALL_GPUS_IDLE" != "1" || \
+        "$RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE" != "1" ]]; then
+    echo "only q8-vdr2-candidate official-isolated with all GPUs idle may be performance_promotable" >&2
+    exit 2
+  fi
 fi
 if [[ "$RUN_SCOPE" != "promotion512" && "$EVIDENCE_CLASS" != "legacy-validation" ]]; then
   echo "non-promotion scopes require EVIDENCE_CLASS=legacy-validation" >&2
@@ -1017,8 +1051,16 @@ on_exit() {
           and .performance_promotable == ($performance_promotable == 1)
           and (if $runtime_profile == "canonical-baseline" then
             true
+          elif $runtime_profile == "q8-vdr4-control" then
+            .evidence_class == "parallel-functional-screen"
+            and .performance_promotable == false
+          elif $runtime_profile == "q8-vdr2-candidate" then
+            (.evidence_class == "parallel-functional-screen"
+             and .performance_promotable == false)
+            or (.evidence_class == "official-isolated"
+                and .performance_promotable == true)
           else
-            .performance_promotable == false
+            false
           end)
           and .harness_manifest_sha256 == $harness_manifest_sha256
           and .artifacts_manifest_verified == true
@@ -1137,6 +1179,7 @@ done
   echo "run_scope=$RUN_SCOPE"
   echo "runtime_profile=$RUNTIME_PROFILE"
   echo "runtime_profile_diagnostic=$RUNTIME_PROFILE_DIAGNOSTIC"
+  echo "runtime_profile_official_isolated_promotable=$RUNTIME_PROFILE_OFFICIAL_ISOLATED_PROMOTABLE"
   echo "declared_q8_reorder_vdr_mmvq=$RUNTIME_DECLARED_Q8_VDR"
   echo "runtime_profile_expected_manifest=$RUNTIME_PROFILE_EXPECTED_MANIFEST"
   echo "runtime_profile_expected_manifest_sha256=$RUNTIME_PROFILE_EXPECTED_MANIFEST_SHA256"

@@ -160,7 +160,7 @@ class RuntimeProfileTests(unittest.TestCase):
         self.assertNotIn("model not found:", completed.stderr)
         self.assertFalse(run_dir.exists())
 
-    def test_diagnostic_scope_is_exactly_restricted(self) -> None:
+    def test_noncanonical_scope_is_exactly_restricted(self) -> None:
         cases = (
             (
                 {"run_scope": "smoke", "full512_band": "realistic"},
@@ -171,12 +171,12 @@ class RuntimeProfileTests(unittest.TestCase):
                 "restricted to FULL512_BAND=short",
             ),
             (
-                {"evidence_class": "official-isolated"},
-                "requires EVIDENCE_CLASS=parallel-functional-screen",
+                {"evidence_class": "legacy-validation"},
+                "requires EVIDENCE_CLASS=parallel-functional-screen or an explicitly authorized official-isolated profile",
             ),
             (
                 {"require_all_gpus_idle": "1"},
-                "requires REQUIRE_ALL_GPUS_IDLE=0",
+                "with EVIDENCE_CLASS=parallel-functional-screen requires REQUIRE_ALL_GPUS_IDLE=0",
             ),
         )
         for kwargs, expected in cases:
@@ -188,6 +188,64 @@ class RuntimeProfileTests(unittest.TestCase):
                 self.assertIn(expected, completed.stderr)
                 self.assertNotIn("model not found:", completed.stderr)
                 self.assertFalse(run_dir.exists())
+
+    def test_vdr2_official_isolated_reaches_model_gate(self) -> None:
+        completed, run_dir = self.run_diagnostic_profile(
+            VDR2_PROFILE,
+            evidence_class="official-isolated",
+            require_all_gpus_idle="1",
+        )
+        self.assert_reaches_missing_model_gate(completed, run_dir)
+
+    def test_vdr2_official_isolated_requires_all_gpus_idle(self) -> None:
+        completed, run_dir = self.run_diagnostic_profile(
+            VDR2_PROFILE,
+            evidence_class="official-isolated",
+            require_all_gpus_idle="0",
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertIn(
+            "with EVIDENCE_CLASS=official-isolated requires REQUIRE_ALL_GPUS_IDLE=1",
+            completed.stderr,
+        )
+        self.assertNotIn("model not found:", completed.stderr)
+        self.assertFalse(run_dir.exists())
+
+    def test_vdr4_control_remains_parallel_only(self) -> None:
+        completed, run_dir = self.run_diagnostic_profile(
+            VDR4_PROFILE,
+            evidence_class="official-isolated",
+            require_all_gpus_idle="1",
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertIn(
+            "does not permit EVIDENCE_CLASS=official-isolated", completed.stderr
+        )
+        self.assertNotIn("model not found:", completed.stderr)
+        self.assertFalse(run_dir.exists())
+
+    def test_vdr2_official_isolated_keeps_runtime_bindings(self) -> None:
+        completed, run_dir = self.run_diagnostic_profile(
+            VDR2_PROFILE,
+            runtime_manifest=VDR4_MANIFEST,
+            evidence_class="official-isolated",
+            require_all_gpus_idle="1",
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertIn("requires RUNTIME_MANIFEST=", completed.stderr)
+        self.assertNotIn("model not found:", completed.stderr)
+        self.assertFalse(run_dir.exists())
+
+        completed, run_dir = self.run_diagnostic_profile(
+            VDR2_PROFILE,
+            llama_server="/definitely/wrong/llama-server",
+            evidence_class="official-isolated",
+            require_all_gpus_idle="1",
+        )
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertIn("requires LLAMA_SERVER=", completed.stderr)
+        self.assertNotIn("model not found:", completed.stderr)
+        self.assertFalse(run_dir.exists())
 
     def copied_runner_with_manifest_value(
         self, *, profile_value: object, vdr_value: object
@@ -250,14 +308,21 @@ class RuntimeProfileTests(unittest.TestCase):
             source,
         )
         self.assertIn('runtime_profile:$runtime_profile', source)
+        self.assertIn('"evidence_class": evidence_class', source)
+        self.assertIn(
+            '"runtime_profile_official_isolated_promotable": '
+            "official_isolated_promotable",
+            source,
+        )
         self.assertIn(
             'declared_q8_reorder_vdr_mmvq:$declared_q8_reorder_vdr_mmvq',
             source,
         )
         self.assertIn('"server_identity_fields": runtime_identity_fields', source)
+        self.assertIn('elif $runtime_profile == "q8-vdr2-candidate" then', source)
         self.assertIn(
-            'echo "diagnostic RUNTIME_PROFILE=$RUNTIME_PROFILE must remain '
-            'performance_promotable=false"',
+            "only q8-vdr2-candidate official-isolated with all GPUs idle may be "
+            "performance_promotable",
             source,
         )
 
