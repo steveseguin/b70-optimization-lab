@@ -1,0 +1,13 @@
+{
+  "event": "quad production relaunch validation",
+  "date_utc": "2026-08-10",
+  "profile": "service, ctx 131072, parallel 2 (two 64K slots per GPU), cache-ram 8192, sticky frontdoor :8000",
+  "health": "data/gemma4-26b-prod-health-quad-frontdoor-relaunch-20260810T154356Z.json ok=true, cached_tokens=0, no errors",
+  "c8_nonstream_smoke_runs": [
+    {"wall_s": 2.911, "completion_tokens": 1280, "aggregate_tok_s": 439.743, "cached_tokens_all_zero": true},
+    {"wall_s": 2.876, "completion_tokens": 1280, "aggregate_tok_s": 445.037, "cached_tokens_all_zero": true}
+  ],
+  "reference_comparison": "beats stored non-streaming c8 reference (298.124 tok/s wall with early-stops, data/gemma4-26b-quad-frontdoor-c8-nonstream-all64k-20260708T032701Z.json); consistent with 556 tok/s streaming benchmark after TTFT exclusion",
+  "sticky_cache_probe": {"prompt_tokens": 11101, "first_s": 8.537, "second_s": 0.071, "second_cached_tokens": 11100, "answer_correct_both": true},
+  "note": "quick validation per operator request; no soak"
+}
