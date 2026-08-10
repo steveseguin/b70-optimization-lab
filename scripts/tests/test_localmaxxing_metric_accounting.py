@@ -59,6 +59,34 @@ class LocalMaxxingMetricAccountingTest(unittest.TestCase):
             any("primaryMetricAccounting" in problem for problem in problems)
         )
 
+    def test_api_projection_preserves_full_offload_and_mtp_identity(self) -> None:
+        flags = queue_item(
+            "median_tok_s_1_100_intervals_after_ttft",
+            "inter-token-intervals",
+        )["payload"]["engineFlags"]
+        flags.update(
+            {
+                "gpuLayers": -1,
+                "mtpEnabled": True,
+                "specMethod": "draft-mtp",
+                "specNumTokens": 3,
+                "specDecoding": True,
+                "targetModelVerifiedAcceptedTokens": True,
+            }
+        )
+
+        projected = MODULE.api_engine_flags(flags)
+
+        self.assertEqual(projected["gpuLayers"], -1)
+        self.assertTrue(projected["mtpEnabled"])
+        self.assertTrue(projected["specDecoding"])
+        self.assertEqual(projected["specMethod"], "draft-mtp")
+        self.assertEqual(projected["specNumTokens"], 3)
+        self.assertIn(
+            '"targetModelVerifiedAcceptedTokens": true',
+            projected["extraFlags"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

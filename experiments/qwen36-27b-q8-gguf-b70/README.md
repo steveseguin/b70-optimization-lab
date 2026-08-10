@@ -227,10 +227,14 @@ Validated results under the correctness-qualified default
   `34.612807` versus `17.050342 tok/s` (`2.030036x`), TTFT is `1.028123x`,
   and every prompt gains at least `1.757122x` on D99. MTP counters bind 3,709
   accepted / 6,448 draft tokens over 2,152 verifications. Eleven prompts
-  reached 512 tokens; `customer-email` stopped normally at 248, so
-  `localmaxxing_submission_ready=false`. This clears the scoped realistic-suite
-  generality gate only; it is not middle/near-32K, concurrency, second-card,
-  production, or submission evidence;
+  reached 512 tokens; `customer-email` stopped normally at 248, after the
+  required generated-token 1/100 timing endpoints for D99. LocalMaxxing policy
+  does not require padding a natural EOS row to the 512-token request cap. The
+  exact Q8_0 queue passes
+  local preflight and authenticated no-write server dry-run, so
+  `localmaxxing_submission_ready=true`; no final POST was made. This clears the
+  scoped realistic-suite gate only; it is not middle/near-32K, concurrency,
+  second-card, or production evidence;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -446,6 +450,8 @@ cards were active. See
 - Embedded publisher-MTP diagnostic closeout: [`notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`](notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md)
 - Embedded publisher-MTP realistic runner: [`scripts/run-embedded-mtp-vdr2-realistic.sh`](scripts/run-embedded-mtp-vdr2-realistic.sh)
 - Embedded publisher-MTP realistic closeout: [`notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md`](notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md)
+- Embedded publisher-MTP LocalMaxxing packet builder: [`scripts/build-embedded-mtp-localmaxxing-packet.py`](scripts/build-embedded-mtp-localmaxxing-packet.py)
+- Embedded publisher-MTP staged no-submit queue: [`localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json`](localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

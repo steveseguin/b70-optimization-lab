@@ -37,7 +37,8 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
     history_markers = [
         bool(engine.get("historyAccelerated")),
         engine.get("freshResponseHeadlineValid") is False,
-        str(engine.get("headlineUse", "")).lower() in {"diagnostic-only", "non-headline"},
+        str(engine.get("headlineUse", "")).lower()
+        in {"diagnostic-only", "non-headline"},
         "history-accelerated" in label.lower(),
         "history-accelerated" in notes.lower(),
         "non-headline" in notes.lower(),
@@ -50,7 +51,9 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
     if any(history_markers):
         problems.append("payload is labeled history-accelerated or non-headline")
     if any(ngram_markers) and not engine.get("freshResponseNgramValidated"):
-        problems.append("payload appears to be n-gram/history based without fresh-response validation")
+        problems.append(
+            "payload appears to be n-gram/history based without fresh-response validation"
+        )
 
     if label.endswith("-fresh") or "-fresh-" in label:
         first_tok_s = engine.get("firstRequestTokSOut")
@@ -59,9 +62,13 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
         if first_tok_s is not None and tok_s is not None:
             try:
                 if abs(float(first_tok_s) - float(tok_s)) > 1e-6:
-                    problems.append("fresh label has tokSOut different from firstRequestTokSOut")
+                    problems.append(
+                        "fresh label has tokSOut different from firstRequestTokSOut"
+                    )
             except (TypeError, ValueError):
-                problems.append("fresh label has non-numeric tokSOut/firstRequestTokSOut")
+                problems.append(
+                    "fresh label has non-numeric tokSOut/firstRequestTokSOut"
+                )
         if cached not in (None, 0):
             problems.append("fresh label has nonzero firstRequestCachedTokens")
 
@@ -135,7 +142,9 @@ def api_engine_flags(engine_flags: dict) -> dict:
     command = engine_flags.get("commandSnippet")
     if not command:
         model = engine_flags.get("modelPath") or "<model>"
-        ctx = engine_flags.get("ctx_size") or engine_flags.get("contextLength") or "<ctx>"
+        ctx = (
+            engine_flags.get("ctx_size") or engine_flags.get("contextLength") or "<ctx>"
+        )
         batch = engine_flags.get("batch_size") or "<batch>"
         ubatch = engine_flags.get("ubatch_size") or "<ubatch>"
         flash = engine_flags.get("flash_attn")
@@ -149,9 +158,7 @@ def api_engine_flags(engine_flags: dict) -> dict:
     kv_cache = None
     if cache_k or cache_v:
         kv_cache = f"K={cache_k or '?'} V={cache_v or '?'}"
-    actual_kv_cache_dtype = kv_cache or str(
-        engine_flags.get("kvCacheDtype") or "f16"
-    )
+    actual_kv_cache_dtype = kv_cache or str(engine_flags.get("kvCacheDtype") or "f16")
     api_kv_cache_dtype = str(
         engine_flags.get("apiKvCacheDtype") or actual_kv_cache_dtype
     )
@@ -159,18 +166,21 @@ def api_engine_flags(engine_flags: dict) -> dict:
     extra = {
         "benchmarkJson": engine_flags.get("benchmarkJson"),
         "realisticSuiteGatePassed": engine_flags.get("realisticSuiteGatePassed"),
-        "realisticSuiteCachedTokensAllZero": engine_flags.get("realisticSuiteCachedTokensAllZero"),
+        "realisticSuiteCachedTokensAllZero": engine_flags.get(
+            "realisticSuiteCachedTokensAllZero"
+        ),
         "primaryMetricName": engine_flags.get("primaryMetricName"),
         "primaryMetricAccounting": engine_flags.get("primaryMetricAccounting"),
-        "metricWindowGeneratedTokens": engine_flags.get(
-            "metricWindowGeneratedTokens"
-        ),
+        "metricWindowGeneratedTokens": engine_flags.get("metricWindowGeneratedTokens"),
         "metricWindowIntervals": engine_flags.get("metricWindowIntervals"),
         "tokenTimingSource": engine_flags.get("tokenTimingSource"),
         "githubResultPacket": engine_flags.get("githubResultPacket"),
         "specMethod": engine_flags.get("specMethod"),
         "specNumTokens": engine_flags.get("specNumTokens"),
-        "targetModelVerifiedAcceptedTokens": engine_flags.get("targetModelVerifiedAcceptedTokens"),
+        "mtpEnabled": engine_flags.get("mtpEnabled"),
+        "targetModelVerifiedAcceptedTokens": engine_flags.get(
+            "targetModelVerifiedAcceptedTokens"
+        ),
         "kvCacheDtypeActual": actual_kv_cache_dtype,
         "attentionBackendActual": engine_flags.get("attentionBackend"),
         "requestPolicy": "cache_prompt=false; no prefix/KV/history/response reuse",
@@ -186,19 +196,14 @@ def api_engine_flags(engine_flags: dict) -> dict:
     attention_backend = engine_flags.get("apiAttentionBackend")
     if not attention_backend:
         attention_backend = (
-            actual_attention_backend
-            or "llama.cpp SYCL/Level Zero flash attention"
+            actual_attention_backend or "llama.cpp SYCL/Level Zero flash attention"
         )
 
     flash_attn_value = engine_flags.get("flashAttn")
     if flash_attn_value is None:
         flash_attn_value = str(engine_flags.get("flash_attn", "")).lower() == "on"
 
-    concurrency = (
-        engine_flags.get("n_parallel")
-        or engine_flags.get("concurrency")
-        or 1
-    )
+    concurrency = engine_flags.get("n_parallel") or engine_flags.get("concurrency") or 1
     gpu_layers = engine_flags.get("gpuLayers")
     if gpu_layers is None:
         gpu_layers = 99
@@ -218,7 +223,9 @@ def api_engine_flags(engine_flags: dict) -> dict:
         "topP": 1.0,
         "extraFlags": extra_text,
     }
-    if gpu_layers is not None and int(gpu_layers) >= 0:
+    if "mtpEnabled" in engine_flags:
+        api_flags["mtpEnabled"] = bool(engine_flags["mtpEnabled"])
+    if gpu_layers is not None and int(gpu_layers) >= -1:
         api_flags["gpuLayers"] = int(gpu_layers)
 
     optional_integer_flags = {
@@ -245,8 +252,7 @@ def api_engine_flags(engine_flags: dict) -> dict:
 
     optional_string_flags = {
         "specMethod": engine_flags.get("specMethod"),
-        "specModel": engine_flags.get("specModel")
-        or engine_flags.get("draftModel"),
+        "specModel": engine_flags.get("specModel") or engine_flags.get("draftModel"),
     }
     for key, value in optional_string_flags.items():
         if value:

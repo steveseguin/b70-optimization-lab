@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail_embedded_mtp_realistic_matched_control_pass",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail_embedded_mtp_realistic_matched_control_pass_localmaxxing_packet_dryrun_pass",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -1635,8 +1635,14 @@
       "same_server_concurrency": false,
       "production_ready": false,
       "performance_promotable": false,
-      "localmaxxing_submission_ready": false,
-      "submission_blocker": "customer-email stopped naturally at 248 tokens; all_rows_full_512=false"
+      "localmaxxing_submission_ready": true,
+      "submission_blocker": null,
+      "submission_policy": {
+        "minimum_generated_events_per_prompt": 100,
+        "minimum_observed_generated_events": 248,
+        "ordinary_eos_after_primary_window_allowed": true,
+        "all_rows_full_512_required": false
+      }
     },
     "failed_parser_attempt": {
       "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-realistic-gpu0-20260810T100440.907192568Z",
@@ -1698,7 +1704,9 @@
       "artifact_manifest_verified": true,
       "completion_status_sha256": "3eaf8d2c72bc64e2440e42486ca69b3605d357cc6e782aae79fd21c059e03c7f",
       "supplemental_identity_sha256": "d966b5d2996cee86faba0ef95b68afdabfcd95fb25d97078319680b8b922ae49",
-      "comparison_sha256": "41d754812311ad657f7f59b7f51794e7b394a82096587123280fdf76dc510ae3"
+      "comparison_sha256": "41d754812311ad657f7f59b7f51794e7b394a82096587123280fdf76dc510ae3",
+      "retained_historical_localmaxxing_submission_ready": false,
+      "historical_false_reason": "overstrict all_rows_full_512 derivation; source supplement remains unchanged"
     },
     "quality": {
       "candidate_control_full_token_ids_exact_all_prompts": true,
@@ -1740,8 +1748,25 @@
         "2": 797
       }
     },
-    "decision": "bank_scoped_realistic_mtp_win_without_submission",
-    "next_gate": "Run middle and near32k retention, then concurrency generalization and a second-card confirmation. Do not submit this 11x512-plus-one-natural-EOS packet."
+    "localmaxxing_packet": {
+      "status": "READY_AUTHENTICATED_DRY_RUN_PASS_FINAL_POST_NOT_PERFORMED",
+      "hf_id": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "quantization": "Q8_0",
+      "primary_tok_s": 36.04870684253697,
+      "total_tok_s": 37.48397529291239,
+      "queue": "experiments/qwen36-27b-q8-gguf-b70/localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json",
+      "queue_sha256": "c3f6032b47dcb420041f3eff25c8c79e5d8aa1197c948f65a82e4b954fc27f23",
+      "api_request_sha256": "a2bcfd8479be27d603c967db5c2cf8785c462542cb46171d94111266b371a8ee",
+      "packet_artifact_manifest_sha256": "b94c99ece2637d105179c6e178384d7b5aca364ddd5e7a2cab63cd6517fb33e6",
+      "local_preflight_passed": true,
+      "authenticated_server_dry_run_http_status": 200,
+      "authenticated_server_dry_run_valid": true,
+      "matching_approved_one_b70_q8_0_records": 0,
+      "final_post_performed": false
+    },
+    "decision": "bank_scoped_realistic_mtp_win_and_stage_localmaxxing_packet_without_final_post",
+    "next_gate": "The Q8_0 packet is submission-ready under the natural-EOS-after-100 policy and passes authenticated server dry-run; final POST remains unperformed. Run middle and near32k retention, then concurrency generalization and a second-card confirmation."
   },
-  "next_gate": "The integrated publisher-MTP identity now passes the fixed cold 12-prompt realistic suite against matched_fresh_control_v1: full candidate/control tokens and content are exact on every prompt, median D99 improves 17.107772 to 36.048707 tok/s (2.107154x), matched full-window throughput improves 17.017022 to 34.545186 tok/s (2.030037x), and native throughput improves 17.050342 to 34.612807 tok/s (2.030036x). Preserve the original measurement root's immutable FAIL from its identity-mismatched legacy oracle and the separate supplemental PASS. One prompt stopped naturally at 248 tokens, so no LocalMaxxing submission is allowed. Advance to middle/near32k retention and concurrency generalization; the sealed formal ordinary-c2 packet remains the honest functional comparator and performance failure."
+  "next_gate": "The integrated publisher-MTP identity now passes the fixed cold 12-prompt realistic suite against matched_fresh_control_v1: full candidate/control tokens and content are exact on every prompt, median D99 improves 17.107772 to 36.048707 tok/s (2.107154x), matched full-window throughput improves 17.017022 to 34.545186 tok/s (2.030037x), and native throughput improves 17.050342 to 34.612807 tok/s (2.030036x). Preserve the original measurement root's immutable FAIL from its identity-mismatched legacy oracle and the separate supplemental PASS. The shortest ordinary-EOS row reaches 248 tokens and includes the required generated-token 1/100 timing endpoints for D99; the staged Q8_0 LocalMaxxing packet passes local and authenticated server dry-run, with no final POST performed. Advance to middle/near32k retention and concurrency generalization; the sealed formal ordinary-c2 packet remains the honest functional comparator and performance failure."
 }

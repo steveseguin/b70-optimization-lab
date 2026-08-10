@@ -95,9 +95,19 @@ submission require the fixed realistic final gate:
   the declared target model;
 - primary metric is the conventional median rate for the 99 inter-token
   intervals between generated-token timestamps 1 and 100 after TTFT across
-  the suite, with p10, mean, TTFT, wall tok/s, full 512-token tok/s,
+  the suite. Every row must therefore contain at least 100 generated-token
+  events. An ordinary EOS after event 100 is eligible; there is no rule that
+  every row must reach the request's 512-token cap. Record the requested cap,
+  per-prompt output-length distribution, p10, mean, TTFT, wall tok/s, full
+  natural-completion tok/s (and 512-token tok/s for cap-limited rows),
   prompt/output hashes, model identity, runtime commit, env vars, flags, and
-  logs recorded.
+  logs.
+
+Do not suppress EOS or pad/retry a naturally completed response merely to make
+all rows the same length. A natural stop before generated event 100 is
+ineligible because the primary 99-interval window does not exist for that row;
+a natural stop at 100 or later is valid when every other realistic-suite gate
+passes.
 
 The submission helper fails closed unless payload `engineFlags` include a
 realistic-suite gate pass marker,

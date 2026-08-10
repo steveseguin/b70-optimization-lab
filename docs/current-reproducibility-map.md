@@ -267,9 +267,13 @@ minimum per-prompt D99 ratio is `1.757122x`, and counters bind 3,709 accepted /
 6,448 draft tokens over 2,152 verifications (`0.575217` acceptance,
 `1.723513` accepted/verification). Eleven prompts reached 512 tokens;
 `customer-email` stopped normally at 248. The scoped one-B70 short result is
-realistic-policy valid but remains `localmaxxing_submission_ready=false`, and
-no submission was made. Advance to middle/near-32K retention and concurrency
-generalization, not submission or tuning against the stale oracle.
+realistic-policy valid because every row includes the required generated-token
+1/100 timing endpoints for the primary window; ordinary EOS after that window
+does not require padding to
+512. The hash-bound Q8_0 queue passes local preflight and authenticated server
+dry-run, so `localmaxxing_submission_ready=true`; no final POST was made.
+Advance to middle/near-32K retention and concurrency generalization, not tuning
+against the stale oracle.
 
 ## Historical Qwen3.6 27B Optimization Lane
 

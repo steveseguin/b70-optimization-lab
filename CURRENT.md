@@ -199,12 +199,18 @@ are exact on all 12 prompts. Median D99 improves
 minimum per-prompt D99 gain is `1.757122x`. MTP accepted 3,709 of 6,448 draft
 tokens over 2,152 verifications (`0.575217` acceptance,
 `1.723513` accepted/verification). Eleven prompts reached 512 tokens and
-`customer-email` stopped normally at EOS after 248, so
-`localmaxxing_submission_ready=false`; no submission was made. The old-oracle
+`customer-email` stopped normally at EOS after 248. That row contains the
+required generated-token 1/100 timing endpoints for D99, so the canonical
+LocalMaxxing policy does not require padding it to 512. A hash-bound Q8_0 queue
+now passes local preflight and the
+authenticated no-write server dry-run (`HTTP 200`, `valid=true`), with
+`localmaxxing_submission_ready=true`; the final POST has not been made. The
+original supplement's historical false field remains unchanged. The old-oracle
 mismatch is not evidence of context-caused quality loss: the identities differ,
 prior evidence favors ubatch sensitivity, and causality remains unresolved.
 This is a scoped one-B70 short realistic-suite win, not middle/near-32K,
-second-card, c2, concurrency, production, or LocalMaxxing evidence. The next
+second-card, c2, concurrency, or production evidence. The staged packet is the
+first matching one-B70 Q8_0 category candidate; the next
 gate is middle/near-32K retention followed by concurrency generalization. The
 full chronology and sealed hashes are in the
 [realistic-suite closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-realistic-suite-matched-control-pass.md);

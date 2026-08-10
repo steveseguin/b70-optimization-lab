@@ -1,0 +1,61 @@
+{
+  "apiRequestPath": "/home/steve/llm-optimizations/experiments/qwen36-27b-q8-gguf-b70/localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.api-request.json",
+  "apiRequestSha256": "a2bcfd8479be27d603c967db5c2cf8785c462542cb46171d94111266b371a8ee",
+  "builderSha256": "ba573452b6ab95ab9e11570d20000563f6eab5a84cbc02090fe3248d1c8ee2f0",
+  "classification": "READY_FOR_AUTHENTICATED_DRY_RUN_NO_POST",
+  "completionLengthDistribution": {
+    "248": 1,
+    "512": 11
+  },
+  "derivedSubmissionPolicy": {
+    "allRowsReachedRequestMaximum": false,
+    "eligible": true,
+    "maximumRequestedGeneratedTokens": 512,
+    "minimumObservedGeneratedTokens": 248,
+    "minimumRequiredGeneratedTokens": 100,
+    "naturalStopsAfterPrimaryWindowAllowed": true
+  },
+  "finalPostPerformed": false,
+  "identity": {
+    "hfId": "unsloth/Qwen3.6-27B-MTP-GGUF",
+    "modelSha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+    "quantization": "Q8_0",
+    "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+    "runtimeCommit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+    "runtimeSha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+    "suiteSha256": "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
+  },
+  "primaryMetric": {
+    "name": "median_tok_s_1_100_intervals_after_ttft",
+    "value": 36.04870684253697
+  },
+  "queuePath": "/home/steve/llm-optimizations/experiments/qwen36-27b-q8-gguf-b70/localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json",
+  "queueSha256": "c3f6032b47dcb420041f3eff25c8c79e5d8aa1197c948f65a82e4b954fc27f23",
+  "schema": "qwen36-embedded-mtp-localmaxxing-builder-audit-v1",
+  "sealedJoins": {
+    "comparisonSha256": "41d754812311ad657f7f59b7f51794e7b394a82096587123280fdf76dc510ae3",
+    "completionStatusSha256": "3eaf8d2c72bc64e2440e42486ca69b3605d357cc6e782aae79fd21c059e03c7f",
+    "controlCaptureGateSha256": "708162bccf98fa77e94022ce42bb77ef1bb96581c090326669123dcfaf430ef0",
+    "controlMetricsBindingGateSha256": "e7b1847322fa08a74fd82c6627b070584f4622f62984b8f3d407c51a94f72e33",
+    "forensicControlSha256": "8af30d579a30aedf3cadaa8f0728d883acc7d0da188bd2b30125b472f37a2ad2",
+    "forensicMtp3Sha256": "886107c29af70fba5ce0919091d1122c5e0317a0811cce9169819d65076c49c0",
+    "mtp3CaptureGateSha256": "95dad265e308c2a1787d81c7a874eb2a2a2cab7ce513a7d6e9ec02fa448987d6",
+    "mtp3MetricsBindingGateSha256": "93974dab89d6f0f2a25e994803478160b8ea5606f52e683efa41a81aed254f0b",
+    "scoredControlSha256": "16d87bf37f6654e5ac920849dc5c97288bea14d70904354780894d7b9fc7a29c",
+    "scoredMtp3Sha256": "0ce2399561568c4d80d112f42457fc31acedbddac576f1900e64ba88ee1352e7",
+    "serverIdentitySha256": "20e465bfb228904255999d45968b8c71bd7773944e84e22d5fcfa8717afc477b",
+    "sourceRunManifestEntries": 132,
+    "sourceRunManifestSha256": "8b0e18c529eabaf837bfb8fc2b2f7b5bc4f280c1952b741dc85e1fefc9425f89",
+    "supplementIdentitySha256": "d966b5d2996cee86faba0ef95b68afdabfcd95fb25d97078319680b8b922ae49",
+    "supplementManifestEntries": 6,
+    "supplementManifestSha256": "d44cef315a2d88652bdaeb9694a718897f2d301f916a4d9d419f41190519a2c3"
+  },
+  "secondaryMetrics": {
+    "outputOnlyWallTokS": 32.60658992314809,
+    "tokSTotal": 37.48397529291239,
+    "tokSTotalDefinition": "median((prompt_tokens + completion_tokens) / request_elapsed_s)",
+    "ttftMs": 785.4771044949302
+  },
+  "sourceRunOriginalStatusPreserved": "FAIL",
+  "supplementClassificationPreserved": "PASS_REALISTIC_MTP_WIN"
+}

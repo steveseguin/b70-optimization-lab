@@ -17,12 +17,16 @@ identity-mismatched legacy 4K/128 prefix oracle. The matched-control PASS lives
 in a separate sealed offline supplement and binds the unchanged source
 captures by SHA-256.
 
-This is not a LocalMaxxing submission or a production result. Eleven prompts
-reached 512 generated tokens, while `customer-email` stopped normally at EOS
-after 248; consequently `all_rows_full_512=false` and
-`localmaxxing_submission_ready=false`. Middle/near-32K prompt retention,
-concurrency, second-card reproduction, and sustained service validation remain
-open.
+This is not yet a LocalMaxxing submission or a production result. Eleven
+prompts reached 512 generated tokens, while `customer-email` stopped normally
+at EOS after 248. The earlier conclusion that `all_rows_full_512=false` made
+the run ineligible was overstrict: all 12 rows contain the required
+generated-token 1/100 timing endpoints for D99, and LocalMaxxing policy does
+not require padding an ordinary EOS response to the request cap. The derived
+submission packet now
+passes local and authenticated no-write preflight; the final POST has not been
+made. Middle/near-32K prompt retention, concurrency, second-card reproduction,
+and sustained service validation remain open.
 
 ## Fixed identity
 
@@ -137,7 +141,8 @@ gates with the quality reference declared as `matched_fresh_control_v1`:
 - evidence: `evidence_passed=true`
 - performance: `performance_passed=true`
 - policy: `realistic_policy_passed=true`
-- submission: `localmaxxing_submission_ready=false`
+- retained historical supplement field:
+  `localmaxxing_submission_ready=false` (overstrict all-512 derivation)
 - six-entry artifact-manifest SHA-256:
   `d44cef315a2d88652bdaeb9694a718897f2d301f916a4d9d419f41190519a2c3`
 - completion SHA-256:
@@ -153,6 +158,49 @@ fresh distinct lifetimes, one scored request per prompt, zero replay requests,
 ordinary EOS, literal cache-zero usage, server/runtime/model identity, and the
 sealed metrics-counter recomputation. Candidate and control full token IDs and
 decoded content are exact for all 12 prompts.
+
+## LocalMaxxing policy correction and staged packet
+
+The conventional primary metric needs generated-token events 1 through 100,
+which form 99 inter-token intervals. Every observed row reaches that window;
+the shortest row reaches 248. Ordinary EOS after the primary window is valid,
+and there is no all-512 rule. Suppressing EOS, padding, or retrying the prompt
+would make the measurement less representative.
+
+A focused offline builder re-verifies the 132-entry failed source manifest,
+the six-entry supplemental manifest, all four scored/forensic capture hashes,
+the matched-control exactness join, model/runtime/suite identity, cache-zero
+policy, MTP counters, and the `11x512 + 1x248` output distribution. Its policy
+tests prove that 248 is eligible, 99 fails closed, and reaching 512 on every row
+is not required. The production submission helper received a narrow typed
+projection fix so `gpuLayers=-1` and `mtpEnabled=true` survive into the API
+request; its eligibility gates were not weakened.
+
+- queue:
+  `experiments/qwen36-27b-q8-gguf-b70/localmaxxing/qwen36-27b-mtp-q8_0-vdr2-embedded-mtp3-realistic-36tok-20260810.queue.json`
+- queue SHA-256:
+  `c3f6032b47dcb420041f3eff25c8c79e5d8aa1197c948f65a82e4b954fc27f23`
+- exact projected API request SHA-256:
+  `a2bcfd8479be27d603c967db5c2cf8785c462542cb46171d94111266b371a8ee`
+- builder audit SHA-256:
+  `45623b9502c7cff233ccbe0743c03aa551d529aad6917fb77daa71c543afc9b3`
+- six-entry packet-artifact checksum manifest SHA-256:
+  `b94c99ece2637d105179c6e178384d7b5aca364ddd5e7a2cab63cd6517fb33e6`
+- local preflight: PASS
+- authenticated `POST /api/speed-tests/dry-run`: `HTTP 200`, `valid=true`
+- matching-record query: no approved one-B70 `Q8_0` row for the exact
+  `unsloth/Qwen3.6-27B-MTP-GGUF` category; the one returned B70 row is
+  `UD-Q4_K_XL` and is identity-incompatible
+- final LocalMaxxing POST: not performed
+
+The payload pins the integrated publisher identity exactly:
+`hfId=unsloth/Qwen3.6-27B-MTP-GGUF`, revision
+`5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace`, and `quantization=Q8_0`.
+Its primary score is `36.04870684253697 tok/s`; `tokSTotal` is the API-defined
+median `(prompt_tokens + completion_tokens) / elapsed_s`,
+`37.48397529291239 tok/s`. Top-level output tokens are the integer suite median,
+512, while the full per-prompt distribution remains in typed local audit
+metadata.
 
 ## Performance
 
@@ -189,9 +237,10 @@ native throughput.
 
 Bank this as a scoped one-B70 short realistic-suite win for the integrated MTP
 identity. Keep it separate from the target-only Q8_0 baseline and from the
-original packet's immutable `FAIL`. Do not publish it as a full-512
-LocalMaxxing record: the natural 248-token `customer-email` row makes the
-current packet ineligible, and no submission was made.
+original packet's immutable `FAIL`. It is LocalMaxxing-submission-ready under
+the corrected natural-EOS policy, and its authenticated server dry-run passes.
+Do not describe every row as full-512: one ordinary response ended at 248. No
+final submission was made in this work item.
 
 The next bounded work is middle and near-32K retention, followed by the
 relevant concurrency generalization and a second-card confirmation. The large

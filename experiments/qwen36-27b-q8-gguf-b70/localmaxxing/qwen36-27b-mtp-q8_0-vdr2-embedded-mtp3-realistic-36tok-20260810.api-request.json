@@ -1,0 +1,41 @@
+{
+  "backend": "xpu",
+  "batchSize": 1,
+  "contextLength": 32768,
+  "engineFlags": {
+    "attentionBackend": "flash_attn",
+    "commandSnippet": "ONEAPI_DEVICE_SELECTOR=level_zero:* ZE_AFFINITY_MASK=0 ZES_ENABLE_SYSMAN=1 UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1 GGML_SYCL_ENABLE_VMM=1 GGML_SYCL_ENABLE_GRAPH=0 GGML_SYCL_GRAPH_CACHE_SIZE=0 GGML_SYCL_ENABLE_DNN=0 GGML_SYCL_ENABLE_OPT=1 GGML_SYCL_FA_ONEDNN=1 GGML_SYCL_FA_ONEDNN_MAX_KV=0 GGML_SYCL_ENABLE_MKL_FA=1 GGML_SYCL_ENABLE_FLASH_ATTN=1 llama-server -m Qwen3.6-27B-Q8_0.gguf -dev SYCL0 -ngl all -c 32768 -np 1 -b 1024 -ub 1024 -t 8 --threads-http 6 --poll 50 -lv 4 -ctk f16 -ctv f16 -fa on -fit on -fitt 1024 --spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-n-min 0 --spec-draft-p-split 0.10 --spec-draft-p-min 0.00 --spec-draft-backend-sampling --spec-draft-device SYCL0 --spec-draft-ngl all --spec-draft-type-k f16 --spec-draft-type-v f16 --reasoning off --ctx-checkpoints 0 --cache-ram 0 --no-cache-idle-slots --no-context-shift --slots --metrics --jinja --no-kv-unified --cont-batching",
+    "concurrency": 1,
+    "extraFlags": "{\"attentionBackendActual\": \"llama.cpp SYCL/Level Zero flash attention\", \"benchmarkJson\": \"/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-realistic-gpu0-20260810T101337.129519194Z/scored-mtp3/scored.json\", \"kvCacheDtypeActual\": \"f16/f16\", \"metricWindowGeneratedTokens\": 100, \"metricWindowIntervals\": 99, \"mtpEnabled\": true, \"primaryMetricAccounting\": \"inter-token-intervals\", \"primaryMetricName\": \"median_tok_s_1_100_intervals_after_ttft\", \"realisticSuiteCachedTokensAllZero\": true, \"realisticSuiteGatePassed\": true, \"requestPolicy\": \"cache_prompt=false; no prefix/KV/history/response reuse\", \"specMethod\": \"draft-mtp\", \"specNumTokens\": 3, \"targetModelVerifiedAcceptedTokens\": true, \"tokenTimingSource\": \"llamacpp_oai_completion_verbose_token_ids\"}",
+    "flashAttn": true,
+    "gpuLayers": -1,
+    "kvCacheDtype": "fp16",
+    "mtpEnabled": true,
+    "prefixCaching": false,
+    "specDecoding": true,
+    "specMethod": "draft-mtp",
+    "specNumTokens": 3,
+    "temperature": 0.0,
+    "topP": 1.0
+  },
+  "engineName": "llama.cpp",
+  "engineVersion": "10298 (15586e2d7) local Intel SYCL VDR2 embedded-MTP build",
+  "hardware": {
+    "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+    "gpuCount": 1,
+    "gpuName": "Intel Arc Pro B70",
+    "hwClass": "DISCRETE_GPU",
+    "os": "Ubuntu 24.04.4 LTS",
+    "ramGb": 128,
+    "vramGb": 32
+  },
+  "hfId": "unsloth/Qwen3.6-27B-MTP-GGUF",
+  "modelRevision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+  "notes": "Qwen3.6 27B integrated publisher-MTP Q8_0 on one Intel Arc Pro B70. The fixed 12-prompt realistic suite used one cold request per prompt, cached_tokens=0 throughout, no prompt/KV/context/response/history reuse, and target-verified embedded MTP3. The primary score is the conventional median over 99 inter-token intervals between generated events 1 and 100. Candidate token IDs and content exactly match a fresh same-integrated-artifact non-spec control for all prompts. Eleven rows reached the 512-token request cap; customer-email ended normally at EOS after 248 tokens, after the required generated-token 1/100 timing endpoints. The immutable measured source retains FAIL from an incompatible legacy 4K/128 oracle; the separately sealed matched-control supplement is PASS.",
+  "outputTokens": 512,
+  "promptTokens": 68,
+  "quantization": "Q8_0",
+  "tokSOut": 36.04870684253697,
+  "tokSTotal": 37.48397529291239,
+  "ttftMs": 785.4771044949302
+}

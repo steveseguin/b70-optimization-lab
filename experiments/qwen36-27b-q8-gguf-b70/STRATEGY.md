@@ -27,9 +27,12 @@ on all prompts. Median primary 99-interval decode improves
 improves `17.017022 -> 34.545186 tok/s` (`2.030037x`), TTFT is `1.028123x`,
 and the minimum per-prompt D99 gain is `1.757122x`. This does not alter the
 target-only starting line. It remains a scoped one-B70 short result: one prompt
-stopped normally at 248 tokens, `localmaxxing_submission_ready=false`, and
-middle/near-32K, concurrency, second-card, production, and submission gates
-remain open.
+stopped normally at 248 tokens after the required generated-token 1/100 timing
+endpoints for D99.
+The no-all-512 LocalMaxxing policy audit, local preflight, and authenticated
+server dry-run pass, so `localmaxxing_submission_ready=true`; the final POST
+has not been made. Middle/near-32K, concurrency, second-card, and production
+gates remain open.
 
 ## Goals
 
