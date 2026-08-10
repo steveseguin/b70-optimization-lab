@@ -15,14 +15,21 @@ that its model is currently loaded.
 
 ## Live Service
 
-No model service, worker, Ray process, benchmark, or experiment listener was
-left by the sealed end of the 2026-08-10 embedded-MTP four-service realistic
-scaling run. All four independent services closed without a survivor,
-listener, or forced kill, and every B70 returned from `29,911 MiB` loaded to
-`43 MiB`; retained device/server fault scans are clear. Recheck immediately
-before any operational change.
+No model service or listener is live. On 2026-08-10 the Gemma 26B quad
+production service was deployed at operator request, validated (health,
+c8 smokes at `439.7/445.0 tok/s` wall, sticky-cache probe), and then stopped
+and disabled the same day when the operator switched efforts to Muse Glimmer
+30B; ports 8000/19350-19353 are free and `b70-openai-frontdoor` remains
+disabled. See `notes/2026-08-10-muse-glimmer-30b-kickoff.md`. Recheck
+immediately before any operational change.
 
-The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
+The active optimization lane as of 2026-08-10 evening is **Meta Muse Glimmer
+30B**, quality-first (lossless BF16 reference per two B70s, UD-Q8_K_XL
+near-lossless candidate per two B70s, DFlash drafter in all arms). Entry
+point: `experiments/muse-glimmer-30b-b70/README.md`. Runtime:
+`/home/steve/src/llama.cpp-muse-glimmer` at clean upstream `030ebb558`.
+
+The prior (now closed and banked) lane was target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
 is two F16-KV 32K slots per card, using all four B70s as independent
 optimization lanes. Q8-KV 100K--128K capacity and vision are optional later
@@ -1861,7 +1868,16 @@ loaded service.
 
 ## Immediate Manager Actions
 
-1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
+1. Advance the Muse Glimmer 30B quality-first bring-up
+   (`experiments/muse-glimmer-30b-b70/README.md`): finish the staged
+   downloads with SHA capture, smoke Arm B (2xB70 UD-Q8_K_XL + DFlash) and
+   Arm A (2xB70 BF16), bank no-spec vs DFlash ladders with exact-output
+   guards, then run the Arm B vs Arm A quality gate before any production
+   claim. Keep the runtime tree clean-master until baselines are banked.
+2. The Qwen3.6 27B Q8_0 lane is closed and banked as of 2026-08-10; do not
+   continue it without a new decision. Its retained record follows in the
+   next item for reference.
+3. Banked Qwen lane record: continue only under its adaptive
    strategy. The trustworthy short c1 full-512 baseline and c2 fit now exist.
    The canonical per-vector Q8 crossover is sealed `NO_EFFECT`; close that
    source lane. Bank the official isolated short and near-32K
@@ -1901,20 +1917,20 @@ loaded service.
    prompt that naturally sustains 512 tokens so the serving scorecard does not
    depend only on forcing short JSON answers past EOS. Do not reuse Laguna
    flags or result directories implicitly.
-2. Recheck processes, listeners, Git status, device health, memory, and model
+4. Recheck processes, listeners, Git status, device health, memory, and model
    storage before launch. The idle statement above is a closure-time fact, not
    standing authorization.
-3. Schedule a non-operational workspace consolidation before substantially
+5. Schedule a non-operational workspace consolidation before substantially
    more history accumulates: review the inherited branch name and unpublished
    commits, make durable remote/integration decisions, compact this authority,
    and repair stale indexes without deleting chronological notes or patches.
-4. Keep Laguna paused and its dynamic M12-to-M1 cutoff rejected. Any Laguna
+6. Keep Laguna paused and its dynamic M12-to-M1 cutoff rejected. Any Laguna
    restart requires a new decision and preregistration; the closeout records
    the correctness and stability gates that would come first.
-5. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
+7. Preserve the exact Laguna, DeepSeek, and Qwen source/patch/result identities.
    Do not reset protected worktrees or relabel default-off experiments as
    promoted records.
-6. Continue to publish only verified new matching LocalMaxxing records after
+8. Continue to publish only verified new matching LocalMaxxing records after
    the applicable cold realistic gate, complete identity capture, and
    correctness pass.
 
