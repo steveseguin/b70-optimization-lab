@@ -713,7 +713,8 @@ def compare_arms(args: argparse.Namespace) -> int:
     }
     acceptance = candidate_metrics.get("acceptance_ratio")
     accepted_per_verify = candidate_metrics.get("accepted_per_verification")
-    ratio_disagreement = abs(interval_ratio - native_ratio)
+    interval_native_ratio_disagreement = abs(interval_ratio - native_ratio)
+    full_512_stream_native_ratio_disagreement = abs(full_ratio - native_ratio)
 
     advance_checks = {
         "candidate_interval_at_least_18": msum["interval_tok_s_median"] >= 18.0,
@@ -728,7 +729,9 @@ def compare_arms(args: argparse.Namespace) -> int:
         "ttft_regression_at_most_10pct": ttft_ratio <= 1.10,
         "acceptance_at_least_045": positive_number(acceptance) and acceptance >= 0.45,
         "accepted_per_verify_at_least_125": positive_number(accepted_per_verify) and accepted_per_verify >= 1.25,
-        "interval_native_ratio_disagreement_at_most_0035": ratio_disagreement <= 0.035,
+        "full_512_stream_native_ratio_disagreement_at_most_0035": (
+            full_512_stream_native_ratio_disagreement <= 0.035
+        ),
     }
     followup_checks = {
         "interval_gain_at_least_5pct": interval_ratio >= 1.05,
@@ -767,7 +770,10 @@ def compare_arms(args: argparse.Namespace) -> int:
             "interval_candidate_over_official": official_interval_ratio,
             "stream_native_candidate_over_official": official_native_ratio,
             "ttft_candidate_over_control": ttft_ratio,
-            "interval_native_ratio_disagreement": ratio_disagreement,
+            "interval_native_ratio_disagreement": interval_native_ratio_disagreement,
+            "full_512_stream_native_ratio_disagreement": (
+                full_512_stream_native_ratio_disagreement
+            ),
             "per_prompt_interval_candidate_over_control": per_prompt_ratios,
         },
         "acceptance": {
@@ -780,8 +786,10 @@ def compare_arms(args: argparse.Namespace) -> int:
         "advance_checks": advance_checks,
         "bounded_followup_checks": followup_checks,
         "measurement_note": (
-            "The policy 99-interval metric is retained, but native server timing "
-            "is co-gated because accepted speculative tokens are emitted in bursts."
+            "The policy 99-interval metric remains independently gated and reported. "
+            "Native server timing covers all 512 generated tokens, so consistency is "
+            "co-gated against the matched-horizon full-window D511 metric; the unmatched "
+            "interval/native disagreement remains diagnostic for speculative bursts."
         ),
     }
     atomic_write_json(args.output, result)

@@ -38,7 +38,13 @@ def baseline_oracle(model_sha: str = TRUNK_SHA) -> dict:
     }
 
 
-def exact_capture(mode: str, interval: float = 18.2, native: float = 18.2) -> dict:
+def exact_capture(
+    mode: str,
+    interval: float = 18.2,
+    native: float = 18.2,
+    full: float | None = None,
+) -> dict:
+    full = interval if full is None else full
     rows = []
     for index, prompt_id in enumerate(("q27-q8-lc-04k-middle", "q27-q8-c2-04k-b")):
         stream_rate = native + index * 0.01
@@ -63,7 +69,7 @@ def exact_capture(mode: str, interval: float = 18.2, native: float = 18.2) -> di
                 "cache_n": 0,
                 "stream_cache_n": 0,
                 "primary_metric": {"tok_s": interval + index * 0.01, "interval_count": 99},
-                "full_512_metric": {"tok_s": interval + index * 0.01, "interval_count": 511},
+                "full_512_metric": {"tok_s": full + index * 0.01, "interval_count": 511},
                 "stream_timings": stream_timing,
                 "timings": replay_timing,
                 "ttft_s": 7.0,
@@ -279,6 +285,158 @@ llamacpp:spec_decode_num_accepted_tokens_per_pos_total{position="2"} 20
                 0,
             )
             self.assertEqual(json.loads(comparison.read_text())["classification"], "ADVANCE_FULL_VALIDATION")
+
+            matched_horizon_gates = {}
+            for mode, interval, full, native in (
+                ("control", 16.5, 16.6, 16.6),
+                ("mtp3", 18.2, 20.0, 20.0),
+            ):
+                capture = root / f"matched-horizon-{mode}-capture.json"
+                gate = root / f"matched-horizon-{mode}-gate.json"
+                write_json(capture, exact_capture(mode, interval, native, full))
+                self.assertEqual(
+                    GATES.gate_exact(
+                        argparse.Namespace(
+                            mode=mode,
+                            input=capture,
+                            model_sha256=MTP_SHA,
+                            runtime_sha256=RUNTIME_SHA,
+                            output=gate,
+                        )
+                    ),
+                    0,
+                )
+                matched_horizon_gates[mode] = gate
+            matched_horizon_comparison = root / "matched-horizon-comparison.json"
+            self.assertEqual(
+                GATES.compare_arms(
+                    argparse.Namespace(
+                        control_exact_gate=matched_horizon_gates["control"],
+                        candidate_exact_gate=matched_horizon_gates["mtp3"],
+                        control_metrics_gate=control_metrics,
+                        candidate_metrics_gate=candidate_metrics,
+                        official_interval_tok_s=16.587155022411466,
+                        official_native_tok_s=16.621315139033597,
+                        output=matched_horizon_comparison,
+                    )
+                ),
+                0,
+            )
+            matched_horizon = json.loads(matched_horizon_comparison.read_text())
+            self.assertEqual(matched_horizon["classification"], "ADVANCE_FULL_VALIDATION")
+            self.assertTrue(matched_horizon["advance"])
+            self.assertGreater(
+                matched_horizon["ratios"]["interval_native_ratio_disagreement"],
+                0.035,
+            )
+            self.assertLessEqual(
+                matched_horizon["ratios"][
+                    "full_512_stream_native_ratio_disagreement"
+                ],
+                0.035,
+            )
+            self.assertTrue(
+                matched_horizon["advance_checks"][
+                    "full_512_stream_native_ratio_disagreement_at_most_0035"
+                ]
+            )
+            self.assertNotIn(
+                "interval_native_ratio_disagreement_at_most_0035",
+                matched_horizon["advance_checks"],
+            )
+
+            mismatched_full_capture = root / "mismatched-full-capture.json"
+            mismatched_full_gate = root / "mismatched-full-gate.json"
+            write_json(
+                mismatched_full_capture,
+                exact_capture("mtp3", interval=18.2, native=20.0, full=19.0),
+            )
+            self.assertEqual(
+                GATES.gate_exact(
+                    argparse.Namespace(
+                        mode="mtp3",
+                        input=mismatched_full_capture,
+                        model_sha256=MTP_SHA,
+                        runtime_sha256=RUNTIME_SHA,
+                        output=mismatched_full_gate,
+                    )
+                ),
+                0,
+            )
+            mismatched_full_comparison = root / "mismatched-full-comparison.json"
+            GATES.compare_arms(
+                argparse.Namespace(
+                    control_exact_gate=matched_horizon_gates["control"],
+                    candidate_exact_gate=mismatched_full_gate,
+                    control_metrics_gate=control_metrics,
+                    candidate_metrics_gate=candidate_metrics,
+                    official_interval_tok_s=16.587155022411466,
+                    official_native_tok_s=16.621315139033597,
+                    output=mismatched_full_comparison,
+                )
+            )
+            mismatched_full = json.loads(mismatched_full_comparison.read_text())
+            self.assertFalse(mismatched_full["advance"])
+            self.assertEqual(
+                mismatched_full["classification"],
+                "ONE_BOUNDED_NMAX_PMIN_FOLLOWUP",
+            )
+            self.assertFalse(
+                mismatched_full["advance_checks"][
+                    "full_512_stream_native_ratio_disagreement_at_most_0035"
+                ]
+            )
+            self.assertGreater(
+                mismatched_full["ratios"][
+                    "full_512_stream_native_ratio_disagreement"
+                ],
+                0.035,
+            )
+
+            weak_policy_capture = root / "weak-policy-capture.json"
+            weak_policy_gate = root / "weak-policy-gate.json"
+            write_json(
+                weak_policy_capture,
+                exact_capture("mtp3", interval=17.0, native=20.0, full=20.0),
+            )
+            self.assertEqual(
+                GATES.gate_exact(
+                    argparse.Namespace(
+                        mode="mtp3",
+                        input=weak_policy_capture,
+                        model_sha256=MTP_SHA,
+                        runtime_sha256=RUNTIME_SHA,
+                        output=weak_policy_gate,
+                    )
+                ),
+                0,
+            )
+            weak_policy_comparison = root / "weak-policy-comparison.json"
+            GATES.compare_arms(
+                argparse.Namespace(
+                    control_exact_gate=matched_horizon_gates["control"],
+                    candidate_exact_gate=weak_policy_gate,
+                    control_metrics_gate=control_metrics,
+                    candidate_metrics_gate=candidate_metrics,
+                    official_interval_tok_s=16.587155022411466,
+                    official_native_tok_s=16.621315139033597,
+                    output=weak_policy_comparison,
+                )
+            )
+            weak_policy = json.loads(weak_policy_comparison.read_text())
+            self.assertFalse(weak_policy["advance"])
+            self.assertEqual(weak_policy["classification"], "STOP_NO_MTP_WIN")
+            self.assertTrue(
+                weak_policy["advance_checks"][
+                    "full_512_stream_native_ratio_disagreement_at_most_0035"
+                ]
+            )
+            self.assertFalse(
+                weak_policy["advance_checks"]["candidate_interval_at_least_18"]
+            )
+            self.assertFalse(
+                weak_policy["advance_checks"]["interval_gain_at_least_8pct"]
+            )
 
             burst_only_capture = root / "burst-only.json"
             burst_only_gate = root / "burst-only-gate.json"
