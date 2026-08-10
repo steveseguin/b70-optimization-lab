@@ -183,9 +183,16 @@ the official isolated VDR4 short baseline, VDR2 measured D100
 `16.5871550224 / 15.0812900263 = 1.09985x`, conventional D511
 `16.5889072472 / 15.0835290852 = 1.09980x`, and legacy D512
 `16.6211250758 / 15.1128678281 = 1.09980x`; PP and TTFT remained neutral.
-Bank this scoped official short decode win. D511 remains below the immediate
-`18 tok/s` target, so the next bounded gate is cross-band VDR2 guarding and
-selection of the next decode candidate. See
+The official isolated cross-band guards also pass. Middle retains the required
+`-ub 128` and measures D100 `15.1381732549 / 13.8696711812 = 1.09146x`
+and D511 `15.0772808986 / 13.8194229005 = 1.09102x`; near-32K retains
+`-ub 1024` and measures D100 `13.6894526174 / 12.6475080195 = 1.08238x`
+and D511 `13.6861593539 / 12.6432505506 = 1.08249x`. PP and TTFT remain
+neutral in both bands. Both packets are official/promotable, full-512 exact,
+cache-zero, fully offloaded, post-canary exact, and clean. Bank VDR2 at short
+`-ub 1024`, middle `-ub 128`, and near-32K `-ub 1024`, with an
+`8.2%--10.0%` decode improvement. D511 remains below `18 tok/s` throughout;
+the next gate is a balanced VDR1 screen against banked VDR2. See
 `../experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json`
 and
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md`.

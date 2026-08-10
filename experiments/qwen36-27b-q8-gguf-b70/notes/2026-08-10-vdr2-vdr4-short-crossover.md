@@ -135,6 +135,70 @@ all nonselected GPUs idle, reverified model/runtime identity, and found no
 device or server fault.
 
 The official short VDR2 decode win is banked, but conventional D511 remains
-below the immediate decode target: `16.5889072472 < 18 tok/s`. The next bounded
-gate is cross-band VDR2 guarding and selection of the next decode candidate;
-the short VDR2 packet does not need another reproduction now.
+below the immediate decode target: `16.5889072472 < 18 tok/s`. This advanced
+VDR2 to bounded middle and near-32K guards; the short packet does not need
+another reproduction.
+
+## Official isolated VDR2 cross-band result
+
+The middle `-ub 128` packet passed:
+
+`/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-vdr2-official-isolated-gpu0-middle-20260810T054938.876737716Z`
+
+- 80/80-entry artifact-manifest SHA-256:
+  `5822c88d6055afa0656269a027468e2aac1dafddf0e6f32131a582e66a551502`;
+- detached completion-marker SHA-256:
+  `8c01de2846ff01b2d472892c695bf797c89104c32b2cc897bdbd5e09d9dd2f10`;
+- exact-result SHA-256:
+  `40c1e38db9d1281eb4410fbb2da3959479e49793a0a61a9c378440c01cd50426`;
+- exact-result-gate SHA-256:
+  `9a63ba6468b10e488c6fcae64a4e7ba59ab85aedff99c553541bad34ff7af411`;
+- run-identity SHA-256:
+  `5a4c6c659c42d3ea6bc9c5ac9f6f7d5f30b358064f41aa113e3884aad192783a`.
+
+Against the matched official VDR4 `-ub 128` middle baseline:
+
+| Metric | VDR4 | VDR2 | VDR2/VDR4 |
+|---|---:|---:|---:|
+| PP tok/s | `157.7084965732` | `157.6975586190` | `0.99993x` |
+| TTFT s | `109.2343399920` | `109.2455990315` | `1.00010x` |
+| D100 tok/s | `13.8696711812` | `15.1381732549` | `1.09146x` |
+| D511 tok/s | `13.8194229005` | `15.0772808986` | `1.09102x` |
+
+The near-32K `-ub 1024` packet passed:
+
+`/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-vdr2-official-isolated-gpu0-near32k-20260810T060340.578608937Z`
+
+- 80/80-entry artifact-manifest SHA-256:
+  `35df11c414f3898753d7a8498a4529a10ce7ff0a7622d7f5f642f1fcdbdef1b1`;
+- detached completion-marker SHA-256:
+  `c997d7b82e5c1ac0397e5b8306addb5d338825347fa7e098ea0e33a5ecaef4e3`;
+- exact-result SHA-256:
+  `96e5197165860191b4efa98d65ff1cea5ef5a2da849a03f9c3a72786d3953a50`;
+- exact-result-gate SHA-256:
+  `9a63ba6468b10e488c6fcae64a4e7ba59ab85aedff99c553541bad34ff7af411`;
+- run-identity SHA-256:
+  `08bee7023bfd1bc13c1ba979dfd057566e446deebb0688ed23c46c1c8b691510`.
+
+Against the official VDR4 `-ub 1024` near-32K baseline:
+
+| Metric | VDR4 | VDR2 | VDR2/VDR4 |
+|---|---:|---:|---:|
+| PP tok/s | `629.2050294524` | `628.7871123260` | `0.99934x` |
+| TTFT s | `50.6597956765` | `50.6909852390` | `1.00062x` |
+| D100 tok/s | `12.6475080195` | `13.6894526174` | `1.08238x` |
+| D511 tok/s | `12.6432505506` | `13.6861593539` | `1.08249x` |
+
+Both cross-band markers are `PASS`, `evidence_valid=true`,
+`official-isolated`, and `performance_promotable=true`. Each has two
+full-512 `PASS_ORACLE_EXACT` rows, exact intrinsic/result/post-canary gates,
+cache zero, `65/65` offload, verified model/runtime identity, no forced kill or
+survivor, a closed port, GPU 0 at `43 -> 43 MiB`, idle nonselected GPUs, and no
+device or server fault.
+
+VDR2 is now officially banked at short `-ub 1024`, middle `-ub 128`, and
+near-32K `-ub 1024`. D100/D511 improves by `8.2%--10.0%` across those bands
+while PP and TTFT remain neutral. Conventional D511 remains below the
+immediate `18 tok/s` target everywhere: `16.5889072472`, `15.0772808986`, and
+`13.6861593539 tok/s`. The current next gate is a balanced VDR1 screen against
+the banked VDR2 profile.

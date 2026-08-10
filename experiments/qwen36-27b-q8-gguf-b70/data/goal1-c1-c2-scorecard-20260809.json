@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_short_decode_win_banked",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_decode_win_banked_vdr1_screen_next",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -437,7 +437,7 @@
     "promotion_status": "official_isolated_short_and_near32k_prompt_ttft_banked_middle_exact_rejected_no_broad_default",
     "causal_conclusion": "On GPU 0 in the current epoch, ubatch 128 exactly reproduces both old GPU-1 middle oracle rows while ubatch 1024 diverges on row 2; the controlled difference is attributable to ubatch treatment rather than card or epoch.",
     "broad_default": false,
-    "subsequent_speed_gate": "decode_vdr2_screen_completed_diagnostic",
+    "subsequent_speed_gate": "vdr2_official_cross_band_pass_vdr1_screen_next",
     "full_512_decode_target_evaluated": true,
     "full_512_decode_target_passed": false
   },
@@ -651,9 +651,179 @@
       "claim_scope": "official_short_vdr2_decode_win",
       "band_decision": "banked_scoped_decode_win"
     },
-    "decision": "bank_official_short_vdr2_decode_win_cross_band_guards_next",
+    "official_isolated_vdr2_middle": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-vdr2-official-isolated-gpu0-middle-20260810T054938.876737716Z",
+      "artifact_manifest_entries": 80,
+      "artifact_manifest_sha256": "5822c88d6055afa0656269a027468e2aac1dafddf0e6f32131a582e66a551502",
+      "completion_status_sha256": "8c01de2846ff01b2d472892c695bf797c89104c32b2cc897bdbd5e09d9dd2f10",
+      "exact_result_sha256": "40c1e38db9d1281eb4410fbb2da3959479e49793a0a61a9c378440c01cd50426",
+      "exact_result_gate_sha256": "9a63ba6468b10e488c6fcae64a4e7ba59ab85aedff99c553541bad34ff7af411",
+      "run_identity_sha256": "5a4c6c659c42d3ea6bc9c5ac9f6f7d5f30b358064f41aa113e3884aad192783a",
+      "runtime_profile_check_sha256": "7d2dc67eaf9d8938414dfc909f2db0f5c8f349830fa18ca10fdf1f92f4596a0c",
+      "status": "PASS",
+      "evidence_valid": true,
+      "evidence_class": "official-isolated",
+      "performance_promotable": true,
+      "run_scope": "promotion512",
+      "runtime_profile": "q8-vdr2-candidate",
+      "declared_q8_reorder_vdr_mmvq": 2,
+      "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+      "promotion_profile": "goal1-baseline-ub128",
+      "band": "middle",
+      "gpu": 0,
+      "ubatch": 128,
+      "prompt_ids": [
+        "q27-q8-lc-17k-early",
+        "q27-q8-c2-17k-b"
+      ],
+      "prompt_tokens": [
+        17274,
+        17171
+      ],
+      "rows": 2,
+      "completion_tokens_per_row": 512,
+      "cache_n_all_zero": true,
+      "full_offload_layers": "65/65",
+      "oracle_status": "PASS_ORACLE_EXACT",
+      "intrinsic_gate_passed": true,
+      "exact_result_gate_passed": true,
+      "post_512_canary_passed": true,
+      "prompt_processing_median_tok_s": 157.69755861897968,
+      "ttft_median_s": 109.24559903149202,
+      "decode_1_100_median_tok_s": 15.138173254861634,
+      "decode_1_512_median_tok_s": 15.077280898582845,
+      "full_512_after_ttft_legacy_median_tok_s": 15.10624063456911,
+      "official_vdr4_baseline_comparison": {
+        "scorecard_ref": "c1_near32k_ubatch_screen.matched_middle_control_ubatch_128",
+        "prompt_processing_median_tok_s": 157.7084965732491,
+        "ttft_median_s": 109.23433999199915,
+        "decode_1_100_median_tok_s": 13.869671181218948,
+        "decode_1_512_median_tok_s": 13.819422900454166,
+        "full_512_after_ttft_legacy_median_tok_s": 13.84602669037905,
+        "prompt_processing_ratio": 0.9999306444832898,
+        "ttft_ratio": 1.0001030723442252,
+        "decode_1_100_ratio": 1.0914586984124308,
+        "decode_1_512_ratio": 1.0910210221649228,
+        "full_512_after_ttft_legacy_ratio": 1.091016287370421,
+        "prompt_processing_interpretation": "neutral",
+        "ttft_interpretation": "neutral"
+      },
+      "target_attainment": {
+        "immediate_decode_1_512_target_tok_s": 18.0,
+        "immediate_decode_1_512_passed": false,
+        "immediate_decode_1_512_attainment": 0.8376267165879359
+      },
+      "cleanup": {
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "gpu_pre_mib": 43,
+        "gpu_final_mib": 43,
+        "port_closed": true,
+        "nonselected_gpus_idle": true,
+        "model_identity_verified": true,
+        "runtime_identity_verified": true,
+        "device_faults": false,
+        "server_faults": false
+      },
+      "claim_scope": "official_middle_vdr2_decode_win",
+      "band_decision": "banked_scoped_decode_win"
+    },
+    "official_isolated_vdr2_near32k": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-vdr2-official-isolated-gpu0-near32k-20260810T060340.578608937Z",
+      "artifact_manifest_entries": 80,
+      "artifact_manifest_sha256": "35df11c414f3898753d7a8498a4529a10ce7ff0a7622d7f5f642f1fcdbdef1b1",
+      "completion_status_sha256": "c997d7b82e5c1ac0397e5b8306addb5d338825347fa7e098ea0e33a5ecaef4e3",
+      "exact_result_sha256": "96e5197165860191b4efa98d65ff1cea5ef5a2da849a03f9c3a72786d3953a50",
+      "exact_result_gate_sha256": "9a63ba6468b10e488c6fcae64a4e7ba59ab85aedff99c553541bad34ff7af411",
+      "run_identity_sha256": "08bee7023bfd1bc13c1ba979dfd057566e446deebb0688ed23c46c1c8b691510",
+      "runtime_profile_check_sha256": "7d2dc67eaf9d8938414dfc909f2db0f5c8f349830fa18ca10fdf1f92f4596a0c",
+      "status": "PASS",
+      "evidence_valid": true,
+      "evidence_class": "official-isolated",
+      "performance_promotable": true,
+      "run_scope": "promotion512",
+      "runtime_profile": "q8-vdr2-candidate",
+      "declared_q8_reorder_vdr_mmvq": 2,
+      "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+      "promotion_profile": "prefill-ub1024",
+      "band": "near32k",
+      "gpu": 0,
+      "ubatch": 1024,
+      "prompt_ids": [
+        "q27-q8-lc-31k-middle",
+        "q27-q8-c2-31k-b"
+      ],
+      "prompt_tokens": [
+        31846,
+        31841
+      ],
+      "rows": 2,
+      "completion_tokens_per_row": 512,
+      "cache_n_all_zero": true,
+      "full_offload_layers": "65/65",
+      "oracle_status": "PASS_ORACLE_EXACT",
+      "intrinsic_gate_passed": true,
+      "exact_result_gate_passed": true,
+      "post_512_canary_passed": true,
+      "prompt_processing_median_tok_s": 628.7871123260159,
+      "ttft_median_s": 50.69098523899447,
+      "decode_1_100_median_tok_s": 13.689452617380034,
+      "decode_1_512_median_tok_s": 13.686159353895466,
+      "full_512_after_ttft_legacy_median_tok_s": 13.712166199837466,
+      "official_vdr4_baseline_comparison": {
+        "scorecard_ref": "c1_near32k_ubatch_screen.official_isolated_ubatch_1024",
+        "prompt_processing_median_tok_s": 629.2050294524228,
+        "ttft_median_s": 50.65979567649629,
+        "decode_1_100_median_tok_s": 12.647508019541377,
+        "decode_1_512_median_tok_s": 12.643250550624003,
+        "full_512_after_ttft_legacy_median_tok_s": 12.667340518467988,
+        "prompt_processing_ratio": 0.9993358013575152,
+        "ttft_ratio": 1.0006156669619704,
+        "decode_1_100_ratio": 1.0823833909596083,
+        "decode_1_512_ratio": 1.082487395080531,
+        "full_512_after_ttft_legacy_ratio": 1.0824818500652291,
+        "prompt_processing_interpretation": "neutral",
+        "ttft_interpretation": "neutral"
+      },
+      "target_attainment": {
+        "immediate_decode_1_512_target_tok_s": 18.0,
+        "immediate_decode_1_512_passed": false,
+        "immediate_decode_1_512_attainment": 0.7603421863275259
+      },
+      "cleanup": {
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "gpu_pre_mib": 43,
+        "gpu_final_mib": 43,
+        "port_closed": true,
+        "nonselected_gpus_idle": true,
+        "model_identity_verified": true,
+        "runtime_identity_verified": true,
+        "device_faults": false,
+        "server_faults": false
+      },
+      "claim_scope": "official_near32k_vdr2_decode_win",
+      "band_decision": "banked_scoped_decode_win"
+    },
+    "official_cross_band_summary": {
+      "bands_passed": [
+        "short_ub1024",
+        "middle_ub128",
+        "near32k_ub1024"
+      ],
+      "decode_1_100_ratio_min": 1.0823833909596083,
+      "decode_1_100_ratio_max": 1.0998498797830727,
+      "decode_1_512_ratio_min": 1.082487395080531,
+      "decode_1_512_ratio_max": 1.0998027818000091,
+      "prompt_processing_interpretation": "neutral_all_bands",
+      "ttft_interpretation": "neutral_all_bands",
+      "immediate_decode_1_512_target_tok_s": 18.0,
+      "immediate_decode_1_512_passed_any": false,
+      "immediate_decode_1_512_passed_all": false
+    },
+    "decision": "bank_official_vdr2_cross_band_decode_win_vdr1_balanced_screen_next",
     "diagnostic_screen_official_performance_claim": false,
-    "next_gate": "bounded_cross_band_vdr2_guards_and_next_decode_candidate"
+    "next_gate": "balanced_vdr1_screen_against_banked_vdr2"
   },
   "c2_short": {
     "configuration": {
@@ -813,5 +983,5 @@
     "official_performance_result": null,
     "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
   },
-  "next_gate": "The balanced four-card VDR2/VDR4 short full-512 crossover remains diagnostic and performance_promotable=false. Its official isolated GPU-0 VDR2 follow-up passes all exact-output, runtime-binding, and lifecycle gates and banks the scoped approximately 10% short decode win. Conventional D511 is 16.5889072472 tok/s, below the immediate 18 tok/s target. Run bounded cross-band VDR2 guards and select the next decode candidate; do not rerun the banked short packet. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
+  "next_gate": "The balanced four-card VDR2/VDR4 short full-512 crossover remains diagnostic and performance_promotable=false. Official isolated GPU-0 VDR2 packets now pass exact-output, canary, runtime-binding, and lifecycle gates at short ub1024, middle ub128, and near32k ub1024. D100/D511 improves by 8.2%--10.0% across the three bands while prompt processing and TTFT remain neutral. Conventional D511 remains below the immediate 18 tok/s target in every band. Bank the scoped VDR2 cross-band win and run a balanced VDR1 screen next; do not rerun the banked VDR2 packets. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
 }

@@ -20,8 +20,10 @@ and short full-512 PP/TTFT gates pass. The matched middle gate fails exact
 output, so `-ub 1024` is not a broad default. A balanced four-card VDR
 crossover then gave VDR2 a repeatable roughly 10% short D100/D511 lead over
 VDR4 with exact output. Its official isolated GPU-0 follow-up passes and banks
-the scoped short decode win; cross-band VDR2 guards and the next decode
-candidate follow because conventional D511 remains below `18 tok/s`.
+the scoped short `-ub 1024` decode win. Official middle `-ub 128` and near-32K
+`-ub 1024` guards also pass, banking an `8.2%--10.0%` VDR2 decode lead across
+all three bands with neutral PP/TTFT. Conventional D511 remains below
+`18 tok/s`; a balanced VDR1 screen is next.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -148,6 +150,18 @@ Validated results under the correctness-qualified default
   `16.6211 / 15.1129 = 1.09980x`; PP and TTFT remain neutral. This banks the
   scoped official short decode win, but D511 remains below the immediate
   `18 tok/s` target;
+- the official isolated GPU-0 VDR2 middle `-ub 128` packet is also exact and
+  promotable. Against the matched VDR4 baseline, D100 is
+  `15.1382 / 13.8697 = 1.09146x` and D511 is
+  `15.0773 / 13.8194 = 1.09102x`; PP and TTFT ratios are neutral at
+  `0.99993x` and `1.00010x`;
+- the official isolated GPU-0 VDR2 near-32K `-ub 1024` packet is exact and
+  promotable. Against the official VDR4 baseline, D100 is
+  `13.6895 / 12.6475 = 1.08238x` and D511 is
+  `13.6862 / 12.6433 = 1.08249x`; PP and TTFT ratios are neutral at
+  `0.99934x` and `1.00062x`. All three official VDR2 bands retain cache-zero,
+  `65/65` offload, exact canaries, and clean teardown, but remain below the
+  immediate `18 tok/s` D511 target;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -193,9 +207,10 @@ recurrent-output DMMV is closed as a source lane. See
 Bank the official short and near-32K PP/TTFT wins, reject the middle result, and
 do not integrate `UBATCH_SIZE=1024` as a broad default. The VDR2 diagnostic
 screen passes on all four cards and its official isolated GPU-0 short follow-up
-banks the scoped roughly 10% decode win. The next bounded speed gate is
-cross-band VDR2 guarding and selection of the next decode candidate, not
-another short reproduction. See
+banks the scoped roughly 10% decode win. The official middle `-ub 128` and
+near-32K `-ub 1024` guards also pass, banking VDR2 across all three bands with
+an `8.2%--10.0%` decode lead and neutral PP/TTFT. The next bounded speed gate
+is a balanced VDR1 screen, not another VDR2 reproduction. See
 [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md).
 
 The validation sequence remains useful for future runtimes:

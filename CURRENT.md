@@ -16,10 +16,10 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-10 official isolated VDR2 GPU-0 short packet. GPU 0
-returned from 43 to 43 MiB, the three nonselected GPUs remained idle, and the
-port closed without a device or server fault. Recheck immediately before any
-operational change.
+running after the 2026-08-10 official isolated VDR2 GPU-0 near-32K packet.
+GPU 0 returned from 43 to 43 MiB, the three nonselected GPUs remained idle,
+and the port closed without a device or server fault. Recheck immediately
+before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -126,9 +126,22 @@ the official isolated VDR4 short baseline, VDR2 measured D100
 `16.5889 / 15.0835 = 1.09980x`, and legacy D512
 `16.6211 / 15.1129 = 1.09980x`; PP `606.0654 / 605.8453` and TTFT
 `7.1874 / 7.1909 s` remained neutral. Bank this scoped official short decode
-win. Conventional D511 remains below the immediate `18 tok/s` target, so the
-next bounded speed work is cross-band VDR2 guarding and selection of the next
-decode candidate, not another short reproduction.
+win.
+
+The official isolated cross-band guards also pass. The middle packet preserves
+the correctness-required `-ub 128` setting and improves D100
+`15.1382 / 13.8697 = 1.09146x` and D511
+`15.0773 / 13.8194 = 1.09102x`; its PP and TTFT ratios are `0.99993x` and
+`1.00010x`. The near-32K `-ub 1024` packet improves D100
+`13.6895 / 12.6475 = 1.08238x` and D511
+`13.6862 / 12.6433 = 1.08249x`; its PP and TTFT ratios are `0.99934x` and
+`1.00062x`. Both packets are official, promotable, full-512 oracle/intrinsic/
+result/post-canary exact, cache-zero, `65/65` offloaded, and clean. VDR2 is
+therefore banked at short `-ub 1024`, middle `-ub 128`, and near-32K
+`-ub 1024`, with an `8.2%--10.0%` decode improvement and neutral PP/TTFT.
+Conventional D511 remains below the immediate `18 tok/s` target in all three
+bands. The current next gate is a balanced VDR1 screen against the banked VDR2
+profile.
 See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md),
 the [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md),
 and the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md).
@@ -1749,10 +1762,12 @@ loaded service.
    exactly matched the old oracle. The balanced VDR screen then gave VDR2 a
    repeatable roughly 10% D100/D511 lead over VDR4 on all four cards with exact
    output and neutral PP/TTFT; its official isolated GPU-0 follow-up passed and
-   banks the scoped short decode win. Because conventional D511 is
-   `16.5889 tok/s`, below the immediate `18 tok/s` target, run bounded
-   cross-band VDR2 guards and select the next decode candidate. Do not promote
-   the concurrent screen or rerun the banked short packet. Directly measure a
+   banks the scoped short decode win. The official middle `-ub 128` and
+   near-32K `-ub 1024` guards also pass exact, giving VDR2 an official
+   `8.2%--10.0%` decode lead across all three bands with neutral PP/TTFT.
+   Conventional D511 remains below `18 tok/s` throughout; run the balanced
+   VDR1 screen next. Do not promote the concurrent screen or rerun the banked
+   VDR2 packets. Directly measure a
    synchronized natural-stop pair as a separate relevance gate. Add a held-out
    prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only
