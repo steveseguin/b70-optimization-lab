@@ -5,7 +5,7 @@ set -euo pipefail
 # Keep this source state and the moving helper hashes literal PENDING until an
 # independent review freezes all three files. The no-argument live path stops
 # before ROOT resolution or any external command while either condition holds.
-LIVE_ENABLE_STATE="PENDING"
+LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"
 LIVE_ENABLE_REQUIRED="REVIEWED_AND_PINNED"
 LIVE_ACK_REQUIRED="I_ACCEPT_ONE_ISOLATED_B70_EMBEDDED_MTP_VDR2_REALISTIC_GATE"
 EXPECTED_CAPTURE_SHA256="40b962bff418ca1481763228a5630f51274492629f21ca3e89401e198a6b73b2"
