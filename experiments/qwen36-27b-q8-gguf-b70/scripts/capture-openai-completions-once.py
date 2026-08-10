@@ -236,7 +236,10 @@ def stream_once(
                     if isinstance(content, str):
                         final_verbose_content = content
                 elif event_ids:
-                    if verbose.get("stop") is not False or verbose.get("id_slot") != 0:
+                    if (
+                        verbose.get("stop") is not False
+                        or verbose.get("id_slot") != -1
+                    ):
                         raise ValueError(
                             "partial verbose token event identity mismatch"
                         )
