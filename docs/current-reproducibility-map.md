@@ -96,6 +96,8 @@ Start with:
 - `../experiments/qwen36-27b-q8-gguf-b70/data/baseline-summary-20260808.json`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-one-b70-baseline-and-dnn-exactness.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-replica-functional-smoke.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`.
 
 The official isolated short full-512 c1 packet now passes and has an exact
@@ -118,14 +120,19 @@ while swapped B+A matched the historical A/slot-1 stream prefix on two cards
 through generated token 128, including the 33-token divergent suffix after the
 95-token common
 prefix. This establishes replicated workload-sensitive, slot-1-associated
-forced-tail behavior; reordered Q8 MMVQ and recurrent-output DMMV are leading
-suspects to test, not established causes. A c2 performance score is therefore
-not promoted. Two later sealed waves completed the fixed A/B matrix: A+A and
+forced-tail behavior. A c2 performance score is therefore not promoted. Two
+later sealed waves completed the fixed A/B matrix: A+A and
 B+B were exact in both slots, while both heterogeneous directions reproduced
 the first slot-1 split immediately after the separately measured boundary. The
 forward B tail was repeatable on each fixed lane but differed between GPU 1 and
 GPU 3 after the shared token-71 split; physical card remains confounded with
-launch ordinal, readiness age, port, and request epoch. The optional stretch ladder
+launch ordinal, readiness age, port, and request epoch. The canonical
+single-column MMVQ plus recurrent-output DMMV control subsequently completed a
+sealed two-wave same-card crossover and classified `NO_EFFECT`: all four ON and
+all four OFF lanes reproduced B71/A96 without pre-boundary regression. GPU 0's
+later forward tail differed across selector states, so this is not complete
+ON/OFF output equality. The forced-512 packet is diagnostic-only and closes
+that source lane without a natural-stop or performance claim. The optional stretch ladder
 treats Q8 KV as a separate quality
 identity and tests c1 at 64K, 100K, and 128K; MTP and vision are also separate
 identities. See
@@ -133,18 +140,35 @@ identities. See
 
 The four-process 4K topology and later full-512 four-band functional wave are
 validated, but their concurrent timings remain diagnostic. The compact c2
-matrix is also sealed diagnostic evidence. The next evidence step is a
-two-wave selector-off/on same-card crossover using the fresh sealed Phase-1
-oracles. The default-off combined canonical per-vector Q8 component control
-already passes, and the four-card no-sleep c1 cohort is full-512 exact across
-both selectors and both replicas. Its OFF lanes retain zero canonical route
-markers; its ON lanes retain the expected flat first-hit before release with
-no recurrent hit or violation. The crossover must establish full c2 exactness
-and flat-to-recurrent route evidence before any narrower DMMV/MMVQ control is
-selected. See
+matrix and canonical-Q8 crossover are also sealed diagnostic evidence. The
+current speed lead is a balanced four-card same-card near-32K screen of
+`-ub 128 -> 1024`: mean PP improved `155.2815 -> 622.1037 tok/s`
+(`4.0063x`), TTFT improved `205.0883 -> 51.1965 s`, and natural 94-token
+decode stayed flat at about `12.78 tok/s`. All eight cache-zero runs were
+retrieval-exact, fully offloaded, clean, and output-identical. They remain
+`legacy-validation`, `performance_promotable=false`. The subsequent official
+isolated GPU-0 near-32K full-512 packet passes with `PASS_ORACLE_EXACT`, exact
+intrinsic/result/post-canary gates, full offload, and clean teardown. At
+`-ub 1024`, median PP is `629.2050 tok/s`, TTFT `50.6598 s`, conventional
+tokens 1--100 decode `12.6475 tok/s`, and conventional tokens 1--512 decode
+`12.6433 tok/s`. Its official isolated short full-512 guard also passes exact
+oracle, intrinsic/result/post-canary, offload, and cleanup gates, with
+`605.8453 tok/s` PP, `7.1909 s` TTFT, and `15.0835 tok/s` full-window decode.
+Bank only the scoped short and near-32K PP/TTFT rows; both decode targets remain
+unmet.
+
+The middle `-ub 1024` packet is `FAIL_ORACLE_EXACT`: row 1 is exact, while row
+2 has a 92-token common prefix and first differs at generated token 93
+(candidate `90`, oracle `71093`). Its requested JSON remains semantically
+correct and stream/replay exactness passes, but its performance is diagnostic
+only and no completion marker was emitted. A subsequent same-GPU `-ub 128`
+control passed and both rows exactly matched the old GPU-1 oracle, attributing
+the divergence to the ubatch treatment rather than card or epoch. Therefore
+`-ub 1024` is not a broad default; no further ubatch integration gate is
+pending. The next bounded speed gate is the decode VDR2 screen. See
 `../experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json`
 and
-`../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`.
+`../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md`.
 
 ## Historical Qwen3.6 27B Optimization Lane
 

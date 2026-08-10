@@ -13,7 +13,11 @@ B+A matched the historical A/slot-1 stream prefix through generated token 128
 on two cards. Two repeat waves completed the fixed A/B matrix: A+A and B+B were
 exact, while both mixed directions reproduced the first slot-1 split after the
 separately measured answer boundary. A synchronized natural-stop pair is still
-unmeasured.
+unmeasured. The canonical MMVQ/DMMV control completed its same-card crossover
+as `NO_EFFECT` and is closed. A later near-32K four-card screen found a
+`4.0063x` prompt-processing lead for `-ub 1024`; its official isolated near-32K
+and short full-512 PP/TTFT gates pass. The matched middle gate fails exact
+output, so `-ub 1024` is not a broad default.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -100,6 +104,30 @@ Validated results under the correctness-qualified default
   exact JSON fields with zero cached tokens;
 - 32K prefill median `156.043 tok/s`; decode-after-TTFT median `14.025 tok/s`,
   ranging from `15.240` at 4K to `12.783` at 31.8K;
+- a balanced four-card same-card near-32K screen changed only
+  `-ub 128 -> 1024` and raised mean approximate PP
+  `155.2815 -> 622.1037 tok/s` (`4.0063x`) while reducing mean TTFT
+  `205.0883 -> 51.1965 s`; all eight 31,846-token rows were cache-zero,
+  retrieval-exact, fully offloaded, and output-identical, but remain
+  `legacy-validation`, `performance_promotable=false`;
+- the official isolated GPU-0 near-32K `-ub 1024` full-512 packet passes
+  `PASS_ORACLE_EXACT`, intrinsic/exact-result/post-canary gates, full offload,
+  and clean teardown. Median PP is `629.2050 tok/s`, TTFT `50.6598 s`, primary
+  conventional decode `12.6475 tok/s`, and full-window conventional decode
+  `12.6433 tok/s`. This promotes only near-32K PP/TTFT; decode remains below the
+  `18 tok/s` target;
+- the official isolated short `-ub 1024` full-512 packet also passes
+  `PASS_ORACLE_EXACT` and all intrinsic/result/post-canary, full-offload, and
+  cleanup gates. PP is `605.8453 tok/s`, TTFT `7.1909 s`, and full-window
+  decode `15.0835 tok/s`; bank only short PP/TTFT because the `20 tok/s` decode
+  target remains unmet;
+- the official isolated middle `-ub 1024` guard is `FAIL_ORACLE_EXACT`. Row 1
+  is exact; row 2 has LCP 92 and first differs at generated token 93
+  (candidate `90`, oracle `71093`). Its JSON answer is semantically correct and
+  stream/replay exact, but its timing is diagnostic only and it has no
+  completion marker. A same-GPU `-ub 128` control passed and both rows exactly
+  matched the old GPU-1 oracle, isolating the divergence to ubatch rather than
+  card or epoch;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -122,9 +150,8 @@ the historical A/slot-1 stream prefix through token 128 on two cards, including
 the 33-token divergent suffix, while duplicate-B was 128/128 c1-exact
 in both slots on two other cards. This rules out a simple unconditional slot-1
 failure and establishes replicated workload-sensitive, slot-1-associated
-forced-tail behavior, not prompt B or SSE loss. Reordered Q8 MMVQ and
-recurrent-output DMMV are leading suspects to test, not established
-causes. Duplicate-A was exact in both slots on two cards and repeated exactly;
+forced-tail behavior, not prompt B or SSE loss. Duplicate-A was exact in both
+slots on two cards and repeated exactly;
 forward A0/B1 reproduced B's first split at token 71 on both cards and both
 waves. Its later tail was stable on each fixed lane but differed across GPU 1
 and GPU 3 after token 71, with card and launch-order effects still confounded.
@@ -134,10 +161,19 @@ dispatch activation. A fresh four-card no-sleep Phase-1 cohort now also passes:
 both selector replicas are full-512 exact to the official c1 packet, selector
 off emits no canonical route marker, and selector on retains the exact flat
 first-hit before release with no recurrent hit or violation. Its sealed
-selector-matched oracles are the authority for the next bounded gate: a
-two-wave selector-off/on same-card crossover. No aggregate c2 rate is official
-until that boundary is classified. See
-[`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md).
+selector-matched oracles fed the sealed two-wave selector-off/on same-card
+crossover. It classified `NO_EFFECT`: every ON and OFF lane reproduced B71 or
+A96 with no pre-boundary regression, despite exact ON-route activation. GPU 0's
+later forward tail differed across selector states, so complete ON/OFF output
+equality is not claimed. The forced-512 crossover is diagnostic-only and makes
+no natural-stop or performance claim; canonical single-column MMVQ plus
+recurrent-output DMMV is closed as a source lane. See
+[`notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`](notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md).
+
+Bank the official short and near-32K PP/TTFT wins, reject the middle result, and
+do not integrate `UBATCH_SIZE=1024` as a broad default. The next bounded speed
+gate is the decode VDR2 screen, not another ubatch gate. See
+[`notes/2026-08-10-near32k-ubatch-screen.md`](notes/2026-08-10-near32k-ubatch-screen.md).
 
 The validation sequence remains useful for future runtimes:
 
@@ -254,6 +290,8 @@ cards were active. See
 - Concurrent token-512 failure diagnostic: [`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md)
 - Canonical Q8 component GPU result: [`notes/2026-08-09-canonical-q8-component-gpu-pass.md`](notes/2026-08-09-canonical-q8-component-gpu-pass.md)
 - Canonical Q8 four-card c1 oracle pass: [`notes/2026-08-09-canonical-q8-c1-phase1-pass.md`](notes/2026-08-09-canonical-q8-c1-phase1-pass.md)
+- Canonical Q8 c2 crossover no-effect result: [`notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`](notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md)
+- Near-32K ubatch crossover screen: [`notes/2026-08-10-near32k-ubatch-screen.md`](notes/2026-08-10-near32k-ubatch-screen.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

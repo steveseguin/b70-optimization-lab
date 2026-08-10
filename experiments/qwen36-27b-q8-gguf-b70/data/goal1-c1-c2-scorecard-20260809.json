@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "date": "2026-08-09",
-  "status": "c1_short_reproduced_c2_fit_validated_forced_tail_exactness_blocked",
+  "date": "2026-08-10",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch1024_short_near32k_prompt_ttft_banked_middle_rejected",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -50,6 +50,396 @@
       "ttft_target_s": 15.0,
       "ttft_target_passed": false
     }
+  },
+  "c1_near32k_ubatch_screen": {
+    "evidence_class": "legacy-validation",
+    "evidence_valid": true,
+    "performance_promotable": false,
+    "design": "two_wave_same_card_ubatch_crossover_balanced_across_four_gpus",
+    "configuration": {
+      "context_tokens": 32768,
+      "parallel_slots": 1,
+      "prompt_tokens": 31846,
+      "completion_tokens": 94,
+      "batch_size": 1024,
+      "kv_unified": false,
+      "continuous_batching": true,
+      "full_offload_layers": "65/65",
+      "runtime_manifest_sha256": "ebab7496fa6665c3f7e8e3dcfd8e18945b4cc5e365a009f5bbffd7c7e878ede6",
+      "sycl_dso_sha256": "5c28055ba08fa5ee29c39a4d15cd060c49c05f3f8c16499125208c848c81d3f0"
+    },
+    "quality": {
+      "runs_passed": 8,
+      "cached_tokens_all_zero": true,
+      "retrieval_exact_all": true,
+      "full_offload_all": true,
+      "output_sha256_all": "603b44deaf794c77011f3263a5f39e793e9e29dc0cb98efdb8c05ecb64f83972",
+      "artifact_manifests_verified": true,
+      "clean_teardown_all": true
+    },
+    "control_ubatch_128": {
+      "observations": 4,
+      "prompt_processing_mean_tok_s": 155.28150180463635,
+      "ttft_mean_s": 205.08825869824796,
+      "natural_94_token_decode_mean_tok_s": 12.778702001069052,
+      "request_elapsed_mean_s": 212.44424930575042
+    },
+    "candidate_ubatch_1024": {
+      "observations": 4,
+      "prompt_processing_mean_tok_s": 622.1036995029367,
+      "ttft_mean_s": 51.196506101499835,
+      "natural_94_token_decode_mean_tok_s": 12.772049671893084,
+      "request_elapsed_mean_s": 58.5563289242491
+    },
+    "effect_1024_over_128": {
+      "prompt_processing_ratio": 4.0062962572684375,
+      "ttft_ratio": 0.24963158021067738,
+      "ttft_reduction_percent": 75.03684197893226,
+      "natural_94_token_decode_ratio": 0.9994794205878336,
+      "natural_94_token_decode_change_percent": -0.05205794121664331,
+      "request_elapsed_ratio": 0.2756315085751022,
+      "request_elapsed_reduction_percent": 72.43684914248978
+    },
+    "official_isolated_ubatch_1024": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-prefill-ub1024-isolated-gpu0-near32k-prefill-ub1024-ub1024-20260810T042909.708244180Z",
+      "artifact_manifest_entries": 79,
+      "artifact_manifest_sha256": "d4ccb9d04cfb08d1e928a8ca2a4e76d9b602718680c6a039ec0f776ba2f4656c",
+      "exact_result_sha256": "1166c210924483538a15ae873c1abeabf4a7a6345b84b3f69a19be0c8141baa3",
+      "completion_status_sha256": "4e61254313eba44bf282835cf461978588c02ca952437e41f954dcf352239001",
+      "status": "PASS",
+      "evidence_valid": true,
+      "evidence_class": "official-isolated",
+      "performance_promotable": true,
+      "promotion_profile": "prefill-ub1024",
+      "band": "near32k",
+      "gpu": 0,
+      "ubatch": 1024,
+      "prompt_ids": [
+        "q27-q8-lc-31k-middle",
+        "q27-q8-c2-31k-b"
+      ],
+      "prompt_tokens": [
+        31846,
+        31841
+      ],
+      "rows": 2,
+      "completion_tokens_per_row": 512,
+      "cache_n_all_zero": true,
+      "full_offload_layers": "65/65",
+      "oracle_status": "PASS_ORACLE_EXACT",
+      "intrinsic_gate_passed": true,
+      "exact_result_gate_passed": true,
+      "post_512_canary_passed": true,
+      "prompt_processing_median_tok_s": 629.2050294524228,
+      "ttft_median_s": 50.65979567649629,
+      "decode_1_100_median_tok_s": 12.647508019541377,
+      "decode_1_512_median_tok_s": 12.643250550624003,
+      "full_512_after_ttft_legacy_median_tok_s": 12.667340518467988,
+      "target_attainment": {
+        "near32k_prompt_processing_target_tok_s": 250.0,
+        "near32k_prompt_processing_stretch_tok_s": 300.0,
+        "near32k_prompt_processing_baseline_passed": true,
+        "near32k_prompt_processing_stretch_passed": true,
+        "near32k_ttft_target_s": 130.0,
+        "near32k_ttft_stretch_s": 110.0,
+        "near32k_ttft_baseline_passed": true,
+        "near32k_ttft_stretch_passed": true,
+        "near32k_decode_1_512_target_tok_s": 18.0,
+        "near32k_decode_1_512_passed": false,
+        "near32k_decode_1_512_attainment": 0.7024028083680002
+      },
+      "cleanup": {
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "gpu_pre_mib": 43,
+        "gpu_final_mib": 43,
+        "port_closed": true,
+        "device_faults": false,
+        "server_faults": false
+      },
+      "claim_scope": "official_near32k_prompt_processing_and_ttft_only",
+      "band_decision": "banked_scoped_prompt_processing_and_ttft",
+      "broad_default_eligible": false
+    },
+    "official_isolated_short_ubatch_1024": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-prefill-ub1024-isolated-gpu0-short-prefill-ub1024-ub1024-20260810T043918.549062817Z",
+      "artifact_manifest_entries": 79,
+      "artifact_manifest_sha256": "a61c0d39f718fb031e12bdaba6a920938204bf1193444a18b0979892aa48f132",
+      "exact_result_sha256": "44447d85de5d522418a554d9ef05b52e981f496e9954459496b23fcc6f7f6754",
+      "completion_status_sha256": "54ea2f5e9c45ca4dabf6759cc2c18004eab87cfe4836445b89b3e59d758535c6",
+      "status": "PASS",
+      "evidence_valid": true,
+      "evidence_class": "official-isolated",
+      "performance_promotable": true,
+      "promotion_profile": "prefill-ub1024",
+      "band": "short",
+      "gpu": 0,
+      "ubatch": 1024,
+      "prompt_ids": [
+        "q27-q8-lc-04k-middle",
+        "q27-q8-c2-04k-b"
+      ],
+      "prompt_tokens": [
+        4369,
+        4317
+      ],
+      "rows": 2,
+      "completion_tokens_per_row": 512,
+      "cache_n_all_zero": true,
+      "full_offload_layers": "65/65",
+      "oracle_status": "PASS_ORACLE_EXACT",
+      "intrinsic_gate_passed": true,
+      "exact_result_gate_passed": true,
+      "post_512_canary_passed": true,
+      "prompt_processing_median_tok_s": 605.8452528247487,
+      "ttft_median_s": 7.190860373499163,
+      "decode_1_100_median_tok_s": 15.08129002631069,
+      "decode_1_512_median_tok_s": 15.08352908516806,
+      "full_512_after_ttft_legacy_median_tok_s": 15.112867828071568,
+      "target_attainment": {
+        "short_prompt_processing_target_tok_s": 300.0,
+        "short_prompt_processing_stretch_tok_s": 350.0,
+        "short_prompt_processing_baseline_passed": true,
+        "short_prompt_processing_stretch_passed": true,
+        "short_ttft_target_s": 15.0,
+        "short_ttft_stretch_s": 13.0,
+        "short_ttft_baseline_passed": true,
+        "short_ttft_stretch_passed": true,
+        "short_decode_1_512_target_tok_s": 20.0,
+        "short_decode_1_512_passed": false,
+        "short_decode_1_512_attainment": 0.754176454258403
+      },
+      "cleanup": {
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "gpu_pre_mib": 43,
+        "gpu_final_mib": 43,
+        "port_closed": true,
+        "device_faults": false,
+        "server_faults": false
+      },
+      "claim_scope": "official_short_prompt_processing_and_ttft_only",
+      "band_decision": "banked_scoped_prompt_processing_and_ttft",
+      "broad_default_eligible": false
+    },
+    "official_isolated_middle_ubatch_1024": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-prefill-ub1024-isolated-gpu0-middle-prefill-ub1024-ub1024-20260810T044337.630129063Z",
+      "artifact_manifest_entries": 78,
+      "artifact_manifest_sha256": "85bbf378748ac87cbfa9c05461dff45bc694c24c23c990852a72946ea5e5ec47",
+      "exact_result_sha256": "d3b3899c55ed28b3441f5c7c0fe995342797e1158286066d67dba3da901b8db2",
+      "completion_status_present": false,
+      "completion_status_sha256": null,
+      "status": "FAIL",
+      "performance_promotable": false,
+      "band": "middle",
+      "gpu": 0,
+      "ubatch": 1024,
+      "prompt_ids": [
+        "q27-q8-lc-17k-early",
+        "q27-q8-c2-17k-b"
+      ],
+      "prompt_tokens": [
+        17274,
+        17171
+      ],
+      "rows": 2,
+      "completion_tokens_per_row": 512,
+      "cache_n_all_zero": true,
+      "full_offload_layers": "65/65",
+      "oracle_status": "FAIL_ORACLE_EXACT",
+      "intrinsic_gate_passed": true,
+      "exact_result_gate_present": false,
+      "post_512_canary_passed": true,
+      "row_exactness": [
+        {
+          "prompt_id": "q27-q8-lc-17k-early",
+          "token_exact": true,
+          "content_exact": true,
+          "rendered_prompt_exact": true
+        },
+        {
+          "prompt_id": "q27-q8-c2-17k-b",
+          "token_exact": false,
+          "content_exact": false,
+          "rendered_prompt_exact": true,
+          "longest_common_prefix_tokens": 92,
+          "first_mismatch_generated_token": 93,
+          "candidate_token_id": 90,
+          "oracle_token_id": 71093,
+          "semantic_requested_json_correct": true,
+          "stream_replay_exact": true
+        }
+      ],
+      "diagnostic_metrics": {
+        "prompt_processing_median_tok_s": 656.5809725228953,
+        "ttft_median_s": 26.26653541050473,
+        "decode_1_100_median_tok_s": 13.877895069386668,
+        "decode_1_512_median_tok_s": 13.826049180316907,
+        "full_512_after_ttft_legacy_median_tok_s": 13.852676549366588
+      },
+      "cleanup": {
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "gpu_pre_mib": 43,
+        "gpu_final_mib": 43,
+        "port_closed": true,
+        "device_faults": false,
+        "server_faults": false
+      },
+      "band_decision": "rejected_under_exact_output_policy"
+    },
+    "matched_middle_control_ubatch_128": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal2-middle-gpu0-localcontrol-ub128-goal1-baseline-ub128-ub128-20260810T045046.449271344Z",
+      "artifact_manifest_entries": 77,
+      "artifact_manifest_sha256": "ff1c24ccb3ec7c1eb1dafccd0218261c156b16687c5a7bfcd60c5d23667396e9",
+      "exact_result_sha256": "f493fa009ca29efa7984b62ea3ab1dd7007dab59d596e4071728d815f288c48f",
+      "completion_status_sha256": "961a9629b7903565233764fa3aac32e1cf8dc648c6b7343e355c2000cb0d4a80",
+      "status": "PASS",
+      "evidence_valid": true,
+      "evidence_class": "official-isolated",
+      "performance_promotable": true,
+      "promotion_profile": "goal1-baseline-ub128",
+      "band": "middle",
+      "gpu": 0,
+      "ubatch": 128,
+      "prompt_ids": [
+        "q27-q8-lc-17k-early",
+        "q27-q8-c2-17k-b"
+      ],
+      "prompt_tokens": [
+        17274,
+        17171
+      ],
+      "rows": 2,
+      "completion_tokens_per_row": 512,
+      "cache_n_all_zero": true,
+      "full_offload_layers": "65/65",
+      "local_oracle_status": "BASELINE_CAPTURE_READY",
+      "intrinsic_gate_passed": true,
+      "exact_result_gate_passed": true,
+      "post_512_canary_passed": true,
+      "old_gpu1_oracle_path": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal1-four-gpu-functional-20260809T161652.861663620Z/gpu1-middle/exact-tokens.json",
+      "old_gpu1_oracle_sha256": "38ea99cd3502243b254f459687a081aa7919837db38977aee0d285d878de189c",
+      "old_gpu1_oracle_rows_exact": true,
+      "direct_comparison_fields": [
+        "prompt_id",
+        "token_ids",
+        "content_sha256",
+        "rendered_prompt_sha256",
+        "prompt_sha256"
+      ],
+      "prompt_processing_median_tok_s": 157.7084965732491,
+      "ttft_median_s": 109.23433999199915,
+      "decode_1_100_median_tok_s": 13.869671181218948,
+      "decode_1_512_median_tok_s": 13.819422900454166,
+      "full_512_after_ttft_legacy_median_tok_s": 13.84602669037905,
+      "cleanup": {
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "gpu_pre_mib": 43,
+        "gpu_final_mib": 43,
+        "port_closed": true,
+        "device_faults": false,
+        "server_faults": false
+      },
+      "claim_scope": "same_gpu_causal_control_not_a_new_speed_candidate"
+    },
+    "lanes": [
+      {
+        "wave": 1,
+        "gpu": 0,
+        "ubatch": 128,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave1-gpu0-ub128-20260810T040942.697666277Z",
+        "artifact_manifest_sha256": "18f5dba429eaae5625f32d7978e6b00b617e69f96b979f25ef431429745ffdd2",
+        "prompt_processing_tok_s": 155.81591092243715,
+        "ttft_s": 204.38220854000247,
+        "natural_94_token_decode_tok_s": 12.779172022985193,
+        "request_elapsed_s": 211.73792766100087
+      },
+      {
+        "wave": 1,
+        "gpu": 1,
+        "ubatch": 1024,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave1-gpu1-ub1024-20260810T040947.699718384Z",
+        "artifact_manifest_sha256": "6c2c8b6308fd7f9a500d0f2d8d3a183ac7982c59a6b48c67fe4760a842a31204",
+        "prompt_processing_tok_s": 611.9170037447542,
+        "ttft_s": 52.04300551400229,
+        "natural_94_token_decode_tok_s": 12.767935680371236,
+        "request_elapsed_s": 59.40519798999594
+      },
+      {
+        "wave": 1,
+        "gpu": 2,
+        "ubatch": 128,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave1-gpu2-ub128-20260810T040952.701518542Z",
+        "artifact_manifest_sha256": "77a34a57ce6f5bc4735158e7038718ca39d38e6b9ecdb80f0e34177862b0d7ef",
+        "prompt_processing_tok_s": 155.7546803893349,
+        "ttft_s": 204.46255560600548,
+        "natural_94_token_decode_tok_s": 12.785915117737279,
+        "request_elapsed_s": 211.81439543400484
+      },
+      {
+        "wave": 1,
+        "gpu": 3,
+        "ubatch": 1024,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave1-gpu3-ub1024-20260810T040957.704322881Z",
+        "artifact_manifest_sha256": "a050a9d901dee495ae922279f6faa44a06e851bdf234a75cf6b4055e2af59335",
+        "prompt_processing_tok_s": 624.4703757197505,
+        "ttft_s": 50.99681464199966,
+        "natural_94_token_decode_tok_s": 12.774409651997818,
+        "request_elapsed_s": 58.35527601600916
+      },
+      {
+        "wave": 2,
+        "gpu": 0,
+        "ubatch": 1024,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave2-gpu0-ub1024-20260810T041532.365802939Z",
+        "artifact_manifest_sha256": "4d550eb19ae21ff21a3f3748c65fd96395a1749554c09e9ac60c99059e32f8a8",
+        "prompt_processing_tok_s": 622.077090428194,
+        "ttft_s": 51.19301207199169,
+        "natural_94_token_decode_tok_s": 12.764761395022315,
+        "request_elapsed_s": 58.55703534599161
+      },
+      {
+        "wave": 2,
+        "gpu": 1,
+        "ubatch": 128,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave2-gpu1-ub128-20260810T041537.366953745Z",
+        "artifact_manifest_sha256": "77ebd91996443a1523a466e55d7519b326efed2cbf2468d30817dd3f525ffc27",
+        "prompt_processing_tok_s": 154.43793574968464,
+        "ttft_s": 206.20581235698774,
+        "natural_94_token_decode_tok_s": 12.774183650959593,
+        "request_elapsed_s": 213.56440391700016
+      },
+      {
+        "wave": 2,
+        "gpu": 2,
+        "ubatch": 1024,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave2-gpu2-ub1024-20260810T041542.369503294Z",
+        "artifact_manifest_sha256": "5b67c82a89124fbb5c50413086ed394fe4222a650dec4ebdb12d6bc2c41339e5",
+        "prompt_processing_tok_s": 629.9503281190483,
+        "ttft_s": 50.5531921780057,
+        "natural_94_token_decode_tok_s": 12.781091960180964,
+        "request_elapsed_s": 57.9078063449997
+      },
+      {
+        "wave": 2,
+        "gpu": 3,
+        "ubatch": 128,
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/near32k-ubatch-wave2-gpu3-ub128-20260810T041547.371696000Z",
+        "artifact_manifest_sha256": "50ce4d458551e4e66273570a523e0ddea5b9362c3d220517c1ccb53592590ea7",
+        "prompt_processing_tok_s": 155.11748015708866,
+        "ttft_s": 205.30245828999614,
+        "natural_94_token_decode_tok_s": 12.77553721259414,
+        "request_elapsed_s": 212.6602702109958
+      }
+    ],
+    "promotion_status": "official_isolated_short_and_near32k_prompt_ttft_banked_middle_exact_rejected_no_broad_default",
+    "causal_conclusion": "On GPU 0 in the current epoch, ubatch 128 exactly reproduces both old GPU-1 middle oracle rows while ubatch 1024 diverges on row 2; the controlled difference is attributable to ubatch treatment rather than card or epoch.",
+    "broad_default": false,
+    "next_speed_gate": "decode_vdr2_screen",
+    "full_512_decode_target_evaluated": true,
+    "full_512_decode_target_passed": false
   },
   "c2_short": {
     "configuration": {
@@ -168,6 +558,35 @@
         "wave_summary_sha256": "a676c58ca0f56ba3d10c3049643ca900d386de0fcdc08390c203701da69b4733",
         "artifact_manifest_sha256": "2f4a3128c0b902c60810770cb8a652de2ffebbd0f53c4e21742487fdecf6b76d",
         "completion_status_sha256": "acb13c4a382bd1b0b1492cd74ea1d73450017748530bd510363e820c1e768f0b"
+      },
+      "canonical_mmvq_crossover": {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/canonical-q8-c2-crossover-four-gpu-20260810T040016.211980985Z",
+        "artifact_manifest_sha256": "b38abbb3046699f50f4631cb92fa2347aae937435e2c7a1450f5fba5848540cb",
+        "summary_sha256": "5c99fa0b35a8bbaad1e752f41b0037f00d7ee872da7922791256c0de891e1bdf",
+        "completion_status_sha256": "2b01c13940122ad723ebd46c7b2f49d56ea7e34d2f4b9b5566b0b274be98c3b1",
+        "independent_audit": "GO",
+        "classification": "NO_EFFECT",
+        "evidence_class": "diagnostic-only",
+        "evidence_valid": true,
+        "performance_promotable": false,
+        "same_card_selector_flip": true,
+        "selector_on_lanes": 4,
+        "selector_off_lanes": 4,
+        "selector_on_exact_all": false,
+        "selector_on_landmarks_all": true,
+        "selector_off_landmarks_all": true,
+        "no_pre_boundary_quality_regression": true,
+        "forward_slot1_first_divergent_generated_token": 71,
+        "reverse_slot1_first_divergent_generated_token": 96,
+        "full_on_off_forced_tail_equality": false,
+        "gpu0_forward_tail": {
+          "selector_off_token_ids_sha256": "80bf67bda3e640d6b27a85422154f7a9d018a7f25dc604400eb7e4e4ea9af43c",
+          "selector_on_token_ids_sha256": "de9f6f1f4f43c379426f061958e0047cdf8510dd13999b2b65adc9e667c671b9",
+          "note": "The later tails differ but both reproduce B71. Later forced-tail hashes are not preregistered causal endpoints."
+        },
+        "natural_stop_claim": false,
+        "performance_claim": false,
+        "lane_decision": "closed_no_effect"
       }
     },
     "m2_occupancy": {
@@ -180,5 +599,5 @@
     "official_performance_result": null,
     "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
   },
-  "next_gate": "The default-off combined canonical per-vector Q8 component gate and fresh four-card candidate-runtime-matched c1 oracle cohort now pass. Use the sealed selector0 oracle 62a3e2991f697db2e420a49ddb048539cf94f1fd436f93b3f48b08eb8b38d573 and selector1 oracle bb179eac0ffa11bffc2d56f77b309ccdf62fcbce193f56a1cb9efbc944e6a2d4 from packet canonical-q8-c1-oracle-four-gpu-20260810T013725.235133447Z in the preregistered two-wave selector-off/on same-card crossover. Pass requires full c2 exactness to the matched c1 oracle and exact flat-to-recurrent first-hit evidence; B71/A96 are baseline mismatch landmarks and later forced-tail hashes are not endpoints. Reordered Q8 MMVQ and recurrent-output DMMV are leading suspects, not established causes. Separately add synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge."
+  "next_gate": "Bank the official isolated short and near-32K UBATCH_SIZE=1024 prompt-processing and TTFT rows, but do not make UBATCH_SIZE=1024 a broad default: the middle packet failed exact output and the matched same-GPU UBATCH_SIZE=128 control exactly reproduced both old GPU-1 oracle rows. Move to the decode VDR2 screen rather than another ubatch gate. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
 }

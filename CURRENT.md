@@ -1,6 +1,6 @@
 # Current Workspace State
 
-Last reviewed: **2026-08-09**
+Last reviewed: **2026-08-10**
 
 ## Authority And Update Rule
 
@@ -16,8 +16,8 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-09 local / 2026-08-10 UTC four-GPU canonical-Q8 c1
-oracle wave; all four B70s returned to 43 MiB. Recheck immediately before any
+running after the 2026-08-10 matched GPU-0 middle-context `-ub 128` control;
+GPU 0 returned from 43 MiB to 43 MiB. Recheck immediately before any
 operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
@@ -65,20 +65,52 @@ the fixed A/B matrix: A+A and B+B were exact in both slots, while both mixed
 directions reproduced the first slot-1 split one token after the corresponding
 boundary. The forward B tail was same-lane repeatable but differed between GPU
 1 and GPU 3 after the shared token-71 split; card, launch order, readiness age,
-port, and request epoch remain confounded. Reordered Q8 MMVQ and
-recurrent-output DMMV are leading suspects to test, not established causes. The
-default-off combined canonical per-vector Q8 control now passes its isolated
-real-shape GPU gate with selector-off/on bitwise equality, exact route
-activation, clean teardown, and no device fault. Its fresh four-card no-sleep
-Phase-1 cohort also passes: both selector replicas are full-512 exact to the
-official c1 packet, OFF retains zero canonical route markers, ON retains the
-exact flat first-hit before release, and no recurrent hit or violation appears.
-The selector-matched c1 oracles are sealed and independently audited. The
-immediate bounded action is the preregistered two-wave selector-off/on same-card
-crossover; do not rerun the
-unchanged full formal test or promote an aggregate c2 rate. Parallel timing
-remains diagnostic; performance promotion remains isolated, same-card
-bracketed, and second-card confirmed.
+port, and request epoch remain confounded. The default-off combined canonical
+per-vector Q8 control passed its component and four-card no-sleep c1 gates,
+then completed the preregistered two-wave same-card c2 crossover. The sealed
+result is independently `GO` / `NO_EFFECT`: all four selector-on and all four
+selector-off lanes reproduced B71/A96 without a pre-boundary regression, so
+canonical single-column MMVQ plus recurrent-output DMMV did not repair the
+behavior and that source lane is closed. GPU 0's later forward forced tail
+differed between selector states, so do not claim complete ON/OFF output
+equality. The packet is forced-512 diagnostic evidence only, with no
+natural-stop or performance claim.
+
+The next prompt-processing screen produced the first large speed lead in this
+lane. A balanced two-wave, same-card four-B70 comparison at 31,846 prompt tokens
+changed only `-ub 128 -> 1024`: mean approximate PP rose
+`155.2815 -> 622.1037 tok/s` (`4.0063x`), TTFT fell
+`205.0883 -> 51.1965 s` (`-75.037%`), natural 94-token decode stayed flat
+`12.7787 -> 12.7721 tok/s`, and elapsed time fell
+`212.4442 -> 58.5563 s`. All eight lanes were cache-zero, fully offloaded,
+retrieval-exact, clean, and returned the same output SHA-256. Those rows remain
+`legacy-validation`, `performance_promotable=false`.
+
+The official isolated GPU-0 near-32K full-512 packet now passes with
+`performance_promotable=true`, `PASS_ORACLE_EXACT`, exact intrinsic/result/
+post-canary gates, and clean `43 -> 43 MiB` teardown. At `-ub 1024`, median PP
+is `629.2050 tok/s` and TTFT is `50.6598 s`, clearing the near-32K stretch
+targets. Conventional decode is `12.6475 tok/s` over tokens 1--100 and
+`12.6433 tok/s` through token 512, so the `>=18 tok/s` near-32K decode target
+remains unmet. The official isolated short full-512 guard also passes
+`PASS_ORACLE_EXACT` and all gates: PP is `605.8453 tok/s`, TTFT `7.1909 s`,
+and conventional full-window decode `15.0835 tok/s`. Bank the short and
+near-32K packets only for their scoped PP/TTFT wins; short decode remains below
+its `>=20 tok/s` target.
+
+The middle `-ub 1024` guard is decisively rejected under exact policy. Its
+first row is exact, but row 2 shares only 92 generated tokens with the oracle;
+generated token 93 is candidate `90` versus oracle `71093`. The requested JSON
+is still semantically correct and stream/replay exactness passes, but the
+packet is `FAIL_ORACLE_EXACT`, has no completion marker, and its
+`656.5810 tok/s` PP, `26.2665 s` TTFT, and `13.8260 tok/s` D512 are diagnostic
+only. A matched GPU-0 `-ub 128` control then passed and both rows exactly
+matched the old GPU-1 oracle. This same-card control attributes the divergence
+to the ubatch treatment rather than card or epoch. Do not make `-ub 1024` a
+broad default or spend another gate on broad ubatch integration. The next
+bounded speed gate is the decode VDR2 screen.
+See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md)
+and [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md).
 The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
@@ -1689,12 +1721,12 @@ loaded service.
 
 1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
    strategy. The trustworthy short c1 full-512 baseline and c2 fit now exist.
-   The fixed A/B workload matrix is complete, and the default-off canonical
-   per-vector Q8 control passes its isolated real-shape GPU gate. The fresh
-   candidate-runtime-matched c1 oracle cohort is now sealed and exact. Run the
-   two-wave selector-off/on same-card crossover before separating
-   recurrent-output DMMV from flattened
-   multi-column MMVQ. Directly measure a synchronized natural-stop pair as a
+   The canonical per-vector Q8 crossover is sealed `NO_EFFECT`; close that
+   source lane. Bank the official isolated short and near-32K
+   `UBATCH_SIZE=1024` PP/TTFT rows, but reject the setting as a broad default:
+   the middle exact-output guard failed while its same-GPU `-ub 128` control
+   exactly matched the old oracle. Move to the decode VDR2 screen rather than
+   more ubatch work. Directly measure a synchronized natural-stop pair as a
    separate relevance gate. Add a held-out prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only
    on forcing short JSON answers past EOS. Do not reuse Laguna flags or result
