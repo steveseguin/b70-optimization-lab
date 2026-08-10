@@ -130,9 +130,13 @@ waves. Its later tail was stable on each fixed lane but differed across GPU 1
 and GPU 3 after token 71, with card and launch-order effects still confounded.
 The default-off combined canonical per-vector Q8 control now passes its
 isolated real-shape GPU gate with selector-off/on bitwise equality and verified
-dispatch activation. The next bounded gate is a candidate-runtime-matched
-sealed c1 oracle, followed by a two-wave selector-off/on card crossover. No aggregate c2 rate is
-official until that boundary is classified. See
+dispatch activation. A fresh four-card no-sleep Phase-1 cohort now also passes:
+both selector replicas are full-512 exact to the official c1 packet, selector
+off emits no canonical route marker, and selector on retains the exact flat
+first-hit before release with no recurrent hit or violation. Its sealed
+selector-matched oracles are the authority for the next bounded gate: a
+two-wave selector-off/on same-card crossover. No aggregate c2 rate is official
+until that boundary is classified. See
 [`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md).
 
 The validation sequence remains useful for future runtimes:
@@ -249,6 +253,7 @@ cards were active. See
 - First c2 attestation failure and fix: [`notes/2026-08-09-c2-nonunified-kv-attestation-fix.md`](notes/2026-08-09-c2-nonunified-kv-attestation-fix.md)
 - Concurrent token-512 failure diagnostic: [`notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`](notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md)
 - Canonical Q8 component GPU result: [`notes/2026-08-09-canonical-q8-component-gpu-pass.md`](notes/2026-08-09-canonical-q8-component-gpu-pass.md)
+- Canonical Q8 four-card c1 oracle pass: [`notes/2026-08-09-canonical-q8-c1-phase1-pass.md`](notes/2026-08-09-canonical-q8-c1-phase1-pass.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

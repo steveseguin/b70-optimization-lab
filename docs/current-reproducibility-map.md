@@ -134,10 +134,14 @@ identities. See
 The four-process 4K topology and later full-512 four-band functional wave are
 validated, but their concurrent timings remain diagnostic. The compact c2
 matrix is also sealed diagnostic evidence. The next evidence step is a
-default-off combined canonical per-vector Q8 control with proven dispatch
-activation and a candidate-runtime-matched sealed c1 oracle, then a two-wave
-baseline/candidate card crossover followed by narrower DMMV/MMVQ controls as
-warranted. See
+two-wave selector-off/on same-card crossover using the fresh sealed Phase-1
+oracles. The default-off combined canonical per-vector Q8 component control
+already passes, and the four-card no-sleep c1 cohort is full-512 exact across
+both selectors and both replicas. Its OFF lanes retain zero canonical route
+markers; its ON lanes retain the expected flat first-hit before release with
+no recurrent hit or violation. The crossover must establish full c2 exactness
+and flat-to-recurrent route evidence before any narrower DMMV/MMVQ control is
+selected. See
 `../experiments/qwen36-27b-q8-gguf-b70/data/goal1-c1-c2-scorecard-20260809.json`
 and
 `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-09-c2-concurrent-endpoint-diagnostic.md`.

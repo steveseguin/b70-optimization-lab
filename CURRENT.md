@@ -16,9 +16,9 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-09 four-GPU Qwen3.6 27B Q8 compact c2 matrix; all
-four B70s returned to 43 MiB. Recheck immediately before any operational
-change.
+running after the 2026-08-09 local / 2026-08-10 UTC four-GPU canonical-Q8 c1
+oracle wave; all four B70s returned to 43 MiB. Recheck immediately before any
+operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -69,9 +69,13 @@ port, and request epoch remain confounded. Reordered Q8 MMVQ and
 recurrent-output DMMV are leading suspects to test, not established causes. The
 default-off combined canonical per-vector Q8 control now passes its isolated
 real-shape GPU gate with selector-off/on bitwise equality, exact route
-activation, clean teardown, and no device fault. The immediate bounded action
-is a candidate-runtime-matched sealed c1 oracle followed by a two-wave
-selector-off/on card crossover; do not rerun the
+activation, clean teardown, and no device fault. Its fresh four-card no-sleep
+Phase-1 cohort also passes: both selector replicas are full-512 exact to the
+official c1 packet, OFF retains zero canonical route markers, ON retains the
+exact flat first-hit before release, and no recurrent hit or violation appears.
+The selector-matched c1 oracles are sealed and independently audited. The
+immediate bounded action is the preregistered two-wave selector-off/on same-card
+crossover; do not rerun the
 unchanged full formal test or promote an aggregate c2 rate. Parallel timing
 remains diagnostic; performance promotion remains isolated, same-card
 bracketed, and second-card confirmed.
@@ -1686,9 +1690,10 @@ loaded service.
 1. Continue the selected target-only Qwen3.6 27B Q8_0 lane under its adaptive
    strategy. The trustworthy short c1 full-512 baseline and c2 fit now exist.
    The fixed A/B workload matrix is complete, and the default-off canonical
-   per-vector Q8 control passes its isolated real-shape GPU gate. Establish a
-   candidate-runtime-matched sealed c1 oracle and run a two-wave selector-off/on
-   card crossover before separating recurrent-output DMMV from flattened
+   per-vector Q8 control passes its isolated real-shape GPU gate. The fresh
+   candidate-runtime-matched c1 oracle cohort is now sealed and exact. Run the
+   two-wave selector-off/on same-card crossover before separating
+   recurrent-output DMMV from flattened
    multi-column MMVQ. Directly measure a synchronized natural-stop pair as a
    separate relevance gate. Add a held-out prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only
