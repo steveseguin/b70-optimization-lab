@@ -1,0 +1,61 @@
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 863d34eab..c18dbd242 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -5,6 +5,14 @@
+ #include "quants.hpp"
+ #include "vecdotq.hpp"
+ 
++#ifndef GGML_SYCL_REORDER_Q8_0_C1_SHAPE_SUBGROUPS
++#define GGML_SYCL_REORDER_Q8_0_C1_SHAPE_SUBGROUPS 0
++#endif
++
++static_assert(GGML_SYCL_REORDER_Q8_0_C1_SHAPE_SUBGROUPS == 0 ||
++              GGML_SYCL_REORDER_Q8_0_C1_SHAPE_SUBGROUPS == 1,
++              "Q8_0 c1 shape-adaptive subgroup policy must be 0 or 1");
++
+ template <typename reorder_vec_dot_q_sycl>
+ static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
+                                   const int ncols, const int nrows, const sycl::nd_item<3> & nd_item) {
+@@ -1074,11 +1082,14 @@ static void mul_mat_vec_q5_1_q8_1_sycl_switch_ncols(
+     }
+ }
+ 
+-static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
+-                                                    const int nrows, dpct::queue_ptr stream) {
++template <size_t num_subgroups>
++static void reorder_mul_mat_vec_q8_0_q8_1_sycl_launch(
++        const void * vx, const void * vy, float * dst,
++        const int ncols, const int nrows, dpct::queue_ptr stream) {
++    static_assert(num_subgroups == 2 || num_subgroups == 4 || num_subgroups == WARP_SIZE,
++                  "Q8_0 c1 launch must use 2, 4, or the default number of subgroups");
+     GGML_ASSERT(ncols % QK8_0 == 0);
+     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
+-    constexpr size_t num_subgroups = WARP_SIZE;
+     const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
+     const sycl::range<3> block_nums(1, 1, block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+@@ -1092,6 +1103,23 @@ static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy,
+     });
+ }
+ 
++static void reorder_mul_mat_vec_q8_0_q8_1_sycl(
++        const void * vx, const void * vy, float * dst,
++        const int ncols, const int nrows, dpct::queue_ptr stream) {
++#if GGML_SYCL_REORDER_Q8_0_C1_SHAPE_SUBGROUPS
++    // Qwen3.6 27B c1 decode hot shapes. Keep the subgroup width and per-row
++    // reduction unchanged; only pack fewer independent row-owning subgroups
++    // into each workgroup.
++    if (ncols == 5120 && nrows == 17408) {
++        return reorder_mul_mat_vec_q8_0_q8_1_sycl_launch<4>(vx, vy, dst, ncols, nrows, stream);
++    }
++    if (ncols == 17408 && nrows == 5120) {
++        return reorder_mul_mat_vec_q8_0_q8_1_sycl_launch<2>(vx, vy, dst, ncols, nrows, stream);
++    }
++#endif
++    return reorder_mul_mat_vec_q8_0_q8_1_sycl_launch<WARP_SIZE>(vx, vy, dst, ncols, nrows, stream);
++}
++
+ template <int ncols_dst>
+ static void reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols(
+         const void * vx, const void * vy, float * dst,

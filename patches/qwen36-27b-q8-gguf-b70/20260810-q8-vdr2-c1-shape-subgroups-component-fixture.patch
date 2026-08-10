@@ -1,0 +1,61 @@
+diff --git a/tests/test-backend-ops.cpp b/tests/test-backend-ops.cpp
+index 8cb598935..7fface4ea 100644
+--- a/tests/test-backend-ops.cpp
++++ b/tests/test-backend-ops.cpp
+@@ -4351,6 +4351,36 @@ struct test_mul_mat : public test_case {
+     }
+ };
+ 
++// Test-only production-like fixture for reordered Q8_0 c1 MMVQ.  Keep src0 in
++// a WEIGHTS buffer, matching model inference allocation and initialization.
++struct test_mul_mat_weight_q8_c1 : public test_mul_mat {
++    test_mul_mat_weight_q8_c1(int64_t m, int64_t k)
++        : test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, m, 1, k, {1, 1}, {1, 1}) {}
++
++    using test_mul_mat::build_graph;
++    bool use_weight_context() override { return true; }
++    int64_t grad_nmax() override { return 0; }
++
++    ggml_tensor * build_graph(ggml_context * ctx, ggml_context * ctx_weights) override {
++        GGML_ASSERT(ctx_weights != nullptr);
++
++        // C^T = A * B^T: (k, m) * (k, 1) => (m, 1)
++        ggml_tensor * a = ggml_new_tensor_4d(ctx_weights, type_a, k, m, 1, 1);
++        ggml_tensor * b = ggml_new_tensor_4d(ctx,         type_b, k, 1, 1, 1);
++        ggml_set_name(a, "a_weight");
++        ggml_set_name(b, "b");
++
++        ggml_tensor * out = ggml_mul_mat(ctx, a, b);
++        ggml_set_name(out, "out");
++        return out;
++    }
++
++    std::string op_desc(ggml_tensor * t) override {
++        GGML_UNUSED(t);
++        return "MUL_MAT_WEIGHT_Q8_C1";
++    }
++};
++
+ // GGML_HINT_SRC0_IS_HADAMARD
+ struct test_mul_mat_hadamard : public test_mul_mat {
+     test_mul_mat_hadamard(ggml_type type_a = GGML_TYPE_F32, ggml_type type_b = GGML_TYPE_F32,
+@@ -8034,6 +8063,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+     std::vector<std::unique_ptr<test_case>> test_cases;
+     std::default_random_engine rng(0);
+ 
++    test_cases.emplace_back(new test_mul_mat_weight_q8_c1(17408,  5120));
++    test_cases.emplace_back(new test_mul_mat_weight_q8_c1( 5120, 17408));
++
+     // unary ops
+     for (ggml_type type : {GGML_TYPE_F16, GGML_TYPE_F32}) {
+         for (int v : {0, 1}) {
+@@ -9747,6 +9779,9 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
+     std::vector<std::unique_ptr<test_case>> test_cases;
+ 
++    test_cases.emplace_back(new test_mul_mat_weight_q8_c1(17408,  5120));
++    test_cases.emplace_back(new test_mul_mat_weight_q8_c1( 5120, 17408));
++
+     // Conv2d: K=CRS=NPQ=4096 matmul performance
+     uint32_t                        iwh_idx  = 0;
+     uint32_t                        kwh_idx  = 1;
