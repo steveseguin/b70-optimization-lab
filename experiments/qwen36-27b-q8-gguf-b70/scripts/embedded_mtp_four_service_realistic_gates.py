@@ -20,12 +20,24 @@ RUNTIME_SHA256 = "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7
 MODEL_PATH = "/mnt/usb-models/models/qwen36-27b-mtp-q8-gguf/Qwen3.6-27B-Q8_0.gguf"
 RUNTIME_PATH = "/mnt/fast-ai/runtime/llama.cpp-15586e2d-qwen27-vdr2-hybrid/llama-server"
 SUITE_SHA256 = "df03f49d36c36d2b8ac4cd117b7cb2e42c74878af1f6926690ebb89eeccd47ac"
-ISOLATED_CANDIDATE_SHA256 = "0ce2399561568c4d80d112f42457fc31acedbddac576f1900e64ba88ee1352e7"
-MATCHED_CONTROL_FORENSIC_SHA256 = "8af30d579a30aedf3cadaa8f0728d883acc7d0da188bd2b30125b472f37a2ad2"
-SEALED_MTP3_GATE_SHA256 = "95dad265e308c2a1787d81c7a874eb2a2a2cab7ce513a7d6e9ec02fa448987d6"
-SUPPLEMENT_COMPARISON_SHA256 = "41d754812311ad657f7f59b7f51794e7b394a82096587123280fdf76dc510ae3"
-SUPPLEMENT_COMPLETION_SHA256 = "3eaf8d2c72bc64e2440e42486ca69b3605d357cc6e782aae79fd21c059e03c7f"
-SUPPLEMENT_IDENTITY_SHA256 = "d966b5d2996cee86faba0ef95b68afdabfcd95fb25d97078319680b8b922ae49"
+ISOLATED_CANDIDATE_SHA256 = (
+    "0ce2399561568c4d80d112f42457fc31acedbddac576f1900e64ba88ee1352e7"
+)
+MATCHED_CONTROL_FORENSIC_SHA256 = (
+    "8af30d579a30aedf3cadaa8f0728d883acc7d0da188bd2b30125b472f37a2ad2"
+)
+SEALED_MTP3_GATE_SHA256 = (
+    "95dad265e308c2a1787d81c7a874eb2a2a2cab7ce513a7d6e9ec02fa448987d6"
+)
+SUPPLEMENT_COMPARISON_SHA256 = (
+    "41d754812311ad657f7f59b7f51794e7b394a82096587123280fdf76dc510ae3"
+)
+SUPPLEMENT_COMPLETION_SHA256 = (
+    "3eaf8d2c72bc64e2440e42486ca69b3605d357cc6e782aae79fd21c059e03c7f"
+)
+SUPPLEMENT_IDENTITY_SHA256 = (
+    "d966b5d2996cee86faba0ef95b68afdabfcd95fb25d97078319680b8b922ae49"
+)
 CAPTURE_SCHEMA = "qwen36-embedded-mtp-four-service-realistic-capture-v1"
 CONFIG_SCHEMA = "qwen36-embedded-mtp-four-service-config-v1"
 PROMPT_IDS = (
@@ -96,18 +108,12 @@ def finite_positive(value: Any) -> bool:
 
 def nonnegative_int_at_most(value: Any, maximum: int) -> bool:
     return (
-        isinstance(value, int)
-        and not isinstance(value, bool)
-        and 0 <= value <= maximum
+        isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= maximum
     )
 
 
 def argv_values(argv: list[str], option: str) -> list[str]:
-    return [
-        argv[index + 1]
-        for index in range(len(argv) - 1)
-        if argv[index] == option
-    ]
+    return [argv[index + 1] for index in range(len(argv) - 1) if argv[index] == option]
 
 
 def row_rates(row: dict[str, Any]) -> tuple[float, float]:
@@ -124,7 +130,11 @@ def row_rates(row: dict[str, Any]) -> tuple[float, float]:
     ):
         raise ValueError("row cannot support D99/full interval accounting")
     by_position = dict(zip(positions, offsets))
-    if 0 not in by_position or 99 not in by_position or completion - 1 not in by_position:
+    if (
+        0 not in by_position
+        or 99 not in by_position
+        or completion - 1 not in by_position
+    ):
         raise ValueError("row is missing required interval endpoints")
     d99_duration = by_position[99] - by_position[0]
     full_duration = by_position[completion - 1] - by_position[0]
@@ -174,7 +184,9 @@ def validate_reference(
         args.supplement_completion: SUPPLEMENT_COMPLETION_SHA256,
         args.supplement_identity: SUPPLEMENT_IDENTITY_SHA256,
     }
-    observed_hashes = {str(path.resolve()): sha256_file(path) for path in expected_hashes}
+    observed_hashes = {
+        str(path.resolve()): sha256_file(path) for path in expected_hashes
+    }
     if any(sha256_file(path) != expected for path, expected in expected_hashes.items()):
         raise ValueError("sealed matched-control reference SHA-256 mismatch")
     isolated = read_object(args.isolated_candidate)
@@ -195,8 +207,7 @@ def validate_reference(
         is True,
         "sealed_gate_passed": sealed_gate.get("passed") is True
         and sealed_gate.get("mode") == "mtp3",
-        "sealed_gate_core_identity": sealed_gate.get("model_sha256")
-        == MODEL_SHA256
+        "sealed_gate_core_identity": sealed_gate.get("model_sha256") == MODEL_SHA256
         and sealed_gate.get("runtime_sha256") == RUNTIME_SHA256
         and sealed_gate.get("suite_sha256") == SUITE_SHA256
         and all(
@@ -213,9 +224,9 @@ def validate_reference(
         ),
         "sealed_gate_candidate_bound": sealed_gate.get("input_sha256")
         == ISOLATED_CANDIDATE_SHA256,
-        "sealed_gate_control_bound": (
-            sealed_gate.get("control_checks") or {}
-        ).get("observed_control_forensic_sha256")
+        "sealed_gate_control_bound": (sealed_gate.get("control_checks") or {}).get(
+            "observed_control_forensic_sha256"
+        )
         == MATCHED_CONTROL_FORENSIC_SHA256,
         "sealed_gate_full_exact": all(
             (sealed_gate.get("control_checks") or {}).get(key) is True
@@ -225,14 +236,12 @@ def validate_reference(
                 "full_candidate_control_exact",
             )
         ),
-        "supplement_pass": comparison.get("classification")
-        == "PASS_REALISTIC_MTP_WIN"
+        "supplement_pass": comparison.get("classification") == "PASS_REALISTIC_MTP_WIN"
         and comparison.get("quality_reference") == "matched_fresh_control_v1"
         and comparison.get("evidence_passed") is True
         and comparison.get("performance_passed") is True
         and comparison.get("realistic_policy_passed") is True,
-        "supplement_completion": completion.get("status")
-        == "PASS_REALISTIC_MTP_WIN"
+        "supplement_completion": completion.get("status") == "PASS_REALISTIC_MTP_WIN"
         and completion.get("evidence_valid") is True
         and completion.get("comparison_sha256") == SUPPLEMENT_COMPARISON_SHA256
         and completion.get("supplemental_identity_sha256")
@@ -243,14 +252,20 @@ def validate_reference(
         and identity.get("quality_reference") == "matched_fresh_control_v1",
     }
     if not all(reference_checks.values()):
-        raise ValueError(f"sealed matched-control reference invalid: {reference_checks}")
+        raise ValueError(
+            f"sealed matched-control reference invalid: {reference_checks}"
+        )
 
     isolated_rows = isolated.get("rows")
     control_rows = control.get("rows")
     if not isinstance(isolated_rows, list) or not isinstance(control_rows, list):
         raise ValueError("sealed reference rows are missing")
-    isolated_by_id = {row.get("prompt_id"): row for row in isolated_rows if isinstance(row, dict)}
-    control_by_id = {row.get("prompt_id"): row for row in control_rows if isinstance(row, dict)}
+    isolated_by_id = {
+        row.get("prompt_id"): row for row in isolated_rows if isinstance(row, dict)
+    }
+    control_by_id = {
+        row.get("prompt_id"): row for row in control_rows if isinstance(row, dict)
+    }
     if tuple(isolated_by_id) != PROMPT_IDS or tuple(control_by_id) != PROMPT_IDS:
         raise ValueError("sealed reference prompt order mismatch")
     rates: dict[str, dict[str, float]] = {}
@@ -272,9 +287,7 @@ def validate_reference(
             or not 100 <= oracle["token_count"] <= 512
             or oracle.get("token_count") != len(oracle["token_ids"])
             or not all(
-                isinstance(token, int)
-                and not isinstance(token, bool)
-                and token >= 0
+                isinstance(token, int) and not isinstance(token, bool) and token >= 0
                 for token in oracle["token_ids"]
             )
             or not isinstance(oracle.get("content"), str)
@@ -293,10 +306,8 @@ def validate_reference(
             or retained.get("rendered_prompt_sha256")
             != oracle.get("rendered_prompt_sha256")
             or not isinstance(retained.get("rendered_prompt_sha256"), str)
-            or retained.get("prompt_tokens")
-            != retained_usage.get("prompt_tokens")
-            or retained.get("prompt_tokens")
-            != retained_timings.get("prompt_n")
+            or retained.get("prompt_tokens") != retained_usage.get("prompt_tokens")
+            or retained.get("prompt_tokens") != retained_timings.get("prompt_n")
             or retained.get("prompt_tokens") != oracle_usage.get("prompt_tokens")
             or retained.get("prompt_tokens") != oracle_timings.get("prompt_n")
             or not isinstance(retained.get("prompt_tokens"), int)
@@ -310,10 +321,15 @@ def validate_reference(
             raise ValueError(
                 f"sealed isolated/matched-control row is malformed: {prompt_id}"
             )
-    return control_by_id, isolated_by_id, rates, {
-        "checks": reference_checks,
-        "hashes": observed_hashes,
-    }
+    return (
+        control_by_id,
+        isolated_by_id,
+        rates,
+        {
+            "checks": reference_checks,
+            "hashes": observed_hashes,
+        },
+    )
 
 
 def load_journal(path: Path) -> list[dict[str, Any]]:
@@ -363,6 +379,7 @@ def validate(args: argparse.Namespace) -> int:
     capture = read_object(capture_path)
     config = read_object(config_path)
     prepared = read_object(prepared_path)
+    error_scan = read_object(run / "error-scan-status.json")
     identity = capture.get("run_identity") or {}
     fresh = capture.get("fresh_response_validity") or {}
     accounting = capture.get("metric_accounting") or {}
@@ -431,9 +448,34 @@ def validate(args: argparse.Namespace) -> int:
         "four_services": isinstance(services, list) and len(services) == 4,
         "twelve_rows": isinstance(rows, list) and len(rows) == 12,
         "three_waves": isinstance(waves, list) and len(waves) == 3,
-        "harness_inputs_unchanged": validate_hash_manifest(run / "harness-inputs.sha256"),
+        "harness_inputs_unchanged": validate_hash_manifest(
+            run / "harness-inputs.sha256"
+        ),
         "device_error_scan_empty": (run / "device-error-scan.txt").read_text() == "",
         "server_error_scan_empty": (run / "server-error-scan.txt").read_text() == "",
+        "error_scan_status": error_scan
+        == {
+            "schema": "qwen36-four-service-error-scan-v1",
+            "journal_rc": 0,
+            "device_grep_rc": 1,
+            "find_rc": 0,
+            "server_grep_rc": 1,
+            "server_log_count": 4,
+            "journal_stderr_empty": True,
+            "device_grep_stderr_empty": True,
+            "find_stderr_empty": True,
+            "server_grep_stderr_empty": True,
+            "passed": True,
+        },
+        "error_scan_stderr_empty": all(
+            (run / name).read_text() == ""
+            for name in (
+                "kernel-journal.stderr.txt",
+                "device-error-scan.stderr.txt",
+                "server-log-find.stderr.txt",
+                "server-error-scan.stderr.txt",
+            )
+        ),
     }
     model_integrity = read_object(run / "model-integrity.json")
     runtime_initial = read_object(run / "runtime-bundle.json")
@@ -453,10 +495,8 @@ def validate(args: argparse.Namespace) -> int:
         == str((run / "runtime-bundle.json").resolve())
         and (runtime_initial.get("binary") or {}).get("sha256") == RUNTIME_SHA256
         and (runtime_final.get("binary") or {}).get("sha256") == RUNTIME_SHA256
-        and (runtime_initial.get("binary") or {}).get("resolved_path")
-        == RUNTIME_PATH
-        and (runtime_final.get("binary") or {}).get("resolved_path")
-        == RUNTIME_PATH
+        and (runtime_initial.get("binary") or {}).get("resolved_path") == RUNTIME_PATH
+        and (runtime_final.get("binary") or {}).get("resolved_path") == RUNTIME_PATH
     )
     if (
         not isinstance(services, list)
@@ -477,12 +517,19 @@ def validate(args: argparse.Namespace) -> int:
             and service.get("gpu_index") == service_index,
             "base_url": isinstance(service, dict)
             and service.get("base_url") == f"http://127.0.0.1:{expected_port}",
-            "model": isinstance(service, dict) and service.get("model") == expected_model,
+            "model": isinstance(service, dict)
+            and service.get("model") == expected_model,
         }
         service_config_checks.append(
-            {"service_index": service_index, "checks": item_checks, "passed": all(item_checks.values())}
+            {
+                "service_index": service_index,
+                "checks": item_checks,
+                "passed": all(item_checks.values()),
+            }
         )
-    checks["service_config_exact"] = all(item["passed"] for item in service_config_checks)
+    checks["service_config_exact"] = all(
+        item["passed"] for item in service_config_checks
+    )
     discovery = read_object(run / "xpu-smi-discovery.json")
     physical_b70s = [
         device
@@ -493,8 +540,7 @@ def validate(args: argparse.Namespace) -> int:
     ]
     checks["four_distinct_physical_b70s"] = (
         len(physical_b70s) == 4
-        and sorted(device.get("device_id") for device in physical_b70s)
-        == [0, 1, 2, 3]
+        and sorted(device.get("device_id") for device in physical_b70s) == [0, 1, 2, 3]
         and len({device.get("pci_bdf_address") for device in physical_b70s}) == 4
         and len({device.get("uuid") for device in physical_b70s}) == 4
         and all(device.get("pci_bdf_address") for device in physical_b70s)
@@ -566,9 +612,7 @@ def validate(args: argparse.Namespace) -> int:
             and payload.get("id_slot") == 0,
             "prompt_hash_bound": isinstance(payload.get("prompt"), str)
             and sha256_text(payload["prompt"]) == row.get("rendered_prompt_sha256"),
-            "rendered_prompt_equal_sealed_reference": row.get(
-                "rendered_prompt_sha256"
-            )
+            "rendered_prompt_equal_sealed_reference": row.get("rendered_prompt_sha256")
             == retained.get("rendered_prompt_sha256")
             == oracle.get("rendered_prompt_sha256"),
             "prompt_token_count_equal_sealed_reference": isinstance(
@@ -601,9 +645,7 @@ def validate(args: argparse.Namespace) -> int:
             and row.get("stream_token_id_count") == len(token_ids),
             "token_ids_valid": isinstance(token_ids, list)
             and all(
-                isinstance(token, int)
-                and not isinstance(token, bool)
-                and token >= 0
+                isinstance(token, int) and not isinstance(token, bool) and token >= 0
                 for token in token_ids
             ),
             "offsets_finite_monotone": isinstance(offsets, list)
@@ -668,11 +710,17 @@ def validate(args: argparse.Namespace) -> int:
             and len(set(row["response_ids"])) == 1,
         }
         if row_checks["request_counters_valid"]:
-            service_response_counters[service_index]["draft_tokens"] += timings["draft_n"]
+            service_response_counters[service_index]["draft_tokens"] += timings[
+                "draft_n"
+            ]
             service_response_counters[service_index]["accepted_tokens"] += timings[
                 "draft_n_accepted"
             ]
-        if finite_positive(d99) and finite_positive(full) and isinstance(prompt_id, str):
+        if (
+            finite_positive(d99)
+            and finite_positive(full)
+            and isinstance(prompt_id, str)
+        ):
             observed_rates[prompt_id] = {"d99": d99, "full": full}
         if isinstance(row.get("request_id"), str):
             request_ids.append(row["request_id"])
@@ -684,7 +732,9 @@ def validate(args: argparse.Namespace) -> int:
                 "service_index": service_index,
                 "d99_interval_tok_s": d99,
                 "full_interval_tok_s": full,
-                "reference_d99_interval_tok_s": reference_rates.get(prompt_id, {}).get("d99"),
+                "reference_d99_interval_tok_s": reference_rates.get(prompt_id, {}).get(
+                    "d99"
+                ),
                 "d99_retention": (
                     d99 / reference_rates[prompt_id]["d99"]
                     if prompt_id in reference_rates and finite_positive(d99)
@@ -707,11 +757,20 @@ def validate(args: argparse.Namespace) -> int:
 
     journal = load_journal(journal_path)
     started = [entry for entry in journal if entry.get("event") == "request_started"]
-    completed = [entry for entry in journal if entry.get("event") == "request_completed"]
+    completed = [
+        entry for entry in journal if entry.get("event") == "request_completed"
+    ]
     failed = [entry for entry in journal if entry.get("event") == "request_failed"]
-    checks["journal_once_only"] = len(journal) == 24 and len(started) == 12 and len(completed) == 12 and not failed
-    checks["journal_request_join"] = sorted(entry.get("request_id") for entry in started) == sorted(request_ids) == sorted(
-        entry.get("request_id") for entry in completed
+    checks["journal_once_only"] = (
+        len(journal) == 24
+        and len(started) == 12
+        and len(completed) == 12
+        and not failed
+    )
+    checks["journal_request_join"] = (
+        sorted(entry.get("request_id") for entry in started)
+        == sorted(request_ids)
+        == sorted(entry.get("request_id") for entry in completed)
     )
     expected_journal_projection = sorted(
         (
@@ -775,7 +834,8 @@ def validate(args: argparse.Namespace) -> int:
         wave_checks = {
             "identity": isinstance(wave, dict) and wave.get("wave_index") == wave_index,
             "partition": isinstance(wave, dict)
-            and wave.get("prompt_indices") == list(range(wave_index * 4, wave_index * 4 + 4))
+            and wave.get("prompt_indices")
+            == list(range(wave_index * 4, wave_index * 4 + 4))
             and wave.get("service_indices") == [0, 1, 2, 3],
             "four_requests": isinstance(wave, dict)
             and isinstance(wave.get("request_ids"), list)
@@ -852,7 +912,9 @@ def validate(args: argparse.Namespace) -> int:
         observed_d99 = median([observed_rates[prompt]["d99"] for prompt in assigned])
         observed_full = median([observed_rates[prompt]["full"] for prompt in assigned])
         reference_d99 = median([reference_rates[prompt]["d99"] for prompt in assigned])
-        reference_full = median([reference_rates[prompt]["full"] for prompt in assigned])
+        reference_full = median(
+            [reference_rates[prompt]["full"] for prompt in assigned]
+        )
         observed_service_d99.append(observed_d99)
         observed_service_full.append(observed_full)
         reference_service_d99.append(reference_d99)
@@ -899,7 +961,10 @@ def validate(args: argparse.Namespace) -> int:
             "fit_no_changes": (pre_gate.get("checks") or {}).get("fit_no_changes_exact")
             is True
             and (post_gate.get("checks") or {}).get("fit_no_changes_exact") is True
-            and all(pair[1] >= 1024 and pair[0] >= pair[1] for pair in pre_gate.get("fit_headroom_pairs_mib", []))
+            and all(
+                pair[1] >= 1024 and pair[0] >= pair[1]
+                for pair in pre_gate.get("fit_headroom_pairs_mib", [])
+            )
             and len(pre_gate.get("fit_headroom_pairs_mib", [])) == 1,
             "metrics_gate": metrics.get("mode") == "mtp3"
             and metrics.get("passed") is True
@@ -916,9 +981,7 @@ def validate(args: argparse.Namespace) -> int:
             ),
             "residency": residency.get("gpu_index") == service_index
             and nonnegative_int_at_most(residency.get("pre_mib"), MAX_IDLE_MIB)
-            and nonnegative_int_at_most(
-                residency.get("loaded_mib"), MAX_LOADED_MIB
-            )
+            and nonnegative_int_at_most(residency.get("loaded_mib"), MAX_LOADED_MIB)
             and residency.get("loaded_delta_mib")
             == residency["loaded_mib"] - residency["pre_mib"]
             and residency["loaded_delta_mib"] >= MIN_LOADED_DELTA_MIB,
@@ -963,10 +1026,9 @@ def validate(args: argparse.Namespace) -> int:
     checks["all_services_pass"] = all(
         service["evidence_passed"] for service in service_results
     )
-    checks["four_distinct_service_pids"] = (
-        len(server_pids) == len(set(server_pids)) == SERVICE_COUNT
-        and all(pid > 0 for pid in server_pids)
-    )
+    checks["four_distinct_service_pids"] = len(server_pids) == len(
+        set(server_pids)
+    ) == SERVICE_COUNT and all(pid > 0 for pid in server_pids)
 
     aggregate_observed_d99 = sum(observed_service_d99)
     aggregate_observed_full = sum(observed_service_full)
@@ -974,8 +1036,21 @@ def validate(args: argparse.Namespace) -> int:
     aggregate_reference_full = sum(reference_service_full)
     aggregate_d99_retention = aggregate_observed_d99 / aggregate_reference_d99
     aggregate_full_retention = aggregate_observed_full / aggregate_reference_full
-    d99_fairness = min(observed_service_d99) / max(observed_service_d99)
-    full_fairness = min(observed_service_full) / max(observed_service_full)
+    service_d99_retentions = [
+        service["retention"]["d99"] for service in service_results
+    ]
+    service_full_retentions = [
+        service["retention"]["full"] for service in service_results
+    ]
+    # Services receive different fixed prompts, whose isolated rates are not
+    # equal.  Fairness therefore compares per-service retention against each
+    # service's own prompt-matched reference, not the raw service medians.
+    d99_fairness = min(service_d99_retentions) / max(service_d99_retentions)
+    full_fairness = min(service_full_retentions) / max(service_full_retentions)
+    raw_d99_service_rate_spread = min(observed_service_d99) / max(observed_service_d99)
+    raw_full_service_rate_spread = min(observed_service_full) / max(
+        observed_service_full
+    )
     prompt_d99_retentions = {
         prompt: observed_rates[prompt]["d99"] / reference_rates[prompt]["d99"]
         for prompt in PROMPT_IDS
@@ -993,10 +1068,8 @@ def validate(args: argparse.Namespace) -> int:
             service["performance_checks"]["full_retention_at_least_090"]
             for service in service_results
         ),
-        "d99_service_fairness_at_least_090": d99_fairness
-        >= SERVICE_FAIRNESS_FLOOR,
-        "full_service_fairness_at_least_090": full_fairness
-        >= SERVICE_FAIRNESS_FLOOR,
+        "d99_service_fairness_at_least_090": d99_fairness >= SERVICE_FAIRNESS_FLOOR,
+        "full_service_fairness_at_least_090": full_fairness >= SERVICE_FAIRNESS_FLOOR,
         "each_prompt_d99_retention_at_least_080": all(
             value >= PROMPT_D99_RETENTION_FLOOR
             for value in prompt_d99_retentions.values()
@@ -1080,17 +1153,21 @@ def validate(args: argparse.Namespace) -> int:
                 "aggregate_full": aggregate_full_retention,
                 "d99_service_fairness": d99_fairness,
                 "full_service_fairness": full_fairness,
+                "service_d99_ratios": service_d99_retentions,
+                "service_full_ratios": service_full_retentions,
                 "per_prompt_d99": prompt_d99_retentions,
             },
             "context": {
                 "ideal_four_service_retention": 1.0,
+                "observed_raw_d99_service_rate_spread": raw_d99_service_rate_spread,
+                "observed_raw_full_service_rate_spread": raw_full_service_rate_spread,
                 "isolated_global_d99_median_x4": 4
                 * median([reference_rates[prompt]["d99"] for prompt in PROMPT_IDS]),
                 "isolated_global_full_median_x4": 4
                 * median([reference_rates[prompt]["full"] for prompt in PROMPT_IDS]),
                 "prior_target_only_four_service_retention_expectation": PRIOR_TARGET_ONLY_FOUR_SERVICE_RETENTION,
                 "preregistered_aggregate_retention_gate": AGGREGATE_RETENTION_FLOOR,
-                "note": "Ideal retention is 100% and the prior target-only expectation is 99.76%, but the hard gate is 95%. The denominator is the sum of four prompt-balanced isolated lane medians; global-median x4 is context only.",
+                "note": "Ideal retention is 100% and the prior target-only expectation is 99.76%, but the hard gate is 95%. The denominator is the sum of four prompt-balanced isolated lane medians; global-median x4 and raw service-rate spread are context only. Service fairness is min/max over prompt-matched per-service retention ratios.",
             },
             "checks": performance_checks,
         },

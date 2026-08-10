@@ -64,6 +64,48 @@ class FourServiceWrapperTests(unittest.TestCase):
         self.assertIn("capture_deadline=$((SECONDS + CAPTURE_TERM_GRACE_S))", source)
         self.assertGreaterEqual(source.count('--max-time "$CURL_REQUEST_TIMEOUT_S"'), 3)
 
+    def test_startup_and_xpu_stats_are_serialized_without_serializing_capture(
+        self,
+    ) -> None:
+        source = SCRIPT.read_text()
+        launch_start = source.index('  env ZE_AFFINITY_MASK="$gpu" "${server_cmd[@]}"')
+        readiness = source.index("  SERVICE_READINESS_DEADLINE=", launch_start)
+        readiness_loop = source.index("  until curl --noproxy '*'", readiness)
+        next_phase = source.index(
+            '\nfor gpu in 0 1 2 3; do\n  python3 "$SERVER_GATES" gate-server',
+            readiness_loop,
+        )
+        launch_section = source[launch_start:next_phase]
+        self.assertIn("SERVER_PIDS[$gpu]=$!", launch_section)
+        self.assertIn('pid_running "${SERVER_PIDS[$gpu]}"', launch_section)
+        self.assertIn("SECONDS < SERVICE_READINESS_DEADLINE", launch_section)
+        self.assertNotIn(
+            "READINESS_DEADLINE=", source.replace("SERVICE_READINESS_DEADLINE=", "")
+        )
+        self.assertIn(
+            'XPU_SMI_LOCK="/run/user/$(id -u)/qwen36-b70-xpu-smi-stats.lock"',
+            source,
+        )
+        self.assertEqual(source.count("xpu-smi stats"), 1)
+        self.assertIn('flock -w 45 "$XPU_SMI_LOCK" timeout 20 xpu-smi stats', source)
+        self.assertGreater(source.index('setsid python3 "$CAPTURE" run'), next_phase)
+
+    def test_fault_scans_preserve_status_and_fail_closed(self) -> None:
+        source = SCRIPT.read_text()
+        scan_start = source.index("scan_errors() {\n")
+        scan_end = source.index("\n}\n\nseal_artifacts()", scan_start)
+        scan = source[scan_start:scan_end]
+        self.assertNotIn("|| true", scan)
+        self.assertIn('> "$RUN_DIR/kernel-journal.stderr.txt"', scan)
+        self.assertIn('> "$RUN_DIR/device-error-scan.stderr.txt"', scan)
+        self.assertIn('> "$RUN_DIR/server-log-find.stderr.txt"', scan)
+        self.assertIn('> "$RUN_DIR/server-error-scan.stderr.txt"', scan)
+        self.assertIn("journal_rc == 0 && device_grep_rc == 1", scan)
+        self.assertIn("find_rc == 0 && server_grep_rc == 1", scan)
+        self.assertIn('schema:"qwen36-four-service-error-scan-v1"', scan)
+        self.assertIn("ERROR_SCAN_PASSED=1", scan)
+        self.assertIn("(( ERROR_SCAN_PASSED == 1 )) || final_status=1", source)
+
     def test_sealed_single_service_harness_is_not_called(self) -> None:
         source = SCRIPT.read_text()
         self.assertNotIn("run-embedded-mtp-vdr2-realistic.sh", source)

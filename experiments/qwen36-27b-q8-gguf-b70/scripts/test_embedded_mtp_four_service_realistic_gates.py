@@ -14,11 +14,31 @@ from pathlib import Path
 
 
 SCRIPT = Path(__file__).with_name("embedded_mtp_four_service_realistic_gates.py")
-SUITE = SCRIPT.parents[3] / "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json"
+SUITE = (
+    SCRIPT.parents[3] / "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json"
+)
 SPEC = importlib.util.spec_from_file_location("four_service_gates", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 gates = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(gates)
+
+# D99 rates calculated from the 12 pinned isolated-candidate rows whose SHA-256
+# is ISOLATED_CANDIDATE_SHA256.  Their round-robin prompt mix gives raw service
+# median fairness below 0.90 even when every service retains exactly 1.0x.
+REAL_SEALED_D99_RATES = (
+    38.208943736470246,
+    30.142151528131315,
+    34.118604245069626,
+    36.07006020235308,
+    35.054328407401655,
+    32.355876309158255,
+    39.4112432868741,
+    36.04702853954609,
+    36.05038514552786,
+    36.062370499263984,
+    30.06947943222394,
+    40.6649166861998,
+)
 
 
 def write_json(path: Path, value: object) -> None:
@@ -31,11 +51,17 @@ def digest(path: Path) -> str:
 
 
 class Fixture:
-    def __init__(self, root: Path) -> None:
+    def __init__(
+        self,
+        root: Path,
+        reference_d99_rates: tuple[float, ...] | None = None,
+    ) -> None:
         self.root = root
         self.port_base = 23000
         suite = json.loads(SUITE.read_text())
         prompts = suite["prompts"]
+        if reference_d99_rates is not None and len(reference_d99_rates) != len(prompts):
+            raise ValueError("reference rate count must match the fixed suite")
         self.control_rows = []
         self.reference_rows = []
         self.capture_rows = []
@@ -48,7 +74,8 @@ class Fixture:
             ]
             token_ids = [full_token_ids[position] for position in positions]
             content = f"exact-content-{index}"
-            offsets = [position / 40 for position in positions]
+            rate = reference_d99_rates[index] if reference_d99_rates else 40.0
+            offsets = [position / rate for position in positions]
             common = {
                 "prompt_index": index,
                 "prompt_id": prompt["id"],
@@ -276,7 +303,9 @@ class Fixture:
                     "wave_index": wave,
                     "prompt_indices": list(range(wave * 4, wave * 4 + 4)),
                     "service_indices": [0, 1, 2, 3],
-                    "request_ids": [f"request-{wave * 4 + service}" for service in range(4)],
+                    "request_ids": [
+                        f"request-{wave * 4 + service}" for service in range(4)
+                    ],
                     "latest_request_start_epoch_s": max(starts),
                     "earliest_request_end_epoch_s": min(ends),
                     "four_way_overlap_s": min(ends) - max(starts),
@@ -438,6 +467,29 @@ class Fixture:
             (self.root / f"listeners-wave{wave}.txt").write_text(listener)
         (self.root / "device-error-scan.txt").write_text("")
         (self.root / "server-error-scan.txt").write_text("")
+        for name in (
+            "kernel-journal.stderr.txt",
+            "device-error-scan.stderr.txt",
+            "server-log-find.stderr.txt",
+            "server-error-scan.stderr.txt",
+        ):
+            (self.root / name).write_text("")
+        write_json(
+            self.root / "error-scan-status.json",
+            {
+                "schema": "qwen36-four-service-error-scan-v1",
+                "journal_rc": 0,
+                "device_grep_rc": 1,
+                "find_rc": 0,
+                "server_grep_rc": 1,
+                "server_log_count": 4,
+                "journal_stderr_empty": True,
+                "device_grep_stderr_empty": True,
+                "find_stderr_empty": True,
+                "server_grep_stderr_empty": True,
+                "passed": True,
+            },
+        )
         write_json(
             self.root / "model-integrity.json",
             {
@@ -530,6 +582,29 @@ class FourServiceGateTests(unittest.TestCase):
                 0.95,
             )
 
+    def test_fairness_normalizes_real_reference_unequal_prompt_mix(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = Fixture(
+                Path(temporary), reference_d99_rates=REAL_SEALED_D99_RATES
+            )
+            self.assertEqual(gates.validate(fixture.args()), 0)
+            result = json.loads((fixture.root / "gate.json").read_text())
+            retention = result["performance"]["retention"]
+            context = result["performance"]["context"]
+            self.assertLess(
+                context["observed_raw_d99_service_rate_spread"],
+                gates.SERVICE_FAIRNESS_FLOOR,
+            )
+            self.assertAlmostEqual(retention["d99_service_fairness"], 1.0)
+            self.assertAlmostEqual(retention["full_service_fairness"], 1.0)
+            self.assertTrue(
+                all(value == 1.0 for value in retention["service_d99_ratios"])
+            )
+            self.assertTrue(
+                result["performance_checks"]["d99_service_fairness_at_least_090"]
+            )
+            self.assertTrue(result["passed"])
+
     def test_full_token_mismatch_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = Fixture(Path(temporary))
@@ -560,7 +635,9 @@ class FourServiceGateTests(unittest.TestCase):
                 ]
             )
 
-    def test_utf8_stream_id_gap_uses_sealed_position_binding_without_replay(self) -> None:
+    def test_utf8_stream_id_gap_uses_sealed_position_binding_without_replay(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             fixture = Fixture(Path(temporary))
             self.assertEqual(gates.validate(fixture.args()), 0)
@@ -596,9 +673,24 @@ class FourServiceGateTests(unittest.TestCase):
                     "each_prompt_d99_retention_at_least_080"
                 ]
             )
-            self.assertFalse(
-                result["services"][0]["checks"]["metrics_response_join"]
+            self.assertFalse(result["services"][0]["checks"]["metrics_response_join"])
+
+    def test_error_scan_command_failure_and_stderr_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = Fixture(Path(temporary))
+            status_path = fixture.root / "error-scan-status.json"
+            status = json.loads(status_path.read_text())
+            status["journal_rc"] = 1
+            status["journal_stderr_empty"] = False
+            status["passed"] = False
+            write_json(status_path, status)
+            (fixture.root / "kernel-journal.stderr.txt").write_text(
+                "journal unavailable\n"
             )
+            self.assertEqual(gates.validate(fixture.args()), 1)
+            result = json.loads((fixture.root / "gate.json").read_text())
+            self.assertFalse(result["evidence_checks"]["error_scan_status"])
+            self.assertFalse(result["evidence_checks"]["error_scan_stderr_empty"])
 
     def test_prepared_prompt_or_cleanup_identity_mismatch_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -617,9 +709,7 @@ class FourServiceGateTests(unittest.TestCase):
             write_json(cleanup_path, cleanup)
             self.assertEqual(gates.validate(fixture.args()), 1)
             result = json.loads((fixture.root / "gate.json").read_text())
-            self.assertFalse(
-                result["rows"][0]["checks"]["prepared_prompt_bound"]
-            )
+            self.assertFalse(result["rows"][0]["checks"]["prepared_prompt_bound"])
             self.assertFalse(result["services"][0]["checks"]["cleanup"])
 
     def test_self_consistent_but_reference_different_prompt_fails_closed(self) -> None:
@@ -642,9 +732,7 @@ class FourServiceGateTests(unittest.TestCase):
             result = json.loads((fixture.root / "gate.json").read_text())
             self.assertTrue(result["rows"][0]["checks"]["prepared_prompt_bound"])
             self.assertFalse(
-                result["rows"][0]["checks"][
-                    "rendered_prompt_equal_sealed_reference"
-                ]
+                result["rows"][0]["checks"]["rendered_prompt_equal_sealed_reference"]
             )
 
     def test_duplicate_service_pid_and_negative_memory_fail_closed(self) -> None:
@@ -705,9 +793,7 @@ class FourServiceGateTests(unittest.TestCase):
             self.assertEqual(gates.validate(fixture.args()), 1)
             result = json.loads((fixture.root / "gate.json").read_text())
             self.assertFalse(result["waves"][1]["checks"]["genuine_overlap"])
-            self.assertFalse(
-                result["waves"][1]["checks"]["summary_extrema_match_rows"]
-            )
+            self.assertFalse(result["waves"][1]["checks"]["summary_extrema_match_rows"])
 
 
 if __name__ == "__main__":

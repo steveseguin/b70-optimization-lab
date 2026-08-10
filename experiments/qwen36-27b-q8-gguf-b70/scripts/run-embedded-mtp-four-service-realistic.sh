@@ -9,7 +9,7 @@ LIVE_ENABLE_STATE="PENDING"
 LIVE_ENABLE_REQUIRED="REVIEWED_AND_PINNED"
 LIVE_ACK_REQUIRED="I_ACCEPT_FOUR_B70_EMBEDDED_MTP_REALISTIC_SCALING_GATE"
 EXPECTED_CAPTURE_SHA256="d51ad8957cf46a703fb12e8de493dafd767d49d32ef07306a995e299496d2547"
-EXPECTED_SCALE_GATES_SHA256="ffa551a647b0cdd7a0274cd72603f68a206355b3823722d21be7bf4aac94a704"
+EXPECTED_SCALE_GATES_SHA256="088f223e256247d4ef7b5c3531309764fc24bf1eddd4c863eb01e627d11d3d46"
 EXPECTED_ONCE_CAPTURE_SHA256="20f082206de7deafdc679fbd638f8361d69dfd647943919732270709e232cd33"
 EXPECTED_SERVER_GATES_SHA256="7af3cf19eee537a8381b4583b09649e6a616b375b72685b569c96f7094363a2b"
 
@@ -226,6 +226,10 @@ for required in awk bash chmod cmp cp curl date dirname env find flock grep id \
     exit 2
   }
 done
+# xpu-smi is unreliable when multiple experiment processes query stats at the
+# same time on this stack.  Share this pathname with the other Qwen36 harnesses
+# and serialize every stats invocation without serializing model execution.
+XPU_SMI_LOCK="/run/user/$(id -u)/qwen36-b70-xpu-smi-stats.lock"
 offline_preflight >/dev/null
 [[ -f "$MODEL" && ! -L "$MODEL" ]] || {
   echo "pinned integrated model is missing or is a symlink" >&2
@@ -259,6 +263,8 @@ CLEANUP_FAILED=0
 BODY_COMPLETED=0
 HARNESS_BASELINE_READY=0
 MODEL_BASELINE_READY=0
+ERROR_SCAN_COMPLETED=0
+ERROR_SCAN_PASSED=0
 FINALIZING=0
 
 capture_model_stat() {
@@ -313,7 +319,8 @@ verify_model_integrity() {
 gpu_used_mib() {
   local gpu="$1"
   local output="$2"
-  timeout 20 xpu-smi stats -d "$gpu" > "$output" 2>&1 || return 1
+  flock -w 45 "$XPU_SMI_LOCK" timeout 20 xpu-smi stats -d "$gpu" \
+    > "$output" 2>&1 || return 1
   awk -F '|' '/GPU Memory Used/{gsub(/[^0-9.]/, "", $3); print int($3); exit}' "$output"
 }
 
@@ -431,13 +438,88 @@ stop_services() {
 }
 
 scan_errors() {
-  journalctl -k --since "@$START_EPOCH" --no-pager 2>/dev/null |
-    grep -Ei 'xe.*(reset|wedg|fault|hang|timedout|device lost)|GuC.*reset|Fault response|VM.*fault|PCIe.*AER|UR_RESULT_ERROR_DEVICE_LOST|ZE_RESULT_ERROR_DEVICE_LOST' \
-      > "$RUN_DIR/device-error-scan.txt" || true
-  find "$RUN_DIR" -path '*/server.stdout.log' -type f -print0 |
-    xargs -0 -r grep -EHi 'UR_RESULT_ERROR_DEVICE_LOST|ZE_RESULT_ERROR_DEVICE_LOST|out of memory|segmentation fault|core dumped|Aborted|failed to create MTP context' \
-      > "$RUN_DIR/server-error-scan.txt" 2>/dev/null || true
-  [[ ! -s "$RUN_DIR/device-error-scan.txt" && ! -s "$RUN_DIR/server-error-scan.txt" ]]
+  local journal_rc device_grep_rc find_rc server_grep_rc server_log
+  local journal_stderr_empty=false device_grep_stderr_empty=false
+  local find_stderr_empty=false server_grep_stderr_empty=false scan_passed=false
+  local -a server_logs=()
+
+  if journalctl -k --since "@$START_EPOCH" --no-pager \
+    > "$RUN_DIR/kernel-journal.txt" \
+    2> "$RUN_DIR/kernel-journal.stderr.txt"; then
+    journal_rc=0
+  else
+    journal_rc=$?
+  fi
+  if grep -Ei 'xe.*(reset|wedg|fault|hang|timedout|device lost)|GuC.*reset|Fault response|VM.*fault|PCIe.*AER|UR_RESULT_ERROR_DEVICE_LOST|ZE_RESULT_ERROR_DEVICE_LOST' \
+    "$RUN_DIR/kernel-journal.txt" \
+    > "$RUN_DIR/device-error-scan.txt" \
+    2> "$RUN_DIR/device-error-scan.stderr.txt"; then
+    device_grep_rc=0
+  else
+    device_grep_rc=$?
+  fi
+  if find "$RUN_DIR" -path '*/server.stdout.log' -type f -print0 \
+    > "$RUN_DIR/server-log-paths.nul" \
+    2> "$RUN_DIR/server-log-find.stderr.txt"; then
+    find_rc=0
+  else
+    find_rc=$?
+  fi
+  if (( find_rc == 0 )); then
+    while IFS= read -r -d '' server_log; do
+      server_logs+=("$server_log")
+    done < "$RUN_DIR/server-log-paths.nul"
+  fi
+  if (( ${#server_logs[@]} == 4 )); then
+    if grep -EHi 'UR_RESULT_ERROR_DEVICE_LOST|ZE_RESULT_ERROR_DEVICE_LOST|out of memory|segmentation fault|core dumped|Aborted|failed to create MTP context' \
+      "${server_logs[@]}" \
+      > "$RUN_DIR/server-error-scan.txt" \
+      2> "$RUN_DIR/server-error-scan.stderr.txt"; then
+      server_grep_rc=0
+    else
+      server_grep_rc=$?
+    fi
+  else
+    server_grep_rc=2
+    : > "$RUN_DIR/server-error-scan.txt"
+    printf 'expected 4 server logs, found %s\n' "${#server_logs[@]}" \
+      > "$RUN_DIR/server-error-scan.stderr.txt"
+  fi
+
+  [[ ! -s "$RUN_DIR/kernel-journal.stderr.txt" ]] && journal_stderr_empty=true
+  [[ ! -s "$RUN_DIR/device-error-scan.stderr.txt" ]] && device_grep_stderr_empty=true
+  [[ ! -s "$RUN_DIR/server-log-find.stderr.txt" ]] && find_stderr_empty=true
+  [[ ! -s "$RUN_DIR/server-error-scan.stderr.txt" ]] && server_grep_stderr_empty=true
+  if (( journal_rc == 0 && device_grep_rc == 1 && find_rc == 0 && server_grep_rc == 1 )) &&
+    (( ${#server_logs[@]} == 4 )) &&
+    [[ "$journal_stderr_empty" == true && "$device_grep_stderr_empty" == true &&
+       "$find_stderr_empty" == true && "$server_grep_stderr_empty" == true &&
+       ! -s "$RUN_DIR/device-error-scan.txt" &&
+       ! -s "$RUN_DIR/server-error-scan.txt" ]]; then
+    scan_passed=true
+  fi
+  if ! jq -n \
+    --argjson journal_rc "$journal_rc" \
+    --argjson device_grep_rc "$device_grep_rc" \
+    --argjson find_rc "$find_rc" \
+    --argjson server_grep_rc "$server_grep_rc" \
+    --argjson server_log_count "${#server_logs[@]}" \
+    --argjson journal_stderr_empty "$journal_stderr_empty" \
+    --argjson device_grep_stderr_empty "$device_grep_stderr_empty" \
+    --argjson find_stderr_empty "$find_stderr_empty" \
+    --argjson server_grep_stderr_empty "$server_grep_stderr_empty" \
+    --argjson passed "$scan_passed" \
+    '{schema:"qwen36-four-service-error-scan-v1",journal_rc:$journal_rc,device_grep_rc:$device_grep_rc,find_rc:$find_rc,server_grep_rc:$server_grep_rc,server_log_count:$server_log_count,journal_stderr_empty:$journal_stderr_empty,device_grep_stderr_empty:$device_grep_stderr_empty,find_stderr_empty:$find_stderr_empty,server_grep_stderr_empty:$server_grep_stderr_empty,passed:$passed}' \
+    > "$RUN_DIR/error-scan-status.json"; then
+    ERROR_SCAN_COMPLETED=1
+    return 1
+  fi
+  ERROR_SCAN_COMPLETED=1
+  if [[ "$scan_passed" == true ]]; then
+    ERROR_SCAN_PASSED=1
+    return 0
+  fi
+  return 1
 }
 
 seal_artifacts() {
@@ -464,7 +546,8 @@ finalize() {
   trap - EXIT INT TERM
   final_status=$original_status
   stop_services || final_status=1
-  [[ -f "$RUN_DIR/device-error-scan.txt" && -f "$RUN_DIR/server-error-scan.txt" ]] || scan_errors || final_status=1
+  (( ERROR_SCAN_COMPLETED == 1 )) || scan_errors || final_status=1
+  (( ERROR_SCAN_PASSED == 1 )) || final_status=1
   verify_harness_inputs final || final_status=1
   check_host_memory final || final_status=1
   (( BODY_COMPLETED == 1 && CLEANUP_FAILED == 0 )) || final_status=1
@@ -765,11 +848,10 @@ PY
     > "$RUN_DIR/gpu${gpu}/server.stdout.log" 2>&1 &
   SERVER_PIDS[$gpu]=$!
   printf '%s\n' "${SERVER_PIDS[$gpu]}" > "$RUN_DIR/gpu${gpu}/server.pid"
-done
-
-READINESS_DEADLINE=$((SECONDS + READINESS_TIMEOUT_S))
-for gpu in 0 1 2 3; do
-  port=$((PORT_BASE_DECIMAL + gpu))
+  # Integrated-MTP model/IGC initialization is serialized across cards.  Once
+  # every service is ready, the capture helper still releases four requests at
+  # once in each wave and the overlap gate proves simultaneous execution.
+  SERVICE_READINESS_DEADLINE=$((SECONDS + READINESS_TIMEOUT_S))
   until curl --noproxy '*' --connect-timeout "$CURL_CONNECT_TIMEOUT_S" \
     --max-time "$CURL_REQUEST_TIMEOUT_S" -fsS "http://127.0.0.1:${port}/v1/models" \
     > "$RUN_DIR/gpu${gpu}/models.json" 2> "$RUN_DIR/gpu${gpu}/models.err"; do
@@ -777,7 +859,10 @@ for gpu in 0 1 2 3; do
       echo "GPU $gpu service exited before readiness" >&2
       exit 1
     }
-    (( SECONDS < READINESS_DEADLINE )) || { echo "four-service readiness timeout" >&2; exit 1; }
+    (( SECONDS < SERVICE_READINESS_DEADLINE )) || {
+      echo "GPU $gpu service readiness timeout" >&2
+      exit 1
+    }
     sleep 2
   done
 done
