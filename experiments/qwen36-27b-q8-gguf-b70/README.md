@@ -26,7 +26,13 @@ all three bands with neutral PP/TTFT. Conventional D511 remains below
 `18 tok/s`. A balanced four-card VDR1 screen then lost `13.1%--13.3%` decode
 on every card with neutral PP/TTFT, so VDR1 is closed. All-VDR2 four-service
 validation then passed with `99.76%` of ideal four-times-isolated decode and
-direct overlap. Structural decode profiling is next.
+direct overlap. The sealed formal VDR2 near-32K c2 packet is now a functional
+PASS but a primary/stretch performance FAIL: both full-512 streams exactly
+match the fresh sequential phase with true M=2 occupancy, while aggregate D511
+is only `10.144217 tok/s`, the requests measure `5.185072 / 10.391849 tok/s`,
+and fairness is `0.498956`. Aggregate PP passes at `598.149228 tok/s`. This
+banks an honest ordinary-c2 comparator, not the per-card or eight-slot serving
+objective.
 No LocalMaxxing performance result is promoted from this lane yet.
 
 The durable goal, integrity boundary, adaptive research loop, four-GPU model,
@@ -41,9 +47,10 @@ This lane has one primary identity:
 - text-only, with no multimodal projector;
 - one Intel Arc Pro B70 with 32 GiB VRAM;
 - validated reference context of 32,768 tokens with F16 KV;
-- primary next target of two F16-KV 32K slots per card; fit, simultaneous answer
-  prefixes, and sequential natural probes pass, while synchronized natural-stop
-  behavior and strict forced-tail invariance remain under diagnosis;
+- primary target of two F16-KV 32K slots per card; the formal VDR2 packet passes
+  fit, simultaneous full-512 cross-phase exactness, selected natural-stop
+  retrieval, canaries, and M=2 occupancy, but fails the primary and stretch
+  throughput/fairness targets;
 - optional later stretch capacity of 100K to 128K with Q8 KV;
 - no MTP, DFlash, n-gram, prompt-cache, or response-cache acceleration.
 
@@ -52,9 +59,9 @@ only baseline identity or result packet.
 
 The selected deployment direction is four independent one-GPU processes. The
 primary candidate is two slots per process, for up to eight cluster-wide
-requests. This is a separate capacity/throughput identity that still needs to
-pass: in llama.cpp, `-c` is the total budget across all `-np` slots, so two 32K
-slots require `-c 65536 -np 2`.
+requests. The ordinary VDR2 c2 identity is functionally valid but too slow to
+qualify that serving objective. In llama.cpp, `-c` is the total budget across
+all `-np` slots, so two 32K slots require `-c 65536 -np 2`.
 
 `UD-Q8_K_XL` is excluded from the one-card lane because its file is already
 larger than one B70 before KV cache and runtime buffers. `Q8_0` is the intended
@@ -95,7 +102,10 @@ Measured-memory modeling predicts F16 c1/64K can fit. F16 c2/32K is now a
 measured fit result: `-c 65536 -np 2 --no-kv-unified` fully offloaded `65/65`
 layers, used `30,570 MiB`, and left `1,814 MiB` free while allocating 4 GiB of
 F16 KV. Its performance/exactness score is not promoted because the forced-tail
-gate below failed. Q8_0 KV is predicted to permit c1/100K and probably c1/128K;
+gate below failed. The later formal VDR2 `-ub 1024` run independently loaded
+`30,839 MiB`, left `1,544 MiB` free, and passed its scoped fresh-sequential/
+simultaneous functional gate, but failed the concurrency performance targets.
+Q8_0 KV is predicted to permit c1/100K and probably c1/128K;
 those are optional capacity rows, not immediate work. The exact estimates,
 slot semantics, stop conditions, and validation order are in
 [`notes/2026-08-08-context-concurrency-mtp-vision-plan.md`](notes/2026-08-08-context-concurrency-mtp-vision-plan.md).
@@ -180,6 +190,15 @@ Validated results under the correctness-qualified default
   and PP `2414.184 tok/s` (`99.5843%`). This establishes essentially linear
   scaling across four independent services, but remains a nonpromotable screen
   and makes no same-server concurrency claim;
+- the formal GPU-0 VDR2 near-32K c2 packet is sealed, evidence-valid, and
+  `PASS_ORACLE_EXACT` against its fresh sequential phase. Both 512-token rows,
+  selected natural-stop retrieval, local/external canaries, cache-zero,
+  `65/65` offload, M=2 occupancy, and cleanup pass. Aggregate PP is
+  `598.149228 tok/s`, but aggregate D511 is `10.144217 tok/s`; per-request D511
+  is `5.185072 / 10.391849 tok/s` and fairness is `0.498956`. This fails the
+  primary `30` aggregate / `13` each and stretch `35` aggregate / `16` each
+  targets. Bank functional evidence and the negative performance measurement;
+  do not claim the c2 serving objective;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -230,7 +249,11 @@ near-32K `-ub 1024` guards also pass, banking VDR2 across all three bands with
 an `8.2%--10.0%` decode lead and neutral PP/TTFT. The balanced VDR1 screen is
 an exact `13.1%--13.3%` decode loss and closes that lane. The directly
 overlapped all-VDR2 four-service screen retains `99.76%` of ideal decode and
-completes service validation. Structural decode profiling is now next. See
+completes independent-service validation. The formal near-32K VDR2 c2 packet
+then passes functional exactness and occupancy but fails primary/stretch
+performance at `10.144217 tok/s` aggregate D511 with `0.498956` fairness.
+Retain it as the sealed comparator for a materially different concurrency
+candidate; do not rerun the unchanged recipe. See
 [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md).
 
 The validation sequence remains useful for future runtimes:
@@ -256,9 +279,10 @@ The validation sequence remains useful for future runtimes:
    [`optional-artifacts-manifest.json`](optional-artifacts-manifest.json).
 
 The full-512/c2 measurement foundation is now implemented, offline-tested, and
-validated by a sealed four-card functional wave. The c2 fit is measured; no c2
-performance result is claimed until its exactness and timing packet passes. The metric definitions, paired prompt
-counts, integrity gates, and four-card first wave are preregistered in
+validated by a sealed four-card functional wave. The formal near-32K VDR2 c2
+packet is a valid functional pass and performance-target failure; it does not
+qualify the serving goal. The metric definitions, paired prompt counts,
+integrity gates, and four-card first wave are preregistered in
 [`notes/2026-08-09-goal1-measurement-foundation.md`](notes/2026-08-09-goal1-measurement-foundation.md).
 For new full-512 and c2 packets, only a verified detached
 `completion-status.json` is an authoritative PASS; a `run-status.txt` file by
@@ -351,6 +375,7 @@ cards were active. See
 - Canonical Q8 c2 crossover no-effect result: [`notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`](notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md)
 - Near-32K ubatch crossover screen: [`notes/2026-08-10-near32k-ubatch-screen.md`](notes/2026-08-10-near32k-ubatch-screen.md)
 - VDR2/VDR4 short full-512 crossover: [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md)
+- Formal VDR2 near-32K c2 result: [`notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md`](notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 

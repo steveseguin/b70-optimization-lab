@@ -15,10 +15,11 @@ that its model is currently loaded.
 
 ## Live Service
 
-No model service, worker, Ray process, benchmark, or experiment listener is
-running after the 2026-08-10 all-VDR2 four-service short screen. All four lanes
-closed without a survivor, listener, device fault, or server fault and returned
-to 46--48 MiB. Recheck immediately before any operational change.
+No model service, worker, Ray process, benchmark, or experiment listener was
+running at the sealed end of the 2026-08-10 formal VDR2 near-32K c2 run. Both
+fresh-server phases closed without a survivor, listener, forced kill, device
+fault, or server fault; GPU 0 returned `43 -> 43 MiB`, and all four cards were
+idle at the final check. Recheck immediately before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
@@ -37,8 +38,9 @@ median on the 12-prompt 128-token exact suite, and the 4K/17K/31,846-token
 F16-KV ladder passed at a 32,768-token allocation with `28,372 MiB` loaded.
 Q8 KV is unnecessary for the validated 32K reference or planned c2/32K target.
 Four independent one-GPU processes are the selected deployment direction,
-with c2 offering up to eight requests cluster-wide if its fit, exactness,
-throughput, latency, and fairness gates pass. Keep
+but the sealed formal VDR2 near-32K c2 packet passes fit/functionality and fails
+its throughput/fairness gates, so the eight-request objective is not yet met.
+Keep
 `GGML_SYCL_ENABLE_DNN=0`: DNN-on retained speed but failed immediate and
 suite-level greedy replay exactness. The simultaneous four-replica functional
 smoke also passed: all four 4K services were fully resident at `26,573 MiB`,
@@ -162,11 +164,22 @@ offload, runtime binding, artifact, and cleanup gates. Aggregate D100 was
 and PP `2414.184 tok/s` (`99.5843%`). This demonstrates essentially linear
 scaling across four independent services. It remains a
 `parallel-functional-screen`, `performance_promotable=false` result and is not
-a same-server concurrency claim. With VDR1 closed and four-service VDR2
-validated, the current next gate is structural decode profiling.
+a same-server concurrency claim.
+
+The later sealed formal GPU-0 VDR2 near-32K c2 packet is valid functional and
+negative performance evidence. Both simultaneous full-512 streams exactly
+match the fresh sequential phase; selected natural-stop retrieval, local and
+external canaries, cache-zero, `65/65` offload, true M=2 occupancy, and clean
+teardown pass. Aggregate PP clears its target at `598.149228 tok/s`, but
+aggregate D511 is `10.144217 tok/s`; the two requests measure
+`5.185072 / 10.391849 tok/s` with `0.498956` fairness. This fails the primary
+`>=30` aggregate / `>=13` each and stretch `>=35` aggregate / `>=16` each
+targets. Bank the functional PASS and honest performance FAIL; do not claim the
+per-card or eight-slot serving objective or rerun the unchanged recipe.
 See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md),
 the [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md),
-and the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md).
+the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md),
+and the [formal c2 closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md).
 The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
@@ -1791,9 +1804,13 @@ loaded service.
    screen then lost `13.1%--13.3%` decode on every card with neutral PP/TTFT;
    reject and close VDR1. The directly overlapped all-VDR2 four-service screen
    then retained `99.76%` of ideal four-times-isolated decode and passed every
-   exactness/lifecycle gate. Four-service validation is complete; use
-   structural decode profiling to select the next candidate. Do not promote
-   either concurrent screen or rerun the banked VDR2 packets. Directly measure a
+   exactness/lifecycle gate. Four-service validation is complete. The formal
+   near-32K VDR2 c2 packet then passes functional exactness and occupancy but
+   fails primary/stretch performance at `10.144217 tok/s` aggregate D511,
+   `5.185072 / 10.391849 tok/s` per request, and `0.498956` fairness. Keep it as
+   the ordinary-c2 comparator; do not claim the eight-slot objective or rerun
+   the unchanged recipe. Do not promote either concurrent screen or rerun the
+   banked VDR2 packets. Directly measure a
    synchronized natural-stop pair as a separate relevance gate. Add a held-out
    prompt that
    naturally sustains 512 tokens so the serving scorecard does not depend only

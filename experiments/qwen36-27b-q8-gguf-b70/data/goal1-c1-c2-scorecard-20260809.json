@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -1089,6 +1089,160 @@
     "decision": "four_service_validation_complete_retain_vdr2",
     "next_gate": "structural_decode_profiling"
   },
+  "c2_near32k_vdr2_formal": {
+    "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/goal3-vdr2-formal-c2-gpu0-near32k-ub1024-20260810T073751.658231543Z",
+    "completed_utc": "2026-08-10T07:56:39.017384+00:00",
+    "evidence_valid": true,
+    "functional_c2_passed": true,
+    "primary_performance_target_passed": false,
+    "stretch_performance_target_passed": false,
+    "official_performance_claim": false,
+    "configuration": {
+      "runtime_profile": "q8-vdr2-candidate",
+      "c2_profile": "prefill-ub1024",
+      "concurrent_case_order": "forward",
+      "gpu": 0,
+      "total_context_tokens": 65536,
+      "parallel_slots": 2,
+      "context_tokens_per_slot": 32768,
+      "kv_unified": false,
+      "continuous_batching": true,
+      "cache_type_k": "f16",
+      "cache_type_v": "f16",
+      "batch_size": 1024,
+      "ubatch_size": 1024,
+      "full_offload_layers": "65/65",
+      "flash_attention": true,
+      "dnn": false,
+      "graph": false,
+      "speculation": false
+    },
+    "identity": {
+      "runner_repository_head": "de2f76d1871c32ab3771f53e7ba43419ebc1d106",
+      "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
+      "llama_cpp_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+      "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+      "runtime_manifest": "experiments/qwen36-27b-q8-gguf-b70/runtime-manifest-q8-vdr2-candidate.json",
+      "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+      "suite": "experiments/qwen36-27b-q8-gguf-b70/c2-long-context-suite-v1.json",
+      "suite_sha256": "053523440e4a23d7f772dec5025fe4831ba33c0a8eaba76795e4ee76718860af"
+    },
+    "seal": {
+      "artifact_manifest_entries": 133,
+      "artifact_manifest_sha256": "35b0108d6f65c4e8d5341c8122e3ff0c22586b4d7708f58e1dad9838c0b6082b",
+      "artifact_manifest_check_passed": true,
+      "exactly_two_fresh_server_launches": true,
+      "harness_inputs_unchanged": true,
+      "completion_status_sha256": "cf403892cbd1758be5cb88fea707c080a81de3f3064597d7d8f74b012c12f0b4",
+      "validation_summary_sha256": "d0ee698e946c4a80742bfed42f778ff6a8b50c1d3542aa5c37446303e787e2e1",
+      "concurrent_result_sha256": "f2f52f873fc4aef9a69ea5d4b8af89bbbad8c56725c2ce92caf2e715e0e03ce2",
+      "sequential_oracle_sha256": "7c41f1dadafe53999fea655be2652a4ff223357c9a26d2c845c3d419438b46c8",
+      "harness_manifest_sha256": "aa7c390739eadc27d4a7f59cad88e72304ac5a43787f96860aae866bc7167231"
+    },
+    "functional": {
+      "oracle_status": "PASS_ORACLE_EXACT",
+      "rows": [
+        {
+          "case_id": "q27-q8-lc-31k-middle",
+          "slot_id": 0,
+          "prompt_tokens": 31846,
+          "completion_tokens": 512,
+          "cache_n": 0,
+          "token_ids_sha256": "9eb40a724468ab30f2d8e2b9b003130a30ceef1242161a4b6b14046ab98a7a6c",
+          "sequential_oracle_exact": true
+        },
+        {
+          "case_id": "q27-q8-c2-31k-b",
+          "slot_id": 1,
+          "prompt_tokens": 31841,
+          "completion_tokens": 512,
+          "cache_n": 0,
+          "token_ids_sha256": "32d83955ca35bea7e96f4dd1061551ffd149d449a689b80c3184dede67492e02",
+          "sequential_oracle_exact": true
+        }
+      ],
+      "intrinsic_gate_passed": true,
+      "semantic_retrieval_both_phases_passed": true,
+      "selected_natural_stop_cases_both_phases_passed": true,
+      "local_canaries_both_phases_passed": true,
+      "external_baseline_canary_both_phases_passed": true,
+      "semantic_cross_phase_exact": true
+    },
+    "fit_and_occupancy": {
+      "loaded_mib": 30839,
+      "loaded_delta_mib": 30796,
+      "free_mib": 1544,
+      "minimum_free_mib": 1024,
+      "send_skew_s": 0.00010328400821890682,
+      "both_decode_overlap_s": 46.9782577349979,
+      "broad_decode_overlap": true,
+      "average_busy_slots_per_decode": 1.94599,
+      "predicted_tokens": 1024,
+      "llama_decode_calls": 574,
+      "predicted_tokens_per_decode": 1.78397212543554,
+      "passed": true
+    },
+    "performance": {
+      "aggregate_prompt_tokens": 63687,
+      "aggregate_prompt_wall_s": 106.47343007501331,
+      "aggregate_prompt_tok_s_wall": 598.1492279823318,
+      "conventional_decode_window_s": 100.74705436899967,
+      "aggregate_tok_s_1_512_intervals": 10.144217182338524,
+      "aggregate_request_wall_s": 155.64858119600103,
+      "aggregate_full_512_request_wall_tok_s": 6.578922802454103,
+      "fairness_min_over_max": 0.49895562075514965,
+      "rows": [
+        {
+          "case_id": "q27-q8-lc-31k-middle",
+          "slot_id": 0,
+          "native_prompt_tok_s": 586.3387598237426,
+          "ttft_s": 54.89951867800846,
+          "decode_1_100_tok_s": 1.6979100183641316,
+          "decode_1_512_tok_s": 5.185071612281629,
+          "request_wall_s": 153.45375757500005,
+          "full_512_request_wall_tok_s": 3.3365100215924106
+        },
+        {
+          "case_id": "q27-q8-c2-31k-b",
+          "slot_id": 1,
+          "native_prompt_tok_s": 299.19718725890374,
+          "ttft_s": 106.47331628100073,
+          "decode_1_100_tok_s": 10.254591413264134,
+          "decode_1_512_tok_s": 10.391849287987231,
+          "request_wall_s": 155.64846740198846,
+          "full_512_request_wall_tok_s": 3.289463806139983
+        }
+      ],
+      "primary_thresholds": {
+        "aggregate_decode_tok_s_min": 30.0,
+        "each_request_decode_tok_s_min": 13.0,
+        "aggregate_prompt_tok_s_min": 400.0
+      },
+      "primary_prompt_threshold_passed": true,
+      "primary_aggregate_decode_threshold_passed": false,
+      "primary_each_request_decode_threshold_passed": false,
+      "primary_passed": false,
+      "stretch_thresholds": {
+        "aggregate_decode_tok_s_min": 35.0,
+        "each_request_decode_tok_s_min": 16.0
+      },
+      "stretch_passed": false,
+      "note": "Aggregate D511 is 1022 generated-token intervals divided by the shared 100.747054-second conventional window; it is not the sum of per-request rates."
+    },
+    "cleanup": {
+      "forced_kill": false,
+      "cleanup_survivor": false,
+      "port_closed": true,
+      "gpu_pre_mib": 43,
+      "gpu_final_mib": 43,
+      "all_four_gpus_idle_after_run": true,
+      "model_stat_unchanged": true,
+      "runtime_bundle_unchanged": true,
+      "device_server_kernel_fault_scans_clear": true
+    },
+    "decision": "bank_functional_c2_pass_and_negative_performance_result",
+    "claim_scope": "fresh_sequential_then_simultaneous_vdr2_c2_near32k_functional_pass_primary_and_stretch_performance_fail"
+  },
   "c2_short": {
     "configuration": {
       "total_context_tokens": 65536,
@@ -1247,5 +1401,5 @@
     "official_performance_result": null,
     "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
   },
-  "next_gate": "Official isolated GPU-0 VDR2 packets pass at short ub1024, middle ub128, and near32k ub1024, banking an 8.2%--10.0% D100/D511 gain with neutral prompt processing and TTFT. The balanced four-card VDR1 screen loses 13.1%--13.3% decode on every card; VDR1 is rejected and closed. The directly overlapped all-VDR2 four-service screen passes every exactness and lifecycle gate and retains 99.76% of ideal four-times-isolated decode, completing the four-service validation goal. It remains performance_promotable=false and is not same-server concurrency. Conventional VDR2 D511 remains below the immediate 18 tok/s target in every band. Run structural decode profiling next. Keep synchronized natural-stop c2 and a held-out naturally sustained 512-token serving challenge as separate later gates."
+  "next_gate": "The sealed formal GPU-0 VDR2 near32k c2 packet is valid functional evidence and an honest performance failure: both full-512 streams are exact to the fresh sequential phase with true M=2 occupancy, but aggregate D511 is 10.144217 tok/s, requests are 5.185072 and 10.391849 tok/s, and fairness is 0.498956. Aggregate prompt processing passes at 598.149228 tok/s. Primary and stretch concurrency targets fail; do not claim the per-card or eight-slot serving objective or rerun the unchanged recipe. Any materially different concurrency candidate must beat this sealed comparator under the same gate. Keep a synchronized natural-stop pair and held-out naturally sustained 512-token challenge as separate relevance gates."
 }

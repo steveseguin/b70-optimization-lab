@@ -99,6 +99,7 @@ Start with:
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md`;
+- `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md`;
 - `../experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md`.
 
 The official isolated short full-512 c1 packet now passes and has an exact
@@ -219,8 +220,18 @@ runtime-binding, artifact, and cleanup gates. Aggregate D100 was
 `66.197483 tok/s` (`99.7617%`), legacy D512 `66.326092 tok/s` (`99.7617%`),
 and PP `2414.184 tok/s` (`99.5843%`). This is essentially linear scaling for
 four independent services, not same-server concurrency. It remains
-`parallel-functional-screen`, `performance_promotable=false`. Four-service
-validation is complete; structural decode profiling is the current next gate.
+`parallel-functional-screen`, `performance_promotable=false`.
+
+The later sealed formal GPU-0 VDR2 near-32K c2 packet is valid functional and
+negative performance evidence. Both simultaneous 512-token streams exactly
+match the fresh sequential phase; selected natural-stop retrieval, local and
+external canaries, cache-zero, `65/65` offload, true M=2 occupancy, and cleanup
+pass. Aggregate PP is `598.149228 tok/s`, but aggregate D511 is only
+`10.144217 tok/s`; per-request D511 is `5.185072 / 10.391849 tok/s` and
+fairness is `0.498956`. The primary `30` aggregate / `13` each and stretch `35`
+aggregate / `16` each targets fail. Bank the functional PASS and honest
+performance FAIL as the ordinary-c2 comparator; do not claim the per-card or
+eight-slot serving objective or rerun the unchanged recipe.
 
 ## Historical Qwen3.6 27B Optimization Lane
 

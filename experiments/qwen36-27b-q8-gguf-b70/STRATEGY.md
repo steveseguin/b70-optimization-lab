@@ -15,7 +15,7 @@ the measurement.
 | Long-context prompt processing | `156.043 tok/s` |
 | Decode at 4K / 17K / 31.8K | `15.240 / 14.025 / 12.783 tok/s` |
 | F16-KV context | `32,768` tokens |
-| Two simultaneous 32K slots | not yet validated |
+| Two simultaneous 32K slots | fresh-sequential/simultaneous exactness PASS; aggregate D511 `10.144 tok/s`, performance target FAIL |
 
 These are baselines, not goals.
 
