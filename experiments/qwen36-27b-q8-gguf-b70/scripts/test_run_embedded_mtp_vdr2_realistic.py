@@ -13,7 +13,7 @@ SCRIPT = Path(__file__).with_name("run-embedded-mtp-vdr2-realistic.sh")
 
 
 class RealisticWrapperStaticTests(unittest.TestCase):
-    def test_live_path_requires_ack_before_external_commands(self) -> None:
+    def test_pending_live_path_stops_before_external_commands(self) -> None:
         completed = subprocess.run(
             ["/bin/bash", str(SCRIPT)],
             cwd=Path("/"),
@@ -24,17 +24,17 @@ class RealisticWrapperStaticTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stdout, "")
-        self.assertIn("requires the exact acknowledgement", completed.stderr)
+        self.assertIn("PENDING independent review", completed.stderr)
 
-    def test_source_is_reviewed_and_four_lifetimes_are_ordered(self) -> None:
+    def test_source_is_pending_and_four_lifetimes_are_ordered(self) -> None:
         source = SCRIPT.read_text()
-        self.assertIn('LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"', source)
+        self.assertIn('LIVE_ENABLE_STATE="PENDING"', source)
         self.assertIn(
             'EXPECTED_CAPTURE_SHA256="20f082206de7deafdc679fbd638f8361d69dfd647943919732270709e232cd33"',
             source,
         )
         self.assertIn(
-            'EXPECTED_REALISTIC_GATES_SHA256="c6e23541d2a06d5b88c61a3e08fe5528305a1eef1041cf189d748cc678662bcb"',
+            'EXPECTED_REALISTIC_GATES_SHA256="PENDING"',
             source,
         )
         calls = [
@@ -52,6 +52,10 @@ class RealisticWrapperStaticTests(unittest.TestCase):
         activated = SCRIPT.read_text().replace(
             'LIVE_ENABLE_STATE="PENDING"',
             'LIVE_ENABLE_STATE="REVIEWED_AND_PINNED"',
+            1,
+        ).replace(
+            'EXPECTED_REALISTIC_GATES_SHA256="PENDING"',
+            f'EXPECTED_REALISTIC_GATES_SHA256="{"0" * 64}"',
             1,
         )
         with tempfile.TemporaryDirectory() as temporary:

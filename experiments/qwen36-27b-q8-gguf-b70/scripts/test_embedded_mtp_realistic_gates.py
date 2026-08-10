@@ -43,6 +43,10 @@ def capture_gate(mode: str, rate: float) -> dict:
         "forensic_input_sha256": f"{mode}-forensic",
         "suite_sha256": GATES.SUITE_SHA256,
         "prefix_oracle_sha256": GATES.PREFIX_ORACLE_SHA256,
+        "legacy_oracle_identity": GATES.LEGACY_PREFIX_ORACLE_IDENTITY,
+        "current_gate_identity": GATES.CURRENT_REALISTIC_IDENTITY,
+        "legacy_oracle_identity_compatible": False,
+        "quality_reference": GATES.QUALITY_REFERENCE,
         "model_sha256": GATES.MODEL_SHA256,
         "runtime_sha256": GATES.RUNTIME_SHA256,
         "policy": {
@@ -66,6 +70,8 @@ def capture_gate(mode: str, rate: float) -> dict:
     }
     if mode == "mtp3":
         value["control_checks"] = {
+            "full_candidate_control_token_ids_exact": True,
+            "full_candidate_control_content_exact": True,
             "full_candidate_control_exact": True,
             "observed_control_scored_sha256": "control-raw",
             "observed_control_forensic_sha256": "control-forensic",
@@ -99,13 +105,18 @@ class CompareEvidenceTests(unittest.TestCase):
         root: Path,
         candidate_rate: float = 20.5,
         candidate_metrics_capture_sha: str = "mtp3-raw",
+        capture_mutator=None,
     ) -> tuple[int, dict]:
         control_capture = root / "control-capture.json"
         candidate_capture = root / "candidate-capture.json"
         control_metrics = root / "control-metrics.json"
         candidate_metrics = root / "candidate-metrics.json"
-        write_json(control_capture, capture_gate("control", 20.0))
-        write_json(candidate_capture, capture_gate("mtp3", candidate_rate))
+        control_capture_value = capture_gate("control", 20.0)
+        candidate_capture_value = capture_gate("mtp3", candidate_rate)
+        if capture_mutator is not None:
+            capture_mutator(control_capture_value, candidate_capture_value)
+        write_json(control_capture, control_capture_value)
+        write_json(candidate_capture, candidate_capture_value)
         write_json(control_metrics, metrics_gate("control"))
         candidate_metrics_value = metrics_gate("mtp3")
         candidate_metrics_value["capture_sha256"] = candidate_metrics_capture_sha
@@ -151,6 +162,121 @@ class CompareEvidenceTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertFalse(result["evidence_passed"])
         self.assertFalse(result["evidence_checks"]["candidate_metrics_capture_join"])
+
+    def test_quality_reference_and_legacy_compatibility_are_fail_closed(self) -> None:
+        cases = (
+            (
+                "missing-control-quality-reference",
+                "control",
+                "quality_reference",
+                None,
+                "control_quality_reference",
+            ),
+            (
+                "wrong-control-quality-reference",
+                "control",
+                "quality_reference",
+                "legacy_prefix_v0",
+                "control_quality_reference",
+            ),
+            (
+                "missing-candidate-quality-reference",
+                "candidate",
+                "quality_reference",
+                None,
+                "candidate_quality_reference",
+            ),
+            (
+                "wrong-candidate-quality-reference",
+                "candidate",
+                "quality_reference",
+                "legacy_prefix_v0",
+                "candidate_quality_reference",
+            ),
+            (
+                "missing-control-compatibility",
+                "control",
+                "legacy_oracle_identity_compatible",
+                None,
+                "control_legacy_oracle_identity_incompatible",
+            ),
+            (
+                "wrong-control-compatibility",
+                "control",
+                "legacy_oracle_identity_compatible",
+                True,
+                "control_legacy_oracle_identity_incompatible",
+            ),
+            (
+                "missing-candidate-compatibility",
+                "candidate",
+                "legacy_oracle_identity_compatible",
+                None,
+                "candidate_legacy_oracle_identity_incompatible",
+            ),
+            (
+                "wrong-candidate-compatibility",
+                "candidate",
+                "legacy_oracle_identity_compatible",
+                True,
+                "candidate_legacy_oracle_identity_incompatible",
+            ),
+        )
+        for name, arm, key, replacement, expected_check in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as raw:
+                def mutate(control: dict, candidate: dict) -> None:
+                    target = control if arm == "control" else candidate
+                    if replacement is None:
+                        target.pop(key)
+                    else:
+                        target[key] = replacement
+
+                status, result = self.run_compare(
+                    Path(raw), capture_mutator=mutate
+                )
+            self.assertEqual(status, 1)
+            self.assertFalse(result["evidence_passed"])
+            self.assertFalse(result["evidence_checks"][expected_check])
+
+    def test_fresh_control_token_content_and_hash_proof_is_fail_closed(self) -> None:
+        cases = (
+            ("full_candidate_control_token_ids_exact", False),
+            ("full_candidate_control_content_exact", False),
+            ("observed_control_forensic_sha256", "different-control"),
+        )
+        for key, replacement in cases:
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as raw:
+                def mutate(_control: dict, candidate: dict) -> None:
+                    candidate["control_checks"][key] = replacement
+
+                status, result = self.run_compare(
+                    Path(raw), capture_mutator=mutate
+                )
+            self.assertEqual(status, 1)
+            self.assertFalse(result["evidence_passed"])
+            self.assertFalse(
+                result["evidence_checks"]["candidate_bound_to_fresh_control"]
+            )
+
+
+class HardRowPolicyTests(unittest.TestCase):
+    def test_only_legacy_prefix_match_is_diagnostic(self) -> None:
+        checks = {
+            "prompt_identity": True,
+            "fresh_control_token_content_exact": True,
+            GATES.LEGACY_PREFIX_DIAGNOSTIC_CHECK: False,
+        }
+        self.assertTrue(GATES.hard_row_checks_pass(checks))
+
+        for name in ("prompt_identity", "fresh_control_token_content_exact"):
+            with self.subTest(name=name):
+                adversarial = dict(checks)
+                adversarial[name] = False
+                self.assertFalse(GATES.hard_row_checks_pass(adversarial))
+
+        missing_diagnostic = dict(checks)
+        missing_diagnostic.pop(GATES.LEGACY_PREFIX_DIAGNOSTIC_CHECK)
+        self.assertFalse(GATES.hard_row_checks_pass(missing_diagnostic))
 
 
 if __name__ == "__main__":

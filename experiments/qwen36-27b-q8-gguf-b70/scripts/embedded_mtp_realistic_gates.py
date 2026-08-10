@@ -3,9 +3,9 @@
 
 The live wrapper uses the generic OpenAI streaming benchmark exactly once per
 prompt.  This module recomputes the conventional 99-interval metric, binds the
-12 responses to Prometheus deltas, and proves streamed token/content equality
-against both the pinned integrated-model prefix oracle and the fresh control.
-It contains no network or device code.
+12 responses to Prometheus deltas, reports the context-incompatible legacy
+prefix comparison diagnostically, and proves full token/content equality to a
+fresh matched control. It contains no network or device code.
 """
 
 from __future__ import annotations
@@ -49,6 +49,10 @@ ALIASES = {
     "control": "qwen36-27b-mtp-q8-vdr2-realistic-control",
     "mtp3": "qwen36-27b-mtp-q8-vdr2-realistic-mtp3",
 }
+QUALITY_REFERENCE = "matched_fresh_control_v1"
+LEGACY_PREFIX_ORACLE_IDENTITY = {"ctx_size": 4096, "max_tokens": 128}
+CURRENT_REALISTIC_IDENTITY = {"ctx_size": 32768, "max_tokens": 512}
+LEGACY_PREFIX_DIAGNOSTIC_CHECK = "legacy_prefix_oracle_match"
 
 
 def sha256_file(path: Path) -> str:
@@ -100,6 +104,31 @@ def token_ids(value: Any, maximum_count: int = 128) -> bool:
             isinstance(token, int) and not isinstance(token, bool) and token >= 0
             for token in value
         )
+    )
+
+
+def longest_common_prefix_tokens(
+    observed: Any, expected: Any, maximum_count: int = 128
+) -> int | None:
+    """Count equal leading token IDs for diagnostic legacy-oracle evidence."""
+    if not isinstance(observed, list) or not isinstance(expected, list):
+        return None
+    compared = min(len(observed), len(expected), maximum_count)
+    for index in range(compared):
+        if observed[index] != expected[index]:
+            return index
+    return compared
+
+
+def hard_row_checks_pass(checks: dict[str, bool]) -> bool:
+    """Pass every row gate except the explicitly diagnostic legacy prefix."""
+    diagnostic = checks.get(LEGACY_PREFIX_DIAGNOSTIC_CHECK)
+    if not isinstance(diagnostic, bool):
+        return False
+    return all(
+        value is True
+        for name, value in checks.items()
+        if name != LEGACY_PREFIX_DIAGNOSTIC_CHECK
     )
 
 
@@ -221,7 +250,10 @@ def load_prefix_oracle(path: Path) -> dict[str, Any]:
         "suite": identity.get("suite_sha256") == SUITE_SHA256,
         "model": identity.get("model_sha256") == MODEL_SHA256,
         "runtime": identity.get("runtime_sha256") == RUNTIME_SHA256,
-        "max_tokens": identity.get("max_tokens") == 128,
+        "ctx_size": identity.get("ctx_size")
+        == LEGACY_PREFIX_ORACLE_IDENTITY["ctx_size"],
+        "max_tokens": identity.get("max_tokens")
+        == LEGACY_PREFIX_ORACLE_IDENTITY["max_tokens"],
         "seed": identity.get("seed") == 1,
         "greedy": identity.get("temperature") == 0 and identity.get("top_p") == 1,
         "prompt_order": identity.get("prompt_ids") == list(PROMPT_IDS),
@@ -345,6 +377,11 @@ def request_identity_checks(
 def gate_capture(args: argparse.Namespace) -> int:
     suite_ids, suite_hashes = load_suite(args.suite)
     prefix = load_prefix_oracle(args.prefix_oracle)
+    prefix_identity = prefix.get("run_identity") or {}
+    legacy_oracle_identity = {
+        "ctx_size": prefix_identity.get("ctx_size"),
+        "max_tokens": prefix_identity.get("max_tokens"),
+    }
     prefix_by_id = {row["prompt_id"]: row for row in prefix["rows"]}
     data = read_object(args.input)
     forensic = read_object(args.forensic_input)
@@ -360,6 +397,29 @@ def gate_capture(args: argparse.Namespace) -> int:
         server_identity,
         server_gate,
         server_post_gate,
+    )
+    scored_argv = identity_argv(server_identity)
+    scored_context_values = argv_pair(scored_argv, "-c")
+    current_gate_identity = {
+        "ctx_size": (
+            int(scored_context_values[0])
+            if len(scored_context_values) == 1
+            and scored_context_values[0].isdigit()
+            else None
+        ),
+        "max_tokens": (data.get("run_identity") or {}).get("max_tokens"),
+    }
+    legacy_oracle_identity_compatible = (
+        legacy_oracle_identity == current_gate_identity
+    )
+    checks["legacy_oracle_identity_recorded"] = (
+        legacy_oracle_identity == LEGACY_PREFIX_ORACLE_IDENTITY
+    )
+    checks["current_gate_identity_recorded"] = (
+        current_gate_identity == CURRENT_REALISTIC_IDENTITY
+    )
+    checks["legacy_oracle_identity_incompatible"] = (
+        legacy_oracle_identity_compatible is False
     )
     rows = data.get("rows")
     forensic_rows = forensic.get("rows")
@@ -380,9 +440,9 @@ def gate_capture(args: argparse.Namespace) -> int:
         and forensic_identity.get("replay_requests") == 0
         and forensic_identity.get("model") == ALIASES[args.mode]
     )
-    checks["scored_origin_bound_to_server"] = argv_pair(
-        identity_argv(server_identity), "--port"
-    ) == [str(scored_port)]
+    checks["scored_origin_bound_to_server"] = argv_pair(scored_argv, "--port") == [
+        str(scored_port)
+    ]
     checks["forensic_server_identity"] = (
         forensic_server_identity.get("mode") == args.mode
         and forensic_server_identity.get("model_sha256") == MODEL_SHA256
@@ -419,7 +479,7 @@ def gate_capture(args: argparse.Namespace) -> int:
     )
     checks["forensic_argv_matches_scored_except_port"] = argv_without_pair(
         forensic_argv, "--port"
-    ) == argv_without_pair(identity_argv(server_identity), "--port")
+    ) == argv_without_pair(scored_argv, "--port")
     checks["forensic_prepared_and_controls"] = (
         forensic_identity.get("api_mode") == "completions"
         and forensic_identity.get("prompt_count") == 12
@@ -462,6 +522,21 @@ def gate_capture(args: argparse.Namespace) -> int:
         )
         offsets = row.get("token_id_offsets_s") if isinstance(row, dict) else None
         support_ids = support.get("token_ids") if isinstance(support, dict) else None
+        expected_ids = expected.get("token_ids") if isinstance(expected, dict) else None
+        legacy_prefix_compared_tokens = (
+            min(128, len(support_ids)) if isinstance(support_ids, list) else 0
+        )
+        legacy_prefix_lcp_tokens = longest_common_prefix_tokens(
+            support_ids, expected_ids
+        )
+        legacy_prefix_oracle_match = (
+            bool(expected)
+            and isinstance(support_ids, list)
+            and isinstance(expected_ids, list)
+            and legacy_prefix_compared_tokens > 0
+            and support_ids[:legacy_prefix_compared_tokens]
+            == expected_ids[:legacy_prefix_compared_tokens]
+        )
         completion_n = row.get("completion_tokens") if isinstance(row, dict) else None
         position_offsets = (
             dict(zip(positions, offsets))
@@ -528,10 +603,7 @@ def gate_capture(args: argparse.Namespace) -> int:
             "rendered_prompt_oracle": bool(expected)
             and row.get("rendered_prompt_sha256")
             == expected.get("rendered_prompt_sha256"),
-            "forensic_prefix_oracle": bool(expected)
-            and isinstance(support_ids, list)
-            and support_ids[: min(128, len(support_ids))]
-            == expected.get("token_ids")[: min(128, len(support_ids))],
+            LEGACY_PREFIX_DIAGNOSTIC_CHECK: legacy_prefix_oracle_match,
             "request_payload_exact": request_payload
             == {
                 "model": ALIASES[args.mode],
@@ -784,11 +856,16 @@ def gate_capture(args: argparse.Namespace) -> int:
             {
                 "prompt_id": prompt_id,
                 "completion_tokens": completion_n,
+                "legacy_prefix_diagnostic": {
+                    "matched": legacy_prefix_oracle_match,
+                    "lcp_tokens": legacy_prefix_lcp_tokens,
+                    "compared_tokens": legacy_prefix_compared_tokens,
+                },
                 "missing_positions": sorted(
                     set(range(completion_n or 0)) - set(positions or [])
                 ),
                 "checks": row_checks,
-                "passed": all(row_checks.values()),
+                "passed": hard_row_checks_pass(row_checks),
             }
         )
     checks["prompt_order"] = (
@@ -822,19 +899,28 @@ def gate_capture(args: argparse.Namespace) -> int:
             for row in control_forensic.get("rows", [])
             if isinstance(row, dict) and isinstance(row.get("prompt_id"), str)
         }
-        full_exact = all(
+        full_token_exact = all(
             isinstance(forensic_by_id.get(prompt), dict)
             and forensic_by_id[prompt].get("token_ids")
             == control_by_id.get(prompt, {}).get("token_ids")
+            for prompt in PROMPT_IDS
+        )
+        full_content_exact = all(
+            isinstance(forensic_by_id.get(prompt), dict)
+            and forensic_by_id[prompt].get("content")
+            == control_by_id.get(prompt, {}).get("content")
             and forensic_by_id[prompt].get("content_sha256")
             == control_by_id.get(prompt, {}).get("content_sha256")
             for prompt in PROMPT_IDS
         )
+        full_exact = full_token_exact and full_content_exact
         control_checks = {
             "control_scored_sha256_bound": sha256_file(args.control_input)
             == args.expected_control_sha256,
             "control_forensic_sha256_bound": sha256_file(args.control_forensic_input)
             == args.expected_control_forensic_sha256,
+            "full_candidate_control_token_ids_exact": full_token_exact,
+            "full_candidate_control_content_exact": full_content_exact,
             "full_candidate_control_exact": full_exact,
             "observed_control_scored_sha256": sha256_file(args.control_input),
             "observed_control_forensic_sha256": sha256_file(
@@ -845,7 +931,8 @@ def gate_capture(args: argparse.Namespace) -> int:
             {
                 key: value
                 for key, value in control_checks.items()
-                if key.endswith("_bound") or key == "full_candidate_control_exact"
+                if key.endswith("_bound")
+                or key.startswith("full_candidate_control_")
             }
         )
     elif any(
@@ -869,6 +956,10 @@ def gate_capture(args: argparse.Namespace) -> int:
         "forensic_input_sha256": sha256_file(args.forensic_input),
         "suite_sha256": SUITE_SHA256,
         "prefix_oracle_sha256": PREFIX_ORACLE_SHA256,
+        "legacy_oracle_identity": legacy_oracle_identity,
+        "current_gate_identity": current_gate_identity,
+        "legacy_oracle_identity_compatible": legacy_oracle_identity_compatible,
+        "quality_reference": QUALITY_REFERENCE,
         "model_sha256": MODEL_SHA256,
         "runtime_sha256": RUNTIME_SHA256,
         "server_evidence": {
@@ -1115,6 +1206,28 @@ def compare_arms(args: argparse.Namespace) -> int:
         "same_prefix_oracle": control.get("prefix_oracle_sha256")
         == candidate.get("prefix_oracle_sha256")
         == PREFIX_ORACLE_SHA256,
+        "control_quality_reference": control.get("quality_reference")
+        == QUALITY_REFERENCE,
+        "candidate_quality_reference": candidate.get("quality_reference")
+        == QUALITY_REFERENCE,
+        "control_legacy_oracle_identity_recorded": control.get(
+            "legacy_oracle_identity"
+        )
+        == LEGACY_PREFIX_ORACLE_IDENTITY
+        and control.get("current_gate_identity") == CURRENT_REALISTIC_IDENTITY,
+        "candidate_legacy_oracle_identity_recorded": candidate.get(
+            "legacy_oracle_identity"
+        )
+        == LEGACY_PREFIX_ORACLE_IDENTITY
+        and candidate.get("current_gate_identity") == CURRENT_REALISTIC_IDENTITY,
+        "control_legacy_oracle_identity_incompatible": control.get(
+            "legacy_oracle_identity_compatible"
+        )
+        is False,
+        "candidate_legacy_oracle_identity_incompatible": candidate.get(
+            "legacy_oracle_identity_compatible"
+        )
+        is False,
         "same_model": control.get("model_sha256")
         == candidate.get("model_sha256")
         == MODEL_SHA256,
@@ -1122,6 +1235,14 @@ def compare_arms(args: argparse.Namespace) -> int:
         == candidate.get("runtime_sha256")
         == RUNTIME_SHA256,
         "candidate_bound_to_fresh_control": candidate.get("control_checks", {}).get(
+            "full_candidate_control_token_ids_exact"
+        )
+        is True
+        and candidate.get("control_checks", {}).get(
+            "full_candidate_control_content_exact"
+        )
+        is True
+        and candidate.get("control_checks", {}).get(
             "full_candidate_control_exact"
         )
         is True
@@ -1185,6 +1306,7 @@ def compare_arms(args: argparse.Namespace) -> int:
             "performance_passed": False,
             "classification": "INVALID_EVIDENCE",
             "realistic_policy_passed": False,
+            "quality_reference": QUALITY_REFERENCE,
             "localmaxxing_submission_ready": False,
         }
         atomic_write_json(args.output, result)
@@ -1273,6 +1395,10 @@ def compare_arms(args: argparse.Namespace) -> int:
             else "VALID_REALISTIC_NO_MTP_WIN"
         ),
         "realistic_policy_passed": True,
+        "quality_reference": QUALITY_REFERENCE,
+        "legacy_oracle_identity": LEGACY_PREFIX_ORACLE_IDENTITY,
+        "current_gate_identity": CURRENT_REALISTIC_IDENTITY,
+        "legacy_oracle_identity_compatible": False,
         "localmaxxing_submission_ready": False,
         "submission_note": (
             "This packet is once-only, cache-zero, exact, and target-verified. "
