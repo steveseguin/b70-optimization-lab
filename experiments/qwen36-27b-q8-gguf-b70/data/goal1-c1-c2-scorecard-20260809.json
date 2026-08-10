@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-08-10",
-  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail",
+  "status": "c1_short_reproduced_c2_fit_validated_canonical_mmvq_no_effect_ubatch_scoped_vdr2_official_cross_band_banked_vdr1_closed_four_service_validated_formal_c2_near32k_functional_pass_performance_fail_embedded_mtp_short_diagnostic_advance",
   "identity": {
     "model": "Qwen3.6-27B-Q8_0.gguf",
     "model_sha256": "f93f517f38e696d35a1a7df2c0e3155a64f4c4dcd662107a146ae263f7fb14ce",
@@ -1401,5 +1401,196 @@
     "official_performance_result": null,
     "performance_target_status": "not_measured_due_to_forced_tail_exactness_failure"
   },
-  "next_gate": "The sealed formal GPU-0 VDR2 near32k c2 packet is valid functional evidence and an honest performance failure: both full-512 streams are exact to the fresh sequential phase with true M=2 occupancy, but aggregate D511 is 10.144217 tok/s, requests are 5.185072 and 10.391849 tok/s, and fairness is 0.498956. Aggregate prompt processing passes at 598.149228 tok/s. Primary and stretch concurrency targets fail; do not claim the per-card or eight-slot serving objective or rerun the unchanged recipe. Any materially different concurrency candidate must beat this sealed comparator under the same gate. Keep a synchronized natural-stop pair and held-out naturally sustained 512-token challenge as separate relevance gates."
+  "embedded_mtp_short_diagnostic": {
+    "identity": {
+      "model": "Qwen3.6-27B-Q8_0.gguf",
+      "model_repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "model_revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "model_size_bytes": 29047084160,
+      "model_sha256": "9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8",
+      "model_blocks": 65,
+      "trunk_layers": 64,
+      "next_token_layers": 1,
+      "runtime_commit": "15586e2d7165570fb3aa7c26e0d442e289ef69de",
+      "llama_server_sha256": "1a093f09122ceb2851157042c2bbc6281ddb9d4e2de50137502890f9b52fa7d7",
+      "runtime_manifest_sha256": "4119790a79c55d158e7257d4fa0d95be0ca34639807c1a71ce87b60d6fdc1b49",
+      "q8_reorder_vdr_mmvq": 2,
+      "gpu": 0,
+      "context_tokens": 32768,
+      "parallel_slots": 1,
+      "batch_size": 1024,
+      "ubatch_size": 1024,
+      "cache_type_k": "f16",
+      "cache_type_v": "f16",
+      "full_offload_layers": "66/66",
+      "control_speculation": "none",
+      "candidate_speculation": "embedded_mtp_nmax3_nmin0_psplit010_pmin000_backend_sampling",
+      "separate_draft_model": false
+    },
+    "scope": {
+      "evidence_class": "official-isolated-diagnostic",
+      "performance_promotable": false,
+      "prompt_band": "short",
+      "prompt_ids": [
+        "q27-q8-lc-04k-middle",
+        "q27-q8-c2-04k-b"
+      ],
+      "prompt_tokens": [
+        4369,
+        4317
+      ],
+      "completion_tokens_per_row": 512,
+      "rows": 2,
+      "post_canary_tokens": 128,
+      "cache_n_all_zero": true,
+      "fixed_realistic_suite": false,
+      "cross_band": false,
+      "second_card": false,
+      "same_server_concurrency": false,
+      "production_ready": false,
+      "localmaxxing_eligible": false
+    },
+    "sealed_premeasurement_failures": [
+      {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-two-arm-gpu0-20260810T083532.916412563Z",
+        "status": "FAIL",
+        "measurement_started": false,
+        "failure": "runtime_rejected_invalid_fitp_argument",
+        "artifact_manifest_entries": 42,
+        "artifact_manifest_sha256": "99a07a5fc720b94df96b33acb38811d42b518e8e67b25b3550a3ad66af37fc44",
+        "artifact_manifest_verified": true,
+        "fix_commit": "c337c4649"
+      },
+      {
+        "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-two-arm-gpu0-20260810T084031.947279449Z",
+        "status": "FAIL",
+        "measurement_started": false,
+        "failure": "stale_nextn_log_gate_expected_n_layer_nextn_instead_of_qwen35_nextn_predict_layers",
+        "artifact_manifest_entries": 43,
+        "artifact_manifest_sha256": "42239f5f3ba952bd199bf7b6bde196c8f63b286845b083123637c3316b6a092a",
+        "artifact_manifest_verified": true,
+        "fix_commit": "418f3e320"
+      }
+    ],
+    "first_valid_original_classifier": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-two-arm-gpu0-20260810T084545.325933113Z",
+      "passed": true,
+      "evidence_valid": true,
+      "advance": false,
+      "historical_classification": "ONE_BOUNDED_NMAX_PMIN_FOLLOWUP",
+      "artifact_manifest_entries": 78,
+      "artifact_manifest_sha256": "35820eb781d1977ca6353cb2c5b4d52f50f8de1a49876e4e8ec00a0863e4dc23",
+      "artifact_manifest_verified": true,
+      "completion_status_sha256": "f52d9093faceffbe8efc41a8dbb1f489aced02d0a8d67f4b0bb36d9093be1725",
+      "comparison_sha256": "bc484bc4fd1bc7155aca5e3313bd2fccfcbb056510a8556e3c7411cadc42f2a8",
+      "control": {
+        "decode_99_interval_median_tok_s": 16.586983023454746,
+        "decode_511_interval_median_tok_s": 16.59118744189833,
+        "stream_native_median_tok_s": 16.62359494554252,
+        "replay_native_median_tok_s": 16.606762615898333,
+        "ttft_median_s": 7.1958508450043155,
+        "loaded_mib": 28642
+      },
+      "mtp3": {
+        "decode_99_interval_median_tok_s": 44.6971765231429,
+        "decode_511_interval_median_tok_s": 48.06419529928801,
+        "stream_native_median_tok_s": 48.15736015232644,
+        "replay_native_median_tok_s": 48.06319838413154,
+        "ttft_median_s": 7.515124958001252,
+        "loaded_mib": 29911
+      },
+      "ratios_mtp3_over_control": {
+        "decode_99_interval": 2.694714069456698,
+        "decode_511_interval": 2.8969713872263143,
+        "stream_native": 2.8969281500232555,
+        "replay_native": 2.8941943409318487,
+        "ttft": 1.0443691955091858,
+        "unmatched_99_interval_native_disagreement": 0.20221408056655754
+      },
+      "historical_classifier_note": "The sole failed advance check compared the early 99-interval ratio with all-512 native timing. Preserve this historical classification; do not tune from it."
+    },
+    "prospective_comparator_change": {
+      "commit": "d878aecb91c757d86bad8b1c7d8af6e13a1cc72d",
+      "policy": "retain_and_gate_99_interval_metric_but_co_gate_native_all512_against_matched_full_window_d511",
+      "applied_before_confirmation": true,
+      "retrospective_artifact_reclassification": false
+    },
+    "confirmation": {
+      "run_dir": "/mnt/fast-ai/bench-results/qwen36-27b-q8-gguf-b70/runs/embedded-mtp-vdr2-confirmation-gpu0-20260810T090326.726315114Z",
+      "passed": true,
+      "evidence_valid": true,
+      "advance": true,
+      "classification": "ADVANCE_FULL_VALIDATION",
+      "artifact_manifest_entries": 78,
+      "artifact_manifest_sha256": "2d044a5c1891de7e1885487515a418b2194c80d61f663deaea6f0274b2062716",
+      "artifact_manifest_verified": true,
+      "comparison_sha256": "0fde58da836cf95b0b20b78a024db85d6859056d8f6000532abcf68bf6ada6f9",
+      "completion_status_sha256": "567556079e1cfdda164288cccef2358599d08f2e9072ab027dca6ff29dc609bc",
+      "quality": {
+        "control_exact": true,
+        "candidate_exact": true,
+        "stream_replay_exact": true,
+        "post_canary_exact": true,
+        "cache_n_all_zero": true,
+        "metrics_response_counter_binding_passed": true
+      },
+      "control": {
+        "decode_99_interval_median_tok_s": 16.586787963163417,
+        "decode_511_interval_median_tok_s": 16.590927883105365,
+        "stream_native_median_tok_s": 16.623274081175673,
+        "replay_native_median_tok_s": 16.611110053600783,
+        "ttft_median_s": 7.19231607549591,
+        "loaded_mib": 28642,
+        "fit_projected_free_mib": 3891,
+        "fit_required_free_mib": 1024,
+        "speculative_counters_zero": true
+      },
+      "mtp3": {
+        "decode_99_interval_median_tok_s": 44.69661981847966,
+        "decode_511_interval_median_tok_s": 48.037351317642944,
+        "stream_native_median_tok_s": 48.13141475467785,
+        "replay_native_median_tok_s": 48.052664541771335,
+        "ttft_median_s": 7.5174836724982015,
+        "loaded_mib": 29911,
+        "fit_projected_free_mib": 2563,
+        "fit_required_free_mib": 1412,
+        "accepted_tokens_all_requests": 1597,
+        "draft_tokens_all_requests": 1709,
+        "verifications": 572,
+        "accepted_over_drafted": 0.9344645991808075,
+        "accepted_per_verification": 2.791958041958042,
+        "effective_tokens_per_target_verification": 3.791958041958042
+      },
+      "ratios_mtp3_over_control": {
+        "decode_99_interval": 2.6947121961011167,
+        "decode_511_interval": 2.895398717666638,
+        "stream_native": 2.89542327941174,
+        "replay_native": 2.8928027318291702,
+        "ttft": 1.0452104153361852,
+        "per_prompt_decode_99_interval": {
+          "q27-q8-c2-04k-b": 2.646044835320728,
+          "q27-q8-lc-04k-middle": 2.743379926352136
+        },
+        "matched_d511_native_disagreement": 0.000024561745102236188,
+        "unmatched_99_interval_native_disagreement_diagnostic": 0.20071108331062337
+      },
+      "cleanup": {
+        "control_gpu_pre_mib": 43,
+        "control_gpu_final_mib": 43,
+        "mtp3_gpu_pre_mib": 43,
+        "mtp3_gpu_final_mib": 43,
+        "forced_kill": false,
+        "cleanup_survivor": false,
+        "ports_closed": true,
+        "model_stat_unchanged": true,
+        "model_sha256_final_verified": true,
+        "runtime_bundle_unchanged": true,
+        "harness_inputs_unchanged": true,
+        "device_server_kernel_fault_scans_clear": true
+      }
+    },
+    "decision": "advance_to_fixed_cold_realistic_suite_without_promotion",
+    "next_gate": "Run the fixed realistic suite once per prompt, cold and cache-zero, with exact target-verified outputs and conventional 99-interval accounting. Only after that passes, test middle and near32k retention, then confirm on a second B70 and advance to the relevant concurrency gate."
+  },
+  "next_gate": "The embedded publisher-MTP short two-prompt diagnostic confirmed ADVANCE after the prospectively committed matched-horizon comparator correction: MTP3 reproduced 44.696620 tok/s on the primary 99-interval view and 48.037351 tok/s over matched full-window D511 versus 16.586788 and 16.590928 controls, with exact output, 0.934465 acceptance, and clean fit/teardown. It remains performance_promotable=false and is not a broad-suite, production, c2, or LocalMaxxing result. Run the fixed cold realistic suite next; only on PASS advance to cross-band retention, second-card confirmation, and relevant concurrency gates. The sealed formal ordinary-c2 packet remains the functional comparator and honest performance failure."
 }

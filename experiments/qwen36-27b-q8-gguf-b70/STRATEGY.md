@@ -19,6 +19,17 @@ the measurement.
 
 These are baselines, not goals.
 
+The optional integrated publisher-MTP identity has separately reached a
+confirmed short diagnostic `ADVANCE`: primary 99-interval decode is
+`44.696620` versus `16.586788 tok/s` control and matched full-window D511 is
+`48.037351` versus `16.590928 tok/s`, with exact two-prompt output, `0.934465`
+acceptance, full offload, fit, and clean teardown. This result remains
+`performance_promotable=false`; it does not alter the target-only starting
+line or satisfy broad quality, cross-band, second-card, c2, production, or
+LocalMaxxing gates. Its next step is the fixed cold realistic suite, followed
+only on PASS by middle/near-32K retention, second-card confirmation, and the
+relevant concurrency gate.
+
 ## Goals
 
 ### 1. Complete the honest scorecard
@@ -80,6 +91,14 @@ Repeat until Goals 1--5 pass together:
 5. Confirm wins with same-card A/B, a quiet host, broad context coverage, and a
    second card; integrate compatible wins.
 6. Record every result, including failures and the condition for retrying them.
+
+The immediate bounded frontier is the embedded-MTP fixed cold realistic-suite
+gate. Preserve the original valid packet's historical
+`ONE_BOUNDED_NMAX_PMIN_FOLLOWUP` label: commit `d878aecb9` prospectively fixed
+its unlike-horizon consistency check, and an unchanged replay then classified
+`ADVANCE_FULL_VALIDATION`. Do not tune from the old label or promote the two
+known prompts. The ordinary VDR2 c2 packet remains the honest functional
+comparator and performance failure.
 
 The four rotating GPU lanes are: reference/reproduction, prompt processing,
 decode/state, and concurrency/long-context or independent challenge. Parallel

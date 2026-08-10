@@ -16,16 +16,18 @@ that its model is currently loaded.
 ## Live Service
 
 No model service, worker, Ray process, benchmark, or experiment listener was
-running at the sealed end of the 2026-08-10 formal VDR2 near-32K c2 run. Both
-fresh-server phases closed without a survivor, listener, forced kill, device
-fault, or server fault; GPU 0 returned `43 -> 43 MiB`, and all four cards were
-idle at the final check. Recheck immediately before any operational change.
+left by the sealed end of the 2026-08-10 embedded-MTP confirmation. Both the
+control and MTP3 services closed without a survivor, listener, forced kill,
+device fault, or server fault, and each returned GPU 0 from `43 -> 43 MiB`.
+Recheck immediately before any operational change.
 
 The active lane is target-only, text-only Qwen3.6 27B Q8_0 GGUF
 on one B70. The validated F16-KV reference reaches 32K; the next service target
 is two F16-KV 32K slots per card, using all four B70s as independent
-optimization lanes. Q8-KV 100K--128K capacity, MTP, and vision are optional
-later lanes and must not be mixed into this baseline. The exact Unsloth artifact is pinned in
+optimization lanes. Q8-KV 100K--128K capacity and vision are optional later
+lanes. The separate integrated-MTP identity has advanced only through its short
+two-prompt diagnostic and must not be mixed into this baseline. The exact
+target-only Unsloth artifact is pinned in
 [`experiments/qwen36-27b-q8-gguf-b70/model-manifest.json`](experiments/qwen36-27b-q8-gguf-b70/model-manifest.json)
 and is size/SHA/GGUF-table verified at
 `/mnt/usb-models/models/qwen36-27b-q8-gguf/Qwen3.6-27B-Q8_0.gguf`. The internal
@@ -176,6 +178,26 @@ aggregate D511 is `10.144217 tok/s`; the two requests measure
 `>=30` aggregate / `>=13` each and stretch `>=35` aggregate / `>=16` each
 targets. Bank the functional PASS and honest performance FAIL; do not claim the
 per-card or eight-slot serving objective or rerun the unchanged recipe.
+
+The separate integrated publisher-MTP identity now has a confirmed short
+two-prompt diagnostic lead. After two sealed pre-measurement harness failures
+(`-fitp` rejected, then a stale next-token metadata matcher), the first valid
+packet was exact and fast but retained its historical
+`ONE_BOUNDED_NMAX_PMIN_FOLLOWUP` classification because the original comparator
+co-gated unlike 99-interval and all-512 timing horizons. Commit `d878aecb9`
+prospectively matched the full-window D511/native horizons while retaining the
+99-interval metric. The unchanged confirmation then classified
+`ADVANCE_FULL_VALIDATION`: MTP3 measured `44.696620 tok/s` versus `16.586788`
+on the primary 99-interval view and `48.037351 tok/s` versus `16.590928` over
+matched D511, with both full-512 rows, replays, canary, counter binding, fit,
+and cleanup exact. Acceptance was `0.934465`; the MTP arm loaded `29,911 MiB`
+and returned `43 -> 43 MiB`. This remains an
+`official-isolated-diagnostic`, `performance_promotable=false` two-prompt
+result: it is not a fixed realistic-suite, cross-band, second-card, c2,
+production, or LocalMaxxing result. Run the fixed cold realistic suite next;
+only on PASS advance to cross-band retention, second-card confirmation, and
+the relevant concurrency gate. The full chronology and sealed hashes are in
+the [embedded-MTP closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md).
 See the [crossover closeout](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-canonical-q8-c2-crossover-no-effect.md),
 the [ubatch screen](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-near32k-ubatch-screen.md),
 the [VDR crossover](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-10-vdr2-vdr4-short-crossover.md),
@@ -184,8 +206,9 @@ The durable authority is
 [`the adaptive optimization strategy`](experiments/qwen36-27b-q8-gguf-b70/STRATEGY.md).
 The first replaceable tactical proposal is
 [`the four-GPU optimization and c2 plan`](experiments/qwen36-27b-q8-gguf-b70/notes/2026-08-08-four-gpu-optimization-and-c2-plan.md).
-MTP is relevant only if ordinary concurrency is insufficient; vision and the
-Q8-KV long-context stretch follow the text/c2 work.
+The embedded-MTP lane has advanced only from its short diagnostic into the
+fixed cold realistic-suite gate. Vision and the Q8-KV long-context stretch
+remain later, separate identities.
 
 Laguna is paused at the user's request. The August 4--7 Laguna no-drafter
 graph result is diagnostic, not promoted: its benchmark completed

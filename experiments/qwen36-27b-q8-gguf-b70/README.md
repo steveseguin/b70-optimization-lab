@@ -54,8 +54,10 @@ This lane has one primary identity:
 - optional later stretch capacity of 100K to 128K with Q8 KV;
 - no MTP, DFlash, n-gram, prompt-cache, or response-cache acceleration.
 
-MTP and vision are optional follow-ups. They must not be mixed into the target-
-only baseline identity or result packet.
+MTP and vision are optional, separate identities. They must not be mixed into
+the target-only baseline identity or result packet. The integrated publisher
+MTP artifact now has a confirmed short diagnostic lead described below; it is
+not yet a broad or promotable result.
 
 The selected deployment direction is four independent one-GPU processes. The
 primary candidate is two slots per process, for up to eight cluster-wide
@@ -199,6 +201,15 @@ Validated results under the correctness-qualified default
   primary `30` aggregate / `13` each and stretch `35` aggregate / `16` each
   targets. Bank functional evidence and the negative performance measurement;
   do not claim the c2 serving objective;
+- the separate integrated publisher-MTP short diagnostic now has a valid
+  prospective confirmation. MTP3 measures primary 99-interval decode
+  `44.696620` versus `16.586788 tok/s` control (`2.694712x`) and matched
+  full-window D511 `48.037351` versus `16.590928 tok/s` (`2.895399x`). Both
+  two-prompt full-512 rows, replays, post-canary, cache-zero, counter binding,
+  `66/66` offload, fit, and cleanup pass. Acceptance is `0.934465`. This is
+  `official-isolated-diagnostic`, `performance_promotable=false` evidence, not
+  a fixed realistic-suite, cross-band, second-card, c2, production, or
+  LocalMaxxing result;
 - both correctness-qualified validation runs exited cleanly, returned GPU 0 from 28,372 or
   26,573 MiB to 43 MiB, and retained empty device/server fault scans.
 
@@ -256,6 +267,33 @@ Retain it as the sealed comparator for a materially different concurrency
 candidate; do not rerun the unchanged recipe. See
 [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md).
 
+The integrated publisher-MTP lane then produced a confirmed, bounded short
+lead. The pinned model is revision
+`5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace`, size `29,047,084,160`, SHA-256
+`9408dcb356cc061a05c139e5647cbde0698ff980c6a69f7fc214e9989f86cfa8`.
+Two pre-measurement packets are intentionally retained: manifest `99a07a5f...`
+stopped on invalid `-fitp`, and manifest `42239f5f...` stopped on a stale
+next-token-layer log matcher. The first valid packet (manifest `35820eb...`,
+completion `f52d9093...`, comparison `bc484bc4...`) was exact and showed the
+same large gain, but keeps its historical `ONE_BOUNDED_NMAX_PMIN_FOLLOWUP`
+label because the original classifier compared unlike timing horizons. Commit
+`d878aecb9` prospectively co-gated matched all-512 D511/native timing while
+retaining the policy 99-interval metric. The unchanged confirmation (manifest
+`2d044a5c...`, comparison `0fde58da...`, completion `56755607...`) then passed
+as `ADVANCE_FULL_VALIDATION`. Its MTP counters are 1,597 accepted / 1,709
+drafted over 572 verifications, or `2.791958` accepted and `3.791958`
+effective target-verified tokens per verification. Control/MTP loaded
+`28,642 / 29,911 MiB`; both arms returned `43 -> 43 MiB` without a survivor or
+forced kill. The exact identities, hashes, measurements, and preserved false
+starts are in
+[`notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`](notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md).
+
+Do not tune from the historical bounded label or promote the two known prompts.
+The next MTP gate is the fixed realistic suite, once per prompt, cold and
+cache-zero. Only after it passes should this exact MTP3 policy advance to
+middle and near-32K retention, a second-card confirmation, and the relevant
+concurrency gate.
+
 The validation sequence remains useful for future runtimes:
 
 1. 4K target-only compatibility smoke with a 4K F16-KV allocation and full GPU
@@ -269,9 +307,10 @@ The validation sequence remains useful for future runtimes:
    retrieval, turnover, aggregate-rate, latency, and fairness gates.
 5. Q8_0 KV only for an optional larger-context target. Treat Q8 KV as a
    separate quality identity and compare it against the F16-KV corpus.
-6. Optional MTP only if ordinary c2 does not meet the serving objective. Use an
-   integrated publisher artifact, or a same-publisher and same-revision target/
-   MTP pair; do not cross-pair converters without tensor and metadata
+6. Optional MTP only if ordinary c2 does not meet the serving objective. The
+   integrated publisher artifact has passed only its short two-prompt
+   diagnostic; run the fixed cold realistic suite next, then cross-band and
+   second-card gates. Do not cross-pair converters without tensor and metadata
    validation, and do not graft the third-party head-only extraction into the
    baseline.
 7. Optional vision only after the text optimization and context envelope are
@@ -376,6 +415,8 @@ cards were active. See
 - Near-32K ubatch crossover screen: [`notes/2026-08-10-near32k-ubatch-screen.md`](notes/2026-08-10-near32k-ubatch-screen.md)
 - VDR2/VDR4 short full-512 crossover: [`notes/2026-08-10-vdr2-vdr4-short-crossover.md`](notes/2026-08-10-vdr2-vdr4-short-crossover.md)
 - Formal VDR2 near-32K c2 result: [`notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md`](notes/2026-08-10-formal-c2-near32k-vdr2-functional-pass-performance-fail.md)
+- Embedded publisher-MTP diagnostic runner: [`scripts/run-embedded-mtp-vdr2-diagnostic.sh`](scripts/run-embedded-mtp-vdr2-diagnostic.sh)
+- Embedded publisher-MTP diagnostic closeout: [`notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md`](notes/2026-08-10-embedded-mtp-short-diagnostic-advance.md)
 - Durable adaptive optimization strategy: [`STRATEGY.md`](STRATEGY.md)
 - Sourced living idea queue: [`../../suggestions/qwen36-27b-q8-gguf/README.md`](../../suggestions/qwen36-27b-q8-gguf/README.md)
 
